@@ -246,14 +246,14 @@ ClientWord2VecAlgorithm<TensorType>::TranslateUpdate(
     translator_.AddVocab(new_gradients->GetHash(), new_gradients->GetReverseVocab());
   }
 
-  VectorSizeVector ret;
+  VectorSizeVector translated_rows_updates;
 
-  ret.push_back(translator_.Translate<TensorType>(new_gradients->GetUpdatedRows().at(0),
-                                                  new_gradients->GetHash()));
-  ret.push_back(translator_.Translate<TensorType>(new_gradients->GetUpdatedRows().at(1),
-                                                  new_gradients->GetHash()));
+  translated_rows_updates.push_back(translator_.TranslateUpdate<TensorType>(
+      new_gradients->GetUpdatedRows().at(0), new_gradients->GetHash()));
+  translated_rows_updates.push_back(translator_.TranslateUpdate<TensorType>(
+      new_gradients->GetUpdatedRows().at(1), new_gradients->GetHash()));
 
-  return ret;
+  return translated_rows_updates;
 }
 
 template <class TensorType>

@@ -67,8 +67,8 @@ void SparseAdd(TensorType const &src, TensorType &dst,
       {
         src_index = update_index;
         dst_index = update_index;
-        // Sparse update src sparse tensor to normal dst tensor
       }
+      // Sparse update src sparse tensor to normal dst tensor
       else
       {
         src_index = cnt;

@@ -217,6 +217,7 @@ void LazyAdamOptimiser<T>::ApplyGradients(SizeType batch_size)
 
       for (SizeType update_index : rows.at(rows.size() - 1))
       {
+
         auto       gradient_view        = gradient_it->View(update_index);
         TensorType gradient_view_tensor = gradient_view.Copy();
 

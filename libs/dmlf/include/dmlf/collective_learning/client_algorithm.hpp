@@ -339,7 +339,7 @@ void ClientAlgorithm<TensorType>::Test()
 }
 
 /**
- * @return vector of gradient update values
+ * @return Update containing vector of sparse gradient tensors and vector of updated rows
  */
 template <class TensorType>
 std::shared_ptr<typename ClientAlgorithm<TensorType>::UpdateType>
@@ -347,22 +347,24 @@ ClientAlgorithm<TensorType>::GetUpdate()
 {
   FETCH_LOCK(model_mutex_);
 
-  std::vector<std::unordered_set<SizeType>> vector_set =
+  std::vector<std::unordered_set<SizeType>> updated_rows_sets_vector =
       this->graph_ptr_->GetUpdatedRowsReferences();
-  std::vector<TensorType> vector_tensor = graph_ptr_->GetGradients();
+  std::vector<TensorType> gradient_vector = graph_ptr_->GetGradients();
 
   // Convert set to vector
-  std::vector<std::vector<SizeType>> out_vector;
-  std::vector<TensorType>            out_tensors;
+  std::vector<std::vector<SizeType>> updated_rows_vector_out;
+  std::vector<TensorType>            sparse_gradients_vector_out;
 
-  for (SizeType i{0}; i < vector_set.size(); i++)
+  for (SizeType i{0}; i < updated_rows_vector_out.size(); i++)
   {
 
-    out_vector.push_back(std::vector<SizeType>(vector_set.at(i).begin(), vector_set.at(i).end()));
-    out_tensors.push_back(fetch::ml::utilities::ToSparse(vector_tensor.at(i), vector_set.at(i)));
+    updated_rows_vector_out.push_back(std::vector<SizeType>(updated_rows_sets_vector.at(i).begin(),
+                                                            updated_rows_sets_vector.at(i).end()));
+    sparse_gradients_vector_out.push_back(
+        fetch::ml::utilities::ToSparse(gradient_vector.at(i), updated_rows_sets_vector.at(i)));
   }
 
-  return std::make_shared<UpdateType>(out_tensors, out_vector);
+  return std::make_shared<UpdateType>(sparse_gradients_vector_out, updated_rows_vector_out);
 }
 
 /**
@@ -423,12 +425,8 @@ void ClientAlgorithm<TensorType>::DoRound()
     // get new update from algorithm controller
     auto new_update = algorithm_controller_->template GetUpdate<UpdateType>();
 
-    std::vector<std::vector<SizeType>> old_update = new_update->GetUpdatedRows();
-    FETCH_UNUSED(old_update);
-    std::vector<std::vector<SizeType>> translated_update = TranslateUpdate(new_update);
-
     // Translate and apply update to model
-    AggregateUpdate(new_update->GetGradients(), translated_update);
+    AggregateUpdate(new_update->GetGradients(), TranslateUpdate(new_update));
 
     // track number of total updates applied for evaluation
     updates_applied_++;
@@ -453,8 +451,6 @@ template <class TensorType>
 void ClientAlgorithm<TensorType>::AggregateUpdate(VectorTensorType const &gradient,
                                                   VectorSizeVector const &updated_rows)
 {
-  //  assert(gradients.size() == graph_ptr_->GetTrainables().size());
-
   auto grad_it = gradient.begin();
   auto rows_it = updated_rows.begin();
 

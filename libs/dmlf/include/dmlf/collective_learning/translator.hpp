@@ -37,9 +37,16 @@ struct Translator
   using SizeType   = fetch::math::SizeType;
   using SizeVector = std::vector<SizeType>;
 
+  /**
+   * Translates vector of updated rows from one vocabulary to another
+   * @tparam TensorType
+   * @param updated_rows vector of updated rows
+   * @param vocab_hash
+   * @return
+   */
   template <typename TensorType>
-  std::vector<SizeType> Translate(SizeVector                        updated_rows,
-                                  const byte_array::ConstByteArray &vocab_hash)
+  std::vector<SizeType> TranslateUpdate(SizeVector                        updated_rows,
+                                        const byte_array::ConstByteArray &vocab_hash)
   {
     if (vocab_hash == MyVocabHash())  // no need to translate
     {
@@ -62,8 +69,15 @@ struct Translator
     return translated_gradient_update;
   }
 
+  /**
+   * Translates weights from one vocabulary to another
+   * @tparam TensorType
+   * @param weights tensor of embedding weights
+   * @param vocab_hash
+   * @return
+   */
   template <typename TensorType>
-  std::pair<TensorType, TensorType> TranslateWeights(TensorType gradient_update,
+  std::pair<TensorType, TensorType> TranslateWeights(TensorType                        weights,
                                                      const byte_array::ConstByteArray &vocab_hash)
   {
     using DataType = typename TensorType::Type;
@@ -73,7 +87,7 @@ struct Translator
     if (vocab_hash == MyVocabHash())  // no need to translate
     {
       mask.Fill(DataType{1});
-      return std::make_pair(gradient_update, mask);
+      return std::make_pair(weights, mask);
     }
 
     assert(VocabKnown(vocab_hash));
@@ -81,22 +95,7 @@ struct Translator
     std::vector<std::string> other_vocab = known_vocabs[vocab_hash];
 
     // figure out which way around the matrix is
-    bool       first_dim_embedding;
-    SizeType   embedding_size;
     TensorType translated_gradient_update;
-
-    if (gradient_update.shape()[0] == other_vocab.size())
-    {
-      first_dim_embedding        = false;
-      embedding_size             = gradient_update.shape()[1];
-      translated_gradient_update = TensorType({MyVocabSize(), embedding_size});
-    }
-    else
-    {
-      first_dim_embedding        = true;
-      embedding_size             = gradient_update.shape()[0];
-      translated_gradient_update = TensorType({embedding_size, MyVocabSize()});
-    }
 
     for (SizeType i = 0; i < other_vocab.size(); i++)
     {
@@ -105,23 +104,14 @@ struct Translator
 
       if (translated_index != fetch::ml::dataloaders::Vocab::UNKNOWN_WORD)
       {
-        if (first_dim_embedding)
+        for (SizeType j = 0; j < weights.shape().at(1); j++)
         {
-          for (SizeType j = 0; j < embedding_size; j++)
-          {
-            translated_gradient_update.At(j, translated_index) = gradient_update.At(j, i);
-          }
-        }
-        else
-        {
-          for (SizeType j = 0; j < embedding_size; j++)
-          {
-            translated_gradient_update.Slice(translated_index).Assign(gradient_update.Slice(i));
-          }
+          translated_gradient_update.View(translated_index).Assign(weights.View(i));
         }
         mask.At(translated_index) += DataType{1};
       }
     }
+
     return std::make_pair(translated_gradient_update, mask);
   }
 
