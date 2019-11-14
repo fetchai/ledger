@@ -278,7 +278,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
       if (db_record.next_hash != hash)
       {
         db_record.next_hash = hash;
-        block_store_->Set(storage::ResourceID(db_record.hash()), db_record);
+        block_store_->Set(storage::ResourceID(db_record.hash), db_record);
       }
     }
   }
@@ -313,14 +313,12 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
 {
   assert(static_cast<bool>(block_store_));
 
-  Block db_record;
-  if (block_store_->Get(storage::ResourceID(hash), db_record))
+  if (block_store_->Get(storage::ResourceID(hash), block))
   {
-    block = db_record.block;
     AddBlockToBloomFilter(block);
     if (next_hash != nullptr)
     {
-      *next_hash = db_record.next_hash;
+      *next_hash = block.next_hash;
     }
 
     return true;
