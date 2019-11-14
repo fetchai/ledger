@@ -16,7 +16,7 @@
 #
 # ------------------------------------------------------------------------------
 
-from fetchai.ledger.api import LedgerApi
+from fetchai.ledger.api import LedgerApi, submit_json_transaction
 from fetchai.ledger.crypto import Identity, Entity
 
 
@@ -46,8 +46,8 @@ def run(options):
     mal_trans = api.tokens._post_tx_json(mal_tx, ENDPOINT)
 
     # Sending the transactions to the ledger
-    api.sync(legit_trans)
-    api.sync(mal_trans)
+    assert legit_trans == mal_trans, "Malleable transactions have different transaction hash"
+    api.sync([legit_trans, mal_trans])
 
     # If transaction malleability is feasible, id2 should have 500 FET.
     # If balance of id2 is more than 250 raise an exception
