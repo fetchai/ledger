@@ -191,12 +191,12 @@ void MainChain::CacheReference(ParentHash &&parent, ChildHash &&child,
  * @param child
  */
 template <class ParentHash, class ChildHash>
-void MainChain::ForgetReference(ParentHash &&parent, ParentHash &&child,
+void MainChain::ForgetReference(ParentHash &&parent, ChildHash &&child,
                                 IntBlockPtr parent_block) const
 {
   auto siblings{references_.equal_range(parent)};
   auto sibling_it{std::find_if(siblings.first, siblings.second,
-                               [](auto const &ref) { return ref.second == child; })};
+                               [&child](auto const &ref) { return ref.second == child; })};
   if (sibling_it == siblings.second)
   {
     // there was no such reference cached
@@ -270,15 +270,15 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
 
   if (!block->IsGenesis())
   {
-    Block storage_record;
+    Block db_record;
 
     // notify stored parent
-    if (block_store_->Get(storage::ResourceID(block->previous_hash), storage_record))
+    if (block_store_->Get(storage::ResourceID(block->previous_hash), db_record))
     {
-      if (storage_record.next_hash != hash)
+      if (db_record.next_hash != hash)
       {
-        storage_record.next_hash = hash;
-        block_store_->Set(storage::ResourceID(record.hash()), storage_record);
+        db_record.next_hash = hash;
+        block_store_->Set(storage::ResourceID(db_record.hash()), db_record);
       }
     }
   }
@@ -313,14 +313,14 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
 {
   assert(static_cast<bool>(block_store_));
 
-  DbRecord record;
-  if (block_store_->Get(storage::ResourceID(hash), record))
+  Block db_record;
+  if (block_store_->Get(storage::ResourceID(hash), db_record))
   {
-    block = record.block;
+    block = db_record.block;
     AddBlockToBloomFilter(block);
     if (next_hash != nullptr)
     {
-      *next_hash = record.next_hash;
+      *next_hash = db_record.next_hash;
     }
 
     return true;
