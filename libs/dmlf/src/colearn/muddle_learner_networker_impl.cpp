@@ -80,12 +80,12 @@ void MuddleLearnerNetworkerImpl::PushUpdate(UpdateInterfacePtr const &update)
 
 uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext const &context,
                                                           const std::string &         type_name,
-                                                          byte_array::ConstByteArray &bytes)
+                                                          byte_array::ConstByteArray bytes)
 {
   auto source = std::string(fetch::byte_array::ToBase64(context.sender_address));
   FETCH_LOG_INFO(LOGGING_NAME, "Update for ", type_name, " from ", source);
   UpdateStoreInterface::Metadata metadata;
-  update_store_->PushUpdate("algo1", type_name, bytes, source, metadata);
+  update_store_->PushUpdate("algo1", type_name, std::move(bytes), source, std::move(metadata));
   return 1;
 }
 }  // namespace colearn
