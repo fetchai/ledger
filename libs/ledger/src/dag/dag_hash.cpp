@@ -19,21 +19,21 @@
 #include "ledger/dag/dag_hash.hpp"
 
 namespace {
-  using namespace fetch::ledger;
+using namespace fetch::ledger;
 
-  char DAGHashTypeToChar(DAGHash::Type const &t)
+char DAGHashTypeToChar(DAGHash::Type const &t)
+{
+  switch (t)
   {
-    switch (t)
-    {
-      case DAGHash::Type::NODE:
-        return 'N';
-      case DAGHash::Type::EPOCH:
-        return 'E';
-      default:
-        return 'U';
-    }
+  case DAGHash::Type::NODE:
+    return 'N';
+  case DAGHash::Type::EPOCH:
+    return 'E';
+  default:
+    return 'U';
   }
 }
+}  // namespace
 
 DAGHash::DAGHash(DAGHash::ConstByteArray h)
   : hash{std::move(h)}
