@@ -50,9 +50,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
 {
   // setup dataloader
   using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>;
-  SizeVector              label_shape = {gt.shape().at(0), 1};
-  std::vector<SizeVector> data_shape  = {{data.shape().at(0), 1}};
-  auto data_loader_ptr                = std::make_unique<DataLoaderType>(label_shape, data_shape);
+  auto data_loader_ptr = std::make_unique<DataLoaderType>();
   data_loader_ptr->AddData({data}, gt);
 
   // run model in training mode
@@ -129,7 +127,7 @@ TYPED_TEST(DNNRegressorModelTest, rmsprop_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(regressor_details::RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
-                                                    DataType{1e-2f}, DataType{0.01f}, 400));
+                                                    DataType{1e-2f}, DataType{0.02f}, 400));
 }
 
 TYPED_TEST(DNNRegressorModelTest, sgd_dnnregressor)
