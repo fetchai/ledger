@@ -161,23 +161,24 @@ void MainChain::CacheReference(BlockHash const &parent, BlockHash const &child,
   // check if this parent-child reference has been already cached
   auto ref_it = std::find_if(siblings.first, siblings.second,
                                  [&child](auto const &ref) { return ref.second == child; });
-  if (ref_it != siblings.second)
+  if (ref_it == siblings.second)
   {
-    // this child has been already referred to
-    return;
+    // this child has not been already referred to yet
+    references_.emplace_hint(siblings.first, parent, child);
   }
 
+  assert(references_.count(parent) > 0);
   // Check how many forward references are already known for the parent hash.
   // Note that two or more refs are ambiguous and thus parent's next_hash is emptied.
   switch (references_.count(parent))
   {
-  case 0:  // this one will be an unique forward ref
+  case 1:  // this one is an unique forward ref
     if (parent_block || LookupBlockFromCache(parent, parent_block))
     {
       parent_block->next_hash = child;
     }
     break;
-  case 1:  // that previously known forward ref from parent is no longer unique
+  case 2:  // there are two forward refs now
     if (parent_block || LookupBlockFromCache(parent, parent_block))
     {
       parent_block->next_hash = BlockHash{};
@@ -193,7 +194,6 @@ void MainChain::CacheReference(BlockHash const &parent, BlockHash const &child,
 #endif
     // there's a lot of forward refs, nothing to be done here
   }
-  references_.emplace_hint(siblings.first, parent, child);
 }
 
 /**
@@ -218,7 +218,7 @@ void MainChain::ForgetReference(BlockHash const &parent, BlockHash const &child,
     return;
   }
 
-  assert(references_.count(parent) != 0);
+  assert(references_.count(parent) > 0);
   // Check how many forward references are known for the parent hash.
   switch (references_.count(parent))
   {
