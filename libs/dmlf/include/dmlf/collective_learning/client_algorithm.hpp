@@ -141,8 +141,8 @@ private:
 
   AlgorithmControllerPtrType algorithm_controller_;
 
-  void AggregateUpdate(VectorTensorType const &gradient);
-  void AggregateSparseUpdate(VectorTensorType const &gradient,
+  void AggregateUpdate(VectorTensorType const &gradients);
+  void AggregateSparseUpdate(VectorTensorType const &gradients,
                              VectorSizeVector const &updated_rows);
 
   void ApplyUpdates();
