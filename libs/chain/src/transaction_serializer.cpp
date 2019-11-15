@@ -256,7 +256,7 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
   buffer.Append(Encode(tx.valid_until()));
 
   // TODO(private issue 885): Increase efficiency by signaling with the charge_unit_flag
-  buffer.Append(Encode(tx.charge()), Encode(tx.charge_limit()));
+  buffer.Append(Encode(tx.charge_rate()), Encode(tx.charge_limit()));
 
   // handle the signalling of the contract mode
   if (ContractMode::NOT_PRESENT != contract_mode)
@@ -409,7 +409,7 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
 
   Decode(buffer, tx.valid_until_);
 
-  Decode(buffer, tx.charge_);
+  Decode(buffer, tx.charge_rate_);
   if (charge_unit_flag != 0u)
   {
     int8_t charge_unit{0};
@@ -418,22 +418,22 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
     switch (charge_unit)
     {
     case UNIT_MEGA:
-      tx.charge_ *= 10000000000000000ull;
+      tx.charge_rate_ *= 10000000000000000ull;
       break;
     case UNIT_KILO:
-      tx.charge_ *= 10000000000000ull;
+      tx.charge_rate_ *= 10000000000000ull;
       break;
     case UNIT_DEFAULT:
-      tx.charge_ *= 10000000000ull;
+      tx.charge_rate_ *= 10000000000ull;
       break;
     case UNIT_MILLI:
-      tx.charge_ *= 10000000ull;
+      tx.charge_rate_ *= 10000000ull;
       break;
     case UNIT_MICRO:
-      tx.charge_ *= 10000ull;
+      tx.charge_rate_ *= 10000ull;
       break;
     case UNIT_NANO:
-      tx.charge_ *= 10ull;
+      tx.charge_rate_ *= 10ull;
       break;
     default:
       break;

@@ -53,7 +53,7 @@ public:
   /// @{
   Digest const &   digest() const;
   BitVector const &mask() const;
-  TokenAmount      charge() const;
+  TokenAmount      charge_rate() const;
   BlockIndex       valid_from() const;
   BlockIndex       valid_until() const;
   /// @}
@@ -67,7 +67,7 @@ public:
 private:
   ConstByteArray digest_{};
   BitVector      mask_{};
-  TokenAmount    charge_{0};
+  TokenAmount    charge_rate_{0};
   BlockIndex     valid_from_{0};
   BlockIndex     valid_until_{0};
 

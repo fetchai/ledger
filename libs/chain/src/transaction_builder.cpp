@@ -225,7 +225,7 @@ TransactionBuilder &TransactionBuilder::ValidUntil(BlockIndex index)
  */
 TransactionBuilder &TransactionBuilder::ChargeRate(TokenAmount amount)
 {
-  partial_transaction_->charge_ = amount;
+  partial_transaction_->charge_rate_ = amount;
   return *this;
 }
 

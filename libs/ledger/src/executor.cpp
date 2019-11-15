@@ -144,7 +144,7 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
   else
   {
     // update the charge related data provided by Tx sender
-    result.charge_rate  = current_tx_->charge();
+    result.charge_rate  = current_tx_->charge_rate();
     result.charge_limit = current_tx_->charge_limit();
 
     // create the storage cache
@@ -445,10 +445,10 @@ void Executor::DeductFees(Result &result)
   uint64_t const balance = token_contract_.GetBalance(from);
 
   // calculate the fee to deduct
-  TokenAmount tx_fee = result.charge * current_tx_->charge();
+  TokenAmount tx_fee = result.charge * current_tx_->charge_rate();
   if (Status::SUCCESS != result.status)
   {
-    tx_fee = current_tx_->charge_limit() * current_tx_->charge();
+    tx_fee = current_tx_->charge_limit() * current_tx_->charge_rate();
   }
 
   // on failed transactions
