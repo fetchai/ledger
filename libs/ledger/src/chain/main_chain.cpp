@@ -147,23 +147,28 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 
 /**
  * Internal: add a parent-child forward reference if it is unknown yet.
+ * Update parent block, if found, with the relevant forward information.
  *
  * @param parent
  * @param child
+ * @param parent_block
  */
-template <class ParentHash, class ChildHash>
-void MainChain::CacheReference(ParentHash &&parent, ChildHash &&child,
+void MainChain::CacheReference(BlockHash const &parent, BlockHash const &child,
                                IntBlockPtr parent_block) const
 {
+  // get all known forward references range for this parent
   auto siblings{references_.equal_range(parent)};
-  auto sibling_it{std::find_if(siblings.first, siblings.second,
-                               [&child](auto const &ref) { return ref.second == child; })};
+  // check if this parent-child reference has been already cached
+  auto sibling_it = std::find_if(siblings.first, siblings.second,
+                                 [&child](auto const &ref) { return ref.second == child; });
   if (sibling_it != siblings.second)
   {
     // this child has been already referred to
     return;
   }
 
+  // Check how many forward references are already known for the parent hash.
+  // Note that two or more refs are ambiguous and thus parent's next_hash is emptied.
   switch (references_.count(parent))
   {
   case 0:  // this one will be an unique forward ref
@@ -172,31 +177,41 @@ void MainChain::CacheReference(ParentHash &&parent, ChildHash &&child,
       parent_block->next_hash = child;
     }
     break;
-  case 1:  // that forward ref from parent is no longer unique
+  case 1:  // that previously known forward ref from parent is no longer unique
     if (parent_block || LookupBlockFromCache(parent, parent_block))
     {
       parent_block->next_hash = BlockHash{};
     }
     break;
   default:;
+#ifndef NDEBUG
+    // there are many more forward refs from this parent so its next_hash should be empty
+    if (parent_block || LookupBlockFromCache(parent, parent_block))
+    {
+      assert(parent_block->next_hash.empty());
+    }
+#endif
+    // there's a lot of forward refs, nothing to be done here
   }
-  references_.emplace_hint(siblings.first, std::forward<ParentHash>(parent),
-                           std::forward<ChildHash>(child));
+  references_.emplace_hint(siblings.first, parent, child);
 }
 
 /**
  * Internal: forget a parent-child forward reference.
+ * Update parent block, if found, with the relevant forward information.
  *
  * @param parent
  * @param child
+ * @param parent_block
  */
-template <class ParentHash, class ChildHash>
-void MainChain::ForgetReference(ParentHash &&parent, ChildHash &&child,
+void MainChain::ForgetReference(BlockHash const &parent, BlockHash const &child,
                                 IntBlockPtr parent_block) const
 {
+  // get all known forward references range for this parent
   auto siblings{references_.equal_range(parent)};
-  auto sibling_it{std::find_if(siblings.first, siblings.second,
-                               [&child](auto const &ref) { return ref.second == child; })};
+  // find a particular reference to this child
+  auto sibling_it = std::find_if(siblings.first, siblings.second,
+                                 [&child](auto const &ref) { return ref.second == child; });
   if (sibling_it == siblings.second)
   {
     // there was no such reference cached
@@ -204,25 +219,37 @@ void MainChain::ForgetReference(ParentHash &&parent, ChildHash &&child,
   }
 
   assert(references_.count(parent) != 0);
+  // Check how many forward references are known for the parent hash.
   switch (references_.count(parent))
   {
-  case 1:  // this one was an unique forward ref
+  case 1:  // this one was an unique forward ref so the parent is a tip from now on, reference-wise
     if (parent_block || LookupBlockFromCache(parent, parent_block))
     {
       parent_block->next_hash = BlockHash{};
     }
     break;
-  case 2:  // the forward ref from parent is now unique
+  case 2:  // there were two forward refs from the parent and the other one is now unique
     if (parent_block || LookupBlockFromCache(parent, parent_block))
     {
-      if (sibling_it == siblings.first)
+      auto other_child_it = siblings.first;
+      if (sibling_it == other_child_it)
       {
-        ++siblings.first;
+        // the child hash is the first in siblings range so the next one is the one that persists
+        ++other_child_it;
       }
-      parent_block->next_hash = siblings.first->second;
+      // other_child_it is now an unique forward reference
+      parent_block->next_hash = other_child_it->second;
     }
     break;
   default:;
+#ifndef NDEBUG
+    // there are many more forward refs from this parent so its next_hash should be empty
+    if (parent_block || LookupBlockFromCache(parent, parent_block))
+    {
+      assert(parent_block->next_hash.empty());
+    }
+#endif
+    // there's still a lot of forward refs left, nothing to be done here
   }
   references_.erase(sibling_it);
 }
@@ -367,7 +394,7 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
   if (retVal)
   {
     // forget the forward ref to this block from its parent
-    ForgetReference(root->previous_hash, removed_hash);
+    ForgetReference(root->previous_hash, removed_hash, root);
   }
 
   for (BlockHashes next_gen{removed_hash}; !next_gen.empty();)
