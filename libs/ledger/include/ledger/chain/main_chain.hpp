@@ -239,7 +239,7 @@ public:
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
   // The whole tree of previous-next relations among cached blocks
-  mutable References                references_;
+  mutable References                forward_references_;
   TipsMap                           tips_;          ///< Keep track of the tips
   HeaviestTip                       heaviest_;      ///< Heaviest block/tip
   LooseBlockMap                     loose_blocks_;  ///< Waiting (loose) blocks

@@ -100,7 +100,7 @@ void MainChain::Reset()
   heaviest_ = HeaviestTip{};
   loose_blocks_.clear();
   block_chain_.clear();
-  references_.clear();
+  forward_references_.clear();
 
   if (block_store_)
   {
@@ -157,20 +157,20 @@ void MainChain::CacheReference(BlockHash const &parent, BlockHash const &child,
                                IntBlockPtr parent_block) const
 {
   // get all known forward references range for this parent
-  auto siblings = references_.equal_range(parent);
+  auto siblings = forward_references_.equal_range(parent);
   // check if this parent-child reference has been already cached
   auto ref_it = std::find_if(siblings.first, siblings.second,
                              [&child](auto const &ref) { return ref.second == child; });
   if (ref_it == siblings.second)
   {
     // this child has not been already referred to yet
-    references_.emplace_hint(siblings.first, parent, child);
+    forward_references_.emplace_hint(siblings.first, parent, child);
   }
 
-  assert(references_.count(parent) > 0);
+  assert(forward_references_.count(parent) > 0);
   // Check how many forward references are already known for the parent hash.
   // Note that two or more refs are ambiguous and thus parent's next_hash is emptied.
-  switch (references_.count(parent))
+  switch (forward_references_.count(parent))
   {
   case 1:  // this one is an unique forward ref
     if (parent_block || LookupBlockFromCache(parent, parent_block))
@@ -208,7 +208,7 @@ void MainChain::ForgetReference(BlockHash const &parent, BlockHash const &child,
                                 IntBlockPtr parent_block) const
 {
   // get all known forward references range for this parent
-  auto siblings = references_.equal_range(parent);
+  auto siblings = forward_references_.equal_range(parent);
   // find a particular reference to this child
   auto ref_it = std::find_if(siblings.first, siblings.second,
                              [&child](auto const &ref) { return ref.second == child; });
@@ -218,9 +218,9 @@ void MainChain::ForgetReference(BlockHash const &parent, BlockHash const &child,
     return;
   }
 
-  assert(references_.count(parent) > 0);
+  assert(forward_references_.count(parent) > 0);
   // Check how many forward references are known for the parent hash.
-  switch (references_.count(parent))
+  switch (forward_references_.count(parent))
   {
   case 1:  // this one was an unique forward ref so the parent is a tip from now on, reference-wise
     if (parent_block || LookupBlockFromCache(parent, parent_block))
@@ -251,7 +251,7 @@ void MainChain::ForgetReference(BlockHash const &parent, BlockHash const &child,
 #endif
     // there's still a lot of forward refs left, nothing to be done here
   }
-  references_.erase(ref_it);
+  forward_references_.erase(ref_it);
 }
 
 /**
@@ -313,7 +313,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
   if (block->next_hash.empty())
   {
     // detect if any of this block's children has somehow made it to the store already
-    auto forward_refs{references_.equal_range(hash)};
+    auto forward_refs{forward_references_.equal_range(hash)};
     for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
     {
       auto const &child_hash{ref_it->second};
@@ -408,12 +408,12 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
       // first remember to remove all the progeny breadth-first
       // this way any hash that could potentially stem from this one,
       // reference tree-wise, is completely wiped out
-      auto children{references_.equal_range(hash)};
+      auto children{forward_references_.equal_range(hash)};
       for (auto child{children.first}; child != children.second; ++child)
       {
         next_gen.push_back(child->second);
       }
-      references_.erase(children.first, children.second);
+      forward_references_.erase(children.first, children.second);
 
       // next, remove the block record from the cache, if found
       if (block_chain_.erase(hash) != 0u)
@@ -1529,7 +1529,7 @@ bool MainChain::ReindexTips()
     }
     auto const &hash{block_entry.first};
     // check if this has has any live forward reference
-    auto children{references_.equal_range(hash)};
+    auto children{forward_references_.equal_range(hash)};
     auto child{std::find_if(children.first, children.second, [this](auto const &ref) {
       return block_chain_.find(ref.second) != block_chain_.end();
     })};
