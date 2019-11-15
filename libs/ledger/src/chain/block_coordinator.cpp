@@ -67,7 +67,7 @@ const std::chrono::seconds      STATE_NOTIFY_INTERVAL{20};
 const std::chrono::seconds      NOTIFY_INTERVAL{5};
 const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{5};
 const std::size_t               MIN_BLOCK_SYNC_SLIPPAGE_FOR_WAITLESS_SYNC_OF_MISSING_TXS{30};
-const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
+const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{1};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 const std::size_t               DIGEST_LENGTH_BYTES{32};
 
@@ -545,7 +545,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: No previous block in chain (0x",
                      current_block_->hash.ToHex(), ')');
 
-      chain_.RemoveBlock(current_block_->hash);
+      RemoveBlock(current_block_->hash);
       return State::RESET;
     }
 
@@ -561,7 +561,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
                        "Block validation failed: Consensus failed to verify block (0x",
                        current_block_->hash.ToHex(), ')');
 
-        chain_.RemoveBlock(current_block_->hash);
+        RemoveBlock(current_block_->hash);
         return State::RESET;
       }
     }
@@ -574,7 +574,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
                      expected_block_number, " Actual: ", current_block_->block_number, " (0x",
                      current_block_->hash.ToHex(), ')');
 
-      chain_.RemoveBlock(current_block_->hash);
+      RemoveBlock(current_block_->hash);
       return State::RESET;
     }
 
@@ -586,7 +586,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
                      " Actual: ", (1u << current_block_->log2_num_lanes), " (0x",
                      current_block_->hash.ToHex(), ')');
 
-      chain_.RemoveBlock(current_block_->hash);
+      RemoveBlock(current_block_->hash);
       return State::RESET;
     }
 
@@ -597,7 +597,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
           LOGGING_NAME, "Block validation failed: Slice count mismatch. Expected: ", num_slices_,
           " Actual: ", current_block_->slices.size(), " (0x", current_block_->hash.ToHex(), ')');
 
-      chain_.RemoveBlock(current_block_->hash);
+      RemoveBlock(current_block_->hash);
       return State::RESET;
     }
   }
@@ -610,7 +610,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
                    DIGEST_LENGTH_BYTES, " Actual: ", current_block_->previous_hash.size(), " (0x",
                    current_block_->hash.ToHex(), ')');
 
-    chain_.RemoveBlock(current_block_->hash);
+    RemoveBlock(current_block_->hash);
     return State::RESET;
   }
 
@@ -626,7 +626,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (0x",
                      current_block_->hash.ToHex(), ")");
 
-      chain_.RemoveBlock(current_block_->hash);
+      RemoveBlock(current_block_->hash);
       return State::RESET;
     }
   }
@@ -667,7 +667,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
     if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(num_lanes_))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (0x", current_block_->hash.ToHex(), ")");
-      chain_.RemoveBlock(current_block_->hash);
+      RemoveBlock(current_block_->hash);
 
       return State::RESET;
     }
@@ -690,7 +690,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
         unable_to_find_tx_count_->increment();
 
         // Assume block was invalid and discard it
-        chain_.RemoveBlock(current_block_->hash);
+        RemoveBlock(current_block_->hash);
 
         return State::RESET;
       }
@@ -796,6 +796,19 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
   state_machine_->Delay(std::chrono::milliseconds{200});
 
   return State::WAIT_FOR_TRANSACTIONS;
+}
+
+void BlockCoordinator::RemoveBlock(MainChain::BlockHash const &hash)
+{
+  chain_.RemoveBlock(hash);
+  auto h = chain_.GetHeaviestBlock();
+  execution_manager_.SetLastProcessedBlock(h->hash);
+  storage_unit_.RevertToHash(h->merkle_hash, h->block_number);
+  if (dag_)
+  {
+    dag_->RevertToEpoch(h->block_number);
+  }
+  blocks_to_common_ancestor_.clear();
 }
 
 BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
@@ -914,7 +927,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     }
 
     // finally mark the block as invalid and purge it from the chain
-    chain_.RemoveBlock(current_block_->hash);
+    RemoveBlock(current_block_->hash);
   }
   else
   {
