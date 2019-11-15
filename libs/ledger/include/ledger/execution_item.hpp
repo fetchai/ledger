@@ -111,7 +111,7 @@ inline void ExecutionItem::Execute(ExecutorInterface &executor)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Exception thrown while executing transaction: ", ex.what());
 
-    result_ = {ContractExecutionStatus::RESOURCE_FAILURE};
+    result_ = {ContractExecutionStatus::INTERNAL_ERROR};
   }
 }
 

@@ -21,6 +21,7 @@
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/token_contract.hpp"
+#include "ledger/chaincode/wallet_record.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
@@ -250,18 +251,54 @@ bool Executor::ValidationChecks(Result &result)
 
   token_contract_.Attach(
       {&token_contract_, current_tx_->contract_address(), &storage_adapter, block_});
-  uint64_t const balance = token_contract_.GetBalance(current_tx_->from());
-  token_contract_.Detach();
+
+  // CHECK: Ensure there is permission from the originating address to perform the transaction
+  //        (essentially take fees)
+  auto const deed = token_contract_.GetDeed(current_tx_->from());
+  if (deed)
+  {
+    // if a deed is present then minimally the signers of the transaction need to have transfer
+    // permission in order to pay for the fees
+    if (!deed->Verify(*current_tx_, Deed::TRANSFER))
+    {
+      result.status = Status::TX_PERMISSION_DENIED;
+      return false;
+    }
+
+    // additionally if a smart contract is present in the transaction we also need the execute
+    // permission
+    if (chain::Transaction::ContractMode::PRESENT == current_tx_->contract_mode())
+    {
+      if (!deed->Verify(*current_tx_, Deed::EXECUTE))
+      {
+        result.status = Status::TX_PERMISSION_DENIED;
+        return false;
+      }
+    }
+  }
 
   // CHECK: Ensure that the originator has funds available to make both all the transfers in the
   //        contract as well as the maximum fees
-  uint64_t const max_tokens_required =
-      current_tx_->GetTotalTransferAmount() + current_tx_->charge_limit();
-  if (balance < max_tokens_required)
+  uint64_t const min_charge =
+      current_tx_->transfers().size() +
+      ((current_tx_->contract_mode() == chain::Transaction::ContractMode::NOT_PRESENT) ? 0 : 1);
+  if (current_tx_->charge_limit() < min_charge)
+  {
+    result.status = Status::TX_NOT_ENOUGH_CHARGE;
+    return false;
+  }
+
+  // CHECK: Ensure that the originator has funds available to make both all the transfers in the
+  //        contract as well as the maximum fees
+  uint64_t const balance    = token_contract_.GetBalance(current_tx_->from());
+  uint64_t const max_charge = current_tx_->charge_rate() * current_tx_->charge_limit();
+  if (balance < max_charge)
   {
     result.status = Status::INSUFFICIENT_AVAILABLE_FUNDS;
     return false;
   }
+
+  token_contract_.Detach();
 
   // All checks passed
   result.status = Status::SUCCESS;
@@ -298,10 +335,10 @@ bool Executor::ExecuteTransactionContract(Result &result)
     StateSentinelAdapter storage_adapter{*storage_cache_, contract_id, allowed_shards_};
 
     // look up or create the instance of the contract as is needed
-    auto const is_token_contract = (contract_id.full_name() == "fetch.token");
+    bool const is_token_contract = (contract_id.full_name() == "fetch.token");
 
-    auto contract = is_token_contract ? &token_contract_
-                                      : chain_code_cache_.Lookup(contract_id, *storage_).get();
+    Contract *contract = is_token_contract ? &token_contract_
+                                           : chain_code_cache_.Lookup(contract_id, *storage_).get();
     if (!static_cast<bool>(contract))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract_id.full_name());
@@ -317,7 +354,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     contract->Detach();
 
     // map the contract execution status
-    result.status = Status::CHAIN_CODE_EXEC_FAILURE;
+    result.status = Status::CONTRACT_EXECUTION_FAILURE;
     switch (contract_status.status)
     {
     case Contract::Status::OK:
@@ -329,7 +366,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
       break;
     case Contract::Status::NOT_FOUND:
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up transaction handler");
-      result.status = Status::CHAIN_CODE_LOOKUP_FAILURE;
+      result.status = Status::ACTION_LOOKUP_FAILURE;
       break;
     }
 
@@ -385,7 +422,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     FETCH_LOG_WARN(LOGGING_NAME, "Exception during execution of tx 0x",
                    current_tx_->digest().ToHex(), " : ", ex.what());
 
-    result.status = Status::CHAIN_CODE_EXEC_FAILURE;
+    result.status = Status::CONTRACT_EXECUTION_FAILURE;
   }
 
   return success;

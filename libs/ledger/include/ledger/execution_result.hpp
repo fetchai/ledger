@@ -24,36 +24,54 @@ namespace ledger {
 
 using TokenAmount = uint64_t;
 
+enum class ExecutionStatusCategory
+{
+  SUCCESS = 0,
+  BLOCK_INVALIDATING_ERROR,
+  NORMAL_ERROR,
+  INTERNAL_ERROR
+};
+
 enum class ContractExecutionStatus
 {
   SUCCESS = 0,
 
-  // Errors
-  CHAIN_CODE_LOOKUP_FAILURE,
-  CHAIN_CODE_EXEC_FAILURE,
-  CONTRACT_NAME_PARSE_FAILURE,
-  CONTRACT_LOOKUP_FAILURE,
-  TX_NOT_VALID_FOR_BLOCK,
-  INSUFFICIENT_AVAILABLE_FUNDS,
-  TRANSFER_FAILURE,
-  INSUFFICIENT_CHARGE,
+  /// @name Block Invalidating Errors
+  /// @{
+  TX_LOOKUP_FAILURE,       ///< Unable to lookup the transaction contents
+  TX_NOT_VALID_FOR_BLOCK,  ///< The transaction is in a block for which it is invalid
+  TX_PERMISSION_DENIED,    ///< Evaluate if the transaction has permission to make the transfer
+  TX_NOT_ENOUGH_CHARGE,    ///< Not enough charge available to make the required transfers
+  /// @}
 
-  // Fatal Errors
-  NOT_RUN,  // TODO(issue ): Seems to be the same as `INEXPLICABLE_FAILURE`
-  TX_LOOKUP_FAILURE,
-  RESOURCE_FAILURE,
-  INEXPLICABLE_FAILURE,
+  /// @name General Errors
+  /// @{
+  INSUFFICIENT_AVAILABLE_FUNDS,  ///< The account holder did not have sufficent funds available
+  CONTRACT_NAME_PARSE_FAILURE,   ///< The contract name could not be parsed
+  CONTRACT_LOOKUP_FAILURE,       ///< The contract was not found
+  ACTION_LOOKUP_FAILURE,         ///< The action on the contract was not found
+  CONTRACT_EXECUTION_FAILURE,    ///< The contract action failed to execute succesffully
+  TRANSFER_FAILURE,              ///< A transfer failed
+  INSUFFICIENT_CHARGE,           ///< The transaction reached the charge limit
+  /// @}
+
+  /// @name Internal Errors
+  /// @{
+  NOT_RUN,               ///< Status result indicating that the contract has not been run
+  INTERNAL_ERROR,        ///< Internal error when executing
+  INEXPLICABLE_FAILURE,  ///< Catch all error
+  /// @}
 };
 
 struct ContractExecutionResult
 {
-  ContractExecutionStatus status{
-      ContractExecutionStatus::NOT_RUN};  ///< The status of the transaction
-  TokenAmount charge{0};                  ///< The number of units of charge
-  TokenAmount charge_rate{0};             ///< The cost of each unit of charge
-  TokenAmount charge_limit{0};            ///< Max. limit for units to charge defined by Tx sender
-  TokenAmount fee{0};                     ///< The total fee claimed by the miner
-  int64_t     return_value{0};            ///< Return value from executed contract function
+  // The status of the transaction
+  ContractExecutionStatus status{ContractExecutionStatus::NOT_RUN};
+  TokenAmount             charge{0};        ///< The number of units of charge
+  TokenAmount             charge_rate{0};   ///< The cost of each unit of charge
+  TokenAmount             charge_limit{0};  ///< Max. limit for units to charge defined by Tx sender
+  TokenAmount             fee{0};           ///< The total fee claimed by the miner
+  int64_t                 return_value{0};  ///< Return value from executed contract function
 };
 
 constexpr char const *ToString(ContractExecutionStatus status)
@@ -62,33 +80,68 @@ constexpr char const *ToString(ContractExecutionStatus status)
   {
   case ContractExecutionStatus::SUCCESS:
     return "Success";
-  case ContractExecutionStatus::CHAIN_CODE_LOOKUP_FAILURE:
-    return "Chain Code Lookup Failure";
-  case ContractExecutionStatus::CHAIN_CODE_EXEC_FAILURE:
-    return "Chain Code Execution Failure";
+  case ContractExecutionStatus::TX_LOOKUP_FAILURE:
+    return "Tx Lookup Failure";
+  case ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK:
+    return "Tx not valid for current block";
+  case ContractExecutionStatus::TX_PERMISSION_DENIED:
+    return "Permission Denied";
+  case ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE:
+    return "Not enough charge";
+  case ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS:
+    return "Insufficient available funds";
   case ContractExecutionStatus::CONTRACT_NAME_PARSE_FAILURE:
     return "Contract Name Parse Failure";
   case ContractExecutionStatus::CONTRACT_LOOKUP_FAILURE:
     return "Contract Lookup Failure";
-  case ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK:
-    return "Tx not valid for current block";
-  case ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS:
-    return "Insufficient available funds";
+  case ContractExecutionStatus::ACTION_LOOKUP_FAILURE:
+    return "Contract Action Lookup Failure";
+  case ContractExecutionStatus::CONTRACT_EXECUTION_FAILURE:
+    return "Contract Execution Failure";
   case ContractExecutionStatus::TRANSFER_FAILURE:
     return "Unable to perform transfer";
   case ContractExecutionStatus::INSUFFICIENT_CHARGE:
     return "Insufficient charge";
   case ContractExecutionStatus::NOT_RUN:
     return "Not Run";
-  case ContractExecutionStatus::TX_LOOKUP_FAILURE:
-    return "Tx Lookup Failure";
-  case ContractExecutionStatus::RESOURCE_FAILURE:
-    return "Resource Failure";
+  case ContractExecutionStatus::INTERNAL_ERROR:
+    return "Internal Error";
   case ContractExecutionStatus::INEXPLICABLE_FAILURE:
     return "Inexplicable Error";
   }
 
   return "Unknown";
+}
+
+constexpr ExecutionStatusCategory Categorise(ContractExecutionStatus status)
+{
+  switch (status)
+  {
+  case ContractExecutionStatus::SUCCESS:
+    return ExecutionStatusCategory::SUCCESS;
+
+  case ContractExecutionStatus::TX_LOOKUP_FAILURE:
+  case ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK:
+  case ContractExecutionStatus::TX_PERMISSION_DENIED:
+  case ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE:
+    return ExecutionStatusCategory::BLOCK_INVALIDATING_ERROR;
+
+  case ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS:
+  case ContractExecutionStatus::CONTRACT_NAME_PARSE_FAILURE:
+  case ContractExecutionStatus::CONTRACT_LOOKUP_FAILURE:
+  case ContractExecutionStatus::ACTION_LOOKUP_FAILURE:
+  case ContractExecutionStatus::CONTRACT_EXECUTION_FAILURE:
+  case ContractExecutionStatus::TRANSFER_FAILURE:
+  case ContractExecutionStatus::INSUFFICIENT_CHARGE:
+    return ExecutionStatusCategory::NORMAL_ERROR;
+
+  case ContractExecutionStatus::NOT_RUN:
+  case ContractExecutionStatus::INTERNAL_ERROR:
+  case ContractExecutionStatus::INEXPLICABLE_FAILURE:
+    break;
+  }
+
+  return ExecutionStatusCategory::INTERNAL_ERROR;
 }
 
 template <typename T>
