@@ -23,7 +23,7 @@ import base64
 
 
 def run(options):
-    ENDPOINT = 'transfer'
+    ENDPOINT = 'fetch/token/transfer'
     # create the APIs
     api = LedgerApi(options['host'], options['port'])
 
