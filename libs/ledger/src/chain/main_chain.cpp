@@ -157,7 +157,7 @@ void MainChain::CacheReference(BlockHash const &parent, BlockHash const &child,
                                IntBlockPtr parent_block) const
 {
   // get all known forward references range for this parent
-  auto siblings{references_.equal_range(parent)};
+  auto siblings = references_.equal_range(parent);
   // check if this parent-child reference has been already cached
   auto sibling_it = std::find_if(siblings.first, siblings.second,
                                  [&child](auto const &ref) { return ref.second == child; });
@@ -208,7 +208,7 @@ void MainChain::ForgetReference(BlockHash const &parent, BlockHash const &child,
                                 IntBlockPtr parent_block) const
 {
   // get all known forward references range for this parent
-  auto siblings{references_.equal_range(parent)};
+  auto siblings = references_.equal_range(parent);
   // find a particular reference to this child
   auto sibling_it = std::find_if(siblings.first, siblings.second,
                                  [&child](auto const &ref) { return ref.second == child; });
