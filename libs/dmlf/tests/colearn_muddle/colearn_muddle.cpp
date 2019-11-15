@@ -76,26 +76,16 @@ public:
   LearnerTypedUpdates(const std::string &pub, const std::string &priv, unsigned short int port,
                       unsigned short int remote = 0)
   {
-    pub_       = pub;
-    auto ident = LoadIdentity(priv);
-    netm_      = std::make_shared<NetMan>("LrnrNet", 4);
-    netm_->Start();
-    mud_ = fetch::muddle::CreateMuddle("Test", ident, *(this->netm_), "127.0.0.1");
+    pub_ = pub;
 
-    store_ = std::make_shared<Store>();
-    actual = std::make_shared<LN>(mud_, store_);
-
-    std::unordered_set<std::string> remotes;
-    if (remote != 0)
+    std::string r = "";
+    if (remote)
     {
-      std::string server = "tcp://127.0.0.1:";
-      server += std::to_string(remote);
-      remotes.insert(server);
+      r = "tcp://127.0.0.1:";
+      r += std::to_string(remote);
     }
 
-    mud_->SetPeerSelectionMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
-    mud_->Start(remotes, {port});
-
+    actual    = std::make_shared<LN>(priv, port, r);
     interface = actual;
     interface->RegisterUpdateType<UpdateTypeForTesting>("update");
     interface->RegisterUpdateType<fetch::dmlf::Update<std::string>>("vocab");
@@ -112,15 +102,6 @@ public:
     interface->PushUpdateType("update", std::make_shared<UpdateTypeForTesting>(r));
     interface->PushUpdateType("vocab", std::make_shared<fetch::dmlf::Update<std::string>>(
                                            std::vector<std::string>{"cat", "dog"}));
-  }
-
-  CertificatePtr LoadIdentity(const std::string &privkey)
-  {
-    using Signer = fetch::crypto::ECDSASigner;
-    // load the key
-    auto signer = std::make_unique<Signer>();
-    signer->Load(fetch::byte_array::FromBase64(privkey));
-    return signer;
   }
 };
 
