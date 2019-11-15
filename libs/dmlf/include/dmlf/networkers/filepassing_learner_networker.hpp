@@ -41,7 +41,7 @@ public:
   bool                         operator==(FilepassingLearnerNetworker const &other) = delete;
   bool                         operator<(FilepassingLearnerNetworker const &other)  = delete;
 
-  void        PushUpdate(const UpdateInterfacePtr &update) override;
+  void        PushUpdate(UpdateInterfacePtr const &update) override;
   std::size_t GetPeerCount() const override
   {
     return peers_.size();
