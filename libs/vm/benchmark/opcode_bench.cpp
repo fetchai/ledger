@@ -43,7 +43,8 @@ using fetch::vm::IR;
 
 namespace {
 
-// Benchmark categories can be selectively suppressed using environment variables
+// Run benchmarks stand-alone or launch from the script "scripts/benchmark/opcode_timing.py"
+// Categories can be selectively suppressed using environment variables
 const bool
     run_basic = std::getenv("FETCH_VM_BENCHMARK_NO_BASIC") == nullptr,
     run_object = std::getenv("FETCH_VM_BENCHMARK_NO_OBJECT") == nullptr,
@@ -63,10 +64,13 @@ const u_int
     n_tensor_bms = 5,
     n_crypto_bms = 4;
 
-// Benchmark parameters
+// Number of total (including int) and decimal (fixed or float) primitives
 const u_int
     n_primitives = 12,
-    n_dec_primitives = 4,
+    n_dec_primitives = 4;
+
+// Benchmark parameters (change as desired)
+const u_int
     max_array_len = 16384,
     n_array_lens = 32,
     max_str_len = 16384,
@@ -92,8 +96,15 @@ const u_int
     crypto_begin = tensor_end,
     crypto_end = crypto_begin + n_crypto_bms - 1 + n_str_lens;
 
-
-// Main benchmark function - compiles and runs Etch code snippets and saves opcodes to file
+/**
+ * Main benchmark function - compiles and runs Etch code snippets and saves opcodes to file
+ *
+ * @state Google benchmark state variable
+ * @benchmark_name Name of this particular benchmark
+ * @etch_code Etch code associated with benchmark
+ * @baseline_name Name of baseline benchmark (baseline time is subtracted to get net time)
+ * @bm_ind Index of benchmark (used to encode several Etch-code benchmarks in each function)
+ */
 void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_name, std::string const &etch_code,
                        std::string const &baseline_name, u_int const bm_ind) {
 
@@ -110,7 +121,8 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
   // Compile the source code
   std::vector<std::string> errors;
   fetch::vm::SourceFiles files = {{"default.etch", etch_code}};
-  if (!compiler.Compile(files, "default_ir", ir, errors)) {
+  if (!compiler.Compile(files, "default_ir", ir, errors))
+  {
     std::cout << "Skipping benchmark (unable to compile): " << benchmark_name << std::endl;
     return;
   }
@@ -118,7 +130,8 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
   // Generate an IR
   Executable executable;
   VM vm{&module};
-  if (!vm.GenerateExecutable(ir, "default_exe", executable, errors)) {
+  if (!vm.GenerateExecutable(ir, "default_exe", executable, errors))
+  {
     std::cout << "Skipping benchmark (unable to generate IR)" << std::endl;
     return;
   }
@@ -126,7 +139,8 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
   // Benchmark iterations
   std::string error{};
   Variant output{};
-  for (auto _ : state) {
+  for (auto _ : state)
+  {
     vm.Execute(executable, "main", error, output);
   }
 
@@ -135,87 +149,108 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
   // Write opcode lists to file
   std::ofstream ofs("opcode_lists.csv", std::ios::app);
   ofs << bm_ind << "," << benchmark_name << "," << baseline_name << ",";
-  for (auto &it : function->instructions) {
+  for (auto &it : function->instructions)
+  {
     ofs << it.opcode;
-    if (it.opcode != fetch::vm::Opcodes::Return && it.opcode != fetch::vm::Opcodes::ReturnValue) {
+    if (it.opcode != fetch::vm::Opcodes::Return && it.opcode != fetch::vm::Opcodes::ReturnValue)
+    {
       ofs << ",";
     }
   }
   ofs << std::endl;
 }
 
-// Functions for generating Etch code
-std::string FunMain(std::string const &contents) {
+// The following functions are all used to generate Etch code
+std::string FunMain(std::string const &contents)
+{
   return "function main()\n" + contents + "endfunction\n";
 }
 
-std::string FunMainRet(std::string const &contents, std::string const &return_type) {
+std::string FunMainRet(std::string const &contents, std::string const &return_type)
+{
   return "function main() : " + return_type + "\n" + contents + "endfunction\n";
 }
 
-std::string FunUser(std::string const &contents) {
+std::string FunUser(std::string const &contents)
+{
   return "function user()\n" + contents + "endfunction\n";
 }
 
-std::string VarDec(std::string const &etchType) {
+std::string VarDec(std::string const &etchType)
+{
   return "var x : " + etchType + ";\n";
 }
 
-std::string VarDecAss(std::string const &etchType, std::string const &value) {
+std::string VarDecAss(std::string const &etchType, std::string const &value)
+{
   return "var x : " + etchType + " = " + value + ";\n";
 }
 
-std::string IfThen(std::string const &condition, std::string const &consequent) {
+std::string IfThen(std::string const &condition, std::string const &consequent)
+{
   return "if (" + condition + ")\n" + consequent + "endif\n";
 }
 
-std::string IfThenElse(std::string const &condition, std::string const &consequent, std::string const &alternate) {
+std::string IfThenElse(std::string const &condition, std::string const &consequent, std::string const &alternate)
+{
   return "if (" + condition + ")\n" + consequent + "else\n" + alternate + "endif\n";
 }
 
-std::string For(std::string const &expression, std::string const &numIter) {
+std::string For(std::string const &expression, std::string const &numIter)
+{
   return "for (i in 0:" + numIter + ")\n" + expression + "endfor\n";
 }
 
-std::string Rand(std::string const &min, std::string const &max) {
+std::string Rand(std::string const &min, std::string const &max)
+{
   return "rand(" + min + "," + max + ");\n";
 }
 
-std::string ArrayDec(std::string const &arr, std::string const &prim, std::string const &dim) {
+std::string ArrayDec(std::string const &arr, std::string const &prim, std::string const &dim)
+{
   return "var " + arr + " = Array<" + prim + ">(" + dim + ");\n";
 }
 
-std::string ArrayAss(std::string const &arr, std::string const &ind, std::string const &val) {
+std::string ArrayAss(std::string const &arr, std::string const &ind, std::string const &val)
+{
   return arr + "[" + ind + "] = " + val + ";\n";
 }
 
-std::string ArrayAppend(std::string const &arr, std::string const &val) {
+std::string ArrayAppend(std::string const &arr, std::string const &val)
+{
   return arr + ".append(" + val + ");\n";
 }
 
-std::string ArrayExtend(std::string const &arr1, std::string const &arr2) {
+std::string ArrayExtend(std::string const &arr1, std::string const &arr2)
+{
   return arr1 + ".extend(" + arr2 + ");\n";
 }
 
-std::string ArrayErase(std::string const &arr, std::string const &ind) {
+std::string ArrayErase(std::string const &arr, std::string const &ind)
+{
   return arr + ".erase(" + ind + ");\n";
 }
 
 std::string TensorDec(std::string const &tensor, std::string const &prim, std::string const &tensor_shape,
-                      std::string const &tensor_size, const u_int tensor_dim) {
+                      std::string const &tensor_size, const u_int tensor_dim)
+{
   auto tensor_dec = ArrayDec(tensor_shape, prim, std::to_string(tensor_dim));
-  for (u_int i = 0; i != tensor_dim; ++i) {
+  for (u_int i = 0; i != tensor_dim; ++i)
+  {
     tensor_dec += ArrayAss(tensor_shape, std::to_string(i), tensor_size);
   }
   tensor_dec += "var " + tensor + " = Tensor(" + tensor_shape + ");\n";
   return tensor_dec;
 }
 
-std::string FromString(std::string const &tensor, std::string const &val, u_int tensor_size) {
+std::string FromString(std::string const &tensor, std::string const &val, u_int tensor_size)
+{
   std::string from_string = tensor + ".fromString(\"";
-  for (u_int i = 0; i != tensor_size; ++i) {
+  for (u_int i = 0; i != tensor_size; ++i)
+  {
     from_string += val;
-    if (i < tensor_size - 1) {
+    if (i < tensor_size - 1)
+    {
       from_string += ",";
     }
   }
@@ -223,32 +258,37 @@ std::string FromString(std::string const &tensor, std::string const &val, u_int 
   return from_string;
 }
 
-std::string Sha256Update(u_int str_len) {
+std::string Sha256Update(u_int str_len)
+{
   std::string str(str_len, '0');
   return "s.update(\"" + str + "\");\n";
 }
 
-/* Create a linear spaced range vector from max/n_elem to max of primitive type T (does not include zero)
-   * @max is the range maximum and last element in the vector
-   *
-   * @n_elem is the number of elements to include in the vector
-   *
-   * @return the range vector
-   */
+/** Create a linear spaced range vector from max/n_elem to max of primitive type T
+ * (does not include zero)
+ *
+ * @max is the range maximum and last element in the vector   *
+ * @n_elem is the number of elements to include in the vector
+ *
+ * @return the range vector
+ */
 template<typename T>
-std::vector<T> LinearRangeVector(T max, u_int n_elem) {
+std::vector<T> LinearRangeVector(T max, u_int n_elem)
+{
   float current_val = 0.0f;
   auto const step = static_cast<float>(max) / static_cast<float>(n_elem);
   std::vector<T> v(n_elem);
-  for (auto it = v.begin(); it != v.end(); ++it) {
+  for (auto it = v.begin(); it != v.end(); ++it)
+  {
     current_val += step;
     *it = static_cast<T>(current_val);
   }
   return v;
 }
 
-void BasicBenchmarks(benchmark::State &state) {
-
+// The following functions correspond to benchmark categories, each calling EtchCodeBenchmark(...)
+void BasicBenchmarks(benchmark::State &state)
+{
   // Functions, variable declarations, and constants
   const static std::string
       FUN_CALL = "user();\n",
@@ -306,7 +346,8 @@ void BasicBenchmarks(benchmark::State &state) {
 
   u_int const etch_ind = bm_ind - basic_begin;
 
-  if (etch_ind >= etch_codes.size()) {
+  if (etch_ind >= etch_codes.size())
+  {
     std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
     return;
   }
@@ -315,8 +356,8 @@ void BasicBenchmarks(benchmark::State &state) {
                     baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
-void ObjectBenchmarks(benchmark::State &state) {
-
+void ObjectBenchmarks(benchmark::State &state)
+{
   auto bm_ind = static_cast<u_int>(state.range(0));
 
   // Generate the string lengths from benchmark parameters
@@ -372,7 +413,8 @@ void ObjectBenchmarks(benchmark::State &state) {
       etch_codes = {PUSH_STRING, VAR_DEC_ASS_STRING, PUSH_VAR_STRING, OBJ_EQ, OBJ_NEQ, OBJ_LT, OBJ_GT,
                     OBJ_LTE, OBJ_GTE, OBJ_ADD};
 
-  if (etch_ind >= etch_codes.size()) {
+  if (etch_ind >= etch_codes.size())
+  {
     std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
     return;
   }
@@ -381,8 +423,8 @@ void ObjectBenchmarks(benchmark::State &state) {
                     baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
-void PrimitiveOpBenchmarks(benchmark::State &state) {
-
+void PrimitiveOpBenchmarks(benchmark::State &state)
+{
   const static std::vector<std::string> primitives{"Int8", "Int16", "Int32", "Int64", "UInt8", "UInt16", "UInt32",
                                                    "UInt64", "Float32", "Float64", "Fixed32", "Fixed64"};
 
@@ -491,7 +533,8 @@ void PrimitiveOpBenchmarks(benchmark::State &state) {
                     PRIM_PRE_DEC, PRIM_POST_INC, PRIM_POST_DEC, VAR_PRIM_INP_ADD, VAR_PRIM_INP_SUB, VAR_PRIM_INP_MUL,
                     VAR_PRIM_INP_DIV, VAR_PRIM_INP_MOD};
 
-  if (etch_ind >= etch_codes.size()) {
+  if (etch_ind >= etch_codes.size())
+  {
     std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
     return;
   }
@@ -500,8 +543,8 @@ void PrimitiveOpBenchmarks(benchmark::State &state) {
                     baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
-void MathBenchmarks(benchmark::State &state) {
-
+void MathBenchmarks(benchmark::State &state)
+{
   static std::vector<std::string>
       primitives{"Float32", "Float64", "Fixed32", "Fixed64"},
       values{"0.5f", "0.5", "0.5fp32", "0.5fp64"},
@@ -583,7 +626,8 @@ void MathBenchmarks(benchmark::State &state) {
       etch_codes = {PRIM_ABS, PRIM_SIN, PRIM_COS, PRIM_TAN, PRIM_ASIN, PRIM_ACOS, PRIM_ATAN, PRIM_SINH, PRIM_COSH,
                     PRIM_TANH, PRIM_ASINH, PRIM_ACOSH, PRIM_ATANH, PRIM_SQRT, PRIM_EXP, PRIM_POW};
 
-  if (etch_ind >= etch_codes.size()) {
+  if (etch_ind >= etch_codes.size())
+  {
     std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
     return;
   }
@@ -592,8 +636,8 @@ void MathBenchmarks(benchmark::State &state) {
                     baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
-void ArrayBenchmarks(benchmark::State &state) {
-
+void ArrayBenchmarks(benchmark::State &state)
+{
   auto bm_ind = static_cast<u_int>(state.range(0));
 
   // Generate array lengths from benchmark parameters
@@ -649,7 +693,8 @@ void ArrayBenchmarks(benchmark::State &state) {
       etch_codes = {ARRAY_DEC, ARRAY_ASS, ARRAY_COUNT, ARRAY_APP, ARRAY_DEC_2, ARRAY_EXT, ARRAY_POPBACK, ARRAY_POPFRONT,
                     ARRAY_ERASE, ARRAY_REV};
 
-  if (etch_ind >= etch_codes.size()) {
+  if (etch_ind >= etch_codes.size())
+  {
     std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
     return;
   }
@@ -658,8 +703,8 @@ void ArrayBenchmarks(benchmark::State &state) {
                     baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
-void TensorBenchmarks(benchmark::State &state) {
-
+void TensorBenchmarks(benchmark::State &state)
+{
   auto bm_ind = static_cast<u_int>(state.range(0));
 
   const u_int
@@ -716,7 +761,8 @@ void TensorBenchmarks(benchmark::State &state) {
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {TENSOR_DEC, TENSOR_SIZE, TENSOR_FILL, TENSOR_FILL_RAND, TENSOR_FROM_STR};
 
-  if (etch_ind >= etch_codes.size()) {
+  if (etch_ind >= etch_codes.size())
+  {
     std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
     return;
   }
@@ -725,8 +771,8 @@ void TensorBenchmarks(benchmark::State &state) {
                     baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
-void CryptoBenchmarks(benchmark::State &state) {
-
+void CryptoBenchmarks(benchmark::State &state)
+{
   auto bm_ind = static_cast<u_int>(state.range(0));
 
   // Generate the string lengths from benchmark parameters
@@ -761,7 +807,8 @@ void CryptoBenchmarks(benchmark::State &state) {
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {SHA256_DEC, SHA256_RESET, SHA256_FINAL, SHA256_UPDATE};
 
-  if (etch_ind >= etch_codes.size()) {
+  if (etch_ind >= etch_codes.size())
+  {
     std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
     return;
   }
@@ -770,7 +817,8 @@ void CryptoBenchmarks(benchmark::State &state) {
                     baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
-bool RegisterBenchmarks() {
+bool RegisterBenchmarks()
+{
   BENCHMARK(BasicBenchmarks)->DenseRange(basic_begin, basic_end - 1, 1);
   if (run_object) { BENCHMARK(ObjectBenchmarks)->DenseRange(object_begin, object_end - 1, 1); }
   if (run_prim_ops) { BENCHMARK(PrimitiveOpBenchmarks)->DenseRange(prim_begin, prim_end - 1, 1); }
