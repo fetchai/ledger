@@ -75,6 +75,11 @@ public:
 
   SerializerTypes GetNextType() const
   {
+    if (pos_ >= data_.size())
+    {
+      throw std::runtime_error{"Reached end of the buffer"};
+    }
+
     return DetermineType(data_[pos_]);
   }
 
@@ -90,6 +95,7 @@ public:
   void WriteBytes(uint8_t const *arr, uint64_t const &size);
 
   void WriteByte(uint8_t const &val);
+  void WriteNil();
 
   template <typename WriteType, typename InitialType>
   void WritePrimitive(InitialType const &val);
