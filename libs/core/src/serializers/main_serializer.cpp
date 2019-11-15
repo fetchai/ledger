@@ -46,6 +46,12 @@ MsgPackSerializer &MsgPackSerializer::operator=(MsgPackSerializer const &from)
   return *this;
 }
 
+void MsgPackSerializer::WriteNil()
+{
+  Allocate(sizeof(uint8_t));
+  WriteByte(static_cast<uint8_t>(TypeCodes::NIL));
+}
+
 void MsgPackSerializer::Allocate(uint64_t const &delta)
 {
   Resize(delta, ResizeParadigm::RELATIVE);

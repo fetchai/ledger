@@ -147,30 +147,28 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
                                                  ArrayType const &mask, ArrayType &ret)
 {
-  // TODO (#1453) this is a wrong implementation of boolean mask, the return array will always be
-  // all zero unless all conditions are true
   assert(input_array.size() == mask.size());
   assert(ret.size() >= typename ArrayType::SizeType(Sum(mask)));
 
+  // Easier to resize before, so we avoid a possible copy.
+  ret.Resize({typename ArrayType::SizeType(Sum(mask))});
   auto     it1 = input_array.cbegin();
   auto     it2 = mask.cbegin();
   auto     rit = ret.begin();
   SizeType counter{0};
   while (rit.is_valid())
   {
-    // TODO(private issue 193): implement boolean only array
     assert((*it2 == 1) || (*it2 == 0));
     if (static_cast<uint64_t>(*it2))
     {
       *rit = *it1;
       ++counter;
+      ++rit;
     }
     ++it1;
     ++it2;
-    ++rit;
   }
-
-  ret.Resize({counter});
+  assert(ret.size() == counter);
 }
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, ArrayType const &mask)
