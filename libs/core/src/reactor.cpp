@@ -46,7 +46,7 @@ namespace core {
 
 Reactor::Reactor(std::string name)
   : name_{std::move(name)}
-  , runnables_time_{CreateHistogram("ledger_reactor_runnables_time",
+  , runnables_time_{CreateHistogram("ledger_reactor_runnable_time",
                                     "The histogram of runnables execution time")}
   , attach_total_{CreateCounter("ledger_reactor_attach_total",
                                 "The total number of times a runnable was attached to the reactor")}
