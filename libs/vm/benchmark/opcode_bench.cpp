@@ -281,24 +281,24 @@ void BasicBenchmarks(benchmark::State &state) {
       VAR_DEC_STRING = std::make_pair("VariableDeclareStr", FunMain(VarDec(STRING)));
 
   std::unordered_map<std::string, std::string>
-      baselineMap({
-                      {"Return",                "Return"},
-                      {"PushNull",              "Return"},
-                      {"PushFalse",             "Return"},
-                      {"PushTrue",              "Return"},
-                      {"JumpIfFalse",           "Return"},
-                      {"Jump",                  "JumpIfFalse"},
-                      {"Not",                   "PushTrue"},
-                      {"And",                   "PushTrue"},
-                      {"Or",                    "PushTrue"},
-                      {"ForLoop",               "Return"},
-                      {"Break",                 "ForLoop"},
-                      {"Continue",              "ForLoop"},
-                      {"DestructBase",          "ForLoop"},
-                      {"Destruct",              "DestructBase"},
-                      {"Function",              "Return"},
-                      {"VariableDeclareStr",    "Return"}
-                  });
+      baseline_map({
+                       {"Return",             "Return"},
+                       {"PushNull",           "Return"},
+                       {"PushFalse",          "Return"},
+                       {"PushTrue",           "Return"},
+                       {"JumpIfFalse",        "Return"},
+                       {"Jump",               "JumpIfFalse"},
+                       {"Not",                "PushTrue"},
+                       {"And",                "PushTrue"},
+                       {"Or",                 "PushTrue"},
+                       {"ForLoop",            "Return"},
+                       {"Break",              "ForLoop"},
+                       {"Continue",           "ForLoop"},
+                       {"DestructBase",       "ForLoop"},
+                       {"Destruct",           "DestructBase"},
+                       {"Function",           "Return"},
+                       {"VariableDeclareStr", "Return"}
+                   });
 
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {RETURN, PUSH_NULL, PUSH_FALSE, PUSH_TRUE, JUMP_IF_FALSE, JUMP, NOT, AND, OR, FOR_LOOP, BREAK,
@@ -309,7 +309,7 @@ void BasicBenchmarks(benchmark::State &state) {
   u_int const etch_ind = bm_ind - basic_begin;
 
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
-                    baselineMap[etch_codes[etch_ind].first], bm_ind);
+                    baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
 void ObjectBenchmarks(benchmark::State &state) {
@@ -352,25 +352,25 @@ void ObjectBenchmarks(benchmark::State &state) {
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string>
-      baselineMap({
-                      {"PushString_" + length,                     "Return"},
-                      {"VariableDeclareAssignString_" + length,    "Return"},
-                      {"PushVariableString_" + length,             "VariableDeclareAssignString_" + length},
-                      {"ObjectEqualString_" + length,              "PushVariableString_" + length},
-                      {"ObjectNotEqualString_" + length,           "PushVariableString_" + length},
-                      {"ObjectLessThanString_" + length,           "PushVariableString_" + length},
-                      {"ObjectLessThanOrEqualString_" + length,    "PushVariableString_" + length},
-                      {"ObjectGreaterThanString_" + length,        "PushVariableString_" + length},
-                      {"ObjectGreaterThanOrEqualString_" + length, "PushVariableString_" + length},
-                      {"ObjectAddString_" + length,                "PushVariableString_" + length}
-                  });
+      baseline_map({
+                       {"PushString_" + length,                     "Return"},
+                       {"VariableDeclareAssignString_" + length,    "Return"},
+                       {"PushVariableString_" + length,             "VariableDeclareAssignString_" + length},
+                       {"ObjectEqualString_" + length,              "PushVariableString_" + length},
+                       {"ObjectNotEqualString_" + length,           "PushVariableString_" + length},
+                       {"ObjectLessThanString_" + length,           "PushVariableString_" + length},
+                       {"ObjectLessThanOrEqualString_" + length,    "PushVariableString_" + length},
+                       {"ObjectGreaterThanString_" + length,        "PushVariableString_" + length},
+                       {"ObjectGreaterThanOrEqualString_" + length, "PushVariableString_" + length},
+                       {"ObjectAddString_" + length,                "PushVariableString_" + length}
+                   });
 
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {PUSH_STRING, VAR_DEC_ASS_STRING, PUSH_VAR_STRING, OBJ_EQ, OBJ_NEQ, OBJ_LT, OBJ_GT,
                     OBJ_LTE, OBJ_GTE, OBJ_ADD};
 
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
-                    baselineMap[etch_codes[etch_ind].first], bm_ind);
+                    baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
 void PrimitiveOpBenchmarks(benchmark::State &state) {
@@ -447,35 +447,35 @@ void PrimitiveOpBenchmarks(benchmark::State &state) {
 
 //Define{benchmark,baseline}pairs
   std::unordered_map<std::string, std::string>
-      baselineMap({
-                      {"PrimReturnValue_" + prim,             "Return"},
-                      {"PrimVariableDeclare_" + prim,         "Return"},
-                      {"PrimVariableDeclareAssign_" + prim,   "Return"},
-                      {"PrimPushConst_" + prim,               "Return"},
-                      {"PrimPushVariable_" + prim,            "PrimPushConst_" + prim},
-                      {"PrimPopToVariable_" + prim,           "PrimVariableDeclareAssign_" + prim},
-                      {"PrimAdd_" + prim,                     "PrimPushVariable_" + prim},
-                      {"PrimSubtract_" + prim,                "PrimPushVariable_" + prim},
-                      {"PrimMultiply_" + prim,                "PrimPushVariable_" + prim},
-                      {"PrimDivide_" + prim,                  "PrimPushVariable_" + prim},
-                      {"PrimModulo_" + prim,                  "PrimPushVariable_" + prim},
-                      {"PrimNegate_" + prim,                  "PrimPushVariable_" + prim},
-                      {"PrimEqual_" + prim,                   "PrimPushVariable_" + prim},
-                      {"PrimNotEqual_" + prim,                "PrimPushVariable_" + prim},
-                      {"PrimLessThan_" + prim,                "PrimPushVariable_" + prim},
-                      {"PrimGreaterThan_" + prim,             "PrimPushVariable_" + prim},
-                      {"PrimLessThanOrEqual_" + prim,         "PrimPushVariable_" + prim},
-                      {"PrimGreaterThanOrEqual_" + prim,      "PrimPushVariable_" + prim},
-                      {"PrimVariablePrefixInc_" + prim,       "PrimVariableDeclareAssign_" + prim},
-                      {"PrimVariablePrefixDec_" + prim,       "PrimVariableDeclareAssign_" + prim},
-                      {"PrimVariablePostfixInc_" + prim,      "PrimVariableDeclareAssign_" + prim},
-                      {"PrimVariablePostfixDec_" + prim,      "PrimVariableDeclareAssign_" + prim},
-                      {"PrimVariableInplaceAdd_" + prim,      "PrimVariableDeclareAssign_" + prim},
-                      {"PrimVariableInplaceSubtract_" + prim, "PrimVariableDeclareAssign_" + prim},
-                      {"PrimVariableInplaceMultiply_" + prim, "PrimVariableDeclareAssign_" + prim},
-                      {"PrimVariableInplaceDivide_" + prim,   "PrimVariableDeclareAssign_" + prim},
-                      {"PrimVariableInplaceModulo_" + prim,   "PrimVariableDeclareAssign_" + prim}
-                  });
+      baseline_map({
+                       {"PrimReturnValue_" + prim,             "Return"},
+                       {"PrimVariableDeclare_" + prim,         "Return"},
+                       {"PrimVariableDeclareAssign_" + prim,   "Return"},
+                       {"PrimPushConst_" + prim,               "Return"},
+                       {"PrimPushVariable_" + prim,            "PrimPushConst_" + prim},
+                       {"PrimPopToVariable_" + prim,           "PrimVariableDeclareAssign_" + prim},
+                       {"PrimAdd_" + prim,                     "PrimPushVariable_" + prim},
+                       {"PrimSubtract_" + prim,                "PrimPushVariable_" + prim},
+                       {"PrimMultiply_" + prim,                "PrimPushVariable_" + prim},
+                       {"PrimDivide_" + prim,                  "PrimPushVariable_" + prim},
+                       {"PrimModulo_" + prim,                  "PrimPushVariable_" + prim},
+                       {"PrimNegate_" + prim,                  "PrimPushVariable_" + prim},
+                       {"PrimEqual_" + prim,                   "PrimPushVariable_" + prim},
+                       {"PrimNotEqual_" + prim,                "PrimPushVariable_" + prim},
+                       {"PrimLessThan_" + prim,                "PrimPushVariable_" + prim},
+                       {"PrimGreaterThan_" + prim,             "PrimPushVariable_" + prim},
+                       {"PrimLessThanOrEqual_" + prim,         "PrimPushVariable_" + prim},
+                       {"PrimGreaterThanOrEqual_" + prim,      "PrimPushVariable_" + prim},
+                       {"PrimVariablePrefixInc_" + prim,       "PrimVariableDeclareAssign_" + prim},
+                       {"PrimVariablePrefixDec_" + prim,       "PrimVariableDeclareAssign_" + prim},
+                       {"PrimVariablePostfixInc_" + prim,      "PrimVariableDeclareAssign_" + prim},
+                       {"PrimVariablePostfixDec_" + prim,      "PrimVariableDeclareAssign_" + prim},
+                       {"PrimVariableInplaceAdd_" + prim,      "PrimVariableDeclareAssign_" + prim},
+                       {"PrimVariableInplaceSubtract_" + prim, "PrimVariableDeclareAssign_" + prim},
+                       {"PrimVariableInplaceMultiply_" + prim, "PrimVariableDeclareAssign_" + prim},
+                       {"PrimVariableInplaceDivide_" + prim,   "PrimVariableDeclareAssign_" + prim},
+                       {"PrimVariableInplaceModulo_" + prim,   "PrimVariableDeclareAssign_" + prim}
+                   });
 
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {RET_VAL, VAR_DEC, VAR_DEC_ASS, PUSH_CONST, PUSH_VAR, POP_TO_VAR, PRIM_ADD, PRIM_SUB, PRIM_MUL,
@@ -484,7 +484,7 @@ void PrimitiveOpBenchmarks(benchmark::State &state) {
                     VAR_PRIM_INP_DIV, VAR_PRIM_INP_MOD};
 
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
-                    baselineMap[etch_codes[etch_ind].first], bm_ind);
+                    baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
 void MathBenchmarks(benchmark::State &state) {
@@ -546,32 +546,32 @@ void MathBenchmarks(benchmark::State &state) {
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string>
-      baselineMap({
-                      {"MathAbs_" + prim,   "PrimPushVariable_" + prim},
-                      {"MathSin_" + prim,   "PrimPushVariable_" + prim},
-                      {"MathCos_" + prim,   "PrimPushVariable_" + prim},
-                      {"MathTan_" + prim,   "PrimPushVariable_" + prim},
-                      {"MathAsin_" + prim,  "PrimPushVariable_" + prim},
-                      {"MathAcos_" + prim,  "PrimPushVariable_" + prim},
-                      {"MathAtan_" + prim,  "PrimPushVariable_" + prim},
-                      {"MathSinh_" + prim,  "PrimPushVariable_" + prim},
-                      {"MathCosh_" + prim,  "PrimPushVariable_" + prim},
-                      {"MathTanh_" + prim,  "PrimPushVariable_" + prim},
-                      {"MathAsinh_" + prim, "PrimPushVariable_" + prim},
-                      {"MathAcosh_" + prim, "PrimPushVariable_" + prim},
-                      {"MathAtanh_" + prim, "PrimPushVariable_" + prim},
-                      {"MathSqrt_" + prim,  "PrimPushVariable_" + prim},
-                      {"MathExp_" + prim,   "PrimPushVariable_" + prim},
-                      {"MathPow_" + prim,   "PrimPushVariable_" + prim},
-                      {"MathRand_" + prim,  "Return"}
-                  });
+      baseline_map({
+                       {"MathAbs_" + prim,   "PrimPushVariable_" + prim},
+                       {"MathSin_" + prim,   "PrimPushVariable_" + prim},
+                       {"MathCos_" + prim,   "PrimPushVariable_" + prim},
+                       {"MathTan_" + prim,   "PrimPushVariable_" + prim},
+                       {"MathAsin_" + prim,  "PrimPushVariable_" + prim},
+                       {"MathAcos_" + prim,  "PrimPushVariable_" + prim},
+                       {"MathAtan_" + prim,  "PrimPushVariable_" + prim},
+                       {"MathSinh_" + prim,  "PrimPushVariable_" + prim},
+                       {"MathCosh_" + prim,  "PrimPushVariable_" + prim},
+                       {"MathTanh_" + prim,  "PrimPushVariable_" + prim},
+                       {"MathAsinh_" + prim, "PrimPushVariable_" + prim},
+                       {"MathAcosh_" + prim, "PrimPushVariable_" + prim},
+                       {"MathAtanh_" + prim, "PrimPushVariable_" + prim},
+                       {"MathSqrt_" + prim,  "PrimPushVariable_" + prim},
+                       {"MathExp_" + prim,   "PrimPushVariable_" + prim},
+                       {"MathPow_" + prim,   "PrimPushVariable_" + prim},
+                       {"MathRand_" + prim,  "Return"}
+                   });
 
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {PRIM_ABS, PRIM_SIN, PRIM_COS, PRIM_TAN, PRIM_ASIN, PRIM_ACOS, PRIM_ATAN, PRIM_SINH, PRIM_COSH,
                     PRIM_TANH, PRIM_ASINH, PRIM_ACOSH, PRIM_ATANH, PRIM_SQRT, PRIM_EXP, PRIM_POW};
 
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
-                    baselineMap[etch_codes[etch_ind].first], bm_ind);
+                    baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
 void ArrayBenchmarks(benchmark::State &state) {
@@ -614,25 +614,25 @@ void ArrayBenchmarks(benchmark::State &state) {
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string>
-      baselineMap({
-                      {"DeclareArray_" + length,    "Return"},
-                      {"AssignArray_" + length,     "DeclareArray_" + length},
-                      {"CountArray_" + length,      "DeclareArray_" + length},
-                      {"AppendArray_" + length,     "DeclareArray_" + length},
-                      {"DeclareTwoArray_" + length, "Return"},
-                      {"ExtendArray_" + length,     "DeclareTwoArray_" + length},
-                      {"PopBackArray_" + length,    "DeclareArray_" + length},
-                      {"PopFrontArray_" + length,   "DeclareArray_" + length},
-                      {"EraseArray_" + length,      "DeclareArray_" + length},
-                      {"ReverseArray_" + length,    "DeclareArray_" + length}
-                  });
+      baseline_map({
+                       {"DeclareArray_" + length,    "Return"},
+                       {"AssignArray_" + length,     "DeclareArray_" + length},
+                       {"CountArray_" + length,      "DeclareArray_" + length},
+                       {"AppendArray_" + length,     "DeclareArray_" + length},
+                       {"DeclareTwoArray_" + length, "Return"},
+                       {"ExtendArray_" + length,     "DeclareTwoArray_" + length},
+                       {"PopBackArray_" + length,    "DeclareArray_" + length},
+                       {"PopFrontArray_" + length,   "DeclareArray_" + length},
+                       {"EraseArray_" + length,      "DeclareArray_" + length},
+                       {"ReverseArray_" + length,    "DeclareArray_" + length}
+                   });
 
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {ARRAY_DEC, ARRAY_ASS, ARRAY_COUNT, ARRAY_APP, ARRAY_DEC_2, ARRAY_EXT, ARRAY_POPBACK, ARRAY_POPFRONT,
                     ARRAY_ERASE, ARRAY_REV};
 
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
-                    baselineMap[etch_codes[etch_ind].first], bm_ind);
+                    baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
 void TensorBenchmarks(benchmark::State &state) {
@@ -682,19 +682,19 @@ void TensorBenchmarks(benchmark::State &state) {
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string>
-      baselineMap({
-                      {"DeclareTensor_" + dim_str + "-" + size,  "Return"},
-                      {"SizeTensor_" + dim_str + "-" + size,     "DeclareTensor_" + dim_str + "-" + size},
-                      {"FillTensor_" + dim_str + "-" + size,     "DeclareTensor_" + dim_str + "-" + size},
-                      {"FillRandTensor_" + dim_str + "-" + size, "DeclareTensor_" + dim_str + "-" + size},
-                      {"FromStrTensor_" + dim_str + "-" + size, "DeclareTensor_" + dim_str + "-" + size}
-                  });
+      baseline_map({
+                       {"DeclareTensor_" + dim_str + "-" + size,  "Return"},
+                       {"SizeTensor_" + dim_str + "-" + size,     "DeclareTensor_" + dim_str + "-" + size},
+                       {"FillTensor_" + dim_str + "-" + size,     "DeclareTensor_" + dim_str + "-" + size},
+                       {"FillRandTensor_" + dim_str + "-" + size, "DeclareTensor_" + dim_str + "-" + size},
+                       {"FromStrTensor_" + dim_str + "-" + size,  "DeclareTensor_" + dim_str + "-" + size}
+                   });
 
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {TENSOR_DEC, TENSOR_SIZE, TENSOR_FILL, TENSOR_FILL_RAND, TENSOR_FROM_STR};
 
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
-                    baselineMap[etch_codes[etch_ind].first], bm_ind);
+                    baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
 void CryptoBenchmarks(benchmark::State &state) {
@@ -723,18 +723,18 @@ void CryptoBenchmarks(benchmark::State &state) {
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string>
-      baselineMap({
-                      {"Sha256Declare",          "Return"},
-                      {"Sha256Reset",            "Sha256Declare"},
-                      {"Sha256Final",            "Sha256Declare"},
-                      {"Sha256Update_" + length, "Sha256Declare"}
-                  });
+      baseline_map({
+                       {"Sha256Declare",          "Return"},
+                       {"Sha256Reset",            "Sha256Declare"},
+                       {"Sha256Final",            "Sha256Declare"},
+                       {"Sha256Update_" + length, "Sha256Declare"}
+                   });
 
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {SHA256_DEC, SHA256_RESET, SHA256_FINAL, SHA256_UPDATE};
 
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
-                    baselineMap[etch_codes[etch_ind].first], bm_ind);
+                    baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
 
 bool RegisterBenchmarks() {
