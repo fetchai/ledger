@@ -250,7 +250,7 @@ BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack &result, Params 
       {
         bool temp;
         serializer >> temp;
-        param.primitive.i8 = temp;
+        param.primitive.i8 = temp ? 1 : 0;
         break;
       }
       case fetch::vm::TypeIds::Int8:
@@ -377,8 +377,7 @@ void ToFixed32(BasicVmEngine::LedgerVariant &var)
   {
     fp32_t val32;
     val32.Data() = var.As<int>();
-    fp64_t val64{std::move(val32)};
-    var = BasicVmEngine::LedgerVariant{std::move(val64)};
+    var = BasicVmEngine::LedgerVariant{fp64_t{val32}};
   }
 }
 
