@@ -113,6 +113,9 @@ public:
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();
 
+  MainChain &operator=(MainChain const &rhs) = delete;
+  MainChain &operator=(MainChain &&rhs) = delete;
+
   void Reset();
 
   /// @name Chain Queries
@@ -157,10 +160,6 @@ private:
   using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
-
-  // Operators
-  MainChain &operator=(MainChain const &rhs) = delete;
-  MainChain &operator=(MainChain &&rhs) = delete;
 
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
