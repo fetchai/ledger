@@ -17,39 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/io_observer_interface.hpp"
-
-#include "core/byte_array/const_byte_array.hpp"
-#include "vm/vm.hpp"
-
-#include <memory>
-#include <unordered_map>
+#include "network/service/protocol.hpp"
 
 namespace fetch {
 namespace dmlf {
+namespace colearn {
 
-class VmState : public vm::IoObserverInterface
+class MuddleLearnerNetworkerImpl;
+
+class ColearnProtocol : public fetch::service::Protocol
 {
 public:
-  VmState()                         = default;
-  VmState(VmState &&other) noexcept = default;
-  VmState &operator=(VmState &&other) noexcept = default;
+  enum
+  {
+    RPC_COLEARN_UPDATE,
+  };
+  explicit ColearnProtocol(MuddleLearnerNetworkerImpl &exec);
 
-  VmState(VmState const &other) = delete;
-  VmState &operator=(VmState const &other) = delete;
-
-  Status Read(std::string const &key, void *data, uint64_t &size) override;
-  Status Write(std::string const &key, void const *data, uint64_t size) override;
-  Status Exists(std::string const &key) override;
-
-  VmState DeepCopy() const;
-
+protected:
 private:
-  using Buffer = fetch::byte_array::ConstByteArray;
-  using Store  = std::unordered_map<std::string, Buffer>;
-
-  Store store_;
 };
 
+}  // namespace colearn
 }  // namespace dmlf
 }  // namespace fetch
