@@ -154,7 +154,7 @@ int main(int ac, char **av)
     scaler.Normalise(orig_test_label, test_label);
   }
 
-  DataLoaderType loader(train_label.shape(), {train_data.shape()});
+  DataLoaderType loader{};
   loader.SetRandomMode(true);
   loader.AddData({train_data}, train_label);
 
