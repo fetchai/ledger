@@ -25,7 +25,7 @@ To further aid clarity we advise using the following prefixes based on the natur
  * `refactor`: Not a change in functionality, but a general improvement to code health
  * `backport`: Porting a fix from the [master branch](#master-branch) to an existing [release branch](#release-branches)
 
-Jira ticket numbers must be present in the branch names in order for the Jira <-> GitHub plugin to link them automatically. But they must not be used as the whole branch name, because they are not descriptive enough out of that context.
+Jira ticket numbers should be present in the branch names, to allow the Jira <-> GitHub plugin to link them automatically. But they must not be used as the whole branch name, because they are not descriptive enough out of Jira's context. In addition to branches, pull requests can also be linked as described in [Integration (pull requests)](#integration-pull-requests).
 
 **Examples**
 
@@ -48,7 +48,7 @@ Release branches will follow the prefix `release` and are created at the point o
 
 ## Integration (pull requests)
 
-At the point when a change has been made and wants to be reintegrated, it is expected that the developer would push all the updates to their personal fork and then create a pull request to merge all the changes into the code base.
+At the point when a change has been made and wants to be reintegrated, it is expected that the developer would push all the updates to their personal fork and then create a pull request to merge all the changes into the code base. The pull request title must contain the Jira ticket number(s) it is associated with, to allow the Jira <-> GitHub plugin to link them automatically.
 
 At this point, there is a chance for fellow developers on the project to review these changes and suggest modifications and/or improvements. This is also the usual point to run integrated CI checks against the changes.
 
