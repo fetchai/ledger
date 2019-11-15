@@ -102,7 +102,9 @@ static constexpr uint16_t VariableObjectInplaceRightDivide   = 75;
 static constexpr uint16_t PrimitiveModulo                    = 76;
 static constexpr uint16_t VariablePrimitiveInplaceModulo     = 77;
 static constexpr uint16_t InitialiseArray                    = 78;
-static constexpr uint16_t NumReserved                        = 79;
+static constexpr uint16_t ContractVariableDeclareAssign      = 79;
+static constexpr uint16_t InvokeContractFunction             = 80;
+static constexpr uint16_t NumReserved                        = 81;
 }  // namespace Opcodes
 
 }  // namespace vm

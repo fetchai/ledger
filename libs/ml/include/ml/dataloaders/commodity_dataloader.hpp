@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
@@ -90,8 +89,6 @@ private:
   float test_to_train_ratio_       = 0.0f;
   float validation_to_train_ratio_ = 0.0f;
 
-  random::Random rand_;
-
   void GetAtIndex(SizeType index);
   void UpdateCursor() override;
   void UpdateRanges();
@@ -132,7 +129,7 @@ CommodityDataLoader<LabelType, InputType>::GetNext()
 {
   if (this->random_mode_)
   {
-    GetAtIndex(this->current_min_ + (static_cast<SizeType>(decltype(rand_)::generator()) % Size()));
+    GetAtIndex(this->current_min_ + SizeType{this->rand()} % Size());
     return buffer_;
   }
 

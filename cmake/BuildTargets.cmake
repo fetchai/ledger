@@ -220,28 +220,7 @@ endfunction ()
 
 function (configure_vendor_targets)
 
-  # OpenSSL
-  find_package(OpenSSL REQUIRED)
   find_package(Threads)
-
-  if (FETCH_VERBOSE_CMAKE)
-    message(STATUS "OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
-    message(STATUS "OpenSSL libraries: ${OPENSSL_LIBRARIES}")
-    if (OPENSSL_USE_STATIC_LIBS)
-      message(STATUS "OpenSSL linking: Static")
-    else ()
-      message(STATUS "OpenSSL linking: Dynamic")
-    endif ()
-  endif (FETCH_VERBOSE_CMAKE)
-
-  add_library(vendor-openssl INTERFACE)
-  target_link_libraries(vendor-openssl INTERFACE ${OPENSSL_LIBRARIES})
-
-  if (OPENSSL_USE_STATIC_LIBS)
-    target_link_libraries(vendor-openssl INTERFACE ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-  endif (OPENSSL_USE_STATIC_LIBS)
-
-  target_include_directories(vendor-openssl INTERFACE ${OPENSSL_INCLUDE_DIR})
 
   # setup the testing
   if (FETCH_ENABLE_TESTS)
@@ -264,6 +243,13 @@ function (configure_vendor_targets)
   if (APPLE)
     target_compile_definitions(vendor-asio INTERFACE ASIO_HAS_STD_STRING_VIEW)
   endif (APPLE)
+
+  # Local version of OpenSSL
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/openssl)
+  add_library(vendor-openssl INTERFACE)
+  message(STATUS "OpenSSL include ${CMAKE_BINARY_DIR}/vendor/openssl/include")
+  target_link_libraries(vendor-openssl INTERFACE ssl crypto)
+  target_include_directories(vendor-openssl INTERFACE ${CMAKE_BINARY_DIR}/vendor/openssl/include)
 
   # Pybind11
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/pybind11)
@@ -322,6 +308,16 @@ function (configure_library_targets)
   set(library_root ${FETCH_ROOT_DIR}/libs)
 
   file(GLOB children RELATIVE ${library_root} ${library_root}/*)
+
+  if (APPLE)
+    # Temporarily disable oef builds
+    list(FILTER
+         children
+         EXCLUDE
+         REGEX
+         ".*oef-core.*")
+  endif (APPLE)
+
   set(dirlist "")
   foreach (child ${children})
     set(element_path ${library_root}/${child})

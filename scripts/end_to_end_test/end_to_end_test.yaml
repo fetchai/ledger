@@ -190,3 +190,37 @@ steps:
   - sleep: 5
   - run_python_test: { "script": ".smart_contract_tests.init_owner_address" }
 ...
+
+---
+test_description: >
+  Single multi-lane standalone node can mine transactions which are then queried
+
+setup_conditions:
+  test_name: "multi_lane_standalone"
+  number_of_nodes: 1
+  lanes: 4
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 30 #  allow all the lanes to start
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [0] }
+  - verify_txs: { "name": "batch1", "nodes": [0] }
+...
+
+---
+test_description: >
+  Transactions sync and are executed across nodes
+
+setup_conditions:
+  test_name: "multi_lane_multinode"
+  number_of_nodes: 2
+  lanes: 4
+  node_connections: [[0, 1]]
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1] }
+...

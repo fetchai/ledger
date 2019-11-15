@@ -110,7 +110,7 @@ DirectMessageService::DirectMessageService(Address address, Router &router, Mudd
 
 void DirectMessageService::InitiateConnection(Handle handle)
 {
-  FETCH_LOG_TRACE(logging_name_, "Init. Connection for conn: ", handle);
+  FETCH_LOG_TRACE(logging_name_, "Init. Connection (conn: ", handle, ")");
 
   // format the message
   RoutingMessage msg{};
@@ -171,7 +171,8 @@ void DirectMessageService::OnDirectMessage(Handle handle, PacketPtr const &packe
       RoutingMessage msg;
       if (!ExtractPayload(packet->GetPayload(), msg))
       {
-        FETCH_LOG_WARN(logging_name_, "Unable to extract routing message payload");
+        FETCH_LOG_WARN(logging_name_, "Unable to extract routing message payload (conn: ", handle,
+                       ")");
         return;
       }
 
@@ -184,6 +185,8 @@ void DirectMessageService::OnDirectMessage(Handle handle, PacketPtr const &packe
 void DirectMessageService::OnRoutingMessage(Handle handle, PacketPtr const &packet,
                                             RoutingMessage const &msg)
 {
+  FETCH_LOG_TRACE(logging_name_, "OnRoutingMessage");
+
   switch (msg.type)
   {
   case RoutingMessage::Type::PING:
@@ -246,7 +249,8 @@ void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
     RoutingMessage response{};
     response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
-    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (duplicate)");
+    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (duplicate) (conn: ", handle,
+                   ")");
 
     // send the message to the connection
     SendMessageToConnection(handle, response);
@@ -257,7 +261,8 @@ void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
     RoutingMessage response{};
     response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
-    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (replaced)");
+    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (replaced) (conn: ", handle,
+                   ")");
 
     // send the message to the connection
     SendMessageToConnection(previous_handle, response);
@@ -306,7 +311,7 @@ void DirectMessageService::OnRoutingRequest(Handle handle, PacketPtr const &pack
   }
   else
   {
-    FETCH_LOG_WARN(logging_name_, "Requesting connection disconnect");
+    FETCH_LOG_WARN(logging_name_, "Requesting connection disconnect (conn: ", handle, ")");
   }
 
   // send back the response
@@ -326,11 +331,11 @@ void DirectMessageService::OnRoutingAccepted(Handle handle, PacketPtr const &pac
   {
   case Router::UpdateStatus::NO_CHANGE:
   case Router::UpdateStatus::UPDATED:
-    FETCH_LOG_INFO(logging_name_, "New routable connection");
+    FETCH_LOG_INFO(logging_name_, "New routable connection (conn: ", handle, ")");
     break;
 
   case Router::UpdateStatus::DUPLICATE_DIRECT:
-    FETCH_LOG_INFO(logging_name_, "Duplicate routing link");
+    FETCH_LOG_INFO(logging_name_, "Duplicate routing link (conn: ", handle, ")");
     break;
   }
 }
@@ -353,7 +358,7 @@ void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr c
     peers_.RemovePersistentPeer(handle);
     peers_.RemoveConnection(handle);  // TODO(EJF): There should not be this duplication
 
-    FETCH_LOG_INFO(logging_name_, "Removing the connection: ", handle);
+    FETCH_LOG_INFO(logging_name_, "Removing the connection (conn: ", handle, ")");
   }
   else
   {

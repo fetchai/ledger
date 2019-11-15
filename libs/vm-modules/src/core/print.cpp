@@ -98,7 +98,7 @@ void PrintString(VM *vm, Ptr<String> const &s)
   }
   else
   {
-    out << s->str;
+    out << s->string();
   }
 
   internal::FlushOutput<APPEND_LINEBREAK>(out);

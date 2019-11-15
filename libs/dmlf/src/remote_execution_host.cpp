@@ -88,7 +88,7 @@ bool RemoteExecutionHost::DeleteState(service::CallContext const &context, OpIde
 
 bool RemoteExecutionHost::Run(service::CallContext const &context, OpIdent const &op_id,
                               Name const &execName, Name const &stateName,
-                              std::string const &entrypoint, const Params &params)
+                              std::string const &entrypoint, Params const &params)
 {
   FETCH_LOG_TRACE(LOGGING_NAME, "Received call for RPC Run");
   pending_workloads_.emplace_back(ExecutionWorkload(

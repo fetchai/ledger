@@ -21,22 +21,25 @@
 using fetch::beacon::TrustedDealer;
 using DkgOutput = TrustedDealer::DkgOutput;
 
-TrustedDealer::TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold)
+TrustedDealer::TrustedDealer(std::set<MuddleAddress> cabinet, double threshold)
   : cabinet_{std::move(cabinet)}
+  , threshold_{static_cast<uint32_t>(std::floor(threshold * static_cast<double>(cabinet_.size()))) +
+               1}
 {
   uint32_t index = 0;
   for (auto const &mem : cabinet_)
   {
     cabinet_index_.emplace(mem, index);
+    notarisation_units_.emplace_back(new ledger::NotarisationManager);
+    notarisation_keys_.insert({mem, notarisation_units_[index]->GenerateKeys()});
     ++index;
   }
 
-  fetch::crypto::mcl::details::MCLInitialiser();
   outputs_ =
-      crypto::mcl::TrustedDealerGenerateKeys(static_cast<uint32_t>(cabinet_.size()), threshold);
+      crypto::mcl::TrustedDealerGenerateKeys(static_cast<uint32_t>(cabinet_.size()), threshold_);
 }
 
-DkgOutput TrustedDealer::GetKeys(MuddleAddress const &address) const
+DkgOutput TrustedDealer::GetDkgKeys(MuddleAddress const &address) const
 {
   auto it = cabinet_index_.find(address);
 
@@ -47,4 +50,17 @@ DkgOutput TrustedDealer::GetKeys(MuddleAddress const &address) const
   }
 
   return DkgOutput();
+}
+
+std::pair<TrustedDealer::SharedNotarisationManager, TrustedDealer::CabinetNotarisationKeys>
+TrustedDealer::GetNotarisationKeys(MuddleAddress const &address)
+{
+  auto it = cabinet_index_.find(address);
+
+  if (it != cabinet_index_.end())
+  {
+    auto &address_as_index = it->second;
+    return std::make_pair(notarisation_units_[address_as_index], notarisation_keys_);
+  }
+  return {nullptr, {}};
 }

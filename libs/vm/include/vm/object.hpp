@@ -177,7 +177,17 @@ public:
 
   std::string GetTypeName() const;
 
+  bool IsTemporary() const
+  {
+    return ref_count_ == 1;
+  }
+
 protected:
+  std::size_t RefCount() const noexcept
+  {
+    return ref_count_;
+  }
+
   Variant &Push();
   Variant &Pop();
   Variant &Top();
@@ -316,7 +326,7 @@ public:
 
   std::size_t RefCount() const noexcept
   {
-    return ptr_->ref_count_;
+    return ptr_->RefCount();
   }
 
 private:

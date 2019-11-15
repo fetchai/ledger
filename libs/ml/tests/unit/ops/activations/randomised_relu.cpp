@@ -17,73 +17,60 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "gtest/gtest.h"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "ml/ops/activations/randomised_relu.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "gtest/gtest.h"
-
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class RandomisedReluTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(RandomisedReluTest, MyTypes);
+TYPED_TEST_CASE(RandomisedReluTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(RandomisedReluTest, forward_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = fetch::math::SizeType;
 
-  TensorType          data(8);
-  TensorType          gt(8);
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<double> gt_input({1, -0.062793536, 3, -0.12558707, 5, -0.1883806, 7, -0.2511741});
-  for (SizeType i{0}; i < 8; ++i)
-  {
-    data.Set(i, static_cast<DataType>(data_input[i]));
-    gt.Set(i, static_cast<DataType>(gt_input[i]));
-  }
+  TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType gt =
+      TensorType::FromString("1, -0.09168547, 3, -0.18337093, 5, -0.27505640, 7, -0.36674187");
+
   fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
+                                  math::function_tolerance<DataType>()));
 
   // Test after generating new random alpha value
-  gt_input = {1, -0.157690314, 3, -0.315380628, 5, -0.47307094, 7, -0.63076125644};
-  for (SizeType i{0}; i < 8; ++i)
-  {
-    gt.Set(i, static_cast<DataType>(gt_input[i]));
-  }
+  gt = TensorType::FromString("1, -0.15504484, 3, -0.31008968, 5, -0.46513452, 7, -0.62017936");
 
   prediction = TensorType(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
-
+  EXPECT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
+                                  math::function_tolerance<DataType>()));
   // Test with is_training set to false
   op.SetTraining(false);
 
-  gt_input = {1, -0.11, 3, -0.22, 5, -0.33, 7, -0.44};
-  for (SizeType i{0}; i < 8; ++i)
-  {
-    gt.Set(i, static_cast<DataType>(gt_input[i]));
-  }
+  gt = TensorType::FromString("1, -0.11, 3, -0.22, 5, -0.33, 7, -0.44");
 
   prediction = TensorType(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
+                                  math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(RandomisedReluTest, forward_3d_tensor_test)
@@ -95,7 +82,7 @@ TYPED_TEST(RandomisedReluTest, forward_3d_tensor_test)
   TensorType          data({2, 2, 2});
   TensorType          gt({2, 2, 2});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<double> gt_input({1, -0.062793536, 3, -0.12558707, 5, -0.1883806, 7, -0.2511741});
+  std::vector<double> gt_input({1, -0.09168547, 3, -0.18337093, 5, -0.27505640, 7, -0.36674187});
 
   for (SizeType i{0}; i < 2; ++i)
   {
@@ -114,61 +101,47 @@ TYPED_TEST(RandomisedReluTest, forward_3d_tensor_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
+                                  math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(RandomisedReluTest, backward_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = fetch::math::SizeType;
 
-  TensorType          data(8);
-  TensorType          error(8);
-  TensorType          gt(8);
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
-  std::vector<double> gt_input({0, 0, 0, 0, 1, 0.079588953, 0, 0});
-  for (SizeType i{0}; i < 8; ++i)
-  {
-    data.Set(i, static_cast<DataType>(data_input[i]));
-    error.Set(i, static_cast<DataType>(errorInput[i]));
-    gt.Set(i, static_cast<DataType>(gt_input[i]));
-  }
+  TensorType data  = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType error = TensorType::FromString("0, 0, 0, 0, 1, 1, 0, 0");
+  TensorType gt    = TensorType::FromString("0, 0, 0, 0, 1, 0.07889955, 0, 0");
   fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
   std::vector<TensorType>                    prediction =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction[0].AllClose(gt, math::function_tolerance<DataType>(),
+                                     math::function_tolerance<DataType>()));
 
   // Test after generating new random alpha value
   // Forward pass will update random value
   TensorType output(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, output);
 
-  gt_input = {0, 0, 0, 0, 1, 0.0788452, 0, 0};
-  for (SizeType i{0}; i < 8; ++i)
-  {
-    gt.Set(i, static_cast<DataType>(gt_input[i]));
-  }
+  gt         = TensorType::FromString("0, 0, 0, 0, 1, 0.07752242, 0, 0");
   prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction[0].AllClose(gt, math::function_tolerance<DataType>(),
+                                     math::function_tolerance<DataType>()));
 
   // Test with is_training set to false
   op.SetTraining(false);
 
-  gt_input = {0, 0, 0, 0, 1, 0.055, 0, 0};
-  for (SizeType i{0}; i < 8; ++i)
-  {
-    gt.Set(i, static_cast<DataType>(gt_input[i]));
-  }
+  gt         = TensorType::FromString("0, 0, 0, 0, 1, 0.055, 0, 0");
   prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction[0].AllClose(gt, math::function_tolerance<DataType>(),
+                                     math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
@@ -182,7 +155,7 @@ TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
   TensorType          gt({2, 2, 2});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
-  std::vector<double> gt_input({0, 0, 0, 0, 1, 0.079588953, 0, 0});
+  std::vector<double> gt_input({0, 0, 0, 0, 1, 0.07889955, 0, 0});
 
   for (SizeType i{0}; i < 2; ++i)
   {
@@ -202,7 +175,8 @@ TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(prediction[0].AllClose(gt, math::function_tolerance<DataType>(),
+                                     math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(RandomisedReluTest, saveparams_test)
@@ -317,3 +291,7 @@ TYPED_TEST(RandomisedReluTest, saveparams_backward_3d_tensor_test)
       new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch
