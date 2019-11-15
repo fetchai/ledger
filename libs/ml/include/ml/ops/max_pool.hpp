@@ -39,7 +39,7 @@ public:
   using DataType      = typename TensorType::Type;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = OpMaxPool1DSaveableParams<T>;
+  using SPType        = OpMaxPoolSaveableParams<T>;
   using MyType        = MaxPool<TensorType>;
 
   MaxPool(SizeType const kernel_size, SizeType const stride_size)
@@ -160,44 +160,48 @@ private:
   bool                                             pool_2d_;
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> pool_op_ptr_;
 
-  /**
-   * Update pointer to pooling op depending on input size
-   * @param inputs
-   */
-  void UpdatePointer(VecTensorType const &inputs)
-  {
-    switch (inputs.at(0)->shape().size())
-    {
-      // MaxPool1D
-    case 3:
-    {
-      if (!pool_op_ptr_ || pool_2d_)
-      {
-        pool_op_ptr_ =
-            std::make_shared<fetch::ml::ops::MaxPool1D<TensorType>>(kernel_size_, stride_size_);
-        pool_2d_ = true;
-      }
-      break;
-    }
-      // MaxPool2D
-    case 4:
-    {
-      if (!pool_op_ptr_ || !pool_2d_)
-      {
-        pool_op_ptr_ =
-            std::make_shared<fetch::ml::ops::MaxPool2D<TensorType>>(kernel_size_, stride_size_);
-        pool_2d_ = false;
-      }
-      break;
-    }
-
-    default:
-    {
-      throw fetch::ml::exceptions::InvalidMode("Unsupported data shape");
-    }
-    }
-  }
+  void UpdatePointer(VecTensorType const &inputs);
 };
+
+/**
+ * Update pointer to pooling op depending on input size
+ * @tparam TensorType
+ * @param inputs
+ */
+template <typename TensorType>
+void MaxPool<TensorType>::UpdatePointer(VecTensorType const &inputs)
+{
+  switch (inputs.at(0)->shape().size())
+  {
+    // MaxPool1D
+  case static_cast<SizeType>(3):
+  {
+    if (!pool_op_ptr_ || pool_2d_)
+    {
+      pool_op_ptr_ =
+          std::make_shared<fetch::ml::ops::MaxPool1D<TensorType>>(kernel_size_, stride_size_);
+      pool_2d_ = false;
+    }
+    break;
+  }
+    // MaxPool2D
+  case static_cast<SizeType>(4):
+  {
+    if (!pool_op_ptr_ || !pool_2d_)
+    {
+      pool_op_ptr_ =
+          std::make_shared<fetch::ml::ops::MaxPool2D<TensorType>>(kernel_size_, stride_size_);
+      pool_2d_ = true;
+    }
+    break;
+  }
+
+  default:
+  {
+    throw fetch::ml::exceptions::InvalidMode("Unsupported data shape");
+  }
+  }
+}
 
 }  // namespace ops
 }  // namespace ml
