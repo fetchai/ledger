@@ -33,7 +33,7 @@ void MuddleLearnerNetworkerImpl::addTarget(const std::string &peer)
 
 MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud, StorePtr update_store)
 {
-  setup(mud, update_store);
+  setup(std::move(mud), std::move(update_store));
 }
 
 void MuddleLearnerNetworkerImpl::setup(MuddlePtr mud, StorePtr update_store)
