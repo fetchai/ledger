@@ -19,6 +19,7 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/analyser.hpp"
 #include "vm/array.hpp"
+#include "vm/fixed.hpp"
 #include "vm/map.hpp"
 #include "vm/matrix.hpp"
 #include "vm/sharded_state.hpp"
@@ -86,6 +87,25 @@ void Analyser::Initialise()
                       fixed32_type_);
   CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64,
                       fixed64_type_);
+
+  CreateClassType("Fixed128", TypeIndex(typeid(Fixed128)), TypeIds::Fixed128, fixed128_type_);
+  EnableOperator(fixed128_type_, Operator::Equal);
+  EnableOperator(fixed128_type_, Operator::NotEqual);
+  EnableOperator(fixed128_type_, Operator::LessThan);
+  EnableOperator(fixed128_type_, Operator::LessThanOrEqual);
+  EnableOperator(fixed128_type_, Operator::GreaterThan);
+  EnableOperator(fixed128_type_, Operator::GreaterThanOrEqual);
+  EnableOperator(fixed128_type_, Operator::Add);
+  EnableOperator(fixed128_type_, Operator::InplaceAdd);
+  /*
+  EnableOperator(fixed128_type_, Operator::Subtract);
+  EnableOperator(fixed128_type_, Operator::InplaceSubtract);
+  EnableOperator(fixed128_type_, Operator::Multiply);
+  EnableOperator(fixed128_type_, Operator::InplaceMultiply);
+  EnableOperator(fixed128_type_, Operator::Divide);
+  EnableOperator(fixed128_type_, Operator::InplaceDivide);
+  EnableOperator(fixed128_type_, Operator::Negate);
+  */
 
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
   EnableOperator(string_type_, Operator::Equal);
@@ -181,6 +201,7 @@ void Analyser::UnInitialise()
   float64_type_             = nullptr;
   fixed32_type_             = nullptr;
   fixed64_type_             = nullptr;
+  fixed128_type_            = nullptr;
   string_type_              = nullptr;
   address_type_             = nullptr;
   template_parameter1_type_ = nullptr;
@@ -1391,6 +1412,11 @@ bool Analyser::InternalAnnotateExpression(ExpressionNodePtr const &node)
   case NodeKind::Fixed64:
   {
     SetRVExpression(node, fixed64_type_);
+    break;
+  }
+  case NodeKind::Fixed128:
+  {
+    SetRVExpression(node, fixed128_type_);
     break;
   }
   case NodeKind::String:

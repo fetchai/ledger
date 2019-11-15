@@ -524,7 +524,7 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 235 "tokeniser.l"
+#line 240 "tokeniser.l"
 
 
 #line 510 "../include/vm/tokeniser.hpp"
