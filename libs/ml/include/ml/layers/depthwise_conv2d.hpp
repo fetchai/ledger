@@ -23,8 +23,8 @@
 #include "ml/ops/concatenate.hpp"
 #include "ml/ops/convolution_2d.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/ops/weights.hpp"
 #include "ml/ops/slice.hpp"
+#include "ml/ops/weights.hpp"
 
 #include <functional>
 #include <memory>
@@ -39,12 +39,12 @@ template <class T>
 class DepthwiseConv2D : public SubGraph<T>
 {
 public:
-//  using TensorType    = T;
-//  using ArrayPtrType  = std::shared_ptr<TensorType>;
-//  using SizeType      = fetch::math::SizeType;
-//  using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
-//  using VecTensorType = typename SubGraph<T>::VecTensorType;
-//  using SPType        = LayerConvolution2DSaveableParams<TensorType>;
+    using TensorType    = T;
+    using ArrayPtrType  = std::shared_ptr<TensorType>;
+    using SizeType      = fetch::math::SizeType;
+    using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
+    using VecTensorType = typename SubGraph<T>::VecTensorType;
+    using SPType        = LayerDepthwiseConv2DSaveableParams<TensorType>;
 
   DepthwiseConv2D() = default;
 
@@ -59,10 +59,12 @@ public:
    * @param init_mode mode in which wights(kernel) will be initialised
    * @param seed random seed for weights(kernel) initialisation
    */
-  DepthwiseConv2D(SizeType const input_channels, SizeType const kernel_size, SizeType const stride_size, SizeType depth_multiplier, details::ActivationType const activation_type = details::ActivationType::NOTHING,
-                std::string const &           name            = "DepthwiseConv2D",
-                WeightsInit const             init_mode       = WeightsInit::XAVIER_GLOROT,
-                SizeType const                seed            = 123456789)
+  DepthwiseConv2D(SizeType const input_channels, SizeType const kernel_size,
+                  SizeType const stride_size, SizeType depth_multiplier,
+                  details::ActivationType const activation_type = details::ActivationType::NOTHING,
+                  std::string const &           name            = "DepthwiseConv2D",
+                  WeightsInit const             init_mode       = WeightsInit::XAVIER_GLOROT,
+                  SizeType const                seed            = 123456789)
     : kernel_size_{kernel_size}
     , input_channels_{input_channels}
     , depth_multiplier_{depth_multiplier}
@@ -73,29 +75,31 @@ public:
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
 
-    for (std::size_t i = 0; i < input_channels_ ; ++i)
+    std::string aggregated_activation;
+    for (std::size_t i = 0; i < input_channels_; ++i)
     {
       // slice out the input data by channel
-      std::string slice_by_channel = this->template AddNode<fetch::ml::ops::Slice<TensorType>>(name + "_Slice", {input, weights}, i, channel_dim);
+      std::string slice_by_channel = this->template AddNode<fetch::ml::ops::Slice<TensorType>>(
+          name + "_Slice", {input}, i, channel_dim);
 
       for (std::size_t j = 0; j < depth_multiplier_; ++j)
       {
         // set up a kernel (height * weight * 1)
-        std::string weights = this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
+        std::string weights =
+            this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
         TensorType weights_data(std::vector<SizeType>{{1, 1, kernel_size_, kernel_size_, 1}});
         fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, 1, 1, init_mode, seed);
         this->SetInput(weights, weights_data);
 
         std::string activation = this->template AddNode<fetch::ml::ops::Convolution2D<TensorType>>(
             name + "_Conv2D", {slice_by_channel, weights}, stride_size_);
+
+        aggregated_activation = this->template AddNode<fetch::ml::ops::Concatenate<TensorType>>(name + "_Conv2D", {slice_by_channel, weights}, static_cast<SizeType>(0));
       }
     }
 
-    std::string aggregated_activation = this->template AddNode<fetch::ml::ops::Concatenate<TensorType>>(
-        name + "_Conv2D", {slice_by_channel, weights}, static_cast<SizeType>(0));
-
-    output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
-                                                      output);
+    std::string output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
+                                                      aggregated_activation);
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
@@ -143,13 +147,12 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::LAYER_DEPTHWISE_CONVOLUTION_2D;
+    return OpType::LAYER_DEPTHWISE_CONV_2D;
   }
 
   static constexpr char const *DESCRIPTOR = "DepthwiseConvolution2DLayer";
 
 private:
-
   SizeType kernel_size_{};
   SizeType input_channels_{};
   SizeType depth_multiplier_{};

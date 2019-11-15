@@ -259,6 +259,18 @@ struct LayerConvolution2DSaveableParams : SubGraphSaveableParams<TensorType>
   SizeType stride_size{};
 };
 
+template <typename TensorType>
+struct LayerDepthwiseConv2DSaveableParams : SubGraphSaveableParams<TensorType>
+{
+  fetch::ml::OpType op_type = OpType::LAYER_DEPTHWISE_CONV_2D;
+
+  using SizeType = typename TensorType::SizeType;
+
+  SizeType kernel_size{};
+  SizeType input_channels{};
+  SizeType depth_multiplier{};
+  SizeType stride_size{};
+};
 /**
  * Saveable parameters for FullyConnectedLayer
  * @tparam TensorType

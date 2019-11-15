@@ -55,15 +55,15 @@ TYPED_TEST(DepthwiseConv2DTest, set_input_and_evaluate_test)  // Use the class a
   input.FillUniformRandom();
 
   // Evaluate
-  fetch::ml::layers::DepthwiseConv2D<TensorType> conv(output_channels, input_channels, kernel_height,
-                                                    stride_size);
+  fetch::ml::layers::DepthwiseConv2D<TensorType> conv(output_channels, input_channels,
+                                                      kernel_height, stride_size);
   conv.SetInput("Conv2D_Input", input);
   TensorType output = conv.Evaluate("Conv2D_Conv2D", true);
 
   // Get ground truth
-  auto                                      weights = conv.GetWeights();
+  auto                                        weights = conv.GetWeights();
   fetch::ml::ops::DepthwiseConv2D<TensorType> c;
-  TensorType                                gt(c.ComputeOutputShape(
+  TensorType                                  gt(c.ComputeOutputShape(
       {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}, gt);
 
@@ -91,16 +91,16 @@ TYPED_TEST(DepthwiseConv2DTest, ops_forward_test)  // Use the class as an Ops
   input.FillUniformRandom();
 
   // Evaluate
-  fetch::ml::layers::DepthwiseConv2D<TensorType> conv(output_channels, input_channels, kernel_height,
-                                                    stride_size);
+  fetch::ml::layers::DepthwiseConv2D<TensorType> conv(output_channels, input_channels,
+                                                      kernel_height, stride_size);
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
 
   // Get ground truth
-  auto                                      weights = conv.GetWeights();
+  auto                                        weights = conv.GetWeights();
   fetch::ml::ops::DepthwiseConv2D<TensorType> c;
-  TensorType                                gt(c.ComputeOutputShape(
+  TensorType                                  gt(c.ComputeOutputShape(
       {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}, gt);
 
@@ -134,8 +134,8 @@ TYPED_TEST(DepthwiseConv2DTest, ops_backward_test)  // Use the class as an Ops
   error_signal.FillUniformRandom();
 
   // Evaluate
-  fetch::ml::layers::DepthwiseConv2D<TensorType> conv(output_channels, input_channels, kernel_height,
-                                                    stride_size);
+  fetch::ml::layers::DepthwiseConv2D<TensorType> conv(output_channels, input_channels,
+                                                      kernel_height, stride_size);
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
@@ -144,9 +144,9 @@ TYPED_TEST(DepthwiseConv2DTest, ops_backward_test)  // Use the class as an Ops
       conv.Backward({std::make_shared<TensorType>(input)}, error_signal);
 
   // generate ground truth
-  auto                                      weights = conv.GetWeights();
+  auto                                        weights = conv.GetWeights();
   fetch::ml::ops::DepthwiseConv2D<TensorType> op;
-  std::vector<TensorType>                   gt =
+  std::vector<TensorType>                     gt =
       op.Backward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights[0])},
                   error_signal);
 
@@ -196,7 +196,7 @@ TYPED_TEST(DepthwiseConv2DTest, node_forward_test)  // Use the class as a Node
       (std::dynamic_pointer_cast<fetch::ml::layers::DepthwiseConv2D<TensorType>>(conv.GetOp()))
           ->GetWeights();
   fetch::ml::ops::DepthwiseConv2D<TensorType> c;
-  TensorType                                gt(c.ComputeOutputShape(
+  TensorType                                  gt(c.ComputeOutputShape(
       {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}, gt);
 
@@ -253,7 +253,7 @@ TYPED_TEST(DepthwiseConv2DTest, node_backward_test)  // Use the class as a Node
       (std::dynamic_pointer_cast<fetch::ml::layers::DepthwiseConv2D<TensorType>>(conv.GetOp()))
           ->GetWeights();
   fetch::ml::ops::DepthwiseConv2D<TensorType> op;
-  std::vector<TensorType>                   gt =
+  std::vector<TensorType>                     gt =
       op.Backward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights[0])},
                   error_signal);
 
@@ -292,9 +292,9 @@ TYPED_TEST(DepthwiseConv2DTest, graph_forward_test)  // Use the class as a Node
   TensorType prediction = g.Evaluate("DepthwiseConv2D", true);
 
   // Get ground truth
-  auto                                      weights = g.GetWeights();
+  auto                                        weights = g.GetWeights();
   fetch::ml::ops::DepthwiseConv2D<TensorType> c;
-  TensorType                                gt(c.ComputeOutputShape(
+  TensorType                                  gt(c.ComputeOutputShape(
       {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}, gt);
 
