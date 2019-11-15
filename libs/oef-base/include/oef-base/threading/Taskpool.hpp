@@ -79,17 +79,22 @@ public:
 
   void CancelTaskGroup(std::size_t group_id);
 
+  Taskpool(const Taskpool &other) = delete;
+  Taskpool &operator=(const Taskpool &other)  = delete;
+  bool      operator==(const Taskpool &other) = delete;
+  bool      operator<(const Taskpool &other)  = delete;
+
 protected:
 private:
   Timestamp lockless_getNextWakeTime(const Timestamp &current_time, const Milliseconds &deflt);
   TaskP     lockless_getNextFutureWork(const Timestamp &current_time);
 
-  mutable Mutex           mutex;
-  std::atomic<bool>       quit;
-  std::condition_variable work_available;
-  Tasks                   pending_tasks;
-  RunningTasks            running_tasks;
-  SuspendedTasks          suspended_tasks;
+  mutable Mutex           mutex_;
+  std::atomic<bool>       quit_;
+  std::condition_variable work_available_;
+  Tasks                   pending_tasks_;
+  RunningTasks            running_tasks_;
+  SuspendedTasks          suspended_tasks_;
 
   struct FutureTask
   {
@@ -101,26 +106,13 @@ private:
   {
     bool operator()(const FutureTask &a, const FutureTask &b)
     {
-      // Needs to be a > because the PriQ outputs largest elements first.
-      // so if a's due is before b's
-      // we need to say "false".
-      if (a.due < b.due)
-      {
-        return false;
-      }
-
-      return true;
+      return (a.due > b.due);
     }
   };
 
   using FutureTasks = std::priority_queue<FutureTask, std::vector<FutureTask>, FutureTaskOrdering>;
 
-  FutureTasks future_tasks;
-
-  Taskpool(const Taskpool &other) = delete;              // { copy(other); }
-  Taskpool &operator=(const Taskpool &other)  = delete;  // { copy(other); return *this; }
-  bool      operator==(const Taskpool &other) = delete;  // const { return compare(other)==0; }
-  bool      operator<(const Taskpool &other)  = delete;  // const { return compare(other)==-1; }
+  FutureTasks future_tasks_;
 };
 }  // namespace base
 }  // namespace oef

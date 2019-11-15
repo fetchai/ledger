@@ -35,8 +35,8 @@ public:
   VmState(VmState &&other) noexcept = default;
   VmState &operator=(VmState &&other) noexcept = default;
 
-  VmState(const VmState &other) = delete;
-  VmState &operator=(const VmState &other) = delete;
+  VmState(VmState const &other) = delete;
+  VmState &operator=(VmState const &other) = delete;
 
   Status Read(std::string const &key, void *data, uint64_t &size) override;
   Status Write(std::string const &key, void const *data, uint64_t size) override;

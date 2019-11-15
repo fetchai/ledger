@@ -65,7 +65,7 @@ public:
     TensorType weights_in({embedding_size, vocab_size_});
     this->Initialise(weights_in, init_mode, in_size, embedding_size);
     TensorType weights_ctx({embedding_size, vocab_size_});
-    this->Initialise(weights_ctx, init_mode, embedding_size, in_size);
+    this->Initialise(weights_ctx, init_mode, in_size, embedding_size);
 
     // embed both inputs
     embed_in_ = this->template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
