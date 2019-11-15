@@ -196,7 +196,7 @@ public:
   using State          = details::PromiseImplementation::State;
 
   explicit PromiseError(details::PromiseImplementation const &promise);
-  PromiseError(PromiseError const &) noexcept;
+  PromiseError(PromiseError const &other) noexcept;
   ~PromiseError() noexcept override = default;
 
   char const *what() const noexcept override;
