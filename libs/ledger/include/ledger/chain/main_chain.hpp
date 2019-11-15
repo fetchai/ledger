@@ -88,17 +88,6 @@ public:
   using BlockHash            = Block::Hash;
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
-  using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
-
-  static constexpr char const *LOGGING_NAME = "MainChain";
-  static constexpr uint64_t    UPPER_BOUND  = 5000ull;
-
-  enum class Mode
-  {
-    IN_MEMORY_DB = 0,
-    CREATE_PERSISTENT_DB,
-    LOAD_PERSISTENT_DB
-  };
 
   // When traversing the chain and returning a subset due to hitting a limit,
   // either return blocks closer to genesis (least recent in time), or
@@ -109,6 +98,15 @@ public:
     RETURN_LEAST_RECENT
   };
 
+  enum class Mode
+  {
+    IN_MEMORY_DB = 0,
+    CREATE_PERSISTENT_DB,
+    LOAD_PERSISTENT_DB
+  };
+
+  static constexpr uint64_t    UPPER_BOUND  = 5000ull;
+
   // Construction / Destruction
   explicit MainChain(bool enable_bloom_filter = false, Mode mode = Mode::IN_MEMORY_DB);
   MainChain(MainChain const &rhs) = delete;
@@ -117,6 +115,18 @@ public:
 
   void Reset();
 
+  /// @name Chain Queries
+  /// @{
+  BlockHash GetHeaviestBlockHash() const;
+  BlockPtr  GetHeaviestBlock() const;
+  Blocks    GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
+  Blocks    GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
+  Blocks    TimeTravel(BlockHash start, int64_t limit = static_cast<int64_t>(UPPER_BOUND)) const;
+  bool      GetPathToCommonAncestor(
+           Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
+           BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
+  /// @}
+
   /// @name Block Management
   /// @{
   BlockStatus AddBlock(Block const &blk);
@@ -124,22 +134,10 @@ public:
   bool        RemoveBlock(BlockHash const &hash);
   /// @}
 
-  /// @name Chain Queries
+  /// @name Transaction Duplication Filtering
   /// @{
-  BlockPtr  GetHeaviestBlock() const;
-  BlockHash GetHeaviestBlockHash() const;
-  Blocks    GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
-  Blocks    GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
-  Blocks    TimeTravel(BlockHash start, int64_t limit = static_cast<int64_t>(UPPER_BOUND)) const;
-  bool      GetPathToCommonAncestor(
-           Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
-           BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
-  /// @}
-
-  /// @name Tips
-  /// @{
-  BlockHashSet GetTips() const;
-  bool         ReindexTips();  // testing only
+  DigestSet DetectDuplicateTransactions(BlockHash const &starting_hash,
+                                        DigestSet const &transactions) const;
   /// @}
 
   /// @name Missing / Loose Management
@@ -149,11 +147,16 @@ public:
   bool         HasMissingBlocks() const;
   /// @}
 
-  /// @name Transaction Duplication Filtering
+  /// @name Tips
   /// @{
-  DigestSet DetectDuplicateTransactions(BlockHash const &starting_hash,
-                                        DigestSet const &transactions) const;
+  BlockHashSet GetTips() const;
+  bool         ReindexTips();  // testing only
   /// @}
+
+private:
+  using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
+
+  static constexpr char const *LOGGING_NAME = "MainChain";
 
   // Operators
   MainChain &operator=(MainChain const &rhs) = delete;
@@ -200,6 +203,8 @@ public:
   /// @{
   BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
   bool LookupBlock(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache = false) const;
+
+private:
   bool LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const;
   bool LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache) const;
   bool IsBlockInCache(BlockHash const &hash) const;
