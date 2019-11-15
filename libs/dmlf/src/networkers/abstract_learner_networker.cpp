@@ -39,6 +39,12 @@ void AbstractLearnerNetworker::SetShuffleAlgorithm(
   alg_ = alg;
 }
 
+AbstractLearnerNetworker::UpdatePtr AbstractLearnerNetworker::GetUpdate(
+    Algorithm const & /*algo*/, UpdateType const & /*type*/, Criteria const & /*criteria*/)
+{
+  throw std::runtime_error("GetUpdate using Criteria is not supported via this interface");
+}
+
 std::size_t AbstractLearnerNetworker::GetUpdateTypeCount(const std::string &key) const
 {
   FETCH_LOCK(queue_map_m_);
