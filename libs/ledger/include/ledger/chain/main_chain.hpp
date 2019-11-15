@@ -83,11 +83,11 @@ constexpr char const *ToString(BlockStatus status);
 class MainChain
 {
 public:
-  using BlockPtr             = std::shared_ptr<Block const>;
-  using Blocks               = std::vector<BlockPtr>;
-  using BlockHash            = Block::Hash;
-  using BlockHashes          = std::vector<BlockHash>;
-  using BlockHashSet         = std::unordered_set<BlockHash>;
+  using BlockPtr     = std::shared_ptr<Block const>;
+  using Blocks       = std::vector<BlockPtr>;
+  using BlockHash    = Block::Hash;
+  using BlockHashes  = std::vector<BlockHash>;
+  using BlockHashSet = std::unordered_set<BlockHash>;
 
   // When traversing the chain and returning a subset due to hitting a limit,
   // either return blocks closer to genesis (least recent in time), or
@@ -105,7 +105,7 @@ public:
     LOAD_PERSISTENT_DB
   };
 
-  static constexpr uint64_t    UPPER_BOUND  = 5000ull;
+  static constexpr uint64_t UPPER_BOUND = 5000ull;
 
   // Construction / Destruction
   explicit MainChain(bool enable_bloom_filter = false, Mode mode = Mode::IN_MEMORY_DB);
