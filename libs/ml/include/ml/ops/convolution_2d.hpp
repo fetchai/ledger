@@ -125,9 +125,9 @@ template <class TensorType>
 void Convolution2D<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
-  // Input should be a 3D tensor [C x H x W x N]
+  // Input should be a 4D tensor [C x H x W x N]
   assert(inputs.at(0)->shape().size() == 4);
-  // Kernels should be a 4D tensor [oC x iC x H x W x N]
+  // Kernels should be a 5D tensor [oC x iC x H x W x N]
   assert(inputs.at(1)->shape().size() == 5);
   assert(output.shape() == ComputeOutputShape(inputs));
 
@@ -151,10 +151,13 @@ void Convolution2D<TensorType>::Forward(VecTensorType const &inputs, TensorType 
   // Vertical stride contains kernel data
   TensorType vertical_stride{{vertical_stride_width, horizontal_stride_width}};
 
+
+  // Tile input tensor -> 2D
   // Reshape input data to horizontal stride - im2col
   FillHorizontalStride(input, horizontal_stride, output_height, output_width, input_channels,
                        kernel_height, kernel_width, batch_size);
 
+  // Tile kernel tensor -> 2D
   // Reshape kernel data to vertical stride - im2col
   FillVerticalStride(kernels, vertical_stride, output_channels, input_channels, kernel_height,
                      kernel_width);
@@ -162,7 +165,7 @@ void Convolution2D<TensorType>::Forward(VecTensorType const &inputs, TensorType 
   // Do matmul
   TensorType reshaped_output = fetch::math::Dot(vertical_stride, horizontal_stride);
 
-  // Reshape values after matmul to output
+  // Reshape back to output shape
   FillOutput(reshaped_output, output, output_channels, output_height, output_width, batch_size);
 }
 
