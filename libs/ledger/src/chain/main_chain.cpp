@@ -353,7 +353,7 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
     return false;
   }
 
-  //if block is not loose update heaviest_
+  // if block is not loose update heaviest_
   auto loose_it = loose_blocks_.find(hash);
   if (loose_it == loose_blocks_.end())
   {
