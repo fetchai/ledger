@@ -99,11 +99,11 @@ const uint32_t
 /**
  * Main benchmark function - compiles and runs Etch code snippets and saves opcodes to file
  *
- * @state Google benchmark state variable
- * @benchmark_name Name of this particular benchmark
- * @etch_code Etch code associated with benchmark
- * @baseline_name Name of baseline benchmark (baseline time is subtracted to get net time)
- * @bm_ind Index of benchmark (used to encode several Etch-code benchmarks in each function)
+ * @param state Google benchmark state variable
+ * @param name Name of this particular benchmark
+ * @param etch_code Etch code associated with benchmark
+ * @param baseline_name Name of baseline benchmark (baseline time is subtracted to get net time)
+ * @param Index of benchmark (used to encode several Etch-code benchmarks in each function)
  */
 void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_name, std::string const &etch_code,
                        std::string const &baseline_name, uint32_t const bm_ind) {
@@ -267,8 +267,8 @@ std::string Sha256Update(uint32_t str_len)
 /** Create a linear spaced range vector from max/n_elem to max of primitive type T
  * (does not include zero)
  *
- * @max is the range maximum and last element in the vector   *
- * @n_elem is the number of elements to include in the vector
+ * @tparam max is the range maximum and last element in the vector
+ * @param n_elem is the number of elements to include in the vector
  *
  * @return the range vector
  */
