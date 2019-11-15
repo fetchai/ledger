@@ -159,9 +159,9 @@ void MainChain::CacheReference(BlockHash const &parent, BlockHash const &child,
   // get all known forward references range for this parent
   auto siblings = references_.equal_range(parent);
   // check if this parent-child reference has been already cached
-  auto sibling_it = std::find_if(siblings.first, siblings.second,
+  auto ref_it = std::find_if(siblings.first, siblings.second,
                                  [&child](auto const &ref) { return ref.second == child; });
-  if (sibling_it != siblings.second)
+  if (ref_it != siblings.second)
   {
     // this child has been already referred to
     return;
@@ -210,9 +210,9 @@ void MainChain::ForgetReference(BlockHash const &parent, BlockHash const &child,
   // get all known forward references range for this parent
   auto siblings = references_.equal_range(parent);
   // find a particular reference to this child
-  auto sibling_it = std::find_if(siblings.first, siblings.second,
+  auto ref_it = std::find_if(siblings.first, siblings.second,
                                  [&child](auto const &ref) { return ref.second == child; });
-  if (sibling_it == siblings.second)
+  if (ref_it == siblings.second)
   {
     // there was no such reference cached
     return;
@@ -232,7 +232,7 @@ void MainChain::ForgetReference(BlockHash const &parent, BlockHash const &child,
     if (parent_block || LookupBlockFromCache(parent, parent_block))
     {
       auto other_child_it = siblings.first;
-      if (sibling_it == other_child_it)
+      if (ref_it == other_child_it)
       {
         // the child hash is the first in siblings range so the next one is the one that persists
         ++other_child_it;
@@ -251,7 +251,7 @@ void MainChain::ForgetReference(BlockHash const &parent, BlockHash const &child,
 #endif
     // there's still a lot of forward refs left, nothing to be done here
   }
-  references_.erase(sibling_it);
+  references_.erase(ref_it);
 }
 
 /**
