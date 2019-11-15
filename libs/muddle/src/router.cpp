@@ -359,7 +359,7 @@ void Router::Route(Handle handle, PacketPtr const &packet)
   uint64_t const packet_size = packet->GetPacketSize();
   rx_packet_total_->increment();
   rx_max_packet_length->max(packet_size);
-  rx_packet_length->Add(packet_size);
+  rx_packet_length->Add(static_cast<double>(packet_size));
 
   // discard all foreign packets
   if (packet->GetNetworkId() != network_id_.value())
@@ -854,7 +854,7 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet)
 
       tx_packet_total_->increment();
       tx_max_packet_length->max(buffer.size());
-      tx_packet_length->Add(buffer.size());
+      tx_packet_length->Add(static_cast<double>(buffer.size()));
     }
     else
     {
@@ -920,7 +920,7 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
       register_.Broadcast(buffer);
       bx_packet_total_->increment();
       bx_max_packet_length->max(buffer.size());
-      bx_packet_length->Add(buffer.size());
+      bx_packet_length->Add(static_cast<double>(buffer.size()));
     }
     else
     {
