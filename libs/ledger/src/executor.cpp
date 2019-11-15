@@ -47,6 +47,12 @@ namespace fetch {
 namespace ledger {
 namespace {
 
+bool IsCreateWealth(chain::Transaction const &tx)
+{
+  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
+         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
+}
+
 bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
 {
   // Step 1 - Translate the tx into a common name
@@ -80,11 +86,7 @@ bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
   return true;
 }
 
-bool IsCreateWealth(chain::Transaction const &tx)
-{
-  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
-         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
-}
+
 
 }  // namespace
 
@@ -96,6 +98,7 @@ bool IsCreateWealth(chain::Transaction const &tx)
 Executor::Executor(StorageUnitPtr storage, StakeUpdateInterface *stake_updates)
   : stake_updates_{stake_updates}
   , storage_{std::move(storage)}
+  , tx_validator_{*storage_, token_contract_}
   , overall_duration_{Registry::Instance().LookupMeasurement<Histogram>(
         "ledger_executor_overall_duration")}
   , tx_retrieve_duration_{Registry::Instance().LookupMeasurement<Histogram>(
@@ -230,75 +233,14 @@ bool Executor::ValidationChecks(Result &result)
 {
   telemetry::FunctionTimer const timer{*validation_checks_duration_};
 
-  // SHORT TERM EXEMPTION - While no state file exists (and the wealth endpoint is still present)
-  // this and only this contract is exempt from the pre-validation checks
-  if (IsCreateWealth(*current_tx_))
-  {
-    result.status = Status::SUCCESS;
-    return true;
-  }
+  // validate this transaction at this time point
+  auto const status = tx_validator_(*current_tx_, block_);
 
-  // CHECK: Determine if the transaction is valid for the given block
-  auto const tx_validity = current_tx_->GetValidity(block_);
-  if (chain::Transaction::Validity::VALID != tx_validity)
+  if (status != Status::SUCCESS)
   {
-    result.status = Status::TX_NOT_VALID_FOR_BLOCK;
+    result.status = status;
     return false;
   }
-
-  // attach the token contract to the storage engine
-  StateAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}};
-
-  token_contract_.Attach(
-      {&token_contract_, current_tx_->contract_address(), &storage_adapter, block_});
-
-  // CHECK: Ensure there is permission from the originating address to perform the transaction
-  //        (essentially take fees)
-  auto const deed = token_contract_.GetDeed(current_tx_->from());
-  if (deed)
-  {
-    // if a deed is present then minimally the signers of the transaction need to have transfer
-    // permission in order to pay for the fees
-    if (!deed->Verify(*current_tx_, Deed::TRANSFER))
-    {
-      result.status = Status::TX_PERMISSION_DENIED;
-      return false;
-    }
-
-    // additionally if a smart contract is present in the transaction we also need the execute
-    // permission
-    if (chain::Transaction::ContractMode::PRESENT == current_tx_->contract_mode())
-    {
-      if (!deed->Verify(*current_tx_, Deed::EXECUTE))
-      {
-        result.status = Status::TX_PERMISSION_DENIED;
-        return false;
-      }
-    }
-  }
-
-  // CHECK: Ensure that the originator has funds available to make both all the transfers in the
-  //        contract as well as the maximum fees
-  uint64_t const min_charge =
-      current_tx_->transfers().size() +
-      ((current_tx_->contract_mode() == chain::Transaction::ContractMode::NOT_PRESENT) ? 0 : 1);
-  if (current_tx_->charge_limit() < min_charge)
-  {
-    result.status = Status::TX_NOT_ENOUGH_CHARGE;
-    return false;
-  }
-
-  // CHECK: Ensure that the originator has funds available to make both all the transfers in the
-  //        contract as well as the maximum fees
-  uint64_t const balance    = token_contract_.GetBalance(current_tx_->from());
-  uint64_t const max_charge = current_tx_->charge_rate() * current_tx_->charge_limit();
-  if (balance < max_charge)
-  {
-    result.status = Status::INSUFFICIENT_AVAILABLE_FUNDS;
-    return false;
-  }
-
-  token_contract_.Detach();
 
   // All checks passed
   result.status = Status::SUCCESS;
