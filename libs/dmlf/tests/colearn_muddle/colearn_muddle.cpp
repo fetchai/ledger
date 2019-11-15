@@ -85,7 +85,7 @@ public:
       r += std::to_string(remote);
     }
 
-    actual    = std::make_shared<LN>(priv, port, r);
+    actual = std::make_shared<LN>(priv, port, r);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     interface = actual;
     interface->RegisterUpdateType<UpdateTypeForTesting>("update");
