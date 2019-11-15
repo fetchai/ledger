@@ -49,6 +49,7 @@ public:
 
   // library functions
   DeedPtr  GetDeed(chain::Address const &address);
+  void     SetDeed(chain::Address const &address, DeedPtr const &deed);
   uint64_t GetBalance(chain::Address const &address);
   bool     AddTokens(chain::Address const &address, uint64_t amount);
   bool     SubtractTokens(chain::Address const &address, uint64_t amount);

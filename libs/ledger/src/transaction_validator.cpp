@@ -54,18 +54,18 @@ TransactionValidator::TransactionValidator(StorageInterface &storage, TokenContr
 ContractExecutionStatus TransactionValidator::operator()(chain::Transaction const &tx,
                                                          uint64_t                  block_index)
 {
-  // SHORT TERM EXEMPTION - While no state file exists (and the wealth endpoint is still present)
-  // this and only this contract is exempt from the pre-validation checks
-  if (IsCreateWealth(tx))
-  {
-    return ContractExecutionStatus::SUCCESS;
-  }
-
   // CHECK: Determine if the transaction is valid for the given block
   auto const tx_validity = tx.GetValidity(block_index);
   if (chain::Transaction::Validity::VALID != tx_validity)
   {
     return ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK;
+  }
+
+  // SHORT TERM EXEMPTION - While no state file exists (and the wealth endpoint is still present)
+  // this and only this contract is exempt from the pre-validation checks
+  if (IsCreateWealth(tx))
+  {
+    return ContractExecutionStatus::SUCCESS;
   }
 
   // attach the token contract to the storage engine
@@ -101,12 +101,7 @@ ContractExecutionStatus TransactionValidator::operator()(chain::Transaction cons
     {
       // CHECK: In the case where there is no deed present. Then there should only be one signature
       //        present in the transaction and it must match the from address
-      if (tx.signatories().size() != 1)
-      {
-        return ContractExecutionStatus::TX_PERMISSION_DENIED;
-      }
-
-      if (tx.signatories()[0].address != tx.from())
+      if (!((tx.signatories().size() == 1) && tx.IsSignedByFromAddress()))
       {
         return ContractExecutionStatus::TX_PERMISSION_DENIED;
       }
@@ -117,7 +112,7 @@ ContractExecutionStatus TransactionValidator::operator()(chain::Transaction cons
     uint64_t const min_charge =
         tx.transfers().size() +
         ((tx.contract_mode() == chain::Transaction::ContractMode::NOT_PRESENT) ? 0 : 1);
-    if (tx.charge_limit() < min_charge)
+    if ((tx.charge_limit() < min_charge) || (tx.charge_rate() == 0))
     {
       return ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE;
     }

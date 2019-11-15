@@ -99,6 +99,19 @@ DeedPtr TokenContract::GetDeed(chain::Address const &address)
   return deed;
 }
 
+void TokenContract::SetDeed(chain::Address const &address, DeedPtr const &deed)
+{
+  // create or lookup the wallet record
+  WalletRecord record{};
+  GetStateRecord(record, address.display());
+
+  // update the deed
+  record.deed = deed;
+
+  // write back the wallet record
+  SetStateRecord(record, address.display());
+}
+
 uint64_t TokenContract::GetBalance(chain::Address const &address)
 {
   WalletRecord record{};
