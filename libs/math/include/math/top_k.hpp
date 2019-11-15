@@ -39,12 +39,8 @@ void TopK(ArrayDataType &ret_data, ArrayIndicesType &ret_indices, ArrayDataType 
   using DataType  = typename ArrayDataType::Type;
   using IndexType = typename ArrayIndicesType::Type;
 
-<<<<<<< HEAD
-  assert(k <= data.shape().at(data.shape().size() - 1));
-=======
   assert(axis < data.shape().size());
   assert(k <= data.shape().at(axis));
->>>>>>> 88491f0c70ec61b3eecf37e939ac4fe8c7c0949d
 
   SizeType axis_size = data.shape().at(axis);
 
