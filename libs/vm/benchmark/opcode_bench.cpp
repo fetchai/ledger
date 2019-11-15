@@ -55,7 +55,7 @@ const bool
     run_crypto = std::getenv("FETCH_VM_BENCHMARK_NO_CRYPTO") == nullptr;
 
 // Number of benchmarks in each category
-const u_int
+const uint32_t
     n_basic_bms = 15,
     n_object_bms = 10,
     n_prim_bms = 25,
@@ -65,12 +65,12 @@ const u_int
     n_crypto_bms = 4;
 
 // Number of total (including int) and decimal (fixed or float) primitives
-const u_int
+const uint32_t
     n_primitives = 12,
     n_dec_primitives = 4;
 
 // Benchmark parameters (change as desired)
-const u_int
+const uint32_t
     max_array_len = 16384,
     n_array_lens = 32,
     max_str_len = 16384,
@@ -80,7 +80,7 @@ const u_int
     n_tensor_dim_sizes = n_tensor_sizes*3;
 
 // Index benchmarks for interpretation by "scripts/benchmark/opcode_timing.py"
-const u_int
+const uint32_t
     basic_begin = 0,
     basic_end = run_basic ? n_basic_bms : 1, // always run "Return" benchmark as baseline
     object_begin = basic_end,
@@ -106,7 +106,7 @@ const u_int
  * @bm_ind Index of benchmark (used to encode several Etch-code benchmarks in each function)
  */
 void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_name, std::string const &etch_code,
-                       std::string const &baseline_name, u_int const bm_ind) {
+                       std::string const &baseline_name, uint32_t const bm_ind) {
 
   Module module;
 
@@ -232,10 +232,10 @@ std::string ArrayErase(std::string const &arr, std::string const &ind)
 }
 
 std::string TensorDec(std::string const &tensor, std::string const &prim, std::string const &tensor_shape,
-                      std::string const &tensor_size, const u_int tensor_dim)
+                      std::string const &tensor_size, const uint32_t tensor_dim)
 {
   auto tensor_dec = ArrayDec(tensor_shape, prim, std::to_string(tensor_dim));
-  for (u_int i = 0; i != tensor_dim; ++i)
+  for (uint32_t i = 0; i != tensor_dim; ++i)
   {
     tensor_dec += ArrayAss(tensor_shape, std::to_string(i), tensor_size);
   }
@@ -243,10 +243,10 @@ std::string TensorDec(std::string const &tensor, std::string const &prim, std::s
   return tensor_dec;
 }
 
-std::string FromString(std::string const &tensor, std::string const &val, u_int tensor_size)
+std::string FromString(std::string const &tensor, std::string const &val, uint32_t tensor_size)
 {
   std::string from_string = tensor + ".fromString(\"";
-  for (u_int i = 0; i != tensor_size; ++i)
+  for (uint32_t i = 0; i != tensor_size; ++i)
   {
     from_string += val;
     if (i < tensor_size - 1)
@@ -258,7 +258,7 @@ std::string FromString(std::string const &tensor, std::string const &val, u_int 
   return from_string;
 }
 
-std::string Sha256Update(u_int str_len)
+std::string Sha256Update(uint32_t str_len)
 {
   std::string str(str_len, '0');
   return "s.update(\"" + str + "\");\n";
@@ -273,7 +273,7 @@ std::string Sha256Update(u_int str_len)
  * @return the range vector
  */
 template<typename T>
-std::vector<T> LinearRangeVector(T max, u_int n_elem)
+std::vector<T> LinearRangeVector(T max, uint32_t n_elem)
 {
   float current_val = 0.0f;
   auto const step = static_cast<float>(max) / static_cast<float>(n_elem);
@@ -342,9 +342,9 @@ void BasicBenchmarks(benchmark::State &state)
       etch_codes = {RETURN, PUSH_FALSE, PUSH_TRUE, JUMP_IF_FALSE, JUMP, NOT, AND, OR, FOR_LOOP, BREAK,
                     CONTINUE, DESTRUCT_BASE, DESTRUCT, FUNC, VAR_DEC_STRING};
 
-  auto bm_ind = static_cast<u_int>(state.range(0));
+  auto bm_ind = static_cast<uint32_t>(state.range(0));
 
-  u_int const etch_ind = bm_ind - basic_begin;
+  uint32_t const etch_ind = bm_ind - basic_begin;
 
   if (etch_ind >= etch_codes.size())
   {
@@ -358,14 +358,14 @@ void BasicBenchmarks(benchmark::State &state)
 
 void ObjectBenchmarks(benchmark::State &state)
 {
-  auto bm_ind = static_cast<u_int>(state.range(0));
+  auto bm_ind = static_cast<uint32_t>(state.range(0));
 
   // Generate the string lengths from benchmark parameters
-  std::vector<u_int> str_len = LinearRangeVector<u_int>(max_str_len, n_str_lens);
+  std::vector<uint32_t> str_len = LinearRangeVector<uint32_t>(max_str_len, n_str_lens);
 
   // Get the indices of the string length and etch code corresponding to the benchmark range variable
-  const u_int len_ind = (bm_ind - object_begin) / n_object_bms;
-  const u_int etch_ind = (bm_ind - object_begin) % n_object_bms;
+  const uint32_t len_ind = (bm_ind - object_begin) / n_object_bms;
+  const uint32_t etch_ind = (bm_ind - object_begin) % n_object_bms;
 
   std::string const str("\"" + std::string(str_len[len_ind], '0') + "\"");
 
@@ -431,11 +431,11 @@ void PrimitiveOpBenchmarks(benchmark::State &state)
   const static std::vector<std::string> values{"1i8", "1i16", "1i32", "1i64", "1u8", "1u16", "1u32", "1u64",
                                                "0.5f", "0.5", "0.5fp32", "0.5fp64"};
 
-  auto bm_ind = static_cast<u_int>(state.range(0));
+  auto bm_ind = static_cast<uint32_t>(state.range(0));
 
   // Get the index of the primitive corresponding to the benchmark range variable and the relevant etch code
-  const u_int prim_ind = (bm_ind - prim_begin) / n_prim_bms;
-  const u_int etch_ind = (bm_ind - prim_begin) % n_prim_bms;
+  const uint32_t prim_ind = (bm_ind - prim_begin) / n_prim_bms;
+  const uint32_t etch_ind = (bm_ind - prim_begin) % n_prim_bms;
 
   std::string const prim(primitives[prim_ind]);
   std::string const val(values[prim_ind]);
@@ -550,11 +550,11 @@ void MathBenchmarks(benchmark::State &state)
       values{"0.5f", "0.5", "0.5fp32", "0.5fp64"},
       alt_values{"1.5f", "1.5", "1.5fp32", "1.5fp64"};
 
-  auto bm_ind = static_cast<u_int>(state.range(0));
+  auto bm_ind = static_cast<uint32_t>(state.range(0));
 
   // Get the index of the math function corresponding to the benchmark range variable and the relevant etch code
-  const u_int prim_ind = (bm_ind - math_begin) / n_math_bms;
-  const u_int etch_ind = (bm_ind - math_begin) % n_math_bms;
+  const uint32_t prim_ind = (bm_ind - math_begin) / n_math_bms;
+  const uint32_t etch_ind = (bm_ind - math_begin) % n_math_bms;
 
   const std::string
       prim = primitives[prim_ind],
@@ -638,14 +638,14 @@ void MathBenchmarks(benchmark::State &state)
 
 void ArrayBenchmarks(benchmark::State &state)
 {
-  auto bm_ind = static_cast<u_int>(state.range(0));
+  auto bm_ind = static_cast<uint32_t>(state.range(0));
 
   // Generate array lengths from benchmark parameters
-  std::vector<u_int> array_len = LinearRangeVector<u_int>(max_array_len, n_array_lens);
+  std::vector<uint32_t> array_len = LinearRangeVector<uint32_t>(max_array_len, n_array_lens);
 
   // Get the index of the array length corresponding to the benchmark range variable and the relevant etch code
-  const u_int len_ind = (bm_ind - array_begin) / n_array_bms;
-  const u_int etch_ind = (bm_ind - array_begin) % n_array_bms;
+  const uint32_t len_ind = (bm_ind - array_begin) / n_array_bms;
+  const uint32_t etch_ind = (bm_ind - array_begin) % n_array_bms;
 
   const std::string
       prim = "Int32",
@@ -705,9 +705,9 @@ void ArrayBenchmarks(benchmark::State &state)
 
 void TensorBenchmarks(benchmark::State &state)
 {
-  auto bm_ind = static_cast<u_int>(state.range(0));
+  auto bm_ind = static_cast<uint32_t>(state.range(0));
 
-  const u_int
+  const uint32_t
       dim_size_ind = (bm_ind - tensor_begin) / n_tensor_bms, // index of all dim-size variations for a given benchmark
       dim (dim_size_ind / n_tensor_sizes + 2), // tensor dimension
       dim_begin ((dim - 2)*n_tensor_sizes), // index of first occurrence of this tensor dimension
@@ -715,9 +715,9 @@ void TensorBenchmarks(benchmark::State &state)
       etch_ind = (bm_ind - tensor_begin) % n_tensor_bms; // index of etch code snippet (benchmark type)
 
   // Generate tensor sizes from benchmark parameters
-  const auto max_tensor_side = static_cast<u_int>(std::pow(static_cast<float>(max_tensor_size),1.0f / static_cast<float>(dim)));
-  std::vector<u_int> tensor_sides = LinearRangeVector<u_int>(max_tensor_side, n_tensor_sizes);
-  const auto n_elem = static_cast<u_int>(std::pow(static_cast<float>(tensor_sides[size_ind]), static_cast<float>(dim)));
+  const auto max_tensor_side = static_cast<uint32_t>(std::pow(static_cast<float>(max_tensor_size),1.0f / static_cast<float>(dim)));
+  std::vector<uint32_t> tensor_sides = LinearRangeVector<uint32_t>(max_tensor_side, n_tensor_sizes);
+  const auto n_elem = static_cast<uint32_t>(std::pow(static_cast<float>(tensor_sides[size_ind]), static_cast<float>(dim)));
 
   const static std::string
       prim = "UInt64",
@@ -773,13 +773,13 @@ void TensorBenchmarks(benchmark::State &state)
 
 void CryptoBenchmarks(benchmark::State &state)
 {
-  auto bm_ind = static_cast<u_int>(state.range(0));
+  auto bm_ind = static_cast<uint32_t>(state.range(0));
 
   // Generate the string lengths from benchmark parameters
-  std::vector<u_int> str_len = LinearRangeVector<u_int>(max_str_len, n_str_lens);
+  std::vector<uint32_t> str_len = LinearRangeVector<uint32_t>(max_str_len, n_str_lens);
 
-  const u_int etch_ind = std::min<u_int>(bm_ind - crypto_begin, 3);
-  const u_int len_ind = (bm_ind - (crypto_begin + 3)) % n_str_lens;
+  const uint32_t etch_ind = std::min<uint32_t>(bm_ind - crypto_begin, 3);
+  const uint32_t len_ind = (bm_ind - (crypto_begin + 3)) % n_str_lens;
 
   std::string const length(std::to_string(str_len[len_ind]));
 
