@@ -24,6 +24,18 @@ project_root = 'unknown'
 build_directory = 'unknown'
 
 
+def find_tool(name):
+    tool_path = shutil.which('name')
+    if tool_path is not None:
+        tool_cmd = [tool_path]
+    elif os.path.exists('/usr/bin/xcrun'):
+        tool_cmd = ['/usr/bin/xcrun', name]
+    else:
+        raise RuntimeError("Unable to find tool '{}' on your system".format(name))
+
+    return tool_cmd
+
+
 def create_dir(dirname, remove):
     dirname = os.path.join(build_directory, dirname)
 
@@ -117,13 +129,13 @@ def get_coverage_reports(targets: map):
 
         # Generate an indexed file target.profdata
         subprocess.check_output(
-            ["llvm-profdata", "merge", "-sparse", raw_file_name, "-o",
+            find_tool('llvm-profdata') + ["merge", "-sparse", raw_file_name, "-o",
              indexed_file_name],
             cwd=build_directory)
 
         # Generate the coverage in coverate/target_coverate
         subprocess.check_output(
-            ["llvm-cov", "show", "-Xdemangler", "c++filt", val,
+            find_tool('llvm-cov') + ["show", "-Xdemangler", "c++filt", val,
              "-instr-profile=" + indexed_file_name, "-format=html", "-o",
              directory_name],
             cwd=build_directory)
@@ -139,21 +151,25 @@ def get_all_coverage_reports(targets: map):
     for key, val in targets.items():
         raw_file_name = key + ".profraw"
         indexed_file_name = key + ".profdata"
-        if not os.path.isfile(build_directory+raw_file_name) or not os.path.isfile(build_directory+indexed_file_name):
+
+        raw_file_path = os.path.join(build_directory, raw_file_name)
+        indexed_file_path = os.path.join(build_directory, indexed_file_name)
+
+        if not (os.path.isfile(raw_file_path) and os.path.isfile(indexed_file_path)):
             print("\nWARNING: Failed to find coverage output files " +
-                  raw_file_name + " and " + indexed_file_name)
+                  raw_file_path + " and " + indexed_file_path)
             continue
 
-        all_profs += [indexed_file_name]
+        all_profs += [indexed_file_path]
         all_binaries += ["-object", val]
 
-    args = ["llvm-profdata", "merge", "-sparse"]
+    args = find_tool("llvm-profdata") + ["merge", "-sparse"]
     args.extend(all_profs)
     args.extend(["-o", "final.profdata"])
 
     subprocess.check_output(args, cwd=build_directory)
 
-    args = ["llvm-cov", "show", "-Xdemangler", "c++filt"]
+    args = find_tool("llvm-cov") + ["show", "-Xdemangler", "c++filt"]
     args.extend(all_binaries)
     args.extend(["-instr-profile=final.profdata",
                  "-format=html", "-o", "coverage/all_coverage"])
