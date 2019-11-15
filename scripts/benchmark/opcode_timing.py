@@ -26,12 +26,12 @@ imgformat = 'png'
 
 # selectively suppress benchmarks by setting environment variables 
 #os.environ['FETCH_VM_BENCHMARK_NO_BASIC'] = '1'
-os.environ['FETCH_VM_BENCHMARK_NO_OBJECT'] = '1'
-os.environ['FETCH_VM_BENCHMARK_NO_PRIM_OPS'] = '1'
-os.environ['FETCH_VM_BENCHMARK_NO_MATH'] = '1'
-os.environ['FETCH_VM_BENCHMARK_NO_ARRAY'] = '1'
-os.environ['FETCH_VM_BENCHMARK_NO_TENSOR'] = '1'
-os.environ['FETCH_VM_BENCHMARK_NO_CRYPTO'] = '1'
+#os.environ['FETCH_VM_BENCHMARK_NO_OBJECT'] = '1'
+#os.environ['FETCH_VM_BENCHMARK_NO_PRIM_OPS'] = '1'
+#os.environ['FETCH_VM_BENCHMARK_NO_MATH'] = '1'
+#os.environ['FETCH_VM_BENCHMARK_NO_ARRAY'] = '1'
+#os.environ['FETCH_VM_BENCHMARK_NO_TENSOR'] = '1'
+#os.environ['FETCH_VM_BENCHMARK_NO_CRYPTO'] = '1'
 
 
 # return index of benchmark from name listed in vm_benchmark_file
@@ -88,7 +88,7 @@ stddevs = {index(row): float(row[3]) for row in bm_rows if 'stddev' in row[0]}
 
 bm_classes = ['Basic','String','Prim','Math','Array','Tensor','Sha256']
 prim_bm_classes = ['Prim','Math']
-param_bm_classes = ['String', 'Array', 'Sha256Update']
+param_bm_classes = ['String', 'Array', 'Sha256']
 
 # collect benchmark data and stats
 benchmarks = {ind : {'name': name, 
@@ -115,7 +115,7 @@ for (ind,bm) in benchmarks.items():
         dim_size = bm['name'].split('_')[1]
         bm['dim'] = int(dim_size.split('-')[0])
         bm['param_val'] = int(dim_size.split('-')[1])**bm['dim'] 
-    elif bm['class'] in param_bm_classes :
+    elif bm['class'] in param_bm_classes and '_' in bm['name']:
         bm['type'] = bm['name'].split('_')[0]
         bm['param_val'] = int(bm['name'].split('_')[1])
 
@@ -123,7 +123,7 @@ for (ind,bm) in benchmarks.items():
 tensor_bm_types = {bm['type'] for bm in benchmarks.values() if bm['class'] == 'Tensor'}
 
 # collect parameterized benchmark data
-param_bm_types = {bm['type'] for bm in benchmarks.values() if bm['class'] in param_bm_classes}
+param_bm_types = {bm['type'] for bm in benchmarks.values() if bm['class'] in param_bm_classes and '_' in bm['name']}
 param_bm_types = param_bm_types.union(tensor_bm_types)
 
 param_bms = {type_name : {'inds': [ind for (ind,bm) in benchmarks.items() if bm['type'] == type_name],
