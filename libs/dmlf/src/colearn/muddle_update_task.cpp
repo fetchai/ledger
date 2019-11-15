@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,51 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
-#include <cassert>
+#include "dmlf/colearn/muddle_update_task.hpp"
 
 namespace fetch {
-namespace math {
-
-/**
- * Max function for two values
- * @tparam T
- * @param datum1
- * @param datum2
- * @return
- */
-template <typename T>
-T Max(T const &datum1, T const &datum2, T &ret)
-{
-  ret = std::max(datum1, datum2);
-  return ret;
+namespace dmlf {
+namespace colearn {
 }
-template <typename T>
-T Max(T const &datum1, T const &datum2)
-{
-  T ret{};
-  ret = Max(datum1, datum2, ret);
-  return ret;
-}
-
-/**
- * Min function for two values
- * @tparam T
- * @param datum1
- * @param datum2
- * @return
- */
-template <typename T>
-void Min(T const &datum1, T const &datum2, T &ret)
-{
-  ret = std::min(datum1, datum2);
-}
-template <typename T>
-T Min(T const &datum1, T const &datum2)
-{
-  T ret = std::min(datum1, datum2);
-  return ret;
-}
-
-}  // namespace math
+}  // namespace dmlf
 }  // namespace fetch
