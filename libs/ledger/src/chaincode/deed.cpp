@@ -95,6 +95,11 @@ Deed::Weight SigneesFullWeight(Deed::Signees const &signees)
 }
 }  // namespace
 
+Deed::Operation const Deed::TRANSFER{"transfer"};
+Deed::Operation const Deed::STAKE{"stake"};
+Deed::Operation const Deed::AMEND{"ammend"};
+Deed::Operation const Deed::EXECUTE{"execute"};
+
 Deed::Deed(Signees signees, OperationTresholds thresholds)
   : signees_{std::move(signees)}
   , operation_thresholds_{std::move(thresholds)}
@@ -154,7 +159,7 @@ bool Deed::IsSane() const
  */
 
 // TODO(EJF): Rework to use signatories
-bool Deed::Verify(chain::Transaction const &tx, DeedOperation const &operation) const
+bool Deed::Verify(chain::Transaction const &tx, Operation const &operation) const
 {
   auto const op = operation_thresholds_.find(operation);
   if (op == operation_thresholds_.end())

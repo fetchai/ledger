@@ -40,7 +40,7 @@ using fetch::byte_array::ConstByteArray;
 using fetch::variant::Variant;
 
 bool IsOperationValid(WalletRecord const &record, chain::Transaction const &tx,
-                      ConstByteArray const &operation)
+                      Deed::Operation const &operation)
 {
   // perform validation checks
   if (record.deed)
@@ -84,6 +84,19 @@ TokenContract::TokenContract()
   OnQuery("balance", this, &TokenContract::Balance);
   OnQuery("stake", this, &TokenContract::Stake);
   OnQuery("cooldownStake", this, &TokenContract::CooldownStake);
+}
+
+DeedPtr TokenContract::GetDeed(chain::Address const &address)
+{
+  DeedPtr deed{};
+
+  WalletRecord record{};
+  if (GetStateRecord(record, address.display()))
+  {
+    deed = record.deed;
+  }
+
+  return deed;
 }
 
 uint64_t TokenContract::GetBalance(chain::Address const &address)
@@ -144,7 +157,7 @@ bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address 
     // There is current deed in effect.
 
     // Verify that current transaction possesses authority to perform the transfer
-    if (!from_record.deed->Verify(tx, TRANSFER_NAME))
+    if (!from_record.deed->Verify(tx, Deed::TRANSFER))
     {
       return false;
     }
@@ -214,7 +227,7 @@ Contract::Result TokenContract::Deed(chain::Transaction const &tx)
 
     // Verify that current transaction has authority to AMEND the deed
     // currently in effect.
-    if (!record.deed->Verify(tx, AMEND_NAME))
+    if (!record.deed->Verify(tx, Deed::AMEND))
     {
       return {Status::FAILED};
     }
@@ -276,7 +289,7 @@ Contract::Result TokenContract::AddStake(chain::Transaction const &tx)
       if (GetStateRecord(record, tx.from().display()))
       {
         // ensure the transaction has authority over this deed
-        if (IsOperationValid(record, tx, STAKE_NAME))
+        if (IsOperationValid(record, tx, Deed::STAKE))
         {
           // stake the amount
           if (record.balance >= amount)
@@ -325,7 +338,7 @@ Contract::Result TokenContract::DeStake(chain::Transaction const &tx)
       if (GetStateRecord(record, tx.from().display()))
       {
         // ensure the transaction has authority over this deed
-        if (IsOperationValid(record, tx, STAKE_NAME))
+        if (IsOperationValid(record, tx, Deed::STAKE))
         {
           FETCH_LOG_INFO(LOGGING_NAME, "Destaking! : ", amount, " of ", record.stake);
           // destake the amount
@@ -358,7 +371,7 @@ Contract::Result TokenContract::CollectStake(chain::Transaction const &tx)
   if (GetStateRecord(record, tx.from().display()))
   {
     // ensure the transaction has authority over this deed
-    if (IsOperationValid(record, tx, STAKE_NAME))
+    if (IsOperationValid(record, tx, Deed::STAKE))
     {
       // Collect all cooled down stakes and put them back into the account
       record.CollectStake(context().block_index);

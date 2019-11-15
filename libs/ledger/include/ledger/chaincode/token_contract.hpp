@@ -32,9 +32,13 @@ class Transaction;
 }  // namespace chain
 namespace ledger {
 
+class Deed;
+
 class TokenContract : public Contract
 {
 public:
+  using DeedPtr = std::shared_ptr<Deed>;
+
   struct StakeUpdate
   {
     Identity identity;  ///< The identity of the staker
@@ -52,6 +56,7 @@ public:
   ~TokenContract() override = default;
 
   // library functions
+  DeedPtr  GetDeed(chain::Address const &address);
   uint64_t GetBalance(chain::Address const &address);
   bool     AddTokens(chain::Address const &address, uint64_t amount);
   bool     SubtractTokens(chain::Address const &address, uint64_t amount);
