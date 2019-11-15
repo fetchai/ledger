@@ -55,7 +55,7 @@ const bool
 
 // Number of benchmarks in each category
 const u_int
-    n_basic_bms = 16,
+    n_basic_bms = 15,
     n_object_bms = 10,
     n_prim_bms = 25,
     n_math_bms = 16,
@@ -264,7 +264,6 @@ void BasicBenchmarks(benchmark::State &state) {
   // Boolean and type-neutral benchmark codes
   static std::pair<std::string, std::string>
       RETURN = std::make_pair("Return", FunMain("")),
-      PUSH_NULL = std::make_pair("PushNull", FunMain("null;\n")),
       PUSH_FALSE = std::make_pair("PushFalse", FunMain(FALSE + ";\n")),
       PUSH_TRUE = std::make_pair("PushTrue", FunMain(TRUE + ";\n")),
       JUMP_IF_FALSE = std::make_pair("JumpIfFalse", FunMain(IfThen(FALSE, EMPTY))),
@@ -283,7 +282,6 @@ void BasicBenchmarks(benchmark::State &state) {
   std::unordered_map<std::string, std::string>
       baseline_map({
                        {"Return",             "Return"},
-                       {"PushNull",           "Return"},
                        {"PushFalse",          "Return"},
                        {"PushTrue",           "Return"},
                        {"JumpIfFalse",        "Return"},
@@ -301,12 +299,17 @@ void BasicBenchmarks(benchmark::State &state) {
                    });
 
   std::vector<std::pair<std::string, std::string>> const
-      etch_codes = {RETURN, PUSH_NULL, PUSH_FALSE, PUSH_TRUE, JUMP_IF_FALSE, JUMP, NOT, AND, OR, FOR_LOOP, BREAK,
+      etch_codes = {RETURN, PUSH_FALSE, PUSH_TRUE, JUMP_IF_FALSE, JUMP, NOT, AND, OR, FOR_LOOP, BREAK,
                     CONTINUE, DESTRUCT_BASE, DESTRUCT, FUNC, VAR_DEC_STRING};
 
   auto bm_ind = static_cast<u_int>(state.range(0));
 
   u_int const etch_ind = bm_ind - basic_begin;
+
+  if (etch_ind >= etch_codes.size()) {
+    std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
+    return;
+  }
 
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
                     baseline_map[etch_codes[etch_ind].first], bm_ind);
@@ -368,6 +371,11 @@ void ObjectBenchmarks(benchmark::State &state) {
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {PUSH_STRING, VAR_DEC_ASS_STRING, PUSH_VAR_STRING, OBJ_EQ, OBJ_NEQ, OBJ_LT, OBJ_GT,
                     OBJ_LTE, OBJ_GTE, OBJ_ADD};
+
+  if (etch_ind >= etch_codes.size()) {
+    std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
+    return;
+  }
 
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
                     baseline_map[etch_codes[etch_ind].first], bm_ind);
@@ -483,6 +491,11 @@ void PrimitiveOpBenchmarks(benchmark::State &state) {
                     PRIM_PRE_DEC, PRIM_POST_INC, PRIM_POST_DEC, VAR_PRIM_INP_ADD, VAR_PRIM_INP_SUB, VAR_PRIM_INP_MUL,
                     VAR_PRIM_INP_DIV, VAR_PRIM_INP_MOD};
 
+  if (etch_ind >= etch_codes.size()) {
+    std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
+    return;
+  }
+
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
                     baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
@@ -500,7 +513,7 @@ void MathBenchmarks(benchmark::State &state) {
   const u_int prim_ind = (bm_ind - math_begin) / n_math_bms;
   const u_int etch_ind = (bm_ind - math_begin) % n_math_bms;
 
-  const std::string 
+  const std::string
       prim = primitives[prim_ind],
       val = values[prim_ind],
       alt_val = alt_values[prim_ind];
@@ -570,6 +583,11 @@ void MathBenchmarks(benchmark::State &state) {
       etch_codes = {PRIM_ABS, PRIM_SIN, PRIM_COS, PRIM_TAN, PRIM_ASIN, PRIM_ACOS, PRIM_ATAN, PRIM_SINH, PRIM_COSH,
                     PRIM_TANH, PRIM_ASINH, PRIM_ACOSH, PRIM_ATANH, PRIM_SQRT, PRIM_EXP, PRIM_POW};
 
+  if (etch_ind >= etch_codes.size()) {
+    std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
+    return;
+  }
+
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
                     baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
@@ -585,14 +603,14 @@ void ArrayBenchmarks(benchmark::State &state) {
   const u_int len_ind = (bm_ind - array_begin) / n_array_bms;
   const u_int etch_ind = (bm_ind - array_begin) % n_array_bms;
 
-  const std::string 
+  const std::string
       prim = "Int32",
       arr1 = "x",
       arr2 = "y",
       val = "1",
       ind = std::to_string(array_len[len_ind] - 1),
       length = std::to_string(array_len[len_ind]);
-  
+
   // Operations
   const static std::string
       COUNT = "x.count(;\n",
@@ -630,6 +648,11 @@ void ArrayBenchmarks(benchmark::State &state) {
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {ARRAY_DEC, ARRAY_ASS, ARRAY_COUNT, ARRAY_APP, ARRAY_DEC_2, ARRAY_EXT, ARRAY_POPBACK, ARRAY_POPFRONT,
                     ARRAY_ERASE, ARRAY_REV};
+
+  if (etch_ind >= etch_codes.size()) {
+    std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
+    return;
+  }
 
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
                     baseline_map[etch_codes[etch_ind].first], bm_ind);
@@ -693,6 +716,11 @@ void TensorBenchmarks(benchmark::State &state) {
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {TENSOR_DEC, TENSOR_SIZE, TENSOR_FILL, TENSOR_FILL_RAND, TENSOR_FROM_STR};
 
+  if (etch_ind >= etch_codes.size()) {
+    std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
+    return;
+  }
+
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
                     baseline_map[etch_codes[etch_ind].first], bm_ind);
 }
@@ -732,6 +760,11 @@ void CryptoBenchmarks(benchmark::State &state) {
 
   std::vector<std::pair<std::string, std::string>> const
       etch_codes = {SHA256_DEC, SHA256_RESET, SHA256_FINAL, SHA256_UPDATE};
+
+  if (etch_ind >= etch_codes.size()) {
+    std::cout << "Skipping benchmark (index out of range of benchmark category)" << std::endl;
+    return;
+  }
 
   EtchCodeBenchmark(state, etch_codes[etch_ind].first, etch_codes[etch_ind].second,
                     baseline_map[etch_codes[etch_ind].first], bm_ind);

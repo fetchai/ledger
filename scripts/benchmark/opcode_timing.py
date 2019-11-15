@@ -21,7 +21,7 @@ make_plots = True
 make_tables = True
 save_results = True
 save_figures = True
-n_reps = 100
+n_reps = 2
 imgformat = 'png'
 
 # selectively suppress benchmarks by setting environment variables 
@@ -157,6 +157,7 @@ if save_results:
         copy(file, output_path)
 
 if make_tables:
+    
     from vm_benchmark_tables import benchmark_table, primitive_table, linear_fit_table
     
     for bm_cls in bm_classes:
@@ -169,6 +170,7 @@ if make_tables:
         linear_fit_table(param_bms, n_reps, bm_cls)
     
 if make_plots:
+    
     from vm_benchmark_plots import plot_linear_fit
     
     fig = 0
