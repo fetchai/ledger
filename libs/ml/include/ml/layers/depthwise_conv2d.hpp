@@ -102,36 +102,36 @@ public:
 
     this->Compile();
   }
-//
-//  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-//  {
-//    // get all base classes saveable params
-//    std::shared_ptr<OpsSaveableParams> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
-//
-//    auto ret = std::make_shared<SPType>();
-//
-//    // copy subgraph saveable params over
-//    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
-//    auto sg_ptr2 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
-//    *sg_ptr2     = *sg_ptr1;
-//
-//    // asign layer specific params
-//    ret->kernel_size     = kernel_size_;
-//    ret->input_channels  = input_channels_;
-//    ret->output_channels = output_channels_;
-//    ret->stride_size     = stride_size_;
-//
-//    return ret;
-//  }
-//
-//  void SetOpSaveableParams(SPType const &sp)
-//  {
-//    // assign layer specific params
-//    kernel_size_     = sp.kernel_size;
-//    input_channels_  = sp.input_channels;
-//    output_channels_ = sp.output_channels;
-//    stride_size_     = sp.stride_size;
-//  }
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    // get all base classes saveable params
+    std::shared_ptr<OpsSaveableParams> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
+
+    auto ret = std::make_shared<SPType>();
+
+    // copy subgraph saveable params over
+    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
+    auto sg_ptr2 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
+    *sg_ptr2     = *sg_ptr1;
+
+    // asign layer specific params
+    ret->kernel_size      = kernel_size_;
+    ret->input_channels   = input_channels_;
+    ret->depth_multiplier = depth_multiplier_;
+    ret->stride_size      = stride_size_;
+
+    return ret;
+  }
+
+  void SetOpSaveableParams(SPType const &sp)
+  {
+    // assign layer specific params
+    kernel_size_      = sp.kernel_size;
+    input_channels_   = sp.input_channels;
+    depth_multiplier_ = sp.depth_multiplier;
+    stride_size_      = sp.stride_size;
+  }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
@@ -149,11 +149,6 @@ public:
   static constexpr char const *DESCRIPTOR = "DepthwiseConvolution2DLayer";
 
 private:
-  void Initialise(TensorType &weights, WeightsInit init_mode)
-  {
-    fetch::ml::ops::Weights<TensorType>::Initialise(weights, input_channels_, output_channels_,
-                                                    init_mode);
-  }
 
   SizeType kernel_size_{};
   SizeType input_channels_{};

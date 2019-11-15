@@ -151,7 +151,6 @@ void Convolution2D<TensorType>::Forward(VecTensorType const &inputs, TensorType 
   // Vertical stride contains kernel data
   TensorType vertical_stride{{vertical_stride_width, horizontal_stride_width}};
 
-
   // Tile input tensor -> 2D
   // Reshape input data to horizontal stride - im2col
   FillHorizontalStride(input, horizontal_stride, output_height, output_width, input_channels,
