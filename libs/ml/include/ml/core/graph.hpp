@@ -940,6 +940,13 @@ std::vector<TensorType> Graph<TensorType>::GetGradientsReferences() const
   return ret;
 }
 
+/**
+ * Assigns sets of all trainable updated rows of their gradients to vector for exporting and
+ * serialising
+ * @tparam TensorType
+ * @return ret is vector containing indices of all updated rows stored in unordered_set for each
+ * trainable
+ */
 template <typename TensorType>
 std::vector<std::unordered_set<fetch::math::SizeType>> Graph<TensorType>::GetUpdatedRowsReferences()
     const

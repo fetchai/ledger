@@ -213,7 +213,8 @@ public:
 
   /**
    * exports the weight gradients Array
-   * @return const reference to internal accumulated gradient Array
+   * @return const reference to internal accumulated gradient Array and unordered set of indices
+   * which were updated
    */
   std::pair<TensorType const, SizeSet const> GetSparseGradientsReferences() const override
   {
