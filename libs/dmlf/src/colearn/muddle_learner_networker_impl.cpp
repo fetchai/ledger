@@ -67,7 +67,7 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
   auto update_store = std::make_shared<UpdateStore>();
 
   std::unordered_set<std::string> remotes;
-  if (remote != "")
+  if (remote.empty())
   {
     remotes.insert(remote);
   }
@@ -75,7 +75,7 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
   mud->SetPeerSelectionMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
   mud->Start(remotes, {port});
 
-  setup(mud, update_store);
+  setup(std::move(mud), std::move(update_store));
 }
 
 MuddleLearnerNetworkerImpl::~MuddleLearnerNetworkerImpl()

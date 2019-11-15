@@ -78,8 +78,8 @@ public:
   {
     pub_ = pub;
 
-    std::string r = "";
-    if (remote)
+    std::string r;
+    if (remote != 0)
     {
       r = "tcp://127.0.0.1:";
       r += std::to_string(remote);
