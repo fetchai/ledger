@@ -17,6 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+// Known Issues:
+// Functions accepting as parameters or returning 
+// Array or Arrays of Arrays... of Float32 
+// or
+// Array or Arrays of Arrays... of Bool 
+// Do not work due to serialization issues. See disabled tests fo examples
+
 #include "dmlf/execution/execution_engine_interface.hpp"
 
 #include "core/serializers/main_serializer.hpp"

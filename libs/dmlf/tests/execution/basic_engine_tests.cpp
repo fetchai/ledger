@@ -716,6 +716,23 @@ endfunction
 
 )";
 
+auto const ReturnArray = R"(
+function ReturnArrayFloat32() : Array<Float32>
+  var arr = Array<Float32>(2);
+  arr[0] = 0.5f;
+  arr[1] = 6.7f;
+  return arr;
+endfunction
+
+function ReturnArrayBool() : Array<Bool>
+  var arr = Array<Bool>(2);
+  arr[0] = true;
+  arr[1] = false;
+  return arr;
+endfunction
+
+)";
+
 ExecutionResult RunStatelessTest(std::string const &which, std::string const &entrypoint,
                                  Params const &params)
 {
@@ -1858,6 +1875,28 @@ TEST(DISABLED_BasicVmEngineDmlfTests, DisabledArrayArrayOpTests)
 
   RunArrayTest("doBool", std::vector<bool>{true, true, false, false});
   EXPECT_EQ(1, 1);
+}
+
+TEST(DISABLED_BasicVmEngineDmlfTests, ReturnArrayFloat32)
+{
+  ExecutionResult result = RunStatelessTest(ReturnArray, "ReturnArrayFloat32", Params{});
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  auto output = result.output();
+  ASSERT_TRUE(output.IsArray());
+  ASSERT_EQ(output.size(), 2);
+  EXPECT_EQ(output[0].As<float>(), 0.5f);
+  EXPECT_EQ(output[1].As<float>(), 6.7f);
+}
+
+TEST(DISABLED_BasicVmEngineDmlfTests, ReturnArrayBool)
+{
+  ExecutionResult result = RunStatelessTest(ReturnArray, "ReturnArrayBool", Params{});
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  auto output = result.output();
+  ASSERT_TRUE(output.IsArray());
+  ASSERT_EQ(output.size(), 2);
+  EXPECT_EQ(output[0].As<bool>(), true);
+  EXPECT_EQ(output[1].As<bool>(), false);
 }
 
 }  // namespace
