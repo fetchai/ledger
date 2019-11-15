@@ -213,8 +213,10 @@ public:
   BlockMap::size_type UncacheBlock(BlockHash const &hash) const;
   void                KeepBlock(IntBlockPtr const &block) const;
   bool LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_hash = nullptr) const;
-  void CacheReference(BlockHash const &parent, BlockHash const &child, IntBlockPtr parent_block = {}) const;
-  void ForgetReference(BlockHash const &parent, BlockHash const &child, IntBlockPtr parent_block = {}) const;
+  void CacheReference(BlockHash const &parent, BlockHash const &child,
+                      IntBlockPtr parent_block = {}) const;
+  void ForgetReference(BlockHash const &parent, BlockHash const &child,
+                       IntBlockPtr parent_block = {}) const;
   /// @}
 
   /// @name Tip Management

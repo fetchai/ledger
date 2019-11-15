@@ -58,9 +58,9 @@ public:
   bool operator==(Block const &rhs) const;
 
   // Block core information
-  Digest         hash;               ///< The hash of the block
-  Digest         previous_hash;      ///< The hash of the previous block
-  Digest         next_hash;          ///< The hash of the next block in heaviest chain, if any.
+  Digest hash;                       ///< The hash of the block
+  Digest previous_hash;              ///< The hash of the previous block
+  Digest next_hash;                  ///< The hash of the next block in heaviest chain, if any.
                                      ///< Left empty when there are no or multiple next blocks.
   Digest         merkle_hash;        ///< The merkle state hash across all shards
   uint64_t       block_number{0};    ///< The height of the block from genesis
