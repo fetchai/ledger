@@ -234,7 +234,7 @@ void MainChain::ForgetReference(BlockHash const &parent, BlockHash const &child,
       auto other_child_it = siblings.first;
       if (ref_it == other_child_it)
       {
-        // the child hash is the first in siblings range so the next one is the one that persists
+        // the child hash is the first sibling in range so its next sibling is the one that persists
         ++other_child_it;
       }
       // other_child_it is now an unique forward reference
