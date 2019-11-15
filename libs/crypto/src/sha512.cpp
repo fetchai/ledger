@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
 #include "crypto/sha512.hpp"
+#include "core/macros.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -48,7 +48,7 @@ void SHA512::Final(uint8_t *const hash)
 std::size_t SHA512::HashSizeInBytes() const
 {
   auto const size = openssl_hasher_.HashSize();
-  assert(size == size_in_bytes);
+  assert(size == SIZE_IN_BYTES);
   return size;
 }
 

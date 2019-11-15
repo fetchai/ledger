@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "peer_selector.hpp"
 #include "core/containers/set_difference.hpp"
 #include "core/containers/set_intersection.hpp"
 #include "core/containers/set_join.hpp"
@@ -27,12 +28,10 @@
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "peer_list.hpp"
-#include "peer_selector.hpp"
 #include "xor_metric.hpp"
 
 #include <cstddef>
 #include <unordered_set>
-
 namespace fetch {
 namespace muddle {
 

@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "router.hpp"
 #include "dispatcher.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
-#include "router.hpp"
 #include "routing_message.hpp"
 #include "xor_metric.hpp"
 
@@ -79,7 +79,7 @@ std::size_t GenerateEchoId(Packet const &packet)
 
   std::size_t out = 0;
 
-  static_assert(sizeof(out) == decltype(hash)::size_in_bytes,
+  static_assert(sizeof(out) == decltype(hash)::SIZE_IN_BYTES,
                 "Output type has incorrect size to contain hash");
   hash.Final(reinterpret_cast<uint8_t *>(&out));
 

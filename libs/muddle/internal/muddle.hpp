@@ -176,6 +176,7 @@ public:
   Addresses         GetRequestedPeers() const override;
   void              ConnectTo(Address const &address) override;
   void              ConnectTo(Addresses const &addresses) override;
+  void              ConnectTo(network::Uri const &uri);  // TODO: override
   void              ConnectTo(Address const &address, network::Uri const &uri_hint) override;
   void              ConnectTo(AddressHints const &address_hints) override;
   void              DisconnectFrom(Address const &address) override;

@@ -389,9 +389,26 @@ void Muddle::ConnectTo(Addresses const &addresses)
   }
 }
 
+/**
+ * Request the muddle to make a persistent connection to a URI.
+ *
+ * @param uri The uri to connect to
+ */
+void Muddle::ConnectTo(network::Uri const &uri)
+{
+  clients_.AddPersistentPeer(uri);
+}
+
 void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint)
 {
-  if (node_address_ != address)
+  if (address.empty())
+  {
+    FETCH_LOG_WARN(logging_name_,
+                   "Address is empty, use ConnectTo(uri) to connect directly to uri.",
+                   uri_hint.ToString());
+    ConnectTo(uri_hint);
+  }
+  else if (node_address_ != address)
   {
     if (uri_hint.IsTcpPeer())
     {
@@ -445,6 +462,7 @@ void Muddle::SetConfidence(Address const &address, Confidence confidence)
 {
   FETCH_UNUSED(address);
   FETCH_UNUSED(confidence);
+  // TODO(tfr): implementation missing.
 }
 
 /**
@@ -515,7 +533,6 @@ Muddle::ServerList const &Muddle::servers() const
 void Muddle::RunPeriodicMaintenance()
 {
   FETCH_LOG_TRACE(logging_name_, "Running periodic maintenance");
-
   try
   {
     // update discovery information
