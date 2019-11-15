@@ -1646,23 +1646,12 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
   SetTimeBySlots(state, time_slots_total, time_slot_for_state);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                 "Time per slot: ", time_per_slot_, ", time slots for state: ", time_slot_for_state,
-                 ", time slots total: ", time_slots_total);
+  FETCH_LOG_DEBUG(
+      LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), "Time per slot: ", time_per_slot_,
+      ", time slots for state: ", time_slot_for_state, ", time slots total: ", time_slots_total);
 
   seconds_for_state_ = uint64_t(double(time_slot_for_state) * time_per_slot_);
   state_deadline_    = reference_timepoint_ + uint64_t(double(time_slots_total) * time_per_slot_);
-
-  FETCH_LOG_INFO(LOGGING_NAME, "-- TIMING DEBUG --");
-  FETCH_LOG_INFO(LOGGING_NAME, "Expected dkg time: ", expected_dkg_time_s);
-  FETCH_LOG_INFO(LOGGING_NAME, "Seconds for state: ", seconds_for_state_);
-  FETCH_LOG_INFO(LOGGING_NAME, "Reference timepoint: ", reference_timepoint_);
-  FETCH_LOG_INFO(LOGGING_NAME, "State deadline: ", state_deadline_);
-  FETCH_LOG_INFO(LOGGING_NAME, "time slot for state ", time_slot_for_state);
-  FETCH_LOG_INFO(LOGGING_NAME, "time slots total ", time_slots_total);
-  FETCH_LOG_INFO(LOGGING_NAME, "time slots in dkg ", time_slots_in_dkg_);
-  FETCH_LOG_INFO(LOGGING_NAME, "time per slot ", time_per_slot);
-  FETCH_LOG_INFO(LOGGING_NAME, "");
 
   if (state_deadline_ < current_time)
   {
