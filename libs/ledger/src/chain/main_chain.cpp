@@ -160,7 +160,7 @@ void MainChain::CacheReference(BlockHash const &parent, BlockHash const &child,
   auto siblings = references_.equal_range(parent);
   // check if this parent-child reference has been already cached
   auto ref_it = std::find_if(siblings.first, siblings.second,
-                                 [&child](auto const &ref) { return ref.second == child; });
+                             [&child](auto const &ref) { return ref.second == child; });
   if (ref_it == siblings.second)
   {
     // this child has not been already referred to yet
@@ -211,7 +211,7 @@ void MainChain::ForgetReference(BlockHash const &parent, BlockHash const &child,
   auto siblings = references_.equal_range(parent);
   // find a particular reference to this child
   auto ref_it = std::find_if(siblings.first, siblings.second,
-                                 [&child](auto const &ref) { return ref.second == child; });
+                             [&child](auto const &ref) { return ref.second == child; });
   if (ref_it == siblings.second)
   {
     // there was no such reference cached
