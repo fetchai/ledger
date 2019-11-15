@@ -92,9 +92,9 @@ struct Translator
 
     assert(VocabKnown(vocab_hash));
 
+    // Get vocab from database
     std::vector<std::string> other_vocab = known_vocabs[vocab_hash];
 
-    // figure out which way around the matrix is
     TensorType translated_gradient_update;
 
     for (SizeType i = 0; i < other_vocab.size(); i++)

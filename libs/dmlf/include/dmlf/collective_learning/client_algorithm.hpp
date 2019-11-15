@@ -434,6 +434,24 @@ void ClientAlgorithm<TensorType>::DoRound()
 ///////////////////////
 
 /**
+ * Aggregates updates from any source together in the model
+ * In this case the updates are gradients aggregated in the graph
+ * @param gradient
+ */
+template <class TensorType>
+void ClientAlgorithm<TensorType>::AggregateUpdate(VectorTensorType const &gradients)
+{
+  assert(gradients.size() == graph_ptr_->GetTrainables().size());
+  auto grad_it = gradients.begin();
+  for (auto &trainable : graph_ptr_->GetTrainables())
+  {
+    auto weights_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(trainable);
+    weights_ptr->AddToGradient(*grad_it);
+    ++grad_it;
+  }
+}
+
+/**
  * Aggregates sparse updates from any source together in the model
  * In this case the updates are gradients aggregated in the graph
  * @tparam TensorType
@@ -453,24 +471,6 @@ void ClientAlgorithm<TensorType>::AggregateSparseUpdate(VectorTensorType const &
     weights_ptr->AddToGradient(*grad_it, *rows_it);
     ++grad_it;
     ++rows_it;
-  }
-}
-
-/**
- * Aggregates updates from any source together in the model
- * In this case the updates are gradients aggregated in the graph
- * @param gradient
- */
-template <class TensorType>
-void ClientAlgorithm<TensorType>::AggregateUpdate(VectorTensorType const &gradients)
-{
-  assert(gradients.size() == graph_ptr_->GetTrainables().size());
-  auto grad_it = gradients.begin();
-  for (auto &trainable : graph_ptr_->GetTrainables())
-  {
-    auto weights_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(trainable);
-    weights_ptr->AddToGradient(*grad_it);
-    ++grad_it;
   }
 }
 
