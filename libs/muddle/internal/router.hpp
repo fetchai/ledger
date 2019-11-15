@@ -215,6 +215,7 @@ private:
   telemetry::CounterPtr         rx_packet_total_;
   telemetry::CounterPtr         tx_packet_total_;
   telemetry::CounterPtr         bx_packet_total_;
+  telemetry::CounterPtr         ttl_expired_packet_total_;
   telemetry::CounterPtr         dispatch_enqueued_total_;
   telemetry::CounterPtr         exchange_dispatch_total_;
   telemetry::CounterPtr         subscription_dispatch_total_;

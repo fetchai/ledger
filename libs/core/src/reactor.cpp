@@ -63,6 +63,8 @@ Reactor::Reactor(std::string name)
   , failure_total_{CreateCounter(
         "ledger_reactor_failure_total",
         "The total number of times the reactor has failed to execute a runnable")}
+  , expired_total_{CreateCounter("ledger_reactor_expired_total",
+                                 "The total number of expired runnables")}
   , work_queue_length_{CreateGauge("ledger_reactor_work_queue_length",
                                    "The current size of the work queue")}
   , work_queue_max_length_{
@@ -170,7 +172,7 @@ void Reactor::Monitor()
     // Step 1. If we have run out of work to execute then gather all the runnables that are ready
     if (work_queue.empty())
     {
-      work_map_.ApplyVoid([&work_queue](auto &work_map) {
+      work_map_.ApplyVoid([&work_queue, this](auto &work_map) {
         // loop through and evaluate the map
         auto it = work_map.begin();
         while (it != work_map.end())
@@ -194,6 +196,8 @@ void Reactor::Monitor()
             // the lifetime of the runnable has expired, remove
             // and advance to next element in the map
             it = work_map.erase(it);
+
+            expired_total_->increment();
           }
         }
       });

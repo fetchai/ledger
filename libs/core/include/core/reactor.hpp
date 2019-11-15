@@ -78,6 +78,7 @@ private:
   telemetry::CounterPtr         sleep_total_;
   telemetry::CounterPtr         success_total_;
   telemetry::CounterPtr         failure_total_;
+  telemetry::CounterPtr         expired_total_;
   telemetry::GaugePtr<uint64_t> work_queue_length_;
   telemetry::GaugePtr<uint64_t> work_queue_max_length_;
 };

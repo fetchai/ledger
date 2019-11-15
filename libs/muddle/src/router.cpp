@@ -267,6 +267,9 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispa
         CreateCounter("ledger_router_tx_packet_total", "The total number of transmitted packets"))
   , bx_packet_total_(
         CreateCounter("ledger_router_bx_packet_total", "The total number of broadcasted packets"))
+  , ttl_expired_packet_total_(
+        CreateCounter("ledger_router_ttl_expired_packet_total",
+                      "The total number of packets that have expired due to TTL"))
   , dispatch_enqueued_total_(CreateCounter("ledger_router_enqueued_packet_total",
                                            "The total number of enqueued packets to be dispatched"))
   , exchange_dispatch_total_(CreateCounter("ledger_router_exchange_packet_total",
@@ -875,16 +878,18 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet)
  */
 void Router::RoutePacket(PacketPtr const &packet, bool external)
 {
-
   // black list support
 
   /// Step 1. Determine if we should drop this packet (for whatever reason)
   if (external)
   {
     FETCH_LOG_TRACE(logging_name_, "Routing external packet.");
+
     // Handle TTL based routing timeout
     if (packet->GetTTL() <= 2u)
     {
+      ttl_expired_packet_total_->increment();
+
       FETCH_LOG_WARN(logging_name_, "Message has timed out (TTL): ", DescribePacket(*packet));
       return;
     }
