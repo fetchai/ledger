@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <math/utilities/ReadCSV.hpp>
 #include "dmlf/collective_learning/collective_learning_client.hpp"
 #include "dmlf/networkers/abstract_learner_networker.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/utilities/mnist_utilities.hpp"
+#include <math/utilities/ReadCSV.hpp>
 
 namespace fetch {
 namespace dmlf {
@@ -48,16 +48,16 @@ std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeMNistModel(
   // Initialise model
   auto model_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
 
-//  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
-//      28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
-//  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
-//      10u, 10u, fetch::ml::details::ActivationType::RELU);
+  //  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
+  //      28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
+  //  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
+  //      10u, 10u, fetch::ml::details::ActivationType::RELU);
   model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
       28u * 28u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
 
   // Initialise DataLoader
-//  auto mnist_images = fetch::ml::utilities::read_mnist_images<TensorType>(images);
-//  auto mnist_labels = fetch::ml::utilities::read_mnist_labels<TensorType>(labels);
+  //  auto mnist_images = fetch::ml::utilities::read_mnist_images<TensorType>(images);
+  //  auto mnist_labels = fetch::ml::utilities::read_mnist_labels<TensorType>(labels);
   auto mnist_images = fetch::math::utilities::ReadCSV<TensorType>(images);
   auto mnist_labels = fetch::math::utilities::ReadCSV<TensorType>(labels);
   mnist_labels      = fetch::ml::utilities::convert_labels_to_onehot(mnist_labels);
@@ -65,7 +65,7 @@ std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeMNistModel(
   auto dataloader_ptr =
       std::make_unique<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
   dataloader_ptr->AddData({mnist_images}, mnist_labels);
-  dataloader_ptr->SetTestRatio(test_set_ratio);
+  dataloader_ptr->SetTestRatio(test_set_ratio);  // todo: alter this to set test ratio
   dataloader_ptr->SetRandomMode(true);
 
   model_ptr->SetDataloader(std::move(dataloader_ptr));

@@ -28,6 +28,7 @@
 #include "ml/utilities/utils.hpp"
 
 #include <condition_variable>
+#include <core/time/to_seconds.hpp>
 #include <fstream>
 #include <mutex>
 #include <queue>
@@ -35,7 +36,6 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include <core/time/to_seconds.hpp>
 
 namespace fetch {
 namespace dmlf {
@@ -68,16 +68,16 @@ public:
    */
   ClientAlgorithm(ClientAlgorithm &other)
   {
-    id_              = other.id_;
-    train_loss_      = other.train_loss_;
-    test_loss_       = other.test_loss_;
-    train_loss_sum_  = other.train_loss_sum_;
-    train_loss_cnt_  = other.train_loss_cnt_;
-    model_ptr_       = other.model_ptr_;
-    graph_ptr_       = other.graph_ptr_;
-    optimiser_ptr_   = other.optimiser_ptr_;
-    dataloader_ptr_  = other.dataloader_ptr_;
-    batch_counter_   = other.batch_counter_;
+    id_                         = other.id_;
+    train_loss_                 = other.train_loss_;
+    test_loss_                  = other.test_loss_;
+    train_loss_sum_             = other.train_loss_sum_;
+    train_loss_cnt_             = other.train_loss_cnt_;
+    model_ptr_                  = other.model_ptr_;
+    graph_ptr_                  = other.graph_ptr_;
+    optimiser_ptr_              = other.optimiser_ptr_;
+    dataloader_ptr_             = other.dataloader_ptr_;
+    batch_counter_              = other.batch_counter_;
     updates_applied_this_round_ = other.updates_applied_this_round_;
 
     params_               = other.params_;
@@ -107,8 +107,8 @@ protected:
   std::string id_;
 
   // Latest loss
-  DataType train_loss_ = fetch::math::numeric_max<DataType>();
-  DataType test_loss_  = fetch::math::numeric_max<DataType>();
+  DataType train_loss_    = fetch::math::numeric_max<DataType>();
+  DataType test_loss_     = fetch::math::numeric_max<DataType>();
   DataType test_accuracy_ = DataType{0};
 
   DataType train_loss_sum_ = static_cast<DataType>(0);
@@ -125,12 +125,12 @@ protected:
   std::shared_ptr<std::mutex> console_mutex_ptr_;
 
   // Count for number of batches
-  SizeType batch_counter_   = 0;
-  SizeType epoch_counter_   = 0;
-  SizeType update_counter_  = 0;
+  SizeType batch_counter_  = 0;
+  SizeType epoch_counter_  = 0;
+  SizeType update_counter_ = 0;
 
   SizeType updates_applied_this_round_ = 0;
-  SizeType epochs_done_this_round_ = 0;
+  SizeType epochs_done_this_round_     = 0;
 
   ClientParams<DataType> params_;
 
@@ -179,7 +179,7 @@ void ClientAlgorithm<TensorType>::ClearLossFile()
 {
   mkdir(params_.results_dir.c_str(), 0777);
   std::ofstream lossfile(params_.results_dir + "losses_" + id_ + ".csv",
-      std::ofstream::out | std::ofstream::trunc);
+                         std::ofstream::out | std::ofstream::trunc);
   lossfile.close();
 }
 
@@ -217,9 +217,10 @@ void ClientAlgorithm<TensorType>::Run()
                          std::ofstream::out | std::ofstream::app);
 
   updates_applied_this_round_ = 0;
-//  dataloader_is_done_ = false;
+  //  dataloader_is_done_ = false;
   epochs_done_this_round_ = 0;
-  while ((updates_applied_this_round_ < params_.max_updates) && (epochs_done_this_round_ < params_.max_epochs))
+  while ((updates_applied_this_round_ < params_.max_updates) &&
+         (epochs_done_this_round_ < params_.max_epochs))
   {
     // perform a round of training on this client
     DoRound();
@@ -228,13 +229,13 @@ void ClientAlgorithm<TensorType>::Run()
     Test();
 
     // Save loss data
-//    if (lossfile)
-//    {
-//      lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
-//               << static_cast<double>(train_loss_) << ", " << static_cast<double>(test_loss_)
-//               << "\n";
-//      lossfile.flush();
-//    }
+    //    if (lossfile)
+    //    {
+    //      lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
+    //               << static_cast<double>(train_loss_) << ", " << static_cast<double>(test_loss_)
+    //               << "\n";
+    //      lossfile.flush();
+    //    }
 
     if (params_.print_loss)
     {
@@ -254,14 +255,10 @@ void ClientAlgorithm<TensorType>::Run()
   if (lossfile)
   {
     double seconds = fetch::ToSeconds(std::chrono::steady_clock::now() - start_time_);
-    lossfile << "Time: " << seconds
-             << " Epochs: " << epoch_counter_
+    lossfile << "Time: " << seconds << " Epochs: " << epoch_counter_
              << " Loss: " << static_cast<double>(train_loss_)
-             << " Test_loss: " << static_cast<double>(test_loss_)
-             << " Updates: " << update_counter_
-             << " Batches: " << batch_counter_
-             << " Test_accuracy: " << test_accuracy_
-             << "\n";
+             << " Test_loss: " << static_cast<double>(test_loss_) << " Updates: " << update_counter_
+             << " Batches: " << batch_counter_ << " Test_accuracy: " << test_accuracy_ << "\n";
     lossfile.close();
   }
 
@@ -288,8 +285,7 @@ void ClientAlgorithm<TensorType>::Train()
   std::pair<TensorType, std::vector<TensorType>> input;
   input = dataloader_ptr_->PrepareBatch(params_.batch_size, dataloader_is_done_);
 
-
-//  std::cout << "input.first.ToString(): " << input.first.ToString() << std::endl;
+  //  std::cout << "input.first.ToString(): " << input.first.ToString() << std::endl;
   {
     FETCH_LOCK(model_mutex_);
 
@@ -360,9 +356,9 @@ void ClientAlgorithm<TensorType>::Test()
       test_loss_ = *(graph_ptr_->Evaluate(params_.error_name).begin());
 
       TensorType test_results = graph_ptr_->Evaluate("FullyConnected_0");
-      test_results = fetch::math::ArgMax(test_results);
+      test_results            = fetch::math::ArgMax(test_results);
       SizeType total_score{0};
-      auto tr = test_results.cbegin();
+      auto     tr = test_results.cbegin();
       for (auto dp : fetch::math::ArgMax(test_pair.first))
       {
         if (dp == *tr)
@@ -371,15 +367,14 @@ void ClientAlgorithm<TensorType>::Test()
         }
         ++tr;
       }
-      test_accuracy_ = static_cast<DataType>(total_score) / static_cast<DataType>(test_results.size());
+      test_accuracy_ =
+          static_cast<DataType>(total_score) / static_cast<DataType>(test_results.size());
     }
   }
   else
   {
     test_loss_ = 0;
   }
-
-
 }
 
 /**
@@ -412,11 +407,11 @@ void ClientAlgorithm<TensorType>::SetWeights(VectorTensorType const &new_weights
 {
   FETCH_LOCK(model_mutex_);
 
+  std::vector<typename ml::Graph<TensorType>::TrainablePtrType> trainables = graph_ptr_->GetTrainables();
+
   auto weights_it = new_weights.cbegin();
-  for (auto &trainable_lookup : graph_ptr_->trainable_lookup_)
+  for (auto &trainable_ptr : trainables)
   {
-    auto trainable_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Trainable<TensorType>>(
-        (trainable_lookup.second)->GetOp());
     trainable_ptr->SetWeights(*weights_it);
     ++weights_it;
   }

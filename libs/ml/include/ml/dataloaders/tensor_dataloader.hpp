@@ -93,11 +93,11 @@ protected:
   SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
 
-  random::Random rand;
-  std::shared_ptr<SizeType> train_count_ = std::make_shared<SizeType>(0);
-  std::shared_ptr<SizeType> test_count_ = std::make_shared<SizeType>(0);
+  random::Random            rand;
+  std::shared_ptr<SizeType> train_count_      = std::make_shared<SizeType>(0);
+  std::shared_ptr<SizeType> test_count_       = std::make_shared<SizeType>(0);
   std::shared_ptr<SizeType> validation_count_ = std::make_shared<SizeType>(0);
-  std::shared_ptr<SizeType> count_ = train_count_;
+  std::shared_ptr<SizeType> count_            = train_count_;
 
   void UpdateRanges();
   void UpdateCursor() override;
@@ -192,7 +192,7 @@ bool TensorDataLoader<LabelType, InputType>::IsDone() const
 template <typename LabelType, typename InputType>
 void TensorDataLoader<LabelType, InputType>::Reset()
 {
-  *count_                   = 0;
+  *count_                  = 0;
   *(this->current_cursor_) = this->current_min_;
 }
 
@@ -266,7 +266,7 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
     this->current_min_    = 0;
     this->current_max_    = test_offset_;
     this->current_size_   = n_train_samples_;
-    count_ = train_count_;
+    count_                = train_count_;
     break;
   }
   case DataLoaderMode::TEST:
@@ -279,7 +279,7 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
     this->current_min_    = test_offset_;
     this->current_max_    = validation_offset_;
     this->current_size_   = n_test_samples_;
-    count_ = test_count_;
+    count_                = test_count_;
     break;
   }
   case DataLoaderMode::VALIDATE:
@@ -292,7 +292,7 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
     this->current_min_    = validation_offset_;
     this->current_max_    = n_samples_;
     this->current_size_   = n_validation_samples_;
-    count_ = validation_count_;
+    count_                = validation_count_;
     break;
   }
   default:

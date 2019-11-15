@@ -27,6 +27,36 @@ namespace collective_learning {
 namespace utilities {
 
 /**
+ * A utility function for printing weights between all client algorithms.
+ * This method is only useful for exploration with local computation because it requires all clients
+ * to return their owned algorithms.
+ * @tparam TensorType
+ * @param clients
+ */
+template <typename TensorType>
+void PrintWeights(std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>> &clients)
+{
+  // gather all of the different clients' algorithms
+  std::vector<std::shared_ptr<ClientAlgorithm<TensorType>>> client_algorithms;
+  for (auto &client : clients)
+  {
+    std::vector<std::shared_ptr<ClientAlgorithm<TensorType>>> current_client_algorithms =
+        client->GetAlgorithms();
+    client_algorithms.insert(client_algorithms.end(), current_client_algorithms.begin(),
+        current_client_algorithms.end());
+  }
+
+  // Sum all weights
+  for (typename TensorType::SizeType i{0}; i < client_algorithms.size(); ++i)
+  {
+    std::vector<TensorType> other_weights = client_algorithms[i]->GetWeights();
+    for (auto ws : other_weights)
+    {
+      std::cout << "weights.ToString(): " << ws.ToString() << std::endl;
+    }
+  }
+}
+/**
  * A utility function for averaging weights between all client algorithms.
  * This method is only useful for exploration with local computation because it requires all clients
  * to return their owned algorithms.
@@ -66,13 +96,18 @@ void SynchroniseWeights(std::vector<std::shared_ptr<CollectiveLearningClient<Ten
     fetch::math::Divide(new_weights.at(j),
                         static_cast<typename TensorType::Type>(client_algorithms.size()),
                         new_weights.at(j));
+//    std::cout << "new_weights.at(j).ToString(): " << new_weights.at(j).ToString() << std::endl;
   }
+
+//  PrintWeights(clients);
+//  std::cout << "Synchronising " << std::endl;
 
   // Update models of all clients by average model
   for (auto &c : client_algorithms)
   {
     c->SetWeights(new_weights);
   }
+//  PrintWeights(clients);
 }
 
 /**
