@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ namespace chain {
 
 class Transaction;
 
-} // namespace chain
+}  // namespace chain
 
 namespace ledger {
 
@@ -42,12 +42,11 @@ class TokenContract;
 class TransactionValidator
 {
 public:
-
   // Construction / Destruction
   TransactionValidator(StorageInterface &storage, TokenContract &token_contract);
   TransactionValidator(TransactionValidator const &) = delete;
-  TransactionValidator(TransactionValidator &&) = delete;
-  ~TransactionValidator() = default;
+  TransactionValidator(TransactionValidator &&)      = delete;
+  ~TransactionValidator()                            = default;
 
   ContractExecutionStatus operator()(chain::Transaction const &tx, uint64_t block_index);
 
@@ -57,8 +56,8 @@ public:
 
 private:
   StorageInterface &storage_;
-  TokenContract    &token_contract_;
+  TokenContract &   token_contract_;
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/transaction_validator.hpp"
 #include "chain/transaction.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chaincode/contract_context.hpp"
@@ -24,6 +23,7 @@
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/identifier.hpp"
+#include "ledger/transaction_validator.hpp"
 
 namespace fetch {
 namespace ledger {

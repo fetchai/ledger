@@ -42,8 +42,8 @@ std::ostream &operator<<(std::ostream &stream, ContractExecutionStatus status)
   return stream;
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch
 
 namespace {
 
@@ -89,7 +89,6 @@ private:
   Deed::OperationTresholds thresholds_;
 };
 
-
 class TransactionValidatorTests : public ::testing::Test
 {
 protected:
@@ -112,8 +111,8 @@ void TransactionValidatorTests::AddFunds(uint64_t amount)
   shards.SetAllOne();
 
   // create storage infrastructure
-  StateSentinelAdapter storage_adapter{storage_, Identifier{"fetch.token"}, shards};
-  ContractContext ctx{&token_contract_, Address{}, &storage_adapter, 0};
+  StateSentinelAdapter    storage_adapter{storage_, Identifier{"fetch.token"}, shards};
+  ContractContext         ctx{&token_contract_, Address{}, &storage_adapter, 0};
   ContractContextAttacher attacher{token_contract_, ctx};
 
   // add the tokens to the account
@@ -127,8 +126,8 @@ void TransactionValidatorTests::SetDeed(Deed const &deed)
   shards.SetAllOne();
 
   // create storage infrastructure
-  StateSentinelAdapter storage_adapter{storage_, Identifier{"fetch.token"}, shards};
-  ContractContext ctx{&token_contract_, Address{}, &storage_adapter, 0};
+  StateSentinelAdapter    storage_adapter{storage_, Identifier{"fetch.token"}, shards};
+  ContractContext         ctx{&token_contract_, Address{}, &storage_adapter, 0};
   ContractContextAttacher attacher{token_contract_, ctx};
 
   // add the tokens to the account
@@ -139,14 +138,14 @@ TEST_F(TransactionValidatorTests, CheckWealthWhileValid)
 {
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .TargetChainCode("fetch.token", BitVector{})
-      .Action("wealth")
-      .ValidUntil(100)
-      .Signer(signer_.identity())
-      .Seal()
-      .Sign(signer_)
-      .Build();
+                .From(signer_address_)
+                .TargetChainCode("fetch.token", BitVector{})
+                .Action("wealth")
+                .ValidUntil(100)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
 
   EXPECT_EQ(ContractExecutionStatus::SUCCESS, validator_(*tx, 50));
   EXPECT_EQ(ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK, validator_(*tx, 100));
@@ -157,31 +156,30 @@ TEST_F(TransactionValidatorTests, CheckWealthOnValidityBoundary)
 {
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .TargetChainCode("fetch.token", BitVector{})
-      .Action("wealth")
-      .ValidUntil(100)
-      .Signer(signer_.identity())
-      .Seal()
-      .Sign(signer_)
-      .Build();
+                .From(signer_address_)
+                .TargetChainCode("fetch.token", BitVector{})
+                .Action("wealth")
+                .ValidUntil(100)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
 
   EXPECT_EQ(ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK, validator_(*tx, 100));
 }
-
 
 TEST_F(TransactionValidatorTests, CheckWealthOutsideOfValidityPeriod)
 {
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .TargetChainCode("fetch.token", BitVector{})
-      .Action("wealth")
-      .ValidUntil(100)
-      .Signer(signer_.identity())
-      .Seal()
-      .Sign(signer_)
-      .Build();
+                .From(signer_address_)
+                .TargetChainCode("fetch.token", BitVector{})
+                .Action("wealth")
+                .ValidUntil(100)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
 
   EXPECT_EQ(ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK, validator_(*tx, 1000));
 }
@@ -190,14 +188,14 @@ TEST_F(TransactionValidatorTests, CheckDefaultCaseOnValidityBoundary)
 {
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .TargetChainCode("some.kind.of.chain.code", BitVector{})
-      .Action("do.work")
-      .ValidUntil(100)
-      .Signer(signer_.identity())
-      .Seal()
-      .Sign(signer_)
-      .Build();
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
 
   EXPECT_EQ(ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK, validator_(*tx, 100));
 }
@@ -206,14 +204,14 @@ TEST_F(TransactionValidatorTests, CheckNoChargeRate)
 {
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .TargetChainCode("some.kind.of.chain.code", BitVector{})
-      .Action("do.work")
-      .ValidUntil(100)
-      .Signer(signer_.identity())
-      .Seal()
-      .Sign(signer_)
-      .Build();
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
 
   EXPECT_EQ(ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE, validator_(*tx, 50));
 }
@@ -222,15 +220,15 @@ TEST_F(TransactionValidatorTests, CheckNoChargeLimit)
 {
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .TargetChainCode("some.kind.of.chain.code", BitVector{})
-      .Action("do.work")
-      .ValidUntil(100)
-      .ChargeRate(1)
-      .Signer(signer_.identity())
-      .Seal()
-      .Sign(signer_)
-      .Build();
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
 
   EXPECT_EQ(ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE, validator_(*tx, 50));
 }
@@ -239,16 +237,16 @@ TEST_F(TransactionValidatorTests, CheckDefaultCase)
 {
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .TargetChainCode("some.kind.of.chain.code", BitVector{})
-      .Action("do.work")
-      .ValidUntil(100)
-      .ChargeRate(1)
-      .ChargeLimit(1)
-      .Signer(signer_.identity())
-      .Seal()
-      .Sign(signer_)
-      .Build();
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(1)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
 
   AddFunds(1);
 
@@ -259,16 +257,16 @@ TEST_F(TransactionValidatorTests, CheckNoEnoughCharge)
 {
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .TargetChainCode("some.kind.of.chain.code", BitVector{})
-      .Action("do.work")
-      .ValidUntil(100)
-      .ChargeRate(100)
-      .ChargeLimit(1)
-      .Signer(signer_.identity())
-      .Seal()
-      .Sign(signer_)
-      .Build();
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(100)
+                .ChargeLimit(1)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
 
   AddFunds(1);
 
@@ -281,17 +279,16 @@ TEST_F(TransactionValidatorTests, CheckPermissionDeniedIncorrectSignature)
 
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .TargetChainCode("some.kind.of.chain.code", BitVector{})
-      .Action("do.work")
-      .ValidUntil(100)
-      .ChargeRate(100)
-      .ChargeLimit(1)
-      .Signer(other1.identity())
-      .Seal()
-      .Sign(other1)
-      .Build();
-
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(100)
+                .ChargeLimit(1)
+                .Signer(other1.identity())
+                .Seal()
+                .Sign(other1)
+                .Build();
 
   AddFunds(1);
 
@@ -305,19 +302,18 @@ TEST_F(TransactionValidatorTests, CheckPermissionDeniedTooManySignatures)
 
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .TargetChainCode("some.kind.of.chain.code", BitVector{})
-      .Action("do.work")
-      .ValidUntil(100)
-      .ChargeRate(100)
-      .ChargeLimit(1)
-      .Signer(other1.identity())
-      .Signer(other2.identity())
-      .Seal()
-      .Sign(other1)
-      .Sign(other2)
-      .Build();
-
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(100)
+                .ChargeLimit(1)
+                .Signer(other1.identity())
+                .Signer(other2.identity())
+                .Seal()
+                .Sign(other1)
+                .Sign(other2)
+                .Build();
 
   AddFunds(1);
 
@@ -344,18 +340,18 @@ TEST_F(TransactionValidatorTests, CheckOkayWithDeedWithExecute)
 
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .TargetChainCode("some.kind.of.chain.code", BitVector{})
-      .Action("do.work")
-      .ValidUntil(100)
-      .ChargeRate(1)
-      .ChargeLimit(1)
-      .Signer(other1.identity())
-      .Signer(other2.identity())
-      .Seal()
-      .Sign(other1)
-      .Sign(other2)
-      .Build();
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(1)
+                .Signer(other1.identity())
+                .Signer(other2.identity())
+                .Seal()
+                .Sign(other1)
+                .Sign(other2)
+                .Build();
 
   EXPECT_EQ(ContractExecutionStatus::SUCCESS, validator_(*tx, 50));
 }
@@ -370,27 +366,27 @@ TEST_F(TransactionValidatorTests, CheckOkayWithDeedTransferOnly)
 
   // build the deed
   auto deed = DeedBuilder{}
-      .AddSignee(address1, 1)
-      .AddSignee(address2, 1)
-      .AddOperation(Deed::TRANSFER, 2)
-      .Build();
+                  .AddSignee(address1, 1)
+                  .AddSignee(address2, 1)
+                  .AddOperation(Deed::TRANSFER, 2)
+                  .Build();
   SetDeed(deed);
   AddFunds(12);
 
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .ValidUntil(100)
-      .ChargeRate(1)
-      .ChargeLimit(2)
-      .Transfer(address1, 5)
-      .Transfer(address2, 5)
-      .Signer(other1.identity())
-      .Signer(other2.identity())
-      .Seal()
-      .Sign(other1)
-      .Sign(other2)
-      .Build();
+                .From(signer_address_)
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(2)
+                .Transfer(address1, 5)
+                .Transfer(address2, 5)
+                .Signer(other1.identity())
+                .Signer(other2.identity())
+                .Seal()
+                .Sign(other1)
+                .Sign(other2)
+                .Build();
 
   EXPECT_EQ(ContractExecutionStatus::SUCCESS, validator_(*tx, 50));
 }
@@ -407,16 +403,16 @@ TEST_F(TransactionValidatorTests, CheckNotEnoughChargeTransfers)
 
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .ValidUntil(100)
-      .ChargeRate(1)
-      .ChargeLimit(2)
-      .Transfer(address1, 5)
-      .Transfer(address2, 5)
-      .Signer(signer_.identity())
-      .Seal()
-      .Sign(signer_)
-      .Build();
+                .From(signer_address_)
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(2)
+                .Transfer(address1, 5)
+                .Transfer(address2, 5)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
 
   EXPECT_EQ(ContractExecutionStatus::SUCCESS, validator_(*tx, 50));
 }
@@ -430,27 +426,24 @@ TEST_F(TransactionValidatorTests, CheckPermissionDeniedWithDeedNoTransferPermiss
   Address address2{other2.identity()};
 
   // build the deed
-  auto deed = DeedBuilder{}
-      .AddSignee(address1, 1)
-      .AddSignee(address2, 1)
-      .Build();
+  auto deed = DeedBuilder{}.AddSignee(address1, 1).AddSignee(address2, 1).Build();
   SetDeed(deed);
   AddFunds(12);
 
   // build up a wealth transaction
   auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .ValidUntil(100)
-      .ChargeRate(1)
-      .ChargeLimit(2)
-      .Transfer(address1, 5)
-      .Transfer(address2, 5)
-      .Signer(other1.identity())
-      .Signer(other2.identity())
-      .Seal()
-      .Sign(other1)
-      .Sign(other2)
-      .Build();
+                .From(signer_address_)
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(2)
+                .Transfer(address1, 5)
+                .Transfer(address2, 5)
+                .Signer(other1.identity())
+                .Signer(other2.identity())
+                .Seal()
+                .Sign(other1)
+                .Sign(other2)
+                .Build();
 
   EXPECT_EQ(ContractExecutionStatus::TX_PERMISSION_DENIED, validator_(*tx, 50));
 }
@@ -465,29 +458,30 @@ TEST_F(TransactionValidatorTests, CheckPermissionDeniedWithDeedNoExecutePermissi
 
   // build the deed
   auto deed = DeedBuilder{}
-      .AddSignee(address1, 1)
-      .AddSignee(address2, 1)
-      .AddOperation(Deed::TRANSFER, 2)
-      .Build();
+                  .AddSignee(address1, 1)
+                  .AddSignee(address2, 1)
+                  .AddOperation(Deed::TRANSFER, 2)
+                  .Build();
   SetDeed(deed);
   AddFunds(1);
 
   // build up a wealth transaction
-  auto tx = TransactionBuilder{}
-      .From(signer_address_)
-      .TargetSmartContract(address1, address2, BitVector{}) // reuse addresses for contract id
-      .Action("do.work")
-      .ValidUntil(100)
-      .ChargeRate(1)
-      .ChargeLimit(1)
-      .Signer(other1.identity())
-      .Signer(other2.identity())
-      .Seal()
-      .Sign(other1)
-      .Sign(other2)
-      .Build();
+  auto tx =
+      TransactionBuilder{}
+          .From(signer_address_)
+          .TargetSmartContract(address1, address2, BitVector{})  // reuse addresses for contract id
+          .Action("do.work")
+          .ValidUntil(100)
+          .ChargeRate(1)
+          .ChargeLimit(1)
+          .Signer(other1.identity())
+          .Signer(other2.identity())
+          .Seal()
+          .Sign(other1)
+          .Sign(other2)
+          .Build();
 
   EXPECT_EQ(ContractExecutionStatus::TX_PERMISSION_DENIED, validator_(*tx, 50));
 }
 
-}
+}  // namespace

@@ -31,7 +31,8 @@ def find_tool(name):
     elif os.path.exists('/usr/bin/xcrun'):
         tool_cmd = ['/usr/bin/xcrun', name]
     else:
-        raise RuntimeError("Unable to find tool '{}' on your system".format(name))
+        raise RuntimeError(
+            "Unable to find tool '{}' on your system".format(name))
 
     return tool_cmd
 
@@ -130,14 +131,14 @@ def get_coverage_reports(targets: map):
         # Generate an indexed file target.profdata
         subprocess.check_output(
             find_tool('llvm-profdata') + ["merge", "-sparse", raw_file_name, "-o",
-             indexed_file_name],
+                                          indexed_file_name],
             cwd=build_directory)
 
         # Generate the coverage in coverate/target_coverate
         subprocess.check_output(
             find_tool('llvm-cov') + ["show", "-Xdemangler", "c++filt", val,
-             "-instr-profile=" + indexed_file_name, "-format=html", "-o",
-             directory_name],
+                                     "-instr-profile=" + indexed_file_name, "-format=html", "-o",
+                                     directory_name],
             cwd=build_directory)
 
 

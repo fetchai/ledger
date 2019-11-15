@@ -22,8 +22,8 @@
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/token_contract.hpp"
-#include "ledger/consensus/stake_manager.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
+#include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
@@ -87,8 +87,6 @@ bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
 
   return true;
 }
-
-
 
 }  // namespace
 
