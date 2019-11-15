@@ -35,7 +35,7 @@ struct Fixed128 : public Object
   Fixed128()           = delete;
   ~Fixed128() override = default;
 
-  Fixed128(VM *vm, fixed_point::fp128_t const &data);
+  Fixed128(VM *vm, fixed_point::fp128_t const &data__);
 
   bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   bool IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;

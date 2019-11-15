@@ -202,7 +202,7 @@ struct Executable
 
   struct LargeConstant
   {
-    LargeConstant() = default;
+    LargeConstant() = delete;
     LargeConstant(const LargeConstant &other)
     {
       Copy(other);
@@ -223,7 +223,7 @@ struct Executable
         new (&fp128) fixed_point::fp128_t(other.fp128);
       }
     }
-    LargeConstant(fixed_point::fp128_t const &fp128__)
+    explicit LargeConstant(fixed_point::fp128_t const &fp128__)
     {
       type_id = TypeIds::Fixed128;
       new (&fp128) fixed_point::fp128_t(fp128__);
