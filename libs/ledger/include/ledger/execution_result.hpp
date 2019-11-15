@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/consensus/stake_update_event.hpp"
+
 #include <cstdint>
 
 namespace fetch {
@@ -72,6 +74,7 @@ struct ContractExecutionResult
   TokenAmount             charge_limit{0};  ///< Max. limit for units to charge defined by Tx sender
   TokenAmount             fee{0};           ///< The total fee claimed by the miner
   int64_t                 return_value{0};  ///< Return value from executed contract function
+  StakeUpdateEvents stake_updates{};  ///< The stake updates that occured during this execution
 };
 
 constexpr char const *ToString(ContractExecutionStatus status)

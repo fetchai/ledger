@@ -20,6 +20,7 @@
 #include "chain/transaction.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/identifier.hpp"
@@ -70,65 +71,66 @@ ContractExecutionStatus TransactionValidator::operator()(chain::Transaction cons
   // attach the token contract to the storage engine
   StateAdapter storage_adapter{storage_, Identifier{"fetch.token"}};
 
-  token_contract_.Attach({&token_contract_, tx.contract_address(), &storage_adapter, block_index});
-
-  // CHECK: Ensure there is permission from the originating address to perform the transaction
-  //        (essentially take fees)
-  auto const deed = token_contract_.GetDeed(tx.from());
-  if (deed)
   {
-    // if a deed is present then minimally the signers of the transaction need to have transfer
-    // permission in order to pay for the fees
-    if (!deed->Verify(tx, Deed::TRANSFER))
-    {
-      return ContractExecutionStatus::TX_PERMISSION_DENIED;
-    }
+    ContractContext ctx{&token_contract_, tx.contract_address(), &storage_adapter, block_index};
+    ContractContextAttacher attacher{token_contract_, ctx};
 
-    // additionally if a smart contract is present in the transaction we also need the execute
-    // permission
-    if (chain::Transaction::ContractMode::PRESENT == tx.contract_mode())
+    // CHECK: Ensure there is permission from the originating address to perform the transaction
+    //        (essentially take fees)
+    auto const deed = token_contract_.GetDeed(tx.from());
+    if (deed)
     {
-      if (!deed->Verify(tx, Deed::EXECUTE))
+      // if a deed is present then minimally the signers of the transaction need to have transfer
+      // permission in order to pay for the fees
+      if (!deed->Verify(tx, Deed::TRANSFER))
+      {
+        return ContractExecutionStatus::TX_PERMISSION_DENIED;
+      }
+
+      // additionally if a smart contract is present in the transaction we also need the execute
+      // permission
+      if (chain::Transaction::ContractMode::PRESENT == tx.contract_mode())
+      {
+        if (!deed->Verify(tx, Deed::EXECUTE))
+        {
+          return ContractExecutionStatus::TX_PERMISSION_DENIED;
+        }
+      }
+    }
+    else
+    {
+      // CHECK: In the case where there is no deed present. Then there should only be one signature
+      //        present in the transaction and it must match the from address
+      if (tx.signatories().size() != 1)
+      {
+        return ContractExecutionStatus::TX_PERMISSION_DENIED;
+      }
+
+      if (tx.signatories()[0].address != tx.from())
       {
         return ContractExecutionStatus::TX_PERMISSION_DENIED;
       }
     }
-  }
-  else
-  {
-    // CHECK: In the case where there is no deed present. Then there should only be one signature
-    //        present in the transaction and it must match the from address
-    if (tx.signatories().size() != 1)
+
+    // CHECK: Ensure that the originator has funds available to make both all the transfers in the
+    //        contract as well as the maximum fees
+    uint64_t const min_charge =
+        tx.transfers().size() +
+        ((tx.contract_mode() == chain::Transaction::ContractMode::NOT_PRESENT) ? 0 : 1);
+    if (tx.charge_limit() < min_charge)
     {
-      return ContractExecutionStatus::TX_PERMISSION_DENIED;
+      return ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE;
     }
 
-    if (tx.signatories()[0].address != tx.from())
+    // CHECK: Ensure that the originator has funds available to make both all the transfers in the
+    //        contract as well as the maximum fees
+    uint64_t const balance    = token_contract_.GetBalance(tx.from());
+    uint64_t const max_charge = tx.charge_rate() * tx.charge_limit();
+    if (balance < max_charge)
     {
-      return ContractExecutionStatus::TX_PERMISSION_DENIED;
+      return ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS;
     }
   }
-
-  // CHECK: Ensure that the originator has funds available to make both all the transfers in the
-  //        contract as well as the maximum fees
-  uint64_t const min_charge =
-      tx.transfers().size() +
-      ((tx.contract_mode() == chain::Transaction::ContractMode::NOT_PRESENT) ? 0 : 1);
-  if (tx.charge_limit() < min_charge)
-  {
-    return ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE;
-  }
-
-  // CHECK: Ensure that the originator has funds available to make both all the transfers in the
-  //        contract as well as the maximum fees
-  uint64_t const balance    = token_contract_.GetBalance(tx.from());
-  uint64_t const max_charge = tx.charge_rate() * tx.charge_limit();
-  if (balance < max_charge)
-  {
-    return ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS;
-  }
-
-  token_contract_.Detach();
 
   return ContractExecutionStatus::SUCCESS;
 }

@@ -88,6 +88,7 @@ static constexpr uint64_t RPC_DKG_BEACON        = 212;
 static constexpr uint64_t RPC_BEACON_SETUP = 250;
 static constexpr uint64_t RPC_BEACON       = 251;
 static constexpr uint64_t RPC_DMLF         = 252;
+static constexpr uint64_t RPC_COLEARN      = 253;
 
 static constexpr uint64_t RPC_NOTARISATION        = 230;
 static constexpr uint64_t RPC_MESSENGER_INTERFACE = 150;

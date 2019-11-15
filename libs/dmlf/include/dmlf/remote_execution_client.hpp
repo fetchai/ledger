@@ -60,7 +60,7 @@ public:
   PromiseOfResult DeleteState(Target const &target, Name const &stateName) override;
 
   PromiseOfResult Run(Target const &target, Name const &execName, Name const &stateName,
-                      std::string const &entrypoint, const Params &params) override;
+                      std::string const &entrypoint, Params const &params) override;
 
   // This is the exported interface which is called with results from the remote host.
 

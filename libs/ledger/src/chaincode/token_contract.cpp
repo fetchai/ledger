@@ -301,8 +301,8 @@ Contract::Result TokenContract::AddStake(chain::Transaction const &tx)
 
             // record the stake update event
             stake_updates_.emplace_back(
-                StakeUpdate{crypto::Identity(input.FromBase64()),
-                            context().block_index + chain::STAKE_WARM_UP_PERIOD, amount});
+                StakeUpdateEvent{context().block_index + chain::STAKE_WARM_UP_PERIOD,
+                                 crypto::Identity(input.FromBase64()), amount});
 
             // save the state
             auto const status = SetStateRecord(record, tx.from().display());
@@ -476,6 +476,16 @@ Contract::Status TokenContract::CooldownStake(Query const &query, Query &respons
   }
 
   return Status::FAILED;
+}
+
+void TokenContract::ClearStakeUpdates()
+{
+  stake_updates_.clear();
+}
+
+void TokenContract::ExtractStakeUpdates(StakeUpdateEvents &updates)
+{
+  updates = std::move(stake_updates_);
 }
 
 }  // namespace ledger

@@ -109,6 +109,16 @@ Digest const &Transaction::digest() const
 }
 
 /**
+ * Get the counter value for the transaction
+ *
+ * @return The counter value (if one exists)
+ */
+Transaction::Counter Transaction::counter() const
+{
+  return counter_;
+}
+
+/**
  * Get the sender address for the transaction
  *
  * @return The sender address
