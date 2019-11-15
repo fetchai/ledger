@@ -17,8 +17,9 @@
 # ------------------------------------------------------------------------------
 
 from fetchai.ledger.api import LedgerApi, submit_json_transaction
-from fetchai.ledger.crypto import Identity, Entity
+from fetchai.ledger.crypto import Entity
 import binascii
+import base64
 
 
 def run(options):
@@ -37,14 +38,14 @@ def run(options):
     # Load 1000 tokens to id1
     api.sync(api.tokens.wealth(id1, 1000))
 
-    # transaction payload that transfers 250 FET from id1 to id2. Signed with (r,s)
-    orig_tx = b'\xa1D\x00\x00\xc5\xab \xe3\xab\x84\\\xb4\xa1\xd2\xc3\xe4\xc3\xb0\x8f_\xf4*o\xf2\xa7\x1dv\x97\xba\x8f2\xc4\x15\xb7|\x7f\x8d\x85\x0b>\xf0%\xb1\x89\xa2\xd9\xbbJQZ\x84\xc3g=\xb6\xd3\xef%8],\x8d\x1e4\xb0n-\xe1\xc0\xfa\xc0\x85\x01\x14\x00\x00\x00\x00\x00\x00\x00\x00\x04\x0b\xaf\xbca\xa0\x85$7/I]\x9d\xee\x08\xad\xbc9\x82N\x98\x05\x06\x94p\x919\\\xec\xe1f6\xdd\xc0\x94\xb9\xd4\t\xd5\xb3N\xf0\xbb\xd9\xc9\x9c\\\xaf!\xfc78\x02G,\xf9j\x8a(\x0f\x84\xe83\xf9\x92@!\x92\xa0\xa1%\xd5Q\xb6\x08\x00\xd4A\xcb4\x83\xcd6W<"\xa7?"V=m\xd7\xb2~g{\x98\xbaN/wYh\x88\x83\x9a<o$9\xc9yI\xea(\x92?\x16\x8d6\nm\x15\\+\xe7\x95p\xaf'
-    # Malicious transaction payload of the previous transaction. Signed with (r,n-s)
-    mal_tx = b"\xa1D\x00\x00\xc5\xab \xe3\xab\x84\\\xb4\xa1\xd2\xc3\xe4\xc3\xb0\x8f_\xf4*o\xf2\xa7\x1dv\x97\xba\x8f2\xc4\x15\xb7|\x7f\x8d\x85\x0b>\xf0%\xb1\x89\xa2\xd9\xbbJQZ\x84\xc3g=\xb6\xd3\xef%8],\x8d\x1e4\xb0n-\xe1\xc0\xfa\xc0\x85\x01\x14\x00\x00\x00\x00\x00\x00\x00\x00\x04\x0b\xaf\xbca\xa0\x85$7/I]\x9d\xee\x08\xad\xbc9\x82N\x98\x05\x06\x94p\x919\\\xec\xe1f6\xdd\xc0\x94\xb9\xd4\t\xd5\xb3N\xf0\xbb\xd9\xc9\x9c\\\xaf!\xfc78\x02G,\xf9j\x8a(\x0f\x84\xe83\xf9\x92@\xf1\xa01\x1c\xc9\xb4.\xda\xa4\x1dS~=\x1f\x9dT\xac\x15\x95\x04'l'\xbe)s\xce\xa8\\\x8e\x8a\x17\x14\x8a+\x1d\xc3\xe1\x88\xf9\x11\xc6\xb0_\x16=\x95\xb9d\xaeYJ4xp\x97>Y\xb3\xc9=5\xb8\x95"
+    # signed transaction that transfers 250 FET from id1 to id2. Signed with (r,s)
+    orig_tx = 'a1440000c5ab20e3ab845cb4a1d2c3e4c3b08f5ff42a6ff2a71d7697ba8f32c415b77c7f8d850b3ef025b189a2d9bb4a515a84c3673db6d3ef25385d2c8d1e34b06e2de1c0fac08501140000000000000000040bafbc61a08524372f495d9dee08adbc39824e980506947091395cece16636ddc094b9d409d5b34ef0bbd9c99c5caf21fc373802472cf96a8a280f84e833f992402192a0a125d551b60800d441cb3483cd36573c22a73f22563d6dd7b27e677b98ba4e2f77596888839a3c6f2439c97949ea28923f168d360a6d155c2be79570af'
+    # signed Malicious transaction of the previous transaction. Signed with (r,n-s)
+    mal_tx = 'a1440000c5ab20e3ab845cb4a1d2c3e4c3b08f5ff42a6ff2a71d7697ba8f32c415b77c7f8d850b3ef025b189a2d9bb4a515a84c3673db6d3ef25385d2c8d1e34b06e2de1c0fac08501140000000000000000040bafbc61a08524372f495d9dee08adbc39824e980506947091395cece16636ddc094b9d409d5b34ef0bbd9c99c5caf21fc373802472cf96a8a280f84e833f99240f1a0311cc9b42edaa41d537e3d1f9d54ac159504276c27be2973cea85c8e8a17148a2b1dc3e188f911c6b05f163d95b964ae594a347870973e59b3c93d35b895'
 
     # Creating jsons for the above mentioned transactions
-    legit_trans = api.tokens._post_tx_json(orig_tx, ENDPOINT)
-    mal_trans = api.tokens._post_tx_json(mal_tx, ENDPOINT)
+    legit_trans = submit_json_transaction(host="localhost", port=8000, tx_data=dict(ver="1.2", data=base64.b64encode(binascii.unhexlify(orig_tx)).decode()), endpoint=ENDPOINT)
+    mal_trans = submit_json_transaction(host="localhost", port=8000, tx_data=dict(ver="1.2", data=base64.b64encode(binascii.unhexlify(mal_tx)).decode()), endpoint=ENDPOINT)
 
     # Sending the transactions to the ledger
     assert legit_trans == mal_trans, "Malleable transactions have different transaction hash"
@@ -52,5 +53,4 @@ def run(options):
 
     # If transaction malleability is feasible, id2 should have 500 FET.
     # If balance of id2 is more than 250 raise an exception
-    assert api.tokens.balance(
-        id2) == 250, "Vulnerable to transaction malleability attack"
+    assert api.tokens.balance(id2) == 250, "Vulnerable to transaction malleability attack"
