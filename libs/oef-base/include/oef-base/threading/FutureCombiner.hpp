@@ -81,7 +81,7 @@ public:
             sp->futures_.clear();
           }
         }
-        catch (std::exception &e)
+        catch (std::exception const &e)
         {
           FETCH_LOG_WARN(LOGGING_NAME, "Exception while processing new future result: ", e.what());
         }

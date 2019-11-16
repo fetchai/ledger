@@ -165,7 +165,7 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
   {
     client->actual->GetUpdate("algo1", "vocab");
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     EXPECT_EQ("vocab", "1 should be present");
   }
@@ -175,7 +175,7 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
     client->actual->GetUpdate("algo1", "weights");
     EXPECT_EQ("weights", "should not be present");
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     // get should throw, because weights Q is empty.
   }
@@ -185,7 +185,7 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
     auto upd = client->actual->GetUpdate("algo1", "vocab");
     EXPECT_EQ("vocab", "should not be present (already emptied)");
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     // get should throw, because vocab Q is empty.
   }
