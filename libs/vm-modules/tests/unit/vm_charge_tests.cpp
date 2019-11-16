@@ -86,11 +86,11 @@ auto affordable_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
 auto expensive_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
   return static_cast<ChargeAmount>(high_charge_limit + x * y);
 };
-auto affordable_member_estimator = [](Ptr<CustomType> const &, uint8_t x,
+auto affordable_member_estimator = [](Ptr<CustomType> const & /*this_*/, uint8_t x,
                                       uint16_t y) -> ChargeAmount {
   return static_cast<ChargeAmount>(low_charge_limit + x * y);
 };
-auto expensive_member_estimator = [](Ptr<CustomType> const &, uint8_t x,
+auto expensive_member_estimator = [](Ptr<CustomType> const & /*this_*/, uint8_t x,
                                      uint16_t y) -> ChargeAmount {
   return static_cast<ChargeAmount>(high_charge_limit + x * y);
 };
