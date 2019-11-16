@@ -19,6 +19,7 @@
 
 #include "core/runnable.hpp"
 #include "core/synchronisation/protected.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <atomic>
 #include <map>
@@ -59,11 +60,27 @@ private:
   void StopWorker();
   void Monitor();
 
+  telemetry::HistogramPtr       CreateHistogram(char const *name, char const *description) const;
+  telemetry::CounterPtr         CreateCounter(char const *name, char const *description) const;
+  telemetry::GaugePtr<uint64_t> CreateGauge(char const *name, char const *description) const;
+
   std::string const name_;
   Flag              running_{false};
 
   RunnableMap work_map_{};
   ThreadPtr   worker_{};
+
+  // telemetry
+  telemetry::HistogramPtr       runnables_time_;
+  telemetry::CounterPtr         attach_total_;
+  telemetry::CounterPtr         detach_total_;
+  telemetry::CounterPtr         runnable_total_;
+  telemetry::CounterPtr         sleep_total_;
+  telemetry::CounterPtr         success_total_;
+  telemetry::CounterPtr         failure_total_;
+  telemetry::CounterPtr         expired_total_;
+  telemetry::GaugePtr<uint64_t> work_queue_length_;
+  telemetry::GaugePtr<uint64_t> work_queue_max_length_;
 };
 
 }  // namespace core

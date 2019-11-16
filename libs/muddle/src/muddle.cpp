@@ -538,7 +538,8 @@ void Muddle::RunPeriodicMaintenance()
       external_addresses.emplace_back(network::Peer(external_address_, port));
       FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
     }
-    discovery_service_.UpdatePeers(std::move(external_addresses));
+    discovery_service_.UpdatePeers(external_addresses);
+    peer_selector_->UpdatePeers(external_addresses);
 
     // connect to all the required peers
     for (Uri const &peer : clients_.GetPeersToConnectTo())

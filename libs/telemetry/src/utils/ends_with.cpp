@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,3 +15,19 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
+#include "telemetry/utils/ends_with.hpp"
+
+namespace fetch {
+namespace telemetry {
+namespace details {
+
+bool EndsWith(std::string const &value, std::string const &suffix)
+{
+  return value.size() >= suffix.size() &&
+         std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
+}
+
+}  // namespace details
+}  // namespace telemetry
+}  // namespace fetch
