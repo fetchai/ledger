@@ -394,9 +394,14 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
       layouts.insert(layouts.end(), std::make_move_iterator(txs.begin()),
                      std::make_move_iterator(txs.end()));
     }
-    catch (std::runtime_error &e)
+    catch (service::PromiseError &e)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET on TX store!");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Failed to resolve GET on TX store! Promise timed out: ", e.what());
+    }
+    catch (...)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET on TX store! Unknown error.");
     }
   }
 
