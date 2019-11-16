@@ -16,3 +16,19 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
+#include <chrono>
+
+namespace fetch {
+namespace telemetry {
+namespace details {
+
+template <typename R, typename P>
+double ToSeconds(std::chrono::duration<R, P> const &value)
+{
+  return std::chrono::duration_cast<std::chrono::duration<double>>(value).count();
+}
+
+}  // namespace details
+}  // namespace telemetry
+}  // namespace fetch
