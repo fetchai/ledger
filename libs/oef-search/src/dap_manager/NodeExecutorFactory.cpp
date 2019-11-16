@@ -179,7 +179,7 @@ std::shared_ptr<NodeExecutorTask> NodeExecutorFactory(const BranchExecutorTask::
     }
     return task;
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Exception in task creation: ", e.what());
     return nullptr;
