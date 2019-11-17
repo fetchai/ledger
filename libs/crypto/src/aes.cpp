@@ -23,8 +23,8 @@
 
 #include "aes.hpp"
 
-#include "openssl/evp.h"
 #include "openssl/err.h"
+#include "openssl/evp.h"
 
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
@@ -109,7 +109,7 @@ void LogAllErrors()
       break;
     }
 
-    FETCH_LOG_DEBUG("AES", "Error: ", error_code,  " => ", ERR_error_string(error_code, nullptr));
+    FETCH_LOG_DEBUG("AES", "Error: ", error_code, " => ", ERR_error_string(error_code, nullptr));
   }
 }
 
