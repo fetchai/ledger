@@ -58,4 +58,23 @@ TEST_F(SecureChannelTests, CheckAliceSendsToBob)
   ASSERT_EQ(msg, recovered);
 }
 
+
+TEST_F(SecureChannelTests, CheckAliceSendsToBobMultipleOfBlockSize)
+{
+  static const uint16_t SERVICE = 200;
+  static const uint16_t CHANNEL = 202;
+  static const uint16_t COUNTER = 304;
+
+  ConstByteArray msg = "Hello Bob, this is a message from Alice.....just aligning message to multiple of AES block size!";
+
+  ConstByteArray payload{};
+  ASSERT_TRUE(alice_channel_.Encrypt(bob_pubic_key_, SERVICE, CHANNEL, COUNTER, msg, payload));
+
+  ConstByteArray recovered{};
+  ASSERT_TRUE(
+      bob_channel_.Decrypt(alice_pubic_key_, SERVICE, CHANNEL, COUNTER, payload, recovered));
+
+  ASSERT_EQ(msg, recovered);
+}
+
 }  // namespace

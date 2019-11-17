@@ -19,9 +19,12 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 
+#include "logging/logging.hpp"
+
 #include "aes.hpp"
 
 #include "openssl/evp.h"
+#include "openssl/err.h"
 
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
@@ -92,6 +95,22 @@ EVP_CIPHER const *LookupCipher(BlockCipher::Type type)
   }
 
   return cipher;
+}
+
+void LogAllErrors()
+{
+  for (;;)
+  {
+    unsigned long const error_code = ERR_get_error();
+
+    // exit if no further errors are present
+    if (error_code == 0)
+    {
+      break;
+    }
+
+    FETCH_LOG_DEBUG("AES", "Error: ", error_code,  " => ", ERR_error_string(error_code, nullptr));
+  }
 }
 
 }  // namespace
@@ -167,6 +186,7 @@ bool AesBlockCipher::Encrypt(BlockCipher::Type type, ConstByteArray const &key,
   EVP_CIPHER const *cipher = LookupCipher(type);
   if (cipher == nullptr)
   {
+    LogAllErrors();
     return false;
   }
 
@@ -176,6 +196,7 @@ bool AesBlockCipher::Encrypt(BlockCipher::Type type, ConstByteArray const &key,
   auto ctx = CreateCipherContext();
   if (!ctx)
   {
+    LogAllErrors();
     return false;
   }
 
@@ -183,6 +204,7 @@ bool AesBlockCipher::Encrypt(BlockCipher::Type type, ConstByteArray const &key,
   status = EVP_EncryptInit(ctx.get(), cipher, key.pointer(), iv.pointer());
   if (status != 1)
   {
+    LogAllErrors();
     return false;
   }
 
@@ -197,6 +219,7 @@ bool AesBlockCipher::Encrypt(BlockCipher::Type type, ConstByteArray const &key,
                              clear_text.pointer(), static_cast<int>(clear_text.size()));
   if (status != 1)
   {
+    LogAllErrors();
     return false;
   }
 
@@ -207,9 +230,10 @@ bool AesBlockCipher::Encrypt(BlockCipher::Type type, ConstByteArray const &key,
   uint8_t *remaining_buffer = cipher_text_buffer.pointer() + populated_length;
   remaining_length          = static_cast<int>(cipher_text_buffer.size() - populated_length);
 
-  status = EVP_EncryptFinal(ctx.get(), remaining_buffer, &remaining_length);
+  status = EVP_EncryptFinal_ex(ctx.get(), remaining_buffer, &remaining_length);
   if (status != 1)
   {
+    LogAllErrors();
     return false;
   }
 
@@ -258,6 +282,7 @@ bool AesBlockCipher::Decrypt(BlockCipher::Type type, ConstByteArray const &key,
   EVP_CIPHER const *cipher = LookupCipher(type);
   if (cipher == nullptr)
   {
+    LogAllErrors();
     return false;
   }
 
@@ -267,6 +292,7 @@ bool AesBlockCipher::Decrypt(BlockCipher::Type type, ConstByteArray const &key,
   auto ctx = CreateCipherContext();
   if (!ctx)
   {
+    LogAllErrors();
     return false;
   }
 
@@ -276,13 +302,14 @@ bool AesBlockCipher::Decrypt(BlockCipher::Type type, ConstByteArray const &key,
                       reinterpret_cast<unsigned char const *>(iv.pointer()));
   if (status != 1)
   {
+    LogAllErrors();
     return false;
   }
 
   // create the clear text buffer at the same length of the cipher text (in practise can be one
   // block smaller)
   ByteArray clear_text_buffer{};
-  clear_text_buffer.Resize(cipher_text.size());
+  clear_text_buffer.Resize(cipher_text.size() + AES_BLOCK_SIZE - 1);
   std::size_t populated_length{0};
 
   // run the cipher text through the cipher
@@ -292,6 +319,7 @@ bool AesBlockCipher::Decrypt(BlockCipher::Type type, ConstByteArray const &key,
                              cipher_text.pointer(), static_cast<int>(cipher_text.size()));
   if (status != 1)
   {
+    LogAllErrors();
     return false;
   }
 
@@ -301,9 +329,10 @@ bool AesBlockCipher::Decrypt(BlockCipher::Type type, ConstByteArray const &key,
   uint8_t *remaining_buffer = clear_text_buffer.pointer() + populated_length;
   remaining_length          = static_cast<int>(clear_text_buffer.size() - populated_length);
 
-  status = EVP_DecryptFinal(ctx.get(), remaining_buffer, &remaining_length);
+  status = EVP_DecryptFinal_ex(ctx.get(), remaining_buffer, &remaining_length);
   if (status != 1)
   {
+    LogAllErrors();
     return false;
   }
 
