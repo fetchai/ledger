@@ -268,16 +268,16 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispa
   , bx_packet_total_(
         CreateCounter("ledger_router_bx_packet_total", "The total number of broadcasted packets"))
   , rx_encrypted_packet_failures_total_(
-        (CreateCounter("ledger_router_rx_encrypted_packet_failures_total_",
+        (CreateCounter("ledger_router_rx_encrypted_packet_failures_total",
                        "The total number of received encrypted packets that could not be read")))
   , rx_encrypted_packet_success_total_(
-        (CreateCounter("ledger_router_rx_encrypted_packet_success_total_",
+        (CreateCounter("ledger_router_rx_encrypted_packet_success_total",
                        "The total number of received encrypted packets that could be read")))
   , tx_encrypted_packet_failures_total_(
-        (CreateCounter("ledger_router_tx_encrypted_packet_failures_total_",
+        (CreateCounter("ledger_router_tx_encrypted_packet_failures_total",
                        "The total number of sent encrypted packets that could not be generated")))
   , tx_encrypted_packet_success_total_(
-        (CreateCounter("ledger_router_tx_encrypted_packet_success_total_",
+        (CreateCounter("ledger_router_tx_encrypted_packet_success_total",
                        "The total number of sent encrypted packets that could be generated")))
   , ttl_expired_packet_total_(
         CreateCounter("ledger_router_ttl_expired_packet_total",
