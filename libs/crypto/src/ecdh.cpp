@@ -18,12 +18,17 @@
 
 #include "crypto/ecdh.hpp"
 #include "crypto/ecdsa.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
+
+using fetch::byte_array::ByteArray;
+using fetch::byte_array::ConstByteArray;
 
 namespace fetch {
 namespace crypto {
 
 /**
- * Compute the shared key using Ellipic Curve Diffe-Hellman between two parties
+ * Compute the shared key using Elliptic Curve Diffe-Hellman between two parties
  *
  * @param signer The reference to the signer object
  * @param verifier The reference to the verifier object
@@ -31,13 +36,39 @@ namespace crypto {
  * @return true if successful, otherwise false
  */
 bool ComputeSharedKey(ECDSASigner const &signer, ECDSAVerifier const &verifier,
-                      byte_array::ConstByteArray &shared_key)
+                      ConstByteArray &shared_key)
 {
-  (void)signer;
-  (void)verifier;
-  (void)shared_key;
+  bool success{false};
 
-  return false;
+  auto public_ec_point = verifier.public_key().KeyAsECPoint();
+  auto private_ec_key  = signer.private_key_ec_key();
+
+  // validate the openssl pointers
+  if (public_ec_point && private_ec_key)
+  {
+    auto const field_size = EC_GROUP_get_degree(EC_KEY_get0_group(private_ec_key.get()));
+
+    // correctly derive the field size
+    if (field_size > 0)
+    {
+      // compute the shared key size
+      std::size_t const shared_key_size = (static_cast<std::size_t>(field_size) + 7u) / 8u;
+
+      // create the key buffer for the shared key
+      ByteArray shared_key_buffer{};
+      shared_key_buffer.Resize(shared_key_size);
+
+      // compute the shared key
+      ECDH_compute_key(shared_key_buffer.pointer(), shared_key_buffer.size(), public_ec_point.get(),
+                       private_ec_key.get(), nullptr);
+
+      // return the hashed computed shared key
+      shared_key = Hash<SHA256>(shared_key_buffer);
+      success    = true;
+    }
+  }
+
+  return success;
 }
 
 /**
@@ -51,17 +82,17 @@ bool ComputeSharedKey(ECDSASigner const &signer, ECDSAVerifier const &verifier,
 bool ComputeSharedKey(Prover const &prover, Verifier const &verifier,
                       byte_array::ConstByteArray &shared_key)
 {
-  bool succes{false};
+  bool success{false};
 
   auto const *ecdsa_signer   = dynamic_cast<ECDSASigner const *>(&prover);
   auto const *ecdsa_verifier = dynamic_cast<ECDSAVerifier const *>(&verifier);
 
   if ((ecdsa_signer != nullptr) && (ecdsa_verifier != nullptr))
   {
-    succes = ComputeSharedKey(*ecdsa_signer, *ecdsa_verifier, shared_key);
+    success = ComputeSharedKey(*ecdsa_signer, *ecdsa_verifier, shared_key);
   }
 
-  return succes;
+  return success;
 }
 
 }  // namespace crypto
