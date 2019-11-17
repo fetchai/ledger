@@ -49,7 +49,6 @@ namespace {
 
 using fetch::BitVector;
 using fetch::chain::Address;
-using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::ContractContext;
