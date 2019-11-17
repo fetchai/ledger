@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "crypto/ecdsa.hpp"
 #include "crypto/ecdh.hpp"
+#include "crypto/ecdsa.hpp"
 
 #include "gtest/gtest.h"
 
@@ -32,7 +32,6 @@ using fetch::crypto::ComputeSharedKey;
 class EcdhTests : public ::testing::Test
 {
 protected:
-
   ECDSASigner   alice_private_key_;
   ECDSAVerifier alice_public_key_{alice_private_key_.identity()};
   ECDSASigner   bob_private_key_;
@@ -50,4 +49,4 @@ TEST_F(EcdhTests, BasicCheck)
   ASSERT_EQ(alice_shared_key, bob_shared_key);
 }
 
-}
+}  // namespace

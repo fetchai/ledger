@@ -33,5 +33,5 @@ bool ComputeSharedKey(ECDSASigner const &signer, ECDSAVerifier const &verifier,
 bool ComputeSharedKey(Prover const &prover, Verifier const &verifier,
                       byte_array::ConstByteArray &shared_key);
 
-} // namespace crypto
-} // namespace fetch
+}  // namespace crypto
+}  // namespace fetch

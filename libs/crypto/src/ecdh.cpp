@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/ecdsa.hpp"
 #include "crypto/ecdh.hpp"
+#include "crypto/ecdsa.hpp"
 
 namespace fetch {
 namespace crypto {
@@ -53,7 +53,7 @@ bool ComputeSharedKey(Prover const &prover, Verifier const &verifier,
 {
   bool succes{false};
 
-  auto const *ecdsa_signer = dynamic_cast<ECDSASigner const *>(&prover);
+  auto const *ecdsa_signer   = dynamic_cast<ECDSASigner const *>(&prover);
   auto const *ecdsa_verifier = dynamic_cast<ECDSAVerifier const *>(&verifier);
 
   if ((ecdsa_signer != nullptr) && (ecdsa_verifier != nullptr))
@@ -64,5 +64,5 @@ bool ComputeSharedKey(Prover const &prover, Verifier const &verifier,
   return succes;
 }
 
-} // namespace crypto
-} // namespace fetch
+}  // namespace crypto
+}  // namespace fetch
