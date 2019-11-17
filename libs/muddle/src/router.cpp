@@ -267,6 +267,18 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispa
         CreateCounter("ledger_router_tx_packet_total", "The total number of transmitted packets"))
   , bx_packet_total_(
         CreateCounter("ledger_router_bx_packet_total", "The total number of broadcasted packets"))
+  , rx_encrypted_packet_failures_total_(
+        (CreateCounter("ledger_router_rx_encrypted_packet_failures_total_",
+                       "The total number of received encrypted packets that could not be read")))
+  , rx_encrypted_packet_success_total_(
+        (CreateCounter("ledger_router_rx_encrypted_packet_success_total_",
+                       "The total number of received encrypted packets that could be read")))
+  , tx_encrypted_packet_failures_total_(
+        (CreateCounter("ledger_router_tx_encrypted_packet_failures_total_",
+                       "The total number of sent encrypted packets that could not be generated")))
+  , tx_encrypted_packet_success_total_(
+        (CreateCounter("ledger_router_tx_encrypted_packet_success_total_",
+                       "The total number of sent encrypted packets that could be generated")))
   , ttl_expired_packet_total_(
         CreateCounter("ledger_router_ttl_expired_packet_total",
                       "The total number of packets that have expired due to TTL"))
@@ -498,11 +510,13 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
     if (!encrypted)
     {
       FETCH_LOG_ERROR(logging_name_, "Unable to encrypt packet contents");
+      tx_encrypted_packet_failures_total_->increment();
       return;
     }
 
     packet->SetPayload(encrypted_payload);
     packet->SetEncrypted(true);
+    tx_encrypted_packet_success_total_->increment();
   }
 
   Sign(packet);
@@ -1050,11 +1064,13 @@ void Router::DispatchPacket(PacketPtr const &packet, Address const &transmitter)
       if (!decrypted)
       {
         FETCH_LOG_ERROR(logging_name_, "Unable to decrypt input message");
+        rx_encrypted_packet_failures_total_->increment();
         return;
       }
 
       // update the payload to be decrypted payload
       packet->SetPayload(decrypted_payload);
+      rx_encrypted_packet_success_total_->increment();
     }
 
     // determine if this was an exchange based node
