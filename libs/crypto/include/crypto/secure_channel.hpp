@@ -17,22 +17,38 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/block_cipher.hpp"
+#include <cstdint>
 
 namespace fetch {
+
+namespace byte_array {
+
+class ConstByteArray;
+
+}  // namespace byte_array
+
 namespace crypto {
 
-class AesBlockCipher
+class Prover;
+
+class SecureChannel
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
 
-  static std::size_t GetKeyLength(BlockCipher::Type type) noexcept;
-  static std::size_t GetIVLength(BlockCipher::Type type) noexcept;
-  static bool Encrypt(BlockCipher::Type type, ConstByteArray const &key, ConstByteArray const &iv,
-                      ConstByteArray const &clear_text, ConstByteArray &cipher_text);
-  static bool Decrypt(BlockCipher::Type type, ConstByteArray const &key, ConstByteArray const &iv,
-                      ConstByteArray const &cipher_text, ConstByteArray &clear_text);
+  explicit SecureChannel(Prover const &prover);
+  ~SecureChannel() = default;
+
+  bool Encrypt(ConstByteArray const &destination_public_key, uint16_t service, uint16_t channel,
+               uint16_t counter, ConstByteArray const &payload,
+               ConstByteArray &encrypted_payload);
+
+  bool Decrypt(ConstByteArray const &sender_public_key, uint16_t service, uint16_t channel,
+               uint16_t counter, ConstByteArray const &encrypted_payload,
+               ConstByteArray &payload);
+
+private:
+  Prover const &prover_;
 };
 
 }  // namespace crypto

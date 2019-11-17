@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 #include "aes.hpp"
 
@@ -38,7 +38,6 @@ constexpr std::size_t AES_BLOCK_SIZE = 16;
 class ContextDeleter
 {
 public:
-
   void operator()(EVP_CIPHER_CTX *ctx) const
   {
     EVP_CIPHER_CTX_free(ctx);
@@ -69,7 +68,7 @@ bool ValidateBufferLength(std::size_t buffer_length, std::size_t desired_length)
   if (desired_length > 0)
   {
     std::size_t const desired_byte_length = (desired_length + 7u) / 8u;
-    valid = desired_byte_length == buffer_length;
+    valid                                 = desired_byte_length == buffer_length;
   }
 
   return valid;
@@ -95,7 +94,7 @@ EVP_CIPHER const *LookupCipher(BlockCipher::Type type)
   return cipher;
 }
 
-} // namespace
+}  // namespace
 
 /**
  * Determine the required key bit length for a given cipher mode
@@ -103,7 +102,7 @@ EVP_CIPHER const *LookupCipher(BlockCipher::Type type)
  * @param type The cipher mode
  * @return The key bit length
  */
-std::size_t AesBlockCipher::GetKeyLength(BlockCipher::Type type)
+std::size_t AesBlockCipher::GetKeyLength(BlockCipher::Type type) noexcept
 {
   std::size_t key_length{0};
 
@@ -123,7 +122,7 @@ std::size_t AesBlockCipher::GetKeyLength(BlockCipher::Type type)
  * @param type The cipher mode
  * @return The IV bit length
  */
-std::size_t AesBlockCipher::GetIVLength(BlockCipher::Type type)
+std::size_t AesBlockCipher::GetIVLength(BlockCipher::Type type) noexcept
 {
   std::size_t iv_length{0};
   switch (type)
@@ -188,7 +187,7 @@ bool AesBlockCipher::Encrypt(BlockCipher::Type type, ConstByteArray const &key,
   }
 
   // create the cipher text buffer
-  ByteArray cipher_text_buffer{};
+  ByteArray   cipher_text_buffer{};
   std::size_t populated_length{0};
   cipher_text_buffer.Resize(clear_text.size() + AES_BLOCK_SIZE - 1);
 
@@ -206,7 +205,7 @@ bool AesBlockCipher::Encrypt(BlockCipher::Type type, ConstByteArray const &key,
 
   // update the remaining length and offset pointer
   uint8_t *remaining_buffer = cipher_text_buffer.pointer() + populated_length;
-  remaining_length = static_cast<int>(cipher_text_buffer.size() - populated_length);
+  remaining_length          = static_cast<int>(cipher_text_buffer.size() - populated_length);
 
   status = EVP_EncryptFinal(ctx.get(), remaining_buffer, &remaining_length);
   if (status != 1)
@@ -222,7 +221,7 @@ bool AesBlockCipher::Encrypt(BlockCipher::Type type, ConstByteArray const &key,
 
   // update the cipher text output buffer
   cipher_text = std::move(cipher_text_buffer);
-  success = true;
+  success     = true;
 
   return success;
 }
@@ -272,8 +271,9 @@ bool AesBlockCipher::Decrypt(BlockCipher::Type type, ConstByteArray const &key,
   }
 
   // configure the block cipher encryption
-  status = EVP_DecryptInit(ctx.get(), cipher, reinterpret_cast<unsigned char const *>(key.pointer()),
-                           reinterpret_cast<unsigned char const *>(iv.pointer()));
+  status =
+      EVP_DecryptInit(ctx.get(), cipher, reinterpret_cast<unsigned char const *>(key.pointer()),
+                      reinterpret_cast<unsigned char const *>(iv.pointer()));
   if (status != 1)
   {
     return false;
@@ -298,9 +298,8 @@ bool AesBlockCipher::Decrypt(BlockCipher::Type type, ConstByteArray const &key,
   // after a successful call openssl will write back the populated length of the buffer
   populated_length += static_cast<std::size_t>(remaining_length);
 
-
   uint8_t *remaining_buffer = clear_text_buffer.pointer() + populated_length;
-  remaining_length = static_cast<int>(clear_text_buffer.size() - populated_length);
+  remaining_length          = static_cast<int>(clear_text_buffer.size() - populated_length);
 
   status = EVP_DecryptFinal(ctx.get(), remaining_buffer, &remaining_length);
   if (status != 1)
@@ -319,5 +318,5 @@ bool AesBlockCipher::Decrypt(BlockCipher::Type type, ConstByteArray const &key,
   return success;
 }
 
-} // namespace crypto
-} // namespace fetch
+}  // namespace crypto
+}  // namespace fetch

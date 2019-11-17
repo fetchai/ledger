@@ -24,7 +24,7 @@ namespace byte_array {
 
 class ConstByteArray;
 
-} // namespace byte_array
+}  // namespace byte_array
 
 namespace crypto {
 
@@ -40,12 +40,14 @@ public:
 
   /// @name Simple small payload length interface
   /// @{
-  static std::size_t GetKeyLength(Type type);
-  static std::size_t GetIVLength(Type type);
-  static bool Encrypt(Type cipher, ConstByteArray const &key, ConstByteArray const &iv, ConstByteArray const &clear_text, ConstByteArray &cipher_text);
-  static bool Decrypt(Type type, ConstByteArray const &key, ConstByteArray const &iv, ConstByteArray const &cipher_text, ConstByteArray &clear_text);
+  static std::size_t GetKeyLength(Type type) noexcept;
+  static std::size_t GetIVLength(Type type) noexcept;
+  static bool        Encrypt(Type type, ConstByteArray const &key, ConstByteArray const &iv,
+                             ConstByteArray const &clear_text, ConstByteArray &cipher_text);
+  static bool        Decrypt(Type type, ConstByteArray const &key, ConstByteArray const &iv,
+                             ConstByteArray const &cipher_text, ConstByteArray &clear_text);
   /// @}
 };
 
-} // namespace crypto
-} // namespace fetch
+}  // namespace crypto
+}  // namespace fetch
