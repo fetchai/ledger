@@ -97,7 +97,7 @@ Deed::Weight SigneesFullWeight(Deed::Signees const &signees)
 
 Deed::Operation const Deed::TRANSFER{"transfer"};
 Deed::Operation const Deed::STAKE{"stake"};
-Deed::Operation const Deed::AMEND{"ammend"};
+Deed::Operation const Deed::AMEND{"amend"};
 Deed::Operation const Deed::EXECUTE{"execute"};
 
 Deed::Deed(Signees signees, OperationTresholds thresholds)
