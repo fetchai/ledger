@@ -53,7 +53,7 @@ static std::size_t const PEER_SELECTION_INTERVAL_MS = 500;
  * @param certificate The certificate/identity of this node
  */
 Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
-               bool sign_packets, bool sign_broadcasts, std::string external_address)
+               std::string external_address)
   : name_{GenerateLoggingName("Muddle", network_id)}
   , certificate_(std::move(certificate))
   , external_address_(std::move(external_address))
@@ -61,8 +61,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , network_manager_(nm)
   , dispatcher_(network_id, certificate_->identity().identifier())
   , register_(std::make_shared<MuddleRegister>(network_id))
-  , router_(network_id, node_address_, *register_, dispatcher_,
-            sign_packets ? certificate_.get() : nullptr, sign_packets && sign_broadcasts)
+  , router_(network_id, node_address_, *register_, dispatcher_, *certificate_)
   , clients_(network_id)
   , network_id_(network_id)
   , reactor_{"muddle"}
