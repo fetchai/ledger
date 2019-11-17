@@ -493,7 +493,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
       {
         ret = function(args);
       }
-      catch (std::runtime_error const &e)
+      catch (std::exception const &e)
       {
         error_tracker_.RaiseRuntimeError(e.what(), stack_[n]->token());
         return;

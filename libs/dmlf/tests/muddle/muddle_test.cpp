@@ -186,7 +186,7 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
     learners[1]->actual->GetUpdateTypeCount("weights");
     EXPECT_NE(1, 1);
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     EXPECT_EQ(1, 1);
   }
@@ -196,7 +196,7 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
     learners[1]->actual->GetUpdateTypeCount<fetch::dmlf::Update<double>>();
     EXPECT_NE(1, 1);
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     EXPECT_EQ(1, 1);
   }
