@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "crypto/secure_channel.hpp"
 #include "crypto/ecdsa.hpp"
+#include "crypto/secure_channel.hpp"
 
 #include "gtest/gtest.h"
 
@@ -52,7 +52,8 @@ TEST_F(SecureChannelTests, CheckAliceSendsToBob)
   ASSERT_TRUE(alice_channel_.Encrypt(bob_pubic_key_, SERVICE, CHANNEL, COUNTER, msg, payload));
 
   ConstByteArray recovered{};
-  ASSERT_TRUE(bob_channel_.Decrypt(alice_pubic_key_, SERVICE, CHANNEL, COUNTER, payload, recovered));
+  ASSERT_TRUE(
+      bob_channel_.Decrypt(alice_pubic_key_, SERVICE, CHANNEL, COUNTER, payload, recovered));
 
   ASSERT_EQ(msg, recovered);
 }

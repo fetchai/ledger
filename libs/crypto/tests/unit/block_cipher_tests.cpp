@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/block_cipher.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "crypto/block_cipher.hpp"
 
 #include "gtest/gtest.h"
 
@@ -45,4 +45,4 @@ TEST(BlockCipherTests, BasicAes256CbcTest)
   ASSERT_EQ(plain_text, recovered_text);
 }
 
-}
+}  // namespace

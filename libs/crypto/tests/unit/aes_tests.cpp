@@ -18,10 +18,10 @@
 
 #include "aes.hpp"
 
-#include "crypto/block_cipher.hpp"
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "crypto/block_cipher.hpp"
 
 #include "gtest/gtest.h"
 
@@ -44,9 +44,10 @@ TEST(AesTests, BasicAes256CbcTest)
   ASSERT_TRUE(AesBlockCipher::Encrypt(BlockCipher::AES_256_CBC, key, iv, plain_text, cipher_text));
 
   ConstByteArray recovered_text{};
-  ASSERT_TRUE(AesBlockCipher::Decrypt(BlockCipher::AES_256_CBC, key, iv, cipher_text, recovered_text));
+  ASSERT_TRUE(
+      AesBlockCipher::Decrypt(BlockCipher::AES_256_CBC, key, iv, cipher_text, recovered_text));
 
   ASSERT_EQ(plain_text, recovered_text);
 }
 
-}
+}  // namespace

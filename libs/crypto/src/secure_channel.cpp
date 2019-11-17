@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/secure_channel.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/block_cipher.hpp"
 #include "crypto/ecdh.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/hash.hpp"
+#include "crypto/secure_channel.hpp"
 #include "crypto/sha256.hpp"
 
 using fetch::byte_array::ConstByteArray;

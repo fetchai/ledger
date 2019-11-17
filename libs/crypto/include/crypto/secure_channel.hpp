@@ -40,12 +40,10 @@ public:
   ~SecureChannel() = default;
 
   bool Encrypt(ConstByteArray const &destination_public_key, uint16_t service, uint16_t channel,
-               uint16_t counter, ConstByteArray const &payload,
-               ConstByteArray &encrypted_payload);
+               uint16_t counter, ConstByteArray const &payload, ConstByteArray &encrypted_payload);
 
   bool Decrypt(ConstByteArray const &sender_public_key, uint16_t service, uint16_t channel,
-               uint16_t counter, ConstByteArray const &encrypted_payload,
-               ConstByteArray &payload);
+               uint16_t counter, ConstByteArray const &encrypted_payload, ConstByteArray &payload);
 
 private:
   Prover const &prover_;
