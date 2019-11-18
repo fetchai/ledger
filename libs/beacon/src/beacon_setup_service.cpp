@@ -79,6 +79,8 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &       muddle,
         "beacon_dkg_state_failed_on", "Last state the DKG failed on")}
   , beacon_dkg_time_allocated_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_time_allocated", "Time allocated for the DKG to complete")}
+  , beacon_dkg_reference_timepoint_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_dkg_reference_timepoint", "The reference time point that members start DKG on")}
   , beacon_dkg_aeon_setting_up_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_aeon_setting_up", "The aeon currently under setup.")}
   , beacon_dkg_miners_in_qual_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
@@ -1525,58 +1527,59 @@ std::vector<std::weak_ptr<core::Runnable>> BeaconSetupService::GetWeakRunnables(
   return {state_machine_, rbc_->GetRunnable()};
 }
 
-double TimePerSlot(uint64_t cabinet_size)
+/**
+ * Return the time in seconds that it is expected DKG will take given the cabinet size is N
+ */
+uint64_t TimePerDKGIteration(uint64_t cabinet_size)
 {
-  // Default
-  uint64_t expected_dkg_time_s = 10 * (cabinet_size << 1u);
+  // Empirical map of cabinet size to expected time. Final element is max to guarantee lower bound
+  // isn't end()
+  // clang-format off
+  static /*constexpr*/ std::map<uint64_t, uint64_t> dkg_time_to_cabinet_size_map
+  {{8, 10},
+   {10, 30},
+   {30, 100},
+   {51, 250},
+   {60, 305},
+   {90, 1304},
+   {200, 27229},
+   {std::numeric_limits<uint64_t>::max(), 27229} };
+  // clang-format on
 
-  // empirical times observed - the base time you expect it to take based on cabinet size
-  if (cabinet_size < 200)
-  {
-    expected_dkg_time_s = 27229;
-  }
-  if (cabinet_size < 90)
-  {
-    expected_dkg_time_s = 1304;
-  }
-  if (cabinet_size < 60)
-  {
-    expected_dkg_time_s = 305;
-  }
-  if (cabinet_size < 51)
-  {
-    expected_dkg_time_s = 250;
-  }
-  if (cabinet_size < 30)
-  {
-    expected_dkg_time_s = 100;
-  }
-  if (cabinet_size < 10)
-  {
-    expected_dkg_time_s = 30;
-  }
-  if (cabinet_size < 8)
-  {
-    expected_dkg_time_s = 10;
-  }
-
-  // This assigns a time in seconds to each slot. Dividing by 100 is an arbitrary way to select the
-  // time for a single slot from the total DKG time and we could equally just set the time per slot
-  // directly.
-  return static_cast<double>(expected_dkg_time_s) / 100.;
+  // Note it is assumed the total dkg time exceeds 1s * DKG states
+  return (dkg_time_to_cabinet_size_map.lower_bound(cabinet_size))->second;
 }
 
-void BeaconSetupService::SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
-                                        uint64_t &time_slot_for_state)
+/**
+ * Given that we are entering State state, with a known starting point in time,
+ * set the deadline for this state to complete
+ *
+ */
+void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &state)
 {
-  assert(time_slot_map_.find(state) != time_slot_map_.end());
-  time_slot_for_state = time_slot_map_.at(state);
+  auto it = time_slot_map_.find(state);
 
-  while (state != BeaconSetupService::State::RESET)
+  if (it == time_slot_map_.end())
   {
-    time_slots_total += time_slot_map_.at(state);
-    state = BeaconSetupService::State(static_cast<uint8_t>(state) - 1);
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "Attempt to set the time for a state that has no associated time!");
+    return;
   }
+
+  uint64_t time_slots_to_end = 0;
+
+  // Walk through the map adding time slots, including the initial state
+  using MapPair = typename decltype(time_slot_map_)::value_type;
+  std::for_each(time_slot_map_.begin(), it, [&time_slots_to_end](MapPair const &cabinet_time_pair) {
+    time_slots_to_end += cabinet_time_pair.second;
+  });
+
+  assert(expected_dkg_timespan_ != 0 && time_slots_in_dkg_ != 0 && time_slots_to_end != 0);
+
+  uint64_t time_until_deadline_s =
+      time_slots_to_end / (expected_dkg_timespan_ * time_slots_in_dkg_);
+
+  state_deadline_ = reference_timepoint_ + time_until_deadline_s;
 }
 
 /**
@@ -1584,86 +1587,84 @@ void BeaconSetupService::SetTimeBySlots(BeaconSetupService::State state, uint64_
  * that we are entering the State 'state'. The function will set a timer
  * that will expire when it is time to move to the next state.
  *
+ * If the state is reset, it will wait until the next DKG time point (also setting up class
+ * variables). Otherwise, it will calculate the time until the next state, given the DKG started at
+ * the most recent start point.
+ *
  */
 void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 {
-  uint64_t current_time = GetTime(system_clock_);
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                 " determining time allowed to move on from state: \"", ToString(state), "\" at ",
-                 current_time);
+  uint64_t const current_time = GetTime(system_clock_);
+  // Initially assume the next start point is in the future
+  reference_timepoint_  = beacon_->aeon.start_reference_timepoint;
   condition_to_proceed_ = false;
 
-  uint64_t cabinet_size  = beacon_->aeon.members.size();
-  double   time_per_slot = TimePerSlot(cabinet_size);
-  auto     expected_dkg_time_s =
-      static_cast<uint64_t>(time_per_slot * static_cast<double>(time_slots_in_dkg_));
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                 " determining time allowed to move on from state: \"", ToString(state),
+                 "\" . Current time: ", current_time,
+                 ", base start reference timepoint: ", reference_timepoint_);
 
-  FETCH_LOG_DEBUG(BeaconSetupService::LOGGING_NAME, "Note: Expect DKG time to be ",
-                  expected_dkg_time_s, " s");
+  uint64_t const cabinet_size = beacon_->aeon.members.size();
+
+  // get the base time a DKG attempt should take
+  uint64_t const time_per_iteration = TimePerDKGIteration(cabinet_size);
+
+  // auto     expected_dkg_time_s =
+  //    static_cast<uint64_t>(time_per_iteration * static_cast<double>(time_slots_in_dkg_));
 
   // RESET state will delay DKG until the start point (or next start point)
   if (state == BeaconSetupService::State::RESET)
   {
     // Easy case where the start point is ahead in time
-    // If not ahead in time, the DKG must have failed before. Algorithmically decide how long
-    // to increase the allotted DKG time (scheme 2x)
-    uint64_t next_start_point       = beacon_->aeon.start_reference_timepoint;
-    uint64_t dkg_time               = expected_dkg_time_s;
-    uint16_t failures               = 0;
-    double   adjusted_time_per_slot = time_per_slot;
+    // If not ahead in time, the DKG must have failed before. Algorithmically, and importantly
+    // deterministically, decide how long to increase the allotted DKG time (increment each time
+    // by 1.5x to a maximum of MAX_DKG_MULTIPLIER)
+    expected_dkg_timespan_ = time_per_iteration;
+    uint16_t failures      = 0;
 
-    while (next_start_point < current_time)
+    while (reference_timepoint_ < current_time)
     {
       failures++;
-      next_start_point += dkg_time;
-      adjusted_time_per_slot += 0.5 * adjusted_time_per_slot;
-      dkg_time =
-          dkg_time + static_cast<uint64_t>(time_per_slot * static_cast<double>(time_slots_in_dkg_));
+      reference_timepoint_ += expected_dkg_timespan_;
+      expected_dkg_timespan_ += std::min(expected_dkg_timespan_ + (expected_dkg_timespan_ / 2),
+                                         time_per_iteration * MAX_DKG_BOUND_MULTIPLE);
     }
 
-    expected_dkg_timespan_ = dkg_time;
-    reference_timepoint_   = next_start_point;
-    time_per_slot_         = adjusted_time_per_slot;
-
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                   " DKG round: ", beacon_->aeon.round_start, " failures so far: ", failures,
-                   " allotted time: ", expected_dkg_timespan_, " base time: ", expected_dkg_time_s);
+                   " calculated dkg time span on entering reset state. "
+                   " DKG round: ",
+                   beacon_->aeon.round_start, " failures so far: ", failures,
+                   " allotted time: ", expected_dkg_timespan_, " base time: ", time_per_iteration);
 
     beacon_dkg_time_allocated_->set(expected_dkg_timespan_);
+    beacon_dkg_reference_timepoint_->set(reference_timepoint_);
     beacon_dkg_failures_required_to_complete_->set(failures);
     failures_ = failures;
   }
 
-  // No timeout for these states
+  // No timeout for these states, so no need to set a deadline
   if (state == BeaconSetupService::State::BEACON_READY || state == BeaconSetupService::State::IDLE)
   {
     return;
   }
-  // Assign each state an equal amount of time for now
-  uint64_t time_slots_total    = 0;
-  uint64_t time_slot_for_state = 0;
 
-  SetTimeBySlots(state, time_slots_total, time_slot_for_state);
+  // Given a reference start point, the DKG allotted time, and the state we are going into,
+  // set the deadline for when this state should move on
+  SetDeadlineForState(state);
 
-  FETCH_LOG_DEBUG(
-      LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), "Time per slot: ", time_per_slot_,
-      ", time slots for state: ", time_slot_for_state, ", time slots total: ", time_slots_total);
-
-  seconds_for_state_ = uint64_t(double(time_slot_for_state) * time_per_slot_);
-  state_deadline_    = reference_timepoint_ + uint64_t(double(time_slots_total) * time_per_slot_);
+  FETCH_LOG_INFO(LOGGING_NAME, "#### Node ", beacon_->manager.cabinet_index(),
+                 " set time for state ", ToString(state), " to complete at: ", state_deadline_,
+                 " which is in ", state_deadline_ - current_time, " seconds");
 
   if (state_deadline_ < current_time)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " \n#### Deadline for ",
-                   ToString(state), " has passed! This should not happen");
+                   ToString(state),
+                   " has passed! This should not happen. The states may be unusually long.");
     timer_to_proceed_.Restart(0);
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                   " #### Proceeding to next state \"", ToString(state), "\", to last ",
-                   state_deadline_ - current_time, " seconds (deadline: ", state_deadline_, ")");
     timer_to_proceed_.Restart(std::chrono::seconds{state_deadline_ - current_time});
   }
 }
