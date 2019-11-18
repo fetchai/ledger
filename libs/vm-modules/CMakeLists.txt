@@ -27,3 +27,4 @@ target_link_libraries(fetch-vm-modules
 add_test_target()
 
 add_subdirectory(examples)
+add_subdirectory(benchmark)
