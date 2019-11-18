@@ -43,8 +43,8 @@ public:
   // Construction / Destruction
   TransactionLayout() = default;
   TransactionLayout(Transaction const &tx, uint32_t log2_num_lanes);
-  TransactionLayout(Digest digest, BitVector const &mask, TokenAmount charge_rate, BlockIndex valid_from,
-                    BlockIndex valid_until);
+  TransactionLayout(Digest digest, BitVector const &mask, TokenAmount charge_rate,
+                    BlockIndex valid_from, BlockIndex valid_until);
   TransactionLayout(TransactionLayout const &) = default;
   TransactionLayout(TransactionLayout &&)      = default;
   ~TransactionLayout()                         = default;
