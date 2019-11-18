@@ -30,104 +30,106 @@ namespace {
 using fetch::byte_array::ByteArray;
 using fetch::vm_modules::math::UInt256Wrapper;
 
-static const ByteArray raw_32xFF{
+const ByteArray raw_32xFF{
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
 
-static const ByteArray raw_32xAA{
+const ByteArray raw_32xAA{
     0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
     0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
 };
 
-static const ByteArray raw_25xFF{
+const ByteArray raw_25xFF{
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const ByteArray raw_24xFF{
+const ByteArray raw_24xFF{
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const ByteArray raw_24xAA{
+const ByteArray raw_24xAA{
     0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
     0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const ByteArray raw_17xFF{
+const ByteArray raw_17xFF{
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
     0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const ByteArray raw_16xFF{
+const ByteArray raw_16xFF{
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const ByteArray raw_16xAA{
+const ByteArray raw_16xAA{
     0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const ByteArray raw_09xFF{
+const ByteArray raw_09xFF{
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const ByteArray raw_09xAA{
+const ByteArray raw_09xAA{
     0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const ByteArray raw_08xFF{
+const ByteArray raw_08xFF{
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const ByteArray raw_1234567890{
+const ByteArray raw_1234567890{
     0xD2, 0x02, 0x96, 0x49, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const ByteArray raw_1234567890123{
+const ByteArray raw_1234567890123{
     0xcb, 0x04, 0xfb, 0x71, 0x1f, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const ByteArray raw_1234567890123456{
+const ByteArray raw_1234567890123456{
     0xC0, 0xBA, 0x8A, 0x3C, 0xD5, 0x62, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const ByteArray raw_1234567890123456789{
+const ByteArray raw_1234567890123456789{
     0x15, 0x81, 0xE9, 0x7D, 0xF4, 0x10, 0x22, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
 // Long integer to double conversion was performed using Wolfram Alfa.
-static const std::map<double, ByteArray> TO_DOUBLE_INPUTS{
-    {1.15792089237316e+77, raw_32xFF},
-    {7.71947261582108e+76, raw_32xAA},
-    {1.60693804425899e+60, raw_25xFF},
-    {6.27710173538668e+57, raw_24xFF},
-    {4.18473449025779e+57, raw_24xAA},
-    {8.71122859317602e+40, raw_17xFF},
-    {3.40282366920938e+38, raw_16xFF},
-    {2.26854911280626e+38, raw_16xAA},
-    {4.72236648286965e+21, raw_09xFF},
-    {3.14824432191310e+21, raw_09xAA},
-    {1.84467440737096e+19, raw_08xFF},
-    {1234567890., raw_1234567890},
-    {1234567890123., raw_1234567890123},
-    {1234567890123456., raw_1234567890123456},
-    {1234567890123456789., raw_1234567890123456789}};
+const std::vector<std::pair<ByteArray, double>> TO_DOUBLE_INPUTS{
+    {raw_32xFF, 1.15792089237316e+77},
+    {raw_32xAA, 7.71947261582108e+76},
+    {raw_25xFF, 1.60693804425899e+60},
+    {raw_24xFF, 6.27710173538668e+57},
+    {raw_24xAA, 4.18473449025779e+57},
+    {raw_17xFF, 8.71122859317602e+40},
+    {raw_16xFF, 3.40282366920938e+38},
+    {raw_16xAA, 2.26854911280626e+38},
+    {raw_09xFF, 4.72236648286965e+21},
+    {raw_09xAA, 3.14824432191310e+21},
+    {raw_08xFF, 1.84467440737096e+19},
+    {raw_1234567890, 1234567890.},
+    {raw_1234567890123, 1234567890123.},
+    {raw_1234567890123456, 1234567890123456.},
+    {raw_1234567890123456789, 1234567890123456789.}};
 
 class UInt256Tests : public ::testing::Test
 {
 public:
-  static constexpr auto           dummy_typeid = fetch::vm::TypeIds::UInt64;
-  static constexpr fetch::vm::VM *dummy_vm_ptr = nullptr;
+  static constexpr auto           dummy_typeid  = fetch::vm::TypeIds::UInt64;
+  static constexpr fetch::vm::VM *dummy_vm_ptr  = nullptr;
+  static constexpr std::size_t    SIZE_IN_BITS  = 256;
+  static constexpr std::size_t    SIZE_IN_BYTES = SIZE_IN_BITS / 8;
 
   UInt256Wrapper zero{dummy_vm_ptr, dummy_typeid, 0};
   UInt256Wrapper uint64max{dummy_vm_ptr, dummy_typeid, std::numeric_limits<uint64_t>::max()};
@@ -136,46 +138,6 @@ public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
 };
-
-static constexpr std::size_t SIZE_IN_BITS  = 256;
-static constexpr std::size_t SIZE_IN_BYTES = SIZE_IN_BITS / 8;
-
-TEST_F(UInt256Tests, uint256_logValue)
-{
-  static constexpr double LOGARITHM_TOLERANCE  = 5e-4;
-  static constexpr double CONVERSION_TOLERANCE = 0.1;
-
-  for (const auto &input : TO_DOUBLE_INPUTS)
-  {
-    using namespace std;
-    UInt256Wrapper n1(dummy_vm_ptr, dummy_typeid, input.second);
-
-    const auto as_double  = ToDouble(n1.number());
-    const auto result     = n1.LogValue();
-    const auto exp_double = input.first;
-    const auto expected   = std::log(exp_double);
-
-    EXPECT_NEAR(as_double, exp_double, exp_double * CONVERSION_TOLERANCE);
-    EXPECT_NEAR(result, expected, expected * LOGARITHM_TOLERANCE);
-  }
-
-  static constexpr char const *TEXT = R"(
-          function main() : Float64
-            var number : UInt256 = UInt256(9000000000000000000u64);
-            var logY : Float64 = number.logValue();
-            return logY;
-          endfunction
-        )";
-
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-  auto const result = res.Get<double>();
-
-  double const expected = std::log(9000000000000000000ull);
-
-  EXPECT_NEAR(result, expected, expected * LOGARITHM_TOLERANCE);
-}
 
 TEST_F(UInt256Tests, uint256_raw_construction)
 {
@@ -308,12 +270,91 @@ TEST_F(UInt256Tests, uint256_size)
   ASSERT_TRUE(toolkit.Run(&res));
   auto const size = res.Get<uint64_t>();
 
-  EXPECT_EQ(size, SIZE_IN_BYTES);
+  EXPECT_TRUE(SIZE_IN_BYTES == size);
 }
 
-TEST_F(UInt256Tests, uint256_type_casts)
+TEST_F(UInt256Tests, uint256_logValue)
 {
-  // TODO(VH): impl. : toFloat64 toInt32 toUInt32 toInt64 toUInt64 toString
+  static constexpr double LOGARITHM_TOLERANCE  = 5e-4;
+  static constexpr double CONVERSION_TOLERANCE = 0.1;
+
+  for (const auto &input : TO_DOUBLE_INPUTS)
+  {
+    using namespace std;
+    UInt256Wrapper n1(dummy_vm_ptr, dummy_typeid, input.first);
+
+    const auto as_double  = ToDouble(n1.number());
+    const auto result     = n1.LogValue();
+    const auto exp_double = input.second;
+    const auto expected   = std::log(exp_double);
+
+    EXPECT_NEAR(as_double, exp_double, exp_double * CONVERSION_TOLERANCE);
+    EXPECT_NEAR(result, expected, expected * LOGARITHM_TOLERANCE);
+  }
+
+  static constexpr char const *TEXT = R"(
+          function main() : Float64
+            var number : UInt256 = UInt256(9000000000000000000u64);
+            var logY : Float64 = number.logValue();
+            return logY;
+          endfunction
+        )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<double>();
+
+  double const expected = std::log(9000000000000000000ull);
+
+  EXPECT_NEAR(result, expected, expected * LOGARITHM_TOLERANCE);
+}
+
+// Disabled until UInt256 type casting is implemented/fixed.
+TEST_F(UInt256Tests, DISABLED_uint256_type_casts)
+{
+  // WARNING: this test will now fail with UInt256 until some fixes.
+  static constexpr char const *TEXT = R"(
+      function main() : Bool
+          var test : UInt256 = UInt256(9000000000000000000u64);
+          var correct : UInt64 = 9000000000000000000u64;
+          var ok = true;
+
+          //var test_float32 = toFloat32(test);
+          //var correct_float32 = toFloat32(correct);
+          //ok = ok && (test_float32 == correct_float32);
+
+          //var float64 = toFloat64(test);
+
+          var test_int32 = toInt32(test);
+          var correct_int32 = toInt32(correct);
+          ok = ok && (test_int32 == correct_int32);
+
+          var test_uint32 = toUInt32(test);
+          var correct_uint32 = toUInt32(correct);
+          ok = ok && (test_uint32 == correct_uint32);
+
+          var test_int64 = toInt64(test);
+          var correct_int64 = toInt64(correct);
+          ok = ok && (test_int64 == correct_int64);
+
+          var test_uint64 = toUInt64(test);
+          var correct_uint64 = toUInt64(correct);
+          ok = ok && (test_uint64 == correct_uint64);
+
+          var test_str : String = toString(test);
+          var correct_str : String = "0000000000000000000000000000000000000000000000007ce66c50e2840000";
+          ok = ok && (test_str == correct_str);
+          printLn(test_str);
+          printLn(correct_str);
+          return ok;
+      endfunction
+    )";
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result_is_ok = res.Get<bool>();
+  EXPECT_TRUE(result_is_ok);
 }
 
 }  // namespace
