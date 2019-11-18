@@ -20,8 +20,8 @@
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
 #include "dmlf/colearn/colearn_protocol.hpp"
-#include "dmlf/colearn/update_store.hpp"
 #include "dmlf/colearn/random_double.hpp"
+#include "dmlf/colearn/update_store.hpp"
 #include "dmlf/networkers/abstract_learner_networker.hpp"
 #include "dmlf/update_interface.hpp"
 #include "logging/logging.hpp"
@@ -57,7 +57,8 @@ public:
   using NetManP            = std::shared_ptr<NetMan>;
   using Signer             = fetch::crypto::ECDSASigner;
   using Randomiser         = RandomDouble;
- 
+  using SignerPtr          = std::shared_ptr<Signer>;
+
   static constexpr char const *LOGGING_NAME = "MuddleLearnerNetworkerImpl";
 
   explicit MuddleLearnerNetworkerImpl(const std::string &priv, unsigned short int port,
@@ -101,8 +102,8 @@ public:
   // This is the exposed interface
 
   uint64_t NetworkColearnUpdate(service::CallContext const &context, const std::string &type_name,
-                                byte_array::ConstByteArray bytes,
-                                double proportion=1.0, double random_factor=0.0);
+                                byte_array::ConstByteArray bytes, double proportion = 1.0,
+                                double random_factor = 0.0);
 
   Randomiser &access_randomiser()
   {

@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <random>
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
+#include <random>
 
 namespace fetch {
 namespace dmlf {
@@ -39,24 +39,25 @@ public:
   virtual ~RandomDouble() = default;
 
   RandomDouble(RandomDouble const &other) = delete;
-  RandomDouble &operator=(RandomDouble const &other) = delete;
-  bool operator==(RandomDouble const &other) = delete;
-  bool operator<(RandomDouble const &other) = delete;
+  RandomDouble &operator=(RandomDouble const &other)  = delete;
+  bool          operator==(RandomDouble const &other) = delete;
+  bool          operator<(RandomDouble const &other)  = delete;
 
   virtual double GetAgain() const;
   virtual double GetNew();
-  virtual void Seed(Bytes const &data);
-  virtual void Seed(CBytes const &data);
+  virtual void   Seed(Bytes const &data);
+  virtual void   Seed(CBytes const &data);
 
   virtual void Set(double forced_value);
+
 protected:
 private:
-  double cache_;
+  double             cache_;
   std::random_device rd_;
-  Twister twister_;
-  Underlying underlying_;
+  Twister            twister_;
+  Underlying         underlying_;
 };
 
-}
-}
-}
+}  // namespace colearn
+}  // namespace dmlf
+}  // namespace fetch

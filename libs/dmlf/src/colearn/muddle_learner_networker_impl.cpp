@@ -21,7 +21,7 @@
 #include "dmlf/colearn/muddle_outbound_update_task.hpp"
 #include "dmlf/colearn/update_store.hpp"
 #include "muddle/rpc/client.hpp"
-#include <cmath> // for modf
+#include <cmath>  // for modf
 
 namespace fetch {
 namespace dmlf {
@@ -52,8 +52,8 @@ void MuddleLearnerNetworkerImpl::setup(MuddlePtr mud, StorePtr update_store)
   server_ = std::make_shared<RpcServer>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   server_->Add(RPC_COLEARN, proto_.get());
 
-  randomising_offset_ = randomiser_.GetNew();
-  broadcast_proportion_ = 1.0; // a reasonable default.
+  randomising_offset_   = randomiser_.GetNew();
+  broadcast_proportion_ = 1.0;  // a reasonable default.
 }
 
 MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
@@ -62,7 +62,7 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
 {
   auto signer = std::make_shared<Signer>();
   signer->Load(fetch::byte_array::FromBase64(priv));
-  CertificatePtr ident = signer;
+  SignerPtr ident = signer;
 
   netm_ = std::make_shared<NetMan>("LrnrNet", 4);
   netm_->Start();
@@ -108,9 +108,8 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, B
   for (auto const &peer : peers_)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating sender for ", type_name, " to target ", peer);
-    auto task = std::make_shared<MuddleOutboundUpdateTask>(peer, type_name, update, client_,
-                                                           broadcast_proportion_,
-                                                           randomiser_.GetNew());
+    auto task = std::make_shared<MuddleOutboundUpdateTask>(
+        peer, type_name, update, client_, broadcast_proportion_, randomiser_.GetNew());
     taskpool_->submit(task);
   }
 }
@@ -135,8 +134,12 @@ uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext c
   FETCH_LOG_INFO(LOGGING_NAME, "Update for ", type_name, " from ", source);
   UpdateStoreInterface::Metadata metadata;
 
-  if ((randomising_offset_ + random_factor) > proportion)
+  double whole;
+
+  if (std::modf(randomising_offset_ + random_factor, &whole) > proportion)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "DISCARDING ", type_name, " from ", source, randomising_offset_,
+                   "+", random_factor, ">", proportion);
     return 0;
   }
 
