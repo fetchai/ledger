@@ -41,13 +41,13 @@ public:
 
   explicit StridedSlice(SizeVector const &begins, SizeVector const &ends,
                         SizeVector const &strides = {})
-    : begins_(std::move(begins))
-    , ends_(std::move(ends))
-    , strides_(std::move(strides))
+    : begins_(begins)
+    , ends_(ends)
+    , strides_(strides)
 
   {
     assert(begins.size() == ends.size());
-    if (strides.size() == 0)
+    if (strides.empty())
     {
       strides_ = begins;
       for (SizeType i{0}; i < strides.size(); i++)
