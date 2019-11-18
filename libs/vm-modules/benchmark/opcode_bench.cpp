@@ -45,8 +45,41 @@ using BenchmarkPair = std::pair<std::string, std::string>;
 
 namespace {
 
-// Run benchmarks stand-alone or launch from the script "scripts/benchmark/opcode_timing.py"
-// Categories can be selectively suppressed using environment variables
+/**These benchmarks are designed to profile the vm opcodes by generating and compiling Etch code
+ * for each opcode or functionality to be profiled. The resulting times can then be compared to
+ * appropriate baseline benchmarks to isolate the desired opcodes as much as possible.
+ *
+ * Benchmarks are best launched from the script "scripts/benchmark/opcode_timing.py"
+ *
+ *  To change the maximum size or number of sizes used for the parameterized benchmarks, change the
+ *  constant under benchmark parameters below.
+ *
+ *  To add a new benchmark to an existing category:
+ *  1. Increment the corresponding n_*_bms constant,
+ *  2. Find the Benchmark function for the category (*Benchmarks(...))
+ *  3. Add a BenchmarkPair specifying the name and corresponding Etch code to be executed
+ *  4. Add the appropriate baseline benchmark to baseline_map
+ *
+ *  To add a new benchmark category:
+ *  1. Create a new Benchmark function for the category using an existing one as a template
+ *  2. Add BenchmarkPairs specifying the names and corresponding Etch codes to be executed
+ *  3. Add each (benchmark, baseline) pair to baseline_map
+ *  4. Define an indexing system depending on the parameters of the benchmark (see existing bms)
+ *  5. Add corresponding parameters and n_*_bms constants below
+ *  6. Register the new benchmarks in the function RegisterBenchmarks
+ *  7. Update python script "scripts/benchmark/opcode_timing.py" as needed
+ */
+
+// Benchmark parameters (change as desired)
+const uint32_t max_array_len = 16384, n_array_lens = 32, max_str_len = 16384, n_str_lens = 10,
+    max_tensor_size = 531441, n_tensor_sizes = 16, n_dim_sizes = n_tensor_sizes * 3,
+    max_crypto_len = 16384, n_crypto_lens = 10;
+
+// Number of benchmarks in each category
+const uint32_t n_basic_bms = 15, n_object_bms = 10, n_prim_bms = 25, n_math_bms = 16,
+    n_array_bms = 10, n_tensor_bms = 5, n_crypto_bms = 6;
+
+ //Categories can be selectively suppressed using environment variables
 const bool run_basic    = std::getenv("FETCH_VM_BENCHMARK_NO_BASIC") == nullptr,
            run_object   = std::getenv("FETCH_VM_BENCHMARK_NO_OBJECT") == nullptr,
            run_prim_ops = std::getenv("FETCH_VM_BENCHMARK_NO_PRIM_OPS") == nullptr,
@@ -55,16 +88,8 @@ const bool run_basic    = std::getenv("FETCH_VM_BENCHMARK_NO_BASIC") == nullptr,
            run_tensor   = std::getenv("FETCH_VM_BENCHMARK_NO_TENSOR") == nullptr,
            run_crypto   = std::getenv("FETCH_VM_BENCHMARK_NO_CRYPTO") == nullptr;
 
-// Number of benchmarks in each category
-const uint32_t n_basic_bms = 15, n_object_bms = 10, n_prim_bms = 25, n_math_bms = 16,
-               n_array_bms = 10, n_tensor_bms = 5, n_crypto_bms = 4;
-
 // Number of total (including int) and decimal (fixed or float) primitives
 const uint32_t n_primitives = 12, n_dec_primitives = 4;
-
-// Benchmark parameters (change as desired)
-const uint32_t max_array_len = 16384, n_array_lens = 32, max_str_len = 16384, n_str_lens = 10,
-               max_tensor_size = 531441, n_tensor_sizes = 16, n_dim_sizes = n_tensor_sizes * 3;
 
 // Index benchmarks for interpretation by "scripts/benchmark/opcode_timing.py"
 const uint32_t basic_begin = 0, basic_end = run_basic ? n_basic_bms : 1;  // always run "Return"
@@ -73,7 +98,8 @@ const uint32_t prim_begin = object_end, prim_end = prim_begin + n_prim_bms * n_p
 const uint32_t math_begin = prim_end, math_end = math_begin + n_math_bms * n_dec_primitives;
 const uint32_t array_begin = math_end, array_end = array_begin + n_array_bms * n_array_lens;
 const uint32_t tensor_begin = array_end, tensor_end = tensor_begin + n_tensor_bms * n_dim_sizes;
-const uint32_t crypto_begin = tensor_end, crypto_end = crypto_begin + n_crypto_bms - 1 + n_str_lens;
+const uint32_t crypto_begin = tensor_end,
+               crypto_end   = crypto_begin + 1 + (n_crypto_bms - 1) * n_crypto_lens;
 
 /**
  * Main benchmark function - compiles and runs Etch code snippets and saves opcodes to file
@@ -241,10 +267,20 @@ std::string FromString(std::string const &tensor, std::string const &val, uint32
   return from_string;
 }
 
-std::string Sha256Update(uint32_t str_len)
+std::string BufferDec(std::string const &buffer, std::string const &dim)
+{
+  return "var " + buffer + " = Buffer(" + dim + ");\n";
+}
+
+std::string Sha256UpdateStr(uint32_t str_len)
 {
   std::string str(str_len, '0');
   return "s.update(\"" + str + "\");\n";
+}
+
+std::string Sha256UpdateBuf(std::string const &buffer)
+{
+  return "s.update(\"" + buffer + "\");\n";
 }
 
 /** Create a linear spaced range vector from max/n_elem to max of primitive type T
@@ -594,8 +630,7 @@ void ArrayBenchmarks(benchmark::State &state)
   // Generate array lengths from benchmark parameters
   std::vector<uint32_t> array_len = LinearRangeVector<uint32_t>(max_array_len, n_array_lens);
 
-  // Get the index of the array length corresponding to the benchmark range variable and the
-  // relevant etch code
+  // Length and etch-code indices corresponding to benchmark range variable
   const uint32_t len_ind  = (bm_ind - array_begin) / n_array_bms;
   const uint32_t etch_ind = (bm_ind - array_begin) % n_array_bms;
 
@@ -720,31 +755,46 @@ void CryptoBenchmarks(benchmark::State &state)
   auto bm_ind = static_cast<uint32_t>(state.range(0));
 
   // Generate the string lengths from benchmark parameters
-  std::vector<uint32_t> str_len = LinearRangeVector<uint32_t>(max_str_len, n_str_lens);
+  std::vector<uint32_t> lengths = LinearRangeVector<uint32_t>(max_crypto_len, n_crypto_lens);
 
-  const uint32_t etch_ind = std::min<uint32_t>(bm_ind - crypto_begin, 3);
-  const uint32_t len_ind  = (bm_ind - (crypto_begin + 3)) % n_str_lens;
+  // Length and etch-code indices corresponding to benchmark range variable
+  uint32_t len_ind  = 0;
+  uint32_t etch_ind = 0;
 
-  std::string const length(std::to_string(str_len[len_ind]));
+  // The first SHA256 benchmark is type independent, but the rest depend on length
+  if ((bm_ind - crypto_begin) >= 1)
+  {
+    len_ind  = (bm_ind - crypto_begin + 1) / (n_crypto_bms - 1);
+    etch_ind = 1 + (bm_ind - crypto_begin + 1) % (n_crypto_bms - 1);
+  }
+
+  std::string const length = std::to_string(lengths[len_ind]);
+  std::string const buffer = "buffer";
 
   // Operations
   const static std::string DEC("var s = SHA256();\n"), RESET("s.reset();\n"), FINAL("s.final();\n");
 
   const BenchmarkPair SHA256_DEC("Sha256Declare", FunMain(DEC));
-  const BenchmarkPair SHA256_RESET("Sha256Reset", FunMain(DEC + RESET));
-  const BenchmarkPair SHA256_FINAL("Sha256Final", FunMain(DEC + FINAL));
-  const BenchmarkPair SHA256_UPDATE("Sha256Update_" + length,
-                                    FunMain(DEC + Sha256Update(str_len[len_ind])));
+  const BenchmarkPair SHA256_RESET("Sha256Reset_" + length, FunMain(DEC + RESET));
+  const BenchmarkPair SHA256_FINAL("Sha256Final_" + length, FunMain(DEC + FINAL));
+  const BenchmarkPair SHA256_BUF_DEC("Sha256DeclareBuf_" + length,
+                                     FunMain(BufferDec(buffer, length)));
+  const BenchmarkPair SHA256_UPDATE_STR("Sha256UpdateStr_" + length,
+                                        FunMain(DEC + Sha256UpdateStr(lengths[len_ind])));
+  const BenchmarkPair SHA256_UPDATE_BUF("Sha256UpdateBuf_" + length,
+                                        FunMain(DEC + Sha256UpdateBuf(buffer)));
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string> baseline_map(
       {{"Sha256Declare", "Return"},
-       {"Sha256Reset", "Sha256Declare"},
-       {"Sha256Final", "Sha256Declare"},
-       {"Sha256Update_" + length, "Sha256Declare"}});
+       {"Sha256Reset_" + length, "Sha256Declare"},
+       {"Sha256Final_" + length, "Sha256Declare"},
+       {"Sha256DeclareBuf_" + length, "Sha256Declare"},
+       {"Sha256UpdateStr_" + length, "Sha256Declare"},
+       {"Sha256UpdateBuf_" + length, "Sha256Declare"}});
 
-  std::vector<BenchmarkPair> const etch_codes = {SHA256_DEC, SHA256_RESET, SHA256_FINAL,
-                                                 SHA256_UPDATE};
+  std::vector<BenchmarkPair> const etch_codes = {
+      SHA256_DEC, SHA256_RESET, SHA256_FINAL, SHA256_BUF_DEC, SHA256_UPDATE_STR, SHA256_UPDATE_BUF};
 
   if (etch_ind >= etch_codes.size())
   {
