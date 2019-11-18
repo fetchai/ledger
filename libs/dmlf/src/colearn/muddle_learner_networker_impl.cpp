@@ -62,7 +62,7 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
 
   netm_ = std::make_shared<NetMan>("LrnrNet", 4);
   netm_->Start();
-  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   
   auto mud = fetch::muddle::CreateMuddle("Test", ident, *netm_, "127.0.0.1");
 
@@ -76,7 +76,7 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
 
   mud->SetPeerSelectionMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
   mud->Start(remotes, {port});
-  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   setup(std::move(mud), std::move(update_store));
 }
