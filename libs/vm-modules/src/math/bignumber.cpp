@@ -111,7 +111,7 @@ Ptr<UInt256Wrapper> UInt256Wrapper::ConstructorFromBytes(VM *vm, TypeId type_id,
   {
     return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, type_id, ba->byte_array())};
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     vm->RuntimeError(e.what());
   }
@@ -124,7 +124,7 @@ Ptr<UInt256Wrapper> UInt256Wrapper::Constructor(VM *vm, TypeId type_id, uint64_t
   {
     return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, type_id, val)};
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     vm->RuntimeError(e.what());
   }
@@ -229,7 +229,7 @@ bool UInt256Wrapper::FromJSON(JSONVariant const &variant)
   {
     value = FromHex(variant["value"].As<byte_array::ConstByteArray>());
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     vm_->RuntimeError("Field 'value' must be a hex-encoded string.");
     return false;
