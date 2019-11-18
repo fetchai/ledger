@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     store(parse_command_line(argc, argv, desc), vm);
     notify(vm);
   }
-  catch (std::exception &ex)
+  catch (std::exception const &ex)
   {
     FETCH_LOG_WARN("MAIN", "Failed to parse command line arguments: ", ex.what());
     return 1;
