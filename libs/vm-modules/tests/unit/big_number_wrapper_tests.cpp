@@ -320,11 +320,9 @@ TEST_F(UInt256Tests, DISABLED_uint256_type_casts)
           var correct : UInt64 = 9000000000000000000u64;
           var ok = true;
 
-          //var test_float32 = toFloat32(test);
-          //var correct_float32 = toFloat32(correct);
-          //ok = ok && (test_float32 == correct_float32);
-
-          //var float64 = toFloat64(test);
+          var test_float64 = toFloat64(test);
+          var correct_float64 = toFloat64(correct);
+          ok = ok && (test_float64 == correct_float64);
 
           var test_int32 = toInt32(test);
           var correct_int32 = toInt32(correct);
