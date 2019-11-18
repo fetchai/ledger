@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/service_ids.hpp"
+#include "crypto/ecdsa.hpp"
 #include "dmlf/colearn/colearn_protocol.hpp"
 #include "dmlf/colearn/update_store.hpp"
 #include "dmlf/colearn/random_double.hpp"
@@ -52,9 +53,15 @@ public:
   using Bytes              = byte_array::ByteArray;
   using Store              = UpdateStore;
   using StorePtr           = std::shared_ptr<Store>;
+  using NetMan             = fetch::network::NetworkManager;
+  using NetManP            = std::shared_ptr<NetMan>;
+  using Signer             = fetch::crypto::ECDSASigner;
   using Randomiser         = RandomDouble;
-
+ 
   static constexpr char const *LOGGING_NAME = "MuddleLearnerNetworkerImpl";
+
+  explicit MuddleLearnerNetworkerImpl(const std::string &priv, unsigned short int port,
+                                      const std::string &remote = "");
 
   explicit MuddleLearnerNetworkerImpl(MuddlePtr mud, StorePtr update_store);
   ~MuddleLearnerNetworkerImpl() override;
@@ -108,6 +115,8 @@ public:
   }
 
 protected:
+  void setup(MuddlePtr mud, StorePtr update_store);
+
 private:
   std::shared_ptr<Taskpool>   taskpool_;
   std::shared_ptr<Threadpool> tasks_runners_;
@@ -121,6 +130,8 @@ private:
   double                      randomising_offset_;
 
   std::unordered_set<std::string> peers_;
+
+  std::shared_ptr<NetMan> netm_;
 
   friend class MuddleMessageHandler;
 };
