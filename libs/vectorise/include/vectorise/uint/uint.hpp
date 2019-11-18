@@ -248,7 +248,10 @@ private:
   constexpr ContainerType const &base() const;
   constexpr ContainerType &      base();
 
-  constexpr void mask_residual_bits() { wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK; }
+  constexpr void mask_residual_bits()
+  {
+    wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
+  }
 
   struct MaxValueConstructorEnabler
   {
@@ -1095,7 +1098,8 @@ inline double ToDouble(UInt<256> const &x)
   }
   const uint64_t most_significant_word = x.ElementAt(msw_index);
 
-  return pow(2, (msw_index)*BITS_IN_UINT64) * most_significant_word;
+  return pow(2, static_cast<double>(msw_index * BITS_IN_UINT64)) *
+         static_cast<double>(most_significant_word);
 }
 
 inline double Log(UInt<256> const &x)
