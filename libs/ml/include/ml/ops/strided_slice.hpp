@@ -60,9 +60,9 @@ public:
   {
     auto sp = std::make_shared<SPType>();
 
-    sp.begins  = begins_;
-    sp.ends    = ends_;
-    sp.strides = strides_;
+    sp->begins  = begins_;
+    sp->ends    = ends_;
+    sp->strides = strides_;
 
     return sp;
   }

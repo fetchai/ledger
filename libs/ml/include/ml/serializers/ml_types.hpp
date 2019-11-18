@@ -2434,7 +2434,7 @@ struct MapSerializer<ml::OpSliceSaveableParams<TensorType>, D>
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpStridedSliceSaveableParams<TensorType>, D>
 {
-  using Type       = ml::OpSliceSaveableParams<TensorType>;
+  using Type       = ml::OpStridedSliceSaveableParams<TensorType>;
   using DriverType = D;
 
   static uint8_t const BASE_OPS = 1;
