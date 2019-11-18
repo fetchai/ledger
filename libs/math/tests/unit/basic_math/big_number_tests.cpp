@@ -137,6 +137,19 @@ TEST(big_number_gtest, subtraction_tests)
   EXPECT_EQ(n3.ElementAt(3), 0);
 }
 
+TEST(big_number_gtest, log_tests)
+{
+  for (const auto argument : {1ul, 64ul, 65536ul, std::numeric_limits<uint64_t>::max()})
+  {
+    UInt<256> n256(argument);
+
+    const auto result   = Log(n256);
+    const auto expected = std::log(argument);
+
+    EXPECT_NEAR(result, expected, std::numeric_limits<double>::epsilon());
+  }
+}
+
 TEST(big_number_gtest, multiplication_tests)
 {
   UInt<256> n1;

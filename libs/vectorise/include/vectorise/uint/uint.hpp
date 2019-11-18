@@ -248,10 +248,7 @@ private:
   constexpr ContainerType const &base() const;
   constexpr ContainerType &      base();
 
-  constexpr void mask_residual_bits()
-  {
-    wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
-  }
+  constexpr void mask_residual_bits() { wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK; }
 
   struct MaxValueConstructorEnabler
   {
@@ -1087,35 +1084,23 @@ inline std::ostream &operator<<(std::ostream &s, UInt<S> const &x)
   return s;
 }
 
-inline double Log(UInt<256> const &x)
-{
-  uint64_t last_word = x.ElementAt(x.TrimmedSize() - 1);
-
-  auto     tz       = uint64_t(platform::CountTrailingZeroes64(last_word));
-  uint64_t exponent = (last_word << 3u) - tz;
-
-  return double(exponent) + std::log(double(last_word << tz) * (1. / double(uint32_t(-1))));
-}
-
 inline double ToDouble(UInt<256> const &x)
 {
-  uint64_t last_word = x.ElementAt(x.TrimmedSize() - 1);
-
-  auto tz       = static_cast<uint16_t>(platform::CountTrailingZeroes64(last_word));
-  auto exponent = static_cast<uint16_t>((last_word << 3u) - tz);
-
-  assert(exponent < 1023);
-
-  union
+  static constexpr size_t BITS_IN_UINT64  = sizeof(uint64_t) * 8;
+  static const size_t     MAX_ELEMENT_IDX = x.elements() - 1;
+  size_t                  msw_index       = MAX_ELEMENT_IDX;
+  while (msw_index > 0 && x.ElementAt(msw_index) == uint64_t(0))
   {
-    double   value;
-    uint64_t bits;
-  } conv{};
+    --msw_index;
+  }
+  const uint64_t most_significant_word = x.ElementAt(msw_index);
 
-  conv.bits = 0;
-  conv.bits |= uint64_t(uint64_t(exponent & ((1u << 12u) - 1)) << 52u);
-  conv.bits |= uint64_t((last_word << (20u + tz)) & ((1ull << 53u) - 1));
-  return conv.value;
+  return pow(2, (msw_index)*BITS_IN_UINT64) * most_significant_word;
+}
+
+inline double Log(UInt<256> const &x)
+{
+  return std::log(ToDouble(x));
 }
 
 }  // namespace vectorise
