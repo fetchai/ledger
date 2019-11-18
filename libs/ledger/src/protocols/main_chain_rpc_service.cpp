@@ -142,9 +142,6 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
     Block block;
     serialiser >> block;
 
-    // recalculate the block hash
-    block.UpdateDigest();
-
     // dispatch the event
     OnNewBlock(from, block, transmitter);
   });
@@ -245,9 +242,6 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     {
       continue;
     }
-
-    // recompute the digest
-    it->UpdateDigest();
 
     // add the block
     if (it->proof())

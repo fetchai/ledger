@@ -984,5 +984,46 @@ public:
   }
 };
 
+template <class T, class D, class... Fields>
+struct MapSerializerTemplate
+{
+  using Type       = T;
+  using DriverType = D;
+
+  template <class Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &t)
+  {
+    value_util::ForEach([&t, map = map_constructor(sizeof...(Fields))](
+                            auto field) mutable { field.Serialize(t, map); },
+                        Fields{}...);
+  }
+
+  template <class MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &t)
+  {
+    value_util::ForEach(
+        [&t, &map](auto field) { field.Deserialize(t, map); }, Fields{}...);
+  }
+};
+
+template <uint8_t K, class F, F f>
+struct SerializedStructField
+{
+  template <class Map, class T>
+  static constexpr void Serialize(T &&t, Map &map)
+  {
+    map.Append(field.Key(), field.Ref(t))
+  }
+
+  template <class Map, class T>
+  static constexpr void Deserialize(T &&t, Map &map)
+  {
+    map.ExpectKeyGetValue(K, std::forward<T>(t).*f);
+  }
+};
+
+#define SERIALIZED_STRUCT_FIELD(Key, ...) \
+  SerializedStructField<Key, decltype(&__VA_ARGS__), &__VA_ARGS__>
+
 }  // namespace serializers
 }  // namespace fetch

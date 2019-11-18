@@ -95,77 +95,46 @@ public:
 private:
   SystemClock clock_ = moment::GetClock("block:body", moment::ClockType::SYSTEM);
 };
+
+struct BlockHashSerializer {
+	template<class Map>
+	static constexpr void Serialize(Map &&/*unused*/, ledger::Block const &/*unused*/)
+	{
+		// hash is not serialzed
+	}
+
+	template<class Map>
+	static constexpr void Deserialize(Map &&/*unused*/, ledger::Block &block)
+	{
+		// so has to be recomputed
+		block.UpdateDigest();
+	}
+};
+
 }  // namespace ledger
 
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<ledger::Block, D>
-{
-public:
-  using Type       = ledger::Block;
-  using DriverType = D;
-
-  static uint8_t const NONCE           = 1;
-  static uint8_t const PROOF           = 2;
-  static uint8_t const WEIGHT          = 3;
-  static uint8_t const TOTAL_WEIGHT    = 4;
-  static uint8_t const MINER_SIGNATURE = 5;
-  static uint8_t const HASH            = 6;
-  static uint8_t const PREVIOUS_HASH   = 7;
-  static uint8_t const MERKLE_HASH     = 8;
-  static uint8_t const BLOCK_NUMBER    = 9;
-  static uint8_t const MINER           = 10;
-  static uint8_t const MINER_ID        = 11;
-  static uint8_t const LOG2_NUM_LANES  = 12;
-  static uint8_t const SLICES          = 13;
-  static uint8_t const DAG_EPOCH       = 14;
-  static uint8_t const TIMESTAMP       = 15;
-  static uint8_t const ENTROPY         = 16;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &block)
-  {
-    auto map = map_constructor(16);
-    map.Append(NONCE, block.nonce);
-    map.Append(PROOF, block.proof);
-    map.Append(WEIGHT, block.weight);
-    map.Append(TOTAL_WEIGHT, block.total_weight);
-    map.Append(MINER_SIGNATURE, block.miner_signature);
-    map.Append(HASH, block.hash);
-    map.Append(PREVIOUS_HASH, block.previous_hash);
-    map.Append(MERKLE_HASH, block.merkle_hash);
-    map.Append(BLOCK_NUMBER, block.block_number);
-    map.Append(MINER, block.miner);
-    map.Append(MINER_ID, block.miner_id);
-    map.Append(LOG2_NUM_LANES, block.log2_num_lanes);
-    map.Append(SLICES, block.slices);
-    map.Append(DAG_EPOCH, block.dag_epoch);
-    map.Append(TIMESTAMP, block.timestamp);
-    map.Append(ENTROPY, block.block_entropy);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &block)
-  {
-    map.ExpectKeyGetValue(NONCE, block.nonce);
-    map.ExpectKeyGetValue(PROOF, block.proof);
-    map.ExpectKeyGetValue(WEIGHT, block.weight);
-    map.ExpectKeyGetValue(TOTAL_WEIGHT, block.total_weight);
-    map.ExpectKeyGetValue(MINER_SIGNATURE, block.miner_signature);
-    map.ExpectKeyGetValue(HASH, block.hash);
-    map.ExpectKeyGetValue(PREVIOUS_HASH, block.previous_hash);
-    map.ExpectKeyGetValue(MERKLE_HASH, block.merkle_hash);
-    map.ExpectKeyGetValue(BLOCK_NUMBER, block.block_number);
-    map.ExpectKeyGetValue(MINER, block.miner);
-    map.ExpectKeyGetValue(MINER_ID, block.miner_id);
-    map.ExpectKeyGetValue(LOG2_NUM_LANES, block.log2_num_lanes);
-    map.ExpectKeyGetValue(SLICES, block.slices);
-    map.ExpectKeyGetValue(DAG_EPOCH, block.dag_epoch);
-    map.ExpectKeyGetValue(TIMESTAMP, block.timestamp);
-    map.ExpectKeyGetValue(ENTROPY, block.block_entropy);
-  }
-};
+struct MapSerializer<ledger::Block, D>: MapSerializerTemplate<Block, D,
+    SERIALIZED_STRUCT_TEMPLATE(1, ledger::Block::nonce),
+    SERIALIZED_STRUCT_TEMPLATE(2, ledger::Block::proof),
+    SERIALIZED_STRUCT_TEMPLATE(3, ledger::Block::weight),
+    SERIALIZED_STRUCT_TEMPLATE(4, ledger::Block::total_weight),
+    SERIALIZED_STRUCT_TEMPLATE(5, ledger::Block::miner_signature),
+    SERIALIZED_STRUCT_TEMPLATE(6, ledger::Block::hash),
+    SERIALIZED_STRUCT_TEMPLATE(7, ledger::Block::previous_hash),
+    SERIALIZED_STRUCT_TEMPLATE(8, ledger::Block::merkle_hash),
+    SERIALIZED_STRUCT_TEMPLATE(9, ledger::Block::block_number),
+    SERIALIZED_STRUCT_TEMPLATE(10, ledger::Block::miner),
+    SERIALIZED_STRUCT_TEMPLATE(11, ledger::Block::miner_id),
+    SERIALIZED_STRUCT_TEMPLATE(12, ledger::Block::log2_num_lanes),
+    SERIALIZED_STRUCT_TEMPLATE(13, ledger::Block::slices),
+    SERIALIZED_STRUCT_TEMPLATE(14, ledger::Block::dag_epoch),
+    SERIALIZED_STRUCT_TEMPLATE(15, ledger::Block::timestamp),
+    SERIALIZED_STRUCT_TEMPLATE(16, ledger::Block::block_entropy),
+    ledger::BlockHashSerializer>
+{};
 
 }  // namespace serializers
 }  // namespace fetch

@@ -462,24 +462,67 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
+MainChain::Travelogue MainChain::TimeTravel(BlockHash current_block, int64_t limit) const
 {
   if (limit <= 0)
   {
-    return GetChainPreceding(std::move(start), static_cast<uint64_t>(-limit));
+    // travel back in time
+    auto lim = static_cast<uint64_t>(-limit);
+    auto ret_blocks = current_hash.empty()? GetHeaviestChain(lim) : GetChainPreceding(std::move(current_hash), lim);
+    if (ret_blocks.empty())
+    {
+	    return {Blocks{}, BlockHash{}, 0};
+    }
+    auto next_hash{ret_blocks.back()->body.previous_hash}; // when next is previous
+    return {std::move(ret_blocks), std::move(next_hash), -1};
   }
 
   auto const lim =
       static_cast<std::size_t>(std::min(limit, static_cast<int64_t>(MainChain::UPPER_BOUND)));
   MilliTimer myTimer("MainChain::ChainPreceding");
 
-  FETCH_LOCK(lock_);
-
-  Blocks result;
-
-  // look up the heaviest block hash
+  Blocks    result;
   Block     block;
   BlockHash next_hash;
+
+  if (current_hash.empty())
+  {
+	  current_hash = chain::GENESIS_DIGEST;
+  }
+  int next_direction = 1;
+
+  FETCH_LOCK(lock_);
+
+  while (  // stop once we have gathered enough blocks or passed genesis
+	 !current_hash.empty() && result.size() < lim)
+
+  {
+    // lookup the block in storage
+    auto block{GetBlock(current_hash, &next_hash)};
+    if (!block)
+    {
+      if (IsBlockInCache(current_hash))
+      {
+        // The block is in the cache yet GetBlock() failed.
+        // This indicates that forward reference is ambiguous, so we stop the loop here
+        // and the remote requester should now travel from the heaviest tip.
+        proceed_in_this_direction = false;  // signal that forward-travelling can go no further
+        break;
+      }
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
+      throw std::runtime_error("Failed to lookup block");
+    }
+    // update the results
+    result.push_back(std::move(block));
+    // walk the stack
+    current_hash = std::move(next_hash);
+  }
+  if (current_hash.empty() && (result.empty() || result.back() != GetHeaviestBlock()))
+  {
+    proceed_in_this_direction = false;
+  }
+
+  return {std::move(result), std::move(current_hash), proceed_in_this_direction};
 
   // exit once we have gathered enough blocks or reached genesis
   for (BlockHash current_hash{std::move(start)};
@@ -1237,6 +1280,33 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 }
 
 /**
+ * Lookup next_hash for a block in-memory.
+ * This procedure may fail in which case next_hash should either be looked for in storage,
+ * or recovered via descent from tip.
+ *
+ * @param hash Hash of the current block
+ * @param[out] next_hash Hash of unique block grown from this
+ * @return true iff a single forward reference is found in cache
+ */
+bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) const
+{
+  switch (references_.count(hash))
+  {
+  case 0:
+    next_hash = BlockHash{};
+    return true;
+  case 1:
+    next_hash = references_.find(hash)->second;
+    return true;
+  default:
+    // ambiguous forward references need to be resolved from tip
+    return false;
+  }
+}
+
+void MainChain::
+
+/**
  * Attempt to look up a block.
  *
  * The search is performed initially on the in memory cache and then if this fails the persistent
@@ -1248,7 +1318,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  *
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache) const
+bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash) const
 {
   return LookupBlockFromCache(hash, block) || LookupBlockFromStorage(hash, block, add_to_cache);
 }
@@ -1299,9 +1369,6 @@ bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block
 
     if (success)
     {
-      // hash not serialised, needs to be recomputed
-      output_block->UpdateDigest();
-
       // add the newly loaded block to the cache (if required)
       if (add_to_cache)
       {
