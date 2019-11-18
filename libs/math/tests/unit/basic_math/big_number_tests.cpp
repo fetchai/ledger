@@ -317,7 +317,7 @@ TEST(big_number_gtest, test_construction_from_byte_array_fails_if_too_long)
   {
     UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1)};
   }
-  catch (std::runtime_error const &ex)
+  catch (std::exception const &ex)
   {
     EXPECT_THAT(ex.what(), HasSubstr("Size of input byte array is bigger than"));
     exception_thrown = true;
