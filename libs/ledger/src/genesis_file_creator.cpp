@@ -82,7 +82,7 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 
       success = true;
     }
-    catch (std::runtime_error const &ex)
+    catch (std::exception const &ex)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to parse input file: ", ex.what());
     }
