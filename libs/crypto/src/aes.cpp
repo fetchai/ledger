@@ -211,7 +211,7 @@ bool AesBlockCipher::Encrypt(BlockCipher::Type type, ConstByteArray const &key,
   // create the cipher text buffer
   ByteArray   cipher_text_buffer{};
   std::size_t populated_length{0};
-  cipher_text_buffer.Resize(clear_text.size() + AES_BLOCK_SIZE - 1);
+  cipher_text_buffer.Resize(clear_text.size() + AES_BLOCK_SIZE);
 
   // run the plain text through the cipher
   int remaining_length = static_cast<int>(cipher_text_buffer.size() - populated_length);
@@ -309,7 +309,7 @@ bool AesBlockCipher::Decrypt(BlockCipher::Type type, ConstByteArray const &key,
   // create the clear text buffer at the same length of the cipher text (in practise can be one
   // block smaller)
   ByteArray clear_text_buffer{};
-  clear_text_buffer.Resize(cipher_text.size() + AES_BLOCK_SIZE - 1);
+  clear_text_buffer.Resize(cipher_text.size() + AES_BLOCK_SIZE);
   std::size_t populated_length{0};
 
   // run the cipher text through the cipher
