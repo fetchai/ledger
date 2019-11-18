@@ -126,7 +126,7 @@ void Taskpool::run(std::size_t thread_idx)
         status = mytask->RunThunk();
       }
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       Counter("mt-core.tasks.run.std::exception")++;
       FETCH_LOG_INFO(LOGGING_NAME, "Threadpool caught:", ex.what());
