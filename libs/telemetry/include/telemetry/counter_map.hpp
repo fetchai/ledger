@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "telemetry/measurement.hpp"
 #include "telemetry/telemetry.hpp"
 
+#include <mutex>
 #include <unordered_map>
 
 namespace fetch {
@@ -51,8 +51,8 @@ private:
 
   CounterPtr LookupCounter(Labels const &keys);
 
-  mutable Mutex lock_;
-  Counters      counters_;
+  mutable std::mutex lock_;
+  Counters           counters_;
 };
 
 }  // namespace telemetry
