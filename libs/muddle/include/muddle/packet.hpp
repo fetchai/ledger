@@ -318,7 +318,7 @@ inline void Packet::SetEncrypted(bool set) noexcept
 
 inline void Packet::SetTTL(uint8_t ttl) noexcept
 {
-  header_.ttl = ttl;
+  header_.ttl = (ttl & 0x7f);
   // stamps are not invalidated
 }
 
