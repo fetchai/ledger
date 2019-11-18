@@ -11,4 +11,5 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 fetch_add_test(oef_base_gtest fetch-oef-base utils/)
+fetch_add_test(tasks_gtest fetch-oef-base tasks/)
 # fetch_add_test(yaml_gtest fetch-core yaml/gtest/)

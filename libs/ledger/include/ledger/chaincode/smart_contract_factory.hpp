@@ -48,8 +48,7 @@ auto CreateSmartContract(byte_array::ConstByteArray const &contract_digest,
   FETCH_LOG_ERROR("SmartContractFactory",
                   "Unable to construct requested smart contract: ", contract_digest);
 
-  throw std::runtime_error(std::string{"Unable to create requested smart contract "} +
-                           std::string(contract_digest));
+  return {};
 }
 
 }  // namespace ledger

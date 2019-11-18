@@ -29,7 +29,8 @@ enum class OptimiserType : uint8_t
   ADAM,
   MOMENTUM,
   RMSPROP,
-  SGD
+  SGD,
+  LAZY_ADAM
 };
 
 enum class LoaderType : uint8_t

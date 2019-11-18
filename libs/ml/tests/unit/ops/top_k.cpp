@@ -117,40 +117,6 @@ TYPED_TEST(TopKOpTest, saveparams_test)
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
 
-TYPED_TEST(TopKOpTest, backward_1D_test)
-{
-  using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
-  using DataType   = typename TypeParam::Type;
-
-  TensorType data = TypeParam::FromString("16,4,3,2,5,6,7,8,9,10,11,12,13,14,15,1");
-  data.Reshape({16});
-  TensorType error = TypeParam::FromString("16,15,14,13");
-  error.Reshape({4});
-  TensorType gt_error = TypeParam::FromString("16,0,0,0,0,0,0,0,0,0,0,0,13,14,15,0");
-  gt_error.Reshape({16});
-
-  SizeType k      = 4;
-  bool     sorted = true;
-
-  auto shape = error.shape();
-
-  fetch::ml::ops::TopK<TypeParam> op(k, sorted);
-
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(data)}));
-  op.Forward({std::make_shared<TypeParam>(data)}, prediction);
-
-  std::vector<TensorType> error_signal =
-      op.Backward({std::make_shared<const TensorType>(data)}, error);
-
-  ASSERT_EQ(error_signal.at(0).shape().size(), 1);
-  ASSERT_EQ(error_signal.at(0).shape().at(0), 16);
-
-  ASSERT_TRUE(error_signal.at(0).AllClose(gt_error, fetch::math::function_tolerance<DataType>(),
-                                          fetch::math::function_tolerance<DataType>()));
-  fetch::math::state_clear<DataType>();
-}
-
 TYPED_TEST(TopKOpTest, backward_2D_test)
 {
   using TensorType = TypeParam;

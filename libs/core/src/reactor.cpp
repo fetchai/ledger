@@ -109,6 +109,15 @@ void Reactor::StartWorker()
   worker_ = std::make_unique<ProtectedThread>(&Reactor::Monitor, this);
 }
 
+Reactor::~Reactor()
+{
+  if (worker_)
+  {
+    worker_->ApplyVoid([](auto &worker) { worker.join(); });
+    worker_.reset();
+  }
+}
+
 void Reactor::StopWorker()
 {
   running_ = false;
@@ -165,6 +174,7 @@ void Reactor::Monitor()
     if (work_queue.empty())
     {
       std::this_thread::sleep_for(POLL_INTERVAL);
+
       continue;
     }
 

@@ -17,13 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "fake_storage_unit.hpp"
+#include "ledger/storage_unit/fake_storage_unit.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 
 using fetch::storage::ResourceAddress;
+using fetch::ledger::FakeStorageUnit;
 
 using FakeStorageUnitPtr = std::unique_ptr<FakeStorageUnit>;
 
