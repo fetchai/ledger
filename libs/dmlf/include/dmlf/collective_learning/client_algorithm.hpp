@@ -25,6 +25,7 @@
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/model/sequential.hpp"
+#include "ml/utilities/sparse_tensor_utilities.hpp"
 #include "ml/utilities/utils.hpp"
 
 #include <condition_variable>
@@ -46,6 +47,7 @@ class ClientAlgorithm
   using DataType         = typename TensorType::Type;
   using SizeType         = fetch::math::SizeType;
   using VectorTensorType = std::vector<TensorType>;
+  using VectorSizeVector = std::vector<std::vector<SizeType>>;
   using TimestampType    = int64_t;
   using UpdateType       = fetch::dmlf::Update<TensorType>;
   using DataloaderPtrType =
@@ -128,7 +130,7 @@ protected:
 
   ClientParams<DataType> params_;
 
-  virtual VectorTensorType TranslateUpdate(std::shared_ptr<UpdateType> &new_gradients);
+  virtual VectorSizeVector TranslateUpdate(std::shared_ptr<UpdateType> &new_gradients);
 
   void DoRound();
 
@@ -140,6 +142,9 @@ private:
   AlgorithmControllerPtrType algorithm_controller_;
 
   void AggregateUpdate(VectorTensorType const &gradients);
+  void AggregateSparseUpdate(VectorTensorType const &gradients,
+                             VectorSizeVector const &updated_rows);
+
   void ApplyUpdates();
 };
 
@@ -336,7 +341,7 @@ void ClientAlgorithm<TensorType>::Test()
 }
 
 /**
- * @return vector of gradient update values
+ * @return Update containing vector of sparse gradient tensors and vector of updated rows
  */
 template <class TensorType>
 std::shared_ptr<typename ClientAlgorithm<TensorType>::UpdateType>
@@ -376,10 +381,10 @@ void ClientAlgorithm<TensorType>::SetWeights(VectorTensorType const &new_weights
 }
 
 template <class TensorType>
-std::vector<TensorType> ClientAlgorithm<TensorType>::TranslateUpdate(
+std::vector<std::vector<fetch::math::SizeType>> ClientAlgorithm<TensorType>::TranslateUpdate(
     std::shared_ptr<UpdateType> &new_gradients)
 {
-  return new_gradients->GetGradients();
+  return new_gradients->GetUpdatedRows();
 }
 
 /**
@@ -405,7 +410,14 @@ void ClientAlgorithm<TensorType>::DoRound()
     auto new_update = algorithm_controller_->template GetUpdate<UpdateType>();
 
     // Translate and apply update to model
-    AggregateUpdate(TranslateUpdate(new_update));
+    if (new_update->GetUpdatedRows().empty())
+    {
+      AggregateUpdate(new_update->GetGradients());
+    }
+    else
+    {
+      AggregateSparseUpdate(new_update->GetGradients(), TranslateUpdate(new_update));
+    }
 
     // track number of total updates applied for evaluation
     updates_applied_++;
@@ -436,6 +448,29 @@ void ClientAlgorithm<TensorType>::AggregateUpdate(VectorTensorType const &gradie
     auto weights_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(trainable);
     weights_ptr->AddToGradient(*grad_it);
     ++grad_it;
+  }
+}
+
+/**
+ * Aggregates sparse updates from any source together in the model
+ * In this case the updates are gradients aggregated in the graph
+ * @tparam TensorType
+ * @param gradient
+ * @param updated_rows
+ */
+template <class TensorType>
+void ClientAlgorithm<TensorType>::AggregateSparseUpdate(VectorTensorType const &gradients,
+                                                        VectorSizeVector const &updated_rows)
+{
+  auto grad_it = gradients.begin();
+  auto rows_it = updated_rows.begin();
+
+  for (auto &trainable : graph_ptr_->GetTrainables())
+  {
+    auto weights_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(trainable);
+    weights_ptr->AddToGradient(*grad_it, *rows_it);
+    ++grad_it;
+    ++rows_it;
   }
 }
 

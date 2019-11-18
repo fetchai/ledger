@@ -409,7 +409,7 @@ bool MtCore::load_ssl_pub_keys(std::string white_list_file)
         FETCH_LOG_INFO(LOGGING_NAME, "inserting in white list : ", pub_key);
         white_list_->insert(pub_key);
       }
-      catch (std::exception &e)
+      catch (std::exception const &e)
       {
         FETCH_LOG_WARN(LOGGING_NAME, " error inserting file in white list: ", line, " - ",
                        e.what());
@@ -417,7 +417,7 @@ bool MtCore::load_ssl_pub_keys(std::string white_list_file)
     }
     return true;
   }
-  catch (std::exception &ex)
+  catch (std::exception const &ex)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Exception: ", ex.what());
     return false;

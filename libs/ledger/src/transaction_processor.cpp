@@ -71,7 +71,7 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
   {
     storage_.AddTransaction(*tx);
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     // TODO(unknown): We need to think about how we handle failures of that class.
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to add transaction to storage: ", e.what());
