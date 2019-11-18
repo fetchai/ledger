@@ -121,6 +121,11 @@ public:
     pos_ += size;
   }
 
+  void WriteNil()
+  {
+    ++pos_;
+  }
+
   template <typename T>
   typename IgnoredSerializer<T, SizeCounter>::DriverType &operator<<(T const & /*unused*/);
 
