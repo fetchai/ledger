@@ -377,7 +377,7 @@ void ToFixed32(BasicVmEngine::LedgerVariant &var)
   {
     fp32_t val32;
     val32.Data() = var.As<int>();
-    var          = BasicVmEngine::LedgerVariant{fp64_t{val32}};
+    var          = BasicVmEngine::LedgerVariant{static_cast<fp64_t>(val32)};
   }
 }
 
