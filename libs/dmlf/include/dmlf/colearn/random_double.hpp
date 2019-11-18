@@ -52,7 +52,7 @@ public:
 
 protected:
 private:
-  double             cache_;
+  double             cache_ = 0;
   std::random_device rd_;
   Twister            twister_;
   Underlying         underlying_;

@@ -23,9 +23,7 @@ namespace dmlf {
 namespace colearn {
 
 RandomDouble::RandomDouble()
-  : cache_(0)
-  , rd_()
-  , twister_(rd_())
+  : twister_(rd_())
   , underlying_(0.0, 1.0)
 {
   GetNew();

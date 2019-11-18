@@ -60,9 +60,8 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
                                                        unsigned short int port,
                                                        const std::string &remote)
 {
-  auto signer = std::make_shared<Signer>();
-  signer->Load(fetch::byte_array::FromBase64(priv));
-  SignerPtr ident = signer;
+  auto ident = std::make_shared<Signer>();
+  ident->Load(fetch::byte_array::FromBase64(priv));
 
   netm_ = std::make_shared<NetMan>("LrnrNet", 4);
   netm_->Start();
