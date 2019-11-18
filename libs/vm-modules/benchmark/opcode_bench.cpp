@@ -58,16 +58,18 @@ namespace {
  *  1. Increment the corresponding n_*_bms constant,
  *  2. Find the Benchmark function for the category (*Benchmarks(...))
  *  3. Add a BenchmarkPair specifying the name and corresponding Etch code to be executed
- *  4. Add the appropriate baseline benchmark to baseline_map
+ *  4. Add this BenchmarkPair to the etch_codes vector
+ *  5. Add the appropriate baseline benchmark to baseline_map
  *
  *  To add a new benchmark category:
  *  1. Create a new Benchmark function for the category using an existing one as a template
  *  2. Add BenchmarkPairs specifying the names and corresponding Etch codes to be executed
  *  3. Add each (benchmark, baseline) pair to baseline_map
  *  4. Define an indexing system depending on the parameters of the benchmark (see existing bms)
- *  5. Add corresponding parameters and n_*_bms constants below
- *  6. Register the new benchmarks in the function RegisterBenchmarks
- *  7. Update python script "scripts/benchmark/opcode_timing.py" as needed
+ *  5. Include each new benchmark in the etch_codes vector
+ *  6. Add corresponding parameters and n_*_bms constants below
+ *  7. Register the new benchmarks in the function RegisterBenchmarks
+ *  8. Update python script "scripts/benchmark/opcode_timing.py" as needed
  */
 
 // Benchmark parameters (change as desired)
