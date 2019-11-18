@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -39,12 +40,22 @@ public:
   using MyType = StridedSlice<TensorType>;
 
   explicit StridedSlice(std::vector<SizeType> const &begins, std::vector<SizeType> const &ends,
-                        std::vector<SizeType> const &strides)
+                        std::vector<SizeType> const &strides = {})
     : begins_(std::move(begins))
     , ends_(std::move(ends))
     , strides_(std::move(strides))
 
-  {}
+  {
+    assert(begins.size() == ends.size());
+    if (strides.size() == 0)
+    {
+      strides_ = begins;
+      for (SizeType i{0}; i < strides.size(); i++)
+      {
+        strides_.at(i) = 1;
+      }
+    }
+  }
 
   explicit StridedSlice(SPType const &sp)
     : Ops<T>(sp)
@@ -76,74 +87,21 @@ public:
     return std::make_shared<MyType>(*this);  // calls default copy constructor of MyType;
   }
 
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(inputs.size() == 1);
-    assert(output.shape() == this->ComputeOutputShape(inputs));
-
-    FETCH_UNUSED(inputs);
-    FETCH_UNUSED(output);
-
-    /* // Copying is necessary because ranged StridedSlice is non-const
-     TensorType input = inputs.front()->Copy();
-     output.Assign(input.Slice(start_end_StridedSlice_, axis_));*/
-  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    FETCH_UNUSED(inputs);
-    FETCH_UNUSED(error_signal);
-    /*
-    FETCH_UNUSED(inputs);
-    assert(inputs.size() == 1);
-    assert(error_signal.shape() == this->ComputeOutputShape(inputs));
-
-    // N.B. At this position of the code, we have to make sure that every position other than the
-    // StridedSliced position of the ret error signal should be zero If a reshape is done, then the
-    whole
-    // tensor would be reset to 0 so it is fine If the shape is preserved and the buffered ret error
-    // signal is used, then the buffered ret error signal should not have non-zeros at the positions
-    // aforementioned. Therefore, a Fill(0) is not necessary
-
-    // reshape and reset ret signal if input shape changes
-    if (inputs.front()->shape() != ret_error_signal_.shape())
-    {
-      ret_error_signal_.Reshape(inputs.front()->shape());
-    }
-
-    // assign the error signal to the correct positions of ret error signal
-    switch (StridedSlice_type_)
-    {
-    case StridedSliceType::SINGLE_AXIS:
-    {
-      ret_error_signal_.StridedSlice(index_, axis_).Assign(error_signal);
-      break;
-    }
-    case StridedSliceType::MULTI_AXIS:
-    {
-      ret_error_signal_.StridedSlice(indices_, axes_).Assign(error_signal);
-      break;
-    }
-    case StridedSliceType::RANGED:
-    {
-      ret_error_signal_.StridedSlice(start_end_StridedSlice_, axis_).Assign(error_signal);
-      break;
-    }
-    }
-
-    return {ret_error_signal_};*/
-
-    return {};
-  }
+                                   TensorType const &   error_signal) override;
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
 
     std::vector<SizeType> output_shape = inputs.front()->shape();
 
-    for (SizeType i{0}; i < output_shape.size(); i++)
+    for (SizeType i{0}; i < begins_.size(); i++)
     {
+      assert(strides_.at(i) != 0);
+      assert(begins_.at(i) <= ends_.at(i));
+      output_shape.at(i) = ((ends_.at(i) - begins_.at(i)) / strides_.at(i)) + 1;
     }
 
     return output_shape;
@@ -161,6 +119,218 @@ public:
 
   static constexpr char const *DESCRIPTOR = "StridedSlice";
 };
+
+template <class T>
+void StridedSlice<T>::Forward(VecTensorType const &inputs, TensorType &output)
+{
+  assert(inputs.size() == 1);
+  assert(output.shape() == this->ComputeOutputShape(inputs));
+
+  switch (inputs.at(0)->shape().size())
+  {
+    // 1D Tensor
+  case 1:
+  {
+    for (SizeType i{0}; i < output.shape().at(0); i++)
+    {
+      output.At(i) = inputs.at(0)->At(begins_.at(0) + i * strides_.at(0));
+    }
+    break;
+  }
+
+  // 2D Tensor
+  case 2:
+  {
+    for (SizeType i{0}; i < output.shape().at(0); i++)
+    {
+      for (SizeType j{0}; j < output.shape().at(1); j++)
+      {
+        output.At(i, j) = inputs.at(0)->At(begins_.at(0) + i * strides_.at(0),
+                                           begins_.at(1) + j * strides_.at(1));
+      }
+    }
+    break;
+  }
+
+  // 3D Tensor
+  case 3:
+  {
+    for (SizeType i{0}; i < output.shape().at(0); i++)
+    {
+      for (SizeType j{0}; j < output.shape().at(1); j++)
+      {
+        for (SizeType k{0}; k < output.shape().at(2); k++)
+        {
+          output.At(i, j, k) = inputs.at(0)->At(begins_.at(0) + i * strides_.at(0),
+                                                begins_.at(1) + j * strides_.at(1),
+                                                begins_.at(2) + k * strides_.at(2));
+        }
+      }
+    }
+    break;
+  }
+
+  // 4D Tensor
+  case 4:
+  {
+    for (SizeType i{0}; i < output.shape().at(0); i++)
+    {
+      for (SizeType j{0}; j < output.shape().at(1); j++)
+      {
+        for (SizeType k{0}; k < output.shape().at(2); k++)
+        {
+          for (SizeType l{0}; l < output.shape().at(3); l++)
+          {
+            output.At(i, j, k, l) = inputs.at(0)->At(
+                begins_.at(0) + i * strides_.at(0), begins_.at(1) + j * strides_.at(1),
+                begins_.at(2) + k * strides_.at(2), begins_.at(3) + l * strides_.at(3));
+          }
+        }
+      }
+    }
+    break;
+  }
+
+  // 5D Tensor
+  case 5:
+  {
+    for (SizeType i{0}; i < output.shape().at(0); i++)
+    {
+      for (SizeType j{0}; j < output.shape().at(1); j++)
+      {
+        for (SizeType k{0}; k < output.shape().at(2); k++)
+        {
+          for (SizeType l{0}; l < output.shape().at(3); l++)
+          {
+            for (SizeType m{0}; m < output.shape().at(4); m++)
+            {
+
+              output.At(i, j, k, l, m) = inputs.at(0)->At(
+                  begins_.at(0) + i * strides_.at(0), begins_.at(1) + j * strides_.at(1),
+                  begins_.at(2) + k * strides_.at(2), begins_.at(3) + l * strides_.at(3),
+                  begins_.at(4) + m * strides_.at(4));
+            }
+          }
+        }
+      }
+    }
+    break;
+  }
+  default:
+  {
+    throw exceptions::InvalidMode("Input shape is supported up to 5D only.");
+  }
+  }
+}
+
+template <class T>
+std::vector<T> StridedSlice<T>::Backward(VecTensorType const &inputs,
+                                         TensorType const &   error_signal)
+{
+  assert(inputs.size() == 1);
+  assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+
+  TensorType ret_error_signal_{inputs.at(0)->shape()};
+
+  switch (inputs.at(0)->shape().size())
+  {
+
+  // 1D Tensor
+  case 1:
+  {
+    for (SizeType i{0}; i < error_signal.shape().at(0); i++)
+    {
+      ret_error_signal_.At(begins_.at(0) + i * strides_.at(0)) = error_signal.At(i);
+    }
+    break;
+  }
+
+  // 2D Tensor
+  case 2:
+  {
+    for (SizeType i{0}; i < error_signal.shape().at(0); i++)
+    {
+      for (SizeType j{0}; j < error_signal.shape().at(1); j++)
+      {
+        ret_error_signal_.At(begins_.at(0) + i * strides_.at(0),
+                             begins_.at(1) + j * strides_.at(1)) = error_signal.At(i, j);
+      }
+    }
+    break;
+  }
+
+  // 3D Tensor
+  case 3:
+  {
+    for (SizeType i{0}; i < error_signal.shape().at(0); i++)
+    {
+      for (SizeType j{0}; j < error_signal.shape().at(1); j++)
+      {
+        for (SizeType k{0}; k < error_signal.shape().at(2); k++)
+        {
+          ret_error_signal_.At(begins_.at(0) + i * strides_.at(0),
+                               begins_.at(1) + j * strides_.at(1),
+                               begins_.at(2) + k * strides_.at(2)) = error_signal.At(i, j, k);
+        }
+      }
+    }
+    break;
+  }
+
+  // 4D Tensor
+  case 4:
+  {
+    for (SizeType i{0}; i < error_signal.shape().at(0); i++)
+    {
+      for (SizeType j{0}; j < error_signal.shape().at(1); j++)
+      {
+        for (SizeType k{0}; k < error_signal.shape().at(2); k++)
+        {
+          for (SizeType l{0}; l < error_signal.shape().at(3); l++)
+          {
+            ret_error_signal_.At(begins_.at(0) + i * strides_.at(0),
+                                 begins_.at(1) + j * strides_.at(1),
+                                 begins_.at(2) + k * strides_.at(2),
+                                 begins_.at(3) + l * strides_.at(3)) = error_signal.At(i, j, k, l);
+          }
+        }
+      }
+    }
+    break;
+  }
+
+  // 5D Tensor
+  case 5:
+  {
+    for (SizeType i{0}; i < error_signal.shape().at(0); i++)
+    {
+      for (SizeType j{0}; j < error_signal.shape().at(1); j++)
+      {
+        for (SizeType k{0}; k < error_signal.shape().at(2); k++)
+        {
+          for (SizeType l{0}; l < error_signal.shape().at(3); l++)
+          {
+            for (SizeType m{0}; m < error_signal.shape().at(4); m++)
+            {
+              ret_error_signal_.At(
+                  begins_.at(0) + i * strides_.at(0), begins_.at(1) + j * strides_.at(1),
+                  begins_.at(2) + k * strides_.at(2), begins_.at(3) + l * strides_.at(3),
+                  begins_.at(4) + m * strides_.at(4)) = error_signal.At(i, j, k, l, m);
+            }
+          }
+        }
+      }
+    }
+    break;
+  }
+  default:
+  {
+    throw exceptions::InvalidMode("Input shape is supported up to 5D only.");
+  }
+  }
+
+  return {ret_error_signal_};
+}
 
 }  // namespace ops
 }  // namespace ml
