@@ -153,12 +153,12 @@ public:
 
 TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
 {
-  sleep(1);
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
   server->actual->addTarget(client->pub_);
 
   server->PretendToLearn();
 
-  sleep(1);
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
   EXPECT_GT(client->actual->GetUpdateCount(), 0);
 
   try
