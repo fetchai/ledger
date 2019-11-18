@@ -2453,7 +2453,7 @@ struct MapSerializer<ml::OpStridedSliceSaveableParams<TensorType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(6);
+    auto map = map_constructor(5);
 
     // serialize parent class first
     auto ops_pointer = static_cast<ml::OpsSaveableParams const *>(&sp);
