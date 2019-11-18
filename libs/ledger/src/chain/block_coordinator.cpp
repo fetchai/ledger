@@ -801,13 +801,6 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
 void BlockCoordinator::RemoveBlock(MainChain::BlockHash const &hash)
 {
   chain_.RemoveBlock(hash);
-  auto h = chain_.GetHeaviestBlock();
-  execution_manager_.SetLastProcessedBlock(h->hash);
-  storage_unit_.RevertToHash(h->merkle_hash, h->block_number);
-  if (dag_)
-  {
-    dag_->RevertToEpoch(h->block_number);
-  }
   blocks_to_common_ancestor_.clear();
 }
 
