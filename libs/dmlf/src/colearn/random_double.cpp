@@ -16,29 +16,40 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/decoders.hpp"
-#include "core/service_ids.hpp"
-#include "dmlf/colearn/colearn_protocol.hpp"
-#include "dmlf/colearn/muddle_outbound_update_task.hpp"
-#include "muddle/rpc/client.hpp"
+#include "dmlf/colearn/random_double.hpp"
 
 namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-MuddleOutboundUpdateTask::ExitState MuddleOutboundUpdateTask::run()
+RandomDouble::RandomDouble()
+  : twister_(rd_())
+  , underlying_(0.0, 1.0)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Sending update to ", target_);
-  auto prom = client_->CallSpecificAddress(
-      fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_)), RPC_COLEARN,
-      ColearnProtocol::RPC_COLEARN_UPDATE, type_name_, update_, proportion_, random_factor_);
-  prom->Wait();
-  return ExitState::COMPLETE;
+  GetNew();
 }
 
-bool MuddleOutboundUpdateTask::IsRunnable() const
+double RandomDouble::GetAgain() const
 {
-  return true;
+  return cache_;
+}
+double RandomDouble::GetNew()
+{
+  cache_ = underlying_(twister_);
+  return cache_;
+}
+void RandomDouble::Seed(Bytes const & /*data*/)
+{
+  // Do nothing at the moment.
+}
+void RandomDouble::Seed(CBytes const & /*data*/)
+{
+  // Do nothing at the moment.
+}
+
+void RandomDouble::Set(double forced_value)
+{
+  cache_ = forced_value;
 }
 }  // namespace colearn
 }  // namespace dmlf
