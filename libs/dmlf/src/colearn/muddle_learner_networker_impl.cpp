@@ -63,7 +63,7 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
   netm_ = std::make_shared<NetMan>("LrnrNet", 4);
   netm_->Start();
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  
+
   auto mud = fetch::muddle::CreateMuddle("Test", ident, *netm_, "127.0.0.1");
 
   auto update_store = std::make_shared<UpdateStore>();

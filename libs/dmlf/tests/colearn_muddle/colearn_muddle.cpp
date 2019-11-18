@@ -85,7 +85,7 @@ public:
       r += std::to_string(remote);
     }
 
-    actual = std::make_shared<LN>(priv, port, r);
+    actual    = std::make_shared<LN>(priv, port, r);
     interface = actual;
     interface->RegisterUpdateType<UpdateTypeForTesting>("update");
     interface->RegisterUpdateType<fetch::dmlf::Update<std::string>>("vocab");
