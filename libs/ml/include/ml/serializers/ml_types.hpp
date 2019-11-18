@@ -3052,6 +3052,54 @@ struct MapSerializer<ml::LayerConvolution2DSaveableParams<TensorType>, D>
 };
 
 /**
+ * serializer for Conv2d layer saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::LayerDepthwiseConv2DSaveableParams<TensorType>, D>
+{
+  using Type       = ml::LayerDepthwiseConv2DSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const SUB_GRAPH       = 1;
+  static uint8_t const OP_CODE         = 2;
+  static uint8_t const KERNEL_SIZE     = 3;
+  static uint8_t const INPUT_CHANNELS  = 4;
+  static uint8_t const DEPTH_MULTIPLIER = 5;
+  static uint8_t const STRIDE_SIZE     = 6;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(6);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
+    map.Append(SUB_GRAPH, *base_pointer);
+
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(KERNEL_SIZE, sp.kernel_size);
+    map.Append(INPUT_CHANNELS, sp.input_channels);
+    map.Append(DEPTH_MULTIPLIER, sp.depth_multiplier);
+    map.Append(STRIDE_SIZE, sp.stride_size);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    // deserialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
+
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(KERNEL_SIZE, sp.kernel_size);
+    map.ExpectKeyGetValue(INPUT_CHANNELS, sp.input_channels);
+    map.ExpectKeyGetValue(DEPTH_MULTIPLIER, sp.depth_multiplier);
+    map.ExpectKeyGetValue(STRIDE_SIZE, sp.stride_size);
+  }
+};
+
+/**
  * serializer for FullyConnectedLayer saveable params
  * @tparam TensorType
  */
