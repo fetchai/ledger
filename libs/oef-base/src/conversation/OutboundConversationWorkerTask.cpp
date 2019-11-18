@@ -54,7 +54,7 @@ bool OutboundConversationWorkerTask::connect()
     FETCH_LOG_WARN(LOGGING_NAME, "Connected to ", uri.ToString());
     return true;
   }
-  catch (std::exception &ex)
+  catch (std::exception const &ex)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Connection to ", uri.ToString(), " failed: ", ex.what());
     ++connect_failures_;

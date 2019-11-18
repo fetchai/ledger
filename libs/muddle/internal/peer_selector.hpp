@@ -55,6 +55,7 @@ public:
   using Timepoint = Clock::time_point;
   using Addresses = std::unordered_set<Address>;
   using UriSet    = std::unordered_set<network::Uri>;
+  using Peers     = std::vector<network::Peer>;
 
   struct PeerMetadata
   {
@@ -95,6 +96,8 @@ public:
   PeersInfo         GetPeerCache() const;
   PeerSelectionMode GetMode() const;
   void              SetMode(PeerSelectionMode mode);
+
+  void UpdatePeers(Peers peers);
 
   // Operators
   PeerSelector &operator=(PeerSelector const &) = delete;
@@ -144,6 +147,7 @@ private:
   SubscriptionPtr       announcement_subscription_;
 
   mutable Mutex     lock_;
+  Peers             external_peers_;
   Rng               rng_{};
   DeadlineTimer     announcement_interval_{CLOCK_NAME};
   PeerSelectionMode mode_{PeerSelectionMode::DEFAULT};
