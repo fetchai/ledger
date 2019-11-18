@@ -33,14 +33,14 @@ class StridedSlice : public Ops<T>
 public:
   using TensorType    = T;
   using SizeType      = fetch::math::SizeType;
+  using SizeVector    = fetch::math::SizeVector;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  // using ConstSliceType = typename TensorType::ConstSliceType;
-  using SPType = OpStridedSliceSaveableParams<T>;
-  using MyType = StridedSlice<TensorType>;
+  using SPType        = OpStridedSliceSaveableParams<T>;
+  using MyType        = StridedSlice<TensorType>;
 
-  explicit StridedSlice(std::vector<SizeType> const &begins, std::vector<SizeType> const &ends,
-                        std::vector<SizeType> const &strides = {})
+  explicit StridedSlice(SizeVector const &begins, SizeVector const &ends,
+                        SizeVector const &strides = {})
     : begins_(std::move(begins))
     , ends_(std::move(ends))
     , strides_(std::move(strides))
@@ -92,10 +92,10 @@ public:
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override;
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  SizeVector ComputeOutputShape(VecTensorType const &inputs) const override
   {
 
-    std::vector<SizeType> output_shape = inputs.front()->shape();
+    SizeVector output_shape = inputs.front()->shape();
 
     for (SizeType i{0}; i < begins_.size(); i++)
     {
@@ -107,10 +107,9 @@ public:
     return output_shape;
   }
 
-  std::vector<SizeType> begins_;
-  std::vector<SizeType> ends_;
-  std::vector<SizeType> strides_;
-  TensorType            ret_error_signal_;
+  SizeVector begins_;
+  SizeVector ends_;
+  SizeVector strides_;
 
   static constexpr OpType OpCode()
   {
