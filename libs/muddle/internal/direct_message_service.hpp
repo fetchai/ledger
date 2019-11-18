@@ -109,8 +109,8 @@ private:
   MuddleRegister &    register_;
   PeerConnectionList &peers_;
 
-  Mutex        lock_;
-  Reservations reservations_;
+  std::recursive_mutex lock_;
+  Reservations         reservations_;
 };
 
 }  // namespace muddle
