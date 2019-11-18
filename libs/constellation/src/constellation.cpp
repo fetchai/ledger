@@ -33,6 +33,7 @@
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "ledger/consensus/simulated_pow_consensus.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
@@ -215,6 +216,12 @@ ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, St
   if (stake)
   {
     consensus = std::make_shared<ledger::Consensus>(stake, beacon_setup, beacon, chain, storage,
+                                                    identity, cfg.aeon_period, cfg.max_cabinet_size,
+                                                    cfg.block_interval_ms);
+  }
+  else
+  {
+    consensus = std::make_shared<ledger::SimulatedPOWConsensus>(stake, beacon_setup, beacon, chain, storage,
                                                     identity, cfg.aeon_period, cfg.max_cabinet_size,
                                                     cfg.block_interval_ms);
   }
