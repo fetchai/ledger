@@ -69,7 +69,7 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
   auto update_store = std::make_shared<UpdateStore>();
 
   std::unordered_set<std::string> remotes;
-  if (remote.empty())
+  if (!remote.empty())
   {
     remotes.insert(remote);
   }
