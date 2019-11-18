@@ -101,7 +101,7 @@ void MainChain::Reset()
   heaviest_ = HeaviestTip{};
   loose_blocks_.clear();
   block_chain_.clear();
-  references_.clear();
+  forward_references_.clear();
 
   if (block_store_)
   {
@@ -147,6 +147,57 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 }
 
 /**
+ * Internal: add a parent-child forward reference if it is unknown yet.
+ * Update parent block, if found, with the relevant forward information.
+ *
+ * @param parent
+ * @param child
+ * @param parent_block
+ */
+void MainChain::CacheReference(BlockHash const &parent, BlockHash const &child,
+                               IntBlockPtr parent_block) const
+{
+  // get all known forward references range for this parent
+  auto siblings = forward_references_.equal_range(parent);
+  // check if this parent-child reference has been already cached
+  auto ref_it = std::find_if(siblings.first, siblings.second,
+                             [&child](auto const &ref) { return ref.second == child; });
+  if (ref_it == siblings.second)
+  {
+    // this child has not been already referred to yet
+    forward_references_.emplace_hint(siblings.first, parent, child);
+  }
+
+  assert(forward_references_.count(parent) > 0);
+  // Check how many forward references are already known for the parent hash.
+  // Note that two or more refs are ambiguous and thus parent's next_hash is emptied.
+  switch (forward_references_.count(parent))
+  {
+  case 1:  // this one is an unique forward ref
+    if (parent_block || LookupBlockFromCache(parent, parent_block))
+    {
+      parent_block->next_hash = child;
+    }
+    break;
+  case 2:  // there are two forward refs now
+    if (parent_block || LookupBlockFromCache(parent, parent_block))
+    {
+      parent_block->next_hash = BlockHash{};
+    }
+    break;
+  default:;
+#ifndef NDEBUG
+    // there are many more forward refs from this parent so its next_hash should be empty
+    if (parent_block || LookupBlockFromCache(parent, parent_block))
+    {
+      assert(parent_block->next_hash.empty());
+    }
+#endif
+    // there's a lot of forward refs, nothing to be done here
+  }
+}
+
+/**
  * Internal: insert a block into the cache maintaining references
  *
  * @param block The block to be cached
@@ -160,7 +211,7 @@ void MainChain::CacheBlock(IntBlockPtr const &block) const
   // under all circumstances, it _should_ be a fresh block
   ASSERT(ret_val.second);
   // keep parent-child reference
-  references_.emplace(block->previous_hash, std::move(hash));
+  CacheReference(block->previous_hash, std::move(hash));
 }
 
 /**
@@ -205,9 +256,8 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
   }
   record.block = *block;
 
-  // detect if any of this block's children has somehow made it to the store already
-  // TODO(bipll): is this needed?
-  auto forward_refs{references_.equal_range(hash)};
+  // detect if any of this block's children has made it to the store already
+  auto forward_refs{forward_references_.equal_range(hash)};
   for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
   {
     auto const &child{ref_it->second};
@@ -289,7 +339,7 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
   if (retVal)
   {
     // forget the forward ref to this block from its parent
-    auto siblings{references_.equal_range(root->previous_hash)};
+    auto siblings{forward_references_.equal_range(root->previous_hash)};
     for (auto sibling{siblings.first}; sibling != siblings.second; ++sibling)
     {
       if (sibling->second == removed_hash)
@@ -311,7 +361,7 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
       // first remember to remove all the progeny breadth-first
       // this way any hash that could potentially stem from this one,
       // reference tree-wise, is completely wiped out
-      auto children{references_.equal_range(hash)};
+      auto children{forward_references_.equal_range(hash)};
       for (auto child{children.first}; child != children.second; ++child)
       {
         next_gen.push_back(child->second);
@@ -1290,21 +1340,19 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  */
 bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) const
 {
-  switch (references_.count(hash))
+  switch (forward_references_.count(hash))
   {
   case 0:
     next_hash = BlockHash{};
     return true;
   case 1:
-    next_hash = references_.find(hash)->second;
+    next_hash = forward_references_.find(hash)->second;
     return true;
   default:
     // ambiguous forward references need to be resolved from tip
     return false;
   }
 }
-
-void MainChain::
 
 /**
  * Attempt to look up a block.
@@ -1499,7 +1547,7 @@ bool MainChain::ReindexTips()
     }
     auto const &hash{block_entry.first};
     // check if this has has any live forward reference
-    auto children{references_.equal_range(hash)};
+    auto children{forward_references_.equal_range(hash)};
     auto child{std::find_if(children.first, children.second, [this](auto const &ref) {
       return block_chain_.find(ref.second) != block_chain_.end();
     })};
