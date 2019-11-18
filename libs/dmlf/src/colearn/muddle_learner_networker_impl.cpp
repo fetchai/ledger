@@ -16,8 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/ecdsa.hpp"
 #include "dmlf/colearn/muddle_learner_networker_impl.hpp"
 #include "dmlf/colearn/muddle_outbound_update_task.hpp"
+#include "dmlf/colearn/update_store.hpp"
 #include "muddle/rpc/client.hpp"
 
 namespace fetch {
@@ -30,9 +32,14 @@ void MuddleLearnerNetworkerImpl::addTarget(const std::string &peer)
 }
 
 MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud, StorePtr update_store)
-  : mud_(std::move(mud))
-  , update_store_(std::move(update_store))
 {
+  setup(std::move(mud), std::move(update_store));
+}
+
+void MuddleLearnerNetworkerImpl::setup(MuddlePtr mud, StorePtr update_store)
+{
+  mud_           = std::move(mud);
+  update_store_  = std::move(update_store);
   taskpool_      = std::make_shared<Taskpool>();
   tasks_runners_ = std::make_shared<Threadpool>();
   std::function<void(std::size_t thread_number)> run_tasks =
@@ -43,6 +50,35 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud, StorePtr u
   proto_  = std::make_shared<ColearnProtocol>(*this);
   server_ = std::make_shared<RpcServer>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   server_->Add(RPC_COLEARN, proto_.get());
+}
+
+MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
+                                                       unsigned short int port,
+                                                       const std::string &remote)
+{
+  auto signer = std::make_shared<Signer>();
+  signer->Load(fetch::byte_array::FromBase64(priv));
+  CertificatePtr ident = signer;
+
+  netm_ = std::make_shared<NetMan>("LrnrNet", 4);
+  netm_->Start();
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  auto mud = fetch::muddle::CreateMuddle("Test", ident, *netm_, "127.0.0.1");
+
+  auto update_store = std::make_shared<UpdateStore>();
+
+  std::unordered_set<std::string> remotes;
+  if (!remote.empty())
+  {
+    remotes.insert(remote);
+  }
+
+  mud->SetPeerSelectionMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
+  mud->Start(remotes, {port});
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  setup(std::move(mud), std::move(update_store));
 }
 
 MuddleLearnerNetworkerImpl::~MuddleLearnerNetworkerImpl()
