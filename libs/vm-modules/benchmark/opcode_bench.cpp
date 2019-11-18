@@ -72,14 +72,14 @@ namespace {
 
 // Benchmark parameters (change as desired)
 const uint32_t max_array_len = 16384, n_array_lens = 32, max_str_len = 16384, n_str_lens = 10,
-    max_tensor_size = 531441, n_tensor_sizes = 16, n_dim_sizes = n_tensor_sizes * 3,
-    max_crypto_len = 16384, n_crypto_lens = 10;
+               max_tensor_size = 531441, n_tensor_sizes = 16, n_dim_sizes = n_tensor_sizes * 3,
+               max_crypto_len = 16384, n_crypto_lens = 10;
 
 // Number of benchmarks in each category
 const uint32_t n_basic_bms = 15, n_object_bms = 10, n_prim_bms = 25, n_math_bms = 16,
-    n_array_bms = 10, n_tensor_bms = 5, n_crypto_bms = 6;
+               n_array_bms = 10, n_tensor_bms = 5, n_crypto_bms = 6;
 
- //Categories can be selectively suppressed using environment variables
+// Categories can be selectively suppressed using environment variables
 const bool run_basic    = std::getenv("FETCH_VM_BENCHMARK_NO_BASIC") == nullptr,
            run_object   = std::getenv("FETCH_VM_BENCHMARK_NO_OBJECT") == nullptr,
            run_prim_ops = std::getenv("FETCH_VM_BENCHMARK_NO_PRIM_OPS") == nullptr,
