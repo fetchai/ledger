@@ -232,22 +232,23 @@ public:
 
   bool RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks);
 
-  BlockStorePtr block_store_;  /// < Long term storage and backup
+  BlockStorePtr block_store_;  ///< Long term storage and backup
   std::fstream  head_store_;
+  std::fstream  bloom_filter_store_;
 
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
-  // The whole tree of previous-next relations among cached blocks
-  mutable References                references_;
-  TipsMap                           tips_;          ///< Keep track of the tips
-  HeaviestTip                       heaviest_;      ///< Heaviest block/tip
-  LooseBlockMap                     loose_blocks_;  ///< Waiting (loose) blocks
-  std::unique_ptr<BasicBloomFilter> bloom_filter_;
-  bool const                        enable_bloom_filter_;
-  telemetry::GaugePtr<std::size_t>  bloom_filter_queried_bit_count_;
-  telemetry::CounterPtr             bloom_filter_query_count_;
-  telemetry::CounterPtr             bloom_filter_positive_count_;
-  telemetry::CounterPtr             bloom_filter_false_positive_count_;
+  /// The whole tree of previous-next relations among cached blocks
+  mutable References               references_;
+  TipsMap                          tips_;          ///< Keep track of the tips
+  HeaviestTip                      heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap                    loose_blocks_;  ///< Waiting (loose) blocks
+  mutable BasicBloomFilter         bloom_filter_;
+  bool const                       enable_bloom_filter_;
+  telemetry::GaugePtr<std::size_t> bloom_filter_queried_bit_count_;
+  telemetry::CounterPtr            bloom_filter_query_count_;
+  telemetry::CounterPtr            bloom_filter_positive_count_;
+  telemetry::CounterPtr            bloom_filter_false_positive_count_;
 };
 
 }  // namespace ledger

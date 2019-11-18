@@ -62,8 +62,8 @@ public:
   HashSourceFactory(HashSourceFactory &&)      = delete;
   ~HashSourceFactory()                         = default;
 
-  HashSourceFactory &operator=(HashSourceFactory const &) = delete;
-  HashSourceFactory &operator=(HashSourceFactory &&) = delete;
+  HashSourceFactory &operator=(HashSourceFactory const &) = default;
+  HashSourceFactory &operator=(HashSourceFactory &&) = default;
 
   /*
    * Create a HashSource which, when iterated, will pass the input parameter
@@ -72,7 +72,7 @@ public:
   HashSource operator()(fetch::byte_array::ConstByteArray const &element) const;
 
 private:
-  Functions const hash_functions_;
+  Functions hash_functions_;
 };
 
 /*
@@ -176,8 +176,8 @@ public:
   BasicBloomFilter(BasicBloomFilter &&)      = delete;
   ~BasicBloomFilter()                        = default;
 
-  BasicBloomFilter &operator=(BasicBloomFilter const &) = delete;
-  BasicBloomFilter &operator=(BasicBloomFilter &&) = delete;
+  BasicBloomFilter &operator=(BasicBloomFilter const &) = default;
+  BasicBloomFilter &operator=(BasicBloomFilter &&) = default;
 
   /*
    * Check if the argument matches the Bloom filter. Returns a pair of
@@ -187,24 +187,15 @@ public:
    * returned. The latter number will increase as the filter's performance
    * degrades.
    */
-  std::pair<bool, std::size_t> Match(fetch::byte_array::ConstByteArray const &element);
+  std::pair<bool, std::size_t> Match(fetch::byte_array::ConstByteArray const &element) const;
   /*
    * Set the bits of the Bloom filter corresponding to the argument
    */
   void Add(fetch::byte_array::ConstByteArray const &element);
-  /*
-   * Inform the Bloom filter of detected false positives. This is used to
-   * track the quality of the filter. Returns true if the quality of the
-   * filter has deteriorated below a predefined threshold; false otherwise.
-   */
-  bool ReportFalsePositives(std::size_t count);
 
 private:
-  BitVector                         bits_;
-  internal::HashSourceFactory const hash_source_factory_;
-  std::size_t                       entry_count_{};
-  std::size_t                       positive_count_{};
-  std::size_t                       false_positive_count_{};
+  BitVector                   bits_;
+  internal::HashSourceFactory hash_source_factory_;
 };
 
 }  // namespace fetch
