@@ -97,6 +97,8 @@ public:
 
     SizeVector output_shape = inputs.front()->shape();
 
+    // Calculate number of stride size steps from specified begin to specified end for each
+    // dimension
     for (SizeType i{0}; i < begins_.size(); i++)
     {
       assert(strides_.at(i) != 0);
@@ -119,6 +121,13 @@ public:
   static constexpr char const *DESCRIPTOR = "StridedSlice";
 };
 
+/**
+ * Forward pass is done by assigning values in given ranges with stride size step for every
+ * dimmension from larger input tensor to smaller output tensor.
+ * @tparam T
+ * @param inputs
+ * @param output
+ */
 template <class T>
 void StridedSlice<T>::Forward(VecTensorType const &inputs, TensorType &output)
 {
@@ -222,6 +231,13 @@ void StridedSlice<T>::Forward(VecTensorType const &inputs, TensorType &output)
   }
 }
 
+/**
+ * Backward pass is done by assigning smaller error signal tensor to larger return signal tensor
+ * @tparam T
+ * @param inputs
+ * @param error_signal
+ * @return
+ */
 template <class T>
 std::vector<T> StridedSlice<T>::Backward(VecTensorType const &inputs,
                                          TensorType const &   error_signal)
