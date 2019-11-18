@@ -21,10 +21,10 @@ make_plots = True
 make_tables = True
 save_results = True
 save_figures = True
-n_reps = 2
+n_reps = 100
 imgformat = 'png'
 
-# selectively suppress benchmarks by setting environment variables 
+# selectively suppress benchmarks by setting environment variables
 #os.environ['FETCH_VM_BENCHMARK_NO_BASIC'] = '1'
 #os.environ['FETCH_VM_BENCHMARK_NO_OBJECT'] = '1'
 #os.environ['FETCH_VM_BENCHMARK_NO_PRIM_OPS'] = '1'
@@ -38,18 +38,19 @@ imgformat = 'png'
 def index(row):
     return int(row[0].split('_')[0].split('/')[1])
 
-    
-# get the list of opcodes that are in ops but not in base_ops 
-def get_net_opcodes(ops,base_ops):
+
+# get the list of opcodes that are in ops but not in base_ops
+def get_net_opcodes(ops, base_ops):
     base_copy = base_ops.copy()
     return [x for x in ops if x not in base_copy or base_copy.remove(x)]
 
-    
+
 def linear_fit(benchmarks, bm_type):
-    
-    x = [bm['param_val'] for bm in benchmarks.values() if bm['type']==bm_type]
-    y = [bm['net_mean'] for bm in benchmarks.values() if bm['type']==bm_type]
-    return np.polyfit(np.array(x,dtype=float), np.array(y), 1).tolist()
+
+    x = [bm['param_val']
+         for bm in benchmarks.values() if bm['type'] == bm_type]
+    y = [bm['net_mean'] for bm in benchmarks.values() if bm['type'] == bm_type]
+    return np.polyfit(np.array(x, dtype=float), np.array(y), 1).tolist()
 
 
 # delete old file if it exists
@@ -79,32 +80,33 @@ with open(vm_benchmark_file) as csvfile:
 bm_names = {int(row[0]): row[1] for row in opcode_rows}
 bm_inds = {row[1]: int(row[0]) for row in opcode_rows}
 base_inds = {bm_inds[row[1]]: bm_inds[row[2]] for row in opcode_rows}
-opcodes = {int(row[0]): [int(op) for (i,op) in enumerate(row[3:])] for row in opcode_rows}
+opcodes = {int(row[0]): [int(op) for (i, op) in enumerate(row[3:])]
+           for row in opcode_rows}
 
 # get cpu time stats (in ns) for each bm index
 means = {index(row): float(row[3]) for row in bm_rows if 'mean' in row[0]}
 medians = {index(row): float(row[3]) for row in bm_rows if 'median' in row[0]}
 stddevs = {index(row): float(row[3]) for row in bm_rows if 'stddev' in row[0]}
 
-bm_classes = ['Basic','String','Prim','Math','Array','Tensor','Sha256']
-prim_bm_classes = ['Prim','Math']
+bm_classes = ['Basic', 'String', 'Prim', 'Math', 'Array', 'Tensor', 'Sha256']
+prim_bm_classes = ['Prim', 'Math']
 param_bm_classes = ['String', 'Array', 'Sha256']
 
 # collect benchmark data and stats
-benchmarks = {ind : {'name': name, 
-                     'mean': means[ind], 
-                     'median': medians[ind],
-                     'stddevs': stddevs[ind], 
-                     'baseline': bm_names[base_inds[ind]],
-                     'opcodes': opcodes[ind], 
-                     'net_mean': means[ind] - means[base_inds[ind]],
-                     'net_stderr': (stddevs[ind] ** 2 + stddevs[base_inds[ind]] ** 2) ** 0.5 / n_reps ** 0.5,
-                     'net_opcodes': get_net_opcodes(opcodes[ind],opcodes[base_inds[ind]]),
-                     'ext_opcodes': get_net_opcodes(opcodes[base_inds[ind]],opcodes[ind]),
-                     'type': ''
-                     } for (ind,name) in bm_names.items()}
+benchmarks = {ind: {'name': name,
+                    'mean': means[ind],
+                    'median': medians[ind],
+                    'stddevs': stddevs[ind],
+                    'baseline': bm_names[base_inds[ind]],
+                    'opcodes': opcodes[ind],
+                    'net_mean': means[ind] - means[base_inds[ind]],
+                    'net_stderr': (stddevs[ind] ** 2 + stddevs[base_inds[ind]] ** 2) ** 0.5 / n_reps ** 0.5,
+                    'net_opcodes': get_net_opcodes(opcodes[ind], opcodes[base_inds[ind]]),
+                    'ext_opcodes': get_net_opcodes(opcodes[base_inds[ind]], opcodes[ind]),
+                    'type': ''
+                    } for (ind, name) in bm_names.items()}
 
-for (ind,bm) in benchmarks.items():
+for (ind, bm) in benchmarks.items():
     bm_class = [cl for cl in bm_classes if cl in bm['name']]
     if len(bm_class) == 0:
         bm['class'] = 'Basic'
@@ -114,67 +116,72 @@ for (ind,bm) in benchmarks.items():
         bm['type'] = bm['name'].split('-')[0]
         dim_size = bm['name'].split('_')[1]
         bm['dim'] = int(dim_size.split('-')[0])
-        bm['param_val'] = int(dim_size.split('-')[1])**bm['dim'] 
+        bm['param_val'] = int(dim_size.split('-')[1])**bm['dim']
     elif bm['class'] in param_bm_classes and '_' in bm['name']:
         bm['type'] = bm['name'].split('_')[0]
         bm['param_val'] = int(bm['name'].split('_')[1])
 
 # collect tensor benchmark data
-tensor_bm_types = {bm['type'] for bm in benchmarks.values() if bm['class'] == 'Tensor'}
+tensor_bm_types = {bm['type']
+                   for bm in benchmarks.values() if bm['class'] == 'Tensor'}
 
 # collect parameterized benchmark data
-param_bm_types = {bm['type'] for bm in benchmarks.values() if bm['class'] in param_bm_classes and '_' in bm['name']}
+param_bm_types = {bm['type'] for bm in benchmarks.values(
+) if bm['class'] in param_bm_classes and '_' in bm['name']}
 param_bm_types = param_bm_types.union(tensor_bm_types)
 
-param_bms = {type_name : {'inds': [ind for (ind,bm) in benchmarks.items() if bm['type'] == type_name],
-                          'lfit': linear_fit(benchmarks, type_name)}
+param_bms = {type_name: {'inds': [ind for (ind, bm) in benchmarks.items() if bm['type'] == type_name],
+                         'lfit': linear_fit(benchmarks, type_name)}
              for type_name in param_bm_types}
-    
-for (ind,param_bm) in param_bms.items():
+
+for (ind, param_bm) in param_bms.items():
     ind0 = param_bm['inds'][0]
     param_bm['opcodes'] = benchmarks[ind0]['opcodes']
     param_bm['baseline'] = benchmarks[ind0]['baseline']
     param_bm['net_opcodes'] = benchmarks[ind0]['net_opcodes']
-    param_bm['param_vals'] = [benchmarks[ind]['param_val'] for ind in param_bm['inds']]
-    param_bm['net_means'] = [benchmarks[ind]['net_mean'] for ind in param_bm['inds']]
-    param_bm['net_stderrs'] = [benchmarks[ind]['net_stderr'] for ind in param_bm['inds']]
+    param_bm['param_vals'] = [benchmarks[ind]['param_val']
+                              for ind in param_bm['inds']]
+    param_bm['net_means'] = [benchmarks[ind]['net_mean']
+                             for ind in param_bm['inds']]
+    param_bm['net_stderrs'] = [benchmarks[ind]['net_stderr']
+                               for ind in param_bm['inds']]
 
 if save_results:
 
     if not os.path.exists('results'):
         os.mkdir('results')
-    
+
     if not os.path.exists(output_path):
         os.mkdir(output_path)
         os.mkdir(output_path + 'plots/')
-    
+
     # copy output of benchmark runs
     copy(vm_benchmark_file, output_path + vm_benchmark_file)
     copy(opcode_list_file, output_path + opcode_list_file)
-    
+
     # copy source code
     for file in glob(r'*.py'):
         copy(file, output_path)
 
 if make_tables:
-    
+
     from vm_benchmark_tables import benchmark_table, primitive_table, linear_fit_table
-    
+
     for bm_cls in bm_classes:
         benchmark_table(benchmarks, n_reps, bm_cls)
-        
+
     for bm_cls in prim_bm_classes:
         primitive_table(benchmarks, n_reps, bm_cls)
-        
+
     for bm_cls in param_bm_classes:
         linear_fit_table(param_bms, n_reps, bm_cls)
-    
+
 if make_plots:
-    
+
     from vm_benchmark_plots import plot_linear_fit
-    
+
     fig = 0
-    for (name,param_bm) in param_bms.items():
-        plot_linear_fit(name, param_bm, fig=fig, savefig=save_figures, 
+    for (name, param_bm) in param_bms.items():
+        plot_linear_fit(name, param_bm, fig=fig, savefig=save_figures,
                         savepath=output_path+'plots/', imgformat=imgformat)
         fig += 1

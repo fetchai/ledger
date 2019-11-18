@@ -30,7 +30,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <iomanip>
 
 namespace fetch {
 namespace vectorise {
