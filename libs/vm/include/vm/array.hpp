@@ -20,6 +20,7 @@
 #include "core/serializers/base_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/vm.hpp"
+#include "vm/fixed.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -443,6 +444,11 @@ Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
     return Ptr<IArray>{
         new Array<fixed_point::fp64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
+  }
+  case TypeIds::Fixed128:
+  {
+    return Ptr<IArray>{
+        new Array<Ptr<Fixed128>>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   default:
   {
