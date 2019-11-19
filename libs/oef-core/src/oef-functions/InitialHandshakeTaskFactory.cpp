@@ -94,7 +94,7 @@ void InitialHandshakeTaskFactory::ProcessMessage(ConstCharArrayBuffer &data)
     break;
     }
   }
-  catch (std::exception &ex)
+  catch (std::exception const &ex)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "ProcessMessage  -- ", ex.what());
     throw ex;

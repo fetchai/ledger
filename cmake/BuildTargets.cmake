@@ -315,7 +315,7 @@ function (configure_library_targets)
          children
          EXCLUDE
          REGEX
-         ".*oef.*")
+         ".*oef-core.*")
   endif (APPLE)
 
   set(dirlist "")

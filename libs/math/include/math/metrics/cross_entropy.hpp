@@ -55,19 +55,18 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
   {
     auto     x_it = x.cbegin();
     auto     y_it = y.cbegin();
-    DataType one{1};
     DataType tmp;
 
     while (x_it.is_valid())
     {
-      assert((*y_it == one) || (*y_it == static_cast<DataType>(0)));
-      if (*y_it == one)
+      assert((*y_it == static_cast<DataType>(1)) || (*y_it == static_cast<DataType>(0)));
+      if (*y_it == static_cast<DataType>(1))
       {
         ret -= Log(*x_it);
       }
       else
       {
-        tmp = one - *x_it;
+        tmp = static_cast<DataType>(1) - *x_it;
         if (tmp <= 0)
         {
           throw exceptions::NegativeLog("cannot take log of negative values");
