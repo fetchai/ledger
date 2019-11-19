@@ -247,6 +247,9 @@ private:
 
   uint16_t failures_{0};
 
+  // Debug/logging
+  std::string GetLoggingName();
+
   // Convenience functions
   ReliableChannelPtr ReliableBroadcastFactory();
 

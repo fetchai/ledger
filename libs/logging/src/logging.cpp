@@ -173,6 +173,9 @@ void LogRegistry::SetLevel(char const *name, LogLevel level)
 {
   std::lock_guard<std::mutex> guard(lock_);
 
+  // Ensure logger exists to avoid races with setting level
+  GetLogger(name);
+
   auto it = registry_.find(name);
   if (it != registry_.end())
   {
