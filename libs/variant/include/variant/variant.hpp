@@ -598,12 +598,11 @@ public:
     {
     case Type::Type::UNDEFINED:
     {
-      // TODO(tfr): Work out if msgpack has support for undefined
-      return;
+      throw std::runtime_error{"Unsupported variant type for serialisation"};
     }
     case Type::Type::NULL_VALUE:
     {
-      // TODO(tfr): Work out if msgpack has support for null
+      serializer.WriteNil();
       return;
     }
     case Type::Type::INTEGER:

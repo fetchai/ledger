@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "telemetry/measurement.hpp"
 #include "telemetry/telemetry.hpp"
 
 #include <algorithm>
 #include <initializer_list>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -89,8 +89,8 @@ private:
 
   static bool ValidateName(std::string const &name);
 
-  mutable Mutex lock_;
-  Measurements  measurements_;
+  mutable std::mutex lock_;
+  Measurements       measurements_;
 };
 
 /**
@@ -114,7 +114,7 @@ Registry::GaugePtr<T> Registry::CreateGauge(std::string name, std::string descri
 
     // add the gauge to the register
     {
-      FETCH_LOCK(lock_);
+      std::lock_guard<std::mutex> guard(lock_);
       measurements_.push_back(gauge);
     }
   }
@@ -136,7 +136,7 @@ std::shared_ptr<T> Registry::LookupMeasurement(std::string const &name) const
 
   auto const matcher = [&name](MeasurementPtr const &m) { return (m->name() == name); };
 
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
 
   // attempt to find the first metric matching the name with the type
   for (auto start = measurements_.begin(), end = measurements_.end(); start != end;)
