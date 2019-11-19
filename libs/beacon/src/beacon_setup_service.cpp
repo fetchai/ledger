@@ -1566,6 +1566,7 @@ void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &st
     return;
   }
 
+  // Need to increment since for_each isn't inclusive
   ++it;
 
   uint64_t time_slots_to_end = 0;
@@ -1578,10 +1579,10 @@ void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &st
 
   assert(expected_dkg_timespan_ != 0 && time_slots_in_dkg_ != 0);
 
-  // Note: need to use ceil arithmetic for this division
+  // Note: fine to do floor arithmetic here, it might cause the deadline to happen in the past, but
+  // there is resilience to this.
   uint64_t time_until_deadline_s =
-      time_slots_to_end == 0 ? 0
-                             : (time_slots_to_end * expected_dkg_timespan_) / time_slots_in_dkg_;
+      (time_slots_to_end * expected_dkg_timespan_) / time_slots_in_dkg_;
 
   state_deadline_ = reference_timepoint_ + time_until_deadline_s;
 
@@ -1617,9 +1618,6 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
   // get the base time a DKG attempt should take
   uint64_t const time_per_iteration = TimePerDKGIteration(cabinet_size);
-
-  // auto     expected_dkg_time_s =
-  //    static_cast<uint64_t>(time_per_iteration * static_cast<double>(time_slots_in_dkg_));
 
   // RESET state will delay DKG until the start point (or next start point)
   if (state == BeaconSetupService::State::RESET)
