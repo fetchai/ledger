@@ -136,6 +136,9 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
 
       // Failed - clear any state.
       genesis_block_ = Block();
+
+      // Reset storage unit
+      storage_unit_.Reset();
     }
   }
 
@@ -192,9 +195,6 @@ bool GenesisFileCreator::LoadState(Variant const &object)
   {
     return true;
   }
-
-  // Reset storage unit
-  storage_unit_.Reset();
 
   // Expecting an array of record entries
   if (!object.IsArray())

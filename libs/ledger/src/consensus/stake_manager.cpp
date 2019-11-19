@@ -92,6 +92,10 @@ bool StakeManager::Save(StorageInterface &storage)
     storage.Set(STAKE_STORAGE_ADDRESS, serializer.data());
 
     success = true;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Wrote stake manager to storage!");
+
+    ERROR_BACKTRACE;
   }
   catch (std::exception const &ex)
   {
