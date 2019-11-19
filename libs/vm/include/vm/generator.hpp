@@ -202,8 +202,8 @@ struct Executable
 
   struct LargeConstant
   {
-    LargeConstant() = default;
-    LargeConstant(const LargeConstant &other)
+    LargeConstant() = delete;
+    explicit LargeConstant(const LargeConstant &other)
     {
       Copy(other);
     }

@@ -71,8 +71,7 @@ void StringifyLargeNumber(std::ostream &out, T const &el)
   }
   else
   {
-    Ptr<Fixed128> fp128 = el;
-    out << fp128->data;
+    out << reinterpret_cast<Ptr<Fixed128> const &>(el)->data;
   }
 }
 
