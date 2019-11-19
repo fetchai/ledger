@@ -42,12 +42,10 @@ namespace {
   }
 }  // namespace
 
-FeeManager::FeeManager(TokenContract &token_contract, BitVector &allowed_shards, CachedStorageAdapterPtr storage_cache)
+FeeManager::FeeManager(TokenContract &token_contract)
   : token_contract_{token_contract}
-  , allowed_shards_{allowed_shards}
-  , storage_cache_{std::move(storage_cache)}
   , deduct_fees_duration_{Registry::Instance().LookupMeasurement<Histogram>(
-      "ledger_executor_deduct_fees_duration")}
+      "ledger_fee_manager_deduct_fees_duration")}
 {
 }
 
@@ -62,7 +60,7 @@ bool FeeManager::CalculateChargeAndValidate(TransactionPtr& tx, std::vector<Char
   }
 
   uint64_t const scaled_charge =
-      std::max<uint64_t>(allowed_shards_.PopCount(), 1) * base_charge;
+      std::max<uint64_t>(tx->shard_mask().PopCount(), 1) * base_charge;
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Calculated charge for 0x", current_tx_->digest().ToHex(), ": ",
                   scaled_charge, " (base: ", base_charge, " storage: ", storage_charge,
@@ -84,12 +82,12 @@ bool FeeManager::CalculateChargeAndValidate(TransactionPtr& tx, std::vector<Char
 }
 
 
-void FeeManager::Execute(TransactionPtr& tx, Result &result, BlockIndex &block)
+void FeeManager::Execute(TransactionPtr& tx, Result &result, BlockIndex &block, StorageInterface &storage)
 {
   telemetry::FunctionTimer const timer{*deduct_fees_duration_};
 
   // attach the token contract to the storage engine
-  StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}, allowed_shards_};
+  StateSentinelAdapter storage_adapter{storage, Identifier{"fetch.token"}, tx->shard_mask()};
 
   auto const &from = tx->from();
 

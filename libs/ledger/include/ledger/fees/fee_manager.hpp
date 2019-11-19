@@ -19,6 +19,7 @@
 
 #include "ledger/fees/chargeable.hpp"
 #include "ledger/chaincode/token_contract.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "chain/transaction.hpp"
 #include "core/bitvector.hpp"
 #include "telemetry/telemetry.hpp"
@@ -43,14 +44,14 @@ public:
   using Result                  = ContractExecutionResult;
 
   // Construction / Destruction
-  FeeManager(TokenContract &token_contract, BitVector &allowed_shards, CachedStorageAdapterPtr storage_cache);
+  FeeManager(TokenContract &token_contract);
   FeeManager(FeeManager const &) = delete;
   FeeManager(FeeManager &&)      = delete;
   virtual ~FeeManager()          = default;
 
 
   bool CalculateChargeAndValidate(TransactionPtr& tx, std::vector<Chargeable*> const &chargeables, Result& result);
-  void Execute(TransactionPtr& tx, Result &result, BlockIndex &block);
+  void Execute(TransactionPtr& tx, Result &result, BlockIndex &block, StorageInterface& storage);
 
   // Operators
   FeeManager &operator=(FeeManager const &) = delete;
@@ -58,8 +59,6 @@ public:
 
 private:
   TokenContract           &token_contract_;
-  BitVector               &allowed_shards_;
-  CachedStorageAdapterPtr storage_cache_;
 
   telemetry::HistogramPtr deduct_fees_duration_;
 };

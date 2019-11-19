@@ -97,7 +97,7 @@ bool IsCreateWealth(chain::Transaction const &tx)
  */
 Executor::Executor(StorageUnitPtr storage)
   : storage_{std::move(storage)}
-  , fee_manager_{token_contract_, allowed_shards_, storage_cache_}
+  , fee_manager_{token_contract_}
   , overall_duration_{Registry::Instance().LookupMeasurement<Histogram>(
         "ledger_executor_overall_duration")}
   , tx_retrieve_duration_{Registry::Instance().LookupMeasurement<Histogram>(
@@ -169,7 +169,7 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
     }
 
     // deduct the fees from the originator
-    fee_manager_.Execute(current_tx_, result, block_);
+    fee_manager_.Execute(current_tx_, result, block_, *storage_cache_);
 
     // flush the storage so that all changes are now persistent
     storage_cache_->Flush();
