@@ -29,6 +29,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <unistd.h>
+#include <limits.h>
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -39,19 +41,31 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
+#define HOST_NAME_MAX 12
+
 int main(int argc, char **argv)
 {
   // This example will create muddle networking distributed client with simple classification neural
   // net and learns how to predict hand written digits from MNIST dataset
 
-  if (argc != 4)
+  if (argc != 3)
   {
-    std::cout << "learner_config.json networker_config instance_number" << std::endl;
+    std::cout << "learner_config.json networker_config" << std::endl;
     return 1;
   }
 
   auto networker_config = std::string(argv[2]);
-  int  instance_number  = std::atoi(argv[3]);
+
+  // grab the host name
+  char tmp_hostname[HOST_NAME_MAX];
+  gethostname(tmp_hostname, HOST_NAME_MAX);
+  std::string host_name(tmp_hostname);
+  std::cout << "host_name: " << host_name << std::endl;
+
+//  int  instance_number  = std::atoi(argv[3]);
+
+
+
 
   fetch::json::JSONDocument                                doc;
   fetch::dmlf::collective_learning::ClientParams<DataType> client_params =
