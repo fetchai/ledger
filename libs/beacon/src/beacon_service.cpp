@@ -294,8 +294,9 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
     // TODO(HUT): clean historically old sigs + entropy here
   }
 
-  // Don't proceed from this state if it is ahead of the entropy we are trying to generate
-  if (index > (most_recent_round_seen_ + entropy_lead_blocks_))
+  // Don't proceed from this state if it is ahead of the entropy we are trying to generate,
+  // or we have no peers
+  if (index > (most_recent_round_seen_ + entropy_lead_blocks_) || endpoint_.GetDirectlyConnectedPeers().size() == 0)
   {
     state_machine_->Delay(std::chrono::milliseconds(5));
     return State::COLLECT_SIGNATURES;

@@ -64,6 +64,7 @@ private:
   uint64_t              start_time_ = 0;
   GenesisStore          genesis_store_;
   Block                 genesis_block_;
+  bool                  loaded_genesis_{false};
 };
 
 }  // namespace ledger

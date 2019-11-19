@@ -128,14 +128,15 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
       chain::GENESIS_DIGEST      = genesis_block_.hash;
 
       FETCH_LOG_INFO(LOGGING_NAME, "Found genesis save file from previous session!");
-
-      return true;
+      loaded_genesis_ = true;
     }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to find genesis save file from previous session");
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Failed to find genesis save file from previous session");
-
-    // Failed - clear any state.
-    genesis_block_ = Block();
+      // Failed - clear any state.
+      genesis_block_ = Block();
+    }
   }
 
   json::JSONDocument doc{};
@@ -173,6 +174,7 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Saving successful genesis block");
     genesis_store_.Set(storage::ResourceAddress("HEAD"), genesis_block_);
+    genesis_store_.Flush(false);
   }
 
   return success;
@@ -185,6 +187,12 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
  */
 bool GenesisFileCreator::LoadState(Variant const &object)
 {
+  // Don't clobber the state if we have loaded the genesis file
+  if(loaded_genesis_ == true)
+  {
+    return true;
+  }
+
   // Reset storage unit
   storage_unit_.Reset();
 
@@ -283,6 +291,12 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object)
     if (!object.Has("stakers"))
     {
       return false;
+    }
+
+    // Don't clobber the state if we have loaded the genesis file
+    if(loaded_genesis_ == true)
+    {
+      return true;
     }
 
     Variant const &stake_array = object["stakers"];
