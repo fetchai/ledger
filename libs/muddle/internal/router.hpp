@@ -232,6 +232,7 @@ private:
   telemetry::CounterPtr         kademlia_routing_total_;
   telemetry::CounterPtr         speculative_routing_total_;
   telemetry::CounterPtr         failed_routing_total_;
+  telemetry::CounterPtr         connection_dropped_total_;
 
   friend class DirectMessageService;
 };

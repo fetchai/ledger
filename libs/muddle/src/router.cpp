@@ -305,6 +305,9 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispa
   , failed_routing_total_(
         CreateCounter("ledger_router_normal_routing_total",
                       "The total number of packets that have failed to be routed"))
+  , connection_dropped_total_(
+        CreateCounter("ledger_router_connection_dropped_total",
+                      "The total number of connections dropped"))
 {}
 
 /**
@@ -405,6 +408,7 @@ void Router::Route(Handle handle, PacketPtr const &packet)
 void Router::ConnectionDropped(Handle handle)
 {
   FETCH_LOG_INFO(logging_name_, "Connection ", handle, " dropped");
+  connection_dropped_total_->add(1);
 
   FETCH_LOCK(routing_table_lock_);
   for (auto it = routing_table_.begin(); it != routing_table_.end();)
