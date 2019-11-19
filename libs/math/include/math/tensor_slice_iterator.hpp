@@ -178,7 +178,6 @@ public:
     }
 
     assert(ref == position_);
-
 #endif
 
     return *this;
