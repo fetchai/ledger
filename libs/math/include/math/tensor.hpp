@@ -290,13 +290,13 @@ public:
   ConstSliceType Slice(SizeType index, SizeType axis = 0) const;
   ConstSliceType Slice(SizeVector indices, SizeVector axes) const;
   ConstSliceType StridedSlice(SizeVector const &begins, SizeVector const &ends,
-                              SizeVector const &indices) const;
+                              SizeVector const &strides) const;
   TensorSlice    Slice();
   TensorSlice    Slice(SizeType index, SizeType axis = 0);
   TensorSlice    Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0);
   TensorSlice    Slice(SizeVector indices, SizeVector axes);
   TensorSlice    StridedSlice(SizeVector const &begins, SizeVector const &ends,
-                              SizeVector const &indices);
+                              SizeVector const &strides);
 
   /////////////
   /// Views ///
