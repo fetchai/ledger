@@ -49,7 +49,7 @@ EndpointSSL<TXType>::EndpointSSL(Core &core, std::size_t sendBufferSize, std::si
     ssl_sock_p->set_verify_mode(asio::ssl::verify_peer);
     ssl_sock_p->set_verify_callback(std::bind(&verify_agent_certificate, _1, _2));
   }
-  catch (std::exception &ec)
+  catch (std::exception const &ec)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "SSL context initialization: ", ec.what());
     return;
@@ -83,7 +83,7 @@ void EndpointSSL<TXType>::close()
 
     ssl_sock_p->lowest_layer().close();
   }
-  catch (std::exception &ec)
+  catch (std::exception const &ec)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "SSL Socket when closing: ", ec.what());
   }
@@ -104,7 +104,7 @@ void EndpointSSL<TXType>::go()
         agent_ssl_key_ = RSA_Modulus(pk);
         FETCH_LOG_INFO(LOGGING_NAME, "Got Agent PubKey: ", agent_ssl_key_);
       }
-      catch (std::exception &e)
+      catch (std::exception const &e)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Couldn't get agent public key from ssl socket : ", e.what());
         return;

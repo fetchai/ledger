@@ -34,31 +34,31 @@ std::atomic<std::size_t> id_counter(0);
 
 Task::Task()
   : task_state_{TaskState ::NOT_PENDING}
-  , cancelled(false)
+  , cancelled_(false)
   , made_runnable_{0}
 {
   created_count++;
-  group_id = thread_group_id;
-  task_id  = id_counter++;
+  group_id_ = thread_group_id;
+  task_id_  = id_counter++;
   // FETCH_LOG_INFO(LOGGING_NAME, "created task ", task_id, " in group ", group_id);
   // Counter(std::string("mt-core.taskgroup.")+std::to_string(group_id)+".created")++;
 }
 
 void Task::cancel()  // try and cancel running task.
 {
-  cancelled = true;
-  if (this->pool)
+  cancelled_ = true;
+  if (pool_)
   {
-    this->pool->remove(shared_from_this());
+    pool_->remove(shared_from_this());
   }
 }
 
 std::size_t Task::SetGroupId(std::size_t new_group_id)
 {
-  auto g = group_id;
-  if (group_id != new_group_id)
+  auto g = group_id_;
+  if (group_id_ != new_group_id)
   {
-    group_id = new_group_id;
+    group_id_ = new_group_id;
     // FETCH_LOG_INFO(LOGGING_NAME, " task ", task_id, " moved from group ", g, " to group ",
     // group_id);
   }
@@ -72,7 +72,7 @@ void Task::SetThreadGroupId(std::size_t new_group_id)
 
 ExitState Task::RunThunk()
 {
-  thread_group_id = group_id;
+  thread_group_id = group_id_;
   return run();
 }
 
@@ -85,26 +85,26 @@ Task::~Task()
 
 bool Task::submit(std::shared_ptr<Taskpool> const &p)
 {
-  if (pool == p)
+  if (pool_ == p)
   {
     Counter("mt-core.tasks.submit(pool).not-submitted.aleady-in-pool")++;
     return true;
   }
 
-  if (pool)
+  if (pool_)
   {
-    pool->remove(shared_from_this());
+    pool_->remove(shared_from_this());
     Counter("mt-core.tasks.submit(pool).remove-from-pool")++;
   }
-  pool = p;
-  pool->submit(shared_from_this());
+  pool_ = p;
+  pool_->submit(shared_from_this());
   return true;
 }
 
 bool Task::submit()
 {
   auto x = Taskpool::GetDefaultTaskpool().lock();
-  if (this->pool == x)
+  if (pool_ == x)
   {
     Counter("mt-core.tasks.submit().not-submitted.aleady-in-pool")++;
     return true;
@@ -121,9 +121,9 @@ bool Task::submit()
 bool Task::MakeRunnable()
 {
   bool status = false;
-  if (this->pool)
+  if (pool_)
   {
-    status = this->pool->MakeRunnable(shared_from_this());
+    status = pool_->MakeRunnable(shared_from_this());
   }
   else
   {
@@ -135,18 +135,18 @@ bool Task::MakeRunnable()
 
 bool Task::submit(std::shared_ptr<Taskpool> const &p, std::chrono::milliseconds const &delay)
 {
-  if (pool == p)
+  if (pool_ == p)
   {
     Counter("mt-core.tasks.submit(pool,delay).not-submitted.aleady-in-pool")++;
     return true;
   }
-  if (pool)
+  if (pool_)
   {
     Counter("mt-core.tasks.submit(pool,delay).remove-from-pool")++;
-    pool->remove(shared_from_this());
+    pool_->remove(shared_from_this());
   }
-  pool = p;
-  pool->after(shared_from_this(), delay);
+  pool_ = p;
+  pool_->after(shared_from_this(), delay);
   return true;
 }
 

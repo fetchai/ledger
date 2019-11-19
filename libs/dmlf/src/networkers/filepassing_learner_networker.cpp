@@ -107,7 +107,7 @@ void FilepassingLearnerNetworker::ClearPeers()
   peers_.clear();
 }
 
-void FilepassingLearnerNetworker::PushUpdate(const UpdateInterfacePtr &update)
+void FilepassingLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
 {
   auto indexes = alg_->GetNextOutputs();
   auto data    = update->Serialise();

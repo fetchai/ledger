@@ -63,6 +63,7 @@ public:
   using DataType      = typename TensorType::Type;
   using SizeType      = fetch::math::SizeType;
   using SizeSet       = std::unordered_set<SizeType>;
+  using SizeVector    = std::vector<SizeType>;
   using TensorPtrType = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpVariableSaveableParams<TensorType>;
@@ -165,6 +166,13 @@ public:
   {
     if (!this->value_frozen_)
     {
+      // Handling of empty set of updates for non-v2w cases
+      if (rows_updated.empty())
+      {
+        AddToGradient(extern_grad);
+        return;
+      }
+
       if (!rows_updated.empty() && this->data_->shape().size() != 2)
       {
         throw fetch::ml::exceptions::InvalidMode("Sparse gradient supported for 2D tensors only.");
@@ -172,6 +180,52 @@ public:
 
       // Add external information about row updates
       this->updated_rows_.insert(rows_updated.begin(), rows_updated.end());
+
+      // Add gradient only to updated rows
+      utilities::SparseAdd(extern_grad, *this->gradient_accumulation_, rows_updated);
+      this->reset_gradients_ = true;
+    }
+  }
+
+  /**
+   * Add external gradient for specified rows from update_rows vector to gradient accumulation
+   * This function is used for translated external sparse gradient updates for distributed
+   * w2v learning
+   * Because we can't keep order of elements in set after translating w2v embeddings update we need
+   * to use vectors instead.
+   *
+   * @param extern_grad
+   * @param rows_updated stored as vector
+   */
+  void AddToGradient(TensorType const &extern_grad, SizeVector const &rows_updated)
+  {
+
+    if (!this->value_frozen_)
+    {
+      // Handling of empty vector of updates for non-v2w cases
+      if (rows_updated.empty())
+      {
+        AddToGradient(extern_grad);
+        return;
+      }
+
+      if (!rows_updated.empty() && this->data_->shape().size() != 2)
+      {
+        throw fetch::ml::exceptions::InvalidMode("Sparse gradient supported for 2D tensors only.");
+      }
+
+      // Add external information about row updates
+      for (auto row : rows_updated)
+      {
+        if (row == fetch::math::numeric_max<SizeType>())
+        {
+          // Skip unknown word row
+          continue;
+        }
+        // Add external information about row updates
+        this->updated_rows_.insert(row);
+      }
+
       // Add gradient only to updated rows
       utilities::SparseAdd(extern_grad, *this->gradient_accumulation_, rows_updated);
       this->reset_gradients_ = true;

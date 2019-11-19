@@ -178,7 +178,7 @@ public:
         RSAKey rsa{*this};
         out = rsa.to_string();
       }
-      catch (std::exception &e)
+      catch (std::exception const &e)
       {
         FETCH_LOG_WARN(LOGGING_NAME_PK, " error getting rsa key");
       }
@@ -213,7 +213,7 @@ public:
         RSAKey rsa{*this};
         out = rsa.to_string_base64();
       }
-      catch (std::exception &e)
+      catch (std::exception const &e)
       {
         FETCH_LOG_WARN(LOGGING_NAME_PK, " error getting rsa key");
       }

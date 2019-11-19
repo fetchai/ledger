@@ -224,3 +224,18 @@ steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
   - verify_txs: { "name": "batch1", "nodes": [0, 1] }
 ...
+
+---
+test_description: >
+  Test signature malleability vulnerability
+
+setup_conditions:
+  test_name: "malleability_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.malleability_test" }
+...

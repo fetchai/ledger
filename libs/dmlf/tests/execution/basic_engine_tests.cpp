@@ -716,6 +716,23 @@ endfunction
 
 )";
 
+auto const ReturnArray = R"(
+function ReturnArrayFloat32() : Array<Float32>
+  var arr = Array<Float32>(2);
+  arr[0] = 0.5f;
+  arr[1] = 6.7f;
+  return arr;
+endfunction
+
+function ReturnArrayBool() : Array<Bool>
+  var arr = Array<Bool>(2);
+  arr[0] = true;
+  arr[1] = false;
+  return arr;
+endfunction
+
+)";
+
 ExecutionResult RunStatelessTest(std::string const &which, std::string const &entrypoint,
                                  Params const &params)
 {
@@ -1456,7 +1473,7 @@ TEST(BasicVmEngineDmlfTests, Add64)
   EXPECT_EQ(result.output().As<int>(), std::numeric_limits<int>::max());
 }
 
-TEST(DISABLED_BasicVmEngineDmlfTests, AddFloat)
+TEST(BasicVmEngineDmlfTests, AddFloat)
 {
   double          a = 4.5;
   float           b = 3.5;
@@ -1465,7 +1482,7 @@ TEST(DISABLED_BasicVmEngineDmlfTests, AddFloat)
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_NEAR(result.output().As<float>(), 8.0, 0.001);
 }
-TEST(DISABLED_BasicVmEngineDmlfTests, AddFloat32)
+TEST(BasicVmEngineDmlfTests, AddFloat32)
 {
   float           a = 4.6f;
   float           b = 3.5f;
@@ -1474,7 +1491,7 @@ TEST(DISABLED_BasicVmEngineDmlfTests, AddFloat32)
   EXPECT_NEAR(result.output().As<float>(), 8.1, 0.001);
 }
 
-TEST(DISABLED_BasicVmEngineDmlfTests, AddFloatComplex)
+TEST(BasicVmEngineDmlfTests, AddFloatComplex)
 {
   double          a = 4.5;
   float           b = 3.3f;
@@ -1489,10 +1506,10 @@ TEST(BasicVmEngineDmlfTests, AddFixed)
   ExecutionResult result = RunStatelessTest(
       AddFixed, "add", Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
+  EXPECT_EQ(result.output().As<fp64_t>(), 10.0);
 }
 
-TEST(DISABLED_BasicVmEngineDmlfTests, TrueIntToFloatCompare)
+TEST(BasicVmEngineDmlfTests, TrueIntToFloatCompare)
 {
   ExecutionResult result =
       RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(5), LedgerVariant(6.5)});
@@ -1500,7 +1517,7 @@ TEST(DISABLED_BasicVmEngineDmlfTests, TrueIntToFloatCompare)
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
-TEST(DISABLED_BasicVmEngineDmlfTests, FalseIntToFloatCompare)
+TEST(BasicVmEngineDmlfTests, FalseIntToFloatCompare)
 {
   ExecutionResult result =
       RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(5), LedgerVariant(4.5)});
@@ -1508,14 +1525,14 @@ TEST(DISABLED_BasicVmEngineDmlfTests, FalseIntToFloatCompare)
   EXPECT_EQ(result.output().As<int>(), 0);
 }
 
-TEST(DISABLED_BasicVmEngineDmlfTests, TrueBoolCompare)
+TEST(BasicVmEngineDmlfTests, TrueBoolCompare)
 {
   ExecutionResult result = RunStatelessTest(BoolCompare, "compare", Params{LedgerVariant(true)});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
-TEST(DISABLED_BasicVmEngineDmlfTests, FalseBoolCompare)
+TEST(BasicVmEngineDmlfTests, FalseBoolCompare)
 {
   ExecutionResult result = RunStatelessTest(BoolCompare, "compare", Params{LedgerVariant(false)});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
@@ -1539,55 +1556,6 @@ TEST(BasicVmEngineDmlfTests, WrongNumberOfParamsTrueIntToFloatCompare)
   EXPECT_EQ(result.error().stage(), Stage::ENGINE);
   EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
 }
-
-// TEST(BasicVmEngineDmlfTests, AddArray)
-//{
-//  BasicVmEngine engine;
-//
-//  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddArray}});
-//  EXPECT_TRUE(createdProgram.succeeded());
-//
-//  ExecutionResult createdState = engine.CreateState("state");
-//  EXPECT_TRUE(createdState.succeeded());
-//
-//  ExecutionResult result = engine.Run(
-//      "add", "state", "add", Params{LedgerVariant()});
-//  //EXPECT_TRUE(result.succeeded());
-//  std::cout << result.error().message() << '\n';
-//  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
-//}
-//
-// TEST(BasicVmEngineDmlfTests, AddArrayThree)
-//{
-//  BasicVmEngine engine;
-//
-//  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddArrayThree}});
-//  EXPECT_TRUE(createdProgram.succeeded());
-//
-//  ExecutionResult createdState = engine.CreateState("state");
-//  EXPECT_TRUE(createdState.succeeded());
-//
-//  ExecutionResult result = engine.Run(
-//      "add", "state", "add", Params{LedgerVariant()});
-//  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
-//  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
-//}
-//
-// TEST(BasicVmEngineDmlfTests, Add3Array)
-//{
-//  BasicVmEngine engine;
-//
-//  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", Add3Array}});
-//  EXPECT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
-//
-//  ExecutionResult createdState = engine.CreateState("state");
-//  EXPECT_TRUE(createdState.succeeded());
-//
-//  ExecutionResult result = engine.Run(
-//      "add", "state", "add", Params{LedgerVariant(), LedgerVariant()});
-//  EXPECT_TRUE(result.succeeded()) << result.error().message() << '\n';
-//  //EXPECT_EQ(result.output().As<fp64_t>(), 9.5);
-//}
 
 TEST(BasicVmEngineDmlfTests, AddMatrix)
 {
@@ -1905,13 +1873,30 @@ TEST(DISABLED_BasicVmEngineDmlfTests, DisabledArrayArrayOpTests)
 {
   RunArrayTest("doFloat32", std::vector<float>{1.0f, 2.0f, 3.0f, 4.0f});
 
-  RunArrayTest("doFixed32",
-               std::vector<fp32_t>{fp32_t{1.0}, fp32_t{2.0}, fp32_t{3.0}, fp32_t{4.0}});
-  RunArrayTest("doFixed64",
-               std::vector<fp64_t>{fp64_t{1.0}, fp64_t{2.0}, fp64_t{3.0}, fp64_t{4.0}});
-
   RunArrayTest("doBool", std::vector<bool>{true, true, false, false});
   EXPECT_EQ(1, 1);
+}
+
+TEST(DISABLED_BasicVmEngineDmlfTests, ReturnArrayFloat32)
+{
+  ExecutionResult result = RunStatelessTest(ReturnArray, "ReturnArrayFloat32", Params{});
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  auto output = result.output();
+  ASSERT_TRUE(output.IsArray());
+  ASSERT_EQ(output.size(), 2);
+  EXPECT_EQ(output[0].As<float>(), 0.5f);
+  EXPECT_EQ(output[1].As<float>(), 6.7f);
+}
+
+TEST(DISABLED_BasicVmEngineDmlfTests, ReturnArrayBool)
+{
+  ExecutionResult result = RunStatelessTest(ReturnArray, "ReturnArrayBool", Params{});
+  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
+  auto output = result.output();
+  ASSERT_TRUE(output.IsArray());
+  ASSERT_EQ(output.size(), 2);
+  EXPECT_EQ(output[0].As<bool>(), true);
+  EXPECT_EQ(output[1].As<bool>(), false);
 }
 
 }  // namespace
