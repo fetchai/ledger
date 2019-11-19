@@ -1566,6 +1566,8 @@ void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &st
     return;
   }
 
+  ++it;
+
   uint64_t time_slots_to_end = 0;
 
   // Walk through the map adding time slots, including the initial state
@@ -1574,12 +1576,19 @@ void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &st
     time_slots_to_end += cabinet_time_pair.second;
   });
 
-  assert(expected_dkg_timespan_ != 0 && time_slots_in_dkg_ != 0 && time_slots_to_end != 0);
+  assert(expected_dkg_timespan_ != 0 && time_slots_in_dkg_ != 0);
 
+  // Note: need to use ceil arithmetic for this division
   uint64_t time_until_deadline_s =
-      time_slots_to_end / (expected_dkg_timespan_ * time_slots_in_dkg_);
+      time_slots_to_end == 0 ? 0
+                             : (time_slots_to_end * expected_dkg_timespan_) / time_slots_in_dkg_;
 
   state_deadline_ = reference_timepoint_ + time_until_deadline_s;
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                 " Given an expected timespan of: ", expected_dkg_timespan_, " the end of state \"",
+                 ToString(state), "\" is ", time_until_deadline_s, " for a state deadline of ",
+                 state_deadline_, ". Ref timepoint: ", reference_timepoint_);
 }
 
 /**
@@ -1654,7 +1663,7 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
   FETCH_LOG_INFO(LOGGING_NAME, "#### Node ", beacon_->manager.cabinet_index(),
                  " set time for state ", ToString(state), " to complete at: ", state_deadline_,
-                 " which is in ", state_deadline_ - current_time, " seconds");
+                 " which is in ", int64_t(state_deadline_) - int64_t(current_time), " seconds");
 
   if (state_deadline_ < current_time)
   {

@@ -116,7 +116,7 @@ steps:
 
 ---
 test_description: >
-  DISABLED - Transactions sync and are executed across nodes when using POS
+  Transactions sync and are executed across nodes when using POS
 
 setup_conditions:
   test_name: "basic_multinode_POS"
