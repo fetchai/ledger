@@ -1653,7 +1653,8 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
   {
     return;
   }
-  else if (reference_timepoint_ > current_time && state != BeaconSetupService::State::RESET)
+
+  if (reference_timepoint_ > current_time && state != BeaconSetupService::State::RESET)
   {
     FETCH_LOG_ERROR(GetLoggingName().c_str(),
                     "The reference time point to start is in the future, but the state machine is "
