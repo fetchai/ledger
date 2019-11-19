@@ -32,7 +32,7 @@ public:
 
   static uint8_t const DIGEST      = 1;
   static uint8_t const MASK        = 2;
-  static uint8_t const CHARGE      = 3;
+  static uint8_t const CHARGE_RATE = 3;
   static uint8_t const VALID_FROM  = 4;
   static uint8_t const VALID_UNTIL = 5;
 
@@ -42,7 +42,7 @@ public:
     auto map = map_constructor(5);
     map.Append(DIGEST, tx.digest_);
     map.Append(MASK, tx.mask_);
-    map.Append(CHARGE, tx.charge_);
+    map.Append(CHARGE_RATE, tx.charge_rate_);
     map.Append(VALID_FROM, tx.valid_from_);
     map.Append(VALID_UNTIL, tx.valid_until_);
   }
@@ -52,7 +52,7 @@ public:
   {
     map.ExpectKeyGetValue(DIGEST, tx.digest_);
     map.ExpectKeyGetValue(MASK, tx.mask_);
-    map.ExpectKeyGetValue(CHARGE, tx.charge_);
+    map.ExpectKeyGetValue(CHARGE_RATE, tx.charge_rate_);
     map.ExpectKeyGetValue(VALID_FROM, tx.valid_from_);
     map.ExpectKeyGetValue(VALID_UNTIL, tx.valid_until_);
   }

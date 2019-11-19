@@ -182,13 +182,13 @@ Transaction::Validity Transaction::GetValidity(BlockIndex block_index) const
 }
 
 /**
- * Return the charge associated with the transaction
+ * Return the charge rate associated with the transaction
  *
  * @return The charge amount
  */
-Transaction::TokenAmount Transaction::charge() const
+Transaction::TokenAmount Transaction::charge_rate() const
 {
-  return charge_;
+  return charge_rate_;
 }
 
 /**

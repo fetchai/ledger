@@ -22,6 +22,7 @@
 
 #include "core/mutex.hpp"
 #include "crypto/prover.hpp"
+#include "crypto/secure_channel.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/network_id.hpp"
 #include "muddle/packet.hpp"
@@ -78,7 +79,7 @@ public:
 
   // Construction / Destruction
   Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispatcher &dispatcher,
-         Prover *prover = nullptr, bool sign_broadcasts = false);
+         Prover const &prover);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
@@ -193,8 +194,8 @@ private:
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
   NetworkId             network_id_;
-  Prover *              prover_          = nullptr;
-  bool                  sign_broadcasts_ = false;
+  crypto::Prover const &prover_;
+  crypto::SecureChannel secure_channel_{prover_};
   std::atomic<bool>     kademlia_routing_{false};
 
   mutable Mutex routing_table_lock_;
@@ -215,6 +216,10 @@ private:
   telemetry::CounterPtr         rx_packet_total_;
   telemetry::CounterPtr         tx_packet_total_;
   telemetry::CounterPtr         bx_packet_total_;
+  telemetry::CounterPtr         rx_encrypted_packet_failures_total_;
+  telemetry::CounterPtr         rx_encrypted_packet_success_total_;
+  telemetry::CounterPtr         tx_encrypted_packet_failures_total_;
+  telemetry::CounterPtr         tx_encrypted_packet_success_total_;
   telemetry::CounterPtr         ttl_expired_packet_total_;
   telemetry::CounterPtr         dispatch_enqueued_total_;
   telemetry::CounterPtr         exchange_dispatch_total_;
