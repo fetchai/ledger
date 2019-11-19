@@ -250,7 +250,7 @@ private:
   // Debug/logging
   std::atomic<BeaconManager::CabinetIndex> index_{
       std::numeric_limits<BeaconManager::CabinetIndex>::max()};
-  std::string GetLoggingName();
+  std::string NodeString();
 
   // Convenience functions
   ReliableChannelPtr ReliableBroadcastFactory();
