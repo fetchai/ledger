@@ -33,8 +33,7 @@ namespace http {
  */
 HttpsClient::HttpsClient(std::string host, uint16_t port)
   : HttpClient{std::move(host), port}
-{
-}
+{}
 
 /**
  * Establish the connection to the remote server
