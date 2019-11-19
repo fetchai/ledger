@@ -17,9 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "vectorise/uint/uint.hpp"
-
 #include "gmock/gmock.h"
+#include "vectorise/uint/uint.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -139,7 +138,8 @@ TEST(big_number_gtest, subtraction_tests)
 
 TEST(big_number_gtest, log_tests)
 {
-  for (const auto argument : {1ul, 64ul, 65536ul, std::numeric_limits<uint64_t>::max()})
+  for (const auto argument :
+       {uint64_t(1), uint64_t(64), uint64_t(65536), uint64_t(std::numeric_limits<uint64_t>::max())})
   {
     UInt<256> n256(argument);
 
