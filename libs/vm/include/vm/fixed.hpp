@@ -45,15 +45,14 @@ struct Fixed128 : public Object
   bool IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   void Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
   void InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
-  /*
-  void        Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
-  void        InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
-  void        Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
-  void        InplaceMultiply(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
-  void        Divide(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
-  void        InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
-  void        Negate(Ptr<Object> &object) override;
-  */
+
+  void Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
+  void InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  void Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
+  void InplaceMultiply(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  void Divide(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
+  void InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  void Negate(Ptr<Object> &object) override;
 
   fixed_point::fp128_t data;
 };

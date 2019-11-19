@@ -99,5 +99,90 @@ void Fixed128::InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
   lhs->data += rhs->data;
 }
 
+void Fixed128::Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso)
+{
+  Ptr<Fixed128> lhs = lhso;
+  Ptr<Fixed128> rhs = rhso;
+  if (lhs->IsTemporary())
+  {
+    lhs->data -= rhs->data;
+    return;
+  }
+  if (rhs->IsTemporary())
+  {
+    rhs->data -= lhs->data;
+    lhso = std::move(rhs);
+    return;
+  }
+  Ptr<Fixed128> n(new Fixed128(vm_, lhs->data - rhs->data));
+  lhso = std::move(n);
+}
+
+void Fixed128::InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+{
+  Ptr<Fixed128> lhs = lhso;
+  Ptr<Fixed128> rhs = rhso;
+  lhs->data -= rhs->data;
+}
+
+void Fixed128::Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso)
+{
+  Ptr<Fixed128> lhs = lhso;
+  Ptr<Fixed128> rhs = rhso;
+  if (lhs->IsTemporary())
+  {
+    lhs->data *= rhs->data;
+    return;
+  }
+  if (rhs->IsTemporary())
+  {
+    rhs->data *= lhs->data;
+    lhso = std::move(rhs);
+    return;
+  }
+  Ptr<Fixed128> n(new Fixed128(vm_, lhs->data * rhs->data));
+  lhso = std::move(n);
+}
+
+void Fixed128::InplaceMultiply(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+{
+  Ptr<Fixed128> lhs = lhso;
+  Ptr<Fixed128> rhs = rhso;
+  lhs->data *= rhs->data;
+}
+
+void Fixed128::Divide(Ptr<Object> &lhso, Ptr<Object> &rhso)
+{
+  Ptr<Fixed128> lhs = lhso;
+  Ptr<Fixed128> rhs = rhso;
+  if (lhs->IsTemporary())
+  {
+    lhs->data /= rhs->data;
+    return;
+  }
+  if (rhs->IsTemporary())
+  {
+    rhs->data /= lhs->data;
+    lhso = std::move(rhs);
+    return;
+  }
+  Ptr<Fixed128> n(new Fixed128(vm_, lhs->data / rhs->data));
+  lhso = std::move(n);
+}
+
+void Fixed128::InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+{
+  Ptr<Fixed128> lhs = lhso;
+  Ptr<Fixed128> rhs = rhso;
+  lhs->data /= rhs->data;
+}
+
+void Fixed128::Negate(Ptr<Object> &object)
+{
+  Ptr<Fixed128> fixed = object;
+  Ptr<Fixed128> n(new Fixed128(vm_, -fixed->data));
+  object = std::move(n);
+}
+
 }  // namespace vm
 }  // namespace fetch
