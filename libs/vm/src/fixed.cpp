@@ -184,5 +184,17 @@ void Fixed128::Negate(Ptr<Object> &object)
   object = std::move(n);
 }
 
+bool Fixed128::SerializeTo(MsgPackSerializer &buffer)
+{
+  buffer << data;
+  return true;
+}
+
+bool Fixed128::DeserializeFrom(MsgPackSerializer &buffer)
+{
+  buffer >> data;
+  return true;
+}
+
 }  // namespace vm
 }  // namespace fetch

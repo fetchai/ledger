@@ -54,6 +54,9 @@ struct Fixed128 : public Object
   void InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   void Negate(Ptr<Object> &object) override;
 
+  bool SerializeTo(MsgPackSerializer &buffer) override;
+  bool DeserializeFrom(MsgPackSerializer &buffer) override;
+
   fixed_point::fp128_t data;
 };
 
