@@ -296,7 +296,8 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 
   // Don't proceed from this state if it is ahead of the entropy we are trying to generate,
   // or we have no peers
-  if (index > (most_recent_round_seen_ + entropy_lead_blocks_) || endpoint_.GetDirectlyConnectedPeers().size() == 0)
+  if (index > (most_recent_round_seen_ + entropy_lead_blocks_) ||
+      endpoint_.GetDirectlyConnectedPeers().size() == 0)
   {
     state_machine_->Delay(std::chrono::milliseconds(5));
     return State::COLLECT_SIGNATURES;

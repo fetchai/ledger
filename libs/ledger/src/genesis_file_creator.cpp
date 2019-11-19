@@ -96,7 +96,8 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 using ConsensusPtr = std::shared_ptr<fetch::ledger::Consensus>;
 
 GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
-                                       StorageUnitInterface &storage_unit, ConsensusPtr consensus, const CertificatePtr &certificate)
+                                       StorageUnitInterface &storage_unit, ConsensusPtr consensus,
+                                       const CertificatePtr &certificate)
   : certificate_{certificate}
   , block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
@@ -116,10 +117,11 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
 
   // Perform a check as to whether we have installed genesis before
   {
-    std::string db_prefix = std::string("genesis_" /*+ certificate_->identity().identifier().ToHex()*/);
-    genesis_store_.Load(db_prefix+".db", db_prefix+".state.db");
+    std::string db_prefix =
+        std::string("genesis_" /*+ certificate_->identity().identifier().ToHex()*/);
+    genesis_store_.Load(db_prefix + ".db", db_prefix + ".state.db");
 
-    if (genesis_store_.Get(storage::ResourceAddress("HEAD"),  genesis_block_))
+    if (genesis_store_.Get(storage::ResourceAddress("HEAD"), genesis_block_))
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Found previous genesis block! Recovering.");
       FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block_.hash.ToHex());
@@ -173,7 +175,7 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
     }
   }
 
-  if(success)
+  if (success)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Saving successful genesis block");
     genesis_store_.Set(storage::ResourceAddress("HEAD"), genesis_block_);
@@ -191,7 +193,7 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
 bool GenesisFileCreator::LoadState(Variant const &object)
 {
   // Don't clobber the state if we have loaded the genesis file
-  if(loaded_genesis_ == true)
+  if (loaded_genesis_ == true)
   {
     return true;
   }
@@ -246,7 +248,7 @@ bool GenesisFileCreator::LoadState(Variant const &object)
 
   FETCH_LOG_INFO(LOGGING_NAME, "Committed genesis merkle hash: 0x", merkle_commit_hash.ToHex());
 
-  //ledger::Block genesis_block;
+  // ledger::Block genesis_block;
 
   genesis_block_.timestamp    = start_time_;
   genesis_block_.merkle_hash  = merkle_commit_hash;
@@ -294,7 +296,7 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object)
     }
 
     // Don't clobber the state if we have loaded the genesis file
-    if(loaded_genesis_ == true)
+    if (loaded_genesis_ == true)
     {
       return true;
     }

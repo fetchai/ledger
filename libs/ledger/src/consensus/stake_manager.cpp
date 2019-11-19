@@ -123,7 +123,7 @@ bool StakeManager::Load(StorageInterface &storage)
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to deserialize/find stake manager!");
     }
 
-    //FETCH_LOG_INFO(LOGGING_NAME, "After recovering stake, cabinet is: ");
+    // FETCH_LOG_INFO(LOGGING_NAME, "After recovering stake, cabinet is: ");
 
     success = true;
   }

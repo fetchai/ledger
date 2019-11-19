@@ -305,9 +305,8 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispa
   , failed_routing_total_(
         CreateCounter("ledger_router_normal_routing_total",
                       "The total number of packets that have failed to be routed"))
-  , connection_dropped_total_(
-        CreateCounter("ledger_router_connection_dropped_total",
-                      "The total number of connections dropped"))
+  , connection_dropped_total_(CreateCounter("ledger_router_connection_dropped_total",
+                                            "The total number of connections dropped"))
 {}
 
 /**

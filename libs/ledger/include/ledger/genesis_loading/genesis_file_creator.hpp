@@ -36,9 +36,9 @@ class StorageUnitInterface;
 class GenesisFileCreator
 {
 public:
-  using ConsensusPtr = std::shared_ptr<fetch::ledger::Consensus>;
-  using CertificatePtr          = std::shared_ptr<crypto::Prover>;
-  using GenesisStore = fetch::storage::ObjectStore<Block>;
+  using ConsensusPtr   = std::shared_ptr<fetch::ledger::Consensus>;
+  using CertificatePtr = std::shared_ptr<crypto::Prover>;
+  using GenesisStore   = fetch::storage::ObjectStore<Block>;
 
   // Construction / Destruction
   GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit,
