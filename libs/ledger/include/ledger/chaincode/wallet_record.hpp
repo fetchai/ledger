@@ -37,9 +37,6 @@ extern byte_array::ConstByteArray const ADDRESS_NAME;
 extern byte_array::ConstByteArray const FROM_NAME;
 extern byte_array::ConstByteArray const TO_NAME;
 extern byte_array::ConstByteArray const AMOUNT_NAME;
-extern byte_array::ConstByteArray const TRANSFER_NAME;
-extern byte_array::ConstByteArray const STAKE_NAME;
-extern byte_array::ConstByteArray const AMEND_NAME;
 extern byte_array::ConstByteArray const THRESHOLDS_NAME;
 extern byte_array::ConstByteArray const SIGNEES_NAME;
 

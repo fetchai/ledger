@@ -60,7 +60,7 @@ public:
 
   /// @name Charge Accessors
   /// @{
-  NativeTokenAmount charge() const;
+  NativeTokenAmount charge_rate() const;
   NativeTokenAmount charge_limit() const;
   /// @}
 

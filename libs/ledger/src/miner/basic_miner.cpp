@@ -303,7 +303,7 @@ void BasicMiner::GenerateSlice(Queue &transactions, Block::Slice &      slice,
 bool BasicMiner::SortByFee(TransactionLayout const &a, TransactionLayout const &b)
 {
   // this doesn't seem to the a good metric
-  return a.charge() > b.charge();
+  return a.charge_rate() > b.charge_rate();
 }
 
 }  // namespace ledger
