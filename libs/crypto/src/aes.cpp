@@ -27,7 +27,6 @@
 #include "openssl/evp.h"
 
 using fetch::byte_array::ByteArray;
-using fetch::byte_array::ConstByteArray;
 
 namespace fetch {
 namespace crypto {
@@ -214,7 +213,7 @@ bool AesBlockCipher::Encrypt(BlockCipher::Type type, ConstByteArray const &key,
   cipher_text_buffer.Resize(clear_text.size() + AES_BLOCK_SIZE);
 
   // run the plain text through the cipher
-  int remaining_length = static_cast<int>(cipher_text_buffer.size() - populated_length);
+  auto remaining_length = static_cast<int>(cipher_text_buffer.size() - populated_length);
   status = EVP_EncryptUpdate(ctx.get(), cipher_text_buffer.pointer(), &remaining_length,
                              clear_text.pointer(), static_cast<int>(clear_text.size()));
   if (status != 1)
@@ -313,7 +312,7 @@ bool AesBlockCipher::Decrypt(BlockCipher::Type type, ConstByteArray const &key,
   std::size_t populated_length{0};
 
   // run the cipher text through the cipher
-  int remaining_length = static_cast<int>(clear_text_buffer.size() - populated_length);
+  auto remaining_length = static_cast<int>(clear_text_buffer.size() - populated_length);
 
   status = EVP_DecryptUpdate(ctx.get(), clear_text_buffer.pointer(), &remaining_length,
                              cipher_text.pointer(), static_cast<int>(cipher_text.size()));

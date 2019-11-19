@@ -27,8 +27,6 @@
 
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
-using fetch::crypto::ECDSAVerifier;
-using fetch::crypto::Identity;
 
 namespace fetch {
 namespace crypto {
