@@ -248,6 +248,8 @@ private:
   uint16_t failures_{0};
 
   // Debug/logging
+  std::atomic<BeaconManager::CabinetIndex> index_{
+      std::numeric_limits<BeaconManager::CabinetIndex>::max()};
   std::string GetLoggingName();
 
   // Convenience functions
