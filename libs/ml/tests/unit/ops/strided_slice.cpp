@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/strided_slice.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
@@ -500,6 +501,167 @@ TYPED_TEST(StridedSliceTest, backward_5D_test)
 
   // test correct values
   EXPECT_TRUE(backpropagated_signals[0].AllClose(gt));
+}
+
+TYPED_TEST(StridedSliceTest, saveparams_test)
+{
+  using TensorType    = TypeParam;
+  using SizeType      = fetch::math::SizeType;
+  using SizeVector    = typename TypeParam::SizeVector;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::StridedSlice<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::StridedSlice<TensorType>;
+
+  TypeParam input({9, 9, 9, 6, 4});
+  TypeParam gt({6, 4, 3, 1, 2});
+
+  SizeVector begins({3, 1, 0, 4, 0});
+  SizeVector ends({8, 7, 8, 5, 2});
+  SizeVector strides({1, 2, 3, 4, 2});
+
+  auto     it  = input.begin();
+  SizeType cnt = 0;
+  while (it.is_valid())
+  {
+    *it = static_cast<DataType>(cnt);
+    cnt++;
+    ++it;
+  }
+
+  for (SizeType i{0}; i < gt.shape().at(0); i++)
+  {
+    for (SizeType j{0}; j < gt.shape().at(1); j++)
+    {
+      for (SizeType k{0}; k < gt.shape().at(2); k++)
+      {
+        for (SizeType l{0}; l < gt.shape().at(3); l++)
+        {
+          for (SizeType m{0}; m < gt.shape().at(4); m++)
+          {
+            gt.At(i, j, k, l, m) =
+                input.At(begins.at(0) + i * strides.at(0), begins.at(1) + j * strides.at(1),
+                         begins.at(2) + k * strides.at(2), begins.at(3) + l * strides.at(3),
+                         begins.at(4) + m * strides.at(4));
+          }
+        }
+      }
+    }
+  }
+
+  OpType op(begins, ends, strides);
+
+  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(input)}));
+  VecTensorType vec_data({std::make_shared<const TensorType>(input)});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::static_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(input)}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(
+      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+}
+
+TYPED_TEST(StridedSliceTest, saveparams_backward_batch_test)
+{
+  using TensorType = TypeParam;
+  using OpType     = typename fetch::ml::ops::StridedSlice<TensorType>;
+  using SPType     = typename OpType::SPType;
+  using SizeType   = fetch::math::SizeType;
+  using SizeVector = typename TypeParam::SizeVector;
+  using DataType   = typename TypeParam::Type;
+
+  TypeParam input({9, 9, 9, 6, 4});
+  TypeParam error({6, 4, 3, 1, 2});
+  TypeParam gt({9, 9, 9, 6, 4});
+
+  SizeVector begins({3, 1, 0, 4, 0});
+  SizeVector ends({8, 7, 8, 5, 2});
+  SizeVector strides({1, 2, 3, 4, 2});
+
+  auto     it  = error.begin();
+  SizeType cnt = 0;
+  while (it.is_valid())
+  {
+    *it = static_cast<DataType>(cnt);
+    cnt++;
+    ++it;
+  }
+
+  for (SizeType i{0}; i < error.shape().at(0); i++)
+  {
+    for (SizeType j{0}; j < error.shape().at(1); j++)
+    {
+      for (SizeType k{0}; k < error.shape().at(2); k++)
+      {
+        for (SizeType l{0}; l < error.shape().at(3); l++)
+        {
+          for (SizeType m{0}; m < error.shape().at(4); m++)
+          {
+
+            gt.At(begins.at(0) + i * strides.at(0), begins.at(1) + j * strides.at(1),
+                  begins.at(2) + k * strides.at(2), begins.at(3) + l * strides.at(3),
+                  begins.at(4) + m * strides.at(4)) = error.At(i, j, k, l, m);
+          }
+        }
+      }
+    }
+  }
+
+  fetch::ml::ops::StridedSlice<TypeParam> op(begins, ends, strides);
+  std::vector<TypeParam>                  backpropagated_signals =
+      op.Backward({std::make_shared<TypeParam>(input)}, error);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  backpropagated_signals = op.Backward({std::make_shared<TypeParam>(input)}, error);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  std::vector<TypeParam> new_backpropagated_signals =
+      new_op.Backward({std::make_shared<TypeParam>(input)}, error);
+
+  // test correct values
+  EXPECT_TRUE(backpropagated_signals.at(0).AllClose(
+      new_backpropagated_signals.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
 }  // namespace test
