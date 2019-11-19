@@ -189,4 +189,32 @@ TEST_F(FixedPointTest, pow_32_fixed_point)
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
+TEST_F(FixedPointTest, multidigit_integral_fixed_point32)
+{
+  char const *TEXT = R"(
+    function main()
+      var val32_1 = 123fp32;
+      var val32_2 = toFixed32(123);
+      assert(val32_1 == val32_2);
+    endfunction
+  )";
+
+  EXPECT_TRUE(toolkit.Compile(TEXT));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(FixedPointTest, multidigit_integral_fixed_point64)
+{
+  char const *TEXT = R"(
+    function main()
+      var val64_1 = 123fp64;
+      var val64_2 = toFixed64(123);
+      assert(val64_1 == val64_2);
+    endfunction
+  )";
+
+  EXPECT_TRUE(toolkit.Compile(TEXT));
+  EXPECT_TRUE(toolkit.Run());
+}
+
 }  // namespace

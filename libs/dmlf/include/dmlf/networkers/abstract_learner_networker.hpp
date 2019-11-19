@@ -22,6 +22,7 @@
 #include "core/mutex.hpp"
 
 #include "core/byte_array/byte_array.hpp"
+#include "dmlf/colearn/update_store_interface.hpp"
 #include "dmlf/queue.hpp"
 #include "dmlf/queue_interface.hpp"
 #include "dmlf/shuffle_algorithm_interface.hpp"
@@ -43,7 +44,7 @@ public:
   bool                      operator<(AbstractLearnerNetworker const &other)  = delete;
 
   // To implement
-  virtual void        PushUpdate(const UpdateInterfacePtr &update) = 0;
+  virtual void        PushUpdate(UpdateInterfacePtr const &update) = 0;
   virtual std::size_t GetPeerCount() const                         = 0;
 
   template <typename T>
@@ -58,7 +59,7 @@ public:
     throw std::runtime_error{"Learner already initialized"};
   }
 
-  std::size_t GetUpdateCount() const;
+  virtual std::size_t GetUpdateCount() const;
 
   template <typename T>
   std::shared_ptr<T> GetUpdate()
@@ -71,7 +72,7 @@ public:
 
   virtual void SetShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg);
 
-  virtual void PushUpdateType(const std::string & /*key*/, const UpdateInterfacePtr & /*update*/);
+  virtual void PushUpdateType(const std::string & /*key*/, UpdateInterfacePtr const & /*update*/);
 
   template <typename T>
   void RegisterUpdateType(std::string key)
@@ -91,6 +92,17 @@ public:
 
   std::size_t GetUpdateTypeCount(const std::string &key) const;
 
+  Bytes GetUpdateAsBytes(const std::string &key);
+
+  using Score      = colearn::UpdateStoreInterface::Score;
+  using Criteria   = colearn::UpdateStoreInterface::Criteria;
+  using UpdateType = colearn::UpdateStoreInterface::UpdateType;
+  using UpdatePtr  = colearn::UpdateStoreInterface::UpdatePtr;
+  using Algorithm  = colearn::UpdateStoreInterface::Algorithm;
+
+  virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type,
+                              Criteria const &criteria);
+
   template <typename T>
   std::shared_ptr<T> GetUpdateType()
   {
@@ -104,8 +116,9 @@ public:
 protected:
   std::shared_ptr<ShuffleAlgorithmInterface> alg_;  // used by descendents
 
-  virtual void NewMessage(Bytes const &msg);      // called by descendents
-  virtual void NewDmlfMessage(Bytes const &msg);  // called by descendents
+  virtual void NewMessage(Bytes const &msg);                             // called by descendents
+  virtual void NewDmlfMessage(Bytes const &msg);                         // called by descendents
+  virtual void NewMessage(const std::string &key, Bytes const &update);  // called by descendents
 
 private:
   using Mutex             = fetch::Mutex;

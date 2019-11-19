@@ -151,7 +151,7 @@ TEST_F(TransactionStatusCacheTests, CheckTxStatusUpdateFailsForExecutedStatus)
   {
     cache_->Update(tx1, TransactionStatus::EXECUTED);
   }
-  catch (std::runtime_error const &ex)
+  catch (std::exception const &ex)
   {
     EXPECT_THAT(ex.what(), HasSubstr("Using inappropriate method to update"));
     ex_thrown = true;

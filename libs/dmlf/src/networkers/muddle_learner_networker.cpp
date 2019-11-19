@@ -114,7 +114,7 @@ uint64_t MuddleLearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
   return 0;
 }
 
-void MuddleLearnerNetworker::PushUpdate(const UpdateInterfacePtr &update)
+void MuddleLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
 {
   auto client =
       std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
@@ -137,7 +137,7 @@ void MuddleLearnerNetworker::PushUpdate(const UpdateInterfacePtr &update)
 }
 
 void MuddleLearnerNetworker::PushUpdateType(const std::string &       type,
-                                            const UpdateInterfacePtr &update)
+                                            UpdateInterfacePtr const &update)
 {
   auto client =
       std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
