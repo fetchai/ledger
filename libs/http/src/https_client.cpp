@@ -34,8 +34,6 @@ namespace http {
 HttpsClient::HttpsClient(std::string host, uint16_t port)
   : HttpClient{std::move(host), port}
 {
-  context_.set_default_verify_paths();
-  socket_.set_verify_mode(asio::ssl::verify_peer);
 }
 
 /**
