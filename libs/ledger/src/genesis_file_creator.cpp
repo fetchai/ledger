@@ -116,10 +116,10 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
 
   // Perform a check as to whether we have installed genesis before
   {
-    std::string db_prefix = "genesis_" + certificate_.identity().identifier().ToHex();
-    old_state_.Load(db_prefix+".db", db_prefix+".state.db");
+    std::string db_prefix = std::string("genesis_" + certificate_->identity().identifier().ToHex());
+    genesis_store_.Load(db_prefix+".db", db_prefix+".state.db");
 
-    if (old_state_.Get(storage::ResourceAddress("HEAD"),  genesis_block_))
+    if (genesis_store_.Get(storage::ResourceAddress("HEAD"),  genesis_block_))
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Found previous genesis block! Recovering.");
       FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block_.hash.ToHex());
@@ -127,7 +127,7 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
       chain::GENESIS_MERKLE_ROOT = genesis_block_.merkle_hash;
       chain::GENESIS_DIGEST      = genesis_block_.hash;
 
-      return;
+      return true;
     }
 
     // Failed - clear any state.
@@ -168,7 +168,7 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
   if(success)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Saving successful genesis block");
-    old_state_.Set(storage::ResourceAddress("HEAD"), genesis_block_);
+    genesis_store_.Set(storage::ResourceAddress("HEAD"), genesis_block_);
   }
 
   return success;
