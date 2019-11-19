@@ -22,6 +22,7 @@
 #include "crypto/ecdsa.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_context_attacher.hpp"
+#include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
@@ -31,7 +32,6 @@
 #include "gtest/gtest.h"
 
 #include <initializer_list>
-#include <ledger/chaincode/deed.hpp>
 
 namespace fetch {
 namespace ledger {
@@ -111,7 +111,7 @@ void TransactionValidatorTests::AddFunds(uint64_t amount)
 
   // create storage infrastructure
   StateSentinelAdapter    storage_adapter{storage_, Identifier{"fetch.token"}, shards};
-  ContractContext         ctx{&token_contract_, Address{}, &storage_adapter, 0};
+  ContractContext         ctx{nullptr, Address{}, &storage_adapter, 0};
   ContractContextAttacher attacher{token_contract_, ctx};
 
   // add the tokens to the account
@@ -126,7 +126,7 @@ void TransactionValidatorTests::SetDeed(Deed const &deed)
 
   // create storage infrastructure
   StateSentinelAdapter    storage_adapter{storage_, Identifier{"fetch.token"}, shards};
-  ContractContext         ctx{&token_contract_, Address{}, &storage_adapter, 0};
+  ContractContext         ctx{nullptr, Address{}, &storage_adapter, 0};
   ContractContextAttacher attacher{token_contract_, ctx};
 
   // add the tokens to the account
@@ -135,7 +135,6 @@ void TransactionValidatorTests::SetDeed(Deed const &deed)
 
 TEST_F(TransactionValidatorTests, CheckWealthWhileValid)
 {
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("fetch.token", BitVector{})
@@ -153,7 +152,6 @@ TEST_F(TransactionValidatorTests, CheckWealthWhileValid)
 
 TEST_F(TransactionValidatorTests, CheckWealthOnValidityBoundary)
 {
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("fetch.token", BitVector{})
@@ -169,7 +167,6 @@ TEST_F(TransactionValidatorTests, CheckWealthOnValidityBoundary)
 
 TEST_F(TransactionValidatorTests, CheckWealthOutsideOfValidityPeriod)
 {
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("fetch.token", BitVector{})
@@ -185,7 +182,6 @@ TEST_F(TransactionValidatorTests, CheckWealthOutsideOfValidityPeriod)
 
 TEST_F(TransactionValidatorTests, CheckDefaultCaseOnValidityBoundary)
 {
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("some.kind.of.chain.code", BitVector{})
@@ -201,7 +197,6 @@ TEST_F(TransactionValidatorTests, CheckDefaultCaseOnValidityBoundary)
 
 TEST_F(TransactionValidatorTests, CheckNoChargeRate)
 {
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("some.kind.of.chain.code", BitVector{})
@@ -217,7 +212,6 @@ TEST_F(TransactionValidatorTests, CheckNoChargeRate)
 
 TEST_F(TransactionValidatorTests, CheckNoChargeLimit)
 {
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("some.kind.of.chain.code", BitVector{})
@@ -234,7 +228,6 @@ TEST_F(TransactionValidatorTests, CheckNoChargeLimit)
 
 TEST_F(TransactionValidatorTests, CheckDefaultCase)
 {
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("some.kind.of.chain.code", BitVector{})
@@ -254,7 +247,6 @@ TEST_F(TransactionValidatorTests, CheckDefaultCase)
 
 TEST_F(TransactionValidatorTests, CheckNoEnoughCharge)
 {
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("some.kind.of.chain.code", BitVector{})
@@ -276,7 +268,6 @@ TEST_F(TransactionValidatorTests, CheckPermissionDeniedIncorrectSignature)
 {
   ECDSASigner other1;
 
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("some.kind.of.chain.code", BitVector{})
@@ -299,7 +290,6 @@ TEST_F(TransactionValidatorTests, CheckPermissionDeniedTooManySignatures)
   ECDSASigner other1;
   ECDSASigner other2;
 
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("some.kind.of.chain.code", BitVector{})
@@ -337,7 +327,6 @@ TEST_F(TransactionValidatorTests, CheckOkayWithDeedWithExecute)
   SetDeed(deed);
   AddFunds(1);
 
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("some.kind.of.chain.code", BitVector{})
@@ -372,7 +361,6 @@ TEST_F(TransactionValidatorTests, CheckOkayWithDeedTransferOnly)
   SetDeed(deed);
   AddFunds(12);
 
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .ValidUntil(100)
@@ -400,7 +388,6 @@ TEST_F(TransactionValidatorTests, CheckNotEnoughChargeTransfers)
 
   AddFunds(12);
 
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .ValidUntil(100)
@@ -429,7 +416,6 @@ TEST_F(TransactionValidatorTests, CheckPermissionDeniedWithDeedNoTransferPermiss
   SetDeed(deed);
   AddFunds(12);
 
-  // build up a wealth transaction
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .ValidUntil(100)
@@ -464,7 +450,6 @@ TEST_F(TransactionValidatorTests, CheckPermissionDeniedWithDeedNoExecutePermissi
   SetDeed(deed);
   AddFunds(1);
 
-  // build up a wealth transaction
   auto tx =
       TransactionBuilder{}
           .From(signer_address_)
