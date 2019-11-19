@@ -168,7 +168,7 @@ void BeaconService::ReloadState()
   {
     FETCH_LOG_INFO(LOGGING_NAME,
                    "Found aeon keys during beacon construction, recovering. Valid from: ",
-                   ret->aeon.round_start);
+                   ret->aeon.round_start, " to ", ret->aeon.round_end);
 
     for (auto const &address_in_qual : ret->manager.qual())
     {
