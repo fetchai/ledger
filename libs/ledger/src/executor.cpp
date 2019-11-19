@@ -27,6 +27,7 @@
 #include "ledger/executor.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
+#include "ledger/fees/storage_fee.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
@@ -96,6 +97,7 @@ bool IsCreateWealth(chain::Transaction const &tx)
  */
 Executor::Executor(StorageUnitPtr storage)
   : storage_{std::move(storage)}
+  , fee_manager_{token_contract_, allowed_shards_, storage_cache_}
   , overall_duration_{Registry::Instance().LookupMeasurement<Histogram>(
         "ledger_executor_overall_duration")}
   , tx_retrieve_duration_{Registry::Instance().LookupMeasurement<Histogram>(
@@ -106,8 +108,6 @@ Executor::Executor(StorageUnitPtr storage)
         "ledger_executor_contract_execution_duration")}
   , transfers_duration_{Registry::Instance().LookupMeasurement<Histogram>(
         "ledger_executor_transfers_duration")}
-  , deduct_fees_duration_{Registry::Instance().LookupMeasurement<Histogram>(
-        "ledger_executor_deduct_fees_duration")}
   , settle_fees_duration_{
         Registry::Instance().LookupMeasurement<Histogram>("ledger_executor_settle_fees_duration")}
 {}
@@ -169,7 +169,7 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
     }
 
     // deduct the fees from the originator
-    DeductFees(result);
+    fee_manager_.Execute(current_tx_, result, block_);
 
     // flush the storage so that all changes are now persistent
     storage_cache_->Flush();
@@ -381,28 +381,12 @@ bool Executor::ExecuteTransactionContract(Result &result)
     if (success)
     {
       // simple linear scale fee
-      uint64_t const compute_charge = contract->CalculateFee();
-      uint64_t const storage_charge = (storage_adapter.num_bytes_written() * 2u);
-      uint64_t const base_charge    = compute_charge + storage_charge;
-      uint64_t const scaled_charge =
-          std::max<uint64_t>(allowed_shards_.PopCount(), 1) * base_charge;
+      StorageFee storage_fee_{storage_adapter};
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Calculated charge for 0x", current_tx_->digest().ToHex(), ": ",
-                      scaled_charge, " (base: ", base_charge, " storage: ", storage_charge,
-                      " compute: ", compute_charge, " shards: ", allowed_shards_.PopCount(), ")");
-
-      // create wealth transactions are always free
-      if (!IsCreateWealth(*current_tx_))
-      {
-        result.charge += scaled_charge;
-      }
-
-      // determine if the chain code ran out of charge
-      if (result.charge > current_tx_->charge_limit())
-      {
-        result.status = Status::INSUFFICIENT_CHARGE;
-        success       = false;
-      }
+      success = fee_manager_.CalculateChargeAndValidate(current_tx_, {
+          contract,
+          &storage_fee_
+      }, result);
 
       if (success)
       {
@@ -461,34 +445,6 @@ bool Executor::ProcessTransfers(Result &result)
   }
 
   return success;
-}
-
-void Executor::DeductFees(Result &result)
-{
-  telemetry::FunctionTimer const timer{*deduct_fees_duration_};
-
-  // attach the token contract to the storage engine
-  StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}, allowed_shards_};
-
-  auto const &from = current_tx_->from();
-
-  ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
-                          block_};
-  ContractContextAttacher raii(token_contract_, context);
-  uint64_t const          balance = token_contract_.GetBalance(from);
-
-  // calculate the fee to deduct
-  TokenAmount tx_fee = result.charge * current_tx_->charge();
-  if (Status::SUCCESS != result.status)
-  {
-    tx_fee = current_tx_->charge_limit() * current_tx_->charge();
-  }
-
-  // on failed transactions
-  result.fee = std::min(balance, tx_fee);
-
-  // deduct the fee from the originator
-  token_contract_.SubtractTokens(from, result.fee);
 }
 
 }  // namespace ledger

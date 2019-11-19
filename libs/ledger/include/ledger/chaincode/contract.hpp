@@ -24,6 +24,7 @@
 #include "ledger/identifier.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "ledger/fees/chargeable.hpp"
 
 #include <atomic>
 #include <cstddef>
@@ -49,7 +50,7 @@ namespace ledger {
 /**
  * Contract - Base class for all smart contract and chain code instances
  */
-class Contract
+class Contract : public Chargeable
 {
 public:
   enum class Status
@@ -101,7 +102,7 @@ public:
   TransactionHandlerMap const &transaction_handlers() const;
   /// @}
 
-  virtual uint64_t CalculateFee() const
+  uint64_t CalculateFee() const override
   {
     return 0;
   }
