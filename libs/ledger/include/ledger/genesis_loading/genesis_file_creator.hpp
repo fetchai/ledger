@@ -37,10 +37,12 @@ class GenesisFileCreator
 {
 public:
   using ConsensusPtr = std::shared_ptr<fetch::ledger::Consensus>;
+  using CertificatePtr          = std::shared_ptr<crypto::Prover>;
+  using GenesisStore = fetch::storage::ObjectStore<Block>;
 
   // Construction / Destruction
   GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit,
-                     ConsensusPtr consensus);
+                     ConsensusPtr consensus, const CertificatePtr &certificate);
   GenesisFileCreator(GenesisFileCreator const &) = delete;
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;
@@ -55,10 +57,13 @@ private:
   bool LoadState(variant::Variant const &object);
   bool LoadConsensus(variant::Variant const &object);
 
+  CertificatePtr        certificate_;
   BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;
   ConsensusPtr          consensus_;
   uint64_t              start_time_ = 0;
+  GenesisStore          genesis_store_;
+  Block                 genesis_block_;
 };
 
 }  // namespace ledger

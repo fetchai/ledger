@@ -96,8 +96,9 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 using ConsensusPtr = std::shared_ptr<fetch::ledger::Consensus>;
 
 GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
-                                       StorageUnitInterface &storage_unit, ConsensusPtr consensus)
-  : block_coordinator_{block_coordinator}
+                                       StorageUnitInterface &storage_unit, ConsensusPtr consensus, const CertificatePtr &certificate)
+  : certificate_{certificate}
+  , block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
   , consensus_{std::move(consensus)}
 {}
@@ -112,6 +113,26 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
   bool success{false};
 
   FETCH_LOG_INFO(LOGGING_NAME, "Clearing state and installing genesis");
+
+  // Perform a check as to whether we have installed genesis before
+  {
+    std::string db_prefix = "genesis_" + certificate_.identity().identifier().ToHex();
+    old_state_.Load(db_prefix+".db", db_prefix+".state.db");
+
+    if (old_state_.Get(storage::ResourceAddress("HEAD"),  genesis_block_))
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Found previous genesis block! Recovering.");
+      FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block_.hash.ToHex());
+
+      chain::GENESIS_MERKLE_ROOT = genesis_block_.merkle_hash;
+      chain::GENESIS_DIGEST      = genesis_block_.hash;
+
+      return;
+    }
+
+    // Failed - clear any state.
+    genesis_block_ = Block();
+  }
 
   json::JSONDocument doc{};
   if (LoadFromFile(doc, name))
@@ -142,6 +163,12 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
       FETCH_LOG_CRITICAL(LOGGING_NAME, "Incorrect stake file version! Found: ", version,
                          ". Expected: ", VERSION);
     }
+  }
+
+  if(success)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Saving successful genesis block");
+    old_state_.Set(storage::ResourceAddress("HEAD"), genesis_block_);
   }
 
   return success;
@@ -207,18 +234,18 @@ bool GenesisFileCreator::LoadState(Variant const &object)
 
   FETCH_LOG_INFO(LOGGING_NAME, "Committed genesis merkle hash: 0x", merkle_commit_hash.ToHex());
 
-  ledger::Block genesis_block;
+  //ledger::Block genesis_block;
 
-  genesis_block.timestamp    = start_time_;
-  genesis_block.merkle_hash  = merkle_commit_hash;
-  genesis_block.block_number = 0;
-  genesis_block.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
-  genesis_block.UpdateDigest();
+  genesis_block_.timestamp    = start_time_;
+  genesis_block_.merkle_hash  = merkle_commit_hash;
+  genesis_block_.block_number = 0;
+  genesis_block_.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
+  genesis_block_.UpdateDigest();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block.hash.ToHex());
+  FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block_.hash.ToHex());
 
   chain::GENESIS_MERKLE_ROOT = merkle_commit_hash;
-  chain::GENESIS_DIGEST      = genesis_block.hash;
+  chain::GENESIS_DIGEST      = genesis_block_.hash;
 
   block_coordinator_.Reset();
 
