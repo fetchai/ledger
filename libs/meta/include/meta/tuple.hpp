@@ -74,6 +74,21 @@ struct TupleOperations<std::tuple<Ts...>>
   template <std::size_t N>
   using DropTerminal =
       TupleOperations<typename SplitTuple<std::tuple_size<type>::value - N, type>::Initial>;
+
+  template <typename T>
+  struct Prepend;
+  template <typename... Ts2>
+  struct Prepend<std::tuple<Ts2...>>
+  {
+    using type = std::tuple<Ts2..., Ts...>;
+  };
+  template <typename T>
+  struct Append;
+  template <typename... Ts2>
+  struct Append<std::tuple<Ts2...>>
+  {
+    using type = std::tuple<Ts..., Ts2...>;
+  };
 };
 
 template <typename>

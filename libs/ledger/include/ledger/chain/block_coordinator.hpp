@@ -302,6 +302,7 @@ private:
   bool            ScheduleBlock(Block const &block);
   ExecutionStatus QueryExecutorStatus();
   void            UpdateNextBlockTime();
+  void            RemoveBlock(MainChain::BlockHash const &hash);
 
   static char const *ToString(ExecutionStatus state);
 

@@ -147,6 +147,7 @@ public:
   std::vector<TensorType>       GetWeightsReferences() const;
   std::vector<TensorType>       GetWeights() const;
   std::vector<TensorType>       GetGradientsReferences() const;
+  std::vector<SizeSet>          GetUpdatedRowsReferences() const;
   std::vector<TensorType>       GetGradients() const;
   std::vector<TrainablePtrType> GetTrainables();
 
@@ -198,6 +199,7 @@ private:
   void GetTrainables(std::vector<TrainablePtrType> &ret);
   void GetWeightsReferences(std::vector<TensorType> &ret) const;
   void GetGradientsReferences(std::vector<TensorType> &ret) const;
+  void GetUpdatedRowsReferences(std::vector<SizeSet> &ret) const;
 
   template <typename TensorIteratorType>
   void ApplyGradients(TensorIteratorType &grad_it);
@@ -939,6 +941,22 @@ std::vector<TensorType> Graph<TensorType>::GetGradientsReferences() const
 }
 
 /**
+ * Assigns sets of all trainable updated rows of their gradients to vector for exporting and
+ * serialising
+ * @tparam TensorType
+ * @return ret is vector containing indices of all updated rows stored in unordered_set for each
+ * trainable
+ */
+template <typename TensorType>
+std::vector<std::unordered_set<fetch::math::SizeType>> Graph<TensorType>::GetUpdatedRowsReferences()
+    const
+{
+  std::vector<SizeSet> ret;
+  GetUpdatedRowsReferences(ret);
+  return ret;
+}
+
+/**
  * Assigns all trainable accumulated gradient parameters to vector of TensorType for exporting and
  * serialising
  * @return ret is vector containing all gradient values
@@ -1146,6 +1164,18 @@ void Graph<TensorType>::GetGradientsReferences(std::vector<TensorType> &ret) con
   RecursiveApply<ret_type, node_func_signature, graph_func_signature>(
       ret, &ops::Trainable<TensorType>::GetGradientsReferences,
       &Graph<TensorType>::GetGradientsReferences);
+}
+
+template <typename TensorType>
+void Graph<TensorType>::GetUpdatedRowsReferences(std::vector<SizeSet> &ret) const
+{
+  using ret_type             = std::vector<std::unordered_set<SizeType>>;
+  using node_func_signature  = SizeSet const &(ops::Trainable<TensorType>::*)() const;
+  using graph_func_signature = void (Graph<TensorType>::*)(ret_type &) const;
+
+  RecursiveApply<ret_type, node_func_signature, graph_func_signature>(
+      ret, &ops::Trainable<TensorType>::GetUpdatedRowsReferences,
+      &Graph<TensorType>::GetUpdatedRowsReferences);
 }
 
 template <typename TensorType>
