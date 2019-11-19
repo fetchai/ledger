@@ -118,7 +118,7 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
   // Perform a check as to whether we have installed genesis before
   {
     std::string db_prefix =
-        std::string("genesis_" /*+ certificate_->identity().identifier().ToHex()*/);
+        std::string("genesis_" + certificate_->identity().identifier().ToHex().Resize(16));
     genesis_store_.Load(db_prefix + ".db", db_prefix + ".state.db");
 
     if (genesis_store_.Get(storage::ResourceAddress("HEAD"), genesis_block_))
@@ -247,8 +247,6 @@ bool GenesisFileCreator::LoadState(Variant const &object)
   auto merkle_commit_hash = storage_unit_.Commit(0);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Committed genesis merkle hash: 0x", merkle_commit_hash.ToHex());
-
-  // ledger::Block genesis_block;
 
   genesis_block_.timestamp    = start_time_;
   genesis_block_.merkle_hash  = merkle_commit_hash;

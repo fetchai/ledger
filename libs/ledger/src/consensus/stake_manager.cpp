@@ -92,10 +92,6 @@ bool StakeManager::Save(StorageInterface &storage)
     storage.Set(STAKE_STORAGE_ADDRESS, serializer.data());
 
     success = true;
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Wrote stake manager to storage!");
-
-    ERROR_BACKTRACE;
   }
   catch (std::exception const &ex)
   {
@@ -118,12 +114,6 @@ bool StakeManager::Load(StorageInterface &storage)
       serializers::LargeObjectSerializeHelper serializer{result.document};
       serializer >> *this;
     }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to deserialize/find stake manager!");
-    }
-
-    // FETCH_LOG_INFO(LOGGING_NAME, "After recovering stake, cabinet is: ");
 
     success = true;
   }
