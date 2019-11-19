@@ -169,17 +169,18 @@ public:
         }
       }
     }
-    /*
-    #ifndef NDEBUG
-        SizeType ref = 0;
-        for (auto &s : ranges_)
-        {
-          ref += s.volume * s.index;
-        }
 
-        assert(ref == position_);
-    #endif
-    */
+#ifndef NDEBUG
+    SizeType ref = 0;
+    for (auto &s : ranges_)
+    {
+      ref += s.volume * s.index;
+    }
+
+    assert(ref == position_);
+
+#endif
+
     return *this;
   }
 
@@ -387,16 +388,10 @@ private:
         volume = stride[i];
 
         s.volume      = volume;
-        SizeType diff = (s.to - s.from);
-        s.total_steps = diff / s.step;
-        if (s.total_steps * s.step < diff)
-        {
-          ++s.total_steps;
-        }
+        s.total_steps = ((s.to - s.from - 1) / s.step) + 1;
 
-        // s.total_steps *= s.step;
         s.step_volume  = s.step * volume;
-        s.total_volume = (s.total_steps) * volume;
+        s.total_volume = (s.total_steps) * s.step_volume;
 
         position_ += volume * s.from;
         size_ *= s.total_steps;

@@ -3008,26 +3008,14 @@ template <typename T, typename C>
 template <typename STensor>
 typename Tensor<T, C>::SizeType Tensor<T, C>::TensorSliceImplementation<STensor>::size() const
 {
-  SizeType size{1};
-  for (SizeType i{0}; i < this->range_.size(); ++i)
-  {
-    size *= (((this->range_[i][1] - this->range_[i][0] - 1) / this->range_[i][2]) + 1);
-  }
-
-  return size;
+  return tensor_.size();
 }
 
 template <typename T, typename C>
 template <typename STensor>
 typename Tensor<T, C>::SizeVector Tensor<T, C>::TensorSliceImplementation<STensor>::shape() const
 {
-  SizeVector shape;
-  for (SizeType i{0}; i < this->range_.size(); ++i)
-  {
-    shape.emplace_back(((this->range_[i][1] - this->range_[i][0] - 1) / this->range_[i][2]) + 1);
-  }
-
-  return shape;
+  return tensor_.shape();
 }
 
 }  // namespace math

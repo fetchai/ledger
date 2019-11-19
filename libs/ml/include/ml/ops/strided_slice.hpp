@@ -98,9 +98,7 @@ public:
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    auto       slice        = inputs.at(0)->StridedSlice(begins_, ends_, strides_);
-    TensorType slice_tensor = slice.Copy();
-
+    auto slice = inputs.at(0)->StridedSlice(begins_, ends_, strides_);
     output.Assign(slice);
   }
 
@@ -118,7 +116,8 @@ public:
 
     TensorType ret_error_signal_{inputs.at(0)->shape()};
 
-    ret_error_signal_.StridedSlice(begins_, ends_, strides_).Assign(*inputs.at(0));
+    auto slice = ret_error_signal_.StridedSlice(begins_, ends_, strides_);
+    slice.Assign(error_signal);
 
     return {ret_error_signal_};
   }
