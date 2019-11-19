@@ -127,8 +127,12 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
       chain::GENESIS_MERKLE_ROOT = genesis_block_.merkle_hash;
       chain::GENESIS_DIGEST      = genesis_block_.hash;
 
+      FETCH_LOG_INFO(LOGGING_NAME, "Found genesis save file from previous session!");
+
       return true;
     }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Failed to find genesis save file from previous session");
 
     // Failed - clear any state.
     genesis_block_ = Block();
