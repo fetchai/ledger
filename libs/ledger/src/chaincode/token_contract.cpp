@@ -74,7 +74,7 @@ constexpr uint64_t MAX_TOKENS = 0xFFFFFFFFFFFFFFFFull;
 TokenContract::TokenContract()
 {
   // TODO(tfr): I think the function CreateWealth should be OnInit?
-  OnTransaction("deed", this, &TokenContract::Deed);
+  OnTransaction("deed", this, &TokenContract::UpdateDeed);
   OnTransaction("wealth", this, &TokenContract::CreateWealth);
   OnTransaction("transfer", this, &TokenContract::Transfer);
   OnTransaction("addStake", this, &TokenContract::AddStake);
@@ -221,7 +221,7 @@ Contract::Result TokenContract::CreateWealth(chain::Transaction const &tx)
  *
  * @return Status::OK if deed has been incorporated successfully.
  */
-Contract::Result TokenContract::Deed(chain::Transaction const &tx)
+Contract::Result TokenContract::UpdateDeed(chain::Transaction const &tx)
 {
   Variant data;
   if (!ParseAsJson(tx, data))
