@@ -166,24 +166,15 @@ void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
   }
 
   std::lock_guard<std::mutex> guard(lock_);
-
-  auto     logger_ref      = GetLogger(name);
-  LogLevel converted_level = ConvertToLevel(logger_ref.level());
-
-  if (level < converted_level)
-  {
-    return;
-  }
-
-  logger_ref.log(ConvertFromLevel(level), message);
+  GetLogger(name).log(ConvertFromLevel(level), message);
 }
 
 void LogRegistry::SetLevel(char const *name, LogLevel level)
 {
+  std::lock_guard<std::mutex> guard(lock_);
+
   // Ensure logger exists to avoid races with setting level
   GetLogger(name);
-
-  std::lock_guard<std::mutex> guard(lock_);
 
   auto it = registry_.find(name);
   if (it != registry_.end())
@@ -232,8 +223,6 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
 
     logger->set_level(ConvertFromLevel(DEFAULT_LEVEL));
     logger->set_pattern("%^[%L]%$ %Y/%m/%d %T | %-30n : %v");
-    logger->set_level(
-        spdlog::level::trace);  // this should be kept in sync with the compilation level
 
     // keep a reference of it
     registry_[name] = logger;
