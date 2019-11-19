@@ -3061,12 +3061,12 @@ struct MapSerializer<ml::LayerDepthwiseConv2DSaveableParams<TensorType>, D>
   using Type       = ml::LayerDepthwiseConv2DSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const SUB_GRAPH       = 1;
-  static uint8_t const OP_CODE         = 2;
-  static uint8_t const KERNEL_SIZE     = 3;
-  static uint8_t const INPUT_CHANNELS  = 4;
+  static uint8_t const SUB_GRAPH        = 1;
+  static uint8_t const OP_CODE          = 2;
+  static uint8_t const KERNEL_SIZE      = 3;
+  static uint8_t const INPUT_CHANNELS   = 4;
   static uint8_t const DEPTH_MULTIPLIER = 5;
-  static uint8_t const STRIDE_SIZE     = 6;
+  static uint8_t const STRIDE_SIZE      = 6;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)

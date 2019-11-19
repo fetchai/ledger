@@ -39,12 +39,12 @@ template <class T>
 class DepthwiseConv2D : public SubGraph<T>
 {
 public:
-    using TensorType    = T;
-    using ArrayPtrType  = std::shared_ptr<TensorType>;
-    using SizeType      = fetch::math::SizeType;
-    using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
-    using VecTensorType = typename SubGraph<T>::VecTensorType;
-    using SPType        = LayerDepthwiseConv2DSaveableParams<TensorType>;
+  using TensorType    = T;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using SizeType      = fetch::math::SizeType;
+  using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
+  using VecTensorType = typename SubGraph<T>::VecTensorType;
+  using SPType        = LayerDepthwiseConv2DSaveableParams<TensorType>;
 
   DepthwiseConv2D() = default;
 
@@ -94,12 +94,13 @@ public:
         std::string activation = this->template AddNode<fetch::ml::ops::Convolution2D<TensorType>>(
             name + "_Conv2D", {slice_by_channel, weights}, stride_size_);
 
-        aggregated_activation = this->template AddNode<fetch::ml::ops::Concatenate<TensorType>>(name + "_Conv2D", {slice_by_channel, weights}, static_cast<SizeType>(0));
+        aggregated_activation = this->template AddNode<fetch::ml::ops::Concatenate<TensorType>>(
+            name + "_Conv2D", {slice_by_channel, weights}, static_cast<SizeType>(0));
       }
     }
 
-    std::string output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
-                                                      aggregated_activation);
+    std::string output = fetch::ml::details::AddActivationNode<T>(
+        activation_type, this, name + "_Activation", aggregated_activation);
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
