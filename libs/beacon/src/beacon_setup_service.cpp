@@ -52,8 +52,6 @@ BeaconSetupService::ReliableChannelPtr BeaconSetupService::ReliableBroadcastFact
     OnDkgMessage(from, env.Message());
   };
 
-  // fetch::SetLogLevel("BeaconSetupService", LogLevel::WARNING);
-
   return std::make_unique<ChannelType>(endpoint_, identity_.identifier(), call_on_msg, certificate_,
                                        CHANNEL_RBC_BROADCAST, false);
 }
@@ -1585,10 +1583,10 @@ void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &st
 
   state_deadline_ = reference_timepoint_ + time_until_deadline_s;
 
-  FETCH_LOG_INFO(GetLoggingName().c_str(),
-                 " Given an expected timespan of: ", expected_dkg_timespan_, " the end of state \"",
-                 ToString(state), "\" is ", time_until_deadline_s, " for a state deadline of ",
-                 state_deadline_, ". Ref timepoint: ", reference_timepoint_);
+  FETCH_LOG_DEBUG(
+      GetLoggingName().c_str(), " Given an expected timespan of: ", expected_dkg_timespan_,
+      " the end of state \"", ToString(state), "\" is ", time_until_deadline_s,
+      " for a state deadline of ", state_deadline_, ". Ref timepoint: ", reference_timepoint_);
 }
 
 /**
@@ -1606,10 +1604,10 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
   uint64_t const current_time = GetTime(system_clock_);
   condition_to_proceed_       = false;
 
-  FETCH_LOG_INFO(GetLoggingName().c_str(), " determining time allowed to move on from state: \"",
-                 ToString(state), "\" . Current time: ", current_time,
-                 ", base start reference timepoint: ", reference_timepoint_,
-                 " updated reference timepoint: ", reference_timepoint_);
+  FETCH_LOG_DEBUG(GetLoggingName().c_str(), " determining time allowed to move on from state: \"",
+                  ToString(state), "\" . Current time: ", current_time,
+                  ", base start reference timepoint: ", reference_timepoint_,
+                  " updated reference timepoint: ", reference_timepoint_);
 
   uint64_t const cabinet_size = beacon_->aeon.members.size();
 
@@ -1637,12 +1635,12 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
                                          time_per_iteration * MAX_DKG_BOUND_MULTIPLE);
     }
 
-    FETCH_LOG_INFO(GetLoggingName().c_str(),
-                   " calculated dkg time span on entering reset state. "
-                   " DKG round: ",
-                   beacon_->aeon.round_start, " failures so far: ", failures,
-                   " allotted time: ", expected_dkg_timespan_, " base time: ", time_per_iteration,
-                   " reference timepoint: ", reference_timepoint_);
+    FETCH_LOG_DEBUG(GetLoggingName().c_str(),
+                    " calculated dkg time span on entering reset state. "
+                    " DKG round: ",
+                    beacon_->aeon.round_start, " failures so far: ", failures,
+                    " allotted time: ", expected_dkg_timespan_, " base time: ", time_per_iteration,
+                    " reference timepoint: ", reference_timepoint_);
 
     beacon_dkg_time_allocated_->set(expected_dkg_timespan_);
     beacon_dkg_reference_timepoint_->set(reference_timepoint_);
