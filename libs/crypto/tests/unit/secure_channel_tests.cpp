@@ -25,7 +25,6 @@
 namespace {
 
 using fetch::crypto::ECDSASigner;
-using fetch::crypto::ECDSAVerifier;
 using fetch::byte_array::ConstByteArray;
 using fetch::crypto::SecureChannel;
 
