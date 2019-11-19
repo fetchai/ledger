@@ -151,6 +151,7 @@ ExecutionResult BasicVmEngine::Run(Name const &execName, Name const &stateName,
 
   Error prepSuccess = PrepInput(parameterPack, params, vm, exec.get(), func,
                                 "Exec: " + execName + " State: " + stateName);
+
   if (prepSuccess.code() != Error::Code::SUCCESS)
   {
     return ExecutionResult(LedgerVariant{}, prepSuccess, "");
@@ -247,7 +248,9 @@ BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack &result, Params 
       {
       case fetch::vm::TypeIds::Bool:
       {
-        serializer >> param.primitive.i8;
+        bool temp;
+        serializer >> temp;
+        param.primitive.i8 = temp ? 1 : 0;
         break;
       }
       case fetch::vm::TypeIds::Int8:
@@ -287,7 +290,9 @@ BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack &result, Params 
       }
       case fetch::vm::TypeIds::Float32:
       {
-        serializer >> param.primitive.f32;
+        double temp;
+        serializer >> temp;
+        param.primitive.f32 = static_cast<float>(temp);
         break;
       }
       case fetch::vm::TypeIds::Float64:
@@ -372,8 +377,7 @@ void ToFixed32(BasicVmEngine::LedgerVariant &var)
   {
     fp32_t val32;
     val32.Data() = var.As<int>();
-    fp64_t val64{fp64_t::FromBase(static_cast<int64_t>(val32.Data()) << 16)};
-    var = BasicVmEngine::LedgerVariant{val64};
+    var          = BasicVmEngine::LedgerVariant{static_cast<fp64_t>(val32)};
   }
 }
 
@@ -435,7 +439,7 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
     }
     case fetch::vm::TypeIds::Float32:
     {
-      output = vmVariant.Get<float>();
+      output = static_cast<double>(vmVariant.Get<float>());
       break;
     }
     case fetch::vm::TypeIds::Float64:

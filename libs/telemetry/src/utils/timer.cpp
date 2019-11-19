@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/time/to_seconds.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/utils/timer.hpp"
+#include "telemetry/utils/to_seconds.hpp"
 
 namespace fetch {
 namespace telemetry {
@@ -30,7 +30,7 @@ FunctionTimer::FunctionTimer(Histogram &histogram)
 
 FunctionTimer::~FunctionTimer()
 {
-  histogram_.Add(ToSeconds(Clock::now() - started_));
+  histogram_.Add(details::ToSeconds(Clock::now() - started_));
 }
 
 }  // namespace telemetry

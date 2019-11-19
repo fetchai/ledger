@@ -59,7 +59,7 @@ public:
 
 private:
   // ApplyGradientSparse if number_of_rows_to_update * sparsity_threshold_ <= total_rows
-  SizeType sparsity_threshold_ = 4;
+  SizeType sparsity_threshold_ = 2;
 
   void ApplyGradients(SizeType batch_size) override;
 };
@@ -128,10 +128,10 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
 
         for (SizeType update_index : rows.at(rows.size() - 1))
         {
-          auto       gradient_slice        = gradient_it->Slice(update_index, 1);
+          auto       gradient_slice        = gradient_it->View(update_index);
           TensorType gradient_slice_tensor = gradient_slice.Copy();
 
-          auto       refs_slice        = gradient_pair.first.Slice(update_index, 1);
+          auto       refs_slice        = gradient_pair.first.View(update_index);
           TensorType refs_slice_tensor = refs_slice.Copy();
 
           // output_grad[i] = (input_grad[i] / batch_size) * -learning_rate
