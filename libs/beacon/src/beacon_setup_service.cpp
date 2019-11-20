@@ -1582,7 +1582,8 @@ void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &st
 
   // Note: fine to do floor arithmetic here, it might cause the deadline to happen in the past, but
   // there is resilience to this.
-  uint64_t time_until_deadline_s = static_cast<uint64_t>(time_slots_to_end * base_state_time);
+  uint64_t time_until_deadline_s =
+      static_cast<uint64_t>(time_slots_to_end * static_cast<double>(base_state_time));
 
   state_deadline_ = reference_timepoint_ + time_until_deadline_s;
 
@@ -1627,8 +1628,9 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     // If not ahead in time, the DKG must have failed before. Algorithmically, and importantly
     // deterministically, decide how long to increase the allotted DKG time (increment each time
     // by 1.5x to a maximum of MAX_DKG_MULTIPLIER)
-    expected_dkg_timespan_ = uint64_t(time_per_state * time_slots_in_dkg_);
-    uint16_t failures      = 0;
+    expected_dkg_timespan_ =
+        static_cast<uint64_t>(static_cast<double>(time_per_state) * time_slots_in_dkg_);
+    uint16_t failures = 0;
 
     while (reference_timepoint_ < current_time)
     {
