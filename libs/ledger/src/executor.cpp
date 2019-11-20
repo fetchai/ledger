@@ -22,6 +22,7 @@
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/token_contract.hpp"
+#include "ledger/chaincode/wallet_record.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
 #include "ledger/executor.hpp"
@@ -47,6 +48,12 @@ using fetch::telemetry::Registry;
 namespace fetch {
 namespace ledger {
 namespace {
+
+bool IsCreateWealth(chain::Transaction const &tx)
+{
+  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
+         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
+}
 
 bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
 {
@@ -81,12 +88,6 @@ bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
   return true;
 }
 
-bool IsCreateWealth(chain::Transaction const &tx)
-{
-  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
-         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
-}
-
 }  // namespace
 
 /**
@@ -96,6 +97,7 @@ bool IsCreateWealth(chain::Transaction const &tx)
  */
 Executor::Executor(StorageUnitPtr storage)
   : storage_{std::move(storage)}
+  , tx_validator_{*storage_, token_contract_}
   , overall_duration_{Registry::Instance().LookupMeasurement<Histogram>(
         "ledger_executor_overall_duration")}
   , tx_retrieve_duration_{Registry::Instance().LookupMeasurement<Histogram>(
@@ -145,7 +147,7 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
   else
   {
     // update the charge related data provided by Tx sender
-    result.charge_rate  = current_tx_->charge();
+    result.charge_rate  = current_tx_->charge_rate();
     result.charge_limit = current_tx_->charge_limit();
 
     // create the storage cache
@@ -261,40 +263,12 @@ bool Executor::ValidationChecks(Result &result)
 {
   telemetry::FunctionTimer const timer{*validation_checks_duration_};
 
-  // SHORT TERM EXEMPTION - While no state file exists (and the wealth endpoint is still present)
-  // this and only this contract is exempt from the pre-validation checks
-  if (IsCreateWealth(*current_tx_))
-  {
-    result.status = Status::SUCCESS;
-    return true;
-  }
+  // validate this transaction at this time point
+  auto const status = tx_validator_(*current_tx_, block_);
 
-  // CHECK: Determine if the transaction is valid for the given block
-  auto const tx_validity = current_tx_->GetValidity(block_);
-  if (chain::Transaction::Validity::VALID != tx_validity)
+  if (status != Status::SUCCESS)
   {
-    result.status = Status::TX_NOT_VALID_FOR_BLOCK;
-    return false;
-  }
-
-  // attach the token contract to the storage engine
-  StateAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}};
-
-  uint64_t balance = 0;
-  {
-    ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
-                            block_};
-    ContractContextAttacher raii(token_contract_, context);
-    balance = token_contract_.GetBalance(current_tx_->from());
-  }
-
-  // CHECK: Ensure that the originator has funds available to make both all the transfers in the
-  //        contract as well as the maximum fees
-  uint64_t const max_tokens_required =
-      current_tx_->GetTotalTransferAmount() + current_tx_->charge_limit();
-  if (balance < max_tokens_required)
-  {
-    result.status = Status::INSUFFICIENT_AVAILABLE_FUNDS;
+    result.status = status;
     return false;
   }
 
@@ -333,10 +307,10 @@ bool Executor::ExecuteTransactionContract(Result &result)
     StateSentinelAdapter storage_adapter{*storage_cache_, contract_id, allowed_shards_};
 
     // look up or create the instance of the contract as is needed
-    auto const is_token_contract = (contract_id.full_name() == "fetch.token");
+    bool const is_token_contract = (contract_id.full_name() == "fetch.token");
 
-    auto contract = is_token_contract ? &token_contract_
-                                      : chain_code_cache_.Lookup(contract_id, *storage_).get();
+    Contract *contract = is_token_contract ? &token_contract_
+                                           : chain_code_cache_.Lookup(contract_id, *storage_).get();
     if (!static_cast<bool>(contract))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract_id.full_name());
@@ -356,7 +330,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     }
 
     // map the contract execution status
-    result.status = Status::CHAIN_CODE_EXEC_FAILURE;
+    result.status = Status::CONTRACT_EXECUTION_FAILURE;
     switch (contract_status.status)
     {
     case Contract::Status::OK:
@@ -368,7 +342,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
       break;
     case Contract::Status::NOT_FOUND:
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up transaction handler");
-      result.status = Status::CHAIN_CODE_LOOKUP_FAILURE;
+      result.status = Status::ACTION_LOOKUP_FAILURE;
       break;
     }
 
@@ -417,7 +391,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     FETCH_LOG_WARN(LOGGING_NAME, "Exception during execution of tx 0x",
                    current_tx_->digest().ToHex(), " : ", ex.what());
 
-    result.status = Status::CHAIN_CODE_EXEC_FAILURE;
+    result.status = Status::CONTRACT_EXECUTION_FAILURE;
   }
 
   return success;
@@ -478,10 +452,10 @@ void Executor::DeductFees(Result &result)
   uint64_t const          balance = token_contract_.GetBalance(from);
 
   // calculate the fee to deduct
-  TokenAmount tx_fee = result.charge * current_tx_->charge();
+  TokenAmount tx_fee = result.charge * current_tx_->charge_rate();
   if (Status::SUCCESS != result.status)
   {
-    tx_fee = current_tx_->charge_limit() * current_tx_->charge();
+    tx_fee = current_tx_->charge_limit() * current_tx_->charge_rate();
   }
 
   // on failed transactions

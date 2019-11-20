@@ -136,7 +136,7 @@ typename CollectiveLearningClient<TensorType>::DataType
 CollectiveLearningClient<TensorType>::GetLossAverage()
 {
   DataType loss_mean(0);
-  for (const auto &algorithm : algorithms_)
+  for (auto const &algorithm : algorithms_)
   {
     loss_mean += algorithm->GetLossAverage();
   }

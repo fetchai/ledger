@@ -63,7 +63,7 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
         handle_query_result.reset();
       });
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());
       SendExceptionReply("search", current_uri, e, endpoint);
@@ -96,7 +96,7 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
         });
       }
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());
       SendExceptionReply("update", current_uri, e, endpoint);
@@ -133,7 +133,7 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
         }
       });
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());
       SendExceptionReply("remove", current_uri, e, endpoint);

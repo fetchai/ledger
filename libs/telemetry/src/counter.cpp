@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/string/ends_with.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/utils/ends_with.hpp"
 
 #include <ostream>
 #include <stdexcept>
@@ -30,7 +30,7 @@ namespace {
 
 bool ValidateName(std::string const &name)
 {
-  return core::EndsWith(name, "_total");
+  return details::EndsWith(name, "_total");
 }
 
 }  // namespace
