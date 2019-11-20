@@ -102,7 +102,7 @@ void BasicMiner::EnqueueTransaction(chain::TransactionLayout const &layout)
 
   if (layout.mask().size() != (1u << log2_num_lanes_))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Disgarding layout due to incompatible mask size");
+    FETCH_LOG_WARN(LOGGING_NAME, "Discarding layout due to incompatible mask size");
     return;
   }
 
@@ -136,6 +136,18 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
     FETCH_LOCK(pending_lock_);
     mining_pool_.Splice(pending_);
   }
+
+  std::remove_if(mining_pool_.begin(), mining_pool_.end(), [&block](auto const &tx_layout) {
+    constexpr Block::Index DEFAULT_TX_VALIDITY_PERIOD = 10;
+    auto const             valid_from                 = tx_layout.valid_from() == 0
+                                ? tx_layout.valid_until() - DEFAULT_TX_VALIDITY_PERIOD
+                                : tx_layout.valid_from();
+
+    bool const tx_expired       = tx_layout.valid_until() < block.block_number;
+    bool const tx_not_yet_valid = valid_from > block.block_number;
+
+    return tx_expired || tx_not_yet_valid;
+  });
 
   // detect the transactions which have already been incorporated into previous blocks
   auto const duplicates =

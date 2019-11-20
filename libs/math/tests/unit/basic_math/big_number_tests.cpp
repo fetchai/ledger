@@ -17,9 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "vectorise/uint/uint.hpp"
-
 #include "gmock/gmock.h"
+#include "vectorise/uint/uint.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -135,6 +134,20 @@ TEST(big_number_gtest, subtraction_tests)
   EXPECT_EQ(n3.ElementAt(1), 0);
   EXPECT_EQ(n3.ElementAt(2), 0);
   EXPECT_EQ(n3.ElementAt(3), 0);
+}
+
+TEST(big_number_gtest, log_tests)
+{
+  for (const auto argument :
+       {uint64_t(1), uint64_t(64), uint64_t(65536), uint64_t(std::numeric_limits<uint64_t>::max())})
+  {
+    UInt<256> n256(argument);
+
+    const auto result   = Log(n256);
+    const auto expected = std::log(argument);
+
+    EXPECT_NEAR(result, expected, std::numeric_limits<double>::epsilon());
+  }
 }
 
 TEST(big_number_gtest, multiplication_tests)
