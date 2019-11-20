@@ -98,7 +98,10 @@ int main(int argc, char **argv)
 
   // get the network config file
   fetch::json::JSONDocument network_doc;
-  network_doc.Parse(argv[2]);
+  std::ifstream             network_config_file{std::string(argv[2])};
+  std::string               text((std::istreambuf_iterator<char>(network_config_file)),
+                                 std::istreambuf_iterator<char>());
+  network_doc.Parse(text.c_str());
 
   /**
    * Prepare environment
