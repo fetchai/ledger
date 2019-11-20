@@ -37,7 +37,7 @@ namespace vm {
 
 namespace internal {
 
-template <template <int, typename, typename, typename...> class Invoker, typename EtchArgsTuple>
+template <template <int, typename, typename, typename> class Invoker, typename EtchArgsTuple>
 struct EtchInvocation
 {
   static_assert(meta::IsStdTuple<EtchArgsTuple>, "Pass binding argument types as a std::tuple");
@@ -46,22 +46,19 @@ struct EtchInvocation
   static void InvokeHandler(VM *vm, Estimator &&estimator, Callable &&callable,
                             ExtraArgs const &... extra_args)
   {
-    using Config = PrepareInvocation<Invoker, Callable, EtchArgsTuple, std::tuple<ExtraArgs...>>;
+    using Config = PrepareInvocation<Invoker, Callable, EtchArgsTuple>;
 
     // get the Etch argument values from the stack
     auto etch_args_tuple = Config::GetEtchArguments(vm);
 
-    using EstimatorType = meta::UnpackTuple<EtchArgsTuple, ChargeEstimator>;
-    if (EstimateCharge(vm, EstimatorType{std::forward<Estimator>(estimator)}, etch_args_tuple))
-    {
-      // prepend extra non-etch arguments (e.g. VM*, TypeId)
-      auto all_args_tuple =
-          std::tuple_cat(std::make_tuple(extra_args...), std::move(etch_args_tuple));
+    using EstimatorArgsTuple = typename meta::CallableTraits<Estimator>::ArgsTupleType;
+    using EstimatorType      = meta::UnpackTuple<EstimatorArgsTuple, ChargeEstimator>;
 
-      // Invoke C++ handler
-      using ConfiguredInvoker = typename Config::ConfiguredInvoker;
-      ConfiguredInvoker::Invoke(vm, std::move(all_args_tuple), std::forward<Callable>(callable));
-    }
+    // Invoke C++ handler
+    using ConfiguredInvoker = typename Config::ConfiguredInvoker;
+    ConfiguredInvoker::Invoke(vm, EstimatorType{std::forward<Estimator>(estimator)},
+                              std::forward<Callable>(callable), std::move(etch_args_tuple),
+                              extra_args...);
   }
 };
 

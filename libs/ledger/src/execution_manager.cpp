@@ -513,24 +513,21 @@ void ExecutionManager::MonitorThreadEntrypoint()
         {
           assert(item);
 
-          switch (item->result().status)
+          switch (Categorise(item->result().status))
           {
-          case ExecutionItem::Status::SUCCESS:
+          case ExecutionStatusCategory::SUCCESS:
             ++num_complete;
             break;
-          case ExecutionItem::Status::TX_LOOKUP_FAILURE:
-            ++num_stalls;
-            break;
-          case ExecutionItem::Status::CHAIN_CODE_LOOKUP_FAILURE:
-          case ExecutionItem::Status::CHAIN_CODE_EXEC_FAILURE:
-          case ExecutionItem::Status::CONTRACT_NAME_PARSE_FAILURE:
-          case ExecutionItem::Status::CONTRACT_LOOKUP_FAILURE:
-          case ExecutionItem::Status::TX_NOT_VALID_FOR_BLOCK:
-          case ExecutionItem::Status::INSUFFICIENT_AVAILABLE_FUNDS:
-          case ExecutionItem::Status::TRANSFER_FAILURE:
-          case ExecutionItem::Status::INSUFFICIENT_CHARGE:
+
+          case ExecutionStatusCategory::NORMAL_ERROR:
             ++num_errors;
             break;
+
+          case ExecutionStatusCategory::INTERNAL_ERROR:
+            ++num_stalls;
+            break;
+
+          case ExecutionStatusCategory::BLOCK_INVALIDATING_ERROR:
           default:
             ++num_fatal_errors;
             break;
