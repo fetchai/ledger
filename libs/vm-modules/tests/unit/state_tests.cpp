@@ -19,6 +19,7 @@
 #include "vm/address.hpp"
 #include "vm/array.hpp"
 #include "vm/map.hpp"
+#include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_test_toolkit.hpp"
 
 #include "gmock/gmock.h"
@@ -26,6 +27,8 @@
 #include <sstream>
 
 using namespace fetch::vm;
+using fetch::vm_modules::ByteArrayWrapper;
+using ::testing::AnyNumber;
 
 namespace {
 
@@ -242,8 +245,8 @@ TEST_F(StateTests, test_serialisation_of_complex_type)
 }
 
 template <typename T>
-std::enable_if_t<!IsPtr<T>::value> ArrayFromVariant(Variant const &array, int32_t expected_size,
-                                                    Ptr<Array<T>> &out)
+std::enable_if_t<!IsPtr<T>> ArrayFromVariant(Variant const &array, int32_t expected_size,
+                                             Ptr<Array<T>> &out)
 {
   out = array.Get<Ptr<Array<T>>>();
   ASSERT_TRUE(out);
@@ -251,7 +254,7 @@ std::enable_if_t<!IsPtr<T>::value> ArrayFromVariant(Variant const &array, int32_
 }
 
 template <typename T>
-std::enable_if_t<IsPtr<T>::value && std::is_same<IArray, std::decay_t<GetManagedType<T>>>::value>
+std::enable_if_t<IsPtr<T> && std::is_same<IArray, std::decay_t<GetManagedType<T>>>::value>
 ArrayFromVariant(Variant const &array, int32_t expected_size, Ptr<Array<T>> &out)
 {
   out = array.Get<Ptr<Array<T>>>();
@@ -340,7 +343,7 @@ TEST_F(StateTests, test_serialisation_of_complex_type_2)
 TEST_F(StateTests, test_serialisation_of_structured_data)
 {
   static char const *ser_src = R"(
-    function main()
+    function main(buffer : Buffer)
 
       var arr_i32 = Array<Int32>(1);
       arr_i32[0] = 10i32;
@@ -360,6 +363,9 @@ TEST_F(StateTests, test_serialisation_of_structured_data)
       data.set("u32", 512u32);
       data.set("i64", 1024i64);
       data.set("u64", 2048u64);
+      data.set("address", Address("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB"));
+      data.set("uint256", UInt256(12297829382473034410u64));
+      data.set("buffer", buffer);
       data.set("arr_i32", arr_i32);
       data.set("arr_i64", arr_i64);
       data.set("arr_u32", arr_u32);
@@ -370,14 +376,18 @@ TEST_F(StateTests, test_serialisation_of_structured_data)
     endfunction
   )";
 
+  ConstByteArray expetced_buffer{"QWERTYUIOPasdfghjkl"};
+
   std::string const state_name{"state_data"};
   EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
 
   ASSERT_TRUE(toolkit.Compile(ser_src));
-  ASSERT_TRUE(toolkit.Run());
+  ASSERT_TRUE(
+      toolkit.RunWithParams(nullptr, std::numeric_limits<ChargeAmount>::max(),
+                            toolkit.vm().CreateNewObject<ByteArrayWrapper>(expetced_buffer)));
 
   static char const *deser_src = R"(
-    function main()
+    function main(buffer : Buffer) : Buffer
       var retrieved_state = State<StructuredData>("state_data");
       var data = retrieved_state.get();
 
@@ -386,6 +396,9 @@ TEST_F(StateTests, test_serialisation_of_structured_data)
       assert(data.getUInt32("u32") == 512u32);
       assert(data.getInt64("i64") == 1024i64);
       assert(data.getUInt64("u64") == 2048u64);
+      assert(data.getAddress("address") == Address("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB"));
+      assert(data.getUInt256("uint256") == UInt256(12297829382473034410u64));
+      assert(data.getBuffer("buffer") == buffer);
 
       var arr_i32 = data.getArrayInt32("arr_i32");
       assert(arr_i32.count() == 1);
@@ -403,14 +416,23 @@ TEST_F(StateTests, test_serialisation_of_structured_data)
       assert(arr_u64.count() == 1);
       assert(arr_u64[0] == 200u64);
 
+      return data.getBuffer("buffer");
     endfunction
   )";
 
   EXPECT_CALL(toolkit.observer(), Exists(state_name));
-  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(AnyNumber());
 
   ASSERT_TRUE(toolkit.Compile(deser_src));
-  ASSERT_TRUE(toolkit.Run());
+
+  Variant buffer;
+  ASSERT_TRUE(
+      toolkit.RunWithParams(&buffer, std::numeric_limits<ChargeAmount>::max(),
+                            toolkit.vm().CreateNewObject<ByteArrayWrapper>(expetced_buffer)));
+
+  auto const acquired_buffer{buffer.Get<Ptr<ByteArrayWrapper>>()};
+  EXPECT_TRUE(acquired_buffer);
+  EXPECT_EQ(expetced_buffer, acquired_buffer->byte_array());
 }
 
 TEST_F(StateTests,

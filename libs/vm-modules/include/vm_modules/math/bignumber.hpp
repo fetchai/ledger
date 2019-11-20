@@ -53,7 +53,8 @@ public:
 
   UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, UInt256 data);
 
-  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray const &data);
+  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                 byte_array::ConstByteArray const &data);
 
   UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, uint64_t data);
 
@@ -93,6 +94,12 @@ public:
 
   bool IsGreaterThan(fetch::vm::Ptr<Object> const &lhso,
                      fetch::vm::Ptr<Object> const &rhso) override;
+
+  bool IsLessThanOrEqual(fetch::vm::Ptr<Object> const &lhso,
+                         fetch::vm::Ptr<Object> const &rhso) override;
+
+  bool IsGreaterThanOrEqual(fetch::vm::Ptr<Object> const &lhso,
+                            fetch::vm::Ptr<Object> const &rhso) override;
 
 private:
   UInt256 number_;

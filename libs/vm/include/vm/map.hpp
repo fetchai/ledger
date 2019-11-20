@@ -64,7 +64,7 @@ struct H<fixed_point::fp64_t, void>
 };
 
 template <typename T>
-struct H<T, std::enable_if_t<IsPrimitive<T>::value>>
+struct H<T, std::enable_if_t<IsPrimitive<T>>>
 {
   std::size_t operator()(TemplateParameter1 const &key) const
   {
@@ -73,7 +73,7 @@ struct H<T, std::enable_if_t<IsPrimitive<T>::value>>
 };
 
 template <typename T>
-struct H<T, std::enable_if_t<IsPtr<T>::value>>
+struct H<T, std::enable_if_t<IsPtr<T>>>
 {
   std::size_t operator()(TemplateParameter1 const &key) const
   {
@@ -84,7 +84,7 @@ struct H<T, std::enable_if_t<IsPtr<T>::value>>
 template <typename T, typename = void>
 struct E;
 template <typename T>
-struct E<T, std::enable_if_t<IsPrimitive<T>::value>>
+struct E<T, std::enable_if_t<IsPrimitive<T>>>
 {
   bool operator()(TemplateParameter1 const &lhs, TemplateParameter1 const &rhs) const
   {
@@ -92,7 +92,7 @@ struct E<T, std::enable_if_t<IsPrimitive<T>::value>>
   }
 };
 template <typename T>
-struct E<T, std::enable_if_t<IsPtr<T>::value>>
+struct E<T, std::enable_if_t<IsPtr<T>>>
 {
   bool operator()(TemplateParameter1 const &lhs, TemplateParameter1 const &rhs) const
   {
@@ -126,13 +126,13 @@ struct Map : public IMap
   }
 
   template <typename U>
-  std::enable_if_t<IsPrimitive<U>::value, TemplateParameter2 *> Get(TemplateParameter1 const &key)
+  std::enable_if_t<IsPrimitive<U>, TemplateParameter2 *> Get(TemplateParameter1 const &key)
   {
     return Find(key);
   }
 
   template <typename U>
-  std::enable_if_t<IsPtr<U>::value, TemplateParameter2 *> Get(TemplateParameter1 const &key)
+  std::enable_if_t<IsPtr<U>, TemplateParameter2 *> Get(TemplateParameter1 const &key)
   {
     if (key.object)
     {
@@ -154,15 +154,15 @@ struct Map : public IMap
   }
 
   template <typename U>
-  std::enable_if_t<IsPrimitive<U>::value, void> Store(TemplateParameter1 const &key,
-                                                      TemplateParameter2 const &value)
+  std::enable_if_t<IsPrimitive<U>, void> Store(TemplateParameter1 const &key,
+                                               TemplateParameter2 const &value)
   {
     map[key] = value;
   }
 
   template <typename U>
-  std::enable_if_t<IsPtr<U>::value, void> Store(TemplateParameter1 const &key,
-                                                TemplateParameter2 const &value)
+  std::enable_if_t<IsPtr<U>, void> Store(TemplateParameter1 const &key,
+                                         TemplateParameter2 const &value)
   {
     if (key.object)
     {
@@ -236,8 +236,8 @@ struct Map : public IMap
 
 private:
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPtr<U>::value, bool> SerializeElement(MsgPackSerializer &          buffer,
-                                                           TemplateParameterType const &v)
+  std::enable_if_t<IsPtr<U>, bool> SerializeElement(MsgPackSerializer &          buffer,
+                                                    TemplateParameterType const &v)
   {
     if (v.object == nullptr)
     {
@@ -249,17 +249,16 @@ private:
   }
 
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPrimitive<U>::value, bool> SerializeElement(MsgPackSerializer &buffer,
-                                                                 TemplateParameterType const &v)
+  std::enable_if_t<IsPrimitive<U>, bool> SerializeElement(MsgPackSerializer &          buffer,
+                                                          TemplateParameterType const &v)
   {
     buffer << v.template Get<U>();
     return true;
   }
 
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPtr<U>::value, bool> DeserializeElement(TypeId                 type_id,
-                                                             MsgPackSerializer &    buffer,
-                                                             TemplateParameterType &v)
+  std::enable_if_t<IsPtr<U>, bool> DeserializeElement(TypeId type_id, MsgPackSerializer &buffer,
+                                                      TemplateParameterType &v)
   {
     if (!vm_->IsDefaultSerializeConstructable(type_id))
     {
@@ -273,9 +272,9 @@ private:
   }
 
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPrimitive<U>::value, bool> DeserializeElement(TypeId                 type_id,
-                                                                   MsgPackSerializer &    buffer,
-                                                                   TemplateParameterType &v)
+  std::enable_if_t<IsPrimitive<U>, bool> DeserializeElement(TypeId                 type_id,
+                                                            MsgPackSerializer &    buffer,
+                                                            TemplateParameterType &v)
   {
     U data;
     buffer >> data;

@@ -24,6 +24,7 @@
 #include <cstdint>
 
 using namespace fetch::vm;
+using namespace fetch::byte_array;
 
 namespace fetch {
 namespace vm_modules {
@@ -31,8 +32,19 @@ namespace vm_modules {
 void ByteArrayWrapper::Bind(Module &module)
 {
   module.CreateClassType<ByteArrayWrapper>("Buffer")
-      .CreateConstructor(&ByteArrayWrapper::Constructor)
-      .CreateMemberFunction("copy", &ByteArrayWrapper::Copy);
+      .CreateSerializeDefaultConstructor(
+          [](VM *vm, TypeId type_id) { return ByteArrayWrapper::Constructor(vm, type_id, 0); })
+      .CreateConstructor(static_cast<Ptr<ByteArrayWrapper> (*)(VM *, TypeId, int32_t)>(
+          &ByteArrayWrapper::Constructor))
+      .CreateMemberFunction("copy", &ByteArrayWrapper::Copy)
+      .CreateMemberFunction("toBase64", &ByteArrayWrapper::ToBase64)
+      .CreateMemberFunction("fromBase64", &ByteArrayWrapper::FromBase64)
+      .EnableOperator(Operator::LessThan)
+      .EnableOperator(Operator::GreaterThan)
+      .EnableOperator(Operator::LessThanOrEqual)
+      .EnableOperator(Operator::GreaterThanOrEqual)
+      .EnableOperator(Operator::Equal)
+      .EnableOperator(Operator::NotEqual);
 }
 
 ByteArrayWrapper::ByteArrayWrapper(VM *vm, TypeId type_id, byte_array::ByteArray bytearray)
@@ -42,8 +54,7 @@ ByteArrayWrapper::ByteArrayWrapper(VM *vm, TypeId type_id, byte_array::ByteArray
 
 Ptr<ByteArrayWrapper> ByteArrayWrapper::Constructor(VM *vm, TypeId type_id, int32_t n)
 {
-  return Ptr<ByteArrayWrapper>{
-      new ByteArrayWrapper(vm, type_id, byte_array::ByteArray(std::size_t(n)))};
+  return Ptr<ByteArrayWrapper>{new ByteArrayWrapper(vm, type_id, ByteArray(std::size_t(n)))};
 }
 
 Ptr<ByteArrayWrapper> ByteArrayWrapper::Copy()
@@ -51,7 +62,86 @@ Ptr<ByteArrayWrapper> ByteArrayWrapper::Copy()
   return vm_->CreateNewObject<ByteArrayWrapper>(byte_array_.Copy());
 }
 
-byte_array::ByteArray ByteArrayWrapper::byte_array() const
+Ptr<vm::String> ByteArrayWrapper::ToBase64()
+{
+  return Ptr<vm::String>{new String{vm_, static_cast<std::string>(byte_array_.ToBase64())}};
+}
+
+bool ByteArrayWrapper::FromBase64(fetch::vm::Ptr<vm::String> const &value_b64)
+{
+  if (!value_b64)
+  {
+    // vm_->RuntimeError("Input string parameter is null reference");
+    return false;
+  }
+
+  auto decoded_array{ByteArray{value_b64->string()}.FromBase64()};
+
+  if (decoded_array.empty())
+  {
+    // vm_->RuntimeError("Input string is not Base64 encoded.");
+    return false;
+  }
+
+  byte_array_ = std::move(decoded_array);
+  return true;
+}
+
+bool ByteArrayWrapper::IsEqual(fetch::vm::Ptr<Object> const &lhso,
+                               fetch::vm::Ptr<Object> const &rhso)
+{
+  ByteArrayWrapper &l{static_cast<ByteArrayWrapper &>(*lhso)};
+  ByteArrayWrapper &r{static_cast<ByteArrayWrapper &>(*rhso)};
+
+  return l.byte_array_ == r.byte_array_;
+}
+
+bool ByteArrayWrapper::IsNotEqual(fetch::vm::Ptr<Object> const &lhso,
+                                  fetch::vm::Ptr<Object> const &rhso)
+{
+  ByteArrayWrapper &l{static_cast<ByteArrayWrapper &>(*lhso)};
+  ByteArrayWrapper &r{static_cast<ByteArrayWrapper &>(*rhso)};
+
+  return l.byte_array_ != r.byte_array_;
+}
+
+bool ByteArrayWrapper::IsLessThan(fetch::vm::Ptr<Object> const &lhso,
+                                  fetch::vm::Ptr<Object> const &rhso)
+{
+  ByteArrayWrapper &l{static_cast<ByteArrayWrapper &>(*lhso)};
+  ByteArrayWrapper &r{static_cast<ByteArrayWrapper &>(*rhso)};
+
+  return l.byte_array_ < r.byte_array_;
+}
+
+bool ByteArrayWrapper::IsLessThanOrEqual(fetch::vm::Ptr<Object> const &lhso,
+                                         fetch::vm::Ptr<Object> const &rhso)
+{
+  ByteArrayWrapper &l{static_cast<ByteArrayWrapper &>(*lhso)};
+  ByteArrayWrapper &r{static_cast<ByteArrayWrapper &>(*rhso)};
+
+  return l.byte_array_ <= r.byte_array_;
+}
+
+bool ByteArrayWrapper::IsGreaterThan(fetch::vm::Ptr<Object> const &lhso,
+                                     fetch::vm::Ptr<Object> const &rhso)
+{
+  ByteArrayWrapper &l{static_cast<ByteArrayWrapper &>(*lhso)};
+  ByteArrayWrapper &r{static_cast<ByteArrayWrapper &>(*rhso)};
+
+  return l.byte_array_ > r.byte_array_;
+}
+
+bool ByteArrayWrapper::IsGreaterThanOrEqual(fetch::vm::Ptr<Object> const &lhso,
+                                            fetch::vm::Ptr<Object> const &rhso)
+{
+  ByteArrayWrapper &l{static_cast<ByteArrayWrapper &>(*lhso)};
+  ByteArrayWrapper &r{static_cast<ByteArrayWrapper &>(*rhso)};
+
+  return l.byte_array_ >= r.byte_array_;
+}
+
+ConstByteArray const &ByteArrayWrapper::byte_array() const
 {
   return byte_array_;
 }

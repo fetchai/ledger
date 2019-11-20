@@ -213,11 +213,16 @@ public:
   /// element accessors ///
   /////////////////////////
 
-  constexpr uint8_t   operator[](std::size_t n) const;
-  constexpr uint8_t & operator[](std::size_t n);
-  constexpr WideType  ElementAt(std::size_t n) const;
+  constexpr uint8_t  operator[](std::size_t n) const;
+  constexpr uint8_t &operator[](std::size_t n);
+  constexpr WideType ElementAt(std::size_t n) const
+  {
+    return wide_[n];
+  }
+
   constexpr WideType &ElementAt(std::size_t n);
 
+  constexpr uint64_t TrimmedWideSize() const;
   constexpr uint64_t TrimmedSize() const;
   constexpr uint64_t size() const;
   constexpr uint64_t elements() const;
@@ -1026,26 +1031,34 @@ constexpr uint8_t &UInt<S>::operator[](std::size_t n)
 }
 
 template <uint16_t S>
-constexpr typename UInt<S>::WideType UInt<S>::ElementAt(std::size_t n) const
-{
-  return wide_[n];
-}
-
-template <uint16_t S>
 constexpr typename UInt<S>::WideType &UInt<S>::ElementAt(std::size_t n)
 {
   return wide_[n];
 }
 
 template <uint16_t S>
-constexpr uint64_t UInt<S>::TrimmedSize() const
+constexpr uint64_t UInt<S>::TrimmedWideSize() const
 {
   uint64_t ret = WIDE_ELEMENTS;
-  while ((ret != 0) && (wide_[ret - 1] == 0))
+  while ((ret > 0) && (wide_[ret - 1] == 0))
   {
     --ret;
   }
   return ret;
+}
+
+template <uint16_t S>
+constexpr uint64_t UInt<S>::TrimmedSize() const
+{
+  uint64_t wide_size{TrimmedWideSize()};
+  uint64_t remainder{WIDE_ELEMENT_SIZE / ELEMENT_SIZE};
+
+  while ((remainder > 0) && (base()[remainder - 1] == 0))
+  {
+    --remainder;
+  }
+
+  return wide_size * (WIDE_ELEMENT_SIZE / ELEMENT_SIZE) + remainder;
 }
 
 template <uint16_t S>
@@ -1081,30 +1094,42 @@ UInt<S>::operator std::string() const
 }
 
 template <uint16_t S>
-inline std::ostream &operator<<(std::ostream &s, UInt<S> const &x)
+std::ostream &operator<<(std::ostream &s, UInt<S> const &x)
 {
   s << std::string(x);
   return s;
 }
 
-inline double ToDouble(UInt<256> const &x)
+template <typename T>
+constexpr meta::EnableIf<std::is_same<meta::Decay<T>, UInt<256>>::value, double> ToDouble(T &&x)
 {
-  static constexpr size_t BITS_IN_UINT64  = sizeof(uint64_t) * 8;
-  static const size_t     MAX_ELEMENT_IDX = x.elements() - 1;
-  size_t                  msw_index       = MAX_ELEMENT_IDX;
-  while (msw_index > 0 && x.ElementAt(msw_index) == uint64_t(0))
+  auto const msw_size{x.TrimmedWideSize()};
+  if (0 == msw_size)
   {
-    --msw_index;
+    return 0;
   }
-  const uint64_t most_significant_word = x.ElementAt(msw_index);
 
-  return pow(2, static_cast<double>(msw_index * BITS_IN_UINT64)) *
-         static_cast<double>(most_significant_word);
+  const auto     msw_index{msw_size - 1};
+  const uint64_t most_significant_word = x.ElementAt(msw_index);
+  auto           retval = pow(2, static_cast<double>(msw_index * x.WIDE_ELEMENT_SIZE)) *
+                static_cast<double>(most_significant_word);
+
+  if (msw_index > 0 and most_significant_word < (1ull << 49))
+  {
+    auto const     next_idx{msw_index - 1};
+    uint64_t const word2 = x.ElementAt(next_idx);
+    auto           v2 =
+        pow(2, static_cast<double>(next_idx * x.WIDE_ELEMENT_SIZE)) * static_cast<double>(word2);
+    retval += v2;
+  }
+
+  return retval;
 }
 
-inline double Log(UInt<256> const &x)
+template <typename T>
+constexpr meta::EnableIf<std::is_same<meta::Decay<T>, UInt<256>>::value, double> Log(T &&x)
 {
-  return std::log(ToDouble(x));
+  return std::log(ToDouble(std::forward<T>(x)));
 }
 
 }  // namespace vectorise

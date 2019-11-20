@@ -129,7 +129,18 @@ public:
 
   explicit operator std::string() const
   {
-    return {char_pointer(), length_};
+    // Avoiding undefined behaviour (C++ standard defines passing nullptr as
+    // input to `std::basic_string(char const*, ...)` as undefined behaviour):
+    if (pointer() != nullptr)
+    {
+      return {char_pointer(), length_};
+    }
+
+    // This is to keep original behaviour always returning a string instance
+    // even if ConstByteArray::pointer() is nullptr.
+    return {};
+    // Alternative approach would be to throw (commented-out for now)
+    // throw std::runtime_error{""};
   }
 
   constexpr ValueType const &operator[](std::size_t n) const noexcept

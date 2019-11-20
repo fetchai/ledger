@@ -64,7 +64,7 @@ struct Getter<T, IfIsPtr<T>>
   }
 };
 template <typename T>
-struct Getter<T, std::enable_if_t<IsVariant<T>::value>>
+struct Getter<T, std::enable_if_t<IsVariant<T>>>
 {
   static TypeId GetTypeId(RegisteredTypes const & /* types */, T const &parameter)
   {
