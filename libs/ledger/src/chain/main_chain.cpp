@@ -578,23 +578,43 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
 }
 
 /**
- * Walk the block history collecting blocks until either genesis or the block limit is reached.
- * Unlike in GetChainPreceding, positive value in limit indicates forward-travel.
+ * Walk the block history collecting blocks until either genesis or the block_number limit reached.
+ * limit specifies block_number; if current_hash identifies a block with a higher number
+ * travel back in time, otherwise fast forward.
+ * If current_hash is empty, travel starts from tip with zero limit, and from genesis otherwise.
  *
  * @param current_hash The hash of the first block
- * @param limit The maximum number of blocks to be returned, negative for towards genesis, positive
- * for towards tip
+ * @param limit
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limit) const
+MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, uint64_t limit) const
 {
-  if (limit <= 0)
+  IntBlockPtr block;
+  BlockHash   next_hash;
+  FETCH_LOCK(lock_);
+
+  if (current_hash.empty() && limit > 0)
+  {
+	  current_hash = chain::GENESIS_DIGEST;
+  }
+  if (!current_hash.empty())
+  {
+	  if (!LookupBlock(current_hash, block, &next_hash))
+	  {
+		  FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
+		  throw std::runtime_error("Failed to lookup block");
+	  }
+  }
+
+  // byt this moment, current hash can only be empty if limit = 0,
+  // i.e. travelling back in time from tip
+  assert(current_hash.empty() && limit == 0 || block);
+  if (current_hash.empty() || limit <= block->block_number)
   {
     // travel back in time
-    auto lim        = static_cast<uint64_t>(-limit);
-    auto ret_blocks = current_hash.empty() ? GetHeaviestChain(lim)
-                                           : GetChainPreceding(std::move(current_hash), lim);
+    auto ret_blocks = current_hash.empty() ? GetHeaviestChain(limit)
+                                           : GetChainPreceding(std::move(current_hash), limit);
     if (ret_blocks.empty())
     {
       // stop here
@@ -602,30 +622,23 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limi
     }
 
     auto const earliest_number = ret_blocks.back()->block_number;
-    assert(earliest_number >= lim);
+    assert(earliest_number >= limit);
 
-    int64_t next_direction = earliest_number == lim ? 0 : -1;
+    int64_t next_direction = earliest_number == limit ? 0 : -1;
     return {std::move(ret_blocks), next_direction};
   }
 
-  auto const lim =
-      static_cast<std::size_t>(std::min(limit, static_cast<int64_t>(MainChain::UPPER_BOUND)));
   MilliTimer myTimer("MainChain::ChainPreceding");
 
-  Blocks      result;
-  IntBlockPtr block;
-  BlockHash   next_hash;
+  Blocks result{block};
 
-  if (current_hash.empty())
-  {
-    current_hash = chain::GENESIS_DIGEST;
-  }
   int64_t next_direction = 1;
 
-  FETCH_LOCK(lock_);
-
-  while (  // stop once we have gathered enough blocks or passed genesis
-      !current_hash.empty())
+  for (current_hash = std::move(next_hash);
+       // stop once we have gathered enough blocks or passed the tip
+       !current_hash.empty() && result.size() < UPPER_BOUND;
+       // walk the stack
+       current_hash = std::move(next_hash))
   {
     // lookup the block in storage
     if (!LookupBlock(current_hash, block, &next_hash))
@@ -647,8 +660,6 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limi
     {
       break;
     }
-    // walk the stack
-    current_hash = std::move(next_hash);
   }
   if (current_hash.empty())
   {

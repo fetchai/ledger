@@ -323,28 +323,30 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   {
     current_peer_address_ = peer;
     Digest  start;
-    int64_t limit;
+    uint64_t limit;
     if (direction_ > 0)
     {
       if (left_edge_)
       {
-        limit = static_cast<int64_t>(left_edge_->block_number + MAX_CHAIN_REQUEST_SIZE - 1);
+        limit = left_edge_->block_number + MAX_CHAIN_REQUEST_SIZE - 1;
+	// such a check is well-defined for unsigned types
+	if (limit < left_edge_->block_number)
+	{
+		throw std::runtime_error("Main chain grew up too large, impossibly large");
+	}
         start = left_edge_->hash;
       }
       else
       {
-        limit = static_cast<int64_t>(MAX_CHAIN_REQUEST_SIZE - 1);
+        limit = MAX_CHAIN_REQUEST_SIZE - 1;
       }
     }
     else
     {
       assert(direction_ < 0);
       assert(bool(left_edge_));
-      if (left_edge_->block_number > MAX_POSSIBLE_CHAIN_LENGTH)
-      {
-        throw std::runtime_error("Main chain is too long to request");
-      }
-      limit = -static_cast<int64_t>(left_edge_->block_number);
+
+      limit = left_edge_->block_number;
       if (right_edge_)
       {
         start = right_edge_->hash;

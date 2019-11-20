@@ -29,8 +29,8 @@ namespace ledger {
 class MainChainProtocol : public service::Protocol
 {
 public:
-  using Blocks     = std::vector<Block>;
   using Travelogue = TimeTravelogue<Block>;
+  using Blocks     = Travelogue::Blocks;
 
   enum
   {
@@ -65,7 +65,7 @@ private:
     return Copy(blocks);
   }
 
-  Travelogue TimeTravel(Digest start, int64_t limit)
+  Travelogue TimeTravel(Digest start, uint64_t limit)
   {
     auto ret_val = chain_.TimeTravel(std::move(start), limit);
     return {Copy(ret_val.blocks), ret_val.next_direction};
