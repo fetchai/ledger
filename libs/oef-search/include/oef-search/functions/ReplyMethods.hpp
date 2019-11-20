@@ -41,7 +41,7 @@ void SendReply(const std::string &log_message, const Uri &uri, std::shared_ptr<P
             resp_pair, endpoint);
     reply_sender->submit();
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     FETCH_LOG_ERROR("SendReply", "Failed to send reply: ", e.what());
   }

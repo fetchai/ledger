@@ -16,3 +16,15 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
+#include <string>
+
+namespace fetch {
+namespace telemetry {
+namespace details {
+
+bool EndsWith(std::string const &value, std::string const &suffix);
+
+}  // namespace details
+}  // namespace telemetry
+}  // namespace fetch

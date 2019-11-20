@@ -394,9 +394,14 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
       layouts.insert(layouts.end(), std::make_move_iterator(txs.begin()),
                      std::make_move_iterator(txs.end()));
     }
-    catch (std::runtime_error &e)
+    catch (std::exception const &e)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET on TX store!");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Failed to resolve GET on TX store! Promise timed out: ", e.what());
+    }
+    catch (...)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET on TX store! Unknown error.");
     }
   }
 
@@ -488,7 +493,7 @@ StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const
     // wait for the document to be returned
     doc = promise->As<Document>();
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to get or create document, because: ", e.what());
     doc.failed = true;
@@ -511,7 +516,7 @@ StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key)
     // wait for the document response
     doc = promise->As<Document>();
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to get document, because: ", e.what());
 
@@ -534,7 +539,7 @@ void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
     // wait for the response
     promise->Wait();
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to call SET (store document), because: ", e.what());
   }
@@ -553,7 +558,7 @@ bool StorageUnitClient::Lock(ShardIndex index)
     // wait for the promise
     success = promise->As<bool>();
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to call Lock, because: ", e.what());
   }
@@ -574,7 +579,7 @@ bool StorageUnitClient::Unlock(ShardIndex index)
     // wait for the result
     success = promise->As<bool>();
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to call Unlock, because: ", e.what());
   }
