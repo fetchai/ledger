@@ -69,11 +69,13 @@ def linear_fit_table(param_bms, n_reps, bm_cls):
     lfit_table = []
     for (name, bm) in param_bms.items():
         if bm_cls in name:
-            lfit_table.append([name, bm['lfit'][0], bm['lfit'][1], bm['opcodes'],
-                               bm['baseline'], bm['net_opcodes']])
+            lfit_table.append([name, bm['lfit'][0], bm['lfit'][1], bm['net_mean'],
+                               bm['net_stderr'], bm['opcodes'], bm['baseline'],
+                               bm['net_opcodes']])
 
     headers = ['Benchmark (' + str(n_reps) + ' reps)', 'Slope (ns/char)',
-               'Intercept (ns)', 'Opcodes', 'Baseline', 'Net opcodes']
+               'Intercept (ns)', 'Mean (ns)', 'Std error (ns)', 'Opcodes',
+               'Baseline', 'Net opcodes']
 
     if len(lfit_table) > 0:
         print('\n', tabulate(lfit_table, headers=headers, floatfmt=".3f"))

@@ -45,12 +45,27 @@ def get_net_opcodes(ops, base_ops):
     return [x for x in ops if x not in base_copy or base_copy.remove(x)]
 
 
-def linear_fit(benchmarks, bm_type):
+def linear_fit(bms, bm_type):
 
     x = [bm['param_val']
-         for bm in benchmarks.values() if bm['type'] == bm_type]
-    y = [bm['net_mean'] for bm in benchmarks.values() if bm['type'] == bm_type]
+         for bm in bms.values() if bm['type'] == bm_type]
+    y = [bm['net_mean'] for bm in bms.values() if bm['type'] == bm_type]
     return np.polyfit(np.array(x, dtype=float), np.array(y), 1).tolist()
+
+
+def aggregate_stats(bms, bm_type, base_inds):
+
+    inds = [ind for (ind, bm) in bms.items() if bm['type'] == bm_type]
+    n_type = len(inds)
+    base_ind = base_inds[inds[0]]
+    means = np.array([bms[ind]['mean'] for ind in inds])
+    stddevs = np.array([bms[ind]['stddev'] for ind in inds])
+    agg_mean = np.mean(means)
+    agg_stddev = np.sqrt(np.mean(stddevs**2 + (means - agg_mean)**2))
+    agg_net_mean = agg_mean - bms[base_ind]['mean']
+    agg_net_stderr = np.sqrt((agg_stddev ** 2) / (n_reps*n_type) +
+                             (bms[base_ind]['stddev'] ** 2) / n_reps) ** 0.5
+    return agg_net_mean, agg_net_stderr
 
 
 # delete old file if it exists
@@ -79,7 +94,7 @@ with open(vm_benchmark_file) as csvfile:
 # create dicts from benchmark indices to names, baseline indices, and opcode lists
 bm_names = {int(row[0]): row[1] for row in opcode_rows}
 bm_inds = {row[1]: int(row[0]) for row in opcode_rows}
-base_inds = {bm_inds[row[1]]: bm_inds[row[2]] for row in opcode_rows}
+baseline_inds = {bm_inds[row[1]]: bm_inds[row[2]] for row in opcode_rows}
 opcodes = {int(row[0]): [int(op) for (i, op) in enumerate(row[3:])]
            for row in opcode_rows}
 
@@ -96,13 +111,13 @@ param_bm_classes = ['String', 'Array', 'Sha256']
 benchmarks = {ind: {'name': name,
                     'mean': means[ind],
                     'median': medians[ind],
-                    'stddevs': stddevs[ind],
-                    'baseline': bm_names[base_inds[ind]],
+                    'stddev': stddevs[ind],
+                    'baseline': bm_names[baseline_inds[ind]],
                     'opcodes': opcodes[ind],
-                    'net_mean': means[ind] - means[base_inds[ind]],
-                    'net_stderr': (stddevs[ind] ** 2 + stddevs[base_inds[ind]] ** 2) ** 0.5 / n_reps ** 0.5,
-                    'net_opcodes': get_net_opcodes(opcodes[ind], opcodes[base_inds[ind]]),
-                    'ext_opcodes': get_net_opcodes(opcodes[base_inds[ind]], opcodes[ind]),
+                    'net_mean': means[ind] - means[baseline_inds[ind]],
+                    'net_stderr': (stddevs[ind] ** 2 + stddevs[baseline_inds[ind]] ** 2) ** 0.5 / n_reps ** 0.5,
+                    'net_opcodes': get_net_opcodes(opcodes[ind], opcodes[baseline_inds[ind]]),
+                    'ext_opcodes': get_net_opcodes(opcodes[baseline_inds[ind]], opcodes[ind]),
                     'type': ''
                     } for (ind, name) in bm_names.items()}
 
@@ -131,7 +146,9 @@ param_bm_types = {bm['type'] for bm in benchmarks.values(
 param_bm_types = param_bm_types.union(tensor_bm_types)
 
 param_bms = {type_name: {'inds': [ind for (ind, bm) in benchmarks.items() if bm['type'] == type_name],
-                         'lfit': linear_fit(benchmarks, type_name)}
+                         'lfit': linear_fit(benchmarks, type_name),
+                         'net_mean': aggregate_stats(benchmarks, type_name, baseline_inds)[0],
+                         'net_stderr': aggregate_stats(benchmarks, type_name, baseline_inds)[1]}
              for type_name in param_bm_types}
 
 for (ind, param_bm) in param_bms.items():
