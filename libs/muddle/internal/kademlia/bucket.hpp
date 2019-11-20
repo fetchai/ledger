@@ -1,7 +1,7 @@
 #pragma once
 
-#include "muddle/kademlia/peer_info.hpp"
-#include "muddle/kademlia/primitives.hpp"
+#include "kademlia/peer_info.hpp"
+#include "kademlia/primitives.hpp"
 
 #include <deque>
 #include <vector>
@@ -20,12 +20,15 @@ struct Bucket
   std::deque<Peer> peers;
   Timepoint        last_updated;
 
+  /*
+  // TODO: Move from primitives
   static BucketId GetBucketID(KademliaDistance const &distance)
   {
     BucketId ret{0};
 
     return ret;
   }
+  */
 };
 
 }  // namespace muddle

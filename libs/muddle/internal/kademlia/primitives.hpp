@@ -1,5 +1,6 @@
 #pragma once
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "crypto/sha1.hpp"
 #include "muddle/packet.hpp"
 
@@ -8,8 +9,8 @@ namespace muddle {
 
 struct KademliaAddress
 {
-  using RawAddress = Packet::RawAddress;
-  using Hasher     = crypto::SHA1;
+  using Address = Packet::Address;
+  using Hasher  = crypto::SHA1;
 
   enum
   {
@@ -24,14 +25,31 @@ struct KademliaAddress
     }
   }
 
-  static KademliaAddress Create(RawAddress const &address)
+  static KademliaAddress Create(Address const &address)
   {
 
     KademliaAddress ret;
     Hasher          hasher;
-    hasher.Update(address.data(), address.size());
+    hasher.Update(address);
 
     hasher.Final(ret.words);
+
+    return ret;
+  }
+
+  static KademliaAddress FromByteArray(byte_array::ConstByteArray const &address)
+  {
+    KademliaAddress ret;
+
+    if (address.size() != ADDRESS_SIZE)
+    {
+      throw std::runtime_error("Kademlia address size mismatch.");
+    }
+
+    for (uint64_t i = 0; i < ADDRESS_SIZE; ++i)
+    {
+      ret.words[i] = address[i];
+    }
 
     return ret;
   }
@@ -39,6 +57,19 @@ struct KademliaAddress
   constexpr uint64_t size() const
   {
     return ADDRESS_SIZE;
+  }
+
+  byte_array::ByteArray ToByteArray() const
+  {
+    byte_array::ByteArray ret;
+    ret.Resize(ADDRESS_SIZE);
+
+    for (uint64_t i = 0; i < ret.size(); ++i)
+    {
+      ret[i] = words[i];
+    }
+
+    return ret;
   }
 
   uint8_t words[ADDRESS_SIZE];
@@ -101,4 +132,31 @@ inline uint64_t GetBucket(KademliaDistance const &dist)
 }
 
 }  // namespace muddle
+
+namespace serializers {
+
+template <typename D>
+struct ForwardSerializer<muddle::KademliaAddress, D>
+{
+public:
+  using Type       = muddle::KademliaAddress;
+  using DriverType = D;
+
+  template <typename Serializer>
+  static void Serialize(Serializer &serializer, Type const &adr)
+  {
+    serializer << adr.ToByteArray();
+  }
+
+  template <typename Deserializer>
+  static void Deserialize(Deserializer &deserializer, Type &adr)
+  {
+    byte_array::ConstByteArray a;
+    deserializer >> a;
+    adr = Type::FromByteArray(a);
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch

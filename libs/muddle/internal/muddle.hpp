@@ -33,6 +33,7 @@
 #include "muddle/network_id.hpp"
 #include "muddle/rpc/server.hpp"
 #include "network/details/thread_pool.hpp"
+
 #include "network/service/promise.hpp"
 #include "network/tcp/abstract_server.hpp"
 #include "network/uri.hpp"
@@ -55,6 +56,7 @@ namespace muddle {
 class MuddleRegister;
 class MuddleEndpoint;
 class PeerSelector;
+class PeerTracker;
 
 /**
  * The Top Level object for the muddle networking stack.
@@ -126,6 +128,7 @@ public:
   using Handle          = network::AbstractConnection::ConnectionHandleType;
   using Server          = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList      = std::vector<Server>;
+  using PeerTrackerPtr  = std::shared_ptr<PeerTracker>;
 
   struct ConnectionData
   {
@@ -176,7 +179,7 @@ public:
   Addresses         GetRequestedPeers() const override;
   void              ConnectTo(Address const &address) override;
   void              ConnectTo(Addresses const &addresses) override;
-  void              ConnectTo(network::Uri const &uri);  // TODO: override
+  void              ConnectTo(network::Uri const &uri) override;
   void              ConnectTo(Address const &address, network::Uri const &uri_hint) override;
   void              ConnectTo(AddressHints const &address_hints) override;
   void              DisconnectFrom(Address const &address) override;
@@ -194,6 +197,7 @@ public:
   PeerConnectionList const &  connection_list() const;
   DirectMessageService const &direct_message_service() const;
   PeerSelector const &        peer_selector() const;
+  PeerTracker const &         peer_tracker() const;
   ServerList const &          servers() const;
   /// @}
 
@@ -238,6 +242,7 @@ private:
   core::RunnablePtr    maintenance_periodic_;
   DirectMessageService direct_message_service_;
   PeerSelectorPtr      peer_selector_;
+  PeerTrackerPtr       peer_tracker_;
 
   // Services
   rpc::Server      rpc_server_;

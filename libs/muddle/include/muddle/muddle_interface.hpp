@@ -227,6 +227,13 @@ public:
   virtual void ConnectTo(Addresses const &addresses) = 0;
 
   /**
+   * Request that muddle attempts to connect to the specified URI.
+   *
+   * @param uri The URI
+   */
+  virtual void ConnectTo(network::Uri const &uri) = 0;
+
+  /**
    * Connect to a specified address with the provided URI hint
    *
    * @param address The address to connect to

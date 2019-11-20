@@ -21,18 +21,18 @@
 
 namespace fetch {
 
-static constexpr uint16_t SERVICE_MUDDLE     = 0;  // reserved
-static constexpr uint16_t SERVICE_P2P        = 1001;
-static constexpr uint16_t SERVICE_MAIN_CHAIN = 2002;
-static constexpr uint16_t SERVICE_LANE       = 3003;
-static constexpr uint16_t SERVICE_LANE_CTRL  = 3004;
-static constexpr uint16_t SERVICE_SHARD_MGMT = 3100;
-static constexpr uint16_t SERVICE_EXECUTOR   = 4004;
-static constexpr uint16_t SERVICE_DAG        = 4005;
-static constexpr uint16_t SERVICE_RBC        = 5001;
-static constexpr uint16_t SERVICE_DKG        = 6001;
-static constexpr uint16_t SERVICE_PBC        = 7001;
-static constexpr uint16_t SERVICE_DMLF       = 8001;
+static constexpr uint16_t SERVICE_MUDDLE              = 0;  // reserved
+static constexpr uint16_t SERVICE_MUDDLE_PEER_TRACKER = 101;
+static constexpr uint16_t SERVICE_MAIN_CHAIN          = 2002;
+static constexpr uint16_t SERVICE_LANE                = 3003;
+static constexpr uint16_t SERVICE_LANE_CTRL           = 3004;
+static constexpr uint16_t SERVICE_SHARD_MGMT          = 3100;
+static constexpr uint16_t SERVICE_EXECUTOR            = 4004;
+static constexpr uint16_t SERVICE_DAG                 = 4005;
+static constexpr uint16_t SERVICE_RBC                 = 5001;
+static constexpr uint16_t SERVICE_DKG                 = 6001;
+static constexpr uint16_t SERVICE_PBC                 = 7001;
+static constexpr uint16_t SERVICE_DMLF                = 8001;
 
 static constexpr uint16_t SERVICE_MESSENGER     = 9001;
 static constexpr uint16_t SERVICE_MSG_TRANSPORT = 10001;
@@ -70,6 +70,7 @@ static constexpr uint64_t CHANNEL_MESSENGER_TRANSPORT = 601;
 // RPC Protocol identifiers
 static constexpr uint64_t RPC_SHARD_MGMT        = 10;
 static constexpr uint64_t RPC_MUDDLE_DISCOVERY  = 100;
+static constexpr uint64_t RPC_MUDDLE_KADEMLIA   = 127;
 static constexpr uint64_t RPC_MAIN_CHAIN        = 199;
 static constexpr uint64_t RPC_IDENTITY          = 200;
 static constexpr uint64_t RPC_STATE             = 201;

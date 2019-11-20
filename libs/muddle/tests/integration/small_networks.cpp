@@ -19,8 +19,14 @@
 #include "muddle.hpp"
 #include "router.hpp"
 
+#include "core/byte_array/encoders.hpp"
+#include "core/random/lfg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
+#include "crypto/sha256.hpp"
+#include "muddle/kademlia/address_priority.hpp"
+#include "muddle/kademlia/peer_tracker.hpp"
+#include "muddle/kademlia/table.hpp"
 #include "network/management/network_manager.hpp"
 
 #include "gtest/gtest.h"
@@ -30,6 +36,13 @@
 #include <memory>
 #include <thread>
 
+using namespace fetch;
+using ConstByteArray = byte_array::ConstByteArray;
+using ByteArray      = byte_array::ByteArray;
+using Address        = typename muddle::Packet::Address;
+using KademliaTable  = muddle::KademliaTable;
+using namespace fetch::muddle;
+
 namespace {
 
 using NetworkManager    = fetch::network::NetworkManager;
@@ -38,7 +51,6 @@ using Uri               = fetch::network::Uri;
 using Muddle            = fetch::muddle::Muddle;
 using MuddlePtr         = std::shared_ptr<Muddle>;
 using Payload           = fetch::muddle::Packet::Payload;
-using Address           = Muddle::Address;
 using MuddlePtr         = std::shared_ptr<Muddle>;
 using Certificate       = fetch::crypto::Prover;
 using CertificatePtr    = std::unique_ptr<Certificate>;
@@ -124,6 +136,63 @@ void LinearConnectivity(std::unique_ptr<Network> &network)
     node.muddle->ConnectTo(fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(8001 + i)));
   }
 }
+
+Address FakeAddress(uint64_t i)
+{
+  Address        ret;
+  crypto::SHA256 hasher;
+
+  hasher.Update(reinterpret_cast<uint8_t *>(&i), sizeof(uint64_t));
+  ret = hasher.Final();
+
+  return ret;
+}
+
+KademliaAddress FakeKademliaAddress(std::initializer_list<uint8_t> vals)
+{
+  KademliaAddress ret;
+  uint64_t        i = vals.size();
+
+  for (auto &v : vals)
+  {
+    --i;
+    ret.words[i] = v;
+    if (i == 0)
+    {
+      break;
+    }
+  }
+  return ret;
+}
+
+ConstByteArray ReadibleAddress(Address const &address)
+{
+  ByteArray ret;
+  ret.Resize(address.size());
+  std::memcpy(ret.pointer(), address.pointer(), address.size());
+  return byte_array::ToBase64(ret);
+}
+
+ConstByteArray ReadibleKadAddress(KademliaAddress const &address)
+{
+  ByteArray ret;
+
+  ret.Resize(address.size());
+  std::memcpy(ret.pointer(), address.words, address.size());
+
+  return byte_array::ToHex(ret);
+}
+
+ConstByteArray ReadibleDistance(KademliaDistance const &dist)
+{
+  ByteArray ret;
+
+  ret.Resize(dist.size());
+  std::memcpy(ret.pointer(), dist.data(), dist.size());
+
+  return byte_array::ToHex(ret);
+}
+
 /*
 TEST(SmallNetworks, TestConnectivityNormalMode)
 {
@@ -152,7 +221,135 @@ TEST(SmallNetworks, TestConnectivityNormalMode)
   network->Stop();
 }
 */
-/*
+
+TEST(SmallNetworks, OrganisingAddressPriority)
+{
+  AddressPriority optimal_connection;
+  optimal_connection.address          = FakeAddress(0);
+  optimal_connection.persistent       = true;
+  optimal_connection.bucket           = 1;  // Good location
+  optimal_connection.connection_value = 1;  // Good behavious
+  optimal_connection.connected_since =
+      std::chrono::system_clock::now() - std::chrono::seconds(4 * 3600);
+  optimal_connection.UpdatePriority();
+
+  // Good location, good behaviour and long term service should give close to
+  // top rating. Naturally, we expect that persistent connection
+  // is preferable
+  EXPECT_LT(0.96, optimal_connection.priority);
+  EXPECT_TRUE(optimal_connection.PreferablyPersistent());
+
+  AddressPriority mediocre_loc;
+  mediocre_loc.address          = FakeAddress(0);
+  mediocre_loc.persistent       = true;
+  mediocre_loc.bucket           = 1;  // Good location
+  mediocre_loc.connection_value = 0;  // Not good, nor bad.
+  mediocre_loc.connected_since  = std::chrono::system_clock::now() - std::chrono::seconds(4 * 3600);
+  mediocre_loc.UpdatePriority();
+
+  // Good location, but no evidence of good behaviour should put
+  // a node somewhere around the middle
+  EXPECT_LT(0.4, mediocre_loc.priority);
+  EXPECT_LT(mediocre_loc.priority, 0.6);
+  EXPECT_TRUE(mediocre_loc.PreferablyPersistent());
+
+  AddressPriority mediocre_beh;
+  mediocre_beh.address          = FakeAddress(0);
+  mediocre_beh.persistent       = true;
+  mediocre_beh.bucket           = static_cast<uint64_t>(-1);  // Bad location
+  mediocre_beh.connection_value = 1;                          // Good behaviour
+  mediocre_beh.connected_since  = std::chrono::system_clock::now() - std::chrono::seconds(4 * 3600);
+  mediocre_beh.UpdatePriority();
+
+  // We value good behaviour slightly worse than good location
+  EXPECT_LT(0.3, mediocre_beh.priority);
+  EXPECT_LT(mediocre_beh.priority, 0.5);
+
+  // We don't expect good behaviour alone to account
+  // for persistent connection.
+  EXPECT_FALSE(mediocre_beh.PreferablyPersistent());
+
+  AddressPriority optimal_gone_bad;
+  optimal_gone_bad.address          = FakeAddress(0);
+  optimal_gone_bad.persistent       = true;
+  optimal_gone_bad.bucket           = 1;   // Good location
+  optimal_gone_bad.connection_value = -1;  // Very bad behaviour
+  optimal_gone_bad.connected_since =
+      std::chrono::system_clock::now() - std::chrono::seconds(4 * 3600);
+  optimal_gone_bad.UpdatePriority();
+
+  // Getting lowest ranking should immediately drag you to the bottom
+  // 1% of the nodes.
+  EXPECT_LT(optimal_gone_bad.priority, 0.01);
+  EXPECT_FALSE(optimal_gone_bad.PreferablyPersistent());
+
+  AddressPriority long_term_disconnect = optimal_connection;
+  long_term_disconnect.ScheduleDisconnect();
+  long_term_disconnect.UpdatePriority();
+  EXPECT_LT(long_term_disconnect.priority, 0.05);
+  EXPECT_TRUE(long_term_disconnect.PreferablyPersistent());
+
+  AddressPriority poor_permanent;
+  poor_permanent.address          = FakeAddress(0);
+  poor_permanent.persistent       = true;
+  poor_permanent.bucket           = static_cast<uint64_t>(-1);
+  poor_permanent.connection_value = 0;
+  poor_permanent.connected_since  = std::chrono::system_clock::now() - std::chrono::seconds(30);
+  poor_permanent.UpdatePriority();
+  EXPECT_LT(0.05, poor_permanent.priority);
+  EXPECT_LT(poor_permanent.priority, 0.10);
+  EXPECT_FALSE(poor_permanent.PreferablyPersistent());
+
+  AddressPriority good_temporary;
+  good_temporary.address          = FakeAddress(0);
+  good_temporary.persistent       = false;
+  good_temporary.connection_value = 0;
+  good_temporary.desired_expiry   = std::chrono::system_clock::now() + std::chrono::seconds(30);
+  good_temporary.connected_since  = std::chrono::system_clock::now() - std::chrono::seconds(30);
+  good_temporary.bucket           = static_cast<uint64_t>(-1);
+  good_temporary.UpdatePriority();
+  EXPECT_FALSE(good_temporary.PreferablyPersistent());
+
+  AddressPriority good_temporary_close_to_expiry;
+  good_temporary_close_to_expiry.address          = FakeAddress(0);
+  good_temporary_close_to_expiry.persistent       = false;
+  good_temporary_close_to_expiry.connection_value = 0;
+  good_temporary_close_to_expiry.desired_expiry =
+      std::chrono::system_clock::now() + std::chrono::seconds(1);
+  good_temporary_close_to_expiry.connected_since =
+      std::chrono::system_clock::now() - std::chrono::seconds(59);
+  good_temporary_close_to_expiry.bucket = static_cast<uint64_t>(-1);
+  good_temporary_close_to_expiry.UpdatePriority();
+  EXPECT_FALSE(good_temporary_close_to_expiry.PreferablyPersistent());
+
+  // We expect a connection close to expiry to have lower priority
+  // than one with high priority.
+  EXPECT_LT(good_temporary_close_to_expiry, good_temporary);
+
+  AddressPriority good_temporary_should_upgrade;
+  good_temporary_should_upgrade.address          = FakeAddress(0);
+  good_temporary_should_upgrade.persistent       = false;
+  good_temporary_should_upgrade.connection_value = 0;
+  good_temporary_should_upgrade.desired_expiry   = std::chrono::system_clock::now();
+  -std::chrono::seconds(30);
+  good_temporary_should_upgrade.connected_since =
+      std::chrono::system_clock::now() - std::chrono::seconds(60);
+  good_temporary_should_upgrade.bucket = static_cast<uint64_t>(1);
+  good_temporary_should_upgrade.UpdatePriority();
+  EXPECT_TRUE(good_temporary_should_upgrade.PreferablyPersistent());
+
+  // We expect anew temporary connection to exceed another one
+  // if the
+  EXPECT_LT(good_temporary_should_upgrade.priority, good_temporary.priority);
+
+  EXPECT_LT(0.10, good_temporary.priority);
+  EXPECT_LT(mediocre_loc, optimal_connection);
+  EXPECT_LT(optimal_gone_bad, mediocre_loc);
+  EXPECT_LT(optimal_gone_bad, long_term_disconnect);
+  EXPECT_LT(optimal_gone_bad, good_temporary);
+  EXPECT_LT(poor_permanent, good_temporary);
+}
+
 TEST(SmallNetworks, TestConnectivityKademliaMode)
 {
   uint64_t N       = 10;
@@ -185,76 +382,8 @@ TEST(SmallNetworks, TestConnectivityKademliaMode)
 
   network->Stop();
 }
-*/
+
 }  // namespace
-
-#include "core/byte_array/encoders.hpp"
-#include "core/random/lfg.hpp"
-#include "crypto/sha256.hpp"
-#include "muddle/kademlia/table.hpp"
-
-using namespace fetch;
-using ConstByteArray = byte_array::ConstByteArray;
-using ByteArray      = byte_array::ByteArray;
-using RawAddress     = typename muddle::Packet::RawAddress;
-using KademliaTable  = muddle::KademliaTable;
-using namespace fetch::muddle;
-
-RawAddress FakeAddress(uint64_t i)
-{
-  RawAddress     ret;
-  crypto::SHA256 hasher;
-
-  hasher.Update(reinterpret_cast<uint8_t *>(&i), sizeof(uint64_t));
-  hasher.Final(ret.data());
-
-  return ret;
-}
-
-KademliaAddress FakeKademliaAddress(std::initializer_list<uint8_t> vals)
-{
-  KademliaAddress ret;
-  uint64_t        i = vals.size();
-
-  for (auto &v : vals)
-  {
-    --i;
-    ret.words[i] = v;
-    if (i == 0)
-    {
-      break;
-    }
-  }
-  return ret;
-}
-
-ConstByteArray ReadibleAddress(RawAddress address)
-{
-  ByteArray ret;
-  ret.Resize(address.size());
-  std::memcpy(ret.pointer(), address.data(), address.size());
-  return byte_array::ToBase64(ret);
-}
-
-ConstByteArray ReadibleKadAddress(KademliaAddress const &address)
-{
-  ByteArray ret;
-
-  ret.Resize(address.size());
-  std::memcpy(ret.pointer(), address.words, address.size());
-
-  return byte_array::ToHex(ret);
-}
-
-ConstByteArray ReadibleDistance(KademliaDistance const &dist)
-{
-  ByteArray ret;
-
-  ret.Resize(dist.size());
-  std::memcpy(ret.pointer(), dist.data(), dist.size());
-
-  return byte_array::ToHex(ret);
-}
 
 TEST(SmallNetworks, BasicAddressTests)
 {

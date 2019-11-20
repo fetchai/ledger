@@ -16,14 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
+#include "kademlia/peer_tracker.hpp"
 #include "muddle.hpp"
 #include "muddle_register.hpp"
 #include "muddle_registry.hpp"
 #include "peer_list.hpp"
 #include "peer_selector.hpp"
 
+#include "core/string/trim.hpp"
 #include "muddle/muddle_status.hpp"
 #include "variant/variant.hpp"
+
+#include <chrono>
+#include <ctime>
 
 namespace fetch {
 namespace muddle {
@@ -99,6 +104,72 @@ void BuildPeerSelection(PeerSelector const &peer_selector, variant::Variant &out
   BuildPeerSet(peer_selector.GetDesiredPeers(), output["desiredPeers"]);
   BuildPeerSet(peer_selector.GetKademliaPeers(), output["kademliaPeers"]);
   BuildPeerInfo(peer_selector, output["peerInfo"]);
+}
+
+/// TODO
+
+void BuildConnectionPriorities(PeerTracker const &peer_tracker, variant::Variant &output)
+{
+  auto                         priorities_map = peer_tracker.connection_priority();
+  std::vector<AddressPriority> priorities;
+  for (auto &p : priorities_map)
+  {
+    priorities.push_back(p.second);
+  }
+
+  output = variant::Variant::Array(priorities.size());
+
+  // Updating priorities
+  for (auto &p : priorities)
+  {
+    p.UpdatePriority();
+  }
+
+  std::sort(priorities.begin(), priorities.end(), [](auto const &a, auto const &b) -> bool {
+    // Making highest priority appear first
+    return a.priority > b.priority;
+  });
+
+  std::size_t       idx{0};
+  std::stringstream ss;
+  for (auto const &entry : priorities)
+  {
+    auto &output_peer = output[idx] = variant::Variant::Object();
+    output_peer["address"]          = entry.address.ToBase64();
+    output_peer["priority"]         = entry.priority;
+    output_peer["persistent"]       = entry.persistent;
+    output_peer["bucket"]           = entry.bucket;
+    output_peer["connection_value"] = entry.connection_value;
+    output_peer["is_connected"]     = entry.is_connected;
+
+    std::time_t t1 = std::chrono::system_clock::to_time_t(entry.connected_since);
+
+    auto ts1 = static_cast<std::string>(std::ctime(&t1));
+    string::Trim(ts1);
+    output_peer["connected_since"] = ts1;
+
+    std::time_t t2  = std::chrono::system_clock::to_time_t(entry.desired_expiry);
+    auto        ts2 = static_cast<std::string>(std::ctime(&t2));
+    string::Trim(ts2);
+
+    output_peer["desired_expiry"] = ts2;
+    ++idx;
+  }
+  std::cout << ss.str() << std::endl;
+}
+
+/**
+ * Build the JSON representation of a PeerTracker internal status
+ * // TODO
+ * @param peer_selector The input peer selector
+ * @param output The output variant object
+ */
+void BuildPeerTracker(PeerTracker const &peer_tracker, variant::Variant &output)
+{
+  output = variant::Variant::Object();
+  BuildConnectionPriorities(peer_tracker, output["connectionPriority"]);
+  //  BuildPeerSet(peer_selector.GetKademliaPeers(), output["kademliaPeers"]);
+  //  BuildPeerInfo(peer_selector, output["peerInfo"]);
 }
 
 /**
@@ -208,6 +279,7 @@ void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output, bool exte
   BuildConnectionList(muddle.connection_register(), output["connections"]);
   BuildPeerLists(muddle.connection_list(), output["peers"]);
   BuildPeerSelection(muddle.peer_selector(), output["peerSelection"]);
+  BuildPeerTracker(muddle.peer_tracker(), output["peerTracker"]);
   BuildRoutingTable(muddle.router().routing_table(), output["routingTable"]);
 
   if (extended)

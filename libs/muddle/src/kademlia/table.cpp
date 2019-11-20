@@ -1,4 +1,4 @@
-#include "muddle/kademlia/table.hpp"
+#include "kademlia/table.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "crypto/sha1.hpp"
@@ -6,12 +6,12 @@
 namespace fetch {
 namespace muddle {
 
-KademliaTable::KademliaTable(RawAddress const &own_address)
+KademliaTable::KademliaTable(Address const &own_address)
   : own_address_{KademliaAddress::Create(own_address)}
 {}
 
 // TODO: This might not be what we want to do
-Peers KademliaTable::ProposePermanentConnections() const
+KademliaTable::Peers KademliaTable::ProposePermanentConnections() const
 {
   FETCH_LOCK(mutex_);
 
@@ -35,7 +35,7 @@ Peers KademliaTable::ProposePermanentConnections() const
   return ret;
 }
 
-Peers KademliaTable::FindPeer(RawAddress const &address)
+KademliaTable::Peers KademliaTable::FindPeer(Address const &address)
 {
   FETCH_LOCK(mutex_);
 
@@ -114,8 +114,7 @@ Peers KademliaTable::FindPeer(RawAddress const &address)
   return ret;
 }
 
-// TODO: add URI
-void KademliaTable::ReportLiveliness(RawAddress const &address)
+void KademliaTable::ReportLiveliness(Address const &address, PeerInfo const &info)
 {
   FETCH_LOCK(mutex_);
 
@@ -157,15 +156,14 @@ void KademliaTable::ReportLiveliness(RawAddress const &address)
     else
     {
       // Discovered a new peer.
-      peerinfo                   = std::make_shared<PeerInfo>();
-      peerinfo->address          = address;
+      peerinfo                   = std::make_shared<PeerInfo>(info);
       peerinfo->kademlia_address = other;
       peerinfo->distance         = dist;
-      // TODO: Obtain URI
+      peerinfo->address          = address;
 
       // Ensures that peer information persists over time
       // even if the peer disappears from the bucket.
-      know_peers_[address] = know_peers_;
+      know_peers_[address] = peerinfo;
     }
   }
 
@@ -182,6 +180,14 @@ void KademliaTable::ReportLiveliness(RawAddress const &address)
     bucket.peers.pop_front();
   }
 }
+
+void KademliaTable::ReportExistence(PeerInfo const &info)
+{
+  know_peers_[info.address] = std::make_shared<PeerInfo>(info);
+}
+
+void KademliaTable::ReportFailure(Address const &address)
+{}
 
 }  // namespace muddle
 }  // namespace fetch

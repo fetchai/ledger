@@ -1,3 +1,4 @@
+
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -27,6 +28,7 @@
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
+#include "kademlia/peer_tracker.hpp"
 #include "logging/logging.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
@@ -72,6 +74,8 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , peer_selector_(std::make_shared<PeerSelector>(
         network_id, std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_, *register_,
         clients_, router_))
+  , peer_tracker_(PeerTracker::New(std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_,
+                                   *register_, clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
 {
   // handle the left issues
@@ -79,6 +83,9 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
     router_.ConnectionDropped(handle);
     direct_message_service_.SignalConnectionLeft(handle);
   });
+
+  register_->OnConnectionEntered(
+      [this](Handle handle) { peer_tracker_->AddConnectionHandleToQueue(handle); });
 
   // register the status update
   clients_.SetStatusCallback(
@@ -95,6 +102,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
 
   reactor_.Attach(maintenance_periodic_);
   reactor_.Attach(peer_selector_);
+  reactor_.Attach(peer_tracker_);
 }
 
 Muddle::~Muddle()
@@ -155,6 +163,9 @@ bool Muddle::Start(Uris const &peers, Ports const &ports)
   {
     CreateTcpServer(port);
   }
+
+  // Updating tracker to
+  peer_tracker_->SetMuddlePorts(ports);
 
   // schedule the maintenance (which shall force the connection of the peers)
   RunPeriodicMaintenance();
@@ -520,6 +531,11 @@ DirectMessageService const &Muddle::direct_message_service() const
 PeerSelector const &Muddle::peer_selector() const
 {
   return *peer_selector_;
+}
+
+PeerTracker const &Muddle::peer_tracker() const
+{
+  return *peer_tracker_;
 }
 
 Muddle::ServerList const &Muddle::servers() const

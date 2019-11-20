@@ -40,8 +40,8 @@ namespace {
 using namespace std::chrono;
 using namespace std::chrono_literals;
 
-constexpr auto        MIN_ANNOUNCEMENT_INTERVAL = 15min;
-constexpr auto        MAX_ANNOUNCEMENT_INTERVAL = 30min;
+constexpr auto        MIN_ANNOUNCEMENT_INTERVAL = 1s;  // 15min;
+constexpr auto        MAX_ANNOUNCEMENT_INTERVAL = 2s;  // 30min;
 constexpr std::size_t MINIMUM_PEERS             = 3;
 constexpr char const *BASE_NAME                 = "PeerSelector";
 constexpr std::size_t MAX_CACHE_KAD_NODES       = 20;

@@ -365,6 +365,11 @@ public:
     throw std::runtime_error("ConnectTo x functionality not implemented");
   }
 
+  void ConnectTo(network::Uri const & /*uri*/) override
+  {
+    throw std::runtime_error("ConnectTo x functionality not implemented");
+  }
+
   void ConnectTo(Address const &address, network::Uri const & /*uri_hint*/) override
   {
     FakeNetwork::Connect(node_address_, address);
