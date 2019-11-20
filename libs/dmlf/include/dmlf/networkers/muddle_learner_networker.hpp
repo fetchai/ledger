@@ -21,12 +21,14 @@
 #include "core/macros.hpp"
 #include "crypto/ecdsa.hpp"
 #include "dmlf/networkers/abstract_learner_networker.hpp"
+#include "json/document.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/peer.hpp"
 #include "network/service/protocol.hpp"
+
 #include <memory>
 
 namespace fetch {
@@ -62,6 +64,11 @@ public:
       const std::string &cloud_config, std::size_t instance_number,
       const std::shared_ptr<NetworkManager> &netm        = std::shared_ptr<NetworkManager>(),
       MuddleChannel                          channel_tmp = MuddleChannel::DEFAULT);
+  MuddleLearnerNetworker(
+      fetch::json::JSONDocument &cloud_config, std::size_t instance_number,
+      const std::shared_ptr<NetworkManager> &netm        = std::shared_ptr<NetworkManager>(),
+      MuddleChannel                          channel_tmp = MuddleChannel::DEFAULT);
+
   ~MuddleLearnerNetworker() override                          = default;
   MuddleLearnerNetworker(MuddleLearnerNetworker const &other) = delete;
   MuddleLearnerNetworker &operator=(MuddleLearnerNetworker const &other)  = delete;
@@ -106,6 +113,8 @@ protected:
   MuddleChannel channel_tmp_;
 
 private:
+  void NetworkConfigInit(fetch::json::JSONDocument &cloud_config, std::size_t instance_number,
+                         const std::shared_ptr<NetworkManager> &netm);
 };
 
 }  // namespace dmlf

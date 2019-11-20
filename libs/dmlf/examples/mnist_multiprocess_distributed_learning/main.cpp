@@ -26,11 +26,11 @@
 
 #include <algorithm>
 #include <iostream>
+#include <limits.h>
 #include <string>
 #include <thread>
-#include <vector>
 #include <unistd.h>
-#include <limits.h>
+#include <vector>
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -43,6 +43,29 @@ using SizeType         = fetch::math::SizeType;
 
 #define HOST_NAME_MAX 12
 
+/**
+ * helper function for stripping instance number from hostname
+ */
+std::uint64_t InstanceFromHostname(std::string &hostname)
+{
+  std::size_t current  = 0;
+  std::size_t previous = 0;
+  std::string instance;
+  std::string delim{'-'};
+
+  current = hostname.find(delim);
+  while (current != std::string::npos)
+  {
+    previous = current + 1;
+    current  = hostname.find(delim, previous);
+  }
+  instance = (hostname.substr(previous, current - previous));
+
+  std::cout << "instance: " << instance << std::endl;
+
+  return std::stoul("1");
+}
+
 int main(int argc, char **argv)
 {
   // This example will create muddle networking distributed client with simple classification neural
@@ -50,23 +73,18 @@ int main(int argc, char **argv)
 
   if (argc != 3)
   {
-    std::cout << "learner_config.json networker_config" << std::endl;
+    std::cout << "learner_config.json networker_config.json" << std::endl;
     return 1;
   }
 
-  auto networker_config = std::string(argv[2]);
-
-  // grab the host name
+  // get the host name
   char tmp_hostname[HOST_NAME_MAX];
   gethostname(tmp_hostname, HOST_NAME_MAX);
   std::string host_name(tmp_hostname);
   std::cout << "host_name: " << host_name << std::endl;
+  std::uint64_t instance_number = InstanceFromHostname(host_name);
 
-//  int  instance_number  = std::atoi(argv[3]);
-
-
-
-
+  // get the config file
   fetch::json::JSONDocument                                doc;
   fetch::dmlf::collective_learning::ClientParams<DataType> client_params =
       fetch::dmlf::collective_learning::utilities::ClientParamsFromJson<TensorType>(
@@ -78,6 +96,10 @@ int main(int argc, char **argv)
   auto n_peers        = doc["n_peers"].As<SizeType>();
   auto test_set_ratio = doc["test_set_ratio"].As<float>();
 
+  // get the network config file
+  fetch::json::JSONDocument network_doc;
+  network_doc.Parse(argv[2]);
+
   /**
    * Prepare environment
    */
@@ -88,7 +110,7 @@ int main(int argc, char **argv)
 
   // Create networker and assign shuffle algorithm
   auto networker =
-      std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(networker_config, instance_number);
+      std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(network_doc, instance_number);
   networker->Initialize<fetch::dmlf::Update<TensorType>>();
   networker->SetShuffleAlgorithm(
       std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));

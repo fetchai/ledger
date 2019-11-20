@@ -52,50 +52,16 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
 {
   json::JSONDocument doc{cloud_config};
 
-  if (netm)
-  {
-    netm_ = netm;
-  }
-  else
-  {
-    netm_ = std::make_shared<NetworkManager>("LrnrNet", 4);
-  }
-  netm_->Start();
+  NetworkConfigInit(doc, instance_number, netm);
+}
 
-  auto my_config = doc.root()["peers"][instance_number];
-  auto self_uri  = Uri(my_config["uri"].As<std::string>());
-  auto port      = self_uri.GetTcpPeer().port();
-  auto privkey   = my_config["key"].As<std::string>();
-
-  ident_ = LoadIdentity(privkey);
-
-  auto addr = self_uri.GetTcpPeer().address();
-
-  mud_ = muddle::CreateMuddle("Test", ident_, *(this->netm_), addr);
-  mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
-
-  std::unordered_set<std::string> initial_peers;
-  if (instance_number > 0)
-  {
-    initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
-  }
-
-  mud_->Start(initial_peers, {port});
-
-  server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
-  proto_  = std::make_shared<MuddleLearnerNetworkerProtocol>(*this);
-
-  server_->Add(RPC_DMLF, proto_.get());
-
-  auto config_peers = doc.root()["peers"];
-
-  for (std::size_t peer_number = 0; peer_number < config_peers.size(); peer_number++)
-  {
-    if (peer_number != instance_number)
-    {
-      peers_.emplace_back(config_peers[peer_number]["pub"].As<std::string>());
-    }
-  }
+MuddleLearnerNetworker::MuddleLearnerNetworker(fetch::json::JSONDocument &cloud_config,
+                                               std::size_t                instance_number,
+                                               const std::shared_ptr<NetworkManager> &netm,
+                                               MuddleChannel                          channel_tmp)
+  : channel_tmp_{channel_tmp}
+{
+  NetworkConfigInit(cloud_config, instance_number, netm);
 }
 
 // TOFIX remove return value
@@ -179,6 +145,57 @@ MuddleLearnerNetworker::CertificatePtr MuddleLearnerNetworker::LoadIdentity(
   signer->Load(FromBase64(privkey));
 
   return signer;
+}
+
+void MuddleLearnerNetworker::NetworkConfigInit(fetch::json::JSONDocument &doc,
+                                               std::size_t                instance_number,
+                                               const std::shared_ptr<NetworkManager> &netm)
+{
+
+  if (netm)
+  {
+    netm_ = netm;
+  }
+  else
+  {
+    netm_ = std::make_shared<NetworkManager>("LrnrNet", 4);
+  }
+  netm_->Start();
+
+  auto my_config = doc.root()["peers"][instance_number];
+  auto self_uri  = Uri(my_config["uri"].As<std::string>());
+  auto port      = self_uri.GetTcpPeer().port();
+  auto privkey   = my_config["key"].As<std::string>();
+
+  ident_ = LoadIdentity(privkey);
+
+  auto addr = self_uri.GetTcpPeer().address();
+
+  mud_ = muddle::CreateMuddle("Test", ident_, *(this->netm_), addr);
+  mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
+
+  std::unordered_set<std::string> initial_peers;
+  if (instance_number > 0)
+  {
+    initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
+  }
+
+  mud_->Start(initial_peers, {port});
+
+  server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
+  proto_  = std::make_shared<MuddleLearnerNetworkerProtocol>(*this);
+
+  server_->Add(RPC_DMLF, proto_.get());
+
+  auto config_peers = doc.root()["peers"];
+
+  for (std::size_t peer_number = 0; peer_number < config_peers.size(); peer_number++)
+  {
+    if (peer_number != instance_number)
+    {
+      peers_.emplace_back(config_peers[peer_number]["pub"].As<std::string>());
+    }
+  }
 }
 
 }  // namespace dmlf
