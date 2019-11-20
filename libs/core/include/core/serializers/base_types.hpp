@@ -1008,13 +1008,13 @@ struct MapSerializerTemplate
 template <uint8_t K, class F, F f>
 struct SerializedStructField
 {
-  template <class Map, class T>
+  template <class T, class Map>
   static constexpr void Serialize(T &&t, Map &map)
   {
     map.Append(K, std::forward<T>(t).*f);
   }
 
-  template <class Map, class T>
+  template <class T, class Map>
   static constexpr void Deserialize(T &&t, Map &map)
   {
     map.ExpectKeyGetValue(K, std::forward<T>(t).*f);
