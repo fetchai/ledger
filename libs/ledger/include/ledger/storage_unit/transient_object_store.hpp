@@ -95,7 +95,6 @@ private:
   {
     Populating,
     Writing,
-    Flushing
   };
 
   using StateMachinePtr = std::shared_ptr<core::StateMachine<Phase>>;
@@ -115,9 +114,10 @@ private:
   uint32_t const    log2_num_lanes_;
   std::size_t const batch_size_ = 100;
 
-  std::vector<ResourceID> rids;
-  std::size_t             extracted_count = 0;
-  std::size_t             written_count   = 0;
+  /// @name State Machine States
+  /// @{
+  std::vector<ResourceID> rids_;
+  /// @}
 
   mutable Mutex   cache_mutex_;       ///< The mutex for the cache
   StateMachinePtr state_machine_;     ///< The state machine controlling the worker writing to disk
@@ -145,7 +145,7 @@ private:
 template <typename O>
 TransientObjectStore<O>::TransientObjectStore(uint32_t log2_num_lanes)
   : log2_num_lanes_(log2_num_lanes)
-  , rids(batch_size_)
+  , rids_()
   , state_machine_{std::make_shared<core::StateMachine<Phase>>("TransientObjectStore",
                                                                Phase::Populating)}
   , cache_rid_removed_{telemetry::Registry::Instance().CreateCounter(
@@ -153,9 +153,10 @@ TransientObjectStore<O>::TransientObjectStore(uint32_t log2_num_lanes)
         "The number of needed rids which were removed from cache.")}
 
 {
+  rids_.reserve(batch_size_);
+
   state_machine_->RegisterHandler(Phase::Populating, this, &TransientObjectStore<O>::OnPopulating);
   state_machine_->RegisterHandler(Phase::Writing, this, &TransientObjectStore<O>::OnWriting);
-  state_machine_->RegisterHandler(Phase::Flushing, this, &TransientObjectStore<O>::OnFlushing);
 }
 
 template <typename O>
@@ -197,44 +198,33 @@ constexpr core::Tickets::Count TransientObjectStore<O>::recent_queue_alarm_thres
 template <typename O>
 typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnPopulating()
 {
-  assert(extracted_count < batch_size_);
-
-  // ensure the write count is reset
-  written_count = 0;
-
-  while (true)
+  for (;;)
   {
     // attempt to extract an element in the confirmation queue
-    bool const extracted =
-        confirm_queue_.Pop(rids[extracted_count], std::chrono::milliseconds::zero());
+    rids_.emplace_back(ResourceID{});
+    bool const extracted = confirm_queue_.Pop(rids_.back(), std::chrono::milliseconds::zero());
 
     // update the index if needed
-    if (extracted)
+    if (!extracted)
     {
-      ++extracted_count;
+      rids_.pop_back();
     }
 
-    bool const is_buffer_full = (extracted_count == batch_size_);
+    bool const is_buffer_full    = (rids_.size() == batch_size_);
+    bool const is_batch_complete = (!extracted) && (!rids_.empty());
 
-    if (is_buffer_full)
+    if (is_buffer_full || is_batch_complete)
     {
       return Phase::Writing;
     }
 
+    // Queue is empty and nothing to write - trigger delay and do not change FSM state
     if (!extracted)
     {
-      if (extracted_count > 0u)
-      {
-        // Nothing more in queue, but buffer not empty - write contents to disk
-        return Phase::Writing;
-      }
-
-      // Queue is empty and nothing to write - trigger delay and do not change FSM state
+      state_machine_->Delay(std::chrono::milliseconds(1000u));
       break;
     }
   }
-
-  state_machine_->Delay(std::chrono::milliseconds(1000u));
 
   return Phase::Populating;
 }
@@ -244,13 +234,13 @@ template <typename O>
 typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
 {
   // check if we need to transition from this state
-  if (written_count >= extracted_count)
+  if (rids_.empty())
   {
-    return Phase::Flushing;
+    return Phase::Populating;
   }
 
   O           obj;
-  auto const &rid = rids[written_count];
+  auto const &rid = rids_.back();
 
   FETCH_LOCK(cache_mutex_);
 
@@ -260,7 +250,8 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
     // write out the object
     archive_.Set(rid, obj);
 
-    ++written_count;
+    // remove it the cache also
+    cache_.erase(rid);
   }
   else
   {
@@ -272,27 +263,10 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
     assert(false);
   }
 
+  // remove the current element
+  rids_.pop_back();
+
   return Phase::Writing;
-}
-
-// Flushing: In this phase we are removing the elements from the cache. This is important to
-// ensure a bound on the memory resources. This must happen after the writing to disk,
-// otherwise the object store will be inconsistent
-template <typename O>
-typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnFlushing()
-{
-  FETCH_LOCK(cache_mutex_);
-
-  assert(extracted_count <= batch_size_);
-
-  for (std::size_t i = 0; i < extracted_count; ++i)
-  {
-    cache_.erase(rids[i]);
-  }
-
-  extracted_count = 0;
-
-  return Phase::Populating;
 }
 
 template <typename O>
