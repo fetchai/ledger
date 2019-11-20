@@ -114,7 +114,7 @@ TensorDataLoader<LabelType, InputType>::GetNext()
   if (this->random_mode_)
   {
     *this->current_cursor_ = this->current_min_ + SizeType{this->rand()} % this->current_size_;
-    ++count_;
+    ++(*count_);
   }
   else
   {
