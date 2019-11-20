@@ -991,7 +991,7 @@ struct MapSerializerTemplate
   using DriverType = D;
 
   template <class Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &t)
+  static constexpr void Serialize(Constructor &map_constructor, Type const &t)
   {
     value_util::ForEach([&t, map = map_constructor(sizeof...(Fields))](
                             auto field) mutable { field.Serialize(t, map); },
@@ -999,7 +999,7 @@ struct MapSerializerTemplate
   }
 
   template <class MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &t)
+  static constexpr void Deserialize(MapDeserializer &map, Type &t)
   {
     value_util::ForEach([&t, &map](auto field) { field.Deserialize(t, map); }, Fields{}...);
   }
