@@ -87,8 +87,8 @@ public:
     uint32_t broadcast : 1;   ///< Flag to signal that the packet is a broadcast packet
     uint32_t exchange  : 1;   ///< Flag to signal that this is an exchange packet
     uint32_t stamped   : 1;   ///< Flag to signal that the packet is signed by sender
-    uint32_t encrypted : 1;   ///< Flag to signal that the packet payload is encrypted
     uint32_t ttl       : 7;   ///< The time to live counter
+    uint32_t encrypted : 1;   ///< Flag to signal that the packet payload is encrypted
     uint32_t service   : 16;  ///< The service number
     uint32_t channel   : 16;  ///< The channel number
     uint32_t msg_num   : 16;  ///< Incremented message counter for detecting duplicate packets
