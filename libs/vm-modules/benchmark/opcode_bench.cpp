@@ -68,8 +68,9 @@ namespace {
  *  4. Define an indexing system depending on the parameters of the benchmark (see existing bms)
  *  5. Include each new benchmark in the etch_codes vector
  *  6. Add corresponding parameters and n_*_bms constants below
- *  7. Register the new benchmarks in the function RegisterBenchmarks
- *  8. Update python script "scripts/benchmark/opcode_timing.py" as needed
+ *  7. Add any new required VM bindings to the top of EtchCodeBenchmarks(...)
+ *  8. Register the new benchmarks in the function RegisterBenchmarks
+ *  9. Update python script "scripts/benchmark/opcode_timing.py" as needed
  */
 
 // Benchmark parameters (change as desired)
@@ -641,8 +642,8 @@ void ArrayBenchmarks(benchmark::State &state)
                     len = std::to_string(array_len[len_ind]);
 
   // Operations
-  const static std::string COUNT = "x.count(;\n", REV = "x.reverse(;\n", POPBACK = "x.popBack(;\n",
-                           POPFRONT = "x.popFront(;\n";
+  const static std::string COUNT = "x.count();\n", REV = "x.reverse();\n",
+                           POPBACK = "x.popBack();\n", POPFRONT = "x.popFront();\n";
 
   const BenchmarkPair ARRAY_DEC("DeclareArray_" + len, FunMain(ArrayDec(arr1, prim, len)));
   const BenchmarkPair ARRAY_ASS("AssignArray_" + len,
@@ -766,8 +767,8 @@ void CryptoBenchmarks(benchmark::State &state)
   // The first SHA256 benchmark is type independent, but the rest depend on length
   if ((bm_ind - crypto_begin) >= 1)
   {
-    len_ind  = (bm_ind - crypto_begin + 1) / (n_crypto_bms - 1);
-    etch_ind = 1 + (bm_ind - crypto_begin + 1) % (n_crypto_bms - 1);
+    len_ind  = (bm_ind - (crypto_begin + 1)) / (n_crypto_bms - 1);
+    etch_ind = 1 + (bm_ind - (crypto_begin + 1)) % (n_crypto_bms - 1);
   }
 
   std::string const length = std::to_string(lengths[len_ind]);
@@ -783,8 +784,9 @@ void CryptoBenchmarks(benchmark::State &state)
                                      FunMain(BufferDec(buffer, length)));
   const BenchmarkPair SHA256_UPDATE_STR("Sha256UpdateStr_" + length,
                                         FunMain(DEC + Sha256UpdateStr(lengths[len_ind])));
-  const BenchmarkPair SHA256_UPDATE_BUF("Sha256UpdateBuf_" + length,
-                                        FunMain(DEC + Sha256UpdateBuf(buffer)));
+  const BenchmarkPair SHA256_UPDATE_BUF(
+      "Sha256UpdateBuf_" + length,
+      FunMain(DEC + BufferDec(buffer, length) + Sha256UpdateBuf(buffer)));
 
   // Define {benchmark,baseline} pairs
   std::unordered_map<std::string, std::string> baseline_map(
@@ -793,7 +795,7 @@ void CryptoBenchmarks(benchmark::State &state)
        {"Sha256Final_" + length, "Sha256Declare"},
        {"Sha256DeclareBuf_" + length, "Sha256Declare"},
        {"Sha256UpdateStr_" + length, "Sha256Declare"},
-       {"Sha256UpdateBuf_" + length, "Sha256Declare"}});
+       {"Sha256UpdateBuf_" + length, "Sha256DeclareBuf_" + length}});
 
   std::vector<BenchmarkPair> const etch_codes = {
       SHA256_DEC, SHA256_RESET, SHA256_FINAL, SHA256_BUF_DEC, SHA256_UPDATE_STR, SHA256_UPDATE_BUF};
