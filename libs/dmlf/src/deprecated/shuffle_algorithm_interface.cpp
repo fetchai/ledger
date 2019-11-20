@@ -16,29 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/simple_cycling_algorithm.hpp"
+#include "dmlf/deprecated/shuffle_algorithm_interface.hpp"
 
 namespace fetch {
 namespace dmlf {
 
-std::vector<std::size_t> SimpleCyclingAlgorithm::GetNextOutputs()
-{
-  std::vector<std::size_t> result(number_of_outputs_per_cycle_);
-  for (std::size_t i = 0; i < number_of_outputs_per_cycle_; i++)
-  {
-    result[i] = next_output_index_;
-    next_output_index_ += 1;
-    next_output_index_ %= GetCount();
-  }
-  return result;
-}
+ShuffleAlgorithmInterface::ShuffleAlgorithmInterface(std::size_t count)
+  : count_(count)
+{}
 
-SimpleCyclingAlgorithm::SimpleCyclingAlgorithm(std::size_t count,
-                                               std::size_t number_of_outputs_per_cycle)
-  : ShuffleAlgorithmInterface(count)
+std::size_t ShuffleAlgorithmInterface::GetCount() const
 {
-  next_output_index_           = 0;
-  number_of_outputs_per_cycle_ = std::min(number_of_outputs_per_cycle, GetCount());
+  // this impl is simple, but descendent ones may not be.
+  return count_;
 }
 
 }  // namespace dmlf

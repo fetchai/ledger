@@ -39,7 +39,7 @@ namespace {
 using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 
-using LNBase  = fetch::dmlf::AbstractLearnerNetworker;
+using LNBase  = fetch::dmlf::deprecated_AbstractLearnerNetworker;
 using LN      = fetch::dmlf::colearn::MuddleLearnerNetworkerImpl;
 using LNBaseP = std::shared_ptr<LNBase>;
 using LNP     = std::shared_ptr<LN>;
@@ -51,7 +51,7 @@ using CertificatePtr = fetch::muddle::ProverPtr;
 using Store          = fetch::dmlf::colearn::UpdateStore;
 using StorePtr       = std::shared_ptr<Store>;
 
-using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
+using UpdateTypeForTesting = fetch::dmlf::deprecated_Update<TensorType>;
 using UpdatePayload        = UpdateTypeForTesting::Payload;
 
 char const *SERVER_PRIV = "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
@@ -88,7 +88,7 @@ public:
     actual    = std::make_shared<LN>(priv, port, r);
     interface = actual;
     interface->RegisterUpdateType<UpdateTypeForTesting>("update");
-    interface->RegisterUpdateType<fetch::dmlf::Update<std::string>>("vocab");
+    interface->RegisterUpdateType<fetch::dmlf::deprecated_Update<std::string>>("vocab");
   }
 
   void PretendToLearn()
@@ -100,7 +100,7 @@ public:
     auto r = std::vector<TensorType>();
     r.push_back(t);
     interface->PushUpdateType("update", std::make_shared<UpdateTypeForTesting>(r));
-    interface->PushUpdateType("vocab", std::make_shared<fetch::dmlf::Update<std::string>>(
+    interface->PushUpdateType("vocab", std::make_shared<fetch::dmlf::deprecated_Update<std::string>>(
                                            std::vector<std::string>{"cat", "dog"}));
   }
 };

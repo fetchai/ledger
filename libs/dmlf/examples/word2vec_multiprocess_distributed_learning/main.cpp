@@ -18,8 +18,8 @@
 
 #include "dmlf/collective_learning/client_word2vec_algorithm.hpp"
 #include "dmlf/collective_learning/utilities/utilities.hpp"
-#include "dmlf/networkers/muddle_learner_networker.hpp"
-#include "dmlf/simple_cycling_algorithm.hpp"
+#include "dmlf/deprecated/muddle_learner_networker.hpp"
+#include "dmlf/deprecated/simple_cycling_algorithm.hpp"
 #include "json/document.hpp"
 #include "math/tensor.hpp"
 
@@ -84,8 +84,8 @@ int main(int argc, char **argv)
 
   // Create networker and assign shuffle algorithm
   auto networker =
-      std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(networker_config, instance_number);
-  networker->Initialize<fetch::dmlf::Update<TensorType>>();
+      std::make_shared<fetch::dmlf::deprecated_MuddleLearnerNetworker>(networker_config, instance_number);
+  networker->Initialize<fetch::dmlf::deprecated_Update<TensorType>>();
   networker->SetShuffleAlgorithm(
       std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));
 

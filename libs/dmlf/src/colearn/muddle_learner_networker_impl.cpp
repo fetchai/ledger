@@ -97,7 +97,7 @@ void MuddleLearnerNetworkerImpl::submit(TaskP const &t)
 }
 
 void MuddleLearnerNetworkerImpl::PushUpdateType(const std::string &       type_name,
-                                                UpdateInterfacePtr const &update)
+                                                deprecated_UpdateInterfacePtr const &update)
 {
   auto bytes = update->Serialise();
   PushUpdateBytes(type_name, bytes);
@@ -119,7 +119,7 @@ MuddleLearnerNetworkerImpl::UpdatePtr MuddleLearnerNetworkerImpl::GetUpdate(
   return update_store_->GetUpdate(algo, type, criteria);
 }
 
-void MuddleLearnerNetworkerImpl::PushUpdate(UpdateInterfacePtr const &update)
+void MuddleLearnerNetworkerImpl::PushUpdate(deprecated_UpdateInterfacePtr const &update)
 {
   PushUpdateType("", update);
 }

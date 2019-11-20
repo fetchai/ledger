@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/update_interface.hpp"
+#include "dmlf/deprecated/update_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "oef-base/threading/Task.hpp"

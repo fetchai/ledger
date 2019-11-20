@@ -22,8 +22,8 @@
 #include "dmlf/colearn/colearn_protocol.hpp"
 #include "dmlf/colearn/random_double.hpp"
 #include "dmlf/colearn/update_store.hpp"
-#include "dmlf/networkers/abstract_learner_networker.hpp"
-#include "dmlf/update_interface.hpp"
+#include "dmlf/deprecated/abstract_learner_networker.hpp"
+#include "dmlf/deprecated/update_interface.hpp"
 #include "logging/logging.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -36,14 +36,14 @@ namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-class MuddleLearnerNetworkerImpl : public dmlf::AbstractLearnerNetworker
+class MuddleLearnerNetworkerImpl : public dmlf::deprecated_AbstractLearnerNetworker
 {
 public:
   using Taskpool           = oef::base::Taskpool;
   using Threadpool         = oef::base::Threadpool;
   using TaskP              = Taskpool::TaskP;
   using MuddlePtr          = muddle::MuddlePtr;
-  using UpdateInterfacePtr = dmlf::UpdateInterfacePtr;
+  using deprecated_UpdateInterfacePtr = dmlf::deprecated_UpdateInterfacePtr;
   using RpcClient          = fetch::muddle::rpc::Client;
   using RpcClientPtr       = std::shared_ptr<RpcClient>;
   using Proto              = ColearnProtocol;
@@ -74,8 +74,8 @@ public:
 
   void addTarget(const std::string &peer);
 
-  void PushUpdate(UpdateInterfacePtr const &update) override;
-  void PushUpdateType(const std::string &type_name, UpdateInterfacePtr const &update) override;
+  void PushUpdate(deprecated_UpdateInterfacePtr const &update) override;
+  void PushUpdateType(const std::string &type_name, deprecated_UpdateInterfacePtr const &update) override;
   void PushUpdateBytes(const std::string &type_name, Bytes const &update);
 
   UpdateStore::UpdatePtr GetUpdate(UpdateStore::Algorithm const & algo,
