@@ -41,8 +41,6 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
-#define HOST_NAME_MAX 12
-
 /**
  * helper function for stripping instance number from hostname
  */
@@ -66,6 +64,8 @@ std::uint64_t InstanceFromHostname(std::string &hostname)
 
 int main(int argc, char **argv)
 {
+  std::size_t host_name_max_len = 12;
+
   // This example will create muddle networking distributed client with simple classification neural
   // net and learns how to predict hand written digits from MNIST dataset
 
@@ -76,8 +76,8 @@ int main(int argc, char **argv)
   }
 
   // get the host name
-  char tmp_hostname[HOST_NAME_MAX];
-  gethostname(tmp_hostname, HOST_NAME_MAX);
+  char tmp_hostname[host_name_max_len];
+  gethostname(tmp_hostname, host_name_max_len);
   std::string host_name(tmp_hostname);
   std::cout << "host_name: " << host_name << std::endl;
   std::uint64_t instance_number = InstanceFromHostname(host_name);
