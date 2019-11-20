@@ -1554,7 +1554,8 @@ uint64_t TimePerDKGState(uint64_t cabinet_size)
  * set the deadline for this state to complete
  *
  */
-void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &state, uint64_t base_state_time)
+void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &state,
+                                             uint64_t                         base_state_time)
 {
   auto it = time_slot_map_.find(state);
 

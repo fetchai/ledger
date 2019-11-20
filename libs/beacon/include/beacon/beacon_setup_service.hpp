@@ -242,8 +242,8 @@ private:
       0;  ///< The expected time it will take for all DKG states to complete
   bool condition_to_proceed_ = false;  ///< Whether the state the DKG is in has been successful
 
-  const std::map<BeaconSetupService::State, double>   time_slot_map_;
-  double                                              time_slots_in_dkg_ = 0;
+  const std::map<BeaconSetupService::State, double> time_slot_map_;
+  double                                            time_slots_in_dkg_ = 0;
 
   uint16_t failures_{0};
 
