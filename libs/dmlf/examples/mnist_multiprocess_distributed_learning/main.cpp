@@ -53,6 +53,9 @@ std::uint64_t InstanceFromHostname(std::string &hostname)
   std::string instance;
   std::string delim{'-'};
 
+  // TODO - DEBUG HACK
+  hostname = "ml-3000-1";
+
   current = hostname.find(delim);
   while (current != std::string::npos)
   {
@@ -61,9 +64,7 @@ std::uint64_t InstanceFromHostname(std::string &hostname)
   }
   instance = (hostname.substr(previous, current - previous));
 
-  std::cout << "instance: " << instance << std::endl;
-
-  return std::stoul("1");
+  return std::stoul(instance);
 }
 
 int main(int argc, char **argv)
