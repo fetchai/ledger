@@ -38,10 +38,10 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
-/*  JSON Config:
+/*  Example JSON configuration file:
 {
-        "data": "datasets/train-images-idx3-ubyte",
-        "labels": "datasets/train-labels-idx1-ubyte",
+        "data": "datasets/mnist_federated/mnist_images_",
+        "labels": "datasets/mnist_federated/mnist_labels_",
         "n_clients": 5,
         "n_peers": 3,
         "n_rounds": 10,
@@ -106,11 +106,9 @@ int main(int argc, char **argv)
   for (SizeType i{0}; i < n_clients; ++i)
   {
     clients.at(i) = fetch::dmlf::collective_learning::utilities::MakeMNISTClient<TensorType>(
-        std::to_string(i), client_params,
-        //        data_file,
-        //        labels_file,
-        data_file + std::to_string(i) + ".csv", labels_file + std::to_string(i) + ".csv",
-        test_set_ratio, networkers.at(i), console_mutex_ptr);
+        std::to_string(i), client_params, data_file + std::to_string(i) + ".csv",
+        labels_file + std::to_string(i) + ".csv", test_set_ratio, networkers.at(i),
+        console_mutex_ptr);
   }
 
   /**
@@ -119,7 +117,6 @@ int main(int argc, char **argv)
 
   for (SizeType it{0}; it < n_rounds; ++it)
   {
-//    fetch::dmlf::collective_learning::utilities::PrintWeights<TensorType>(clients);
     // Start all clients
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
     std::vector<std::thread> threads;

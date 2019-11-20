@@ -40,7 +40,7 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
-/*  JSON config
+/*  Example JSON configuration file:
 {
         "data": "datasets/text8",
         "analogies_test_file": "datasets/text8_first_tenth_analogies_dataset.txt",

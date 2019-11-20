@@ -29,7 +29,6 @@
 #include "ml/utilities/utils.hpp"
 
 #include <condition_variable>
-#include <core/time/to_seconds.hpp>
 #include <fstream>
 #include <mutex>
 #include <queue>
@@ -255,18 +254,10 @@ void ClientAlgorithm<TensorType>::Run()
 
   if (lossfile)
   {
-    double seconds = fetch::ToSeconds(std::chrono::steady_clock::now() - start_time_);
-    lossfile << "Time: " << seconds
-             << " Epochs: " << epoch_counter_
-             << " Loss: " << static_cast<double>(train_loss_)
-             << " Test_loss: " << static_cast<double>(test_loss_)
-             << " Updates: " << update_counter_
-             << " Batches: " << batch_counter_
-             << " Test_accuracy: " << test_accuracy_
-             << "\n";
-    lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
-             << "STOPPED"
-             << "\n";
+    lossfile << "End_of_round: " << fetch::ml::utilities::GetStrTimestamp()
+             << " Epochs: " << epoch_counter_ << " Loss: " << static_cast<double>(train_loss_)
+             << " Test_loss: " << static_cast<double>(test_loss_) << " Updates: " << update_counter_
+             << " Batches: " << batch_counter_ << " Test_accuracy: " << test_accuracy_ << "\n";
     lossfile.close();
   }
 
@@ -361,7 +352,9 @@ void ClientAlgorithm<TensorType>::Test()
 
       test_loss_ = *(graph_ptr_->Evaluate(params_.error_name).begin());
 
-      TensorType test_results = graph_ptr_->Evaluate("FullyConnected_0");
+      // Accuracy calculation
+      // Todo: will be replaced by accuracy metric once that PR is merged
+      TensorType test_results = graph_ptr_->Evaluate("FullyConnected_2");
       test_results            = fetch::math::ArgMax(test_results);
       SizeType total_score{0};
       auto     tr = test_results.cbegin();
@@ -379,7 +372,8 @@ void ClientAlgorithm<TensorType>::Test()
   }
   else
   {
-    test_loss_ = 0;
+    test_loss_     = 0;
+    test_accuracy_ = 0;
   }
 }
 
@@ -413,7 +407,8 @@ void ClientAlgorithm<TensorType>::SetWeights(VectorTensorType const &new_weights
 {
   FETCH_LOCK(model_mutex_);
 
-  std::vector<typename ml::Graph<TensorType>::TrainablePtrType> trainables = graph_ptr_->GetTrainables();
+  std::vector<typename ml::Graph<TensorType>::TrainablePtrType> trainables =
+      graph_ptr_->GetTrainables();
 
   auto weights_it = new_weights.cbegin();
   for (auto &trainable_ptr : trainables)
