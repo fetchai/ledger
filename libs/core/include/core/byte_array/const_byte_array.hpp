@@ -583,9 +583,8 @@ struct hash<fetch::byte_array::ConstByteArray>
   std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const noexcept
   {
     uint64_t h = 2166136261U;
-    uint64_t i;
 
-    for (i = 0; i < value.size(); ++i)
+    for (uint64_t i = 0; i < value.size(); ++i)
     {
       h = (h * 16777619) ^ value[i];
     }
