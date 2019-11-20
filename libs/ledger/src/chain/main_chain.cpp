@@ -596,15 +596,15 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, uint64_t lim
 
   if (current_hash.empty() && limit > 0)
   {
-	  current_hash = chain::GENESIS_DIGEST;
+    current_hash = chain::GENESIS_DIGEST;
   }
   if (!current_hash.empty())
   {
-	  if (!LookupBlock(current_hash, block, &next_hash))
-	  {
-		  FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
-		  throw std::runtime_error("Failed to lookup block");
-	  }
+    if (!LookupBlock(current_hash, block, &next_hash))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
+      throw std::runtime_error("Failed to lookup block");
+    }
   }
 
   // byt this moment, current hash can only be empty if limit = 0,
@@ -656,7 +656,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, uint64_t lim
     }
     // update the results
     result.push_back(std::move(block));
-    if (block->block_number >= lim)
+    if (block->block_number >= limit)
     {
       break;
     }

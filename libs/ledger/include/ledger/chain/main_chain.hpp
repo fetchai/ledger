@@ -137,8 +137,7 @@ public:
   BlockHash  GetHeaviestBlockHash() const;
   Blocks     GetHeaviestChain(uint64_t lowest_block_number = 0) const;
   Blocks     GetChainPreceding(BlockHash start, uint64_t lowest_block_number = 0) const;
-  Travelogue TimeTravel(BlockHash current_hash,
-                        int64_t   limit = static_cast<int64_t>(UPPER_BOUND)) const;
+  Travelogue TimeTravel(BlockHash current_hash, uint64_t limit = UPPER_BOUND) const;
   bool       GetPathToCommonAncestor(
             Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
             BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
