@@ -149,6 +149,8 @@ public:
     }
 
     // divide by number of elements
+    std::cout << "data_size: " << data_size << std::endl;
+    std::cout << "num_correct: " << num_correct << std::endl;
     output(0, 0) = fetch::math::Divide(num_correct, static_cast<DataType>(data_size));
   }
 

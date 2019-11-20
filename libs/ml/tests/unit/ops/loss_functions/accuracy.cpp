@@ -94,7 +94,7 @@ TYPED_TEST(AccuracyTest, mixed_forward_test)
   op.Forward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)}, result);
 
   EXPECT_NEAR(static_cast<double>(result(0, 0)), 0.5,
-      fetch::math::function_tolerance<DataType>());
+              static_cast<double>(fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(AccuracyTest, backward_test)
