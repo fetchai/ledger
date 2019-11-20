@@ -50,12 +50,12 @@ private:
   }
 };
 
-template <template <int, typename, typename, typename...> class Invoker, typename Callable,
-          typename...>
+template <template <int, typename, typename, typename> class Invoker, typename Callable,
+          typename EtchArgsTuple>
 class PrepareInvocationImpl;
-template <template <int, typename, typename, typename...> class Invoker, typename Callable,
-          typename... EtchArgs, typename... ExtraArgs>
-class PrepareInvocationImpl<Invoker, Callable, std::tuple<EtchArgs...>, std::tuple<ExtraArgs...>>
+template <template <int, typename, typename, typename> class Invoker, typename Callable,
+          typename... EtchArgs>
+class PrepareInvocationImpl<Invoker, Callable, std::tuple<EtchArgs...>>
 {
   constexpr static int num_parameters = int(sizeof...(EtchArgs));
   constexpr static int sp_offset =
@@ -64,8 +64,7 @@ class PrepareInvocationImpl<Invoker, Callable, std::tuple<EtchArgs...>, std::tup
   using ReturnType = typename meta::CallableTraits<Callable>::ReturnType;
 
 public:
-  using ConfiguredInvoker =
-      Invoker<sp_offset, ReturnType, Callable, std::tuple<ExtraArgs..., EtchArgs...>>;
+  using ConfiguredInvoker = Invoker<sp_offset, ReturnType, Callable, std::tuple<EtchArgs...>>;
 
   static auto GetEtchArguments(VM *vm)
   {
@@ -75,10 +74,10 @@ public:
 
 }  // namespace internal
 
-template <template <int, typename, typename, typename...> class Invoker, typename Callable,
-          typename EtchArgsTuple, typename ExtraArgsTuple>
+template <template <int, typename, typename, typename> class Invoker, typename Callable,
+          typename EtchArgsTuple>
 using PrepareInvocation =
-    typename internal::PrepareInvocationImpl<Invoker, Callable, EtchArgsTuple, ExtraArgsTuple>;
+    typename internal::PrepareInvocationImpl<Invoker, Callable, EtchArgsTuple>;
 
 }  // namespace vm
 }  // namespace fetch

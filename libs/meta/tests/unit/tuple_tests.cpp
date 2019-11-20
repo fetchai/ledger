@@ -227,6 +227,20 @@ TEST_F(TupleMetaTests, Tuple_Take_Drop_mixed)
   static_assert(Same<TupleA, std::tuple<C, D>>, "");
 }
 
+TEST_F(TupleMetaTests, Tuple_Append_Prepend)
+{
+  using empty1 = Tuple<Empty>::Prepend<Empty>::type;
+  using empty2 = Tuple<Empty>::Append<Empty>::type;
+  static_assert(Same<empty1, Empty>, "");
+  static_assert(Same<empty2, Empty>, "");
+
+  using TupleA = Tuple<std::tuple<A, B>>::Prepend<std::tuple<C, D>>::type;
+  static_assert(Same<TupleA, std::tuple<C, D, A, B>>, "");
+
+  using TupleB = Tuple<std::tuple<A, B>>::Append<std::tuple<C, D>>::type;
+  static_assert(Same<TupleB, std::tuple<A, B, C, D>>, "");
+}
+
 }  // namespace
 
 }  // namespace meta
