@@ -290,13 +290,12 @@ public:
   ConstSliceType Slice(SizeType index, SizeType axis = 0) const;
   ConstSliceType Slice(SizeVector indices, SizeVector axes) const;
   ConstSliceType Slice(SizeVector const &begins, SizeVector const &ends,
-                              SizeVector const &strides) const;
+                       SizeVector const &strides) const;
   TensorSlice    Slice();
   TensorSlice    Slice(SizeType index, SizeType axis = 0);
   TensorSlice    Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0);
   TensorSlice    Slice(SizeVector indices, SizeVector axes);
-  TensorSlice    Slice(SizeVector const &begins, SizeVector const &ends,
-                              SizeVector const &strides);
+  TensorSlice    Slice(SizeVector const &begins, SizeVector const &ends, SizeVector const &strides);
 
   /////////////
   /// Views ///
@@ -2214,7 +2213,7 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(
 
   for (SizeType j = 0; j < shape().size(); ++j)
   {
-    range.push_back({begins.at(j), ends.at(j) + 1, strides.at(j)});
+    range.push_back({begins.at(j), ends.at(j), strides.at(j)});
     axis.emplace_back(j);
   }
 
@@ -2325,15 +2324,15 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> ind
 
 template <typename T, typename C>
 typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> const &begins,
-                                                              std::vector<SizeType> const &ends,
-                                                              std::vector<SizeType> const &strides)
+                                                       std::vector<SizeType> const &ends,
+                                                       std::vector<SizeType> const &strides)
 {
   std::vector<std::vector<SizeType>> range;
   std::vector<SizeType>              axis;
 
   for (SizeType j = 0; j < shape().size(); ++j)
   {
-    range.push_back({begins.at(j), ends.at(j) + 1, strides.at(j)});
+    range.push_back({begins.at(j), ends.at(j), strides.at(j)});
     axis.emplace_back(j);
   }
 

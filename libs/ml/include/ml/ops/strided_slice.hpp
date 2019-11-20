@@ -43,9 +43,15 @@ public:
     : begins_(begins)
     , ends_(ends)
     , strides_(strides)
-
   {
     assert(begins.size() == ends.size());
+
+    // Correction to match tf.StridedSlice
+    for (SizeType i{0}; i < ends_.size(); i++)
+    {
+      ends_[i] = ends[i] + 1;
+    }
+
     if (strides.empty())
     {
       strides_ = begins;
@@ -132,7 +138,7 @@ public:
     {
       assert(strides_.at(i) != 0);
       assert(begins_.at(i) <= ends_.at(i));
-      output_shape.at(i) = ((ends_.at(i) - begins_.at(i)) / strides_.at(i)) + 1;
+      output_shape.at(i) = ((ends_.at(i) - begins_.at(i) - 1) / strides_.at(i)) + 1;
     }
 
     return output_shape;
