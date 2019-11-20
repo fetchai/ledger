@@ -165,6 +165,13 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
                                            chain::Address const &contract_address,
                                            ProblemData const &   problem_data)
 {
+  uint64_t const balance = token_contract_.GetBalance(contract_address);
+
+  if (balance == 0)
+  {
+    return {};
+  }
+
   auto contract = CreateSmartContract<SynergeticContract>(contract_digest, storage_);
 
   // if no contract can be loaded then simple return
@@ -206,6 +213,17 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
     if (!(best_work && best_work->score() >= work->score()))
     {
       best_work = std::make_shared<Work>(*work);
+    }
+
+    if (i==0)
+    {
+      auto const fee = contract->CalculateFee();
+      //TODO(AB): scaling? charge approx search_length_*one
+      if (fee >= balance)
+      {
+        //not enough balance, stop using contract
+        return {};
+      }
     }
   }
 

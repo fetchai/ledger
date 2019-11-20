@@ -22,6 +22,7 @@
 #include "ledger/upow/synergetic_contract.hpp"
 #include "ledger/upow/synergetic_miner_interface.hpp"
 #include "ledger/upow/work.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 
 #include <memory>
 
@@ -88,6 +89,7 @@ private:
   std::size_t                   search_length_{DEFAULT_SEARCH_LENGTH};
   std::shared_ptr<StateMachine> state_machine_;
   std::atomic<bool>             is_mining_{false};
+  TokenContract                 token_contract_{};
 };
 
 }  // namespace ledger
