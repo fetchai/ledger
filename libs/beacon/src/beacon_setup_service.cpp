@@ -63,7 +63,6 @@ BeaconSetupService::ReliableChannelPtr BeaconSetupService::ReliableBroadcastFact
  */
 std::string BeaconSetupService::NodeString()
 {
-
   if (index_ != std::numeric_limits<BeaconManager::CabinetIndex>::max())
   {
     std::ostringstream ss;
@@ -110,17 +109,17 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &       muddle,
   , beacon_dkg_successes_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_successes_total", "The total number of DKG successes")}
   , time_slot_map_{{BeaconSetupService::State::RESET, 0},
-                   {BeaconSetupService::State::CONNECT_TO_ALL, 10},
-                   {BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS, 10},
-                   {BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS, 10},
-                   {BeaconSetupService::State::WAIT_FOR_SHARES, 10},
-                   {BeaconSetupService::State::WAIT_FOR_COMPLAINTS, 10},
-                   {BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS, 10},
-                   {BeaconSetupService::State::WAIT_FOR_QUAL_SHARES, 10},
-                   {BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS, 10},
-                   {BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES, 10},
-                   {BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE, 10},
-                   {BeaconSetupService::State::DRY_RUN_SIGNING, 10}}
+                   {BeaconSetupService::State::CONNECT_TO_ALL, 1},
+                   {BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS, 1},
+                   {BeaconSetupService::State::WAIT_FOR_NOTARISATION_KEYS, 1},
+                   {BeaconSetupService::State::WAIT_FOR_SHARES, 1},
+                   {BeaconSetupService::State::WAIT_FOR_COMPLAINTS, 1},
+                   {BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS, 1},
+                   {BeaconSetupService::State::WAIT_FOR_QUAL_SHARES, 1},
+                   {BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS, 1},
+                   {BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES, 1},
+                   {BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE, 1},
+                   {BeaconSetupService::State::DRY_RUN_SIGNING, 1.5}}
 {
   // clang-format off
   state_machine_->RegisterHandler(State::IDLE, this, &BeaconSetupService::OnIdle);
@@ -1530,20 +1529,20 @@ std::vector<std::weak_ptr<core::Runnable>> BeaconSetupService::GetWeakRunnables(
 /**
  * Return the time in seconds that it is expected DKG will take given the cabinet size is N
  */
-uint64_t TimePerDKGIteration(uint64_t cabinet_size)
+uint64_t TimePerDKGState(uint64_t cabinet_size)
 {
   // Empirical map of cabinet size to expected time. Final element is max to guarantee lower bound
   // isn't end()
   // clang-format off
-  static /*constexpr*/ std::map<uint64_t, uint64_t> dkg_time_to_cabinet_size_map
-  {{8, 10},
-   {10, 30},
-   {30, 100},
-   {51, 250},
-   {60, 305},
-   {90, 1304},
-   {200, 27229},
-   {std::numeric_limits<uint64_t>::max(), 27229} };
+  thread_local std::map<uint64_t, uint64_t> dkg_time_to_cabinet_size_map
+  {{8, 1},
+   {10, 3},
+   {30, 10},
+   {51, 25},
+   {60, 30},
+   {90, 130},
+   {200, 2722},
+   {std::numeric_limits<uint64_t>::max(), 2722} };
   // clang-format on
 
   // Note it is assumed the total dkg time exceeds 1s * DKG states
@@ -1555,7 +1554,7 @@ uint64_t TimePerDKGIteration(uint64_t cabinet_size)
  * set the deadline for this state to complete
  *
  */
-void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &state)
+void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &state, uint64_t base_state_time)
 {
   auto it = time_slot_map_.find(state);
 
@@ -1569,7 +1568,7 @@ void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &st
   // Need to increment since for_each isn't inclusive
   ++it;
 
-  uint64_t time_slots_to_end = 0;
+  double time_slots_to_end = 0;
 
   // Walk through the map adding time slots, including the initial state
   using MapPair = typename decltype(time_slot_map_)::value_type;
@@ -1582,8 +1581,7 @@ void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &st
 
   // Note: fine to do floor arithmetic here, it might cause the deadline to happen in the past, but
   // there is resilience to this.
-  uint64_t time_until_deadline_s =
-      (time_slots_to_end * expected_dkg_timespan_) / time_slots_in_dkg_;
+  uint64_t time_until_deadline_s = static_cast<uint64_t>(time_slots_to_end * base_state_time);
 
   state_deadline_ = reference_timepoint_ + time_until_deadline_s;
 
@@ -1615,8 +1613,8 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
   uint64_t const cabinet_size = beacon_->aeon.members.size();
 
-  // get the base time a DKG attempt should take
-  uint64_t const time_per_iteration = TimePerDKGIteration(cabinet_size);
+  // get the base time each DKG state should take
+  uint64_t const time_per_state = TimePerDKGState(cabinet_size);
 
   // RESET state will delay DKG until the start point (or next start point)
   if (state == BeaconSetupService::State::RESET)
@@ -1628,7 +1626,7 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     // If not ahead in time, the DKG must have failed before. Algorithmically, and importantly
     // deterministically, decide how long to increase the allotted DKG time (increment each time
     // by 1.5x to a maximum of MAX_DKG_MULTIPLIER)
-    expected_dkg_timespan_ = time_per_iteration;
+    expected_dkg_timespan_ = uint64_t(time_per_state * time_slots_in_dkg_);
     uint16_t failures      = 0;
 
     while (reference_timepoint_ < current_time)
@@ -1636,14 +1634,14 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
       failures++;
       reference_timepoint_ += expected_dkg_timespan_;
       expected_dkg_timespan_ += std::min(expected_dkg_timespan_ + (expected_dkg_timespan_ / 2),
-                                         time_per_iteration * MAX_DKG_BOUND_MULTIPLE);
+                                         time_per_state * MAX_DKG_BOUND_MULTIPLE);
     }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, NodeString(),
                     " calculated dkg time span on entering reset state. "
                     " DKG round: ",
                     beacon_->aeon.round_start, " failures so far: ", failures,
-                    " allotted time: ", expected_dkg_timespan_, " base time: ", time_per_iteration,
+                    " allotted time: ", expected_dkg_timespan_, " base time: ", time_per_state,
                     " reference timepoint: ", reference_timepoint_);
 
     beacon_dkg_time_allocated_->set(expected_dkg_timespan_);
@@ -1667,7 +1665,7 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
   // Given a reference start point, the DKG allotted time, and the state we are going into,
   // set the deadline for when this state should move on
-  SetDeadlineForState(state);
+  SetDeadlineForState(state, time_per_state);
 
   FETCH_LOG_INFO(LOGGING_NAME, NodeString(), "#### Set time for state ", ToString(state),
                  " to complete at: ", state_deadline_, " which is in ",
