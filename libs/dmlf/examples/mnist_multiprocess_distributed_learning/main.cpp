@@ -64,7 +64,7 @@ std::uint64_t InstanceFromHostname(std::string &hostname)
 
 int main(int argc, char **argv)
 {
-  std::size_t host_name_max_len = 12;
+  static constexpr std::size_t host_name_max_len = 12;
 
   // This example will create muddle networking distributed client with simple classification neural
   // net and learns how to predict hand written digits from MNIST dataset
