@@ -440,14 +440,6 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
   FETCH_LOCK(lock_);
 
   // Step 0. Manually set heaviest to a block we still know is valid
-<<<<<<< HEAD
-  auto block_before_one_to_del = GetBlock(hash);
-  heaviest_                    = HeaviestTip{};
-  if (block_before_one_to_del &&
-      (block_before_one_to_del = GetBlock(block_before_one_to_del->previous_hash)))
-  {
-    heaviest_.Update(*block_before_one_to_del);
-=======
   auto block_to_remove = GetBlock(hash);
 
   if (!block_to_remove)
@@ -471,7 +463,6 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
       heaviest_ = HeaviestTip{};
       heaviest_.Update(*block_before_one_to_del);
     }
->>>>>>> master
   }
 
   // Step 1. Remove this block and the whole its progeny from the cache
