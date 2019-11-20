@@ -120,8 +120,6 @@ private:
   using StateMachinePtr = std::shared_ptr<StateMachine>;
   using BlockPtr        = MainChain::BlockPtr;
 
-  static constexpr uint64_t MAX_POSSIBLE_CHAIN_LENGTH =
-      static_cast<uint64_t>(std::numeric_limits<int64_t>::max());
   /// @name Subscription Handlers
   /// @{
   void OnNewBlock(Address const &from, Block &block, Address const &transmitter);
