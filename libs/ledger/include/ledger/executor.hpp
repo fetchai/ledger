@@ -23,6 +23,7 @@
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "ledger/transaction_validator.hpp"
 #include "telemetry/telemetry.hpp"
 
 #include <cstdint>
@@ -86,6 +87,7 @@ private:
   LaneIndex               log2_num_lanes_{0};
   TransactionPtr          current_tx_{};
   CachedStorageAdapterPtr storage_cache_;
+  TransactionValidator    tx_validator_;
   /// @}
 
   telemetry::HistogramPtr overall_duration_;
