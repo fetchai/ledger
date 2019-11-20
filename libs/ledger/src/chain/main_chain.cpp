@@ -440,12 +440,38 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
   FETCH_LOCK(lock_);
 
   // Step 0. Manually set heaviest to a block we still know is valid
+<<<<<<< HEAD
   auto block_before_one_to_del = GetBlock(hash);
   heaviest_                    = HeaviestTip{};
   if (block_before_one_to_del &&
       (block_before_one_to_del = GetBlock(block_before_one_to_del->previous_hash)))
   {
     heaviest_.Update(*block_before_one_to_del);
+=======
+  auto block_to_remove = GetBlock(hash);
+
+  if (!block_to_remove)
+  {
+    return false;
+  }
+
+  if (block_to_remove->IsGenesis())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Trying to remove genesis block!");
+    return false;
+  }
+
+  // if block is not loose update heaviest_
+  auto loose_it = loose_blocks_.find(hash);
+  if (loose_it == loose_blocks_.end())
+  {
+    auto block_before_one_to_del = GetBlock(block_to_remove->previous_hash);
+    if (block_before_one_to_del)
+    {
+      heaviest_ = HeaviestTip{};
+      heaviest_.Update(*block_before_one_to_del);
+    }
+>>>>>>> master
   }
 
   // Step 1. Remove this block and the whole its progeny from the cache
