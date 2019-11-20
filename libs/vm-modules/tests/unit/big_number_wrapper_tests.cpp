@@ -188,20 +188,10 @@ TEST_F(UInt256Tests, uint256_raw_increase)
 
 TEST_F(UInt256Tests, uint256_comparisons)
 {
-  // WARNING! This test passes fine, but the actual values are different from expected ones,
-  // because from any integer above 9223372036854775807 the etch VM creates UInt64 with
-  // 0x7fffffffffffffff.
-  // WARNING! using a value >= 0x7fffffffffffffff (>= 9223372036854775807)
-  // in Etch code could fail (other) unit tests, this behavior is still a subject for further
-  // investigation.
-  // NOTE: Initializing UInt256 with 9223372036854775807 is ok, and after increase (+1) the actual
-  // value becomes 9223372036854775808, but it does not corrupt VM state (as initializing UInt64
-  // with 9223372036854775808 does).
-
   static constexpr char const *TEXT = R"(
     function main() : Bool
         var ok : Bool = true;
-        var uint64_max = 9223372036854775807u64;
+        var uint64_max = 18446744073709551615u64;
 
         var smaller = UInt256(uint64_max);
         var bigger = UInt256(uint64_max);
@@ -289,7 +279,7 @@ TEST_F(UInt256Tests, uint256_logValue)
     using namespace std;
     UInt256Wrapper n1(dummy_vm_ptr, dummy_typeid, input.first);
 
-    const auto as_double  = ToDouble(n1.number());
+    const auto as_double  = n1.ToFloat64();
     const auto result     = n1.LogValue();
     const auto exp_double = input.second;
     const auto expected   = std::log(exp_double);
@@ -300,7 +290,7 @@ TEST_F(UInt256Tests, uint256_logValue)
 
   static constexpr char const *TEXT = R"(
           function main() : Float64
-            var number : UInt256 = UInt256(9000000000000000000u64);
+            var number : UInt256 = UInt256(18446744073709551615u64);
             var logY : Float64 = number.logValue();
             return logY;
           endfunction
@@ -311,22 +301,20 @@ TEST_F(UInt256Tests, uint256_logValue)
   ASSERT_TRUE(toolkit.Run(&res));
   auto const result = res.Get<double>();
 
-  double const expected = std::log(9000000000000000000ull);
+  double const expected = std::log(18446744073709551615ull);
 
   EXPECT_NEAR(result, expected, expected * LOGARITHM_TOLERANCE);
 }
 
-// Disabled until UInt256 type casting is implemented/fixed.
-TEST_F(UInt256Tests, DISABLED_uint256_type_casts)
+TEST_F(UInt256Tests, uint256_type_casts)
 {
-  // WARNING: this test will now fail with UInt256 until some fixes.
   static constexpr char const *TEXT = R"(
       function main() : Bool
           var test : UInt256 = UInt256(9000000000000000000u64);
           var correct : UInt64 = 9000000000000000000u64;
           var ok = true;
 
-          var test_float64 = toFloat64(test);
+          var test_float64 = test.toFloat64();
           var correct_float64 = toFloat64(correct);
           ok = ok && (test_float64 == correct_float64);
 
@@ -348,7 +336,7 @@ TEST_F(UInt256Tests, DISABLED_uint256_type_casts)
 
           var test_str : String = toString(test);
           var correct_str : String =
-          "0000000000000000000000000000000000000000000000007ce66c50e2840000";
+          "000084e2506ce67c000000000000000000000000000000000000000000000000"
           ok = ok && (test_str == correct_str);
           return ok;
       endfunction
@@ -360,4 +348,28 @@ TEST_F(UInt256Tests, DISABLED_uint256_type_casts)
   EXPECT_TRUE(result_is_ok);
 }
 
+TEST_F(UInt256Tests, DISABLED_uint256_sha256_assignment)
+{
+  // This test uses a SHA256 hash from empty string
+  // 0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  // String representation of UInt256 is big-endian, so expected String is
+  // "55b852781b9995a44c939b64e441ae2724b96f99c8f4fb9a141cfc9842c4b0e3"
+  // and the ending 8 bytes (as uint64) are
+  // 0xa495991b7852b855 == 11859553537011923029.
+  // However, the current conversion result is 1449310910991872227, or
+  // 0x141cfc9842c4b0e3, which indicated that either SHA256().final() serialization,
+  // or UInt256 constructor-from-bytearray is incorrect.
+  static constexpr char const *TEXT = R"(
+        function main() : Bool
+            var test : UInt256 = SHA256().final();
+            var asU64 = toUint64(test);
+            return asU64 == 11859553537011923029u64;
+        endfunction
+      )";
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result_is_ok = res.Get<bool>();
+  EXPECT_TRUE(result_is_ok);
+}
 }  // namespace

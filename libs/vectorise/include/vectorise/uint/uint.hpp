@@ -1041,7 +1041,7 @@ template <uint16_t S>
 constexpr uint64_t UInt<S>::TrimmedSize() const
 {
   uint64_t ret = WIDE_ELEMENTS;
-  while ((ret != 0) && (wide_[ret - 1] == 0))
+  while ((ret > 1) && (wide_[ret - 1] == 0))
   {
     --ret;
   }
@@ -1087,22 +1087,31 @@ inline std::ostream &operator<<(std::ostream &s, UInt<S> const &x)
   return s;
 }
 
-inline double ToDouble(UInt<256> const &x)
+inline double ToDouble(UInt<> const &x)
 {
-  static constexpr size_t BITS_IN_UINT64  = sizeof(uint64_t) * 8;
-  static const size_t     MAX_ELEMENT_IDX = x.elements() - 1;
-  size_t                  msw_index       = MAX_ELEMENT_IDX;
-  while (msw_index > 0 && x.ElementAt(msw_index) == uint64_t(0))
+  if (x.TrimmedSize() == 1)
   {
-    --msw_index;
+    return static_cast<double>(x.ElementAt(0));
   }
-  const uint64_t most_significant_word = x.ElementAt(msw_index);
+  const size_t ELEMENTS_PER_WIDE = x.WIDE_ELEMENT_SIZE / x.ELEMENT_SIZE;
+  uint64_t     magnitude         = x.ELEMENTS * x.ELEMENT_SIZE - x.msb();
 
-  return pow(2, static_cast<double>(msw_index * BITS_IN_UINT64)) *
-         static_cast<double>(most_significant_word);
+  const size_t most_sign_byte  = (magnitude - 1) / x.ELEMENT_SIZE;
+  const size_t least_sign_byte = most_sign_byte - (ELEMENTS_PER_WIDE - 1);
+
+  uint64_t mantisse = 0;
+  for (size_t i = 0; i < ELEMENTS_PER_WIDE; ++i)
+  {
+    const uint64_t element_at = x[least_sign_byte + i];
+    const uint64_t addition   = uint64_t(element_at) << (i * x.ELEMENT_SIZE);
+    mantisse += addition;
+  }
+  magnitude -= x.WIDE_ELEMENT_SIZE;
+
+  return static_cast<double>(mantisse) * pow(2, static_cast<double>(magnitude));
 }
 
-inline double Log(UInt<256> const &x)
+inline double Log(UInt<> const &x)
 {
   return std::log(ToDouble(x));
 }
