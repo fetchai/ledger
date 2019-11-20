@@ -97,10 +97,10 @@ void FeeManager::Execute(TransactionPtr& tx, Result &result, BlockIndex const &b
   uint64_t const          balance = token_contract_.GetBalance(from);
 
   // calculate the fee to deduct
-  TokenAmount tx_fee = result.charge * tx->charge();
+  TokenAmount tx_fee = result.charge * tx->charge_rate();
   if (Status::SUCCESS != result.status)
   {
-    tx_fee = tx->charge_limit() * tx->charge();
+    tx_fee = tx->charge_limit() * tx->charge_rate();
   }
 
   // on failed transactions
