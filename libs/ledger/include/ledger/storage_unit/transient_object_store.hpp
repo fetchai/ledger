@@ -109,7 +109,6 @@ private:
 
   Phase OnPopulating();
   Phase OnWriting();
-  Phase OnFlushing();
 
   uint32_t const    log2_num_lanes_;
   std::size_t const batch_size_ = 100;
