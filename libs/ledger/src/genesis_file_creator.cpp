@@ -97,11 +97,12 @@ using ConsensusPtr = std::shared_ptr<fetch::ledger::Consensus>;
 
 GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
                                        StorageUnitInterface &storage_unit, ConsensusPtr consensus,
-                                       const CertificatePtr &certificate)
-  : certificate_{certificate}
+                                       CertificatePtr certificate, std::string const &db_prefix)
+  : certificate_{std::move(certificate)}
   , block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
   , consensus_{std::move(consensus)}
+  , db_name_{db_prefix + "genesis_block"}
 {}
 
 /**
@@ -117,10 +118,7 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
 
   // Perform a check as to whether we have installed genesis before
   {
-    ByteArray identity_as_hex = certificate_->identity().identifier().ToHex();
-    identity_as_hex.Resize(16);
-    std::string db_prefix = std::string("genesis_" + identity_as_hex);
-    genesis_store_.Load(db_prefix + ".db", db_prefix + ".state.db");
+    genesis_store_.Load(db_name_ + ".db", db_name_ + ".state.db");
 
     if (genesis_store_.Get(storage::ResourceAddress("HEAD"), genesis_block_))
     {
@@ -194,7 +192,7 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
 bool GenesisFileCreator::LoadState(Variant const &object)
 {
   // Don't clobber the state if we have loaded the genesis file
-  if (loaded_genesis_ == true)
+  if (loaded_genesis_)
   {
     return true;
   }
@@ -295,7 +293,7 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object)
     }
 
     // Don't clobber the state if we have loaded the genesis file
-    if (loaded_genesis_ == true)
+    if (loaded_genesis_)
     {
       return true;
     }

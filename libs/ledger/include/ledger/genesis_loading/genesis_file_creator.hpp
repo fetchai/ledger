@@ -44,7 +44,8 @@ public:
 
   // Construction / Destruction
   GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit,
-                     ConsensusPtr consensus, const CertificatePtr &certificate);
+                     ConsensusPtr consensus, CertificatePtr certificate,
+                     std::string const &db_prefix);
   GenesisFileCreator(GenesisFileCreator const &) = delete;
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;
@@ -67,6 +68,7 @@ private:
   GenesisStore          genesis_store_;
   Block                 genesis_block_;
   bool                  loaded_genesis_{false};
+  std::string           db_name_;
 };
 
 }  // namespace ledger

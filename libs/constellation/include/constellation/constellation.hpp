@@ -98,6 +98,7 @@ public:
     bool         load_genesis_file{false};
     bool         kademlia_routing{true};
     std::string  genesis_file_location{""};
+    std::string  db_files_prefix{""};
     bool         proof_of_stake{false};
     NetworkMode  network_mode{NetworkMode::PUBLIC_NETWORK};
     FeatureFlags features{};
