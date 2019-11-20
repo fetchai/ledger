@@ -289,13 +289,13 @@ public:
   ConstSliceType Slice() const;
   ConstSliceType Slice(SizeType index, SizeType axis = 0) const;
   ConstSliceType Slice(SizeVector indices, SizeVector axes) const;
-  ConstSliceType StridedSlice(SizeVector const &begins, SizeVector const &ends,
+  ConstSliceType Slice(SizeVector const &begins, SizeVector const &ends,
                               SizeVector const &strides) const;
   TensorSlice    Slice();
   TensorSlice    Slice(SizeType index, SizeType axis = 0);
   TensorSlice    Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0);
   TensorSlice    Slice(SizeVector indices, SizeVector axes);
-  TensorSlice    StridedSlice(SizeVector const &begins, SizeVector const &ends,
+  TensorSlice    Slice(SizeVector const &begins, SizeVector const &ends,
                               SizeVector const &strides);
 
   /////////////
@@ -2205,7 +2205,7 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> 
 }
 
 template <typename T, typename C>
-typename Tensor<T, C>::ConstSliceType Tensor<T, C>::StridedSlice(
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(
     std::vector<SizeType> const &begins, std::vector<SizeType> const &ends,
     std::vector<SizeType> const &strides) const
 {
@@ -2324,7 +2324,7 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> ind
 }
 
 template <typename T, typename C>
-typename Tensor<T, C>::TensorSlice Tensor<T, C>::StridedSlice(std::vector<SizeType> const &begins,
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> const &begins,
                                                               std::vector<SizeType> const &ends,
                                                               std::vector<SizeType> const &strides)
 {
