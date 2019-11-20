@@ -32,18 +32,24 @@ class Transaction;
 }  // namespace chain
 namespace ledger {
 
-struct Deed
+class Deed
 {
+public:
   using Weight             = uint64_t;
   using Threshold          = Weight;
-  using DeedOperation      = byte_array::ConstByteArray;
+  using Operation          = byte_array::ConstByteArray;
   using Signees            = std::unordered_map<chain::Address, Weight>;
-  using OperationTresholds = std::unordered_map<DeedOperation, Threshold>;
+  using OperationTresholds = std::unordered_map<Operation, Threshold>;
   using Weights            = std::unordered_map<Weight, uint64_t>;
   using MandatorityMatrix  = std::unordered_map<Threshold, Weights>;
 
+  static Operation const TRANSFER;
+  static Operation const STAKE;
+  static Operation const AMEND;
+  static Operation const EXECUTE;
+
   bool              IsSane() const;
-  bool              Verify(chain::Transaction const &tx, DeedOperation const &operation) const;
+  bool              Verify(chain::Transaction const &tx, Operation const &operation) const;
   MandatorityMatrix InferMandatoryWeights() const;
 
   Deed()             = default;

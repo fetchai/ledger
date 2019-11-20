@@ -52,6 +52,7 @@ public:
   using BlockEntropy = beacon::BlockEntropy;
   using Identity     = crypto::Identity;
   using SystemClock  = moment::ClockPtr;
+  using Index        = uint64_t;
 
   Block() = default;
 
