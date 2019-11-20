@@ -150,6 +150,44 @@ TEST(big_number_gtest, log_tests)
   }
 }
 
+TEST(big_number_gtest, to_double_tests)
+{
+  static constexpr double INITIAL = 1.;
+
+  UInt<256> n256(static_cast<uint64_t>(INITIAL));
+
+  for (size_t i = 0; i < n256.ELEMENTS; ++i)
+  {
+    const double result   = ToDouble(n256);
+    const double expected = INITIAL * pow(2, i * n256.ELEMENT_SIZE);
+    EXPECT_NEAR(result, expected, std::numeric_limits<double>::epsilon());
+    n256 <<= n256.ELEMENT_SIZE;
+  }
+}
+
+template <typename LongUInt>
+bool IsTrimmedSizeValid()
+{
+  LongUInt number(uint64_t(0x80));
+  bool     isValid = true;
+  for (size_t i = 0; i < number.ELEMENTS; i++)
+  {
+    const auto expected_trimmed_size = i / (number.ELEMENTS / number.WIDE_ELEMENTS) + 1;
+    isValid &= number.TrimmedSize() == expected_trimmed_size;
+    number <<= number.ELEMENT_SIZE;
+  }
+
+  return isValid;
+}
+
+TEST(big_number_gtest, trimmed_size_tests)
+{
+  EXPECT_TRUE(IsTrimmedSizeValid<UInt<32>>());
+  EXPECT_TRUE(IsTrimmedSizeValid<UInt<64>>());
+  EXPECT_TRUE(IsTrimmedSizeValid<UInt<128>>());
+  EXPECT_TRUE(IsTrimmedSizeValid<UInt<256>>());
+}
+
 TEST(big_number_gtest, multiplication_tests)
 {
   UInt<256> n1;
