@@ -39,7 +39,7 @@ public:
     {
       stop();
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       std::cerr << " Exception while shuting down threads: " << e.what() << std::endl;
     }

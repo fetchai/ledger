@@ -52,16 +52,16 @@ enum class PublicTxStatus
   EXECUTED,     ///< The transaction has been executed successfully
   SUBMITTED,    ///< Special case for the data based synergetic transactions
 
-  // Contract execution errors
-  CHAIN_CODE_LOOKUP_FAILURE,
-  CHAIN_CODE_EXEC_FAILURE,
+  // Normal Contract execution errors
+  INSUFFICIENT_AVAILABLE_FUNDS,
   CONTRACT_NAME_PARSE_FAILURE,
   CONTRACT_LOOKUP_FAILURE,
-  TX_NOT_VALID_FOR_BLOCK,
-  INSUFFICIENT_AVAILABLE_FUNDS,
+  ACTION_LOOKUP_FAILURE,
+  CONTRACT_EXECUTION_FAILURE,
   TRANSFER_FAILURE,
   INSUFFICIENT_CHARGE,
-  FATAL_ERROR,
+
+  FATAL_ERROR
 };
 
 constexpr char const *ToString(PublicTxStatus status)
@@ -78,18 +78,16 @@ constexpr char const *ToString(PublicTxStatus status)
     return "Submitted";
   case PublicTxStatus::EXECUTED:
     return "Executed";
-  case PublicTxStatus::CHAIN_CODE_LOOKUP_FAILURE:
-    return "Chain Code Lookup Failure";
-  case PublicTxStatus::CHAIN_CODE_EXEC_FAILURE:
-    return "Chain Code Execution Failure";
+  case PublicTxStatus::INSUFFICIENT_AVAILABLE_FUNDS:
+    return "Insufficient available funds";
   case PublicTxStatus::CONTRACT_NAME_PARSE_FAILURE:
     return "Contract Name Parse Failure";
   case PublicTxStatus::CONTRACT_LOOKUP_FAILURE:
     return "Contract Lookup Failure";
-  case PublicTxStatus::TX_NOT_VALID_FOR_BLOCK:
-    return "Tx not valid for current block";
-  case PublicTxStatus::INSUFFICIENT_AVAILABLE_FUNDS:
-    return "Insufficient available funds";
+  case PublicTxStatus::ACTION_LOOKUP_FAILURE:
+    return "Contract Action Lookup Failure";
+  case PublicTxStatus::CONTRACT_EXECUTION_FAILURE:
+    return "Contract Execution Failure";
   case PublicTxStatus::TRANSFER_FAILURE:
     return "Unable to perform transfer";
   case PublicTxStatus::INSUFFICIENT_CHARGE:

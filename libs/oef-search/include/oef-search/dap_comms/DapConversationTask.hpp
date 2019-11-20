@@ -120,7 +120,7 @@ public:
       FETCH_LOG_INFO(LOGGING_NAME, "NOT Sleeping (", uri.ToString(), ")");
       return DapConversationTask::StateResult(1, fetch::oef::base::COMPLETE);
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to create conversation with: ", dap_name_,
                      ", message: ", e.what());
