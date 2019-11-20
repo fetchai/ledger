@@ -32,7 +32,7 @@ namespace crypto {
 namespace mcl {
 
 std::atomic<bool>  details::MCLInitialiser::was_initialised{false};
-constexpr uint16_t public_key_byte_size = 310;
+constexpr uint16_t PUBLIC_KEY_BYTE_SIZE = 310;
 
 PublicKey::PublicKey()
 {
@@ -413,7 +413,7 @@ PrivateKey SignatureAggregationCoefficient(PublicKey const &             notaris
 
   std::string concatenated_keys;
   concatenated_keys.reserve(hash_function_reuse_appender.length() +
-                            (cabinet_notarisation_keys.size() + 1) * public_key_byte_size);
+                            (cabinet_notarisation_keys.size() + 1) * PUBLIC_KEY_BYTE_SIZE);
 
   concatenated_keys += hash_function_reuse_appender;
 
