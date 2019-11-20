@@ -56,15 +56,31 @@ void MuddleLearnerNetworkerImpl::setup(MuddlePtr mud, StorePtr update_store)
 
   subscription_->SetMessageHandler(
       [](Address const &from, uint16_t service, uint16_t channel,
-                   uint16_t counter, Payload const &payload, Address const &foo)
+         uint16_t counter, Payload const &payload, Address const &my_address)
       {
+        serializers::MsgPackSerializer buf{payload};
+
+        std::string type_name;
+        byte_array::ConstByteArray  bytes;
+        double proportion;
+        double random_factor;
+
+        buf >> type_name
+            >> bytes
+            >> proportion
+            >> random_factor;
+
         std::cout
-          << from << ", "
-          << service << ", "
-          << channel << ", "
-          << counter << ", "
-          << payload << ", "
-          << foo
+          << "from:" << fetch::byte_array::ToBase64(from) << ", "
+          << "serv:" << service << ", "
+          << "chan:" << channel << ", "
+          << "cntr:" << counter << ", "
+          << "addr:" << fetch::byte_array::ToBase64(my_address) << ", "
+          << "type:" << type_name << ", "
+          << "size:" << bytes.size() << " bytes, "
+          << "prop:" << proportion << ", "
+          << "fact:" << random_factor << ", "
+          << std::endl;
           ;
       });
 
@@ -120,15 +136,24 @@ void MuddleLearnerNetworkerImpl::PushUpdateType(const std::string &       type_n
 }
 void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update)
 {
+  auto random_factor = randomiser_.GetNew();
   for (auto const &peer : peers_)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating sender for ", type_name, " to target ", peer);
     auto task = std::make_shared<MuddleOutboundUpdateTask>(
-        peer, type_name, update, client_, broadcast_proportion_, randomiser_.GetNew());
+        peer, type_name, update, client_, broadcast_proportion_, random_factor);
     taskpool_->submit(task);
   }
 
-  mud_ -> GetEndpoint() . Broadcast(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST, "Node A Message 1");
+  serializers::MsgPackSerializer buf;
+  buf
+    << type_name
+    << update
+    << broadcast_proportion_
+    << random_factor
+    ;
+
+  mud_ -> GetEndpoint() . Broadcast(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST, buf.data());
 }
 
 MuddleLearnerNetworkerImpl::UpdatePtr MuddleLearnerNetworkerImpl::GetUpdate(
