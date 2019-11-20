@@ -358,7 +358,7 @@ void ClientAlgorithm<TensorType>::Test()
       test_results            = fetch::math::ArgMax(test_results);
       SizeType total_score{0};
       auto     tr = test_results.cbegin();
-      for (auto dp : fetch::math::ArgMax(test_pair.first))
+      for (auto const &dp : fetch::math::ArgMax(test_pair.first))
       {
         if (dp == *tr)
         {
