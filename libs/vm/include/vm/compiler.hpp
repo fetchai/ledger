@@ -34,6 +34,7 @@ class Compiler
 public:
   explicit Compiler(Module *module);
   ~Compiler();
+
   bool Compile(SourceFiles const &files, std::string const &ir_name, IR &ir,
                std::vector<std::string> &errors);
 

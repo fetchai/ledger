@@ -855,11 +855,11 @@ TEST_F(MLTests, conv1d_sequential_model_test)
   auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
   fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1});
-  gt(0, 0) = static_cast<DataType>(-4.28031352977);
-  gt(1, 0) = static_cast<DataType>(-4.03654768132);
-  gt(2, 0) = static_cast<DataType>(8.11192789580);
-  gt(3, 0) = static_cast<DataType>(1.763717529829592);
-  gt(4, 0) = static_cast<DataType>(-1.8677866039798);
+  gt(0, 0) = static_cast<DataType>(+7.29641703);
+  gt(1, 0) = static_cast<DataType>(+5.42749771);
+  gt(2, 0) = static_cast<DataType>(+1.89785659);
+  gt(3, 0) = static_cast<DataType>(-0.52079467);
+  gt(4, 0) = static_cast<DataType>(+0.57897364);
 
   ASSERT_TRUE((prediction->GetTensor())
                   .AllClose(gt, fetch::math::function_tolerance<DataType>(),
@@ -928,11 +928,11 @@ TEST_F(MLTests, conv2d_sequential_model_test)
   auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
   fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1, 1});
-  gt.Set(0, 0, 0, static_cast<DataType>(1.1533032542));
-  gt.Set(1, 0, 0, static_cast<DataType>(-7.7671483948));
-  gt.Set(2, 0, 0, static_cast<DataType>(-4.0066583846));
-  gt.Set(3, 0, 0, static_cast<DataType>(-7.9669202564));
-  gt.Set(4, 0, 0, static_cast<DataType>(-16.5230417126));
+  gt.Set(0, 0, 0, static_cast<DataType>(+2.96216551));
+  gt.Set(1, 0, 0, static_cast<DataType>(+10.21055092));
+  gt.Set(2, 0, 0, static_cast<DataType>(-2.11563497));
+  gt.Set(3, 0, 0, static_cast<DataType>(+1.88992180));
+  gt.Set(4, 0, 0, static_cast<DataType>(+14.14585049));
 
   ASSERT_TRUE((prediction->GetTensor())
                   .AllClose(gt, fetch::math::function_tolerance<DataType>(),
