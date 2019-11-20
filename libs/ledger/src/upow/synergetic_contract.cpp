@@ -24,6 +24,7 @@
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
+#include "ledger/fees/storage_fee.hpp"
 #include "logging/logging.hpp"
 #include "vectorise/uint/uint.hpp"
 #include "vm/address.hpp"
@@ -230,6 +231,8 @@ Status SynergeticContract::DefineProblem(ProblemData const &problem_data)
     return Status::VM_EXECUTION_ERROR;
   }
 
+  charge_ += vm->GetChargeTotal();
+
   return Status::SUCCESS;
 }
 
@@ -259,6 +262,7 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
   if (!vm->Execute(*executable_, work_function_, error, *solution_, *problem_, hashed_nonce))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Work execution error: ", error);
+    charge_ += vm->GetChargeTotal();
     return Status::VM_EXECUTION_ERROR;
   }
 
@@ -268,8 +272,11 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
                    *solution_))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Objective evaluation execution error: ", error);
+    charge_ += vm->GetChargeTotal();
     return Status::VM_EXECUTION_ERROR;
   }
+
+  charge_ += vm->GetChargeTotal();
 
   // ensure the output of the objective function is "correct"
   if (vm::TypeIds::Int64 != objective_output.type_id)
@@ -284,7 +291,7 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
   return Status::SUCCESS;
 }
 
-Status SynergeticContract::Complete(chain::Address const &address, BitVector const &shards)
+Status SynergeticContract::Complete(chain::Address const &address, BitVector const &shards, CompletionValidator const &validator)
 {
   if (storage_ == nullptr)
   {
@@ -306,13 +313,30 @@ Status SynergeticContract::Complete(chain::Address const &address, BitVector con
   if (!vm->Execute(*executable_, clear_function_, error, output, *problem_, *solution_))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Solution execution failure: ", error);
+    charge_ += vm->GetChargeTotal();
     return Status::VM_EXECUTION_ERROR;
+  }
+
+  charge_ += vm->GetChargeTotal();
+
+  StorageFee storage_fee{state_sentinel};
+  charge_ += storage_fee.CalculateFee();
+
+  if (!validator())
+  {
+    storage_cache.Clear();
+    return Status::VALIDATION_ERROR;
   }
 
   // everything worked, flush the storage
   storage_cache.Flush();
 
   return Status::SUCCESS;
+}
+
+uint64_t SynergeticContract::CalculateFee() const
+{
+  return charge_;
 }
 
 bool SynergeticContract::HasProblem() const
@@ -380,6 +404,7 @@ void SynergeticContract::Detach()
   storage_ = nullptr;
   problem_.reset();
   solution_.reset();
+  charge_ = 0;
 }
 
 char const *ToString(SynergeticContract::Status status)
@@ -399,6 +424,9 @@ char const *ToString(SynergeticContract::Status status)
     break;
   case SynergeticContract::Status::GENERAL_ERROR:
     text = "General Error";
+    break;
+  case SynergeticContract::Status ::VALIDATION_ERROR:
+    text = "Failed to validate";
     break;
   }
 

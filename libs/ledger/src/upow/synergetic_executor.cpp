@@ -24,6 +24,8 @@
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
+#include "chain/transaction_builder.hpp"
+#include "ledger/execution_result.hpp"
 #include "logging/logging.hpp"
 
 #include <cstddef>
@@ -36,6 +38,7 @@ constexpr char const *LOGGING_NAME = "SynergeticExecutor";
 
 SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
   : storage_{storage}
+  , fee_manager_{token_contract_}
 {}
 
 void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem_data,
@@ -71,7 +74,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
     // validate the work that has been done
     WorkScore calculated_score{0};
     auto      status = contract->Work(solution->CreateHashedNonce(), calculated_score);
-
+    //TODO(AB): fee for invalid solution?
     if (SynergeticContract::Status::SUCCESS == status && calculated_score == solution->score())
     {
       // TODO(issue 1213): State sharding needs to be added here
@@ -87,8 +90,19 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       contract->Attach(storage_);
       ContractContext ctx(&token_contract_, solution->address(), &storage_adapter, 0);
       contract->UpdateContractContext(ctx);
-      status = contract->Complete(solution->address(), shard_mask);
-      contract->Detach();
+
+      //TODO(AB): charge limit
+      auto tx =  std::make_shared<chain::TransactionBuilder>()
+          ->From(solution->address())
+          .ChargeLimit(1e10)
+          .TargetSmartContract(chain::Address(solution->contract_digest()), solution->address(), shard_mask)
+          .Seal()
+          .Build();
+
+      ContractExecutionResult result;
+      status = contract->Complete(solution->address(), shard_mask, [this, &contract, &tx, &result]()->bool {
+        return fee_manager_.CalculateChargeAndValidate(tx, {contract.get()}, result);
+      });
 
       if (SynergeticContract::Status::SUCCESS != status)
       {
@@ -96,6 +110,11 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
                        " Reason: ", ToString(status));
         return;
       }
+
+      fee_manager_.Execute(tx, result, solution->block_index(), storage_);
+
+      contract->Detach();
+
       break;
     }
 

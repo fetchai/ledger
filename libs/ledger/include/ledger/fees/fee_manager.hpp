@@ -51,7 +51,7 @@ public:
 
 
   bool CalculateChargeAndValidate(TransactionPtr& tx, std::vector<Chargeable*> const &chargeables, Result& result);
-  void Execute(TransactionPtr& tx, Result &result, BlockIndex &block, StorageInterface& storage);
+  void Execute(TransactionPtr& tx, Result &result, BlockIndex const &block, StorageInterface& storage);
 
   // Operators
   FeeManager &operator=(FeeManager const &) = delete;

@@ -64,6 +64,11 @@ WorkScore Work::score() const
   return score_;
 }
 
+Work::BlockIndex Work::block_index() const
+{
+  return block_index_;
+}
+
 void Work::UpdateDigest(Digest digest)
 {
   contract_digest_ = std::move(digest);
@@ -87,6 +92,11 @@ void Work::UpdateScore(WorkScore score)
 void Work::UpdateNonce(UInt256 const &nonce)
 {
   nonce_ = nonce;
+}
+
+void Work::UpdateBlockIndex(Work::BlockIndex block_index)
+{
+  block_index_ = block_index;
 }
 
 Work::UInt256 Work::CreateHashedNonce() const

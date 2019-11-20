@@ -19,6 +19,7 @@
 
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
+#include "ledger/fees/fee_manager.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -45,6 +46,7 @@ public:
 private:
   StorageInterface &storage_;
   TokenContract     token_contract_{};
+  FeeManager        fee_manager_;
 };
 
 }  // namespace ledger

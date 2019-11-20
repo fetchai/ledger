@@ -82,7 +82,7 @@ bool FeeManager::CalculateChargeAndValidate(TransactionPtr& tx, std::vector<Char
 }
 
 
-void FeeManager::Execute(TransactionPtr& tx, Result &result, BlockIndex &block, StorageInterface &storage)
+void FeeManager::Execute(TransactionPtr& tx, Result &result, BlockIndex const &block, StorageInterface &storage)
 {
   telemetry::FunctionTimer const timer{*deduct_fees_duration_};
 

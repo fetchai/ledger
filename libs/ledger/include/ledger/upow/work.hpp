@@ -40,7 +40,8 @@ namespace ledger {
 class Work
 {
 public:
-  using UInt256 = vectorise::UInt<256>;
+  using UInt256    = vectorise::UInt<256>;
+  using BlockIndex = uint64_t;
 
   // Construction / Destruction
   Work() = default;
@@ -54,6 +55,7 @@ public:
   crypto::Identity const &miner() const;
   UInt256 const &         nonce() const;
   WorkScore               score() const;
+  BlockIndex              block_index() const;
 
   // Setters
   void UpdateDigest(Digest digest);
@@ -61,6 +63,7 @@ public:
   void UpdateIdentity(crypto::Identity const &identity);
   void UpdateScore(WorkScore score);
   void UpdateNonce(UInt256 const &nonce);
+  void UpdateBlockIndex(BlockIndex block_index);
 
   // Actions
   UInt256 CreateHashedNonce() const;
@@ -71,6 +74,7 @@ private:
   crypto::Identity miner_{};
   UInt256          nonce_{};
   WorkScore        score_{std::numeric_limits<WorkScore>::max()};
+  BlockIndex       block_index_{0};
 
   template <typename T, typename S>
   friend struct serializers::MapSerializer;
