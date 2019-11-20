@@ -530,7 +530,7 @@ protected:
 
     EXPECT_EQ(a.valid_from(), b.valid_from());
     EXPECT_EQ(a.valid_until(), b.valid_until());
-    EXPECT_EQ(a.charge(), b.charge());
+    EXPECT_EQ(a.charge_rate(), b.charge_rate());
     EXPECT_EQ(a.charge_limit(), b.charge_limit());
     EXPECT_EQ(a.contract_mode(), b.contract_mode());
     EXPECT_EQ(a.contract_digest(), b.contract_digest());
