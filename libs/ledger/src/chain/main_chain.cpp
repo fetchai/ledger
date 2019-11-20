@@ -533,12 +533,12 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
   FETCH_LOCK(lock_);
 
   // asserting genesis block has a number of 0, and everything else is above
-  assert(GetBlock(chain::GENESIS_HASH));
-  assert(GetBlock(chain::GENESIS_HASH)->block_number == 0);
+  assert(GetBlock(chain::GENESIS_DIGEST));
+  assert(GetBlock(chain::GENESIS_DIGEST)->block_number == 0);
 #ifndef NDEBUG
   for (auto const &block_entry : block_chain_)
   {
-    assert(block_entry_.second.block_number_ > 0 || block_entry_.first == chain::GENSIS_DIGEST);
+    assert(block_entry_.second.block_number_ > 0 || block_entry_.first == chain::GENESIS_DIGEST);
   }
 #endif
 
@@ -607,7 +607,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, uint64_t lim
     }
   }
 
-  // byt this moment, current hash can only be empty if limit = 0,
+  // by this moment, current hash can only be empty if limit = 0,
   // i.e. travelling back in time from tip
   assert(current_hash.empty() && limit == 0 || block);
   if (current_hash.empty() || limit <= block->block_number)
