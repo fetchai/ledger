@@ -168,7 +168,7 @@ void BeaconService::ReloadState()
   {
     FETCH_LOG_INFO(LOGGING_NAME,
                    "Found aeon keys during beacon construction, recovering. Valid from: ",
-                   ret->aeon.round_start);
+                   ret->aeon.round_start, " to ", ret->aeon.round_end);
 
     for (auto const &address_in_qual : ret->manager.qual())
     {
@@ -294,8 +294,10 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
     // TODO(HUT): clean historically old sigs + entropy here
   }
 
-  // Don't proceed from this state if it is ahead of the entropy we are trying to generate
-  if (index > (most_recent_round_seen_ + entropy_lead_blocks_))
+  // Don't proceed from this state if it is ahead of the entropy we are trying to generate,
+  // or we have no peers
+  if (index > (most_recent_round_seen_ + entropy_lead_blocks_) ||
+      endpoint_.GetDirectlyConnectedPeers().empty())
   {
     state_machine_->Delay(std::chrono::milliseconds(5));
     return State::COLLECT_SIGNATURES;
