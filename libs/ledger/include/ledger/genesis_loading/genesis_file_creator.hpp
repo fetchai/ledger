@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "storage/object_store.hpp"
@@ -36,6 +37,7 @@ class StorageUnitInterface;
 class GenesisFileCreator
 {
 public:
+  using ByteArray      = byte_array::ByteArray;
   using ConsensusPtr   = std::shared_ptr<fetch::ledger::Consensus>;
   using CertificatePtr = std::shared_ptr<crypto::Prover>;
   using GenesisStore   = fetch::storage::ObjectStore<Block>;

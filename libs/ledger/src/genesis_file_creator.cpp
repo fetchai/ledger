@@ -117,7 +117,7 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
 
   // Perform a check as to whether we have installed genesis before
   {
-    auto identity_as_hex = certificate_->identity().identifier().ToHex();
+    ByteArray identity_as_hex = certificate_->identity().identifier().ToHex();
     identity_as_hex.Resize(16);
     std::string db_prefix = std::string("genesis_" + identity_as_hex);
     genesis_store_.Load(db_prefix + ".db", db_prefix + ".state.db");
