@@ -25,6 +25,7 @@
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block_db_record.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/time_travelogue.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -150,50 +151,84 @@ BlockStatus MainChain::AddBlock(Block const &blk)
  * Internal: add a parent-child forward reference if it is unknown yet.
  * Update parent block, if found, with the relevant forward information.
  *
- * @param parent
- * @param child
- * @param parent_block
+ * @param hash
+ * @param next_hash
+ * @param unique if set to true, forget all other references, if any
  */
-void MainChain::CacheReference(BlockHash const &parent, BlockHash const &child,
-                               IntBlockPtr parent_block) const
+void MainChain::CacheReference(BlockHash const &hash, BlockHash const &next_hash, bool unique) const
 {
   // get all known forward references range for this parent
-  auto siblings = forward_references_.equal_range(parent);
+  auto siblings = forward_references_.equal_range(hash);
+  // references from storage are unique
+  if (unique)
+  {
+    // forget all other references
+    forward_references_.erase(siblings.first, siblings.second);
+    // keep unique this one
+    forward_references_.emplace(hash, next_hash);
+    return;
+  }
+
   // check if this parent-child reference has been already cached
   auto ref_it = std::find_if(siblings.first, siblings.second,
-                             [&child](auto const &ref) { return ref.second == child; });
+                             [&next_hash](auto const &ref) { return ref.second == next_hash; });
   if (ref_it == siblings.second)
   {
     // this child has not been already referred to yet
-    forward_references_.emplace_hint(siblings.first, parent, child);
+    forward_references_.emplace_hint(siblings.first, hash, next_hash);
   }
+}
 
-  assert(forward_references_.count(parent) > 0);
-  // Check how many forward references are already known for the parent hash.
-  // Note that two or more refs are ambiguous and thus parent's next_hash is emptied.
-  switch (forward_references_.count(parent))
+/**
+ * Internal: forget a parent-child forward reference.
+ * Update parent block, if found, with the relevant forward information.
+ *
+ * @param hash
+ * @param next_hash
+ */
+void MainChain::ForgetReference(BlockHash const &hash, BlockHash const &next_hash) const
+{
+  // get all known forward references range for this parent
+  auto siblings = forward_references_.equal_range(hash);
+  if (next_hash.empty())
   {
-  case 1:  // this one is an unique forward ref
-    if (parent_block || LookupBlockFromCache(parent, parent_block))
-    {
-      parent_block->next_hash = child;
-    }
-    break;
-  case 2:  // there are two forward refs now
-    if (parent_block || LookupBlockFromCache(parent, parent_block))
-    {
-      parent_block->next_hash = BlockHash{};
-    }
-    break;
-  default:;
-#ifndef NDEBUG
-    // there are many more forward refs from this parent so its next_hash should be empty
-    if (parent_block || LookupBlockFromCache(parent, parent_block))
-    {
-      assert(parent_block->next_hash.empty());
-    }
-#endif
-    // there's a lot of forward refs, nothing to be done here
+    // no particular child specified, forget all references from this parent
+    forward_references_.erase(siblings.first, siblings.second);
+    return;
+  }
+  // find a particular reference to this child
+  auto ref_it = std::find_if(siblings.first, siblings.second,
+                             [&next_hash](auto const &ref) { return ref.second == next_hash; });
+  if (ref_it != siblings.second)
+  {
+    forward_references_.erase(ref_it);
+  }
+}
+
+/**
+ * Lookup next_hash for a block in-memory.
+ * This procedure may fail in which case next_hash should either be looked for in storage,
+ * or recovered by descending from tip.
+ *
+ * @param hash Hash of the current block
+ * @param[out] next_hash Hash of unique block grown from this
+ * @return true iff a single forward reference is found in cache
+ */
+bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) const
+{
+  switch (forward_references_.count(hash))
+  {
+  case 0:
+    // should be a tip
+    next_hash = BlockHash{};
+    return true;
+  case 1:
+    // unique reference
+    next_hash = forward_references_.find(hash)->second;
+    return true;
+  default:
+    // ambiguous forward references need to be resolved from tip
+    return false;
   }
 }
 
@@ -206,12 +241,16 @@ void MainChain::CacheBlock(IntBlockPtr const &block) const
 {
   ASSERT(static_cast<bool>(block));
 
-  auto hash{block->hash};
-  auto ret_val{block_chain_.emplace(hash, block)};
+  auto const &hash = block->hash;
+  auto        ret_val{block_chain_.emplace(hash, block)};
+
   // under all circumstances, it _should_ be a fresh block
   ASSERT(ret_val.second);
-  // keep parent-child reference
-  CacheReference(block->previous_hash, std::move(hash));
+  if (!block->IsGenesis())
+  {
+    // keep parent-child reference
+    CacheReference(block->previous_hash, hash);
+  }
 }
 
 /**
@@ -252,6 +291,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
       }
       // before checking for this block's children in storage, reset next_hash to genesis
       record.next_hash = Digest{};
+      CacheReference(block->previous_hash, hash, true);
     }
   }
   record.block = *block;
@@ -264,6 +304,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
     if (block_store_->Has(storage::ResourceID(child)))
     {
       record.next_hash = child;
+      CacheReference(hash, child, true);
       break;
     }
   }
@@ -291,6 +332,15 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
     if (next_hash != nullptr)
     {
       *next_hash = record.next_hash;
+    }
+    // update references assuming those from storage are unique
+    if (!block.IsGenesis())
+    {
+      CacheReference(block.previous_hash, hash, true);
+    }
+    if (!record.next_hash.empty())
+    {
+      CacheReference(hash, record.next_hash, true);
     }
 
     return true;
@@ -340,11 +390,11 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
   {
     // forget the forward ref to this block from its parent
     auto siblings{forward_references_.equal_range(root->previous_hash)};
-    for (auto sibling{siblings.first}; sibling != siblings.second; ++sibling)
+    for (auto sibling = siblings.first; sibling != siblings.second; ++sibling)
     {
       if (sibling->second == removed_hash)
       {
-        references_.erase(sibling);
+        forward_references_.erase(sibling);
         break;
       }
     }
@@ -366,7 +416,7 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
       {
         next_gen.push_back(child->second);
       }
-      references_.erase(children.first, children.second);
+      forward_references_.erase(children.first, children.second);
 
       // next, remove the block record from the cache, if found
       if (block_chain_.erase(hash) != 0u)
@@ -392,7 +442,11 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
   // Step 0. Manually set heaviest to a block we still know is valid
   auto block_before_one_to_del = GetBlock(hash);
   heaviest_                    = HeaviestTip{};
-  heaviest_.Update(*block_before_one_to_del);
+  if (block_before_one_to_del &&
+      (block_before_one_to_del = GetBlock(block_before_one_to_del->previous_hash)))
+  {
+    heaviest_.Update(*block_before_one_to_del);
+  }
 
   // Step 1. Remove this block and the whole its progeny from the cache
   BlockHashSet invalidated_blocks;
@@ -432,47 +486,51 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
 /**
  * Walk the block history starting from the heaviest block
  *
- * @param limit The maximum number of blocks to be returned
+ * @param lowest_block_number The minimum allowed block_number to be returned
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
+MainChain::Blocks MainChain::GetHeaviestChain(uint64_t lowest_block_number) const
 {
   // Note: min needs a reference to something, so this is a workaround since UPPER_BOUND is a
   // constexpr
-  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::HeaviestChain");
 
   FETCH_LOCK(lock_);
 
-  return GetChainPreceding(GetHeaviestBlockHash(), limit);
+  return GetChainPreceding(GetHeaviestBlockHash(), lowest_block_number);
 }
 
 /**
  * Walk the block history collecting blocks until either genesis or the block limit is reached
  *
  * @param start The hash of the first block
- * @param limit The maximum number of blocks to be returned
+ * @param lowest_block_number The minimum allowed block_number to be returned
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
+MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_block_number) const
 {
-  if (limit == 0)
-  {
-    return Blocks{};
-  }
-  limit = std::min(limit, static_cast<uint64_t>(MainChain::UPPER_BOUND));
   MilliTimer myTimer("MainChain::ChainPreceding");
 
   FETCH_LOCK(lock_);
 
-  Blocks result;
+  // asserting genesis block has a number of 0, and everything else is above
+  assert(GetBlock(chain::GENESIS_HASH));
+  assert(GetBlock(chain::GENESIS_HASH)->block_number == 0);
+#ifndef NDEBUG
+  for (auto const &block_entry : block_chain_)
+  {
+    assert(block_entry_.second.block_number_ > 0 || block_entry_.first == chain::GENSIS_DIGEST);
+  }
+#endif
 
-  // look up the heaviest block hash
+  Blocks result;
+  bool   proceed = true;
+
   for (BlockHash current_hash = std::move(start);
        // exit once we have gathered enough blocks or reached genesis
-       result.size() < limit;)
+       proceed && result.size() < MainChain::UPPER_BOUND;)
   {
     // look up the block
     auto block = GetBlock(current_hash);
@@ -482,21 +540,21 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
       throw std::runtime_error("Failed to look up block");
     }
 
-    // walk the hash
-    bool stop = block->IsGenesis();
+    if (block->block_number < lowest_block_number)
+    {
+      break;
+    }
 
-    if (!stop)
+    // walk the hash
+    proceed = block->block_number > lowest_block_number;
+
+    if (proceed)
     {
       current_hash = block->previous_hash;
     }
 
     // update the results
     result.push_back(std::move(block));
-
-    if (stop)
-    {
-      break;
-    }
   }
 
   return result;
@@ -506,57 +564,61 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  * Walk the block history collecting blocks until either genesis or the block limit is reached.
  * Unlike in GetChainPreceding, positive value in limit indicates forward-travel.
  *
- * @param start The hash of the first block
+ * @param current_hash The hash of the first block
  * @param limit The maximum number of blocks to be returned, negative for towards genesis, positive
  * for towards tip
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Travelogue MainChain::TimeTravel(BlockHash current_block, int64_t limit) const
+MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, int64_t limit) const
 {
   if (limit <= 0)
   {
     // travel back in time
-    auto lim = static_cast<uint64_t>(-limit);
-    auto ret_blocks = current_hash.empty()? GetHeaviestChain(lim) : GetChainPreceding(std::move(current_hash), lim);
+    auto lim        = static_cast<uint64_t>(-limit);
+    auto ret_blocks = current_hash.empty() ? GetHeaviestChain(lim)
+                                           : GetChainPreceding(std::move(current_hash), lim);
     if (ret_blocks.empty())
     {
-	    return {Blocks{}, BlockHash{}, 0};
+      // stop here
+      return {Blocks{}, 0};
     }
-    auto next_hash{ret_blocks.back()->body.previous_hash}; // when next is previous
-    return {std::move(ret_blocks), std::move(next_hash), -1};
+
+    auto const earliest_number = ret_blocks.back()->block_number;
+    assert(earliest_number >= lim);
+
+    int64_t next_direction = earliest_number == lim ? 0 : -1;
+    return {std::move(ret_blocks), next_direction};
   }
 
   auto const lim =
       static_cast<std::size_t>(std::min(limit, static_cast<int64_t>(MainChain::UPPER_BOUND)));
   MilliTimer myTimer("MainChain::ChainPreceding");
 
-  Blocks    result;
-  Block     block;
-  BlockHash next_hash;
+  Blocks      result;
+  IntBlockPtr block;
+  BlockHash   next_hash;
 
   if (current_hash.empty())
   {
-	  current_hash = chain::GENESIS_DIGEST;
+    current_hash = chain::GENESIS_DIGEST;
   }
-  int next_direction = 1;
+  int64_t next_direction = 1;
 
   FETCH_LOCK(lock_);
 
   while (  // stop once we have gathered enough blocks or passed genesis
-	 !current_hash.empty() && result.size() < lim)
-
+      !current_hash.empty())
   {
     // lookup the block in storage
-    auto block{GetBlock(current_hash, &next_hash)};
-    if (!block)
+    if (!LookupBlock(current_hash, block, &next_hash))
     {
       if (IsBlockInCache(current_hash))
       {
         // The block is in the cache yet GetBlock() failed.
         // This indicates that forward reference is ambiguous, so we stop the loop here
         // and the remote requester should now travel from the heaviest tip.
-        proceed_in_this_direction = false;  // signal that forward-travelling can go no further
+        next_direction = -1;  // signal that forward-travelling can go no further
         break;
       }
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
@@ -564,32 +626,20 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_block, int64_t lim
     }
     // update the results
     result.push_back(std::move(block));
+    if (block->block_number >= lim)
+    {
+      break;
+    }
     // walk the stack
     current_hash = std::move(next_hash);
   }
-  if (current_hash.empty() && (result.empty() || result.back() != GetHeaviestBlock()))
+  if (current_hash.empty())
   {
-    proceed_in_this_direction = false;
+    // we have reached the tip of the chain, stop here
+    next_direction = 0;
   }
 
-  return {std::move(result), std::move(current_hash), proceed_in_this_direction};
-
-  // exit once we have gathered enough blocks or reached genesis
-  for (BlockHash current_hash{std::move(start)};
-       // check for returned subchain size
-       result.size() < lim
-       // empty next hash designates the tip of the chain
-       && !current_hash.empty()
-       // look up the block in storage
-       && LoadBlock(current_hash, block, &next_hash);
-       // walk the stack
-       current_hash = std::move(next_hash))
-  {
-    // update the results
-    result.push_back(std::make_unique<Block>(block));
-  }
-
-  return result;
+  return {std::move(result), next_direction};
 }
 
 /**
@@ -840,33 +890,26 @@ void MainChain::RecoverFromFile(Mode mode)
                      std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
     return;
   }
+  assert(mode == Mode::LOAD_PERSISTENT_DB);
   if (Mode::LOAD_PERSISTENT_DB == mode)
   {
     block_store_->Load("chain.db", "chain.index.db");
     head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out);
   }
-  else
-  {
-    assert(false);
-  }
 
   // load the head block, and attempt verify that this block forms a complete chain to genesis
-  IntBlockPtr block = std::make_shared<Block>();
-  IntBlockPtr head  = std::make_shared<Block>();
+  IntBlockPtr head = std::make_shared<Block>();
 
   // retrieve the starting hash
   BlockHash head_block_hash = GetHeadHash();
 
   bool recovery_complete{false};
-  if (!head_block_hash.empty() && LoadBlock(head_block_hash, *block))
+  if (!head_block_hash.empty() && LoadBlock(head_block_hash, *head))
   {
-    auto block_index = block->block_number;
-
-    // Save the head
-    head = block;
+    auto block_index = head->block_number;
 
     // Copy head block so as to walk down the chain
-    IntBlockPtr next = std::make_shared<Block>(*block);
+    IntBlockPtr next = std::make_shared<Block>(*head);
 
     while (LoadBlock(next->previous_hash, *next))
     {
@@ -1330,31 +1373,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 }
 
 /**
- * Lookup next_hash for a block in-memory.
- * This procedure may fail in which case next_hash should either be looked for in storage,
- * or recovered via descent from tip.
- *
- * @param hash Hash of the current block
- * @param[out] next_hash Hash of unique block grown from this
- * @return true iff a single forward reference is found in cache
- */
-bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) const
-{
-  switch (forward_references_.count(hash))
-  {
-  case 0:
-    next_hash = BlockHash{};
-    return true;
-  case 1:
-    next_hash = forward_references_.find(hash)->second;
-    return true;
-  default:
-    // ambiguous forward references need to be resolved from tip
-    return false;
-  }
-}
-
-/**
  * Attempt to look up a block.
  *
  * The search is performed initially on the in memory cache and then if this fails the persistent
@@ -1362,13 +1380,22 @@ bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) con
  *
  * @param hash The hash of the block to search for
  * @param block The output block to be populated
- * @param add_to_cache Whether to add to the cache as it is recent
+ * @param next_hash If non-null, next_hash of this block is to be copied to that location
  *
  * @return true if successful, otherwise false
  */
 bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash) const
 {
-  return LookupBlockFromCache(hash, block) || LookupBlockFromStorage(hash, block, add_to_cache);
+  if (LookupBlockFromCache(hash, block))
+  {
+    if (next_hash == nullptr                   // either forward reference is not needed
+        || LookupReference(hash, *next_hash))  // or forward reference is required and unique
+    {
+      return true;
+    }
+  }
+  // either block is not in the cache, or forward reference cannot be resolved unambiguously
+  return LookupBlockFromStorage(hash, block, next_hash);
 }
 
 /**
@@ -1380,19 +1407,17 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash
  */
 bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const
 {
-  bool success{false};
-
   FETCH_LOCK(lock_);
 
   // perform the lookup
   auto const it = block_chain_.find(hash);
   if ((block_chain_.end() != it))
   {
-    block   = it->second;
-    success = true;
+    block = it->second;
+    return true;
   }
 
-  return success;
+  return false;
 }
 
 /**
@@ -1403,7 +1428,7 @@ bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) 
  * @return true if successful, otherwise false
  */
 bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
-                                       bool add_to_cache) const
+                                       BlockHash *next_hash) const
 {
   bool success{false};
 
@@ -1413,15 +1438,12 @@ bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block
     auto output_block = std::make_shared<Block>();
 
     // attempt to read the block from the storage engine
-    success = LoadBlock(hash, *output_block);
+    success = LoadBlock(hash, *output_block, next_hash);
 
     if (success)
     {
-      // add the newly loaded block to the cache (if required)
-      if (add_to_cache)
-      {
-        AddBlockToCache(output_block);
-      }
+      // hash not serialised, needs to be recomputed
+      output_block->UpdateDigest();
 
       // update the returned shared pointer
       block = output_block;
@@ -1501,12 +1523,8 @@ bool MainChain::DetermineHeaviestTip()
           //
           // Chains of equivalent total weight and length are tie-broken, choosing the weight of the
           // tips as a tiebreaker. This is important for consensus.
-          return a_total_weight < b_total_weight ||
-                 (a_total_weight == b_total_weight && a_height < b_height) ||
-                 (a_total_weight == b_total_weight && a_height == b_height &&
-                  a_weight < b_weight) ||
-                 (a_total_weight == b_total_weight && a_height == b_height &&
-                  a_weight == b_weight && a_hash < b_hash);
+          return HeaviestTip::TipStats{a_total_weight, a_height, a_weight, a_hash} <
+                 HeaviestTip::TipStats{b_total_weight, b_height, b_weight, b_hash};
         });
 
     // update the heaviest
@@ -1561,14 +1579,10 @@ bool MainChain::ReindexTips()
     const uint64_t total_weight{block.total_weight};
     const uint64_t weight{block.weight};
     const uint64_t block_number{block.block_number};
-    new_tips[hash] = Tip{total_weight, weight};
+    new_tips[hash] = Tip{total_weight, weight, block_number};
     // check if this tip is the current heaviest
-    if (total_weight > max_total_weight ||
-        (total_weight == max_total_weight && block_number > max_block_number) ||
-        (total_weight == max_total_weight && block_number == max_block_number &&
-         weight > max_weight) ||
-        (total_weight == max_total_weight && block_number == max_block_number &&
-         weight == max_weight && hash > max_hash))
+    if (HeaviestTip::TipStats{total_weight, block_number, weight, hash} >
+        HeaviestTip::TipStats{max_total_weight, max_block_number, max_weight, max_hash})
     {
       max_total_weight = total_weight;
       max_weight       = weight;
@@ -1626,14 +1640,7 @@ MainChain::BlockHash MainChain::GetHeaviestBlockHash() const
  */
 bool MainChain::HeaviestTip::Update(Block const &block)
 {
-  bool updated{false};
-
-  if ((block.total_weight > total_weight) ||
-      (block.total_weight == total_weight && block.block_number > block_number) ||
-      (block.total_weight == total_weight && block.block_number == block_number &&
-       block.weight > weight) ||
-      (block.total_weight == total_weight && block.block_number == block_number &&
-       block.weight == weight && block.hash > hash))
+  if (TipStats{block.total_weight, block.block_number, block.weight, block.hash} > Stats())
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "New heaviest tip: 0x", block.hash.ToHex());
 
@@ -1641,10 +1648,10 @@ bool MainChain::HeaviestTip::Update(Block const &block)
     weight       = block.weight;
     hash         = block.hash;
     block_number = block.block_number;
-    updated      = true;
+    return true;
   }
 
-  return updated;
+  return false;
 }
 
 MainChain::BlockHash MainChain::GetHeadHash()
@@ -1694,7 +1701,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
   FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
 
   IntBlockPtr block;
-  if (!LookupBlock(starting_hash, block, false) || block->is_loose)
+  if (!LookupBlock(starting_hash, block) || block->is_loose)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
     return {};
@@ -1738,7 +1745,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
       }
 
       // exit the loop once we can no longer find the block
-      if (!LookupBlock(block->previous_hash, block, false))
+      if (!LookupBlock(block->previous_hash, block))
       {
         break;
       }

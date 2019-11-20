@@ -32,6 +32,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <stdexcept>
 
 static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
 static const uint64_t MAX_SUB_CHAIN_SIZE     = 1000;
@@ -61,9 +62,7 @@ constexpr State GetInitialState(Mode mode) noexcept
   {
   case Mode::STANDALONE:
     return State::SYNCHRONISED;
-  case Mode::PRIVATE_NETWORK:
-  case Mode::PUBLIC_NETWORK:
-    break;
+  default:;
   }
 
   return State::REQUEST_HEAVIEST_CHAIN;
@@ -83,6 +82,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   , rpc_client_("R:MChain", endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , state_machine_{std::make_shared<StateMachine>("MainChain", GetInitialState(mode_),
                                                   [](State state) { return ToString(state); })}
+  , left_edge_(chain_.GetHeaviestBlock())
   , recv_block_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_recv_block_total",
         "The number of received blocks from the network")}
@@ -141,6 +141,9 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
     // deserialize the block
     Block block;
     serialiser >> block;
+
+    // recalculate the block hash
+    block.UpdateDigest();
 
     // dispatch the event
     OnNewBlock(from, block, transmitter);
@@ -228,20 +231,30 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
   return address;
 }
 
-void MainChainRpcService::HandleChainResponse(Address const &address, BlockList block_list)
+void MainChainRpcService::HandleChainResponse(Address const &address, BlockList blocks)
+{
+  // default expectations is that blocks are returned in reverse order, later-to-earlier
+  HandleChainResponse(address, blocks.rbegin(), blocks.rend());
+}
+
+template <class Begin, class End>
+void MainChainRpcService::HandleChainResponse(Address const &address, Begin begin, End end)
 {
   std::size_t added{0};
   std::size_t loose{0};
   std::size_t duplicate{0};
   std::size_t invalid{0};
 
-  for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
+  for (auto it = begin; it != end; ++it)
   {
     // skip the genesis block
     if (it->IsGenesis())
     {
       continue;
     }
+
+    // recompute the digest
+    it->UpdateDigest();
 
     // add the block
     if (it->proof())
@@ -309,15 +322,52 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   if (!peer.empty())
   {
     current_peer_address_ = peer;
-    current_request_ =
-        rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
-                                        MainChainProtocol::HEAVIEST_CHAIN, MAX_CHAIN_REQUEST_SIZE);
+    Digest  start;
+    int64_t limit;
+    if (direction_ > 0)
+    {
+      if (left_edge_)
+      {
+        limit = static_cast<int64_t>(left_edge_->block_number + MAX_CHAIN_REQUEST_SIZE - 1);
+        start = left_edge_->hash;
+      }
+      else
+      {
+        limit = static_cast<int64_t>(MAX_CHAIN_REQUEST_SIZE - 1);
+      }
+    }
+    else
+    {
+      assert(direction_ < 0);
+      assert(bool(left_edge_));
+      if (left_edge_->block_number > MAX_POSSIBLE_CHAIN_LENGTH)
+      {
+        throw std::runtime_error("Main chain is too long to request");
+      }
+      limit = -static_cast<int64_t>(left_edge_->block_number);
+      if (right_edge_)
+      {
+        start = right_edge_->hash;
+      }
+    }
+
+    current_request_ = rpc_client_.CallSpecificAddress(
+        current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::TIME_TRAVEL, start, limit);
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
 
   state_machine_->Delay(std::chrono::milliseconds{500});
   return next_state;
+}
+
+inline bool Match(MainChainRpcService::Block const &left, MainChainRpcService::Block const &right)
+{
+  return left.hash == right.hash && left.previous_hash == right.previous_hash &&
+         left.merkle_hash == right.merkle_hash && left.block_number == right.block_number &&
+         left.miner == right.miner && left.miner_id == right.miner_id &&
+         left.log2_num_lanes == right.log2_num_lanes && left.slices == right.slices &&
+         left.timestamp == right.timestamp && left.weight == right.weight;
 }
 
 MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
@@ -340,11 +390,123 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
     {
       if (PromiseState::SUCCESS == status)
       {
-        // the request was successful, simply hand off the blocks to be added to the chain
-        HandleChainResponse(current_peer_address_, current_request_->As<BlockList>());
+        // the request was successful
+        auto response = current_request_->As<MainChainProtocol::Travelogue>();
+        // we should receive at least one extra block in addition to what we already have
+        if (response.blocks.size() > 1)
+        {
+          auto &blocks = response.blocks;
 
-        // now we have completed a request we can start normal synchronisation
-        next_state = State::SYNCHRONISING;
+          if (direction_ > 0)
+          {
+            auto earliest_block_it = blocks.begin();
+            if (left_edge_)
+            {
+              // left_edge_ is not null, which means we're continuing moving forward in time
+              // check if the first block received is actually the left_edge_
+              auto &earliest_block = blocks.front();
+              earliest_block.UpdateDigest();
+              if (!Match(earliest_block, *left_edge_))
+              {
+                FETCH_LOG_WARN(LOGGING_NAME, "The earliest block received (0x",
+                               earliest_block.hash.ToHex(), ", #", earliest_block.block_number,
+                               " does not match current left edge (0x", left_edge_->hash.ToHex(),
+                               ", #", left_edge_->block_number, ')');
+                return State::REQUEST_HEAVIEST_CHAIN;
+              }
+              // it matches so we won't need to add it, it's in the chain already
+              ++earliest_block_it;
+            }
+            HandleChainResponse(current_peer_address_, earliest_block_it, blocks.end());
+            left_edge_ = chain_.GetBlock(blocks.back().hash);
+            assert(left_edge_);
+          }
+          else
+          {
+            assert(direction_ < 0);  // we should be still receiving the heaviest chain
+
+            if (response.next_direction > 0)
+            {
+              FETCH_LOG_WARN(LOGGING_NAME,
+                             "Error: remote peer suggested sync forward after backwards");
+              return State::REQUEST_HEAVIEST_CHAIN;
+            }
+
+            // Since we're moving back in time, the earliest block is at the end of the array
+            auto earliest_block_it = blocks.rbegin();
+            auto latest_block_it   = blocks.rend();
+            if (right_edge_)
+            {
+              // right_edge_ is not null, which means we're continuing moving backwards in time
+              // check if the first block received is actually the right_edge_
+              auto &latest_block = blocks.front();
+              latest_block.UpdateDigest();
+              if (!Match(latest_block, *right_edge_))
+              {
+                FETCH_LOG_WARN(LOGGING_NAME, "The latest block received (0x",
+                               latest_block.hash.ToHex(), ", #", latest_block.block_number,
+                               " does not match current right edge (0x", right_edge_->hash.ToHex(),
+                               ", #", right_edge_->block_number, ')');
+                return State::REQUEST_HEAVIEST_CHAIN;
+              }
+              // it matches so we won't need to add it, it's on the chain already
+              --latest_block_it;
+            }
+
+            // check if the two edges already glue together
+            assert(left_edge_);
+            auto &earliest_block = blocks.back();
+
+            if (earliest_block.block_number < left_edge_->block_number)
+            {
+              FETCH_LOG_WARN(LOGGING_NAME, "The earliest block received (0x",
+                             earliest_block.hash.ToHex(), ", #", earliest_block.block_number,
+                             " is earlier than current left edge (0x", left_edge_->hash.ToHex(),
+                             ", #", left_edge_->block_number);
+              return State::REQUEST_HEAVIEST_CHAIN;
+            }
+
+            if (earliest_block.block_number == left_edge_->block_number)
+            {
+              if (response.next_direction != 0)
+              {
+                FETCH_LOG_WARN(LOGGING_NAME, "Error: remote peer should have suggested sync stop");
+                return State::REQUEST_HEAVIEST_CHAIN;
+              }
+
+              earliest_block.UpdateDigest();
+              if (!Match(earliest_block, *left_edge_))
+              {
+                FETCH_LOG_WARN(LOGGING_NAME,
+                               "Left-edge blocks do not match: "
+                               "expected {0x",
+                               left_edge_->hash.ToHex(), ", <-0x", left_edge_->previous_hash, ", ",
+                               left_edge_->weight, "}, actual {0x", earliest_block.hash.ToHex(),
+                               ", <-0x", earliest_block.previous_hash, ", ", earliest_block.weight,
+                               '}');
+                return State::REQUEST_HEAVIEST_CHAIN;
+              }
+              // it matches so we won't need to add it, it's on the chain already
+              ++earliest_block_it;
+            }
+            else if (response.next_direction == 0)
+            {
+              FETCH_LOG_WARN(LOGGING_NAME,
+                             "Error: remote peer suggested sync stop with gap not yet closed");
+              return State::REQUEST_HEAVIEST_CHAIN;
+            }
+
+            HandleChainResponse(current_peer_address_, earliest_block_it, latest_block_it);
+            if (response.next_direction != 0)
+            {
+              auto const &earliest_hash = blocks.back().hash;
+              right_edge_               = chain_.GetBlock(earliest_hash);
+              assert(right_edge_);
+            }
+          }
+        }
+        direction_ = response.next_direction;
+        next_state = direction_ == 0 ? State::SYNCHRONISING : State::REQUEST_HEAVIEST_CHAIN;
       }
       else
       {

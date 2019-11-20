@@ -32,6 +32,7 @@
 #include "network/p2pservice/p2ptrust_interface.hpp"
 #include "telemetry/telemetry.hpp"
 
+#include <limits>
 #include <memory>
 
 namespace fetch {
@@ -117,7 +118,10 @@ private:
   using BlockList       = fetch::ledger::MainChainProtocol::Blocks;
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
+  using BlockPtr        = MainChain::BlockPtr;
 
+  static constexpr uint64_t MAX_POSSIBLE_CHAIN_LENGTH =
+      static_cast<uint64_t>(std::numeric_limits<int64_t>::max());
   /// @name Subscription Handlers
   /// @{
   void OnNewBlock(Address const &from, Block &block, Address const &transmitter);
@@ -127,7 +131,10 @@ private:
   /// @{
   static constexpr char const *ToString(State state) noexcept;
   Address                      GetRandomTrustedPeer() const;
-  void                         HandleChainResponse(Address const &address, BlockList block_list);
+
+  void HandleChainResponse(Address const &address, BlockList blocks);
+  template <class Begin, class End>
+  void HandleChainResponse(Address const &address, Begin begin, End end);
   /// @}
 
   /// @name State Machine Handlers
@@ -160,6 +167,13 @@ private:
   Address         current_peer_address_;
   BlockHash       current_missing_block_;
   Promise         current_request_;
+  /// @}
+
+  /// @name Transient metadata for synchronisation — gap edges
+  /// @{
+  BlockPtr left_edge_;
+  BlockPtr right_edge_;
+  int64_t  direction_ = 0;
   /// @}
 
   /// @name Telemetry

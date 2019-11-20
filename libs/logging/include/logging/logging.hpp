@@ -41,7 +41,7 @@ std::string Format(Args &&... args)
   // unroll all the arguments and generate the formatted output
   std::ostringstream oss;
   value_util::ForEach([&oss](auto &&arg) { oss << std::forward<decltype(arg)>(arg); },
-		      std::forward<Args>(args)...);
+                      std::forward<Args>(args)...);
   return oss.str();
 }
 

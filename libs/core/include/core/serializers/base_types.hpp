@@ -1001,8 +1001,7 @@ struct MapSerializerTemplate
   template <class MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &t)
   {
-    value_util::ForEach(
-        [&t, &map](auto field) { field.Deserialize(t, map); }, Fields{}...);
+    value_util::ForEach([&t, &map](auto field) { field.Deserialize(t, map); }, Fields{}...);
   }
 };
 
@@ -1012,7 +1011,7 @@ struct SerializedStructField
   template <class Map, class T>
   static constexpr void Serialize(T &&t, Map &map)
   {
-    map.Append(field.Key(), field.Ref(t))
+    map.Append(K, std::forward<T>(t).*f);
   }
 
   template <class Map, class T>

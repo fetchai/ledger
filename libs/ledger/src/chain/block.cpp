@@ -32,7 +32,12 @@ namespace ledger {
 bool Block::operator==(Block const &rhs) const
 {
   // Invalid to compare blocks with no block hash
-  return (!this->hash.empty()) && (this->hash == rhs.hash);
+  return !hash.empty() && hash == rhs.hash;
+}
+
+bool Block::operator!=(Block const &rhs) const
+{
+  return !operator==(rhs);
 }
 
 /**

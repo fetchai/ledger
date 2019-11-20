@@ -37,6 +37,7 @@
 #include <list>
 #include <memory>
 #include <mutex>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -82,7 +83,7 @@ constexpr char const *ToString(BlockStatus status);
 
 struct BlockDbRecord;
 
-template<class B>
+template <class B>
 struct TimeTravelogue;
 
 class MainChain
@@ -132,14 +133,15 @@ public:
 
   /// @name Chain Queries
   /// @{
-  BlockPtr  GetHeaviestBlock() const;
-  BlockHash GetHeaviestBlockHash() const;
-  Blocks    GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
-  Blocks    GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
-  Travelogue TimeTravel(BlockHash current_block, int64_t limit = static_cast<int64_t>(UPPER_BOUND)) const;
-  bool      GetPathToCommonAncestor(
-           Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
-           BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
+  BlockPtr   GetHeaviestBlock() const;
+  BlockHash  GetHeaviestBlockHash() const;
+  Blocks     GetHeaviestChain(uint64_t lowest_block_number = 0) const;
+  Blocks     GetChainPreceding(BlockHash start, uint64_t lowest_block_number = 0) const;
+  Travelogue TimeTravel(BlockHash current_hash,
+                        int64_t   limit = static_cast<int64_t>(UPPER_BOUND)) const;
+  bool       GetPathToCommonAncestor(
+            Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
+            BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
   /// @}
 
   /// @name Tips
@@ -180,12 +182,18 @@ public:
 
   struct HeaviestTip
   {
-    uint64_t total_weight{0};
-    uint64_t weight{0};
-    uint64_t block_number{0};
+    using TipStats = std::tuple<Block::Weight, uint64_t, Block::Weight, BlockHash const &>;
+
+    Block::Weight total_weight{0};
+    Block::Weight weight{0};
+    uint64_t      block_number{0};
     // assuming every chain has a proper genesis
     BlockHash hash{chain::GENESIS_DIGEST};
 
+    constexpr TipStats Stats() const
+    {
+      return TipStats{total_weight, block_number, weight, hash};
+    }
     bool Update(Block const &block);
   };
 
@@ -207,12 +215,15 @@ public:
   /// @{
   BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
   bool LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash = nullptr) const;
-  bool LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash = nullptr) const;
-  bool LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash = nullptr) const;
+  bool LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const;
+  bool LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
+                              BlockHash *next_hash = nullptr) const;
   bool IsBlockInCache(BlockHash const &hash) const;
   void AddBlockToCache(IntBlockPtr const &block) const;
   void AddBlockToBloomFilter(Block const &block) const;
-  bool LookupNextHash(BlockHash const &hash, BlockHash &next_hash) const;
+  void CacheReference(BlockHash const &hash, BlockHash const &next_hash, bool unique = false) const;
+  void ForgetReference(BlockHash const &hash, BlockHash const &next_hash = {}) const;
+  bool LookupReference(BlockHash const &hash, BlockHash &next_hash) const;
   /// @}
 
   /// @name Low-level storage interface
@@ -243,7 +254,7 @@ public:
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
   // The whole tree of previous-next relations among cached blocks
-  mutable References                references_;
+  mutable References                forward_references_;
   TipsMap                           tips_;          ///< Keep track of the tips
   HeaviestTip                       heaviest_;      ///< Heaviest block/tip
   LooseBlockMap                     loose_blocks_;  ///< Waiting (loose) blocks

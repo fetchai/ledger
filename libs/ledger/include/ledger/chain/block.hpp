@@ -56,6 +56,7 @@ public:
   Block() = default;
 
   bool operator==(Block const &rhs) const;
+  bool operator!=(Block const &rhs) const;
 
   // Block core information
   Digest         hash;               ///< The hash of the block
@@ -96,45 +97,30 @@ private:
   SystemClock clock_ = moment::GetClock("block:body", moment::ClockType::SYSTEM);
 };
 
-struct BlockHashSerializer {
-	template<class Map>
-	static constexpr void Serialize(Map &&/*unused*/, ledger::Block const &/*unused*/)
-	{
-		// hash is not serialzed
-	}
-
-	template<class Map>
-	static constexpr void Deserialize(Map &&/*unused*/, ledger::Block &block)
-	{
-		// so has to be recomputed
-		block.UpdateDigest();
-	}
-};
-
 }  // namespace ledger
 
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<ledger::Block, D>: MapSerializerTemplate<Block, D,
-    SERIALIZED_STRUCT_TEMPLATE(1, ledger::Block::nonce),
-    SERIALIZED_STRUCT_TEMPLATE(2, ledger::Block::proof),
-    SERIALIZED_STRUCT_TEMPLATE(3, ledger::Block::weight),
-    SERIALIZED_STRUCT_TEMPLATE(4, ledger::Block::total_weight),
-    SERIALIZED_STRUCT_TEMPLATE(5, ledger::Block::miner_signature),
-    SERIALIZED_STRUCT_TEMPLATE(6, ledger::Block::hash),
-    SERIALIZED_STRUCT_TEMPLATE(7, ledger::Block::previous_hash),
-    SERIALIZED_STRUCT_TEMPLATE(8, ledger::Block::merkle_hash),
-    SERIALIZED_STRUCT_TEMPLATE(9, ledger::Block::block_number),
-    SERIALIZED_STRUCT_TEMPLATE(10, ledger::Block::miner),
-    SERIALIZED_STRUCT_TEMPLATE(11, ledger::Block::miner_id),
-    SERIALIZED_STRUCT_TEMPLATE(12, ledger::Block::log2_num_lanes),
-    SERIALIZED_STRUCT_TEMPLATE(13, ledger::Block::slices),
-    SERIALIZED_STRUCT_TEMPLATE(14, ledger::Block::dag_epoch),
-    SERIALIZED_STRUCT_TEMPLATE(15, ledger::Block::timestamp),
-    SERIALIZED_STRUCT_TEMPLATE(16, ledger::Block::block_entropy),
-    ledger::BlockHashSerializer>
-{};
+struct MapSerializer<ledger::Block, D>
+  : MapSerializerTemplate<ledger::Block, D, SERIALIZED_STRUCT_FIELD(1, ledger::Block::nonce),
+                          SERIALIZED_STRUCT_FIELD(2, ledger::Block::proof),
+                          SERIALIZED_STRUCT_FIELD(3, ledger::Block::weight),
+                          SERIALIZED_STRUCT_FIELD(4, ledger::Block::total_weight),
+                          SERIALIZED_STRUCT_FIELD(5, ledger::Block::miner_signature),
+                          SERIALIZED_STRUCT_FIELD(6, ledger::Block::hash),
+                          SERIALIZED_STRUCT_FIELD(7, ledger::Block::previous_hash),
+                          SERIALIZED_STRUCT_FIELD(8, ledger::Block::merkle_hash),
+                          SERIALIZED_STRUCT_FIELD(9, ledger::Block::block_number),
+                          SERIALIZED_STRUCT_FIELD(10, ledger::Block::miner),
+                          SERIALIZED_STRUCT_FIELD(11, ledger::Block::miner_id),
+                          SERIALIZED_STRUCT_FIELD(12, ledger::Block::log2_num_lanes),
+                          SERIALIZED_STRUCT_FIELD(13, ledger::Block::slices),
+                          SERIALIZED_STRUCT_FIELD(14, ledger::Block::dag_epoch),
+                          SERIALIZED_STRUCT_FIELD(15, ledger::Block::timestamp),
+                          SERIALIZED_STRUCT_FIELD(16, ledger::Block::block_entropy)>
+{
+};
 
 }  // namespace serializers
 }  // namespace fetch
