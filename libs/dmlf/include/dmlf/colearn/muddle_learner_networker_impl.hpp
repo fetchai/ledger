@@ -58,6 +58,10 @@ public:
   using Signer             = fetch::crypto::ECDSASigner;
   using Randomiser         = RandomDouble;
   using SignerPtr          = std::shared_ptr<Signer>;
+  using Payload            = fetch::muddle::Packet::Payload;
+  using Address            = fetch::muddle::Address;
+  using Uri                = fetch::network::Uri;
+  using SubscriptionPtr    = fetch::muddle::MuddleEndpoint::SubscriptionPtr;
 
   static constexpr char const *LOGGING_NAME = "MuddleLearnerNetworkerImpl";
 
@@ -129,6 +133,7 @@ private:
   Randomiser                  randomiser_;
   double                      broadcast_proportion_;
   double                      randomising_offset_;
+  SubscriptionPtr             subscription_;
 
   std::unordered_set<std::string> peers_;
 

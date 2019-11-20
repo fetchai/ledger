@@ -52,6 +52,22 @@ void MuddleLearnerNetworkerImpl::setup(MuddlePtr mud, StorePtr update_store)
   server_ = std::make_shared<RpcServer>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   server_->Add(RPC_COLEARN, proto_.get());
 
+  subscription_ = mud_ -> GetEndpoint() . Subscribe(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST);
+
+  subscription_->SetMessageHandler(
+      [](Address const &from, uint16_t service, uint16_t channel,
+                   uint16_t counter, Payload const &payload, Address const &foo)
+      {
+        std::cout
+          << from << ", "
+          << service << ", "
+          << channel << ", "
+          << counter << ", "
+          << payload << ", "
+          << foo
+          ;
+      });
+
   randomising_offset_   = randomiser_.GetNew();
   broadcast_proportion_ = 1.0;  // a reasonable default.
 }
@@ -111,6 +127,8 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, B
         peer, type_name, update, client_, broadcast_proportion_, randomiser_.GetNew());
     taskpool_->submit(task);
   }
+
+  mud_ -> GetEndpoint() . Broadcast(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST, "Node A Message 1");
 }
 
 MuddleLearnerNetworkerImpl::UpdatePtr MuddleLearnerNetworkerImpl::GetUpdate(
