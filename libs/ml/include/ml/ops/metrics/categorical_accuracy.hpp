@@ -44,11 +44,15 @@ public:
   explicit CategoricalAccuracy(SPType const &sp)
     : Ops<T>(sp)
     , weightings_(sp.weightings)
-  {}
+  {
+    weights_sum_ = weightings_.Sum();
+  }
 
   explicit CategoricalAccuracy(TensorType weightings = TensorType())
     : weightings_(std::move(weightings))
-  {}
+  {
+    weights_sum_ = weightings_.Sum();
+  }
 
   ~CategoricalAccuracy() override = default;
 
@@ -67,7 +71,8 @@ public:
     assert(me.get() == this);
 
     auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
-    copyshare->weightings_ = weightings_.Copy();
+    copyshare->weightings_  = weightings_.Copy();
+    copyshare->weights_sum_ = weights_sum_;
 
     return copyshare;
   }
@@ -87,7 +92,7 @@ public:
 
     SizeType data_size = test_results.size();
 
-    if (weightings_.size() == static_cast<SizeType>(0))
+    if (weightings_.size() == SizeType{0})
     {
       while (it1.is_valid())
       {
@@ -98,20 +103,9 @@ public:
         ++it1;
         ++it2;
       }
+      num_correct = fetch::math::Divide(num_correct, static_cast<DataType>(data_size));
     }
     // rescale according to weights
-    else if (weightings_.shape().size() == static_cast<SizeType>(1))
-    {
-      while (it1.is_valid())
-      {
-        if (*it1 == *it2)
-        {
-          num_correct += weightings_(0);
-        }
-        ++it1;
-        ++it2;
-      }
-    }
     // weighting is a batch_size vector (one weight per data point)
     else if (weightings_.shape() == std::vector<SizeType>{data_size})
     {
@@ -126,16 +120,15 @@ public:
         ++it2;
         ++w_it;
       }
+      num_correct = fetch::math::Divide(num_correct, weights_sum_);
     }
     else
     {
-      throw math::exceptions::WrongShape("input or weightings_shape invalid");
+      throw math::exceptions::WrongShape("input or weightings_ invalid");
     }
 
     // divide by number of elements
-    std::cout << "data_size: " << data_size << std::endl;
-    std::cout << "num_correct: " << num_correct << std::endl;
-    output(0, 0) = fetch::math::Divide(num_correct, static_cast<DataType>(data_size));
+    output(0, 0) = num_correct;
   }
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
@@ -161,6 +154,7 @@ public:
 
 private:
   TensorType weightings_;
+  DataType   weights_sum_;
 };
 
 }  // namespace ops

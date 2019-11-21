@@ -41,17 +41,17 @@ TYPED_TEST(CategoricalAccuracyTest, perfect_match_forward_test)
   using TensorType = TypeParam;
   using DataType   = typename TensorType::Type;
 
-  uint64_t n_classes     = 4;
-  uint64_t n_data_points = 8;
+  math::SizeType n_classes     = 4;
+  math::SizeType n_data_points = 8;
 
   TensorType data1({n_classes, n_data_points});
   TensorType data2({n_classes, n_data_points});
 
   std::vector<math::SizeType> data = {1, 2, 3, 0, 3, 1, 0, 2};
 
-  for (uint64_t i = 0; i < n_data_points; ++i)
+  for (math::SizeType i = 0; i < n_data_points; ++i)
   {
-    for (uint64_t j = 0; j < n_classes; ++j)
+    for (math::SizeType j = 0; j < n_classes; ++j)
     {
       if (data[i] == j)
       {
@@ -75,16 +75,15 @@ TYPED_TEST(CategoricalAccuracyTest, perfect_match_forward_test)
 
 TYPED_TEST(CategoricalAccuracyTest, mixed_forward_test)
 {
-  using TensorType       = TypeParam;
-  using DataType         = typename TensorType::Type;
-  uint64_t n_classes     = 3;
-  uint64_t n_data_points = 2;
+  using TensorType             = TypeParam;
+  using DataType               = typename TensorType::Type;
+  math::SizeType n_classes     = 3;
+  math::SizeType n_data_points = 2;
 
   TensorType data1({n_classes, n_data_points});
   TensorType data2({n_classes, n_data_points});
-  TensorType gt({n_classes, n_data_points});
 
-  data1 = TensorType::FromString("0, 1, 0; 0, 0, 1");
+  data1 = TensorType::FromString("0.05, 0.9, 0.05; 0.3, 0.3, 0.4");
   data1 = data1.Transpose();
   data2 = TensorType::FromString("0, 1, 0; 1, 0, 0");
   data2 = data2.Transpose();
@@ -97,12 +96,38 @@ TYPED_TEST(CategoricalAccuracyTest, mixed_forward_test)
               static_cast<double>(fetch::math::function_tolerance<DataType>()));
 }
 
+TYPED_TEST(CategoricalAccuracyTest, mixed_forward_test_weighted)
+{
+  using TensorType             = TypeParam;
+  using DataType               = typename TensorType::Type;
+  math::SizeType n_classes     = 3;
+  math::SizeType n_data_points = 2;
+
+  TensorType data1({n_classes, n_data_points});
+  TensorType data2({n_classes, n_data_points});
+
+  data1 = TensorType::FromString("0.05, 0.9, 0.05; 0.3, 0.3, 0.4");
+  data1 = data1.Transpose();
+  data2 = TensorType::FromString("0, 1, 0; 1, 0, 0");
+  data2 = data2.Transpose();
+
+  TensorType weights_vector = TensorType::FromString("0.3, 0.7");
+  weights_vector.Reshape({n_data_points});
+
+  fetch::ml::ops::CategoricalAccuracy<TensorType> op(weights_vector);
+  TensorType                                      result({1, 1});
+  op.Forward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)}, result);
+
+  EXPECT_NEAR(static_cast<double>(result(0, 0)), 0.3,
+              static_cast<double>(fetch::math::function_tolerance<DataType>()));
+}
+
 TYPED_TEST(CategoricalAccuracyTest, backward_test)
 {
   using TensorType = TypeParam;
 
-  uint64_t n_classes     = 1;
-  uint64_t n_data_points = 3;
+  math::SizeType n_classes     = 5;
+  math::SizeType n_data_points = 7;
 
   TensorType data1({n_classes, n_data_points});
   TensorType data2({n_classes, n_data_points});
@@ -123,17 +148,17 @@ TYPED_TEST(CategoricalAccuracyTest, saveparams_test)
   using SPType     = typename fetch::ml::ops::CategoricalAccuracy<TensorType>::SPType;
   using OpType     = fetch::ml::ops::CategoricalAccuracy<TensorType>;
 
-  uint64_t n_classes     = 4;
-  uint64_t n_data_points = 8;
+  math::SizeType n_classes     = 4;
+  math::SizeType n_data_points = 8;
 
   TensorType data1({n_classes, n_data_points});
   TensorType data2({n_classes, n_data_points});
 
   // set gt data
   std::vector<math::SizeType> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
-  for (uint64_t i = 0; i < n_data_points; ++i)
+  for (math::SizeType i = 0; i < n_data_points; ++i)
   {
-    for (uint64_t j = 0; j < n_classes; ++j)
+    for (math::SizeType j = 0; j < n_classes; ++j)
     {
       if (gt_data[i] == j)
       {
@@ -151,10 +176,10 @@ TYPED_TEST(CategoricalAccuracyTest, saveparams_test)
                              0.1, 0.5, 0.1,  0.1,  0.3, 0.2, 0.3, 0.1, 0.4,  0.1,  0.7,
                              0.1, 0.1, 0.7,  0.1,  0.1, 0.1, 0.1, 0.1, 0.5,  0.3};
 
-  uint64_t counter{0};
-  for (uint64_t i{0}; i < n_data_points; ++i)
+  math::SizeType counter{0};
+  for (math::SizeType i{0}; i < n_data_points; ++i)
   {
-    for (uint64_t j{0}; j < n_classes; ++j)
+    for (math::SizeType j{0}; j < n_classes; ++j)
     {
       data1.Set(j, i, DataType(logits[counter]));
       ++counter;
