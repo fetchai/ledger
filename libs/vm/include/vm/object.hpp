@@ -76,11 +76,17 @@ static constexpr bool IsAddress = std::is_base_of<Address, T>::value;
 template <typename T>
 static constexpr bool IsString = std::is_base_of<String, std::decay_t<T>>::value;
 
+// clang-format off
 template <typename T, typename R = void>
 using IfIsExternal = std::enable_if_t<
-    (!IsPtr<std::decay_t<T>>)&&(!IsObject<std::decay_t<T>>)&&(!IsVariant<std::decay_t<T>>)&&(
-        !IsPrimitive<std::decay_t<T>>)&&(!IsString<std::decay_t<T>>)&&(!IsAddress<std::decay_t<T>>),
+    !IsPtr<std::decay_t<T>> &&
+    !IsObject<std::decay_t<T>> &&
+    !IsVariant<std::decay_t<T>> &&
+    !IsPrimitive<std::decay_t<T>> &&
+    !IsString<std::decay_t<T>> &&
+    !IsAddress<std::decay_t<T>>,
     R>;
+// clang-format on
 
 template <typename T>
 using IsNonconstRef = std::is_same<T, std::decay_t<T> &>;

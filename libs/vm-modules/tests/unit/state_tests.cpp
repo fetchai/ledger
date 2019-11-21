@@ -421,7 +421,7 @@ TEST_F(StateTests, test_serialisation_of_structured_data)
   )";
 
   EXPECT_CALL(toolkit.observer(), Exists(state_name));
-  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(AnyNumber());
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(2);
 
   ASSERT_TRUE(toolkit.Compile(deser_src));
 

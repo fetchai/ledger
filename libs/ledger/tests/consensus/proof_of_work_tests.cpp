@@ -72,7 +72,7 @@ TEST(ledger_proof_of_work_gtest, Slightly_hard_difficulty)
   EXPECT_LT(proof.digest(), proof.target());
   proof = Test1("FETCH", 12);
   EXPECT_LT(proof.digest(), proof.target());
-  proof = Test1("Blah blah", 15);
+  proof = Test1("Blah blah", 1);
   EXPECT_LT(proof.digest(), proof.target());
 }
 
