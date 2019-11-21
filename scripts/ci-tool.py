@@ -283,7 +283,7 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
         sys.exit(exit_code)
 
 
-def test_end_to_end(project_root, build_root, names_filter=None):
+def test_end_to_end(project_root, build_root, name_filter=None):
     from end_to_end_test import run_end_to_end_test
 
     yaml_file = join(
@@ -301,7 +301,7 @@ def test_end_to_end(project_root, build_root, names_filter=None):
     clean_files(build_root)
 
     run_end_to_end_test.run_test(
-        build_root, yaml_file, constellation_exe, names_filter)
+        build_root, yaml_file, constellation_exe, name_filter)
 
 
 def test_language(build_root):
