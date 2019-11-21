@@ -18,7 +18,7 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
-#include "ml/ops/loss_functions/accuracy.hpp"
+#include "ml/ops/metrics/categorical_accuracy.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -30,13 +30,13 @@ namespace ml {
 namespace test {
 
 template <typename T>
-class AccuracyTest : public ::testing::Test
+class CategoricalAccuracyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(AccuracyTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_CASE(CategoricalAccuracyTest, math::test::HighPrecisionTensorFloatingTypes);
 
-TYPED_TEST(AccuracyTest, perfect_match_forward_test)
+TYPED_TEST(CategoricalAccuracyTest, perfect_match_forward_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TensorType::Type;
@@ -66,14 +66,14 @@ TYPED_TEST(AccuracyTest, perfect_match_forward_test)
     }
   }
 
-  fetch::ml::ops::Accuracy<TensorType> op;
+  fetch::ml::ops::CategoricalAccuracy<TensorType> op;
   TensorType                           result({1, 1});
   op.Forward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)}, result);
 
   EXPECT_EQ(result(0, 0), DataType{1});
 }
 
-TYPED_TEST(AccuracyTest, mixed_forward_test)
+TYPED_TEST(CategoricalAccuracyTest, mixed_forward_test)
 {
   using TensorType       = TypeParam;
   using DataType         = typename TensorType::Type;
@@ -89,7 +89,7 @@ TYPED_TEST(AccuracyTest, mixed_forward_test)
   data2 = TensorType::FromString("0, 1, 0; 1, 0, 0");
   data2 = data2.Transpose();
 
-  fetch::ml::ops::Accuracy<TensorType> op;
+  fetch::ml::ops::CategoricalAccuracy<TensorType> op;
   TensorType                           result({1, 1});
   op.Forward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)}, result);
 
@@ -97,7 +97,7 @@ TYPED_TEST(AccuracyTest, mixed_forward_test)
               static_cast<double>(fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(AccuracyTest, backward_test)
+TYPED_TEST(CategoricalAccuracyTest, backward_test)
 {
   using TensorType = TypeParam;
 
@@ -108,7 +108,7 @@ TYPED_TEST(AccuracyTest, backward_test)
   TensorType data2({n_classes, n_data_points});
   TensorType error_signal({1, 1});
 
-  fetch::ml::ops::Accuracy<TensorType> op;
+  fetch::ml::ops::CategoricalAccuracy<TensorType> op;
 
   EXPECT_THROW(
       op.Backward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)},
@@ -116,12 +116,12 @@ TYPED_TEST(AccuracyTest, backward_test)
       fetch::ml::exceptions::NotImplemented);
 }
 
-TYPED_TEST(AccuracyTest, saveparams_test)
+TYPED_TEST(CategoricalAccuracyTest, saveparams_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TensorType::Type;
-  using SPType     = typename fetch::ml::ops::Accuracy<TensorType>::SPType;
-  using OpType     = fetch::ml::ops::Accuracy<TensorType>;
+  using SPType     = typename fetch::ml::ops::CategoricalAccuracy<TensorType>::SPType;
+  using OpType     = fetch::ml::ops::CategoricalAccuracy<TensorType>;
 
   uint64_t n_classes     = 4;
   uint64_t n_data_points = 8;

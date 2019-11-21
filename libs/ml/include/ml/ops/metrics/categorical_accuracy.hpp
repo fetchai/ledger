@@ -31,26 +31,26 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Accuracy : public Ops<T>
+class CategoricalAccuracy : public Ops<T>
 {
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
   using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = OpAccuracySaveableParams<T>;
-  using MyType        = Accuracy<TensorType>;
+  using SPType        = OpCategoricalAccuracySaveableParams<T>;
+  using MyType        = CategoricalAccuracy<TensorType>;
 
-  explicit Accuracy(SPType const &sp)
+  explicit CategoricalAccuracy(SPType const &sp)
     : Ops<T>(sp)
     , weightings_(sp.weightings)
   {}
 
-  explicit Accuracy(TensorType weightings = TensorType())
+  explicit CategoricalAccuracy(TensorType weightings = TensorType())
     : weightings_(std::move(weightings))
   {}
 
-  ~Accuracy() override = default;
+  ~CategoricalAccuracy() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
@@ -155,9 +155,9 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::OP_ACCURACY;
+    return OpType::METRIC_CATEGORICAL_ACCURACY;
   }
-  static constexpr char const *DESCRIPTOR = "Accuracy";
+  static constexpr char const *DESCRIPTOR = "Categorical Accuracy";
 
 private:
   TensorType weightings_;

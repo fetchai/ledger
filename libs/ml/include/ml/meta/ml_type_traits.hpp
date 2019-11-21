@@ -119,7 +119,9 @@ enum class OpType : uint16_t
   LOSS_CROSS_ENTROPY,
   LOSS_SOFTMAX_CROSS_ENTROPY,
   LOSS_MEAN_SQUARE_ERROR,
-  OP_ACCURACY,  // todo: what even is accuracy?
+
+  // Metrics
+  METRIC_CATEGORICAL_ACCURACY,
 
   // OpKind - LAYER
   SUBGRAPH,

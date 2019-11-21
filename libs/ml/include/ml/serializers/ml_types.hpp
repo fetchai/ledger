@@ -2131,13 +2131,13 @@ struct MapSerializer<ml::OpMeanSquareErrorSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Accuracy saveable params
+ * serializer for CategoricalAccuracy saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
-struct MapSerializer<ml::OpAccuracySaveableParams<TensorType>, D>
+struct MapSerializer<ml::OpCategoricalAccuracySaveableParams<TensorType>, D>
 {
-  using Type       = ml::OpAccuracySaveableParams<TensorType>;
+  using Type       = ml::OpCategoricalAccuracySaveableParams<TensorType>;
   using DriverType = D;
 
   static uint8_t const BASE_OPS   = 1;
