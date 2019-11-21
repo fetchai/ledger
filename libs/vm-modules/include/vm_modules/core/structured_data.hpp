@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "variant/variant.hpp"
+#include "meta/type_traits.hpp"
+#include "vm/fixed.hpp"
 #include "vm/object.hpp"
 
 namespace fetch {
@@ -52,16 +54,20 @@ private:
   bool Has(vm::Ptr<vm::String> const &s);
 
   vm::Ptr<vm::String> GetString(vm::Ptr<vm::String> const &s);
+  vm::Ptr<vm::Fixed128> GetFixed128(vm::Ptr<vm::String> const &s);
   template <typename T>
   T GetPrimitive(vm::Ptr<vm::String> const &s);
   template <typename T>
   vm::Ptr<vm::Array<T>> GetArray(vm::Ptr<vm::String> const &s);
+  vm::Ptr<vm::Array<vm::Ptr<vm::Fixed128>>> GetFixed128Array(vm::Ptr<vm::String> const &s);
 
   template <typename T>
   void SetPrimitive(vm::Ptr<vm::String> const &s, T value);
   template <typename T>
-  void SetArray(vm::Ptr<vm::String> const &s, vm::Ptr<vm::Array<T>> const &arr);
+  meta::EnableIfNotSame<T, vm::Ptr<vm::Fixed128>> SetArray(vm::Ptr<vm::String> const &s, vm::Ptr<vm::Array<T>> const &arr);
+  void SetFixed128Array(vm::Ptr<vm::String> const &s, vm::Ptr<vm::Array<vm::Ptr<vm::Fixed128>>> const &arr);
   void SetString(vm::Ptr<vm::String> const &s, vm::Ptr<vm::String> const &value);
+  void SetFixed128(vm::Ptr<vm::String> const &s, vm::Ptr<vm::Fixed128> const &value);
 
   // Data
   variant::Variant contents_{variant::Variant::Object()};

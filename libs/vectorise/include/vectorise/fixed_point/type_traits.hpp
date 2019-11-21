@@ -86,6 +86,9 @@ constexpr bool IsFixedPoint128 = std::is_same<T, fixed_point::FixedPoint<64, 64>
 template <typename T>
 constexpr bool IsNotFixedPoint128 = !IsFixedPoint128<T> && IsFixedPoint<T>;
 
+template <typename DataType, typename ReturnType = void>
+using IfIsFixedPoint128 = fetch::meta::EnableIf<IsFixedPoint128<DataType>, ReturnType>;
+
 }  // namespace meta
 }  // namespace math
 }  // namespace fetch
