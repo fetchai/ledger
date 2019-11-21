@@ -181,7 +181,7 @@ template <class TensorType>
 void ClientAlgorithm<TensorType>::ClearLossFile()
 {
   mkdir(params_.results_dir.c_str(), 0777);
-  std::ofstream lossfile(params_.results_dir + "losses_" + id_ + ".csv",
+  std::ofstream lossfile(params_.results_dir + "/losses_" + id_ + ".csv",
                          std::ofstream::out | std::ofstream::trunc);
   lossfile.close();
 }
@@ -216,7 +216,7 @@ void ClientAlgorithm<TensorType>::Run()
   train_loss_sum_ = static_cast<DataType>(0);
   train_loss_cnt_ = 0;
 
-  std::ofstream lossfile(params_.results_dir + "losses_" + id_ + ".csv",
+  std::ofstream lossfile(params_.results_dir + "/losses_" + id_ + ".csv",
                          std::ofstream::out | std::ofstream::app);
 
   updates_applied_this_round_ = 0;
@@ -357,14 +357,14 @@ void ClientAlgorithm<TensorType>::Test()
       TensorType test_results = graph_ptr_->Evaluate("FullyConnected_2");
       test_results            = fetch::math::ArgMax(test_results);
       SizeType total_score{0};
-      auto     tr = test_results.cbegin();
-      for (auto const &dp : fetch::math::ArgMax(test_pair.first))
+      auto     test_result = test_results.cbegin();
+      for (auto const &data_point : fetch::math::ArgMax(test_pair.first))
       {
-        if (dp == *tr)
+        if (data_point == *test_result)
         {
           total_score++;
         }
-        ++tr;
+        ++test_result;
       }
       test_accuracy_ =
           static_cast<DataType>(total_score) / static_cast<DataType>(test_results.size());
