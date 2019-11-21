@@ -30,6 +30,7 @@
 #include <string>
 #include <thread>
 #include <unistd.h>
+#include <utility>
 #include <vector>
 
 using namespace fetch::ml::ops;
@@ -88,11 +89,16 @@ int main(int argc, char **argv)
       fetch::dmlf::collective_learning::utilities::ClientParamsFromJson<TensorType>(
           std::string(argv[1]), doc);
 
-  auto data_file      = doc["data"].As<std::string>();
-  auto labels_file    = doc["labels"].As<std::string>();
-  auto n_rounds       = doc["n_rounds"].As<SizeType>();
-  auto n_peers        = doc["n_peers"].As<SizeType>();
-  auto test_set_ratio = doc["test_set_ratio"].As<float>();
+  auto     data_file      = doc["data"].As<std::string>();
+  auto     labels_file    = doc["labels"].As<std::string>();
+  auto     n_rounds       = doc["n_rounds"].As<SizeType>();
+  auto     n_peers        = doc["n_peers"].As<SizeType>();
+  auto     test_set_ratio = doc["test_set_ratio"].As<float>();
+  SizeType start_time     = 0;
+  if (!doc["start_time"].IsUndefined())
+  {
+    start_time = doc["start_time"].As<SizeType>();
+  }
 
   // get the network config file
   fetch::json::JSONDocument network_doc;
@@ -120,6 +126,24 @@ int main(int argc, char **argv)
   auto client = fetch::dmlf::collective_learning::utilities::MakeMNISTClient<TensorType>(
       std::to_string(instance_number), client_params, data_file, labels_file, test_set_ratio,
       networker, console_mutex_ptr);
+
+  // Pause until start time
+  if (start_time != 0)
+  {
+    SizeType now = 0;
+    while (true)
+    {
+      now = static_cast<SizeType>(std::time(nullptr));
+      if (now >= start_time)
+      {
+        break;
+      }
+      auto diff  = start_time - now;
+      auto pause = std::max(30ul, diff);
+      std::cout << "Waiting 30s of " << diff << " delay before starting..." << std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(pause));
+    };
+  }
 
   /**
    * Main loop

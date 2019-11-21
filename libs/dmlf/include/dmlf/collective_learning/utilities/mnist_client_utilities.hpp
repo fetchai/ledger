@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/utilities/ReadCSV.hpp"
 #include "dmlf/collective_learning/collective_learning_client.hpp"
 #include "dmlf/networkers/abstract_learner_networker.hpp"
+#include "math/utilities/ReadCSV.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/meta/ml_type_traits.hpp"
