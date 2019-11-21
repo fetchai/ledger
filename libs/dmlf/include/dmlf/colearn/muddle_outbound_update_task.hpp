@@ -34,8 +34,9 @@ public:
   using RpcClientPtr = std::shared_ptr<RpcClient>;
   using Bytes        = byte_array::ByteArray;
   using ExitState    = oef::base::ExitState;
+  using Address      = fetch::muddle::Address;
 
-  std::string                  target_;
+  Address                      target_;
   std::string                  type_name_;
   Bytes                        update_;
   RpcClientPtr                 client_;
@@ -44,7 +45,7 @@ public:
   double proportion_;
   double random_factor_;
 
-  MuddleOutboundUpdateTask(std::string target, std::string type_name, Bytes update,
+  MuddleOutboundUpdateTask(Address target, std::string type_name, Bytes update,
                            RpcClientPtr client, double proportion, double random_factor)
     : target_(std::move(target))
     , type_name_(std::move(type_name))
