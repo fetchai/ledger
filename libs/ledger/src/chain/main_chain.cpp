@@ -645,12 +645,12 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, uint64_t lim
     // lookup the block in storage
     if (!LookupBlock(current_hash, block, &next_hash))
     {
-      if (!IsBlockInCache(current_hash))
+      if (!block)
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
         throw std::runtime_error("Failed to lookup block");
       }
-      // The block is in the cache yet GetBlock() failed.
+      // The block is in the cache yet LookupBlock() failed.
       // This indicates that forward reference is ambiguous, so we stop the loop here
       // and the remote requester should now travel from the heaviest tip.
       next_direction = -1;  // signal that forward-travelling can go no further
@@ -1407,7 +1407,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  * Attempt to look up a block.
  *
  * The search is performed initially on the in memory cache and then if this fails the persistent
- * disk storage is searched
+ * disk storage is searched.
  *
  * @param hash The hash of the block to search for
  * @param block The output block to be populated
@@ -1417,16 +1417,27 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  */
 bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash) const
 {
-  if (LookupBlockFromCache(hash, block))
+  auto is_in_cache = LookupBlockFromCache(hash, block);
+  if (is_in_cache)
   {
     if (next_hash == nullptr                   // either forward reference is not needed
-        || LookupReference(hash, *next_hash))  // or forward reference is required and unique
+        || LookupReference(hash, *next_hash))  // or forward reference is unique
     {
       return true;
     }
   }
   // either block is not in the cache, or forward reference cannot be resolved unambiguously
-  return LookupBlockFromStorage(hash, block, next_hash);
+  auto is_in_storage = LookupBlockFromStorage(hash, block, next_hash);
+  assert(!is_in_cache || next_hash != nullptr);
+
+  if (is_in_storage && is_in_cache && next_hash->empty())
+  {
+    // corner case:
+    // is_in_cache set, which, here, can only mean that several forward references are known
+    // yet next_hash is empty so neither of them is kept in the storage
+    return false;
+  }
+  return is_in_storage;
 }
 
 /**
@@ -1477,7 +1488,7 @@ bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block
       output_block->UpdateDigest();
 
       // update the returned shared pointer
-      block = output_block;
+      block = std::move(output_block);
     }
   }
 
