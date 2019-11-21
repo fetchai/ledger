@@ -1314,9 +1314,9 @@ void Generator::HandleInteger64(IRExpressionNodePtr const &node)
 void Generator::HandleUnsignedInteger64(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  auto                    value = static_cast<uint64_t>(std::atoll(node->text.c_str()));
-  instruction.index             = AddConstant(Variant(value, TypeIds::UInt64));
-  uint16_t pc                   = function_->AddInstruction(instruction);
+  auto value        = static_cast<uint64_t>(std::strtoull(node->text.c_str(), nullptr, 10));
+  instruction.index = AddConstant(Variant(value, TypeIds::UInt64));
+  uint16_t pc       = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 

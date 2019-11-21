@@ -65,6 +65,11 @@ public:
     return static_cast<bool>(identity_);
   }
 
+  PublicKey const &public_key() const
+  {
+    return public_key_;
+  }
+
 private:
   Identity  identity_;
   PublicKey public_key_;
@@ -111,6 +116,11 @@ public:
   ConstByteArray private_key() const
   {
     return private_key_.Apply([](PrivateKey const &key) { return key.KeyAsBin(); });
+  }
+
+  PrivateKey::EcKeyPtr private_key_ec_key() const
+  {
+    return private_key_.Apply([](PrivateKey const &key) { return key.key(); });
   }
 
 private:

@@ -66,6 +66,7 @@
 #include "ml/ops/slice.hpp"
 #include "ml/ops/sqrt.hpp"
 #include "ml/ops/squeeze.hpp"
+#include "ml/ops/strided_slice.hpp"
 #include "ml/ops/subtract.hpp"
 #include "ml/ops/switch.hpp"
 #include "ml/ops/tanh.hpp"
@@ -392,6 +393,13 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   case ops::Slice<T>::OpCode():
   {
     op_ptr = GetOp<ops::Slice<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::StridedSlice<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::StridedSlice<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
     g->AddTrainable(node, name);
     break;

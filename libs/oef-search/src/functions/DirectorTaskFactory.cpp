@@ -76,7 +76,7 @@ void DirectorTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCha
         }
       });
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());
       SendExceptionReply("update", current_uri, e, endpoint);
@@ -109,7 +109,7 @@ void DirectorTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCha
       status->set_success(count == 0);
       SendReply<Successfulness>("", current_uri, std::move(status), endpoint);
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());
       SendExceptionReply("update", current_uri, e, endpoint);
