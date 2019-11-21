@@ -87,8 +87,6 @@ void Analyser::Initialise()
                       fixed32_type_);
   CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64,
                       fixed64_type_);
-  CreatePrimitiveType("Fixed128", TypeIndex(typeid(fixed_point::fp128_t)), true, TypeIds::Fixed128,
-                      fixed128_type_);
 
   CreateClassType("Fixed128", TypeIndex(typeid(Fixed128)), TypeIds::Fixed128, fixed128_type_);
   EnableOperator(fixed128_type_, Operator::Equal);
@@ -99,26 +97,6 @@ void Analyser::Initialise()
   EnableOperator(fixed128_type_, Operator::GreaterThanOrEqual);
   EnableOperator(fixed128_type_, Operator::Add);
   EnableOperator(fixed128_type_, Operator::InplaceAdd);
-  /*
-  EnableOperator(fixed128_type_, Operator::Subtract);
-  EnableOperator(fixed128_type_, Operator::InplaceSubtract);
-  EnableOperator(fixed128_type_, Operator::Multiply);
-  EnableOperator(fixed128_type_, Operator::InplaceMultiply);
-  EnableOperator(fixed128_type_, Operator::Divide);
-  EnableOperator(fixed128_type_, Operator::InplaceDivide);
-  EnableOperator(fixed128_type_, Operator::Negate);
-  */
-
-  CreateClassType("Fixed128", TypeIndex(typeid(Fixed128)), TypeIds::Fixed128, fixed128_type_);
-  EnableOperator(fixed128_type_, Operator::Equal);
-  EnableOperator(fixed128_type_, Operator::NotEqual);
-  EnableOperator(fixed128_type_, Operator::LessThan);
-  EnableOperator(fixed128_type_, Operator::LessThanOrEqual);
-  EnableOperator(fixed128_type_, Operator::GreaterThan);
-  EnableOperator(fixed128_type_, Operator::GreaterThanOrEqual);
-  EnableOperator(fixed128_type_, Operator::Add);
-  EnableOperator(fixed128_type_, Operator::InplaceAdd);
-
   EnableOperator(fixed128_type_, Operator::Subtract);
   EnableOperator(fixed128_type_, Operator::InplaceSubtract);
   EnableOperator(fixed128_type_, Operator::Multiply);
