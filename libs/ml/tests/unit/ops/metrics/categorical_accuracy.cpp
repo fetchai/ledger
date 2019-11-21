@@ -67,7 +67,7 @@ TYPED_TEST(CategoricalAccuracyTest, perfect_match_forward_test)
   }
 
   fetch::ml::ops::CategoricalAccuracy<TensorType> op;
-  TensorType                           result({1, 1});
+  TensorType                                      result({1, 1});
   op.Forward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)}, result);
 
   EXPECT_EQ(result(0, 0), DataType{1});
@@ -90,7 +90,7 @@ TYPED_TEST(CategoricalAccuracyTest, mixed_forward_test)
   data2 = data2.Transpose();
 
   fetch::ml::ops::CategoricalAccuracy<TensorType> op;
-  TensorType                           result({1, 1});
+  TensorType                                      result({1, 1});
   op.Forward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)}, result);
 
   EXPECT_NEAR(static_cast<double>(result(0, 0)), 0.5,
