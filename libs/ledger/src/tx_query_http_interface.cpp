@@ -86,7 +86,8 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
         tx_obj["validFrom"]  = tx.valid_from();
         tx_obj["validUntil"] = tx.valid_until();
 
-        tx_obj["charge"]      = tx.charge();
+        tx_obj["charge"]      = tx.charge_rate();  // kept for the moment but will be deprecated
+        tx_obj["chargeRate"]  = tx.charge_rate();
         tx_obj["chargeLimit"] = tx.charge_limit();
 
         switch (tx.contract_mode())

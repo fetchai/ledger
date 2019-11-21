@@ -44,6 +44,8 @@ public:
   static constexpr eECDSAEncoding          binaryDataFormat = P_ECDSABinaryDataFormat;
   static constexpr point_conversion_form_t conversionForm   = P_ConversionForm;
 
+  using EcKeyPtr = SharedPointerType<const EC_KEY>;
+
   // using PublicKeyType = ECDSAPublicKey<binaryDataFormat, P_ECDSA_Curve_NID,
   // P_ConversionForm>;
   // TODO(issue 36): Implement DER encoding. It mis missing now so defaulting to
@@ -111,7 +113,7 @@ public:
     return *this;
   }
 
-  SharedPointerType<const EC_KEY> key() const
+  EcKeyPtr key() const
   {
     return private_key_;
   }

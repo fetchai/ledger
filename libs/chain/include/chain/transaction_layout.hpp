@@ -43,8 +43,8 @@ public:
   // Construction / Destruction
   TransactionLayout() = default;
   TransactionLayout(Transaction const &tx, uint32_t log2_num_lanes);
-  TransactionLayout(Digest digest, BitVector const &mask, TokenAmount charge, BlockIndex valid_from,
-                    BlockIndex valid_until);
+  TransactionLayout(Digest digest, BitVector const &mask, TokenAmount charge_rate,
+                    BlockIndex valid_from, BlockIndex valid_until);
   TransactionLayout(TransactionLayout const &) = default;
   TransactionLayout(TransactionLayout &&)      = default;
   ~TransactionLayout()                         = default;
@@ -53,7 +53,7 @@ public:
   /// @{
   Digest const &   digest() const;
   BitVector const &mask() const;
-  TokenAmount      charge() const;
+  TokenAmount      charge_rate() const;
   BlockIndex       valid_from() const;
   BlockIndex       valid_until() const;
   /// @}
@@ -67,7 +67,7 @@ public:
 private:
   ConstByteArray digest_{};
   BitVector      mask_{};
-  TokenAmount    charge_{0};
+  TokenAmount    charge_rate_{0};
   BlockIndex     valid_from_{0};
   BlockIndex     valid_until_{0};
 

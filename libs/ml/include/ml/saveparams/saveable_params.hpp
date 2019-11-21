@@ -309,6 +309,22 @@ struct OpSliceSaveableParams : public OpsSaveableParams
 };
 
 /**
+ * Saveable parameters for StridedSlice op
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct OpStridedSliceSaveableParams : public OpsSaveableParams
+{
+  using SizeType = typename TensorType::SizeType;
+
+  std::vector<SizeType> begins;
+  std::vector<SizeType> ends;
+  std::vector<SizeType> strides;
+
+  fetch::ml::OpType op_type = OpType::OP_STRIDED_SLICE;
+};
+
+/**
  * Saveable parameters for Squeeze op
  * @tparam TensorType
  */
@@ -409,6 +425,8 @@ struct OpMatrixMultiplySaveableParams : public OpsSaveableParams
   using SizeVector = std::vector<SizeType>;
 
   fetch::ml::OpType op_type = OpType::OP_MATRIX_MULTIPLY;
+  bool              transpose_a;
+  bool              transpose_b;
 };
 
 template <typename TensorType>

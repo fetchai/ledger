@@ -92,7 +92,7 @@ TEST(SemanticSearchIndex, BasicOperations2D)
     auto fail_group0 = database_index.Find(0, {width * 2});
     FAIL() << "Was expecting exception" << std::endl;
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
   }
 
