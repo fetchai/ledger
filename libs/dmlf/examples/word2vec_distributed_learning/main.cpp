@@ -168,8 +168,8 @@ int main(int argc, char **argv)
   std::cout << "FETCH Distributed Word2vec Demo" << std::endl;
 
   std::vector<std::string> client_data = SplitTrainingData(data_file, n_clients);
-  std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>> clients(n_clients);
-  std::vector<std::shared_ptr<fetch::dmlf::deprecated_LocalLearnerNetworker>>   networkers(n_clients);
+  std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>>          clients(n_clients);
+  std::vector<std::shared_ptr<fetch::dmlf::deprecated_LocalLearnerNetworker>> networkers(n_clients);
 
   // Create networkers
   for (SizeType i(0); i < n_clients; ++i)

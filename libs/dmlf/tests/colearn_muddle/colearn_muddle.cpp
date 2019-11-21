@@ -40,14 +40,14 @@ namespace {
 using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 
-using LNBase  = fetch::dmlf::colearn::AbstractMessageController;
-using LNBaseT = fetch::dmlf::collective_learning::utilities::TypedUpdateAdaptor;
-using LN      = fetch::dmlf::colearn::MuddleLearnerNetworkerImpl;
-using LNBaseP = std::shared_ptr<LNBase>;
+using LNBase   = fetch::dmlf::colearn::AbstractMessageController;
+using LNBaseT  = fetch::dmlf::collective_learning::utilities::TypedUpdateAdaptor;
+using LN       = fetch::dmlf::colearn::MuddleLearnerNetworkerImpl;
+using LNBaseP  = std::shared_ptr<LNBase>;
 using LNBaseTP = std::shared_ptr<LNBaseT>;
-using LNP     = std::shared_ptr<LN>;
-using NetMan  = fetch::network::NetworkManager;
-using NetManP = std::shared_ptr<NetMan>;
+using LNP      = std::shared_ptr<LN>;
+using NetMan   = fetch::network::NetworkManager;
+using NetManP  = std::shared_ptr<NetMan>;
 
 using MuddlePtr      = fetch::muddle::MuddlePtr;
 using CertificatePtr = fetch::muddle::ProverPtr;
@@ -89,8 +89,8 @@ public:
       r += std::to_string(remote);
     }
 
-    actual    = std::make_shared<LN>(priv, port, r);
-    interface = actual;
+    actual          = std::make_shared<LN>(priv, port, r);
+    interface       = actual;
     interface_typed = std::make_shared<LNBaseT>(interface);
     interface_typed->RegisterUpdateType<UpdateTypeForTesting>("update");
     interface_typed->RegisterUpdateType<fetch::dmlf::deprecated_Update<std::string>>("vocab");
@@ -106,7 +106,7 @@ public:
     r.push_back(t);
     interface_typed->PushUpdate(std::make_shared<UpdateTypeForTesting>(r));
     interface_typed->PushUpdate(std::make_shared<fetch::dmlf::deprecated_Update<std::string>>(
-                                           std::vector<std::string>{"cat", "dog"}));
+        std::vector<std::string>{"cat", "dog"}));
   }
 };
 

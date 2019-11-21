@@ -53,7 +53,8 @@ public:
 
   Learner(const std::string &cloud_config, std::size_t instance_number)
   {
-    actual = std::make_shared<fetch::dmlf::deprecated_MuddleLearnerNetworker>(cloud_config, instance_number);
+    actual    = std::make_shared<fetch::dmlf::deprecated_MuddleLearnerNetworker>(cloud_config,
+                                                                              instance_number);
     interface = actual;
     interface->Initialize<UpdateTypeForTesting>();
   }
@@ -72,8 +73,8 @@ public:
 class deprecated_MuddleLearnerNetworkerTests : public ::testing::Test
 {
 public:
-  using Inst                   = LNP;
-  using Insts                  = std::vector<Inst>;
+  using Inst                              = LNP;
+  using Insts                             = std::vector<Inst>;
   using deprecated_MuddleLearnerNetworker = fetch::dmlf::deprecated_MuddleLearnerNetworker;
 
   Insts insts;
@@ -133,16 +134,17 @@ public:
     auto r = std::vector<TensorType>();
     r.push_back(t);
     interface->PushUpdateType("update", std::make_shared<UpdateTypeForTesting>(r));
-    interface->PushUpdateType("vocab", std::make_shared<fetch::dmlf::deprecated_Update<std::string>>(
-                                           std::vector<std::string>{"cat", "dog"}));
+    interface->PushUpdateType("vocab",
+                              std::make_shared<fetch::dmlf::deprecated_Update<std::string>>(
+                                  std::vector<std::string>{"cat", "dog"}));
   }
 };
 
 class MuddleTypedUpdatesTests : public ::testing::Test
 {
 public:
-  using Inst                   = LNP;
-  using Insts                  = std::vector<Inst>;
+  using Inst                              = LNP;
+  using Insts                             = std::vector<Inst>;
   using deprecated_MuddleLearnerNetworker = fetch::dmlf::deprecated_MuddleLearnerNetworker;
 
   Insts insts;

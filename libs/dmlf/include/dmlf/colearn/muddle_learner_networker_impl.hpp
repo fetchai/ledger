@@ -19,10 +19,10 @@
 
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
+#include "dmlf/colearn/abstract_message_controller.hpp"
 #include "dmlf/colearn/colearn_protocol.hpp"
 #include "dmlf/colearn/random_double.hpp"
 #include "dmlf/colearn/update_store.hpp"
-#include "dmlf/colearn/abstract_message_controller.hpp"
 #include "dmlf/deprecated/abstract_learner_networker.hpp"
 #include "dmlf/deprecated/update_interface.hpp"
 #include "logging/logging.hpp"
@@ -40,31 +40,31 @@ namespace colearn {
 class MuddleLearnerNetworkerImpl : public AbstractMessageController
 {
 public:
-  using Taskpool           = oef::base::Taskpool;
-  using Threadpool         = oef::base::Threadpool;
-  using TaskP              = Taskpool::TaskP;
-  using MuddlePtr          = muddle::MuddlePtr;
+  using Taskpool                      = oef::base::Taskpool;
+  using Threadpool                    = oef::base::Threadpool;
+  using TaskP                         = Taskpool::TaskP;
+  using MuddlePtr                     = muddle::MuddlePtr;
   using deprecated_UpdateInterfacePtr = dmlf::deprecated_UpdateInterfacePtr;
-  using RpcClient          = fetch::muddle::rpc::Client;
-  using RpcClientPtr       = std::shared_ptr<RpcClient>;
-  using Proto              = ColearnProtocol;
-  using ProtoP             = std::shared_ptr<ColearnProtocol>;
-  using RpcServer          = fetch::muddle::rpc::Server;
-  using RpcServerPtr       = std::shared_ptr<RpcServer>;
-  using Bytes              = byte_array::ByteArray;
-  using Store              = UpdateStore;
-  using StorePtr           = std::shared_ptr<Store>;
-  using NetMan             = fetch::network::NetworkManager;
-  using NetManP            = std::shared_ptr<NetMan>;
-  using Signer             = fetch::crypto::ECDSASigner;
-  using Randomiser         = RandomDouble;
-  using SignerPtr          = std::shared_ptr<Signer>;
-  using Data               = AbstractMessageController::Bytes;
-  using UpdatePtr          = AbstractMessageController::UpdatePtr;
-  using ConstUpdatePtr     = AbstractMessageController::ConstUpdatePtr;
-  using Algorithm          = UpdateStore::Algorithm;
-  using UpdateType          = UpdateStore::UpdateType;
-  using Criteria           = UpdateStoreInterface::Criteria;
+  using RpcClient                     = fetch::muddle::rpc::Client;
+  using RpcClientPtr                  = std::shared_ptr<RpcClient>;
+  using Proto                         = ColearnProtocol;
+  using ProtoP                        = std::shared_ptr<ColearnProtocol>;
+  using RpcServer                     = fetch::muddle::rpc::Server;
+  using RpcServerPtr                  = std::shared_ptr<RpcServer>;
+  using Bytes                         = byte_array::ByteArray;
+  using Store                         = UpdateStore;
+  using StorePtr                      = std::shared_ptr<Store>;
+  using NetMan                        = fetch::network::NetworkManager;
+  using NetManP                       = std::shared_ptr<NetMan>;
+  using Signer                        = fetch::crypto::ECDSASigner;
+  using Randomiser                    = RandomDouble;
+  using SignerPtr                     = std::shared_ptr<Signer>;
+  using Data                          = AbstractMessageController::Bytes;
+  using UpdatePtr                     = AbstractMessageController::UpdatePtr;
+  using ConstUpdatePtr                = AbstractMessageController::ConstUpdatePtr;
+  using Algorithm                     = UpdateStore::Algorithm;
+  using UpdateType                    = UpdateStore::UpdateType;
+  using Criteria                      = UpdateStoreInterface::Criteria;
 
   static constexpr char const *LOGGING_NAME = "MuddleLearnerNetworkerImpl";
 
@@ -81,36 +81,38 @@ public:
 
   void addTarget(const std::string &peer);
 
-  void        PushUpdate(UpdatePtr const &update, Algorithm const& algo = "algo0", UpdateType const& type = "gradients") override
+  void PushUpdate(UpdatePtr const &update, Algorithm const &algo = "algo0",
+                  UpdateType const &type = "gradients") override
   {
     PushUpdate(update->data(), algo, type);
   }
-  
-  void        PushUpdate(Data const &update, Algorithm const& /*algo = "algo0"*/, UpdateType const& type = "gradients") override
+
+  void PushUpdate(Data const &      update, Algorithm const & /*algo = "algo0"*/,
+                  UpdateType const &type = "gradients") override
   {
     PushUpdateBytes(type, update);
   }
 
-  std::size_t GetUpdateCount(Algorithm const &algo = "algo0", UpdateType const &type = "gradients") const  override
+  std::size_t GetUpdateCount(Algorithm const & algo = "algo0",
+                             UpdateType const &type = "gradients") const override
   {
     FETCH_UNUSED(algo);
     FETCH_UNUSED(type);
     return GetUpdateTotalCount();
   }
-  
-  std::size_t GetUpdateTotalCount() const  override
+
+  std::size_t GetUpdateTotalCount() const override
   {
     return update_store_->GetUpdateCount();
   }
 
-  ConstUpdatePtr   GetUpdate(Algorithm const &algo = "algo0", UpdateType const &type = "gradients") override 
+  ConstUpdatePtr GetUpdate(Algorithm const & algo = "algo0",
+                           UpdateType const &type = "gradients") override
   {
     return update_store_->GetUpdate(algo, type);
   }
-  
-  ConstUpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type,
-                      Criteria const &criteria);
 
+  ConstUpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria const &criteria);
 
   void PushUpdateBytes(const UpdateType &type_name, Bytes const &update);
 

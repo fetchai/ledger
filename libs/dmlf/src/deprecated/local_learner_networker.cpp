@@ -25,7 +25,8 @@
 namespace fetch {
 namespace dmlf {
 
-void deprecated_LocalLearnerNetworker::AddPeers(std::vector<std::shared_ptr<deprecated_LocalLearnerNetworker>> new_peers)
+void deprecated_LocalLearnerNetworker::AddPeers(
+    std::vector<std::shared_ptr<deprecated_LocalLearnerNetworker>> new_peers)
 {
   for (auto const &peer : new_peers)
   {

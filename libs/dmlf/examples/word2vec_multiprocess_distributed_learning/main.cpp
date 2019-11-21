@@ -83,8 +83,8 @@ int main(int argc, char **argv)
   std::string client_data = fetch::ml::utilities::ReadFile(data_file);
 
   // Create networker and assign shuffle algorithm
-  auto networker =
-      std::make_shared<fetch::dmlf::deprecated_MuddleLearnerNetworker>(networker_config, instance_number);
+  auto networker = std::make_shared<fetch::dmlf::deprecated_MuddleLearnerNetworker>(
+      networker_config, instance_number);
   networker->Initialize<fetch::dmlf::deprecated_Update<TensorType>>();
   networker->SetShuffleAlgorithm(
       std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));

@@ -144,7 +144,7 @@ public:
 
   void DoWork()
   {
-    const std::size_t                         peercount = 20;
+    const std::size_t                                    peercount = 20;
     fetch::dmlf::deprecated_LocalLearnerNetworker::Peers peers;
     for (std::size_t i = 0; i < peercount; i++)
     {
@@ -179,7 +179,7 @@ public:
   }
   void DoMtWork()
   {
-    const std::size_t                         peercount = 20;
+    const std::size_t                                    peercount = 20;
     fetch::dmlf::deprecated_LocalLearnerNetworker::Peers peers;
     for (std::size_t i = 0; i < peercount; i++)
     {
@@ -227,7 +227,7 @@ public:
   }
   void DoMtFilepassingWork()
   {
-    const std::size_t                                                      peercount = 20;
+    const std::size_t peercount = 20;
     std::vector<std::shared_ptr<fetch::dmlf::deprecated_FilepassingLearnerNetworker>> peers;
     fetch::dmlf::deprecated_FilepassingLearnerNetworker::Peers                        names;
 

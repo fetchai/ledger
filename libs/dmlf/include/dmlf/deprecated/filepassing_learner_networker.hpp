@@ -36,10 +36,12 @@ public:
 
   deprecated_FilepassingLearnerNetworker() = default;
   ~deprecated_FilepassingLearnerNetworker() override;
-  deprecated_FilepassingLearnerNetworker(deprecated_FilepassingLearnerNetworker const &other) = delete;
-  deprecated_FilepassingLearnerNetworker &operator=(deprecated_FilepassingLearnerNetworker const &other)  = delete;
-  bool                         operator==(deprecated_FilepassingLearnerNetworker const &other) = delete;
-  bool                         operator<(deprecated_FilepassingLearnerNetworker const &other)  = delete;
+  deprecated_FilepassingLearnerNetworker(deprecated_FilepassingLearnerNetworker const &other) =
+      delete;
+  deprecated_FilepassingLearnerNetworker &operator                     =(
+      deprecated_FilepassingLearnerNetworker const &other) = delete;
+  bool operator==(deprecated_FilepassingLearnerNetworker const &other) = delete;
+  bool operator<(deprecated_FilepassingLearnerNetworker const &other)  = delete;
 
   void        PushUpdate(deprecated_UpdateInterfacePtr const &update) override;
   std::size_t GetPeerCount() const override

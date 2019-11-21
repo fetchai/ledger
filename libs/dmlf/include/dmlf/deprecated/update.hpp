@@ -66,8 +66,8 @@ public:
     , updated_rows_{std::move(updated_rows)}
   {}
 
-  explicit deprecated_Update(VectorTensor gradients, byte_array::ConstByteArray hash, ReverseVocabType vocab,
-                  VectorSizeVector updated_rows)
+  explicit deprecated_Update(VectorTensor gradients, byte_array::ConstByteArray hash,
+                             ReverseVocabType vocab, VectorSizeVector updated_rows)
     : stamp_{CurrentTime()}
     , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
@@ -129,8 +129,8 @@ public:
 
   deprecated_Update(deprecated_Update const &other) = delete;
   deprecated_Update &operator=(deprecated_Update const &other)  = delete;
-  bool    operator==(deprecated_Update const &other) = delete;
-  bool    operator<(deprecated_Update const &other)  = delete;
+  bool               operator==(deprecated_Update const &other) = delete;
+  bool               operator<(deprecated_Update const &other)  = delete;
 
 protected:
 private:

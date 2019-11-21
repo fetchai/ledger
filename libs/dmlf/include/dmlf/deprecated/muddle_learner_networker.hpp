@@ -62,14 +62,16 @@ public:
       const std::string &cloud_config, std::size_t instance_number,
       const std::shared_ptr<NetworkManager> &netm        = std::shared_ptr<NetworkManager>(),
       MuddleChannel                          channel_tmp = MuddleChannel::DEFAULT);
-  ~deprecated_MuddleLearnerNetworker() override                          = default;
+  ~deprecated_MuddleLearnerNetworker() override                                     = default;
   deprecated_MuddleLearnerNetworker(deprecated_MuddleLearnerNetworker const &other) = delete;
-  deprecated_MuddleLearnerNetworker &operator=(deprecated_MuddleLearnerNetworker const &other)  = delete;
-  bool                    operator==(deprecated_MuddleLearnerNetworker const &other) = delete;
-  bool                    operator<(deprecated_MuddleLearnerNetworker const &other)  = delete;
+  deprecated_MuddleLearnerNetworker &operator=(deprecated_MuddleLearnerNetworker const &other) =
+      delete;
+  bool operator==(deprecated_MuddleLearnerNetworker const &other) = delete;
+  bool operator<(deprecated_MuddleLearnerNetworker const &other)  = delete;
 
   void        PushUpdate(deprecated_UpdateInterfacePtr const &update) override;
-  void        PushUpdateType(const std::string &type, deprecated_UpdateInterfacePtr const &update) override;
+  void        PushUpdateType(const std::string &                  type,
+                             deprecated_UpdateInterfacePtr const &update) override;
   std::size_t GetPeerCount() const override;
 
   uint64_t RecvBytes(const byte_array::ByteArray &b);
@@ -94,9 +96,9 @@ protected:
     explicit deprecated_MuddleLearnerNetworkerProtocol(deprecated_MuddleLearnerNetworker &sample);
   };
 
-  std::shared_ptr<NetworkManager>                 netm_;
-  MuddlePtr                                       mud_;
-  std::shared_ptr<Server>                         server_;
+  std::shared_ptr<NetworkManager>                            netm_;
+  MuddlePtr                                                  mud_;
+  std::shared_ptr<Server>                                    server_;
   std::shared_ptr<deprecated_MuddleLearnerNetworkerProtocol> proto_;
 
   mutable Mutex mutex_;

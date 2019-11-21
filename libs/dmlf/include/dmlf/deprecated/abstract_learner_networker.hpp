@@ -36,16 +36,17 @@ class deprecated_AbstractLearnerNetworker
 public:
   using Bytes = byte_array::ByteArray;
 
-  deprecated_AbstractLearnerNetworker()                                      = default;
-  virtual ~deprecated_AbstractLearnerNetworker()                             = default;
+  deprecated_AbstractLearnerNetworker()                                                 = default;
+  virtual ~deprecated_AbstractLearnerNetworker()                                        = default;
   deprecated_AbstractLearnerNetworker(deprecated_AbstractLearnerNetworker const &other) = delete;
-  deprecated_AbstractLearnerNetworker &operator=(deprecated_AbstractLearnerNetworker const &other)  = delete;
-  bool                      operator==(deprecated_AbstractLearnerNetworker const &other) = delete;
-  bool                      operator<(deprecated_AbstractLearnerNetworker const &other)  = delete;
+  deprecated_AbstractLearnerNetworker &operator=(deprecated_AbstractLearnerNetworker const &other) =
+      delete;
+  bool operator==(deprecated_AbstractLearnerNetworker const &other) = delete;
+  bool operator<(deprecated_AbstractLearnerNetworker const &other)  = delete;
 
   // To implement
   virtual void        PushUpdate(deprecated_UpdateInterfacePtr const &update) = 0;
-  virtual std::size_t GetPeerCount() const                         = 0;
+  virtual std::size_t GetPeerCount() const                                    = 0;
 
   template <typename T>
   void Initialize()
@@ -72,7 +73,8 @@ public:
 
   virtual void SetShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg);
 
-  virtual void PushUpdateType(const std::string & /*key*/, deprecated_UpdateInterfacePtr const & /*update*/);
+  virtual void PushUpdateType(const std::string & /*key*/,
+                              deprecated_UpdateInterfacePtr const & /*update*/);
 
   template <typename T>
   void RegisterUpdateType(std::string key)

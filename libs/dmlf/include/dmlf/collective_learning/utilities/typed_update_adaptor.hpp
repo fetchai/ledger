@@ -34,40 +34,40 @@ namespace utilities {
 class TypedUpdateAdaptor
 {
 public:
-  using MessageControllerPtr = std::shared_ptr<colearn::AbstractMessageController>; 
+  using MessageControllerPtr = std::shared_ptr<colearn::AbstractMessageController>;
 
   explicit TypedUpdateAdaptor(MessageControllerPtr msg_ctrl)
-  : msg_ctrl_{std::move(msg_ctrl)}
+    : msg_ctrl_{std::move(msg_ctrl)}
   {}
 
   template <typename T>
-  void RegisterUpdateType(std::string const& update_type)
+  void RegisterUpdateType(std::string const &update_type)
   {
     FETCH_LOCK(update_types_m_);
     update_types_.template put<T>(update_type);
   }
-  
+
   template <typename T>
   void PushUpdate(std::shared_ptr<T> const &update)
   {
     std::string upd_type{};
     {
       FETCH_LOCK(update_types_m_);
-      upd_type  = update_types_.template find<T>();
+      upd_type = update_types_.template find<T>();
     }
 
     auto data = Serialize(update);
 
     msg_ctrl_->PushUpdate(data, "algo0", upd_type);
   }
-  
+
   template <typename T>
   std::size_t GetUpdateCount() const
   {
     std::string upd_type{};
     {
       FETCH_LOCK(update_types_m_);
-      upd_type  = update_types_.template find<T>();
+      upd_type = update_types_.template find<T>();
     }
 
     return msg_ctrl_->GetUpdateCount("alog0", upd_type);
@@ -83,24 +83,23 @@ public:
     }
 
     Bytes bytes = msg_ctrl_->GetUpdate("algo0", upd_type)->data();
-    return Deserialize<T>(bytes);    
+    return Deserialize<T>(bytes);
   }
 
-  
-  virtual ~TypedUpdateAdaptor()                             = default;
+  virtual ~TypedUpdateAdaptor()                       = default;
   TypedUpdateAdaptor(TypedUpdateAdaptor const &other) = default;
-  TypedUpdateAdaptor(TypedUpdateAdaptor &&other) = default;
-  TypedUpdateAdaptor &operator=(TypedUpdateAdaptor const &other)  = default;
-  TypedUpdateAdaptor &operator=(TypedUpdateAdaptor  &&other)  = default;
+  TypedUpdateAdaptor(TypedUpdateAdaptor &&other)      = default;
+  TypedUpdateAdaptor &operator=(TypedUpdateAdaptor const &other) = default;
+  TypedUpdateAdaptor &operator=(TypedUpdateAdaptor &&other) = default;
 
 private:
   using Bytes = colearn::AbstractMessageController::Bytes;
-  using Mutex             = fetch::Mutex;
-  using Lock              = std::unique_lock<Mutex>;
+  using Mutex = fetch::Mutex;
+  using Lock  = std::unique_lock<Mutex>;
 
   MessageControllerPtr msg_ctrl_;
-  TypeMap<> update_types_;
-  mutable Mutex     update_types_m_;
+  TypeMap<>            update_types_;
+  mutable Mutex        update_types_m_;
 
   template <typename T>
   Bytes Serialize(std::shared_ptr<T> const &update)
@@ -113,14 +112,14 @@ private:
   template <typename T>
   std::shared_ptr<T> Deserialize(Bytes const &bytes)
   {
-    auto update = std::make_shared<T>();
+    auto                                  update = std::make_shared<T>();
     fetch::serializers::MsgPackSerializer deserializer{bytes};
     deserializer >> *update;
     return update;
   }
 };
 
-}  // collective_learning 
-}  // utilities
+}  // namespace utilities
+}  // namespace collective_learning
 }  // namespace dmlf
 }  // namespace fetch

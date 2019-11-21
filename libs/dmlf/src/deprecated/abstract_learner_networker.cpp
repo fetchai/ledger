@@ -20,8 +20,8 @@
 
 namespace fetch {
 namespace dmlf {
-void deprecated_AbstractLearnerNetworker::PushUpdateType(const std::string & /*key*/,
-                                              deprecated_UpdateInterfacePtr const & /*update*/)
+void deprecated_AbstractLearnerNetworker::PushUpdateType(
+    const std::string & /*key*/, deprecated_UpdateInterfacePtr const & /*update*/)
 {
   // do nothing in the base case.
 }
@@ -56,7 +56,8 @@ std::size_t deprecated_AbstractLearnerNetworker::GetUpdateTypeCount(const std::s
   throw std::runtime_error{"Requesting UpdateCount for unregistered type"};
 }
 
-deprecated_AbstractLearnerNetworker::Bytes deprecated_AbstractLearnerNetworker::GetUpdateAsBytes(const std::string &key)
+deprecated_AbstractLearnerNetworker::Bytes deprecated_AbstractLearnerNetworker::GetUpdateAsBytes(
+    const std::string &key)
 {
   FETCH_LOCK(queue_map_m_);
   auto iter = queue_map_.find(key);

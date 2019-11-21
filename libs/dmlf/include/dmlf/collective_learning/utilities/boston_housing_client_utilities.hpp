@@ -72,7 +72,7 @@ MakeBostonClient(
     fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> &client_params,
     TensorType &data, TensorType &labels, float test_set_ratio,
     std::shared_ptr<deprecated_AbstractLearnerNetworker> networker,
-    std::shared_ptr<std::mutex>               console_mutex_ptr)
+    std::shared_ptr<std::mutex>                          console_mutex_ptr)
 {
 
   // set up the client first

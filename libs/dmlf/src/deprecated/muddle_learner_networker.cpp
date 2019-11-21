@@ -38,16 +38,16 @@ using fetch::service::Promise;
 using PromiseList = std::vector<Promise>;
 using SignerPtr   = std::shared_ptr<crypto::ECDSASigner>;
 
-deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworkerProtocol::deprecated_MuddleLearnerNetworkerProtocol(
-    deprecated_MuddleLearnerNetworker &sample)
+deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworkerProtocol::
+    deprecated_MuddleLearnerNetworkerProtocol(deprecated_MuddleLearnerNetworker &sample)
 {
-  Expose(deprecated_MuddleLearnerNetworkerProtocol::RECV_BYTES, &sample, &deprecated_MuddleLearnerNetworker::RecvBytes);
+  Expose(deprecated_MuddleLearnerNetworkerProtocol::RECV_BYTES, &sample,
+         &deprecated_MuddleLearnerNetworker::RecvBytes);
 }
 
-deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworker(const std::string &cloud_config,
-                                               std::size_t        instance_number,
-                                               const std::shared_ptr<NetworkManager> &netm,
-                                               MuddleChannel                          channel_tmp)
+deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworker(
+    const std::string &cloud_config, std::size_t instance_number,
+    const std::shared_ptr<NetworkManager> &netm, MuddleChannel channel_tmp)
   : channel_tmp_{channel_tmp}
 {
   json::JSONDocument doc{cloud_config};
@@ -136,8 +136,8 @@ void deprecated_MuddleLearnerNetworker::PushUpdate(deprecated_UpdateInterfacePtr
   }
 }
 
-void deprecated_MuddleLearnerNetworker::PushUpdateType(const std::string &       type,
-                                            deprecated_UpdateInterfacePtr const &update)
+void deprecated_MuddleLearnerNetworker::PushUpdateType(const std::string &                  type,
+                                                       deprecated_UpdateInterfacePtr const &update)
 {
   auto client =
       std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
@@ -163,7 +163,8 @@ std::size_t deprecated_MuddleLearnerNetworker::GetPeerCount() const
   return peers_.size();
 }
 
-deprecated_MuddleLearnerNetworker::CertificatePtr deprecated_MuddleLearnerNetworker::CreateIdentity()
+deprecated_MuddleLearnerNetworker::CertificatePtr
+deprecated_MuddleLearnerNetworker::CreateIdentity()
 {
   SignerPtr certificate = std::make_shared<crypto::ECDSASigner>();
   certificate->GenerateKeys();

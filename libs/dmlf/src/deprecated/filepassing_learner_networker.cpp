@@ -51,7 +51,8 @@ void deprecated_FilepassingLearnerNetworker::SetName(const std::string &name)
     ::unlink(name_to_unlink.c_str());
   }
   running_ = true;
-  watcher_ = std::make_shared<std::thread>(&deprecated_FilepassingLearnerNetworker::CheckUpdates, this);
+  watcher_ =
+      std::make_shared<std::thread>(&deprecated_FilepassingLearnerNetworker::CheckUpdates, this);
 }
 
 void deprecated_FilepassingLearnerNetworker::CheckUpdates()

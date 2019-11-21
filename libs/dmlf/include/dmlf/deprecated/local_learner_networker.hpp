@@ -33,12 +33,13 @@ public:
   using PeerP = std::shared_ptr<deprecated_LocalLearnerNetworker>;
   using Peers = std::vector<PeerP>;
 
-  deprecated_LocalLearnerNetworker()                                   = default;
-  ~deprecated_LocalLearnerNetworker() override                         = default;
+  deprecated_LocalLearnerNetworker()                                              = default;
+  ~deprecated_LocalLearnerNetworker() override                                    = default;
   deprecated_LocalLearnerNetworker(deprecated_LocalLearnerNetworker const &other) = delete;
-  deprecated_LocalLearnerNetworker &operator=(deprecated_LocalLearnerNetworker const &other)  = delete;
-  bool                   operator==(deprecated_LocalLearnerNetworker const &other) = delete;
-  bool                   operator<(deprecated_LocalLearnerNetworker const &other)  = delete;
+  deprecated_LocalLearnerNetworker &operator=(deprecated_LocalLearnerNetworker const &other) =
+      delete;
+  bool operator==(deprecated_LocalLearnerNetworker const &other) = delete;
+  bool operator<(deprecated_LocalLearnerNetworker const &other)  = delete;
 
   void PushUpdate(deprecated_UpdateInterfacePtr const &update) override;
 

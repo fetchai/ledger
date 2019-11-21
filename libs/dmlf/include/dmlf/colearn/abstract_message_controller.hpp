@@ -29,22 +29,25 @@ namespace colearn {
 class AbstractMessageController
 {
 public:
-  using Bytes = ColearnUpdate::Data;
-  using AlgorithmClass  = ColearnUpdate::Algorithm;
-  using UpdateClass = ColearnUpdate::UpdateType;
-  using UpdatePtr  = std::shared_ptr<ColearnUpdate>; 
+  using Bytes          = ColearnUpdate::Data;
+  using AlgorithmClass = ColearnUpdate::Algorithm;
+  using UpdateClass    = ColearnUpdate::UpdateType;
+  using UpdatePtr      = std::shared_ptr<ColearnUpdate>;
   using ConstUpdatePtr = std::shared_ptr<const ColearnUpdate>;
 
-
-  AbstractMessageController()                                      = default;
-  virtual ~AbstractMessageController()                             = default;
+  AbstractMessageController()          = default;
+  virtual ~AbstractMessageController() = default;
 
   // To implement
-  virtual void        PushUpdate(UpdatePtr const &update, AlgorithmClass const &algorithm, UpdateClass const &upd_class) = 0;
-  virtual void        PushUpdate(Bytes const &update, AlgorithmClass const &algorithm, UpdateClass const &upd_class) = 0;
-  virtual std::size_t GetUpdateCount(AlgorithmClass const &algorithm, UpdateClass const &upd_class) const   = 0;
-  virtual std::size_t GetUpdateTotalCount() const   = 0;
-  virtual ConstUpdatePtr   GetUpdate(AlgorithmClass const &algorithm, UpdateClass const &upd_class) = 0;
+  virtual void           PushUpdate(UpdatePtr const &update, AlgorithmClass const &algorithm,
+                                    UpdateClass const &upd_class)           = 0;
+  virtual void           PushUpdate(Bytes const &update, AlgorithmClass const &algorithm,
+                                    UpdateClass const &upd_class)           = 0;
+  virtual std::size_t    GetUpdateCount(AlgorithmClass const &algorithm,
+                                        UpdateClass const &   upd_class) const = 0;
+  virtual std::size_t    GetUpdateTotalCount() const                        = 0;
+  virtual ConstUpdatePtr GetUpdate(AlgorithmClass const &algorithm,
+                                   UpdateClass const &   upd_class)            = 0;
 };
 
 }  // namespace colearn
