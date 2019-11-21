@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <stdexcept>
+#include <string>
 
 namespace fetch {
 namespace ml {
