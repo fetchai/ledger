@@ -28,7 +28,7 @@ namespace fetch {
 namespace dmlf {
 
 template <typename ValueType = std::string>
-class TypeMap_
+class TypeMap
 {
 public:
   using IntToValueMap = std::unordered_map<std::type_index, ValueType>;

@@ -131,7 +131,7 @@ private:
   QueueInterfaceMap queue_map_;
   mutable Mutex     queue_map_m_;
 
-  TypeMap<> update_types_;
+  TypeMap_<> update_types_;
 
   void ThrowIfNotInitialized() const;
 };

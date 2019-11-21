@@ -96,12 +96,6 @@ void MuddleLearnerNetworkerImpl::submit(TaskP const &t)
   taskpool_->submit(t);
 }
 
-void MuddleLearnerNetworkerImpl::PushUpdateType(const std::string &       type_name,
-                                                deprecated_UpdateInterfacePtr const &update)
-{
-  auto bytes = update->Serialise();
-  PushUpdateBytes(type_name, bytes);
-}
 void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update)
 {
   for (auto const &peer : peers_)
@@ -113,15 +107,10 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, B
   }
 }
 
-MuddleLearnerNetworkerImpl::UpdatePtr MuddleLearnerNetworkerImpl::GetUpdate(
+MuddleLearnerNetworkerImpl::ConstUpdatePtr MuddleLearnerNetworkerImpl::GetUpdate(
     Algorithm const &algo, UpdateType const &type, Criteria const &criteria)
 {
   return update_store_->GetUpdate(algo, type, criteria);
-}
-
-void MuddleLearnerNetworkerImpl::PushUpdate(deprecated_UpdateInterfacePtr const &update)
-{
-  PushUpdateType("", update);
 }
 
 uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext const &context,
@@ -143,7 +132,7 @@ uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext c
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "STORING ", type_name, " from ", source);
-  update_store_->PushUpdate("algo1", type_name, std::move(bytes), source, std::move(metadata));
+  update_store_->PushUpdate("algo0", type_name, std::move(bytes), source, std::move(metadata));
   return 1;
 }
 }  // namespace colearn

@@ -22,6 +22,7 @@
 #include "dmlf/colearn/colearn_protocol.hpp"
 #include "dmlf/colearn/random_double.hpp"
 #include "dmlf/colearn/update_store.hpp"
+#include "dmlf/colearn/abstract_message_controller.hpp"
 #include "dmlf/deprecated/abstract_learner_networker.hpp"
 #include "dmlf/deprecated/update_interface.hpp"
 #include "logging/logging.hpp"
@@ -36,7 +37,7 @@ namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-class MuddleLearnerNetworkerImpl : public dmlf::deprecated_AbstractLearnerNetworker
+class MuddleLearnerNetworkerImpl : public AbstractMessageController
 {
 public:
   using Taskpool           = oef::base::Taskpool;
@@ -58,6 +59,12 @@ public:
   using Signer             = fetch::crypto::ECDSASigner;
   using Randomiser         = RandomDouble;
   using SignerPtr          = std::shared_ptr<Signer>;
+  using Data               = AbstractMessageController::Bytes;
+  using UpdatePtr          = AbstractMessageController::UpdatePtr;
+  using ConstUpdatePtr     = AbstractMessageController::ConstUpdatePtr;
+  using Algorithm          = UpdateStore::Algorithm;
+  using UpdateType          = UpdateStore::UpdateType;
+  using Criteria           = UpdateStoreInterface::Criteria;
 
   static constexpr char const *LOGGING_NAME = "MuddleLearnerNetworkerImpl";
 
@@ -74,25 +81,40 @@ public:
 
   void addTarget(const std::string &peer);
 
-  void PushUpdate(deprecated_UpdateInterfacePtr const &update) override;
-  void PushUpdateType(const std::string &type_name, deprecated_UpdateInterfacePtr const &update) override;
-  void PushUpdateBytes(const std::string &type_name, Bytes const &update);
-
-  UpdateStore::UpdatePtr GetUpdate(UpdateStore::Algorithm const & algo,
-                                   UpdateStore::UpdateType const &type)
+  void        PushUpdate(UpdatePtr const &update, Algorithm const& algo = "algo0", UpdateType const& type = "gradients") override
   {
-    return update_store_->GetUpdate(algo, type);
+    PushUpdate(update->data(), algo, type);
+  }
+  
+  void        PushUpdate(Data const &update, Algorithm const& /*algo = "algo0"*/, UpdateType const& type = "gradients") override
+  {
+    PushUpdateBytes(type, update);
   }
 
-  UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type,
-                      Criteria const &criteria) override;
-
-  std::size_t GetUpdateCount() const override
+  std::size_t GetUpdateCount(Algorithm const &algo = "algo0", UpdateType const &type = "gradients") const  override
+  {
+    FETCH_UNUSED(algo);
+    FETCH_UNUSED(type);
+    return GetUpdateTotalCount();
+  }
+  
+  std::size_t GetUpdateTotalCount() const  override
   {
     return update_store_->GetUpdateCount();
   }
 
-  std::size_t GetPeerCount() const override
+  ConstUpdatePtr   GetUpdate(Algorithm const &algo = "algo0", UpdateType const &type = "gradients") override 
+  {
+    return update_store_->GetUpdate(algo, type);
+  }
+  
+  ConstUpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type,
+                      Criteria const &criteria);
+
+
+  void PushUpdateBytes(const UpdateType &type_name, Bytes const &update);
+
+  std::size_t GetPeerCount() const
   {
     return 0;
   }
