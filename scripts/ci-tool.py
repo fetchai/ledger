@@ -180,6 +180,8 @@ def parse_commandline():
         help='Specify the folder directly that should be used for the build / test')
     parser.add_argument('-m', '--metrics',
                         action='store_true', help='Store the metrics')
+    parser.add_argument('--test-names', type=lambda cli_arg: frozenset(cli_arg.split(',')),
+                        help='Comma-separated list of end-to-end tests to run (default: all)')
 
     return parser.parse_args()
 
@@ -281,7 +283,7 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
         sys.exit(exit_code)
 
 
-def test_end_to_end(project_root, build_root):
+def test_end_to_end(project_root, build_root, names_filter=None):
     from end_to_end_test import run_end_to_end_test
 
     yaml_file = join(
@@ -298,7 +300,8 @@ def test_end_to_end(project_root, build_root):
 
     clean_files(build_root)
 
-    run_end_to_end_test.run_test(build_root, yaml_file, constellation_exe)
+    run_end_to_end_test.run_test(
+        build_root, yaml_file, constellation_exe, names_filter)
 
 
 def test_language(build_root):
@@ -423,7 +426,7 @@ def main():
             include_regex=INTEGRATION_TEST_LABEL)
 
     if args.end_to_end_tests or args.all:
-        test_end_to_end(project_root, build_root)
+        test_end_to_end(project_root, build_root, args.test_names)
 
     if args.lint or args.all:
         fetchai_code_quality.static_analysis(
