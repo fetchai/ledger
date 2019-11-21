@@ -154,22 +154,22 @@ TEST(big_number_gtest, to_double_tests)
 {
   static constexpr double INITIAL = 1.;
 
-  UInt<256> n256(static_cast<uint64_t>(INITIAL));
+  UInt<256> number(static_cast<uint64_t>(INITIAL));
 
-  for (size_t i = 0; i < n256.ELEMENTS; ++i)
+  for (size_t i = 0; i < number.ELEMENTS; ++i)
   {
-    const double result   = ToDouble(n256);
-    const double expected = INITIAL * pow(2, i * n256.ELEMENT_SIZE);
+    const double result   = ToDouble(number);
+    const double expected = INITIAL * pow(2, i * number.ELEMENT_SIZE);
     EXPECT_NEAR(result, expected, std::numeric_limits<double>::epsilon());
-    n256 <<= n256.ELEMENT_SIZE;
+    number <<= number.ELEMENT_SIZE;
   }
 }
 
 template <typename LongUInt>
 bool IsTrimmedSizeValid()
 {
+  bool     isValid = LongUInt(uint64_t(0)).TrimmedSize() == 1;
   LongUInt number(uint64_t(0x80));
-  bool     isValid = true;
   for (size_t i = 0; i < number.ELEMENTS; i++)
   {
     const auto expected_trimmed_size = i / (number.ELEMENTS / number.WIDE_ELEMENTS) + 1;

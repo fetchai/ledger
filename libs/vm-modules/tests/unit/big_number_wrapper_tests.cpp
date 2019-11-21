@@ -336,7 +336,7 @@ TEST_F(UInt256Tests, uint256_type_casts)
 
           var test_str : String = toString(test);
           var correct_str : String =
-          "000084e2506ce67c000000000000000000000000000000000000000000000000"
+          "000084e2506ce67c000000000000000000000000000000000000000000000000";
           ok = ok && (test_str == correct_str);
           return ok;
       endfunction

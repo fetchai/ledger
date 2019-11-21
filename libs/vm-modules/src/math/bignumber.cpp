@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/math/bignumber.hpp"
-
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "vectorise/uint/uint.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
+#include "vm_modules/math/bignumber.hpp"
 
 #include <cstdint>
 #include <stdexcept>

@@ -1087,7 +1087,7 @@ inline std::ostream &operator<<(std::ostream &s, UInt<S> const &x)
   return s;
 }
 
-inline double ToDouble(UInt<> const &x)
+inline double ToDouble(UInt<256> const &x)
 {
   if (x.TrimmedSize() == 1)
   {
@@ -1111,7 +1111,7 @@ inline double ToDouble(UInt<> const &x)
   return static_cast<double>(mantisse) * pow(2, static_cast<double>(magnitude));
 }
 
-inline double Log(UInt<> const &x)
+inline double Log(UInt<256> const &x)
 {
   return std::log(ToDouble(x));
 }
