@@ -150,11 +150,10 @@ public:
    *
    * However we make a few alterations:
    * 1. we ignore the gradient for the ground truth (i.e. grad[1]),
-   * 2. we drop the 2 since we divide by 2 in forward pass,
-   * 3. we must incorporate the weightings,
+   * 2. we must incorporate the weightings,
    *
    * so the modified gradient is computed as:
-   * grad[0] = (err * (in[0] - in[1])  * weighting) / data_size
+   * grad[0] = 2 * err * (in[0] - in[1])  * weighting / data_size
    * grad[1] = grad[0] -- SHOULD NOT BE USED
    *
    * @param inputs vector of input_tensor and ground_truth tensor (order is important)

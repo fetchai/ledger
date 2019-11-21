@@ -482,6 +482,18 @@ struct OpMeanSquareErrorSaveableParams : public OpsSaveableParams
 };
 
 /**
+ * Saveable parameters for Categorical Accuracy op
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct OpCategoricalAccuracySaveableParams : public OpsSaveableParams
+{
+  using DataType            = typename TensorType::Type;
+  fetch::ml::OpType op_type = OpType::METRIC_CATEGORICAL_ACCURACY;
+  TensorType        weightings;
+};
+
+/**
  * Saveable parameters for Maximum op
  * @tparam TensorType
  */
