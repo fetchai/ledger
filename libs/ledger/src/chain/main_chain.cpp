@@ -579,37 +579,43 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
 
 /**
  * Walk the block history collecting blocks until either genesis or the block_number limit reached.
- * limit specifies block_number; if current_hash identifies a block with a higher number
- * travel back in time, otherwise fast forward.
+ * limit specifies destination block_number.
  * If current_hash is empty, travel starts from tip with zero limit, and from genesis otherwise.
  *
  * @param current_hash The hash of the first block
  * @param limit
+ * @param direction -1 for towards genesis, +1, for towards tip
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, uint64_t limit) const
+MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, uint64_t limit,
+                                            int64_t direction) const
 {
-  IntBlockPtr block;
-  BlockHash   next_hash;
-  FETCH_LOCK(lock_);
+  if (direction == 0)
+  {
+    return {Blocks{}, 0};
+  }
 
-  if (current_hash.empty() && limit > 0)
+  if (current_hash.empty() && direction > 0)
   {
     current_hash = chain::GENESIS_DIGEST;
   }
+
+  IntBlockPtr block;
+  BlockHash   next_hash;
+
+  FETCH_LOCK(lock_);
   if (!current_hash.empty())
   {
-    if (!LookupBlock(current_hash, block, &next_hash))
+    if (!LookupBlock(current_hash, block, direction > 0 ? &next_hash : nullptr))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
       throw std::runtime_error("Failed to lookup block");
     }
   }
 
-  // by this moment, current hash can only be empty if limit = 0,
-  // i.e. travelling back in time from tip
-  assert((current_hash.empty() && limit == 0) || block);
+  // by this moment, current hash can only be empty travelling back in time from tip
+  assert((current_hash.empty() && direction < 0) || block);
   if (current_hash.empty() || limit <= block->block_number)
   {
     // travel back in time

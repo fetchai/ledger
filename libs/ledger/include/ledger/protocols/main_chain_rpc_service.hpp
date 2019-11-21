@@ -171,7 +171,7 @@ private:
   /// @{
   BlockPtr left_edge_;
   BlockPtr right_edge_;
-  int64_t  direction_ = 0;
+  int64_t  direction_ = 1;
   /// @}
 
   /// @name Telemetry

@@ -65,9 +65,9 @@ private:
     return Copy(blocks);
   }
 
-  Travelogue TimeTravel(Digest start, uint64_t limit)
+  Travelogue TimeTravel(Digest start, uint64_t limit, int64_t direction)
   {
-    auto ret_val = chain_.TimeTravel(std::move(start), limit);
+    auto ret_val = chain_.TimeTravel(std::move(start), limit, direction);
     return {Copy(ret_val.blocks), ret_val.next_direction};
   }
 

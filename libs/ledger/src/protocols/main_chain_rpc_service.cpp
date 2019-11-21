@@ -353,8 +353,9 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
       }
     }
 
-    current_request_ = rpc_client_.CallSpecificAddress(
-        current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::TIME_TRAVEL, start, limit);
+    current_request_ =
+        rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
+                                        MainChainProtocol::TIME_TRAVEL, start, limit, direction_);
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
@@ -420,7 +421,11 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
               ++earliest_block_it;
             }
             HandleChainResponse(current_peer_address_, earliest_block_it, blocks.end());
-            left_edge_ = chain_.GetBlock(blocks.back().hash);
+            auto next_edge_ = chain_.GetBlock(blocks.back().hash);
+            if (next_edge_->block_number > left_edge_->block_number)
+            {
+              left_edge_ = std::move(next_edge_);
+            }
             assert(left_edge_);
           }
           else
