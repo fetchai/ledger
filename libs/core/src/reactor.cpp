@@ -21,6 +21,11 @@
 #include "core/runnable.hpp"
 #include "core/set_thread_name.hpp"
 #include "logging/logging.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
+#include "telemetry/utils/timer.hpp"
 
 #include <chrono>
 #include <deque>
@@ -41,6 +46,29 @@ namespace core {
 
 Reactor::Reactor(std::string name)
   : name_{std::move(name)}
+  , runnables_time_{CreateHistogram("ledger_reactor_runnable_time",
+                                    "The histogram of runnables execution time")}
+  , attach_total_{CreateCounter("ledger_reactor_attach_total",
+                                "The total number of times a runnable was attached to the reactor")}
+  , detach_total_{CreateCounter(
+        "ledger_reactor_detach_total",
+        "The total number of times a runnable was detached from the reactor")}
+  , runnable_total_{CreateCounter("ledger_reactor_runnables_total",
+                                  "The total number of runnables processed")}
+  , sleep_total_{CreateCounter("ledger_reactor_sleep_total",
+                               "The total number of times the reactor has slept")}
+  , success_total_{CreateCounter(
+        "ledger_reactor_success_total",
+        "The total number of times the reactor has successfully executed a runable")}
+  , failure_total_{CreateCounter(
+        "ledger_reactor_failure_total",
+        "The total number of times the reactor has failed to execute a runnable")}
+  , expired_total_{CreateCounter("ledger_reactor_expired_total",
+                                 "The total number of expired runnables")}
+  , work_queue_length_{CreateGauge("ledger_reactor_work_queue_length",
+                                   "The current size of the work queue")}
+  , work_queue_max_length_{
+        CreateGauge("ledger_reactor_max_work_queue_length", "The max size of the work queue")}
 {}
 
 bool Reactor::Attach(WeakRunnable runnable)
@@ -59,6 +87,8 @@ bool Reactor::Attach(WeakRunnable runnable)
       return result.second;
     });
   }
+
+  attach_total_->increment();
 
   return success;
 }
@@ -81,6 +111,7 @@ bool Reactor::Attach(std::vector<WeakRunnable> runnables)
 
 bool Reactor::Detach(Runnable const &runnable)
 {
+  detach_total_->increment();
   return work_map_.Apply(
       [&runnable](auto &work_map) -> bool { return work_map.erase(&runnable) > 0; });
 }
@@ -141,7 +172,7 @@ void Reactor::Monitor()
     // Step 1. If we have run out of work to execute then gather all the runnables that are ready
     if (work_queue.empty())
     {
-      work_map_.ApplyVoid([&work_queue](auto &work_map) {
+      work_map_.ApplyVoid([&work_queue, this](auto &work_map) {
         // loop through and evaluate the map
         auto it = work_map.begin();
         while (it != work_map.end())
@@ -165,14 +196,21 @@ void Reactor::Monitor()
             // the lifetime of the runnable has expired, remove
             // and advance to next element in the map
             it = work_map.erase(it);
+
+            expired_total_->increment();
           }
         }
       });
+
+      work_queue_max_length_->max(work_queue.size());
     }
+
+    work_queue_length_->set(work_queue.size());
 
     // If the work queue is still empty then there is no work to do. Sleep the worker and try again
     if (work_queue.empty())
     {
+      sleep_total_->increment();
       std::this_thread::sleep_for(POLL_INTERVAL);
 
       continue;
@@ -185,21 +223,48 @@ void Reactor::Monitor()
     // execute the item if it can be executed
     if (runnable)
     {
+      telemetry::FunctionTimer timer{*runnables_time_};
+      runnable_total_->increment();
+
       try
       {
         runnable->Execute();
+
+        success_total_->increment();
       }
       catch (std::exception const &ex)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "The reactor caught an exception in ", runnable->GetId(), "! ",
                        name_, " error: ", ex.what());
+
+        failure_total_->increment();
       }
       catch (...)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Unknown error generated in reactor: ", name_);
+
+        failure_total_->increment();
       }
     }
   }
+}
+
+telemetry::HistogramPtr Reactor::CreateHistogram(char const *name, char const *description) const
+{
+  return telemetry::Registry::Instance().CreateHistogram(
+      {0.000000001, 0.00000001, 0.0000001, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1.0, 10.0},
+      name, description, {{"reactor", name_}});
+}
+
+telemetry::CounterPtr Reactor::CreateCounter(char const *name, char const *description) const
+{
+  return telemetry::Registry::Instance().CreateCounter(name, description, {{"reactor", name_}});
+}
+
+telemetry::GaugePtr<uint64_t> Reactor::CreateGauge(char const *name, char const *description) const
+{
+  return telemetry::Registry::Instance().CreateGauge<uint64_t>(name, description,
+                                                               {{"reactor", name_}});
 }
 
 }  // namespace core

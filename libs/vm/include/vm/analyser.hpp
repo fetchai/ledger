@@ -35,12 +35,8 @@ namespace vm {
 class Analyser
 {
 public:
-  Analyser() = default;
-
-  ~Analyser()
-  {
-    UnInitialise();
-  }
+  Analyser()  = default;
+  ~Analyser() = default;
 
   void Initialise();
 

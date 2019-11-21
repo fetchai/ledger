@@ -174,6 +174,8 @@ VM::VM(Module *module)
                 [](VM *vm) { vm->Handler__ContractVariableDeclareAssign(); });
   AddOpcodeInfo(Opcodes::InvokeContractFunction, "InvokeContractFunction",
                 [](VM *vm) { vm->Handler__InvokeContractFunction(); });
+  AddOpcodeInfo(Opcodes::PushLargeConstant, "PushLargeConstant",
+                [](VM *vm) { vm->Handler__PushLargeConstant(); });
 
   opcode_map_.clear();
   for (uint16_t i = 0; i < num_functions; ++i)
