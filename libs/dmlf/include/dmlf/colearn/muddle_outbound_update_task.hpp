@@ -45,8 +45,8 @@ public:
   double proportion_;
   double random_factor_;
 
-  MuddleOutboundUpdateTask(Address target, std::string type_name, Bytes update,
-                           RpcClientPtr client, double proportion, double random_factor)
+  MuddleOutboundUpdateTask(Address target, std::string type_name, Bytes update, RpcClientPtr client,
+                           double proportion, double random_factor)
     : target_(std::move(target))
     , type_name_(std::move(type_name))
     , update_(std::move(update))

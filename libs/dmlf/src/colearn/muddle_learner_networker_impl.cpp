@@ -47,43 +47,36 @@ void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
   server_ = std::make_shared<RpcServer>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   server_->Add(RPC_COLEARN, proto_.get());
 
-  subscription_ = mud_ -> GetEndpoint() . Subscribe(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST);
+  subscription_ = mud_->GetEndpoint().Subscribe(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST);
 
-  public_key_ = mud_ -> GetAddress();
+  public_key_ = mud_->GetAddress();
 
-  subscription_->SetMessageHandler(
-      [this](Address const &from, uint16_t service, uint16_t channel,
-         uint16_t counter, Payload const &payload, Address const &my_address)
-      {
-        serializers::MsgPackSerializer buf{payload};
+  subscription_->SetMessageHandler([this](Address const &from, uint16_t service, uint16_t channel,
+                                          uint16_t counter, Payload const &payload,
+                                          Address const &my_address) {
+    serializers::MsgPackSerializer buf{payload};
 
-        std::string type_name;
-        byte_array::ConstByteArray  bytes;
-        double proportion;
-        double random_factor;
+    std::string                type_name;
+    byte_array::ConstByteArray bytes;
+    double                     proportion;
+    double                     random_factor;
 
-        buf >> type_name
-            >> bytes
-            >> proportion
-            >> random_factor;
-        auto source = std::string(fetch::byte_array::ToBase64(from));
-  
-        std::cout
-          << "from:" << source  << ", "
-          << "serv:" << service << ", "
-          << "chan:" << channel << ", "
-          << "cntr:" << counter << ", "
-          << "addr:" << fetch::byte_array::ToBase64(my_address) << ", "
-          << "type:" << type_name << ", "
-          << "size:" << bytes.size() << " bytes, "
-          << "prop:" << proportion << ", "
-          << "fact:" << random_factor << ", "
-          << std::endl;
-          ;
+    buf >> type_name >> bytes >> proportion >> random_factor;
+    auto source = std::string(fetch::byte_array::ToBase64(from));
 
-          return ProcessUpdate(type_name, bytes, proportion, random_factor, source);
+    std::cout << "from:" << source << ", "
+              << "serv:" << service << ", "
+              << "chan:" << channel << ", "
+              << "cntr:" << counter << ", "
+              << "addr:" << fetch::byte_array::ToBase64(my_address) << ", "
+              << "type:" << type_name << ", "
+              << "size:" << bytes.size() << " bytes, "
+              << "prop:" << proportion << ", "
+              << "fact:" << random_factor << ", " << std::endl;
+    ;
 
-      });
+    return ProcessUpdate(type_name, bytes, proportion, random_factor, source);
+  });
 
   randomising_offset_   = randomiser_.GetNew();
   broadcast_proportion_ = 1.0;  // a reasonable default.
@@ -91,12 +84,12 @@ void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
 
 MuddleLearnerNetworkerImpl::Address MuddleLearnerNetworkerImpl::GetAddress() const
 {
-  return mud_ -> GetAddress();
+  return mud_->GetAddress();
 }
 
 std::string MuddleLearnerNetworkerImpl::GetAddressAsString() const
 {
-  return std::string(fetch::byte_array::ToBase64(mud_ -> GetAddress()));
+  return std::string(fetch::byte_array::ToBase64(mud_->GetAddress()));
 }
 
 MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
@@ -106,7 +99,7 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
   auto ident = std::make_shared<Signer>();
   if (priv.empty())
   {
-    ident -> GenerateKeys();
+    ident->GenerateKeys();
   }
   else
   {
@@ -153,33 +146,27 @@ void MuddleLearnerNetworkerImpl::PushUpdateType(const std::string &       type_n
   PushUpdateBytes(type_name, bytes);
 }
 
-  void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name,
-                                                   Bytes const &update,
-                                                   Peers peers)
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update,
+                                                 Peers peers)
+{
+  auto random_factor = randomiser_.GetNew();
+  for (auto const &peer : peers)
   {
-    auto random_factor = randomiser_.GetNew();
-    for (auto const &peer : peers)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Creating sender for ", type_name, " to target ", peer);
-      auto task = std::make_shared<MuddleOutboundUpdateTask>(peer, type_name, update, client_,
-                                                             broadcast_proportion_, random_factor);
-      taskpool_->submit(task);
-    }
+    FETCH_LOG_INFO(LOGGING_NAME, "Creating sender for ", type_name, " to target ", peer);
+    auto task = std::make_shared<MuddleOutboundUpdateTask>(peer, type_name, update, client_,
+                                                           broadcast_proportion_, random_factor);
+    taskpool_->submit(task);
   }
+}
 
 void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update)
 {
   auto random_factor = randomiser_.GetNew();
 
   serializers::MsgPackSerializer buf;
-  buf
-    << type_name
-    << update
-    << broadcast_proportion_
-    << random_factor
-    ;
+  buf << type_name << update << broadcast_proportion_ << random_factor;
 
-  mud_ -> GetEndpoint() . Broadcast(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST, buf.data());
+  mud_->GetEndpoint().Broadcast(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST, buf.data());
 }
 
 MuddleLearnerNetworkerImpl::UpdatePtr MuddleLearnerNetworkerImpl::GetUpdate(
@@ -195,9 +182,8 @@ void MuddleLearnerNetworkerImpl::PushUpdate(UpdateInterfacePtr const &update)
 
 uint64_t MuddleLearnerNetworkerImpl::ProcessUpdate(const std::string &        type_name,
                                                    byte_array::ConstByteArray bytes,
-                                                   double                     proportion,
-                                                   double                     random_factor,
-                                                   const std::string &        source)
+                                                   double proportion, double random_factor,
+                                                   const std::string &source)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Update for ", type_name, " from ", source);
   UpdateStoreInterface::Metadata metadata;

@@ -54,11 +54,11 @@ using StorePtr       = std::shared_ptr<Store>;
 using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
 using UpdatePayload        = UpdateTypeForTesting::Payload;
 
-//char const *SERVER_PRIV = "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
-//char const *SERVER_PUB =
+// char const *SERVER_PRIV = "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
+// char const *SERVER_PUB =
 //    "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==";
-//char const *CLIENT_PRIV = "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
-//char const *CLIENT_PUB =
+// char const *CLIENT_PRIV = "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
+// char const *CLIENT_PUB =
 //    "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
 
 char const *LOGGING_NAME = "colearn_muddle";
@@ -66,11 +66,11 @@ char const *LOGGING_NAME = "colearn_muddle";
 class LearnerTypedUpdates
 {
 public:
-  LNP         actual;
-  LNBaseP     interface;
-  NetManP     netm_;
-  MuddlePtr   mud_;
-  StorePtr    store_;
+  LNP       actual;
+  LNBaseP   interface;
+  NetManP   netm_;
+  MuddlePtr mud_;
+  StorePtr  store_;
 
   LearnerTypedUpdates(const std::string &priv, unsigned short int port,
                       unsigned short int remote = 0)
@@ -105,10 +105,11 @@ public:
 class MuddleTypedUpdatesTests : public ::testing::Test
 {
 public:
-  using Inst = struct {
+  using Inst = struct
+  {
     std::shared_ptr<LearnerTypedUpdates> instance;
-    unsigned short int port;
-    LN::Address pub;
+    unsigned short int                   port;
+    LN::Address                          pub;
   };
 
   using Insts = std::vector<Inst>;
@@ -122,15 +123,13 @@ public:
     srand(static_cast<unsigned int>(time(nullptr)));
     auto base_port = static_cast<unsigned short int>(rand() % 10000 + 10000);
 
-    for(unsigned int i = 0; i < PEERS; i++)
+    for (unsigned int i = 0; i < PEERS; i++)
     {
       Inst inst;
-      inst . port = static_cast<unsigned short int>(base_port + i);
-      inst . instance = std::make_shared<LearnerTypedUpdates>(
-        "", inst . port,
-        (i > 0) ? base_port : 0);
-      inst . pub = inst . instance -> actual -> GetAddress();
-      instances . push_back(inst);
+      inst.port     = static_cast<unsigned short int>(base_port + i);
+      inst.instance = std::make_shared<LearnerTypedUpdates>("", inst.port, (i > 0) ? base_port : 0);
+      inst.pub      = inst.instance->actual->GetAddress();
+      instances.push_back(inst);
     }
   }
 };
@@ -172,8 +171,6 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
   {
     // get should throw, because vocab Q is empty.
   }
-
-  
 }
 
 }  // namespace
