@@ -634,32 +634,35 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, uint64_t lim
 
   int64_t next_direction = 1;
 
+  bool not_done = true;
   for (current_hash = std::move(next_hash);
        // stop once we have gathered enough blocks or passed the tip
-       !current_hash.empty() && result.size() < UPPER_BOUND;
+       not_done && !current_hash.empty() && result.size() < UPPER_BOUND;
        // walk the stack
        current_hash = std::move(next_hash))
   {
+    block = {};
     // lookup the block in storage
     if (!LookupBlock(current_hash, block, &next_hash))
     {
-      if (IsBlockInCache(current_hash))
+      if (!IsBlockInCache(current_hash))
       {
-        // The block is in the cache yet GetBlock() failed.
-        // This indicates that forward reference is ambiguous, so we stop the loop here
-        // and the remote requester should now travel from the heaviest tip.
-        next_direction = -1;  // signal that forward-travelling can go no further
-        break;
+        FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
+        throw std::runtime_error("Failed to lookup block");
       }
-      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
-      throw std::runtime_error("Failed to lookup block");
+      // The block is in the cache yet GetBlock() failed.
+      // This indicates that forward reference is ambiguous, so we stop the loop here
+      // and the remote requester should now travel from the heaviest tip.
+      next_direction = -1;  // signal that forward-travelling can go no further
+      not_done       = false;
     }
+    else
+    {
+      not_done = block->block_number < limit;
+    }
+
     // update the results
     result.push_back(std::move(block));
-    if (block->block_number >= limit)
-    {
-      break;
-    }
   }
   if (current_hash.empty())
   {
