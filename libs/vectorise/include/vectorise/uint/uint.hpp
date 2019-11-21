@@ -1096,13 +1096,13 @@ inline double ToDouble(UInt<256> const &x)
   const size_t ELEMENTS_PER_WIDE = x.WIDE_ELEMENT_SIZE / x.ELEMENT_SIZE;
   uint64_t     magnitude         = x.ELEMENTS * x.ELEMENT_SIZE - x.msb();
 
-  const size_t most_sign_byte  = (magnitude - 1) / x.ELEMENT_SIZE;
-  const size_t least_sign_byte = most_sign_byte - (ELEMENTS_PER_WIDE - 1);
+  const size_t most_significant_byte  = (magnitude - 1) / x.ELEMENT_SIZE;
+  const size_t least_significant_byte = most_significant_byte - (ELEMENTS_PER_WIDE - 1);
 
   uint64_t mantisse = 0;
   for (size_t i = 0; i < ELEMENTS_PER_WIDE; ++i)
   {
-    const uint64_t element_at = x[least_sign_byte + i];
+    const uint64_t element_at = x[least_significant_byte + i];
     const uint64_t addition   = uint64_t(element_at) << (i * x.ELEMENT_SIZE);
     mantisse += addition;
   }

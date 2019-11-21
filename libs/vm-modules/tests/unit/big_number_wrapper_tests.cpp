@@ -348,6 +348,7 @@ TEST_F(UInt256Tests, uint256_type_casts)
   EXPECT_TRUE(result_is_ok);
 }
 
+// Disabled until UInt256 constructor from bytearray fix/rework.
 TEST_F(UInt256Tests, DISABLED_uint256_sha256_assignment)
 {
   // This test uses a SHA256 hash from empty string
