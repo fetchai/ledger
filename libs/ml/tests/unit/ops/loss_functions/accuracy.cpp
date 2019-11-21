@@ -39,7 +39,7 @@ TYPED_TEST_CASE(AccuracyTest, math::test::HighPrecisionTensorFloatingTypes);
 TYPED_TEST(AccuracyTest, perfect_match_forward_test)
 {
   using TensorType = TypeParam;
-  using DataType = typename TensorType::Type;
+  using DataType   = typename TensorType::Type;
 
   uint64_t n_classes     = 4;
   uint64_t n_data_points = 8;
@@ -48,7 +48,7 @@ TYPED_TEST(AccuracyTest, perfect_match_forward_test)
   TensorType data2({n_classes, n_data_points});
 
   std::vector<math::SizeType> data = {1, 2, 3, 0, 3, 1, 0, 2};
-  
+
   for (uint64_t i = 0; i < n_data_points; ++i)
   {
     for (uint64_t j = 0; j < n_classes; ++j)
@@ -67,7 +67,7 @@ TYPED_TEST(AccuracyTest, perfect_match_forward_test)
   }
 
   fetch::ml::ops::Accuracy<TensorType> op;
-  TensorType  result({1, 1});
+  TensorType                           result({1, 1});
   op.Forward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)}, result);
 
   EXPECT_EQ(result(0, 0), DataType{1});
@@ -75,8 +75,8 @@ TYPED_TEST(AccuracyTest, perfect_match_forward_test)
 
 TYPED_TEST(AccuracyTest, mixed_forward_test)
 {
-  using TensorType = TypeParam;
-  using DataType = typename TensorType::Type;
+  using TensorType       = TypeParam;
+  using DataType         = typename TensorType::Type;
   uint64_t n_classes     = 3;
   uint64_t n_data_points = 2;
 
@@ -90,7 +90,7 @@ TYPED_TEST(AccuracyTest, mixed_forward_test)
   data2 = data2.Transpose();
 
   fetch::ml::ops::Accuracy<TensorType> op;
-  TensorType                                   result({1, 1});
+  TensorType                           result({1, 1});
   op.Forward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)}, result);
 
   EXPECT_NEAR(static_cast<double>(result(0, 0)), 0.5,
@@ -110,8 +110,10 @@ TYPED_TEST(AccuracyTest, backward_test)
 
   fetch::ml::ops::Accuracy<TensorType> op;
 
-  EXPECT_THROW(op.Backward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)},
-                          error_signal), fetch::ml::exceptions::NotImplemented);
+  EXPECT_THROW(
+      op.Backward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)},
+                  error_signal),
+      fetch::ml::exceptions::NotImplemented);
 }
 
 TYPED_TEST(AccuracyTest, saveparams_test)
@@ -159,7 +161,7 @@ TYPED_TEST(AccuracyTest, saveparams_test)
     }
   }
 
-  OpType    op;
+  OpType     op;
   TensorType result({1, 1});
   op.Forward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)}, result);
 
@@ -186,7 +188,8 @@ TYPED_TEST(AccuracyTest, saveparams_test)
 
   // check that new predictions match the old
   TensorType new_result({1, 1});
-  op.Forward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)}, new_result);
+  op.Forward({std::make_shared<TensorType>(data1), std::make_shared<TensorType>(data2)},
+             new_result);
 
   // test correct values
   EXPECT_NEAR(static_cast<double>(result(0, 0)), static_cast<double>(new_result(0, 0)),

@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/exceptions/exceptions.hpp"
-#include "ml/ops/ops.hpp"
 #include "ml/exceptions/exceptions.hpp"
+#include "ml/ops/ops.hpp"
 
 #include <cassert>
 #include <memory>
@@ -78,9 +78,15 @@ public:
     assert(inputs.at(0)->shape() == inputs.at(1)->shape());
 
     DataType num_correct{0};
-    auto it1 = inputs.at(0)->cbegin();
-    auto it2 = inputs.at(1)->cbegin();
-    SizeType data_size = inputs.at(0)->shape(inputs.at(0)->shape().size() - 1);
+
+    TensorType test_results = fetch::math::ArgMax(*inputs.at(0));
+    TensorType ground_truth = fetch::math::ArgMax(*inputs.at(1));
+
+    auto it1 = test_results.cbegin();
+    auto it2 = ground_truth.cbegin();
+
+    SizeType data_size = test_results.size();
+
     if (weightings_.size() == static_cast<SizeType>(0))
     {
       while (it1.is_valid())
@@ -106,8 +112,8 @@ public:
         ++it2;
       }
     }
-      // weighting tensor is same shape as input (one weight for every parameter)
-    else if (weightings_.shape() == inputs.at(0)->shape())
+    // weighting is a batch_size vector (one weight per data point)
+    else if (weightings_.shape() == std::vector<SizeType>{data_size})
     {
       auto w_it = weightings_.cbegin();
       while (it1.is_valid())
@@ -121,30 +127,8 @@ public:
         ++w_it;
       }
     }
-    // weighting is a batch_size vector (one weight per data point)
-    else if (weightings_.shape() == std::vector<SizeType>{data_size})
+    else
     {
-      SizeType data_count = 0;
-      SizeType data_stride = fetch::math::Divide(inputs.at(0)->size(), weightings_.size());
-
-      auto w_it = weightings_.cbegin();
-      while (it1.is_valid())
-      {
-        if (*it1 == *it2)
-        {
-          num_correct += *w_it;
-        }
-        ++it1;
-        ++it2;
-        ++data_count;
-        if (data_count == data_stride)
-        {
-          data_count = 0;
-          ++w_it;
-        }
-      }
-    }
-    else {
       throw math::exceptions::WrongShape("input or weightings_shape invalid");
     }
 
