@@ -1094,21 +1094,21 @@ inline double ToDouble(UInt<256> const &x)
     return static_cast<double>(x.ElementAt(0));
   }
   const size_t ELEMENTS_PER_WIDE = x.WIDE_ELEMENT_SIZE / x.ELEMENT_SIZE;
-  uint64_t     magnitude         = x.ELEMENTS * x.ELEMENT_SIZE - x.msb();
+  uint64_t     magnitude         = x.ELEMENTS * x.ELEMENT_SIZE - x.msb() - 1;
 
-  const size_t most_significant_byte  = (magnitude - 1) / x.ELEMENT_SIZE;
-  const size_t least_significant_byte = most_significant_byte - (ELEMENTS_PER_WIDE - 1);
+  const size_t most_significant_byte_idx = magnitude / x.ELEMENT_SIZE;
+  const size_t least_eligible_byte_idx   = most_significant_byte_idx - (ELEMENTS_PER_WIDE - 1);
 
   uint64_t mantisse = 0;
   for (size_t i = 0; i < ELEMENTS_PER_WIDE; ++i)
   {
-    const uint64_t element_at = x[least_significant_byte + i];
-    const uint64_t addition   = uint64_t(element_at) << (i * x.ELEMENT_SIZE);
-    mantisse += addition;
+    const uint64_t element  = x[i + least_eligible_byte_idx];
+    const uint64_t addendum = uint64_t(element) << (i * x.ELEMENT_SIZE);
+    mantisse += addendum;
   }
-  magnitude -= x.WIDE_ELEMENT_SIZE;
+  const double exponent = static_cast<double>(least_eligible_byte_idx * x.ELEMENT_SIZE);
 
-  return static_cast<double>(mantisse) * pow(2, static_cast<double>(magnitude));
+  return static_cast<double>(mantisse) * pow(2, exponent);
 }
 
 inline double Log(UInt<256> const &x)

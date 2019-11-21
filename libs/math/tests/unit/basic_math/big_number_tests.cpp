@@ -152,16 +152,27 @@ TEST(big_number_gtest, log_tests)
 
 TEST(big_number_gtest, to_double_tests)
 {
-  static constexpr double INITIAL = 1.;
+  EXPECT_NEAR(ToDouble(UInt<256>(uint64_t(0))), 0., std::numeric_limits<double>::epsilon());
 
-  UInt<256> number(static_cast<uint64_t>(INITIAL));
-
-  for (size_t i = 0; i < number.ELEMENTS; ++i)
+  static constexpr double MAX_UINT256_VALUE = 1.15792089237316e+77;
+  for (auto seed : {1., 10., 100., 1000., 10000.})
   {
-    const double result   = ToDouble(number);
-    const double expected = INITIAL * pow(2, i * number.ELEMENT_SIZE);
-    EXPECT_NEAR(result, expected, std::numeric_limits<double>::epsilon());
-    number <<= number.ELEMENT_SIZE;
+    UInt<256> number(static_cast<uint64_t>(seed));
+
+    for (size_t i = 0; i < number.ELEMENTS; ++i)
+    {
+      const double result   = ToDouble(number);
+      const double expected = seed * pow(2, i * number.ELEMENT_SIZE);
+      if (expected < MAX_UINT256_VALUE)
+      {
+        EXPECT_NEAR(result, expected, std::numeric_limits<double>::epsilon());
+      }
+      else
+      {
+        EXPECT_NE(result, expected);
+      }
+      number <<= number.ELEMENT_SIZE;
+    }
   }
 }
 
