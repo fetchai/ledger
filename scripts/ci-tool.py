@@ -326,8 +326,11 @@ def run_sccache_server(sccache_path):
     print('sccache Server Config:', env)
 
     with open('sccache.log', 'w') as sccache_log:
-        subprocess.check_call(
-            cmd, env=env, stdout=sccache_log, stderr=subprocess.STDOUT)
+        try:
+            subprocess.check_call(
+                cmd, env=env, stdout=sccache_log, stderr=subprocess.STDOUT)
+        except:
+            print("Failed to run sccache server. You may already have one running.")
 
 
 def stop_sscache_server(sccache_path):

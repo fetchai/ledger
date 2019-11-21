@@ -152,6 +152,11 @@ public:
     return *observer_;
   }
 
+  void setStdout(std::ostream &ostream)
+  {
+    stdout_ = &ostream;
+  }
+
 private:
   std::ostream *stdout_ = &std::cout;
   ObserverPtr   observer_;
