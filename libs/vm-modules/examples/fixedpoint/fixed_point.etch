@@ -62,5 +62,24 @@ function main()
   var pi128 : Fixed128 = 3.1415fp128;
   printLn("pi = " + toString(pi128));
 
+  var x: Fixed128 = -pi128;
+  var y = abs(x);
+  printLn("x = " + toString(x));
+  printLn("y = " + toString(y));
+  printLn("abs(x) = " + toString(y));
+  printLn("exp(x) = " + toString(exp(x)));
+  printLn("exp(abs(x)) = " + toString(exp(y)));
+  printLn("log2(y) = " + toString(log2(y)));
+  printLn("log(y) = " + toString(log(y)));
+  printLn("log10(y) = " + toString(log10(y)));
+  printLn("sqrt(y) = " + toString(sqrt(y)));
+
   printLn("pow(" + toString(d) + ", " + toString(d) + ") = " + toString(pow(d, d)));
+
+  var data_shape = Array<UInt64>(2);
+  data_shape[0] = 2u64;
+  data_shape[1] = 4u64;
+  var T = Tensor(data_shape);
+
+  printLn(T.toString());
 endfunction
