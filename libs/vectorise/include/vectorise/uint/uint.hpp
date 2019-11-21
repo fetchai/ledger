@@ -99,7 +99,7 @@ public:
   }
 
   template <typename T, meta::IfIsAByteArray<T> * = nullptr>
-  explicit UInt(T const &other);
+  constexpr explicit UInt(T const &other, bool input_is_little_endian);
   template <typename T, meta::IfIsUnsignedInteger<T> * = nullptr>
   constexpr explicit UInt(T number);
 
@@ -108,10 +108,12 @@ public:
   ////////////////////////////
 
   constexpr UInt &operator=(UInt const &v);
-  template <typename ArrayType>
-  meta::IfHasIndex<ArrayType, UInt> &operator=(ArrayType const &v);  // NOLINT
   template <typename T>
   constexpr meta::IfHasNoIndex<T, UInt> &operator=(T const &v);  // NOLINT
+
+  template <typename T>
+  constexpr meta::IfIsAByteArray<T, UInt> &FromArray(T const &arr,
+                                                     bool     input_is_little_endian);  // NOLINT
 
   /////////////////////////////////////////////
   /// comparison operators for UInt objects ///
@@ -237,6 +239,10 @@ public:
 
   explicit operator std::string() const;
 
+  template <typename T>
+  constexpr meta::EnableIf<std::is_same<meta::Decay<T>, byte_array::ByteArray>::value, T> As(
+      bool as_little_endian, bool include_leading_zeroes = false) const;
+
   /////////////////
   /// constants ///
   /////////////////
@@ -257,6 +263,10 @@ private:
   {
     wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
   }
+
+  template <typename T>
+  constexpr meta::IfIsAByteArray<T> FromArrayInternal(T const &arr, bool input_is_little_endian,
+                                                      bool zero_content);  // NOLINT
 
   struct MaxValueConstructorEnabler
   {
@@ -300,14 +310,9 @@ const UInt<S> UInt<S>::max{MaxValueConstructorEnabler{}};
 
 template <uint16_t S>
 template <typename T, meta::IfIsAByteArray<T> *>
-UInt<S>::UInt(T const &other)
+constexpr UInt<S>::UInt(T const &other, bool input_is_little_endian)
 {
-  if (other.size() > ELEMENTS)
-  {
-    throw std::runtime_error("Size of input byte array is bigger than size of this UInt type.");
-  }
-
-  std::copy(other.pointer(), other.pointer() + other.size(), base());
+  FromArrayInternal(other, input_is_little_endian, false);
 }
 
 template <uint16_t S>
@@ -330,14 +335,52 @@ constexpr UInt<S> &UInt<S>::operator=(UInt const &v)
   return *this;
 }
 
-template <uint16_t S>  // NOLINT
-template <typename ArrayType>
-meta::IfHasIndex<ArrayType, UInt<S>> &UInt<S>::operator=(ArrayType const &v)  // NOLINT
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsAByteArray<T, UInt<S>> &UInt<S>::FromArray(
+    T const &other, bool input_is_little_endian)  // NOLINT
 {
-  wide_.fill(0);
-  std::copy(v.pointer(), v.pointer() + v.capacity(), base());
-
+  FromArrayInternal(other, input_is_little_endian, true);
   return *this;
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsAByteArray<T> UInt<S>::FromArrayInternal(T const &other,
+                                                             bool     input_is_little_endian,
+                                                             bool     zero_content)  // NOLINT
+{
+  auto const size{other.size()};
+
+  if (0 == size)
+  {
+    if (zero_content)
+    {
+      wide_.fill(0);
+    }
+    return;
+  }
+  else if (size > ELEMENTS)
+  {
+    throw std::runtime_error("Size of input byte array is bigger than size of this UInt type.");
+  }
+
+  if (zero_content)
+  {
+    wide_.fill(0);
+  }
+
+  if (input_is_little_endian)
+  {
+    std::copy(other.pointer(), other.pointer() + size, base());
+  }
+  else
+  {
+    for (std::size_t i{0}, rev_i{size - 1}; i < size; ++i, --rev_i)
+    {
+      base()[i] = other[rev_i];
+    }
+  }
 }
 
 template <uint16_t S>  // NOLINT
@@ -918,13 +961,13 @@ constexpr meta::IfIsUnsignedInteger<T, UInt<S>> &UInt<S>::operator^=(T n)
 template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
 {
-  std::size_t full_words = bits / (sizeof(uint64_t) * 8);
-  std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
+  std::size_t full_words = bits / WIDE_ELEMENT_SIZE;
+  std::size_t real_bits  = bits - full_words * WIDE_ELEMENT_SIZE;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
   if (full_words != 0u)
   {
-    for (std::size_t i = WIDE_ELEMENTS - 1; i >= full_words; i--)
+    for (std::size_t i = WIDE_ELEMENTS - 1; i >= full_words; --i)
     {
       wide_[i] = wide_[i - full_words];
     }
@@ -951,8 +994,8 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
 template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
 {
-  std::size_t full_words = bits / (sizeof(uint64_t) * 8);
-  std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
+  std::size_t full_words = bits / WIDE_ELEMENT_SIZE;
+  std::size_t real_bits  = bits - full_words * WIDE_ELEMENT_SIZE;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
   if (full_words != 0u)
@@ -1091,6 +1134,33 @@ UInt<S>::operator std::string() const
   }
 
   return ret.str();
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::EnableIf<std::is_same<meta::Decay<T>, byte_array::ByteArray>::value, T> UInt<S>::As(
+    bool as_little_endian, bool include_leading_zeroes) const
+{
+  auto const size_{include_leading_zeroes ? size() : TrimmedSize()};
+
+  if (0 == size_)
+  {
+    return T{};
+  }
+
+  if (as_little_endian)
+  {
+    return T{pointer(), size_};
+  }
+
+  T array;
+  array.Resize(size_);
+  for (std::size_t i{0}, rev_i{size_ - 1}; i < size_; ++i, --rev_i)
+  {
+    array[rev_i] = base()[i];
+  }
+
+  return array;
 }
 
 template <uint16_t S>

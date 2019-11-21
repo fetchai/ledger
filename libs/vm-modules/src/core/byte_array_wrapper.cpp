@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
@@ -39,6 +41,10 @@ void ByteArrayWrapper::Bind(Module &module)
       .CreateMemberFunction("copy", &ByteArrayWrapper::Copy)
       .CreateMemberFunction("toBase64", &ByteArrayWrapper::ToBase64)
       .CreateMemberFunction("fromBase64", &ByteArrayWrapper::FromBase64)
+      .CreateMemberFunction("toBase58", &ByteArrayWrapper::ToBase58)
+      .CreateMemberFunction("fromBase58", &ByteArrayWrapper::FromBase58)
+      .CreateMemberFunction("toHex", &ByteArrayWrapper::ToHex)
+      .CreateMemberFunction("fromHex", &ByteArrayWrapper::FromHex)
       .EnableOperator(Operator::LessThan)
       .EnableOperator(Operator::GreaterThan)
       .EnableOperator(Operator::LessThanOrEqual)
@@ -71,20 +77,86 @@ bool ByteArrayWrapper::FromBase64(fetch::vm::Ptr<vm::String> const &value_b64)
 {
   if (!value_b64)
   {
-    // vm_->RuntimeError("Input string parameter is null reference");
     return false;
   }
 
-  auto decoded_array{ByteArray{value_b64->string()}.FromBase64()};
-
-  if (decoded_array.empty())
+  try
   {
-    // vm_->RuntimeError("Input string is not Base64 encoded.");
+    auto decoded_array{ByteArray{value_b64->string()}.FromBase64()};
+
+    if (value_b64->Length() > 0 && decoded_array.empty())
+    {
+      return false;
+    }
+
+    byte_array_ = std::move(decoded_array);
+    return true;
+  }
+  catch (std::runtime_error const &ex)
+  {
+    return false;
+  }
+}
+
+fetch::vm::Ptr<vm::String> ByteArrayWrapper::ToHex()
+{
+  return Ptr<vm::String>{new String{vm_, static_cast<std::string>(byte_array_.ToHex())}};
+}
+
+bool ByteArrayWrapper::FromHex(fetch::vm::Ptr<vm::String> const &value_hex)
+{
+  if (!value_hex)
+  {
     return false;
   }
 
-  byte_array_ = std::move(decoded_array);
-  return true;
+  try
+  {
+    auto decoded_array{ByteArray{value_hex->string()}.FromHex()};
+
+    if (value_hex->Length() > 0 && decoded_array.empty())
+    {
+      return false;
+    }
+
+    byte_array_ = std::move(decoded_array);
+    return true;
+  }
+  catch (std::runtime_error const &ex)
+  {
+    return false;
+  }
+}
+
+fetch::vm::Ptr<vm::String> ByteArrayWrapper::ToBase58()
+{
+  return Ptr<vm::String>{
+      new String{vm_, static_cast<std::string>(byte_array::ToBase58(byte_array_))}};
+}
+
+bool ByteArrayWrapper::FromBase58(fetch::vm::Ptr<vm::String> const &value_b58)
+{
+  if (!value_b58)
+  {
+    return false;
+  }
+
+  try
+  {
+    auto decoded_array{byte_array::ToBase58(ConstByteArray{value_b58->string()})};
+
+    if (value_b58->Length() > 0 && decoded_array.empty())
+    {
+      return false;
+    }
+
+    byte_array_ = std::move(decoded_array);
+    return true;
+  }
+  catch (std::runtime_error const &ex)
+  {
+    return false;
+  }
 }
 
 bool ByteArrayWrapper::IsEqual(fetch::vm::Ptr<Object> const &lhso,

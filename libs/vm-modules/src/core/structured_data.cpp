@@ -175,7 +175,7 @@ meta::EnableIf<std::is_same<UInt256Wrapper, T>::value, Ptr<T>> FromByteArray(
     return Ptr<T>{};
   }
 
-  return vm->CreateNewObject<UInt256Wrapper>(value_array);
+  return vm->CreateNewObject<UInt256Wrapper>(value_array, true);
 }
 
 ByteArray ToByteArray(String const &str)
@@ -201,8 +201,8 @@ ByteArray ToByteArray(ByteArrayWrapper const &byte_array)
 
 ByteArray ToByteArray(UInt256Wrapper const &big_number)
 {
-  ByteArray      encoded_array;
-  ConstByteArray raw_array{big_number.number().pointer(), big_number.number().TrimmedSize()};
+  ByteArray  encoded_array;
+  auto const raw_array{big_number.number().As<ByteArray>(true, false)};
   encoded_array.Append(getTypeId<UInt256Wrapper>(), raw_array.ToBase64());
   return encoded_array;
 }

@@ -43,6 +43,10 @@ public:
   fetch::vm::Ptr<ByteArrayWrapper> Copy();
   fetch::vm::Ptr<vm::String>       ToBase64();
   bool                             FromBase64(fetch::vm::Ptr<vm::String> const &value_b64);
+  fetch::vm::Ptr<vm::String>       ToHex();
+  bool                             FromHex(fetch::vm::Ptr<vm::String> const &value_hex);
+  fetch::vm::Ptr<vm::String>       ToBase58();
+  bool                             FromBase58(fetch::vm::Ptr<vm::String> const &value_b58);
 
   bool IsEqual(fetch::vm::Ptr<Object> const &lhso, fetch::vm::Ptr<Object> const &rhso) override;
   bool IsNotEqual(fetch::vm::Ptr<Object> const &lhso, fetch::vm::Ptr<Object> const &rhso) override;

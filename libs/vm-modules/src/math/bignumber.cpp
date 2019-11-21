@@ -32,27 +32,18 @@ using namespace fetch::vm;
 namespace fetch {
 namespace vm_modules {
 namespace math {
-
-Ptr<String> UInt256Wrapper::ToString(VM *vm, Ptr<UInt256Wrapper> const &n)
+namespace {
+Ptr<String> ToString(VM *vm, Ptr<UInt256Wrapper> const &n)
 {
-  return Ptr<String>{new String{vm, static_cast<std::string>(n->number_)}};
+  return Ptr<String>{new String{vm, static_cast<std::string>(n->number())}};
 }
 
 template <typename T>
-T UInt256Wrapper::ToPrimitive(VM * /*vm*/, Ptr<UInt256Wrapper> const &a)
+meta::IfIsInteger<T, T> ToInteger(VM * /*vm*/, Ptr<UInt256Wrapper> const &a)
 {
-  union
-  {
-    uint8_t bytes[sizeof(T)];
-    T       value;
-  } x{};
-  for (uint64_t i = 0; i < sizeof(T); ++i)
-  {
-    x.bytes[i] = a->number_[i];
-  }
-
-  return x.value;
+  return {*reinterpret_cast<T const *>(a->number().pointer())};
 }
+}  // namespace
 
 void UInt256Wrapper::Bind(Module &module)
 {
@@ -70,15 +61,20 @@ void UInt256Wrapper::Bind(Module &module)
       //.CreateMemberFunction("toBuffer", &UInt256Wrapper::ToBuffer)
       .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
       .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
-      .CreateMemberFunction("toFloat64", &UInt256Wrapper::ToFloat64)
-      .CreateMemberFunction("toInt32", &UInt256Wrapper::ToInt32)
       .CreateMemberFunction("size", &UInt256Wrapper::size);
 
-  module.CreateFreeFunction("toString", &UInt256Wrapper::ToString);
-  module.CreateFreeFunction("toUInt64", &UInt256Wrapper::ToPrimitive<uint64_t>);
-  module.CreateFreeFunction("toInt64", &UInt256Wrapper::ToPrimitive<int64_t>);
-  module.CreateFreeFunction("toUInt32", &UInt256Wrapper::ToPrimitive<uint32_t>);
-  module.CreateFreeFunction("toInt32", &UInt256Wrapper::ToPrimitive<int32_t>);
+  module.CreateFreeFunction("toString", &ToString);
+  module.CreateFreeFunction("toBuffer", [](VM *vm, Ptr<UInt256Wrapper> const &x,
+                                           bool as_little_endian, bool include_leading_zeroes) {
+    return vm->CreateNewObject<ByteArrayWrapper>(
+        x->number().As<byte_array::ByteArray>(as_little_endian, include_leading_zeroes));
+  });
+  module.CreateFreeFunction(
+      "toFloat64", [](VM * /*vm*/, Ptr<UInt256Wrapper> const &x) { return ToDouble(x->number()); });
+  module.CreateFreeFunction("toUInt64", &ToInteger<uint64_t>);
+  module.CreateFreeFunction("toInt64", &ToInteger<int64_t>);
+  module.CreateFreeFunction("toUInt32", &ToInteger<uint32_t>);
+  module.CreateFreeFunction("toInt32", &ToInteger<int32_t>);
 }
 
 UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, UInt256 data)
@@ -86,9 +82,10 @@ UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, UInt256 data)
   , number_(std::move(data))
 {}
 
-UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, byte_array::ConstByteArray const &data)
+UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, byte_array::ConstByteArray const &data,
+                               bool input_is_little_endian)
   : Object(vm, type_id)
-  , number_(data)
+  , number_(data, input_is_little_endian)
 {}
 
 UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, uint64_t data)
@@ -97,11 +94,13 @@ UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, uint64_t data)
 {}
 
 Ptr<UInt256Wrapper> UInt256Wrapper::ConstructorFromBytes(VM *vm, TypeId type_id,
-                                                         Ptr<ByteArrayWrapper> const &ba)
+                                                         Ptr<ByteArrayWrapper> const &ba,
+                                                         bool input_is_little_endian)
 {
   try
   {
-    return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, type_id, ba->byte_array())};
+    return Ptr<UInt256Wrapper>{
+        new UInt256Wrapper(vm, type_id, ba->byte_array(), input_is_little_endian)};
   }
   catch (std::exception const &e)
   {
@@ -123,24 +122,9 @@ Ptr<UInt256Wrapper> UInt256Wrapper::Constructor(VM *vm, TypeId type_id, uint64_t
   return {};
 }
 
-double UInt256Wrapper::ToFloat64() const
-{
-  return ToDouble(number_);
-}
-
-int32_t UInt256Wrapper::ToInt32() const
-{
-  return static_cast<int32_t>(number_[0]);
-}
-
 double UInt256Wrapper::LogValue() const
 {
   return Log(number_);
-}
-
-bool UInt256Wrapper::LessThan(Ptr<UInt256Wrapper> const &other) const
-{
-  return number_ < other->number_;
 }
 
 void UInt256Wrapper::Increase()

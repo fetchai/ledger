@@ -92,7 +92,7 @@ void Transaction::Bind(vm::Module &module)
 Transaction::Transaction(vm::VM *vm, vm::TypeId type_id, fetch::chain::Transaction const &tx)
   : Object{vm, type_id}
   , tx_{std::make_shared<fetch::chain::Transaction>(tx)}
-  , digest_{vm->CreateNewObject<math::UInt256Wrapper>(tx.digest())}
+  , digest_{vm->CreateNewObject<math::UInt256Wrapper>(tx.digest(), false)}
   , from_{CreateAddress(vm, tx.from(), tx.signatories())}
   , transfers_{CreateTransfers(vm, tx)}
   , contract_digest_{CreateAddress(vm, tx.contract_digest(), tx.signatories())}

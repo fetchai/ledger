@@ -323,12 +323,12 @@ TEST(big_number_gtest, test_construction_from_byte_array_fails_if_too_long)
   constexpr std::size_t bits{256};
 
   // Verify that construction pass is size is <= bits/8
-  UInt<bits> shall_pass{ConstByteArray(bits / 8)};
+  UInt<bits> shall_pass{ConstByteArray(bits / 8), true};
 
   bool exception_thrown = false;
   try
   {
-    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1)};
+    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1), true};
   }
   catch (std::exception const &ex)
   {

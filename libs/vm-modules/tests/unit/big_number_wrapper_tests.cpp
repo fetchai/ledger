@@ -131,9 +131,13 @@ public:
   static constexpr std::size_t    SIZE_IN_BITS  = 256;
   static constexpr std::size_t    SIZE_IN_BYTES = SIZE_IN_BITS / 8;
 
-  UInt256Wrapper zero{dummy_vm_ptr, dummy_typeid, 0};
+  UInt256Wrapper zero{
+      dummy_vm_ptr,
+      dummy_typeid,
+      0,
+  };
   UInt256Wrapper uint64max{dummy_vm_ptr, dummy_typeid, std::numeric_limits<uint64_t>::max()};
-  UInt256Wrapper maximum{dummy_vm_ptr, dummy_typeid, raw_32xFF};
+  UInt256Wrapper maximum{dummy_vm_ptr, dummy_typeid, raw_32xFF, true};
 
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
@@ -141,13 +145,13 @@ public:
 
 TEST_F(UInt256Tests, uint256_raw_construction)
 {
-  UInt256Wrapper fromStdUint64(dummy_vm_ptr, dummy_typeid, uint64_t(42));
+  UInt256Wrapper fromStdUint64{dummy_vm_ptr, dummy_typeid, uint64_t(42)};
   ASSERT_TRUE(SIZE_IN_BYTES == fromStdUint64.size());
 
-  UInt256Wrapper fromByteArray(dummy_vm_ptr, dummy_typeid, raw_32xFF);
+  UInt256Wrapper fromByteArray{dummy_vm_ptr, dummy_typeid, raw_32xFF, true};
   ASSERT_TRUE(SIZE_IN_BYTES == fromByteArray.size());
 
-  UInt256Wrapper fromAnotherUInt256(dummy_vm_ptr, dummy_typeid, zero.number());
+  UInt256Wrapper fromAnotherUInt256{dummy_vm_ptr, dummy_typeid, zero.number()};
   ASSERT_TRUE(SIZE_IN_BYTES == fromAnotherUInt256.size());
 }
 
@@ -287,7 +291,7 @@ TEST_F(UInt256Tests, uint256_logValue)
   for (const auto &input : TO_DOUBLE_INPUTS)
   {
     using namespace std;
-    UInt256Wrapper n1(dummy_vm_ptr, dummy_typeid, input.first);
+    UInt256Wrapper n1{dummy_vm_ptr, dummy_typeid, input.first, true};
 
     const auto as_double  = ToDouble(n1.number());
     const auto result     = n1.LogValue();

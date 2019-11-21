@@ -34,16 +34,11 @@ ConstByteArray FromBase64(ConstByteArray const &str)
   // After
   // https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
 
-  if (nullptr == str.pointer())
-  {
-    return {};
-  }
-
   // Prevents potential attack vector so
   // should be checked both in debug and release
   if ((str.size() % 4) != 0)
   {
-    return "";
+    return {};
   }
 
   std::size_t pad = 0;

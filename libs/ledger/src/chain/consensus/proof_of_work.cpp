@@ -39,12 +39,15 @@ bool ProofOfWork::operator()()
   hasher.Update(header_);
   hasher.Update(this->pointer(), this->size());
 
-  digest_ = hasher.Final();
+  // Forcing little endian representation of the hash (even if it is actually
+  // represented in big endian encoding) in order to keep compatibility with
+  // proofs recorded in previously generated blocks.
+  digest_.FromArray(hasher.Final(), true);
 
   hasher.Reset();
   hasher.Update(digest_.pointer(), digest_.size());
 
-  digest_ = hasher.Final();
+  digest_.FromArray(hasher.Final(), true);
 
   return digest_ < target_;
 }

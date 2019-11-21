@@ -376,7 +376,7 @@ TEST_F(StateTests, test_serialisation_of_structured_data)
     endfunction
   )";
 
-  ConstByteArray expetced_buffer{"QWERTYUIOPasdfghjkl"};
+  ConstByteArray expected_buffer{"QWERTYUIOPasdfghjkl"};
 
   std::string const state_name{"state_data"};
   EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
@@ -384,7 +384,7 @@ TEST_F(StateTests, test_serialisation_of_structured_data)
   ASSERT_TRUE(toolkit.Compile(ser_src));
   ASSERT_TRUE(
       toolkit.RunWithParams(nullptr, std::numeric_limits<ChargeAmount>::max(),
-                            toolkit.vm().CreateNewObject<ByteArrayWrapper>(expetced_buffer)));
+                            toolkit.vm().CreateNewObject<ByteArrayWrapper>(expected_buffer)));
 
   static char const *deser_src = R"(
     function main(buffer : Buffer) : Buffer
@@ -428,11 +428,11 @@ TEST_F(StateTests, test_serialisation_of_structured_data)
   Variant buffer;
   ASSERT_TRUE(
       toolkit.RunWithParams(&buffer, std::numeric_limits<ChargeAmount>::max(),
-                            toolkit.vm().CreateNewObject<ByteArrayWrapper>(expetced_buffer)));
+                            toolkit.vm().CreateNewObject<ByteArrayWrapper>(expected_buffer)));
 
   auto const acquired_buffer{buffer.Get<Ptr<ByteArrayWrapper>>()};
   EXPECT_TRUE(acquired_buffer);
-  EXPECT_EQ(expetced_buffer, acquired_buffer->byte_array());
+  EXPECT_EQ(expected_buffer, acquired_buffer->byte_array());
 }
 
 TEST_F(StateTests,
