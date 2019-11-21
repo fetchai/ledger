@@ -52,8 +52,8 @@ void UpdateMaskWithTokenAddress(BitVector &shards, Address const &address, uint3
  * @param tx The input transaction to be summarized
  */
 TransactionLayout::TransactionLayout(Transaction const &tx, uint32_t log2_num_lanes)
-  : TransactionLayout(tx.digest(), BitVector{1u << log2_num_lanes}, tx.charge(), tx.valid_from(),
-                      tx.valid_until())
+  : TransactionLayout(tx.digest(), BitVector{1u << log2_num_lanes}, tx.charge_rate(),
+                      tx.valid_from(), tx.valid_until())
 {
   // in the case where the transaction contains a contract call, ensure that the shard
   // mask is correctly mapped to the current number of lanes
@@ -82,15 +82,15 @@ TransactionLayout::TransactionLayout(Transaction const &tx, uint32_t log2_num_la
  *
  * @param digest The digest to be set
  * @param mask The mask to be set
- * @param charge The charge to be set
+ * @param charge_rate The charge rate to be set
  * @param valid_from The block index from which point the transaction is valid
  * @param valid_until The block index from which point the transaction is no longer valid
  */
-TransactionLayout::TransactionLayout(Digest digest, BitVector const &mask, TokenAmount charge,
+TransactionLayout::TransactionLayout(Digest digest, BitVector const &mask, TokenAmount charge_rate,
                                      BlockIndex valid_from, BlockIndex valid_until)
   : digest_{std::move(digest)}
   , mask_{mask}
-  , charge_{charge}
+  , charge_rate_{charge_rate}
   , valid_from_{valid_from}
   , valid_until_{valid_until}
 {}
@@ -120,9 +120,9 @@ BitVector const &TransactionLayout::mask() const
  *
  * @return The charge amount
  */
-TransactionLayout::TokenAmount TransactionLayout::charge() const
+TransactionLayout::TokenAmount TransactionLayout::charge_rate() const
 {
-  return charge_;
+  return charge_rate_;
 }
 
 /**

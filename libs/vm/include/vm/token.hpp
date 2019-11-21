@@ -41,6 +41,7 @@ struct Token
     Float64,
     Fixed32,
     Fixed64,
+    Fixed128,
     String,
     BadString,
     True,

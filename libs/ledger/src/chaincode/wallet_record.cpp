@@ -99,9 +99,6 @@ extern ConstByteArray const ADDRESS_NAME{"address"};
 extern ConstByteArray const FROM_NAME{"from"};
 extern ConstByteArray const TO_NAME{"to"};
 extern ConstByteArray const AMOUNT_NAME{"amount"};
-extern ConstByteArray const TRANSFER_NAME{"transfer"};
-extern ConstByteArray const STAKE_NAME{"stake"};
-extern ConstByteArray const AMEND_NAME{"amend"};
 extern ConstByteArray const THRESHOLDS_NAME{"thresholds"};
 extern ConstByteArray const SIGNEES_NAME{"signees"};
 

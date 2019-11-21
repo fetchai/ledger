@@ -17,16 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fake_storage_unit.hpp"
+#include "ledger/storage_unit/fake_storage_unit.hpp"
 
 #include "gmock/gmock.h"
 
 class MockStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
-  using Transaction = fetch::chain::Transaction;
-  using Digest      = fetch::Digest;
-  using DigestSet   = fetch::DigestSet;
+  using Transaction     = fetch::chain::Transaction;
+  using Digest          = fetch::Digest;
+  using DigestSet       = fetch::DigestSet;
+  using FakeStorageUnit = fetch::ledger::FakeStorageUnit;
 
   MockStorageUnit()
   {

@@ -289,10 +289,13 @@ public:
   ConstSliceType Slice() const;
   ConstSliceType Slice(SizeType index, SizeType axis = 0) const;
   ConstSliceType Slice(SizeVector indices, SizeVector axes) const;
+  ConstSliceType Slice(SizeVector const &begins, SizeVector const &ends,
+                       SizeVector const &strides) const;
   TensorSlice    Slice();
   TensorSlice    Slice(SizeType index, SizeType axis = 0);
   TensorSlice    Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0);
   TensorSlice    Slice(SizeVector indices, SizeVector axes);
+  TensorSlice    Slice(SizeVector const &begins, SizeVector const &ends, SizeVector const &strides);
 
   /////////////
   /// Views ///
@@ -533,8 +536,8 @@ private:
     for (SizeType i = 0; i < new_array.shape().size(); ++i)
     {
       cur_stride /= this->shape()[i];
-      stride.push_back(cur_stride);
-      index.push_back(0);
+      stride.emplace_back(cur_stride);
+      index.emplace_back(0);
     }
 
     SizeType          total_size = Tensor::SizeFromShape(new_array.shape());
@@ -716,7 +719,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       {
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
         auto        float_val = std::atof(cur_elem.c_str());
-        elems.push_back(Type(float_val));
+        elems.emplace_back(Type(float_val));
       }
       break;
     }
@@ -1609,7 +1612,7 @@ Tensor<T, C> Tensor<T, C>::Transpose(SizeVector &new_axes) const
 
   for (auto &val : new_axes)
   {
-    new_shape.push_back(shape_.at(val));
+    new_shape.emplace_back(shape_.at(val));
   }
 
   Tensor ret(new_shape);
@@ -1661,7 +1664,7 @@ template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::Unsqueeze()
 {
   auto shape = shape_;
-  shape.push_back(1);
+  shape.emplace_back(1);
 
   Reshape(shape);
 
@@ -2201,6 +2204,23 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> 
 }
 
 template <typename T, typename C>
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(
+    std::vector<SizeType> const &begins, std::vector<SizeType> const &ends,
+    std::vector<SizeType> const &strides) const
+{
+  std::vector<std::vector<SizeType>> range;
+  std::vector<SizeType>              axis;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    range.push_back({begins.at(j), ends.at(j), strides.at(j)});
+    axis.emplace_back(j);
+  }
+
+  return ConstSliceType(*this, range, axis);
+}
+
+template <typename T, typename C>
 typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice()
 {
   std::vector<SizeVector> range;
@@ -2302,6 +2322,23 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> ind
   return TensorSlice(*this, range, axes);
 }
 
+template <typename T, typename C>
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> const &begins,
+                                                       std::vector<SizeType> const &ends,
+                                                       std::vector<SizeType> const &strides)
+{
+  std::vector<std::vector<SizeType>> range;
+  std::vector<SizeType>              axis;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    range.push_back({begins.at(j), ends.at(j), strides.at(j)});
+    axis.emplace_back(j);
+  }
+
+  return TensorSlice(*this, range, axis);
+}
+
 ////////////////////////////////////////
 /// Tensor methods: general utilites ///
 ////////////////////////////////////////
@@ -2377,7 +2414,7 @@ template <typename TensorType>
 Tensor<T, C> Tensor<T, C>::Stack(std::vector<TensorType> const &tensors)
 {
   SizeVector ret_size;
-  ret_size.push_back(tensors.size());
+  ret_size.emplace_back(tensors.size());
   ret_size.insert(ret_size.end(), tensors.front().shape().begin(), tensors.front().shape().end());
   TensorType ret(ret_size);
   for (SizeType i(0); i < tensors.size(); ++i)
@@ -2599,13 +2636,14 @@ bool Tensor<T, C>::AllClose(Tensor const &o, Type const &relative_tolerance,
     ++it1;
     ++it2;
 
-    T abs_e1 = e1;
-    fetch::math::Abs(abs_e1, abs_e1);
-    T abs_e2 = e2;
-    fetch::math::Abs(abs_e2, abs_e2);
-    T abs_diff = e1 - e2;
-    fetch::math::Abs(abs_diff, abs_diff);
-    T tolerance = std::max(absolute_tolerance, std::max(abs_e1, abs_e2) * relative_tolerance);
+    T abs_e1;
+    T abs_e2;
+    T abs_diff;
+    fetch::math::Abs(e1, abs_e1);
+    fetch::math::Abs(e2, abs_e2);
+    fetch::math::Abs(e1 - e2, abs_diff);
+    T tolerance = fetch::vectorise::Max(absolute_tolerance,
+                                        fetch::vectorise::Max(abs_e1, abs_e2) * relative_tolerance);
     if (abs_diff > tolerance)
     {
       return false;
@@ -2777,7 +2815,7 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType ind
   // If new axes are empty, it means that there was single axis
   if (new_axes.empty())
   {
-    new_axes.push_back(this->axis_);
+    new_axes.emplace_back(this->axis_);
   }
 
   // Test validity
@@ -2798,7 +2836,7 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType ind
   new_range.at(axis).at(2) = 1;
 
   // Add new axis
-  new_axes.push_back(axis);
+  new_axes.emplace_back(axis);
 
   return TensorSlice(this->tensor_, new_range, new_axes);
 }
@@ -2864,7 +2902,7 @@ Tensor<T, C> Tensor<T, C>::TensorSliceImplementation<STensor>::Copy() const
   SizeVector shape;
   for (SizeType i{0}; i < this->range_.size(); ++i)
   {
-    shape.emplace_back(this->range_[i][1] - this->range_[i][0] / this->range_[i][2]);
+    shape.emplace_back(((this->range_[i][1] - this->range_[i][0] - 1) / this->range_[i][2]) + 1);
   }
   fetch::math::Tensor<T, C> ret{shape};
   ret.Assign(*this);
@@ -2890,7 +2928,7 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::TensorSliceImplementation<ST
   // If new axes are empty, it means that there was single axis
   if (axes_.empty())
   {
-    new_axes.push_back(axis_);
+    new_axes.emplace_back(axis_);
   }
 
   // Test validity
@@ -2911,7 +2949,7 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::TensorSliceImplementation<ST
   new_range.at(axis).at(2) = 1;
 
   // Add new axis
-  new_axes.push_back(axis);
+  new_axes.emplace_back(axis);
 
   return ConstSliceType(tensor_, new_range, new_axes);
 }

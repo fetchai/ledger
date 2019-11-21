@@ -209,9 +209,7 @@ struct OpGeluSaveableParams : public OpsSaveableParams
 template <typename TensorType>
 struct OpEmbeddingsSaveableParams : public OpWeightsSaveableParams<TensorType>
 {
-  fetch::ml::OpType                  op_type           = OpType::OP_EMBEDDINGS;
-  std::vector<fetch::math::SizeType> trailing_indices1 = {0, 0};
-  std::vector<fetch::math::SizeType> trailing_indices2 = {0};
+  fetch::ml::OpType op_type = OpType::OP_EMBEDDINGS;
 };
 
 /**
@@ -308,6 +306,22 @@ struct OpSliceSaveableParams : public OpsSaveableParams
   uint8_t                       slice_type;
 
   fetch::ml::OpType op_type = OpType::OP_SLICE;
+};
+
+/**
+ * Saveable parameters for StridedSlice op
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct OpStridedSliceSaveableParams : public OpsSaveableParams
+{
+  using SizeType = typename TensorType::SizeType;
+
+  std::vector<SizeType> begins;
+  std::vector<SizeType> ends;
+  std::vector<SizeType> strides;
+
+  fetch::ml::OpType op_type = OpType::OP_STRIDED_SLICE;
 };
 
 /**
@@ -411,6 +425,8 @@ struct OpMatrixMultiplySaveableParams : public OpsSaveableParams
   using SizeVector = std::vector<SizeType>;
 
   fetch::ml::OpType op_type = OpType::OP_MATRIX_MULTIPLY;
+  bool              transpose_a;
+  bool              transpose_b;
 };
 
 template <typename TensorType>

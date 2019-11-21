@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include <chrono>
+#include "telemetry/utils/to_seconds.hpp"
 
 namespace fetch {
 
 template <typename R, typename P>
 double ToSeconds(std::chrono::duration<R, P> const &value)
 {
-  return std::chrono::duration_cast<std::chrono::duration<double>>(value).count();
+  return telemetry::details::ToSeconds(value);
 }
 
 }  // namespace fetch

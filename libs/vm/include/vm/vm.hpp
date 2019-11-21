@@ -1518,6 +1518,11 @@ private:
     Variant &lhsv = Top();
     if (rhsv.object)
     {
+      if (!lhsv.IsPrimitive() && !lhsv.object)
+      {
+        RuntimeError("null reference");
+        return;
+      }
       Op::Apply(lhsv, rhsv);
       rhsv.Reset();
       return;
@@ -1532,6 +1537,11 @@ private:
     Variant &lhsv = Top();
     if (lhsv.object)
     {
+      if (!rhsv.IsPrimitive() && !rhsv.object)
+      {
+        RuntimeError("null reference");
+        return;
+      }
       Op::Apply(lhsv, rhsv);
       rhsv.Reset();
       return;
@@ -1574,6 +1584,11 @@ private:
     Variant &rhsv = Pop();
     if (lhso)
     {
+      if (!rhsv.IsPrimitive() && !rhsv.object)
+      {
+        RuntimeError("null reference");
+        return;
+      }
       Op::Apply(lhso, rhsv);
       rhsv.Reset();
       return;
@@ -1692,6 +1707,7 @@ private:
   void Handler__InitialiseArray();
   void Handler__ContractVariableDeclareAssign();
   void Handler__InvokeContractFunction();
+  void Handler__PushLargeConstant();
 
   friend class Object;
   friend class Module;

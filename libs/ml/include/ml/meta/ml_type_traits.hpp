@@ -29,7 +29,8 @@ enum class OptimiserType : uint8_t
   ADAM,
   MOMENTUM,
   RMSPROP,
-  SGD
+  SGD,
+  LAZY_ADAM
 };
 
 enum class LoaderType : uint8_t
@@ -112,6 +113,7 @@ enum class OpType : uint16_t
   OP_SLICE,
   OP_SQUEEZE,
   OP_REDUCE_MEAN,
+  OP_STRIDED_SLICE,
 
   // OpKind - LOSS
   LOSS_CROSS_ENTROPY,
