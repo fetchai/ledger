@@ -5,6 +5,7 @@ import datetime
 import glob
 import shutil
 import subprocess
+from pathlib import Path
 
 from fetch.cluster.instance import ConstellationInstance, DmlfEtchInstance
 from fetch.cluster.utils import output, verify_file
