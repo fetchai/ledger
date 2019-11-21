@@ -531,7 +531,7 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
                    "Loading from genesis save file. Location: ", cfg_.genesis_file_location);
 
     GenesisFileCreator creator(block_coordinator_, *storage_, consensus_, external_identity_,
-                               cfg_.genesis_file_location);
+                               cfg_.db_prefix);
 
     if (cfg_.genesis_file_location.empty())
     {
