@@ -1106,7 +1106,7 @@ inline double ToDouble(UInt<256> const &x)
     const uint64_t addendum = uint64_t(element) << (i * x.ELEMENT_SIZE);
     mantisse += addendum;
   }
-  const double exponent = static_cast<double>(least_eligible_byte_idx * x.ELEMENT_SIZE);
+  const auto exponent = static_cast<double>(least_eligible_byte_idx * x.ELEMENT_SIZE);
 
   return static_cast<double>(mantisse) * pow(2, exponent);
 }
