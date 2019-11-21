@@ -68,6 +68,11 @@ void TelemetryData::Update(HTTPRequest const &request, HTTPResponse const &respo
   {
     path = "/api/tx";
   }
+  else if (core::StartsWith(path, "/api/status/tx/"))
+  {
+    path = "/api/status/tx";
+  }
+
   // update the duration stats
   durations_->Add(path, request.GetDuration());
 

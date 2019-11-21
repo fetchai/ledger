@@ -98,6 +98,7 @@ public:
     bool         load_genesis_file{false};
     bool         kademlia_routing{true};
     std::string  genesis_file_location{""};
+    std::string  db_files_prefix{""};
     bool         proof_of_stake{false};
     NetworkMode  network_mode{NetworkMode::PUBLIC_NETWORK};
     FeatureFlags features{};
@@ -172,6 +173,7 @@ private:
   NetworkManager http_network_manager_;  ///< A separate net. coordinator for the http service(s)
   MuddlePtr      muddle_;                ///< The muddle networking service
   CertificatePtr internal_identity_;
+  CertificatePtr external_identity_;
   MuddlePtr      internal_muddle_;  ///< The muddle networking service
   TrustSystem    trust_;            ///< The trust subsystem
   /// @}

@@ -86,7 +86,7 @@ CounterPtr Registry::CreateCounter(std::string name, std::string description, La
 
     // add the counter to the register
     {
-      FETCH_LOCK(lock_);
+      std::lock_guard<std::mutex> guard(lock_);
       measurements_.push_back(counter);
     }
   }
@@ -113,7 +113,7 @@ CounterMapPtr Registry::CreateCounterMap(std::string name, std::string descripti
 
     // add the counter to the register
     {
-      FETCH_LOCK(lock_);
+      std::lock_guard<std::mutex> guard(lock_);
       measurements_.emplace_back(map);
     }
   }
@@ -142,7 +142,7 @@ HistogramPtr Registry::CreateHistogram(std::initializer_list<double> const &buck
 
     // add the counter to the register
     {
-      FETCH_LOCK(lock_);
+      std::lock_guard<std::mutex> guard(lock_);
       measurements_.push_back(histogram);
     }
   }
@@ -165,7 +165,7 @@ HistogramMapPtr Registry::CreateHistogramMap(std::vector<double> buckets, std::s
 
     // add the counter to the register
     {
-      FETCH_LOCK(lock_);
+      std::lock_guard<std::mutex> guard(lock_);
       measurements_.emplace_back(histogram_map);
     }
   }
@@ -182,7 +182,7 @@ void Registry::Collect(std::ostream &stream)
 {
   OutputStream telemetry_stream{stream};
 
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
   for (auto const &measurement : measurements_)
   {
     measurement->ToStream(telemetry_stream);

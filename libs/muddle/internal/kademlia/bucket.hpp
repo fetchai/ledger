@@ -18,7 +18,7 @@ struct Bucket
 
   BucketId         bucket_id;
   std::deque<Peer> peers;
-  Timepoint        last_updated;
+  Timepoint        last_updated;  // TODO: not used atm
 
   /*
   // TODO: Move from primitives

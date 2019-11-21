@@ -292,6 +292,7 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   , muddle_{muddle::CreateMuddle("IHUB", certificate, network_manager_,
                                  cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE))}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
+  , external_identity_{certificate}
   , internal_muddle_{muddle::CreateMuddle(
         "ISRD", internal_identity_, network_manager_,
         cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE))}
@@ -529,7 +530,8 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
     FETCH_LOG_INFO(LOGGING_NAME,
                    "Loading from genesis save file. Location: ", cfg_.genesis_file_location);
 
-    GenesisFileCreator creator(block_coordinator_, *storage_, consensus_);
+    GenesisFileCreator creator(block_coordinator_, *storage_, consensus_, external_identity_,
+                               cfg_.genesis_file_location);
 
     if (cfg_.genesis_file_location.empty())
     {

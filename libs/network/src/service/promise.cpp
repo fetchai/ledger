@@ -44,6 +44,7 @@ void LogTimout(NAME const &name, ID const &id)
     FETCH_LOG_WARN(PromiseImplementation::LOGGING_NAME, "Promise ", id, " timed out!");
   }
 }
+
 }  // namespace
 
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
@@ -302,6 +303,69 @@ PromiseBuilder &PromiseBuilder::Finally(Callback const &cb)
 }
 
 }  // namespace details
+
+PromiseError::PromiseError(details::PromiseImplementation const &promise)
+  : id_{promise.id()}
+  , created_{promise.created_at()}
+  , deadline_{promise.deadline()}
+  , protocol_{promise.protocol()}
+  , function_{promise.function()}
+  , state_{promise.state()}
+  , name_{promise.name()}
+  , message_{BuildErrorMessage(*this)}
+{}
+
+PromiseError::PromiseError(PromiseError const &other) noexcept
+  : id_{other.id_}
+  , created_{other.created_}
+  , deadline_{other.deadline_}
+  , protocol_{other.protocol_}
+  , function_{other.function_}
+  , state_{other.state_}
+  , name_{other.name_}
+  , message_{other.message_}
+{}
+
+char const *PromiseError::what() const noexcept
+{
+  return message_.c_str();
+}
+
+std::string PromiseError::BuildErrorMessage(PromiseError const &error)
+{
+  std::ostringstream oss;
+
+  oss << "Promise ";
+  switch (error.state_)
+  {
+  case details::PromiseImplementation::State::TIMEDOUT:
+    oss << "timeout";
+    break;
+  case details::PromiseImplementation::State::FAILED:
+    oss << "failure";
+    break;
+  default:
+    oss << "error";
+    break;
+  }
+
+  if (error.protocol_ != details::PromiseImplementation::INVALID)
+  {
+    oss << " Protocol: " << error.protocol_;
+  }
+
+  if (error.function_ != details::PromiseImplementation::INVALID)
+  {
+    oss << " Function: " << error.function_;
+  }
+
+  if (!error.name_.empty())
+  {
+    oss << " Name: " << error.name_;
+  }
+
+  return oss.str();
+}
 
 /**
  * Converts the state of the promise to a string

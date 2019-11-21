@@ -406,12 +406,7 @@ struct DkgMember
     muddle->Start({muddle_port});
   }
 
-  virtual ~DkgMember()
-  {
-    reactor.Stop();
-    muddle->Stop();
-    network_manager.Stop();
-  }
+  virtual ~DkgMember() = default;
 
   virtual void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
                                uint64_t round_end, uint64_t start_time,
@@ -437,10 +432,7 @@ struct FaultyDkgMember : DkgMember
     });
   }
 
-  ~FaultyDkgMember() override
-  {
-    reactor.Stop();
-  }
+  ~FaultyDkgMember() override = default;
 
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
                        uint64_t round_end, uint64_t start_time,
@@ -475,10 +467,7 @@ struct HonestDkgMember : DkgMember
     });
   }
 
-  ~HonestDkgMember() override
-  {
-    reactor.Stop();
-  }
+  ~HonestDkgMember() override = default;
 
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
                        uint64_t round_end, uint64_t start_time,
@@ -606,6 +595,13 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
                   cabinet_members[start_complete]->output.public_key_shares[q]);
       }
     }
+  }
+
+  for (auto &member : cabinet_members)
+  {
+    member->reactor.Stop();
+    member->muddle->Stop();
+    member->network_manager.Stop();
   }
 }
 

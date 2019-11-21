@@ -141,21 +141,22 @@ void BuildConnectionPriorities(PeerTracker const &peer_tracker, variant::Variant
     output_peer["bucket"]           = entry.bucket;
     output_peer["connection_value"] = entry.connection_value;
     output_peer["is_connected"]     = entry.is_connected;
+    /*
+    // TODO: Figure out how to convert steady clock to system clock
+        std::time_t t1 = std::chrono::system_clock::to_time_t(entry.connected_since);
 
-    std::time_t t1 = std::chrono::system_clock::to_time_t(entry.connected_since);
+        auto ts1 = static_cast<std::string>(std::ctime(&t1));
+        string::Trim(ts1);
+        output_peer["connected_since"] = ts1;
 
-    auto ts1 = static_cast<std::string>(std::ctime(&t1));
-    string::Trim(ts1);
-    output_peer["connected_since"] = ts1;
+        std::time_t t2  = std::chrono::system_clock::to_time_t(entry.desired_expiry);
+        auto        ts2 = static_cast<std::string>(std::ctime(&t2));
+        string::Trim(ts2);
 
-    std::time_t t2  = std::chrono::system_clock::to_time_t(entry.desired_expiry);
-    auto        ts2 = static_cast<std::string>(std::ctime(&t2));
-    string::Trim(ts2);
-
-    output_peer["desired_expiry"] = ts2;
+        output_peer["desired_expiry"] = ts2;
+    */
     ++idx;
   }
-  std::cout << ss.str() << std::endl;
 }
 
 /**

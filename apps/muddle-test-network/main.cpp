@@ -201,7 +201,7 @@ ConstByteArray ReadibleAddress(Address const &address)
 
 int main()
 {
-  uint64_t N       = 3;  // TODO: Make parameter
+  uint64_t N       = 40;  // TODO: Make parameter
   auto     network = Network::New(N);
 
   MakeKademliaNetwork(network);
@@ -210,7 +210,7 @@ int main()
   std::string input;
   while (true)
   {
-    std::this_thread::sleep_for(std::chrono::seconds(4));
+    std::this_thread::sleep_for(std::chrono::seconds(400));
     network->AddNode();
   }
   std::getline(std::cin, input);

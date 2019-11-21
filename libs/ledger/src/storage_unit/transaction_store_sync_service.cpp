@@ -211,7 +211,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 
   if (roots_to_sync_.empty())
   {
-    state_machine_->Delay(std::chrono::milliseconds{20});
+    state_machine_->Delay(std::chrono::milliseconds{2000});
 
     return State::QUERY_OBJECT_COUNTS;
   }

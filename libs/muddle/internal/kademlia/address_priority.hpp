@@ -11,7 +11,7 @@ namespace muddle {
 
 struct AddressPriority
 {
-  using Clock     = std::chrono::system_clock;
+  using Clock     = std::chrono::steady_clock;
   using TimePoint = Clock::time_point;
   template <typename T>
   using Duration = typename std::chrono::duration<T>;
