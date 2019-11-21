@@ -1,4 +1,5 @@
 function main()
+  printLn("fp32:");
   var a = 2.0fp32;
   var b = 3.0fp32;
   printLn(a);
@@ -9,6 +10,7 @@ function main()
   print("d = a * b = ");
   var c = a * b;
   printLn(c);
+  printLn("fp64:");
   var d = 4.0fp64;
   var e = 3.0fp64;
   printLn(d);
@@ -19,16 +21,34 @@ function main()
   print("f = d * e = ");
   var f = d * e;
   printLn(f);
+  printLn("fp128:");
+  var g = 4.0fp128;
+  var h = 3.0fp128;
+  printLn(g);
+  printLn(h);
+  g += h;
+  print("g += h : g = ");
+  printLn(g);
+  print("i = g * h = ");
+  var i = g * h;
+  printLn(i);
+  printLn(toFixed128(d));
 
   var myArray = Array<Fixed32>(5);
   var myArray2 = Array<Fixed64>(5);
+  var myArray3 = Array<Fixed128>(5);
 
   for (i in 0:4)
   	myArray[i] = a * toFixed32(i);
   	myArray2[i] = d * toFixed64(i);
-    printLn(myArray[i]);
-    printLn(myArray2[i]);
+  	myArray3[i] = g * toFixed128(i);
   endfor
+  printLn("fp32:");
+  printLn(myArray);
+  printLn("fp64:");
+  printLn(myArray2);
+  printLn("fp128:");
+  printLn(myArray3);
 
   var mymap = Map<Fixed32, Fixed32>();
   mymap[a] = b;
@@ -38,6 +58,9 @@ function main()
   var pi : Fixed64 = 3.1415fp64;
   printLn("exp(" + toString(d) + ") = " + toString(exp(d)));
   printLn("sin(" + toString(pi) + ") = " + toString(sin(pi)));
+
+  var pi128 : Fixed128 = 3.1415fp128;
+  printLn("pi = " + toString(pi128));
 
   printLn("pow(" + toString(d) + ", " + toString(d) + ") = " + toString(pow(d, d)));
 endfunction

@@ -203,7 +203,7 @@ struct Executable
   struct LargeConstant
   {
     LargeConstant() = delete;
-    LargeConstant(const LargeConstant &other)
+    explicit LargeConstant(const LargeConstant &other)
     {
       Copy(other);
     }

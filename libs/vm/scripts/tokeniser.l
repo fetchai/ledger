@@ -142,13 +142,8 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 	return Set(yylval, fetch::vm::Token::Kind::Fixed64, yytext, yyleng, yyextra);
 }
 
-<<<<<<< HEAD
-{FIXED1}fp128 |
-{FIXED2}fp128 {
-=======
 {FIXED}fp128 |
 {INTEGER}fp128 {
->>>>>>> master
 	return Set(yylval, fetch::vm::Token::Kind::Fixed128, yytext, yyleng, yyextra);
 }
 
