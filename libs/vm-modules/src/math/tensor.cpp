@@ -57,15 +57,16 @@ Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>>
 
 void VMTensor::Bind(Module &module)
 {
+  using Index = fetch::math::SizeType;
   module.CreateClassType<VMTensor>("Tensor")
       .CreateConstructor(&VMTensor::Constructor)
       .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
         return Ptr<VMTensor>{new VMTensor(vm, type_id)};
       })
-      .CreateMemberFunction("at", &VMTensor::At<uint64_t>)
-      .CreateMemberFunction("at", &VMTensor::At<uint64_t, uint64_t>)
-      .CreateMemberFunction("at", &VMTensor::At<uint64_t, uint64_t, uint64_t>)
-      .CreateMemberFunction("at", &VMTensor::At<uint64_t, uint64_t, uint64_t, uint64_t>)
+      .CreateMemberFunction("at", &VMTensor::At<Index>)
+      .CreateMemberFunction("at", &VMTensor::At<Index, Index>)
+      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>)
+      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>)
       .CreateMemberFunction("setAt", &VMTensor::SetAtOne)
       .CreateMemberFunction("setAt", &VMTensor::SetAtTwo)
       .CreateMemberFunction("setAt", &VMTensor::SetAtThree)
