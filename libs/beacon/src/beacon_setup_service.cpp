@@ -1630,7 +1630,7 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     uint64_t const base_time =
         static_cast<uint64_t>(static_cast<double>(time_per_state) * time_slots_in_dkg_);
     expected_dkg_timespan_ = base_time;
-    ;
+
     uint16_t failures = 0;
 
     while (reference_timepoint_ < current_time)
