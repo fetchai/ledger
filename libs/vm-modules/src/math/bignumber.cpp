@@ -35,8 +35,8 @@ namespace math {
 
 Ptr<String> UInt256Wrapper::ToString(VM *vm, Ptr<UInt256Wrapper> const &n)
 {
-  byte_array::ByteArray ba(32);
-  for (uint64_t i = 0; i < 32; ++i)
+  byte_array::ByteArray ba(UInt256::ELEMENTS);
+  for (uint64_t i = 0; i < UInt256::ELEMENTS; ++i)
   {
     ba[i] = n->number_[i];
   }
