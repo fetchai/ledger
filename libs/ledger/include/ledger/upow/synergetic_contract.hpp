@@ -108,6 +108,7 @@ public:
   /// @}
 
   uint64_t CalculateFee() const override;
+  void SetChargeLimit(uint64_t charge_limit);
 
 private:
   using ModulePtr     = std::shared_ptr<vm::Module>;
@@ -134,6 +135,7 @@ private:
   VariantPtr        solution_;
 
   uint64_t charge_{0};
+  uint64_t charge_limit_{0};
 };
 
 char const *ToString(SynergeticContract::Status status);

@@ -220,6 +220,11 @@ Status SynergeticContract::DefineProblem(ProblemData const &problem_data)
   auto vm  = std::make_unique<vm::VM>(module_.get());
   problem_ = std::make_shared<vm::Variant>();
 
+  if (charge_limit_ > 0)
+  {
+    vm->SetChargeLimit(charge_limit_);
+  }
+
   // create the problem data
   auto problems = CreateProblemData(vm.get(), problem_data);
 
@@ -252,6 +257,11 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
   score = std::numeric_limits<WorkScore>::max();
 
   auto vm = std::make_unique<vm::VM>(module_.get());
+
+  if (charge_limit_ > 0)
+  {
+    vm->SetChargeLimit(charge_limit_);
+  }
 
   // create the nonce object to be passed into the work function
   auto hashed_nonce = vm->CreateNewObject<UInt256Wrapper>(nonce);
@@ -301,6 +311,11 @@ Status SynergeticContract::Complete(chain::Address const &address, BitVector con
 
   auto vm = std::make_unique<vm::VM>(module_.get());
 
+  if (charge_limit_ > 0)
+  {
+    vm->SetChargeLimit(charge_limit_);
+  }
+
   // setup the storage infrastructure
   CachedStorageAdapter storage_cache(*storage_);
   StateSentinelAdapter state_sentinel{
@@ -338,6 +353,11 @@ Status SynergeticContract::Complete(chain::Address const &address, BitVector con
 uint64_t SynergeticContract::CalculateFee() const
 {
   return charge_;
+}
+
+void SynergeticContract::SetChargeLimit(uint64_t charge_limit)
+{
+  charge_limit_ = charge_limit;
 }
 
 bool SynergeticContract::HasProblem() const

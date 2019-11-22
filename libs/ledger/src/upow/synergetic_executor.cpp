@@ -34,7 +34,14 @@
 namespace fetch {
 namespace ledger {
 
+namespace {
+
 constexpr char const *LOGGING_NAME = "SynergeticExecutor";
+
+constexpr TokenAmount const CHARGE_RATE  = 1;
+constexpr TokenAmount const CHARGE_LIMIT = 10000000000;
+
+} //namespace
 
 SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
   : storage_{storage}
@@ -96,8 +103,8 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
                                                 solution->address(),
                                                 shard_mask,
                                                 solution->contract_digest(),
-                                                1,
-                                                10000000000,
+                                                CHARGE_RATE,
+                                                CHARGE_LIMIT,
                                                 false};
 
       ContractExecutionResult result;

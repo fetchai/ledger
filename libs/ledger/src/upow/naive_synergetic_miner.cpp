@@ -39,6 +39,8 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "NaiveSynMiner";
 
+constexpr uint64_t const CHARGE_LIMIT = 10000000000;
+
 using UInt256  = vectorise::UInt<256>;
 using DagNodes = NaiveSynergeticMiner::DagNodes;
 
@@ -183,6 +185,8 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
   }
 
   auto contract = CreateSmartContract<SynergeticContract>(contract_digest, storage_);
+
+  contract->SetChargeLimit(CHARGE_LIMIT / search_length_);
 
   // if no contract can be loaded then simple return
   if (!contract)
