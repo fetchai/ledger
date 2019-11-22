@@ -77,7 +77,6 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
   std::unordered_set<std::string> initial_peers;
   auto config_peers = doc.root()["peers"];
 
-  initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
   auto config_peer_count = config_peers.size();
   for (std::size_t peer_number = 0; peer_number < config_peer_count; peer_number++)
   {
@@ -87,12 +86,19 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
     }
   }
 
-  for(unsigned int i = 0; i< 10; i++)
+  if (config_peer_count < 10)
   {
-    auto peer_number = (instance_number + 1 + i) % config_peers;
-    if (peer_number != instance_number)
+      initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
+  }
+  else
+  {
+    for(unsigned int i = 0; i< 10; i++)
     {
-      initial_peers.insert(config_peers[peer_number]["uri"].As<std::string>());
+      auto peer_number = (instance_number + 1 + i) % config_peer_count;
+      if (peer_number != instance_number)
+      {
+        initial_peers.insert(config_peers[peer_number]["uri"].As<std::string>());
+      }
     }
   }
 
