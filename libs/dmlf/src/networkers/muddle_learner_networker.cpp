@@ -38,7 +38,7 @@ using fetch::service::Promise;
 using PromiseList = std::vector<Promise>;
 using SignerPtr   = std::shared_ptr<crypto::ECDSASigner>;
 
-const INITIAL_PEERS_COUNT = 10;
+const unsigned int INITIAL_PEERS_COUNT = 10;
 
 MuddleLearnerNetworker::MuddleLearnerNetworkerProtocol::MuddleLearnerNetworkerProtocol(
     MuddleLearnerNetworker &sample)
