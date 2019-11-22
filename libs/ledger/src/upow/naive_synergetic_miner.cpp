@@ -19,6 +19,7 @@
 #include "core/digest.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/smart_contract_factory.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
@@ -27,6 +28,7 @@
 #include "ledger/upow/work.hpp"
 #include "logging/logging.hpp"
 #include "vm_modules/math/bignumber.hpp"
+#include "ledger/state_sentinel_adapter.hpp"
 
 #include <random>
 #include <unordered_set>
@@ -64,11 +66,12 @@ void ExecuteWork(SynergeticContract &contract, WorkPtr const &work)
 
 }  // namespace
 
-NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover)
+NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover, uint32_t num_lanes)
   : dag_{std::move(dag)}
   , storage_{storage}
   , prover_{std::move(prover)}
   , state_machine_{std::make_shared<core::StateMachine<State>>("NaiveSynMiner", State::INITIAL)}
+  , num_lanes_{num_lanes}
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &NaiveSynergeticMiner::OnInitial);
   state_machine_->RegisterHandler(State::MINE, this, &NaiveSynergeticMiner::OnMine);
@@ -165,10 +168,20 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
                                            chain::Address const &contract_address,
                                            ProblemData const &   problem_data)
 {
+  // TODO(AB): State sharding needs to be added here
+  BitVector shards{num_lanes_};
+  shards.SetAllOne();
+  StateSentinelAdapter storage_adapter{storage_, Identifier{"fetch.token"}, shards};
+
+  ContractContext context{&token_contract_, contract_address, &storage_adapter, 0};
+  ContractContextAttacher raii(token_contract_, context);
+
   uint64_t const balance = token_contract_.GetBalance(contract_address);
 
   if (balance == 0)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Not handling contract: 0x", contract_digest.ToHex(),
+        ", because contract address 0x", contract_address.address().ToHex(), " balance is 0");
     return {};
   }
 
@@ -190,7 +203,6 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
   if (SynergeticContract::Status::SUCCESS != status)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to define the problem. Reason: ", ToString(status));
-
     return {};
   }
 

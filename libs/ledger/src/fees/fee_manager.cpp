@@ -35,21 +35,15 @@ namespace ledger {
 namespace {
   constexpr char const *LOGGING_NAME = "FeeManager";
 
-  bool IsCreateWealth(chain::Transaction const &tx)
-  {
-    return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
-           (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
-  }
 }  // namespace
 
-FeeManager::FeeManager(TokenContract &token_contract)
+FeeManager::FeeManager(TokenContract &token_contract, std::string const &histogram_name)
   : token_contract_{token_contract}
-  , deduct_fees_duration_{Registry::Instance().LookupMeasurement<Histogram>(
-      "ledger_fee_manager_deduct_fees_duration")}
+  , deduct_fees_duration_{Registry::Instance().LookupMeasurement<Histogram>(histogram_name)}
 {
 }
 
-bool FeeManager::CalculateChargeAndValidate(TransactionPtr& tx, std::vector<Chargeable*> const &chargeables, Result& result)
+bool FeeManager::CalculateChargeAndValidate(TransactionDetails& tx, std::vector<Chargeable*> const &chargeables, Result& result)
 {
   bool success  = true;
 
@@ -60,19 +54,19 @@ bool FeeManager::CalculateChargeAndValidate(TransactionPtr& tx, std::vector<Char
   }
 
   uint64_t const scaled_charge =
-      std::max<uint64_t>(tx->shard_mask().PopCount(), 1) * base_charge;
+      std::max<uint64_t>(tx.shard_mask.PopCount(), 1) * base_charge;
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Calculated charge for 0x", current_tx_->digest().ToHex(), ": ",
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Calculated charge for 0x", tx.digest.ToHex(), ": ",
                   scaled_charge, " (base: ", base_charge, " storage: ", storage_charge,
                   " compute: ", compute_charge, " shards: ", allowed_shards_.PopCount(), ")");
 
-  if (!IsCreateWealth(*tx))
+  if (!tx.is_create_wealth)
   {
     result.charge += scaled_charge;
   }
 
   // determine if the chain code ran out of charge
-  if (result.charge > tx->charge_limit())
+  if (result.charge > tx.charge_limit)
   {
     result.status = Status::INSUFFICIENT_CHARGE;
     success       = false;
@@ -82,25 +76,25 @@ bool FeeManager::CalculateChargeAndValidate(TransactionPtr& tx, std::vector<Char
 }
 
 
-void FeeManager::Execute(TransactionPtr& tx, Result &result, BlockIndex const &block, StorageInterface &storage)
+void FeeManager::Execute(TransactionDetails& tx, Result &result, BlockIndex const &block, StorageInterface &storage)
 {
   telemetry::FunctionTimer const timer{*deduct_fees_duration_};
 
   // attach the token contract to the storage engine
-  StateSentinelAdapter storage_adapter{storage, Identifier{"fetch.token"}, tx->shard_mask()};
+  StateSentinelAdapter storage_adapter{storage, Identifier{"fetch.token"}, tx.shard_mask};
 
-  auto const &from = tx->from();
+  auto const &from = tx.from;
 
-  ContractContext context{&token_contract_, tx->contract_address(), &storage_adapter,
+  ContractContext context{&token_contract_, tx.contract_address, &storage_adapter,
                           block};
   ContractContextAttacher raii(token_contract_, context);
   uint64_t const          balance = token_contract_.GetBalance(from);
 
   // calculate the fee to deduct
-  TokenAmount tx_fee = result.charge * tx->charge_rate();
+  TokenAmount tx_fee = result.charge * tx.charge_rate;
   if (Status::SUCCESS != result.status)
   {
-    tx_fee = tx->charge_limit() * tx->charge_rate();
+    tx_fee = tx.charge_limit * tx.charge_rate;
   }
 
   // on failed transactions

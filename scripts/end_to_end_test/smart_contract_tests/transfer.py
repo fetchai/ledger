@@ -71,6 +71,9 @@ def setup(api):
     api.sync(api.contracts.create(entity1, contract1, 2000))
     api.sync(api.contracts.create(entity1, contract2, 2000))
 
+    api.sync(api.tokens.transfer(entity1, contract1.address, 10000, 500))
+    api.sync(api.tokens.transfer(entity1, contract2.address, 10000, 500))
+
     return entity1, contract1, contract2
 
 

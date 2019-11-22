@@ -50,6 +50,12 @@ namespace fetch {
 namespace ledger {
 namespace {
 
+bool IsCreateWealth(chain::Transaction const &tx)
+{
+  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
+         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
+}
+
 bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
 {
   // Step 1 - Translate the tx into a common name
@@ -93,7 +99,7 @@ bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
 Executor::Executor(StorageUnitPtr storage)
   : storage_{std::move(storage)}
   , tx_validator_{*storage_, token_contract_}
-  , fee_manager_{token_contract_}
+  , fee_manager_{token_contract_, "ledger_executor_deduct_fees_duration"}
   , overall_duration_{Registry::Instance().LookupMeasurement<Histogram>(
         "ledger_executor_overall_duration")}
   , tx_retrieve_duration_{Registry::Instance().LookupMeasurement<Histogram>(
@@ -164,8 +170,18 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
       storage_cache_->Clear();
     }
 
+    FeeManager::TransactionDetails tx_details{
+        current_tx_->from(),
+        current_tx_->contract_address(),
+        allowed_shards_,
+        current_tx_->digest(),
+        current_tx_->charge_rate(),
+        current_tx_->charge_limit(),
+        IsCreateWealth(*current_tx_)
+    };
+
     // deduct the fees from the originator
-    fee_manager_.Execute(current_tx_, result, block_, *storage_cache_);
+    fee_manager_.Execute(tx_details, result, block_, *storage_cache_);
 
     // flush the storage so that all changes are now persistent
     storage_cache_->Flush();
@@ -351,7 +367,17 @@ bool Executor::ExecuteTransactionContract(Result &result)
       // simple linear scale fee
       StorageFee storage_fee_{storage_adapter};
 
-      success = fee_manager_.CalculateChargeAndValidate(current_tx_, {
+      FeeManager::TransactionDetails tx_details{
+        current_tx_->from(),
+        current_tx_->contract_address(),
+        allowed_shards_,
+        current_tx_->digest(),
+        current_tx_->charge_rate(),
+        current_tx_->charge_limit(),
+        IsCreateWealth(*current_tx_)
+      };
+
+      success = fee_manager_.CalculateChargeAndValidate(tx_details, {
           contract,
           &storage_fee_
       }, result);

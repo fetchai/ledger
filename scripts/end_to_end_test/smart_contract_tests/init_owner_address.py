@@ -53,6 +53,8 @@ def run(options):
     # deploy the contract to the network
     status = api.sync(api.contracts.create(entity1, contract, 2000))[0]
 
+    api.sync(api.tokens.transfer(entity1, contract.address, 10000, 500))
+
     saved_address = contract.query(api, 'query_owner_address')
 
     assert str(Address(entity1)) == saved_address, \

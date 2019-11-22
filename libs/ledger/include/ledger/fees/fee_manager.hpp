@@ -42,16 +42,27 @@ public:
   using BlockIndex              = uint64_t;
   using Status                  = ContractExecutionStatus;
   using Result                  = ContractExecutionResult;
+  using TokenAmount             = uint64_t;
+
+  struct TransactionDetails {
+    chain::Address const &from;
+    chain::Address const &contract_address;
+    BitVector const &shard_mask;
+    Digest const &digest;
+    TokenAmount const charge_rate{1};
+    TokenAmount const charge_limit{0};
+    bool const is_create_wealth{false};
+  };
 
   // Construction / Destruction
-  FeeManager(TokenContract &token_contract);
+  FeeManager(TokenContract &token_contract, std::string const &histogram_name);
   FeeManager(FeeManager const &) = delete;
   FeeManager(FeeManager &&)      = delete;
   virtual ~FeeManager()          = default;
 
 
-  bool CalculateChargeAndValidate(TransactionPtr& tx, std::vector<Chargeable*> const &chargeables, Result& result);
-  void Execute(TransactionPtr& tx, Result &result, BlockIndex const &block, StorageInterface& storage);
+  bool CalculateChargeAndValidate(TransactionDetails& tx, std::vector<Chargeable*> const &chargeables, Result& result);
+  void Execute(TransactionDetails& tx, Result &result, BlockIndex const &block, StorageInterface& storage);
 
   // Operators
   FeeManager &operator=(FeeManager const &) = delete;

@@ -38,7 +38,7 @@ constexpr char const *LOGGING_NAME = "SynergeticExecutor";
 
 SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
   : storage_{storage}
-  , fee_manager_{token_contract_}
+  , fee_manager_{token_contract_, "ledger_synergetic_executor_deduct_fees_duration"}
 {}
 
 void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem_data,
@@ -92,16 +92,22 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       contract->UpdateContractContext(ctx);
 
       //TODO(AB): charge limit
-      auto tx =  std::make_shared<chain::TransactionBuilder>()
-          ->From(solution->address())
-          .ChargeLimit(1e10)
-          .TargetSmartContract(chain::Address(solution->contract_digest()), solution->address(), shard_mask)
-          .Seal()
-          .Build();
+      FeeManager::TransactionDetails tx_details{
+          solution->address(),
+          solution->address(),
+          shard_mask,
+          solution->contract_digest(),
+          1,
+          10000000000,
+          false
+      };
 
       ContractExecutionResult result;
-      status = contract->Complete(solution->address(), shard_mask, [this, &contract, &tx, &result]()->bool {
-        return fee_manager_.CalculateChargeAndValidate(tx, {contract.get()}, result);
+      FETCH_LOG_INFO(LOGGING_NAME, "Verify: tx created");
+
+
+      status = contract->Complete(solution->address(), shard_mask, [this, &contract, &tx_details, &result]()->bool {
+        return fee_manager_.CalculateChargeAndValidate(tx_details, {contract.get()}, result);
       });
 
       if (SynergeticContract::Status::SUCCESS != status)
@@ -110,8 +116,8 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
                        " Reason: ", ToString(status));
         return;
       }
-
-      fee_manager_.Execute(tx, result, solution->block_index(), storage_);
+      FETCH_LOG_INFO(LOGGING_NAME, "Calculated fee: ", result.charge);
+      fee_manager_.Execute(tx_details, result, solution->block_index(), storage_);
 
       contract->Detach();
 

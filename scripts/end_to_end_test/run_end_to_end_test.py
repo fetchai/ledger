@@ -25,6 +25,7 @@ import yaml
 from threading import Event
 from pathlib import Path
 from threading import Event
+import operator
 
 from fetch.testing.testcase import ConstellationTestCase, DmlfEtchTestCase
 from fetch.cluster.utils import output, verify_file, yaml_extract
@@ -468,6 +469,7 @@ def create_synergetic_contract(parameters, test_instance):
     nodes = parameters["nodes"]
     name = parameters["name"]
     fee_limit = parameters["fee_limit"]
+    transfer_amount = parameters.get("transfer_amount", -1)
     for node_index in nodes:
         node_host = "localhost"
         node_port = test_instance._nodes[node_index]._port_start
@@ -482,6 +484,8 @@ def create_synergetic_contract(parameters, test_instance):
             name, api, entity, test_instance._workspace)
         helper.create_new(fee_limit)
         test_instance._nodes[node_index]._contract = helper
+        if transfer_amount > 0:
+            api.sync(api.tokens.transfer(entity, helper.contract.address, transfer_amount, 1000))
 
 
 def run_contract(parameters, test_instance):
@@ -550,6 +554,66 @@ def wait_network_ready(parameters, test_instance):
         f"Network readiness check failed, because reached max trials ({max_trials})")
 
 
+def query_balance(parameters, test_instance):
+    nodes  = parameters["nodes"]
+    variable = parameters["save_as"]
+    for node_index in nodes:
+        node_instance = test_instance._nodes[node_index]
+        node_host = "localhost"
+        node_port = node_instance._port_start
+
+        api = LedgerApi(node_host, node_port)
+
+        # create the entity from the node's private key
+        entity = Entity(get_nodes_private_key(test_instance, node_index))
+        b = api.tokens.balance(entity)
+        output(f"Requested balance {b}, saved as {variable}")
+        if not hasattr(node_instance, "_variables"):
+            setattr(node_instance, "_variables", {})
+        node_instance._variables[variable] = b
+
+
+def execute_expression(parameters, test_instance):
+    nodes = parameters["nodes"]
+    expression = parameters["expression"]
+    ops = {
+        "==": operator.eq,
+        "<=": operator.le,
+        ">=": operator.ge,
+        ">": operator.gt,
+        "<": operator.lt,
+    }
+    op = None
+    ls = None
+    rs = None
+    for key in ops:
+        if expression.find(key) != -1:
+            ls, rs = expression.split(key)
+            ls = ls.replace(" ", "")
+            rs = rs.replace(" ", "")
+            op = key
+            break
+    print("ls='", ls, "'")
+    print("op='", op,"'")
+    print("rs='",rs,"'")
+    if op is None:
+        raise RuntimeError(f"Expression '{expression}' not supported! Available ops: {ops.keys()}")
+
+    for node_index in nodes:
+        node_instance = test_instance._nodes[node_index]
+
+        if not hasattr(node_instance, "_variables"):
+            raise RuntimeError(f"Expression '{expression}' can't be evaluated because node {node_instance} doesn't have the required variables!")
+        ls = node_instance._variables.get(ls, None)
+        rs = node_instance._variables.get(rs, None)
+        if ls is None or rs is None:
+            raise RuntimeError(f"Expression '{expression}' can't be evaluated because node {node_instance} doesn't have one of the required variables!")
+        result = ops[op](ls, rs)
+        if not result:
+            raise RuntimeError(f"Evaluation of '{expression}' failed or false!")
+        output(f"Result of execution of '{expression}' is '{result}'")
+
+
 def run_steps(test_yaml, test_instance):
     output("Running steps: {}".format(test_yaml))
 
@@ -602,6 +666,10 @@ def run_steps(test_yaml, test_instance):
             verify_chain_sync(parameters, test_instance)
         elif command == "wait_network_ready":
             wait_network_ready(parameters, test_instance)
+        elif command == "query_balance":
+            query_balance(parameters, test_instance)
+        elif command == "execute_expression":
+            execute_expression(parameters, test_instance)
         else:
             output(
                 "Found unknown command when running steps: '{}'".format(
