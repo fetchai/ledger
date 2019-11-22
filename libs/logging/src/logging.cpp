@@ -223,8 +223,6 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
 
     logger->set_level(ConvertFromLevel(DEFAULT_LEVEL));
     logger->set_pattern("%^[%L]%$ %Y/%m/%d %T | %-30n : %v");
-    logger->set_level(
-        spdlog::level::trace);  // this should be kept in sync with the compilation level
 
     // keep a reference of it
     registry_[name] = logger;
