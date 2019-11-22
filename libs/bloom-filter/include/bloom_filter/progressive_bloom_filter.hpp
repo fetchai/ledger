@@ -51,8 +51,8 @@ public:
   void Reset();
 
 private:
-  std::size_t                       current_min_index_{};
-  std::size_t                       overlap_{20000};
+  uint64_t                          current_min_index_{};
+  uint64_t                          overlap_{20000};
   std::unique_ptr<BasicBloomFilter> filter1_{std::make_unique<BasicBloomFilter>()};
   std::unique_ptr<BasicBloomFilter> filter2_{std::make_unique<BasicBloomFilter>()};
 
@@ -78,8 +78,8 @@ public:
   static void Serialize(T &map_constructor, Type const &filter)
   {
     auto map = map_constructor(4);
-    map.Append(MIN_INDEX, static_cast<uint64_t>(filter.current_min_index_));
-    map.Append(OVERLAP, static_cast<uint64_t>(filter.overlap_));
+    map.Append(MIN_INDEX, filter.current_min_index_);
+    map.Append(OVERLAP, filter.overlap_);
     map.Append(FILTER1, *filter.filter1_);
     map.Append(FILTER2, *filter.filter2_);
   }
@@ -87,8 +87,8 @@ public:
   template <typename T>
   static void Deserialize(T &map, Type &filter)
   {
-    map.ExpectKeyGetValue(MIN_INDEX, static_cast<uint64_t &>(filter.current_min_index_));
-    map.ExpectKeyGetValue(OVERLAP, static_cast<uint64_t &>(filter.overlap_));
+    map.ExpectKeyGetValue(MIN_INDEX, filter.current_min_index_);
+    map.ExpectKeyGetValue(OVERLAP, filter.overlap_);
     map.ExpectKeyGetValue(FILTER1, *filter.filter1_);
     map.ExpectKeyGetValue(FILTER2, *filter.filter2_);
   }
