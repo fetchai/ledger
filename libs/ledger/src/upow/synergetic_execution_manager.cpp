@@ -22,8 +22,8 @@
 #include "ledger/upow/synergetic_executor_interface.hpp"
 #include "logging/logging.hpp"
 #include "telemetry/counter.hpp"
-#include "telemetry/registry.hpp"
 #include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
 
 namespace fetch {
@@ -75,8 +75,7 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
        0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
        0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
        0.001,    0.01,     0.1,      1,        10.,      100.},
-      "ledger_synergetic_executor_execute_duration",
-      "The execution duration in seconds");
+      "ledger_synergetic_executor_execute_duration", "The execution duration in seconds");
 
   telemetry::Registry::Instance().CreateHistogram(
       {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,

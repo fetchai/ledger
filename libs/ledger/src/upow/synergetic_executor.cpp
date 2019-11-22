@@ -47,13 +47,15 @@ constexpr TokenAmount const CHARGE_LIMIT = 10000000000;
 using fetch::telemetry::Histogram;
 using fetch::telemetry::Registry;
 
-} //namespace
+}  // namespace
 
 SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
   : storage_{storage}
   , fee_manager_{token_contract_, "ledger_synergetic_executor_deduct_fees_duration"}
-  , work_duration_{Registry::Instance().LookupMeasurement<Histogram>("ledger_synergetic_executor_work_duration")}
-  , complete_duration_{Registry::Instance().LookupMeasurement<Histogram>("ledger_synergetic_executor_complete_duration")}
+  , work_duration_{Registry::Instance().LookupMeasurement<Histogram>(
+        "ledger_synergetic_executor_work_duration")}
+  , complete_duration_{Registry::Instance().LookupMeasurement<Histogram>(
+        "ledger_synergetic_executor_complete_duration")}
 {}
 
 void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem_data,
@@ -87,7 +89,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
     }
 
     // validate the work that has been done
-    WorkScore calculated_score{0};
+    WorkScore                  calculated_score{0};
     SynergeticContract::Status status;
     {
       telemetry::FunctionTimer const timer{*work_duration_};
@@ -111,13 +113,9 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       contract->UpdateContractContext(ctx);
 
       // TODO(AB): charge limit
-      FeeManager::TransactionDetails tx_details{solution->address(),
-                                                solution->address(),
-                                                shard_mask,
-                                                solution->contract_digest(),
-                                                CHARGE_RATE,
-                                                CHARGE_LIMIT,
-                                                false};
+      FeeManager::TransactionDetails tx_details{
+          solution->address(), solution->address(), shard_mask, solution->contract_digest(),
+          CHARGE_RATE,         CHARGE_LIMIT,        false};
 
       ContractExecutionResult result;
       FETCH_LOG_INFO(LOGGING_NAME, "Verify: tx created");

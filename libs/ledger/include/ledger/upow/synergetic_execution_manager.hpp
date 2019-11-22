@@ -89,9 +89,9 @@ private:
 
   /// @name Telemetry
   /// @{
-  telemetry::CounterPtr no_executor_count_;
-  telemetry::CounterPtr no_executor_loop_count_;
-  telemetry::CounterPtr execute_item_failed_count_;
+  telemetry::CounterPtr   no_executor_count_;
+  telemetry::CounterPtr   no_executor_loop_count_;
+  telemetry::CounterPtr   execute_item_failed_count_;
   telemetry::HistogramPtr prepare_queue_duration_;
   telemetry::HistogramPtr execute_duration_;
   /// @}

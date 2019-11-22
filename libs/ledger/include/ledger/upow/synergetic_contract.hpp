@@ -108,7 +108,7 @@ public:
   /// @}
 
   uint64_t CalculateFee() const override;
-  void SetChargeLimit(uint64_t charge_limit);
+  void     SetChargeLimit(uint64_t charge_limit);
 
 private:
   using ModulePtr     = std::shared_ptr<vm::Module>;
