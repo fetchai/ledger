@@ -1627,8 +1627,10 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     // If not ahead in time, the DKG must have failed before. Algorithmically, and importantly
     // deterministically, decide how long to increase the allotted DKG time (increment each time
     // by 1.5x to a maximum of MAX_DKG_MULTIPLIER)
-    expected_dkg_timespan_ =
+    uint64_t const base_time =
         static_cast<uint64_t>(static_cast<double>(time_per_state) * time_slots_in_dkg_);
+    expected_dkg_timespan_ = base_time;
+    ;
     uint16_t failures = 0;
 
     while (reference_timepoint_ < current_time)
@@ -1644,7 +1646,7 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
                    " calculated dkg time span on entering reset state. "
                    " DKG round: ",
                    beacon_->aeon.round_start, " failures so far: ", failures,
-                   " allotted time: ", expected_dkg_timespan_, " base time: ", time_per_state,
+                   " allotted time: ", expected_dkg_timespan_, " base time: ", base_time,
                    " reference timepoint: ", reference_timepoint_);
 
     beacon_dkg_time_allocated_->set(expected_dkg_timespan_);
