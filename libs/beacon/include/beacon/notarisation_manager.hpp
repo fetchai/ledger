@@ -27,14 +27,16 @@ namespace ledger {
 class NotarisationManager
 {
 public:
-  using ConstByteArray     = byte_array::ConstByteArray;
-  using MuddleAddress      = ConstByteArray;
-  using PublicKey          = crypto::mcl::PublicKey;
-  using PrivateKey         = crypto::mcl::PrivateKey;
-  using Signature          = crypto::mcl::Signature;
-  using Generator          = crypto::mcl::Generator;
-  using MessagePayload     = crypto::mcl::MessagePayload;
-  using AggregateSignature = crypto::mcl::AggregateSignature;
+  using ConstByteArray      = byte_array::ConstByteArray;
+  using MuddleAddress       = ConstByteArray;
+  using PublicKey           = crypto::mcl::PublicKey;
+  using PrivateKey          = crypto::mcl::PrivateKey;
+  using Signature           = crypto::mcl::Signature;
+  using Generator           = crypto::mcl::Generator;
+  using MessagePayload      = crypto::mcl::MessagePayload;
+  using AggregatePublicKey  = crypto::mcl::AggregatePublicKey;
+  using AggregatePrivateKey = crypto::mcl::AggregatePrivateKey;
+  using AggregateSignature  = crypto::mcl::AggregateSignature;
 
   NotarisationManager();
 
@@ -80,9 +82,9 @@ private:
   std::unordered_map<MuddleAddress, uint32_t> identity_to_index_{};
 
   // Notarisation keys for this aeon
-  PrivateKey             private_key_;
-  PublicKey              public_key_;
-  std::vector<PublicKey> cabinet_public_keys_{};
+  AggregatePrivateKey             aggregate_private_key_;
+  PublicKey                       public_key_;
+  std::vector<AggregatePublicKey> cabinet_public_keys_{};
 };
 }  // namespace ledger
 }  // namespace fetch
