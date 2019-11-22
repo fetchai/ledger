@@ -149,7 +149,7 @@ public:
           }
         }
       }
-      catch (std::exception &e)
+      catch (std::exception const &e)
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Exception in the worker (", GetTaskId(),
                         ") loop: ", e.what());

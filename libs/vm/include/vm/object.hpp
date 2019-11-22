@@ -177,6 +177,11 @@ public:
 
   std::string GetTypeName() const;
 
+  bool IsTemporary() const
+  {
+    return ref_count_ == 1;
+  }
+
 protected:
   std::size_t RefCount() const noexcept
   {

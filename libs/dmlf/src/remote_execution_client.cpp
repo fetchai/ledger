@@ -112,7 +112,7 @@ RemoteExecutionClient::PromiseOfResult RemoteExecutionClient::Run(Target const &
                                                                   Name const &       execName,
                                                                   Name const &       stateName,
                                                                   std::string const &entrypoint,
-                                                                  const Params &     params)
+                                                                  Params const &     params)
 {
   if (target.empty() || target == LOCAL)
   {

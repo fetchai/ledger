@@ -309,6 +309,22 @@ struct OpSliceSaveableParams : public OpsSaveableParams
 };
 
 /**
+ * Saveable parameters for StridedSlice op
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct OpStridedSliceSaveableParams : public OpsSaveableParams
+{
+  using SizeType = typename TensorType::SizeType;
+
+  std::vector<SizeType> begins;
+  std::vector<SizeType> ends;
+  std::vector<SizeType> strides;
+
+  fetch::ml::OpType op_type = OpType::OP_STRIDED_SLICE;
+};
+
+/**
  * Saveable parameters for Squeeze op
  * @tparam TensorType
  */
@@ -409,6 +425,8 @@ struct OpMatrixMultiplySaveableParams : public OpsSaveableParams
   using SizeVector = std::vector<SizeType>;
 
   fetch::ml::OpType op_type = OpType::OP_MATRIX_MULTIPLY;
+  bool              transpose_a;
+  bool              transpose_b;
 };
 
 template <typename TensorType>
@@ -460,6 +478,18 @@ struct OpMeanSquareErrorSaveableParams : public OpsSaveableParams
 {
   using DataType            = typename TensorType::Type;
   fetch::ml::OpType op_type = OpType::LOSS_MEAN_SQUARE_ERROR;
+  TensorType        weightings;
+};
+
+/**
+ * Saveable parameters for Categorical Accuracy op
+ * @tparam TensorType
+ */
+template <typename TensorType>
+struct OpCategoricalAccuracySaveableParams : public OpsSaveableParams
+{
+  using DataType            = typename TensorType::Type;
+  fetch::ml::OpType op_type = OpType::METRIC_CATEGORICAL_ACCURACY;
   TensorType        weightings;
 };
 

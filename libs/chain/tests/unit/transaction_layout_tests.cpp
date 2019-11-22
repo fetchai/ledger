@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "address/address.hpp"
+#include "chain/address.hpp"
+#include "chain/transaction.hpp"
+#include "chain/transaction_builder.hpp"
+#include "chain/transaction_layout.hpp"
 #include "core/bitvector.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_builder.hpp"
-#include "ledger/chain/transaction_layout.hpp"
 
 #include "gtest/gtest.h"
 
@@ -88,7 +88,7 @@ TEST_F(TransactionLayoutTests, BasicTest)
   TransactionLayout const layout{*tx, 2};
 
   EXPECT_EQ(layout.digest(), tx->digest());
-  EXPECT_EQ(layout.charge(), tx->charge());
+  EXPECT_EQ(layout.charge_rate(), tx->charge_rate());
   EXPECT_EQ(layout.valid_from(), tx->valid_from());
   EXPECT_EQ(layout.valid_until(), tx->valid_until());
 }
@@ -116,7 +116,7 @@ TEST_F(TransactionLayoutTests, FixedBasicTest)
   TransactionLayout const layout{*tx, 2};
 
   EXPECT_EQ(layout.digest(), tx->digest());
-  EXPECT_EQ(layout.charge(), tx->charge());
+  EXPECT_EQ(layout.charge_rate(), tx->charge_rate());
   EXPECT_EQ(layout.valid_from(), tx->valid_from());
   EXPECT_EQ(layout.valid_until(), tx->valid_until());
 

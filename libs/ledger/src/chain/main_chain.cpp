@@ -202,7 +202,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
         block_store_->Set(storage::ResourceID(record.hash()), record);
       }
       // before checking for this block's children in storage, reset next_hash to genesis
-      record.next_hash = chain::GENESIS_DIGEST;
+      record.next_hash = Digest{};
     }
   }
   record.block = *block;
@@ -349,9 +349,30 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
   FETCH_LOCK(lock_);
 
   // Step 0. Manually set heaviest to a block we still know is valid
-  auto block_before_one_to_del = GetBlock(hash);
-  heaviest_                    = HeaviestTip{};
-  heaviest_.Update(*block_before_one_to_del);
+  auto block_to_remove = GetBlock(hash);
+
+  if (!block_to_remove)
+  {
+    return false;
+  }
+
+  if (block_to_remove->IsGenesis())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Trying to remove genesis block!");
+    return false;
+  }
+
+  // if block is not loose update heaviest_
+  auto loose_it = loose_blocks_.find(hash);
+  if (loose_it == loose_blocks_.end())
+  {
+    auto block_before_one_to_del = GetBlock(block_to_remove->previous_hash);
+    if (block_before_one_to_del)
+    {
+      heaviest_ = HeaviestTip{};
+      heaviest_.Update(*block_before_one_to_del);
+    }
+  }
 
   // Step 1. Remove this block and the whole its progeny from the cache
   BlockHashSet invalidated_blocks;
@@ -494,8 +515,8 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
   for (BlockHash current_hash{std::move(start)};
        // check for returned subchain size
        result.size() < lim
-       // genesis as the next hash designates the tip of the chain
-       && current_hash != chain::GENESIS_DIGEST
+       // empty next hash designates the tip of the chain
+       && !current_hash.empty()
        // look up the block in storage
        && LoadBlock(current_hash, block, &next_hash);
        // walk the stack
@@ -1709,11 +1730,11 @@ bool MainChain::ReindexTips()
 MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
 {
   auto genesis           = std::make_shared<Block>();
-  genesis->previous_hash = chain::GENESIS_DIGEST;
+  genesis->previous_hash = chain::ZERO_HASH;
+  genesis->hash          = chain::GENESIS_DIGEST;
   genesis->merkle_hash   = chain::GENESIS_MERKLE_ROOT;
   genesis->miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
   genesis->is_loose      = false;
-  genesis->UpdateDigest();
 
   return genesis;
 }
@@ -1781,7 +1802,7 @@ MainChain::BlockHash MainChain::GetHeadHash()
 
 void MainChain::SetHeadHash(BlockHash const &hash)
 {
-  assert(hash.size() == 32);
+  assert(hash.size() == chain::HASH_SIZE);
 
   // move to the beginning of the file and write out the hash
   head_store_.seekp(0);
@@ -1885,6 +1906,8 @@ constexpr char const *ToString(BlockStatus status)
     return "Duplicate";
   case BlockStatus::INVALID:
     return "Invalid";
+  default:
+    return "Unknown";
   }
 }
 

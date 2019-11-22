@@ -71,7 +71,7 @@ public:
     return OptimiserType::ADAM;
   }
 
-private:
+protected:
   std::vector<TensorType> cache_;
   std::vector<TensorType> momentum_;
   std::vector<TensorType> mt_;

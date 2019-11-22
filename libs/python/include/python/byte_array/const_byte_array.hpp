@@ -17,48 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
 namespace byte_array {
 
-inline void BuildConstByteArray(pybind11::module &module)
-{
-  namespace py = pybind11;
-  py::class_<ConstByteArray>(module, "ConstByteArray")
-      .def(py::init<>())
-      .def(py::init<std::size_t const &>())
-      .def(py::init<char const *>())
-      .def(py::init<unsigned char const *const, std::size_t>())
-      .def(py::init<std::initializer_list<ConstByteArray::ValueType>>())
-      .def(py::init<std::string const &>())
-      .def(py::init<fetch::byte_array::ConstByteArray::SelfType const &>())
-      .def(py::init<fetch::byte_array::ConstByteArray::SelfType const &, std::size_t const &,
-                    std::size_t const &>())
-      .def("AsInt", &ConstByteArray::AsInt)
-      .def(py::self != fetch::byte_array::ConstByteArray::SelfType())
-      .def(py::self < fetch::byte_array::ConstByteArray::SelfType())
-      .def(py::self > fetch::byte_array::ConstByteArray::SelfType())
-      .def("AsFloat", &ConstByteArray::AsFloat)
-      .def(py::self == fetch::byte_array::ConstByteArray::SelfType())
-      .def(py::self + fetch::byte_array::ConstByteArray::SelfType())
-      .def("SubArray",
-           static_cast<ConstByteArray (ConstByteArray::*)(std::size_t, std::size_t) const>(
-               &ConstByteArray::SubArray))
-      .def("capacity", &ConstByteArray::capacity)
-      .def("Copy", &ConstByteArray::Copy)
-      .def("Find", &ConstByteArray::Find)
-      .def("Match",
-           static_cast<bool (ConstByteArray::*)(fetch::byte_array::ConstByteArray::SelfType const &,
-                                                std::size_t) const>(&ConstByteArray::Match))
-      .def("Match", static_cast<bool (ConstByteArray::*)(
-                        fetch::byte_array::ConstByteArray::ValueType const *, std::size_t) const>(
-                        &ConstByteArray::Match))
-      .def("size", &ConstByteArray::size)
-      .def("AsBytes",
-           [](ConstByteArray const &a) { return py::bytes(a.char_pointer(), a.size()); });
-}
+void BuildConstByteArray(pybind11::module &module);
 
 }  // namespace byte_array
 }  // namespace fetch

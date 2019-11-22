@@ -27,7 +27,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Log : public fetch::ml::ops::Ops<T>
+class Log : public Ops<T>
 {
 public:
   using TensorType    = T;

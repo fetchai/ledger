@@ -33,9 +33,13 @@ class Transaction;
 }  // namespace chain
 namespace ledger {
 
+class Deed;
+
 class TokenContract : public Contract
 {
 public:
+  using DeedPtr = std::shared_ptr<Deed>;
+
   static constexpr char const *LOGGING_NAME = "TokenContract";
   static constexpr char const *NAME         = "fetch.token";
 
@@ -44,6 +48,8 @@ public:
   ~TokenContract() override = default;
 
   // library functions
+  DeedPtr  GetDeed(chain::Address const &address);
+  void     SetDeed(chain::Address const &address, DeedPtr const &deed);
   uint64_t GetBalance(chain::Address const &address);
   bool     AddTokens(chain::Address const &address, uint64_t amount);
   bool     SubtractTokens(chain::Address const &address, uint64_t amount);
@@ -51,7 +57,7 @@ public:
 
   // transaction handlers
   Result CreateWealth(chain::Transaction const &tx);
-  Result Deed(chain::Transaction const &tx);
+  Result UpdateDeed(chain::Transaction const &tx);
   Result Transfer(chain::Transaction const &tx);
   Result AddStake(chain::Transaction const &tx);
   Result DeStake(chain::Transaction const &tx);
@@ -68,16 +74,6 @@ public:
 private:
   StakeUpdateEvents stake_updates_;
 };
-
-inline void TokenContract::ExtractStakeUpdates(StakeUpdateEvents &updates)
-{
-  updates = std::move(stake_updates_);
-}
-
-inline void TokenContract::ClearStakeUpdates()
-{
-  stake_updates_.clear();
-}
 
 }  // namespace ledger
 }  // namespace fetch

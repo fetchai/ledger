@@ -20,6 +20,8 @@
 #include "meta/tags.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
+#include "vectorise/uint/int.hpp"
+#include "vectorise/uint/uint.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -49,18 +51,33 @@ struct TypeFromSize
 };
 
 #if (__SIZEOF_INT128__ == 16)
+// 256 bit implementation
+template <>
+struct TypeFromSize<256>
+{
+  static constexpr bool     is_valid = true;
+  static constexpr uint16_t size     = 256;
+  using ValueType                    = fetch::vectorise::Int<256>;
+  using UnsignedType                 = fetch::vectorise::UInt<256>;
+  using SignedType                   = fetch::vectorise::Int<256>;
+  // using NextSize                   = TypeFromSize<256>;
+};
 // 128 bit implementation
 template <>
 struct TypeFromSize<128>
 {
-  static constexpr bool     is_valid = true;
-  static constexpr uint16_t size     = 128;
-  using ValueType                    = __int128_t;
-  using UnsignedType                 = __uint128_t;
-  using SignedType                   = __int128_t;
-  // Commented out, when we need to implement FixedPoint<128,128> fully, we will deal with that
-  // then.
-  // using NextSize                        = TypeFromSize<256>;
+  static constexpr bool     is_valid   = true;
+  static constexpr uint16_t size       = 128;
+  using ValueType                      = __int128_t;
+  using UnsignedType                   = __uint128_t;
+  using SignedType                     = __int128_t;
+  using NextSize                       = TypeFromSize<256>;
+  static constexpr uint16_t  decimals  = 18;
+  static constexpr ValueType tolerance = 0x100000000000;  // 0,00000095367431640625
+  static constexpr ValueType max_exp =
+      (static_cast<__uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000;  // 43.6682723752765511
+  static constexpr UnsignedType min_exp = (static_cast<__uint128_t>(0xffffffffffffffd4) << 64) |
+                                          0x54ec1a035df20000;  // -43.6682723752765511
 };
 #endif
 
@@ -68,30 +85,32 @@ struct TypeFromSize<128>
 template <>
 struct TypeFromSize<64>
 {
-  static constexpr bool          is_valid  = true;
-  static constexpr std::uint16_t size      = 64;
-  using ValueType                          = int64_t;
-  using UnsignedType                       = uint64_t;
-  using SignedType                         = int64_t;
-  using NextSize                           = TypeFromSize<128>;
-  static constexpr std::uint16_t decimals  = 9;
-  static constexpr ValueType     tolerance = 0x200;                 // 0.00000012
-  static constexpr ValueType     max_exp   = 0x000000157cd0e6e8LL;  // 21.48756259
+  static constexpr bool     is_valid      = true;
+  static constexpr uint16_t size          = 64;
+  using ValueType                         = int64_t;
+  using UnsignedType                      = uint64_t;
+  using SignedType                        = int64_t;
+  using NextSize                          = TypeFromSize<128>;
+  static constexpr uint16_t     decimals  = 9;
+  static constexpr ValueType    tolerance = 0x200;                 // 0.00000012
+  static constexpr ValueType    max_exp   = 0x000000157cd0e6e8LL;  // 21.48756259
+  static constexpr UnsignedType min_exp   = 0xffffffea832f1918LL;  // -21.48756259
 };
 
 // 32 bit implementation
 template <>
 struct TypeFromSize<32>
 {
-  static constexpr bool          is_valid  = true;
-  static constexpr std::uint16_t size      = 32;
-  using ValueType                          = int32_t;
-  using UnsignedType                       = uint32_t;
-  using SignedType                         = int32_t;
-  using NextSize                           = TypeFromSize<64>;
-  static constexpr std::uint16_t decimals  = 4;
-  static constexpr ValueType     tolerance = 0x15;         // 0.0003
-  static constexpr ValueType     max_exp   = 0x000a65adL;  // 10.3971
+  static constexpr bool     is_valid      = true;
+  static constexpr uint16_t size          = 32;
+  using ValueType                         = int32_t;
+  using UnsignedType                      = uint32_t;
+  using SignedType                        = int32_t;
+  using NextSize                          = TypeFromSize<64>;
+  static constexpr uint16_t     decimals  = 4;
+  static constexpr ValueType    tolerance = 0x15;         // 0.0003
+  static constexpr ValueType    max_exp   = 0x000a65adL;  //  10.3971
+  static constexpr UnsignedType min_exp   = 0xfff59a53L;  // -10.3972
 };
 
 // 16 bit implementation
@@ -139,12 +158,9 @@ public:
   using NextType     = typename BaseTypeInfo::NextSize::ValueType;
   using UnsignedType = typename BaseTypeInfo::UnsignedType;
 
-  enum
-  {
-    FRACTIONAL_MASK = Type(((1ull << FRACTIONAL_BITS) - 1)),
-    INTEGER_MASK    = Type(~FRACTIONAL_MASK),
-    ONE_MASK        = Type(1) << FRACTIONAL_BITS
-  };
+  static constexpr Type FRACTIONAL_MASK = Type((Type(1ull) << FRACTIONAL_BITS) - 1);
+  static constexpr Type INTEGER_MASK    = Type(~FRACTIONAL_MASK);
+  static constexpr Type ONE_MASK        = Type(1) << FRACTIONAL_BITS;
 
   ////////////////////////
   /// Constants/Limits ///
@@ -225,6 +241,8 @@ public:
   constexpr explicit FixedPoint(T n, meta::IfIsFloat<T> * /*unused*/ = nullptr);
   constexpr FixedPoint(FixedPoint const &o);
   constexpr FixedPoint(Type const &integer, UnsignedType const &fraction);
+  template <uint16_t N, uint16_t M>
+  constexpr explicit FixedPoint(FixedPoint<N, M> const &o);
 
   ///////////////////
   /// conversions ///
@@ -292,6 +310,8 @@ public:
   constexpr FixedPoint  operator-() const;
   constexpr FixedPoint &operator++();
   constexpr FixedPoint &operator--();
+  FixedPoint const      operator++(int) &;
+  FixedPoint const      operator--(int) &;
 
   //////////////////////////////
   /// math and bit operators ///
@@ -475,8 +495,28 @@ private:
   static constexpr FixedPoint         CosPi2(FixedPoint const &r);
   static constexpr FixedPoint<16, 16> SinApproxPi4(FixedPoint<16, 16> const &r);
   static constexpr FixedPoint<32, 32> SinApproxPi4(FixedPoint<32, 32> const &r);
+  static constexpr FixedPoint<64, 64> SinApproxPi4(FixedPoint<64, 64> const &r);
   static constexpr FixedPoint         CosApproxPi4(FixedPoint const &r);
 };
+
+template <typename T>
+static inline bool IsMinusZero(T n);
+
+template <>
+inline bool IsMinusZero<float>(float const n)
+{
+  // Have to dereference the pointer as char const *, else we get a strict-aliasing error
+  uint32_t n_int = *(reinterpret_cast<uint8_t const *>(&n));
+  return (n_int == 0x80000000);
+}
+
+template <>
+inline bool IsMinusZero<double>(double const n)
+{
+  // Have to dereference the pointer as char const *, else we get a strict-aliasing error
+  uint64_t n_int = *(reinterpret_cast<uint8_t const *>(&n));
+  return (n_int == 0x8000000000000000);
+}
 
 template <uint16_t I, uint16_t F>
 std::function<FixedPoint<I, F>(FixedPoint<I, F> const &x)>
@@ -565,8 +605,9 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::MAX_EXP{FixedPoint<I, F>::FromBase(
     FixedPoint<I, F>::BaseTypeInfo::max_exp)}; /* maximum exponent for Exp() */
 template <uint16_t I, uint16_t F>
-FixedPoint<I, F> const FixedPoint<I, F>::MIN_EXP{-FixedPoint<I, F>::FromBase(
-    FixedPoint<I, F>::BaseTypeInfo::max_exp)}; /* minimum exponent for Exp() */
+FixedPoint<I, F> const FixedPoint<I, F>::MIN_EXP{
+    FixedPoint<I, F>::FromBase(static_cast<FixedPoint<I, F>::Type>(
+        FixedPoint<I, F>::BaseTypeInfo::min_exp))}; /* minimum exponent for Exp() */
 template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::FP_MAX{FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MAX)};
 template <uint16_t I, uint16_t F>
@@ -581,10 +622,18 @@ template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::NEGATIVE_INFINITY{
     FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MIN - FixedPoint<I, F>::ONE_MASK)};
 
+inline std::ostream &operator<<(std::ostream &s, __int128_t const &x)
+{
+  s << static_cast<uint64_t>(x >> 64) << "|" << static_cast<uint64_t>(x);
+  return s;
+}
+
 template <uint16_t I, uint16_t F>
-std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
+inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
 {
   std::ios_base::fmtflags f(s.flags());
+  s << std::setfill('0');
+  s << std::setw(I / 4);
   s << std::setprecision(F / 4);
   s << std::fixed;
   if (FixedPoint<I, F>::IsNaN(n))
@@ -603,7 +652,10 @@ std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   {
     s << double(n);
   }
-  s << " (0x" << std::hex << n.Data() << ")";
+#ifndef NDEBUG
+  // Only output the hex value in DEBUG mode
+  s << " (0x" << std::hex << static_cast<typename FixedPoint<I, F>::Type>(n.Data()) << ")";
+#endif
   s.flags(f);
   return s;
 }
@@ -697,12 +749,16 @@ template <typename T>
 constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsFloat<T> * /*unused*/)
   : data_(static_cast<typename FixedPoint<I, F>::Type>(n * ONE_MASK))
 {
-  if (CheckOverflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
+  if (IsMinusZero(n))
+  {
+    data_ = 0;
+  }
+  else if (CheckOverflow(static_cast<NextType>(n * ONE_MASK)))
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
   }
-  else if (CheckUnderflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
+  else if (CheckUnderflow(static_cast<NextType>(n * ONE_MASK)))
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MIN;
@@ -728,6 +784,75 @@ constexpr FixedPoint<I, F>::FixedPoint(typename FixedPoint<I, F>::Type const &  
                                        typename FixedPoint<I, F>::UnsignedType const &fraction)
   : data_{(INTEGER_MASK & (Type(integer) << FRACTIONAL_BITS)) | Type(fraction & FRACTIONAL_MASK)}
 {}
+
+template <>
+template <>
+constexpr FixedPoint<32, 32>::FixedPoint(FixedPoint<16, 16> const &o)
+  : data_{static_cast<int64_t>(o.Data()) << 16}
+{}
+
+template <>
+template <>
+constexpr FixedPoint<64, 64>::FixedPoint(FixedPoint<16, 16> const &o)
+  : data_{static_cast<__int128_t>(o.Data()) << 48}
+{}
+
+template <>
+template <>
+constexpr FixedPoint<64, 64>::FixedPoint(FixedPoint<32, 32> const &o)
+  : data_{static_cast<__int128_t>(o.Data()) << 32}
+{}
+
+template <>
+template <>
+constexpr FixedPoint<32, 32>::FixedPoint(FixedPoint<64, 64> const &o)
+  : data_{static_cast<int64_t>(o.Data() >> 32)}
+{
+  if (CheckOverflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+}
+
+template <>
+template <>
+constexpr FixedPoint<16, 16>::FixedPoint(FixedPoint<64, 64> const &o)
+  : data_{static_cast<int32_t>(o.Data() >> 48)}
+{
+  if (CheckOverflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+}
+
+template <>
+template <>
+constexpr FixedPoint<16, 16>::FixedPoint(FixedPoint<32, 32> const &o)
+  : data_{static_cast<int32_t>(o.Data() >> 16)}
+{
+  if (CheckOverflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+}
 
 ///////////////////
 /// conversions ///
@@ -894,12 +1019,12 @@ template <uint16_t I, uint16_t F>  // NOLINT
 template <typename T>
 constexpr meta::IfIsFloat<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T const &n)  // NOLINT
 {
-  if (CheckOverflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
+  if (CheckOverflow(static_cast<NextType>(n * ONE_MASK)))
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
   }
-  else if (CheckUnderflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
+  else if (CheckUnderflow(static_cast<NextType>(n * ONE_MASK)))
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MIN;
@@ -1192,6 +1317,30 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator--()
   return *this;
 }
 
+/**
+ * Postfix increment operator, increase the number by one
+ * @return the number increased by one, prefix mode
+ */
+template <uint16_t I, uint16_t F>
+FixedPoint<I, F> const FixedPoint<I, F>::operator++(int) &
+{
+  FixedPoint<I, F> result{*this};
+  ++result;
+  return result;
+}
+
+/**
+ * Postfix decrement operator, decrease the number by one
+ * @return the number decreased by one, prefix mode
+ */
+template <uint16_t I, uint16_t F>
+FixedPoint<I, F> const FixedPoint<I, F>::operator--(int) &
+{
+  FixedPoint<I, F> result{*this};
+  --result;
+  return result;
+}
+
 /////////////////////////////////////////////////
 /// math operators against FixedPoint objects ///
 /////////////////////////////////////////////////
@@ -1330,15 +1479,15 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator+=(FixedPoint<I, F> const 
   }
   else
   {
-    if (IsNegInfinity(n))
-    {
-      fp_state |= STATE_INFINITY;
-      *this = NEGATIVE_INFINITY;
-    }
-    else if (IsPosInfinity(n))
+    if (IsPosInfinity(n))
     {
       fp_state |= STATE_INFINITY;
       *this = POSITIVE_INFINITY;
+    }
+    else if (IsNegInfinity(n))
+    {
+      fp_state |= STATE_INFINITY;
+      *this = NEGATIVE_INFINITY;
     }
     else if (CheckOverflow(static_cast<NextType>(data_) + static_cast<NextType>(n.Data())))
     {
@@ -1494,19 +1643,19 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
   else
   {
     NextType prod = NextType(data_) * NextType(n.Data());
-    if (CheckOverflow(static_cast<NextType>(prod >> FRACTIONAL_BITS)))
+    if (CheckOverflow(static_cast<NextType>(prod >> size_t(FRACTIONAL_BITS))))
     {
       fp_state |= STATE_OVERFLOW;
       data_ = MAX;
     }
-    else if (CheckUnderflow(static_cast<NextType>(prod >> FRACTIONAL_BITS)))
+    else if (CheckUnderflow(static_cast<NextType>(prod >> size_t(FRACTIONAL_BITS))))
     {
       fp_state |= STATE_OVERFLOW;
       data_ = MIN;
     }
     else
     {
-      auto fp = Type(prod >> FRACTIONAL_BITS);
+      auto fp = static_cast<Type>(prod >> size_t(FRACTIONAL_BITS));
       *this   = FromBase(fp);
     }
   }
@@ -1554,11 +1703,12 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator/=(FixedPoint<I, F> const 
   }
   else
   {
-    FixedPoint sign      = Sign(*this);
-    FixedPoint abs_n     = Abs(*this);
-    NextType   numerator = NextType(abs_n.Data()) << FRACTIONAL_BITS;
-    NextType   quotient  = numerator / NextType(n.Data());
-    *this                = sign * FromBase(Type(quotient));
+    FixedPoint sign        = Sign(*this);
+    FixedPoint abs_n       = Abs(*this);
+    auto       numerator   = NextType(abs_n.Data()) << size_t(FRACTIONAL_BITS);
+    auto       denominator = NextType(n.Data());
+    NextType   quotient    = numerator / denominator;
+    *this                  = sign * FromBase(Type(quotient));
   }
   return *this;
 }
@@ -2355,23 +2505,24 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
   }
-  if (y.Fraction() == 0)
+  if (x < _0)
   {
-    FixedPoint pow{x};
-    FixedPoint t{Abs(y)};
-    while (--t)
+    FixedPoint x1{x};
+    if (y.Fraction() == 0)
     {
-      pow *= x;
-    }
-    if (y > _0)
-    {
+      if (y < _0)
+      {
+        x1 = _1 / x;
+      }
+      FixedPoint pow{x1};
+      FixedPoint t{Abs(y)};
+      while (--t)
+      {
+        pow *= x1;
+      }
       return pow;
     }
 
-    return _1 / pow;
-  }
-  if (x < _0)
-  {
     // Already checked the case for integer y
     fp_state |= STATE_NAN;
     return NaN;
@@ -2436,6 +2587,23 @@ constexpr FixedPoint<32, 32> FixedPoint<32, 32>::SinApproxPi4(FixedPoint<32, 32>
   FixedPoint<32, 32> P   = r * Q00 - r3 * 22260 + r5 * 551;
   FixedPoint<32, 32> Q   = Q00 + r2 * 5460 + r4 * 75;
   FixedPoint<32, 32> sin = P / Q;
+
+  return sin;
+}
+
+template <>
+constexpr FixedPoint<64, 64> FixedPoint<64, 64>::SinApproxPi4(FixedPoint<64, 64> const &r)
+{
+  assert(r <= CONST_PI_4);
+
+  FixedPoint<64, 64> r2 = r * r;
+  FixedPoint<64, 64> r3 = r2 * r;
+  FixedPoint<64, 64> r4 = r3 * r;
+  FixedPoint<64, 64> r5 = r4 * r;
+  FixedPoint<64, 64> Q00{166320};
+  FixedPoint<64, 64> P   = r * Q00 - r3 * 22260 + r5 * 551;
+  FixedPoint<64, 64> Q   = Q00 + r2 * 5460 + r4 * 75;
+  FixedPoint<64, 64> sin = P / Q;
 
   return sin;
 }

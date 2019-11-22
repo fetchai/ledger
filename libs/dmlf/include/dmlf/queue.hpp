@@ -33,9 +33,11 @@ template <typename T>
 class Queue : public QueueInterface
 {
 public:
-  using UpdateType   = T;
+  using UpdateType = T;
+
   using UpdatePtr    = std::shared_ptr<UpdateType>;
-  using QueueUpdates = std::priority_queue<UpdatePtr, std::vector<UpdatePtr>, std::greater<>>;
+  using StoredType   = std::pair<UpdatePtr, Bytes>;
+  using QueueUpdates = std::priority_queue<StoredType, std::vector<StoredType>, std::greater<>>;
 
   Queue()           = default;
   ~Queue() override = default;
@@ -46,7 +48,7 @@ public:
     update->DeSerialise(msg);
     {
       FETCH_LOCK(updates_m_);
-      updates_.push(update);
+      updates_.push({update, msg});
     }
   }
 
@@ -56,12 +58,42 @@ public:
     return updates_.size();
   }
 
+  Bytes PopAsBytes() override
+  {
+    FETCH_LOCK(updates_m_);
+
+    auto b = PeekAsBytes();
+    Drop();
+    return b;
+  }
+
+  Bytes PeekAsBytes() override
+  {
+    FETCH_LOCK(updates_m_);
+    if (!updates_.empty())
+    {
+      auto res = updates_.top().second;
+      return res;
+    }
+    throw std::length_error{"Updates queue is empty"};
+  }
+
+  void Drop() override
+  {
+    FETCH_LOCK(updates_m_);
+    if (!updates_.empty())
+    {
+      updates_.pop();
+    }
+    throw std::length_error{"Updates queue is empty"};
+  }
+
   std::shared_ptr<UpdateType> GetUpdate()
   {
     FETCH_LOCK(updates_m_);
     if (!updates_.empty())
     {
-      auto upd = updates_.top();
+      auto upd = updates_.top().first;
       updates_.pop();
       return upd;
     }
