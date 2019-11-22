@@ -395,10 +395,11 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
       {
         // the request was successful
         auto response = current_request_->As<MainChainProtocol::Travelogue>();
+	auto &blocks = response.blocks;
+
         // we should receive at least one extra block in addition to what we already have
-        if (response.blocks.size() > 1)
+        if (blocks.size() > 1)
         {
-          auto &blocks = response.blocks;
 
           if (direction_ > 0)
           {
