@@ -85,7 +85,7 @@ public:
   Contract()                 = default;
   Contract(Contract const &) = delete;
   Contract(Contract &&)      = delete;
-  virtual ~Contract()        = default;
+  ~Contract() override       = default;
 
   /// @name Contract Lifecycle Handlers
   /// @{

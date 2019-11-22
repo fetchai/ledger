@@ -28,10 +28,10 @@ class StorageFee : public Chargeable
 {
 public:
   // Construction / Destruction
-  StorageFee(StateSentinelAdapter &storage_adapter);
+  explicit StorageFee(StateSentinelAdapter &storage_adapter);
   StorageFee(StorageFee const &) = delete;
   StorageFee(StorageFee &&)      = delete;
-  virtual ~StorageFee()          = default;
+  ~StorageFee() override         = default;
 
   uint64_t CalculateFee() const override;
 

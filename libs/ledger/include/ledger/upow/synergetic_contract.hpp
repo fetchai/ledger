@@ -75,7 +75,7 @@ public:
   };
 
   explicit SynergeticContract(ConstByteArray const &source);
-  ~SynergeticContract() = default;
+  ~SynergeticContract() override = default;
 
   // Accessors
   Digest const &     digest() const;
