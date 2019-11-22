@@ -1635,8 +1635,8 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     {
       failures++;
       reference_timepoint_ += expected_dkg_timespan_;
-      expected_dkg_timespan_ += std::min(expected_dkg_timespan_ + (expected_dkg_timespan_ / 2),
-                                         time_per_state * MAX_DKG_BOUND_MULTIPLE);
+      expected_dkg_timespan_ = std::min(expected_dkg_timespan_ + (expected_dkg_timespan_ / 2),
+                                         time_per_state * time_slots_in_dkg_ * MAX_DKG_BOUND_MULTIPLE);
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, NodeString(),
