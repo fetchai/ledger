@@ -87,8 +87,11 @@ public:
   template <typename T>
   static void Deserialize(T &map, Type &filter)
   {
-    map.ExpectKeyGetValue(MIN_INDEX, filter.current_min_index_);
-    map.ExpectKeyGetValue(OVERLAP, filter.overlap_);
+    uint64_t &min_index = filter.current_min_index_;
+    uint64_t &overlap   = filter.overlap_;
+
+    map.ExpectKeyGetValue(MIN_INDEX, min_index);
+    map.ExpectKeyGetValue(OVERLAP, overlap);
     map.ExpectKeyGetValue(FILTER1, *filter.filter1_);
     map.ExpectKeyGetValue(FILTER2, *filter.filter2_);
   }
