@@ -232,6 +232,7 @@ public:
 
   bool RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks);
 
+  Mode          mode_{Mode::IN_MEMORY_DB};
   BlockStorePtr block_store_;  ///< Long term storage and backup
   std::fstream  head_store_;
   std::fstream  bloom_filter_store_;

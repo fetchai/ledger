@@ -51,7 +51,8 @@ namespace ledger {
  * @param mode Flag to signal which storage mode has been requested
  */
 MainChain::MainChain(Mode mode)
-  : bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
+  : mode_{mode}
+  , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
         "ledger_main_chain_bloom_filter_queried_bit_number",
         "Total number of bits checked during each query to the Ledger Main Chain Bloom filter"))
   , bloom_filter_query_count_(telemetry::Registry::Instance().CreateCounter(
@@ -84,12 +85,21 @@ MainChain::MainChain(Mode mode)
 
 MainChain::~MainChain()
 {
+  using namespace fetch::serializers;
   if (block_store_)
   {
     block_store_->Flush(false);
   }
 
-  bloom_filter_store_ << bloom_filter_;  //???
+  if (mode_ != Mode::IN_MEMORY_DB)
+  {
+    MsgPackSerializer serializer;
+    auto              ctor = serializer.NewMapConstructor();
+
+    MapSerializer<ProgressiveBloomFilter, MsgPackSerializer>::Serialize(ctor, bloom_filter_);
+
+    bloom_filter_store_ << serializer.data();
+  }
 }
 
 void MainChain::Reset()
@@ -110,9 +120,9 @@ void MainChain::Reset()
                      std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
   }
 
-  head_store_.close();
-  head_store_.open("chain.bloom.db",
-                   std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+  bloom_filter_store_.close();
+  bloom_filter_store_.open("chain.bloom.db",
+                           std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
   bloom_filter_.Reset();
 
   auto genesis = CreateGenesisBlock();
@@ -777,10 +787,20 @@ void MainChain::RecoverFromFile(Mode mode)
   }
   if (Mode::LOAD_PERSISTENT_DB == mode)
   {
+    using namespace fetch::serializers;
+
     block_store_->Load("chain.db", "chain.index.db");
     head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out);
+
     bloom_filter_store_.open("chain.bloom.db", std::ios::binary | std::ios::in | std::ios::out);
-    bloom_filter_store_ >> bloom_filter_;  //???
+
+    byte_array::ByteArray bloom_filter_data{bloom_filter_store_};
+
+    MsgPackSerializer msgpack{bloom_filter_data};
+    auto              deserializer = msgpack.NewMapDeserializer();
+
+    MapSerializer<ProgressiveBloomFilter, MsgPackSerializer>::Deserialize(deserializer,
+                                                                          bloom_filter_);
   }
   else
   {

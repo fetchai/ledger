@@ -178,7 +178,7 @@ public:
   ~BasicBloomFilter()                        = default;
 
   BasicBloomFilter &operator=(BasicBloomFilter const &) = delete;
-  BasicBloomFilter &operator=(BasicBloomFilter &&) = delete;
+  BasicBloomFilter &operator=(BasicBloomFilter &&) = default;
 
   /*
    * Check if the argument matches the Bloom filter. Returns a pair of
@@ -200,9 +200,49 @@ public:
    */
   void Reset();
 
+  BitVector *getSerialisationData()
+  {
+    return &bits_;
+  }
+
+  BitVector const *getSerialisationData() const
+  {
+    return &bits_;
+  }
+
 private:
-  BitVector                         bits_;
-  internal::HashSourceFactory const hash_source_factory_;
+  BitVector                   bits_;
+  internal::HashSourceFactory hash_source_factory_;
 };
 
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<BasicBloomFilter, D>
+{
+public:
+  using Type       = BasicBloomFilter;
+  using DriverType = D;
+
+  static const uint8_t BITS = 1;
+
+  template <typename T>
+  static void Serialize(T &map_constructor, Type const &filter)
+  {
+    auto const bits = filter.getSerialisationData();
+
+    auto map = map_constructor(1);
+    map.Append(BITS, *bits);
+  }
+
+  template <typename T>
+  static void Deserialize(T &map, Type &filter)
+  {
+    auto bits = filter.getSerialisationData();
+
+    map.ExpectKeyGetValue(BITS, *bits);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

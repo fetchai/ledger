@@ -70,19 +70,4 @@ void ProgressiveBloomFilter::Reset()
   current_min_index_ = 0u;
 }
 
-std::ostream &operator<<(std::ostream &out, ProgressiveBloomFilter const &filter)
-{
-  // TODO(WK) ???
-  (void)filter;
-  return out;
-}
-
-std::istream &operator>>(std::istream &in, ProgressiveBloomFilter &filter)
-{
-  // TODO(WK) ???
-  ProgressiveBloomFilter temp{};
-  filter = std::move(temp);
-  return in;
-}
-
 }  // namespace fetch

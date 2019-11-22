@@ -87,6 +87,7 @@ public:
 
   ConstByteArray(ConstByteArray const &other) = default;
   ConstByteArray(ConstByteArray &&other)      = default;
+
   // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
   // details - absolute vs relative[against `other.start_`] size)
   ConstByteArray(ConstByteArray const &other, std::size_t start, std::size_t length) noexcept
@@ -96,6 +97,17 @@ public:
     , arr_pointer_(data_.pointer() + start_)
   {
     assert(start_ + length_ <= data_.size());
+  }
+
+  explicit ConstByteArray(std::istream &in)
+  {
+    in.seekg(0, std::ios::end);
+    auto const size_in_bytes = in.tellg();
+    in.seekg(0, std::ios::beg);
+
+    Resize(static_cast<std::size_t>(size_in_bytes), ResizeParadigm::ABSOLUTE);
+
+    in.read(char_pointer(), size_in_bytes);
   }
 
   ConstByteArray &operator=(ConstByteArray const &) = default;
