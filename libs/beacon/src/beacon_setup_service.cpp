@@ -1640,11 +1640,11 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, NodeString(),
-                    " calculated dkg time span on entering reset state. "
-                    " DKG round: ",
-                    beacon_->aeon.round_start, " failures so far: ", failures,
-                    " allotted time: ", expected_dkg_timespan_, " base time: ", time_per_state,
-                    " reference timepoint: ", reference_timepoint_);
+                   " calculated dkg time span on entering reset state. "
+                   " DKG round: ",
+                   beacon_->aeon.round_start, " failures so far: ", failures,
+                   " allotted time: ", expected_dkg_timespan_, " base time: ", time_per_state,
+                   " reference timepoint: ", reference_timepoint_);
 
     beacon_dkg_time_allocated_->set(expected_dkg_timespan_);
     beacon_dkg_reference_timepoint_->set(reference_timepoint_);
