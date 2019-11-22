@@ -1639,7 +1639,7 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
                                          time_per_state * MAX_DKG_BOUND_MULTIPLE);
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, NodeString(),
+    FETCH_LOG_INFO(LOGGING_NAME, NodeString(),
                     " calculated dkg time span on entering reset state. "
                     " DKG round: ",
                     beacon_->aeon.round_start, " failures so far: ", failures,
