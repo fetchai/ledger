@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/fees/fee_manager.hpp"
-#include "ledger/execution_result.hpp"
-#include "ledger/state_sentinel_adapter.hpp"
-#include "ledger/storage_unit/cached_storage_adapter.hpp"
-#include "ledger/execution_result.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_context_attacher.hpp"
+#include "ledger/execution_result.hpp"
+#include "ledger/fees/fee_manager.hpp"
+#include "ledger/state_sentinel_adapter.hpp"
+#include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
@@ -33,31 +32,31 @@ using fetch::telemetry::Registry;
 namespace fetch {
 namespace ledger {
 namespace {
-  constexpr char const *LOGGING_NAME = "FeeManager";
+constexpr char const *LOGGING_NAME = "FeeManager";
 
 }  // namespace
 
 FeeManager::FeeManager(TokenContract &token_contract, std::string const &histogram_name)
   : token_contract_{token_contract}
   , deduct_fees_duration_{Registry::Instance().LookupMeasurement<Histogram>(histogram_name)}
-{
-}
+{}
 
-bool FeeManager::CalculateChargeAndValidate(TransactionDetails& tx, std::vector<Chargeable*> const &chargeables, Result& result)
+bool FeeManager::CalculateChargeAndValidate(TransactionDetails &             tx,
+                                            std::vector<Chargeable *> const &chargeables,
+                                            Result &                         result)
 {
-  bool success  = true;
+  bool success = true;
 
   uint64_t base_charge = 0;
-  for(auto &chargeable : chargeables)
+  for (auto &chargeable : chargeables)
   {
     base_charge += chargeable->CalculateFee();
   }
 
-  uint64_t const scaled_charge =
-      std::max<uint64_t>(tx.shard_mask.PopCount(), 1) * base_charge;
+  uint64_t const scaled_charge = std::max<uint64_t>(tx.shard_mask.PopCount(), 1) * base_charge;
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Calculated charge for 0x", tx.digest.ToHex(), ": ",
-                  scaled_charge, " (base: ", base_charge, " storage: ", storage_charge,
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Calculated charge for 0x", tx.digest.ToHex(), ": ", scaled_charge,
+                  " (base: ", base_charge, " storage: ", storage_charge,
                   " compute: ", compute_charge, " shards: ", allowed_shards_.PopCount(), ")");
 
   if (!tx.is_create_wealth)
@@ -75,8 +74,8 @@ bool FeeManager::CalculateChargeAndValidate(TransactionDetails& tx, std::vector<
   return success;
 }
 
-
-void FeeManager::Execute(TransactionDetails& tx, Result &result, BlockIndex const &block, StorageInterface &storage)
+void FeeManager::Execute(TransactionDetails &tx, Result &result, BlockIndex const &block,
+                         StorageInterface &storage)
 {
   telemetry::FunctionTimer const timer{*deduct_fees_duration_};
 
@@ -85,8 +84,7 @@ void FeeManager::Execute(TransactionDetails& tx, Result &result, BlockIndex cons
 
   auto const &from = tx.from;
 
-  ContractContext context{&token_contract_, tx.contract_address, &storage_adapter,
-                          block};
+  ContractContext         context{&token_contract_, tx.contract_address, &storage_adapter, block};
   ContractContextAttacher raii(token_contract_, context);
   uint64_t const          balance = token_contract_.GetBalance(from);
 

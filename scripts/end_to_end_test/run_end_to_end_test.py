@@ -485,7 +485,8 @@ def create_synergetic_contract(parameters, test_instance):
         helper.create_new(fee_limit)
         test_instance._nodes[node_index]._contract = helper
         if transfer_amount > 0:
-            api.sync(api.tokens.transfer(entity, helper.contract.address, transfer_amount, 1000))
+            api.sync(api.tokens.transfer(
+                entity, helper.contract.address, transfer_amount, 1000))
 
 
 def run_contract(parameters, test_instance):
@@ -555,7 +556,7 @@ def wait_network_ready(parameters, test_instance):
 
 
 def query_balance(parameters, test_instance):
-    nodes  = parameters["nodes"]
+    nodes = parameters["nodes"]
     variable = parameters["save_as"]
     for node_index in nodes:
         node_instance = test_instance._nodes[node_index]
@@ -594,23 +595,27 @@ def execute_expression(parameters, test_instance):
             op = key
             break
     print("ls='", ls, "'")
-    print("op='", op,"'")
-    print("rs='",rs,"'")
+    print("op='", op, "'")
+    print("rs='", rs, "'")
     if op is None:
-        raise RuntimeError(f"Expression '{expression}' not supported! Available ops: {ops.keys()}")
+        raise RuntimeError(
+            f"Expression '{expression}' not supported! Available ops: {ops.keys()}")
 
     for node_index in nodes:
         node_instance = test_instance._nodes[node_index]
 
         if not hasattr(node_instance, "_variables"):
-            raise RuntimeError(f"Expression '{expression}' can't be evaluated because node {node_instance} doesn't have the required variables!")
+            raise RuntimeError(
+                f"Expression '{expression}' can't be evaluated because node {node_instance} doesn't have the required variables!")
         ls = node_instance._variables.get(ls, None)
         rs = node_instance._variables.get(rs, None)
         if ls is None or rs is None:
-            raise RuntimeError(f"Expression '{expression}' can't be evaluated because node {node_instance} doesn't have one of the required variables!")
+            raise RuntimeError(
+                f"Expression '{expression}' can't be evaluated because node {node_instance} doesn't have one of the required variables!")
         result = ops[op](ls, rs)
         if not result:
-            raise RuntimeError(f"Evaluation of '{expression}' failed or false!")
+            raise RuntimeError(
+                f"Evaluation of '{expression}' failed or false!")
         output(f"Result of execution of '{expression}' is '{result}'")
 
 

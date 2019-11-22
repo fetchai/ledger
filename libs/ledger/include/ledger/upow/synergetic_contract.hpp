@@ -18,13 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
+#include "ledger/fees/chargeable.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "vm/analyser.hpp"
 #include "vm/common.hpp"
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
-#include "ledger/fees/chargeable.hpp"
 
 #include <memory>
 #include <string>
@@ -95,7 +95,8 @@ public:
   /// @{
   Status DefineProblem(ProblemData const &problem_data);
   Status Work(vectorise::UInt<256> const &nonce, WorkScore &score);
-  Status Complete(chain::Address const &address, BitVector const &shards, CompletionValidator const &validator);
+  Status Complete(chain::Address const &address, BitVector const &shards,
+                  CompletionValidator const &validator);
   /// @}
 
   /// @name Synergetic State Access

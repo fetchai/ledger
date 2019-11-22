@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/token_contract.hpp"
-#include "ledger/upow/synergetic_executor_interface.hpp"
 #include "ledger/fees/fee_manager.hpp"
+#include "ledger/upow/synergetic_executor_interface.hpp"
 
 namespace fetch {
 namespace ledger {

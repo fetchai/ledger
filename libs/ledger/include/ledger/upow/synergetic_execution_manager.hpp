@@ -20,10 +20,10 @@
 #include "chain/address.hpp"
 #include "core/mutex.hpp"
 #include "ledger/dag/dag_interface.hpp"
+#include "ledger/fees/fee_manager.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "ledger/upow/work.hpp"
 #include "ledger/upow/work_queue.hpp"
-#include "ledger/fees/fee_manager.hpp"
 #include "telemetry/telemetry.hpp"
 #include "vectorise/threading/pool.hpp"
 

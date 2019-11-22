@@ -26,9 +26,9 @@
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
 #include "ledger/executor.hpp"
+#include "ledger/fees/storage_fee.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
-#include "ledger/fees/storage_fee.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
@@ -171,14 +171,9 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
     }
 
     FeeManager::TransactionDetails tx_details{
-        current_tx_->from(),
-        current_tx_->contract_address(),
-        allowed_shards_,
-        current_tx_->digest(),
-        current_tx_->charge_rate(),
-        current_tx_->charge_limit(),
-        IsCreateWealth(*current_tx_)
-    };
+        current_tx_->from(),         current_tx_->contract_address(), allowed_shards_,
+        current_tx_->digest(),       current_tx_->charge_rate(),      current_tx_->charge_limit(),
+        IsCreateWealth(*current_tx_)};
 
     // deduct the fees from the originator
     fee_manager_.Execute(tx_details, result, block_, *storage_cache_);
@@ -368,19 +363,12 @@ bool Executor::ExecuteTransactionContract(Result &result)
       StorageFee storage_fee_{storage_adapter};
 
       FeeManager::TransactionDetails tx_details{
-        current_tx_->from(),
-        current_tx_->contract_address(),
-        allowed_shards_,
-        current_tx_->digest(),
-        current_tx_->charge_rate(),
-        current_tx_->charge_limit(),
-        IsCreateWealth(*current_tx_)
-      };
+          current_tx_->from(),         current_tx_->contract_address(), allowed_shards_,
+          current_tx_->digest(),       current_tx_->charge_rate(),      current_tx_->charge_limit(),
+          IsCreateWealth(*current_tx_)};
 
-      success = fee_manager_.CalculateChargeAndValidate(tx_details, {
-          contract,
-          &storage_fee_
-      }, result);
+      success =
+          fee_manager_.CalculateChargeAndValidate(tx_details, {contract, &storage_fee_}, result);
 
       if (success)
       {

@@ -16,16 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_builder.hpp"
 #include "core/bitvector.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/smart_contract_factory.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/chaincode/token_contract.hpp"
+#include "ledger/execution_result.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
-#include "chain/transaction_builder.hpp"
-#include "ledger/execution_result.hpp"
 #include "logging/logging.hpp"
 
 #include <cstddef>
@@ -74,7 +74,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
     // validate the work that has been done
     WorkScore calculated_score{0};
     auto      status = contract->Work(solution->CreateHashedNonce(), calculated_score);
-    //TODO(AB): fee for invalid solution?
+    // TODO(AB): fee for invalid solution?
     if (SynergeticContract::Status::SUCCESS == status && calculated_score == solution->score())
     {
       // TODO(issue 1213): State sharding needs to be added here
@@ -91,24 +91,22 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       ContractContext ctx(&token_contract_, solution->address(), &storage_adapter, 0);
       contract->UpdateContractContext(ctx);
 
-      //TODO(AB): charge limit
-      FeeManager::TransactionDetails tx_details{
-          solution->address(),
-          solution->address(),
-          shard_mask,
-          solution->contract_digest(),
-          1,
-          10000000000,
-          false
-      };
+      // TODO(AB): charge limit
+      FeeManager::TransactionDetails tx_details{solution->address(),
+                                                solution->address(),
+                                                shard_mask,
+                                                solution->contract_digest(),
+                                                1,
+                                                10000000000,
+                                                false};
 
       ContractExecutionResult result;
       FETCH_LOG_INFO(LOGGING_NAME, "Verify: tx created");
 
-
-      status = contract->Complete(solution->address(), shard_mask, [this, &contract, &tx_details, &result]()->bool {
-        return fee_manager_.CalculateChargeAndValidate(tx_details, {contract.get()}, result);
-      });
+      status = contract->Complete(
+          solution->address(), shard_mask, [this, &contract, &tx_details, &result]() -> bool {
+            return fee_manager_.CalculateChargeAndValidate(tx_details, {contract.get()}, result);
+          });
 
       if (SynergeticContract::Status::SUCCESS != status)
       {

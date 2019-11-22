@@ -22,13 +22,13 @@
 #include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/smart_contract_factory.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/problem_id.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/upow/work.hpp"
 #include "logging/logging.hpp"
 #include "vm_modules/math/bignumber.hpp"
-#include "ledger/state_sentinel_adapter.hpp"
 
 #include <random>
 #include <unordered_set>
@@ -66,7 +66,8 @@ void ExecuteWork(SynergeticContract &contract, WorkPtr const &work)
 
 }  // namespace
 
-NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover, uint32_t num_lanes)
+NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover,
+                                           uint32_t num_lanes)
   : dag_{std::move(dag)}
   , storage_{storage}
   , prover_{std::move(prover)}
@@ -173,7 +174,7 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
   shards.SetAllOne();
   StateSentinelAdapter storage_adapter{storage_, Identifier{"fetch.token"}, shards};
 
-  ContractContext context{&token_contract_, contract_address, &storage_adapter, 0};
+  ContractContext         context{&token_contract_, contract_address, &storage_adapter, 0};
   ContractContextAttacher raii(token_contract_, context);
 
   uint64_t const balance = token_contract_.GetBalance(contract_address);
@@ -181,7 +182,8 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
   if (balance == 0)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Not handling contract: 0x", contract_digest.ToHex(),
-        ", because contract address 0x", contract_address.address().ToHex(), " balance is 0");
+                   ", because contract address 0x", contract_address.address().ToHex(),
+                   " balance is 0");
     return {};
   }
 
@@ -227,13 +229,13 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
       best_work = std::make_shared<Work>(*work);
     }
 
-    if (i==0)
+    if (i == 0)
     {
       auto const fee = contract->CalculateFee();
-      //TODO(AB): scaling? charge approx search_length_*one
+      // TODO(AB): scaling? charge approx search_length_*one
       if (fee >= balance)
       {
-        //not enough balance, stop using contract
+        // not enough balance, stop using contract
         return {};
       }
     }

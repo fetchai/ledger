@@ -21,10 +21,10 @@
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/fees/chargeable.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "ledger/fees/chargeable.hpp"
 
 #include <atomic>
 #include <cstddef>

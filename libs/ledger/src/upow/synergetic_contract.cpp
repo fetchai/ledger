@@ -21,10 +21,10 @@
 #include "json/document.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/token_contract.hpp"
+#include "ledger/fees/storage_fee.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
-#include "ledger/fees/storage_fee.hpp"
 #include "logging/logging.hpp"
 #include "vectorise/uint/uint.hpp"
 #include "vm/address.hpp"
@@ -291,7 +291,8 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
   return Status::SUCCESS;
 }
 
-Status SynergeticContract::Complete(chain::Address const &address, BitVector const &shards, CompletionValidator const &validator)
+Status SynergeticContract::Complete(chain::Address const &address, BitVector const &shards,
+                                    CompletionValidator const &validator)
 {
   if (storage_ == nullptr)
   {

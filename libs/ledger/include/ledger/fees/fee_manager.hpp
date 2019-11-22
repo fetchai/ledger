@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/fees/chargeable.hpp"
-#include "ledger/chaincode/token_contract.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "chain/transaction.hpp"
 #include "core/bitvector.hpp"
+#include "ledger/chaincode/token_contract.hpp"
+#include "ledger/fees/chargeable.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "telemetry/telemetry.hpp"
 
 #include <vector>
@@ -44,14 +44,15 @@ public:
   using Result                  = ContractExecutionResult;
   using TokenAmount             = uint64_t;
 
-  struct TransactionDetails {
+  struct TransactionDetails
+  {
     chain::Address const &from;
     chain::Address const &contract_address;
-    BitVector const &shard_mask;
-    Digest const &digest;
-    TokenAmount const charge_rate{1};
-    TokenAmount const charge_limit{0};
-    bool const is_create_wealth{false};
+    BitVector const &     shard_mask;
+    Digest const &        digest;
+    TokenAmount const     charge_rate{1};
+    TokenAmount const     charge_limit{0};
+    bool const            is_create_wealth{false};
   };
 
   // Construction / Destruction
@@ -60,16 +61,17 @@ public:
   FeeManager(FeeManager &&)      = delete;
   virtual ~FeeManager()          = default;
 
-
-  bool CalculateChargeAndValidate(TransactionDetails& tx, std::vector<Chargeable*> const &chargeables, Result& result);
-  void Execute(TransactionDetails& tx, Result &result, BlockIndex const &block, StorageInterface& storage);
+  bool CalculateChargeAndValidate(TransactionDetails &             tx,
+                                  std::vector<Chargeable *> const &chargeables, Result &result);
+  void Execute(TransactionDetails &tx, Result &result, BlockIndex const &block,
+               StorageInterface &storage);
 
   // Operators
   FeeManager &operator=(FeeManager const &) = delete;
   FeeManager &operator=(FeeManager &&) = delete;
 
 private:
-  TokenContract           &token_contract_;
+  TokenContract &token_contract_;
 
   telemetry::HistogramPtr deduct_fees_duration_;
 };

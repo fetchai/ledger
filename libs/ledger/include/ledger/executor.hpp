@@ -22,9 +22,9 @@
 #include "ledger/chaincode/chain_code_cache.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/executor_interface.hpp"
+#include "ledger/fees/fee_manager.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_validator.hpp"
-#include "ledger/fees/fee_manager.hpp"
 #include "telemetry/telemetry.hpp"
 
 #include <cstdint>
@@ -90,7 +90,7 @@ private:
   TransactionValidator    tx_validator_;
   /// @}
 
-  FeeManager     fee_manager_;
+  FeeManager fee_manager_;
 
   telemetry::HistogramPtr overall_duration_;
   telemetry::HistogramPtr tx_retrieve_duration_;

@@ -21,15 +21,15 @@
 
 namespace fetch {
 namespace ledger {
-  
+
 class Chargeable
 {
 public:
   // Construction / Destruction
-  Chargeable()                 = default;
+  Chargeable()                   = default;
   Chargeable(Chargeable const &) = delete;
   Chargeable(Chargeable &&)      = delete;
-  virtual ~Chargeable()        = default;
+  virtual ~Chargeable()          = default;
 
   virtual uint64_t CalculateFee() const = 0;
 

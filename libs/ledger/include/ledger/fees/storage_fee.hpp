@@ -26,10 +26,9 @@ class StorageFee : public Chargeable
 {
 public:
   // Construction / Destruction
-  StorageFee(StateSentinelAdapter& storage_adapter)
-  : storage_adapter_{storage_adapter}
-  {
-  }
+  StorageFee(StateSentinelAdapter &storage_adapter)
+    : storage_adapter_{storage_adapter}
+  {}
   StorageFee(StorageFee const &) = delete;
   StorageFee(StorageFee &&)      = delete;
   virtual ~StorageFee()          = default;
@@ -42,6 +41,7 @@ public:
   // Operators
   StorageFee &operator=(StorageFee const &) = delete;
   StorageFee &operator=(StorageFee &&) = delete;
+
 private:
   StateSentinelAdapter &storage_adapter_;
 };
