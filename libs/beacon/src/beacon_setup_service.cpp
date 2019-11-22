@@ -397,7 +397,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   if (can_see.size() > connections_.size() && can_see.size() >= require_connections &&
       !condition_to_proceed_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, NodeString(), " Minimum peer threshold requirement met for DKG");
+    FETCH_LOG_DEBUG(LOGGING_NAME, NodeString(), " Minimum peer threshold requirement met for DKG");
 
     connections_ = ConvertToSet(can_see);
     SendBroadcast(DKGEnvelope{ConnectionsMessage{connections_}});
