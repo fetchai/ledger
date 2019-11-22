@@ -160,6 +160,11 @@ int main(int argc, char **argv)
 
     client->RunAlgorithms();
   }
-
+  system("gsutil cp /app/results/* gs://ml-3000/results/");
+  while (true)
+  {
+    std::cout << "Sleeping" << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(30));
+  }
   return 0;
 }
