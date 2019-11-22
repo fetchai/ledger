@@ -271,7 +271,7 @@ private:
 
   /// @name Helper methods
   /// @{
-  void     SetDeadlineForState(BeaconSetupService::State const &state, uint64_t base_state_time);
+  void     SetDeadlineForState(BeaconSetupService::State const &state);
   bool     BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
   void     CheckComplaintAnswers();
   bool     BuildQual();
