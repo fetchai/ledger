@@ -75,9 +75,25 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
   mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
 
   std::unordered_set<std::string> initial_peers;
-  if (instance_number > 0)
+  auto config_peers = doc.root()["peers"];
+
+  initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
+  auto config_peer_count = config_peers.size();
+  for (std::size_t peer_number = 0; peer_number < config_peer_count; peer_number++)
   {
-    initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
+    if (peer_number != instance_number)
+    {
+      peers_.emplace_back(config_peers[peer_number]["pub"].As<std::string>());
+    }
+  }
+
+  for(unsigned int i = 0; i< 10; i++)
+  {
+    auto peer_number = (instance_number + 1 + i) % config_peers;
+    if (peer_number != instance_number)
+    {
+      initial_peers.insert(config_peers[peer_number]["uri"].As<std::string>());
+    }
   }
 
   mud_->Start(initial_peers, {port});
@@ -87,7 +103,6 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
 
   server_->Add(RPC_DMLF, proto_.get());
 
-  auto config_peers = doc.root()["peers"];
 
   for (std::size_t peer_number = 0; peer_number < config_peers.size(); peer_number++)
   {
