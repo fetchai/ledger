@@ -78,8 +78,8 @@ public:
   static void Serialize(T &map_constructor, Type const &filter)
   {
     auto map = map_constructor(4);
-    map.Append(MIN_INDEX, filter.current_min_index_);
-    map.Append(OVERLAP, filter.overlap_);
+    map.Append(MIN_INDEX, static_cast<uint64_t>(filter.current_min_index_));
+    map.Append(OVERLAP, static_cast<uint64_t>(filter.overlap_));
     map.Append(FILTER1, *filter.filter1_);
     map.Append(FILTER2, *filter.filter2_);
   }
