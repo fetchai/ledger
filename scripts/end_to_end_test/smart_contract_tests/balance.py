@@ -105,7 +105,7 @@ def run(options):
 
     assert contract.query(api, 'query_init_test') == 0
 
-    api.sync(contract.action(api, 'action_test', 10000, [entity1]))
+    api.sync(contract.action(api, 'action_test', 200, [entity1]))
     v = contract.query(api, 'query_action_test')
     print(v)
     assert contract.query(api, 'query_action_test') == 1000
@@ -116,12 +116,12 @@ def run(options):
     assert contract.query(api, 'query_clear_test') == 1000
 
     # Provide the contract with funds
-    api.tokens.transfer(entity1, contract.address, 1234, 200)
+    api.sync(api.tokens.transfer(entity1, contract.address, 1234, 200))
 
-    api.sync(contract.action(api, 'action_test', 10000, [entity1]))
+    api.sync(contract.action(api, 'action_test', 200, [entity1]))
     v = contract.query(api, 'query_action_test')
     print(v)
-    assert contract.query(api, 'query_action_test') == 1234
+    assert 2000 < v < 2234
 
     submit_synergetic_data(api, contract, [100, 20, 3], entity1)
-    assert contract.query(api, 'query_clear_test') == 1234
+    assert 2000 < contract.query(api, 'query_clear_test') < 2234
