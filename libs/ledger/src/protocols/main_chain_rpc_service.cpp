@@ -368,15 +368,6 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   return next_state;
 }
 
-inline bool Match(MainChainRpcService::Block const &left, MainChainRpcService::Block const &right)
-{
-  return left.hash == right.hash && left.previous_hash == right.previous_hash &&
-         left.merkle_hash == right.merkle_hash && left.block_number == right.block_number &&
-         left.miner == right.miner && left.miner_id == right.miner_id &&
-         left.log2_num_lanes == right.log2_num_lanes && left.slices == right.slices &&
-         left.timestamp == right.timestamp && left.weight == right.weight;
-}
-
 MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
 {
   state_wait_heaviest_->increment();
