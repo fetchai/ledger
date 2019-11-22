@@ -20,6 +20,7 @@
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/fees/fee_manager.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
+#include "telemetry/telemetry.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -47,6 +48,12 @@ private:
   StorageInterface &storage_;
   TokenContract     token_contract_{};
   FeeManager        fee_manager_;
+
+  /// @name Telemetry
+  /// @{
+  telemetry::HistogramPtr work_duration_;
+  telemetry::HistogramPtr complete_duration_;
+  /// @}
 };
 
 }  // namespace ledger

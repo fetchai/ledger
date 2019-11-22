@@ -78,6 +78,22 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
       "ledger_synergetic_executor_execute_duration",
       "The execution duration in seconds");
 
+  telemetry::Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_synergetic_executor_work_duration",
+      "The execution duration in seconds for executing the work method of the contract");
+
+  telemetry::Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_synergetic_executor_complete_duration",
+      "The execution duration in seconds for executing the complete method of the contract");
+
   // build the required number of executors
   for (auto &executor : executors_)
   {

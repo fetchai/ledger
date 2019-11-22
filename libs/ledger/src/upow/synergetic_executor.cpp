@@ -27,6 +27,9 @@
 #include "ledger/upow/synergetic_contract.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
 #include "logging/logging.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
+#include "telemetry/utils/timer.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -41,11 +44,16 @@ constexpr char const *LOGGING_NAME = "SynergeticExecutor";
 constexpr TokenAmount const CHARGE_RATE  = 1;
 constexpr TokenAmount const CHARGE_LIMIT = 10000000000;
 
+using fetch::telemetry::Histogram;
+using fetch::telemetry::Registry;
+
 } //namespace
 
 SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
   : storage_{storage}
   , fee_manager_{token_contract_, "ledger_synergetic_executor_deduct_fees_duration"}
+  , work_duration_{Registry::Instance().LookupMeasurement<Histogram>("ledger_synergetic_executor_work_duration")}
+  , complete_duration_{Registry::Instance().LookupMeasurement<Histogram>("ledger_synergetic_executor_complete_duration")}
 {}
 
 void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem_data,
@@ -80,7 +88,11 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
 
     // validate the work that has been done
     WorkScore calculated_score{0};
-    auto      status = contract->Work(solution->CreateHashedNonce(), calculated_score);
+    SynergeticContract::Status status;
+    {
+      telemetry::FunctionTimer const timer{*work_duration_};
+      status = contract->Work(solution->CreateHashedNonce(), calculated_score);
+    }
     // TODO(AB): fee for invalid solution?
     if (SynergeticContract::Status::SUCCESS == status && calculated_score == solution->score())
     {
@@ -110,10 +122,13 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       ContractExecutionResult result;
       FETCH_LOG_INFO(LOGGING_NAME, "Verify: tx created");
 
-      status = contract->Complete(
-          solution->address(), shard_mask, [this, &contract, &tx_details, &result]() -> bool {
-            return fee_manager_.CalculateChargeAndValidate(tx_details, {contract.get()}, result);
-          });
+      {
+        telemetry::FunctionTimer const timer{*complete_duration_};
+        status = contract->Complete(
+            solution->address(), shard_mask, [this, &contract, &tx_details, &result]() -> bool {
+              return fee_manager_.CalculateChargeAndValidate(tx_details, {contract.get()}, result);
+            });
+      }
 
       if (SynergeticContract::Status::SUCCESS != status)
       {
