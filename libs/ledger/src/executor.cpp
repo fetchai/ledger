@@ -50,11 +50,6 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-bool IsCreateWealth(chain::Transaction const &tx)
-{
-  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
-         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
-}
 
 bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
 {
@@ -170,10 +165,7 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
       storage_cache_->Clear();
     }
 
-    FeeManager::TransactionDetails tx_details{
-        current_tx_->from(),         current_tx_->contract_address(), allowed_shards_,
-        current_tx_->digest(),       current_tx_->charge_rate(),      current_tx_->charge_limit(),
-        IsCreateWealth(*current_tx_)};
+    FeeManager::TransactionDetails tx_details{*current_tx_, allowed_shards_};
 
     // deduct the fees from the originator
     fee_manager_.Execute(tx_details, result, block_, *storage_cache_);
@@ -362,10 +354,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
       // simple linear scale fee
       StorageFee storage_fee_{storage_adapter};
 
-      FeeManager::TransactionDetails tx_details{
-          current_tx_->from(),         current_tx_->contract_address(), allowed_shards_,
-          current_tx_->digest(),       current_tx_->charge_rate(),      current_tx_->charge_limit(),
-          IsCreateWealth(*current_tx_)};
+      FeeManager::TransactionDetails tx_details{*current_tx_, allowed_shards_};
 
       success =
           fee_manager_.CalculateChargeAndValidate(tx_details, {contract, &storage_fee_}, result);

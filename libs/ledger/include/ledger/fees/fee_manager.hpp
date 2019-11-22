@@ -46,6 +46,10 @@ public:
 
   struct TransactionDetails
   {
+    TransactionDetails(chain::Transaction& tx, BitVector const &shards);
+    TransactionDetails(chain::Address const &from_addr, chain::Address const &contract_addr, BitVector const &shards,
+        Digest const &tx_digest, TokenAmount const &rate, TokenAmount const &limit, bool is_wealth);
+
     chain::Address const &from;
     chain::Address const &contract_address;
     BitVector const &     shard_mask;

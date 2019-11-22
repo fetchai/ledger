@@ -31,7 +31,7 @@ from fetch.testing.testcase import ConstellationTestCase, DmlfEtchTestCase
 from fetch.cluster.utils import output, verify_file, yaml_extract
 
 from fetchai.ledger.api import LedgerApi
-from fetchai.ledger.crypto import Entity
+from fetchai.ledger.crypto import Entity, Address
 
 from .smart_contract_tests.synergetic_utils import SynergeticContractTestHelper
 
@@ -568,7 +568,8 @@ def query_balance(parameters, test_instance):
         # create the entity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
         b = api.tokens.balance(entity)
-        output(f"Requested balance {b}, saved as {variable}")
+        address = Address(entity)
+        output(f"Requested balance (0x{entity}) {address.to_hex()}, saved as {variable}")
         if not hasattr(node_instance, "_variables"):
             setattr(node_instance, "_variables", {})
         node_instance._variables[variable] = b

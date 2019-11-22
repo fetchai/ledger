@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/fees/chargeable.hpp"
+#include "ledger/state_sentinel_adapter.hpp"
 
 namespace fetch {
 namespace ledger {
