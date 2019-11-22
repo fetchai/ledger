@@ -22,7 +22,7 @@
 #include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/smart_contract_factory.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
-#include "ledger/state_sentinel_adapter.hpp"
+#include "ledger/state_adapter.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/problem_id.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
@@ -66,13 +66,11 @@ void ExecuteWork(SynergeticContract &contract, WorkPtr const &work)
 
 }  // namespace
 
-NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover,
-                                           uint32_t num_lanes)
+NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover)
   : dag_{std::move(dag)}
   , storage_{storage}
   , prover_{std::move(prover)}
   , state_machine_{std::make_shared<core::StateMachine<State>>("NaiveSynMiner", State::INITIAL)}
-  , num_lanes_{num_lanes}
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &NaiveSynergeticMiner::OnInitial);
   state_machine_->RegisterHandler(State::MINE, this, &NaiveSynergeticMiner::OnMine);
@@ -169,10 +167,7 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
                                            chain::Address const &contract_address,
                                            ProblemData const &   problem_data)
 {
-  // TODO(AB): State sharding needs to be added here
-  BitVector shards{num_lanes_};
-  shards.SetAllOne();
-  StateSentinelAdapter storage_adapter{storage_, Identifier{"fetch.token"}, shards};
+  StateAdapter storage_adapter{storage_, Identifier{"fetch.token"}};
 
   ContractContext         context{&token_contract_, contract_address, &storage_adapter, 0};
   ContractContextAttacher raii(token_contract_, context);

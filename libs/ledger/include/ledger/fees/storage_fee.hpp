@@ -18,26 +18,22 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/fees/chargeable.hpp"
-#include "ledger/state_sentinel_adapter.hpp"
 
 namespace fetch {
 namespace ledger {
+
+class StateSentinelAdapter;
 
 class StorageFee : public Chargeable
 {
 public:
   // Construction / Destruction
-  StorageFee(StateSentinelAdapter &storage_adapter)
-    : storage_adapter_{storage_adapter}
-  {}
+  StorageFee(StateSentinelAdapter &storage_adapter);
   StorageFee(StorageFee const &) = delete;
   StorageFee(StorageFee &&)      = delete;
   virtual ~StorageFee()          = default;
 
-  virtual uint64_t CalculateFee() const
-  {
-    return storage_adapter_.num_bytes_written() * 2u;
-  }
+  uint64_t CalculateFee() const override;
 
   // Operators
   StorageFee &operator=(StorageFee const &) = delete;

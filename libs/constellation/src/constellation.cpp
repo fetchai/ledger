@@ -380,7 +380,7 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   if (cfg_.features.IsEnabled("synergetic") && dag_)
   {
     auto syn_miner =
-        std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate, cfg_.num_lanes());
+        std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate);
     if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to attach synergetic miner to reactor.");

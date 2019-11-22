@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,29 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
+#include "ledger/fees/storage_fee.hpp"
+#include "ledger/state_sentinel_adapter.hpp"
 
 namespace fetch {
 namespace ledger {
 
-/**
- * Chargeable is an abstract interface that exposes fees occurred during transaction, contract, etc.
- * execution.
- */
-class Chargeable
-{
-public:
-  // Construction / Destruction
-  Chargeable()          = default;
-  virtual ~Chargeable() = default;
+StorageFee::StorageFee(StateSentinelAdapter &storage_adapter)
+  : storage_adapter_{storage_adapter}
+{}
 
-  /**
-   * Calculate the fee as a result of the execution calls on this object.
-   *
-   * @return The fee
-   */
-  virtual uint64_t CalculateFee() const = 0;
-};
+uint64_t StorageFee::CalculateFee() const
+{
+  return storage_adapter_.num_bytes_written() * 2u;
+}
 
 }  // namespace ledger
 }  // namespace fetch

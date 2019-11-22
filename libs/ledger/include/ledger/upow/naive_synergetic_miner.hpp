@@ -49,7 +49,7 @@ public:
   using StateMachine = core::StateMachine<State>;
 
   // Construction / Destruction
-  NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover, uint32_t num_lanes);
+  NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover);
   NaiveSynergeticMiner(NaiveSynergeticMiner const &) = delete;
   NaiveSynergeticMiner(NaiveSynergeticMiner &&)      = delete;
   ~NaiveSynergeticMiner() override                   = default;
@@ -90,7 +90,6 @@ private:
   std::shared_ptr<StateMachine> state_machine_;
   std::atomic<bool>             is_mining_{false};
   TokenContract                 token_contract_{};
-  uint32_t                      num_lanes_;
 };
 
 }  // namespace ledger

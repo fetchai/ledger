@@ -43,7 +43,7 @@ bool IsCreateWealth(chain::Transaction const &tx)
 
 }  // namespace
 
-FeeManager::TransactionDetails::TransactionDetails(chain::Transaction& tx, BitVector const &shards)
+FeeManager::TransactionDetails::TransactionDetails(chain::Transaction &tx, BitVector const &shards)
   : from{tx.from()}
   , contract_address{tx.contract_address()}
   , shard_mask{shards}
@@ -51,11 +51,13 @@ FeeManager::TransactionDetails::TransactionDetails(chain::Transaction& tx, BitVe
   , charge_rate{tx.charge_rate()}
   , charge_limit{tx.charge_limit()}
   , is_create_wealth{IsCreateWealth(tx)}
-{
-}
+{}
 
-FeeManager::TransactionDetails::TransactionDetails(chain::Address const &from_addr, chain::Address const &contract_addr,
-    BitVector const &shards, Digest const &tx_digest, TokenAmount const &rate, TokenAmount const &limit, bool is_wealth)
+FeeManager::TransactionDetails::TransactionDetails(chain::Address const &from_addr,
+                                                   chain::Address const &contract_addr,
+                                                   BitVector const &shards, Digest const &tx_digest,
+                                                   TokenAmount const &rate,
+                                                   TokenAmount const &limit, bool is_wealth)
   : from{from_addr}
   , contract_address{contract_addr}
   , shard_mask{shards}
@@ -63,9 +65,7 @@ FeeManager::TransactionDetails::TransactionDetails(chain::Address const &from_ad
   , charge_rate{rate}
   , charge_limit{limit}
   , is_create_wealth{is_wealth}
-{
-}
-
+{}
 
 FeeManager::FeeManager(TokenContract &token_contract, std::string const &histogram_name)
   : token_contract_{token_contract}
@@ -98,7 +98,8 @@ bool FeeManager::CalculateChargeAndValidate(TransactionDetails &             tx,
   // determine if the chain code ran out of charge
   if (result.charge > tx.charge_limit)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Insufficient charge, charge (", result.charge, ") greater then limit (", tx.charge_limit, ")");
+    FETCH_LOG_INFO(LOGGING_NAME, "Insufficient charge, charge (", result.charge,
+                   ") greater then limit (", tx.charge_limit, ")");
     result.status = Status::INSUFFICIENT_CHARGE;
     success       = false;
   }

@@ -569,7 +569,8 @@ def query_balance(parameters, test_instance):
         entity = Entity(get_nodes_private_key(test_instance, node_index))
         b = api.tokens.balance(entity)
         address = Address(entity)
-        output(f"Requested balance ({b}) {address.to_hex()}, saved as {variable}")
+        output(
+            f"Requested balance ({b}) {address.to_hex()}, saved as {variable}")
         if not hasattr(node_instance, "_variables"):
             setattr(node_instance, "_variables", {})
         node_instance._variables[variable] = b

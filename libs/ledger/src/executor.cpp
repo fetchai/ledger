@@ -50,7 +50,6 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-
 bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
 {
   // Step 1 - Translate the tx into a common name
