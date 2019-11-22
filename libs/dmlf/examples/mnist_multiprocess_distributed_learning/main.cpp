@@ -140,6 +140,9 @@ int main(int argc, char **argv)
   networker->SetShuffleAlgorithm(
       std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));
 
+  // Pause to let muddle get set up
+  std::this_thread::sleep_for(std::chrono::seconds(30));
+
   // Create learning client
   auto client = fetch::dmlf::collective_learning::utilities::MakeMNISTClient<TensorType>(
       std::to_string(instance_number), client_params, data_file, labels_file, test_set_ratio,

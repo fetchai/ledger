@@ -158,7 +158,7 @@ void MuddleLearnerNetworker::NetworkConfigInit(fetch::json::JSONDocument &doc,
   }
   else
   {
-    netm_ = std::make_shared<NetworkManager>("LrnrNet", 4);
+    netm_ = std::make_shared<NetworkManager>("LrnrNet", 16);
   }
   netm_->Start();
 
