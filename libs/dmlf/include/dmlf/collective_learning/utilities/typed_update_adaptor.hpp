@@ -87,10 +87,10 @@ public:
   }
 
   virtual ~TypedUpdateAdaptor()                       = default;
-  TypedUpdateAdaptor(TypedUpdateAdaptor const &other) = default;
-  TypedUpdateAdaptor(TypedUpdateAdaptor &&other)      = default;
-  TypedUpdateAdaptor &operator=(TypedUpdateAdaptor const &other) = default;
-  TypedUpdateAdaptor &operator=(TypedUpdateAdaptor &&other) = default;
+  TypedUpdateAdaptor(TypedUpdateAdaptor const &other) = delete;
+  TypedUpdateAdaptor(TypedUpdateAdaptor &&other)      = delete;
+  TypedUpdateAdaptor &operator=(TypedUpdateAdaptor const &other) = delete;
+  TypedUpdateAdaptor &operator=(TypedUpdateAdaptor &&other) = delete;
 
 private:
   using Bytes = colearn::AbstractMessageController::Bytes;
