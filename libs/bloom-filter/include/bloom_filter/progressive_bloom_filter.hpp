@@ -50,23 +50,14 @@ public:
   bool IsInCurrentRange(std::size_t index) const;
   void Reset();
 
-  std::tuple<std::size_t *, std::size_t *, BasicBloomFilter *, BasicBloomFilter *>
-  getSerialisationData()
-  {
-    return {&current_min_index_, &overlap_, filter1_.get(), filter2_.get()};
-  }
-  std::tuple<std::size_t const *, std::size_t const *, BasicBloomFilter const *,
-             BasicBloomFilter const *>
-  getSerialisationData() const
-  {
-    return {&current_min_index_, &overlap_, filter1_.get(), filter2_.get()};
-  }
-
 private:
   std::size_t                       current_min_index_{};
   std::size_t                       overlap_{20000};
   std::unique_ptr<BasicBloomFilter> filter1_{std::make_unique<BasicBloomFilter>()};
   std::unique_ptr<BasicBloomFilter> filter2_{std::make_unique<BasicBloomFilter>()};
+
+  template <typename, typename>
+  friend struct fetch::serializers::MapSerializer;
 };
 
 namespace serializers {
@@ -86,24 +77,20 @@ public:
   template <typename T>
   static void Serialize(T &map_constructor, Type const &filter)
   {
-    auto const data = filter.getSerialisationData();
-
     auto map = map_constructor(4);
-    map.Append(MIN_INDEX, *std::get<0>(data));
-    map.Append(OVERLAP, *std::get<1>(data));
-    map.Append(FILTER1, *std::get<2>(data));
-    map.Append(FILTER2, *std::get<3>(data));
+    map.Append(MIN_INDEX, filter.current_min_index_);
+    map.Append(OVERLAP, filter.overlap_);
+    map.Append(FILTER1, *filter.filter1_);
+    map.Append(FILTER2, *filter.filter2_);
   }
 
   template <typename T>
   static void Deserialize(T &map, Type &filter)
   {
-    auto data = filter.getSerialisationData();
-
-    map.ExpectKeyGetValue(MIN_INDEX, *std::get<0>(data));
-    map.ExpectKeyGetValue(OVERLAP, *std::get<1>(data));
-    map.ExpectKeyGetValue(FILTER1, *std::get<2>(data));
-    map.ExpectKeyGetValue(FILTER2, *std::get<3>(data));
+    map.ExpectKeyGetValue(MIN_INDEX, filter.current_min_index_);
+    map.ExpectKeyGetValue(OVERLAP, filter.overlap_);
+    map.ExpectKeyGetValue(FILTER1, *filter.filter1_);
+    map.ExpectKeyGetValue(FILTER2, *filter.filter2_);
   }
 };
 

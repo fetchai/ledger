@@ -31,19 +31,22 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <vector>
 
 using fetch::byte_array::ToBase64;
 using fetch::generics::MilliTimer;
 
 namespace fetch {
 namespace ledger {
+
+namespace {
+constexpr char const *BLOOM_FILTER_STORE = "chain.bloom.db";
+}
 
 /**
  * Constructs the main chain
@@ -86,6 +89,7 @@ MainChain::MainChain(Mode mode)
 MainChain::~MainChain()
 {
   using namespace fetch::serializers;
+
   if (block_store_)
   {
     block_store_->Flush(false);
@@ -93,10 +97,11 @@ MainChain::~MainChain()
 
   if (mode_ != Mode::IN_MEMORY_DB)
   {
+    std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
     LargeObjectSerializeHelper buffer{};
     buffer << bloom_filter_;
 
-    bloom_filter_store_ << buffer.data();
+    out << buffer.data();
   }
 }
 
@@ -118,9 +123,7 @@ void MainChain::Reset()
                      std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
   }
 
-  bloom_filter_store_.close();
-  bloom_filter_store_.open("chain.bloom.db",
-                           std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+  std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
   bloom_filter_.Reset();
 
   auto genesis = CreateGenesisBlock();
@@ -778,9 +781,10 @@ void MainChain::RecoverFromFile(Mode mode)
     block_store_->New("chain.db", "chain.index.db");
     head_store_.open("chain.head.db",
                      std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
-    bloom_filter_store_.open("chain.bloom.db",
-                             std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+
+    std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
     bloom_filter_.Reset();
+
     return;
   }
   if (Mode::LOAD_PERSISTENT_DB == mode)
@@ -790,13 +794,16 @@ void MainChain::RecoverFromFile(Mode mode)
     block_store_->Load("chain.db", "chain.index.db");
     head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out);
 
-    bloom_filter_store_.open("chain.bloom.db", std::ios::binary | std::ios::in | std::ios::out);
+    std::ifstream in(BLOOM_FILTER_STORE, std::ios::binary | std::ios::in);
 
-    byte_array::ByteArray bloom_filter_data{bloom_filter_store_};
+    if (in.is_open())
+    {
+      byte_array::ByteArray bloom_filter_data{in};
 
-    LargeObjectSerializeHelper buffer{bloom_filter_data};
+      LargeObjectSerializeHelper buffer{bloom_filter_data};
 
-    buffer >> bloom_filter_;
+      buffer >> bloom_filter_;
+    }
   }
   else
   {
@@ -885,9 +892,8 @@ void MainChain::RecoverFromFile(Mode mode)
     head_store_.close();
     head_store_.open("chain.head.db",
                      std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
-    bloom_filter_store_.close();
-    bloom_filter_store_.open("chain.bloom.db",
-                             std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+
+    std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
     bloom_filter_.Reset();
   }
 }

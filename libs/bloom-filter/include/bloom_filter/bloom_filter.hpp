@@ -200,19 +200,12 @@ public:
    */
   void Reset();
 
-  BitVector *getSerialisationData()
-  {
-    return &bits_;
-  }
-
-  BitVector const *getSerialisationData() const
-  {
-    return &bits_;
-  }
-
 private:
   BitVector                   bits_;
   internal::HashSourceFactory hash_source_factory_;
+
+  template <typename, typename>
+  friend struct fetch::serializers::MapSerializer;
 };
 
 namespace serializers {
@@ -229,18 +222,14 @@ public:
   template <typename T>
   static void Serialize(T &map_constructor, Type const &filter)
   {
-    auto const bits = filter.getSerialisationData();
-
     auto map = map_constructor(1);
-    map.Append(BITS, *bits);
+    map.Append(BITS, filter.bits_);
   }
 
   template <typename T>
   static void Deserialize(T &map, Type &filter)
   {
-    auto bits = filter.getSerialisationData();
-
-    map.ExpectKeyGetValue(BITS, *bits);
+    map.ExpectKeyGetValue(BITS, filter.bits_);
   }
 };
 

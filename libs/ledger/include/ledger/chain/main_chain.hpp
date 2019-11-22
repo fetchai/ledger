@@ -235,7 +235,6 @@ public:
   Mode          mode_{Mode::IN_MEMORY_DB};
   BlockStorePtr block_store_;  ///< Long term storage and backup
   std::fstream  head_store_;
-  std::fstream  bloom_filter_store_;
 
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
