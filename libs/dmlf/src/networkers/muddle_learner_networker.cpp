@@ -175,9 +175,12 @@ void MuddleLearnerNetworker::NetworkConfigInit(fetch::json::JSONDocument &doc,
   mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
 
   std::unordered_set<std::string> initial_peers;
+
+  auto config_peers = doc.root()["peers"];
+  auto config_peer_count = config_peers.size();
   if (instance_number > 0)
   {
-    initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
+    initial_peers.insert(config_peers[(instance_number+1) % config_peer_count]["uri"].As<std::string>());
   }
 
   mud_->Start(initial_peers, {port});
@@ -186,8 +189,6 @@ void MuddleLearnerNetworker::NetworkConfigInit(fetch::json::JSONDocument &doc,
   proto_  = std::make_shared<MuddleLearnerNetworkerProtocol>(*this);
 
   server_->Add(RPC_DMLF, proto_.get());
-
-  auto config_peers = doc.root()["peers"];
 
   for (std::size_t peer_number = 0; peer_number < config_peers.size(); peer_number++)
   {

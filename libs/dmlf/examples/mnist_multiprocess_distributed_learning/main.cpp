@@ -115,18 +115,6 @@ int main(int argc, char **argv)
   // Create console mutex
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
-  // Create networker and assign shuffle algorithm
-  auto networker =
-      std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(network_doc, instance_number);
-  networker->Initialize<fetch::dmlf::Update<TensorType>>();
-  networker->SetShuffleAlgorithm(
-      std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));
-
-  // Create learning client
-  auto client = fetch::dmlf::collective_learning::utilities::MakeMNISTClient<TensorType>(
-      std::to_string(instance_number), client_params, data_file, labels_file, test_set_ratio,
-      networker, console_mutex_ptr);
-
   // Pause until start time
   if (start_time != 0)
   {
@@ -144,6 +132,19 @@ int main(int argc, char **argv)
       std::this_thread::sleep_for(std::chrono::seconds(pause));
     };
   }
+
+  // Create networker and assign shuffle algorithm
+  auto networker =
+      std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(network_doc, instance_number);
+  networker->Initialize<fetch::dmlf::Update<TensorType>>();
+  networker->SetShuffleAlgorithm(
+      std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));
+
+  // Create learning client
+  auto client = fetch::dmlf::collective_learning::utilities::MakeMNISTClient<TensorType>(
+      std::to_string(instance_number), client_params, data_file, labels_file, test_set_ratio,
+      networker, console_mutex_ptr);
+
 
   /**
    * Main loop
