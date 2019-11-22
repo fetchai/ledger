@@ -338,19 +338,19 @@ constexpr UInt<S> &UInt<S>::operator=(UInt const &v)
 template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsAByteArray<T, UInt<S>> &UInt<S>::FromArray(
-    T const &other, bool input_is_little_endian)  // NOLINT
+    T const &arr, bool input_is_little_endian)  // NOLINT
 {
-  FromArrayInternal(other, input_is_little_endian, true);
+  FromArrayInternal(arr, input_is_little_endian, true);
   return *this;
 }
 
 template <uint16_t S>
 template <typename T>
-constexpr meta::IfIsAByteArray<T> UInt<S>::FromArrayInternal(T const &other,
+constexpr meta::IfIsAByteArray<T> UInt<S>::FromArrayInternal(T const &arr,
                                                              bool     input_is_little_endian,
                                                              bool     zero_content)  // NOLINT
 {
-  auto const size{other.size()};
+  auto const size{arr.size()};
 
   if (0 == size)
   {
@@ -360,7 +360,8 @@ constexpr meta::IfIsAByteArray<T> UInt<S>::FromArrayInternal(T const &other,
     }
     return;
   }
-  else if (size > ELEMENTS)
+
+  if (size > ELEMENTS)
   {
     throw std::runtime_error("Size of input byte array is bigger than size of this UInt type.");
   }
@@ -372,13 +373,13 @@ constexpr meta::IfIsAByteArray<T> UInt<S>::FromArrayInternal(T const &other,
 
   if (input_is_little_endian)
   {
-    std::copy(other.pointer(), other.pointer() + size, base());
+    std::copy(arr.pointer(), arr.pointer() + size, base());
   }
   else
   {
     for (std::size_t i{0}, rev_i{size - 1}; i < size; ++i, --rev_i)
     {
-      base()[i] = other[rev_i];
+      base()[i] = arr[rev_i];
     }
   }
 }

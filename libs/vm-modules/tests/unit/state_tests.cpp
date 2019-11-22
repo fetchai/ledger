@@ -28,7 +28,6 @@
 
 using namespace fetch::vm;
 using fetch::vm_modules::ByteArrayWrapper;
-using ::testing::AnyNumber;
 
 namespace {
 
