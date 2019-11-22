@@ -93,12 +93,10 @@ MainChain::~MainChain()
 
   if (mode_ != Mode::IN_MEMORY_DB)
   {
-    MsgPackSerializer serializer;
-    auto              ctor = serializer.NewMapConstructor();
+    LargeObjectSerializeHelper buffer{};
+    buffer << bloom_filter_;
 
-    MapSerializer<ProgressiveBloomFilter, MsgPackSerializer>::Serialize(ctor, bloom_filter_);
-
-    bloom_filter_store_ << serializer.data();
+    bloom_filter_store_ << buffer.data();
   }
 }
 
@@ -796,11 +794,9 @@ void MainChain::RecoverFromFile(Mode mode)
 
     byte_array::ByteArray bloom_filter_data{bloom_filter_store_};
 
-    MsgPackSerializer msgpack{bloom_filter_data};
-    auto              deserializer = msgpack.NewMapDeserializer();
+    LargeObjectSerializeHelper buffer{bloom_filter_data};
 
-    MapSerializer<ProgressiveBloomFilter, MsgPackSerializer>::Deserialize(deserializer,
-                                                                          bloom_filter_);
+    buffer >> bloom_filter_;
   }
   else
   {
