@@ -328,7 +328,7 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
     {
       if (left_edge_)
       {
-        limit = left_edge_->block_number + MAX_CHAIN_REQUEST_SIZE - 1;
+        limit = left_edge_->block_number + MAX_CHAIN_REQUEST_SIZE;
         // such a check is well-defined for unsigned types
         if (limit < left_edge_->block_number)
         {
@@ -344,12 +344,16 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
     else
     {
       assert(direction_ < 0);
-      assert(bool(left_edge_));
+      assert(left_edge_);
 
-      limit = left_edge_->block_number;
+      limit = left_edge_->block_number + 1;
+      if (limit < left_edge_->block_number)
+      {
+        throw std::runtime_error("Main chain grew up too large, impossibly large");
+      }
       if (right_edge_)
       {
-        start = right_edge_->hash;
+        start = right_edge_->previous_hash;
       }
     }
 
@@ -394,39 +398,33 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
       if (PromiseState::SUCCESS == status)
       {
         // the request was successful
-        auto response = current_request_->As<MainChainProtocol::Travelogue>();
-	auto &blocks = response.blocks;
+        auto  response = current_request_->As<MainChainProtocol::Travelogue>();
+        auto &blocks   = response.blocks;
 
         // we should receive at least one extra block in addition to what we already have
-        if (blocks.size() > 1)
+        if (!blocks.empty())
         {
-
           if (direction_ > 0)
           {
-            auto earliest_block_it = blocks.begin();
             if (left_edge_)
             {
               // left_edge_ is not null, which means we're continuing moving forward in time
-              // check if the first block received is actually the left_edge_
+              // check if the first block received is actually next to left_edge_
               auto &earliest_block = blocks.front();
-              earliest_block.UpdateDigest();
-              if (!Match(earliest_block, *left_edge_))
+              if (earliest_block.previous_hash != left_edge_->hash)
               {
                 FETCH_LOG_WARN(LOGGING_NAME, "The earliest block received (0x",
                                earliest_block.hash.ToHex(), ", #", earliest_block.block_number,
-                               " does not match current left edge (0x", left_edge_->hash.ToHex(),
-                               ", #", left_edge_->block_number, ')');
+                               ") does not stem from the current left edge (0x",
+                               left_edge_->hash.ToHex(), ", #", left_edge_->block_number, ')');
                 return State::REQUEST_HEAVIEST_CHAIN;
               }
-              // it matches so we won't need to add it, it's in the chain already
-              ++earliest_block_it;
             }
-            HandleChainResponse(current_peer_address_, earliest_block_it, blocks.end());
-            auto next_edge_ = chain_.GetBlock(blocks.back().hash);
-            if (next_edge_->block_number > left_edge_->block_number)
-            {
-              left_edge_ = std::move(next_edge_);
-            }
+            HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
+
+            auto const &latest_hash = blocks.back().hash;
+            assert(!latest_hash.empty());  // should be set by HandleChainResponse()
+            left_edge_ = chain_.GetBlock(latest_hash);
             assert(left_edge_);
           }
           else
@@ -441,40 +439,36 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             }
 
             // Since we're moving back in time, the earliest block is at the end of the array
-            auto earliest_block_it = blocks.rbegin();
-            auto latest_block_it   = blocks.rend();
             if (right_edge_)
             {
               // right_edge_ is not null, which means we're continuing moving backwards in time
               // check if the first block received is actually the right_edge_
               auto &latest_block = blocks.front();
               latest_block.UpdateDigest();
-              if (!Match(latest_block, *right_edge_))
+              if (right_edge_->previous_hash != latest_block.hash)
               {
                 FETCH_LOG_WARN(LOGGING_NAME, "The latest block received (0x",
                                latest_block.hash.ToHex(), ", #", latest_block.block_number,
-                               " does not match current right edge (0x", right_edge_->hash.ToHex(),
-                               ", #", right_edge_->block_number, ')');
+                               ") is not previous to the current right edge (0x",
+                               right_edge_->hash.ToHex(), ", #", right_edge_->block_number, ')');
                 return State::REQUEST_HEAVIEST_CHAIN;
               }
-              // it matches so we won't need to add it, it's on the chain already
-              --latest_block_it;
             }
 
             // check if the two edges already glue together
             assert(left_edge_);
             auto &earliest_block = blocks.back();
 
-            if (earliest_block.block_number < left_edge_->block_number)
+            if (earliest_block.block_number <= left_edge_->block_number)
             {
               FETCH_LOG_WARN(LOGGING_NAME, "The earliest block received (0x",
                              earliest_block.hash.ToHex(), ", #", earliest_block.block_number,
-                             " is earlier than current left edge (0x", left_edge_->hash.ToHex(),
+                             " overlaps with the current left edge (0x", left_edge_->hash.ToHex(),
                              ", #", left_edge_->block_number);
               return State::REQUEST_HEAVIEST_CHAIN;
             }
 
-            if (earliest_block.block_number == left_edge_->block_number)
+            if (earliest_block.block_number == left_edge_->block_number + 1)
             {
               if (response.next_direction != 0)
               {
@@ -482,20 +476,14 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
                 return State::REQUEST_HEAVIEST_CHAIN;
               }
 
-              earliest_block.UpdateDigest();
-              if (!Match(earliest_block, *left_edge_))
+              if (earliest_block.previous_hash != left_edge_->hash)
               {
-                FETCH_LOG_WARN(LOGGING_NAME,
-                               "Left-edge blocks do not match: "
-                               "expected {0x",
-                               left_edge_->hash.ToHex(), ", <-0x", left_edge_->previous_hash, ", ",
-                               left_edge_->weight, "}, actual {0x", earliest_block.hash.ToHex(),
-                               ", <-0x", earliest_block.previous_hash, ", ", earliest_block.weight,
-                               '}');
+                FETCH_LOG_WARN(LOGGING_NAME, "The earliest block received (0x",
+                               earliest_block.hash.ToHex(), ", #", earliest_block.block_number,
+                               ") does not stem from the current left edge (0x",
+                               left_edge_->hash.ToHex(), ", #", left_edge_->block_number, ')');
                 return State::REQUEST_HEAVIEST_CHAIN;
               }
-              // it matches so we won't need to add it, it's on the chain already
-              ++earliest_block_it;
             }
             else if (response.next_direction == 0)
             {
@@ -504,11 +492,12 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
               return State::REQUEST_HEAVIEST_CHAIN;
             }
 
-            HandleChainResponse(current_peer_address_, earliest_block_it, latest_block_it);
+            HandleChainResponse(current_peer_address_, blocks.rbegin(), blocks.rend());
             if (response.next_direction != 0)
             {
               auto const &earliest_hash = blocks.back().hash;
-              right_edge_               = chain_.GetBlock(earliest_hash);
+              assert(!earliest_hash.empty());  // should be set by HandleChainResponse()
+              right_edge_ = chain_.GetBlock(earliest_hash);
               assert(right_edge_);
             }
           }

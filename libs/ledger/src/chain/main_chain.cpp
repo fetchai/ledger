@@ -582,7 +582,8 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
  * limit specifies destination block_number.
  * If current_hash is empty, travel starts from tip with zero limit, and from genesis otherwise.
  *
- * @param current_hash The hash of the first block
+ * @param current_hash In forward travel, the hash of the first block's parent;
+ *                     when travelling backwards, the hash of the latest block to return
  * @param limit
  * @param direction -1 for towards genesis, +1, for towards tip
  * @return The array of blocks
@@ -591,68 +592,71 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
 MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, uint64_t limit,
                                             int64_t direction) const
 {
+  MilliTimer myTimer("MainChain::TimeTravel");
+
   if (direction == 0)
   {
     return {Blocks{}, 0};
   }
 
-  if (current_hash.empty() && direction > 0)
+  if (direction < 0)
   {
-    current_hash = chain::GENESIS_DIGEST;
-  }
-
-  IntBlockPtr block;
-  BlockHash   next_hash;
-
-  FETCH_LOCK(lock_);
-  if (!current_hash.empty())
-  {
-    if (!LookupBlock(current_hash, block, direction > 0 ? &next_hash : nullptr))
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
-      throw std::runtime_error("Failed to lookup block");
-    }
-  }
-
-  // by this moment, current hash can only be empty travelling back in time from tip
-  assert((current_hash.empty() && direction < 0) || block);
-  if (current_hash.empty() || limit <= block->block_number)
-  {
-    // travel back in time
-    auto ret_blocks = current_hash.empty() ? GetHeaviestChain(limit)
+    // travelling back in time
+    auto ret_blocks = current_hash.empty() ?
+                                           // heaviest chain from tip requested
+                          GetHeaviestChain(limit)
+                                           // continuing descend
                                            : GetChainPreceding(std::move(current_hash), limit);
     if (ret_blocks.empty())
     {
-      // stop here
       return {Blocks{}, 0};
     }
 
     auto const earliest_number = ret_blocks.back()->block_number;
     assert(earliest_number >= limit);
 
+    // 0 as next_direction indicates stop, if we have reached block number limit
+    // otherwise next_direction is -1, to continue descent
     int64_t next_direction = earliest_number == limit ? 0 : -1;
     return {std::move(ret_blocks), next_direction};
   }
 
-  MilliTimer myTimer("MainChain::ChainPreceding");
+  // Moving forward in time, towards tip
+  BlockHash next_hash;
+  Blocks    result;
+  int64_t   next_direction = 1;
+  bool      not_done       = true;
 
-  Blocks result{block};
+  FETCH_LOCK(lock_);
 
-  int64_t next_direction = 1;
+  IntBlockPtr block;
+  if (current_hash.empty())
+  {
+    // start of the sync, from genesis
+    next_hash = chain::GENESIS_DIGEST;
+  }
+  else
+  {
+    if (!LookupBlock(current_hash, block, &next_hash))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
+      throw std::runtime_error("Failed to lookup block");
+    }
+  }
 
-  bool not_done = true;
   for (current_hash = std::move(next_hash);
        // stop once we have gathered enough blocks or passed the tip
        not_done && !current_hash.empty() && result.size() < UPPER_BOUND;
        // walk the stack
        current_hash = std::move(next_hash))
   {
-    block = {};
+    block.reset();
     // lookup the block in storage
     if (!LookupBlock(current_hash, block, &next_hash))
     {
       if (!block)
       {
+        // there is no block such hashed neither in cache, nor in storage
         FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
         throw std::runtime_error("Failed to lookup block");
       }
