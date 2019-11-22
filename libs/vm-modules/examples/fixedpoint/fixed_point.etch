@@ -73,6 +73,18 @@ function main()
   printLn("log(y) = " + toString(log(y)));
   printLn("log10(y) = " + toString(log10(y)));
   printLn("sqrt(y) = " + toString(sqrt(y)));
+  printLn("sin(y) = " + toString(sin(y)));
+  printLn("cos(y) = " + toString(cos(y)));
+  printLn("tan(y) = " + toString(tan(y)));
+  x = sin(y);
+  printLn("x = " + toString(x));
+  printLn("asin(x) = " + toString(asin(x)));
+  x = cos(y);
+  printLn("x = " + toString(x));
+  printLn("acos(x) = " + toString(acos(x)));
+  x = tan(y);
+  printLn("x = " + toString(x));
+  printLn("atan(x) = " + toString(atan(x)));
 
   printLn("pow(" + toString(d) + ", " + toString(d) + ") = " + toString(pow(d, d)));
 
