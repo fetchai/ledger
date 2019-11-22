@@ -23,6 +23,8 @@
 #include "logging/logging.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/utils/timer.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -60,6 +62,22 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
       "ledger_synergetic_executor_deduct_fees_duration",
       "The execution duration in seconds for executing a transaction");
 
+  prepare_queue_duration_ = telemetry::Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_synergetic_executor_prepare_queue_duration",
+      "Preparing work queue duration in seconds");
+
+  execute_duration_ = telemetry::Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_synergetic_executor_execute_duration",
+      "The execution duration in seconds");
+
   // build the required number of executors
   for (auto &executor : executors_)
   {
@@ -69,6 +87,8 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
 
 ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Block const &previous)
 {
+  telemetry::FunctionTimer const timer{*prepare_queue_duration_};
+
   using WorkMap = std::unordered_map<ProblemId, WorkItemPtr>;
 
   auto const &current_epoch  = current.dag_epoch;
@@ -181,6 +201,8 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(std::size_t num_lane
 void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const &problem_data,
                                              std::size_t num_lanes)
 {
+  telemetry::FunctionTimer const timer{*execute_duration_};
+
   ExecutorPtr executor;
 
   bool first = true;
