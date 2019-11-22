@@ -1671,7 +1671,7 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
   FETCH_LOG_INFO(LOGGING_NAME, NodeString(), "#### Set time for state ", ToString(state),
                  " to complete at: ", state_deadline_, " which is in ",
-                 int64_t(state_deadline_) - int64_t(current_time), " seconds");
+                 int64_t(state_deadline_) - int64_t(current_time), " seconds.");
 
   if (state_deadline_ < current_time)
   {
