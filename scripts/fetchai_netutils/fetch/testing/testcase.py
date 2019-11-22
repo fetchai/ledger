@@ -1,21 +1,17 @@
-import os
-import json
-import time
 import datetime
 import glob
+import os
 import shutil
-import subprocess
-from pathlib import Path
-
+import sys
+import time
+from fetch.cluster.chain import ChainSyncTesting
 from fetch.cluster.instance import ConstellationInstance, DmlfEtchInstance
 from fetch.cluster.utils import output, verify_file
-from fetch.cluster.chain import ChainSyncTesting
-
-from fetchai.ledger.api.common import ApiEndpoint
 from fetchai.ledger.api import LedgerApi
+from fetchai.ledger.api.common import ApiEndpoint
 from fetchai.ledger.crypto import Entity
 from fetchai.ledger.genesis import *
-from fetch.cluster.chain import ChainSyncTesting
+from pathlib import Path
 
 
 class TestCase(object):
@@ -151,7 +147,7 @@ class ConstellationTestCase(TestCase):
 
         assert len(self._nodes) == index, \
             "Attempt to add node with an index mismatch. Current len: {}, index: {}".format(
-            len(self._nodes), index)
+                len(self._nodes), index)
 
         self._nodes.append(instance)
 
@@ -362,7 +358,7 @@ class ConstellationTestCase(TestCase):
         sync_test = ChainSyncTesting(config)
         target_host = "localhost"
         target_port = self._nodes[node_index]._port_start
-        sleep_time = self._nodes[node_index].block_interval*1.2/1000.
+        sleep_time = self._nodes[node_index].block_interval * 1.2 / 1000.
         for i in range(max_trials):
             try:
                 if sync_test.node_synced(target_host, target_port):
@@ -448,7 +444,8 @@ class DmlfEtchTestCase(TestCase):
             clear_path=False
         )
 
-        assert len(self._nodes) == index, "Attempt to add node with an index mismatch. Current len: {}, index: {}".format(
+        assert len(
+            self._nodes) == index, "Attempt to add node with an index mismatch. Current len: {}, index: {}".format(
             len(self._nodes), index)
 
         self._nodes.append(instance)
@@ -527,7 +524,7 @@ class DmlfEtchTestCase(TestCase):
         if self._nodes:
             for n, node in enumerate(self._nodes):
                 print('Stopping Node {}...'.format(n))
-                if(node):
+                if (node):
                     node.stop()
                 print('Stopping Node {}...complete'.format(n))
 

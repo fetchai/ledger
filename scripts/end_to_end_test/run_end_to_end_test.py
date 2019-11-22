@@ -9,28 +9,21 @@
 
 import argparse
 import codecs
-import datetime
-import glob
 import importlib
+import json
 import os
 import pickle
-import shutil
 import subprocess
 import sys
 import threading
 import time
 import traceback
-import json
 import yaml
-from threading import Event
-from pathlib import Path
-from threading import Event
-
-from fetch.testing.testcase import ConstellationTestCase, DmlfEtchTestCase
 from fetch.cluster.utils import output, verify_file, yaml_extract
-
+from fetch.testing.testcase import ConstellationTestCase, DmlfEtchTestCase
 from fetchai.ledger.api import LedgerApi
 from fetchai.ledger.crypto import Entity
+from threading import Event
 
 from .smart_contract_tests.synergetic_utils import SynergeticContractTestHelper
 
@@ -610,7 +603,6 @@ def run_steps(test_yaml, test_instance):
 
 
 def run_test(build_directory, yaml_file, node_exe):
-
     # Read YAML file
     with open(yaml_file, 'r') as stream:
         try:
