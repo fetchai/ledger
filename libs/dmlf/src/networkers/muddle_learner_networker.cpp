@@ -38,6 +38,8 @@ using fetch::service::Promise;
 using PromiseList = std::vector<Promise>;
 using SignerPtr   = std::shared_ptr<crypto::ECDSASigner>;
 
+const INITIAL_PEERS_COUNT = 10;
+
 MuddleLearnerNetworker::MuddleLearnerNetworkerProtocol::MuddleLearnerNetworkerProtocol(
     MuddleLearnerNetworker &sample)
 {
@@ -86,19 +88,16 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
     }
   }
 
-  if (config_peer_count < 10)
+  if (config_peer_count <= INITIAL_PEERS_COUNT)
   {
     initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
   }
   else
   {
-    for (unsigned int i = 0; i < 10; i++)
+    for (unsigned int i = 0; i < INITIAL_PEERS_COUNT; i++)
     {
       auto peer_number = (instance_number + 1 + i) % config_peer_count;
-      if (peer_number != instance_number)
-      {
-        initial_peers.insert(config_peers[peer_number]["uri"].As<std::string>());
-      }
+      initial_peers.insert(config_peers[peer_number]["uri"].As<std::string>());
     }
   }
 
@@ -108,14 +107,6 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
   proto_  = std::make_shared<MuddleLearnerNetworkerProtocol>(*this);
 
   server_->Add(RPC_DMLF, proto_.get());
-
-  for (std::size_t peer_number = 0; peer_number < config_peers.size(); peer_number++)
-  {
-    if (peer_number != instance_number)
-    {
-      peers_.emplace_back(config_peers[peer_number]["pub"].As<std::string>());
-    }
-  }
 }
 
 // TOFIX remove return value
