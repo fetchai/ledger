@@ -1554,8 +1554,7 @@ uint64_t TimePerDKGState(uint64_t cabinet_size)
  * set the deadline for this state to complete
  *
  */
-void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &state,
-                                             uint64_t                         base_state_time)
+void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &state)
 {
   auto it = time_slot_map_.find(state);
 
@@ -1583,7 +1582,7 @@ void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &st
   // Note: fine to do floor arithmetic here, it might cause the deadline to happen in the past, but
   // there is resilience to this.
   auto time_until_deadline_s =
-      static_cast<uint64_t>(time_slots_to_end * static_cast<double>(base_state_time));
+      static_cast<uint64_t>((time_slots_to_end / time_slots_in_dkg_) * expected_dkg_timespan_);
 
   state_deadline_ = reference_timepoint_ + time_until_deadline_s;
 
@@ -1668,7 +1667,7 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
   // Given a reference start point, the DKG allotted time, and the state we are going into,
   // set the deadline for when this state should move on
-  SetDeadlineForState(state, time_per_state);
+  SetDeadlineForState(state);
 
   FETCH_LOG_INFO(LOGGING_NAME, NodeString(), "#### Set time for state ", ToString(state),
                  " to complete at: ", state_deadline_, " which is in ",
