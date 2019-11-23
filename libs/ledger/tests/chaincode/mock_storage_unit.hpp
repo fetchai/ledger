@@ -17,13 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fake_storage_unit.hpp"
+#include "ledger/storage_unit/fake_storage_unit.hpp"
 
 #include "gmock/gmock.h"
 
 class MockStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
+  using FakeStorageUnit = fetch::ledger::FakeStorageUnit;
+
   MockStorageUnit()
   {
     using ::testing::_;

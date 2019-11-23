@@ -81,7 +81,7 @@ void Transaction::Bind(vm::Module &module)
       .CreateMemberFunction("getTotalTransferAmount", &Transaction::get_total_transfer_amount)
       .CreateMemberFunction("validFrom", &Transaction::valid_from)
       .CreateMemberFunction("validUntil", &Transaction::valid_until)
-      .CreateMemberFunction("chargeRate", &Transaction::charge)
+      .CreateMemberFunction("chargeRate", &Transaction::charge_rate)
       .CreateMemberFunction("chargeLimit", &Transaction::charge_limit)
       .CreateMemberFunction("contractDigest", &Transaction::contract_digest)
       .CreateMemberFunction("contractAddress", &Transaction::contract_address)
@@ -97,7 +97,7 @@ Transaction::Transaction(vm::VM *vm, vm::TypeId type_id, fetch::chain::Transacti
   , transfers_{CreateTransfers(vm, tx)}
   , contract_digest_{CreateAddress(vm, tx.contract_digest(), tx.signatories())}
   , contract_address_{CreateAddress(vm, tx.contract_address(), tx.signatories())}
-  , action_{new String{vm, static_cast<std::string>(tx.action()), false}}
+  , action_{new String{vm, static_cast<std::string>(tx.action())}}
   , signatories_{CreateSignatories(vm, tx)}
 {}
 
@@ -131,9 +131,9 @@ BlockIndex Transaction::valid_until() const
   return tx_->valid_until();
 }
 
-NativeTokenAmount Transaction::charge() const
+NativeTokenAmount Transaction::charge_rate() const
 {
-  return tx_->charge();
+  return tx_->charge_rate();
 }
 
 NativeTokenAmount Transaction::charge_limit() const

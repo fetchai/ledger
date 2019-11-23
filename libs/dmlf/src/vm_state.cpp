@@ -34,9 +34,10 @@ Status VmState::Read(const std::string &key, void *data, uint64_t &size)
     return Status::PERMISSION_DENIED;
   }
 
-  const auto &buf = it->second;
+  auto const &buf = it->second;
   if (size < buf.size())
   {
+    size = buf.size();  // Signal how big a buffer is needed
     return Status::BUFFER_TOO_SMALL;
   }
 
@@ -67,10 +68,10 @@ VmState VmState::DeepCopy() const
 {
   VmState newCopy;
 
-  for (const auto &i : store_)
+  for (auto const &i : store_)
   {
-    const auto &name = i.first;
-    const auto &buff = i.second;
+    auto const &name = i.first;
+    auto const &buff = i.second;
     newCopy.store_.emplace(name, buff.Copy());
   }
 

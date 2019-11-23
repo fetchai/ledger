@@ -108,10 +108,10 @@ public:
     }
   };
 
-  Constellation(CertificatePtr certificate, Config config);
+  Constellation(CertificatePtr const &certificate, Config config);
   ~Constellation() override = default;
 
-  void Run(UriSet const &initial_peers, core::WeakRunnable bootstrap_monitor);
+  bool Run(UriSet const &initial_peers, core::WeakRunnable bootstrap_monitor);
   void SignalStop();
 
   void DumpOpenAPI(std::ostream &stream);
@@ -147,6 +147,7 @@ private:
   using NaiveSynergeticMiner   = ledger::NaiveSynergeticMiner;
   using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
   using BeaconServicePtr       = std::shared_ptr<fetch::beacon::BeaconService>;
+  using BeaconSetupServicePtr  = std::shared_ptr<fetch::beacon::BeaconSetupService>;
   using EntropyPtr             = std::unique_ptr<ledger::EntropyGeneratorInterface>;
   using ShardManagementService = shards::ShardManagementService;
   using ShardMgmtServicePtr    = std::shared_ptr<ShardManagementService>;
@@ -171,6 +172,7 @@ private:
   NetworkManager http_network_manager_;  ///< A separate net. coordinator for the http service(s)
   MuddlePtr      muddle_;                ///< The muddle networking service
   CertificatePtr internal_identity_;
+  CertificatePtr external_identity_;
   MuddlePtr      internal_muddle_;  ///< The muddle networking service
   TrustSystem    trust_;            ///< The trust subsystem
   /// @}
@@ -190,10 +192,11 @@ private:
 
   /// @name Staking
   /// @{
-  MuddlePtr        beacon_network_;
-  BeaconServicePtr beacon_;
-  StakeManagerPtr  stake_;  ///< The stake system
-  ConsensusPtr     consensus_;
+  MuddlePtr             beacon_network_;
+  BeaconSetupServicePtr beacon_setup_;
+  BeaconServicePtr      beacon_;
+  StakeManagerPtr       stake_;  ///< The stake system
+  ConsensusPtr          consensus_;
   /// @}
 
   /// @name Block Processing

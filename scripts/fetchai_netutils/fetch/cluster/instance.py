@@ -1,6 +1,9 @@
 import os
 import subprocess
 import fnmatch
+import json
+
+from fetchai.ledger.crypto import Entity
 
 
 class Instance(object):
@@ -27,6 +30,7 @@ class Instance(object):
             # tear down the log file
             self._logfile.close()
             self._logfile = None
+            self._process = None
 
     def poll(self):
         if self._exit_code is not None:
@@ -45,6 +49,10 @@ class Instance(object):
     def log_path(self):
         return self._log_path
 
+    @property
+    def started(self):
+        return self._process is not None
+
 
 class ConstellationInstance(Instance):
     def __init__(self, app_path, port_start, root, clear_path=True):
@@ -57,6 +65,7 @@ class ConstellationInstance(Instance):
         self._standalone = False
         self._lanes = None
         self._slices = None
+        self._entity = Entity()
 
         # fake construct the instances
         super().__init__([], root)
@@ -69,6 +78,10 @@ class ConstellationInstance(Instance):
             for ext in ('*.db', '*.log'):
                 for item in fnmatch.filter(os.listdir(root), ext):
                     os.remove(os.path.join(root, item))
+
+        # Set the miner up with a predefined identity by default
+        with open(os.path.join(root, "p2p.key"), 'wb+') as f:
+            f.write(self._entity.private_key_bytes)
 
     def add_peer(self, peer):
         print(self.p2p_address, '<=>', peer.p2p_address)
@@ -176,6 +189,76 @@ class ConstellationInstance(Instance):
             cmd += ['-experimental', ','.join(self._feature_flags)]
 
         self._cmd = list(map(str, cmd))
+
+    # Append arbitrary flags
+    def append_to_cmd(self, extra):
+        self._cmd = [*self._cmd, *extra]
+
+
+class DmlfEtchInstance(Instance):
+    def __init__(self, app_path, port_start, key_b64, pub_b64, root, clear_path=True):
+        self._app_path = str(app_path)
+        self._port_start = int(port_start)
+        self._root = root
+        self._key = key_b64
+        self._pub = pub_b64
+        self._peers_uris = []
+        self._peers_pubs = []
+
+        super().__init__([], root)
+
+        self._update_cmd()
+
+    def add_peer(self, peer):
+        self._peers_uris.append(peer.uri)
+        self._peers_pubs.append(peer.public_key)
+
+    def start(self):
+        self._update_cmd()
+
+        super().start()
+
+        print('Dmlf Etch instance {} on pid {}'.format(
+            self._port_start, self._process.pid))
+        print(self._cmd)
+
+    @property
+    def uri(self):
+        return 'tcp://127.0.0.1:' + str(self._port_start)
+
+    @property
+    def public_key(self):
+        return self._pub
+
+    def _update_cmd(self):
+        config_file = "{}/config_{}.json".format(self._root, self._port_start)
+        self._generate_json(config_file)
+        cmd = [
+            self._app_path,
+            config_file,
+        ]
+        self._cmd = cmd
+
+    def _generate_json(self, filename):
+        config = {
+            "node": {
+                "uri": self.uri,
+                "key": self._key
+            }
+        }
+        with open(filename, 'w') as config_file:
+            json.dump(config, config_file)
+
+    def generate_nodes_config(self):
+        nodes = [
+            {
+                "uri": uri,
+                "pub": pub
+            }
+            for uri, pub in zip(self._peers_uris, self._peers_pubs)
+        ]
+
+        return nodes
 
     # Append arbitrary flags
     def append_to_cmd(self, extra):

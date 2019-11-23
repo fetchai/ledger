@@ -77,7 +77,7 @@ AdjustableClockPtr CreateAdjustable(ClockType type)
 }  // namespace
 
 /**
- * Create or lookup a requested clock
+ * Create or look up a requested clock
  *
  * @param name The name of the clock
  * @param default_type The default type of the clock

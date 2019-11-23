@@ -27,9 +27,14 @@ namespace version {
 void DisplayCLIHeader(std::string const &name, std::string const &years,
                       std::string const &additional)
 {
-  std::cout << " F E ╱     " << name << ' ' << version::FULL << '\n';
-  std::cout << "   T C     Copyright " << years << " (c) Fetch AI Ltd." << '\n';
-  std::cout << "     H     " << additional << '\n' << std::endl;
+
+  std::cout << "\u25A0 \u25A0 \u25A0 .\n";
+  std::cout << "\u25A0 \u25A0 . .\n";
+  std::cout << "\u25A0 . . .\n";
+  std::cout << ". . . .\n";
+  std::cout << name << ' ' << version::FULL << std::endl;
+  std::cout << "Copyright " << years << " (c) Fetch AI Ltd." << std::endl;
+  std::cout << additional << std::endl;
 }
 
 }  // namespace version

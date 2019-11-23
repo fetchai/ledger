@@ -497,7 +497,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
 
   vm->SetIOObserver(state());
 
-  // lookup the function / entry point which will be executed
+  // look up the function / entry point which will be executed
   Executable::Function const *target_function = executable_->FindFunction(name);
   if (target_function == nullptr ||
       input_params.size() != static_cast<std::size_t>(target_function->num_parameters))
@@ -578,7 +578,7 @@ Contract::Result SmartContract::InvokeInit(chain::Address const &    owner,
 
   vm::ParameterPack params{vm->registered_types()};
 
-  // lookup the function / entry point which will be executed
+  // look up the function / entry point which will be executed
   Executable::Function const *target_function = executable_->FindFunction(init_fn_name_);
   if (target_function->num_parameters == 1)
   {
@@ -631,11 +631,11 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   auto vm = std::make_unique<vm::VM>(module_.get());
   vm->SetIOObserver(state());
 
-  // lookup the executable
+  // look up the executable
   auto const target_function = executable_->FindFunction(name);
   if (target_function == nullptr)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup target function");
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up target function");
     return Status::FAILED;
   }
 
@@ -652,10 +652,10 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
 
       if (!request.Has(parameter.name))
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup variable: ", parameter.name);
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up variable: ", parameter.name);
         response           = Query::Object();
         response["status"] = "failed";
-        response["msg"] = "Unable to lookup variable: " + static_cast<std::string>(parameter.name);
+        response["msg"] = "Unable to look up variable: " + static_cast<std::string>(parameter.name);
         response["console"] = "";
         response["result"]  = variant::Variant::Null();
         return Status::FAILED;
@@ -741,7 +741,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     response["result"] = output.Get<fixed_point::fp64_t>();
     break;
   case vm::TypeIds::String:
-    response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
+    response["result"] = output.Get<vm::Ptr<vm::String>>()->string();
     break;
   default:
     if (output.IsPrimitive())

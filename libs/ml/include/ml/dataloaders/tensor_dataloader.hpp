@@ -17,13 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 
-#include <cassert>
 #include <stdexcept>
 #include <utility>
 
@@ -44,13 +42,12 @@ class TensorDataLoader : public DataLoader<LabelType, InputType>
 
 public:
   TensorDataLoader() = default;
-  TensorDataLoader(SizeVector label_shape, std::vector<SizeVector> data_shapes);
 
   ~TensorDataLoader() override = default;
 
   ReturnType GetNext() override;
 
-  bool AddData(InputType const &data, LabelType const &labels) override;
+  bool AddData(std::vector<InputType> const &data, LabelType const &labels) override;
 
   SizeType Size() const override;
   bool     IsDone() const override;
@@ -77,16 +74,14 @@ protected:
   SizeType validation_offset_ = 0;
 
   SizeType n_samples_            = 0;  // number of all samples
-  SizeType n_test_samples_       = 0;  // number of train samples
-  SizeType n_validation_samples_ = 0;  // number of train samples
-  SizeType n_train_samples_      = 0;  // number of validation samples
+  SizeType n_test_samples_       = 0;  // number of test samples
+  SizeType n_validation_samples_ = 0;  // number of validation samples
+  SizeType n_train_samples_      = 0;  // number of train samples
 
-  TensorType data_;
-  TensorType labels_;
+  std::vector<TensorType> data_;
+  TensorType              labels_;
 
-  SizeVector              label_shape_;
   SizeVector              one_sample_label_shape_;
-  std::vector<SizeVector> data_shapes_;
   std::vector<SizeVector> one_sample_data_shapes_;
   float                   test_to_train_ratio_       = 0.0;
   float                   validation_to_train_ratio_ = 0.0;
@@ -94,35 +89,28 @@ protected:
   SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
 
-  random::Random rand;
-  SizeType       count_ = 0;
+  SizeType count_ = 0;
 
   void UpdateRanges();
   void UpdateCursor() override;
 };
 
 template <typename LabelType, typename InputType>
-TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector              label_shape,
-                                                         std::vector<SizeVector> data_shapes)
-  : DataLoader<LabelType, TensorType>()
-  , label_shape_(std::move(label_shape))
-  , data_shapes_(std::move(data_shapes))
-{
-  UpdateCursor();
-}
-
-template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::ReturnType
 TensorDataLoader<LabelType, InputType>::GetNext()
 {
-  ReturnType ret(labels_.View(*this->current_cursor_).Copy(one_sample_label_shape_),
-                 {data_.View(*this->current_cursor_).Copy(one_sample_data_shapes_.at(0))});
+  std::vector<InputType> ret_data;
+  LabelType ret_labels = labels_.View(*this->current_cursor_).Copy(one_sample_label_shape_);
+
+  for (SizeType i{0}; i < data_.size(); i++)
+  {
+    ret_data.emplace_back(
+        data_.at(i).View(*this->current_cursor_).Copy(one_sample_data_shapes_.at(i)));
+  }
 
   if (this->random_mode_)
   {
-    *this->current_cursor_ =
-        this->current_min_ +
-        (static_cast<SizeType>(decltype(rand)::generator()) % this->current_size_);
+    *this->current_cursor_ = this->current_min_ + SizeType{this->rand()} % this->current_size_;
     ++count_;
   }
   else
@@ -130,22 +118,33 @@ TensorDataLoader<LabelType, InputType>::GetNext()
     (*this->current_cursor_)++;
   }
 
-  return ret;
+  return ReturnType(ret_labels, ret_data);
 }
 
 template <typename LabelType, typename InputType>
-bool TensorDataLoader<LabelType, InputType>::AddData(InputType const &data, LabelType const &labels)
+bool TensorDataLoader<LabelType, InputType>::AddData(std::vector<InputType> const &data,
+                                                     LabelType const &             labels)
 {
   one_sample_label_shape_                                        = labels.shape();
   one_sample_label_shape_.at(one_sample_label_shape_.size() - 1) = 1;
+  labels_                                                        = labels.Copy();
 
-  one_sample_data_shapes_.emplace_back(data.shape());
-  one_sample_data_shapes_.at(0).at(one_sample_data_shapes_.at(0).size() - 1) = 1;
+  // Resize data vector
+  if (data_.size() < data.size())
+  {
+    data_.resize(data.size());
+    one_sample_data_shapes_.resize(data.size());
+  }
 
-  data_   = data.Copy();
-  labels_ = labels.Copy();
+  // Add data to data vector
+  for (SizeType i{0}; i < data.size(); i++)
+  {
+    data_.at(i)                                                                = data.at(i).Copy();
+    one_sample_data_shapes_.at(i)                                              = data.at(i).shape();
+    one_sample_data_shapes_.at(i).at(one_sample_data_shapes_.at(i).size() - 1) = 1;
+  }
 
-  n_samples_ = data_.shape().at(data_.shape().size() - 1);
+  n_samples_ = data_.at(0).shape().at(data_.at(0).shape().size() - 1);
 
   UpdateRanges();
 
@@ -334,18 +333,17 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
   static uint8_t const DATA                      = 13;
   static uint8_t const LABELS                    = 14;
 
-  static uint8_t const LABEL_SHAPE            = 15;
-  static uint8_t const ONE_SAMPLE_LABEL_SHAPE = 16;
-  static uint8_t const DATA_SHAPES            = 17;
-  static uint8_t const ONE_SAMPLE_DATA_SHAPES = 18;
+  static uint8_t const ONE_SAMPLE_LABEL_SHAPE = 15;
+  static uint8_t const ONE_SAMPLE_DATA_SHAPES = 16;
 
-  static uint8_t const BATCH_LABEL_DIM = 19;
-  static uint8_t const BATCH_DATA_DIM  = 20;
+  static uint8_t const BATCH_LABEL_DIM = 17;
+  static uint8_t const BATCH_DATA_DIM  = 18;
+  static uint8_t const COUNT           = 19;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(20);
+    auto map = map_constructor(19);
 
     // serialize parent class first
     auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> const *>(&sp);
@@ -369,13 +367,12 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
     map.Append(DATA, sp.data_);
     map.Append(LABELS, sp.labels_);
 
-    map.Append(LABEL_SHAPE, sp.label_shape_);
     map.Append(ONE_SAMPLE_LABEL_SHAPE, sp.one_sample_label_shape_);
-    map.Append(DATA_SHAPES, sp.data_shapes_);
     map.Append(ONE_SAMPLE_DATA_SHAPES, sp.one_sample_data_shapes_);
 
     map.Append(BATCH_LABEL_DIM, sp.batch_label_dim_);
     map.Append(BATCH_DATA_DIM, sp.batch_data_dim_);
+    map.Append(COUNT, sp.count_);
   }
 
   template <typename MapDeserializer>
@@ -402,14 +399,12 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
     map.ExpectKeyGetValue(DATA, sp.data_);
     map.ExpectKeyGetValue(LABELS, sp.labels_);
 
-    map.ExpectKeyGetValue(LABEL_SHAPE, sp.label_shape_);
     map.ExpectKeyGetValue(ONE_SAMPLE_LABEL_SHAPE, sp.one_sample_label_shape_);
-    map.ExpectKeyGetValue(DATA_SHAPES, sp.data_shapes_);
     map.ExpectKeyGetValue(ONE_SAMPLE_DATA_SHAPES, sp.one_sample_data_shapes_);
 
     map.ExpectKeyGetValue(BATCH_LABEL_DIM, sp.batch_label_dim_);
     map.ExpectKeyGetValue(BATCH_DATA_DIM, sp.batch_data_dim_);
-    sp.UpdateRanges();
+    map.ExpectKeyGetValue(COUNT, sp.count_);
     sp.UpdateCursor();
   }
 };

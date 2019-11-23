@@ -143,9 +143,14 @@ namespace serializers {
 template <typename D>
 struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
 {
-  using Type             = fetch::vm_modules::ml::VMOptimiser;
-  using OptimiserType    = fetch::vm_modules::ml::VMOptimiser::OptimiserType;
-  using SgdOptimiserType = fetch::vm_modules::ml::VMOptimiser::SgdOptimiserType;
+  using Type                  = fetch::vm_modules::ml::VMOptimiser;
+  using OptimiserType         = fetch::vm_modules::ml::VMOptimiser::OptimiserType;
+  using AdagradOptimiserType  = fetch::vm_modules::ml::VMOptimiser::AdagradOptimiserType;
+  using AdamOptimiserType     = fetch::vm_modules::ml::VMOptimiser::AdamOptimiserType;
+  using MomentumOptimiserType = fetch::vm_modules::ml::VMOptimiser::MomentumOptimiserType;
+  using RmspropOptimiserType  = fetch::vm_modules::ml::VMOptimiser::RmspropOptimiserType;
+  using SgdOptimiserType      = fetch::vm_modules::ml::VMOptimiser::SgdOptimiserType;
+
   using DataLoaderType =
       fetch::ml::dataloaders::DataLoader<vm_modules::ml::VMOptimiser::TensorType,
                                          vm_modules::ml::VMOptimiser::TensorType>;
@@ -185,7 +190,11 @@ struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
     }
     case vm_modules::ml::VMOptimiser::OptimiserMode::ADAM:
     {
-      throw std::runtime_error("serialisation not yet implemented for adam optimiser");
+      auto opt_ptr =
+          std::static_pointer_cast<fetch::vm_modules::ml::VMOptimiser::AdamOptimiserType>(
+              sp.optimiser_);
+      map.Append(OPTIMISER, *opt_ptr);
+      break;
     }
     case vm_modules::ml::VMOptimiser::OptimiserMode::MOMENTUM:
     {
@@ -233,7 +242,10 @@ struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
     }
     case vm_modules::ml::VMOptimiser::OptimiserMode::ADAM:
     {
-      throw std::runtime_error("deserialisation not yet implemented for adam optimiser");
+      auto opt_ptr = std::make_shared<AdamOptimiserType>();
+      map.ExpectKeyGetValue(OPTIMISER, *opt_ptr);
+      sp.optimiser_ = std::static_pointer_cast<OptimiserType>(opt_ptr);
+      break;
     }
     case vm_modules::ml::VMOptimiser::OptimiserMode::MOMENTUM:
     {

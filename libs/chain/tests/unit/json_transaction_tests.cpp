@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "address/address.hpp"
+#include "chain/address.hpp"
+#include "chain/json_transaction.hpp"
+#include "chain/transaction.hpp"
+#include "chain/transaction_builder.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/json_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_builder.hpp"
 #include "variant/variant.hpp"
 
 #include "gtest/gtest.h"
@@ -31,8 +31,8 @@ using fetch::crypto::ECDSASigner;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
 using fetch::chain::Address;
-using fetch::ledger::FromJsonTransaction;
-using fetch::ledger::ToJsonTransaction;
+using fetch::chain::FromJsonTransaction;
+using fetch::chain::ToJsonTransaction;
 using fetch::variant::Variant;
 
 TEST(JsonTransactionTests, BasicTest)

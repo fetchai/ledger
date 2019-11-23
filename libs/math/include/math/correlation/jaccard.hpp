@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"
+#include "vectorise/math/max.hpp"
+#include "vectorise/math/min.hpp"
 
 #include <cassert>
 
@@ -31,15 +32,15 @@ typename ArrayType::Type Jaccard(ArrayType const &a, ArrayType const &b)
 {
   assert(a.size() == b.size());
   using DataType = typename ArrayType::Type;
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   DataType sumA  = 0;
   DataType sumB  = 0;
   SizeType count = 0;
   for (auto &val : a)
   {
-    sumA += Min(val != 0, b.At(count) != 0);
-    sumB += Max(val != 0, b.At(count) != 0);
+    sumA += fetch::vectorise::Min(val != 0, b.At(count) != 0);
+    sumB += fetch::vectorise::Max(val != 0, b.At(count) != 0);
     count++;
   }
 
@@ -51,15 +52,15 @@ typename ArrayType::Type GeneralisedJaccard(ArrayType const &a, ArrayType const 
 {
   assert(a.size() == b.size());
   using DataType = typename ArrayType::Type;
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   DataType sumA  = 0;
   DataType sumB  = 0;
   SizeType count = 0;
   for (auto &val : a)
   {
-    sumA += Min(val, b.At(count));
-    sumB += Max(val, b.At(count));
+    sumA += fetch::vectorise::Min(val, b.At(count));
+    sumB += fetch::vectorise::Max(val, b.At(count));
     count++;
   }
 

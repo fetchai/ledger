@@ -62,7 +62,7 @@ bool ShardManagementService::QueryManifest(Address const &address, Manifest &man
 
   FETCH_LOCK(lock_);
 
-  // attempt to lookup the manifest from the cache
+  // attempt to look up the manifest from the cache
   auto it = manifest_cache_.find(address);
 
   if (it == manifest_cache_.end())
@@ -123,7 +123,7 @@ void ShardManagementService::ResolveUpdates()
     {
       FETCH_LOG_TRACE(LOGGING_NAME, "Resolved manifest from: ", it->first.ToBase64());
 
-      // lookup the cache entry
+      // look up the cache entry
       auto &entry = manifest_cache_[it->first];
 
       // update the cache entry
@@ -190,7 +190,7 @@ void ShardManagementService::UpdateShards(Addresses const &addresses)
 
       for (uint32_t shard = 0; shard < num_shards_; ++shard)
       {
-        // lookup the give output shard configuration
+        // look up the give output shard configuration
         auto &shard_cfg = shard_address_cfg[static_cast<std::size_t>(shard)];
 
         // attempt to locate the corresponding entry in the manifest

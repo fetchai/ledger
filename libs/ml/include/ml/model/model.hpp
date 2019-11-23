@@ -30,6 +30,13 @@
 #include <utility>
 
 namespace fetch {
+namespace dmlf {
+namespace collective_learning {
+template <class TensorType>
+class ClientAlgorithm;
+}  // namespace collective_learning
+}  // namespace dmlf
+
 namespace ml {
 namespace model {
 
@@ -43,13 +50,14 @@ template <typename TensorType>
 class Model
 {
 public:
-  using DataType          = typename TensorType::Type;
-  using SizeType          = fetch::math::SizeType;
-  using GraphType         = Graph<TensorType>;
-  using DataLoaderType    = dataloaders::DataLoader<TensorType, TensorType>;
-  using GraphPtrType      = typename std::shared_ptr<GraphType>;
-  using DataLoaderPtrType = typename std::unique_ptr<DataLoaderType>;
-  using OptimiserPtrType  = typename std::unique_ptr<optimisers::Optimiser<TensorType>>;
+  using DataType           = typename TensorType::Type;
+  using SizeType           = fetch::math::SizeType;
+  using GraphType          = Graph<TensorType>;
+  using DataLoaderType     = dataloaders::DataLoader<TensorType, TensorType>;
+  using ModelOptimiserType = optimisers::Optimiser<TensorType>;
+  using GraphPtrType       = typename std::shared_ptr<GraphType>;
+  using DataLoaderPtrType  = typename std::shared_ptr<DataLoaderType>;
+  using OptimiserPtrType   = typename std::shared_ptr<ModelOptimiserType>;
 
   explicit Model(ModelConfig<DataType> model_config = ModelConfig<DataType>())
     : model_config_(std::move(model_config))
@@ -64,7 +72,8 @@ public:
   virtual ~Model() = default;
 
   void Compile(OptimiserType optimiser_type, ops::LossType loss_type = ops::LossType::NONE);
-  void SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr);
+  void SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr);
+  void SetOptimiser(OptimiserPtrType optimiser_ptr);
 
   void     Train();
   void     Train(SizeType n_rounds);
@@ -75,12 +84,18 @@ public:
 
   void UpdateConfig(ModelConfig<DataType> &model_config);
 
+  /// FUNCTIONS THAT EXPOSE THE INTERNALS ///
+  std::string InputName();
+  std::string LabelName();
+  std::string OutputName();
+  std::string ErrorName();
+
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 
 protected:
   ModelConfig<DataType> model_config_;
-  GraphPtrType          graph_ptr_ = std::make_unique<GraphType>();
+  GraphPtrType          graph_ptr_ = std::make_shared<GraphType>();
   DataLoaderPtrType     dataloader_ptr_;
   OptimiserPtrType      optimiser_ptr_;
 
@@ -99,6 +114,8 @@ protected:
                           DataType test_loss = fetch::math::numeric_max<DataType>());
 
 private:
+  friend class dmlf::collective_learning::ClientAlgorithm<TensorType>;
+
   bool SetOptimiser();
   void TrainImplementation(DataType &loss, SizeType n_rounds = 1);
 };
@@ -166,15 +183,14 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
 }
 
 /**
- * Overwrite the models dataloader with an external custom dataloader. It must be
- * moved in as a unique_ptr to ensure ownership entirely belongs to model
+ * Overwrite the models dataloader with an external custom dataloader.
  * @tparam TensorType
  * @param dataloader_ptr
  */
 template <typename TensorType>
-void Model<TensorType>::SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr)
+void Model<TensorType>::SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr)
 {
-  dataloader_ptr_ = std::move(dataloader_ptr);
+  dataloader_ptr_ = dataloader_ptr;
 }
 
 /**
@@ -254,6 +270,30 @@ template <typename TensorType>
 void Model<TensorType>::UpdateConfig(ModelConfig<DataType> &model_config)
 {
   model_config_ = model_config;
+}
+
+template <typename TensorType>
+std::string Model<TensorType>::InputName()
+{
+  return input_;
+}
+
+template <typename TensorType>
+std::string Model<TensorType>::LabelName()
+{
+  return label_;
+}
+
+template <typename TensorType>
+std::string Model<TensorType>::OutputName()
+{
+  return output_;
+}
+
+template <typename TensorType>
+std::string Model<TensorType>::ErrorName()
+{
+  return error_;
 }
 
 template <typename TensorType>
@@ -387,7 +427,6 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       break;
     }
 
-    case ml::LoaderType::MNIST:
     case ml::LoaderType::SGNS:
     case ml::LoaderType::W2V:
     case ml::LoaderType::COMMODITY:
@@ -418,9 +457,14 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       map.Append(OPTIMISER_PTR, *optimiser_ptr);
       break;
     }
-
-    case ml::OptimiserType::ADAGRAD:
     case ml::OptimiserType::ADAM:
+    {
+      auto *optimiser_ptr =
+          static_cast<fetch::ml::optimisers::AdamOptimiser<TensorType> *>(sp.optimiser_ptr_.get());
+      map.Append(OPTIMISER_PTR, *optimiser_ptr);
+      break;
+    }
+    case ml::OptimiserType::ADAGRAD:
     case ml::OptimiserType::MOMENTUM:
     case ml::OptimiserType::RMSPROP:
     {
@@ -450,7 +494,6 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       sp.dataloader_ptr_.reset(loader_ptr);
       break;
     }
-    case ml::LoaderType::MNIST:
     case ml::LoaderType::SGNS:
     case ml::LoaderType::W2V:
     case ml::LoaderType::COMMODITY:
@@ -484,9 +527,16 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       sp.optimiser_ptr_->Init();
       break;
     }
-
-    case ml::OptimiserType::ADAGRAD:
     case ml::OptimiserType::ADAM:
+    {
+      auto optimiser_ptr = new ml::optimisers::AdamOptimiser<TensorType>();
+      map.ExpectKeyGetValue(OPTIMISER_PTR, *optimiser_ptr);
+      sp.optimiser_ptr_.reset(optimiser_ptr);
+      sp.optimiser_ptr_->SetGraph(sp.graph_ptr_);
+      sp.optimiser_ptr_->Init();
+      break;
+    }
+    case ml::OptimiserType::ADAGRAD:
     case ml::OptimiserType::MOMENTUM:
     case ml::OptimiserType::RMSPROP:
     {

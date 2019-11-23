@@ -29,21 +29,18 @@ using namespace fetch::byte_array;
 
 TEST(MclTests, BaseMcl)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
+  details::MCLInitialiser();
   Generator generator;
   SetGenerator(generator);
-  Signature P(-1, 1);
+  bn::G1 P(-1, 1);
 
   // Checking clear operation resets to 0
   {
     PublicKey Q0;
-    Q0.clear();
     EXPECT_TRUE(Q0.isZero());
     Signature P0;
-    P0.clear();
     EXPECT_TRUE(P0.isZero());
     PrivateKey F0;
-    F0.clear();
     EXPECT_TRUE(F0.isZero());
   }
 
@@ -59,27 +56,21 @@ TEST(MclTests, BaseMcl)
 
   // Testing basic operations for types G1, G2 and Fp used in DKG
   {
-    PrivateKey power = 2;
+    PrivateKey power{2};
     PublicKey  gen_mult;
     PublicKey  gen_add;
-    gen_mult.clear();
-    gen_add.clear();
     mcl::bn::G2::mul(gen_mult, generator, power);
     mcl::bn::G2::add(gen_add, generator, generator);
     EXPECT_EQ(gen_mult, gen_add);
 
     Signature P_mul;
     Signature P_add;
-    P_mul.clear();
-    P_add.clear();
     mcl::bn::G1::mul(P_mul, P, power);
     mcl::bn::G1::add(P_add, P, P);
     EXPECT_EQ(P_mul, P_add);
 
     PrivateKey fr_pow;
     PrivateKey fr_mul;
-    fr_pow.clear();
-    fr_mul.clear();
     mcl::bn::Fr::pow(fr_pow, power, 2);
     mcl::bn::Fr::mul(fr_mul, power, power);
     EXPECT_EQ(fr_mul, fr_pow);
@@ -88,7 +79,7 @@ TEST(MclTests, BaseMcl)
 
 TEST(MclDkgTests, ComputeLhsRhs)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
+  details::MCLInitialiser();
 
   // Construct polynomial of degree 2 (threshold = 1)
   uint32_t                threshold = 1;
@@ -152,7 +143,7 @@ TEST(MclDkgTests, ComputeLhsRhs)
 
 TEST(MclDkgTests, Interpolation)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
+  details::MCLInitialiser();
 
   // Construct polynomial of degree 2
   uint32_t                degree = 2;
@@ -197,13 +188,12 @@ TEST(MclDkgTests, Interpolation)
     values2.emplace_back(s_i);
   }
 
-  EXPECT_EQ(vec_a[0], ComputeZi(member_set, values));
   EXPECT_EQ(vec_a, InterpolatePolynom(points, values2));
 }
 
 TEST(MclDkgTests, Signing)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
+  details::MCLInitialiser();
 
   uint32_t cabinet_size = 200;
   uint32_t threshold    = 101;
@@ -244,7 +234,8 @@ TEST(MclDkgTests, Signing)
 
 TEST(MclDkgTests, GenerateKeys)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
+  details::MCLInitialiser();
+
   Generator generator;
   SetGenerator(generator);
 
@@ -256,19 +247,33 @@ TEST(MclDkgTests, GenerateKeys)
 
 TEST(MclNotarisationTests, AggregateSigningVerification)
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
-  using KeyPair = std::pair<PrivateKey, PublicKey>;
+  details::MCLInitialiser();
 
   Generator generator;
   SetGenerator(generator);
-  uint32_t               cabinet_size = 4;
-  std::vector<KeyPair>   keys;
-  std::vector<PublicKey> all_public_keys;
+
+  uint32_t                         cabinet_size = 4;
+  std::vector<PublicKey>           public_keys;
+  std::vector<AggregatePrivateKey> aggregate_private_keys;
+  std::vector<AggregatePublicKey>  aggregate_public_keys;
+
+  aggregate_private_keys.resize(cabinet_size);
+  aggregate_public_keys.resize(cabinet_size);
+
   for (uint32_t i = 0; i < cabinet_size; ++i)
   {
-    auto new_keys = GenerateKeyPair(generator);
-    keys.push_back(new_keys);
-    all_public_keys.push_back(new_keys.second);
+    auto new_keys                         = GenerateKeyPair(generator);
+    aggregate_private_keys[i].private_key = new_keys.first;
+    public_keys.push_back(new_keys.second);
+  }
+
+  // Compute coefficients
+  for (uint32_t i = 0; i < cabinet_size; ++i)
+  {
+    aggregate_private_keys[i].coefficient =
+        SignatureAggregationCoefficient(public_keys[i], public_keys);
+    bn::G2::mul(aggregate_public_keys[i].aggregate_public_key, public_keys[i],
+                aggregate_private_keys[i].coefficient);
   }
 
   MessagePayload                          message = "Hello";
@@ -277,12 +282,15 @@ TEST(MclNotarisationTests, AggregateSigningVerification)
   {
     if (i != 0u)
     {
-      Signature signature = SignShare(message, keys[i].first);
-      EXPECT_TRUE(VerifySign(keys[i].second, message, signature, generator));
+      Signature signature = AggregateSign(message, aggregate_private_keys[i]);
+      EXPECT_TRUE(
+          VerifySign(aggregate_public_keys[i].aggregate_public_key, message, signature, generator));
       signatures.insert({i, signature});
     }
   }
 
-  auto aggregate_signature = ComputeAggregateSignature(signatures, all_public_keys);
-  EXPECT_TRUE(VerifyAggregateSignature(message, aggregate_signature, all_public_keys, generator));
+  auto aggregate_signature = ComputeAggregateSignature(signatures, cabinet_size);
+  auto aggregate_public_key =
+      ComputeAggregatePublicKey(aggregate_signature.second, aggregate_public_keys);
+  EXPECT_TRUE(VerifySign(aggregate_public_key, message, aggregate_signature.first, generator));
 }

@@ -83,7 +83,7 @@ public:
     {
       DumpMemberTable();
 
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to lookup function handler: ", n);
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to look up function handler: ", n);
 
       throw serializers::SerializableException(
           error::MEMBER_NOT_FOUND, ByteArrayType("Could not find protocol member function"));

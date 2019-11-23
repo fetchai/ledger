@@ -18,28 +18,24 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
 #include "ml/ops/sqrt.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
-#include <cmath>
-#include <cstdint>
 #include <memory>
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace test {
 template <typename T>
 class SqrtTest : public ::testing::Test
 {
 };
 
-using SqrtTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                   fetch::math::Tensor<fetch::fixed_point::fp64_t>,
-                                   fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
-
-TYPED_TEST_CASE(SqrtTest, SqrtTypes);
+TYPED_TEST_CASE(SqrtTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(SqrtTest, forward_all_positive_test)
 {
@@ -225,3 +221,7 @@ TYPED_TEST(SqrtTest, saveparams_backward_all_positive_test)
       new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

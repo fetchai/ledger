@@ -28,7 +28,7 @@ namespace math {
 
 struct TensorSliceIteratorRange
 {
-  using SizeType       = uint64_t;
+  using SizeType       = fetch::math::SizeType;
   SizeType index       = 0;
   SizeType from        = 0;
   SizeType to          = 0;
@@ -50,7 +50,7 @@ class TensorSliceIterator
 {
 public:
   using Type     = T;
-  using SizeType = uint64_t;
+  using SizeType = fetch::math::SizeType;
   /**
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array
@@ -387,16 +387,10 @@ private:
         volume = stride[i];
 
         s.volume      = volume;
-        SizeType diff = (s.to - s.from);
-        s.total_steps = diff / s.step;
-        if (s.total_steps * s.step < diff)
-        {
-          ++s.total_steps;
-        }
+        s.total_steps = ((s.to - s.from - 1) / s.step) + 1;
 
-        s.total_steps *= s.step;
         s.step_volume  = s.step * volume;
-        s.total_volume = (s.total_steps) * volume;
+        s.total_volume = (s.total_steps) * s.step_volume;
 
         position_ += volume * s.from;
         size_ *= s.total_steps;

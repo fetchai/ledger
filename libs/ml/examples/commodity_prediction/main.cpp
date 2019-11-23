@@ -19,18 +19,15 @@
 #include "file_loader.hpp"
 #include "math/distance/cosine.hpp"
 #include "math/tensor.hpp"
+#include "math/utilities/ReadCSV.hpp"
 #include "ml/core/graph.hpp"
-#include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-#include "ml/ops/transpose.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
-#include "ml/state_dict.hpp"
 
-#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -230,9 +227,11 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
   DataType                                                            loss_counter = 0;
   fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
 
-  auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
-  auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(test_y_file);
-  loader.AddData(data, label);
+  auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file);
+  data.Transpose();
+  auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file);
+  label.Transpose();
+  loader.AddData({data}, label);
 
   while (!loader.IsDone())
   {
@@ -319,10 +318,11 @@ int main(int argc, char **argv)
             weights_dir.append("/").append(name).append("/").append(actual_dirs[0]);
 
         // the weights array for the node has number of columns = number of features
-        TensorType weights = fetch::ml::dataloaders::ReadCSV<TensorType>(
-            node_weights_dir + "/kernel:0.csv", 0, 0, true);
-        TensorType bias = fetch::ml::dataloaders::ReadCSV<TensorType>(
-            node_weights_dir + "/bias:0.csv", 0, 0, false);
+        TensorType weights =
+            fetch::math::utilities::ReadCSV<TensorType>(node_weights_dir + "/kernel:0.csv", 0, 0);
+        TensorType bias =
+            fetch::math::utilities::ReadCSV<TensorType>(node_weights_dir + "/bias:0.csv", 0, 0);
+        bias.Transpose();
 
         assert(bias.shape().at(0) == weights.shape().at(0));
 
@@ -343,9 +343,11 @@ int main(int argc, char **argv)
     std::string test_x_file = filename_root + "x_test.csv";
     std::string test_y_file = filename_root + "y_pred_test.csv";
     fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
-    auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
-    auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(test_y_file);
-    loader.AddData(data, label);
+    auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file);
+    data.Transpose();
+    auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file);
+    label.Transpose();
+    loader.AddData({data}, label);
 
     /// FORWARD PASS PREDICTIONS ///
 
@@ -407,9 +409,11 @@ int main(int argc, char **argv)
       std::string valid_y_file = filename_root + std::to_string(j) + "_y_val.csv";
 
       loader.Reset();
-      auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(train_x_file);
-      auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(train_y_file);
-      loader.AddData(data, label);
+      auto data = fetch::math::utilities::ReadCSV<TensorType>(train_x_file);
+      data.Transpose();
+      auto label = fetch::math::utilities::ReadCSV<TensorType>(train_y_file);
+      label.Transpose();
+      loader.AddData({data}, label);
 
       // Training loop
       // run first loop to get loss
@@ -452,9 +456,11 @@ int main(int argc, char **argv)
     std::string test_y_file = filename_root + "y_pred_test.csv";
 
     loader.Reset();
-    auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
-    auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(test_y_file);
-    loader.AddData(data, label);
+    auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file);
+    data.Transpose();
+    auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file);
+    label.Transpose();
+    loader.AddData({data}, label);
 
     DataType    distance         = 0;
     DataType    distance_counter = 0;

@@ -35,7 +35,8 @@ class SGDOptimiser : public Optimiser<T>
 public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
-  using SizeType   = typename TensorType::SizeType;
+  using SizeType   = fetch::math::SizeType;
+  using SizeSet    = std::unordered_set<SizeType>;
 
   SGDOptimiser() = default;
   SGDOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
@@ -57,6 +58,9 @@ public:
   }
 
 private:
+  // ApplyGradientSparse if number_of_rows_to_update * sparsity_threshold_ <= total_rows
+  SizeType sparsity_threshold_ = 2;
+
   void ApplyGradients(SizeType batch_size) override;
 };
 
@@ -96,15 +100,47 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
   DataType neg_learning_rate_div_batch_size =
       (-this->learning_rate_) / static_cast<DataType>(batch_size);
 
+  std::vector<SizeSet> rows;
+
   while (gradient_it != this->gradients_.end())
   {
     // Skip frozen trainables
     if (!(*trainable_it)->GetFrozenState())
     {
 
-      // output_grad[i] = (input_grad[i] / batch_size) * -learning_rate
-      fetch::math::Multiply((*trainable_it)->GetGradientsReferences(),
-                            neg_learning_rate_div_batch_size, *gradient_it);
+      auto gradient_pair = (*trainable_it)->GetSparseGradientsReferences();
+      rows.push_back(gradient_pair.second);
+
+      // Normal ApplyGradient
+      // if number_of_rows_to_update * sparsity_threshold_ > total_rows
+      if (rows.at(rows.size() - 1).empty() ||
+          (rows.at(rows.size() - 1).size() * sparsity_threshold_) >
+              gradient_pair.first.shape().at(1))
+      {
+
+        // output_grad[i] = (input_grad[i] / batch_size) * -learning_rate
+        fetch::math::Multiply(gradient_pair.first, neg_learning_rate_div_batch_size, *gradient_it);
+      }
+      else
+      {
+        // Sparse apply gradient
+        // if number_of_rows_to_update * sparsity_threshold_ <= total_rows
+
+        for (SizeType update_index : rows.at(rows.size() - 1))
+        {
+          auto       gradient_slice        = gradient_it->View(update_index);
+          TensorType gradient_slice_tensor = gradient_slice.Copy();
+
+          auto       refs_slice        = gradient_pair.first.View(update_index);
+          TensorType refs_slice_tensor = refs_slice.Copy();
+
+          // output_grad[i] = (input_grad[i] / batch_size) * -learning_rate
+          fetch::math::Multiply(refs_slice_tensor, neg_learning_rate_div_batch_size,
+                                gradient_slice_tensor);
+
+          gradient_slice.Assign(gradient_slice_tensor);
+        }
+      }
 
       // we need to explicitly reset the gradients for this shared op to avoid double counting
       // in the case of shared ops
@@ -115,7 +151,7 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
   }
 
   // calling apply gradients on the graph ensures that the node caches are reset properly
-  this->graph_->ApplyGradients(this->gradients_);
+  this->graph_->ApplySparseGradients(this->gradients_, rows);
 }
 
 }  // namespace optimisers
@@ -151,5 +187,4 @@ struct MapSerializer<ml::optimisers::SGDOptimiser<TensorType>, D>
   }
 };
 }  // namespace serializers
-
 }  // namespace fetch

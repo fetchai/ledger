@@ -116,7 +116,7 @@ struct ChainHeadStore
     if (!WriteToFile(file_name.c_str(), head))
     {
       std::ostringstream s;
-      s << "Error occured when writing " << head.ToHex() << " to " << file_name;
+      s << "Error occured when writing 0x" << head.ToHex() << " to " << file_name;
       throw std::runtime_error(s.str());
     }
   }
@@ -124,15 +124,15 @@ struct ChainHeadStore
 
 struct BlockNode
 {
-  using BlockChilds = Blocks;
+  using BlockChildren = Blocks;
 
   BlockDbRecord db_record;
-  BlockChilds   childs;
+  BlockChildren children;
   bool          is_block_set;
 
-  BlockNode(BlockDbRecord block_, BlockChilds childs_, bool is_block_set)
-    : db_record{std::move(block_)}
-    , childs{std::move(childs_)}
+  BlockNode(BlockDbRecord block, BlockChildren children, bool is_block_set)
+    : db_record{std::move(block)}
+    , children{std::move(children)}
     , is_block_set{is_block_set}
   {}
 
@@ -142,7 +142,7 @@ struct BlockNode
 
     if (is_block_set)
     {
-      for (auto const &slice : db_record.block.body.slices)
+      for (auto const &slice : db_record.block.slices)
       {
         tx_count += slice.size();
       }
@@ -211,7 +211,7 @@ class BlockChainForwardTree
 
     RecursionContext(BlockNode const &node_, BlockChain const &parent_chain)
       : node{&node_}
-      , curr_child_itr{node_.childs.cbegin()}
+      , curr_child_itr{node_.children.cbegin()}
       , chain{parent_chain, node_}
     {}
 
@@ -270,7 +270,7 @@ public:
         break;
       }
 
-      hash = &node.db_record.block.body.previous_hash;
+      hash = &node.db_record.block.previous_hash;
     }
   }
 
@@ -309,7 +309,7 @@ public:
       {
         // This shall not happen, each root shall have at least one subchain (with root block as the
         // only block in the chain)
-        std::cerr << "INCONSISTENCE: NO SubChain(s) for ROOT[" << root_hash.ToHex()
+        std::cerr << "INCONSISTENCY: NO SubChain(s) for ROOT[0x" << root_hash.ToHex()
                   << "] has/have been found!" << std::endl;
         std::cerr.flush();
       }
@@ -345,7 +345,7 @@ public:
     BlockChains::const_iterator block_chain_chff{chains.cend()};
     if (block_node_chff == tree.end() || !block_node_chff->second.is_block_set)
     {
-      s << "INCONSISTENCY: No corresponding block data found for block hash "
+      s << "INCONSISTENCY: No corresponding block data found for block hash 0x"
         << chain_head_from_file.ToHex() << " stored in the \"" << chain_head_store.file_name
         << "\" file containing assumed chain head." << std::endl;
     }
@@ -363,7 +363,7 @@ public:
 
     if (block_chain_chff == chains.cend())
     {
-      s << "INCONSISTENCY: *NO* corresponding CHAIN found for the HEAD block "
+      s << "INCONSISTENCY: *NO* corresponding CHAIN found for the HEAD block 0x"
         << chain_head_from_file.ToHex() << " stored in the \"" << chain_head_store.file_name
         << "\" file." << std::endl;
     }
@@ -372,13 +372,13 @@ public:
       if (block_chain_chff->total_weight == one_of_heaviest_chains->total_weight)
       {
         heaviest_chain = block_chain_chff;
-        s << "Heaviest chain corresponds to the HEAD block " << chain_head_from_file.ToHex()
+        s << "Heaviest chain corresponds to the HEAD block 0x" << chain_head_from_file.ToHex()
           << " stored in the \"" << chain_head_store.file_name << "\" file." << std::endl;
       }
       else
       {
-        s << "INCONSISTENCY: CHAIN corresponding to the HEAD block " << chain_head_from_file.ToHex()
-          << " stored in the \"" << chain_head_store.file_name
+        s << "INCONSISTENCY: CHAIN corresponding to the HEAD block 0x"
+          << chain_head_from_file.ToHex() << " stored in the \"" << chain_head_store.file_name
           << "\" file is *NOT* the heaviest chain." << std::endl;
       }
     }
@@ -395,7 +395,7 @@ public:
         // Trying to recover if possible
         if (block_chain_chff != chains.cend())
         {
-          s << "RECOVERY: Picking the heaviest chain using the assumed HEAD block "
+          s << "RECOVERY: Picking the heaviest chain using the assumed HEAD block 0x"
             << chain_head_from_file.ToHex() << " stored in the \"" << chain_head_store.file_name
             << "\" file EVEN if it *NOT* the heaviest chain, because there exist *MULTIPLE* "
                "heavier chains which ."
@@ -404,7 +404,7 @@ public:
         }
         else
         {
-          s << "ERROR: *UNABLE* to recover while selecting heviest chain: Assumed HEAD block "
+          s << "ERROR: *UNABLE* to recover while selecting heviest chain: Assumed HEAD block 0x"
             << chain_head_from_file.ToHex() << " stored in the \"" << chain_head_store.file_name
             << "\" file does *NOT* correspond to any of existing blocks in chain store db, and "
                "there exist multiple heaviest chains."
@@ -435,9 +435,9 @@ public:
         {
           err_code = -1;
           std::ostringstream s;
-          s << "Block hash =" << block_hash.ToHex()
+          s << "Block hash = 0x" << block_hash.ToHex()
             << " of node with UNSET block db structure (= technical root of the chain) does NOT "
-               "match to expected root hash " +
+               "match to expected root hash 0x" +
                    chain.root.ToHex();
           err_msg = s.str();
         }
@@ -456,19 +456,18 @@ public:
 
       if (i > 0)
       {
-        if (last_block_number != node.db_record.block.body.block_number + 1)
+        if (last_block_number != node.db_record.block.block_number + 1)
         {
           err_code = -3;
           std::ostringstream s;
-          s << "Block " << block_hash.ToHex() << " has unexpected block number value "
-            << node.db_record.block.body.block_number << ", expected value is "
-            << last_block_number - 1;
+          s << "Block 0x" << block_hash.ToHex() << " has unexpected block number value "
+            << node.db_record.block.block_number << ", expected value is " << last_block_number - 1;
           err_msg = s.str();
           return false;
         }
       }
 
-      last_block_number = node.db_record.block.body.block_number;
+      last_block_number = node.db_record.block.block_number;
       ++i;
 
       return true;
@@ -504,9 +503,9 @@ private:
     auto const  end{block_store.end()};
     for (auto it{block_store.begin()}; it != end; ++it)
     {
-      BlockNode  new_node{*it, BlockNode::BlockChilds{}, true};
+      BlockNode  new_node{*it, BlockNode::BlockChildren{}, true};
       auto const new_node_hash{new_node.db_record.hash()};
-      auto       node_it{bch.find(new_node.db_record.hash())};
+      auto       node_it{bch.find(new_node_hash)};
 
       if (node_it != bch.cend())
       {
@@ -514,7 +513,7 @@ private:
         {
           // This shall never happen since object data store is supposed to ensure uniqueness in
           // regards of key (hash of the block in this particular case).
-          std::cerr << "INCONSISTENCE: Duplicate Block! blck hash: " << new_node_hash.ToHex()
+          std::cerr << "INCONSISTENCY: Duplicate Block! block hash: 0x" << new_node_hash.ToHex()
                     << std::endl;
           continue;
         }
@@ -527,26 +526,27 @@ private:
         node_it = bch.emplace(new_node_hash, std::move(new_node)).first;
       }
 
-      auto parent_it{bch.find(node_it->second.db_record.block.body.previous_hash)};
+      auto parent_it{bch.find(node_it->second.db_record.block.previous_hash)};
       if (parent_it != bch.cend())
       {
-        parent_it->second.childs.emplace(new_node_hash);
+        parent_it->second.children.insert(new_node_hash);
       }
       else
       {
-        // parent_it = bch.emplace(node_it->second.db_record.block.body.previous_hash,
-        // BlockNode{BlockDbRecord{}, BlockNode::BlockChilds{new_node_hash}, false}).first;
-        bch.emplace(node_it->second.db_record.block.body.previous_hash,
-                    BlockNode{BlockDbRecord{}, BlockNode::BlockChilds{new_node_hash}, false});
+        // parent_it = bch.emplace(node_it->second.db_record.block.previous_hash,
+        // BlockNode{BlockDbRecord{}, BlockNode::BlockChildren{new_node_hash}, false}).first;
+        bch.emplace(node_it->second.db_record.block.previous_hash,
+                    BlockNode{BlockDbRecord{}, BlockNode::BlockChildren{new_node_hash}, false});
       }
 
       // TODO(pb): This check is supposed to be compiled in, but it can't, since ledger node sets
       // the `next_hash` to genesis hash for all blocks (at least in release/v0.6.x).
       // if (parent_it->second.db_record.next_hash != new_node_hash)
       //{
-      //  std::cerr << "INCONSISTENCE: Parent block (" << parent_it->first.ToHex() << ") NEXT hash "
-      //  << parent_it->second.db_record.next_hash.ToHex() << " does not match child block hash " <<
-      //  new_node_hash.ToHex() << std::endl;
+      //  std::cerr << "INCONSISTENCY: Parent block (0x" << parent_it->first.ToHex() << ") NEXT hash
+      //  0x"
+      //  << parent_it->second.db_record.next_hash.ToHex() << " does not match child block hash 0x"
+      //  << new_node_hash.ToHex() << std::endl;
       //}
 
       ++count;
@@ -575,7 +575,7 @@ private:
       }
       else
       {
-        if (node.first != chain::GENESIS_DIGEST)
+        if (node.first != chain::ZERO_HASH)
         {
           ++md.num_of_empty_blocks;
         }
@@ -596,7 +596,7 @@ BlockChains BlockChainForwardTree::RecursionContext::Recurse(
   Stack stack;
   if (block_tree.tree.count(root) == 0)
   {
-    std::cerr << "INCONSISTENCE: Chain ROOT block " << root.ToHex()
+    std::cerr << "INCONSISTENCY: Chain ROOT block 0x" << root.ToHex()
               << " does NOT exist in the data storage." << std::endl;
     std::cerr.flush();
     return chains;
@@ -636,7 +636,7 @@ bool BlockChainForwardTree::RecursionContext::RecurseInternal(
   auto &                                      curr{stack.back()};
   BlockChainForwardTree::Tree::const_iterator child_block_itr;
 
-  if (curr.curr_child_itr != curr.node->childs.cend() &&
+  if (curr.curr_child_itr != curr.node->children.cend() &&
       (child_block_itr = block_tree.tree.find(*curr.curr_child_itr)) != block_tree.tree.cend())
   {
     stack.emplace_back(child_block_itr->second, curr.chain);
@@ -653,7 +653,7 @@ bool BlockChainForwardTree::RecursionContext::RecurseInternal(
       std::cerr.flush();
     }
 
-    if (curr.node->childs.empty())
+    if (curr.node->children.empty())
     {
       chains.emplace(curr.chain);
     }
@@ -773,7 +773,7 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
        &trimmed_tx_stores, progress_step, print_missing_txs,
        log2_num_of_lanes](BlockNode const &node, BlockHash const & /*block_hash*/) {
         uint64_t slice_idx{0};
-        for (auto const &slice : node.db_record.block.body.slices)
+        for (auto const &slice : node.db_record.block.slices)
         {
           tx_count_in_blockchain += slice.size();
 
@@ -793,7 +793,7 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
               if (print_missing_txs)
               {
                 std::cerr << "EXCEPTION: Tx fetch from db failed:"
-                          << " lane = " << lane << ", tx hash = " << tx_layout.digest().ToHex()
+                          << " lane = " << lane << ", tx hash = 0x" << tx_layout.digest().ToHex()
                           << std::endl;
                 std::cerr.flush();
               }
@@ -806,11 +806,11 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
               if (print_missing_txs)
               {
                 std::cerr << "INCONSISTENCY: Tx fetch from db failed:"
-                          << " lane = " << lane << ", block["
-                          << node.db_record.block.body.block_number << "] "
-                          << node.db_record.block.body.hash.ToHex() << ", slice = " << slice_idx
-                          << ", tx index in slice = " << tx_idx_in_slice
-                          << ", tx hash = " << tx_layout.digest().ToHex() << std::endl;
+                          << " lane = " << lane << ", block[" << node.db_record.block.block_number
+                          << "] 0x" << node.db_record.block.hash.ToHex()
+                          << ", slice = " << slice_idx
+                          << ", tx index in slice = " << tx_idx_in_slice << ", tx hash = 0x"
+                          << tx_layout.digest().ToHex() << std::endl;
                 std::cerr.flush();
               }
             }
@@ -826,18 +826,18 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
           ++slice_idx;
         }
 
-        if (node.db_record.block.body.block_number == 0 ||
+        if (node.db_record.block.block_number == 0 ||
             (tx_count_in_blockchain > last_reported_progress_tx_count &&
              (tx_count_in_blockchain - last_reported_progress_tx_count >= progress_step ||
               tx_count_in_blockchain >= num_of_progress_steps * progress_step)))
         {
           last_reported_progress_tx_count = tx_count_in_blockchain;
           std::size_t const progress_percent{
-              (node.db_record.block.body.block_number == 0)
+              (node.db_record.block.block_number == 0)
                   ? 100ull
                   : ((tx_count_in_blockchain / progress_step) * 100ull) / num_of_progress_steps};
           std::cout << progress_percent << "%"
-                    << " (processed up to " << node.db_record.block.body.block_number
+                    << " (processed up to " << node.db_record.block.block_number
                     << " block INDEX going backwards from tip,"
                     << " missing/failed TX count " << tx_count_missing_accumulated << " (from "
                     << tx_count_processed << " TXs processed so far)." << std::endl;
@@ -886,6 +886,8 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
 
 int main(int argc, char **argv)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
+
   bool print_missing_txs{false};
   bool create_trimmed_tx_store{false};
   bool create_repaired_block_store{false};

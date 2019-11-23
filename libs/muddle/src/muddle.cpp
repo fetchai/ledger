@@ -53,7 +53,7 @@ static std::size_t const PEER_SELECTION_INTERVAL_MS = 500;
  * @param certificate The certificate/identity of this node
  */
 Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
-               bool sign_packets, bool sign_broadcasts, std::string external_address)
+               std::string external_address)
   : name_{GenerateLoggingName("Muddle", network_id)}
   , certificate_(std::move(certificate))
   , external_address_(std::move(external_address))
@@ -61,8 +61,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , network_manager_(nm)
   , dispatcher_(network_id, certificate_->identity().identifier())
   , register_(std::make_shared<MuddleRegister>(network_id))
-  , router_(network_id, node_address_, *register_, dispatcher_,
-            sign_packets ? certificate_.get() : nullptr, sign_packets && sign_broadcasts)
+  , router_(network_id, node_address_, *register_, dispatcher_, *certificate_)
   , clients_(network_id)
   , network_id_(network_id)
   , reactor_{"muddle"}
@@ -170,6 +169,26 @@ bool Muddle::Start(Uris const &peers, Ports const &ports)
   return true;
 }
 
+bool Muddle::Start(Uris const &peers, PortMapping const &port_mapping)
+{
+  Ports ports{};
+
+  for (auto const &item : port_mapping)
+  {
+    // mapping a random port does not make any sense so this is a failure
+    if (item.first == 0)
+    {
+      return false;
+    }
+
+    ports.emplace_back(item.first);
+  }
+
+  port_mapping_ = port_mapping;
+
+  return Start(peers, ports);
+}
+
 /**
  * Start the muddle instance listing on the specified set of ports
  *
@@ -230,6 +249,16 @@ NetworkId const &Muddle::GetNetwork() const
 Address const &Muddle::GetAddress() const
 {
   return node_address_;
+}
+
+/**
+ * Get the external address of the muddle
+ *
+ * @return The external address of the node
+ */
+std::string const &Muddle::GetExternalAddress() const
+{
+  return external_address_;
 }
 
 /**
@@ -498,10 +527,18 @@ void Muddle::RunPeriodicMaintenance()
         continue;
       }
 
+      // determine if the port needs to be mapped to an external range
+      auto const it = port_mapping_.find(port);
+      if (it != port_mapping_.end())
+      {
+        port = it->second;
+      }
+
       external_addresses.emplace_back(network::Peer(external_address_, port));
       FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
     }
-    discovery_service_.UpdatePeers(std::move(external_addresses));
+    discovery_service_.UpdatePeers(external_addresses);
+    peer_selector_->UpdatePeers(external_addresses);
 
     // connect to all the required peers
     for (Uri const &peer : clients_.GetPeersToConnectTo())

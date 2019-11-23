@@ -162,7 +162,7 @@ public:
   // found
   State(VM *vm, TypeId type_id, TypeId template_param_type_id, Ptr<String> const &name)
     : IState(vm, type_id)
-    , name_{name->str}
+    , name_{name->string()}
     , template_param_type_id_{template_param_type_id}
   {}
 
@@ -290,11 +290,11 @@ private:
 };
 
 template <typename... Args>
-Ptr<IState> Construct(VM *vm, TypeId StateType_id, Args &&... args)
+Ptr<IState> Construct(VM *vm, TypeId type_id, Args &&... args)
 {
-  TypeInfo const &StateType_info = vm->GetTypeInfo(StateType_id);
-  TypeId const    value_type_id  = StateType_info.parameter_type_ids[0];
-  return IState::ConstructIntrinsic(vm, StateType_id, value_type_id, std::forward<Args>(args)...);
+  TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
+  TypeId const    value_type_id = type_info.template_parameter_type_ids[0];
+  return IState::ConstructIntrinsic(vm, type_id, value_type_id, std::forward<Args>(args)...);
 }
 
 template <typename T, typename R = void>

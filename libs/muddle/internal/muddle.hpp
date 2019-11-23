@@ -139,7 +139,6 @@ public:
 
   // Construction / Destruction
   Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
-         bool sign_packets = false, bool sign_broadcasts = false,
          std::string external_address = "127.0.0.1");
   Muddle(Muddle const &) = delete;
   Muddle(Muddle &&)      = delete;
@@ -149,6 +148,7 @@ public:
   /// @{
   bool            Start(Peers const &peers, Ports const &ports) override;
   bool            Start(Uris const &peers, Ports const &ports) override;
+  bool            Start(Uris const &peers, PortMapping const &port_mapping) override;
   bool            Start(Ports const &ports) override;
   void            Stop() override;
   MuddleEndpoint &GetEndpoint() override;
@@ -156,12 +156,13 @@ public:
 
   /// @name Muddle Status
   /// @{
-  NetworkId const &GetNetwork() const override;
-  Address const &  GetAddress() const override;
-  Ports            GetListeningPorts() const override;
-  Addresses        GetDirectlyConnectedPeers() const override;
-  Addresses        GetIncomingConnectedPeers() const override;
-  Addresses        GetOutgoingConnectedPeers() const override;
+  NetworkId const &  GetNetwork() const override;
+  Address const &    GetAddress() const override;
+  std::string const &GetExternalAddress() const override;
+  Ports              GetListeningPorts() const override;
+  Addresses          GetDirectlyConnectedPeers() const override;
+  Addresses          GetIncomingConnectedPeers() const override;
+  Addresses          GetOutgoingConnectedPeers() const override;
 
   std::size_t GetNumDirectlyConnectedPeers() const override;
   bool        IsDirectlyConnected(Address const &address) const override;
@@ -221,6 +222,7 @@ private:
   Dispatcher           dispatcher_;       ///< Waiting promise store
   Register             register_;         ///< The register for all the connection
   Router               router_;           ///< The packet router for the node
+  PortMapping          port_mapping_;
 
   mutable Mutex servers_lock_;
   ServerList    servers_;  ///< The list of listening servers

@@ -24,7 +24,7 @@
 namespace fetch {
 namespace dmlf {
 
-RemoteExecutionHost::RemoteExecutionHost(MuddlePtr mud, ExecutionInterfacePtr executor)
+RemoteExecutionHost::RemoteExecutionHost(MuddlePtr mud, ExecutionEngineInterfacePtr executor)
   : mud_(std::move(mud))
   , executor_(std::move(executor))
 {
@@ -35,54 +35,65 @@ bool RemoteExecutionHost::CreateExecutable(service::CallContext const &context,
                                            OpIdent const &op_id, Name const &execName,
                                            SourceFiles const &sources)
 {
-  pending_workloads_.emplace_back(ExecutionWorkload(
-      context.sender_address, op_id, "", [execName, sources](ExecutionInterfacePtr const &exec) {
-        return exec->CreateExecutable(execName, sources);
-      }));
+  FETCH_LOG_TRACE(LOGGING_NAME, "Received call for RPC CreateExecutable");
+  pending_workloads_.emplace_back(
+      ExecutionWorkload(context.sender_address, op_id, "",
+                        [execName, sources](ExecutionEngineInterfacePtr const &exec) {
+                          return exec->CreateExecutable(execName, sources);
+                        }));
   return true;
 }
 bool RemoteExecutionHost::DeleteExecutable(service::CallContext const &context,
                                            OpIdent const &op_id, Name const &execName)
 {
+  FETCH_LOG_TRACE(LOGGING_NAME, "Received call for RPC DeleteExecutable");
   pending_workloads_.emplace_back(ExecutionWorkload(
-      context.sender_address, op_id, "",
-      [execName](ExecutionInterfacePtr const &exec) { return exec->DeleteExecutable(execName); }));
+      context.sender_address, op_id, "", [execName](ExecutionEngineInterfacePtr const &exec) {
+        return exec->DeleteExecutable(execName);
+      }));
   return true;
 }
 
 bool RemoteExecutionHost::CreateState(service::CallContext const &context, OpIdent const &op_id,
                                       Name const &stateName)
 {
+  FETCH_LOG_TRACE(LOGGING_NAME, "Received call for RPC CreateState");
   pending_workloads_.emplace_back(ExecutionWorkload(
-      context.sender_address, op_id, "",
-      [stateName](ExecutionInterfacePtr const &exec) { return exec->CreateState(stateName); }));
+      context.sender_address, op_id, "", [stateName](ExecutionEngineInterfacePtr const &exec) {
+        return exec->CreateState(stateName);
+      }));
   return true;
 }
 bool RemoteExecutionHost::CopyState(service::CallContext const &context, OpIdent const &op_id,
                                     Name const &srcName, Name const &newName)
 {
-  pending_workloads_.emplace_back(ExecutionWorkload(
-      context.sender_address, op_id, "", [srcName, newName](ExecutionInterfacePtr const &exec) {
-        return exec->CopyState(srcName, newName);
-      }));
+  FETCH_LOG_TRACE(LOGGING_NAME, "Received call for RPC CopyState");
+  pending_workloads_.emplace_back(
+      ExecutionWorkload(context.sender_address, op_id, "",
+                        [srcName, newName](ExecutionEngineInterfacePtr const &exec) {
+                          return exec->CopyState(srcName, newName);
+                        }));
   return true;
 }
 bool RemoteExecutionHost::DeleteState(service::CallContext const &context, OpIdent const &op_id,
                                       Name const &stateName)
 {
+  FETCH_LOG_TRACE(LOGGING_NAME, "Received call for RPC DeleteState");
   pending_workloads_.emplace_back(ExecutionWorkload(
-      context.sender_address, op_id, "",
-      [stateName](ExecutionInterfacePtr const &exec) { return exec->DeleteState(stateName); }));
+      context.sender_address, op_id, "", [stateName](ExecutionEngineInterfacePtr const &exec) {
+        return exec->DeleteState(stateName);
+      }));
   return true;
 }
 
 bool RemoteExecutionHost::Run(service::CallContext const &context, OpIdent const &op_id,
                               Name const &execName, Name const &stateName,
-                              std::string const &entrypoint, const Params &params)
+                              std::string const &entrypoint, Params const &params)
 {
+  FETCH_LOG_TRACE(LOGGING_NAME, "Received call for RPC Run");
   pending_workloads_.emplace_back(ExecutionWorkload(
       context.sender_address, op_id, "",
-      [execName, stateName, entrypoint, params](ExecutionInterfacePtr const &exec) {
+      [execName, stateName, entrypoint, params](ExecutionEngineInterfacePtr const &exec) {
         return exec->Run(execName, stateName, entrypoint, params);
       }));
   return true;

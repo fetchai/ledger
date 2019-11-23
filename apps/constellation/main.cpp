@@ -68,12 +68,14 @@ using fetch::Settings;
 using fetch::core::WeakRunnable;
 using fetch::crypto::Prover;
 using fetch::network::Uri;
+using fetch::shards::ServiceIdentifier;
 
 using BootstrapPtr = std::unique_ptr<BootstrapMonitor>;
 using ProverPtr    = std::shared_ptr<Prover>;
 using NetworkMode  = fetch::constellation::Constellation::NetworkMode;
 using UriSet       = fetch::constellation::Constellation::UriSet;
 using Uris         = std::vector<Uri>;
+using Config       = fetch::constellation::Constellation::Config;
 
 std::atomic<fetch::constellation::Constellation *> gConstellationInstance{nullptr};
 std::atomic<std::size_t>                           gInterruptCount{0};
@@ -150,19 +152,30 @@ bool HasVersionFlag(int argc, char **argv)
  * @param uris The initial set of nodes
  * @return The new bootstrap pointer if one exists
  */
-BootstrapPtr CreateBootstrap(Settings const &settings, ProverPtr const &prover, UriSet &uris)
+BootstrapPtr CreateBootstrap(Settings const &settings, Config const &config,
+                             ProverPtr const &prover, UriSet &uris)
 {
   BootstrapPtr bootstrap{};
 
   if (settings.bootstrap.value())
   {
+    // lookup the external port from the manifest
+    auto const service_it = config.manifest.FindService(ServiceIdentifier::Type::CORE);
+    if (service_it == config.manifest.end())
+    {
+      throw std::runtime_error("Unable to read core entry from service manifest");
+    }
+
+    // get the reference to the TCP peer entry for the core service
+    auto const &core_service_peer = service_it->second.uri().GetTcpPeer();
+
     // build the bootstrap monitor instance
     bootstrap = std::make_unique<BootstrapMonitor>(
-        prover, settings.port.value() + fetch::P2P_PORT_OFFSET, settings.network_name.value(),
-        settings.discoverable.value(), settings.token.value(), settings.hostname.value());
+        prover, core_service_peer.port(), settings.network_name.value(),
+        settings.discoverable.value(), settings.token.value(), core_service_peer.address());
 
     // run the discover
-    bootstrap->DiscoverPeers(uris, settings.external.value());
+    bootstrap->DiscoverPeers(uris, core_service_peer.address());
   }
 
   return bootstrap;
@@ -221,17 +234,17 @@ int main(int argc, char **argv)
       // create and load the main certificate for the bootstrapper
       auto p2p_key = fetch::crypto::GenerateP2PKey();
 
+      // attempt to build the configuration for constellation
+      fetch::constellation::Constellation::Config cfg = BuildConstellationConfig(settings);
+
       // create the bootrap monitor (if configued to do so)
       auto initial_peers = ToUriSet(settings.peers.value());
-      auto bootstrap     = CreateBootstrap(settings, p2p_key, initial_peers);
+      auto bootstrap     = CreateBootstrap(settings, cfg, p2p_key, initial_peers);
 
       for (auto const &uri : initial_peers)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Initial Peer: ", uri);
       }
-
-      // attempt to build the configuration for constellation
-      fetch::constellation::Constellation::Config cfg = BuildConstellationConfig(settings);
 
       // create and run the constellation
       auto constellation =
@@ -245,9 +258,19 @@ int main(int argc, char **argv)
       std::signal(SIGTERM, InterruptHandler);
 
       // run the application
-      constellation->Run(initial_peers, ExtractRunnable(bootstrap));
-
-      exit_code = EXIT_SUCCESS;
+      try
+      {
+        exit_code = (constellation->Run(initial_peers, ExtractRunnable(bootstrap))) ? EXIT_SUCCESS
+                                                                                    : EXIT_FAILURE;
+      }
+      catch (std::exception const &ex)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to run constellation with exception: ", ex.what());
+      }
+      catch (...)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to run constellation with unknown exception");
+      }
     }
   }
   catch (std::exception const &ex)

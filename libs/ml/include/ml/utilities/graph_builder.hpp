@@ -54,19 +54,23 @@
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/mask_fill.hpp"
 #include "ml/ops/matrix_multiply.hpp"
+#include "ml/ops/max_pool.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "ml/ops/max_pool_2d.hpp"
 #include "ml/ops/maximum.hpp"
 #include "ml/ops/multiply.hpp"
+#include "ml/ops/one_hot.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/reduce_mean.hpp"
 #include "ml/ops/reshape.hpp"
 #include "ml/ops/slice.hpp"
 #include "ml/ops/sqrt.hpp"
 #include "ml/ops/squeeze.hpp"
+#include "ml/ops/strided_slice.hpp"
 #include "ml/ops/subtract.hpp"
 #include "ml/ops/switch.hpp"
 #include "ml/ops/tanh.hpp"
+#include "ml/ops/top_k.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/saveparams/saveable_params.hpp"
@@ -316,6 +320,13 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
+  case ops::MaxPool<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::MaxPool<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
   case ops::AvgPool1D<T>::OpCode():
   {
     op_ptr = GetOp<ops::AvgPool1D<T>>(nsp.op_save_params);
@@ -386,6 +397,13 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
+  case ops::StridedSlice<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::StridedSlice<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
   case ops::ReduceMean<T>::OpCode():
   {
     op_ptr = GetOp<ops::ReduceMean<T>>(nsp.op_save_params);
@@ -438,6 +456,20 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   case ops::Transpose<T>::OpCode():
   {
     op_ptr = GetOp<ops::Transpose<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::OneHot<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::OneHot<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::TopK<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::TopK<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
     g->AddTrainable(node, name);
     break;

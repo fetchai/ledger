@@ -29,26 +29,45 @@
 namespace fetch {
 namespace vm {
 
-template <int sp_offset, typename ReturnType, typename Callable, typename ArgsTuple>
+template <int sp_offset, typename ReturnType, typename Callable, typename EtchArgsTuple>
 struct VmFreeFunctionInvoker
 {
-  static void Invoke(VM *vm, ArgsTuple &&arguments, Callable &&callable)
+  template <typename Estimator, typename... ExtraArgs>
+  static void Invoke(VM *vm, Estimator &&estimator, Callable &&callable,
+                     EtchArgsTuple &&etch_arguments, ExtraArgs const &... extra_args)
   {
-    ReturnType result =
-        meta::Apply(std::forward<Callable>(callable), std::forward<ArgsTuple>(arguments));
-    auto const return_type_id = vm->instruction_->type_id;
-    StackSetter<ReturnType>::Set(vm, sp_offset, std::move(result), return_type_id);
-    vm->sp_ -= sp_offset;
+    auto estimator_args_tuple = etch_arguments;
+    if (EstimateCharge(vm, std::forward<Estimator>(estimator), std::move(estimator_args_tuple)))
+    {
+      // prepend extra non-etch arguments (e.g. VM*, TypeId)
+      auto args_tuple = std::tuple_cat(std::make_tuple(extra_args...),
+                                       std::forward<EtchArgsTuple>(etch_arguments));
+
+      ReturnType result = meta::Apply(std::forward<Callable>(callable), std::move(args_tuple));
+      auto const return_type_id = vm->instruction_->type_id;
+      StackSetter<ReturnType>::Set(vm, sp_offset, std::move(result), return_type_id);
+      vm->sp_ -= sp_offset;
+    }
   }
 };
 
-template <int sp_offset, typename Callable, typename ArgsTuple>
-struct VmFreeFunctionInvoker<sp_offset, void, Callable, ArgsTuple>
+template <int sp_offset, typename Callable, typename EtchArgsTuple>
+struct VmFreeFunctionInvoker<sp_offset, void, Callable, EtchArgsTuple>
 {
-  static void Invoke(VM *vm, ArgsTuple &&arguments, Callable &&callable)
+  template <typename Estimator, typename... ExtraArgs>
+  static void Invoke(VM *vm, Estimator &&estimator, Callable &&callable,
+                     EtchArgsTuple &&etch_arguments, ExtraArgs const &... extra_args)
   {
-    meta::Apply(std::forward<Callable>(callable), std::forward<ArgsTuple>(arguments));
-    vm->sp_ -= sp_offset;
+    auto estimator_args_tuple = etch_arguments;
+    if (EstimateCharge(vm, std::forward<Estimator>(estimator), std::move(estimator_args_tuple)))
+    {
+      // prepend extra non-etch arguments (e.g. VM*, TypeId)
+      auto args_tuple = std::tuple_cat(std::make_tuple(extra_args...),
+                                       std::forward<EtchArgsTuple>(etch_arguments));
+
+      meta::Apply(std::forward<Callable>(callable), std::move(args_tuple));
+      vm->sp_ -= sp_offset;
+    }
   }
 };
 

@@ -23,6 +23,7 @@
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/structured_data.hpp"
+#include "vm_modules/math/tensor.hpp"
 
 #include <sstream>
 #include <stdexcept>
@@ -206,7 +207,7 @@ bool StructuredData::FromJSON(JSONVariant const &variant)
 
 bool StructuredData::Has(Ptr<String> const &s)
 {
-  return contents_.Has(s->str);
+  return contents_.Has(s->string());
 }
 
 Ptr<String> StructuredData::GetString(Ptr<String> const &s)
@@ -218,15 +219,15 @@ Ptr<String> StructuredData::GetString(Ptr<String> const &s)
     // check that the value exists
     if (!Has(s))
     {
-      vm_->RuntimeError("Unable to lookup item: " + s->str);
+      vm_->RuntimeError("Unable to look up item: " + s->string());
     }
     else
     {
-      auto const decoded = FromBase64(contents_[s->str].As<ConstByteArray>());
+      auto const decoded = FromBase64(contents_[s->string()].As<ConstByteArray>());
       ret                = static_cast<std::string>(decoded);
     }
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     vm_->RuntimeError(e.what());
   }
@@ -244,14 +245,14 @@ T StructuredData::GetPrimitive(Ptr<String> const &s)
     // check that the value exists
     if (!Has(s))
     {
-      vm_->RuntimeError("Unable to lookup item: " + s->str);
+      vm_->RuntimeError("Unable to look up item: " + s->string());
     }
     else
     {
-      ret = contents_[s->str].As<T>();
+      ret = contents_[s->string()].As<T>();
     }
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     vm_->RuntimeError(e.what());
   }
@@ -268,11 +269,11 @@ Ptr<Array<T>> StructuredData::GetArray(Ptr<String> const &s)
   {
     if (!Has(s))
     {
-      vm_->RuntimeError("Unable to lookup item: " + s->str);
+      vm_->RuntimeError("Unable to look up item: " + s->string());
     }
     else
     {
-      auto const &value_array = contents_[s->str];
+      auto const &value_array = contents_[s->string()];
 
       if (!value_array.IsArray())
       {
@@ -307,7 +308,7 @@ void StructuredData::SetPrimitive(Ptr<String> const &s, T value)
 {
   try
   {
-    contents_[s->str] = value;
+    contents_[s->string()] = value;
   }
   catch (std::exception const &e)
   {
@@ -320,7 +321,7 @@ void StructuredData::SetArray(Ptr<String> const &s, Ptr<Array<T>> const &arr)
 {
   try
   {
-    auto &values = contents_[s->str];
+    auto &values = contents_[s->string()];
 
     // update the value to be an array
     values = variant::Variant::Array(arr->elements.size());
@@ -341,7 +342,7 @@ void StructuredData::SetString(Ptr<String> const &s, Ptr<String> const &value)
 {
   try
   {
-    contents_[s->str] = ToBase64(value->str);
+    contents_[s->string()] = ToBase64(value->string());
   }
   catch (std::exception const &ex)
   {

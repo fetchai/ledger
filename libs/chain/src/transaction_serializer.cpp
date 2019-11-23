@@ -48,7 +48,7 @@ using TokenAmount  = Transaction::TokenAmount;
 using ContractMode = Transaction::ContractMode;
 
 const uint8_t MAGIC              = 0xA1;
-const uint8_t VERSION            = 1u;
+const uint8_t VERSION            = 2u;
 const int8_t  UNIT_MEGA          = -2;
 const int8_t  UNIT_KILO          = -1;
 const int8_t  UNIT_DEFAULT       = 0;
@@ -79,6 +79,13 @@ uint8_t Map(ContractMode mode)
     break;
   }
 
+  return value;
+}
+
+uint8_t ReadSingleByte(serializers::MsgPackSerializer &buffer)
+{
+  uint8_t value{0};
+  buffer.ReadByte(value);
   return value;
 }
 
@@ -123,6 +130,17 @@ ConstByteArray Encode(Identity const &identity)
   ByteArray buffer;
   buffer.Append(uint8_t{0x04}, identity.identifier());
 
+  return {buffer};
+}
+
+ConstByteArray EncodeFixed(uint64_t value)
+{
+  auto const *raw = reinterpret_cast<uint8_t const *>(&value);
+
+  ByteArray buffer;
+  buffer.Append(raw[7], raw[6], raw[5], raw[4], raw[3], raw[2], raw[1], raw[0]);
+
+  assert(buffer.size() == 8);
   return {buffer};
 }
 
@@ -192,6 +210,20 @@ void Decode(MsgPackSerializer &buffer, Identity &identity)
   identity = Identity{std::move(public_key)};
 }
 
+void DecodeFixed(MsgPackSerializer &buffer, uint64_t &value)
+{
+  auto *raw = reinterpret_cast<uint8_t *>(&value);
+
+  raw[7] = ReadSingleByte(buffer);
+  raw[6] = ReadSingleByte(buffer);
+  raw[5] = ReadSingleByte(buffer);
+  raw[4] = ReadSingleByte(buffer);
+  raw[3] = ReadSingleByte(buffer);
+  raw[2] = ReadSingleByte(buffer);
+  raw[1] = ReadSingleByte(buffer);
+  raw[0] = ReadSingleByte(buffer);
+}
+
 }  // namespace
 
 TransactionSerializer::TransactionSerializer(ConstByteArray data)
@@ -236,6 +268,9 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
   header1 |= static_cast<uint8_t>(signalled_signatures) & 0x3Fu;
   buffer.Append(header1);
 
+  // reserved flag for future updates
+  buffer.Append(uint8_t{0});
+
   buffer.Append(Encode(tx.from()));
 
   if (num_transfers > 1u)
@@ -256,7 +291,7 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
   buffer.Append(Encode(tx.valid_until()));
 
   // TODO(private issue 885): Increase efficiency by signaling with the charge_unit_flag
-  buffer.Append(Encode(tx.charge()), Encode(tx.charge_limit()));
+  buffer.Append(Encode(tx.charge_rate()), Encode(tx.charge_limit()));
 
   // handle the signalling of the contract mode
   if (ContractMode::NOT_PRESENT != contract_mode)
@@ -321,6 +356,8 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
     buffer.Append(Encode(tx.action()), Encode(tx.data()));
   }
 
+  buffer.Append(EncodeFixed(tx.counter()));
+
   if (num_extra_signatures > 0)
   {
     buffer.Append(Encode(num_extra_signatures));
@@ -356,29 +393,35 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
 
   std::size_t const payload_start = buffer.tell();
 
-  // read the initial fixed header
-  uint8_t header[3] = {0};
-  buffer.ReadBytes(header, 3);
-
-  if (header[0] != MAGIC)
+  // magic byte
+  uint8_t const magic = ReadSingleByte(buffer);
+  if (magic != MAGIC)
   {
     return false;
   }
 
-  uint8_t const version                 = (header[1] >> 5u) & 0x7u;
-  uint8_t const charge_unit_flag        = (header[1] >> 3u) & 0x1u;
-  uint8_t const transfer_flag           = (header[1] >> 2u) & 0x1u;
-  uint8_t const multiple_transfers_flag = (header[1] >> 1u) & 0x1u;
-  uint8_t const valid_from_flag         = header[1] & 0x1u;
-
-  uint8_t const contract_type          = (header[2] >> 6u) & 0x3u;
-  uint8_t const signature_count_minus1 = header[2] & 0x3fu;
+  // header byte 1
+  uint8_t const header1                 = ReadSingleByte(buffer);
+  uint8_t const version                 = (header1 >> 5u) & 0x7u;
+  uint8_t const charge_unit_flag        = (header1 >> 3u) & 0x1u;
+  uint8_t const transfer_flag           = (header1 >> 2u) & 0x1u;
+  uint8_t const multiple_transfers_flag = (header1 >> 1u) & 0x1u;
+  uint8_t const valid_from_flag         = header1 & 0x1u;
 
   if (version != VERSION)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Version mismatch");
     return false;
   }
+
+  // header byte 2
+  uint8_t const header2                = ReadSingleByte(buffer);
+  uint8_t const contract_type          = (header2 >> 6u) & 0x3u;
+  uint8_t const signature_count_minus1 = header2 & 0x3fu;
+
+  // header byte 3
+  uint8_t const header3 = ReadSingleByte(buffer);
+  FETCH_UNUSED(header3);
 
   Decode(buffer, tx.from_);
 
@@ -409,7 +452,7 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
 
   Decode(buffer, tx.valid_until_);
 
-  Decode(buffer, tx.charge_);
+  Decode(buffer, tx.charge_rate_);
   if (charge_unit_flag != 0u)
   {
     int8_t charge_unit{0};
@@ -418,22 +461,22 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
     switch (charge_unit)
     {
     case UNIT_MEGA:
-      tx.charge_ *= 10000000000000000ull;
+      tx.charge_rate_ *= 10000000000000000ull;
       break;
     case UNIT_KILO:
-      tx.charge_ *= 10000000000000ull;
+      tx.charge_rate_ *= 10000000000000ull;
       break;
     case UNIT_DEFAULT:
-      tx.charge_ *= 10000000000ull;
+      tx.charge_rate_ *= 10000000000ull;
       break;
     case UNIT_MILLI:
-      tx.charge_ *= 10000000ull;
+      tx.charge_rate_ *= 10000000ull;
       break;
     case UNIT_MICRO:
-      tx.charge_ *= 10000ull;
+      tx.charge_rate_ *= 10000ull;
       break;
     case UNIT_NANO:
-      tx.charge_ *= 10ull;
+      tx.charge_rate_ *= 10ull;
       break;
     default:
       break;
@@ -522,6 +565,9 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
     Decode(buffer, tx.data_);
   }
 
+  // get the counter metadata
+  DecodeFixed(buffer, tx.counter_);
+
   // determine the number of signatures that are contained
   std::size_t num_signatures = signature_count_minus1 + 1u;
   if (signature_count_minus1 == 0x3fu)
@@ -552,9 +598,6 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
   for (std::size_t i = 0; i < num_signatures; ++i)
   {
     Decode(buffer, tx.signatories_[i].signature);
-
-    // update signatories
-    hash_function.Update(tx.signatories_[i].signature);
   }
 
   // compute the hash function

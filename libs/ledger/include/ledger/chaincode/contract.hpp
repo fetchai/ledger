@@ -20,6 +20,7 @@
 #include "chain/address.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/identity.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -44,8 +45,6 @@ class Transaction;
 }  // namespace chain
 
 namespace ledger {
-
-struct ContractContext;
 
 /**
  * Contract - Base class for all smart contract and chain code instances
@@ -89,9 +88,6 @@ public:
 
   /// @name Contract Lifecycle Handlers
   /// @{
-  void Attach(ContractContext const &context);
-  void Detach();
-
   Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
   Result DispatchTransaction(chain::Transaction const &tx);
@@ -151,6 +147,9 @@ protected:
   /// @}
 
 private:
+  void Attach(ContractContext context);
+  void Detach();
+
   std::unique_ptr<ContractContext> context_{};
 
   static constexpr std::size_t DEFAULT_BUFFER_SIZE = 512;
@@ -166,6 +165,8 @@ private:
   CounterMap transaction_counters_{};
   CounterMap query_counters_{};
   /// @}
+
+  friend class ContractContextAttacher;
 };
 
 /**
@@ -219,7 +220,7 @@ void Contract::OnQuery(std::string const &name, C *instance,
 }
 
 /**
- * Lookup the state record stored with the specified key
+ * Look up the state record stored with the specified key
  *
  * @tparam T The type of the state record
  * @param record The reference to the record to be populated
@@ -284,7 +285,7 @@ StateAdapter::Status Contract::SetStateRecord(T const &record, ConstByteArray co
   serializers::MsgPackSerializer buffer;
   buffer << record;
 
-  // lookup reference to the underlying buffer
+  // look up reference to the underlying buffer
   auto const &data = buffer.data();
 
   // store the buffer

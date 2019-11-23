@@ -35,8 +35,8 @@ namespace math {
 
 Ptr<String> UInt256Wrapper::ToString(VM *vm, Ptr<UInt256Wrapper> const &n)
 {
-  byte_array::ByteArray ba(32);
-  for (uint64_t i = 0; i < 32; ++i)
+  byte_array::ByteArray ba(UInt256::ELEMENTS);
+  for (uint64_t i = 0; i < UInt256::ELEMENTS; ++i)
   {
     ba[i] = n->number_[i];
   }
@@ -111,7 +111,7 @@ Ptr<UInt256Wrapper> UInt256Wrapper::ConstructorFromBytes(VM *vm, TypeId type_id,
   {
     return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, type_id, ba->byte_array())};
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     vm->RuntimeError(e.what());
   }
@@ -124,7 +124,7 @@ Ptr<UInt256Wrapper> UInt256Wrapper::Constructor(VM *vm, TypeId type_id, uint64_t
   {
     return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, type_id, val)};
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     vm->RuntimeError(e.what());
   }
@@ -156,7 +156,7 @@ void UInt256Wrapper::Increase()
   ++number_;
 }
 
-UInt256Wrapper::SizeType UInt256Wrapper::size() const
+fetch::math::SizeType UInt256Wrapper::size() const
 {
   return number_.size();
 }
@@ -220,12 +220,20 @@ bool UInt256Wrapper::FromJSON(JSONVariant const &variant)
 
   if (!variant["value"].IsString())
   {
-    vm_->RuntimeError("Field 'value' must be a hex encoded string.");
+    vm_->RuntimeError("Field 'value' must be a hex-encoded string.");
     return false;
   }
 
-  // TODO(issue 1262): Caller can't unambiguously detect whether the conversion failed or not
-  auto const value = FromHex(variant["value"].As<byte_array::ConstByteArray>());
+  byte_array::ByteArray value;
+  try
+  {
+    value = FromHex(variant["value"].As<byte_array::ConstByteArray>());
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Field 'value' must be a hex-encoded string.");
+    return false;
+  }
 
   uint64_t i = 0;
   uint64_t n = std::min(32ul, value.size());

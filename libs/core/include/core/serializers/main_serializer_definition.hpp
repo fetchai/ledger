@@ -36,6 +36,22 @@ class MsgPackSerializer
 public:
   using ByteArray = byte_array::ByteArray;
 
+  /// Array Helpers
+  /// @{
+  using ArrayConstructor = interfaces::ContainerConstructorInterface<
+      MsgPackSerializer, interfaces::ArrayInterface<MsgPackSerializer>, TypeCodes::ARRAY_CODE_FIXED,
+      TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
+  using ArrayDeserializer = interfaces::ArrayDeserializer<MsgPackSerializer>;
+  /// @}
+
+  /// Map Helpers
+  /// @{
+  using MapConstructor = interfaces::ContainerConstructorInterface<
+      MsgPackSerializer, interfaces::MapInterface<MsgPackSerializer>, TypeCodes::MAP_CODE_FIXED,
+      TypeCodes::MAP_CODE16, TypeCodes::MAP_CODE32>;
+  using MapDeserializer = interfaces::MapDeserializer<MsgPackSerializer>;
+  /// @}
+
   MsgPackSerializer()                         = default;
   MsgPackSerializer(MsgPackSerializer &&from) = default;
   MsgPackSerializer &operator=(MsgPackSerializer &&from) = default;
@@ -57,6 +73,16 @@ public:
 
   MsgPackSerializer &operator=(MsgPackSerializer const &from);
 
+  SerializerTypes GetNextType() const
+  {
+    if (pos_ >= data_.size())
+    {
+      throw std::runtime_error{"Reached end of the buffer"};
+    }
+
+    return DetermineType(data_[pos_]);
+  }
+
   void Allocate(uint64_t const &delta);
 
   void Resize(uint64_t const &      size,
@@ -69,6 +95,7 @@ public:
   void WriteBytes(uint8_t const *arr, uint64_t const &size);
 
   void WriteByte(uint8_t const &val);
+  void WriteNil();
 
   template <typename WriteType, typename InitialType>
   void WritePrimitive(InitialType const &val);
@@ -125,11 +152,18 @@ public:
   template <typename T>
   typename BinarySerializer<T, MsgPackSerializer>::DriverType &operator>>(T &val);
 
+  ArrayConstructor  NewArrayConstructor();
+  ArrayDeserializer NewArrayDeserializer();
+
   template <typename T>
   typename ArraySerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);
 
   template <typename T>
   typename ArraySerializer<T, MsgPackSerializer>::DriverType &operator>>(T &val);
+
+  MapConstructor  NewMapConstructor();
+  MapDeserializer NewMapDeserializer();
+
   template <typename T>
   typename MapSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);
 

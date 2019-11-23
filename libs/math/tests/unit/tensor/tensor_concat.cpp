@@ -16,17 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-
 #include "gtest/gtest.h"
+#include "math/tensor.hpp"
+#include "test_types.hpp"
+
+namespace fetch {
+namespace math {
+namespace test {
 
 template <typename T>
 class TensorConcatenationTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<int32_t, int64_t, uint32_t, uint64_t, float, double>;
-TYPED_TEST_CASE(TensorConcatenationTest, MyTypes);
+TYPED_TEST_CASE(TensorConcatenationTest, FloatIntAndUIntTypes);
 
 template <typename T>
 fetch::math::Tensor<T> PrepareTensor(std::vector<fetch::math::SizeType> const &shape)
@@ -402,3 +405,7 @@ TYPED_TEST(TensorConcatenationTest, tensor_Split_3d)
   EXPECT_TRUE(ret_tensors[1].AllClose(t2));
   EXPECT_TRUE(ret_tensors[2].AllClose(t3));
 }
+
+}  // namespace test
+}  // namespace math
+}  // namespace fetch

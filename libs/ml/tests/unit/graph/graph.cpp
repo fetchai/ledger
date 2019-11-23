@@ -25,19 +25,20 @@
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
+
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename T>
 class GraphTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
-
-TYPED_TEST_CASE(GraphTest, MyTypes);
+TYPED_TEST_CASE(GraphTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(GraphTest, node_placeholder)
 {
@@ -90,7 +91,7 @@ TYPED_TEST(GraphTest, get_state_dict)
 TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   fetch::ml::Graph<TensorType> g;
 
@@ -107,7 +108,7 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
 TYPED_TEST(GraphTest, node_add_wrong_order_test)
 {
   using TensorType = TypeParam;
-  using SizeType   = typename TypeParam::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   fetch::ml::Graph<TensorType> g;
 
@@ -699,3 +700,7 @@ TYPED_TEST(GraphTest, diamond_graph_getStateDict)
   ASSERT_NE(sd.dict_["Diamond_Weight2"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["Diamond_Weight2"].weights_->shape(), data2.shape());
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

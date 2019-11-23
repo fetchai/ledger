@@ -15,11 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-telemetry)
-target_link_libraries(fetch-telemetry PUBLIC fetch-core)
-
-if (_is_clang_compiler)
-  target_compile_options(fetch-telemetry PRIVATE -Wshadow)
-endif ()
+target_link_libraries(fetch-telemetry)
 
 # ------------------------------------------------------------------------------
 # Test Targets

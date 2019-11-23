@@ -22,8 +22,10 @@
 #include "core/serializers/main_serializer.hpp"
 #include "http/json_response.hpp"
 #include "json/document.hpp"
+#include "ledger/chaincode/chain_code_factory.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
@@ -132,11 +134,11 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
   , access_log_{"access.log"}
 {
   // create all the contracts
-  auto const &contracts = contract_cache_.factory().GetChainCodeContracts();
+  auto const &contracts = GetChainCodeContracts();
   for (auto const &contract_name : contracts)
   {
     // create the contract
-    auto contract = contract_cache_.factory().Create(Identifier{contract_name}, storage_);
+    auto contract = CreateChainCode(contract_name);
 
     ByteArray contract_path{contract_name};
     contract_path.Replace(static_cast<char const &>(CONTRACT_NAME_SEPARATOR[0]),
@@ -237,12 +239,15 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     // adapt the storage engine so that that get and sets are sandboxed for the contract
     StateAdapter storage_adapter{storage_, contract_id};
 
-    chain::Address address;
-    chain::Address::Parse(contract_id.name(), address);
     // Current block index does not apply to queries - set to 0
-    contract->Attach({&token_contract_, std::move(address), &storage_adapter, 0});
-    auto const status = contract->DispatchQuery(query, doc.root(), response);
-    contract->Detach();
+    Contract::Status status;
+    {
+      chain::Address address;
+      chain::Address::Parse(contract_id.name(), address);
+      ContractContext         context{&token_contract_, std::move(address), &storage_adapter, 0};
+      ContractContextAttacher raii(*contract, context);
+      status = contract->DispatchQuery(query, doc.root(), response);
+    }
 
     if (Contract::Status::OK == status)
     {

@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/collective_learning/client_word2vec_algorithm.hpp"
+#include "dmlf/collective_learning/utilities/utilities.hpp"
 #include "dmlf/networkers/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
-#include "math/matrix_operations.hpp"
+#include "json/document.hpp"
 #include "math/tensor.hpp"
-#include "ml/core/graph.hpp"
-#include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
-#include "word2vec_client.hpp"
 
 #include <iostream>
 #include <mutex>
@@ -34,24 +33,23 @@ using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
-using namespace fetch::ml::distributed_learning;
+using namespace fetch::dmlf::collective_learning;
 
 using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
-using SizeType         = typename TensorType::SizeType;
+using SizeType         = fetch::math::SizeType;
 
-std::vector<std::string> SplitTrainingData(std::string const &train_file,
-                                           SizeType           number_of_clients)
+std::vector<std::string> SplitTrainingData(std::string const &train_file, SizeType n_clients)
 {
-  // split train file into number_of_clients parts
+  // split train file into n_clients parts
   std::vector<std::string> client_data;
-  auto                     input_data = ReadFile(train_file);
-  auto     chars_per_client = static_cast<SizeType>(input_data.size() / number_of_clients);
-  SizeType pos{0};
-  SizeType old_pos{0};
+  auto                     input_data       = fetch::ml::utilities::ReadFile(train_file);
+  auto                     chars_per_client = static_cast<SizeType>(input_data.size() / n_clients);
+  SizeType                 pos{0};
+  SizeType                 old_pos{0};
 
-  for (SizeType i(0); i < number_of_clients; ++i)
+  for (SizeType i(0); i < n_clients; ++i)
   {
     old_pos = pos;
     pos     = (i + 1) * chars_per_client;
@@ -63,118 +61,153 @@ std::vector<std::string> SplitTrainingData(std::string const &train_file,
   return client_data;
 }
 
+/**
+ * Averages weights between all clients
+ * @param clients
+ */
+void SynchroniseWeights(std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>> clients)
+{
+  // gather all of the different clients' algorithms
+  std::vector<std::shared_ptr<ClientAlgorithm<TensorType>>> client_algorithms;
+  for (auto &client : clients)
+  {
+    std::vector<std::shared_ptr<ClientAlgorithm<TensorType>>> current_client_algorithms =
+        client->GetAlgorithms();
+    client_algorithms.insert(client_algorithms.end(), current_client_algorithms.begin(),
+                             current_client_algorithms.end());
+  }
+
+  // Synchronize weights by giving all clients average of all client's weights
+  std::vector<VectorTensorType>                  clients_weights{client_algorithms.size()};
+  std::vector<fetch::byte_array::ConstByteArray> clients_vocab_hashes{client_algorithms.size()};
+
+  for (SizeType i{0}; i < clients.size(); ++i)
+  {
+    clients_weights.at(i) = client_algorithms.at(i)->GetWeights();
+    auto cast_client_i =
+        std::dynamic_pointer_cast<ClientWord2VecAlgorithm<TensorType>>(client_algorithms.at(i));
+    clients_vocab_hashes.at(i) = cast_client_i->GetVocab().second;
+  }
+
+  std::vector<VectorTensorType> clients_new_weights{client_algorithms.size()};
+
+  for (SizeType i{0}; i < client_algorithms.size(); ++i)
+  {
+    VectorTensorType weights_new;
+
+    auto cast_client_i =
+        std::dynamic_pointer_cast<ClientWord2VecAlgorithm<TensorType>>(client_algorithms.at(i));
+
+    for (SizeType k{0}; k < clients_weights.at(i).size(); ++k)
+    {
+      TensorType weight_sum;
+      TensorType counts_sum;
+      bool       first = true;
+      for (SizeType j{0}; j < client_algorithms.size(); ++j)
+      {
+        auto ret =
+            cast_client_i->TranslateWeights(clients_weights.at(j).at(k), clients_vocab_hashes[j]);
+        if (first)
+        {
+          weight_sum = ret.first;
+          counts_sum = ret.second;
+          first      = false;
+        }
+        else
+        {
+          weight_sum += ret.first;
+          counts_sum += ret.first;
+        }
+      }
+      // divide weights by counts to get average
+      weights_new.push_back(weight_sum / counts_sum);
+    }
+
+    cast_client_i->SetWeights(weights_new);
+  }
+}
+
 int main(int argc, char **argv)
 {
-  if (argc != 4)
+  // This example will create multiple local distributed clients with Word2Vec model and trains
+  // word embeddings based on input text file
+
+  if (argc != 2)
   {
-    std::cout << "Usage : " << argv[0] << " PATH/TO/text8 analogies_test_file output_csv_file"
-              << std::endl;
+    std::cout << "Usage : " << argv[0] << "config_file.json" << std::endl;
     return 1;
   }
 
-  W2VTrainingParams<DataType> client_params;
+  /**
+   * Prepare configuration
+   */
+
+  fetch::json::JSONDocument doc;
+  ClientParams<DataType>    client_params =
+      fetch::dmlf::collective_learning::utilities::ClientParamsFromJson<TensorType>(
+          std::string(argv[1]), doc);
+  auto word2vec_client_params = std::make_shared<Word2VecTrainingParams<DataType>>(client_params);
+
+  auto data_file                              = doc["data"].As<std::string>();
+  word2vec_client_params->analogies_test_file = doc["analogies_test_file"].As<std::string>();
+  word2vec_client_params->vocab_file          = doc["vocab_file"].As<std::string>();
+  word2vec_client_params->test_frequency      = doc["test_frequency"].As<SizeType>();
 
   // Distributed learning parameters:
-  SizeType number_of_clients = 5;
-  SizeType number_of_rounds  = 1000;
-  SizeType number_of_peers   = 3;
-  bool     synchronisation   = false;
-  // have been processed in total by the clients
+  auto        n_clients       = doc["n_clients"].As<SizeType>();
+  auto        n_peers         = doc["n_peers"].As<SizeType>();
+  auto        n_rounds        = doc["n_rounds"].As<SizeType>();
+  auto        synchronise     = doc["synchronise"].As<bool>();
+  std::string output_csv_file = doc["results"].As<std::string>();
 
-  client_params.batch_size    = 10000;
-  client_params.learning_rate = static_cast<DataType>(.001f);
-  client_params.max_updates   = 100;  //  Synchronization occurs after this number of batches
-
-  // Word2Vec parameters:
-  client_params.vocab_file           = "/tmp/vocab.txt";
-  client_params.negative_sample_size = 5;  // number of negative sample per word-context pair
-  client_params.window_size          = 5;  // window size for context sampling
-  client_params.freq_thresh          = DataType{0.001f};  // frequency threshold for subsampling
-  client_params.min_count            = 5;                 // infrequent word removal threshold
-  client_params.embedding_size       = 100;               // dimension of embedding vec
-  client_params.starting_learning_rate_per_sample =
-      DataType{0.0025f};  // these are the learning rates we have for each sample
-  client_params.test_frequency = 1000;
-
-  client_params.k     = 20;       // how many nearest neighbours to compare against
-  client_params.word0 = "three";  // test word to consider
-  client_params.word1 = "king";
-  client_params.word2 = "queen";
-  client_params.word3 = "father";
-
-  // calc the true starting learning rate
-  client_params.starting_learning_rate = static_cast<DataType>(client_params.batch_size) *
-                                         client_params.starting_learning_rate_per_sample;
-  client_params.ending_learning_rate = static_cast<DataType>(client_params.batch_size) *
-                                       client_params.ending_learning_rate_per_sample;
-  client_params.learning_rate_param.starting_learning_rate = client_params.starting_learning_rate;
-  client_params.learning_rate_param.ending_learning_rate   = client_params.ending_learning_rate;
+  /**
+   * Prepare environment
+   */
 
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
   std::cout << "FETCH Distributed Word2vec Demo" << std::endl;
 
-  std::string train_file            = argv[1];
-  client_params.analogies_test_file = argv[2];
-
-  std::vector<std::string> client_data = SplitTrainingData(train_file, number_of_clients);
-
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>>         clients(number_of_clients);
-  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
+  std::vector<std::string> client_data = SplitTrainingData(data_file, n_clients);
+  std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>> clients(n_clients);
+  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>>   networkers(n_clients);
 
   // Create networkers
-  for (SizeType i(0); i < number_of_clients; ++i)
+  for (SizeType i(0); i < n_clients; ++i)
   {
-    networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
-    networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
+    networkers.at(i) = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
+    networkers.at(i)->Initialize<fetch::dmlf::Update<TensorType>>();
   }
 
-  for (SizeType i(0); i < number_of_clients; ++i)
+  // Add peers to networkers and initialise shuffle algorithm
+  for (SizeType i(0); i < n_clients; ++i)
   {
-    networkers[i]->AddPeers(networkers);
-    networkers[i]->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
-        networkers[i]->GetPeerCount(), number_of_peers));
+    networkers.at(i)->AddPeers(networkers);
+    networkers.at(i)->SetShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
+        networkers.at(i)->GetPeerCount(), n_peers));
   }
 
-  std::vector<std::pair<std::vector<std::string>, fetch::byte_array::ConstByteArray>> vocabs;
-
-  // Instantiate NUMBER_OF_CLIENTS clients
-  for (SizeType i(0); i < number_of_clients; ++i)
+  // Instantiate n_clients clients
+  for (SizeType i(0); i < n_clients; ++i)
   {
-    W2VTrainingParams<DataType> cp = client_params;
-    cp.data                        = {client_data[i]};
-    auto client =
-        std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
+    Word2VecTrainingParams<DataType> cp(*word2vec_client_params);
+    cp.data       = {client_data.at(i)};
+    clients.at(i) = std::make_shared<CollectiveLearningClient<TensorType>>(
+        std::to_string(i), cp, networkers.at(i), console_mutex_ptr, false);
 
-    clients[i] = client;
-    vocabs.push_back(client->GetVocab());
+    clients.at(i)->BuildAlgorithms<ClientWord2VecAlgorithm<TensorType>>(cp, console_mutex_ptr);
   }
 
-  for (const auto &client : clients)
+  /**
+   * Main loop
+   */
+  for (SizeType it(0); it < n_rounds; ++it)
   {
-    auto cast_client = std::dynamic_pointer_cast<Word2VecClient<TensorType>>(client);
-
-    for (const auto &vocab : vocabs)
-    {
-      cast_client->AddVocab(vocab);
-    }
-  }
-
-  for (SizeType i(0); i < number_of_clients; ++i)
-  {
-    // Give each client pointer to coordinator
-    clients[i]->SetNetworker(networkers[i]);
-  }
-
-  // Main loop
-  for (SizeType it(0); it < number_of_rounds; ++it)
-  {
-
     // Start all clients
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
-    std::list<std::thread> threads;
+    std::vector<std::thread> threads;
     for (auto &c : clients)
     {
-      threads.emplace_back([&c] { c->Run(); });
+      c->RunAlgorithms(threads);
     }
 
     // Wait for everyone to finish
@@ -183,76 +216,32 @@ int main(int argc, char **argv)
       t.join();
     }
 
-    std::ofstream lossfile(std::string(argv[3]), std::ofstream::out | std::ofstream::app);
-
+    // Gather and write performance statistics
+    std::ofstream lossfile(output_csv_file, std::ofstream::out | std::ofstream::app);
     std::cout << "Test losses:";
-    lossfile << utilities::GetStrTimestamp();
+    lossfile << fetch::ml::utilities::GetStrTimestamp();
     for (auto &c : clients)
     {
-      auto *w2v_client = dynamic_cast<Word2VecClient<TensorType> *>(c.get());
+      for (auto &algo : c->GetAlgorithms())
+      {
+        auto *w2v_client = dynamic_cast<ClientWord2VecAlgorithm<TensorType> *>(algo.get());
 
-      std::cout << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
-                << w2v_client->analogy_score_;
-      lossfile << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
-               << w2v_client->analogy_score_;
+        std::cout << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
+                  << w2v_client->GetAnalogyScore();
+        lossfile << "\t" << static_cast<double>(c->GetLossAverage()) << "\t"
+                 << w2v_client->GetAnalogyScore();
+      }
     }
     std::cout << std::endl;
     lossfile << std::endl;
 
     lossfile.close();
 
-    if (!synchronisation)
-    {
-      continue;
-    }
-
-    std::cout << std::endl << "Synchronising weights" << std::endl;
-
     // Synchronize weights by giving all clients average of all client's weights
-    std::vector<VectorTensorType>                  clients_weights{clients.size()};
-    std::vector<fetch::byte_array::ConstByteArray> clients_vocab_hashes{clients.size()};
-
-    for (SizeType i{0}; i < number_of_clients; ++i)
+    if (synchronise)
     {
-      clients_weights[i]      = clients[i]->GetWeights();
-      auto cast_client_i      = std::dynamic_pointer_cast<Word2VecClient<TensorType>>(clients[i]);
-      clients_vocab_hashes[i] = cast_client_i->GetVocab().second;
-    }
-
-    std::vector<VectorTensorType> clients_new_weights{clients.size()};
-
-    for (SizeType i{0}; i < number_of_clients; ++i)
-    {
-      VectorTensorType weights_new;
-
-      auto cast_client_i = std::dynamic_pointer_cast<Word2VecClient<TensorType>>(clients[i]);
-
-      for (SizeType k{0}; k < clients_weights.at(i).size(); ++k)
-      {
-        TensorType weight_sum;
-        TensorType counts_sum;
-        bool       first = true;
-        for (SizeType j{0}; j < number_of_clients; ++j)
-        {
-          auto ret =
-              cast_client_i->TranslateWeights(clients_weights.at(j).at(k), clients_vocab_hashes[j]);
-          if (first)
-          {
-            weight_sum = ret.first;
-            counts_sum = ret.second;
-            first      = false;
-          }
-          else
-          {
-            weight_sum += ret.first;
-            counts_sum += ret.first;
-          }
-        }
-        // divide weights by counts to get average
-        weights_new.push_back(weight_sum / counts_sum);
-      }
-
-      cast_client_i->SetWeights(weights_new);
+      std::cout << std::endl << "Synchronising weights" << std::endl;
+      SynchroniseWeights(clients);
     }
   }
 

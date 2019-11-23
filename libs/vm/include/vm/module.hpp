@@ -169,9 +169,13 @@ public:
     ClassInterface &CreateMemberFunction(std::string const &name, Callable callable,
                                          ChargeAmount static_charge = 1)
     {
-      using Traits        = typename meta::CallableTraits<Callable>;
-      using EtchParams    = typename Traits::ArgsTupleType;
-      using EstimatorType = meta::UnpackTuple<EtchParams, ChargeEstimator>;
+      using Traits     = typename meta::CallableTraits<Callable>;
+      using EtchParams = typename Traits::ArgsTupleType;
+
+      using EstimatorArgs =
+          typename meta::Tuple<EtchParams>::template Prepend<std::tuple<Ptr<Type> const &>>::type;
+
+      using EstimatorType = meta::UnpackTuple<EstimatorArgs, ChargeEstimator>;
 
       return InternalCreateMemberFunction(name, callable, static_charge, EstimatorType{});
     }
@@ -221,8 +225,8 @@ public:
                                         ChargeAmount static_setter_charge = 1)
     {
       return InternalEnableIndexOperator(getter, setter, static_getter_charge, static_setter_charge,
-                                         ChargeEstimator<GetterArgs...>{},
-                                         ChargeEstimator<SetterArgs...>{});
+                                         ChargeEstimator<Ptr<Type> const &, GetterArgs...>{},
+                                         ChargeEstimator<Ptr<Type> const &, SetterArgs...>{});
     }
 
     template <typename GetterReturnType, typename... GetterArgs, typename SetterReturnType,
@@ -232,9 +236,9 @@ public:
                                         GetterEstimator getter_estimator,
                                         SetterEstimator setter_estimator)
     {
-      return InternalEnableIndexOperator(getter, setter, 0, 0,
-                                         ChargeEstimator<GetterArgs...>{getter_estimator},
-                                         ChargeEstimator<SetterArgs...>{setter_estimator});
+      return InternalEnableIndexOperator(
+          getter, setter, 0, 0, ChargeEstimator<Ptr<Type> const &, GetterArgs...>{getter_estimator},
+          ChargeEstimator<Ptr<Type> const &, SetterArgs...>{setter_estimator});
     }
 
     template <typename InstantiationType>
@@ -242,12 +246,12 @@ public:
     {
       TypeIndex const instantiation_type_index = TypeIndex(typeid(InstantiationType));
       TypeIndex const template_type_index      = type_index_;
-      TypeIndexArray  parameter_type_index_array;
-      UnrollTemplateParameters<InstantiationType>::Unroll(parameter_type_index_array);
+      TypeIndexArray  template_parameter_type_index_array;
+      UnrollTemplateParameters<InstantiationType>::Unroll(template_parameter_type_index_array);
       auto compiler_setup_function = [instantiation_type_index, template_type_index,
-                                      parameter_type_index_array](Compiler *compiler) {
-        compiler->CreateInstantiationType(instantiation_type_index, template_type_index,
-                                          parameter_type_index_array);
+                                      template_parameter_type_index_array](Compiler *compiler) {
+        compiler->CreateTemplateInstantiationType(instantiation_type_index, template_type_index,
+                                                  template_parameter_type_index_array);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
 
@@ -294,7 +298,7 @@ public:
                                                        Estimator    estimator)
     {
       using Traits      = typename meta::CallableTraits<Callable>;
-      using Params      = typename meta::CallableTraits<Callable>::ArgsTupleType;
+      using Params      = typename Traits::ArgsTupleType;
       using EtchParams  = typename meta::Tuple<Params>::template DropInitial<2>::type;
       using ExtraParams = typename meta::Tuple<Params>::template TakeInitial<2>::type;
       using ReturnType  = typename Traits::ReturnType;
@@ -308,8 +312,7 @@ public:
       TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
 
       Handler handler = [callable, estimator](VM *vm) {
-        using EstimatorType = meta::UnpackTuple<EtchParams, ChargeEstimator>;
-        StaticMemberFunction<EtchParams>::InvokeHandler(vm, EstimatorType{estimator}, callable, vm,
+        StaticMemberFunction<EtchParams>::InvokeHandler(vm, estimator, callable, vm,
                                                         vm->instruction_->data);
       };
       auto compiler_setup_function = [type_index__, name, parameter_type_index_array,
@@ -390,8 +393,7 @@ public:
       TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
 
       Handler handler = [callable, estimator](VM *vm) {
-        using EstimatorType = meta::UnpackTuple<EtchParams, ChargeEstimator>;
-        MemberFunction<EtchParams>::InvokeHandler(vm, EstimatorType{estimator}, callable);
+        MemberFunction<EtchParams>::InvokeHandler(vm, estimator, callable);
       };
 
       auto compiler_setup_function = [type_index__, name, parameter_type_index_array,
@@ -462,6 +464,15 @@ public:
   RegisteredTypes const &registered_types() const
   {
     return registered_types_;
+  }
+
+  const TypeInfoArray &GetTypeInfoArray() const
+  {
+    return type_info_array_;
+  }
+  const DeserializeConstructorMap &GetDeserializationConstructors() const
+  {
+    return deserialization_constructors_;
   }
 
 private:

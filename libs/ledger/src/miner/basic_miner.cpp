@@ -102,7 +102,7 @@ void BasicMiner::EnqueueTransaction(chain::TransactionLayout const &layout)
 
   if (layout.mask().size() != (1u << log2_num_lanes_))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Disgarding layout due to incompatible mask size");
+    FETCH_LOG_WARN(LOGGING_NAME, "Discarding layout due to incompatible mask size");
     return;
   }
 
@@ -114,7 +114,7 @@ void BasicMiner::EnqueueTransaction(chain::TransactionLayout const &layout)
   else
   {
     duplicate_count_->increment();
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) ", layout.digest().ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) 0x", layout.digest().ToHex());
   }
 }
 
@@ -137,9 +137,21 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
     mining_pool_.Splice(pending_);
   }
 
+  std::remove_if(mining_pool_.begin(), mining_pool_.end(), [&block](auto const &tx_layout) {
+    constexpr Block::Index DEFAULT_TX_VALIDITY_PERIOD = 10;
+    auto const             valid_from                 = tx_layout.valid_from() == 0
+                                ? tx_layout.valid_until() - DEFAULT_TX_VALIDITY_PERIOD
+                                : tx_layout.valid_from();
+
+    bool const tx_expired       = tx_layout.valid_until() < block.block_number;
+    bool const tx_not_yet_valid = valid_from > block.block_number;
+
+    return tx_expired || tx_not_yet_valid;
+  });
+
   // detect the transactions which have already been incorporated into previous blocks
   auto const duplicates =
-      chain.DetectDuplicateTransactions(block.body.previous_hash, mining_pool_.digests());
+      chain.DetectDuplicateTransactions(block.previous_hash, mining_pool_.digests());
 
   duplicate_filtered_count_->add(duplicates.size());
 
@@ -158,12 +170,12 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   auto const num_threads = Clip3<std::size_t>(mining_pool_.size() / 1000u, 1u, max_num_threads_);
 
   // prepare the basic formatting for the block
-  block.body.slices.resize(num_slices);
+  block.slices.resize(num_slices);
 
   // skip thread generation in the simple case
   if (num_threads == 1)
   {
-    GenerateSlices(mining_pool_, block.body, 0, 1, num_lanes);
+    GenerateSlices(mining_pool_, block, 0, 1, num_lanes);
   }
   else if (num_threads > 1)
   {
@@ -188,7 +200,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
       txs.Splice(mining_pool_, start, end);
 
       thread_pool_.Dispatch([&txs, &block, i, num_threads, num_lanes]() {
-        GenerateSlices(txs, block.body, i, num_threads, num_lanes);
+        GenerateSlices(txs, block, i, num_threads, num_lanes);
       });
     }
 
@@ -231,7 +243,7 @@ uint64_t BasicMiner::GetBacklog() const
  * @param interval The slice index interval to be used when selecting the next slice to populate
  * @param num_lanes The number of lanes of the block
  */
-void BasicMiner::GenerateSlices(Queue &transactions, Block::Body &block, std::size_t offset,
+void BasicMiner::GenerateSlices(Queue &transactions, Block &block, std::size_t offset,
                                 std::size_t interval, std::size_t num_lanes)
 {
   // sort by fees
@@ -303,7 +315,7 @@ void BasicMiner::GenerateSlice(Queue &transactions, Block::Slice &      slice,
 bool BasicMiner::SortByFee(TransactionLayout const &a, TransactionLayout const &b)
 {
   // this doesn't seem to the a good metric
-  return a.charge() > b.charge();
+  return a.charge_rate() > b.charge_rate();
 }
 
 }  // namespace ledger

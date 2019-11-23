@@ -18,9 +18,9 @@
 
 #include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
+#include "math/utilities/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/dataloaders/dataloader.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "vm/array.hpp"
 #include "vm/module.hpp"
@@ -43,9 +43,6 @@ using VMTensorType   = fetch::vm_modules::math::VMTensor;
 using CommodityLoaderType =
     fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<VMDataLoader::DataType>,
                                                 fetch::math::Tensor<VMDataLoader::DataType>>;
-using MnistLoaderType =
-    fetch::ml::dataloaders::MNISTLoader<fetch::math::Tensor<VMDataLoader::DataType>,
-                                        fetch::math::Tensor<VMDataLoader::DataType>>;
 using TensorLoaderType =
     fetch::ml::dataloaders::TensorDataLoader<fetch::math::Tensor<VMDataLoader::DataType>,
                                              fetch::math::Tensor<VMDataLoader::DataType>>;
@@ -57,20 +54,15 @@ VMDataLoader::VMDataLoader(VM *vm, TypeId type_id)
 VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, Ptr<String> const &mode)
   : Object(vm, type_id)
 {
-  if (mode->str == "tensor")
+  if (mode->string() == "tensor")
   {
     mode_   = DataLoaderMode::TENSOR;
     loader_ = std::make_shared<TensorLoaderType>();
   }
-  else if (mode->str == "commodity")
+  else if (mode->string() == "commodity")
   {
     mode_   = DataLoaderMode::COMMODITY;
     loader_ = std::make_shared<CommodityLoaderType>();
-  }
-  else if (mode->str == "mnist")
-  {
-    mode_   = DataLoaderMode::MNIST;
-    loader_ = std::make_shared<MnistLoaderType>();
   }
   else
   {
@@ -105,11 +97,6 @@ void VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename, Ptr<String> cons
     AddCommodityData(xfilename, yfilename);
     break;
   }
-  case DataLoaderMode::MNIST:
-  {
-    AddMnistData(xfilename, yfilename);
-    break;
-  }
   default:
   {
     throw std::runtime_error("current dataloader mode does not support AddDataByFiles");
@@ -117,7 +104,9 @@ void VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename, Ptr<String> cons
   }
 }
 
-void VMDataLoader::AddDataByData(Ptr<VMTensorType> const &data, Ptr<VMTensorType> const &labels)
+void VMDataLoader::AddDataByData(
+    fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<VMTensorType>>> const &data,
+    Ptr<VMTensorType> const &                                             labels)
 {
   switch (mode_)
   {
@@ -135,22 +124,26 @@ void VMDataLoader::AddDataByData(Ptr<VMTensorType> const &data, Ptr<VMTensorType
 
 void VMDataLoader::AddCommodityData(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
 {
-  auto data  = fetch::ml::dataloaders::ReadCSV<MathTensorType>(xfilename->str);
-  auto label = fetch::ml::dataloaders::ReadCSV<MathTensorType>(yfilename->str);
+  auto data  = fetch::math::utilities::ReadCSV<MathTensorType>(xfilename->string());
+  auto label = fetch::math::utilities::ReadCSV<MathTensorType>(yfilename->string());
 
-  std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData(data, label);
+  std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData({data}, label);
 }
 
-void VMDataLoader::AddMnistData(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
+void VMDataLoader::AddTensorData(
+    fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<VMTensorType>>> const &data,
+    Ptr<VMTensorType> const &                                             labels)
 {
-  std::static_pointer_cast<MnistLoaderType>(loader_)->SetupWithDataFiles(xfilename->str,
-                                                                         yfilename->str);
-}
+  auto                    n_elements = data->elements.size();
+  std::vector<TensorType> c_data(n_elements);
 
-void VMDataLoader::AddTensorData(Ptr<VMTensorType> const &data, Ptr<VMTensorType> const &labels)
-{
-  std::static_pointer_cast<TensorLoaderType>(loader_)->AddData(data->GetTensor(),
-                                                               labels->GetTensor());
+  for (fetch::math::SizeType i{0}; i < n_elements; i++)
+  {
+    Ptr<VMTensorType> ptr_tensor = data->elements.at(i);
+    c_data.at(i)                 = (ptr_tensor)->GetTensor();
+  }
+
+  std::static_pointer_cast<TensorLoaderType>(loader_)->AddData(c_data, labels->GetTensor());
 }
 
 // TODO(issue 1692): Simplify Array<Tensor> construction

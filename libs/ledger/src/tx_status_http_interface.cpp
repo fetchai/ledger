@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "core/byte_array/encoders.hpp"
 #include "core/macros.hpp"
 #include "http/json_response.hpp"
 #include "ledger/transaction_status_cache.hpp"
@@ -27,16 +26,16 @@
 
 #include <utility>
 
-static constexpr char const *LOGGING_NAME = "TxStatusHttp";
-
-using fetch::byte_array::FromHex;
-using fetch::byte_array::ToBase64;
-using fetch::variant::Variant;
-
 namespace fetch {
 namespace ledger {
 
 namespace {
+
+constexpr char const *LOGGING_NAME = "TxStatusHttp";
+
+using fetch::byte_array::FromHex;
+using fetch::variant::Variant;
+
 constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_status,
                                  ContractExecutionStatus contract_exec_status)
 {
@@ -57,33 +56,33 @@ constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_
     case ContractExecutionStatus::SUCCESS:
       return PublicTxStatus::EXECUTED;
 
-    case ContractExecutionStatus::CHAIN_CODE_LOOKUP_FAILURE:
-      return PublicTxStatus::CHAIN_CODE_LOOKUP_FAILURE;
-
-    case ContractExecutionStatus::CHAIN_CODE_EXEC_FAILURE:
-      return PublicTxStatus::CHAIN_CODE_EXEC_FAILURE;
-
-    case ContractExecutionStatus::CONTRACT_LOOKUP_FAILURE:
-      return PublicTxStatus::CONTRACT_LOOKUP_FAILURE;
+    case ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS:
+      return PublicTxStatus::INSUFFICIENT_AVAILABLE_FUNDS;
 
     case ContractExecutionStatus::CONTRACT_NAME_PARSE_FAILURE:
       return PublicTxStatus::CONTRACT_NAME_PARSE_FAILURE;
 
-    case ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS:
-      return PublicTxStatus::INSUFFICIENT_AVAILABLE_FUNDS;
+    case ContractExecutionStatus::CONTRACT_LOOKUP_FAILURE:
+      return PublicTxStatus::CONTRACT_LOOKUP_FAILURE;
 
-    case ContractExecutionStatus::INSUFFICIENT_CHARGE:
-      return PublicTxStatus::INSUFFICIENT_CHARGE;
+    case ContractExecutionStatus::ACTION_LOOKUP_FAILURE:
+      return PublicTxStatus::ACTION_LOOKUP_FAILURE;
+
+    case ContractExecutionStatus::CONTRACT_EXECUTION_FAILURE:
+      return PublicTxStatus::CONTRACT_EXECUTION_FAILURE;
 
     case ContractExecutionStatus::TRANSFER_FAILURE:
       return PublicTxStatus::TRANSFER_FAILURE;
 
-    case ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK:
-      return PublicTxStatus::TX_NOT_VALID_FOR_BLOCK;
+    case ContractExecutionStatus::INSUFFICIENT_CHARGE:
+      return PublicTxStatus::INSUFFICIENT_CHARGE;
 
-    case ContractExecutionStatus::NOT_RUN:
-    case ContractExecutionStatus::RESOURCE_FAILURE:
     case ContractExecutionStatus::TX_LOOKUP_FAILURE:
+    case ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK:
+    case ContractExecutionStatus::TX_PERMISSION_DENIED:
+    case ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE:
+    case ContractExecutionStatus::NOT_RUN:
+    case ContractExecutionStatus::INTERNAL_ERROR:
     case ContractExecutionStatus::INEXPLICABLE_FAILURE:
       break;
     }
@@ -100,7 +99,7 @@ Variant ToVariant(Digest const &digest, TransactionStatusCache::TxStatus const &
 {
   auto retval{Variant::Object()};
 
-  retval["tx"]        = ToBase64(digest);
+  retval["tx"]        = digest.ToHex();
   retval["status"]    = ToString(Convert(tx_status.status, tx_status.contract_exec_result.status));
   retval["exit_code"] = tx_status.contract_exec_result.return_value;
   retval["charge"]    = tx_status.contract_exec_result.charge;
@@ -125,12 +124,10 @@ TxStatusHttpInterface::TxStatusHttpInterface(TxStatusCachePtr status_cache)
 
         if (params.Has("digest"))
         {
-          // convert the digest back to binary
           auto const digest = FromHex(params["digest"]);
 
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Querying status of: ", digest.ToBase64());
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Querying status of: 0x", digest.ToHex());
 
-          // prepare the response
           auto const response{ToVariant(digest, status_cache_->Query(digest))};
 
           return http::CreateJsonResponse(response);

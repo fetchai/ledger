@@ -46,8 +46,7 @@ STR2			([^'\\\n]|\\.)*
 INTEGER		[0-9][0-9]*
 REAL1		([0-9]*\.[0-9]+|[0-9]+\.){EXP}?
 REAL2		[0-9]+{EXP}
-FIXED1		([0-9]*\.[0-9]+|[0-9]+\.)
-FIXED2		[0-9]
+FIXED		([0-9]*\.[0-9]+|[0-9]+\.)
 IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 
 %%
@@ -133,14 +132,19 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 	return Set(yylval, fetch::vm::Token::Kind::Float64, yytext, yyleng, yyextra);
 }
 
-{FIXED1}fp32 |
-{FIXED2}fp32 {
+{FIXED}fp32 |
+{INTEGER}fp32 {
 	return Set(yylval, fetch::vm::Token::Kind::Fixed32, yytext, yyleng, yyextra);
 }
 
-{FIXED1}fp64 |
-{FIXED2}fp64 {
+{FIXED}fp64 |
+{INTEGER}fp64 {
 	return Set(yylval, fetch::vm::Token::Kind::Fixed64, yytext, yyleng, yyextra);
+}
+
+{FIXED}fp128 |
+{INTEGER}fp128 {
+	return Set(yylval, fetch::vm::Token::Kind::Fixed128, yytext, yyleng, yyextra);
 }
 
 	/* strings */
@@ -160,6 +164,8 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 "true"        {return Set(yylval, fetch::vm::Token::Kind::True, yytext, yyleng, yyextra);}
 "false"       {return Set(yylval, fetch::vm::Token::Kind::False, yytext, yyleng, yyextra);}
 "null"        {return Set(yylval, fetch::vm::Token::Kind::Null, yytext, yyleng, yyextra);}
+"contract"    {return Set(yylval, fetch::vm::Token::Kind::Contract, yytext, yyleng, yyextra);}
+"endcontract" {return Set(yylval, fetch::vm::Token::Kind::EndContract, yytext, yyleng, yyextra);}
 "function"    {return Set(yylval, fetch::vm::Token::Kind::Function, yytext, yyleng, yyextra);}
 "endfunction" {return Set(yylval, fetch::vm::Token::Kind::EndFunction, yytext, yyleng, yyextra);}
 "while"       {return Set(yylval, fetch::vm::Token::Kind::While, yytext, yyleng, yyextra);}

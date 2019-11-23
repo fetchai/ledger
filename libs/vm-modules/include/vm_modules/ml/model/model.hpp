@@ -33,7 +33,7 @@ namespace vm_modules {
 namespace ml {
 namespace model {
 
-enum class ModelType
+enum class ModelCategory : uint8_t
 {
   NONE,
   SEQUENTIAL,
@@ -46,29 +46,40 @@ class VMModel : public fetch::vm::Object
 public:
   using DataType            = fetch::vm_modules::math::DataType;
   using TensorType          = fetch::math::Tensor<DataType>;
-  using ModelPtrType        = std::shared_ptr<fetch::ml::model::Model<TensorType>>;
+  using ModelType           = fetch::ml::model::Model<TensorType>;
+  using ModelPtrType        = std::shared_ptr<ModelType>;
   using ModelConfigType     = fetch::ml::model::ModelConfig<DataType>;
   using ModelConfigPtrType  = std::shared_ptr<fetch::ml::model::ModelConfig<DataType>>;
   using GraphType           = fetch::ml::Graph<TensorType>;
   using TensorDataloader    = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
-  using TensorDataloaderPtr = std::unique_ptr<TensorDataloader>;
+  using TensorDataloaderPtr = std::shared_ptr<TensorDataloader>;
   using VMTensor            = fetch::vm_modules::math::VMTensor;
 
+  VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
+
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-          fetch::vm::Ptr<fetch::vm::String> const &model_type);
+          fetch::vm::Ptr<fetch::vm::String> const &model_category);
 
-  static fetch::vm::Ptr<VMModel> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                             fetch::vm::Ptr<fetch::vm::String> const &model_type);
+  VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &model_category);
 
-  void LayerAdd(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
-                math::SizeType const &hidden_nodes);
-  void LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                          math::SizeType const &inputs, math::SizeType const &hidden_nodes,
-                          fetch::vm::Ptr<fetch::vm::String> const &activation);
-  void LayerAddImplementation(std::string const &layer, math::SizeType const &inputs,
-                              math::SizeType const &                    hidden_nodes,
-                              fetch::ml::details::ActivationType const &activation =
-                                  fetch::ml::details::ActivationType::NOTHING);
+  static fetch::vm::Ptr<VMModel> Constructor(
+      fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+      fetch::vm::Ptr<fetch::vm::String> const &model_category);
+
+  void LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+                     math::SizeType const &hidden_nodes);
+  void LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                               math::SizeType const &inputs, math::SizeType const &hidden_nodes,
+                               fetch::vm::Ptr<fetch::vm::String> const &activation);
+
+  void LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                    math::SizeType const &output_channels, math::SizeType const &input_channels,
+                    math::SizeType const &kernel_size, math::SizeType const &stride_size);
+  void LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                              math::SizeType const &                   output_channels,
+                              math::SizeType const &                   input_channels,
+                              math::SizeType const &kernel_size, math::SizeType const &stride_size,
+                              fetch::vm::Ptr<fetch::vm::String> const &activation);
 
   void CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                          fetch::vm::Ptr<fetch::vm::String> const &optimiser);
@@ -77,7 +88,7 @@ public:
                      fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers);
 
   void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
-           fetch::math::SizeType const &batch_size);
+           ::fetch::math::SizeType const &batch_size);
 
   DataType Evaluate();
 
@@ -85,11 +96,23 @@ public:
 
   static void Bind(fetch::vm::Module &module);
 
+  ModelPtrType &GetModel();
+
+  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+
+  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+
+  fetch::vm::Ptr<fetch::vm::String> SerializeToString();
+
+  fetch::vm::Ptr<VMModel> DeserializeFromString(
+      fetch::vm::Ptr<fetch::vm::String> const &model_string);
+
 private:
-  TensorDataloaderPtr dl_;
-  ModelPtrType        model_;
-  ModelConfigPtrType  model_config_;
-  ModelType           model_type_ = ModelType::NONE;
+  ModelPtrType       model_;
+  ModelConfigPtrType model_config_;
+  ModelCategory      model_category_ = ModelCategory::NONE;
+
+  void Init(std::string const &model_category);
 };
 
 }  // namespace model

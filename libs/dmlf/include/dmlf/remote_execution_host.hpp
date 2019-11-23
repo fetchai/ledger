@@ -32,9 +32,9 @@ namespace dmlf {
 class RemoteExecutionHost
 {
 public:
-  using Name                  = ExecutionInterface::Name;
-  using SourceFiles           = ExecutionInterface::SourceFiles;
-  using ExecutionInterfacePtr = ExecutionWorkload::ExecutionInterfacePtr;
+  using Name                        = ExecutionInterface::Name;
+  using SourceFiles                 = ExecutionInterface::SourceFiles;
+  using ExecutionEngineInterfacePtr = ExecutionWorkload::ExecutionEngineInterfacePtr;
 
   using MuddlePtr = muddle::MuddlePtr;
   using Uri       = network::Uri;
@@ -44,7 +44,7 @@ public:
 
   using PendingWorkloads = std::list<ExecutionWorkload>;
 
-  RemoteExecutionHost(MuddlePtr mud, ExecutionInterfacePtr executor);
+  RemoteExecutionHost(MuddlePtr mud, ExecutionEngineInterfacePtr executor);
 
   virtual ~RemoteExecutionHost() = default;
 
@@ -66,17 +66,19 @@ public:
                            Name const &stateName);
 
   virtual bool Run(service::CallContext const &context, OpIdent const &op_id, Name const &execName,
-                   Name const &stateName, std::string const &entrypoint, const Params &params);
+                   Name const &stateName, std::string const &entrypoint, Params const &params);
 
   bool ExecuteOneWorkload();
+
+  static constexpr char const *LOGGING_NAME = "RemoteExecutionHost";
 
 protected:
 private:
   MuddlePtr                  mud_;
   std::shared_ptr<RpcClient> client_;
 
-  PendingWorkloads      pending_workloads_;
-  ExecutionInterfacePtr executor_;
+  PendingWorkloads            pending_workloads_;
+  ExecutionEngineInterfacePtr executor_;
 };
 
 }  // namespace dmlf

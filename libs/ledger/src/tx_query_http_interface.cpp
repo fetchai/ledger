@@ -59,9 +59,9 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
         // convert the digest back to binary
         auto const digest = FromHex(params["digest"]);
 
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Querying tx: ", digest.ToBase64());
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Querying tx: 0x", digest.ToHex());
 
-        // attempt to lookup the transaction
+        // attempt to look up the transaction
         Transaction tx;
         if (!storage_unit_.GetTransaction(digest, tx))
         {
@@ -86,7 +86,8 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
         tx_obj["validFrom"]  = tx.valid_from();
         tx_obj["validUntil"] = tx.valid_until();
 
-        tx_obj["charge"]      = tx.charge();
+        tx_obj["charge"]      = tx.charge_rate();  // kept for the moment but will be deprecated
+        tx_obj["chargeRate"]  = tx.charge_rate();
         tx_obj["chargeLimit"] = tx.charge_limit();
 
         switch (tx.contract_mode())

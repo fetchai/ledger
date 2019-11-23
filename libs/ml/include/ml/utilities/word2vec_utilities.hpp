@@ -53,7 +53,7 @@ std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>>
     typename TensorType::SizeType const &word2, typename TensorType::SizeType const &word3,
     typename TensorType::SizeType k)
 {
-  using SizeType = typename TensorType::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TensorType::Type;
 
   // get word vectors for word_ids
@@ -78,7 +78,7 @@ std::string WordAnalogyTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
                             std::string const &word2, std::string const &word3,
                             typename TensorType::SizeType k)
 {
-  using SizeType = typename TensorType::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TensorType::Type;
 
   std::stringstream outstream;
@@ -114,7 +114,7 @@ template <class TensorType>
 std::string KNNTest(dataloaders::GraphW2VLoader<TensorType> const &dl, TensorType const &embeddings,
                     std::string const &word0, typename TensorType::SizeType k)
 {
-  using SizeType = typename TensorType::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TensorType::Type;
 
   std::stringstream outstream;
@@ -148,7 +148,7 @@ std::pair<std::string, float> AnalogiesFileTest(dataloaders::GraphW2VLoader<Tens
                                                 std::string const &analogy_file,
                                                 bool               verbose = false)
 {
-  using SizeType = typename TensorType::SizeType;
+  using SizeType = fetch::math::SizeType;
   using DataType = typename TensorType::Type;
 
   std::stringstream outstream;
@@ -267,11 +267,7 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
   }
 }
 
-inline std::string ReadFile(std::string const &path)
-{
-  std::ifstream t(path);
-  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-}
+std::string ReadFile(std::string const &path);
 
 }  // namespace utilities
 }  // namespace ml

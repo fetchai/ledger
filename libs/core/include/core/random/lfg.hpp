@@ -51,7 +51,7 @@ public:
 
     for (uint64_t i = 0; i < Q; ++i)
     {
-      buffer_[i] = lcg_();
+      buffer_[i] = (lcg_() >> 19) ^ lcg_();
     }
 
     FillBuffer();
@@ -94,7 +94,7 @@ public:
    * required for serialising lfg
    * @return
    */
-  std::vector<RandomType> GetBuffer()
+  std::vector<RandomType> GetBuffer() const
   {
     return std::vector<RandomType>(std::begin(buffer_), std::end(buffer_));
   }
@@ -107,7 +107,7 @@ public:
     }
   }
 
-  uint64_t GetIndex()
+  uint64_t GetIndex() const
   {
     return index_;
   }

@@ -18,27 +18,27 @@
 
 #include "math/tensor.hpp"
 #include "ml/clustering/tsne.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
-using namespace fetch::math;
-using namespace fetch::math::distance;
+namespace fetch {
+namespace ml {
+namespace test {
 
 template <typename T>
 class TsneTests : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-
-TYPED_TEST_CASE(TsneTests, MyTypes);
+// we do not test for fp32 since that tends to overflow
+TYPED_TEST_CASE(TsneTests, math::test::HighPrecisionTensorFloatingTypes);
 
 template <typename TypeParam>
 TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
                   typename TypeParam::SizeType n_data_size)
 {
-
+  using SizeType   = fetch::math::SizeType;
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
 
@@ -89,87 +89,39 @@ TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
   return tsn.GetOutputMatrix();
 }
 
-TEST(TsneTests, tsne_test_2d_float)
-{
-  SizeType N_DATA_SIZE{100};
-  SizeType N_OUTPUT_FEATURE_SIZE{2};
-
-  Tensor<float> output_matrix = RunTest<Tensor<float>>(N_OUTPUT_FEATURE_SIZE, N_DATA_SIZE);
-
-  ASSERT_EQ(output_matrix.shape().at(0), N_OUTPUT_FEATURE_SIZE);
-  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
-
-  EXPECT_FLOAT_EQ(output_matrix.At(0, 0), 0.25323879718780517578);
-  EXPECT_FLOAT_EQ(output_matrix.At(1, 0), -3.1758825778961181641);
-  EXPECT_FLOAT_EQ(output_matrix.At(0, 25), -1.7577359676361083984);
-  EXPECT_FLOAT_EQ(output_matrix.At(1, 25), 2.6265761852264404297);
-  EXPECT_FLOAT_EQ(output_matrix.At(0, 50), 0.2358369976282119751);
-  EXPECT_FLOAT_EQ(output_matrix.At(1, 50), 1.679751276969909668);
-  EXPECT_FLOAT_EQ(output_matrix.At(0, 99), -0.87262111902236938477);
-  EXPECT_FLOAT_EQ(output_matrix.At(1, 99), 3.0463356971740722656);
-}
-
-TEST(TsneTests, tsne_test_2d_double)
-{
-  SizeType N_DATA_SIZE{100};
-  SizeType N_OUTPUT_FEATURE_SIZE{2};
-
-  Tensor<double> output_matrix = RunTest<Tensor<double>>(N_OUTPUT_FEATURE_SIZE, N_DATA_SIZE);
-
-  ASSERT_EQ(output_matrix.shape().at(0), N_OUTPUT_FEATURE_SIZE);
-  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
-
-  EXPECT_DOUBLE_EQ(output_matrix.At(0, 0), 0.25323926146043396201);
-  EXPECT_DOUBLE_EQ(output_matrix.At(1, 0), -3.1758751208173934266);
-  EXPECT_DOUBLE_EQ(output_matrix.At(0, 25), -1.7577317050493974637);
-  EXPECT_DOUBLE_EQ(output_matrix.At(1, 25), 2.6265693658422666346);
-  EXPECT_DOUBLE_EQ(output_matrix.At(0, 50), 0.23583728299026301967);
-  EXPECT_DOUBLE_EQ(output_matrix.At(1, 50), 1.6797469776066187297);
-  EXPECT_DOUBLE_EQ(output_matrix.At(0, 99), -0.87261847085526600409);
-  EXPECT_DOUBLE_EQ(output_matrix.At(1, 99), 3.0463283985051647917);
-}
-
-TEST(TsneTests, tsne_test_2d_fixed_point)
-{
-  using DataType = typename fetch::fixed_point::FixedPoint<32, 32>;
-  SizeType N_DATA_SIZE{100};
-  SizeType N_OUTPUT_FEATURE_SIZE{2};
-
-  Tensor<DataType> output_matrix = RunTest<Tensor<DataType>>(N_OUTPUT_FEATURE_SIZE, N_DATA_SIZE);
-
-  ASSERT_EQ(output_matrix.shape().at(0), N_OUTPUT_FEATURE_SIZE);
-  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
-
-  EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323880254290997982025146484375, 2e-6);
-  EXPECT_NEAR(double(output_matrix.At(1, 0)), -3.17587922653183341026306152343750, 3e-6);
-  EXPECT_NEAR(double(output_matrix.At(0, 25)), -1.75773554784245789051055908203125, 2e-6);
-  EXPECT_NEAR(double(output_matrix.At(1, 25)), 2.62657403736375272274017333984375, 4e-6);
-  EXPECT_NEAR(double(output_matrix.At(0, 50)), 0.23583724093623459339141845703125, 2e-6);
-  EXPECT_NEAR(double(output_matrix.At(1, 50)), 1.67974892887286841869354248046875, 1e-6);
-  EXPECT_NEAR(double(output_matrix.At(0, 99)), -0.87261968106031417846679687500000, 1e-6);
-  EXPECT_NEAR(double(output_matrix.At(1, 99)), 3.04633120773360133171081542968750, 2e-6);
-}
-
-TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
+TYPED_TEST(TsneTests, tsne_test_2d)
 {
   using DataType = typename TypeParam::Type;
+  math::SizeType n_data{100};
+  math::SizeType n_features{2};
 
-  SizeType N_DATA_SIZE{100};
-  SizeType N_OUTPUT_FEATURE_SIZE{2};
+  TypeParam output_matrix = RunTest<TypeParam>(n_features, n_data);
 
-  TypeParam output_matrix = RunTest<TypeParam>(N_OUTPUT_FEATURE_SIZE, N_DATA_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(0), n_features);
+  ASSERT_EQ(output_matrix.shape().at(1), n_data);
 
-  ASSERT_EQ(output_matrix.shape().at(0), N_OUTPUT_FEATURE_SIZE);
-  ASSERT_EQ(output_matrix.shape().at(1), N_DATA_SIZE);
-
-  double tolerance = 60 * double(fetch::math::function_tolerance<DataType>());
-
-  EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323879718780517578, tolerance);
-  EXPECT_NEAR(double(output_matrix.At(1, 0)), -3.1758825778961181641, tolerance);
-  EXPECT_NEAR(double(output_matrix.At(0, 25)), -1.7577359676361083984, tolerance);
-  EXPECT_NEAR(double(output_matrix.At(1, 25)), 2.6265761852264404297, tolerance);
-  EXPECT_NEAR(double(output_matrix.At(0, 50)), 0.2358369976282119751, tolerance);
-  EXPECT_NEAR(double(output_matrix.At(1, 50)), 1.679751276969909668, tolerance);
-  EXPECT_NEAR(double(output_matrix.At(0, 99)), -0.87262111902236938477, tolerance);
-  EXPECT_NEAR(double(output_matrix.At(1, 99)), 3.0463356971740722656, tolerance);
+  // in general we set the tolerance to be function tolerance * number of operations.
+  // since tsne is a training procedure the number of operations is relatively large.
+  // here we use 50 as proxy instead of calculating the number of operations
+  // 50 is quite strict since there are 100 data points
+  EXPECT_NEAR(double(output_matrix.At(0, 0)), 2.5455484559746151,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(1, 0)), -1.7767733335494995,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(0, 25)), 0.059521886824643898,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(1, 25)), 2.8227819671468208,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(0, 50)), -1.0112856793691054,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(1, 50)), -0.057417890948507175,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(0, 99)), 2.7302324351584537,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(1, 99)), 0.48101261687371411,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
 }
+
+}  // namespace test
+}  // namespace ml
+}  // namespace fetch

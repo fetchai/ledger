@@ -22,11 +22,13 @@
 
 #include "core/mutex.hpp"
 #include "crypto/prover.hpp"
+#include "crypto/secure_channel.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/network_id.hpp"
 #include "muddle/packet.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/abstract_connection.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -58,14 +60,18 @@ public:
   using HandleDirectAddrMap  = std::unordered_map<Handle, Address>;
   using Prover               = crypto::Prover;
   using DirectMessageHandler = std::function<void(Handle, PacketPtr)>;
+  using Handles              = std::vector<Handle>;
 
   struct RoutingData
   {
-    bool   direct = false;
-    Handle handle = 0;
+    bool    direct = false;
+    Handles handles{};
   };
 
   using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
+  using Clock        = std::chrono::steady_clock;
+  using Timepoint    = Clock::time_point;
+  using EchoCache    = std::unordered_map<std::size_t, Timepoint>;
 
   // Helper functions
   static Packet::RawAddress ConvertAddress(Packet::Address const &address);
@@ -73,7 +79,7 @@ public:
 
   // Construction / Destruction
   Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispatcher &dispatcher,
-         Prover *prover = nullptr, bool sign_broadcasts = false);
+         Prover const &prover);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
@@ -117,7 +123,6 @@ public:
   AddressList GetDirectlyConnectedPeers() const override;
 
   AddressSet GetDirectlyConnectedPeerSet() const override;
-
   /// @}
 
   void Cleanup();
@@ -135,15 +140,16 @@ public:
 
   void SetKademliaRouting(bool enable = true);
 
+  RoutingTable     routing_table() const;
+  EchoCache        echo_cache() const;
+  NetworkId const &network() const;
+  Address const &  network_address() const;
+
   // Operators
   Router &operator=(Router const &) = delete;
   Router &operator=(Router &&) = delete;
 
 private:
-  using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
-  using Clock      = std::chrono::steady_clock;
-  using Timepoint  = Clock::time_point;
-  using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
   using RawAddress = Packet::RawAddress;
   using BlackList  = fetch::muddle::Blacklist;
 
@@ -164,7 +170,7 @@ private:
 
   void SendToConnection(Handle handle, PacketPtr const &packet);
   void RoutePacket(PacketPtr const &packet, bool external = true);
-  void DispatchDirect(Handle handle, PacketPtr packet);
+  void DispatchDirect(Handle handle, PacketPtr const &packet);
 
   void DispatchPacket(PacketPtr const &packet, Address const &transmitter);
 
@@ -173,6 +179,10 @@ private:
 
   PacketPtr const &Sign(PacketPtr const &p) const;
   bool             Genuine(PacketPtr const &p) const;
+
+  telemetry::GaugePtr<uint64_t> CreateGauge(char const *name, char const *description) const;
+  telemetry::HistogramPtr       CreateHistogram(char const *name, char const *description) const;
+  telemetry::CounterPtr         CreateCounter(char const *name, char const *description) const;
 
   std::string const     name_;
   char const *const     logging_name_{name_.c_str()};
@@ -184,8 +194,8 @@ private:
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
   NetworkId             network_id_;
-  Prover *              prover_          = nullptr;
-  bool                  sign_broadcasts_ = false;
+  crypto::Prover const &prover_;
+  crypto::SecureChannel secure_channel_{prover_};
   std::atomic<bool>     kademlia_routing_{false};
 
   mutable Mutex routing_table_lock_;
@@ -195,6 +205,39 @@ private:
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;
+
+  // telemetry
+  telemetry::GaugePtr<uint64_t> rx_max_packet_length;
+  telemetry::GaugePtr<uint64_t> tx_max_packet_length;
+  telemetry::GaugePtr<uint64_t> bx_max_packet_length;
+  telemetry::HistogramPtr       rx_packet_length;
+  telemetry::HistogramPtr       tx_packet_length;
+  telemetry::HistogramPtr       bx_packet_length;
+  telemetry::CounterPtr         rx_packet_total_;
+  telemetry::CounterPtr         tx_packet_total_;
+  telemetry::CounterPtr         bx_packet_total_;
+  telemetry::CounterPtr         rx_encrypted_packet_failures_total_;
+  telemetry::CounterPtr         rx_encrypted_packet_success_total_;
+  telemetry::CounterPtr         tx_encrypted_packet_failures_total_;
+  telemetry::CounterPtr         tx_encrypted_packet_success_total_;
+  telemetry::CounterPtr         ttl_expired_packet_total_;
+  telemetry::CounterPtr         dispatch_enqueued_total_;
+  telemetry::CounterPtr         exchange_dispatch_total_;
+  telemetry::CounterPtr         subscription_dispatch_total_;
+  telemetry::CounterPtr         dispatch_direct_total_;
+  telemetry::CounterPtr         dispatch_failure_total_;
+  telemetry::CounterPtr         dispatch_complete_total_;
+  telemetry::CounterPtr         foreign_packet_total_;
+  telemetry::CounterPtr         fraudulent_packet_total_;
+  telemetry::CounterPtr         routing_table_updates_total_;
+  telemetry::CounterPtr         echo_cache_trims_total_;
+  telemetry::CounterPtr         echo_cache_removals_total_;
+  telemetry::CounterPtr         normal_routing_total_;
+  telemetry::CounterPtr         informed_routing_total_;
+  telemetry::CounterPtr         kademlia_routing_total_;
+  telemetry::CounterPtr         speculative_routing_total_;
+  telemetry::CounterPtr         failed_routing_total_;
+  telemetry::CounterPtr         connection_dropped_total_;
 
   friend class DirectMessageService;
 };

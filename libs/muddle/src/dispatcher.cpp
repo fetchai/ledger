@@ -190,7 +190,7 @@ void Dispatcher::NotifyConnectionFailure(Handle handle)
 {
   PromiseSet affected_promises{};
 
-  // lookup all the affected promises
+  // look up all the affected promises
   {
     FETCH_LOCK(handles_lock_);
     auto it = handles_.find(handle);
