@@ -1581,8 +1581,8 @@ void BeaconSetupService::SetDeadlineForState(BeaconSetupService::State const &st
 
   // Note: fine to do floor arithmetic here, it might cause the deadline to happen in the past, but
   // there is resilience to this.
-  auto time_until_deadline_s =
-      static_cast<uint64_t>((time_slots_to_end / time_slots_in_dkg_) * expected_dkg_timespan_);
+  auto time_until_deadline_s = static_cast<uint64_t>((time_slots_to_end / time_slots_in_dkg_) *
+                                                     static_cast<double>(expected_dkg_timespan_));
 
   state_deadline_ = reference_timepoint_ + time_until_deadline_s;
 
