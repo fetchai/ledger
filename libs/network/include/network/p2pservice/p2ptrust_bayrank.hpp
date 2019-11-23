@@ -333,7 +333,7 @@ protected:
 
 protected:
   bool          dirty_ = false;
-  mutable Mutex mutex_;
+  mutable Mutex mutex_{__FILE__, __LINE__};
   TrustStore    trust_store_;
   RankingStore  ranking_store_;
 };

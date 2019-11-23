@@ -22,7 +22,7 @@ namespace fetch {
 namespace http {
 
 AbstractHTTPServer::HandleType AbstractHTTPServer::global_handle_counter_ = 0;
-Mutex                          AbstractHTTPServer::global_handle_mutex_;
+Mutex                          AbstractHTTPServer::global_handle_mutex_{__FILE__, __LINE__};
 
 }  // namespace http
 }  // namespace fetch

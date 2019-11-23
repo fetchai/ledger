@@ -341,7 +341,7 @@ public:
   }
 
 protected:
-  Mutex             mutex_;
+  Mutex             mutex_{__FILE__, __LINE__};
   KeyValueIndexType key_index_;
   FileObjectType    file_object_;
 };

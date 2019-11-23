@@ -97,7 +97,7 @@ private:
 
   /// @name Manifest Cache
   /// @{
-  mutable Mutex   lock_;
+  mutable Mutex   lock_{__FILE__, __LINE__};
   ManifestCache   manifest_cache_;
   Addresses       unavailable_requests_;
   PendingPromises pending_requests_;

@@ -127,9 +127,9 @@ private:
   using QueueInterfaceMap = std::unordered_map<std::string, QueueInterfacePtr>;
 
   QueueInterfacePtr queue_;
-  mutable Mutex     queue_m_;
+  mutable Mutex     queue_m_{__FILE__, __LINE__};
   QueueInterfaceMap queue_map_;
-  mutable Mutex     queue_map_m_;
+  mutable Mutex     queue_map_m_{__FILE__, __LINE__};
 
   TypeMap<> update_types_;
 

@@ -57,7 +57,7 @@ private:
   using SubscriptionWeakPtr = std::weak_ptr<Subscription>;
   using SubscriptionList    = std::vector<SubscriptionWeakPtr>;
 
-  mutable Mutex    feed_lock_;
+  mutable Mutex    feed_lock_{__FILE__, __LINE__};
   SubscriptionList feed_;
 };
 

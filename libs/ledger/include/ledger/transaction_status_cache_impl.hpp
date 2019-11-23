@@ -65,7 +65,7 @@ private:
   void PruneCache(Timepoint const &until);
   void PruneCacheIfNecessary(Timepoint const &until);
 
-  mutable Mutex mtx_;
+  mutable Mutex mtx_{__FILE__, __LINE__};
   Cache         cache_{};
   Timepoint     last_clean_{Clock::now()};
 };

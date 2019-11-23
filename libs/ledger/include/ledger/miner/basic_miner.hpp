@@ -92,13 +92,13 @@ private:
 
   /// @name Pending Queue
   /// @{
-  mutable Mutex pending_lock_;  ///< Pending queue lock (priority 1)
+  mutable Mutex pending_lock_{__FILE__, __LINE__};  ///< Pending queue lock (priority 1)
   Queue         pending_;       ///< The main mining queue for the node
   /// @}
 
   /// @name Central Mining Pool Queue
   /// @{
-  mutable Mutex mining_pool_lock_;  ///< Mining pool lock (priority 0)
+  mutable Mutex mining_pool_lock_{__FILE__, __LINE__};  ///< Mining pool lock (priority 0)
   Queue         mining_pool_;       ///< The main mining queue for the node
   /// @}
 

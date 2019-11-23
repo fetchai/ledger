@@ -62,7 +62,7 @@ protected:
   void    RemovePromise(PromiseCounter id);
 
   PromiseMap promises_;
-  Mutex      promises_mutex_;
+  Mutex      promises_mutex_{__FILE__, __LINE__};
 };
 }  // namespace service
 }  // namespace fetch

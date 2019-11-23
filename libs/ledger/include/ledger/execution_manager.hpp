@@ -121,14 +121,14 @@ private:
 
   StorageUnitPtr storage_;
 
-  Mutex         execution_plan_lock_;  ///< guards `execution_plan_`
+  Mutex         execution_plan_lock_{__FILE__, __LINE__};  ///< guards `execution_plan_`
   ExecutionPlan execution_plan_;
 
-  Mutex     monitor_lock_;
+  Mutex     monitor_lock_{__FILE__, __LINE__};
   Condition monitor_wake_;
   Condition monitor_notify_;
 
-  Mutex        idle_executors_lock_;  ///< guards `idle_executors`
+  Mutex        idle_executors_lock_{__FILE__, __LINE__};  ///< guards `idle_executors`
   ExecutorList idle_executors_;
 
   Counter completed_executions_{0};

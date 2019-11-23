@@ -104,7 +104,7 @@ private:
 
   ObjectStore *store_;  ///< The pointer to the object store
 
-  Mutex cache_mutex_;  ///< The mutex protecting cache_
+  Mutex cache_mutex_{__FILE__, __LINE__};  ///< The mutex protecting cache_
   Cache cache_;
 
   int id_;

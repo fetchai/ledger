@@ -84,7 +84,6 @@ private:
   using DAGTipID        = uint64_t;
   using DAGTipPtr       = std::shared_ptr<DAGTip>;
   using DAGNodePtr      = std::shared_ptr<DAGNode>;
-  using Mutex           = std::recursive_mutex;
   using CertificatePtr  = std::shared_ptr<crypto::Prover>;
   using DAGTypes        = DAGInterface::DAGTypes;
 
@@ -197,7 +196,7 @@ private:
 
   std::string    db_name_;
   CertificatePtr certificate_;
-  mutable Mutex  mutex_;
+  mutable RecursiveMutex  mutex_{__FILE__, __LINE__};
 };
 
 }  // namespace ledger

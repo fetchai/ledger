@@ -91,7 +91,7 @@ private:
 
   std::shared_ptr<asio::io_service::work> shared_work_;
 
-  mutable Mutex thread_mutex_;
+  mutable Mutex thread_mutex_{__FILE__, __LINE__};
 };
 
 }  // namespace details

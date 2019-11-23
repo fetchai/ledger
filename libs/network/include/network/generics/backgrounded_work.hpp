@@ -112,7 +112,7 @@ public:
   template <typename Rep, typename Per>
   void Wait(std::chrono::duration<Rep, Per> const &timeout)
   {
-    std::unique_lock<Mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     cv_.wait_for(lock, timeout);
   }
 
@@ -268,9 +268,9 @@ public:
   }
 
 private:
-  WorkLoad                workload_;
-  mutable Mutex           mutex_;
-  std::condition_variable cv_;
+  WorkLoad          workload_;
+  mutable Mutex     mutex_{__FILE__, __LINE__};
+  ConditionVariable cv_;
 };
 
 }  // namespace network

@@ -116,7 +116,7 @@ private:
   std::string const name_;
   char const *const logging_name_{name_.c_str()};
 
-  mutable Mutex          lock_;
+  mutable Mutex          lock_{__FILE__, __LINE__};
   ConnectionLeftCallback left_callback_;
   HandleIndex            handle_index_;
   AddressIndex           address_index_;

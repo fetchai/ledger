@@ -310,7 +310,7 @@ public:
   }
 
 private:
-  mutable Mutex        mutex_;
+  mutable Mutex        mutex_{__FILE__, __LINE__};
   KeyByteArrayStore<S> store_;
 };
 

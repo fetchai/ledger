@@ -71,7 +71,7 @@ public:
 
     while (!until.IsDue())
     {
-      Lock lock(the_counter.mutex);
+      std::unique_lock<std::mutex> lock(the_counter.mutex);
 
       if (the_counter.complete >= the_counter.total)
       {
@@ -85,12 +85,12 @@ public:
   }
 
 private:
-  using CondVar = std::condition_variable;
+  using CondVar = ConditionVariable;
   using Lock    = std::unique_lock<Mutex>;
 
   struct Counter
   {
-    Mutex   mutex;
+    Mutex   mutex{__FILE__, __LINE__};
     CondVar cv;
 
     uint32_t complete = 0;

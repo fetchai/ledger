@@ -48,7 +48,7 @@ void LogTimout(NAME const &name, ID const &id)
 }  // namespace
 
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
-Mutex                          PromiseImplementation::counter_lock_;
+Mutex                          PromiseImplementation::counter_lock_{__FILE__, __LINE__};
 
 std::chrono::seconds const PromiseImplementation::DEFAULT_TIMEOUT{30};
 

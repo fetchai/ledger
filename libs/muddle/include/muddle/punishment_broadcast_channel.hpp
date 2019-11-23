@@ -161,7 +161,7 @@ private:
   StateMachinePtr state_machine_;
 
   // ONLY the question (and previous question if this is enabled) needs to be locked
-  mutable Mutex  lock_;
+  mutable Mutex  lock_{__FILE__, __LINE__};
   QuestionStruct question_;
   QuestionStruct previous_question_;
 };

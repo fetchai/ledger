@@ -21,7 +21,55 @@
 
 namespace fetch {
 
-using Mutex = std::mutex;
+//using Mutex = std::mutex;
+
+template <typename UnderlyingMutex>
+class CustomMutex : public UnderlyingMutex
+{
+public:
+
+  CustomMutex(char const *file, int line);
+  ~CustomMutex() = default;
+
+  /// @name Mutex Interface
+  /// @{
+  void lock();
+  bool try_lock();
+  void unlock();
+  /// @}
+
+  char const *file() const
+  {
+    return file_;
+  }
+
+  int line() const
+  {
+    return line_;
+  }
+
+private:
+
+  enum class Event
+  {
+    WAIT_FOR_LOCK = 0,
+    LOCKED,
+    UNLOCKED
+  };
+
+  /// @name Helpers
+  /// @{
+  static char const *ToString(Event event);
+  void RecordEvent(Event event);
+  /// @}
+
+  char const *const file_{nullptr};
+  int               line_{0};
+};
+
+using ConditionVariable = std::condition_variable;
+using Mutex             = CustomMutex<std::mutex>;
+using RecursiveMutex    = CustomMutex<std::recursive_mutex>;
 
 #define FETCH_JOIN_IMPL(x, y) x##y
 #define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)

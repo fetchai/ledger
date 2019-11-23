@@ -22,7 +22,7 @@ namespace fetch {
 namespace network {
 
 AbstractConnection::ConnectionHandleType AbstractConnection::global_handle_counter_ = 1;
-Mutex                                    AbstractConnection::global_handle_mutex_;
+Mutex                                    AbstractConnection::global_handle_mutex_{__FILE__, __LINE__};
 
 // Construction / Destruction
 AbstractConnection::AbstractConnection()

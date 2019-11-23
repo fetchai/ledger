@@ -85,13 +85,13 @@ private:
   std::string const name_;
   char const *const logging_name_{name_.c_str()};
 
-  Mutex    counter_lock_;
+  Mutex    counter_lock_{__FILE__, __LINE__};
   uint16_t counter_{1};
 
-  Mutex      promises_lock_;
+  Mutex      promises_lock_{__FILE__, __LINE__};
   PromiseMap promises_;
 
-  Mutex     handles_lock_;
+  Mutex     handles_lock_{__FILE__, __LINE__};
   HandleMap handles_;
 
   /// @name Telemetry

@@ -99,7 +99,7 @@ protected:
   std::shared_ptr<Server>                         server_;
   std::shared_ptr<MuddleLearnerNetworkerProtocol> proto_;
 
-  mutable Mutex mutex_;
+  mutable Mutex mutex_{__FILE__, __LINE__};
   Peers         peers_;
 
   // TOFIX

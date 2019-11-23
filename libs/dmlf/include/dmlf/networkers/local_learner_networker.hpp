@@ -55,7 +55,7 @@ private:
   using Lock  = std::unique_lock<Mutex>;
   using Bytes = AbstractLearnerNetworker::Bytes;
 
-  mutable Mutex mutex_;
+  mutable Mutex mutex_{__FILE__, __LINE__};
   Peers         peers_;
 
   void Recieve(Bytes const &data);

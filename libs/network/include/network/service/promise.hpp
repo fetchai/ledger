@@ -155,12 +155,12 @@ private:
   ExceptionPtr        exception_;
   std::string         name_;
 
-  mutable Mutex    callback_lock_;
+  mutable Mutex    callback_lock_{__FILE__, __LINE__};
   mutable Callback callback_success_;
   mutable Callback callback_failure_;
   mutable Callback callback_completion_;
 
-  mutable Mutex     notify_lock_;
+  mutable Mutex     notify_lock_{__FILE__, __LINE__};
   mutable Condition notify_;
 };
 

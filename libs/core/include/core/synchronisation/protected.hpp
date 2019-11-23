@@ -93,7 +93,7 @@ public:
 template <typename T, typename M>
 template <typename... Args>
 Protected<T, M>::Protected(Args &&... args)
-  : mutex_{}
+  : mutex_{__FILE__, __LINE__}
   , payload_{std::forward<Args>(args)...}
 {}
 

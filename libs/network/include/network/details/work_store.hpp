@@ -131,7 +131,7 @@ public:
 private:
   using Queue = std::deque<WorkItem>;
 
-  mutable Mutex     mutex_;            ///< Mutex protecting `queue_`
+  mutable Mutex     mutex_{__FILE__, __LINE__};            ///< Mutex protecting `queue_`
   Queue             queue_;            ///< The queue of work items
   std::atomic<bool> shutdown_{false};  ///< Flag to signal the work queue is shutting down
 };
