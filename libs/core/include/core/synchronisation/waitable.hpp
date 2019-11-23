@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "core/synchronisation/protected.hpp"
 
 #include <chrono>
@@ -28,12 +27,12 @@
 
 namespace fetch {
 
-template <typename T, typename M = CustomMutex<std::mutex>>
+template <typename T, typename M = std::mutex>
 class Waitable
 {
 private:
-  mutable ConditionVariable condition_{};
-  Protected<T, M>           protected_payload_;
+  mutable std::condition_variable condition_{};
+  Protected<T, M>                 protected_payload_;
 
 public:
   template <typename... Args>
@@ -102,7 +101,7 @@ template <typename T, typename M>
 template <typename Predicate>
 void Waitable<T, M>::Wait(Predicate &&predicate) const
 {
-  std::unique_lock<std::mutex> lock{protected_payload_.mutex_};
+  std::unique_lock<M> lock{protected_payload_.mutex_};
 
   condition_.wait(lock,
                   [this, predicate]() -> bool { return predicate(protected_payload_.payload_); });
@@ -113,7 +112,7 @@ template <typename Predicate, typename R, typename P>
 bool Waitable<T, M>::Wait(Predicate &&                       predicate,
                           std::chrono::duration<R, P> const &max_wait_time) const
 {
-  std::unique_lock<std::mutex> lock{protected_payload_.mutex_};
+  std::unique_lock<M> lock{protected_payload_.mutex_};
 
   return condition_.wait_for(lock, max_wait_time, [this, predicate]() -> bool {
     return predicate(protected_payload_.payload_);

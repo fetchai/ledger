@@ -73,7 +73,7 @@ public:
   Subscription &operator=(Subscription &&) = delete;
 
 private:
-  mutable Mutex    callback_lock_{__FILE__, __LINE__};
+  mutable Mutex    callback_lock_;
   LowLevelCallback callback_;
 };
 

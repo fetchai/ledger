@@ -99,7 +99,7 @@ private:
   std::string           address_{};
   std::atomic<uint16_t> port_{0};
 
-  mutable Mutex address_mutex_{__FILE__, __LINE__};
+  mutable Mutex address_mutex_;
 
   static ConnectionHandleType next_handle();
 
@@ -108,7 +108,7 @@ private:
 
   static ConnectionHandleType global_handle_counter_;
   static Mutex                global_handle_mutex_;
-  mutable Mutex               callback_mutex_{__FILE__, __LINE__};
+  mutable Mutex               callback_mutex_;
 
   SharedType self_;
 

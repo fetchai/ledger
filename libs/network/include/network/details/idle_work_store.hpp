@@ -197,7 +197,7 @@ private:
   using Flag      = std::atomic<bool>;
   using Store     = std::vector<WorkItem>;
 
-  mutable Mutex             mutex_{__FILE__, __LINE__};
+  mutable Mutex             mutex_;
   Store                     store_;
   Flag                      shutdown_{false};
   std::chrono::milliseconds interval_{0};

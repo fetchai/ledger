@@ -201,7 +201,7 @@ private:
   using Queue = std::priority_queue<Element>;
   using Flag  = std::atomic<bool>;
 
-  mutable Mutex queue_mutex_{__FILE__, __LINE__};  ///< Mutex protecting `queue_`
+  mutable Mutex queue_mutex_;  ///< Mutex protecting `queue_`
   Queue         queue_;        ///< Ordered queue of work items
 
   // Shutdown flag this is designed to only ever be set to true. User will have to recreate the

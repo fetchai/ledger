@@ -238,7 +238,7 @@ private:
   asio::ip::tcp::tcp::socket socket_;
   HTTPConnectionManager &    manager_;
   ResponseQueueType          write_queue_;
-  Mutex                      write_mutex_{__FILE__, __LINE__};
+  Mutex                      write_mutex_;
 
   HandleType handle_{};
   bool       is_open_ = false;

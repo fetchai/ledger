@@ -149,7 +149,7 @@ private:
     return generator_.unspent().size() + pending_queue_.size();
   }
 
-  Mutex pending_queue_lock_{__FILE__, __LINE__};  ///< Protects both `pending_queue_` and
+  Mutex pending_queue_lock_;  ///< Protects both `pending_queue_` and
                               ///< `transaction_index_`
   transaction_queue_type pending_queue_;
   std::size_t            transaction_index_{0};

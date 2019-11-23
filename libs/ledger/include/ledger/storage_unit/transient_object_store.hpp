@@ -119,7 +119,7 @@ private:
   std::size_t             extracted_count = 0;
   std::size_t             written_count   = 0;
 
-  mutable Mutex   cache_mutex_{__FILE__, __LINE__};       ///< The mutex for the cache
+  mutable Mutex   cache_mutex_;       ///< The mutex for the cache
   StateMachinePtr state_machine_;     ///< The state machine controlling the worker writing to disk
   Cache           cache_;             ///< The main object cache
   Archive         archive_;           ///< The persistent object store

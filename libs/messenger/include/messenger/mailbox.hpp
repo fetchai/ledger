@@ -70,7 +70,7 @@ protected:
   // TODO(private issue AEA-122): Add state logic to trim inboxes
   //
 private:
-  Mutex                                    mutex_{__FILE__, __LINE__};
+  Mutex                                    mutex_{};
   std::unordered_map<Address, MessageList> inboxes_{};
 
   Endpoint &      message_endpoint_;

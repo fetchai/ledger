@@ -47,7 +47,7 @@ public:
 private:
   AbstractHTTPServer &                 server_;
   std::map<HandleType, ConnectionType> clients_;
-  Mutex                                clients_mutex_{__FILE__, __LINE__};
+  Mutex                                clients_mutex_;
 };
 
 }  // namespace http

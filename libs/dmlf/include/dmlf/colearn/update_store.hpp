@@ -62,7 +62,7 @@ private:
   using AlgoMap = std::unordered_map<QueueId, Queue>;
 
   AlgoMap       algo_map_;
-  mutable Mutex global_m_{__FILE__, __LINE__};
+  mutable Mutex global_m_;
 };
 
 }  // namespace colearn

@@ -153,7 +153,7 @@ protected:
   }
 
 private:
-  mutable Mutex         service_lock_{__FILE__, __LINE__};
+  mutable Mutex         service_lock_;
   ServiceMapType        services_;
   std::atomic<uint64_t> number_of_services_;
 };

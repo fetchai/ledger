@@ -198,10 +198,10 @@ private:
   crypto::SecureChannel secure_channel_{prover_};
   std::atomic<bool>     kademlia_routing_{false};
 
-  mutable Mutex routing_table_lock_{__FILE__, __LINE__};
+  mutable Mutex routing_table_lock_;
   RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by
 
-  mutable Mutex echo_cache_lock_{__FILE__, __LINE__};
+  mutable Mutex echo_cache_lock_;
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;

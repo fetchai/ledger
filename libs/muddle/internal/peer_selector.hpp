@@ -146,7 +146,7 @@ private:
   rpc::Client           rpc_client_;
   SubscriptionPtr       announcement_subscription_;
 
-  mutable Mutex     lock_{__FILE__, __LINE__};
+  mutable Mutex     lock_;
   Peers             external_peers_;
   Rng               rng_{};
   DeadlineTimer     announcement_interval_{CLOCK_NAME};

@@ -32,7 +32,7 @@ namespace {
 
 using ClockStore = std::unordered_map<std::string, ClockPtr>;
 
-Mutex      clock_store_lock{__FILE__, __LINE__};
+Mutex      clock_store_lock;
 ClockStore clock_store;
 
 /**

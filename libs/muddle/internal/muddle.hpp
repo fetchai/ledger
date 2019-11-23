@@ -224,7 +224,7 @@ private:
   Router               router_;           ///< The packet router for the node
   PortMapping          port_mapping_;
 
-  mutable Mutex servers_lock_{__FILE__, __LINE__};
+  mutable Mutex servers_lock_;
   ServerList    servers_;  ///< The list of listening servers
 
   PeerConnectionList clients_;  ///< The list of active and possible inactive connections

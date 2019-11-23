@@ -49,7 +49,7 @@ public:
   std::size_t   number;
   std::size_t   integrations;
   std::size_t   produced;
-  mutable Mutex mut{__FILE__, __LINE__};
+  mutable Mutex mut;
   bool          quitflag = false;
 
   LocalLearnerInstance(NetP net, std::size_t number)

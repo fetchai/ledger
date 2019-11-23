@@ -110,7 +110,7 @@ private:
   using Lock  = std::unique_lock<Mutex>;
 
   QueueUpdates  updates_;
-  mutable Mutex updates_m_{__FILE__, __LINE__};
+  mutable Mutex updates_m_;
 };
 
 }  // namespace dmlf
