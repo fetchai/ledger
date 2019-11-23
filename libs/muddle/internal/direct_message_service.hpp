@@ -97,6 +97,7 @@ private:
 
   UpdateStatus UpdateReservation(Address const &address, Handle handle,
                                  Handle *previous_handle = nullptr);
+  bool ShouldReplace(Address const &other, bool is_outgoing) const;
 
   Address const       address_;
   std::string const   name_;
