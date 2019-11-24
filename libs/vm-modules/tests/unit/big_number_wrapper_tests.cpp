@@ -131,9 +131,13 @@ public:
   static constexpr std::size_t    SIZE_IN_BITS  = 256;
   static constexpr std::size_t    SIZE_IN_BYTES = SIZE_IN_BITS / 8;
 
-  UInt256Wrapper zero{dummy_vm_ptr, dummy_typeid, 0};
+  UInt256Wrapper zero{
+      dummy_vm_ptr,
+      dummy_typeid,
+      0,
+  };
   UInt256Wrapper uint64max{dummy_vm_ptr, dummy_typeid, std::numeric_limits<uint64_t>::max()};
-  UInt256Wrapper maximum{dummy_vm_ptr, dummy_typeid, raw_32xFF};
+  UInt256Wrapper maximum{dummy_vm_ptr, dummy_typeid, raw_32xFF, true};
 
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
@@ -141,13 +145,13 @@ public:
 
 TEST_F(UInt256Tests, uint256_raw_construction)
 {
-  UInt256Wrapper fromStdUint64(dummy_vm_ptr, dummy_typeid, uint64_t(42));
+  UInt256Wrapper fromStdUint64{dummy_vm_ptr, dummy_typeid, uint64_t(42)};
   ASSERT_TRUE(SIZE_IN_BYTES == fromStdUint64.size());
 
-  UInt256Wrapper fromByteArray(dummy_vm_ptr, dummy_typeid, raw_32xFF);
+  UInt256Wrapper fromByteArray{dummy_vm_ptr, dummy_typeid, raw_32xFF, true};
   ASSERT_TRUE(SIZE_IN_BYTES == fromByteArray.size());
 
-  UInt256Wrapper fromAnotherUInt256(dummy_vm_ptr, dummy_typeid, zero.number());
+  UInt256Wrapper fromAnotherUInt256{dummy_vm_ptr, dummy_typeid, zero.number()};
   ASSERT_TRUE(SIZE_IN_BYTES == fromAnotherUInt256.size());
 }
 
@@ -277,9 +281,9 @@ TEST_F(UInt256Tests, uint256_logValue)
   for (const auto &input : TO_DOUBLE_INPUTS)
   {
     using namespace std;
-    UInt256Wrapper n1(dummy_vm_ptr, dummy_typeid, input.first);
+    UInt256Wrapper n1{dummy_vm_ptr, dummy_typeid, input.first, true};
 
-    const auto as_double  = n1.ToFloat64();
+    const auto as_double  = fetch::vectorise::ToDouble(n1.number());
     const auto result     = n1.LogValue();
     const auto exp_double = input.second;
     const auto expected   = std::log(exp_double);
@@ -309,43 +313,39 @@ TEST_F(UInt256Tests, uint256_logValue)
 TEST_F(UInt256Tests, uint256_type_casts)
 {
   static constexpr char const *TEXT = R"(
-      function main() : Bool
+      function main()
           var test : UInt256 = UInt256(9000000000000000000u64);
           var correct : UInt64 = 9000000000000000000u64;
-          var ok = true;
 
-          var test_float64 = test.toFloat64();
+          var test_float64 = toFloat64(test);
           var correct_float64 = toFloat64(correct);
-          ok = ok && (test_float64 == correct_float64);
+          assert(test_float64 == correct_float64, "toFloat64(...) failed");
 
           var test_int32 = toInt32(test);
           var correct_int32 = toInt32(correct);
-          ok = ok && (test_int32 == correct_int32);
+          assert(test_int32 == correct_int32, "toInt32(...) failed");
 
           var test_uint32 = toUInt32(test);
           var correct_uint32 = toUInt32(correct);
-          ok = ok && (test_uint32 == correct_uint32);
+          assert(test_uint32 == correct_uint32, "toUInt32(...) failed");
 
           var test_int64 = toInt64(test);
           var correct_int64 = toInt64(correct);
-          ok = ok && (test_int64 == correct_int64);
+          assert(test_int64 == correct_int64, "toInt64(...) failed");
 
           var test_uint64 = toUInt64(test);
           var correct_uint64 = toUInt64(correct);
-          ok = ok && (test_uint64 == correct_uint64);
+          assert(test_uint64 == correct_uint64, "toUInt64(...) failed");
 
           var test_str : String = toString(test);
-          var correct_str : String =
-          "000084e2506ce67c000000000000000000000000000000000000000000000000";
-          ok = ok && (test_str == correct_str);
-          return ok;
+          var expected_str_in_big_endian_enc : String =
+          "0000000000000000000000000000000000000000000000007ce66c50e2840000";
+          assert(test_str == expected_str_in_big_endian_enc, "toString(...) failed");
       endfunction
     )";
+
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-  auto const result_is_ok = res.Get<bool>();
-  EXPECT_TRUE(result_is_ok);
+  EXPECT_TRUE(toolkit.Run());
 }
 
 // Disabled until UInt256 constructor from bytearray fix/rework.

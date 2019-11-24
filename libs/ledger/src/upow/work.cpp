@@ -102,7 +102,10 @@ Work::UInt256 Work::CreateHashedNonce() const
   hasher.Reset();
   hasher.Update(digest1);
 
-  return UInt256{hasher.Final()};
+  // Forcing little endian representation of the hash (even if it is actually
+  // represented in big endian encoding) in order to keep compatibility with
+  // proofs recorded in previously generated blocks.
+  return UInt256{hasher.Final(), true};
 }
 
 }  // namespace ledger

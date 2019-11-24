@@ -99,7 +99,7 @@ public:
   }
 
   template <typename T, meta::IfIsAByteArray<T> * = nullptr>
-  explicit UInt(T const &other);
+  constexpr explicit UInt(T const &other, bool input_is_little_endian);
   template <typename T, meta::IfIsUnsignedInteger<T> * = nullptr>
   constexpr explicit UInt(T number);
 
@@ -108,10 +108,12 @@ public:
   ////////////////////////////
 
   constexpr UInt &operator=(UInt const &v);
-  template <typename ArrayType>
-  meta::IfHasIndex<ArrayType, UInt> &operator=(ArrayType const &v);  // NOLINT
   template <typename T>
   constexpr meta::IfHasNoIndex<T, UInt> &operator=(T const &v);  // NOLINT
+
+  template <typename T>
+  constexpr meta::IfIsAByteArray<T, UInt> &FromArray(T const &arr,
+                                                     bool     input_is_little_endian);  // NOLINT
 
   /////////////////////////////////////////////
   /// comparison operators for UInt objects ///
@@ -213,11 +215,16 @@ public:
   /// element accessors ///
   /////////////////////////
 
-  constexpr uint8_t   operator[](std::size_t n) const;
-  constexpr uint8_t & operator[](std::size_t n);
-  constexpr WideType  ElementAt(std::size_t n) const;
+  constexpr uint8_t  operator[](std::size_t n) const;
+  constexpr uint8_t &operator[](std::size_t n);
+  constexpr WideType ElementAt(std::size_t n) const
+  {
+    return wide_[n];
+  }
+
   constexpr WideType &ElementAt(std::size_t n);
 
+  constexpr uint64_t TrimmedWideSize() const;
   constexpr uint64_t TrimmedSize() const;
   constexpr uint64_t size() const;
   constexpr uint64_t elements() const;
@@ -231,6 +238,10 @@ public:
   constexpr friend void Deserialize(T &s, UInt<G> &u);
 
   explicit operator std::string() const;
+
+  template <typename T>
+  constexpr meta::EnableIf<std::is_same<meta::Decay<T>, byte_array::ByteArray>::value, T> As(
+      bool as_little_endian, bool include_leading_zeroes = false) const;
 
   /////////////////
   /// constants ///
@@ -252,6 +263,10 @@ private:
   {
     wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
   }
+
+  template <typename T>
+  constexpr meta::IfIsAByteArray<T> FromArrayInternal(T const &arr, bool input_is_little_endian,
+                                                      bool zero_content);  // NOLINT
 
   struct MaxValueConstructorEnabler
   {
@@ -295,14 +310,9 @@ const UInt<S> UInt<S>::max{MaxValueConstructorEnabler{}};
 
 template <uint16_t S>
 template <typename T, meta::IfIsAByteArray<T> *>
-UInt<S>::UInt(T const &other)
+constexpr UInt<S>::UInt(T const &other, bool input_is_little_endian)
 {
-  if (other.size() > ELEMENTS)
-  {
-    throw std::runtime_error("Size of input byte array is bigger than size of this UInt type.");
-  }
-
-  std::copy(other.pointer(), other.pointer() + other.size(), base());
+  FromArrayInternal(other, input_is_little_endian, false);
 }
 
 template <uint16_t S>
@@ -325,14 +335,53 @@ constexpr UInt<S> &UInt<S>::operator=(UInt const &v)
   return *this;
 }
 
-template <uint16_t S>  // NOLINT
-template <typename ArrayType>
-meta::IfHasIndex<ArrayType, UInt<S>> &UInt<S>::operator=(ArrayType const &v)  // NOLINT
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsAByteArray<T, UInt<S>> &UInt<S>::FromArray(
+    T const &arr, bool input_is_little_endian)  // NOLINT
 {
-  wide_.fill(0);
-  std::copy(v.pointer(), v.pointer() + v.capacity(), base());
-
+  FromArrayInternal(arr, input_is_little_endian, true);
   return *this;
+}
+
+template <uint16_t S>
+template <typename T>
+constexpr meta::IfIsAByteArray<T> UInt<S>::FromArrayInternal(T const &arr,
+                                                             bool     input_is_little_endian,
+                                                             bool     zero_content)  // NOLINT
+{
+  auto const size{arr.size()};
+
+  if (0 == size)
+  {
+    if (zero_content)
+    {
+      wide_.fill(0);
+    }
+    return;
+  }
+
+  if (size > ELEMENTS)
+  {
+    throw std::runtime_error("Size of input byte array is bigger than size of this UInt type.");
+  }
+
+  if (zero_content)
+  {
+    wide_.fill(0);
+  }
+
+  if (input_is_little_endian)
+  {
+    std::copy(arr.pointer(), arr.pointer() + size, base());
+  }
+  else
+  {
+    for (std::size_t i{0}, rev_i{size - 1}; i < size; ++i, --rev_i)
+    {
+      base()[i] = arr[rev_i];
+    }
+  }
 }
 
 template <uint16_t S>  // NOLINT
@@ -913,13 +962,13 @@ constexpr meta::IfIsUnsignedInteger<T, UInt<S>> &UInt<S>::operator^=(T n)
 template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
 {
-  std::size_t full_words = bits / (sizeof(uint64_t) * 8);
-  std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
+  std::size_t full_words = bits / WIDE_ELEMENT_SIZE;
+  std::size_t real_bits  = bits - full_words * WIDE_ELEMENT_SIZE;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
   if (full_words != 0u)
   {
-    for (std::size_t i = WIDE_ELEMENTS - 1; i >= full_words; i--)
+    for (std::size_t i = WIDE_ELEMENTS - 1; i >= full_words; --i)
     {
       wide_[i] = wide_[i - full_words];
     }
@@ -946,8 +995,8 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
 template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
 {
-  std::size_t full_words = bits / (sizeof(uint64_t) * 8);
-  std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
+  std::size_t full_words = bits / WIDE_ELEMENT_SIZE;
+  std::size_t real_bits  = bits - full_words * WIDE_ELEMENT_SIZE;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
   if (full_words != 0u)
@@ -1026,26 +1075,34 @@ constexpr uint8_t &UInt<S>::operator[](std::size_t n)
 }
 
 template <uint16_t S>
-constexpr typename UInt<S>::WideType UInt<S>::ElementAt(std::size_t n) const
-{
-  return wide_[n];
-}
-
-template <uint16_t S>
 constexpr typename UInt<S>::WideType &UInt<S>::ElementAt(std::size_t n)
 {
   return wide_[n];
 }
 
 template <uint16_t S>
-constexpr uint64_t UInt<S>::TrimmedSize() const
+constexpr uint64_t UInt<S>::TrimmedWideSize() const
 {
   uint64_t ret = WIDE_ELEMENTS;
-  while ((ret > 1) && (wide_[ret - 1] == 0))
+  while ((ret > 0) && (wide_[ret - 1] == 0))
   {
     --ret;
   }
   return ret;
+}
+
+template <uint16_t S>
+constexpr uint64_t UInt<S>::TrimmedSize() const
+{
+  uint64_t wide_size{TrimmedWideSize()};
+  uint64_t remainder{WIDE_ELEMENT_SIZE / ELEMENT_SIZE};
+
+  while ((remainder > 0) && (base()[remainder - 1] == 0))
+  {
+    --remainder;
+  }
+
+  return wide_size * (WIDE_ELEMENT_SIZE / ELEMENT_SIZE) + remainder;
 }
 
 template <uint16_t S>
@@ -1081,39 +1138,69 @@ UInt<S>::operator std::string() const
 }
 
 template <uint16_t S>
-inline std::ostream &operator<<(std::ostream &s, UInt<S> const &x)
+template <typename T>
+constexpr meta::EnableIf<std::is_same<meta::Decay<T>, byte_array::ByteArray>::value, T> UInt<S>::As(
+    bool as_little_endian, bool include_leading_zeroes) const
+{
+  auto const size_{include_leading_zeroes ? size() : TrimmedSize()};
+
+  if (0 == size_)
+  {
+    return T{};
+  }
+
+  if (as_little_endian)
+  {
+    return T{pointer(), size_};
+  }
+
+  T array;
+  array.Resize(size_);
+  for (std::size_t i{0}, rev_i{size_ - 1}; i < size_; ++i, --rev_i)
+  {
+    array[rev_i] = base()[i];
+  }
+
+  return array;
+}
+
+template <uint16_t S>
+std::ostream &operator<<(std::ostream &s, UInt<S> const &x)
 {
   s << std::string(x);
   return s;
 }
 
-inline double ToDouble(UInt<256> const &x)
+template <typename T>
+constexpr meta::EnableIf<std::is_same<meta::Decay<T>, UInt<256>>::value, double> ToDouble(T &&x)
 {
-  if (x.TrimmedSize() == 1)
+  auto const msw_size{x.TrimmedWideSize()};
+  if (0 == msw_size)
   {
-    return static_cast<double>(x.ElementAt(0));
+    return 0;
   }
-  const size_t ELEMENTS_PER_WIDE = x.WIDE_ELEMENT_SIZE / x.ELEMENT_SIZE;
-  uint64_t     magnitude         = x.ELEMENTS * x.ELEMENT_SIZE - x.msb() - 1;
 
-  const size_t most_significant_byte_idx = magnitude / x.ELEMENT_SIZE;
-  const size_t least_eligible_byte_idx   = most_significant_byte_idx - (ELEMENTS_PER_WIDE - 1);
+  const auto     msw_index{msw_size - 1};
+  const uint64_t most_significant_word = x.ElementAt(msw_index);
+  auto           retval = pow(2, static_cast<double>(msw_index * x.WIDE_ELEMENT_SIZE)) *
+                static_cast<double>(most_significant_word);
 
-  uint64_t mantisse = 0;
-  for (size_t i = 0; i < ELEMENTS_PER_WIDE; ++i)
+  if (msw_index > 0 and most_significant_word < (1ull << 49))
   {
-    const uint64_t element  = x[i + least_eligible_byte_idx];
-    const uint64_t addendum = uint64_t(element) << (i * x.ELEMENT_SIZE);
-    mantisse += addendum;
+    auto const     next_idx{msw_index - 1};
+    uint64_t const word2 = x.ElementAt(next_idx);
+    auto           v2 =
+        pow(2, static_cast<double>(next_idx * x.WIDE_ELEMENT_SIZE)) * static_cast<double>(word2);
+    retval += v2;
   }
-  const auto exponent = static_cast<double>(least_eligible_byte_idx * x.ELEMENT_SIZE);
 
-  return static_cast<double>(mantisse) * pow(2, exponent);
+  return retval;
 }
 
-inline double Log(UInt<256> const &x)
+template <typename T>
+constexpr meta::EnableIf<std::is_same<meta::Decay<T>, UInt<256>>::value, double> Log(T &&x)
 {
-  return std::log(ToDouble(x));
+  return std::log(ToDouble(std::forward<T>(x)));
 }
 
 }  // namespace vectorise

@@ -24,7 +24,7 @@ namespace vm {
 
 namespace {
 
-template <typename T, typename = std::enable_if_t<IsPrimitive<T>::value>>
+template <typename T, typename = std::enable_if_t<IsPrimitive<T>>>
 bool ReadHelper(TypeId /*type_id*/, std::string const &name, T &val, VM *vm)
 {
   if (!vm->HasIoObserver())
@@ -37,7 +37,7 @@ bool ReadHelper(TypeId /*type_id*/, std::string const &name, T &val, VM *vm)
   return result == IoObserverInterface::Status::OK;
 }
 
-template <typename T, typename = std::enable_if_t<IsPrimitive<T>::value>>
+template <typename T, typename = std::enable_if_t<IsPrimitive<T>>>
 bool WriteHelper(std::string const &name, T const &val, VM *vm)
 {
   if (!vm->HasIoObserver())
@@ -247,7 +247,7 @@ private:
   }
 
   template <typename Y = T>
-  meta::EnableIf<IsPrimitive<Y>::value> SetValue(TemplateParameter1 const &value)
+  meta::EnableIf<IsPrimitive<Y>> SetValue(TemplateParameter1 const &value)
   {
     value_      = value.Get<Value>();
     mod_status_ = eModifStatus::modified;
@@ -256,7 +256,7 @@ private:
   }
 
   template <typename Y = T>
-  meta::EnableIf<IsPtr<Y>::value> SetValue(TemplateParameter1 const &value)
+  meta::EnableIf<IsPtr<Y>> SetValue(TemplateParameter1 const &value)
   {
     auto v{value.Get<Value>()};
     if (!v)
@@ -298,8 +298,7 @@ Ptr<IState> Construct(VM *vm, TypeId type_id, Args &&... args)
 }
 
 template <typename T, typename R = void>
-constexpr bool IsMetatype =
-    !((!std::is_void<T>::value && IsPrimitive<T>::value) || IsPtr<T>::value);
+constexpr bool IsMetatype = !((!std::is_void<T>::value && IsPrimitive<T>) || IsPtr<T>);
 
 template <typename T, typename = void>
 struct StateFactory;

@@ -129,7 +129,14 @@ public:
 
   explicit operator std::string() const
   {
-    return {char_pointer(), length_};
+    // Avoiding undefined behaviour (C++ standard defines passing nullptr as
+    // input to `std::basic_string(char const*, ...)` as undefined behaviour):
+    if (pointer() != nullptr)
+    {
+      return {char_pointer(), length_};
+    }
+
+    return {};
   }
 
   constexpr ValueType const &operator[](std::size_t n) const noexcept

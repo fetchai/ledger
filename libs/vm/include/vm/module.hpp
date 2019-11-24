@@ -94,7 +94,7 @@ public:
     {
       using ReturnType = typename meta::CallableTraits<Constructor>::ReturnType;
       using Params     = typename meta::CallableTraits<Constructor>::ArgsTupleType;
-      static_assert(IsPtr<ReturnType>::value, "Constructors must return a fetch::vm::Ptr");
+      static_assert(IsPtr<ReturnType>, "Constructors must return a fetch::vm::Ptr");
       static_assert(std::is_same<Params, std::tuple<VM *, TypeId>>::value,
                     "Invalid default constructor handler: argument types should be (VM*, TypeId)");
 
@@ -268,7 +268,7 @@ public:
       using Params      = typename Traits::ArgsTupleType;
       using EtchParams  = typename meta::Tuple<Params>::template DropInitial<2>::type;
       using ExtraParams = typename meta::Tuple<Params>::template TakeInitial<2>::type;
-      static_assert(IsPtr<ReturnType>::value, "Constructors must return a fetch::vm::Ptr");
+      static_assert(IsPtr<ReturnType>, "Constructors must return a fetch::vm::Ptr");
       static_assert(std::is_same<ExtraParams, std::tuple<VM *, TypeId>>::value,
                     "Invalid constructor handler: initial two arguments should be (VM*, TypeId)");
 

@@ -177,26 +177,24 @@ TEST(big_number_gtest, to_double_tests)
 }
 
 template <typename LongUInt>
-bool IsTrimmedSizeValid()
+void TestTrimmedWideSize()
 {
-  bool     isValid = LongUInt(uint64_t(0)).TrimmedSize() == 1;
+  EXPECT_EQ(0, LongUInt(uint64_t(0)).TrimmedWideSize());
   LongUInt number(uint64_t(0x80));
   for (size_t i = 0; i < number.ELEMENTS; i++)
   {
     const auto expected_trimmed_size = i / (number.ELEMENTS / number.WIDE_ELEMENTS) + 1;
-    isValid &= number.TrimmedSize() == expected_trimmed_size;
+    EXPECT_EQ(expected_trimmed_size, number.TrimmedWideSize());
     number <<= number.ELEMENT_SIZE;
   }
-
-  return isValid;
 }
 
 TEST(big_number_gtest, trimmed_size_tests)
 {
-  EXPECT_TRUE(IsTrimmedSizeValid<UInt<32>>());
-  EXPECT_TRUE(IsTrimmedSizeValid<UInt<64>>());
-  EXPECT_TRUE(IsTrimmedSizeValid<UInt<128>>());
-  EXPECT_TRUE(IsTrimmedSizeValid<UInt<256>>());
+  TestTrimmedWideSize<UInt<32>>();
+  TestTrimmedWideSize<UInt<64>>();
+  TestTrimmedWideSize<UInt<128>>();
+  TestTrimmedWideSize<UInt<256>>();
 }
 
 TEST(big_number_gtest, multiplication_tests)
@@ -372,12 +370,12 @@ TEST(big_number_gtest, test_construction_from_byte_array_fails_if_too_long)
   constexpr std::size_t bits{256};
 
   // Verify that construction pass is size is <= bits/8
-  UInt<bits> shall_pass{ConstByteArray(bits / 8)};
+  UInt<bits> shall_pass{ConstByteArray(bits / 8), true};
 
   bool exception_thrown = false;
   try
   {
-    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1)};
+    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1), true};
   }
   catch (std::exception const &ex)
   {
