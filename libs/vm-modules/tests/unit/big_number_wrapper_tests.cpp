@@ -367,6 +367,34 @@ TEST_F(UInt256Tests, uint256_inplace_multiplication_division)
   EXPECT_TRUE(toolkit.Run());
 }
 
+TEST_F(UInt256Tests, uint256_division_by_zero)
+{
+  static constexpr char const *REGULAR = R"(
+      function main()
+        var a = UInt256(18446744073709551615u64);
+        var zero = UInt256(0u64);
+
+        var result = a;
+        result /= zero;
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(REGULAR));
+  EXPECT_FALSE(toolkit.Run());
+
+  static constexpr char const *INPLACE = R"(
+      function main()
+        var a = UInt256(18446744073709551615u64);
+        var zero = UInt256(0u64);
+
+        var result = a / zero;
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(INPLACE));
+  EXPECT_FALSE(toolkit.Run());
+}
+
 TEST_F(UInt256Tests, uint256_size)
 {
   static constexpr char const *TEXT = R"(

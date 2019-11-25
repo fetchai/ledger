@@ -342,6 +342,11 @@ void UInt256Wrapper::Divide(Ptr<Object> &lhso, Ptr<Object> &rhso)
 {
   Ptr<UInt256Wrapper> lhs = lhso;
   Ptr<UInt256Wrapper> rhs = rhso;
+  if (rhs->number_ == UInt256::_0)
+  {
+    vm_->RuntimeError("UInt256Wrapper::Divide runtime error : division by zero.");
+    return;
+  }
   if (lhs->IsTemporary())
   {
     lhs->number_ /= rhs->number_;
@@ -353,6 +358,7 @@ void UInt256Wrapper::Divide(Ptr<Object> &lhso, Ptr<Object> &rhso)
     lhso = std::move(rhs);
     return;
   }
+
   Ptr<UInt256Wrapper> n(
       new UInt256Wrapper(vm_, fetch::vm::TypeIds::UInt256, lhs->number_ / rhs->number_));
   lhso = std::move(n);
@@ -362,7 +368,14 @@ void UInt256Wrapper::InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &r
 {
   Ptr<UInt256Wrapper> lhs = lhso;
   Ptr<UInt256Wrapper> rhs = rhso;
-  lhs->number_ /= rhs->number_;
+  try
+  {
+    lhs->number_ /= rhs->number_;
+  }
+  catch (std::exception const &ex)
+  {
+    vm_->RuntimeError(std::string("UInt256Wrapper::InplaceDivide runtime error: ") + ex.what());
+  }
 }
 
 bool UInt256Wrapper::IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
