@@ -36,29 +36,30 @@ public:
 
   /// @name Testing Interface
   /// @{
-  void SubmitPacket(Address const &from, uint16_t service, uint16_t channel, Payload const &payload);
+  void SubmitPacket(Address const &from, uint16_t service, uint16_t channel,
+                    Payload const &payload);
   void SubmitPacket(Packet const &packet, Address const &last_hop);
   /// @}
 
   /// @name Muddle Endpoint Interface
   /// @{
   Address const &GetAddress() const override;
-  void Send(Address const &address, uint16_t service, uint16_t channel,
-                    Payload const &message) override;
-  void Send(Address const &address, uint16_t service, uint16_t channel,
-                    Payload const &message, Options options) override;
-  void Send(Address const &address, uint16_t service, uint16_t channel,
-                    uint16_t message_num, Payload const &payload) override;
-  void Send(Address const &address, uint16_t service, uint16_t channel,
-                    uint16_t message_num, Payload const &payload, Options options) override;
-  void Broadcast(uint16_t service, uint16_t channel, Payload const &payload) override;
+  void           Send(Address const &address, uint16_t service, uint16_t channel,
+                      Payload const &message) override;
+  void     Send(Address const &address, uint16_t service, uint16_t channel, Payload const &message,
+                Options options) override;
+  void     Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
+                Payload const &payload) override;
+  void     Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
+                Payload const &payload, Options options) override;
+  void     Broadcast(uint16_t service, uint16_t channel, Payload const &payload) override;
   Response Exchange(Address const &address, uint16_t service, uint16_t channel,
-                            Payload const &request) override;
-  SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) override;
-  SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) override;
+                    Payload const &request) override;
+  SubscriptionPtr  Subscribe(uint16_t service, uint16_t channel) override;
+  SubscriptionPtr  Subscribe(Address const &address, uint16_t service, uint16_t channel) override;
   NetworkId const &network_id() const override;
-  AddressList GetDirectlyConnectedPeers() const override;
-  AddressSet GetDirectlyConnectedPeerSet() const override;
+  AddressList      GetDirectlyConnectedPeers() const override;
+  AddressSet       GetDirectlyConnectedPeerSet() const override;
   /// @}
 
 private:
@@ -66,7 +67,7 @@ private:
   using Subscriptions   = std::vector<SubscriptionPtr>;
   using SubscriptionMap = std::map<ServiceChannel, Subscriptions>;
 
-  Address   const address_;
+  Address const   address_;
   NetworkId const network_id_;
 
   fetch::Mutex    lock_;

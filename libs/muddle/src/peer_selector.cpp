@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/is_in.hpp"
 #include "core/containers/set_difference.hpp"
 #include "core/containers/set_intersection.hpp"
 #include "core/containers/set_join.hpp"
-#include "core/containers/is_in.hpp"
 #include "core/mutex.hpp"
 #include "core/reactor.hpp"
 #include "core/service_ids.hpp"

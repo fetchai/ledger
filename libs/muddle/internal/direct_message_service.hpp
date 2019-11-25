@@ -55,7 +55,6 @@ public:
   DirectMessageService &operator=(DirectMessageService &&) = delete;
 
 private:
-
   enum class Phase : uint8_t
   {
     INITIAL = 0,
@@ -97,7 +96,7 @@ private:
 
   UpdateStatus UpdateReservation(Address const &address, Handle handle,
                                  Handle *previous_handle = nullptr);
-  bool ShouldReplace(Address const &other, bool is_outgoing) const;
+  bool         ShouldReplace(Address const &other, bool is_outgoing) const;
 
   Address const       address_;
   std::string const   name_;

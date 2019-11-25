@@ -157,7 +157,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjectCou
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjectCounts()
 {
-  auto const counts = pending_object_count_.Resolve();
+  auto const counts    = pending_object_count_.Resolve();
   auto const completed = pending_object_count_.Get(MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE);
   pending_object_count_.DiscardFailures();
 

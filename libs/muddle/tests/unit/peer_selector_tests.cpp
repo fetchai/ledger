@@ -16,18 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/containers/is_in.hpp"
-#include "core/service_ids.hpp"
-#include "core/byte_array/decoders.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "core/containers/is_in.hpp"
 #include "core/reactor.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "core/service_ids.hpp"
 #include "mock_muddle_endpoint.hpp"
 #include "muddle/address.hpp"
 #include "muddle/network_id.hpp"
 #include "muddle_register.hpp"
 #include "peer_list.hpp"
 #include "peer_selector.hpp"
-#include "core/serializers/main_serializer.hpp"
 
 #include <chrono>
 #include <initializer_list>
@@ -60,7 +60,6 @@ using PeerMetadata = PeerSelector::PeerMetadata;
 class PeerSelectorTests : public ::testing::Test
 {
 protected:
-
   void RunPeerSelector()
   {
     fetch::core::PeriodicRunnable &periodic{peer_selector_};
@@ -130,7 +129,7 @@ TEST_F(PeerSelectorTests, CheckInitialCacheSize)
 TEST_F(PeerSelectorTests, BasicAnnouncement)
 {
   auto const address1 = CreateAddress(1);
-  auto const peers1 = CreatePeersPayload({"127.0.0.1:8000"});
+  auto const peers1   = CreatePeersPayload({"127.0.0.1:8000"});
 
   // emulate recieving of announcement
   endpoint_.fake.SubmitPacket(address1, fetch::SERVICE_MUDDLE, fetch::CHANNEL_ANNOUNCEMENT, peers1);
@@ -151,7 +150,7 @@ TEST_F(PeerSelectorTests, CheckKademliaSelection)
   peer_selector_.SetMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
 
   auto const address1 = CreateAddress(1);
-  auto const peers1 = CreatePeersPayload({"127.0.0.1:8000"});
+  auto const peers1   = CreatePeersPayload({"127.0.0.1:8000"});
 
   // emulate recieving of announcement
   endpoint_.fake.SubmitPacket(address1, fetch::SERVICE_MUDDLE, fetch::CHANNEL_ANNOUNCEMENT, peers1);
@@ -178,7 +177,7 @@ TEST_F(PeerSelectorTests, CheckOverwrite)
   peer_selector_.SetMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
 
   auto const address1 = CreateAddress(1);
-  auto const peers1 = CreatePeersPayload({"127.0.0.1:8000"});
+  auto const peers1   = CreatePeersPayload({"127.0.0.1:8000"});
 
   // emulate recieving of announcement
   endpoint_.fake.SubmitPacket(address1, fetch::SERVICE_MUDDLE, fetch::CHANNEL_ANNOUNCEMENT, peers1);
@@ -223,6 +222,4 @@ TEST_F(PeerSelectorTests, CheckOverwrite)
     EXPECT_EQ("127.0.0.1:8000", metadata2.peer_data[0].peer.ToString());
     EXPECT_FALSE(metadata2.peer_data[0].unreachable);
   }
-
 }
-

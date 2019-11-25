@@ -27,7 +27,8 @@ FakeMuddleEndpoint::FakeMuddleEndpoint(Address address, NetworkId const &network
   , network_id_{network_id}
 {}
 
-void FakeMuddleEndpoint::SubmitPacket(Address const &from, uint16_t service, uint16_t channel, Payload const &payload)
+void FakeMuddleEndpoint::SubmitPacket(Address const &from, uint16_t service, uint16_t channel,
+                                      Payload const &payload)
 {
   // build up the muddle packet
   Packet packet{from, network_id_.value()};
