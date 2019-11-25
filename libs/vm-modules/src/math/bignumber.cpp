@@ -258,7 +258,7 @@ bool UInt256Wrapper::FromJSON(JSONVariant const &variant)
   return true;
 }
 
-void UInt256Wrapper::Add(fetch::vm::Ptr<Object> &lhso, fetch::vm::Ptr<Object> &rhso)
+void UInt256Wrapper::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
 {
   Ptr<UInt256Wrapper> lhs = lhso;
   Ptr<UInt256Wrapper> rhs = rhso;
@@ -278,7 +278,7 @@ void UInt256Wrapper::Add(fetch::vm::Ptr<Object> &lhso, fetch::vm::Ptr<Object> &r
   lhso = std::move(n);
 }
 
-void UInt256Wrapper::Subtract(fetch::vm::Ptr<Object> &lhso, fetch::vm::Ptr<Object> &rhso)
+void UInt256Wrapper::Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso)
 {
   Ptr<UInt256Wrapper> lhs = lhso;
   Ptr<UInt256Wrapper> rhs = rhso;
@@ -298,16 +298,14 @@ void UInt256Wrapper::Subtract(fetch::vm::Ptr<Object> &lhso, fetch::vm::Ptr<Objec
   lhso = std::move(n);
 }
 
-void UInt256Wrapper::InplaceAdd(fetch::vm::Ptr<Object> const &lhso,
-                                fetch::vm::Ptr<Object> const &rhso)
+void UInt256Wrapper::InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
   Ptr<UInt256Wrapper> lhs = lhso;
   Ptr<UInt256Wrapper> rhs = rhso;
   lhs->number_ += rhs->number_;
 }
 
-void UInt256Wrapper::InplaceSubtract(fetch::vm::Ptr<Object> const &lhso,
-                                     fetch::vm::Ptr<Object> const &rhso)
+void UInt256Wrapper::InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
   Ptr<UInt256Wrapper> lhs = lhso;
   Ptr<UInt256Wrapper> rhs = rhso;
@@ -329,8 +327,7 @@ void UInt256Wrapper::Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     lhso = std::move(rhs);
     return;
   }
-  Ptr<UInt256Wrapper> n(
-      new UInt256Wrapper(vm_, fetch::vm::TypeIds::UInt256, lhs->number_ * rhs->number_));
+  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, TypeIds::UInt256, lhs->number_ * rhs->number_));
   lhso = std::move(n);
 }
 

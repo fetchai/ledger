@@ -96,13 +96,9 @@ public:
   void Divide(fetch::vm::Ptr<Object> &lhso, fetch::vm::Ptr<Object> &rhso) override;
   void InplaceDivide(fetch::vm::Ptr<Object> const &lhso,
                      fetch::vm::Ptr<Object> const &rhso) override;
-
   bool IsEqual(fetch::vm::Ptr<Object> const &lhso, fetch::vm::Ptr<Object> const &rhso) override;
-
   bool IsNotEqual(fetch::vm::Ptr<Object> const &lhso, fetch::vm::Ptr<Object> const &rhso) override;
-
   bool IsLessThan(fetch::vm::Ptr<Object> const &lhso, fetch::vm::Ptr<Object> const &rhso) override;
-
   bool IsGreaterThan(fetch::vm::Ptr<Object> const &lhso,
                      fetch::vm::Ptr<Object> const &rhso) override;
 
