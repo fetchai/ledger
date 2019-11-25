@@ -32,7 +32,7 @@ namespace fetch {
 namespace vm {
 static ChargeAmount CHARGE_UNIT = 1u;
 }
-}
+}  // namespace fetch
 
 namespace fetch {
 namespace vm_modules {
@@ -115,7 +115,6 @@ void VMTensor::Bind(Module &module)
   auto to_string_charge_estimator = [charge_func_of_tensor_size](Ptr<VMTensor> const &this_) {
     return charge_func_of_tensor_size(this_);
   };
-  
 
   /////////////////////////////////////////////////////////
   // Bind member function and their estimators to module //
