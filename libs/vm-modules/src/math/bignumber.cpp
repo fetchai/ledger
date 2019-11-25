@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/math/bignumber.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "vectorise/uint/uint.hpp"
+
 #include "vm/module.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
+#include "vm_modules/math/bignumber.hpp"
 
 #include <cstdint>
 #include <stdexcept>
@@ -375,6 +376,7 @@ void UInt256Wrapper::InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &r
   catch (std::exception const &ex)
   {
     vm_->RuntimeError(std::string("UInt256Wrapper::InplaceDivide runtime error: ") + ex.what());
+    return;
   }
 }
 
