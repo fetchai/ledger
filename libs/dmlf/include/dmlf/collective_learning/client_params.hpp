@@ -38,6 +38,7 @@ struct ClientParams
   std::vector<std::string> input_names = {"Input"};
   std::string              label_name  = "Label";
   std::string              error_name  = "Error";
+  std::string accuracy_name = "";
 
   std::string results_dir = ".";
 };

@@ -24,6 +24,7 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/utilities/mnist_utilities.hpp"
+#include "ml/ops/metrics/categorical_accuracy.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -54,6 +55,10 @@ std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeMNistModel(
       10u, 10u, fetch::ml::details::ActivationType::RELU);
   model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
       10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
+
+  client_params.accuracy_name =
+      model_ptr->graph_ptr_->template AddNode<fetch::ml::ops::CategoricalAccuracy<TensorType>>("accuracy",
+                                                                                           {model_ptr->output_});
 
   // Initialise DataLoader
   auto mnist_images = fetch::math::utilities::ReadCSV<TensorType>(images);

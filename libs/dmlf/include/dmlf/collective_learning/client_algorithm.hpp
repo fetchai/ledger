@@ -181,8 +181,9 @@ template <class TensorType>
 void ClientAlgorithm<TensorType>::ClearLossFile()
 {
   mkdir(params_.results_dir.c_str(), 0777);
-  std::ofstream lossfile(params_.results_dir + "/losses_" + id_ + ".csv",
-                         std::ofstream::out | std::ofstream::trunc);
+  std::string results_file = params_.results_dir + "/losses_" + id_ + ".csv";
+  std::cout << "Writing results to: " << results_file << std::endl;
+  std::ofstream lossfile(results_file, std::ofstream::out | std::ofstream::trunc);
   lossfile.close();
 }
 
@@ -353,28 +354,32 @@ void ClientAlgorithm<TensorType>::Test()
       test_loss_ = *(graph_ptr_->Evaluate(params_.error_name).begin());
 
       // Accuracy calculation
-      // Todo: will be replaced by accuracy metric once that PR is merged
-      TensorType test_results = graph_ptr_->Evaluate("FullyConnected_2");
-      test_results            = fetch::math::ArgMax(test_results);
-      SizeType total_score{0};
-      auto     test_result = test_results.cbegin();
-      for (auto const &data_point : fetch::math::ArgMax(test_pair.first))
+      if (!params_.accuracy_name.empty())
       {
-        if (data_point == *test_result)
-        {
-          total_score++;
-        }
-        ++test_result;
+        test_accuracy_ = *(graph_ptr_->Evaluate(params_.accuracy_name).begin());
       }
-      test_accuracy_ =
-          static_cast<DataType>(total_score) / static_cast<DataType>(test_results.size());
+//      // Todo: will be replaced by accuracy metric once that PR is merged
+//      TensorType test_results = graph_ptr_->Evaluate("FullyConnected_2");
+//      test_results            = fetch::math::ArgMax(test_results);
+//      SizeType total_score{0};
+//      auto     test_result = test_results.cbegin();
+//      for (auto const &data_point : fetch::math::ArgMax(test_pair.first))
+//      {
+//        if (data_point == *test_result)
+//        {
+//          total_score++;
+//        }
+//        ++test_result;
+//      }
+//      test_accuracy_ =
+//          static_cast<DataType>(total_score) / static_cast<DataType>(test_results.size());
     }
   }
-  else
-  {
-    test_loss_     = 0;
-    test_accuracy_ = 0;
-  }
+//  else
+//  {
+//    test_loss_     = 0;
+//    test_accuracy_ = 0;
+//  }
 }
 
 /**
