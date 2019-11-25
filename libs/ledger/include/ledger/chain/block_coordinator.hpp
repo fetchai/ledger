@@ -25,7 +25,7 @@
 #include "core/synchronisation/protected.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/consensus/consensus.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
@@ -151,7 +151,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using DAGPtr         = std::shared_ptr<ledger::DAGInterface>;
   using ProverPtr      = std::shared_ptr<crypto::Prover>;
-  using ConsensusPtr   = std::shared_ptr<ledger::Consensus>;
+  using ConsensusPtr   = std::shared_ptr<ledger::ConsensusInterface>;
 
   enum class State
   {

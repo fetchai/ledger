@@ -33,6 +33,7 @@
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/simulated_pow_consensus.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
@@ -221,9 +222,7 @@ ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, St
   }
   else
   {
-    consensus = std::make_shared<ledger::SimulatedPOWConsensus>(stake, beacon_setup, beacon, chain, storage,
-                                                    identity, cfg.aeon_period, cfg.max_cabinet_size,
-                                                    cfg.block_interval_ms);
+    consensus = std::make_shared<ledger::SimulatedPowConsensus>(identity);
   }
 
   return consensus;
@@ -602,6 +601,7 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
     // determine the status of the main chain server
     bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
 
+    // TODO(HUT): look at this...
     // control from the top level block production based on the chain sync state
     block_coordinator_.EnableMining(is_in_sync);
 

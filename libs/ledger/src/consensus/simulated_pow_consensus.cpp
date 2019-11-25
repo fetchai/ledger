@@ -27,132 +27,106 @@
  * do the full scheme, as key generation takes a long time.
  *
  * In order to simulate pow, the consensus will probalistically generate blocks
- * so as to emulate pow. Blocks are all assumed to be valid
+ * so as to emulate pow. Blocks are all assumed to be valid.
+ * Forks are much more likely in this scheme and there are no guarantees
+ * around block time.
  *
  */
 
-namespace {
+//namespace {
 
-constexpr char const *LOGGING_NAME = "SimulatedPOWConsensus";
+constexpr char const *LOGGING_NAME = "SimulatedPowConsensus";
 
-using Consensus       = fetch::ledger::SimulatedPOWConsensus;
+using SimulatedPowConsensus       = fetch::ledger::SimulatedPowConsensus;
+using NextBlockPtr                = SimulatedPowConsensus::NextBlockPtr;
+using Status                      = SimulatedPowConsensus::Status;
 
 using fetch::ledger::MainChain;
 using fetch::ledger::Block;
 
-Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
-                     BeaconServicePtr beacon, MainChain const &chain, StorageInterface &storage,
-                     Identity mining_identity, uint64_t aeon_period, uint64_t max_cabinet_size,
-                     uint64_t block_interval_ms, NotarisationPtr notarisation)
-  : storage_{storage}
-  , stake_{std::move(stake)}
-  , cabinet_creator_{std::move(beacon_setup)}
-  , beacon_{std::move(beacon)}
-  , chain_{chain}
-  , mining_identity_{std::move(mining_identity)}
-  , mining_address_{chain::Address(mining_identity_)}
-  , aeon_period_{aeon_period}
-  , max_cabinet_size_{max_cabinet_size}
-  , block_interval_ms_{block_interval_ms}
-  , notarisation_{std::move(notarisation)}
+uint64_t GetPoissonSample(uint64_t range, double mean_of_distribution)
 {
-  assert(stake_);
+  thread_local std::random_device rd;
+  thread_local std::mt19937       rng(rd());
+
+  using Distribution = std::poisson_distribution<uint64_t>;
+
+  Distribution      dist(mean_of_distribution);
+
+  return std::min(dist(rng), range);
 }
 
-void Consensus::UpdateCurrentBlock(Block const &current)
+SimulatedPowConsensus::SimulatedPowConsensus(Identity mining_identity)
+  : mining_identity_{mining_identity}
+  , other_miners_seen_in_chain_{mining_identity_}
 {
 }
 
-NextBlockPtr Consensus::GenerateNextBlock()
+void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
 {
+  current_block_ = current;
+
+  if(current.miner_id.identifier().empty())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Received block with empty miner ID for simulated POW");
+  }
+  else
+  {
+    other_miners_seen_in_chain_.insert(current.miner_id);
+  }
+
+  // Generate a block probalistically based on the previous block time and the number
+  // of other peers seen so far (bounded to 30s)
+  decided_next_timestamp_s_ = current.timestamp + static_cast<uint64_t>(std::ceil(GetPoissonSample(30000, block_interval_ms_/other_miners_seen_in_chain_.size()) / 1000.0));
 }
 
-Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous) const
+NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
 {
+  NextBlockPtr ret;
+
+  auto     current_time =
+      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
+
+  if(!(current_time > decided_next_timestamp_s_))
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Waiting before producing block. Seconds to wait: ", decided_next_timestamp_s_ - current_time);
+  }
+
+  // Number of block we want to generate
+  uint64_t const block_number = current_block_.block_number + 1;
+
+  ret = std::make_unique<Block>();
+
+  // Note, it is important to do this here so the block when passed to ValidBlockTiming
+  // is well formed
+  ret->previous_hash = current_block_.hash;
+  ret->block_number  = block_number;
+  /* ret->miner         = mining_address_; */
+  ret->miner_id      = mining_identity_;
+  ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
+  ret->weight    = GetPoissonSample(200, 50);
+
+  return ret;
 }
 
-uint32_t Consensus::GetThreshold(Block const &block) const
+Status SimulatedPowConsensus::ValidBlock(Block const &/*current*/) const
 {
+  return Status::YES;
 }
 
-Block GetBlockPriorTo(Block const &current, MainChain const &chain)
+void SimulatedPowConsensus::SetBlockInterval(uint64_t block_interval_ms)
 {
+  block_interval_ms_ = block_interval_ms;
 }
 
-Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
-{
-}
-
-bool Consensus::VerifyNotarisation(Block const &block) const
-{
-}
-
-uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address)
-{
-}
-
-Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet const &cabinet,
-                                              uint64_t                                entropy)
-{
-}
-
-bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) const
-{
-}
-
-bool ShouldTriggerAeon(uint64_t block_number, uint64_t aeon_period)
-{
-}
-
-bool Consensus::ShouldTriggerNewCabinet(Block const &block)
-{
-}
-
-// Helper function to determine whether the block has been signed correctly
-bool BlockSignedByQualMember(fetch::ledger::Block const &block)
-{
-}
-
-bool ValidNotarisationKeys(Consensus::BlockEntropy::Cabinet const &             cabinet,
-                           Consensus::BlockEntropy::AeonNotarisationKeys const &notarisation_keys)
-{
-}
-
-bool Consensus::EnoughQualSigned(BlockEntropy const &block_entropy) const
-{
-}
-
-Status Consensus::ValidBlock(Block const &current) const
-{
-}
-
-void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)
-{
-}
-
-void Consensus::Refresh()
+void SimulatedPowConsensus::SetMaxCabinetSize(uint16_t /*max_cabinet_size*/)
 {}
 
-void Consensus::SetThreshold(double threshold)
-{
-}
+void SimulatedPowConsensus::SetAeonPeriod(uint16_t /*aeon_period*/)
+{}
 
-void Consensus::SetCabinetSize(uint64_t size)
-{
-}
+void SimulatedPowConsensus::Reset(StakeSnapshot const &/*snapshot*/, StorageInterface &/*storage*/)
+{}
 
-StakeManagerPtr Consensus::stake()
-{
-}
-
-void Consensus::SetDefaultStartTime(uint64_t default_start_time)
-{
-  default_start_time_ = default_start_time;
-}
-
-void Consensus::AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet)
-{
-  cabinet_history_[block_number] = cabinet;
-  TrimToSize(cabinet_history_, HISTORY_LENGTH);
-}
-
+void SimulatedPowConsensus::SetDefaultStartTime(uint64_t /*default_start_time*/)
+{}

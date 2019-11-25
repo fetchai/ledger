@@ -28,7 +28,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
-#include "ledger/consensus/consensus.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
@@ -93,7 +93,8 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 
 }  // namespace
 
-using ConsensusPtr = std::shared_ptr<fetch::ledger::Consensus>;
+// TODO(HUT): remove this?
+using ConsensusPtr = std::shared_ptr<fetch::ledger::ConsensusInterface>;
 
 GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
                                        StorageUnitInterface &storage_unit, ConsensusPtr consensus)
@@ -229,12 +230,12 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object)
   if (consensus_)
   {
     uint64_t parsed_value;
-    double   parsed_value_double;
+    //double   parsed_value_double;
 
     // Optionally overwrite default parameters
     if (variant::Extract(object, "cabinetSize", parsed_value))
     {
-      consensus_->SetCabinetSize(parsed_value);
+      consensus_->SetMaxCabinetSize(static_cast<uint16_t>(parsed_value));
     }
 
     if (variant::Extract(object, "startTime", parsed_value))
@@ -243,10 +244,10 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object)
       consensus_->SetDefaultStartTime(parsed_value);
     }
 
-    if (variant::Extract(object, "threshold", parsed_value_double))
-    {
-      consensus_->SetThreshold(parsed_value_double);
-    }
+    //if (variant::Extract(object, "threshold", parsed_value_double))
+    //{
+    //  consensus_->SetThreshold(parsed_value_double);
+    //}
 
     if (!object.Has("stakers"))
     {

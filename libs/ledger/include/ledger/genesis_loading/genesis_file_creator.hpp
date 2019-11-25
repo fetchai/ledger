@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/consensus.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 
 #include <string>
 
@@ -34,7 +34,7 @@ class StorageUnitInterface;
 class GenesisFileCreator
 {
 public:
-  using ConsensusPtr = std::shared_ptr<fetch::ledger::Consensus>;
+  using ConsensusPtr = std::shared_ptr<fetch::ledger::ConsensusInterface>;
 
   // Construction / Destruction
   GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit,

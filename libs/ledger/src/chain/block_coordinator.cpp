@@ -554,8 +554,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       consensus_->UpdateCurrentBlock(*previous);  // Only update with valid blocks
       auto result = consensus_->ValidBlock(*current_block_);
 
-      if (!(result == ConsensusInterface::Status::YES ||
-            result == ConsensusInterface::Status::UNKNOWN))
+      if (!(result == ConsensusInterface::Status::YES))
       {
         FETCH_LOG_WARN(LOGGING_NAME,
                        "Block validation failed: Consensus failed to verify block (0x",
@@ -1153,7 +1152,6 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   if (consensus_)
   {
     consensus_->UpdateCurrentBlock(*block);
-    consensus_->Refresh();
   }
 
   current_block_.reset();

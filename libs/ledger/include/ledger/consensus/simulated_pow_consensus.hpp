@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+// TODO(HUT): delete unnec. includes
 #include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/protocols/notarisation_service.hpp"
 
@@ -36,44 +37,49 @@
 namespace fetch {
 namespace ledger {
 
-class StorageInterface;
-
 class SimulatedPowConsensus final : public ConsensusInterface
 {
 public:
+  using Identity              = crypto::Identity;
+  //using MainChain             = ledger::MainChain;
+  //using NextBlockPtr          = ConsensusInterface::NextBlockPtr;
+
+  // TODO(HUT): when you construct consensus, do not set aeon period etc. Do this later.
 
   // Construction / Destruction
-  Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup, BeaconServicePtr beacon,
-            MainChain const &chain, StorageInterface &storage, Identity mining_identity,
-            uint64_t aeon_period, uint64_t max_cabinet_size, uint64_t block_interval_ms = 1000,
-            NotarisationPtr notarisation = NotarisationPtr{});
-  Consensus(Consensus const &) = delete;
-  Consensus(Consensus &&)      = delete;
-  ~Consensus() override        = default;
+  SimulatedPowConsensus(Identity mining_identity);
+
+  SimulatedPowConsensus(SimulatedPowConsensus const &) = delete;
+  SimulatedPowConsensus(SimulatedPowConsensus &&)      = delete;
+  ~SimulatedPowConsensus() override        = default;
 
   // Overridden methods
   void         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
   Status       ValidBlock(Block const &current) const override;
-  void         Refresh() override;
+
+  // Methods used in POS, and so do nothing here
+  void SetMaxCabinetSize(uint16_t max_cabinet_size) override;
+  void SetBlockInterval(uint64_t block_interval_s) override;
+  void SetAeonPeriod(uint16_t aeon_period) override;
+  void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
+  void SetDefaultStartTime(uint64_t default_start_time) override;
 
   // Operators
-  Consensus &operator=(Consensus const &) = delete;
-  Consensus &operator=(Consensus &&) = delete;
+  SimulatedPowConsensus &operator=(SimulatedPowConsensus const &) = delete;
+  SimulatedPowConsensus &operator=(SimulatedPowConsensus &&) = delete;
 
 private:
-  //StorageInterface &    storage_;
-  //StakeManagerPtr       stake_;
-  //BeaconSetupServicePtr cabinet_creator_;
-  //BeaconServicePtr      beacon_;
-  MainChain const &     chain_;
   Identity              mining_identity_;
-  chain::Address        mining_address_;
+
+  // Recalculated whenever we see a new block: set a time for when we will produce
+  // the next block
+  uint64_t              decided_next_timestamp_s_{std::numeric_limits<uint64_t>::max()};
 
   // Consensus' view on the heaviest block etc.
-  Block          current_block_;
-  Block          previous_block_;
-  uint64_t       block_interval_ms_{std::numeric_limits<uint64_t>::max()};
+  Block                        current_block_;
+  uint64_t                     block_interval_ms_{std::numeric_limits<uint64_t>::max()};
+  std::set<Identity>           other_miners_seen_in_chain_;
 };
 
 }  // namespace ledger
