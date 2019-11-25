@@ -20,9 +20,9 @@
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/estimator_use.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
+#include "vm_modules/utilities.hpp"
 
 #include <cstdint>
 #include <vector>

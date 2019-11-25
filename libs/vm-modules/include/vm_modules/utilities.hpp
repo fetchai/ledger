@@ -24,6 +24,20 @@ using namespace fetch::vm;
 namespace fetch {
 namespace vm_modules {
 
+/*
+  Converts a member function `estimator` of an estimator object `EstimatorType` to a free function
+  intended to be used as a charge estimation for a VM object member function.
+
+  - `EstimatorType` : the type of the estimator object, should define an `ObjectType` that
+  corresponds to the type of the vm object it is providing estimators for
+
+  - `estimator`     : should be a member function of the class `EstimatorType`
+
+  - `Args...`       : list of arguments of of the `estimator` member function as well as the vm
+  object one
+
+*/
+
 template <typename EstimatorType, typename... Args>
 std::function<ChargeAmount(Ptr<typename EstimatorType::ObjectType>, Args...)> estimator_use(
     ChargeAmount (EstimatorType::*estimator)(Args... args))
