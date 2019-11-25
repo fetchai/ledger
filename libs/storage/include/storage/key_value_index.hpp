@@ -56,7 +56,6 @@
 // Representation of a possible configuration of the key value trie. When the split is maximal
 // (256), this represents that the node is a leaf. The nodes can contain additional information
 
-#include "core/packed_tag.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/key.hpp"

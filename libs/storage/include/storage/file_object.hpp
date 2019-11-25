@@ -32,7 +32,6 @@
 //    └────────────────────┴───────────────────────────┘
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/packed_tag.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/document.hpp"

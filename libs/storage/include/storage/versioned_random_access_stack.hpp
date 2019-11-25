@@ -36,7 +36,6 @@
 //       │      │      │      │      │      │
 //       └──────┴──────┴──────┴──────┴──────┘
 
-#include "core/packed_tag.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/random_access_stack.hpp"
 #include "storage/storage_exception.hpp"
