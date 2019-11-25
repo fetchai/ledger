@@ -109,6 +109,16 @@ Digest const &Transaction::digest() const
 }
 
 /**
+ * Get the counter value for the transaction
+ *
+ * @return The counter value (if one exists)
+ */
+Transaction::Counter Transaction::counter() const
+{
+  return counter_;
+}
+
+/**
  * Get the sender address for the transaction
  *
  * @return The sender address
@@ -172,13 +182,13 @@ Transaction::Validity Transaction::GetValidity(BlockIndex block_index) const
 }
 
 /**
- * Return the charge associated with the transaction
+ * Return the charge rate associated with the transaction
  *
  * @return The charge amount
  */
-Transaction::TokenAmount Transaction::charge() const
+Transaction::TokenAmount Transaction::charge_rate() const
 {
-  return charge_;
+  return charge_rate_;
 }
 
 /**

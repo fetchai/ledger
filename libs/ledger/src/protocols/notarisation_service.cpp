@@ -25,6 +25,19 @@
 namespace fetch {
 namespace ledger {
 
+namespace {
+
+template <typename T>
+void TrimToSize(T &container, std::size_t max_size)
+{
+  auto it = container.begin();
+  while ((it != container.end()) && (container.size() > max_size))
+  {
+    it = container.erase(it);
+  }
+}
+}  // namespace
+
 char const *StateToString(NotarisationService::State state);
 
 NotarisationService::NotarisationService(MuddleInterface &muddle, CertificatePtr certificate,
@@ -61,6 +74,13 @@ NotarisationService::State NotarisationService::OnKeyRotation()
 {
   FETCH_LOCK(mutex_);
 
+  // If next block to be notarised is in the next aeon then reset the active notarisation unit
+  if (active_notarisation_unit_ &&
+      notarisation_collection_height_ > active_notarisation_unit_->round_end())
+  {
+    active_notarisation_unit_.reset();
+  }
+
   // If the cutoff for blocks we notarise is greater than the end of the
   // previous aeon then reset previous
   if (previous_notarisation_unit_ && BlockNumberCutoff() > previous_notarisation_unit_->round_end())
@@ -71,24 +91,11 @@ NotarisationService::State NotarisationService::OnKeyRotation()
   // Checking whether the new keys have been generated
   if (!aeon_notarisation_queue_.empty())
   {
-    new_keys                  = false;
-    active_notarisation_unit_ = aeon_notarisation_queue_.front();
+    new_keys = false;
+    // Save previous as we might still need to process blocks from previous aeon
+    previous_notarisation_unit_ = std::move(active_notarisation_unit_);
+    active_notarisation_unit_   = aeon_notarisation_queue_.front();
     aeon_notarisation_queue_.pop_front();
-
-    // If previous notarisation has been reset then create new one just for verification
-    if (!previous_notarisation_unit_)
-    {
-      previous_notarisation_unit_ = std::make_shared<NotarisationManager>();
-      std::map<MuddleAddress, NotarisationManager::PublicKey> public_notarisation_keys;
-      for (auto const &key : current_aeon_details.cabinet_public_keys)
-      {
-        public_notarisation_keys.insert({key.first, key.second.first});
-      }
-      previous_notarisation_unit_->SetAeonDetails(
-          current_aeon_details.round_start, current_aeon_details.round_end,
-          current_aeon_details.threshold, public_notarisation_keys);
-      assert(!previous_notarisation_unit_->CanSign());
-    }
 
     return State::NOTARISATION_SYNCHRONISATION;
   }
@@ -222,13 +229,13 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
                                           address_sig_pairs.first))
             {
               FETCH_LOG_DEBUG(LOGGING_NAME, "Added notarisation from node ",
-                              active_notarisation_unit_->Index(address_sig_pairs.first));
+                              notarisation_unit->Index(address_sig_pairs.first));
               existing_notarisations[address_sig_pairs.first] = address_sig_pairs.second;
             }
           }
         }
         // If we have collected enough notarisations for this block hash then move onto next hash
-        if (existing_notarisations.size() == active_notarisation_unit_->threshold())
+        if (existing_notarisations.size() == notarisation_unit->threshold())
         {
           can_verify.insert(block_hash);
           break;
@@ -265,7 +272,11 @@ NotarisationService::State NotarisationService::OnComplete()
 {
   FETCH_LOCK(mutex_);
 
-  // TODO(JMW): Clear old signature shares
+  // Trim maps of unnecessary info
+  auto const max_cache_size =
+      ((active_notarisation_unit_->round_end() - active_notarisation_unit_->round_start()) + 1) * 3;
+  TrimToSize(notarisations_being_built_, max_cache_size);
+  TrimToSize(notarisations_built_, max_cache_size);
 
   // If chain has moved ahead faster while notarisations were being collected then reset
   // the block number collection is working on
@@ -280,9 +291,6 @@ NotarisationService::State NotarisationService::OnComplete()
       new_keys && notarisation_collection_height_ == active_notarisation_unit_->round_end();
   if (load_new_keys || notarisation_collection_height_ > active_notarisation_unit_->round_end())
   {
-    // Save previous as we might still need to notarise blocks from previous aeon
-    previous_notarisation_unit_ = active_notarisation_unit_;
-    active_notarisation_unit_.reset();
     return State::KEY_ROTATION;
   }
 
@@ -326,7 +334,8 @@ void NotarisationService::NotariseBlock(Block const &block)
 
   // If block is within current aeon then notarise now
   SharedAeonNotarisationUnit notarisation_unit;
-  if (active_notarisation_unit_ && block.block_number >= active_notarisation_unit_->round_start() &&
+  if (active_notarisation_unit_ && active_notarisation_unit_->CanSign() &&
+      block.block_number >= active_notarisation_unit_->round_start() &&
       block.block_number <= active_notarisation_unit_->round_end())
   {
     notarisation_unit = active_notarisation_unit_;
@@ -362,7 +371,22 @@ void NotarisationService::SetAeonDetails(uint64_t round_start, uint64_t round_en
                                          uint32_t                    threshold,
                                          AeonNotarisationKeys const &cabinet_public_keys)
 {
-  current_aeon_details = AeonDetails{round_start, round_end, threshold, cabinet_public_keys};
+  FETCH_LOCK(mutex_);
+
+  // If no active notarisation has been set for this aeon then create new one just for verifying
+  // notarisations in blocks. Not necessary but reduces verification time
+  if (!active_notarisation_unit_)
+  {
+    active_notarisation_unit_ = std::make_shared<NotarisationManager>();
+    std::map<MuddleAddress, NotarisationManager::PublicKey> public_notarisation_keys;
+    for (auto const &key : cabinet_public_keys)
+    {
+      public_notarisation_keys.insert({key.first, key.second.first});
+    }
+    active_notarisation_unit_->SetAeonDetails(round_start, round_end, threshold,
+                                              public_notarisation_keys);
+    assert(!active_notarisation_unit_->CanSign());
+  }
 }
 
 NotarisationService::AggregateSignature NotarisationService::GetAggregateNotarisation(

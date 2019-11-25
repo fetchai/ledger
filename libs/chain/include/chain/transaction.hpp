@@ -38,6 +38,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using TokenAmount    = uint64_t;
   using BlockIndex     = uint64_t;
+  using Counter        = uint64_t;
 
   /**
    * Represents a single target and token about. The transaction format allows any number of
@@ -93,6 +94,7 @@ public:
   /// @name Identification
   /// @{
   Digest const &digest() const;
+  Counter       counter() const;
   /// @}
 
   /// @name Transfer Accessors
@@ -111,7 +113,7 @@ public:
 
   /// @name Charge Accessors
   /// @{
-  TokenAmount charge() const;
+  TokenAmount charge_rate() const;
   TokenAmount charge_limit() const;
   /// @}
 
@@ -145,7 +147,7 @@ private:
   Transfers      transfers_{};                               ///< The list of the transfers
   BlockIndex     valid_from_{0};                             ///< Min. block number before valid
   BlockIndex     valid_until_{0};                            ///< Max. block number before invalid
-  TokenAmount    charge_{0};                                 ///< The charge rate for the TX
+  TokenAmount    charge_rate_{0};                            ///< The charge rate for the TX
   TokenAmount    charge_limit_{0};                           ///< The maximum charge to be used
   ContractMode   contract_mode_{ContractMode::NOT_PRESENT};  ///< The payload being contained
   Address        contract_digest_{};                         ///< The digest of the smart contract
@@ -155,6 +157,7 @@ private:
   ConstByteArray action_{};                                  ///< The name of the action invoked
   ConstByteArray data_{};                                    ///< The payload of the transaction
   Signatories    signatories_{};                             ///< The signatories for this tx
+  Counter        counter_{0};
   /// @}
 
   /// @name Metadata

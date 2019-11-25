@@ -41,7 +41,7 @@ void LocalLearnerNetworker::ClearPeers()
   peers_.clear();
 }
 
-void LocalLearnerNetworker::PushUpdate(const UpdateInterfacePtr &update)
+void LocalLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
 {
   std::vector<std::shared_ptr<LocalLearnerNetworker>> targets;
 

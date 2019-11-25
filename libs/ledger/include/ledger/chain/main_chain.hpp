@@ -186,7 +186,8 @@ public:
     BlockWeight total_weight{0};
     BlockWeight weight{0};
     BlockNumber block_number{0};
-    BlockHash   hash{chain::GENESIS_DIGEST};
+    // assuming every chain has a proper genesis
+    BlockHash hash{chain::GENESIS_DIGEST};
 
     bool Update(Block const &block);
   };

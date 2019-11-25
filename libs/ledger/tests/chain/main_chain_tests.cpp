@@ -328,6 +328,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   auto const branch6{GenerateChain(generator_, cabinet_, genesis, 6, 3)};
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
+  static constexpr char const *LOGGING_NAME = "MainChainTests";
   FETCH_LOG_DEBUG(LOGGING_NAME, "Genesis : ", fetch::byte_array::ToBase64(genesis->hash));
   for (auto const &branch : {branch3, branch5, branch9, branch7, branch6})
   {

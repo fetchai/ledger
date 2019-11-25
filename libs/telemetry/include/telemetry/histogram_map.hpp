@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "telemetry/measurement.hpp"
 #include "telemetry/telemetry.hpp"
 
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -59,7 +59,7 @@ private:
   std::string const         field_;
   std::vector<double> const buckets_;
 
-  mutable Mutex       lock_;
+  mutable std::mutex  lock_;
   HistogramCollection histograms_;
 };
 

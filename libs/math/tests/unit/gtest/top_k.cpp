@@ -48,7 +48,7 @@ TYPED_TEST(TopKTest, top_k_2D_test_sorted)
   gt_indices.Reshape({2, 4});
 
   SizeType                          k   = 2;
-  std::pair<ArrayType, IndicesType> ret = TopK<ArrayType, IndicesType>(data, k, true);
+  std::pair<ArrayType, IndicesType> ret = TopK<ArrayType, IndicesType>(data, k, 0, true);
 
   ASSERT_EQ(ret.first.shape(), gt_data.shape());
   ASSERT_EQ(ret.second.shape(), gt_indices.shape());
@@ -73,7 +73,7 @@ TYPED_TEST(TopKTest, top_k_2D_test_unsorted)
   gt_indices.Reshape({2, 4});
 
   SizeType                          k   = 2;
-  std::pair<ArrayType, IndicesType> ret = TopK<ArrayType, IndicesType>(data, k, false);
+  std::pair<ArrayType, IndicesType> ret = TopK<ArrayType, IndicesType>(data, k, 0, false);
 
   ASSERT_EQ(ret.first.shape(), gt_data.shape());
   ASSERT_EQ(ret.second.shape(), gt_indices.shape());
@@ -98,7 +98,7 @@ TYPED_TEST(TopKTest, top_k_1D_test_sorted)
   gt_indices.Reshape({4});
 
   SizeType                          k   = 4;
-  std::pair<ArrayType, IndicesType> ret = TopK<ArrayType, IndicesType>(data, k, true);
+  std::pair<ArrayType, IndicesType> ret = TopK<ArrayType, IndicesType>(data, k, 0, true);
 
   ASSERT_EQ(ret.first.shape(), gt_data.shape());
   ASSERT_EQ(ret.second.shape(), gt_indices.shape());
@@ -123,7 +123,7 @@ TYPED_TEST(TopKTest, top_k_1D_test_unsorted)
   gt_indices.Reshape({4});
 
   SizeType                          k   = 4;
-  std::pair<ArrayType, IndicesType> ret = TopK<ArrayType, IndicesType>(data, k, false);
+  std::pair<ArrayType, IndicesType> ret = TopK<ArrayType, IndicesType>(data, k, 0, false);
 
   ASSERT_EQ(ret.first.shape(), gt_data.shape());
   ASSERT_EQ(ret.second.shape(), gt_indices.shape());

@@ -383,10 +383,10 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
   if (current.block_number > current_block_.block_number && !one_ahead)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME,
-                    "Updating the current block more than one block ahead is invalid! current: ",
-                    current_block_.block_number, " Attempt: ", current.block_number);
-    return;
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Note: updating consensus with a block more than one ahead than last updated "
+                   "block! Current: ",
+                   current_block_.block_number, " Attempt: ", current.block_number);
   }
 
   // If previous block is stutter block in main chain then delete notarisations for this block

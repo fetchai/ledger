@@ -17,16 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/containers/array.hpp"
-#include "core/serializers/group_definitions.hpp"
 #include "meta/has_index.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/containers/array.hpp"
 #include "vectorise/platform.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -147,6 +147,7 @@ public:
 
   constexpr UInt &operator++();
   constexpr UInt &operator--();
+  constexpr UInt  operator+() const;
   constexpr UInt  operator~() const;
 
   //////////////////////////////
@@ -448,7 +449,7 @@ constexpr meta::IfIsUnsignedInteger<T, bool> UInt<S>::operator>=(T other) const
 
 ///////////////////////
 /// unary operators ///
-//////////////////////1/
+///////////////////////
 
 template <uint16_t S>
 constexpr UInt<S> &UInt<S>::operator++()
@@ -463,6 +464,12 @@ constexpr UInt<S> &UInt<S>::operator--()
 {
   *this -= _1;
 
+  return *this;
+}
+
+template <uint16_t S>
+constexpr UInt<S> UInt<S>::operator+() const
+{
   return *this;
 }
 
@@ -631,8 +638,6 @@ constexpr UInt<256> &UInt<256>::operator*=(UInt<256> const &n)
   terms[2] = products[0][2] + products[1][1] + products[2][0] + carry;
   carry    = static_cast<WideType>(terms[2] >> WIDE_ELEMENT_SIZE);
   terms[3] = products[0][3] + products[1][2] + products[2][1] + products[3][0] + carry;
-  // TODO(?): decide what to do with overflow if carry > 0
-  // carry    = static_cast<WideType>(terms[3] >> WIDE_ELEMENT_SIZE);
 
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
@@ -661,11 +666,10 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   }
   if (*this == _0)
   {
-    *this = _0;
     return *this;
   }
   // No fractions supported, if *this < n return 0
-  if (*this < _0)
+  if (*this < n)
   {
     *this = _0;
     return *this;
@@ -997,7 +1001,7 @@ constexpr std::size_t UInt<S>::lsb() const
   {
     std::size_t lsbi = platform::CountTrailingZeroes64(wide_[i]);
     lsb += lsbi;
-    if (lsb < 64)
+    if (lsbi < 64)
     {
       return lsb;
     }
@@ -1037,7 +1041,7 @@ template <uint16_t S>
 constexpr uint64_t UInt<S>::TrimmedSize() const
 {
   uint64_t ret = WIDE_ELEMENTS;
-  while ((ret != 0) && (wide_[ret - 1] == 0))
+  while ((ret > 1) && (wide_[ret - 1] == 0))
   {
     --ret;
   }
@@ -1076,71 +1080,42 @@ UInt<S>::operator std::string() const
   return ret.str();
 }
 
-inline double Log(UInt<256> const &x)
+template <uint16_t S>
+inline std::ostream &operator<<(std::ostream &s, UInt<S> const &x)
 {
-  uint64_t last_word = x.ElementAt(x.TrimmedSize() - 1);
-
-  auto     tz       = uint64_t(platform::CountTrailingZeroes64(last_word));
-  uint64_t exponent = (last_word << 3u) - tz;
-
-  return double(exponent) + std::log(double(last_word << tz) * (1. / double(uint32_t(-1))));
+  s << std::string(x);
+  return s;
 }
 
 inline double ToDouble(UInt<256> const &x)
 {
-  uint64_t last_word = x.ElementAt(x.TrimmedSize() - 1);
-
-  auto tz       = static_cast<uint16_t>(platform::CountTrailingZeroes64(last_word));
-  auto exponent = static_cast<uint16_t>((last_word << 3u) - tz);
-
-  assert(exponent < 1023);
-
-  union
+  if (x.TrimmedSize() == 1)
   {
-    double   value;
-    uint64_t bits;
-  } conv{};
+    return static_cast<double>(x.ElementAt(0));
+  }
+  const size_t ELEMENTS_PER_WIDE = x.WIDE_ELEMENT_SIZE / x.ELEMENT_SIZE;
+  uint64_t     magnitude         = x.ELEMENTS * x.ELEMENT_SIZE - x.msb() - 1;
 
-  conv.bits = 0;
-  conv.bits |= uint64_t(uint64_t(exponent & ((1u << 12u) - 1)) << 52u);
-  conv.bits |= uint64_t((last_word << (20u + tz)) & ((1ull << 53u) - 1));
-  return conv.value;
+  const size_t most_significant_byte_idx = magnitude / x.ELEMENT_SIZE;
+  const size_t least_eligible_byte_idx   = most_significant_byte_idx - (ELEMENTS_PER_WIDE - 1);
+
+  uint64_t mantisse = 0;
+  for (size_t i = 0; i < ELEMENTS_PER_WIDE; ++i)
+  {
+    const uint64_t element  = x[i + least_eligible_byte_idx];
+    const uint64_t addendum = uint64_t(element) << (i * x.ELEMENT_SIZE);
+    mantisse += addendum;
+  }
+  const auto exponent = static_cast<double>(least_eligible_byte_idx * x.ELEMENT_SIZE);
+
+  return static_cast<double>(mantisse) * pow(2, exponent);
+}
+
+inline double Log(UInt<256> const &x)
+{
+  return std::log(ToDouble(x));
 }
 
 }  // namespace vectorise
-
-namespace serializers {
-template <typename D, uint16_t S>
-struct ArraySerializer<vectorise::UInt<S>, D>
-{
-public:
-  using Type       = vectorise::UInt<S>;
-  using DriverType = D;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &array_constructor, Type const &u)
-  {
-    // TODO(issue 1425): Add WideType size to serialisation
-    auto array = array_constructor(u.elements());
-    for (std::size_t i = 0; i < u.elements(); i++)
-    {
-      array.Append(u.ElementAt(i));
-    }
-  }
-
-  template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &array, Type &u)
-  {
-    if (array.size() != u.elements())
-    {
-      // TODO(?): Throw
-    }
-    for (std::size_t i = 0; i < u.elements(); i++)
-    {
-      array.GetNextValue(u.ElementAt(i));
-    }
-  }
-};
-}  // namespace serializers
 
 }  // namespace fetch

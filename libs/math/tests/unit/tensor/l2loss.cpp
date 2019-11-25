@@ -22,11 +22,13 @@
 
 #include <cstddef>
 
+namespace {
+
 using namespace fetch::math;
 using DataType      = double;
 using ContainerType = fetch::memory::SharedArray<DataType>;
 
-inline Tensor<DataType, ContainerType> RandomArray(std::size_t n, DataType adj)
+Tensor<DataType, ContainerType> RandomArray(std::size_t n, DataType adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
   Tensor<DataType, ContainerType>                   a1(n);
@@ -57,3 +59,5 @@ TEST(ndarray, l2_basic)
 
   ASSERT_TRUE(manual_test_loss - test_loss < epsilon);
 }
+
+}  // namespace

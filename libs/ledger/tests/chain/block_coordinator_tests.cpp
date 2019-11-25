@@ -289,7 +289,7 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
 
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::ZERO_HASH);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -355,7 +355,7 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b3));
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::ZERO_HASH);
 
   {
     InSequence s;
@@ -656,7 +656,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::ZERO_HASH);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -744,7 +744,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::ZERO_HASH);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -835,7 +835,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::ZERO_HASH);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -932,7 +932,7 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
   }
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GENESIS_DIGEST);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::ZERO_HASH);
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);

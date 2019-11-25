@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/constants.hpp"
+#include "ledger/chain/block.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -53,6 +54,6 @@ private:
 
   Digest      current_hash_;
   Digest      current_merkle_root_;
-  Digest      last_processed_{fetch::chain::GENESIS_DIGEST};
+  Digest      last_processed_{fetch::chain::ZERO_HASH};
   std::size_t current_polls_{0};
 };

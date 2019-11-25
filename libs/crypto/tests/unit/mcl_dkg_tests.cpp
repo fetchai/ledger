@@ -247,20 +247,33 @@ TEST(MclDkgTests, GenerateKeys)
 
 TEST(MclNotarisationTests, AggregateSigningVerification)
 {
-  using KeyPair = std::pair<PrivateKey, PublicKey>;
-
   details::MCLInitialiser();
 
   Generator generator;
   SetGenerator(generator);
-  uint32_t               cabinet_size = 4;
-  std::vector<KeyPair>   keys;
-  std::vector<PublicKey> all_public_keys;
+
+  uint32_t                         cabinet_size = 4;
+  std::vector<PublicKey>           public_keys;
+  std::vector<AggregatePrivateKey> aggregate_private_keys;
+  std::vector<AggregatePublicKey>  aggregate_public_keys;
+
+  aggregate_private_keys.resize(cabinet_size);
+  aggregate_public_keys.resize(cabinet_size);
+
   for (uint32_t i = 0; i < cabinet_size; ++i)
   {
-    auto new_keys = GenerateKeyPair(generator);
-    keys.push_back(new_keys);
-    all_public_keys.push_back(new_keys.second);
+    auto new_keys                         = GenerateKeyPair(generator);
+    aggregate_private_keys[i].private_key = new_keys.first;
+    public_keys.push_back(new_keys.second);
+  }
+
+  // Compute coefficients
+  for (uint32_t i = 0; i < cabinet_size; ++i)
+  {
+    aggregate_private_keys[i].coefficient =
+        SignatureAggregationCoefficient(public_keys[i], public_keys);
+    bn::G2::mul(aggregate_public_keys[i].aggregate_public_key, public_keys[i],
+                aggregate_private_keys[i].coefficient);
   }
 
   MessagePayload                          message = "Hello";
@@ -269,12 +282,15 @@ TEST(MclNotarisationTests, AggregateSigningVerification)
   {
     if (i != 0u)
     {
-      Signature signature = SignShare(message, keys[i].first);
-      EXPECT_TRUE(VerifySign(keys[i].second, message, signature, generator));
+      Signature signature = AggregateSign(message, aggregate_private_keys[i]);
+      EXPECT_TRUE(
+          VerifySign(aggregate_public_keys[i].aggregate_public_key, message, signature, generator));
       signatures.insert({i, signature});
     }
   }
 
-  auto aggregate_signature = ComputeAggregateSignature(signatures, all_public_keys);
-  EXPECT_TRUE(VerifyAggregateSignature(message, aggregate_signature, all_public_keys, generator));
+  auto aggregate_signature = ComputeAggregateSignature(signatures, cabinet_size);
+  auto aggregate_public_key =
+      ComputeAggregatePublicKey(aggregate_signature.second, aggregate_public_keys);
+  EXPECT_TRUE(VerifySign(aggregate_public_key, message, aggregate_signature.first, generator));
 }
