@@ -578,7 +578,6 @@ bool Consensus::EnoughQualSigned(BlockEntropy const &block_entropy) const
   return true;
 }
 
-// TODO(HUT): make this thread safe (!!)
 Status Consensus::ValidBlock(Block const &current) const
 {
   Status ret = Status::YES;
@@ -686,7 +685,7 @@ void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)
   }
 }
 
-//void Consensus::SetThreshold(double threshold)
+// void Consensus::SetThreshold(double threshold)
 //{
 //  threshold_ = threshold;
 //  FETCH_LOG_INFO(LOGGING_NAME, "Set threshold to ", threshold_);
@@ -706,7 +705,6 @@ void Consensus::SetAeonPeriod(uint16_t aeon_period)
 {
   aeon_period_ = aeon_period;
 }
-
 
 void Consensus::SetBlockInterval(uint64_t block_interval_ms)
 {

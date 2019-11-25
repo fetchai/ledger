@@ -57,7 +57,7 @@ namespace fetch {
 namespace beacon {
 class BeaconService;
 class BeaconSetupService;
-}
+}  // namespace beacon
 
 namespace constellation {
 

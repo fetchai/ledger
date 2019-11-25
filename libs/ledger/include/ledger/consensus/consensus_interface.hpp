@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/consensus/stake_snapshot.hpp"
 #include <memory>
 #include <unordered_map>
-#include "ledger/consensus/stake_snapshot.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -49,16 +49,16 @@ public:
 
   // Populate the next block for packing and submission. Will return
   // an empty pointer if the miner should not emit a block
-  virtual NextBlockPtr GenerateNextBlock() = 0; // TODO(HUT): this should be const.
+  virtual NextBlockPtr GenerateNextBlock() = 0;  // TODO(HUT): this should be const.
 
   // Verify a block according to consensus requirements. It must not be loose.
-  virtual Status ValidBlock(Block const &current) const = 0; // TODO(HUT): this should be const.
+  virtual Status ValidBlock(Block const &current) const = 0;  // TODO(HUT): this should be const.
 
   // Set system parameters
-  virtual void SetMaxCabinetSize(uint16_t max_cabinet_size) = 0;
-  virtual void SetBlockInterval(uint64_t block_interval_s) = 0;
-  virtual void SetAeonPeriod(uint16_t aeon_period) = 0;
-  virtual void SetDefaultStartTime(uint64_t default_start_time_ms) = 0;
+  virtual void SetMaxCabinetSize(uint16_t max_cabinet_size)                    = 0;
+  virtual void SetBlockInterval(uint64_t block_interval_s)                     = 0;
+  virtual void SetAeonPeriod(uint16_t aeon_period)                             = 0;
+  virtual void SetDefaultStartTime(uint64_t default_start_time_ms)             = 0;
   virtual void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) = 0;
 };
 

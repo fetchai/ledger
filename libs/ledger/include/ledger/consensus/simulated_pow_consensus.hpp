@@ -40,9 +40,9 @@ namespace ledger {
 class SimulatedPowConsensus final : public ConsensusInterface
 {
 public:
-  using Identity              = crypto::Identity;
-  //using MainChain             = ledger::MainChain;
-  //using NextBlockPtr          = ConsensusInterface::NextBlockPtr;
+  using Identity = crypto::Identity;
+  // using MainChain             = ledger::MainChain;
+  // using NextBlockPtr          = ConsensusInterface::NextBlockPtr;
 
   // TODO(HUT): when you construct consensus, do not set aeon period etc. Do this later.
 
@@ -51,7 +51,7 @@ public:
 
   SimulatedPowConsensus(SimulatedPowConsensus const &) = delete;
   SimulatedPowConsensus(SimulatedPowConsensus &&)      = delete;
-  ~SimulatedPowConsensus() override        = default;
+  ~SimulatedPowConsensus() override                    = default;
 
   // Overridden methods
   void         UpdateCurrentBlock(Block const &current) override;
@@ -70,18 +70,17 @@ public:
   SimulatedPowConsensus &operator=(SimulatedPowConsensus &&) = delete;
 
 private:
-  Identity              mining_identity_;
+  Identity mining_identity_;
 
   // Recalculated whenever we see a new block: set a time for when we will produce
   // the next block
-  uint64_t              decided_next_timestamp_s_{std::numeric_limits<uint64_t>::max()};
+  uint64_t decided_next_timestamp_s_{std::numeric_limits<uint64_t>::max()};
 
   // Consensus' view on the heaviest block etc.
-  Block                        current_block_;
-  uint64_t                     block_interval_ms_{std::numeric_limits<uint64_t>::max()};
-  std::set<Identity>           other_miners_seen_in_chain_;
+  Block              current_block_;
+  uint64_t           block_interval_ms_{std::numeric_limits<uint64_t>::max()};
+  std::set<Identity> other_miners_seen_in_chain_;
 };
 
 }  // namespace ledger
 }  // namespace fetch
-

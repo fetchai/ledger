@@ -59,12 +59,12 @@ public:
   bool operator==(Block const &rhs) const;
 
   // Block core information
-  Digest         hash;               ///< The hash of the block
-  Digest         previous_hash;      ///< The hash of the previous block
-  Digest         merkle_hash;        ///< The merkle state hash across all shards
-  uint64_t       block_number{0};    ///< The height of the block from genesis
-  chain::Address miner;              ///< The identity of the generated miner // TODO(HUT): delete this.
-  Identity       miner_id;           ///< The identity of the generated miner
+  Digest         hash;             ///< The hash of the block
+  Digest         previous_hash;    ///< The hash of the previous block
+  Digest         merkle_hash;      ///< The merkle state hash across all shards
+  uint64_t       block_number{0};  ///< The height of the block from genesis
+  chain::Address miner;     ///< The identity of the generated miner // TODO(HUT): delete this.
+  Identity       miner_id;  ///< The identity of the generated miner
   uint32_t       log2_num_lanes{0};  ///< The log2(number of lanes)
   Slices         slices;             ///< The slice lists
   DAGEpoch       dag_epoch;          ///< DAG epoch containing information on new dag_nodes
