@@ -378,6 +378,9 @@ def set_nodes_private_key(test_instance, index, entity):
     expected_ouptut_dir = os.path.abspath(
         os.path.dirname(test_instance._yaml_file) + "/input_files")
 
+    if not os.path.exists(expected_ouptut_dir):
+        os.makedirs(expected_ouptut_dir)
+
     key_path = expected_ouptut_dir + "/{}.key".format(index)
     open(key_path, "wb").write(entity.private_key_bytes)
 
