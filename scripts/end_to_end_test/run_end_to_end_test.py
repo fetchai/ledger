@@ -684,7 +684,7 @@ def run_steps(test_yaml, test_instance):
             sys.exit(1)
 
 
-def run_test(build_directory, yaml_file, node_exe):
+def run_test(build_directory, yaml_file, node_exe, name_filter=None):
 
     # Read YAML file
     with open(yaml_file, 'r') as stream:
@@ -693,6 +693,15 @@ def run_test(build_directory, yaml_file, node_exe):
 
             # Parse yaml documents as tests (sequentially)
             for test in all_yaml:
+                # Get test setup conditions
+                setup_conditions = yaml_extract(test, 'setup_conditions')
+
+                # Check if name is not filtered out
+                if name_filter is not None:
+                    name = yaml_extract(setup_conditions, 'test_name')
+                    if name not in name_filter:
+                        continue
+
                 # Create a new test instance
                 description = yaml_extract(test, 'test_description')
                 output("\n=================================================")
@@ -702,9 +711,6 @@ def run_test(build_directory, yaml_file, node_exe):
                 if "DISABLED" in description:
                     output("Skipping disabled test")
                     continue
-
-                # Get test setup conditions
-                setup_conditions = yaml_extract(test, 'setup_conditions')
 
                 # Create a test instance
                 test_instance = create_test(
