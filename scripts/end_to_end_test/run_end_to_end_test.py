@@ -364,11 +364,22 @@ def get_nodes_private_key(test_instance, index):
         os.path.dirname(test_instance._yaml_file) + "/input_files")
 
     key_path = expected_ouptut_dir + "/{}.key".format(index)
-    verify_file(key_path)
+    if not os.path.isfile(key_path):
+        output("Couldn't find expected file: {}".format(key_path))
+        return None
 
     private_key = open(key_path, "rb").read(32)
 
     return private_key
+
+
+def set_nodes_private_key(test_instance, index, entity):
+    # Path to config files (should already be generated)
+    expected_ouptut_dir = os.path.abspath(
+        os.path.dirname(test_instance._yaml_file) + "/input_files")
+
+    key_path = expected_ouptut_dir + "/{}.key".format(index)
+    open(key_path, "wb").write(entity.private_key_bytes)
 
 
 def destake(parameters, test_instance):
@@ -451,6 +462,7 @@ def create_wealth(parameters, test_instance):
 
         # create the entity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
+        set_nodes_private_key(test_instance, node_index, entity)
         tx = api.tokens.wealth(entity, amount)
         for i in range(10):
             output('Create balance of: ', amount)
