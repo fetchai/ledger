@@ -78,9 +78,8 @@ void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
   // of other peers seen so far (bounded to 30s)
   decided_next_timestamp_s_ =
       current.timestamp +
-      static_cast<uint64_t>(std::ceil(
-          GetPoissonSample(30000, block_interval_ms_ / other_miners_seen_in_chain_.size()) /
-          1000.0));
+      static_cast<uint64_t>(GetPoissonSample(
+          30000, std::ceil(block_interval_ms_ / other_miners_seen_in_chain_.size()) / 1000.0));
 }
 
 NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
