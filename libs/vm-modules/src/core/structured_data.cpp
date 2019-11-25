@@ -44,63 +44,11 @@ using fetch::vm_modules::ByteArrayWrapper;
 using fetch::vm_modules::math::UInt256Wrapper;
 
 template <typename T>
-constexpr uint8_t getTypeId() noexcept;
-
-template <>
-constexpr uint8_t getTypeId<vm::String>() noexcept
-{
-  return 's';
-}
-
-template <>
-constexpr uint8_t getTypeId<vm::Address>() noexcept
-{
-  return 'a';
-}
-
-template <>
-constexpr uint8_t getTypeId<ByteArrayWrapper>() noexcept
-{
-  return 'b';
-}
-
-template <>
-constexpr uint8_t getTypeId<UInt256Wrapper>() noexcept
-{
-  return 'u';
-}
-
-template <typename T>
-bool ExtractByteArrayRepresentigType(VM *vm, std::string const &key, ConstByteArray const &in_array,
-                                     ConstByteArray &out_array)
-{
-  if (in_array.empty())
-  {
-    vm->RuntimeError("Unable to decode raw value for the " + key + " key");
-    return false;
-  }
-
-  if (in_array[0] != getTypeId<T>())
-  {
-    vm->RuntimeError("Mismatching type for the " + key + " key");
-    return false;
-  }
-
-  out_array = in_array.SubArray(1);
-  return true;
-}
-
-template <typename T>
 meta::EnableIf<vm::IsString<meta::Decay<T>>::value, Ptr<T>> FromByteArray(
-    VM *vm, Ptr<String> const &name, ConstByteArray const &array)
+    VM *vm, Ptr<String> const & /*name*/, ConstByteArray const &array)
 {
   ConstByteArray value_array;
-  if (!ExtractByteArrayRepresentigType<T>(vm, name->string(), array, value_array))
-  {
-    return Ptr<T>{};
-  }
-
-  return Ptr<T>{new T{vm, static_cast<std::string>(value_array)}};
+  return Ptr<T>{new T{vm, static_cast<std::string>(array)}};
 }
 
 template <typename T>
@@ -108,32 +56,21 @@ meta::EnableIf<IsAddress<meta::Decay<T>>::value, Ptr<T>> FromByteArray(VM *     
                                                                        Ptr<String> const &   name,
                                                                        ConstByteArray const &array)
 {
-  ConstByteArray value_array_base64;
-  if (!ExtractByteArrayRepresentigType<T>(vm, name->string(), array, value_array_base64))
-  {
-    return Ptr<T>{};
-  }
-
-  if (value_array_base64.empty())
-  {
-    return vm->CreateNewObject<Address>();
-  }
-
-  auto const raw_address{value_array_base64.FromBase64()};
-  if (!value_array_base64.empty() && raw_address.empty())
-  {
-    vm->RuntimeError("Unable to decode raw address value for " + name->string() + " item");
-    return Ptr<T>{};
-  }
-
   try
   {
-    return vm->CreateNewObject<Address>(chain::Address{raw_address});
+    chain::Address addr;
+    if (!chain::Address::Parse(array, addr))
+    {
+      vm->RuntimeError("Unable to decode address value for " + name->string() + " item");
+      return Ptr<T>{};
+    }
+
+    return vm->CreateNewObject<Address>(std::move(addr));
   }
   catch (std::runtime_error const &ex)
   {
-    vm->RuntimeError("Unable to construct Address object from raw_address byte array for " +
-                     name->string() + " item");
+    vm->RuntimeError("Unable to construct Address object for " + name->string() +
+                     " item: " + ex.what());
     return Ptr<T>{};
   }
 }
@@ -143,12 +80,7 @@ meta::EnableIf<std::is_same<ByteArrayWrapper, T>::value, Ptr<T>> FromByteArray(
     VM *vm, Ptr<String> const &name, ConstByteArray const &array)
 {
   ConstByteArray value_array_base64;
-  if (!ExtractByteArrayRepresentigType<T>(vm, name->string(), array, value_array_base64))
-  {
-    return Ptr<T>{};
-  }
-
-  ConstByteArray value_array{value_array_base64.FromBase64()};
+  ConstByteArray value_array{array.FromBase64()};
 
   if (!value_array_base64.empty() and value_array.empty())
   {
@@ -164,12 +96,7 @@ meta::EnableIf<std::is_same<UInt256Wrapper, T>::value, Ptr<T>> FromByteArray(
     VM *vm, Ptr<String> const &name, ConstByteArray const &array)
 {
   ConstByteArray value_array_base64;
-  if (!ExtractByteArrayRepresentigType<T>(vm, name->string(), array, value_array_base64))
-  {
-    return Ptr<T>{};
-  }
-
-  auto const value_array{value_array_base64.FromBase64()};
+  auto const     value_array{array.FromBase64()};
   if (!value_array_base64.empty() && value_array.empty())
   {
     vm->RuntimeError("Unable to decode UInt256 value for " + name->string() + " item");
@@ -181,32 +108,22 @@ meta::EnableIf<std::is_same<UInt256Wrapper, T>::value, Ptr<T>> FromByteArray(
 
 ByteArray ToByteArray(String const &str)
 {
-  ByteArray encoded_array;
-  encoded_array.Append(getTypeId<String>(), str.string());
-  return encoded_array;
+  return {str.string()};
 }
 
 ByteArray ToByteArray(Address const &addr)
 {
-  ByteArray encoded_array;
-  encoded_array.Append(getTypeId<Address>(), addr.address().address().ToBase64());
-  return encoded_array;
+  return addr.address().display();
 }
 
 ByteArray ToByteArray(ByteArrayWrapper const &byte_array)
 {
-  ByteArray encoded_array;
-  encoded_array.Append(getTypeId<ByteArrayWrapper>(), byte_array.byte_array().ToBase64());
-  return encoded_array;
+  return byte_array.byte_array().ToBase64();
 }
 
 ByteArray ToByteArray(UInt256Wrapper const &big_number)
 {
-  ByteArray encoded_array;
-  encoded_array.Append(
-      getTypeId<UInt256Wrapper>(),
-      byte_array::ToBase64(big_number.number().pointer(), big_number.number().TrimmedSize()));
-  return encoded_array;
+  return byte_array::ToBase64(big_number.number().pointer(), big_number.number().TrimmedSize());
 }
 
 template <typename T>
