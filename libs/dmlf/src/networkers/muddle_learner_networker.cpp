@@ -187,28 +187,50 @@ void MuddleLearnerNetworker::NetworkConfigInit(fetch::json::JSONDocument &doc,
 
   std::unordered_set<std::string> initial_peers;
 
+  math::SizeType INITIAL_PEERS_COUNT = 10;
   auto config_peers      = doc.root()["peers"];
   auto config_peer_count = config_peers.size();
-  if (instance_number > 0)
-  {
-    initial_peers.insert(
-        config_peers[(instance_number + 1) % config_peer_count]["uri"].As<std::string>());
-  }
-
-  mud_->Start(initial_peers, {port});
-
-  server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
-  proto_  = std::make_shared<MuddleLearnerNetworkerProtocol>(*this);
-
-  server_->Add(RPC_DMLF, proto_.get());
-
-  for (std::size_t peer_number = 0; peer_number < config_peers.size(); peer_number++)
+  for (std::size_t peer_number = 0; peer_number < config_peer_count; peer_number++)
   {
     if (peer_number != instance_number)
     {
       peers_.emplace_back(config_peers[peer_number]["pub"].As<std::string>());
     }
   }
+  if (config_peer_count <= INITIAL_PEERS_COUNT)
+  {
+    initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
+  }
+  else
+  {
+    for (unsigned int i = 0; i < INITIAL_PEERS_COUNT; i++)
+    {
+      auto peer_number = (instance_number + 1 + i) % config_peer_count;
+      initial_peers.insert(config_peers[peer_number]["uri"].As<std::string>());
+    }
+  }
+  mud_->Start(initial_peers, {port});
+
+//  if (instance_number > 0)
+//  {
+//    initial_peers.insert(
+//        config_peers[(instance_number + 1) % config_peer_count]["uri"].As<std::string>());
+//  }
+//
+//  mud_->Start(initial_peers, {port});
+
+  server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
+  proto_  = std::make_shared<MuddleLearnerNetworkerProtocol>(*this);
+
+  server_->Add(RPC_DMLF, proto_.get());
+
+//  for (std::size_t peer_number = 0; peer_number < config_peers.size(); peer_number++)
+//  {
+//    if (peer_number != instance_number)
+//    {
+//      peers_.emplace_back(config_peers[peer_number]["pub"].As<std::string>());
+//    }
+//  }
 }
 
 }  // namespace dmlf
