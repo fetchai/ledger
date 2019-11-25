@@ -779,9 +779,9 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
   // When the timer has expired, try to create the final structure
   if (timer_to_proceed_.HasExpired() || condition_to_proceed_)
   {
-    // Need at least DKG threshold number of signatures otherwise there will not be enough
-    // parties who agree of the dkg output to compute threshold signatures
-    auto desired_signatures_min = beacon_->manager.polynomial_degree() + 1;
+    // Minimum qual size (set by QualSize) needs to be respected here as well otherwise the beacon
+    // generation will not be fault tolerant to 1/3 of malicious parties in original committee
+    auto desired_signatures_min = QualSize();
 
     // For each sig, verify that it matches the hash
     for (auto const &address_and_sig : final_state_payload_)

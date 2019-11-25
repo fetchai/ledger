@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/array.hpp"
+#include "vm/fixed.hpp"
 #include "vm/vm.hpp"
 
 #include <cstdint>
@@ -772,6 +773,15 @@ void VM::Handler__InvokeContractFunction()
     return;
   }
   RuntimeError("contract invocation handler is null");
+}
+
+void VM::Handler__PushLargeConstant()
+{
+  Variant &                        top      = Push();
+  Executable::LargeConstant const &constant = executable_->large_constants[instruction_->index];
+  assert(constant.type_id == TypeIds::Fixed128);
+  auto object = Ptr<Fixed128>(new Fixed128(this, constant.fp128));
+  top.Construct(object, TypeIds::Fixed128);
 }
 
 }  // namespace vm

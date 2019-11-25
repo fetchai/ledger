@@ -286,7 +286,7 @@ TEST_F(TransactionLayoutQueueTests, CheckSorting)
   EXPECT_TRUE(queue_->Add(tx3));
 
   // sort the queue by charge
-  queue_->Sort([](auto const &a, auto const &b) { return a.charge() > b.charge(); });
+  queue_->Sort([](auto const &a, auto const &b) { return a.charge_rate() > b.charge_rate(); });
 
   ASSERT_EQ(queue_->size(), 3u);
 

@@ -227,7 +227,7 @@ Ptr<String> StructuredData::GetString(Ptr<String> const &s)
       ret                = static_cast<std::string>(decoded);
     }
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     vm_->RuntimeError(e.what());
   }
@@ -252,7 +252,7 @@ T StructuredData::GetPrimitive(Ptr<String> const &s)
       ret = contents_[s->string()].As<T>();
     }
   }
-  catch (std::runtime_error const &e)
+  catch (std::exception const &e)
   {
     vm_->RuntimeError(e.what());
   }

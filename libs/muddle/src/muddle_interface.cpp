@@ -30,7 +30,7 @@ MuddlePtr CreateMuddle(NetworkId const &network, ProverPtr certificate,
                        network::NetworkManager const &nm, std::string const &external_address)
 {
   // enable all message signing
-  return std::make_shared<Muddle>(network, certificate, nm, true, true, external_address);
+  return std::make_shared<Muddle>(network, certificate, nm, external_address);
 }
 
 MuddlePtr CreateMuddle(char const network[4], ProverPtr certificate,

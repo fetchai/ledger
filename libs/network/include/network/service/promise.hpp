@@ -43,6 +43,8 @@ class SerializableException;
 
 namespace service {
 
+class PromiseError;
+
 namespace details {
 
 class PromiseBuilder;
@@ -70,6 +72,7 @@ public:
 
   static constexpr char const *     LOGGING_NAME = "Promise";
   static std::chrono::seconds const DEFAULT_TIMEOUT;
+  static const uint64_t             INVALID = uint64_t(-1);
 
   // Construction / Destruction
   PromiseImplementation() = default;
@@ -113,30 +116,10 @@ public:
   bool Wait(bool throw_exception = true) const;
 
   template <typename T>
-  T As() const
-  {
-    T result{};
-    if (!As<T>(result))
-    {
-      throw std::runtime_error("Timeout or connection lost");
-    }
-
-    return result;
-  }
+  T As() const;
 
   template <typename T>
-  bool As(T &ret) const
-  {
-    if (!Wait())
-    {
-      return false;
-    }
-
-    SerializerType ser(value_);
-    ser >> ret;
-
-    return true;
-  }
+  bool As(T &ret) const;
   /// @}
 
   // Operators
@@ -165,8 +148,8 @@ private:
   Counter const       id_{GetNextId()};
   Timepoint const     created_{Clock::now()};
   Timepoint const     deadline_{created_ + DEFAULT_TIMEOUT};
-  uint64_t const      protocol_ = uint64_t(-1);
-  uint64_t const      function_ = uint64_t(-1);
+  uint64_t const      protocol_ = INVALID;
+  uint64_t const      function_ = INVALID;
   mutable AtomicState state_{State::WAITING};
   ConstByteArray      value_;
   ExceptionPtr        exception_;
@@ -203,6 +186,59 @@ private:
 };
 
 }  // namespace details
+
+class PromiseError final : public std::exception
+{
+public:
+  using ConstByteArray = byte_array::ConstByteArray;
+  using Counter        = details::PromiseImplementation::Counter;
+  using Timepoint      = details::PromiseImplementation::Timepoint;
+  using State          = details::PromiseImplementation::State;
+
+  explicit PromiseError(details::PromiseImplementation const &promise);
+  PromiseError(PromiseError const &other) noexcept;
+  ~PromiseError() noexcept override = default;
+
+  char const *what() const noexcept override;
+
+private:
+  static std::string BuildErrorMessage(PromiseError const &error);
+
+  Counter const     id_;
+  Timepoint const   created_;
+  Timepoint const   deadline_;
+  uint64_t const    protocol_;
+  uint64_t const    function_;
+  State const       state_;
+  std::string const name_;
+  std::string const message_;
+};
+
+template <typename T>
+T details::PromiseImplementation::As() const
+{
+  T result{};
+  if (!As<T>(result))
+  {
+    throw PromiseError{*this};
+  }
+
+  return result;
+}
+
+template <typename T>
+bool details::PromiseImplementation::As(T &ret) const
+{
+  if (!Wait())
+  {
+    return false;
+  }
+
+  SerializerType ser(value_);
+  ser >> ret;
+
+  return true;
+}
 
 using PromiseCounter = details::PromiseImplementation::Counter;
 using PromiseState   = details::PromiseImplementation::State;
