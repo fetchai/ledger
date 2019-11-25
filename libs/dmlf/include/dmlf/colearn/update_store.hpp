@@ -41,8 +41,8 @@ public:
   void        PushUpdate(Algorithm const &algo, UpdateType type, Data &&data, Source source,
                          Metadata &&metadata) override;
   UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria,
-                        Consumer consumer = "") override;
-  UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type, Consumer = "") override;
+                        Consumer consumer = "learner0") override;
+  UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type, Consumer = "learner0") override;
   std::size_t GetUpdateCount() const override;
   std::size_t GetUpdateCount(Algorithm const &algo, UpdateType const &type) const override;
 
