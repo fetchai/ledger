@@ -99,6 +99,11 @@ int main(int argc, char **argv)
   {
     start_time = doc["start_time"].As<SizeType>();
   }
+  SizeType muddle_delay = 30;
+  if (!doc["muddle_delay"].IsUndefined())
+  {
+    start_time = doc["muddle_delay"].As<SizeType>();
+  }
 
   // get the network config file
   fetch::json::JSONDocument network_doc;
@@ -118,19 +123,13 @@ int main(int argc, char **argv)
   // Pause until start time
   if (start_time != 0)
   {
-    SizeType now = 0;
-    while (true)
+    SizeType now = static_cast<SizeType>(std::time(nullptr));
+    if (now < start_time)
     {
-      now = static_cast<SizeType>(std::time(nullptr));
-      if (now >= start_time)
-      {
-        break;
-      }
-      auto diff  = start_time - now;
-      auto pause = std::max(30ul, diff);
-      std::cout << "Waiting 30s of " << diff << " delay before starting..." << std::endl;
-      std::this_thread::sleep_for(std::chrono::seconds(pause));
-    };
+      SizeType diff = start_time - now;
+      std::cout << "Waiting for " << diff << " seconds delay before starting..." << std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(diff));
+    }
   }
 
   // Create networker and assign shuffle algorithm
@@ -141,13 +140,12 @@ int main(int argc, char **argv)
       std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));
 
   // Pause to let muddle get set up
-  std::this_thread::sleep_for(std::chrono::seconds(30));
+  std::this_thread::sleep_for(std::chrono::seconds(muddle_delay));
 
   // Create learning client
   auto client = fetch::dmlf::collective_learning::utilities::MakeMNISTClient<TensorType>(
       std::to_string(instance_number), client_params, data_file, labels_file, test_set_ratio,
       networker, console_mutex_ptr);
-
 
   /**
    * Main loop

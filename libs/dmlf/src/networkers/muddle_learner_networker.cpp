@@ -176,11 +176,12 @@ void MuddleLearnerNetworker::NetworkConfigInit(fetch::json::JSONDocument &doc,
 
   std::unordered_set<std::string> initial_peers;
 
-  auto config_peers = doc.root()["peers"];
+  auto config_peers      = doc.root()["peers"];
   auto config_peer_count = config_peers.size();
   if (instance_number > 0)
   {
-    initial_peers.insert(config_peers[(instance_number+1) % config_peer_count]["uri"].As<std::string>());
+    initial_peers.insert(
+        config_peers[(instance_number + 1) % config_peer_count]["uri"].As<std::string>());
   }
 
   mud_->Start(initial_peers, {port});
