@@ -208,6 +208,9 @@ TEST_F(UInt256Tests, uint256_comparisons)
 
 TEST_F(UInt256Tests, uint256_assignment)
 {
+  // NOTE! The current behavior for assignment of UInt256 is a reference-assignment,
+  // e.g. after a = b both a and b shares the same underlying object.
+  // This is not a correct expected behavior for numbers, so a rework is pending.
   static constexpr char const *TEXT = R"(
     function main()
       var a = UInt256(42u64);
@@ -373,9 +376,7 @@ TEST_F(UInt256Tests, uint256_division_by_zero)
       function main()
         var a = UInt256(18446744073709551615u64);
         var zero = UInt256(0u64);
-
-        var result = a;
-        result /= zero;
+        var result = a / zero;
       endfunction
     )";
 
@@ -386,8 +387,8 @@ TEST_F(UInt256Tests, uint256_division_by_zero)
       function main()
         var a = UInt256(18446744073709551615u64);
         var zero = UInt256(0u64);
-
-        var result = a / zero;
+        var result = a;
+        result /= zero;
       endfunction
     )";
 
