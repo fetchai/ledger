@@ -189,35 +189,21 @@ TEST_F(UInt256Tests, uint256_raw_increase)
 TEST_F(UInt256Tests, uint256_comparisons)
 {
   static constexpr char const *TEXT = R"(
-    function main() : Bool
-        var ok : Bool = true;
-        var uint64_max = 18446744073709551615u64;
+    function main()
+      var uint64_max = 18446744073709551615u64;
+      var smaller = UInt256(uint64_max);
+      var bigger = UInt256(uint64_max);
+      bigger.increase();
 
-        var smaller = UInt256(uint64_max);
-        var bigger = UInt256(uint64_max);
-        bigger.increase();
-
-        var gt : Bool = smaller > bigger;
-        ok = ok && !gt;
-
-        var ls : Bool = smaller < bigger;
-        ok = ok && ls;
-
-        var eq : Bool = smaller == bigger;
-        ok = ok && !eq;
-
-        var ne : Bool = smaller != bigger;
-        ok = ok && ne;
-
-        return true;
+      assert(smaller < bigger, "1<2 is false!");
+      assert((smaller > bigger) == false, "1>2 is true!");
+      assert(smaller != bigger, "1!=2 is false!");
+      assert((smaller == bigger) == false, "1==2 is true!");
     endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-  auto const result_is_ok = res.Get<bool>();
-  EXPECT_TRUE(result_is_ok);
+  EXPECT_TRUE(toolkit.Run());
 }
 
 TEST_F(UInt256Tests, uint256_assignment)
@@ -248,30 +234,30 @@ TEST_F(UInt256Tests, uint256_addition_subtraction)
       function main()
         var a = UInt256(18446744073709551615u64);
         var b = UInt256(18446744073709551615u64);
-        assert(a == b); // This is important for this test.
+        assert(a == b, "Initial constants not equal!");
 
         var zero = UInt256(0u64);
 
         var result = a - zero;
-        assert(result == a);
+        assert(result == a, "a-0 != a");
 
         result = a + zero;
-        assert(result == a);
+        assert(result == a, "a+0 != a");
 
         result = a - a;
-        assert(result == zero);
+        assert(result == zero, "a-a != 0");
 
         result = a + b;
-        assert(result > a);
+        assert(result > a, "a+b < a");
 
         result = result - b;
-        assert(result == a);
+        assert(result == a, "a+b-b != a");
 
         result = b - a + a - b;
-        assert(result == zero);
+        assert(result == zero, "b - a + a - b != 0");
 
-        assert(a + a == b + b);
-        assert(a - b == b - a);
+        assert(a + a == b + b, "a + a != b + b");
+        assert(a - b == b - a, "a - b != b - a");
 
         assert(a == b);
 
@@ -279,7 +265,7 @@ TEST_F(UInt256Tests, uint256_addition_subtraction)
     )";
 
   ASSERT_TRUE(toolkit.Compile(SRC));
-  ASSERT_TRUE(toolkit.Run());
+  EXPECT_TRUE(toolkit.Run());
 }
 
 TEST_F(UInt256Tests, uint256_inplace_addition_subtraction)
@@ -309,7 +295,7 @@ TEST_F(UInt256Tests, uint256_inplace_addition_subtraction)
       )";
 
   ASSERT_TRUE(toolkit.Compile(SRC));
-  ASSERT_TRUE(toolkit.Run());
+  EXPECT_TRUE(toolkit.Run());
 }
 
 TEST_F(UInt256Tests, uint256_multiplication_division)
@@ -347,7 +333,7 @@ TEST_F(UInt256Tests, uint256_multiplication_division)
     )";
 
   ASSERT_TRUE(toolkit.Compile(SRC));
-  ASSERT_TRUE(toolkit.Run());
+  EXPECT_TRUE(toolkit.Run());
 }
 
 TEST_F(UInt256Tests, uint256_inplace_multiplication_division)
@@ -378,7 +364,7 @@ TEST_F(UInt256Tests, uint256_inplace_multiplication_division)
   )";
 
   ASSERT_TRUE(toolkit.Compile(SRC));
-  ASSERT_TRUE(toolkit.Run());
+  EXPECT_TRUE(toolkit.Run());
 }
 
 TEST_F(UInt256Tests, uint256_size)
