@@ -316,30 +316,33 @@ TEST_F(UInt256Tests, uint256_multiplication_division)
 {
   static constexpr char const *SRC = R"(
       function main()
-        var a = UInt256(18446744073709551615u64);
-        var b = UInt256(18446744073709551615u64);
-        assert(a == b); // This is important for this test.
+         var a = UInt256(18446744073709551615u64);
+         var b = UInt256(9000000000000000000u64);
 
-        var zero = UInt256(0u64);
-        var one  = UInt256(1u64);
+         var two = UInt256(2u64);
+         var zero = UInt256(0u64);
+         var one  = UInt256(1u64);
 
-        var result = a * zero;
-        assert(result == zero, "*0 result is not 0!");
+         var result = a + zero;
+         result = a * zero;
+         assert(result == zero, "*0 result is not 0!");
 
-        result = a / a;
-        assert(result == one, "a/a is not 1!");
+         result = (a * a) / (a * a);
+         assert(result == one, "a/a is not 1!");
 
-        result = a / one;
-        assert(result == a, "/1 result is wrong!");
+         result = zero / a;
+         assert(result == zero, "Zero divided by smth is not zero!");
 
-        result = a * b;
-        var result2 = b * a;
-        assert(result == result2, "Multiplication is not commutative!");
-        assert(result > a);
+         result = a / one;
+         assert(result == a, "/1 result is wrong!");
 
-        result = a * UInt256(3u64);
-        result = result / a;
-        assert(result == UInt256(3u64));
+         assert(a * b * one == one * b * a, "Multiplication is not commutative!");
+
+         result = a * UInt256(3u64);
+         result = result / a;
+         assert(result == UInt256(3u64), "Division if wrong!");
+
+         assert((a / ( a / two)) / two == one, "Division order is wrong!");
       endfunction
     )";
 
@@ -350,13 +353,29 @@ TEST_F(UInt256Tests, uint256_multiplication_division)
 TEST_F(UInt256Tests, uint256_inplace_multiplication_division)
 {
   static constexpr char const *SRC = R"(
-        function main()
-          var a = UInt256(18446744073709551615u64);
-          var b = UInt256(18446744073709551615u64);
-          var zero = UInt256(0u64);
+    function main()
+      var a = UInt256(18446744073709551615u64);
+      var two = UInt256(2u64);
+      var zero = UInt256(0u64);
+      var one  = UInt256(1u64);
 
-        endfunction
-      )";
+      var result = a + zero;
+      result *= one;
+      assert(result == a, "a*1 result is not a!");
+
+      result /= one;
+      assert(result == a, "a/1 is not 1!");
+
+      result *= two;
+      result /= a;
+      assert(result == two, "In-place div and mul are wrong!");
+
+      result *= zero;
+      assert(result == zero, "In-place *0 is not 0!");
+      result /= a;
+      assert(result == zero, "In-place 0/a is not 0");
+    endfunction
+  )";
 
   ASSERT_TRUE(toolkit.Compile(SRC));
   ASSERT_TRUE(toolkit.Run());
