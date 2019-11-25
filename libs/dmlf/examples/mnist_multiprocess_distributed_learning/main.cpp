@@ -121,14 +121,15 @@ int main(int argc, char **argv)
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
   // Pause until start time
-  if (start_time != 0)
-  {
+  std::cout << "start_time: " << start_time << std::endl;
+  if (start_time != 0) {
     SizeType now = static_cast<SizeType>(std::time(nullptr));
-    if (now < start_time)
-    {
+    if (now < start_time) {
       SizeType diff = start_time - now;
       std::cout << "Waiting for " << diff << " seconds delay before starting..." << std::endl;
       std::this_thread::sleep_for(std::chrono::seconds(diff));
+    } else {
+      std::cout << "Start time is in the past" << std::endl;
     }
   }
 
