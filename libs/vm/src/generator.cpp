@@ -44,6 +44,7 @@ bool Generator::GenerateExecutable(IR const &ir, std::string const &executable_n
   loops_.clear();
   strings_map_.clear();
   constants_map_.clear();
+  large_constants_map_.clear();
   function_ = nullptr;
   line_to_pc_map_.clear();
   errors_.clear();
@@ -79,6 +80,7 @@ bool Generator::GenerateExecutable(IR const &ir, std::string const &executable_n
   loops_.clear();
   strings_map_.clear();
   constants_map_.clear();
+  large_constants_map_.clear();
   function_ = nullptr;
   line_to_pc_map_.clear();
   return true;
@@ -1148,6 +1150,11 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
     HandleFixed64(node);
     break;
   }
+  case NodeKind::Fixed128:
+  {
+    HandleFixed128(node);
+    break;
+  }
   case NodeKind::String:
   {
     HandleString(node);
@@ -1345,6 +1352,15 @@ void Generator::HandleFixed64(IRExpressionNodePtr const &node)
   Executable::Instruction instruction(Opcodes::PushConstant);
   fixed_point::fp64_t     value = fixed_point::fp64_t(std::atof(node->text.c_str()));
   instruction.index             = AddConstant(Variant(value, TypeIds::Fixed64));
+  uint16_t pc                   = function_->AddInstruction(instruction);
+  AddLineNumber(node->line, pc);
+}
+
+void Generator::HandleFixed128(IRExpressionNodePtr const &node)
+{
+  Executable::Instruction instruction(Opcodes::PushLargeConstant);
+  fixed_point::fp128_t    value = fixed_point::fp128_t(std::atof(node->text.c_str()));
+  instruction.index             = AddLargeConstant(Executable::LargeConstant(value));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
@@ -1915,6 +1931,23 @@ uint16_t Generator::AddConstant(Variant const &c)
   return index;
 }
 
+uint16_t Generator::AddLargeConstant(Executable::LargeConstant const &c)
+{
+  uint16_t index;
+  auto     it = large_constants_map_.find(c);
+  if (it != large_constants_map_.end())
+  {
+    index = it->second;
+  }
+  else
+  {
+    index = uint16_t(executable_.large_constants.size());
+    executable_.large_constants.push_back(c);
+    large_constants_map_[c] = index;
+  }
+  return index;
+}
+
 uint16_t Generator::GetInplaceArithmeticOpcode(bool is_primitive, TypeId lhs_type_id,
                                                TypeId rhs_type_id, uint16_t opcode1,
                                                uint16_t opcode2, uint16_t opcode3)
@@ -2034,6 +2067,31 @@ bool Generator::ConstantComparator::operator()(Variant const &lhs, Variant const
   {
     return fixed_point::fp64_t::FromBase(lhs.primitive.i64) <
            fixed_point::fp64_t::FromBase(rhs.primitive.i64);
+  }
+  default:
+  {
+    assert(false);
+    return false;
+  }
+  }  // switch
+}
+
+bool Generator::LargeConstantComparator::operator()(Executable::LargeConstant const &lhs,
+                                                    Executable::LargeConstant const &rhs) const
+{
+  if (lhs.type_id < rhs.type_id)
+  {
+    return true;
+  }
+  if (lhs.type_id > rhs.type_id)
+  {
+    return false;
+  }
+  switch (lhs.type_id)
+  {
+  case TypeIds::Fixed128:
+  {
+    return lhs.fp128 < rhs.fp128;
   }
   default:
   {

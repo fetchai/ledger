@@ -142,6 +142,11 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 	return Set(yylval, fetch::vm::Token::Kind::Fixed64, yytext, yyleng, yyextra);
 }
 
+{FIXED}fp128 |
+{INTEGER}fp128 {
+	return Set(yylval, fetch::vm::Token::Kind::Fixed128, yytext, yyleng, yyextra);
+}
+
 	/* strings */
 \"{STR1}\" |
 \'{STR2}\' {
