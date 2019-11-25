@@ -197,7 +197,6 @@ public:
 
   template <typename R, typename P>
   void SetBlockPeriod(std::chrono::duration<R, P> const &period);
-  void EnableMining(bool enable = true);
   void TriggerBlockGeneration();  // useful in tests
 
   std::weak_ptr<core::Runnable> GetWeakRunnable()
@@ -336,7 +335,6 @@ private:
   std::size_t     num_lanes_{1u << log2_num_lanes_};  ///< The current number of lanes
   std::size_t     num_slices_;                        ///< The current number of slices
   Flag            mining_{false};           ///< Flag to signal if this node generating blocks
-  Flag            mining_enabled_{false};   ///< Short term signal to toggle on and off
   BlockPeriod     block_period_{};          ///< The desired period before a block is generated
   Timepoint       next_block_time_;         ///< The next point that a block should be generated
   BlockPtr        current_block_{};         ///< The pointer to the current block (read only)
@@ -389,6 +387,7 @@ private:
   /// @}
 };
 
+// TODO(HUT): remove this.
 template <typename R, typename P>
 void BlockCoordinator::SetBlockPeriod(std::chrono::duration<R, P> const &period)
 {

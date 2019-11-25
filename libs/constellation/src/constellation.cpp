@@ -603,10 +603,6 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
     // determine the status of the main chain server
     bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
 
-    // TODO(HUT): look at this...
-    // control from the top level block production based on the chain sync state
-    block_coordinator_.EnableMining(is_in_sync);
-
     if (synergetic_miner_)
     {
       synergetic_miner_->EnableMining(is_in_sync);

@@ -102,7 +102,7 @@ protected:
         LOG2_NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{}, nullptr);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
-    block_coordinator_->EnableMining(true);
+    /*block_coordinator_->EnableMining(true);*/
   }
 
   /**
@@ -1001,7 +1001,7 @@ protected:
         LOG2_NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{}, nullptr);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
-    block_coordinator_->EnableMining(true);
+    // block_coordinator_->EnableMining(true);
   }
 
   fetch::moment::AdjustableClockPtr clock_;

@@ -480,7 +480,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   {
     return State::RESET;
   }
-  if (mining_ && mining_enabled_ && ((Clock::now() >= next_block_time_) || consensus_))
+  if (mining_ && /*mining_enabled_ &&*/ ((Clock::now() >= next_block_time_) || consensus_))
   {
     if (consensus_)
     {
@@ -1352,10 +1352,10 @@ void BlockCoordinator::Reset()
   chain_.Reset();
 }
 
-void BlockCoordinator::EnableMining(bool enable)
-{
-  mining_enabled_ = enable;
-}
+// void BlockCoordinator::EnableMining(bool /*enable*/)
+//{
+//  //mining_enabled_ = enable;
+//}
 
 }  // namespace ledger
 }  // namespace fetch
