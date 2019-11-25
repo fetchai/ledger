@@ -47,7 +47,7 @@ public:
   // TODO(HUT): when you construct consensus, do not set aeon period etc. Do this later.
 
   // Construction / Destruction
-  SimulatedPowConsensus(Identity mining_identity);
+  explicit SimulatedPowConsensus(Identity mining_identity);
 
   SimulatedPowConsensus(SimulatedPowConsensus const &) = delete;
   SimulatedPowConsensus(SimulatedPowConsensus &&)      = delete;
@@ -60,7 +60,7 @@ public:
 
   // Methods used in POS, and so do nothing here
   void SetMaxCabinetSize(uint16_t max_cabinet_size) override;
-  void SetBlockInterval(uint64_t block_interval_s) override;
+  void SetBlockInterval(uint64_t block_interval_ms) override;
   void SetAeonPeriod(uint16_t aeon_period) override;
   void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
   void SetDefaultStartTime(uint64_t default_start_time) override;

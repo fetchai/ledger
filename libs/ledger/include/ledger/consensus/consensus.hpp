@@ -66,8 +66,8 @@ public:
   Status       ValidBlock(Block const &current) const override;
   bool         VerifyNotarisation(Block const &block) const;
 
-  void SetMaxCabinetSize(uint16_t max_cabinet_size) override;
-  void SetBlockInterval(uint64_t block_interval_s) override;
+  void SetMaxCabinetSize(uint16_t size) override;
+  void SetBlockInterval(uint64_t block_interval_ms) override;
   void SetAeonPeriod(uint16_t aeon_period) override;
   void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
   void SetDefaultStartTime(uint64_t default_start_time) override;

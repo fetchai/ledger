@@ -41,7 +41,6 @@ using SimulatedPowConsensus = fetch::ledger::SimulatedPowConsensus;
 using NextBlockPtr          = SimulatedPowConsensus::NextBlockPtr;
 using Status                = SimulatedPowConsensus::Status;
 
-using fetch::ledger::MainChain;
 using fetch::ledger::Block;
 
 uint64_t GetPoissonSample(uint64_t range, double mean_of_distribution)
@@ -57,7 +56,7 @@ uint64_t GetPoissonSample(uint64_t range, double mean_of_distribution)
 }
 
 SimulatedPowConsensus::SimulatedPowConsensus(Identity mining_identity)
-  : mining_identity_{mining_identity}
+  : mining_identity_{std::move(mining_identity)}
   , other_miners_seen_in_chain_{mining_identity_}
 {}
 
