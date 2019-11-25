@@ -22,6 +22,7 @@
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/model/model_config.hpp"
 #include "ml/ops/loss_functions/types.hpp"
+#include "ml/ops/metrics/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/types.hpp"
 #include "ml/utilities/graph_builder.hpp"
@@ -40,11 +41,11 @@ class ClientAlgorithm;
 namespace ml {
 namespace model {
 
-enum class MetricType
-{
-  LOSS,
-  ACCURACY
-};
+//enum class MetricType
+//{
+//  LOSS,
+//  ACCURACY
+//};
 
 template <typename TensorType>
 class Model
@@ -80,7 +81,7 @@ public:
   void     Train(SizeType n_rounds, DataType &loss);
   void     Test(DataType &test_loss);
   void     Predict(TensorType &input, TensorType &output);
-  DataType Evaluate(std::vector<MetricType> const &metrics = std::vector<MetricType>());
+  DataType Evaluate(std::vector<ops::MetricType> const &metrics = std::vector<ops::MetricType>());
 
   void UpdateConfig(ModelConfig<DataType> &model_config);
 
@@ -260,7 +261,7 @@ void Model<TensorType>::Predict(TensorType &input, TensorType &output)
 
 template <typename TensorType>
 typename Model<TensorType>::DataType Model<TensorType>::Evaluate(
-    std::vector<MetricType> const &metrics)
+    std::vector<ops::MetricType> const &metrics)
 {
   FETCH_UNUSED(metrics);
   return loss_;
