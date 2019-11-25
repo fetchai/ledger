@@ -31,12 +31,6 @@
 
 using namespace fetch::vm;
 
-namespace fetch {
-namespace vm {
-static ChargeAmount CHARGE_UNIT = 1u;
-}
-}  // namespace fetch
-
 namespace {
 
 using ::testing::Between;

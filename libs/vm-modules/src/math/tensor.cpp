@@ -20,6 +20,7 @@
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
+#include "vm_modules/math/estimator_use.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 
@@ -27,12 +28,6 @@
 #include <vector>
 
 using namespace fetch::vm;
-
-namespace fetch {
-namespace vm {
-static ChargeAmount CHARGE_UNIT = 1u;
-}
-}  // namespace fetch
 
 namespace fetch {
 namespace vm_modules {
@@ -45,15 +40,18 @@ using SizeVector = ArrayType::SizeVector;
 VMTensor::VMTensor(VM *vm, TypeId type_id, std::vector<uint64_t> const &shape)
   : Object(vm, type_id)
   , tensor_(shape)
+  , estimator_(*this)
 {}
 
 VMTensor::VMTensor(VM *vm, TypeId type_id, ArrayType tensor)
   : Object(vm, type_id)
   , tensor_(std::move(tensor))
+  , estimator_(*this)
 {}
 
 VMTensor::VMTensor(VM *vm, TypeId type_id)
   : Object(vm, type_id)
+  , estimator_(*this)
 {}
 
 Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> const &shape)
@@ -61,87 +59,51 @@ Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>>
   return Ptr<VMTensor>{new VMTensor(vm, type_id, shape->elements)};
 }
 
+/////////////////////////////////////////////////////////
+// Bind member function and their estimators to module //
+/////////////////////////////////////////////////////////
+
 void VMTensor::Bind(Module &module)
 {
-
-  ///////////////////////////////
-  // Prepare charge estimators //
-  ///////////////////////////////
-
-  // scalar estimation for cheap operations
-  ChargeAmount low_charge{vm::CHARGE_UNIT};
-
-  // object state-dependent estimators
-  auto charge_func_of_tensor_size = [](Ptr<VMTensor> const &this_,
-                                       size_t               factor = 1) -> ChargeAmount {
-    return static_cast<ChargeAmount>(vm::CHARGE_UNIT * this_->size() * factor);
-  };
-
-  auto fill_charge_estimator = [charge_func_of_tensor_size](
-                                   Ptr<VMTensor> const &this_, DataType const &
-                                   /*value*/) -> ChargeAmount {
-    return charge_func_of_tensor_size(this_);
-  };
-
-  auto fill_random_charge_estimator =
-      [charge_func_of_tensor_size](Ptr<VMTensor> const &this_) -> ChargeAmount {
-    return charge_func_of_tensor_size(this_);
-  };
-
-  auto reshape_charge_estimator = [charge_func_of_tensor_size](
-                                      Ptr<VMTensor> const &this_, Ptr<Array<SizeType>> const &
-                                      /*new_shape*/) -> ChargeAmount {
-    return charge_func_of_tensor_size(this_);
-  };
-
-  auto squeeze_charge_estimator =
-      [charge_func_of_tensor_size](Ptr<VMTensor> const &this_) -> ChargeAmount {
-    return charge_func_of_tensor_size(this_);
-  };
-
-  auto transpose_charge_estimator =
-      [charge_func_of_tensor_size](Ptr<VMTensor> const &this_) -> ChargeAmount {
-    return charge_func_of_tensor_size(this_);
-  };
-
-  auto &unsqueeze_charge_estimator = squeeze_charge_estimator;
-
-  auto from_string_charge_estimator = [](Ptr<VMTensor> const & /*this_*/,
-                                         Ptr<String> const &string) {
-    size_t val_size = 2;
-    return static_cast<ChargeAmount>(static_cast<size_t>(string->Length()) / val_size);
-  };
-
-  auto to_string_charge_estimator = [charge_func_of_tensor_size](Ptr<VMTensor> const &this_) {
-    return charge_func_of_tensor_size(this_);
-  };
-
-  /////////////////////////////////////////////////////////
-  // Bind member function and their estimators to module //
-  /////////////////////////////////////////////////////////
-
   module.CreateClassType<VMTensor>("Tensor")
       .CreateConstructor(&VMTensor::Constructor)
       .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
         return Ptr<VMTensor>{new VMTensor(vm, type_id)};
       })
-      .CreateMemberFunction("at", &VMTensor::AtOne, low_charge)
-      .CreateMemberFunction("at", &VMTensor::AtTwo, low_charge)
-      .CreateMemberFunction("at", &VMTensor::AtThree, low_charge)
-      .CreateMemberFunction("at", &VMTensor::AtFour, low_charge)
-      .CreateMemberFunction("setAt", &VMTensor::SetAtOne, low_charge)
-      .CreateMemberFunction("setAt", &VMTensor::SetAtTwo, low_charge)
-      .CreateMemberFunction("setAt", &VMTensor::SetAtThree, low_charge)
-      .CreateMemberFunction("setAt", &VMTensor::SetAtFour, low_charge)
-      .CreateMemberFunction("size", &VMTensor::size, low_charge)
-      .CreateMemberFunction("fill", &VMTensor::Fill, fill_charge_estimator)
-      .CreateMemberFunction("fillRandom", &VMTensor::FillRandom, fill_random_charge_estimator)
-      .CreateMemberFunction("reshape", &VMTensor::Reshape, reshape_charge_estimator)
-      .CreateMemberFunction("squeeze", &VMTensor::Squeeze, squeeze_charge_estimator)
-      .CreateMemberFunction("transpose", &VMTensor::Transpose, transpose_charge_estimator)
-      .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze, unsqueeze_charge_estimator)
-      .CreateMemberFunction("fromString", &VMTensor::FromString, from_string_charge_estimator)
-      .CreateMemberFunction("toString", &VMTensor::ToString, to_string_charge_estimator);
+      .CreateMemberFunction("at", &VMTensor::AtOne,
+                            estimator_use(&VMTensor::TensorEstimator::AtOne))
+      .CreateMemberFunction("at", &VMTensor::AtTwo,
+                            estimator_use(&VMTensor::TensorEstimator::AtTwo))
+      .CreateMemberFunction("at", &VMTensor::AtThree,
+                            estimator_use(&VMTensor::TensorEstimator::AtThree))
+      .CreateMemberFunction("at", &VMTensor::AtFour,
+                            estimator_use(&VMTensor::TensorEstimator::AtFour))
+      .CreateMemberFunction("setAt", &VMTensor::SetAtOne,
+                            estimator_use(&VMTensor::TensorEstimator::SetAtOne))
+      .CreateMemberFunction("setAt", &VMTensor::SetAtTwo,
+                            estimator_use(&VMTensor::TensorEstimator::SetAtTwo))
+      .CreateMemberFunction("setAt", &VMTensor::SetAtThree,
+                            estimator_use(&VMTensor::TensorEstimator::SetAtThree))
+      .CreateMemberFunction("setAt", &VMTensor::SetAtFour,
+                            estimator_use(&VMTensor::TensorEstimator::SetAtFour))
+      .CreateMemberFunction("size", &VMTensor::size,
+                            estimator_use(&VMTensor::TensorEstimator::size))
+      .CreateMemberFunction("fill", &VMTensor::Fill,
+                            estimator_use(&VMTensor::TensorEstimator::Fill))
+      .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
+                            estimator_use(&VMTensor::TensorEstimator::FillRandom))
+      .CreateMemberFunction("reshape", &VMTensor::Reshape,
+                            estimator_use(&VMTensor::TensorEstimator::Reshape))
+      .CreateMemberFunction("squeeze", &VMTensor::Squeeze,
+                            estimator_use(&VMTensor::TensorEstimator::Squeeze))
+      .CreateMemberFunction("transpose", &VMTensor::Transpose,
+                            estimator_use(&VMTensor::TensorEstimator::Transpose))
+      .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze,
+                            estimator_use(&VMTensor::TensorEstimator::Unsqueeze))
+      .CreateMemberFunction("fromString", &VMTensor::FromString,
+                            estimator_use(&VMTensor::TensorEstimator::FromString))
+      .CreateMemberFunction("toString", &VMTensor::ToString,
+                            estimator_use(&VMTensor::TensorEstimator::ToString));
 
   // Add support for Array of Tensors
   module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<VMTensor>>>();
@@ -275,6 +237,118 @@ bool VMTensor::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
   buffer >> tensor_;
   return true;
+}
+
+VMTensor::TensorEstimator &VMTensor::Estimator()
+{
+  return estimator_;
+}
+
+//////////////////////////
+/// CHARGE ESTIMATIONS ///
+//////////////////////////
+
+VMTensor::TensorEstimator::TensorEstimator(VMTensor &tensor)
+  : tensor_{tensor}
+{}
+
+ChargeAmount VMTensor::TensorEstimator::size()
+{
+  return low_charge;
+}
+
+ChargeAmount VMTensor::TensorEstimator::AtOne(TensorType::SizeType /*idx1*/)
+{
+  return low_charge;
+}
+
+ChargeAmount VMTensor::TensorEstimator::AtTwo(uint64_t /*idx1*/, uint64_t /*idx2*/)
+{
+  return low_charge;
+}
+
+ChargeAmount VMTensor::TensorEstimator::AtThree(uint64_t /*idx1*/, uint64_t /*idx2*/,
+                                                uint64_t /*idx3*/)
+{
+  return low_charge;
+}
+
+ChargeAmount VMTensor::TensorEstimator::AtFour(uint64_t /*idx1*/, uint64_t /*idx2*/,
+                                               uint64_t /*idx3*/, uint64_t /*idx4*/)
+{
+  return low_charge;
+}
+
+ChargeAmount VMTensor::TensorEstimator::SetAtOne(uint64_t /*idx1*/, DataType const & /*value*/)
+{
+  return low_charge;
+}
+
+ChargeAmount VMTensor::TensorEstimator::SetAtTwo(uint64_t /*idx1*/, uint64_t /*idx2*/,
+                                                 DataType const & /*value*/)
+{
+  return low_charge;
+}
+
+ChargeAmount VMTensor::TensorEstimator::SetAtThree(uint64_t /*idx1*/, uint64_t /*idx2*/,
+                                                   uint64_t /*idx3*/, DataType const & /*value*/)
+{
+  return low_charge;
+}
+
+ChargeAmount VMTensor::TensorEstimator::SetAtFour(uint64_t /*idx1*/, uint64_t /*idx2*/,
+                                                  uint64_t /*idx3*/, uint64_t /*idx4*/,
+                                                  DataType const & /*value*/)
+{
+  return low_charge;
+}
+
+ChargeAmount VMTensor::TensorEstimator::Fill(DataType const & /*value*/)
+{
+  return charge_func_of_tensor_size();
+}
+
+ChargeAmount VMTensor::TensorEstimator::FillRandom()
+{
+  return charge_func_of_tensor_size();
+}
+
+ChargeAmount VMTensor::TensorEstimator::Squeeze()
+{
+  return charge_func_of_tensor_size();
+}
+
+ChargeAmount VMTensor::TensorEstimator::Unsqueeze()
+{
+  return charge_func_of_tensor_size();
+}
+
+ChargeAmount VMTensor::TensorEstimator::Reshape(
+    fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape)
+{
+  FETCH_UNUSED(new_shape);
+  return charge_func_of_tensor_size();
+}
+
+ChargeAmount VMTensor::TensorEstimator::Transpose()
+{
+  return charge_func_of_tensor_size();
+}
+
+ChargeAmount VMTensor::TensorEstimator::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
+{
+  size_t val_size = 2;
+  return static_cast<ChargeAmount>(static_cast<size_t>(string->Length()) / val_size);
+}
+
+ChargeAmount VMTensor::TensorEstimator::ToString()
+{
+  return charge_func_of_tensor_size();
+}
+
+ChargeAmount VMTensor::TensorEstimator::charge_func_of_tensor_size(size_t factor)
+{
+  return static_cast<ChargeAmount>(vm::CHARGE_UNIT * factor * tensor_.size());
 }
 
 }  // namespace math
