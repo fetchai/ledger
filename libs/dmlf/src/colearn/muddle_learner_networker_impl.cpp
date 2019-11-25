@@ -22,6 +22,7 @@
 #include "dmlf/colearn/update_store.hpp"
 #include "muddle/rpc/client.hpp"
 #include <cmath>  // for modf
+#include "oef-base/monitoring/Gauge.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -102,11 +103,23 @@ void MuddleLearnerNetworkerImpl::PushUpdateType(const std::string &       type_n
   auto bytes = update->Serialise();
   PushUpdateBytes(type_name, bytes);
 }
+
+// These are aliases for the Taskpool's internal gauges so we can read them out.
+static Gauge gauge_pending("mt-core.taskpool.gauge.runnable_tasks");
+static Gauge gauge_running("mt-core.taskpool.gauge.running_tasks");
+static Gauge gauge_suspended("mt-core.taskpool.gauge.sleeping_tasks");
+static Gauge gauge_future("mt-core.taskpool.gauge.future_tasks");
+
 void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update)
 {
   for (auto const &peer : peers_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Creating sender for ", type_name, " to target ", peer);
+    FETCH_LOG_INFO(LOGGING_NAME, "Creating type=", type_name, " targ=", peer,
+                   " run=", gauge_running.get(),
+                   " pen=", gauge_pending.get(),
+                   " sus=", gauge_suspended.get(),
+                   " fut=", gauge_future.get()
+                   );
     auto task = std::make_shared<MuddleOutboundUpdateTask>(
         peer, type_name, update, client_, broadcast_proportion_, randomiser_.GetNew());
     taskpool_->submit(task);
