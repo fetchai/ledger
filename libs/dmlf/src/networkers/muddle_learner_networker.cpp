@@ -89,12 +89,15 @@ void MuddleLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
   PromiseList promises;
   promises.reserve(20);
 
-  for (auto const &target_peer : peers_)
+  std::vector<std::size_t> txpeers;
+  txpeers = alg_->GetNextOutputs();
+  for (auto const &target_peer_index : txpeers)
   {
+    auto peer = peers_[target_peer_index];
     auto tmp = client->CallSpecificAddress(
-        fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_peer)), RPC_DMLF,
+        fetch::byte_array::FromBase64(byte_array::ConstByteArray(peer)), RPC_DMLF,
         MuddleLearnerNetworkerProtocol::RECV_BYTES, data);
-    FETCH_LOG_INFO(LOGGING_NAME, "Sending targ=", target_peer, " prom=", tmp -> id());
+    FETCH_LOG_INFO(LOGGING_NAME, "Sending targ=", peer, " prom=", tmp -> id());
 
     promises.push_back(tmp);
   }
