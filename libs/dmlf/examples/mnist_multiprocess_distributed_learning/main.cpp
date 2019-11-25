@@ -102,7 +102,7 @@ int main(int argc, char **argv)
   SizeType muddle_delay = 30;
   if (!doc["muddle_delay"].IsUndefined())
   {
-    start_time = doc["muddle_delay"].As<SizeType>();
+    muddle_delay = doc["muddle_delay"].As<SizeType>();
   }
 
   // get the network config file
