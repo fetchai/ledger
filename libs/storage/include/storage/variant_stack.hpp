@@ -35,6 +35,7 @@
 
 #include "core/assert.hpp"
 #include "core/macros.hpp"
+#include "meta/type_traits.hpp"
 #include "storage/storage_exception.hpp"
 
 #include <cassert>
@@ -165,6 +166,7 @@ public:
   template <typename T>
   void Push(T const &object, uint64_t type = uint64_t(-1))
   {
+    static_assert(meta::IsPackedV<T>, "VariantStack::Push only applicable to packed types");
     assert(bool(file_handle_));
     file_handle_.seekg(header_.end, std::fstream::beg);
     Separator separator = {type, sizeof(T), header_.end};
@@ -202,6 +204,7 @@ public:
   template <typename T>
   uint64_t Top(T &object)
   {
+    static_assert(meta::IsPackedV<T>, "VariantStack::Top only applicable to packed types");
     assert(bool(file_handle_));
 
     file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), std::fstream::beg);

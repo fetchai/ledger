@@ -31,6 +31,7 @@
 #include <string>
 
 #include "core/assert.hpp"
+#include "meta/type_traits.hpp"
 #include "storage/storage_exception.hpp"
 
 namespace fetch {
@@ -57,6 +58,8 @@ class RandomAccessStack
 {
 private:
   static constexpr char const *LOGGING_NAME = "RandomAccessStack";
+  static_assert(meta::IsPackedV<T>, "RandomAccessStack needs type to be packed");
+  static_assert(meta::IsPackedV<D>, "RandomAccessStack needs HeaderExtraType to be packed");
 
   /**
    * Header holding information for the structure. Magic is used to determine the endianness of the

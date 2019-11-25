@@ -156,5 +156,21 @@ using IfIsNullPtr = EnableIf<IsNullPtr<T>, R>;
 template <typename T, typename R = void>
 using IfIsPod = EnableIf<IsPOD<T>, R>;
 
+template <typename T>
+class IsPacked
+{
+  template <class U>
+  static constexpr EnableIf<std::is_scalar<U>::value, std::true_type> Can(U &&) noexcept;
+  template <class U>
+  static constexpr EnableIf<U::is_packed, std::true_type> Can(U &&) noexcept;
+  static constexpr std::false_type                        Can(...) noexcept;
+
+public:
+  static constexpr bool value = decltype(Can(std::declval<T>()))::value;
+};
+
+template <typename T>
+static constexpr auto IsPackedV = IsPacked<T>::value;
+
 }  // namespace meta
 }  // namespace fetch

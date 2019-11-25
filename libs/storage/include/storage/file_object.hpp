@@ -32,6 +32,7 @@
 //    └────────────────────┴───────────────────────────┘
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/packed_tag.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/document.hpp"
@@ -45,24 +46,18 @@
 namespace fetch {
 namespace storage {
 
+#pragma pack(push)
+#pragma pack(1)
 template <std::size_t BS = 128>
 struct FileBlockType
 {
+  static constexpr bool     is_packed       = true;
   static constexpr uint64_t META_DATA_BYTES = (3 * sizeof(uint64_t));
   static constexpr uint64_t CAPACITY        = BS - META_DATA_BYTES;
   static constexpr uint64_t UNDEFINED       = std::numeric_limits<uint64_t>::max();
 
   static_assert(BS > META_DATA_BYTES,
                 "Block size needs to exceed the min requirement for metadata");
-
-  FileBlockType()
-  {
-    // Ensures that padded bytes are not uninitialised.
-    memset(this, 0, sizeof(decltype(*this)));
-    previous         = UNDEFINED;
-    next             = UNDEFINED;
-    file_object_size = UNDEFINED;
-  }
 
   // Metadata
   uint64_t next     = UNDEFINED;
@@ -80,6 +75,7 @@ struct FileBlockType
   // Data
   uint8_t data[CAPACITY]{};
 };
+#pragma pack(pop)
 
 /**
  * FileObject represents 'files' (objects) of varying length in a filesystem. Given the user knows

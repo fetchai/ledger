@@ -45,6 +45,7 @@
 #include "core/byte_array/encoders.hpp"
 
 #include <cstring>
+#include <type_traits>
 
 namespace fetch {
 namespace storage {
@@ -56,11 +57,18 @@ using DefaultKey = Key<256>;
  * This header is at the beginning of the main RAS and keeps track of the final bookmark in the
  * history stack
  */
+#pragma pack(push)
+#pragma pack(1)
 struct NewBookmarkHeader
 {
+  enum : bool
+  {
+    is_packed = true
+  };
   uint64_t header;
   uint64_t bookmark;  // aim to remove this.
 };
+#pragma pack(pop)
 
 /**
  * NewVersionedRandomAccessStack implements a random access stack that can revert to a previous
@@ -87,22 +95,11 @@ private:
    *
    * Represents a 'bookmark' that users can revert to.
    */
+#pragma pack(push)
+#pragma pack(1)
   struct HistoryBookmark
   {
-    HistoryBookmark()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    HistoryBookmark(uint64_t val, DefaultKey const &key_in)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-      bookmark = val;
-      key      = key_in;
-    }
-
+    static constexpr bool is_packed = true;
     enum
     {
       value = 0
@@ -119,21 +116,7 @@ private:
    */
   struct HistorySwap
   {
-    HistorySwap()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    HistorySwap(uint64_t i_, uint64_t j_)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      i = i_;
-      j = j_;
-    }
-
+    static constexpr bool is_packed = true;
     enum
     {
       value = 1
@@ -150,20 +133,7 @@ private:
    */
   struct HistoryPop
   {
-    HistoryPop()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    explicit HistoryPop(T const &d)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      data = d;
-    }
-
+    static constexpr bool is_packed = true;
     enum
     {
       value = 2
@@ -180,12 +150,7 @@ private:
    */
   struct HistoryPush
   {
-    HistoryPush()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
+    static constexpr bool is_packed = true;
     enum
     {
       value = 3
@@ -203,21 +168,7 @@ private:
    */
   struct HistorySet
   {
-    HistorySet()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    HistorySet(uint64_t i_, T const &d)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      i    = i_;
-      data = d;
-    }
-
+    static constexpr bool is_packed = true;
     enum
     {
       value = 4
@@ -233,20 +184,7 @@ private:
    */
   struct HistoryHeader
   {
-    HistoryHeader()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    explicit HistoryHeader(uint64_t d)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      data = d;
-    }
-
+    static constexpr bool is_packed = true;
     enum
     {
       value = 5
@@ -254,6 +192,7 @@ private:
 
     uint64_t data = 0;
   };
+#pragma pack(pop)
 
 public:
   using type             = T;

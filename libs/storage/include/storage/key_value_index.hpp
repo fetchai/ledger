@@ -56,6 +56,7 @@
 // Representation of a possible configuration of the key value trie. When the split is maximal
 // (256), this represents that the node is a leaf. The nodes can contain additional information
 
+#include "core/packed_tag.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/key.hpp"
@@ -83,10 +84,13 @@ namespace storage {
  * include their children's hashes, ie. merkle tree which can be used to detect file corruption.
  *
  */
+#pragma pack(push)
+#pragma pack(1)
 template <std::size_t S = 256, std::size_t N = 32>
 struct KeyValuePair
 {
-  using HashFunction = crypto::SHA256;
+  static constexpr bool is_packed = true;
+  using HashFunction              = crypto::SHA256;
   static_assert(N == HashFunction::size_in_bytes, "Hash size must match the hash function");
 
   using KeyType   = Key<S>;
@@ -150,6 +154,7 @@ struct KeyValuePair
     return {hash, N};
   }
 };
+#pragma pack(pop)
 
 /**
  * Allows users to store, retrieve and create key value pairs. Byte arrays are used for the key and
