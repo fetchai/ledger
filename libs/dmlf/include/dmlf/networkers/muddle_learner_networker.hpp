@@ -28,6 +28,7 @@
 #include "network/management/network_manager.hpp"
 #include "network/peer.hpp"
 #include "network/service/protocol.hpp"
+#include "logging/logging.hpp"
 
 #include <memory>
 
@@ -59,6 +60,8 @@ public:
 
   using Mutex = fetch::Mutex;
   using Lock  = std::unique_lock<Mutex>;
+
+  static constexpr char const *LOGGING_NAME = "MuddleLearnerNetworker";
 
   MuddleLearnerNetworker(
       const std::string &cloud_config, std::size_t instance_number,

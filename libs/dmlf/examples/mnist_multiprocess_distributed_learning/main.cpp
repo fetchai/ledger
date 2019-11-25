@@ -159,7 +159,8 @@ int main(int argc, char **argv)
 
     client->RunAlgorithms();
   }
-  system("gsutil cp /app/results/* gs://ml-3000/results/");
+  (void) system("gsutil cp /app/results/* gs://ml-3000/results/");
+
   while (true)
   {
     std::cout << "Sleeping" << std::endl;

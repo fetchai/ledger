@@ -91,14 +91,25 @@ void MuddleLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
 
   for (auto const &target_peer : peers_)
   {
-    promises.push_back(client->CallSpecificAddress(
+    auto tmp = client->CallSpecificAddress(
         fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_peer)), RPC_DMLF,
-        MuddleLearnerNetworkerProtocol::RECV_BYTES, data));
+        MuddleLearnerNetworkerProtocol::RECV_BYTES, data);
+    FETCH_LOG_INFO(LOGGING_NAME, "Sending targ=", target_peer, " prom=", tmp -> id());
+
+    promises.push_back(tmp);
   }
 
   for (auto &prom : promises)
   {
-    prom->Wait();
+//    prom->Wait();
+    if (prom->Wait())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Success prom=", prom -> id());
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Whups prom=", prom -> id());
+    }
   }
 }
 
