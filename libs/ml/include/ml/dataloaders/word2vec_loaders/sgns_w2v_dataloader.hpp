@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/random/lfg.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
@@ -86,19 +85,18 @@ public:
   }
 
 private:
-  SizeType                                  current_sentence_;
-  SizeType                                  current_word_;
-  SizeType                                  window_size_;
-  SizeType                                  negative_samples_;
-  DataType                                  freq_thresh_;
-  VocabPtrType                              vocab_ = std::make_shared<VocabType>();
-  std::vector<std::vector<SizeType>>        data_;
-  std::vector<SizeType>                     word_id_counts_;
-  UnigramTable                              unigram_table_;
-  SizeType                                  max_word_count_;
-  fetch::random::LaggedFibonacciGenerator<> lfg_;
-  SizeType                                  size_        = 0;
-  SizeType                                  reset_count_ = 0;
+  SizeType                           current_sentence_;
+  SizeType                           current_word_;
+  SizeType                           window_size_;
+  SizeType                           negative_samples_;
+  DataType                           freq_thresh_;
+  VocabPtrType                       vocab_ = std::make_shared<VocabType>();
+  std::vector<std::vector<SizeType>> data_;
+  std::vector<SizeType>              word_id_counts_;
+  UnigramTable                       unigram_table_;
+  SizeType                           max_word_count_;
+  SizeType                           size_        = 0;
+  SizeType                           reset_count_ = 0;
 
   // temporary sample and labels for buffering samples
   InputType                     input_words_, output_words_, labels_;
@@ -127,7 +125,6 @@ GraphW2VLoader<TensorType>::GraphW2VLoader(SizeType window_size, SizeType negati
   , negative_samples_(negative_samples)
   , freq_thresh_(freq_thresh)
   , max_word_count_(max_word_count)
-  , lfg_(seed)
 {
   // setup temporary buffers for training purpose
   input_words_  = InputType({negative_samples * window_size_ * 2 + window_size_ * 2});
@@ -139,6 +136,7 @@ GraphW2VLoader<TensorType>::GraphW2VLoader(SizeType window_size, SizeType negati
   labels_.Fill(BufferPositionUnusedDataType);
   cur_sample_.first  = InputType({1, 1});
   cur_sample_.second = {InputType({1, 1}), InputType({1, 1})};
+  this->SetSeed(seed);
 }
 
 /**
@@ -380,7 +378,7 @@ void GraphW2VLoader<TensorType>::BufferNextSamples()
     auto word_freq =
         static_cast<DataType>(word_id_counts_[data_.at(current_sentence_).at(current_word_)]) /
         static_cast<DataType>(size_);
-    auto random_var = static_cast<DataType>(lfg_.AsDouble());  // random variable between 0-1
+    auto random_var = static_cast<DataType>(this->rand.AsDouble());  // random variable between 0-1
     if (random_var < DataType{1} - fetch::math::Sqrt(freq_thresh_ / word_freq))
     {  // subsample for a cumulative prob of 1 - sqrt(thresh/freq) // N.B. if word_freq <
        // freq_thresh, then subsampling would not happen
@@ -412,7 +410,7 @@ void GraphW2VLoader<TensorType>::BufferNextSamples()
   }
 
   // select random window size
-  SizeType dynamic_size = lfg_() % window_size_ + 1;
+  SizeType dynamic_size = SizeType{this->rand()} % window_size_ + 1;
 
   // for the interested one word
   auto cur_word_id = DataType(data_.at(current_sentence_).at(current_word_));

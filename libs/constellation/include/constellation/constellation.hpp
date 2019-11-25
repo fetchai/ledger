@@ -174,6 +174,7 @@ private:
   NetworkManager http_network_manager_;  ///< A separate net. coordinator for the http service(s)
   MuddlePtr      muddle_;                ///< The muddle networking service
   CertificatePtr internal_identity_;
+  CertificatePtr external_identity_;
   MuddlePtr      internal_muddle_;  ///< The muddle networking service
   TrustSystem    trust_;            ///< The trust subsystem
   /// @}

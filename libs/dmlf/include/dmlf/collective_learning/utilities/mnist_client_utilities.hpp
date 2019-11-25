@@ -104,7 +104,7 @@ MakeMNISTClient(
 
   // build an mnist model for each algorithm in the client
   auto algorithms = client->GetAlgorithms();
-  for (const auto &algorithm : algorithms)
+  for (auto const &algorithm : algorithms)
   {
     // build the mnist model
     auto model_ptr =

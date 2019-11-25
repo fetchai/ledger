@@ -33,39 +33,45 @@ class TensorDataloaderTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorDataloaderTest, math::test::TensorFloatIntAndUIntTypes);
+TYPED_TEST_CASE(TensorDataloaderTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
 {
-  TypeParam label_tensor = TypeParam::UniformRandom(4);
-  TypeParam data1_tensor = TypeParam::UniformRandom(24);
-  TypeParam data2_tensor = TypeParam::UniformRandom(32);
+  TypeParam label_tensor = TypeParam::UniformRandomIntegers(4, 0, 100);
+  TypeParam data1_tensor = TypeParam::UniformRandomIntegers(24, 0, 100);
+  TypeParam data2_tensor = TypeParam::UniformRandomIntegers(32, 0, 100);
   label_tensor.Reshape({1, 4});
   data1_tensor.Reshape({2, 3, 4});
   data2_tensor.Reshape({8, 2, 4});
 
   // generate a plausible tensor data loader
-  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>(
-      label_tensor.shape(), {data1_tensor.shape(), data2_tensor.shape()});
+  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>();
 
   // add some data
   tdl.AddData({data1_tensor, data2_tensor}, label_tensor);
+  tdl.SetRandomMode(true);
+  // calling GetNext ensures that internal parameters are not default
+  auto next0 = tdl.GetNext();
 
   fetch::serializers::MsgPackSerializer b;
   b << tdl;
 
   b.seek(0);
 
-  // initialise a new tensor dataloader with the wrong shape parameters
-  // these will get updated by deserialisation
-  fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam> tdl_2({1, 1}, {{1, 1}});
+  fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam> tdl_2;
   tdl_2.SetTestRatio(0.5);
 
   b >> tdl_2;
 
   EXPECT_EQ(tdl.Size(), tdl_2.Size());
   EXPECT_EQ(tdl.IsDone(), tdl_2.IsDone());
-  EXPECT_EQ(tdl.GetNext(), tdl_2.GetNext());
+
+  auto next1 = tdl.GetNext();
+  auto next2 = tdl_2.GetNext();
+
+  EXPECT_TRUE(next1.first.AllClose(next2.first));
+  EXPECT_TRUE(next1.second.at(0).AllClose(next2.second.at(0)));
+  EXPECT_TRUE(next1.second.at(1).AllClose(next2.second.at(1)));
 
   // add some new data
   label_tensor = TypeParam::UniformRandom(4);
@@ -79,7 +85,12 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
 
   EXPECT_EQ(tdl.Size(), tdl_2.Size());
   EXPECT_EQ(tdl.IsDone(), tdl_2.IsDone());
-  EXPECT_EQ(tdl.GetNext(), tdl_2.GetNext());
+
+  next1 = tdl.GetNext();
+  next2 = tdl_2.GetNext();
+  EXPECT_TRUE(next1.first.AllClose(next2.first));
+  EXPECT_TRUE(next1.second.at(0).AllClose(next2.second.at(0)));
+  EXPECT_TRUE(next1.second.at(1).AllClose(next2.second.at(1)));
 }
 
 TYPED_TEST(TensorDataloaderTest, test_validation_splitting_dataloader_test)
@@ -92,8 +103,7 @@ TYPED_TEST(TensorDataloaderTest, test_validation_splitting_dataloader_test)
   data2_tensor.Reshape({8, 2, 4});
 
   // generate a plausible tensor data loader
-  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>(
-      label_tensor.shape(), {data1_tensor.shape(), data2_tensor.shape()});
+  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>();
   tdl.SetTestRatio(0.1f);
   tdl.SetValidationRatio(0.1f);
 
@@ -124,8 +134,7 @@ TYPED_TEST(TensorDataloaderTest, prepare_batch_test)
   data2_tensor.Reshape({feature_size_2_1, feature_size_2_2, n_data});
 
   // generate a plausible tensor data loader
-  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>(
-      label_tensor.shape(), {data1_tensor.shape(), data2_tensor.shape()});
+  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>();
   // add some data
   tdl.AddData({data1_tensor, data2_tensor}, label_tensor);
 

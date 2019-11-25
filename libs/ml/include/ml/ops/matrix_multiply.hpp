@@ -48,13 +48,19 @@ public:
 
   explicit MatrixMultiply(SPType const &sp)
     : Ops<T>(sp)
-  {}
+  {
+    transpose_a_ = sp.transpose_a;
+    transpose_b_ = sp.transpose_b;
+  }
 
   ~MatrixMultiply() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
-    return std::make_shared<SPType>();
+    auto ret         = std::make_shared<SPType>();
+    ret->transpose_a = transpose_a_;
+    ret->transpose_b = transpose_b_;
+    return ret;
   }
 
   /**
@@ -81,6 +87,8 @@ public:
     copyshare->err_sig_view_tensor_  = err_sig_view_tensor_.Copy();
     copyshare->err1_                 = err1_.Copy();
     copyshare->err2_                 = err2_.Copy();
+    copyshare->transpose_a_          = transpose_a_;
+    copyshare->transpose_b_          = transpose_b_;
 
     return copyshare;
   }
