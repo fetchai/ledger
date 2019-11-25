@@ -63,8 +63,6 @@ T UInt256Wrapper::ToPrimitive(VM * /*vm*/, Ptr<UInt256Wrapper> const &a)
 
 void UInt256Wrapper::Bind(Module &module)
 {
-  // std::cout << __PRETTY_FUNCTION__ << std::endl;
-
   module.CreateClassType<UInt256Wrapper>("UInt256")
       .CreateSerializeDefaultConstructor(
           [](VM *vm, TypeId type_id) { return UInt256Wrapper::Constructor(vm, type_id, 0u); })
@@ -77,6 +75,10 @@ void UInt256Wrapper::Bind(Module &module)
       .EnableOperator(Operator::Subtract)
       .EnableOperator(Operator::InplaceAdd)
       .EnableOperator(Operator::InplaceSubtract)
+      .EnableOperator(Operator::Multiply)
+      .EnableOperator(Operator::Divide)
+      .EnableOperator(Operator::InplaceMultiply)
+      .EnableOperator(Operator::InplaceDivide)
       //        .EnableOperator(Operator::LessThanOrEqual)
       .EnableOperator(Operator::GreaterThan)
       //        .EnableOperator(Operator::GreaterThanOrEqual)
@@ -98,34 +100,21 @@ void UInt256Wrapper::Bind(Module &module)
 UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, UInt256 data)
   : Object(vm, type_id)
   , number_(std::move(data))
-{
-  // std::cout << __PRETTY_FUNCTION__ << std::endl;
-}
+{}
 
 UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, byte_array::ByteArray const &data)
   : Object(vm, type_id)
   , number_(data)
-{
-  // std::cout << __PRETTY_FUNCTION__ << std::endl;
-}
-
-UInt256Wrapper::UInt256Wrapper(VM *vm, const UInt256 &data)
-  : Object(vm, fetch::vm::TypeIds::UInt256)
-  , number_{data}
 {}
 
 UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, uint64_t data)
   : Object(vm, type_id)
   , number_(data)
-{
-  // std::cout << __PRETTY_FUNCTION__ << std::endl;
-}
+{}
 
 Ptr<UInt256Wrapper> UInt256Wrapper::ConstructorFromBytes(VM *vm, TypeId type_id,
                                                          Ptr<ByteArrayWrapper> const &ba)
 {
-  // std::cout << __PRETTY_FUNCTION__ << std::endl;
-
   try
   {
     return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, type_id, ba->byte_array())};
@@ -139,8 +128,6 @@ Ptr<UInt256Wrapper> UInt256Wrapper::ConstructorFromBytes(VM *vm, TypeId type_id,
 
 Ptr<UInt256Wrapper> UInt256Wrapper::Constructor(VM *vm, TypeId type_id, uint64_t val)
 {
-  // std::cout << __PRETTY_FUNCTION__ << std::endl;
-
   try
   {
     return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, type_id, val)};
@@ -286,7 +273,8 @@ void UInt256Wrapper::Add(fetch::vm::Ptr<Object> &lhso, fetch::vm::Ptr<Object> &r
     lhso = std::move(rhs);
     return;
   }
-  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ + rhs->number_));
+  Ptr<UInt256Wrapper> n(
+      new UInt256Wrapper(vm_, fetch::vm::TypeIds::UInt256, lhs->number_ + rhs->number_));
   lhso = std::move(n);
 }
 
@@ -305,7 +293,8 @@ void UInt256Wrapper::Subtract(fetch::vm::Ptr<Object> &lhso, fetch::vm::Ptr<Objec
     lhso = std::move(rhs);
     return;
   }
-  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ - rhs->number_));
+  Ptr<UInt256Wrapper> n(
+      new UInt256Wrapper(vm_, fetch::vm::TypeIds::UInt256, lhs->number_ - rhs->number_));
   lhso = std::move(n);
 }
 
@@ -340,7 +329,8 @@ void UInt256Wrapper::Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     lhso = std::move(rhs);
     return;
   }
-  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ * rhs->number_));
+  Ptr<UInt256Wrapper> n(
+      new UInt256Wrapper(vm_, fetch::vm::TypeIds::UInt256, lhs->number_ * rhs->number_));
   lhso = std::move(n);
 }
 
@@ -366,7 +356,8 @@ void UInt256Wrapper::Divide(Ptr<Object> &lhso, Ptr<Object> &rhso)
     lhso = std::move(rhs);
     return;
   }
-  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ / rhs->number_));
+  Ptr<UInt256Wrapper> n(
+      new UInt256Wrapper(vm_, fetch::vm::TypeIds::UInt256, lhs->number_ / rhs->number_));
   lhso = std::move(n);
 }
 

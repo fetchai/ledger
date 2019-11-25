@@ -324,22 +324,22 @@ TEST_F(UInt256Tests, uint256_multiplication_division)
         var one  = UInt256(1u64);
 
         var result = a * zero;
-        assert(result == zero, "*0 result is not 0!);
+        assert(result == zero, "*0 result is not 0!");
 
         result = a / a;
         assert(result == one, "a/a is not 1!");
 
-        result = a / 1;
+        result = a / one;
         assert(result == a, "/1 result is wrong!");
 
         result = a * b;
         var result2 = b * a;
-        assert(result == result2, "Multiplication is not );
+        assert(result == result2, "Multiplication is not commutative!");
         assert(result > a);
 
-        result = a * 3;
+        result = a * UInt256(3u64);
         result = result / a;
-        assert(result == 3);
+        assert(result == UInt256(3u64));
       endfunction
     )";
 
@@ -425,8 +425,7 @@ TEST_F(UInt256Tests, uint256_type_casts)
           var test : UInt256 = UInt256(9000000000000000000u64);
           var correct : UInt64 = 9000000000000000000u64;
 
-
-          var test_float64 = toFloat64(test);
+          var test_float64 = test.toFloat64();
           var correct_float64 = toFloat64(correct);
           assert(test_float64 == correct_float64, "toFloat64(...) failed");
 
