@@ -20,6 +20,7 @@ target_link_libraries(fetch-dmlf
                              fetch-network
                              fetch-muddle
                              fetch-crypto
+                             fetch-logging
                              fetch-math
                              fetch-ml
                              fetch-oef-base
