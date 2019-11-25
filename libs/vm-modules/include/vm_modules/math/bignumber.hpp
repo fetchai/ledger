@@ -55,6 +55,8 @@ public:
 
   UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray const &data);
 
+  UInt256Wrapper(fetch::vm::VM *vm, const UInt256 &data);
+
   UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, uint64_t data);
 
   static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
@@ -84,6 +86,18 @@ public:
   bool ToJSON(fetch::vm::JSONVariant &variant) override;
 
   bool FromJSON(fetch::vm::JSONVariant const &variant) override;
+
+  void Add(fetch::vm::Ptr<Object> &lhso, fetch::vm::Ptr<Object> &rhso) override;
+  void InplaceAdd(fetch::vm::Ptr<Object> const &lhso, fetch::vm::Ptr<Object> const &rhso) override;
+  void Subtract(fetch::vm::Ptr<Object> &lhso, fetch::vm::Ptr<Object> &rhso) override;
+  void InplaceSubtract(fetch::vm::Ptr<Object> const &lhso,
+                       fetch::vm::Ptr<Object> const &rhso) override;
+  void Multiply(fetch::vm::Ptr<Object> &lhso, fetch::vm::Ptr<Object> &rhso) override;
+  void InplaceMultiply(fetch::vm::Ptr<Object> const &lhso,
+                       fetch::vm::Ptr<Object> const &rhso) override;
+  void Divide(fetch::vm::Ptr<Object> &lhso, fetch::vm::Ptr<Object> &rhso) override;
+  void InplaceDivide(fetch::vm::Ptr<Object> const &lhso,
+                     fetch::vm::Ptr<Object> const &rhso) override;
 
   bool IsEqual(fetch::vm::Ptr<Object> const &lhso, fetch::vm::Ptr<Object> const &rhso) override;
 
