@@ -42,7 +42,6 @@ class ClientAlgorithm;
 namespace ml {
 namespace model {
 
-
 template <typename TensorType>
 class Model
 {
@@ -78,7 +77,8 @@ public:
   void           Train(SizeType n_rounds, DataType &loss);
   void           Test(DataType &test_loss);
   void           Predict(TensorType &input, TensorType &output);
-  DataVectorType Evaluate();
+  DataVectorType Evaluate(dataloaders::DataLoaderMode dl_mode = dataloaders::DataLoaderMode::TEST,
+                          SizeType                    batch_size = 0);
 
   void UpdateConfig(ModelConfig<DataType> &model_config);
 
@@ -298,16 +298,21 @@ void Model<TensorType>::Predict(TensorType &input, TensorType &output)
 }
 
 template <typename TensorType>
-typename Model<TensorType>::DataVectorType Model<TensorType>::Evaluate()
+typename Model<TensorType>::DataVectorType Model<TensorType>::Evaluate(
+    dataloaders::DataLoaderMode dl_mode, SizeType batch_size)
 {
   if (!compiled_)
   {
     throw ml::exceptions::InvalidMode("must compile model before evaluating");
   }
 
-  dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
+  dataloader_ptr_->SetMode(dl_mode);
   bool is_done_set;
-  auto evaluate_pair = dataloader_ptr_->PrepareBatch(model_config_.batch_size, is_done_set);
+  if (batch_size == 0)
+  {
+    batch_size = dataloader_ptr_->Size();
+  }
+  auto evaluate_pair = dataloader_ptr_->PrepareBatch(batch_size, is_done_set);
 
   this->graph_ptr_->SetInput(label_, evaluate_pair.first);
   this->graph_ptr_->SetInput(input_, evaluate_pair.second.at(0));
@@ -458,14 +463,15 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
   static uint8_t const OPTIMISER_PTR   = 5;
   static uint8_t const OPTIMISER_TYPE  = 6;
 
-  static uint8_t const INPUT_NODE_NAME  = 7;
-  static uint8_t const LABEL_NODE_NAME  = 8;
-  static uint8_t const OUTPUT_NODE_NAME = 9;
-  static uint8_t const ERROR_NODE_NAME  = 10;
+  static uint8_t const INPUT_NODE_NAME   = 7;
+  static uint8_t const LABEL_NODE_NAME   = 8;
+  static uint8_t const OUTPUT_NODE_NAME  = 9;
+  static uint8_t const ERROR_NODE_NAME   = 10;
+  static uint8_t const METRIC_NODE_NAMES = 11;
 
-  static uint8_t const LOSS_SET_FLAG      = 11;
-  static uint8_t const OPTIMISER_SET_FLAG = 12;
-  static uint8_t const COMPILED_FLAG      = 13;
+  static uint8_t const LOSS_SET_FLAG      = 12;
+  static uint8_t const OPTIMISER_SET_FLAG = 13;
+  static uint8_t const COMPILED_FLAG      = 14;
 
   template <typename MapType>
   static void SerializeDataLoader(MapType map, Type const &sp)
@@ -610,7 +616,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(13);
+    auto map = map_constructor(14);
 
     // serialize the graph first
     map.Append(GRAPH, sp.graph_ptr_->GetGraphSaveableParams());
@@ -626,6 +632,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     map.Append(LABEL_NODE_NAME, sp.label_);
     map.Append(OUTPUT_NODE_NAME, sp.output_);
     map.Append(ERROR_NODE_NAME, sp.error_);
+    map.Append(METRIC_NODE_NAMES, sp.metrics_);
 
     map.Append(LOSS_SET_FLAG, sp.loss_set_);
     map.Append(OPTIMISER_SET_FLAG, sp.optimiser_set_);
@@ -654,6 +661,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     map.ExpectKeyGetValue(LABEL_NODE_NAME, sp.label_);
     map.ExpectKeyGetValue(OUTPUT_NODE_NAME, sp.output_);
     map.ExpectKeyGetValue(ERROR_NODE_NAME, sp.error_);
+    map.ExpectKeyGetValue(METRIC_NODE_NAMES, sp.metrics_);
 
     map.ExpectKeyGetValue(LOSS_SET_FLAG, sp.loss_set_);
     map.ExpectKeyGetValue(OPTIMISER_SET_FLAG, sp.optimiser_set_);

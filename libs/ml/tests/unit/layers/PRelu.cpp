@@ -97,9 +97,10 @@ TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
   placeholder_op_ptr->SetData(data);
 
   fetch::math::SizeType in_size = 50u;
-  auto prelu_node = fetch::ml::Node<TypeParam>(fetch::ml::OpType::LAYER_PRELU, "PRelu", [in_size]() {
-    return std::make_shared<fetch::ml::layers::PRelu<TypeParam>>(in_size, "PRelu");
-  });
+  auto                  prelu_node =
+      fetch::ml::Node<TypeParam>(fetch::ml::OpType::LAYER_PRELU, "PRelu", [in_size]() {
+        return std::make_shared<fetch::ml::layers::PRelu<TypeParam>>(in_size, "PRelu");
+      });
   prelu_node.AddInput(placeholder_node);
   auto prediction = prelu_node.Evaluate(true);
 
@@ -119,10 +120,10 @@ TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
       std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp());
   placeholder_op_ptr->SetData(data);
 
-  fetch::math::SizeType in_size = 50u;
-  auto prelu_node = fetch::ml::Node<TypeParam>(fetch::ml::OpType::LAYER_PRELU, "PRelu", [in_size]() {
-    return std::make_shared<fetch::ml::layers::PRelu<TypeParam>>(in_size);
-  });
+  fetch::math::SizeType in_size    = 50u;
+  auto                  prelu_node = fetch::ml::Node<TypeParam>(
+      fetch::ml::OpType::LAYER_PRELU, "PRelu",
+      [in_size]() { return std::make_shared<fetch::ml::layers::PRelu<TypeParam>>(in_size); });
   prelu_node.AddInput(placeholder_node);
   TypeParam prediction = *prelu_node.Evaluate(true);
 
