@@ -64,6 +64,8 @@ struct Tip
   uint64_t weight{0};
   uint64_t block_number{0};
 };
+bool operator<(const Tip &lhs, const Tip &rhs);
+bool operator==(const Tip &lhs, const Tip &rhs);
 
 enum class BlockStatus
 {
@@ -96,8 +98,9 @@ public:
   using MinerIdentity        = Block::Identity;
   using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
 
-  static constexpr char const *LOGGING_NAME = "MainChain";
-  static constexpr uint64_t    UPPER_BOUND  = 5000ull;
+  static constexpr char const *LOGGING_NAME         = "MainChain";
+  static constexpr uint64_t    UPPER_BOUND          = 5000ull;
+  static constexpr BlockNumber CACHE_TRIM_THRESHOLD = 2 * chain::FINALITY_PERIOD;
 
   enum class Mode
   {
@@ -116,8 +119,7 @@ public:
   };
 
   // Construction / Destruction
-  explicit MainChain(bool enable_bloom_filter = false, Mode mode = Mode::IN_MEMORY_DB,
-                     bool enable_stutter_removal = false);
+  explicit MainChain(bool enable_bloom_filter = false, Mode mode = Mode::IN_MEMORY_DB);
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();
@@ -142,6 +144,7 @@ public:
            Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
            BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
   bool IsStutterBlock(BlockNumber block_number, BlockWeight block_weight) const;
+  bool HasForwardRef(BlockHash const &block_hash) const;
   /// @}
 
   /// @name Tips
@@ -183,9 +186,7 @@ public:
 
   struct HeaviestTip
   {
-    BlockWeight total_weight{0};
-    BlockWeight weight{0};
-    BlockNumber block_number{0};
+    Tip tip;
     // assuming every chain has a proper genesis
     BlockHash hash{chain::GENESIS_DIGEST};
 
@@ -227,10 +228,11 @@ public:
 
   /// @name Tip Management
   /// @{
-  bool AddTip(IntBlockPtr const &block);
-  bool RemoveTip(IntBlockPtr const &block);
-  bool UpdateTips(IntBlockPtr const &block);
-  bool DetermineHeaviestTip();
+  bool     AddTip(IntBlockPtr const &block);
+  bool     RemoveTip(BlockPtr const &block);
+  bool     UpdateTips(IntBlockPtr const &block);
+  bool     DetermineHeaviestTip();
+  BlockPtr GetFirstNonStutterBlock(Block const &block);
   /// @}
 
   static IntBlockPtr CreateGenesisBlock();
@@ -251,8 +253,8 @@ public:
   HeaviestTip        heaviest_;      ///< Heaviest block/tip
   LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
 
-  bool const
-      enable_stutter_removal_;  ///< Whether blocks of equal height and weight are removed from tips
+  bool const enable_stutter_removal_{
+      true};  ///< Whether blocks of equal height and weight are removed from tips
   StutterBlockMap
       stutter_blocks_;  ///< Block weights seen by height and whether they are stutter blocks
 

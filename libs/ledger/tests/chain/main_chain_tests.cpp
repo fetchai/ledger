@@ -43,6 +43,7 @@ using namespace fetch;
 using fetch::ledger::Block;
 using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
+using fetch::ledger::Tip;
 using fetch::ledger::testing::BlockGenerator;
 using fetch::ledger::Consensus;
 using fetch::chain::Address;
@@ -168,12 +169,11 @@ auto GenerateChain(BlockGeneratorPtr &gen, Block::BlockEntropy::Cabinet const &c
 
 Block::Hash GetHeaviestHash(BlockPtr const &block1, BlockPtr const &block2)
 {
+  Tip block1_tip{block1->total_weight, block1->weight, block1->block_number};
+  Tip block2_tip{block2->total_weight, block2->weight, block2->block_number};
+
   Block::Hash heaviest_hash = block1->hash;
-  if (block2->total_weight > block1->total_weight ||
-      (block2->total_weight == block1->total_weight &&
-       block2->block_number > block1->block_number) ||
-      (block2->total_weight == block1->total_weight &&
-       block2->block_number == block1->block_number && block2->weight > block1->weight))
+  if (block1_tip < block2_tip)
   {
     heaviest_hash = block2->hash;
   }
@@ -223,7 +223,7 @@ protected:
 
     auto const main_chain_mode = GetParam();
 
-    chain_     = std::make_unique<MainChain>(false, main_chain_mode, true);
+    chain_     = std::make_unique<MainChain>(false, main_chain_mode);
     generator_ = std::make_unique<BlockGenerator>(NUM_LANES, NUM_SLICES);
     for (std::size_t i = 0; i < CABINET_SIZE; ++i)
     {
@@ -1050,9 +1050,9 @@ TEST_P(MainChainTests, StutterChain)
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain1_3b));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), chain2_2->hash);
 
-  // Tips should now only contain genesis and heaviest tip
+  // Tips should now only contain heaviest tip
   auto                          tips       = chain_->GetTips();
-  std::unordered_set<BlockHash> check_tips = {chain2_2->hash, genesis->hash};
+  std::unordered_set<BlockHash> check_tips = {chain2_2->hash};
   ASSERT_EQ(tips, check_tips);
 }
 
@@ -1124,15 +1124,15 @@ TEST_P(MainChainTests, CheckReindexingOfTipsWithStutter)
   //                                │           │           └─▶│B14 │
   //                                │  ┌────┐   │              └────┘
   //                                └─▶│ B4 │───┤
-  //                                   └────┘   │              ┌────┐
-  //                                            │           ┌─▶│B15 │
-  //                                            │   ┌────┐  │  └────┘
-  //                                            └──▶│ B8 │──┤
-  //                                                └────┘  │  ┌────┐
-  //                                                        └─▶│B16 │
-  //                                                           └────┘
+  //                                   └────┘   │
+  //                                            │
+  //                                            │   ┌────┐     ┌────┐
+  //                                            └──▶│ B8 │────▶│B15 │
+  //                                                └────┘     └────┘
   //
-  std::vector<BlockPtr> chain(17);
+  //
+  //
+  std::vector<BlockPtr> chain(16);
   // Need to give blocks with the same block number different weights
   chain[0]  = generator_->Generate();
   chain[1]  = Generate(generator_, cabinet_, chain[0]);
@@ -1150,7 +1150,6 @@ TEST_P(MainChainTests, CheckReindexingOfTipsWithStutter)
   chain[13] = Generate(generator_, cabinet_, chain[7], 5);
   chain[14] = Generate(generator_, cabinet_, chain[7], 6);
   chain[15] = Generate(generator_, cabinet_, chain[8], 7);
-  chain[16] = Generate(generator_, cabinet_, chain[8], 8);
 
   // add all the tips
   for (std::size_t i = 1; i < chain.size(); ++i)
@@ -1167,7 +1166,7 @@ TEST_P(MainChainTests, CheckReindexingOfTipsWithStutter)
   std::unordered_set<BlockHash> previous_to_stutter;
   stutter[0] = Generate(generator_, cabinet_, chain[5], 1);
   stutter[1] = Generate(generator_, cabinet_, chain[6], 4);
-  stutter[2] = Generate(generator_, cabinet_, chain[8], 8);
+  stutter[2] = Generate(generator_, cabinet_, chain[8], 7);
 
   for (auto const &block : stutter)
   {
@@ -1176,13 +1175,15 @@ TEST_P(MainChainTests, CheckReindexingOfTipsWithStutter)
     previous_to_stutter.insert(block->previous_hash);
   }
 
-  // check tips contain no stutter blocks but have replaced them with their previous
-  auto const new_tips                 = chain_->GetTips();
-  auto const stutter_in_tips          = new_tips & stutter_tips;
-  auto const stutter_previous_in_tips = new_tips & previous_to_stutter;
+  // check tips contain no stutter blocks. Only one previous to stutter blocks
+  // are added as majority are not tips
+  auto const                    new_tips                      = chain_->GetTips();
+  auto const                    stutter_in_tips               = new_tips & stutter_tips;
+  auto const                    stutter_previous_in_tips      = new_tips & previous_to_stutter;
+  std::unordered_set<BlockHash> stutter_previous_in_tips_test = {stutter[2]->previous_hash};
   ASSERT_TRUE(stutter_in_tips.empty());
-  ASSERT_EQ(previous_to_stutter, stutter_previous_in_tips);
-  ASSERT_TRUE(chain_->GetHeaviestBlockHash() == chain[15]->hash);
+  ASSERT_EQ(stutter_previous_in_tips_test, stutter_previous_in_tips);
+  ASSERT_TRUE(chain_->GetHeaviestBlockHash() == chain[14]->hash);
 
   // force the chain to index its tips again
   ASSERT_TRUE(chain_->ReindexTips());
