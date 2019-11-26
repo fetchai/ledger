@@ -94,24 +94,23 @@ void MuddleLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
   for (auto const &target_peer_index : txpeers)
   {
     auto peer = peers_[target_peer_index];
-    auto tmp = client->CallSpecificAddress(
-        fetch::byte_array::FromBase64(byte_array::ConstByteArray(peer)), RPC_DMLF,
-        MuddleLearnerNetworkerProtocol::RECV_BYTES, data);
-    FETCH_LOG_INFO(LOGGING_NAME, "Sending targ=", peer, " prom=", tmp -> id());
+    auto tmp =
+        client->CallSpecificAddress(fetch::byte_array::FromBase64(byte_array::ConstByteArray(peer)),
+                                    RPC_DMLF, MuddleLearnerNetworkerProtocol::RECV_BYTES, data);
+    FETCH_LOG_INFO(LOGGING_NAME, "Sending targ=", peer, " prom=", tmp->id());
 
     promises.push_back(tmp);
   }
 
   for (auto &prom : promises)
   {
-//    prom->Wait();
     if (prom->Wait())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Success prom=", prom -> id());
+      FETCH_LOG_INFO(LOGGING_NAME, "Success prom=", prom->id());
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Whups prom=", prom -> id());
+      FETCH_LOG_INFO(LOGGING_NAME, "Whups prom=", prom->id());
     }
   }
 }
@@ -191,8 +190,8 @@ void MuddleLearnerNetworker::NetworkConfigInit(fetch::json::JSONDocument &doc,
   std::unordered_set<std::string> initial_peers;
 
   math::SizeType INITIAL_PEERS_COUNT = 10;
-  auto config_peers      = doc.root()["peers"];
-  auto config_peer_count = config_peers.size();
+  auto           config_peers        = doc.root()["peers"];
+  auto           config_peer_count   = config_peers.size();
   for (std::size_t peer_number = 0; peer_number < config_peer_count; peer_number++)
   {
     if (peer_number != instance_number)
@@ -213,27 +212,10 @@ void MuddleLearnerNetworker::NetworkConfigInit(fetch::json::JSONDocument &doc,
     }
   }
   mud_->Start(initial_peers, {port});
-
-//  if (instance_number > 0)
-//  {
-//    initial_peers.insert(
-//        config_peers[(instance_number + 1) % config_peer_count]["uri"].As<std::string>());
-//  }
-//
-//  mud_->Start(initial_peers, {port});
-
   server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   proto_  = std::make_shared<MuddleLearnerNetworkerProtocol>(*this);
 
   server_->Add(RPC_DMLF, proto_.get());
-
-//  for (std::size_t peer_number = 0; peer_number < config_peers.size(); peer_number++)
-//  {
-//    if (peer_number != instance_number)
-//    {
-//      peers_.emplace_back(config_peers[peer_number]["pub"].As<std::string>());
-//    }
-//  }
 }
 
 }  // namespace dmlf

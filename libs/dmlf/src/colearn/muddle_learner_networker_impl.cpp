@@ -21,8 +21,8 @@
 #include "dmlf/colearn/muddle_outbound_update_task.hpp"
 #include "dmlf/colearn/update_store.hpp"
 #include "muddle/rpc/client.hpp"
-#include <cmath>  // for modf
 #include "oef-base/monitoring/Gauge.hpp"
+#include <cmath>  // for modf
 
 namespace fetch {
 namespace dmlf {
@@ -115,11 +115,8 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, B
   for (auto const &peer : peers_)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating type=", type_name, " targ=", peer,
-                   " run=", gauge_running.get(),
-                   " pen=", gauge_pending.get(),
-                   " sus=", gauge_suspended.get(),
-                   " fut=", gauge_future.get()
-                   );
+                   " run=", gauge_running.get(), " pen=", gauge_pending.get(),
+                   " sus=", gauge_suspended.get(), " fut=", gauge_future.get());
     auto task = std::make_shared<MuddleOutboundUpdateTask>(
         peer, type_name, update, client_, broadcast_proportion_, randomiser_.GetNew());
     taskpool_->submit(task);

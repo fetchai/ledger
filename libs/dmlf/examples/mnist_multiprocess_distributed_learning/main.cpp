@@ -122,13 +122,17 @@ int main(int argc, char **argv)
 
   // Pause until start time
   std::cout << "start_time: " << start_time << std::endl;
-  if (start_time != 0) {
+  if (start_time != 0)
+  {
     SizeType now = static_cast<SizeType>(std::time(nullptr));
-    if (now < start_time) {
+    if (now < start_time)
+    {
       SizeType diff = start_time - now;
       std::cout << "Waiting for " << diff << " seconds delay before starting..." << std::endl;
       std::this_thread::sleep_for(std::chrono::seconds(diff));
-    } else {
+    }
+    else
+    {
       std::cout << "Start time is in the past" << std::endl;
     }
   }
@@ -159,7 +163,8 @@ int main(int argc, char **argv)
 
     client->RunAlgorithms();
   }
-  (void) system("gsutil cp /app/results/* gs://ml-3000/results/");
+  int res = system("gsutil cp /app/results/* gs://ml-3000/results/");
+  std::cout << "system() result: " << res << std::endl;
 
   while (true)
   {

@@ -22,13 +22,13 @@
 #include "crypto/ecdsa.hpp"
 #include "dmlf/networkers/abstract_learner_networker.hpp"
 #include "json/document.hpp"
+#include "logging/logging.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/peer.hpp"
 #include "network/service/protocol.hpp"
-#include "logging/logging.hpp"
 
 #include <memory>
 

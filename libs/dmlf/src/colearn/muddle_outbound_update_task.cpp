@@ -31,14 +31,17 @@ MuddleOutboundUpdateTask::ExitState MuddleOutboundUpdateTask::run()
   auto prom = client_->CallSpecificAddress(
       fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_)), RPC_COLEARN,
       ColearnProtocol::RPC_COLEARN_UPDATE, type_name_, update_, proportion_, random_factor_);
-  FETCH_LOG_INFO(LOGGING_NAME, "Sending type=", type_name_, " targ=", target_, " prom=", prom -> id());
+  FETCH_LOG_INFO(LOGGING_NAME, "Sending type=", type_name_, " targ=", target_,
+                 " prom=", prom->id());
   if (prom->Wait())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Success type=", type_name_, " targ=", target_, " prom=", prom -> id());
+    FETCH_LOG_INFO(LOGGING_NAME, "Success type=", type_name_, " targ=", target_,
+                   " prom=", prom->id());
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Whups type=", type_name_, " targ=", target_, " prom=", prom -> id());
+    FETCH_LOG_INFO(LOGGING_NAME, "Whups type=", type_name_, " targ=", target_,
+                   " prom=", prom->id());
   }
   return ExitState::COMPLETE;
 }
