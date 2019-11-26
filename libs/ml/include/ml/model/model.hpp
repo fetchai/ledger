@@ -81,15 +81,15 @@ public:
   void     Predict(TensorType &input, TensorType &output);
   DataType Evaluate(std::vector<MetricType> const &metrics = std::vector<MetricType>());
 
-  template <typename ...Params>
-  void     SetData(Params params...);
+  template <typename... Params>
+  void SetData(Params params...);
 
   void UpdateConfig(ModelConfig<DataType> &model_config);
 
   /// getters and setters ///
   void SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr);
 
-  std::shared_ptr<const DataLoaderType> GetDataloader();
+  std::shared_ptr<const DataLoaderType>     GetDataloader();
   std::shared_ptr<const ModelOptimiserType> GetOptimiser();
 
   std::string InputName();
@@ -262,12 +262,11 @@ typename Model<TensorType>::DataType Model<TensorType>::Evaluate(
 }
 
 template <typename TensorType>
-template <typename ...Params>
-void Model<TensorType>::SetData(Params ...params)
+template <typename... Params>
+void Model<TensorType>::SetData(Params... params)
 {
   dataloader_ptr_->AddData(params...);
 }
-
 
 template <typename TensorType>
 void Model<TensorType>::UpdateConfig(ModelConfig<DataType> &model_config)
@@ -301,11 +300,11 @@ std::shared_ptr<const typename Model<TensorType>::DataLoaderType> Model<TensorTy
  * @return
  */
 template <typename TensorType>
-std::shared_ptr<const typename Model<TensorType>::ModelOptimiserType> Model<TensorType>::GetOptimiser()
+std::shared_ptr<const typename Model<TensorType>::ModelOptimiserType>
+Model<TensorType>::GetOptimiser()
 {
   return optimiser_ptr_;
 }
-
 
 template <typename TensorType>
 std::string Model<TensorType>::InputName()

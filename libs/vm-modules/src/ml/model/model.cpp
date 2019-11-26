@@ -313,7 +313,6 @@ void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        opt
   model_->Compile(optimiser_type);
 }
 
-
 void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
                   fetch::math::SizeType const &batch_size)
 {
