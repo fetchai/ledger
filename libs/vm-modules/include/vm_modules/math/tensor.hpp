@@ -49,7 +49,7 @@ public:
   class TensorEstimator
   {
   public:
-    using VMObjectType   = VMTensor;
+    using VMObjectType = VMTensor;
     using ChargeAmount = fetch::vm::ChargeAmount;
 
     explicit TensorEstimator(VMObjectType &tensor);
@@ -92,7 +92,7 @@ public:
 
   private:
     ChargeAmount const low_charge{fetch::vm::CHARGE_UNIT};
-    ChargeAmount charge_func_of_tensor_size(std::size_t factor = 1);
+    ChargeAmount       charge_func_of_tensor_size(std::size_t factor = 1);
 
     VMObjectType &tensor_;
   };

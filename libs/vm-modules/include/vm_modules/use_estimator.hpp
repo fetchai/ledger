@@ -23,28 +23,38 @@
 namespace fetch {
 namespace vm_modules {
 
+namespace internal {
+
+template <typename... EtchArgs>
+struct EstimatorFromMemberFunction
+{
+  template <typename Callable>
+  static auto MakeEstimator(Callable &&estimator)
+  {
+    using EstimatorType = typename meta::CallableTraits<Callable>::OwningType;
+    return [estimator](vm::Ptr<typename EstimatorType::VMObjectType> context,
+                       EtchArgs... args) -> vm::ChargeAmount {
+      return meta::Invoke(estimator, context->Estimator(), args...);
+    };
+  }
+};
+
+}  // namespace internal
+
 /*
-  Converts a member function `estimator` of an estimator object `EstimatorType` to a free function
+  Converts a member function `estimator` of an estimator object to a free function
   intended to be used as a charge estimation for a VM object member function.
 
-  - `EstimatorType` : the type of the estimator object, should define an `ObjectType` that
-  corresponds to the type of the vm object it is providing estimators for
-
-  - `estimator`     : should be a member function of the class `EstimatorType`
-
-  - `EtchArgs...`   : list of arguments of of the `estimator` member function as well as the vm
-  object one
+  - `estimator`   : pointer of the estimator object member function to be used
 
 */
 
-template <typename EstimatorType, typename... EtchArgs>
-vm::ChargeEstimator<vm::Ptr<typename EstimatorType::VMObjectType>, EtchArgs...> use_estimator(
-    vm::ChargeAmount (EstimatorType::*estimator)(EtchArgs... args))
+template <typename Callable>
+auto use_estimator(Callable &&estimator)
 {
-  return
-      [estimator](vm::Ptr<typename EstimatorType::VMObjectType> context, EtchArgs... args) -> vm::ChargeAmount {
-        return (context->Estimator().*estimator)(args...);
-      };
+  using EtchArgs = typename meta::CallableTraits<Callable>::ArgsTupleType;
+  return meta::UnpackTuple<EtchArgs, internal::EstimatorFromMemberFunction>::MakeEstimator(
+      std::forward<Callable>(estimator));
 }
 
 }  // namespace vm_modules
