@@ -51,7 +51,9 @@ private:
   using QueueId = std::string;
   QueueId Id(Algorithm const &algo, UpdateType const &type) const;
 
-  Criteria Lifo = [](UpdatePtr update) -> double { return -update->TimeSinceCreation().count(); };
+  Criteria Lifo = [](UpdatePtr const &update) -> double {
+    return -update->TimeSinceCreation().count();
+  };
 
   using Mutex           = fetch::Mutex;
   using Lock            = std::unique_lock<Mutex>;
