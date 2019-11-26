@@ -22,6 +22,7 @@
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/model/model_config.hpp"
 #include "ml/ops/loss_functions/types.hpp"
+#include "ml/ops/metrics/categorical_accuracy.hpp"
 #include "ml/ops/metrics/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/types.hpp"
@@ -41,11 +42,6 @@ class ClientAlgorithm;
 namespace ml {
 namespace model {
 
-//enum class MetricType
-//{
-//  LOSS,
-//  ACCURACY
-//};
 
 template <typename TensorType>
 class Model
@@ -59,6 +55,7 @@ public:
   using GraphPtrType       = typename std::shared_ptr<GraphType>;
   using DataLoaderPtrType  = typename std::shared_ptr<DataLoaderType>;
   using OptimiserPtrType   = typename std::shared_ptr<ModelOptimiserType>;
+  using DataVectorType     = std::vector<DataType>;
 
   explicit Model(ModelConfig<DataType> model_config = ModelConfig<DataType>())
     : model_config_(std::move(model_config))
@@ -72,16 +69,16 @@ public:
 
   virtual ~Model() = default;
 
-  void Compile(OptimiserType optimiser_type, ops::LossType loss_type = ops::LossType::NONE);
+  void Compile(OptimiserType optimiser_type, ops::LossType loss_type = ops::LossType::NONE,
+               std::vector<ops::MetricType> const &metrics = std::vector<ops::MetricType>());
   void SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr);
-  void SetOptimiser(OptimiserPtrType optimiser_ptr);
 
-  void     Train();
-  void     Train(SizeType n_rounds);
-  void     Train(SizeType n_rounds, DataType &loss);
-  void     Test(DataType &test_loss);
-  void     Predict(TensorType &input, TensorType &output);
-  DataType Evaluate(std::vector<ops::MetricType> const &metrics = std::vector<ops::MetricType>());
+  void           Train();
+  void           Train(SizeType n_rounds);
+  void           Train(SizeType n_rounds, DataType &loss);
+  void           Test(DataType &test_loss);
+  void           Predict(TensorType &input, TensorType &output);
+  DataVectorType Evaluate();
 
   void UpdateConfig(ModelConfig<DataType> &model_config);
 
@@ -100,10 +97,11 @@ protected:
   DataLoaderPtrType     dataloader_ptr_;
   OptimiserPtrType      optimiser_ptr_;
 
-  std::string input_;
-  std::string label_;
-  std::string output_;
-  std::string error_;
+  std::string              input_;
+  std::string              label_;
+  std::string              output_;
+  std::string              error_;
+  std::vector<std::string> metrics_;
 
   bool loss_set_      = false;
   bool optimiser_set_ = false;
@@ -117,12 +115,12 @@ protected:
 private:
   friend class dmlf::collective_learning::ClientAlgorithm<TensorType>;
 
-  bool SetOptimiser();
   void TrainImplementation(DataType &loss, SizeType n_rounds = 1);
 };
 
 template <typename TensorType>
-void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss_type)
+void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss_type,
+                                std::vector<ops::MetricType> const &metrics)
 {
   // add loss to graph
   if (!loss_set_)
@@ -165,6 +163,46 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
       throw ml::exceptions::InvalidMode(
           "attempted to set loss function on compile but loss function already previously set! "
           "maybe using wrong type of model?");
+    }
+  }
+
+  for (auto const &met : metrics)
+  {
+    switch (met)
+    {
+    case (ops::MetricType::CATEGORICAL_ACCURACY):
+    {
+      metrics_.emplace_back(graph_ptr_->template AddNode<ops::CategoricalAccuracy<TensorType>>(
+          "", {output_, label_}));
+      break;
+    }
+    case ops::MetricType::CROSS_ENTROPY:
+    {
+      metrics_.emplace_back(
+          graph_ptr_->template AddNode<ops::CrossEntropyLoss<TensorType>>("", {output_, label_}));
+
+      break;
+    }
+    case ops::MetricType::MEAN_SQUARE_ERROR:
+    {
+
+      metrics_.emplace_back(graph_ptr_->template AddNode<ops::MeanSquareErrorLoss<TensorType>>(
+          "", {output_, label_}));
+
+      break;
+    }
+    case ops::MetricType::SOFTMAX_CROSS_ENTROPY:
+    {
+
+      metrics_.emplace_back(graph_ptr_->template AddNode<ops::SoftmaxCrossEntropyLoss<TensorType>>(
+          "", {output_, label_}));
+
+      break;
+    }
+    default:
+    {
+      throw ml::exceptions::InvalidMode("unrecognised metric type in model compilation");
+    }
     }
   }
 
@@ -260,11 +298,28 @@ void Model<TensorType>::Predict(TensorType &input, TensorType &output)
 }
 
 template <typename TensorType>
-typename Model<TensorType>::DataType Model<TensorType>::Evaluate(
-    std::vector<ops::MetricType> const &metrics)
+typename Model<TensorType>::DataVectorType Model<TensorType>::Evaluate()
 {
-  FETCH_UNUSED(metrics);
-  return loss_;
+  if (!compiled_)
+  {
+    throw ml::exceptions::InvalidMode("must compile model before evaluating");
+  }
+
+  dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
+  bool is_done_set;
+  auto evaluate_pair = dataloader_ptr_->PrepareBatch(model_config_.batch_size, is_done_set);
+
+  this->graph_ptr_->SetInput(label_, evaluate_pair.first);
+  this->graph_ptr_->SetInput(input_, evaluate_pair.second.at(0));
+
+  DataVectorType ret;
+  ret.emplace_back(*(this->graph_ptr_->Evaluate(error_).cbegin()));
+
+  for (auto const &met : metrics_)
+  {
+    ret.emplace_back(*(this->graph_ptr_->Evaluate(met).cbegin()));
+  }
+  return ret;
 }
 
 template <typename TensorType>
@@ -321,8 +376,8 @@ void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
 
-  loss_              = DataType{0};
-  DataType min_loss  = fetch::math::numeric_max<DataType>();
+  loss_ = DataType{0};
+  DataType min_loss;
   DataType test_loss = fetch::math::numeric_max<DataType>();
   SizeType patience_count{0};
   bool     stop_early = false;
@@ -483,7 +538,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
   template <typename MapType>
   static void DeserializeDataLoader(MapType map, Type &sp)
   {
-    uint8_t loader_type;
+    uint8_t loader_type{};
     map.ExpectKeyGetValue(DATALOADER_TYPE, loader_type);
 
     switch (static_cast<ml::LoaderType>(loader_type))
@@ -514,7 +569,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
   template <typename MapType>
   static void DeserializeOptimiser(MapType map, Type &sp)
   {
-    uint8_t optimiser_type;
+    uint8_t optimiser_type{};
     map.ExpectKeyGetValue(OPTIMISER_TYPE, optimiser_type);
 
     switch (static_cast<ml::OptimiserType>(optimiser_type))

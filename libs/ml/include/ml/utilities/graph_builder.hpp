@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <ml/ops/metrics/categorical_accuracy.hpp>
 #include "ml/core/graph.hpp"
 
 #include "ml/layers/PRelu.hpp"
@@ -551,6 +552,17 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
+  case OpType::METRIC_CATEGORICAL_ACCURACY: {
+    op_ptr = GetOp<ops::CategoricalAccuracy<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case OpType::GRAPH:
+  case OpType::NONE:
+  case OpType::SUBGRAPH:
+  case OpType::OP_VARIABLE:  // todo: should variable and dataholder be unimplemented?
+  case OpType::OP_DATAHOLDER:
   default:
     throw ml::exceptions::NotImplemented("unknown node type");
   }

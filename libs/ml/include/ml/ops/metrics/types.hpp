@@ -23,8 +23,10 @@ namespace ops {
 
 enum class MetricType
 {
-  NONE,
-  CATEGORICAL_ACCURACY
+  CATEGORICAL_ACCURACY,
+  CROSS_ENTROPY,
+  MEAN_SQUARE_ERROR,
+  SOFTMAX_CROSS_ENTROPY
 };
 }
 }  // namespace ml

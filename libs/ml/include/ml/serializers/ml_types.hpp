@@ -391,6 +391,18 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
                                                                                         op);
     break;
   }
+  case ml::OpType::METRIC_CATEGORICAL_ACCURACY:
+  {
+    SerializeImplementation<TensorType, D, ml::OpCategoricalAccuracySaveableParams<TensorType>>(map, code,
+                                                                                        op);
+    break;
+  }
+  case ml::OpType::GRAPH:
+  case ml::OpType::SUBGRAPH:
+  {
+    throw ml::exceptions::InvalidMode("Graph and subgraph shouldn't be serialized with SerializeImplementation");
+  }
+  case ml::OpType::NONE:
   default:
   {
     throw ml::exceptions::InvalidMode("Unknown type for Serialization");
@@ -756,7 +768,20 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
         map, code);
     break;
   }
-  default:
+    case ml::OpType::METRIC_CATEGORICAL_ACCURACY: {
+
+      op = DeserializeImplementation<TensorType, D, ml::OpCategoricalAccuracySaveableParams<TensorType>>(
+          map, code);
+      break;
+    }
+    case ml::OpType::GRAPH:
+    case ml::OpType::SUBGRAPH:
+    {
+      throw ml::exceptions::InvalidMode("Graph and Subgraph shouldn't be deserialized with DeserializeImplementation");
+      break;
+    }
+    case ml::OpType::NONE:
+    default:
   {
     throw ml::exceptions::InvalidMode("Unknown type for Deserialization");
   }
