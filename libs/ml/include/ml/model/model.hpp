@@ -72,9 +72,8 @@ public:
   virtual ~Model() = default;
 
   void Compile(OptimiserType optimiser_type, ops::LossType loss_type = ops::LossType::NONE);
-  void SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr);
-  void SetOptimiser(OptimiserPtrType optimiser_ptr);
 
+  /// training and testing ///
   void     Train();
   void     Train(SizeType n_rounds);
   void     Train(SizeType n_rounds, DataType &loss);
@@ -82,9 +81,17 @@ public:
   void     Predict(TensorType &input, TensorType &output);
   DataType Evaluate(std::vector<MetricType> const &metrics = std::vector<MetricType>());
 
+  template <typename ...Params>
+  void     SetData(Params params...);
+
   void UpdateConfig(ModelConfig<DataType> &model_config);
 
-  /// FUNCTIONS THAT EXPOSE THE INTERNALS ///
+  /// getters and setters ///
+  void SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr);
+
+  std::shared_ptr<const DataLoaderType> GetDataloader();
+  std::shared_ptr<const ModelOptimiserType> GetOptimiser();
+
   std::string InputName();
   std::string LabelName();
   std::string OutputName();
@@ -116,7 +123,6 @@ protected:
 private:
   friend class dmlf::collective_learning::ClientAlgorithm<TensorType>;
 
-  bool SetOptimiser();
   void TrainImplementation(DataType &loss, SizeType n_rounds = 1);
 };
 
@@ -180,17 +186,6 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
   }
 
   compiled_ = true;
-}
-
-/**
- * Overwrite the models dataloader with an external custom dataloader.
- * @tparam TensorType
- * @param dataloader_ptr
- */
-template <typename TensorType>
-void Model<TensorType>::SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr)
-{
-  dataloader_ptr_ = dataloader_ptr;
 }
 
 /**
@@ -267,10 +262,50 @@ typename Model<TensorType>::DataType Model<TensorType>::Evaluate(
 }
 
 template <typename TensorType>
+template <typename ...Params>
+void Model<TensorType>::SetData(Params ...params)
+{
+  dataloader_ptr_->AddData(params...);
+}
+
+
+template <typename TensorType>
 void Model<TensorType>::UpdateConfig(ModelConfig<DataType> &model_config)
 {
   model_config_ = model_config;
 }
+
+/**
+ * Overwrite the models dataloader with an external custom dataloader.
+ * @tparam TensorType
+ * @param dataloader_ptr
+ */
+template <typename TensorType>
+void Model<TensorType>::SetDataloader(std::shared_ptr<DataLoaderType> dataloader_ptr)
+{
+  dataloader_ptr_ = dataloader_ptr;
+}
+
+/**
+ * returns a pointer to the models dataloader
+ * @return
+ */
+template <typename TensorType>
+std::shared_ptr<const typename Model<TensorType>::DataLoaderType> Model<TensorType>::GetDataloader()
+{
+  return dataloader_ptr_;
+}
+
+/**
+ * returns a pointer to the models optimiser
+ * @return
+ */
+template <typename TensorType>
+std::shared_ptr<const typename Model<TensorType>::ModelOptimiserType> Model<TensorType>::GetOptimiser()
+{
+  return optimiser_ptr_;
+}
+
 
 template <typename TensorType>
 std::string Model<TensorType>::InputName()
@@ -296,6 +331,8 @@ std::string Model<TensorType>::ErrorName()
   return error_;
 }
 
+/// PROTECTED METHODS ///
+
 template <typename TensorType>
 void Model<TensorType>::PrintStats(SizeType epoch, DataType loss, DataType test_loss)
 {
@@ -309,6 +346,8 @@ void Model<TensorType>::PrintStats(SizeType epoch, DataType loss, DataType test_
     std::cout << "epoch: " << epoch << ", loss: " << loss << std::endl;
   }
 }
+
+/// PRIVATE METHODS ///
 
 template <typename TensorType>
 void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)

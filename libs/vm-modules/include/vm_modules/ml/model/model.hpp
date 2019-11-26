@@ -113,6 +113,8 @@ private:
   ModelCategory      model_category_ = ModelCategory::NONE;
 
   void Init(std::string const &model_category);
+
+  void CompileDataloader();
 };
 
 }  // namespace model
