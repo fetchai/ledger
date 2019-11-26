@@ -61,7 +61,7 @@ uint64_t GetPoissonSample(uint64_t range, double mean_of_distribution)
 void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Updating new current block: ", current.hash.ToHex(),
-                 " num: ", current.block_number);
+                  " num: ", current.block_number);
 
   if (current == current_block_)
   {
@@ -116,12 +116,12 @@ NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
   if (!(current_time_ms > decided_next_timestamp_ms_))
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Waiting before producing block. Milliseconds to wait: ",
-                   decided_next_timestamp_ms_ - current_time_ms);
+                    decided_next_timestamp_ms_ - current_time_ms);
     return ret;
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Generating block. Current time: ", current_time_ms,
-                 " deadline: ", decided_next_timestamp_ms_);
+                  " deadline: ", decided_next_timestamp_ms_);
 
   // Number of block we want to generate
   uint64_t const block_number = current_block_.block_number + 1;
@@ -132,7 +132,7 @@ NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
   // is well formed
   ret->previous_hash = current_block_.hash;
   ret->block_number  = block_number;
-  ret->miner_id  = mining_identity_;
+  ret->miner_id      = mining_identity_;
   ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
   ret->weight    = GetPoissonSample(200, 50);
 

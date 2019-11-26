@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/consensus_interface.hpp"
-#include "ledger/chain/block.hpp"
 #include "crypto/identity.hpp"
+#include "ledger/chain/block.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 
 namespace fetch {
@@ -29,7 +29,7 @@ class SimulatedPowConsensus final : public ConsensusInterface
 {
 public:
   using Identity = crypto::Identity;
-  using Block = ledger::Block;
+  using Block    = ledger::Block;
 
   // Construction / Destruction
   explicit SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms);

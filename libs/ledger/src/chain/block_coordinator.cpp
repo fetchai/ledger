@@ -83,7 +83,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &block_sink, ProverPtr prover,
                                    uint32_t log2_num_lanes, std::size_t num_slices,
-                                   ConsensusPtr consensus,
+                                   ConsensusPtr         consensus,
                                    SynergeticExecMgrPtr synergetic_exec_manager)
   : chain_{chain}
   , dag_{std::move(dag)}
@@ -199,10 +199,10 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
 
   state_machine_->OnStateChange([this](State current, State previous) {
     FETCH_UNUSED(this);
-     if (periodic_print_.Poll())
+    if (periodic_print_.Poll())
     {
-    FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
-                   " (previous: ", ToString(previous), ")");
+      FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
+                     " (previous: ", ToString(previous), ")");
     }
   });
 
@@ -217,9 +217,9 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
 void BlockCoordinator::TriggerBlockGeneration()
 {
   // TODO(HUT): delete or redo this.
-  //if (mining_)
+  // if (mining_)
   //{
-    next_block_time_ = Clock::now();
+  next_block_time_ = Clock::now();
   //}
 }
 

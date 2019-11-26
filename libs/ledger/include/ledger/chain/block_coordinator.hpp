@@ -191,8 +191,8 @@ public:
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
 
-  //template <typename R, typename P>
-  //void SetBlockPeriod(std::chrono::duration<R, P> const &period);
+  // template <typename R, typename P>
+  // void SetBlockPeriod(std::chrono::duration<R, P> const &period);
   void TriggerBlockGeneration();  // useful in tests
 
   std::weak_ptr<core::Runnable> GetWeakRunnable()
