@@ -215,8 +215,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
  * needed
  */
 void BlockCoordinator::TriggerBlockGeneration()
-{
-}
+{}
 
 BlockCoordinator::State BlockCoordinator::OnReloadState()
 {
