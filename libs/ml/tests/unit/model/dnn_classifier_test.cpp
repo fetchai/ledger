@@ -105,7 +105,7 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   EXPECT_EQ(eval.size(), 2);
 
   // check loss
-  double double_tolerance = static_cast<double>(tolerance);
+  auto double_tolerance = static_cast<double>(tolerance);
   EXPECT_NEAR(static_cast<double>(eval[0]), 0, double_tolerance);
 
   // check accuracy
