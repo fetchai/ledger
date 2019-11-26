@@ -100,17 +100,17 @@ function myFunction(arr: Array< Array< Float64 > >, msg: String, i: Int64, mymap
   assert(arr[1].count() == 2);
   assert(arr[2].count() == 3);
 
-  assert(arr[0][0] == 9.);
-  assert(arr[0][1] == 2.);
-  assert(arr[0][2] == 3.);
-  assert(arr[0][3] == 4.);
+  assert(arr[0][0] == 9.0);
+  assert(arr[0][1] == 2.0);
+  assert(arr[0][2] == 3.0);
+  assert(arr[0][3] == 4.0);
 
-  assert(arr[1][0] == 2.);
-  assert(arr[1][1] == 3.);
+  assert(arr[1][0] == 2.0);
+  assert(arr[1][1] == 3.0);
 
-  assert(arr[2][0] == 2.);
-  assert(arr[2][1] == 3.);
-  assert(arr[2][2] == 4.);
+  assert(arr[2][0] == 2.0);
+  assert(arr[2][1] == 3.0);
+  assert(arr[2][2] == 4.0);
 
   assert(msg == "Hello world");
 
@@ -166,17 +166,17 @@ function myFunction(arr: Array< Array< Float64 > >, msg: String, i: Int64, mymap
   assert(arr[1].count() == 2);
   assert(arr[2].count() == 3);
 
-  assert(arr[0][0] == 9.);
-  assert(arr[0][1] == 2.);
-  assert(arr[0][2] == 3.);
-  assert(arr[0][3] == 4.);
+  assert(arr[0][0] == 9.0);
+  assert(arr[0][1] == 2.0);
+  assert(arr[0][2] == 3.0);
+  assert(arr[0][3] == 4.0);
 
-  assert(arr[1][0] == 2.);
-  assert(arr[1][1] == 3.);
+  assert(arr[1][0] == 2.0);
+  assert(arr[1][1] == 3.0);
 
-  assert(arr[2][0] == 2.);
-  assert(arr[2][1] == 3.);
-  assert(arr[2][2] == 4.);
+  assert(arr[2][0] == 2.0);
+  assert(arr[2][1] == 3.0);
+  assert(arr[2][2] == 4.0);
 
   assert(msg == "Hello world");
 
