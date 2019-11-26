@@ -1368,9 +1368,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   // we expect only non-loose blocks here
   assert(!block->is_loose);
 
-  // expect weight to be correct
-  assert(Consensus::GetBlockGenerationWeight(*this, *block, block->miner_id) == block->weight);
-
   // by definition this also means we expect blocks to have a valid parent block too
   assert(static_cast<bool>(prev_block));
 
