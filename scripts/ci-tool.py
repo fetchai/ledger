@@ -181,7 +181,7 @@ def parse_commandline():
     parser.add_argument('-m', '--metrics',
                         action='store_true', help='Store the metrics')
     parser.add_argument('--test-names', type=lambda cli_arg: frozenset(cli_arg.split(',')),
-                        help='Comma-separated list of end-to-end tests to run (default: all)')
+                        help='Comma-separated list of specific tests to run (default: all)')
 
     return parser.parse_args()
 
@@ -232,7 +232,7 @@ def clean_files(build_root):
             os.remove(data_path)
 
 
-def test_project(build_root, include_regex=None, exclude_regex=None):
+def test_project(build_root, include_regex=None, exclude_regex=None, test_names=None):
     TEST_NAME = 'Test'
 
     if not isdir(build_root):
@@ -249,6 +249,10 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
         '-T', TEST_NAME
     ]
 
+    if test_names is not None:
+        # Need to convert test names from set to a regex of ORs
+        names_as_regex = "|".join(str(x) for x in test_names)
+        cmd = cmd + ['-R', names_as_regex]
     if include_regex is not None:
         cmd = cmd + ['-L', str(include_regex)]
     if exclude_regex is not None:
@@ -410,7 +414,8 @@ def main():
     if args.test or args.all:
         test_project(
             build_root,
-            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
+            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS),
+            test_names=args.test_names)
 
     if args.language_tests or args.all:
         test_language(build_root)
@@ -418,12 +423,14 @@ def main():
     if args.slow_tests or args.all:
         test_project(
             build_root,
-            include_regex=SLOW_TEST_LABEL)
+            include_regex=SLOW_TEST_LABEL,
+            test_names=args.test_names)
 
     if args.integration_tests or args.all:
         test_project(
             build_root,
-            include_regex=INTEGRATION_TEST_LABEL)
+            include_regex=INTEGRATION_TEST_LABEL,
+            test_names=args.test_names)
 
     if args.end_to_end_tests or args.all:
         test_end_to_end(project_root, build_root, args.test_names)
