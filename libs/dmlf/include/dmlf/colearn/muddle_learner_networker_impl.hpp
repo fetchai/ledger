@@ -58,6 +58,11 @@ public:
   using Signer             = fetch::crypto::ECDSASigner;
   using Randomiser         = RandomDouble;
   using SignerPtr          = std::shared_ptr<Signer>;
+  using Payload            = fetch::muddle::Packet::Payload;
+  using Address            = fetch::muddle::Address;
+  using Uri                = fetch::network::Uri;
+  using SubscriptionPtr    = fetch::muddle::MuddleEndpoint::SubscriptionPtr;
+  using Peers              = std::unordered_set<Address>;
 
   static constexpr char const *LOGGING_NAME = "MuddleLearnerNetworkerImpl";
 
@@ -72,12 +77,10 @@ public:
   bool                        operator==(MuddleLearnerNetworkerImpl const &other) = delete;
   bool                        operator<(MuddleLearnerNetworkerImpl const &other)  = delete;
 
-  void addTarget(const std::string &peer);
-
   void PushUpdate(UpdateInterfacePtr const &update) override;
   void PushUpdateType(const std::string &type_name, UpdateInterfacePtr const &update) override;
   void PushUpdateBytes(const std::string &type_name, Bytes const &update);
-
+  void PushUpdateBytes(const std::string &type_name, Bytes const &update, Peers peers);
   UpdateStore::UpdatePtr GetUpdate(UpdateStore::Algorithm const & algo,
                                    UpdateStore::UpdateType const &type)
   {
@@ -115,8 +118,13 @@ public:
     broadcast_proportion_ = proportion;
   }
 
+  Address     GetAddress() const;
+  std::string GetAddressAsString() const;
+
 protected:
-  void setup(MuddlePtr mud, StorePtr update_store);
+  void     Setup(MuddlePtr mud, StorePtr update_store);
+  uint64_t ProcessUpdate(const std::string &type_name, byte_array::ConstByteArray bytes,
+                         double proportion, double random_factor, const std::string &source);
 
 private:
   std::shared_ptr<Taskpool>   taskpool_;
@@ -129,8 +137,8 @@ private:
   Randomiser                  randomiser_;
   double                      broadcast_proportion_;
   double                      randomising_offset_;
-
-  std::unordered_set<std::string> peers_;
+  SubscriptionPtr             subscription_;
+  byte_array::ConstByteArray  public_key_;
 
   std::shared_ptr<NetMan> netm_;
 

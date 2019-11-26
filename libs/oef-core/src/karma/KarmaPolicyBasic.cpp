@@ -203,7 +203,7 @@ KarmaPolicyBasic::KARMA KarmaPolicyBasic::afterwards(KARMA              currentB
       }
     }
   }
-  catch (XKarma &x)
+  catch (XKarma const &x)
   {
     throw XKarma(std::string("actions:") + actions + " result in disconnect due to Karma policy");
   }
