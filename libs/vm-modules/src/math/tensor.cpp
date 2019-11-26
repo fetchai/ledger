@@ -28,11 +28,14 @@
 
 using namespace fetch::vm;
 
-namespace fetch {
-namespace vm {
-static ChargeAmount CHARGE_UNIT = 1u;
+namespace {
+fetch::vm::ChargeAmount charge_func_of_tensor_size(
+    fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &ctx, size_t factor = 1)
+{
+  return static_cast<fetch::vm::ChargeAmount>(fetch::vm::CHARGE_UNIT * ctx->size() * factor);
 }
-}  // namespace fetch
+
+}  // namespace
 
 namespace fetch {
 namespace vm_modules {
@@ -72,35 +75,26 @@ void VMTensor::Bind(Module &module)
   ChargeAmount low_charge{vm::CHARGE_UNIT};
 
   // object state-dependent estimators
-  auto charge_func_of_tensor_size = [](Ptr<VMTensor> const &this_,
-                                       size_t               factor = 1) -> ChargeAmount {
-    return static_cast<ChargeAmount>(vm::CHARGE_UNIT * this_->size() * factor);
-  };
 
-  auto fill_charge_estimator = [charge_func_of_tensor_size](
-                                   Ptr<VMTensor> const &this_, DataType const &
-                                   /*value*/) -> ChargeAmount {
+  auto fill_charge_estimator = [](Ptr<VMTensor> const &this_, DataType const &
+                                  /*value*/) -> ChargeAmount {
     return charge_func_of_tensor_size(this_);
   };
 
-  auto fill_random_charge_estimator =
-      [charge_func_of_tensor_size](Ptr<VMTensor> const &this_) -> ChargeAmount {
+  auto fill_random_charge_estimator = [](Ptr<VMTensor> const &this_) -> ChargeAmount {
     return charge_func_of_tensor_size(this_);
   };
 
-  auto reshape_charge_estimator = [charge_func_of_tensor_size](
-                                      Ptr<VMTensor> const &this_, Ptr<Array<SizeType>> const &
-                                      /*new_shape*/) -> ChargeAmount {
+  auto reshape_charge_estimator = [](Ptr<VMTensor> const &this_, Ptr<Array<SizeType>> const &
+                                     /*new_shape*/) -> ChargeAmount {
     return charge_func_of_tensor_size(this_);
   };
 
-  auto squeeze_charge_estimator =
-      [charge_func_of_tensor_size](Ptr<VMTensor> const &this_) -> ChargeAmount {
+  auto squeeze_charge_estimator = [](Ptr<VMTensor> const &this_) -> ChargeAmount {
     return charge_func_of_tensor_size(this_);
   };
 
-  auto transpose_charge_estimator =
-      [charge_func_of_tensor_size](Ptr<VMTensor> const &this_) -> ChargeAmount {
+  auto transpose_charge_estimator = [](Ptr<VMTensor> const &this_) -> ChargeAmount {
     return charge_func_of_tensor_size(this_);
   };
 
@@ -112,7 +106,7 @@ void VMTensor::Bind(Module &module)
     return static_cast<ChargeAmount>(static_cast<size_t>(string->Length()) / val_size);
   };
 
-  auto to_string_charge_estimator = [charge_func_of_tensor_size](Ptr<VMTensor> const &this_) {
+  auto to_string_charge_estimator = [](Ptr<VMTensor> const &this_) {
     return charge_func_of_tensor_size(this_);
   };
 
