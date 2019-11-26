@@ -52,7 +52,7 @@ private:
   QueueId Id(Algorithm const &algo, UpdateType const &type) const;
 
   Criteria Lifo = [](UpdatePtr const &update) -> double {
-    return -update->TimeSinceCreation().count();
+    return static_cast<double>(-update->TimeSinceCreation().count());
   };
 
   using Mutex           = fetch::Mutex;
