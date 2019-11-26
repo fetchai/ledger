@@ -180,24 +180,31 @@ public:
   using RMutex        = std::recursive_mutex;
   using RLock         = std::unique_lock<RMutex>;
 
-  struct HeaviestTip
+  class HeaviestTip
   {
     using Weight = Block::Weight;
+
+    Weight   total_weight_{0};
+    Weight   weight_{0};
+    uint64_t block_number_{0};
+    // assuming every chain has a proper genesis
+    BlockHash hash_{chain::GENESIS_DIGEST};
+
+  public:
     using TipStats = std::tuple<Weight, uint64_t, Weight, BlockHash const &>;
 
-    Weight total_weight{0};
-    Weight weight{0};
-    uint64_t      block_number{0};
-    // assuming every chain has a proper genesis
-    BlockHash hash{chain::GENESIS_DIGEST};
     uint64_t chain_label{0};
 
+    HeaviestTip() = default;
+
+    BlockHash const &  Hash() const;
     constexpr TipStats Stats() const
     {
-      return TipStats{total_weight, block_number, weight, hash};
+      return TipStats{total_weight_, block_number_, weight_, hash_};
     }
+
+    void Set(Block &block);
     bool Update(Block &block);
-    bool Update(TipStats &&stats);
   };
 
   /// @name Persistence Management
@@ -259,7 +266,6 @@ public:
 
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
-  mutable BlockMap loose_cache_;  ///< A purgatory for loose blocks
   // The whole tree of previous-next relations among cached blocks
   mutable References                forward_references_;
   TipsMap                           tips_;          ///< Keep track of the tips
@@ -268,7 +274,6 @@ public:
   std::unique_ptr<BasicBloomFilter> bloom_filter_;
   bool const                        enable_bloom_filter_;
   telemetry::GaugePtr<std::size_t>  bloom_filter_queried_bit_count_;
-  mutable uint64_t                  heaviest_chain_label_{0};
   mutable IntBlockPtr               labeled_subchain_start_;
   telemetry::CounterPtr             bloom_filter_query_count_;
   telemetry::CounterPtr             bloom_filter_positive_count_;
