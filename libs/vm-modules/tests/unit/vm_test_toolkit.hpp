@@ -62,7 +62,7 @@ public:
     , module_{fetch::vm_modules::VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
   {}
 
-  bool Compile(char const *text)
+  bool Compile(std::string const &text)
   {
     std::vector<std::string> errors{};
 
