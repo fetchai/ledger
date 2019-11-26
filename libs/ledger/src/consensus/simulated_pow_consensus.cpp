@@ -91,14 +91,12 @@ void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
 
   uint64_t time_to_wait_ms = static_cast<uint64_t>(GetPoissonSample(30000, mean_time_to_block));
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Generating time to wait (ms): ", time_to_wait_ms,
-                 " mean: ", mean_time_to_block, " block time: ", block_interval_ms_);
+  bool disabled =
+      block_interval_ms_ == std::numeric_limits<uint64_t>::max() || block_interval_ms_ == 0;
 
-  bool disabled = block_interval_ms_ == std::numeric_limits<uint64_t>::max();
-
-  if(disabled)
+  if (disabled)
   {
-    decided_next_timestamp_ms_ = block_interval_ms_;
+    decided_next_timestamp_ms_ = std::numeric_limits<uint64_t>::max();
   }
   else
   {
@@ -106,6 +104,10 @@ void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
     // of other peers seen so far (bounded to 30s)
     decided_next_timestamp_ms_ = (current.timestamp * 1000) + time_to_wait_ms;
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Generating time to wait (ms): ", time_to_wait_ms,
+                 " mean: ", mean_time_to_block, " block time: ", block_interval_ms_,
+                 " decided: ", decided_next_timestamp_ms_);
 }
 
 NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
@@ -121,6 +123,11 @@ NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
     FETCH_LOG_INFO(LOGGING_NAME, "Waiting before producing block. Milliseconds to wait: ",
                    decided_next_timestamp_ms_ - current_time_ms);
     return ret;
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Generating block. Current time: ", current_time_ms,
+                   " deadline: ", decided_next_timestamp_ms_);
   }
 
   // Number of block we want to generate
