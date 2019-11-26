@@ -29,12 +29,35 @@ bool PeerTracker::IsBlacklisted(Address const & /*target*/) const
   return false;
 }
 
+void PeerTracker::SetMuddlePorts(PortsList const &ports)
+{
+  peer_tracker_protocol_.SetMuddlePorts(ports);
+  logging_name_ = "tcp://localhost:" + std::to_string(ports[0]);
+}
+
+PeerTracker::ConnectionPriorityMap PeerTracker::connection_priority() const
+{
+  FETCH_LOCK(mutex_);
+  return longlived_connection_priority_;
+}
+
+void PeerTracker::SetConfiguration(TrackerConfiguration const &config)
+{
+  FETCH_LOCK(mutex_);
+  tracker_configuration_ = config;
+}
+
 void PeerTracker::AddConnectionHandleToQueue(ConnectionHandle handle)
 {
   FETCH_LOCK(mutex_);
-  UnresolvedConnection conn_details;
-  conn_details.handle = handle;
-  new_handles_.push(conn_details);
+
+  // Registering new handle if feature is enabled
+  if (tracker_configuration_.register_connections)
+  {
+    UnresolvedConnection conn_details;
+    conn_details.handle = handle;
+    new_handles_.push(conn_details);
+  }
 }
 
 void PeerTracker::ProcessConnectionHandles()
@@ -78,7 +101,28 @@ void PeerTracker::ProcessConnectionHandles()
 
 void PeerTracker::UpdatePriorityList()
 {
-  for (auto &p : connection_priority_)
+  // Finding peers close to us
+  auto peers = peer_table_.FindPeer(own_address_);
+
+  // Adding the cloest known peers to the priority list
+  for (auto &p : peers)
+  {
+    // Skipping own address
+    if (p.address == own_address_)
+    {
+      continue;
+    }
+
+    // Creating a priority for the list
+    AddressPriority priority;
+    priority.address = p.address;
+    priority.bucket  = GetBucket(p.distance);
+
+    longlived_connection_priority_.insert({p.address, std::move(priority)});
+  }
+
+  //
+  for (auto &p : longlived_connection_priority_)
   {
     // Skipping own address
     if (p.first == own_address_)
@@ -88,63 +132,48 @@ void PeerTracker::UpdatePriorityList()
 
     // Updating and pushing to list
     p.second.UpdatePriority();
-    prioritized_peers_.push_back(p.second);
+    longlived_prioritized_peers_.push_back(p.second);
   }
 
   // Sorting according to priority
-  std::sort(prioritized_peers_.begin(), prioritized_peers_.end(),
+  std::sort(longlived_prioritized_peers_.begin(), longlived_prioritized_peers_.end(),
             [](auto const &a, auto const &b) -> bool {
               // Making highest priority appear first
               return a.priority > b.priority;
             });
 }
 
-void PeerTracker::Periodically()
+void PeerTracker::UpdareLongLivedConnections()
 {
-  FETCH_LOCK(mutex_);
+  auto const currently_outgoing = register_.GetOutgoingAddressSet();
+  auto const currently_incoming = register_.GetIncomingAddressSet();
 
-  // Getting state of our connectivity
-  auto const currently_connected_peers = register_.GetCurrentAddressSet();
-  auto const currently_incoming        = register_.GetIncomingAddressSet();
-
-  // Resolving all handles
-  ProcessConnectionHandles();
-
-  // Tracking own address will result in finding neighbourhood peers
-  // as own address is not contained in table
-
-  // TODO: Add tracking time
-  if (track_cycle_counter_ % 32 == 0)
-  {
-    AddMostPromisingPeers();
-    Track(own_address_);
-  }
-  ++track_cycle_counter_;
-
-  // Updating the priority of the peer list.
-  UpdatePriorityList();
-
-  // Connecting - note that the order matters as we connect to the closest nodes first
-  next_priority_map_.clear();
   persistent_outgoing_connections_ = 0;
-  shortlived_outgoing_connections_ = 0;
   keep_connections_.clear();
+  no_uri_.clear();
 
   uint64_t n = 0;
 
   // Primary loop to ensure that we are conencted to high priority peers
-  for (; n < prioritized_peers_.size(); ++n)
+  for (; n < longlived_prioritized_peers_.size(); ++n)
   {
     // If we have more longlived connections than the max,
     // we stop. The most important onces are now kept alive.
     if (persistent_outgoing_connections_ >= tracker_configuration_.max_longlived_outgoing)
     {
+
       break;
     }
 
     // Getting the peer details
-    auto &p = prioritized_peers_[n];
+    auto &p = longlived_prioritized_peers_[n];
     if (p.address == own_address_)
+    {
+      continue;
+    }
+
+    // Already connected treated peers are skipped
+    if (keep_connections_.find(p.address) != keep_connections_.end())
     {
       continue;
     }
@@ -155,19 +184,8 @@ void PeerTracker::Periodically()
       continue;
     }
 
-    // Short lived connections might be high priority.
-    // If we exceed the number of short lived connections, we skip
-    // any there might be left.
-    if (shortlived_outgoing_connections_ >= tracker_configuration_.max_shortlived_outgoing)
-    {
-      if (!p.persistent)
-      {
-        continue;
-      }
-    }
-
     // If not connected, we connect
-    if (currently_connected_peers.find(p.address) == currently_connected_peers.end())
+    if (currently_outgoing.find(p.address) == currently_outgoing.end())
     {
       auto suri = peer_table_.GetUri(p.address);
 
@@ -175,96 +193,65 @@ void PeerTracker::Periodically()
       network::Uri uri;
       if (suri.empty())
       {
+        no_uri_.insert(p.address);
         continue;
       }
 
       uri.Parse(suri);
-      // TODO: add callback if failure on connection
+
+      // TODO: record failure
+      FETCH_LOG_WARN(logging_name_.c_str(), "Connecting to ", uri.ToString(), " with address ",
+                     p.address.ToBase64());
       connections_.AddPersistentPeer(uri);
-      p.is_connected = true;
-      p.is_incoming  = false;
     }
 
-    // Upgrading connection if we are better off
-    // having the potentially shortlived connection as a
-    // long lived one.
-    if (p.PreferablyPersistent())
-    {
-      p.MakePersistent();
-    }
-
-    // Counting accordingly
-    if (p.persistent)
-    {
-      ++persistent_outgoing_connections_;
-    }
-    else
-    {
-      ++shortlived_outgoing_connections_;
-    }
+    ++persistent_outgoing_connections_;
 
     // Keeping track of what we have connected to.
     keep_connections_.insert(p.address);
-    next_priority_map_.insert({p.address, p});
   }
+}
 
-  // In this loop we only add shortlived connections. Should we encountering
-  // a previously longlived peer, we downgrade it.
-  for (; n < prioritized_peers_.size(); ++n)
+void PeerTracker::DisconnectDuplicates()
+{
+  auto const outgoing = register_.GetOutgoingAddressSet();
+  auto const incoming = register_.GetIncomingAddressSet();
+
+  for (auto const &adr : outgoing)
   {
-    // Stopping at max number of shortlived connections
-    if (shortlived_outgoing_connections_ >= tracker_configuration_.max_shortlived_outgoing)
+    if (incoming.find(adr) != incoming.end())
     {
-      break;
-    }
-
-    // Getting the peer
-    auto &p = prioritized_peers_[n];
-    if (p.address == own_address_)
-    {
-      continue;
-    }
-
-    // Ignoring addresses found in incoming
-    if (currently_incoming.find(p.address) != currently_incoming.end())
-    {
-      continue;
-    }
-
-    // We stop when the priority becomes too low
-    if (p.priority < 0.01)
-    {
-      break;
-    }
-
-    // If not connected, we connect
-    if (currently_connected_peers.find(p.address) == currently_connected_peers.end())
-    {
-      auto suri = peer_table_.GetUri(p.address);
-      // If we are not connected, we connect.
-      network::Uri uri;
-      if (suri.empty())
+      if (own_address_ < adr)
       {
-        continue;
+        auto connections = register_.LookupConnections(adr);
+        for (auto &conn_ptr : connections)
+        {
+          auto conn = conn_ptr.lock();
+          if (conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING)
+          {
+            auto const handle = conn->handle();
+            FETCH_LOG_WARN(logging_name_.c_str(), "Disconnecting from bilateral ", handle,
+                           " connection: ", adr.ToBase64());
+
+            // Note that the order of these two matters. RemovePersistentPeer must
+            // be executed first.
+            connections_.RemovePersistentPeer(handle);
+            connections_.RemoveConnection(handle);
+          }
+        }
       }
-
-      uri.Parse(suri);
-      connections_.AddPersistentPeer(uri);
-      p.is_connected = true;
-      p.is_incoming  = false;
     }
-
-    // Making connection short-lived.
-    p.MakeTemporary();
-
-    // Keeping track of what we have added
-    keep_connections_.insert(p.address);
-    next_priority_map_.insert({p.address, p});
-    ++shortlived_outgoing_connections_;
   }
+}
 
-  // Managing terminating connections that are not needed.
+void PeerTracker::DisconnectFromPeers()
+{
+  // Trimming connections
   auto connecting_to = register_.GetOutgoingAddressSet();
+  if (connecting_to.size() <= tracker_configuration_.max_outgoing_connections)
+  {
+    return;
+  }
 
   // Disconnecting from the remaining  nodes
   for (auto const &address : connecting_to)
@@ -274,35 +261,211 @@ void PeerTracker::Periodically()
       continue;
     }
 
-    auto conn = register_.LookupConnection(address).lock();
-    if (conn)
+    auto connections = register_.LookupConnections(address);
+    for (auto &conn_ptr : connections)
     {
-      FETCH_LOG_WARN("TODO2:logging_name_", "Dropping Address: ", address.ToBase64());
+      auto conn = conn_ptr.lock();
+      if (conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING)
+      {
+        auto const handle = conn->handle();
+        FETCH_LOG_WARN(logging_name_.c_str(), "Disconnecting from bilateral ", handle,
+                       " connection: ", address.ToBase64());
 
-      auto const handle = conn->handle();
+        // Note that the order of these two matters. RemovePersistentPeer must
+        // be executed first.
+        connections_.RemovePersistentPeer(handle);
+        connections_.RemoveConnection(handle);
+      }
+    }
+  }
+}
 
-      connections_.RemoveConnection(handle);
-      connections_.RemovePersistentPeer(handle);
+void PeerTracker::PullPeerKnowledge()
+{
+  // Scheduling for data pull
+  if (peer_pull_queue_.empty())
+  {
+    auto const currently_connected_peers = register_.GetCurrentAddressSet();
+    for (auto const &peer : currently_connected_peers)
+    {
+      SchedulePull(peer);
     }
   }
 
-  // Setting the new priority list
-  std::cout << "Connection stats: " << persistent_outgoing_connections_ << " "
-            << shortlived_outgoing_connections_ << " " << next_priority_map_.size() << std::endl;
-  std::swap(connection_priority_, next_priority_map_);
-}
-/// @}
+  // If it is still empty
+  if (peer_pull_queue_.empty())
+  {
+    return;
+  }
 
-void PeerTracker::SetMuddlePorts(PortsList const &ports)
+  auto search_for = own_address_;
+
+  auto address = peer_pull_queue_.front();
+  peer_pull_queue_.pop_front();
+
+  // Increasing the tracker id.
+  auto pull_id = pull_next_id_++;
+
+  // make the call to the remote service
+  auto promise = rpc_client_.CallSpecificAddress(address, RPC_MUDDLE_KADEMLIA,
+                                                 PeerTrackerProtocol::FIND_PEERS, search_for);
+
+  // wrap the promise is a task
+  auto call_task =
+      std::make_shared<PromiseTask>(promise, tracker_configuration_.promise_timeout,
+                                    [this, address, pull_id](service::Promise const &promise) {
+                                      OnResolvedPull(pull_id, address, promise);
+                                    });
+
+  // add the task to the reactor
+  reactor_.Attach(call_task);
+
+  // add the task to the pending resolutions queue
+  pull_promises_.emplace(pull_id, std::move(call_task));
+}
+
+void PeerTracker::SchedulePull(Address const &address)
 {
-  peer_tracker_protocol_.SetMuddlePorts(ports);
+  // Checking whether it is already scheduled
+  if (peer_pull_set_.find(address) != peer_pull_set_.end())
+  {
+    return;
+  }
+
+  // Pulling from self is not allowed
+  if (address == own_address_)
+  {
+    return;
+  }
+
+  // Scheduling
+  peer_pull_queue_.push_back(address);
+  peer_pull_set_.insert(address);
 }
 
-PeerTracker::ConnectionPriorityMap PeerTracker::connection_priority() const
+PeerTracker::AddressSet PeerTracker::all_peers() const
 {
   FETCH_LOCK(mutex_);
-  return connection_priority_;
+  return register_.GetCurrentAddressSet();
 }
+
+PeerTracker::AddressSet PeerTracker::incoming() const
+{
+  FETCH_LOCK(mutex_);
+  return register_.GetIncomingAddressSet();
+}
+
+PeerTracker::AddressSet PeerTracker::outgoing() const
+{
+  FETCH_LOCK(mutex_);
+  return register_.GetOutgoingAddressSet();
+}
+
+PeerTracker::AddressSet PeerTracker::keep_connections() const
+{
+  FETCH_LOCK(mutex_);
+  return keep_connections_;
+}
+
+std::size_t PeerTracker::known_peer_count() const
+{
+  FETCH_LOCK(mutex_);
+  return peer_table_.size();
+}
+
+PeerTracker::AddressSet PeerTracker::no_uri() const
+{
+  FETCH_LOCK(mutex_);
+  return no_uri_;
+}
+
+void PeerTracker::OnResolvedPull(uint64_t pull_id, Address peer, service::Promise const &promise)
+{
+  FETCH_LOCK(mutex_);
+  if (promise->state() == service::PromiseState::SUCCESS)
+  {
+    // Reporting that peer is still responding
+    peer_table_.ReportLiveliness(peer);
+
+    // extract the set of addresses from which the prospective node is contactable
+    auto peer_info_list = promise->As<std::deque<PeerInfo>>();
+
+    // create the new entry and populate
+    // TODO: Work out if this is what we want
+    for (auto const &peer_info : peer_info_list)
+    {
+      // reporting the possible existence of another peer on the network.a
+      assert(peer_info.address.size() > 0);
+      //      peer_table_.ReportLiveliness(peer_info.address, peer_info);
+      peer_table_.ReportExistence(peer_info);
+    }
+
+    // Rescheduling task if not found.
+    if (peer_pull_set_.find(peer) != peer_pull_set_.end())
+    {
+      peer_pull_queue_.push_back(peer);
+    }
+  }
+  else
+  {
+    FETCH_LOG_WARN("TODO:logging_name_", "Unable to resolve address for: ", peer.ToBase64(),
+                   " code: ", int(promise->state()));
+
+    // In case of failure, we stop following
+    if (peer_pull_set_.find(peer) != peer_pull_set_.end())
+    {
+      peer_pull_set_.erase(peer);
+    }
+
+    // and erase it from the table
+    peer_table_.ReportFailure(peer);
+  }
+
+  // remove the entry from the pending list
+  pull_promises_.erase(pull_id);
+}
+
+void PeerTracker::Periodically()
+{
+  FETCH_LOCK(mutex_);
+
+  // Getting state of our connectivity
+  auto const currently_connected_peers = register_.GetCurrentAddressSet();
+  auto const currently_incoming        = register_.GetIncomingAddressSet();
+  auto const currently_outgoing        = register_.GetOutgoingAddressSet();
+  auto       ref                       = currently_outgoing;
+  for (auto &adr : currently_incoming)
+  {
+    ref.insert(adr);
+  }
+  assert(ref.size() == currently_connected_peers.size());
+
+  if (tracker_configuration_.register_connections)
+  {
+    // Resolving all handles and adding their details to the peer table.
+    ProcessConnectionHandles();
+  }
+
+  //
+  if (tracker_configuration_.pull_peers)
+  {
+    // Scheduling tracking every now and then
+    PullPeerKnowledge();
+  }
+
+  if (tracker_configuration_.connect_to_nearest)
+  {
+    // Updating the connectivity priority list with the nearest known neighbours
+    UpdatePriorityList();
+
+    UpdareLongLivedConnections();
+  }
+
+  DisconnectDuplicates();
+
+  DisconnectFromPeers();
+}
+/// @}
 
 PeerTracker::PeerTracker(PeerTracker::Duration const &interval, core::Reactor &reactor,
                          MuddleRegister const &reg, PeerConnectionList &connections,
@@ -319,124 +482,6 @@ PeerTracker::PeerTracker(PeerTracker::Duration const &interval, core::Reactor &r
   , own_address_{endpoint_.GetAddress()}
 {
   rpc_server_.Add(RPC_MUDDLE_KADEMLIA, &peer_tracker_protocol_);
-}
-
-void PeerTracker::AddMostPromisingPeers()
-{
-  // Finding initial peers to track from
-  // TODO: Make global variable since it is used many places
-  auto const currently_connected_peers = register_.GetCurrentAddressSet();
-  auto       peers                     = peer_table_.FindPeer(own_address_);
-
-  // Adding new peers to priority list
-  for (auto &p : peers)
-  {
-    // Only add the onces to which we are not already connected
-    if (currently_connected_peers.find(p.address) == currently_connected_peers.end())
-    {
-      AddressPriority priority;
-      priority.address      = p.address;
-      priority.bucket       = GetBucket(p.distance);
-      priority.is_connected = false;
-      priority.persistent   = true;
-
-      connection_priority_.insert({p.address, std::move(priority)});
-    }
-  }
-}
-
-void PeerTracker::Track(Address address_to_track)
-{
-  auto     direct_peers = endpoint_.GetDirectlyConnectedPeerSet();
-  auto     peers        = peer_table_.FindPeer(address_to_track);
-  uint64_t N =
-      std::min(static_cast<unsigned long>(tracker_configuration_.async_calls), peers.size());
-
-  // tracking the peer through the N closest peers
-  uint64_t j = 0;
-  for (uint64_t i = 0; (j < N) && (i < peers.size()); ++i)
-  {
-    // We only track through directly connected peers
-    // TODO: Will fail if all found addresses are unconnected
-    auto &peer = peers[i];
-    if (direct_peers.find(peer.address) == direct_peers.end())
-    {
-      continue;
-    }
-    ++j;
-
-    auto tracker_id = next_tracker_id_++;
-
-    // make the call to the remote service
-    auto promise = rpc_client_.CallSpecificAddress(
-        peer.address, RPC_MUDDLE_KADEMLIA, PeerTrackerProtocol::FIND_PEERS, address_to_track);
-
-    // wrap the promise is a task
-    auto task = std::make_shared<PromiseTask>(
-        promise, tracker_configuration_.promise_timeout,
-        [this, peer, address_to_track, tracker_id](service::Promise const &promise) {
-          OnResolvedTracking(tracker_id, peer.address, address_to_track, promise);
-        });
-
-    // add the task to the reactor
-    reactor_.Attach(task);
-
-    // add the task to the pending resolutions queue
-    tracking_promises_.emplace(tracker_id, std::move(task));
-  }
-}
-
-void PeerTracker::OnResolvedTracking(uint64_t tracker_id, Address peer, Address address_to_track,
-                                     service::Promise const &promise)
-{
-  FETCH_LOCK(mutex_);
-  if (promise->state() == service::PromiseState::SUCCESS)
-  {
-    // Reporting that peer is still responding
-    peer_table_.ReportLiveliness(peer);
-
-    // extract the set of addresses from which the prospective node is contactable
-    auto peer_info_list = promise->As<std::deque<PeerInfo>>();
-
-    // create the new entry and populate
-    for (auto const &peer_info : peer_info_list)
-    {
-      // reporting the possible existence of another peer on the network.
-      peer_table_.ReportLiveliness(peer_info.address, peer_info);
-    }
-
-    // Scheduling short lived connections in case the address was not found.
-    if (peer != address_to_track)
-    {
-      for (auto const &peer_info : peer_info_list)
-      {
-        AddressPriority priority;
-        priority.address      = peer_info.address;
-        priority.is_connected = false;
-
-        // TODO: Re-compute distance as you cannot trust any distance
-        // given by others.
-        priority.bucket = GetBucket(peer_info.distance);
-
-        priority.persistent  = false;
-        priority.is_incoming = false;
-        priority.desired_expiry =
-            AddressPriority::Clock::now() + tracker_configuration_.default_connection_expiry;
-        connection_priority_.insert({peer_info.address, std::move(priority)});
-      }
-    }
-  }
-  else
-  {
-    FETCH_LOG_WARN("TODO:logging_name_", "Unable to resolve address for: ", peer.ToBase64(),
-                   " code: ", int(promise->state()));
-
-    // In case of failure, we report it to the tracker table.
-    peer_table_.ReportFailure(peer);
-  }
-
-  // remove the entry from the pending list
-  tracking_promises_.erase(tracker_id);
 }
 
 PeerTracker::ConnectionState PeerTracker::ResolveConnectionDetails(UnresolvedConnection &details)
@@ -477,6 +522,7 @@ PeerTracker::ConnectionState PeerTracker::ResolveConnectionDetails(UnresolvedCon
       details.is_incoming = true;
     }
 
+    // Invoking short-lived connection callback
     return ConnectionState::RESOLVED;
   }
 
@@ -510,35 +556,8 @@ void PeerTracker::RegisterConnectionDetails(UnresolvedConnection const &details)
   peer_table_.ReportLiveliness(details.address, info);
   bool found = false;
 
-  // Finding address priority
-  for (auto &element : connection_priority_)
-  {
-    auto &address_priority = element.second;
-    if (address_priority.address == details.address)
-    {
-      address_priority.is_connected = true;
-      found                         = true;
-    }
-  }
-
-  // If the address does not exist in the priorities we
-  // create it.
-  if (!found)
-  {
-    AddressPriority priority;
-    priority.address      = details.address;
-    priority.is_connected = false;
-
-    // By default we assume that incoming connections
-    // are not persistent
-    if (details.is_incoming)
-    {
-      priority.persistent  = false;
-      priority.is_incoming = true;
-    }
-
-    connection_priority_.insert({details.address, std::move(priority)});
-  }
+  // Scheduling for data pull
+  SchedulePull(details.address);
 }
 
 }  // namespace muddle

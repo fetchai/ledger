@@ -119,6 +119,24 @@ MuddleRegister::WeakConnectionPtr MuddleRegister::LookupConnection(Address const
   return conn;
 }
 
+MuddleRegister::Connections MuddleRegister::LookupConnections(Address const &address) const
+{
+  Connections conns{};
+
+  {
+    FETCH_LOCK(lock_);
+
+    auto it = address_index_.find(address);
+    while ((it != address_index_.end()) && (it->first == address))
+    {
+      conns.emplace_back(it->second->connection);
+      ++it;
+    }
+  }
+
+  return conns;
+}
+
 bool MuddleRegister::IsEmpty() const
 {
   FETCH_LOCK(lock_);

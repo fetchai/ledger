@@ -19,6 +19,7 @@
 
 #include "muddle/address.hpp"
 #include "muddle/peer_selection_mode.hpp"
+#include "muddle/tracker_configuration.hpp"
 #include "network/uri.hpp"
 
 #include <cstdint>
@@ -284,6 +285,13 @@ public:
    * @param map The map of address to confidence level
    */
   virtual void SetConfidence(ConfidenceMap const &map) = 0;
+
+  /**
+   * Sets the tracker configuration
+   *
+   * @param config The configuration for the peer tracker
+   */
+  virtual void SetTrackerConfiguration(TrackerConfiguration const &config) = 0;
   /// @}
 };
 

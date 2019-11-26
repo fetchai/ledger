@@ -186,6 +186,7 @@ public:
   void              SetConfidence(Address const &address, Confidence confidence) override;
   void              SetConfidence(Addresses const &addresses, Confidence confidence) override;
   void              SetConfidence(ConfidenceMap const &map) override;
+  void              SetTrackerConfiguration(TrackerConfiguration const &config) override;
   /// @}
 
   /// @name Internal Accessors

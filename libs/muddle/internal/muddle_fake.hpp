@@ -407,6 +407,11 @@ public:
   {
     throw std::runtime_error("SetConfidence z functionality not implemented");
   }
+
+  void SetTrackerConfiguration(TrackerConfiguration const & /*config*/) override
+  {
+    throw std::runtime_error("SetTrackerConfiguration functionality not implemented");
+  }
   /// @}
 
 private:

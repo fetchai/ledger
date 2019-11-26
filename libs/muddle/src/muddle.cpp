@@ -47,7 +47,7 @@ namespace muddle {
 
 static auto const        CLEANUP_INTERVAL           = std::chrono::seconds{10};
 static std::size_t const MAINTENANCE_INTERVAL_MS    = 2500;
-static std::size_t const PEER_SELECTION_INTERVAL_MS = 500;
+static std::size_t const PEER_SELECTION_INTERVAL_MS = 2500;
 
 /**
  * Constructs the muddle node instances
@@ -81,6 +81,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   register_->OnConnectionLeft([this](Handle handle) {
     router_.ConnectionDropped(handle);
     direct_message_service_.SignalConnectionLeft(handle);
+    FETCH_LOG_WARN("TEST", "Connection left");
   });
 
   register_->OnConnectionEntered(
@@ -489,6 +490,11 @@ void Muddle::SetConfidence(Addresses const &addresses, Confidence confidence)
   }
 }
 
+void Muddle::SetTrackerConfiguration(TrackerConfiguration const &config)
+{
+  peer_tracker_->SetConfiguration(config);
+}
+
 /**
  * Update a map of address to confidence level
  *
@@ -551,6 +557,8 @@ void Muddle::RunPeriodicMaintenance()
   try
   {
     // update discovery information
+    std::unordered_set<Uri> just_connected_to;
+
     DiscoveryService::Peers external_addresses{};
     for (uint16_t port : GetListeningPorts())
     {
@@ -572,10 +580,19 @@ void Muddle::RunPeriodicMaintenance()
     }
     discovery_service_.UpdatePeers(external_addresses);
     peer_selector_->UpdatePeers(external_addresses);
+    // TODO: update external address for peer_tracker.
 
     // connect to all the required peers
     for (Uri const &peer : clients_.GetPeersToConnectTo())
     {
+      // skipping uris we just connected to
+      if (just_connected_to.find(peer) != just_connected_to.end())
+      {
+        FETCH_LOG_WARN(logging_name_, "Already connected. Skipping ", peer.uri());
+        continue;
+      }
+
+      // connecting according to scheme
       switch (peer.scheme())
       {
       case Uri::Scheme::Tcp:
@@ -585,6 +602,8 @@ void Muddle::RunPeriodicMaintenance()
         FETCH_LOG_ERROR(logging_name_, "Unable to create client connection to ", peer.uri());
         break;
       }
+
+      just_connected_to.emplace(peer);
     }
 
     // run periodic cleanup

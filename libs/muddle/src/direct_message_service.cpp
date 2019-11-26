@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/service_ids.hpp"
 #include "direct_message_service.hpp"
+#include "core/service_ids.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "peer_list.hpp"
@@ -126,7 +126,8 @@ void DirectMessageService::RequestDisconnect(Handle handle)
   response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
   // this should be conditional on the connection orientation
-  SendMessageToConnection(handle, response);
+  // TODO: never disconnect
+  //  SendMessageToConnection(handle, response);
 }
 
 void DirectMessageService::SignalConnectionLeft(Handle handle)
@@ -355,8 +356,10 @@ void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr c
   if (is_outgoing)
   {
     // remove this persistent peer connection
-    peers_.RemovePersistentPeer(handle);
-    peers_.RemoveConnection(handle);  // TODO(EJF): There should not be this duplication
+    //
+    //    peers_.RemovePersistentPeer(handle);
+    // TODO:
+    //    peers_.RemoveConnection(handle);  // TODO(EJF): There should not be this duplication
 
     FETCH_LOG_INFO(logging_name_, "Removing the connection (conn: ", handle, ")");
   }
@@ -366,7 +369,8 @@ void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr c
     response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
     // this should be conditional on the connection orientation
-    SendMessageToConnection(handle, response);
+    // TODO: Never disconnect
+    //    SendMessageToConnection(handle, response);
   }
 }
 

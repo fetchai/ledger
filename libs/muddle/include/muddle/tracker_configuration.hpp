@@ -16,6 +16,26 @@ struct TrackerConfiguration
     ASYNC_FORK_AND_COLLECT
   };
 
+  /*
+   * @brief Creates a configuration where all features are turned off.
+   */
+  static TrackerConfiguration AllOff()
+  {
+    TrackerConfiguration conf;
+
+    conf.register_connections = false;
+    conf.pull_peers           = false;
+    conf.connect_to_nearest   = false;
+
+    return conf;
+  }
+
+  bool register_connections{true};
+  bool pull_peers{true};
+  bool connect_to_nearest{true};
+
+  uint64_t max_outgoing_connections{2};
+
   /// Priority paramters
   /// @{
   double expiry_decay{1.0 / 30.};
@@ -44,7 +64,7 @@ struct TrackerConfiguration
   /// Tracking
   /// @{
   TrackingMode tracking_mode;
-  uint64_t     async_calls{1};
+  uint64_t     async_calls{5};
   Duration     periodicity;
   Duration     default_connection_expiry{
       std::chrono::duration_cast<Duration>(std::chrono::seconds{20})};

@@ -24,9 +24,9 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/sha256.hpp"
-#include "muddle/kademlia/address_priority.hpp"
-#include "muddle/kademlia/peer_tracker.hpp"
-#include "muddle/kademlia/table.hpp"
+#include "kademlia/address_priority.hpp"
+#include "kademlia/peer_tracker.hpp"
+#include "kademlia/table.hpp"
 #include "network/management/network_manager.hpp"
 
 #include "gtest/gtest.h"
@@ -68,12 +68,14 @@ CertificatePtr NewCertificate()
 
 struct Node
 {
-  Node(uint16_t port)
-    : network_manager{std::make_unique<NetworkManager>("NetMgr" + std::to_string(port), 1)}
+  Node(uint16_t p, TrackerConfiguration const &configuration)
+    : network_manager{std::make_unique<NetworkManager>("NetMgr" + std::to_string(p), 1)}
+    , port{p}
   {
     network_manager->Start();
     muddle = std::make_shared<Muddle>(NetworkId{"Test"}, NewCertificate(), *network_manager);
     muddle->Start({port});
+    muddle->SetTrackerConfiguration(configuration);
   }
 
   void Stop()
@@ -85,14 +87,17 @@ struct Node
   NetworkManagerPtr network_manager;
   MuddlePtr         muddle;
   Address           address;
+  uint16_t          port;
 };
 
 struct Network
 {
-  static std::unique_ptr<Network> New(uint64_t number_of_nodes)
+  static std::unique_ptr<Network> New(uint64_t                    number_of_nodes,
+                                      TrackerConfiguration const &configuration = {},
+                                      uint16_t                    offset        = 8000)
   {
     std::unique_ptr<Network> ret;
-    ret.reset(new Network(number_of_nodes));
+    ret.reset(new Network(number_of_nodes, configuration, offset));
     return ret;
   }
 
@@ -107,14 +112,17 @@ struct Network
   }
 
   std::vector<Node> nodes;
+  uint16_t          port_offset;
 
 private:
-  Network(uint64_t number_of_nodes)
+  Network(uint64_t number_of_nodes, TrackerConfiguration const &configuration, uint16_t offset)
+    : port_offset{offset}
+
   {
     /// Creating the nodes
     for (uint64_t i = 0; i < number_of_nodes; ++i)
     {
-      nodes.emplace_back(static_cast<uint16_t>(8000 + i));
+      nodes.emplace_back(static_cast<uint16_t>(offset + i), configuration);
     }
   }
 };
@@ -134,6 +142,17 @@ void LinearConnectivity(std::unique_ptr<Network> &network)
   {
     auto &node = network->nodes[i];
     node.muddle->ConnectTo(fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(8001 + i)));
+  }
+}
+
+void ConnectNetworks(std::unique_ptr<Network> &n1, std::unique_ptr<Network> &n2)
+{
+  for (auto &node1 : n1->nodes)
+  {
+    for (auto &node2 : n2->nodes)
+    {
+      node1.muddle->ConnectTo(fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(node2.port)));
+    }
   }
 }
 
@@ -193,35 +212,7 @@ ConstByteArray ReadibleDistance(KademliaDistance const &dist)
   return byte_array::ToHex(ret);
 }
 
-/*
-TEST(SmallNetworks, TestConnectivityNormalMode)
-{
-  uint64_t N       = 10;
-  auto     network = Network::New(N);
-
-  LinearConnectivity(network);
-  sleep_for(std::chrono::milliseconds(2000));
-
-  // End nodes would have 1 connected peer
-  auto &n0 = network->nodes[0];
-  EXPECT_EQ(n0.muddle->GetNumDirectlyConnectedPeers(), 1);
-
-  auto &nN = network->nodes[N - 1];
-  EXPECT_EQ(nN.muddle->GetNumDirectlyConnectedPeers(), 1);
-
-  // For the rest we expect exactly 2 peers
-  for (std::size_t i = 1; i < N - 1; ++i)
-  {
-    auto &node = network->nodes[i];
-    EXPECT_EQ(node.muddle->GetNumDirectlyConnectedPeers(), 2);
-  }
-
-  // Sending messages
-
-  network->Stop();
-}
-*/
-
+// TODO: move to unit test
 TEST(SmallNetworks, OrganisingAddressPriority)
 {
   AddressPriority optimal_connection;
@@ -230,7 +221,7 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   optimal_connection.bucket           = 1;  // Good location
   optimal_connection.connection_value = 1;  // Good behavious
   optimal_connection.connected_since =
-      std::chrono::system_clock::now() - std::chrono::seconds(4 * 3600);
+      std::chrono::steady_clock::now() - std::chrono::seconds(4 * 3600);
   optimal_connection.UpdatePriority();
 
   // Good location, good behaviour and long term service should give close to
@@ -244,7 +235,7 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   mediocre_loc.persistent       = true;
   mediocre_loc.bucket           = 1;  // Good location
   mediocre_loc.connection_value = 0;  // Not good, nor bad.
-  mediocre_loc.connected_since  = std::chrono::system_clock::now() - std::chrono::seconds(4 * 3600);
+  mediocre_loc.connected_since  = std::chrono::steady_clock::now() - std::chrono::seconds(4 * 3600);
   mediocre_loc.UpdatePriority();
 
   // Good location, but no evidence of good behaviour should put
@@ -258,7 +249,7 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   mediocre_beh.persistent       = true;
   mediocre_beh.bucket           = static_cast<uint64_t>(-1);  // Bad location
   mediocre_beh.connection_value = 1;                          // Good behaviour
-  mediocre_beh.connected_since  = std::chrono::system_clock::now() - std::chrono::seconds(4 * 3600);
+  mediocre_beh.connected_since  = std::chrono::steady_clock::now() - std::chrono::seconds(4 * 3600);
   mediocre_beh.UpdatePriority();
 
   // We value good behaviour slightly worse than good location
@@ -275,7 +266,7 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   optimal_gone_bad.bucket           = 1;   // Good location
   optimal_gone_bad.connection_value = -1;  // Very bad behaviour
   optimal_gone_bad.connected_since =
-      std::chrono::system_clock::now() - std::chrono::seconds(4 * 3600);
+      std::chrono::steady_clock::now() - std::chrono::seconds(4 * 3600);
   optimal_gone_bad.UpdatePriority();
 
   // Getting lowest ranking should immediately drag you to the bottom
@@ -294,7 +285,7 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   poor_permanent.persistent       = true;
   poor_permanent.bucket           = static_cast<uint64_t>(-1);
   poor_permanent.connection_value = 0;
-  poor_permanent.connected_since  = std::chrono::system_clock::now() - std::chrono::seconds(30);
+  poor_permanent.connected_since  = std::chrono::steady_clock::now() - std::chrono::seconds(30);
   poor_permanent.UpdatePriority();
   EXPECT_LT(0.05, poor_permanent.priority);
   EXPECT_LT(poor_permanent.priority, 0.10);
@@ -304,8 +295,8 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   good_temporary.address          = FakeAddress(0);
   good_temporary.persistent       = false;
   good_temporary.connection_value = 0;
-  good_temporary.desired_expiry   = std::chrono::system_clock::now() + std::chrono::seconds(30);
-  good_temporary.connected_since  = std::chrono::system_clock::now() - std::chrono::seconds(30);
+  good_temporary.desired_expiry   = std::chrono::steady_clock::now() + std::chrono::seconds(30);
+  good_temporary.connected_since  = std::chrono::steady_clock::now() - std::chrono::seconds(30);
   good_temporary.bucket           = static_cast<uint64_t>(-1);
   good_temporary.UpdatePriority();
   EXPECT_FALSE(good_temporary.PreferablyPersistent());
@@ -315,9 +306,9 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   good_temporary_close_to_expiry.persistent       = false;
   good_temporary_close_to_expiry.connection_value = 0;
   good_temporary_close_to_expiry.desired_expiry =
-      std::chrono::system_clock::now() + std::chrono::seconds(1);
+      std::chrono::steady_clock::now() + std::chrono::seconds(1);
   good_temporary_close_to_expiry.connected_since =
-      std::chrono::system_clock::now() - std::chrono::seconds(59);
+      std::chrono::steady_clock::now() - std::chrono::seconds(59);
   good_temporary_close_to_expiry.bucket = static_cast<uint64_t>(-1);
   good_temporary_close_to_expiry.UpdatePriority();
   EXPECT_FALSE(good_temporary_close_to_expiry.PreferablyPersistent());
@@ -330,10 +321,10 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   good_temporary_should_upgrade.address          = FakeAddress(0);
   good_temporary_should_upgrade.persistent       = false;
   good_temporary_should_upgrade.connection_value = 0;
-  good_temporary_should_upgrade.desired_expiry   = std::chrono::system_clock::now();
+  good_temporary_should_upgrade.desired_expiry   = std::chrono::steady_clock::now();
   -std::chrono::seconds(30);
   good_temporary_should_upgrade.connected_since =
-      std::chrono::system_clock::now() - std::chrono::seconds(60);
+      std::chrono::steady_clock::now() - std::chrono::seconds(60);
   good_temporary_should_upgrade.bucket = static_cast<uint64_t>(1);
   good_temporary_should_upgrade.UpdatePriority();
   EXPECT_TRUE(good_temporary_should_upgrade.PreferablyPersistent());
@@ -348,6 +339,122 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   EXPECT_LT(optimal_gone_bad, long_term_disconnect);
   EXPECT_LT(optimal_gone_bad, good_temporary);
   EXPECT_LT(poor_permanent, good_temporary);
+}
+
+TEST(SmallNetworks, NetworkRegistrationThreeLayers)
+{
+  TrackerConfiguration configuration = TrackerConfiguration::AllOff();
+  configuration.register_connections = true;
+  configuration.pull_peers           = true;
+
+  {
+    uint64_t N        = 5;
+    auto     network1 = Network::New(N, configuration);
+    auto     network2 = Network::New(1, configuration, 8100);
+    auto     network3 = Network::New(N, configuration, 8200);
+
+    ConnectNetworks(network1, network2);
+    ConnectNetworks(network2, network3);
+
+    auto &tracker = network2->nodes[0].muddle->peer_tracker();
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+    auto total = network1->nodes.size() + network2->nodes.size() + network3->nodes.size();
+    EXPECT_EQ(tracker.known_peer_count(), total);
+  }
+}
+
+TEST(SmallNetworks, NetworkRegistrationFiveLayers)
+{
+  TrackerConfiguration configuration = TrackerConfiguration::AllOff();
+  configuration.register_connections = true;
+  configuration.pull_peers           = true;
+  // Testing propagation in deeper networks
+  {
+    uint64_t N        = 5;
+    auto     network1 = Network::New(N, configuration);
+    auto     network2 = Network::New(1, configuration, 8100);
+    auto     network3 = Network::New(N, configuration, 8200);
+    auto     network4 = Network::New(1, configuration, 8300);
+    auto     network5 = Network::New(N, configuration, 8400);
+
+    ConnectNetworks(network1, network2);
+    ConnectNetworks(network2, network3);
+    ConnectNetworks(network3, network4);
+    ConnectNetworks(network4, network5);
+
+    auto &tracker1 = network2->nodes[0].muddle->peer_tracker();
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+    auto &tracker2 = network4->nodes[0].muddle->peer_tracker();
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+    auto total = network1->nodes.size() + network2->nodes.size() + network3->nodes.size() +
+                 network4->nodes.size() + network5->nodes.size();
+
+    // Note that the total number of nodes cannot exceed 20.
+    ASSERT_LT(total, 20);
+
+    EXPECT_EQ(tracker1.known_peer_count(), total);
+    EXPECT_EQ(tracker2.known_peer_count(), total);
+  }
+}
+
+// Testing that the effect is not there when the configuration is turned off.
+TEST(SmallNetworks, NetworkRegistrationOff)
+{
+  TrackerConfiguration configuration = TrackerConfiguration::AllOff();
+  configuration.register_connections = false;
+  configuration.pull_peers           = false;
+
+  {
+    uint64_t N        = 5;
+    auto     network1 = Network::New(N, configuration);
+    auto     network2 = Network::New(1, configuration, 8100);
+    auto     network3 = Network::New(N, configuration, 8200);
+
+    ConnectNetworks(network1, network2);
+    ConnectNetworks(network2, network3);
+
+    auto &tracker = network2->nodes[0].muddle->peer_tracker();
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+    auto total = 0;
+    EXPECT_EQ(tracker.known_peer_count(), total);
+  }
+}
+
+TEST(SmallNetworks, NetworkRegistrationRegistrationNoPull)
+{
+  TrackerConfiguration configuration = TrackerConfiguration::AllOff();
+  // Testing that register connection has the effect expected
+  configuration.register_connections = true;
+  configuration.pull_peers           = false;
+  {
+    uint64_t N        = 5;
+    auto     network1 = Network::New(N, configuration);
+    auto     network2 = Network::New(1, configuration, 8100);
+    auto     network3 = Network::New(N, configuration, 8200);
+    auto     network4 = Network::New(1, configuration, 8300);
+    auto     network5 = Network::New(N, configuration, 8400);
+
+    ConnectNetworks(network1, network2);
+    ConnectNetworks(network2, network3);
+    ConnectNetworks(network3, network4);
+    ConnectNetworks(network4, network5);
+
+    auto &tracker1 = network2->nodes[0].muddle->peer_tracker();
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+    auto &tracker2 = network4->nodes[0].muddle->peer_tracker();
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+    auto total1 = network1->nodes.size() + network3->nodes.size();
+    auto total2 = network3->nodes.size() + network5->nodes.size();
+
+    EXPECT_EQ(tracker1.known_peer_count(), total1);
+    EXPECT_EQ(tracker2.known_peer_count(), total2);
+  }
 }
 
 TEST(SmallNetworks, TestConnectivityKademliaMode)
@@ -446,6 +553,7 @@ TEST(SmallNetworks, KademliaPrimitives)
   }
 
   // Testing the table
+  // TODO: Turn into proper test
   std::vector<PeerInfo> ref_peers = all_peers;
   for (auto &p1 : ref_peers)
   {
@@ -458,19 +566,6 @@ TEST(SmallNetworks, KademliaPrimitives)
 
     // Testing that the set
     auto found_peers = table.FindPeer(p1.address);
-    /*
-    for (std::size_t i = 0; i < 2; ++i)
-    {
-      if (found_peers[i].address != all_peers[i].address)
-      {
-        std::cout << "NO MATCH" << std::endl;
-      }
-      else
-      {
-        std::cout << "OK" << std::endl;
-      }
-    }
-    */
   }
 
   std::cout << "Getting nearest nodes for peer 10: " << table.FindPeer(FakeAddress(10)).size()

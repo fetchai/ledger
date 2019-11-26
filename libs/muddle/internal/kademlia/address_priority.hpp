@@ -38,7 +38,7 @@ struct AddressPriority
   /// Lifetime
   /// @{
   // TODO: rename persistent to long-lived
-  bool      persistent{false};              ///< Whether or not this connnection is permanent
+  bool      persistent{true};               ///< Whether or not this connnection is permanent
   TimePoint connected_since{Clock::now()};  ///< Time at which connection was established
   TimePoint desired_expiry{Clock::now()};   ///< Time at which this connection is no longer relevant
   /// @}
@@ -119,6 +119,10 @@ struct AddressPriority
 
     // Priority goes down exponentially with the increasing bucket number.
     double bucket_d = static_cast<double>(bucket);
+    if (bucket_d > 160)  // TODO: fetch from address
+    {
+      bucket_d = 160;
+    }
 
     // If it is a non-persistent connection, the bucket is less
     // relevant and, in fact, far-away short lived connections has

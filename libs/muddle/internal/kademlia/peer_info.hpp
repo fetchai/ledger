@@ -21,13 +21,12 @@ struct PeerInfo
 
   /// Serializable fields
   /// @{
+  bool             verified{false};
   Address          address{};
   KademliaAddress  kademlia_address;
   KademliaDistance distance{};
   std::string      uri{};
   /// @}
-
-  bool is_kademlia_node{false};
 
   // Promise ping_promise;
   // TimeSpan latency{}
@@ -37,6 +36,12 @@ struct PeerInfo
 
   bool operator<(PeerInfo const &other) const
   {
+
+    if (verified != other.verified)
+    {
+      return verified;
+    }
+
     // Assumes a little endian type structure
     uint64_t i = distance.size();
     while (i != 0)

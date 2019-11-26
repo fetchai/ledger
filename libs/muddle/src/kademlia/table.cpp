@@ -169,6 +169,7 @@ void KademliaTable::ReportLiveliness(Address const &address, PeerInfo const &inf
 
   // Updating activity information
   // TODO: This last part is wrong
+  peerinfo->verified = true;
   peerinfo->message_count += 1;
   // TODO: peerinfo.last_activity
   bucket.peers.push_back(peerinfo);
@@ -183,7 +184,36 @@ void KademliaTable::ReportLiveliness(Address const &address, PeerInfo const &inf
 
 void KademliaTable::ReportExistence(PeerInfo const &info)
 {
-  know_peers_[info.address] = std::make_shared<PeerInfo>(info);
+  //  ReportLiveliness(info.address, info);
+  //  return;
+  FETCH_LOCK(mutex_);
+
+  auto other     = KademliaAddress::Create(info.address);
+  auto dist      = GetKademliaDistance(own_address_, other);
+  auto bucket_id = GetBucket(dist);
+
+  assert(bucket_id <= KADEMLIA_MAX_ID_BITS);
+
+  // Do nothing if we already know about the existence
+  auto it = know_peers_.find(info.address);
+  if (it != know_peers_.end())
+  {
+    return;
+  }
+
+  // Fetching the bucket and finding the peer if it is in the
+  // bucket
+  auto &      bucket   = buckets_[bucket_id];
+  PeerInfoPtr peerinfo = std::make_shared<PeerInfo>(info);
+  peerinfo->verified   = false;
+
+  know_peers_[info.address] = peerinfo;
+
+  //
+  if (bucket.peers.size() < kademlia_max_peers_per_bucket_)
+  {
+    bucket.peers.push_front(peerinfo);
+  }
 }
 
 void KademliaTable::ReportFailure(Address const &address)

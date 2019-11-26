@@ -55,7 +55,7 @@ public:
   using Handle                    = ConnectionHandleType;
   using ConnectionLeftCallback    = std::function<void(Handle)>;
   using ConnectionEnteredCallback = std::function<void(Handle)>;
-
+  using Connections               = std::vector<WeakConnectionPtr>;
   enum class UpdateStatus
   {
     HANDLE_NOT_FOUND,
@@ -93,6 +93,7 @@ public:
   void              Broadcast(ConstByteArray const &data) const;
   WeakConnectionPtr LookupConnection(ConnectionHandle handle) const;
   WeakConnectionPtr LookupConnection(Address const &address) const;
+  Connections       LookupConnections(Address const &address) const;
 
   bool         IsEmpty() const;
   UpdateStatus UpdateAddress(ConnectionHandle handle, Address const &address);

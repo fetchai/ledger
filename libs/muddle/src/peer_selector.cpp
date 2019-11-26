@@ -200,7 +200,7 @@ void PeerSelector::Periodically()
   // add all the additions
   for (auto const &uri : additions)
   {
-    connections_.AddPersistentPeer(uri);
+    // TODO:    connections_.AddPersistentPeer(uri);
   }
 
   // we only start removing connections once we have applied all the additions

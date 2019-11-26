@@ -204,7 +204,7 @@ int main()
   uint64_t N       = 40;  // TODO: Make parameter
   auto     network = Network::New(N);
 
-  MakeKademliaNetwork(network);
+  //  MakeKademliaNetwork(network);
   LinearConnectivity(network);
 
   std::string input;
