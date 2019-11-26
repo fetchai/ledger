@@ -225,12 +225,13 @@ public:
   /// @{
   BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
   bool LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash = nullptr) const;
-  bool LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const;
-  bool LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
-                              BlockHash *next_hash = nullptr) const;
-  bool IsBlockInCache(BlockHash const &hash) const;
-  void AddBlockToCache(IntBlockPtr const &block) const;
-  void AddBlockToBloomFilter(Block const &block) const;
+  IntBlockPtr LookupBlock(BlockHash const &hash) const;
+  bool        LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const;
+  bool        LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
+                                     BlockHash *next_hash = nullptr) const;
+  bool        IsBlockInCache(BlockHash const &hash) const;
+  void        AddBlockToCache(IntBlockPtr const &block) const;
+  void        AddBlockToBloomFilter(Block const &block) const;
   void CacheReference(BlockHash const &hash, BlockHash const &next_hash, bool unique = false) const;
   void ForgetReference(BlockHash const &hash, BlockHash const &next_hash = {}) const;
   bool LookupReference(BlockHash const &hash, BlockHash &next_hash) const;
@@ -249,7 +250,7 @@ public:
   bool        AddTip(IntBlockPtr const &block);
   bool        UpdateTips(IntBlockPtr const &block);
   bool        DetermineHeaviestTip();
-  bool        UpdateHeaviestTip(Block const &block);
+  bool        UpdateHeaviestTip(IntBlockPtr const &block);
   void        ColourHeaviestChainBlocks(uint64_t limit) const;
   IntBlockPtr GetLabeledSubchainStart() const;
   /// @}

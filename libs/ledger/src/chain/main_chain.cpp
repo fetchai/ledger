@@ -484,7 +484,7 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
   auto loose_it = loose_blocks_.find(hash);
   if (loose_it == loose_blocks_.end())
   {
-    auto block_before_one_to_del = GetBlock(block_to_remove->previous_hash);
+    auto block_before_one_to_del = LookupBlock(block_to_remove->previous_hash);
     if (block_before_one_to_del)
     {
       heaviest_.Set(*block_before_one_to_del);
@@ -1491,6 +1491,13 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   return BlockStatus::ADDED;
 }
 
+MainChain::IntBlockPtr MainChain::LookupBlock(BlockHash const &hash) const
+{
+  IntBlockPtr ret_val;
+  LookupBlock(hash, ret_val);
+  return ret_val;
+}
+
 /**
  * Attempt to look up a block.
  *
@@ -1658,7 +1665,7 @@ bool MainChain::DetermineHeaviestTip()
         });
 
     // update the heaviest
-    auto heaviest_block = GetBlock(it->first);
+    auto heaviest_block = LookupBlock(it->first);
     assert(heaviest_block);
     heaviest_.Set(*heaviest_block);
     return true;
@@ -1724,7 +1731,7 @@ bool MainChain::ReindexTips()
   if (!tips_.empty())
   {
     // finally update the heaviest tip
-    auto heaviest_block = GetBlock(max_hash);
+    auto heaviest_block = LookupBlock(max_hash);
     assert(heaviest_block);
     heaviest_.Set(*heaviest_block);
 
@@ -1768,13 +1775,13 @@ MainChain::BlockHash MainChain::GetHeaviestBlockHash() const
  */
 void MainChain::HeaviestTip::Set(Block &block)
 {
-  if (block.hash == hash)
+  if (block.hash == hash_)
   {
     return;
   }
 
   // check if this block belongs to a different branch
-  if (block.chain_label != chain_label && block.previous_hash != hash)
+  if (block.chain_label != chain_label && block.previous_hash != hash_)
   {
     // then we'll need to colour a new heaviest branch
     ++chain_label;
@@ -1782,10 +1789,10 @@ void MainChain::HeaviestTip::Set(Block &block)
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "New heaviest tip: 0x", block.hash.ToHex());
 
-  total_weight = block.total_weight;
-  weight       = block.weight;
-  hash         = block.hash;
-  block_number = block.block_number;
+  total_weight_ = block.total_weight;
+  weight_       = block.weight;
+  hash_         = block.hash;
+  block_number_ = block.block_number;
 
   // label this block as belonging to a heaviest chain
   block.chain_label = chain_label;
@@ -1806,6 +1813,11 @@ bool MainChain::HeaviestTip::Update(Block &block)
   }
 
   return false;
+}
+
+MainChain::BlockHash const &MainChain::HeaviestTip::Hash() const
+{
+  return hash_;
 }
 
 MainChain::BlockHash MainChain::GetHeadHash()
