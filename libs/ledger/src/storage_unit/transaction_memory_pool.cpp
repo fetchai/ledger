@@ -68,5 +68,16 @@ bool TransactionMemoryPool::Get(Digest const &tx_digest, chain::Transaction &tx)
   return success;
 }
 
+/**
+ * Remove a transaction from the pool
+ *
+ * @param tx_digest The transaction being removed
+ */
+void TransactionMemoryPool::Remove(Digest const &tx_digest)
+{
+  FETCH_LOCK(lock_);
+  transaction_store_.erase(tx_digest);
+}
+
 }  // namespace ledger
 }  // namespace fetch

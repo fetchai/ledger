@@ -17,32 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-#include "ledger/storage_unit/transaction_pool_interface.hpp"
-
-#include <unordered_map>
+#include "transaction_store_interface.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class TransactionMemoryPool : public TransactionPoolInterface
+class TransactionPoolInterface : public TransactionStoreInterface
 {
 public:
+  TransactionPoolInterface()           = default;
+  ~TransactionPoolInterface() override = default;
 
-  /// @name Transaction Storage Interface
+  /// @name Transaction Pool Interface
   /// @{
-  void Add(chain::Transaction const &tx) override;
-  bool Has(Digest const &tx_digest) const override;
-  bool Get(Digest const &tx_digest, chain::Transaction &tx) const override;
-  void Remove(Digest const &tx_digest) override;
+
+  /**
+   * Remove a transaction from the pool
+   *
+   * @param tx_digest The transaction being removed
+   */
+  virtual void Remove(Digest const &tx_digest) = 0;
   /// @}
-
-private:
-  using TxStore = DigestMap<chain::Transaction>;
-
-  mutable Mutex lock_;
-  TxStore       transaction_store_;
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch
