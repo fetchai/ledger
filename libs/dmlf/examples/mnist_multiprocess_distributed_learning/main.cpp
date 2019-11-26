@@ -104,6 +104,11 @@ int main(int argc, char **argv)
   {
     muddle_delay = doc["muddle_delay"].As<SizeType>();
   }
+  std::string gcloud_folder = "gs://ml-3000/results/";
+  if (!doc["gcloud_folder"].IsUndefined())
+  {
+    gcloud_folder = doc["gcloud_folder"].As<std::string>();
+  }
 
   // get the network config file
   fetch::json::JSONDocument network_doc;
@@ -163,7 +168,7 @@ int main(int argc, char **argv)
 
     client->RunAlgorithms();
   }
-  int res = system("gsutil cp /app/results/* gs://ml-3000/results/");
+  int res = system(("gsutil cp /app/results/* " + gcloud_folder).c_str());
   std::cout << "system() result: " << res << std::endl;
 
   while (true)
