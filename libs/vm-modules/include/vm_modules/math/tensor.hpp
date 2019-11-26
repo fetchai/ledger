@@ -69,7 +69,7 @@ public:
   DataType At(Indices... indices) const;
 
   template <typename... Indices>
-  void SetAt(Indices... indices, const DataType &a);
+  void SetAt(Indices... indices, const DataType &value);
 
   void Copy(TensorType const &other);
 

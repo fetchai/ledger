@@ -106,9 +106,9 @@ VMTensor::DataType VMTensor::At(Indices... indices) const
 }
 
 template <typename... Indices>
-void VMTensor::SetAt(Indices... indices, const DataType &a)
+void VMTensor::SetAt(Indices... indices, const DataType &value)
 {
-  tensor_.At(indices...) = a;
+  tensor_.At(indices...) = value;
 }
 
 void VMTensor::Copy(ArrayType const &other)
