@@ -227,6 +227,34 @@ bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) con
     next_hash = forward_references_.find(hash)->second;
     return true;
   default:
+    // check if this block lies on a currently known heaviest chain
+    if (heaviest_chain_label_ > 0)
+    {
+      auto parent_block = GetBlock(hash);
+      assert(parent_block);
+      if (parent_block->chain_label < heaviest_chain_label_)
+      {
+        ColourHeaviestChainBlocks(parent_block->block_number);
+      }
+      if (parent_block->chain_label == heaviest_chain_label_)
+      {
+        // it does
+        auto references_range = forward_references_.equal_range(hash);
+        for (auto reference_it = references_range.first; reference_it != references_range.second;
+             ++reference_it)
+        {
+          auto const &child_hash  = reference_it->second;
+          auto        child_block = GetBlock(child_hash);
+          if (child_block && child_block->chain_label == heaviest_chain_label_)
+          {
+            next_hash = child_hash;
+            return true;
+          }
+        }
+        // at least one forward ref has to be to a block of current chain
+        assert(false);
+      }
+    }
     // ambiguous forward references need to be resolved from tip
     return false;
   }
@@ -461,7 +489,7 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
     if (block_before_one_to_del)
     {
       heaviest_ = HeaviestTip{};
-      heaviest_.Update(*block_before_one_to_del);
+      UpdateHeaviestTip(*block_before_one_to_del);
     }
   }
 
@@ -516,6 +544,49 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t lowest_block_number) cons
   FETCH_LOCK(lock_);
 
   return GetChainPreceding(GetHeaviestBlockHash(), lowest_block_number);
+}
+
+MainChain::IntBlockPtr MainChain::GetLabeledSubchainStart() const
+{
+  if (!labeled_subchain_start_)
+  {
+    ASSERT(LookupBlock(heaviest_.hash, labeled_subchain_start_));
+    labeled_subchain_start_->chain_label = heaviest_chain_label_;
+  }
+  return labeled_subchain_start_;
+}
+
+/**
+ * Update blocks of the current heaviest chain setting their chain_label
+ * equal to heaviest_chain_label_.
+ *
+ * @param limit the earliest block number, this colouring stops at.
+ */
+void MainChain::ColourHeaviestChainBlocks(uint64_t limit) const
+{
+  MilliTimer myTimer("MainChain::ColourHeaviestChainBlocks");
+  FETCH_LOCK(lock_);
+  if (heaviest_chain_label_ == 0)
+  {
+    ++heaviest_chain_label_;
+  }
+
+  auto block = GetLabeledSubchainStart();
+  assert(block);
+  if (block->block_number < limit)
+  {
+    return;
+  }
+  while (block->block_number > limit)
+  {
+    assert(!block->IsGenesis());
+    if (!LookupBlock(block->previous_hash, block))
+    {
+      throw std::runtime_error("Cannot find a block for hash");
+    }
+    block->chain_label = heaviest_chain_label_;
+  }
+  labeled_subchain_start_ = block;
 }
 
 /**
@@ -980,7 +1051,7 @@ void MainChain::RecoverFromFile(Mode mode)
       CacheBlock(head);
 
       // Update this as our heaviest
-      bool const result = heaviest_.Update(*head);
+      bool const result = UpdateHeaviestTip(*head);
       tips_[head->hash] = Tip{head->total_weight, head->weight, head->block_number};
 
       if (!result)
@@ -1287,7 +1358,24 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
   tips_[block->hash] = Tip{block->total_weight, block->weight, block->block_number};
 
   // attempt to update the heaviest tip
-  return heaviest_.Update(*block);
+  return UpdateHeaviestTip(*block);
+}
+
+/**
+ * Update heaviest tip record, if this block is the new heaviest.
+ *
+ * @param block The block to possibly become the new heaviest
+ * @return true if the heaviest tip was advanced, otherwise false
+ */
+bool MainChain::UpdateHeaviestTip(Block const &block)
+{
+  auto ret_val = heaviest_.Update(block);
+  if (ret_val)
+  {
+    // pehaps we have a new heaviest chain, update the version number
+    ++heaviest_chain_label_;
+  }
+  return ret_val;
 }
 
 /**

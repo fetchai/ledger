@@ -236,9 +236,12 @@ public:
 
   /// @name Tip Management
   /// @{
-  bool AddTip(IntBlockPtr const &block);
-  bool UpdateTips(IntBlockPtr const &block);
-  bool DetermineHeaviestTip();
+  bool        AddTip(IntBlockPtr const &block);
+  bool        UpdateTips(IntBlockPtr const &block);
+  bool        DetermineHeaviestTip();
+  bool        UpdateHeaviestTip(Block const &block);
+  void        ColourHeaviestChainBlocks(uint64_t limit) const;
+  IntBlockPtr GetLabeledSubchainStart() const;
   /// @}
 
   static IntBlockPtr CreateGenesisBlock();
@@ -261,6 +264,8 @@ public:
   std::unique_ptr<BasicBloomFilter> bloom_filter_;
   bool const                        enable_bloom_filter_;
   telemetry::GaugePtr<std::size_t>  bloom_filter_queried_bit_count_;
+  mutable uint64_t                  heaviest_chain_label_{0};
+  mutable IntBlockPtr               labeled_subchain_start_;
   telemetry::CounterPtr             bloom_filter_query_count_;
   telemetry::CounterPtr             bloom_filter_positive_count_;
   telemetry::CounterPtr             bloom_filter_false_positive_count_;
