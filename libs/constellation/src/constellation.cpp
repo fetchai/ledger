@@ -28,8 +28,6 @@
 #include "constellation/telemetry_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/telemetry.hpp"
-#include "ledger/chain/consensus/bad_miner.hpp"
-#include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/consensus/consensus.hpp"
@@ -214,8 +212,6 @@ ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, St
 {
   ConsensusPtr consensus{};
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Block time is: ", cfg.block_interval_ms);
-
   if (stake)
   {
     consensus = std::make_shared<ledger::Consensus>(stake, beacon_setup, beacon, chain, storage,
@@ -332,7 +328,6 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
                        certificate,
                        cfg_.log2_num_lanes,
                        cfg_.num_slices,
-                       cfg_.block_difficulty,
                        consensus_,
                        std::make_unique<ledger::SynergeticExecutionManager>(
                            dag_, 1u,
@@ -466,12 +461,6 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   //---------------------------------------------------------------
   // Step 1. Start all the components
   //---------------------------------------------------------------
-
-  // if a non-zero block interval it set then the application will generate blocks
-  if (cfg_.block_interval_ms > 0)
-  {
-    block_coordinator_.SetBlockPeriod(std::chrono::milliseconds{cfg_.block_interval_ms});
-  }
 
   /// NETWORKING INFRASTRUCTURE
 

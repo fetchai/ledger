@@ -49,10 +49,10 @@ public:
 
   // Populate the next block for packing and submission. Will return
   // an empty pointer if the miner should not emit a block
-  virtual NextBlockPtr GenerateNextBlock() = 0;  // TODO(HUT): this should be const.
+  virtual NextBlockPtr GenerateNextBlock() = 0;
 
   // Verify a block according to consensus requirements. It must not be loose.
-  virtual Status ValidBlock(Block const &current) const = 0;  // TODO(HUT): this should be const.
+  virtual Status ValidBlock(Block const &current) const = 0;
 
   // Set system parameters
   virtual void SetMaxCabinetSize(uint16_t max_cabinet_size)                    = 0;

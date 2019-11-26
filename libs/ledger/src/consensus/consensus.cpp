@@ -619,7 +619,6 @@ Status Consensus::ValidBlock(Block const &current) const
     }
 
     // Check that the members of qual meet threshold requirements
-
     qualified_cabinet = block_entropy.qualified;
     group_pub_key     = block_entropy.group_public_key;
 
@@ -684,12 +683,6 @@ void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)
     FETCH_LOG_WARN(LOGGING_NAME, "Resetting stake aggregate...FAILED");
   }
 }
-
-// void Consensus::SetThreshold(double threshold)
-//{
-//  threshold_ = threshold;
-//  FETCH_LOG_INFO(LOGGING_NAME, "Set threshold to ", threshold_);
-//}
 
 void Consensus::SetMaxCabinetSize(uint16_t size)
 {

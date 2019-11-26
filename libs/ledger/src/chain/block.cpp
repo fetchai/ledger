@@ -89,8 +89,6 @@ void Block::UpdateDigest()
   hash_builder.Reset();
   hash_builder.Update(buf.data());
   hash = hash_builder.Final();
-
-  // proof.SetHeader(hash);
 }
 
 void Block::UpdateTimestamp()

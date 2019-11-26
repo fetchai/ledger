@@ -75,9 +75,6 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using ConsensusPtr   = std::shared_ptr<ledger::ConsensusInterface>;
 
-  // TODO(HUT): remove this.
-  static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
-
   struct Config
   {
     Manifest     manifest{};
@@ -93,7 +90,6 @@ public:
     uint64_t     max_cabinet_size{0};
     uint64_t     stake_delay_period{0};
     uint64_t     aeon_period{0};
-    uint32_t     block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
     uint32_t     peers_update_cycle_ms{0};
     bool         disable_signing{false};
     bool         sign_broadcasts{false};

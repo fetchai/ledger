@@ -33,8 +33,6 @@
  *
  */
 
-// namespace {
-
 constexpr char const *LOGGING_NAME = "SimulatedPowConsensus";
 
 using SimulatedPowConsensus = fetch::ledger::SimulatedPowConsensus;
@@ -42,6 +40,11 @@ using NextBlockPtr          = SimulatedPowConsensus::NextBlockPtr;
 using Status                = SimulatedPowConsensus::Status;
 
 using fetch::ledger::Block;
+
+SimulatedPowConsensus::SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms)
+  : mining_identity_{std::move(mining_identity)}
+  , block_interval_ms_{block_interval_ms}
+{}
 
 uint64_t GetPoissonSample(uint64_t range, double mean_of_distribution)
 {
@@ -52,22 +55,12 @@ uint64_t GetPoissonSample(uint64_t range, double mean_of_distribution)
 
   Distribution dist(mean_of_distribution);
 
-  auto ret = std::min(dist(rng), range);
-  ;
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Ret: ", ret);
-
-  return ret;
+  return std::min(dist(rng), range);
 }
-
-SimulatedPowConsensus::SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms)
-  : mining_identity_{std::move(mining_identity)}
-  , block_interval_ms_{block_interval_ms}
-{}
 
 void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Updating new current block: ", current.hash.ToHex(),
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Updating new current block: ", current.hash.ToHex(),
                  " num: ", current.block_number);
 
   if (current == current_block_)
@@ -84,6 +77,8 @@ void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
 
   auto mean_time_to_block = static_cast<double>(block_interval_ms_);
 
+  // So as to provoke the possibility of forks, make it slightly less likely the miner
+  // generates two blocks in a row
   if (current.miner_id == mining_identity_)
   {
     mean_time_to_block *= 1.1;
@@ -120,15 +115,13 @@ NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
 
   if (!(current_time_ms > decided_next_timestamp_ms_))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Waiting before producing block. Milliseconds to wait: ",
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Waiting before producing block. Milliseconds to wait: ",
                    decided_next_timestamp_ms_ - current_time_ms);
     return ret;
   }
-  else
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Generating block. Current time: ", current_time_ms,
-                   " deadline: ", decided_next_timestamp_ms_);
-  }
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Generating block. Current time: ", current_time_ms,
+                 " deadline: ", decided_next_timestamp_ms_);
 
   // Number of block we want to generate
   uint64_t const block_number = current_block_.block_number + 1;
@@ -139,7 +132,6 @@ NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
   // is well formed
   ret->previous_hash = current_block_.hash;
   ret->block_number  = block_number;
-  /* ret->miner         = mining_address_; */
   ret->miner_id  = mining_identity_;
   ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
   ret->weight    = GetPoissonSample(200, 50);

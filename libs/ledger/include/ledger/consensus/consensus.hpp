@@ -72,7 +72,6 @@ public:
   void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
   void SetDefaultStartTime(uint64_t default_start_time) override;
 
-  // TODO(HUT): unused?
   StakeManagerPtr stake();
 
   // Operators

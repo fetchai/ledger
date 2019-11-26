@@ -39,13 +39,6 @@ namespace storage {
 ResourceID::ResourceID(byte_array::ConstByteArray id)
   : id_(std::move(id))
 {
-  const char *LOGGING_NAME = "xxx";
-
-  if (!(id.size() == RESOURCE_ID_SIZE_IN_BYTES))
-  {
-    std::cout << "urgh." << std::endl;
-    ERROR_BACKTRACE;
-  }
   assert(id.size() == RESOURCE_ID_SIZE_IN_BYTES);
 }
 

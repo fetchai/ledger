@@ -252,7 +252,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
 
     // add the block
     // TODO(HUT): put consensus check here.
-    if (/*it->proof()*/ true)
+    if (true)
     {
       auto const status = chain_.AddBlock(*it);
 

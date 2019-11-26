@@ -93,7 +93,6 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 
 }  // namespace
 
-// TODO(HUT): remove this?
 using ConsensusPtr = std::shared_ptr<fetch::ledger::ConsensusInterface>;
 
 GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
@@ -269,7 +268,6 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object)
   if (consensus_)
   {
     uint64_t parsed_value;
-    // double   parsed_value_double;
 
     // Optionally overwrite default parameters
     if (variant::Extract(object, "cabinetSize", parsed_value))
@@ -282,11 +280,6 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object)
       start_time_ = parsed_value;
       consensus_->SetDefaultStartTime(parsed_value);
     }
-
-    // if (variant::Extract(object, "threshold", parsed_value_double))
-    //{
-    //  consensus_->SetThreshold(parsed_value_double);
-    //}
 
     if (!object.Has("stakers"))
     {

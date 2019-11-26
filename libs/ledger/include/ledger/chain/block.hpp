@@ -63,7 +63,7 @@ public:
   Digest         previous_hash;    ///< The hash of the previous block
   Digest         merkle_hash;      ///< The merkle state hash across all shards
   uint64_t       block_number{0};  ///< The height of the block from genesis
-  chain::Address miner;     ///< The identity of the generated miner // TODO(HUT): delete this.
+  chain::Address miner;     ///< The identity of the generated miner
   Identity       miner_id;  ///< The identity of the generated miner
   uint32_t       log2_num_lanes{0};  ///< The log2(number of lanes)
   Slices         slices;             ///< The slice lists
@@ -74,12 +74,6 @@ public:
 
   // The qual miner must sign the block
   Digest miner_signature;
-
-  ///// @name Proof of Work specifics
-  ///// @{
-  // uint64_t nonce{0};  ///< The nonce field associated with the proof
-  // Proof    proof;     ///< The consensus proof
-  ///// @}
 
   /// @name Metadata for block management (not serialized)
   /// @{
@@ -114,13 +108,13 @@ public:
   static uint8_t const PREVIOUS_HASH   = 5;
   static uint8_t const MERKLE_HASH     = 6;
   static uint8_t const BLOCK_NUMBER    = 7;
-  static uint8_t const MINER           = 8;
-  static uint8_t const MINER_ID        = 9;
-  static uint8_t const LOG2_NUM_LANES  = 10;
-  static uint8_t const SLICES          = 11;
-  static uint8_t const DAG_EPOCH       = 12;
-  static uint8_t const TIMESTAMP       = 13;
-  static uint8_t const ENTROPY         = 14;
+  static uint8_t const MINER_ID        = 8;
+  static uint8_t const LOG2_NUM_LANES  = 9;
+  static uint8_t const SLICES          = 10;
+  static uint8_t const DAG_EPOCH       = 11;
+  static uint8_t const TIMESTAMP       = 12;
+  static uint8_t const ENTROPY         = 13;
+  static uint8_t const MINER           = 14;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &block)
@@ -133,13 +127,13 @@ public:
     map.Append(PREVIOUS_HASH, block.previous_hash);
     map.Append(MERKLE_HASH, block.merkle_hash);
     map.Append(BLOCK_NUMBER, block.block_number);
-    map.Append(MINER, block.miner);
     map.Append(MINER_ID, block.miner_id);
     map.Append(LOG2_NUM_LANES, block.log2_num_lanes);
     map.Append(SLICES, block.slices);
     map.Append(DAG_EPOCH, block.dag_epoch);
     map.Append(TIMESTAMP, block.timestamp);
     map.Append(ENTROPY, block.block_entropy);
+    map.Append(MINER, block.miner);
   }
 
   template <typename MapDeserializer>
@@ -152,13 +146,13 @@ public:
     map.ExpectKeyGetValue(PREVIOUS_HASH, block.previous_hash);
     map.ExpectKeyGetValue(MERKLE_HASH, block.merkle_hash);
     map.ExpectKeyGetValue(BLOCK_NUMBER, block.block_number);
-    map.ExpectKeyGetValue(MINER, block.miner);
     map.ExpectKeyGetValue(MINER_ID, block.miner_id);
     map.ExpectKeyGetValue(LOG2_NUM_LANES, block.log2_num_lanes);
     map.ExpectKeyGetValue(SLICES, block.slices);
     map.ExpectKeyGetValue(DAG_EPOCH, block.dag_epoch);
     map.ExpectKeyGetValue(TIMESTAMP, block.timestamp);
     map.ExpectKeyGetValue(ENTROPY, block.block_entropy);
+    map.ExpectKeyGetValue(MINER, block.miner);
   }
 };
 

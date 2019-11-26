@@ -17,22 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-// TODO(HUT): delete unnec. includes
 #include "ledger/consensus/consensus_interface.hpp"
-#include "ledger/protocols/notarisation_service.hpp"
-
-#include "chain/address.hpp"
+#include "ledger/chain/block.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/chain/main_chain.hpp"
-
-#include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_service.hpp"
-#include "beacon/event_manager.hpp"
-
 #include "ledger/consensus/stake_manager.hpp"
-
-#include <cmath>
-#include <unordered_map>
 
 namespace fetch {
 namespace ledger {
@@ -41,10 +29,7 @@ class SimulatedPowConsensus final : public ConsensusInterface
 {
 public:
   using Identity = crypto::Identity;
-  // using MainChain             = ledger::MainChain;
-  // using NextBlockPtr          = ConsensusInterface::NextBlockPtr;
-
-  // TODO(HUT): when you construct consensus, do not set aeon period etc. Do this later.
+  using Block = ledger::Block;
 
   // Construction / Destruction
   explicit SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms);

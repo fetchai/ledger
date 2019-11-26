@@ -52,9 +52,6 @@ class Prover;
 }
 
 namespace ledger {
-namespace consensus {
-class ConsensusMinerInterface;
-}
 
 class TransactionStatusCache;
 class BlockPackerInterface;
@@ -188,14 +185,14 @@ public:
   BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                    BlockSinkInterface &block_sink, ProverPtr prover, uint32_t log2_num_lanes,
-                   std::size_t num_slices, std::size_t block_difficulty, ConsensusPtr consensus,
+                   std::size_t num_slices, ConsensusPtr consensus,
                    SynergeticExecMgrPtr synergetic_exec_manager);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
 
-  template <typename R, typename P>
-  void SetBlockPeriod(std::chrono::duration<R, P> const &period);
+  //template <typename R, typename P>
+  //void SetBlockPeriod(std::chrono::duration<R, P> const &period);
   void TriggerBlockGeneration();  // useful in tests
 
   std::weak_ptr<core::Runnable> GetWeakRunnable()
@@ -264,7 +261,6 @@ private:
   using Clock             = std::chrono::system_clock;
   using Timepoint         = Clock::time_point;
   using StateMachinePtr   = std::shared_ptr<StateMachine>;
-  using MinerPtr          = std::shared_ptr<consensus::ConsensusMinerInterface>;
   using TxDigestSetPtr    = std::unique_ptr<DigestSet>;
   using LastExecutedBlock = Protected<ConstByteArray>;
   using FutureTimepoint   = fetch::core::FutureTimepoint;
@@ -313,7 +309,6 @@ private:
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
   BlockSinkInterface &       block_sink_;         ///< Ref to the output sink interface
   PeriodicAction             periodic_print_;
-  MinerPtr                   miner_;
   MainChain::Blocks blocks_to_common_ancestor_;  ///< Partial vector of blocks from main chain HEAD
                                                  ///< to block coord. last executed block.
   /// @}
@@ -331,7 +326,6 @@ private:
   uint32_t        log2_num_lanes_{};
   std::size_t     num_lanes_{1u << log2_num_lanes_};  ///< The current number of lanes
   std::size_t     num_slices_;                        ///< The current number of slices
-  Flag            mining_{false};           ///< Flag to signal if this node generating blocks
   BlockPeriod     block_period_{};          ///< The desired period before a block is generated
   Timepoint       next_block_time_;         ///< The next point that a block should be generated
   BlockPtr        current_block_{};         ///< The pointer to the current block (read only)
@@ -382,20 +376,6 @@ private:
   telemetry::GaugePtr<uint64_t> block_hash_;
   /// @}
 };
-
-// TODO(HUT): remove this.
-template <typename R, typename P>
-void BlockCoordinator::SetBlockPeriod(std::chrono::duration<R, P> const &period)
-{
-  using std::chrono::duration_cast;
-
-  // convert and store
-  block_period_ = duration_cast<BlockPeriod>(period);
-  UpdateNextBlockTime();
-
-  // signal that we are mining
-  mining_ = true;
-}
 
 }  // namespace ledger
 }  // namespace fetch
