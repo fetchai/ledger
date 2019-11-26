@@ -182,19 +182,22 @@ public:
 
   struct HeaviestTip
   {
-    using TipStats = std::tuple<Block::Weight, uint64_t, Block::Weight, BlockHash const &>;
+    using Weight = Block::Weight;
+    using TipStats = std::tuple<Weight, uint64_t, Weight, BlockHash const &>;
 
-    Block::Weight total_weight{0};
-    Block::Weight weight{0};
+    Weight total_weight{0};
+    Weight weight{0};
     uint64_t      block_number{0};
     // assuming every chain has a proper genesis
     BlockHash hash{chain::GENESIS_DIGEST};
+    uint64_t chain_label{0};
 
     constexpr TipStats Stats() const
     {
       return TipStats{total_weight, block_number, weight, hash};
     }
-    bool Update(Block const &block);
+    bool Update(Block &block);
+    bool Update(TipStats &&stats);
   };
 
   /// @name Persistence Management
@@ -256,6 +259,7 @@ public:
 
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
+  mutable BlockMap loose_cache_;  ///< A purgatory for loose blocks
   // The whole tree of previous-next relations among cached blocks
   mutable References                forward_references_;
   TipsMap                           tips_;          ///< Keep track of the tips
