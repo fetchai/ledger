@@ -182,9 +182,9 @@ void OefFunctionsTaskFactory::ProcessMessage(ConstCharArrayBuffer &data)
       break;
     }
   }
-  catch (XError &x)
+  catch (XError const &x)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "XERROR!!!! ", x.what());
+    FETCH_LOG_INFO(LOGGING_NAME, "XERROR! ", x.what());
 
     auto error_response = std::make_shared<fetch::oef::pb::Server_AgentMessage>();
     error_response->set_answer_id(msg_id);
@@ -200,9 +200,9 @@ void OefFunctionsTaskFactory::ProcessMessage(ConstCharArrayBuffer &data)
         error_response, GetEndpoint());
     senderTask->submit();
   }
-  catch (XKarma &x)
+  catch (XKarma const &x)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "XKARMA!!!! ", x.what());
+    FETCH_LOG_INFO(LOGGING_NAME, "XKARMA! ", x.what());
 
     auto error_response = std::make_shared<fetch::oef::pb::Server_AgentMessage>();
     error_response->set_answer_id(msg_id);
@@ -218,7 +218,7 @@ void OefFunctionsTaskFactory::ProcessMessage(ConstCharArrayBuffer &data)
         error_response, GetEndpoint());
     senderTask->submit();
   }
-  catch (XDisconnect &x)
+  catch (XDisconnect const &x)
   {
     FETCH_LOG_INFO(LOGGING_NAME,
                    "XDISCONNECT was thrown while processing OEF operation: ", x.what());

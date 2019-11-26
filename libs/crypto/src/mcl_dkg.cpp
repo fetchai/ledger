@@ -31,7 +31,8 @@ namespace fetch {
 namespace crypto {
 namespace mcl {
 
-std::atomic<bool> details::MCLInitialiser::was_initialised{false};
+std::atomic<bool>  details::MCLInitialiser::was_initialised{false};
+constexpr uint16_t PUBLIC_KEY_BYTE_SIZE = 310;
 
 PublicKey::PublicKey()
 {
@@ -63,6 +64,11 @@ Generator::Generator(std::string const &string_to_hash)
 {
   clear();
   bn::hashAndMapToG2(*this, string_to_hash);
+}
+
+AggregatePublicKey::AggregatePublicKey(PublicKey const &public_key, PrivateKey const &coefficient)
+{
+  bn::G2::mul(aggregate_public_key, public_key, coefficient);
 }
 
 DkgKeyInformation::DkgKeyInformation(PublicKey              group_public_key1,
@@ -400,14 +406,16 @@ PrivateKey SignatureAggregationCoefficient(PublicKey const &             notaris
 {
   PrivateKey coefficient;
 
-  // Reserve first 48 bytes for some fixed value for hygenic reuse of the
-  // hashing function
-  std::string concatenated_keys = "BLS Aggregation";
-  concatenated_keys.reserve(cabinet_notarisation_keys.size() * 310);
-  while (concatenated_keys.length() < 48)
-  {
-    concatenated_keys.push_back('0');
-  }
+  // Reserve first 48 bytes for some fixed value as the hash function (also used in DKG) is being
+  // reused here in different context
+  const std::string hash_function_reuse_appender =
+      "BLS Aggregation 00000000000000000000000000000000";
+
+  std::string concatenated_keys;
+  concatenated_keys.reserve(hash_function_reuse_appender.length() +
+                            (cabinet_notarisation_keys.size() + 1) * PUBLIC_KEY_BYTE_SIZE);
+
+  concatenated_keys += hash_function_reuse_appender;
 
   concatenated_keys += notarisation_key.getStr();
   for (auto const &key : cabinet_notarisation_keys)
@@ -419,30 +427,41 @@ PrivateKey SignatureAggregationCoefficient(PublicKey const &             notaris
 }
 
 /**
- * Computes aggregrate signature from signatures of a message
+ * Computes a signature which has been modified to allow fast addition into an aggregate signature
+ *
+ * @param message Message to be signed
+ * @param aggregate_private_key class containing private key and also coefficient unique to this
+ * signer allowing computation and verification of aggregate signature by others
+ * @return Signature
+ */
+Signature AggregateSign(MessagePayload const &     message,
+                        AggregatePrivateKey const &aggregate_private_key)
+{
+  auto signature = crypto::mcl::SignShare(message, aggregate_private_key.private_key);
+  bn::G1::mul(signature, signature, aggregate_private_key.coefficient);
+  return signature;
+}
+
+/**
+ * Computes aggregate signature from signatures of a message
  *
  * @param signatures Map of the signer index and their signature of a message
- * @param public_keys Public keys of all eligible signers
+ * @param cabinet_size Size of cabinet
  * @return Pair consisting of aggregate signature and a vector indicating who's signatures were
  * aggregated
  */
 AggregateSignature ComputeAggregateSignature(
-    std::unordered_map<uint32_t, Signature> const &signatures,
-    std::vector<PublicKey> const &                 public_keys)
+    std::unordered_map<uint32_t, Signature> const &signatures, uint32_t cabinet_size)
 {
   Signature    aggregate_signature;
   SignerRecord signers;
-  signers.resize(public_keys.size(), 0);
+  signers.resize(cabinet_size, 0);
 
-  // Compute signature
+  // Add individual signatures to compute aggregate signature
   for (auto const &sig : signatures)
   {
-    uint32_t  index = sig.first;
-    Signature modified_sig;
-    bn::Fr aggregate_coefficient = SignatureAggregationCoefficient(public_keys[index], public_keys);
-    bn::G1::mul(modified_sig, sig.second, aggregate_coefficient);
-    bn::G1::add(aggregate_signature, aggregate_signature, modified_sig);
-    signers[index] = 1;
+    bn::G1::add(aggregate_signature, aggregate_signature, sig.second);
+    signers[sig.first] = 1;
   }
   return std::make_pair(aggregate_signature, signers);
 }
@@ -464,12 +483,11 @@ PublicKey ComputeAggregatePublicKey(SignerRecord const &          signers,
   {
     if (signers[i] == 1)
     {
-      // Compute public_key_i ^ coefficient_i
+      // Compute public_key_i * coefficient_i
       PublicKey modified_public_key;
       bn::Fr    aggregate_coefficient =
           SignatureAggregationCoefficient(cabinet_public_keys[i], cabinet_public_keys);
       bn::G2::mul(modified_public_key, cabinet_public_keys[i], aggregate_coefficient);
-
       bn::G2::add(aggregate_key, aggregate_key, modified_public_key);
     }
   }
@@ -477,39 +495,27 @@ PublicKey ComputeAggregatePublicKey(SignerRecord const &          signers,
 }
 
 /**
- * Verifies an aggregate signature
+ * Computes the aggregated public key from a set of parties who signed a particular message
  *
- * @param message Message that was signed
- * @param aggregate_signature Pair of signature and vector of booleans indicating who participated
- * in the aggregate signature
- * @param cabinet_public_keys Public keys of all eligible signers
- * @param generator Generator of elliptic curve
- * @return Bool for whether the signature passed verification
+ * @param signers Vector of booleans indicated whether this member participated in the aggregate
+ * signature
+ * @param cabinet_public_keys Aggregate public keys of all eligible signers, which are computed by
+ * multiplying original public keys by the signer's coefficient
+ * @return Aggregated public key
  */
-bool VerifyAggregateSignature(MessagePayload const &        message,
-                              AggregateSignature const &    aggregate_signature,
-                              std::vector<PublicKey> const &cabinet_public_keys,
-                              Generator const &             generator)
+PublicKey ComputeAggregatePublicKey(SignerRecord const &                   signers,
+                                    std::vector<AggregatePublicKey> const &cabinet_public_keys)
 {
-  // hash and map message to point on curve
-  Signature PH;
-  bn::Fp    Hm;
-  Hm.setHashOf(message.pointer(), message.size());
-  bn::mapToG1(PH, Hm);
-
-  // Compute aggregate  public key
-  if (aggregate_signature.second.size() != cabinet_public_keys.size())
+  PublicKey aggregate_key;
+  assert(signers.size() == cabinet_public_keys.size());
+  for (size_t i = 0; i < cabinet_public_keys.size(); ++i)
   {
-    return false;
+    if (signers[i] == 1)
+    {
+      bn::G2::add(aggregate_key, aggregate_key, cabinet_public_keys[i].aggregate_public_key);
+    }
   }
-  PublicKey aggregate_key =
-      ComputeAggregatePublicKey(aggregate_signature.second, cabinet_public_keys);
-
-  bn::Fp12 e1, e2;
-  bn::pairing(e1, aggregate_signature.first, generator);
-  bn::pairing(e2, PH, aggregate_key);
-
-  return e1 == e2;
+  return aggregate_key;
 }
 
 }  // namespace mcl
