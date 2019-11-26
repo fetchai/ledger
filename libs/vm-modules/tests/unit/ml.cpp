@@ -689,16 +689,6 @@ TEST_F(MLTests, non_permitted_serialisation_model_sequential_test)
 
       function main()
 
-        // set up data and labels
-        var data_shape = Array<UInt64>(2);
-        data_shape[0] = 10u64;
-        data_shape[1] = 1000u64;
-        var label_shape = Array<UInt64>(2);
-        label_shape[0] = 1u64;
-        label_shape[1] = 1000u64;
-        var data = Tensor(data_shape);
-        var label = Tensor(label_shape);
-
         // set up a model
         var model = Model("sequential");
         model.add("dense", 10u64, 10u64, "relu");
@@ -713,7 +703,7 @@ TEST_F(MLTests, non_permitted_serialisation_model_sequential_test)
     )";
 
   ASSERT_TRUE(toolkit.Compile(model_sequential_serialise_src));
-  EXPECT_FALSE(toolkit.Run());
+  EXPECT_THROW(toolkit.Run(), std::runtime_error);
 }
 
 TEST_F(MLTests, non_permitted_serialisation_model_regressor_test)
@@ -721,16 +711,6 @@ TEST_F(MLTests, non_permitted_serialisation_model_regressor_test)
   static char const *model_regressor_serialise_src = R"(
 
       function main()
-
-        // set up data and labels
-        var data_shape = Array<UInt64>(2);
-        data_shape[0] = 10u64;
-        data_shape[1] = 1000u64;
-        var label_shape = Array<UInt64>(2);
-        label_shape[0] = 1u64;
-        label_shape[1] = 1000u64;
-        var data = Tensor(data_shape);
-        var label = Tensor(label_shape);
 
         // set up a model
         var model = Model("regressor");
@@ -743,7 +723,7 @@ TEST_F(MLTests, non_permitted_serialisation_model_regressor_test)
     )";
 
   ASSERT_TRUE(toolkit.Compile(model_regressor_serialise_src));
-  EXPECT_FALSE(toolkit.Run());
+  EXPECT_THROW(toolkit.Run(), std::runtime_error);
 }
 
 TEST_F(MLTests, non_permitted_serialisation_model_classifier_test)
@@ -751,16 +731,6 @@ TEST_F(MLTests, non_permitted_serialisation_model_classifier_test)
   static char const *model_classifier_serialise_src = R"(
 
       function main()
-
-        // set up data and labels
-        var data_shape = Array<UInt64>(2);
-        data_shape[0] = 10u64;
-        data_shape[1] = 1000u64;
-        var label_shape = Array<UInt64>(2);
-        label_shape[0] = 1u64;
-        label_shape[1] = 1000u64;
-        var data = Tensor(data_shape);
-        var label = Tensor(label_shape);
 
         // set up a model
         var model = Model("classifier");
@@ -773,7 +743,7 @@ TEST_F(MLTests, non_permitted_serialisation_model_classifier_test)
     )";
 
   ASSERT_TRUE(toolkit.Compile(model_classifier_serialise_src));
-  EXPECT_FALSE(toolkit.Run());
+  EXPECT_THROW(toolkit.Run(), std::runtime_error);
 }
 
 TEST_F(MLTests, optimiser_set_graph_test)
