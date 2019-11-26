@@ -61,12 +61,13 @@ uint64_t GetPoissonSample(uint64_t range, double mean_of_distribution)
 
 SimulatedPowConsensus::SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms)
   : mining_identity_{std::move(mining_identity)}
-  , other_miners_seen_in_chain_{mining_identity_}
   , block_interval_ms_{block_interval_ms}
 {}
 
 void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Updating new current block: ", current.hash.ToHex(), " num: ", current.block_number);
+
   if(current == current_block_)
   {
     return;
@@ -74,27 +75,22 @@ void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
 
   current_block_ = current;
 
-  if (current.miner_id.identifier().empty())
+  if (current.miner_id.identifier().empty() && current.block_number != 0)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Received block with empty miner ID for simulated POW");
-  }
-  else
-  {
-    other_miners_seen_in_chain_.insert(current.miner_id);
+    FETCH_LOG_WARN(LOGGING_NAME, "Received block with empty miner ID for simulated POW: ");
   }
 
   double mean_time_to_block = block_interval_ms_;
 
   if(current.miner_id == mining_identity_)
   {
-    mean_time_to_block *= 4;
+    mean_time_to_block *= 1.1;
   }
 
   uint64_t time_to_wait_ms =
       static_cast<uint64_t>(GetPoissonSample(30000, mean_time_to_block));
 
   FETCH_LOG_INFO(LOGGING_NAME, "Generating time to wait (ms): ", time_to_wait_ms,
-                 " given others: ", other_miners_seen_in_chain_.size(),
                  " mean: ", mean_time_to_block, " block time: ", block_interval_ms_);
 
   // Generate a block probalistically based on the previous block time and the number

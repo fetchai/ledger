@@ -100,7 +100,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , mining_address_{certificate_->identity()}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
                                                   [](State state) { return ToString(state); })}
-  , block_difficulty_{block_difficulty}
   , log2_num_lanes_{log2_num_lanes}
   , num_slices_{num_slices}
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
@@ -146,9 +145,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , new_wait_exec_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_new_wait_exec_state_total",
         "The total number of times in the new wait exec state")}
-  , proof_search_state_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_proof_search_state_total",
-        "The total number of times in the proof search state")}
   , transmit_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_transmit_state_total",
         "The total number of times in the transmit state")}
@@ -199,14 +195,11 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   state_machine_->RegisterHandler(State::EXECUTE_NEW_BLOCK,            this, &BlockCoordinator::OnExecuteNewBlock);
   state_machine_->RegisterHandler(State::WAIT_FOR_NEW_BLOCK_EXECUTION, this, &BlockCoordinator::OnWaitForNewBlockExecution);
 
-  // TODO(HUT): remove all references to proof search
-  state_machine_->RegisterHandler(State::PROOF_SEARCH,                 this, &BlockCoordinator::OnProofSearch);
-
   state_machine_->RegisterHandler(State::TRANSMIT_BLOCK,               this, &BlockCoordinator::OnTransmitBlock);
   state_machine_->RegisterHandler(State::RESET,                        this, &BlockCoordinator::OnReset);
   // clang-format on
 
-  FETCH_UNUSED(block_difficulty_);
+  FETCH_UNUSED(block_difficulty);
 
   state_machine_->OnStateChange([this](State current, State previous) {
       FETCH_UNUSED(this);
@@ -527,9 +520,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
       next_block_->dag_epoch = dag_->CreateEpoch(next_block_->block_number);
     }
 
-    //// ensure the difficulty is correctly set
-    //next_block_->proof.SetTarget(block_difficulty_);
-
     // discard the current block (we are making a new one)
     current_block_.reset();
 
@@ -562,8 +552,8 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       return State::RESET;
     }
 
-    if (consensus_)
-    {
+    //if (consensus_)
+    //{
       consensus_->UpdateCurrentBlock(*previous);  // Only update with valid blocks
       auto result = consensus_->ValidBlock(*current_block_);
 
@@ -576,7 +566,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
         RemoveBlock(current_block_->hash);
         return State::RESET;
       }
-    }
+    //}
 
     // Check: Ensure the block number is continuous
     uint64_t const expected_block_number = previous->block_number + 1u;
@@ -953,10 +943,10 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     executed_tx_count_->add(current_block_->GetTransactionCount());
 
     // Update consensus so block can be notarised
-    if (consensus_)
-    {
+    //if (consensus_)
+    //{
       consensus_->UpdateCurrentBlock(*current_block_);
-    }
+    //}
   }
 
   return State::RESET;
@@ -1083,41 +1073,29 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
   return next_state;
 }
 
-BlockCoordinator::State BlockCoordinator::OnProofSearch()
-{
-  exit(1);
-  proof_search_state_count_->increment();
-
-  State next_state{State::PROOF_SEARCH};
-
-  if (miner_->Mine(*next_block_, 100))  // TODO(unknown): what is this hard-coded number?
-  {
-    // update the digest
-    next_block_->UpdateDigest();
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block Hash: 0x", next_block_->hash.ToHex());
-
-    // this step is needed because the execution manager is actually unaware of the actual last
-    // block that is executed because the merkle hash was not known at this point.
-    execution_manager_.SetLastProcessedBlock(next_block_->hash);
-
-    // the block is now fully formed it can be sent across the network
-    next_state = State::TRANSMIT_BLOCK;
-  }
-
-  return next_state;
-}
-
 BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 {
   transmit_state_count_->increment();
 
   try
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Transmit!");
+
     // Before the block leaves, it must be signed.
     next_block_->UpdateDigest();
-    next_block_->miner_id        = certificate_->identity();
+
+    FETCH_LOG_INFO(LOGGING_NAME, ":::: ", next_block_->hash.ToBase64());
+    FETCH_LOG_INFO(LOGGING_NAME, "::::! ", next_block_->miner_id.identifier().ToBase64());
+    FETCH_LOG_INFO(LOGGING_NAME, "::::? ", certificate_->identity().identifier().ToBase64());
+
+    /*next_block_->miner_id        = certificate_->identity(); */
     next_block_->miner_signature = certificate_->Sign(next_block_->hash);
+
+    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block Hash: 0x", next_block_->hash.ToHex());
+
+    // this step is needed because the execution manager is actually unaware of the actual last
+    // block that is executed because the merkle hash was not known at this point.
+    execution_manager_.SetLastProcessedBlock(next_block_->hash);
 
     // ensure that the main chain is aware of the block
     if (BlockStatus::ADDED == chain_.AddBlock(*next_block_))
@@ -1169,10 +1147,10 @@ BlockCoordinator::State BlockCoordinator::OnReset()
     block_hash_->set(*reinterpret_cast<uint64_t const *>(block->hash.pointer()));
   }
 
-  if (consensus_)
-  {
+  //if (consensus_)
+  //{
     consensus_->UpdateCurrentBlock(*block);
-  }
+  //}
 
   current_block_.reset();
   next_block_.reset();
@@ -1321,9 +1299,6 @@ char const *BlockCoordinator::ToString(State state)
     break;
   case State::WAIT_FOR_NEW_BLOCK_EXECUTION:
     text = "Waiting for New Block Execution";
-    break;
-  case State::PROOF_SEARCH:
-    text = "Searching for Proof";
     break;
   case State::TRANSMIT_BLOCK:
     text = "Transmitting Block";

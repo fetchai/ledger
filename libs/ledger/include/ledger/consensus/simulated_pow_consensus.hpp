@@ -78,7 +78,6 @@ private:
 
   // Consensus' view on the heaviest block etc.
   Block              current_block_;
-  std::set<Identity> other_miners_seen_in_chain_;
   uint64_t           block_interval_ms_{std::numeric_limits<uint64_t>::max()};
 };
 

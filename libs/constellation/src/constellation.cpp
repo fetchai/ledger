@@ -224,7 +224,7 @@ ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, St
   }
   else
   {
-    consensus = std::make_shared<ledger::SimulatedPowConsensus>(identity, 1000);
+    consensus = std::make_shared<ledger::SimulatedPowConsensus>(identity, cfg.block_interval_ms);
   }
 
   return consensus;

@@ -121,7 +121,7 @@ class BlockSinkInterface;
  *                  │─ ─ ─ ─ ─ ─              │─ ─ ─ ─ ─ ─ ┘         │                  │
  *                  ▼                         ▼                      │                  │
  *        ┌──────────────────┐      ┌──────────────────┐             │                  │
- *        │ Post Exec. Block │      │   Proof Search   │             │                  │
+ *        │ Post Exec. Block │      │                  │             │                  │
  *        │    Validation    │      │                  │◀ ─          │                  │
  *        └──────────────────┘      └──────────────────┘   │         │                  │
  *                  │                         │                      │                  │
@@ -174,7 +174,6 @@ public:
     NEW_SYNERGETIC_EXECUTION,
     EXECUTE_NEW_BLOCK,             ///< Schedule the execution of the new block
     WAIT_FOR_NEW_BLOCK_EXECUTION,  ///< Wait for the new block to be executed
-    PROOF_SEARCH,                  ///< New Block: Waiting until a hash can be found
     TRANSMIT_BLOCK,                ///< Transmit the new block to
 
     // Main loop
@@ -291,7 +290,6 @@ private:
   State OnNewSynergeticExecution();
   State OnExecuteNewBlock();
   State OnWaitForNewBlockExecution();
-  State OnProofSearch();
   State OnTransmitBlock();
   State OnReset();
   /// @}
@@ -330,7 +328,6 @@ private:
   ProverPtr       certificate_;       ///< The miners identity
   chain::Address  mining_address_;    ///< The miners address
   StateMachinePtr state_machine_;     ///< The main state machine for this service
-  std::size_t     block_difficulty_;  ///< The number of leading zeros needed in the proof
   uint32_t        log2_num_lanes_{};
   std::size_t     num_lanes_{1u << log2_num_lanes_};  ///< The current number of lanes
   std::size_t     num_slices_;                        ///< The current number of slices
@@ -372,7 +369,6 @@ private:
   telemetry::CounterPtr         new_syn_state_count_;
   telemetry::CounterPtr         new_exec_state_count_;
   telemetry::CounterPtr         new_wait_exec_state_count_;
-  telemetry::CounterPtr         proof_search_state_count_;
   telemetry::CounterPtr         transmit_state_count_;
   telemetry::CounterPtr         reset_state_count_;
   telemetry::CounterPtr         executed_block_count_;
