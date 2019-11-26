@@ -82,7 +82,7 @@ void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
     FETCH_LOG_WARN(LOGGING_NAME, "Received block with empty miner ID for simulated POW: ");
   }
 
-  double mean_time_to_block = block_interval_ms_;
+  auto mean_time_to_block = static_cast<double>(block_interval_ms_);
 
   if (current.miner_id == mining_identity_)
   {
