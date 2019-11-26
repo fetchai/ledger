@@ -31,33 +31,17 @@ using fetch::ledger::TransactionMemoryPool;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
 
-using Txs = std::vector<TransactionGenerator::TransactionPtr>;
-
 class TransactionMemPoolTests : public ::testing::Test
 {
 protected:
-
-  // helpers
-  Txs GenerateRandomTxs(std::size_t count);
 
   TransactionGenerator  tx_gen_;
   TransactionMemoryPool memory_pool_;
 };
 
-Txs TransactionMemPoolTests::GenerateRandomTxs(std::size_t count)
-{
-  std::vector<TransactionGenerator::TransactionPtr> txs;
-  for (std::size_t i = 0; i < count; ++i)
-  {
-    txs.emplace_back(tx_gen_());
-  }
-
-  return txs;
-}
-
 TEST_F(TransactionMemPoolTests, SimpleCheck)
 {
-  auto const txs = GenerateRandomTxs(5);
+  auto const txs = tx_gen_.GenerateRandomTxs(5);
 
   for (std::size_t i = 0; i < txs.size(); ++i)
   {
