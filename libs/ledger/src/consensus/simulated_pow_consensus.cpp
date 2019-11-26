@@ -94,9 +94,18 @@ void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
   FETCH_LOG_INFO(LOGGING_NAME, "Generating time to wait (ms): ", time_to_wait_ms,
                  " mean: ", mean_time_to_block, " block time: ", block_interval_ms_);
 
-  // Generate a block probalistically based on the previous block time and the number
-  // of other peers seen so far (bounded to 30s)
-  decided_next_timestamp_ms_ = (current.timestamp * 1000) + time_to_wait_ms;
+  bool disabled = block_interval_ms_ == std::numeric_limits<uint64_t>::max();
+
+  if(disabled)
+  {
+    decided_next_timestamp_ms_ = block_interval_ms_;
+  }
+  else
+  {
+    // Generate a block probalistically based on the previous block time and the number
+    // of other peers seen so far (bounded to 30s)
+    decided_next_timestamp_ms_ = (current.timestamp * 1000) + time_to_wait_ms;
+  }
 }
 
 NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
