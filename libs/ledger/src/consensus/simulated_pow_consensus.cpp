@@ -39,8 +39,6 @@ using SimulatedPowConsensus = fetch::ledger::SimulatedPowConsensus;
 using NextBlockPtr          = SimulatedPowConsensus::NextBlockPtr;
 using Status                = SimulatedPowConsensus::Status;
 
-using fetch::ledger::Block;
-
 SimulatedPowConsensus::SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms)
   : mining_identity_{std::move(mining_identity)}
   , block_interval_ms_{block_interval_ms}
@@ -84,7 +82,7 @@ void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
     mean_time_to_block *= 1.1;
   }
 
-  uint64_t time_to_wait_ms = static_cast<uint64_t>(GetPoissonSample(30000, mean_time_to_block));
+  auto time_to_wait_ms = static_cast<uint64_t>(GetPoissonSample(30000, mean_time_to_block));
 
   bool disabled =
       block_interval_ms_ == std::numeric_limits<uint64_t>::max() || block_interval_ms_ == 0;
