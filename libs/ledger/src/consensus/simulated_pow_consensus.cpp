@@ -73,12 +73,15 @@ void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
     other_miners_seen_in_chain_.insert(current.miner_id);
   }
 
+  uint64_t time_to_wait = static_cast<uint64_t>(GetPoissonSample(
+          30000, std::ceil(block_interval_ms_ / other_miners_seen_in_chain_.size()) / 1000.0));
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Generating time to wait: ", time_to_wait, " given others: ", other_miners_seen_in_chain_.size());
+
   // Generate a block probalistically based on the previous block time and the number
   // of other peers seen so far (bounded to 30s)
   decided_next_timestamp_s_ =
-      current.timestamp +
-      static_cast<uint64_t>(GetPoissonSample(
-          30000, std::ceil(block_interval_ms_ / other_miners_seen_in_chain_.size()) / 1000.0));
+      current.timestamp + time_to_wait;
 }
 
 NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
@@ -91,6 +94,7 @@ NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Waiting before producing block. Seconds to wait: ",
                    decided_next_timestamp_s_ - current_time);
+    return ret;
   }
 
   // Number of block we want to generate
