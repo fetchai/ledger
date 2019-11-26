@@ -620,23 +620,20 @@ def run_test(build_directory, yaml_file, node_exe, name_filter=None):
             for test in all_yaml:
                 # Get test setup conditions
                 setup_conditions = yaml_extract(test, 'setup_conditions')
-                description = yaml_extract(test, 'test_description')
 
-                test_disabled = "DISABLED" in description
-
-                # Check if name is not filtered out (overrides disabled specifier)
+                # Check if name is not filtered out
                 if name_filter is not None:
-                    test_disabled = False
                     name = yaml_extract(setup_conditions, 'test_name')
                     if name not in name_filter:
                         continue
 
                 # Create a new test instance
+                description = yaml_extract(test, 'test_description')
                 output("\n=================================================")
                 output("Test: {}".format(description))
                 output("=================================================\n")
 
-                if test_disabled:
+                if "DISABLED" in description:
                     output("Skipping disabled test")
                     continue
 

@@ -249,11 +249,9 @@ def test_project(build_root, include_regex=None, exclude_regex=None, test_names=
         '-T', TEST_NAME
     ]
 
-    # Need to convert test names from set to a regex of ORs
-    names_as_list = list(test_names)
-    names_as_regex = "|".join(str(x) for x in names_as_list)
-
     if test_names is not None:
+        # Need to convert test names from set to a regex of ORs
+        names_as_regex = "|".join(str(x) for x in test_names)
         cmd = cmd + ['-R', names_as_regex]
     if include_regex is not None:
         cmd = cmd + ['-L', str(include_regex)]
