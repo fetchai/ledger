@@ -91,6 +91,16 @@ public:
   static PeerTrackerPtr New(Duration const &interval, core::Reactor &reactor,
                             MuddleRegister const &reg, PeerConnectionList &connections,
                             MuddleEndpoint &endpoint);
+
+  ///
+  /// @{
+  AddressSet GetDesiredPeers() const;
+  void       AddDesiredPeer(Address const &address);
+  void       AddDesiredPeer(Address const &address, network::Peer const &hint);
+  void       RemoveDesiredPeer(Address const &address);
+  AddressSet desired_peers_;
+  /// @}
+
   /// Message delivery
   /// @{
   // void NotifyOnFindPeer(Address address, PeerConnectedCallback cb);

@@ -29,6 +29,31 @@ bool PeerTracker::IsBlacklisted(Address const & /*target*/) const
   return false;
 }
 
+PeerTracker::AddressSet PeerTracker::GetDesiredPeers() const
+{
+  FETCH_LOCK(mutex_);
+  return desired_peers_;
+}
+
+void PeerTracker::AddDesiredPeer(Address const &address)
+{
+  FETCH_LOCK(mutex_);
+  desired_peers_.insert(address);
+}
+
+void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hint)
+{
+  FETCH_LOCK(mutex_);
+  desired_peers_.erase(address);
+  // TODO: work out what to do with the hint.
+}
+
+void PeerTracker::RemoveDesiredPeer(Address const &address)
+{
+  FETCH_LOCK(mutex_);
+  desired_peers_.erase(address);
+}
+
 void PeerTracker::SetMuddlePorts(PortsList const &ports)
 {
   peer_tracker_protocol_.SetMuddlePorts(ports);

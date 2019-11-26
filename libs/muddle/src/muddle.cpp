@@ -22,7 +22,6 @@
 #include "muddle_register.hpp"
 #include "muddle_registry.hpp"
 #include "muddle_server.hpp"
-#include "peer_selector.hpp"
 
 #include "core/containers/set_intersection.hpp"
 #include "core/serializers/base_types.hpp"
@@ -70,9 +69,9 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , maintenance_periodic_(std::make_shared<core::PeriodicFunctor>(
         std::chrono::milliseconds{MAINTENANCE_INTERVAL_MS}, this, &Muddle::RunPeriodicMaintenance))
   , direct_message_service_(node_address_, router_, *register_, clients_)
-  , peer_selector_(std::make_shared<PeerSelector>(
-        network_id, std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_, *register_,
-        clients_, router_))
+  //  , peer_selector_(std::make_shared<PeerSelector>(
+  //        network_id, std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_, *register_,
+  //        clients_, router_))
   , peer_tracker_(PeerTracker::New(std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_,
                                    *register_, clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
@@ -101,7 +100,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   rpc_server_.Add(RPC_MUDDLE_DISCOVERY, &discovery_service_);
 
   reactor_.Attach(maintenance_periodic_);
-  reactor_.Attach(peer_selector_);
+  //  reactor_.Attach(peer_selector_);
   reactor_.Attach(peer_tracker_);
 }
 
@@ -351,7 +350,8 @@ bool Muddle::IsDirectlyConnected(Address const &address) const
  */
 PeerSelectionMode Muddle::GetPeerSelectionMode() const
 {
-  return peer_selector_->GetMode();
+  return PeerSelectionMode::DEFAULT;  // TODO Make part of peer tracker configuration
+                                      // peer_selector_->GetMode();
 }
 
 /**
@@ -361,7 +361,7 @@ PeerSelectionMode Muddle::GetPeerSelectionMode() const
 void Muddle::SetPeerSelectionMode(PeerSelectionMode mode)
 {
   router_.SetKademliaRouting(PeerSelectionMode::KADEMLIA == mode);
-  peer_selector_->SetMode(mode);
+  // TODO: update peer tracker to support this peer_selector_->SetMode(mode);
 }
 
 /**
@@ -371,7 +371,7 @@ void Muddle::SetPeerSelectionMode(PeerSelectionMode mode)
  */
 Muddle::Addresses Muddle::GetRequestedPeers() const
 {
-  return peer_selector_->GetDesiredPeers();
+  return peer_tracker_->GetDesiredPeers();
 }
 
 /**
@@ -383,7 +383,7 @@ void Muddle::ConnectTo(Address const &address)
 {
   if (node_address_ != address)
   {
-    peer_selector_->AddDesiredPeer(address);
+    peer_tracker_->AddDesiredPeer(address);
   }
 }
 
@@ -423,7 +423,7 @@ void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint)
   {
     if (uri_hint.IsTcpPeer())
     {
-      peer_selector_->AddDesiredPeer(address, uri_hint.GetTcpPeer());
+      peer_tracker_->AddDesiredPeer(address, uri_hint.GetTcpPeer());
     }
     else
     {
@@ -447,7 +447,7 @@ void Muddle::ConnectTo(AddressHints const &address_hints)
  */
 void Muddle::DisconnectFrom(Address const &address)
 {
-  peer_selector_->RemoveDesiredPeer(address);
+  peer_tracker_->RemoveDesiredPeer(address);
 }
 
 /**
@@ -533,11 +533,6 @@ DirectMessageService const &Muddle::direct_message_service() const
   return direct_message_service_;
 }
 
-PeerSelector const &Muddle::peer_selector() const
-{
-  return *peer_selector_;
-}
-
 PeerTracker const &Muddle::peer_tracker() const
 {
   return *peer_tracker_;
@@ -579,7 +574,7 @@ void Muddle::RunPeriodicMaintenance()
       FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
     }
     discovery_service_.UpdatePeers(external_addresses);
-    peer_selector_->UpdatePeers(external_addresses);
+    // TODO: remove peer_selector_->UpdatePeers(external_addresses);
     // TODO: update external address for peer_tracker.
 
     // connect to all the required peers

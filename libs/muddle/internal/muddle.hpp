@@ -196,9 +196,9 @@ public:
   MuddleRegister const &      connection_register() const;
   PeerConnectionList const &  connection_list() const;
   DirectMessageService const &direct_message_service() const;
-  PeerSelector const &        peer_selector() const;
-  PeerTracker const &         peer_tracker() const;
-  ServerList const &          servers() const;
+  //  PeerSelector const &        peer_selector() const;
+  PeerTracker const &peer_tracker() const;
+  ServerList const & servers() const;
   /// @}
 
   // Operators

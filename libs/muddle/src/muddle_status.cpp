@@ -21,7 +21,6 @@
 #include "muddle_register.hpp"
 #include "muddle_registry.hpp"
 #include "peer_list.hpp"
-#include "peer_selector.hpp"
 
 #include "core/string/trim.hpp"
 #include "muddle/muddle_status.hpp"
@@ -42,7 +41,7 @@ using byte_array::ConstByteArray;
  * @param address_set The input address set to convert
  * @param output The output variant structure
  */
-void BuildPeerSet(PeerSelector::Addresses const &address_set, variant::Variant &output)
+void BuildPeerSet(Muddle::Addresses const &address_set, variant::Variant &output)
 {
   output = variant::Variant::Array(address_set.size());
 
@@ -52,61 +51,6 @@ void BuildPeerSet(PeerSelector::Addresses const &address_set, variant::Variant &
     output[idx++] = address.ToBase64();
   }
 }
-
-/**
- * Build the JSON representation of the PeerSelectors Peer Cache
- *
- * @param peer_selector The input peer selector
- * @param output The output variant object
- */
-void BuildPeerInfo(PeerSelector const &peer_selector, variant::Variant &output)
-{
-  auto const peer_info = peer_selector.GetPeerCache();
-
-  output = variant::Variant::Array(peer_info.size());
-
-  std::size_t peer_idx{0};
-  for (auto const &entry : peer_info)
-  {
-    auto &output_peer = output[peer_idx] = variant::Variant::Object();
-
-    output_peer["targetAddress"] = entry.first.ToBase64();
-    output_peer["currentIndex"]  = entry.second.peer_index;
-
-    auto &address_list = output_peer["addresses"] =
-        variant::Variant::Array(entry.second.peer_data.size());
-
-    std::size_t address_idx{0};
-    for (auto const &address_entry : entry.second.peer_data)
-    {
-      auto &addr_entry = address_list[address_idx] = variant::Variant::Object();
-
-      addr_entry["peerAddress"] = address_entry.peer.ToString();
-      addr_entry["unreachable"] = address_entry.unreachable;
-
-      ++address_idx;
-    }
-
-    ++peer_idx;
-  }
-}
-
-/**
- * Build the JSON representation of a PeerSelectors internal status
- *
- * @param peer_selector The input peer selector
- * @param output The output variant object
- */
-void BuildPeerSelection(PeerSelector const &peer_selector, variant::Variant &output)
-{
-  output = variant::Variant::Object();
-
-  BuildPeerSet(peer_selector.GetDesiredPeers(), output["desiredPeers"]);
-  BuildPeerSet(peer_selector.GetKademliaPeers(), output["kademliaPeers"]);
-  BuildPeerInfo(peer_selector, output["peerInfo"]);
-}
-
-/// TODO
 
 void BuildConnectionPriorities(PeerTracker const &peer_tracker, variant::Variant &output)
 {
@@ -299,7 +243,7 @@ void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output, bool exte
 
   BuildConnectionList(muddle.connection_register(), output["connections"]);
   BuildPeerLists(muddle.connection_list(), output["peers"]);
-  BuildPeerSelection(muddle.peer_selector(), output["peerSelection"]);
+  // TODO: remove  BuildPeerSelection(muddle.peer_selector(), output["peerSelection"]);
   BuildPeerTracker(muddle.peer_tracker(), output["peerTracker"]);
   BuildRoutingTable(muddle.router().routing_table(), output["routingTable"]);
 
