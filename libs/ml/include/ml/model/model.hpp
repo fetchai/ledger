@@ -82,7 +82,7 @@ public:
   DataType Evaluate(std::vector<MetricType> const &metrics = std::vector<MetricType>());
 
   template <typename... Params>
-  void SetData(Params params...);
+  void SetData(Params ...params);
 
   void UpdateConfig(ModelConfig<DataType> &model_config);
 
