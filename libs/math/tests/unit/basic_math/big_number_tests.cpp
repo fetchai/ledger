@@ -23,6 +23,10 @@
 #include <cstddef>
 #include <cstdint>
 
+namespace {
+
+using namespace fetch;
+using namespace fetch::memory;
 using namespace fetch::vectorise;
 using namespace fetch::byte_array;
 
@@ -370,12 +374,12 @@ TEST(big_number_gtest, test_construction_from_byte_array_fails_if_too_long)
   constexpr std::size_t bits{256};
 
   // Verify that construction pass is size is <= bits/8
-  UInt<bits> shall_pass{ConstByteArray(bits / 8), true};
+  UInt<bits> shall_pass{ConstByteArray(bits / 8), Endian::LITTLE};
 
   bool exception_thrown = false;
   try
   {
-    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1), true};
+    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1), Endian::LITTLE};
   }
   catch (std::exception const &ex)
   {
@@ -424,7 +428,7 @@ TEST(big_number_gtest, test_zero)
 }
 
 // TODO(issue 1383): Enable test when issue is resolved
-TEST(big_number_gtest, DISABLED_test_issue_1383_demo_with_bitshift_oper)
+TEST(big_number_gtest, test_issue_1383_demo_with_bitshift_oper)
 {
   using UIntT = UInt<72>;
 
@@ -444,7 +448,7 @@ TEST(big_number_gtest, DISABLED_test_issue_1383_demo_with_bitshift_oper)
 }
 
 // TODO(issue 1383): Enable test when issue is resolved
-TEST(big_number_gtest, DISABLED_test_issue_1383_demo_overflow_with_plus_minus_oper)
+TEST(big_number_gtest, test_issue_1383_demo_overflow_with_plus_minus_oper)
 {
   using UIntT = UInt<72>;
   UIntT n1{UIntT::max};
@@ -457,6 +461,8 @@ TEST(big_number_gtest, DISABLED_test_issue_1383_demo_overflow_with_plus_minus_op
                 (UIntT::WIDE_ELEMENT_SIZE - (UIntT::UINT_SIZE % UIntT::WIDE_ELEMENT_SIZE)));
 
   n1 += 1u;
-  n1 -= 1u;
+  n1 <<= 1u;
   EXPECT_EQ(n1, 0u);
 }
+
+}  // namespace

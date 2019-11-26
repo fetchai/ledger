@@ -103,7 +103,7 @@ meta::EnableIf<std::is_same<UInt256Wrapper, T>::value, Ptr<T>> FromByteArray(
     return Ptr<T>{};
   }
 
-  return vm->CreateNewObject<UInt256Wrapper>(value_array, false);
+  return vm->CreateNewObject<UInt256Wrapper>(value_array, memory::Endian::BIG);
 }
 
 ByteArray ToByteArray(String const &str)
@@ -123,7 +123,7 @@ ByteArray ToByteArray(ByteArrayWrapper const &byte_array)
 
 ByteArray ToByteArray(UInt256Wrapper const &big_number)
 {
-  auto const big_endian_byte_array{big_number.number().As<ByteArray>(false)};
+  auto const big_endian_byte_array{big_number.number().As<ByteArray>(memory::Endian::BIG)};
   return big_endian_byte_array.ToBase64();
 }
 

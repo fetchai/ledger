@@ -43,6 +43,22 @@ meta::IfIsInteger<T, T> ToInteger(VM * /*vm*/, Ptr<UInt256Wrapper> const &a)
 {
   return {*reinterpret_cast<T const *>(a->number().pointer())};
 }
+
+Ptr<UInt256Wrapper> ConstructorFromBytesBigEndian(VM *vm, TypeId type_id,
+                                                  Ptr<ByteArrayWrapper> const &ba)
+{
+  try
+  {
+    return Ptr<UInt256Wrapper>{
+        new UInt256Wrapper(vm, type_id, ba->byte_array(), memory::Endian::BIG)};
+  }
+  catch (std::exception const &e)
+  {
+    vm->RuntimeError(e.what());
+  }
+  return {};
+}
+
 }  // namespace
 
 void UInt256Wrapper::Bind(Module &module)
@@ -51,7 +67,7 @@ void UInt256Wrapper::Bind(Module &module)
       .CreateSerializeDefaultConstructor(
           [](VM *vm, TypeId type_id) { return UInt256Wrapper::Constructor(vm, type_id, 0u); })
       .CreateConstructor(&UInt256Wrapper::Constructor)
-      .CreateConstructor(&UInt256Wrapper::ConstructorFromBytes)
+      .CreateConstructor(&ConstructorFromBytesBigEndian)
       .EnableOperator(Operator::Equal)
       .EnableOperator(Operator::NotEqual)
       .EnableOperator(Operator::LessThan)
@@ -64,10 +80,9 @@ void UInt256Wrapper::Bind(Module &module)
       .CreateMemberFunction("size", &UInt256Wrapper::size);
 
   module.CreateFreeFunction("toString", &ToString);
-  module.CreateFreeFunction("toBuffer", [](VM *vm, Ptr<UInt256Wrapper> const &x,
-                                           bool as_little_endian, bool include_leading_zeroes) {
+  module.CreateFreeFunction("toBuffer", [](VM *vm, Ptr<UInt256Wrapper> const &x) {
     return vm->CreateNewObject<ByteArrayWrapper>(
-        x->number().As<byte_array::ByteArray>(as_little_endian, include_leading_zeroes));
+        x->number().As<byte_array::ByteArray>(memory::Endian::BIG, true));
   });
   module.CreateFreeFunction(
       "toFloat64", [](VM * /*vm*/, Ptr<UInt256Wrapper> const &x) { return ToDouble(x->number()); });
@@ -83,31 +98,15 @@ UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, UInt256 data)
 {}
 
 UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, byte_array::ConstByteArray const &data,
-                               bool input_is_little_endian)
+                               memory::Endian endianess_of_input_data)
   : Object(vm, type_id)
-  , number_(data, input_is_little_endian)
+  , number_(data, endianess_of_input_data)
 {}
 
 UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, uint64_t data)
   : Object(vm, type_id)
   , number_(data)
 {}
-
-Ptr<UInt256Wrapper> UInt256Wrapper::ConstructorFromBytes(VM *vm, TypeId type_id,
-                                                         Ptr<ByteArrayWrapper> const &ba,
-                                                         bool input_is_little_endian)
-{
-  try
-  {
-    return Ptr<UInt256Wrapper>{
-        new UInt256Wrapper(vm, type_id, ba->byte_array(), input_is_little_endian)};
-  }
-  catch (std::exception const &e)
-  {
-    vm->RuntimeError(e.what());
-  }
-  return {};
-}
 
 Ptr<UInt256Wrapper> UInt256Wrapper::Constructor(VM *vm, TypeId type_id, uint64_t val)
 {

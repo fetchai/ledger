@@ -23,12 +23,14 @@
 #include "vm_modules/math/type.hpp"
 #include "vm_test_toolkit.hpp"
 
-using namespace fetch::vm;
-
 namespace {
 
+using namespace fetch;
+using namespace fetch::vm;
 using fetch::byte_array::ByteArray;
 using fetch::vm_modules::math::UInt256Wrapper;
+
+static constexpr memory::Endian ENDIANESS_OF_TEST_DATA{memory::Endian::LITTLE};
 
 const ByteArray raw_32xFF{
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -137,7 +139,7 @@ public:
       0,
   };
   UInt256Wrapper uint64max{dummy_vm_ptr, dummy_typeid, std::numeric_limits<uint64_t>::max()};
-  UInt256Wrapper maximum{dummy_vm_ptr, dummy_typeid, raw_32xFF, true};
+  UInt256Wrapper maximum{dummy_vm_ptr, dummy_typeid, raw_32xFF, ENDIANESS_OF_TEST_DATA};
 
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
@@ -148,7 +150,7 @@ TEST_F(UInt256Tests, uint256_raw_construction)
   UInt256Wrapper fromStdUint64{dummy_vm_ptr, dummy_typeid, uint64_t(42)};
   ASSERT_TRUE(SIZE_IN_BYTES == fromStdUint64.size());
 
-  UInt256Wrapper fromByteArray{dummy_vm_ptr, dummy_typeid, raw_32xFF, true};
+  UInt256Wrapper fromByteArray{dummy_vm_ptr, dummy_typeid, raw_32xFF, ENDIANESS_OF_TEST_DATA};
   ASSERT_TRUE(SIZE_IN_BYTES == fromByteArray.size());
 
   UInt256Wrapper fromAnotherUInt256{dummy_vm_ptr, dummy_typeid, zero.number()};
@@ -281,7 +283,7 @@ TEST_F(UInt256Tests, uint256_logValue)
   for (const auto &input : TO_DOUBLE_INPUTS)
   {
     using namespace std;
-    UInt256Wrapper n1{dummy_vm_ptr, dummy_typeid, input.first, true};
+    UInt256Wrapper n1{dummy_vm_ptr, dummy_typeid, input.first, ENDIANESS_OF_TEST_DATA};
 
     const auto as_double  = fetch::vectorise::ToDouble(n1.number());
     const auto result     = n1.LogValue();
@@ -348,8 +350,7 @@ TEST_F(UInt256Tests, uint256_type_casts)
   EXPECT_TRUE(toolkit.Run());
 }
 
-// Disabled until UInt256 constructor from bytearray fix/rework.
-TEST_F(UInt256Tests, DISABLED_uint256_sha256_assignment)
+TEST_F(UInt256Tests, uint256_sha256_assignment)
 {
   // This test uses a SHA256 hash from empty string
   // 0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
@@ -361,16 +362,22 @@ TEST_F(UInt256Tests, DISABLED_uint256_sha256_assignment)
   // 0x141cfc9842c4b0e3, which indicated that either SHA256().final() serialization,
   // or UInt256 constructor-from-bytearray is incorrect.
   static constexpr char const *TEXT = R"(
-        function main() : Bool
-            var test : UInt256 = SHA256().final();
-            var asU64 = toUint64(test);
-            return asU64 == 11859553537011923029u64;
+        function main()
+            var sha256hasher = SHA256();
+
+            sha256hasher.update("Hello World!");
+            var acquired_digest: UInt256 = sha256hasher.final();
+
+            var expected_digest_BigEndian = Buffer(0);
+            expected_digest_BigEndian.fromHex("7F83B1657FF1FC53B92DC18148A1D65DFC2D4B1FA3D677284ADDD200126D9069");
+
+            var acquired_digest_buffer = toBuffer(acquired_digest);
+
+            assert(acquired_digest_buffer == expected_digest_BigEndian, "Resulting digest '0x" + acquired_digest_buffer.toHex() + "' does not match expected digest '0x" + expected_digest_BigEndian.toHex() + "'");
         endfunction
       )";
+
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-  auto const result_is_ok = res.Get<bool>();
-  EXPECT_TRUE(result_is_ok);
+  EXPECT_TRUE(toolkit.Run());
 }
 }  // namespace

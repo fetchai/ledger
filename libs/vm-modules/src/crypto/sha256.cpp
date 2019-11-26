@@ -62,7 +62,7 @@ void SHA256Wrapper::Reset()
 
 Ptr<math::UInt256Wrapper> SHA256Wrapper::Final()
 {
-  return vm_->CreateNewObject<math::UInt256Wrapper>(hasher_.Final(), false);
+  return vm_->CreateNewObject<math::UInt256Wrapper>(hasher_.Final(), memory::Endian::BIG);
 }
 
 Ptr<ByteArrayWrapper> SHA256Wrapper::FinalAsByteArray()

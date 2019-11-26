@@ -48,16 +48,12 @@ public:
   UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, UInt256 data);
 
   UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                 byte_array::ConstByteArray const &data, bool input_is_little_endian);
+                 byte_array::ConstByteArray const &data, memory::Endian endianess_of_input_data);
 
   UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, uint64_t data);
 
   static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                     uint64_t val);
-
-  static fetch::vm::Ptr<UInt256Wrapper> ConstructorFromBytes(
-      fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<ByteArrayWrapper> const &ba,
-      bool input_is_little_endian);
 
   double LogValue() const;
 
