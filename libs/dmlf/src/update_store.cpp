@@ -59,7 +59,7 @@ void UpdateStore::PushUpdate(Algorithm const &algo, UpdateType type, Data &&data
                              Metadata &&metadata)
 {
   QueueId id        = Id(algo, type);
-  auto    newUpdate = std::make_shared<Update>(std::move(algo), std::move(type), std::move(data),
+  auto    newUpdate = std::make_shared<Update>(algo, std::move(type), std::move(data),
                                             std::move(source), std::move(metadata));
   FETCH_LOCK(global_m_);
 
@@ -69,10 +69,8 @@ void UpdateStore::PushUpdate(Algorithm const &algo, UpdateType type, Data &&data
   {
     return;
   }
-  else
-  {
-    result.first->second.insert(newUpdate->source());
-  }
+
+  result.first->second.insert(newUpdate->source());
 
   auto queue_it = algo_map_.find(id);
   if (queue_it == algo_map_.end())
@@ -127,7 +125,8 @@ UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType 
     throw std::runtime_error("No updates of algo " + algo + " and type " + type +
                              " matching the criteria found\n");
   }
-  else if (!consumer.empty())
+
+  if (!consumer.empty())
   {
     consumed_[result->fingerprint()].insert(consumer);
   }
