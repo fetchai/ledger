@@ -517,7 +517,7 @@ private:
   void GetDetails(TypeInfoArray &type_info_array, TypeInfoMap &type_info_map,
                   RegisteredTypes &registered_types, FunctionInfoArray &function_info_array,
                   DeserializeConstructorMap &deserialization_constructors,
-                  CPPCopyConstructorMap &    cpp_copy_constructors)
+                  CPPCopyConstructorMap &    cpp_copy_constructors) const
   {
     type_info_array              = type_info_array_;
     type_info_map                = type_info_map_;
