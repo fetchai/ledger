@@ -17,9 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/callable/callable_traits.hpp"
 #include "vm/vm.hpp"
-
-using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
@@ -33,17 +32,17 @@ namespace vm_modules {
 
   - `estimator`     : should be a member function of the class `EstimatorType`
 
-  - `Args...`       : list of arguments of of the `estimator` member function as well as the vm
+  - `EtchArgs...`   : list of arguments of of the `estimator` member function as well as the vm
   object one
 
 */
 
-template <typename EstimatorType, typename... Args>
-std::function<ChargeAmount(Ptr<typename EstimatorType::ObjectType>, Args...)> estimator_use(
-    ChargeAmount (EstimatorType::*estimator)(Args... args))
+template <typename EstimatorType, typename... EtchArgs>
+vm::ChargeEstimator<vm::Ptr<typename EstimatorType::VMObjectType>, EtchArgs...> use_estimator(
+    vm::ChargeAmount (EstimatorType::*estimator)(EtchArgs... args))
 {
   return
-      [estimator](Ptr<typename EstimatorType::ObjectType> context, Args... args) -> ChargeAmount {
+      [estimator](vm::Ptr<typename EstimatorType::VMObjectType> context, EtchArgs... args) -> vm::ChargeAmount {
         return (context->Estimator().*estimator)(args...);
       };
 }
