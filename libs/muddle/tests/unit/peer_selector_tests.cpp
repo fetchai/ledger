@@ -107,14 +107,14 @@ Address CreateAddress(uint64_t index)
   memset(address.pointer(), 0, address.size());
 
   // use index as the address
-  address[63] = (index & 0xFFu);
-  address[62] = ((index >> 8u) & 0xFFu);
-  address[61] = ((index >> 16u) & 0xFFu);
-  address[60] = ((index >> 24u) & 0xFFu);
-  address[59] = ((index >> 32u) & 0xFFu);
-  address[58] = ((index >> 40u) & 0xFFu);
-  address[57] = ((index >> 48u) & 0xFFu);
-  address[56] = ((index >> 56u) & 0xFFu);
+  address[63] = static_cast<uint8_t>(index & 0xFFu);
+  address[62] = static_cast<uint8_t>((index >> 8u) & 0xFFu);
+  address[61] = static_cast<uint8_t>((index >> 16u) & 0xFFu);
+  address[60] = static_cast<uint8_t>((index >> 24u) & 0xFFu);
+  address[59] = static_cast<uint8_t>((index >> 32u) & 0xFFu);
+  address[58] = static_cast<uint8_t>((index >> 40u) & 0xFFu);
+  address[57] = static_cast<uint8_t>((index >> 48u) & 0xFFu);
+  address[56] = static_cast<uint8_t>((index >> 56u) & 0xFFu);
 
   return {address};
 }
