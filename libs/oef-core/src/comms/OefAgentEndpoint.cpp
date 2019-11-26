@@ -192,7 +192,7 @@ void OefAgentEndpoint::heartbeat()
     hb_sent++;
     outstanding_heartbeats++;
   }
-  catch (XKarma &x)
+  catch (XKarma const &x)
   {
     socket().close();
   }

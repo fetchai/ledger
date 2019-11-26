@@ -95,10 +95,10 @@ std::shared_ptr<Module> VMFactory::GetModule(uint64_t enabled)
     CreateToString(*module);
     CreateToBool(*module);
 
-    StructuredData::Bind(*module);
     ByteArrayWrapper::Bind(*module);
     math::UInt256Wrapper::Bind(*module);
     SHA256Wrapper::Bind(*module);
+    StructuredData::Bind(*module);
   }
 
   // math modules
