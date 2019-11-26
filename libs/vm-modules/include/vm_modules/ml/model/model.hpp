@@ -22,6 +22,7 @@
 #include "vm/object.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
+#include "vm_modules/ml/model/model_estimator.hpp"
 
 namespace fetch {
 
@@ -54,6 +55,7 @@ public:
   using TensorDataloader    = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
   using TensorDataloaderPtr = std::shared_ptr<TensorDataloader>;
   using VMTensor            = fetch::vm_modules::math::VMTensor;
+  using ModelEstimator      = fetch::vm_modules::ml::model::ModelEstimator;
 
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
@@ -107,10 +109,13 @@ public:
   fetch::vm::Ptr<VMModel> DeserializeFromString(
       fetch::vm::Ptr<fetch::vm::String> const &model_string);
 
+  ModelEstimator &Estimator();
+
 private:
   ModelPtrType       model_;
   ModelConfigPtrType model_config_;
   ModelCategory      model_category_ = ModelCategory::NONE;
+  ModelEstimator     estimator_;
 
   void Init(std::string const &model_category);
 };

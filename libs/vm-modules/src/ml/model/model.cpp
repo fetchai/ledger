@@ -40,18 +40,21 @@ using VMPtrString = Ptr<String>;
 
 VMModel::VMModel(VM *vm, TypeId type_id)
   : Object(vm, type_id)
+  , estimator_{*this}
 {
   Init("none");
 }
 
 VMModel::VMModel(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &model_category)
   : Object(vm, type_id)
+  , estimator_{*this}
 {
   Init(model_category->string());
 }
 
 VMModel::VMModel(VM *vm, TypeId type_id, std::string const &model_category)
   : Object(vm, type_id)
+  , estimator_{*this}
 {
   Init(model_category);
 }
@@ -451,6 +454,11 @@ fetch::vm::Ptr<VMModel> VMModel::DeserializeFromString(
   vm_model->GetModel() = model_;
 
   return vm_model;
+}
+
+VMModel::ModelEstimator &VMModel::Estimator()
+{
+  return estimator_;
 }
 
 }  // namespace model
