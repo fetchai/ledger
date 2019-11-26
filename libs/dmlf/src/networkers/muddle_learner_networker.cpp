@@ -82,8 +82,8 @@ uint64_t MuddleLearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
 
 void MuddleLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
 {
-  auto client =
-      std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
+//  std::shared_ptr<RpcClient> client;
+//  client = std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   auto data = update->Serialise();
 
   PromiseList promises;
@@ -95,7 +95,7 @@ void MuddleLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
   {
     auto peer = peers_[target_peer_index];
     auto tmp =
-        client->CallSpecificAddress(fetch::byte_array::FromBase64(byte_array::ConstByteArray(peer)),
+        client_->CallSpecificAddress(fetch::byte_array::FromBase64(byte_array::ConstByteArray(peer)),
                                     RPC_DMLF, MuddleLearnerNetworkerProtocol::RECV_BYTES, data);
     FETCH_LOG_INFO(LOGGING_NAME, "Sending targ=", peer, " prom=", tmp->id());
 
@@ -118,8 +118,8 @@ void MuddleLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
 void MuddleLearnerNetworker::PushUpdateType(const std::string &       type,
                                             UpdateInterfacePtr const &update)
 {
-  auto client =
-      std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
+//  auto client =
+//      std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   auto data = update->Serialise(type);
 
   PromiseList promises;
@@ -127,7 +127,7 @@ void MuddleLearnerNetworker::PushUpdateType(const std::string &       type,
 
   for (auto const &target_peer : peers_)
   {
-    promises.push_back(client->CallSpecificAddress(
+    promises.push_back(client_->CallSpecificAddress(
         fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_peer)), RPC_DMLF,
         MuddleLearnerNetworkerProtocol::RECV_BYTES, data));
   }
@@ -212,10 +212,13 @@ void MuddleLearnerNetworker::NetworkConfigInit(fetch::json::JSONDocument &doc,
     }
   }
   mud_->Start(initial_peers, {port});
-  server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
+  server_ = std::make_shared<RpcServer>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   proto_  = std::make_shared<MuddleLearnerNetworkerProtocol>(*this);
 
   server_->Add(RPC_DMLF, proto_.get());
+
+  client_ =
+      std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
 }
 
 }  // namespace dmlf

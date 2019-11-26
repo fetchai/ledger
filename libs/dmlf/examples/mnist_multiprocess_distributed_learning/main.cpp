@@ -23,6 +23,10 @@
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "json/document.hpp"
 #include "math/tensor.hpp"
+#include "http/server.hpp"
+#include "network/management/network_manager.hpp"
+#include "http/json_response.hpp"
+#include "muddle/muddle_status.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -63,6 +67,27 @@ std::uint64_t InstanceFromHostname(std::string &hostname)
   return std::stoul(instance);
 }
 
+class MuddleStatusModule : public fetch::http::HTTPModule
+{
+public:
+  MuddleStatusModule()
+  {
+    Get("/api/status/muddle", "Returns the status of the muddle instances present on the node",
+        [](fetch::http::ViewParameters const &, fetch::http::HTTPRequest const &request) {
+          auto const &params = request.query();
+
+          std::string network_name{};
+          if (params.Has("network"))
+          {
+            network_name = static_cast<std::string>(params["network"]);
+          }
+
+          return fetch::http::CreateJsonResponse(fetch::muddle::GetStatusSummary(network_name));
+        });
+
+  }
+};
+
 int main(int argc, char **argv)
 {
   static constexpr std::size_t HOST_NAME_MAX_LEN = 12;
@@ -75,6 +100,14 @@ int main(int argc, char **argv)
     std::cout << "learner_config.json networker_config.json" << std::endl;
     return 1;
   }
+
+  // set up muddle https server
+  auto netm = std::make_shared<fetch::network::NetworkManager>("netman", 1);
+  netm->Start();
+  auto htpptr = std::make_shared<fetch::http::HTTPServer>(*netm);
+  auto mudstat = std::make_shared<MuddleStatusModule>();
+  htpptr->AddModule(*mudstat);
+  htpptr->Start(8311);
 
   // get the host name
   char tmp_hostname[HOST_NAME_MAX_LEN];

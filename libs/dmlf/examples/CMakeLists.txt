@@ -11,3 +11,5 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 setup_library_examples(fetch-dmlf)
+
+target_link_libraries(example-dmlf-mnist-multiprocess-distributed-learning PUBLIC fetch-http)

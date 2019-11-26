@@ -54,7 +54,6 @@ public:
   using Promise           = fetch::service::Promise;
   using Payload           = fetch::muddle::Packet::Payload;
   using Response          = MuddleEndpoint::Response;
-  using Server            = fetch::muddle::rpc::Server;
   using CertificatePtr    = muddle::ProverPtr;
   using Uri               = fetch::network::Uri;
 
@@ -106,8 +105,9 @@ protected:
 
   std::shared_ptr<NetworkManager>                 netm_;
   MuddlePtr                                       mud_;
-  std::shared_ptr<Server>                         server_;
+  std::shared_ptr<RpcServer>                         server_;
   std::shared_ptr<MuddleLearnerNetworkerProtocol> proto_;
+  std::shared_ptr<RpcClient> client_;
 
   mutable Mutex mutex_;
   Peers         peers_;
