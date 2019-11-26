@@ -38,6 +38,7 @@ using fetch::vm::Primitive;
 using fetch::vm::TypeId;
 using fetch::fixed_point::fp32_t;
 using fetch::fixed_point::fp64_t;
+using fetch::fixed_point::fp128_t;
 using namespace fetch::vm::TypeIds;
 
 class VariantSerialization : public ::testing::Test
@@ -62,6 +63,7 @@ public:
   double   ft64 = -128.64321684;
   fp32_t   fp32 = fetch::fixed_point::fp32_t::FromBase(i32);
   fp64_t   fp64 = fetch::fixed_point::fp64_t::FromBase(i64);
+  fp128_t  fp128 = fetch::fixed_point::fp128_t::FromBase(i64);
 
   std::string str{"I am a string"};
 

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/common.hpp"
 #include "vm/object.hpp"
 
@@ -36,6 +37,10 @@ struct Fixed128 : public Object
   ~Fixed128() override = default;
 
   Fixed128(VM *vm, fixed_point::fp128_t const &data);
+
+  Fixed128(vm::VM *vm, vm::TypeId type_id, fixed_point::fp128_t data);
+
+  Fixed128(vm::VM *vm, vm::TypeId type_id, byte_array::ByteArray const &data);
 
   bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   bool IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;

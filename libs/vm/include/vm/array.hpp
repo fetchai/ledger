@@ -279,7 +279,7 @@ private:
   {
     if (!vm_->IsDefaultSerializeConstructable(element_type_id))
     {
-      vm_->RuntimeError("Cannot seserialize type " + vm_->GetTypeName(element_type_id) +
+      vm_->RuntimeError("Cannot serialize type " + vm_->GetTypeName(element_type_id) +
                         " as no serialisation constructor exists.");
       return false;
     }

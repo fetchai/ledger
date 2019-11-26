@@ -31,6 +31,16 @@ Fixed128::Fixed128(VM *vm, fixed_point::fp128_t const &data)
   , data_{data}
 {}
 
+Fixed128::Fixed128(vm::VM *vm, vm::TypeId /*type_id*/, fixed_point::fp128_t data)
+  : Object(vm, TypeIds::Fixed128)
+  , data_{data}
+{}
+
+Fixed128::Fixed128(vm::VM *vm, vm::TypeId /*type_id*/, byte_array::ByteArray const &data)
+  : Object(vm, TypeIds::Fixed128)
+  , data_{*reinterpret_cast<int128_t const *>(data.pointer())}
+{}
+
 bool Fixed128::IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
   Ptr<Fixed128> lhs = lhso;

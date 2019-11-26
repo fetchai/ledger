@@ -23,6 +23,7 @@
 #include "meta/type_traits.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/array.hpp"
+#include "vm/fixed.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/structured_data.hpp"
 #include "vm_modules/math/tensor.hpp"
@@ -41,25 +42,119 @@ namespace vm_modules {
 namespace {
 
 using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::ToBase64;
-using fetch::byte_array::FromBase64;
-using fetch::meta::EnableIfNotSame;
+using fetch::byte_array::ByteArray;
+using fetch::vm_modules::ByteArrayWrapper;
+using fetch::vm_modules::math::UInt256Wrapper;
+using fetch::vm::Fixed128;
+
+template <typename T>
+meta::EnableIf<vm::IsString<meta::Decay<T>>::value, Ptr<T>> FromByteArray(
+    VM *vm, Ptr<String> const & /*name*/, ConstByteArray const &array)
+{
+  ConstByteArray value_array;
+  return Ptr<T>{new T{vm, static_cast<std::string>(array)}};
+}
+
+template <typename T>
+meta::EnableIf<IsAddress<meta::Decay<T>>::value, Ptr<T>> FromByteArray(VM *                  vm,
+                                                                       Ptr<String> const &   name,
+                                                                       ConstByteArray const &array)
+{
+  try
+  {
+    chain::Address addr;
+    if (!chain::Address::Parse(array, addr))
+    {
+      vm->RuntimeError("Unable to decode address value for " + name->string() + " item");
+      return Ptr<T>{};
+    }
+
+    return vm->CreateNewObject<Address>(std::move(addr));
+  }
+  catch (std::runtime_error const &ex)
+  {
+    vm->RuntimeError("Unable to construct Address object for " + name->string() +
+                     " item: " + ex.what());
+    return Ptr<T>{};
+  }
+}
+
+template <typename T>
+meta::EnableIf<std::is_same<ByteArrayWrapper, T>::value, Ptr<T>> FromByteArray(
+    VM *vm, Ptr<String> const &name, ConstByteArray const &array)
+{
+  ConstByteArray value_array_base64;
+  ConstByteArray value_array{array.FromBase64()};
+
+  if (!value_array_base64.empty() and value_array.empty())
+  {
+    vm->RuntimeError("Unable to decode byte array value for " + name->string() + " item");
+    return Ptr<T>{};
+  }
+
+  return vm->CreateNewObject<ByteArrayWrapper>(std::move(value_array));
+}
+
+template <typename T>
+meta::EnableIf<std::is_same<UInt256Wrapper, T>::value, Ptr<T>> FromByteArray(
+    VM *vm, Ptr<String> const &name, ConstByteArray const &array)
+{
+  ConstByteArray value_array_base64;
+  auto const     value_array{array.FromBase64()};
+  if (!value_array_base64.empty() && value_array.empty())
+  {
+    vm->RuntimeError("Unable to decode UInt256 value for " + name->string() + " item");
+    return Ptr<T>{};
+  }
+
+  return vm->CreateNewObject<UInt256Wrapper>(value_array);
+}
+
+template <typename T>
+meta::EnableIf<std::is_same<Fixed128, T>::value, Ptr<T>> FromByteArray(
+    VM *vm, Ptr<String> const &name, ConstByteArray const &array)
+{
+  ConstByteArray value_array_base64;
+  auto const     value_array{array.FromBase64()};
+  if (!value_array_base64.empty() && value_array.empty())
+  {
+    vm->RuntimeError("Unable to decode Fixed128 value for " + name->string() + " item");
+    return Ptr<T>{};
+  }
+
+  return vm->CreateNewObject<Fixed128>(value_array);
+}
+
+ByteArray ToByteArray(String const &str)
+{
+  return {str.string()};
+}
+
+ByteArray ToByteArray(Address const &addr)
+{
+  return addr.address().display();
+}
+
+ByteArray ToByteArray(ByteArrayWrapper const &byte_array)
+{
+  return byte_array.byte_array().ToBase64();
+}
+
+ByteArray ToByteArray(UInt256Wrapper const &big_number)
+{
+  return byte_array::ToBase64(big_number.number().pointer(), big_number.number().TrimmedSize());
+}
+
+ByteArray ToByteArray(Fixed128 const &fixed_number)
+{
+  return byte_array::ToBase64(reinterpret_cast<uint8_t const*>(fixed_number.data_.pointer()), sizeof(fixed_point::fp128_t));
+}
 
 template <typename T>
 Ptr<Array<T>> CreateNewPrimitiveArray(VM *vm, std::vector<T> &&items)
 {
   Ptr<Array<T>> array{
       new Array<T>(vm, vm->GetTypeId<IArray>(), vm->GetTypeId<T>(), int32_t(items.size()))};
-  array->elements = std::move(items);
-
-  return array;
-}
-
-template <typename T>
-Ptr<Array<Ptr<T>>> CreateNewPtrArray(VM *vm, std::vector<Ptr<T>> &&items)
-{
-  Ptr<Array<Ptr<T>>> array{
-      new Array<Ptr<T>>(vm, vm->GetTypeId<IArray>(), vm->GetTypeId<T>(), int32_t(items.size()))};
   array->elements = std::move(items);
 
   return array;
@@ -80,8 +175,11 @@ void StructuredData::Bind(Module &module)
       .CreateMemberFunction("getFloat64", &StructuredData::GetPrimitive<double>)
       .CreateMemberFunction("getFixed32", &StructuredData::GetPrimitive<fixed_point::fp32_t>)
       .CreateMemberFunction("getFixed64", &StructuredData::GetPrimitive<fixed_point::fp64_t>)
-      .CreateMemberFunction("getFixed128", &StructuredData::GetFixed128)
-      .CreateMemberFunction("getString", &StructuredData::GetString)
+      .CreateMemberFunction("getString", &StructuredData::GetObject<String>)
+      .CreateMemberFunction("getAddress", &StructuredData::GetObject<Address>)
+      .CreateMemberFunction("getBuffer", &StructuredData::GetObject<ByteArrayWrapper>)
+      .CreateMemberFunction("getUInt256", &StructuredData::GetObject<UInt256Wrapper>)
+      .CreateMemberFunction("getFixed128", &StructuredData::GetObject<Fixed128>)
       .CreateMemberFunction("getArrayInt32", &StructuredData::GetArray<int32_t>)
       .CreateMemberFunction("getArrayInt64", &StructuredData::GetArray<int64_t>)
       .CreateMemberFunction("getArrayUInt32", &StructuredData::GetArray<uint32_t>)
@@ -90,7 +188,9 @@ void StructuredData::Bind(Module &module)
       .CreateMemberFunction("getArrayFloat64", &StructuredData::GetArray<double>)
       .CreateMemberFunction("getArrayFixed32", &StructuredData::GetArray<fixed_point::fp32_t>)
       .CreateMemberFunction("getArrayFixed64", &StructuredData::GetArray<fixed_point::fp64_t>)
-      .CreateMemberFunction("getArrayFixed128", &StructuredData::GetFixed128Array)
+      .CreateMemberFunction("getArrayFixed128", &StructuredData::GetObjectArray<Fixed128>)
+      .CreateMemberFunction("getArrayString", &StructuredData::GetObjectArray<String>)
+      // .CreateMemberFunction("getArrayUInt256", &StructuredData::GetObjectArray<UInt256Wrapper>)
       // Setters
       .CreateMemberFunction("set", &StructuredData::SetArray<int32_t>)
       .CreateMemberFunction("set", &StructuredData::SetArray<int64_t>)
@@ -100,8 +200,12 @@ void StructuredData::Bind(Module &module)
       .CreateMemberFunction("set", &StructuredData::SetArray<double>)
       .CreateMemberFunction("set", &StructuredData::SetArray<fixed_point::fp32_t>)
       .CreateMemberFunction("set", &StructuredData::SetArray<fixed_point::fp64_t>)
-      .CreateMemberFunction("set", &StructuredData::SetFixed128Array)
-      .CreateMemberFunction("set", &StructuredData::SetString)
+      // .CreateMemberFunction("set", &StructuredData::SetArray<Fixed128>)
+      .CreateMemberFunction("set", &StructuredData::SetObject<String>)
+      .CreateMemberFunction("set", &StructuredData::SetObject<Address>)
+      .CreateMemberFunction("set", &StructuredData::SetObject<ByteArrayWrapper>)
+      .CreateMemberFunction("set", &StructuredData::SetObject<UInt256Wrapper>)
+      .CreateMemberFunction("set", &StructuredData::SetObject<Fixed128>)
       .CreateMemberFunction("set", &StructuredData::SetPrimitive<int32_t>)
       .CreateMemberFunction("set", &StructuredData::SetPrimitive<int64_t>)
       .CreateMemberFunction("set", &StructuredData::SetPrimitive<uint32_t>)
@@ -109,8 +213,7 @@ void StructuredData::Bind(Module &module)
       .CreateMemberFunction("set", &StructuredData::SetPrimitive<float>)
       .CreateMemberFunction("set", &StructuredData::SetPrimitive<double>)
       .CreateMemberFunction("set", &StructuredData::SetPrimitive<fixed_point::fp32_t>)
-      .CreateMemberFunction("set", &StructuredData::SetPrimitive<fixed_point::fp64_t>)
-      .CreateMemberFunction("set", &StructuredData::SetFixed128);
+      .CreateMemberFunction("set", &StructuredData::SetPrimitive<fixed_point::fp64_t>);
 
   // add array support?
   module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<StructuredData>>>();
@@ -235,55 +338,33 @@ bool StructuredData::Has(Ptr<String> const &s)
   return contents_.Has(s->string());
 }
 
-Ptr<String> StructuredData::GetString(Ptr<String> const &s)
+template <typename T>
+StructuredData::IfIsSupportedRefType<T, Ptr<T>> StructuredData::GetObject(
+    vm::Ptr<vm::String> const &s)
 {
-  std::string ret;
-
   try
   {
-    // check that the value exists
-    if (!Has(s))
+    if (Has(s))
     {
-      vm_->RuntimeError("Unable to look up item: " + s->string());
+      auto const v_item{contents_[s->string()]};
+      if (v_item.IsNull())
+      {
+        return Ptr<T>{};
+      }
+
+      return FromByteArray<T>(vm_, s, v_item.As<ConstByteArray>());
     }
-    else
-    {
-      auto const decoded = FromBase64(contents_[s->string()].As<ConstByteArray>());
-      ret                = static_cast<std::string>(decoded);
-    }
+
+    vm_->RuntimeError("Unable to look up item" +
+                      (s ? ("for the \"" + s->string() + "\" key") : std::string{}) +
+                      " in the StructuredData object");
   }
   catch (std::exception const &e)
   {
     vm_->RuntimeError(e.what());
   }
 
-  return Ptr<String>{new String(vm_, ret)};
-}
-
-Ptr<Fixed128> StructuredData::GetFixed128(Ptr<String> const &s)
-{
-  fixed_point::fp128_t ret;
-
-  try
-  {
-    // check that the value exists
-    if (!Has(s))
-    {
-      vm_->RuntimeError("Unable to look up item: " + s->string());
-    }
-    else
-    {
-      auto const decoded = FromBase64(contents_[s->string()].As<ConstByteArray>());
-      int128_t number = *reinterpret_cast<int128_t const *>(decoded.pointer());
-      ret = fixed_point::fp128_t::FromBase(number);
-    }
-  }
-  catch (std::runtime_error const &e)
-  {
-    vm_->RuntimeError(e.what());
-  }
-
-  return Ptr<Fixed128>{new Fixed128(vm_, ret)};
+  return Ptr<T>{};
 }
 
 template <typename T>
@@ -332,17 +413,18 @@ Ptr<Array<T>> StructuredData::GetArray(Ptr<String> const &s)
       }
       else
       {
+        ret = Ptr<Array<T>>(new Array<T>(vm_, vm_->GetTypeId<IArray>(), vm_->GetTypeId<T>(), int32_t(value_array.size())));
         // create and preallocate the vector of elements
-        std::vector<T> elements;
-        elements.resize(value_array.size());
+        // std::vector<T> elements;
+        // elements.resize(value_array.size());
 
         // copy each of the elements
         for (std::size_t i = 0; i < value_array.size(); ++i)
         {
-          elements[i] = value_array[i].As<T>();
+          ret->elements[i] = value_array[i].As<T>();
         }
 
-        ret = CreateNewPrimitiveArray(vm_, std::move(elements));
+        // ret = CreateNewPrimitiveArray(vm_, std::move(elements));
       }
     }
   }
@@ -354,9 +436,10 @@ Ptr<Array<T>> StructuredData::GetArray(Ptr<String> const &s)
   return ret;
 }
 
-Ptr<Array<Ptr<Fixed128>>> StructuredData::GetFixed128Array(Ptr<String> const &s)
+template <typename T>
+StructuredData::IfIsSupportedRefType<T, Ptr<Array<Ptr<T>>>> StructuredData::GetObjectArray(Ptr<String> const &s)
 {
-  Ptr<Array<Ptr<Fixed128>>> ret{};
+  Ptr<Array<Ptr<T>>> ret{};
 
   try
   {
@@ -374,17 +457,18 @@ Ptr<Array<Ptr<Fixed128>>> StructuredData::GetFixed128Array(Ptr<String> const &s)
       }
       else
       {
+        ret = Ptr<Array<Ptr<T>>>(new Array<Ptr<T>>(vm_, vm_->GetTypeId<IArray>(), vm_->GetTypeId<T>(), int32_t(value_array.size())));
         // create and preallocate the vector of elements
-        std::vector<Ptr<Fixed128>> elements;
-        elements.resize(value_array.size());
+        // std::vector<Ptr<T>> elements;
+        // elements.resize(value_array.size());
 
         // copy each of the elements
         for (std::size_t i = 0; i < value_array.size(); ++i)
         {
-          elements[i] = Ptr<Fixed128>(new Fixed128(vm_, value_array[i].As<fixed_point::fp128_t>()));
+          ret->elements[i] = FromByteArray<T>(vm_, s, value_array[i].As<ConstByteArray>());
         }
 
-        //ret = CreateNewPtrArray<Fixed128>(vm_, std::move(elements));
+        // ret = CreateNewObjectArray(vm_, std::move(elements));
       }
     }
   }
@@ -410,7 +494,7 @@ void StructuredData::SetPrimitive(Ptr<String> const &s, T value)
 }
 
 template <typename T>
-EnableIfNotSame<T, Ptr<vm::Fixed128>> StructuredData::SetArray(Ptr<String> const &s, Ptr<Array<T>> const &arr)
+void StructuredData::SetArray(vm::Ptr<vm::String> const &s, vm::Ptr<vm::Array<T>> const &arr)
 {
   try
   {
@@ -431,52 +515,27 @@ EnableIfNotSame<T, Ptr<vm::Fixed128>> StructuredData::SetArray(Ptr<String> const
   }
 }
 
-void StructuredData::SetFixed128Array(Ptr<String> const &s, Ptr<Array<Ptr<Fixed128>>> const &arr)
+template <typename T>
+StructuredData::IfIsSupportedRefType<T> StructuredData::SetObject(Ptr<String> const &s,
+                                                                  Ptr<T> const &     value)
 {
   try
   {
-    auto &values = contents_[s->string()];
-
-    // update the value to be an array
-    values = variant::Variant::Array(arr->elements.size());
-
-    // add the elements into the array
-    for (std::size_t i = 0; i < arr->elements.size(); ++i)
+    if (value)
     {
-      Ptr<Fixed128> element = arr->elements[i];
-      Ptr<String> value;
-      SetFixed128(value, element);
-      values[i] = value->string();
+      contents_[s->string()] = ToByteArray(*value);
+    }
+    else
+    {
+      contents_[s->string()] = variant::Variant::Null();
     }
   }
   catch (std::exception const &ex)
   {
-    vm_->RuntimeError("Unable to set array of variables");
-  }
-}
-
-void StructuredData::SetString(Ptr<String> const &s, Ptr<String> const &value)
-{
-  try
-  {
-    contents_[s->string()] = ToBase64(value->string());
-  }
-  catch (std::exception const &ex)
-  {
-    vm_->RuntimeError(std::string{"Internal error setting string: "} + ex.what());
-  }
-}
-
-void StructuredData::SetFixed128(Ptr<String> const &s, Ptr<Fixed128> const &value)
-{
-  try
-  {
-    ConstByteArray buf(reinterpret_cast<uint8_t const *>(&value->data_), sizeof(int128_t));
-    contents_[s->string()] = ToBase64(buf);
-  }
-  catch (std::exception const &ex)
-  {
-    vm_->RuntimeError(std::string{"Internal error setting string: "} + ex.what());
+    vm_->RuntimeError(std::string{"Internal error setting item" +
+                                  (s ? (" for the \"" + s->string() + "\" key") : std::string{}) +
+                                  " in to StructuredData object: "} +
+                      ex.what());
   }
 }
 
