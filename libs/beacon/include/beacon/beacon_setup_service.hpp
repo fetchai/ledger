@@ -235,7 +235,7 @@ private:
   Clock         clock_        = moment::GetClock("beacon:dkg", moment::ClockType::SYSTEM);
   DeadlineTimer timer_to_proceed_{"beacon:dkg"};
 
-  static constexpr uint64_t MAX_DKG_BOUND_MULTIPLE = 4;
+  static constexpr double MAX_DKG_BOUND_MULTIPLE = 4.0;
   uint64_t reference_timepoint_ = 0;  ///< A starting point in time all members use to syncronise
   uint64_t state_deadline_      = 0;  ///< The time at which the current state should move on
   uint64_t expected_dkg_timespan_ =
