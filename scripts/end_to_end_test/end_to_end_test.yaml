@@ -242,7 +242,7 @@ steps:
 
 ---
 test_description: >
-  Test synergetic contract fees
+  DISABLED - Test synergetic contract fees
 
 setup_conditions:
   test_name: "synergetic_fee_test"
