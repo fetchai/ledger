@@ -80,22 +80,23 @@ public:
     {
       // slice out the input data by channel
       std::string slice_by_channel = this->template AddNode<fetch::ml::ops::Slice<TensorType>>(
-          name + "_Slice", {input}, i, channel_dim);
+          name + "_Slice" + std::to_string(i), {input}, i, channel_dim);
 
       for (std::size_t j = 0; j < depth_multiplier_; ++j)
       {
         // set up a kernel (height * weight * 1)
         std::string weights =
-            this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
+            this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights" + std::to_string(i) + "_" + std::to_string(j), {});
+
         TensorType weights_data(std::vector<SizeType>{{1, 1, kernel_size_, kernel_size_, 1}});
         fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, 1, 1, init_mode, seed);
         this->SetInput(weights, weights_data);
 
         std::string activation = this->template AddNode<fetch::ml::ops::Convolution2D<TensorType>>(
-            name + "_Conv2D", {slice_by_channel, weights}, stride_size_);
+            name + "_Conv2D_" + std::to_string(i) + "_" + std::to_string(j), {slice_by_channel, weights}, stride_size_);
 
         aggregated_activation = this->template AddNode<fetch::ml::ops::Concatenate<TensorType>>(
-            name + "_Conv2D", {slice_by_channel, weights}, static_cast<SizeType>(0));
+            name + "_Concat_" + std::to_string(i) + "_" + std::to_string(j), {activation, weights}, static_cast<SizeType>(0));
       }
     }
 
