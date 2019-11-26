@@ -28,7 +28,6 @@ namespace ledger {
 class TransactionMemoryPool : public TransactionPoolInterface
 {
 public:
-
   /// @name Transaction Storage Interface
   /// @{
   void Add(chain::Transaction const &tx) override;
@@ -44,5 +43,5 @@ private:
   TxStore       transaction_store_;
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

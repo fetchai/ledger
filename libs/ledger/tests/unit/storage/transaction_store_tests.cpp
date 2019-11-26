@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "transaction_generator.hpp"
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
 #include "ledger/storage_unit/transaction_store.hpp"
+#include "transaction_generator.hpp"
 
 #include <vector>
 
@@ -34,7 +34,6 @@ using fetch::chain::TransactionBuilder;
 class TransactionStoreTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override;
 
   TransactionGenerator tx_gen_;
@@ -81,4 +80,4 @@ TEST_F(TransactionStoreTests, SimpleCheck)
   }
 }
 
-}
+}  // namespace

@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
-#include "storage/object_store.hpp"
 #include "ledger/storage_unit/transaction_store_interface.hpp"
+#include "storage/object_store.hpp"
 
 #include <string>
 
@@ -29,12 +29,11 @@ namespace ledger {
 class TransactionStore : public TransactionStoreInterface
 {
 public:
-
   // Construction / Destruction
-  TransactionStore() = default;
+  TransactionStore()                         = default;
   TransactionStore(TransactionStore const &) = delete;
-  TransactionStore(TransactionStore &&) = delete;
-  ~TransactionStore() override = default;
+  TransactionStore(TransactionStore &&)      = delete;
+  ~TransactionStore() override               = default;
 
   // Database control
   void New(std::string const &doc_file, std::string const &index_file, bool create = true);
@@ -57,5 +56,5 @@ private:
   mutable Archive archive_;
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

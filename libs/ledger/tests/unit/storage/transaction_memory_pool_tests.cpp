@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "transaction_generator.hpp"
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
 #include "ledger/storage_unit/transaction_memory_pool.hpp"
+#include "transaction_generator.hpp"
 
 #include <vector>
 
@@ -34,7 +34,6 @@ using fetch::chain::TransactionBuilder;
 class TransactionMemPoolTests : public ::testing::Test
 {
 protected:
-
   TransactionGenerator  tx_gen_;
   TransactionMemoryPool memory_pool_;
 };
@@ -74,4 +73,4 @@ TEST_F(TransactionMemPoolTests, SimpleCheck)
   }
 }
 
-}
+}  // namespace

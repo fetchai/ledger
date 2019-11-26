@@ -34,7 +34,6 @@ using fetch::ledger::TransactionArchiver;
 class TransactionArchiverTests : public ::testing::Test
 {
 protected:
-
   void CycleStateMachine()
   {
     auto state_machine = archiver_.GetStateMachine();
@@ -102,7 +101,6 @@ TEST_F(TransactionArchiverTests, BasicCheck)
   }
 }
 
-
 TEST_F(TransactionArchiverTests, CheckRecoveryFromLookupFailure)
 {
   auto const tx = tx_gen_();
@@ -140,4 +138,4 @@ TEST_F(TransactionArchiverTests, CheckRecoveryFromLookupFailure)
   EXPECT_FALSE(pool_.pool.Has(current));
 }
 
-}
+}  // namespace

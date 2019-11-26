@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/transaction_archiver.hpp"
 #include "chain/transaction.hpp"
+#include "ledger/storage_unit/transaction_archiver.hpp"
 #include "ledger/storage_unit/transaction_pool_interface.hpp"
 
 #include <chrono>

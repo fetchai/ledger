@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/transaction_store.hpp"
+#include "logging/logging.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -31,7 +31,7 @@ storage::ResourceID CreateResourceId(Digest const &digest)
   return storage::ResourceID{digest};
 }
 
-} // namespace
+}  // namespace
 
 void TransactionStore::New(std::string const &doc_file, std::string const &index_file, bool create)
 {
@@ -61,7 +61,8 @@ void TransactionStore::Add(chain::Transaction const &tx)
   }
   catch (std::exception const &ex)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to add tx: 0x", tx.digest().ToHex(), " to store: ", ex.what());
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to add tx: 0x", tx.digest().ToHex(),
+                   " to store: ", ex.what());
   }
 }
 
@@ -94,11 +95,12 @@ bool TransactionStore::Get(Digest const &tx_digest, chain::Transaction &tx) cons
   }
   catch (std::exception const &ex)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to get tx: 0x", tx.digest().ToHex(), " from store: ", ex.what());
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to get tx: 0x", tx.digest().ToHex(),
+                   " from store: ", ex.what());
   }
 
   return false;
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch
