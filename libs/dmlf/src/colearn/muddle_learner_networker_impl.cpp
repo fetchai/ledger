@@ -27,17 +27,12 @@ namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-void MuddleLearnerNetworkerImpl::addTarget(const std::string &peer)
-{
-  peers_.insert(peer);
-}
-
 MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud, StorePtr update_store)
 {
-  setup(std::move(mud), std::move(update_store));
+  Setup(std::move(mud), std::move(update_store));
 }
 
-void MuddleLearnerNetworkerImpl::setup(MuddlePtr mud, StorePtr update_store)
+void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
 {
   mud_           = std::move(mud);
   update_store_  = std::move(update_store);
@@ -52,8 +47,49 @@ void MuddleLearnerNetworkerImpl::setup(MuddlePtr mud, StorePtr update_store)
   server_ = std::make_shared<RpcServer>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
   server_->Add(RPC_COLEARN, proto_.get());
 
+  subscription_ = mud_->GetEndpoint().Subscribe(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST);
+
+  public_key_ = mud_->GetAddress();
+
+  subscription_->SetMessageHandler([this](Address const &from, uint16_t service, uint16_t channel,
+                                          uint16_t counter, Payload const &payload,
+                                          Address const &my_address) {
+    serializers::MsgPackSerializer buf{payload};
+
+    std::string                type_name;
+    byte_array::ConstByteArray bytes;
+    double                     proportion;
+    double                     random_factor;
+
+    buf >> type_name >> bytes >> proportion >> random_factor;
+    auto source = std::string(fetch::byte_array::ToBase64(from));
+
+    std::cout << "from:" << source << ", "
+              << "serv:" << service << ", "
+              << "chan:" << channel << ", "
+              << "cntr:" << counter << ", "
+              << "addr:" << fetch::byte_array::ToBase64(my_address) << ", "
+              << "type:" << type_name << ", "
+              << "size:" << bytes.size() << " bytes, "
+              << "prop:" << proportion << ", "
+              << "fact:" << random_factor << ", " << std::endl;
+    ;
+
+    return ProcessUpdate(type_name, bytes, proportion, random_factor, source);
+  });
+
   randomising_offset_   = randomiser_.GetNew();
   broadcast_proportion_ = 1.0;  // a reasonable default.
+}
+
+MuddleLearnerNetworkerImpl::Address MuddleLearnerNetworkerImpl::GetAddress() const
+{
+  return mud_->GetAddress();
+}
+
+std::string MuddleLearnerNetworkerImpl::GetAddressAsString() const
+{
+  return std::string(fetch::byte_array::ToBase64(mud_->GetAddress()));
 }
 
 MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
@@ -61,7 +97,14 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
                                                        const std::string &remote)
 {
   auto ident = std::make_shared<Signer>();
-  ident->Load(fetch::byte_array::FromBase64(priv));
+  if (priv.empty())
+  {
+    ident->GenerateKeys();
+  }
+  else
+  {
+    ident->Load(fetch::byte_array::FromBase64(priv));
+  }
 
   netm_ = std::make_shared<NetMan>("LrnrNet", 4);
   netm_->Start();
@@ -81,7 +124,7 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
   mud->Start(remotes, {port});
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-  setup(std::move(mud), std::move(update_store));
+  Setup(std::move(mud), std::move(update_store));
 }
 
 MuddleLearnerNetworkerImpl::~MuddleLearnerNetworkerImpl()
@@ -102,15 +145,28 @@ void MuddleLearnerNetworkerImpl::PushUpdateType(const std::string &       type_n
   auto bytes = update->Serialise();
   PushUpdateBytes(type_name, bytes);
 }
-void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update)
+
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update,
+                                                 Peers peers)
 {
-  for (auto const &peer : peers_)
+  auto random_factor = randomiser_.GetNew();
+  for (auto const &peer : peers)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating sender for ", type_name, " to target ", peer);
-    auto task = std::make_shared<MuddleOutboundUpdateTask>(
-        peer, type_name, update, client_, broadcast_proportion_, randomiser_.GetNew());
+    auto task = std::make_shared<MuddleOutboundUpdateTask>(peer, type_name, update, client_,
+                                                           broadcast_proportion_, random_factor);
     taskpool_->submit(task);
   }
+}
+
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update)
+{
+  auto random_factor = randomiser_.GetNew();
+
+  serializers::MsgPackSerializer buf;
+  buf << type_name << update << broadcast_proportion_ << random_factor;
+
+  mud_->GetEndpoint().Broadcast(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST, buf.data());
 }
 
 MuddleLearnerNetworkerImpl::UpdatePtr MuddleLearnerNetworkerImpl::GetUpdate(
@@ -124,12 +180,11 @@ void MuddleLearnerNetworkerImpl::PushUpdate(UpdateInterfacePtr const &update)
   PushUpdateType("", update);
 }
 
-uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext const &context,
-                                                          const std::string &         type_name,
-                                                          byte_array::ConstByteArray  bytes,
-                                                          double proportion, double random_factor)
+uint64_t MuddleLearnerNetworkerImpl::ProcessUpdate(const std::string &        type_name,
+                                                   byte_array::ConstByteArray bytes,
+                                                   double proportion, double random_factor,
+                                                   const std::string &source)
 {
-  auto source = std::string(fetch::byte_array::ToBase64(context.sender_address));
   FETCH_LOG_INFO(LOGGING_NAME, "Update for ", type_name, " from ", source);
   UpdateStoreInterface::Metadata metadata;
 
@@ -145,6 +200,15 @@ uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext c
   FETCH_LOG_INFO(LOGGING_NAME, "STORING ", type_name, " from ", source);
   update_store_->PushUpdate("algo1", type_name, std::move(bytes), source, std::move(metadata));
   return 1;
+}
+
+uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext const &context,
+                                                          const std::string &         type_name,
+                                                          byte_array::ConstByteArray  bytes,
+                                                          double proportion, double random_factor)
+{
+  auto source = std::string(fetch::byte_array::ToBase64(context.sender_address));
+  return ProcessUpdate(type_name, std::move(bytes), proportion, random_factor, source);
 }
 }  // namespace colearn
 }  // namespace dmlf
