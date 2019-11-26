@@ -257,11 +257,26 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
 
       switch (status)
       {
-      case BlockStatus::ADDED: FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", it->hash.ToHex(), " from: muddle://", ToBase64(address)); ++added;
-      break; case BlockStatus::LOOSE: FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", it->hash.ToHex(), " from: muddle://", ToBase64(address)); ++loose;
-      break; case BlockStatus::DUPLICATE: FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", it->hash.ToHex(), " from: muddle://", ToBase64(address)); ++duplicate;
-      break; case BlockStatus::INVALID: FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->hash.ToHex(), " from: muddle://", ToBase64(address)); ++invalid;
-      break;
+      case BlockStatus::ADDED:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", it->hash.ToHex(), " from: muddle://",
+                        ToBase64(address));
+        ++added;
+        break;
+      case BlockStatus::LOOSE:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", it->hash.ToHex(),
+                        " from: muddle://", ToBase64(address));
+        ++loose;
+        break;
+      case BlockStatus::DUPLICATE:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", it->hash.ToHex(),
+                        " from: muddle://", ToBase64(address));
+        ++duplicate;
+        break;
+      case BlockStatus::INVALID:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->hash.ToHex(),
+                        " from: muddle://", ToBase64(address));
+        ++invalid;
+        break;
       }
     }
   }

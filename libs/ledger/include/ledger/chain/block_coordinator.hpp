@@ -294,7 +294,6 @@ private:
   bool            ScheduleNextBlock();
   bool            ScheduleBlock(Block const &block);
   ExecutionStatus QueryExecutorStatus();
-  void            UpdateNextBlockTime();
   void            RemoveBlock(MainChain::BlockHash const &hash);
 
   static char const *ToString(ExecutionStatus state);
@@ -326,8 +325,6 @@ private:
   uint32_t        log2_num_lanes_{};
   std::size_t     num_lanes_{1u << log2_num_lanes_};  ///< The current number of lanes
   std::size_t     num_slices_;                        ///< The current number of slices
-  BlockPeriod     block_period_{};          ///< The desired period before a block is generated
-  Timepoint       next_block_time_;         ///< The next point that a block should be generated
   BlockPtr        current_block_{};         ///< The pointer to the current block (read only)
   NextBlockPtr    next_block_{};            ///< The next block being created (read / write)
   TxDigestSetPtr  pending_txs_{};           ///< The list of pending txs that are being waited on

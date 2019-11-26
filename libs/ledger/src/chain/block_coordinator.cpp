@@ -216,11 +216,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
  */
 void BlockCoordinator::TriggerBlockGeneration()
 {
-  // TODO(HUT): delete or redo this.
-  // if (mining_)
-  //{
-  next_block_time_ = Clock::now();
-  //}
 }
 
 BlockCoordinator::State BlockCoordinator::OnReloadState()
@@ -929,9 +924,6 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
     // call the block packer
     block_packer_.GenerateBlock(*next_block_, num_lanes_, num_slices_, chain_);
 
-    // update our desired next block time
-    UpdateNextBlockTime();
-
     // trigger the execution of the block
     next_state = State::EXECUTE_NEW_BLOCK;
   }
@@ -1111,9 +1103,6 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   next_block_.reset();
   pending_txs_.reset();
 
-  // we should update the next block time
-  UpdateNextBlockTime();
-
   return State::SYNCHRONISING;
 }
 
@@ -1203,11 +1192,6 @@ BlockCoordinator::ExecutionStatus BlockCoordinator::QueryExecutorStatus()
   }
 
   return status;
-}
-
-void BlockCoordinator::UpdateNextBlockTime()
-{
-  next_block_time_ = Clock::now() + block_period_;
 }
 
 char const *BlockCoordinator::ToString(State state)
