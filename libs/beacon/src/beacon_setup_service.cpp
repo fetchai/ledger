@@ -1627,13 +1627,13 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     // If not ahead in time, the DKG must have failed before. Algorithmically, and importantly
     // deterministically, decide how long to increase the allotted DKG time (increment each time
     // by 1.5x to a maximum of MAX_DKG_MULTIPLIER)
-    uint64_t const base_time =
+    auto const base_time =
         static_cast<uint64_t>(static_cast<double>(time_per_state) * time_slots_in_dkg_);
     expected_dkg_timespan_ = base_time;
 
     // Bounded timespan is the longest the DKG is allowed to take even after multiple failures.
-    uint64_t bounded_timespan = static_cast<uint64_t>(static_cast<double>(time_per_state) *
-                                                      time_slots_in_dkg_ * MAX_DKG_BOUND_MULTIPLE);
+    auto     bounded_timespan = static_cast<uint64_t>(static_cast<double>(time_per_state) *
+                                                  time_slots_in_dkg_ * MAX_DKG_BOUND_MULTIPLE);
     uint16_t failures         = 0;
 
     while (reference_timepoint_ < current_time)
