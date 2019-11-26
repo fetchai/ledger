@@ -663,10 +663,9 @@ TEST_F(StateTests, test_serialisation_of_fixed_point3)
   auto retval{output.Get<Ptr<IArray>>()};
   ASSERT_TRUE(static_cast<bool>(retval));
   ASSERT_EQ(int32_t{3}, retval->Count());
-
-  EXPECT_EQ(fetch::fixed_point::fp128_t{1.0}, retval->PopFrontOne().Get<fetch::fixed_point::fp128_t>());
-  EXPECT_EQ(fetch::fixed_point::fp128_t{101.01}, retval->PopFrontOne().Get<fetch::fixed_point::fp128_t>());
-  EXPECT_EQ(fetch::fixed_point::fp128_t{10101.0101}, retval->PopFrontOne().Get<fetch::fixed_point::fp128_t>());
+  EXPECT_EQ(fetch::fixed_point::fp128_t{1.0}, retval->PopFrontOne().Get<Ptr<fetch::vm::Fixed128>>()->data_);
+  EXPECT_EQ(fetch::fixed_point::fp128_t{101.01}, retval->PopFrontOne().Get<Ptr<fetch::vm::Fixed128>>()->data_);
+  EXPECT_EQ(fetch::fixed_point::fp128_t{10101.0101}, retval->PopFrontOne().Get<Ptr<fetch::vm::Fixed128>>()->data_);
 }
 
 }  // namespace
