@@ -81,7 +81,7 @@ public:
   bool Analyse(BlockNodePtr const &root, std::vector<std::string> &errors);
 
   void GetDetails(TypeInfoArray &type_info_array, TypeInfoMap &type_info_map,
-                  RegisteredTypes &registered_types, FunctionInfoArray &function_info_array)
+                  RegisteredTypes &registered_types, FunctionInfoArray &function_info_array) const
   {
     type_info_array     = type_info_array_;
     type_info_map       = type_info_map_;

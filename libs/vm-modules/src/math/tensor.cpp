@@ -59,10 +59,6 @@ Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>>
   return Ptr<VMTensor>{new VMTensor(vm, type_id, shape->elements)};
 }
 
-/////////////////////////////////////////////////////////
-// Bind member function and their estimators to module //
-/////////////////////////////////////////////////////////
-
 void VMTensor::Bind(Module &module)
 {
   module.CreateClassType<VMTensor>("Tensor")

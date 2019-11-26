@@ -227,8 +227,8 @@ template <typename T>
 class Ptr;
 class Object;
 
-using ChargeAmount              = uint64_t;
-static ChargeAmount CHARGE_UNIT = 1u;
+using ChargeAmount                        = uint64_t;
+static constexpr ChargeAmount CHARGE_UNIT = 1u;
 template <typename... Args>
 using ChargeEstimator = std::function<ChargeAmount(Args const &...)>;
 
