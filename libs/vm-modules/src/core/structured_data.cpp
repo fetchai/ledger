@@ -384,7 +384,7 @@ Ptr<Array<Ptr<Fixed128>>> StructuredData::GetFixed128Array(Ptr<String> const &s)
           elements[i] = Ptr<Fixed128>(new Fixed128(vm_, value_array[i].As<fixed_point::fp128_t>()));
         }
 
-        ret = CreateNewPtrArray<Fixed128>(vm_, std::move(elements));
+        //ret = CreateNewPtrArray<Fixed128>(vm_, std::move(elements));
       }
     }
   }
@@ -471,7 +471,7 @@ void StructuredData::SetFixed128(Ptr<String> const &s, Ptr<Fixed128> const &valu
 {
   try
   {
-    ConstByteArray buf(reinterpret_cast<uint8_t const *>(&value->data), sizeof(int128_t));
+    ConstByteArray buf(reinterpret_cast<uint8_t const *>(&value->data_), sizeof(int128_t));
     contents_[s->string()] = ToBase64(buf);
   }
   catch (std::exception const &ex)
