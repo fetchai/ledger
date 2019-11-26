@@ -47,7 +47,7 @@ public:
   // TODO(HUT): when you construct consensus, do not set aeon period etc. Do this later.
 
   // Construction / Destruction
-  explicit SimulatedPowConsensus(Identity mining_identity);
+  explicit SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms = 1000);
 
   SimulatedPowConsensus(SimulatedPowConsensus const &) = delete;
   SimulatedPowConsensus(SimulatedPowConsensus &&)      = delete;
@@ -78,8 +78,8 @@ private:
 
   // Consensus' view on the heaviest block etc.
   Block              current_block_;
-  uint64_t           block_interval_ms_{std::numeric_limits<uint64_t>::max()};
   std::set<Identity> other_miners_seen_in_chain_;
+  uint64_t           block_interval_ms_{std::numeric_limits<uint64_t>::max()};
 };
 
 }  // namespace ledger
