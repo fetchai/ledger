@@ -27,6 +27,7 @@
 #include "vm/module.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/state_dict.hpp"
+#include "vm_modules/use_estimator.hpp"
 
 using namespace fetch::vm;
 
@@ -345,19 +346,29 @@ void VMModel::Bind(Module &module)
       .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMModel> {
         return Ptr<VMModel>{new VMModel(vm, type_id)};
       })
-      .CreateMemberFunction("add", &VMModel::LayerAddDense)
-      .CreateMemberFunction("add", &VMModel::LayerAddConv)
-      .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation)
-      .CreateMemberFunction("add", &VMModel::LayerAddConvActivation)
-      .CreateMemberFunction("compile", &VMModel::CompileSequential)
-      .CreateMemberFunction("compile", &VMModel::CompileSimple)
-      .CreateMemberFunction("fit", &VMModel::Fit)
-      .CreateMemberFunction("evaluate", &VMModel::Evaluate)
-      .CreateMemberFunction("predict", &VMModel::Predict)
-      .CreateMemberFunction("evaluate", &VMModel::Evaluate)
-      .CreateMemberFunction("predict", &VMModel::Predict)
-      .CreateMemberFunction("serializeToString", &VMModel::SerializeToString)
-      .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString);
+      .CreateMemberFunction("add", &VMModel::LayerAddDense,
+                            use_estimator(&ModelEstimator::LayerAddDense))
+      .CreateMemberFunction("add", &VMModel::LayerAddConv,
+                            use_estimator(&ModelEstimator::LayerAddConv))
+      .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation,
+                            use_estimator(&ModelEstimator::LayerAddDenseActivation))
+      .CreateMemberFunction("add", &VMModel::LayerAddConvActivation,
+                            use_estimator(&ModelEstimator::LayerAddConvActivation))
+      .CreateMemberFunction("compile", &VMModel::CompileSequential,
+                            use_estimator(&ModelEstimator::CompileSequential))
+      .CreateMemberFunction("compile", &VMModel::CompileSimple,
+                            use_estimator(&ModelEstimator::CompileSimple))
+      .CreateMemberFunction("fit", &VMModel::Fit, use_estimator(&ModelEstimator::Fit))
+      .CreateMemberFunction("evaluate", &VMModel::Evaluate,
+                            use_estimator(&ModelEstimator::Evaluate))
+      .CreateMemberFunction("predict", &VMModel::Predict, use_estimator(&ModelEstimator::Predict))
+      .CreateMemberFunction("evaluate", &VMModel::Evaluate,
+                            use_estimator(&ModelEstimator::Evaluate))
+      .CreateMemberFunction("predict", &VMModel::Predict, use_estimator(&ModelEstimator::Predict))
+      .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
+                            use_estimator(&ModelEstimator::SerializeToString))
+      .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
+                            use_estimator(&ModelEstimator::DeserializeFromString));
 }
 
 typename VMModel::ModelPtrType &VMModel::GetModel()
