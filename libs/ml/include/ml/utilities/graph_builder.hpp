@@ -562,8 +562,11 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   case OpType::GRAPH:
   case OpType::NONE:
   case OpType::SUBGRAPH:
-  case OpType::OP_VARIABLE:  // todo: should variable and dataholder be unimplemented?
+  case OpType::OP_VARIABLE:
   case OpType::OP_DATAHOLDER:
+  {
+    throw ml::exceptions::NotImplemented();
+  }
   default:
     throw ml::exceptions::NotImplemented("unknown node type");
   }
