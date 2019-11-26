@@ -31,7 +31,7 @@ Fixed128::Fixed128(VM *vm, fixed_point::fp128_t const &data)
   , data_{data}
 {}
 
-Fixed128::Fixed128(vm::VM *vm, vm::TypeId /*type_id*/, fixed_point::fp128_t data)
+Fixed128::Fixed128(vm::VM *vm, vm::TypeId /*type_id*/, fixed_point::fp128_t const &data)
   : Object(vm, TypeIds::Fixed128)
   , data_{data}
 {}
