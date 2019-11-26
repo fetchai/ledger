@@ -81,6 +81,7 @@ void VMModel::Init(std::string const &model_category)
   {
     throw std::runtime_error("unknown model type specified.");
   }
+  compiled_ = false;
 }
 
 Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
@@ -108,6 +109,7 @@ void VMModel::LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
   {
     throw std::runtime_error("no add method for non-sequential methods");
   }
+  compiled_ = false;
 }
 
 void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
@@ -141,6 +143,7 @@ void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &l
   {
     throw std::runtime_error("no add method for non-sequential methods");
   }
+  compiled_ = false;
 }
 
 void VMModel::LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
@@ -171,6 +174,7 @@ void VMModel::LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
   {
     throw std::runtime_error("invalid params specified for " + layer->string() + " layer");
   }
+  compiled_ = false;
 }
 
 void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
@@ -210,6 +214,7 @@ void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &la
   {
     throw std::runtime_error("invalid params specified for " + layer->string() + " layer");
   }
+  compiled_ = false;
 }
 
 void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
@@ -396,6 +401,7 @@ bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
 
   buffer << static_cast<uint8_t>(model_category_);
   buffer << *model_config_;
+  buffer << compiled_;
   buffer << *model_;
   return true;
 }
@@ -411,6 +417,10 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   ModelConfigType model_config;
   buffer >> model_config;
   model_config_ = std::make_shared<ModelConfigType>(model_config);
+
+  // deserialise the compiled status
+  bool compiled;
+  buffer >> compiled;
 
   // deserialise the model
   auto model_ptr = std::make_shared<fetch::ml::model::Model<TensorType>>();
@@ -455,6 +465,9 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   // assign deserialised model
   vm_model.GetModel() = model_ptr;
 
+  // assign compiled status
+  vm_model.compiled_ = compiled;
+
   // point this object pointer at the deserialised model
   *this = vm_model;
 
@@ -493,6 +506,8 @@ void VMModel::CompileDataloader()
   auto dl = std::make_unique<TensorDataloader>();
   dl->SetRandomMode(true);
   model_->SetDataloader(std::move(dl));
+
+  compiled_ = true;
 }
 
 }  // namespace model

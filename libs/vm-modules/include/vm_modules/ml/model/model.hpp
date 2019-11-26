@@ -111,6 +111,7 @@ private:
   ModelPtrType       model_;
   ModelConfigPtrType model_config_;
   ModelCategory      model_category_ = ModelCategory::NONE;
+  bool               compiled_       = false;
 
   void Init(std::string const &model_category);
 
