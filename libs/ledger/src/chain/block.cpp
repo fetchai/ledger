@@ -82,7 +82,7 @@ void Block::UpdateDigest()
   // Generate hash stream
   serializers::MsgPackSerializer buf;
   buf << previous_hash << merkle_hash << block_number << miner << log2_num_lanes << timestamp
-      << tx_merkle_tree.root() << nonce;
+      << tx_merkle_tree.root();
 
   // Generate the hash
   crypto::SHA256 hash_builder;
@@ -90,7 +90,7 @@ void Block::UpdateDigest()
   hash_builder.Update(buf.data());
   hash = hash_builder.Final();
 
-  proof.SetHeader(hash);
+  //proof.SetHeader(hash);
 }
 
 void Block::UpdateTimestamp()

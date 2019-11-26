@@ -198,18 +198,23 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   state_machine_->RegisterHandler(State::NEW_SYNERGETIC_EXECUTION,     this, &BlockCoordinator::OnNewSynergeticExecution);
   state_machine_->RegisterHandler(State::EXECUTE_NEW_BLOCK,            this, &BlockCoordinator::OnExecuteNewBlock);
   state_machine_->RegisterHandler(State::WAIT_FOR_NEW_BLOCK_EXECUTION, this, &BlockCoordinator::OnWaitForNewBlockExecution);
+
+  // TODO(HUT): remove all references to proof search
   state_machine_->RegisterHandler(State::PROOF_SEARCH,                 this, &BlockCoordinator::OnProofSearch);
 
   state_machine_->RegisterHandler(State::TRANSMIT_BLOCK,               this, &BlockCoordinator::OnTransmitBlock);
   state_machine_->RegisterHandler(State::RESET,                        this, &BlockCoordinator::OnReset);
   // clang-format on
 
+  FETCH_UNUSED(block_difficulty_);
+
   state_machine_->OnStateChange([this](State current, State previous) {
-    if (periodic_print_.Poll())
-    {
+      FETCH_UNUSED(this);
+    //if (periodic_print_.Poll())
+    //{
       FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
                      " (previous: ", ToString(previous), ")");
-    }
+    //}
   });
 
   // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on
@@ -463,6 +468,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
 {
   synchronised_state_count_->increment();
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Entering synchronised state!");
+
   FETCH_UNUSED(current);
 
   if (State::SYNCHRONISING == previous)
@@ -478,22 +485,27 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   // if we have detected a change in the chain then we need to re-evaluate the chain
   if (chain_.GetHeaviestBlockHash() != current_block_->hash)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "reset synchronised state!");
     return State::RESET;
   }
-  if (mining_ && /*mining_enabled_ &&*/ ((Clock::now() >= next_block_time_) || consensus_))
-  {
-    if (consensus_)
-    {
+
+  FETCH_LOG_INFO(LOGGING_NAME, "mining flag: ", mining_);
+
+  //if (mining_ && /*mining_enabled_ &&*/ ((Clock::now() >= next_block_time_) || consensus_))
+  //{
+  //  FETCH_LOG_INFO(LOGGING_NAME, "loop x 1");
+  //  if (consensus_)
+  //  {
       consensus_->UpdateCurrentBlock(*current_block_);
 
       // Failure will set this to a nullptr
       next_block_ = consensus_->GenerateNextBlock();
-    }
-    else
-    {
-      // create a new block
-      next_block_ = std::make_unique<Block>();
-    }
+    //}
+    //else
+    //{
+    //  // create a new block
+    //  next_block_ = std::make_unique<Block>();
+    //}
 
     if (!next_block_)
     {
@@ -515,20 +527,21 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
       next_block_->dag_epoch = dag_->CreateEpoch(next_block_->block_number);
     }
 
-    // ensure the difficulty is correctly set
-    next_block_->proof.SetTarget(block_difficulty_);
+    //// ensure the difficulty is correctly set
+    //next_block_->proof.SetTarget(block_difficulty_);
 
     // discard the current block (we are making a new one)
     current_block_.reset();
 
     // trigger packing state
     return State::NEW_SYNERGETIC_EXECUTION;
-  }
+  //}
+  //FETCH_LOG_INFO(LOGGING_NAME, "loop x 2");
 
-  // delay the invocation of this state machine
-  state_machine_->Delay(std::chrono::milliseconds{100});
+  //// delay the invocation of this state machine
+  //state_machine_->Delay(std::chrono::milliseconds{100});
 
-  return State::SYNCHRONISED;
+  //return State::SYNCHRONISED;
 }
 
 BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
@@ -1046,7 +1059,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
       dag_->CommitEpoch(next_block_->dag_epoch);
     }
 
-    next_state = State::PROOF_SEARCH;
+    next_state = State::TRANSMIT_BLOCK;
     break;
   }
 
@@ -1072,6 +1085,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
 
 BlockCoordinator::State BlockCoordinator::OnProofSearch()
 {
+  exit(1);
   proof_search_state_count_->increment();
 
   State next_state{State::PROOF_SEARCH};

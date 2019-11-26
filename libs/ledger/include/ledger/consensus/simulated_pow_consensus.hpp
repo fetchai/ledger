@@ -47,7 +47,7 @@ public:
   // TODO(HUT): when you construct consensus, do not set aeon period etc. Do this later.
 
   // Construction / Destruction
-  explicit SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms = 1000);
+  explicit SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms);
 
   SimulatedPowConsensus(SimulatedPowConsensus const &) = delete;
   SimulatedPowConsensus(SimulatedPowConsensus &&)      = delete;
@@ -74,7 +74,7 @@ private:
 
   // Recalculated whenever we see a new block: set a time for when we will produce
   // the next block
-  uint64_t decided_next_timestamp_s_{std::numeric_limits<uint64_t>::max()};
+  uint64_t decided_next_timestamp_ms_{std::numeric_limits<uint64_t>::max()};
 
   // Consensus' view on the heaviest block etc.
   Block              current_block_;

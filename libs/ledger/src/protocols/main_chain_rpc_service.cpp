@@ -181,7 +181,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 #endif  // FETCH_LOG_INFO_ENABLED
 
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: 0x", block.hash.ToHex(),
-                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), ")");
+                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), " num: ", block.block_number, ")");
 
   trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
@@ -250,7 +250,8 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     it->UpdateDigest();
 
     // add the block
-    if (it->proof())
+    // TODO(HUT): put consensus check here.
+    if (/*it->proof()*/ true)
     {
       auto const status = chain_.AddBlock(*it);
 

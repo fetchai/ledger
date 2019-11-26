@@ -214,6 +214,8 @@ ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, St
 {
   ConsensusPtr consensus{};
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Block time is: ", cfg.block_interval_ms);
+
   if (stake)
   {
     consensus = std::make_shared<ledger::Consensus>(stake, beacon_setup, beacon, chain, storage,
@@ -222,7 +224,7 @@ ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, St
   }
   else
   {
-    consensus = std::make_shared<ledger::SimulatedPowConsensus>(identity);
+    consensus = std::make_shared<ledger::SimulatedPowConsensus>(identity, 1000);
   }
 
   return consensus;

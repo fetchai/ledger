@@ -52,7 +52,11 @@ uint64_t GetPoissonSample(uint64_t range, double mean_of_distribution)
 
   Distribution dist(mean_of_distribution);
 
-  return std::min(dist(rng), range);
+  auto ret = std::min(dist(rng), range);;
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Ret: ", ret);
+
+  return ret;
 }
 
 SimulatedPowConsensus::SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms)
@@ -63,6 +67,11 @@ SimulatedPowConsensus::SimulatedPowConsensus(Identity mining_identity, uint64_t 
 
 void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
 {
+  if(current == current_block_)
+  {
+    return;
+  }
+
   current_block_ = current;
 
   if (current.miner_id.identifier().empty())
@@ -74,30 +83,35 @@ void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
     other_miners_seen_in_chain_.insert(current.miner_id);
   }
 
-  double const mean_time_to_block = (block_interval_ms_ * other_miners_seen_in_chain_.size());
+  double mean_time_to_block = block_interval_ms_;
 
-  uint64_t time_to_wait =
-      static_cast<uint64_t>(std::ceil(GetPoissonSample(30000, mean_time_to_block) / 1000));
+  if(current.miner_id == mining_identity_)
+  {
+    mean_time_to_block *= 4;
+  }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Generating time to wait: ", time_to_wait,
+  uint64_t time_to_wait_ms =
+      static_cast<uint64_t>(GetPoissonSample(30000, mean_time_to_block));
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Generating time to wait (ms): ", time_to_wait_ms,
                  " given others: ", other_miners_seen_in_chain_.size(),
                  " mean: ", mean_time_to_block, " block time: ", block_interval_ms_);
 
   // Generate a block probalistically based on the previous block time and the number
   // of other peers seen so far (bounded to 30s)
-  decided_next_timestamp_s_ = current.timestamp + time_to_wait;
+  decided_next_timestamp_ms_ = (current.timestamp * 1000) + time_to_wait_ms;
 }
 
 NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
 {
   NextBlockPtr ret;
 
-  auto current_time = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
+  uint64_t current_time_ms = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM), moment::TimeAccuracy::MILLISECONDS);
 
-  if (!(current_time > decided_next_timestamp_s_))
+  if (!(current_time_ms > decided_next_timestamp_ms_))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Waiting before producing block. Seconds to wait: ",
-                   decided_next_timestamp_s_ - current_time);
+    FETCH_LOG_INFO(LOGGING_NAME, "Waiting before producing block. Milliseconds to wait: ",
+                   decided_next_timestamp_ms_ - current_time_ms);
     return ret;
   }
 

@@ -75,11 +75,11 @@ public:
   // The qual miner must sign the block
   Digest miner_signature;
 
-  /// @name Proof of Work specifics
-  /// @{
-  uint64_t nonce{0};  ///< The nonce field associated with the proof
-  Proof    proof;     ///< The consensus proof
-  /// @}
+  ///// @name Proof of Work specifics
+  ///// @{
+  //uint64_t nonce{0};  ///< The nonce field associated with the proof
+  //Proof    proof;     ///< The consensus proof
+  ///// @}
 
   /// @name Metadata for block management (not serialized)
   /// @{
@@ -107,29 +107,25 @@ public:
   using Type       = ledger::Block;
   using DriverType = D;
 
-  static uint8_t const NONCE           = 1;
-  static uint8_t const PROOF           = 2;
-  static uint8_t const WEIGHT          = 3;
-  static uint8_t const TOTAL_WEIGHT    = 4;
-  static uint8_t const MINER_SIGNATURE = 5;
-  static uint8_t const HASH            = 6;
-  static uint8_t const PREVIOUS_HASH   = 7;
-  static uint8_t const MERKLE_HASH     = 8;
-  static uint8_t const BLOCK_NUMBER    = 9;
-  static uint8_t const MINER           = 10;
-  static uint8_t const MINER_ID        = 11;
-  static uint8_t const LOG2_NUM_LANES  = 12;
-  static uint8_t const SLICES          = 13;
-  static uint8_t const DAG_EPOCH       = 14;
-  static uint8_t const TIMESTAMP       = 15;
-  static uint8_t const ENTROPY         = 16;
+  static uint8_t const WEIGHT          = 1;
+  static uint8_t const TOTAL_WEIGHT    = 2;
+  static uint8_t const MINER_SIGNATURE = 3;
+  static uint8_t const HASH            = 4;
+  static uint8_t const PREVIOUS_HASH   = 5;
+  static uint8_t const MERKLE_HASH     = 6;
+  static uint8_t const BLOCK_NUMBER    = 7;
+  static uint8_t const MINER           = 8;
+  static uint8_t const MINER_ID        = 9;
+  static uint8_t const LOG2_NUM_LANES  = 10;
+  static uint8_t const SLICES          = 11;
+  static uint8_t const DAG_EPOCH       = 12;
+  static uint8_t const TIMESTAMP       = 13;
+  static uint8_t const ENTROPY         = 14;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &block)
   {
-    auto map = map_constructor(16);
-    map.Append(NONCE, block.nonce);
-    map.Append(PROOF, block.proof);
+    auto map = map_constructor(14);
     map.Append(WEIGHT, block.weight);
     map.Append(TOTAL_WEIGHT, block.total_weight);
     map.Append(MINER_SIGNATURE, block.miner_signature);
@@ -149,8 +145,6 @@ public:
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &block)
   {
-    map.ExpectKeyGetValue(NONCE, block.nonce);
-    map.ExpectKeyGetValue(PROOF, block.proof);
     map.ExpectKeyGetValue(WEIGHT, block.weight);
     map.ExpectKeyGetValue(TOTAL_WEIGHT, block.total_weight);
     map.ExpectKeyGetValue(MINER_SIGNATURE, block.miner_signature);
