@@ -181,7 +181,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 #endif  // FETCH_LOG_INFO_ENABLED
 
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: 0x", block.hash.ToHex(),
-                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), " num: ", block.block_number, ")");
+                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(),
+                 " num: ", block.block_number, ")");
 
   trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 

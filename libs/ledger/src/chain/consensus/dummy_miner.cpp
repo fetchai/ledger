@@ -27,7 +27,7 @@
 
 namespace {
 
-//uint32_t GetRandom()
+// uint32_t GetRandom()
 //{
 //  std::random_device                      rd;
 //  std::mt19937                            gen(rd());
@@ -35,7 +35,7 @@ namespace {
 //  return dis(gen);
 //}
 
-//constexpr char const *LOGGING_NAME = "DummyMiner";
+// constexpr char const *LOGGING_NAME = "DummyMiner";
 
 }  // namespace
 
@@ -54,28 +54,28 @@ void DummyMiner::Mine(Block &block)
   }
 }
 
-bool DummyMiner::Mine(Block &/*block*/, uint64_t /*iterations*/)
+bool DummyMiner::Mine(Block & /*block*/, uint64_t /*iterations*/)
 {
   return true;
-//  //block.nonce = GetRandom();
-//
-//  block.UpdateDigest();
-//
-//  while (!/*block.proof()*/ iterations > 0)
-//  {
-//    //block.nonce++;
-//    block.UpdateDigest();
-//    iterations--;
-//  }
-//
-//  bool const success = block.proof();
-//  if (success)
-//  {
-//    FETCH_LOG_DEBUG(LOGGING_NAME, "Proof: Digest: ", std::string(block.proof.digest()));
-//    FETCH_LOG_DEBUG(LOGGING_NAME, "Proof: Target: ", std::string(block.proof.target()));
-//  }
-//
-//  return success;
+  //  //block.nonce = GetRandom();
+  //
+  //  block.UpdateDigest();
+  //
+  //  while (!/*block.proof()*/ iterations > 0)
+  //  {
+  //    //block.nonce++;
+  //    block.UpdateDigest();
+  //    iterations--;
+  //  }
+  //
+  //  bool const success = block.proof();
+  //  if (success)
+  //  {
+  //    FETCH_LOG_DEBUG(LOGGING_NAME, "Proof: Digest: ", std::string(block.proof.digest()));
+  //    FETCH_LOG_DEBUG(LOGGING_NAME, "Proof: Target: ", std::string(block.proof.target()));
+  //  }
+  //
+  //  return success;
 }
 
 }  // namespace consensus

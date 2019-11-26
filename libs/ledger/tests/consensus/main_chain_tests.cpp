@@ -68,7 +68,7 @@ std::map<std::size_t, std::size_t> GetRandomIndexes(std::size_t size)
   return ret;
 }
 
-//TEST(ledger_main_chain_gtest, Test_mining_proof)
+// TEST(ledger_main_chain_gtest, Test_mining_proof)
 //{
 //  fetch::crypto::mcl::details::MCLInitialiser();
 //  Blocks      blocks;
@@ -95,7 +95,8 @@ std::map<std::size_t, std::size_t> GetRandomIndexes(std::size_t size)
 //
 //    auto t2 = TimePoint();
 //    std::cout << "Difficulty: " << diff
-//              << ". Block time: " << TimeDifference(t2, t1) / double(blockIterations) << std::endl;
+//              << ". Block time: " << TimeDifference(t2, t1) / double(blockIterations) <<
+//              std::endl;
 //  }
 //
 //  // Verify blocks
@@ -108,7 +109,7 @@ std::map<std::size_t, std::size_t> GetRandomIndexes(std::size_t size)
 //  }
 //}
 //
-//TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
+// TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
 //{
 //  fetch::crypto::mcl::details::MCLInitialiser();
 //  Blocks     blocks;

@@ -325,9 +325,9 @@ private:
 
   /// @name State Machine State
   /// @{
-  ProverPtr       certificate_;       ///< The miners identity
-  chain::Address  mining_address_;    ///< The miners address
-  StateMachinePtr state_machine_;     ///< The main state machine for this service
+  ProverPtr       certificate_;     ///< The miners identity
+  chain::Address  mining_address_;  ///< The miners address
+  StateMachinePtr state_machine_;   ///< The main state machine for this service
   uint32_t        log2_num_lanes_{};
   std::size_t     num_lanes_{1u << log2_num_lanes_};  ///< The current number of lanes
   std::size_t     num_slices_;                        ///< The current number of slices

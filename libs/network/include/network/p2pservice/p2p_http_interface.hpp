@@ -156,7 +156,7 @@ private:
       block["hash"]         = "0x" + b->hash.ToHex();
       block["previousHash"] = "0x" + b->previous_hash.ToHex();
       block["merkleHash"]   = "0x" + b->merkle_hash.ToHex();
-      block["proof"]        = "0x" + b->merkle_hash.ToHex(); // TODO(HUT): check non breaking here.
+      block["proof"]        = "0x" + b->merkle_hash.ToHex();  // TODO(HUT): check non breaking here.
       block["miner"]        = b->miner.display();
       block["blockNumber"]  = b->block_number;
       block["timestamp"]    = b->timestamp;

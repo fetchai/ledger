@@ -77,8 +77,8 @@ public:
 
   ///// @name Proof of Work specifics
   ///// @{
-  //uint64_t nonce{0};  ///< The nonce field associated with the proof
-  //Proof    proof;     ///< The consensus proof
+  // uint64_t nonce{0};  ///< The nonce field associated with the proof
+  // Proof    proof;     ///< The consensus proof
   ///// @}
 
   /// @name Metadata for block management (not serialized)

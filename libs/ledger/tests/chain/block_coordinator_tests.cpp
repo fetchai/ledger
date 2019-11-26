@@ -42,47 +42,47 @@
 //#include <memory>
 //#include <ostream>
 //
-//namespace {
+// namespace {
 //
-//using namespace fetch::ledger;
-//using namespace fetch::chain;
+// using namespace fetch::ledger;
+// using namespace fetch::chain;
 //
-//using fetch::crypto::ECDSASigner;
-//using fetch::ledger::testing::BlockGenerator;
+// using fetch::crypto::ECDSASigner;
+// using fetch::ledger::testing::BlockGenerator;
 //
-//using ::testing::_;
-//using ::testing::AnyNumber;
-//using ::testing::InSequence;
-//using ::testing::NiceMock;
-//using ::testing::StrictMock;
+// using ::testing::_;
+// using ::testing::AnyNumber;
+// using ::testing::InSequence;
+// using ::testing::NiceMock;
+// using ::testing::StrictMock;
 //
-//using BlockCoordinatorPtr = std::unique_ptr<BlockCoordinator>;
-//using MainChainPtr        = std::unique_ptr<MainChain>;
-//using ExecutionMgrPtr     = std::unique_ptr<MockExecutionManager>;
-//using StorageUnitPtr      = std::unique_ptr<MockStorageUnit>;
-//using BlockPackerPtr      = std::unique_ptr<MockBlockPacker>;
-//using BlockPtr            = std::shared_ptr<Block>;
-//using ScheduleStatus      = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
-//using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
-//using State               = fetch::ledger::BlockCoordinator::State;
-//using AddressPtr          = std::unique_ptr<fetch::chain::Address>;
-//using DAGPtr              = BlockCoordinator::DAGPtr;
-//using BeaconServicePtr    = std::shared_ptr<fetch::beacon::BeaconService>;
-//using StakeManagerPtr     = std::shared_ptr<fetch::ledger::StakeManager>;
-//using ConsensusPtr        = std::shared_ptr<fetch::ledger::Consensus>;
+// using BlockCoordinatorPtr = std::unique_ptr<BlockCoordinator>;
+// using MainChainPtr        = std::unique_ptr<MainChain>;
+// using ExecutionMgrPtr     = std::unique_ptr<MockExecutionManager>;
+// using StorageUnitPtr      = std::unique_ptr<MockStorageUnit>;
+// using BlockPackerPtr      = std::unique_ptr<MockBlockPacker>;
+// using BlockPtr            = std::shared_ptr<Block>;
+// using ScheduleStatus      = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
+// using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
+// using State               = fetch::ledger::BlockCoordinator::State;
+// using AddressPtr          = std::unique_ptr<fetch::chain::Address>;
+// using DAGPtr              = BlockCoordinator::DAGPtr;
+// using BeaconServicePtr    = std::shared_ptr<fetch::beacon::BeaconService>;
+// using StakeManagerPtr     = std::shared_ptr<fetch::ledger::StakeManager>;
+// using ConsensusPtr        = std::shared_ptr<fetch::ledger::Consensus>;
 //
-//fetch::Digest GENESIS_DIGEST =
+// fetch::Digest GENESIS_DIGEST =
 //    fetch::byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
-//fetch::Digest GENESIS_MERKLE_ROOT =
+// fetch::Digest GENESIS_MERKLE_ROOT =
 //    fetch::byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 //
-//constexpr uint32_t    LOG2_NUM_LANES = 0;
-//constexpr std::size_t NUM_LANES      = 1u << LOG2_NUM_LANES;
-//constexpr std::size_t NUM_SLICES     = 1;
+// constexpr uint32_t    LOG2_NUM_LANES = 0;
+// constexpr std::size_t NUM_LANES      = 1u << LOG2_NUM_LANES;
+// constexpr std::size_t NUM_SLICES     = 1;
 //
-//class BlockCoordinatorTests : public ::testing::Test
+// class BlockCoordinatorTests : public ::testing::Test
 //{
-//protected:
+// protected:
 //  void SetUp() override
 //  {
 //    fetch::crypto::mcl::details::MCLInitialiser();
@@ -98,8 +98,8 @@
 //    packer_            = std::make_unique<StrictMock<MockBlockPacker>>();
 //    block_sink_        = std::make_unique<FakeBlockSink>();
 //    block_coordinator_ = std::make_unique<BlockCoordinator>(
-//        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
-//        LOG2_NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{}, nullptr);
+//        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
+//        signer, LOG2_NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{}, nullptr);
 //
 //    block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
 //    /*block_coordinator_->EnableMining(true);*/
@@ -215,27 +215,27 @@
 ////  return stream;
 ////}
 //
-//MATCHER(IsNewBlock, "")  // NOLINT
+// MATCHER(IsNewBlock, "")  // NOLINT
 //{
 //  return arg.hash.empty();
 //}
 //
-//MATCHER_P(IsBlock, block, "")  // NOLINT
+// MATCHER_P(IsBlock, block, "")  // NOLINT
 //{
 //  return arg.hash == block->hash;
 //}
 //
-//MATCHER_P(IsBlockFollowing, block, "")  // NOLINT
+// MATCHER_P(IsBlockFollowing, block, "")  // NOLINT
 //{
 //  return arg.previous_hash == block->hash;
 //}
 //
-//MATCHER_P(IsBlockBodyFollowing, block, "")  // NOLINT
+// MATCHER_P(IsBlockBodyFollowing, block, "")  // NOLINT
 //{
 //  return arg.previous_hash == block->hash;
 //}
 //
-//TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
+// TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
 //{
 //  auto const genesis = block_generator_();
 //
@@ -340,7 +340,7 @@
 //  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 //}
 //
-//TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
+// TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 //{
 //  auto genesis = block_generator_();
 //  auto b1      = block_generator_(genesis);
@@ -619,7 +619,7 @@
 //  }
 //}
 //
-//TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
+// TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
 //{
 //  auto genesis = block_generator_();
 //
@@ -693,7 +693,7 @@
 //  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->hash);
 //}
 //
-//TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
+// TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
 //{
 //  auto genesis = block_generator_();
 //
@@ -785,7 +785,7 @@
 //  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->hash);
 //}
 //
-//TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
+// TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
 //{
 //  auto genesis = block_generator_();
 //
@@ -876,7 +876,7 @@
 //  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->hash);
 //}
 //
-//TEST_F(BlockCoordinatorTests, CheckBlockMining)
+// TEST_F(BlockCoordinatorTests, CheckBlockMining)
 //{
 //  auto genesis = block_generator_();
 //
@@ -978,9 +978,9 @@
 //  }
 //}
 //
-//class NiceMockBlockCoordinatorTests : public BlockCoordinatorTests
+// class NiceMockBlockCoordinatorTests : public BlockCoordinatorTests
 //{
-//protected:
+// protected:
 //  void SetUp() override
 //  {
 //    fetch::crypto::mcl::details::MCLInitialiser();
@@ -997,8 +997,8 @@
 //    block_sink_        = std::make_unique<FakeBlockSink>();
 //
 //    block_coordinator_ = std::make_unique<BlockCoordinator>(
-//        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
-//        LOG2_NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{}, nullptr);
+//        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
+//        signer, LOG2_NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{}, nullptr);
 //
 //    block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
 //    // block_coordinator_->EnableMining(true);
@@ -1007,9 +1007,10 @@
 //  fetch::moment::AdjustableClockPtr clock_;
 //};
 //
-//TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
+// TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
 //{
-//  TransactionLayout layout{*fetch::testing::GenerateUniqueHashes(1u).begin(), fetch::BitVector{}, 0,
+//  TransactionLayout layout{*fetch::testing::GenerateUniqueHashes(1u).begin(), fetch::BitVector{},
+//  0,
 //                           0, 1000};
 //
 //  auto genesis = block_generator_();

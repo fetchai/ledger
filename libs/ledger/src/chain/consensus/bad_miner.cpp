@@ -26,13 +26,13 @@ namespace consensus {
 
 void BadMiner::Mine(Block &block)
 {
-  //block.nonce = 0;
+  // block.nonce = 0;
   block.UpdateDigest();
 }
 
 bool BadMiner::Mine(Block &block, uint64_t /*iterations*/)
 {
-  //block.nonce = 0;
+  // block.nonce = 0;
   block.UpdateDigest();
   return true;
 }

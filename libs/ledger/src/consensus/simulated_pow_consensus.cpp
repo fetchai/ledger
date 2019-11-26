@@ -52,7 +52,8 @@ uint64_t GetPoissonSample(uint64_t range, double mean_of_distribution)
 
   Distribution dist(mean_of_distribution);
 
-  auto ret = std::min(dist(rng), range);;
+  auto ret = std::min(dist(rng), range);
+  ;
 
   FETCH_LOG_INFO(LOGGING_NAME, "Ret: ", ret);
 
@@ -66,9 +67,10 @@ SimulatedPowConsensus::SimulatedPowConsensus(Identity mining_identity, uint64_t 
 
 void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Updating new current block: ", current.hash.ToHex(), " num: ", current.block_number);
+  FETCH_LOG_INFO(LOGGING_NAME, "Updating new current block: ", current.hash.ToHex(),
+                 " num: ", current.block_number);
 
-  if(current == current_block_)
+  if (current == current_block_)
   {
     return;
   }
@@ -82,13 +84,12 @@ void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
 
   double mean_time_to_block = block_interval_ms_;
 
-  if(current.miner_id == mining_identity_)
+  if (current.miner_id == mining_identity_)
   {
     mean_time_to_block *= 1.1;
   }
 
-  uint64_t time_to_wait_ms =
-      static_cast<uint64_t>(GetPoissonSample(30000, mean_time_to_block));
+  uint64_t time_to_wait_ms = static_cast<uint64_t>(GetPoissonSample(30000, mean_time_to_block));
 
   FETCH_LOG_INFO(LOGGING_NAME, "Generating time to wait (ms): ", time_to_wait_ms,
                  " mean: ", mean_time_to_block, " block time: ", block_interval_ms_);
@@ -102,7 +103,9 @@ NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
 {
   NextBlockPtr ret;
 
-  uint64_t current_time_ms = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM), moment::TimeAccuracy::MILLISECONDS);
+  uint64_t current_time_ms =
+      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM),
+              moment::TimeAccuracy::MILLISECONDS);
 
   if (!(current_time_ms > decided_next_timestamp_ms_))
   {

@@ -137,15 +137,16 @@ uint64_t GetTime(moment::ClockPtr const &clock, TimeAccuracy accuracy)
 {
   uint64_t ret = 0;
 
-  switch(accuracy)
+  switch (accuracy)
   {
-    case TimeAccuracy::SECONDS:
-      ret = static_cast<uint64_t>(
-          std::chrono::duration_cast<std::chrono::seconds>(clock->Now().time_since_epoch()).count());
+  case TimeAccuracy::SECONDS:
+    ret = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::seconds>(clock->Now().time_since_epoch()).count());
     break;
-    case TimeAccuracy::MILLISECONDS:
-      ret = static_cast<uint64_t>(
-          std::chrono::duration_cast<std::chrono::milliseconds>(clock->Now().time_since_epoch()).count());
+  case TimeAccuracy::MILLISECONDS:
+    ret = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(clock->Now().time_since_epoch())
+            .count());
     break;
   }
 

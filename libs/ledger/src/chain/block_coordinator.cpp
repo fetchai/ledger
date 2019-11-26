@@ -202,11 +202,11 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   FETCH_UNUSED(block_difficulty);
 
   state_machine_->OnStateChange([this](State current, State previous) {
-      FETCH_UNUSED(this);
-    //if (periodic_print_.Poll())
+    FETCH_UNUSED(this);
+    // if (periodic_print_.Poll())
     //{
-      FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
-                     " (previous: ", ToString(previous), ")");
+    FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
+                   " (previous: ", ToString(previous), ")");
     //}
   });
 
@@ -484,54 +484,54 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
 
   FETCH_LOG_INFO(LOGGING_NAME, "mining flag: ", mining_);
 
-  //if (mining_ && /*mining_enabled_ &&*/ ((Clock::now() >= next_block_time_) || consensus_))
+  // if (mining_ && /*mining_enabled_ &&*/ ((Clock::now() >= next_block_time_) || consensus_))
   //{
   //  FETCH_LOG_INFO(LOGGING_NAME, "loop x 1");
   //  if (consensus_)
   //  {
-      consensus_->UpdateCurrentBlock(*current_block_);
+  consensus_->UpdateCurrentBlock(*current_block_);
 
-      // Failure will set this to a nullptr
-      next_block_ = consensus_->GenerateNextBlock();
-    //}
-    //else
-    //{
-    //  // create a new block
-    //  next_block_ = std::make_unique<Block>();
-    //}
-
-    if (!next_block_)
-    {
-      state_machine_->Delay(std::chrono::milliseconds{100});
-      return State::SYNCHRONISED;
-    }
-
-    next_block_->previous_hash  = current_block_->hash;
-    next_block_->block_number   = current_block_->block_number + 1;
-    next_block_->miner          = mining_address_;
-    next_block_->log2_num_lanes = log2_num_lanes_;
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->block_number,
-                   " beacon: ", next_block_->block_entropy.EntropyAsU64());
-
-    // Attach current DAG state
-    if (dag_)
-    {
-      next_block_->dag_epoch = dag_->CreateEpoch(next_block_->block_number);
-    }
-
-    // discard the current block (we are making a new one)
-    current_block_.reset();
-
-    // trigger packing state
-    return State::NEW_SYNERGETIC_EXECUTION;
+  // Failure will set this to a nullptr
+  next_block_ = consensus_->GenerateNextBlock();
   //}
-  //FETCH_LOG_INFO(LOGGING_NAME, "loop x 2");
+  // else
+  //{
+  //  // create a new block
+  //  next_block_ = std::make_unique<Block>();
+  //}
+
+  if (!next_block_)
+  {
+    state_machine_->Delay(std::chrono::milliseconds{100});
+    return State::SYNCHRONISED;
+  }
+
+  next_block_->previous_hash  = current_block_->hash;
+  next_block_->block_number   = current_block_->block_number + 1;
+  next_block_->miner          = mining_address_;
+  next_block_->log2_num_lanes = log2_num_lanes_;
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->block_number,
+                 " beacon: ", next_block_->block_entropy.EntropyAsU64());
+
+  // Attach current DAG state
+  if (dag_)
+  {
+    next_block_->dag_epoch = dag_->CreateEpoch(next_block_->block_number);
+  }
+
+  // discard the current block (we are making a new one)
+  current_block_.reset();
+
+  // trigger packing state
+  return State::NEW_SYNERGETIC_EXECUTION;
+  //}
+  // FETCH_LOG_INFO(LOGGING_NAME, "loop x 2");
 
   //// delay the invocation of this state machine
-  //state_machine_->Delay(std::chrono::milliseconds{100});
+  // state_machine_->Delay(std::chrono::milliseconds{100});
 
-  //return State::SYNCHRONISED;
+  // return State::SYNCHRONISED;
 }
 
 BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
@@ -552,20 +552,19 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       return State::RESET;
     }
 
-    //if (consensus_)
+    // if (consensus_)
     //{
-      consensus_->UpdateCurrentBlock(*previous);  // Only update with valid blocks
-      auto result = consensus_->ValidBlock(*current_block_);
+    consensus_->UpdateCurrentBlock(*previous);  // Only update with valid blocks
+    auto result = consensus_->ValidBlock(*current_block_);
 
-      if (!(result == ConsensusInterface::Status::YES))
-      {
-        FETCH_LOG_WARN(LOGGING_NAME,
-                       "Block validation failed: Consensus failed to verify block (0x",
-                       current_block_->hash.ToHex(), ')');
+    if (!(result == ConsensusInterface::Status::YES))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Consensus failed to verify block (0x",
+                     current_block_->hash.ToHex(), ')');
 
-        RemoveBlock(current_block_->hash);
-        return State::RESET;
-      }
+      RemoveBlock(current_block_->hash);
+      return State::RESET;
+    }
     //}
 
     // Check: Ensure the block number is continuous
@@ -943,9 +942,9 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     executed_tx_count_->add(current_block_->GetTransactionCount());
 
     // Update consensus so block can be notarised
-    //if (consensus_)
+    // if (consensus_)
     //{
-      consensus_->UpdateCurrentBlock(*current_block_);
+    consensus_->UpdateCurrentBlock(*current_block_);
     //}
   }
 
@@ -1147,9 +1146,9 @@ BlockCoordinator::State BlockCoordinator::OnReset()
     block_hash_->set(*reinterpret_cast<uint64_t const *>(block->hash.pointer()));
   }
 
-  //if (consensus_)
+  // if (consensus_)
   //{
-    consensus_->UpdateCurrentBlock(*block);
+  consensus_->UpdateCurrentBlock(*block);
   //}
 
   current_block_.reset();

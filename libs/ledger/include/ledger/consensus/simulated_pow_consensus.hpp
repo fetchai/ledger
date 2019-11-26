@@ -77,8 +77,8 @@ private:
   uint64_t decided_next_timestamp_ms_{std::numeric_limits<uint64_t>::max()};
 
   // Consensus' view on the heaviest block etc.
-  Block              current_block_;
-  uint64_t           block_interval_ms_{std::numeric_limits<uint64_t>::max()};
+  Block    current_block_;
+  uint64_t block_interval_ms_{std::numeric_limits<uint64_t>::max()};
 };
 
 }  // namespace ledger
