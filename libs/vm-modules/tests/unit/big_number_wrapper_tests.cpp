@@ -147,7 +147,7 @@ TEST_F(UInt256Tests, uint256_raw_construction)
   UInt256Wrapper fromByteArray(dummy_vm_ptr, dummy_typeid, raw_32xFF);
   ASSERT_TRUE(SIZE_IN_BYTES == fromByteArray.size());
 
-  UInt256Wrapper fromAnotherUInt256(dummy_vm_ptr, dummy_typeid, zero.number());
+  UInt256Wrapper fromAnotherUInt256(dummy_vm_ptr, zero.number() + zero.number());
   ASSERT_TRUE(SIZE_IN_BYTES == fromAnotherUInt256.size());
 }
 
@@ -208,9 +208,6 @@ TEST_F(UInt256Tests, uint256_comparisons)
 
 TEST_F(UInt256Tests, uint256_assignment)
 {
-  // NOTE! The current behavior for assignment of UInt256 is a reference-assignment,
-  // e.g. after a = b both a and b shares the same underlying object.
-  // This is not a correct expected behavior for numbers, so a rework is pending.
   static constexpr char const *TEXT = R"(
     function main()
       var a = UInt256(42u64);
@@ -451,7 +448,6 @@ TEST_F(UInt256Tests, uint256_logValue)
   EXPECT_NEAR(result, expected, expected * LOGARITHM_TOLERANCE);
 }
 
-// Warning: the test contains 1 temporary disabled assertion.
 TEST_F(UInt256Tests, uint256_type_casts)
 {
   static constexpr char const *TEXT = R"(
@@ -477,12 +473,23 @@ TEST_F(UInt256Tests, uint256_type_casts)
 
           var test_uint64 = toUInt64(test);
           var correct_uint64 = toUInt64(correct);
+          assert(test_uint64 == correct_uint64, "toUInt64(...) failed");
+      endfunction
+    )";
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  EXPECT_TRUE(toolkit.Run());
+}
 
+// Disabled until UInt256 constructor from bytearray fix/rework.
+TEST_F(UInt256Tests, DISABLED_uint256_to_string)
+{
+  static constexpr char const *TEXT = R"(
+      function main()
+          var test : UInt256 = UInt256(9000000000000000000u64);
           var test_str : String = toString(test);
           var expected_str_in_big_endian_enc : String =
                 "0000000000000000000000000000000000000000000000007ce66c50e2840000";
-          // Assertion disabled until UInt256 buffer init rework
-          // assert(test_str == expected_str_in_big_endian_enc, "toString(...) failed");
+          assert(test_str == expected_str_in_big_endian_enc, "toString(...) failed");
       endfunction
     )";
   ASSERT_TRUE(toolkit.Compile(TEXT));

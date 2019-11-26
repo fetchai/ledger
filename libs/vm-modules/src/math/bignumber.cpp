@@ -80,12 +80,8 @@ void UInt256Wrapper::Bind(Module &module)
       .EnableOperator(Operator::Divide)
       .EnableOperator(Operator::InplaceMultiply)
       .EnableOperator(Operator::InplaceDivide)
-      //        .EnableOperator(Operator::LessThanOrEqual)
       .EnableOperator(Operator::GreaterThan)
-      //        .EnableOperator(Operator::GreaterThanOrEqual)
-      //        .CreateMemberFunction("toBuffer", &UInt256Wrapper::ToBuffer)
       .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
-      //        .CreateMemberFunction("lessThan", &UInt256Wrapper::LessThan)
       .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
       .CreateMemberFunction("toFloat64", &UInt256Wrapper::ToFloat64)
       .CreateMemberFunction("toInt32", &UInt256Wrapper::ToInt32)
@@ -98,8 +94,8 @@ void UInt256Wrapper::Bind(Module &module)
   module.CreateFreeFunction("toInt32", &UInt256Wrapper::ToPrimitive<int32_t>);
 }
 
-UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, UInt256 data)
-  : Object(vm, type_id)
+UInt256Wrapper::UInt256Wrapper(VM *vm, UInt256 &&data)
+  : Object(vm, TypeIds::UInt256)
   , number_(std::move(data))
 {}
 
@@ -274,8 +270,7 @@ void UInt256Wrapper::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
     lhso = std::move(rhs);
     return;
   }
-  Ptr<UInt256Wrapper> n(
-      new UInt256Wrapper(vm_, fetch::vm::TypeIds::UInt256, lhs->number_ + rhs->number_));
+  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ + rhs->number_));
   lhso = std::move(n);
 }
 
@@ -294,8 +289,7 @@ void UInt256Wrapper::Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso)
     lhso = std::move(rhs);
     return;
   }
-  Ptr<UInt256Wrapper> n(
-      new UInt256Wrapper(vm_, fetch::vm::TypeIds::UInt256, lhs->number_ - rhs->number_));
+  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ - rhs->number_));
   lhso = std::move(n);
 }
 
@@ -328,7 +322,7 @@ void UInt256Wrapper::Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     lhso = std::move(rhs);
     return;
   }
-  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, TypeIds::UInt256, lhs->number_ * rhs->number_));
+  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ * rhs->number_));
   lhso = std::move(n);
 }
 
@@ -360,8 +354,7 @@ void UInt256Wrapper::Divide(Ptr<Object> &lhso, Ptr<Object> &rhso)
     return;
   }
 
-  Ptr<UInt256Wrapper> n(
-      new UInt256Wrapper(vm_, fetch::vm::TypeIds::UInt256, lhs->number_ / rhs->number_));
+  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ / rhs->number_));
   lhso = std::move(n);
 }
 
