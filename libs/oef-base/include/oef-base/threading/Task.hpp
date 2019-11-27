@@ -87,6 +87,11 @@ public:
     return std::dynamic_pointer_cast<Derived>(shared_from_this());
   }
 
+  std::shared_ptr<Taskpool> GetTaskPool()
+  {
+    return pool_;
+  }
+
   void SetTaskState(TaskState state)
   {
     task_state_.store(state);

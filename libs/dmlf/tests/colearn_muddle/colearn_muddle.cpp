@@ -143,6 +143,8 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
   EXPECT_GT(instances[1].instance->actual->GetUpdateCount(), 0);
 
+  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+
   try
   {
     instances[1].instance->actual->GetUpdate("algo1", "vocab");

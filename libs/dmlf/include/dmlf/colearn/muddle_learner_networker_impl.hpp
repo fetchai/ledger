@@ -63,6 +63,9 @@ public:
   using Uri                = fetch::network::Uri;
   using SubscriptionPtr    = fetch::muddle::MuddleEndpoint::SubscriptionPtr;
   using Peers              = std::unordered_set<Address>;
+  using Mutex = fetch::Mutex;
+  using Lock  = std::unique_lock<Mutex>;
+  using Sources = std::set<std::string>;
 
   static constexpr char const *LOGGING_NAME = "MuddleLearnerNetworkerImpl";
 
@@ -122,10 +125,10 @@ public:
   std::string GetAddressAsString() const;
 
 protected:
+  friend class MuddleOutboundAnnounceTask;
   void     Setup(MuddlePtr mud, StorePtr update_store);
   uint64_t ProcessUpdate(const std::string &type_name, byte_array::ConstByteArray bytes,
                          double proportion, double random_factor, const std::string &source);
-
 private:
   std::shared_ptr<Taskpool>   taskpool_;
   std::shared_ptr<Threadpool> tasks_runners_;
@@ -141,6 +144,9 @@ private:
   byte_array::ConstByteArray  public_key_;
 
   std::shared_ptr<NetMan> netm_;
+  Sources sources_;
+
+  mutable Mutex mutex_;
 
   friend class MuddleMessageHandler;
 };

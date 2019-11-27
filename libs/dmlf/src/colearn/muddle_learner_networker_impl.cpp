@@ -61,21 +61,37 @@ void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
     double                     proportion;
     double                     random_factor;
 
-    buf >> type_name >> bytes >> proportion >> random_factor;
+    std::string kind;
     auto source = std::string(fetch::byte_array::ToBase64(from));
+    buf >> kind;
 
-    std::cout << "from:" << source << ", "
-              << "serv:" << service << ", "
-              << "chan:" << channel << ", "
-              << "cntr:" << counter << ", "
-              << "addr:" << fetch::byte_array::ToBase64(my_address) << ", "
-              << "type:" << type_name << ", "
-              << "size:" << bytes.size() << " bytes, "
-              << "prop:" << proportion << ", "
-              << "fact:" << random_factor << ", " << std::endl;
-    ;
 
-    return ProcessUpdate(type_name, bytes, proportion, random_factor, source);
+    if (kind == "DATA")
+    {
+      buf >> type_name >> bytes >> proportion >> random_factor;
+      std::cout << "kind:" << kind << ", "
+                << "from:" << source << ", "
+                << "serv:" << service << ", "
+                << "chan:" << channel << ", "
+                << "cntr:" << counter << ", "
+                << "addr:" << fetch::byte_array::ToBase64(my_address) << ", "
+                << "type:" << type_name << ", "
+                << "size:" << bytes.size() << " bytes, "
+                << "prop:" << proportion << ", "
+                << "fact:" << random_factor << ", " << std::endl;
+      ;
+      ProcessUpdate(type_name, bytes, proportion, random_factor, source);
+      return;
+    }
+
+    if (kind == "HELO")
+    {
+      std::cout << "helo:" << source
+                << std::endl;
+      Lock lock(mutex_);
+      sources_.insert(source);
+      return;
+    }
   });
 
   randomising_offset_   = randomiser_.GetNew();
@@ -164,7 +180,7 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, B
   auto random_factor = randomiser_.GetNew();
 
   serializers::MsgPackSerializer buf;
-  buf << type_name << update << broadcast_proportion_ << random_factor;
+  buf << std::string("DATA") << type_name << update << broadcast_proportion_ << random_factor;
 
   mud_->GetEndpoint().Broadcast(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST, buf.data());
 }
