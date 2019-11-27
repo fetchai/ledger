@@ -65,7 +65,6 @@ template <typename D>
 struct MapSerializer<ledger::WalletRecord, D>
 {
 public:
-  // TODO(issue 1426): Change this serializer to map
   using Type       = ledger::WalletRecord;
   using DriverType = D;
 
