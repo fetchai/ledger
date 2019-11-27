@@ -93,7 +93,22 @@ public:
   bool DeserializeFrom(serializers::MsgPackSerializer &buffer);
 
 private:
-  VMObjectType &     model_;
+  VMObjectType &model_;
+
+  // Layers
+  ChargeAmount forward_pass_cost_{0};
+  ChargeAmount backward_pass_cost_{0};
+
+  // Loss function
+  ChargeAmount loss_forward_pass_cost_{0};
+  ChargeAmount loss_backward_pass_cost_{0};
+
+  // Optimiser
+  ChargeAmount weights_size_sum_{0};
+  ChargeAmount optimiser_step_impact_{0};
+
+  fetch::math::SizeType last_layer_size_{0};
+
   ChargeAmount const constant_charge{vm::CHARGE_UNIT};
 
   void copy_state_from(ModelEstimator const &);

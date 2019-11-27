@@ -111,6 +111,8 @@ public:
 
   ModelEstimator &Estimator();
 
+  friend class fetch::vm_modules::ml::model::ModelEstimator;
+
 private:
   ModelPtrType       model_;
   ModelConfigPtrType model_config_;

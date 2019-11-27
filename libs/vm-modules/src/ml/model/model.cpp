@@ -26,6 +26,7 @@
 
 #include "vm/module.hpp"
 #include "vm_modules/ml/model/model.hpp"
+#include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/use_estimator.hpp"
 
