@@ -28,17 +28,19 @@ Transaction::Validity GetValidity(TxOrTxLayout const &tx, Transaction::BlockInde
   constexpr Transaction::BlockIndex MAXIMUM_TX_VALIDITY_PERIOD = 40000;
   constexpr Transaction::BlockIndex DEFAULT_TX_VALIDITY_PERIOD = 1000;
 
-  auto const default_valid_from = tx.valid_until() >= DEFAULT_TX_VALIDITY_PERIOD
-                                      ? tx.valid_until() - DEFAULT_TX_VALIDITY_PERIOD
-                                      : 0u;
-  auto const valid_from = tx.valid_from() == 0 ? default_valid_from : tx.valid_from();
+  auto const valid_until = tx.valid_until();
 
-  if (tx.valid_until() - valid_from > MAXIMUM_TX_VALIDITY_PERIOD)
+  auto const fallback_valid_from =
+      valid_until >= DEFAULT_TX_VALIDITY_PERIOD ? valid_until - DEFAULT_TX_VALIDITY_PERIOD : 0u;
+
+  auto const valid_from = tx.valid_from() == 0 ? fallback_valid_from : tx.valid_from();
+
+  if (valid_until - valid_from > MAXIMUM_TX_VALIDITY_PERIOD)
   {
     return Transaction::Validity::INVALID;
   }
 
-  if (tx.valid_until() < block_index)
+  if (valid_until <= block_index)
   {
     return Transaction::Validity::INVALID;
   }
