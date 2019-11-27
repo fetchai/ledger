@@ -130,8 +130,8 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     if (loss->string() == "mse")
     {
       // loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
-      loss_forward_pass_cost_  = 6 * constant_charge;
-      loss_backward_pass_cost_ = 6 * constant_charge;
+      loss_forward_pass_cost_  = 6 * last_layer_size_;
+      loss_backward_pass_cost_ = 6 * last_layer_size_;
     }
     else if (loss->string() == "cel")
     {
@@ -234,11 +234,9 @@ ChargeAmount ModelEstimator::Evaluate()
 
 ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 {
-  fetch::math::SizeType label_size = last_layer_size_;
   fetch::math::SizeType batch_size =
       data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
-  fetch::math::SizeType estimate =
-      forward_pass_cost_ * batch_size + loss_forward_pass_cost_ * label_size;
+  fetch::math::SizeType estimate = (forward_pass_cost_ + loss_forward_pass_cost_) * batch_size;
 
   return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
 }
