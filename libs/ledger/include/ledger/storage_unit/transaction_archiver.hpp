@@ -28,9 +28,21 @@ class TransactionPoolInterface;
 class TransactionStoreInterface;
 
 /**
- * The transaction archiver manages transactions between a pool and an archive. Once a transaction
+ * The transaction archiver manages transactions between a pool and a store. Once a transaction
  * has been confirmed it will be placed in a queue which will result in the transaction being
  * committed to persistent storage.
+ *
+ *                       ┌─────────────┐               ┌─────────────┐
+ *                       │ Transaction │               │ Transaction │
+ *                       │    Pool     │               │    Store    │
+ *                       └─────────────┘               └─────────────┘
+ *                              │                             ▲
+ *                              │                             │
+ *                              │       ┌─────────────┐       │
+ *                              │       │ Transaction │       │
+ *                              └──────▶│  Archiver   │───────┘
+ *                                      └─────────────┘
+ *
  */
 class TransactionArchiver
 {
