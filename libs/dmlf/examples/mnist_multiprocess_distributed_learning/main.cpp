@@ -181,7 +181,7 @@ int main(int argc, char **argv)
       std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(network_doc, instance_number);
   networker->Initialize<fetch::dmlf::Update<TensorType>>();
   networker->SetShuffleAlgorithm(
-      std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(n_clients, n_peers));
+      std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(n_clients-1, n_peers));
 
   // Pause to let muddle get set up
   std::this_thread::sleep_for(std::chrono::seconds(muddle_delay));
