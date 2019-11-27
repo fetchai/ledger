@@ -42,7 +42,7 @@ fetch::math::meta::IfIsMath<T, T> Exp(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ExpPtr(VM *vm, T const &a)
+IfIsPtrFixed128<T, Ptr<T>> ExpPtr(VM *vm, Ptr<T> const &a)
 {
   fixed_point::fp128_t x = a->data_;
   fetch::math::Exp(x, x);
@@ -57,7 +57,7 @@ void BindExp(Module &module)
   module.CreateFreeFunction("exp", &Exp<double_t>);
   module.CreateFreeFunction("exp", &Exp<fixed_point::fp32_t>);
   module.CreateFreeFunction("exp", &Exp<fixed_point::fp64_t>);
-  module.CreateFreeFunction("exp", &ExpPtr<Ptr<Fixed128>>);
+  module.CreateFreeFunction("exp", &ExpPtr<Fixed128>);
 }
 
 }  // namespace math

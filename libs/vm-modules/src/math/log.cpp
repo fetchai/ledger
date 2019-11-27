@@ -42,7 +42,7 @@ fetch::math::meta::IfIsMath<T, T> Log(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> LogPtr(VM *vm, T const &a)
+IfIsPtrFixed128<T, Ptr<T>> LogPtr(VM *vm, Ptr<T> const &a)
 {
   fixed_point::fp128_t x = a->data_;
   fetch::math::Log(x, x);
@@ -58,7 +58,7 @@ fetch::math::meta::IfIsMath<T, T> Log2(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> Log2Ptr(VM *vm, T const &a)
+IfIsPtrFixed128<T, Ptr<T>> Log2Ptr(VM *vm, Ptr<T> const &a)
 {
   fixed_point::fp128_t x = a->data_;
   fetch::math::Log2(x, x);
@@ -74,7 +74,7 @@ fetch::math::meta::IfIsMath<T, T> Log10(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> Log10Ptr(VM *vm, T const &a)
+IfIsPtrFixed128<T, Ptr<T>> Log10Ptr(VM *vm, Ptr<T> const &a)
 {
   fixed_point::fp128_t x = a->data_;
   fetch::math::Log10(x, x);
@@ -89,19 +89,19 @@ void BindLog(Module &module)
   module.CreateFreeFunction("log", &Log<double_t>);
   module.CreateFreeFunction("log", &Log<fixed_point::fp32_t>);
   module.CreateFreeFunction("log", &Log<fixed_point::fp64_t>);
-  module.CreateFreeFunction("log", &LogPtr<Ptr<Fixed128>>);
+  module.CreateFreeFunction("log", &LogPtr<Fixed128>);
 
   module.CreateFreeFunction("log2", &Log2<float_t>);
   module.CreateFreeFunction("log2", &Log2<double_t>);
   module.CreateFreeFunction("log2", &Log2<fixed_point::fp32_t>);
   module.CreateFreeFunction("log2", &Log2<fixed_point::fp64_t>);
-  module.CreateFreeFunction("log2", &Log2Ptr<Ptr<Fixed128>>);
+  module.CreateFreeFunction("log2", &Log2Ptr<Fixed128>);
 
   module.CreateFreeFunction("log10", &Log10<float_t>);
   module.CreateFreeFunction("log10", &Log10<double_t>);
   module.CreateFreeFunction("log10", &Log10<fixed_point::fp32_t>);
   module.CreateFreeFunction("log10", &Log10<fixed_point::fp64_t>);
-  module.CreateFreeFunction("log10", &Log10Ptr<Ptr<Fixed128>>);
+  module.CreateFreeFunction("log10", &Log10Ptr<Fixed128>);
 }
 
 }  // namespace math

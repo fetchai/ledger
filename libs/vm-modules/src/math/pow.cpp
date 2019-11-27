@@ -42,7 +42,7 @@ fetch::math::meta::IfIsMath<T, T> Pow(VM * /*vm*/, T const &a, T const &b)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> PowPtr(VM *vm, T const &a, T const &b)
+IfIsPtrFixed128<T, Ptr<T>> PowPtr(VM *vm, Ptr<T> const &a, Ptr<T> const &b)
 {
   fixed_point::fp128_t x = a->data_;
   fixed_point::fp128_t y = b->data_;
@@ -58,7 +58,7 @@ void BindPow(Module &module)
   module.CreateFreeFunction("pow", &Pow<double_t>);
   module.CreateFreeFunction("pow", &Pow<fixed_point::fp32_t>);
   module.CreateFreeFunction("pow", &Pow<fixed_point::fp64_t>);
-  module.CreateFreeFunction("exp", &PowPtr<Ptr<Fixed128>>);
+  module.CreateFreeFunction("exp", &PowPtr<Fixed128>);
 }
 
 }  // namespace math

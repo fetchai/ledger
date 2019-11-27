@@ -45,7 +45,7 @@ fetch::math::meta::IfIsMath<T, T> Abs(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> AbsPtr(VM *vm, T const &a)
+IfIsPtrFixed128<T, Ptr<T>> AbsPtr(VM *vm, Ptr<T> const &a)
 {
   fixed_point::fp128_t x = a->data_;
   fetch::math::Abs(x, x);
@@ -101,7 +101,7 @@ void BindAbs(Module &module)
 
   module.CreateFreeFunction("abs", &Abs<fixed_point::fp32_t>);
   module.CreateFreeFunction("abs", &Abs<fixed_point::fp64_t>);
-  module.CreateFreeFunction("abs", &AbsPtr<Ptr<Fixed128>>);
+  module.CreateFreeFunction("abs", &AbsPtr<Fixed128>);
 }
 
 }  // namespace math
