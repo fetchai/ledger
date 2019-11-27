@@ -38,7 +38,7 @@ Transaction::Validity GetValidity(TxOrTxLayout const &tx, Transaction::BlockInde
     return Transaction::Validity::INVALID;
   }
 
-  if (tx.valid_until() <= block_index)
+  if (tx.valid_until() < block_index)
   {
     return Transaction::Validity::INVALID;
   }
