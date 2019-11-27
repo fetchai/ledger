@@ -36,7 +36,7 @@ public:
   static Vocabulary New(T data)
   {
     // TODO(private issue 143): add destructor
-    return std::make_shared<VocabularyInstance>(std::type_index(typeid(T)), new T(data));
+    return Vocabulary{new VocabularyInstance(std::type_index(typeid(T)), new T(data))};
   }
 
   VocabularyInstance()                                = delete;

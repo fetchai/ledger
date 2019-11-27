@@ -19,7 +19,6 @@
 
 #include "core/reactor.hpp"
 #include "ledger/shard_config.hpp"
-#include "ledger/storage_unit/object_store_protocol.hpp"
 #include "ledger/storage_unit/transaction_storage_engine.hpp"
 #include "ledger/storage_unit/transaction_storage_protocol.hpp"
 

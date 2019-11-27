@@ -21,7 +21,6 @@
 #include "core/digest.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
-#include "ledger/storage_unit/transient_object_store.hpp"
 #include "ledger/transaction_verifier.hpp"
 #include "logging/logging.hpp"
 #include "muddle/address.hpp"
