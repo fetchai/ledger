@@ -183,7 +183,8 @@ void Executor::SettleFees(chain::Address const &miner, BlockIndex block, TokenAm
 
   FETCH_LOG_TRACE(LOGGING_NAME, "Settling fees");
 
-  fee_manager_.SettleFees(miner, amount,current_tx_->contract_address(), log2_num_lanes, block_, *storage_);
+  fee_manager_.SettleFees(miner, amount, current_tx_->contract_address(), log2_num_lanes, block_,
+                          *storage_);
 
   FETCH_LOG_TRACE(LOGGING_NAME, "Aggregating stake updates...");
 

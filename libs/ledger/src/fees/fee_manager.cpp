@@ -142,8 +142,9 @@ void FeeManager::Execute(TransactionDetails &tx, Result &result, BlockIndex cons
   token_contract_.SubtractTokens(from, result.fee);
 }
 
-void FeeManager::SettleFees(chain::Address const &miner, TokenAmount amount, chain::Address const &contract_address,
-    uint32_t log2_num_lanes, BlockIndex const &block, StorageInterface &storage)
+void FeeManager::SettleFees(chain::Address const &miner, TokenAmount amount,
+                            chain::Address const &contract_address, uint32_t log2_num_lanes,
+                            BlockIndex const &block, StorageInterface &storage)
 {
   // only if there are fees to settle then update the state database
   if (amount == 0)
@@ -161,8 +162,7 @@ void FeeManager::SettleFees(chain::Address const &miner, TokenAmount amount, cha
   // attach the token contract to the storage engine
   StateSentinelAdapter storage_adapter{storage, Identifier{"fetch.token"}, shard};
 
-  ContractContext context{&token_contract_, contract_address, &storage_adapter,
-                          block};
+  ContractContext         context{&token_contract_, contract_address, &storage_adapter, block};
   ContractContextAttacher raii(token_contract_, context);
   token_contract_.AddTokens(miner, amount);
 }

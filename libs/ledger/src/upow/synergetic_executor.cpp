@@ -26,8 +26,8 @@
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
-#include "meta/log2.hpp"
 #include "logging/logging.hpp"
+#include "meta/log2.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
@@ -138,8 +138,9 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       FETCH_LOG_DEBUG(LOGGING_NAME, "Calculated fee: ", result.charge);
       fee_manager_.Execute(tx_details, result, solution->block_index(), storage_);
 
-      fee_manager_.SettleFees(miner, result.fee, tx_details.contract_address, Log2(static_cast<uint32_t>(num_lanes)),
-          solution->block_index(), storage_);
+      fee_manager_.SettleFees(miner, result.fee, tx_details.contract_address,
+                              Log2(static_cast<uint32_t>(num_lanes)), solution->block_index(),
+                              storage_);
 
       contract->Detach();
 

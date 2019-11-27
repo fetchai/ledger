@@ -70,8 +70,9 @@ public:
                                   std::vector<Chargeable *> const &chargeables, Result &result);
   void Execute(TransactionDetails &tx, Result &result, BlockIndex const &block,
                StorageInterface &storage);
-  void SettleFees(chain::Address const &miner, TokenAmount amount, chain::Address const &contract_address,
-                  uint32_t log2_num_lanes, BlockIndex const &block, StorageInterface &storage);
+  void SettleFees(chain::Address const &miner, TokenAmount amount,
+                  chain::Address const &contract_address, uint32_t log2_num_lanes,
+                  BlockIndex const &block, StorageInterface &storage);
 
   // Operators
   FeeManager &operator=(FeeManager const &) = delete;
