@@ -126,6 +126,7 @@ int main(int argc, char **argv)
   auto     labels_file    = doc["labels"].As<std::string>();
   auto     n_rounds       = doc["n_rounds"].As<SizeType>();
   auto     n_peers        = doc["n_peers"].As<SizeType>();
+  auto n_clients        = doc["n_clients"].As<SizeType>();
   auto     test_set_ratio = doc["test_set_ratio"].As<float>();
   SizeType start_time     = 0;
   if (!doc["start_time"].IsUndefined())
@@ -180,7 +181,7 @@ int main(int argc, char **argv)
       std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(network_doc, instance_number);
   networker->Initialize<fetch::dmlf::Update<TensorType>>();
   networker->SetShuffleAlgorithm(
-      std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));
+      std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(n_clients, n_peers));
 
   // Pause to let muddle get set up
   std::this_thread::sleep_for(std::chrono::seconds(muddle_delay));
