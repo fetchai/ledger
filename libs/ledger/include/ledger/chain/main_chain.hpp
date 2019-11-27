@@ -186,7 +186,7 @@ public:
 
   struct HeaviestTip
   {
-    Tip tip;
+    Tip tip{};
     // assuming every chain has a proper genesis
     BlockHash hash{chain::GENESIS_DIGEST};
 

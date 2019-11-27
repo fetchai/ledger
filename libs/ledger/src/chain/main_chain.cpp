@@ -107,6 +107,7 @@ MainChain::MainChain(bool const enable_bloom_filter, Mode mode)
   if (block_store_ && GetHeadHash().empty())
   {
     SetHeadHash(genesis->hash);
+    assert(genesis->hash == chain::GENESIS_DIGEST);
   }
 }
 
@@ -143,6 +144,12 @@ void MainChain::Reset()
 
   // add the tip for this block
   AddTip(genesis);
+
+  // set genesis as head in file if no head
+  if (block_store_ && GetHeadHash().empty())
+  {
+    SetHeadHash(genesis->hash);
+  }
 }
 
 /**
@@ -993,6 +1000,10 @@ void MainChain::WriteToFile()
     else
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Writing block. ", block->block_number);
+      if (block->block_number == 1)
+      {
+        assert(block->previous_hash == chain::GENESIS_DIGEST);
+      }
 
       // Recover the current head block from the file
       IntBlockPtr current_file_head = std::make_shared<Block>();
@@ -1003,6 +1014,10 @@ void MainChain::WriteToFile()
       LoadBlock(head_hash, *current_file_head);
       FETCH_LOG_INFO(LOGGING_NAME, "Current file head block number ",
                      current_file_head->block_number);
+      if (current_file_head->block_number == 0)
+      {
+        assert(current_file_head->hash == chain::GENESIS_DIGEST);
+      }
 
       // Now keep adding the block and its prev to the file until we are certain the file contains
       // an unbroken chain. Assuming that the current_file_head is unbroken we can write until we
@@ -1029,6 +1044,7 @@ void MainChain::WriteToFile()
         if (block->block_number == 0)
         {
           FETCH_LOG_INFO(LOGGING_NAME, "Block number zero reached in WriteToFile");
+          assert(false);
         }
       }
 
@@ -1582,29 +1598,13 @@ bool MainChain::DetermineHeaviestTip()
  */
 MainChain::BlockPtr MainChain::GetFirstNonStutterBlock(Block const &block)
 {
-  BlockPtr ret;
-  auto     previous_block = GetBlock(block.previous_hash);
+  BlockPtr ret = GetBlock(block.previous_hash);
 
   // Check previous is not stutter, otherwise traverse back through chain
-  while (!ret && previous_block)
+  while (ret && stutter_blocks_[ret->block_number][ret->weight])
   {
-    BlockNumber previous_block_number = previous_block->block_number;
-    assert(stutter_blocks_.find(previous_block_number) != stutter_blocks_.end() &&
-           stutter_blocks_.at(previous_block_number).find(previous_block->weight) !=
-               stutter_blocks_.at(previous_block_number).end());
-    if (previous_block->IsGenesis() ||
-        !stutter_blocks_[previous_block_number][previous_block->weight])
-    {
-      ret = GetBlock(previous_block->hash);
-      if (!ret)
-      {
-        break;
-      }
-    }
-    else
-    {
-      previous_block = GetBlock(previous_block->previous_hash);
-    }
+    assert(!ret->IsGenesis());
+    ret = GetBlock(ret->previous_hash);
   }
 
   // If return has forward references then return null as it is not a tip
@@ -1630,8 +1630,8 @@ bool MainChain::ReindexTips()
 
   // Tips are hashes of cached non-loose blocks that don't have any forward references
   TipsMap   new_tips;
-  Tip       max_tip;
-  BlockHash max_hash;
+  Tip       max_tip{};
+  BlockHash max_hash{};
 
   for (auto const &block_entry : block_chain_)
   {
@@ -1664,7 +1664,13 @@ bool MainChain::ReindexTips()
       // check if this tip is the current heaviest
       if (max_tip == new_tips[block.hash])
       {
-        assert(!enable_stutter_removal_);
+        if (enable_stutter_removal_ && !block.IsGenesis())
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Stutter blocks found for block number ",
+                         max_tip.block_number, ", weight ", max_tip.weight, ", total weight ",
+                         max_tip.total_weight);
+          assert(!enable_stutter_removal_);
+        }
         if (block.hash > max_hash)
         {
           max_tip  = new_tips[block.hash];

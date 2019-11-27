@@ -79,6 +79,7 @@ auto Generate(BlockGeneratorPtr &gen, Block::BlockEntropy::Cabinet const &cabine
   if (previous->block_number == 0)
   {
     assert(!cabinet.empty());
+    assert(previous->hash == chain::GENESIS_DIGEST);
     block->block_entropy.qualified = cabinet;
     // Insert fake confirmatin to trigger aeon beginning
     block->block_entropy.confirmations.insert({"fake", "confirmation"});
