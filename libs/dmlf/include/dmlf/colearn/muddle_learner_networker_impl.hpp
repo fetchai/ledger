@@ -40,25 +40,30 @@ namespace colearn {
 class MuddleLearnerNetworkerImpl : public AbstractMessageController
 {
 public:
-  using Taskpool                      = oef::base::Taskpool;
-  using Threadpool                    = oef::base::Threadpool;
-  using TaskP                         = Taskpool::TaskP;
-  using MuddlePtr                     = muddle::MuddlePtr;
+  using Taskpool           = oef::base::Taskpool;
+  using Threadpool         = oef::base::Threadpool;
+  using TaskP              = Taskpool::TaskP;
+  using MuddlePtr          = muddle::MuddlePtr;
   using deprecated_UpdateInterfacePtr = dmlf::deprecated_UpdateInterfacePtr;
-  using RpcClient                     = fetch::muddle::rpc::Client;
-  using RpcClientPtr                  = std::shared_ptr<RpcClient>;
-  using Proto                         = ColearnProtocol;
-  using ProtoP                        = std::shared_ptr<ColearnProtocol>;
-  using RpcServer                     = fetch::muddle::rpc::Server;
-  using RpcServerPtr                  = std::shared_ptr<RpcServer>;
-  using Bytes                         = byte_array::ByteArray;
-  using Store                         = UpdateStore;
-  using StorePtr                      = std::shared_ptr<Store>;
-  using NetMan                        = fetch::network::NetworkManager;
-  using NetManP                       = std::shared_ptr<NetMan>;
-  using Signer                        = fetch::crypto::ECDSASigner;
-  using Randomiser                    = RandomDouble;
-  using SignerPtr                     = std::shared_ptr<Signer>;
+  using RpcClient          = fetch::muddle::rpc::Client;
+  using RpcClientPtr       = std::shared_ptr<RpcClient>;
+  using Proto              = ColearnProtocol;
+  using ProtoP             = std::shared_ptr<ColearnProtocol>;
+  using RpcServer          = fetch::muddle::rpc::Server;
+  using RpcServerPtr       = std::shared_ptr<RpcServer>;
+  using Bytes              = byte_array::ByteArray;
+  using Store              = UpdateStore;
+  using StorePtr           = std::shared_ptr<Store>;
+  using NetMan             = fetch::network::NetworkManager;
+  using NetManP            = std::shared_ptr<NetMan>;
+  using Signer             = fetch::crypto::ECDSASigner;
+  using Randomiser         = RandomDouble;
+  using SignerPtr          = std::shared_ptr<Signer>;
+  using Payload            = fetch::muddle::Packet::Payload;
+  using Address            = fetch::muddle::Address;
+  using Uri                = fetch::network::Uri;
+  using SubscriptionPtr    = fetch::muddle::MuddleEndpoint::SubscriptionPtr;
+  using Peers              = std::unordered_set<Address>;
   using Data                          = AbstractMessageController::Bytes;
   using UpdatePtr                     = AbstractMessageController::UpdatePtr;
   using ConstUpdatePtr                = AbstractMessageController::ConstUpdatePtr;
@@ -78,8 +83,6 @@ public:
   MuddleLearnerNetworkerImpl &operator=(MuddleLearnerNetworkerImpl const &other)  = delete;
   bool                        operator==(MuddleLearnerNetworkerImpl const &other) = delete;
   bool                        operator<(MuddleLearnerNetworkerImpl const &other)  = delete;
-
-  void addTarget(const std::string &peer);
 
   void PushUpdate(UpdatePtr const &update, Algorithm const &algo = "algo0",
                   UpdateType const &type = "gradients") override
@@ -111,10 +114,11 @@ public:
   {
     return update_store_->GetUpdate(algo, type);
   }
+  
+  void PushUpdateBytes(const std::string &type_name, Bytes const &update);
+  void PushUpdateBytes(const std::string &type_name, Bytes const &update, Peers peers);
 
   ConstUpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria const &criteria);
-
-  void PushUpdateBytes(const UpdateType &type_name, Bytes const &update);
 
   std::size_t GetPeerCount() const
   {
@@ -139,8 +143,13 @@ public:
     broadcast_proportion_ = proportion;
   }
 
+  Address     GetAddress() const;
+  std::string GetAddressAsString() const;
+
 protected:
-  void setup(MuddlePtr mud, StorePtr update_store);
+  void     Setup(MuddlePtr mud, StorePtr update_store);
+  uint64_t ProcessUpdate(const std::string &type_name, byte_array::ConstByteArray bytes,
+                         double proportion, double random_factor, const std::string &source);
 
 private:
   std::shared_ptr<Taskpool>   taskpool_;
@@ -153,8 +162,8 @@ private:
   Randomiser                  randomiser_;
   double                      broadcast_proportion_;
   double                      randomising_offset_;
-
-  std::unordered_set<std::string> peers_;
+  SubscriptionPtr             subscription_;
+  byte_array::ConstByteArray  public_key_;
 
   std::shared_ptr<NetMan> netm_;
 

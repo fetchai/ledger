@@ -57,31 +57,28 @@ using StorePtr       = std::shared_ptr<Store>;
 using UpdateTypeForTesting = fetch::dmlf::deprecated_Update<TensorType>;
 using UpdatePayload        = UpdateTypeForTesting::Payload;
 
-char const *SERVER_PRIV = "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
-char const *SERVER_PUB =
-    "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==";
-char const *CLIENT_PRIV = "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
-char const *CLIENT_PUB =
-    "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
+// char const *SERVER_PRIV = "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
+// char const *SERVER_PUB =
+//    "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==";
+// char const *CLIENT_PRIV = "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
+// char const *CLIENT_PUB =
+//    "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
 
 char const *LOGGING_NAME = "colearn_muddle";
 
 class LearnerTypedUpdates
 {
 public:
-  LNP         actual;
-  LNBaseP     interface;
-  LNBaseTP    interface_typed;
-  NetManP     netm_;
-  MuddlePtr   mud_;
-  std::string pub_;
-  StorePtr    store_;
+  LNP       actual;
+  LNBaseP   interface;
+  LNBaseTP  interface_typed;
+  NetManP   netm_;
+  MuddlePtr mud_;
+  StorePtr  store_;
 
-  LearnerTypedUpdates(const std::string &pub, const std::string &priv, unsigned short int port,
+  LearnerTypedUpdates(const std::string &priv, unsigned short int port,
                       unsigned short int remote = 0)
   {
-    pub_ = pub;
-
     std::string r;
     if (remote != 0)
     {
@@ -113,40 +110,47 @@ public:
 class MuddleTypedUpdatesTests : public ::testing::Test
 {
 public:
-  using Inst                   = LNP;
-  using Insts                  = std::vector<Inst>;
-  using MuddleLearnerNetworker = LN;
+  using Inst = struct
+  {
+    std::shared_ptr<LearnerTypedUpdates> instance;
+    unsigned short int                   port;
+    LN::Address                          pub;
+  };
 
-  std::shared_ptr<LearnerTypedUpdates> server;
-  std::shared_ptr<LearnerTypedUpdates> client;
-  unsigned short int                   server_port = 1766;
-  unsigned short int                   client_port = 1767;
+  using Insts = std::vector<Inst>;
+
+  const unsigned int PEERS = 3;
+
+  Insts instances;
 
   void SetUp() override
   {
     srand(static_cast<unsigned int>(time(nullptr)));
-    server_port = static_cast<unsigned short int>(rand() % 10000 + 10000);
-    client_port = static_cast<unsigned short int>(server_port + 1);
+    auto base_port = static_cast<unsigned short int>(rand() % 10000 + 10000);
 
-    server = std::make_shared<LearnerTypedUpdates>(SERVER_PUB, SERVER_PRIV, server_port, 0);
-    client =
-        std::make_shared<LearnerTypedUpdates>(CLIENT_PUB, CLIENT_PRIV, client_port, server_port);
+    for (unsigned int i = 0; i < PEERS; i++)
+    {
+      Inst inst;
+      inst.port     = static_cast<unsigned short int>(base_port + i);
+      inst.instance = std::make_shared<LearnerTypedUpdates>("", inst.port, (i > 0) ? base_port : 0);
+      inst.pub      = inst.instance->actual->GetAddress();
+      instances.push_back(inst);
+    }
   }
 };
 
 TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
 {
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
-  server->actual->addTarget(client->pub_);
 
-  server->PretendToLearn();
+  instances[0].instance->PretendToLearn();
 
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
-  EXPECT_GT(client->actual->GetUpdateCount(), 0);
+  EXPECT_GT(instances[1].instance->actual->GetUpdateCount(), 0);
 
   try
   {
-    client->actual->GetUpdate("algo0", "vocab");
+    instances[1].instance->actual->GetUpdate("algo0", "vocab");
   }
   catch (std::exception const &e)
   {
@@ -155,7 +159,7 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
 
   try
   {
-    client->actual->GetUpdate("algo0", "weights");
+    instances[1].instance->actual->GetUpdate("algo0", "weights");
     EXPECT_EQ("weights", "should not be present");
   }
   catch (std::exception const &e)
@@ -165,7 +169,7 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
 
   try
   {
-    auto upd = client->actual->GetUpdate("algo0", "vocab");
+    auto upd = instances[1].instance->actual->GetUpdate("algo0", "vocab");
     EXPECT_EQ("vocab", "should not be present (already emptied)");
   }
   catch (std::exception const &e)

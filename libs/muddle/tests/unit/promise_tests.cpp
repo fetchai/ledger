@@ -32,12 +32,6 @@ protected:
   using PeerConnectionList    = fetch::muddle::PeerConnectionList;
   using PeerConnectionListPtr = std::unique_ptr<PeerConnectionList>;
 
-  void SetUp() override
-  {
-    //    router_ = std::make_unique<Router>();
-    //    peer_list_ = std::make_unique<PeerConnectionList>();
-  }
-
   RouterPtr             router_;
   PeerConnectionListPtr peer_list_;
 };

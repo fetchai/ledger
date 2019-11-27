@@ -38,6 +38,8 @@ using fetch::service::Promise;
 using PromiseList = std::vector<Promise>;
 using SignerPtr   = std::shared_ptr<crypto::ECDSASigner>;
 
+const unsigned int INITIAL_PEERS_COUNT = 10;
+
 deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworkerProtocol::
     deprecated_MuddleLearnerNetworkerProtocol(deprecated_MuddleLearnerNetworker &sample)
 {
@@ -75,9 +77,28 @@ deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworker(
   mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
 
   std::unordered_set<std::string> initial_peers;
-  if (instance_number > 0)
+  auto                            config_peers = doc.root()["peers"];
+
+  auto config_peer_count = config_peers.size();
+  for (std::size_t peer_number = 0; peer_number < config_peer_count; peer_number++)
+  {
+    if (peer_number != instance_number)
+    {
+      peers_.emplace_back(config_peers[peer_number]["pub"].As<std::string>());
+    }
+  }
+
+  if (config_peer_count <= INITIAL_PEERS_COUNT)
   {
     initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
+  }
+  else
+  {
+    for (unsigned int i = 0; i < INITIAL_PEERS_COUNT; i++)
+    {
+      auto peer_number = (instance_number + 1 + i) % config_peer_count;
+      initial_peers.insert(config_peers[peer_number]["uri"].As<std::string>());
+    }
   }
 
   mud_->Start(initial_peers, {port});
@@ -86,16 +107,6 @@ deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworker(
   proto_  = std::make_shared<deprecated_MuddleLearnerNetworkerProtocol>(*this);
 
   server_->Add(RPC_DMLF, proto_.get());
-
-  auto config_peers = doc.root()["peers"];
-
-  for (std::size_t peer_number = 0; peer_number < config_peers.size(); peer_number++)
-  {
-    if (peer_number != instance_number)
-    {
-      peers_.emplace_back(config_peers[peer_number]["pub"].As<std::string>());
-    }
-  }
 }
 
 // TOFIX remove return value
