@@ -416,6 +416,11 @@ Module::Module()
       [](VM *vm, TypeId) -> Ptr<Fixed128> {
         return Ptr<Fixed128>{new Fixed128(vm, fixed_point::fp128_t::_0)};
       });
+
+  // GetClassInterface<UInt256Wrapper>().CreateSerializeDefaultConstructor(
+  //     [](VM *vm, TypeId) -> Ptr<UInt256Wrapper> {
+  //       return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, 0)};
+  //     });
 }
 
 }  // namespace vm
