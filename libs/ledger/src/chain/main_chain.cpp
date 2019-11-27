@@ -104,7 +104,7 @@ MainChain::MainChain(bool const enable_bloom_filter, Mode mode)
   AddTip(genesis);
 
   // set genesis as head in file if no head
-  if (GetHeadHash().empty())
+  if (block_store_ && GetHeadHash().empty())
   {
     SetHeadHash(genesis->hash);
   }
@@ -953,8 +953,10 @@ void MainChain::WriteToFile()
   IntBlockPtr block = block_chain_.at(heaviest_.hash);
 
   // skip if the block store is not persistent
+  FETCH_LOG_INFO(LOGGING_NAME, "Enter WriteToFile on block number ", block->block_number);
   if (block_store_ && (block->block_number >= chain::FINALITY_PERIOD))
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Begin WriteToFile");
     MilliTimer myTimer("MainChain::WriteToFile", 500);
 
     // Add confirmed blocks to file, minus finality
@@ -982,7 +984,7 @@ void MainChain::WriteToFile()
     // Corner case - block is genesis
     if (block->IsGenesis())
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
+      FETCH_LOG_INFO(LOGGING_NAME, "Writing genesis. ");
 
       KeepBlock(block);
       // Genesis should already be head
@@ -1053,6 +1055,7 @@ void MainChain::TrimCache()
 
   BlockNumber const heaviest_block_num = GetHeaviestBlock()->block_number;
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Begin trim cache");
   if (CACHE_TRIM_THRESHOLD < heaviest_block_num)
   {
     BlockNumber const trim_threshold = heaviest_block_num - CACHE_TRIM_THRESHOLD;
@@ -1097,6 +1100,7 @@ void MainChain::TrimCache()
   }
 
   // Trim stutter map
+  FETCH_LOG_INFO(LOGGING_NAME, "Start stutter block removal");
   if (!stutter_blocks_.empty() && stutter_blocks_.rbegin()->first > CACHE_TRIM_THRESHOLD)
   {
     BlockNumber const stutter_threshold = stutter_blocks_.rbegin()->first - CACHE_TRIM_THRESHOLD;
