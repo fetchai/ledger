@@ -152,16 +152,6 @@ ByteArray ToByteArray(Fixed128 const &fixed_number)
                               sizeof(fixed_point::fp128_t));
 }
 
-template <typename T>
-Ptr<Array<T>> CreateNewPrimitiveArray(VM *vm, std::vector<T> &&items)
-{
-  Ptr<Array<T>> array{
-      new Array<T>(vm, vm->GetTypeId<IArray>(), vm->GetTypeId<T>(), int32_t(items.size()))};
-  array->elements = std::move(items);
-
-  return array;
-}
-
 }  // namespace
 
 void StructuredData::Bind(Module &module)
@@ -417,17 +407,12 @@ Ptr<Array<T>> StructuredData::GetArray(Ptr<String> const &s)
       {
         ret = Ptr<Array<T>>(new Array<T>(vm_, vm_->GetTypeId<IArray>(), vm_->GetTypeId<T>(),
                                          int32_t(value_array.size())));
-        // create and preallocate the vector of elements
-        // std::vector<T> elements;
-        // elements.resize(value_array.size());
 
         // copy each of the elements
         for (std::size_t i = 0; i < value_array.size(); ++i)
         {
           ret->elements[i] = value_array[i].As<T>();
         }
-
-        // ret = CreateNewPrimitiveArray(vm_, std::move(elements));
       }
     }
   }
@@ -463,17 +448,12 @@ StructuredData::IfIsSupportedRefType<T, Ptr<Array<Ptr<T>>>> StructuredData::GetO
       {
         ret = Ptr<Array<Ptr<T>>>(new Array<Ptr<T>>(
             vm_, vm_->GetTypeId<IArray>(), vm_->GetTypeId<T>(), int32_t(value_array.size())));
-        // create and preallocate the vector of elements
-        // std::vector<Ptr<T>> elements;
-        // elements.resize(value_array.size());
 
         // copy each of the elements
         for (std::size_t i = 0; i < value_array.size(); ++i)
         {
           ret->elements[i] = FromByteArray<T>(vm_, s, value_array[i].As<ConstByteArray>());
         }
-
-        // ret = CreateNewObjectArray(vm_, std::move(elements));
       }
     }
   }
