@@ -16,24 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-core/tasks/OefLoginTimeoutTask.hpp"
+#include "dmlf/deprecated/simple_cycling_algorithm.hpp"
 
-#include <iostream>
-#include <string>
+namespace fetch {
+namespace dmlf {
 
-#include "oef-core/comms/OefAgentEndpoint.hpp"
-
-fetch::oef::base::ExitState OefLoginTimeoutTask::run()
+std::vector<std::size_t> SimpleCyclingAlgorithm::GetNextOutputs()
 {
-  auto sp = ep.lock();
-  if (sp)
+  std::vector<std::size_t> result(number_of_outputs_per_cycle_);
+  for (std::size_t i = 0; i < number_of_outputs_per_cycle_; i++)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "id=", sp->GetIdentifier(), " TIMEOUT");
-    if (!sp->GetState("loggedin"))
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "TIMEOUT");
-      sp->close("login-timeout");
-    }
+    result[i] = next_output_index_;
+    next_output_index_ += 1;
+    next_output_index_ %= GetCount();
   }
-  return fetch::oef::base::COMPLETE;
+  return result;
 }
+
+SimpleCyclingAlgorithm::SimpleCyclingAlgorithm(std::size_t count,
+                                               std::size_t number_of_outputs_per_cycle)
+  : ShuffleAlgorithmInterface(count)
+{
+  next_output_index_           = 0;
+  number_of_outputs_per_cycle_ = std::min(number_of_outputs_per_cycle, GetCount());
+}
+
+}  // namespace dmlf
+}  // namespace fetch

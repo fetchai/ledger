@@ -62,7 +62,7 @@ public:
     , module_{fetch::vm_modules::VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
   {}
 
-  bool Compile(char const *text)
+  bool Compile(std::string const &text)
   {
     std::vector<std::string> errors{};
 
@@ -96,6 +96,12 @@ public:
   bool Run(Variant *    output       = nullptr,
            ChargeAmount charge_limit = std::numeric_limits<ChargeAmount>::max())
   {
+    return RunWithParams(output, charge_limit);
+  }
+
+  template <typename... Ts>
+  bool RunWithParams(Variant *output, ChargeAmount charge_limit, Ts &&... parameters)
+  {
     vm_->SetChargeLimit(charge_limit);
     std::string error{};
 
@@ -105,7 +111,7 @@ public:
       output = &dummy_output;
     }
 
-    if (!vm_->Execute(*executable_, "main", error, *output))
+    if (!vm_->Execute(*executable_, "main", error, *output, std::forward<Ts...>(parameters)...))
     {
       *stdout_ << "Runtime Error: " << error << std::endl;
 
@@ -119,7 +125,7 @@ public:
   {
     for (auto const &line : errors)
     {
-      *stdout_ << "Compiler Error: " << line << '\n';
+      *stdout_ << "Compiler Error: " << line << std::endl;
     }
     *stdout_ << std::endl;
   }
@@ -136,9 +142,19 @@ public:
     return *module_;
   }
 
+  VM &vm() const
+  {
+    return *vm_;
+  }
+
   MockIoObserver &observer() const
   {
     return *observer_;
+  }
+
+  void setStdout(std::ostream &ostream)
+  {
+    stdout_ = &ostream;
   }
 
 private:
