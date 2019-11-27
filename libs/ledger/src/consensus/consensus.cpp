@@ -496,7 +496,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
 
   // Optionally, check and do not allow block generation when we are not generate a block
   // if we are aware there is entropy ahead (node is catching up)
-  if(beacon_->AreCatchingUpToEntropy(block_number))
+  if (beacon_->AreCatchingUpToEntropy(block_number))
   {
     return {};
   }

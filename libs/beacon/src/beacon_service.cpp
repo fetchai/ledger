@@ -208,12 +208,12 @@ bool BeaconService::AreCatchingUpToEntropy(uint64_t block_number)
 {
   FETCH_LOCK(mutex_);
 
-  if(completed_block_entropy_.empty())
+  if (completed_block_entropy_.empty())
   {
     return false;
   }
 
-  auto &last_entropy_ptr = (completed_block_entropy_.end()--)->second;
+  auto &         last_entropy_ptr    = (completed_block_entropy_.end()--)->second;
   uint64_t const most_recent_entropy = last_entropy_ptr->block_number;
 
   return most_recent_entropy > block_number + entropy_lead_blocks_;
