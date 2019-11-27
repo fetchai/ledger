@@ -24,6 +24,7 @@
 #include "crypto/ecdsa.hpp"
 #include "dmlf/colearn/muddle_learner_networker_impl.hpp"
 #include "dmlf/colearn/update_store.hpp"
+#include "dmlf/collective_learning/utilities/typed_update_adaptor.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -39,19 +40,21 @@ namespace {
 using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 
-using LNBase  = fetch::dmlf::AbstractLearnerNetworker;
-using LN      = fetch::dmlf::colearn::MuddleLearnerNetworkerImpl;
-using LNBaseP = std::shared_ptr<LNBase>;
-using LNP     = std::shared_ptr<LN>;
-using NetMan  = fetch::network::NetworkManager;
-using NetManP = std::shared_ptr<NetMan>;
+using LNBase   = fetch::dmlf::colearn::AbstractMessageController;
+using LNBaseT  = fetch::dmlf::collective_learning::utilities::TypedUpdateAdaptor;
+using LN       = fetch::dmlf::colearn::MuddleLearnerNetworkerImpl;
+using LNBaseP  = std::shared_ptr<LNBase>;
+using LNBaseTP = std::shared_ptr<LNBaseT>;
+using LNP      = std::shared_ptr<LN>;
+using NetMan   = fetch::network::NetworkManager;
+using NetManP  = std::shared_ptr<NetMan>;
 
 using MuddlePtr      = fetch::muddle::MuddlePtr;
 using CertificatePtr = fetch::muddle::ProverPtr;
 using Store          = fetch::dmlf::colearn::UpdateStore;
 using StorePtr       = std::shared_ptr<Store>;
 
-using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
+using UpdateTypeForTesting = fetch::dmlf::deprecated_Update<TensorType>;
 using UpdatePayload        = UpdateTypeForTesting::Payload;
 
 // char const *SERVER_PRIV = "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
@@ -68,6 +71,7 @@ class LearnerTypedUpdates
 public:
   LNP       actual;
   LNBaseP   interface;
+  LNBaseTP  interface_typed;
   NetManP   netm_;
   MuddlePtr mud_;
   StorePtr  store_;
@@ -82,10 +86,11 @@ public:
       r += std::to_string(remote);
     }
 
-    actual    = std::make_shared<LN>(priv, port, r);
-    interface = actual;
-    interface->RegisterUpdateType<UpdateTypeForTesting>("update");
-    interface->RegisterUpdateType<fetch::dmlf::Update<std::string>>("vocab");
+    actual          = std::make_shared<LN>(priv, port, r);
+    interface       = actual;
+    interface_typed = std::make_shared<LNBaseT>(interface);
+    interface_typed->RegisterUpdateType<UpdateTypeForTesting>("update");
+    interface_typed->RegisterUpdateType<fetch::dmlf::deprecated_Update<std::string>>("vocab");
   }
 
   void PretendToLearn()
@@ -96,9 +101,9 @@ public:
     t.Fill(DataType(sequence_number++));
     auto r = std::vector<TensorType>();
     r.push_back(t);
-    interface->PushUpdateType("update", std::make_shared<UpdateTypeForTesting>(r));
-    interface->PushUpdateType("vocab", std::make_shared<fetch::dmlf::Update<std::string>>(
-                                           std::vector<std::string>{"cat", "dog"}));
+    interface_typed->PushUpdate(std::make_shared<UpdateTypeForTesting>(r));
+    interface_typed->PushUpdate(std::make_shared<fetch::dmlf::deprecated_Update<std::string>>(
+        std::vector<std::string>{"cat", "dog"}));
   }
 };
 
@@ -147,7 +152,7 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
 
   try
   {
-    instances[1].instance->actual->GetUpdate("algo1", "vocab");
+    instances[1].instance->actual->GetUpdate("algo0", "vocab");
   }
   catch (std::exception const &e)
   {
@@ -156,7 +161,7 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
 
   try
   {
-    instances[1].instance->actual->GetUpdate("algo1", "weights");
+    instances[1].instance->actual->GetUpdate("algo0", "weights");
     EXPECT_EQ("weights", "should not be present");
   }
   catch (std::exception const &e)
@@ -166,7 +171,7 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
 
   try
   {
-    auto upd = instances[1].instance->actual->GetUpdate("algo1", "vocab");
+    auto upd = instances[1].instance->actual->GetUpdate("algo0", "vocab");
     EXPECT_EQ("vocab", "should not be present (already emptied)");
   }
   catch (std::exception const &e)

@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,27 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "moment/clock_interfaces.hpp"
+#include "dmlf/deprecated/simple_cycling_algorithm.hpp"
 
 namespace fetch {
-namespace moment {
+namespace dmlf {
 
-enum class ClockType
+std::vector<std::size_t> SimpleCyclingAlgorithm::GetNextOutputs()
 {
-  SYSTEM,
-};
+  std::vector<std::size_t> result(number_of_outputs_per_cycle_);
+  for (std::size_t i = 0; i < number_of_outputs_per_cycle_; i++)
+  {
+    result[i] = next_output_index_;
+    next_output_index_ += 1;
+    next_output_index_ %= GetCount();
+  }
+  return result;
+}
 
-enum class TimeAccuracy
+SimpleCyclingAlgorithm::SimpleCyclingAlgorithm(std::size_t count,
+                                               std::size_t number_of_outputs_per_cycle)
+  : ShuffleAlgorithmInterface(count)
 {
-  SECONDS,
-  MILLISECONDS,
-};
+  next_output_index_           = 0;
+  number_of_outputs_per_cycle_ = std::min(number_of_outputs_per_cycle, GetCount());
+}
 
-ClockPtr           GetClock(char const *name, ClockType default_type = ClockType::SYSTEM);
-AdjustableClockPtr CreateAdjustableClock(char const *name, ClockType type = ClockType::SYSTEM);
-
-// Convenience function to provide the time as a uint64
-uint64_t GetTime(moment::ClockPtr const &clock, TimeAccuracy accuracy = TimeAccuracy::SECONDS);
-
-}  // namespace moment
+}  // namespace dmlf
 }  // namespace fetch

@@ -19,11 +19,12 @@
 
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
+#include "dmlf/colearn/abstract_message_controller.hpp"
 #include "dmlf/colearn/colearn_protocol.hpp"
 #include "dmlf/colearn/random_double.hpp"
 #include "dmlf/colearn/update_store.hpp"
-#include "dmlf/networkers/abstract_learner_networker.hpp"
-#include "dmlf/update_interface.hpp"
+#include "dmlf/deprecated/abstract_learner_networker.hpp"
+#include "dmlf/deprecated/update_interface.hpp"
 #include "logging/logging.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -36,36 +37,40 @@ namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-class MuddleLearnerNetworkerImpl : public dmlf::AbstractLearnerNetworker
+class MuddleLearnerNetworkerImpl : public AbstractMessageController
 {
 public:
-  using Taskpool           = oef::base::Taskpool;
-  using Threadpool         = oef::base::Threadpool;
-  using TaskP              = Taskpool::TaskP;
-  using MuddlePtr          = muddle::MuddlePtr;
-  using UpdateInterfacePtr = dmlf::UpdateInterfacePtr;
-  using RpcClient          = fetch::muddle::rpc::Client;
-  using RpcClientPtr       = std::shared_ptr<RpcClient>;
-  using Proto              = ColearnProtocol;
-  using ProtoP             = std::shared_ptr<ColearnProtocol>;
-  using RpcServer          = fetch::muddle::rpc::Server;
-  using RpcServerPtr       = std::shared_ptr<RpcServer>;
-  using Bytes              = byte_array::ByteArray;
-  using Store              = UpdateStore;
-  using StorePtr           = std::shared_ptr<Store>;
-  using NetMan             = fetch::network::NetworkManager;
-  using NetManP            = std::shared_ptr<NetMan>;
-  using Signer             = fetch::crypto::ECDSASigner;
-  using Randomiser         = RandomDouble;
-  using SignerPtr          = std::shared_ptr<Signer>;
-  using Payload            = fetch::muddle::Packet::Payload;
-  using Address            = fetch::muddle::Address;
-  using Uri                = fetch::network::Uri;
-  using SubscriptionPtr    = fetch::muddle::MuddleEndpoint::SubscriptionPtr;
-  using Peers              = std::unordered_set<Address>;
+  using Taskpool                      = oef::base::Taskpool;
+  using Threadpool                    = oef::base::Threadpool;
+  using TaskP                         = Taskpool::TaskP;
+  using MuddlePtr                     = muddle::MuddlePtr;
+  using deprecated_UpdateInterfacePtr = dmlf::deprecated_UpdateInterfacePtr;
+  using RpcClient                     = fetch::muddle::rpc::Client;
+  using RpcClientPtr                  = std::shared_ptr<RpcClient>;
+  using Proto                         = ColearnProtocol;
+  using ProtoP                        = std::shared_ptr<ColearnProtocol>;
+  using RpcServer                     = fetch::muddle::rpc::Server;
+  using RpcServerPtr                  = std::shared_ptr<RpcServer>;
+  using Bytes                         = byte_array::ByteArray;
+  using Store                         = UpdateStore;
+  using StorePtr                      = std::shared_ptr<Store>;
+  using NetMan                        = fetch::network::NetworkManager;
+  using NetManP                       = std::shared_ptr<NetMan>;
+  using Signer                        = fetch::crypto::ECDSASigner;
+  using Randomiser                    = RandomDouble;
+  using SignerPtr                     = std::shared_ptr<Signer>;
+  using Payload                       = fetch::muddle::Packet::Payload;
+  using Address                       = fetch::muddle::Address;
+  using Uri                           = fetch::network::Uri;
+  using SubscriptionPtr               = fetch::muddle::MuddleEndpoint::SubscriptionPtr;
+  using Peers                         = std::unordered_set<Address>;
   using Mutex = fetch::Mutex;
   using Lock  = std::unique_lock<Mutex>;
-  using Sources = std::set<std::string>;
+  using UpdatePtr                     = AbstractMessageController::UpdatePtr;
+  using ConstUpdatePtr                = AbstractMessageController::ConstUpdatePtr;
+  using Algorithm                     = UpdateStore::Algorithm;
+  using UpdateType                    = UpdateStore::UpdateType;
+  using Criteria                      = UpdateStoreInterface::Criteria;
 
   static constexpr char const *LOGGING_NAME = "MuddleLearnerNetworkerImpl";
 
@@ -80,25 +85,43 @@ public:
   bool                        operator==(MuddleLearnerNetworkerImpl const &other) = delete;
   bool                        operator<(MuddleLearnerNetworkerImpl const &other)  = delete;
 
-  void PushUpdate(UpdateInterfacePtr const &update) override;
-  void PushUpdateType(const std::string &type_name, UpdateInterfacePtr const &update) override;
-  void PushUpdateBytes(const std::string &type_name, Bytes const &update);
-  void PushUpdateBytes(const std::string &type_name, Bytes const &update, Peers peers);
-  UpdateStore::UpdatePtr GetUpdate(UpdateStore::Algorithm const & algo,
-                                   UpdateStore::UpdateType const &type)
+  void PushUpdate(UpdatePtr const &update, Algorithm const &algo = "algo0",
+                  UpdateType const &type = "gradients") override
   {
-    return update_store_->GetUpdate(algo, type);
+    PushUpdate(update->data(), algo, type);
   }
 
-  UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type,
-                      Criteria const &criteria) override;
+  void PushUpdate(Data const &      update, Algorithm const & /*algo = "algo0"*/,
+                  UpdateType const &type = "gradients") override
+  {
+    PushUpdateBytes(type, update);
+  }
 
-  std::size_t GetUpdateCount() const override
+  std::size_t GetUpdateCount(Algorithm const & algo = "algo0",
+                             UpdateType const &type = "gradients") const override
+  {
+    FETCH_UNUSED(algo);
+    FETCH_UNUSED(type);
+    return GetUpdateTotalCount();
+  }
+
+  std::size_t GetUpdateTotalCount() const override
   {
     return update_store_->GetUpdateCount();
   }
 
-  std::size_t GetPeerCount() const override
+  ConstUpdatePtr GetUpdate(Algorithm const & algo = "algo0",
+                           UpdateType const &type = "gradients") override
+  {
+    return update_store_->GetUpdate(algo, type);
+  }
+
+  void PushUpdateBytes(const std::string &type_name, Bytes const &update);
+  void PushUpdateBytes(const std::string &type_name, Bytes const &update, Peers peers);
+
+  ConstUpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria const &criteria);
+
+  std::size_t GetPeerCount() const
   {
     return 0;
   }
