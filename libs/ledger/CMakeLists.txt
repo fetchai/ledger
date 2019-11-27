@@ -18,8 +18,8 @@ setup_library(fetch-ledger)
 target_link_libraries(fetch-ledger
                       PUBLIC fetch-beacon
                              fetch-bloomfilter
-			     fetch-constellation
-		             fetch-core
+                             fetch-constellation
+                             fetch-core
                              fetch-crypto
                              fetch-entropy
                              fetch-http
