@@ -374,6 +374,7 @@ typename VMModel::ModelPtrType &VMModel::GetModel()
 
 bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
+  bool success = false;
 
   // can't serialise uncompiled model
   if (!compiled_)
@@ -405,9 +406,10 @@ bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
     buffer << *model_config_;
     buffer << compiled_;
     buffer << *model_;
-    return true;
+    success = true;
   }
 
+  return success;
 }
 
 bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
