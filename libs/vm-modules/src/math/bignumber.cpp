@@ -94,6 +94,11 @@ void UInt256Wrapper::Bind(Module &module)
   module.CreateFreeFunction("toInt32", &UInt256Wrapper::ToPrimitive<int32_t>);
 }
 
+UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, UInt256Wrapper::UInt256 data)
+  : Object(vm, type_id)
+  , number_(std::move(data))
+{}
+
 UInt256Wrapper::UInt256Wrapper(VM *vm, UInt256 &&data)
   : Object(vm, TypeIds::UInt256)
   , number_(std::move(data))

@@ -51,6 +51,8 @@ public:
 
   static void Bind(fetch::vm::Module &module);
 
+  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, UInt256 data);
+
   UInt256Wrapper(fetch::vm::VM *vm, UInt256 &&data);
 
   UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray const &data);
