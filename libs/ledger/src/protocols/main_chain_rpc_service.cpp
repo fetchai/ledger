@@ -187,7 +187,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
-  if (consensus_->ValidBlock(block) != ConsensusInterface::Status::YES)
+  if (ValidBlock(block))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Block did not prove valid");
     return;
@@ -239,6 +239,10 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
   return address;
 }
 
+bool MainChainRpcService::ValidBlock(Block const &block) const {
+	return !consensus_ || consensus_->ValidBlock(block) == ConsensusInterface::Status::YES;
+}
+
 void MainChainRpcService::HandleChainResponse(Address const &address, BlockList blocks)
 {
   // default expectations is that blocks are returned in reverse order, later-to-earlier
@@ -265,7 +269,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
     it->UpdateDigest();
 
     // add the block
-    if (consensus_->ValidBlock(*it) != ConsensusInterface::Status::YES)
+    if (ValidBlock(*it))
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
                       " from: muddle://", ToBase64(address));

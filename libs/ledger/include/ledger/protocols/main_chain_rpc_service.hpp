@@ -153,7 +153,12 @@ private:
   MuddleEndpoint &endpoint_;
   MainChain &     chain_;
   TrustSystem &   trust_;
+  /// @}
+
+  /// @name Block Validation
+  /// @{
   ConsensusPtr    consensus_;
+  bool ValidBlock(Block const &block) const;
   /// @}
 
   /// @name RPC Server
