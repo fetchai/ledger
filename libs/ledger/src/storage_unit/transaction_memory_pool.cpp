@@ -69,6 +69,17 @@ bool TransactionMemoryPool::Get(Digest const &tx_digest, chain::Transaction &tx)
 }
 
 /**
+ * Get the total number of transactions in this store
+ *
+ * @return The number of transactions stored
+ */
+std::size_t TransactionMemoryPool::GetCount() const
+{
+  FETCH_LOCK(lock_);
+  return transaction_store_.size();
+}
+
+/**
  * Remove a transaction from the pool
  *
  * @param tx_digest The transaction being removed

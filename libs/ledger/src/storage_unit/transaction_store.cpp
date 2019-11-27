@@ -102,5 +102,15 @@ bool TransactionStore::Get(Digest const &tx_digest, chain::Transaction &tx) cons
   return false;
 }
 
+/**
+ * Get the total number of transactions in this store
+ *
+ * @return The number of transactions stored
+ */
+std::size_t TransactionStore::GetCount() const
+{
+  return archive_.size();
+}
+
 }  // namespace ledger
 }  // namespace fetch

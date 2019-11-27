@@ -61,6 +61,13 @@ public:
    * @return
    */
   virtual bool Get(Digest const &tx_digest, chain::Transaction &tx) const = 0;
+
+  /**
+   * Get the total number of transactions in this store
+   *
+   * @return The number of transactions stored
+   */
+  virtual std::size_t GetCount() const = 0;
   /// @}
 };
 

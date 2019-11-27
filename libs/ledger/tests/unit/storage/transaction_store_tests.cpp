@@ -51,6 +51,8 @@ TEST_F(TransactionStoreTests, SimpleCheck)
 
   for (std::size_t i = 0; i < txs.size(); ++i)
   {
+    EXPECT_EQ(store_.GetCount(), i);
+
     // check to see if the previous transaction has been added to the memory pool
     for (std::size_t j = 0; j < i; ++j)
     {
@@ -65,6 +67,8 @@ TEST_F(TransactionStoreTests, SimpleCheck)
 
     // add the current transaction to the pool
     store_.Add(*txs.at(i));
+
+    EXPECT_EQ(store_.GetCount(), i + 1);
 
     // check to see if the previous transaction has been added to the memory pool
     for (std::size_t j = 0; j <= i; ++j)

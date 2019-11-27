@@ -39,11 +39,13 @@ public:
     ON_CALL(*this, Add(_)).WillByDefault(Invoke(&pool, &TransactionMemoryPool::Add));
     ON_CALL(*this, Has(_)).WillByDefault(Invoke(&pool, &TransactionMemoryPool::Has));
     ON_CALL(*this, Get(_, _)).WillByDefault(Invoke(&pool, &TransactionMemoryPool::Get));
+    ON_CALL(*this, GetCount()).WillByDefault(Invoke(&pool, &TransactionMemoryPool::GetCount));
   }
 
   MOCK_METHOD1(Add, void(Transaction const &));
   MOCK_CONST_METHOD1(Has, bool(Digest const &));
   MOCK_CONST_METHOD2(Get, bool(Digest const &, Transaction &));
+  MOCK_CONST_METHOD0(GetCount, std::size_t());
 
   fetch::ledger::TransactionMemoryPool pool;
 };
