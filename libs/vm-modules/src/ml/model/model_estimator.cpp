@@ -199,31 +199,32 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
                                  ::fetch::math::SizeType const &batch_size)
 {
   fetch::math::SizeType estimate;
-  fetch::math::SizeType dataloader_size = model_.GetModel()->dataloader_ptr_->Size();
-  fetch::math::SizeType data_size       = data->GetTensor().size();
-  fetch::math::SizeType labels_size     = labels->GetTensor().size();
+  fetch::math::SizeType subset_size =
+      data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
+  fetch::math::SizeType data_size   = data->GetTensor().size();
+  fetch::math::SizeType labels_size = labels->GetTensor().size();
 
   // Assign input data to dataloader
-  estimate = CHARGE_UNIT * data_size;
+  estimate = data_size;
   // Assign label data to dataloader
-  estimate += CHARGE_UNIT * labels_size;
+  estimate += labels_size;
   // SetRandomMode, UpdateConfig, etc.
-  estimate += CHARGE_UNIT;
+  estimate += 1;
   // PrepareBatch overhead
-  estimate += 2 * CHARGE_UNIT * dataloader_size / batch_size;
+  estimate += 2 * subset_size / batch_size;
   // PrepareBatch-input
-  estimate += CHARGE_UNIT * dataloader_size * batch_size * data_size;
+  estimate += data_size;
   // PrepareBatch-label
-  estimate += CHARGE_UNIT * dataloader_size * batch_size * labels_size;
+  estimate += labels_size;
   // SetInputReference, update stats
-  estimate += CHARGE_UNIT * (dataloader_size / batch_size);
+  estimate += subset_size / batch_size;
   // Forward and backward prob
-  estimate += CHARGE_UNIT * dataloader_size * (forward_pass_cost_ + backward_pass_cost_);
+  estimate += subset_size * (forward_pass_cost_ + backward_pass_cost_);
   // Optimiser step and clearing gradients
-  estimate += (dataloader_size / batch_size) *
-              (weights_size_sum_ * optimiser_step_impact_ + weights_size_sum_ * CHARGE_UNIT);
+  estimate +=
+      (subset_size / batch_size) * (weights_size_sum_ * optimiser_step_impact_ + weights_size_sum_);
 
-  return static_cast<ChargeAmount>(constant_charge);
+  return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
 }
 
 ChargeAmount ModelEstimator::Evaluate()
