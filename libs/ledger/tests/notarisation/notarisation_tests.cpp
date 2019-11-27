@@ -194,8 +194,7 @@ std::vector<std::shared_ptr<NotarisationNode>> TestSetup(uint32_t num_nodes    =
   for (auto &node : nodes)
   {
     node->reactor.Start();
-    node->consensus.SetCabinetSize(cabinet_size);
-    node->consensus.SetThreshold(threshold);
+    node->consensus.SetMaxCabinetSize(static_cast<uint16_t>(cabinet_size));
   }
 
   // Stake setup
