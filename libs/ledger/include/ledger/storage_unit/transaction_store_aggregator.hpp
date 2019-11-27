@@ -26,14 +26,14 @@ class TransactionStoreAggregator : public TransactionStoreInterface
 {
 public:
   TransactionStoreAggregator(TransactionStoreInterface &pool, TransactionStoreInterface &store);
-  ~TransactionStoreAggregator() = default;
+  ~TransactionStoreAggregator() override = default;
 
   /// @name Transaction Storage Interface
   /// @{
-  void        Add(chain::Transaction const &tx) override;
-  bool        Has(Digest const &tx_digest) const override;
-  bool        Get(Digest const &tx_digest, chain::Transaction &tx) const override;
-  std::size_t GetCount() const override;
+  void     Add(chain::Transaction const &tx) override;
+  bool     Has(Digest const &tx_digest) const override;
+  bool     Get(Digest const &tx_digest, chain::Transaction &tx) const override;
+  uint64_t GetCount() const override;
   /// @}
 
 private:

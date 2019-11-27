@@ -28,11 +28,19 @@
 #include <functional>
 
 namespace fetch {
+namespace core {
+
+class Reactor;
+
+}  // namespace core
+
 namespace ledger {
 
 class TransactionStorageEngine : public TransactionStorageEngineInterface
 {
 public:
+  using Callback = std::function<void(chain::Transaction const &)>;
+
   // Construction / Destruction
   explicit TransactionStorageEngine(uint32_t log2_num_lanes);
   TransactionStorageEngine(TransactionStorageEngine const &) = delete;
@@ -41,6 +49,8 @@ public:
 
   void New(std::string const &doc_file, std::string const &index_file, bool const &create = true);
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true);
+  void AttachToReactor(core::Reactor &reactor);
+  void SetNewTransactionHandler(Callback cb);
 
   /// @name Transaction Storage Engine Interface
   /// @{
@@ -54,11 +64,6 @@ public:
                           uint64_t pull_limit) override;
   /// @}
 
-  //  void SetCallback(Callback cb)
-  //  {
-  //    set_callback_ = std::move(cb);
-  //  }
-
   // Operators
   TransactionStorageEngine &operator=(TransactionStorageEngine const &) = delete;
   TransactionStorageEngine &operator=(TransactionStorageEngine &&) = delete;
@@ -71,6 +76,7 @@ private:
   TransactionStoreAggregator store_{mem_pool_, archive_};
   TransactionArchiver        archiver_{mem_pool_, archive_};
   RecentTransactionsCache    recent_tx_;
+  Callback                   new_tx_callback_;
 };
 
 }  // namespace ledger

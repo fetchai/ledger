@@ -72,7 +72,7 @@ bool TransactionStoreAggregator::Get(Digest const &tx_digest, chain::Transaction
  *
  * @return The number of transactions stored
  */
-std::size_t TransactionStoreAggregator::GetCount() const
+uint64_t TransactionStoreAggregator::GetCount() const
 {
   return pool_.GetCount() + store_.GetCount();
 }

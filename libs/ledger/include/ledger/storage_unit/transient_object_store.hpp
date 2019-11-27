@@ -47,7 +47,7 @@ namespace storage {
  * @tparam Object The type of the object being stored
  */
 template <typename Object>
-class TransientObjectStore
+class TransientObjectStore2
 {
 public:
   using Callback     = std::function<void(Object const &)>;
@@ -58,9 +58,9 @@ public:
 
   static constexpr char const *LOGGING_NAME = "TransientObjectStore";
 
-  explicit TransientObjectStore(uint32_t log2_num_lanes);
-  TransientObjectStore(TransientObjectStore const &) = delete;
-  TransientObjectStore(TransientObjectStore &&)      = delete;
+  explicit TransientObjectStore2(uint32_t log2_num_lanes);
+  TransientObjectStore2(TransientObjectStore2 const &) = delete;
+  TransientObjectStore2(TransientObjectStore2 &&)      = delete;
 
   void New(std::string const &doc_file, std::string const &index_file, bool const &create = true);
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true);
@@ -80,8 +80,8 @@ public:
   }
 
   // Operators
-  TransientObjectStore &operator=(TransientObjectStore const &) = delete;
-  TransientObjectStore &operator=(TransientObjectStore &&) = delete;
+  TransientObjectStore2 &operator=(TransientObjectStore2 const &) = delete;
+  TransientObjectStore2 &operator=(TransientObjectStore2 &&) = delete;
 
   std::size_t Size() const;
 
@@ -143,9 +143,8 @@ private:
  * @tparam O The type of the object being stored
  */
 template <typename O>
-TransientObjectStore<O>::TransientObjectStore(uint32_t log2_num_lanes)
+TransientObjectStore2<O>::TransientObjectStore2(uint32_t log2_num_lanes)
   : log2_num_lanes_(log2_num_lanes)
-  , rids_()
   , state_machine_{std::make_shared<core::StateMachine<Phase>>("TransientObjectStore",
                                                                Phase::Populating)}
   , cache_rid_removed_{telemetry::Registry::Instance().CreateCounter(
@@ -155,12 +154,12 @@ TransientObjectStore<O>::TransientObjectStore(uint32_t log2_num_lanes)
 {
   rids_.reserve(batch_size_);
 
-  state_machine_->RegisterHandler(Phase::Populating, this, &TransientObjectStore<O>::OnPopulating);
-  state_machine_->RegisterHandler(Phase::Writing, this, &TransientObjectStore<O>::OnWriting);
+  state_machine_->RegisterHandler(Phase::Populating, this, &TransientObjectStore2<O>::OnPopulating);
+  state_machine_->RegisterHandler(Phase::Writing, this, &TransientObjectStore2<O>::OnWriting);
 }
 
 template <typename O>
-std::size_t TransientObjectStore<O>::Size() const
+std::size_t TransientObjectStore2<O>::Size() const
 {
   FETCH_LOCK(cache_mutex_);
 
@@ -168,7 +167,7 @@ std::size_t TransientObjectStore<O>::Size() const
 }
 
 template <typename O>
-typename TransientObjectStore<O>::TxArray TransientObjectStore<O>::PullSubtree(
+typename TransientObjectStore2<O>::TxArray TransientObjectStore2<O>::PullSubtree(
     byte_array::ConstByteArray const &rid, uint64_t bit_count, uint64_t pull_limit)
 {
   TxArray ret{};
@@ -192,11 +191,11 @@ typename TransientObjectStore<O>::TxArray TransientObjectStore<O>::PullSubtree(
 }
 
 template <typename O>
-constexpr core::Tickets::Count TransientObjectStore<O>::recent_queue_alarm_threshold;
+constexpr core::Tickets::Count TransientObjectStore2<O>::recent_queue_alarm_threshold;
 
 // Populating: We are filling up our batch of objects from the queue that is being posted
 template <typename O>
-typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnPopulating()
+typename TransientObjectStore2<O>::Phase TransientObjectStore2<O>::OnPopulating()
 {
   for (;;)
   {
@@ -231,7 +230,7 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnPopulating()
 
 // Writing: We are extracting the items from the cache and writing them to disk
 template <typename O>
-typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
+typename TransientObjectStore2<O>::Phase TransientObjectStore2<O>::OnWriting()
 {
   // check if we need to transition from this state
   if (rids_.empty())
@@ -270,7 +269,7 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
 }
 
 template <typename O>
-core::WeakRunnable TransientObjectStore<O>::GetWeakRunnable() const
+core::WeakRunnable TransientObjectStore2<O>::GetWeakRunnable() const
 {
   return state_machine_;
 }
@@ -284,8 +283,8 @@ core::WeakRunnable TransientObjectStore<O>::GetWeakRunnable() const
  * @param create Flag to indicate if the file should be created if it doesn't exist
  */
 template <typename O>
-void TransientObjectStore<O>::New(std::string const &doc_file, std::string const &index_file,
-                                  bool const &create)
+void TransientObjectStore2<O>::New(std::string const &doc_file, std::string const &index_file,
+                                   bool const &create)
 {
   archive_.New(doc_file, index_file, create);
 }
@@ -299,8 +298,8 @@ void TransientObjectStore<O>::New(std::string const &doc_file, std::string const
  * @param create
  */
 template <typename O>
-void TransientObjectStore<O>::Load(std::string const &doc_file, std::string const &index_file,
-                                   bool const &create)
+void TransientObjectStore2<O>::Load(std::string const &doc_file, std::string const &index_file,
+                                    bool const &create)
 {
   archive_.Load(doc_file, index_file, create);
 }
@@ -314,7 +313,7 @@ void TransientObjectStore<O>::Load(std::string const &doc_file, std::string cons
  * @return true if the element was retrieved, otherwise false
  */
 template <typename O>
-bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
+bool TransientObjectStore2<O>::Get(ResourceID const &rid, O &object)
 {
   bool success = false;
 
@@ -339,7 +338,8 @@ bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
  * @return a vector of the tx summaries
  */
 template <typename O>
-typename TransientObjectStore<O>::TxLayouts TransientObjectStore<O>::GetRecent(uint32_t max_to_poll)
+typename TransientObjectStore2<O>::TxLayouts TransientObjectStore2<O>::GetRecent(
+    uint32_t max_to_poll)
 {
   static const std::chrono::milliseconds MAX_WAIT{5};
 
@@ -369,7 +369,7 @@ typename TransientObjectStore<O>::TxLayouts TransientObjectStore<O>::GetRecent(u
  * @return true if the element exists, otherwise false
  */
 template <typename O>
-bool TransientObjectStore<O>::Has(ResourceID const &rid)
+bool TransientObjectStore2<O>::Has(ResourceID const &rid)
 {
   FETCH_LOCK(cache_mutex_);
 
@@ -384,7 +384,7 @@ bool TransientObjectStore<O>::Has(ResourceID const &rid)
  * @param object The value of the element to be stored
  */
 template <typename O>
-void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool newly_seen)
+void TransientObjectStore2<O>::Set(ResourceID const &rid, O const &object, bool newly_seen)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Adding TX: ", byte_array::ToBase64(rid.id()));
 
@@ -438,7 +438,7 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
  *               is not the intended usage.
  */
 template <typename O>
-bool TransientObjectStore<O>::Confirm(ResourceID const &rid)
+bool TransientObjectStore2<O>::Confirm(ResourceID const &rid)
 {
   {
     FETCH_LOCK(cache_mutex_);
@@ -467,7 +467,7 @@ bool TransientObjectStore<O>::Confirm(ResourceID const &rid)
  * @return true if the object was found, otherwise false
  */
 template <typename O>
-bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
+bool TransientObjectStore2<O>::GetFromCache(ResourceID const &rid, O &object)
 {
   bool success = false;
 
@@ -492,7 +492,7 @@ bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
  * @param object The reference to the object to be stored
  */
 template <typename O>
-void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
+void TransientObjectStore2<O>::SetInCache(ResourceID const &rid, O const &object)
 {
   typename Cache::iterator it;
   bool                     inserted{false};
@@ -519,7 +519,7 @@ void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
  * @return
  */
 template <typename O>
-bool TransientObjectStore<O>::IsInCache(ResourceID const &rid)
+bool TransientObjectStore2<O>::IsInCache(ResourceID const &rid)
 {
   return cache_.find(rid) != cache_.end();
 }

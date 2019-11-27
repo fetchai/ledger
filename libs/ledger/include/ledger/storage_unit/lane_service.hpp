@@ -20,7 +20,9 @@
 #include "core/reactor.hpp"
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/object_store_protocol.hpp"
-#include "ledger/storage_unit/transient_object_store.hpp"
+#include "ledger/storage_unit/transaction_storage_engine.hpp"
+#include "ledger/storage_unit/transaction_storage_protocol.hpp"
+
 #include "muddle/muddle_interface.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
@@ -102,8 +104,6 @@ private:
   using ServerPtr                 = std::shared_ptr<Server>;
   using StateDb                   = storage::NewRevertibleDocumentStore;
   using StateDbProto              = storage::RevertibleDocumentStoreProtocol;
-  using TxStore                   = storage::TransientObjectStore<chain::Transaction>;
-  using TxStoreProto              = storage::ObjectStoreProtocol<chain::Transaction>;
   using BackgroundedWork          = network::BackgroundedWork<TransactionStoreSyncService>;
   using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
@@ -111,8 +111,8 @@ private:
   using LaneControllerProtocolPtr = std::shared_ptr<LaneControllerProtocol>;
   using StateDbPtr                = std::shared_ptr<StateDb>;
   using StateDbProtoPtr           = std::shared_ptr<StateDbProto>;
-  using TxStorePtr                = std::shared_ptr<TxStore>;
-  using TxStoreProtoPtr           = std::shared_ptr<TxStoreProto>;
+  using TxStorePtr                = std::shared_ptr<TransactionStorageEngine>;
+  using TxStoreProtoPtr           = std::shared_ptr<TransactionStorageProtocol>;
   using TxSyncProtoPtr            = std::shared_ptr<TransactionStoreSyncProtocol>;
   using TxSyncServicePtr          = std::shared_ptr<TransactionStoreSyncService>;
   using TxFinderProtocolPtr       = std::unique_ptr<TxFinderProtocol>;

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
+#include "core/digest.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/storage_unit/transient_object_store.hpp"
@@ -42,6 +43,8 @@
 namespace fetch {
 namespace ledger {
 
+class TransactionStorageEngineInterface;
+
 class TransactionStoreSyncProtocol : public fetch::service::Protocol
 {
 public:
@@ -53,17 +56,15 @@ public:
     PULL_SPECIFIC_OBJECTS = 4
   };
 
-  using ObjectStore = storage::TransientObjectStore<chain::Transaction>;
-
   static constexpr char const *LOGGING_NAME = "ObjectStoreSyncProtocol";
 
   // Construction / Destruction
-  TransactionStoreSyncProtocol(ObjectStore *store, int lane_id);
+  TransactionStoreSyncProtocol(TransactionStorageEngineInterface &store, uint32_t lane_id);
   TransactionStoreSyncProtocol(TransactionStoreSyncProtocol const &) = delete;
   TransactionStoreSyncProtocol(TransactionStoreSyncProtocol &&)      = delete;
   ~TransactionStoreSyncProtocol() override                           = default;
 
-  void OnNewTx(chain::Transaction const &o);
+  void OnNewTx(chain::Transaction const &tx);
   void TrimCache();
 
   // Operators
@@ -72,7 +73,7 @@ public:
 
 private:
   // Limit the amount a single rpc call will provide
-  static constexpr uint64_t PULL_LIMIT_ = 10000u;
+  static constexpr uint64_t PULL_LIMIT = 10000u;
 
   struct CachedObject
   {
@@ -89,29 +90,33 @@ private:
     Timepoint          created{Clock::now()};
   };
 
-  using Self    = TransactionStoreSyncProtocol;
   using Cache   = std::vector<CachedObject>;
   using TxArray = std::vector<chain::Transaction>;
+  using TxStore = TransactionStorageEngineInterface;
 
   uint64_t ObjectCount();
   TxArray  PullObjects(service::CallContext const &call_context);
+  TxArray  PullSubtree(byte_array::ConstByteArray const &rid, uint64_t bit_count);
+  TxArray  PullSpecificObjects(DigestSet const &digests);
 
-  TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t bit_count);
-  TxArray PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
+  telemetry::CounterPtr   CreateCounter(char const *operation) const;
+  telemetry::HistogramPtr CreateHistogram(char const *operation) const;
 
-  static telemetry::HistogramPtr CreateHistogram(char const *name, char const *description,
-                                                 int lane);
-
-  ObjectStore *store_;  ///< The pointer to the object store
+  uint32_t const lane_;
+  TxStore &      store_;  ///< The pointer to the object store
 
   Mutex cache_mutex_;  ///< The mutex protecting cache_
   Cache cache_;
 
-  int id_;
-
-  telemetry::HistogramPtr pull_objects_histogram_;
-  telemetry::HistogramPtr pull_subtree_histogram_;
-  telemetry::HistogramPtr pull_specific_histogram_;
+  // telemetry
+  telemetry::CounterPtr   object_count_total_;
+  telemetry::CounterPtr   pull_objects_total_;
+  telemetry::CounterPtr   pull_subtree_total_;
+  telemetry::CounterPtr   pull_specific_objects_total_;
+  telemetry::HistogramPtr object_count_durations_;
+  telemetry::HistogramPtr pull_objects_durations_;
+  telemetry::HistogramPtr pull_subtree_durations_;
+  telemetry::HistogramPtr pull_specific_objects_durations_;
 };
 
 }  // namespace ledger

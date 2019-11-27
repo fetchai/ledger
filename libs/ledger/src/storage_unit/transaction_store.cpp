@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/transaction_store.hpp"
 #include "chain/transaction_rpc_serializers.hpp"
+#include "ledger/storage_unit/transaction_store.hpp"
 #include "logging/logging.hpp"
 
 namespace fetch {
@@ -111,9 +111,9 @@ bool TransactionStore::Get(Digest const &tx_digest, chain::Transaction &tx) cons
  *
  * @return The number of transactions stored
  */
-std::size_t TransactionStore::GetCount() const
+uint64_t TransactionStore::GetCount() const
 {
-  return archive_.size();
+  return static_cast<uint64_t>(archive_.size());
 }
 
 /**
@@ -133,7 +133,6 @@ TxArray TransactionStore::PullSubtree(Digest const &partial_digest, uint64_t bit
 
   archive_.Flush(false);
   archive_.WithLock([this, &pull_limit, &ret, &counter, &partial_digest, bit_count]() {
-
     // This is effectively saying get all objects whose ID begins rid & mask
     auto it = archive_.GetSubtree(ResourceID(partial_digest), bit_count);
 

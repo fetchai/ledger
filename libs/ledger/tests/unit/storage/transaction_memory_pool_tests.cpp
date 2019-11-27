@@ -14,7 +14,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 //
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
@@ -28,8 +28,6 @@
 namespace {
 
 using fetch::ledger::TransactionMemoryPool;
-using fetch::chain::Transaction;
-using fetch::chain::TransactionBuilder;
 
 class TransactionMemPoolTests : public ::testing::Test
 {

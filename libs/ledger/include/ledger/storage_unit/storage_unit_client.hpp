@@ -68,7 +68,7 @@ public:
   void      AddTransaction(chain::Transaction const &tx) override;
   bool      GetTransaction(ConstByteArray const &digest, chain::Transaction &tx) override;
   bool      HasTransaction(ConstByteArray const &digest) override;
-  void      IssueCallForMissingTxs(DigestSet const &tx_set) override;
+  void      IssueCallForMissingTxs(DigestSet const &digest_set) override;
   TxLayouts PollRecentTx(uint32_t max_to_poll) override;
 
   Document GetOrCreate(ResourceAddress const &key) override;

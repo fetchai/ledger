@@ -36,6 +36,7 @@ struct ResourceKeyValuePair
   T          value;
 };
 
+#if 0
 template <typename T>
 class ObjectStoreProtocol : public fetch::service::Protocol
 {
@@ -135,6 +136,7 @@ private:
   telemetry::HistogramPtr  set_durations_;
   telemetry::HistogramPtr  get_durations_;
 };
+#endif
 
 }  // namespace storage
 

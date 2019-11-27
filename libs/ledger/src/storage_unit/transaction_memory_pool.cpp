@@ -73,10 +73,10 @@ bool TransactionMemoryPool::Get(Digest const &tx_digest, chain::Transaction &tx)
  *
  * @return The number of transactions stored
  */
-std::size_t TransactionMemoryPool::GetCount() const
+uint64_t TransactionMemoryPool::GetCount() const
 {
   FETCH_LOCK(lock_);
-  return transaction_store_.size();
+  return static_cast<uint64_t>(transaction_store_.size());
 }
 
 /**

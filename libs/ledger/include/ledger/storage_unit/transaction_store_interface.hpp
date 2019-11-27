@@ -67,7 +67,7 @@ public:
    *
    * @return The number of transactions stored
    */
-  virtual std::size_t GetCount() const = 0;
+  virtual uint64_t GetCount() const = 0;
   /// @}
 };
 

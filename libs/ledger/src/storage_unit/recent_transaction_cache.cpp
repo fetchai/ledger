@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/containers/is_in.hpp"
 #include "chain/transaction.hpp"
+#include "core/containers/is_in.hpp"
 #include "ledger/storage_unit/recent_transaction_cache.hpp"
 
 using fetch::core::IsIn;

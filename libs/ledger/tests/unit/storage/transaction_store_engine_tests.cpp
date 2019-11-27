@@ -96,4 +96,4 @@ TEST_F(TransactionStorageEngineTests, CheckTxNotInRecentCache)
   ASSERT_EQ(recent.size(), 0);
 }
 
-}
+}  // namespace

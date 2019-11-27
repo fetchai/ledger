@@ -28,8 +28,6 @@
 namespace {
 
 using fetch::ledger::TransactionStore;
-using fetch::chain::Transaction;
-using fetch::chain::TransactionBuilder;
 
 class TransactionStoreTests : public ::testing::Test
 {

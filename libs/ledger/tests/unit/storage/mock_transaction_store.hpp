@@ -45,7 +45,7 @@ public:
   MOCK_METHOD1(Add, void(Transaction const &));
   MOCK_CONST_METHOD1(Has, bool(Digest const &));
   MOCK_CONST_METHOD2(Get, bool(Digest const &, Transaction &));
-  MOCK_CONST_METHOD0(GetCount, std::size_t());
+  MOCK_CONST_METHOD0(GetCount, uint64_t());
 
   fetch::ledger::TransactionMemoryPool pool;
 };

@@ -27,7 +27,6 @@ namespace ledger {
 class TransactionStorageEngineInterface
 {
 public:
-  using Callback  = std::function<void(chain::Transaction const &)>;
   using TxArray   = std::vector<chain::Transaction>;
   using TxLayouts = std::vector<chain::TransactionLayout>;
 

@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/reactor.hpp"
 #include "ledger/storage_unit/transaction_storage_engine.hpp"
 
 namespace fetch {
@@ -60,6 +61,28 @@ void TransactionStorageEngine::Load(std::string const &doc_file, std::string con
 }
 
 /**
+ * Attach state machines to the reactor
+ *
+ * @param reactor The reactor to attach to
+ */
+void TransactionStorageEngine::AttachToReactor(core::Reactor &reactor)
+{
+  reactor.Attach(archiver_.GetStateMachine());
+}
+
+/**
+ * Set the new transaction handler
+ *
+ * @note Not thread safe, should only be called on lane service setup
+ *
+ * @param cb The callback to be set
+ */
+void TransactionStorageEngine::SetNewTransactionHandler(Callback cb)
+{
+  new_tx_callback_ = std::move(cb);
+}
+
+/**
  * Add a new transaction to the storage engine
  *
  * @param tx The transaction to be stored
@@ -74,6 +97,12 @@ void TransactionStorageEngine::Add(chain::Transaction const &tx, bool is_recent)
   if (is_recent)
   {
     recent_tx_.Add(tx);
+  }
+
+  // if there is a new tx callback then dispatch it
+  if (new_tx_callback_)
+  {
+    new_tx_callback_(tx);
   }
 }
 
