@@ -378,25 +378,25 @@ bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
   // can't serialise uncompiled model
   if (!compiled_)
   {
-    throw std::runtime_error("cannot set state with uncompiled model");
+    vm_->RuntimeError("cannot set state with uncompiled model");
   }
 
   // can't serialise without a model
   if (!model_)
   {
-    throw std::runtime_error("cannot set state with model undefined");
+    vm_->RuntimeError("cannot set state with model undefined");
   }
 
   // can't serialise without dataloader ready
   if (!model_->GetDataloader())
   {
-    throw std::runtime_error("cannot set state with dataloader not set");
+    vm_->RuntimeError("cannot set state with dataloader not set");
   }
 
   // can't serialise without optimiser ready
   if (!model_->GetOptimiser())
   {
-    throw std::runtime_error("cannot set state with optimiser not set");
+    vm_->RuntimeError("cannot set state with optimiser not set");
   }
 
   buffer << static_cast<uint8_t>(model_category_);
