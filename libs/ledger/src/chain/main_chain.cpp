@@ -1476,8 +1476,8 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash
   auto is_in_cache = LookupBlockFromCache(hash, block);
   if (is_in_cache)
   {
-    return next_hash == nullptr // either forward reference is not needed
-	    || LookupReference(hash, *next_hash);  // or forward reference is unambiguous
+    return next_hash == nullptr                   // either forward reference is not needed
+           || LookupReference(hash, *next_hash);  // or forward reference is unambiguous
   }
   // either block is not in the cache, or forward reference cannot be resolved unambiguously
   auto is_in_storage = LookupBlockFromStorage(hash, block, next_hash);

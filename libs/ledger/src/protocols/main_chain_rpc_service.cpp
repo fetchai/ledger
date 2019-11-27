@@ -322,11 +322,10 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   if (!peer.empty())
   {
     current_peer_address_ = peer;
-    Digest   start = chain_.GetHeaviestBlockHash();
+    Digest start          = chain_.GetHeaviestBlockHash();
 
-    current_request_ =
-        rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
-                                        MainChainProtocol::TIME_TRAVEL, start);
+    current_request_ = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
+                                                       MainChainProtocol::TIME_TRAVEL, start);
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
@@ -362,34 +361,34 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
         // we should receive at least one extra block in addition to what we already have
         if (!blocks.empty())
         {
-		auto heaviest_block_ = chain_.GetHeaviestBlock();
-		assert(heaviest_block_);
+          auto heaviest_block_ = chain_.GetHeaviestBlock();
+          assert(heaviest_block_);
 
-		// check if the first block received is actually next to heaviest_block_
-		auto &earliest_block = blocks.front();
-		if (earliest_block.previous_hash != heaviest_block_->hash)
-		{
-			FETCH_LOG_WARN(LOGGING_NAME, "The earliest block received (0x",
-				       earliest_block.hash.ToHex(), ", #", earliest_block.block_number,
-				       ") is not next to the current heaviest block (0x",
-				       heaviest_block_->hash.ToHex(), ", #", heaviest_block_->block_number, ')');
-		}
-		else
-		{
-			HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
-			auto const &latest_hash = blocks.back().hash;
-			assert(!latest_hash.empty()); // should be set by HandleChainResponse()
-			// TODO(unknown): this is to be improved later
-			if (latest_hash == response.heaviest_hash)
-			{
-				next_state = State::SYNCHRONISING;
-			}
-		}
-	}
+          // check if the first block received is actually next to heaviest_block_
+          auto &earliest_block = blocks.front();
+          if (earliest_block.previous_hash != heaviest_block_->hash)
+          {
+            FETCH_LOG_WARN(
+                LOGGING_NAME, "The earliest block received (0x", earliest_block.hash.ToHex(), ", #",
+                earliest_block.block_number, ") is not next to the current heaviest block (0x",
+                heaviest_block_->hash.ToHex(), ", #", heaviest_block_->block_number, ')');
+          }
+          else
+          {
+            HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
+            auto const &latest_hash = blocks.back().hash;
+            assert(!latest_hash.empty());  // should be set by HandleChainResponse()
+            // TODO(unknown): this is to be improved later
+            if (latest_hash == response.heaviest_hash)
+            {
+              next_state = State::SYNCHRONISING;
+            }
+          }
+        }
       }
 
       // clear the state
-      current_peer_address_  = Address{};
+      current_peer_address_ = Address{};
     }
   }
 
