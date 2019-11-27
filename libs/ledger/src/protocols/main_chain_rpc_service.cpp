@@ -34,7 +34,6 @@
 #include <cstdint>
 #include <stdexcept>
 
-static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
 static const uint64_t MAX_SUB_CHAIN_SIZE     = 1000;
 
 namespace fetch {
