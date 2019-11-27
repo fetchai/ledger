@@ -992,7 +992,7 @@ void MainChain::WriteToFile()
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Writing block. ", block->block_number);
+      FETCH_LOG_INFO(LOGGING_NAME, "Writing block. ", block->block_number);
 
       // Recover the current head block from the file
       IntBlockPtr current_file_head = std::make_shared<Block>();
@@ -1001,6 +1001,8 @@ void MainChain::WriteToFile()
       BlockHash head_hash = GetHeadHash();
       assert(!head_hash.empty());
       LoadBlock(head_hash, *current_file_head);
+      FETCH_LOG_INFO(LOGGING_NAME, "Current file head block number ",
+                     current_file_head->block_number);
 
       // Now keep adding the block and its prev to the file until we are certain the file contains
       // an unbroken chain. Assuming that the current_file_head is unbroken we can write until we
@@ -1018,11 +1020,16 @@ void MainChain::WriteToFile()
         // Successful case
         if (current_file_head->hash == block->previous_hash)
         {
+          FETCH_LOG_INFO(LOGGING_NAME, "WriteToFile walk back success!");
           break;
         }
 
         // Continue to push previous into file
         LookupBlock(block->previous_hash, block);
+        if (block->block_number == 0)
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "Block number zero reached in WriteToFile");
+        }
       }
 
       // Success - we kept a copy of the new head to write
