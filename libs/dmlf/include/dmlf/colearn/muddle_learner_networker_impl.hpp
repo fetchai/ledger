@@ -40,30 +40,30 @@ namespace colearn {
 class MuddleLearnerNetworkerImpl : public AbstractMessageController
 {
 public:
-  using Taskpool           = oef::base::Taskpool;
-  using Threadpool         = oef::base::Threadpool;
-  using TaskP              = Taskpool::TaskP;
-  using MuddlePtr          = muddle::MuddlePtr;
+  using Taskpool                      = oef::base::Taskpool;
+  using Threadpool                    = oef::base::Threadpool;
+  using TaskP                         = Taskpool::TaskP;
+  using MuddlePtr                     = muddle::MuddlePtr;
   using deprecated_UpdateInterfacePtr = dmlf::deprecated_UpdateInterfacePtr;
-  using RpcClient          = fetch::muddle::rpc::Client;
-  using RpcClientPtr       = std::shared_ptr<RpcClient>;
-  using Proto              = ColearnProtocol;
-  using ProtoP             = std::shared_ptr<ColearnProtocol>;
-  using RpcServer          = fetch::muddle::rpc::Server;
-  using RpcServerPtr       = std::shared_ptr<RpcServer>;
-  using Bytes              = byte_array::ByteArray;
-  using Store              = UpdateStore;
-  using StorePtr           = std::shared_ptr<Store>;
-  using NetMan             = fetch::network::NetworkManager;
-  using NetManP            = std::shared_ptr<NetMan>;
-  using Signer             = fetch::crypto::ECDSASigner;
-  using Randomiser         = RandomDouble;
-  using SignerPtr          = std::shared_ptr<Signer>;
-  using Payload            = fetch::muddle::Packet::Payload;
-  using Address            = fetch::muddle::Address;
-  using Uri                = fetch::network::Uri;
-  using SubscriptionPtr    = fetch::muddle::MuddleEndpoint::SubscriptionPtr;
-  using Peers              = std::unordered_set<Address>;
+  using RpcClient                     = fetch::muddle::rpc::Client;
+  using RpcClientPtr                  = std::shared_ptr<RpcClient>;
+  using Proto                         = ColearnProtocol;
+  using ProtoP                        = std::shared_ptr<ColearnProtocol>;
+  using RpcServer                     = fetch::muddle::rpc::Server;
+  using RpcServerPtr                  = std::shared_ptr<RpcServer>;
+  using Bytes                         = byte_array::ByteArray;
+  using Store                         = UpdateStore;
+  using StorePtr                      = std::shared_ptr<Store>;
+  using NetMan                        = fetch::network::NetworkManager;
+  using NetManP                       = std::shared_ptr<NetMan>;
+  using Signer                        = fetch::crypto::ECDSASigner;
+  using Randomiser                    = RandomDouble;
+  using SignerPtr                     = std::shared_ptr<Signer>;
+  using Payload                       = fetch::muddle::Packet::Payload;
+  using Address                       = fetch::muddle::Address;
+  using Uri                           = fetch::network::Uri;
+  using SubscriptionPtr               = fetch::muddle::MuddleEndpoint::SubscriptionPtr;
+  using Peers                         = std::unordered_set<Address>;
   using Data                          = AbstractMessageController::Bytes;
   using UpdatePtr                     = AbstractMessageController::UpdatePtr;
   using ConstUpdatePtr                = AbstractMessageController::ConstUpdatePtr;
@@ -114,7 +114,7 @@ public:
   {
     return update_store_->GetUpdate(algo, type);
   }
-  
+
   void PushUpdateBytes(const std::string &type_name, Bytes const &update);
   void PushUpdateBytes(const std::string &type_name, Bytes const &update, Peers peers);
 
