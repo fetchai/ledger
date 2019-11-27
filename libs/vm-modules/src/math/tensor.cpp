@@ -67,10 +67,15 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("at", &VMTensor::At<Index, Index>)
       .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>)
       .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index>)
+      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index, Index>)
+      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index, Index, Index>)
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, DataType>)
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, DataType>)
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, DataType>)
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>)
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, Index, DataType>)
+      .CreateMemberFunction("setAt",
+                            &VMTensor::SetAt<Index, Index, Index, Index, Index, Index, DataType>)
       .CreateMemberFunction("fill", &VMTensor::Fill)
       .CreateMemberFunction("fillRandom", &VMTensor::FillRandom)
       .CreateMemberFunction("reshape", &VMTensor::Reshape)
@@ -105,10 +110,10 @@ VMTensor::DataType VMTensor::At(Indices... indices) const
   return tensor_.At(indices...);
 }
 
-template <typename... Indices>
-void VMTensor::SetAt(Indices... indices, const DataType &value)
+template <typename... Args>
+void VMTensor::SetAt(Args... args)
 {
-  tensor_.At(indices...) = value;
+  tensor_.Set(args...);
 }
 
 void VMTensor::Copy(ArrayType const &other)
