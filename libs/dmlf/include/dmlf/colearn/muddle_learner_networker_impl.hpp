@@ -40,7 +40,7 @@ namespace colearn {
 class MuddleLearnerNetworkerImpl : public AbstractMessageController
 {
 public:
-  using Taskpool                      = oef::base::Taskpool;
+  using Taskpool = oef::base::Taskpool;
 
   using Address                       = fetch::muddle::Address;
   using AlgorithmClass                = AbstractMessageController::AlgorithmClass;
@@ -94,7 +94,7 @@ public:
     PushUpdate(update->data(), algorithm, upd_class);
   }
 
-  void PushUpdate(Bytes const &update, AlgorithmClass const &/*algorithm*/,
+  void PushUpdate(Bytes const &      update, AlgorithmClass const & /*algorithm*/,
                   UpdateClass const &upd_class) override
   {
     PushUpdateBytes(upd_class, update);

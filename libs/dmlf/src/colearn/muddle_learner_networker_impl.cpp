@@ -153,9 +153,8 @@ void MuddleLearnerNetworkerImpl::submit(TaskP const &t)
   taskpool_->submit(t);
 }
 
-
-void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name,
-                                                 Bytes const &update, const Peers &peers)
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update,
+                                                 const Peers &peers)
 {
   auto random_factor = randomiser_.GetNew();
   for (auto const &peer : peers)
@@ -176,7 +175,6 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, By
 
   mud_->GetEndpoint().Broadcast(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST, buf.data());
 }
-
 
 MuddleLearnerNetworkerImpl::ConstUpdatePtr MuddleLearnerNetworkerImpl::GetUpdate(
     AlgorithmClass const &algo, UpdateType const &type, Criteria const &criteria)
