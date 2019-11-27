@@ -157,8 +157,11 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjectCou
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjectCounts()
 {
-  auto counts = pending_object_count_.Resolve();
-  for (auto &result : pending_object_count_.Get(MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE))
+  auto const counts    = pending_object_count_.Resolve();
+  auto const completed = pending_object_count_.Get(MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE);
+  pending_object_count_.DiscardFailures();
+
+  for (auto &result : completed)
   {
     max_object_count_ = std::max(max_object_count_, result.promised);
   }
