@@ -188,7 +188,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
-  if (ValidBlock(block))
+  if (!ValidBlock(block))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Block did not prove valid");
     return;
@@ -271,7 +271,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
     it->UpdateDigest();
 
     // add the block
-    if (ValidBlock(*it))
+    if (!ValidBlock(*it))
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
                       " from: muddle://", ToBase64(address));
