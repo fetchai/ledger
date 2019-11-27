@@ -116,33 +116,44 @@ void ShardManagementService::ResolveUpdates()
   auto const now = Clock::now();
 
   // loop through all the outstanding requests
-  auto it = pending_requests_.begin();
-  while (it != pending_requests_.end())
+  auto    it = pending_requests_.begin();
+  Address current_peer;
+
+  try
   {
-    if (it->second->IsSuccessful())
+    while (it != pending_requests_.end())
     {
-      FETCH_LOG_TRACE(LOGGING_NAME, "Resolved manifest from: ", it->first.ToBase64());
+      current_peer = it->first;
+      if (it->second->IsSuccessful())
+      {
+        FETCH_LOG_TRACE(LOGGING_NAME, "Resolved manifest from: ", it->first.ToBase64());
 
-      // look up the cache entry
-      auto &entry = manifest_cache_[it->first];
+        // look up the cache entry
+        auto &entry = manifest_cache_[it->first];
 
-      // update the cache entry
-      entry.manifest     = it->second->As<Manifest>();
-      entry.last_updated = now;
+        // update the cache entry
+        entry.manifest     = it->second->As<Manifest>();
+        entry.last_updated = now;
 
-      // remove the promise from the queue
-      it = pending_requests_.erase(it);
+        // remove the promise from the queue
+        it = pending_requests_.erase(it);
+      }
+      else if (it->second->IsFailed())
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to get manifest from ", it->first.ToBase64());
+        it = pending_requests_.erase(it);
+      }
+      else
+      {
+        // continue waiting for the promise to resolve
+        ++it;
+      }
     }
-    else if (it->second->IsFailed())
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to get manifest from ", it->first.ToBase64());
-      it = pending_requests_.erase(it);
-    }
-    else
-    {
-      // continue waiting for the promise to resolve
-      ++it;
-    }
+  }
+  catch (std::exception const &e)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to request manifest from peer: ", current_peer,
+                   " exception thrown: ", e.what());
   }
 }
 

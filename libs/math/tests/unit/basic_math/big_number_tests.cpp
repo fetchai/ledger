@@ -17,9 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "vectorise/uint/uint.hpp"
-
 #include "gmock/gmock.h"
+#include "vectorise/uint/uint.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -135,6 +134,67 @@ TEST(big_number_gtest, subtraction_tests)
   EXPECT_EQ(n3.ElementAt(1), 0);
   EXPECT_EQ(n3.ElementAt(2), 0);
   EXPECT_EQ(n3.ElementAt(3), 0);
+}
+
+TEST(big_number_gtest, log_tests)
+{
+  for (const auto argument :
+       {uint64_t(1), uint64_t(64), uint64_t(65536), uint64_t(std::numeric_limits<uint64_t>::max())})
+  {
+    UInt<256> n256(argument);
+
+    const auto result   = Log(n256);
+    const auto expected = std::log(argument);
+
+    EXPECT_NEAR(result, expected, std::numeric_limits<double>::epsilon());
+  }
+}
+
+TEST(big_number_gtest, to_double_tests)
+{
+  EXPECT_NEAR(ToDouble(UInt<256>(uint64_t(0))), 0., std::numeric_limits<double>::epsilon());
+
+  static constexpr double MAX_UINT256_VALUE = 1.15792089237316e+77;
+  for (auto seed : {1., 10., 100., 1000., 10000.})
+  {
+    UInt<256> number(static_cast<uint64_t>(seed));
+
+    for (size_t i = 0; i < number.ELEMENTS; ++i)
+    {
+      const double result   = ToDouble(number);
+      const double expected = seed * pow(2, i * number.ELEMENT_SIZE);
+      if (expected < MAX_UINT256_VALUE)
+      {
+        EXPECT_NEAR(result, expected, std::numeric_limits<double>::epsilon());
+      }
+      else
+      {
+        EXPECT_NE(result, expected);
+      }
+      number <<= number.ELEMENT_SIZE;
+    }
+  }
+}
+
+template <typename LongUInt>
+void TestTrimmedWideSize()
+{
+  EXPECT_EQ(0, LongUInt(uint64_t(0)).TrimmedWideSize());
+  LongUInt number(uint64_t(0x80));
+  for (size_t i = 0; i < number.ELEMENTS; i++)
+  {
+    const auto expected_trimmed_size = i / (number.ELEMENTS / number.WIDE_ELEMENTS) + 1;
+    EXPECT_EQ(expected_trimmed_size, number.TrimmedWideSize());
+    number <<= number.ELEMENT_SIZE;
+  }
+}
+
+TEST(big_number_gtest, trimmed_size_tests)
+{
+  TestTrimmedWideSize<UInt<32>>();
+  TestTrimmedWideSize<UInt<64>>();
+  TestTrimmedWideSize<UInt<128>>();
+  TestTrimmedWideSize<UInt<256>>();
 }
 
 TEST(big_number_gtest, multiplication_tests)

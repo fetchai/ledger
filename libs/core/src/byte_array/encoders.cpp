@@ -27,18 +27,19 @@
 namespace fetch {
 namespace byte_array {
 
-ConstByteArray ToBase64(ConstByteArray const &str)
+ConstByteArray ToBase64(uint8_t const *data, std::size_t data_size)
 {
-  if (str.empty())
+  assert(data != nullptr);
+
+  if (data_size == 0)
   {
     return {};
   }
 
   // After
   // https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
-  std::size_t N    = str.size();
-  auto        data = reinterpret_cast<uint8_t const *>(str.pointer());
-  std::size_t idx  = 0;
+  std::size_t N   = data_size;
+  std::size_t idx = 0;
 
   std::size_t invPadCount = N % 3;
   std::size_t size        = ((N + (3 - invPadCount)) << 2u) / 3;
