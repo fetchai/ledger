@@ -494,6 +494,13 @@ NextBlockPtr Consensus::GenerateNextBlock()
     return {};
   }
 
+  // Optionally, check and do not allow block generation when we are not generate a block
+  // if we are aware there is entropy ahead (node is catching up)
+  if(beacon_->AreCatchingUpToEntropy(block_number))
+  {
+    return {};
+  }
+
   // Note, it is important to do this here so the block when passed to ValidBlockTiming
   // is well formed
   ret->previous_hash = current_block_.hash;

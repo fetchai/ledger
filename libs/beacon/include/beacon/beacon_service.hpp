@@ -106,6 +106,8 @@ public:
   Status GenerateEntropy(uint64_t block_number, BlockEntropy &entropy) override;
   /// @}
 
+  bool AreCatchingUpToEntropy(uint64_t block_number);
+
   /// Beacon runnable
   /// @{
   std::weak_ptr<core::Runnable> GetWeakRunnable();
