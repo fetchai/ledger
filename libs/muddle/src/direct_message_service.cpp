@@ -94,11 +94,6 @@ Router::PacketPtr FormatDirect(Packet::Address const &from, NetworkId const &net
   return packet;
 }
 
-bool IsOutgoing(std::shared_ptr<network::AbstractConnection> const &conn)
-{
-  return conn->Type() == network::AbstractConnection::TYPE_OUTGOING;
-}
-
 }  // namespace
 
 DirectMessageService::DirectMessageService(Address address, Router &router, MuddleRegister &reg,
@@ -425,10 +420,16 @@ DirectMessageService::UpdateStatus DirectMessageService::UpdateReservation(Addre
       auto conn = register_.LookupConnection(handle).lock();
       if (conn)
       {
+        // determine the connection orientation
+        bool const is_outgoing = conn->Type() == network::AbstractConnection::TYPE_OUTGOING;
+
         // we have a duplicate entry. This means that the two nodes are trying to connect to each
         // other. In this case define the rule that the connection with the lowest address continues
         // the connection
-        if (ShouldReplace(address, IsOutgoing(conn)))
+        bool const should_replace =
+            ((address_ < address) && is_outgoing) || ((address_ > address) && !is_outgoing);
+
+        if (should_replace)
         {
           // cache the previous handle
           if (previous_handle != nullptr)
@@ -443,11 +444,6 @@ DirectMessageService::UpdateStatus DirectMessageService::UpdateReservation(Addre
   }
 
   return status;
-}
-
-bool DirectMessageService::ShouldReplace(Address const &other, bool is_outgoing) const
-{
-  return ((address_ < other) && is_outgoing) || ((address_ > other) && !is_outgoing);
 }
 
 }  // namespace muddle
