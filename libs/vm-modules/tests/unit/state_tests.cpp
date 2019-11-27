@@ -540,7 +540,7 @@ TEST_F(
   ASSERT_EQ(out.str(), "Bob.Bob");
 }
 
-TEST_F(StateTests, test_serialisation_of_fixed_point1)
+TEST_F(StateTests, test_serialisation_of_fixed_point32)
 {
   static char const *ser_src = R"(
     function main()
@@ -587,7 +587,7 @@ TEST_F(StateTests, test_serialisation_of_fixed_point1)
             retval->PopFrontOne().Get<fetch::fixed_point::fp32_t>());
 }
 
-TEST_F(StateTests, test_serialisation_of_fixed_point2)
+TEST_F(StateTests, test_serialisation_of_fixed_point64)
 {
   static char const *ser_src = R"(
     function main()
@@ -632,7 +632,7 @@ TEST_F(StateTests, test_serialisation_of_fixed_point2)
             retval->PopFrontOne().Get<fetch::fixed_point::fp64_t>());
 }
 
-TEST_F(StateTests, test_serialisation_of_fixed_point3)
+TEST_F(StateTests, test_serialisation_of_fixed_point128)
 {
   static char const *ser_src = R"(
     function main()
