@@ -650,6 +650,12 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
  */
 MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash) const
 {
+  if (hash.empty())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Attempted to get an empty block hash! This should not happen.");
+    return {};
+  }
+
   FETCH_LOCK(lock_);
 
   BlockPtr output_block{};
