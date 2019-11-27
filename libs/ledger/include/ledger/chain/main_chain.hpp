@@ -83,6 +83,7 @@ constexpr char const *ToString(BlockStatus status);
 
 struct BlockDbRecord;
 
+template <class B>
 struct TimeTravelogue;
 
 class MainChain
@@ -94,7 +95,7 @@ public:
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
   using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
-  using Travelogue           = TimeTravelogue;
+  using Travelogue           = TimeTravelogue<BlockPtr>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
   static constexpr uint64_t    UPPER_BOUND  = 5000ull;

@@ -82,7 +82,6 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   , rpc_client_("R:MChain", endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , state_machine_{std::make_shared<StateMachine>("MainChain", GetInitialState(mode_),
                                                   [](State state) { return ToString(state); })}
-  , left_edge_(chain_.GetHeaviestBlock())
   , recv_block_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_recv_block_total",
         "The number of received blocks from the network")}

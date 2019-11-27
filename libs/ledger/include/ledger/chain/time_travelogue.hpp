@@ -31,7 +31,7 @@ template <class B>
 struct TimeTravelogue
 {
   using Block     = B;
-  using BlockHash = typename Block::Hash;
+  using BlockHash = Digest;
   using Blocks    = std::vector<Block>;
 
   Blocks    blocks;

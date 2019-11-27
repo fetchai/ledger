@@ -65,7 +65,7 @@ private:
     return Copy(blocks);
   }
 
-  Travelogue TimeTravel(Digest start);
+  Travelogue TimeTravel(Digest start)
   {
     auto ret_val = chain_.TimeTravel(std::move(start));
     return {Copy(ret_val.blocks), ret_val.heaviest_hash};
