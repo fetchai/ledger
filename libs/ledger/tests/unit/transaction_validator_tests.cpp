@@ -133,6 +133,7 @@ void TransactionValidatorTests::SetDeed(Deed const &deed)
   token_contract_.SetDeed(signer_address_, std::make_shared<Deed>(deed));
 }
 
+// TODO(HUT): fix these.
 TEST_F(TransactionValidatorTests, CheckWealthWhileValid)
 {
   auto tx = TransactionBuilder{}

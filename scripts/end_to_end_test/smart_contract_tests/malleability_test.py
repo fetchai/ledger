@@ -36,6 +36,7 @@ def run(options):
     id2 = Entity.from_hex(id2PrivateKey)
 
     # Load 1000 tokens to id1
+    # TODO(HUT): fix this.
     api.sync(api.tokens.wealth(id1, 1000))
 
     # signed transaction that transfers 250 FET from id1 to id2. Signed with (r,s)

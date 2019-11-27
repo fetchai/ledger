@@ -73,9 +73,7 @@ constexpr uint64_t MAX_TOKENS = 0xFFFFFFFFFFFFFFFFull;
 
 TokenContract::TokenContract()
 {
-  // TODO(tfr): I think the function CreateWealth should be OnInit?
   OnTransaction("deed", this, &TokenContract::UpdateDeed);
-  OnTransaction("wealth", this, &TokenContract::CreateWealth);
   OnTransaction("transfer", this, &TokenContract::Transfer);
   OnTransaction("addStake", this, &TokenContract::AddStake);
   OnTransaction("deStake", this, &TokenContract::DeStake);
@@ -187,27 +185,6 @@ bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address 
   }
 
   return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
-}
-
-Contract::Result TokenContract::CreateWealth(chain::Transaction const &tx)
-{
-  // parse the payload as JSON
-  Variant data;
-  if (ParseAsJson(tx, data))
-  {
-    // attempt to extract the amount field
-    uint64_t amount{0};
-    if (Extract(data, AMOUNT_NAME, amount))
-    {
-      // mint new tokens
-      if (AddTokens(tx.from(), amount))
-      {
-        return {Contract::Status::OK};
-      }
-    }
-  }
-
-  return {Contract::Status::FAILED};
 }
 
 /**

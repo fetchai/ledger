@@ -46,6 +46,7 @@ def run(options):
     api = LedgerApi(options['host'], options['port'])
 
     # create wealth so that we have the funds to be able to create contracts on the network
+    # TODO(HUT): fix this
     api.sync(api.tokens.wealth(entity1, 100000))
 
     contract = Contract(CONTRACT_TEXT, entity1)

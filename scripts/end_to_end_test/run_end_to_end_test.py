@@ -590,6 +590,7 @@ def run_steps(test_yaml, test_instance):
             destake(parameters, test_instance)
         elif command == 'run_dmlf_etch_client':
             run_dmlf_etch_client(parameters, test_instance)
+        # TODO(HUT): fix this.
         elif command == "create_wealth":
             create_wealth(parameters, test_instance)
         elif command == "create_synergetic_contract":

@@ -58,6 +58,7 @@ def balance_within_range(actual, expected, fees=150):
 def setup(api):
     entity1 = Entity()
 
+    # TODO(HUT): fix this.
     api.sync(api.tokens.wealth(entity1, 100000))
 
     contract1 = Contract(TRANSFER_CONTRACT_TEXT, entity1)

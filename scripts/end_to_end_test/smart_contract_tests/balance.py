@@ -96,6 +96,8 @@ def submit_synergetic_data(api, contract, data, entity):
 def run(options):
     entity1 = Entity()
     api = LedgerApi(options['host'], options['port'])
+
+    # TODO(HUT): fix this.
     api.sync(api.tokens.wealth(entity1, 100000000))
     contract = Contract(CONTRACT_TEXT, entity1)
 
