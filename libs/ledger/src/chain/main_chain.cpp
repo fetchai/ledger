@@ -61,12 +61,8 @@ bool operator<(const Tip &lhs, const Tip &rhs)
 
 bool operator==(const Tip &lhs, const Tip &rhs)
 {
-  if ((lhs.total_weight == rhs.total_weight) && (lhs.block_number == rhs.block_number) &&
-      (lhs.weight == rhs.weight))
-  {
-    return true;
-  }
-  return false;
+  return ((lhs.total_weight == rhs.total_weight) && (lhs.block_number == rhs.block_number) &&
+          (lhs.weight == rhs.weight));
 }
 
 /**
@@ -709,30 +705,16 @@ bool MainChain::HasForwardRef(BlockHash const &block_hash) const
 {
   auto children{references_.equal_range(block_hash)};
   auto child{std::find_if(children.first, children.second, [this](auto const &ref) {
-    return block_chain_.find(ref.second) != block_chain_.end();
-  })};
-  if (child != children.second)
-  {
-    if (enable_stutter_removal_)
+    bool ret = block_chain_.find(ref.second) != block_chain_.end();
+    if (ret && enable_stutter_removal_)
     {
+      auto block = GetBlock(ref.second);
       // Check if forward reference is a stutter block
-      while (child != children.second)
-      {
-        auto block = GetBlock(child->second);
-        if (!IsStutterBlock(block->block_number, block->weight))
-        {
-          return true;
-        }
-        child = std::find_if(++child, children.second, [this](auto const &ref) {
-          return block_chain_.find(ref.second) != block_chain_.end();
-        });
-      }
-      return false;
+      ret = (ret && !IsStutterBlock(block->block_number, block->weight));
     }
-
-    return true;
-  }
-  return false;
+    return ret;
+  })};
+  return child != children.second;
 }
 
 /**
@@ -1115,12 +1097,13 @@ void MainChain::TrimCache()
   }
 
   // Trim stutter map
-  auto stutter_map_back = stutter_blocks_.rbegin();
-  if (stutter_map_back != stutter_blocks_.rend() && stutter_map_back->first > CACHE_TRIM_THRESHOLD)
+  if (!stutter_blocks_.empty() && stutter_blocks_.rbegin()->first > CACHE_TRIM_THRESHOLD)
   {
-    BlockNumber const stutter_threshold = stutter_map_back->first - CACHE_TRIM_THRESHOLD;
+    BlockNumber const stutter_threshold = stutter_blocks_.rbegin()->first - CACHE_TRIM_THRESHOLD;
     auto              stutter_map_iter  = stutter_blocks_.begin();
-    while (stutter_threshold >= stutter_map_iter->first)
+    // Anything with block number less than or equal to stutter threshold is removed
+    while (stutter_map_iter != stutter_blocks_.end() &&
+           stutter_threshold >= stutter_map_iter->first)
     {
       stutter_map_iter = stutter_blocks_.erase(stutter_map_iter);
     }
@@ -1566,10 +1549,7 @@ bool MainChain::DetermineHeaviestTip()
                                  {
                                    return a.first < b.first;
                                  }
-                                 else
-                                 {
-                                   return a.second < b.second;
-                                 }
+                                 return a.second < b.second;
                                });
 
     // update the heaviest
@@ -1604,6 +1584,10 @@ MainChain::BlockPtr MainChain::GetFirstNonStutterBlock(Block const &block)
         !stutter_blocks_[previous_block_number][previous_block->weight])
     {
       ret = GetBlock(previous_block->hash);
+      if (!ret)
+      {
+        break;
+      }
     }
     else
     {
