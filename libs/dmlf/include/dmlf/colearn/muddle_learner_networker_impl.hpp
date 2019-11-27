@@ -49,7 +49,6 @@ public:
   using Criteria                      = UpdateStoreInterface::Criteria;
   using Lock                          = std::unique_lock<Mutex>;
   using MuddlePtr                     = muddle::MuddlePtr;
-  using Mutex                         = fetch::Mutex;
   using NetMan                        = fetch::network::NetworkManager;
   using NetManP                       = std::shared_ptr<NetMan>;
   using Payload                       = fetch::muddle::Packet::Payload;
