@@ -79,7 +79,7 @@ void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
   // generates two blocks in a row
   if (current.miner_id == mining_identity_)
   {
-    mean_time_to_block *= 1.1;
+    mean_time_to_block *= 1.05;
   }
 
   auto time_to_wait_ms = static_cast<uint64_t>(GetPoissonSample(30000, mean_time_to_block));
