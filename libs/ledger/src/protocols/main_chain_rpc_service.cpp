@@ -239,8 +239,9 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
   return address;
 }
 
-bool MainChainRpcService::ValidBlock(Block const &block) const {
-	return !consensus_ || consensus_->ValidBlock(block) == ConsensusInterface::Status::YES;
+bool MainChainRpcService::ValidBlock(Block const &block) const
+{
+  return !consensus_ || consensus_->ValidBlock(block) == ConsensusInterface::Status::YES;
 }
 
 void MainChainRpcService::HandleChainResponse(Address const &address, BlockList blocks)
