@@ -93,7 +93,7 @@ void MuddleLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
   txpeers = alg_->GetNextOutputs();
   for (auto const &target_peer_index : txpeers)
   {
-    auto peer = peers_[target_peer_index];
+    auto peer = peers_.at(target_peer_index);
     auto tmp =
         client_->CallSpecificAddress(fetch::byte_array::FromBase64(byte_array::ConstByteArray(peer)),
                                     RPC_DMLF, MuddleLearnerNetworkerProtocol::RECV_BYTES, data);
@@ -191,7 +191,7 @@ void MuddleLearnerNetworker::NetworkConfigInit(fetch::json::JSONDocument &doc,
 
   math::SizeType INITIAL_PEERS_COUNT = 10;
   auto           config_peers        = doc.root()["peers"];
-  auto           config_peer_count   = config_peers.size();
+  auto           config_peer_count   = doc.root()["n_clients"].As<math::SizeType>();
   for (std::size_t peer_number = 0; peer_number < config_peer_count; peer_number++)
   {
     if (peer_number != instance_number)

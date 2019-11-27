@@ -150,6 +150,7 @@ int main(int argc, char **argv)
   std::string               text((std::istreambuf_iterator<char>(network_config_file)),
                                  std::istreambuf_iterator<char>());
   network_doc.Parse(text.c_str());
+  network_doc["n_clients"] = n_clients;  // bit of a hack!
 
   /**
    * Prepare environment
