@@ -64,11 +64,10 @@ class TransactionStorageEngineInterface;
 class TransactionStoreSyncService : public TransactionSink
 {
 public:
-  using Address   = muddle::Address;
-  using Uri       = network::Uri;
-  using Client    = muddle::rpc::Client;
-  using ClientPtr = std::shared_ptr<Client>;
-  //  using ObjectStore           = storage::TransientObjectStore<chain::Transaction>;
+  using Address               = muddle::Address;
+  using Uri                   = network::Uri;
+  using Client                = muddle::rpc::Client;
+  using ClientPtr             = std::shared_ptr<Client>;
   using FutureTimepoint       = core::FutureTimepoint;
   using RequestingObjectCount = network::RequestingQueueOf<Address, uint64_t>;
   using PromiseOfObjectCount  = network::PromiseOf<uint64_t>;
@@ -81,10 +80,9 @@ public:
   using TrimCacheCallback     = std::function<void()>;
   using State                 = tx_sync::State;
   using StateMachine          = core::StateMachine<State>;
-  //  using ObjectStorePtr        = std::shared_ptr<ObjectStore>;
-  using LaneControllerPtr   = std::shared_ptr<LaneController>;
-  using TxFinderProtocolPtr = std::shared_ptr<TxFinderProtocol>;
-  using MuddleEndpoint      = muddle::MuddleEndpoint;
+  using LaneControllerPtr     = std::shared_ptr<LaneController>;
+  using TxFinderProtocolPtr   = std::shared_ptr<TxFinderProtocol>;
+  using MuddleEndpoint        = muddle::MuddleEndpoint;
 
   static constexpr char const *LOGGING_NAME = "TransactionStoreSyncService";
   static constexpr std::size_t MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE = 128;
