@@ -1108,6 +1108,7 @@ void MainChain::TrimCache()
       stutter_map_iter = stutter_blocks_.erase(stutter_map_iter);
     }
   }
+  FETCH_LOG_INFO(LOGGING_NAME, "Finish stutter block removal");
 
   // Debug and sanity check
   auto loose_it = loose_blocks_.begin();
