@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/simulated_pow_consensus.hpp"
-#include "ledger/chain/block.hpp"
 #include "crypto/ecdsa.hpp"
+#include "ledger/chain/block.hpp"
+#include "ledger/consensus/simulated_pow_consensus.hpp"
 #include "moment/deadline_timer.hpp"
 
 #include "gtest/gtest.h"
@@ -39,20 +39,20 @@ TEST(ledger_simulated_pow_gtest, test_block_emission)
   // generate a public/private key pair for the constructor (not needed for the test)
   auto signer = std::make_shared<ECDSASigner>();
 
-  auto consensus = std::make_shared<fetch::ledger::SimulatedPowConsensus>(signer->identity(),
-                                                                      block_interval_ms);
+  auto consensus =
+      std::make_shared<fetch::ledger::SimulatedPowConsensus>(signer->identity(), block_interval_ms);
 
   std::shared_ptr<Block> block = std::make_shared<Block>();
   block->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
   std::vector<Block> all_blocks;
 
-  DeadlineTimer    timer_to_proceed_{"pow:test"};
+  DeadlineTimer timer_to_proceed_{"pow:test"};
   timer_to_proceed_.Restart(std::chrono::milliseconds{6000});
 
   // Generate around 10 blocks given our time interval
-  while(!timer_to_proceed_.HasExpired())
+  while (!timer_to_proceed_.HasExpired())
   {
-    if(block)
+    if (block)
     {
       consensus->UpdateCurrentBlock(*block);
       all_blocks.push_back(*block);
@@ -77,20 +77,20 @@ TEST(ledger_simulated_pow_gtest, test_disable_functionality)
   // generate a public/private key pair for the constructor (not needed for the test)
   auto signer = std::make_shared<ECDSASigner>();
 
-  auto consensus = std::make_shared<fetch::ledger::SimulatedPowConsensus>(signer->identity(),
-                                                                      block_interval_ms);
+  auto consensus =
+      std::make_shared<fetch::ledger::SimulatedPowConsensus>(signer->identity(), block_interval_ms);
 
   std::shared_ptr<Block> block = std::make_shared<Block>();
   block->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
   std::vector<Block> all_blocks;
 
-  DeadlineTimer    timer_to_proceed_{"pow:test"};
+  DeadlineTimer timer_to_proceed_{"pow:test"};
   timer_to_proceed_.Restart(std::chrono::milliseconds{6000});
 
   // Generate around 10 blocks given our time interval
-  while(!timer_to_proceed_.HasExpired())
+  while (!timer_to_proceed_.HasExpired())
   {
-    if(block)
+    if (block)
     {
       consensus->UpdateCurrentBlock(*block);
       all_blocks.push_back(*block);
