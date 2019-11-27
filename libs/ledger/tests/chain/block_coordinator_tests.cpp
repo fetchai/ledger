@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/beacon_service.hpp"
 #include "bloom_filter/bloom_filter.hpp"
 #include "chain/constants.hpp"
 #include "chain/transaction_layout.hpp"
@@ -26,7 +27,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chaincode/contract_context.hpp"
-#include "ledger/consensus/consensus.hpp"
+#include "ledger/consensus/simulated_pow_consensus.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "mock_block_packer.hpp"
@@ -69,7 +70,7 @@ using AddressPtr          = std::unique_ptr<fetch::chain::Address>;
 using DAGPtr              = BlockCoordinator::DAGPtr;
 using BeaconServicePtr    = std::shared_ptr<fetch::beacon::BeaconService>;
 using StakeManagerPtr     = std::shared_ptr<fetch::ledger::StakeManager>;
-using ConsensusPtr        = std::shared_ptr<fetch::ledger::Consensus>;
+using ConsensusPtr        = std::shared_ptr<fetch::ledger::SimulatedPowConsensus>;
 
 fetch::Digest GENESIS_DIGEST =
     fetch::byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
@@ -91,6 +92,9 @@ protected:
     // generate a public/private key pair
     auto signer = std::make_shared<ECDSASigner>();
 
+    consensus_ = std::make_shared<fetch::ledger::SimulatedPowConsensus>(signer->identity(),
+                                                                        block_interval_ms_);
+
     address_           = std::make_unique<fetch::chain::Address>(signer->identity());
     main_chain_        = std::make_unique<MainChain>(false, MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<StrictMock<MockStorageUnit>>();
@@ -99,7 +103,7 @@ protected:
     block_sink_        = std::make_unique<FakeBlockSink>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
-        LOG2_NUM_LANES, NUM_SLICES, ConsensusPtr{}, nullptr);
+        LOG2_NUM_LANES, NUM_SLICES, consensus_, nullptr);
 
     // TODO(HUT): look at this.
     /* block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});*/
@@ -150,7 +154,13 @@ protected:
     // run one step of the state machine
     block_coordinator_->GetRunnable().Execute();
 
-    ASSERT_EQ(final_state, state_machine.state());
+    if (final_state != state_machine.state())
+    {
+      std::cout << "." << std::endl;
+    }
+
+    ASSERT_EQ(std::string(block_coordinator_->ToString(final_state)),
+              std::string(block_coordinator_->ToString(state_machine.state())));
   }
 
   /**
@@ -191,6 +201,8 @@ protected:
   BlockSinkPtr        block_sink_;
   BlockCoordinatorPtr block_coordinator_;
   BlockGenerator      block_generator_{NUM_LANES, NUM_SLICES};
+  ConsensusPtr        consensus_;
+  uint64_t            block_interval_ms_ = 0;
 };
 
 // useful when debugging
@@ -317,13 +329,13 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->hash);
 
   // force the generation of a new block (normally done with a timer)
-  block_coordinator_->TriggerBlockGeneration();
+  consensus_->TriggerBlockGeneration();
 
   Tick(State::SYNCHRONISED, State::NEW_SYNERGETIC_EXECUTION);
   Tick(State::NEW_SYNERGETIC_EXECUTION, State::PACK_NEW_BLOCK);
   Tick(State::PACK_NEW_BLOCK, State::EXECUTE_NEW_BLOCK);
   Tick(State::EXECUTE_NEW_BLOCK, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
-  Tick(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::TRANSMIT_BLOCK);
+  Tock(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::TRANSMIT_BLOCK);
   Tick(State::TRANSMIT_BLOCK, State::RESET);
 
   ASSERT_NE(execution_manager_->fake.LastProcessedBlock(), genesis->hash);
@@ -949,14 +961,14 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
   Tick(State::SYNCHRONISED, State::SYNCHRONISED);
   Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
-  // trigger the coordinator to try and make a block
-  block_coordinator_->TriggerBlockGeneration();
+  // trigger the consensus to try and make a block
+  consensus_->TriggerBlockGeneration();
 
   Tick(State::SYNCHRONISED, State::NEW_SYNERGETIC_EXECUTION);
   Tick(State::NEW_SYNERGETIC_EXECUTION, State::PACK_NEW_BLOCK);
   Tick(State::PACK_NEW_BLOCK, State::EXECUTE_NEW_BLOCK);
   Tick(State::EXECUTE_NEW_BLOCK, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
-  Tick(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::TRANSMIT_BLOCK);
+  Tock(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::TRANSMIT_BLOCK);
   Tick(State::TRANSMIT_BLOCK, State::RESET);
 
   // ensure that the coordinator has actually made a block
@@ -983,6 +995,9 @@ protected:
     // generate a public/private key pair
     auto signer = std::make_shared<ECDSASigner>();
 
+    consensus_ = std::make_shared<fetch::ledger::SimulatedPowConsensus>(signer->identity(),
+                                                                        block_interval_ms_);
+
     clock_             = fetch::moment::CreateAdjustableClock("bc:deadline");
     main_chain_        = std::make_unique<MainChain>(false, MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<NiceMock<MockStorageUnit>>();
@@ -992,7 +1007,7 @@ protected:
 
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
-        LOG2_NUM_LANES, NUM_SLICES, ConsensusPtr{}, nullptr);
+        LOG2_NUM_LANES, NUM_SLICES, consensus_, nullptr);
 
     // block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     // block_coordinator_->EnableMining(true);

@@ -111,12 +111,14 @@ NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
       GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM),
               moment::TimeAccuracy::MILLISECONDS);
 
-  if (!(current_time_ms > decided_next_timestamp_ms_))
+  if (!(current_time_ms > decided_next_timestamp_ms_) && !forcibly_generate_next_)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Waiting before producing block. Milliseconds to wait: ",
                     decided_next_timestamp_ms_ - current_time_ms);
     return ret;
   }
+
+  forcibly_generate_next_ = false;
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Generating block. Current time: ", current_time_ms,
                   " deadline: ", decided_next_timestamp_ms_);
@@ -140,6 +142,11 @@ NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
 Status SimulatedPowConsensus::ValidBlock(Block const & /*current*/) const
 {
   return Status::YES;
+}
+
+void SimulatedPowConsensus::TriggerBlockGeneration()
+{
+  forcibly_generate_next_ = true;
 }
 
 void SimulatedPowConsensus::SetBlockInterval(uint64_t block_interval_ms)
