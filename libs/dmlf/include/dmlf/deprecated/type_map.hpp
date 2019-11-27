@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,30 +17,49 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/simple_cycling_algorithm.hpp"
+#include <atomic>
+#include <exception>
+#include <iostream>
+#include <typeindex>
+#include <typeinfo>
+#include <unordered_map>
 
 namespace fetch {
 namespace dmlf {
 
-std::vector<std::size_t> SimpleCyclingAlgorithm::GetNextOutputs()
+template <typename ValueType = std::string>
+class TypeMap_
 {
-  std::vector<std::size_t> result(number_of_outputs_per_cycle_);
-  for (std::size_t i = 0; i < number_of_outputs_per_cycle_; i++)
-  {
-    result[i] = next_output_index_;
-    next_output_index_ += 1;
-    next_output_index_ %= GetCount();
-  }
-  return result;
-}
+public:
+  using IntToValueMap = std::unordered_map<std::type_index, ValueType>;
 
-SimpleCyclingAlgorithm::SimpleCyclingAlgorithm(std::size_t count,
-                                               std::size_t number_of_outputs_per_cycle)
-  : ShuffleAlgorithmInterface(count)
-{
-  next_output_index_           = 0;
-  number_of_outputs_per_cycle_ = std::min(number_of_outputs_per_cycle, GetCount());
-}
+  template <typename KeyType>
+  ValueType find() const
+  {
+    std::type_index tid{typeid(KeyType)};
+    auto            iter = map_.find(tid);
+    if (iter == map_.end())
+    {
+      throw std::runtime_error{"Type not registered"};
+    }
+    return iter->second;
+  }
+
+  template <typename KeyType>
+  void put(ValueType value)
+  {
+    std::type_index tid{typeid(KeyType)};
+    auto            iter = map_.find(tid);
+    if (iter != map_.end())
+    {
+      throw std::runtime_error{"Type already registered with name '" + iter->second + "'"};
+    }
+    map_[tid] = value;
+  }
+
+private:
+  IntToValueMap map_;
+};
 
 }  // namespace dmlf
 }  // namespace fetch

@@ -21,7 +21,7 @@
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "dmlf/update_interface.hpp"
+#include "dmlf/deprecated/update_interface.hpp"
 #include "ml/dataloaders/word2vec_loaders/vocab.hpp"
 
 #include <chrono>
@@ -32,7 +32,7 @@ namespace fetch {
 namespace dmlf {
 
 template <typename T>
-class Update : public UpdateInterface
+class deprecated_Update : public UpdateInterface
 {
   template <typename TT, typename D>
   friend struct serializers::MapSerializer;
@@ -49,25 +49,25 @@ public:
 
   using Payload = VectorTensor;
 
-  explicit Update()
+  explicit deprecated_Update()
     : stamp_{CurrentTime()}
   {}
 
-  explicit Update(VectorTensor gradients)
+  explicit deprecated_Update(VectorTensor gradients)
     : stamp_{CurrentTime()}
     , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
   {}
 
-  explicit Update(VectorTensor gradients, VectorSizeVector updated_rows)
+  explicit deprecated_Update(VectorTensor gradients, VectorSizeVector updated_rows)
     : stamp_{CurrentTime()}
     , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
     , updated_rows_{std::move(updated_rows)}
   {}
 
-  explicit Update(VectorTensor gradients, byte_array::ConstByteArray hash, ReverseVocabType vocab,
-                  VectorSizeVector updated_rows)
+  explicit deprecated_Update(VectorTensor gradients, byte_array::ConstByteArray hash,
+                             ReverseVocabType vocab, VectorSizeVector updated_rows)
     : stamp_{CurrentTime()}
     , gradients_{std::move(gradients)}
     , fingerprint_{ComputeFingerprint()}
@@ -76,7 +76,7 @@ public:
     , updated_rows_{std::move(updated_rows)}
   {}
 
-  ~Update() override = default;
+  ~deprecated_Update() override = default;
 
   byte_array::ByteArray Serialise() override
   {
@@ -127,10 +127,10 @@ public:
     return updated_rows_;
   }
 
-  Update(Update const &other) = delete;
-  Update &operator=(Update const &other)  = delete;
-  bool    operator==(Update const &other) = delete;
-  bool    operator<(Update const &other)  = delete;
+  deprecated_Update(deprecated_Update const &other) = delete;
+  deprecated_Update &operator=(deprecated_Update const &other)  = delete;
+  bool               operator==(deprecated_Update const &other) = delete;
+  bool               operator<(deprecated_Update const &other)  = delete;
 
 protected:
 private:
@@ -162,10 +162,10 @@ private:
 namespace serializers {
 
 template <typename T, typename D>
-struct MapSerializer<fetch::dmlf::Update<T>, D>
+struct MapSerializer<fetch::dmlf::deprecated_Update<T>, D>
 {
 public:
-  using Type       = fetch::dmlf::Update<T>;
+  using Type       = fetch::dmlf::deprecated_Update<T>;
   using DriverType = D;
 
   static uint8_t const TIME_STAMP   = 1;
