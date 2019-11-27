@@ -91,7 +91,7 @@ function main()
   var data_shape = Array<UInt64>(2);
   data_shape[0] = 2u64;
   data_shape[1] = 4u64;
-  var T = Tensor(data_shape);
+  var t = Tensor(data_shape);
 
-  printLn(T.toString());
+  printLn(t.toString());
 endfunction
