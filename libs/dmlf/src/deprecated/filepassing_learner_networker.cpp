@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/base_types.hpp"
-#include "dmlf/networkers/filepassing_learner_networker.hpp"
+#include "dmlf/deprecated/filepassing_learner_networker.hpp"
 
 #include <dirent.h>
 #include <fstream>
@@ -25,7 +25,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "dmlf/update_interface.hpp"
+#include "dmlf/deprecated/update_interface.hpp"
 #include <cstdio>  //for remove( ) and rename( )
 
 #include <chrono>
@@ -35,7 +35,7 @@ using namespace std::chrono_literals;
 namespace fetch {
 namespace dmlf {
 
-void FilepassingLearnerNetworker::SetName(const std::string &name)
+void deprecated_FilepassingLearnerNetworker::SetName(const std::string &name)
 {
   name_  = name;
   dir_   = ProcessNameToTargetDir(name);
@@ -51,10 +51,11 @@ void FilepassingLearnerNetworker::SetName(const std::string &name)
     ::unlink(name_to_unlink.c_str());
   }
   running_ = true;
-  watcher_ = std::make_shared<std::thread>(&FilepassingLearnerNetworker::CheckUpdates, this);
+  watcher_ =
+      std::make_shared<std::thread>(&deprecated_FilepassingLearnerNetworker::CheckUpdates, this);
 }
 
-void FilepassingLearnerNetworker::CheckUpdates()
+void deprecated_FilepassingLearnerNetworker::CheckUpdates()
 {
   while (running_)
   {
@@ -80,18 +81,18 @@ void FilepassingLearnerNetworker::CheckUpdates()
   }
 }
 
-FilepassingLearnerNetworker::~FilepassingLearnerNetworker()
+deprecated_FilepassingLearnerNetworker::~deprecated_FilepassingLearnerNetworker()
 {
   running_ = false;
   watcher_->join();
 }
 
-std::string FilepassingLearnerNetworker::ProcessNameToTargetDir(const std::string &name)
+std::string deprecated_FilepassingLearnerNetworker::ProcessNameToTargetDir(const std::string &name)
 {
-  return std::string("/tmp/FilepassingLearnerNetworker/") + name + "/";
+  return std::string("/tmp/deprecated_FilepassingLearnerNetworker/") + name + "/";
 }
 
-void FilepassingLearnerNetworker::AddPeers(Peers new_peers)
+void deprecated_FilepassingLearnerNetworker::AddPeers(Peers new_peers)
 {
   for (auto const &peer : new_peers)
   {
@@ -102,12 +103,12 @@ void FilepassingLearnerNetworker::AddPeers(Peers new_peers)
   }
 }
 
-void FilepassingLearnerNetworker::ClearPeers()
+void deprecated_FilepassingLearnerNetworker::ClearPeers()
 {
   peers_.clear();
 }
 
-void FilepassingLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
+void deprecated_FilepassingLearnerNetworker::PushUpdate(deprecated_UpdateInterfacePtr const &update)
 {
   auto indexes = alg_->GetNextOutputs();
   auto data    = update->Serialise();
@@ -119,7 +120,7 @@ void FilepassingLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
   }
 }
 
-void FilepassingLearnerNetworker::Transmit(const std::string &target, Bytes const &data)
+void deprecated_FilepassingLearnerNetworker::Transmit(const std::string &target, Bytes const &data)
 {
   static int filecounter = 0;
   auto       target_dir  = ProcessNameToTargetDir(target);
@@ -136,7 +137,7 @@ void FilepassingLearnerNetworker::Transmit(const std::string &target, Bytes cons
   ::rename(tmpfilepath.c_str(), filepath.c_str());
 }
 
-std::vector<std::string> FilepassingLearnerNetworker::GetUpdateNames() const
+std::vector<std::string> deprecated_FilepassingLearnerNetworker::GetUpdateNames() const
 {
   std::vector<std::string> r;
 
