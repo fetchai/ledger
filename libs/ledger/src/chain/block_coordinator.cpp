@@ -1019,6 +1019,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
 
   case ExecutionStatus::STALLED:
     FETCH_LOG_INFO(LOGGING_NAME, "Merkle Hash4: ", ToBase64(next_block_->merkle_hash));
+    next_state = State::RESET;
+    break;
   case ExecutionStatus::ERROR:
     FETCH_LOG_INFO(LOGGING_NAME, "Merkle Hash5: ", ToBase64(next_block_->merkle_hash));
     next_state = State::RESET;
