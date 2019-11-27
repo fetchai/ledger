@@ -274,6 +274,7 @@ private:
   struct MaxValueConstructorEnabler
   {
   };
+
   constexpr explicit UInt(MaxValueConstructorEnabler /*unused*/)
   {
     for (auto &itm : wide_)
@@ -407,10 +408,13 @@ template <uint16_t S>
 constexpr bool UInt<S>::operator==(UInt const &other) const
 {
   bool ret = true;
-  for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
+  std::size_t i = 0;
+  for (; i < (WIDE_ELEMENTS - 1u); ++i)
   {
     ret &= (wide_[i] == other.ElementAt(i));
   }
+
+  ret &= ((wide_[i] & RESIDUAL_BITS_MASK) == (other.ElementAt(i) & other.RESIDUAL_BITS_MASK));
 
   return ret;
 }
@@ -698,7 +702,6 @@ constexpr UInt<256> &UInt<256>::operator*=(UInt<256> const &n)
     wide_[i] = static_cast<WideType>(terms[i]);
   }
 
-  mask_residual_bits();
   return *this;
 }
 
@@ -739,12 +742,11 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   D >>= lsb;
   UInt<S> multiple(1u);
 
+  auto const D_leading_zero_bits {D.UINT_SIZE - D.msb()};
   // Find smallest multiple of divisor (D) that is larger than the dividend (N)
-  while (N > D)
-  {
-    D <<= 1;
-    multiple <<= 1;
-  }
+  D <<= D_leading_zero_bits;
+  multiple <<= D_leading_zero_bits;
+
   // Calculate Quotient in a loop, essentially divide divisor by 2 and subtract from Remainder
   // Add multiple to Quotient
   UInt<S> Q = _0, R = N;
@@ -971,6 +973,7 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
   std::size_t full_words = bits / WIDE_ELEMENT_SIZE;
   std::size_t real_bits  = bits - full_words * WIDE_ELEMENT_SIZE;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
+
   // No actual shifting involved, just move the elements
   if (full_words != 0u)
   {
@@ -983,6 +986,7 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
       wide_[i] = 0;
     }
   }
+
   // If real_bits == 0, nothing to do
   if (real_bits != 0u)
   {
@@ -993,9 +997,9 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
       wide_[i]     = (val << real_bits) | carry;
       carry        = val >> nbits;
     }
-
-    mask_residual_bits();
   }
+
+  mask_residual_bits();
 
   return *this;
 }
@@ -1006,6 +1010,9 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
   std::size_t full_words = bits / WIDE_ELEMENT_SIZE;
   std::size_t real_bits  = bits - full_words * WIDE_ELEMENT_SIZE;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
+
+  mask_residual_bits();
+
   // No actual shifting involved, just move the elements
   if (full_words != 0u)
   {
@@ -1029,7 +1036,6 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
       wide_[WIDE_ELEMENTS - 1 - i] = (val >> real_bits) | carry;
       carry                        = val << nbits;
     }
-    mask_residual_bits();
   }
 
   return *this;
@@ -1038,33 +1044,35 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
 template <uint16_t S>
 constexpr std::size_t UInt<S>::msb() const
 {
-  std::size_t msb = 0;
-  for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
+  auto const trimmed_size {TrimmedWideSize()};
+  if (trimmed_size == 0)
   {
-    std::size_t msbi = platform::CountLeadingZeroes64(wide_[WIDE_ELEMENTS - 1 - i]);
-    msb += msbi;
-    if (msbi < 64)
-    {
-      return msb;
-    }
+    return UINT_SIZE;
   }
-  return msb;
+
+  auto const trimmed_idx {trimmed_size - 1};
+  auto const last_elem_val {(trimmed_size == WIDE_ELEMENTS) ? wide_[trimmed_idx] & RESIDUAL_BITS_MASK : wide_[trimmed_idx]};
+  auto const leading_zero_bits = platform::CountLeadingZeroes64(last_elem_val);
+  return trimmed_size * WIDE_ELEMENT_SIZE - leading_zero_bits - 1;
 }
 
 template <uint16_t S>
 constexpr std::size_t UInt<S>::lsb() const
 {
   std::size_t lsb = 0;
-  for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
+  std::size_t i = 0;
+
+  for (; i < WIDE_ELEMENTS - 1; i++, lsb += WIDE_ELEMENT_SIZE)
   {
-    std::size_t lsbi = platform::CountTrailingZeroes64(wide_[i]);
-    lsb += lsbi;
-    if (lsbi < 64)
+    auto const val {wide_[i]};
+    if (val > 0)
     {
-      return lsb;
+      return lsb + platform::CountTrailingZeroes64(val);
     }
   }
-  return lsb;
+
+  auto const val {wide_[i] & RESIDUAL_BITS_MASK};
+  return val > 0 ? lsb + platform::CountTrailingZeroes64(val) : UINT_SIZE;
 }
 
 /////////////////////////
@@ -1093,6 +1101,12 @@ template <uint16_t S>
 constexpr uint64_t UInt<S>::TrimmedWideSize() const
 {
   uint64_t ret = WIDE_ELEMENTS;
+  if ((wide_[ret - 1] & RESIDUAL_BITS_MASK) > 0)
+  {
+    return ret;
+  }
+
+  --ret;
   while ((ret > 0) && (wide_[ret - 1] == 0))
   {
     --ret;
@@ -1104,14 +1118,21 @@ template <uint16_t S>
 constexpr uint64_t UInt<S>::TrimmedSize() const
 {
   uint64_t wide_size{TrimmedWideSize()};
-  uint64_t remainder{WIDE_ELEMENT_SIZE / ELEMENT_SIZE};
 
-  while ((remainder > 0) && (base()[remainder - 1] == 0))
+  if (wide_size == 0)
+  {
+    return 0;
+  }
+
+  uint64_t remainder{wide_size == WIDE_ELEMENTS ? (WIDE_ELEMENT_SIZE - RESIDUAL_BITS_MASK) / ELEMENT_SIZE : WIDE_ELEMENT_SIZE / ELEMENT_SIZE};
+  uint64_t start_idx {(wide_size - 1) * (WIDE_ELEMENT_SIZE / ELEMENT_SIZE)};
+
+  while ((remainder > 0) && (base()[start_idx + remainder - 1] == 0))
   {
     --remainder;
   }
 
-  return wide_size * (WIDE_ELEMENT_SIZE / ELEMENT_SIZE) + remainder;
+  return start_idx + remainder;
 }
 
 template <uint16_t S>

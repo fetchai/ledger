@@ -265,13 +265,13 @@ TEST(big_number_gtest, msb_lsb_tests)
   n1.ElementAt(2) = 0xfffffffe00000001;
   n1.ElementAt(3) = 0x00000000fffffffe;
 
-  EXPECT_EQ(n1.msb(), 32);
+  EXPECT_EQ(n1.msb(), 223);
   EXPECT_EQ(n1.lsb(), 32);
   n1 <<= 17;
-  EXPECT_EQ(n1.msb(), 15);
-  EXPECT_EQ(n1.lsb(), 49);
+  EXPECT_EQ(n1.msb(), 223+17);
+  EXPECT_EQ(n1.lsb(), 32+17);
   n1 >>= 114;
-  EXPECT_EQ(n1.msb(), 129);
+  EXPECT_EQ(n1.msb(), 223+17-114);
   EXPECT_EQ(n1.lsb(), 31);
 }
 
@@ -428,6 +428,16 @@ TEST(big_number_gtest, test_zero)
 }
 
 // TODO(issue 1383): Enable test when issue is resolved
+TEST(big_number_gtest, test_issue_1383_demo_overflow_with_comparison_oper)
+{
+  using UIntT = UInt<72>;
+  UIntT n1{UIntT::max};
+  n1.ElementAt(UIntT::WIDE_ELEMENTS - 1) = ~UIntT::WideType{0};
+
+  EXPECT_EQ(n1, UIntT::max);
+}
+
+// TODO(issue 1383): Enable test when issue is resolved
 TEST(big_number_gtest, test_issue_1383_demo_with_bitshift_oper)
 {
   using UIntT = UInt<72>;
@@ -443,26 +453,44 @@ TEST(big_number_gtest, test_issue_1383_demo_with_bitshift_oper)
   // Scenario where bit-shift *GOES* over UIntT::UINT_SIZE boundary
   n1 <<= UIntT::UINT_SIZE;
   n1 >>= UIntT::UINT_SIZE;
-
   EXPECT_EQ(n1, 0u);
 }
 
 // TODO(issue 1383): Enable test when issue is resolved
-TEST(big_number_gtest, test_issue_1383_demo_overflow_with_plus_minus_oper)
+TEST(big_number_gtest, test_issue_1383_demo_overflow_with_bitshift_oper_2)
 {
   using UIntT = UInt<72>;
   UIntT n1{UIntT::max};
-  ASSERT_EQ(UIntT::max.ElementAt(0), ~UIntT::WideType{0});
-  ASSERT_EQ(UIntT::max.ElementAt(1), 0xff);
+  n1.ElementAt(UIntT::WIDE_ELEMENTS - 1) = ~UIntT::WideType{0};
+
+  n1 >>= UIntT::UINT_SIZE - 1;
+  ASSERT_EQ(n1, 1u);
+}
+
+// TODO(issue 1383): Enable test when issue is resolved
+TEST(big_number_gtest, test_issue_1383_demo_overflow_with_plus_oper)
+{
+  using UIntT = UInt<72>;
+  UIntT n1{UIntT::max};
 
   ASSERT_EQ(n1.ElementAt(0), ~UIntT::WideType{0});
-  ASSERT_EQ(n1.ElementAt(1),
-            ~UIntT::WideType{0} >>
-                (UIntT::WIDE_ELEMENT_SIZE - (UIntT::UINT_SIZE % UIntT::WIDE_ELEMENT_SIZE)));
+  ASSERT_EQ(n1.ElementAt(1), ~UIntT::WideType{0} >> UIntT::RESIDUAL_BITS);
 
   n1 += 1u;
+  ASSERT_EQ(n1, 0u);
   n1 <<= 1u;
   EXPECT_EQ(n1, 0u);
+}
+
+// TODO(issue 1383): Enable test when issue is resolved
+TEST(big_number_gtest, test_issue_1383_demo_overflow_with_division_oper)
+{
+  using UIntT = UInt<72>;
+  UIntT n1{UIntT::max};
+  n1.ElementAt(UIntT::WIDE_ELEMENTS - 1) = ~UIntT::WideType{0};
+
+  n1 /= 2u;
+  ASSERT_EQ(n1, UIntT{UIntT::max} <<= 1u);
 }
 
 }  // namespace
