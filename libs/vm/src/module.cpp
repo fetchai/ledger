@@ -108,11 +108,6 @@ To Cast(Variant const &from)
     to = static_cast<To>(fixed_point::fp64_t::FromBase(from.primitive.i64));
     break;
   }
-  case TypeIds::Fixed128:
-  {
-    to = static_cast<To>(fixed_point::fp64_t::FromBase(from.primitive.i64));
-    break;
-  }
   default:
   {
     to = 0;
