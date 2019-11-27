@@ -22,8 +22,8 @@
 #include "dmlf/collective_learning/client_algorithm.hpp"
 #include "dmlf/collective_learning/client_algorithm_controller.hpp"
 #include "dmlf/collective_learning/client_params.hpp"
-#include "dmlf/networkers/abstract_learner_networker.hpp"
-#include "dmlf/update.hpp"
+#include "dmlf/deprecated/abstract_learner_networker.hpp"
+#include "dmlf/deprecated/update.hpp"
 
 #include <condition_variable>
 #include <fstream>
@@ -47,9 +47,9 @@ class CollectiveLearningClient
 
 public:
   CollectiveLearningClient(std::string id, ClientParams<DataType> const &client_params,
-                           std::shared_ptr<dmlf::AbstractLearnerNetworker> networker_ptr,
-                           std::shared_ptr<std::mutex>                     console_mutex_ptr,
-                           bool                                            build_algorithms = true);
+                           std::shared_ptr<dmlf::deprecated_AbstractLearnerNetworker> networker_ptr,
+                           std::shared_ptr<std::mutex> console_mutex_ptr,
+                           bool                        build_algorithms = true);
   virtual ~CollectiveLearningClient() = default;
 
   void RunAlgorithms(std::vector<std::thread> &threads);
@@ -72,7 +72,7 @@ protected:
 template <class TensorType>
 CollectiveLearningClient<TensorType>::CollectiveLearningClient(
     std::string id, ClientParams<DataType> const &client_params,
-    std::shared_ptr<dmlf::AbstractLearnerNetworker> networker_ptr,
+    std::shared_ptr<dmlf::deprecated_AbstractLearnerNetworker> networker_ptr,
     std::shared_ptr<std::mutex> console_mutex_ptr, bool build_algorithms)
   : id_(std::move(id))
 {
