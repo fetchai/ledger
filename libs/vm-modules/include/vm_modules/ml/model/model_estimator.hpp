@@ -43,6 +43,7 @@ class ModelEstimator
 public:
   using VMObjectType = VMModel;
   using ChargeAmount = fetch::vm::ChargeAmount;
+  using SizeType     = fetch::math::SizeType;
 
   explicit ModelEstimator(VMObjectType &model);
   ~ModelEstimator() = default;
@@ -103,7 +104,14 @@ private:
   ChargeAmount weights_size_sum_{0};
   ChargeAmount optimiser_step_impact_{0};
 
-  fetch::math::SizeType last_layer_size_{0};
+  SizeType last_layer_size_{0};
+
+  SizeType adam_step_impact_         = 15;
+  SizeType adam_construction_impact_ = 15;
+  SizeType mse_forward_impact_       = 6;
+  SizeType mse_backward_impact_      = 6;
+  SizeType fit_const_overhead_ = 3;
+  SizeType fit_per_batch_overhead_ = 2;
 
   ChargeAmount const constant_charge{vm::CHARGE_UNIT};
 
