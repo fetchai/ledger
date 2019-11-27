@@ -97,22 +97,22 @@ namespace serializers {
 
 template <typename D>
 struct MapSerializer<ledger::Block, D>
-  : MapSerializerTemplate<ledger::Block, D,
-	SERIALIZED_STRUCT_FIELD(1, ledger::Block::weight),
-	SERIALIZED_STRUCT_FIELD(2, ledger::Block::total_weight),
-	SERIALIZED_STRUCT_FIELD(3, ledger::Block::miner_signature),
-	SERIALIZED_STRUCT_FIELD(4, ledger::Block::hash),
-	SERIALIZED_STRUCT_FIELD(5, ledger::Block::previous_hash),
-	SERIALIZED_STRUCT_FIELD(6, ledger::Block::merkle_hash),
-	SERIALIZED_STRUCT_FIELD(7, ledger::Block::block_number),
-	SERIALIZED_STRUCT_FIELD(8, ledger::Block::miner_id),
-	SERIALIZED_STRUCT_FIELD(9, ledger::Block::log2_num_lanes),
-	SERIALIZED_STRUCT_FIELD(10, ledger::Block::slices),
-	SERIALIZED_STRUCT_FIELD(11, ledger::Block::dag_epoch),
-	SERIALIZED_STRUCT_FIELD(12, ledger::Block::timestamp),
-	SERIALIZED_STRUCT_FIELD(13, ledger::Block::block_entropy),
-	SERIALIZED_STRUCT_FIELD(14, ledger::Block::miner)>
-{};
+  : MapSerializerTemplate<ledger::Block, D, SERIALIZED_STRUCT_FIELD(1, ledger::Block::weight),
+                          SERIALIZED_STRUCT_FIELD(2, ledger::Block::total_weight),
+                          SERIALIZED_STRUCT_FIELD(3, ledger::Block::miner_signature),
+                          SERIALIZED_STRUCT_FIELD(4, ledger::Block::hash),
+                          SERIALIZED_STRUCT_FIELD(5, ledger::Block::previous_hash),
+                          SERIALIZED_STRUCT_FIELD(6, ledger::Block::merkle_hash),
+                          SERIALIZED_STRUCT_FIELD(7, ledger::Block::block_number),
+                          SERIALIZED_STRUCT_FIELD(8, ledger::Block::miner_id),
+                          SERIALIZED_STRUCT_FIELD(9, ledger::Block::log2_num_lanes),
+                          SERIALIZED_STRUCT_FIELD(10, ledger::Block::slices),
+                          SERIALIZED_STRUCT_FIELD(11, ledger::Block::dag_epoch),
+                          SERIALIZED_STRUCT_FIELD(12, ledger::Block::timestamp),
+                          SERIALIZED_STRUCT_FIELD(13, ledger::Block::block_entropy),
+                          SERIALIZED_STRUCT_FIELD(14, ledger::Block::miner)>
+{
+};
 
 }  // namespace serializers
 }  // namespace fetch
