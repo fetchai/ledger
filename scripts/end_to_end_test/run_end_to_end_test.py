@@ -13,7 +13,6 @@ import datetime
 import glob
 import importlib
 import os
-import pickle
 import shutil
 import subprocess
 import sys
@@ -283,6 +282,7 @@ def verify_txs(parameters, test_instance):
     # Currently assume there only one set of TXs
     tx_and_identity = test_instance._metadata
 
+    # TODO(HUT): remove.
     # Load these from file if specified
     if "load_from_file" in parameters and parameters["load_from_file"] == True:
         filename = "{}/identities_pickled/{}_meta.pickle".format(
