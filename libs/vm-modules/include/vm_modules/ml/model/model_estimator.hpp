@@ -95,13 +95,9 @@ public:
 private:
   VMObjectType &model_;
 
-  // Layers
+  // Model
   ChargeAmount forward_pass_cost_{0};
   ChargeAmount backward_pass_cost_{0};
-
-  // Loss function
-  ChargeAmount loss_forward_pass_cost_{0};
-  ChargeAmount loss_backward_pass_cost_{0};
 
   // Optimiser
   ChargeAmount weights_size_sum_{0};
