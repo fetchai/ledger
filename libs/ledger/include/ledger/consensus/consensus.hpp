@@ -51,6 +51,7 @@ public:
   using BlockEntropy          = ledger::Block::BlockEntropy;
   using NotarisationPtr       = std::shared_ptr<ledger::NotarisationService>;
   using NotarisationResult    = NotarisationService::NotarisationResult;
+  using BlockPtr              = MainChain::BlockPtr;
 
   // Construction / Destruction
   Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup, BeaconServicePtr beacon,
