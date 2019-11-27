@@ -43,7 +43,7 @@ TEST_F(RecentTransactionsCacheTests, CheckFillingOfCache)
 {
   constexpr std::size_t NUM_TX = 2 * MAX_CACHE_SIZE;
 
-  auto txs = tx_gen_.GenerateRandomTxs(NUM_TX);
+  auto const txs = tx_gen_.GenerateRandomTxs(NUM_TX);
 
   for (std::size_t i = 0; i < NUM_TX; ++i)
   {
@@ -53,6 +53,29 @@ TEST_F(RecentTransactionsCacheTests, CheckFillingOfCache)
     cache_.Add(*txs[i]);
 
     EXPECT_EQ(cache_.GetSize(), std::min(MAX_CACHE_SIZE, i + 1));
+  }
+}
+
+TEST_F(RecentTransactionsCacheTests, CheckFillingOfCacheOrder)
+{
+  constexpr std::size_t NUM_TX = 2 * MAX_CACHE_SIZE;
+
+  // generate and add all the transactions into the cache
+  auto const txs = tx_gen_.GenerateRandomTxs(NUM_TX);
+  for (auto const &tx : txs)
+  {
+    cache_.Add(*tx);
+  }
+
+  // extract the elements from the cache
+  auto const entries = cache_.Flush(NUM_TX);
+  ASSERT_EQ(cache_.GetSize(), 0);
+  ASSERT_EQ(entries.size(), MAX_CACHE_SIZE);
+
+  // check the ordering of the extracted entries
+  for (std::size_t i = 0; i < MAX_CACHE_SIZE; ++i)
+  {
+    ASSERT_EQ(entries.at(i).digest(), txs.at(NUM_TX - (i + 1))->digest());
   }
 }
 
@@ -71,7 +94,7 @@ TEST_F(RecentTransactionsCacheTests, CheckTransactionLayouts)
   EXPECT_EQ(digests.size(), MAX_CACHE_SIZE);
 
   EXPECT_EQ(cache_.GetSize(), MAX_CACHE_SIZE);
-  auto const cache = cache_.Flush();
+  auto const cache = cache_.Flush(MAX_CACHE_SIZE);
   EXPECT_EQ(cache_.GetSize(), 0);
 
   // build complete list of input digests

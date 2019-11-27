@@ -18,8 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction_layout.hpp"
-#include "core/synchronisation/protected.hpp"
+#include "core/digest.hpp"
+#include "core/mutex.hpp"
 
+#include <deque>
 #include <unordered_set>
 #include <vector>
 
@@ -39,19 +41,24 @@ namespace ledger {
 class RecentTransactionsCache
 {
 public:
-  using Cache = std::unordered_set<chain::TransactionLayout>;
+  using TxLayouts = std::vector<chain::TransactionLayout>;
 
   explicit RecentTransactionsCache(std::size_t max_cache_size, uint32_t log2_num_lanes);
   ~RecentTransactionsCache() = default;
 
   void        Add(chain::Transaction const &tx);
   std::size_t GetSize() const;
-  Cache       Flush();
+  TxLayouts   Flush(std::size_t num_to_flush);
 
 private:
+  using LayoutQueue = std::deque<chain::TransactionLayout>;
+
   std::size_t const max_cache_size_;
   uint32_t const    log2_num_lanes_;
-  Protected<Cache>  cache_;
+
+  mutable Mutex lock_;
+  DigestSet     digests_;
+  LayoutQueue   queue_;
 };
 
 }  // namespace ledger
