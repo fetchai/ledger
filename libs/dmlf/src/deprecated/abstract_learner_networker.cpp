@@ -16,36 +16,36 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/networkers/abstract_learner_networker.hpp"
+#include "dmlf/deprecated/abstract_learner_networker.hpp"
 
 namespace fetch {
 namespace dmlf {
-void AbstractLearnerNetworker::PushUpdateType(const std::string & /*key*/,
-                                              UpdateInterfacePtr const & /*update*/)
+void deprecated_AbstractLearnerNetworker::PushUpdateType(
+    const std::string & /*key*/, deprecated_UpdateInterfacePtr const & /*update*/)
 {
   // do nothing in the base case.
 }
 
-std::size_t AbstractLearnerNetworker::GetUpdateCount() const
+std::size_t deprecated_AbstractLearnerNetworker::GetUpdateCount() const
 {
   FETCH_LOCK(queue_m_);
   ThrowIfNotInitialized();
   return queue_->size();
 }
 
-void AbstractLearnerNetworker::SetShuffleAlgorithm(
+void deprecated_AbstractLearnerNetworker::SetShuffleAlgorithm(
     const std::shared_ptr<ShuffleAlgorithmInterface> &alg)
 {
   alg_ = alg;
 }
 
-AbstractLearnerNetworker::UpdatePtr AbstractLearnerNetworker::GetUpdate(
+deprecated_AbstractLearnerNetworker::UpdatePtr deprecated_AbstractLearnerNetworker::GetUpdate(
     Algorithm const & /*algo*/, UpdateType const & /*type*/, Criteria const & /*criteria*/)
 {
   throw std::runtime_error("GetUpdate using Criteria is not supported via this interface");
 }
 
-std::size_t AbstractLearnerNetworker::GetUpdateTypeCount(const std::string &key) const
+std::size_t deprecated_AbstractLearnerNetworker::GetUpdateTypeCount(const std::string &key) const
 {
   FETCH_LOCK(queue_map_m_);
   auto iter = queue_map_.find(key);
@@ -56,7 +56,8 @@ std::size_t AbstractLearnerNetworker::GetUpdateTypeCount(const std::string &key)
   throw std::runtime_error{"Requesting UpdateCount for unregistered type"};
 }
 
-AbstractLearnerNetworker::Bytes AbstractLearnerNetworker::GetUpdateAsBytes(const std::string &key)
+deprecated_AbstractLearnerNetworker::Bytes deprecated_AbstractLearnerNetworker::GetUpdateAsBytes(
+    const std::string &key)
 {
   FETCH_LOCK(queue_map_m_);
   auto iter = queue_map_.find(key);
@@ -67,14 +68,14 @@ AbstractLearnerNetworker::Bytes AbstractLearnerNetworker::GetUpdateAsBytes(const
   throw std::runtime_error{"Requesting GetUpdateAsBytes for unregistered type"};
 }
 
-void AbstractLearnerNetworker::NewMessage(Bytes const &msg)
+void deprecated_AbstractLearnerNetworker::NewMessage(Bytes const &msg)
 {
   FETCH_LOCK(queue_m_);
   ThrowIfNotInitialized();
   queue_->PushNewMessage(msg);
 }
 
-void AbstractLearnerNetworker::NewMessage(const std::string &key, Bytes const &update)
+void deprecated_AbstractLearnerNetworker::NewMessage(const std::string &key, Bytes const &update)
 {
   FETCH_LOCK(queue_map_m_);
   auto iter = queue_map_.find(key);
@@ -86,7 +87,7 @@ void AbstractLearnerNetworker::NewMessage(const std::string &key, Bytes const &u
   throw std::runtime_error{"Received Update with a non-registered type"};
 }
 
-void AbstractLearnerNetworker::NewDmlfMessage(Bytes const &msg)
+void deprecated_AbstractLearnerNetworker::NewDmlfMessage(Bytes const &msg)
 {
   serializers::MsgPackSerializer serializer{msg};
   std::string                    key;
@@ -105,7 +106,7 @@ void AbstractLearnerNetworker::NewDmlfMessage(Bytes const &msg)
   throw std::runtime_error{"Received Update with a non-registered type"};
 }
 
-void AbstractLearnerNetworker::ThrowIfNotInitialized() const
+void deprecated_AbstractLearnerNetworker::ThrowIfNotInitialized() const
 {
   if (!queue_)
   {
