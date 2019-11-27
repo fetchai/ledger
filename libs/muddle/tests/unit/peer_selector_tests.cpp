@@ -36,8 +36,6 @@
 
 using namespace std::chrono_literals;
 
-using ::testing::Return;
-using ::testing::ReturnRef;
 using ::testing::NiceMock;
 using fetch::core::Reactor;
 using fetch::byte_array::FromHex;
