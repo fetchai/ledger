@@ -515,7 +515,7 @@ void StructuredData::SetObjectArray(Ptr<String> const &s, Ptr<Array<Ptr<T>>> con
     // add the elements into the array
     for (std::size_t i = 0; i < arr->elements.size(); ++i)
     {
-      Ptr<T> object = static_cast<Ptr<T>>(arr->elements[i]);
+      auto object = static_cast<Ptr<T>>(arr->elements[i]);
       values[i]     = ToByteArray(*object);
     }
   }
