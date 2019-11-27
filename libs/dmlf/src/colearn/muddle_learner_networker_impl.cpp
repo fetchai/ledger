@@ -62,9 +62,8 @@ void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
     double                     random_factor;
 
     std::string kind;
-    auto source = std::string(fetch::byte_array::ToBase64(from));
+    auto        source = std::string(fetch::byte_array::ToBase64(from));
     buf >> kind;
-
 
     if (kind == "DATA")
     {
@@ -86,8 +85,7 @@ void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
 
     if (kind == "HELO")
     {
-      std::cout << "helo:" << source
-                << std::endl;
+      std::cout << "helo:" << source << std::endl;
       Lock lock(mutex_);
       sources_.insert(source);
       return;
@@ -155,18 +153,9 @@ void MuddleLearnerNetworkerImpl::submit(TaskP const &t)
   taskpool_->submit(t);
 }
 
-void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update)
-{
-  auto random_factor = randomiser_.GetNew();
 
-  serializers::MsgPackSerializer buf;
-  buf << type_name << update << broadcast_proportion_ << random_factor;
-
-  mud_->GetEndpoint().Broadcast(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST, buf.data());
-}
-
-void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update,
-                                                 Peers peers)
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name,
+                                                 Bytes const &update, const Peers &peers)
 {
   auto random_factor = randomiser_.GetNew();
   for (auto const &peer : peers)
@@ -178,7 +167,7 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, B
   }
 }
 
-void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update)
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update)
 {
   auto random_factor = randomiser_.GetNew();
 
@@ -188,8 +177,9 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, B
   mud_->GetEndpoint().Broadcast(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST, buf.data());
 }
 
-MuddleLearnerNetworkerImpl::UpdatePtr MuddleLearnerNetworkerImpl::GetUpdate(
-    Algorithm const &algo, UpdateType const &type, Criteria const &criteria)
+
+MuddleLearnerNetworkerImpl::ConstUpdatePtr MuddleLearnerNetworkerImpl::GetUpdate(
+    AlgorithmClass const &algo, UpdateType const &type, Criteria const &criteria)
 {
   return update_store_->GetUpdate(algo, type, criteria);
 }

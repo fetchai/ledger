@@ -30,8 +30,7 @@ public:
   StochasticReceptionAlgorithm(double broadcast_proportion)
     : ShuffleAlgorithmInterface(0)
     , broadcast_proportion_(broadcast_proportion)
-  {
-  }
+  {}
 
   ~StochasticReceptionAlgorithm() override = default;
 
@@ -46,7 +45,11 @@ public:
   bool operator==(StochasticReceptionAlgorithm const &other) = delete;
   bool operator<(StochasticReceptionAlgorithm const &other)  = delete;
 
-  double broadcast_proportion() { return broadcast_proportion_; }
+  double broadcast_proportion()
+  {
+    return broadcast_proportion_;
+  }
+
 protected:
 private:
   double broadcast_proportion_;
