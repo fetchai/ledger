@@ -70,8 +70,8 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
 }
 
 ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> const &layer,
-                                                     SizeType const &        inputs,
-                                                     SizeType const &        hidden_nodes,
+                                                     SizeType const &              inputs,
+                                                     SizeType const &              hidden_nodes,
                                                      Ptr<fetch::vm::String> const &activation)
 {
   ChargeAmount estimate = LayerAddDense(layer, inputs, hidden_nodes);
@@ -89,11 +89,9 @@ ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> cons
   return estimate;
 }
 
-ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &   layer,
-                                          SizeType const &output_channels,
+ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType const &output_channels,
                                           SizeType const &input_channels,
-                                          SizeType const &kernel_size,
-                                          SizeType const &stride_size)
+                                          SizeType const &kernel_size, SizeType const &stride_size)
 {
   FETCH_UNUSED(layer);
   FETCH_UNUSED(output_channels);
@@ -103,12 +101,9 @@ ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &   layer,
   throw std::runtime_error("Not yet implement");
 }
 
-ChargeAmount ModelEstimator::LayerAddConvActivation(Ptr<String> const &   layer,
-                                                    SizeType const &output_channels,
-                                                    SizeType const &input_channels,
-                                                    SizeType const &kernel_size,
-                                                    SizeType const &stride_size,
-                                                    Ptr<String> const &   activation)
+ChargeAmount ModelEstimator::LayerAddConvActivation(
+    Ptr<String> const &layer, SizeType const &output_channels, SizeType const &input_channels,
+    SizeType const &kernel_size, SizeType const &stride_size, Ptr<String> const &activation)
 {
   FETCH_UNUSED(layer);
   FETCH_UNUSED(output_channels);
@@ -129,8 +124,8 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     if (loss->string() == "mse")
     {
       // loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
-      forward_pass_cost_ += mse_forward_impact_ * last_layer_size_;
-      backward_pass_cost_ += mse_backward_impact_ * last_layer_size_;
+      forward_pass_cost_ += MSE_FORWARD_IMPACT * last_layer_size_;
+      backward_pass_cost_ += MSE_BACKWARD_IMPACT * last_layer_size_;
     }
     else if (loss->string() == "cel")
     {
@@ -158,8 +153,8 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     else if (optimiser->string() == "adam")
     {
       // optimiser_type = fetch::ml::OptimiserType::ADAM;
-      optimiser_step_impact_        = adam_step_impact_;
-      optimiser_construction_impact = adam_construction_impact_;
+      optimiser_step_impact_        = ADAM_STEP_IMPACT;
+      optimiser_construction_impact = ADAM_CONSTRUCTION_IMPACT;
     }
     else if (optimiser->string() == "momentum")
     {
@@ -185,7 +180,7 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
   return static_cast<ChargeAmount>(optimiser_construction_impact * CHARGE_UNIT);
 }
 
-ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &               optimiser,
+ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,
                                            Ptr<Array<SizeType>> const &in_layers)
 {
 
@@ -198,8 +193,7 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
                                  SizeType const &batch_size)
 {
   SizeType estimate;
-  SizeType subset_size =
-      data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
+  SizeType subset_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
   SizeType data_size   = data->GetTensor().size();
   SizeType labels_size = labels->GetTensor().size();
 
@@ -208,9 +202,9 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
   // Assign label data to dataloader
   estimate += labels_size;
   // SetRandomMode, UpdateConfig, etc.
-  estimate += fit_const_overhead_;
+  estimate += FIT_CONST_OVERHEAD;
   // PrepareBatch overhead
-  estimate += fit_per_batch_overhead_ * subset_size / batch_size;
+  estimate += FIT_PER_BATCH_OVERHEAD * subset_size / batch_size;
   // PrepareBatch-input
   estimate += data_size;
   // PrepareBatch-label
@@ -234,9 +228,8 @@ ChargeAmount ModelEstimator::Evaluate()
 
 ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 {
-  SizeType batch_size =
-      data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
-  SizeType estimate = (forward_pass_cost_)*batch_size;
+  SizeType batch_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
+  SizeType estimate   = (forward_pass_cost_)*batch_size;
 
   return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
 }

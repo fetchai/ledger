@@ -106,12 +106,12 @@ private:
 
   SizeType last_layer_size_{0};
 
-  SizeType adam_step_impact_         = 15;
-  SizeType adam_construction_impact_ = 15;
-  SizeType mse_forward_impact_       = 6;
-  SizeType mse_backward_impact_      = 6;
-  SizeType fit_const_overhead_ = 3;
-  SizeType fit_per_batch_overhead_ = 2;
+  static constexpr SizeType ADAM_STEP_IMPACT         = 15;
+  static constexpr SizeType ADAM_CONSTRUCTION_IMPACT = 15;
+  static constexpr SizeType MSE_FORWARD_IMPACT       = 6;
+  static constexpr SizeType MSE_BACKWARD_IMPACT      = 6;
+  static constexpr SizeType FIT_CONST_OVERHEAD       = 3;
+  static constexpr SizeType FIT_PER_BATCH_OVERHEAD   = 2;
 
   ChargeAmount const constant_charge{vm::CHARGE_UNIT};
 
