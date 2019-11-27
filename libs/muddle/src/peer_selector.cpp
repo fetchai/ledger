@@ -417,8 +417,7 @@ void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArra
   // remove all internal references to this objects address and peer
   std::unordered_set<Address> removed_addresses{};
   {
-    auto it = peers_info_.begin();
-    while (it != peers_info_.end())
+    for (auto it = peers_info_.begin(); it != peers_info_.end();)
     {
       Metadata &metadata  = it->second;
       auto &    peer_data = metadata.peer_data;
