@@ -131,10 +131,18 @@ TxLayouts TransactionStorageEngine::GetRecent(uint32_t max_to_poll)
   return recent_tx_.Flush(max_to_poll);
 }
 
+/**
+ * Pull a sub tree from the storage engine with the given starting prefix for the digest
+ *
+ * @param partial_digest The partial digest for the subtree
+ * @param bit_count The bit count of the partial digest for the subtree
+ * @param pull_limit The maximum number of transactions to be retrieved
+ * @return The extracted subtree of transactions from the store
+ */
 TxArray TransactionStorageEngine::PullSubtree(Digest const &partial_digest, uint64_t bit_count,
                                               uint64_t pull_limit)
 {
-  return {};
+  return archive_.PullSubtree(partial_digest, bit_count, pull_limit);
 }
 
 }  // namespace ledger

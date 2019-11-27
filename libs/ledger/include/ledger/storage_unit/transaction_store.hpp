@@ -22,6 +22,7 @@
 #include "storage/object_store.hpp"
 
 #include <string>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
@@ -29,6 +30,8 @@ namespace ledger {
 class TransactionStore : public TransactionStoreInterface
 {
 public:
+  using TxArray = std::vector<chain::Transaction>;
+
   // Construction / Destruction
   TransactionStore()                         = default;
   TransactionStore(TransactionStore const &) = delete;
@@ -45,6 +48,11 @@ public:
   bool        Has(Digest const &tx_digest) const override;
   bool        Get(Digest const &tx_digest, chain::Transaction &tx) const override;
   std::size_t GetCount() const override;
+  /// @}
+
+  /// @mame Low Level Subtree Access
+  /// @{
+  TxArray PullSubtree(Digest const &partial_digest, uint64_t bit_count, uint64_t pull_limit);
   /// @}
 
   // Operators

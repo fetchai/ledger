@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/transaction_store.hpp"
+#include "chain/transaction_rpc_serializers.hpp"
 #include "logging/logging.hpp"
 
 namespace fetch {
@@ -26,9 +26,13 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "TransactionStore";
 
-storage::ResourceID CreateResourceId(Digest const &digest)
+using fetch::storage::ResourceID;
+
+using TxArray = TransactionStore::TxArray;
+
+ResourceID CreateResourceId(Digest const &digest)
 {
-  return storage::ResourceID{digest};
+  return ResourceID{digest};
 }
 
 }  // namespace
@@ -110,6 +114,37 @@ bool TransactionStore::Get(Digest const &tx_digest, chain::Transaction &tx) cons
 std::size_t TransactionStore::GetCount() const
 {
   return archive_.size();
+}
+
+/**
+ * Pull a sub tree from the storage engine with the given starting prefix for the digest
+ *
+ * @param partial_digest The partial digest for the subtree
+ * @param bit_count The bit count of the partial digest for the subtree
+ * @param pull_limit The maximum number of transactions to be retrieved
+ * @return The extracted subtree of transactions from the store
+ */
+TxArray TransactionStore::PullSubtree(Digest const &partial_digest, uint64_t bit_count,
+                                      uint64_t pull_limit)
+{
+  TxArray ret{};
+
+  uint64_t counter = 0;
+
+  archive_.Flush(false);
+  archive_.WithLock([this, &pull_limit, &ret, &counter, &partial_digest, bit_count]() {
+
+    // This is effectively saying get all objects whose ID begins rid & mask
+    auto it = archive_.GetSubtree(ResourceID(partial_digest), bit_count);
+
+    while ((it != archive_.end()) && (counter++ < pull_limit))
+    {
+      ret.push_back(*it);
+      ++it;
+    }
+  });
+
+  return ret;
 }
 
 }  // namespace ledger
