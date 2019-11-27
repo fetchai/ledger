@@ -79,6 +79,8 @@ private:
   IfIsSupportedRefType<T> SetObject(vm::Ptr<vm::String> const &s, vm::Ptr<T> const &value);
   template <typename T>
   void SetArray(vm::Ptr<vm::String> const &s, vm::Ptr<vm::Array<T>> const &arr);
+  template <typename T>
+  void SetObjectArray(vm::Ptr<vm::String> const &s, vm::Ptr<vm::Array<vm::Ptr<T>>> const &arr);
 
   // Data
   variant::Variant contents_{variant::Variant::Object()};

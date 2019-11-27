@@ -192,7 +192,9 @@ void StructuredData::Bind(Module &module)
       .CreateMemberFunction("set", &StructuredData::SetArray<double>)
       .CreateMemberFunction("set", &StructuredData::SetArray<fixed_point::fp32_t>)
       .CreateMemberFunction("set", &StructuredData::SetArray<fixed_point::fp64_t>)
-      // .CreateMemberFunction("set", &StructuredData::SetArray<Fixed128>)
+      .CreateMemberFunction("set", &StructuredData::SetObjectArray<Fixed128>)
+      .CreateMemberFunction("set", &StructuredData::SetObjectArray<String>)
+      // .CreateMemberFunction("set", &StructuredData::SetObjectArray<UInt256Wrapper>)
       .CreateMemberFunction("set", &StructuredData::SetObject<String>)
       .CreateMemberFunction("set", &StructuredData::SetObject<Address>)
       .CreateMemberFunction("set", &StructuredData::SetObject<ByteArrayWrapper>)
@@ -492,6 +494,29 @@ void StructuredData::SetArray(vm::Ptr<vm::String> const &s, vm::Ptr<vm::Array<T>
     for (std::size_t i = 0; i < arr->elements.size(); ++i)
     {
       values[i] = arr->elements[i];
+    }
+  }
+  catch (std::exception const &ex)
+  {
+    vm_->RuntimeError("Unable to set array of variables");
+  }
+}
+
+template <typename T>
+void StructuredData::SetObjectArray(Ptr<String> const &s, Ptr<Array<Ptr<T>>> const &arr)
+{
+  try
+  {
+    auto &values = contents_[s->string()];
+
+    // update the value to be an array
+    values = variant::Variant::Array(arr->elements.size());
+
+    // add the elements into the array
+    for (std::size_t i = 0; i < arr->elements.size(); ++i)
+    {
+      Ptr<T> object = static_cast<Ptr<T>>(arr->elements[i]);
+      values[i] = ToByteArray(*object);
     }
   }
   catch (std::exception const &ex)
