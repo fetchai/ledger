@@ -188,11 +188,10 @@ public:
     uint64_t block_number_{0};
     // assuming every chain has a proper genesis
     BlockHash hash_{chain::GENESIS_DIGEST};
+    uint64_t chain_label_{0};
 
   public:
     using TipStats = std::tuple<Weight, uint64_t, Weight, BlockHash const &>;
-
-    uint64_t chain_label{0};
 
     HeaviestTip() = default;
 
@@ -201,6 +200,7 @@ public:
     {
       return TipStats{total_weight_, block_number_, weight_, hash_};
     }
+    uint64_t ChainLabel() const;
 
     void Set(Block &block);
     bool Update(Block &block);

@@ -229,13 +229,13 @@ bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) con
   default:
     auto parent_block = GetBlock(hash);
     assert(parent_block);
-    assert(heaviest_.chain_label != 0);
-    if (parent_block->chain_label != heaviest_.chain_label)
+    assert(heaviest_.ChainLabel() != 0);
+    if (parent_block->chain_label != heaviest_.ChainLabel())
     {
       ColourHeaviestChainBlocks(parent_block->block_number);
     }
     // check if this block lies on a currently known heaviest chain
-    if (parent_block->chain_label == heaviest_.chain_label)
+    if (parent_block->chain_label == heaviest_.ChainLabel())
     {
       // it does
       auto references_range = forward_references_.equal_range(hash);
@@ -244,7 +244,7 @@ bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) con
       {
         auto const &child_hash  = reference_it->second;
         auto        child_block = GetBlock(child_hash);
-        if (child_block && child_block->chain_label == heaviest_.chain_label)
+        if (child_block && child_block->chain_label == heaviest_.ChainLabel())
         {
           next_hash = child_hash;
           return true;
@@ -551,7 +551,7 @@ MainChain::IntBlockPtr MainChain::GetLabeledSubchainStart() const
 
 /**
  * Update blocks of the current heaviest chain setting their chain_label
- * equal to heaviest_.chain_label.
+ * equal to heaviest_.ChainLabel().
  *
  * @param limit the earliest block number, this colouring stops at.
  */
@@ -559,7 +559,7 @@ void MainChain::ColourHeaviestChainBlocks(uint64_t limit) const
 {
   MilliTimer myTimer("MainChain::ColourHeaviestChainBlocks");
   FETCH_LOCK(lock_);
-  assert(heaviest_.chain_label != 0);
+  assert(heaviest_.ChainLabel() != 0);
 
   auto block = GetLabeledSubchainStart();
   assert(block);
@@ -570,7 +570,7 @@ void MainChain::ColourHeaviestChainBlocks(uint64_t limit) const
     {
       throw std::runtime_error("Cannot find a block for hash");
     }
-    block->chain_label = heaviest_.chain_label;
+    block->chain_label = heaviest_.ChainLabel();
   }
   labeled_subchain_start_ = block;
 }
@@ -635,16 +635,13 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
 }
 
 /**
- * Walk the block history collecting blocks until either genesis or the block_number limit reached.
- * limit specifies destination block_number.
- * If current_hash is empty, travel starts from tip with zero limit, and from genesis otherwise.
+ * Walk the chain forward collecting at most UPPER_LIMIT blocks, until either tip reached,
+ * or next block is ambiguous, which can happen off-heaviest chain.
+ * If current_hash is empty, travel starts from genesis.
  *
- * @param current_hash In forward travel, the hash of the first block's parent;
- *                     when travelling backwards, the hash of the latest block to return
- * @param limit
- * @param direction -1 for towards genesis, +1, for towards tip
+ * @param current_hash The hash of the first block's parent
  * @return The array of blocks
- * @throws std::runtime_error if a block lookup occurs
+ * @throws std::runtime_error if a block lookup fails
  */
 MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
 {
@@ -688,9 +685,8 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
         FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
         throw std::runtime_error("Failed to lookup block");
       }
-      // The block is in the cache yet LookupBlock() failed.
-      // This indicates that forward reference is ambiguous, so we stop the loop here
-      // and the remote requester should now travel from the heaviest tip.
+      // The block is in cache yet LookupBlock() failed.
+      // This indicates that forward reference is ambiguous, so we stop the loop here.
       not_done = false;
     }
 
@@ -1320,7 +1316,7 @@ bool MainChain::UpdateHeaviestTip(IntBlockPtr const &block)
   auto ret_val = heaviest_.Update(*block);
   if (ret_val)
   {
-    if (!labeled_subchain_start_ || labeled_subchain_start_->chain_label != heaviest_.chain_label)
+    if (!labeled_subchain_start_ || labeled_subchain_start_->chain_label != heaviest_.ChainLabel())
     {
       // we have a new distinct heaviest chain
       labeled_subchain_start_ = block;
@@ -1739,10 +1735,10 @@ void MainChain::HeaviestTip::Set(Block &block)
   }
 
   // check if this block belongs to a different branch
-  if (block.chain_label != chain_label && block.previous_hash != hash_)
+  if (block.chain_label != chain_label_ && block.previous_hash != hash_)
   {
     // then we'll need to colour a new heaviest branch
-    ++chain_label;
+    ++chain_label_;
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "New heaviest tip: 0x", block.hash.ToHex());
@@ -1753,7 +1749,7 @@ void MainChain::HeaviestTip::Set(Block &block)
   block_number_ = block.block_number;
 
   // label this block as belonging to a heaviest chain
-  block.chain_label = chain_label;
+  block.chain_label = chain_label_;
 }
 
 /**
@@ -1771,6 +1767,10 @@ bool MainChain::HeaviestTip::Update(Block &block)
   }
 
   return false;
+}
+
+uint64_t MainChain::HeaviestTip::ChainLabel() const {
+	return chain_label_;
 }
 
 MainChain::BlockHash const &MainChain::HeaviestTip::Hash() const

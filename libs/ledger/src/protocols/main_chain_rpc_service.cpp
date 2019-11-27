@@ -24,6 +24,7 @@
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "logging/logging.hpp"
 #include "muddle/packet.hpp"
@@ -186,7 +187,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
-  if (!consensus_->ValidBlock(block))
+  if (consensus_->ValidBlock(block) != ConsensusInterface::Status::YES)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Block did not prove valid");
     return;
@@ -264,7 +265,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
     it->UpdateDigest();
 
     // add the block
-    if (!consensus_->ValidBlock(*it))
+    if (consensus_->ValidBlock(*it) != ConsensusInterface::Status::YES)
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
                       " from: muddle://", ToBase64(address));

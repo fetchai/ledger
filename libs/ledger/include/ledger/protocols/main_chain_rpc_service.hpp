@@ -17,13 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "constellation/constellation.hpp"
 #include "core/future_timepoint.hpp"
 #include "core/mutex.hpp"
 #include "core/random/lcg.hpp"
 #include "core/state_machine.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/consensus/consensus.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -74,7 +73,7 @@ public:
   using RpcClient       = muddle::rpc::Client;
   using TrustSystem     = p2p::P2PTrustInterface<Address>;
   using FutureTimepoint = core::FutureTimepoint;
-  using ConsensusPtr    = constellation::ConsensusPtr;
+  using ConsensusPtr    = std::shared_ptr<ConsensusInterface>;
 
   static constexpr char const *LOGGING_NAME = "MainChainRpc";
 
