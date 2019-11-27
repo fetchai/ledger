@@ -76,27 +76,51 @@ public:
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
 
     std::string aggregated_activation;
+
+    std::string last_output = "";
+//    std::string concat_placeholder =
+//        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Concat_Placeholder", {});
+
     for (std::size_t i = 0; i < input_channels_; ++i)
     {
       // slice out the input data by channel
       std::string slice_by_channel = this->template AddNode<fetch::ml::ops::Slice<TensorType>>(
           name + "_Slice" + std::to_string(i), {input}, i, channel_dim);
 
+      /// 1 convolution per depth multiplier per slice
       for (std::size_t j = 0; j < depth_multiplier_; ++j)
       {
-        // set up a kernel (height * weight * 1)
-        std::string weights =
-            this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights" + std::to_string(i) + "_" + std::to_string(j), {});
-
+        // set up a weights kernel (height * weight * 1)
+        std::string weights = this->template AddNode<fetch::ml::ops::Weights<TensorType>>(
+            name + "_Weights" + std::to_string(i) + "_" + std::to_string(j), {});
         TensorType weights_data(std::vector<SizeType>{{1, 1, kernel_size_, kernel_size_, 1}});
         fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, 1, 1, init_mode, seed);
         this->SetInput(weights, weights_data);
 
+        // perform convolution
         std::string activation = this->template AddNode<fetch::ml::ops::Convolution2D<TensorType>>(
-            name + "_Conv2D_" + std::to_string(i) + "_" + std::to_string(j), {slice_by_channel, weights}, stride_size_);
+            name + "_Conv2D_" + std::to_string(i) + "_" + std::to_string(j),
+            {slice_by_channel, weights}, stride_size_);
 
-        aggregated_activation = this->template AddNode<fetch::ml::ops::Concatenate<TensorType>>(
-            name + "_Concat_" + std::to_string(i) + "_" + std::to_string(j), {activation, weights}, static_cast<SizeType>(0));
+        // TODO - we need to store the first activation somewhere and concatenate subsequent activattions (which requires conditional op),
+        // TODO - or alternatively, we need to fill in an output placeholder of the correct ComputeOutputShape size row by row,
+        // TODO - this means we need an 'assign' op that takes data in one placeholder and copies it to another
+
+        last_output = this->template AddNode<fetch::ml::ops::Concatenate<TensorType>>(
+            name + "_Concat_" + std::to_string(i) + "_" + std::to_string(j),
+            {last_output, activation}, static_cast<SizeType>(0));
+
+//        // concat if not the first convolution
+//        if (!(last_output.empty()))
+//        {
+//          last_output = this->template AddNode<fetch::ml::ops::Concatenate<TensorType>>(
+//              name + "_Concat_" + std::to_string(i) + "_" + std::to_string(j),
+//              {last_output, activation}, static_cast<SizeType>(0));
+//        }
+//        else
+//        {
+//          last_output = activation;
+//        }
       }
     }
 
