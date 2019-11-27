@@ -201,7 +201,7 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
   fetch::math::SizeType estimate;
   fetch::math::SizeType dataloader_size = model_.GetModel()->dataloader_ptr_->Size();
   fetch::math::SizeType data_size       = data->GetTensor().size();
-  fetch::math::SizeType labels_size     = data->GetTensor().size();
+  fetch::math::SizeType labels_size     = labels->GetTensor().size();
 
   // Assign input data to dataloader
   estimate = CHARGE_UNIT * data_size;
@@ -214,7 +214,7 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
   // PrepareBatch-input
   estimate += CHARGE_UNIT * dataloader_size * batch_size * data_size;
   // PrepareBatch-label
-  estimate += CHARGE_UNIT * dataloader_size * batch_size * labels.size();
+  estimate += CHARGE_UNIT * dataloader_size * batch_size * labels_size;
   // SetInputReference, update stats
   estimate += CHARGE_UNIT * (dataloader_size / batch_size);
   // Forward and backward prob
@@ -259,7 +259,6 @@ bool ModelEstimator::SerializeTo(serializers::MsgPackSerializer &buffer)
   FETCH_UNUSED(buffer);
   return false;
 }
-throw std::runtime_error("Not yet implement");
 
 bool ModelEstimator::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
