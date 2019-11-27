@@ -180,6 +180,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     {
       solution_stack_.emplace_back(std::move(item.second));
     }
+    current_miner_ = current.miner;
   }
 
   return SUCCESS;
@@ -189,9 +190,11 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(std::size_t num_lane
 {
   // get the current solution stack
   WorkQueueStack solution_stack;
+  chain::Address miner;
   {
     FETCH_LOCK(lock_);
     std::swap(solution_stack, solution_stack_);
+    miner = std::move(current_miner_);
   }
 
   // post all the work into the thread queues
@@ -202,8 +205,8 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(std::size_t num_lane
     solution_stack.pop_back();
 
     // dispatch the work
-    threads_.Dispatch([this, work_item, num_lanes] {
-      ExecuteItem(work_item->work_queue, work_item->problem_data, num_lanes);
+    threads_.Dispatch([this, work_item, num_lanes, miner] {
+      ExecuteItem(work_item->work_queue, work_item->problem_data, num_lanes, miner);
     });
   }
 
@@ -214,7 +217,7 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(std::size_t num_lane
 }
 
 void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const &problem_data,
-                                             std::size_t num_lanes)
+                                             std::size_t num_lanes, chain::Address const &miner)
 {
   telemetry::FunctionTimer const timer{*execute_duration_};
 
@@ -254,7 +257,7 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const
   }
 
   assert(static_cast<bool>(executor));
-  executor->Verify(queue, problem_data, num_lanes);
+  executor->Verify(queue, problem_data, num_lanes, miner);
 
   // return the executor to the stack
   FETCH_LOCK(lock_);

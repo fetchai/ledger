@@ -74,7 +74,7 @@ private:
   using WorkQueueStack = std::vector<WorkItemPtr>;
   using ThreadPool     = threading::Pool;
 
-  void ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, std::size_t num_lanes);
+  void ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, std::size_t num_lanes, chain::Address const &miner);
 
   // System Components
   DAGPtr dag_;
@@ -83,6 +83,7 @@ private:
   /// @{
   Mutex          lock_;
   WorkQueueStack solution_stack_;
+  chain::Address current_miner_;
   Executors      executors_;
   ThreadPool     threads_;
   /// @}

@@ -183,24 +183,7 @@ void Executor::SettleFees(chain::Address const &miner, BlockIndex block, TokenAm
 
   FETCH_LOG_TRACE(LOGGING_NAME, "Settling fees");
 
-  // only if there are fees to settle then update the state database
-  if (amount > 0)
-  {
-    // compute the resource address
-    ResourceAddress resource_address{"fetch.token.state." + miner.display()};
-
-    // create the complete shard mask
-    BitVector shard{1u << log2_num_lanes};
-    shard.set(resource_address.lane(log2_num_lanes), 1);
-
-    // attach the token contract to the storage engine
-    StateSentinelAdapter storage_adapter{*storage_, Identifier{"fetch.token"}, shard};
-
-    ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
-                            block_};
-    ContractContextAttacher raii(token_contract_, context);
-    token_contract_.AddTokens(miner, amount);
-  }
+  fee_manager_.SettleFees(miner, amount,current_tx_->contract_address(), log2_num_lanes, block_, *storage_);
 
   FETCH_LOG_TRACE(LOGGING_NAME, "Aggregating stake updates...");
 

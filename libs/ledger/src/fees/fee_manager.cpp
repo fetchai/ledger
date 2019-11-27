@@ -22,12 +22,14 @@
 #include "ledger/fees/fee_manager.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
+#include "storage/resource_mapper.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
 
 using fetch::telemetry::Histogram;
 using fetch::telemetry::Registry;
+using fetch::storage::ResourceAddress;
 
 namespace fetch {
 namespace ledger {
@@ -138,6 +140,31 @@ void FeeManager::Execute(TransactionDetails &tx, Result &result, BlockIndex cons
 
   // deduct the fee from the originator
   token_contract_.SubtractTokens(from, result.fee);
+}
+
+void FeeManager::SettleFees(chain::Address const &miner, TokenAmount amount, chain::Address const &contract_address,
+    uint32_t log2_num_lanes, BlockIndex const &block, StorageInterface &storage)
+{
+  // only if there are fees to settle then update the state database
+  if (amount == 0)
+  {
+    return;
+  }
+
+  // compute the resource address
+  ResourceAddress resource_address{"fetch.token.state." + miner.display()};
+
+  // create the complete shard mask
+  BitVector shard{1u << log2_num_lanes};
+  shard.set(resource_address.lane(log2_num_lanes), 1);
+
+  // attach the token contract to the storage engine
+  StateSentinelAdapter storage_adapter{storage, Identifier{"fetch.token"}, shard};
+
+  ContractContext context{&token_contract_, contract_address, &storage_adapter,
+                          block};
+  ContractContextAttacher raii(token_contract_, context);
+  token_contract_.AddTokens(miner, amount);
 }
 
 }  // namespace ledger

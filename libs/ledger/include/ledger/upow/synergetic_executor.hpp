@@ -37,7 +37,7 @@ public:
   /// @name Synergetic Executor Interface
   /// @{
   void Verify(WorkQueue &solutions, ProblemData const &problem_data,
-              std::size_t num_lanes) override;
+              std::size_t num_lanes, chain::Address const &miner) override;
   /// @}
 
   // Operators

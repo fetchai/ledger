@@ -26,6 +26,7 @@
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
+#include "meta/log2.hpp"
 #include "logging/logging.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
@@ -46,6 +47,7 @@ constexpr TokenAmount const CHARGE_LIMIT = 10000000000;
 
 using fetch::telemetry::Histogram;
 using fetch::telemetry::Registry;
+using fetch::meta::Log2;
 
 }  // namespace
 
@@ -59,7 +61,7 @@ SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
 {}
 
 void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem_data,
-                                std::size_t num_lanes)
+                                std::size_t num_lanes, chain::Address const &miner)
 {
   std::unique_ptr<SynergeticContract> contract;
 
@@ -118,7 +120,6 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
           CHARGE_RATE,         CHARGE_LIMIT,        false};
 
       ContractExecutionResult result;
-      FETCH_LOG_INFO(LOGGING_NAME, "Verify: tx created");
 
       {
         telemetry::FunctionTimer const timer{*complete_duration_};
@@ -134,8 +135,11 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
                        " Reason: ", ToString(status));
         return;
       }
-      FETCH_LOG_INFO(LOGGING_NAME, "Calculated fee: ", result.charge);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Calculated fee: ", result.charge);
       fee_manager_.Execute(tx_details, result, solution->block_index(), storage_);
+
+      fee_manager_.SettleFees(miner, result.fee, tx_details.contract_address, Log2(static_cast<uint32_t>(num_lanes)),
+          solution->block_index(), storage_);
 
       contract->Detach();
 
