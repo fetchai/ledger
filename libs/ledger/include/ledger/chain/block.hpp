@@ -24,7 +24,6 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/digest.hpp"
 #include "core/serializers/base_types.hpp"
-#include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/dag/dag_epoch.hpp"
 #include "moment/clocks.hpp"
 
@@ -43,7 +42,6 @@ namespace ledger {
 class Block
 {
 public:
-  using Proof        = consensus::ProofOfWork;
   using Slice        = std::vector<chain::TransactionLayout>;
   using Slices       = std::vector<Slice>;
   using DAGEpoch     = fetch::ledger::DAGEpoch;

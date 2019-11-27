@@ -652,7 +652,7 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash) const
 {
   if (hash.empty())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Attempted to get an empty block hash!");
+    FETCH_LOG_WARN(LOGGING_NAME, "Attempted to get an empty block hash! This should not happen.");
     return {};
   }
 

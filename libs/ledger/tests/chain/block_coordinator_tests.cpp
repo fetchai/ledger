@@ -104,10 +104,6 @@ protected:
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
         LOG2_NUM_LANES, NUM_SLICES, consensus_, nullptr);
-
-    // TODO(HUT): look at this.
-    /* block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});*/
-    /*block_coordinator_->EnableMining(true);*/
   }
 
   /**
@@ -154,11 +150,6 @@ protected:
     // run one step of the state machine
     block_coordinator_->GetRunnable().Execute();
 
-    if (final_state != state_machine.state())
-    {
-      std::cout << "." << std::endl;
-    }
-
     ASSERT_EQ(std::string(block_coordinator_->ToString(final_state)),
               std::string(block_coordinator_->ToString(state_machine.state())));
   }
@@ -202,7 +193,9 @@ protected:
   BlockCoordinatorPtr block_coordinator_;
   BlockGenerator      block_generator_{NUM_LANES, NUM_SLICES};
   ConsensusPtr        consensus_;
-  uint64_t            block_interval_ms_ = 0;
+
+  // Turn off block generation so it can be done manually in the test
+  uint64_t block_interval_ms_ = 0;
 };
 
 // useful when debugging
@@ -1008,9 +1001,6 @@ protected:
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
         LOG2_NUM_LANES, NUM_SLICES, consensus_, nullptr);
-
-    // block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
-    // block_coordinator_->EnableMining(true);
   }
 
   fetch::moment::AdjustableClockPtr clock_;
