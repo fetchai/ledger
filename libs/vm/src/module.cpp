@@ -417,9 +417,10 @@ Module::Module()
       .CreateMemberFunction("set", &IShardedState::SetFromString)
       .CreateMemberFunction("set", &IShardedState::SetFromAddress);
 
-  GetClassInterface<Fixed128>()
-      .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId) -> Ptr<Fixed128> { return Ptr<Fixed128>{new Fixed128(vm, fixed_point::fp128_t::_0)}; });
+  GetClassInterface<Fixed128>().CreateSerializeDefaultConstructor(
+      [](VM *vm, TypeId) -> Ptr<Fixed128> {
+        return Ptr<Fixed128>{new Fixed128(vm, fixed_point::fp128_t::_0)};
+      });
 }
 
 }  // namespace vm

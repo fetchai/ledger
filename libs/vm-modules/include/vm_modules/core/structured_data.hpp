@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "variant/variant.hpp"
-#include "vm/fixed.hpp"
 #include "vm/address.hpp"
+#include "vm/fixed.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_modules/math/bignumber.hpp"
@@ -38,8 +38,8 @@ class StructuredData : public vm::Object
 public:
   template <typename T, typename Y = void>
   static constexpr bool IsSupportedRefType =
-      type_util::IsAnyOfV<meta::Decay<T>, vm::String, vm::Address, vm::Fixed128, vm_modules::ByteArrayWrapper,
-                          vm_modules::math::UInt256Wrapper>;
+      type_util::IsAnyOfV<meta::Decay<T>, vm::String, vm::Address, vm::Fixed128,
+                          vm_modules::ByteArrayWrapper, vm_modules::math::UInt256Wrapper>;
 
   template <typename T, typename Y = void>
   using IfIsSupportedRefType = meta::EnableIf<IsSupportedRefType<T>, Y>;
@@ -70,7 +70,8 @@ private:
   template <typename T>
   vm::Ptr<vm::Array<T>> GetArray(vm::Ptr<vm::String> const &s);
   template <typename T>
-  IfIsSupportedRefType<T, vm::Ptr<vm::Array<vm::Ptr<T>>>> GetObjectArray(vm::Ptr<vm::String> const &s);
+  IfIsSupportedRefType<T, vm::Ptr<vm::Array<vm::Ptr<T>>>> GetObjectArray(
+      vm::Ptr<vm::String> const &s);
 
   template <typename T>
   void SetPrimitive(vm::Ptr<vm::String> const &s, T value);

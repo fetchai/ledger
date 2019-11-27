@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/standard_functions/sqrt.hpp"
-#include "vm/module.hpp"
 #include "vm/fixed.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
@@ -42,7 +41,7 @@ fetch::math::meta::IfIsMath<T, T> Sqrt(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> SqrtPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> SqrtPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x = a->data_;
   fetch::math::Sqrt(x, x);

@@ -42,7 +42,7 @@ fetch::math::meta::IfIsMath<T, T> Exp(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ExpPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ExpPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x = a->data_;
   fetch::math::Exp(x, x);

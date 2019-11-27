@@ -209,10 +209,8 @@ TEST(FixedPointTest, Conversion_64_64)
   EXPECT_EQ(smallest_int.Data(), fp128_t::MIN_INT);
   EXPECT_EQ(largest_fixed_point.Data(), fp128_t::MAX);
   EXPECT_EQ(smallest_fixed_point.Data(), fp128_t::MIN);
-  EXPECT_EQ(fp128_t::MIN,
-            (static_cast<uint128_t>(0x8000000000000001) << 64) | 0x0000000000000001);
-  EXPECT_EQ(fp128_t::MAX,
-            (static_cast<uint128_t>(0x7ffffffffffffffe) << 64) | 0xffffffffffffffff);
+  EXPECT_EQ(fp128_t::MIN, (static_cast<uint128_t>(0x8000000000000001) << 64) | 0x0000000000000001);
+  EXPECT_EQ(fp128_t::MAX, (static_cast<uint128_t>(0x7ffffffffffffffe) << 64) | 0xffffffffffffffff);
 
   // We cannot be smaller than the actual negative integer of the actual type
   EXPECT_TRUE(smallest_fixed_point.Data() > std::numeric_limits<int128_t>::min());
@@ -309,10 +307,8 @@ TEST(FixedPointTest, Constants_64_64)
 
   EXPECT_EQ(fp128_t::MAX_INT, (static_cast<uint128_t>(0x7ffffffffffffffe) << 64));
   EXPECT_EQ(fp128_t::MIN_INT, (static_cast<uint128_t>(0x8000000000000002) << 64));
-  EXPECT_EQ(fp128_t::MAX,
-            (static_cast<uint128_t>(0x7ffffffffffffffe) << 64) | 0xffffffffffffffff);
-  EXPECT_EQ(fp128_t::MIN,
-            (static_cast<uint128_t>(0x8000000000000001) << 64) | 0x0000000000000001);
+  EXPECT_EQ(fp128_t::MAX, (static_cast<uint128_t>(0x7ffffffffffffffe) << 64) | 0xffffffffffffffff);
+  EXPECT_EQ(fp128_t::MIN, (static_cast<uint128_t>(0x8000000000000001) << 64) | 0x0000000000000001);
 
   EXPECT_EQ(fp128_t::MAX_EXP.Data(), (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000);
   EXPECT_EQ(fp128_t::MIN_EXP.Data(),

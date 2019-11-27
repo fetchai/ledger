@@ -43,7 +43,7 @@ fetch::math::meta::IfIsMath<T, T> Sin(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> SinPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> SinPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x;
   fetch::math::Sin(a->data_, x);
@@ -62,7 +62,7 @@ fetch::math::meta::IfIsMath<T, T> Cos(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> CosPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> CosPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x;
   fetch::math::Cos(a->data_, x);
@@ -81,7 +81,7 @@ fetch::math::meta::IfIsMath<T, T> Tan(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> TanPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> TanPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x;
   fetch::math::Tan(a->data_, x);
@@ -100,7 +100,7 @@ fetch::math::meta::IfIsMath<T, T> ASin(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ASinPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ASinPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x;
   fetch::math::ASin(a->data_, x);
@@ -119,7 +119,7 @@ fetch::math::meta::IfIsMath<T, T> ACos(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ACosPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ACosPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x;
   fetch::math::ACos(a->data_, x);
@@ -138,7 +138,7 @@ fetch::math::meta::IfIsMath<T, T> ATan(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ATanPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ATanPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x;
   fetch::math::ATan(a->data_, x);
@@ -157,7 +157,7 @@ fetch::math::meta::IfIsMath<T, T> ATan2(VM * /*vm*/, T const &a, T const &b)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ATan2Ptr(VM * vm, T const &a, T const &b)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ATan2Ptr(VM *vm, T const &a, T const &b)
 {
   fixed_point::fp128_t x;
   fetch::math::ATan2(a->data_, b->data_, x);
@@ -176,7 +176,7 @@ fetch::math::meta::IfIsMath<T, T> SinH(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> SinHPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> SinHPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x;
   fetch::math::SinH(a->data_, x);
@@ -195,7 +195,7 @@ fetch::math::meta::IfIsMath<T, T> CosH(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> CosHPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> CosHPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x;
   fetch::math::CosH(a->data_, x);
@@ -214,7 +214,7 @@ fetch::math::meta::IfIsMath<T, T> TanH(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> TanHPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> TanHPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x;
   fetch::math::TanH(a->data_, x);
@@ -233,7 +233,7 @@ fetch::math::meta::IfIsMath<T, T> ASinH(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ASinHPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ASinHPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x;
   fetch::math::ASinH(a->data_, x);
@@ -252,7 +252,7 @@ fetch::math::meta::IfIsMath<T, T> ACosH(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ACosHPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ACosHPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x;
   fetch::math::ACosH(a->data_, x);
@@ -271,7 +271,7 @@ fetch::math::meta::IfIsMath<T, T> ATanH(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ATanHPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> ATanHPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x;
   fetch::math::ATanH(a->data_, x);

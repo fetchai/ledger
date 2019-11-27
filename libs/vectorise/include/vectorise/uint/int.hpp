@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/containers/array.hpp"
 #include "meta/has_index.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/containers/array.hpp"
 #include "vectorise/platform.hpp"
 
 #include <algorithm>
@@ -792,8 +792,7 @@ constexpr Int<S> &Int<S>::operator*=(Int<S> const &n)
     for (std::size_t j = 0; j < WIDE_ELEMENTS; ++j)
     {
       // Note: C++14 does not have constexpr std::array, we need to cast the array
-      products[i][j] =
-          static_cast<uint128_t>(wide_[i]) * static_cast<uint128_t>(o.ElementAt(j));
+      products[i][j] = static_cast<uint128_t>(wide_[i]) * static_cast<uint128_t>(o.ElementAt(j));
     }
   }
 

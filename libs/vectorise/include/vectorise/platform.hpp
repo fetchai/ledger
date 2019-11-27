@@ -20,7 +20,7 @@
 #include "meta/type_traits.hpp"
 
 #if (__SIZEOF_INT128__ == 16)
-using int128_t = __int128_t;
+using int128_t  = __int128_t;
 using uint128_t = __uint128_t;
 #endif
 

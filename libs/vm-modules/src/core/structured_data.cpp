@@ -111,8 +111,9 @@ meta::EnableIf<std::is_same<UInt256Wrapper, T>::value, Ptr<T>> FromByteArray(
 }
 
 template <typename T>
-meta::EnableIf<std::is_same<Fixed128, T>::value, Ptr<T>> FromByteArray(
-    VM *vm, Ptr<String> const &name, ConstByteArray const &array)
+meta::EnableIf<std::is_same<Fixed128, T>::value, Ptr<T>> FromByteArray(VM *                  vm,
+                                                                       Ptr<String> const &   name,
+                                                                       ConstByteArray const &array)
 {
   ConstByteArray value_array_base64;
   auto const     value_array{array.FromBase64()};
@@ -147,7 +148,8 @@ ByteArray ToByteArray(UInt256Wrapper const &big_number)
 
 ByteArray ToByteArray(Fixed128 const &fixed_number)
 {
-  return byte_array::ToBase64(reinterpret_cast<uint8_t const*>(fixed_number.data_.pointer()), sizeof(fixed_point::fp128_t));
+  return byte_array::ToBase64(reinterpret_cast<uint8_t const *>(fixed_number.data_.pointer()),
+                              sizeof(fixed_point::fp128_t));
 }
 
 template <typename T>
@@ -413,7 +415,8 @@ Ptr<Array<T>> StructuredData::GetArray(Ptr<String> const &s)
       }
       else
       {
-        ret = Ptr<Array<T>>(new Array<T>(vm_, vm_->GetTypeId<IArray>(), vm_->GetTypeId<T>(), int32_t(value_array.size())));
+        ret = Ptr<Array<T>>(new Array<T>(vm_, vm_->GetTypeId<IArray>(), vm_->GetTypeId<T>(),
+                                         int32_t(value_array.size())));
         // create and preallocate the vector of elements
         // std::vector<T> elements;
         // elements.resize(value_array.size());
@@ -437,7 +440,8 @@ Ptr<Array<T>> StructuredData::GetArray(Ptr<String> const &s)
 }
 
 template <typename T>
-StructuredData::IfIsSupportedRefType<T, Ptr<Array<Ptr<T>>>> StructuredData::GetObjectArray(Ptr<String> const &s)
+StructuredData::IfIsSupportedRefType<T, Ptr<Array<Ptr<T>>>> StructuredData::GetObjectArray(
+    Ptr<String> const &s)
 {
   Ptr<Array<Ptr<T>>> ret{};
 
@@ -457,7 +461,8 @@ StructuredData::IfIsSupportedRefType<T, Ptr<Array<Ptr<T>>>> StructuredData::GetO
       }
       else
       {
-        ret = Ptr<Array<Ptr<T>>>(new Array<Ptr<T>>(vm_, vm_->GetTypeId<IArray>(), vm_->GetTypeId<T>(), int32_t(value_array.size())));
+        ret = Ptr<Array<Ptr<T>>>(new Array<Ptr<T>>(
+            vm_, vm_->GetTypeId<IArray>(), vm_->GetTypeId<T>(), int32_t(value_array.size())));
         // create and preallocate the vector of elements
         // std::vector<Ptr<T>> elements;
         // elements.resize(value_array.size());

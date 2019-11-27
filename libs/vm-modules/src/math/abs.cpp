@@ -18,8 +18,8 @@
 
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/abs.hpp"
-#include "vm/module.hpp"
 #include "vm/fixed.hpp"
+#include "vm/module.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/math/abs.hpp"
 
@@ -45,7 +45,7 @@ fetch::math::meta::IfIsMath<T, T> Abs(VM * /*vm*/, T const &a)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> AbsPtr(VM * vm, T const &a)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> AbsPtr(VM *vm, T const &a)
 {
   fixed_point::fp128_t x = a->data_;
   fetch::math::Abs(x, x);

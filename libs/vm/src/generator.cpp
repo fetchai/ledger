@@ -1356,7 +1356,6 @@ void Generator::HandleFixed64(IRExpressionNodePtr const &node)
   AddLineNumber(node->line, pc);
 }
 
-
 void Generator::HandleFixed128(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushLargeConstant);

@@ -42,7 +42,7 @@ fetch::math::meta::IfIsMath<T, T> Pow(VM * /*vm*/, T const &a, T const &b)
 }
 
 template <typename T>
-fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> PowPtr(VM * vm, T const &a, T const &b)
+fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> PowPtr(VM *vm, T const &a, T const &b)
 {
   fixed_point::fp128_t x = a->data_;
   fixed_point::fp128_t y = b->data_;
