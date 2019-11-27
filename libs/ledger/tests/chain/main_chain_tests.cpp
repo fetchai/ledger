@@ -276,14 +276,11 @@ TEST_P(MainChainTests, CheckSideChainSwitching)
   // build a small side chain
   auto const side{GenerateChain(generator_, cabinet_, genesis, 9)};
   // add the side chain blocks
-  auto j = 0;
   for (auto const &block : side)
   {
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block)) << "; side: " << Hashes(side);
-    std::cout << "Added block " << j << " in side chain" << std::endl;
     ASSERT_EQ(chain_->GetHeaviestBlockHash(), block->hash)
         << "when adding side block no. " << block->block_number << "; side: " << Hashes(side);
-    ++j;
   }
 
   // build a heavier main chain (length chosen so that it is always heavier)
@@ -294,7 +291,6 @@ TEST_P(MainChainTests, CheckSideChainSwitching)
   {
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main[i]))
         << "; side: " << Hashes(side) << "; main: " << Hashes(main);
-    std::cout << "Added block " << i << " in main chain" << std::endl;
     if (i == 0)
     {
       ASSERT_EQ(chain_->GetHeaviestBlockHash(), side.back()->hash)

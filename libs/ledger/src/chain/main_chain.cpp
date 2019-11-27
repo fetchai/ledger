@@ -107,7 +107,7 @@ MainChain::MainChain(bool const enable_bloom_filter, Mode mode)
   if (block_store_ && GetHeadHash().empty())
   {
     SetHeadHash(genesis->hash);
-    assert(genesis->hash == chain::GENESIS_DIGEST);
+    KeepBlock(genesis);
   }
 }
 
@@ -149,6 +149,7 @@ void MainChain::Reset()
   if (block_store_ && GetHeadHash().empty())
   {
     SetHeadHash(genesis->hash);
+    KeepBlock(genesis);
   }
 }
 
@@ -966,10 +967,8 @@ void MainChain::WriteToFile()
   IntBlockPtr block = block_chain_.at(heaviest_.hash);
 
   // skip if the block store is not persistent
-  FETCH_LOG_INFO(LOGGING_NAME, "Enter WriteToFile on block number ", block->block_number);
   if (block_store_ && (block->block_number >= chain::FINALITY_PERIOD))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Begin WriteToFile");
     MilliTimer myTimer("MainChain::WriteToFile", 500);
 
     // Add confirmed blocks to file, minus finality
@@ -994,23 +993,9 @@ void MainChain::WriteToFile()
     }
 
     // This block will now become the head in our file
-    // Corner case - block is genesis
-    if (block->IsGenesis())
+    // Corner case - genesis block skipped as already in file
+    if (!block->IsGenesis())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Writing genesis. ");
-
-      KeepBlock(block);
-      // Genesis should already be head
-      assert(GetHeadHash() == block->hash);
-    }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Writing block. ", block->block_number);
-      if (block->block_number == 1)
-      {
-        assert(block->previous_hash == chain::GENESIS_DIGEST);
-      }
-
       // Recover the current head block from the file
       IntBlockPtr current_file_head = std::make_shared<Block>();
       IntBlockPtr block_head        = block;
@@ -1018,12 +1003,6 @@ void MainChain::WriteToFile()
       BlockHash head_hash = GetHeadHash();
       assert(!head_hash.empty());
       LoadBlock(head_hash, *current_file_head);
-      FETCH_LOG_INFO(LOGGING_NAME, "Current file head block number ",
-                     current_file_head->block_number);
-      if (current_file_head->block_number == 0)
-      {
-        assert(current_file_head->hash == chain::GENESIS_DIGEST);
-      }
 
       // Now keep adding the block and its prev to the file until we are certain the file contains
       // an unbroken chain. Assuming that the current_file_head is unbroken we can write until we
@@ -1041,17 +1020,11 @@ void MainChain::WriteToFile()
         // Successful case
         if (current_file_head->hash == block->previous_hash)
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "WriteToFile walk back success!");
           break;
         }
 
         // Continue to push previous into file
         LookupBlock(block->previous_hash, block);
-        if (block->block_number == 0)
-        {
-          FETCH_LOG_INFO(LOGGING_NAME, "Block number zero reached in WriteToFile");
-          assert(false);
-        }
       }
 
       // Success - we kept a copy of the new head to write
@@ -1078,13 +1051,12 @@ void MainChain::TrimCache()
 {
   assert(static_cast<bool>(block_store_));
 
-  MilliTimer myTimer("MainChain::chche");
+  MilliTimer myTimer("MainChain::cache");
 
   FETCH_LOCK(lock_);
 
   BlockNumber const heaviest_block_num = GetHeaviestBlock()->block_number;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Begin trim cache");
   if (CACHE_TRIM_THRESHOLD < heaviest_block_num)
   {
     BlockNumber const trim_threshold = heaviest_block_num - CACHE_TRIM_THRESHOLD;
@@ -1129,7 +1101,6 @@ void MainChain::TrimCache()
   }
 
   // Trim stutter map
-  FETCH_LOG_INFO(LOGGING_NAME, "Start stutter block removal");
   if (!stutter_blocks_.empty() && stutter_blocks_.rbegin()->first > CACHE_TRIM_THRESHOLD)
   {
     BlockNumber const stutter_threshold = stutter_blocks_.rbegin()->first - CACHE_TRIM_THRESHOLD;
@@ -1141,7 +1112,6 @@ void MainChain::TrimCache()
       stutter_map_iter = stutter_blocks_.erase(stutter_map_iter);
     }
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "Finish stutter block removal");
 
   // Debug and sanity check
   auto loose_it = loose_blocks_.begin();
@@ -1672,10 +1642,9 @@ bool MainChain::ReindexTips()
       {
         if (enable_stutter_removal_ && !block.IsGenesis())
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Stutter blocks found for block number ",
-                         max_tip.block_number, ", weight ", max_tip.weight, ", total weight ",
-                         max_tip.total_weight);
-          assert(!enable_stutter_removal_);
+          FETCH_LOG_ERROR(LOGGING_NAME, "Stutter blocks found for block number ",
+                          max_tip.block_number, ", weight ", max_tip.weight, ", total weight ",
+                          max_tip.total_weight);
         }
         if (block.hash > max_hash)
         {
