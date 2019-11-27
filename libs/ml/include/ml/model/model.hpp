@@ -166,6 +166,7 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
     }
   }
 
+  // Add all the metric nodes to the graph and store the names in metrics_ for future reference
   for (auto const &met : metrics)
   {
     switch (met)
@@ -318,8 +319,10 @@ typename Model<TensorType>::DataVectorType Model<TensorType>::Evaluate(
   this->graph_ptr_->SetInput(input_, evaluate_pair.second.at(0));
 
   DataVectorType ret;
+  // call evaluate on the graph and store the loss in ret
   ret.emplace_back(*(this->graph_ptr_->Evaluate(error_).cbegin()));
 
+  // push further metrics into ret - due to graph caching these subsequent evaluate calls are cheap
   for (auto const &met : metrics_)
   {
     ret.emplace_back(*(this->graph_ptr_->Evaluate(met).cbegin()));
@@ -381,8 +384,6 @@ void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
 
-  loss_ = DataType{0};
-  DataType min_loss;
   DataType test_loss = fetch::math::numeric_max<DataType>();
   SizeType patience_count{0};
   bool     stop_early = false;
@@ -390,7 +391,7 @@ void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
   // run for one subset - if this is not set it defaults to epoch
   loss_ =
       optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
-  min_loss = loss_;
+  DataType min_loss = loss_;
 
   // run for remaining epochs (or subsets) with early stopping
   SizeType step{1};
@@ -472,6 +473,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
   static uint8_t const LOSS_SET_FLAG      = 12;
   static uint8_t const OPTIMISER_SET_FLAG = 13;
   static uint8_t const COMPILED_FLAG      = 14;
+  static uint8_t const TOTAL_MAP_SIZE     = 14;
 
   template <typename MapType>
   static void SerializeDataLoader(MapType map, Type const &sp)
@@ -616,7 +618,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(14);
+    auto map = map_constructor(TOTAL_MAP_SIZE);
 
     // serialize the graph first
     map.Append(GRAPH, sp.graph_ptr_->GetGraphSaveableParams());
