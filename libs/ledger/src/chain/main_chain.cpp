@@ -1769,8 +1769,9 @@ bool MainChain::HeaviestTip::Update(Block &block)
   return false;
 }
 
-uint64_t MainChain::HeaviestTip::ChainLabel() const {
-	return chain_label_;
+uint64_t MainChain::HeaviestTip::ChainLabel() const
+{
+  return chain_label_;
 }
 
 MainChain::BlockHash const &MainChain::HeaviestTip::Hash() const

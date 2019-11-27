@@ -188,7 +188,7 @@ public:
     uint64_t block_number_{0};
     // assuming every chain has a proper genesis
     BlockHash hash_{chain::GENESIS_DIGEST};
-    uint64_t chain_label_{0};
+    uint64_t  chain_label_{0};
 
   public:
     using TipStats = std::tuple<Weight, uint64_t, Weight, BlockHash const &>;

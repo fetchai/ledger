@@ -331,9 +331,8 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
                            [this]() {
                              return std::make_shared<ledger::SynergeticExecutor>(*storage_);
                            })}
-  , main_chain_service_{
-	  std::make_shared<MainChainRpcService>(muddle_->GetEndpoint(), chain_,
-						trust_, cfg_.network_mode, consensus_)}
+  , main_chain_service_{std::make_shared<MainChainRpcService>(
+        muddle_->GetEndpoint(), chain_, trust_, cfg_.network_mode, consensus_)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_open_api_module_{std::make_shared<OpenAPIHttpModule>()}
   , http_{http_network_manager_}
