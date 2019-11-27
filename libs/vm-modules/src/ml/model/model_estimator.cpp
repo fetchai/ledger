@@ -247,13 +247,25 @@ ChargeAmount ModelEstimator::DeserializeFromString(Ptr<String> const &model_stri
 
 bool ModelEstimator::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
-  FETCH_UNUSED(buffer);
+  buffer<<forward_pass_cost_;
+  buffer<<backward_pass_cost_;
+  buffer<<weights_size_sum_;
+  buffer<<optimiser_step_impact_;
+  buffer<<optimiser_step_impact_;
+  buffer<<last_layer_size_;
+
   return false;
 }
 
 bool ModelEstimator::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
-  FETCH_UNUSED(buffer);
+  buffer>>forward_pass_cost_;
+  buffer>>backward_pass_cost_;
+  buffer>>weights_size_sum_;
+  buffer>>optimiser_step_impact_;
+  buffer>>optimiser_step_impact_;
+  buffer>>last_layer_size_;
+
   return false;
 }
 

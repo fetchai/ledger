@@ -113,7 +113,7 @@ private:
   static constexpr SizeType FIT_CONST_OVERHEAD       = 3;
   static constexpr SizeType FIT_PER_BATCH_OVERHEAD   = 2;
 
-  ChargeAmount const constant_charge{vm::CHARGE_UNIT};
+  static constexpr ChargeAmount constant_charge{vm::CHARGE_UNIT};
 
   void copy_state_from(ModelEstimator const &);
 };

@@ -382,6 +382,7 @@ bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
   buffer << static_cast<uint8_t>(model_category_);
   buffer << *model_config_;
   buffer << *model_;
+  estimator_.SerializeTo(buffer);
   return true;
 }
 
@@ -429,6 +430,9 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
     throw std::runtime_error("cannot deserialise from unspecified model type");
   }
   }
+
+  // deserialise the estimator
+  estimator_.DeserializeFrom(buffer);
 
   // assign deserialised model category
   VMModel vm_model(this->vm_, this->type_id_, model_category_str);
