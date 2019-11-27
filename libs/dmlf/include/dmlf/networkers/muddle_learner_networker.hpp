@@ -111,6 +111,7 @@ protected:
 
   mutable Mutex mutex_;
   Peers         peers_;
+  std::vector<std::string> peers_uris_;
 
   // TOFIX
   MuddleChannel channel_tmp_;

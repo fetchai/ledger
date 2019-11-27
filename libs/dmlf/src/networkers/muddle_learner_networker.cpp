@@ -97,7 +97,8 @@ void MuddleLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
     auto tmp =
         client_->CallSpecificAddress(fetch::byte_array::FromBase64(byte_array::ConstByteArray(peer)),
                                     RPC_DMLF, MuddleLearnerNetworkerProtocol::RECV_BYTES, data);
-    FETCH_LOG_INFO(LOGGING_NAME, "Sending targ=", peer, " prom=", tmp->id());
+    FETCH_LOG_INFO(LOGGING_NAME, "Sending targ=", peer, " prom=", tmp->id(),
+        " uri=", peers_uris_.at(target_peer_index));
 
     promises.push_back(tmp);
   }
@@ -197,6 +198,7 @@ void MuddleLearnerNetworker::NetworkConfigInit(fetch::json::JSONDocument &doc,
     if (peer_number != instance_number)
     {
       peers_.emplace_back(config_peers[peer_number]["pub"].As<std::string>());
+      peers_uris_.emplace_back(config_peers[peer_number]["uri"].As<std::string>());
     }
   }
   if (config_peer_count <= INITIAL_PEERS_COUNT)
