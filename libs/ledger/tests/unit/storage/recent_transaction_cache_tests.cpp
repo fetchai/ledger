@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/digest.hpp"
 #include "core/containers/is_in.hpp"
+#include "core/digest.hpp"
 #include "ledger/storage_unit/recent_transaction_cache.hpp"
 #include "transaction_generator.hpp"
 
@@ -82,4 +82,4 @@ TEST_F(RecentTransactionsCacheTests, CheckTransactionLayouts)
   }
 }
 
-}
+}  // namespace

@@ -126,4 +126,4 @@ TEST_F(TransactionStoreAggregatorTests, CheckCountsOnlyStore)
   EXPECT_EQ(agg_.GetCount(), 128);
 }
 
-}
+}  // namespace

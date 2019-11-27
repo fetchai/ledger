@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/recent_transaction_cache.hpp"
 #include "chain/transaction.hpp"
+#include "ledger/storage_unit/recent_transaction_cache.hpp"
 
 namespace fetch {
 namespace ledger {

@@ -30,11 +30,11 @@ class TransactionMemoryPool : public TransactionPoolInterface
 public:
   /// @name Transaction Storage Interface
   /// @{
-  void Add(chain::Transaction const &tx) override;
-  bool Has(Digest const &tx_digest) const override;
-  bool Get(Digest const &tx_digest, chain::Transaction &tx) const override;
+  void        Add(chain::Transaction const &tx) override;
+  bool        Has(Digest const &tx_digest) const override;
+  bool        Get(Digest const &tx_digest, chain::Transaction &tx) const override;
   std::size_t GetCount() const override;
-  void Remove(Digest const &tx_digest) override;
+  void        Remove(Digest const &tx_digest) override;
   /// @}
 
 private:
