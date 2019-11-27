@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "constellation/constellation.hpp"
 #include "core/future_timepoint.hpp"
 #include "core/mutex.hpp"
 #include "core/random/lcg.hpp"
@@ -73,6 +74,7 @@ public:
   using RpcClient       = muddle::rpc::Client;
   using TrustSystem     = p2p::P2PTrustInterface<Address>;
   using FutureTimepoint = core::FutureTimepoint;
+  using ConsensusPtr    = constellation::ConsensusPtr;
 
   static constexpr char const *LOGGING_NAME = "MainChainRpc";
 
@@ -84,7 +86,7 @@ public:
   };
 
   // Construction / Destruction
-  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust, Mode mode, );
+  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust, Mode mode, ConsensusPtr consensus);
   MainChainRpcService(MainChainRpcService const &) = delete;
   MainChainRpcService(MainChainRpcService &&)      = delete;
   ~MainChainRpcService() override                  = default;
@@ -151,6 +153,7 @@ private:
   MuddleEndpoint &endpoint_;
   MainChain &     chain_;
   TrustSystem &   trust_;
+  ConsensusPtr    consensus_;
   /// @}
 
   /// @name RPC Server

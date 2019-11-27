@@ -70,12 +70,13 @@ constexpr State GetInitialState(Mode mode) noexcept
 }  // namespace
 
 MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain,
-                                         TrustSystem &trust, Mode mode)
+                                         TrustSystem &trust, Mode mode, ConsensusPtr consensus)
   : muddle::rpc::Server(endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , mode_(mode)
   , endpoint_(endpoint)
   , chain_(chain)
   , trust_(trust)
+  , consensus_(std::move(consensus))
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
   , rpc_client_("R:MChain", endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
@@ -112,6 +113,8 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
         "ledger_mainchain_service_state_synchronised_total",
         "The number of times in the sychronised state")}
 {
+  assert(consensus_);
+
   // register the main chain protocol
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);
 
@@ -182,6 +185,12 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
                  " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), ")");
 
   trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+
+  if (!consensus_->ValidBlock(block))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Block did not prove valid");
+    return;
+  }
 
   // add the new block to the chain
   auto const status = chain_.AddBlock(block);
@@ -255,39 +264,37 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
     it->UpdateDigest();
 
     // add the block
-    if (it->proof())
-    {
-      auto const status = chain_.AddBlock(*it);
-
-      switch (status)
-      {
-      case BlockStatus::ADDED:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", it->hash.ToHex(), " from: muddle://",
-                        ToBase64(address));
-        ++added;
-        break;
-      case BlockStatus::LOOSE:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", it->hash.ToHex(),
-                        " from: muddle://", ToBase64(address));
-        ++loose;
-        break;
-      case BlockStatus::DUPLICATE:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", it->hash.ToHex(),
-                        " from: muddle://", ToBase64(address));
-        ++duplicate;
-        break;
-      case BlockStatus::INVALID:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->hash.ToHex(),
-                        " from: muddle://", ToBase64(address));
-        ++invalid;
-        break;
-      }
-    }
-    else
+    if (!consensus_->ValidBlock(*it))
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
                       " from: muddle://", ToBase64(address));
       ++invalid;
+      continue;
+    }
+    auto const status = chain_.AddBlock(*it);
+
+    switch (status)
+    {
+	    case BlockStatus::ADDED:
+		    FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", it->hash.ToHex(), " from: muddle://",
+				    ToBase64(address));
+		    ++added;
+		    break;
+	    case BlockStatus::LOOSE:
+		    FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", it->hash.ToHex(),
+				    " from: muddle://", ToBase64(address));
+		    ++loose;
+		    break;
+	    case BlockStatus::DUPLICATE:
+		    FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", it->hash.ToHex(),
+				    " from: muddle://", ToBase64(address));
+		    ++duplicate;
+		    break;
+	    case BlockStatus::INVALID:
+		    FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->hash.ToHex(),
+				    " from: muddle://", ToBase64(address));
+		    ++invalid;
+		    break;
     }
   }
 
