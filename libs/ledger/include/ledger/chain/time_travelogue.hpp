@@ -30,11 +30,12 @@ namespace ledger {
 template <class B>
 struct TimeTravelogue
 {
-  using BlockType = B;
-  using Blocks    = std::vector<BlockType>;
+  using Block     = B;
+  using BlockHash = typename Block::Hash;
+  using Blocks    = std::vector<Block>;
 
-  Blocks  blocks;
-  int64_t next_direction;
+  Blocks    blocks;
+  BlockHash heaviest_hash;
 };
 
 }  // namespace ledger
@@ -45,7 +46,7 @@ template <class B, class D>
 struct MapSerializer<ledger::TimeTravelogue<B>, D>
   : MapSerializerTemplate<ledger::TimeTravelogue<B>, D,
                           SERIALIZED_STRUCT_FIELD(1, ledger::TimeTravelogue<B>::blocks),
-                          SERIALIZED_STRUCT_FIELD(2, ledger::TimeTravelogue<B>::next_direction)>
+                          SERIALIZED_STRUCT_FIELD(2, ledger::TimeTravelogue<B>::heaviest_hash)>
 {
 };
 

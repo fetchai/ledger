@@ -167,13 +167,6 @@ private:
   Promise         current_request_;
   /// @}
 
-  /// @name Transient metadata for synchronisation — gap edges
-  /// @{
-  BlockPtr left_edge_;
-  BlockPtr right_edge_;
-  int64_t  direction_ = 1;
-  /// @}
-
   /// @name Telemetry
   /// @{
   telemetry::CounterPtr recv_block_count_;

@@ -65,10 +65,10 @@ private:
     return Copy(blocks);
   }
 
-  Travelogue TimeTravel(Digest start, uint64_t limit, int64_t direction)
+  Travelogue TimeTravel(Digest start);
   {
-    auto ret_val = chain_.TimeTravel(std::move(start), limit, direction);
-    return {Copy(ret_val.blocks), ret_val.next_direction};
+    auto ret_val = chain_.TimeTravel(std::move(start));
+    return {Copy(ret_val.blocks), ret_val.heaviest_hash};
   }
 
   static Blocks Copy(MainChain::Blocks const &blocks)

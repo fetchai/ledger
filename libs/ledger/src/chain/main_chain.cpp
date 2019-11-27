@@ -646,43 +646,13 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, uint64_t limit,
-                                            int64_t direction) const
+MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
 {
   MilliTimer myTimer("MainChain::TimeTravel");
-
-  if (direction == 0)
-  {
-    return {Blocks{}, 0};
-  }
-
-  if (direction < 0)
-  {
-    // travelling back in time
-    auto ret_blocks = current_hash.empty() ?
-                                           // heaviest chain from tip requested
-                          GetHeaviestChain(limit)
-                                           // continuing descend
-                                           : GetChainPreceding(std::move(current_hash), limit);
-    if (ret_blocks.empty())
-    {
-      return {Blocks{}, 0};
-    }
-
-    auto const earliest_number = ret_blocks.back()->block_number;
-    assert(earliest_number >= limit);
-
-    // 0 as next_direction indicates stop, if we have reached block number limit
-    // otherwise next_direction is -1, to continue descent
-    int64_t next_direction = earliest_number == limit ? 0 : -1;
-    return {std::move(ret_blocks), next_direction};
-  }
 
   // Moving forward in time, towards tip
   BlockHash next_hash;
   Blocks    result;
-  int64_t   next_direction = 1;
-  bool      not_done       = true;
 
   FETCH_LOCK(lock_);
 
@@ -701,6 +671,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, uint64_t lim
     }
   }
 
+  bool not_done = true;
   for (current_hash = std::move(next_hash);
        // stop once we have gathered enough blocks or passed the tip
        not_done && !current_hash.empty() && result.size() < UPPER_BOUND;
@@ -720,24 +691,14 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, uint64_t lim
       // The block is in the cache yet LookupBlock() failed.
       // This indicates that forward reference is ambiguous, so we stop the loop here
       // and the remote requester should now travel from the heaviest tip.
-      next_direction = -1;  // signal that forward-travelling can go no further
-      not_done       = false;
-    }
-    else
-    {
-      not_done = block->block_number < limit;
+      not_done = false;
     }
 
     // update the results
     result.push_back(std::move(block));
   }
-  if (current_hash.empty())
-  {
-    // we have reached the tip of the chain, stop here
-    next_direction = 0;
-  }
 
-  return {std::move(result), next_direction};
+  return {std::move(result), GetHeaviestBlockHash()};
 }
 
 /**
@@ -1515,11 +1476,8 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash
   auto is_in_cache = LookupBlockFromCache(hash, block);
   if (is_in_cache)
   {
-    if (next_hash == nullptr                   // either forward reference is not needed
-        || LookupReference(hash, *next_hash))  // or forward reference is unique
-    {
-      return true;
-    }
+    return next_hash == nullptr // either forward reference is not needed
+	    || LookupReference(hash, *next_hash);  // or forward reference is unambiguous
   }
   // either block is not in the cache, or forward reference cannot be resolved unambiguously
   auto is_in_storage = LookupBlockFromStorage(hash, block, next_hash);
