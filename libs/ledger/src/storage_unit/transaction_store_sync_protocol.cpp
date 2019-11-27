@@ -19,9 +19,9 @@
 #include "chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/transaction_storage_engine_interface.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
+#include "telemetry/counter.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
-#include "telemetry/counter.hpp"
 #include "telemetry/utils/timer.hpp"
 
 #include <algorithm>
