@@ -636,7 +636,27 @@ def execute_expression(parameters, test_instance):
         output(f"Result of execution of '{expression}' is '{result}'")
 
 
+def fail(parameters, test_instance):
+    global command_map
+    for key in parameters:
+        output(f"Running {key} command in fail mode")
+        try:
+            func = command_map.get(key, None)
+            if func:
+                func(parameters[key], test_instance)
+            else:
+                output(
+                    "Found unknown command when running steps: '{}'".format(
+                        key))
+                sys.exit(1)
+            output(f"Running command {key} not failed!")
+            sys.exit(1)
+        except BaseException:
+            pass
+
+
 def run_steps(test_yaml, test_instance):
+    global command_map
     output("Running steps: {}".format(test_yaml))
 
     for step in test_yaml:
@@ -654,44 +674,10 @@ def run_steps(test_yaml, test_instance):
             raise RuntimeError(
                 "Failed to parse command from step: {}".format(step))
 
-        if command == 'send_txs':
-            send_txs(parameters, test_instance)
-        elif command == 'verify_txs':
-            verify_txs(parameters, test_instance)
-        elif command == 'add_node':
-            add_node(parameters, test_instance)
-        elif command == 'sleep':
-            time.sleep(parameters)
-        elif command == 'print_time_elapsed':
-            test_instance.print_time_elapsed()
-        elif command == 'run_python_test':
-            run_python_test(parameters, test_instance)
-        elif command == 'restart_nodes':
-            restart_nodes(parameters, test_instance)
-        elif command == 'stop_nodes':
-            stop_nodes(parameters, test_instance)
-        elif command == 'start_nodes':
-            start_nodes(parameters, test_instance)
-        elif command == 'destake':
-            destake(parameters, test_instance)
-        elif command == 'run_dmlf_etch_client':
-            run_dmlf_etch_client(parameters, test_instance)
-        elif command == "create_wealth":
-            create_wealth(parameters, test_instance)
-        elif command == "create_synergetic_contract":
-            create_synergetic_contract(parameters, test_instance)
-        elif command == "run_contract":
-            run_contract(parameters, test_instance)
-        elif command == "wait_for_blocks":
-            wait_for_blocks(parameters, test_instance)
-        elif command == "verify_chain_sync":
-            verify_chain_sync(parameters, test_instance)
-        elif command == "wait_network_ready":
-            wait_network_ready(parameters, test_instance)
-        elif command == "query_balance":
-            query_balance(parameters, test_instance)
-        elif command == "execute_expression":
-            execute_expression(parameters, test_instance)
+        func = command_map.get(command, None)
+
+        if func:
+            func(parameters, test_instance)
         else:
             output(
                 "Found unknown command when running steps: '{}'".format(
@@ -700,6 +686,30 @@ def run_steps(test_yaml, test_instance):
 
 
 def run_test(build_directory, yaml_file, node_exe, name_filter=None):
+    global command_map
+
+    command_map = {
+        "send_txs": send_txs,
+        "verify_txs": verify_txs,
+        "add_node": add_node,
+        "sleep": lambda parameters, test_instance: time.sleep(parameters),
+        "print_time_elapsed": lambda parameters, test_instance: test_instance.print_time_elapsed(),
+        "run_python_test": run_python_test,
+        "restart_nodes": restart_nodes,
+        "stop_nodes": stop_nodes,
+        "start_nodes": start_nodes,
+        "destake": destake,
+        "run_dmlf_etch_client": run_dmlf_etch_client,
+        "create_wealth": create_wealth,
+        "create_synergetic_contract": create_synergetic_contract,
+        "run_contract": run_contract,
+        "wait_for_blocks": wait_for_blocks,
+        "verify_chain_sync": verify_chain_sync,
+        "wait_network_ready": wait_network_ready,
+        "query_balance": query_balance,
+        "execute_expression": execute_expression,
+        "fail": fail
+    }
 
     # Read YAML file
     with open(yaml_file, 'r') as stream:
