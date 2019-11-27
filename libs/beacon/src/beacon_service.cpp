@@ -301,21 +301,19 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   uint64_t const index = block_entropy_being_created_->block_number;
   beacon_entropy_current_round_->set(index);
 
-  // On first entry to function, populate with our info (will go between collect and verify)
-  if (state_machine_->previous_state() == State::PREPARE_ENTROPY_GENERATION)
+  // Only populate our signature information when we want to share it with peers (when less
+  // than lead blocks from the HEAD). Entropy generation can however sync ahead of the chain.
+  if (signatures_being_built_.find(index) == signatures_being_built_.end() &&
+      index <= (most_recent_round_seen_ + entropy_lead_blocks_))
   {
     SignatureInformation this_round;
     this_round.round                                        = index;
     this_round.threshold_signatures[identity_.identifier()] = active_exe_unit_->member_share;
     signatures_being_built_[index]                          = this_round;
-
-    // TODO(HUT): clean historically old sigs + entropy here
   }
 
-  // Don't proceed from this state if it is ahead of the entropy we are trying to generate,
-  // or we have no peers
-  if (index > (most_recent_round_seen_ + entropy_lead_blocks_) ||
-      endpoint_.GetDirectlyConnectedPeers().empty())
+  // Don't make RPC calls if we have no peers
+  if (endpoint_.GetDirectlyConnectedPeers().empty())
   {
     state_machine_->Delay(std::chrono::milliseconds(5));
     return State::COLLECT_SIGNATURES;
@@ -451,7 +449,6 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
 
   MilliTimer const timer{"Verify threshold signature", 100};
 
-  // TODO(HUT): possibility for infinite loop here I suspect.
   if (active_exe_unit_->manager.can_verify() && active_exe_unit_->manager.Verify())
   {
     return State::COMPLETE;
