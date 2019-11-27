@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/shuffle_algorithm_interface.hpp"
+#include "dmlf/deprecated/shuffle_algorithm_interface.hpp"
 
 namespace fetch {
 namespace dmlf {
