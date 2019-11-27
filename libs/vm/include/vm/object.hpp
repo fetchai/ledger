@@ -40,6 +40,7 @@ class Ptr;
 struct Variant;
 class Address;
 struct String;
+struct Fixed128;
 
 template <typename T>
 using IsPrimitive =
@@ -72,6 +73,12 @@ using IsAddress = std::is_base_of<Address, T>;
 
 template <typename T>
 using IsString = std::is_base_of<String, std::decay_t<T>>;
+
+template <typename T>
+using IsFixed128 = std::is_base_of<Fixed128, std::decay_t<T>>;
+
+template <typename T, typename R = void>
+using IfIsPtrFixed128 = std::enable_if_t<IsFixed128<T>::value, R>;
 
 template <typename T, typename R = void>
 using IfIsExternal = std::enable_if_t<
