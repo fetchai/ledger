@@ -703,7 +703,7 @@ TEST_F(MLTests, non_permitted_serialisation_model_sequential_test)
     )";
 
   ASSERT_TRUE(toolkit.Compile(model_sequential_serialise_src));
-  EXPECT_THROW(toolkit.Run(), std::runtime_error);
+  EXPECT_FALSE(toolkit.Run());
 }
 
 TEST_F(MLTests, non_permitted_serialisation_model_regressor_test)
@@ -723,7 +723,7 @@ TEST_F(MLTests, non_permitted_serialisation_model_regressor_test)
     )";
 
   ASSERT_TRUE(toolkit.Compile(model_regressor_serialise_src));
-  EXPECT_THROW(toolkit.Run(), std::runtime_error);
+  EXPECT_FALSE(toolkit.Run());
 }
 
 TEST_F(MLTests, non_permitted_serialisation_model_classifier_test)
@@ -743,7 +743,7 @@ TEST_F(MLTests, non_permitted_serialisation_model_classifier_test)
     )";
 
   ASSERT_TRUE(toolkit.Compile(model_classifier_serialise_src));
-  EXPECT_THROW(toolkit.Run(), std::runtime_error);
+  EXPECT_FALSE(toolkit.Run());
 }
 
 TEST_F(MLTests, optimiser_set_graph_test)
