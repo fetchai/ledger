@@ -188,10 +188,17 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
-  if (!ValidBlock(block))
+  try
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Block did not prove valid");
-    return;
+    if (!ValidBlock(block))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block did not prove valid");
+      return;
+    }
+  }
+  catch (std::runtime_error const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Consensus threw when validating new block! ", ex.what());
   }
 
   // add the new block to the chain
@@ -271,13 +278,21 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
     it->UpdateDigest();
 
     // add the block
-    if (!ValidBlock(*it))
+    try
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
-                      " from: muddle://", ToBase64(address));
-      ++invalid;
-      continue;
+      if (!ValidBlock(*it))
+      {
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
+                        " from: muddle://", ToBase64(address));
+        ++invalid;
+        continue;
+      }
     }
+    catch (std::runtime_error const &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Consensus threw when validating during fwd sync! ", ex.what());
+    }
+
     auto const status = chain_.AddBlock(*it);
 
     switch (status)
