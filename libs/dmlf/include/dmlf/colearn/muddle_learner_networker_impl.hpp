@@ -50,11 +50,11 @@ public:
   using Lock                          = std::unique_lock<Mutex>;
   using MuddlePtr                     = muddle::MuddlePtr;
   using NetMan                        = fetch::network::NetworkManager;
-  using NetManP                       = std::shared_ptr<NetMan>;
+  using NetManPtr                     = std::shared_ptr<NetMan>;
   using Payload                       = fetch::muddle::Packet::Payload;
   using Peers                         = std::unordered_set<Address>;
   using Proto                         = ColearnProtocol;
-  using ProtoP                        = std::shared_ptr<ColearnProtocol>;
+  using ProtoPtr                      = std::shared_ptr<ColearnProtocol>;
   using Randomiser                    = RandomDouble;
   using RpcClient                     = fetch::muddle::rpc::Client;
   using RpcClientPtr                  = std::shared_ptr<RpcClient>;
@@ -67,7 +67,7 @@ public:
   using Store                         = UpdateStore;
   using StorePtr                      = std::shared_ptr<Store>;
   using SubscriptionPtr               = fetch::muddle::MuddleEndpoint::SubscriptionPtr;
-  using TaskP                         = Taskpool::TaskP;
+  using TaskPtr                       = Taskpool::TaskP;
   using Threadpool                    = oef::base::Threadpool;
   using UpdateClass                   = AbstractMessageController::UpdateClass;
   using UpdatePtr                     = AbstractMessageController::UpdatePtr;
@@ -126,7 +126,7 @@ public:
   ConstUpdatePtr GetUpdate(AlgorithmClass const &algo, UpdateType const &type,
                            Criteria const &criteria);
 
-  virtual void submit(TaskP const &t);
+  virtual void submit(TaskPtr const &t);
 
   // This is the exposed interface
 
@@ -177,7 +177,7 @@ private:
   MuddlePtr                   mud_;
   RpcClientPtr                client_;
   RpcServerPtr                server_;
-  ProtoP                      proto_;
+  ProtoPtr                    proto_;
   StorePtr                    update_store_;
   Randomiser                  randomiser_;
   double                      broadcast_proportion_;
@@ -185,9 +185,9 @@ private:
   SubscriptionPtr             subscription_;
   byte_array::ConstByteArray  public_key_;
 
-  std::shared_ptr<NetMan> netm_;
-  Sources                 detected_peers_;
-  SourcesList             supplied_peers_;
+  NetManPtr   netm_;
+  Sources     detected_peers_;
+  SourcesList supplied_peers_;
 
   mutable Mutex mutex_;
 

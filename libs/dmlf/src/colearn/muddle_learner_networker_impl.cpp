@@ -150,7 +150,7 @@ MuddleLearnerNetworkerImpl::~MuddleLearnerNetworkerImpl()
   tasks_runners_->stop();
 }
 
-void MuddleLearnerNetworkerImpl::submit(TaskP const &t)
+void MuddleLearnerNetworkerImpl::submit(TaskPtr const &t)
 {
   taskpool_->submit(t);
 }
