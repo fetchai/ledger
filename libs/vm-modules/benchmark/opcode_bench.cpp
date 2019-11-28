@@ -25,6 +25,7 @@
 #include <vm_modules/math/bignumber.hpp>
 #include <vm_modules/math/math.hpp>
 #include <vm_modules/math/random.hpp>
+#include <vm_modules/vm_factory.hpp>
 
 #include "benchmark/benchmark.h"
 
@@ -36,6 +37,7 @@
 
 using fetch::vm::VM;
 using fetch::vm::Module;
+using fetch::vm_modules::VMFactory;
 using fetch::vm::Executable;
 using fetch::vm::Variant;
 using fetch::vm::Compiler;
@@ -74,28 +76,19 @@ namespace {
  */
 
 // Benchmark parameters (change as desired)
-const uint32_t max_array_len = 16384, n_array_lens = 32, max_str_len = 16384, n_str_lens = 10,
-               max_tensor_size = 531441, n_tensor_sizes = 16, n_dim_sizes = n_tensor_sizes * 3,
-               max_crypto_len = 16384, n_crypto_lens = 10;
+const uint32_t max_array_len = 16384, n_array_lens = 33, max_str_len = 16384, n_str_lens = 17,
+               max_tensor_size = 531441, n_tensor_sizes = 17, n_dim_sizes = n_tensor_sizes * 3,
+               max_crypto_len = 16384, n_crypto_lens = 17;
 
 // Number of benchmarks in each category
 const uint32_t n_basic_bms = 15, n_object_bms = 10, n_prim_bms = 25, n_math_bms = 16,
                n_array_bms = 10, n_tensor_bms = 5, n_crypto_bms = 6;
 
-// Categories can be selectively suppressed using environment variables
-const bool run_basic    = std::getenv("FETCH_VM_BENCHMARK_NO_BASIC") == nullptr,
-           run_object   = std::getenv("FETCH_VM_BENCHMARK_NO_OBJECT") == nullptr,
-           run_prim_ops = std::getenv("FETCH_VM_BENCHMARK_NO_PRIM_OPS") == nullptr,
-           run_math     = std::getenv("FETCH_VM_BENCHMARK_NO_MATH") == nullptr,
-           run_array    = std::getenv("FETCH_VM_BENCHMARK_NO_ARRAY") == nullptr,
-           run_tensor   = std::getenv("FETCH_VM_BENCHMARK_NO_TENSOR") == nullptr,
-           run_crypto   = std::getenv("FETCH_VM_BENCHMARK_NO_CRYPTO") == nullptr;
-
 // Number of total (including int) and decimal (fixed or float) primitives
 const uint32_t n_primitives = 12, n_dec_primitives = 4;
 
 // Index benchmarks for interpretation by "scripts/benchmark/opcode_timing.py"
-const uint32_t basic_begin = 0, basic_end = run_basic ? n_basic_bms : 1;  // always run "Return"
+const uint32_t basic_begin = 0, basic_end = n_basic_bms;  // always run "Return"
 const uint32_t object_begin = basic_end, object_end = object_begin + n_str_lens * n_object_bms;
 const uint32_t prim_begin = object_end, prim_end = prim_begin + n_prim_bms * n_primitives;
 const uint32_t math_begin = prim_end, math_end = math_begin + n_math_bms * n_dec_primitives;
@@ -117,15 +110,8 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
                        std::string const &etch_code, std::string const &baseline_name,
                        uint32_t const bm_ind)
 {
-
-  Module module;
-
-  fetch::vm_modules::math::BindMath(module);
-  fetch::vm_modules::math::BindRand(module);
-  fetch::vm_modules::ByteArrayWrapper::Bind(module);
-  fetch::vm_modules::math::UInt256Wrapper::Bind(module);
-  fetch::vm_modules::SHA256Wrapper::Bind(module);
-  Compiler compiler(&module);
+  auto     module = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
+  Compiler compiler(module.get());
   IR       ir;
 
   // Compile the source code
@@ -139,8 +125,8 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
 
   // Generate an IR
   Executable executable;
-  VM         vm{&module};
-  if (!vm.GenerateExecutable(ir, "default_exe", executable, errors))
+  auto       vm = std::make_unique<VM>(module.get());
+  if (!vm->GenerateExecutable(ir, "default_exe", executable, errors))
   {
     std::cout << "Skipping benchmark (unable to generate IR)" << std::endl;
     return;
@@ -151,7 +137,7 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
   Variant     output{};
   for (auto _ : state)
   {
-    vm.Execute(executable, "main", error, output);
+    // vm->Execute(executable, "main", error, output);
   }
 
   auto function = executable.FindFunction("main");
@@ -168,6 +154,20 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
     }
   }
   ofs << std::endl;
+  ofs.close();
+
+  // The first time through, write all opcode information to file
+  if (bm_ind == 0)
+  {
+    ofs.open("opcode_defs.csv", std::ios::out);
+    uint32_t i = 0;
+    for (auto &opcode : vm->GetOpcodeInfoArray())
+    {
+      ofs << i << "\t" << opcode.unique_name << "\t" << opcode.static_charge << std::endl;
+      ++i;
+    }
+    ofs.close();
+  }
 }
 
 // The following functions are all used to generate Etch code
@@ -286,8 +286,7 @@ std::string Sha256UpdateBuf(std::string const &buffer)
   return "s.update(\"" + buffer + "\");\n";
 }
 
-/** Create a linear spaced range vector from max/n_elem to max of primitive type T
- * (does not include zero)
+/** Create a linear spaced range vector from zero to max of primitive type T
  *
  * @tparam max is the range maximum and last element in the vector
  * @param n_elem is the number of elements to include in the vector
@@ -297,15 +296,16 @@ std::string Sha256UpdateBuf(std::string const &buffer)
 template <typename T>
 std::vector<T> LinearRangeVector(T max, uint32_t n_elem)
 {
-  float      current_val = 0.0f;
-  auto const step        = static_cast<float>(max) / static_cast<float>(n_elem);
+  float      current_val = 1.0f;
+  auto const step        = static_cast<float>(max) / static_cast<float>(n_elem - 1);
 
   std::vector<T> v(n_elem);
   for (auto it = v.begin(); it != v.end(); ++it)
   {
-    current_val += step;
     *it = static_cast<T>(current_val);
+    current_val += step;
   }
+  v[0] = static_cast<T>(1);
   return v;
 }
 
@@ -813,30 +813,12 @@ void CryptoBenchmarks(benchmark::State &state)
 bool RegisterBenchmarks()
 {
   BENCHMARK(BasicBenchmarks)->DenseRange(basic_begin, basic_end - 1, 1);
-  if (run_object)
-  {
-    BENCHMARK(ObjectBenchmarks)->DenseRange(object_begin, object_end - 1, 1);
-  }
-  if (run_prim_ops)
-  {
-    BENCHMARK(PrimitiveOpBenchmarks)->DenseRange(prim_begin, prim_end - 1, 1);
-  }
-  if (run_math)
-  {
-    BENCHMARK(MathBenchmarks)->DenseRange(math_begin, math_end - 1, 1);
-  }
-  if (run_array)
-  {
-    BENCHMARK(ArrayBenchmarks)->DenseRange(array_begin, array_end - 1, 1);
-  }
-  if (run_tensor)
-  {
-    BENCHMARK(TensorBenchmarks)->DenseRange(tensor_begin, tensor_end - 1, 1);
-  }
-  if (run_crypto)
-  {
-    BENCHMARK(CryptoBenchmarks)->DenseRange(crypto_begin, crypto_end - 1, 1);
-  }
+  BENCHMARK(ObjectBenchmarks)->DenseRange(object_begin, object_end - 1, 1);
+  BENCHMARK(PrimitiveOpBenchmarks)->DenseRange(prim_begin, prim_end - 1, 1);
+  BENCHMARK(MathBenchmarks)->DenseRange(math_begin, math_end - 1, 1);
+  BENCHMARK(ArrayBenchmarks)->DenseRange(array_begin, array_end - 1, 1);
+  BENCHMARK(TensorBenchmarks)->DenseRange(tensor_begin, tensor_end - 1, 1);
+  BENCHMARK(CryptoBenchmarks)->DenseRange(crypto_begin, crypto_end - 1, 1);
   return true;
 }
 

@@ -306,6 +306,11 @@ void VM::SetChargeLimit(ChargeAmount limit)
   charge_limit_ = limit;
 }
 
+VM::OpcodeInfoArray &VM::GetOpcodeInfoArray()
+{
+  return opcode_info_array_;
+}
+
 void VM::UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_static_charges)
 {
   for (auto const &entry : opcode_static_charges)
