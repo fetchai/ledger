@@ -41,8 +41,8 @@ const std::string consumerb = "consumerb";
 
 using UpdatePtr = UpdateStore::UpdatePtr;
 
-auto LifoCriteria = [](UpdatePtr const &u) { return -u->TimeSinceCreation().count(); };
-auto FifoCriteria = [](UpdatePtr const &u) { return u->TimeSinceCreation().count(); };
+auto LifoCriteria = [](UpdatePtr const &u) { return static_cast<double>(-u->TimeSinceCreation().count()); };
+auto FifoCriteria = [](UpdatePtr const &u) { return static_cast<double>(u->TimeSinceCreation().count()); };
 
 }  // namespace
 
