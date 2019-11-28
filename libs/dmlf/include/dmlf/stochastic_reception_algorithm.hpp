@@ -36,7 +36,7 @@ public:
 
   std::vector<std::size_t> GetNextOutputs() override
   {
-    return {};
+    throw std::invalid_argument("StochasticReceptionAlgorithm::GetNextOutputs should never be called.")
   }
 
   StochasticReceptionAlgorithm(StochasticReceptionAlgorithm const &other) = delete;
