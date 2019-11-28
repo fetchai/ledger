@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "core/common.hpp"
 #include "logging/logging.hpp"
 #include "meta/value_util.hpp"
@@ -30,6 +31,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <initializer_list>
+#include <istream>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -101,6 +103,8 @@ public:
 
   explicit ConstByteArray(std::istream &in)
   {
+    detailed_assert(in.good());
+
     in.seekg(0, std::ios::end);
     auto const size_in_bytes = in.tellg();
     in.seekg(0, std::ios::beg);
