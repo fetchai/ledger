@@ -141,6 +141,7 @@ def build_type(text):
             'Invalid build type {text}. Choices: {build_types}'.format(text=text, build_types=", ".join(BUILD_TYPES)))
     return text
 
+
 def log_level(text):
     if text not in LOG_LEVELS:
         raise RuntimeError(
@@ -152,7 +153,7 @@ def parse_commandline():
     parser = argparse.ArgumentParser()
     parser.add_argument('build_type', metavar='TYPE',
                         type=build_type, help='The type of build to be used')
-    parser.add_argument('--log-level', 
+    parser.add_argument('--log-level',
                         type=log_level, help='Override FETCH_LOG_LEVEL (one of '+', '.join(LOG_LEVELS)+')')
     parser.add_argument(
         '-p', '--build-path-prefix', default='build-',

@@ -364,24 +364,24 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
 
     if (status == PromiseState::SUCCESS)
     {
-	    // the request was successful
-	    next_state = State::REQUEST_HEAVIEST_CHAIN; // request succeeding chunk
+      // the request was successful
+      next_state = State::REQUEST_HEAVIEST_CHAIN;  // request succeeding chunk
 
-	    auto  response = current_request_->As<MainChainProtocol::Travelogue>();
-	    auto &blocks   = response.blocks;
+      auto  response = current_request_->As<MainChainProtocol::Travelogue>();
+      auto &blocks   = response.blocks;
 
-	    // we should receive at least one extra block in addition to what we already have
-	    if (!blocks.empty())
-	    {
-		    HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
-		    auto const &latest_hash = blocks.back().hash;
-		    assert(!latest_hash.empty());  // should be set by HandleChainResponse()
-		    // TODO(unknown): this is to be improved later
-		    if (latest_hash == response.heaviest_hash)
-		    {
-			    next_state = State::SYNCHRONISING; // we have reached the tip
-		    }
-	    }
+      // we should receive at least one extra block in addition to what we already have
+      if (!blocks.empty())
+      {
+        HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
+        auto const &latest_hash = blocks.back().hash;
+        assert(!latest_hash.empty());  // should be set by HandleChainResponse()
+        // TODO(unknown): this is to be improved later
+        if (latest_hash == response.heaviest_hash)
+        {
+          next_state = State::SYNCHRONISING;  // we have reached the tip
+        }
+      }
     }
 
     if (status != PromiseState::WAITING)
