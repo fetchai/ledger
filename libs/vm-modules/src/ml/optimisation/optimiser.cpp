@@ -98,15 +98,15 @@ VMOptimiser::VMOptimiser(VM *vm, TypeId type_id, std::string const &mode, GraphT
 void VMOptimiser::Bind(Module &module)
 {
   module.CreateClassType<VMOptimiser>("Optimiser")
-      .CreateConstructor(&VMOptimiser::Constructor)
+      .CreateConstructor(&VMOptimiser::Constructor, vm::CHARGE_INFINITY)
       .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMOptimiser> {
         return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id)};
       })
-      .CreateMemberFunction("run", &VMOptimiser::RunData)
-      .CreateMemberFunction("run", &VMOptimiser::RunLoader)
-      .CreateMemberFunction("run", &VMOptimiser::RunLoaderNoSubset)
-      .CreateMemberFunction("setGraph", &VMOptimiser::SetGraph)
-      .CreateMemberFunction("setDataloader", &VMOptimiser::SetDataloader);
+      .CreateMemberFunction("run", &VMOptimiser::RunData, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("run", &VMOptimiser::RunLoader, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("run", &VMOptimiser::RunLoaderNoSubset, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("setGraph", &VMOptimiser::SetGraph, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("setDataloader", &VMOptimiser::SetDataloader, vm::CHARGE_INFINITY);
 }
 
 Ptr<VMOptimiser> VMOptimiser::Constructor(

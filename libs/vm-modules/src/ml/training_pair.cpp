@@ -39,9 +39,11 @@ VMTrainingPair::VMTrainingPair(
 void VMTrainingPair::Bind(Module &module)
 {
   module.CreateClassType<fetch::vm_modules::ml::VMTrainingPair>("TrainingPair")
-      .CreateConstructor(&VMTrainingPair::Constructor)
-      .CreateMemberFunction("data", &fetch::vm_modules::ml::VMTrainingPair::data)
-      .CreateMemberFunction("label", &fetch::vm_modules::ml::VMTrainingPair::label);
+      .CreateConstructor(&VMTrainingPair::Constructor, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("data", &fetch::vm_modules::ml::VMTrainingPair::data,
+                            vm::CHARGE_INFINITY)
+      .CreateMemberFunction("label", &fetch::vm_modules::ml::VMTrainingPair::label,
+                            vm::CHARGE_INFINITY);
 }
 
 Ptr<VMTrainingPair> VMTrainingPair::Constructor(

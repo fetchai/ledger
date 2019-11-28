@@ -155,28 +155,31 @@ Ptr<VMStateDict> VMGraph::StateDict()
 void VMGraph::Bind(Module &module)
 {
   module.CreateClassType<VMGraph>("Graph")
-      .CreateConstructor(&VMGraph::Constructor)
+      .CreateConstructor(&VMGraph::Constructor, vm::CHARGE_INFINITY)
       .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMGraph> {
         return Ptr<VMGraph>{new VMGraph(vm, type_id)};
       })
-      .CreateMemberFunction("setInput", &VMGraph::SetInput)
-      .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
-      .CreateMemberFunction("backPropagate", &VMGraph::BackPropagate)
-      .CreateMemberFunction("step", &VMGraph::Step)
-      .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder)
-      .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected)
-      .CreateMemberFunction("addConv1D", &VMGraph::AddConv1D)
-      .CreateMemberFunction("addRelu", &VMGraph::AddRelu)
-      .CreateMemberFunction("addSoftmax", &VMGraph::AddSoftmax)
-      .CreateMemberFunction("addDropout", &VMGraph::AddDropout)
-      .CreateMemberFunction("addCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss)
-      .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss)
-      .CreateMemberFunction("addTranspose", &VMGraph::AddTranspose)
-      .CreateMemberFunction("addExp", &VMGraph::AddExp)
-      .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict)
-      .CreateMemberFunction("stateDict", &VMGraph::StateDict)
-      .CreateMemberFunction("serializeToString", &VMGraph::SerializeToString)
-      .CreateMemberFunction("deserializeFromString", &VMGraph::DeserializeFromString);
+      .CreateMemberFunction("setInput", &VMGraph::SetInput, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("evaluate", &VMGraph::Evaluate, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("backPropagate", &VMGraph::BackPropagate, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("step", &VMGraph::Step, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("addConv1D", &VMGraph::AddConv1D, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("addRelu", &VMGraph::AddRelu, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("addSoftmax", &VMGraph::AddSoftmax, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("addDropout", &VMGraph::AddDropout, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("addCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss,
+                            vm::CHARGE_INFINITY)
+      .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss,
+                            vm::CHARGE_INFINITY)
+      .CreateMemberFunction("addTranspose", &VMGraph::AddTranspose, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("addExp", &VMGraph::AddExp, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("stateDict", &VMGraph::StateDict, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("serializeToString", &VMGraph::SerializeToString, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("deserializeFromString", &VMGraph::DeserializeFromString,
+                            vm::CHARGE_INFINITY);
 }
 
 VMGraph::GraphType &VMGraph::GetGraph()

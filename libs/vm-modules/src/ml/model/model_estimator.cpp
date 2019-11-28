@@ -29,6 +29,8 @@ namespace vm_modules {
 namespace ml {
 namespace model {
 
+static constexpr char const *LOGGING_NAME = "VMModelEstimator";
+
 ModelEstimator::ModelEstimator(VMObjectType &model)
   : model_{model}
 {}
@@ -51,19 +53,19 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
   // guarantee it's a dense layer
   if (!(layer->string() == "dense"))
   {
-    throw std::runtime_error("invalid params specified for " + layer->string() + " layer");
+    return infinite_charge("invalid params specified for " + layer->string() + " layer");
   }
 
   if (model_.model_category_ == ModelCategory::SEQUENTIAL)
   {
-    forward_pass_cost_ += inputs * hidden_nodes + inputs + hidden_nodes;
-    backward_pass_cost_ += 2 * inputs * hidden_nodes + inputs + 2 * hidden_nodes;
-    weights_size_sum_ += inputs * hidden_nodes + hidden_nodes;
-    last_layer_size_ = hidden_nodes;
+    state_.forward_pass_cost += inputs * hidden_nodes + inputs + hidden_nodes;
+    state_.backward_pass_cost += 2 * inputs * hidden_nodes + inputs + 2 * hidden_nodes;
+    state_.weights_size_sum += inputs * hidden_nodes + hidden_nodes;
+    state_.last_layer_size = hidden_nodes;
   }
   else
   {
-    throw std::runtime_error("no add method for non-sequential methods");
+    return infinite_charge("no add method for non-sequential methods");
   }
 
   return static_cast<ChargeAmount>((inputs * hidden_nodes + hidden_nodes) * CHARGE_UNIT);
@@ -78,12 +80,12 @@ ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> cons
 
   if (activation->string() == "relu")
   {
-    forward_pass_cost_ += hidden_nodes;
-    backward_pass_cost_ += hidden_nodes;
+    state_.forward_pass_cost += hidden_nodes;
+    state_.backward_pass_cost += hidden_nodes;
   }
   else
   {
-    throw std::runtime_error("attempted to estimate unknown layer with unknown activation type");
+    return infinite_charge("attempted to estimate unknown layer with unknown activation type");
   }
 
   return estimate;
@@ -98,7 +100,7 @@ ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType con
   FETCH_UNUSED(input_channels);
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
-  throw std::runtime_error("Not yet implement");
+  return infinite_charge("Not yet implement");
 }
 
 ChargeAmount ModelEstimator::LayerAddConvActivation(
@@ -111,7 +113,7 @@ ChargeAmount ModelEstimator::LayerAddConvActivation(
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
   FETCH_UNUSED(activation);
-  throw std::runtime_error("Not yet implement");
+  return infinite_charge("Not yet implement");
 }
 
 ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
@@ -124,22 +126,22 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     if (loss->string() == "mse")
     {
       // loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
-      forward_pass_cost_ += MSE_FORWARD_IMPACT * last_layer_size_;
-      backward_pass_cost_ += MSE_BACKWARD_IMPACT * last_layer_size_;
+      state_.forward_pass_cost += MSE_FORWARD_IMPACT * state_.last_layer_size;
+      state_.backward_pass_cost += MSE_BACKWARD_IMPACT * state_.last_layer_size;
     }
     else if (loss->string() == "cel")
     {
       // loss_type = fetch::ml::ops::LossType::CROSS_ENTROPY;
-      throw std::runtime_error("Not yet implement");
+      return infinite_charge("Not yet implement");
     }
     else if (loss->string() == "scel")
     {
       // loss_type = fetch::ml::ops::LossType::SOFTMAX_CROSS_ENTROPY;
-      throw std::runtime_error("Not yet implement");
+      return infinite_charge("Not yet implement");
     }
     else
     {
-      throw std::runtime_error("invalid loss function");
+      return infinite_charge("invalid loss function");
     }
   }
 
@@ -148,32 +150,36 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     if (optimiser->string() == "adagrad")
     {
       // optimiser_type = fetch::ml::OptimiserType::ADAGRAD;
-      throw std::runtime_error("Not yet implement");
+      return vm::CHARGE_INFINITY;
     }
     else if (optimiser->string() == "adam")
     {
       // optimiser_type = fetch::ml::OptimiserType::ADAM;
-      optimiser_step_impact_        = ADAM_STEP_IMPACT;
+      state_.optimiser_step_impact  = ADAM_STEP_IMPACT;
       optimiser_construction_impact = ADAM_CONSTRUCTION_IMPACT;
     }
     else if (optimiser->string() == "momentum")
     {
       // optimiser_type = fetch::ml::OptimiserType::MOMENTUM;
-      throw std::runtime_error("Not yet implement");
+      return infinite_charge("Not yet implement");
+      return vm::CHARGE_INFINITY;
     }
     else if (optimiser->string() == "rmsprop")
     {
       //  optimiser_type = fetch::ml::OptimiserType::RMSPROP;
-      throw std::runtime_error("Not yet implement");
+      return infinite_charge("Not yet implement");
+      return vm::CHARGE_INFINITY;
     }
     else if (optimiser->string() == "sgd")
     {
       // optimiser_type = fetch::ml::OptimiserType::SGD;
-      throw std::runtime_error("Not yet implement");
+      return infinite_charge("Not yet implement");
+      return vm::CHARGE_INFINITY;
     }
     else
     {
-      throw std::runtime_error("invalid optimiser");
+      return infinite_charge("invalid optimiser");
+      return vm::CHARGE_INFINITY;
     }
   }
 
@@ -186,7 +192,7 @@ ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser
 
   FETCH_UNUSED(optimiser);
   FETCH_UNUSED(in_layers);
-  throw std::runtime_error("Not yet implement");
+  return infinite_charge("Not yet implement");
 }
 
 ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTensor> const &labels,
@@ -212,10 +218,10 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
   // SetInputReference, update stats
   estimate += subset_size / batch_size;
   // Forward and backward prob
-  estimate += subset_size * (forward_pass_cost_ + backward_pass_cost_);
+  estimate += subset_size * (state_.forward_pass_cost + state_.backward_pass_cost);
   // Optimiser step and clearing gradients
-  estimate +=
-      (subset_size / batch_size) * (weights_size_sum_ * optimiser_step_impact_ + weights_size_sum_);
+  estimate += (subset_size / batch_size) *
+              (state_.weights_size_sum * state_.optimiser_step_impact + state_.weights_size_sum);
 
   return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
 }
@@ -229,50 +235,63 @@ ChargeAmount ModelEstimator::Evaluate()
 ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 {
   SizeType batch_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
-  SizeType estimate   = (forward_pass_cost_)*batch_size;
+  SizeType estimate   = (state_.forward_pass_cost) * batch_size;
 
   return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
 }
 
 ChargeAmount ModelEstimator::SerializeToString()
 {
-  throw std::runtime_error("Not yet implemented");
+  return infinite_charge("Not yet implemented");
 }
 
 ChargeAmount ModelEstimator::DeserializeFromString(Ptr<String> const &model_string)
 {
   FETCH_UNUSED(model_string);
-  throw std::runtime_error("Not yet implemented");
+  return infinite_charge("Not yet implemented");
 }
 
 bool ModelEstimator::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
-  buffer<<forward_pass_cost_;
-  buffer<<backward_pass_cost_;
-  buffer<<weights_size_sum_;
-  buffer<<optimiser_step_impact_;
-  buffer<<optimiser_step_impact_;
-  buffer<<last_layer_size_;
-
-  return false;
+  return state_.SerializeTo(buffer);
 }
 
 bool ModelEstimator::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
-  buffer>>forward_pass_cost_;
-  buffer>>backward_pass_cost_;
-  buffer>>weights_size_sum_;
-  buffer>>optimiser_step_impact_;
-  buffer>>optimiser_step_impact_;
-  buffer>>last_layer_size_;
-
-  return false;
+  return state_.DeserializeFrom(buffer);
 }
 
 void ModelEstimator::copy_state_from(ModelEstimator const &src)
 {
-  FETCH_UNUSED(src);
-  throw std::runtime_error("Not yet implemented");
+  state_ = src.state_;
+}
+
+ChargeAmount ModelEstimator::infinite_charge(std::string const &log_msg)
+{
+  FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::CHARGE_INIFITY : " + log_msg);
+  return vm::CHARGE_INFINITY;
+}
+
+bool ModelEstimator::State::SerializeTo(serializers::MsgPackSerializer &buffer)
+{
+  buffer << forward_pass_cost;
+  buffer << backward_pass_cost;
+  buffer << weights_size_sum;
+  buffer << optimiser_step_impact;
+  buffer << last_layer_size;
+
+  return true;
+}
+
+bool ModelEstimator::State::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+{
+  buffer >> forward_pass_cost;
+  buffer >> backward_pass_cost;
+  buffer >> weights_size_sum;
+  buffer >> optimiser_step_impact;
+  buffer >> last_layer_size;
+
+  return true;
 }
 
 }  // namespace model

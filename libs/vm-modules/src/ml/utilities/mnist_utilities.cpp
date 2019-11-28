@@ -41,8 +41,8 @@ vm::Ptr<math::VMTensor> load_mnist_labels(vm::VM *vm, vm::Ptr<vm::String> const 
 
 void BindMNISTUtils(vm::Module &module)
 {
-  module.CreateFreeFunction("loadMNISTImages", &load_mnist_images);
-  module.CreateFreeFunction("loadMNISTLabels", &load_mnist_labels);
+  module.CreateFreeFunction("loadMNISTImages", &load_mnist_images, vm::CHARGE_INFINITY);
+  module.CreateFreeFunction("loadMNISTLabels", &load_mnist_labels, vm::CHARGE_INFINITY);
 }
 
 }  // namespace utilities
