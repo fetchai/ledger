@@ -124,7 +124,7 @@ NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
                   " deadline: ", decided_next_timestamp_ms_);
 
   // Round up to the nearest second for block timestamp
-  auto current_time_s_ceiled =
+  auto const current_time_s_ceiled =
       static_cast<uint64_t>(std::ceil(static_cast<double>(current_time_ms) / 1000.0));
 
   // Number of block we want to generate
