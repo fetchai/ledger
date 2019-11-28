@@ -19,6 +19,11 @@
 
 #include "meta/type_traits.hpp"
 
+#if (__SIZEOF_INT128__ == 16)
+using int128_t  = __int128_t;
+using uint128_t = __uint128_t;
+#endif
+
 namespace fetch {
 namespace platform {
 
@@ -265,7 +270,7 @@ constexpr int32_t HighestSetBit(T n_input)
  * @return
  */
 template <>
-constexpr int32_t HighestSetBit(__int128_t n_input)
+constexpr int32_t HighestSetBit(int128_t n_input)
 {
   auto const high = static_cast<uint64_t>(n_input >> 64);
   auto const low  = static_cast<uint64_t>(n_input >> 64);

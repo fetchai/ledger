@@ -20,6 +20,7 @@
 #include "vm/address.hpp"
 #include "vm/array.hpp"
 #include "vm/common.hpp"
+#include "vm/fixed.hpp"
 #include "vm/map.hpp"
 #include "vm/matrix.hpp"
 #include "vm/module.hpp"
@@ -178,6 +179,88 @@ fixed_point::fp64_t toFixed64(VM * /* vm */, AnyPrimitive const &from)
   return Cast<fixed_point::fp64_t>(from);
 }
 
+Ptr<Fixed128> toFixed128(VM *vm, AnyPrimitive const &from)
+{
+  fixed_point::fp128_t fixed;
+  switch (from.type_id)
+  {
+  case TypeIds::Bool:
+  {
+    fixed = static_cast<fixed_point::fp128_t>(from.primitive.ui8);
+    break;
+  }
+  case TypeIds::Int8:
+  {
+    fixed = static_cast<fixed_point::fp128_t>(from.primitive.i8);
+    break;
+  }
+  case TypeIds::UInt8:
+  {
+    fixed = static_cast<fixed_point::fp128_t>(from.primitive.ui8);
+    break;
+  }
+  case TypeIds::Int16:
+  {
+    fixed = static_cast<fixed_point::fp128_t>(from.primitive.i16);
+    break;
+  }
+  case TypeIds::UInt16:
+  {
+    fixed = static_cast<fixed_point::fp128_t>(from.primitive.ui16);
+    break;
+  }
+  case TypeIds::Int32:
+  {
+    fixed = static_cast<fixed_point::fp128_t>(from.primitive.i32);
+    break;
+  }
+  case TypeIds::UInt32:
+  {
+    fixed = static_cast<fixed_point::fp128_t>(from.primitive.ui32);
+    break;
+  }
+  case TypeIds::Int64:
+  {
+    fixed = static_cast<fixed_point::fp128_t>(from.primitive.i64);
+    break;
+  }
+  case TypeIds::UInt64:
+  {
+    fixed = static_cast<fixed_point::fp128_t>(from.primitive.ui64);
+    break;
+  }
+  case TypeIds::Float32:
+  {
+    fixed = static_cast<fixed_point::fp128_t>(from.primitive.f32);
+    break;
+  }
+  case TypeIds::Float64:
+  {
+    fixed = static_cast<fixed_point::fp128_t>(from.primitive.f64);
+    break;
+  }
+  case TypeIds::Fixed32:
+  {
+    fixed = static_cast<fixed_point::fp128_t>(fixed_point::fp32_t::FromBase(from.primitive.i32));
+    break;
+  }
+  case TypeIds::Fixed64:
+  {
+    fixed = static_cast<fixed_point::fp128_t>(fixed_point::fp64_t::FromBase(from.primitive.i64));
+    break;
+  }
+  default:
+  {
+    fixed = 0;
+    // Not a primitive
+    assert(false);
+    break;
+  }
+  }  // switch
+
+  return Ptr<Fixed128>(new Fixed128(vm, fixed));
+}
+
 }  // namespace
 
 Module::Module()
@@ -194,6 +277,7 @@ Module::Module()
   CreateFreeFunction("toFloat64", &toFloat64);
   CreateFreeFunction("toFixed32", &toFixed32);
   CreateFreeFunction("toFixed64", &toFixed64);
+  CreateFreeFunction("toFixed128", &toFixed128);
 
   CreateTemplateType<IMatrix, AnyFloatingPoint>("Matrix")
       .CreateConstructor(&IMatrix::Constructor)
@@ -269,6 +353,7 @@ Module::Module()
           })
       .CreateInstantiationType<Array<fixed_point::fp32_t>>()
       .CreateInstantiationType<Array<fixed_point::fp64_t>>()
+      .CreateInstantiationType<Array<Ptr<Fixed128>>>()
       .CreateInstantiationType<Array<Ptr<String>>>()
       .CreateInstantiationType<Array<Ptr<Address>>>();
   /*
@@ -326,6 +411,16 @@ Module::Module()
       .CreateMemberFunction("get", &IShardedState::GetFromAddressWithDefault)
       .CreateMemberFunction("set", &IShardedState::SetFromString)
       .CreateMemberFunction("set", &IShardedState::SetFromAddress);
+
+  GetClassInterface<Fixed128>().CreateSerializeDefaultConstructor(
+      [](VM *vm, TypeId) -> Ptr<Fixed128> {
+        return Ptr<Fixed128>{new Fixed128(vm, fixed_point::fp128_t::_0)};
+      });
+
+  // GetClassInterface<UInt256Wrapper>().CreateSerializeDefaultConstructor(
+  //     [](VM *vm, TypeId) -> Ptr<UInt256Wrapper> {
+  //       return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, 0)};
+  //     });
 }
 
 }  // namespace vm
