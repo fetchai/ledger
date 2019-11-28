@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "chain/constants.hpp"
-#include "core/serializers/base_types.hpp"
 #include "ledger/chain/block.hpp"
 
 namespace fetch {
@@ -43,12 +42,33 @@ struct BlockDbRecord
 
 namespace serializers {
 
+template <typename V, typename D>
+struct MapSerializer;
+
 template <typename D>
 struct MapSerializer<ledger::BlockDbRecord, D>
-  : MapSerializerTemplate<ledger::BlockDbRecord, D,
-                          SERIALIZED_STRUCT_FIELD(1, ledger::BlockDbRecord::block),
-                          SERIALIZED_STRUCT_FIELD(2, ledger::BlockDbRecord::next_hash)>
 {
+public:
+  using Type       = ledger::BlockDbRecord;
+  using DriverType = D;
+
+  static uint8_t const BLOCK     = 1;
+  static uint8_t const NEXT_HASH = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &dbRecord)
+  {
+    auto map = map_constructor(2);
+    map.Append(BLOCK, dbRecord.block);
+    map.Append(NEXT_HASH, dbRecord.next_hash);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &dbRecord)
+  {
+    map.ExpectKeyGetValue(BLOCK, dbRecord.block);
+    map.ExpectKeyGetValue(NEXT_HASH, dbRecord.next_hash);
+  }
 };
 
 }  // namespace serializers
