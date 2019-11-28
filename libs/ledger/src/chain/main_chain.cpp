@@ -1640,7 +1640,12 @@ bool MainChain::ReindexTips()
       // check if this tip is the current heaviest
       if (max_tip == new_tips[block.hash])
       {
-        assert(!enable_stutter_removal_);
+        if (enable_stutter_removal_)
+        {
+          FETCH_LOG_ERROR(LOGGING_NAME, "Stutter block found at block number ", block.block_number,
+                          " and weight ", block.weight);
+          assert(false);
+        }
         if (block.hash > max_hash)
         {
           max_tip  = new_tips[block.hash];
