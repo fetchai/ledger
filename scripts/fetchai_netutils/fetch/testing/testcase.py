@@ -86,6 +86,10 @@ class ConstellationTestCase(TestCase):
         self._creation_time = time.perf_counter()
         self._block_interval = 1000
 
+        # In order for the tests to have tokens, allocate
+        # a benefactor address enough at genesis
+        self._benefactor_address = Entity()
+
         # Variables related to temporary pos mode
         self._pos_mode = False
         self._nodes_pubkeys = []
@@ -156,6 +160,10 @@ class ConstellationTestCase(TestCase):
 
         self._nodes.append(instance)
 
+        # Load in genesis file
+        if not self._pos_mode:
+            self.setup_genesis_benefactor(index)
+
     def connect_nodes(self, node_connections):
         for connect_from, connect_to in node_connections:
             self._nodes[connect_from].add_peer(self._nodes[connect_to])
@@ -171,6 +179,27 @@ class ConstellationTestCase(TestCase):
         print('Starting Node {}...complete'.format(index))
 
         time.sleep(1)
+
+    def setup_genesis_benefactor(self, index):
+        """
+            Note: this will set up a genesis file, which will be overwritten for the POS case, which
+            needs a more complex genesis file
+        """
+
+        nodes_identities = []
+
+        nodes_identities.append(
+            (self._benefactor_address, 100000000, 0))
+
+        genesis_file = GenesisFile(
+            nodes_identities, 20, 5, self._block_interval)
+        genesis_file_location = os.path.abspath(
+            os.path.join(self._workspace, "genesis_file.json"))
+        genesis_file.dump_to_file(genesis_file_location)
+
+        # Give all nodes this stake file
+        # for index in range(self._number_of_nodes):
+        shutil.copy(genesis_file_location, self._nodes[index].root)
 
     def setup_pos_for_nodes(self):
 
@@ -190,7 +219,10 @@ class ConstellationTestCase(TestCase):
                     node._entity.public_key))
 
             nodes_identities.append(
-                (node._entity, 100, 10000 if node.mining else 0))
+                (node._entity, 10000000, 10000 if node.mining else 0))
+
+        # set benefactor to node1
+        self._benefactor_address = self._nodes[index]._entity
 
         genesis_file = GenesisFile(
             nodes_identities, 20, 5, self._block_interval)

@@ -93,12 +93,11 @@ def submit_synergetic_data(api, contract, data, entity):
     api.wait_for_blocks(10)
 
 
-def run(options):
+def run(options, benefactor):
     entity1 = Entity()
     api = LedgerApi(options['host'], options['port'])
 
-    # TODO(HUT): fix this.
-    api.sync(api.tokens.wealth(entity1, 100000000))
+    api.sync(api.tokens.transfer(benefactor, entity1, 100000000, 1000))
     contract = Contract(CONTRACT_TEXT, entity1)
 
     api.sync(api.contracts.create(entity1, contract, 10000))

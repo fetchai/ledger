@@ -33,7 +33,7 @@ steps:
 
 ---
 test_description: >
-  DISABLED - Transactions sync - corner case with connection order
+  Transactions sync - corner case with connection order
 
 setup_conditions:
   test_name: "basic_multinode_corner_case"
@@ -116,7 +116,7 @@ steps:
 
 ---
 test_description: >
-  DISABLED - Transactions sync and are executed across nodes when using POS
+  Transactions sync and are executed across nodes when using POS
 
 setup_conditions:
   test_name: "basic_multinode_POS"

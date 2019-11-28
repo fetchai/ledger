@@ -22,7 +22,7 @@ import binascii
 import base64
 
 
-def run(options):
+def run(options, benefactor):
     ENDPOINT = 'fetch/token/transfer'
     # create the APIs
     api = LedgerApi(options['host'], options['port'])
@@ -36,8 +36,7 @@ def run(options):
     id2 = Entity.from_hex(id2PrivateKey)
 
     # Load 1000 tokens to id1
-    # TODO(HUT): fix this.
-    api.sync(api.tokens.wealth(id1, 1000))
+    api.sync(api.tokens.transfer(benefactor, id1, 1000, 1000))
 
     # signed transaction that transfers 250 FET from id1 to id2. Signed with (r,s)
     orig_tx = 'a1440000c5ab20e3ab845cb4a1d2c3e4c3b08f5ff42a6ff2a71d7697ba8f32c415b77c7f8d850b3ef025b189a2d9bb4a515a84c3673db6d3ef25385d2c8d1e34b06e2de1c0fac08501140000000000000000040bafbc61a08524372f495d9dee08adbc39824e980506947091395cece16636ddc094b9d409d5b34ef0bbd9c99c5caf21fc373802472cf96a8a280f84e833f992402192a0a125d551b60800d441cb3483cd36573c22a73f22563d6dd7b27e677b98ba4e2f77596888839a3c6f2439c97949ea28923f168d360a6d155c2be79570af'
