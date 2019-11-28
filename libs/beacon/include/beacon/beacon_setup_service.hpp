@@ -206,6 +206,7 @@ protected:
   telemetry::GaugePtr<uint64_t> beacon_dkg_failures_required_to_complete_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_state_failed_on_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_time_allocated_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_reference_timepoint_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_aeon_setting_up_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_miners_in_qual_;
   telemetry::CounterPtr         beacon_dkg_failures_total_;
@@ -233,16 +234,23 @@ private:
   Clock         system_clock_ = moment::GetClock("beacon:dkg_system", moment::ClockType::SYSTEM);
   Clock         clock_        = moment::GetClock("beacon:dkg", moment::ClockType::SYSTEM);
   DeadlineTimer timer_to_proceed_{"beacon:dkg"};
-  uint64_t      reference_timepoint_   = 0;
-  uint64_t      state_deadline_        = 0;
-  uint64_t      seconds_for_state_     = 0;
-  uint64_t      expected_dkg_timespan_ = 0;
-  double        time_per_slot_         = 0.;
-  bool          condition_to_proceed_  = false;
-  const std::map<BeaconSetupService::State, uint64_t> time_slot_map_;
-  uint64_t                                            time_slots_in_dkg_ = 0;
+
+  static constexpr double MAX_DKG_BOUND_MULTIPLE = 4.0;
+  uint64_t reference_timepoint_ = 0;  ///< A starting point in time all members use to syncronise
+  uint64_t state_deadline_      = 0;  ///< The time at which the current state should move on
+  uint64_t expected_dkg_timespan_ =
+      0;  ///< The expected time it will take for all DKG states to complete
+  bool condition_to_proceed_ = false;  ///< Whether the state the DKG is in has been successful
+
+  const std::map<BeaconSetupService::State, double> time_slot_map_;
+  double                                            time_slots_in_dkg_ = 0;
 
   uint16_t failures_{0};
+
+  // Debug/logging
+  std::atomic<BeaconManager::CabinetIndex> index_{
+      std::numeric_limits<BeaconManager::CabinetIndex>::max()};
+  std::string NodeString();
 
   // Convenience functions
   ReliableChannelPtr ReliableBroadcastFactory();
@@ -263,8 +271,7 @@ private:
 
   /// @name Helper methods
   /// @{
-  void     SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
-                          uint64_t &time_slot_for_state);
+  void     SetDeadlineForState(BeaconSetupService::State const &state);
   bool     BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
   void     CheckComplaintAnswers();
   bool     BuildQual();
@@ -279,7 +286,6 @@ namespace serializers {
 template <typename D>
 struct ArraySerializer<beacon::DryRunInfo, D>
 {
-
 public:
   using Type       = beacon::DryRunInfo;
   using DriverType = D;

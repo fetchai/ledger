@@ -16,27 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/consensus/bad_miner.hpp"
-
-#include "ledger/chain/block.hpp"
+#include "dmlf/deprecated/shuffle_algorithm_interface.hpp"
 
 namespace fetch {
-namespace ledger {
-namespace consensus {
+namespace dmlf {
 
-void BadMiner::Mine(Block &block)
+ShuffleAlgorithmInterface::ShuffleAlgorithmInterface(std::size_t count)
+  : count_(count)
+{}
+
+std::size_t ShuffleAlgorithmInterface::GetCount() const
 {
-  block.nonce = 0;
-  block.UpdateDigest();
+  // this impl is simple, but descendent ones may not be.
+  return count_;
 }
 
-bool BadMiner::Mine(Block &block, uint64_t /*iterations*/)
-{
-  block.nonce = 0;
-  block.UpdateDigest();
-  return true;
-}
-
-}  // namespace consensus
-}  // namespace ledger
+}  // namespace dmlf
 }  // namespace fetch
