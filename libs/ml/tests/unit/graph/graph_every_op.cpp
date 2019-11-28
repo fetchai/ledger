@@ -218,7 +218,7 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
       g, {input_logits_transpose, input_binary_transpose});
 
   // Metrics
-  std::string acc  = AddOp<ops::CategoricalAccuracy<TensorType>>(g, {input_logits, input_binary});
+  std::string acc = AddOp<ops::CategoricalAccuracy<TensorType>>(g, {input_logits, input_binary});
 
   // Layers
   std::string layer_layernorm =
