@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "meta/param_pack.hpp"
+#include "meta/type_util.hpp"
 
 #include <cstddef>
 #include <tuple>
@@ -76,19 +77,10 @@ struct TupleOperations<std::tuple<Ts...>>
       TupleOperations<typename SplitTuple<std::tuple_size<type>::value - N, type>::Initial>;
 
   template <typename T>
-  struct Prepend;
-  template <typename... Ts2>
-  struct Prepend<std::tuple<Ts2...>>
-  {
-    using type = std::tuple<Ts2..., Ts...>;
-  };
+  using Prepend = type_util::tuple::Concat<T, type>;
+
   template <typename T>
-  struct Append;
-  template <typename... Ts2>
-  struct Append<std::tuple<Ts2...>>
-  {
-    using type = std::tuple<Ts..., Ts2...>;
-  };
+  using Append = type_util::tuple::Concat<type, T>;
 };
 
 template <typename>
@@ -101,17 +93,7 @@ template <typename T, typename... Ts>
 struct Tuple<std::tuple<T, Ts...>> : TupleOperations<std::tuple<T, Ts...>>
 {
   using FirstType = T;
-  using LastType  = std::tuple_element_t<
-      0, typename TupleOperations<std::tuple<T, Ts...>>::template TakeTerminal<1>::type>;
-};
-
-template <typename T>
-struct IsStdTupleImpl : std::false_type
-{
-};
-template <typename... Args>
-struct IsStdTupleImpl<std::tuple<Args...>> : std::true_type
-{
+  using LastType  = std::tuple_element_t<sizeof...(Ts), std::tuple<T, Ts...>>;
 };
 
 }  // namespace internal
@@ -129,8 +111,7 @@ constexpr decltype(auto) IndexSequenceFromTuple()
 }
 
 template <typename T>
-constexpr bool IsStdTuple =
-    internal::IsStdTupleImpl<std::remove_cv_t<std::remove_reference_t<T>>>::value;
+constexpr bool IsStdTuple = type_util::AreSimilarV<std::decay_t<T>, std::tuple<>>;
 
 }  // namespace meta
 }  // namespace fetch

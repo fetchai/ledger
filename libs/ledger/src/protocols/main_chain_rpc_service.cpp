@@ -188,17 +188,10 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
-  try
+  if (!ValidBlock(block, "new block"))
   {
-    if (!ValidBlock(block))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block did not prove valid");
-      return;
-    }
-  }
-  catch (std::runtime_error const &ex)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Consensus threw when validating new block! ", ex.what());
+	  FETCH_LOG_WARN(LOGGING_NAME, "Block did not prove valid");
+	  return;
   }
 
   // add the new block to the chain
@@ -247,9 +240,16 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
   return address;
 }
 
-bool MainChainRpcService::ValidBlock(Block const &block) const
+bool MainChainRpcService::ValidBlock(Block const &block, char const *action) const
 {
-  return !consensus_ || consensus_->ValidBlock(block) == ConsensusInterface::Status::YES;
+  try {
+	  return !consensus_ || consensus_->ValidBlock(block) == ConsensusInterface::Status::YES;
+  }
+    catch (std::runtime_error const &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Exception in consensus on validating ", action, ": ", ex.what());
+      return false;
+    }
 }
 
 void MainChainRpcService::HandleChainResponse(Address const &address, BlockList blocks)
@@ -278,19 +278,12 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
     it->UpdateDigest();
 
     // add the block
-    try
+    if (!ValidBlock(*it, "during fwd sync"))
     {
-      if (!ValidBlock(*it))
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
-                        " from: muddle://", ToBase64(address));
-        ++invalid;
-        continue;
-      }
-    }
-    catch (std::runtime_error const &ex)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Consensus threw when validating during fwd sync! ", ex.what());
+	    FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
+			    " from: muddle://", ToBase64(address));
+	    ++invalid;
+	    continue;
     }
 
     auto const status = chain_.AddBlock(*it);

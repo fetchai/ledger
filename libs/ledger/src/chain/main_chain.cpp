@@ -47,6 +47,15 @@ using fetch::generics::MilliTimer;
 namespace fetch {
 namespace ledger {
 
+namespace {
+
+Tip BlockTip(Block const &block)
+{
+	return Tip{block.total_weight, block.weight, block.block_number};
+}
+
+}
+
 /**
  * Constructs the main chain
  *
@@ -395,7 +404,7 @@ void MainChain::AddBlockToBloomFilter(Block const &block) const
 MainChain::BlockPtr MainChain::GetHeaviestBlock() const
 {
   FETCH_LOCK(lock_);
-  auto block_ptr = GetBlock(heaviest_.Hash());
+  auto block_ptr = GetBlock(heaviest_.hash);
   assert(block_ptr);
   return block_ptr;
 }
@@ -1009,11 +1018,11 @@ void MainChain::RecoverFromFile(Mode mode)
       }
 
       // Sanity check
-      uint64_t heaviest_block_num = GetHeaviestBlock()->block_number;
+      uint64_t heaviest_block_num = heaviest_.BlockNumber();
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block: ", heaviest_block_num);
 
       DetermineHeaviestTip();
-      heaviest_block_num = GetHeaviestBlock()->block_number;
+      heaviest_block_num = heaviest_.BlockNumber();
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block now: ", heaviest_block_num);
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block weight: ", GetHeaviestBlock()->total_weight);
 
@@ -1045,7 +1054,7 @@ void MainChain::RecoverFromFile(Mode mode)
 void MainChain::WriteToFile()
 {
   // look up the heaviest block
-  IntBlockPtr block = block_chain_.at(heaviest_.Hash());
+  IntBlockPtr block = block_chain_.at(heaviest_.hash);
 
   // skip if the block store is not persistent
   if (block_store_ && (block->block_number >= chain::FINALITY_PERIOD))
@@ -1069,7 +1078,7 @@ void MainChain::WriteToFile()
     {
       FETCH_LOG_WARN(LOGGING_NAME,
                      "Failed to walk back the chain when writing to file! Block head: ",
-                     block_chain_.at(heaviest_.Hash())->block_number);
+                     block_chain_.at(heaviest_.hash)->block_number);
       return;
     }
 
@@ -1144,7 +1153,7 @@ void MainChain::TrimCache()
 
   FETCH_LOCK(lock_);
 
-  uint64_t const heaviest_block_num = GetHeaviestBlock()->block_number;
+  uint64_t const heaviest_block_num = heaviest_.BlockNumber();
 
   if (CACHE_TRIM_THRESHOLD < heaviest_block_num)
   {
@@ -1606,10 +1615,10 @@ bool MainChain::DetermineHeaviestTip()
     // find the heaviest item in our tip selection
     auto it = std::max_element(
         tips_.begin(), tips_.end(), [](TipsMap::value_type const &a, TipsMap::value_type const &b) {
-          auto        a_total_weight{a.second.total_weight}, b_total_weight{b.second.total_weight};
-          auto const &a_hash{a.first}, &b_hash{b.first};
-          auto        a_weight{a.second.weight}, b_weight{b.second.weight};
-          auto        a_height{a.second.block_number}, b_height{b.second.block_number};
+	  auto const &a_hash = a.first;
+	  auto const &a_tip = a.second;
+	  auto const &b_hash = b.first;
+	  auto const &b_tip = b.second;
 
           // Tips are selected based on the following priority of properties:
           // 1. total weight
@@ -1620,8 +1629,7 @@ bool MainChain::DetermineHeaviestTip()
           //
           // Chains of equivalent total weight and length are tie-broken, choosing the weight of the
           // tips as a tiebreaker. This is important for consensus.
-          return HeaviestTip::TipStats{a_total_weight, a_height, a_weight, a_hash} <
-                 HeaviestTip::TipStats{b_total_weight, b_height, b_weight, b_hash};
+	  return HeaviestTip(a_tip, a_hash) < HeaviestTip(b_tip, b_hash);
         });
 
     // update the heaviest
@@ -1648,9 +1656,7 @@ bool MainChain::ReindexTips()
 
   // Tips are hashes of cached non-loose blocks that don't have any forward references
   TipsMap   new_tips;
-  uint64_t  max_total_weight{};
-  uint64_t  max_weight{};
-  uint64_t  max_block_number{};
+  HeaviestTip best_tip{};
   BlockHash max_hash;
 
   for (auto const &block_entry : block_chain_)
@@ -1671,19 +1677,14 @@ bool MainChain::ReindexTips()
       continue;
     }
     // this hash has no next blocks
-    auto const &   block{*block_entry.second};
-    const uint64_t total_weight{block.total_weight};
-    const uint64_t weight{block.weight};
-    const uint64_t block_number{block.block_number};
-    new_tips[hash] = Tip{total_weight, weight, block_number};
-    // check if this tip is the current heaviest
-    if (HeaviestTip::TipStats{total_weight, block_number, weight, hash} >
-        HeaviestTip::TipStats{max_total_weight, max_block_number, max_weight, max_hash})
+    auto const &block = *block_entry.second;
+    auto curr_tip = BlockTip(block);
+    new_tips[hash] = curr_tip;
+
+    // check if this tip is the new heaviest
+    if (best_tip.LessThan(curr_tip, hash))
     {
-      max_total_weight = total_weight;
-      max_weight       = weight;
-      max_hash         = hash;
-      max_block_number = block_number;
+      best_tip = HeaviestTip{curr_tip, hash};
     }
   }
   tips_ = std::move(new_tips);
@@ -1691,7 +1692,7 @@ bool MainChain::ReindexTips()
   if (!tips_.empty())
   {
     // finally update the heaviest tip
-    auto heaviest_block = LookupBlock(max_hash);
+    auto heaviest_block = LookupBlock(best_tip.hash);
     assert(heaviest_block);
     heaviest_.Set(*heaviest_block);
 
@@ -1725,8 +1726,13 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
 MainChain::BlockHash MainChain::GetHeaviestBlockHash() const
 {
   FETCH_LOCK(lock_);
-  return heaviest_.Hash();
+  return heaviest_.hash;
 }
+
+MainChain::HeaviestTip::HeaviestTip(Tip tip, BlockHash hash)
+	: Tip(tip)
+	, hash(std::move(hash))
+{}
 
 /**
  * Set heaviest tip values.
@@ -1735,13 +1741,13 @@ MainChain::BlockHash MainChain::GetHeaviestBlockHash() const
  */
 void MainChain::HeaviestTip::Set(Block &block)
 {
-  if (block.hash == hash_)
+  if (block.hash == hash)
   {
     return;
   }
 
   // check if this block belongs to a different branch
-  if (block.chain_label != chain_label_ && block.previous_hash != hash_)
+  if (block.chain_label != chain_label_ && block.previous_hash != hash)
   {
     // then we'll need to colour a new heaviest branch
     ++chain_label_;
@@ -1749,13 +1755,21 @@ void MainChain::HeaviestTip::Set(Block &block)
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "New heaviest tip: 0x", block.hash.ToHex());
 
-  total_weight_ = block.total_weight;
-  weight_       = block.weight;
-  hash_         = block.hash;
-  block_number_ = block.block_number;
+  total_weight = block.total_weight;
+  weight       = block.weight;
+  hash        = block.hash;
+  block_number = block.block_number;
 
   // label this block as belonging to a heaviest chain
   block.chain_label = chain_label_;
+}
+
+bool MainChain::HeaviestTip::operator<(HeaviestTip const &that) const {
+	return Stats() < that.Stats();
+}
+
+bool MainChain::HeaviestTip::LessThan(Tip const &tip, BlockHash const &hash) const {
+	return Tip::operator<(tip) || (Tip::operator==(tip) && hash < hash);
 }
 
 /**
@@ -1766,7 +1780,7 @@ void MainChain::HeaviestTip::Set(Block &block)
  */
 bool MainChain::HeaviestTip::Update(Block &block)
 {
-  if (TipStats{block.total_weight, block.block_number, block.weight, block.hash} > Stats())
+  if (BlockStats(block) > Stats())
   {
     Set(block);
     return true;
@@ -1780,9 +1794,9 @@ uint64_t MainChain::HeaviestTip::ChainLabel() const
   return chain_label_;
 }
 
-MainChain::BlockHash const &MainChain::HeaviestTip::Hash() const
+uint64_t MainChain::HeaviestTip::BlockNumber() const
 {
-  return hash_;
+  return block_number;
 }
 
 MainChain::BlockHash MainChain::GetHeadHash()

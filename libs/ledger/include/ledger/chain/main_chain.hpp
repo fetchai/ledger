@@ -26,6 +26,7 @@
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
+#include "meta/type_util.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
@@ -59,9 +60,28 @@ namespace ledger {
  */
 struct Tip
 {
-  uint64_t total_weight{0};
-  uint64_t weight{0};
+  using Weight = Block::Weight;
+
+  Weight total_weight{0};
+  Weight weight{0};
   uint64_t block_number{0};
+
+  constexpr bool operator<(Tip const &right) const
+  {
+	  return Stats() < right.Stats();
+  }
+
+  constexpr bool operator==(Tip const &right) const
+  {
+	  return Stats() == right.Stats();
+  }
+
+protected:
+  using TipStats = std::tuple<Weight, uint64_t, Weight>;
+  constexpr TipStats Stats() const
+  {
+    return {total_weight, block_number, weight};
+  }
 };
 
 enum class BlockStatus
@@ -177,31 +197,45 @@ public:
   using RMutex        = std::recursive_mutex;
   using RLock         = std::unique_lock<RMutex>;
 
-  class HeaviestTip
+  class HeaviestTip: public Tip
   {
-    using Weight = Block::Weight;
+    using Tip::Weight;
+    using TipStats = type_util::tuple::AppendT<Tip::TipStats, BlockHash const &>;
 
-    Weight   total_weight_{0};
-    Weight   weight_{0};
-    uint64_t block_number_{0};
-    // assuming every chain has a proper genesis
-    BlockHash hash_{chain::GENESIS_DIGEST};
     uint64_t  chain_label_{0};
 
-  public:
-    using TipStats = std::tuple<Weight, uint64_t, Weight, BlockHash const &>;
+    template <class Node>
+    static constexpr TipStats StatsFor(Node &&node)
+    {
+	    return TipStats{node.total_weight, node.block_number, node.weight, node.hash};
+    }
 
-    HeaviestTip() = default;
-
-    BlockHash const &  Hash() const;
     constexpr TipStats Stats() const
     {
-      return TipStats{total_weight_, block_number_, weight_, hash_};
+      return StatsFor(*this);
     }
+
+    static constexpr TipStats BlockStats(Block const &block)
+    {
+      return StatsFor(block);
+    }
+
+  public:
+    // assuming every chain has a proper genesis
+    BlockHash hash{chain::GENESIS_DIGEST};
+
+    HeaviestTip() = default;
+    HeaviestTip(Tip tip, BlockHash hash);
+
+    uint64_t BlockNumber() const;
     uint64_t ChainLabel() const;
 
     void Set(Block &block);
     bool Update(Block &block);
+
+    bool operator<(HeaviestTip const &that) const;
+
+    bool LessThan(Tip const &tip, BlockHash const &hash) const;
   };
 
   /// @name Persistence Management

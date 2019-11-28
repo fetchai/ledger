@@ -158,7 +158,7 @@ private:
   /// @name Block Validation
   /// @{
   ConsensusPtr consensus_;
-  bool         ValidBlock(Block const &block) const;
+  bool         ValidBlock(Block const &block, char const *action) const;
   /// @}
 
   /// @name RPC Server
