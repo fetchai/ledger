@@ -21,7 +21,7 @@
 #include "core/mutex.hpp"
 #include "dmlf/collective_learning/client_algorithm_controller.hpp"
 #include "dmlf/collective_learning/client_params.hpp"
-#include "dmlf/update.hpp"
+#include "dmlf/deprecated/update.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/model/sequential.hpp"
@@ -49,7 +49,7 @@ class ClientAlgorithm
   using VectorTensorType = std::vector<TensorType>;
   using VectorSizeVector = std::vector<std::vector<SizeType>>;
   using TimestampType    = int64_t;
-  using UpdateType       = fetch::dmlf::Update<TensorType>;
+  using UpdateType       = fetch::dmlf::deprecated_Update<TensorType>;
   using DataloaderPtrType =
       std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>>;
   using GraphPtrType               = std::shared_ptr<fetch::ml::Graph<TensorType>>;

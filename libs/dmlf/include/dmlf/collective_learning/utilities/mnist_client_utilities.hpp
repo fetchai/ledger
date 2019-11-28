@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/collective_learning/collective_learning_client.hpp"
-#include "dmlf/networkers/abstract_learner_networker.hpp"
+#include "dmlf/deprecated/abstract_learner_networker.hpp"
 #include "math/utilities/ReadCSV.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -101,8 +101,8 @@ MakeMNISTClient(
     std::string const &                                                        id,
     fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> &client_params,
     std::string const &images, std::string const &labels, float test_set_ratio,
-    std::shared_ptr<AbstractLearnerNetworker> networker,
-    std::shared_ptr<std::mutex>               console_mutex_ptr)
+    std::shared_ptr<deprecated_AbstractLearnerNetworker> networker,
+    std::shared_ptr<std::mutex>                          console_mutex_ptr)
 {
   // set up the client first
   auto client = std::make_shared<CollectiveLearningClient<TensorType>>(id, client_params, networker,

@@ -683,6 +683,69 @@ TEST_F(MLTests, model_string_serialisation_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
+TEST_F(MLTests, non_permitted_serialisation_model_sequential_test)
+{
+  static char const *model_sequential_serialise_src = R"(
+
+      function main()
+
+        // set up a model
+        var model = Model("sequential");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 1u64);
+
+        // serialise model
+        var model_state = State<Model>("model");
+        model_state.set(model);
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(model_sequential_serialise_src));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(MLTests, non_permitted_serialisation_model_regressor_test)
+{
+  static char const *model_regressor_serialise_src = R"(
+
+      function main()
+
+        // set up a model
+        var model = Model("regressor");
+
+        // serialise model
+        var model_state = State<Model>("model");
+        model_state.set(model);
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(model_regressor_serialise_src));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(MLTests, non_permitted_serialisation_model_classifier_test)
+{
+  static char const *model_classifier_serialise_src = R"(
+
+      function main()
+
+        // set up a model
+        var model = Model("classifier");
+
+        // serialise model
+        var model_state = State<Model>("model");
+        model_state.set(model);
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(model_classifier_serialise_src));
+  EXPECT_FALSE(toolkit.Run());
+}
+
 TEST_F(MLTests, optimiser_set_graph_test)
 {
   static char const *several_serialise_src = R"(

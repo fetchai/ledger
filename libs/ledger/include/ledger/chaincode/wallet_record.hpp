@@ -60,45 +60,51 @@ struct WalletRecord
 }  // namespace ledger
 
 namespace serializers {
+
 template <typename D>
-struct ArraySerializer<ledger::WalletRecord, D>
+struct MapSerializer<ledger::WalletRecord, D>
 {
 public:
-  // TODO(issue 1426): Change this serializer to map
   using Type       = ledger::WalletRecord;
   using DriverType = D;
 
+  static uint8_t const BALANCE        = 1;
+  static uint8_t const STAKE          = 2;
+  static uint8_t const COOLDOWN_STAKE = 3;
+  static uint8_t const DEED           = 4;
+
   template <typename Constructor>
-  static void Serialize(Constructor &array_constructor, Type const &b)
+  static void Serialize(Constructor &map_constructor, Type const &b)
   {
-    auto array = array_constructor(b.deed ? 4 : 3);
-    array.Append(b.balance);
+    auto map = map_constructor(b.deed ? 4 : 3);
+    map.Append(BALANCE, b.balance);
+    map.Append(STAKE, b.stake);
+    map.Append(COOLDOWN_STAKE, b.cooldown_stake);
+
     if (b.deed)
     {
-      array.Append(*b.deed);
+      map.Append(DEED, *b.deed);
     }
-
-    array.Append(b.stake);
-    array.Append(b.cooldown_stake);
   }
 
   template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &array, Type &b)
+  static void Deserialize(ArrayDeserializer &map, Type &b)
   {
-    array.GetNextValue(b.balance);
-    if (array.size() == 4)
-    {
-      if (!b.deed)
-      {
-        b.deed = std::make_shared<ledger::Deed>();
-      }
-      array.GetNextValue(*b.deed);
-    }
+    bool const has_deed = map.size() == 4;
 
-    array.GetNextValue(b.stake);
-    array.GetNextValue(b.cooldown_stake);
+    map.ExpectKeyGetValue(BALANCE, b.balance);
+    map.ExpectKeyGetValue(STAKE, b.stake);
+    map.ExpectKeyGetValue(COOLDOWN_STAKE, b.cooldown_stake);
+
+    if (has_deed)
+    {
+      b.deed = std::make_shared<ledger::Deed>();
+
+      map.ExpectKeyGetValue(DEED, *b.deed);
+    }
   }
 };
+
 }  // namespace serializers
 
 }  // namespace fetch
