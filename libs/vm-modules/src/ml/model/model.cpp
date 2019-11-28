@@ -133,15 +133,28 @@ Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
 void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                 fetch::vm::Ptr<fetch::vm::String> const &optimiser)
 {
-  auto const loss_type      = ParseName(loss->string(), losses_, "loss function");
-  auto const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
-  model_->Compile(optimiser_type, loss_type);
+  LossType const      loss_type      = ParseName(loss->string(), losses_, "loss function");
+  OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
+
+  // Prepare the dataloader
+  CompileDataloader();
+
+  try
+  {
+    model_->Compile(optimiser_type, loss_type);
+  }
+  catch (std::exception &e)
+  {
+    vm_->RuntimeError("Compilation of a Sequential model failed : " + std::string(e.what()));
+    return;
+  }
+  compiled_ = true;
 }
 
 void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
                             fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers)
 {
-  auto const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
+  OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
   if (optimiser_type != OptimiserType::ADAM)
   {
     vm_->RuntimeError(R"(Wrong optimiser, a "Simple" model can use only "adam", while given : )" +
@@ -149,27 +162,23 @@ void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        opt
     return;
   }
 
-  auto BuildLayersFromInput = [&in_layers]() {
-    auto const n_elements = in_layers->elements.size();
+  size_t const n_elements = in_layers->elements.size();
 
-    std::vector<math::SizeType> layers(n_elements);
-    for (std::size_t i = 0; i < n_elements; ++i)
-    {
-      layers.at(i) = in_layers->elements.at(i);
-    }
-    return layers;
-  };
+  std::vector<math::SizeType> layers;
+  layers.reserve(n_elements);
+  for (size_t i = 0; i < n_elements; ++i)
+  {
+    layers.emplace_back(in_layers->elements.at(i));
+  }
 
   switch (model_category_)
   {
   case (ModelCategory::REGRESSOR):
-    model_ = std::make_shared<fetch::ml::model::DNNRegressor<TensorType>>(*model_config_,
-                                                                          BuildLayersFromInput());
+    model_ = std::make_shared<fetch::ml::model::DNNRegressor<TensorType>>(*model_config_, layers);
     break;
 
   case (ModelCategory::CLASSIFIER):
-    model_ = std::make_shared<fetch::ml::model::DNNClassifier<TensorType>>(*model_config_,
-                                                                           BuildLayersFromInput());
+    model_ = std::make_shared<fetch::ml::model::DNNClassifier<TensorType>>(*model_config_, layers);
     break;
 
   default:
@@ -177,10 +186,21 @@ void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        opt
     return;
   }
 
-  model_->Compile(optimiser_type);
+  // Prepare the dataloader
+  CompileDataloader();
+
+  try
+  {
+    model_->Compile(optimiser_type);
+  }
+  catch (std::exception &e)
+  {
+    vm_->RuntimeError("Compilation of a Simple model failed : " + std::string(e.what()));
+    return;
+  }
+  compiled_ = true;
 }
 
-// TODO(VH): Why the method is called "Fit" while it does only 1 epoch training?
 void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
                   fetch::math::SizeType const &batch_size)
 {
@@ -224,7 +244,6 @@ void VMModel::Bind(Module &module)
       .CreateMemberFunction("add", &VMModel::AddLayer<SizeRef, SizeRef, StringPtrRef>)
       .CreateMemberFunction("add",
                             &VMModel::AddLayer<SizeRef, SizeRef, SizeRef, SizeRef, StringPtrRef>)
-
       .CreateMemberFunction("compile", &VMModel::CompileSequential)
       .CreateMemberFunction("compile", &VMModel::CompileSimple)
       .CreateMemberFunction("fit", &VMModel::Fit)
@@ -341,7 +360,7 @@ fetch::vm::Ptr<fetch::vm::String> VMModel::SerializeToString()
 {
   serializers::MsgPackSerializer b;
   SerializeTo(b);
-  auto const byte_array_data = b.data().ToBase64();
+  auto byte_array_data = b.data().ToBase64();
   return Ptr<String>{new fetch::vm::String(vm_, static_cast<std::string>(byte_array_data))};
 }
 
@@ -465,11 +484,9 @@ void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType cons
 void VMModel::CompileDataloader()
 {
   // set up the dataloader
-  auto dl = std::make_unique<TensorDataloader>();
-  dl->SetRandomMode(true);
-  model_->SetDataloader(std::move(dl));
-
-  compiled_ = true;
+  auto data_loader = std::make_unique<TensorDataloader>();
+  data_loader->SetRandomMode(true);
+  model_->SetDataloader(std::move(data_loader));
 }
 }  // namespace model
 }  // namespace ml
