@@ -29,50 +29,50 @@ using namespace fetch::vm;
 
 namespace {
 
-using VMModel = fetch::vm_modules::ml::model::VMModel;
-using VMTensor = fetch::vm_modules::math::VMTensor;
+using VMModel        = fetch::vm_modules::ml::model::VMModel;
+using VMTensor       = fetch::vm_modules::math::VMTensor;
 using ModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
-using VMFactory = fetch::vm_modules::VMFactory;
-using VMPtr = std::unique_ptr<VM>;
-
+using VMFactory      = fetch::vm_modules::VMFactory;
+using VMPtr          = std::unique_ptr<VM>;
 
 class MLChargeEstimationTests : public ::testing::Test
 {
 public:
-  VMPtr vm;
+  VMPtr        vm;
   Ptr<VMModel> model;
 
   void SetUp() override
   {
     // setup the VM
     auto module = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
-    vm = std::make_unique<VM>(module.get());
+    vm          = std::make_unique<VM>(module.get());
 
     // create a VMModel
     model = CreateSequentialModel();
   }
-  
-  Ptr<String> CreateString(std::string const& str)
+
+  Ptr<String> CreateString(std::string const &str)
   {
     return Ptr<String>{new String{vm.get(), str}};
   }
-  
-  Ptr<Array<uint64_t>> CreateArray(std::vector<uint64_t> const& values)
+
+  Ptr<Array<uint64_t>> CreateArray(std::vector<uint64_t> const &values)
   {
-    std::size_t size = values.size();
-    Ptr<Array<uint64_t>> array = vm->CreateNewObject<Array<uint64_t>>(
-      vm->GetTypeId<uint64_t>(), static_cast<int32_t>(size));;
-    
+    std::size_t          size = values.size();
+    Ptr<Array<uint64_t>> array =
+        vm->CreateNewObject<Array<uint64_t>>(vm->GetTypeId<uint64_t>(), static_cast<int32_t>(size));
+    ;
+
     for (std::size_t i{0}; i < size; ++i)
     {
-      array->elements[i]      = values[i];
+      array->elements[i] = values[i];
     }
 
     return array;
   }
-  
-  //Ptr<VMTensor> CreateTensor(Ptr<Array<uint64_t>> const& shape)
-  Ptr<VMTensor> CreateTensor(std::vector<uint64_t> const& shape)
+
+  // Ptr<VMTensor> CreateTensor(Ptr<Array<uint64_t>> const& shape)
+  Ptr<VMTensor> CreateTensor(std::vector<uint64_t> const &shape)
   {
     return vm->CreateNewObject<VMTensor>(shape);
   }
@@ -87,29 +87,30 @@ public:
 TEST_F(MLChargeEstimationTests, test)
 {
   // set up data and labels
-  std::vector<uint64_t> data_shape{10,1000};
-  std::vector<uint64_t> label_shape{1,1000};
-  auto data = CreateTensor(data_shape);
-  auto label = CreateTensor(label_shape);
+  std::vector<uint64_t> data_shape{10, 1000};
+  std::vector<uint64_t> label_shape{1, 1000};
+  auto                  data  = CreateTensor(data_shape);
+  auto                  label = CreateTensor(label_shape);
 
   // set up a model
   auto model = CreateSequentialModel();
-  model->LayerAddDenseActivation(CreateString("dense"), 10, 10, CreateString("relu")); // input_size, hidden_1_size
-  model->LayerAddDenseActivation(CreateString("dense"), 10, 10, CreateString("relu")); // hidden_1_size, hidden_2_size
-  model->LayerAddDense(CreateString("dense"), 10, 1);  // hidden_2_size, label_size
+  model->LayerAddDenseActivation(CreateString("dense"), 10, 10,
+                                 CreateString("relu"));  // input_size, hidden_1_size
+  model->LayerAddDenseActivation(CreateString("dense"), 10, 10,
+                                 CreateString("relu"));  // hidden_1_size, hidden_2_size
+  model->LayerAddDense(CreateString("dense"), 10, 1);    // hidden_2_size, label_size
   model->CompileSequential(CreateString("mse"), CreateString("adam"));
-  
+
   // train the model
-  model->Fit(data, label, 32); // batch_size
-  
+  model->Fit(data, label, 32);  // batch_size
+
   // get loss value
-  /*auto loss* = */model->Evaluate();
+  /*auto loss* = */ model->Evaluate();
 
   // make a prediction
-  /*Ptr<VMTensor> prediction =*/ model->Predict(data); 
+  /*Ptr<VMTensor> prediction =*/model->Predict(data);
 
-  ASSERT_TRUE(1!=1);
-
+  ASSERT_TRUE(1 != 1);
 }
 
 }  // namespace
