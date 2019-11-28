@@ -177,8 +177,7 @@ TEST(notarisation, notarise_blocks)
   for (auto &node : nodes)
   {
     node->reactor.Start();
-    node->consensus.SetCabinetSize(cabinet_size);
-    node->consensus.SetThreshold(threshold);
+    node->consensus.SetMaxCabinetSize(static_cast<uint16_t>(cabinet_size));
   }
 
   // Stake setup

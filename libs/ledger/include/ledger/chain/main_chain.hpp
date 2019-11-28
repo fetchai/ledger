@@ -26,7 +26,6 @@
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/consensus/proof_of_work.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
@@ -165,7 +164,6 @@ public:
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
   using References    = std::unordered_multimap<BlockHash, BlockHash>;
-  using Proof         = Block::Proof;
   using TipsMap       = std::unordered_map<BlockHash, Tip>;
   using BlockHashList = std::list<BlockHash>;
   using LooseBlockMap = std::unordered_map<BlockHash, BlockHashList>;

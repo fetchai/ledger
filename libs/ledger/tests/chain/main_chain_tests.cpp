@@ -52,8 +52,7 @@ static bool IsSameBlock(Block const &a, Block const &b)
   return (a.hash == b.hash) && (a.previous_hash == b.previous_hash) &&
          (a.merkle_hash == b.merkle_hash) && (a.block_number == b.block_number) &&
          (a.miner == b.miner) && (a.log2_num_lanes == b.log2_num_lanes) &&
-         (a.timestamp == b.timestamp) && (a.slices == b.slices) && (a.proof == b.proof) &&
-         (a.nonce == b.nonce);
+         (a.timestamp == b.timestamp) && (a.slices == b.slices);
 }
 
 template <typename Container, typename Value>

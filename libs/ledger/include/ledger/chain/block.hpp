@@ -24,7 +24,6 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/digest.hpp"
 #include "core/serializers/base_types.hpp"
-#include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/dag/dag_epoch.hpp"
 #include "moment/clocks.hpp"
 
@@ -43,7 +42,6 @@ namespace ledger {
 class Block
 {
 public:
-  using Proof        = consensus::ProofOfWork;
   using Slice        = std::vector<chain::TransactionLayout>;
   using Slices       = std::vector<Slice>;
   using DAGEpoch     = fetch::ledger::DAGEpoch;
@@ -75,12 +73,6 @@ public:
   // The qual miner must sign the block
   Digest miner_signature;
 
-  /// @name Proof of Work specifics
-  /// @{
-  uint64_t nonce{0};  ///< The nonce field associated with the proof
-  Proof    proof;     ///< The consensus proof
-  /// @}
-
   /// @name Metadata for block management (not serialized)
   /// @{
   Weight total_weight = 1;
@@ -107,29 +99,25 @@ public:
   using Type       = ledger::Block;
   using DriverType = D;
 
-  static uint8_t const NONCE           = 1;
-  static uint8_t const PROOF           = 2;
-  static uint8_t const WEIGHT          = 3;
-  static uint8_t const TOTAL_WEIGHT    = 4;
-  static uint8_t const MINER_SIGNATURE = 5;
-  static uint8_t const HASH            = 6;
-  static uint8_t const PREVIOUS_HASH   = 7;
-  static uint8_t const MERKLE_HASH     = 8;
-  static uint8_t const BLOCK_NUMBER    = 9;
-  static uint8_t const MINER           = 10;
-  static uint8_t const MINER_ID        = 11;
-  static uint8_t const LOG2_NUM_LANES  = 12;
-  static uint8_t const SLICES          = 13;
-  static uint8_t const DAG_EPOCH       = 14;
-  static uint8_t const TIMESTAMP       = 15;
-  static uint8_t const ENTROPY         = 16;
+  static uint8_t const WEIGHT          = 1;
+  static uint8_t const TOTAL_WEIGHT    = 2;
+  static uint8_t const MINER_SIGNATURE = 3;
+  static uint8_t const HASH            = 4;
+  static uint8_t const PREVIOUS_HASH   = 5;
+  static uint8_t const MERKLE_HASH     = 6;
+  static uint8_t const BLOCK_NUMBER    = 7;
+  static uint8_t const MINER_ID        = 8;
+  static uint8_t const LOG2_NUM_LANES  = 9;
+  static uint8_t const SLICES          = 10;
+  static uint8_t const DAG_EPOCH       = 11;
+  static uint8_t const TIMESTAMP       = 12;
+  static uint8_t const ENTROPY         = 13;
+  static uint8_t const MINER           = 14;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &block)
   {
-    auto map = map_constructor(16);
-    map.Append(NONCE, block.nonce);
-    map.Append(PROOF, block.proof);
+    auto map = map_constructor(14);
     map.Append(WEIGHT, block.weight);
     map.Append(TOTAL_WEIGHT, block.total_weight);
     map.Append(MINER_SIGNATURE, block.miner_signature);
@@ -137,20 +125,18 @@ public:
     map.Append(PREVIOUS_HASH, block.previous_hash);
     map.Append(MERKLE_HASH, block.merkle_hash);
     map.Append(BLOCK_NUMBER, block.block_number);
-    map.Append(MINER, block.miner);
     map.Append(MINER_ID, block.miner_id);
     map.Append(LOG2_NUM_LANES, block.log2_num_lanes);
     map.Append(SLICES, block.slices);
     map.Append(DAG_EPOCH, block.dag_epoch);
     map.Append(TIMESTAMP, block.timestamp);
     map.Append(ENTROPY, block.block_entropy);
+    map.Append(MINER, block.miner);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &block)
   {
-    map.ExpectKeyGetValue(NONCE, block.nonce);
-    map.ExpectKeyGetValue(PROOF, block.proof);
     map.ExpectKeyGetValue(WEIGHT, block.weight);
     map.ExpectKeyGetValue(TOTAL_WEIGHT, block.total_weight);
     map.ExpectKeyGetValue(MINER_SIGNATURE, block.miner_signature);
@@ -158,13 +144,13 @@ public:
     map.ExpectKeyGetValue(PREVIOUS_HASH, block.previous_hash);
     map.ExpectKeyGetValue(MERKLE_HASH, block.merkle_hash);
     map.ExpectKeyGetValue(BLOCK_NUMBER, block.block_number);
-    map.ExpectKeyGetValue(MINER, block.miner);
     map.ExpectKeyGetValue(MINER_ID, block.miner_id);
     map.ExpectKeyGetValue(LOG2_NUM_LANES, block.log2_num_lanes);
     map.ExpectKeyGetValue(SLICES, block.slices);
     map.ExpectKeyGetValue(DAG_EPOCH, block.dag_epoch);
     map.ExpectKeyGetValue(TIMESTAMP, block.timestamp);
     map.ExpectKeyGetValue(ENTROPY, block.block_entropy);
+    map.ExpectKeyGetValue(MINER, block.miner);
   }
 };
 
