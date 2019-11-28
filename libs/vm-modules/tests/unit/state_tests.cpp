@@ -18,6 +18,7 @@
 
 #include "vm/address.hpp"
 #include "vm/array.hpp"
+#include "vm/fixed.hpp"
 #include "vm/map.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_test_toolkit.hpp"
@@ -537,6 +538,143 @@ TEST_F(
   ASSERT_TRUE(toolkit.Run());
 
   ASSERT_EQ(out.str(), "Bob.Bob");
+}
+
+TEST_F(StateTests, test_serialisation_of_fixed_point32)
+{
+  static char const *ser_src = R"(
+    function main()
+      var ref_array = Array<Fixed32>(3);
+      ref_array[0] = 1.0fp32;
+      ref_array[1] = 101.01fp32;
+      ref_array[2] = 10101.0101fp32;
+
+      var state = State<Array<Fixed32>>("my array");
+      state.set(ref_array);
+    endfunction
+  )";
+
+  std::string const state_name{"my array"};
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+
+  ASSERT_TRUE(toolkit.Compile(ser_src));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *deser_src = R"(
+    function main() : Array<Fixed32>
+      var retrieved_state = State<Array<Fixed32>>("my array");
+      return retrieved_state.get(Array<Fixed32>(0));
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _));
+
+  ASSERT_TRUE(toolkit.Compile(deser_src));
+
+  Variant output;
+  ASSERT_TRUE(toolkit.Run(&output));
+  ASSERT_FALSE(output.IsPrimitive());
+  auto retval{output.Get<Ptr<IArray>>()};
+  ASSERT_TRUE(static_cast<bool>(retval));
+  ASSERT_EQ(int32_t{3}, retval->Count());
+
+  EXPECT_EQ(fetch::fixed_point::fp32_t{1.0},
+            retval->PopFrontOne().Get<fetch::fixed_point::fp32_t>());
+  EXPECT_EQ(fetch::fixed_point::fp32_t{101.01},
+            retval->PopFrontOne().Get<fetch::fixed_point::fp32_t>());
+  EXPECT_EQ(fetch::fixed_point::fp32_t{10101.0101},
+            retval->PopFrontOne().Get<fetch::fixed_point::fp32_t>());
+}
+
+TEST_F(StateTests, test_serialisation_of_fixed_point64)
+{
+  static char const *ser_src = R"(
+    function main()
+      var ref_array = Array<Fixed64>(3);
+      ref_array[0] = 1.0fp64;
+      ref_array[1] = 101.01fp64;
+      ref_array[2] = 10101.0101fp64;
+
+      var state = State<Array<Fixed64>>("my array");
+      state.set(ref_array);
+    endfunction
+  )";
+
+  std::string const state_name{"my array"};
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+
+  ASSERT_TRUE(toolkit.Compile(ser_src));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *deser_src = R"(
+    function main() : Array<Fixed64>
+      var retrieved_state = State<Array<Fixed64>>("my array");
+      return retrieved_state.get(Array<Fixed64>(0));
+    endfunction
+  )";
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _));
+
+  ASSERT_TRUE(toolkit.Compile(deser_src));
+
+  Variant output;
+  ASSERT_TRUE(toolkit.Run(&output));
+  ASSERT_FALSE(output.IsPrimitive());
+  auto retval{output.Get<Ptr<IArray>>()};
+  ASSERT_TRUE(static_cast<bool>(retval));
+  ASSERT_EQ(int32_t{3}, retval->Count());
+  EXPECT_EQ(fetch::fixed_point::fp64_t{1.0},
+            retval->PopFrontOne().Get<fetch::fixed_point::fp64_t>());
+  EXPECT_EQ(fetch::fixed_point::fp64_t{101.01},
+            retval->PopFrontOne().Get<fetch::fixed_point::fp64_t>());
+  EXPECT_EQ(fetch::fixed_point::fp64_t{10101.0101},
+            retval->PopFrontOne().Get<fetch::fixed_point::fp64_t>());
+}
+
+TEST_F(StateTests, test_serialisation_of_fixed_point128)
+{
+  static char const *ser_src = R"(
+    function main()
+      var ref_array = Array<Fixed128>(3);
+      ref_array[0] = 1.0fp128;
+      ref_array[1] = 101.01fp128;
+      ref_array[2] = 10101.0101fp128;
+
+      var state = State<Array<Fixed128>>("my array");
+      state.set(ref_array);
+    endfunction
+  )";
+
+  std::string const state_name{"my array"};
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+
+  ASSERT_TRUE(toolkit.Compile(ser_src));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *deser_src = R"(
+    function main() : Array<Fixed128>
+      var retrieved_state = State<Array<Fixed128>>("my array");
+      return retrieved_state.get(Array<Fixed128>(0));
+    endfunction
+  )";
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _));
+
+  ASSERT_TRUE(toolkit.Compile(deser_src));
+
+  Variant output;
+  ASSERT_TRUE(toolkit.Run(&output));
+  ASSERT_FALSE(output.IsPrimitive());
+  auto retval{output.Get<Ptr<IArray>>()};
+  ASSERT_TRUE(static_cast<bool>(retval));
+  ASSERT_EQ(int32_t{3}, retval->Count());
+  EXPECT_EQ(fetch::fixed_point::fp128_t{1.0},
+            retval->PopFrontOne().Get<Ptr<fetch::vm::Fixed128>>()->data_);
+  EXPECT_EQ(fetch::fixed_point::fp128_t{101.01},
+            retval->PopFrontOne().Get<Ptr<fetch::vm::Fixed128>>()->data_);
+  EXPECT_EQ(fetch::fixed_point::fp128_t{10101.0101},
+            retval->PopFrontOne().Get<Ptr<fetch::vm::Fixed128>>()->data_);
 }
 
 }  // namespace

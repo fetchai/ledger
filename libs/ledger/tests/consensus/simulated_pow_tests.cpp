@@ -89,7 +89,7 @@ TEST(ledger_simulated_pow_gtest, test_disable_functionality)
   std::vector<Block> all_blocks;
 
   DeadlineTimer timer_to_proceed_{"pow:test"};
-  timer_to_proceed_.Restart(std::chrono::milliseconds{6000});
+  timer_to_proceed_.Restart(std::chrono::milliseconds{1000});
 
   // Generate around 10 blocks given our time interval
   while (!timer_to_proceed_.HasExpired())
