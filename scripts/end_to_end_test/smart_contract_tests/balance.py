@@ -110,7 +110,7 @@ def run(options):
     assert contract.query(api, 'query_clear_test') == 0
 
     # Provide the contract with funds
-    api.tokens.transfer(entity1, contract.address, 1234, 200)
+    api.sync(api.tokens.transfer(entity1, contract.address, 1234, 200))
 
     api.sync(contract.action(api, 'action_test', 10000, [entity1]))
     assert contract.query(api, 'query_action_test') == 1234
