@@ -20,7 +20,7 @@
 #include "dmlf/collective_learning/utilities/boston_housing_client_utilities.hpp"
 #include "dmlf/collective_learning/utilities/utilities.hpp"
 #include "dmlf/deprecated/muddle_learner_networker.hpp"
-#include "dmlf/deprecated/simple_cycling_algorithm.hpp"
+#include "dmlf/simple_cycling_algorithm.hpp"
 #include "json/document.hpp"
 #include "math/tensor.hpp"
 #include "math/utilities/ReadCSV.hpp"

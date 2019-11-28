@@ -19,7 +19,7 @@
 #include "core/mutex.hpp"
 #include "dmlf/deprecated/filepassing_learner_networker.hpp"
 #include "dmlf/deprecated/local_learner_networker.hpp"
-#include "dmlf/deprecated/simple_cycling_algorithm.hpp"
+#include "dmlf/simple_cycling_algorithm.hpp"
 #include "dmlf/deprecated/update.hpp"
 #include "dmlf/deprecated/update_interface.hpp"
 #include "math/matrix_operations.hpp"
