@@ -150,7 +150,7 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     if (optimiser->string() == "adagrad")
     {
       // optimiser_type = fetch::ml::OptimiserType::ADAGRAD;
-      return vm::CHARGE_INFINITY;
+      return infinite_charge("Not yet implement");
     }
     else if (optimiser->string() == "adam")
     {
@@ -162,24 +162,20 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     {
       // optimiser_type = fetch::ml::OptimiserType::MOMENTUM;
       return infinite_charge("Not yet implement");
-      return vm::CHARGE_INFINITY;
     }
     else if (optimiser->string() == "rmsprop")
     {
       //  optimiser_type = fetch::ml::OptimiserType::RMSPROP;
       return infinite_charge("Not yet implement");
-      return vm::CHARGE_INFINITY;
     }
     else if (optimiser->string() == "sgd")
     {
       // optimiser_type = fetch::ml::OptimiserType::SGD;
       return infinite_charge("Not yet implement");
-      return vm::CHARGE_INFINITY;
     }
     else
     {
       return infinite_charge("invalid optimiser");
-      return vm::CHARGE_INFINITY;
     }
   }
 
