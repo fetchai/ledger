@@ -1633,7 +1633,7 @@ bool MainChain::ReindexTips()
       }
     }
 
-    if (new_tip)
+    if (new_tip && new_tips.find(block.hash) == new_tips.end())
     {
       new_tips[block.hash] = Tip{block.total_weight, block.weight, block.block_number};
 
