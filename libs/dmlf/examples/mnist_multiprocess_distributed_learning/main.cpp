@@ -64,6 +64,13 @@ int main(int argc, char **argv)
   auto n_peers        = doc["n_peers"].As<SizeType>();
   auto test_set_ratio = doc["test_set_ratio"].As<float>();
 
+  // get the network config file
+  fetch::json::JSONDocument network_doc;
+  std::ifstream             network_config_file{networker_config};
+  std::string               text((std::istreambuf_iterator<char>(network_config_file)),
+                                 std::istreambuf_iterator<char>());
+  network_doc.Parse(text.c_str());
+
   /**
    * Prepare environment
    */
@@ -74,7 +81,7 @@ int main(int argc, char **argv)
 
   // Create networker and assign shuffle algorithm
   auto networker = std::make_shared<fetch::dmlf::deprecated_MuddleLearnerNetworker>(
-      networker_config, instance_number);
+      network_doc, instance_number);
   networker->Initialize<fetch::dmlf::deprecated_Update<TensorType>>();
   networker->SetShuffleAlgorithm(
       std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));

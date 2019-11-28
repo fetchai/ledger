@@ -85,6 +85,10 @@ public:
 
     params_               = other.params_;
     algorithm_controller_ = other.algorithm_controller_;
+
+    input_names_ = other.input_names_;
+    label_name_  = other.label_name_;
+    error_name_  = other.error_name_;
   }
 
   virtual ~ClientAlgorithm() = default;
@@ -143,6 +147,10 @@ protected:
 
   void ClearLossFile();
 
+  std::vector<std::string> input_names_;
+  std::string              label_name_;
+  std::string              error_name_;
+
 private:
   std::mutex algorithm_mutex_;
 
@@ -175,14 +183,16 @@ void ClientAlgorithm<TensorType>::SetModel(ModelPtrType model_ptr)
   optimiser_ptr_  = model_ptr_->optimiser_ptr_;
   dataloader_ptr_ = model_ptr_->dataloader_ptr_;
   graph_ptr_      = model_ptr_->graph_ptr_;
+  input_names_    = {model_ptr_->InputName()};
+  label_name_     = model_ptr_->LabelName();
+  error_name_     = model_ptr_->ErrorName();
 }
 
 template <class TensorType>
 void ClientAlgorithm<TensorType>::ClearLossFile()
 {
   mkdir(params_.results_dir.c_str(), 0777);
-  std::string results_file = params_.results_dir + "/losses_" + id_ + ".csv";
-  std::cout << "Writing results to: " << results_file << std::endl;
+  std::string   results_file = params_.results_dir + "/losses_" + id_ + ".csv";
   std::ofstream lossfile(results_file, std::ofstream::out | std::ofstream::trunc);
   lossfile.close();
 }
@@ -289,23 +299,23 @@ void ClientAlgorithm<TensorType>::Train()
 
     // Set inputs and label
     auto input_data_it = input.second.begin();
-    auto input_name_it = params_.input_names.begin();
+    auto input_name_it = input_names_.begin();
 
-    while (input_name_it != params_.input_names.end())
+    while (input_name_it != input_names_.end())
     {
       graph_ptr_->SetInput(*input_name_it, *input_data_it);
       ++input_name_it;
       ++input_data_it;
     }
-    graph_ptr_->SetInput(params_.label_name, input.first);
+    graph_ptr_->SetInput(label_name_, input.first);
 
-    TensorType loss_tensor = graph_ptr_->ForwardPropagate(params_.error_name);
+    TensorType loss_tensor = graph_ptr_->ForwardPropagate(error_name_);
     train_loss_            = *(loss_tensor.begin());
 
     train_loss_sum_ += train_loss_;
     train_loss_cnt_++;
 
-    graph_ptr_->BackPropagate(params_.error_name);
+    graph_ptr_->BackPropagate(error_name_);
   }
 
   if (dataloader_is_done_)
@@ -327,15 +337,6 @@ void ClientAlgorithm<TensorType>::Test()
 {
   if (dataloader_ptr_->IsModeAvailable(fetch::ml::dataloaders::DataLoaderMode::TEST))
   {
-//    dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
-    // Disable random to run model on whole test set
-//    dataloader_ptr_->SetRandomMode(false);
-
-//    SizeType test_set_size = dataloader_ptr_->Size();
-
-//    dataloader_ptr_->Reset();
-//    bool is_done_set;
-//    auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
     {
       FETCH_LOCK(model_mutex_);
 
@@ -350,44 +351,10 @@ void ClientAlgorithm<TensorType>::Test()
       }
       else if (results.size() > 2)
       {
-        throw fetch::ml::exceptions::NotImplemented("More metrics configured for model than "
-                                                    "ClientAlgorithm knows how to process.");
+        throw fetch::ml::exceptions::NotImplemented(
+            "More metrics configured for model than "
+            "ClientAlgorithm knows how to process.");
       }
-
-      // Set inputs and label
-//      auto input_data_it = test_pair.second.begin();
-//      auto input_name_it = params_.input_names.begin();
-
-//      while (input_name_it != params_.input_names.end())
-//      {
-//        graph_ptr_->SetInput(*input_name_it, *input_data_it);
-//        ++input_name_it;
-//        ++input_data_it;
-//      }
-//      graph_ptr_->SetInput(params_.label_name, test_pair.first);
-//
-//      test_loss_ = *(graph_ptr_->Evaluate(params_.error_name).begin());
-//
-//       Accuracy calculation
-//      if (!params_.accuracy_name.empty())
-//      {
-//        test_accuracy_ = *(graph_ptr_->Evaluate(params_.accuracy_name).begin());
-//      }
-//      // Todo: will be replaced by accuracy metric once that PR is merged
-//      TensorType test_results = graph_ptr_->Evaluate("FullyConnected_2");
-//      test_results            = fetch::math::ArgMax(test_results);
-//      SizeType total_score{0};
-//      auto     test_result = test_results.cbegin();
-//      for (auto const &data_point : fetch::math::ArgMax(test_pair.first))
-//      {
-//        if (data_point == *test_result)
-//        {
-//          total_score++;
-//        }
-//        ++test_result;
-//      }
-//      test_accuracy_ =
-//          static_cast<DataType>(total_score) / static_cast<DataType>(test_results.size());
     }
   }
 }

@@ -51,7 +51,7 @@ public:
   std::shared_ptr<fetch::dmlf::deprecated_MuddleLearnerNetworker>   actual;
   std::shared_ptr<fetch::dmlf::deprecated_AbstractLearnerNetworker> interface;
 
-  Learner(const std::string &cloud_config, std::size_t instance_number)
+  Learner(fetch::json::JSONDocument &cloud_config, std::size_t instance_number)
   {
     actual    = std::make_shared<fetch::dmlf::deprecated_MuddleLearnerNetworker>(cloud_config,
                                                                               instance_number);
@@ -81,19 +81,23 @@ public:
 
   std::vector<std::shared_ptr<Learner>> learners;
 
-  std::string json_config = std::string("{") + "  \"peers\": [ " +
-                            "  { \"uri\": \"tcp://127.0.0.1:8000\", \"key\": "
-                            "\"BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=\", \"pub\": "
-                            "\"rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/"
-                            "Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==\" }, " +
-                            "  { \"uri\": \"tcp://127.0.0.1:8001\", \"key\": "
-                            "\"4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=\",  \"pub\": "
-                            "\"646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/"
-                            "PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==\" } " +
-                            "]" + "}";
+  fetch::json::JSONDocument json_config;
 
   void SetUp() override
   {
+    std::string json_config_input = std::string("{") + "  \"peers\": [ " +
+                                    "  { \"uri\": \"tcp://127.0.0.1:8000\", \"key\": "
+                                    "\"BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=\", \"pub\": "
+                                    "\"rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/"
+                                    "Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==\" }, " +
+                                    "  { \"uri\": \"tcp://127.0.0.1:8001\", \"key\": "
+                                    "\"4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=\",  \"pub\": "
+                                    "\"646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/"
+                                    "PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==\" } " +
+                                    "]" + "}";
+
+    json_config.Parse(json_config_input.c_str());
+
     for (std::size_t i = 0; i < 2; i++)
     {
       learners.push_back(std::make_shared<Learner>(json_config, i));
@@ -116,7 +120,7 @@ public:
   std::shared_ptr<fetch::dmlf::deprecated_MuddleLearnerNetworker>   actual;
   std::shared_ptr<fetch::dmlf::deprecated_AbstractLearnerNetworker> interface;
 
-  LearnerTypedUpdates(const std::string &cloud_config, std::size_t instance_number)
+  LearnerTypedUpdates(fetch::json::JSONDocument &cloud_config, std::size_t instance_number)
   {
     actual = std::make_shared<fetch::dmlf::deprecated_MuddleLearnerNetworker>(
         cloud_config, instance_number, std::shared_ptr<fetch::network::NetworkManager>{},
@@ -151,19 +155,23 @@ public:
 
   std::vector<std::shared_ptr<LearnerTypedUpdates>> learners;
 
-  std::string json_config = std::string("{") + "  \"peers\": [ " +
-                            "  { \"uri\": \"tcp://127.0.0.1:8000\", \"key\": "
-                            "\"BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=\", \"pub\": "
-                            "\"rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/"
-                            "Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==\" }, " +
-                            "  { \"uri\": \"tcp://127.0.0.1:8001\", \"key\": "
-                            "\"4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=\",  \"pub\": "
-                            "\"646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/"
-                            "PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==\" } " +
-                            "]" + "}";
+  fetch::json::JSONDocument json_config;
 
   void SetUp() override
   {
+    std::string json_config_input = std::string("{") + "  \"peers\": [ " +
+                                    "  { \"uri\": \"tcp://127.0.0.1:8000\", \"key\": "
+                                    "\"BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=\", \"pub\": "
+                                    "\"rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/"
+                                    "Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==\" }, " +
+                                    "  { \"uri\": \"tcp://127.0.0.1:8001\", \"key\": "
+                                    "\"4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=\",  \"pub\": "
+                                    "\"646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/"
+                                    "PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==\" } " +
+                                    "]" + "}";
+
+    json_config.Parse(json_config_input.c_str());
+
     for (std::size_t i = 0; i < 2; i++)
     {
       learners.push_back(std::make_shared<LearnerTypedUpdates>(json_config, i));

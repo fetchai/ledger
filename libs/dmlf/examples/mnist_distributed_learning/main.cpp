@@ -53,9 +53,6 @@ using SizeType         = fetch::math::SizeType;
         "max_epochs": 20,
         "learning_rate": 0.02,
         "print_loss": false,
-        "input_names": ["Input"],
-        "label_name": "Label",
-        "error_name": "Error"
 }
  */
 

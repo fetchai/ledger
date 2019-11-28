@@ -23,8 +23,8 @@
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/meta/ml_type_traits.hpp"
-#include "ml/utilities/mnist_utilities.hpp"
 #include "ml/ops/metrics/types.hpp"
+#include "ml/utilities/mnist_utilities.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -42,19 +42,15 @@ namespace details {
  * @return
  */
 template <typename TensorType>
-std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeMNistModel(
-    fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> &client_params,
-    std::string const &images, std::string const &labels, float test_set_ratio)
+std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeMNistModel(std::string const &images,
+                                                                         std::string const &labels,
+                                                                         float test_set_ratio)
 {
   // Initialise model
   auto model_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
 
   model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
-      28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
-  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
-      10u, 10u, fetch::ml::details::ActivationType::RELU);
-  model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(
-      10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
+      28u * 28u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
 
   // Initialise DataLoader
   auto mnist_images = fetch::math::utilities::ReadCSV<TensorType>(images);
@@ -68,14 +64,8 @@ std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeMNistModel(
   dataloader_ptr->SetRandomMode(true);
 
   model_ptr->SetDataloader(std::move(dataloader_ptr));
-//  model_ptr->Compile(fetch::ml::OptimiserType::ADAM, fetch::ml::ops::LossType::CROSS_ENTROPY,
-//      {fetch::ml::ops::MetricType::CATEGORICAL_ACCURACY});
-  model_ptr->Compile(fetch::ml::OptimiserType::ADAM, fetch::ml::ops::LossType::CROSS_ENTROPY);
-
-  // N.B. some names are not set until AFTER the model is compiled
-  client_params.input_names = {model_ptr->InputName()};
-  client_params.label_name  = model_ptr->LabelName();
-  client_params.error_name  = model_ptr->ErrorName();
+  model_ptr->Compile(fetch::ml::OptimiserType::ADAM, fetch::ml::ops::LossType::CROSS_ENTROPY,
+                     {fetch::ml::ops::MetricType::CATEGORICAL_ACCURACY});
 
   return model_ptr;
 }
@@ -111,8 +101,7 @@ MakeMNISTClient(
   for (auto const &algorithm : algorithms)
   {
     // build the mnist model
-    auto model_ptr =
-        details::MakeMNistModel<TensorType>(client_params, images, labels, test_set_ratio);
+    auto model_ptr = details::MakeMNistModel<TensorType>(images, labels, test_set_ratio);
 
     algorithm->SetModel(model_ptr);
   }
