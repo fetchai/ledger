@@ -1051,7 +1051,7 @@ void MainChain::TrimCache()
 {
   assert(static_cast<bool>(block_store_));
 
-  MilliTimer myTimer("MainChain::cache");
+  MilliTimer myTimer("MainChain::TrimCache");
 
   FETCH_LOCK(lock_);
 
@@ -1640,12 +1640,7 @@ bool MainChain::ReindexTips()
       // check if this tip is the current heaviest
       if (max_tip == new_tips[block.hash])
       {
-        if (enable_stutter_removal_ && !block.IsGenesis())
-        {
-          FETCH_LOG_ERROR(LOGGING_NAME, "Stutter blocks found for block number ",
-                          max_tip.block_number, ", weight ", max_tip.weight, ", total weight ",
-                          max_tip.total_weight);
-        }
+        assert(!enable_stutter_removal_);
         if (block.hash > max_hash)
         {
           max_tip  = new_tips[block.hash];
