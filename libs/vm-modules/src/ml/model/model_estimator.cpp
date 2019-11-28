@@ -62,6 +62,7 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
     state_.backward_pass_cost += 2 * inputs * hidden_nodes + inputs + 2 * hidden_nodes;
     state_.weights_size_sum += inputs * hidden_nodes + hidden_nodes;
     state_.last_layer_size = hidden_nodes;
+    state_.ops_count += 3;
   }
   else
   {
@@ -82,6 +83,7 @@ ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> cons
   {
     state_.forward_pass_cost += hidden_nodes;
     state_.backward_pass_cost += hidden_nodes;
+    state_.ops_count += 1;
   }
   else
   {
@@ -128,6 +130,7 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       // loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
       state_.forward_pass_cost += MSE_FORWARD_IMPACT * state_.last_layer_size;
       state_.backward_pass_cost += MSE_BACKWARD_IMPACT * state_.last_layer_size;
+      state_.ops_count += 1;
     }
     else if (loss->string() == "cel")
     {
@@ -157,6 +160,7 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       // optimiser_type = fetch::ml::OptimiserType::ADAM;
       state_.optimiser_step_impact  = ADAM_STEP_IMPACT;
       optimiser_construction_impact = ADAM_CONSTRUCTION_IMPACT;
+      state_.ops_count++;
     }
     else if (optimiser->string() == "momentum")
     {
@@ -238,13 +242,15 @@ ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 
 ChargeAmount ModelEstimator::SerializeToString()
 {
-  return infinite_charge("Not yet implemented");
+  SizeType estimate = state_.ops_count * SERIALISATION_OVERHEAD +
+                      state_.weights_size_sum * WEIGHT_SERIALISATION_OVERHEAD;
+  return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
 }
 
 ChargeAmount ModelEstimator::DeserializeFromString(Ptr<String> const &model_string)
 {
-  FETCH_UNUSED(model_string);
-  return infinite_charge("Not yet implemented");
+  SizeType estimate = model_string->string().size() * DESERIALISATION_OVERHEAD;
+  return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
 }
 
 bool ModelEstimator::SerializeTo(serializers::MsgPackSerializer &buffer)
@@ -275,6 +281,7 @@ bool ModelEstimator::State::SerializeTo(serializers::MsgPackSerializer &buffer)
   buffer << weights_size_sum;
   buffer << optimiser_step_impact;
   buffer << last_layer_size;
+  buffer << ops_count;
 
   return true;
 }
@@ -286,6 +293,7 @@ bool ModelEstimator::State::DeserializeFrom(serializers::MsgPackSerializer &buff
   buffer >> weights_size_sum;
   buffer >> optimiser_step_impact;
   buffer >> last_layer_size;
+  buffer >> ops_count;
 
   return true;
 }

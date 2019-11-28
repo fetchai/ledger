@@ -105,6 +105,7 @@ private:
     ChargeAmount optimiser_step_impact{0};
 
     SizeType last_layer_size{0};
+    SizeType ops_count{0};
 
     // serialization
     bool SerializeTo(serializers::MsgPackSerializer &buffer);
@@ -114,12 +115,15 @@ private:
   VMObjectType &model_;
   State         state_;
 
-  static constexpr SizeType ADAM_STEP_IMPACT         = 15;
-  static constexpr SizeType ADAM_CONSTRUCTION_IMPACT = 15;
-  static constexpr SizeType MSE_FORWARD_IMPACT       = 6;
-  static constexpr SizeType MSE_BACKWARD_IMPACT      = 6;
-  static constexpr SizeType FIT_CONST_OVERHEAD       = 3;
-  static constexpr SizeType FIT_PER_BATCH_OVERHEAD   = 2;
+  static constexpr SizeType ADAM_STEP_IMPACT              = 15;
+  static constexpr SizeType ADAM_CONSTRUCTION_IMPACT      = 15;
+  static constexpr SizeType MSE_FORWARD_IMPACT            = 6;
+  static constexpr SizeType MSE_BACKWARD_IMPACT           = 6;
+  static constexpr SizeType FIT_CONST_OVERHEAD            = 3;
+  static constexpr SizeType FIT_PER_BATCH_OVERHEAD        = 2;
+  static constexpr SizeType SERIALISATION_OVERHEAD        = 5;
+  static constexpr SizeType DESERIALISATION_OVERHEAD      = 10;
+  static constexpr SizeType WEIGHT_SERIALISATION_OVERHEAD = 4;  // Will depend on DataType of Tensor
 
   static constexpr ChargeAmount constant_charge{vm::CHARGE_UNIT};
 
