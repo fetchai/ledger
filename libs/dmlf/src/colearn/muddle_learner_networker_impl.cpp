@@ -20,9 +20,9 @@
 #include "dmlf/colearn/muddle_learner_networker_impl.hpp"
 #include "dmlf/colearn/muddle_outbound_update_task.hpp"
 #include "dmlf/colearn/update_store.hpp"
+#include "dmlf/stochastic_reception_algorithm.hpp"
 #include "muddle/rpc/client.hpp"
 #include <cmath>  // for modf
-#include "dmlf/stochastic_reception_algorithm.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -33,15 +33,15 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud, StorePtr u
   Setup(std::move(mud), std::move(update_store));
 }
 
-void MuddleLearnerNetworkerImpl::SetShuffleAlgorithm(const
-    std::shared_ptr<ShuffleAlgorithmInterface> &alg)
+void MuddleLearnerNetworkerImpl::SetShuffleAlgorithm(
+    const std::shared_ptr<ShuffleAlgorithmInterface> &alg)
 {
-  ShuffleAlgorithmInterface *iface = alg.get();
-  StochasticReceptionAlgorithm *stoc = dynamic_cast<StochasticReceptionAlgorithm*>(iface);
+  ShuffleAlgorithmInterface *   iface = alg.get();
+  StochasticReceptionAlgorithm *stoc  = dynamic_cast<StochasticReceptionAlgorithm *>(iface);
 
   if (stoc)
   {
-    set_broadcast_proportion(stoc -> broadcast_proportion());
+    set_broadcast_proportion(stoc->broadcast_proportion());
   }
   else
   {
@@ -78,7 +78,7 @@ void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
     double                     proportion;
     double                     random_factor;
 
-    auto        source = std::string(fetch::byte_array::ToBase64(from));
+    auto source = std::string(fetch::byte_array::ToBase64(from));
 
     buf >> type_name >> bytes >> proportion >> random_factor;
     std::cout << "from:" << source << ", "
@@ -156,8 +156,7 @@ void MuddleLearnerNetworkerImpl::submit(TaskPtr const &t)
 }
 
 void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update,
-                                                 const Peers &peers,
-                                                 double broadcast_proportion)
+                                                 const Peers &peers, double broadcast_proportion)
 {
   auto random_factor = randomiser_.GetNew();
   if (broadcast_proportion < 0.0)
@@ -180,15 +179,15 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, By
   if (alg_)
   {
     // use the shuffler
-    auto next_ones = alg_ -> GetNextOutputs();
+    auto next_ones = alg_->GetNextOutputs();
 
     Peers peers;
-    for(auto const &next_one : next_ones)
+    for (auto const &next_one : next_ones)
     {
-      auto id = supplied_peers_[next_one];
+      auto id      = supplied_peers_[next_one];
       auto idbytes = fetch::byte_array::FromBase64(id);
-      FETCH_LOG_INFO(LOGGING_NAME, "PushUpdateBytes, adding to sender list: ",
-                     next_one, " => ", id);
+      FETCH_LOG_INFO(LOGGING_NAME, "PushUpdateBytes, adding to sender list: ", next_one, " => ",
+                     id);
       peers.insert(idbytes);
     }
     PushUpdateBytes(type_name, update, peers, 1.0);

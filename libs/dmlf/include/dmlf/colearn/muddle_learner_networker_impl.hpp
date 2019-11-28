@@ -165,6 +165,7 @@ public:
   {
     supplied_peers_.clear();
   }
+
 protected:
   friend class MuddleOutboundAnnounceTask;
   void     Setup(MuddlePtr mud, StorePtr update_store);

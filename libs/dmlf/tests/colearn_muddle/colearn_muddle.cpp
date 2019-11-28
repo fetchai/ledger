@@ -25,11 +25,11 @@
 #include "dmlf/colearn/muddle_learner_networker_impl.hpp"
 #include "dmlf/colearn/update_store.hpp"
 #include "dmlf/collective_learning/utilities/typed_update_adaptor.hpp"
+#include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "network/management/network_manager.hpp"
-#include "dmlf/simple_cycling_algorithm.hpp"
 
 #include <chrono>
 #include <ostream>
@@ -116,7 +116,7 @@ public:
     std::shared_ptr<LearnerTypedUpdates> instance;
     unsigned short int                   port;
     LN::Address                          pub;
-    std::string pubstr;
+    std::string                          pubstr;
   };
 
   using Insts = std::vector<Inst>;
@@ -188,7 +188,7 @@ TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveShuffle)
   {
     for (unsigned int j = 0; j < instances.size(); j++)
     {
-      if (i != j )
+      if (i != j)
       {
         instances[i].instance->actual->AddPeers({instances[j].pubstr});
       }
@@ -211,7 +211,6 @@ TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveShuffle)
   EXPECT_EQ(instances[3].instance->actual->GetUpdateCount(), 1);
   EXPECT_EQ(instances[4].instance->actual->GetUpdateCount(), 1);
   EXPECT_EQ(instances[5].instance->actual->GetUpdateCount(), 0);
-
 }
 
 }  // namespace
