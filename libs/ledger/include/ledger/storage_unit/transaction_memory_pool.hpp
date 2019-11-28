@@ -19,6 +19,7 @@
 
 #include "core/digest.hpp"
 #include "core/mutex.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/storage_unit/transaction_pool_interface.hpp"
 
 #include <unordered_map>
