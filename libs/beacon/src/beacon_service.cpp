@@ -301,10 +301,13 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   uint64_t const index = block_entropy_being_created_->block_number;
   beacon_entropy_current_round_->set(index);
 
+  bool const entropy_within_lead_period =
+      (index <= (most_recent_round_seen_ + entropy_lead_blocks_));
+
   // Only populate our signature information when we want to share it with peers (when less
-  // than lead blocks from the HEAD). Entropy generation can however sync ahead of the chain.
+  // than lead blocks from the HEAD). Entropy generation can however sync ahead of the known chain.
   if (signatures_being_built_.find(index) == signatures_being_built_.end() &&
-      index <= (most_recent_round_seen_ + entropy_lead_blocks_))
+      entropy_within_lead_period)
   {
     SignatureInformation this_round;
     this_round.round                                        = index;
@@ -312,8 +315,10 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
     signatures_being_built_[index]                          = this_round;
   }
 
-  // Don't make RPC calls if we have no peers
-  if (endpoint_.GetDirectlyConnectedPeers().empty())
+  // Don't make RPC calls if we have no peers, or if we would exceed the lead period (exception when
+  // we think we are lagging behind the chain)
+  if (endpoint_.GetDirectlyConnectedPeers().empty() ||
+      !(!entropy_within_lead_period && !likely_to_be_behind_))
   {
     state_machine_->Delay(std::chrono::milliseconds(5));
     return State::COLLECT_SIGNATURES;
@@ -427,8 +432,10 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     }
 
     // Success - Add relevant info
-    auto &signatures_struct = signatures_being_built_[index];
-    auto &all_sigs_map      = signatures_struct.threshold_signatures;
+    auto &     signatures_struct  = signatures_being_built_[index];
+    auto &     all_sigs_map       = signatures_struct.threshold_signatures;
+    bool const have_no_signatures = all_sigs_map.empty();
+    likely_to_be_behind_          = false;
 
     for (auto const &address_sig_pair : ret.threshold_signatures)
     {
@@ -439,6 +446,14 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
       // If we have collected enough signatures already then break
       if (active_exe_unit_->manager.can_verify())
       {
+        if (have_no_signatures)
+        {
+          FETCH_LOG_INFO(LOGGING_NAME,
+                         "Node received all sigs required for entropy before even populating its "
+                         "own. Likely to be lagging behind the chain");
+          likely_to_be_behind_ = true;
+        }
+
         break;
       }
     }

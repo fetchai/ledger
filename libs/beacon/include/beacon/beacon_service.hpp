@@ -170,6 +170,7 @@ private:
   /// @{
   // Important this is ordered for trimming
   std::map<uint64_t, SignatureInformation> signatures_being_built_;
+  bool                                     likely_to_be_behind_{false};
   std::size_t                              random_number_{0};
   Identity                                 qual_promise_identity_;
   service::Promise                         sig_share_promise_;
