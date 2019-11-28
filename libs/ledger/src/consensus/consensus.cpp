@@ -502,6 +502,8 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 }
 
 // TODO(HUT): put block number confirmation/check here (?)
+// TODO(HUT): check you're a member of qual
+// TODO(HUT): turn this off when syncing(?)
 NextBlockPtr Consensus::GenerateNextBlock()
 {
   NextBlockPtr ret;
@@ -650,7 +652,6 @@ Status Consensus::ValidBlock(Block const &current) const
     }
 
     // Check that the members of qual meet threshold requirements
-
     qualified_cabinet = block_entropy.qualified;
     group_pub_key     = block_entropy.group_public_key;
 
@@ -716,16 +717,7 @@ void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)
   }
 }
 
-void Consensus::Refresh()
-{}
-
-void Consensus::SetThreshold(double threshold)
-{
-  threshold_ = threshold;
-  FETCH_LOG_INFO(LOGGING_NAME, "Set threshold to ", threshold_);
-}
-
-void Consensus::SetCabinetSize(uint64_t size)
+void Consensus::SetMaxCabinetSize(uint16_t size)
 {
   max_cabinet_size_ = size;
 }
@@ -733,6 +725,16 @@ void Consensus::SetCabinetSize(uint64_t size)
 StakeManagerPtr Consensus::stake()
 {
   return stake_;
+}
+
+void Consensus::SetAeonPeriod(uint16_t aeon_period)
+{
+  aeon_period_ = aeon_period;
+}
+
+void Consensus::SetBlockInterval(uint64_t block_interval_ms)
+{
+  block_interval_ms_ = block_interval_ms;
 }
 
 void Consensus::SetDefaultStartTime(uint64_t default_start_time)
