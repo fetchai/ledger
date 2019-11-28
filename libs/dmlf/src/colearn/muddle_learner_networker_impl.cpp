@@ -78,12 +78,10 @@ void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
     double                     proportion;
     double                     random_factor;
 
-    std::string kind;
     auto        source = std::string(fetch::byte_array::ToBase64(from));
 
     buf >> type_name >> bytes >> proportion >> random_factor;
-    std::cout << "kind:" << kind << ", "
-              << "from:" << source << ", "
+    std::cout << "from:" << source << ", "
               << "serv:" << service << ", "
               << "chan:" << channel << ", "
               << "cntr:" << counter << ", "
