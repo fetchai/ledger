@@ -367,12 +367,12 @@ void Analyser::AddError(uint16_t line, std::string const &message)
 {
   std::ostringstream stream;
   stream << filename_ << ": line " << line << ": error: " << message;
-  errors_.push_back(stream.str());
+  errors_.emplace_back(stream.str());
 }
 
 void Analyser::BuildBlock(BlockNodePtr const &block_node)
 {
-  blocks_.push_back(block_node);
+  blocks_.emplace_back(block_node);
   for (NodePtr const &child : block_node->block_children)
   {
     switch (child->node_kind)
@@ -495,7 +495,7 @@ void Analyser::BuildContractDefinition(BlockNodePtr const &contract_definition_n
   }
   TypePtr contract_type  = CreateType(TypeKind::UserDefinedContract, contract_name);
   contract_type->symbols = CreateSymbolTable();
-  blocks_.push_back(contract_definition_node);
+  blocks_.emplace_back(contract_definition_node);
   for (NodePtr const &contract_function_prototype_node : contract_definition_node->block_children)
   {
     ExpressionNodePtr      function_name_node;
@@ -534,7 +534,7 @@ void Analyser::BuildContractDefinition(BlockNodePtr const &contract_definition_n
     }
     FunctionPtr function = CreateUserDefinedContractFunction(
         contract_type, function_name, parameter_types, parameter_variables, return_type);
-    function_group->functions.push_back(function);
+    function_group->functions.emplace_back(function);
     function_name_node->function = function;
   }
   blocks_.pop_back();
@@ -595,7 +595,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &function_definition_n
   }
   FunctionPtr function = CreateUserDefinedFreeFunction(function_name, parameter_types,
                                                        parameter_variables, return_type);
-  function_group->functions.push_back(function);
+  function_group->functions.emplace_back(function);
   function_name_node->function = function;
   BuildBlock(function_definition_node);
 }
@@ -643,9 +643,9 @@ bool Analyser::BuildFunctionPrototype(NodePtr const &         prototype_node,
         CreateVariable(VariableKind::Parameter, parameter_name, parameter_type);
     parameter_node->variable = parameter_variable;
     parameter_node->type     = parameter_variable->type;
-    parameter_types.push_back(parameter_type);
-    parameter_variables.push_back(std::move(parameter_variable));
-    parameter_nodes.push_back(std::move(parameter_node));
+    parameter_types.emplace_back(parameter_type);
+    parameter_variables.emplace_back(std::move(parameter_variable));
+    parameter_nodes.emplace_back(std::move(parameter_node));
   }
   ExpressionNodePtr return_type_node =
       ConvertToExpressionNodePtr(prototype_node->children[std::size_t(count - 1)]);
@@ -690,12 +690,12 @@ void Analyser::BuildIfStatement(NodePtr const &if_statement_node)
 
 void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
 {
-  blocks_.push_back(block_node);
+  blocks_.emplace_back(block_node);
   bool const is_loop = block_node->node_kind == NodeKind::WhileStatement ||
                        block_node->node_kind == NodeKind::ForStatement;
   if (is_loop)
   {
-    loops_.push_back(block_node);
+    loops_.emplace_back(block_node);
   }
   for (NodePtr const &child : block_node->block_children)
   {
@@ -834,7 +834,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
                                       ? sharded_state_constructor_
                                       : state_constructor_;
         child->function = constructor;
-        use_any_node_->children.push_back(std::move(child));
+        use_any_node_->children.emplace_back(std::move(child));
       }
     }
   }
@@ -905,7 +905,7 @@ void Analyser::AnnotateForStatement(BlockNodePtr const &for_statement_node)
       AddError(child_node->line, "integral type expected");
       continue;
     }
-    nodes.push_back(std::move(child_node));
+    nodes.emplace_back(std::move(child_node));
   }
   if (problems == 0)
   {
@@ -1263,7 +1263,7 @@ bool Analyser::AnnotateLHSExpression(ExpressionNodePtr const &node, ExpressionNo
   for (std::size_t i = 1; i <= num_indexes; ++i)
   {
     ExpressionNodePtr index_node = ConvertToExpressionNodePtr(lhs->children[i]);
-    index_nodes.push_back(std::move(index_node));
+    index_nodes.emplace_back(std::move(index_node));
   }
 
   SymbolPtr setter_symbol = symbols->Find(SET_INDEXED_VALUE);
@@ -1276,7 +1276,7 @@ bool Analyser::AnnotateLHSExpression(ExpressionNodePtr const &node, ExpressionNo
 
   FunctionGroupPtr setter_fg = ConvertToFunctionGroupPtr(setter_symbol);
 
-  index_nodes.push_back(lhs);
+  index_nodes.emplace_back(lhs);
   FunctionPtr setter_f = FindFunction(container_node->type, setter_fg, index_nodes);
   if (!setter_f)
   {
@@ -1803,7 +1803,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
     {
       return false;
     }
-    index_nodes.push_back(std::move(index_node));
+    index_nodes.emplace_back(std::move(index_node));
   }
   SymbolPtr symbol = symbols->Find(GET_INDEXED_VALUE);
   if (!symbol)
@@ -1898,7 +1898,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     {
       return false;
     }
-    parameter_nodes.push_back(std::move(parameter_node));
+    parameter_nodes.emplace_back(std::move(parameter_node));
   }
   if (lhs->IsFunctionGroupExpression())
   {
@@ -2175,12 +2175,12 @@ FunctionPtr Analyser::FindFunction(TypePtr const &type, FunctionGroupPtr const &
         match = false;
         break;
       }
-      temp_resolved_types.push_back(std::move(resolved_type));
+      temp_resolved_types.emplace_back(std::move(resolved_type));
     }
     if (match)
     {
-      functions.push_back(function);
-      array.push_back(std::move(temp_resolved_types));
+      functions.emplace_back(function);
+      array.emplace_back(std::move(temp_resolved_types));
     }
   }
   if (functions.size() == 1)
@@ -2390,7 +2390,7 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
       }
       // Need to check here that parameter_type does in fact support any operator(s)
       // required by the template_type's i'th type parameter...
-      template_parameter_types.push_back(std::move(parameter_type));
+      template_parameter_types.emplace_back(std::move(parameter_type));
     }
     TypePtr type = InternalCreateTemplateInstantiationType(
         TypeKind::UserDefinedTemplateInstantiation, template_type, template_parameter_types);
@@ -2562,7 +2562,7 @@ void Analyser::CreateTemplateInstantiationType(TypeIndex type_index, TypePtr con
   TypeIdArray template_parameter_type_ids;
   for (auto const &template_parameter_type : template_parameter_types)
   {
-    template_parameter_type_ids.push_back(template_parameter_type->id);
+    template_parameter_type_ids.emplace_back(template_parameter_type->id);
   }
   type_map_.Add(type_index, type);
   AddTypeInfo(TypeKind::TemplateInstantiation, type->name, type_id, template_type->id,
@@ -2709,7 +2709,7 @@ void Analyser::EnableIndexOperator(TypePtr const &type, TypePtrArray const &inpu
   }
 
   TypePtrArray s_input_types = input_types;
-  s_input_types.push_back(output_type);
+  s_input_types.emplace_back(output_type);
   std::string s_unique_name = BuildUniqueName(type, SET_INDEXED_VALUE, s_input_types, void_type_);
   if (function_map_.Find(s_unique_name))
   {
@@ -2738,7 +2738,7 @@ void Analyser::AddTypeInfo(TypeKind type_kind, std::string const &type_name, Typ
   {
     id = TypeId(type_info_array_.size());
     TypeInfo info(type_kind, type_name, id, template_type_id, template_parameter_type_ids);
-    type_info_array_.push_back(std::move(info));
+    type_info_array_.emplace_back(std::move(info));
   }
   else
   {
@@ -2795,7 +2795,7 @@ void Analyser::AddFunctionToSymbolTable(SymbolTablePtr const &symbols, FunctionP
     symbols->Add(function_group);
   }
   // Add the function to the function group
-  function_group->functions.push_back(function);
+  function_group->functions.emplace_back(function);
 }
 
 }  // namespace vm

@@ -214,7 +214,7 @@ Ptr<Array<Ptr<String>>> String::Split(Ptr<String> const &separator) const
     return ret;
   }
 
-  segment_boundaries.push_back(utf8_str_.string().size() + separator->utf8_str_.string().size());
+  segment_boundaries.emplace_back(utf8_str_.string().size() + separator->utf8_str_.string().size());
 
   assert(segment_boundaries.size() > 2u);
 

@@ -73,7 +73,7 @@ IRNodePtrArray IRBuilder::BuildChildren(NodePtrArray const &children)
   IRNodePtrArray ir_children;
   for (auto const &child : children)
   {
-    ir_children.push_back(BuildNode(child));
+    ir_children.emplace_back(BuildNode(child));
   }
   return ir_children;
 }
@@ -148,7 +148,7 @@ IRTypePtrArray IRBuilder::BuildTypes(TypePtrArray const &types)
   array.reserve(types.size());
   for (auto const &type : types)
   {
-    array.push_back(BuildType(type));
+    array.emplace_back(BuildType(type));
   }
   return array;
 }
@@ -159,7 +159,7 @@ IRVariablePtrArray IRBuilder::BuildVariables(VariablePtrArray const &variables)
   array.reserve(variables.size());
   for (auto const &variable : variables)
   {
-    array.push_back(BuildVariable(variable));
+    array.emplace_back(BuildVariable(variable));
   }
   return array;
 }

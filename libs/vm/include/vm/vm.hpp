@@ -161,7 +161,7 @@ public:
   {
     // TODO(1669): Probably should make a deep copy
 
-    params_.push_back(std::move(parameter));
+    params_.emplace_back(std::move(parameter));
     return true;
   }
 
@@ -468,7 +468,7 @@ public:
     for (std::size_t i = 0; i < num_local_types; ++i)
     {
       TypeInfo const &type_info = executable_->types[i];
-      type_info_array_.push_back(type_info);
+      type_info_array_.emplace_back(type_info);
     }
   }
 

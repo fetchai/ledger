@@ -531,7 +531,7 @@ private:
 
   void AddCompilerSetupFunction(CompilerSetupFunction const &function)
   {
-    compiler_setup_functions_.push_back(function);
+    compiler_setup_functions_.emplace_back(function);
   }
 
   std::vector<CompilerSetupFunction> compiler_setup_functions_;

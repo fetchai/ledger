@@ -97,7 +97,7 @@ struct Array : public IArray
       RuntimeError("Failed to append to Array: incompatible type");
       return;
     }
-    elements.push_back(element.Get<ElementType>());
+    elements.emplace_back(element.Get<ElementType>());
   }
 
   TemplateParameter1 PopBackOne() override

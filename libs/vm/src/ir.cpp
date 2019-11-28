@@ -122,7 +122,7 @@ IRNodePtrArray IR::CloneChildren(IRNodePtrArray const &children)
   IRNodePtrArray clone_children;
   for (auto const &child : children)
   {
-    clone_children.push_back(CloneNode(child));
+    clone_children.emplace_back(CloneNode(child));
   }
   return clone_children;
 }
@@ -198,7 +198,7 @@ IRTypePtrArray IR::CloneTypes(IRTypePtrArray const &types)
   IRTypePtrArray array;
   for (auto const &type : types)
   {
-    array.push_back(CloneType(type));
+    array.emplace_back(CloneType(type));
   }
   return array;
 }
@@ -208,7 +208,7 @@ IRVariablePtrArray IR::CloneVariables(IRVariablePtrArray const &variables)
   IRVariablePtrArray array;
   for (auto const &variable : variables)
   {
-    array.push_back(CloneVariable(variable));
+    array.emplace_back(CloneVariable(variable));
   }
   return array;
 }

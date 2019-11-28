@@ -381,17 +381,17 @@ private:
 
   void AddType(IRTypePtr const &type)
   {
-    types_.push_back(type);
+    types_.emplace_back(type);
   }
 
   void AddVariable(IRVariablePtr const &variable)
   {
-    variables_.push_back(variable);
+    variables_.emplace_back(variable);
   }
 
   void AddFunction(IRFunctionPtr const &function)
   {
-    functions_.push_back(function);
+    functions_.emplace_back(function);
   }
 
   std::string                           name_;

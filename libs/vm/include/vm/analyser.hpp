@@ -362,7 +362,7 @@ private:
     TypePtrArray array;
     for (auto const &type_index : type_index_array)
     {
-      array.push_back(GetType(type_index));
+      array.emplace_back(GetType(type_index));
     }
     return array;
   }

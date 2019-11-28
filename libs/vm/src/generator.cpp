@@ -119,7 +119,7 @@ void Generator::ResolveTypes(IR const &ir)
       TypeIdArray template_parameter_type_ids;
       for (auto const &template_parameter_type : type->template_parameter_types)
       {
-        template_parameter_type_ids.push_back(template_parameter_type->id);
+        template_parameter_type_ids.emplace_back(template_parameter_type->id);
       }
       auto num_local_types = static_cast<uint16_t>(executable_.types.size());
       auto type_id         = uint16_t(num_system_types_ + num_local_types);
@@ -132,7 +132,7 @@ void Generator::ResolveTypes(IR const &ir)
     uint16_t type_id = vm_->FindType(type->name);
     if (type_id == TypeIds::Unknown)
     {
-      errors_.push_back("error: unable to find type '" + type->name + "'");
+      errors_.emplace_back("error: unable to find type '" + type->name + "'");
       continue;
     }
     type->id = type_id;
@@ -151,7 +151,7 @@ void Generator::ResolveFunctions(IR const &ir)
     uint16_t opcode = vm_->FindOpcode(function->unique_name);
     if (opcode == Opcodes::Unknown)
     {
-      errors_.push_back("error: unable to find function '" + function->unique_name + "'");
+      errors_.emplace_back("error: unable to find function '" + function->unique_name + "'");
       continue;
     }
     function->id = opcode;
@@ -271,9 +271,9 @@ void Generator::CreateAnnotations(IRNodePtr const &node, AnnotationArray &annota
         element.type = AnnotationElementType::Value;
         SetAnnotationLiteral(annotation_element_node, element.value);
       }
-      annotation.elements.push_back(element);
+      annotation.elements.emplace_back(element);
     }
-    annotations.push_back(annotation);
+    annotations.emplace_back(annotation);
   }
 }
 
@@ -650,7 +650,7 @@ void Generator::HandleIfStatement(IRNodePtr const &node)
         jump_instruction.index = 0;  // pc placeholder
         uint16_t const jump_pc = function_->AddInstruction(jump_instruction);
         AddLineNumber(block_node->block_terminator_line, jump_pc);
-        jump_pcs.push_back(jump_pc);
+        jump_pcs.emplace_back(jump_pc);
       }
     }
     else
@@ -725,7 +725,7 @@ void Generator::HandleUseVariable(std::string const &name, uint16_t line,
   if (!variable->type->IsPrimitive())
   {
     Scope &scope = scopes_[scope_number];
-    scope.objects.push_back(variable->id);
+    scope.objects.emplace_back(variable->id);
   }
   PushString(name, line);
   uint16_t                opcode = function->id;
@@ -761,7 +761,7 @@ void Generator::HandleContractStatement(IRNodePtr const &node)
   if (!contract_variable->type->IsPrimitive())
   {
     Scope &scope = scopes_[scope_number];
-    scope.objects.push_back(contract_variable->id);
+    scope.objects.emplace_back(contract_variable->id);
   }
 
   HandleExpression(initialiser_node);
@@ -785,7 +785,7 @@ void Generator::HandleVarStatement(IRNodePtr const &node)
   if (!variable->type->IsPrimitive())
   {
     Scope &scope = scopes_[scope_number];
-    scope.objects.push_back(variable->id);
+    scope.objects.emplace_back(variable->id);
   }
 
   if (node->node_kind == NodeKind::VarDeclarationStatement)
@@ -847,7 +847,7 @@ void Generator::HandleBreakStatement(IRNodePtr const &node)
   instruction.data        = loop.scope_number;
   uint16_t const break_pc = function_->AddInstruction(instruction);
   AddLineNumber(node->line, break_pc);
-  loop.break_pcs.push_back(break_pc);
+  loop.break_pcs.emplace_back(break_pc);
 }
 
 void Generator::HandleContinueStatement(IRNodePtr const &node)
@@ -858,7 +858,7 @@ void Generator::HandleContinueStatement(IRNodePtr const &node)
   instruction.data           = loop.scope_number;
   uint16_t const continue_pc = function_->AddInstruction(instruction);
   AddLineNumber(node->line, continue_pc);
-  loop.continue_pcs.push_back(continue_pc);
+  loop.continue_pcs.emplace_back(continue_pc);
 }
 
 void Generator::HandleAssignmentStatement(IRExpressionNodePtr const &node)
@@ -1381,7 +1381,7 @@ void Generator::PushString(std::string const &s, uint16_t line)
   else
   {
     index = uint16_t(executable_.strings.size());
-    executable_.strings.push_back(s);
+    executable_.strings.emplace_back(s);
     strings_map_[s] = index;
   }
   Executable::Instruction instruction(Opcodes::PushString);
@@ -1925,7 +1925,7 @@ uint16_t Generator::AddConstant(Variant const &c)
   else
   {
     index = uint16_t(executable_.constants.size());
-    executable_.constants.push_back(c);
+    executable_.constants.emplace_back(c);
     constants_map_[c] = index;
   }
   return index;
@@ -1942,7 +1942,7 @@ uint16_t Generator::AddLargeConstant(Executable::LargeConstant const &c)
   else
   {
     index = uint16_t(executable_.large_constants.size());
-    executable_.large_constants.push_back(c);
+    executable_.large_constants.emplace_back(c);
     large_constants_map_[c] = index;
   }
   return index;

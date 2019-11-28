@@ -164,7 +164,7 @@ struct Executable
     uint16_t AddInstruction(Instruction const &instruction)
     {
       auto const pc = static_cast<uint16_t>(instructions.size());
-      instructions.push_back(instruction);
+      instructions.emplace_back(instruction);
       return pc;
     }
     uint16_t FindLineNumber(uint16_t pc) const
@@ -192,7 +192,7 @@ struct Executable
     uint16_t AddFunction(Function function)
     {
       auto const id = static_cast<uint16_t>(functions.size());
-      functions.push_back(std::move(function));
+      functions.emplace_back(std::move(function));
       return id;
     }
     std::string   name;
@@ -246,20 +246,20 @@ struct Executable
 
   void AddTypeInfo(TypeInfo type_info)
   {
-    types.push_back(std::move(type_info));
+    types.emplace_back(std::move(type_info));
   }
 
   uint16_t AddContract(Contract contract)
   {
     auto const id = static_cast<uint16_t>(contracts.size());
-    contracts.push_back(std::move(contract));
+    contracts.emplace_back(std::move(contract));
     return id;
   }
 
   uint16_t AddFunction(Function function)
   {
     auto const id = static_cast<uint16_t>(functions.size());
-    functions.push_back(std::move(function));
+    functions.emplace_back(std::move(function));
     return id;
   }
 
@@ -306,7 +306,7 @@ private:
 
     void Append(uint16_t pc)
     {
-      pcs.push_back(pc);
+      pcs.emplace_back(pc);
     }
     void Append(std::vector<uint16_t> const &other_pcs)
     {
