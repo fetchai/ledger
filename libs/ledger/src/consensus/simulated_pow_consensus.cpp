@@ -123,6 +123,10 @@ NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
   FETCH_LOG_DEBUG(LOGGING_NAME, "Generating block. Current time: ", current_time_ms,
                   " deadline: ", decided_next_timestamp_ms_);
 
+  // Round up to the nearest second for block timestamp
+  uint64_t current_time_s_ceiled =
+      static_cast<uint64_t>(std::ceil(static_cast<double>(current_time_ms) / 1000.0));
+
   // Number of block we want to generate
   uint64_t const block_number = current_block_.block_number + 1;
 
@@ -133,8 +137,8 @@ NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
   ret->previous_hash = current_block_.hash;
   ret->block_number  = block_number;
   ret->miner_id      = mining_identity_;
-  ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-  ret->weight    = GetPoissonSample(200, 50);
+  ret->timestamp     = current_time_s_ceiled;
+  ret->weight        = GetPoissonSample(200, 50);
 
   return ret;
 }
