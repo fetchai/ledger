@@ -60,6 +60,7 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
     backward_pass_cost_ += 2 * inputs * hidden_nodes + inputs + 2 * hidden_nodes;
     weights_size_sum_ += inputs * hidden_nodes + hidden_nodes;
     last_layer_size_ = hidden_nodes;
+    ops_count_ += 3;
   }
   else
   {
@@ -80,6 +81,7 @@ ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> cons
   {
     forward_pass_cost_ += hidden_nodes;
     backward_pass_cost_ += hidden_nodes;
+    ops_count_ += 1;
   }
   else
   {
@@ -126,6 +128,7 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       // loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
       forward_pass_cost_ += MSE_FORWARD_IMPACT * last_layer_size_;
       backward_pass_cost_ += MSE_BACKWARD_IMPACT * last_layer_size_;
+      ops_count_ += 1;
     }
     else if (loss->string() == "cel")
     {
@@ -155,6 +158,7 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       // optimiser_type = fetch::ml::OptimiserType::ADAM;
       optimiser_step_impact_        = ADAM_STEP_IMPACT;
       optimiser_construction_impact = ADAM_CONSTRUCTION_IMPACT;
+      ops_count_++;
     }
     else if (optimiser->string() == "momentum")
     {
@@ -236,35 +240,39 @@ ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 
 ChargeAmount ModelEstimator::SerializeToString()
 {
-  throw std::runtime_error("Not yet implemented");
+  SizeType estimate =
+      ops_count_ * SERIALISATION_OVERHEAD + weights_size_sum_ * WEIGHT_SERIALISATION_OVERHEAD;
+  return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
 }
 
 ChargeAmount ModelEstimator::DeserializeFromString(Ptr<String> const &model_string)
 {
-  FETCH_UNUSED(model_string);
-  throw std::runtime_error("Not yet implemented");
+  SizeType estimate = model_string->string().size() * DESERIALISATION_OVERHEAD;
+  return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
 }
 
 bool ModelEstimator::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
-  buffer<<forward_pass_cost_;
-  buffer<<backward_pass_cost_;
-  buffer<<weights_size_sum_;
-  buffer<<optimiser_step_impact_;
-  buffer<<optimiser_step_impact_;
-  buffer<<last_layer_size_;
+  buffer << forward_pass_cost_;
+  buffer << backward_pass_cost_;
+  buffer << weights_size_sum_;
+  buffer << optimiser_step_impact_;
+  buffer << optimiser_step_impact_;
+  buffer << last_layer_size_;
+  buffer << ops_count_;
 
   return false;
 }
 
 bool ModelEstimator::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
-  buffer>>forward_pass_cost_;
-  buffer>>backward_pass_cost_;
-  buffer>>weights_size_sum_;
-  buffer>>optimiser_step_impact_;
-  buffer>>optimiser_step_impact_;
-  buffer>>last_layer_size_;
+  buffer >> forward_pass_cost_;
+  buffer >> backward_pass_cost_;
+  buffer >> weights_size_sum_;
+  buffer >> optimiser_step_impact_;
+  buffer >> optimiser_step_impact_;
+  buffer >> last_layer_size_;
+  buffer >> ops_count_;
 
   return false;
 }
