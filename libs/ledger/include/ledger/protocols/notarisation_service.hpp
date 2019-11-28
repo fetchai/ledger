@@ -169,6 +169,8 @@ private:
   uint64_t notarised_chain_height_{0};          ///< Current highest notarised block number in chain
   uint64_t notarisation_collection_height_{0};  ///< Block number current collecting signatures for
   static const uint32_t cutoff_ = 2;            ///< Number of blocks behind
+  std::unordered_set<BlockHash>
+      stutter_blocks_;  ///< Set of stutter blocks to not collect notarisations for
   /// @}
 };
 }  // namespace ledger
