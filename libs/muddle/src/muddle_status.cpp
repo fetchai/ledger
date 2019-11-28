@@ -65,8 +65,9 @@ void BuildPeerInfo(PeerSelector const &peer_selector, variant::Variant &output)
   {
     auto &output_peer = output[peer_idx] = variant::Variant::Object();
 
-    output_peer["targetAddress"] = entry.first.ToBase64();
-    output_peer["currentIndex"]  = entry.second.peer_index;
+    output_peer["targetAddress"]       = entry.first.ToBase64();
+    output_peer["currentIndex"]        = entry.second.peer_index;
+    output_peer["consecutiveFailures"] = entry.second.consecutive_failures;
 
     auto &address_list = output_peer["addresses"] =
         variant::Variant::Array(entry.second.peer_data.size());

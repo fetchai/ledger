@@ -1775,13 +1775,8 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   // lhs->IsRVExpression()
   if (!lhs->IsConcrete())
   {
-    // Prevent null[i, j] and {3, 4, 5}[i, j]
+    // Prevent null[i, j] and {3, 4, 5}[i, j] and contractvariable[i, j]
     AddError(lhs->line, "operand does not support index operator");
-    return false;
-  }
-  if (lhs->IsVariableExpression() && lhs->type->IsUserDefinedContract())
-  {
-    AddError(lhs->line, "unable to use contract variable '" + lhs->variable->name + "'");
     return false;
   }
   if (lhs->type->IsPrimitive())
@@ -1848,12 +1843,6 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
   // lhs->IsLVExpression()
   // lhs->IsRVExpression()
   // lhs->IsTypeExpression()
-  if (!lhs->IsConcrete())
-  {
-    // Prevent null.foo and {3, 4, 5}.foo
-    AddError(lhs->line, "operand does not support member-access operator");
-    return false;
-  }
   bool lhs_is_type_expression = lhs->IsTypeExpression();
   if (lhs->type->IsPrimitive())
   {
@@ -1985,6 +1974,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
   // e.g.
   // null()
   // {3, 4, 5}()
+  // contractvariable()
   // variable()
   // (a + b)()
   // array[index]()
