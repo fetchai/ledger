@@ -251,6 +251,17 @@ TEST(big_number_gtest, division_tests)
   EXPECT_EQ(n4.ElementAt(1), 0);
   EXPECT_EQ(n4.ElementAt(2), 0);
   EXPECT_EQ(n4.ElementAt(3), 0);
+
+  UInt<256> n5{ULONG_MAX};
+  UInt<256> n6{ULONG_MAX};
+  n5 = n5 / 1ull;
+  EXPECT_EQ(n5, n6);
+
+  n5 = n4 / n5;
+  EXPECT_EQ(n5.ElementAt(0), 0);
+  EXPECT_EQ(n5.ElementAt(1), 0);
+  EXPECT_EQ(n5.ElementAt(2), 0);
+  EXPECT_EQ(n5.ElementAt(3), 0);
 }
 
 TEST(big_number_gtest, msb_lsb_tests)
