@@ -19,6 +19,7 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "vectorise/uint/uint.hpp"
+
 #include "vm/module.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_modules/math/bignumber.hpp"
@@ -71,12 +72,16 @@ void UInt256Wrapper::Bind(Module &module)
       .EnableOperator(Operator::Equal)
       .EnableOperator(Operator::NotEqual)
       .EnableOperator(Operator::LessThan)
-      //        .EnableOperator(Operator::LessThanOrEqual)
+      .EnableOperator(Operator::Add)
+      .EnableOperator(Operator::Subtract)
+      .EnableOperator(Operator::InplaceAdd)
+      .EnableOperator(Operator::InplaceSubtract)
+      .EnableOperator(Operator::Multiply)
+      .EnableOperator(Operator::Divide)
+      .EnableOperator(Operator::InplaceMultiply)
+      .EnableOperator(Operator::InplaceDivide)
       .EnableOperator(Operator::GreaterThan)
-      //        .EnableOperator(Operator::GreaterThanOrEqual)
-      //        .CreateMemberFunction("toBuffer", &UInt256Wrapper::ToBuffer)
       .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
-      //        .CreateMemberFunction("lessThan", &UInt256Wrapper::LessThan)
       .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
       .CreateMemberFunction("toFloat64", &UInt256Wrapper::ToFloat64)
       .CreateMemberFunction("toInt32", &UInt256Wrapper::ToInt32)
@@ -89,8 +94,13 @@ void UInt256Wrapper::Bind(Module &module)
   module.CreateFreeFunction("toInt32", &UInt256Wrapper::ToPrimitive<int32_t>);
 }
 
-UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, UInt256 data)
+UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, UInt256Wrapper::UInt256 data)
   : Object(vm, type_id)
+  , number_(std::move(data))
+{}
+
+UInt256Wrapper::UInt256Wrapper(VM *vm, UInt256 &&data)
+  : Object(vm, TypeIds::UInt256)
   , number_(std::move(data))
 {}
 
@@ -248,6 +258,124 @@ bool UInt256Wrapper::FromJSON(JSONVariant const &variant)
   }
 
   return true;
+}
+
+void UInt256Wrapper::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
+{
+  Ptr<UInt256Wrapper> lhs = lhso;
+  Ptr<UInt256Wrapper> rhs = rhso;
+  if (lhs->IsTemporary())
+  {
+    lhs->number_ += rhs->number_;
+    return;
+  }
+  if (rhs->IsTemporary())
+  {
+    rhs->number_ += lhs->number_;
+    lhso = std::move(rhs);
+    return;
+  }
+  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ + rhs->number_));
+  lhso = std::move(n);
+}
+
+void UInt256Wrapper::Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso)
+{
+  Ptr<UInt256Wrapper> lhs = lhso;
+  Ptr<UInt256Wrapper> rhs = rhso;
+  if (lhs->IsTemporary())
+  {
+    lhs->number_ -= rhs->number_;
+    return;
+  }
+  if (rhs->IsTemporary())
+  {
+    rhs->number_ -= lhs->number_;
+    lhso = std::move(rhs);
+    return;
+  }
+  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ - rhs->number_));
+  lhso = std::move(n);
+}
+
+void UInt256Wrapper::InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+{
+  Ptr<UInt256Wrapper> lhs = lhso;
+  Ptr<UInt256Wrapper> rhs = rhso;
+  lhs->number_ += rhs->number_;
+}
+
+void UInt256Wrapper::InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+{
+  Ptr<UInt256Wrapper> lhs = lhso;
+  Ptr<UInt256Wrapper> rhs = rhso;
+  lhs->number_ -= rhs->number_;
+}
+
+void UInt256Wrapper::Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso)
+{
+  Ptr<UInt256Wrapper> lhs = lhso;
+  Ptr<UInt256Wrapper> rhs = rhso;
+  if (lhs->IsTemporary())
+  {
+    lhs->number_ *= rhs->number_;
+    return;
+  }
+  if (rhs->IsTemporary())
+  {
+    rhs->number_ *= lhs->number_;
+    lhso = std::move(rhs);
+    return;
+  }
+  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ * rhs->number_));
+  lhso = std::move(n);
+}
+
+void UInt256Wrapper::InplaceMultiply(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+{
+  Ptr<UInt256Wrapper> lhs = lhso;
+  Ptr<UInt256Wrapper> rhs = rhso;
+  lhs->number_ *= rhs->number_;
+}
+
+void UInt256Wrapper::Divide(Ptr<Object> &lhso, Ptr<Object> &rhso)
+{
+  Ptr<UInt256Wrapper> lhs = lhso;
+  Ptr<UInt256Wrapper> rhs = rhso;
+  if (rhs->number_ == UInt256::_0)
+  {
+    vm_->RuntimeError("UInt256Wrapper::Divide runtime error : division by zero.");
+    return;
+  }
+  if (lhs->IsTemporary())
+  {
+    lhs->number_ /= rhs->number_;
+    return;
+  }
+  if (rhs->IsTemporary())
+  {
+    rhs->number_ /= lhs->number_;
+    lhso = std::move(rhs);
+    return;
+  }
+
+  Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ / rhs->number_));
+  lhso = std::move(n);
+}
+
+void UInt256Wrapper::InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+{
+  Ptr<UInt256Wrapper> lhs = lhso;
+  Ptr<UInt256Wrapper> rhs = rhso;
+  try
+  {
+    lhs->number_ /= rhs->number_;
+  }
+  catch (std::exception const &ex)
+  {
+    vm_->RuntimeError(std::string("UInt256Wrapper::InplaceDivide runtime error: ") + ex.what());
+    return;
+  }
 }
 
 bool UInt256Wrapper::IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)

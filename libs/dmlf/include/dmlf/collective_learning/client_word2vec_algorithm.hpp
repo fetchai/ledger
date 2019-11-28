@@ -37,7 +37,7 @@ class ClientWord2VecAlgorithm : public ClientAlgorithm<TensorType>
   using VectorTensorType = std::vector<TensorType>;
   using VectorSizeVector = std::vector<std::vector<SizeType>>;
 
-  using GradientType               = fetch::dmlf::Update<TensorType>;
+  using GradientType               = fetch::dmlf::deprecated_Update<TensorType>;
   using AlgorithmControllerType    = ClientAlgorithmController<TensorType>;
   using AlgorithmControllerPtrType = std::shared_ptr<ClientAlgorithmController<TensorType>>;
 
@@ -144,7 +144,8 @@ float ClientWord2VecAlgorithm<TensorType>::ComputeAnalogyScore()
  * @return vector of gradient update values
  */
 template <class TensorType>
-std::shared_ptr<fetch::dmlf::Update<TensorType>> ClientWord2VecAlgorithm<TensorType>::GetUpdate()
+std::shared_ptr<fetch::dmlf::deprecated_Update<TensorType>>
+ClientWord2VecAlgorithm<TensorType>::GetUpdate()
 {
   FETCH_LOCK(this->model_mutex_);
 
