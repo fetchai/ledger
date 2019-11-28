@@ -362,43 +362,30 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
     // determine the status of the request that is in flight
     auto const status = current_request_->state();
 
-    if (PromiseState::WAITING != status)
+    if (status == PromiseState::SUCCESS)
     {
-      if (PromiseState::SUCCESS == status)
-      {
-        // the request was successful
-        auto  response = current_request_->As<MainChainProtocol::Travelogue>();
-        auto &blocks   = response.blocks;
+	    // the request was successful
+	    next_state = State::REQUEST_HEAVIEST_CHAIN; // request succeeding chunk
 
-        // we should receive at least one extra block in addition to what we already have
-        if (!blocks.empty())
-        {
-          auto heaviest_block_ = chain_.GetHeaviestBlock();
-          assert(heaviest_block_);
+	    auto  response = current_request_->As<MainChainProtocol::Travelogue>();
+	    auto &blocks   = response.blocks;
 
-          // check if the first block received is actually next to heaviest_block_
-          auto &earliest_block = blocks.front();
-          if (earliest_block.previous_hash != heaviest_block_->hash)
-          {
-            FETCH_LOG_WARN(
-                LOGGING_NAME, "The earliest block received (0x", earliest_block.hash.ToHex(), ", #",
-                earliest_block.block_number, ") is not next to the current heaviest block (0x",
-                heaviest_block_->hash.ToHex(), ", #", heaviest_block_->block_number, ')');
-          }
-          else
-          {
-            HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
-            auto const &latest_hash = blocks.back().hash;
-            assert(!latest_hash.empty());  // should be set by HandleChainResponse()
-            // TODO(unknown): this is to be improved later
-            if (latest_hash == response.heaviest_hash)
-            {
-              next_state = State::SYNCHRONISING;
-            }
-          }
-        }
-      }
+	    // we should receive at least one extra block in addition to what we already have
+	    if (!blocks.empty())
+	    {
+		    HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
+		    auto const &latest_hash = blocks.back().hash;
+		    assert(!latest_hash.empty());  // should be set by HandleChainResponse()
+		    // TODO(unknown): this is to be improved later
+		    if (latest_hash == response.heaviest_hash)
+		    {
+			    next_state = State::SYNCHRONISING; // we have reached the tip
+		    }
+	    }
+    }
 
+    if (status != PromiseState::WAITING)
+    {
       // clear the state
       current_peer_address_ = Address{};
     }
