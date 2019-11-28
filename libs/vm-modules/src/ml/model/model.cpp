@@ -81,6 +81,7 @@ void VMModel::Init(std::string const &model_category)
   {
     throw std::runtime_error("unknown model type specified.");
   }
+  compiled_ = false;
 }
 
 Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
@@ -108,6 +109,7 @@ void VMModel::LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
   {
     throw std::runtime_error("no add method for non-sequential methods");
   }
+  compiled_ = false;
 }
 
 void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
@@ -141,6 +143,7 @@ void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &l
   {
     throw std::runtime_error("no add method for non-sequential methods");
   }
+  compiled_ = false;
 }
 
 void VMModel::LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
@@ -171,6 +174,7 @@ void VMModel::LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
   {
     throw std::runtime_error("invalid params specified for " + layer->string() + " layer");
   }
+  compiled_ = false;
 }
 
 void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
@@ -210,6 +214,7 @@ void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &la
   {
     throw std::runtime_error("invalid params specified for " + layer->string() + " layer");
   }
+  compiled_ = false;
 }
 
 void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
@@ -261,6 +266,9 @@ void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
     throw std::runtime_error("invalid optimiser");
   }
 
+  // Prepare the dataloader
+  CompileDataloader();
+
   model_->Compile(optimiser_type, loss_type);
 }
 
@@ -304,16 +312,18 @@ void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        opt
     throw std::runtime_error("invalid optimiser");
   }
 
+  // Prepare the dataloader
+  CompileDataloader();
+
   model_->Compile(optimiser_type);
 }
+
 void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
                   fetch::math::SizeType const &batch_size)
 {
   // prepare dataloader
-  auto dl = std::make_unique<TensorDataloader>();
-  dl->SetRandomMode(true);
-  dl->AddData({data->GetTensor()}, labels->GetTensor());
-  model_->SetDataloader(std::move(dl));
+  std::vector<TensorType> train_data{data->GetTensor()};
+  model_->SetData(train_data, labels->GetTensor());
 
   // set batch size
   model_config_->batch_size = batch_size;
@@ -364,10 +374,42 @@ typename VMModel::ModelPtrType &VMModel::GetModel()
 
 bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
-  buffer << static_cast<uint8_t>(model_category_);
-  buffer << *model_config_;
-  buffer << *model_;
-  return true;
+  bool success = false;
+
+  // can't serialise uncompiled model
+  if (!compiled_)
+  {
+    vm_->RuntimeError("cannot set state with uncompiled model");
+  }
+  // can't serialise without a model
+  else if (!model_)
+  {
+    vm_->RuntimeError("cannot set state with model undefined");
+  }
+
+  // can't serialise without dataloader ready
+  else if (!model_->GetDataloader())
+  {
+    vm_->RuntimeError("cannot set state with dataloader not set");
+  }
+
+  // can't serialise without optimiser ready
+  else if (!model_->GetOptimiser())
+  {
+    vm_->RuntimeError("cannot set state with optimiser not set");
+  }
+
+  // should be fine to serialise
+  else
+  {
+    buffer << static_cast<uint8_t>(model_category_);
+    buffer << *model_config_;
+    buffer << compiled_;
+    buffer << *model_;
+    success = true;
+  }
+
+  return success;
 }
 
 bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
@@ -381,6 +423,10 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   ModelConfigType model_config;
   buffer >> model_config;
   model_config_ = std::make_shared<ModelConfigType>(model_config);
+
+  // deserialise the compiled status
+  bool compiled;
+  buffer >> compiled;
 
   // deserialise the model
   auto model_ptr = std::make_shared<fetch::ml::model::Model<TensorType>>();
@@ -425,6 +471,9 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   // assign deserialised model
   vm_model.GetModel() = model_ptr;
 
+  // assign compiled status
+  vm_model.compiled_ = compiled;
+
   // point this object pointer at the deserialised model
   *this = vm_model;
 
@@ -451,6 +500,20 @@ fetch::vm::Ptr<VMModel> VMModel::DeserializeFromString(
   vm_model->GetModel() = model_;
 
   return vm_model;
+}
+
+/**
+ * for regressor and classifier we can't prepare the dataloder until after compile has begun
+ * because model_ isn't ready until then.
+ */
+void VMModel::CompileDataloader()
+{
+  // set up the dataloader
+  auto dl = std::make_unique<TensorDataloader>();
+  dl->SetRandomMode(true);
+  model_->SetDataloader(std::move(dl));
+
+  compiled_ = true;
 }
 
 }  // namespace model
