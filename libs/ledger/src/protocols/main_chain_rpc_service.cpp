@@ -190,8 +190,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   if (!ValidBlock(block, "new block"))
   {
-	  FETCH_LOG_WARN(LOGGING_NAME, "Block did not prove valid");
-	  return;
+    FETCH_LOG_WARN(LOGGING_NAME, "Block did not prove valid");
+    return;
   }
 
   // add the new block to the chain
@@ -242,14 +242,15 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 
 bool MainChainRpcService::ValidBlock(Block const &block, char const *action) const
 {
-  try {
-	  return !consensus_ || consensus_->ValidBlock(block) == ConsensusInterface::Status::YES;
+  try
+  {
+    return !consensus_ || consensus_->ValidBlock(block) == ConsensusInterface::Status::YES;
   }
-    catch (std::runtime_error const &ex)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Exception in consensus on validating ", action, ": ", ex.what());
-      return false;
-    }
+  catch (std::runtime_error const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception in consensus on validating ", action, ": ", ex.what());
+    return false;
+  }
 }
 
 void MainChainRpcService::HandleChainResponse(Address const &address, BlockList blocks)
@@ -280,10 +281,10 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
     // add the block
     if (!ValidBlock(*it, "during fwd sync"))
     {
-	    FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
-			    " from: muddle://", ToBase64(address));
-	    ++invalid;
-	    continue;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
+                      " from: muddle://", ToBase64(address));
+      ++invalid;
+      continue;
     }
 
     auto const status = chain_.AddBlock(*it);

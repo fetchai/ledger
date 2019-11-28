@@ -62,18 +62,18 @@ struct Tip
 {
   using Weight = Block::Weight;
 
-  Weight total_weight{0};
-  Weight weight{0};
+  Weight   total_weight{0};
+  Weight   weight{0};
   uint64_t block_number{0};
 
   constexpr bool operator<(Tip const &right) const
   {
-	  return Stats() < right.Stats();
+    return Stats() < right.Stats();
   }
 
   constexpr bool operator==(Tip const &right) const
   {
-	  return Stats() == right.Stats();
+    return Stats() == right.Stats();
   }
 
 protected:
@@ -197,17 +197,17 @@ public:
   using RMutex        = std::recursive_mutex;
   using RLock         = std::unique_lock<RMutex>;
 
-  class HeaviestTip: public Tip
+  class HeaviestTip : public Tip
   {
     using Tip::Weight;
     using TipStats = type_util::tuple::AppendT<Tip::TipStats, BlockHash const &>;
 
-    uint64_t  chain_label_{0};
+    uint64_t chain_label_{0};
 
     template <class Node>
     static constexpr TipStats StatsFor(Node &&node)
     {
-	    return TipStats{node.total_weight, node.block_number, node.weight, node.hash};
+      return TipStats{node.total_weight, node.block_number, node.weight, node.hash};
     }
 
     constexpr TipStats Stats() const

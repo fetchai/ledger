@@ -51,10 +51,10 @@ namespace {
 
 Tip BlockTip(Block const &block)
 {
-	return Tip{block.total_weight, block.weight, block.block_number};
+  return Tip{block.total_weight, block.weight, block.block_number};
 }
 
-}
+}  // namespace
 
 /**
  * Constructs the main chain
@@ -1613,24 +1613,26 @@ bool MainChain::DetermineHeaviestTip()
   if (!tips_.empty())
   {
     // find the heaviest item in our tip selection
-    auto it = std::max_element(
-        tips_.begin(), tips_.end(), [](TipsMap::value_type const &a, TipsMap::value_type const &b) {
-	  auto const &a_hash = a.first;
-	  auto const &a_tip = a.second;
-	  auto const &b_hash = b.first;
-	  auto const &b_tip = b.second;
+    auto it = std::max_element(tips_.begin(), tips_.end(),
+                               [](TipsMap::value_type const &a, TipsMap::value_type const &b) {
+                                 auto const &a_hash = a.first;
+                                 auto const &a_tip  = a.second;
+                                 auto const &b_hash = b.first;
+                                 auto const &b_tip  = b.second;
 
-          // Tips are selected based on the following priority of properties:
-          // 1. total weight
-          // 2. block number (long chain)
-          // 3. weight, which is related to the rank of the miner producing the block
-          // 4. hash - note this case should never be required if stutter blocks are removed from
-          // tips
-          //
-          // Chains of equivalent total weight and length are tie-broken, choosing the weight of the
-          // tips as a tiebreaker. This is important for consensus.
-	  return HeaviestTip(a_tip, a_hash) < HeaviestTip(b_tip, b_hash);
-        });
+                                 // Tips are selected based on the following priority of properties:
+                                 // 1. total weight
+                                 // 2. block number (long chain)
+                                 // 3. weight, which is related to the rank of the miner producing
+                                 // the block
+                                 // 4. hash - note this case should never be required if stutter
+                                 // blocks are removed from tips
+                                 //
+                                 // Chains of equivalent total weight and length are tie-broken,
+                                 // choosing the weight of the tips as a tiebreaker. This is
+                                 // important for consensus.
+                                 return HeaviestTip(a_tip, a_hash) < HeaviestTip(b_tip, b_hash);
+                               });
 
     // update the heaviest
     auto heaviest_block = LookupBlock(it->first);
@@ -1655,9 +1657,9 @@ bool MainChain::ReindexTips()
   FETCH_LOCK(lock_);
 
   // Tips are hashes of cached non-loose blocks that don't have any forward references
-  TipsMap   new_tips;
+  TipsMap     new_tips;
   HeaviestTip best_tip{};
-  BlockHash max_hash;
+  BlockHash   max_hash;
 
   for (auto const &block_entry : block_chain_)
   {
@@ -1677,9 +1679,9 @@ bool MainChain::ReindexTips()
       continue;
     }
     // this hash has no next blocks
-    auto const &block = *block_entry.second;
-    auto curr_tip = BlockTip(block);
-    new_tips[hash] = curr_tip;
+    auto const &block    = *block_entry.second;
+    auto        curr_tip = BlockTip(block);
+    new_tips[hash]       = curr_tip;
 
     // check if this tip is the new heaviest
     if (best_tip.LessThan(curr_tip, hash))
@@ -1730,8 +1732,8 @@ MainChain::BlockHash MainChain::GetHeaviestBlockHash() const
 }
 
 MainChain::HeaviestTip::HeaviestTip(Tip tip, BlockHash hash)
-	: Tip(tip)
-	, hash(std::move(hash))
+  : Tip(tip)
+  , hash(std::move(hash))
 {}
 
 /**
@@ -1757,19 +1759,21 @@ void MainChain::HeaviestTip::Set(Block &block)
 
   total_weight = block.total_weight;
   weight       = block.weight;
-  hash        = block.hash;
+  hash         = block.hash;
   block_number = block.block_number;
 
   // label this block as belonging to a heaviest chain
   block.chain_label = chain_label_;
 }
 
-bool MainChain::HeaviestTip::operator<(HeaviestTip const &that) const {
-	return Stats() < that.Stats();
+bool MainChain::HeaviestTip::operator<(HeaviestTip const &that) const
+{
+  return Stats() < that.Stats();
 }
 
-bool MainChain::HeaviestTip::LessThan(Tip const &tip, BlockHash const &hash) const {
-	return Tip::operator<(tip) || (Tip::operator==(tip) && hash < hash);
+bool MainChain::HeaviestTip::LessThan(Tip const &tip, BlockHash const &hash) const
+{
+  return Tip::operator<(tip) || (Tip::operator==(tip) && hash < hash);
 }
 
 /**
