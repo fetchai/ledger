@@ -327,37 +327,52 @@ void ClientAlgorithm<TensorType>::Test()
 {
   if (dataloader_ptr_->IsModeAvailable(fetch::ml::dataloaders::DataLoaderMode::TEST))
   {
-    dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
+//    dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
     // Disable random to run model on whole test set
-    dataloader_ptr_->SetRandomMode(false);
+//    dataloader_ptr_->SetRandomMode(false);
 
-    SizeType test_set_size = dataloader_ptr_->Size();
+//    SizeType test_set_size = dataloader_ptr_->Size();
 
-    dataloader_ptr_->Reset();
-    bool is_done_set;
-    auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
+//    dataloader_ptr_->Reset();
+//    bool is_done_set;
+//    auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
     {
       FETCH_LOCK(model_mutex_);
 
+      typename ml::model::Model<TensorType>::DataVectorType results =
+          model_ptr_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TEST);
+
+      test_loss_ = results.at(0);
+
+      if (results.size() == 2)
+      {
+        test_accuracy_ = results.at(1);
+      }
+      else if (results.size() > 2)
+      {
+        throw fetch::ml::exceptions::NotImplemented("More metrics configured for model than "
+                                                    "ClientAlgorithm knows how to process.");
+      }
+
       // Set inputs and label
-      auto input_data_it = test_pair.second.begin();
-      auto input_name_it = params_.input_names.begin();
+//      auto input_data_it = test_pair.second.begin();
+//      auto input_name_it = params_.input_names.begin();
 
-      while (input_name_it != params_.input_names.end())
-      {
-        graph_ptr_->SetInput(*input_name_it, *input_data_it);
-        ++input_name_it;
-        ++input_data_it;
-      }
-      graph_ptr_->SetInput(params_.label_name, test_pair.first);
-
-      test_loss_ = *(graph_ptr_->Evaluate(params_.error_name).begin());
-
-      // Accuracy calculation
-      if (!params_.accuracy_name.empty())
-      {
-        test_accuracy_ = *(graph_ptr_->Evaluate(params_.accuracy_name).begin());
-      }
+//      while (input_name_it != params_.input_names.end())
+//      {
+//        graph_ptr_->SetInput(*input_name_it, *input_data_it);
+//        ++input_name_it;
+//        ++input_data_it;
+//      }
+//      graph_ptr_->SetInput(params_.label_name, test_pair.first);
+//
+//      test_loss_ = *(graph_ptr_->Evaluate(params_.error_name).begin());
+//
+//       Accuracy calculation
+//      if (!params_.accuracy_name.empty())
+//      {
+//        test_accuracy_ = *(graph_ptr_->Evaluate(params_.accuracy_name).begin());
+//      }
 //      // Todo: will be replaced by accuracy metric once that PR is merged
 //      TensorType test_results = graph_ptr_->Evaluate("FullyConnected_2");
 //      test_results            = fetch::math::ArgMax(test_results);
@@ -375,11 +390,6 @@ void ClientAlgorithm<TensorType>::Test()
 //          static_cast<DataType>(total_score) / static_cast<DataType>(test_results.size());
     }
   }
-//  else
-//  {
-//    test_loss_     = 0;
-//    test_accuracy_ = 0;
-//  }
 }
 
 /**
