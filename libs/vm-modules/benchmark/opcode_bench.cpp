@@ -36,7 +36,6 @@
 #include "vm/vm.hpp"
 
 using fetch::vm::VM;
-using fetch::vm::Module;
 using fetch::vm_modules::VMFactory;
 using fetch::vm::Executable;
 using fetch::vm::Variant;
