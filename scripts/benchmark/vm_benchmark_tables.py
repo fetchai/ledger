@@ -6,11 +6,23 @@ from tabulate import tabulate
 
 def benchmark_table(benchmarks, n_reps, bm_class=''):
 
-    headers = ['Benchmark (' + str(n_reps) + ' reps)', 'Mean (ns)', 'Std error (ns)',
-               'Opcodes', 'Baseline', 'Net opcodes']
+    headers = ['Benchmark (' + str(n_reps) + ' reps)', 'Net mean (ns)', 'Net median (ns)',
+               'Std error (ns)', 'Opcodes', 'Baseline', 'Net opcodes']
 
-    table = [[bm['name'], bm['net_mean'], bm['net_stderr'], bm['opcodes'],
-              bm['baseline'], bm['net_opcodes']]
+    table = [[bm['name'], bm['net_mean'], bm['net_median'], bm['net_stderr'],
+              bm['opcodes'], bm['baseline'], bm['net_opcodes']]
+             for (i, bm) in benchmarks.items() if bm_class in bm['class']]
+
+    if len(table) > 0:
+        print('\n', tabulate(table, headers=headers, floatfmt=".2f"))
+
+
+def benchmark_opcode_table(benchmarks, n_reps, bm_class=''):
+
+    headers = ['Benchmark (' + str(n_reps) + ' reps)', 'Mean (ns)', 'Std. error (ns)',
+               'Opcodes: estimated times (ns)']
+
+    table = [[bm['name'], bm['mean'], bm['net_stderr'], bm['opcode_times']]
              for (i, bm) in benchmarks.items() if bm_class in bm['class']]
 
     if len(table) > 0:
@@ -69,13 +81,25 @@ def linear_fit_table(param_bms, n_reps, bm_cls):
     lfit_table = []
     for (name, bm) in param_bms.items():
         if bm_cls in name:
-            lfit_table.append([name, bm['lfit'][0], bm['lfit'][1], bm['net_mean'],
-                               bm['net_stderr'], bm['opcodes'], bm['baseline'],
-                               bm['net_opcodes']])
+            lfit_table.append([name, bm['lfit'][0], bm['lfit'][1], bm['agg_net_mean'],
+                               bm['agg_net_median'], bm['agg_net_stderr'], bm['opcodes'],
+                               bm['baseline'], bm['net_opcodes']])
 
     headers = ['Benchmark (' + str(n_reps) + ' reps)', 'Slope (ns/char)',
-               'Intercept (ns)', 'Mean (ns)', 'Std error (ns)', 'Opcodes',
+               'Intercept (ns)', 'Mean (ns)', 'Median (ns)', 'Std error (ns)', 'Opcodes',
                'Baseline', 'Net opcodes']
 
     if len(lfit_table) > 0:
         print('\n', tabulate(lfit_table, headers=headers, floatfmt=".3f"))
+
+
+def opcode_time_table(optimes, opcode_defs):
+
+    for optype in optimes:
+        headers = ['Opcode (' + optype + ')', 'Name', 'Estimated time (ns)']
+
+        table = [[op, opcode_defs[op], time]
+                 for [op, time] in optimes[optype].items()]
+
+        if len(table) > 0:
+            print('\n', tabulate(table, headers=headers, floatfmt=".2f"))
