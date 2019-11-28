@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction_layout_rpc_serializers.hpp"
+#include "chain/transaction_validity_period.hpp"
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -55,6 +56,7 @@ constexpr char const *BLOOM_FILTER_STORE = "chain.bloom.db";
  */
 MainChain::MainChain(Mode mode)
   : mode_{mode}
+  , bloom_filter_{1 + chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD / 2}
   , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
         "ledger_main_chain_bloom_filter_queried_bit_number",
         "Total number of bits checked during each query to the Ledger Main Chain Bloom filter"))

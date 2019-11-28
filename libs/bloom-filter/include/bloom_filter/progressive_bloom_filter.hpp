@@ -34,7 +34,7 @@ class ConstByteArray;
 class ProgressiveBloomFilter
 {
 public:
-  ProgressiveBloomFilter()                               = default;
+  explicit ProgressiveBloomFilter(uint64_t overlap);
   ProgressiveBloomFilter(ProgressiveBloomFilter const &) = delete;
   ProgressiveBloomFilter(ProgressiveBloomFilter &&)      = delete;
   ~ProgressiveBloomFilter()                              = default;
@@ -47,12 +47,13 @@ public:
   void Add(fetch::byte_array::ConstByteArray const &element, std::size_t element_index,
            std::size_t current_head_index);
 
-  bool IsInCurrentRange(std::size_t index) const;
   void Reset();
 
 private:
+  bool IsInCurrentRange(std::size_t index) const;
+
   uint64_t                          current_min_index_{};
-  uint64_t                          overlap_{20000};
+  uint64_t                          overlap_;
   std::unique_ptr<BasicBloomFilter> filter1_{std::make_unique<BasicBloomFilter>()};
   std::unique_ptr<BasicBloomFilter> filter2_{std::make_unique<BasicBloomFilter>()};
 
