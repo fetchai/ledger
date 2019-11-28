@@ -97,7 +97,6 @@ void Analyser::Initialise()
   EnableOperator(fixed128_type_, Operator::GreaterThanOrEqual);
   EnableOperator(fixed128_type_, Operator::Add);
   EnableOperator(fixed128_type_, Operator::InplaceAdd);
-  /*
   EnableOperator(fixed128_type_, Operator::Subtract);
   EnableOperator(fixed128_type_, Operator::InplaceSubtract);
   EnableOperator(fixed128_type_, Operator::Multiply);
@@ -105,7 +104,6 @@ void Analyser::Initialise()
   EnableOperator(fixed128_type_, Operator::Divide);
   EnableOperator(fixed128_type_, Operator::InplaceDivide);
   EnableOperator(fixed128_type_, Operator::Negate);
-  */
 
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
   EnableOperator(string_type_, Operator::Equal);
@@ -135,7 +133,8 @@ void Analyser::Initialise()
                                       int32_type_, uint32_type_, int64_type_, uint64_type_};
   TypePtrArray const number_types  = {int8_type_,    uint8_type_,   int16_type_,   uint16_type_,
                                      int32_type_,   uint32_type_,  int64_type_,   uint64_type_,
-                                     float32_type_, float64_type_, fixed32_type_, fixed64_type_};
+                                     float32_type_, float64_type_, fixed32_type_, fixed64_type_,
+                                     fixed128_type_};
   for (auto const &type : number_types)
   {
     EnableOperator(type, Operator::Equal);
