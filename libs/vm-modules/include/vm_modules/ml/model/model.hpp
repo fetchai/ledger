@@ -151,13 +151,6 @@ private:
   inline void AssertLayerTypeMatches(SupportedLayerType                layer,
                                      std::vector<SupportedLayerType> &&valids) const;
 
-  /**
-   * Converts between user specified string and output type (e.g. activation, layer etc.)
-   * invokes VM runtime error if parsing failed.
-   * @param name user specified string to convert
-   * @param dict dictionary of existing entities
-   * @param errmsg preferred display name of expected type, that was not parsed
-   */
   template <typename T>
   inline T ParseName(std::string const &name, std::map<std::string, T> const &dict,
                      std::string const &errmsg) const;

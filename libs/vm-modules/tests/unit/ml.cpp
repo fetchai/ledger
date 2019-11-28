@@ -459,7 +459,7 @@ TEST_F(MLTests, serialisation_several_components_test)
 /////
 /// MODEL SERIALISATION TESTS
 /////
-TEST_F(MLTests, serialization_model)
+TEST_F(MLTests, serialisation_model)
 {
   static char const *model_serialise_src = R"(
 
@@ -682,7 +682,7 @@ TEST_F(MLTests, model_string_serialisation_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, non_permitted_serialization_model_sequential_test)
+TEST_F(MLTests, non_permitted_serialisation_model_sequential_test)
 {
   static char const *model_sequential_serialise_src = R"(
 
@@ -705,7 +705,7 @@ TEST_F(MLTests, non_permitted_serialization_model_sequential_test)
   EXPECT_FALSE(toolkit.Run());
 }
 
-TEST_F(MLTests, non_permitted_serialization_model_regressor_test)
+TEST_F(MLTests, non_permitted_serialisation_model_regressor_test)
 {
   static char const *model_regressor_serialise_src = R"(
 
@@ -725,7 +725,7 @@ TEST_F(MLTests, non_permitted_serialization_model_regressor_test)
   EXPECT_FALSE(toolkit.Run());
 }
 
-TEST_F(MLTests, non_permitted_serialization_model_classifier_test)
+TEST_F(MLTests, non_permitted_serialisation_model_classifier_test)
 {
   static char const *model_classifier_serialise_src = R"(
 
@@ -742,6 +742,7 @@ TEST_F(MLTests, non_permitted_serialization_model_classifier_test)
     )";
 
   ASSERT_TRUE(toolkit.Compile(model_classifier_serialise_src));
+  EXPECT_FALSE(toolkit.Run());
 }
 
 TEST_F(MLTests, model_init_with_wrong_name)
