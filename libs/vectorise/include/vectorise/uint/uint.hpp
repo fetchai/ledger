@@ -657,7 +657,6 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   }
   if (n == _1)
   {
-    *this = n;
     return *this;
   }
   if (*this == n)
