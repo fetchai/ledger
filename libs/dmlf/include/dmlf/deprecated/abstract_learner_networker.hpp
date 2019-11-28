@@ -25,7 +25,7 @@
 #include "dmlf/colearn/update_store_interface.hpp"
 #include "dmlf/deprecated/queue.hpp"
 #include "dmlf/deprecated/queue_interface.hpp"
-#include "dmlf/deprecated/shuffle_algorithm_interface.hpp"
+#include "dmlf/shuffle_algorithm_interface.hpp"
 #include "dmlf/deprecated/type_map.hpp"
 
 namespace fetch {

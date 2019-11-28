@@ -63,6 +63,7 @@ public:
   using Signer                        = fetch::crypto::ECDSASigner;
   using SignerPtr                     = std::shared_ptr<Signer>;
   using Sources                       = std::set<std::string>;
+  using SourcesList                   = std::vector<std::string>;
   using Store                         = UpdateStore;
   using StorePtr                      = std::shared_ptr<Store>;
   using SubscriptionPtr               = fetch::muddle::MuddleEndpoint::SubscriptionPtr;
@@ -119,15 +120,11 @@ public:
   }
 
   void PushUpdateBytes(UpdateType const &type_name, Bytes const &update);
-  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, const Peers &peers);
+  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, const Peers &peers,
+                       double broadcast_proportion = -1.0);
 
   ConstUpdatePtr GetUpdate(AlgorithmClass const &algo, UpdateType const &type,
                            Criteria const &criteria);
-
-  std::size_t GetPeerCount() const
-  {
-    return 0;
-  }
 
   virtual void submit(TaskP const &t);
 
@@ -150,6 +147,24 @@ public:
   Address     GetAddress() const;
   std::string GetAddressAsString() const;
 
+  void SetShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg);
+
+  std::size_t GetPeerCount() const
+  {
+    return supplied_peers_.size();
+  }
+
+  void AddPeers(const std::vector<std::string> &new_peers)
+  {
+    for (auto const &peer : new_peers)
+    {
+      supplied_peers_.emplace_back(peer);
+    }
+  }
+  void ClearPeers()
+  {
+    supplied_peers_.clear();
+  }
 protected:
   friend class MuddleOutboundAnnounceTask;
   void     Setup(MuddlePtr mud, StorePtr update_store);
@@ -171,9 +186,12 @@ private:
   byte_array::ConstByteArray  public_key_;
 
   std::shared_ptr<NetMan> netm_;
-  Sources                 sources_;
+  Sources                 detected_peers_;
+  SourcesList             supplied_peers_;
 
   mutable Mutex mutex_;
+
+  std::shared_ptr<ShuffleAlgorithmInterface> alg_;
 
   friend class MuddleMessageHandler;
 };

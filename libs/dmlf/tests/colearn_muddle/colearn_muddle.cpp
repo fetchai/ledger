@@ -29,6 +29,7 @@
 #include "math/tensor.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "network/management/network_manager.hpp"
+#include "dmlf/simple_cycling_algorithm.hpp"
 
 #include <chrono>
 #include <ostream>
@@ -115,41 +116,39 @@ public:
     std::shared_ptr<LearnerTypedUpdates> instance;
     unsigned short int                   port;
     LN::Address                          pub;
+    std::string pubstr;
   };
 
   using Insts = std::vector<Inst>;
 
-  const unsigned int PEERS = 3;
-
   Insts instances;
 
-  void SetUp() override
+  void CreateServers(unsigned int peercount = 3)
   {
     srand(static_cast<unsigned int>(time(nullptr)));
     auto base_port = static_cast<unsigned short int>(rand() % 10000 + 10000);
 
-    for (unsigned int i = 0; i < PEERS; i++)
+    for (unsigned int i = 0; i < peercount; i++)
     {
       Inst inst;
       inst.port     = static_cast<unsigned short int>(base_port + i);
       inst.instance = std::make_shared<LearnerTypedUpdates>("", inst.port, (i > 0) ? base_port : 0);
       inst.pub      = inst.instance->actual->GetAddress();
+      inst.pubstr   = inst.instance->actual->GetAddressAsString();
       instances.push_back(inst);
     }
   }
 };
 
-TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
+TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveBCast)
 {
+  CreateServers(2);
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
   instances[0].instance->PretendToLearn();
 
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
   EXPECT_GT(instances[1].instance->actual->GetUpdateCount(), 0);
-
-  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-
   try
   {
     instances[1].instance->actual->GetUpdate("algo0", "vocab");
@@ -178,6 +177,41 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
   {
     // get should throw, because vocab Q is empty.
   }
+}
+
+TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveShuffle)
+{
+  CreateServers(6);
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+  for (unsigned int i = 0; i < instances.size(); i++)
+  {
+    for (unsigned int j = 0; j < instances.size(); j++)
+    {
+      if (i != j )
+      {
+        instances[i].instance->actual->AddPeers({instances[j].pubstr});
+      }
+    }
+  }
+
+  auto cycle = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(instances.size() - 1, 2);
+  for (unsigned int i = 0; i < instances.size(); i++)
+  {
+    instances[i].instance->actual->SetShuffleAlgorithm(cycle);
+  }
+
+  instances[0].instance->PretendToLearn();
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(700));
+
+  EXPECT_EQ(instances[0].instance->actual->GetUpdateCount(), 0);
+  EXPECT_EQ(instances[1].instance->actual->GetUpdateCount(), 1);
+  EXPECT_EQ(instances[2].instance->actual->GetUpdateCount(), 1);
+  EXPECT_EQ(instances[3].instance->actual->GetUpdateCount(), 1);
+  EXPECT_EQ(instances[4].instance->actual->GetUpdateCount(), 1);
+  EXPECT_EQ(instances[5].instance->actual->GetUpdateCount(), 0);
+
 }
 
 }  // namespace
