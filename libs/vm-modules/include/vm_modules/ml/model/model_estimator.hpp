@@ -94,18 +94,26 @@ public:
   bool DeserializeFrom(serializers::MsgPackSerializer &buffer);
 
 private:
+  struct State
+  {
+    // Model
+    ChargeAmount forward_pass_cost{0};
+    ChargeAmount backward_pass_cost{0};
+
+    // Optimiser
+    ChargeAmount weights_size_sum{0};
+    ChargeAmount optimiser_step_impact{0};
+
+    SizeType last_layer_size{0};
+    SizeType ops_count{0};
+
+    // serialization
+    bool SerializeTo(serializers::MsgPackSerializer &buffer);
+    bool DeserializeFrom(serializers::MsgPackSerializer &buffer);
+  };
+
   VMObjectType &model_;
-
-  // Model
-  ChargeAmount forward_pass_cost_{0};
-  ChargeAmount backward_pass_cost_{0};
-
-  // Optimiser
-  ChargeAmount weights_size_sum_{0};
-  ChargeAmount optimiser_step_impact_{0};
-
-  SizeType last_layer_size_{0};
-  SizeType ops_count_{0};
+  State         state_;
 
   static constexpr SizeType ADAM_STEP_IMPACT              = 15;
   static constexpr SizeType ADAM_CONSTRUCTION_IMPACT      = 15;
@@ -120,6 +128,8 @@ private:
   static constexpr ChargeAmount constant_charge{vm::CHARGE_UNIT};
 
   void copy_state_from(ModelEstimator const &);
+
+  ChargeAmount infinite_charge(std::string const &log_msg = "");
 };
 
 }  // namespace model

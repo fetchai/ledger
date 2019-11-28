@@ -85,11 +85,11 @@ Ptr<VMTensorType> VMScaler::DeNormalise(Ptr<VMTensorType> const &input_tensor)
 void VMScaler::Bind(Module &module)
 {
   module.CreateClassType<VMScaler>("Scaler")
-      .CreateConstructor(VMScaler::Constructor)
-      .CreateMemberFunction("setScale", &VMScaler::SetScaleByData)
-      .CreateMemberFunction("setScale", &VMScaler::SetScaleByRange)
-      .CreateMemberFunction("normalise", &VMScaler::Normalise)
-      .CreateMemberFunction("deNormalise", &VMScaler::DeNormalise);
+      .CreateConstructor(VMScaler::Constructor, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("setScale", &VMScaler::SetScaleByData, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("setScale", &VMScaler::SetScaleByRange, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("normalise", &VMScaler::Normalise, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("deNormalise", &VMScaler::DeNormalise, vm::CHARGE_INFINITY);
 }
 
 bool VMScaler::SerializeTo(serializers::MsgPackSerializer &buffer)

@@ -44,6 +44,8 @@ enum class ModelCategory : uint8_t
 
 class VMModel : public fetch::vm::Object
 {
+  friend class fetch::vm_modules::ml::model::ModelEstimator;
+
 public:
   using DataType            = fetch::vm_modules::math::DataType;
   using TensorType          = fetch::math::Tensor<DataType>;
@@ -110,8 +112,6 @@ public:
       fetch::vm::Ptr<fetch::vm::String> const &model_string);
 
   ModelEstimator &Estimator();
-
-  friend class fetch::vm_modules::ml::model::ModelEstimator;
 
 private:
   ModelPtrType       model_;

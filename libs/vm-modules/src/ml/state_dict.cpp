@@ -70,8 +70,8 @@ bool VMStateDict::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 void VMStateDict::Bind(Module &module)
 {
   module.CreateClassType<VMStateDict>("StateDict")
-      .CreateConstructor(&VMStateDict::Constructor)
-      .CreateMemberFunction("setWeights", &VMStateDict::SetWeights);
+      .CreateConstructor(&VMStateDict::Constructor, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("setWeights", &VMStateDict::SetWeights, vm::CHARGE_INFINITY);
 }
 
 }  // namespace ml
