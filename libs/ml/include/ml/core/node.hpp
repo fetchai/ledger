@@ -47,7 +47,6 @@ private:
 
 public:
   using DataType        = typename TensorType::Type;
-  using NodePtrType     = std::shared_ptr<Node<TensorType>>;
   using NodeWeakPtrType = std::weak_ptr<Node<TensorType>>;
 
   using VecTensorType    = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
@@ -111,12 +110,12 @@ public:
 
   NodeErrorMapType BackPropagate(TensorType const &error_signal);
 
-  void                            AddInput(NodeWeakPtrType const &i);
-  std::vector<std::string>        GetInputNames();
-  void                            AddOutput(NodePtrType const &o);
-  std::vector<NodePtrType> const &GetOutputs() const;
-  void                            ResetCache(bool input_size_changed);
-  void                            ResetInputsAndOutputs();
+  void                                AddInput(NodeWeakPtrType const &i);
+  std::vector<std::string>            GetInputNames();
+  void                                AddOutput(NodeWeakPtrType const &o);
+  std::vector<NodeWeakPtrType> const &GetOutputs() const;
+  void                                ResetCache(bool input_size_changed);
+  void                                ResetInputsAndOutputs();
 
   std::string const &GetNodeName()
   {
@@ -144,7 +143,7 @@ public:
 
 private:
   std::vector<NodeWeakPtrType> input_nodes_;
-  std::vector<NodePtrType>     outputs_;
+  std::vector<NodeWeakPtrType> outputs_;
 
   std::string       name_;
   TensorType        cached_output_;
@@ -338,7 +337,7 @@ std::vector<std::string> Node<TensorType>::GetInputNames()
  * @param o pointer to the output node
  */
 template <typename TensorType>
-void Node<TensorType>::AddOutput(NodePtrType const &o)
+void Node<TensorType>::AddOutput(NodeWeakPtrType const &o)
 {
   outputs_.push_back(o);
 }
@@ -350,7 +349,7 @@ void Node<TensorType>::AddOutput(NodePtrType const &o)
  * @return vector of pointers to output nodes
  */
 template <typename TensorType>
-std::vector<typename Node<TensorType>::NodePtrType> const &Node<TensorType>::GetOutputs() const
+std::vector<typename Node<TensorType>::NodeWeakPtrType> const &Node<TensorType>::GetOutputs() const
 {
   return outputs_;
 }
