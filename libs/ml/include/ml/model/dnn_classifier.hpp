@@ -42,9 +42,6 @@ public:
   ~DNNClassifier() override                 = default;
 
   DNNClassifier(ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
-
-private:
-  using Model<TensorType>::layer_count_;
 };
 
 /**
@@ -79,8 +76,7 @@ DNNClassifier<TensorType>::DNNClassifier(ModelConfig<DataType>        model_conf
   this->label_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Label", {});
   this->error_ =
       this->graph_ptr_->template AddNode<CostFunctionType>("Error", {this->output_, this->label_});
-  this->loss_set_    = true;
-  this->layer_count_ = hidden_layers.size();
+  this->loss_set_ = true;
 }
 
 }  // namespace model

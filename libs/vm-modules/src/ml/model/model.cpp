@@ -392,7 +392,7 @@ fetch::vm::Ptr<VMModel> VMModel::DeserializeFromString(
   DeserializeFrom(buffer);
 
   auto vm_model = fetch::vm::Ptr<VMModel>(new VMModel(vm_, type_id_));
-  vm_model->SetUnderlyingModelInstance(model_);
+  vm_model->SetModel(model_);
 
   return vm_model;
 }
