@@ -34,6 +34,7 @@ imgformat = 'png'
 
 # Specify maximum parameter value to use in linear fit for bm names that contain these strings
 max_fit_lens = {'Array': 6000, 'FromStr': 100000}
+slope_thresh = 0.01
 
 
 def index(row):
@@ -150,22 +151,21 @@ for (ind, bm) in benchmarks.items():
 tensor_bm_types = {bm['type']
                    for bm in benchmarks.values() if bm['class'] == 'Tensor'}
 
+del benchmarks[9]
+
 # Solve linear least-squares problem to estimate individual opcode times
 optimes = {'Base': dict()}
-vm_least_squares.opcode_times(benchmarks, n_reps, optimes['Base'], {'Basic'})
+vm_least_squares.opcode_times(benchmarks, optimes['Base'], {'Basic'})
 op_prims = {'Int8', 'Int16', 'Int32', 'Int64', 'UInt8', 'UInt16', 'UInt32', 'UInt64',
             'Float32', 'Float64', 'Fixed32', 'Fixed64'}
 math_prims = {'Float32', 'Float64', 'Fixed32', 'Fixed64'}
 
-#del benchmarks[9]
-#del benchmarks[10]
-
 for prim in op_prims:
     optimes[prim] = optimes['Base'].copy()
-    vm_least_squares.opcode_times(benchmarks, n_reps, optimes[prim], {
+    vm_least_squares.opcode_times(benchmarks, optimes[prim], {
                                   'Prim'}, prim_type=prim)
 for prim in math_prims:
-    vm_least_squares.opcode_times(benchmarks, n_reps, optimes[prim], {
+    vm_least_squares.opcode_times(benchmarks, optimes[prim], {
                                   'Math'}, prim_type=prim)
 
 for bm in benchmarks.values():
@@ -221,6 +221,9 @@ for (bm_type, param_bm) in param_bms.items():
             max_len = max_fit_lens[key]
     param_bm['lfit'] = vm_least_squares.linear_fit(param_bm, max_len)
 
+param_dep_bms = {name: bm for (
+    name, bm) in param_bms.items() if bm['lfit'][0] > slope_thresh}
+
 
 if save_results:
 
@@ -262,7 +265,7 @@ if make_plots:
     from vm_benchmark_plots import plot_linear_fit
 
     fig = 0
-    for (name, param_bm) in param_bms.items():
+    for (name, param_bm) in param_dep_bms.items():
         plot_linear_fit(name, param_bm, fig=fig, savefig=save_figures,
                         savepath=output_path+'plots/', imgformat=imgformat)
         fig += 1

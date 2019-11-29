@@ -95,11 +95,11 @@ def linear_fit_table(param_bms, n_reps, bm_cls):
 
 def opcode_time_table(optimes, opcode_defs):
 
-    for optype in optimes:
+    for optype in sorted(optimes):
         headers = ['Opcode (' + optype + ')', 'Name', 'Estimated time (ns)']
 
-        table = [[op, opcode_defs[op], time]
-                 for [op, time] in optimes[optype].items()]
+        table = [[op, opcode_defs[op], optimes[optype][op]]
+                 for op in sorted(optimes[optype].keys())]
 
         if len(table) > 0:
             print('\n', tabulate(table, headers=headers, floatfmt=".2f"))
