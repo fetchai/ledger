@@ -90,7 +90,7 @@ public:
                          fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
   void CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
-                     fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers);
+                     fetch::vm::Ptr<vm::Array<math::SizeType>> const &layer_shapes);
 
   void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
            ::fetch::math::SizeType const &batch_size);
@@ -118,9 +118,8 @@ private:
   ModelCategory      model_category_ = ModelCategory::NONE;
   bool               compiled_       = false;
 
-  // Simple Model does not allow to have 1 hidden layer,
-  // fix is pending in ML-278
-  static constexpr std::size_t min_allowed_hidden_layers_ = 2;
+  // First for input layer shape, second for output layer shape.
+  static constexpr std::size_t min_total_layer_shapes = 2;
 
   static const std::map<std::string, SupportedLayerType>                 layer_types_;
   static const std::map<std::string, fetch::ml::details::ActivationType> activations_;

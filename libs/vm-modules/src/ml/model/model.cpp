@@ -135,6 +135,11 @@ Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
   return Ptr<VMModel>{new VMModel(vm, type_id, model_category)};
 }
 
+/**
+ * @brief VMModel::CompileSequential
+ * @param loss a valid loss function ["mse", ...]
+ * @param optimiser a valid optimiser name ["adam", "sgd" ...]
+ */
 void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                 fetch::vm::Ptr<fetch::vm::String> const &optimiser)
 {
@@ -160,22 +165,27 @@ void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
   compiled_ = true;
 }
 
+/**
+ * @brief VMModel::CompileSimple
+ * @param optimiser a valid optimiser name ["adam", "sgd" ...]
+ * @param layer_shapes a list of layer shapes, min 2: Input and Output shape correspondingly.
+ */
 void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
-                            fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers)
+                            fetch::vm::Ptr<vm::Array<math::SizeType>> const &layer_shapes)
 {
-  std::size_t const total_hidden_layers = in_layers->elements.size();
-  if (total_hidden_layers < min_allowed_hidden_layers_)
+  std::size_t const total_layer_shapes = layer_shapes->elements.size();
+  if (total_layer_shapes < min_total_layer_shapes)
   {
-    vm_->RuntimeError("Regressor/classifier model must have at least " +
-                      std::to_string(min_allowed_hidden_layers_) + " hidden layers!");
+    vm_->RuntimeError("Regressor/classifier model compilation requires providing at least " +
+                      std::to_string(min_total_layer_shapes) + " layer shapes (input, output)!");
     return;
   }
 
   std::vector<math::SizeType> layers;
-  layers.reserve(total_hidden_layers);
-  for (size_t i = 0; i < total_hidden_layers; ++i)
+  layers.reserve(total_layer_shapes);
+  for (size_t i = 0; i < total_layer_shapes; ++i)
   {
-    layers.emplace_back(in_layers->elements.at(i));
+    layers.emplace_back(layer_shapes->elements.at(i));
   }
 
   switch (model_category_)
@@ -190,7 +200,7 @@ void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        opt
 
   default:
     vm_->RuntimeError(
-        "Only regressor/classifier model types accept hidden layers list as a compilation "
+        "Only regressor/classifier model types accept layer shapes list as a compilation "
         "parameter!");
     return;
   }
