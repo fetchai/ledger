@@ -101,7 +101,7 @@ public:
 
   static void Bind(fetch::vm::Module &module);
 
-  ModelPtrType &GetModel();
+  void SetUnderlyingModelInstance(ModelPtrType const &instance);
 
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
@@ -112,13 +112,13 @@ public:
   fetch::vm::Ptr<VMModel> DeserializeFromString(
       fetch::vm::Ptr<fetch::vm::String> const &model_string);
 
-  static constexpr size_t MIN_HIDDEN_LAYERS = 2;
-
 private:
   ModelPtrType       model_;
   ModelConfigPtrType model_config_;
   ModelCategory      model_category_ = ModelCategory::NONE;
   bool               compiled_       = false;
+
+  static constexpr size_t min_allowed_hidden_layers_ = 2;
 
   static const std::map<std::string, SupportedLayerType>                 layer_types_;
   static const std::map<std::string, fetch::ml::details::ActivationType> activations_;
@@ -128,7 +128,7 @@ private:
 
   void Init(std::string const &model_category);
 
-  void CompileDataloader();
+  void PrepareDataloader();
 
   void AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &inputs,
                             math::SizeType const &hidden_nodes);
