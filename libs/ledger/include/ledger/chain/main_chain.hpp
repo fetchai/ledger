@@ -60,6 +60,7 @@ namespace ledger {
  */
 struct Tip
 {
+  using Hash = Block::Hash;
   using Weight = Block::Weight;
 
   BlockHash hash;
