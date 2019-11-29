@@ -69,7 +69,7 @@ struct Tip
   uint64_t  block_number{0};
 
   constexpr Tip() = default;
-  Tip(Block const &block);
+  explicit Tip(Block const &block);
 
   Tip &operator=(Block const &block);
 
