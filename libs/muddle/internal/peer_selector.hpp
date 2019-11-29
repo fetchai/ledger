@@ -61,7 +61,6 @@ public:
   {
     network::Peer peer;
     bool          unreachable{false};
-    Timepoint     last_attempt{Clock::now()};  // replace with connection attempts
 
     explicit PeerMetadata(network::Peer addr)
       : peer{std::move(addr)}

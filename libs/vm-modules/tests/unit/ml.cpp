@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gmock/gmock.h"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 #include "vm_test_toolkit.hpp"
-
-#include "gmock/gmock.h"
 
 #include <sstream>
 
@@ -681,6 +680,91 @@ TEST_F(MLTests, model_string_serialisation_test)
   EXPECT_CALL(toolkit.observer(), Read(state_name3, _, _)).Times(::testing::Between(1, 2));
   EXPECT_CALL(toolkit.observer(), Read(state_name4, _, _)).Times(::testing::Between(1, 2));
   ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, non_permitted_serialisation_model_sequential_test)
+{
+  static char const *model_sequential_serialise_src = R"(
+
+      function main()
+
+        // set up a model
+        var model = Model("sequential");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 1u64);
+
+        // serialise model
+        var model_state = State<Model>("model");
+        model_state.set(model);
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(model_sequential_serialise_src));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(MLTests, non_permitted_serialisation_model_regressor_test)
+{
+  static char const *model_regressor_serialise_src = R"(
+
+      function main()
+
+        // set up a model
+        var model = Model("regressor");
+
+        // serialise model
+        var model_state = State<Model>("model");
+        model_state.set(model);
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(model_regressor_serialise_src));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(MLTests, non_permitted_serialisation_model_classifier_test)
+{
+  static char const *model_classifier_serialise_src = R"(
+
+      function main()
+
+        // set up a model
+        var model = Model("classifier");
+
+        // serialise model
+        var model_state = State<Model>("model");
+        model_state.set(model);
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(model_classifier_serialise_src));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(MLTests, model_init_with_wrong_name)
+{
+  static char const *SRC_CORRECT_NAMES = R"(
+        function main()
+          var model1 = Model("sequential");
+          var model2 = Model("regressor");
+          var model3 = Model("classifier");
+          var model4 = Model("none");
+        endfunction
+      )";
+  ASSERT_TRUE(toolkit.Compile(SRC_CORRECT_NAMES));
+  EXPECT_TRUE(toolkit.Run());
+
+  static char const *SRC_WRONG_NAME = R"(
+      function main()
+        var model = Model("wrong_name");
+      endfunction
+    )";
+  ASSERT_TRUE(toolkit.Compile(SRC_WRONG_NAME));
+  EXPECT_THROW(toolkit.Run(), std::runtime_error);
 }
 
 TEST_F(MLTests, optimiser_set_graph_test)

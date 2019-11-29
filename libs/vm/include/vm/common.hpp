@@ -66,7 +66,8 @@ static constexpr TypeId PrimitiveMaxId  = 16;
 static constexpr TypeId String          = 17;
 static constexpr TypeId Address         = 18;
 static constexpr TypeId Fixed128        = 19;
-static constexpr TypeId NumReserved     = 20;
+static constexpr TypeId UInt256         = 20;
+static constexpr TypeId NumReserved     = 21;
 }  // namespace TypeIds
 
 enum class NodeCategory : uint8_t

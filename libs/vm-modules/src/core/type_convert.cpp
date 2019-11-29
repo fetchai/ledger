@@ -18,6 +18,7 @@
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/fixed_point/type_traits.hpp"
+#include "vm/fixed.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/type_convert.hpp"
 
@@ -58,6 +59,15 @@ fetch::math::meta::IfIsFixedPoint<T, Ptr<String>> ToString(VM *vm, T const &a)
 }
 
 template <typename T>
+Ptr<String> ToPtrString(VM *vm, Ptr<Fixed128> const &a)
+{
+  std::stringstream stream;
+  stream << a->data_;
+  Ptr<String> ret(new String(vm, stream.str()));
+  return ret;
+}
+
+template <typename T>
 bool ToBool(VM * /*vm*/, T const &a)
 {
   return static_cast<bool>(a);
@@ -80,6 +90,7 @@ void CreateToString(Module &module)
   module.CreateFreeFunction("toString", &ToString<bool>);
   module.CreateFreeFunction("toString", &ToString<fixed_point::fp32_t>);
   module.CreateFreeFunction("toString", &ToString<fixed_point::fp64_t>);
+  module.CreateFreeFunction("toString", &ToPtrString<Ptr<Fixed128>>);
 }
 
 void CreateToBool(Module &module)

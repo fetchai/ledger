@@ -2,6 +2,7 @@
 %option outfile="../src/tokeniser.cpp"
 %option header-file="../include/vm/tokeniser.hpp"
 %x COMMENT
+%x SINGLELINECOMMENT
 
 %{
 
@@ -27,7 +28,7 @@ int Set(fetch::vm::Token *token, const fetch::vm::Token::Kind kind, char const *
     uint16_t const length, fetch::vm::Location *location)
 {
     //printf("kind=%d text=[%s] length=%d line=%d offset=%d\n",
-        //kind, text, length, location->line, location->offset);
+      //  int(kind), text, length, location->line, location->offset);
     token->kind = kind;
     token->offset = location->offset;
     token->line = location->line;
@@ -78,9 +79,22 @@ IDENT           [_a-zA-Z][_a-zA-Z0-9]*
     yyextra->offset += yyleng;
     BEGIN(INITIAL);
 }
-"//".*\n {
+
+  /* single line comments */
+"//" {
+    yyextra->offset += yyleng;
+    BEGIN(SINGLELINECOMMENT);
+}
+<SINGLELINECOMMENT>[^\n]+ {
+    yyextra->offset += yyleng;
+}
+<SINGLELINECOMMENT>\n {
     yyextra->offset += yyleng;
     yyextra->line++;
+    BEGIN(INITIAL);
+}
+<SINGLELINECOMMENT><<EOF>> {
+    Set(yylval, fetch::vm::Token::Kind::EndOfInput, "", 0, yyextra); return 0;
 }
 
     /* numbers */

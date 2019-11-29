@@ -17,15 +17,16 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/base_types.hpp"
-#include "dmlf/networkers/local_learner_networker.hpp"
-#include "dmlf/update_interface.hpp"
+#include "dmlf/deprecated/local_learner_networker.hpp"
+#include "dmlf/deprecated/update_interface.hpp"
 
 #include <iostream>
 
 namespace fetch {
 namespace dmlf {
 
-void LocalLearnerNetworker::AddPeers(std::vector<std::shared_ptr<LocalLearnerNetworker>> new_peers)
+void deprecated_LocalLearnerNetworker::AddPeers(
+    std::vector<std::shared_ptr<deprecated_LocalLearnerNetworker>> new_peers)
 {
   for (auto const &peer : new_peers)
   {
@@ -36,14 +37,14 @@ void LocalLearnerNetworker::AddPeers(std::vector<std::shared_ptr<LocalLearnerNet
   }
 }
 
-void LocalLearnerNetworker::ClearPeers()
+void deprecated_LocalLearnerNetworker::ClearPeers()
 {
   peers_.clear();
 }
 
-void LocalLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
+void deprecated_LocalLearnerNetworker::PushUpdate(deprecated_UpdateInterfacePtr const &update)
 {
-  std::vector<std::shared_ptr<LocalLearnerNetworker>> targets;
+  std::vector<std::shared_ptr<deprecated_LocalLearnerNetworker>> targets;
 
   auto indexes = alg_->GetNextOutputs();
   auto data    = update->Serialise();
@@ -55,7 +56,7 @@ void LocalLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
   }
 }
 
-void LocalLearnerNetworker::Recieve(Bytes const &data)
+void deprecated_LocalLearnerNetworker::Recieve(Bytes const &data)
 {
   // since we're in the same process, there's no processing to do to
   // the message, we can simply deliver it.

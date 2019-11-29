@@ -655,7 +655,7 @@ def run_test(build_directory, yaml_file, node_exe, name_filter=None):
             test_instance.dump_debug()
             sys.exit(1)
 
-    output("\nAll end to end tests have passed")
+    output("\nAll end to end tests have passed :)")
 
 
 def parse_commandline():
