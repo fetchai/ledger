@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cmath>
 #include <numeric>
 #include <stdexcept>
 
@@ -57,39 +58,85 @@ std::size_t UpdateStore::GetUpdateCount(Algorithm const &algo, UpdateType const 
 void UpdateStore::PushUpdate(Algorithm const &algo, UpdateType type, Data &&data, Source source,
                              Metadata &&metadata)
 {
+  QueueId id        = Id(algo, type);
+  auto    newUpdate = std::make_shared<Update>(algo, std::move(type), std::move(data),
+                                            std::move(source), std::move(metadata));
   FETCH_LOCK(global_m_);
 
-  QueueId id       = Id(algo, type);
-  auto    queue_it = algo_map_.find(id);
+  auto result = consumed_.emplace(newUpdate->fingerprint(), UpdateConsumers());
 
-  if (queue_it == algo_map_.end())
+  if (!result.second)  // Duplicate
   {
-    queue_it = algo_map_.emplace(id, Queue()).first;
+    return;
   }
 
-  queue_it->second.push(std::make_shared<Update>(algo, std::move(type), std::move(data),
-                                                 std::move(source), std::move(metadata)));
+  result.first->second.insert(newUpdate->source());
+
+  auto queue_it = algo_map_.find(id);
+  if (queue_it == algo_map_.end())
+  {
+    queue_it = algo_map_.emplace(id, Store{}).first;
+  }
+  auto &store = queue_it->second;
+
+  store.emplace_back(newUpdate);
 }
 UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType const &type,
-                                              Criteria /*criteria*/)
+                                              Criteria criteria, Consumer consumer)
 {
-  return GetUpdate(algo, type);
-}
-UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType const &type)
-{
+  QueueId id = Id(algo, type);
   FETCH_LOCK(global_m_);
-  QueueId id       = Id(algo, type);
-  auto    queue_it = algo_map_.find(id);
+  auto queue_it = algo_map_.find(id);
 
   if (queue_it == algo_map_.end() || queue_it->second.empty())
   {
-    throw std::runtime_error("No updates found");
+    throw std::runtime_error("No updates of algo " + algo + " and type " + type + " in store\n");
   }
 
-  auto result = queue_it->second.top();
-  queue_it->second.pop();
+  auto wrapped_criteria = [&criteria, &consumer, &seen = consumed_](UpdatePtr const &update) {
+    if (!consumer.empty() && seen[update->fingerprint()].count(consumer) == 1)
+    {
+      return std::nan("");
+    }
+    return criteria(update);
+  };
+
+  auto &store = queue_it->second;
+
+  auto it = std::max_element(store.cbegin(), store.cend(),
+                             [&wrapped_criteria](UpdatePtr const &left, UpdatePtr const &right) {
+                               double leftScore = wrapped_criteria(left);
+                               if (std::isnan(leftScore))
+                               {
+                                 return true;
+                               }
+                               double rightScore = wrapped_criteria(right);
+                               if (std::isnan(rightScore))
+                               {
+                                 return false;
+                               }
+
+                               return leftScore < rightScore;
+                             });
+
+  auto result = *it;
+  if (std::isnan(wrapped_criteria(result)))
+  {
+    throw std::runtime_error("No updates of algo " + algo + " and type " + type +
+                             " matching the criteria found\n");
+  }
+
+  if (!consumer.empty())
+  {
+    consumed_[result->fingerprint()].insert(consumer);
+  }
 
   return result;
+}
+UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType const &type,
+                                              Consumer consumer)
+{
+  return GetUpdate(algo, type, Lifo, consumer);
 }
 
 }  // namespace colearn
