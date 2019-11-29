@@ -652,7 +652,7 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   {
     s << double(n);
   }
-#ifndef NDEBUG
+#ifdef FETCH_FIXEDPOINT_DEBUG_HEX
   // Only output the hex value in DEBUG mode
   s << " (0x" << std::hex << static_cast<typename FixedPoint<I, F>::Type>(n.Data()) << ")";
 #endif
