@@ -75,6 +75,16 @@ struct BlockEntropy : public BlockEntropyInterface
   uint64_t EntropyAsU64() const override;
   void     HashSelf();
   bool     IsAeonBeginning() const;
+
+  bool operator==(BlockEntropy const &other) const
+  {
+    return ((qualified == other.qualified) &&
+            (aeon_notarisation_keys == other.aeon_notarisation_keys) &&
+            (group_public_key == other.group_public_key) && (block_number == other.block_number) &&
+            (digest == other.digest) && (confirmations == other.confirmations) &&
+            (group_signature == other.group_signature) &&
+            (block_notarisation == other.block_notarisation));
+  }
 };
 
 }  // namespace beacon
