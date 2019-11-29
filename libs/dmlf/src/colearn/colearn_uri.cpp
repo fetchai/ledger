@@ -25,17 +25,16 @@ namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-ColearnURI::ColearnURI(UpdateStore::Update const & update)
-: algorithm_class_(update.algorithm())
-, update_type_(update.update_type())
-, source_(update.source())
-//, fingerprint_(EncodeFingerprint(update.fingerprint().ToBase64()))
-, fingerprint_(EncodeFingerprint("abc/+efg"))
-{
-}
+ColearnURI::ColearnURI(UpdateStore::Update const &update)
+  : algorithm_class_(update.algorithm())
+  , update_type_(update.update_type())
+  , source_(update.source())
+  //, fingerprint_(EncodeFingerprint(update.fingerprint().ToBase64()))
+  , fingerprint_(EncodeFingerprint("abc/+efg"))
+{}
 
-  // Must be encoded
-ColearnURI::ColearnURI(std::string const& uriString)
+// Must be encoded
+ColearnURI::ColearnURI(std::string const &uriString)
 {
   constexpr int prefixLength = 10;
   if (uriString.compare(0, prefixLength, "colearn://") != 0)
@@ -51,7 +50,7 @@ ColearnURI::ColearnURI(std::string const& uriString)
   {
     ++current;
     auto nextSlash = std::find(current, end, '/');
-    fields.emplace_back(current,nextSlash);
+    fields.emplace_back(current, nextSlash);
     current = nextSlash;
   }
 
@@ -60,35 +59,29 @@ ColearnURI::ColearnURI(std::string const& uriString)
     return;
   }
 
-  owner_ = fields[0];
+  owner_           = fields[0];
   algorithm_class_ = fields[1];
-  update_type_ = fields[2];
-  source_ = fields[3];
-  fingerprint_ = fields[4];
+  update_type_     = fields[2];
+  source_          = fields[3];
+  fingerprint_     = fields[4];
 }
 
 std::string ColearnURI::ToString() const
 {
-  return protocol()     + "://" 
-    + owner()           + '/' 
-    + algorithm_class() + '/' 
-    + update_type()     + '/' 
-    + source()          + '/'
-    + fingerprint();
+  return protocol() + "://" + owner() + '/' + algorithm_class() + '/' + update_type() + '/' +
+         source() + '/' + fingerprint();
 }
 
 bool ColearnURI::IsEmpty() const
 {
-  return owner_.empty() && algorithm_class_.empty() && update_type_.empty() && source_.empty()
-    && fingerprint_.empty();
+  return owner_.empty() && algorithm_class_.empty() && update_type_.empty() && source_.empty() &&
+         fingerprint_.empty();
 }
 
 std::string ColearnURI::EncodeFingerprint(std::string const &fingerprint)
 {
   std::string result;
-  std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result), 
-      [] (char c)
-  {
+  std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result), [](char c) {
     if (c == '+')
     {
       return '.';
@@ -108,9 +101,7 @@ std::string ColearnURI::EncodeFingerprint(std::string const &fingerprint)
 std::string ColearnURI::DecodeFingerprint(std::string const &fingerprint)
 {
   std::string result;
-  std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result),
-      [] (char c)
-  {
+  std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result), [](char c) {
     if (c == '.')
     {
       return '+';

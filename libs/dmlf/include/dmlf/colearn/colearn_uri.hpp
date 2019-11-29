@@ -31,12 +31,12 @@ class ColearnURI
 {
 public:
   ColearnURI() = default;
-  ColearnURI(UpdateStore::Update const & update);
+  ColearnURI(UpdateStore::Update const &update);
   // Must be encoded
-  ColearnURI(std::string const& uriString);
+  ColearnURI(std::string const &uriString);
 
   std::string ToString() const;
-  bool IsEmpty() const;
+  bool        IsEmpty() const;
 
   std::string protocol() const
   {
@@ -46,7 +46,7 @@ public:
   {
     return owner_;
   }
-  ColearnURI& owner(std::string name)
+  ColearnURI &owner(std::string name)
   {
     owner_ = std::move(name);
     return *this;
@@ -55,7 +55,7 @@ public:
   {
     return algorithm_class_;
   }
-  ColearnURI& algorithm_class(std::string name)
+  ColearnURI &algorithm_class(std::string name)
   {
     algorithm_class_ = std::move(name);
     return *this;
@@ -64,7 +64,7 @@ public:
   {
     return update_type_;
   }
-  ColearnURI& update_type(std::string name)
+  ColearnURI &update_type(std::string name)
   {
     update_type_ = std::move(name);
     return *this;
@@ -73,7 +73,7 @@ public:
   {
     return source_;
   }
-  ColearnURI& source(std::string name)
+  ColearnURI &source(std::string name)
   {
     source_ = std::move(name);
     return *this;
@@ -86,7 +86,7 @@ public:
   {
     return DecodeFingerprint(fingerprint_);
   }
-  ColearnURI& fingerprint(std::string fingerprint)
+  ColearnURI &fingerprint(std::string fingerprint)
   {
     fingerprint_ = std::move(fingerprint);
     return *this;
@@ -96,7 +96,6 @@ public:
   static std::string DecodeFingerprint(std::string const &fingerprint);
 
 private:
-
   std::string protocol_ = "colearn";
   std::string owner_;
   std::string algorithm_class_;
