@@ -1605,8 +1605,7 @@ bool MainChain::DetermineHeaviestTip()
   {
     // find the heaviest item in our tip selection
     auto it = std::max_element(tips_.begin(), tips_.end(),
-                               [](TipsMap::value_type const &a, TipsMap::value_type const &b)
-			       {
+                               [](TipsMap::value_type const &a, TipsMap::value_type const &b) {
                                  // Tips are selected based on the following priority of properties:
                                  // 1. total weight
                                  // 2. block number (long chain)
@@ -1667,9 +1666,9 @@ bool MainChain::ReindexTips()
       continue;
     }
     // this hash has no next blocks
-    auto const &block    = *block_entry.second;
-    Tip curr_tip(block);
-    new_tips[hash]       = curr_tip;
+    auto const &block = *block_entry.second;
+    Tip         curr_tip(block);
+    new_tips[hash] = curr_tip;
 
     // check if this tip is the new heaviest
     if (best_tip < curr_tip)
@@ -1720,34 +1719,43 @@ MainChain::BlockHash MainChain::GetHeaviestBlockHash() const
 }
 
 Tip::Tip(Block const &block)
-	: hash(block.hash),
-	, total_weight(block.total_weight),
-	, weight(block.weight),
-	, block_number(block.block_number),
+  : hash(block.hash)
+  ,
+  , total_weight(block.total_weight)
+  ,
+  , weight(block.weight)
+  ,
+  , block_number(block.block_number)
+  ,
 {}
 
-Tip &Tip::operator=(Block const &block) {
-	hash = block.hash;
-	total_weight = block.total_weight;
-	weight = block.weight;
-	block_number = block.block_number;
-	return *this;
+Tip &Tip::operator=(Block const &block)
+{
+  hash         = block.hash;
+  total_weight = block.total_weight;
+  weight       = block.weight;
+  block_number = block.block_number;
+  return *this;
 }
 
-bool Tip::operator<(Tip const &that) const {
-	return Stats() < that.Stats();
+bool Tip::operator<(Tip const &that) const
+{
+  return Stats() < that.Stats();
 }
 
-bool Tip::operator==(Tip const &that) const {
-	return Stats() == that.Stats();
+bool Tip::operator==(Tip const &that) const
+{
+  return Stats() == that.Stats();
 }
 
-bool Tip::operator<(Block const &that) const {
-	return operator<(Tip(that));
+bool Tip::operator<(Block const &that) const
+{
+  return operator<(Tip(that));
 }
 
-bool Tip::operator==(Block const &that) const {
-	return operator==(Tip(that));
+bool Tip::operator==(Block const &that) const
+{
+  return operator==(Tip(that));
 }
 
 /**

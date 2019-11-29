@@ -63,17 +63,16 @@ struct Tip
   using Weight = Block::Weight;
 
   BlockHash hash;
-  Weight   total_weight{0};
-  Weight   weight{0};
-  uint64_t block_number{0};
+  Weight    total_weight{0};
+  Weight    weight{0};
+  uint64_t  block_number{0};
 
   constexpr Tip() = default;
   Tip(Block const &block);
 
   Tip &operator=(Block const &block);
 
-  bool operator<(Tip const &right) const
-  bool operator<(Block const &right) const;
+  bool operator<(Tip const &right) const bool operator<(Block const &right) const;
 
   bool operator==(Tip const &right) const;
   bool operator==(Block const &right) const;
