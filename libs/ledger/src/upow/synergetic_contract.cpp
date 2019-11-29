@@ -312,6 +312,8 @@ Status SynergeticContract::Complete(chain::Address const &address, BitVector con
   // everything worked, flush the storage
   storage_cache.Flush();
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Solution execution completed!");
+
   return Status::SUCCESS;
 }
 

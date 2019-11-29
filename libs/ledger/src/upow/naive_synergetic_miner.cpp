@@ -151,7 +151,7 @@ void NaiveSynergeticMiner::Mine()
     {
       dag_->AddWork(*solution);
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Mined and added work! Epoch number: ", dag_->CurrentEpoch());
+      FETCH_LOG_INFO(LOGGING_NAME, "Mined and added work! Epoch number: ", dag_->CurrentEpoch());
     }
   }
 }
