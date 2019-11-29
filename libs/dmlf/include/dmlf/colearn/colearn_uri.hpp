@@ -31,63 +31,12 @@ class ColearnURI
 {
 public:
   ColearnURI() = default;
-  ColearnURI(UpdateStore::Update const & update)
-  : algorithm_class_(update.algorithm())
-  , update_type_(update.update_type())
-  , source_(update.source())
-  //, fingerprint_(EncodeFingerprint(update.fingerprint().ToBase64()))
-  , fingerprint_(EncodeFingerprint("abc/+efg"))
-  {
-  }
-
+  ColearnURI(UpdateStore::Update const & update);
   // Must be encoded
-  ColearnURI(std::string const& uriString)
-  {
-    constexpr int prefixLength = 10;
-    if (uriString.compare(0, prefixLength, "colearn://") != 0)
-    {
-      return;
-    }
+  ColearnURI(std::string const& uriString);
 
-    auto current = uriString.cbegin() + prefixLength - 1;
-    auto end     = uriString.cend();
-
-    std::vector<std::string> fields;
-    while (current != end)
-    {
-      ++current;
-      auto nextSlash = std::find(current, end, '/');
-      fields.emplace_back(current,nextSlash);
-      current = nextSlash;
-    }
-
-    if (fields.size() != 5)
-    {
-      return;
-    }
-
-    owner_ = fields[0];
-    algorithm_class_ = fields[1];
-    update_type_ = fields[2];
-    source_ = fields[3];
-    fingerprint_ = fields[4];
-  }
-
-  std::string ToString() const
-  {
-    return protocol()     + "://" 
-      + owner()           + '/' 
-      + algorithm_class() + '/' 
-      + update_type()     + '/' 
-      + source()          + '/'
-      + fingerprint();
-  }
-
-  bool IsEmpty() const
-  {
-    return owner_.empty() && algorithm_class_.empty() && update_type_.empty() && source_.empty()
-      && fingerprint_.empty();
-  }
+  std::string ToString() const;
+  bool IsEmpty() const;
 
   std::string protocol() const
   {
@@ -137,57 +86,14 @@ public:
   {
     return DecodeFingerprint(fingerprint_);
   }
-
   ColearnURI& fingerprint(std::string fingerprint)
   {
     fingerprint_ = std::move(fingerprint);
     return *this;
   }
 
-  static std::string EncodeFingerprint(std::string const &fingerprint)
-  {
-    std::string result;
-    std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result), 
-        [] (char c)
-    {
-      if (c == '+')
-      {
-        return '.';
-      }
-      if (c == '/')
-      {
-        return '_';
-      }
-      if (c == '=')
-      {
-        return '-';
-      }
-      return c;
-    });
-    return result;
-  }
-  static std::string DecodeFingerprint(std::string const &fingerprint)
-  {
-    std::string result;
-    std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result),
-        [] (char c)
-    {
-      if (c == '.')
-      {
-        return '+';
-      }
-      if (c == '_')
-      {
-        return '/';
-      }
-      if (c == '-')
-      {
-        return '=';
-      }
-      return c;
-    });
-    return result;
-  }
+  static std::string EncodeFingerprint(std::string const &fingerprint);
+  static std::string DecodeFingerprint(std::string const &fingerprint);
 
 private:
 
