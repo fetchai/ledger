@@ -252,7 +252,7 @@ TEST(Colearn_UpdateStore, pushPushPushPopPopPop_SelectSource)
     {
       return std::nan("");
     }
-    return -update->TimeSinceCreation().count();
+    return static_cast<double>(-update->TimeSinceCreation().count());
   };
 
   UpdateStore store;
@@ -309,7 +309,7 @@ TEST(Colearn_UpdateStore, pushPushPushPopPopPop_SelectMetadata)
     {
       return std::nan("");
     }
-    return -update->TimeSinceCreation().count();
+    return static_cast<double>(-update->TimeSinceCreation().count());
   };
 
   UpdateStore store;
