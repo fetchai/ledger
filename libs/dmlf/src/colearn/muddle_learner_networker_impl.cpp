@@ -37,7 +37,7 @@ void MuddleLearnerNetworkerImpl::SetShuffleAlgorithm(
     const std::shared_ptr<ShuffleAlgorithmInterface> &alg)
 {
   ShuffleAlgorithmInterface *iface = alg.get();
-  auto *stoc  = dynamic_cast<StochasticReceptionAlgorithm *>(iface);
+  auto *                     stoc  = dynamic_cast<StochasticReceptionAlgorithm *>(iface);
 
   if (stoc != nullptr)
   {
