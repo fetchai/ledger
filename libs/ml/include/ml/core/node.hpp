@@ -181,8 +181,14 @@ typename Node<TensorType>::VecTensorType Node<TensorType>::GatherInputs() const
   VecTensorType inputs;
   for (auto const &i : input_nodes_)
   {
-    auto ptr = i.lock();
-    inputs.push_back(ptr->Evaluate(op_ptr_->IsTraining()));
+    if (auto ptr = i.lock())
+    {
+      inputs.push_back(ptr->Evaluate(op_ptr_->IsTraining()));
+    }
+    else
+    {
+      throw std::runtime_error("Unable to lock weak pointer.");
+    }
   }
   return inputs;
 }
@@ -266,9 +272,16 @@ typename Node<TensorType>::NodeErrorMapType Node<TensorType>::BackPropagate(
     auto bp_it = error_signals.begin();
     for (auto &i : input_nodes_)
     {
-      auto ptr         = i.lock();
-      auto ret_err_sig = ptr->BackPropagate(*bp_it);
-      ret.insert(ret_err_sig.begin(), ret_err_sig.end());
+      if (auto ptr = i.lock())
+      {
+        auto ret_err_sig = ptr->BackPropagate(*bp_it);
+        ret.insert(ret_err_sig.begin(), ret_err_sig.end());
+      }
+      else
+      {
+        throw std::runtime_error("Unable to lock weak pointer.");
+      }
+
       ++bp_it;
     }
   }
@@ -324,8 +337,14 @@ std::vector<std::string> Node<TensorType>::GetInputNames()
   std::vector<std::string> ret{};
   for (auto const &input_node : input_nodes_)
   {
-    auto ptr = input_node.lock();
-    ret.emplace_back(ptr->name_);
+    if (auto ptr = input_node.lock())
+    {
+      ret.emplace_back(ptr->name_);
+    }
+    else
+    {
+      throw std::runtime_error("Unable to lock weak pointer.");
+    }
   }
   return ret;
 }
