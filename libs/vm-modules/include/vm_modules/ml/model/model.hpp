@@ -112,6 +112,8 @@ public:
   fetch::vm::Ptr<VMModel> DeserializeFromString(
       fetch::vm::Ptr<fetch::vm::String> const &model_string);
 
+  static constexpr size_t MIN_HIDDEN_LAYERS = 2;
+
 private:
   ModelPtrType       model_;
   ModelConfigPtrType model_config_;

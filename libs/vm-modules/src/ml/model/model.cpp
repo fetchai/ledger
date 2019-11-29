@@ -89,11 +89,9 @@ inline T VMModel::ParseName(std::string const &name, std::map<std::string, T> co
 {
   if (dict.find(name) == dict.end())
   {
-    std::string const message{"Unknown " + errmsg + " name : " + name};
-    vm_->RuntimeError(message);
-    throw std::runtime_error(message);
+    throw std::runtime_error("Unknown " + errmsg + " name : " + name);
   }
-  return dict.find(name)->second;
+  return dict.at(name);
 }
 
 VMModel::VMModel(VM *vm, TypeId type_id)
@@ -140,14 +138,13 @@ Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
 void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                 fetch::vm::Ptr<fetch::vm::String> const &optimiser)
 {
-  LossType const      loss_type      = ParseName(loss->string(), losses_, "loss function");
-  OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
-
   // Prepare the dataloader
   CompileDataloader();
 
   try
   {
+    LossType const      loss_type      = ParseName(loss->string(), losses_, "loss function");
+    OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
     model_->Compile(optimiser_type, loss_type);
   }
   catch (std::exception &e)
@@ -161,19 +158,17 @@ void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
 void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
                             fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers)
 {
-  OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
-  if (optimiser_type != OptimiserType::ADAM)
+  size_t const total_hidden_layers = in_layers->elements.size();
+  if (total_hidden_layers < MIN_HIDDEN_LAYERS)
   {
-    vm_->RuntimeError(R"(Wrong optimiser, a "Simple" model can use only "adam", while given : )" +
-                      optimiser->string());
+    vm_->RuntimeError("Can not compile a Simple model with less than" +
+                      std::to_string(MIN_HIDDEN_LAYERS) + "hidden layers!");
     return;
   }
 
-  size_t const n_elements = in_layers->elements.size();
-
   std::vector<math::SizeType> layers;
-  layers.reserve(n_elements);
-  for (size_t i = 0; i < n_elements; ++i)
+  layers.reserve(total_hidden_layers);
+  for (size_t i = 0; i < total_hidden_layers; ++i)
   {
     layers.emplace_back(in_layers->elements.at(i));
   }
@@ -189,7 +184,9 @@ void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        opt
     break;
 
   default:
-    vm_->RuntimeError("Only REGRESSOR and CLASSIFIER model types take layers on compilation!");
+    vm_->RuntimeError(
+        "Only REGRESSOR and CLASSIFIER model types accept hidden layers list as a compilation "
+        "parameter!");
     return;
   }
 
@@ -198,6 +195,13 @@ void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        opt
 
   try
   {
+    OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
+    if (optimiser_type != OptimiserType::ADAM)
+    {
+      vm_->RuntimeError(R"(Wrong optimiser, a Simple model can use only "adam", while given : )" +
+                        optimiser->string());
+      return;
+    }
     model_->Compile(optimiser_type);
   }
   catch (std::exception &e)
@@ -395,10 +399,8 @@ void VMModel::AssertLayerTypeMatches(SupportedLayerType                layer,
   };
   if (std::find(valids.begin(), valids.end(), layer) == valids.end())
   {
-    std::string const message{"Invalid params specified for \"" + LAYER_NAMES_.at(layer) +
-                              "\" layer."};
-    vm_->RuntimeError(message);
-    throw std::runtime_error(message);
+    throw std::runtime_error("Invalid params specified for \"" + LAYER_NAMES_.at(layer) +
+                             "\" layer.");
   }
 }
 
@@ -406,9 +408,7 @@ VMModel::SequentialModelPtr VMModel::GetMeAsSequentialIfPossible()
 {
   if (model_category_ != ModelCategory::SEQUENTIAL)
   {
-    std::string const message{"No \"add\" method exists for non-sequential models!"};
-    vm_->RuntimeError(message);
-    throw std::runtime_error(message);
+    throw std::runtime_error("Layer adding is allowed only for Sequential models!");
   }
   return std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
 }
@@ -416,8 +416,16 @@ VMModel::SequentialModelPtr VMModel::GetMeAsSequentialIfPossible()
 template <typename... LayerArgs>
 void VMModel::AddLayer(fetch::vm::Ptr<fetch::vm::String> const &layer, LayerArgs... args)
 {
-  auto const layer_type = ParseName(layer->string(), layer_types_, "layer type");
-  AddLayerSpecificImpl(layer_type, args...);
+  try
+  {
+    auto const layer_type = ParseName(layer->string(), layer_types_, "layer type");
+    AddLayerSpecificImpl(layer_type, args...);
+  }
+  catch (std::exception &e)
+  {
+    vm_->RuntimeError("Impossible to add layer : " + std::string(e.what()));
+    return;
+  }
 }
 
 void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &inputs,
@@ -438,7 +446,7 @@ void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType cons
                                    math::SizeType const &             hidden_nodes,
                                    fetch::ml::details::ActivationType activation)
 {
-  auto me = GetMeAsSequentialIfPossible();
+  SequentialModelPtr me = GetMeAsSequentialIfPossible();
   AssertLayerTypeMatches(layer, {SupportedLayerType::DENSE});
   compiled_ = false;
   me->Add<fetch::ml::layers::FullyConnected<TensorType>>(inputs, hidden_nodes, activation);
@@ -469,7 +477,7 @@ void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType cons
                                    math::SizeType const &             stride_size,
                                    fetch::ml::details::ActivationType activation)
 {
-  auto me = GetMeAsSequentialIfPossible();
+  SequentialModelPtr me = GetMeAsSequentialIfPossible();
   AssertLayerTypeMatches(layer, {SupportedLayerType::CONV1D, SupportedLayerType::CONV2D});
   compiled_ = false;
   if (layer == SupportedLayerType::CONV1D)
