@@ -88,7 +88,11 @@ TYPED_TEST(PReluTest, ops_backward_test)  // Use the class as an Ops
 
 TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
 {
-  TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
+  math::SizeType input_dim_0 = 5;
+  math::SizeType input_dim_1 = 10;
+  math::SizeType input_dim_2 = 2;
+
+  TypeParam data({input_dim_0, input_dim_1, input_dim_2});
   auto      placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(
       fetch::ml::OpType::OP_PLACEHOLDER, "Input",
       []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
@@ -96,22 +100,27 @@ TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
       std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp());
   placeholder_op_ptr->SetData(data);
 
-  fetch::math::SizeType in_size = 50u;
-  auto prelu_node = fetch::ml::Node<TypeParam>(fetch::ml::OpType::OP_PRELU, "PRelu", [in_size]() {
-    return std::make_shared<fetch::ml::layers::PRelu<TypeParam>>(in_size, "PRelu");
-  });
+  fetch::math::SizeType in_size = input_dim_0 * input_dim_1;
+  auto                  prelu_node =
+      fetch::ml::Node<TypeParam>(fetch::ml::OpType::LAYER_PRELU, "PRelu", [in_size]() {
+        return std::make_shared<fetch::ml::layers::PRelu<TypeParam>>(in_size, "PRelu");
+      });
   prelu_node.AddInput(placeholder_node);
   auto prediction = prelu_node.Evaluate(true);
 
   ASSERT_EQ(prediction->shape().size(), 3);
-  ASSERT_EQ(prediction->shape()[0], 5);
-  ASSERT_EQ(prediction->shape()[1], 10);
-  ASSERT_EQ(prediction->shape()[2], 2);
+  ASSERT_EQ(prediction->shape()[0], input_dim_0);
+  ASSERT_EQ(prediction->shape()[1], input_dim_1);
+  ASSERT_EQ(prediction->shape()[2], input_dim_2);
 }
 
 TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
 {
-  TypeParam data({5, 10, 2});
+  math::SizeType input_dim_0 = 5;
+  math::SizeType input_dim_1 = 10;
+  math::SizeType input_dim_2 = 2;
+
+  TypeParam data({input_dim_0, input_dim_1, input_dim_2});
   auto      placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(
       fetch::ml::OpType::OP_PLACEHOLDER, "Input",
       []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
@@ -119,39 +128,44 @@ TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
       std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp());
   placeholder_op_ptr->SetData(data);
 
-  fetch::math::SizeType in_size = 50u;
-  auto prelu_node = fetch::ml::Node<TypeParam>(fetch::ml::OpType::OP_PRELU, "PRelu", [in_size]() {
-    return std::make_shared<fetch::ml::layers::PRelu<TypeParam>>(in_size);
-  });
+  fetch::math::SizeType in_size    = input_dim_0 * input_dim_1;
+  auto                  prelu_node = fetch::ml::Node<TypeParam>(
+      fetch::ml::OpType::LAYER_PRELU, "PRelu",
+      [in_size]() { return std::make_shared<fetch::ml::layers::PRelu<TypeParam>>(in_size); });
   prelu_node.AddInput(placeholder_node);
   TypeParam prediction = *prelu_node.Evaluate(true);
 
-  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
+  TypeParam error_signal({input_dim_0, input_dim_1, input_dim_2});
   auto      bp_err = prelu_node.BackPropagate(error_signal);
 
   ASSERT_EQ(bp_err.size(), 1);
   auto err_signal = (*(bp_err.begin())).second.at(0);
   ASSERT_EQ(err_signal.shape().size(), 3);
-  ASSERT_EQ(err_signal.shape()[0], 5);
-  ASSERT_EQ(err_signal.shape()[1], 10);
-  ASSERT_EQ(err_signal.shape()[2], 2);
+  ASSERT_EQ(err_signal.shape()[0], input_dim_0);
+  ASSERT_EQ(err_signal.shape()[1], input_dim_1);
+  ASSERT_EQ(err_signal.shape()[2], input_dim_2);
 }
 
 TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node
 {
   fetch::ml::Graph<TypeParam> g;
 
-  g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
-  g.template AddNode<fetch::ml::layers::PRelu<TypeParam>>("PRelu", {"Input"}, 50u);
+  math::SizeType input_dim_0 = 5;
+  math::SizeType input_dim_1 = 10;
+  math::SizeType input_dim_2 = 2;
 
-  TypeParam data({5, 10, 2});
+  g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
+  g.template AddNode<fetch::ml::layers::PRelu<TypeParam>>("PRelu", {"Input"},
+                                                          input_dim_0 * input_dim_1);
+
+  TypeParam data({input_dim_0, input_dim_1, input_dim_2});
   g.SetInput("Input", data);
 
   TypeParam prediction = g.Evaluate("PRelu", true);
   ASSERT_EQ(prediction.shape().size(), 3);
-  ASSERT_EQ(prediction.shape()[0], 5);
-  ASSERT_EQ(prediction.shape()[1], 10);
-  ASSERT_EQ(prediction.shape()[2], 2);
+  ASSERT_EQ(prediction.shape()[0], input_dim_0);
+  ASSERT_EQ(prediction.shape()[1], input_dim_1);
+  ASSERT_EQ(prediction.shape()[2], input_dim_2);
 }
 
 TYPED_TEST(PReluTest, getStateDict)
@@ -176,14 +190,17 @@ TYPED_TEST(PReluTest, saveparams_test)
   std::string input_name  = "PRelu_Input";
   std::string output_name = "PRelu_PReluOp";
 
-  TypeParam input({5, 10, 2});
+  math::SizeType input_dim_0 = 5;
+  math::SizeType input_dim_1 = 10;
+  math::SizeType input_dim_2 = 2;
+  TypeParam      input({input_dim_0, input_dim_1, input_dim_2});
   input.FillUniformRandom();
 
-  TypeParam labels({5, 10, 2});
+  TypeParam labels({input_dim_0, input_dim_1, input_dim_2});
   labels.FillUniformRandom();
 
   // Create layer
-  LayerType layer(50, "PRelu");
+  LayerType layer(input_dim_0 * input_dim_1, "PRelu");
 
   // add label node
   std::string label_name =
