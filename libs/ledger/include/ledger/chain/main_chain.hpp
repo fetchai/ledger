@@ -62,25 +62,27 @@ struct Tip
 {
   using Weight = Block::Weight;
 
+  BlockHash hash;
   Weight   total_weight{0};
   Weight   weight{0};
   uint64_t block_number{0};
 
-  constexpr bool operator<(Tip const &right) const
-  {
-    return Stats() < right.Stats();
-  }
+  constexpr Tip() = default;
+  Tip(Block const &block);
 
-  constexpr bool operator==(Tip const &right) const
-  {
-    return Stats() == right.Stats();
-  }
+  Tip &operator=(Block const &block);
+
+  bool operator<(Tip const &right) const
+  bool operator<(Block const &right) const;
+
+  bool operator==(Tip const &right) const;
+  bool operator==(Block const &right) const;
 
 protected:
-  using TipStats = std::tuple<Weight, uint64_t, Weight>;
+  using TipStats = std::tuple<Weight, uint64_t, Weight, BlockHash const &>;
   constexpr TipStats Stats() const
   {
-    return {total_weight, block_number, weight};
+    return {total_weight, block_number, weight, hash};
   }
 };
 
@@ -199,43 +201,21 @@ public:
 
   class HeaviestTip : public Tip
   {
-    using Tip::Weight;
-    using TipStats = type_util::tuple::AppendT<Tip::TipStats, BlockHash const &>;
-
     uint64_t chain_label_{0};
 
-    template <class Node>
-    static constexpr TipStats StatsFor(Node &&node)
-    {
-      return TipStats{node.total_weight, node.block_number, node.weight, node.hash};
-    }
-
-    constexpr TipStats Stats() const
-    {
-      return StatsFor(*this);
-    }
-
-    static constexpr TipStats BlockStats(Block const &block)
-    {
-      return StatsFor(block);
-    }
-
   public:
-    // assuming every chain has a proper genesis
     BlockHash hash{chain::GENESIS_DIGEST};
 
-    HeaviestTip() = default;
-    HeaviestTip(Tip tip, BlockHash hash);
+    using Tip::Tip;
+    using Tip::operator=;
 
-    uint64_t BlockNumber() const;
+    using Tip::operator<;
+    using Tip::operator==;
+
     uint64_t ChainLabel() const;
 
     void Set(Block &block);
     bool Update(Block &block);
-
-    bool operator<(HeaviestTip const &that) const;
-
-    bool LessThan(Tip const &tip, BlockHash const &hash) const;
   };
 
   /// @name Persistence Management
