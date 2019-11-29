@@ -19,7 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "core/serializers/base_types.hpp"
-#include "dmlf/networkers/abstract_learner_networker.hpp"
+#include "dmlf/deprecated/abstract_learner_networker.hpp"
 #include <list>
 #include <map>
 #include <memory>
@@ -27,20 +27,21 @@
 namespace fetch {
 namespace dmlf {
 
-class LocalLearnerNetworker : public AbstractLearnerNetworker
+class deprecated_LocalLearnerNetworker : public deprecated_AbstractLearnerNetworker
 {
 public:
-  using PeerP = std::shared_ptr<LocalLearnerNetworker>;
+  using PeerP = std::shared_ptr<deprecated_LocalLearnerNetworker>;
   using Peers = std::vector<PeerP>;
 
-  LocalLearnerNetworker()                                   = default;
-  ~LocalLearnerNetworker() override                         = default;
-  LocalLearnerNetworker(LocalLearnerNetworker const &other) = delete;
-  LocalLearnerNetworker &operator=(LocalLearnerNetworker const &other)  = delete;
-  bool                   operator==(LocalLearnerNetworker const &other) = delete;
-  bool                   operator<(LocalLearnerNetworker const &other)  = delete;
+  deprecated_LocalLearnerNetworker()                                              = default;
+  ~deprecated_LocalLearnerNetworker() override                                    = default;
+  deprecated_LocalLearnerNetworker(deprecated_LocalLearnerNetworker const &other) = delete;
+  deprecated_LocalLearnerNetworker &operator=(deprecated_LocalLearnerNetworker const &other) =
+      delete;
+  bool operator==(deprecated_LocalLearnerNetworker const &other) = delete;
+  bool operator<(deprecated_LocalLearnerNetworker const &other)  = delete;
 
-  void PushUpdate(UpdateInterfacePtr const &update) override;
+  void PushUpdate(deprecated_UpdateInterfacePtr const &update) override;
 
   std::size_t GetPeerCount() const override
   {
@@ -53,7 +54,7 @@ protected:
 private:
   using Mutex = fetch::Mutex;
   using Lock  = std::unique_lock<Mutex>;
-  using Bytes = AbstractLearnerNetworker::Bytes;
+  using Bytes = deprecated_AbstractLearnerNetworker::Bytes;
 
   mutable Mutex mutex_;
   Peers         peers_;

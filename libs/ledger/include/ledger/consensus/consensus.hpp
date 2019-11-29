@@ -51,6 +51,7 @@ public:
   using BlockEntropy          = ledger::Block::BlockEntropy;
   using NotarisationPtr       = std::shared_ptr<ledger::NotarisationService>;
   using NotarisationResult    = NotarisationService::NotarisationResult;
+  using BlockPtr              = MainChain::BlockPtr;
 
   // Construction / Destruction
   Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup, BeaconServicePtr beacon,
@@ -65,13 +66,14 @@ public:
   NextBlockPtr GenerateNextBlock() override;
   Status       ValidBlock(Block const &current) const override;
   bool         VerifyNotarisation(Block const &block) const;
-  void         Reset(StakeSnapshot const &snapshot, StorageInterface &storage);
-  void         Refresh() override;
+
+  void SetMaxCabinetSize(uint16_t size) override;
+  void SetBlockInterval(uint64_t block_interval_ms) override;
+  void SetAeonPeriod(uint16_t aeon_period) override;
+  void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
+  void SetDefaultStartTime(uint64_t default_start_time) override;
 
   StakeManagerPtr stake();
-  void            SetThreshold(double threshold);
-  void            SetCabinetSize(uint64_t size);
-  void            SetDefaultStartTime(uint64_t default_start_time);
 
   // Operators
   Consensus &operator=(Consensus const &) = delete;
