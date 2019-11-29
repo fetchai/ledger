@@ -32,11 +32,52 @@ namespace {
 
 using DataType = fetch::vm_modules::math::DataType;
 
+static std::string const ADD_INVALID_LAYER_TEST_SOURCE = R"(
+    function main()
+      var model = Model("sequential");
+      <<TOKEN>>
+    endfunction
+  )";
+
+static char const *INVALID_LAYER_TYPE =
+    R"(model.add("INVALID_LAYER_TYPE", 1u64, 1u64, 1u64, 1u64);)";
+
+static char const *INVALID_ACTIVATION_DENSE =
+    R"(model.add("dense", 10u64, 10u64, "INVALID_ACTIVATION_DENSE");)";
+
+static char const *INVALID_ACTIVATION_CONV =
+    R"(model.add("conv1d", 1u64, 1u64, 1u64, 1u64, "INVALID_ACTIVATION_CONV");)";
+
+static char const *INVALID_PARAMS_DENSE_NOACT = R"(model.add("dense", 1u64, 1u64, 1u64, 1u64);)";
+static char const *INVALID_PARAMS_DENSE_RELU =
+    R"(model.add("dense", 1u64, 1u64, 1u64, 1u64, "relu");)";
+
+static char const *INVALID_PARAMS_CONV_NOACT = R"(model.add("conv1d", 10u64, 10u64);)";
+static char const *INVALID_PARAMS_CONV_RELU  = R"(model.add("conv1d", 10u64, 10u64, "relu");)";
+
+static char const *WRONG_PARAM_COUNT_CONV  = R"(model.add("conv1d", 10u64, 10u64, 10u64, "relu");)";
+static char const *WRONG_PARAM_COUNT_DENSE = R"(model.add("dense", 10u64, 10u64, 10u64, "relu");)";
+static char const *WRONG_PARAM_TYPE_CONV =
+    R"(model.add("conv1d", 0u64, 10fp32, 10u64, 10u64, "relu");)";
+static char const *WRONG_PARAM_TYPE_DENSE = R"(model.add("dense", 10fp32, 10u64, "relu");)";
+
 class VMModelTests : public ::testing::Test
 {
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
+
+  void TestInvalidLayerCompilation(std::vector<std::string> sources)
+  {
+    for (const auto &test_case : sources)
+    {
+      std::cout << "Testing invalid layer: " << test_case << std::endl;
+      std::string const src =
+          std::regex_replace(ADD_INVALID_LAYER_TEST_SOURCE, std::regex("<<TOKEN>>"), test_case);
+      ASSERT_TRUE(toolkit.Compile(src));
+      EXPECT_FALSE(toolkit.Run());
+    }
+  }
 };
 
 TEST_F(VMModelTests, serialisation_model)
@@ -347,57 +388,32 @@ TEST_F(VMModelTests, model_init_with_wrong_name)
   EXPECT_THROW(toolkit.Run(), std::runtime_error);
 }
 
-TEST_F(VMModelTests, model_add_invalid_layers)
+TEST_F(VMModelTests, model_add_invalid_layer_type)
 {
+  TestInvalidLayerCompilation({INVALID_LAYER_TYPE});
+}
 
-  static std::string const SOURCE = R"(
-      function main()
-        var model = Model("sequential");
-        <<TOKEN>>
-      endfunction
-    )";
+TEST_F(VMModelTests, model_add_layer_with_invalid_params)
+{
+  TestInvalidLayerCompilation({
+      INVALID_PARAMS_DENSE_NOACT,
+      INVALID_PARAMS_DENSE_RELU,
+      INVALID_PARAMS_CONV_NOACT,
+      INVALID_PARAMS_CONV_RELU,
+  });
+}
 
-  static char const *INVALID_LAYER_TYPE =
-      R"(model.add("INVALID_LAYER_TYPE", 1u64, 1u64, 1u64, 1u64);)";
+TEST_F(VMModelTests, model_add_layers_invalid_activation)
+{
+  TestInvalidLayerCompilation({
+      INVALID_ACTIVATION_DENSE,
+      INVALID_ACTIVATION_CONV,
+  });
+}
 
-  static char const *INVALID_ACTIVATION_DENSE =
-      R"(model.add("dense", 10u64, 10u64, "INVALID_ACTIVATION_DENSE");)";
-
-  static char const *INVALID_ACTIVATION_CONV =
-      R"(model.add("conv1d", 1u64, 1u64, 1u64, 1u64, "INVALID_ACTIVATION_CONV");)";
-
-  static char const *INVALID_PARAMS_DENSE_NOACT = R"(model.add("dense", 1u64, 1u64, 1u64, 1u64);)";
-  static char const *INVALID_PARAMS_DENSE_RELU =
-      R"(model.add("dense", 1u64, 1u64, 1u64, 1u64, "relu");)";
-
-  static char const *INVALID_PARAMS_CONV_NOACT = R"(model.add("conv1d", 10u64, 10u64);)";
-  static char const *INVALID_PARAMS_CONV_RELU  = R"(model.add("conv1d", 10u64, 10u64, "relu");)";
-
-  for (auto test_case : {
-           INVALID_ACTIVATION_DENSE,
-           INVALID_ACTIVATION_CONV,
-           INVALID_LAYER_TYPE,
-           INVALID_PARAMS_DENSE_NOACT,
-           INVALID_PARAMS_DENSE_RELU,
-           INVALID_PARAMS_CONV_NOACT,
-           INVALID_PARAMS_CONV_RELU,
-       })
-  {
-    std::cout << "Testing invalid layer: " << test_case << std::endl;
-    std::string const src = std::regex_replace(SOURCE, std::regex("<<TOKEN>>"), test_case);
-    ASSERT_TRUE(toolkit.Compile(src));
-    EXPECT_FALSE(toolkit.Run());
-  }
-
-  static char const *WRONG_PARAM_COUNT_CONV =
-      R"(model.add("conv1d", 10u64, 10u64, 10u64, "relu");)";
-  static char const *WRONG_PARAM_COUNT_DENSE =
-      R"(model.add("dense", 10u64, 10u64, 10u64, "relu");)";
-  static char const *WRONG_PARAM_TYPE_CONV =
-      R"(model.add("conv1d", 0u64, 10fp32, 10u64, 10u64, "relu");)";
-  static char const *WRONG_PARAM_TYPE_DENSE = R"(model.add("dense", 10fp32, 10u64, "relu");)";
-
-  for (auto test_case : {
+TEST_F(VMModelTests, model_add_invalid_layers_uncompilable)
+{
+  for (auto const &test_case : {
            WRONG_PARAM_COUNT_CONV,
            WRONG_PARAM_COUNT_DENSE,
            WRONG_PARAM_TYPE_CONV,
@@ -405,7 +421,8 @@ TEST_F(VMModelTests, model_add_invalid_layers)
        })
   {
     std::cout << "Testing uncompilable layer: " << test_case << std::endl;
-    std::string const src = std::regex_replace(SOURCE, std::regex("<<TOKEN>>"), test_case);
+    std::string const src =
+        std::regex_replace(ADD_INVALID_LAYER_TEST_SOURCE, std::regex("<<TOKEN>>"), test_case);
     EXPECT_FALSE(toolkit.Compile(src));
   }
 }
@@ -422,7 +439,7 @@ TEST_F(VMModelTests, model_add_layer_to_non_sequential)
   EXPECT_FALSE(toolkit.Run());
 }
 
-TEST_F(VMModelTests, model_compilation_params)
+TEST_F(VMModelTests, model_empty_sequential_compilation)
 {
   static char const *EMPTY_SEQUENTIAL_SRC = R"(
       function main()
@@ -434,7 +451,10 @@ TEST_F(VMModelTests, model_compilation_params)
   ASSERT_TRUE(toolkit.Compile(EMPTY_SEQUENTIAL_SRC));
   std::cout << "Testing compilation of an empty Sequential model" << std::endl;
   EXPECT_FALSE(toolkit.Run());
+}
 
+TEST_F(VMModelTests, model_compilation_invalid_params)
+{
   static char const *SEQUENTIAL_SRC = R"(
       function main()
          var model = Model("sequential");
@@ -447,14 +467,17 @@ TEST_F(VMModelTests, model_compilation_params)
   static char const *INVALID_OPTIMIZER = R"(model.compile("mse", "INVALID_OPTIMIZER");)";
   static char const *INVALID_BOTH      = R"(model.compile("INVALID_LOSS", "INVALID_OPTIMIZER");)";
 
-  for (auto test_case : {INVALID_LOSS, INVALID_OPTIMIZER, INVALID_BOTH})
+  for (auto const &test_case : {INVALID_LOSS, INVALID_OPTIMIZER, INVALID_BOTH})
   {
     std::cout << "Testing invalid model compilation params: " << test_case << std::endl;
     std::string const src = std::regex_replace(SEQUENTIAL_SRC, std::regex("<<TOKEN>>"), test_case);
     ASSERT_TRUE(toolkit.Compile(src));
     EXPECT_FALSE(toolkit.Run());
   }
+}
 
+TEST_F(VMModelTests, model_compilation_simple_with_wrong_optimizer)
+{
   static char const *SIMPLE_NONADAM_SRC = R"(
       function main()
          var hidden_layers = Array<UInt64>(2);
@@ -466,7 +489,9 @@ TEST_F(VMModelTests, model_compilation_params)
   ASSERT_TRUE(toolkit.Compile(SIMPLE_NONADAM_SRC));
   std::cout << "Testing non-Adam optimizer for a Simple model" << std::endl;
   EXPECT_FALSE(toolkit.Run());
-
+}
+TEST_F(VMModelTests, model_compilation_simple_with_too_few_layer_shapes)
+{
   static char const *SIMPLE_1_HIDDEN_SRC = R"(
       function main()
          var hidden_layers = Array<UInt64>(1);
@@ -478,7 +503,10 @@ TEST_F(VMModelTests, model_compilation_params)
   ASSERT_TRUE(toolkit.Compile(SIMPLE_1_HIDDEN_SRC));
   std::cout << "Testing insufficient hidden layers quantity for a Simple model" << std::endl;
   EXPECT_FALSE(toolkit.Run());
+}
 
+TEST_F(VMModelTests, model_compilation_sequential_from_layer_shapes)
+{
   static char const *HIDDEN_TO_SEQUENTIAL_SRC = R"(
       function main()
          var hidden_layers = Array<UInt64>(10);
@@ -490,7 +518,7 @@ TEST_F(VMModelTests, model_compilation_params)
   ASSERT_TRUE(toolkit.Compile(HIDDEN_TO_SEQUENTIAL_SRC));
   std::cout << "Testing passing of hidden layers to Sequential model" << std::endl;
   EXPECT_FALSE(toolkit.Run());
-}
+}  // namespace
 
 TEST_F(VMModelTests, dense_sequential_model_test)
 {

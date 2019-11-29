@@ -181,21 +181,21 @@ void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        opt
     return;
   }
 
-  std::vector<math::SizeType> layers;
-  layers.reserve(total_layer_shapes);
+  std::vector<math::SizeType> shapes;
+  shapes.reserve(total_layer_shapes);
   for (size_t i = 0; i < total_layer_shapes; ++i)
   {
-    layers.emplace_back(layer_shapes->elements.at(i));
+    shapes.emplace_back(layer_shapes->elements.at(i));
   }
 
   switch (model_category_)
   {
   case (ModelCategory::REGRESSOR):
-    model_ = std::make_shared<fetch::ml::model::DNNRegressor<TensorType>>(*model_config_, layers);
+    model_ = std::make_shared<fetch::ml::model::DNNRegressor<TensorType>>(*model_config_, shapes);
     break;
 
   case (ModelCategory::CLASSIFIER):
-    model_ = std::make_shared<fetch::ml::model::DNNClassifier<TensorType>>(*model_config_, layers);
+    model_ = std::make_shared<fetch::ml::model::DNNClassifier<TensorType>>(*model_config_, shapes);
     break;
 
   default:
