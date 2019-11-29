@@ -183,6 +183,10 @@ macro (setup_compiler)
       )
   endif ()
 
+  if (FETCH_FIXEDPOINT_DEBUG_HEX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_FIXEDPOINT_DEBUG_HEX")
+  endif ()
+
 endmacro (setup_compiler)
 
 function (conditionally_enable_lto)
