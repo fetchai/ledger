@@ -73,7 +73,8 @@ struct Tip
 
   Tip &operator=(Block const &block);
 
-  bool operator<(Tip const &right) const bool operator<(Block const &right) const;
+  bool operator<(Tip const &right) const;
+  bool operator<(Block const &right) const;
 
   bool operator==(Tip const &right) const;
   bool operator==(Block const &right) const;
