@@ -833,7 +833,7 @@ void Graph<TensorType>::ResetGraphCache(bool input_size_changed, NodePtrType n)
       }
     }
   }
-  .else
+  else
   {
     n->ResetCache(input_size_changed);
     for (auto &node : n->GetOutputs())
