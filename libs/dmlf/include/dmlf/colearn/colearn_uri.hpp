@@ -35,42 +35,42 @@ public:
   : algorithm_class_(update.algorithm())
   , update_type_(update.update_type())
   , source_(update.source())
-  , fingerprint_(update.fingerprint().ToBase64())
+  //, fingerprint_(EncodeFingerprint(update.fingerprint().ToBase64()))
+  , fingerprint_(EncodeFingerprint("abc/+efg"))
   {
-    EncodeFingerprint(fingerprint_);
   }
 
+  // Must be encoded
   ColearnURI(std::string const& uriString)
   {
-
-    auto prefixEnd = uriString.find("://");
-    if (prefixEnd == std::string::npos)
+    constexpr int prefixLength = 10;
+    if (uriString.compare(0, prefixLength, "colearn://") != 0)
     {
       return;
     }
 
-    
+    auto current = uriString.cbegin() + prefixLength - 1;
+    auto end     = uriString.cend();
 
+    std::vector<std::string> fields;
+    while (current != end)
+    {
+      ++current;
+      auto nextSlash = std::find(current, end, '/');
+      fields.emplace_back(current,nextSlash);
+      current = nextSlash;
+    }
 
-    if (!hasProtocol(uriString))
+    if (fields.size() != 5)
     {
       return;
     }
 
-    auto count = std::count(uriString.cbegin()+ prefixEnd+3, uriString.cend(), '/');
-    if (count < 6)
-    {
-      return;
-    }
-    
-    std::string::const_reverse_iterator begin = uriString.rbegin(); 
-    std::string::const_reverse_iterator end   = uriString.rend() - 10; 
-
-    fingerprint_     = Pop(begin,end);
-    source_          = Pop(begin,end);
-    update_type_     = Pop(begin,end);
-    algorithm_class_ = Pop(begin,end);
-    owner_           = Pop(begin,end);
+    owner_ = fields[0];
+    algorithm_class_ = fields[1];
+    update_type_ = fields[2];
+    source_ = fields[3];
+    fingerprint_ = fields[4];
   }
 
   std::string ToString() const
@@ -144,15 +144,10 @@ public:
     return *this;
   }
 
-private:
-  bool hasProtocol(std::string const& uriString)
+  static std::string EncodeFingerprint(std::string const &fingerprint)
   {
-    return uriString.find(protocol() + "://") == 0;
-  }
-
-  std::string EncodeFingerprint(std::string& fingerprint)
-  {
-    std::transform(fingerprint.begin(), fingerprint.end(), fingerprint.begin(), 
+    std::string result;
+    std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result), 
         [] (char c)
     {
       if (c == '+')
@@ -169,15 +164,32 @@ private:
       }
       return c;
     });
+    return result;
+  }
+  static std::string DecodeFingerprint(std::string const &fingerprint)
+  {
+    std::string result;
+    std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result),
+        [] (char c)
+    {
+      if (c == '.')
+      {
+        return '+';
+      }
+      if (c == '_')
+      {
+        return '/';
+      }
+      if (c == '-')
+      {
+        return '=';
+      }
+      return c;
+    });
+    return result;
   }
 
-  std::string Pop(std::string::const_reverse_iterator &begin, std::string::const_reverse_iterator end)
-  {
-    auto nextSlash = std::find(begin, end, '/');
-    auto origBegin = begin;
-    begin = nextSlash;
-    return std::string(origBegin,nextSlash);
-  }
+private:
 
   std::string protocol_ = "colearn";
   std::string owner_;
