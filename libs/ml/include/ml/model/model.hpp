@@ -301,7 +301,6 @@ typename Model<TensorType>::DataVectorType Model<TensorType>::Evaluate(
 
   dataloader_ptr_->SetMode(dl_mode);
   dataloader_ptr_->SetRandomMode(false);
-
   bool is_done_set;
   if (batch_size == 0)
   {
