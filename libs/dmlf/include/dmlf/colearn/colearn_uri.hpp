@@ -32,10 +32,10 @@ class ColearnURI
 public:
   ColearnURI() = default;
   ColearnURI(UpdateStore::Update const &update);
-  // Must be encoded
-  ColearnURI(std::string const &uriString);
 
   std::string ToString() const;
+  static ColearnURI Parse(std::string const& uriString); // Fingerprint must be encoded
+
   bool        IsEmpty() const;
 
   std::string protocol() const

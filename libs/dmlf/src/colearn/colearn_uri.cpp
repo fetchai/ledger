@@ -18,6 +18,7 @@
 
 #include "dmlf/colearn/colearn_uri.hpp"
 
+#include <array>
 #include <string>
 #include <unordered_map>
 
@@ -33,13 +34,13 @@ ColearnURI::ColearnURI(UpdateStore::Update const &update)
   , fingerprint_(EncodeFingerprint("abc/+efg"))
 {}
 
-// Must be encoded
-ColearnURI::ColearnURI(std::string const &uriString)
+ColearnURI ColearnURI::Parse(std::string const &uriString)
 {
+  ColearnURI result;
   constexpr int prefixLength = 10;
   if (uriString.compare(0, prefixLength, "colearn://") != 0)
   {
-    return;
+    return result;
   }
 
   auto current = uriString.cbegin() + prefixLength - 1;
@@ -56,14 +57,16 @@ ColearnURI::ColearnURI(std::string const &uriString)
 
   if (fields.size() != 5)
   {
-    return;
+    return result;
   }
 
-  owner_           = fields[0];
-  algorithm_class_ = fields[1];
-  update_type_     = fields[2];
-  source_          = fields[3];
-  fingerprint_     = fields[4];
+  result.owner(fields[0])
+    .algorithm_class(fields[1])
+    .update_type(fields[2])
+    .source(fields[3])
+    .fingerprint(fields[4]);
+
+  return result;
 }
 
 std::string ColearnURI::ToString() const
@@ -78,44 +81,40 @@ bool ColearnURI::IsEmpty() const
          fingerprint_.empty();
 }
 
+constexpr std::array<std::array<char, 2>, 3> ENCODING{{ {'+','.'}, {'/','_'}, {'=','-'} }};
+constexpr char EncodeChar(char c)
+{
+  for (std::size_t i = 0; i < ENCODING.size(); ++i)
+  {
+    if (ENCODING[i][0] == c)
+    {
+      return ENCODING[i][1];
+    }
+  }
+  return c;
+}
+constexpr char DecodeChar(char c)
+{
+  for (std::size_t i = 0; i < ENCODING.size(); ++i)
+  {
+    if (ENCODING[i][1] == c)
+    {
+      return ENCODING[i][0];
+    }
+  }
+  return c;
+}
+
 std::string ColearnURI::EncodeFingerprint(std::string const &fingerprint)
 {
   std::string result;
-  std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result), [](char c) {
-    if (c == '+')
-    {
-      return '.';
-    }
-    if (c == '/')
-    {
-      return '_';
-    }
-    if (c == '=')
-    {
-      return '-';
-    }
-    return c;
-  });
+  std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result), EncodeChar);
   return result;
 }
 std::string ColearnURI::DecodeFingerprint(std::string const &fingerprint)
 {
   std::string result;
-  std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result), [](char c) {
-    if (c == '.')
-    {
-      return '+';
-    }
-    if (c == '_')
-    {
-      return '/';
-    }
-    if (c == '-')
-    {
-      return '=';
-    }
-    return c;
-  });
+  std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result), DecodeChar);
   return result;
 }
 
