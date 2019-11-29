@@ -80,6 +80,20 @@ public:
   explicit Generator(std::string const &string_to_hash);
 };
 
+struct AggregatePrivateKey
+{
+  AggregatePrivateKey() = default;
+  PrivateKey private_key;
+  PrivateKey coefficient;
+};
+
+struct AggregatePublicKey
+{
+  AggregatePublicKey() = default;
+  AggregatePublicKey(PublicKey const &public_key, PrivateKey const &coefficient);
+  PublicKey aggregate_public_key;
+};
+
 struct DkgKeyInformation
 {
   DkgKeyInformation() = default;
@@ -163,18 +177,18 @@ Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> cons
 std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t cabinet_size, uint32_t threshold);
 std::pair<PrivateKey, PublicKey> GenerateKeyPair(Generator const &generator);
 
-// For aggregate signatures
+// For aggregate signatures. Note only the verification of the signatures is done using VerifySign
+// but one must compute the public key to verify with
 PrivateKey         SignatureAggregationCoefficient(PublicKey const &             notarisation_key,
                                                    std::vector<PublicKey> const &cabinet_notarisation_keys);
+Signature          AggregateSign(MessagePayload const &     message,
+                                 AggregatePrivateKey const &aggregate_private_key);
 AggregateSignature ComputeAggregateSignature(
-    std::unordered_map<uint32_t, Signature> const &signatures,
-    std::vector<PublicKey> const &                 public_keys);
-PublicKey ComputeAggregatePublicKey(std::vector<bool> const &     signers,
+    std::unordered_map<uint32_t, Signature> const &signatures, uint32_t cabinet_size);
+PublicKey ComputeAggregatePublicKey(SignerRecord const &          signers,
                                     std::vector<PublicKey> const &cabinet_public_keys);
-bool      VerifyAggregateSignature(MessagePayload const &        message,
-                                   AggregateSignature const &    aggregate_signature,
-                                   std::vector<PublicKey> const &cabinet_public_keys,
-                                   Generator const &             generator);
+PublicKey ComputeAggregatePublicKey(SignerRecord const &                   signers,
+                                    std::vector<AggregatePublicKey> const &cabinet_public_keys);
 
 }  // namespace mcl
 }  // namespace crypto

@@ -56,7 +56,8 @@
 namespace fetch {
 namespace beacon {
 class BeaconService;
-}
+class BeaconSetupService;
+}  // namespace beacon
 
 namespace constellation {
 
@@ -72,9 +73,7 @@ public:
   using NetworkMode    = ledger::MainChainRpcService::Mode;
   using FeatureFlags   = core::FeatureFlags;
   using ConstByteArray = byte_array::ConstByteArray;
-  using ConsensusPtr   = std::shared_ptr<ledger::Consensus>;
-
-  static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
+  using ConsensusPtr   = std::shared_ptr<ledger::ConsensusInterface>;
 
   struct Config
   {
@@ -91,7 +90,6 @@ public:
     uint64_t     max_cabinet_size{0};
     uint64_t     stake_delay_period{0};
     uint64_t     aeon_period{0};
-    uint32_t     block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
     uint32_t     peers_update_cycle_ms{0};
     bool         disable_signing{false};
     bool         sign_broadcasts{false};
@@ -172,6 +170,7 @@ private:
   NetworkManager http_network_manager_;  ///< A separate net. coordinator for the http service(s)
   MuddlePtr      muddle_;                ///< The muddle networking service
   CertificatePtr internal_identity_;
+  CertificatePtr external_identity_;
   MuddlePtr      internal_muddle_;  ///< The muddle networking service
   TrustSystem    trust_;            ///< The trust subsystem
   /// @}

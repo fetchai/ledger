@@ -289,10 +289,13 @@ public:
   ConstSliceType Slice() const;
   ConstSliceType Slice(SizeType index, SizeType axis = 0) const;
   ConstSliceType Slice(SizeVector indices, SizeVector axes) const;
+  ConstSliceType Slice(SizeVector const &begins, SizeVector const &ends,
+                       SizeVector const &strides) const;
   TensorSlice    Slice();
   TensorSlice    Slice(SizeType index, SizeType axis = 0);
   TensorSlice    Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0);
   TensorSlice    Slice(SizeVector indices, SizeVector axes);
+  TensorSlice    Slice(SizeVector const &begins, SizeVector const &ends, SizeVector const &strides);
 
   /////////////
   /// Views ///
@@ -700,6 +703,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       }
       ++i;
       break;
+    case '+':
     case ',':
     case ' ':
     case '\n':
@@ -2201,6 +2205,23 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(std::vector<SizeType> 
 }
 
 template <typename T, typename C>
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(
+    std::vector<SizeType> const &begins, std::vector<SizeType> const &ends,
+    std::vector<SizeType> const &strides) const
+{
+  std::vector<std::vector<SizeType>> range;
+  std::vector<SizeType>              axis;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    range.push_back({begins.at(j), ends.at(j), strides.at(j)});
+    axis.emplace_back(j);
+  }
+
+  return ConstSliceType(*this, range, axis);
+}
+
+template <typename T, typename C>
 typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice()
 {
   std::vector<SizeVector> range;
@@ -2300,6 +2321,23 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> ind
   }
 
   return TensorSlice(*this, range, axes);
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(std::vector<SizeType> const &begins,
+                                                       std::vector<SizeType> const &ends,
+                                                       std::vector<SizeType> const &strides)
+{
+  std::vector<std::vector<SizeType>> range;
+  std::vector<SizeType>              axis;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    range.push_back({begins.at(j), ends.at(j), strides.at(j)});
+    axis.emplace_back(j);
+  }
+
+  return TensorSlice(*this, range, axis);
 }
 
 ////////////////////////////////////////
@@ -2865,7 +2903,7 @@ Tensor<T, C> Tensor<T, C>::TensorSliceImplementation<STensor>::Copy() const
   SizeVector shape;
   for (SizeType i{0}; i < this->range_.size(); ++i)
   {
-    shape.emplace_back(this->range_[i][1] - this->range_[i][0] / this->range_[i][2]);
+    shape.emplace_back(((this->range_[i][1] - this->range_[i][0] - 1) / this->range_[i][2]) + 1);
   }
   fetch::math::Tensor<T, C> ret{shape};
   ret.Assign(*this);

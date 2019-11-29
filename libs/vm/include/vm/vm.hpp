@@ -1708,6 +1708,7 @@ private:
   void Handler__InitialiseArray();
   void Handler__ContractVariableDeclareAssign();
   void Handler__InvokeContractFunction();
+  void Handler__PushLargeConstant();
 
   friend class Object;
   friend class Module;

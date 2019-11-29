@@ -17,8 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/consensus/consensus.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "storage/object_store.hpp"
 
 #include <string>
@@ -36,11 +38,15 @@ class StorageUnitInterface;
 class GenesisFileCreator
 {
 public:
-  using ConsensusPtr = std::shared_ptr<fetch::ledger::Consensus>;
+  using ConsensusPtr   = std::shared_ptr<fetch::ledger::ConsensusInterface>;
+  using ByteArray      = byte_array::ByteArray;
+  using CertificatePtr = std::shared_ptr<crypto::Prover>;
+  using GenesisStore   = fetch::storage::ObjectStore<Block>;
 
   // Construction / Destruction
   GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit,
-                     ConsensusPtr consensus);
+                     ConsensusPtr consensus, CertificatePtr certificate,
+                     std::string const &db_prefix);
   GenesisFileCreator(GenesisFileCreator const &) = delete;
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;
@@ -55,10 +61,15 @@ private:
   bool LoadState(variant::Variant const &object);
   bool LoadConsensus(variant::Variant const &object);
 
+  CertificatePtr        certificate_;
   BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;
   ConsensusPtr          consensus_;
   uint64_t              start_time_ = 0;
+  GenesisStore          genesis_store_;
+  Block                 genesis_block_;
+  bool                  loaded_genesis_{false};
+  std::string           db_name_;
 };
 
 }  // namespace ledger

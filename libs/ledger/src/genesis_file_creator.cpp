@@ -28,7 +28,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
-#include "ledger/consensus/consensus.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
@@ -93,13 +93,16 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 
 }  // namespace
 
-using ConsensusPtr = std::shared_ptr<fetch::ledger::Consensus>;
+using ConsensusPtr = std::shared_ptr<fetch::ledger::ConsensusInterface>;
 
 GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
-                                       StorageUnitInterface &storage_unit, ConsensusPtr consensus)
-  : block_coordinator_{block_coordinator}
+                                       StorageUnitInterface &storage_unit, ConsensusPtr consensus,
+                                       CertificatePtr certificate, std::string const &db_prefix)
+  : certificate_{std::move(certificate)}
+  , block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
   , consensus_{std::move(consensus)}
+  , db_name_{db_prefix + "genesis_block"}
 {}
 
 /**
@@ -112,6 +115,33 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
   bool success{false};
 
   FETCH_LOG_INFO(LOGGING_NAME, "Clearing state and installing genesis");
+
+  // Perform a check as to whether we have installed genesis before
+  {
+    genesis_store_.Load(db_name_ + ".db", db_name_ + ".state.db");
+
+    if (genesis_store_.Get(storage::ResourceAddress("HEAD"), genesis_block_))
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Found previous genesis block! Recovering.");
+      FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block_.hash.ToHex());
+
+      chain::GENESIS_MERKLE_ROOT = genesis_block_.merkle_hash;
+      chain::GENESIS_DIGEST      = genesis_block_.hash;
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Found genesis save file from previous session!");
+      loaded_genesis_ = true;
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to find genesis save file from previous session");
+
+      // Failed - clear any state.
+      genesis_block_ = Block();
+
+      // Reset storage unit
+      storage_unit_.Reset();
+    }
+  }
 
   json::JSONDocument doc{};
   if (LoadFromFile(doc, name))
@@ -144,6 +174,13 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
     }
   }
 
+  if (success)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Saving successful genesis block");
+    genesis_store_.Set(storage::ResourceAddress("HEAD"), genesis_block_);
+    genesis_store_.Flush(false);
+  }
+
   return success;
 }
 
@@ -154,8 +191,11 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
  */
 bool GenesisFileCreator::LoadState(Variant const &object)
 {
-  // Reset storage unit
-  storage_unit_.Reset();
+  // Don't clobber the state if we have loaded the genesis file
+  if (loaded_genesis_)
+  {
+    return true;
+  }
 
   // Expecting an array of record entries
   if (!object.IsArray())
@@ -207,18 +247,16 @@ bool GenesisFileCreator::LoadState(Variant const &object)
 
   FETCH_LOG_INFO(LOGGING_NAME, "Committed genesis merkle hash: 0x", merkle_commit_hash.ToHex());
 
-  ledger::Block genesis_block;
+  genesis_block_.timestamp    = start_time_;
+  genesis_block_.merkle_hash  = merkle_commit_hash;
+  genesis_block_.block_number = 0;
+  genesis_block_.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
+  genesis_block_.UpdateDigest();
 
-  genesis_block.timestamp    = start_time_;
-  genesis_block.merkle_hash  = merkle_commit_hash;
-  genesis_block.block_number = 0;
-  genesis_block.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
-  genesis_block.UpdateDigest();
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block.hash.ToHex());
+  FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block_.hash.ToHex());
 
   chain::GENESIS_MERKLE_ROOT = merkle_commit_hash;
-  chain::GENESIS_DIGEST      = genesis_block.hash;
+  chain::GENESIS_DIGEST      = genesis_block_.hash;
 
   block_coordinator_.Reset();
 
@@ -230,12 +268,11 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object)
   if (consensus_)
   {
     uint64_t parsed_value;
-    double   parsed_value_double;
 
     // Optionally overwrite default parameters
     if (variant::Extract(object, "cabinetSize", parsed_value))
     {
-      consensus_->SetCabinetSize(parsed_value);
+      consensus_->SetMaxCabinetSize(static_cast<uint16_t>(parsed_value));
     }
 
     if (variant::Extract(object, "startTime", parsed_value))
@@ -244,14 +281,15 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object)
       consensus_->SetDefaultStartTime(parsed_value);
     }
 
-    if (variant::Extract(object, "threshold", parsed_value_double))
-    {
-      consensus_->SetThreshold(parsed_value_double);
-    }
-
     if (!object.Has("stakers"))
     {
       return false;
+    }
+
+    // Don't clobber the state if we have loaded the genesis file
+    if (loaded_genesis_)
+    {
+      return true;
     }
 
     Variant const &stake_array = object["stakers"];

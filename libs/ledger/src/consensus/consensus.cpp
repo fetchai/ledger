@@ -64,6 +64,7 @@ using Consensus       = fetch::ledger::Consensus;
 using NextBlockPtr    = Consensus::NextBlockPtr;
 using Status          = Consensus::Status;
 using StakeManagerPtr = Consensus::StakeManagerPtr;
+using BlockPtr        = Consensus::BlockPtr;
 
 using fetch::ledger::MainChain;
 using fetch::ledger::Block;
@@ -148,9 +149,9 @@ uint32_t Consensus::GetThreshold(Block const &block) const
   return static_cast<uint32_t>(std::floor(cabinet_size * threshold_)) + 1;
 }
 
-Block GetBlockPriorTo(Block const &current, MainChain const &chain)
+BlockPtr GetBlockPriorTo(Block const &current, MainChain const &chain)
 {
-  return *chain.GetBlock(current.previous_hash);
+  return chain.GetBlock(current.previous_hash);
 }
 
 Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
@@ -161,7 +162,16 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
   // case for true genesis)
   while (!ret.block_entropy.IsAeonBeginning() && current.block_number != 0)
   {
-    ret = GetBlockPriorTo(ret, chain);
+    auto prior = GetBlockPriorTo(ret, chain);
+
+    if (!prior)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Failed to find the beginning of the aeon when traversing the chain!");
+      throw std::runtime_error("Failed to traverse main chain");
+    }
+
+    ret = *prior;
   }
 
   return ret;
@@ -175,7 +185,14 @@ bool Consensus::VerifyNotarisation(Block const &block) const
   {
     // Try to verify with notarisation units in notarisation_
     auto previous_notarised_block = chain_.GetBlock(block.previous_hash);
-    auto result                   = notarisation_->Verify(previous_notarised_block->block_number,
+
+    if (!previous_notarised_block)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to find preceding block when verifying notarisation!");
+      return false;
+    }
+
+    auto result = notarisation_->Verify(previous_notarised_block->block_number,
                                         previous_notarised_block->hash,
                                         block.block_entropy.block_notarisation);
     if (result == NotarisationResult::CAN_NOT_VERIFY)
@@ -364,10 +381,10 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
   if (current.block_number > current_block_.block_number && !one_ahead)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME,
-                    "Updating the current block more than one block ahead is invalid! current: ",
-                    current_block_.block_number, " Attempt: ", current.block_number);
-    return;
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Note: updating consensus with a block more than one ahead than last updated "
+                   "block! Current: ",
+                   current_block_.block_number, " Attempt: ", current.block_number);
   }
 
   // Don't try to set previous when we see genesis!
@@ -377,8 +394,18 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   }
   else
   {
-    current_block_     = current;
-    previous_block_    = GetBlockPriorTo(current_block_, chain_);
+    current_block_ = current;
+
+    auto prior = GetBlockPriorTo(current_block_, chain_);
+
+    if (!prior)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Failed to find the beginning of the aeon when updating the block!");
+      throw std::runtime_error("Failed to update block!");
+    }
+
+    previous_block_    = *prior;
     beginning_of_aeon_ = GetBeginningOfAeon(current_block_, chain_);
   }
 
@@ -475,6 +502,8 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 }
 
 // TODO(HUT): put block number confirmation/check here (?)
+// TODO(HUT): check you're a member of qual
+// TODO(HUT): turn this off when syncing(?)
 NextBlockPtr Consensus::GenerateNextBlock()
 {
   NextBlockPtr ret;
@@ -586,6 +615,14 @@ Status Consensus::ValidBlock(Block const &current) const
     return Status::YES;
   }
 
+  auto const block_preceeding = GetBlockPriorTo(current, chain_);
+
+  // This will happen if the block is loose
+  if (!block_preceeding)
+  {
+    return Status::NO;
+  }
+
   if (!BlockSignedByQualMember(current))
   {
     FETCH_LOG_WARN(LOGGING_NAME,
@@ -593,13 +630,11 @@ Status Consensus::ValidBlock(Block const &current) const
     return Status::NO;
   }
 
-  auto const block_preceeding = GetBlockPriorTo(current, chain_);
-
   BlockEntropy::Cabinet        qualified_cabinet;
   BlockEntropy::GroupPublicKey group_pub_key;
 
   // If this block would be the start of a new aeon, need to check the stakers for the prev. block
-  if (ShouldTriggerAeon(block_preceeding.block_number, aeon_period_))
+  if (ShouldTriggerAeon(block_preceeding->block_number, aeon_period_))
   {
     auto const &block_entropy = current.block_entropy;
 
@@ -617,7 +652,6 @@ Status Consensus::ValidBlock(Block const &current) const
     }
 
     // Check that the members of qual meet threshold requirements
-
     qualified_cabinet = block_entropy.qualified;
     group_pub_key     = block_entropy.group_public_key;
 
@@ -635,7 +669,7 @@ Status Consensus::ValidBlock(Block const &current) const
     group_pub_key          = beginning_of_aeon.block_entropy.group_public_key;
   }
 
-  if (!dkg::BeaconManager::Verify(group_pub_key, block_preceeding.block_entropy.EntropyAsSHA256(),
+  if (!dkg::BeaconManager::Verify(group_pub_key, block_preceeding->block_entropy.EntropyAsSHA256(),
                                   current.block_entropy.group_signature))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Found block whose entropy isn't a signature of the previous!");
@@ -650,7 +684,7 @@ Status Consensus::ValidBlock(Block const &current) const
 
   // Perform the time checks (also qual adherence). Note, this check should be last, as the checking
   // logic relies on a well formed block.
-  if (!ValidBlockTiming(block_preceeding, current))
+  if (!ValidBlockTiming(*block_preceeding, current))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Found block with bad timings!");
     return Status::NO;
@@ -683,16 +717,7 @@ void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)
   }
 }
 
-void Consensus::Refresh()
-{}
-
-void Consensus::SetThreshold(double threshold)
-{
-  threshold_ = threshold;
-  FETCH_LOG_INFO(LOGGING_NAME, "Set threshold to ", threshold_);
-}
-
-void Consensus::SetCabinetSize(uint64_t size)
+void Consensus::SetMaxCabinetSize(uint16_t size)
 {
   max_cabinet_size_ = size;
 }
@@ -700,6 +725,16 @@ void Consensus::SetCabinetSize(uint64_t size)
 StakeManagerPtr Consensus::stake()
 {
   return stake_;
+}
+
+void Consensus::SetAeonPeriod(uint16_t aeon_period)
+{
+  aeon_period_ = aeon_period;
+}
+
+void Consensus::SetBlockInterval(uint64_t block_interval_ms)
+{
+  block_interval_ms_ = block_interval_ms;
 }
 
 void Consensus::SetDefaultStartTime(uint64_t default_start_time)

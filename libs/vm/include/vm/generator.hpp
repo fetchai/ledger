@@ -200,9 +200,46 @@ struct Executable
   };
   using ContractArray = std::vector<Contract>;
 
+  struct LargeConstant
+  {
+    LargeConstant() = delete;
+    LargeConstant(LargeConstant const &other)
+    {
+      Copy(other);
+    }
+    LargeConstant &operator=(LargeConstant const &other)
+    {
+      if (this != &other)
+      {
+        Copy(other);
+      }
+      return *this;
+    }
+    void Copy(const LargeConstant &other)
+    {
+      type_id = other.type_id;
+      if (type_id == TypeIds::Fixed128)
+      {
+        new (&fp128) fixed_point::fp128_t(other.fp128);
+      }
+    }
+    explicit LargeConstant(fixed_point::fp128_t const &fp128__)
+    {
+      type_id = TypeIds::Fixed128;
+      new (&fp128) fixed_point::fp128_t(fp128__);
+    }
+    TypeId type_id{TypeIds::Unknown};
+    union
+    {
+      fixed_point::fp128_t fp128;
+    };
+  };
+  using LargeConstantArray = std::vector<LargeConstant>;
+
   std::string              name;
   std::vector<std::string> strings;
   VariantArray             constants;
+  LargeConstantArray       large_constants;
   TypeInfoArray            types;
   ContractArray            contracts;
   FunctionArray            functions;
@@ -285,9 +322,16 @@ private:
     bool operator()(Variant const &lhs, Variant const &rhs) const;
   };
 
-  using StringsMap   = std::unordered_map<std::string, uint16_t>;
-  using ConstantsMap = std::map<Variant, uint16_t, ConstantComparator>;
-  using LineToPcMap  = std::map<uint16_t, uint16_t>;
+  struct LargeConstantComparator
+  {
+    bool operator()(Executable::LargeConstant const &lhs,
+                    Executable::LargeConstant const &rhs) const;
+  };
+
+  using StringsMap        = std::unordered_map<std::string, uint16_t>;
+  using ConstantsMap      = std::map<Variant, uint16_t, ConstantComparator>;
+  using LargeConstantsMap = std::map<Executable::LargeConstant, uint16_t, LargeConstantComparator>;
+  using LineToPcMap       = std::map<uint16_t, uint16_t>;
 
   VM *                     vm_{};
   uint16_t                 num_system_types_{};
@@ -296,6 +340,7 @@ private:
   std::vector<Loop>        loops_;
   StringsMap               strings_map_;
   ConstantsMap             constants_map_;
+  LargeConstantsMap        large_constants_map_;
   Executable::Function *   function_{};
   LineToPcMap              line_to_pc_map_;
   std::vector<std::string> errors_;
@@ -349,6 +394,7 @@ private:
   void  HandleFloat64(IRExpressionNodePtr const &node);
   void  HandleFixed32(IRExpressionNodePtr const &node);
   void  HandleFixed64(IRExpressionNodePtr const &node);
+  void  HandleFixed128(IRExpressionNodePtr const &node);
   void  HandleString(IRExpressionNodePtr const &node);
   void  PushString(std::string const &s, uint16_t line);
   void  HandleTrue(IRExpressionNodePtr const &node);
@@ -373,6 +419,7 @@ private:
   void  ScopeEnter();
   void  ScopeLeave(IRBlockNodePtr const &block_node);
   uint16_t AddConstant(Variant const &c);
+  uint16_t AddLargeConstant(Executable::LargeConstant const &c);
   uint16_t GetInplaceArithmeticOpcode(bool is_primitive, TypeId lhs_type_id, TypeId rhs_type_id,
                                       uint16_t opcode1, uint16_t opcode2, uint16_t opcode3);
   uint16_t GetArithmeticOpcode(bool lhs_is_primitive, TypeId node_type_id, TypeId lhs_type_id,

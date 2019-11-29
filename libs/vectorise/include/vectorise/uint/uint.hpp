@@ -219,6 +219,7 @@ public:
   constexpr WideType &ElementAt(std::size_t n);
 
   constexpr uint64_t TrimmedSize() const;
+  constexpr uint64_t TrimmedWideSize() const;
   constexpr uint64_t size() const;
   constexpr uint64_t elements() const;
 
@@ -656,7 +657,6 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   }
   if (n == _1)
   {
-    *this = n;
     return *this;
   }
   if (*this == n)
@@ -1038,14 +1038,26 @@ constexpr typename UInt<S>::WideType &UInt<S>::ElementAt(std::size_t n)
 }
 
 template <uint16_t S>
-constexpr uint64_t UInt<S>::TrimmedSize() const
+constexpr uint64_t UInt<S>::TrimmedWideSize() const
 {
   uint64_t ret = WIDE_ELEMENTS;
-  while ((ret != 0) && (wide_[ret - 1] == 0))
+  while ((ret > 0) && (wide_[ret - 1] == 0))
   {
     --ret;
   }
   return ret;
+}
+
+template <uint16_t S>
+constexpr uint64_t UInt<S>::TrimmedSize() const
+{
+  uint64_t wide_size{TrimmedWideSize()};
+  uint64_t remainder{WIDE_ELEMENT_SIZE / ELEMENT_SIZE};
+  while ((remainder > 0) && (base()[remainder - 1] == 0))
+  {
+    --remainder;
+  }
+  return wide_size * (WIDE_ELEMENT_SIZE / ELEMENT_SIZE) + remainder;
 }
 
 template <uint16_t S>
@@ -1087,35 +1099,33 @@ inline std::ostream &operator<<(std::ostream &s, UInt<S> const &x)
   return s;
 }
 
-inline double Log(UInt<256> const &x)
-{
-  uint64_t last_word = x.ElementAt(x.TrimmedSize() - 1);
-
-  auto     tz       = uint64_t(platform::CountTrailingZeroes64(last_word));
-  uint64_t exponent = (last_word << 3u) - tz;
-
-  return double(exponent) + std::log(double(last_word << tz) * (1. / double(uint32_t(-1))));
-}
-
 inline double ToDouble(UInt<256> const &x)
 {
-  uint64_t last_word = x.ElementAt(x.TrimmedSize() - 1);
-
-  auto tz       = static_cast<uint16_t>(platform::CountTrailingZeroes64(last_word));
-  auto exponent = static_cast<uint16_t>((last_word << 3u) - tz);
-
-  assert(exponent < 1023);
-
-  union
+  if (x.TrimmedWideSize() < 2)
   {
-    double   value;
-    uint64_t bits;
-  } conv{};
+    return static_cast<double>(x.ElementAt(0));
+  }
+  const size_t ELEMENTS_PER_WIDE = x.WIDE_ELEMENT_SIZE / x.ELEMENT_SIZE;
+  uint64_t     magnitude         = x.ELEMENTS * x.ELEMENT_SIZE - x.msb() - 1;
 
-  conv.bits = 0;
-  conv.bits |= uint64_t(uint64_t(exponent & ((1u << 12u) - 1)) << 52u);
-  conv.bits |= uint64_t((last_word << (20u + tz)) & ((1ull << 53u) - 1));
-  return conv.value;
+  const size_t most_significant_byte_idx = magnitude / x.ELEMENT_SIZE;
+  const size_t least_eligible_byte_idx   = most_significant_byte_idx - (ELEMENTS_PER_WIDE - 1);
+
+  uint64_t mantisse = 0;
+  for (size_t i = 0; i < ELEMENTS_PER_WIDE; ++i)
+  {
+    const uint64_t element  = x[i + least_eligible_byte_idx];
+    const uint64_t addendum = uint64_t(element) << (i * x.ELEMENT_SIZE);
+    mantisse += addendum;
+  }
+  const auto exponent = static_cast<double>(least_eligible_byte_idx * x.ELEMENT_SIZE);
+
+  return static_cast<double>(mantisse) * pow(2, exponent);
+}
+
+inline double Log(UInt<256> const &x)
+{
+  return std::log(ToDouble(x));
 }
 
 }  // namespace vectorise

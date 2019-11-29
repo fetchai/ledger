@@ -29,6 +29,7 @@
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/fnv.hpp"
+#include "crypto/secure_channel.hpp"
 #include "logging/logging.hpp"
 #include "muddle/packet.hpp"
 #include "telemetry/counter.hpp"
@@ -238,7 +239,7 @@ Packet::Address Router::ConvertAddress(Packet::RawAddress const &address)
  * @param reg The connection register
  */
 Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispatcher &dispatcher,
-               Prover *prover, bool sign_broadcasts)
+               Prover const &prover)
   : name_{GenerateLoggingName(BASE_NAME, network_id)}
   , address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
@@ -247,7 +248,6 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispa
   , registrar_(network_id)
   , network_id_(network_id)
   , prover_(prover)
-  , sign_broadcasts_((prover != nullptr) && sign_broadcasts)
   , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
   , rx_max_packet_length(
         CreateGauge("ledger_router_rx_max_packet_length", "The max received packet length"))
@@ -267,6 +267,18 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispa
         CreateCounter("ledger_router_tx_packet_total", "The total number of transmitted packets"))
   , bx_packet_total_(
         CreateCounter("ledger_router_bx_packet_total", "The total number of broadcasted packets"))
+  , rx_encrypted_packet_failures_total_(
+        (CreateCounter("ledger_router_rx_encrypted_packet_failures_total",
+                       "The total number of received encrypted packets that could not be read")))
+  , rx_encrypted_packet_success_total_(
+        (CreateCounter("ledger_router_rx_encrypted_packet_success_total",
+                       "The total number of received encrypted packets that could be read")))
+  , tx_encrypted_packet_failures_total_(
+        (CreateCounter("ledger_router_tx_encrypted_packet_failures_total",
+                       "The total number of sent encrypted packets that could not be generated")))
+  , tx_encrypted_packet_success_total_(
+        (CreateCounter("ledger_router_tx_encrypted_packet_success_total",
+                       "The total number of sent encrypted packets that could be generated")))
   , ttl_expired_packet_total_(
         CreateCounter("ledger_router_ttl_expired_packet_total",
                       "The total number of packets that have expired due to TTL"))
@@ -305,6 +317,8 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispa
   , failed_routing_total_(
         CreateCounter("ledger_router_normal_routing_total",
                       "The total number of packets that have failed to be routed"))
+  , connection_dropped_total_(CreateCounter("ledger_router_connection_dropped_total",
+                                            "The total number of connections dropped"))
 {}
 
 /**
@@ -325,26 +339,20 @@ void Router::Stop()
 
 bool Router::Genuine(PacketPtr const &p) const
 {
-  if (p->IsBroadcast())
+  bool genuine{true};
+
+  if (p->IsStamped() || p->IsBroadcast())
   {
-    // broadcasts are only verified if really needed
-    return !sign_broadcasts_ || p->Verify();
+    genuine = p->Verify();
   }
-  if (p->IsStamped())
-  {
-    // stamped packages are verified in any circumstances
-    return p->Verify();
-  }
-  // non-stamped packages are genuine in a trusted network
-  return prover_ == nullptr;
+
+  return genuine;
 }
 
 Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
 {
-  if ((prover_ != nullptr) && (sign_broadcasts_ || !p->IsBroadcast()))
-  {
-    p->Sign(*prover_);
-  }
+  p->Sign(prover_);
+
   return p;
 }
 
@@ -405,6 +413,7 @@ void Router::Route(Handle handle, PacketPtr const &packet)
 void Router::ConnectionDropped(Handle handle)
 {
   FETCH_LOG_INFO(logging_name_, "Connection ", handle, " dropped");
+  connection_dropped_total_->add(1);
 
   FETCH_LOCK(routing_table_lock_);
   for (auto it = routing_table_.begin(); it != routing_table_.end();)
@@ -494,6 +503,23 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
   if ((options & OPTION_EXCHANGE) != 0u)
   {
     packet->SetExchange(true);
+  }
+
+  if ((options & OPTION_ENCRYPTED) != 0u)
+  {
+    ConstByteArray encrypted_payload{};
+    bool const     encrypted = secure_channel_.Encrypt(address, service, channel, message_num,
+                                                   packet->GetPayload(), encrypted_payload);
+    if (!encrypted)
+    {
+      FETCH_LOG_ERROR(logging_name_, "Unable to encrypt packet contents");
+      tx_encrypted_packet_failures_total_->increment();
+      return;
+    }
+
+    packet->SetPayload(encrypted_payload);
+    packet->SetEncrypted(true);
+    tx_encrypted_packet_success_total_->increment();
   }
 
   Sign(packet);
@@ -1029,6 +1055,26 @@ void Router::DispatchPacket(PacketPtr const &packet, Address const &transmitter)
 
   dispatch_thread_pool_->Post([this, packet, transmitter]() {
     bool const isPossibleExchangeResponse = !packet->IsExchange();
+
+    // decrypt encrypted messages
+    if (packet->IsEncrypted())
+    {
+      ConstByteArray decrypted_payload{};
+      bool const     decrypted =
+          secure_channel_.Decrypt(packet->GetSender(), packet->GetService(), packet->GetChannel(),
+                                  packet->GetMessageNum(), packet->GetPayload(), decrypted_payload);
+
+      if (!decrypted)
+      {
+        FETCH_LOG_ERROR(logging_name_, "Unable to decrypt input message");
+        rx_encrypted_packet_failures_total_->increment();
+        return;
+      }
+
+      // update the payload to be decrypted payload
+      packet->SetPayload(decrypted_payload);
+      rx_encrypted_packet_success_total_->increment();
+    }
 
     // determine if this was an exchange based node
     if (isPossibleExchangeResponse && dispatcher_.Dispatch(packet))

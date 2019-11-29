@@ -28,10 +28,10 @@
 #include "constellation/telemetry_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/telemetry.hpp"
-#include "ledger/chain/consensus/bad_miner.hpp"
-#include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
+#include "ledger/consensus/consensus.hpp"
+#include "ledger/consensus/simulated_pow_consensus.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
@@ -218,6 +218,10 @@ ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, St
                                                     identity, cfg.aeon_period, cfg.max_cabinet_size,
                                                     cfg.block_interval_ms);
   }
+  else
+  {
+    consensus = std::make_shared<ledger::SimulatedPowConsensus>(identity, cfg.block_interval_ms);
+  }
 
   return consensus;
 }
@@ -292,6 +296,7 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   , muddle_{muddle::CreateMuddle("IHUB", certificate, network_manager_,
                                  cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE))}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
+  , external_identity_{certificate}
   , internal_muddle_{muddle::CreateMuddle(
         "ISRD", internal_identity_, network_manager_,
         cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE))}
@@ -323,7 +328,6 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
                        certificate,
                        cfg_.log2_num_lanes,
                        cfg_.num_slices,
-                       cfg_.block_difficulty,
                        consensus_,
                        std::make_unique<ledger::SynergeticExecutionManager>(
                            dag_, 1u,
@@ -458,12 +462,6 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   // Step 1. Start all the components
   //---------------------------------------------------------------
 
-  // if a non-zero block interval it set then the application will generate blocks
-  if (cfg_.block_interval_ms > 0)
-  {
-    block_coordinator_.SetBlockPeriod(std::chrono::milliseconds{cfg_.block_interval_ms});
-  }
-
   /// NETWORKING INFRASTRUCTURE
 
   // start all the services
@@ -529,7 +527,8 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
     FETCH_LOG_INFO(LOGGING_NAME,
                    "Loading from genesis save file. Location: ", cfg_.genesis_file_location);
 
-    GenesisFileCreator creator(block_coordinator_, *storage_, consensus_);
+    GenesisFileCreator creator(block_coordinator_, *storage_, consensus_, external_identity_,
+                               cfg_.db_prefix);
 
     if (cfg_.genesis_file_location.empty())
     {
@@ -594,9 +593,6 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   {
     // determine the status of the main chain server
     bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
-
-    // control from the top level block production based on the chain sync state
-    block_coordinator_.EnableMining(is_in_sync);
 
     if (synergetic_miner_)
     {
