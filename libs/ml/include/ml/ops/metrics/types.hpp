@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,20 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/shuffle_algorithm_interface.hpp"
-
 namespace fetch {
-namespace dmlf {
+namespace ml {
+namespace ops {
 
-ShuffleAlgorithmInterface::ShuffleAlgorithmInterface(std::size_t count)
-  : count_(count)
-{}
-
-std::size_t ShuffleAlgorithmInterface::GetCount() const
+enum class MetricType
 {
-  // this impl is simple, but descendent ones may not be.
-  return count_;
+  CATEGORICAL_ACCURACY,
+  CROSS_ENTROPY,
+  MEAN_SQUARE_ERROR,
+  SOFTMAX_CROSS_ENTROPY
+};
 }
-
-}  // namespace dmlf
+}  // namespace ml
 }  // namespace fetch

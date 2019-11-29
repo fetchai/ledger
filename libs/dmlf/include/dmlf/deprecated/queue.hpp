@@ -22,9 +22,9 @@
 
 #include "core/mutex.hpp"
 
-#include "dmlf/queue_interface.hpp"
-#include "dmlf/update.hpp"
-#include "dmlf/update_interface.hpp"
+#include "dmlf/deprecated/queue_interface.hpp"
+#include "dmlf/deprecated/update.hpp"
+#include "dmlf/deprecated/update_interface.hpp"
 
 namespace fetch {
 namespace dmlf {

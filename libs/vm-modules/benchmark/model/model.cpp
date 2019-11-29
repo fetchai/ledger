@@ -82,7 +82,8 @@ void BM_AddLayer(benchmark::State &state)
   //    using VMTensor       = fetch::vm_modules::math::VMTensor;
   //    using ModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
   using VMPtr = std::shared_ptr<VM>;
-
+  //  using StringPtrRef = fetch::vm::Ptr<fetch::vm::String> const &;
+  using SizeRef = fetch::math::SizeType const &;
 
   /*
   // set up a model
@@ -118,11 +119,12 @@ void BM_AddLayer(benchmark::State &state)
     auto model = CreateSequentialModel(vm);
     state.ResumeTiming();
 
-    model->LayerAddDense(CreateString(vm, "dense"), I, O);  // input_size, hidden_1_size
+    model->AddLayer<SizeRef, SizeRef>(CreateString(vm, "dense"), I,
+                                      O);  // input_size, hidden_1_size
 
-   // state.PauseTiming();
-   // vm->~VM();
-   // state.ResumeTiming();
+    // state.PauseTiming();
+    // vm->~VM();
+    // state.ResumeTiming();
   }
 }
 
