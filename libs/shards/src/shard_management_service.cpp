@@ -126,9 +126,14 @@ void ShardManagementService::ResolveUpdates()
       // look up the cache entry
       auto &entry = manifest_cache_[it->first];
 
+      Manifest manifest{};
+
       // update the cache entry
-      entry.manifest     = it->second->As<Manifest>();
-      entry.last_updated = now;
+      if (it->second->GetResult(manifest))
+      {
+        entry.manifest     = manifest;
+        entry.last_updated = now;
+      }
 
       // remove the promise from the queue
       it = pending_requests_.erase(it);

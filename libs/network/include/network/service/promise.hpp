@@ -116,10 +116,7 @@ public:
   bool Wait(bool throw_exception = true) const;
 
   template <typename T>
-  T As() const;
-
-  template <typename T>
-  bool As(T &ret) const;
+  bool GetResult(T &ret) const;
   /// @}
 
   // Operators
@@ -215,29 +212,26 @@ private:
 };
 
 template <typename T>
-T details::PromiseImplementation::As() const
+bool details::PromiseImplementation::GetResult(T &ret) const
 {
-  T result{};
-  if (!As<T>(result))
+  bool success{false};
+
+  try
   {
-    throw PromiseError{*this};
+    if (Wait())
+    {
+      SerializerType ser(value_);
+      ser >> ret;
+
+      success = true;
+    }
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN("Promise", "Error getting promise result: ", ex.what());
   }
 
-  return result;
-}
-
-template <typename T>
-bool details::PromiseImplementation::As(T &ret) const
-{
-  if (!Wait())
-  {
-    return false;
-  }
-
-  SerializerType ser(value_);
-  ser >> ret;
-
-  return true;
+  return success;
 }
 
 using PromiseCounter = details::PromiseImplementation::Counter;

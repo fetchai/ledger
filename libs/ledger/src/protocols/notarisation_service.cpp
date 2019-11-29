@@ -152,18 +152,10 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
 {
   BlockNotarisationShares ret;
 
-  try
+  // Attempt to resolve the promise and add it
+  if (!notarisation_promise_->IsSuccessful() || !notarisation_promise_->GetResult(ret))
   {
-    // Attempt to resolve the promise and add it
-    if (!notarisation_promise_->IsSuccessful() ||
-        !notarisation_promise_->As<BlockNotarisationShares>(ret))
-    {
-      return State::COMPLETE;
-    }
-  }
-  catch (...)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Promise timed out and threw! This should not happen.");
+    return State::COMPLETE;
   }
 
   // Note: don't lock until the promise has resolved (above)! Otherwise the system can deadlock
