@@ -20,6 +20,7 @@
 #include "dmlf/colearn/update_store_interface.hpp"
 
 #include <queue>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -39,8 +40,10 @@ public:
 
   void        PushUpdate(Algorithm const &algo, UpdateType type, Data &&data, Source source,
                          Metadata &&metadata) override;
-  UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria) override;
-  UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type) override;
+  UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria,
+                        Consumer consumer = "learner0") override;
+  UpdatePtr   GetUpdate(Algorithm const &algo, UpdateType const &type,
+                        Consumer consumer = "learner0") override;
   std::size_t GetUpdateCount() const override;
   std::size_t GetUpdateCount(Algorithm const &algo, UpdateType const &type) const override;
 
@@ -48,21 +51,21 @@ private:
   using QueueId = std::string;
   QueueId Id(Algorithm const &algo, UpdateType const &type) const;
 
-  struct QueueOrder
-  {
-    bool operator()(UpdatePtr const &l, UpdatePtr const &r)
-    {
-      return l->time_stamp() > r->time_stamp();
-    }
+  Criteria Lifo = [](UpdatePtr const &update) -> double {
+    return static_cast<double>(-update->TimeSinceCreation().count());
   };
 
-  using Mutex   = fetch::Mutex;
-  using Lock    = std::unique_lock<Mutex>;
-  using Queue   = std::priority_queue<UpdatePtr, std::vector<UpdatePtr>, QueueOrder>;
-  using AlgoMap = std::unordered_map<QueueId, Queue>;
+  using Mutex           = fetch::Mutex;
+  using Lock            = std::unique_lock<Mutex>;
+  using Store           = std::vector<UpdatePtr>;
+  using AlgoMap         = std::unordered_map<QueueId, Store>;
+  using Fingerprint     = Update::Fingerprint;
+  using UpdateConsumers = std::unordered_set<Consumer>;
 
   AlgoMap       algo_map_;
   mutable Mutex global_m_;
+
+  std::unordered_map<Fingerprint, UpdateConsumers> consumed_;
 };
 
 }  // namespace colearn
