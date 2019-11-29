@@ -341,8 +341,13 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
     {
       if (PromiseState::SUCCESS == status)
       {
-        // the request was successful, simply hand off the blocks to be added to the chain
-        HandleChainResponse(current_peer_address_, current_request_->As<BlockList>());
+        BlockList block_list{};
+
+        if (current_request_->GetResult(block_list))
+        {
+          // the request was successful, simply hand off the blocks to be added to the chain
+          HandleChainResponse(current_peer_address_, block_list);
+        }
 
         // now we have completed a request we can start normal synchronisation
         next_state = State::SYNCHRONISING;
@@ -419,8 +424,13 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
     {
       if (PromiseState::SUCCESS == status)
       {
+        BlockList blocks{};
+
         // the request was successful, simply hand off the blocks to be added to the chain
-        HandleChainResponse(current_peer_address_, current_request_->As<BlockList>());
+        if (current_request_->GetResult(blocks))
+        {
+          HandleChainResponse(current_peer_address_, blocks);
+        }
       }
       else
       {

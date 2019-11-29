@@ -96,9 +96,16 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
   std::size_t index = 0;
   for (auto &p : promises)
   {
-    tree[index] = p->As<byte_array::ByteArray>();
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Merkle Hash ", index, ": 0x", tree[index].ToHex());
+    byte_array::ByteArray digest{};
+    if (p->GetResult(digest))
+    {
+      tree[index] = digest;
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate merkle hash no leaf: ", index);
+      return {};
+    }
 
     ++index;
   }
@@ -207,7 +214,8 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   bool all_success{true};
   for (auto &p : promises)
   {
-    if (!p->As<bool>())
+    bool success{false};
+    if (!(p->GetResult(success) && success))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert shard ", lane_index, " to 0x",
                      tree[lane_index].ToHex());
@@ -256,7 +264,17 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index
   std::size_t index = 0;
   for (auto &p : promises)
   {
-    tree[index] = p->As<byte_array::ByteArray>();
+    byte_array::ByteArray digest{};
+
+    if (p->GetResult(digest))
+    {
+      tree[index] = digest;
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate (commit) merkle hash, no leaf: ", index);
+      return {};
+    }
 
     ++index;
   }
@@ -387,21 +405,16 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
 
   for (auto const &promise : promises)
   {
-    try
-    {
-      auto txs = promise->As<TxLayouts>();
+    TxLayouts txs{};
 
+    if (promise->GetResult(txs))
+    {
       layouts.insert(layouts.end(), std::make_move_iterator(txs.begin()),
                      std::make_move_iterator(txs.end()));
     }
-    catch (std::exception const &e)
+    else
     {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Failed to resolve GET on TX store! Promise timed out: ", e.what());
-    }
-    catch (...)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET on TX store! Unknown error.");
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET on TX store!");
     }
   }
 
@@ -411,24 +424,17 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
 bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
                                        chain::Transaction &              tx)
 {
-  bool success{false};
+  ResourceID resource{digest};
 
-  try
+  // make the request to the RPC server
+  auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
+                                                  TxStoreProtocol::GET, resource);
+
+  // wait for the response to be delivered
+  bool const success = promise->GetResult(tx);
+  if (!success)
   {
-    ResourceID resource{digest};
-
-    // make the request to the RPC server
-    auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
-                                                    TxStoreProtocol::GET, resource);
-
-    // wait for the response to be delivered
-    tx = promise->As<chain::Transaction>();
-
-    success = true;
-  }
-  catch (std::exception const &e)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to get transaction, because: ", e.what());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction 0x", digest.ToHex());
   }
 
   return success;
@@ -436,28 +442,16 @@ bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
 
 bool StorageUnitClient::HasTransaction(ConstByteArray const &digest)
 {
+  ResourceID resource{digest};
+
+  // make the request to the RPC server
+  auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
+                                                  TxStoreProtocol::HAS, resource);
+
+  // wait for the response to be delivered
   bool present{false};
 
-  try
-  {
-    ResourceID resource{digest};
-
-    // make the request to the RPC server
-    auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
-                                                    TxStoreProtocol::HAS, resource);
-
-    // wait for the response to be delivered
-    present = promise->As<bool>();
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "TX: ", ToBase64(digest), " Present: ", present);
-  }
-  catch (std::exception const &e)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to check transaction existence, because: ", e.what(),
-                   " tx: ", ToBase64(digest));
-  }
-
-  return present;
+  return promise->GetResult(present) && present;
 }
 
 void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
@@ -481,21 +475,16 @@ void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
 
 StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const &key)
 {
+  // make the request to the RPC client
+  auto promise = rpc_client_->CallSpecificAddress(LookupAddress(key), RPC_STATE,
+                                                  RevertibleDocumentStoreProtocol::GET_OR_CREATE,
+                                                  key.as_resource_id());
+
+  // wait for the document to be returned
   Document doc;
-
-  try
+  if (!promise->GetResult(doc))
   {
-    // make the request to the RPC client
-    auto promise = rpc_client_->CallSpecificAddress(LookupAddress(key), RPC_STATE,
-                                                    RevertibleDocumentStoreProtocol::GET_OR_CREATE,
-                                                    key.as_resource_id());
-
-    // wait for the document to be returned
-    doc = promise->As<Document>();
-  }
-  catch (std::exception const &e)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to get or create document, because: ", e.what());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to get or create document");
     doc.failed = true;
   }
 
@@ -504,21 +493,16 @@ StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const
 
 StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key) const
 {
+  // make the request to the RPC server
+  auto promise = rpc_client_->CallSpecificAddress(
+      LookupAddress(key), RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET,
+      key.as_resource_id());
+
+  // wait for the document response
   Document doc;
-
-  try
+  if (!promise->GetResult(doc))
   {
-    // make the request to the RPC server
-    auto promise = rpc_client_->CallSpecificAddress(
-        LookupAddress(key), RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET,
-        key.as_resource_id());
-
-    // wait for the document response
-    doc = promise->As<Document>();
-  }
-  catch (std::exception const &e)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to get document, because: ", e.what());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to get document");
 
     // signal the failure
     doc.failed = true;
@@ -556,7 +540,7 @@ bool StorageUnitClient::Lock(ShardIndex index)
                                                     RevertibleDocumentStoreProtocol::LOCK);
 
     // wait for the promise
-    success = promise->As<bool>();
+    success = promise->GetResult(success) && success;
   }
   catch (std::exception const &e)
   {
@@ -577,7 +561,7 @@ bool StorageUnitClient::Unlock(ShardIndex index)
                                                     RevertibleDocumentStoreProtocol::UNLOCK);
 
     // wait for the result
-    success = promise->As<bool>();
+    success = promise->GetResult(success) && success;
   }
   catch (std::exception const &e)
   {
