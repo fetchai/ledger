@@ -46,8 +46,10 @@ private:
   };
 
 public:
-  using DataType         = typename TensorType::Type;
-  using NodePtrType      = std::shared_ptr<Node<TensorType>>;
+  using DataType        = typename TensorType::Type;
+  using NodePtrType     = std::shared_ptr<Node<TensorType>>;
+  using NodeWeakPtrType = std::weak_ptr<Node<TensorType>>;
+
   using VecTensorType    = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType           = fetch::ml::NodeSaveableParams<TensorType>;
   using NodeErrorMapType = std::unordered_map<Node<TensorType> *, std::vector<TensorType>>;
@@ -109,7 +111,7 @@ public:
 
   NodeErrorMapType BackPropagate(TensorType const &error_signal);
 
-  void                            AddInput(NodePtrType const &i);
+  void                            AddInput(NodeWeakPtrType const &i);
   std::vector<std::string>        GetInputNames();
   void                            AddOutput(NodePtrType const &o);
   std::vector<NodePtrType> const &GetOutputs() const;
@@ -141,8 +143,8 @@ public:
   }
 
 private:
-  std::vector<NodePtrType> input_nodes_;
-  std::vector<NodePtrType> outputs_;
+  std::vector<NodeWeakPtrType> input_nodes_;
+  std::vector<NodePtrType>     outputs_;
 
   std::string       name_;
   TensorType        cached_output_;
@@ -180,7 +182,8 @@ typename Node<TensorType>::VecTensorType Node<TensorType>::GatherInputs() const
   VecTensorType inputs;
   for (auto const &i : input_nodes_)
   {
-    inputs.push_back(i->Evaluate(op_ptr_->IsTraining()));
+    auto ptr = i.lock();
+    inputs.push_back(ptr->Evaluate(op_ptr_->IsTraining()));
   }
   return inputs;
 }
@@ -264,7 +267,8 @@ typename Node<TensorType>::NodeErrorMapType Node<TensorType>::BackPropagate(
     auto bp_it = error_signals.begin();
     for (auto &i : input_nodes_)
     {
-      auto ret_err_sig = i->BackPropagate(*bp_it);
+      auto ptr         = i.lock();
+      auto ret_err_sig = ptr->BackPropagate(*bp_it);
       ret.insert(ret_err_sig.begin(), ret_err_sig.end());
       ++bp_it;
     }
@@ -304,7 +308,7 @@ void Node<TensorType>::ResetInputsAndOutputs()
  * @param i pointer to the input node
  */
 template <typename TensorType>
-void Node<TensorType>::AddInput(NodePtrType const &i)
+void Node<TensorType>::AddInput(NodeWeakPtrType const &i)
 {
   input_nodes_.push_back(i);
 }
@@ -321,7 +325,8 @@ std::vector<std::string> Node<TensorType>::GetInputNames()
   std::vector<std::string> ret{};
   for (auto const &input_node : input_nodes_)
   {
-    ret.emplace_back(input_node->name_);
+    auto ptr = input_node.lock();
+    ret.emplace_back(ptr->name_);
   }
   return ret;
 }
