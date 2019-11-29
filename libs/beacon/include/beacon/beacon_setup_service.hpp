@@ -211,6 +211,7 @@ protected:
   telemetry::CounterPtr         beacon_dkg_failures_total_;
   telemetry::CounterPtr         beacon_dkg_aborts_total_;
   telemetry::CounterPtr         beacon_dkg_successes_total_;
+  telemetry::CounterPtr         beacon_dkg_duplicate_creates_total_;
 
   // Members below protected by mutex
   std::mutex                   mutex_;

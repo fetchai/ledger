@@ -47,6 +47,13 @@ struct Aeon
 
   // Timeouts for waiting for other members
   uint64_t start_reference_timepoint{uint64_t(-1)};
+
+  bool operator==(Aeon const &other) const
+  {
+    return ((members == other.members) && (round_start == other.round_start) &&
+            (round_end == other.round_end) &&
+            (block_entropy_previous == other.block_entropy_previous));
+  }
 };
 
 // TODO(HUT): merge these into just Aeon
