@@ -34,30 +34,21 @@
 
 using namespace fetch::vm;
 
-using VMModel        = fetch::vm_modules::ml::model::VMModel;
-using VMTensor       = fetch::vm_modules::math::VMTensor;
-using ModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
-using VMFactory      = fetch::vm_modules::VMFactory;
-using VMPtr          = std::unique_ptr<VM>;
-
-VMPtr vm;
-
-void SetUp()
+void SetUp(std::shared_ptr<VM> &vm)
 {
-  // setup the VM
-  auto module = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
-  vm          = std::make_unique<VM>(module.get());
+  using VMFactory = fetch::vm_modules::VMFactory;
 
-  // create a VMModel
-  // model = CreateSequentialModel();
+  // setup the VM
+  auto module = VMFactory::GetModule(fetch::vm_modules::VMFactory::USE_SMART_CONTRACTS);
+  vm          = std::make_shared<VM>(module.get());
 }
 
-Ptr<String> CreateString(std::string const &str)
+Ptr<String> CreateString(std::shared_ptr<VM> &vm, std::string const &str)
 {
   return Ptr<String>{new String{vm.get(), str}};
 }
 
-Ptr<Array<uint64_t>> CreateArray(std::vector<uint64_t> const &values)
+Ptr<Array<uint64_t>> CreateArray(std::shared_ptr<VM> &vm, std::vector<uint64_t> const &values)
 {
   std::size_t          size = values.size();
   Ptr<Array<uint64_t>> array =
@@ -72,27 +63,26 @@ Ptr<Array<uint64_t>> CreateArray(std::vector<uint64_t> const &values)
   return array;
 }
 
-Ptr<VMTensor> CreateTensor(std::vector<uint64_t> const &shape)
+Ptr<fetch::vm_modules::math::VMTensor> CreateTensor(std::shared_ptr<VM> &        vm,
+                                                    std::vector<uint64_t> const &shape)
 {
-  return vm->CreateNewObject<VMTensor>(shape);
+  return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(shape);
 }
 
-Ptr<VMModel> CreateSequentialModel()
+Ptr<fetch::vm_modules::ml::model::VMModel> CreateSequentialModel(std::shared_ptr<VM> &vm)
 {
-  auto model_category = CreateString("sequential");
-  return vm->CreateNewObject<VMModel>(model_category);
+  auto model_category = CreateString(vm, "sequential");
+  return vm->CreateNewObject<fetch::vm_modules::ml::model::VMModel>(model_category);
 }
 
 template <typename T, int S, int I, int O>
 void BM_AddLayer(benchmark::State &state)
 {
-  SetUp();
+  //    using VMModel        = fetch::vm_modules::ml::model::VMModel;
+  //    using VMTensor       = fetch::vm_modules::math::VMTensor;
+  //    using ModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
+  using VMPtr = std::shared_ptr<VM>;
 
-  // set up data and labels
-  std::vector<uint64_t> data_shape{I, S};
-  std::vector<uint64_t> label_shape{O, S};
-  auto                  data  = CreateTensor(data_shape);
-  auto                  label = CreateTensor(label_shape);
 
   /*
   // set up a model
@@ -116,21 +106,39 @@ void BM_AddLayer(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    auto model = CreateSequentialModel();
+    VMPtr vm;
+    SetUp(vm);
+
+    // set up data and labels
+    std::vector<uint64_t> data_shape{I, S};
+    std::vector<uint64_t> label_shape{O, S};
+    auto                  data  = CreateTensor(vm, data_shape);
+    auto                  label = CreateTensor(vm, label_shape);
+
+    auto model = CreateSequentialModel(vm);
     state.ResumeTiming();
 
-    model->LayerAddDenseActivation(CreateString("dense"), I, O,
-                                   CreateString("relu"));  // input_size, hidden_1_size
+    model->LayerAddDense(CreateString(vm, "dense"), I, O);  // input_size, hidden_1_size
+
+   // state.PauseTiming();
+   // vm->~VM();
+   // state.ResumeTiming();
   }
 }
 
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 10, 10)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 1000, 1000)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 100, 10)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 1000, 10)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 10, 100)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 10, 1000)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 100, 100)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 100, 1000)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 1000, 100)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 1, 1000, 100)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 1000, 1, 100)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 200, 200, 100)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 2000, 20, 100)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 3000, 10, 100)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 10, 3000, 100)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_MAIN();
