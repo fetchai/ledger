@@ -174,7 +174,6 @@ def send_txs(parameters, test_instance):
 
             # create and send the transaction to the ledger, capturing the tx
             # hash
-            #tx = api.tokens.wealth(identity, index)
             tx = api.tokens.transfer(
                 test_instance._benefactor_address, identity, amount, BASE_TX_FEE)
 
@@ -314,8 +313,7 @@ def verify_txs(parameters, test_instance):
                     failed_to_find = failed_to_find + 1
 
                     if failed_to_find > 5:
-                        # Forces the resubmission of wealth TX to the chain (TX most likely was lost)
-                        #api.tokens.wealth(identity, balance)
+                        # Forces the resubmission of transfer TX to the chain (TX most likely was lost)
                         api.tokens.transfer(
                             test_instance._benefactor_address, identity, balance, BASE_TX_FEE)
                         failed_to_find = 0
@@ -414,7 +412,7 @@ def add_node(parameters, test_instance):
     test_instance.start_node(index)
 
 
-def create_wealth(parameters, test_instance):
+def create_balance(parameters, test_instance):
     nodes = parameters["nodes"]
     amount = parameters["amount"]
 
@@ -427,7 +425,6 @@ def create_wealth(parameters, test_instance):
         # create the entity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
 
-        #tx = api.tokens.wealth(entity, amount)
         tx = api.tokens.transfer(
             test_instance._benefactor_address, entity, amount, BASE_TX_FEE)
 
@@ -570,9 +567,8 @@ def run_steps(test_yaml, test_instance):
             destake(parameters, test_instance)
         elif command == 'run_dmlf_etch_client':
             run_dmlf_etch_client(parameters, test_instance)
-        # TODO(HUT): fix this.
-        elif command == "create_wealth":
-            create_wealth(parameters, test_instance)
+        elif command == "create_balance":
+            create_balance(parameters, test_instance)
         elif command == "create_synergetic_contract":
             create_synergetic_contract(parameters, test_instance)
         elif command == "run_contract":
