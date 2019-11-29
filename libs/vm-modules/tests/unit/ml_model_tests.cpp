@@ -424,6 +424,17 @@ TEST_F(VMModelTests, model_add_layer_to_non_sequential)
 
 TEST_F(VMModelTests, model_compilation_params)
 {
+  static char const *EMPTY_SEQUENTIAL_SRC = R"(
+      function main()
+         var model = Model("sequential");
+         model.compile("mse", "sgd");
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(EMPTY_SEQUENTIAL_SRC));
+  std::cout << "Testing compilation of an empty Sequential model" << std::endl;
+  EXPECT_FALSE(toolkit.Run());
+
   static char const *SEQUENTIAL_SRC = R"(
       function main()
          var model = Model("sequential");
