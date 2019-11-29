@@ -133,7 +133,7 @@ steps:
 
 ---
 test_description: >
-  Test synergetic mining
+  DISABLED - Test synergetic mining
 
 setup_conditions:
   test_name: "synergetic_mining"
