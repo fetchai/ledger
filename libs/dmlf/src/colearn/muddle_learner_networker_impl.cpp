@@ -36,10 +36,10 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(MuddlePtr mud, StorePtr u
 void MuddleLearnerNetworkerImpl::SetShuffleAlgorithm(
     const std::shared_ptr<ShuffleAlgorithmInterface> &alg)
 {
-  ShuffleAlgorithmInterface *   iface = alg.get();
-  StochasticReceptionAlgorithm *stoc  = dynamic_cast<StochasticReceptionAlgorithm *>(iface);
+  ShuffleAlgorithmInterface *iface = alg.get();
+  auto *stoc  = dynamic_cast<StochasticReceptionAlgorithm *>(iface);
 
-  if (stoc)
+  if (stoc != nullptr)
   {
     set_broadcast_proportion(stoc->broadcast_proportion());
   }

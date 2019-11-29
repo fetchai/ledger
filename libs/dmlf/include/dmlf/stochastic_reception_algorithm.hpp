@@ -27,7 +27,7 @@ namespace dmlf {
 class StochasticReceptionAlgorithm : public ShuffleAlgorithmInterface
 {
 public:
-  StochasticReceptionAlgorithm(double broadcast_proportion)
+  explicit StochasticReceptionAlgorithm(double broadcast_proportion)
     : ShuffleAlgorithmInterface(0)
     , broadcast_proportion_(broadcast_proportion)
   {}

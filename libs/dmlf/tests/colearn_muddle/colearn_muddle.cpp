@@ -196,9 +196,9 @@ TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveShuffle)
   }
 
   auto cycle = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(instances.size() - 1, 2);
-  for (unsigned int i = 0; i < instances.size(); i++)
+  for (auto &inst : instances)
   {
-    instances[i].instance->actual->SetShuffleAlgorithm(cycle);
+    inst.instance->actual->SetShuffleAlgorithm(cycle);
   }
 
   instances[0].instance->PretendToLearn();
