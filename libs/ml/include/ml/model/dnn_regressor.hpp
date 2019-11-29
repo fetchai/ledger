@@ -42,6 +42,9 @@ public:
   ~DNNRegressor() override                = default;
 
   DNNRegressor(ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
+
+private:
+  using Model<TensorType>::layer_count_;
 };
 
 /**
@@ -76,7 +79,8 @@ DNNRegressor<TensorType>::DNNRegressor(ModelConfig<DataType>        model_config
   this->label_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Label", {});
   this->error_ =
       this->graph_ptr_->template AddNode<CostFunctionType>("Error", {this->output_, this->label_});
-  this->loss_set_ = true;
+  this->loss_set_    = true;
+  this->layer_count_ = hidden_layers.size();
 }
 
 }  // namespace model

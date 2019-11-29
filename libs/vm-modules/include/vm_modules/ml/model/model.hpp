@@ -101,7 +101,7 @@ public:
 
   static void Bind(fetch::vm::Module &module);
 
-  void SetUnderlyingModelInstance(ModelPtrType const &instance);
+  void SetModel(ModelPtrType const &instance);
 
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
@@ -118,7 +118,9 @@ private:
   ModelCategory      model_category_ = ModelCategory::NONE;
   bool               compiled_       = false;
 
-  static constexpr size_t min_allowed_hidden_layers_ = 2;
+  // Simple Model does not allow to have 1 hidden layer,
+  // fix is pending in ML-278
+  static constexpr std::size_t min_allowed_hidden_layers_ = 2;
 
   static const std::map<std::string, SupportedLayerType>                 layer_types_;
   static const std::map<std::string, fetch::ml::details::ActivationType> activations_;

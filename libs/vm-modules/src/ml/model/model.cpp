@@ -142,6 +142,12 @@ void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
   {
     LossType const      loss_type      = ParseName(loss->string(), losses_, "loss function");
     OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
+    SequentialModelPtr  me             = GetMeAsSequentialIfPossible();
+    if (me->LayerCount() == 0)
+    {
+      vm_->RuntimeError("Can not compile an empty sequential model, please add layers first.");
+      return;
+    }
     PrepareDataloader();
     compiled_ = false;
     model_->Compile(optimiser_type, loss_type);
@@ -157,7 +163,7 @@ void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
 void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
                             fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers)
 {
-  size_t const total_hidden_layers = in_layers->elements.size();
+  std::size_t const total_hidden_layers = in_layers->elements.size();
   if (total_hidden_layers < min_allowed_hidden_layers_)
   {
     vm_->RuntimeError("Regressor/classifier model must have at least " +
@@ -268,7 +274,7 @@ void VMModel::Bind(Module &module)
       .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString);
 }
 
-void VMModel::SetUnderlyingModelInstance(const VMModel::ModelPtrType &instance)
+void VMModel::SetModel(const VMModel::ModelPtrType &instance)
 {
   model_ = instance;
 }
@@ -358,7 +364,7 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   vm_model.model_config_ = model_config_;
 
   // assign deserialised model
-  vm_model.SetUnderlyingModelInstance(model_ptr);
+  vm_model.SetModel(model_ptr);
 
   // assign compiled status
   vm_model.compiled_ = compiled;

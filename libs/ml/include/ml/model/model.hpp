@@ -91,10 +91,11 @@ public:
   std::shared_ptr<const DataLoaderType>     GetDataloader();
   std::shared_ptr<const ModelOptimiserType> GetOptimiser();
 
-  std::string InputName();
-  std::string LabelName();
-  std::string OutputName();
-  std::string ErrorName();
+  std::string InputName() const;
+  std::string LabelName() const;
+  std::string OutputName() const;
+  std::string ErrorName() const;
+  SizeType    LayerCount() const;
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
@@ -111,9 +112,10 @@ protected:
   std::string              error_;
   std::vector<std::string> metrics_;
 
-  bool loss_set_      = false;
-  bool optimiser_set_ = false;
-  bool compiled_      = false;
+  bool     loss_set_      = false;
+  bool     optimiser_set_ = false;
+  bool     compiled_      = false;
+  SizeType layer_count_   = 0;
 
   DataType loss_;
 
@@ -373,27 +375,33 @@ Model<TensorType>::GetOptimiser()
 }
 
 template <typename TensorType>
-std::string Model<TensorType>::InputName()
+std::string Model<TensorType>::InputName() const
 {
   return input_;
 }
 
 template <typename TensorType>
-std::string Model<TensorType>::LabelName()
+std::string Model<TensorType>::LabelName() const
 {
   return label_;
 }
 
 template <typename TensorType>
-std::string Model<TensorType>::OutputName()
+std::string Model<TensorType>::OutputName() const
 {
   return output_;
 }
 
 template <typename TensorType>
-std::string Model<TensorType>::ErrorName()
+std::string Model<TensorType>::ErrorName() const
 {
   return error_;
+}
+
+template <typename TensorType>
+fetch::math::SizeType Model<TensorType>::LayerCount() const
+{
+  return layer_count_;
 }
 
 /// PROTECTED METHODS ///

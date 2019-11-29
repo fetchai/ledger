@@ -49,8 +49,8 @@ public:
   friend struct serializers::MapSerializer;
 
 private:
-  SizeType    layer_count_ = 0;
   std::string prev_layer_;
+  using Model<TensorType>::layer_count_;
 };
 
 /**
