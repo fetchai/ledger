@@ -100,7 +100,7 @@ def fast_tests_stage(Platform platform, Configuration config)
 def slow_tests_stage(Platform platform, Configuration config)
 {
   return {
-    stage("Slow Tests ${stage_name_suffix(platform, config)}") {
+//     stage("Slow Tests ${stage_name_suffix(platform, config)}") {
 //       sh "./scripts/ci-tool.py -S ${config.label}"
 //     }
 //
