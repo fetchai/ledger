@@ -55,11 +55,6 @@ public:
   DirectMessageService &operator=(DirectMessageService &&) = delete;
 
 private:
-  struct ConnectionData
-  {
-    Address address;
-  };
-
   enum class Phase : uint8_t
   {
     INITIAL = 0,

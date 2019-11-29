@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/networkers/abstract_learner_networker.hpp"
+#include "dmlf/deprecated/abstract_learner_networker.hpp"
 #include <memory>
 #include <set>
 #include <thread>
@@ -25,23 +25,25 @@
 namespace fetch {
 namespace dmlf {
 
-class FilepassingLearnerNetworker : public AbstractLearnerNetworker
+class deprecated_FilepassingLearnerNetworker : public deprecated_AbstractLearnerNetworker
 {
 public:
-  using Bytes                = AbstractLearnerNetworker::Bytes;
+  using Bytes                = deprecated_AbstractLearnerNetworker::Bytes;
   using Peer                 = std::string;
   using Peers                = std::vector<Peer>;
   using ProcessedUpdateNames = std::unordered_set<std::string>;
   using ThreadP              = std::shared_ptr<std::thread>;
 
-  FilepassingLearnerNetworker() = default;
-  ~FilepassingLearnerNetworker() override;
-  FilepassingLearnerNetworker(FilepassingLearnerNetworker const &other) = delete;
-  FilepassingLearnerNetworker &operator=(FilepassingLearnerNetworker const &other)  = delete;
-  bool                         operator==(FilepassingLearnerNetworker const &other) = delete;
-  bool                         operator<(FilepassingLearnerNetworker const &other)  = delete;
+  deprecated_FilepassingLearnerNetworker() = default;
+  ~deprecated_FilepassingLearnerNetworker() override;
+  deprecated_FilepassingLearnerNetworker(deprecated_FilepassingLearnerNetworker const &other) =
+      delete;
+  deprecated_FilepassingLearnerNetworker &operator                     =(
+      deprecated_FilepassingLearnerNetworker const &other) = delete;
+  bool operator==(deprecated_FilepassingLearnerNetworker const &other) = delete;
+  bool operator<(deprecated_FilepassingLearnerNetworker const &other)  = delete;
 
-  void        PushUpdate(UpdateInterfacePtr const &update) override;
+  void        PushUpdate(deprecated_UpdateInterfacePtr const &update) override;
   std::size_t GetPeerCount() const override
   {
     return peers_.size();

@@ -18,6 +18,7 @@
 
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/abs.hpp"
+#include "vm/fixed.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/math/abs.hpp"
@@ -32,7 +33,6 @@ namespace vm_modules {
 namespace math {
 
 namespace {
-
 /**
  * method for taking the absolute of a value
  */
@@ -42,6 +42,14 @@ fetch::math::meta::IfIsMath<T, T> Abs(VM * /*vm*/, T const &a)
   T x;
   fetch::math::Abs(a, x);
   return x;
+}
+
+template <typename T>
+IfIsPtrFixed128<T, Ptr<T>> AbsPtr(VM *vm, Ptr<T> const &a)
+{
+  fixed_point::fp128_t x = a->data_;
+  fetch::math::Abs(x, x);
+  return Ptr<Fixed128>(new Fixed128(vm, x));
 }
 
 template <typename T, typename R = void>
@@ -93,6 +101,7 @@ void BindAbs(Module &module)
 
   module.CreateFreeFunction("abs", &Abs<fixed_point::fp32_t>);
   module.CreateFreeFunction("abs", &Abs<fixed_point::fp64_t>);
+  module.CreateFreeFunction("abs", &AbsPtr<Fixed128>);
 }
 
 }  // namespace math

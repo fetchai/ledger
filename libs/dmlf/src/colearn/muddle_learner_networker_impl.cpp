@@ -139,11 +139,14 @@ void MuddleLearnerNetworkerImpl::submit(TaskP const &t)
   taskpool_->submit(t);
 }
 
-void MuddleLearnerNetworkerImpl::PushUpdateType(const std::string &       type_name,
-                                                UpdateInterfacePtr const &update)
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update)
 {
-  auto bytes = update->Serialise();
-  PushUpdateBytes(type_name, bytes);
+  auto random_factor = randomiser_.GetNew();
+
+  serializers::MsgPackSerializer buf;
+  buf << type_name << update << broadcast_proportion_ << random_factor;
+
+  mud_->GetEndpoint().Broadcast(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST, buf.data());
 }
 
 void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update,
@@ -159,25 +162,10 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, B
   }
 }
 
-void MuddleLearnerNetworkerImpl::PushUpdateBytes(const std::string &type_name, Bytes const &update)
-{
-  auto random_factor = randomiser_.GetNew();
-
-  serializers::MsgPackSerializer buf;
-  buf << type_name << update << broadcast_proportion_ << random_factor;
-
-  mud_->GetEndpoint().Broadcast(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST, buf.data());
-}
-
-MuddleLearnerNetworkerImpl::UpdatePtr MuddleLearnerNetworkerImpl::GetUpdate(
+MuddleLearnerNetworkerImpl::ConstUpdatePtr MuddleLearnerNetworkerImpl::GetUpdate(
     Algorithm const &algo, UpdateType const &type, Criteria const &criteria)
 {
   return update_store_->GetUpdate(algo, type, criteria);
-}
-
-void MuddleLearnerNetworkerImpl::PushUpdate(UpdateInterfacePtr const &update)
-{
-  PushUpdateType("", update);
 }
 
 uint64_t MuddleLearnerNetworkerImpl::ProcessUpdate(const std::string &        type_name,
@@ -198,7 +186,7 @@ uint64_t MuddleLearnerNetworkerImpl::ProcessUpdate(const std::string &        ty
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "STORING ", type_name, " from ", source);
-  update_store_->PushUpdate("algo1", type_name, std::move(bytes), source, std::move(metadata));
+  update_store_->PushUpdate("algo0", type_name, std::move(bytes), source, std::move(metadata));
   return 1;
 }
 
@@ -210,6 +198,7 @@ uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext c
   auto source = std::string(fetch::byte_array::ToBase64(context.sender_address));
   return ProcessUpdate(type_name, std::move(bytes), proportion, random_factor, source);
 }
+
 }  // namespace colearn
 }  // namespace dmlf
 }  // namespace fetch
