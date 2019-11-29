@@ -1510,7 +1510,7 @@ void BeaconSetupService::StartNewCabinet(CabinetMemberList members, uint32_t thr
 
   if (is_current_round || is_already_queued)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, NodeString(), "Duplicate creation of entropy: current_round: ", is_current_round, " is_queued: ", is_already_queued);
+    FETCH_LOG_WARN(LOGGING_NAME,"Node ", beacon_->manager.cabinet_index(), " : Duplicate creation of entropy: current_round: ", is_current_round, " is_queued: ", is_already_queued);
     beacon_dkg_duplicate_creates_total_->increment();
     return;
   }
