@@ -45,7 +45,6 @@ void PeerConnectionList::SetStatusCallback(StatusCallback callback)
 bool PeerConnectionList::AddPersistentPeer(Uri const &peer)
 {
   FETCH_LOCK(lock_);
-  FETCH_LOG_WARN(logging_name_, "Adding persistent peer to ", peer.ToString());
   auto const result = persistent_peers_.emplace(peer);
   return result.second;
 }
@@ -53,7 +52,6 @@ bool PeerConnectionList::AddPersistentPeer(Uri const &peer)
 void PeerConnectionList::RemovePersistentPeer(Uri const &peer)
 {
   FETCH_LOCK(lock_);
-  FETCH_LOG_WARN(logging_name_, "Removing (X) ", peer);
   persistent_peers_.erase(peer);
 }
 
@@ -65,7 +63,6 @@ void PeerConnectionList::RemovePersistentPeer(Handle handle)
     if (peer_connection.second->handle() == handle)
     {
 
-      FETCH_LOG_WARN(logging_name_, "Removing ", peer_connection.first);
       persistent_peers_.erase(peer_connection.first);
       break;
     }
@@ -267,7 +264,6 @@ PeerConnectionList::PeerList PeerConnectionList::GetPeersToConnectTo() const
         // determine if this connection should be connected again
         if (ReadyForRetry(metadata))
         {
-          FETCH_LOG_WARN(logging_name_, "Retrying connect to ", peer);
           peers.push_back(peer);
         }
       }

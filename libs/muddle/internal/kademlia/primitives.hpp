@@ -3,6 +3,7 @@
 #include "core/serializers/group_definitions.hpp"
 #include "crypto/sha1.hpp"
 #include "muddle/packet.hpp"
+#include "vectorise/platform.hpp"
 
 namespace fetch {
 namespace muddle {
@@ -89,7 +90,17 @@ inline KademliaDistance GetKademliaDistance(KademliaAddress const &a, KademliaAd
   return ret;
 }
 
-inline uint64_t GetBucket(KademliaDistance const &dist)
+inline uint64_t GetBucketByHamming(KademliaDistance const &dist)
+{
+  uint64_t ret{0};
+  for (auto const &d : dist)
+  {
+    ret += platform::CountSetBits(d);
+  }
+  return ret;
+}
+
+inline uint64_t GetBucketByLogarithm(KademliaDistance const &dist)
 {
 
   static uint64_t zeros[16] = {

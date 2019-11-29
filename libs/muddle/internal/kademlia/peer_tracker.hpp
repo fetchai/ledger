@@ -21,6 +21,11 @@
 namespace fetch {
 namespace muddle {
 
+/*
+ * Things to update:
+ * 1. Work out what long range connections look like
+ * 2. Add Kademlia topology
+ */
 class PeerTracker : public core::PeriodicRunnable
 {
 public:
@@ -30,6 +35,7 @@ public:
   using Clock                  = std::chrono::steady_clock;
   using TimePoint              = Clock::time_point;
   using Address                = Packet::Address;
+  using Peers                  = std::deque<PeerInfo>;
   using PeerTrackerPtr         = std::shared_ptr<PeerTracker>;
   using PeerList               = std::unordered_set<Address>;
   using PendingPortResolution  = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
@@ -40,6 +46,7 @@ public:
   using ConnectionPriorityMap  = std::unordered_map<Address, AddressPriority>;
   using ConnectionPriorityList = std::vector<AddressPriority>;
   using AddressSet             = std::unordered_set<Address>;
+  using AddressMap             = std::unordered_map<Address, Address>;
   using AddressTimestamp       = std::unordered_map<Address, TimePoint>;
   using PeerInfoList           = std::deque<PeerInfo>;
   using TrackingTaskDetailsMap = std::unordered_map<Address, TrackingTaskDetails>;
@@ -98,7 +105,9 @@ public:
   void       AddDesiredPeer(Address const &address);
   void       AddDesiredPeer(Address const &address, network::Peer const &hint);
   void       RemoveDesiredPeer(Address const &address);
+  void       EstablishLongRangeConnnectivity();
   AddressSet desired_peers_;
+
   /// @}
 
   /// Message delivery
@@ -130,11 +139,14 @@ public:
   /// @{
   ConnectionPriorityMap connection_priority() const;
   std::size_t           known_peer_count() const;
+  std::size_t           active_buckets() const;
+  std::size_t           first_non_empty_bucket() const;
   AddressSet            keep_connections() const;
   AddressSet            no_uri() const;
   AddressSet            incoming() const;
   AddressSet            outgoing() const;
   AddressSet            all_peers() const;
+  AddressSet            desired_peers() const;
   /// @}
 private:
   PeerTracker(Duration const &interval, core::Reactor &reactor, MuddleRegister const &reg,
@@ -142,8 +154,10 @@ private:
 
   /// Connectivity maintenance
   /// @{
-  void UpdatePriorityList();
-  void UpdareLongLivedConnections();
+  void ConnectToDesiredPeers();
+  void UpdatePriorityList(ConnectionPriorityMap & connection_priority,
+                          ConnectionPriorityList &prioritized_peers, Peers const &peers);
+  void UpdareLongLivedConnections(ConnectionPriorityList &prioritized_peers);
   void DisconnectDuplicates();
   void DisconnectFromPeers();
   /// @}
@@ -176,48 +190,46 @@ private:
   rpc::Client          rpc_client_;
   rpc::Server          rpc_server_;
   PeerTrackerProtocol  peer_tracker_protocol_;
-  uint64_t             track_cycle_counter_{0};
   TrackerConfiguration tracker_configuration_;
   /// @}
 
   std::queue<UnresolvedConnection> new_handles_;
   PendingPortResolution            port_resolution_promises_;
 
-  /// Tracking
-  /// @{
-  /*
-  uint64_t                  next_tracker_id_{0};
-  PendingPromised           tracking_promises_;
-  TrackingTaskDetailsMap    tracking_task_details_;
-  TrackingPriorities        tracking_priorities_;
-  std::vector<TrackingTask> tracking_in_progress_;
-  */
-  /// @}
+  ConnectionPriorityMap
+                         kademlia_connection_priority_;  ///< Contains all relevant address priorities.
+  ConnectionPriorityList kademlia_prioritized_peers_;  ///< List with all address in priority.
 
   ConnectionPriorityMap
-                         longlived_connection_priority_;  ///< Contains all relevant address priorities.
-  ConnectionPriorityList longlived_prioritized_peers_;  ///< List with all address in priority.
-
+                         longrange_connection_priority_;  ///< Contains all relevant address priorities.
+  ConnectionPriorityList longrange_prioritized_peers_;  ///< List with all address in priority.
   /// Maintenance cycle
   /// @{
   Address own_address_;  ///< Own address
 
   void PullPeerKnowledge();
   void SchedulePull(Address const &address);
-  void OnResolvedPull(uint64_t pull_id, Address peer, service::Promise const &promise);
-  std::deque<Address>         peer_pull_queue_;
-  std::unordered_set<Address> peer_pull_set_;
-  PendingPromised             pull_promises_;
-  uint64_t                    pull_next_id_{0};
+  void SchedulePull(Address const &address, Address const &search_for);
+  void OnResolvedPull(uint64_t pull_id, Address peer, Address search_for,
+                      service::Promise const &promise);
 
-  uint64_t   persistent_outgoing_connections_{0};  ///< Number of persistent outgoing connections
-  uint64_t   shortlived_outgoing_connections_{0};  ///< Number of shortlived outgoing connections
-  AddressSet no_uri_{};
-  AddressSet keep_connections_{};              ///< Addresses that should not be disconnected
+  std::deque<Address>                    peer_pull_queue_;
+  AddressMap                             peer_pull_map_;
+  PendingPromised                        pull_promises_;
+  std::unordered_map<Address, TimePoint> last_pull_from_peer_;
+  uint64_t                               pull_next_id_{0};
+
+  uint64_t persistent_outgoing_connections_{0};  ///< Number of persistent outgoing connections
+  /// @}
+
+  /// Logging sets
+  /// @{
+  AddressSet            no_uri_{};
+  AddressSet            keep_connections_{};   ///< Addresses that should not be disconnected
   ConnectionPriorityMap next_priority_map_{};  ///< Trimmed priority map
+  /// @}
 
   std::string logging_name_{"not-set"};
-  /// @}
 };  // namespace muddle
 
 }  // namespace muddle

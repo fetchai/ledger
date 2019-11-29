@@ -78,7 +78,8 @@ struct Node
 
     char const *external         = std::getenv("MUDDLE_EXTERNAL");
     char const *external_address = (external == nullptr) ? "127.0.0.1" : external;
-    muddle = muddle::CreateMuddle("TEST", NewCertificate(), *network_manager, external_address);
+    muddle  = muddle::CreateMuddle("TEST", NewCertificate(), *network_manager, external_address);
+    address = muddle->GetAddress();
 
     muddle->Start({port});
 
@@ -201,11 +202,20 @@ ConstByteArray ReadibleAddress(Address const &address)
 
 int main()
 {
-  uint64_t N       = 8;  // TODO: Make parameter
+  uint64_t N       = 40;  // TODO: Make parameter
   auto     network = Network::New(N);
 
   //  MakeKademliaNetwork(network);
   LinearConnectivity(network);
+
+  uint64_t step = N / 4;
+  for (uint64_t i = 0; i < N; i += step)
+  {
+    uint64_t next    = (i + step) % N;
+    auto     address = network->nodes[next]->address;
+
+    network->nodes[i]->muddle->ConnectTo(address);
+  }
 
   std::string input;
   while (true)

@@ -23,18 +23,29 @@ struct TrackerConfiguration
   {
     TrackerConfiguration conf;
 
-    conf.register_connections = false;
-    conf.pull_peers           = false;
-    conf.connect_to_nearest   = false;
-
+    conf.allow_desired_connections = false;
+    conf.register_connections      = false;
+    conf.pull_peers                = false;
+    conf.connect_to_nearest        = false;
+    conf.disconnect_duplicates     = false;
+    conf.trim_peer_list            = false;
     return conf;
   }
 
+  /// Operations
+  /// @{
+  bool allow_desired_connections{true};
   bool register_connections{true};
   bool pull_peers{true};
   bool connect_to_nearest{true};
+  bool disconnect_duplicates{true};
+  bool trim_peer_list{true};
+  bool long_range_connectivity{true};
+  /// @}
 
-  uint64_t max_outgoing_connections{2};
+  uint64_t max_kademlia_connections{3};
+  uint64_t max_desired_connections{3};
+  uint64_t max_discovery_connections{3};
 
   /// Priority paramters
   /// @{
@@ -52,8 +63,8 @@ struct TrackerConfiguration
 
   /// Connectivity
   /// @{
-  uint64_t max_shortlived_outgoing{2};
-  uint64_t max_longlived_outgoing{2};
+  //  uint64_t max_shortlived_outgoing{2};
+  //  uint64_t max_longlived_outgoing{2};
   /// @}
 
   /// RPC configuration

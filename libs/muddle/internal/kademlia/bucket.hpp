@@ -4,6 +4,7 @@
 #include "kademlia/primitives.hpp"
 
 #include <deque>
+#include <unordered_set>
 #include <vector>
 
 namespace fetch {
@@ -14,11 +15,11 @@ struct Bucket
   using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
   using BucketId  = uint64_t;
-  using Peer      = std::shared_ptr<PeerInfo>;
+  using Peer      = std::shared_ptr<PeerInfo>;  // TODO: Make weak
 
-  BucketId         bucket_id;
-  std::deque<Peer> peers;
-  Timepoint        last_updated;  // TODO: not used atm
+  BucketId                 bucket_id;
+  std::unordered_set<Peer> peers;
+  Timepoint                last_updated;  // TODO: not used atm
 
   /*
   // TODO: Move from primitives

@@ -55,7 +55,6 @@ namespace muddle {
 
 class MuddleRegister;
 class MuddleEndpoint;
-class PeerSelector;
 class PeerTracker;
 
 /**
@@ -196,9 +195,8 @@ public:
   MuddleRegister const &      connection_register() const;
   PeerConnectionList const &  connection_list() const;
   DirectMessageService const &direct_message_service() const;
-  //  PeerSelector const &        peer_selector() const;
-  PeerTracker const &peer_tracker() const;
-  ServerList const & servers() const;
+  PeerTracker const &         peer_tracker() const;
+  ServerList const &          servers() const;
   /// @}
 
   // Operators
@@ -206,13 +204,12 @@ public:
   Muddle &operator=(Muddle &&) = delete;
 
 private:
-  using Client          = std::shared_ptr<network::AbstractConnection>;
-  using ThreadPool      = network::ThreadPool;
-  using Register        = std::shared_ptr<MuddleRegister>;
-  using Clock           = std::chrono::system_clock;
-  using Timepoint       = Clock::time_point;
-  using Duration        = Clock::duration;
-  using PeerSelectorPtr = std::shared_ptr<PeerSelector>;
+  using Client     = std::shared_ptr<network::AbstractConnection>;
+  using ThreadPool = network::ThreadPool;
+  using Register   = std::shared_ptr<MuddleRegister>;
+  using Clock      = std::chrono::system_clock;
+  using Timepoint  = Clock::time_point;
+  using Duration   = Clock::duration;
 
   void RunPeriodicMaintenance();
 
@@ -241,7 +238,6 @@ private:
   core::Reactor        reactor_;
   core::RunnablePtr    maintenance_periodic_;
   DirectMessageService direct_message_service_;
-  PeerSelectorPtr      peer_selector_;
   PeerTrackerPtr       peer_tracker_;
 
   // Services

@@ -103,20 +103,6 @@ void BuildConnectionPriorities(PeerTracker const &peer_tracker, variant::Variant
   }
 }
 
-void BuildKeepConnections(PeerTracker const &peer_tracker, variant::Variant &output)
-{
-  auto keepers = peer_tracker.keep_connections();
-  output       = variant::Variant::Array(keepers.size());
-
-  // Updating priorities
-  std::size_t idx{0};
-  for (auto &p : keepers)
-  {
-    output[idx] = p.ToBase64();
-    ++idx;
-  }
-}
-
 /**
  * Build the JSON representation of a PeerTracker internal status
  * // TODO
@@ -125,16 +111,18 @@ void BuildKeepConnections(PeerTracker const &peer_tracker, variant::Variant &out
  */
 void BuildPeerTracker(PeerTracker const &peer_tracker, variant::Variant &output)
 {
-  output                   = variant::Variant::Object();
-  output["knownPeerCount"] = peer_tracker.known_peer_count();
+  output                        = variant::Variant::Object();
+  output["knownPeerCount"]      = peer_tracker.known_peer_count();
+  output["activeBucketCount"]   = peer_tracker.active_buckets();
+  output["firstNonEmptyBucket"] = peer_tracker.first_non_empty_bucket();
+
   BuildConnectionPriorities(peer_tracker, output["connectionPriority"]);
   BuildPeerSet(peer_tracker.keep_connections(), output["keepConnections"]);
   BuildPeerSet(peer_tracker.no_uri(), output["noUri"]);
   BuildPeerSet(peer_tracker.incoming(), output["incoming"]);
   BuildPeerSet(peer_tracker.outgoing(), output["outgoing"]);
   BuildPeerSet(peer_tracker.all_peers(), output["allPeers"]);
-  //  BuildPeerSet(peer_selector.GetKademliaPeers(), output["kademliaPeers"]);
-  //  BuildPeerInfo(peer_selector, output["peerInfo"]);
+  BuildPeerSet(peer_tracker.desired_peers(), output["desiredPeers"]);
 }
 
 /**

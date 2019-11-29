@@ -17,16 +17,16 @@ KademliaTable::Peers KademliaTable::ProposePermanentConnections() const
 
   uint64_t n = 0;
   Peers    ret;
-  for (auto &p : buckets_[n].peers)
+  for (auto &p : by_logarithm_[n].peers)
   {
     ret.push_back(*p);
   }
 
   ++n;
 
-  while ((n < buckets_.size()) && (ret.size() < kademlia_max_peers_per_bucket_))
+  while ((n < by_logarithm_.size()) && (ret.size() < kademlia_max_peers_per_bucket_))
   {
-    for (auto const &p : buckets_[n].peers)
+    for (auto const &p : by_logarithm_[n].peers)
     {
       ret.push_back(*p);
     }
@@ -35,30 +35,28 @@ KademliaTable::Peers KademliaTable::ProposePermanentConnections() const
   return ret;
 }
 
-KademliaTable::Peers KademliaTable::FindPeer(Address const &address)
+KademliaTable::Peers KademliaTable::FindPeerInternal(KademliaAddress const &kam_address,
+                                                     uint64_t log_id, bool scan_left,
+                                                     bool scan_right)
 {
-  FETCH_LOCK(mutex_);
-
-  // Computing the Kademlia distance and the
-  // corresponding bucket.
-  auto kam_address = KademliaAddress::Create(address);
-  auto dist        = GetKademliaDistance(own_address_, kam_address);
-  auto bucket_id   = GetBucket(dist);
-
-  assert(bucket_id <= KADEMLIA_MAX_ID_BITS);
-
-  // Getting the list of peers from the bucket
-  Peers ret;
-  for (auto &p : buckets_[bucket_id].peers)
+  // Checking that we are within bounds
+  if (log_id > KADEMLIA_MAX_ID_BITS)
   {
-    ret.push_back(*p);
+    return {};
+  }
+
+  // Creating initial list
+  std::unordered_map<Address, PeerInfo> results;
+  for (auto &p : by_logarithm_[log_id].peers)
+  {
+    results.insert({p->address, *p});
   }
 
   // Preparing to search nearby buckets in case there is not
   // enough peers in the current bucket.
-  auto left            = bucket_id;
-  auto right           = bucket_id;
-  bool need_more_peers = ret.size() < kademlia_max_peers_per_bucket_;
+  auto left            = log_id;
+  auto right           = log_id;
+  bool need_more_peers = results.size() < kademlia_max_peers_per_bucket_;
 
   // Checking if we need to go to other buckets to add more
   // peers.
@@ -67,39 +65,40 @@ KademliaTable::Peers KademliaTable::FindPeer(Address const &address)
     need_more_peers = false;
 
     // Searhcing the buckets left of the main bucket
-    if (left != 0)
+    if (scan_left && (left != 0))
     {
       left -= 1;
-      for (auto const &p : buckets_[left].peers)
+      for (auto const &p : by_logarithm_[left].peers)
       {
-        ret.push_back(*p);
+        results.insert({p->address, *p});
       }
 
-      need_more_peers = ret.size() < kademlia_max_peers_per_bucket_;
+      need_more_peers = results.size() < kademlia_max_peers_per_bucket_;
     }
 
     // And the ones right of the main bucket.
-    if (right < KADEMLIA_MAX_ID_BITS)
+    if (scan_right && (right < KADEMLIA_MAX_ID_BITS))
     {
       right += 1;
 
-      for (auto const &p : buckets_[right].peers)
+      for (auto const &p : by_logarithm_[right].peers)
       {
-        ret.push_back(*p);
+        results.insert({p->address, *p});
       }
 
-      need_more_peers = ret.size() < kademlia_max_peers_per_bucket_;
+      need_more_peers = results.size() < kademlia_max_peers_per_bucket_;
     }
   }
 
   // Worst cast size of the return is at this point
   // 3 * kademlia_max_peers_per_bucket_ - 1. We now
   // trim and sort according to distance
-  assert(ret.size() < 3 * kademlia_max_peers_per_bucket_);
-
-  for (auto &peer : ret)
+  assert(results.size() < 3 * kademlia_max_peers_per_bucket_);
+  Peers ret;
+  for (auto &peer : results)
   {
-    peer.distance = GetKademliaDistance(peer.kademlia_address, kam_address);
+    peer.second.distance = GetKademliaDistance(peer.second.kademlia_address, kam_address);
+    ret.push_back(peer.second);
   }
 
   // Sorting according to distance
@@ -114,19 +113,141 @@ KademliaTable::Peers KademliaTable::FindPeer(Address const &address)
   return ret;
 }
 
-void KademliaTable::ReportLiveliness(Address const &address, PeerInfo const &info)
+KademliaTable::Peers KademliaTable::FindPeer(Address const &address)
 {
   FETCH_LOCK(mutex_);
 
-  auto other     = KademliaAddress::Create(address);
-  auto dist      = GetKademliaDistance(own_address_, other);
-  auto bucket_id = GetBucket(dist);
+  // Computing the Kademlia distance and the
+  // corresponding bucket.
+  auto kam_address = KademliaAddress::Create(address);
+  auto dist        = GetKademliaDistance(own_address_, kam_address);
+  auto log_id      = GetBucketByLogarithm(dist);
 
-  assert(bucket_id <= KADEMLIA_MAX_ID_BITS);
+  return FindPeerInternal(kam_address, log_id);
+}
+
+KademliaTable::Peers KademliaTable::FindPeer(Address const &address, uint64_t log_id,
+                                             bool scan_left, bool scan_right)
+{
+  FETCH_LOCK(mutex_);
+
+  // Computing the Kademlia distance and the
+  // corresponding bucket.
+  auto kam_address = KademliaAddress::Create(address);
+  return FindPeerInternal(kam_address, log_id, scan_left, scan_right);
+}
+
+KademliaTable::Peers KademliaTable::FindPeerByHammingInternal(KademliaAddress const &kam_address,
+                                                              uint64_t hamming_id, bool scan_left,
+                                                              bool scan_right)
+{
+  // TODO: Merge with other function.
+  // Checking that we are within bounds
+  if (hamming_id > KADEMLIA_MAX_ID_BITS)
+  {
+    return {};
+  }
+
+  // Creating initial list
+  std::unordered_map<Address, PeerInfo> results;
+  for (auto &p : by_hamming_[hamming_id].peers)
+  {
+    results.insert({p->address, *p});
+  }
+
+  // Preparing to search nearby buckets in case there is not
+  // enough peers in the current bucket.
+  auto left            = hamming_id;
+  auto right           = hamming_id;
+  bool need_more_peers = results.size() < kademlia_max_peers_per_bucket_;
+
+  // Checking if we need to go to other buckets to add more
+  // peers.
+  while (need_more_peers)
+  {
+    need_more_peers = false;
+
+    // Searhcing the buckets left of the main bucket
+    if (scan_left && (left != 0))
+    {
+      left -= 1;
+      for (auto const &p : by_hamming_[left].peers)
+      {
+        results.insert({p->address, *p});
+      }
+
+      need_more_peers = results.size() < kademlia_max_peers_per_bucket_;
+    }
+
+    // And the ones right of the main bucket.
+    if (scan_right && (right < KADEMLIA_MAX_ID_BITS))
+    {
+      right += 1;
+
+      for (auto const &p : by_hamming_[right].peers)
+      {
+        results.insert({p->address, *p});
+      }
+
+      need_more_peers = results.size() < kademlia_max_peers_per_bucket_;
+    }
+  }
+
+  // Worst cast size of the return is at this point
+  // 3 * kademlia_max_peers_per_bucket_ - 1. We now
+  // trim and sort according to distance
+  assert(results.size() < 3 * kademlia_max_peers_per_bucket_);
+  Peers ret;
+  for (auto &peer : results)
+  {
+    peer.second.distance = GetKademliaDistance(peer.second.kademlia_address, kam_address);
+    ret.push_back(peer.second);
+  }
+
+  // Sorting according to distance
+  std::sort(ret.begin(), ret.end());
+
+  // Trimming the list
+  while (ret.size() > kademlia_max_peers_per_bucket_)
+  {
+    ret.pop_back();
+  }
+
+  return ret;
+}
+
+KademliaTable::Peers KademliaTable::FindPeerByHamming(Address const &address)
+{
+  FETCH_LOCK(mutex_);
+  auto kam_address = KademliaAddress::Create(address);
+  auto dist        = GetKademliaDistance(own_address_, kam_address);
+  auto hamming_id  = GetBucketByLogarithm(dist);
+
+  return FindPeerByHammingInternal(kam_address, hamming_id);
+}
+
+KademliaTable::Peers KademliaTable::FindPeerByHamming(Address const &address, uint64_t hamming_id,
+                                                      bool scan_left, bool scan_right)
+{
+  FETCH_LOCK(mutex_);
+  auto kam_address = KademliaAddress::Create(address);
+  return FindPeerInternal(kam_address, hamming_id, scan_left, scan_right);
+}
+
+void KademliaTable::ReportLiveliness(Address const &address, Address const &reporter,
+                                     PeerInfo const &info)
+{
+  FETCH_LOCK(mutex_);
+
+  auto other  = KademliaAddress::Create(address);
+  auto dist   = GetKademliaDistance(own_address_, other);
+  auto log_id = GetBucketByLogarithm(dist);
+
+  assert(log_id <= KADEMLIA_MAX_ID_BITS);
 
   // Fetching the bucket and finding the peer if it is in the
   // bucket
-  auto &bucket  = buckets_[bucket_id];
+  auto &bucket  = by_logarithm_[log_id];
   auto  peer_it = bucket.peers.begin();
   for (; peer_it != bucket.peers.end(); ++peer_it)
   {
@@ -169,54 +290,90 @@ void KademliaTable::ReportLiveliness(Address const &address, PeerInfo const &inf
 
   // Updating activity information
   // TODO: This last part is wrong
-  peerinfo->verified = true;
+  peerinfo->last_reporter = reporter;
+  peerinfo->verified      = true;
   peerinfo->message_count += 1;
   // TODO: peerinfo.last_activity
-  bucket.peers.push_back(peerinfo);
+  bucket.peers.insert(peerinfo);
 
+  // Updating own bucket
+  if (log_id < first_non_empty_bucket_)
+  {
+    first_non_empty_bucket_ = log_id;
+  }
   // Triming the list
   // TODO: move to after pinging
+  /*
   while (bucket.peers.size() > kademlia_max_peers_per_bucket_)
   {
-    bucket.peers.pop_front();
+    // TODO: Pop
+    //    bucket.peers.pop_front();
   }
+  */
 }
 
-void KademliaTable::ReportExistence(PeerInfo const &info)
+void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporter)
 {
   //  ReportLiveliness(info.address, info);
   //  return;
   FETCH_LOCK(mutex_);
 
-  auto other     = KademliaAddress::Create(info.address);
-  auto dist      = GetKademliaDistance(own_address_, other);
-  auto bucket_id = GetBucket(dist);
+  auto other  = KademliaAddress::Create(info.address);
+  auto dist   = GetKademliaDistance(own_address_, other);
+  auto log_id = GetBucketByLogarithm(dist);
 
-  assert(bucket_id <= KADEMLIA_MAX_ID_BITS);
+  assert(log_id <= KADEMLIA_MAX_ID_BITS);
 
   // Do nothing if we already know about the existence
   auto it = know_peers_.find(info.address);
-  if (it != know_peers_.end())
-  {
-    return;
-  }
 
   // Fetching the bucket and finding the peer if it is in the
   // bucket
-  auto &      bucket   = buckets_[bucket_id];
-  PeerInfoPtr peerinfo = std::make_shared<PeerInfo>(info);
-  peerinfo->verified   = false;
-
-  know_peers_[info.address] = peerinfo;
-
-  //
-  if (bucket.peers.size() < kademlia_max_peers_per_bucket_)
+  if (it == know_peers_.end())
   {
-    bucket.peers.push_front(peerinfo);
+    auto &      bucket      = by_logarithm_[log_id];
+    PeerInfoPtr peerinfo    = std::make_shared<PeerInfo>(info);
+    peerinfo->verified      = false;
+    peerinfo->last_reporter = reporter;
+
+    know_peers_[info.address] = peerinfo;
+
+    //
+    if (bucket.peers.size() < kademlia_max_peers_per_bucket_)
+    {
+      bucket.peers.insert(peerinfo);
+    }
+  }
+  else
+  {
+    // Updating
+    // TODO: Update to time stamped certificiates
+    if (!info.uri.empty())
+    {
+      it->second->uri = info.uri;
+    }
+    it->second->last_reporter = reporter;
+  }
+
+  // Updating own bucket
+  if (log_id < first_non_empty_bucket_)
+  {
+    first_non_empty_bucket_ = log_id;
   }
 }
 
-void KademliaTable::ReportFailure(Address const &address)
+KademliaTable::PeerInfoPtr KademliaTable::GetPeerDetails(Address const &address)
+{
+  auto it = know_peers_.find(address);
+  if (it == know_peers_.end())
+  {
+    return nullptr;
+  }
+
+  return it->second;
+}
+
+void KademliaTable::ReportFailure(Address const & /*address*/, Address const & /*reporter*/)
 {}
 
 }  // namespace muddle

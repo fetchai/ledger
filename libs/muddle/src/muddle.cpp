@@ -69,9 +69,6 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , maintenance_periodic_(std::make_shared<core::PeriodicFunctor>(
         std::chrono::milliseconds{MAINTENANCE_INTERVAL_MS}, this, &Muddle::RunPeriodicMaintenance))
   , direct_message_service_(node_address_, router_, *register_, clients_)
-  //  , peer_selector_(std::make_shared<PeerSelector>(
-  //        network_id, std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_, *register_,
-  //        clients_, router_))
   , peer_tracker_(PeerTracker::New(std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_,
                                    *register_, clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
@@ -80,7 +77,6 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   register_->OnConnectionLeft([this](Handle handle) {
     router_.ConnectionDropped(handle);
     direct_message_service_.SignalConnectionLeft(handle);
-    FETCH_LOG_WARN("TEST", "Connection left");
   });
 
   register_->OnConnectionEntered(
@@ -100,7 +96,6 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   rpc_server_.Add(RPC_MUDDLE_DISCOVERY, &discovery_service_);
 
   reactor_.Attach(maintenance_periodic_);
-  //  reactor_.Attach(peer_selector_);
   reactor_.Attach(peer_tracker_);
 }
 

@@ -22,7 +22,10 @@ public:
   {
     PING             = 1,
     FIND_PEERS       = 2,
-    GET_MUDDLE_PORTS = 3
+    GET_MUDDLE_PORTS = 3,
+
+    // TODO: Not implemented
+    REQUEST_DISCONNECT = 4
   };
 
   PeerTrackerProtocol(KademliaTable &table, PortsList ports = {})
