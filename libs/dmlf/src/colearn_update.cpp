@@ -16,26 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <chrono>
-
 #include "dmlf/colearn/colearn_update.hpp"
+
+#include "core/serializers/main_serializer.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 
 namespace fetch {
 namespace dmlf {
 namespace colearn {
-
-namespace {
-
-using TimeStamp = ColearnUpdate::TimeStamp;
-
-TimeStamp CurrentTime()
-{
-  return static_cast<TimeStamp>(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                    std::chrono::system_clock::now().time_since_epoch())
-                                    .count());
-}
-
-}  // namespace
 
 ColearnUpdate::ColearnUpdate(Algorithm algorithm, UpdateType update_type, Data &&data,
                              Source source, Metadata metadata)
@@ -43,9 +32,25 @@ ColearnUpdate::ColearnUpdate(Algorithm algorithm, UpdateType update_type, Data &
   , update_type_{std::move(update_type)}
   , data_{std::move(data)}
   , source_{std::move(source)}
-  , time_stamp_{CurrentTime()}
   , metadata_{std::move(metadata)}
+  , creation_{Clock::now()}
+  , fingerprint_{ComputeFingerprint()}
 {}
+
+ColearnUpdate::Resolution ColearnUpdate::TimeSinceCreation() const
+{
+  return std::chrono::duration_cast<Resolution>(Clock::now() - creation_);
+}
+
+ColearnUpdate::Fingerprint ColearnUpdate::ComputeFingerprint()
+{
+  serializers::LargeObjectSerializeHelper serializer;
+  serializer << algorithm();
+  serializer << update_type();
+  serializer << source();
+  serializer << data();
+  return crypto::Hash<crypto::SHA256>(serializer.data());
+}
 
 }  // namespace colearn
 }  // namespace dmlf

@@ -19,7 +19,7 @@
 #include "dmlf/collective_learning/client_word2vec_algorithm.hpp"
 #include "dmlf/collective_learning/utilities/utilities.hpp"
 #include "dmlf/deprecated/local_learner_networker.hpp"
-#include "dmlf/deprecated/simple_cycling_algorithm.hpp"
+#include "dmlf/simple_cycling_algorithm.hpp"
 #include "json/document.hpp"
 #include "math/tensor.hpp"
 
