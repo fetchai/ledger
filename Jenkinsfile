@@ -101,12 +101,12 @@ def slow_tests_stage(Platform platform, Configuration config)
 {
   return {
     stage("Slow Tests ${stage_name_suffix(platform, config)}") {
-      sh "./scripts/ci-tool.py -S ${config.label}"
-    }
-
-    stage("Integration Tests ${stage_name_suffix(platform, config)}") {
-      sh "./scripts/ci-tool.py -I ${config.label}"
-    }
+//       sh "./scripts/ci-tool.py -S ${config.label}"
+//     }
+//
+//     stage("Integration Tests ${stage_name_suffix(platform, config)}") {
+//       sh "./scripts/ci-tool.py -I ${config.label}"
+//     }
 
     stage("End-to-End Tests ${stage_name_suffix(platform, config)}") {
       sh './scripts/install-test-dependencies.sh'
@@ -149,14 +149,14 @@ def _create_build(
 fast_run = { platform_, config_ ->
   return {
     build_stage(platform_, config_)()
-    fast_tests_stage(platform_, config_)()
+//     fast_tests_stage(platform_, config_)()
   }
 }
 
 full_run = { platform_, config_ ->
   return {
     build_stage(platform_, config_)()
-    fast_tests_stage(platform_, config_)()
+//     fast_tests_stage(platform_, config_)()
     slow_tests_stage(platform_, config_)()
   }
 }
@@ -205,12 +205,12 @@ def run_builds_in_parallel()
     }
 
     // Only run macOS builds on master and head branches
-    if (run_full_build())
-    {
-      stages["macOS ${Platform.DEFAULT_CLANG.label} ${config.label}"] = create_macos_build(
-        Platform.DEFAULT_CLANG,
-        config)
-    }
+//     if (run_full_build())
+//     {
+//       stages["macOS ${Platform.DEFAULT_CLANG.label} ${config.label}"] = create_macos_build(
+//         Platform.DEFAULT_CLANG,
+//         config)
+//     }
   }
 
   for (config in (run_full_build() ? Configuration.values() : [Configuration.RELEASE]))
@@ -224,10 +224,10 @@ def run_builds_in_parallel()
     }
   }
 
-  if (run_full_build())
-  {
-    stages['Static Analysis'] = static_analysis(Configuration.DEBUG)
-  }
+//   if (run_full_build())
+//   {
+//     stages['Static Analysis'] = static_analysis(Configuration.DEBUG)
+//   }
 
   stage('Build and Test') {
     // Execute stages
@@ -259,7 +259,7 @@ def run_basic_checks()
 def main()
 {
   timeout(180) {
-    run_basic_checks()
+//     run_basic_checks()
     run_builds_in_parallel()
   }
 }
