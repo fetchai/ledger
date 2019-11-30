@@ -476,13 +476,16 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
 
   // Assume if the chain is quite old that there are peers who have a heavier chain we haven't
   // heard about
+#if 0
   if (seconds_since_last_block > 100 && head_of_chain->block_number != 0)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation appears to be lost - chain is old.");
     state_machine_->Delay(std::chrono::milliseconds{1000});
     next_state = State::REQUEST_HEAVIEST_CHAIN;
   }
-  else if (chain_.HasMissingBlocks())
+  else
+#endif
+    if (chain_.HasMissingBlocks())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation lost - chain has missing blocks");
 
