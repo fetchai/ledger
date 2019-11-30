@@ -62,21 +62,21 @@ public:
                             MuddleRegister const &reg, PeerConnectionList &connections,
                             MuddleEndpoint &endpoint);
 
-  ///
+  /// Tracker interface
   /// @{
   AddressSet GetDesiredPeers() const;
   void       AddDesiredPeer(Address const &address);
   void       AddDesiredPeer(Address const &address, network::Peer const &hint);
   void       RemoveDesiredPeer(Address const &address);
+  // TODO: Address GetRoutingAddress(Address const& destination);
   /// @}
 
   /// Trust interface
   /// @{
-  // From Muddle
   void Blacklist(Address const & /*target*/);
   void Whitelist(Address const & /*target*/);
   bool IsBlacklisted(Address const & /*target*/) const;
-  // void ReportBehaviour(Address,  double)
+  // TODO: void ReportBehaviour(Address,  double)
   /// @}
 
   /// Periodic maintainance
@@ -117,9 +117,8 @@ private:
   void ConnectToDesiredPeers();
   void UpdatePriorityList(ConnectionPriorityMap & connection_priority,
                           ConnectionPriorityList &prioritized_peers, Peers const &peers);
-  void UpdareLongLivedConnections(AddressSet &                  connections,
-                                  ConnectionPriorityList const &prioritized_peers,
-                                  uint64_t &connection_count, uint64_t const &max_connections);
+  void ConnectToPeers(AddressSet &connections_made, ConnectionPriorityList const &prioritized_peers,
+                      uint64_t const &max_connections);
   void DisconnectDuplicates();
   void DisconnectFromPeers();
   /// @}
@@ -133,23 +132,28 @@ private:
   void            RegisterConnectionDetails(UnresolvedConnection const &details);
   /// @}
 
+  /// Network discovery
+  /// @{
+  void PullPeerKnowledge();
+  void SchedulePull(Address const &address);
+  void SchedulePull(Address const &address, Address const &search_for);
+  void OnResolvedPull(uint64_t pull_id, Address peer, Address search_for,
+                      service::Promise const &promise);
+  /// @}
+
   /// Thread-safety
   /// @{
   mutable std::mutex mutex_;
   /// @}
 
-  /// Maintaining connectivity
+  /// Core components for maintaining connectivity.
   /// @{
   core::Reactor &       reactor_;
   MuddleRegister const &register_;
   MuddleEndpoint &      endpoint_;
   PeerConnectionList &  connections_;
   KademliaTable         peer_table_;
-  /// @}
-
-  /// User defined connections
-  /// @{
-  AddressSet desired_peers_;
+  Address               own_address_;
   /// @}
 
   /// Peer tracker protocol
@@ -158,45 +162,49 @@ private:
   rpc::Server          rpc_server_;
   PeerTrackerProtocol  peer_tracker_protocol_;
   TrackerConfiguration tracker_configuration_;
+  AddressSet           keep_connections_{};
   /// @}
 
+  /// User defined connections
+  /// @{
+  AddressSet desired_peers_;
+  /// @}
+
+  /// Handling new comers
+  /// @{
   std::queue<UnresolvedConnection> new_handles_;
   PendingPortResolution            port_resolution_promises_;
+  /// @}
 
-  ConnectionPriorityMap
-                         kademlia_connection_priority_;  ///< Contains all relevant address priorities.
-  ConnectionPriorityList kademlia_prioritized_peers_;  ///< List with all address in priority.
-  AddressSet             kademlia_connections_;
-
-  ConnectionPriorityMap
-                         longrange_connection_priority_;  ///< Contains all relevant address priorities.
-  ConnectionPriorityList longrange_prioritized_peers_;  ///< List with all address in priority.
-  AddressSet             longrange_connections_;
-  /// Maintenance cycle
+  /// Managing connections to Kademlia subtrees
   /// @{
-  Address own_address_;  ///< Own address
+  ConnectionPriorityMap  kademlia_connection_priority_;
+  ConnectionPriorityList kademlia_prioritized_peers_;
+  AddressSet             kademlia_connections_;
+  //  uint64_t               persistent_outgoing_connections_{0};  /// TODO: rename?
 
-  void PullPeerKnowledge();
-  void SchedulePull(Address const &address);
-  void SchedulePull(Address const &address, Address const &search_for);
-  void OnResolvedPull(uint64_t pull_id, Address peer, Address search_for,
-                      service::Promise const &promise);
+  /// @}
 
+  /// Managing connections accross subtrees.
+  /// @{
+  ConnectionPriorityMap  longrange_connection_priority_;
+  ConnectionPriorityList longrange_prioritized_peers_;
+  AddressSet             longrange_connections_;
+  //  uint64_t               persistent_longrange_connections_{0};  /// TODO: rename?
+  /// @}
+
+  /// Management variables for network discovery
+  /// @{
   std::deque<Address>                    peer_pull_queue_;
   AddressMap                             peer_pull_map_;
   PendingPromised                        pull_promises_;
   std::unordered_map<Address, TimePoint> last_pull_from_peer_;
   uint64_t                               pull_next_id_{0};
-
-  uint64_t persistent_outgoing_connections_{0};   ///< Number of persistent outgoing connections
-  uint64_t persistent_longrange_connections_{0};  ///< Number of persistent outgoing connections
   /// @}
 
   /// Logging sets
   /// @{
-  AddressSet            no_uri_{};
-  AddressSet            keep_connections_{};   ///< Addresses that should not be disconnected
-  ConnectionPriorityMap next_priority_map_{};  ///< Trimmed priority map
+  AddressSet no_uri_{};  ///< TODO:  Get rid of it?
   /// @}
 
   std::string logging_name_{"not-set"};

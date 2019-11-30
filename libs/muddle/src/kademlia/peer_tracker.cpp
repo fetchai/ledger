@@ -168,59 +168,15 @@ void PeerTracker::UpdatePriorityList(ConnectionPriorityMap & connection_priority
               return a.priority > b.priority;
             });
 }
-/*
-void PeerTracker::UpdateLongrangePriorityList(ConnectionPriorityMap & connection_priority,
-                                              ConnectionPriorityList &prioritized_peers)
-{
-  // Adding the cloest known peers to the priority list
-  for (auto const &p : peers)
-  {
-    // Skipping own address
-    if (p.address == own_address_)
-    {
-      continue;
-    }
 
-    // Creating a priority for the list
-    AddressPriority priority;
-    priority.address = p.address;
-    priority.bucket  = GetBucketByLogarithm(p.distance);
-
-    connection_priority.insert({p.address, std::move(priority)});
-  }
-
-  //
-  for (auto &p : connection_priority)
-  {
-    // Skipping own address
-    if (p.first == own_address_)
-    {
-      continue;
-    }
-
-    // Updating and pushing to list
-    p.second.UpdatePriority();
-    prioritized_peers.push_back(p.second);
-  }
-
-  // Sorting according to priority
-  std::sort(prioritized_peers.begin(), prioritized_peers.end(),
-            [](auto const &a, auto const &b) -> bool {
-              // Making highest priority appear first
-              return a.priority > b.priority;
-            });
-}
-*/
-void PeerTracker::UpdareLongLivedConnections(AddressSet &                  connections,
-                                             ConnectionPriorityList const &prioritized_peers,
-                                             uint64_t &                    connection_count,
-                                             uint64_t const &              max_connections)
+void PeerTracker::ConnectToPeers(AddressSet &                  connections_made,
+                                 ConnectionPriorityList const &prioritized_peers,
+                                 uint64_t const &              max_connections)
 {
   auto const currently_outgoing = register_.GetOutgoingAddressSet();
   auto const currently_incoming = register_.GetIncomingAddressSet();
 
-  connections.clear();
-  connection_count = 0;
+  connections_made.clear();
 
   uint64_t n = 0;
 
@@ -229,7 +185,7 @@ void PeerTracker::UpdareLongLivedConnections(AddressSet &                  conne
   {
     // If we have more longlived connections than the max,
     // we stop. The most important onces are now kept alive.
-    if (connection_count >= max_connections)
+    if (connections_made.size() >= max_connections)
     {
       break;
     }
@@ -273,11 +229,9 @@ void PeerTracker::UpdareLongLivedConnections(AddressSet &                  conne
       connections_.AddPersistentPeer(uri);
     }
 
-    ++connection_count;
-
     // Keeping track of what we have connected to.
     keep_connections_.insert(p.address);
-    connections.insert(p.address);
+    connections_made.insert(p.address);
   }
 }
 
@@ -692,13 +646,13 @@ void PeerTracker::Periodically()
 
     // Updating the connectivity priority list with the nearest known neighbours
     UpdatePriorityList(kademlia_connection_priority_, kademlia_prioritized_peers_, peers);
-    UpdareLongLivedConnections(kademlia_connections_, kademlia_prioritized_peers_,
-                               persistent_outgoing_connections_,
-                               tracker_configuration_.max_kademlia_connections);
+    ConnectToPeers(kademlia_connections_, kademlia_prioritized_peers_,
+                   tracker_configuration_.max_kademlia_connections);
   }
 
   if (tracker_configuration_.long_range_connectivity)
   {
+    // TODO: Move into a functino
     // Finding peers close to us
     auto peers = peer_table_.FindPeer(own_address_);
 
@@ -734,11 +688,8 @@ void PeerTracker::Periodically()
       longrange_prioritized_peers_.push_back(p.second);
     }
 
-    UpdareLongLivedConnections(longrange_connections_, longrange_prioritized_peers_,
-                               persistent_longrange_connections_,
-                               tracker_configuration_.max_longrange_connections);
-    // UpdatePriorityList(kademlia_connection_priority_, kademlia_prioritized_peers_, peers);
-    //    UpdareLongLivedConnections(longrange_connection_priority_);
+    ConnectToPeers(longrange_connections_, longrange_prioritized_peers_,
+                   tracker_configuration_.max_longrange_connections);
   }
 
   // Identifying duplicate connections and remove them from the list
@@ -763,10 +714,11 @@ PeerTracker::PeerTracker(PeerTracker::Duration const &interval, core::Reactor &r
   , endpoint_{endpoint}
   , connections_{connections}
   , peer_table_{endpoint_.GetAddress()}
+  , own_address_{endpoint_.GetAddress()}
   , rpc_client_{"PeerTracker", endpoint_, SERVICE_MUDDLE_PEER_TRACKER, CHANNEL_RPC}
   , rpc_server_(endpoint_, SERVICE_MUDDLE_PEER_TRACKER, CHANNEL_RPC)
   , peer_tracker_protocol_{peer_table_}
-  , own_address_{endpoint_.GetAddress()}
+
 {
   rpc_server_.Add(RPC_MUDDLE_KADEMLIA, &peer_tracker_protocol_);
 }
