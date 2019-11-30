@@ -19,6 +19,7 @@
 
 #include "ml/core/graph.hpp"
 #include "vm/object.hpp"
+#include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 
 namespace fetch {

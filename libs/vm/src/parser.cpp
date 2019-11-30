@@ -1425,6 +1425,10 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       parses = HandleLiteral(NodeKind::Fixed64);
       break;
 
+    case Token::Kind::Fixed128:
+      parses = HandleLiteral(NodeKind::Fixed128);
+      break;
+
     case Token::Kind::String:
       parses = HandleLiteral(NodeKind::String);
       break;

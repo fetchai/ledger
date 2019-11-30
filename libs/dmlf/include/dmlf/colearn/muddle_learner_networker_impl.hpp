@@ -19,11 +19,12 @@
 
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
+#include "dmlf/colearn/abstract_message_controller.hpp"
 #include "dmlf/colearn/colearn_protocol.hpp"
 #include "dmlf/colearn/random_double.hpp"
 #include "dmlf/colearn/update_store.hpp"
-#include "dmlf/networkers/abstract_learner_networker.hpp"
-#include "dmlf/update_interface.hpp"
+#include "dmlf/deprecated/abstract_learner_networker.hpp"
+#include "dmlf/deprecated/update_interface.hpp"
 #include "logging/logging.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -36,28 +37,43 @@ namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-class MuddleLearnerNetworkerImpl : public dmlf::AbstractLearnerNetworker
+class MuddleLearnerNetworkerImpl : public AbstractMessageController
 {
 public:
-  using Taskpool           = oef::base::Taskpool;
-  using Threadpool         = oef::base::Threadpool;
-  using TaskP              = Taskpool::TaskP;
-  using MuddlePtr          = muddle::MuddlePtr;
-  using UpdateInterfacePtr = dmlf::UpdateInterfacePtr;
-  using RpcClient          = fetch::muddle::rpc::Client;
-  using RpcClientPtr       = std::shared_ptr<RpcClient>;
-  using Proto              = ColearnProtocol;
-  using ProtoP             = std::shared_ptr<ColearnProtocol>;
-  using RpcServer          = fetch::muddle::rpc::Server;
-  using RpcServerPtr       = std::shared_ptr<RpcServer>;
-  using Bytes              = byte_array::ByteArray;
-  using Store              = UpdateStore;
-  using StorePtr           = std::shared_ptr<Store>;
-  using NetMan             = fetch::network::NetworkManager;
-  using NetManP            = std::shared_ptr<NetMan>;
-  using Signer             = fetch::crypto::ECDSASigner;
-  using Randomiser         = RandomDouble;
-  using SignerPtr          = std::shared_ptr<Signer>;
+  using Taskpool = oef::base::Taskpool;
+
+  using Address                       = fetch::muddle::Address;
+  using AlgorithmClass                = AbstractMessageController::AlgorithmClass;
+  using Bytes                         = ColearnUpdate::Data;
+  using ConstUpdatePtr                = AbstractMessageController::ConstUpdatePtr;
+  using Criteria                      = UpdateStoreInterface::Criteria;
+  using Lock                          = std::unique_lock<Mutex>;
+  using MuddlePtr                     = muddle::MuddlePtr;
+  using NetMan                        = fetch::network::NetworkManager;
+  using NetManPtr                     = std::shared_ptr<NetMan>;
+  using Payload                       = fetch::muddle::Packet::Payload;
+  using Peers                         = std::unordered_set<Address>;
+  using Proto                         = ColearnProtocol;
+  using ProtoPtr                      = std::shared_ptr<ColearnProtocol>;
+  using Randomiser                    = RandomDouble;
+  using RpcClient                     = fetch::muddle::rpc::Client;
+  using RpcClientPtr                  = std::shared_ptr<RpcClient>;
+  using RpcServer                     = fetch::muddle::rpc::Server;
+  using RpcServerPtr                  = std::shared_ptr<RpcServer>;
+  using Signer                        = fetch::crypto::ECDSASigner;
+  using SignerPtr                     = std::shared_ptr<Signer>;
+  using Sources                       = std::set<std::string>;
+  using SourcesList                   = std::vector<std::string>;
+  using Store                         = UpdateStore;
+  using StorePtr                      = std::shared_ptr<Store>;
+  using SubscriptionPtr               = fetch::muddle::MuddleEndpoint::SubscriptionPtr;
+  using TaskPtr                       = Taskpool::TaskP;
+  using Threadpool                    = oef::base::Threadpool;
+  using UpdateClass                   = AbstractMessageController::UpdateClass;
+  using UpdatePtr                     = AbstractMessageController::UpdatePtr;
+  using UpdateType                    = UpdateStore::UpdateType;
+  using Uri                           = fetch::network::Uri;
+  using deprecated_UpdateInterfacePtr = dmlf::deprecated_UpdateInterfacePtr;
 
   static constexpr char const *LOGGING_NAME = "MuddleLearnerNetworkerImpl";
 
@@ -72,32 +88,45 @@ public:
   bool                        operator==(MuddleLearnerNetworkerImpl const &other) = delete;
   bool                        operator<(MuddleLearnerNetworkerImpl const &other)  = delete;
 
-  void addTarget(const std::string &peer);
-
-  void PushUpdate(UpdateInterfacePtr const &update) override;
-  void PushUpdateType(const std::string &type_name, UpdateInterfacePtr const &update) override;
-  void PushUpdateBytes(const std::string &type_name, Bytes const &update);
-
-  UpdateStore::UpdatePtr GetUpdate(UpdateStore::Algorithm const & algo,
-                                   UpdateStore::UpdateType const &type)
+  void PushUpdate(UpdatePtr const &update, AlgorithmClass const &algorithm,
+                  UpdateClass const &upd_class) override
   {
-    return update_store_->GetUpdate(algo, type);
+    PushUpdate(update->data(), algorithm, upd_class);
   }
 
-  UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type,
-                      Criteria const &criteria) override;
+  void PushUpdate(Bytes const &      update, AlgorithmClass const & /*algorithm*/,
+                  UpdateClass const &upd_class) override
+  {
+    PushUpdateBytes(upd_class, update);
+  }
 
-  std::size_t GetUpdateCount() const override
+  std::size_t GetUpdateCount(AlgorithmClass const &algo = "algo0",
+                             UpdateClass const &   type = "gradients") const override
+  {
+    FETCH_UNUSED(algo);
+    FETCH_UNUSED(type);
+    return GetUpdateTotalCount();
+  }
+
+  std::size_t GetUpdateTotalCount() const override
   {
     return update_store_->GetUpdateCount();
   }
 
-  std::size_t GetPeerCount() const override
+  ConstUpdatePtr GetUpdate(AlgorithmClass const &algo = "algo0",
+                           UpdateType const &    type = "gradients") override
   {
-    return 0;
+    return update_store_->GetUpdate(algo, type);
   }
 
-  virtual void submit(TaskP const &t);
+  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update);
+  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, const Peers &peers,
+                       double broadcast_proportion = -1.0);
+
+  ConstUpdatePtr GetUpdate(AlgorithmClass const &algo, UpdateType const &type,
+                           Criteria const &criteria);
+
+  virtual void submit(TaskPtr const &t);
 
   // This is the exposed interface
 
@@ -115,8 +144,33 @@ public:
     broadcast_proportion_ = proportion;
   }
 
+  Address     GetAddress() const;
+  std::string GetAddressAsString() const;
+
+  void SetShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg);
+
+  std::size_t GetPeerCount() const
+  {
+    return supplied_peers_.size();
+  }
+
+  void AddPeers(const std::vector<std::string> &new_peers)
+  {
+    for (auto const &peer : new_peers)
+    {
+      supplied_peers_.emplace_back(peer);
+    }
+  }
+  void ClearPeers()
+  {
+    supplied_peers_.clear();
+  }
+
 protected:
-  void setup(MuddlePtr mud, StorePtr update_store);
+  friend class MuddleOutboundAnnounceTask;
+  void     Setup(MuddlePtr mud, StorePtr update_store);
+  uint64_t ProcessUpdate(const std::string &type_name, byte_array::ConstByteArray bytes,
+                         double proportion, double random_factor, const std::string &source);
 
 private:
   std::shared_ptr<Taskpool>   taskpool_;
@@ -124,15 +178,21 @@ private:
   MuddlePtr                   mud_;
   RpcClientPtr                client_;
   RpcServerPtr                server_;
-  ProtoP                      proto_;
+  ProtoPtr                    proto_;
   StorePtr                    update_store_;
   Randomiser                  randomiser_;
   double                      broadcast_proportion_;
   double                      randomising_offset_;
+  SubscriptionPtr             subscription_;
+  byte_array::ConstByteArray  public_key_;
 
-  std::unordered_set<std::string> peers_;
+  NetManPtr   netm_;
+  Sources     detected_peers_;
+  SourcesList supplied_peers_;
 
-  std::shared_ptr<NetMan> netm_;
+  mutable Mutex mutex_;
+
+  std::shared_ptr<ShuffleAlgorithmInterface> alg_;
 
   friend class MuddleMessageHandler;
 };

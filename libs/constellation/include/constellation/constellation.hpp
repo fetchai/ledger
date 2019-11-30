@@ -56,7 +56,8 @@
 namespace fetch {
 namespace beacon {
 class BeaconService;
-}
+class BeaconSetupService;
+}  // namespace beacon
 
 namespace constellation {
 
@@ -72,9 +73,7 @@ public:
   using NetworkMode    = ledger::MainChainRpcService::Mode;
   using FeatureFlags   = core::FeatureFlags;
   using ConstByteArray = byte_array::ConstByteArray;
-  using ConsensusPtr   = std::shared_ptr<ledger::Consensus>;
-
-  static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
+  using ConsensusPtr   = std::shared_ptr<ledger::ConsensusInterface>;
 
   struct Config
   {
@@ -91,14 +90,12 @@ public:
     uint64_t     max_cabinet_size{0};
     uint64_t     stake_delay_period{0};
     uint64_t     aeon_period{0};
-    uint32_t     block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
     uint32_t     peers_update_cycle_ms{0};
     bool         disable_signing{false};
     bool         sign_broadcasts{false};
     bool         load_genesis_file{false};
     bool         kademlia_routing{true};
     std::string  genesis_file_location{""};
-    std::string  db_files_prefix{""};
     bool         proof_of_stake{false};
     NetworkMode  network_mode{NetworkMode::PUBLIC_NETWORK};
     FeatureFlags features{};

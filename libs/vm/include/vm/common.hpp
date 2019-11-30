@@ -65,7 +65,9 @@ static constexpr TypeId Fixed64         = 16;
 static constexpr TypeId PrimitiveMaxId  = 16;
 static constexpr TypeId String          = 17;
 static constexpr TypeId Address         = 18;
-static constexpr TypeId NumReserved     = 19;
+static constexpr TypeId Fixed128        = 19;
+static constexpr TypeId UInt256         = 20;
+static constexpr TypeId NumReserved     = 21;
 }  // namespace TypeIds
 
 enum class NodeCategory : uint8_t
@@ -152,7 +154,8 @@ enum class NodeKind : uint16_t
   InitialiserList                           = 71,
   ContractDefinition                        = 72,
   ContractFunctionPrototype                 = 73,
-  ContractStatement                         = 74
+  ContractStatement                         = 74,
+  Fixed128                                  = 75
 };
 
 enum class ExpressionKind : uint8_t

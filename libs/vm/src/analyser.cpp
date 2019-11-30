@@ -19,6 +19,7 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/analyser.hpp"
 #include "vm/array.hpp"
+#include "vm/fixed.hpp"
 #include "vm/map.hpp"
 #include "vm/matrix.hpp"
 #include "vm/sharded_state.hpp"
@@ -87,6 +88,23 @@ void Analyser::Initialise()
   CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64,
                       fixed64_type_);
 
+  CreateClassType("Fixed128", TypeIndex(typeid(Fixed128)), TypeIds::Fixed128, fixed128_type_);
+  EnableOperator(fixed128_type_, Operator::Equal);
+  EnableOperator(fixed128_type_, Operator::NotEqual);
+  EnableOperator(fixed128_type_, Operator::LessThan);
+  EnableOperator(fixed128_type_, Operator::LessThanOrEqual);
+  EnableOperator(fixed128_type_, Operator::GreaterThan);
+  EnableOperator(fixed128_type_, Operator::GreaterThanOrEqual);
+  EnableOperator(fixed128_type_, Operator::Add);
+  EnableOperator(fixed128_type_, Operator::InplaceAdd);
+  EnableOperator(fixed128_type_, Operator::Subtract);
+  EnableOperator(fixed128_type_, Operator::InplaceSubtract);
+  EnableOperator(fixed128_type_, Operator::Multiply);
+  EnableOperator(fixed128_type_, Operator::InplaceMultiply);
+  EnableOperator(fixed128_type_, Operator::Divide);
+  EnableOperator(fixed128_type_, Operator::InplaceDivide);
+  EnableOperator(fixed128_type_, Operator::Negate);
+
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
   EnableOperator(string_type_, Operator::Equal);
   EnableOperator(string_type_, Operator::NotEqual);
@@ -115,7 +133,8 @@ void Analyser::Initialise()
                                       int32_type_, uint32_type_, int64_type_, uint64_type_};
   TypePtrArray const number_types  = {int8_type_,    uint8_type_,   int16_type_,   uint16_type_,
                                      int32_type_,   uint32_type_,  int64_type_,   uint64_type_,
-                                     float32_type_, float64_type_, fixed32_type_, fixed64_type_};
+                                     float32_type_, float64_type_, fixed32_type_, fixed64_type_,
+                                     fixed128_type_};
   for (auto const &type : number_types)
   {
     EnableOperator(type, Operator::Equal);
@@ -181,6 +200,7 @@ void Analyser::UnInitialise()
   float64_type_             = nullptr;
   fixed32_type_             = nullptr;
   fixed64_type_             = nullptr;
+  fixed128_type_            = nullptr;
   string_type_              = nullptr;
   address_type_             = nullptr;
   template_parameter1_type_ = nullptr;
@@ -1393,6 +1413,11 @@ bool Analyser::InternalAnnotateExpression(ExpressionNodePtr const &node)
     SetRVExpression(node, fixed64_type_);
     break;
   }
+  case NodeKind::Fixed128:
+  {
+    SetRVExpression(node, fixed128_type_);
+    break;
+  }
   case NodeKind::String:
   {
     SetRVExpression(node, string_type_);
@@ -1750,13 +1775,8 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   // lhs->IsRVExpression()
   if (!lhs->IsConcrete())
   {
-    // Prevent null[i, j] and {3, 4, 5}[i, j]
+    // Prevent null[i, j] and {3, 4, 5}[i, j] and contractvariable[i, j]
     AddError(lhs->line, "operand does not support index operator");
-    return false;
-  }
-  if (lhs->IsVariableExpression() && lhs->type->IsUserDefinedContract())
-  {
-    AddError(lhs->line, "unable to use contract variable '" + lhs->variable->name + "'");
     return false;
   }
   if (lhs->type->IsPrimitive())
@@ -1823,12 +1843,6 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
   // lhs->IsLVExpression()
   // lhs->IsRVExpression()
   // lhs->IsTypeExpression()
-  if (!lhs->IsConcrete())
-  {
-    // Prevent null.foo and {3, 4, 5}.foo
-    AddError(lhs->line, "operand does not support member-access operator");
-    return false;
-  }
   bool lhs_is_type_expression = lhs->IsTypeExpression();
   if (lhs->type->IsPrimitive())
   {
@@ -1960,6 +1974,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
   // e.g.
   // null()
   // {3, 4, 5}()
+  // contractvariable()
   // variable()
   // (a + b)()
   // array[index]()
