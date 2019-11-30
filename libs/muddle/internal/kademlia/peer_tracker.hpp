@@ -21,17 +21,10 @@
 namespace fetch {
 namespace muddle {
 
-/*
- * Things to update:
- * 1. Work out what long range connections look like
- * 2. Add Kademlia topology
- */
+class Muddle;
 class PeerTracker : public core::PeriodicRunnable
 {
 public:
-  struct TrackingTaskDetails;
-  struct TrackingTask;
-
   using Clock                  = std::chrono::steady_clock;
   using TimePoint              = Clock::time_point;
   using Address                = Packet::Address;
@@ -49,9 +42,6 @@ public:
   using AddressMap             = std::unordered_map<Address, Address>;
   using AddressTimestamp       = std::unordered_map<Address, TimePoint>;
   using PeerInfoList           = std::deque<PeerInfo>;
-  using TrackingTaskDetailsMap = std::unordered_map<Address, TrackingTaskDetails>;
-  using TrackingCallback       = std::function<void(Address, std::string)>;
-  using TrackingPriorities     = std::priority_queue<TrackingTask>;
 
   struct UnresolvedConnection
   {
@@ -59,33 +49,6 @@ public:
     Address          address{};
     std::string      partial_uri{};
     PortsList        ports{};
-    bool             is_incoming{false};
-  };
-
-  struct TrackingTask
-  {
-    enum Priority
-    {
-      LOW    = 0,
-      NORMAL = 1,
-      HIGH   = 2
-    };
-
-    Address  address{};
-    Priority priority{LOW};
-
-    bool operator<(TrackingTask const &other) const
-    {
-      // TODO: check if this is right
-      return priority < other.priority;
-    }
-  };
-
-  struct TrackingTaskDetails
-  {
-    PeerInfoList     next_peers{};
-    AddressTimestamp visited_timestamp{};  // TODO: Move to global
-    TrackingCallback on_found{};
   };
 
   enum ConnectionState
@@ -105,14 +68,6 @@ public:
   void       AddDesiredPeer(Address const &address);
   void       AddDesiredPeer(Address const &address, network::Peer const &hint);
   void       RemoveDesiredPeer(Address const &address);
-  void       EstablishLongRangeConnnectivity();
-  AddressSet desired_peers_;
-
-  /// @}
-
-  /// Message delivery
-  /// @{
-  // void NotifyOnFindPeer(Address address, PeerConnectedCallback cb);
   /// @}
 
   /// Trust interface
@@ -121,18 +76,12 @@ public:
   void Blacklist(Address const & /*target*/);
   void Whitelist(Address const & /*target*/);
   bool IsBlacklisted(Address const & /*target*/) const;
+  // void ReportBehaviour(Address,  double)
   /// @}
 
   /// Periodic maintainance
   /// @{
   void Periodically() override;
-  /// @}
-
-  /// Methods integrate new connections into the peer tracker.
-  /// @{
-  void AddConnectionHandleToQueue(ConnectionHandle handle);
-  void SetMuddlePorts(PortsList const &ports);
-  void SetConfiguration(TrackerConfiguration const &config);
   /// @}
 
   /// Monitoring
@@ -149,6 +98,16 @@ public:
   AddressSet            all_peers() const;
   AddressSet            desired_peers() const;
   /// @}
+
+protected:
+  friend class Muddle;
+  /// Methods integrate new connections into the peer tracker.
+  /// @{
+  void AddConnectionHandleToQueue(ConnectionHandle handle);
+  void SetMuddlePorts(PortsList const &ports);
+  void SetConfiguration(TrackerConfiguration const &config);
+  /// @}
+
 private:
   PeerTracker(Duration const &interval, core::Reactor &reactor, MuddleRegister const &reg,
               PeerConnectionList &connections, MuddleEndpoint &endpoint);
@@ -186,6 +145,11 @@ private:
   MuddleEndpoint &      endpoint_;
   PeerConnectionList &  connections_;
   KademliaTable         peer_table_;
+  /// @}
+
+  /// User defined connections
+  /// @{
+  AddressSet desired_peers_;
   /// @}
 
   /// Peer tracker protocol

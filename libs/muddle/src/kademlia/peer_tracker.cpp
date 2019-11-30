@@ -55,10 +55,12 @@ void PeerTracker::RemoveDesiredPeer(Address const &address)
   desired_peers_.erase(address);
 }
 
+//. TODO: Update and used mehtods used in other module
 void PeerTracker::SetMuddlePorts(PortsList const &ports)
 {
   peer_tracker_protocol_.SetMuddlePorts(ports);
-  logging_name_ = "tcp://localhost:" + std::to_string(ports[0]);
+  logging_name_ =
+      "tcp://localhost:" + std::to_string(ports[0]);  // TODO: remove and follow. normal convention
 }
 
 PeerTracker::ConnectionPriorityMap PeerTracker::connection_priority() const
@@ -266,8 +268,7 @@ void PeerTracker::UpdareLongLivedConnections(AddressSet &                  conne
 
       uri.Parse(suri);
 
-      // TODO: record failure
-      FETCH_LOG_WARN(logging_name_.c_str(), "Connecting to ", uri.ToString(), " with address ",
+      FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to ", uri.ToString(), " with address ",
                      p.address.ToBase64());
       connections_.AddPersistentPeer(uri);
     }
@@ -298,8 +299,8 @@ void PeerTracker::DisconnectDuplicates()
           if (conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING)
           {
             auto const handle = conn->handle();
-            FETCH_LOG_WARN(logging_name_.c_str(), "Disconnecting from bilateral ", handle,
-                           " connection: ", adr.ToBase64());
+            FETCH_LOG_DEBUG(logging_name_.c_str(), "Disconnecting from bilateral ", handle,
+                            " connection: ", adr.ToBase64());
 
             // Note that the order of these two matters. RemovePersistentPeer must
             // be executed first.
@@ -336,8 +337,8 @@ void PeerTracker::DisconnectFromPeers()
       if (conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING)
       {
         auto const handle = conn->handle();
-        FETCH_LOG_WARN(logging_name_.c_str(), "Disconnecting from bilateral ", handle,
-                       " connection: ", address.ToBase64());
+        FETCH_LOG_DEBUG(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
+                        " connection: ", address.ToBase64());
 
         // Note that the order of these two matters. RemovePersistentPeer must
         // be executed first.
@@ -489,30 +490,16 @@ void PeerTracker::OnResolvedPull(uint64_t pull_id, Address peer, Address search_
     auto peer_info_list        = promise->As<std::deque<PeerInfo>>();
     last_pull_from_peer_[peer] = Clock::now();
 
-    if (search_for != own_address_)
-    {
-      FETCH_LOG_WARN(logging_name_.c_str(), "Successfully pulled ", peer_info_list.size(),
-                     " from: ", peer.ToBase64(), " searching for ", search_for.ToBase64());
-    }
-
     // create the new entry and populate
     bool found = false;
     for (auto const &peer_info : peer_info_list)
     {
-      if (search_for != own_address_)
-      {
-        FETCH_LOG_WARN(logging_name_.c_str(), " -- ", peer_info.address.ToBase64());
-      }
       // reporting the possible existence of another peer on the network.a
       assert(peer_info.address.size() > 0);
-      //      peer_table_.ReportLiveliness(peer_info.address, peer_info);
+
       peer_table_.ReportExistence(peer_info, peer);
       if (peer_info.address == search_for)
       {
-        if (search_for != own_address_)
-        {
-          FETCH_LOG_WARN(logging_name_.c_str(), "PEER FOUND:", peer_info.uri);  // TODO: Delete this
-        }
         found = true;
       }
     }
@@ -522,7 +509,6 @@ void PeerTracker::OnResolvedPull(uint64_t pull_id, Address peer, Address search_
     {
       if (found)
       {
-
         // We are done and remove the peer from the map
         peer_pull_map_.erase(peer);
       }
@@ -550,7 +536,7 @@ void PeerTracker::OnResolvedPull(uint64_t pull_id, Address peer, Address search_
 
   // remove the entry from the pending list
   pull_promises_.erase(pull_id);
-}  // namespace muddle
+}
 
 void PeerTracker::ConnectToDesiredPeers()
 {
@@ -564,19 +550,15 @@ void PeerTracker::ConnectToDesiredPeers()
       continue;
     }
 
-    FETCH_LOG_WARN(logging_name_.c_str(), "Looking for connections to ", peer.ToBase64());
-
     // Ignoring addresses found in incoming
     if (currently_incoming.find(peer) != currently_incoming.end())
     {
-      FETCH_LOG_WARN(logging_name_.c_str(), " - Already connected (1) ", peer.ToBase64());
       continue;
     }
 
     // Ignoring addresses found in incoming
     if (currently_outgoing.find(peer) != currently_outgoing.end())
     {
-      FETCH_LOG_WARN(logging_name_.c_str(), " - Already connected (2) ", peer.ToBase64());
       keep_connections_.insert(peer);
       continue;
     }
@@ -584,6 +566,7 @@ void PeerTracker::ConnectToDesiredPeers()
     // Finding known details
     auto    known_details = peer_table_.GetPeerDetails(peer);
     Address best_peer;
+    FETCH_LOG_INFO(logging_name_.c_str(), "Looking for connections to ", peer.ToBase64());
 
     // If we have details, we can connect directly
     if (known_details != nullptr)
@@ -592,15 +575,12 @@ void PeerTracker::ConnectToDesiredPeers()
     }
     else
     {
-      FETCH_LOG_WARN(logging_name_.c_str(), " - Cannot find connectivity details ",
-                     peer.ToBase64());
       // Finding the peers closest to the desirec peer
       auto closest_peers = peer_table_.FindPeer(peer);
 
       // Skipping this peer if we cannot find any close peers
       if (closest_peers.size() == 0)
       {
-        FETCH_LOG_WARN(logging_name_.c_str(), " - No peers found ", peer.ToBase64());
         continue;
       }
 
@@ -637,8 +617,6 @@ void PeerTracker::ConnectToDesiredPeers()
       //
       if (idx >= closest_peers.size())
       {
-        FETCH_LOG_WARN(logging_name_.c_str(), " - Out of peers in search for ",
-                       best_peer.ToBase64());
         continue;
       }
     }
@@ -646,7 +624,6 @@ void PeerTracker::ConnectToDesiredPeers()
     // Ignoring addresses found in incoming
     if (currently_incoming.find(best_peer) != currently_incoming.end())
     {
-      FETCH_LOG_WARN(logging_name_.c_str(), " - Already connected (3) ", best_peer.ToBase64());
       continue;
     }
 
@@ -666,7 +643,7 @@ void PeerTracker::ConnectToDesiredPeers()
 
       uri.Parse(suri);
 
-      FETCH_LOG_WARN(logging_name_.c_str(), "Connecting to ", uri.ToString(), " with address ",
+      FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to ", uri.ToString(), " with address ",
                      best_peer.ToBase64());
       connections_.AddPersistentPeer(uri);
     }
@@ -823,13 +800,8 @@ PeerTracker::ConnectionState PeerTracker::ResolveConnectionDetails(UnresolvedCon
     // We can only rely on ports for outgoing connections.
     if (connection->Type() == network::AbstractConnection::TYPE_OUTGOING)
     {
-      details.is_incoming = false;
-      details.ports       = PortsList({connection->port()});
+      details.ports = PortsList({connection->port()});
       RegisterConnectionDetails(details);
-    }
-    else
-    {
-      details.is_incoming = true;
     }
 
     // Invoking short-lived connection callback
