@@ -239,53 +239,56 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
 {
   FETCH_LOCK(mutex_);
 
-  auto other  = KademliaAddress::Create(address);
-  auto dist   = GetKademliaDistance(own_address_, other);
-  auto log_id = GetBucketByLogarithm(dist);
+  auto other      = KademliaAddress::Create(address);
+  auto dist       = GetKademliaDistance(own_address_, other);
+  auto log_id     = GetBucketByLogarithm(dist);
+  auto hamming_id = GetBucketByHamming(dist);
 
   assert(log_id <= KADEMLIA_MAX_ID_BITS);
 
-  // Fetching the bucket and finding the peer if it is in the
-  // bucket
-  auto &bucket  = by_logarithm_[log_id];
-  auto  peer_it = bucket.peers.begin();
-  for (; peer_it != bucket.peers.end(); ++peer_it)
+  // Fetching the log bucket and finding the peer if it exists in it
+  auto &log_bucket = by_logarithm_[log_id];
+  auto  log_it     = log_bucket.peers.begin();
+  for (; log_it != log_bucket.peers.end(); ++log_it)
   {
-    if (address == (*peer_it)->address)
+    if (address == (*log_it)->address)
     {
+      log_bucket.peers.erase(log_it);
       break;
     }
   }
 
-  // Finding or creating peer information
-  PeerInfoPtr peerinfo;
-  if (peer_it != bucket.peers.end())
+  // Fetching the hamming bucket and finding the peer if it exists in it
+  auto &hamming_bucket = by_hamming_[hamming_id];
+  auto  hamming_it     = hamming_bucket.peers.begin();
+  for (; hamming_it != hamming_bucket.peers.end(); ++hamming_it)
   {
-    // Peer is known and located in a bucket.
-    peerinfo = *peer_it;
-    bucket.peers.erase(peer_it);
+    if (address == (*hamming_it)->address)
+    {
+      hamming_bucket.peers.erase(hamming_it);
+      break;
+    }
+  }
+
+  // Peer is already known but not in any
+  // log_bucket.
+  PeerInfoPtr peerinfo;
+  auto        it = know_peers_.find(address);
+  if (it != know_peers_.end())
+  {
+    peerinfo = it->second;
   }
   else
   {
-    // Peer is already known but not in any
-    // bucket.
-    auto it = know_peers_.find(address);
-    if (it != know_peers_.end())
-    {
-      peerinfo = it->second;
-    }
-    else
-    {
-      // Discovered a new peer.
-      peerinfo                   = std::make_shared<PeerInfo>(info);
-      peerinfo->kademlia_address = other;
-      peerinfo->distance         = dist;
-      peerinfo->address          = address;
+    // Discovered a new peer.
+    peerinfo                   = std::make_shared<PeerInfo>(info);
+    peerinfo->kademlia_address = other;
+    peerinfo->distance         = dist;
+    peerinfo->address          = address;
 
-      // Ensures that peer information persists over time
-      // even if the peer disappears from the bucket.
-      know_peers_[address] = peerinfo;
-    }
+    // Ensures that peer information persists over time
+    // even if the peer disappears from the log_bucket.
+    know_peers_[address] = peerinfo;
   }
 
   // Updating activity information
@@ -294,7 +297,10 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
   peerinfo->verified      = true;
   peerinfo->message_count += 1;
   // TODO: peerinfo.last_activity
-  bucket.peers.insert(peerinfo);
+
+  // Updating buckets
+  log_bucket.peers.insert(peerinfo);
+  hamming_bucket.peers.insert(peerinfo);
 
   // Updating own bucket
   if (log_id < first_non_empty_bucket_)
@@ -318,9 +324,10 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
   //  return;
   FETCH_LOCK(mutex_);
 
-  auto other  = KademliaAddress::Create(info.address);
-  auto dist   = GetKademliaDistance(own_address_, other);
-  auto log_id = GetBucketByLogarithm(dist);
+  auto other      = KademliaAddress::Create(info.address);
+  auto dist       = GetKademliaDistance(own_address_, other);
+  auto log_id     = GetBucketByLogarithm(dist);
+  auto hamming_id = GetBucketByHamming(dist);
 
   assert(log_id <= KADEMLIA_MAX_ID_BITS);
 
@@ -331,7 +338,8 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
   // bucket
   if (it == know_peers_.end())
   {
-    auto &      bucket      = by_logarithm_[log_id];
+    auto &      log_bucket  = by_logarithm_[log_id];
+    auto &      ham_bucket  = by_hamming_[hamming_id];
     PeerInfoPtr peerinfo    = std::make_shared<PeerInfo>(info);
     peerinfo->verified      = false;
     peerinfo->last_reporter = reporter;
@@ -339,9 +347,14 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
     know_peers_[info.address] = peerinfo;
 
     //
-    if (bucket.peers.size() < kademlia_max_peers_per_bucket_)
+    if (log_bucket.peers.size() < kademlia_max_peers_per_bucket_)
     {
-      bucket.peers.insert(peerinfo);
+      log_bucket.peers.insert(peerinfo);
+    }
+
+    if (ham_bucket.peers.size() < kademlia_max_peers_per_bucket_)
+    {
+      ham_bucket.peers.insert(peerinfo);
     }
   }
   else

@@ -142,6 +142,7 @@ public:
   std::size_t           active_buckets() const;
   std::size_t           first_non_empty_bucket() const;
   AddressSet            keep_connections() const;
+  AddressSet            longrange_connections() const;
   AddressSet            no_uri() const;
   AddressSet            incoming() const;
   AddressSet            outgoing() const;
@@ -157,7 +158,9 @@ private:
   void ConnectToDesiredPeers();
   void UpdatePriorityList(ConnectionPriorityMap & connection_priority,
                           ConnectionPriorityList &prioritized_peers, Peers const &peers);
-  void UpdareLongLivedConnections(ConnectionPriorityList &prioritized_peers);
+  void UpdareLongLivedConnections(AddressSet &                  connections,
+                                  ConnectionPriorityList const &prioritized_peers,
+                                  uint64_t &connection_count, uint64_t const &max_connections);
   void DisconnectDuplicates();
   void DisconnectFromPeers();
   /// @}
@@ -199,10 +202,12 @@ private:
   ConnectionPriorityMap
                          kademlia_connection_priority_;  ///< Contains all relevant address priorities.
   ConnectionPriorityList kademlia_prioritized_peers_;  ///< List with all address in priority.
+  AddressSet             kademlia_connections_;
 
   ConnectionPriorityMap
                          longrange_connection_priority_;  ///< Contains all relevant address priorities.
   ConnectionPriorityList longrange_prioritized_peers_;  ///< List with all address in priority.
+  AddressSet             longrange_connections_;
   /// Maintenance cycle
   /// @{
   Address own_address_;  ///< Own address
@@ -219,7 +224,8 @@ private:
   std::unordered_map<Address, TimePoint> last_pull_from_peer_;
   uint64_t                               pull_next_id_{0};
 
-  uint64_t persistent_outgoing_connections_{0};  ///< Number of persistent outgoing connections
+  uint64_t persistent_outgoing_connections_{0};   ///< Number of persistent outgoing connections
+  uint64_t persistent_longrange_connections_{0};  ///< Number of persistent outgoing connections
   /// @}
 
   /// Logging sets
