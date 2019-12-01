@@ -44,6 +44,7 @@ struct Token
     Fixed128,
     String,
     BadString,
+    UnterminatedComment,
     True,
     False,
     Null,
