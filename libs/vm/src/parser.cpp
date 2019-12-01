@@ -91,7 +91,7 @@ void Parser::Tokenise(std::string const &source)
   {
     value = yylex(&token, scanner);
     tokens_.push_back(token);
-  } while (value);
+  } while (value != 0);
   if (token.kind != Token::Kind::EndOfInput)
   {
     token.kind   = Token::Kind::EndOfInput;
