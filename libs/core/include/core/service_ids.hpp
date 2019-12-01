@@ -22,7 +22,7 @@
 namespace fetch {
 
 static constexpr uint16_t SERVICE_MUDDLE              = 0;  // reserved
-static constexpr uint16_t SERVICE_MUDDLE_PEER_TRACKER = 101;
+static constexpr uint16_t SERVICE_MUDDLE_PEER_TRACKER = 1001;
 static constexpr uint16_t SERVICE_MAIN_CHAIN          = 2002;
 static constexpr uint16_t SERVICE_LANE                = 3003;
 static constexpr uint16_t SERVICE_LANE_CTRL           = 3004;

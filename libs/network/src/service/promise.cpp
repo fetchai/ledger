@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/promise.hpp"
 #include "core/serializers/exception.hpp"
+#include "network/service/promise.hpp"
 
 #include <chrono>
 

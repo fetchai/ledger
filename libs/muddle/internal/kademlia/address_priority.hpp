@@ -1,4 +1,22 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "kademlia/primitives.hpp"
 #include "muddle/packet.hpp"
 
@@ -37,7 +55,6 @@ struct AddressPriority
 
   /// Lifetime
   /// @{
-  // TODO: rename persistent to long-lived
   bool      persistent{true};               ///< Whether or not this connnection is permanent
   TimePoint connected_since{Clock::now()};  ///< Time at which connection was established
   TimePoint desired_expiry{Clock::now()};   ///< Time at which this connection is no longer relevant
@@ -54,34 +71,6 @@ struct AddressPriority
   Purpose purpose{Purpose::NORMAL};
   /// @}
 
-  bool PreferablyPersistent() const
-  {
-    if (priority_permanent < 0.02)
-    {
-      return false;
-    }
-    return priority_temporary < priority_permanent;
-  }
-
-  bool PreferablyTemporary() const
-  {
-    if (priority_permanent < 0.02)
-    {
-      return true;
-    }
-    return priority_temporary > priority_permanent;
-  }
-
-  void MakeTemporary()
-  {
-    persistent = false;
-  }
-
-  void MakePersistent()
-  {
-    persistent = true;
-  }
-
   void ScheduleDisconnect()
   {
     persistent      = false;
@@ -92,7 +81,7 @@ struct AddressPriority
     purpose          = NORMAL;
   }
 
-  void UpdatePriority(bool up_down_grade = false)
+  void UpdatePriority()
   {
     // Consensus connections are considered
     // special high priority connections
@@ -106,15 +95,12 @@ struct AddressPriority
     TimePoint    now      = Clock::now();
 
     // Compute prioity based on desired expiry
-    double time_until_expiry_tmp =
-        std::chrono::duration_cast<Duration<double>>(desired_expiry - now).count();
     double time_until_expiry_perm =
         3600. * 24.;  // We use a day as default for persistent connections
 
     // Becomes 1 when connection is far from its expiry point
     // 0.5 when on its expiry point
     // Goes to zero as expiry is passed.
-    double expiry_coef_tmp  = 1. / (1. + exp(-params[0] * time_until_expiry_tmp));
     double expiry_coef_perm = 1. / (1. + exp(-params[0] * time_until_expiry_perm));
 
     // Priority goes down exponentially with the increasing bucket number.
@@ -127,7 +113,7 @@ struct AddressPriority
     // If it is a non-persistent connection, the bucket is less
     // relevant and, in fact, far-away short lived connections has
     // higher priority than long lived far away connections
-    double bucket_tmp_param = 1. - expiry_coef_tmp;
+    double bucket_tmp_param = 1. - expiry_coef_perm;
     if (params[2] < bucket_tmp_param)
     {
       bucket_tmp_param = params[2];
@@ -135,7 +121,6 @@ struct AddressPriority
 
     assert((0 <= bucket_d) && (bucket_d <= 160.));
 
-    double bucket_coef_tmp  = 1.0 / (1 + exp(-params[2] * (80 - bucket_d)));
     double bucket_coef_perm = 1.0 / (1 + exp(-bucket_tmp_param * (80 - bucket_d)));
 
     // We value long time connections
@@ -149,39 +134,7 @@ struct AddressPriority
     double behaviour_coef = 1. / (1 + exp(-params[4] * connection_value));
 
     // Setting priority
-    priority_permanent = expiry_coef_perm * behaviour_coef * bucket_coef_perm * connect_coef;
-    priority_temporary = expiry_coef_tmp * behaviour_coef * bucket_coef_tmp * connect_coef;
-    // Upgrading or downgrading if requested. We can only upgrade
-    if (up_down_grade)
-    {
-      if (is_incoming)
-      {
-        // We do not control incoming connections and they
-        // are treated as non-persistent.
-        persistent = false;
-      }
-      else if (PreferablyPersistent())
-      {
-        // If upgrading we do so
-        persistent = true;
-      }
-      else
-      {
-        // And otherwise we downgrade
-        persistent = false;
-      }
-    }
-
-    // Seting priority depending on whether persistent
-    // or not.
-    if (persistent)
-    {
-      priority = priority_permanent;
-    }
-    else
-    {
-      priority = priority_temporary;
-    }
+    priority = expiry_coef_perm * behaviour_coef * bucket_coef_perm * connect_coef;
   }
 
   bool operator<(AddressPriority const &other) const

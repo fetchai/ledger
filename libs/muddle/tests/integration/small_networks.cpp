@@ -228,7 +228,6 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   // top rating. Naturally, we expect that persistent connection
   // is preferable
   EXPECT_LT(0.96, optimal_connection.priority);
-  EXPECT_TRUE(optimal_connection.PreferablyPersistent());
 
   AddressPriority mediocre_loc;
   mediocre_loc.address          = FakeAddress(0);
@@ -242,7 +241,6 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   // a node somewhere around the middle
   EXPECT_LT(0.4, mediocre_loc.priority);
   EXPECT_LT(mediocre_loc.priority, 0.6);
-  EXPECT_TRUE(mediocre_loc.PreferablyPersistent());
 
   AddressPriority mediocre_beh;
   mediocre_beh.address          = FakeAddress(0);
@@ -258,7 +256,6 @@ TEST(SmallNetworks, OrganisingAddressPriority)
 
   // We don't expect good behaviour alone to account
   // for persistent connection.
-  EXPECT_FALSE(mediocre_beh.PreferablyPersistent());
 
   AddressPriority optimal_gone_bad;
   optimal_gone_bad.address          = FakeAddress(0);
@@ -272,13 +269,11 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   // Getting lowest ranking should immediately drag you to the bottom
   // 1% of the nodes.
   EXPECT_LT(optimal_gone_bad.priority, 0.01);
-  EXPECT_FALSE(optimal_gone_bad.PreferablyPersistent());
 
   AddressPriority long_term_disconnect = optimal_connection;
   long_term_disconnect.ScheduleDisconnect();
   long_term_disconnect.UpdatePriority();
   EXPECT_LT(long_term_disconnect.priority, 0.05);
-  EXPECT_TRUE(long_term_disconnect.PreferablyPersistent());
 
   AddressPriority poor_permanent;
   poor_permanent.address          = FakeAddress(0);
@@ -289,7 +284,6 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   poor_permanent.UpdatePriority();
   EXPECT_LT(0.05, poor_permanent.priority);
   EXPECT_LT(poor_permanent.priority, 0.10);
-  EXPECT_FALSE(poor_permanent.PreferablyPersistent());
 
   AddressPriority good_temporary;
   good_temporary.address          = FakeAddress(0);
@@ -299,7 +293,6 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   good_temporary.connected_since  = std::chrono::steady_clock::now() - std::chrono::seconds(30);
   good_temporary.bucket           = static_cast<uint64_t>(-1);
   good_temporary.UpdatePriority();
-  EXPECT_FALSE(good_temporary.PreferablyPersistent());
 
   AddressPriority good_temporary_close_to_expiry;
   good_temporary_close_to_expiry.address          = FakeAddress(0);
@@ -311,7 +304,6 @@ TEST(SmallNetworks, OrganisingAddressPriority)
       std::chrono::steady_clock::now() - std::chrono::seconds(59);
   good_temporary_close_to_expiry.bucket = static_cast<uint64_t>(-1);
   good_temporary_close_to_expiry.UpdatePriority();
-  EXPECT_FALSE(good_temporary_close_to_expiry.PreferablyPersistent());
 
   // We expect a connection close to expiry to have lower priority
   // than one with high priority.
@@ -327,7 +319,6 @@ TEST(SmallNetworks, OrganisingAddressPriority)
       std::chrono::steady_clock::now() - std::chrono::seconds(60);
   good_temporary_should_upgrade.bucket = static_cast<uint64_t>(1);
   good_temporary_should_upgrade.UpdatePriority();
-  EXPECT_TRUE(good_temporary_should_upgrade.PreferablyPersistent());
 
   // We expect anew temporary connection to exceed another one
   // if the
@@ -527,7 +518,6 @@ TEST(SmallNetworks, KademliaPrimitives)
 
   auto kam_address1 = KademliaAddress::Create(raw_address1);
   auto kam_address2 = KademliaAddress::Create(raw_address2);
-  auto dist         = GetKademliaDistance(kam_address1, kam_address2);
 
   EXPECT_EQ(GetBucketByLogarithm(GetKademliaDistance(kam_address1, kam_address1)), 0);
 
@@ -547,9 +537,9 @@ TEST(SmallNetworks, KademliaPrimitives)
   }
 
   // Simulating a 1 peers simulating a 100.000 interactions
-  for (std::size_t i = 0; i < 10 * N; ++i)
+  for (std::size_t j = 0; j < 10 * N; ++j)
   {
-    table.ReportLiveliness(all_peers[lfg() % N].address);
+    table.ReportLiveliness(all_peers[lfg() % N].address, all_peers[lfg() % N].address);
   }
 
   // Testing the table

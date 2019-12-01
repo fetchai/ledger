@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/md5.hpp"
 #include "core/macros.hpp"
+#include "crypto/md5.hpp"
 
 #include <cassert>
 #include <cstddef>

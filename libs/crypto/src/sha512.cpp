@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/sha512.hpp"
 #include "core/macros.hpp"
+#include "crypto/sha512.hpp"
 
 #include <cassert>
 #include <cstddef>
