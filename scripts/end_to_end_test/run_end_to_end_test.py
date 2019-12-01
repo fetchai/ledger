@@ -13,7 +13,6 @@ import datetime
 import glob
 import importlib
 import os
-import pickle
 import shutil
 import subprocess
 import sys
@@ -33,6 +32,8 @@ from fetchai.ledger.api import LedgerApi
 from fetchai.ledger.crypto import Entity
 
 from .smart_contract_tests.synergetic_utils import SynergeticContractTestHelper
+
+BASE_TX_FEE = 1000
 
 
 class TimerWatchdog():
@@ -155,23 +156,7 @@ def send_txs(parameters, test_instance):
         sys.exit(1)
 
     # Create or load the identities up front
-    identities = []
-
-    if "load_from_file" in parameters and parameters["load_from_file"] == True:
-
-        filename = "{}/identities_pickled/{}.pickle".format(
-            test_instance._test_files_dir, name)
-
-        verify_file(filename)
-
-        with open(filename, 'rb') as handle:
-            identities = pickle.load(handle)
-    else:
-        identities = [Entity() for i in range(amount)]
-
-    # If pickling, save this to the workspace
-    with open('{}/{}.pickle'.format(test_instance._workspace, name), 'wb') as handle:
-        pickle.dump(identities, handle)
+    identities = [Entity() for i in range(amount)]
 
     for node_index in nodes:
         node_host = "localhost"
@@ -185,21 +170,19 @@ def send_txs(parameters, test_instance):
         for index in range(amount):
             # get next identity
             identity = identities[index]
+            amount = index + 1
 
             # create and send the transaction to the ledger, capturing the tx
             # hash
-            tx = api.tokens.wealth(identity, index)
+            tx = api.tokens.transfer(
+                test_instance._benefactor_address, identity, amount, BASE_TX_FEE)
 
-            tx_and_identity.append((tx, identity, index))
+            tx_and_identity.append((tx, identity, amount))
 
-            output("Created wealth with balance: ", index)
+            output(f"Sent balance {amount} to node")
 
         # Attach this to the test instance so it can be used for verification
         test_instance._metadata = tx_and_identity
-
-        # Save the metatada too
-        with open('{}/{}_meta.pickle'.format(test_instance._workspace, name), 'wb') as handle:
-            pickle.dump(test_instance._metadata, handle)
 
 
 def run_python_test(parameters, test_instance):
@@ -213,7 +196,7 @@ def run_python_test(parameters, test_instance):
     test_script.run({
         'host': host,
         'port': port
-    })
+    }, test_instance._benefactor_address)
 
 
 def run_dmlf_etch_client(parameters, test_instance):
@@ -283,16 +266,6 @@ def verify_txs(parameters, test_instance):
     # Currently assume there only one set of TXs
     tx_and_identity = test_instance._metadata
 
-    # Load these from file if specified
-    if "load_from_file" in parameters and parameters["load_from_file"] == True:
-        filename = "{}/identities_pickled/{}_meta.pickle".format(
-            test_instance._test_files_dir, name)
-
-        verify_file(filename)
-
-        with open(filename, 'rb') as handle:
-            tx_and_identity = pickle.load(handle)
-
     for node_index in nodes:
         node_host = "localhost"
         node_port = test_instance._nodes[node_index]._port_start
@@ -340,8 +313,9 @@ def verify_txs(parameters, test_instance):
                     failed_to_find = failed_to_find + 1
 
                     if failed_to_find > 5:
-                        # Forces the resubmission of wealth TX to the chain (TX most likely was lost)
-                        api.tokens.wealth(identity, balance)
+                        # Forces the resubmission of transfer TX to the chain (TX most likely was lost)
+                        api.tokens.transfer(
+                            test_instance._benefactor_address, identity, balance, BASE_TX_FEE)
                         failed_to_find = 0
                 else:
                     # Non-zero balance at this point. Stop waiting.
@@ -352,7 +326,7 @@ def verify_txs(parameters, test_instance):
                         test_instance._watchdog.trigger()
                     break
 
-            output("Verified a wealth of {}".format(seen_balance))
+            output("Verified a balance of {}".format(seen_balance))
 
         output("Verified balances for node: {}".format(node_index))
 
@@ -438,7 +412,7 @@ def add_node(parameters, test_instance):
     test_instance.start_node(index)
 
 
-def create_wealth(parameters, test_instance):
+def create_balance(parameters, test_instance):
     nodes = parameters["nodes"]
     amount = parameters["amount"]
 
@@ -450,7 +424,10 @@ def create_wealth(parameters, test_instance):
 
         # create the entity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
-        tx = api.tokens.wealth(entity, amount)
+
+        tx = api.tokens.transfer(
+            test_instance._benefactor_address, entity, amount, BASE_TX_FEE)
+
         for i in range(10):
             output('Create balance of: ', amount)
             api.sync(tx, timeout=120, hold_state_sec=20)
@@ -461,7 +438,7 @@ def create_wealth(parameters, test_instance):
                     return
                 time.sleep(5)
             time.sleep(5)
-        raise Exception("Failed to create wealth")
+        raise Exception("Failed to send funds to node!")
 
 
 def create_synergetic_contract(parameters, test_instance):
@@ -590,8 +567,8 @@ def run_steps(test_yaml, test_instance):
             destake(parameters, test_instance)
         elif command == 'run_dmlf_etch_client':
             run_dmlf_etch_client(parameters, test_instance)
-        elif command == "create_wealth":
-            create_wealth(parameters, test_instance)
+        elif command == "create_balance":
+            create_balance(parameters, test_instance)
         elif command == "create_synergetic_contract":
             create_synergetic_contract(parameters, test_instance)
         elif command == "run_contract":
@@ -655,7 +632,7 @@ def run_test(build_directory, yaml_file, node_exe, name_filter=None):
             test_instance.dump_debug()
             sys.exit(1)
 
-    output("\nAll end to end tests have passed :)")
+    output("\nAll end to end tests have passed")
 
 
 def parse_commandline():

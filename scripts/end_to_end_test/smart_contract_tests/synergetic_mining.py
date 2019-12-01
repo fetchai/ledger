@@ -102,15 +102,16 @@ def submit_synergetic_data(api, contract, data, entity):
         'Expected {}, found {}'.format(sum(data), result)
 
 
-def run(options):
+def run(options, benefactor):
     entity1 = Entity()
 
     # build the ledger API
     api = LedgerApi(options['host'], options['port'])
 
-    # create wealth so that we have the funds to be able to create contracts on the network
-    print('Create wealth...')
-    api.sync(api.tokens.wealth(entity1, 100000000))
+    # create funds so that we have the funds to be able to create contracts on the network
+    # TODO(HUT): fix this.
+    print('Create funds...')
+    api.sync(api.tokens.transfer(benefactor, entity1, 100000000, 1000))
 
     contract = Contract(CONTRACT_TEXT, entity1)
 

@@ -33,7 +33,7 @@ steps:
 
 ---
 test_description: >
-  DISABLED - Transactions sync - corner case with connection order
+  Transactions sync - corner case with connection order
 
 setup_conditions:
   test_name: "basic_multinode_corner_case"
@@ -116,7 +116,7 @@ steps:
 
 ---
 test_description: >
-  DISABLED - Transactions sync and are executed across nodes when using POS
+  Transactions sync and are executed across nodes when using POS
 
 setup_conditions:
   test_name: "basic_multinode_POS"
@@ -133,7 +133,7 @@ steps:
 
 ---
 test_description: >
-  DISABLED - Test synergetic mining
+  Test synergetic mining
 
 setup_conditions:
   test_name: "synergetic_mining"
@@ -148,7 +148,7 @@ steps:
 
 ---
 test_description: >
-  DISABLED - Test ability of contracts to check their balance
+  Test ability of contracts to check their balance
 
 setup_conditions:
   test_name: "contracts_checking_balance"
