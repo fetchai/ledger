@@ -86,7 +86,7 @@ void Parser::Tokenise(std::string const &source)
   yy_switch_to_buffer(bp, scanner);
   // There is always at least one token: the last is EndOfInput
   Token token;
-  int value;
+  int   value;
   do
   {
     value = yylex(&token, scanner);
@@ -94,11 +94,11 @@ void Parser::Tokenise(std::string const &source)
   } while (value);
   if (token.kind != Token::Kind::EndOfInput)
   {
-    token.kind = Token::Kind::EndOfInput;
+    token.kind   = Token::Kind::EndOfInput;
     token.offset = location.offset;
-    token.line = location.line;
+    token.line   = location.line;
     token.length = 0;
-    token.text = "";
+    token.text   = "";
     tokens_.push_back(token);
   }
   yy_delete_buffer(bp, scanner);
