@@ -30,8 +30,7 @@ ColearnURI::ColearnURI(UpdateStore::Update const &update)
   : algorithm_class_(update.algorithm())
   , update_type_(update.update_type())
   , source_(update.source())
-  //, fingerprint_(EncodeFingerprint(update.fingerprint().ToBase64()))
-  , fingerprint_(EncodeFingerprint("abc/+efg"))
+  , fingerprint_(EncodeFingerprint(std::string(update.fingerprint().ToBase64())))
 {}
 
 ColearnURI ColearnURI::Parse(std::string const &uriString)
