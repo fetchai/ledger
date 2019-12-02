@@ -81,6 +81,7 @@ void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
     auto source = std::string(fetch::byte_array::ToBase64(from));
 
     buf >> type_name >> bytes >> proportion >> random_factor;
+
     std::cout << "from:" << source << ", "
               << "serv:" << service << ", "
               << "chan:" << channel << ", "
@@ -153,6 +154,12 @@ MuddleLearnerNetworkerImpl::~MuddleLearnerNetworkerImpl()
 void MuddleLearnerNetworkerImpl::submit(TaskPtr const &t)
 {
   taskpool_->submit(t);
+}
+
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update,
+                                                 const Peers &peers)
+{
+  PushUpdateBytes(type_name, update, peers, broadcast_proportion_);
 }
 
 void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update,
