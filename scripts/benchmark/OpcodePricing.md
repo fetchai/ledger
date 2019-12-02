@@ -77,9 +77,9 @@ Since the measure of interest is the mean CPU time, we compute the standard erro
 
 In the previous section, we found that some of the opcodes always appear in pairs. For example, arithmetic operations are almost always preceded by a PushVariable operation and isolated push operations are almost always followed by a Discard operation. As we will see later on, this also arises in more complex operations. Since it would be ideal to measure the CPU times for each opcode in isolation, we show one way to estimate these times here.
 
-Let *A* be a matrix where each row corresponds to a benchmark and each element *A<sub>ij</sub>=k* if benchmark *i* uses opcode a total of *k* times. Let ***b*** be a vector where each element *b<sub>i</sub>* is the mean CPU time to run benchmark *i*. Then the solution to ***x***<sup>\*</sup> = arg min(||*A****x*** - ***b***||<sup>2</sup>) provides an estimate of the individual opcode times.
+Let *A* be a matrix where each row corresponds to a benchmark and each element *A<sub>ij</sub>=k* if benchmark *i* uses opcode a total of *k* times. Let ***b*** be a vector where each element *b<sub>i</sub>* is the mean CPU time to run benchmark *i*. Then the solution to ***x***<sup>\*</sup> = arg min(||*A****x*** - ***b***||<sup>2</sup>) provides an estimate of the individual opcode times, where each *x<sub>i</sub>* represents the CPU time required by opcode *i*.
 
-For the benchmarks listed in [Table 1](#table1), we seek values in the vector ***x*** (where each *x<sub>i</sub>* represents the CPU time required by opcode *i*) that make the following expression as close as possible to an equality.
+For the benchmarks listed in [Table 1](#table1), we seek values in the vector ***x*** that make the following expression as close as possible to an equality.
 
 ![enter image description here](https://lh3.googleusercontent.com/AGtgdyy0KlpXvm9J38fmfFhT9ksjsLJnQIC5ZnrKI_mTjGI3xKRjKM3mppSUN3a_sG3PzwjC9D0)
 
