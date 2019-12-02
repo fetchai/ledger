@@ -280,7 +280,7 @@ TEST_F(UInt256Tests, uint256_addition_subtraction)
 
   ASSERT_TRUE(toolkit.Compile(SRC));
   EXPECT_TRUE(toolkit.Run());
-  //std::cout << stdout.str() << std::endl;
+  // std::cout << stdout.str() << std::endl;
 }
 
 TEST_F(UInt256Tests, uint256_inplace_addition_subtraction)

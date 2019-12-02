@@ -69,12 +69,14 @@ public:
   static constexpr char const *LOGGING_NAME = "UInt";
 
   template <typename... T>
-  using IfIsWideInitialiserList = std::enable_if_t<meta::Is<WideType>::SameAsEvery<T...>::value &&
-                                                   (sizeof...(T) <= WIDE_ELEMENTS)>;
+  using IfIsWideInitialiserList =
+      std::enable_if_t<meta::Is<WideType>::SameAsEvery<meta::Decay<T>...>::value &&
+                       (sizeof...(T) <= WIDE_ELEMENTS)>;
 
   template <typename... T>
   using IfIsBaseInitialiserList =
-      std::enable_if_t<meta::Is<BaseType>::SameAsEvery<T...>::value && (sizeof...(T) <= ELEMENTS)>;
+      std::enable_if_t<meta::Is<BaseType>::SameAsEvery<meta::Decay<T>...>::value &&
+                       (sizeof...(T) <= ELEMENTS)>;
 
   ////////////////////
   /// constructors ///
@@ -85,14 +87,14 @@ public:
   constexpr UInt(UInt &&other) noexcept = default;
 
   template <typename... T, IfIsWideInitialiserList<T...> * = nullptr>
-  constexpr explicit UInt(T &&... data)
+  constexpr UInt(T &&... data)
     : wide_{{std::forward<T>(data)...}}
   {
     mask_residual_bits();
   }
 
   template <typename... T, IfIsBaseInitialiserList<T...> * = nullptr>
-  constexpr explicit UInt(T &&... data)
+  constexpr UInt(T &&... data)
     : wide_{reinterpret_cast<WideContainerType &&>(
           core::Array<BaseType, ELEMENTS>{{std::forward<T>(data)...}})}
   {
@@ -741,7 +743,7 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   D >>= lsb;
   UInt<S> multiple(1u);
 
-  auto const D_leading_zero_bits{D.UINT_SIZE - D.msb()};
+  auto const D_leading_zero_bits{D.UINT_SIZE - D.msb() - 1};
   // Find smallest multiple of divisor (D) that is larger than the dividend (N)
   D <<= D_leading_zero_bits;
   multiple <<= D_leading_zero_bits;
