@@ -31,7 +31,7 @@ class ColearnURI
 {
 public:
   ColearnURI() = default;
-  ColearnURI(ColearnUpdate const &update);
+  explicit ColearnURI(ColearnUpdate const &update);
 
   std::string       ToString() const;
   static ColearnURI Parse(std::string const &uriString);  // Fingerprint must be encoded
