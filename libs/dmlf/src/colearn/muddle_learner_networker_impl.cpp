@@ -158,7 +158,7 @@ void MuddleLearnerNetworkerImpl::submit(TaskPtr const &t)
 void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update,
                                                  const Peers &peers, double broadcast_proportion)
 {
-  auto random_factor = randomiser_.GetNew();
+  auto random_factor   = randomiser_.GetNew();
   broadcast_proportion = std::max(0.0, std::min(1.0, broadcast_proportion));
   for (auto const &peer : peers)
   {
