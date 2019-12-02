@@ -1694,17 +1694,6 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
                  " to complete at: ", state_deadline_, " which is in ",
                  int64_t(state_deadline_) - int64_t(current_time), " seconds.");
 
-  FETCH_LOG_INFO(LOGGING_NAME, "-- TIMING DEBUG --");
-  FETCH_LOG_INFO(LOGGING_NAME, "Expected dkg time: ", expected_dkg_time_s);
-  FETCH_LOG_INFO(LOGGING_NAME, "Seconds for state: ", seconds_for_state_);
-  FETCH_LOG_INFO(LOGGING_NAME, "Reference timepoint: ", reference_timepoint_);
-  FETCH_LOG_INFO(LOGGING_NAME, "State deadline: ", state_deadline_);
-  FETCH_LOG_INFO(LOGGING_NAME, "time slot for state ", time_slot_for_state);
-  FETCH_LOG_INFO(LOGGING_NAME, "time slots total ", time_slots_total);
-  FETCH_LOG_INFO(LOGGING_NAME, "time slots in dkg ", time_slots_in_dkg_);
-  FETCH_LOG_INFO(LOGGING_NAME, "time per slot ", time_per_slot);
-  FETCH_LOG_INFO(LOGGING_NAME, "");
-
   if (state_deadline_ < current_time)
   {
     FETCH_LOG_WARN(LOGGING_NAME, NodeString(), "#### Deadline for ", ToString(state),
