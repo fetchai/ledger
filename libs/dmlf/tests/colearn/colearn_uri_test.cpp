@@ -59,7 +59,8 @@ TEST(Colearn_URi, updateConstructor)
   EXPECT_EQ(uri.update_type(), "type");
   EXPECT_EQ(uri.source(), "source");
   EXPECT_EQ(uri.fingerprint(), "xhywzpw.OyL8_Q5KdOyYyt7Vop2SYlvqgwGlYvimR_M-");
-  EXPECT_EQ(uri.ToString(), "colearn:///algo/type/source/xhywzpw.OyL8_Q5KdOyYyt7Vop2SYlvqgwGlYvimR_M-");
+  EXPECT_EQ(uri.ToString(),
+            "colearn:///algo/type/source/xhywzpw.OyL8_Q5KdOyYyt7Vop2SYlvqgwGlYvimR_M-");
 }
 
 TEST(Colearn_URi, manualConstruction)
@@ -84,7 +85,7 @@ TEST(Colearn_URi, stringConstruction)
 
   {
     std::string asString = "colearn://owner/algo/type/source/fingerprint";
-    ColearnURI  uri = ColearnURI::Parse(asString);
+    ColearnURI  uri      = ColearnURI::Parse(asString);
 
     EXPECT_FALSE(uri.IsEmpty());
     EXPECT_EQ(uri.protocol(), "colearn");
@@ -97,7 +98,7 @@ TEST(Colearn_URi, stringConstruction)
   }
   {
     std::string asString = "colearn:///algo/type/source/fingerprint";
-    ColearnURI  uri = ColearnURI::Parse(asString);
+    ColearnURI  uri      = ColearnURI::Parse(asString);
 
     EXPECT_FALSE(uri.IsEmpty());
     EXPECT_EQ(uri.protocol(), "colearn");
@@ -110,7 +111,7 @@ TEST(Colearn_URi, stringConstruction)
   }
   {
     std::string asString = "colearn:////type/source/fingerprint";
-    ColearnURI  uri = ColearnURI::Parse(asString);
+    ColearnURI  uri      = ColearnURI::Parse(asString);
 
     EXPECT_FALSE(uri.IsEmpty());
     EXPECT_EQ(uri.protocol(), "colearn");
@@ -123,7 +124,7 @@ TEST(Colearn_URi, stringConstruction)
   }
   {
     std::string asString = "colearn://///source/fingerprint";
-    ColearnURI  uri = ColearnURI::Parse(asString);
+    ColearnURI  uri      = ColearnURI::Parse(asString);
 
     EXPECT_FALSE(uri.IsEmpty());
     EXPECT_EQ(uri.protocol(), "colearn");
@@ -136,7 +137,7 @@ TEST(Colearn_URi, stringConstruction)
   }
   {
     std::string asString = "colearn://////fingerprint";
-    ColearnURI  uri = ColearnURI::Parse(asString);
+    ColearnURI  uri      = ColearnURI::Parse(asString);
 
     EXPECT_FALSE(uri.IsEmpty());
     EXPECT_EQ(uri.protocol(), "colearn");
@@ -149,7 +150,7 @@ TEST(Colearn_URi, stringConstruction)
   }
   {
     std::string asString = "colearn://////";
-    ColearnURI  uri = ColearnURI::Parse(asString);
+    ColearnURI  uri      = ColearnURI::Parse(asString);
 
     EXPECT_TRUE(uri.IsEmpty());
     EXPECT_EQ(uri.protocol(), "colearn");
@@ -167,31 +168,31 @@ TEST(Colearn_URi, badStringConstruction)
 
   {
     std::string asString = "myuri://owner/algo/type/source/fingerprint";
-    ColearnURI  uri = ColearnURI::Parse(asString);
+    ColearnURI  uri      = ColearnURI::Parse(asString);
 
     EXPECT_TRUE(uri.IsEmpty());
   }
   {
     std::string asString = "colearn://owner/source/fingerprint";
-    ColearnURI  uri = ColearnURI::Parse(asString);
+    ColearnURI  uri      = ColearnURI::Parse(asString);
 
     EXPECT_TRUE(uri.IsEmpty());
   }
   {
     std::string asString = "";
-    ColearnURI  uri = ColearnURI::Parse(asString);
+    ColearnURI  uri      = ColearnURI::Parse(asString);
 
     EXPECT_TRUE(uri.IsEmpty());
   }
   {
     std::string asString = "AAAAAAA://owner/algo/type/source/fingerprint";
-    ColearnURI  uri = ColearnURI::Parse(asString);
+    ColearnURI  uri      = ColearnURI::Parse(asString);
 
     EXPECT_TRUE(uri.IsEmpty());
   }
   {
     std::string asString = "colearn:/owner/algo/type/source/fingerprint";
-    ColearnURI  uri = ColearnURI::Parse(asString);
+    ColearnURI  uri      = ColearnURI::Parse(asString);
 
     EXPECT_TRUE(uri.IsEmpty());
   }

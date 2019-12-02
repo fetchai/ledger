@@ -35,7 +35,7 @@ ColearnURI::ColearnURI(UpdateStore::Update const &update)
 
 ColearnURI ColearnURI::Parse(std::string const &uriString)
 {
-  ColearnURI result;
+  ColearnURI    result;
   constexpr int prefixLength = 10;
   if (uriString.compare(0, prefixLength, "colearn://") != 0)
   {
@@ -60,10 +60,10 @@ ColearnURI ColearnURI::Parse(std::string const &uriString)
   }
 
   result.owner(fields[0])
-    .algorithm_class(fields[1])
-    .update_type(fields[2])
-    .source(fields[3])
-    .fingerprint(fields[4]);
+      .algorithm_class(fields[1])
+      .update_type(fields[2])
+      .source(fields[3])
+      .fingerprint(fields[4]);
 
   return result;
 }
@@ -80,8 +80,8 @@ bool ColearnURI::IsEmpty() const
          fingerprint_.empty();
 }
 
-constexpr std::array<std::array<char, 2>, 3> ENCODING{{ {'+','.'}, {'/','_'}, {'=','-'} }};
-constexpr char EncodeChar(char c)
+constexpr std::array<std::array<char, 2>, 3> ENCODING{{{'+', '.'}, {'/', '_'}, {'=', '-'}}};
+constexpr char                               EncodeChar(char c)
 {
   for (std::size_t i = 0; i < ENCODING.size(); ++i)
   {
