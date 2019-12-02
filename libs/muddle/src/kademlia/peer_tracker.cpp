@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "kademlia/peer_tracker.hpp"
 #include "core/time/to_seconds.hpp"
+#include "kademlia/peer_tracker.hpp"
 
 #include <chrono>
 #include <memory>
