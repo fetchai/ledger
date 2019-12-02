@@ -120,8 +120,9 @@ public:
   }
 
   void PushUpdateBytes(UpdateType const &type_name, Bytes const &update);
+  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, const Peers &peers);
   void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, const Peers &peers,
-                       double broadcast_proportion = -1.0);
+                       double broadcast_proportion);
 
   ConstUpdatePtr GetUpdate(AlgorithmClass const &algo, UpdateType const &type,
                            Criteria const &criteria);

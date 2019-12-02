@@ -156,6 +156,12 @@ void MuddleLearnerNetworkerImpl::submit(TaskPtr const &t)
 }
 
 void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update,
+                                                 const Peers &peers)
+{
+  PushUpdateBytes(type_name, update, peers, broadcast_proportion_)
+}
+
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update,
                                                  const Peers &peers, double broadcast_proportion)
 {
   auto random_factor = randomiser_.GetNew();
