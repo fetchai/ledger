@@ -460,6 +460,8 @@ void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
   std::map<Address, std::unordered_set<ResourceID>> lanes_of_interest;
   for (auto const &hash : tx_set)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Request for TX: 0x", hash.ToHex());
+
     ResourceID resource{hash};
     lanes_of_interest[LookupAddress(resource)].insert(std::move(resource));
   }
