@@ -1734,22 +1734,22 @@ Tip &Tip::operator=(Block const &block)
   return *this;
 }
 
-bool Tip::operator<(Tip const &that) const
+bool Tip::operator<(Tip const &right) const
 {
-  return Stats() < that.Stats();
+  return Stats() < right.Stats();
 }
 
-bool Tip::operator==(Tip const &that) const
+bool Tip::operator==(Tip const &right) const
 {
-  return Stats() == that.Stats();
+  return Stats() == right.Stats();
 }
 
-bool Tip::operator<(Block const &that) const
+bool Tip::operator<(Block const &right) const
 {
-  return operator<(Tip(that));
+  return operator<(Tip(right));
 }
 
-bool Tip::operator==(Block const &that) const
+bool Tip::operator==(Block const &right) const
 {
   return operator==(Tip(that));
 }
