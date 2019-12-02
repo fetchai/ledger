@@ -463,29 +463,12 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
 
 MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, State previous)
 {
+  FETCH_UNUSED(current);
   state_synchronised_->increment();
 
   State next_state{State::SYNCHRONISED};
 
-  FETCH_UNUSED(current);
-
-  MainChain::BlockPtr head_of_chain = chain_.GetHeaviestBlock();
-  uint64_t const      seconds_since_last_block =
-      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) -
-      head_of_chain->timestamp;
-
-  // Assume if the chain is quite old that there are peers who have a heavier chain we haven't
-  // heard about
-#if 0
-  if (seconds_since_last_block > 100 && head_of_chain->block_number != 0)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation appears to be lost - chain is old.");
-    state_machine_->Delay(std::chrono::milliseconds{1000});
-    next_state = State::REQUEST_HEAVIEST_CHAIN;
-  }
-  else
-#endif
-    if (chain_.HasMissingBlocks())
+  if (chain_.HasMissingBlocks())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation lost - chain has missing blocks");
 
