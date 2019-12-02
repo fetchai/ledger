@@ -1751,7 +1751,7 @@ bool Tip::operator<(Block const &right) const
 
 bool Tip::operator==(Block const &right) const
 {
-  return operator==(Tip(righ));
+  return operator==(Tip(right));
 }
 
 MainChain::BlockHash const &MainChain::HeaviestTip::Hash() const
