@@ -35,7 +35,10 @@ struct AddressPriority
   using Duration = typename std::chrono::duration<T>;
   using Address  = Packet::Address;
 
-  // TODO: Move all parameters up here.
+  enum
+  {
+    ADDRESS_SIZE = KademliaAddress::ADDRESS_SIZE
+  };
 
   enum Purpose
   {
@@ -62,13 +65,8 @@ struct AddressPriority
 
   /// Distance
   /// @{
-  uint64_t bucket{static_cast<uint64_t>(160)};  // TODO: System parameter
-  double   connection_value{0};                 ///< Overall value obtained from connection.
-  /// @}
-
-  /// Purpose
-  /// @{
-  Purpose purpose{Purpose::NORMAL};
+  uint64_t bucket{ADDRESS_SIZE};
+  double   connection_value{0};  ///< Overall value obtained from connection.
   /// @}
 
   void ScheduleDisconnect()
@@ -78,19 +76,11 @@ struct AddressPriority
     desired_expiry  = Clock::now() - std::chrono::seconds(60);
 
     connection_value = 0;
-    purpose          = NORMAL;
   }
 
   void UpdatePriority()
   {
-    // Consensus connections are considered
-    // special high priority connections
-    if (purpose == Purpose::PRIORITY_CONNECTION)
-    {
-      priority = 1.0;
-      return;
-    }
-
+    // TODO: Get parameters from configuration
     double const params[] = {1.0 / 30., 1. / 20., 0.05, 1.0 / 3600., 10.0};
     TimePoint    now      = Clock::now();
 

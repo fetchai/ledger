@@ -45,8 +45,6 @@ struct PeerInfo
   std::string      uri{};
   /// @}
 
-  // Promise ping_promise;
-  // TimeSpan latency{}
   Address  last_reporter{};
   uint64_t message_count{0};
   uint64_t failures{0};

@@ -139,7 +139,7 @@ KademliaTable::Peers KademliaTable::FindPeer(Address const &address)
   // corresponding bucket.
   auto kam_address = KademliaAddress::Create(address);
   auto dist        = GetKademliaDistance(own_address_, kam_address);
-  auto log_id      = GetBucketByLogarithm(dist);
+  auto log_id      = Bucket::IdByLogarithm(dist);
 
   return FindPeerInternal(kam_address, log_id);
 }
@@ -239,7 +239,7 @@ KademliaTable::Peers KademliaTable::FindPeerByHamming(Address const &address)
   FETCH_LOCK(mutex_);
   auto kam_address = KademliaAddress::Create(address);
   auto dist        = GetKademliaDistance(own_address_, kam_address);
-  auto hamming_id  = GetBucketByLogarithm(dist);
+  auto hamming_id  = Bucket::IdByLogarithm(dist);
 
   return FindPeerByHammingInternal(kam_address, hamming_id);
 }
@@ -259,8 +259,8 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
 
   auto other      = KademliaAddress::Create(address);
   auto dist       = GetKademliaDistance(own_address_, other);
-  auto log_id     = GetBucketByLogarithm(dist);
-  auto hamming_id = GetBucketByHamming(dist);
+  auto log_id     = Bucket::IdByLogarithm(dist);
+  auto hamming_id = Bucket::IdByHamming(dist);
 
   assert(log_id <= KADEMLIA_MAX_ID_BITS);
 
@@ -344,8 +344,8 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
 
   auto other      = KademliaAddress::Create(info.address);
   auto dist       = GetKademliaDistance(own_address_, other);
-  auto log_id     = GetBucketByLogarithm(dist);
-  auto hamming_id = GetBucketByHamming(dist);
+  auto log_id     = Bucket::IdByLogarithm(dist);
+  auto hamming_id = Bucket::IdByHamming(dist);
 
   assert(log_id <= KADEMLIA_MAX_ID_BITS);
 

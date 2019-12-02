@@ -199,8 +199,6 @@ private:
   ConnectionPriorityMap  kademlia_connection_priority_;
   ConnectionPriorityList kademlia_prioritized_peers_;
   AddressSet             kademlia_connections_;
-  //  uint64_t               persistent_outgoing_connections_{0};  /// TODO: rename?
-
   /// @}
 
   /// Managing connections accross subtrees.
@@ -208,7 +206,6 @@ private:
   ConnectionPriorityMap  longrange_connection_priority_;
   ConnectionPriorityList longrange_prioritized_peers_;
   AddressSet             longrange_connections_;
-  //  uint64_t               persistent_longrange_connections_{0};  /// TODO: rename?
   /// @}
 
   /// Management variables for network discovery

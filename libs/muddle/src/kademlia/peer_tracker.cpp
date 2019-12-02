@@ -60,11 +60,11 @@ void PeerTracker::AddDesiredPeer(Address const &address)
   desired_peers_.insert(address);
 }
 
-void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hint)
+void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const & /*hint*/)
 {
   FETCH_LOCK(mutex_);
   desired_peers_.insert(address);
-  // TODO: work out what to do with the hint.
+  // TODO: work out what to do with the hint. Possibly report existense
 }
 
 void PeerTracker::RemoveDesiredPeer(Address const &address)
@@ -160,7 +160,7 @@ void PeerTracker::UpdatePriorityList(ConnectionPriorityMap & connection_priority
     // Creating a priority for the list
     AddressPriority priority;
     priority.address = p.address;
-    priority.bucket  = GetBucketByLogarithm(p.distance);
+    priority.bucket  = Bucket::IdByLogarithm(p.distance);
 
     connection_priority.insert({p.address, std::move(priority)});
   }
@@ -687,7 +687,7 @@ void PeerTracker::Periodically()
       // Creating a priority for the list
       AddressPriority priority;
       priority.address = p.address;
-      priority.bucket  = GetBucketByLogarithm(p.distance);
+      priority.bucket  = Bucket::IdByLogarithm(p.distance);
 
       longrange_connection_priority_.insert({p.address, std::move(priority)});
     }

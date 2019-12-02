@@ -486,26 +486,26 @@ TEST(SmallNetworks, TestConnectivityKademliaMode)
 TEST(SmallNetworks, BasicAddressTests)
 {
   auto zero_address = FakeKademliaAddress({});
-  EXPECT_EQ(GetBucketByLogarithm(GetKademliaDistance(zero_address, zero_address)), 0);
+  EXPECT_EQ(Bucket::IdByLogarithm(GetKademliaDistance(zero_address, zero_address)), 0);
 
   {
     auto address = FakeKademliaAddress({255});
-    EXPECT_EQ(GetBucketByLogarithm(GetKademliaDistance(zero_address, address)), 8);
+    EXPECT_EQ(Bucket::IdByLogarithm(GetKademliaDistance(zero_address, address)), 8);
   }
 
   {
     auto address = FakeKademliaAddress({255, 255});
-    EXPECT_EQ(GetBucketByLogarithm(GetKademliaDistance(zero_address, address)), 16);
+    EXPECT_EQ(Bucket::IdByLogarithm(GetKademliaDistance(zero_address, address)), 16);
   }
 
   {
     auto address = FakeKademliaAddress({static_cast<uint8_t>(1 << 7), 0});
-    EXPECT_EQ(GetBucketByLogarithm(GetKademliaDistance(zero_address, address)), 16);
+    EXPECT_EQ(Bucket::IdByLogarithm(GetKademliaDistance(zero_address, address)), 16);
   }
 
   {
     auto address = FakeKademliaAddress({static_cast<uint8_t>(1 << 4), 0, 0});
-    EXPECT_EQ(GetBucketByLogarithm(GetKademliaDistance(zero_address, address)), 21);
+    EXPECT_EQ(Bucket::IdByLogarithm(GetKademliaDistance(zero_address, address)), 21);
   }
 }
 
@@ -519,7 +519,7 @@ TEST(SmallNetworks, KademliaPrimitives)
   auto kam_address1 = KademliaAddress::Create(raw_address1);
   auto kam_address2 = KademliaAddress::Create(raw_address2);
 
-  EXPECT_EQ(GetBucketByLogarithm(GetKademliaDistance(kam_address1, kam_address1)), 0);
+  EXPECT_EQ(Bucket::IdByLogarithm(GetKademliaDistance(kam_address1, kam_address1)), 0);
 
   constexpr uint64_t const N = 1000;
 

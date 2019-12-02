@@ -38,15 +38,57 @@ struct Bucket
   std::unordered_set<Peer> peers;
   Timepoint                last_updated;  // TODO: not used atm
 
-  /*
-  // TODO: Move from primitives
-  static BucketId GetBucketID(KademliaDistance const &distance)
+  static uint64_t IdByHamming(KademliaDistance const &dist)
   {
-    BucketId ret{0};
+    uint64_t ret{0};
+    for (auto const &d : dist)
+    {
+      ret += platform::CountSetBits(d);
+    }
+    return ret;
+  }
+
+  static uint64_t IdByLogarithm(KademliaDistance const &dist)
+  {
+
+    static uint64_t zeros[16] = {
+        4,  // 0: 0b0000
+        3,  // 1: 0b0001
+        2,  // 2: 0b0010
+        2,  // 3: 0b0011
+        1,  // 4: 0b0100
+        1,  // 5: 0b0101
+        1,  // 6: 0b0110
+        1,  // 7: 0b0111
+        0,  // 8: 0b1000
+        0,  // 9: 0b1001
+        0,  // 10: 0b1010
+        0,  // 11: 0b1011
+        0,  // 12: 0b1100
+        0,  // 13: 0b1101
+        0,  // 14: 0b1110
+        0   // 15: 0b1111
+    };
+
+    uint64_t    ret{8 * dist.size() * sizeof(uint8_t)};
+    std::size_t i = dist.size();
+
+    // TODO: this function can be improved by using intrinsics
+    // but endianness needs to be considered.
+    do
+    {
+      --i;
+      auto top = zeros[(dist[i] >> 4) & 0xF];
+      ret -= top;
+      if (top == 4)
+      {
+        ret -= zeros[dist[i] & 0xF];
+      }
+
+    } while ((i != 0) && (dist[i] == 0));
 
     return ret;
   }
-  */
 };
 
 }  // namespace muddle
