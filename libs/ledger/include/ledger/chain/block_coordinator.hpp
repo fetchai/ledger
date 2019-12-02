@@ -198,6 +198,7 @@ public:
 
   core::Runnable &GetRunnable()
   {
+    std::cerr << "State machine: " << bool(state_machine_) << '\n';
     return *state_machine_;
   }
 

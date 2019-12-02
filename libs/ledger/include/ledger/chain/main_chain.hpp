@@ -161,7 +161,7 @@ public:
   Blocks     GetChainPreceding(BlockHash start, uint64_t lowest_block_number = 0) const;
   Travelogue TimeTravel(BlockHash current_hash) const;
   bool       GetPathToCommonAncestor(
-            Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
+            Blocks &blocks, BlockHash tip_hash, BlockHash node_hash, uint64_t limit = UPPER_BOUND,
             BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
   /// @}
 
@@ -247,7 +247,8 @@ public:
   void CacheReference(BlockHash const &hash, BlockHash const &next_hash, bool unique = false) const;
   void ForgetReference(BlockHash const &hash, BlockHash const &next_hash = {}) const;
   bool LookupReference(BlockHash const &hash, BlockHash &next_hash) const;
-  /// @}
+  BlockPtr ExpectBlock(BlockHash const &hash, char const *type) const;
+  /// @}t
 
   /// @name Low-level storage interface
   /// @{

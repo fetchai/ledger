@@ -131,6 +131,7 @@ protected:
 
       state_machine.Execute();
     }
+    EXPECT_EQ(state_machine.state(), state);
 
     return success;
   }
@@ -143,16 +144,21 @@ protected:
    */
   void Tick(State starting_state, State final_state)
   {
+    std::cerr << "38\n";
     auto const &state_machine = block_coordinator_->GetStateMachine();
+    std::cerr << "39\n";
 
     // match the current state of the machine
     ASSERT_EQ(starting_state, state_machine.state());
+    std::cerr << "40\n";
 
     // run one step of the state machine
     block_coordinator_->GetRunnable().Execute();
+    std::cerr << "41\n";
 
     ASSERT_EQ(std::string(block_coordinator_->ToString(final_state)),
               std::string(block_coordinator_->ToString(state_machine.state())));
+    std::cerr << "42\n";
   }
 
   /**
@@ -296,49 +302,83 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
 
+  std::cerr << "1\n";
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::ZERO_HASH);
 
+  std::cerr << "2\n";
   Tick(State::RELOAD_STATE, State::RESET);
+  std::cerr << "3\n";
   Tick(State::RESET, State::SYNCHRONISING);
+  std::cerr << "4\n";
   Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
+  std::cerr << "5\n";
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  std::cerr << "6\n";
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  std::cerr << "7\n";
   Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
+  std::cerr << "8\n";
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
+  std::cerr << "9\n";
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
+  std::cerr << "10\n";
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  std::cerr << "11\n";
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->hash);
 
+  std::cerr << "12\n";
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
+  std::cerr << "13\n";
   Tick(State::RESET, State::SYNCHRONISING);
+  std::cerr << "14\n";
   Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  std::cerr << "15\n";
   Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  std::cerr << "16\n";
   Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  std::cerr << "17\n";
   Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  std::cerr << "18\n";
   Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  std::cerr << "19\n";
   Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  std::cerr << "20\n";
   Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  std::cerr << "21\n";
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->hash);
+  std::cerr << "22\n";
 
   // force the generation of a new block (normally done with a timer)
   consensus_->TriggerBlockGeneration();
 
+  std::cerr << "23\n";
   Tick(State::SYNCHRONISED, State::NEW_SYNERGETIC_EXECUTION);
+  std::cerr << "24\n";
   Tick(State::NEW_SYNERGETIC_EXECUTION, State::PACK_NEW_BLOCK);
+  std::cerr << "25\n";
   Tick(State::PACK_NEW_BLOCK, State::EXECUTE_NEW_BLOCK);
+  std::cerr << "26\n";
   Tick(State::EXECUTE_NEW_BLOCK, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
+  std::cerr << "27\n";
   Tock(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::TRANSMIT_BLOCK);
+  std::cerr << "28\n";
   Tick(State::TRANSMIT_BLOCK, State::RESET);
+  std::cerr << "29\n";
 
   ASSERT_NE(execution_manager_->fake.LastProcessedBlock(), genesis->hash);
 
   // the state machine should exit from the main loop
+  std::cerr << "30\n";
   Tick(State::RESET, State::SYNCHRONISING);
+  std::cerr << "31\n";
   Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  std::cerr << "32\n";
   Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  std::cerr << "33\n";
   Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  std::cerr << "34\n";
   Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 }
 

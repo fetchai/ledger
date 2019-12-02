@@ -173,6 +173,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , block_hash_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "block_hash", "The last seen block hash beginning")}
 {
+  std::cerr << "State machine ctored: " << bool(state_machine_) << '\n';
   // configure the state machine
   // clang-format off
   state_machine_->RegisterHandler(State::RELOAD_STATE,                 this, &BlockCoordinator::OnReloadState);
@@ -253,41 +254,58 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
 
 BlockCoordinator::State BlockCoordinator::OnSynchronising()
 {
+  std::cerr << "51\n";
   synchronising_state_count_->increment();
 
+  std::cerr << "52\n";
   // ensure that we have a current block that we are executing
   if (!current_block_)
   {
+    std::cerr << "53\n";
     current_block_ = chain_.GetHeaviestBlock();
   }
 
+  std::cerr << "54\n";
   if (!current_block_ || current_block_->hash.empty())
   {
+    std::cerr << "55\n";
     FETCH_LOG_ERROR(LOGGING_NAME, "Invalid heaviest block, empty block hash");
 
     state_machine_->Delay(std::chrono::milliseconds{500});
     return State::RESET;
   }
+  std::cerr << "56\n";
 
   // update the current block telemetry
   current_block_num_->set(current_block_->block_number);
+  std::cerr << "57\n";
 
   // determine if extra debug is wanted or needed
   bool const extra_debug = syncing_periodic_.Poll();
+  std::cerr << "58\n";
 
   // cache some useful variables
-  auto const     current_hash         = current_block_->hash;
-  auto const     previous_hash        = current_block_->previous_hash;
-  auto const     desired_state        = current_block_->merkle_hash;
-  auto const     last_committed_state = storage_unit_.LastCommitHash();
-  auto const     current_state        = storage_unit_.CurrentHash();
-  auto const     last_processed_block = execution_manager_.LastProcessedBlock();
-  uint64_t const current_dag_epoch    = dag_ ? dag_->CurrentEpoch() : 0;
-  bool const     is_genesis           = current_block_->IsGenesis();
+  auto const current_hash = current_block_->hash;
+  std::cerr << "59\n";
+  auto const previous_hash = current_block_->previous_hash;
+  std::cerr << "60\n";
+  auto const desired_state = current_block_->merkle_hash;
+  std::cerr << "61\n";
+  auto const last_committed_state = storage_unit_.LastCommitHash();
+  std::cerr << "62\n";
+  auto const current_state = storage_unit_.CurrentHash();
+  std::cerr << "63\n";
+  auto const last_processed_block = execution_manager_.LastProcessedBlock();
+  std::cerr << "64\n";
+  uint64_t const current_dag_epoch = dag_ ? dag_->CurrentEpoch() : 0;
+  std::cerr << "65\n";
+  bool const is_genesis = current_block_->IsGenesis();
+  std::cerr << "66\n";
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
   if (extra_debug)
   {
+    std::cerr << "67\n";
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Heaviest.....: 0x", chain_.GetHeaviestBlockHash().ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current......: 0x", current_hash.ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Previous.....: 0x", previous_hash.ToHex());
@@ -301,72 +319,99 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   }
 #endif  // FETCH_LOG_DEBUG_ENABLED
 
+  std::cerr << "68\n";
   FETCH_UNUSED(current_dag_epoch);
+  std::cerr << "69\n";
 
   // initial condition, the last processed block is empty
   if (chain::ZERO_HASH == last_processed_block)
   {
+    std::cerr << "70\n";
     // start up - we need to work out which of the blocks has been executed previously
 
     if (is_genesis)
     {
+      std::cerr << "71\n";
       // once we have got back to genesis then we need to start executing from the beginning
       return State::PRE_EXEC_BLOCK_VALIDATION;
+      std::cerr << "72\n";
     }
 
+    std::cerr << "73\n";
     // look up the previous block
     auto previous_block = chain_.GetBlock(previous_hash);
+    std::cerr << "74\n";
     if (!previous_block)
     {
+      std::cerr << "76\n";
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up previous block: ", ToBase64(current_hash));
+      std::cerr << "77\n";
       return State::RESET;
     }
 
+    std::cerr << "79\n";
     // update the current block
     current_block_ = previous_block;
+    std::cerr << "80\n";
   }
   else if (current_hash == last_processed_block)
   {
+    std::cerr << "81\n";
     // the block coordinator has now successfully synced with the chain of blocks.
     return State::SYNCHRONISED;
   }
   else
   {
+    std::cerr << "82\n";
     // normal case - we have processed at least one block
 
     // find the path to ancestor - retain this path if it is long for efficiency reasons.
     bool lookup_success = false;
+    std::cerr << "83\n";
 
     if (blocks_to_common_ancestor_.empty())
     {
+      std::cerr << "84\n";
       lookup_success = chain_.GetPathToCommonAncestor(
           blocks_to_common_ancestor_, current_hash, last_processed_block,
           COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT, MainChain::BehaviourWhenLimit::RETURN_LEAST_RECENT);
     }
     else
     {
+      std::cerr << "85\n";
       lookup_success = true;
     }
 
+    std::cerr << "86\n";
     if (!lookup_success)
     {
+      std::cerr << "87\n";
       FETCH_LOG_WARN(LOGGING_NAME,
                      "Unable to look up common ancestor for block:", ToBase64(current_hash));
       return State::RESET;
     }
 
+    std::cerr << "88\n";
     assert(blocks_to_common_ancestor_.size() >= 2 &&
            "Expected at least two blocks from common ancestor: HEAD and current");
 
-    auto     block_path_it = blocks_to_common_ancestor_.crbegin();
+    auto block_path_it = blocks_to_common_ancestor_.crbegin();
+    std::cerr << "Blocks to common:\n";
+    for (auto bp : blocks_to_common_ancestor_)
+      std::cerr << "\tBp: " << bool(bp) << '\n';
+    std::cerr << "89\n";
     BlockPtr common_parent = *block_path_it++;
-    BlockPtr next_block    = *block_path_it++;
+    std::cerr << "90\n";
+    BlockPtr next_block = *block_path_it++;
+    std::cerr << "91\n";
 
     // update the telemetry
     next_block_num_->set(next_block->block_number);
+    std::cerr << "92\n";
 
     if (extra_debug)
     {
+      std::cerr << "94\n";
       FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Common Parent: 0x", common_parent->hash.ToHex());
       FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Next Block...: 0x", next_block->hash.ToHex());
 
@@ -382,8 +427,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
     // we expect that the common parent in this case will always have been processed, but this
     // should be checked
+    std::cerr << "95\n";
     if (!storage_unit_.HashExists(common_parent->merkle_hash, common_parent->block_number))
     {
+      std::cerr << "96\n";
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's merkle hash cannot be retrieved! block: 0x",
                       current_hash.ToHex(), " number: ", common_parent->block_number,
                       " merkle hash: 0x", common_parent->merkle_hash.ToHex());
@@ -407,9 +454,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
       return State::RESET;
     }
 
+    std::cerr << "97\n";
     // revert the storage back to the known state
     if (!storage_unit_.RevertToHash(common_parent->merkle_hash, common_parent->block_number))
     {
+      std::cerr << "98\n";
       FETCH_LOG_ERROR(LOGGING_NAME, "Unable to restore state for block: ", current_hash.ToHex());
 
       // delay the state machine in these error cases, to allow the network to catch up if the issue
@@ -419,23 +468,30 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
       return State::RESET;
     }
 
+    std::cerr << "99\n";
     if (dag_ && !dag_->RevertToEpoch(common_parent->block_number))
     {
+      std::cerr << "100\n";
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to revert dag to block: ", common_parent->block_number);
       state_machine_->Delay(std::chrono::seconds{5});
       return State::RESET;
     }
 
+    std::cerr << "101\n";
     // update the current block and begin scheduling
     current_block_ = next_block;
 
+    std::cerr << "102\n";
     blocks_to_common_ancestor_.pop_back();
 
+    std::cerr << "103\n";
     if (blocks_to_common_ancestor_.size() < THRESHOLD_FOR_FAST_SYNCING)
     {
+      std::cerr << "104\n";
       blocks_to_common_ancestor_.clear();
     }
 
+    std::cerr << "105\n";
     return State::PRE_EXEC_BLOCK_VALIDATION;
   }
 
