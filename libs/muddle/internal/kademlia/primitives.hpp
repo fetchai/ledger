@@ -109,6 +109,18 @@ inline KademliaDistance GetKademliaDistance(KademliaAddress const &a, KademliaAd
   return ret;
 }
 
+inline KademliaDistance MaxKademliaDistance()
+{
+  KademliaDistance ret;
+
+  for (auto &a : ret)
+  {
+    a = 0xFF;
+  }
+
+  return ret;
+}
+
 }  // namespace muddle
 
 namespace serializers {

@@ -74,6 +74,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
 {
   // Default configuration is to do no tracking at all
   peer_tracker_->SetConfiguration(TrackerConfiguration::DefaultConfiguration());
+  router_.SetTracker(peer_tracker_);
 
   // handle the left issues
   register_->OnConnectionLeft([this](Handle handle) {

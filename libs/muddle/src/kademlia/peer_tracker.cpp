@@ -726,6 +726,17 @@ void PeerTracker::Periodically()
   {
     DisconnectFromPeers();
   }
+
+  // Finally, we create a list of accessible peers
+  accessible_peers_.clear();
+  for (auto &p : keep_connections_)
+  {
+    auto connection = register_.LookupConnection(p).lock();
+    if (connection)
+    {
+      accessible_peers_.insert(p);
+    }
+  }
 }
 
 PeerTracker::PeerTracker(PeerTracker::Duration const &interval, core::Reactor &reactor,

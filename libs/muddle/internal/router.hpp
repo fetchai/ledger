@@ -43,6 +43,7 @@ namespace muddle {
 
 class Dispatcher;
 class MuddleRegister;
+class PeerTracker;
 
 /**
  * The router if the fundamental object of the muddle system an routes external and internal packets
@@ -61,6 +62,7 @@ public:
   using Prover               = crypto::Prover;
   using DirectMessageHandler = std::function<void(Handle, PacketPtr)>;
   using Handles              = std::vector<Handle>;
+  using PeerTrackerPtr       = std::shared_ptr<PeerTracker>;
 
   struct RoutingData
   {
@@ -138,6 +140,11 @@ public:
     direct_message_handler_ = std::move(handler);
   }
 
+  void SetTracker(PeerTrackerPtr const &tracker)
+  {
+    tracker_ = tracker;
+  }
+
   void SetKademliaRouting(bool enable = true);
 
   RoutingTable     routing_table() const;
@@ -166,7 +173,6 @@ private:
                                           bool direct, bool broadcast);
 
   Handle LookupRandomHandle(Packet::RawAddress const &address) const;
-  Handle LookupKademliaClosestHandle(Address const &address) const;
 
   void SendToConnection(Handle handle, PacketPtr const &packet);
   void RoutePacket(PacketPtr const &packet, bool external = true);
@@ -198,15 +204,17 @@ private:
   crypto::SecureChannel secure_channel_{prover_};
   std::atomic<bool>     kademlia_routing_{false};
 
-  mutable Mutex routing_table_lock_;
-  RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by
+  mutable Mutex  routing_table_lock_;
+  RoutingTable   routing_table_;  ///< The map routing table from address to handle (Protected by
+  PeerTrackerPtr tracker_{nullptr};
 
   mutable Mutex echo_cache_lock_;
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;
 
-  // telemetry
+  /// Telemetry
+  /// @{
   telemetry::GaugePtr<uint64_t> rx_max_packet_length;
   telemetry::GaugePtr<uint64_t> tx_max_packet_length;
   telemetry::GaugePtr<uint64_t> bx_max_packet_length;
@@ -238,6 +246,7 @@ private:
   telemetry::CounterPtr         speculative_routing_total_;
   telemetry::CounterPtr         failed_routing_total_;
   telemetry::CounterPtr         connection_dropped_total_;
+  /// @}
 
   friend class DirectMessageService;
 };

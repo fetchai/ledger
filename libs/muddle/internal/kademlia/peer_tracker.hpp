@@ -64,6 +64,7 @@ public:
   using PeerInfoList           = std::deque<PeerInfo>;
   using BlackList              = fetch::muddle::Blacklist;
   using NetworkUris            = std::vector<std::string>;
+  using Handle                 = network::AbstractConnection::ConnectionHandleType;
 
   struct UnresolvedConnection
   {
@@ -91,6 +92,51 @@ public:
   void       AddDesiredPeer(Address const &address, network::Peer const &hint);
   void       RemoveDesiredPeer(Address const &address);
   // TODO(tfr): Address GetRoutingAddress(Address const& destination);
+  /// @}
+
+  /// Low-level
+  /// @{
+  Handle LookupHandle(Address const &address) const
+  {
+    auto wptr = register_.LookupConnection(address);
+
+    // If it is a direct connection we just return the handle
+    auto connection = wptr.lock();
+    if (connection)
+    {
+      return connection->handle();
+    }
+
+    // TODO(tfr): Create a cache for the search below
+
+    // Finding best address
+    auto             own_kad = KademliaAddress::Create(own_address_);
+    Address          best_address{};
+    KademliaDistance best = MaxKademliaDistance();
+
+    for (auto &peer : accessible_peers_)
+    {
+      KademliaAddress cmp  = KademliaAddress::Create(peer);
+      auto            dist = GetKademliaDistance(own_kad, cmp);
+
+      if (dist < best)
+      {
+        best         = dist;
+        best_address = peer;
+      }
+    }
+
+    // Finding handle
+    wptr       = register_.LookupConnection(best_address);
+    connection = wptr.lock();
+    if (connection)
+    {
+      // TODO(tfr): add to cache
+      return connection->handle();
+    }
+
+    return 0;
+  }
   /// @}
 
   /// Trust interface
@@ -186,6 +232,7 @@ private:
   PeerTrackerProtocol  peer_tracker_protocol_;
   TrackerConfiguration tracker_configuration_;
   AddressSet           keep_connections_{};
+  AddressSet           accessible_peers_{};
   /// @}
 
   /// User defined connections

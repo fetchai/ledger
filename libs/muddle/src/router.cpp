@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "dispatcher.hpp"
+#include "kademlia/peer_tracker.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "router.hpp"
@@ -745,27 +746,19 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
  * @param address The address to look up the handle for.
  * @return The target handle for the connection, or zero on failure.
  */
-Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
+Router::Handle Router::LookupHandle(Packet::RawAddress const &raw_address) const
 {
-  Handle handle = 0;
+  Handle handle  = 0;
+  auto   address = ConvertAddress(raw_address);
 
+  if (tracker_)
   {
-    FETCH_LOCK(routing_table_lock_);
-
-    auto address_it = routing_table_.find(address);
-    if (address_it != routing_table_.end())
-    {
-      auto const &routing_data = address_it->second;
-
-      if (!routing_data.handles.empty())
-      {
-        handle = routing_data.handles.front();
-      }
-    }
+    return tracker_->LookupHandle(address);
   }
-
-  FETCH_LOG_TRACE(logging_name_, "Routing decision: ", ConvertAddress(address).ToBase64(), " -> ",
-                  handle);
+  else
+  {
+    FETCH_LOG_ERROR(logging_name_, "Unable handle of address: ", address.ToBase64());
+  }
 
   return handle;
 }
@@ -811,40 +804,6 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
   }
 
   return 0;
-}
-
-/**
- * Look up the closest directly connected handle to route the packet to
- *
- * @param address The address
- * @return
- */
-Router::Handle Router::LookupKademliaClosestHandle(Address const &address) const
-{
-  Handle handle{0};
-  // TODO(tfr): use peer tracker
-
-  auto const directly_connected = GetDirectlyConnectedPeerSet();
-  if (!directly_connected.empty())
-  {
-    auto it   = directly_connected.begin();
-    auto node = *it++;
-
-    uint64_t best_distance = CalculateDistance(address, node);
-    for (; it != directly_connected.end(); ++it)
-    {
-      uint64_t const distance = CalculateDistance(address, *it);
-
-      if (distance < best_distance)
-      {
-        node = *it;
-      }
-    }
-
-    handle = LookupHandle(ConvertAddress(node));
-  }
-
-  return handle;
 }
 
 /**
@@ -990,18 +949,6 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
       }
 
       FETCH_LOG_ERROR(logging_name_, "Informed routing; Invalid handle");
-    }
-
-    // if kad routing is enabled we should use this to route packets
-    if (kademlia_routing_)
-    {
-      handle = LookupKademliaClosestHandle(packet->GetTarget());
-      if (handle != 0u)
-      {
-        SendToConnection(handle, packet);
-        kademlia_routing_total_->increment();
-        return;
-      }
     }
 
     // if direct routing fails then randomly select a handle. In future a better routing scheme
