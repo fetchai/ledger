@@ -99,7 +99,7 @@ void BM_AddLayer(::benchmark::State &state)
                                       O);  // input_size, output_size
   }
 }
-/*
+
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 1, 1)->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 10, 10)->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 1000, 1000)->Unit(::benchmark::kMicrosecond);
@@ -119,7 +119,7 @@ BENCHMARK_TEMPLATE(BM_AddLayer, float, 200, 200)->Unit(::benchmark::kMicrosecond
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 2000, 20)->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 3000, 10)->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 10, 3000)->Unit(::benchmark::kMicrosecond);
-*/
+
 void BM_Predict(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
@@ -149,7 +149,7 @@ void BM_Predict(::benchmark::State &state)
     auto res = model->Predict(data);
   }
 }
-/*
+
 // batch_size, number_of_layers, input_size, hidden_1_size, ...., output_size
 BENCHMARK(BM_Predict)->Args({1,6,1,10, 100,1000,10000,1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)->Args({2,6,1,10, 100,1000,10000,1})->Unit(::benchmark::kMicrosecond);
@@ -223,7 +223,6 @@ BENCHMARK(BM_Predict)->Args({1,2,10,10})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)->Args({128,5,1000,1000, 1000,1000,1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)->Args({256,5,1000,1000, 1000,1000,1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)->Args({512,5,1000,1000, 1000,1000,1000})->Unit(::benchmark::kMicrosecond);
-*/
 
 void BM_Compile(::benchmark::State &state)
 {
@@ -317,7 +316,7 @@ void BM_Serialise(::benchmark::State &state)
     model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
 
     state.ResumeTiming();
-    model->SerialiseToString();
+    model->SerializeToString();
   }
 }
 
@@ -326,9 +325,6 @@ void BM_Serialise(::benchmark::State &state)
 //BENCHMARK(BM_Compile)->Args({5,10000,1000, 100,10,1})->Unit(::benchmark::kMicrosecond);
 //BENCHMARK(BM_Compile)->Args({4,1,1, 1,1})->Unit(::benchmark::kMicrosecond);
 
-
-
-BENCHMARK_MAIN();
 
 } // model
 } // ml
