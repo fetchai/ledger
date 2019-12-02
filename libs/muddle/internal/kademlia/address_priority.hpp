@@ -66,7 +66,7 @@ struct AddressPriority
 
   /// Distance
   /// @{
-  uint64_t bucket{ADDRESS_SIZE};
+  uint64_t bucket{KADEMLIA_MAX_ID_BITS};
   double   connection_value{0};  ///< Overall value obtained from connection.
   /// @}
 
@@ -85,36 +85,17 @@ struct AddressPriority
     double const params[] = {1.0 / 30., 1. / 20., 0.05, 1.0 / 3600., 10.0};
     TimePoint    now      = Clock::now();
 
-    // Compute prioity based on desired expiry
-    double time_until_expiry_perm =
-        3600. * 24.;  // We use a day as default for persistent connections
-
-    // Becomes 1 when connection is far from its expiry point
-    // 0.5 when on its expiry point
-    // Goes to zero as expiry is passed.
-    double expiry_coef_perm = 1. / (1. + exp(-params[0] * time_until_expiry_perm));
-
     // Priority goes down exponentially with the increasing bucket number.
     auto bucket_d = static_cast<double>(bucket);
-    if (bucket_d > KADEMLIA_MAX_ID_BITS)
+    if (bucket_d > static_cast<double>(KADEMLIA_MAX_ID_BITS))
     {
-      bucket_d = KADEMLIA_MAX_ID_BITS;
-    }
-
-    // If it is a non-persistent connection, the bucket is less
-    // relevant and, in fact, far-away short lived connections has
-    // higher priority than long lived far away connections
-    double bucket_tmp_param = 1. - expiry_coef_perm;
-    if (params[2] < bucket_tmp_param)
-    {
-      bucket_tmp_param = params[2];
+      bucket_d = static_cast<double>(KADEMLIA_MAX_ID_BITS);
     }
 
     assert((0 <= bucket_d) && (bucket_d <= static_cast<double>(KADEMLIA_MAX_ID_BITS)));
 
     double bucket_coef_perm =
-        1.0 /
-        (1 + exp(-bucket_tmp_param * (static_cast<double>(KADEMLIA_MAX_ID_BITS) / 2. - bucket_d)));
+        1.0 / (1 + exp(-params[2] * (static_cast<double>(KADEMLIA_MAX_ID_BITS) / 2. - bucket_d)));
 
     // We value long time connections
     double connection_time =
@@ -127,7 +108,7 @@ struct AddressPriority
     double behaviour_coef = 1. / (1 + exp(-params[4] * connection_value));
 
     // Setting priority
-    priority = expiry_coef_perm * behaviour_coef * bucket_coef_perm * connect_coef;
+    priority = behaviour_coef * bucket_coef_perm * connect_coef;
   }
 
   bool operator<(AddressPriority const &other) const

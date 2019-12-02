@@ -50,6 +50,19 @@ struct TrackerConfiguration
     return conf;
   }
 
+  static TrackerConfiguration DefaultConfiguration()
+  {
+    TrackerConfiguration conf;
+
+    conf.allow_desired_connections = true;
+    conf.register_connections      = false;
+    conf.pull_peers                = false;
+    conf.connect_to_nearest        = false;
+    conf.disconnect_duplicates     = false;
+    conf.trim_peer_list            = false;
+    return conf;
+  }
+
   /// Operations
   /// @{
   bool allow_desired_connections{true};

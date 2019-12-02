@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/time/to_seconds.hpp"
 #include "kademlia/peer_tracker.hpp"
+#include "core/time/to_seconds.hpp"
 
 #include <chrono>
 #include <memory>
@@ -64,11 +64,15 @@ void PeerTracker::AddDesiredPeer(Address const &address)
   desired_peers_.insert(address);
 }
 
-void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const & /*hint*/)
+void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hint)
 {
   FETCH_LOCK(mutex_);
   desired_peers_.insert(address);
-  // TODO(tfr): work out what to do with the hint. Possibly report existense
+
+  PeerInfo info;
+  info.address = address;
+  info.uri     = hint.ToUri();
+  peer_table_.ReportExistence(info, own_address_);
 }
 
 void PeerTracker::RemoveDesiredPeer(Address const &address)
@@ -77,12 +81,9 @@ void PeerTracker::RemoveDesiredPeer(Address const &address)
   desired_peers_.erase(address);
 }
 
-//. TODO(tfr): Update and used mehtods used in other module
-void PeerTracker::SetMuddlePorts(PortsList const &ports)
+void PeerTracker::UpdateExternalUris(NetworkUris const &uris)
 {
-  peer_tracker_protocol_.SetMuddlePorts(ports);
-  logging_name_ = "tcp://localhost:" +
-                  std::to_string(ports[0]);  // TODO(tfr): remove and follow. normal convention
+  peer_tracker_protocol_.UpdateExternalUris(uris);
 }
 
 PeerTracker::ConnectionPriorityMap PeerTracker::connection_priority() const
@@ -127,22 +128,22 @@ void PeerTracker::ProcessConnectionHandles()
     else if (state == ConnectionState::RESOLVED)
     {
       // If not ports were detected, we request the client for its server ports
-      if (details.ports.empty())
+      if (details.uris.empty())
       {
         // make the call to the remote service
         auto promise = rpc_client_.CallSpecificAddress(details.address, RPC_MUDDLE_KADEMLIA,
-                                                       PeerTrackerProtocol::GET_MUDDLE_PORTS);
+                                                       PeerTrackerProtocol::GET_MUDDLE_URIS);
 
         // wrap the promise is a task
         auto task = std::make_shared<PromiseTask>(
             promise, tracker_configuration_.promise_timeout,
-            [this, details](service::Promise const &promise) { OnResolvePorts(details, promise); });
+            [this, details](service::Promise const &promise) { OnResolveUris(details, promise); });
 
         // add the task to the reactor
         reactor_.Attach(task);
 
         // add the task to the pending resolutions queue
-        port_resolution_promises_.emplace(details.address, std::move(task));
+        uri_resolution_promises_.emplace(details.address, std::move(task));
       }
     }
   }
@@ -771,48 +772,56 @@ PeerTracker::ConnectionState PeerTracker::ResolveConnectionDetails(UnresolvedCon
     // Getting the network endpoint without port
     details.partial_uri = connection->Address();
 
-    // We can only rely on ports for outgoing connections.
+    // We can only rely on uris for outgoing connections.
     if (connection->Type() == network::AbstractConnection::TYPE_OUTGOING)
     {
-      details.ports = PortsList({connection->port()});
+      network::Peer peer{connection->Address(), connection->port()};
+
+      details.uris = NetworkUris({peer.ToUri()});
       RegisterConnectionDetails(details);
     }
 
-    // Invoking short-lived connection callback
     return ConnectionState::RESOLVED;
   }
 
   return ConnectionState::DEAD;
 }
 
-void PeerTracker::OnResolvePorts(UnresolvedConnection details, service::Promise const &promise)
+void PeerTracker::OnResolveUris(UnresolvedConnection details, service::Promise const &promise)
 {
   FETCH_LOCK(mutex_);
   if (promise->state() == service::PromiseState::SUCCESS)
   {
     // extract the set of addresses from which the prospective node is contactable
-    auto ports = promise->As<PortsList>();
-
-    details.ports = std::move(ports);
+    auto uris    = promise->As<NetworkUris>();
+    details.uris = std::move(uris);
     RegisterConnectionDetails(details);
+  }
+  else
+  {
+    FETCH_LOG_WARN(logging_name_.c_str(), "Could not pull URI details.");
   }
 }
 
 void PeerTracker::RegisterConnectionDetails(UnresolvedConnection const &details)
 {
   // Reporting that peer is still responding
-  network::Peer peer(details.partial_uri, details.ports[0]);
-  auto          uri = peer.ToUri();
+  if (!details.uris.empty())
+  {
+    PeerInfo info;
 
-  PeerInfo info;
+    info.address = details.address;
+    info.uri     = details.uris[0];  // TODO: store all URIs
 
-  info.address = details.address;
-  info.uri     = std::move(uri);
+    peer_table_.ReportLiveliness(details.address, own_address_, info);
 
-  peer_table_.ReportLiveliness(details.address, own_address_, info);
-
-  // Scheduling for data pull
-  SchedulePull(details.address);
+    // Scheduling for data pull
+    SchedulePull(details.address);
+  }
+  else
+  {
+    FETCH_LOG_WARN(logging_name_.c_str(), "Could not resolve URI.");
+  }
 }
 
 }  // namespace muddle

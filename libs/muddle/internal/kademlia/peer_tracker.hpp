@@ -44,17 +44,18 @@ class Muddle;
 class PeerTracker : public core::PeriodicRunnable
 {
 public:
-  using Clock                  = std::chrono::steady_clock;
-  using TimePoint              = Clock::time_point;
-  using Address                = Packet::Address;
-  using Peers                  = std::deque<PeerInfo>;
-  using PeerTrackerPtr         = std::shared_ptr<PeerTracker>;
-  using PeerList               = std::unordered_set<Address>;
-  using PendingPortResolution  = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
-  using PendingPromised        = std::unordered_map<uint64_t, std::shared_ptr<PromiseTask>>;
-  using ConnectionHandle       = network::AbstractConnection::ConnectionHandleType;
-  using ConstByteArray         = byte_array::ConstByteArray;
-  using PortsList              = PeerTrackerProtocol::PortsList;
+  using Clock                = std::chrono::steady_clock;
+  using TimePoint            = Clock::time_point;
+  using Address              = Packet::Address;
+  using Peers                = std::deque<PeerInfo>;
+  using PeerTrackerPtr       = std::shared_ptr<PeerTracker>;
+  using PeerList             = std::unordered_set<Address>;
+  using PendingUriResolution = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
+  using PendingPromised      = std::unordered_map<uint64_t, std::shared_ptr<PromiseTask>>;
+  using ConnectionHandle     = network::AbstractConnection::ConnectionHandleType;
+  using ConstByteArray       = byte_array::ConstByteArray;
+  // TODO: might be needed to reinstate  using PortsList              =
+  // PeerTrackerProtocol::PortsList;
   using ConnectionPriorityMap  = std::unordered_map<Address, AddressPriority>;
   using ConnectionPriorityList = std::vector<AddressPriority>;
   using AddressSet             = std::unordered_set<Address>;
@@ -62,13 +63,14 @@ public:
   using AddressTimestamp       = std::unordered_map<Address, TimePoint>;
   using PeerInfoList           = std::deque<PeerInfo>;
   using BlackList              = fetch::muddle::Blacklist;
+  using NetworkUris            = std::vector<std::string>;
 
   struct UnresolvedConnection
   {
     ConnectionHandle handle;
     Address          address{};
     std::string      partial_uri{};
-    PortsList        ports{};
+    NetworkUris      uris{};
   };
 
   enum ConnectionState
@@ -124,7 +126,7 @@ protected:
   /// Methods integrate new connections into the peer tracker.
   /// @{
   void AddConnectionHandleToQueue(ConnectionHandle handle);
-  void SetMuddlePorts(PortsList const &ports);
+  void UpdateExternalUris(NetworkUris const &uris);
   void SetConfiguration(TrackerConfiguration const &config);
   /// @}
 
@@ -148,7 +150,7 @@ private:
   /// @{
   void            ProcessConnectionHandles();
   ConnectionState ResolveConnectionDetails(UnresolvedConnection &details);
-  void            OnResolvePorts(UnresolvedConnection details, service::Promise const &promise);
+  void            OnResolveUris(UnresolvedConnection details, service::Promise const &promise);
   void            RegisterConnectionDetails(UnresolvedConnection const &details);
   /// @}
 
@@ -194,7 +196,7 @@ private:
   /// Handling new comers
   /// @{
   std::queue<UnresolvedConnection> new_handles_;
-  PendingPortResolution            port_resolution_promises_;
+  PendingUriResolution             uri_resolution_promises_;
   /// @}
 
   /// Managing connections to Kademlia subtrees

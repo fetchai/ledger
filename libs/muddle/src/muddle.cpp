@@ -72,6 +72,9 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
                                    *register_, clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
 {
+  // Default configuration is to do no tracking at all
+  peer_tracker_->SetConfiguration(TrackerConfiguration::DefaultConfiguration());
+
   // handle the left issues
   register_->OnConnectionLeft([this](Handle handle) {
     router_.ConnectionDropped(handle);
@@ -156,9 +159,6 @@ bool Muddle::Start(Uris const &peers, Ports const &ports)
   {
     CreateTcpServer(port);
   }
-
-  // Updating tracker to
-  peer_tracker_->SetMuddlePorts(ports);
 
   // schedule the maintenance (which shall force the connection of the peers)
   RunPeriodicMaintenance();
@@ -548,7 +548,8 @@ void Muddle::RunPeriodicMaintenance()
     // update discovery information
     std::unordered_set<Uri> just_connected_to;
 
-    DiscoveryService::Peers external_addresses{};
+    PeerTracker::NetworkUris external_uris{};
+    DiscoveryService::Peers  external_addresses{};
     for (uint16_t port : GetListeningPorts())
     {
       // ignore pending ports
@@ -564,11 +565,16 @@ void Muddle::RunPeriodicMaintenance()
         port = it->second;
       }
 
-      external_addresses.emplace_back(network::Peer(external_address_, port));
+      network::Peer peer{external_address_, port};
+
+      external_uris.emplace_back(peer.ToUri());
+      external_addresses.emplace_back(std::move(peer));
       FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
     }
+
     discovery_service_.UpdatePeers(external_addresses);
-    // TODO(tfr): remove peer_selector_->UpdatePeers(external_addresses);
+    peer_tracker_->UpdateExternalUris(external_uris);
+
     // TODO(tfr): update external address for peer_tracker.
 
     // connect to all the required peers
