@@ -729,8 +729,8 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, Bloc
   BlockPtr left{};
   BlockPtr right{};
 
-  BlockHash left_hash  = std::move(tip);
-  BlockHash right_hash = std::move(node);
+  BlockHash left_hash  = std::move(tip_hash);
+  BlockHash right_hash = std::move(node_hash);
 
   std::deque<BlockPtr> res;
 
