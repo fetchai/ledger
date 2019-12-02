@@ -32,11 +32,11 @@ struct Bucket
   using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
   using BucketId  = uint64_t;
-  using Peer      = std::shared_ptr<PeerInfo>;  // TODO: Make weak
+  using Peer      = std::shared_ptr<PeerInfo>;  // TODO(tfr): Make weak
 
   BucketId                 bucket_id;
   std::unordered_set<Peer> peers;
-  Timepoint                last_updated;  // TODO: not used atm
+  Timepoint                last_updated;  // TODO(tfr): not used atm
 
   static uint64_t IdByHamming(KademliaDistance const &dist)
   {
@@ -73,7 +73,7 @@ struct Bucket
     uint64_t    ret{8 * dist.size() * sizeof(uint8_t)};
     std::size_t i = dist.size();
 
-    // TODO: this function can be improved by using intrinsics
+    // TODO(tfr): this function can be improved by using intrinsics
     // but endianness needs to be considered.
     do
     {

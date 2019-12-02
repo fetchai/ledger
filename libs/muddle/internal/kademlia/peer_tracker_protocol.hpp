@@ -41,7 +41,7 @@ public:
     FIND_PEERS       = 2,
     GET_MUDDLE_PORTS = 3,
 
-    // TODO: Not implemented
+    // TODO(tfr): Not implemented
     REQUEST_DISCONNECT = 4
   };
 

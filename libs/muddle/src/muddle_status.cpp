@@ -86,7 +86,7 @@ void BuildConnectionPriorities(PeerTracker const &peer_tracker, variant::Variant
     output_peer["connection_value"] = entry.connection_value;
     output_peer["is_connected"]     = entry.is_connected;
     /*
-    // TODO: Figure out how to convert steady clock to system clock
+    // TODO(tfr): Figure out how to convert steady clock to system clock
         std::time_t t1 = std::chrono::system_clock::to_time_t(entry.connected_since);
 
         auto ts1 = static_cast<std::string>(std::ctime(&t1));
@@ -232,7 +232,7 @@ void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output, bool exte
 
   BuildConnectionList(muddle.connection_register(), output["connections"]);
   BuildPeerLists(muddle.connection_list(), output["peers"]);
-  // TODO: remove  BuildPeerSelection(muddle.peer_selector(), output["peerSelection"]);
+  // TODO(tfr): remove  BuildPeerSelection(muddle.peer_selector(), output["peerSelection"]);
   BuildPeerTracker(muddle.peer_tracker(), output["peerTracker"]);
   BuildRoutingTable(muddle.router().routing_table(), output["routingTable"]);
 

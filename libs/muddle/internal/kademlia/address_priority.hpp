@@ -80,7 +80,7 @@ struct AddressPriority
 
   void UpdatePriority()
   {
-    // TODO: Get parameters from configuration
+    // TODO(tfr): Get parameters from configuration
     double const params[] = {1.0 / 30., 1. / 20., 0.05, 1.0 / 3600., 10.0};
     TimePoint    now      = Clock::now();
 
@@ -95,7 +95,7 @@ struct AddressPriority
 
     // Priority goes down exponentially with the increasing bucket number.
     double bucket_d = static_cast<double>(bucket);
-    if (bucket_d > 160)  // TODO: fetch from address
+    if (bucket_d > 160)  // TODO(tfr): fetch from address
     {
       bucket_d = 160;
     }

@@ -118,7 +118,7 @@ private:
   Buckets            by_hamming_;
   PeerMap            know_peers_;
 
-  uint64_t first_non_empty_bucket_{160};  // TODO: Test what happens in the case where
+  uint64_t first_non_empty_bucket_{160};  // TODO(tfr): Test what happens in the case where
   uint64_t kademlia_max_peers_per_bucket_{20};
 };
 

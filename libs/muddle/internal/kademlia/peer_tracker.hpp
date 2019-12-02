@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "blacklist.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/periodic_runnable.hpp"
 #include "core/reactor.hpp"
@@ -60,6 +61,7 @@ public:
   using AddressMap             = std::unordered_map<Address, Address>;
   using AddressTimestamp       = std::unordered_map<Address, TimePoint>;
   using PeerInfoList           = std::deque<PeerInfo>;
+  using BlackList              = fetch::muddle::Blacklist;
 
   struct UnresolvedConnection
   {
@@ -86,7 +88,7 @@ public:
   void       AddDesiredPeer(Address const &address);
   void       AddDesiredPeer(Address const &address, network::Peer const &hint);
   void       RemoveDesiredPeer(Address const &address);
-  // TODO: Address GetRoutingAddress(Address const& destination);
+  // TODO(tfr): Address GetRoutingAddress(Address const& destination);
   /// @}
 
   /// Trust interface
@@ -94,7 +96,7 @@ public:
   void Blacklist(Address const & /*target*/);
   void Whitelist(Address const & /*target*/);
   bool IsBlacklisted(Address const & /*target*/) const;
-  // TODO: void ReportBehaviour(Address,  double)
+  // TODO(tfr): void ReportBehaviour(Address,  double)
   /// @}
 
   /// Periodic maintainance
@@ -172,6 +174,7 @@ private:
   PeerConnectionList &  connections_;
   KademliaTable         peer_table_;
   Address               own_address_;
+  BlackList             blacklist_;
   /// @}
 
   /// Peer tracker protocol
@@ -219,7 +222,7 @@ private:
 
   /// Logging sets
   /// @{
-  AddressSet no_uri_{};  ///< TODO:  Get rid of it?
+  AddressSet no_uri_{};  ///< TODO(tfr):  Get rid of it?
   /// @}
 
   std::string logging_name_{"not-set"};

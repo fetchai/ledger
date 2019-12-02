@@ -822,6 +822,7 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
 Router::Handle Router::LookupKademliaClosestHandle(Address const &address) const
 {
   Handle handle{0};
+  // TODO(tfr): use peer tracker
 
   auto const directly_connected = GetDirectlyConnectedPeerSet();
   if (!directly_connected.empty())
@@ -1033,13 +1034,19 @@ void Router::DispatchDirect(Handle handle, PacketPtr const &packet)
 
   dispatch_thread_pool_->Post([this, packet, handle]() {
     // dispatch to the direct message handler if needed
+    // TODO(tfr): replace with something like:
+    //  router_.SendToConnection(
+    //      handle, router_.Sign(FormatDirect(router_.address_, router_.network_id_, SERVICE_MUDDLE,
+    //                                        CHANNEL_ROUTING, msg, exchange)));
+
     if (direct_message_handler_)
     {
       direct_message_handler_(handle, packet);
       dispatch_direct_total_->increment();
     }
 
-    dispatch_failure_total_->increment();
+    dispatch_failure_total_->increment();  // TODO(tfr): Why does this increase total? possibly
+                                           // missing return in previous if
     dispatch_complete_total_->increment();
   });
 }

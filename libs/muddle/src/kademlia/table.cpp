@@ -28,7 +28,7 @@ KademliaTable::KademliaTable(Address const &own_address)
   : own_address_{KademliaAddress::Create(own_address)}
 {}
 
-// TODO: This might not be what we want to do
+// TODO(tfr): This might not be what we want to do
 KademliaTable::Peers KademliaTable::ProposePermanentConnections() const
 {
   FETCH_LOCK(mutex_);
@@ -159,7 +159,7 @@ KademliaTable::Peers KademliaTable::FindPeerByHammingInternal(KademliaAddress co
                                                               uint64_t hamming_id, bool scan_left,
                                                               bool scan_right)
 {
-  // TODO: Merge with other function.
+  // TODO(tfr): Merge with other function.
   // Checking that we are within bounds
   if (hamming_id > KADEMLIA_MAX_ID_BITS)
   {
@@ -310,11 +310,11 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
   }
 
   // Updating activity information
-  // TODO: This last part is wrong
+  // TODO(tfr): This last part is wrong
   peerinfo->last_reporter = reporter;
   peerinfo->verified      = true;
   peerinfo->message_count += 1;
-  // TODO: peerinfo.last_activity
+  // TODO(tfr): peerinfo.last_activity
 
   // Updating buckets
   log_bucket.peers.insert(peerinfo);
@@ -326,11 +326,11 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
     first_non_empty_bucket_ = log_id;
   }
   // Triming the list
-  // TODO: move to after pinging
+  // TODO(tfr): move to after pinging
   /*
   while (bucket.peers.size() > kademlia_max_peers_per_bucket_)
   {
-    // TODO: Pop
+    // TODO(tfr): Pop
     //    bucket.peers.pop_front();
   }
   */
@@ -378,7 +378,7 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
   else
   {
     // Updating
-    // TODO: Update to time stamped certificiates
+    // TODO(tfr): Update to time stamped certificiates
     if (!info.uri.empty())
     {
       it->second->uri = info.uri;

@@ -97,12 +97,12 @@ Router::PacketPtr FormatDirect(Packet::Address const &from, NetworkId const &net
 }  // namespace
 
 DirectMessageService::DirectMessageService(Address address, Router &router, MuddleRegister &reg,
-                                           PeerConnectionList &peers)
+                                           PeerConnectionList & /*peers*/)
   : address_{std::move(address)}
   , name_{GenerateLoggingName(BASE_NAME, router.network_id())}
   , router_{router}
   , register_{reg}
-  , peers_{peers}
+//  , peers_{peers}
 {
   router_.SetDirectHandler(
       [this](Handle handle, PacketPtr packet) { OnDirectMessage(handle, packet); });
@@ -120,13 +120,13 @@ void DirectMessageService::InitiateConnection(Handle handle)
   SendMessageToConnection(handle, msg);
 }
 
-void DirectMessageService::RequestDisconnect(Handle handle)
+void DirectMessageService::RequestDisconnect(Handle /*handle*/)
 {
   RoutingMessage response{};
   response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
   // this should be conditional on the connection orientation
-  // TODO: never disconnect
+  // TODO(tfr): never disconnect
   //  SendMessageToConnection(handle, response);
 }
 
@@ -358,7 +358,7 @@ void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr c
     // remove this persistent peer connection
     //
     //    peers_.RemovePersistentPeer(handle);
-    // TODO:
+    // TODO(tfr):
     //    peers_.RemoveConnection(handle);  // TODO(EJF): There should not be this duplication
 
     FETCH_LOG_INFO(logging_name_, "Removing the connection (conn: ", handle, ")");
@@ -369,7 +369,7 @@ void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr c
     response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
     // this should be conditional on the connection orientation
-    // TODO: Never disconnect
+    // TODO(tfr): Never disconnect
     //    SendMessageToConnection(handle, response);
   }
 }

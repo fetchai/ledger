@@ -37,15 +37,19 @@ PeerTracker::PeerTrackerPtr PeerTracker::New(PeerTracker::Duration const &interv
   return ret;
 }
 
-void PeerTracker::Blacklist(Address const & /*target*/)
-{}
-
-void PeerTracker::Whitelist(Address const & /*target*/)
-{}
-
-bool PeerTracker::IsBlacklisted(Address const & /*target*/) const
+void PeerTracker::Blacklist(Address const &target)
 {
-  return false;
+  blacklist_.Add(target);
+}
+
+void PeerTracker::Whitelist(Address const &target)
+{
+  blacklist_.Remove(target);
+}
+
+bool PeerTracker::IsBlacklisted(Address const &target) const
+{
+  return blacklist_.Contains(target);
 }
 
 PeerTracker::AddressSet PeerTracker::GetDesiredPeers() const
@@ -64,7 +68,7 @@ void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const & /
 {
   FETCH_LOCK(mutex_);
   desired_peers_.insert(address);
-  // TODO: work out what to do with the hint. Possibly report existense
+  // TODO(tfr): work out what to do with the hint. Possibly report existense
 }
 
 void PeerTracker::RemoveDesiredPeer(Address const &address)
@@ -73,12 +77,12 @@ void PeerTracker::RemoveDesiredPeer(Address const &address)
   desired_peers_.erase(address);
 }
 
-//. TODO: Update and used mehtods used in other module
+//. TODO(tfr): Update and used mehtods used in other module
 void PeerTracker::SetMuddlePorts(PortsList const &ports)
 {
   peer_tracker_protocol_.SetMuddlePorts(ports);
-  logging_name_ =
-      "tcp://localhost:" + std::to_string(ports[0]);  // TODO: remove and follow. normal convention
+  logging_name_ = "tcp://localhost:" +
+                  std::to_string(ports[0]);  // TODO(tfr): remove and follow. normal convention
 }
 
 PeerTracker::ConnectionPriorityMap PeerTracker::connection_priority() const
@@ -578,7 +582,7 @@ void PeerTracker::ConnectToDesiredPeers()
         }
 
         // Breaking if it is sufficiently long ago
-        if (ToSeconds(Clock::now() - it->second) > 300)  // TODO: Fix parameter
+        if (ToSeconds(Clock::now() - it->second) > 300)  // TODO(tfr): Fix parameter
         {
           break;
         }
@@ -670,7 +674,7 @@ void PeerTracker::Periodically()
 
   if (tracker_configuration_.long_range_connectivity)
   {
-    // TODO: Move into a functino
+    // TODO(tfr): Move into a functino
     // Finding peers close to us
     auto peers = peer_table_.FindPeer(own_address_);
 

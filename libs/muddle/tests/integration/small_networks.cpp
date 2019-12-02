@@ -184,6 +184,7 @@ KademliaAddress FakeKademliaAddress(std::initializer_list<uint8_t> vals)
   return ret;
 }
 
+/*
 ConstByteArray ReadibleAddress(Address const &address)
 {
   ByteArray ret;
@@ -211,8 +212,9 @@ ConstByteArray ReadibleDistance(KademliaDistance const &dist)
 
   return byte_array::ToHex(ret);
 }
+*/
 
-// TODO: move to unit test
+// TODO(tfr): move to unit test
 TEST(SmallNetworks, OrganisingAddressPriority)
 {
   AddressPriority optimal_connection;
@@ -517,7 +519,6 @@ TEST(SmallNetworks, KademliaPrimitives)
   auto raw_address2 = FakeAddress(2);
 
   auto kam_address1 = KademliaAddress::Create(raw_address1);
-  auto kam_address2 = KademliaAddress::Create(raw_address2);
 
   EXPECT_EQ(Bucket::IdByLogarithm(GetKademliaDistance(kam_address1, kam_address1)), 0);
 
@@ -543,7 +544,7 @@ TEST(SmallNetworks, KademliaPrimitives)
   }
 
   // Testing the table
-  // TODO: Turn into proper test
+  // TODO(tfr): Turn into proper test
   std::vector<PeerInfo> ref_peers = all_peers;
   for (auto &p1 : ref_peers)
   {

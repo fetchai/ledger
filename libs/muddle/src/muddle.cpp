@@ -355,7 +355,7 @@ PeerSelectionMode Muddle::GetPeerSelectionMode() const
 void Muddle::SetPeerSelectionMode(PeerSelectionMode mode)
 {
   router_.SetKademliaRouting(PeerSelectionMode::KADEMLIA == mode);
-  // TODO: update peer tracker to support this peer_selector_->SetMode(mode);
+  // TODO(tfr): update peer tracker to support this peer_selector_->SetMode(mode);
 }
 
 /**
@@ -568,8 +568,8 @@ void Muddle::RunPeriodicMaintenance()
       FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
     }
     discovery_service_.UpdatePeers(external_addresses);
-    // TODO: remove peer_selector_->UpdatePeers(external_addresses);
-    // TODO: update external address for peer_tracker.
+    // TODO(tfr): remove peer_selector_->UpdatePeers(external_addresses);
+    // TODO(tfr): update external address for peer_tracker.
 
     // connect to all the required peers
     for (Uri const &peer : clients_.GetPeersToConnectTo())
