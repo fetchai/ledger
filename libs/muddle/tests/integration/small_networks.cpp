@@ -215,7 +215,7 @@ ConstByteArray ReadibleDistance(KademliaDistance const &dist)
 */
 
 // TODO(tfr): move to unit test
-TEST(SmallNetworks, OrganisingAddressPriority)
+TEST(SmallNetworks, DISABLED_OrganisingAddressPriority)
 {
   AddressPriority optimal_connection;
   optimal_connection.address          = FakeAddress(0);
@@ -334,7 +334,7 @@ TEST(SmallNetworks, OrganisingAddressPriority)
   EXPECT_LT(poor_permanent, good_temporary);
 }
 
-TEST(SmallNetworks, NetworkRegistrationThreeLayers)
+TEST(SmallNetworks, DISABLED_NetworkRegistrationThreeLayers)
 {
   TrackerConfiguration configuration = TrackerConfiguration::AllOff();
   configuration.register_connections = true;
@@ -357,7 +357,7 @@ TEST(SmallNetworks, NetworkRegistrationThreeLayers)
   }
 }
 
-TEST(SmallNetworks, NetworkRegistrationFiveLayers)
+TEST(SmallNetworks, DISABLED_NetworkRegistrationFiveLayers)
 {
   TrackerConfiguration configuration = TrackerConfiguration::AllOff();
   configuration.register_connections = true;
@@ -394,7 +394,7 @@ TEST(SmallNetworks, NetworkRegistrationFiveLayers)
 }
 
 // Testing that the effect is not there when the configuration is turned off.
-TEST(SmallNetworks, NetworkRegistrationOff)
+TEST(SmallNetworks, DISABLED_NetworkRegistrationOff)
 {
   TrackerConfiguration configuration = TrackerConfiguration::AllOff();
   configuration.register_connections = false;
@@ -417,7 +417,7 @@ TEST(SmallNetworks, NetworkRegistrationOff)
   }
 }
 
-TEST(SmallNetworks, NetworkRegistrationRegistrationNoPull)
+TEST(SmallNetworks, DISABLED_NetworkRegistrationRegistrationNoPull)
 {
   TrackerConfiguration configuration = TrackerConfiguration::AllOff();
   // Testing that register connection has the effect expected
@@ -450,7 +450,7 @@ TEST(SmallNetworks, NetworkRegistrationRegistrationNoPull)
   }
 }
 
-TEST(SmallNetworks, TestConnectivityKademliaMode)
+TEST(SmallNetworks, DISABLED_TestConnectivityKademliaMode)
 {
   uint64_t N       = 10;
   auto     network = Network::New(N);
@@ -485,7 +485,7 @@ TEST(SmallNetworks, TestConnectivityKademliaMode)
 
 }  // namespace
 
-TEST(SmallNetworks, BasicAddressTests)
+TEST(SmallNetworks, DISABLED_BasicAddressTests)
 {
   auto zero_address = FakeKademliaAddress({});
   EXPECT_EQ(Bucket::IdByLogarithm(GetKademliaDistance(zero_address, zero_address)), 0);
@@ -511,7 +511,7 @@ TEST(SmallNetworks, BasicAddressTests)
   }
 }
 
-TEST(SmallNetworks, KademliaPrimitives)
+TEST(SmallNetworks, DISABLED_KademliaPrimitives)
 {
   fetch::random::LaggedFibonacciGenerator<> lfg;
 
