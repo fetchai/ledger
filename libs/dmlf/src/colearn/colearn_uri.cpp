@@ -18,6 +18,8 @@
 
 #include "dmlf/colearn/colearn_uri.hpp"
 
+#include "core/byte_array/encoders.hpp"
+
 #include <array>
 #include <string>
 #include <unordered_map>
@@ -30,7 +32,7 @@ ColearnURI::ColearnURI(ColearnUpdate const &update)
   : algorithm_class_(update.algorithm())
   , update_type_(update.update_type())
   , source_(update.source())
-  , fingerprint_(EncodeFingerprint(std::string(update.fingerprint().ToBase64())))
+  , fingerprint_(fetch::byte_array::ToBase58(update.fingerprint()))
 {}
 
 ColearnURI ColearnURI::Parse(std::string const &uriString)
@@ -78,43 +80,6 @@ bool ColearnURI::IsEmpty() const
 {
   return owner_.empty() && algorithm_class_.empty() && update_type_.empty() && source_.empty() &&
          fingerprint_.empty();
-}
-
-constexpr std::array<std::array<char, 2>, 3> ENCODING{{{'+', '.'}, {'/', '_'}, {'=', '-'}}};
-constexpr char                               EncodeChar(char c)
-{
-  for (std::size_t i = 0; i < ENCODING.size(); ++i)
-  {
-    if (ENCODING[i][0] == c)
-    {
-      return ENCODING[i][1];
-    }
-  }
-  return c;
-}
-constexpr char DecodeChar(char c)
-{
-  for (std::size_t i = 0; i < ENCODING.size(); ++i)
-  {
-    if (ENCODING[i][1] == c)
-    {
-      return ENCODING[i][0];
-    }
-  }
-  return c;
-}
-
-std::string ColearnURI::EncodeFingerprint(std::string const &fingerprint)
-{
-  std::string result;
-  std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result), EncodeChar);
-  return result;
-}
-std::string ColearnURI::DecodeFingerprint(std::string const &fingerprint)
-{
-  std::string result;
-  std::transform(fingerprint.cbegin(), fingerprint.cend(), std::back_inserter(result), DecodeChar);
-  return result;
 }
 
 }  // namespace colearn

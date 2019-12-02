@@ -58,9 +58,9 @@ TEST(Colearn_URi, updateConstructor)
   EXPECT_EQ(uri.algorithm_class(), "algo");
   EXPECT_EQ(uri.update_type(), "type");
   EXPECT_EQ(uri.source(), "source");
-  EXPECT_EQ(uri.fingerprint(), "xhywzpw.OyL8_Q5KdOyYyt7Vop2SYlvqgwGlYvimR_M-");
+  EXPECT_EQ(uri.fingerprint(), "ELM6hjWH59R9Nert8hoZKYNBWY3zubzWGREtR1MurPLe");
   EXPECT_EQ(uri.ToString(),
-            "colearn:///algo/type/source/xhywzpw.OyL8_Q5KdOyYyt7Vop2SYlvqgwGlYvimR_M-");
+            "colearn:///algo/type/source/ELM6hjWH59R9Nert8hoZKYNBWY3zubzWGREtR1MurPLe");
 }
 
 TEST(Colearn_URi, manualConstruction)

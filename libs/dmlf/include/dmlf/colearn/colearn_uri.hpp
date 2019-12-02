@@ -34,7 +34,7 @@ public:
   explicit ColearnURI(ColearnUpdate const &update);
 
   std::string       ToString() const;
-  static ColearnURI Parse(std::string const &uriString);  // Fingerprint must be encoded
+  static ColearnURI Parse(std::string const &uriString);  // Fingerprint must be Base58
 
   bool IsEmpty() const;
 
@@ -82,18 +82,11 @@ public:
   {
     return fingerprint_;
   }
-  std::string fingerprintAsBase64() const
-  {
-    return DecodeFingerprint(fingerprint_);
-  }
   ColearnURI &fingerprint(std::string fingerprint)
   {
     fingerprint_ = std::move(fingerprint);
     return *this;
   }
-
-  static std::string EncodeFingerprint(std::string const &fingerprint);
-  static std::string DecodeFingerprint(std::string const &fingerprint);
 
 private:
   std::string protocol_ = "colearn";
