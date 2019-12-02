@@ -89,11 +89,9 @@ inline T VMModel::ParseName(std::string const &name, std::map<std::string, T> co
 {
   if (dict.find(name) == dict.end())
   {
-    std::string const message{"Unknown " + errmsg + " name : " + name};
-    vm_->RuntimeError(message);
-    throw std::runtime_error(message);
+    throw std::runtime_error("Unknown " + errmsg + " name : " + name);
   }
-  return dict.find(name)->second;
+  return dict.at(name);
 }
 
 VMModel::VMModel(VM *vm, TypeId type_id)
@@ -137,72 +135,96 @@ Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
   return Ptr<VMModel>{new VMModel(vm, type_id, model_category)};
 }
 
+/**
+ * @brief VMModel::CompileSequential
+ * @param loss a valid loss function ["mse", ...]
+ * @param optimiser a valid optimiser name ["adam", "sgd" ...]
+ */
 void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                 fetch::vm::Ptr<fetch::vm::String> const &optimiser)
 {
-  LossType const      loss_type      = ParseName(loss->string(), losses_, "loss function");
-  OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
-
-  // Prepare the dataloader
-  CompileDataloader();
-
   try
   {
+    LossType const      loss_type      = ParseName(loss->string(), losses_, "loss function");
+    OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
+    SequentialModelPtr  me             = GetMeAsSequentialIfPossible();
+    if (me->LayerCount() == 0)
+    {
+      vm_->RuntimeError("Can not compile an empty sequential model, please add layers first.");
+      return;
+    }
+    PrepareDataloader();
+    compiled_ = false;
     model_->Compile(optimiser_type, loss_type);
   }
   catch (std::exception &e)
   {
-    vm_->RuntimeError("Compilation of a Sequential model failed : " + std::string(e.what()));
+    vm_->RuntimeError("Compilation of a sequential model failed : " + std::string(e.what()));
     return;
   }
   compiled_ = true;
 }
 
+/**
+ * @brief VMModel::CompileSimple
+ * @param optimiser a valid optimiser name ["adam", "sgd" ...]
+ * @param layer_shapes a list of layer shapes, min 2: Input and Output shape correspondingly.
+ */
 void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
-                            fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers)
+                            fetch::vm::Ptr<vm::Array<math::SizeType>> const &layer_shapes)
 {
-  OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
-  if (optimiser_type != OptimiserType::ADAM)
+  std::size_t const total_layer_shapes = layer_shapes->elements.size();
+  if (total_layer_shapes < min_total_layer_shapes)
   {
-    vm_->RuntimeError(R"(Wrong optimiser, a "Simple" model can use only "adam", while given : )" +
-                      optimiser->string());
+    vm_->RuntimeError("Regressor/classifier model compilation requires providing at least " +
+                      std::to_string(min_total_layer_shapes) + " layer shapes (input, output)!");
     return;
   }
 
-  size_t const n_elements = in_layers->elements.size();
-
-  std::vector<math::SizeType> layers;
-  layers.reserve(n_elements);
-  for (size_t i = 0; i < n_elements; ++i)
+  std::vector<math::SizeType> shapes;
+  shapes.reserve(total_layer_shapes);
+  for (std::size_t i = 0; i < total_layer_shapes; ++i)
   {
-    layers.emplace_back(in_layers->elements.at(i));
+    shapes.emplace_back(layer_shapes->elements.at(i));
   }
 
   switch (model_category_)
   {
   case (ModelCategory::REGRESSOR):
-    model_ = std::make_shared<fetch::ml::model::DNNRegressor<TensorType>>(*model_config_, layers);
+    model_ = std::make_shared<fetch::ml::model::DNNRegressor<TensorType>>(*model_config_, shapes);
     break;
 
   case (ModelCategory::CLASSIFIER):
-    model_ = std::make_shared<fetch::ml::model::DNNClassifier<TensorType>>(*model_config_, layers);
+    model_ = std::make_shared<fetch::ml::model::DNNClassifier<TensorType>>(*model_config_, shapes);
     break;
 
   default:
-    vm_->RuntimeError("Only REGRESSOR and CLASSIFIER model types take layers on compilation!");
+    vm_->RuntimeError(
+        "Only regressor/classifier model types accept layer shapes list as a compilation "
+        "parameter!");
     return;
   }
 
-  // Prepare the dataloader
-  CompileDataloader();
+  // For regressor and classifier we can't prepare the dataloder until model_ is ready.
+  PrepareDataloader();
 
+  compiled_ = false;
   try
   {
+    OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
+    if (optimiser_type != OptimiserType::ADAM)
+    {
+      vm_->RuntimeError(
+          R"(Wrong optimiser, a regressor/classifier model can use only "adam", while given : )" +
+          optimiser->string());
+      return;
+    }
     model_->Compile(optimiser_type);
   }
   catch (std::exception &e)
   {
-    vm_->RuntimeError("Compilation of a Simple model failed : " + std::string(e.what()));
+    vm_->RuntimeError("Compilation of a regressor/classifier model failed : " +
+                      std::string(e.what()));
     return;
   }
   compiled_ = true;
@@ -262,9 +284,9 @@ void VMModel::Bind(Module &module)
       .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString);
 }
 
-typename VMModel::ModelPtrType &VMModel::GetModel()
+void VMModel::SetModel(const VMModel::ModelPtrType &instance)
 {
-  return model_;
+  model_ = instance;
 }
 
 bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
@@ -352,7 +374,7 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   vm_model.model_config_ = model_config_;
 
   // assign deserialised model
-  vm_model.GetModel() = model_ptr;
+  vm_model.SetModel(model_ptr);
 
   // assign compiled status
   vm_model.compiled_ = compiled;
@@ -379,8 +401,8 @@ fetch::vm::Ptr<VMModel> VMModel::DeserializeFromString(
   MsgPackSerializer buffer(b);
   DeserializeFrom(buffer);
 
-  auto vm_model        = fetch::vm::Ptr<VMModel>(new VMModel(vm_, type_id_));
-  vm_model->GetModel() = model_;
+  auto vm_model = fetch::vm::Ptr<VMModel>(new VMModel(vm_, type_id_));
+  vm_model->SetModel(model_);
 
   return vm_model;
 }
@@ -395,10 +417,8 @@ void VMModel::AssertLayerTypeMatches(SupportedLayerType                layer,
   };
   if (std::find(valids.begin(), valids.end(), layer) == valids.end())
   {
-    std::string const message{"Invalid params specified for \"" + LAYER_NAMES_.at(layer) +
-                              "\" layer."};
-    vm_->RuntimeError(message);
-    throw std::runtime_error(message);
+    throw std::runtime_error("Invalid params specified for \"" + LAYER_NAMES_.at(layer) +
+                             "\" layer.");
   }
 }
 
@@ -406,9 +426,7 @@ VMModel::SequentialModelPtr VMModel::GetMeAsSequentialIfPossible()
 {
   if (model_category_ != ModelCategory::SEQUENTIAL)
   {
-    std::string const message{"No \"add\" method exists for non-sequential models!"};
-    vm_->RuntimeError(message);
-    throw std::runtime_error(message);
+    throw std::runtime_error("Layer adding is allowed only for sequential models!");
   }
   return std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
 }
@@ -416,8 +434,17 @@ VMModel::SequentialModelPtr VMModel::GetMeAsSequentialIfPossible()
 template <typename... LayerArgs>
 void VMModel::AddLayer(fetch::vm::Ptr<fetch::vm::String> const &layer, LayerArgs... args)
 {
-  auto const layer_type = ParseName(layer->string(), layer_types_, "layer type");
-  AddLayerSpecificImpl(layer_type, args...);
+  try
+  {
+    SupportedLayerType const layer_type = ParseName(layer->string(), layer_types_, "layer type");
+    AddLayerSpecificImpl(layer_type, args...);
+    compiled_ = false;
+  }
+  catch (std::exception &e)
+  {
+    vm_->RuntimeError("Impossible to add layer : " + std::string(e.what()));
+    return;
+  }
 }
 
 void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &inputs,
@@ -438,9 +465,8 @@ void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType cons
                                    math::SizeType const &             hidden_nodes,
                                    fetch::ml::details::ActivationType activation)
 {
-  auto me = GetMeAsSequentialIfPossible();
   AssertLayerTypeMatches(layer, {SupportedLayerType::DENSE});
-  compiled_ = false;
+  SequentialModelPtr me = GetMeAsSequentialIfPossible();
   me->Add<fetch::ml::layers::FullyConnected<TensorType>>(inputs, hidden_nodes, activation);
 }
 
@@ -469,9 +495,8 @@ void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType cons
                                    math::SizeType const &             stride_size,
                                    fetch::ml::details::ActivationType activation)
 {
-  auto me = GetMeAsSequentialIfPossible();
   AssertLayerTypeMatches(layer, {SupportedLayerType::CONV1D, SupportedLayerType::CONV2D});
-  compiled_ = false;
+  SequentialModelPtr me = GetMeAsSequentialIfPossible();
   if (layer == SupportedLayerType::CONV1D)
   {
     me->Add<fetch::ml::layers::Convolution1D<TensorType>>(output_channels, input_channels,
@@ -488,7 +513,7 @@ void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType cons
  * for regressor and classifier we can't prepare the dataloder until after compile has begun
  * because model_ isn't ready until then.
  */
-void VMModel::CompileDataloader()
+void VMModel::PrepareDataloader()
 {
   // set up the dataloader
   auto data_loader = std::make_unique<TensorDataloader>();

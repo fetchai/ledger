@@ -31,12 +31,9 @@ struct ClientParams
   SizeType n_algorithms_per_client = 1;
   SizeType batch_size{};
   SizeType max_updates;
+  SizeType max_epochs;
   DataType learning_rate;
   bool     print_loss = false;
-
-  std::vector<std::string> input_names = {"Input"};
-  std::string              label_name  = "Label";
-  std::string              error_name  = "Error";
 
   std::string results_dir = ".";
 };
