@@ -407,8 +407,8 @@ constexpr meta::IfHasNoIndex<T, UInt<S>> &UInt<S>::operator=(T const &v)  // NOL
 template <uint16_t S>
 constexpr bool UInt<S>::operator==(UInt const &other) const
 {
-  bool ret = true;
-  std::size_t i = 0;
+  bool        ret = true;
+  std::size_t i   = 0;
   for (; i < (WIDE_ELEMENTS - 1u); ++i)
   {
     ret &= (wide_[i] == other.ElementAt(i));
@@ -714,7 +714,6 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   }
   if (n == _1)
   {
-    *this = n;
     return *this;
   }
   if (*this == n)
@@ -742,7 +741,7 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   D >>= lsb;
   UInt<S> multiple(1u);
 
-  auto const D_leading_zero_bits {D.UINT_SIZE - D.msb()};
+  auto const D_leading_zero_bits{D.UINT_SIZE - D.msb()};
   // Find smallest multiple of divisor (D) that is larger than the dividend (N)
   D <<= D_leading_zero_bits;
   multiple <<= D_leading_zero_bits;
@@ -1044,14 +1043,15 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
 template <uint16_t S>
 constexpr std::size_t UInt<S>::msb() const
 {
-  auto const trimmed_size {TrimmedWideSize()};
+  auto const trimmed_size{TrimmedWideSize()};
   if (trimmed_size == 0)
   {
     return UINT_SIZE;
   }
 
-  auto const trimmed_idx {trimmed_size - 1};
-  auto const last_elem_val {(trimmed_size == WIDE_ELEMENTS) ? wide_[trimmed_idx] & RESIDUAL_BITS_MASK : wide_[trimmed_idx]};
+  auto const trimmed_idx{trimmed_size - 1};
+  auto const last_elem_val{(trimmed_size == WIDE_ELEMENTS) ? wide_[trimmed_idx] & RESIDUAL_BITS_MASK
+                                                           : wide_[trimmed_idx]};
   auto const leading_zero_bits = platform::CountLeadingZeroes64(last_elem_val);
   return trimmed_size * WIDE_ELEMENT_SIZE - leading_zero_bits - 1;
 }
@@ -1060,18 +1060,18 @@ template <uint16_t S>
 constexpr std::size_t UInt<S>::lsb() const
 {
   std::size_t lsb = 0;
-  std::size_t i = 0;
+  std::size_t i   = 0;
 
   for (; i < WIDE_ELEMENTS - 1; i++, lsb += WIDE_ELEMENT_SIZE)
   {
-    auto const val {wide_[i]};
+    auto const val{wide_[i]};
     if (val > 0)
     {
       return lsb + platform::CountTrailingZeroes64(val);
     }
   }
 
-  auto const val {wide_[i] & RESIDUAL_BITS_MASK};
+  auto const val{wide_[i] & RESIDUAL_BITS_MASK};
   return val > 0 ? lsb + platform::CountTrailingZeroes64(val) : UINT_SIZE;
 }
 
@@ -1124,8 +1124,10 @@ constexpr uint64_t UInt<S>::TrimmedSize() const
     return 0;
   }
 
-  uint64_t remainder{wide_size == WIDE_ELEMENTS ? (WIDE_ELEMENT_SIZE - RESIDUAL_BITS_MASK) / ELEMENT_SIZE : WIDE_ELEMENT_SIZE / ELEMENT_SIZE};
-  uint64_t start_idx {(wide_size - 1) * (WIDE_ELEMENT_SIZE / ELEMENT_SIZE)};
+  uint64_t remainder{wide_size == WIDE_ELEMENTS
+                         ? (WIDE_ELEMENT_SIZE - RESIDUAL_BITS_MASK) / ELEMENT_SIZE
+                         : WIDE_ELEMENT_SIZE / ELEMENT_SIZE};
+  uint64_t start_idx{(wide_size - 1) * (WIDE_ELEMENT_SIZE / ELEMENT_SIZE)};
 
   while ((remainder > 0) && (base()[start_idx + remainder - 1] == 0))
   {

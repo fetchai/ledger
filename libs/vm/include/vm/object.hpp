@@ -40,6 +40,7 @@ class Ptr;
 struct Variant;
 class Address;
 struct String;
+struct Fixed128;
 
 template <typename T>
 static constexpr bool IsPrimitive =
@@ -75,6 +76,12 @@ static constexpr bool IsAddress = std::is_base_of<Address, T>::value;
 
 template <typename T>
 static constexpr bool IsString = std::is_base_of<String, std::decay_t<T>>::value;
+
+template <typename T>
+using IsFixed128 = std::is_base_of<Fixed128, std::decay_t<T>>;
+
+template <typename T, typename R = void>
+using IfIsPtrFixed128 = std::enable_if_t<IsFixed128<T>::value, R>;
 
 // clang-format off
 template <typename T, typename R = void>
@@ -464,6 +471,15 @@ auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
 
   case TypeIds::Float64:
     return Functor<double>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Fixed32:
+    return Functor<fixed_point::fp32_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Fixed64:
+    return Functor<fixed_point::fp64_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Fixed128:
+    return Functor<Ptr<fixed_point::fp128_t>>{}(std::forward<Args>(args)...);
 
   case TypeIds::String:
     return Functor<Ptr<String>>{}(std::forward<Args>(args)...);
