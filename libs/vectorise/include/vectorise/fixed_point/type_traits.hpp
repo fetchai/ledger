@@ -80,6 +80,15 @@ constexpr bool IsPodOrFixedPoint = fetch::meta::IsPOD<T> || IsFixedPoint<T>;
 template <typename T, typename R = void>
 using IfIsPodOrFixedPoint = fetch::meta::EnableIf<IsPodOrFixedPoint<T>, R>;
 
+template <typename T>
+constexpr bool IsFixedPoint128 = std::is_same<T, fixed_point::FixedPoint<64, 64>>::value;
+
+template <typename T>
+constexpr bool IsNotFixedPoint128 = !IsFixedPoint128<T> && IsFixedPoint<T>;
+
+template <typename DataType, typename ReturnType = void>
+using IfIsFixedPoint128 = fetch::meta::EnableIf<IsFixedPoint128<DataType>, ReturnType>;
+
 }  // namespace meta
 }  // namespace math
 }  // namespace fetch

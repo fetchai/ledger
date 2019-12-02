@@ -61,26 +61,27 @@ Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>>
 
 void VMTensor::Bind(Module &module)
 {
+  using Index = fetch::math::SizeType;
   module.CreateClassType<VMTensor>("Tensor")
       .CreateConstructor(&VMTensor::Constructor)
       .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
         return Ptr<VMTensor>{new VMTensor(vm, type_id)};
       })
-      .CreateMemberFunction("at", &VMTensor::AtOne,
+      .CreateMemberFunction("at", &VMTensor::At<Index>,
                             use_estimator(&VMTensor::TensorEstimator::AtOne))
-      .CreateMemberFunction("at", &VMTensor::AtTwo,
+      .CreateMemberFunction("at", &VMTensor::At<Index, Index>,
                             use_estimator(&VMTensor::TensorEstimator::AtTwo))
-      .CreateMemberFunction("at", &VMTensor::AtThree,
+      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>,
                             use_estimator(&VMTensor::TensorEstimator::AtThree))
-      .CreateMemberFunction("at", &VMTensor::AtFour,
+      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>,
                             use_estimator(&VMTensor::TensorEstimator::AtFour))
-      .CreateMemberFunction("setAt", &VMTensor::SetAtOne,
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, DataType>,
                             use_estimator(&VMTensor::TensorEstimator::SetAtOne))
-      .CreateMemberFunction("setAt", &VMTensor::SetAtTwo,
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, DataType>,
                             use_estimator(&VMTensor::TensorEstimator::SetAtTwo))
-      .CreateMemberFunction("setAt", &VMTensor::SetAtThree,
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, DataType>,
                             use_estimator(&VMTensor::TensorEstimator::SetAtThree))
-      .CreateMemberFunction("setAt", &VMTensor::SetAtFour,
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>,
                             use_estimator(&VMTensor::TensorEstimator::SetAtFour))
       .CreateMemberFunction("size", &VMTensor::size,
                             use_estimator(&VMTensor::TensorEstimator::size))
@@ -99,7 +100,29 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("fromString", &VMTensor::FromString,
                             use_estimator(&VMTensor::TensorEstimator::FromString))
       .CreateMemberFunction("toString", &VMTensor::ToString,
-                            use_estimator(&VMTensor::TensorEstimator::ToString));
+                            use_estimator(&VMTensor::TensorEstimator::ToString))
+      .CreateMemberFunction("at", &VMTensor::At<Index>)
+      .CreateMemberFunction("at", &VMTensor::At<Index, Index>)
+      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>)
+      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>)
+      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index, Index>)
+      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index, Index, Index>)
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, DataType>)
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, DataType>)
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, DataType>)
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>)
+      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, Index, DataType>)
+      .CreateMemberFunction("setAt",
+                            &VMTensor::SetAt<Index, Index, Index, Index, Index, Index, DataType>)
+      .CreateMemberFunction("fill", &VMTensor::Fill)
+      .CreateMemberFunction("fillRandom", &VMTensor::FillRandom)
+      .CreateMemberFunction("reshape", &VMTensor::Reshape)
+      .CreateMemberFunction("squeeze", &VMTensor::Squeeze)
+      .CreateMemberFunction("size", &VMTensor::size)
+      .CreateMemberFunction("transpose", &VMTensor::Transpose)
+      .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze)
+      .CreateMemberFunction("fromString", &VMTensor::FromString)
+      .CreateMemberFunction("toString", &VMTensor::ToString);
 
   // Add support for Array of Tensors
   module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<VMTensor>>>();
@@ -119,45 +142,16 @@ SizeType VMTensor::size() const
 /// ACCESSING AND SETTING VALUES ///
 ////////////////////////////////////
 
-DataType VMTensor::AtOne(SizeType idx1) const
+template <typename... Indices>
+VMTensor::DataType VMTensor::At(Indices... indices) const
 {
-  return tensor_.At(idx1);
+  return tensor_.At(indices...);
 }
 
-DataType VMTensor::AtTwo(uint64_t idx1, uint64_t idx2) const
+template <typename... Args>
+void VMTensor::SetAt(Args... args)
 {
-  return tensor_.At(idx1, idx2);
-}
-
-DataType VMTensor::AtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3) const
-{
-  return tensor_.At(idx1, idx2, idx3);
-}
-
-DataType VMTensor::AtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4) const
-{
-  return tensor_.At(idx1, idx2, idx3, idx4);
-}
-
-void VMTensor::SetAtOne(uint64_t idx1, DataType const &value)
-{
-  tensor_.At(idx1) = value;
-}
-
-void VMTensor::SetAtTwo(uint64_t idx1, uint64_t idx2, DataType const &value)
-{
-  tensor_.At(idx1, idx2) = value;
-}
-
-void VMTensor::SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType const &value)
-{
-  tensor_.At(idx1, idx2, idx3) = value;
-}
-
-void VMTensor::SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4,
-                         DataType const &value)
-{
-  tensor_.At(idx1, idx2, idx3, idx4) = value;
+  tensor_.Set(args...);
 }
 
 void VMTensor::Copy(ArrayType const &other)

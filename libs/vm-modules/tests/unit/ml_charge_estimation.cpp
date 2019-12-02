@@ -98,6 +98,9 @@ public:
 
 TEST_F(MLChargeComputationTests, )
 {
+  using SizeRef      = fetch::math::SizeType const &;
+  using StringPtrRef = fetch::vm::Ptr<fetch::vm::String> const &;
+
   // set up data and labels
   std::vector<uint64_t> data_shape{10, 1000};
   std::vector<uint64_t> label_shape{1, 1000};
@@ -106,11 +109,13 @@ TEST_F(MLChargeComputationTests, )
 
   // set up a model
   auto model = CreateSequentialModel();
-  model->LayerAddDenseActivation(CreateString("dense"), 10, 10,
-                                 CreateString("relu"));  // input_size, hidden_1_size
-  model->LayerAddDenseActivation(CreateString("dense"), 10, 10,
-                                 CreateString("relu"));  // hidden_1_size, hidden_2_size
-  model->LayerAddDense(CreateString("dense"), 10, 1);    // hidden_2_size, label_size
+  model->AddLayer<SizeRef, SizeRef, StringPtrRef>(
+      CreateString("dense"), 10, 10,
+      CreateString("relu"));  // input_size, hidden_1_size
+  model->AddLayer<SizeRef, SizeRef, StringPtrRef>(
+      CreateString("dense"), 10, 10,
+      CreateString("relu"));                                        // hidden_1_size, hidden_2_size
+  model->AddLayer<SizeRef, SizeRef>(CreateString("dense"), 10, 1);  // hidden_2_size, label_size
   model->CompileSequential(CreateString("mse"), CreateString("adam"));
 
   // train the model

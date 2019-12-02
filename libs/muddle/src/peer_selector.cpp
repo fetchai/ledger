@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/is_in.hpp"
 #include "core/containers/set_difference.hpp"
 #include "core/containers/set_intersection.hpp"
 #include "core/containers/set_join.hpp"
@@ -358,10 +359,20 @@ void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArra
   static constexpr auto CACHE_LIFETIME = MAX_ANNOUNCEMENT_INTERVAL + MIN_ANNOUNCEMENT_INTERVAL;
   FETCH_UNUSED(payload);
 
-  Peers peers{};
+  // load the peer list from the network
+  Peers peer_list{};
+  try
+  {
+    serializers::MsgPackSerializer serializer{payload};
+    serializer >> peer_list;
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_ERROR(logging_name_, "Unable to deserialise announcement packet: ", ex.what());
+  }
 
-  serializers::MsgPackSerializer serializer{payload};
-  serializer >> peers;
+  // convert to a set
+  std::unordered_set<network::Peer> const peers{peer_list.begin(), peer_list.end()};
 
   FETCH_LOG_TRACE(logging_name_, "Received announcement from: ", from.ToBase64());
 
@@ -403,36 +414,70 @@ void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArra
     }
   }
 
-  // update the peers info cache
+  // remove all internal references to this objects address and peer
+  std::unordered_set<Address> removed_addresses{};
   {
-    auto it = peers_info_.find(from);
-    if (it != peers_info_.end())
+    for (auto it = peers_info_.begin(); it != peers_info_.end();)
     {
-      Metadata &metadata       = it->second;
-      PeerData &existing_peers = metadata.peer_data;
+      Metadata &metadata  = it->second;
+      auto &    peer_data = metadata.peer_data;
 
-      for (auto const &peer : peers)
+      // remove the peer address from the cache
+      bool peers_removed{false};
+      for (auto peer_it = peer_data.begin(); peer_it != peer_data.end();)
       {
-        // attempt to locate the address in the peer list
-        bool const peer_present = std::find_if(existing_peers.begin(), existing_peers.end(),
-                                               [&peer](PeerMetadata const &entry) {
-                                                 return entry.peer == peer;
-                                               }) != existing_peers.end();
-
-        if (!peer_present)
+        if (core::IsIn(peers, peer_it->peer))
         {
-          metadata.peer_data.emplace_back(PeerMetadata{peer});
+          peer_it       = peer_data.erase(peer_it);
+          peers_removed = true;
+        }
+        else
+        {
+          ++peer_it;
         }
       }
-    }
-    else  // new entry
-    {
-      Metadata &metadata = peers_info_[from];
 
-      for (auto const &peer : peers)
+      // remove the entry completely if we have removed all previous peers
+      if (peers_removed && peer_data.empty())
       {
-        metadata.peer_data.emplace_back(PeerMetadata{peer});
+        removed_addresses.emplace(it->first);
+        it = peers_info_.erase(it);
       }
+      else
+      {
+        ++it;
+      }
+    }
+  }
+
+  // for all the addresses that have been removed, they must be removed from the desired and kad
+  // peers lists too.
+  desired_addresses_  = desired_addresses_ - removed_addresses;
+  kademlia_addresses_ = kademlia_addresses_ - removed_addresses;
+
+  Metadata *metadata{nullptr};
+
+  // lookup or create the metadata object
+  auto it = peers_info_.find(from);
+  if (it != peers_info_.end())
+  {
+    // lookup existing entry
+    metadata = &(it->second);
+  }
+  else
+  {
+    // create a new entry
+    metadata = &peers_info_[from];
+  }
+
+  if (metadata != nullptr)
+  {
+    PeerData &peer_data = metadata->peer_data;
+
+    peer_data.reserve(peer_data.size() + peers.size());
+    for (auto const &peer : peers)
+    {
+      peer_data.emplace_back(PeerMetadata{peer});
     }
   }
 }

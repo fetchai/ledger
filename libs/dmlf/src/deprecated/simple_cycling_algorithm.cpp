@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,33 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/transaction_layout_rpc_serializers.hpp"
-#include "chain/transaction_rpc_serializers.hpp"
-#include "ledger/chain/consensus/consensus_miner_interface.hpp"
+#include "dmlf/deprecated/simple_cycling_algorithm.hpp"
 
 namespace fetch {
-namespace ledger {
-namespace consensus {
+namespace dmlf {
 
-class DummyMiner : public ConsensusMinerInterface
+std::vector<std::size_t> SimpleCyclingAlgorithm::GetNextOutputs()
 {
-public:
-  // Construction / Destruction
-  DummyMiner()                   = default;
-  DummyMiner(DummyMiner const &) = delete;
-  DummyMiner(DummyMiner &&)      = delete;
-  ~DummyMiner() override         = default;
+  std::vector<std::size_t> result(number_of_outputs_per_cycle_);
+  for (std::size_t i = 0; i < number_of_outputs_per_cycle_; i++)
+  {
+    result[i] = next_output_index_;
+    next_output_index_ += 1;
+    next_output_index_ %= GetCount();
+  }
+  return result;
+}
 
-  /// @name Consensus Miner Interface
-  /// @{
-  void Mine(Block &block) override;
-  bool Mine(Block &block, uint64_t iterations) override;
-  /// @}
+SimpleCyclingAlgorithm::SimpleCyclingAlgorithm(std::size_t count,
+                                               std::size_t number_of_outputs_per_cycle)
+  : ShuffleAlgorithmInterface(count)
+{
+  next_output_index_           = 0;
+  number_of_outputs_per_cycle_ = std::min(number_of_outputs_per_cycle, GetCount());
+}
 
-  // Operators
-  DummyMiner &operator=(DummyMiner const &) = delete;
-  DummyMiner &operator=(DummyMiner &&) = delete;
-};
-}  // namespace consensus
-}  // namespace ledger
+}  // namespace dmlf
 }  // namespace fetch

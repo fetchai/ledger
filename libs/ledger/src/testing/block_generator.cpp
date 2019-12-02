@@ -80,7 +80,6 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uin
       merkle_root[index] = static_cast<uint8_t>((block_count_ & mask) >> shift);
     }
 
-    block->nonce          = ++block_count_;
     block->total_weight   = from->total_weight + block->weight;
     block->previous_hash  = from->hash;
     block->merkle_hash    = merkle_root;

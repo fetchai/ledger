@@ -16,27 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/consensus/bad_miner.hpp"
+#include "benchmark/benchmark.h"
 
-#include "ledger/chain/block.hpp"
-
-namespace fetch {
-namespace ledger {
-namespace consensus {
-
-void BadMiner::Mine(Block &block)
-{
-  block.nonce = 0;
-  block.UpdateDigest();
-}
-
-bool BadMiner::Mine(Block &block, uint64_t /*iterations*/)
-{
-  block.nonce = 0;
-  block.UpdateDigest();
-  return true;
-}
-
-}  // namespace consensus
-}  // namespace ledger
-}  // namespace fetch
+BENCHMARK_MAIN();
