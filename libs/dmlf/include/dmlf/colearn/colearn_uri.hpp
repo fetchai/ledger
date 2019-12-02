@@ -21,7 +21,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "dmlf/colearn/update_store.hpp"
+#include "dmlf/colearn/colearn_update.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -31,7 +31,7 @@ class ColearnURI
 {
 public:
   ColearnURI() = default;
-  ColearnURI(UpdateStore::Update const &update);
+  ColearnURI(ColearnUpdate const &update);
 
   std::string       ToString() const;
   static ColearnURI Parse(std::string const &uriString);  // Fingerprint must be encoded

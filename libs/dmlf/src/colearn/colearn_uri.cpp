@@ -26,7 +26,7 @@ namespace fetch {
 namespace dmlf {
 namespace colearn {
 
-ColearnURI::ColearnURI(UpdateStore::Update const &update)
+ColearnURI::ColearnURI(ColearnUpdate const &update)
   : algorithm_class_(update.algorithm())
   , update_type_(update.update_type())
   , source_(update.source())
