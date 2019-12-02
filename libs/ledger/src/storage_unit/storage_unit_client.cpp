@@ -135,28 +135,29 @@ byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 {
   // determine if the unit requests the genesis block
-  bool const genesis_state = hash == chain::GENESIS_MERKLE_ROOT;
+  // bool const genesis_state = hash == chain::GENESIS_MERKLE_ROOT;
 
   FETCH_LOCK(merkle_mutex_);
 
   // Set merkle stack to this hash, get the tree
   MerkleTree tree{num_lanes()};
 
-  if (genesis_state && (index == 0))  // this is truly the genesis block
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis.");
-
-    // fill the tree with empty leaf nodes
-    for (std::size_t i = 0; i < num_lanes(); ++i)
-    {
-      tree[i] = chain::GENESIS_MERKLE_ROOT;
-    }
-
-    permanent_state_merkle_stack_.New(MERKLE_FILENAME_DOC,
-                                      MERKLE_FILENAME_INDEX);  // clear the stack
-    permanent_state_merkle_stack_.Push(tree);
-  }
-  else
+  //  if (genesis_state && (index == 0))  // this is truly the genesis block
+  //  {
+  //    FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis! Hash: ", hash.ToBase64(), "
+  //    Genesis merkle root: ", chain::GENESIS_MERKLE_ROOT.ToBase64());
+  //
+  //    // fill the tree with empty leaf nodes
+  //    for (std::size_t i = 0; i < num_lanes(); ++i)
+  //    {
+  //      tree[i] = chain::GENESIS_MERKLE_ROOT;
+  //    }
+  //
+  //    permanent_state_merkle_stack_.New(MERKLE_FILENAME_DOC,
+  //                                      MERKLE_FILENAME_INDEX);  // clear the stack
+  //    permanent_state_merkle_stack_.Push(tree);
+  //  }
+  //  else
   {
     uint64_t const merkle_stack_size = permanent_state_merkle_stack_.size();
 
@@ -179,7 +180,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
       return false;
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Successfully found merkle at: ", index);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "When reverting, successfully found merkle at: ", index);
   }  // End set merkle stack
 
   // Note: we shouldn't be touching the lanes at this point from other threads
@@ -192,7 +193,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   {
     assert(!hash.empty());
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "reverting tree leaf: 0x", lane_merkle_hash.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "reverting tree leaf: 0x", lane_merkle_hash.ToHex());
 
     // make the call to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,

@@ -314,7 +314,8 @@ public:
     if (!(key_index_.underlying_stack().HashExists(DefaultKey(hash)) &&
           file_object_.underlying_stack().HashExists(DefaultKey(hash))))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to revert to a hash that doesn't exist");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Attempted to revert to a hash that doesn't exist: ", hash.ToBase64());
       return false;
     }
 
