@@ -371,30 +371,34 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
     // determine the status of the request that is in flight
     auto const status = current_request_->state();
 
-    if (status == PromiseState::SUCCESS)
-    {
-      // the request was successful
-      next_state = State::REQUEST_HEAVIEST_CHAIN;  // request succeeding chunk
-
-      auto  response = current_request_->As<MainChainProtocol::Travelogue>();
-      auto &blocks   = response.blocks;
-
-      // we should receive at least one extra block in addition to what we already have
-      if (!blocks.empty())
-      {
-        HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
-        auto const &latest_hash = blocks.back().hash;
-        assert(!latest_hash.empty());  // should be set by HandleChainResponse()
-        // TODO(unknown): this is to be improved later
-        if (latest_hash == response.heaviest_hash)
-        {
-          next_state = State::SYNCHRONISING;  // we have reached the tip
-        }
-      }
-    }
-
     if (status != PromiseState::WAITING)
     {
+      if (status == PromiseState::SUCCESS)
+      {
+        // the request was successful
+        next_state = State::REQUEST_HEAVIEST_CHAIN;  // request succeeding chunk
+
+        auto  response = current_request_->As<MainChainProtocol::Travelogue>();
+        auto &blocks   = response.blocks;
+
+        // we should receive at least one extra block in addition to what we already have
+        if (!blocks.empty())
+        {
+          HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
+          auto const &latest_hash = blocks.back().hash;
+          assert(!latest_hash.empty());  // should be set by HandleChainResponse()
+          // TODO(unknown): this is to be improved later
+          if (latest_hash == response.heaviest_hash)
+          {
+            next_state = State::SYNCHRONISING;  // we have reached the tip
+          }
+        }
+      }
+      else
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Heaviest chain request to: ", ToBase64(current_peer_address_),
+                       " failed. Reason: ", service::ToString(status));
+      }
       // clear the state
       current_peer_address_ = Address{};
     }
