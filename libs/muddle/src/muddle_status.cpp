@@ -56,9 +56,10 @@ void BuildConnectionPriorities(PeerTracker const &peer_tracker, variant::Variant
 {
   auto                         priorities_map = peer_tracker.connection_priority();
   std::vector<AddressPriority> priorities;
+  priorities.reserve(priorities_map.size());
   for (auto &p : priorities_map)
   {
-    priorities.push_back(p.second);
+    priorities.emplace_back(p.second);
   }
 
   output = variant::Variant::Array(priorities.size());

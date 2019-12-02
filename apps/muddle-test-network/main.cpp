@@ -50,7 +50,6 @@ using Certificate        = fetch::crypto::Prover;
 using CertificatePtr     = std::unique_ptr<Certificate>;
 using MuddleStatusModule = fetch::constellation::MuddleStatusModule;
 
-using fetch::muddle::NetworkId;
 using std::chrono::milliseconds;
 using std::this_thread::sleep_for;
 using namespace fetch::http;
