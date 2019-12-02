@@ -299,9 +299,60 @@ BENCHMARK(BM_Compile)->Args({2, 10, 10})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Compile)->Args({5, 1000, 1000, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 
+/// FIT BENCHMARKS ///
+
+// 1. benchmark model->DeserialiseFromString
+void BM_Fit(::benchmark::State &state)
+{
+  using VMPtr    = std::shared_ptr<VM>;
+  using SizeRef  = fetch::math::SizeType const &;
+  using SizeType = fetch::math::SizeType;
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    VMPtr vm;
+    SetUp(vm);
+
+    // set up data and labels
+    auto model = CreateSequentialModel(vm);
+
+    std::vector<std::uint64_t> input_shape{static_cast<std::uint64_t>(state.range(1)), 1};
+    std::vector<std::uint64_t> label_shape{1, 1};
+
+    auto batch_size = static_cast<fetch::math::SizeType>(state.range(0));
+
+    fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> input_data{};
+    fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> input_labels{};
+    auto data_tensor = input_data->GetTensor();
+    auto label_tensor = input_labels->GetTensor();
+    data_tensor.Reshape(input_shape);
+    label_tensor.Reshape(label_shape);
+
+    for (SizeType i{2}; i < static_cast<SizeType>(state.range(0)); i++)
+    {
+      model->AddLayer<SizeRef, SizeRef>(
+          CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
+          static_cast<SizeType>(state.range(i + 1)));  // input_size, output_size
+    }
+    model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
+
+
+    state.ResumeTiming();
+    model->Fit(input_data, input_labels, batch_size);
+  }
+}
+
+//// batch_size, number_of_layers, input_size, hidden_1_size, ...., output_size
+// BENCHMARK(BM_Deserialise)->Args({1, 1, 6, 1, 10, 100, 1000, 10000,
+// 1})->Unit(::benchmark::kMicrosecond);
+//
+//
+//
+
 /// SERIALISATION BENCHMARKS ///
 
-// just benchmark model->SerialiseToString
+// 1. benchmark model->SerialiseToString
 void BM_Serialise(::benchmark::State &state)
 {
   using VMPtr    = std::shared_ptr<VM>;
@@ -331,12 +382,13 @@ void BM_Serialise(::benchmark::State &state)
 }
 
 //// number_of_layers, input_size, hidden_1_size, ...., output_size
-// BENCHMARK(BM_Serialise)->Args({1, 6, 1, 10, 100, 1000, 10000, 1})->Unit(::benchmark::kMicrosecond);
+// BENCHMARK(BM_Serialise)->Args({1, 6, 1, 10, 100, 1000, 10000,
+// 1})->Unit(::benchmark::kMicrosecond);
 //
 //
 //
 
-// just benchmark model->DeserialiseFromString
+// 2. benchmark model->DeserialiseFromString
 void BM_Deserialise(::benchmark::State &state)
 {
   using VMPtr    = std::shared_ptr<VM>;
@@ -367,11 +419,11 @@ void BM_Deserialise(::benchmark::State &state)
 }
 
 //// number_of_layers, input_size, hidden_1_size, ...., output_size
-// BENCHMARK(BM_Deserialise)->Args({1, 6, 1, 10, 100, 1000, 10000, 1})->Unit(::benchmark::kMicrosecond);
+// BENCHMARK(BM_Deserialise)->Args({1, 6, 1, 10, 100, 1000, 10000,
+// 1})->Unit(::benchmark::kMicrosecond);
 //
 //
 //
-
 
 }  // namespace model
 }  // namespace ml
