@@ -324,8 +324,8 @@ void BM_Fit(::benchmark::State &state)
 
     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> input_data{};
     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> input_labels{};
-    auto data_tensor = input_data->GetTensor();
-    auto label_tensor = input_labels->GetTensor();
+    auto                                              data_tensor  = input_data->GetTensor();
+    auto                                              label_tensor = input_labels->GetTensor();
     data_tensor.Reshape(input_shape);
     label_tensor.Reshape(label_shape);
 
@@ -337,14 +337,13 @@ void BM_Fit(::benchmark::State &state)
     }
     model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
 
-
     state.ResumeTiming();
     model->Fit(input_data, input_labels, batch_size);
   }
 }
 
 //// batch_size, number_of_layers, input_size, hidden_1_size, ...., output_size
-// BENCHMARK(BM_Deserialise)->Args({1, 1, 6, 1, 10, 100, 1000, 10000,
+// BENCHMARK(BM_Fit)->Args({1, 1, 6, 1, 10, 100, 1000, 10000,
 // 1})->Unit(::benchmark::kMicrosecond);
 //
 //
