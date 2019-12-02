@@ -697,18 +697,6 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
   return {std::move(result), GetHeaviestBlockHash()};
 }
 
-MainChain::BlockPtr MainChain::ExpectBlock(BlockHash const &hash, char const *type, int line) const
-{
-  auto block = GetBlock(hash);
-  if (!block)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup ", type, ' ', ToBase64(hash), " from line ",
-                   line);
-  }
-  return std::move(block);
-}
-
-#define ExpectBlock(...) ExpectBlock(__VA_ARGS__, __LINE__)
 /**
  * Get a common sub tree from the chain.
  *
