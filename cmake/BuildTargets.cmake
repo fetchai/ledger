@@ -305,6 +305,29 @@ function (configure_vendor_targets)
   set(UTF8_SAMPLES OFF CACHE BOOL "Enable building samples for UTF8-CPP" FORCE)
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/utfcpp)
 
+  # noisec
+  find_package(BISON REQUIRED)
+  find_package(FLEX REQUIRED)
+  include(ExternalProject)
+  ExternalProject_Add(project_noisec
+                      DOWNLOAD_COMMAND ""
+                      PREFIX "${FETCH_ROOT_VENDOR_DIR}/noisec"
+                      SOURCE_DIR "${FETCH_ROOT_VENDOR_DIR}/noisec"
+                      CONFIGURE_COMMAND autoreconf
+                                        --install ${FETCH_ROOT_VENDOR_DIR}/noisec &&
+                                                  ${FETCH_ROOT_VENDOR_DIR}/noisec/./configure
+                      BUILD_IN_SOURCE 1
+                      BUILD_COMMAND make -C ${FETCH_ROOT_VENDOR_DIR}/noisec
+                      INSTALL_COMMAND "")
+
+  ExternalProject_Get_Property(project_noisec SOURCE_DIR)
+  set(NOISE_INCLUDE_PATH ${SOURCE_DIR}/include/)
+
+  add_library(noisec STATIC IMPORTED)
+  set_target_properties(noisec
+                        PROPERTIES IMPORTED_LOCATION ${SOURCE_DIR}/src/protocol/libnoiseprotocol.a)
+  add_dependencies(noisec project_noisec)
+
 endfunction (configure_vendor_targets)
 
 function (configure_library_targets)
