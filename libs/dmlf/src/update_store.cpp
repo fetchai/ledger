@@ -59,18 +59,22 @@ void UpdateStore::PushUpdate(ColearnURI const &uri, Data &&data, Metadata &&meta
 {
   if (uri.algorithm_class().empty())
   {
-    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() + "\", algorithm_class must not be empty");
+    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() +
+                                "\", algorithm_class must not be empty");
   }
   if (uri.update_type().empty())
   {
-    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() + "\", update_type must not be empty");
+    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() +
+                                "\", update_type must not be empty");
   }
   if (uri.source().empty())
   {
-    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() + "\", source must not be empty");
+    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() +
+                                "\", source must not be empty");
   }
 
-  PushUpdate(uri.algorithm_class(), uri.update_type(), std::move(data), uri.source(), std::move(metadata));
+  PushUpdate(uri.algorithm_class(), uri.update_type(), std::move(data), uri.source(),
+             std::move(metadata));
 }
 void UpdateStore::PushUpdate(Algorithm const &algo, UpdateType type, Data &&data, Source source,
                              Metadata &&metadata)
@@ -98,9 +102,6 @@ void UpdateStore::PushUpdate(Algorithm const &algo, UpdateType type, Data &&data
 
   store.emplace_back(newUpdate);
 }
-
-
-
 
 UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType const &type,
                                               Criteria criteria, Consumer consumer)
@@ -155,28 +156,33 @@ UpdateStore::UpdatePtr UpdateStore::GetUpdate(Algorithm const &algo, UpdateType 
   return result;
 }
 
-UpdateStore::UpdatePtr UpdateStore::GetUpdate(ColearnURI const& uri, Criteria criteria, Consumer consumer)
+UpdateStore::UpdatePtr UpdateStore::GetUpdate(ColearnURI const &uri, Criteria criteria,
+                                              Consumer consumer)
 {
   if (uri.algorithm_class().empty())
   {
-    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() + "\", algorithm_class must not be empty");
+    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() +
+                                "\", algorithm_class must not be empty");
   }
   if (uri.update_type().empty())
   {
-    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() + "\", update_type must not be empty");
+    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() +
+                                "\", update_type must not be empty");
   }
 
   return GetUpdate(uri.algorithm_class(), uri.update_type(), criteria, consumer);
 }
-UpdateStore::UpdatePtr UpdateStore::GetUpdate(ColearnURI const& uri, Consumer consumer)
+UpdateStore::UpdatePtr UpdateStore::GetUpdate(ColearnURI const &uri, Consumer consumer)
 {
   if (uri.algorithm_class().empty())
   {
-    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() + "\", algorithm_class must not be empty");
+    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() +
+                                "\", algorithm_class must not be empty");
   }
   if (uri.update_type().empty())
   {
-    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() + "\", update_type must not be empty");
+    throw std::invalid_argument("Uri is missing fields. Recieved \"" + uri.ToString() +
+                                "\", update_type must not be empty");
   }
 
   return GetUpdate(uri.algorithm_class(), uri.update_type(), consumer);
