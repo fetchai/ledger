@@ -395,7 +395,7 @@ void MainChain::AddBlockToBloomFilter(Block const &block) const
 MainChain::BlockPtr MainChain::GetHeaviestBlock() const
 {
   FETCH_LOCK(lock_);
-  auto block_ptr = GetBlock(heaviest_.hash);
+  auto block_ptr = GetBlock(heaviest_.Hash());
   assert(block_ptr);
   return block_ptr;
 }
@@ -1021,11 +1021,11 @@ void MainChain::RecoverFromFile(Mode mode)
       }
 
       // Sanity check
-      uint64_t heaviest_block_num = heaviest_.block_number;
+      uint64_t heaviest_block_num = heaviest_.BlockNumber();
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block: ", heaviest_block_num);
 
       DetermineHeaviestTip();
-      heaviest_block_num = heaviest_.block_number;
+      heaviest_block_num = heaviest_.BlockNumber();
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block now: ", heaviest_block_num);
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block weight: ", GetHeaviestBlock()->total_weight);
 
@@ -1057,7 +1057,7 @@ void MainChain::RecoverFromFile(Mode mode)
 void MainChain::WriteToFile()
 {
   // look up the heaviest block
-  IntBlockPtr block = block_chain_.at(heaviest_.hash);
+  IntBlockPtr block = block_chain_.at(heaviest_.Hash());
 
   // skip if the block store is not persistent
   if (block_store_ && (block->block_number >= chain::FINALITY_PERIOD))
@@ -1081,7 +1081,7 @@ void MainChain::WriteToFile()
     {
       FETCH_LOG_WARN(LOGGING_NAME,
                      "Failed to walk back the chain when writing to file! Block head: ",
-                     block_chain_.at(heaviest_.hash)->block_number);
+                     block_chain_.at(heaviest_.Hash())->block_number);
       return;
     }
 
@@ -1156,7 +1156,7 @@ void MainChain::TrimCache()
 
   FETCH_LOCK(lock_);
 
-  uint64_t const heaviest_block_num = heaviest_.block_number;
+  uint64_t const heaviest_block_num = heaviest_.BlockNumber();
 
   if (CACHE_TRIM_THRESHOLD < heaviest_block_num)
   {
@@ -1727,7 +1727,7 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
 MainChain::BlockHash MainChain::GetHeaviestBlockHash() const
 {
   FETCH_LOCK(lock_);
-  return heaviest_.hash;
+  return heaviest_.Hash();
 }
 
 Tip::Tip(Block const &block)

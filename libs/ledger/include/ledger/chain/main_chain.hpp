@@ -200,8 +200,19 @@ public:
   using RMutex        = std::recursive_mutex;
   using RLock         = std::unique_lock<RMutex>;
 
-  class HeaviestTip : public Tip
+  class HeaviestTip : Tip
   {
+    // When a new heaviest tip is added to the chain,
+    // that is not a direct successor the previous one,
+    // this number is incremented
+    // (if the new heaviest is the direct successor the the old one, the former simply receives
+    // this current label and that's it).
+    // When the heaviest subchain is discovered as a sequence of blocks starting at
+    // the very first block with non-unique forward reference and ending at
+    // the heaviest tip, all the blocks that fall into this chain receive this number.
+    // So, if you see a block with chain_label equal to the chain_label_ of the current HeaviestTip
+    // then you know that one of its forward references also leads to a block with such label,
+    // and so on, up until the HeaviestTip.
     uint64_t chain_label_{0};
 
   public:
@@ -211,8 +222,12 @@ public:
     using Tip::operator<;
     using Tip::operator==;
 
-    uint64_t ChainLabel() const;
+    // Getters
+    BlockHash const &Hash() const;
+    uint64_t         BlockNumber() const;
+    uint64_t         ChainLabel() const;
 
+    // Setters
     void Set(Block &block);
     bool Update(Block &block);
   };
