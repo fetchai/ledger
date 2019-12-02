@@ -129,8 +129,8 @@ protected:
   /// @}
 
 private:
-  PeerTracker(Duration const &interval, core::Reactor &reactor, MuddleRegister const &reg,
-              PeerConnectionList &connections, MuddleEndpoint &endpoint);
+  explicit PeerTracker(Duration const &interval, core::Reactor &reactor, MuddleRegister const &reg,
+                       PeerConnectionList &connections, MuddleEndpoint &endpoint);
 
   /// Connectivity maintenance
   /// @{

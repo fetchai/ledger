@@ -41,7 +41,7 @@ public:
   using PortList       = std::vector<Port>;
   using ConstByteArray = byte_array::ConstByteArray;
 
-  KademliaTable(Address const &own_address);
+  explicit KademliaTable(Address const &own_address);
 
   /// Construtors & destructors
   /// @{
@@ -60,10 +60,10 @@ public:
   /// @{
   ConstByteArray Ping(Address const &address, PortList port);
   Peers          FindPeer(Address const &address);
-  Peers          FindPeer(Address const &address, uint64_t start_bucket, bool scan_left = true,
+  Peers          FindPeer(Address const &address, uint64_t log_id, bool scan_left = true,
                           bool scan_right = true);
   Peers          FindPeerByHamming(Address const &address);
-  Peers FindPeerByHamming(Address const &address, uint64_t start_bucket, bool scan_left = true,
+  Peers FindPeerByHamming(Address const &address, uint64_t hamming_id, bool scan_left = true,
                           bool scan_right = true);
   void ReportLiveliness(Address const &address, Address const &reporter, PeerInfo const &info = {});
   void ReportExistence(PeerInfo const &info, Address const &reporter);
@@ -97,7 +97,7 @@ public:
     std::size_t ret{0};
     for (auto &b : by_logarithm_)
     {
-      ret += b.peers.size() > 0;
+      ret += !b.peers.empty();
     }
     return ret;
   }
@@ -118,7 +118,7 @@ private:
   Buckets            by_hamming_;
   PeerMap            know_peers_;
 
-  uint64_t first_non_empty_bucket_{160};  // TODO(tfr): Test what happens in the case where
+  uint64_t first_non_empty_bucket_{160};
   uint64_t kademlia_max_peers_per_bucket_{20};
 };
 

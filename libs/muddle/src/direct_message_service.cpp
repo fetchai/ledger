@@ -122,7 +122,7 @@ void DirectMessageService::InitiateConnection(Handle handle)
 
 void DirectMessageService::RequestDisconnect(Handle /*handle*/)
 {
-  RoutingMessage response{};
+  // RoutingMessage response{};
   response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
   // this should be conditional on the connection orientation
@@ -365,7 +365,7 @@ void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr c
   }
   else
   {
-    RoutingMessage response{};
+    // RoutingMessage response{};
     response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
     // this should be conditional on the connection orientation

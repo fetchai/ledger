@@ -38,9 +38,9 @@ struct KademliaAddress
 
   KademliaAddress()
   {
-    for (uint64_t i = 0; i < ADDRESS_SIZE; ++i)
+    for (auto &word : words)
     {
-      words[i] = 0;
+      word = 0;
     }
   }
 

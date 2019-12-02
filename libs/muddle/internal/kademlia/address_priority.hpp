@@ -94,7 +94,7 @@ struct AddressPriority
     double expiry_coef_perm = 1. / (1. + exp(-params[0] * time_until_expiry_perm));
 
     // Priority goes down exponentially with the increasing bucket number.
-    double bucket_d = static_cast<double>(bucket);
+    auto bucket_d = static_cast<double>(bucket);
     if (bucket_d > 160)  // TODO(tfr): fetch from address
     {
       bucket_d = 160;
