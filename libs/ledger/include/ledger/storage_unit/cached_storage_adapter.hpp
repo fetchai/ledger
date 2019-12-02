@@ -31,7 +31,7 @@ namespace ledger {
 /**
  * Designed for temporary caching of values to reduce hits to the underlying storage engine.
  *
- * Initially intended in conjuction with the smart contract engine
+ * Initially intended in conjunction with the smart contract engine
  */
 class CachedStorageAdapter : public StorageInterface
 {
@@ -45,7 +45,7 @@ public:
 
   /// @name State Interface
   /// @{
-  Document Get(ResourceAddress const &key) override;
+  Document Get(ResourceAddress const &key) const override;
   Document GetOrCreate(ResourceAddress const &key) override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
   bool     Lock(ShardIndex index) override;
@@ -69,7 +69,7 @@ private:
 
   /// @name Cache Helpers
   /// @{
-  void       AddCacheEntry(ResourceAddress const &address, StateValue const &value);
+  void       AddCacheEntry(ResourceAddress const &address, StateValue const &value) const;
   StateValue GetCacheEntry(ResourceAddress const &address) const;
   bool       HasCacheEntry(ResourceAddress const &address) const;
   /// @}
@@ -78,7 +78,7 @@ private:
 
   /// @name Cache Data
   /// @{
-  Protected<Cache> cache_{};  ///< The local cache
+  mutable Protected<Cache> cache_{};  ///< The local cache
   /// @}
 };
 
