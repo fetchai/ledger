@@ -157,7 +157,7 @@ private:
   void PullPeerKnowledge();
   void SchedulePull(Address const &address);
   void SchedulePull(Address const &address, Address const &search_for);
-  void OnResolvedPull(uint64_t pull_id, Address peer, Address search_for,
+  void OnResolvedPull(uint64_t pull_id, Address const &peer, Address const &search_for,
                       service::Promise const &promise);
   /// @}
 

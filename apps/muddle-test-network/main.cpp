@@ -148,7 +148,7 @@ struct Network
   std::vector<std::unique_ptr<Node>> nodes;
 
 private:
-  Network(uint64_t number_of_nodes)
+  explicit Network(uint64_t number_of_nodes)
   {
     /// Creating the nodes
     for (uint64_t i = 0; i < number_of_nodes; ++i)
@@ -202,7 +202,7 @@ ConstByteArray ReadibleAddress(Address const &address)
 
 int main()
 {
-  uint64_t N       = 40;  // TODO: Make parameter
+  uint64_t N       = 40;  // TODO(tfr): Make parameter
   auto     network = Network::New(N);
 
   //  MakeKademliaNetwork(network);

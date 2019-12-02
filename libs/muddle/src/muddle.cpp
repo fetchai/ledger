@@ -344,7 +344,7 @@ bool Muddle::IsDirectlyConnected(Address const &address) const
  */
 PeerSelectionMode Muddle::GetPeerSelectionMode() const
 {
-  return PeerSelectionMode::DEFAULT;  // TODO Make part of peer tracker configuration
+  return PeerSelectionMode::DEFAULT;  // TODO(tfr): Make part of peer tracker configuration
                                       // peer_selector_->GetMode();
 }
 

@@ -97,7 +97,7 @@ public:
     std::size_t ret{0};
     for (auto &b : by_logarithm_)
     {
-      ret += !b.peers.empty();
+      ret += static_cast<std::size_t>(!b.peers.empty());
     }
     return ret;
   }

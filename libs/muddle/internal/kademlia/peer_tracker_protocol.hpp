@@ -45,7 +45,7 @@ public:
     REQUEST_DISCONNECT = 4
   };
 
-  PeerTrackerProtocol(KademliaTable &table, PortsList ports = {})
+  explicit PeerTrackerProtocol(KademliaTable &table, PortsList ports = {})
     : table_{table}
     , ports_{std::move(ports)}
   {

@@ -453,7 +453,7 @@ PeerTracker::AddressSet PeerTracker::desired_peers() const
   return desired_peers_;
 }
 
-void PeerTracker::OnResolvedPull(uint64_t pull_id, Address peer, Address search_for,
+void PeerTracker::OnResolvedPull(uint64_t pull_id, Address const &peer, Address const &search_for,
                                  service::Promise const &promise)
 {
   FETCH_LOCK(mutex_);
@@ -471,7 +471,7 @@ void PeerTracker::OnResolvedPull(uint64_t pull_id, Address peer, Address search_
     for (auto const &peer_info : peer_info_list)
     {
       // reporting the possible existence of another peer on the network.a
-      assert(peer_info.address.size() > 0);
+      assert(!peer_info.address.empty());
 
       peer_table_.ReportExistence(peer_info, peer);
       if (peer_info.address == search_for)
@@ -555,7 +555,7 @@ void PeerTracker::ConnectToDesiredPeers()
       auto closest_peers = peer_table_.FindPeer(peer);
 
       // Skipping this peer if we cannot find any close peers
-      if (closest_peers.size() == 0)
+      if (closest_peers.empty())
       {
         continue;
       }
