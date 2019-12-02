@@ -122,8 +122,8 @@ BENCHMARK_TEMPLATE(BM_AddLayer, float, 10, 3000)->Unit(::benchmark::kMicrosecond
 */
 void BM_Predict(::benchmark::State &state)
 {
-  using VMPtr = std::shared_ptr<VM>;
-  using SizeRef = fetch::math::SizeType const &;
+  using VMPtr    = std::shared_ptr<VM>;
+  using SizeRef  = fetch::math::SizeType const &;
   using SizeType = fetch::math::SizeType;
 
   for (auto _ : state)
@@ -133,15 +133,17 @@ void BM_Predict(::benchmark::State &state)
     SetUp(vm);
 
     // set up data and labels
-    std::vector<uint64_t> data_shape{static_cast<SizeType>(state.range(2)), static_cast<SizeType>(state.range(0))};
+    std::vector<uint64_t> data_shape{static_cast<SizeType>(state.range(2)),
+                                     static_cast<SizeType>(state.range(0))};
     auto                  data = CreateTensor(vm, data_shape);
 
     auto model = CreateSequentialModel(vm);
 
-
-    for(SizeType i{2};i< static_cast<SizeType>(state.range(1)+1);i++){
-    model->AddLayer<SizeRef, SizeRef>(CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
-                                      static_cast<SizeType>(state.range(i+1)));  // input_size, output_size
+    for (SizeType i{2}; i < static_cast<SizeType>(state.range(1) + 1); i++)
+    {
+      model->AddLayer<SizeRef, SizeRef>(
+          CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
+          static_cast<SizeType>(state.range(i + 1)));  // input_size, output_size
     }
 
     model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
@@ -225,10 +227,11 @@ BENCHMARK(BM_Predict)->Args({256,5,1000,1000, 1000,1000,1000})->Unit(::benchmark
 BENCHMARK(BM_Predict)->Args({512,5,1000,1000, 1000,1000,1000})->Unit(::benchmark::kMicrosecond);
 */
 
+
 void BM_Compile(::benchmark::State &state)
 {
-  using VMPtr = std::shared_ptr<VM>;
-  using SizeRef = fetch::math::SizeType const &;
+  using VMPtr    = std::shared_ptr<VM>;
+  using SizeRef  = fetch::math::SizeType const &;
   using SizeType = fetch::math::SizeType;
 
   for (auto _ : state)
@@ -240,9 +243,11 @@ void BM_Compile(::benchmark::State &state)
     // set up data and labels
     auto model = CreateSequentialModel(vm);
 
-    for(SizeType i{1};i< static_cast<SizeType>(state.range(0));i++){
-      model->AddLayer<SizeRef, SizeRef>(CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
-                                        static_cast<SizeType>(state.range(i+1)));  // input_size, output_size
+    for (SizeType i{1}; i < static_cast<SizeType>(state.range(0)); i++)
+    {
+      model->AddLayer<SizeRef, SizeRef>(
+          CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
+          static_cast<SizeType>(state.range(i + 1)));  // input_size, output_size
     }
 
     state.ResumeTiming();
@@ -251,6 +256,7 @@ void BM_Compile(::benchmark::State &state)
 }
 /*
 // number_of_layers, input_size, hidden_1_size, ...., output_size
+
 BENCHMARK(BM_Compile)->Args({6,1,10, 100,1000,10000,1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Compile)->Args({5,10000,1000, 100,10,1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Compile)->Args({4,1,1, 1,1})->Unit(::benchmark::kMicrosecond);
@@ -298,6 +304,11 @@ BENCHMARK(BM_Compile)->Args({5,1000,1000, 1000,1000,1000})->Unit(::benchmark::kM
             using SizeRef = fetch::math::SizeType const &;
             using SizeType = fetch::math::SizeType;
 
+
+            SizeType batch_size = static_cast<SizeType>(state.range(1));
+            SizeType args_size = static_cast<SizeType>(state.range(2)+3);
+
+
             for (auto _ : state)
             {
                 state.PauseTiming();
@@ -314,14 +325,14 @@ BENCHMARK(BM_Compile)->Args({5,1000,1000, 1000,1000,1000})->Unit(::benchmark::kM
                 auto model = CreateSequentialModel(vm);
 
 
-                for(SizeType i{3};i< static_cast<SizeType>(state.range(2)+2);i++){
+                for(SizeType i{3};i<args_size-1;i++){
                     model->AddLayer<SizeRef, SizeRef>(CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
                                                       static_cast<SizeType>(state.range(i+1)));  // input_size, output_size
                 }
 
                 model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
                 state.ResumeTiming();
-                auto res = model->Predict(data);
+                 model->Fit(data,label,batch_size);
             }
         }
 
@@ -340,13 +351,20 @@ BENCHMARK(BM_Compile)->Args({5,1000,1000, 1000,1000,1000})->Unit(::benchmark::kM
         BENCHMARK(BM_Fit)->Args({1000000,100000,2,10, 100})->Unit(::benchmark::kMicrosecond);
         BENCHMARK(BM_Fit)->Args({1000000,1000000,2,10, 100})->Unit(::benchmark::kMicrosecond);
 
+//// batch_size, number_of_layers, input_size, hidden_1_size, ...., output_size
+// BENCHMARK(BM_Fit)->Args({1, 1, 6, 1, 10, 100, 1000, 10000,
+// 1})->Unit(::benchmark::kMicrosecond);
+//
+//
+//
+
 /// SERIALISATION BENCHMARKS ///
 
-
+// 1. benchmark model->SerialiseToString
 void BM_Serialise(::benchmark::State &state)
 {
-  using VMPtr = std::shared_ptr<VM>;
-  using SizeRef = fetch::math::SizeType const &;
+  using VMPtr    = std::shared_ptr<VM>;
+  using SizeRef  = fetch::math::SizeType const &;
   using SizeType = fetch::math::SizeType;
 
   for (auto _ : state)
@@ -358,10 +376,11 @@ void BM_Serialise(::benchmark::State &state)
     // set up data and labels
     auto model = CreateSequentialModel(vm);
 
-    for(SizeType i{1};i< static_cast<SizeType>(state.range(0));i++)
+    for (SizeType i{1}; i < static_cast<SizeType>(state.range(0)); i++)
     {
-      model->AddLayer<SizeRef, SizeRef>(CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
-                                        static_cast<SizeType>(state.range(i+1)));  // input_size, output_size
+      model->AddLayer<SizeRef, SizeRef>(
+          CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
+          static_cast<SizeType>(state.range(i + 1)));  // input_size, output_size
     }
     model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
 
@@ -371,13 +390,51 @@ void BM_Serialise(::benchmark::State &state)
 }
 
 //// number_of_layers, input_size, hidden_1_size, ...., output_size
-//BENCHMARK(BM_Compile)->Args({6,1,10, 100,1000,10000,1})->Unit(::benchmark::kMicrosecond);
-//BENCHMARK(BM_Compile)->Args({5,10000,1000, 100,10,1})->Unit(::benchmark::kMicrosecond);
-//BENCHMARK(BM_Compile)->Args({4,1,1, 1,1})->Unit(::benchmark::kMicrosecond);
+// BENCHMARK(BM_Serialise)->Args({1, 6, 1, 10, 100, 1000, 10000,
+// 1})->Unit(::benchmark::kMicrosecond);
+//
+//
+//
 
-} // model
-} // ml
-} // benchmark
-} // vm_modules
+// 2. benchmark model->DeserialiseFromString
+void BM_Deserialise(::benchmark::State &state)
+{
+  using VMPtr    = std::shared_ptr<VM>;
+  using SizeRef  = fetch::math::SizeType const &;
+  using SizeType = fetch::math::SizeType;
 
-BENCHMARK_MAIN();
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    VMPtr vm;
+    SetUp(vm);
+
+    // set up data and labels
+    auto model = CreateSequentialModel(vm);
+
+    for (SizeType i{1}; i < static_cast<SizeType>(state.range(0)); i++)
+    {
+      model->AddLayer<SizeRef, SizeRef>(
+          CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
+          static_cast<SizeType>(state.range(i + 1)));  // input_size, output_size
+    }
+    model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
+    fetch::vm::Ptr<fetch::vm::String> serialised_model = model->SerializeToString();
+
+    state.ResumeTiming();
+    model->DeserializeFromString(serialised_model);
+  }
+}
+
+//// number_of_layers, input_size, hidden_1_size, ...., output_size
+// BENCHMARK(BM_Deserialise)->Args({1, 6, 1, 10, 100, 1000, 10000,
+// 1})->Unit(::benchmark::kMicrosecond);
+//
+//
+//
+
+}  // namespace model
+}  // namespace ml
+}  // namespace benchmark
+}  // namespace vm_modules
+
