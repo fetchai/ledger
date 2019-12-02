@@ -725,105 +725,110 @@ MainChain::BlockPtr MainChain::ExpectBlock(BlockHash const &hash, char const *ty
  *
  * @return true if successful, otherwise false
  */
-bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, BlockHash node_hash,
-                                        uint64_t limit, const BehaviourWhenLimit behaviour) const
+bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
+                                        uint64_t limit, BehaviourWhenLimit behaviour) const
 {
-  std::cerr << "105: tip " << tip_hash.ToHex().SubArray(0, 8)
-            << "; node: " << node_hash.ToHex().SubArray(0, 8) << "; limit: " << limit << "\n";
-  std::cerr << "Chain:\n";
-  for (auto const &b : block_chain_)
-  {
-    std::cerr << '\t' << b.first.ToHex().SubArray(0, 8) << '\n';
-  }
-
-  blocks.clear();
   limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
-  if (limit == 0)
-  {
-    return true;
-  }
   MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
 
   FETCH_LOCK(lock_);
 
-  auto tip  = ExpectBlock(tip_hash, "tip");
-  auto node = ExpectBlock(node_hash, "node");
-  if (!tip || !node)
-  {
-    return false;
-  }
+  bool success{true};
 
-  // slide the node down to the same level with the tip, if it's above
-  while (node->block_number > tip->block_number)
+  // clear the output structure
+  blocks.clear();
+
+  BlockPtr left{};
+  BlockPtr right{};
+
+  BlockHash left_hash  = std::move(tip);
+  BlockHash right_hash = std::move(node);
+
+  std::deque<BlockPtr> res;
+
+  // The algorithm implemented here is effectively a coordinated parallel walk about from the two
+  // input tips until the a common ancestor is located.
+  for (;;)
   {
-    node = ExpectBlock(node->previous_hash, "node");
-    // TODO(unknown): this should be an excess check if we operate on the main chain
-    if (!node)
+    // load up the left side
+    if (!left || left->hash != left_hash)
     {
-      return false;
+      left = GetBlock(left_hash);
+      if (!left)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up block (left): ", ToBase64(left_hash));
+        success = false;
+        break;
+      }
+
+      // left side always loaded into output queue as we traverse
+      // blocks.push_back(left);
+      res.push_back(left);
+      bool break_loop = false;
+
+      switch (behaviour)
+      {
+      case BehaviourWhenLimit::RETURN_LEAST_RECENT:
+        if (res.size() > limit)
+        {
+          res.pop_front();
+        }
+        break;
+      case BehaviourWhenLimit::RETURN_MOST_RECENT:
+        if (res.size() >= limit)
+        {
+          break_loop = true;
+        }
+        break;
+      }
+
+      if (break_loop)
+      {
+        break;
+      }
+    }
+
+    // load up the right side
+    if (!right || right->hash != right_hash)
+    {
+      right = GetBlock(right_hash);
+      if (!right)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up block (right): ", ToBase64(right_hash));
+        success = false;
+        break;
+      }
+    }
+
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Left: ", ToBase64(left_hash), " -> ", left->block_number,
+                    " Right: ", ToBase64(right_hash), " -> ", right->block_number);
+
+    if (left_hash == right_hash)
+    {
+      break;
+    }
+
+    if (left->block_number <= right->block_number)
+    {
+      right_hash = right->previous_hash;
+    }
+
+    if (left->block_number >= right->block_number)
+    {
+      left_hash = left->previous_hash;
     }
   }
 
-  // if this is true and we've collected limit blocks, it's time to return
-  const bool return_least_recent = behaviour == BehaviourWhenLimit::RETURN_LEAST_RECENT;
-  const bool return_most_recent  = behaviour == BehaviourWhenLimit::RETURN_MOST_RECENT;
+  blocks.resize(res.size());
+  std::move(res.begin(), res.end(), blocks.begin());
 
-  // slide the tip down to the same level with the node collecting blocks, if it's above
-  std::deque<BlockPtr> result{tip};
-  while (tip->block_number > node->block_number && (return_least_recent || result.size() < limit))
+  // If a lookup error has occurred then we do not return anything
+  if (!success)
   {
-    tip = ExpectBlock(tip->previous_hash, "tip");
-    // TODO(unknown): this should be an excess check if we operate on the main chain
-    if (!tip)
-    {
-      return false;
-    }
-    result.push_back(tip);
-    if (result.size() > limit)
-    {
-      result.pop_front();
-    }
+    blocks.clear();
   }
 
-  assert(tip && node && tip->block_number == node->block_number && result.back() == tip);
-
-  if (tip == node || (return_most_recent && result.size() == limit))
-  {
-    blocks.reserve(limit);
-    blocks.insert(blocks.end(), std::make_move_iterator(result.begin()),
-                  std::make_move_iterator(result.end()));
-    return true;
-  }
-
-  node = ExpectBlock(node->previous_hash, "node");
-  tip  = ExpectBlock(tip->previous_hash, "tip");
-  if (!node || !tip)
-  {
-    return false;
-  }
-
-  while ((return_least_recent || result.size() < limit) && tip != node)
-  {
-    result.push_back(tip);
-    if (result.size() > limit)
-    {
-      result.pop_front();
-    }
-    tip  = ExpectBlock(tip->previous_hash, "tip");
-    node = ExpectBlock(node->previous_hash, "node");
-    // TODO(unknown): this should be an excess check if we operate on the main chain
-    if (!tip || !node)
-    {
-      return false;
-    }
-  }
-  assert(tip && tip == node && result.back() != tip);
-  result.push_back(tip);
-
-  blocks.reserve(result.size());
-  blocks.insert(blocks.end(), std::make_move_iterator(result.begin()),
-                std::make_move_iterator(result.end()));
-  return true;
+  return success;
 }
 
 /**

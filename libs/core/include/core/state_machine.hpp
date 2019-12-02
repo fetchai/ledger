@@ -308,48 +308,31 @@ bool StateMachine<S>::IsReadyToExecute() const
 template <typename S>
 void StateMachine<S>::Execute()
 {
-  std::cerr << "41 Applying\n";
   callbacks_.ApplyVoid([this](auto &callbacks) {
     // iterate over the current state event callback map
-    std::cerr << "42 Applying\n";
     auto it = callbacks.find(current_state_);
-    std::cerr << "43 Applying\n";
     if (it != callbacks.end())
     {
-      std::cerr << "44 Applying\n";
-      std::cerr << "44 first: " << int(it->first) << "; second: " << bool(it->second) << '\n';
       // execute the state handler
       S const next_state = it->second(current_state_, previous_state_);
-      std::cerr << "45 Applying\n";
 
       // perform the state updates
       previous_state_ = current_state_.load();
-      std::cerr << "46 Applying\n";
-      current_state_ = next_state;
-      std::cerr << "47 Applying\n";
+      current_state_  = next_state;
 
       // detect a state change
       if (current_state_ != previous_state_)
       {
-        std::cerr << "48 Applying\n";
         // trigger the state change callback if configured
         state_change_callback_.ApplyVoid([this](auto &state_change_callback) {
-          std::cerr << "49 Applying\n";
           if (state_change_callback)
           {
-            std::cerr << "50 Applying\n";
             state_change_callback(current_state_, previous_state_);
-            std::cerr << "51 Applying\n";
           }
-          std::cerr << "52 Applying\n";
         });
-        std::cerr << "53 Applying\n";
       }
-      std::cerr << "54 Applying\n";
     }
-    std::cerr << "55 Applying\n";
   });
-  std::cerr << "56 Applying\n";
 }
 
 /**

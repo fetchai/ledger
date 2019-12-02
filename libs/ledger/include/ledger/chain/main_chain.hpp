@@ -63,7 +63,7 @@ struct Tip
   using BlockHash = Block::Hash;
   using Weight    = Block::Weight;
 
-  BlockHash hash;
+  BlockHash hash{fetch::chain::GENESIS_DIGEST};
   Weight    total_weight{0};
   Weight    weight{0};
   uint64_t  block_number{0};
@@ -205,8 +205,6 @@ public:
     uint64_t chain_label_{0};
 
   public:
-    BlockHash hash{chain::GENESIS_DIGEST};
-
     using Tip::Tip;
     using Tip::operator=;
 
