@@ -159,10 +159,7 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, By
                                                  const Peers &peers, double broadcast_proportion)
 {
   auto random_factor = randomiser_.GetNew();
-  if (broadcast_proportion < 0.0)
-  {
-    broadcast_proportion = broadcast_proportion_;
-  }
+  broadcast_proportion = std::max(0.0, std::min(1.0, broadcast_proportion));
   for (auto const &peer : peers)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating sender for ", type_name, " to target ",

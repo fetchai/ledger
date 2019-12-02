@@ -141,7 +141,7 @@ public:
 
   void set_broadcast_proportion(double proportion)
   {
-    broadcast_proportion_ = proportion;
+    broadcast_proportion_ = std::max(0.0, std::min(1.0, proportion));
   }
 
   Address     GetAddress() const;
