@@ -81,7 +81,7 @@ Let *A* be a matrix where each row corresponds to a benchmark and each element *
 
 For the benchmarks listed in [Table 1](#table1), we seek values in the vector ***x*** that make the following expression as close as possible to an equality.
 
-![enter image description here](https://lh3.googleusercontent.com/AGtgdyy0KlpXvm9J38fmfFhT9ksjsLJnQIC5ZnrKI_mTjGI3xKRjKM3mppSUN3a_sG3PzwjC9D0)
+<img src="https://lh3.googleusercontent.com/XEBuaslfkpGcO3el45UIoN88fF7uzpecNvc6UVzOlXrMYbE7EZAYfi_TVz4Vu1Q0_p_LCcQWJCI" alt="drawing" height="300" class="center"/>
 
 In addition to minimizing ||*A****x*** - ***b***||<sup>2</sup>, we also need to constrain the individual opcode times to be positive (*x<sub>i</sub> > 0* for each *i*). Finally, since CPU times vary more for some benchmarks than others, we normalize the expression by the standard deviation and rewrite the expression as follows:
 
@@ -89,7 +89,7 @@ In addition to minimizing ||*A****x*** - ***b***||<sup>2</sup>, we also need to 
 
 The solution of the above example is: 
 
-![enter image description here](https://lh3.googleusercontent.com/OQNoOtRSJ6kHStPb-xs-rvFCtAYVsXYalcQlRqEjEcFActzWZ5TbymZMjO-YZraDBEr46yQwZdU)
+<img src="https://lh3.googleusercontent.com/OQNoOtRSJ6kHStPb-xs-rvFCtAYVsXYalcQlRqEjEcFActzWZ5TbymZMjO-YZraDBEr46yQwZdU" alt="drawing" height="300" class="center"/>
 
 where the values of **x** are given in nanoseconds and the corresponding opcodes are defined as {1: VariableDeclare, 4: PushFalse, 5: PushTrue, 7: PushConstant, 14: Discard, 15: Destruct, 18: Jump, 19: JumpIfFalse,  21: Return, 23: ForRangeInit, 24: ForRangeIterate, 25: ForRangeTerminate, 26: InvokeUserDefinedFreeFunction, 31: JumpIfFalseOrPop, 32: JumpIfTrueOrPop, 33: Not}.
 
