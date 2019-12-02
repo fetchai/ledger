@@ -183,7 +183,7 @@ void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        opt
 
   std::vector<math::SizeType> shapes;
   shapes.reserve(total_layer_shapes);
-  for (size_t i = 0; i < total_layer_shapes; ++i)
+  for (std::size_t i = 0; i < total_layer_shapes; ++i)
   {
     shapes.emplace_back(layer_shapes->elements.at(i));
   }

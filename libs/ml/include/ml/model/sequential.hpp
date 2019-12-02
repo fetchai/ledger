@@ -51,8 +51,8 @@ public:
   friend struct serializers::MapSerializer;
 
 private:
-  std::string prev_layer_;
   SizeType    layer_count_ = 0;
+  std::string prev_layer_;
 };
 
 /**
