@@ -21,6 +21,7 @@
 #include "core/macros.hpp"
 #include "crypto/ecdsa.hpp"
 #include "dmlf/deprecated/abstract_learner_networker.hpp"
+#include "json/document.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -59,7 +60,7 @@ public:
   using Lock  = std::unique_lock<Mutex>;
 
   deprecated_MuddleLearnerNetworker(
-      const std::string &cloud_config, std::size_t instance_number,
+      json::JSONDocument &cloud_config, std::size_t instance_number,
       const std::shared_ptr<NetworkManager> &netm        = std::shared_ptr<NetworkManager>(),
       MuddleChannel                          channel_tmp = MuddleChannel::DEFAULT);
   ~deprecated_MuddleLearnerNetworker() override                                     = default;

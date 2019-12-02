@@ -32,12 +32,38 @@ namespace {
 
 using DataType = fetch::vm_modules::math::DataType;
 
+std::string const ADD_INVALID_LAYER_TEST_SOURCE = R"(
+    function main()
+      var model = Model("sequential");
+      <<TOKEN>>
+    endfunction
+  )";
+
 class VMModelTests : public ::testing::Test
 {
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
-};
+
+  void TestInvalidLayerAdding(std::string const &test_case_source)
+  {
+    std::string const src = std::regex_replace(ADD_INVALID_LAYER_TEST_SOURCE,
+                                               std::regex("<<TOKEN>>"), test_case_source);
+    ASSERT_TRUE(toolkit.Compile(src));
+    // Invalid layer adding parameters (activation, layer type, parameter values) must not cause
+    // unhandled exception/runtime crash, but should raise VM RuntimeError and cause a safe stop.
+    ASSERT_FALSE(toolkit.Run());
+  }
+
+  void TestAddingUncompilableLayer(std::string const &test_case_source)
+  {
+    std::string const src = std::regex_replace(ADD_INVALID_LAYER_TEST_SOURCE,
+                                               std::regex("<<TOKEN>>"), test_case_source);
+    // Wrong number of arguments in layer adding parameters or calling uncompatible ".compile()"
+    // method for a model must end in model compilation error and safe stop.
+    ASSERT_FALSE(toolkit.Compile(src));
+  }
+};  // namespace
 
 TEST_F(VMModelTests, serialisation_model)
 {
@@ -346,6 +372,155 @@ TEST_F(VMModelTests, model_init_with_wrong_name)
   ASSERT_TRUE(toolkit.Compile(SRC_WRONG_NAME));
   EXPECT_THROW(toolkit.Run(), std::runtime_error);
 }
+
+TEST_F(VMModelTests, model_add_invalid_layer_type)
+{
+  TestInvalidLayerAdding(R"(model.add("INVALID_LAYER_TYPE", 1u64, 1u64, 1u64, 1u64);)");
+}
+
+TEST_F(VMModelTests, model_add_dense_invalid_params_noact)
+{
+  TestInvalidLayerAdding(R"(model.add("dense", 1u64, 1u64, 1u64, 1u64);)");
+}
+
+TEST_F(VMModelTests, model_add_dense_invalid_params_relu)
+{
+  TestInvalidLayerAdding(R"(model.add("dense", 1u64, 1u64, 1u64, 1u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_add_conv_invalid_params_noact)
+{
+  TestInvalidLayerAdding(R"(model.add("conv1d", 10u64, 10u64);)");
+}
+
+TEST_F(VMModelTests, model_add_conv_invalid_params_relu)
+{
+  TestInvalidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_add_layers_invalid_activation_dense)
+{
+  TestInvalidLayerAdding(R"(model.add("dense", 10u64, 10u64, "INVALID_ACTIVATION_DENSE");)");
+}
+
+TEST_F(VMModelTests, model_add_layers_invalid_activation_conv)
+{
+  TestInvalidLayerAdding(
+      R"(model.add("conv1d", 1u64, 1u64, 1u64, 1u64, "INVALID_ACTIVATION_CONV");)");
+}
+
+TEST_F(VMModelTests, model_uncompilable_add_layer__dense_uncompatible_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("dense", 10u64, 10u64, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_uncompilable_add_layer__conv_uncompatible_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("conv1d", 10u64, 10u64, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_uncompilable_add_layer__dense_invalid_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("dense", 10fp32, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_uncompilable_add_layer__conv_invalid_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("conv1d", 0u64, 10fp32, 10u64, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_add_layer_to_non_sequential)
+{
+  static char const *SRC = R"(
+        function main()
+          var model = Model("regressor");
+          model.add("conv1d", 1u64, 1u64, 1u64, 1u64);
+        endfunction
+      )";
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_empty_sequential_compilation)
+{
+  static char const *EMPTY_SEQUENTIAL_SRC = R"(
+      function main()
+         var model = Model("sequential");
+         model.compile("mse", "sgd");
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(EMPTY_SEQUENTIAL_SRC));
+  std::cout << "Testing compilation of an empty Sequential model" << std::endl;
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_compilation_invalid_params)
+{
+  static char const *SEQUENTIAL_SRC = R"(
+      function main()
+         var model = Model("sequential");
+         model.add("dense", 10u64, 1u64);
+         <<TOKEN>>
+      endfunction
+    )";
+
+  static char const *INVALID_LOSS      = R"(model.compile("INVALID_LOSS", "adam");)";
+  static char const *INVALID_OPTIMIZER = R"(model.compile("mse", "INVALID_OPTIMIZER");)";
+  static char const *INVALID_BOTH      = R"(model.compile("INVALID_LOSS", "INVALID_OPTIMIZER");)";
+
+  for (auto const &test_case : {INVALID_LOSS, INVALID_OPTIMIZER, INVALID_BOTH})
+  {
+    std::cout << "Testing invalid model compilation params: " << test_case << std::endl;
+    std::string const src = std::regex_replace(SEQUENTIAL_SRC, std::regex("<<TOKEN>>"), test_case);
+    ASSERT_TRUE(toolkit.Compile(src));
+    EXPECT_FALSE(toolkit.Run());
+  }
+}
+
+TEST_F(VMModelTests, model_compilation_simple_with_wrong_optimizer)
+{
+  static char const *SIMPLE_NONADAM_SRC = R"(
+      function main()
+         var hidden_layers = Array<UInt64>(2);
+         var model = Model("classifier");
+         model.compile("sgd", hidden_layers);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SIMPLE_NONADAM_SRC));
+  std::cout << "Testing non-Adam optimizer for a Simple model" << std::endl;
+  EXPECT_FALSE(toolkit.Run());
+}
+TEST_F(VMModelTests, model_compilation_simple_with_too_few_layer_shapes)
+{
+  static char const *SIMPLE_1_HIDDEN_SRC = R"(
+      function main()
+         var hidden_layers = Array<UInt64>(1);
+         var model = Model("classifier");
+         model.compile("adam", hidden_layers);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SIMPLE_1_HIDDEN_SRC));
+  std::cout << "Testing insufficient hidden layers quantity for a Simple model" << std::endl;
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_compilation_sequential_from_layer_shapes)
+{
+  static char const *HIDDEN_TO_SEQUENTIAL_SRC = R"(
+      function main()
+         var hidden_layers = Array<UInt64>(10);
+         var model = Model("sequential");
+         model.compile("adam", hidden_layers);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(HIDDEN_TO_SEQUENTIAL_SRC));
+  std::cout << "Testing passing of hidden layers to Sequential model" << std::endl;
+  EXPECT_FALSE(toolkit.Run());
+}  // namespace
 
 TEST_F(VMModelTests, dense_sequential_model_test)
 {
