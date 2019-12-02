@@ -123,7 +123,7 @@ void DirectMessageService::InitiateConnection(Handle handle)
 void DirectMessageService::RequestDisconnect(Handle /*handle*/)
 {
   // RoutingMessage response{};
-  response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
+  // response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
   // this should be conditional on the connection orientation
   // TODO(tfr): never disconnect
