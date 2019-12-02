@@ -366,7 +366,7 @@ void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr c
   else
   {
     // RoutingMessage response{};
-    response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
+    // response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
     // this should be conditional on the connection orientation
     // TODO(tfr): Never disconnect

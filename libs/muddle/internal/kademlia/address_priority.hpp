@@ -37,7 +37,8 @@ struct AddressPriority
 
   enum
   {
-    ADDRESS_SIZE = KademliaAddress::ADDRESS_SIZE
+    ADDRESS_SIZE         = KademliaAddress::ADDRESS_SIZE,
+    KADEMLIA_MAX_ID_BITS = KademliaAddress::KADEMLIA_MAX_ID_BITS
   };
 
   enum Purpose
@@ -95,9 +96,9 @@ struct AddressPriority
 
     // Priority goes down exponentially with the increasing bucket number.
     auto bucket_d = static_cast<double>(bucket);
-    if (bucket_d > 160)  // TODO(tfr): fetch from address
+    if (bucket_d > KADEMLIA_MAX_ID_BITS)
     {
-      bucket_d = 160;
+      bucket_d = KADEMLIA_MAX_ID_BITS;
     }
 
     // If it is a non-persistent connection, the bucket is less
@@ -109,9 +110,11 @@ struct AddressPriority
       bucket_tmp_param = params[2];
     }
 
-    assert((0 <= bucket_d) && (bucket_d <= 160.));
+    assert((0 <= bucket_d) && (bucket_d <= static_cast<double>(KADEMLIA_MAX_ID_BITS)));
 
-    double bucket_coef_perm = 1.0 / (1 + exp(-bucket_tmp_param * (80 - bucket_d)));
+    double bucket_coef_perm =
+        1.0 /
+        (1 + exp(-bucket_tmp_param * (static_cast<double>(KADEMLIA_MAX_ID_BITS) / 2. - bucket_d)));
 
     // We value long time connections
     double connection_time =

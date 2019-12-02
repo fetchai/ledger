@@ -33,7 +33,8 @@ struct KademliaAddress
 
   enum
   {
-    ADDRESS_SIZE = Hasher::SIZE_IN_BYTES
+    ADDRESS_SIZE         = Hasher::SIZE_IN_BYTES,
+    KADEMLIA_MAX_ID_BITS = ADDRESS_SIZE << 3
   };
 
   KademliaAddress()

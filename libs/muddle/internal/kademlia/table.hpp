@@ -30,7 +30,7 @@ namespace muddle {
 class KademliaTable
 {
 public:
-  static constexpr uint64_t KADEMLIA_MAX_ID_BITS = KademliaAddress::ADDRESS_SIZE << 3;
+  static constexpr uint64_t KADEMLIA_MAX_ID_BITS = KademliaAddress::KADEMLIA_MAX_ID_BITS;
 
   using Buckets        = std::array<Bucket, KADEMLIA_MAX_ID_BITS + 1>;
   using Peers          = std::deque<PeerInfo>;
@@ -118,7 +118,7 @@ private:
   Buckets            by_hamming_;
   PeerMap            know_peers_;
 
-  uint64_t first_non_empty_bucket_{160};
+  uint64_t first_non_empty_bucket_{KADEMLIA_MAX_ID_BITS};
   uint64_t kademlia_max_peers_per_bucket_{20};
 };
 
