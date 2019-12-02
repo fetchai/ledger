@@ -268,12 +268,7 @@ void UInt256Wrapper::Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso)
     lhs->number_ -= rhs->number_;
     return;
   }
-  if (rhs->IsTemporary())
-  {
-    rhs->number_ -= lhs->number_;
-    lhso = std::move(rhs);
-    return;
-  }
+
   Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ - rhs->number_));
   lhso = std::move(n);
 }
@@ -330,12 +325,6 @@ void UInt256Wrapper::Divide(Ptr<Object> &lhso, Ptr<Object> &rhso)
   if (lhs->IsTemporary())
   {
     lhs->number_ /= rhs->number_;
-    return;
-  }
-  if (rhs->IsTemporary())
-  {
-    rhs->number_ /= lhs->number_;
-    lhso = std::move(rhs);
     return;
   }
 

@@ -496,7 +496,7 @@ TEST_F(UInt256Tests, uint256_type_casts)
 }
 
 // Disabled until UInt256 constructor from bytearray fix/rework.
-TEST_F(UInt256Tests, DISABLED_uint256_to_string)
+TEST_F(UInt256Tests, uint256_to_string)
 {
   static constexpr char const *TEXT = R"(
       function main()
