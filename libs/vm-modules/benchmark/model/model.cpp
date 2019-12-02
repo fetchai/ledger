@@ -75,8 +75,48 @@ Ptr<fetch::vm_modules::ml::model::VMModel> CreateSequentialModel(std::shared_ptr
   return vm->CreateNewObject<fetch::vm_modules::ml::model::VMModel>(model_category);
 }
 
-template <typename T, int S, int I, int O>
+template <typename T, int I, int O>
 void BM_AddLayer(benchmark::State &state)
+{
+  using VMPtr   = std::shared_ptr<VM>;
+  using SizeRef = fetch::math::SizeType const &;
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    VMPtr vm;
+    SetUp(vm);
+
+    auto model = CreateSequentialModel(vm);
+    state.ResumeTiming();
+
+    model->AddLayer<SizeRef, SizeRef>(CreateString(vm, "dense"), I,
+                                      O);  // input_size, output_size
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 1, 1)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 10, 10)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 1000, 1000)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 10)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 1000, 10)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 10, 100)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 10, 1000)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 100)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 1000)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 1, 1000)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 1000, 1)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 1, 10000)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 10000, 1)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 1, 100000)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 100000, 1)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 200, 200)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 2000, 20)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 3000, 10)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 10, 3000)->Unit(benchmark::kMicrosecond);
+
+template <typename T, int I, int O, int B>
+void BM_Predict(benchmark::State &state)
 {
   //    using VMModel        = fetch::vm_modules::ml::model::VMModel;
   //    using VMTensor       = fetch::vm_modules::math::VMTensor;
@@ -111,36 +151,20 @@ void BM_AddLayer(benchmark::State &state)
     SetUp(vm);
 
     // set up data and labels
-    std::vector<uint64_t> data_shape{I, S};
-    std::vector<uint64_t> label_shape{O, S};
-    auto                  data  = CreateTensor(vm, data_shape);
-    auto                  label = CreateTensor(vm, label_shape);
+    std::vector<uint64_t> data_shape{I, B};
+    auto                  data = CreateTensor(vm, data_shape);
 
     auto model = CreateSequentialModel(vm);
-    state.ResumeTiming();
 
     model->AddLayer<SizeRef, SizeRef>(CreateString(vm, "dense"), I,
-                                      O);  // input_size, hidden_1_size
+                                      O);  // input_size, output_size
 
-    // state.PauseTiming();
-    // vm->~VM();
-    // state.ResumeTiming();
+    model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
+    state.ResumeTiming();
+    auto res = model->Predict(data);
   }
 }
 
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 10, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 1000, 1000)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 100, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 1000, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 10, 100)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 10, 1000)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 100, 100)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 100, 1000)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 1, 1000, 100)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 1000, 1, 100)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 200, 200, 100)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 2000, 20, 100)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 3000, 10, 100)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 10, 3000, 100)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Predict, float, 1, 1, 1)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_MAIN();
