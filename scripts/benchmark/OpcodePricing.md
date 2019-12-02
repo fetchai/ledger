@@ -89,7 +89,7 @@ In addition to minimizing arg min(||*A****x*** - ***b***||<sup>2</sup>), we also
 
 The solution of the above example is: 
 
-![enter image description here](https://lh3.googleusercontent.com/nR5tW3uTT_T8m0txAVDWhwyBE85wBpu0OCAJrCNQnuqU2osqBS2cuEMrCmwk6dYl2W9pJ6dsTNo)
+![enter image description here](https://lh3.googleusercontent.com/OQNoOtRSJ6kHStPb-xs-rvFCtAYVsXYalcQlRqEjEcFActzWZ5TbymZMjO-YZraDBEr46yQwZdU)
 
 where the values of **x** are given in nanoseconds and the corresponding opcodes are defined as {1: VariableDeclare, 4: PushFalse, 5: PushTrue, 7: PushConstant, 14: Discard, 15: Destruct, 18: Jump, 19: JumpIfFalse,  21: Return, 23: ForRangeInit, 24: ForRangeIterate, 25: ForRangeTerminate, 26: InvokeUserDefinedFreeFunction, 31: JumpIfFalseOrPop, 32: JumpIfTrueOrPop, 33: Not}.
 
