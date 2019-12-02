@@ -713,7 +713,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
  *
  * @return true if successful, otherwise false
  */
-bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
+bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, BlockHash node_hash,
                                         uint64_t limit, BehaviourWhenLimit behaviour) const
 {
   limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
