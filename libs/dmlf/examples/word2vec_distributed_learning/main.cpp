@@ -40,6 +40,27 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
+/*  Example JSON configuration file:
+{
+        "data": "datasets/text8",
+        "analogies_test_file": "datasets/text8_first_tenth_analogies_dataset.txt",
+        "vocab_file": "/tmp/vocab.txt",
+        "test_frequency": 10000,
+        "n_clients": 5,
+        "n_peers": 3,
+        "n_rounds": 10,
+        "synchronise": false,
+        "results": "/tmp/w2v_results",
+        "batch_size": 10000,
+        "max_updates": 30,
+        "max_epochs": 20,
+        "learning_rate": 0.02,
+        "print_loss": false,
+        "random_seed": 1,
+        "test_set_ratio": 0.00
+}
+ */
+
 std::vector<std::string> SplitTrainingData(std::string const &train_file, SizeType n_clients)
 {
   // split train file into n_clients parts
@@ -134,7 +155,7 @@ int main(int argc, char **argv)
 
   if (argc != 2)
   {
-    std::cout << "Usage : " << argv[0] << "config_file.json" << std::endl;
+    std::cout << "Usage : " << argv[0] << " config_file.json" << std::endl;
     return 1;
   }
 
