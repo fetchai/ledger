@@ -811,7 +811,7 @@ void PeerTracker::RegisterConnectionDetails(UnresolvedConnection const &details)
     PeerInfo info;
 
     info.address = details.address;
-    info.uri     = details.uris[0];  // TODO: store all URIs
+    info.uri     = details.uris[0];  // TODO(tfr): store all URIs
 
     peer_table_.ReportLiveliness(details.address, own_address_, info);
 

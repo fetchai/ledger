@@ -54,7 +54,7 @@ public:
   using PendingPromised      = std::unordered_map<uint64_t, std::shared_ptr<PromiseTask>>;
   using ConnectionHandle     = network::AbstractConnection::ConnectionHandleType;
   using ConstByteArray       = byte_array::ConstByteArray;
-  // TODO: might be needed to reinstate  using PortsList              =
+
   // PeerTrackerProtocol::PortsList;
   using ConnectionPriorityMap  = std::unordered_map<Address, AddressPriority>;
   using ConnectionPriorityList = std::vector<AddressPriority>;
