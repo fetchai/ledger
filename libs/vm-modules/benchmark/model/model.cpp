@@ -227,7 +227,6 @@ BENCHMARK(BM_Predict)->Args({256,5,1000,1000, 1000,1000,1000})->Unit(::benchmark
 BENCHMARK(BM_Predict)->Args({512,5,1000,1000, 1000,1000,1000})->Unit(::benchmark::kMicrosecond);
 */
 
-
 void BM_Compile(::benchmark::State &state)
 {
   using VMPtr    = std::shared_ptr<VM>;
@@ -297,59 +296,60 @@ BENCHMARK(BM_Compile)->Args({2,10,10})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Compile)->Args({5,1000,1000, 1000,1000,1000})->Unit(::benchmark::kMicrosecond);
 */
 
+void BM_Fit(::benchmark::State &state)
+{
+  using VMPtr    = std::shared_ptr<VM>;
+  using SizeRef  = fetch::math::SizeType const &;
+  using SizeType = fetch::math::SizeType;
 
-        void BM_Fit(::benchmark::State &state)
-        {
-            using VMPtr = std::shared_ptr<VM>;
-            using SizeRef = fetch::math::SizeType const &;
-            using SizeType = fetch::math::SizeType;
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    VMPtr vm;
+    SetUp(vm);
 
+    SizeType subset_size = static_cast<SizeType>(state.range(0));
+    SizeType batch_size  = static_cast<SizeType>(state.range(1));
+    SizeType input_size  = static_cast<SizeType>(state.range(3));
+    SizeType args_size   = static_cast<SizeType>(state.range(2) + 3);
+    SizeType label_size  = static_cast<SizeType>(state.range(args_size - 1));
 
-            SizeType batch_size = static_cast<SizeType>(state.range(1));
-            SizeType args_size = static_cast<SizeType>(state.range(2)+3);
+    // set up data and labels
+    std::vector<uint64_t> data_shape{input_size, subset_size};
+    std::vector<uint64_t> label_shape{label_size, subset_size};
 
+    auto data  = CreateTensor(vm, data_shape);
+    auto label = CreateTensor(vm, label_shape);
 
-            for (auto _ : state)
-            {
-                state.PauseTiming();
-                VMPtr vm;
-                SetUp(vm);
+    auto model = CreateSequentialModel(vm);
 
-                // set up data and labels
-                std::vector<uint64_t> data_shape{static_cast<SizeType>(state.range(3)), static_cast<SizeType>(state.range(0))};
-                std::vector<uint64_t> label_shape{static_cast<SizeType>(state.range(static_cast<SizeType>(state.range(2)+1))), static_cast<SizeType>(state.range(0))};
+    for (SizeType i{3}; i < args_size - 1; i++)
+    {
+      model->AddLayer<SizeRef, SizeRef>(
+          CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
+          static_cast<SizeType>(state.range(i + 1)));  // input_size, output_size
+    }
 
-                auto                  data = CreateTensor(vm, data_shape);
-                auto                  label = CreateTensor(vm, label_shape);
+    model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
+    state.ResumeTiming();
 
-                auto model = CreateSequentialModel(vm);
-
-
-                for(SizeType i{3};i<args_size-1;i++){
-                    model->AddLayer<SizeRef, SizeRef>(CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
-                                                      static_cast<SizeType>(state.range(i+1)));  // input_size, output_size
-                }
-
-                model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
-                state.ResumeTiming();
-                 model->Fit(data,label,batch_size);
-            }
-        }
+    model->Fit(data, label, batch_size);
+  }
+}
 
 // subset_size, batch_size, number_of_layers, input_size, hidden_1_size, ...., output_size
-        BENCHMARK(BM_Fit)->Args({1,1,2,10, 100})->Unit(::benchmark::kMicrosecond);
-        BENCHMARK(BM_Fit)->Args({10,1,2,10, 100})->Unit(::benchmark::kMicrosecond);
-        BENCHMARK(BM_Fit)->Args({100,1,2,10, 100})->Unit(::benchmark::kMicrosecond);
-        BENCHMARK(BM_Fit)->Args({1000,1,2,10, 100})->Unit(::benchmark::kMicrosecond);
-        BENCHMARK(BM_Fit)->Args({10000,1,2,10, 100})->Unit(::benchmark::kMicrosecond);
-        BENCHMARK(BM_Fit)->Args({100000,1,2,10, 100})->Unit(::benchmark::kMicrosecond);
-        BENCHMARK(BM_Fit)->Args({1000000,1,2,10, 100})->Unit(::benchmark::kMicrosecond);
-        BENCHMARK(BM_Fit)->Args({1000000,10,2,10, 100})->Unit(::benchmark::kMicrosecond);
-        BENCHMARK(BM_Fit)->Args({1000000,100,2,10, 100})->Unit(::benchmark::kMicrosecond);
-        BENCHMARK(BM_Fit)->Args({1000000,1000,2,10, 100})->Unit(::benchmark::kMicrosecond);
-        BENCHMARK(BM_Fit)->Args({1000000,10000,2,10, 100})->Unit(::benchmark::kMicrosecond);
-        BENCHMARK(BM_Fit)->Args({1000000,100000,2,10, 100})->Unit(::benchmark::kMicrosecond);
-        BENCHMARK(BM_Fit)->Args({1000000,1000000,2,10, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 1, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({100, 1, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1000, 1, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 1, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({100000, 1, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1000000, 1, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1000000, 10, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1000000, 100, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1000000, 1000, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1000000, 10000, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1000000, 100000, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1000000, 1000000, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
 
 //// batch_size, number_of_layers, input_size, hidden_1_size, ...., output_size
 // BENCHMARK(BM_Fit)->Args({1, 1, 6, 1, 10, 100, 1000, 10000,
@@ -437,4 +437,3 @@ void BM_Deserialise(::benchmark::State &state)
 }  // namespace ml
 }  // namespace benchmark
 }  // namespace vm_modules
-
