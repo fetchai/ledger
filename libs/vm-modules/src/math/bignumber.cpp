@@ -85,8 +85,6 @@ void UInt256Wrapper::Bind(Module &module)
       .EnableOperator(Operator::Divide)
       .EnableOperator(Operator::InplaceMultiply)
       .EnableOperator(Operator::InplaceDivide)
-      .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
-      .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
       .CreateMemberFunction("size", &UInt256Wrapper::size);
 
   module.CreateFreeFunction("toString", &ToString);
@@ -133,16 +131,6 @@ Ptr<UInt256Wrapper> UInt256Wrapper::Constructor(VM *vm, TypeId type_id, uint64_t
     vm->RuntimeError(e.what());
   }
   return {};
-}
-
-double UInt256Wrapper::LogValue() const
-{
-  return Log(number_);
-}
-
-void UInt256Wrapper::Increase()
-{
-  ++number_;
 }
 
 fetch::math::SizeType UInt256Wrapper::size() const

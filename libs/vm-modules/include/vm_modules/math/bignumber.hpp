@@ -58,10 +58,6 @@ public:
   static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                     uint64_t val);
 
-  double LogValue() const;
-
-  void Increase();
-
   fetch::math::SizeType size() const;
 
   fetch::vectorise::UInt<256> const &number() const;
