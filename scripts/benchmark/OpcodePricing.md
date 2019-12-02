@@ -110,6 +110,8 @@ We can then use these estimates to decouple the opcode times listed in [Table 1]
 | Function               |       40.49 |              0.12 | {**26**: 12.77, **21**: 27.72}                                                          |
 | VariableDeclareStr     |       35.31 |              0.13 | {**1**: 7.75, **21**: 27.72}                                                            |
 
+See [Appendix](#app) for the list of all parameter-independent opcodes.
+
 ## Primitive opcodes
 
 We tested the primitive opcodes for each of the different primitives to determine if there is any significant difference in CPU time. Table 3 shows that the different integer types result only in very small variations in CPU time.
@@ -290,7 +292,7 @@ We profile tensor-based operations using a similar approach. To ensure that they
 ![enter image description here](https://lh3.googleusercontent.com/1VsZkBgZNNWg6G6RoTrFbiZKzADiKz3aDkYt0DyZgI_tR7ZSS68WnsPeeCNgEzkLOLW-npZSiPk)
 ![enter image description here](https://lh3.googleusercontent.com/ZomW7d8kat5ZL7XxBPfboXujHe0yGAkuyVJnOs5RRsHW5ef08aEmNY6YkFIhU4xTqYAhd9rBLlA)
 
-## Appendix:  Parameter-independent opcode tables
+## <a name="app">Appendix</a>:  Parameter-independent opcode tables
 
 ### Base opcodes
 |   Opcode (Base) | Name                          |   Estimated time (ns) |
