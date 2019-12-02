@@ -83,7 +83,7 @@ For the benchmarks listed in [Table 1](#table1), we seek values in the vector **
 
 ![enter image description here](https://lh3.googleusercontent.com/AGtgdyy0KlpXvm9J38fmfFhT9ksjsLJnQIC5ZnrKI_mTjGI3xKRjKM3mppSUN3a_sG3PzwjC9D0)
 
-In addition to minimizing arg min(||*A****x*** - ***b***||<sup>2</sup>), we also need to constrain the individual opcode times to be positive (*x<sub>i</sub> > 0* for each *i*). Finally, since CPU times vary more for some benchmarks than others, we normalize the expression by the standard deviation and rewrite the expression as follows:
+In addition to minimizing ||*A****x*** - ***b***||<sup>2</sup>, we also need to constrain the individual opcode times to be positive (*x<sub>i</sub> > 0* for each *i*). Finally, since CPU times vary more for some benchmarks than others, we normalize the expression by the standard deviation and rewrite the expression as follows:
 
 ![enter image description here](https://lh3.googleusercontent.com/kVZIT9dzirl7nqZAIkcgaZ5tPsSF8iOh8TnmR07EC2FvJPOxmQNHxS7ERGOOWH8AqrSzERzcHTA)
 
@@ -95,21 +95,21 @@ where the values of **x** are given in nanoseconds and the corresponding opcodes
 
 We can then use these estimates to decouple the opcode times listed in [Table 1](#table1), which can then be subtracted wherever they appear in other benchmarks. Discrepancies between the Mean column and total estimated time reflect the fact that the least-squares fit is necessarily an approximation.
 
-| Benchmark (100 reps)   |   Mean (ns) |   Std. error (ns) | Opcodes: estimated times (ns)                                                   |
+| Benchmark (100 reps)   |   Mean (ns) |   Std. error (ns) | Opcodes**: estimated times (ns)                                                   |
 |------------------------|-------------|-------------------|---------------------------------------------------------------------------------|
-| Return                 |       28.27 |              0.16 | {21: 27.72}                                                                     |
-| PushFalse              |       35.94 |              0.12 | {4: 5.45, 14: 2.77, 21: 27.72}                                                  |
-| PushTrue               |       36.04 |              0.12 | {5: 5.55, 14: 2.77, 21: 27.72}                                                  |
-| JumpIfFalse            |       36.36 |              0.13 | {4: 5.45, 19: 2.69, 21: 27.72}                                                  |
-| Jump                   |       35.82 |              0.07 | {4: 5.45, 19: 2.69, 18: 0.0, 21: 27.72}                                         |
-| Not                    |       39.19 |              0.04 | {5: 5.55, 33: 3.16, 14: 2.77, 21: 27.72}                                        |
-| And                    |       45.05 |              0.08 | {5: 5.55, 31: 3.46, 14: 2.77, 21: 27.72}                                        |
-| Or                     |       45.01 |              0.07 | {4: 5.45, 32: 3.53, 5: 5.55, 14: 2.77, 21: 27.72}                               |
-| ForLoop                |       66.17 |              0.13 | {7: 11.07, 23: 5.52, 24: 5.52, 18: 0.0, 25: 5.52, 21: 27.72}                    |
-| DestructBase           |       74.76 |              0.14 | {1: 7.75, 7: 11.07, 23: 5.52, 24: 5.52, 18: 0.0, 25: 5.52, 21: 27.72}           |
-| Destruct               |       77.92 |              0.13 | {7: 11.07, 23: 5.52, 24: 5.52, 1: 7.75, 15: 3.76, 18: 0.0, 25: 5.52, 21: 27.72} |
-| Function               |       40.49 |              0.12 | {26: 12.77, 21: 27.72}                                                          |
-| VariableDeclareStr     |       35.31 |              0.13 | {1: 7.75, 21: 27.72}                                                            |
+| Return                 |       28.27 |              0.16 | {**21**: 27.72}                                                                     |
+| PushFalse              |       35.94 |              0.12 | {**4**: 5.45, **14**: 2.77, **21**: 27.72}                                                  |
+| PushTrue               |       36.04 |              0.12 | {**5**: 5.55, **14**: 2.77, **21**: 27.72}                                                  |
+| JumpIfFalse            |       36.36 |              0.13 | {**4**: 5.45, **19**: 2.69, **21**: 27.72}                                                  |
+| Jump                   |       35.82 |              0.07 | {**4**: 5.45, **19**: 2.69, **18**: 0.0, **21**: 27.72}                                         |
+| Not                    |       39.19 |              0.04 | {**5**: 5.55, **33**: 3.16, **14**: 2.77, **21**: 27.72}                                        |
+| And                    |       45.05 |              0.08 | {**5**: 5.55, **31**: 3.46, **14**: 2.77, **21**: 27.72}                                        |
+| Or                     |       45.01 |              0.07 | {**4**: 5.45, **32**: 3.53, **5**: 5.55, **14**: 2.77, **21**: 27.72}                               |
+| ForLoop                |       66.17 |              0.13 | {**7**: 11.07, **23**: 5.52, **24**: 5.52, **18**: 0.0, **25**: 5.52, **21**: 27.72}                    |
+| DestructBase           |       74.76 |              0.14 | {**1**: 7.75, **7**: 11.07, **23**: 5.52, **24**: 5.52, **18**: 0.0, **25**: 5.52, **21**: 27.72}           |
+| Destruct               |       77.92 |              0.13 | {**7**: 11.07, **23**: 5.52, **24**: 5.52, **1**: 7.75, **15**: 3.76, **18**: 0.0, **25**: 5.52, **21**: 27.72} |
+| Function               |       40.49 |              0.12 | {**26**: 12.77, **21**: 27.72}                                                          |
+| VariableDeclareStr     |       35.31 |              0.13 | {**1**: 7.75, **21**: 27.72} 
 
 See [Appendix](#app) for the list of all parameter-independent opcodes.
 
