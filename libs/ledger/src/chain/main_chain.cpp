@@ -640,7 +640,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
  * If current_hash is empty, travel starts from genesis.
  *
  * @param current_hash The hash of the first block's parent
- * @return The array of blocks
+ * @return The array of blocks, plus the current heaviest hash
  * @throws std::runtime_error if a block lookup fails
  */
 MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
@@ -1754,6 +1754,21 @@ bool Tip::operator==(Block const &that) const
   return operator==(Tip(that));
 }
 
+MainChain::BlockHash const &MainChain::HeaviestTip::Hash() const
+{
+  return hash;
+}
+
+uint64_t MainChain::HeaviestTip::BlockNumber() const
+{
+  return block_number;
+}
+
+uint64_t MainChain::HeaviestTip::ChainLabel() const
+{
+  return chain_label_;
+}
+
 /**
  * Set heaviest tip values.
  *
@@ -1796,11 +1811,6 @@ bool MainChain::HeaviestTip::Update(Block &block)
   }
 
   return false;
-}
-
-uint64_t MainChain::HeaviestTip::ChainLabel() const
-{
-  return chain_label_;
 }
 
 MainChain::BlockHash MainChain::GetHeadHash()

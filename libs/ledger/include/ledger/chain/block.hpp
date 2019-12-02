@@ -71,6 +71,7 @@ public:
   BlockEntropy   block_entropy;      ///< Entropy that determines miner priority for the next block
   Weight         weight = 1;         ///< Block weight
   uint64_t       chain_label{0};     ///< The label of a heaviest chain this block once belonged to
+                                     ///< A more detailed explanation in MainChain::HeaviestTip.
 
   // The qual miner must sign the block
   Digest miner_signature;
