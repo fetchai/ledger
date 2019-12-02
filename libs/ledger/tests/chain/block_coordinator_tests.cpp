@@ -142,7 +142,7 @@ protected:
    * @param starting_state The expected state before the state machine is run
    * @param final_state The expected state after the state machine has run
    */
-  void Tick(State starting_state, State final_state)
+  void Tick(State starting_state, State final_state, int line_no)
   {
     std::cerr << "38\n";
     auto const &state_machine = block_coordinator_->GetStateMachine();
@@ -157,9 +157,12 @@ protected:
     std::cerr << "41\n";
 
     ASSERT_EQ(std::string(block_coordinator_->ToString(final_state)),
-              std::string(block_coordinator_->ToString(state_machine.state())));
+              std::string(block_coordinator_->ToString(state_machine.state())))
+        << " at line " << line_no;
     std::cerr << "42\n";
   }
+
+#define Tick(...) Tick(__VA_ARGS__, __LINE__)
 
   /**
    * Run the state machine until it reaches the next state, or times out
@@ -167,12 +170,13 @@ protected:
    * @param starting_state The expected state before the state machine is run
    * @param final_state The expected state after the state machine has run
    */
-  void Tock(State starting_state, State final_state, uint64_t max_iterations = 50)
+  void Tock(State starting_state, State final_state, int line_no)
   {
-    auto const &state_machine = block_coordinator_->GetStateMachine();
+    uint64_t    max_iterations = 50;
+    auto const &state_machine  = block_coordinator_->GetStateMachine();
 
     // match the current state of the machine
-    ASSERT_EQ(starting_state, state_machine.state());
+    ASSERT_EQ(starting_state, state_machine.state()) << " at line " << line_no;
 
     while (final_state != state_machine.state())
     {
@@ -187,8 +191,10 @@ protected:
       }
     }
 
-    ASSERT_EQ(final_state, state_machine.state());
+    ASSERT_EQ(final_state, state_machine.state()) << " at line " << line_no;
   }
+
+#define Tock(...) Tock(__VA_ARGS__, __LINE__)
 
   StakeManagerPtr     stake_mgr_;
   AddressPtr          address_;

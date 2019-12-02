@@ -697,16 +697,18 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
   return {std::move(result), GetHeaviestBlockHash()};
 }
 
-MainChain::BlockPtr MainChain::ExpectBlock(BlockHash const &hash, char const *type) const
+MainChain::BlockPtr MainChain::ExpectBlock(BlockHash const &hash, char const *type, int line) const
 {
   auto block = GetBlock(hash);
   if (!block)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup ", type, ' ', ToBase64(hash));
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup ", type, ' ', ToBase64(hash), " from line ",
+                   line);
   }
   return std::move(block);
 }
 
+#define ExpectBlock(...) ExpectBlock(__VA_ARGS__, __LINE__)
 /**
  * Get a common sub tree from the chain.
  *
@@ -783,15 +785,15 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, Bloc
     }
   }
 
-  if (return_most_recent && result.size() == limit)
+  assert(tip && node && tip->block_number == node->block_number && result.back() == tip);
+
+  if (tip == node || (return_most_recent && result.size() == limit))
   {
     blocks.reserve(limit);
     blocks.insert(blocks.end(), std::make_move_iterator(result.begin()),
                   std::make_move_iterator(result.end()));
     return true;
   }
-
-  assert(tip && node && tip->block_number == node->block_number && result.back() == tip);
 
   node = ExpectBlock(node->previous_hash, "node");
   tip  = ExpectBlock(tip->previous_hash, "tip");

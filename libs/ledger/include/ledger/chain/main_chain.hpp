@@ -247,7 +247,7 @@ public:
   void CacheReference(BlockHash const &hash, BlockHash const &next_hash, bool unique = false) const;
   void ForgetReference(BlockHash const &hash, BlockHash const &next_hash = {}) const;
   bool LookupReference(BlockHash const &hash, BlockHash &next_hash) const;
-  BlockPtr ExpectBlock(BlockHash const &hash, char const *type) const;
+  BlockPtr ExpectBlock(BlockHash const &hash, char const *type, int) const;
   /// @}t
 
   /// @name Low-level storage interface
