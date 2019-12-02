@@ -81,6 +81,7 @@ void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
     auto source = std::string(fetch::byte_array::ToBase64(from));
 
     buf >> type_name >> bytes >> proportion >> random_factor;
+
     std::cout << "from:" << source << ", "
               << "serv:" << service << ", "
               << "chan:" << channel << ", "
@@ -156,13 +157,16 @@ void MuddleLearnerNetworkerImpl::submit(TaskPtr const &t)
 }
 
 void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update,
+                                                 const Peers &peers)
+{
+  PushUpdateBytes(type_name, update, peers, broadcast_proportion_);
+}
+
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update,
                                                  const Peers &peers, double broadcast_proportion)
 {
-  auto random_factor = randomiser_.GetNew();
-  if (broadcast_proportion < 0.0)
-  {
-    broadcast_proportion = broadcast_proportion_;
-  }
+  auto random_factor   = randomiser_.GetNew();
+  broadcast_proportion = std::max(0.0, std::min(1.0, broadcast_proportion));
   for (auto const &peer : peers)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating sender for ", type_name, " to target ",

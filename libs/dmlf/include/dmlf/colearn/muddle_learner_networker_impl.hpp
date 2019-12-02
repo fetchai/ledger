@@ -120,8 +120,9 @@ public:
   }
 
   void PushUpdateBytes(UpdateType const &type_name, Bytes const &update);
-  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, const Peers &peers,
-                       double broadcast_proportion = -1.0);
+  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, Peers const &peers);
+  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, Peers const &peers,
+                       double broadcast_proportion);
 
   ConstUpdatePtr GetUpdate(AlgorithmClass const &algo, UpdateType const &type,
                            Criteria const &criteria);
@@ -141,7 +142,7 @@ public:
 
   void set_broadcast_proportion(double proportion)
   {
-    broadcast_proportion_ = proportion;
+    broadcast_proportion_ = std::max(0.0, std::min(1.0, proportion));
   }
 
   Address     GetAddress() const;
