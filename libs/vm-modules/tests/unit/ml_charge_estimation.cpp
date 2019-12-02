@@ -35,6 +35,9 @@ using ModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
 using VMFactory      = fetch::vm_modules::VMFactory;
 using VMPtr          = std::unique_ptr<VM>;
 
+/* This fixture is used for consistency tests of the charge amount estimation
+ * for VMModel objects                                                        */
+
 class MLChargeEstimationTests : public ::testing::Test
 {
 public:
@@ -84,7 +87,16 @@ public:
   }
 };
 
-TEST_F(MLChargeEstimationTests, test)
+//////////////////////////////////////////////////
+// I. Charge amounts relative consistency tests //
+//////////////////////////////////////////////////
+
+// I.1 LayerAddDense
+
+// 1.1. Layer size impact on AddLayerDense() Charge amount
+// 1.1. Layer size impact on AddLayerDenseActivation() Charge amount
+
+TEST_F(MLChargeComputationTests, )
 {
   // set up data and labels
   std::vector<uint64_t> data_shape{10, 1000};
@@ -112,5 +124,45 @@ TEST_F(MLChargeEstimationTests, test)
 
   ASSERT_TRUE(1 != 1);
 }
+
+// I.2 CompileSequential
+// 2.1 Layer size impact on CompileSquential() Charge amount
+// 2.2 Layers number impact on CompileSequential() Charge amount
+
+// I.3 Fit
+// 3.1 Layer size impact on Fit() Charge amount
+// 3.2 Layers number impact on Fit() Charge amount
+// 3.3 data size impact on Fit() Charge amount
+// 3.4 label size impact on Fit() Charge amount
+// 3.5 batch size impact on Fit() Charge amount
+
+// I.4 Evaluate
+
+// I.5 Predict
+// 3.1 Layer size impact on Predict() Charge amount
+// 3.2 Layers number impact on Predict() Charge amount
+// 3.3 data size impact on Predict() Charge amount
+
+
+
+////////////////////////
+// II. Maintaining the Estimator state consistent with the VMModel owner
+////////////////////////
+
+//////////////////////////
+// III. Maintaining Estimator state consistent across possible operation execution orders
+//////////////////////////
+
+//////////////////////
+// VI. VMModel operations without estimators should have a vm::CHARGE_INFINITY
+//////////////////////
+
+//////////////////////
+// VI. ML operations without estimators should have a vm::CHARGE_INFINITY
+//////////////////////
+
+////////////////////////////
+// III. End-to-End tests within a VM
+///////////////////////////
 
 }  // namespace

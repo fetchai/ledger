@@ -126,8 +126,8 @@ void BM_AddLayer(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 10, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 1000, 1000)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 10, 10)->Unit(benchmark::kMicrosecond)->Complexity(benchmark::oN);;
+BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 1000, 1000)->Unit(benchmark::kMicrosecond)->Complexity(benchmark::oN);;
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 100, 10)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 1000, 10)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 100, 10, 100)->Unit(benchmark::kMicrosecond);
