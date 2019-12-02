@@ -29,13 +29,13 @@
 
 #include <chrono>
 #include <deque>
+#include <iomanip>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
 #include <vector>
-#include <iomanip>
 
 static const std::chrono::milliseconds POLL_INTERVAL{15};
 static constexpr char const *          LOGGING_NAME = "Reactor";
@@ -265,7 +265,7 @@ void Reactor::Monitor()
 void Reactor::RecordEvent(Event event, Runnable const &runnable)
 {
   static const char SEP = ',';
-  using Clock = std::chrono::system_clock;
+  using Clock           = std::chrono::system_clock;
 
   auto const now = Clock::now();
   auto const timestamp_ms =
@@ -273,9 +273,8 @@ void Reactor::RecordEvent(Event event, Runnable const &runnable)
   double const timestamp = (timestamp_ms / 1e6);
 
   // write out the event to a file
-  events_ << std::fixed << timestamp << SEP
-          << static_cast<int>(event) << SEP << ToString(event) << SEP << &runnable << SEP
-          << runnable.GetId() << std::endl;
+  events_ << std::fixed << timestamp << SEP << static_cast<int>(event) << SEP << ToString(event)
+          << SEP << &runnable << SEP << runnable.GetId() << std::endl;
 }
 
 char const *Reactor::ToString(Event event)

@@ -416,7 +416,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   if (synced_tx != 0u)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Synchronised ", synced_tx,
-                    " requested txs");
+                   " requested txs");
   }
 
   if (counts.pending > 0)

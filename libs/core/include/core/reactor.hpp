@@ -54,7 +54,7 @@ public:
 private:
   enum class Event
   {
-    TASK_STARTED=0,
+    TASK_STARTED = 0,
     TASK_COMPLETED,
     TASK_FAILED,
   };
@@ -64,10 +64,10 @@ private:
   using ProtectedThread = Protected<std::thread>;
   using ThreadPtr       = std::unique_ptr<ProtectedThread>;
 
-  void StartWorker();
-  void StopWorker();
-  void Monitor();
-  void RecordEvent(Event event, Runnable const &runnable);
+  void               StartWorker();
+  void               StopWorker();
+  void               Monitor();
+  void               RecordEvent(Event event, Runnable const &runnable);
   static char const *ToString(Event event);
 
   telemetry::HistogramPtr       CreateHistogram(char const *name, char const *description) const;

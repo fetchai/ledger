@@ -79,12 +79,12 @@ private:
 
   /// @name Periodic Runnable Interface
   /// @{
-  void Periodically() override;
+  void        Periodically() override;
   char const *GetId() const override;
-  void ResolveUpdates();
-  void RequestUpdates(Addresses addresses);
-  void UpdateShards(Addresses const &addresses);
-  void RefreshCache();
+  void        ResolveUpdates();
+  void        RequestUpdates(Addresses addresses);
+  void        UpdateShards(Addresses const &addresses);
+  void        RefreshCache();
   /// @}
 
   ShardManagementInterface &shards_;

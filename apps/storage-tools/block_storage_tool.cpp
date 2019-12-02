@@ -57,7 +57,7 @@ public:
 
 DummyTrust dummy_trust;
 
-} // namespace
+}  // namespace
 
 BlockStorageTool::BlockStorageTool()
 {
@@ -78,10 +78,10 @@ BlockStorageTool::BlockStorageTool()
 
   reactor_.Start();
 
-//  // create the storage client
-//  auto const peers = net_->GetDirectlyConnectedPeers();
-//  client_          = std::make_unique<TxStorageClient>(
-//      TxStorageClient::LaneAddresses{peers.begin(), peers.end()}, net_->GetEndpoint());
+  //  // create the storage client
+  //  auto const peers = net_->GetDirectlyConnectedPeers();
+  //  client_          = std::make_unique<TxStorageClient>(
+  //      TxStorageClient::LaneAddresses{peers.begin(), peers.end()}, net_->GetEndpoint());
 
   FETCH_LOG_INFO(LOGGING_NAME, "Initialisation complete");
 }
@@ -89,8 +89,6 @@ BlockStorageTool::BlockStorageTool()
 BlockStorageTool::~BlockStorageTool()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Tearing Down");
-
-
 
   // tear down
   reactor_.Stop();

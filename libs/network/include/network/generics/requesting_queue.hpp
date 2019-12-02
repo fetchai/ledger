@@ -207,7 +207,8 @@ typename RequestingQueueOf<K, R, P, H>::Counters RequestingQueueOf<K, R, P, H>::
     case PromiseState::WAITING:
       ++iter;
       break;
-    case PromiseState::SUCCESS: {
+    case PromiseState::SUCCESS:
+    {
       R value{};
       if (promise.GetResult(value))
       {

@@ -116,7 +116,8 @@ void MessengerPrototype::ResolveMessages()
       // are kept for later
       unresolved.push_back(x);
       break;
-    case service::PromiseState::SUCCESS: {
+    case service::PromiseState::SUCCESS:
+    {
       MessageList list{};
       if (!p->GetResult(list))
       {

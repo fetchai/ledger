@@ -125,15 +125,15 @@ private:
 
   using NodeList = std::list<KademliaNode>;
 
-  void   Periodically() override;
+  void        Periodically() override;
   char const *GetId() const override;
-  void   ResolveAddresses(Addresses const &addresses);
-  void   OnResolvedAddress(Address const &address, service::Promise const &promise);
-  UriSet GenerateUriSet(Addresses const &addresses);
-  void   OnAnnouncement(Address const &from, byte_array::ConstByteArray const &payload);
-  void   ScheduleNextAnnouncement();
-  void   MakeAnnouncement();
-  void   UpdateKademliaPeers();
+  void        ResolveAddresses(Addresses const &addresses);
+  void        OnResolvedAddress(Address const &address, service::Promise const &promise);
+  UriSet      GenerateUriSet(Addresses const &addresses);
+  void        OnAnnouncement(Address const &from, byte_array::ConstByteArray const &payload);
+  void        ScheduleNextAnnouncement();
+  void        MakeAnnouncement();
+  void        UpdateKademliaPeers();
 
   std::string const name_;
   char const *const logging_name_{name_.c_str()};
