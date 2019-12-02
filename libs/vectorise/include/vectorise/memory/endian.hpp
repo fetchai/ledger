@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,27 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/consensus/bad_miner.hpp"
-
-#include "ledger/chain/block.hpp"
+#include <algorithm>
+#include <functional>
+#include <type_traits>
+#include <utility>
 
 namespace fetch {
-namespace ledger {
-namespace consensus {
+namespace memory {
 
-void BadMiner::Mine(Block &block)
+enum class Endian
 {
-  block.nonce = 0;
-  block.UpdateDigest();
-}
+  BIG,
+  LITTLE,
+};
 
-bool BadMiner::Mine(Block &block, uint64_t /*iterations*/)
-{
-  block.nonce = 0;
-  block.UpdateDigest();
-  return true;
-}
-
-}  // namespace consensus
-}  // namespace ledger
+}  // namespace memory
 }  // namespace fetch

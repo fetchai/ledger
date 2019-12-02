@@ -19,6 +19,7 @@
 
 #include "core/serializers/base_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vm/fixed.hpp"
 #include "vm/vm.hpp"
 
 #include <algorithm>
@@ -278,7 +279,7 @@ private:
   {
     if (!vm_->IsDefaultSerializeConstructable(element_type_id))
     {
-      vm_->RuntimeError("Cannot seserialize type " + vm_->GetTypeName(element_type_id) +
+      vm_->RuntimeError("Cannot serialize type " + vm_->GetTypeName(element_type_id) +
                         " as no serialisation constructor exists.");
       return false;
     }
@@ -443,6 +444,11 @@ Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
     return Ptr<IArray>{
         new Array<fixed_point::fp64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
+  }
+  case TypeIds::Fixed128:
+  {
+    return Ptr<IArray>{
+        new Array<Ptr<Fixed128>>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   default:
   {

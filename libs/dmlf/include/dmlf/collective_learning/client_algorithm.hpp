@@ -21,7 +21,7 @@
 #include "core/mutex.hpp"
 #include "dmlf/collective_learning/client_algorithm_controller.hpp"
 #include "dmlf/collective_learning/client_params.hpp"
-#include "dmlf/update.hpp"
+#include "dmlf/deprecated/update.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/model/sequential.hpp"
@@ -49,7 +49,7 @@ class ClientAlgorithm
   using VectorTensorType = std::vector<TensorType>;
   using VectorSizeVector = std::vector<std::vector<SizeType>>;
   using TimestampType    = int64_t;
-  using UpdateType       = fetch::dmlf::Update<TensorType>;
+  using UpdateType       = fetch::dmlf::deprecated_Update<TensorType>;
   using DataloaderPtrType =
       std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>>;
   using GraphPtrType               = std::shared_ptr<fetch::ml::Graph<TensorType>>;
@@ -69,20 +69,26 @@ public:
    */
   ClientAlgorithm(ClientAlgorithm &other)
   {
-    id_              = other.id_;
-    train_loss_      = other.train_loss_;
-    test_loss_       = other.test_loss_;
-    train_loss_sum_  = other.train_loss_sum_;
-    train_loss_cnt_  = other.train_loss_cnt_;
-    model_ptr_       = other.model_ptr_;
-    graph_ptr_       = other.graph_ptr_;
-    optimiser_ptr_   = other.optimiser_ptr_;
-    dataloader_ptr_  = other.dataloader_ptr_;
-    round_counter_   = other.round_counter_;
-    updates_applied_ = other.updates_applied_;
+    id_                         = other.id_;
+    train_loss_                 = other.train_loss_;
+    test_loss_                  = other.test_loss_;
+    train_loss_sum_             = other.train_loss_sum_;
+    train_loss_cnt_             = other.train_loss_cnt_;
+    model_ptr_                  = other.model_ptr_;
+    graph_ptr_                  = other.graph_ptr_;
+    optimiser_ptr_              = other.optimiser_ptr_;
+    dataloader_ptr_             = other.dataloader_ptr_;
+    batch_counter_              = other.batch_counter_;
+    epoch_counter_              = other.epoch_counter_;
+    update_counter_             = other.update_counter_;
+    updates_applied_this_round_ = other.updates_applied_this_round_;
 
     params_               = other.params_;
     algorithm_controller_ = other.algorithm_controller_;
+
+    input_names_ = other.input_names_;
+    label_name_  = other.label_name_;
+    error_name_  = other.error_name_;
   }
 
   virtual ~ClientAlgorithm() = default;
@@ -108,8 +114,9 @@ protected:
   std::string id_;
 
   // Latest loss
-  DataType train_loss_ = fetch::math::numeric_max<DataType>();
-  DataType test_loss_  = fetch::math::numeric_max<DataType>();
+  DataType train_loss_    = fetch::math::numeric_max<DataType>();
+  DataType test_loss_     = fetch::math::numeric_max<DataType>();
+  DataType test_accuracy_ = DataType{0};
 
   DataType train_loss_sum_ = static_cast<DataType>(0);
   SizeType train_loss_cnt_ = 0;
@@ -124,17 +131,25 @@ protected:
   // Console mutex pointer
   std::shared_ptr<std::mutex> console_mutex_ptr_;
 
-  // Count for number of batches
-  SizeType round_counter_   = 0;
-  SizeType updates_applied_ = 0;
+  // Counters
+  SizeType batch_counter_  = 0;  // counts batches of own dataset processed
+  SizeType epoch_counter_  = 0;  // counts epochs (complete passes through own dataset)
+  SizeType update_counter_ = 0;  // counts updates (local batches + updates from peers)
+
+  SizeType updates_applied_this_round_ = 0;
+  SizeType epochs_done_this_round_     = 0;
 
   ClientParams<DataType> params_;
 
   virtual VectorSizeVector TranslateUpdate(std::shared_ptr<UpdateType> &new_gradients);
 
-  void DoRound();
+  void TrainAndApplyUpdates();
 
   void ClearLossFile();
+
+  std::vector<std::string> input_names_;
+  std::string              label_name_;
+  std::string              error_name_;
 
 private:
   std::mutex algorithm_mutex_;
@@ -168,12 +183,17 @@ void ClientAlgorithm<TensorType>::SetModel(ModelPtrType model_ptr)
   optimiser_ptr_  = model_ptr_->optimiser_ptr_;
   dataloader_ptr_ = model_ptr_->dataloader_ptr_;
   graph_ptr_      = model_ptr_->graph_ptr_;
+  input_names_    = {model_ptr_->InputName()};
+  label_name_     = model_ptr_->LabelName();
+  error_name_     = model_ptr_->ErrorName();
 }
 
 template <class TensorType>
 void ClientAlgorithm<TensorType>::ClearLossFile()
 {
-  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::trunc);
+  mkdir(params_.results_dir.c_str(), 0777);
+  std::string   results_file = params_.results_dir + "/losses_" + id_ + ".csv";
+  std::ofstream lossfile(results_file, std::ofstream::out | std::ofstream::trunc);
   lossfile.close();
 }
 
@@ -207,14 +227,16 @@ void ClientAlgorithm<TensorType>::Run()
   train_loss_sum_ = static_cast<DataType>(0);
   train_loss_cnt_ = 0;
 
-  std::ofstream lossfile(params_.results_dir + "losses_" + id_ + ".csv",
+  std::ofstream lossfile(params_.results_dir + "/losses_" + id_ + ".csv",
                          std::ofstream::out | std::ofstream::app);
 
-  updates_applied_ = 0;
-  while (updates_applied_ < params_.max_updates)
+  updates_applied_this_round_ = 0;
+  epochs_done_this_round_     = 0;
+  while ((updates_applied_this_round_ < params_.max_updates) &&
+         (epochs_done_this_round_ < params_.max_epochs))
   {
     // perform a round of training on this client
-    DoRound();
+    TrainAndApplyUpdates();
 
     // Validate loss for logging purpose
     Test();
@@ -224,7 +246,9 @@ void ClientAlgorithm<TensorType>::Run()
     {
       lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
                << static_cast<double>(train_loss_) << ", " << static_cast<double>(test_loss_)
+               << ", " << epoch_counter_ << ", " << update_counter_ << ", " << batch_counter_
                << "\n";
+      lossfile.flush();
     }
 
     if (params_.print_loss)
@@ -241,9 +265,10 @@ void ClientAlgorithm<TensorType>::Run()
 
   if (lossfile)
   {
-    lossfile << fetch::ml::utilities::GetStrTimestamp() << ", "
-             << "STOPPED"
-             << "\n";
+    lossfile << "End_of_round: " << fetch::ml::utilities::GetStrTimestamp()
+             << " Epochs: " << epoch_counter_ << " Loss: " << static_cast<double>(train_loss_)
+             << " Test_loss: " << static_cast<double>(test_loss_) << " Updates: " << update_counter_
+             << " Batches: " << batch_counter_ << " Test_accuracy: " << test_accuracy_ << "\n";
     lossfile.close();
   }
 
@@ -265,34 +290,42 @@ void ClientAlgorithm<TensorType>::Train()
   dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
   dataloader_ptr_->SetRandomMode(true);
 
-  bool is_done_set = false;
+  bool dataloader_is_done_ = false;
 
   std::pair<TensorType, std::vector<TensorType>> input;
-  input = dataloader_ptr_->PrepareBatch(params_.batch_size, is_done_set);
+  input = dataloader_ptr_->PrepareBatch(params_.batch_size, dataloader_is_done_);
   {
     FETCH_LOCK(model_mutex_);
 
     // Set inputs and label
     auto input_data_it = input.second.begin();
-    auto input_name_it = params_.input_names.begin();
+    auto input_name_it = input_names_.begin();
 
-    while (input_name_it != params_.input_names.end())
+    while (input_name_it != input_names_.end())
     {
       graph_ptr_->SetInput(*input_name_it, *input_data_it);
       ++input_name_it;
       ++input_data_it;
     }
-    graph_ptr_->SetInput(params_.label_name, input.first);
+    graph_ptr_->SetInput(label_name_, input.first);
 
-    TensorType loss_tensor = graph_ptr_->ForwardPropagate(params_.error_name);
+    TensorType loss_tensor = graph_ptr_->ForwardPropagate(error_name_);
     train_loss_            = *(loss_tensor.begin());
 
     train_loss_sum_ += train_loss_;
     train_loss_cnt_++;
 
-    graph_ptr_->BackPropagate(params_.error_name);
+    graph_ptr_->BackPropagate(error_name_);
   }
-  updates_applied_++;
+
+  if (dataloader_is_done_)
+  {
+    epochs_done_this_round_++;
+    epoch_counter_++;
+  }
+  batch_counter_++;
+  updates_applied_this_round_++;
+  update_counter_++;
 }
 
 /**
@@ -302,42 +335,28 @@ void ClientAlgorithm<TensorType>::Train()
 template <class TensorType>
 void ClientAlgorithm<TensorType>::Test()
 {
-  // If test set is not available we run test on whole training set
   if (dataloader_ptr_->IsModeAvailable(fetch::ml::dataloaders::DataLoaderMode::TEST))
   {
-    dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
-  }
-  else
-  {
-    dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
-  }
-
-  // Disable random to run model on whole test set
-  dataloader_ptr_->SetRandomMode(false);
-
-  SizeType test_set_size = dataloader_ptr_->Size();
-
-  dataloader_ptr_->Reset();
-  bool is_done_set;
-  auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
-  {
-    FETCH_LOCK(model_mutex_);
-
-    // Set inputs and label
-    auto input_data_it = test_pair.second.begin();
-    auto input_name_it = params_.input_names.begin();
-
-    while (input_name_it != params_.input_names.end())
     {
-      graph_ptr_->SetInput(*input_name_it, *input_data_it);
-      ++input_name_it;
-      ++input_data_it;
-    }
-    graph_ptr_->SetInput(params_.label_name, test_pair.first);
+      FETCH_LOCK(model_mutex_);
 
-    test_loss_ = *(graph_ptr_->Evaluate(params_.error_name).begin());
+      typename ml::model::Model<TensorType>::DataVectorType results =
+          model_ptr_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TEST);
+
+      test_loss_ = results.at(0);
+
+      if (results.size() == 2)
+      {
+        test_accuracy_ = results.at(1);
+      }
+      else if (results.size() > 2)
+      {
+        throw fetch::ml::exceptions::NotImplemented(
+            "More metrics configured for model than "
+            "ClientAlgorithm knows how to process.");
+      }
+    }
   }
-  dataloader_ptr_->Reset();
 }
 
 /**
@@ -370,11 +389,12 @@ void ClientAlgorithm<TensorType>::SetWeights(VectorTensorType const &new_weights
 {
   FETCH_LOCK(model_mutex_);
 
+  std::vector<typename ml::Graph<TensorType>::TrainablePtrType> trainables =
+      graph_ptr_->GetTrainables();
+
   auto weights_it = new_weights.cbegin();
-  for (auto &trainable_lookup : graph_ptr_->trainable_lookup_)
+  for (auto &trainable_ptr : trainables)
   {
-    auto trainable_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Trainable<TensorType>>(
-        (trainable_lookup.second)->GetOp());
     trainable_ptr->SetWeights(*weights_it);
     ++weights_it;
   }
@@ -395,7 +415,7 @@ std::vector<std::vector<fetch::math::SizeType>> ClientAlgorithm<TensorType>::Tra
  * 4. aggregate and apply updates
  */
 template <class TensorType>
-void ClientAlgorithm<TensorType>::DoRound()
+void ClientAlgorithm<TensorType>::TrainAndApplyUpdates()
 {
   // Train one batch to create own gradient
   Train();
@@ -420,13 +440,12 @@ void ClientAlgorithm<TensorType>::DoRound()
     }
 
     // track number of total updates applied for evaluation
-    updates_applied_++;
+    updates_applied_this_round_++;
+    update_counter_++;
   }
 
   // apply aggregated local and remote updates
   ApplyUpdates();
-
-  round_counter_++;
 }
 
 ///////////////////////

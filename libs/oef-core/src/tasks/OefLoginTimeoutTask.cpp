@@ -28,11 +28,10 @@ fetch::oef::base::ExitState OefLoginTimeoutTask::run()
   auto sp = ep.lock();
   if (sp)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "???? id=", sp->GetIdentifier(), " TIMEOUT");
+    FETCH_LOG_INFO(LOGGING_NAME, "id=", sp->GetIdentifier(), " TIMEOUT");
     if (!sp->GetState("loggedin"))
     {
-      FETCH_LOG_INFO(LOGGING_NAME,
-                     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TIMEOUT");
+      FETCH_LOG_INFO(LOGGING_NAME, "TIMEOUT");
       sp->close("login-timeout");
     }
   }

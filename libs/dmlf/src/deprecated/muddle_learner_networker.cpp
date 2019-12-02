@@ -18,9 +18,8 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/service_ids.hpp"
-#include "dmlf/networkers/muddle_learner_networker.hpp"
-#include "dmlf/update_interface.hpp"
-#include "json/document.hpp"
+#include "dmlf/deprecated/muddle_learner_networker.hpp"
+#include "dmlf/deprecated/update_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -40,20 +39,18 @@ using SignerPtr   = std::shared_ptr<crypto::ECDSASigner>;
 
 const unsigned int INITIAL_PEERS_COUNT = 10;
 
-MuddleLearnerNetworker::MuddleLearnerNetworkerProtocol::MuddleLearnerNetworkerProtocol(
-    MuddleLearnerNetworker &sample)
+deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworkerProtocol::
+    deprecated_MuddleLearnerNetworkerProtocol(deprecated_MuddleLearnerNetworker &sample)
 {
-  Expose(MuddleLearnerNetworkerProtocol::RECV_BYTES, &sample, &MuddleLearnerNetworker::RecvBytes);
+  Expose(deprecated_MuddleLearnerNetworkerProtocol::RECV_BYTES, &sample,
+         &deprecated_MuddleLearnerNetworker::RecvBytes);
 }
 
-MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
-                                               std::size_t        instance_number,
-                                               const std::shared_ptr<NetworkManager> &netm,
-                                               MuddleChannel                          channel_tmp)
+deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworker(
+    fetch::json::JSONDocument &cloud_config, std::size_t instance_number,
+    const std::shared_ptr<NetworkManager> &netm, MuddleChannel channel_tmp)
   : channel_tmp_{channel_tmp}
 {
-  json::JSONDocument doc{cloud_config};
-
   if (netm)
   {
     netm_ = netm;
@@ -64,7 +61,7 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
   }
   netm_->Start();
 
-  auto my_config = doc.root()["peers"][instance_number];
+  auto my_config = cloud_config.root()["peers"][instance_number];
   auto self_uri  = Uri(my_config["uri"].As<std::string>());
   auto port      = self_uri.GetTcpPeer().port();
   auto privkey   = my_config["key"].As<std::string>();
@@ -77,7 +74,7 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
   mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
 
   std::unordered_set<std::string> initial_peers;
-  auto                            config_peers = doc.root()["peers"];
+  auto                            config_peers = cloud_config.root()["peers"];
 
   auto config_peer_count = config_peers.size();
   for (std::size_t peer_number = 0; peer_number < config_peer_count; peer_number++)
@@ -90,7 +87,7 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
 
   if (config_peer_count <= INITIAL_PEERS_COUNT)
   {
-    initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
+    initial_peers.insert(cloud_config.root()["peers"][0]["uri"].As<std::string>());
   }
   else
   {
@@ -104,13 +101,13 @@ MuddleLearnerNetworker::MuddleLearnerNetworker(const std::string &cloud_config,
   mud_->Start(initial_peers, {port});
 
   server_ = std::make_shared<Server>(mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
-  proto_  = std::make_shared<MuddleLearnerNetworkerProtocol>(*this);
+  proto_  = std::make_shared<deprecated_MuddleLearnerNetworkerProtocol>(*this);
 
   server_->Add(RPC_DMLF, proto_.get());
 }
 
 // TOFIX remove return value
-uint64_t MuddleLearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
+uint64_t deprecated_MuddleLearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
 {
   switch (channel_tmp_)
   {
@@ -125,7 +122,7 @@ uint64_t MuddleLearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
   return 0;
 }
 
-void MuddleLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
+void deprecated_MuddleLearnerNetworker::PushUpdate(deprecated_UpdateInterfacePtr const &update)
 {
   auto client =
       std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
@@ -138,7 +135,7 @@ void MuddleLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
   {
     promises.push_back(client->CallSpecificAddress(
         fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_peer)), RPC_DMLF,
-        MuddleLearnerNetworkerProtocol::RECV_BYTES, data));
+        deprecated_MuddleLearnerNetworkerProtocol::RECV_BYTES, data));
   }
 
   for (auto &prom : promises)
@@ -147,8 +144,8 @@ void MuddleLearnerNetworker::PushUpdate(UpdateInterfacePtr const &update)
   }
 }
 
-void MuddleLearnerNetworker::PushUpdateType(const std::string &       type,
-                                            UpdateInterfacePtr const &update)
+void deprecated_MuddleLearnerNetworker::PushUpdateType(const std::string &                  type,
+                                                       deprecated_UpdateInterfacePtr const &update)
 {
   auto client =
       std::make_shared<RpcClient>("Client", mud_->GetEndpoint(), SERVICE_DMLF, CHANNEL_RPC);
@@ -161,7 +158,7 @@ void MuddleLearnerNetworker::PushUpdateType(const std::string &       type,
   {
     promises.push_back(client->CallSpecificAddress(
         fetch::byte_array::FromBase64(byte_array::ConstByteArray(target_peer)), RPC_DMLF,
-        MuddleLearnerNetworkerProtocol::RECV_BYTES, data));
+        deprecated_MuddleLearnerNetworkerProtocol::RECV_BYTES, data));
   }
 
   for (auto &prom : promises)
@@ -169,19 +166,20 @@ void MuddleLearnerNetworker::PushUpdateType(const std::string &       type,
     prom->Wait();
   }
 }
-std::size_t MuddleLearnerNetworker::GetPeerCount() const
+std::size_t deprecated_MuddleLearnerNetworker::GetPeerCount() const
 {
   return peers_.size();
 }
 
-MuddleLearnerNetworker::CertificatePtr MuddleLearnerNetworker::CreateIdentity()
+deprecated_MuddleLearnerNetworker::CertificatePtr
+deprecated_MuddleLearnerNetworker::CreateIdentity()
 {
   SignerPtr certificate = std::make_shared<crypto::ECDSASigner>();
   certificate->GenerateKeys();
   return certificate;
 }
 
-MuddleLearnerNetworker::CertificatePtr MuddleLearnerNetworker::LoadIdentity(
+deprecated_MuddleLearnerNetworker::CertificatePtr deprecated_MuddleLearnerNetworker::LoadIdentity(
     const std::string &privkey)
 {
   using Signer = fetch::crypto::ECDSASigner;

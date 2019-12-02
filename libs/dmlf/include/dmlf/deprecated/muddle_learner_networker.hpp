@@ -20,7 +20,8 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/macros.hpp"
 #include "crypto/ecdsa.hpp"
-#include "dmlf/networkers/abstract_learner_networker.hpp"
+#include "dmlf/deprecated/abstract_learner_networker.hpp"
+#include "json/document.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -38,7 +39,7 @@ enum class MuddleChannel : uint16_t
   MULTIPLEX = 2
 };
 
-class MuddleLearnerNetworker : public AbstractLearnerNetworker
+class deprecated_MuddleLearnerNetworker : public deprecated_AbstractLearnerNetworker
 {
 public:
   using NetworkManager    = fetch::network::NetworkManager;
@@ -58,18 +59,20 @@ public:
   using Mutex = fetch::Mutex;
   using Lock  = std::unique_lock<Mutex>;
 
-  MuddleLearnerNetworker(
-      const std::string &cloud_config, std::size_t instance_number,
+  deprecated_MuddleLearnerNetworker(
+      json::JSONDocument &cloud_config, std::size_t instance_number,
       const std::shared_ptr<NetworkManager> &netm        = std::shared_ptr<NetworkManager>(),
       MuddleChannel                          channel_tmp = MuddleChannel::DEFAULT);
-  ~MuddleLearnerNetworker() override                          = default;
-  MuddleLearnerNetworker(MuddleLearnerNetworker const &other) = delete;
-  MuddleLearnerNetworker &operator=(MuddleLearnerNetworker const &other)  = delete;
-  bool                    operator==(MuddleLearnerNetworker const &other) = delete;
-  bool                    operator<(MuddleLearnerNetworker const &other)  = delete;
+  ~deprecated_MuddleLearnerNetworker() override                                     = default;
+  deprecated_MuddleLearnerNetworker(deprecated_MuddleLearnerNetworker const &other) = delete;
+  deprecated_MuddleLearnerNetworker &operator=(deprecated_MuddleLearnerNetworker const &other) =
+      delete;
+  bool operator==(deprecated_MuddleLearnerNetworker const &other) = delete;
+  bool operator<(deprecated_MuddleLearnerNetworker const &other)  = delete;
 
-  void        PushUpdate(UpdateInterfacePtr const &update) override;
-  void        PushUpdateType(const std::string &type, UpdateInterfacePtr const &update) override;
+  void        PushUpdate(deprecated_UpdateInterfacePtr const &update) override;
+  void        PushUpdateType(const std::string &                  type,
+                             deprecated_UpdateInterfacePtr const &update) override;
   std::size_t GetPeerCount() const override;
 
   uint64_t RecvBytes(const byte_array::ByteArray &b);
@@ -84,20 +87,20 @@ protected:
 
   CertificatePtr ident_;
 
-  class MuddleLearnerNetworkerProtocol : public fetch::service::Protocol
+  class deprecated_MuddleLearnerNetworkerProtocol : public fetch::service::Protocol
   {
   public:
     enum
     {
       RECV_BYTES,
     };
-    explicit MuddleLearnerNetworkerProtocol(MuddleLearnerNetworker &sample);
+    explicit deprecated_MuddleLearnerNetworkerProtocol(deprecated_MuddleLearnerNetworker &sample);
   };
 
-  std::shared_ptr<NetworkManager>                 netm_;
-  MuddlePtr                                       mud_;
-  std::shared_ptr<Server>                         server_;
-  std::shared_ptr<MuddleLearnerNetworkerProtocol> proto_;
+  std::shared_ptr<NetworkManager>                            netm_;
+  MuddlePtr                                                  mud_;
+  std::shared_ptr<Server>                                    server_;
+  std::shared_ptr<deprecated_MuddleLearnerNetworkerProtocol> proto_;
 
   mutable Mutex mutex_;
   Peers         peers_;

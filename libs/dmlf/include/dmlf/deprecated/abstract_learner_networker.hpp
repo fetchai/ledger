@@ -23,29 +23,30 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "dmlf/colearn/update_store_interface.hpp"
-#include "dmlf/queue.hpp"
-#include "dmlf/queue_interface.hpp"
+#include "dmlf/deprecated/queue.hpp"
+#include "dmlf/deprecated/queue_interface.hpp"
+#include "dmlf/deprecated/type_map.hpp"
 #include "dmlf/shuffle_algorithm_interface.hpp"
-#include "dmlf/type_map.hpp"
 
 namespace fetch {
 namespace dmlf {
 
-class AbstractLearnerNetworker
+class deprecated_AbstractLearnerNetworker
 {
 public:
   using Bytes = byte_array::ByteArray;
 
-  AbstractLearnerNetworker()                                      = default;
-  virtual ~AbstractLearnerNetworker()                             = default;
-  AbstractLearnerNetworker(AbstractLearnerNetworker const &other) = delete;
-  AbstractLearnerNetworker &operator=(AbstractLearnerNetworker const &other)  = delete;
-  bool                      operator==(AbstractLearnerNetworker const &other) = delete;
-  bool                      operator<(AbstractLearnerNetworker const &other)  = delete;
+  deprecated_AbstractLearnerNetworker()                                                 = default;
+  virtual ~deprecated_AbstractLearnerNetworker()                                        = default;
+  deprecated_AbstractLearnerNetworker(deprecated_AbstractLearnerNetworker const &other) = delete;
+  deprecated_AbstractLearnerNetworker &operator=(deprecated_AbstractLearnerNetworker const &other) =
+      delete;
+  bool operator==(deprecated_AbstractLearnerNetworker const &other) = delete;
+  bool operator<(deprecated_AbstractLearnerNetworker const &other)  = delete;
 
   // To implement
-  virtual void        PushUpdate(UpdateInterfacePtr const &update) = 0;
-  virtual std::size_t GetPeerCount() const                         = 0;
+  virtual void        PushUpdate(deprecated_UpdateInterfacePtr const &update) = 0;
+  virtual std::size_t GetPeerCount() const                                    = 0;
 
   template <typename T>
   void Initialize()
@@ -72,7 +73,8 @@ public:
 
   virtual void SetShuffleAlgorithm(const std::shared_ptr<ShuffleAlgorithmInterface> &alg);
 
-  virtual void PushUpdateType(const std::string & /*key*/, UpdateInterfacePtr const & /*update*/);
+  virtual void PushUpdateType(const std::string & /*key*/,
+                              deprecated_UpdateInterfacePtr const & /*update*/);
 
   template <typename T>
   void RegisterUpdateType(std::string key)
@@ -131,7 +133,7 @@ private:
   QueueInterfaceMap queue_map_;
   mutable Mutex     queue_map_m_;
 
-  TypeMap<> update_types_;
+  TypeMap_<> update_types_;
 
   void ThrowIfNotInitialized() const;
 };

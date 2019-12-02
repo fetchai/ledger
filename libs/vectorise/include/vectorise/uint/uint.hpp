@@ -20,6 +20,7 @@
 #include "meta/has_index.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/containers/array.hpp"
+#include "vectorise/memory/endian.hpp"
 #include "vectorise/platform.hpp"
 
 #include <algorithm>
@@ -68,12 +69,14 @@ public:
   static constexpr char const *LOGGING_NAME = "UInt";
 
   template <typename... T>
-  using IfIsWideInitialiserList = std::enable_if_t<meta::Is<WideType>::SameAsEvery<T...>::value &&
-                                                   (sizeof...(T) <= WIDE_ELEMENTS)>;
+  using IfIsWideInitialiserList =
+      std::enable_if_t<meta::Is<WideType>::SameAsEvery<meta::Decay<T>...>::value &&
+                       (sizeof...(T) <= WIDE_ELEMENTS)>;
 
   template <typename... T>
   using IfIsBaseInitialiserList =
-      std::enable_if_t<meta::Is<BaseType>::SameAsEvery<T...>::value && (sizeof...(T) <= ELEMENTS)>;
+      std::enable_if_t<meta::Is<BaseType>::SameAsEvery<meta::Decay<T>...>::value &&
+                       (sizeof...(T) <= ELEMENTS)>;
 
   ////////////////////
   /// constructors ///
@@ -84,14 +87,14 @@ public:
   constexpr UInt(UInt &&other) noexcept = default;
 
   template <typename... T, IfIsWideInitialiserList<T...> * = nullptr>
-  constexpr explicit UInt(T &&... data)
+  constexpr UInt(T &&... data)
     : wide_{{std::forward<T>(data)...}}
   {
     mask_residual_bits();
   }
 
   template <typename... T, IfIsBaseInitialiserList<T...> * = nullptr>
-  constexpr explicit UInt(T &&... data)
+  constexpr UInt(T &&... data)
     : wide_{reinterpret_cast<WideContainerType &&>(
           core::Array<BaseType, ELEMENTS>{{std::forward<T>(data)...}})}
   {
@@ -99,7 +102,7 @@ public:
   }
 
   template <typename T, meta::IfIsAByteArray<T> * = nullptr>
-  constexpr explicit UInt(T const &other, bool input_is_little_endian);
+  constexpr explicit UInt(T const &other, memory::Endian endianess_of_input_data);
   template <typename T, meta::IfIsUnsignedInteger<T> * = nullptr>
   constexpr explicit UInt(T number);
 
@@ -112,8 +115,9 @@ public:
   constexpr meta::IfHasNoIndex<T, UInt> &operator=(T const &v);  // NOLINT
 
   template <typename T>
-  constexpr meta::IfIsAByteArray<T, UInt> &FromArray(T const &arr,
-                                                     bool     input_is_little_endian);  // NOLINT
+  constexpr meta::IfIsAByteArray<T, UInt> &FromArray(
+      T const &      arr,
+      memory::Endian endianess_of_input_data);  // NOLINT
 
   /////////////////////////////////////////////
   /// comparison operators for UInt objects ///
@@ -241,7 +245,7 @@ public:
 
   template <typename T>
   constexpr meta::EnableIf<std::is_same<meta::Decay<T>, byte_array::ByteArray>::value, T> As(
-      bool as_little_endian, bool include_leading_zeroes = false) const;
+      memory::Endian endianess_of_output_data, bool include_leading_zeroes = false) const;
 
   /////////////////
   /// constants ///
@@ -265,12 +269,14 @@ private:
   }
 
   template <typename T>
-  constexpr meta::IfIsAByteArray<T> FromArrayInternal(T const &arr, bool input_is_little_endian,
-                                                      bool zero_content);  // NOLINT
+  constexpr meta::IfIsAByteArray<T> FromArrayInternal(T const &      arr,
+                                                      memory::Endian endianess_of_input_data,
+                                                      bool           zero_content);  // NOLINT
 
   struct MaxValueConstructorEnabler
   {
   };
+
   constexpr explicit UInt(MaxValueConstructorEnabler /*unused*/)
   {
     for (auto &itm : wide_)
@@ -310,9 +316,9 @@ const UInt<S> UInt<S>::max{MaxValueConstructorEnabler{}};
 
 template <uint16_t S>
 template <typename T, meta::IfIsAByteArray<T> *>
-constexpr UInt<S>::UInt(T const &other, bool input_is_little_endian)
+constexpr UInt<S>::UInt(T const &other, memory::Endian endianess_of_input_data)
 {
-  FromArrayInternal(other, input_is_little_endian, false);
+  FromArrayInternal(other, endianess_of_input_data, false);
 }
 
 template <uint16_t S>
@@ -338,17 +344,17 @@ constexpr UInt<S> &UInt<S>::operator=(UInt const &v)
 template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsAByteArray<T, UInt<S>> &UInt<S>::FromArray(
-    T const &arr, bool input_is_little_endian)  // NOLINT
+    T const &arr, memory::Endian endianess_of_input_data)  // NOLINT
 {
-  FromArrayInternal(arr, input_is_little_endian, true);
+  FromArrayInternal(arr, endianess_of_input_data, true);
   return *this;
 }
 
 template <uint16_t S>
 template <typename T>
-constexpr meta::IfIsAByteArray<T> UInt<S>::FromArrayInternal(T const &arr,
-                                                             bool     input_is_little_endian,
-                                                             bool     zero_content)  // NOLINT
+constexpr meta::IfIsAByteArray<T> UInt<S>::FromArrayInternal(T const &      arr,
+                                                             memory::Endian endianess_of_input_data,
+                                                             bool           zero_content)  // NOLINT
 {
   auto const size{arr.size()};
 
@@ -371,16 +377,18 @@ constexpr meta::IfIsAByteArray<T> UInt<S>::FromArrayInternal(T const &arr,
     wide_.fill(0);
   }
 
-  if (input_is_little_endian)
+  switch (endianess_of_input_data)
   {
+  case memory::Endian::LITTLE:
     std::copy(arr.pointer(), arr.pointer() + size, base());
-  }
-  else
-  {
+    break;
+
+  case memory::Endian::BIG:
     for (std::size_t i{0}, rev_i{size - 1}; i < size; ++i, --rev_i)
     {
       base()[i] = arr[rev_i];
     }
+    break;
   }
 }
 
@@ -401,11 +409,14 @@ constexpr meta::IfHasNoIndex<T, UInt<S>> &UInt<S>::operator=(T const &v)  // NOL
 template <uint16_t S>
 constexpr bool UInt<S>::operator==(UInt const &other) const
 {
-  bool ret = true;
-  for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
+  bool        ret = true;
+  std::size_t i   = 0;
+  for (; i < (WIDE_ELEMENTS - 1u); ++i)
   {
     ret &= (wide_[i] == other.ElementAt(i));
   }
+
+  ret &= ((wide_[i] & RESIDUAL_BITS_MASK) == (other.ElementAt(i) & other.RESIDUAL_BITS_MASK));
 
   return ret;
 }
@@ -530,7 +541,7 @@ constexpr UInt<S> UInt<S>::operator~() const
   {
     retval.wide_[i] = ~wide_[i];
   }
-  retval.wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
+  retval.mask_residual_bits();
 
   return retval;
 }
@@ -622,7 +633,7 @@ constexpr UInt<S> &UInt<S>::operator+=(UInt<S> const &n)
     wide_[i] += n.ElementAt(i) + carry;
     carry = new_carry;
   }
-
+  mask_residual_bits();
   return *this;
 }
 
@@ -641,7 +652,7 @@ constexpr UInt<S> &UInt<S>::operator-=(UInt<S> const &n)
     wide_[i] -= n.ElementAt(i) + carry;
     carry = new_carry;
   }
-
+  mask_residual_bits();
   return *this;
 }
 
@@ -705,7 +716,6 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   }
   if (n == _1)
   {
-    *this = n;
     return *this;
   }
   if (*this == n)
@@ -733,12 +743,11 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   D >>= lsb;
   UInt<S> multiple(1u);
 
+  auto const D_leading_zero_bits{D.UINT_SIZE - D.msb() - 1};
   // Find smallest multiple of divisor (D) that is larger than the dividend (N)
-  while (N > D)
-  {
-    D <<= 1;
-    multiple <<= 1;
-  }
+  D <<= D_leading_zero_bits;
+  multiple <<= D_leading_zero_bits;
+
   // Calculate Quotient in a loop, essentially divide divisor by 2 and subtract from Remainder
   // Add multiple to Quotient
   UInt<S> Q = _0, R = N;
@@ -795,7 +804,7 @@ constexpr UInt<S> &UInt<S>::operator^=(UInt<S> const &n)
   {
     wide_[i] ^= n.ElementAt(i);
   }
-
+  mask_residual_bits();
   return *this;
 }
 
@@ -965,6 +974,7 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
   std::size_t full_words = bits / WIDE_ELEMENT_SIZE;
   std::size_t real_bits  = bits - full_words * WIDE_ELEMENT_SIZE;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
+
   // No actual shifting involved, just move the elements
   if (full_words != 0u)
   {
@@ -977,6 +987,7 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
       wide_[i] = 0;
     }
   }
+
   // If real_bits == 0, nothing to do
   if (real_bits != 0u)
   {
@@ -989,6 +1000,8 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
     }
   }
 
+  mask_residual_bits();
+
   return *this;
 }
 
@@ -998,6 +1011,9 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
   std::size_t full_words = bits / WIDE_ELEMENT_SIZE;
   std::size_t real_bits  = bits - full_words * WIDE_ELEMENT_SIZE;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
+
+  mask_residual_bits();
+
   // No actual shifting involved, just move the elements
   if (full_words != 0u)
   {
@@ -1029,33 +1045,36 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
 template <uint16_t S>
 constexpr std::size_t UInt<S>::msb() const
 {
-  std::size_t msb = 0;
-  for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
+  auto const trimmed_size{TrimmedWideSize()};
+  if (trimmed_size == 0)
   {
-    std::size_t msbi = platform::CountLeadingZeroes64(wide_[WIDE_ELEMENTS - 1 - i]);
-    msb += msbi;
-    if (msbi < 64)
-    {
-      return msb;
-    }
+    return UINT_SIZE;
   }
-  return msb;
+
+  auto const trimmed_idx{trimmed_size - 1};
+  auto const last_elem_val{(trimmed_size == WIDE_ELEMENTS) ? wide_[trimmed_idx] & RESIDUAL_BITS_MASK
+                                                           : wide_[trimmed_idx]};
+  auto const leading_zero_bits = platform::CountLeadingZeroes64(last_elem_val);
+  return trimmed_size * WIDE_ELEMENT_SIZE - leading_zero_bits - 1;
 }
 
 template <uint16_t S>
 constexpr std::size_t UInt<S>::lsb() const
 {
   std::size_t lsb = 0;
-  for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
+  std::size_t i   = 0;
+
+  for (; i < WIDE_ELEMENTS - 1; i++, lsb += WIDE_ELEMENT_SIZE)
   {
-    std::size_t lsbi = platform::CountTrailingZeroes64(wide_[i]);
-    lsb += lsbi;
-    if (lsbi < 64)
+    auto const val{wide_[i]};
+    if (val > 0)
     {
-      return lsb;
+      return lsb + platform::CountTrailingZeroes64(val);
     }
   }
-  return lsb;
+
+  auto const val{wide_[i] & RESIDUAL_BITS_MASK};
+  return val > 0 ? lsb + platform::CountTrailingZeroes64(val) : UINT_SIZE;
 }
 
 /////////////////////////
@@ -1084,6 +1103,12 @@ template <uint16_t S>
 constexpr uint64_t UInt<S>::TrimmedWideSize() const
 {
   uint64_t ret = WIDE_ELEMENTS;
+  if ((wide_[ret - 1] & RESIDUAL_BITS_MASK) > 0)
+  {
+    return ret;
+  }
+
+  --ret;
   while ((ret > 0) && (wide_[ret - 1] == 0))
   {
     --ret;
@@ -1095,14 +1120,23 @@ template <uint16_t S>
 constexpr uint64_t UInt<S>::TrimmedSize() const
 {
   uint64_t wide_size{TrimmedWideSize()};
-  uint64_t remainder{WIDE_ELEMENT_SIZE / ELEMENT_SIZE};
 
-  while ((remainder > 0) && (base()[remainder - 1] == 0))
+  if (wide_size == 0)
+  {
+    return 0;
+  }
+
+  uint64_t remainder{wide_size == WIDE_ELEMENTS
+                         ? (WIDE_ELEMENT_SIZE - RESIDUAL_BITS_MASK) / ELEMENT_SIZE
+                         : WIDE_ELEMENT_SIZE / ELEMENT_SIZE};
+  uint64_t start_idx{(wide_size - 1) * (WIDE_ELEMENT_SIZE / ELEMENT_SIZE)};
+
+  while ((remainder > 0) && (base()[start_idx + remainder - 1] == 0))
   {
     --remainder;
   }
 
-  return wide_size * (WIDE_ELEMENT_SIZE / ELEMENT_SIZE) + remainder;
+  return start_idx + remainder;
 }
 
 template <uint16_t S>
@@ -1140,28 +1174,30 @@ UInt<S>::operator std::string() const
 template <uint16_t S>
 template <typename T>
 constexpr meta::EnableIf<std::is_same<meta::Decay<T>, byte_array::ByteArray>::value, T> UInt<S>::As(
-    bool as_little_endian, bool include_leading_zeroes) const
+    memory::Endian endianess_of_output_data, bool include_leading_zeroes) const
 {
   auto const size_{include_leading_zeroes ? size() : TrimmedSize()};
 
+  T arr;
+
   if (0 == size_)
   {
-    return T{};
+    return arr;
   }
 
-  if (as_little_endian)
+  switch (endianess_of_output_data)
   {
+  case memory::Endian::LITTLE:
     return T{pointer(), size_};
-  }
 
-  T array;
-  array.Resize(size_);
-  for (std::size_t i{0}, rev_i{size_ - 1}; i < size_; ++i, --rev_i)
-  {
-    array[rev_i] = base()[i];
+  case memory::Endian::BIG:
+    arr.Resize(size_);
+    for (std::size_t i{0}, rev_i{size_ - 1}; i < size_; ++i, --rev_i)
+    {
+      arr[rev_i] = base()[i];
+    }
+    return arr;
   }
-
-  return array;
 }
 
 template <uint16_t S>

@@ -39,6 +39,7 @@ public:
   using Data       = Update::Data;
   using Source     = Update::Source;
   using Metadata   = Update::Metadata;
+  using Consumer   = std::string;
 
   UpdateStoreInterface()                                  = default;
   virtual ~UpdateStoreInterface()                         = default;
@@ -46,11 +47,12 @@ public:
   UpdateStoreInterface &operator=(UpdateStoreInterface const &other) = delete;
 
   virtual void      PushUpdate(Algorithm const &algo, UpdateType update, Data &&data, Source source,
-                               Metadata &&metadata)                                             = 0;
-  virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria) = 0;
-  virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type)                    = 0;
-  virtual std::size_t GetUpdateCount() const                                                    = 0;
-  virtual std::size_t GetUpdateCount(Algorithm const &algo, UpdateType const &type) const       = 0;
+                               Metadata &&metadata)                                         = 0;
+  virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria,
+                              Consumer consumer = "")                                       = 0;
+  virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Consumer = "") = 0;
+  virtual std::size_t GetUpdateCount() const                                                = 0;
+  virtual std::size_t GetUpdateCount(Algorithm const &algo, UpdateType const &type) const   = 0;
   // TODO(Juan) Set maximum timestamp? Queue size? Other such admin tasks
 };
 

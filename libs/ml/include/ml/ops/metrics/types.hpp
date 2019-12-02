@@ -17,32 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/consensus/consensus_miner_interface.hpp"
-
 namespace fetch {
-namespace ledger {
-namespace consensus {
+namespace ml {
+namespace ops {
 
-class BadMiner : public ConsensusMinerInterface
+enum class MetricType
 {
-public:
-  // Construction / Destruction
-  BadMiner()                 = default;
-  BadMiner(BadMiner const &) = delete;
-  BadMiner(BadMiner &&)      = delete;
-  ~BadMiner() override       = default;
-
-  /// @name Consensus Miner Interface
-  /// @{
-  void Mine(Block &block) override;
-  bool Mine(Block &block, uint64_t iterations) override;
-  /// @}
-
-  // Operators
-  BadMiner &operator=(BadMiner const &) = delete;
-  BadMiner &operator=(BadMiner &&) = delete;
+  CATEGORICAL_ACCURACY,
+  CROSS_ENTROPY,
+  MEAN_SQUARE_ERROR,
+  SOFTMAX_CROSS_ENTROPY
 };
-
-}  // namespace consensus
-}  // namespace ledger
+}
+}  // namespace ml
 }  // namespace fetch
