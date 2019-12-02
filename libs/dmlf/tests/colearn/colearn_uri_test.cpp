@@ -180,7 +180,7 @@ TEST(Colearn_URi, badStringConstruction)
   }
   {
     std::string asString;
-    ColearnURI  uri      = ColearnURI::Parse(asString);
+    ColearnURI  uri = ColearnURI::Parse(asString);
 
     EXPECT_TRUE(uri.IsEmpty());
   }
