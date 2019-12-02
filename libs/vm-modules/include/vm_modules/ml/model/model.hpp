@@ -90,7 +90,7 @@ public:
                          fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
   void CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
-                     fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers);
+                     fetch::vm::Ptr<vm::Array<math::SizeType>> const &layer_shapes);
 
   void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
            ::fetch::math::SizeType const &batch_size);
@@ -101,7 +101,7 @@ public:
 
   static void Bind(fetch::vm::Module &module);
 
-  ModelPtrType &GetModel();
+  void SetModel(ModelPtrType const &instance);
 
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
@@ -118,6 +118,9 @@ private:
   ModelCategory      model_category_ = ModelCategory::NONE;
   bool               compiled_       = false;
 
+  // First for input layer shape, second for output layer shape.
+  static constexpr std::size_t min_total_layer_shapes = 2;
+
   static const std::map<std::string, SupportedLayerType>                 layer_types_;
   static const std::map<std::string, fetch::ml::details::ActivationType> activations_;
   static const std::map<std::string, fetch::ml::ops::LossType>           losses_;
@@ -126,7 +129,7 @@ private:
 
   void Init(std::string const &model_category);
 
-  void CompileDataloader();
+  void PrepareDataloader();
 
   void AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &inputs,
                             math::SizeType const &hidden_nodes);

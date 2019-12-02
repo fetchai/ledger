@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,30 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/decoders.hpp"
-#include "core/service_ids.hpp"
-#include "dmlf/colearn/colearn_protocol.hpp"
-#include "dmlf/colearn/muddle_outbound_update_task.hpp"
-#include "muddle/rpc/client.hpp"
-
 namespace fetch {
-namespace dmlf {
-namespace colearn {
+namespace ml {
+namespace ops {
 
-MuddleOutboundUpdateTask::ExitState MuddleOutboundUpdateTask::run()
+enum class MetricType
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Sending update to ", fetch::byte_array::ToBase64(target_));
-  auto prom =
-      client_->CallSpecificAddress(target_, RPC_COLEARN, ColearnProtocol::RPC_COLEARN_UPDATE,
-                                   type_name_, update_, proportion_, random_factor_);
-  prom->Wait();
-  return ExitState::COMPLETE;
+  CATEGORICAL_ACCURACY,
+  CROSS_ENTROPY,
+  MEAN_SQUARE_ERROR,
+  SOFTMAX_CROSS_ENTROPY
+};
 }
-
-bool MuddleOutboundUpdateTask::IsRunnable() const
-{
-  return true;
-}
-}  // namespace colearn
-}  // namespace dmlf
+}  // namespace ml
 }  // namespace fetch
