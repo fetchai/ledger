@@ -34,6 +34,11 @@
 
 using namespace fetch::vm;
 
+namespace vm_modules {
+namespace benchmark {
+namespace ml {
+namespace model {
+
 void SetUp(std::shared_ptr<VM> &vm)
 {
   using VMFactory = fetch::vm_modules::VMFactory;
@@ -289,36 +294,41 @@ BENCHMARK(BM_Compile)->Args({5,1000,1000, 1000,1000,1000})->Unit(benchmark::kMic
 /// SERIALISATION BENCHMARKS ///
 
 
-void BM_Compile(benchmark::State &state)
-{
-  using VMPtr = std::shared_ptr<VM>;
-  using SizeRef = fetch::math::SizeType const &;
-  using SizeType = fetch::math::SizeType;
-
-  for (auto _ : state)
-  {
-    state.PauseTiming();
-    VMPtr vm;
-    SetUp(vm);
-
-    // set up data and labels
-    auto model = CreateSequentialModel(vm);
-
-    for(SizeType i{1};i< static_cast<SizeType>(state.range(0));i++){
-      model->AddLayer<SizeRef, SizeRef>(CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
-                                        static_cast<SizeType>(state.range(i+1)));  // input_size, output_size
-    }
-
-    state.ResumeTiming();
-    model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
-  }
-}
-
-// number_of_layers, input_size, hidden_1_size, ...., output_size
-BENCHMARK(BM_Compile)->Args({6,1,10, 100,1000,10000,1})->Unit(benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({5,10000,1000, 100,10,1})->Unit(benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({4,1,1, 1,1})->Unit(benchmark::kMicrosecond);
+//void BM_Compile(benchmark::State &state)
+//{
+//  using VMPtr = std::shared_ptr<VM>;
+//  using SizeRef = fetch::math::SizeType const &;
+//  using SizeType = fetch::math::SizeType;
+//
+//  for (auto _ : state)
+//  {
+//    state.PauseTiming();
+//    VMPtr vm;
+//    SetUp(vm);
+//
+//    // set up data and labels
+//    auto model = CreateSequentialModel(vm);
+//
+//    for(SizeType i{1};i< static_cast<SizeType>(state.range(0));i++){
+//      model->AddLayer<SizeRef, SizeRef>(CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
+//                                        static_cast<SizeType>(state.range(i+1)));  // input_size, output_size
+//    }
+//
+//    state.ResumeTiming();
+//    model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
+//  }
+//}
+//
+//// number_of_layers, input_size, hidden_1_size, ...., output_size
+//BENCHMARK(BM_Compile)->Args({6,1,10, 100,1000,10000,1})->Unit(benchmark::kMicrosecond);
+//BENCHMARK(BM_Compile)->Args({5,10000,1000, 100,10,1})->Unit(benchmark::kMicrosecond);
+//BENCHMARK(BM_Compile)->Args({4,1,1, 1,1})->Unit(benchmark::kMicrosecond);
 
 
 
 BENCHMARK_MAIN();
+
+} // model
+} // ml
+} // benchmark
+} // vm_modules
