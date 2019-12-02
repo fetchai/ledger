@@ -126,6 +126,7 @@ private:
   using NodeList = std::list<KademliaNode>;
 
   void   Periodically() override;
+  char const *GetId() const override;
   void   ResolveAddresses(Addresses const &addresses);
   void   OnResolvedAddress(Address const &address, service::Promise const &promise);
   UriSet GenerateUriSet(Addresses const &addresses);

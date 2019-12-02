@@ -22,6 +22,7 @@
 #include "telemetry/telemetry.hpp"
 
 #include <atomic>
+#include <fstream>
 #include <map>
 #include <memory>
 #include <string>
@@ -51,6 +52,13 @@ public:
   Reactor &operator=(Reactor &&) = delete;
 
 private:
+  enum class Event
+  {
+    TASK_STARTED=0,
+    TASK_COMPLETED,
+    TASK_FAILED,
+  };
+
   using RunnableMap     = Protected<std::map<Runnable const *, WeakRunnable>>;
   using Flag            = std::atomic<bool>;
   using ProtectedThread = Protected<std::thread>;
@@ -59,6 +67,8 @@ private:
   void StartWorker();
   void StopWorker();
   void Monitor();
+  void RecordEvent(Event event, Runnable const &runnable);
+  static char const *ToString(Event event);
 
   telemetry::HistogramPtr       CreateHistogram(char const *name, char const *description) const;
   telemetry::CounterPtr         CreateCounter(char const *name, char const *description) const;
@@ -67,8 +77,9 @@ private:
   std::string const name_;
   Flag              running_{false};
 
-  RunnableMap work_map_{};
-  ThreadPtr   worker_{};
+  RunnableMap   work_map_{};
+  ThreadPtr     worker_{};
+  std::ofstream events_;
 
   // telemetry
   telemetry::HistogramPtr       runnables_time_;

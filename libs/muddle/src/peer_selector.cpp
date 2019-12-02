@@ -231,6 +231,11 @@ void PeerSelector::Periodically()
   }
 }
 
+char const *PeerSelector::GetId() const
+{
+  return "PeerSelector";
+}
+
 void PeerSelector::ResolveAddresses(Addresses const &addresses)
 {
   // generate the set of addresses which have not been resolved yet

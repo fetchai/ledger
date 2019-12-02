@@ -111,6 +111,11 @@ void ShardManagementService::Periodically()
   FETCH_LOG_TRACE(LOGGING_NAME, "### Shard Management Periodical (Complete) ###");
 }
 
+char const *ShardManagementService::GetId() const
+{
+  return "ShardMgmtService";
+}
+
 void ShardManagementService::ResolveUpdates()
 {
   auto const now = Clock::now();

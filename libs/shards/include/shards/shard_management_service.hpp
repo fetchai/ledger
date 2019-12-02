@@ -80,6 +80,7 @@ private:
   /// @name Periodic Runnable Interface
   /// @{
   void Periodically() override;
+  char const *GetId() const override;
   void ResolveUpdates();
   void RequestUpdates(Addresses addresses);
   void UpdateShards(Addresses const &addresses);

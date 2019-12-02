@@ -65,7 +65,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , clients_(network_id)
   , network_id_(network_id)
   , reactor_{"muddle"}
-  , maintenance_periodic_(std::make_shared<core::PeriodicFunctor>(
+  , maintenance_periodic_(std::make_shared<core::PeriodicFunctor>(name_ + "Maint",
         std::chrono::milliseconds{MAINTENANCE_INTERVAL_MS}, this, &Muddle::RunPeriodicMaintenance))
   , direct_message_service_(node_address_, router_, *register_, clients_)
   , peer_selector_(std::make_shared<PeerSelector>(

@@ -35,6 +35,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <iomanip>
 
 static const std::chrono::milliseconds POLL_INTERVAL{15};
 static constexpr char const *          LOGGING_NAME = "Reactor";
@@ -46,6 +47,7 @@ namespace core {
 
 Reactor::Reactor(std::string name)
   : name_{std::move(name)}
+  , events_{(name_ + ".events.csv.db").c_str()}
   , runnables_time_{CreateHistogram("ledger_reactor_runnable_time",
                                     "The histogram of runnables execution time")}
   , attach_total_{CreateCounter("ledger_reactor_attach_total",
@@ -69,7 +71,10 @@ Reactor::Reactor(std::string name)
                                    "The current size of the work queue")}
   , work_queue_max_length_{
         CreateGauge("ledger_reactor_max_work_queue_length", "The max size of the work queue")}
-{}
+{
+  // write CSV headers
+  events_ << "timestamp,event,event_name,runnable,name" << std::endl;
+}
 
 bool Reactor::Attach(WeakRunnable runnable)
 {
@@ -228,7 +233,11 @@ void Reactor::Monitor()
 
       try
       {
+        RecordEvent(Event::TASK_STARTED, *runnable);
+
         runnable->Execute();
+
+        RecordEvent(Event::TASK_COMPLETED, *runnable);
 
         success_total_->increment();
       }
@@ -238,15 +247,54 @@ void Reactor::Monitor()
                        name_, " error: ", ex.what());
 
         failure_total_->increment();
+
+        RecordEvent(Event::TASK_FAILED, *runnable);
       }
       catch (...)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Unknown error generated in reactor: ", name_);
 
         failure_total_->increment();
+
+        RecordEvent(Event::TASK_FAILED, *runnable);
       }
     }
   }
+}
+
+void Reactor::RecordEvent(Event event, Runnable const &runnable)
+{
+  static const char SEP = ',';
+  using Clock = std::chrono::system_clock;
+
+  auto const now = Clock::now();
+  auto const timestamp_ms =
+      std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+  double const timestamp = (timestamp_ms / 1e6);
+
+  // write out the event to a file
+  events_ << std::fixed << timestamp << SEP
+          << static_cast<int>(event) << SEP << ToString(event) << SEP << &runnable << SEP
+          << runnable.GetId() << std::endl;
+}
+
+char const *Reactor::ToString(Event event)
+{
+  char const *text = "Unknown";
+  switch (event)
+  {
+  case Event::TASK_STARTED:
+    text = "Started";
+    break;
+  case Event::TASK_COMPLETED:
+    text = "Completed";
+    break;
+  case Event::TASK_FAILED:
+    text = "Failed";
+    break;
+  }
+
+  return text;
 }
 
 telemetry::HistogramPtr Reactor::CreateHistogram(char const *name, char const *description) const
