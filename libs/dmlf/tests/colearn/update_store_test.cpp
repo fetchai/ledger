@@ -20,7 +20,10 @@
 #include "dmlf/colearn/update_store.hpp"
 #include "gtest/gtest.h"
 
+#include <chrono>
+#include <cmath>
 #include <iomanip>
+#include <thread>
 
 namespace fetch {
 namespace dmlf {
@@ -32,6 +35,19 @@ using fetch::byte_array::ConstByteArray;
 ConstByteArray a("a");
 ConstByteArray b("b");
 ConstByteArray c("c");
+
+const std::string consumer  = "consumer";
+const std::string consumerb = "consumerb";
+
+using UpdatePtr = UpdateStore::UpdatePtr;
+
+auto LifoCriteria = [](UpdatePtr const &u) {
+  return static_cast<double>(-u->TimeSinceCreation().count());
+};
+auto FifoCriteria = [](UpdatePtr const &u) {
+  return static_cast<double>(u->TimeSinceCreation().count());
+};
+
 }  // namespace
 
 TEST(Colearn_UpdateStore, pushPop)
@@ -54,15 +70,15 @@ TEST(Colearn_UpdateStore, pushPushPopPop)
   store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
   store.PushUpdate("algo", "update", ConstByteArray{b}, "test2", {});
 
-  auto result1 = store.GetUpdate("algo", "update");
-  auto result2 = store.GetUpdate("algo", "update");
+  auto result1 = store.GetUpdate("algo", "update", consumer);
+  auto result2 = store.GetUpdate("algo", "update", consumer);
 
   EXPECT_EQ(result1->update_type(), "update");
-  EXPECT_EQ(result1->data(), a);
-  EXPECT_EQ(result1->source(), "test");
+  EXPECT_EQ(result1->data(), b);
+  EXPECT_EQ(result1->source(), "test2");
   EXPECT_EQ(result2->update_type(), "update");
-  EXPECT_EQ(result2->data(), b);
-  EXPECT_EQ(result2->source(), "test2");
+  EXPECT_EQ(result2->data(), a);
+  EXPECT_EQ(result2->source(), "test");
 }
 
 TEST(Colearn_UpdateStore, pushPushPopPushPopPop)
@@ -71,20 +87,282 @@ TEST(Colearn_UpdateStore, pushPushPopPushPopPop)
 
   store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
   store.PushUpdate("algo", "update", ConstByteArray{b}, "test2", {});
-  auto result1 = store.GetUpdate("algo", "update");
+  auto result1 = store.GetUpdate("algo", "update", consumer);
   store.PushUpdate("algo", "update", ConstByteArray{c}, "test3", {});
-  auto result2 = store.GetUpdate("algo", "update");
-  auto result3 = store.GetUpdate("algo", "update");
+  auto result2 = store.GetUpdate("algo", "update", consumer);
+  auto result3 = store.GetUpdate("algo", "update", consumer);
+
+  EXPECT_EQ(result1->update_type(), "update");
+  EXPECT_EQ(result1->data(), b);
+  EXPECT_EQ(result1->source(), "test2");
+  EXPECT_EQ(result2->update_type(), "update");
+  EXPECT_EQ(result2->data(), c);
+  EXPECT_EQ(result2->source(), "test3");
+  EXPECT_EQ(result3->update_type(), "update");
+  EXPECT_EQ(result3->data(), a);
+  EXPECT_EQ(result3->source(), "test");
+}
+
+TEST(Colearn_UpdateStore, pushPushPopPushPopPop_TwoConsumersSameCriteria)
+{
+  UpdateStore store;
+
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
+  store.PushUpdate("algo", "update", ConstByteArray{b}, "test2", {});
+  auto result1  = store.GetUpdate("algo", "update", consumer);
+  auto result1b = store.GetUpdate("algo", "update", consumerb);
+  store.PushUpdate("algo", "update", ConstByteArray{c}, "test3", {});
+  auto result2  = store.GetUpdate("algo", "update", consumer);
+  auto result2b = store.GetUpdate("algo", "update", consumerb);
+  auto result3  = store.GetUpdate("algo", "update", consumer);
+  auto result3b = store.GetUpdate("algo", "update", consumerb);
+
+  EXPECT_EQ(result1->update_type(), "update");
+  EXPECT_EQ(result1->data(), b);
+  EXPECT_EQ(result1->source(), "test2");
+  EXPECT_EQ(result2->update_type(), "update");
+  EXPECT_EQ(result2->data(), c);
+  EXPECT_EQ(result2->source(), "test3");
+  EXPECT_EQ(result3->update_type(), "update");
+  EXPECT_EQ(result3->data(), a);
+  EXPECT_EQ(result3->source(), "test");
+
+  EXPECT_EQ(result1b->update_type(), "update");
+  EXPECT_EQ(result1b->data(), b);
+  EXPECT_EQ(result1b->source(), "test2");
+  EXPECT_EQ(result2b->update_type(), "update");
+  EXPECT_EQ(result2b->data(), c);
+  EXPECT_EQ(result2b->source(), "test3");
+  EXPECT_EQ(result3b->update_type(), "update");
+  EXPECT_EQ(result3b->data(), a);
+  EXPECT_EQ(result3b->source(), "test");
+}
+
+TEST(Colearn_UpdateStore, pushPushPopPushPopPop_TwoConsumersDiffCriteria)
+{
+  UpdateStore store;
+
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
+  store.PushUpdate("algo", "update", ConstByteArray{b}, "test2", {});
+  auto result1  = store.GetUpdate("algo", "update", LifoCriteria, consumer);
+  auto result1b = store.GetUpdate("algo", "update", FifoCriteria, consumerb);
+  store.PushUpdate("algo", "update", ConstByteArray{c}, "test3", {});
+  auto result2  = store.GetUpdate("algo", "update", LifoCriteria, consumer);
+  auto result2b = store.GetUpdate("algo", "update", FifoCriteria, consumerb);
+  auto result3  = store.GetUpdate("algo", "update", LifoCriteria, consumer);
+  auto result3b = store.GetUpdate("algo", "update", FifoCriteria, consumerb);
+
+  EXPECT_EQ(result1->update_type(), "update");
+  EXPECT_EQ(result1->data(), b);
+  EXPECT_EQ(result1->source(), "test2");
+  EXPECT_EQ(result2->update_type(), "update");
+  EXPECT_EQ(result2->data(), c);
+  EXPECT_EQ(result2->source(), "test3");
+  EXPECT_EQ(result3->update_type(), "update");
+  EXPECT_EQ(result3->data(), a);
+  EXPECT_EQ(result3->source(), "test");
+
+  EXPECT_EQ(result1b->update_type(), "update");
+  EXPECT_EQ(result1b->data(), a);
+  EXPECT_EQ(result1b->source(), "test");
+  EXPECT_EQ(result2b->update_type(), "update");
+  EXPECT_EQ(result2b->data(), b);
+  EXPECT_EQ(result2b->source(), "test2");
+  EXPECT_EQ(result3b->update_type(), "update");
+  EXPECT_EQ(result3b->data(), c);
+  EXPECT_EQ(result3b->source(), "test3");
+}
+
+TEST(Colearn_UpdateStore, pushPushPopPushPopPop_NoConsumer)
+{
+  const std::string noConsumer;
+
+  UpdateStore store;
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
+  store.PushUpdate("algo", "update", ConstByteArray{b}, "test2", {});
+  auto result1 = store.GetUpdate("algo", "update", noConsumer);
+  store.PushUpdate("algo", "update", ConstByteArray{c}, "test3", {});
+  auto result2 = store.GetUpdate("algo", "update", noConsumer);
+  auto result3 = store.GetUpdate("algo", "update", noConsumer);
+
+  EXPECT_EQ(result1->update_type(), "update");
+  EXPECT_EQ(result1->data(), b);
+  EXPECT_EQ(result1->source(), "test2");
+  EXPECT_EQ(result2->update_type(), "update");
+  EXPECT_EQ(result2->data(), c);
+  EXPECT_EQ(result2->source(), "test3");
+  EXPECT_EQ(result3->update_type(), "update");
+  EXPECT_EQ(result3->data(), c);
+  EXPECT_EQ(result3->source(), "test3");
+}
+
+TEST(Colearn_UpdateStore, pushPop_repetition)
+{
+  UpdateStore store;
+
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
+  EXPECT_EQ(store.GetUpdateCount(), 1);
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
+  EXPECT_EQ(store.GetUpdateCount(), 1);
+
+  auto result = store.GetUpdate("algo", "update", consumer);
+  EXPECT_EQ(store.GetUpdateCount(), 1);
+
+  EXPECT_EQ(result->update_type(), "update");
+  EXPECT_EQ(result->data(), a);
+  EXPECT_EQ(result->source(), "test");
+
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
+  EXPECT_EQ(store.GetUpdateCount(), 1);
+
+  EXPECT_THROW(store.GetUpdate("algo", "update", consumer), std::runtime_error);
+}
+
+TEST(Colearn_UpdateStore, samePushDifferentSources)
+{
+  UpdateStore store;
+
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
+  EXPECT_EQ(store.GetUpdateCount(), 1);
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "other", {});
+  EXPECT_EQ(store.GetUpdateCount(), 2);
+
+  auto result = store.GetUpdate("algo", "update", consumer);
+  EXPECT_EQ(store.GetUpdateCount(), 2);
+
+  EXPECT_EQ(result->update_type(), "update");
+  EXPECT_EQ(result->data(), a);
+  EXPECT_EQ(result->source(), "other");
+
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
+  EXPECT_EQ(store.GetUpdateCount(), 2);
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "other", {});
+  EXPECT_EQ(store.GetUpdateCount(), 2);
+
+  result = store.GetUpdate("algo", "update", consumer);
+  EXPECT_EQ(result->update_type(), "update");
+  EXPECT_EQ(result->data(), a);
+  EXPECT_EQ(result->source(), "test");
+}
+
+TEST(Colearn_UpdateStore, pushPushPushPopPopPop_SelectSource)
+{
+  auto LifoSelect = [](UpdatePtr const &update) -> double {
+    if (update->source() != "thinker")
+    {
+      return std::nan("");
+    }
+    return static_cast<double>(-update->TimeSinceCreation().count());
+  };
+
+  UpdateStore store;
+
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {});
+  store.PushUpdate("algo", "update", ConstByteArray{b}, "test2", {});
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "thinker", {});
+
+  auto result1 = store.GetUpdate("algo", "update", LifoSelect, consumer);
+  auto resulta = store.GetUpdate("algo", "update", consumerb);
+
+  EXPECT_EQ(result1->update_type(), "update");
+  EXPECT_EQ(result1->data(), a);
+  EXPECT_EQ(result1->source(), "thinker");
+  EXPECT_EQ(resulta->update_type(), "update");
+  EXPECT_EQ(resulta->data(), a);
+  EXPECT_EQ(resulta->source(), "thinker");
+
+  store.PushUpdate("algo", "update", ConstByteArray{b}, "thinker", {});
+  store.PushUpdate("algo", "update", ConstByteArray{c}, "thinker", {});
+  store.PushUpdate("algo", "update", ConstByteArray{b}, "test", {});
+
+  auto result2 = store.GetUpdate("algo", "update", LifoSelect, consumer);
+  auto result3 = store.GetUpdate("algo", "update", LifoSelect, consumer);
+  auto resultb = store.GetUpdate("algo", "update", LifoCriteria, consumerb);
+
+  EXPECT_EQ(result2->update_type(), "update");
+  EXPECT_EQ(result2->data(), c);
+  EXPECT_EQ(result2->source(), "thinker");
+  EXPECT_EQ(result3->update_type(), "update");
+  EXPECT_EQ(result3->data(), b);
+  EXPECT_EQ(result3->source(), "thinker");
+  EXPECT_EQ(resultb->update_type(), "update");
+  EXPECT_EQ(resultb->data(), b);
+  EXPECT_EQ(resultb->source(), "test");
+
+  EXPECT_THROW(store.GetUpdate("algo", "update", LifoSelect, consumer), std::runtime_error);
+  auto result4 = store.GetUpdate("algo", "update", LifoCriteria, consumer);
+  EXPECT_EQ(result4->update_type(), "update");
+  EXPECT_EQ(result4->data(), b);
+  EXPECT_EQ(result4->source(), "test");
+
+  auto resultc = store.GetUpdate("algo", "update", LifoSelect, consumerb);
+  EXPECT_EQ(resultc->update_type(), "update");
+  EXPECT_EQ(resultc->data(), c);
+  EXPECT_EQ(resultc->source(), "thinker");
+}
+
+TEST(Colearn_UpdateStore, pushPushPushPopPopPop_SelectMetadata)
+{
+  std::string which;
+  auto        LifoSelect = [&which](UpdatePtr const &update) -> double {
+    if (update->metadata().at("meta") != which)
+    {
+      return std::nan("");
+    }
+    return static_cast<double>(-update->TimeSinceCreation().count());
+  };
+
+  UpdateStore store;
+
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "test", {{"meta", "a"}});
+  store.PushUpdate("algo", "update", ConstByteArray{b}, "test2", {{"meta", "b"}});
+  store.PushUpdate("algo", "update", ConstByteArray{a}, "thinker", {{"meta", "c"}});
+
+  which        = "a";
+  auto result1 = store.GetUpdate("algo", "update", LifoSelect, consumer);
+  auto resulta = store.GetUpdate("algo", "update", consumerb);
 
   EXPECT_EQ(result1->update_type(), "update");
   EXPECT_EQ(result1->data(), a);
   EXPECT_EQ(result1->source(), "test");
+  EXPECT_EQ(resulta->update_type(), "update");
+  EXPECT_EQ(resulta->data(), a);
+  EXPECT_EQ(resulta->source(), "thinker");
+
+  store.PushUpdate("algo", "update", ConstByteArray{b}, "thinker", {{"meta", "d"}});
+  store.PushUpdate("algo", "update", ConstByteArray{c}, "thinker", {{"meta", "e"}});
+  store.PushUpdate("algo", "update", ConstByteArray{b}, "test", {{"meta", "f"}});
+
+  which        = "c";
+  auto result2 = store.GetUpdate("algo", "update", LifoSelect, consumer);
+  which        = "b";
+  auto result3 = store.GetUpdate("algo", "update", LifoSelect, consumer);
+  auto resultb = store.GetUpdate("algo", "update", LifoCriteria, consumerb);
+
   EXPECT_EQ(result2->update_type(), "update");
-  EXPECT_EQ(result2->data(), b);
-  EXPECT_EQ(result2->source(), "test2");
+  EXPECT_EQ(result2->data(), a);
+  EXPECT_EQ(result2->source(), "thinker");
   EXPECT_EQ(result3->update_type(), "update");
-  EXPECT_EQ(result3->data(), c);
-  EXPECT_EQ(result3->source(), "test3");
+  EXPECT_EQ(result3->data(), b);
+  EXPECT_EQ(result3->source(), "test2");
+  EXPECT_EQ(resultb->update_type(), "update");
+  EXPECT_EQ(resultb->data(), b);
+  EXPECT_EQ(resultb->source(), "test");
+
+  EXPECT_THROW(store.GetUpdate("algo", "update", LifoSelect, consumer), std::runtime_error);
+  which        = "d";
+  auto result4 = store.GetUpdate("algo", "update", LifoSelect, consumer);
+  EXPECT_EQ(result4->update_type(), "update");
+  EXPECT_EQ(result4->data(), b);
+  EXPECT_EQ(result4->source(), "thinker");
+
+  which = "f";
+  EXPECT_THROW(store.GetUpdate("algo", "update", LifoSelect, consumerb), std::runtime_error);
+  which        = "a";
+  auto resultc = store.GetUpdate("algo", "update", LifoSelect, consumerb);
+  EXPECT_EQ(resultc->update_type(), "update");
+  EXPECT_EQ(resultc->data(), a);
+  EXPECT_EQ(resultc->source(), "test");
 }
 
 }  // namespace colearn

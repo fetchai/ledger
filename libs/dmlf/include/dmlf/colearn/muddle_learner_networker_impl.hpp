@@ -120,7 +120,7 @@ public:
   }
 
   void PushUpdateBytes(UpdateType const &type_name, Bytes const &update);
-  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, const Peers &peers);
+  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, Peers peers);
   void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, const Peers &peers,
                        double broadcast_proportion);
 
