@@ -89,7 +89,7 @@ bool PromiseTask::IsReadyToExecute() const
     // signal that the promise has timed out
     promise_->Timeout();
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Explicitly marking the promise as timed out");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Explicitly marking the promise as timed out");
     ready = true;
   }
 
