@@ -119,7 +119,7 @@ void ClientWord2VecAlgorithm<TensorType>::Run()
 template <class TensorType>
 void ClientWord2VecAlgorithm<TensorType>::Test()
 {
-  if (this->round_counter_ % tp_.test_frequency == tp_.test_frequency - 1)
+  if (this->update_counter_ % tp_.test_frequency == tp_.test_frequency - 1)
   {
     // Lock model
     FETCH_LOCK(this->model_mutex_);
@@ -216,22 +216,22 @@ void ClientWord2VecAlgorithm<TensorType>::PrepareOptimiser()
       this->graph_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
   std::string context_name =
       this->graph_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
-  this->params_.label_name =
+  this->label_name_ =
       this->graph_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
   skipgram_ = this->graph_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
       "SkipGram", {input_name, context_name}, SizeType(1), SizeType(1), tp_.embedding_size,
       w2v_data_loader_ptr_->vocab_size());
 
-  this->params_.error_name =
+  this->error_name_ =
       this->graph_ptr_->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
-          "Error", {skipgram_, this->params_.label_name});
+          "Error", {skipgram_, this->label_name_});
 
-  this->params_.input_names = {input_name, context_name};
+  this->input_names_ = {input_name, context_name};
 
   // Initialise Optimiser
   this->optimiser_ptr_ = std::make_shared<fetch::ml::optimisers::LazyAdamOptimiser<TensorType>>(
-      this->graph_ptr_, this->params_.input_names, this->params_.label_name,
-      this->params_.error_name, tp_.learning_rate_param);
+      this->graph_ptr_, this->input_names_, this->label_name_, this->error_name_,
+      tp_.learning_rate_param);
 }
 
 template <class TensorType>

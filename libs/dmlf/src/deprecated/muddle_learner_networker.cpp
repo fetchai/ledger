@@ -20,7 +20,6 @@
 #include "core/service_ids.hpp"
 #include "dmlf/deprecated/muddle_learner_networker.hpp"
 #include "dmlf/deprecated/update_interface.hpp"
-#include "json/document.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -48,12 +47,10 @@ deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworkerProtocol::
 }
 
 deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworker(
-    const std::string &cloud_config, std::size_t instance_number,
+    fetch::json::JSONDocument &cloud_config, std::size_t instance_number,
     const std::shared_ptr<NetworkManager> &netm, MuddleChannel channel_tmp)
   : channel_tmp_{channel_tmp}
 {
-  json::JSONDocument doc{cloud_config};
-
   if (netm)
   {
     netm_ = netm;
@@ -64,7 +61,7 @@ deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworker(
   }
   netm_->Start();
 
-  auto my_config = doc.root()["peers"][instance_number];
+  auto my_config = cloud_config.root()["peers"][instance_number];
   auto self_uri  = Uri(my_config["uri"].As<std::string>());
   auto port      = self_uri.GetTcpPeer().port();
   auto privkey   = my_config["key"].As<std::string>();
@@ -77,7 +74,7 @@ deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworker(
   mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
 
   std::unordered_set<std::string> initial_peers;
-  auto                            config_peers = doc.root()["peers"];
+  auto                            config_peers = cloud_config.root()["peers"];
 
   auto config_peer_count = config_peers.size();
   for (std::size_t peer_number = 0; peer_number < config_peer_count; peer_number++)
@@ -90,7 +87,7 @@ deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworker(
 
   if (config_peer_count <= INITIAL_PEERS_COUNT)
   {
-    initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
+    initial_peers.insert(cloud_config.root()["peers"][0]["uri"].As<std::string>());
   }
   else
   {
