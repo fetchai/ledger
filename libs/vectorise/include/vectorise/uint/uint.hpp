@@ -89,17 +89,13 @@ public:
   template <typename... T, IfIsWideInitialiserList<T...> * = nullptr>
   constexpr UInt(T &&... data)
     : wide_{{std::forward<T>(data)...}}
-  {
-    mask_residual_bits();
-  }
+  {}
 
   template <typename... T, IfIsBaseInitialiserList<T...> * = nullptr>
   constexpr UInt(T &&... data)
     : wide_{reinterpret_cast<WideContainerType &&>(
           core::Array<BaseType, ELEMENTS>{{std::forward<T>(data)...}})}
-  {
-    mask_residual_bits();
-  }
+  {}
 
   template <typename T, meta::IfIsAByteArray<T> * = nullptr>
   constexpr explicit UInt(T const &other, memory::Endian endianess_of_input_data);
@@ -263,7 +259,12 @@ private:
   constexpr ContainerType const &base() const;
   constexpr ContainerType &      base();
 
-  constexpr void mask_residual_bits()
+  template <uint16_t G = S>
+  constexpr meta::EnableIf<(G % WIDE_ELEMENT_SIZE) == 0u, void> mask_residual_bits()
+  {}
+
+  template <uint16_t G = S>
+  constexpr meta::EnableIf<(G % WIDE_ELEMENT_SIZE) != 0u, void> mask_residual_bits()
   {
     wide_[WIDE_ELEMENTS - 1] &= RESIDUAL_BITS_MASK;
   }
@@ -541,7 +542,7 @@ constexpr UInt<S> UInt<S>::operator~() const
   {
     retval.wide_[i] = ~wide_[i];
   }
-  retval.mask_residual_bits();
+  // retval.mask_residual_bits();
 
   return retval;
 }
@@ -633,7 +634,6 @@ constexpr UInt<S> &UInt<S>::operator+=(UInt<S> const &n)
     wide_[i] += n.ElementAt(i) + carry;
     carry = new_carry;
   }
-  mask_residual_bits();
   return *this;
 }
 
@@ -652,7 +652,6 @@ constexpr UInt<S> &UInt<S>::operator-=(UInt<S> const &n)
     wide_[i] -= n.ElementAt(i) + carry;
     carry = new_carry;
   }
-  mask_residual_bits();
   return *this;
 }
 
@@ -764,6 +763,7 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
 
   // Return the Quotient
   *this = Q;
+
   return *this;
 }
 
@@ -804,7 +804,6 @@ constexpr UInt<S> &UInt<S>::operator^=(UInt<S> const &n)
   {
     wide_[i] ^= n.ElementAt(i);
   }
-  mask_residual_bits();
   return *this;
 }
 
