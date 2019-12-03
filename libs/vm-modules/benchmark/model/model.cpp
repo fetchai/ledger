@@ -39,8 +39,6 @@ namespace benchmark {
 namespace ml {
 namespace model {
 
-namespace {
-
 void SetUp(std::shared_ptr<VM> &vm)
 {
   using VMFactory = fetch::vm_modules::VMFactory;
@@ -55,7 +53,6 @@ Ptr<String> CreateString(std::shared_ptr<VM> &vm, std::string const &str)
   return Ptr<String>{new String{vm.get(), str}};
 }
 
-/*
 Ptr<Array<uint64_t>> CreateArray(std::shared_ptr<VM> &vm, std::vector<uint64_t> const &values)
 {
   std::size_t          size = values.size();
@@ -69,7 +66,6 @@ Ptr<Array<uint64_t>> CreateArray(std::shared_ptr<VM> &vm, std::vector<uint64_t> 
 
   return array;
 }
-*/
 
 Ptr<fetch::vm_modules::math::VMTensor> CreateTensor(std::shared_ptr<VM> &        vm,
                                                     std::vector<uint64_t> const &shape)
@@ -506,8 +502,6 @@ void BM_Deserialise(::benchmark::State &state)
 //
 //
 //
-
-}  // namespace
 
 }  // namespace model
 }  // namespace ml
