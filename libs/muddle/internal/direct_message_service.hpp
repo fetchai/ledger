@@ -80,9 +80,6 @@ private:
   void OnRoutingPing(Handle handle, PacketPtr const &packet, RoutingMessage const &msg);
   void OnRoutingPong(Handle handle, PacketPtr const &packet, RoutingMessage const &msg);
   void OnRoutingRequest(Handle handle, PacketPtr const &packet, RoutingMessage const &msg);
-  void OnRoutingAccepted(Handle handle, PacketPtr const &packet, RoutingMessage const &msg);
-  void OnRoutingDisconnectRequest(Handle handle, PacketPtr const &packet,
-                                  RoutingMessage const &msg);
 
   enum class UpdateStatus
   {

@@ -95,7 +95,6 @@ public:
   void Stop();
 
   void Route(Handle handle, PacketPtr const &packet);
-  void ConnectionDropped(Handle handle);
 
   /// @name Endpoint Methods (Publicly visible)
   /// @{
@@ -143,7 +142,6 @@ public:
 
   void SetKademliaRouting(bool enable = true);
 
-  RoutingTable     routing_table() const;
   EchoCache        echo_cache() const;
   NetworkId const &network() const;
   Address const &  network_address() const;
@@ -164,9 +162,6 @@ private:
   };
 
   static constexpr std::size_t NUMBER_OF_ROUTER_THREADS = 1;
-
-  UpdateStatus AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address,
-                                          bool direct, bool broadcast);
 
   Handle LookupRandomHandle(Packet::RawAddress const &address) const;
 
@@ -199,8 +194,6 @@ private:
   crypto::SecureChannel secure_channel_{prover_};
   std::atomic<bool>     kademlia_routing_{false};
 
-  mutable Mutex  routing_table_lock_;
-  RoutingTable   routing_table_;  ///< The map routing table from address to handle (Protected by
   PeerTrackerPtr tracker_{nullptr};
 
   mutable Mutex echo_cache_lock_;
