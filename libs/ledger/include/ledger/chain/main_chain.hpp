@@ -295,13 +295,13 @@ public:
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
 
   // The whole tree of previous-next relations among cached blocks
-  mutable References                forward_references_;
-  TipsMap                           tips_;          ///< Keep track of the tips
-  HeaviestTip                       heaviest_;      ///< Heaviest block/tip
-  LooseBlockMap                     loose_blocks_;  ///< Waiting (loose) blocks
+  mutable References forward_references_;
+  TipsMap            tips_;          ///< Keep track of the tips
+  HeaviestTip        heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
   ///< The earliest block known of current heaveiest chain.
-  mutable IntBlockPtr               labeled_subchain_start_;
- 
+  mutable IntBlockPtr labeled_subchain_start_;
+
   mutable ProgressiveBloomFilter   bloom_filter_;
   telemetry::GaugePtr<std::size_t> bloom_filter_queried_bit_count_;
   telemetry::CounterPtr            bloom_filter_query_count_;
