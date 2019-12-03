@@ -84,7 +84,7 @@ const uint32_t n_basic_bms = 15, n_object_bms = 10, n_prim_bms = 25, n_math_bms 
                n_array_bms = 10, n_tensor_bms = 5, n_crypto_bms = 6;
 
 // Number of total (including int) and decimal (fixed or float) primitives
-const uint32_t n_primitives = 12, n_dec_primitives = 4;
+const uint32_t n_primitives = 13, n_dec_primitives = 5;
 
 // Index benchmarks for interpretation by "scripts/benchmark/opcode_timing.py"
 const uint32_t basic_begin = 0, basic_end = n_basic_bms;  // always run "Return"
@@ -136,7 +136,7 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
   Variant     output{};
   for (auto _ : state)
   {
-    vm->Execute(executable, "main", error, output);
+    // vm->Execute(executable, "main", error, output);
   }
 
   auto function = executable.FindFunction("main");
@@ -436,13 +436,13 @@ void ObjectBenchmarks(benchmark::State &state)
 
 void PrimitiveOpBenchmarks(benchmark::State &state)
 {
-  const static std::vector<std::string> primitives{"Int8",    "Int16",   "Int32",   "Int64",
-                                                   "UInt8",   "UInt16",  "UInt32",  "UInt64",
-                                                   "Float32", "Float64", "Fixed32", "Fixed64"};
+  const static std::vector<std::string> primitives{
+      "Int8",   "Int16",   "Int32",   "Int64",   "UInt8",   "UInt16",  "UInt32",
+      "UInt64", "Float32", "Float64", "Fixed32", "Fixed64", "Fixed128"};
 
-  const static std::vector<std::string> values{"1i8",  "1i16", "1i32",    "1i64",
-                                               "1u8",  "1u16", "1u32",    "1u64",
-                                               "0.5f", "0.5",  "0.5fp32", "0.5fp64"};
+  const static std::vector<std::string> values{"1i8",     "1i16",    "1i32",    "1i64", "1u8",
+                                               "1u16",    "1u32",    "1u64",    "0.5f", "0.5",
+                                               "0.5fp32", "0.5fp64", "0.5fp128"};
 
   auto bm_ind = static_cast<uint32_t>(state.range(0));
 
@@ -552,8 +552,10 @@ void PrimitiveOpBenchmarks(benchmark::State &state)
 
 void MathBenchmarks(benchmark::State &state)
 {
-  static std::vector<std::string> primitives{"Float32", "Float64", "Fixed32", "Fixed64"},
-      values{"0.5f", "0.5", "0.5fp32", "0.5fp64"}, alt_values{"1.5f", "1.5", "1.5fp32", "1.5fp64"};
+  static std::vector<std::string> primitives{"Float32", "Float64", "Fixed32", "Fixed64",
+                                             "Fixed128"};
+  static std::vector<std::string> values{"0.5f", "0.5", "0.5fp32", "0.5fp64", "0.5fp128"};
+  static std::vector<std::string> alt_values{"1.5f", "1.5", "1.5fp32", "1.5fp64", "1.5fp128"};
 
   auto bm_ind = static_cast<uint32_t>(state.range(0));
 
