@@ -126,6 +126,7 @@ public:
   AddressSet            outgoing() const;
   AddressSet            all_peers() const;
   AddressSet            desired_peers() const;
+  AddressSet            accessible_peers() const;
   /// @}
 
 protected:

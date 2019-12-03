@@ -621,26 +621,13 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
 
 MuddleEndpoint::AddressList Router::GetDirectlyConnectedPeers() const
 {
-  auto peers = GetDirectlyConnectedPeerSet();
+  auto peers = tracker_->accessible_peers();
   return {std::make_move_iterator(peers.begin()), std::make_move_iterator(peers.end())};
 }
 
 Router::AddressSet Router::GetDirectlyConnectedPeerSet() const
 {
-  AddressSet peers{};
-  auto const current_direct_peers = register_.GetCurrentAddressSet();
-
-  FETCH_LOCK(routing_table_lock_);
-  for (auto const &address : current_direct_peers)
-  {
-    auto const raw_address = ConvertAddress(address);
-    if (routing_table_.find(raw_address) != routing_table_.end())
-    {
-      peers.emplace(address);
-    }
-  }
-
-  return peers;
+  return tracker_->accessible_peers();
 }
 
 /**
@@ -748,8 +735,7 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
  */
 Router::Handle Router::LookupHandle(Packet::RawAddress const &raw_address) const
 {
-  Handle handle  = 0;
-  auto   address = ConvertAddress(raw_address);
+  auto address = ConvertAddress(raw_address);
 
   if (!tracker_)
   {

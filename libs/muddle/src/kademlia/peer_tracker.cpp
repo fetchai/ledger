@@ -529,6 +529,12 @@ PeerTracker::AddressSet PeerTracker::desired_peers() const
   return desired_peers_;
 }
 
+PeerTracker::AddressSet PeerTracker::accessible_peers() const
+{
+  FETCH_LOCK(mutex_);
+  return accessible_peers_;
+}
+
 void PeerTracker::OnResolvedPull(uint64_t pull_id, Address const &peer, Address const &search_for,
                                  service::Promise const &promise)
 {
