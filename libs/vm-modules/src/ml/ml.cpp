@@ -16,11 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm_modules/ml/ml.hpp"
+
 #include "vm/module.hpp"
+#include "vm_modules/math/ndarray.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/ml.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/optimisation/optimiser.hpp"
 #include "vm_modules/ml/state_dict.hpp"
@@ -38,6 +40,7 @@ void BindML(Module &module)
 {
   // Tensor - required by later functions
   math::VMTensor::Bind(module);
+  math::ITensor::Bind(module);
 
   // ml fundamentals
   VMStateDict::Bind(module);
