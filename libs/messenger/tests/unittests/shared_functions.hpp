@@ -218,16 +218,29 @@ struct Messenger
     , messenger_muddle{
           fetch::muddle::CreateMuddle("MSGN", certificate, network_manager, "127.0.0.1")}
   {
+    std::cout << " - A " << std::endl;
     network_manager.Start();
+    std::cout << " - B " << std::endl;
     messenger_muddle->Start({"tcp://127.0.0.1:" + std::to_string(port)}, {});
 
+    std::size_t n = 0;
+    std::cout << " - C " << std::endl;
     while (messenger_muddle->GetDirectlyConnectedPeers().empty())
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      ++n;
+      std::cout << " == > " << n << std::endl;
+      if (n > 50)
+      {
+        throw std::runtime_error("Failed to connect!");
+      }
     }
 
+    std::cout << " - D " << std::endl;
     auto messenger_api_addresses = messenger_muddle->GetDirectlyConnectedPeers();
+    std::cout << " - E " << std::endl;
     messenger = std::make_shared<MessengerPrototype>(messenger_muddle, messenger_api_addresses);
+    std::cout << " - F " << std::endl;
   }
 
   ProverPtr                           certificate;

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/time/to_seconds.hpp"
 #include "kademlia/peer_tracker.hpp"
+#include "core/time/to_seconds.hpp"
 
 #include <chrono>
 #include <memory>
@@ -36,14 +36,14 @@ PeerTracker::Handle PeerTracker::RandomHandle() const
 
   // decide the random index to access
   FETCH_LOCK(mutex_);
-  Distribution      table_dist{0, accessible_peers_.size() - 1};
+  Distribution      table_dist{0, directly_connected_peers_handles_.size() - 1};
   std::size_t const element = table_dist(rng);
 
-  auto it = accessible_peers_.cbegin();
+  auto it = directly_connected_peers_handles_.cbegin();
   std::advance(it, static_cast<std::ptrdiff_t>(element));
-  auto address = *it;
+  auto address = it->first;
 
-  // Getting connections
+  // Getting connections and pick an active one.
   auto connections = register_.LookupConnections(address);
   for (auto &wconn : connections)
   {
@@ -71,35 +71,28 @@ PeerTracker::Handle PeerTracker::LookupHandle(Address const &address) const
 
   // TODO(tfr): Create a cache for the search below
 
-  auto             own_kad = KademliaAddress::Create(own_address_);
-  Address          best_address{};
-  KademliaDistance best = MaxKademliaDistance();
+  auto             own_kad     = KademliaAddress::Create(own_address_);
+  Handle           best_handle = 0;
+  KademliaDistance best        = MaxKademliaDistance();
 
   {  // Finding best peer
     FETCH_LOCK(mutex_);
-    for (auto &peer : accessible_peers_)
+    for (auto const &peer : directly_connected_peers_handles_)
     {
-      KademliaAddress cmp  = KademliaAddress::Create(peer);
+      KademliaAddress cmp  = KademliaAddress::Create(peer.first);
       auto            dist = GetKademliaDistance(own_kad, cmp);
 
-      if (dist < best)
+      if ((dist < best) && (!peer.second.empty()))
       {
-        best         = dist;
-        best_address = peer;
+        best        = dist;
+        best_handle = *peer.second.begin();
       }
     }
   }
 
   // Finding handle
-  wptr       = register_.LookupConnection(best_address);
-  connection = wptr.lock();
-  if (connection)
-  {
-    // TODO(tfr): add to cache
-    return connection->handle();
-  }
-
-  return 0;
+  // TODO: Add cache
+  return best_handle;
 }
 
 PeerTracker::PeerTrackerPtr PeerTracker::New(PeerTracker::Duration const &interval,
@@ -146,13 +139,22 @@ void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hi
 
   PeerInfo info;
   info.address = address;
-  info.uri     = hint.ToUri();
+  info.uri.Parse(hint.ToUri());
   peer_table_.ReportExistence(info, own_address_);
+
+  desired_uris_.insert(info.uri);
+}
+
+void PeerTracker::AddDesiredPeer(PeerTracker::Uri const &uri)
+{
+  FETCH_LOCK(mutex_);
+  desired_uris_.insert(uri);
 }
 
 void PeerTracker::RemoveDesiredPeer(Address const &address)
 {
   FETCH_LOCK(mutex_);
+  desired_uris_.erase(peer_table_.GetUri(address));
   desired_peers_.erase(address);
 }
 
@@ -173,16 +175,32 @@ void PeerTracker::SetConfiguration(TrackerConfiguration const &config)
   tracker_configuration_ = config;
 }
 
-void PeerTracker::AddConnectionHandleToQueue(ConnectionHandle handle)
+void PeerTracker::AddConnectionHandle(ConnectionHandle handle)
 {
   FETCH_LOCK(mutex_);
 
   // Registering new handle if feature is enabled
-  if (tracker_configuration_.register_connections)
+  UnresolvedConnection conn_details;
+  conn_details.handle = handle;
+  new_handles_.push(conn_details);
+}
+
+void PeerTracker::RemoveConnectionHandle(ConnectionHandle handle)
+{
+  FETCH_LOCK(mutex_);
+  auto address = register_.GetAddress(handle);
+  auto it      = directly_connected_peers_handles_.find(address);
+
+  if (it == directly_connected_peers_handles_.end())
   {
-    UnresolvedConnection conn_details;
-    conn_details.handle = handle;
-    new_handles_.push(conn_details);
+    return;
+  }
+
+  it->second.erase(handle);
+  if (it->second.empty())
+  {
+    directly_connected_peers_.erase(it->first);
+    directly_connected_peers_handles_.erase(it);
   }
 }
 
@@ -202,13 +220,25 @@ void PeerTracker::ProcessConnectionHandles()
     }
     else if (state == ConnectionState::RESOLVED)
     {
+      // Adding it to the set of existing peers
+      auto it = directly_connected_peers_handles_.find(details.address);
+      if (it == directly_connected_peers_handles_.end())
+      {
+        directly_connected_peers_handles_.insert({details.address, {}});
+        it = directly_connected_peers_handles_.find(details.address);
+
+        directly_connected_peers_.insert(details.address);
+      }
+
+      it->second.insert(details.handle);
+
       // If not ports were detected, we request the client for its server ports
       if (details.uris.empty())
       {
         // make the call to the remote service
+        std::cout << "Making call!!" << std::endl;
         auto promise = rpc_client_.CallSpecificAddress(details.address, RPC_MUDDLE_KADEMLIA,
                                                        PeerTrackerProtocol::GET_MUDDLE_URIS);
-
         // wrap the promise is a task
         auto task = std::make_shared<PromiseTask>(
             promise, tracker_configuration_.promise_timeout,
@@ -310,17 +340,14 @@ void PeerTracker::ConnectToPeers(AddressSet &                  connections_made,
     // If not connected, we connect
     if (currently_outgoing.find(p.address) == currently_outgoing.end())
     {
-      auto suri = peer_table_.GetUri(p.address);
+      auto uri = peer_table_.GetUri(p.address);
 
       // If we are not connected, we connect.
-      network::Uri uri;
-      if (suri.empty())
+      if (!uri.IsMuddleAddress())
       {
         no_uri_.insert(p.address);
         continue;
       }
-
-      uri.Parse(suri);
 
       FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to ", uri.ToString(), " with address ",
                      p.address.ToBase64());
@@ -529,18 +556,20 @@ PeerTracker::AddressSet PeerTracker::desired_peers() const
   return desired_peers_;
 }
 
-PeerTracker::AddressSet PeerTracker::accessible_peers() const
+PeerTracker::AddressSet PeerTracker::directly_connected_peers() const
 {
   FETCH_LOCK(mutex_);
-  return accessible_peers_;
+  return directly_connected_peers_;
 }
 
 void PeerTracker::OnResolvedPull(uint64_t pull_id, Address const &peer, Address const &search_for,
                                  service::Promise const &promise)
 {
   FETCH_LOCK(mutex_);
+  std::cout << "-------======== Got result =========---------" << std::endl;
   if (promise->state() == service::PromiseState::SUCCESS)
   {
+    std::cout << " - success" << std::endl;
     // Reporting that peer is still responding
     peer_table_.ReportLiveliness(peer, own_address_);
 
@@ -688,18 +717,15 @@ void PeerTracker::ConnectToDesiredPeers()
     // Ignoring addresses found in incoming
     if (currently_outgoing.find(best_peer) == currently_outgoing.end())
     {
-      auto suri = peer_table_.GetUri(best_peer);
+      auto uri = peer_table_.GetUri(best_peer);
 
       // If we are not connected, we connect.
-      network::Uri uri;
-      if (suri.empty())
+      if (!uri.IsMuddleAddress())
       {
         no_uri_.insert(best_peer);
         FETCH_LOG_WARN(logging_name_.c_str(), " - URI failed! ", peer.ToBase64());
         continue;
       }
-
-      uri.Parse(suri);
 
       FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to ", uri.ToString(), " with address ",
                      best_peer.ToBase64());
@@ -725,17 +751,40 @@ void PeerTracker::Periodically()
   keep_connections_.clear();
   no_uri_.clear();
 
+  // Converting URIs into addresses if possible
+  std::unordered_set<Uri> new_uris;
+  for (auto const uri : desired_uris_)
+  {
+    if (peer_table_.HasUri(uri))
+    {
+      auto address = peer_table_.GetAddressFromUri(uri);
+      FETCH_LOG_INFO(logging_name_.c_str(), "Address from URI found ", uri.ToString(), ": ",
+                     address.ToBase64());
+
+      desired_peers_.insert(std::move(address));
+    }
+    else
+    {
+      new_uris.insert(uri);
+    }
+  }
+  std::swap(new_uris, desired_uris_);
+
+  // Adding the unresolved URIs to the connection pool
+  for (auto const &uri : desired_uris_)
+  {
+    FETCH_LOG_INFO(logging_name_.c_str(), "Adding peer with unknown address: ", uri.ToString());
+    connections_.AddPersistentPeer(uri);
+  }
+
   if (tracker_configuration_.allow_desired_connections)
   {
     // Making connections to user defined endpoints
     ConnectToDesiredPeers();
   }
 
-  if (tracker_configuration_.register_connections)
-  {
-    // Resolving all handles and adding their details to the peer table.
-    ProcessConnectionHandles();
-  }
+  // Resolving all handles and adding their details to the peer table.
+  ProcessConnectionHandles();
 
   if (tracker_configuration_.pull_peers)
   {
@@ -807,17 +856,6 @@ void PeerTracker::Periodically()
   {
     DisconnectFromPeers();
   }
-
-  // Finally, we create a list of accessible peers
-  accessible_peers_.clear();
-  for (auto &p : keep_connections_)
-  {
-    auto connection = register_.LookupConnection(p).lock();
-    if (connection)
-    {
-      accessible_peers_.insert(p);
-    }
-  }
 }
 
 PeerTracker::PeerTracker(PeerTracker::Duration const &interval, core::Reactor &reactor,
@@ -868,8 +906,10 @@ PeerTracker::ConnectionState PeerTracker::ResolveConnectionDetails(UnresolvedCon
     if (connection->Type() == network::AbstractConnection::TYPE_OUTGOING)
     {
       network::Peer peer{connection->Address(), connection->port()};
+      Uri           uri;
+      uri.Parse(peer.ToUri());
 
-      details.uris = NetworkUris({peer.ToUri()});
+      details.uris = NetworkUris({uri});
       RegisterConnectionDetails(details);
     }
 

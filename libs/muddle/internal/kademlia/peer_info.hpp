@@ -19,6 +19,7 @@
 
 #include "core/serializers/group_definitions.hpp"
 #include "kademlia/primitives.hpp"
+#include "network/uri.hpp"
 
 #include <chrono>
 #include <deque>
@@ -42,7 +43,7 @@ struct PeerInfo
   Address          address{};
   KademliaAddress  kademlia_address;
   KademliaDistance distance{};
-  std::string      uri{};
+  network::Uri     uri{};
   /// @}
 
   Address  last_reporter{};

@@ -30,6 +30,7 @@
 #include "network/management/abstract_connection.hpp"
 #include "telemetry/telemetry.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -41,7 +42,6 @@
 namespace fetch {
 namespace muddle {
 
-class Dispatcher;
 class MuddleRegister;
 class PeerTracker;
 
@@ -80,8 +80,7 @@ public:
   static Packet::Address    ConvertAddress(Packet::RawAddress const &address);
 
   // Construction / Destruction
-  Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispatcher &dispatcher,
-         Prover const &prover);
+  Router(NetworkId network_id, Address address, MuddleRegister &reg, Prover const &prover);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
@@ -115,9 +114,6 @@ public:
             Payload const &payload, Options options) override;
 
   void Broadcast(uint16_t service, uint16_t channel, Payload const &payload) override;
-
-  Response Exchange(Address const &address, uint16_t service, uint16_t channel,
-                    Payload const &request) override;
 
   SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) override;
   SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) override;
@@ -196,7 +192,6 @@ private:
   MuddleRegister &      register_;
   DirectMessageHandler  direct_message_handler_;
   BlackList             blacklist_;
-  Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
   NetworkId             network_id_;
   crypto::Prover const &prover_;
@@ -211,6 +206,13 @@ private:
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;
+
+  uint16_t GetNextCounter()
+  {
+    return counter_++;
+  }
+
+  std::atomic<uint16_t> counter_{0};
 
   /// Telemetry
   /// @{

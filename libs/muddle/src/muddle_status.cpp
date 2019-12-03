@@ -33,8 +33,6 @@ namespace fetch {
 namespace muddle {
 namespace {
 
-using byte_array::ConstByteArray;
-
 /**
  * For a given set of peer selector address, build the JSON representation
  *

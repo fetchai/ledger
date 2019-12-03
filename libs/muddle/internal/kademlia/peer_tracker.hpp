@@ -54,6 +54,7 @@ public:
   using PendingPromised      = std::unordered_map<uint64_t, std::shared_ptr<PromiseTask>>;
   using ConnectionHandle     = network::AbstractConnection::ConnectionHandleType;
   using ConstByteArray       = byte_array::ConstByteArray;
+  using Uri                  = network::Uri;
 
   // PeerTrackerProtocol::PortsList;
   using ConnectionPriorityMap  = std::unordered_map<Address, AddressPriority>;
@@ -63,8 +64,9 @@ public:
   using AddressTimestamp       = std::unordered_map<Address, TimePoint>;
   using PeerInfoList           = std::deque<PeerInfo>;
   using BlackList              = fetch::muddle::Blacklist;
-  using NetworkUris            = std::vector<std::string>;
+  using NetworkUris            = std::vector<Uri>;
   using Handle                 = network::AbstractConnection::ConnectionHandleType;
+  using AddressToHandles       = std::unordered_map<Address, std::unordered_set<Handle>>;
 
   struct UnresolvedConnection
   {
@@ -90,6 +92,7 @@ public:
   AddressSet GetDesiredPeers() const;
   void       AddDesiredPeer(Address const &address);
   void       AddDesiredPeer(Address const &address, network::Peer const &hint);
+  void       AddDesiredPeer(Uri const &uri);
   void       RemoveDesiredPeer(Address const &address);
   // TODO(tfr): Address GetRoutingAddress(Address const& destination);
   /// @}
@@ -126,16 +129,30 @@ public:
   AddressSet            outgoing() const;
   AddressSet            all_peers() const;
   AddressSet            desired_peers() const;
-  AddressSet            accessible_peers() const;
+  AddressSet            directly_connected_peers() const;
   /// @}
 
 protected:
   friend class Muddle;
   /// Methods integrate new connections into the peer tracker.
   /// @{
-  void AddConnectionHandleToQueue(ConnectionHandle handle);
+  void AddConnectionHandle(ConnectionHandle handle);
+  void RemoveConnectionHandle(ConnectionHandle handle);
   void UpdateExternalUris(NetworkUris const &uris);
   void SetConfiguration(TrackerConfiguration const &config);
+  void Stop()
+  {
+    FETCH_LOG_WARN(logging_name_.c_str(), "Stopping peer tracker.");
+    FETCH_LOCK(mutex_);
+    tracker_configuration_ = TrackerConfiguration::AllOff();
+    desired_peers_.clear();
+    kademlia_connection_priority_.clear();
+    kademlia_prioritized_peers_.clear();
+    kademlia_connections_.clear();
+    longrange_connection_priority_.clear();
+    longrange_prioritized_peers_.clear();
+    longrange_connections_.clear();
+  }
   /// @}
 
 private:
@@ -194,12 +211,14 @@ private:
   PeerTrackerProtocol  peer_tracker_protocol_;
   TrackerConfiguration tracker_configuration_;
   AddressSet           keep_connections_{};
-  AddressSet           accessible_peers_{};
+  AddressSet           directly_connected_peers_{};
+  AddressToHandles     directly_connected_peers_handles_{};
   /// @}
 
   /// User defined connections
   /// @{
-  AddressSet desired_peers_;
+  AddressSet              desired_peers_;
+  std::unordered_set<Uri> desired_uris_;
   /// @}
 
   /// Handling new comers

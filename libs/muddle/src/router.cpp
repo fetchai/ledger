@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dispatcher.hpp"
+#include "router.hpp"
 #include "kademlia/peer_tracker.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
-#include "router.hpp"
 #include "routing_message.hpp"
 #include "xor_metric.hpp"
 
@@ -239,13 +238,11 @@ Packet::Address Router::ConvertAddress(Packet::RawAddress const &address)
  * @param address The address of the current node
  * @param reg The connection register
  */
-Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispatcher &dispatcher,
-               Prover const &prover)
+Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Prover const &prover)
   : name_{GenerateLoggingName(BASE_NAME, network_id)}
   , address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
-  , dispatcher_(dispatcher)
   , registrar_(network_id)
   , network_id_(network_id)
   , prover_(prover)
@@ -366,7 +363,7 @@ Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
 void Router::Route(Handle handle, PacketPtr const &packet)
 {
   FETCH_LOG_TRACE(logging_name_, "RX: (conn: ", handle, ") ", DescribePacket(*packet));
-
+  std::cout << "Routing message" << std::endl;
   // input packet size information
   uint64_t const packet_size = packet->GetPacketSize();
   rx_packet_total_->increment();
@@ -392,11 +389,13 @@ void Router::Route(Handle handle, PacketPtr const &packet)
 
   if (packet->IsDirect())
   {
+    std::cout << "This is a direct message" << std::endl;
     // when it is a direct message we must handle this
     DispatchDirect(handle, packet);
   }
   else if (packet->GetTargetRaw() == address_)
   {
+    std::cout << "XXX" << std::endl;
     // we do not care about the transmitter, since this was an addition for the trust system.
     DispatchPacket(packet, packet->GetSender());
   }
@@ -406,6 +405,7 @@ void Router::Route(Handle handle, PacketPtr const &packet)
     // TODO(KLL): this may not be the association we're looking for.
     AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false, packet->IsBroadcast());
 
+    std::cout << "Re-routing" << std::endl;
     // if this message does not belong to us we must route it along the path
     RoutePacket(packet);
   }
@@ -465,7 +465,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
                   Payload const &message)
 {
   // get the next counter for this message
-  uint16_t const counter = dispatcher_.GetNextCounter();
+  uint16_t const counter = GetNextCounter();
 
   Send(address, service, channel, counter, message, OPTION_DEFAULT);
 }
@@ -473,7 +473,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
 void Router::Send(Address const &address, uint16_t service, uint16_t channel,
                   Payload const &message, Options options)
 {
-  uint16_t const counter = dispatcher_.GetNextCounter();
+  uint16_t const counter = GetNextCounter();
 
   Send(address, service, channel, counter, message, options);
 }
@@ -496,6 +496,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
 void Router::Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
                   Payload const &payload, Options options)
 {
+
   // format the packet
   auto packet =
       FormatPacket(address_, network_id_, service, channel, message_num, DEFAULT_TTL, payload);
@@ -541,7 +542,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
 void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payload)
 {
   // get the next counter for this message
-  uint16_t const counter = dispatcher_.GetNextCounter();
+  uint16_t const counter = GetNextCounter();
 
   auto packet =
       FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, payload);
@@ -558,39 +559,6 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
 void Router::Cleanup()
 {
   CleanEchoCache();
-}
-
-/**
- * Send a request and expect a response back from the target address
- *
- * @param request The request to be sent
- * @param service The service identifier
- * @param channel The channel identifier
- * @return The promise of a response back from the target address
- */
-Router::Response Router::Exchange(Address const &address, uint16_t service, uint16_t channel,
-                                  Payload const &request)
-{
-  // get the next counter for this message
-  uint16_t const counter = dispatcher_.GetNextCounter();
-
-  // register with the dispatcher that we are expecting a response
-  auto promise = dispatcher_.RegisterExchange(service, channel, counter, address);
-
-  FETCH_LOG_TRACE(logging_name_, "Exchange Request: ", ToBase64(address), " (", service, '-',
-                  channel, '-', counter, ") prom: ", promise->id());
-
-  // format the packet and route the packet
-  auto packet =
-      FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, request);
-  packet->SetTarget(address);
-  packet->SetExchange();
-  Sign(packet);
-
-  RoutePacket(packet, false);
-
-  // return the response
-  return Response(std::move(promise));
 }
 
 /**
@@ -621,13 +589,31 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
 
 MuddleEndpoint::AddressList Router::GetDirectlyConnectedPeers() const
 {
-  auto peers = tracker_->accessible_peers();
+  auto peers = GetDirectlyConnectedPeerSet();
   return {std::make_move_iterator(peers.begin()), std::make_move_iterator(peers.end())};
+  // TODO: Reinstate
+  //  auto peers = tracker_->directly_connected_peers();
+  //  return {std::make_move_iterator(peers.begin()), std::make_move_iterator(peers.end())};
 }
 
 Router::AddressSet Router::GetDirectlyConnectedPeerSet() const
 {
-  return tracker_->accessible_peers();
+  AddressSet peers{};
+  auto const current_direct_peers = register_.GetCurrentAddressSet();
+
+  FETCH_LOCK(routing_table_lock_);
+  for (auto const &address : current_direct_peers)
+  {
+    auto const raw_address = ConvertAddress(address);
+    if (routing_table_.find(raw_address) != routing_table_.end())
+    {
+      peers.emplace(address);
+    }
+  }
+
+  return peers;
+  // TODO: Reinstate
+  //  return tracker_->directly_connected_peers();
 }
 
 /**
@@ -776,18 +762,10 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet)
 
   // look up the connection
   auto conn = register_.LookupConnection(handle).lock();
+  std::cout << "SendToConnection" << std::endl;
   if (conn)
   {
-    // determine if this packet originated from this node and that we are expecting an exchange
-    if (packet->IsExchange() && (address_ == packet->GetSender()))
-    {
-      // notify the dispatcher about the message so that it can associate the connection handle
-      // with any pending promises. This is required to ensure clean handling of promises which
-      // fail due to connection loss.
-      dispatcher_.NotifyMessage(handle, packet->GetService(), packet->GetChannel(),
-                                packet->GetMessageNum());
-    }
-
+    std::cout << " - ready" << std::endl;
     // serialize the packet to the buffer
     ByteArray buffer;
     buffer.Resize(packet->GetPacketSize());
@@ -796,6 +774,7 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet)
       FETCH_LOG_TRACE(logging_name_, "TX: (conn: ", handle, ") ", DescribePacket(*packet));
 
       // dispatch to the connection object
+      std::cout << " - send" << std::endl;
       conn->Send(buffer);
 
       tx_packet_total_->increment();
@@ -881,6 +860,7 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     Handle handle = LookupHandle(packet->GetTargetRaw());
     if (handle != 0u)
     {
+
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
       normal_routing_total_->increment();
@@ -965,8 +945,8 @@ void Router::DispatchPacket(PacketPtr const &packet, Address const &transmitter)
   dispatch_enqueued_total_->increment();
 
   dispatch_thread_pool_->Post([this, packet, transmitter]() {
-    bool const isPossibleExchangeResponse = !packet->IsExchange();
-
+    //    bool const isPossibleExchangeResponse = !packet->IsExchange();
+    std::cout << "dispatcher thread" << std::endl;
     // decrypt encrypted messages
     if (packet->IsEncrypted())
     {
@@ -987,20 +967,11 @@ void Router::DispatchPacket(PacketPtr const &packet, Address const &transmitter)
       rx_encrypted_packet_success_total_->increment();
     }
 
-    // determine if this was an exchange based node
-    if (isPossibleExchangeResponse && dispatcher_.Dispatch(packet))
-    {
-      exchange_dispatch_total_->increment();
-      dispatch_complete_total_->increment();
-
-      // the dispatcher has "claimed" this packet as there was an outstanding promise waiting for it
-      return;
-    }
-
     // If no exchange message has claimed this then attempt to dispatch it through our normal system
     // of message subscriptions.
     if (registrar_.Dispatch(packet, transmitter))
     {
+      std::cout << "Used registrar" << std::endl;
       subscription_dispatch_total_->increment();
       dispatch_complete_total_->increment();
       return;

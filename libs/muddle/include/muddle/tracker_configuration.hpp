@@ -55,10 +55,10 @@ struct TrackerConfiguration
     TrackerConfiguration conf;
 
     conf.allow_desired_connections = true;
-    conf.register_connections      = false;
+    conf.register_connections      = true;
     conf.pull_peers                = false;
     conf.connect_to_nearest        = false;
-    conf.disconnect_duplicates     = false;
+    conf.disconnect_duplicates     = true;
     conf.trim_peer_list            = false;
     return conf;
   }
@@ -76,7 +76,7 @@ struct TrackerConfiguration
 
   uint64_t max_kademlia_connections{3};
   uint64_t max_longrange_connections{1};
-  uint64_t max_desired_connections{2};
+  uint64_t max_desired_connections{16000};
   uint64_t max_discovery_connections{2};
 
   /// Priority paramters

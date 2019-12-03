@@ -201,7 +201,7 @@ ConstByteArray ReadibleAddress(Address const &address)
 
 int main()
 {
-  uint64_t N       = 40;  // TODO(tfr): Make parameter
+  uint64_t N       = 10;  // TODO(tfr): Make parameter
   auto     network = Network::New(N);
 
   //  MakeKademliaNetwork(network);

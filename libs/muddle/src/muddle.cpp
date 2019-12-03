@@ -59,9 +59,8 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , external_address_(std::move(external_address))
   , node_address_(certificate_->identity().identifier())
   , network_manager_(nm)
-  , dispatcher_(network_id, certificate_->identity().identifier())
   , register_(std::make_shared<MuddleRegister>(network_id))
-  , router_(network_id, node_address_, *register_, dispatcher_, *certificate_)
+  , router_(network_id, node_address_, *register_, *certificate_)
   , clients_(network_id)
   , network_id_(network_id)
   , reactor_{"muddle"}
@@ -80,10 +79,11 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   register_->OnConnectionLeft([this](Handle handle) {
     router_.ConnectionDropped(handle);
     direct_message_service_.SignalConnectionLeft(handle);
+    peer_tracker_->RemoveConnectionHandle(handle);
   });
 
   register_->OnConnectionEntered(
-      [this](Handle handle) { peer_tracker_->AddConnectionHandleToQueue(handle); });
+      [this](Handle handle) { peer_tracker_->AddConnectionHandle(handle); });
 
   // register the status update
   clients_.SetStatusCallback(
@@ -212,6 +212,8 @@ bool Muddle::Start(Ports const &ports)
 void Muddle::Stop()
 {
   // stop all the periodic actions
+  peer_tracker_->Stop();
+
   reactor_.Stop();
   router_.Stop();
 
@@ -403,6 +405,7 @@ void Muddle::ConnectTo(Addresses const &addresses)
 void Muddle::ConnectTo(network::Uri const &uri)
 {
   clients_.AddPersistentPeer(uri);
+  //  peer_tracker_->AddDesiredPeer(uri);
 }
 
 void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint)
@@ -418,6 +421,7 @@ void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint)
   {
     if (uri_hint.IsTcpPeer())
     {
+      // TODO: Fix this pass URI instead
       peer_tracker_->AddDesiredPeer(address, uri_hint.GetTcpPeer());
     }
     else
@@ -503,11 +507,6 @@ void Muddle::SetConfidence(ConfidenceMap const &map)
   }
 }
 
-Dispatcher const &Muddle::dispatcher() const
-{
-  return dispatcher_;
-}
-
 Router const &Muddle::router() const
 {
   return router_;
@@ -568,7 +567,10 @@ void Muddle::RunPeriodicMaintenance()
 
       network::Peer peer{external_address_, port};
 
-      external_uris.emplace_back(peer.ToUri());
+      Uri uri;
+      uri.Parse(peer.ToUri());
+
+      external_uris.emplace_back(uri);
       external_addresses.emplace_back(std::move(peer));
       FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
     }
@@ -606,8 +608,6 @@ void Muddle::RunPeriodicMaintenance()
     Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
     if (time_since_last_cleanup >= CLEANUP_INTERVAL)
     {
-      // clean up and pending message handlers and also trigger the timeout logic
-      dispatcher_.Cleanup();
 
       // clean up echo caches and other temporary stored objects
       router_.Cleanup();
@@ -714,6 +714,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
   auto const &tcp_peer = peer.GetTcpPeer();
 
   client.Connect(tcp_peer.address(), tcp_peer.port());
+  std::cout << "DONE!!" << std::endl;
 }
 
 }  // namespace muddle

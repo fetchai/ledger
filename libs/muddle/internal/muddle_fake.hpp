@@ -153,13 +153,6 @@ public:
     FakeNetwork::BroadcastPacket(packet);
   }
 
-  Response Exchange(Address const & /*address*/, uint16_t /*service*/, uint16_t /*channel*/,
-                    Payload const & /*request*/) override
-  {
-    throw std::runtime_error("Exchange functionality not implemented");
-    return {};
-  }
-
   SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) override
   {
     return registrar_.Register(service, channel);
