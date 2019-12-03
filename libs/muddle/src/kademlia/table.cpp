@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "kademlia/table.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "crypto/sha1.hpp"
-#include "kademlia/table.hpp"
 
 namespace fetch {
 namespace muddle {
@@ -306,7 +306,8 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
 
     // Ensures that peer information persists over time
     // even if the peer disappears from the log_bucket.
-    know_peers_[address] = peerinfo;
+    know_peers_[address]       = peerinfo;
+    known_uris_[peerinfo->uri] = peerinfo;
   }
 
   // Updating activity information
@@ -379,9 +380,10 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
   {
     // Updating
     // TODO(tfr): Update to time stamped certificiates
-    if (!info.uri.empty())
+    if (info.uri.IsMuddleAddress())
     {
-      it->second->uri = info.uri;
+      it->second->uri              = info.uri;
+      known_uris_[it->second->uri] = it->second;
     }
     it->second->last_reporter = reporter;
   }

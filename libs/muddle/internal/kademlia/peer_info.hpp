@@ -19,6 +19,7 @@
 
 #include "core/serializers/group_definitions.hpp"
 #include "kademlia/primitives.hpp"
+#include "network/uri.hpp"
 
 #include <chrono>
 #include <deque>
@@ -32,6 +33,7 @@ struct PeerInfo
   using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
   using Address   = Packet::Address;
+  using Uri       = network::Uri;
 
   Timepoint first_seen{Clock::now()};
   Timepoint last_activity{};
@@ -42,7 +44,7 @@ struct PeerInfo
   Address          address{};
   KademliaAddress  kademlia_address;
   KademliaDistance distance{};
-  std::string      uri{};
+  Uri              uri{};
   /// @}
 
   Address  last_reporter{};

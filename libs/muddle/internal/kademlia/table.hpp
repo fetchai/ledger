@@ -37,6 +37,8 @@ public:
   using Address        = Packet::Address;
   using PeerInfoPtr    = std::shared_ptr<PeerInfo>;
   using PeerMap        = std::unordered_map<Address, PeerInfoPtr>;
+  using Uri            = network::Uri;
+  using UriToPeerMap   = std::unordered_map<Uri, PeerInfoPtr>;
   using Port           = uint16_t;
   using PortList       = std::vector<Port>;
   using ConstByteArray = byte_array::ConstByteArray;
@@ -69,6 +71,21 @@ public:
   void ReportExistence(PeerInfo const &info, Address const &reporter);
   void ReportFailure(Address const &address, Address const &reporter);
   PeerInfoPtr GetPeerDetails(Address const &address);
+  bool        HasUri(Uri const &uri) const
+  {
+    auto it = known_uris_.find(uri);
+    return (it != known_uris_.end()) && (!it->second->address.empty());
+  }
+
+  Address GetAddressFromUri(Uri const &uri) const
+  {
+    auto it = known_uris_.find(uri);
+    if (it == known_uris_.end())
+    {
+      return {};
+    }
+    return it->second->address;
+  }
   /// @}
 
   /// For connection maintenance
@@ -82,12 +99,12 @@ public:
     return know_peers_.size();
   }
 
-  std::string GetUri(Address const &address)
+  Uri GetUri(Address const &address)
   {
     auto it = know_peers_.find(address);
     if (it == know_peers_.end())
     {
-      return "";
+      return {};
     }
     return it->second->uri;
   }
@@ -117,6 +134,7 @@ private:
   Buckets            by_logarithm_;
   Buckets            by_hamming_;
   PeerMap            know_peers_;
+  UriToPeerMap       known_uris_;
 
   uint64_t first_non_empty_bucket_{KADEMLIA_MAX_ID_BITS};
   uint64_t kademlia_max_peers_per_bucket_{20};

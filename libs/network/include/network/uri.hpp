@@ -70,6 +70,10 @@ public:
   /// @{
   bool IsTcpPeer() const;
   bool IsMuddleAddress() const;
+  bool IsValid() const
+  {
+    return IsTcpPeer() || IsMuddleAddress();
+  }
 
   Peer const &          GetTcpPeer() const;
   ConstByteArray const &GetMuddleAddress() const;
@@ -149,7 +153,10 @@ public:
 
     if (!x.Parse(uri))
     {
-      throw std::runtime_error("Failed to deserialize uri");
+      FETCH_LOG_ERROR("Uri", "Failed to deserialise URI.");
+      // TODO: This is undesired behaviour  as undefined URIs cannot be
+      // transmitted
+      // throw std::runtime_error("Failed to deserialize uri");
     }
   }
 };

@@ -210,6 +210,8 @@ bool Muddle::Start(Ports const &ports)
  */
 void Muddle::Stop()
 {
+  peer_tracker_->Stop();
+
   // stop all the periodic actions
   reactor_.Stop();
   router_.Stop();
@@ -562,7 +564,11 @@ void Muddle::RunPeriodicMaintenance()
 
       network::Peer peer{external_address_, port};
 
-      external_uris.emplace_back(peer.ToUri());
+      Uri uri;
+      uri.Parse(peer.ToUri());
+
+      external_uris.emplace_back(uri);
+
       external_addresses.emplace_back(std::move(peer));
       FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
     }

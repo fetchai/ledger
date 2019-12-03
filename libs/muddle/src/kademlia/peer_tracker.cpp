@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/time/to_seconds.hpp"
 #include "kademlia/peer_tracker.hpp"
+#include "core/time/to_seconds.hpp"
 
 #include <chrono>
 #include <memory>
@@ -71,8 +71,16 @@ void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hi
 
   PeerInfo info;
   info.address = address;
-  info.uri     = hint.ToUri();
+  info.uri.Parse(hint.ToUri());
   peer_table_.ReportExistence(info, own_address_);
+
+  desired_uris_.insert(info.uri);
+}
+
+void PeerTracker::AddDesiredPeer(PeerTracker::Uri const &uri)
+{
+  FETCH_LOCK(mutex_);
+  desired_uris_.insert(uri);
 }
 
 void PeerTracker::RemoveDesiredPeer(Address const &address)
@@ -235,17 +243,14 @@ void PeerTracker::ConnectToPeers(AddressSet &                  connections_made,
     // If not connected, we connect
     if (currently_outgoing.find(p.address) == currently_outgoing.end())
     {
-      auto suri = peer_table_.GetUri(p.address);
+      auto uri = peer_table_.GetUri(p.address);
 
       // If we are not connected, we connect.
-      network::Uri uri;
-      if (suri.empty())
+      if (!uri.IsValid())
       {
         no_uri_.insert(p.address);
         continue;
       }
-
-      uri.Parse(suri);
 
       FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to ", uri.ToString(), " with address ",
                      p.address.ToBase64());
@@ -607,18 +612,15 @@ void PeerTracker::ConnectToDesiredPeers()
     // Ignoring addresses found in incoming
     if (currently_outgoing.find(best_peer) == currently_outgoing.end())
     {
-      auto suri = peer_table_.GetUri(best_peer);
+      auto uri = peer_table_.GetUri(best_peer);
 
       // If we are not connected, we connect.
-      network::Uri uri;
-      if (suri.empty())
+      if (!uri.IsValid())
       {
         no_uri_.insert(best_peer);
         FETCH_LOG_WARN(logging_name_.c_str(), " - URI failed! ", peer.ToBase64());
         continue;
       }
-
-      uri.Parse(suri);
 
       FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to ", uri.ToString(), " with address ",
                      best_peer.ToBase64());
@@ -788,7 +790,10 @@ PeerTracker::ConnectionState PeerTracker::ResolveConnectionDetails(UnresolvedCon
     {
       network::Peer peer{connection->Address(), connection->port()};
 
-      details.uris = NetworkUris({peer.ToUri()});
+      Uri uri;
+      uri.Parse(peer.ToUri());
+
+      details.uris = NetworkUris({uri});
       RegisterConnectionDetails(details);
     }
 

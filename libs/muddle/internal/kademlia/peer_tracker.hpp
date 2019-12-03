@@ -63,7 +63,8 @@ public:
   using AddressTimestamp       = std::unordered_map<Address, TimePoint>;
   using PeerInfoList           = std::deque<PeerInfo>;
   using BlackList              = fetch::muddle::Blacklist;
-  using NetworkUris            = std::vector<std::string>;
+  using Uri                    = network::Uri;
+  using NetworkUris            = std::vector<Uri>;
   using Handle                 = network::AbstractConnection::ConnectionHandleType;
 
   struct UnresolvedConnection
@@ -89,7 +90,9 @@ public:
   /// @{
   AddressSet GetDesiredPeers() const;
   void       AddDesiredPeer(Address const &address);
-  void       AddDesiredPeer(Address const &address, network::Peer const &hint);
+  void       AddDesiredPeer(Address const &      address,
+                            network::Peer const &hint);  // TODO: change hint to URI
+  void       AddDesiredPeer(Uri const &uri);
   void       RemoveDesiredPeer(Address const &address);
   // TODO(tfr): Address GetRoutingAddress(Address const& destination);
   /// @}
@@ -174,6 +177,19 @@ protected:
   void AddConnectionHandleToQueue(ConnectionHandle handle);
   void UpdateExternalUris(NetworkUris const &uris);
   void SetConfiguration(TrackerConfiguration const &config);
+  void Stop()
+  {
+    FETCH_LOG_WARN(logging_name_.c_str(), "Stopping peer tracker.");
+    FETCH_LOCK(mutex_);
+    tracker_configuration_ = TrackerConfiguration::AllOff();
+    desired_peers_.clear();
+    kademlia_connection_priority_.clear();
+    kademlia_prioritized_peers_.clear();
+    kademlia_connections_.clear();
+    longrange_connection_priority_.clear();
+    longrange_prioritized_peers_.clear();
+    longrange_connections_.clear();
+  }
   /// @}
 
 private:
@@ -237,7 +253,8 @@ private:
 
   /// User defined connections
   /// @{
-  AddressSet desired_peers_;
+  AddressSet              desired_peers_;
+  std::unordered_set<Uri> desired_uris_;
   /// @}
 
   /// Handling new comers

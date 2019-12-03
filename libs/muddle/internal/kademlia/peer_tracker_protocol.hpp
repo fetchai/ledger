@@ -21,6 +21,7 @@
 #include "kademlia/table.hpp"
 #include "muddle/address.hpp"
 #include "network/service/protocol.hpp"
+#include "network/uri.hpp"
 
 #include <atomic>
 #include <memory>
@@ -33,7 +34,7 @@ class PeerTrackerProtocol : public service::Protocol
 public:
   using Peers          = std::deque<PeerInfo>;
   using ConstByteArray = byte_array::ConstByteArray;
-  using NetworkUris    = std::vector<std::string>;
+  using NetworkUris    = std::vector<network::Uri>;
   enum
   {
     PING            = 1,
@@ -68,7 +69,16 @@ private:
 
   Peers FindPeers(Address const &address)
   {
-    return table_.FindPeer(address);
+    auto  peers = table_.FindPeer(address);
+    Peers ret;
+    for (auto &p : peers)
+    {
+      if (p.uri.IsValid())
+      {
+        ret.push_back(p);
+      }
+    }
+    return ret;
   }
 
   NetworkUris GetMuddleUris()
