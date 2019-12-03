@@ -765,6 +765,7 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &raw_address) const
 
 void Router::SetKademliaRouting(bool enable)
 {
+  // TODO(tfr): get rid of this
   kademlia_routing_ = enable;
 }
 
@@ -773,37 +774,10 @@ void Router::SetKademliaRouting(bool enable)
  * @param address paremeter not used
  * @return The random handle, or zero if the routing table is empty
  */
+// TODO(tfr): This function is not needed, just use tracker_->RandomHandle directly
 Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/) const
 {
-  thread_local std::random_device rd;
-  thread_local std::mt19937       rng(rd());
-
-  {
-    FETCH_LOCK(routing_table_lock_);
-
-    if (!routing_table_.empty())
-    {
-      using Distribution = std::uniform_int_distribution<std::size_t>;
-
-      // decide the random index to access
-      Distribution      table_dist{0, routing_table_.size() - 1};
-      std::size_t const element = table_dist(rng);
-
-      // advance the iterator to the correct offset
-      auto it = routing_table_.cbegin();
-      std::advance(it, static_cast<std::ptrdiff_t>(element));
-
-      auto const &handles = it->second.handles;
-
-      if (!handles.empty())
-      {
-        Distribution handle_dist{0, handles.size() - 1};
-        return handles[handle_dist(rng)];
-      }
-    }
-  }
-
-  return 0;
+  return tracker_->RandomHandle();
 }
 
 /**

@@ -22,10 +22,85 @@
 #include <chrono>
 #include <memory>
 #include <queue>
+#include <random>
 #include <vector>
 
 namespace fetch {
 namespace muddle {
+
+PeerTracker::Handle PeerTracker::RandomHandle() const
+{
+  using Distribution = std::uniform_int_distribution<std::size_t>;
+  thread_local std::random_device rd;
+  thread_local std::mt19937       rng(rd());
+
+  // decide the random index to access
+  FETCH_LOCK(mutex_);
+  Distribution      table_dist{0, accessible_peers_.size() - 1};
+  std::size_t const element = table_dist(rng);
+
+  auto it = accessible_peers_.cbegin();
+  std::advance(it, static_cast<std::ptrdiff_t>(element));
+  auto address = *it;
+
+  // Getting connections
+  auto connections = register_.LookupConnections(address);
+  for (auto &wconn : connections)
+  {
+    auto conn = wconn.lock();
+    if (conn)
+    {
+      return conn->handle();
+    }
+  }
+
+  // No connections found
+  return 0;
+}
+
+PeerTracker::Handle PeerTracker::LookupHandle(Address const &address) const
+{
+  auto wptr = register_.LookupConnection(address);
+
+  // If it is a direct connection we just return the handle
+  auto connection = wptr.lock();
+  if (connection)
+  {
+    return connection->handle();
+  }
+
+  // TODO(tfr): Create a cache for the search below
+
+  auto             own_kad = KademliaAddress::Create(own_address_);
+  Address          best_address{};
+  KademliaDistance best = MaxKademliaDistance();
+
+  {  // Finding best peer
+    FETCH_LOCK(mutex_);
+    for (auto &peer : accessible_peers_)
+    {
+      KademliaAddress cmp  = KademliaAddress::Create(peer);
+      auto            dist = GetKademliaDistance(own_kad, cmp);
+
+      if (dist < best)
+      {
+        best         = dist;
+        best_address = peer;
+      }
+    }
+  }
+
+  // Finding handle
+  wptr       = register_.LookupConnection(best_address);
+  connection = wptr.lock();
+  if (connection)
+  {
+    // TODO(tfr): add to cache
+    return connection->handle();
+  }
+
+  return 0;
+}
 
 PeerTracker::PeerTrackerPtr PeerTracker::New(PeerTracker::Duration const &interval,
                                              core::Reactor &reactor, MuddleRegister const &reg,

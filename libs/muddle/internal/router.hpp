@@ -133,7 +133,7 @@ public:
   void Whitelist(Address const &target);
   bool IsBlacklisted(Address const &target) const;
 
-  Handle LookupHandle(Packet::RawAddress const &address) const;
+  Handle LookupHandle(Packet::RawAddress const &raw_address) const;
 
   void SetDirectHandler(DirectMessageHandler handler)
   {
