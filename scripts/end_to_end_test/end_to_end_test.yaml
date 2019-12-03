@@ -8,7 +8,7 @@ setup_conditions:
   test_name: "basic_standalone"
   number_of_nodes: 1
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [0] }
@@ -24,7 +24,7 @@ setup_conditions:
   number_of_nodes: 2
   node_connections: [[0, 1]]
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
@@ -33,14 +33,14 @@ steps:
 
 ---
 test_description: >
-  Transactions sync - corner case with connection order
+  DISABLED - Transactions sync - corner case with connection order
 
 setup_conditions:
   test_name: "basic_multinode_corner_case"
   number_of_nodes: 2
   node_connections: [[1, 0]]
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
@@ -56,7 +56,7 @@ setup_conditions:
   number_of_nodes: 2
   node_connections: [[0, 1]]
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
@@ -74,7 +74,7 @@ setup_conditions:
   test_name: "miner_receives_more_tx"
   number_of_nodes: 1
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - send_txs: { "name": "100_identities", "amount": 100, "nodes": [0] }
@@ -90,7 +90,7 @@ setup_conditions:
   test_name: "context_accessible_from_smart_contract"
   number_of_nodes: 1
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - sleep: 5
@@ -105,7 +105,7 @@ setup_conditions:
   test_name: "basic_node_recovery"
   number_of_nodes: 1
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [0] }
@@ -116,7 +116,7 @@ steps:
 
 ---
 test_description: >
-  Transactions sync and are executed across nodes when using POS
+  DISABLED - Transactions sync and are executed across nodes when using POS
 
 setup_conditions:
   test_name: "basic_multinode_POS"
@@ -124,7 +124,7 @@ setup_conditions:
   node_connections: [[0, 1], [0, 2], [1, 2]]
   mining_nodes: [0, 1, 2]
   pos_mode: True
-  max_test_time: 1200
+  max_test_time: 600
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
@@ -133,13 +133,13 @@ steps:
 
 ---
 test_description: >
-  Test synergetic mining
+  DISABLED - Test synergetic mining
 
 setup_conditions:
   test_name: "synergetic_mining"
   number_of_nodes: 1
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - sleep: 5
@@ -148,13 +148,13 @@ steps:
 
 ---
 test_description: >
-  Test ability of contracts to check their balance
+  DISABLED - Test ability of contracts to check their balance
 
 setup_conditions:
   test_name: "contracts_checking_balance"
   number_of_nodes: 1
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - sleep: 5
@@ -169,7 +169,7 @@ setup_conditions:
   test_name: "transfers_between_contracts_and_people"
   number_of_nodes: 1
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - sleep: 5
@@ -184,7 +184,7 @@ setup_conditions:
   test_name: "init_owner_address"
   number_of_nodes: 1
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - sleep: 5
@@ -200,7 +200,7 @@ setup_conditions:
   number_of_nodes: 1
   lanes: 4
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - sleep: 30 #  allow all the lanes to start
@@ -218,7 +218,7 @@ setup_conditions:
   lanes: 4
   node_connections: [[0, 1]]
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
@@ -233,7 +233,7 @@ setup_conditions:
   test_name: "malleability_test"
   number_of_nodes: 1
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - sleep: 5
