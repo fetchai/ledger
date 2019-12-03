@@ -29,6 +29,7 @@
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/use_estimator.hpp"
+#include "core/serializers/counter.hpp"
 
 using namespace fetch::vm;
 
@@ -352,8 +353,14 @@ bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
     buffer << static_cast<uint8_t>(model_category_);
     buffer << *model_config_;
     buffer << compiled_;
+
+    serializers::SizeCounter       counter{};
+
+    counter << *model_;
+    buffer.Reserve(counter.size());
     buffer << *model_;
     estimator_.SerializeTo(buffer);
+
     success = true;
   }
 

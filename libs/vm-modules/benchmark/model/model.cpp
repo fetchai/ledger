@@ -752,20 +752,18 @@ BENCHMARK(BM_Deserialise)->Args({2, 1, 10, false})->Unit(::benchmark::kMicroseco
 BENCHMARK(BM_Deserialise)->Args({2, 1, 100, false})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Deserialise)->Args({2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Deserialise)->Args({2, 1, 10000, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Deserialise)->Args({2, 1, 100000, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Deserialise)->Args({2, 1, 1000000, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Deserialise)->Args({2, 1, 10000000, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Deserialise)->Args({2, 1, 100000000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Deserialise)->Args({2, 1, 100000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Deserialise)->Args({2, 1, 1000000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Deserialise)->Args({2, 1, 10000000, false})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Deserialise)->Args({2, 10, 1, false})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Deserialise)->Args({2, 100, 1, false})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Deserialise)->Args({2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Deserialise)->Args({2, 10000, 1, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Deserialise)->Args({2, 100000, 1, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Deserialise)->Args({2, 1000000, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Deserialise)->Args({2, 10000, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Deserialise)->Args({2, 100000, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Deserialise)->Args({2, 1000000, 1, false})->Unit(::benchmark::kMicrosecond);
 
-// BENCHMARK(BM_Deserialise)->Args({2, 10000, 10000, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Deserialise)->Args({2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Deserialise)->Args({2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Deserialise)->Args({2, 100, 100, false})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Deserialise)->Args({2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
 
