@@ -550,6 +550,7 @@ MuddleEndpoint::AddressList Router::GetDirectlyConnectedPeers() const
 
 Router::AddressSet Router::GetDirectlyConnectedPeerSet() const
 {
+  // TODO.
   return {};
 }
 

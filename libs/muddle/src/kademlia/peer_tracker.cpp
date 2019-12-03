@@ -106,7 +106,7 @@ void PeerTracker::SetConfiguration(TrackerConfiguration const &config)
   tracker_configuration_ = config;
 }
 
-void PeerTracker::AddConnectionHandleToQueue(ConnectionHandle handle)
+void PeerTracker::AddConnectionHandle(ConnectionHandle handle)
 {
   FETCH_LOCK(mutex_);
 
@@ -118,6 +118,9 @@ void PeerTracker::AddConnectionHandleToQueue(ConnectionHandle handle)
     new_handles_.push(conn_details);
   }
 }
+
+void PeerTracker::RemoveConnectionHandle(ConnectionHandle /*handle*/)
+{}
 
 void PeerTracker::ProcessConnectionHandles()
 {
@@ -135,6 +138,7 @@ void PeerTracker::ProcessConnectionHandles()
     }
     else if (state == ConnectionState::RESOLVED)
     {
+
       // If not ports were detected, we request the client for its server ports
       if (details.uris.empty())
       {
@@ -640,8 +644,6 @@ void PeerTracker::ConnectToDesiredPeers()
 
 void PeerTracker::Periodically()
 {
-  FETCH_LOCK(mutex_);
-
   // Clearing arrays used to track actions on connections
   keep_connections_.clear();
   no_uri_.clear();
@@ -730,13 +732,24 @@ void PeerTracker::Periodically()
   }
 
   // Finally, we create a list of accessible peers
-  accessible_peers_.clear();
+  FETCH_LOCK(direct_mutex_);
+  directly_connected_peers_.clear();
   for (auto &p : keep_connections_)
   {
     auto connection = register_.LookupConnection(p).lock();
     if (connection)
     {
-      accessible_peers_.insert(p);
+      directly_connected_peers_.insert(p);
+    }
+  }
+
+  auto const currently_outgoing = register_.GetOutgoingAddressSet();
+  for (auto const &p : currently_outgoing)
+  {
+    auto connection = register_.LookupConnection(p).lock();
+    if (connection)
+    {
+      directly_connected_peers_.insert(p);
     }
   }
 }

@@ -66,6 +66,7 @@ public:
   using Uri                    = network::Uri;
   using NetworkUris            = std::vector<Uri>;
   using Handle                 = network::AbstractConnection::ConnectionHandleType;
+  using AddressToHandles       = std::unordered_map<Address, std::unordered_set<Handle>>;
 
   struct UnresolvedConnection
   {
@@ -113,19 +114,24 @@ public:
     // TODO(tfr): Create a cache for the search below
 
     // Finding best address
-    auto             own_kad = KademliaAddress::Create(own_address_);
     Address          best_address{};
     KademliaDistance best = MaxKademliaDistance();
 
-    for (auto &peer : accessible_peers_)
     {
-      KademliaAddress cmp  = KademliaAddress::Create(peer);
-      auto            dist = GetKademliaDistance(own_kad, cmp);
+      FETCH_LOCK(direct_mutex_);
 
-      if (dist < best)
+      auto own_kad = KademliaAddress::Create(own_address_);
+
+      for (auto &peer : directly_connected_peers_)
       {
-        best         = dist;
-        best_address = peer;
+        KademliaAddress cmp  = KademliaAddress::Create(peer);
+        auto            dist = GetKademliaDistance(own_kad, cmp);
+
+        if (dist < best)
+        {
+          best         = dist;
+          best_address = peer;
+        }
       }
     }
 
@@ -168,13 +174,19 @@ public:
   AddressSet            outgoing() const;
   AddressSet            all_peers() const;
   AddressSet            desired_peers() const;
+  AddressSet            directly_connected_peers() const
+  {
+    FETCH_LOCK(direct_mutex_);
+    return directly_connected_peers_;
+  }
   /// @}
 
 protected:
   friend class Muddle;
   /// Methods integrate new connections into the peer tracker.
   /// @{
-  void AddConnectionHandleToQueue(ConnectionHandle handle);
+  void AddConnectionHandle(ConnectionHandle handle);
+  void RemoveConnectionHandle(ConnectionHandle handle);
   void UpdateExternalUris(NetworkUris const &uris);
   void SetConfiguration(TrackerConfiguration const &config);
   void Stop()
@@ -228,6 +240,8 @@ private:
   /// Thread-safety
   /// @{
   mutable std::mutex mutex_;
+  mutable std::mutex direct_mutex_;  ///< Use to protect directly connected
+                                     /// peers to avoid causing a deadlock
   /// @}
 
   /// Core components for maintaining connectivity.
@@ -248,7 +262,7 @@ private:
   PeerTrackerProtocol  peer_tracker_protocol_;
   TrackerConfiguration tracker_configuration_;
   AddressSet           keep_connections_{};
-  AddressSet           accessible_peers_{};
+  AddressSet           directly_connected_peers_{};
   /// @}
 
   /// User defined connections
