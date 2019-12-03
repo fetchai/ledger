@@ -1,3 +1,5 @@
+
+
 # Opcode Pricing
 
 We have designed a [pricing mechanism](https://www.overleaf.com/read/qdgrnfdspjgd) to maximize transaction throughput in the fetch.ai ledger by incentivizing transactions to use a small number of resource lanes (or shards) and occupy the least congested lanes. Such a policy promotes efficient operation of an ideal ledger, but it is based on the assumption that transaction fees depend on lane usage alone. Ultimately, the price of transactions should also relate to the actual cost of maintaining the ledger, which in the case of digital tokens, is proportional to the resources consumed by the servers responsible for validating transactions. At a basic level, this can be expressed in terms of the expected number of CPU cycles and memory space needed to validate a transaction. Since transactions include smart contracts and are expressed in a programming language (Etch), they consist of a sequence of machine instructions. Estimates of the CPU time required by a transaction can therefore be decomposed into the times of the constituent instructions or opcodes.
@@ -77,24 +79,25 @@ Since the measure of interest is the mean CPU time, we compute the standard erro
 
 In the previous section, we found that some of the opcodes always appear in pairs. For example, arithmetic operations are almost always preceded by a PushVariable operation and isolated push operations are almost always followed by a Discard operation. As we will see later on, this also arises in more complex operations. Since it would be ideal to measure the CPU times for each opcode in isolation, we show one way to estimate these times here.
 
-Let *A* be a matrix where each row corresponds to a benchmark and each element *A<sub>ij</sub>=k* if benchmark *i* uses opcode a total of *k* times. Let ***b*** be a vector where each element *b<sub>i</sub>* is the mean CPU time to run benchmark *i*. Then the solution to ***x***<sup>\*</sup> = arg min(||*A****x*** - ***b***||<sup>2</sup>) provides an estimate of the individual opcode times, where each *x<sub>i</sub>* represents the CPU time required by opcode *i*.
+Let *A* be a matrix where each row corresponds to a benchmark and each element *A<sub>ij</sub>=k* if benchmark *i* uses opcode a total of *k* times. Let ***b*** be a vector where each element *b<sub>i</sub>* is the mean measured CPU time corresponding to benchmark *i*. Then the solution to ***x***<sup>\*</sup> = arg min(||*A****x*** - ***b***||<sup>2</sup>) provides an estimate of the individual opcode times, where each *x<sub>i</sub>* represents the CPU time required by opcode *i*.
 
 For the benchmarks listed in [Table 1](#table1), we seek values in the vector ***x*** that make the following expression as close as possible to an equality.
 
-<img src="https://lh3.googleusercontent.com/XEBuaslfkpGcO3el45UIoN88fF7uzpecNvc6UVzOlXrMYbE7EZAYfi_TVz4Vu1Q0_p_LCcQWJCI" alt="drawing" height="300" class="center"/>
+<p align="center"><img src="https://lh3.googleusercontent.com/XEBuaslfkpGcO3el45UIoN88fF7uzpecNvc6UVzOlXrMYbE7EZAYfi_TVz4Vu1Q0_p_LCcQWJCI" alt="drawing" height="300" align="center"/></p>
 
 In addition to minimizing ||*A****x*** - ***b***||<sup>2</sup>, we also need to constrain the individual opcode times to be positive (*x<sub>i</sub> > 0* for each *i*). Finally, since CPU times vary more for some benchmarks than others, we normalize the expression by the standard deviation and rewrite the expression as follows:
 
-![enter image description here](https://lh3.googleusercontent.com/kVZIT9dzirl7nqZAIkcgaZ5tPsSF8iOh8TnmR07EC2FvJPOxmQNHxS7ERGOOWH8AqrSzERzcHTA)
+<p align="center"><img src="https://lh3.googleusercontent.com/kVZIT9dzirl7nqZAIkcgaZ5tPsSF8iOh8TnmR07EC2FvJPOxmQNHxS7ERGOOWH8AqrSzERzcHTA"/></p>
 
 The solution of the above example is: 
 
-<img src="https://lh3.googleusercontent.com/OQNoOtRSJ6kHStPb-xs-rvFCtAYVsXYalcQlRqEjEcFActzWZ5TbymZMjO-YZraDBEr46yQwZdU" alt="drawing" height="300" class="center"/>
+<p align="center"><img src="https://lh3.googleusercontent.com/OQNoOtRSJ6kHStPb-xs-rvFCtAYVsXYalcQlRqEjEcFActzWZ5TbymZMjO-YZraDBEr46yQwZdU" alt="drawing" height="300" class="center"/></p>
 
 where the values of **x** are given in nanoseconds and the corresponding opcodes are defined as {1: VariableDeclare, 4: PushFalse, 5: PushTrue, 7: PushConstant, 14: Discard, 15: Destruct, 18: Jump, 19: JumpIfFalse,  21: Return, 23: ForRangeInit, 24: ForRangeIterate, 25: ForRangeTerminate, 26: InvokeUserDefinedFreeFunction, 31: JumpIfFalseOrPop, 32: JumpIfTrueOrPop, 33: Not}.
 
 We can then use these estimates to decouple the opcode times listed in [Table 1](#table1), which can then be subtracted wherever they appear in other benchmarks. Discrepancies between the Mean column and total estimated time reflect the fact that the least-squares fit is necessarily an approximation.
 
+### <a name="table2">Table 2</a>: Basic benchmarks decomposed into estimated individual opcode times
 | Benchmark (100 reps)   |   Mean (ns) |   Std. error (ns) | Opcodes**: estimated times (ns)                                                   |
 |------------------------|-------------|-------------------|---------------------------------------------------------------------------------|
 | Return                 |       28.27 |              0.16 | {**21**: 27.72}                                                                     |
@@ -115,9 +118,9 @@ See [Appendix](#app) for the list of all parameter-independent opcodes.
 
 ## Primitive opcodes
 
-We tested the primitive opcodes for each of the different primitives to determine if there is any significant difference in CPU time. Table 3 shows that the different integer types result only in very small variations in CPU time.
+We tested the primitive opcodes for each of the different primitives to determine if there is any significant difference in CPU time. [Table 3](#table3) shows that the different integer types result only in very small variations in CPU time.
 
-### Table 3: Mean CPU times for integer primitive opcodes (+/- std error)
+### <a name="table3">Table 3</a>: Mean CPU times for integer primitive opcodes (+/- std error)
 | Benchmark (100 reps)        | Int16 (ns)   | Int32 (ns)   | Int64 (ns)   | Int8 (ns)    | UInt16 (ns)   | UInt32 (ns)   | UInt64 (ns)   | UInt8 (ns)   |
 |-----------------------------|--------------|--------------|--------------|--------------|---------------|---------------|---------------|--------------|
 | PrimAdd                     | 12.01 ± 0.06 | 11.39 ± 0.09 | 11.79 ± 0.05 | 12.12 ± 0.06 | 12.44 ± 0.11  | 11.55 ± 0.09  | 11.85 ± 0.05  | 11.82 ± 0.05 |
@@ -146,9 +149,9 @@ We tested the primitive opcodes for each of the different primitives to determin
 | PrimVariablePrefixDec       | 10.60 ± 0.06 | 10.25 ± 0.07 | 10.15 ± 0.06 | 10.96 ± 0.08 | 10.61 ± 0.05  | 9.73 ± 0.07   | 9.89 ± 0.05   | 9.98 ± 0.04  |
 | PrimVariablePrefixInc       | 10.14 ± 0.05 | 10.33 ± 0.08 | 9.64 ± 0.04  | 9.94 ± 0.05  | 10.06 ± 0.05  | 10.06 ± 0.08  | 9.18 ± 0.03   | 9.98 ± 0.08  |
 
-In Table 4, we see that certain operations are more expensive for fixed-point than floating point primitives, but there are only small differences between 32 and 64 bits within each primitive class.
+In [Table 4](#table4), we see that certain operations are more expensive for fixed-point than floating point primitives, but there are only small differences between 32 and 64 bits within each primitive class.
 
-### Table 4: Mean CPU times for floating and fixed point primitive opcodes (+/- std error)
+### <a name="table4">Table 4</a>: Mean CPU times for floating and fixed point primitive opcodes (+/- std error)
 | Benchmark (100 reps)        | Fixed128 (ns)   | Fixed32 (ns)   | Fixed64 (ns)   | Float32 (ns)   | Float64 (ns)   |
 |-----------------------------|-----------------|----------------|----------------|----------------|----------------|
 | PrimAdd                     | 52.63 ± 0.12    | 12.49 ± 0.05   | 12.14 ± 0.06   | 12.07 ± 0.07   | 12.02 ± 0.06   |
@@ -175,9 +178,9 @@ In Table 4, we see that certain operations are more expensive for fixed-point th
 
 ## Math function opcodes
 
-Similarly, we tested the math function opcodes for the various primitives. Table 5 shows that most math function opcodes take significantly longer for fixed point than floating point primitives.
+Similarly, we tested the math function opcodes for the various primitives. [Table 5](#table5) shows that most math function opcodes take significantly longer for fixed point than floating point primitives.
 
-### Table 5: Math function opcodes for fixed and floating point primitives
+### <a name="table5">Table 5</a>: Math function opcodes for fixed and floating point primitives
 | Benchmark (100 reps)   | Fixed128 (ns)    | Fixed32 (ns)   | Fixed64 (ns)   | Float32 (ns)   | Float64 (ns)   |
 |------------------------|------------------|----------------|----------------|----------------|----------------|
 | MathAbs                | 93.70 ± 1.18     | 12.06 ± 0.06   | 13.77 ± 0.05   | 10.90 ± 0.08   | 11.51 ± 0.11   |
@@ -203,7 +206,7 @@ Next, we profile the operations that may depend on variable size. When the relat
 
 ## String-based opcodes
 
-### Table 6: Least-squares linear fit parameters for string-based opcodes
+### <a name="table6">Table 6</a>: Least-squares linear fit parameters for string-based opcodes
 | Benchmark (100 reps)           |   Slope (ns/char) |   Intercept (ns) |   Mean (ns) |   Std error (ns) | Net opcodes   |
 |--------------------------------|-------------------|------------------|-------------|------------------|---------------|
 | ObjectAddString                |             1.128 |           38.747 |   13742.782 |           14.243 | [8, 49]       |
@@ -217,20 +220,21 @@ Next, we profile the operations that may depend on variable size. When the relat
 | ObjectNotEqualString           |             0.012 |           15.190 |    4582.888 |            8.191 | [8, 37]       |
 | PushVariableString             |            -0.000 |            5.019 |    4471.781 |            8.101 | [8, 14]       |
 
-![enter image description here](https://lh3.googleusercontent.com/x_2cbgzSlwBvWMeHQitI_21loITfcWKTzq483LRI75a8dTbaFHImrY7nODcruph3Ydj92NLs4y8)![enter image description here](https://lh3.googleusercontent.com/uVMF38lLDQ556126BMMsxfONlATjW_0T1B049w0NrLUoPQ4gSzgz8E0attdGjGJxqQijD9UXetg)
-![enter image description here](https://lh3.googleusercontent.com/MIckMhq_X9IiNgrk3sWsJ-_kf0-Atz5A4jDMqpHaiq2AWal3w9i0VpdI0dy_PleNPCAk7idXzbM)
-![enter image description here](https://lh3.googleusercontent.com/yPCTvd5Osq2mEFfbhwcu9DCtnDRZjgVFb2ilPtEmFQeYIUguJypx5Vfp0qRnaF3bPwkaAhabIkI)
-![enter image description here](https://lh3.googleusercontent.com/JMGez-WoeUzB8-7TfSIaL7IqHc65DlyWusBKb7tbB3wDM_AwzwZ4jSEbQMpjEZE6TG3CAj12WKM)
-![enter image description here](https://lh3.googleusercontent.com/dmPd8p11ANh3q3nUV7-Dy9Bk00PP3C4XdHb6HDn6SVx2YIPbsdguNfZVny_R2QK6IuRXu554RUU)
-![enter image description here](https://lh3.googleusercontent.com/XtZHuq-gM385i0I2Sk56DgA8CQKujQR7dF_4wHOCxR-udr3rsk8QaquDFp1os7ux-0LOynTl1Fc)
-![enter image description here](https://lh3.googleusercontent.com/ULrd2GvoXDK7Zpa5-Gm1B-L99KMJTApA5sWxpg0wQ2kMhxGqSdtnROvzH4FawsGi9_-JI_USyBs)
-![enter image description here](https://lh3.googleusercontent.com/tjAvEXAplIo5tjCpUs9-7rJ8gGB_5wmhsdHuhMxtn1IoDI7gWhQcn13z6OYXWOhvitcT3YAPhMg)
+<p align="center"><img src="https://lh3.googleusercontent.com/x_2cbgzSlwBvWMeHQitI_21loITfcWKTzq483LRI75a8dTbaFHImrY7nODcruph3Ydj92NLs4y8" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/uVMF38lLDQ556126BMMsxfONlATjW_0T1B049w0NrLUoPQ4gSzgz8E0attdGjGJxqQijD9UXetg" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/MIckMhq_X9IiNgrk3sWsJ-_kf0-Atz5A4jDMqpHaiq2AWal3w9i0VpdI0dy_PleNPCAk7idXzbM" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/yPCTvd5Osq2mEFfbhwcu9DCtnDRZjgVFb2ilPtEmFQeYIUguJypx5Vfp0qRnaF3bPwkaAhabIkI" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/JMGez-WoeUzB8-7TfSIaL7IqHc65DlyWusBKb7tbB3wDM_AwzwZ4jSEbQMpjEZE6TG3CAj12WKM" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/dmPd8p11ANh3q3nUV7-Dy9Bk00PP3C4XdHb6HDn6SVx2YIPbsdguNfZVny_R2QK6IuRXu554RUU" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/XtZHuq-gM385i0I2Sk56DgA8CQKujQR7dF_4wHOCxR-udr3rsk8QaquDFp1os7ux-0LOynTl1Fc" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/ULrd2GvoXDK7Zpa5-Gm1B-L99KMJTApA5sWxpg0wQ2kMhxGqSdtnROvzH4FawsGi9_-JI_USyBs" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/tjAvEXAplIo5tjCpUs9-7rJ8gGB_5wmhsdHuhMxtn1IoDI7gWhQcn13z6OYXWOhvitcT3YAPhMg" width="600"/></p>
 
 ## Array-based opcodes
 
 We use a similar approach to profile array operations. As shown below, there is often a change in slope or behavior once the array length exceeds about 6000. For this reason, we compute the least-squares fits based only on arrays smaller than 6000. The change in behavior is likely a result of machine-dependent memory management, and memory storage will probably be included separately in transaction pricing.
 
-### Table 7: Least-squares linear fit parameters for array-based opcodes
+### <a name="table7">Table 7</a>: Least-squares linear fit parameters for array-based opcodes
 | Benchmark (100 reps)   |   Slope (ns/char) |   Intercept (ns) |   Mean (ns) |   Std error (ns) | Net opcodes          |
 |------------------------|-------------------|------------------|-------------|------------------|----------------------|
 | ReverseArray           |             0.277 |           13.673 |    2847.449 |            5.536 | [8, 107]             |
@@ -244,18 +248,18 @@ We use a similar approach to profile array operations. As shown below, there is 
 | PopBackArray           |            -0.001 |           22.580 |     594.415 |            2.659 | [8, 103, 14]         |
 | CountArray             |            -0.001 |           15.849 |     591.189 |            2.673 | [8, 100, 14]         |
 
-![enter image description here](https://lh3.googleusercontent.com/UfiJ1SiH6oGEjyFpY40euuiSFIeKPikstWsH_DrBCv3wMj58-FSqUJN2wz_7fFNuf6WFbm311Tc)
-![enter image description here](https://lh3.googleusercontent.com/TO0q5ZNpeU5gbttuaDqskclm2vypVyPRq5ZhZJNlP0nalfIg1ZbUYh22RvFQ3B9Y32XOEKlovuA)
-![enter image description here](https://lh3.googleusercontent.com/iSK3mlbFRhqq7CkgdoUlvkglT1EH_HPEmc06l_LEQTWuNsGxayA30iFUeET0ptr15mV5uf3XMYE)
-![enter image description here](https://lh3.googleusercontent.com/wXoM1NIO199bHXSVHhqrS67SBZB7r_pOrtBP917xgTZK5fA96pa7mAQRO4Qx6Wzn48Te_AbwLk8)
-![enter image description here](https://lh3.googleusercontent.com/_4Mb9lC19WUurTI8bHrNBokSAbvzbs9YYrcpn36IIwVufWZ9y8V18G7sQqhdzKfg2PynZuoW5sM)
-![enter image description here](https://lh3.googleusercontent.com/AHZQ2UblQZxx75ag3Ptg0h7_IlX6_6PjO1wAWTh7KvoVednW_HW_vlPd74OBS2gSZhgGR1La74Y)
+<p align="center"><img src="https://lh3.googleusercontent.com/UfiJ1SiH6oGEjyFpY40euuiSFIeKPikstWsH_DrBCv3wMj58-FSqUJN2wz_7fFNuf6WFbm311Tc" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/TO0q5ZNpeU5gbttuaDqskclm2vypVyPRq5ZhZJNlP0nalfIg1ZbUYh22RvFQ3B9Y32XOEKlovuA" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/iSK3mlbFRhqq7CkgdoUlvkglT1EH_HPEmc06l_LEQTWuNsGxayA30iFUeET0ptr15mV5uf3XMYE" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/wXoM1NIO199bHXSVHhqrS67SBZB7r_pOrtBP917xgTZK5fA96pa7mAQRO4Qx6Wzn48Te_AbwLk8" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/_4Mb9lC19WUurTI8bHrNBokSAbvzbs9YYrcpn36IIwVufWZ9y8V18G7sQqhdzKfg2PynZuoW5sM" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/AHZQ2UblQZxx75ag3Ptg0h7_IlX6_6PjO1wAWTh7KvoVednW_HW_vlPd74OBS2gSZhgGR1La74Y" width="600"/></p>
 
 ## Tensor-based opcodes
 
 We profile tensor-based operations using a similar approach. To ensure that they do not depend on the dimension of the tensor, we tested the following dimensions independently: 2, 3 and 4. 
 
-### Table 7: Least-squares linear fit parameters for tensor-based opcodes
+### <a name="table8">Table 8</a>: Least-squares linear fit parameters for tensor-based opcodes
 | Benchmark (100 reps)   |   Slope (ns/char) |   Intercept (ns) |    Mean (ns) |   Std error (ns) | Net opcodes                                                                   |
 |------------------------|-------------------|------------------|--------------|------------------|-------------------------------------------------------------------------------|
 | FromStrTensor_3        |            72.117 |          658.957 | 21459495.574 |          814.668 | [8, 6, 422]                                                                   |
@@ -274,14 +278,14 @@ We profile tensor-based operations using a similar approach. To ensure that they
 | SizeTensor_2           |             0.002 |           26.582 |    28530.266 |           25.250 | [8, 419, 14]                                                                  |
 | SizeTensor_3           |            -0.001 |           15.156 |    28087.432 |           27.902 | [8, 419, 14]                                                                  |
 
-![enter image description here](https://lh3.googleusercontent.com/oJNMuMOKUsBiVlA8F7jreAgeq-yQ7lVb542ky3JoN7K6HOITzCD1FKWh_IklyRDvzEx9_fyFDv8)
-![enter image description here](https://lh3.googleusercontent.com/wU7uOueyDmyWTef0S0oBmrLqlw0IL_VTpciNQpPMv_LmzKPcd4scQG3AkB3uOIU458_Kcns4Ibw)
-![enter image description here](https://lh3.googleusercontent.com/Csu8HlTqcu9cYvpTaKQMKnHFKy26ICaZK8uTIxM9oof5pznGKvafkiyyW0dtxAnC05-PyKRPtSE)
-![enter image description here](https://lh3.googleusercontent.com/awDzFVNDZbiNk2avZTqJHfW_8wNZdsZE3eewJ4mWm3Fw83IG234LeDFqswvthmxiJLodtxgUjTY)
+<p align="center"><img src="https://lh3.googleusercontent.com/oJNMuMOKUsBiVlA8F7jreAgeq-yQ7lVb542ky3JoN7K6HOITzCD1FKWh_IklyRDvzEx9_fyFDv8" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/wU7uOueyDmyWTef0S0oBmrLqlw0IL_VTpciNQpPMv_LmzKPcd4scQG3AkB3uOIU458_Kcns4Ibw" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/Csu8HlTqcu9cYvpTaKQMKnHFKy26ICaZK8uTIxM9oof5pznGKvafkiyyW0dtxAnC05-PyKRPtSE" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/awDzFVNDZbiNk2avZTqJHfW_8wNZdsZE3eewJ4mWm3Fw83IG234LeDFqswvthmxiJLodtxgUjTY" width="600"/></p>
 
 ## Crypto-based opcodes
 
-### Table 6: Least-squares linear fit parameters for crypto-based opcodes
+### <a name="table9">Table 9</a>: Least-squares linear fit parameters for crypto-based opcodes
 | Benchmark (100 reps)   |   Slope (ns/char) |   Intercept (ns) |   Mean (ns) |   Std error (ns) | Net opcodes         |
 |------------------------|-------------------|------------------|-------------|------------------|---------------------|
 | Sha256UpdateStr        |             4.576 |           63.464 |   37633.507 |           23.537 | [8, 6, 235]         |
@@ -290,12 +294,11 @@ We profile tensor-based operations using a similar approach. To ensure that they
 | Sha256Reset            |             0.000 |           29.546 |      36.277 |            0.387 | [8, 238]            |
 | Sha256UpdateBuf        |            -0.000 |          202.819 |     316.383 |            1.077 | [233, 2, 8, 6, 235] |
 
-![enter image description here](https://lh3.googleusercontent.com/1VsZkBgZNNWg6G6RoTrFbiZKzADiKz3aDkYt0DyZgI_tR7ZSS68WnsPeeCNgEzkLOLW-npZSiPk)
-![enter image description here](https://lh3.googleusercontent.com/ZomW7d8kat5ZL7XxBPfboXujHe0yGAkuyVJnOs5RRsHW5ef08aEmNY6YkFIhU4xTqYAhd9rBLlA)
+<p align="center"><img src="https://lh3.googleusercontent.com/1VsZkBgZNNWg6G6RoTrFbiZKzADiKz3aDkYt0DyZgI_tR7ZSS68WnsPeeCNgEzkLOLW-npZSiPk" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/ZomW7d8kat5ZL7XxBPfboXujHe0yGAkuyVJnOs5RRsHW5ef08aEmNY6YkFIhU4xTqYAhd9rBLlA" width="600"/></p>
 
 ## <a name="app">Appendix</a>:  Parameter-independent opcode tables
 
-### Base opcodes
 |   Opcode (Base) | Name                          |   Estimated time (ns) |
 |-----------------|-------------------------------|-----------------------|
 |               1 | VariableDeclare               |                  7.75 |
@@ -314,44 +317,6 @@ We profile tensor-based operations using a similar approach. To ensure that they
 |              31 | JumpIfFalseOrPop              |                  3.46 |
 |              32 | JumpIfTrueOrPop               |                  3.53 |
 |              33 | Not                           |                  3.16 |
-
-|   Opcode (Fixed128) | Name                          |   Estimated time (ns) |
-|---------------------|-------------------------------|-----------------------|
-|                   2 | VariableDeclareAssign         |                  8.01 |
-|                   8 | PushVariable                  |                  9.77 |
-|                   9 | PopToVariable                 |                  3.89 |
-|                  22 | ReturnValue                   |                 28.68 |
-|                  35 | ObjectEqual                   |                  5.65 |
-|                  37 | ObjectNotEqual                |                  7.67 |
-|                  39 | ObjectLessThan                |                  8.48 |
-|                  41 | ObjectLessThanOrEqual         |                 10.55 |
-|                  43 | ObjectGreaterThan             |                  8.03 |
-|                  45 | ObjectGreaterThanOrEqual      |                 10.31 |
-|                  47 | ObjectNegate                  |                 20.66 |
-|                  49 | ObjectAdd                     |                 42.86 |
-|                  53 | VariableObjectInplaceAdd      |                 29.96 |
-|                  56 | ObjectSubtract                |                 46.18 |
-|                  60 | VariableObjectInplaceSubtract |                 33.03 |
-|                  63 | ObjectMultiply                |                 81.01 |
-|                  67 | VariableObjectInplaceMultiply |                 65.70 |
-|                  70 | ObjectDivide                  |               1202.24 |
-|                  74 | VariableObjectInplaceDivide   |               1183.90 |
-|                  81 | PushLargeConstant             |                 22.21 |
-|                 298 | ::abs^Fixed128^Fixed128       |                 93.70 |
-|                 303 | ::exp^Fixed128^Fixed128       |               3984.08 |
-|                 336 | ::sqrt^Fixed128^Fixed128      |               4533.79 |
-|                 389 | ::sin^Fixed128^Fixed128       |               5727.26 |
-|                 390 | ::cos^Fixed128^Fixed128       |               5498.05 |
-|                 391 | ::tan^Fixed128^Fixed128       |               4169.56 |
-|                 392 | ::asin^Fixed128^Fixed128      |               3272.88 |
-|                 393 | ::acos^Fixed128^Fixed128      |               3368.53 |
-|                 394 | ::atan^Fixed128^Fixed128      |               2485.70 |
-|                 396 | ::sinh^Fixed128^Fixed128      |               9772.40 |
-|                 397 | ::cosh^Fixed128^Fixed128      |               9756.85 |
-|                 398 | ::tanh^Fixed128^Fixed128      |              11470.62 |
-|                 399 | ::asinh^Fixed128^Fixed128     |              10920.12 |
-|                 400 | ::acosh^Fixed128^Fixed128     |              10972.92 |
-|                 401 | ::atanh^Fixed128^Fixed128     |               6950.12 |
 
 |   Opcode (Fixed32) | Name                             |   Estimated time (ns) |
 |--------------------|----------------------------------|-----------------------|
@@ -428,6 +393,45 @@ We profile tensor-based operations using a similar approach. To ensure that they
 |                386 | ::asinh^Fixed64^Fixed64          |                388.16 |
 |                387 | ::acosh^Fixed64^Fixed64          |                400.43 |
 |                388 | ::atanh^Fixed64^Fixed64          |                269.30 |
+
+|   Opcode (Fixed128) | Name                          |   Estimated time (ns) |
+|---------------------|-------------------------------|-----------------------|
+|                   2 | VariableDeclareAssign         |                  8.01 |
+|                   8 | PushVariable                  |                  9.77 |
+|                   9 | PopToVariable                 |                  3.89 |
+|                  22 | ReturnValue                   |                 28.68 |
+|                  35 | ObjectEqual                   |                  5.65 |
+|                  37 | ObjectNotEqual                |                  7.67 |
+|                  39 | ObjectLessThan                |                  8.48 |
+|                  41 | ObjectLessThanOrEqual         |                 10.55 |
+|                  43 | ObjectGreaterThan             |                  8.03 |
+|                  45 | ObjectGreaterThanOrEqual      |                 10.31 |
+|                  47 | ObjectNegate                  |                 20.66 |
+|                  49 | ObjectAdd                     |                 42.86 |
+|                  53 | VariableObjectInplaceAdd      |                 29.96 |
+|                  56 | ObjectSubtract                |                 46.18 |
+|                  60 | VariableObjectInplaceSubtract |                 33.03 |
+|                  63 | ObjectMultiply                |                 81.01 |
+|                  67 | VariableObjectInplaceMultiply |                 65.70 |
+|                  70 | ObjectDivide                  |               1202.24 |
+|                  74 | VariableObjectInplaceDivide   |               1183.90 |
+|                  81 | PushLargeConstant             |                 22.21 |
+|                 298 | ::abs^Fixed128^Fixed128       |                 93.70 |
+|                 303 | ::exp^Fixed128^Fixed128       |               3984.08 |
+|                 336 | ::sqrt^Fixed128^Fixed128      |               4533.79 |
+|                 389 | ::sin^Fixed128^Fixed128       |               5727.26 |
+|                 390 | ::cos^Fixed128^Fixed128       |               5498.05 |
+|                 391 | ::tan^Fixed128^Fixed128       |               4169.56 |
+|                 392 | ::asin^Fixed128^Fixed128      |               3272.88 |
+|                 393 | ::acos^Fixed128^Fixed128      |               3368.53 |
+|                 394 | ::atan^Fixed128^Fixed128      |               2485.70 |
+|                 396 | ::sinh^Fixed128^Fixed128      |               9772.40 |
+|                 397 | ::cosh^Fixed128^Fixed128      |               9756.85 |
+|                 398 | ::tanh^Fixed128^Fixed128      |              11470.62 |
+|                 399 | ::asinh^Fixed128^Fixed128     |              10920.12 |
+|                 400 | ::acosh^Fixed128^Fixed128     |              10972.92 |
+|                 401 | ::atanh^Fixed128^Fixed128     |               6950.12 |
+
 
 |   Opcode (Float32) | Name                             |   Estimated time (ns) |
 |--------------------|----------------------------------|-----------------------|
