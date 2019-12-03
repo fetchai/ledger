@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "kademlia/table.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "crypto/sha1.hpp"
+#include "kademlia/table.hpp"
 
 namespace fetch {
 namespace muddle {

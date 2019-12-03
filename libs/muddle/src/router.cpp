@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "router.hpp"
 #include "kademlia/peer_tracker.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
+#include "router.hpp"
 #include "routing_message.hpp"
 #include "xor_metric.hpp"
 
@@ -785,8 +785,6 @@ void Router::DispatchPacket(PacketPtr const &packet, Address const &transmitter)
   dispatch_enqueued_total_->increment();
 
   dispatch_thread_pool_->Post([this, packet, transmitter]() {
-    bool const isPossibleExchangeResponse = !packet->IsExchange();
-
     // decrypt encrypted messages
     if (packet->IsEncrypted())
     {
