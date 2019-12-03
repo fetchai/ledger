@@ -299,16 +299,16 @@ TEST_F(UInt256Tests, uint256_addition_and_subtraction_together)
 TEST_F(UInt256Tests, uint256_addition_exact_match_test)
 {
   // exact match addition test based on result from following python script
-  // x = 18446744073709551615
-  // y = 15648375915132456516
+  // x = 18446744073709551
+  // y = 14543531527343513
   // z = x + y
   // print(z)
 
   static constexpr char const *SRC = R"(
       function main()
-        var a = UInt256(18446744073709551615u64);
-        var b = UInt256(15648375915132456516u64);
-        var c = UInt256(34095119988842008131u64);
+        var a = UInt256(18446744073709551u64);
+        var b = UInt256(14543531527343513u64);
+        var c = UInt256(32990275601053064u64);
         var result = UInt256(0u64);
         result = a + b;
         assert(result == c, "a+b != c");
@@ -322,8 +322,8 @@ TEST_F(UInt256Tests, uint256_addition_exact_match_test)
 TEST_F(UInt256Tests, uint256_subtraction_exact_match_test)
 {
   // exact match subtraction test based on result from following python script
-  // x = 18446744073709551615
-  // y = 15648375915132456516
+  // x = 1844674407370955161
+  // y = 1564837591513245651
   // z = x - y
   // print(z)
 
@@ -374,17 +374,17 @@ TEST_F(UInt256Tests, uint256_inplace_addition_subtraction)
 TEST_F(UInt256Tests, uint256_inplace_addition_exact_match_test)
 {
   // exact match addition test based on result from following python script
-  // x = 12345918842218884612
-  // y = 84121516482377794512
+  // x = 123459188422188846
+  // y = 841215164823777945
   // z = x + y
   // print(z)
 
   // exact match addition test based on result from python computation
   static constexpr char const *SRC = R"(
       function main()
-        var a = UInt256(12345918842218884612u64);
-        var b = UInt256(84121516482377794512u64);
-        var c = UInt256(96467435324596679124u64);
+        var a = UInt256(123459188422188846u64);
+        var b = UInt256(841215164823777945u64);
+        var c = UInt256(964674353245966791u64);
 
         a += b;
         assert(a == c, "a += b != c");
@@ -399,17 +399,17 @@ TEST_F(UInt256Tests, uint256_inplace_addition_exact_match_test)
 TEST_F(UInt256Tests, uint256_inplace_subtraction_exact_match_test)
 {
   // exact match subtraction test based on result from following python script
-  // x = 76431259486712564321
-  // y = 28716423786481234561
+  // x = 123459188422188846
+  // y = 41215164823777945
   // z = x - y
   // print(z)
 
   // exact match addition test based on result from python computation
   static constexpr char const *SRC = R"(
       function main()
-        var a = UInt256(76431259486712564321u64);
-        var b = UInt256(28716423786481234561u64);
-        var c = UInt256(47714835700231329760u64);
+        var a = UInt256(123459188422188846u64);
+        var b = UInt256(41215164823777945u64);
+        var c = UInt256(82244023598410901u64);
 
         a -= b;
         assert(a == c, "a -= b != c");
