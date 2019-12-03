@@ -16,30 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/decoders.hpp"
-#include "core/service_ids.hpp"
-#include "dmlf/colearn/colearn_protocol.hpp"
-#include "dmlf/colearn/muddle_outbound_update_task.hpp"
-#include "muddle/rpc/client.hpp"
+#include "dmlf/shuffle_algorithm_interface.hpp"
 
 namespace fetch {
 namespace dmlf {
-namespace colearn {
 
-MuddleOutboundUpdateTask::ExitState MuddleOutboundUpdateTask::run()
+ShuffleAlgorithmInterface::ShuffleAlgorithmInterface(std::size_t count)
+  : count_(count)
+{}
+
+std::size_t ShuffleAlgorithmInterface::GetCount() const
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Sending update to ", fetch::byte_array::ToBase64(target_));
-  auto prom =
-      client_->CallSpecificAddress(target_, RPC_COLEARN, ColearnProtocol::RPC_COLEARN_UPDATE,
-                                   type_name_, update_, proportion_, random_factor_);
-  prom->Wait();
-  return ExitState::COMPLETE;
+  // this impl is simple, but descendent ones may not be.
+  return count_;
 }
 
-bool MuddleOutboundUpdateTask::IsRunnable() const
-{
-  return true;
-}
-}  // namespace colearn
 }  // namespace dmlf
 }  // namespace fetch

@@ -16,20 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/deprecated/shuffle_algorithm_interface.hpp"
+#include "benchmark/benchmark.h"
 
-namespace fetch {
-namespace dmlf {
-
-ShuffleAlgorithmInterface::ShuffleAlgorithmInterface(std::size_t count)
-  : count_(count)
-{}
-
-std::size_t ShuffleAlgorithmInterface::GetCount() const
-{
-  // this impl is simple, but descendent ones may not be.
-  return count_;
-}
-
-}  // namespace dmlf
-}  // namespace fetch
+BENCHMARK_MAIN();
