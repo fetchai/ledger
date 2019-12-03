@@ -68,15 +68,15 @@ struct TypeFromSize<128>
 {
   static constexpr bool     is_valid   = true;
   static constexpr uint16_t size       = 128;
-  using ValueType                      = __int128_t;
-  using UnsignedType                   = __uint128_t;
-  using SignedType                     = __int128_t;
+  using ValueType                      = int128_t;
+  using UnsignedType                   = uint128_t;
+  using SignedType                     = int128_t;
   using NextSize                       = TypeFromSize<256>;
   static constexpr uint16_t  decimals  = 18;
   static constexpr ValueType tolerance = 0x100000000000;  // 0,00000095367431640625
   static constexpr ValueType max_exp =
-      (static_cast<__uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000;  // 43.6682723752765511
-  static constexpr UnsignedType min_exp = (static_cast<__uint128_t>(0xffffffffffffffd4) << 64) |
+      (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000;  // 43.6682723752765511
+  static constexpr UnsignedType min_exp = (static_cast<uint128_t>(0xffffffffffffffd4) << 64) |
                                           0x54ec1a035df20000;  // -43.6682723752765511
 };
 #endif
@@ -622,7 +622,7 @@ template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::NEGATIVE_INFINITY{
     FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MIN - FixedPoint<I, F>::ONE_MASK)};
 
-inline std::ostream &operator<<(std::ostream &s, __int128_t const &x)
+inline std::ostream &operator<<(std::ostream &s, int128_t const &x)
 {
   s << static_cast<uint64_t>(x >> 64) << "|" << static_cast<uint64_t>(x);
   return s;
@@ -652,7 +652,7 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   {
     s << double(n);
   }
-#ifndef NDEBUG
+#ifdef FETCH_FIXEDPOINT_DEBUG_HEX
   // Only output the hex value in DEBUG mode
   s << " (0x" << std::hex << static_cast<typename FixedPoint<I, F>::Type>(n.Data()) << ")";
 #endif
@@ -794,13 +794,13 @@ constexpr FixedPoint<32, 32>::FixedPoint(FixedPoint<16, 16> const &o)
 template <>
 template <>
 constexpr FixedPoint<64, 64>::FixedPoint(FixedPoint<16, 16> const &o)
-  : data_{static_cast<__int128_t>(o.Data()) << 48}
+  : data_{static_cast<int128_t>(o.Data()) << 48}
 {}
 
 template <>
 template <>
 constexpr FixedPoint<64, 64>::FixedPoint(FixedPoint<32, 32> const &o)
-  : data_{static_cast<__int128_t>(o.Data()) << 32}
+  : data_{static_cast<int128_t>(o.Data()) << 32}
 {}
 
 template <>

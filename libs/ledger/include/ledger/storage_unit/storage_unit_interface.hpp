@@ -50,7 +50,7 @@ public:
 
   /// @name State Interface
   /// @{
-  virtual Document Get(ResourceAddress const &key)                          = 0;
+  virtual Document Get(ResourceAddress const &key) const                    = 0;
   virtual Document GetOrCreate(ResourceAddress const &key)                  = 0;
   virtual void     Set(ResourceAddress const &key, StateValue const &value) = 0;
   virtual bool     Lock(ShardIndex shard)                                   = 0;
