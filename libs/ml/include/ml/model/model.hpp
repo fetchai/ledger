@@ -201,23 +201,18 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
     {
       metrics_.emplace_back(
           graph_ptr_->template AddNode<ops::CrossEntropyLoss<TensorType>>("", {output_, label_}));
-
       break;
     }
     case ops::MetricType::MEAN_SQUARE_ERROR:
     {
-
       metrics_.emplace_back(graph_ptr_->template AddNode<ops::MeanSquareErrorLoss<TensorType>>(
           "", {output_, label_}));
-
       break;
     }
     case ops::MetricType::SOFTMAX_CROSS_ENTROPY:
     {
-
       metrics_.emplace_back(graph_ptr_->template AddNode<ops::SoftmaxCrossEntropyLoss<TensorType>>(
           "", {output_, label_}));
-
       break;
     }
     default:
@@ -317,6 +312,7 @@ typename Model<TensorType>::DataVectorType Model<TensorType>::Evaluate(
   }
 
   dataloader_ptr_->SetMode(dl_mode);
+  dataloader_ptr_->SetRandomMode(false);
   bool is_done_set;
   if (batch_size == 0)
   {
