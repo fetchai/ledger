@@ -169,20 +169,20 @@ TEST(Colearn_UpdateStore, URI_pushPushPopPushPopPop_TwoConsumersSameCriteria)
                    ConstByteArray{a}, {});
   store.PushUpdate(ColearnURI().algorithm_class("algo").update_type("update").source("test2"),
                    ConstByteArray{b}, {});
-  auto result1 =
-      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), LifoCriteria, consumer);
-  auto result1b =
-      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), LifoCriteria, consumerb);
+  auto result1  = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
+                                 LifoCriteria, consumer);
+  auto result1b = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
+                                  LifoCriteria, consumerb);
   store.PushUpdate(ColearnURI().algorithm_class("algo").update_type("update").source("test3"),
                    ConstByteArray{c}, {});
-  auto result2 =
-      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), LifoCriteria, consumer);
-  auto result2b =
-      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), LifoCriteria, consumerb);
-  auto result3 =
-      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), LifoCriteria, consumer);
-  auto result3b =
-      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), LifoCriteria, consumerb);
+  auto result2  = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
+                                 LifoCriteria, consumer);
+  auto result2b = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
+                                  LifoCriteria, consumerb);
+  auto result3  = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
+                                 LifoCriteria, consumer);
+  auto result3b = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
+                                  LifoCriteria, consumerb);
 
   EXPECT_EQ(result1->update_type(), "update");
   EXPECT_EQ(result1->data(), b);
@@ -456,8 +456,8 @@ TEST(Colearn_UpdateStore, URI_pushPushPushPopPopPop_SelectMetadata)
   which        = "a";
   auto result1 = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
                                  LifoSelect, consumer);
-  auto resulta =
-      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), LifoCriteria, consumerb);
+  auto resulta = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
+                                 LifoCriteria, consumerb);
 
   EXPECT_EQ(result1->update_type(), "update");
   EXPECT_EQ(result1->data(), a);
