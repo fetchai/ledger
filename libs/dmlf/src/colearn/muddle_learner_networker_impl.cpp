@@ -164,7 +164,7 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(fetch::json::JSONDocument
 
   if (config_peer_count <= INITIAL_PEERS_COUNT)
   {
-    if (instance_number)
+    if (instance_number != 0)
     {
       remotes.insert(cloud_config.root()["peers"][0]["uri"].As<std::string>());
     }
