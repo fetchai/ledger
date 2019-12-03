@@ -123,7 +123,7 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
 {
   SizeType optimiser_construction_impact = 0;
 
-  if (!model_.GetModel()->loss_set_)
+  if (!model_.model_->loss_set_)
   {
     if (loss->string() == "mse")
     {
@@ -148,7 +148,7 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     }
   }
 
-  if (!model_.GetModel()->optimiser_set_)
+  if (!model_.model_->optimiser_set_)
   {
     if (optimiser->string() == "adagrad")
     {
