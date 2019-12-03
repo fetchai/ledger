@@ -1096,12 +1096,6 @@ bool Router::IsBlacklisted(Address const &target) const
   return blacklist_.Contains(target);
 }
 
-Router::RoutingTable Router::routing_table() const
-{
-  FETCH_LOCK(routing_table_lock_);
-  return routing_table_;
-}
-
 Router::EchoCache Router::echo_cache() const
 {
   FETCH_LOCK(echo_cache_lock_);

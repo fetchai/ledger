@@ -172,31 +172,6 @@ void BuildConnectionList(MuddleRegister const &reg, variant::Variant &output)
   }
 }
 
-void BuildRoutingTable(Router::RoutingTable const &routing_table, variant::Variant &output)
-{
-  output = variant::Variant::Object();
-
-  for (auto const &element : routing_table)
-  {
-    ConstByteArray const address{element.first.data(), element.first.size()};
-    auto const &         handles = element.second.handles;
-
-    auto &entry = output[address.ToBase64()] = variant::Variant::Object();
-
-    entry["direct"] = element.second.direct;
-
-    // create the array for all the handles
-    auto &handles_entry = entry["handle"] = variant::Variant::Array(handles.size());
-
-    // list out all the handles
-    std::size_t idx{0};
-    for (auto const &handle : handles)
-    {
-      handles_entry[idx++] = handle;
-    }
-  }
-}
-
 void BuildEchoCache(Router::EchoCache const &echo_cache, variant::Variant &output)
 {
   output = variant::Variant::Array(echo_cache.size());
@@ -233,9 +208,7 @@ void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output, bool exte
 
   BuildConnectionList(muddle.connection_register(), output["connections"]);
   BuildPeerLists(muddle.connection_list(), output["peers"]);
-  // TODO(tfr): remove  BuildPeerSelection(muddle.peer_selector(), output["peerSelection"]);
   BuildPeerTracker(muddle.peer_tracker(), output["peerTracker"]);
-  BuildRoutingTable(muddle.router().routing_table(), output["routingTable"]);
 
   if (extended)
   {

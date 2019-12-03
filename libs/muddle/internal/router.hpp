@@ -147,7 +147,6 @@ public:
 
   void SetKademliaRouting(bool enable = true);
 
-  RoutingTable     routing_table() const;
   EchoCache        echo_cache() const;
   NetworkId const &network() const;
   Address const &  network_address() const;
