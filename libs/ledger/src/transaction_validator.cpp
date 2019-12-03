@@ -52,7 +52,7 @@ TransactionValidator::TransactionValidator(StorageInterface &storage, TokenContr
  * @return SUCCESS if successful, otherwise a corresponding error code
  */
 ContractExecutionStatus TransactionValidator::operator()(chain::Transaction const &tx,
-                                                         uint64_t                  block_index)
+                                                         uint64_t block_index) const
 {
   // CHECK: Determine if the transaction is valid for the given block
   auto const tx_validity = tx.GetValidity(block_index);

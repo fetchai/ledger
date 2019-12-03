@@ -18,6 +18,7 @@
 
 #include "chain/transaction.hpp"
 #include "chain/transaction_serializer.hpp"
+#include "chain/transaction_validity_period.hpp"
 #include "crypto/verifier.hpp"
 
 #include <algorithm>
@@ -166,19 +167,7 @@ Transaction::BlockIndex Transaction::valid_until() const
  */
 Transaction::Validity Transaction::GetValidity(BlockIndex block_index) const
 {
-  Validity validity{Validity::INVALID};
-
-  if (block_index < valid_until_)
-  {
-    validity = Validity::VALID;
-
-    if ((valid_from_ != 0u) && (valid_from_ > block_index))
-    {
-      validity = Validity::PENDING;
-    }
-  }
-
-  return validity;
+  return fetch::chain::GetValidity(*this, block_index);
 }
 
 /**

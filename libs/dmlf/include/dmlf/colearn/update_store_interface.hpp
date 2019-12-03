@@ -21,6 +21,7 @@
 #include <memory>
 
 #include "dmlf/colearn/colearn_update.hpp"
+#include "dmlf/colearn/colearn_uri.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -46,13 +47,21 @@ public:
   UpdateStoreInterface(UpdateStoreInterface const &other) = delete;
   UpdateStoreInterface &operator=(UpdateStoreInterface const &other) = delete;
 
-  virtual void      PushUpdate(Algorithm const &algo, UpdateType update, Data &&data, Source source,
-                               Metadata &&metadata)                                         = 0;
+  virtual void PushUpdate(ColearnURI const &uri, Data &&data, Metadata &&metadata) = 0;
+  virtual void PushUpdate(Algorithm const &algo, UpdateType update, Data &&data, Source source,
+                          Metadata &&metadata)                                     = 0;
+
+  virtual UpdatePtr GetUpdate(ColearnURI const &uri, Consumer consumer = "learner0") = 0;
+  virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type,
+                              Consumer consumer = "learner0")                        = 0;
+
+  virtual UpdatePtr GetUpdate(ColearnURI const &uri, Criteria criteria,
+                              Consumer consumer = "learner0") = 0;
   virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Criteria criteria,
-                              Consumer consumer = "")                                       = 0;
-  virtual UpdatePtr GetUpdate(Algorithm const &algo, UpdateType const &type, Consumer = "") = 0;
-  virtual std::size_t GetUpdateCount() const                                                = 0;
-  virtual std::size_t GetUpdateCount(Algorithm const &algo, UpdateType const &type) const   = 0;
+                              Consumer consumer = "learner0") = 0;
+
+  virtual std::size_t GetUpdateCount() const                                              = 0;
+  virtual std::size_t GetUpdateCount(Algorithm const &algo, UpdateType const &type) const = 0;
   // TODO(Juan) Set maximum timestamp? Queue size? Other such admin tasks
 };
 

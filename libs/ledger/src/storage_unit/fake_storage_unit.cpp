@@ -29,7 +29,7 @@
 namespace fetch {
 namespace ledger {
 
-FakeStorageUnit::Document FakeStorageUnit::Get(ResourceAddress const &key)
+FakeStorageUnit::Document FakeStorageUnit::Get(ResourceAddress const &key) const
 {
   FETCH_LOCK(lock_);
 

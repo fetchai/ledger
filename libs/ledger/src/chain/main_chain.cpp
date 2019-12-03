@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "bloom_filter/bloom_filter.hpp"
 #include "chain/transaction_layout_rpc_serializers.hpp"
+#include "chain/transaction_validity_period.hpp"
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -32,13 +32,12 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <vector>
 
 using fetch::byte_array::ToBase64;
 using fetch::generics::MilliTimer;
@@ -46,14 +45,18 @@ using fetch::generics::MilliTimer;
 namespace fetch {
 namespace ledger {
 
+namespace {
+constexpr char const *BLOOM_FILTER_STORE = "chain.bloom.db";
+}
+
 /**
  * Constructs the main chain
  *
  * @param mode Flag to signal which storage mode has been requested
  */
-MainChain::MainChain(bool const enable_bloom_filter, Mode mode)
-  : bloom_filter_{std::make_unique<BasicBloomFilter>()}
-  , enable_bloom_filter_{enable_bloom_filter}
+MainChain::MainChain(Mode mode)
+  : mode_{mode}
+  , bloom_filter_{1 + chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD / 2}
   , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
         "ledger_main_chain_bloom_filter_queried_bit_number",
         "Total number of bits checked during each query to the Ledger Main Chain Bloom filter"))
@@ -87,9 +90,20 @@ MainChain::MainChain(bool const enable_bloom_filter, Mode mode)
 
 MainChain::~MainChain()
 {
+  using namespace fetch::serializers;
+
   if (block_store_)
   {
     block_store_->Flush(false);
+  }
+
+  if (mode_ != Mode::IN_MEMORY_DB)
+  {
+    std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
+    LargeObjectSerializeHelper buffer{};
+    buffer << bloom_filter_;
+
+    out << buffer.data();
   }
 }
 
@@ -110,6 +124,9 @@ void MainChain::Reset()
     head_store_.open("chain.head.db",
                      std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
   }
+
+  std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
+  bloom_filter_.Reset();
 
   auto genesis = CreateGenesisBlock();
 
@@ -253,9 +270,9 @@ void MainChain::AddBlockToBloomFilter(Block const &block) const
 {
   for (auto const &slice : block.slices)
   {
-    for (auto const &tx : slice)
+    for (auto const &tx_layout : slice)
     {
-      bloom_filter_->Add(tx.digest());
+      bloom_filter_.Add(tx_layout.digest(), tx_layout.valid_until(), heaviest_.block_number);
     }
   }
 }
@@ -772,12 +789,29 @@ void MainChain::RecoverFromFile(Mode mode)
     block_store_->New("chain.db", "chain.index.db");
     head_store_.open("chain.head.db",
                      std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+
+    std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
+    bloom_filter_.Reset();
+
     return;
   }
   if (Mode::LOAD_PERSISTENT_DB == mode)
   {
+    using namespace fetch::serializers;
+
     block_store_->Load("chain.db", "chain.index.db");
     head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out);
+
+    std::ifstream in(BLOOM_FILTER_STORE, std::ios::binary | std::ios::in);
+
+    if (in.is_open())
+    {
+      byte_array::ByteArray bloom_filter_data{in};
+
+      LargeObjectSerializeHelper buffer{bloom_filter_data};
+
+      buffer >> bloom_filter_;
+    }
   }
   else
   {
@@ -866,6 +900,9 @@ void MainChain::RecoverFromFile(Mode mode)
     head_store_.close();
     head_store_.open("chain.head.db",
                      std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+
+    std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
+    bloom_filter_.Reset();
   }
 }
 
@@ -1281,7 +1318,7 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, bool add_
 }
 
 /**
- * Attempt to locate a block stored in the im memory cache
+ * Attempt to locate a block stored in the in memory cache
  *
  * @param hash The hash of the block to search for
  * @param block The output block to be populated
@@ -1563,7 +1600,7 @@ MainChain::BlockHash MainChain::GetHeadHash()
 {
   byte_array::ByteArray buffer;
 
-  // determine is the hash has already been stored once
+  // determine if the hash has already been stored once
   head_store_.seekg(0, std::ios::end);
   auto const file_size = head_store_.tellg();
 
@@ -1598,8 +1635,8 @@ void MainChain::SetHeadHash(BlockHash const &hash)
  *
  * @return: bool whether the starting hash referred to a valid block on a valid chain
  */
-DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
-                                                 DigestSet const &transactions) const
+DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           starting_hash,
+                                                 TransactionLayoutSet const &transactions) const
 {
   MilliTimer const timer{"DuplicateTransactionsCheck", 100};
 
@@ -1613,15 +1650,15 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
   }
 
   DigestSet potential_duplicates{};
-  for (auto const &digest : transactions)
+  for (auto const &tx_layout : transactions)
   {
-
-    std::pair<bool, std::size_t> const result = bloom_filter_->Match(digest);
+    std::pair<bool, std::size_t> const result =
+        bloom_filter_.Match(tx_layout.digest(), tx_layout.valid_until());
     bloom_filter_queried_bit_count_->set(result.second);
     if (result.first)
     {
       bloom_filter_positive_count_->increment();
-      potential_duplicates.insert(digest);
+      potential_duplicates.insert(tx_layout.digest());
     }
     bloom_filter_query_count_->increment();
   }
@@ -1659,17 +1696,11 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
     return duplicates;
   };
 
-  DigestSet const duplicates =
-      search_chain_for_duplicates(enable_bloom_filter_ ? potential_duplicates : transactions);
+  DigestSet const duplicates = search_chain_for_duplicates(potential_duplicates);
 
   auto const false_positives = potential_duplicates.size() - duplicates.size();
 
   bloom_filter_false_positive_count_->add(false_positives);
-
-  if (bloom_filter_->ReportFalsePositives(false_positives))
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Bloom filter false positive rate exceeded threshold");
-  }
 
   return duplicates;
 }
@@ -1686,9 +1717,9 @@ constexpr char const *ToString(BlockStatus status)
     return "Duplicate";
   case BlockStatus::INVALID:
     return "Invalid";
-  default:
-    return "Unknown";
   }
+
+  return "Unknown";
 }
 
 }  // namespace ledger
