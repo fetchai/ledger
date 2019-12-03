@@ -718,8 +718,8 @@ bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
   auto  index = static_cast<uint32_t>(msg_type);
   if (iter[index])
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " repeated msg type ", msgType_to_string(m),
-                    " with tag ", tag);
+    FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " repeated msg type ",
+                    static_cast<uint8_t>(msg_type), " with tag ", tag);
     return false;
   }
   iter.set(index);

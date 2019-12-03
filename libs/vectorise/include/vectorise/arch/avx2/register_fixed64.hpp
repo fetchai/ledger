@@ -292,7 +292,7 @@ FETCH_ADD_OPERATOR (^, fixed_point::fp64_t, 256, int64_t)
 
 #undef FETCH_ADD_OPERATOR
 
-inline std::ostream &operator<<(std::ostream &s, __int128_t const &n)
+inline std::ostream &operator<<(std::ostream &s, int128_t const &n)
 {
   s << std::setprecision(32);
   s << std::fixed;

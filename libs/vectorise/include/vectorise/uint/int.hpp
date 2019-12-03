@@ -17,10 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/containers/array.hpp"
-// #include "core/serializers/group_definitions.hpp"
 #include "meta/has_index.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/containers/array.hpp"
 #include "vectorise/platform.hpp"
 
 #include <algorithm>
@@ -101,8 +100,8 @@ public:
   constexpr explicit Int(T const &number);
   template <typename T, meta::IfIsUnsignedInteger<T> * = nullptr>
   constexpr explicit Int(T const &number);
-  constexpr explicit Int(__int128_t const &number);
-  constexpr explicit Int(__uint128_t const &number);
+  constexpr explicit Int(int128_t const &number);
+  constexpr explicit Int(uint128_t const &number);
 
   /////////////////////////
   /// casting operators ///
@@ -111,8 +110,8 @@ public:
   explicit operator std::string() const;
   template <typename T, meta::IfIsInteger<T> * = nullptr>
   explicit constexpr operator T() const;
-  explicit constexpr operator __int128_t() const;
-  explicit constexpr operator __uint128_t() const;
+  explicit constexpr operator int128_t() const;
+  explicit constexpr operator uint128_t() const;
 
   ////////////////////////////
   /// assignment operators ///
@@ -389,7 +388,7 @@ constexpr Int<S>::Int(T const &number)
 }
 
 template <uint16_t S>
-constexpr Int<S>::Int(__int128_t const &number)
+constexpr Int<S>::Int(int128_t const &number)
 {
   wide_[0] = static_cast<WideType>(number);
   wide_[1] = static_cast<WideType>(number >> 64);
@@ -403,7 +402,7 @@ constexpr Int<S>::Int(__int128_t const &number)
 }
 
 template <uint16_t S>
-constexpr Int<S>::Int(__uint128_t const &number)
+constexpr Int<S>::Int(uint128_t const &number)
 {
   wide_[0] = static_cast<WideType>(number);
   wide_[1] = static_cast<WideType>(number >> 64);
@@ -439,16 +438,16 @@ constexpr Int<S>::operator T() const
 }
 
 template <uint16_t S>
-constexpr Int<S>::operator __int128_t() const
+constexpr Int<S>::operator int128_t() const
 {
-  __int128_t x = wide_[0] | (static_cast<__int128_t>(wide_[1]) << 64);
+  int128_t x = wide_[0] | (static_cast<int128_t>(wide_[1]) << 64);
   return x;
 }
 
 template <uint16_t S>
-constexpr Int<S>::operator __uint128_t() const
+constexpr Int<S>::operator uint128_t() const
 {
-  __uint128_t x = wide_[0] | (static_cast<__uint128_t>(wide_[1]) << 64);
+  uint128_t x = wide_[0] | (static_cast<uint128_t>(wide_[1]) << 64);
   return x;
 }
 
@@ -786,15 +785,14 @@ constexpr Int<S> &Int<S>::operator*=(Int<S> const &n)
 
   // Calculate all products between each uint64_t element in the Ints
   // Use int128_t type to hold the actual product.
-  __uint128_t products[WIDE_ELEMENTS][WIDE_ELEMENTS] = {};
+  uint128_t products[WIDE_ELEMENTS][WIDE_ELEMENTS] = {};
 
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
     for (std::size_t j = 0; j < WIDE_ELEMENTS; ++j)
     {
       // Note: C++14 does not have constexpr std::array, we need to cast the array
-      products[i][j] =
-          static_cast<__uint128_t>(wide_[i]) * static_cast<__uint128_t>(o.ElementAt(j));
+      products[i][j] = static_cast<uint128_t>(wide_[i]) * static_cast<uint128_t>(o.ElementAt(j));
     }
   }
 
@@ -814,7 +812,7 @@ constexpr Int<S> &Int<S>::operator*=(Int<S> const &n)
    * high-64-bits as carry to the next term
    */
 
-  __uint128_t carry = 0, terms[WIDE_ELEMENTS] = {};
+  uint128_t carry = 0, terms[WIDE_ELEMENTS] = {};
   terms[0] = products[0][0];
   carry    = static_cast<WideType>(terms[0] >> WIDE_ELEMENT_SIZE);
   terms[1] = products[0][1] + products[1][0] + carry;

@@ -34,7 +34,7 @@ using testing::Return;
 class MockStorage : public StorageInterface
 {
 public:
-  MOCK_METHOD1(Get, Document(ResourceAddress const &));
+  MOCK_CONST_METHOD1(Get, Document(ResourceAddress const &));
   MOCK_METHOD1(GetOrCreate, Document(ResourceAddress const &));
   MOCK_METHOD2(Set, void(ResourceAddress const &, StateValue const &));
   MOCK_METHOD1(Lock, bool(ShardIndex));

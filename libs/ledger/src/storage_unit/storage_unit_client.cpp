@@ -503,7 +503,7 @@ StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const
   return doc;
 }
 
-StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key)
+StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key) const
 {
   Document doc;
 

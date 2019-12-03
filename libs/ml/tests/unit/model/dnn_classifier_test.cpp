@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/model/dnn_classifier.hpp"
+#include "ml/model/model.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
@@ -56,7 +57,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
   // run model in training mode
   auto model = ModelType(model_config, {3, 100, 100, 3});
   model.SetDataloader(std::move(data_loader_ptr));
-  model.Compile(optimiser_type);
+  model.Compile(optimiser_type, ops::LossType::NONE, {ops::MetricType::CATEGORICAL_ACCURACY});
 
   return model;
 }
@@ -97,6 +98,18 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   TypeParam pred;
   model.Predict(train_data, pred);
   EXPECT_TRUE(pred.AllClose(train_labels, tolerance, tolerance));
+
+  typename model::Model<TypeParam>::DataVectorType eval =
+      model.Evaluate(dataloaders::DataLoaderMode::TRAIN);
+
+  EXPECT_EQ(eval.size(), 2);
+
+  // check loss
+  auto double_tolerance = static_cast<double>(tolerance);
+  EXPECT_NEAR(static_cast<double>(eval[0]), 0, double_tolerance);
+
+  // check accuracy
+  EXPECT_NEAR(static_cast<double>(eval[1]), 1, double_tolerance);
 
   return true;
 }
