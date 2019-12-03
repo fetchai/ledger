@@ -1781,19 +1781,23 @@ void MainChain::HeaviestTip::Set(Block &block)
     return;
   }
 
-  // check if this block belongs to a different branch
-  if (block.chain_label != chain_label_ && block.previous_hash != hash)
+  // check if this block is not of the current heaviest chain
+  if (block.chain_label != chain_label_)
   {
-    // then we'll need to colour a new heaviest branch
-    ++chain_label_;
+    if (block.previous_hash != hash)
+    {
+      // this block is not of this heaviest chain and is not even next to the current tip
+      // then we'll need to colour a new heaviest branch,
+      // of which this block will be the first known
+      ++chain_label_;
+    }
+    // mark the block as belonging to the current heaviest chain
+    block.chain_label = chain_label_;
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "New heaviest tip: 0x", block.hash.ToHex());
 
   *this = block;
-
-  // label this block as belonging to a heaviest chain
-  block.chain_label = chain_label_;
 }
 
 /**
