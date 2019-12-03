@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "dmlf/colearn/colearn_uri.hpp"
 #include "dmlf/colearn/update_store.hpp"
 #include "gtest/gtest.h"
 
@@ -116,6 +117,50 @@ TEST(Colearn_UpdateStore, pushPushPopPushPopPop_TwoConsumersSameCriteria)
   auto result2b = store.GetUpdate("algo", "update", consumerb);
   auto result3  = store.GetUpdate("algo", "update", consumer);
   auto result3b = store.GetUpdate("algo", "update", consumerb);
+
+  EXPECT_EQ(result1->update_type(), "update");
+  EXPECT_EQ(result1->data(), b);
+  EXPECT_EQ(result1->source(), "test2");
+  EXPECT_EQ(result2->update_type(), "update");
+  EXPECT_EQ(result2->data(), c);
+  EXPECT_EQ(result2->source(), "test3");
+  EXPECT_EQ(result3->update_type(), "update");
+  EXPECT_EQ(result3->data(), a);
+  EXPECT_EQ(result3->source(), "test");
+
+  EXPECT_EQ(result1b->update_type(), "update");
+  EXPECT_EQ(result1b->data(), b);
+  EXPECT_EQ(result1b->source(), "test2");
+  EXPECT_EQ(result2b->update_type(), "update");
+  EXPECT_EQ(result2b->data(), c);
+  EXPECT_EQ(result2b->source(), "test3");
+  EXPECT_EQ(result3b->update_type(), "update");
+  EXPECT_EQ(result3b->data(), a);
+  EXPECT_EQ(result3b->source(), "test");
+}
+
+TEST(Colearn_UpdateStore, URI_pushPushPopPushPopPop_TwoConsumersSameCriteria)
+{
+  UpdateStore store;
+
+  store.PushUpdate(ColearnURI().algorithm_class("algo").update_type("update").source("test"),
+                   ConstByteArray{a}, {});
+  store.PushUpdate(ColearnURI().algorithm_class("algo").update_type("update").source("test2"),
+                   ConstByteArray{b}, {});
+  auto result1 =
+      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), consumer);
+  auto result1b =
+      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), consumerb);
+  store.PushUpdate(ColearnURI().algorithm_class("algo").update_type("update").source("test3"),
+                   ConstByteArray{c}, {});
+  auto result2 =
+      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), consumer);
+  auto result2b =
+      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), consumerb);
+  auto result3 =
+      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), consumer);
+  auto result3b =
+      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), consumerb);
 
   EXPECT_EQ(result1->update_type(), "update");
   EXPECT_EQ(result1->data(), b);
@@ -360,6 +405,83 @@ TEST(Colearn_UpdateStore, pushPushPushPopPopPop_SelectMetadata)
   EXPECT_THROW(store.GetUpdate("algo", "update", LifoSelect, consumerb), std::runtime_error);
   which        = "a";
   auto resultc = store.GetUpdate("algo", "update", LifoSelect, consumerb);
+  EXPECT_EQ(resultc->update_type(), "update");
+  EXPECT_EQ(resultc->data(), a);
+  EXPECT_EQ(resultc->source(), "test");
+}
+
+TEST(Colearn_UpdateStore, URI_pushPushPushPopPopPop_SelectMetadata)
+{
+  std::string which;
+  auto        LifoSelect = [&which](UpdatePtr const &update) -> double {
+    if (update->metadata().at("meta") != which)
+    {
+      return std::nan("");
+    }
+    return static_cast<double>(-update->TimeSinceCreation().count());
+  };
+
+  UpdateStore store;
+
+  store.PushUpdate(ColearnURI().algorithm_class("algo").update_type("update").source("test"),
+                   ConstByteArray{a}, {{"meta", "a"}});
+  store.PushUpdate(ColearnURI().algorithm_class("algo").update_type("update").source("test2"),
+                   ConstByteArray{b}, {{"meta", "b"}});
+  store.PushUpdate(ColearnURI().algorithm_class("algo").update_type("update").source("thinker"),
+                   ConstByteArray{a}, {{"meta", "c"}});
+
+  which        = "a";
+  auto result1 = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
+                                 LifoSelect, consumer);
+  auto resulta =
+      store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"), consumerb);
+
+  EXPECT_EQ(result1->update_type(), "update");
+  EXPECT_EQ(result1->data(), a);
+  EXPECT_EQ(result1->source(), "test");
+  EXPECT_EQ(resulta->update_type(), "update");
+  EXPECT_EQ(resulta->data(), a);
+  EXPECT_EQ(resulta->source(), "thinker");
+
+  store.PushUpdate(ColearnURI().algorithm_class("algo").update_type("update").source("thinker"),
+                   ConstByteArray{b}, {{"meta", "d"}});
+  store.PushUpdate(ColearnURI().algorithm_class("algo").update_type("update").source("thinker"),
+                   ConstByteArray{c}, {{"meta", "e"}});
+  store.PushUpdate(ColearnURI().algorithm_class("algo").update_type("update").source("test"),
+                   ConstByteArray{b}, {{"meta", "f"}});
+
+  which        = "c";
+  auto result2 = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
+                                 LifoSelect, consumer);
+  which        = "b";
+  auto result3 = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
+                                 LifoSelect, consumer);
+  auto resultb = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
+                                 LifoCriteria, consumerb);
+
+  EXPECT_EQ(result2->update_type(), "update");
+  EXPECT_EQ(result2->data(), a);
+  EXPECT_EQ(result2->source(), "thinker");
+  EXPECT_EQ(result3->update_type(), "update");
+  EXPECT_EQ(result3->data(), b);
+  EXPECT_EQ(result3->source(), "test2");
+  EXPECT_EQ(resultb->update_type(), "update");
+  EXPECT_EQ(resultb->data(), b);
+  EXPECT_EQ(resultb->source(), "test");
+
+  EXPECT_THROW(store.GetUpdate("algo", "update", LifoSelect, consumer), std::runtime_error);
+  which        = "d";
+  auto result4 = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
+                                 LifoSelect, consumer);
+  EXPECT_EQ(result4->update_type(), "update");
+  EXPECT_EQ(result4->data(), b);
+  EXPECT_EQ(result4->source(), "thinker");
+
+  which = "f";
+  EXPECT_THROW(store.GetUpdate("algo", "update", LifoSelect, consumerb), std::runtime_error);
+  which        = "a";
+  auto resultc = store.GetUpdate(ColearnURI().algorithm_class("algo").update_type("update"),
+                                 LifoSelect, consumerb);
   EXPECT_EQ(resultc->update_type(), "update");
   EXPECT_EQ(resultc->data(), a);
   EXPECT_EQ(resultc->source(), "test");
