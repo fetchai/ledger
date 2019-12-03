@@ -43,11 +43,19 @@ class ITensor : public fetch::vm::Object
 public:
   ITensor()           = delete;
   ~ITensor() override = default;
-
+  using Index         = fetch::math::SizeType;
   // static Ptr<ITensor> Constructor(VM *vm, TypeId type_id, int32_t num_rows, int32_t num_columns);
   static Ptr<ITensor> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm::Array<fetch::math::SizeType>> const &shape);
+
+  virtual TemplateParameter1 At(AnyInteger const &idx1)                               = 0;
+  virtual TemplateParameter1 At(AnyInteger const &idx1, AnyInteger const &idx2) const = 0;
+  virtual TemplateParameter1 At(AnyInteger const &idx1, AnyInteger const &idx2,
+                                AnyInteger const &idx3) const                         = 0;
+  virtual TemplateParameter1 At(AnyInteger const &idx1, AnyInteger const &idx2,
+                                AnyInteger const &idx3, AnyInteger const &idx4) const = 0;
+
   virtual TemplateParameter1 GetIndexedValue(AnyInteger const &row, AnyInteger const &column) = 0;
   virtual void               SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
                                              TemplateParameter1 const &value)                 = 0;
@@ -89,18 +97,17 @@ struct NDArray : public ITensor
   ////////////////////////////////////
   /// ACCESSING AND SETTING VALUES ///
   ////////////////////////////////////
+  TemplateParameter1 At(AnyInteger const &idx1) override;
+  TemplateParameter1 At(AnyInteger const &idx1, AnyInteger const &idx2) const override;
+  TemplateParameter1 At(AnyInteger const &idx1, AnyInteger const &idx2,
+                        AnyInteger const &idx3) const override;
+  TemplateParameter1 At(AnyInteger const &idx1, AnyInteger const &idx2, AnyInteger const &idx3,
+                        AnyInteger const &idx4) const override;
 
-  template <typename... Indices>
-  T At(Indices... indices) const
-  {
-    return tensor_.At(indices...);
-  }
+  void SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
+                       TemplateParameter1 const &value) override;
 
-  template <typename... Args>
-  void SetAt(Args... args)
-  {
-    tensor_.Set(args...);
-  }
+  TemplateParameter1 GetIndexedValue(AnyInteger const &row, AnyInteger const &column) override;
 
   void Copy(TensorType const &other);
 
@@ -140,10 +147,7 @@ struct NDArray : public ITensor
 
   T *Find(AnyInteger const &row, AnyInteger const &column);
 
-  TemplateParameter1 GetIndexedValue(AnyInteger const &row, AnyInteger const &column) override;
-
-  void SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
-                       TemplateParameter1 const &value) override;
+  // TemplateParameter1 At(AnyInteger const &row, AnyInteger const &column) override;
 
   fetch::math::Tensor<T> tensor_;
   TypeId                 element_type_id_;

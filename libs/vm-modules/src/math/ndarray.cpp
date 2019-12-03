@@ -389,15 +389,44 @@ T *NDArray<T>::Find(AnyInteger const &row, AnyInteger const &column)
 }
 
 template <typename T>
-TemplateParameter1 NDArray<T>::GetIndexedValue(AnyInteger const &row, AnyInteger const &column)
+TemplateParameter1 NDArray<T>::At(const AnyInteger &idx1)
 {
-  T *ptr = Find(row, column);
-  if (ptr)
+  auto const value = tensor_.At(idx1.Get<std::size_t>());
+  return {value, element_type_id_};
+}
+template <typename T>
+TemplateParameter1 NDArray<T>::At(AnyInteger const &idx1, AnyInteger const &idx2) const
+{
+  std::size_t r;
+  std::size_t c;
+  if (!GetNonNegativeInteger(idx2, c))
   {
-    return TemplateParameter1(*ptr, element_type_id_);
+    RuntimeError("negative index");
+    return TemplateParameter1();
   }
-  // Not found
-  return TemplateParameter1();
+  if (!GetNonNegativeInteger(idx1, r))
+  {
+    RuntimeError("negative index");
+    return TemplateParameter1();
+  }
+  auto const value = tensor_.At(r, c);
+  return {value, element_type_id_};
+}
+template <typename T>
+TemplateParameter1 NDArray<T>::At(AnyInteger const &idx1, AnyInteger const &idx2,
+                                  AnyInteger const &idx3) const
+{
+  auto const value =
+      tensor_.At(idx1.Get<std::size_t>(), idx2.Get<std::size_t>(), idx3.Get<std::size_t>());
+  return {value, element_type_id_};
+}
+template <typename T>
+TemplateParameter1 NDArray<T>::At(AnyInteger const &idx1, AnyInteger const &idx2,
+                                  AnyInteger const &idx3, AnyInteger const &idx4) const
+{
+  auto const value = tensor_.At(idx1.Get<std::size_t>(), idx2.Get<std::size_t>(),
+                                idx3.Get<std::size_t>(), idx4.Get<std::size_t>());
+  return {value, element_type_id_};
 }
 
 template <typename T>
@@ -409,6 +438,18 @@ void NDArray<T>::SetIndexedValue(AnyInteger const &row, AnyInteger const &column
   {
     *ptr = value.Get<T>();
   }
+}
+
+template <typename T>
+TemplateParameter1 NDArray<T>::GetIndexedValue(const AnyInteger &row, const AnyInteger &column)
+{
+  T *ptr = Find(row, column);
+  if (ptr)
+  {
+    return TemplateParameter1(*ptr, element_type_id_);
+  }
+  // Not found
+  return TemplateParameter1();
 }
 
 // Ptr<ITensor> ITensor::Constructor(VM *vm, TypeId type_id,  // int32_t num_rows, int32_t
@@ -459,19 +500,36 @@ Ptr<ITensor> ITensor::Constructor(
     return Ptr<ITensor>();
   }
 
-  // TODO (VH) : impl. proper Factory.
-  return Ptr<ITensor>{new NDArray<double>(vm, type_id, shape->elements)};
+  switch (element_type_id)
+  {
+  case TypeIds::Float64:
+    return Ptr<ITensor>{new NDArray<double>(vm, type_id, shape->elements)};
+  case TypeIds::Float32:
+    return Ptr<ITensor>{new NDArray<float>(vm, type_id, shape->elements)};
+  case TypeIds::Fixed32:
+    return Ptr<ITensor>{new NDArray<fixed_point::fp32_t>(vm, type_id, shape->elements)};
+  case TypeIds::Fixed64:
+    return Ptr<ITensor>{new NDArray<fixed_point::fp64_t>(vm, type_id, shape->elements)};
+    // TODO (VH) : impl. proper Factory with Fixed128, Integers and so on.
+  }
+
+  // TEMPORARY DUMMY, SHOULD BE REWORKED
+  vm->RuntimeError("Can not create NDArray with element typeId " + std::to_string(element_type_id));
+  return Ptr<ITensor>();
 }
 
 void fetch::vm_modules::math::ITensor::Bind(fetch::vm::Module &module)
 {
+  auto at2 = static_cast<TemplateParameter1 (ITensor::*)(AnyInteger const &, AnyInteger const &)>(
+      &ITensor::GetIndexedValue);
   module.CreateTemplateType<ITensor, AnyPrimitive>("NDArray")
       .CreateConstructor(&ITensor::Constructor)
       .EnableIndexOperator(&ITensor::GetIndexedValue, &ITensor::SetIndexedValue)
-      .CreateInstantiationType<NDArray<double>>()
+      .CreateMemberFunction("at", at2)
       .CreateInstantiationType<NDArray<float>>()
-      .CreateInstantiationType<NDArray<fixed_point::fp64_t>>()
+      .CreateInstantiationType<NDArray<double>>()
       .CreateInstantiationType<NDArray<fixed_point::fp32_t>>()
+      .CreateInstantiationType<NDArray<fixed_point::fp64_t>>()
       //.CreateInstantiationType<NDArray<fixed_point::fp128_t>>() TODO(VH): impl. non-primitives
       .EnableOperator(Operator::Negate)
       .EnableOperator(Operator::Add)

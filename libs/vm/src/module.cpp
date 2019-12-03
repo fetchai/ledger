@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/module.hpp"
+
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/address.hpp"
 #include "vm/array.hpp"
@@ -23,7 +25,6 @@
 #include "vm/fixed.hpp"
 #include "vm/map.hpp"
 #include "vm/matrix.hpp"
-#include "vm/module.hpp"
 #include "vm/sharded_state.hpp"
 #include "vm/state.hpp"
 #include "vm/string.hpp"
@@ -43,73 +44,59 @@ To Cast(Variant const &from)
   To to;
   switch (from.type_id)
   {
-  case TypeIds::Bool:
-  {
+  case TypeIds::Bool: {
     to = static_cast<To>(from.primitive.ui8);
     break;
   }
-  case TypeIds::Int8:
-  {
+  case TypeIds::Int8: {
     to = static_cast<To>(from.primitive.i8);
     break;
   }
-  case TypeIds::UInt8:
-  {
+  case TypeIds::UInt8: {
     to = static_cast<To>(from.primitive.ui8);
     break;
   }
-  case TypeIds::Int16:
-  {
+  case TypeIds::Int16: {
     to = static_cast<To>(from.primitive.i16);
     break;
   }
-  case TypeIds::UInt16:
-  {
+  case TypeIds::UInt16: {
     to = static_cast<To>(from.primitive.ui16);
     break;
   }
-  case TypeIds::Int32:
-  {
+  case TypeIds::Int32: {
     to = static_cast<To>(from.primitive.i32);
     break;
   }
-  case TypeIds::UInt32:
-  {
+  case TypeIds::UInt32: {
     to = static_cast<To>(from.primitive.ui32);
     break;
   }
-  case TypeIds::Int64:
-  {
+  case TypeIds::Int64: {
     to = static_cast<To>(from.primitive.i64);
     break;
   }
-  case TypeIds::UInt64:
-  {
+  case TypeIds::UInt64: {
     to = static_cast<To>(from.primitive.ui64);
     break;
   }
-  case TypeIds::Float32:
-  {
+  case TypeIds::Float32: {
     to = static_cast<To>(from.primitive.f32);
     break;
   }
-  case TypeIds::Float64:
-  {
+  case TypeIds::Float64: {
     to = static_cast<To>(from.primitive.f64);
     break;
   }
-  case TypeIds::Fixed32:
-  {
+  case TypeIds::Fixed32: {
     to = static_cast<To>(fixed_point::fp32_t::FromBase(from.primitive.i32));
     break;
   }
-  case TypeIds::Fixed64:
-  {
+  case TypeIds::Fixed64: {
     to = static_cast<To>(fixed_point::fp64_t::FromBase(from.primitive.i64));
     break;
   }
-  default:
-  {
+  default: {
     to = 0;
     // Not a primitive
     assert(false);
@@ -184,73 +171,59 @@ Ptr<Fixed128> toFixed128(VM *vm, AnyPrimitive const &from)
   fixed_point::fp128_t fixed;
   switch (from.type_id)
   {
-  case TypeIds::Bool:
-  {
+  case TypeIds::Bool: {
     fixed = static_cast<fixed_point::fp128_t>(from.primitive.ui8);
     break;
   }
-  case TypeIds::Int8:
-  {
+  case TypeIds::Int8: {
     fixed = static_cast<fixed_point::fp128_t>(from.primitive.i8);
     break;
   }
-  case TypeIds::UInt8:
-  {
+  case TypeIds::UInt8: {
     fixed = static_cast<fixed_point::fp128_t>(from.primitive.ui8);
     break;
   }
-  case TypeIds::Int16:
-  {
+  case TypeIds::Int16: {
     fixed = static_cast<fixed_point::fp128_t>(from.primitive.i16);
     break;
   }
-  case TypeIds::UInt16:
-  {
+  case TypeIds::UInt16: {
     fixed = static_cast<fixed_point::fp128_t>(from.primitive.ui16);
     break;
   }
-  case TypeIds::Int32:
-  {
+  case TypeIds::Int32: {
     fixed = static_cast<fixed_point::fp128_t>(from.primitive.i32);
     break;
   }
-  case TypeIds::UInt32:
-  {
+  case TypeIds::UInt32: {
     fixed = static_cast<fixed_point::fp128_t>(from.primitive.ui32);
     break;
   }
-  case TypeIds::Int64:
-  {
+  case TypeIds::Int64: {
     fixed = static_cast<fixed_point::fp128_t>(from.primitive.i64);
     break;
   }
-  case TypeIds::UInt64:
-  {
+  case TypeIds::UInt64: {
     fixed = static_cast<fixed_point::fp128_t>(from.primitive.ui64);
     break;
   }
-  case TypeIds::Float32:
-  {
+  case TypeIds::Float32: {
     fixed = static_cast<fixed_point::fp128_t>(from.primitive.f32);
     break;
   }
-  case TypeIds::Float64:
-  {
+  case TypeIds::Float64: {
     fixed = static_cast<fixed_point::fp128_t>(from.primitive.f64);
     break;
   }
-  case TypeIds::Fixed32:
-  {
+  case TypeIds::Fixed32: {
     fixed = static_cast<fixed_point::fp128_t>(fixed_point::fp32_t::FromBase(from.primitive.i32));
     break;
   }
-  case TypeIds::Fixed64:
-  {
+  case TypeIds::Fixed64: {
     fixed = static_cast<fixed_point::fp128_t>(fixed_point::fp64_t::FromBase(from.primitive.i64));
     break;
   }
-  default:
-  {
+  default: {
     fixed = 0;
     // Not a primitive
     assert(false);
@@ -279,26 +252,26 @@ Module::Module()
   CreateFreeFunction("toFixed64", &toFixed64);
   CreateFreeFunction("toFixed128", &toFixed128);
 
-  CreateTemplateType<IMatrix, AnyFloatingPoint>("Matrix")
-      .CreateConstructor(&IMatrix::Constructor)
-      .EnableIndexOperator(&IMatrix::GetIndexedValue, &IMatrix::SetIndexedValue)
-      .CreateInstantiationType<Matrix<double>>()
-      .CreateInstantiationType<Matrix<float>>()
-      .EnableOperator(Operator::Negate)
-      .EnableOperator(Operator::Add)
-      .EnableOperator(Operator::Subtract)
-      .EnableOperator(Operator::Multiply)
-      .EnableOperator(Operator::InplaceAdd)
-      .EnableOperator(Operator::InplaceSubtract)
-      .EnableLeftOperator(Operator::Multiply)
-      .EnableRightOperator(Operator::Add)
-      .EnableRightOperator(Operator::Subtract)
-      .EnableRightOperator(Operator::Multiply)
-      .EnableRightOperator(Operator::Divide)
-      .EnableRightOperator(Operator::InplaceAdd)
-      .EnableRightOperator(Operator::InplaceSubtract)
-      .EnableRightOperator(Operator::InplaceMultiply)
-      .EnableRightOperator(Operator::InplaceDivide);
+  //  CreateTemplateType<ITensor, AnyFloatingPoint>("NDArray")
+  //      .CreateConstructor(&ITensor::Constructor)
+  //      .EnableIndexOperator(&ITensor::GetIndexedValue, &ITensor::SetIndexedValue)
+  //      .CreateInstantiationType<NDArray<double>>()
+  //      .CreateInstantiationType<NDArray<float>>()
+  //      .EnableOperator(Operator::Negate)
+  //      .EnableOperator(Operator::Add)
+  //      .EnableOperator(Operator::Subtract)
+  //      .EnableOperator(Operator::Multiply)
+  //      .EnableOperator(Operator::InplaceAdd)
+  //      .EnableOperator(Operator::InplaceSubtract)
+  //      .EnableLeftOperator(Operator::Multiply)
+  //      .EnableRightOperator(Operator::Add)
+  //      .EnableRightOperator(Operator::Subtract)
+  //      .EnableRightOperator(Operator::Multiply)
+  //      .EnableRightOperator(Operator::Divide)
+  //      .EnableRightOperator(Operator::InplaceAdd)
+  //      .EnableRightOperator(Operator::InplaceSubtract)
+  //      .EnableRightOperator(Operator::InplaceMultiply)
+  //      .EnableRightOperator(Operator::InplaceDivide);
 
   GetClassInterface<IArray>()
       .CreateConstructor(&IArray::Constructor)
