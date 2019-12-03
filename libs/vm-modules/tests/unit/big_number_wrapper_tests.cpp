@@ -480,16 +480,16 @@ TEST_F(UInt256Tests, uint256_trivial_division)
 TEST_F(UInt256Tests, uint256_multiplication_exact_match_test)
 {
   // exact match multiplication test based on result from following python script
-  // x = 14672318642
-  // y = 13459264231
+  // x = 146723186
+  // y = 134592642
   // z = x + y
   // print(z)
 
   static constexpr char const *SRC = R"(
       function main()
-        var a = UInt256(14672318642u64);
-        var b = UInt256(13459264231u64);
-        var c = UInt256(197478613484105094302u64);
+        var a = UInt256(146723186u64);
+        var b = UInt256(134592642u64);
+        var c = UInt256(19747861246397412u64);
         var result = UInt256(0u64);
         result = a * b;
         assert(result == c, "a+b != c");
@@ -504,15 +504,15 @@ TEST_F(UInt256Tests, uint256_division_exact_match_test)
 {
   // exact match subtraction test based on result from following python script
   // x = 18446744073709551615
-  // y = 15648375915132456516
+  // y = 145435315
   // z = x / y
   // print(z)
 
   static constexpr char const *SRC = R"(
       function main()
-        var a = UInt256(197478613484105094302u64);
-        var b = UInt256(13459264231u64);
-        var c = UInt256(14672318642u64);
+        var a = UInt256(18446744073709551615u64);
+        var b = UInt256(145435315u64);
+        var c = UInt256(126838134697u64);
         var result = a / b;
         assert(result == c, "a+b != c");
       endfunction
