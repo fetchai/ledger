@@ -192,6 +192,12 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
     for (auto const &block_hash_sigs : ret)
     {
       BlockHash block_hash = block_hash_sigs.first;
+
+      if (stutter_blocks_.find(block_hash) != stutter_blocks_.end())
+      {
+        continue;
+      }
+
       // If we have already built a notarisation for this hash then continue
       if (notarisations_built_[notarisation_collection_height_].find(block_hash) !=
           notarisations_built_[notarisation_collection_height_].end())
@@ -278,11 +284,13 @@ NotarisationService::State NotarisationService::OnComplete()
   TrimToSize(notarisations_being_built_, max_cache_size);
   TrimToSize(notarisations_built_, max_cache_size);
 
-  // If chain has moved ahead faster while notarisations were being collected then reset
-  // the block number collection is working on
+  // If chain has moved ahead while notarisations were being collected then reset
+  // the block number collection is working on and clear stutter blocks collected for
+  // previous block number
   if (notarised_chain_height_ + 1 > notarisation_collection_height_)
   {
     notarisation_collection_height_ = notarised_chain_height_ + 1;
+    stutter_blocks_.clear();
   }
 
   // If we have new notarisation keys and the next block to notarise is the end of the aeon then we
@@ -406,6 +414,16 @@ NotarisationService::AggregateSignature NotarisationService::GetAggregateNotaris
     }
   }
   return notarisation;
+}
+
+void NotarisationService::RemoveNotarisation(BlockNumber const &block_number,
+                                             BlockHash const &  block_hash)
+{
+  FETCH_LOCK(mutex_);
+
+  notarisations_being_built_[block_number].erase(block_hash);
+  notarisations_built_[block_number].erase(block_hash);
+  stutter_blocks_.insert(block_hash);
 }
 
 std::weak_ptr<core::Runnable> NotarisationService::GetWeakRunnable()
