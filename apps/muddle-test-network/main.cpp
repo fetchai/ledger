@@ -81,6 +81,7 @@ struct Node
     address = muddle->GetAddress();
 
     muddle->Start({port});
+    muddle->SetTrackerConfiguration(TrackerConfiguration::AllOn());
 
     http_network_manager->Start();
     http.AddMiddleware(http::middleware::AllowOrigin("*"));
