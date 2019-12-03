@@ -23,7 +23,7 @@ output_path = 'results/' + date.today().strftime("%Y-%m-%d") + '/'
 n_reps = 100
 
 # Benchmark categories to run
-bm_filter = 'Basic|Math|Object|Array|Tensor|Crypto'
+bm_filter = 'Basic|Prim|Math|Object|Array|Tensor|Crypto'
 
 run_benchmarks = True
 make_plots = True
@@ -39,13 +39,11 @@ slope_thresh = 0.01
 
 def index(row):
     """Return index of benchmark from name listed in vm_benchmark_file"""
-
     return int(row[0].split('_')[0].split('/')[1])
 
 
 def get_net_opcodes(ops, base_ops):
     """Get the list of opcodes that are in ops but not in base_ops"""
-
     base_copy = base_ops.copy()
     return [x for x in ops if x not in base_copy or base_copy.remove(x)]
 
@@ -112,7 +110,14 @@ stddevs = {index(row): float(row[3]) for row in bm_rows if 'stddev' in row[0]}
 
 bm_classes = ['Basic', 'String', 'Prim', 'Math', 'Array', 'Tensor', 'Sha256']
 prim_bm_classes = ['Prim', 'Math']
-param_bm_classes = ['String', 'Array', 'Sha256']
+param_bm_classes = ['String', 'Array', 'Sha256', 'Tensor']
+
+# Primitives used in primitive operation benchmarks
+op_prims = {'Int8', 'Int16', 'Int32', 'Int64', 'UInt8', 'UInt16', 'UInt32', 'UInt64',
+            'Float32', 'Float64', 'Fixed32', 'Fixed64', 'Fixed128'}
+
+# Primitives used in math function benchmarks
+math_prims = {'Float32', 'Float64', 'Fixed32', 'Fixed64', 'Fixed128'}
 
 # Collect benchmark data and stats
 benchmarks = {ind: {'name': name,
@@ -147,28 +152,27 @@ for (ind, bm) in benchmarks.items():
     elif bm['class'] in prim_bm_classes:
         bm['primitive'] = bm['name'].split('_')[1]
 
-# Collect tensor benchmark data
-tensor_bm_types = {bm['type']
-                   for bm in benchmarks.values() if bm['class'] == 'Tensor'}
-
-del benchmarks[9]
+# Delete 'Break' and 'Continue' benchmarks for the purposes of least-squares fitting
+benchmarks_fit = benchmarks.copy()
+for key in benchmarks.keys():
+    if benchmarks[key]['name'] in {'Break', 'Continue'}:
+        del benchmarks_fit[key]
 
 # Solve linear least-squares problem to estimate individual opcode times
 optimes = {'Base': dict()}
-vm_least_squares.opcode_times(benchmarks, optimes['Base'], {'Basic'})
-op_prims = {'Int8', 'Int16', 'Int32', 'Int64', 'UInt8', 'UInt16', 'UInt32', 'UInt64',
-            'Float32', 'Float64', 'Fixed32', 'Fixed64'}
-math_prims = {'Float32', 'Float64', 'Fixed32', 'Fixed64'}
+vm_least_squares.opcode_times(benchmarks_fit, optimes['Base'], {'Basic'})
 
+# For each primitive, build on already computed base opcodes
 for prim in op_prims:
     optimes[prim] = optimes['Base'].copy()
-    vm_least_squares.opcode_times(benchmarks, optimes[prim], {
+    vm_least_squares.opcode_times(benchmarks_fit, optimes[prim], {
                                   'Prim'}, prim_type=prim)
 for prim in math_prims:
-    vm_least_squares.opcode_times(benchmarks, optimes[prim], {
+    vm_least_squares.opcode_times(benchmarks_fit, optimes[prim], {
                                   'Math'}, prim_type=prim)
 
-for bm in benchmarks.values():
+# Add indivudual opcode times to relevant benchmarks
+for bm in benchmarks_fit.values():
     if bm['class'] == 'Basic':
         bm['opcode_times'] = {op: round(optimes['Base'][op], 2)
                               for op in bm['opcodes']}
@@ -179,7 +183,6 @@ for bm in benchmarks.values():
 # Collect parameterized benchmark data
 param_bm_types = {bm['type'] for bm in benchmarks.values(
 ) if bm['class'] in param_bm_classes and '_' in bm['name']}
-param_bm_types = param_bm_types.union(tensor_bm_types)
 
 param_bms = {type_name: {'inds': [ind for (ind, bm) in benchmarks.items() if bm['type'] == type_name]}
              for type_name in param_bm_types}
@@ -221,9 +224,9 @@ for (bm_type, param_bm) in param_bms.items():
             max_len = max_fit_lens[key]
     param_bm['lfit'] = vm_least_squares.linear_fit(param_bm, max_len)
 
+# Select parameterized benchmarks whose fit slopes satisfy the given threshold
 param_dep_bms = {name: bm for (
     name, bm) in param_bms.items() if bm['lfit'][0] > slope_thresh}
-
 
 if save_results:
 
@@ -252,7 +255,7 @@ if make_tables:
     vmt.benchmark_opcode_table(benchmarks, n_reps, 'Basic')
 
     for bm_cls in prim_bm_classes:
-        vmt.benchmark_opcode_table(benchmarks, n_reps, bm_cls)
+        vmt.benchmark_opcode_table(benchmarks_fit, n_reps, bm_cls)
         vmt.primitive_table(benchmarks, n_reps, bm_cls)
 
     for bm_cls in param_bm_classes:

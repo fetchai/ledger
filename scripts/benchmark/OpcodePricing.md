@@ -1,49 +1,47 @@
-
-
 # Opcode Pricing
 
 We have designed a [pricing mechanism](https://www.overleaf.com/read/qdgrnfdspjgd) to maximize transaction throughput in the fetch.ai ledger by incentivizing transactions to use a small number of resource lanes (or shards) and occupy the least congested lanes. Such a policy promotes efficient operation of an ideal ledger, but it is based on the assumption that transaction fees depend on lane usage alone. Ultimately, the price of transactions should also relate to the actual cost of maintaining the ledger, which in the case of digital tokens, is proportional to the resources consumed by the servers responsible for validating transactions. At a basic level, this can be expressed in terms of the expected number of CPU cycles and memory space needed to validate a transaction. Since transactions include smart contracts and are expressed in a programming language (Etch), they consist of a sequence of machine instructions. Estimates of the CPU time required by a transaction can therefore be decomposed into the times of the constituent instructions or opcodes.
 
 In the fetch.ai distributed ledger, transactions are typically submitted via [Etch-code](https://docs.fetch.ai/etch-language/). Therefore, we estimate the CPU requirements of each opcode in the fetch.ai virtual machine by isolating it as much as possible in a compiled piece of Etch code. For example, if we want to compute the CPU requirements for adding two 32-bit integers, we can compile and time the following Etch code:
 ```c
-function PrimitiveAdd()  
-var x : Int32 = 1i32;  
-x + x;  
+function PrimitiveAdd()
+var x : Int32 = 1i32;
+x + x;
 endfunction
 ```
 If we look at the opcodes that result from compiling this code, we get:
 
-	7 PushConstant  
-	2 VariableDeclareAssign  
-	8 PushVariable  
-	8 PushVariable  
-	48 PrimitiveAdd  
-	14 Discard  
+	7 PushConstant
+	2 VariableDeclareAssign
+	8 PushVariable
+	8 PushVariable
+	48 PrimitiveAdd
+	14 Discard
 	21 Return
 
 Since we are interested in timing the add operation, we also time the following code for use as as a baseline:
 ```c
-function PushVariable()  
-var x : Int32 = 1i32;  
-x;  
+function PushVariable()
+var x : Int32 = 1i32;
+x;
 endfunction
 ```
 This code runs the following opcodes:
 
-	7 PushConstant  
-	2 VariableDeclareAssign  
-	8 PushVariable  
-	14 Discard  
+	7 PushConstant
+	2 VariableDeclareAssign
+	8 PushVariable
+	14 Discard
 	21 Return
 
 By subtracting the time of **PushVariable** from **PrimitiveAdd**, we obtain an estimate of the opcodes 8 (**PushVariable**) and 48 (**PrimitiveAdd**). Note that the primitive add operation requires pushing two variables to the stack. Since the arithmetic operations will almost always be executed after a push operation, we include both together in the benchmark timings. Similarly for the discard operation (14) after a push. However, we will show one way to estimate the isolated opcode times in the next section. Using the [Google benchmark library](https://github.com/google/benchmark) to run 100 repetitions of each compiled function, we obtain the following output:
 
-	Run on (8 X 4000 MHz CPU s)  
-	CPU Caches:  
-	L1 Data 32K (x4)  
-	L1 Instruction 32K (x4)  
-	L2 Unified 256K (x4)  
-	L3 Unified 8192K (x1)  
+	Run on (8 X 4000 MHz CPU s)
+	CPU Caches:
+	L1 Data 32K (x4)
+	L1 Instruction 32K (x4)
+	L2 Unified 256K (x4)
+	L3 Unified 8192K (x1)
 	------------------------------------------------------------------------------------
 	Benchmark Time CPU Iterations
 	------------------------------------------------------------------------------------
@@ -83,15 +81,15 @@ Let *A* be a matrix where each row corresponds to a benchmark and each element *
 
 For the benchmarks listed in [Table 1](#table1), we seek values in the vector ***x*** that make the following expression as close as possible to an equality.
 
-<p align="center"><img src="https://lh3.googleusercontent.com/XEBuaslfkpGcO3el45UIoN88fF7uzpecNvc6UVzOlXrMYbE7EZAYfi_TVz4Vu1Q0_p_LCcQWJCI" alt="drawing" height="300" align="center"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/XEBuaslfkpGcO3el45UIoN88fF7uzpecNvc6UVzOlXrMYbE7EZAYfi_TVz4Vu1Q0_p_LCcQWJCI" alt="drawing" height="300"/></p>
 
 In addition to minimizing ||*A****x*** - ***b***||<sup>2</sup>, we also need to constrain the individual opcode times to be positive (*x<sub>i</sub> > 0* for each *i*). Finally, since CPU times vary more for some benchmarks than others, we normalize the expression by the standard deviation and rewrite the expression as follows:
 
 <p align="center"><img src="https://lh3.googleusercontent.com/kVZIT9dzirl7nqZAIkcgaZ5tPsSF8iOh8TnmR07EC2FvJPOxmQNHxS7ERGOOWH8AqrSzERzcHTA"/></p>
 
-The solution of the above example is: 
+The solution of the above example is:
 
-<p align="center"><img src="https://lh3.googleusercontent.com/OQNoOtRSJ6kHStPb-xs-rvFCtAYVsXYalcQlRqEjEcFActzWZ5TbymZMjO-YZraDBEr46yQwZdU" alt="drawing" height="300" class="center"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/OQNoOtRSJ6kHStPb-xs-rvFCtAYVsXYalcQlRqEjEcFActzWZ5TbymZMjO-YZraDBEr46yQwZdU" alt="drawing" height="300"/></p>
 
 where the values of **x** are given in nanoseconds and the corresponding opcodes are defined as {1: VariableDeclare, 4: PushFalse, 5: PushTrue, 7: PushConstant, 14: Discard, 15: Destruct, 18: Jump, 19: JumpIfFalse,  21: Return, 23: ForRangeInit, 24: ForRangeIterate, 25: ForRangeTerminate, 26: InvokeUserDefinedFreeFunction, 31: JumpIfFalseOrPop, 32: JumpIfTrueOrPop, 33: Not}.
 
@@ -112,7 +110,7 @@ We can then use these estimates to decouple the opcode times listed in [Table 1]
 | DestructBase           |       74.76 |              0.14 | {**1**: 7.75, **7**: 11.07, **23**: 5.52, **24**: 5.52, **18**: 0.0, **25**: 5.52, **21**: 27.72}           |
 | Destruct               |       77.92 |              0.13 | {**7**: 11.07, **23**: 5.52, **24**: 5.52, **1**: 7.75, **15**: 3.76, **18**: 0.0, **25**: 5.52, **21**: 27.72} |
 | Function               |       40.49 |              0.12 | {**26**: 12.77, **21**: 27.72}                                                          |
-| VariableDeclareStr     |       35.31 |              0.13 | {**1**: 7.75, **21**: 27.72} 
+| VariableDeclareStr     |       35.31 |              0.13 | {**1**: 7.75, **21**: 27.72}
 
 See [Appendix](#app) for the list of all parameter-independent opcodes.
 
@@ -257,7 +255,7 @@ We use a similar approach to profile array operations. As shown below, there is 
 
 ## Tensor-based opcodes
 
-We profile tensor-based operations using a similar approach. To ensure that they do not depend on the dimension of the tensor, we tested the following dimensions independently: 2, 3 and 4. 
+We profile tensor-based operations using a similar approach. To ensure that they do not depend on the dimension of the tensor, we tested the following dimensions independently: 2, 3 and 4.
 
 ### <a name="table8">Table 8</a>: Least-squares linear fit parameters for tensor-based opcodes
 | Benchmark (100 reps)   |   Slope (ns/char) |   Intercept (ns) |    Mean (ns) |   Std error (ns) | Net opcodes                                                                   |
