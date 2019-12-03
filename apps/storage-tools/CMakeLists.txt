@@ -7,20 +7,17 @@ project(storage-unit-cli)
 setup_compiler()
 
 add_executable(tx-ctl
-  tx_ctl.cpp
-  tx_storage_client.cpp
-  tx_storage_client.hpp
-  tx_storage_tool.cpp
-  tx_storage_tool.hpp
-)
+               tx_ctl.cpp
+               tx_storage_client.cpp
+               tx_storage_client.hpp
+               tx_storage_tool.cpp
+               tx_storage_tool.hpp)
 target_link_libraries(tx-ctl PRIVATE fetch-ledger)
 
 add_executable(blk-ctl
-  blk_ctl.cpp
-  block_storage_client.cpp
-  block_storage_client.hpp
-  block_storage_tool.cpp
-  block_storage_tool.hpp
-)
+               blk_ctl.cpp
+               block_storage_client.cpp
+               block_storage_client.hpp
+               block_storage_tool.cpp
+               block_storage_tool.hpp)
 target_link_libraries(blk-ctl PRIVATE fetch-ledger)
-

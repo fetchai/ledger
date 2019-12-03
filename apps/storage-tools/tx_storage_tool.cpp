@@ -38,7 +38,6 @@ using fetch::chain::TransactionSerializer;
 
 using InitialPeers = MuddleInterface::Peers;
 
-
 std::string GenerateTxFilename(fetch::Digest const &digest)
 {
   std::string base = static_cast<std::string>(digest.ToHex());

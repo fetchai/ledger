@@ -45,7 +45,7 @@ public:
   ~PromiseOf() override           = default;
 
   // Promise Accessors
-  bool   Wait(bool throw_exception = true) const;
+  bool Wait(bool throw_exception = true) const;
 
   bool GetResult(RESULT &result) const
   {

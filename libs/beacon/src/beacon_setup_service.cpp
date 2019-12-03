@@ -1490,7 +1490,6 @@ void BeaconSetupService::StartNewCabinet(CabinetMemberList members, uint32_t thr
 
   FETCH_LOCK(mutex_);
 
-
   SharedAeonExecutionUnit beacon = std::make_shared<beacon::AeonExecutionUnit>();
 
   beacon->manager.SetCertificate(certificate_);
@@ -1503,15 +1502,17 @@ void BeaconSetupService::StartNewCabinet(CabinetMemberList members, uint32_t thr
   beacon->aeon.start_reference_timepoint = start_time;
   beacon->aeon.block_entropy_previous    = prev_entropy;
 
-  bool const is_current_round  = (beacon_) ? (beacon_->aeon == beacon->aeon) : false;
-  bool const is_already_queued = std::find_if(aeon_exe_queue_.begin(), aeon_exe_queue_.end(),
-                                              [&beacon](auto const &item) {
-                                                return (item->aeon == beacon->aeon);
-                                              }) != aeon_exe_queue_.end();
+  bool const is_current_round = (beacon_) ? (beacon_->aeon == beacon->aeon) : false;
+  bool const is_already_queued =
+      std::find_if(aeon_exe_queue_.begin(), aeon_exe_queue_.end(), [&beacon](auto const &item) {
+        return (item->aeon == beacon->aeon);
+      }) != aeon_exe_queue_.end();
 
   if (is_current_round || is_already_queued)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, NodeString(), "Duplicate creation of entropy: current_round: ", is_current_round, " is_queued: ", is_already_queued);
+    FETCH_LOG_WARN(LOGGING_NAME, NodeString(),
+                   "Duplicate creation of entropy: current_round: ", is_current_round,
+                   " is_queued: ", is_already_queued);
     beacon_dkg_duplicate_creates_total_->increment();
     return;
   }
