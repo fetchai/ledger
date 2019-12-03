@@ -20,20 +20,16 @@
 #include <cmath>
 #include <fstream>
 
-#include <vm_modules/core/byte_array_wrapper.hpp>
-#include <vm_modules/crypto/sha256.hpp>
-#include <vm_modules/math/bignumber.hpp>
-#include <vm_modules/math/math.hpp>
-#include <vm_modules/math/random.hpp>
-#include <vm_modules/vm_factory.hpp>
-
-#include "benchmark/benchmark.h"
-
+#include "vm/common.hpp"
 #include "vm/compiler.hpp"
 #include "vm/ir.hpp"
 #include "vm/module.hpp"
 #include "vm/opcodes.hpp"
 #include "vm/vm.hpp"
+
+#include <vm_modules/vm_factory.hpp>
+
+#include "benchmark/benchmark.h"
 
 using fetch::vm::VM;
 using fetch::vm_modules::VMFactory;
