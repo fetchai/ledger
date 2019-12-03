@@ -228,7 +228,30 @@ TEST_F(UInt256Tests, uint256_assignment)
   EXPECT_TRUE(toolkit.Run());
 }
 
-TEST_F(UInt256Tests, uint256_addition_subtraction)
+TEST_F(UInt256Tests, uint256_trivial_addition)
+{
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(18446744073709551615u64);
+        var b = UInt256(18446744073709551615u64);
+        assert(a == b, "Initial constants not equal!");
+
+        var zero = UInt256(0u64);
+
+        result = a + zero;
+        assert(result == a, "a+0 != a");
+
+        result = a + b;
+        assert(result > a, "a+b <= a");
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_trivial_subtraction)
 {
   static constexpr char const *SRC = R"(
       function main()
@@ -241,17 +264,25 @@ TEST_F(UInt256Tests, uint256_addition_subtraction)
         var result = a - zero;
         assert(result == a, "a-0 != a");
 
-        result = a + zero;
-        assert(result == a, "a+0 != a");
-
-        result = a - a;
-        assert(result == zero, "a-a != 0");
-
-        result = a + b;
-        assert(result > a, "a+b < a");
-
         result = result - b;
         assert(result == a, "a+b-b != a");
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_addition_and_subtraction_together)
+{
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(18446744073709551615u64);
+        var b = UInt256(18446744073709551615u64);
+        assert(a == b, "Initial constants not equal!");
+
+        var zero = UInt256(0u64);
 
         result = b - a + a - b;
         assert(result == zero, "b - a + a - b != 0");
@@ -260,6 +291,46 @@ TEST_F(UInt256Tests, uint256_addition_subtraction)
         assert(a - b == b - a, "a - b != b - a");
 
         assert(a == b);
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_addition_exact_match_test)
+{
+
+  // exact match addition test based on result from python computation
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(18446744073709551615u64);
+        var b = UInt256(15648375915132456516u64);
+        var c = UInt256(34095119988842008131u64);
+
+        var result = a + b;
+        assert(result == c, "a+b != c");
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_subtraction_exact_match_test)
+{
+
+  // exact match addition test based on result from python computation
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(18446744073709551615u64);
+        var b = UInt256(15648375915132456516u64);
+        var c = UInt256(2798368158577095099u64);
+
+        var result = a - b;
+        assert(result == c, "a+b != c");
 
       endfunction
     )";
@@ -293,6 +364,47 @@ TEST_F(UInt256Tests, uint256_inplace_addition_subtraction)
           assert(result == zero, "-=a -=b failed!");
         endfunction
       )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+
+TEST_F(UInt256Tests, uint256_inplace_addition_exact_match_test)
+{
+
+  // exact match addition test based on result from python computation
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(18446744073709551615u64);
+        var b = UInt256(15648375915132456516u64);
+        var c = UInt256(34095119988842008131u64);
+
+        a += b;
+        assert(a == c, "a += b != c");
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_inplace_subtraction_exact_match_test)
+{
+
+  // exact match addition test based on result from python computation
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(18446744073709551615u64);
+        var b = UInt256(15648375915132456516u64);
+        var c = UInt256(2798368158577095099u64);
+
+        a -= b;
+        assert(a == c, "a -= b != c");
+
+      endfunction
+    )";
 
   ASSERT_TRUE(toolkit.Compile(SRC));
   EXPECT_TRUE(toolkit.Run());
