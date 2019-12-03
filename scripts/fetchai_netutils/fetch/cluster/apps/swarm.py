@@ -1,12 +1,8 @@
-import os
-import sys
 import argparse
-import time
+import os
 import random
-import requests
-import multiprocessing
-from concurrent.futures import ThreadPoolExecutor
-
+import sys
+import time
 from fetch.cluster.instance import ConstellationInstance
 from fetch.cluster.monitor import ConstellationMonitor
 

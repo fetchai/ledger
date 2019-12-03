@@ -30,14 +30,7 @@
 #include <utility>
 #include <vector>
 
-// Aim for 1 false positive per this many positive queries
-constexpr std::size_t const INVERSE_TARGET_FALSE_POSITIVE_RATE = 100000u;
-
-// No point in evaluating the filter's quality until this many positive queries
-// have been executed
-constexpr std::size_t const MEANINGFUL_STATS_THRESHOLD = 5u * INVERSE_TARGET_FALSE_POSITIVE_RATE;
-
-constexpr std::size_t const INITIAL_SIZE_IN_BITS = 8 * 10 * 1024 * 1024;
+constexpr std::size_t const INITIAL_SIZE_IN_BITS = 8 * 1 * 1024 * 1024;
 
 namespace fetch {
 namespace internal {
@@ -152,22 +145,12 @@ HashSource::Hashes md5(fetch::byte_array::ConstByteArray const &input)
   return internal::HashSourceFunction<crypto::MD5>(input);
 }
 
-HashSource::Hashes sha1(fetch::byte_array::ConstByteArray const &input)
-{
-  return internal::HashSourceFunction<crypto::SHA1>(input);
-}
-
-HashSource::Hashes sha2_512(fetch::byte_array::ConstByteArray const &input)
-{
-  return HashSourceFunction<crypto::SHA512>(input);
-}
-
 }  // namespace
 
 }  // namespace internal
 
-BasicBloomFilter::Functions const default_hash_functions{
-    internal::raw_data, internal::fnv, internal::md5, internal::sha1, internal::sha2_512};
+BasicBloomFilter::Functions const default_hash_functions{internal::raw_data, internal::fnv,
+                                                         internal::md5};
 
 BasicBloomFilter::BasicBloomFilter()
   : bits_(INITIAL_SIZE_IN_BITS)
@@ -180,7 +163,7 @@ BasicBloomFilter::BasicBloomFilter(Functions const &functions)
 {}
 
 std::pair<bool, std::size_t> BasicBloomFilter::Match(
-    fetch::byte_array::ConstByteArray const &element)
+    fetch::byte_array::ConstByteArray const &element) const
 {
   auto const  source       = hash_source_factory_(element);
   std::size_t bits_checked = 0u;
@@ -193,44 +176,23 @@ std::pair<bool, std::size_t> BasicBloomFilter::Match(
     }
   }
 
-  ++positive_count_;
-
   return {true, bits_checked};
 }
 
 void BasicBloomFilter::Add(fetch::byte_array::ConstByteArray const &element)
 {
-  bool is_new_entry = false;
-
   auto const source = hash_source_factory_(element);
   for (std::size_t const hash : source)
   {
     auto const bit_index = hash % bits_.size();
 
-    if (bits_.bit(bit_index) == 0u)
-    {
-      is_new_entry = true;
-    }
-
     bits_.set(bit_index, 1u);
-  }
-
-  if (is_new_entry)
-  {
-    ++entry_count_;
   }
 }
 
-bool BasicBloomFilter::ReportFalsePositives(std::size_t count)
+void BasicBloomFilter::Reset()
 {
-  false_positive_count_ += count;
-  if (positive_count_ > MEANINGFUL_STATS_THRESHOLD && false_positive_count_ > 0)
-  {
-    return static_cast<std::size_t>(positive_count_ / false_positive_count_) <
-           INVERSE_TARGET_FALSE_POSITIVE_RATE;
-  }
-
-  return false;
+  bits_.SetAllZero();
 }
 
 }  // namespace fetch

@@ -96,7 +96,7 @@ protected:
                                                                         block_interval_ms_);
 
     address_           = std::make_unique<fetch::chain::Address>(signer->identity());
-    main_chain_        = std::make_unique<MainChain>(false, MainChain::Mode::IN_MEMORY_DB);
+    main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<StrictMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<StrictMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<StrictMock<MockBlockPacker>>();
@@ -992,7 +992,7 @@ protected:
                                                                         block_interval_ms_);
 
     clock_             = fetch::moment::CreateAdjustableClock("bc:deadline");
-    main_chain_        = std::make_unique<MainChain>(false, MainChain::Mode::IN_MEMORY_DB);
+    main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<NiceMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<NiceMock<MockBlockPacker>>();
