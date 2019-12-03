@@ -66,13 +66,19 @@ public:
   NextBlockPtr GenerateNextBlock() override;
   Status       ValidBlock(Block const &current) const override;
   bool         VerifyNotarisation(Block const &block) const;
-  void         Reset(StakeSnapshot const &snapshot, StorageInterface &storage);
-  void         Refresh() override;
+
+  void SetMaxCabinetSize(uint16_t size) override;
+  void SetBlockInterval(uint64_t block_interval_ms) override;
+  void SetAeonPeriod(uint16_t aeon_period) override;
+  void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
+  void SetDefaultStartTime(uint64_t default_start_time) override;
 
   StakeManagerPtr stake();
-  void            SetThreshold(double threshold);
-  void            SetCabinetSize(uint64_t size);
-  void            SetDefaultStartTime(uint64_t default_start_time);
+
+  static uint64_t GetBlockGenerationWeight(MainChain const &chain, Block const &previous,
+                                           Identity const &identity);
+  static uint64_t ShuffledCabinetRank(BlockEntropy::Cabinet const &cabinet, Block const &previous,
+                                      Identity const &identity);
 
   // Operators
   Consensus &operator=(Consensus const &) = delete;
@@ -112,7 +118,6 @@ private:
   NotarisationPtr notarisation_;
 
   CabinetPtr GetCabinet(Block const &previous) const;
-  uint64_t   GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
   bool       ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool       ShouldTriggerNewCabinet(Block const &block);
   bool       EnoughQualSigned(BlockEntropy const &block_entropy) const;

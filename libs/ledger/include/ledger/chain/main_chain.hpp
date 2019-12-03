@@ -26,7 +26,6 @@
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/consensus/proof_of_work.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
@@ -55,7 +54,8 @@ namespace ledger {
  *     All blocks added MUST have a valid hash and previous hash
  *
  * Loose blocks are blocks where the previous hash/block isn't found.
- * Tips keep track of all non loose chains.
+ * Tips keep track of all non loose chains. Option to have the property that the chain will not
+ * present a heaviest block that it sees as having a duplicated height and weight (stutter blocks)
  */
 struct Tip
 {
@@ -63,6 +63,8 @@ struct Tip
   uint64_t weight{0};
   uint64_t block_number{0};
 };
+bool operator<(const Tip &lhs, const Tip &rhs);
+bool operator==(const Tip &lhs, const Tip &rhs);
 
 enum class BlockStatus
 {
@@ -90,10 +92,14 @@ public:
   using BlockHash            = Block::Hash;
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
+  using BlockNumber          = uint64_t;
+  using BlockWeight          = uint64_t;
+  using MinerIdentity        = Block::Identity;
   using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
 
-  static constexpr char const *LOGGING_NAME = "MainChain";
-  static constexpr uint64_t    UPPER_BOUND  = 5000ull;
+  static constexpr char const *LOGGING_NAME         = "MainChain";
+  static constexpr uint64_t    UPPER_BOUND          = 5000ull;
+  static constexpr BlockNumber CACHE_TRIM_THRESHOLD = 2 * chain::FINALITY_PERIOD;
 
   enum class Mode
   {
@@ -136,6 +142,8 @@ public:
   bool      GetPathToCommonAncestor(
            Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
            BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
+  bool IsStutterBlock(BlockNumber block_number, BlockWeight block_weight) const;
+  bool HasForwardRef(BlockHash const &block_hash) const;
   /// @}
 
   /// @name Tips
@@ -161,24 +169,22 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
-  using DbRecord      = BlockDbRecord;
-  using IntBlockPtr   = std::shared_ptr<Block>;
-  using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
-  using References    = std::unordered_multimap<BlockHash, BlockHash>;
-  using Proof         = Block::Proof;
-  using TipsMap       = std::unordered_map<BlockHash, Tip>;
-  using BlockHashList = std::list<BlockHash>;
-  using LooseBlockMap = std::unordered_map<BlockHash, BlockHashList>;
-  using BlockStore    = fetch::storage::ObjectStore<DbRecord>;
-  using BlockStorePtr = std::unique_ptr<BlockStore>;
-  using RMutex        = std::recursive_mutex;
-  using RLock         = std::unique_lock<RMutex>;
+  using DbRecord        = BlockDbRecord;
+  using IntBlockPtr     = std::shared_ptr<Block>;
+  using BlockMap        = std::unordered_map<BlockHash, IntBlockPtr>;
+  using References      = std::unordered_multimap<BlockHash, BlockHash>;
+  using TipsMap         = std::unordered_map<BlockHash, Tip>;
+  using BlockHashList   = std::list<BlockHash>;
+  using LooseBlockMap   = std::unordered_map<BlockHash, BlockHashList>;
+  using BlockStore      = fetch::storage::ObjectStore<DbRecord>;
+  using BlockStorePtr   = std::unique_ptr<BlockStore>;
+  using RMutex          = std::recursive_mutex;
+  using RLock           = std::unique_lock<RMutex>;
+  using StutterBlockMap = std::map<BlockNumber, std::unordered_map<BlockWeight, bool>>;
 
   struct HeaviestTip
   {
-    uint64_t total_weight{0};
-    uint64_t weight{0};
-    uint64_t block_number{0};
+    Tip tip{};
     // assuming every chain has a proper genesis
     BlockHash hash{chain::GENESIS_DIGEST};
 
@@ -220,9 +226,11 @@ public:
 
   /// @name Tip Management
   /// @{
-  bool AddTip(IntBlockPtr const &block);
-  bool UpdateTips(IntBlockPtr const &block);
-  bool DetermineHeaviestTip();
+  bool     AddTip(IntBlockPtr const &block);
+  bool     RemoveTip(BlockPtr const &block);
+  bool     UpdateTips(IntBlockPtr const &block);
+  bool     DetermineHeaviestTip();
+  BlockPtr GetFirstNonStutterBlock(Block const &block);
   /// @}
 
   static IntBlockPtr CreateGenesisBlock();
@@ -238,10 +246,16 @@ public:
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
   // The whole tree of previous-next relations among cached blocks
-  mutable References                references_;
-  TipsMap                           tips_;          ///< Keep track of the tips
-  HeaviestTip                       heaviest_;      ///< Heaviest block/tip
-  LooseBlockMap                     loose_blocks_;  ///< Waiting (loose) blocks
+  mutable References references_;
+  TipsMap            tips_;          ///< Keep track of the tips
+  HeaviestTip        heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
+
+  bool const enable_stutter_removal_{
+      true};  ///< Whether blocks of equal height and weight are removed from tips
+  StutterBlockMap
+      stutter_blocks_;  ///< Block weights seen by height and whether they are stutter blocks
+
   std::unique_ptr<BasicBloomFilter> bloom_filter_;
   bool const                        enable_bloom_filter_;
   telemetry::GaugePtr<std::size_t>  bloom_filter_queried_bit_count_;

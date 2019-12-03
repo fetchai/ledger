@@ -116,17 +116,34 @@ struct NotarisationNode
   {
     return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
   }
+
+  std::unique_ptr<Block> GenerateBlock()
+  {
+    auto next_block = consensus.GenerateNextBlock();
+
+    if (next_block != nullptr)
+    {
+      // Set block hash for first block
+      if (next_block->block_number == 1)
+      {
+        next_block->previous_hash = chain.GetHeaviestBlock()->hash;
+      }
+
+      next_block->UpdateDigest();
+      next_block->miner_signature = muddle_certificate->Sign(next_block->hash);
+      assert(next_block->weight != 0);
+    }
+    return next_block;
+  }
 };
 
-TEST(notarisation, notarise_blocks)
+std::vector<std::shared_ptr<NotarisationNode>> TestSetup(uint32_t num_nodes    = 6,
+                                                         uint32_t cabinet_size = 3,
+                                                         double   threshold    = 0.5,
+                                                         uint64_t aeon_period  = 5)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
-
-  uint32_t num_nodes    = 6;
-  uint32_t cabinet_size = 3;
-  double   threshold    = 0.5;
-  uint64_t aeon_period  = 5;
-  uint64_t stake        = 10;
+  uint64_t stake = 10;
 
   std::vector<std::shared_ptr<NotarisationNode>> nodes;
   for (uint16_t i = 0; i < num_nodes; ++i)
@@ -177,8 +194,7 @@ TEST(notarisation, notarise_blocks)
   for (auto &node : nodes)
   {
     node->reactor.Start();
-    node->consensus.SetCabinetSize(cabinet_size);
-    node->consensus.SetThreshold(threshold);
+    node->consensus.SetMaxCabinetSize(static_cast<uint16_t>(cabinet_size));
   }
 
   // Stake setup
@@ -226,6 +242,14 @@ TEST(notarisation, notarise_blocks)
         dealer.GetNotarisationKeys(nodes[i]->address()));
   }
 
+  return nodes;
+}
+
+TEST(notarisation, notarise_blocks)
+{
+  uint64_t                                       aeon_period = 5;
+  std::vector<std::shared_ptr<NotarisationNode>> nodes       = TestSetup(6, 3, 0.5, aeon_period);
+
   // Generate blocks and notarise for 2 aeons
   for (uint16_t block_number = 1; block_number < aeon_period * 2 + 1; block_number++)
   {
@@ -235,24 +259,9 @@ TEST(notarisation, notarise_blocks)
     {
       for (auto &node : nodes)
       {
-        auto next_block = node->consensus.GenerateNextBlock();
-
+        auto next_block = node->GenerateBlock();
         if (next_block != nullptr)
         {
-          // Set block hash and ficticious weight for first block
-          if (block_number == 1)
-          {
-            next_block->previous_hash = node->chain.GetHeaviestBlock()->hash;
-            next_block->weight        = static_cast<uint64_t>(
-                cabinet_size -
-                std::distance(nodes.begin(), std::find(nodes.begin(), nodes.end(), node)));
-          }
-
-          next_block->UpdateDigest();
-          next_block->UpdateTimestamp();
-          next_block->miner_signature = node->muddle_certificate->Sign(next_block->hash);
-          assert(next_block->weight != 0);
-
           blocks_this_round.push_back(std::move(next_block));
           ++count;
         }
@@ -277,5 +286,56 @@ TEST(notarisation, notarise_blocks)
         node->consensus.UpdateCurrentBlock(*block);
       }
     }
+  }
+}
+
+TEST(notarisation, stutter_block_removal)
+{
+  std::vector<std::shared_ptr<NotarisationNode>> nodes = TestSetup();
+
+  // Choose random node to generate a block
+  std::unique_ptr<Block>            next_block;
+  std::shared_ptr<NotarisationNode> block_miner;
+  while (!next_block)
+  {
+    block_miner = nodes[static_cast<std::size_t>(rand()) % nodes.size()];
+    next_block  = block_miner->GenerateBlock();
+  }
+
+  // Generate stutter block
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::unique_ptr<Block> stutter_block = block_miner->GenerateBlock();
+  assert(stutter_block);
+
+  EXPECT_NE(next_block->hash, stutter_block->hash);
+
+  // Add first block to everyone's chain
+  for (auto &node : nodes)
+  {
+    EXPECT_EQ(BlockStatus::ADDED, node->chain.AddBlock(*next_block));
+    node->consensus.UpdateCurrentBlock(*next_block);
+  }
+
+  // Now stutter block arrives
+  for (auto &node : nodes)
+  {
+    EXPECT_EQ(BlockStatus::ADDED, node->chain.AddBlock(*stutter_block));
+    EXPECT_TRUE(node->chain.IsStutterBlock(next_block->block_number, next_block->weight));
+  }
+
+  // Choose random node to generate a block
+  std::unique_ptr<Block> next_block2;
+  while (!next_block2)
+  {
+    auto block_miner2 = nodes[static_cast<std::size_t>(rand()) % nodes.size()];
+    next_block2       = block_miner2->GenerateBlock();
+  }
+
+  // Add second block to everyone's chain
+  for (auto &node : nodes)
+  {
+    EXPECT_EQ(BlockStatus::ADDED, node->chain.AddBlock(*next_block2));
+    node->consensus.UpdateCurrentBlock(*next_block2);
+    EXPECT_EQ((node->notarisation_service->GetNotarisations(next_block->block_number)).size(), 0);
   }
 }
