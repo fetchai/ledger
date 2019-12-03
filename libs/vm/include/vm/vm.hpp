@@ -575,11 +575,11 @@ public:
     ChargeAmount static_charge{};
   };
 
-  ChargeAmount             GetChargeTotal() const;
-  void                     IncreaseChargeTotal(ChargeAmount amount);
-  ChargeAmount             GetChargeLimit() const;
-  void                     SetChargeLimit(ChargeAmount limit);
-  std::vector<OpcodeInfo> &GetOpcodeInfoArray();
+  ChargeAmount                   GetChargeTotal() const;
+  void                           IncreaseChargeTotal(ChargeAmount amount);
+  ChargeAmount                   GetChargeLimit() const;
+  void                           SetChargeLimit(ChargeAmount limit);
+  const std::vector<OpcodeInfo> &GetOpcodeInfoArray() const;
 
   void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_static_charges);
 

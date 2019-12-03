@@ -175,7 +175,7 @@ for prim in math_prims:
 for prim in op_prims:
     for op in optimes['Base']:
         del optimes[prim][op]
-    
+
 # Add individual opcode times to relevant benchmarks
 for bm in benchmarks_fit.values():
     if bm['class'] == 'Basic':

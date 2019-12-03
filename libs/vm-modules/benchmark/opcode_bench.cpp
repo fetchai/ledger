@@ -136,7 +136,7 @@ void EtchCodeBenchmark(benchmark::State &state, std::string const &benchmark_nam
   Variant     output{};
   for (auto _ : state)
   {
-    // vm->Execute(executable, "main", error, output);
+    vm->Execute(executable, "main", error, output);
   }
 
   auto function = executable.FindFunction("main");

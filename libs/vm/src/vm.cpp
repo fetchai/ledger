@@ -308,7 +308,7 @@ void VM::SetChargeLimit(ChargeAmount limit)
   charge_limit_ = limit;
 }
 
-VM::OpcodeInfoArray &VM::GetOpcodeInfoArray()
+const VM::OpcodeInfoArray &VM::GetOpcodeInfoArray() const
 {
   return opcode_info_array_;
 }
