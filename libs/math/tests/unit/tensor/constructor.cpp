@@ -39,6 +39,11 @@ TYPED_TEST(TensorConstructorTest, string_construction)
   ASSERT_EQ(tensor.At(0, 2), TypeParam(4));
 }
 
+TYPED_TEST(TensorConstructorTest, large_tensor_construction_throw_test)
+{
+  EXPECT_THROW(fetch::math::Tensor<TypeParam>({10000, 10000, 10000}), std::runtime_error);
+}
+
 }  // namespace test
 }  // namespace math
 }  // namespace fetch
