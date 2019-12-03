@@ -305,7 +305,7 @@ void MainChain::AddBlockToBloomFilter(Block const &block) const
   {
     for (auto const &tx_layout : slice)
     {
-      bloom_filter_.Add(tx_layout.digest(), tx_layout.valid_until(), heaviest_.block_number);
+      bloom_filter_.Add(tx_layout.digest(), tx_layout.valid_until(), heaviest_.tip.block_number);
     }
   }
 }
