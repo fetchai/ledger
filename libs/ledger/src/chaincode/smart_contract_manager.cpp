@@ -27,6 +27,7 @@
 #include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "ledger/chaincode/smart_contract_wrapper.hpp"
 #include "logging/logging.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
@@ -120,11 +121,12 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
   nonce = FromBase64(nonce);
   chain::Address const payable_address{crypto::Hash<crypto::SHA256>(tx.from().address() + nonce)};
 
-  Identifier scope;
-  if (!scope.Parse(calculated_hash + "." + payable_address.display()))
+  SmartContractWrapper contract;
+  if (GetStateRecord(contract, payable_address.display()))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse scope for smart contract");
-    return {Status::FAILED};
+    FETCH_LOG_INFO(LOGGING_NAME, "Contract ", payable_address.display(), " already created @ ",
+        contract.creation_timestamp);
+    return {Status::OK};
   }
 
   // construct a smart contract - this can throw for various reasons, need to catch this
@@ -169,7 +171,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
   Result init_status;
   if (!on_init_function.empty())
   {
-    state().PushContext(scope.full_name());
+    state().PushContext(payable_address.display());
 
     {
       ContractContext         ctx{context().token_contract, tx.contract_address(), &state(),
@@ -184,8 +186,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
       return init_status;
     }
   }
-
-  auto const status = SetStateRecord(contract_source, calculated_hash);
+  auto const status = SetStateRecord(SmartContractWrapper{contract_source}, payable_address.display());
   if (status != StateAdapter::Status::OK)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Failed to store smart contract to state DB!");
@@ -206,7 +207,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
 storage::ResourceAddress SmartContractManager::CreateAddressForContract(Digest const &digest)
 {
   // create the resource address in the form fetch.contract.state.<digest of contract>
-  return StateAdapter::CreateAddress(Identifier{NAME}, digest.ToHex());
+  return StateAdapter::CreateAddress(NAME, digest);
 }
 
 }  // namespace ledger

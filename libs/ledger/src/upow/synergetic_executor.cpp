@@ -53,10 +53,16 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
     // in the case of the first iteration we need to create the contract and define the problem
     if (!contract)
     {
-      auto const &digest = solution->contract_digest();
+      auto const &address = solution->address().display();
 
       // create the contract
-      contract = CreateSmartContract<SynergeticContract>(digest, storage_);
+      contract = CreateSmartContract<SynergeticContract>(address, storage_);
+
+      if (!contract)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to create synergetic contract: ", address);
+        return;
+      }
 
       // define the problem
       auto const status = contract->DefineProblem(problem_data);
@@ -78,10 +84,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       BitVector shard_mask{num_lanes};
       shard_mask.SetAllOne();
 
-      Identifier contract_id(solution->contract_digest().ToHex() + "." +
-                             solution->address().display());
-
-      StateSentinelAdapter storage_adapter{storage_, contract_id, shard_mask};
+      StateSentinelAdapter storage_adapter{storage_, solution->address().display(), shard_mask};
 
       // complete the work and resolve the work queue
       contract->Attach(storage_);

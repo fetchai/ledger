@@ -16,41 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "in_memory_storage.hpp"
-#include "ledger/state_sentinel_adapter.hpp"
 
-#include "benchmark/benchmark.h"
+#include "ledger/chaincode/smart_contract_wrapper.hpp"
+#include "moment/clocks.hpp"
 
-#include <cstdint>
-#include <string>
-#include <vector>
+namespace fetch {
+namespace ledger {
 
-namespace {
-
-using fetch::ledger::StateSentinelAdapter;
-using fetch::BitVector;
-
-void StateSentinelAdapter_BasicBenchmark(benchmark::State &state)
+SmartContractWrapper::SmartContractWrapper(ConstByteArray source)
+  : source{std::move(source)}
+  , creation_timestamp{GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))}
 {
-  InMemoryStorageUnit storage{};
-
-  BitVector shards{1};
-  shards.SetAllOne();
-
-  StateSentinelAdapter adapter{storage, {"foo.bar"}, shards};
-
-  std::string          key{"baz"};
-  std::vector<uint8_t> buffer(256);
-
-  uint64_t size = buffer.size();
-
-  for (auto _ : state)
-  {
-    adapter.Read(key, buffer.data(), size);
-  }
 }
 
-}  // namespace
-
-BENCHMARK(StateSentinelAdapter_BasicBenchmark);
+} //namespace ledger
+} //namespace fetch

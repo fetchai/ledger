@@ -78,7 +78,7 @@ private:
 
   /// @name Utils
   /// @{
-  WorkPtr MineSolution(Digest const &contract_digest, chain::Address const &contract_address,
+  WorkPtr MineSolution(chain::Address const &contract_address,
                        ProblemData const &problem_data);
   /// @}
 

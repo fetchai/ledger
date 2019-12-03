@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "vm/io_observer_interface.hpp"
 
@@ -39,8 +38,10 @@ namespace ledger {
 class StateAdapter : public vm::IoObserverInterface
 {
 public:
+  using ScopeType = byte_array::ConstByteArray;
+
   // Resource Mapping
-  static storage::ResourceAddress CreateAddress(Identifier const &                scope,
+  static storage::ResourceAddress CreateAddress(ScopeType const &                scope,
                                                 byte_array::ConstByteArray const &key);
 
   enum class Mode
@@ -50,7 +51,7 @@ public:
   };
 
   // Construction / Destruction
-  StateAdapter(StorageInterface &storage, Identifier scope);
+  StateAdapter(StorageInterface &storage, ScopeType scope);
   ~StateAdapter() override = default;
 
   /// @name Io Observer Interface
@@ -60,17 +61,17 @@ public:
   Status Exists(std::string const &key) override;
   /// @}
 
-  void PushContext(byte_array::ConstByteArray const &scope);
+  void PushContext(ScopeType const &scope);
   void PopContext();
 
 protected:
-  Identifier CurrentScope() const;
+  ScopeType CurrentScope() const;
 
   // Protected construction
-  StateAdapter(StorageInterface &storage, Identifier scope, Mode mode);
+  StateAdapter(StorageInterface &storage, ScopeType scope, Mode mode);
 
   StorageInterface &      storage_;
-  std::vector<Identifier> scope_;
+  std::vector<ScopeType>  scope_;
   Mode const              mode_;
 };
 

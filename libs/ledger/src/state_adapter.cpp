@@ -19,6 +19,7 @@
 #include "ledger/state_adapter.hpp"
 #include "logging/logging.hpp"
 #include "storage/resource_mapper.hpp"
+#include "core/byte_array/encoders.hpp"
 
 using fetch::storage::ResourceAddress;
 using fetch::byte_array::ConstByteArray;
@@ -37,11 +38,11 @@ constexpr char const *LOGGING_NAME = "StateAdapter";
  * @param scope The reference to the scope
  * @param allow_writes Enables write functionality
  */
-StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope)
+StateAdapter::StateAdapter(StorageInterface &storage, ScopeType scope)
   : StateAdapter(storage, std::move(scope), Mode::READ_ONLY)
 {}
 
-StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope, Mode mode)
+StateAdapter::StateAdapter(StorageInterface &storage, ScopeType scope, Mode mode)
   : storage_{storage}
   , scope_{std::move(scope)}
   , mode_{mode}
@@ -120,7 +121,7 @@ StateAdapter::Status StateAdapter::Write(std::string const &key, void const *dat
  * Checks to see if the specified key exists in the database
  *
  * @param key The key to be checked
- * @return OK if the key exists, PERMISSION_DENIED if the key is incorrect, ERROR is the key does
+ * @return OK if the key exists, PERMISSION_DENIED if the key is incorrect, ERROR is thSe key does
  * not exist
  */
 StateAdapter::Status StateAdapter::Exists(std::string const &key)
@@ -143,11 +144,11 @@ StateAdapter::Status StateAdapter::Exists(std::string const &key)
  * @param key The input key to be converted
  * @return The generated resource address for this key
  */
-ResourceAddress StateAdapter::CreateAddress(Identifier const &scope, ConstByteArray const &key)
+ResourceAddress StateAdapter::CreateAddress(ScopeType const &scope, ConstByteArray const &key)
 {
-  FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key, " scope: ", scope.full_name());
+  FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key, " scope: ", scope);
 
-  return ResourceAddress{scope.full_name() + ".state." + key};
+  return ResourceAddress{scope + ".state." + key};
 }
 
 void StateAdapter::PushContext(byte_array::ConstByteArray const &scope)
@@ -160,7 +161,7 @@ void StateAdapter::PopContext()
   scope_.pop_back();
 }
 
-Identifier StateAdapter::CurrentScope() const
+StateAdapter::ScopeType StateAdapter::CurrentScope() const
 {
   return scope_.back();
 }

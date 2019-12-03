@@ -30,7 +30,45 @@
 namespace fetch {
 namespace ledger {
 
-ChainCodeCache::ContractPtr ChainCodeCache::Lookup(Identifier const &contract_id,
+namespace {
+
+using byte_array::ConstByteArray;
+
+template <std::size_t MIN_LENGTH, std::size_t MAX_LENGTH>
+bool IsBase58(ConstByteArray const &value)
+{
+  char const *buffer = value.char_pointer();
+
+  if (!(value.size() >= MIN_LENGTH && value.size() <= MAX_LENGTH))
+  {
+    return false;
+  }
+
+  for (std::size_t i = 0; i < value.size(); ++i, ++buffer)
+  {
+    // 1-9A-HJ-NP-Za-km-z
+    bool const valid =
+        ((('1' <= *buffer) && ('9' >= *buffer)) || (('A' <= *buffer) && ('H' >= *buffer)) ||
+         (('J' <= *buffer) && ('N' >= *buffer)) || (('P' <= *buffer) && ('Z' >= *buffer)) ||
+         (('a' <= *buffer) && ('k' >= *buffer)) || (('m' <= *buffer) && ('z' >= *buffer)));
+
+    if (!valid)
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool IsIdentity(ConstByteArray const &value)
+{
+  return IsBase58<48, 50>(value);
+}
+
+} //namespace
+
+ChainCodeCache::ContractPtr ChainCodeCache::Lookup(ContractId const &contract_id,
                                                    StorageInterface &storage)
 {
   // attempt to locate the contract in the cache
@@ -39,21 +77,19 @@ ChainCodeCache::ContractPtr ChainCodeCache::Lookup(Identifier const &contract_id
   // if this fails create the contract
   if (!contract)
   {
-    if (contract_id.type() == Identifier::Type::SMART_OR_SYNERGETIC_CONTRACT)
+    if (IsIdentity(contract_id))
     {
-      auto const contract_digest = contract_id.qualifier().FromHex();
-      contract                   = CreateSmartContract<SmartContract>(contract_digest, storage);
+      contract = CreateSmartContract<SmartContract>(contract_id, storage);
     }
     else
     {
-      auto const &contract_name = contract_id.full_name();
-      contract                  = CreateChainCode(contract_name);
+      contract = CreateChainCode(contract_id);
     }
 
     assert(static_cast<bool>(contract));
 
     // update the cache
-    cache_.emplace(contract_id.qualifier(), contract);
+    cache_.emplace(contract_id, contract);
   }
 
   // periodically run cache maintenance
@@ -65,12 +101,12 @@ ChainCodeCache::ContractPtr ChainCodeCache::Lookup(Identifier const &contract_id
   return contract;
 }
 
-ChainCodeCache::ContractPtr ChainCodeCache::FindInCache(Identifier const &contract_id)
+ChainCodeCache::ContractPtr ChainCodeCache::FindInCache(ContractId const &contract_id)
 {
   ContractPtr contract;
 
   // attempt to look up the contract in the cache
-  auto it = cache_.find(contract_id.qualifier());
+  auto it = cache_.find(contract_id);
   if (it != cache_.end())
   {
     // extract the contract and refresh the cache timestamp

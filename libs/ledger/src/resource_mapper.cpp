@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "ledger/identifier.hpp"
 #include "ledger/resource_mapper.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -27,13 +26,36 @@
 namespace fetch {
 namespace ledger {
 
+namespace {
+
+constexpr char SEPARATOR = '.';
+
+byte_array::ConstByteArray GetNameSpace(byte_array::ConstByteArray const &name)
+{
+  std::size_t offset = 0;
+  std::size_t last_token_size = 0;
+  for (;;) {
+    // find the next instance of the separator
+    std::size_t const index = name.Find(SEPARATOR, offset);
+
+    // determine if this is the last token
+    if (byte_array::ConstByteArray::NPOS == index) {
+      last_token_size = name.size() - offset + 1;
+      break;
+    }
+    // update the index
+    offset = index + 1;
+  }
+  return name.SubArray(0, name.size() - last_token_size);
+}
+
+} //namespace
+
 uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
                            byte_array::ConstByteArray const &contract, uint32_t log2_num_lanes)
 {
-  ledger::Identifier identifier(contract);
-
   return storage::ResourceAddress{
-      byte_array::ByteArray{}.Append(identifier.name_space(), ".state.", resource)}
+      byte_array::ByteArray{}.Append(GetNameSpace(contract), ".state.", resource)}
       .lane(log2_num_lanes);
 }
 

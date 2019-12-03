@@ -120,7 +120,6 @@ public:
   /// @name Contract Accessors
   /// @{
   ContractMode          contract_mode() const;
-  Address const &       contract_digest() const;
   Address const &       contract_address() const;
   ConstByteArray const &chain_code() const;
   ConstByteArray const &action() const;
@@ -150,7 +149,6 @@ private:
   TokenAmount    charge_rate_{0};                            ///< The charge rate for the TX
   TokenAmount    charge_limit_{0};                           ///< The maximum charge to be used
   ContractMode   contract_mode_{ContractMode::NOT_PRESENT};  ///< The payload being contained
-  Address        contract_digest_{};                         ///< The digest of the smart contract
   Address        contract_address_{};                        ///< The address of the smart contract
   ConstByteArray chain_code_{};                              ///< The name of the chain code
   BitVector      shard_mask_{};                              ///< Shard mask of addition depends

@@ -533,7 +533,6 @@ protected:
     EXPECT_EQ(a.charge_rate(), b.charge_rate());
     EXPECT_EQ(a.charge_limit(), b.charge_limit());
     EXPECT_EQ(a.contract_mode(), b.contract_mode());
-    EXPECT_EQ(a.contract_digest(), b.contract_digest());
     EXPECT_EQ(a.contract_address(), b.contract_address());
     EXPECT_EQ(a.chain_code(), b.chain_code());
     EXPECT_EQ(a.action(), b.action());
@@ -698,13 +697,12 @@ TEST_F(TransactionSerializerTests, ChainCodeExecute)
 TEST_F(TransactionSerializerTests, SmartContract)
 {
   static const std::string EXPECTED_DIGEST =
-      "032a72029ae2ac5cdbf9e07cf57d9ecab97a6de34ed5cdf785d1d98037cd5dcd";
+      "fcece5706b346bd45e9aa4dfa440b2cb174b631f28b4d11ff91ac84fa9ec85d9";
   static const std::string EXPECTED_DATA =
       "a1404000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d400c103e8c2000f424080"
-      "da2e9c3191e3768d1c59ea43f6318367ed9b21e6974f46a60d0dd8976740af6de6672a9d98da667e5dc25b2bca8a"
-      "cf9644a7ac0797f01cb5968abf39de011df2066c61756e636802676f00000000000000000418c2a33af8bd2cba7f"
-      "a714a840a308a217aa4483880b1ef14b4fdffe08ab956e3f4b921cec33be7c258cfd7025a2b9a942770e5b17758b"
-      "cc4961bbdc75a0251c";
+      "e6672a9d98da667e5dc25b2bca8acf9644a7ac0797f01cb5968abf39de011df2066c61756e636802676f00000000"
+      "000000000418c2a33af8bd2cba7fa714a840a308a217aa4483880b1ef14b4fdffe08ab956e3f4b921cec33be7c25"
+      "8cfd7025a2b9a942770e5b17758bcc4961bbdc75a0251c";
 
   // build the transaction
   auto tx = TransactionBuilder()
@@ -712,7 +710,7 @@ TEST_F(TransactionSerializerTests, SmartContract)
                 .Signer(signers_[0]->identity())
                 .ChargeRate(1000)
                 .ChargeLimit(1000000)
-                .TargetSmartContract(addresses_[3], addresses_[4], BitVector{})
+                .TargetSmartContract(addresses_[4], BitVector{})
                 .Action("launch")
                 .Data("go")
                 .Seal()
