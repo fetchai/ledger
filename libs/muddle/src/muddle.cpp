@@ -402,6 +402,7 @@ void Muddle::ConnectTo(Addresses const &addresses)
 void Muddle::ConnectTo(network::Uri const &uri)
 {
   clients_.AddPersistentPeer(uri);
+  peer_tracker_->AddDesiredPeer(uri);
 }
 
 void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint)

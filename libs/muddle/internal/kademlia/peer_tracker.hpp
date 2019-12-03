@@ -95,7 +95,6 @@ public:
                             network::Peer const &hint);  // TODO: change hint to URI
   void       AddDesiredPeer(Uri const &uri);
   void       RemoveDesiredPeer(Address const &address);
-  // TODO(tfr): Address GetRoutingAddress(Address const& destination);
   /// @}
 
   /// Low-level
@@ -193,7 +192,9 @@ protected:
   {
     FETCH_LOG_WARN(logging_name_.c_str(), "Stopping peer tracker.");
     FETCH_LOCK(mutex_);
+
     tracker_configuration_ = TrackerConfiguration::AllOff();
+
     desired_peers_.clear();
     kademlia_connection_priority_.clear();
     kademlia_prioritized_peers_.clear();

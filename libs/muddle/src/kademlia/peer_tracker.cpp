@@ -648,6 +648,32 @@ void PeerTracker::Periodically()
   keep_connections_.clear();
   no_uri_.clear();
 
+  // Converting URIs into addresses if possible
+  std::unordered_set<Uri> new_uris;
+  for (auto const uri : desired_uris_)
+  {
+    if (peer_table_.HasUri(uri))
+    {
+      auto address = peer_table_.GetAddressFromUri(uri);
+      FETCH_LOG_INFO(logging_name_.c_str(), "Address from URI found ", uri.ToString(), ": ",
+                     address.ToBase64());
+
+      desired_peers_.insert(std::move(address));
+    }
+    else
+    {
+      new_uris.insert(uri);
+    }
+  }
+  std::swap(new_uris, desired_uris_);
+
+  // Adding the unresolved URIs to the connection pool
+  for (auto const &uri : desired_uris_)
+  {
+    FETCH_LOG_INFO(logging_name_.c_str(), "Adding peer with unknown address: ", uri.ToString());
+    connections_.AddPersistentPeer(uri);
+  }
+
   if (tracker_configuration_.allow_desired_connections)
   {
     // Making connections to user defined endpoints
