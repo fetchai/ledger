@@ -39,8 +39,6 @@ namespace benchmark {
 namespace ml {
 namespace model {
 
-namespace {
-
 void SetUp(std::shared_ptr<VM> &vm)
 {
   using VMFactory = fetch::vm_modules::VMFactory;
@@ -55,7 +53,6 @@ Ptr<String> CreateString(std::shared_ptr<VM> &vm, std::string const &str)
   return Ptr<String>{new String{vm.get(), str}};
 }
 
-/*
 Ptr<Array<uint64_t>> CreateArray(std::shared_ptr<VM> &vm, std::vector<uint64_t> const &values)
 {
   std::size_t          size = values.size();
@@ -70,7 +67,6 @@ Ptr<Array<uint64_t>> CreateArray(std::shared_ptr<VM> &vm, std::vector<uint64_t> 
 
   return array;
 }
-*/
 
 Ptr<fetch::vm_modules::math::VMTensor> CreateTensor(std::shared_ptr<VM> &        vm,
                                                     std::vector<uint64_t> const &shape)
@@ -84,6 +80,8 @@ Ptr<fetch::vm_modules::ml::model::VMModel> CreateSequentialModel(std::shared_ptr
   return vm->CreateNewObject<fetch::vm_modules::ml::model::VMModel>(model_category);
 }
 
+/*
+*/
 template <typename T, int I, int O>
 void BM_AddLayer(::benchmark::State &state)
 {
@@ -97,6 +95,7 @@ void BM_AddLayer(::benchmark::State &state)
     SetUp(vm);
 
     auto model = CreateSequentialModel(vm);
+    state.counters["charge"] = model->Estimator().LayerAddDense(CreateString(vm, "dense"), I, O);
     state.ResumeTiming();
 
     model->AddLayer<SizeRef, SizeRef>(CreateString(vm, "dense"), I,
@@ -104,6 +103,33 @@ void BM_AddLayer(::benchmark::State &state)
   }
 }
 /*
+void BM_AddLayer(::benchmark::State &state)
+{
+  using VMPtr   = std::shared_ptr<VM>;
+  using SizeRef = fetch::math::SizeType const &;
+  using SizeType = fetch::math::SizeType;
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    VMPtr vm;
+    SetUp(vm);
+    auto input_size = static_cast<SizeType>(state.range(0)); 
+    auto output_size = static_cast<SizeType>(state.range(1)); 
+
+    auto model = CreateSequentialModel(vm);
+    state.counters["charge"] = model->Estimator().LayerAddDense(CreateString(vm, "dense"), input_size, output_size);
+    state.ResumeTiming();
+
+    model->AddLayer<SizeRef, SizeRef>(CreateString(vm, "dense"), input_size, output_size); 
+  }
+}
+
+BENCHMARK(BM_AddLayer)->Args({1,1})->Args({10,1})->Args({100,1})->Args({1000,1})->Args({10000,1})->Args({100000,1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({1,1})->Args({1,10})->Args({1,100})->Args({1,1000})->Args({1,10000})->Args({1,100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({1,1})->Args({10,10})->Args({100,100})->Args({1000,1000})->Args({10000,10000})->Args({100000,100000})->Unit(::benchmark::kMicrosecond);
+*/
+
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 1, 1)->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 10, 10)->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 1000, 1000)->Unit(::benchmark::kMicrosecond);
@@ -123,6 +149,7 @@ BENCHMARK_TEMPLATE(BM_AddLayer, float, 200, 200)->Unit(::benchmark::kMicrosecond
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 2000, 20)->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 3000, 10)->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddLayer, float, 10, 3000)->Unit(::benchmark::kMicrosecond);
+/*
 */
 void BM_Predict(::benchmark::State &state)
 {
@@ -342,6 +369,7 @@ void BM_Fit(::benchmark::State &state)
 }
 
 // subset_size, batch_size, number_of_layers, input_size, hidden_1_size, ...., output_size
+/*
 BENCHMARK(BM_Fit)->Args({10, 1, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)->Args({100, 1, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)->Args({1000, 1, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
@@ -354,6 +382,7 @@ BENCHMARK(BM_Fit)->Args({1000000, 1000, 2, 10, 100})->Unit(::benchmark::kMicrose
 BENCHMARK(BM_Fit)->Args({1000000, 10000, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)->Args({1000000, 100000, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)->Args({1000000, 1000000, 2, 10, 100})->Unit(::benchmark::kMicrosecond);
+*/
 
 //// batch_size, number_of_layers, input_size, hidden_1_size, ...., output_size
 // BENCHMARK(BM_Fit)->Args({1, 1, 6, 1, 10, 100, 1000, 10000,
@@ -436,8 +465,6 @@ void BM_Deserialise(::benchmark::State &state)
 //
 //
 //
-
-}  // namespace
 
 }  // namespace model
 }  // namespace ml

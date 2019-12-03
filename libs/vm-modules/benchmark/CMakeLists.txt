@@ -11,3 +11,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 add_fetch_gbench(benchmark_vm_modules_model fetch-vm-modules ../../vm-modules/benchmark/model)
+add_fetch_gbench(benchmark_vm_modules_model_charge fetch-vm-modules ../../vm-modules/benchmark/model_charge)
