@@ -100,7 +100,7 @@ protected:
     block_sink_        = std::make_unique<FakeBlockSink>();
 
     consensus_ = std::make_shared<fetch::ledger::SimulatedPowConsensus>(
-        signer->identity(), block_interval_ms_, *main_chain_.get());
+        signer->identity(), block_interval_ms_, *main_chain_);
 
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
@@ -1004,7 +1004,7 @@ protected:
     block_sink_        = std::make_unique<FakeBlockSink>();
 
     consensus_ = std::make_shared<fetch::ledger::SimulatedPowConsensus>(
-        signer->identity(), block_interval_ms_, *main_chain_.get());
+        signer->identity(), block_interval_ms_, *main_chain_);
 
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
