@@ -92,7 +92,7 @@ public:
   AddressSet GetDesiredPeers() const;
   void       AddDesiredPeer(Address const &address);
   void       AddDesiredPeer(Address const &      address,
-                            network::Peer const &hint);  // TODO: change hint to URI
+                            network::Peer const &hint);  // TODO(tfr): change hint to URI
   void       AddDesiredPeer(Uri const &uri);
   void       RemoveDesiredPeer(Address const &address);
   /// @}

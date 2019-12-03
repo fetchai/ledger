@@ -119,8 +119,12 @@ void PeerTracker::AddConnectionHandle(ConnectionHandle handle)
   }
 }
 
-void PeerTracker::RemoveConnectionHandle(ConnectionHandle /*handle*/)
-{}
+void PeerTracker::RemoveConnectionHandle(ConnectionHandle handle)
+{
+  FETCH_LOCK(direct_mutex_);
+  auto address = register_.GetAddress(handle);
+  directly_connected_peers_.erase(address);
+}
 
 void PeerTracker::ProcessConnectionHandles()
 {

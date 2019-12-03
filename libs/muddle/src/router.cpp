@@ -21,7 +21,6 @@
 #include "muddle_register.hpp"
 #include "router.hpp"
 #include "routing_message.hpp"
-#include "xor_metric.hpp"
 
 #include "core/byte_array/encoders.hpp"
 #include "core/containers/set_intersection.hpp"
@@ -591,7 +590,7 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) con
 {
   if (tracker_)
   {
-    // TODO: add some randomness
+    // TODO(tfr): add some randomness
     return tracker_->LookupHandle(ConvertAddress(address));
   }
   return 0;
