@@ -23,12 +23,11 @@ namespace fixed_point {
 
 /* e = 2.718281828459045235360287471352662498 */
 template <>
-FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_E(2, 0xB7E151628AED2A6A); 
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_E(2, 0xB7E151628AED2A6A);
 template <>
 FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_E{FixedPoint<64, 64>::CONST_E};
 template <>
 FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_E(FixedPoint<64, 64>::CONST_E);
-
 
 /* log_2(e) = 1.442695040888963407359924681001892137 */
 template <>
@@ -114,9 +113,11 @@ FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_TWO_INV_PI{FixedPoint<64, 64>
 template <>
 FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_TWO_INV_SQRTPI(1, 0x20DD750429B6D11A);
 template <>
-FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_TWO_INV_SQRTPI{FixedPoint<64, 64>::CONST_TWO_INV_SQRTPI};
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_TWO_INV_SQRTPI{
+    FixedPoint<64, 64>::CONST_TWO_INV_SQRTPI};
 template <>
-FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_TWO_INV_SQRTPI{FixedPoint<64, 64>::CONST_TWO_INV_SQRTPI};
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_TWO_INV_SQRTPI{
+    FixedPoint<64, 64>::CONST_TWO_INV_SQRTPI};
 
 /* Sqrt(2) = 1.414213562373095048801688724209698079 */
 template <>

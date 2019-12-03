@@ -2111,11 +2111,11 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sign(FixedPoint<I, F> const &x)
  * @return the result of e^x
  */
 
-static constexpr FixedPoint<64, 64> Exp_P01(0, 0x8000000000000000); //  1 / 2
-static constexpr FixedPoint<64, 64> Exp_P02(0, 0x1C71C71C71C71C71); //  1 / 9
-static constexpr FixedPoint<64, 64> Exp_P03(0, 0x038E38E38E38E38E); //  1 / 72
-static constexpr FixedPoint<64, 64> Exp_P04(0, 0x0041041041041041); //  1 / 1008
-static constexpr FixedPoint<64, 64> Exp_P05(0, 0x00022ACD578022AC); //  1 / 30240
+static constexpr FixedPoint<64, 64> Exp_P01(0, 0x8000000000000000);  //  1 / 2
+static constexpr FixedPoint<64, 64> Exp_P02(0, 0x1C71C71C71C71C71);  //  1 / 9
+static constexpr FixedPoint<64, 64> Exp_P03(0, 0x038E38E38E38E38E);  //  1 / 72
+static constexpr FixedPoint<64, 64> Exp_P04(0, 0x0041041041041041);  //  1 / 1008
+static constexpr FixedPoint<64, 64> Exp_P05(0, 0x00022ACD578022AC);  //  1 / 30240
 
 template <uint16_t I, uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::Exp(FixedPoint<I, F> const &x)
@@ -2170,7 +2170,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Exp(FixedPoint<I, F> const &x)
   FixedPoint r4 = r3 * r;
   FixedPoint r5 = r4 * r;
   // Multiply the coefficients as they are the same in both numerator and denominator
-  r  *= static_cast<FixedPoint>(Exp_P01);
+  r *= static_cast<FixedPoint>(Exp_P01);
   r2 *= static_cast<FixedPoint>(Exp_P02);
   r3 *= static_cast<FixedPoint>(Exp_P03);
   r4 *= static_cast<FixedPoint>(Exp_P04);
@@ -2561,8 +2561,8 @@ constexpr FixedPoint<16, 16> FixedPoint<16, 16>::SinApproxPi4(FixedPoint<16, 16>
   FixedPoint<16, 16> r3 = r2 * r;
   FixedPoint<16, 16> r4 = r3 * r;
   FixedPoint<16, 16> Q00{5880};
-  FixedPoint<16, 16> P   = r * Q00 - r3 * 620;
-  FixedPoint<16, 16> Q   = Q00 + r2 * 360 + r4 * 11;
+  FixedPoint<16, 16> P = r * Q00 - r3 * 620;
+  FixedPoint<16, 16> Q = Q00 + r2 * 360 + r4 * 11;
   return P / Q;
 }
 
@@ -2576,8 +2576,8 @@ constexpr FixedPoint<32, 32> FixedPoint<32, 32>::SinApproxPi4(FixedPoint<32, 32>
   FixedPoint<32, 32> r4 = r3 * r;
   FixedPoint<32, 32> r5 = r4 * r;
   FixedPoint<32, 32> Q00{166320};
-  FixedPoint<32, 32> P   = r * Q00 - r3 * 22260 + r5 * 551;
-  FixedPoint<32, 32> Q   = Q00 + r2 * 5460 + r4 * 75;
+  FixedPoint<32, 32> P = r * Q00 - r3 * 22260 + r5 * 551;
+  FixedPoint<32, 32> Q = Q00 + r2 * 5460 + r4 * 75;
   return P / Q;
 }
 
@@ -2745,11 +2745,11 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Cos(FixedPoint<I, F> const &x)
  * @return the result of tan(x)
  */
 
-static constexpr FixedPoint<64, 64> Tan_P01(0, 0x1F07C1F07C1F07C1); //  4 / 33
-static constexpr FixedPoint<64, 64> Tan_P02(0, 0x0084655D9BAB2F10); //  1 / 495
-static constexpr FixedPoint<64, 64> Tan_Q01(0, 0x745D1745D1745D17); //  5 / 11
-static constexpr FixedPoint<64, 64> Tan_Q02(0, 0x052BF5A814AFD6A0); //  2 / 99
-static constexpr FixedPoint<64, 64> Tan_Q03(0, 0x00064DF8445D7C25); //  1 / 10395
+static constexpr FixedPoint<64, 64> Tan_P01(0, 0x1F07C1F07C1F07C1);  //  4 / 33
+static constexpr FixedPoint<64, 64> Tan_P02(0, 0x0084655D9BAB2F10);  //  1 / 495
+static constexpr FixedPoint<64, 64> Tan_Q01(0, 0x745D1745D1745D17);  //  5 / 11
+static constexpr FixedPoint<64, 64> Tan_Q02(0, 0x052BF5A814AFD6A0);  //  2 / 99
+static constexpr FixedPoint<64, 64> Tan_Q03(0, 0x00064DF8445D7C25);  //  1 / 10395
 
 template <uint16_t I, uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
@@ -2774,12 +2774,12 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
     return -Tan(-x);
   }
 
-  FixedPoint r = Fmod(x, CONST_PI);
-  FixedPoint P01 = static_cast<FixedPoint>(-Tan_P01); // -4 / 33
-  FixedPoint P02 = static_cast<FixedPoint>(Tan_P02);  //  1 / 495
-  FixedPoint Q01 = static_cast<FixedPoint>(-Tan_Q01); // -5 / 11
-  FixedPoint Q02 = static_cast<FixedPoint>(Tan_Q02);  //  2 / 99
-  FixedPoint Q03 = static_cast<FixedPoint>(-Tan_Q03); // -1 / 10395
+  FixedPoint r   = Fmod(x, CONST_PI);
+  FixedPoint P01 = static_cast<FixedPoint>(-Tan_P01);  // -4 / 33
+  FixedPoint P02 = static_cast<FixedPoint>(Tan_P02);   //  1 / 495
+  FixedPoint Q01 = static_cast<FixedPoint>(-Tan_Q01);  // -5 / 11
+  FixedPoint Q02 = static_cast<FixedPoint>(Tan_Q02);   //  2 / 99
+  FixedPoint Q03 = static_cast<FixedPoint>(-Tan_Q03);  // -1 / 10395
   if (r <= CONST_PI_4)
   {
     FixedPoint r2 = r * r;
@@ -2817,16 +2817,16 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
  * @return the result of asin(x)
  */
 
-static constexpr FixedPoint<64, 64> ASin_P00(0, 0x2AAAAAAAAAAAAA00); //  1.66666666666666657415e-01
-static constexpr FixedPoint<64, 64> ASin_P01(0, 0x5358480FADBDF3FF); //  3.25565818622400915405e-01
-static constexpr FixedPoint<64, 64> ASin_P02(0, 0x3382AA1D1088A9FF); //  2.01212532134862925881e-01
-static constexpr FixedPoint<64, 64> ASin_P03(0, 0x0A41145AB4479D80); //  4.00555345006794114027e-02
-static constexpr FixedPoint<64, 64> ASin_P04(0, 0x0033DFC0EA036510); //  7.91534994289814532176e-04
-static constexpr FixedPoint<64, 64> ASin_P05(0, 0x000247BC21BFBEE1); //  3.47933107596021167570e-05
-static constexpr FixedPoint<64, 64> ASin_Q01(2, 0x6744E39145A95FFF); //  2.40339491173441421878e+00
-static constexpr FixedPoint<64, 64> ASin_Q02(2, 0x055CB38B3158FFFF); //  2.02094576023350569471e+00
-static constexpr FixedPoint<64, 64> ASin_Q03(0, 0xB03360DC680AC7FF); //  6.88283971605453293030e-01
-static constexpr FixedPoint<64, 64> ASin_Q04(0, 0x13B8C5B12E9281FF); //  7.70381505559019352791e-02
+static constexpr FixedPoint<64, 64> ASin_P00(0, 0x2AAAAAAAAAAAAA00);  //  1.66666666666666657415e-01
+static constexpr FixedPoint<64, 64> ASin_P01(0, 0x5358480FADBDF3FF);  //  3.25565818622400915405e-01
+static constexpr FixedPoint<64, 64> ASin_P02(0, 0x3382AA1D1088A9FF);  //  2.01212532134862925881e-01
+static constexpr FixedPoint<64, 64> ASin_P03(0, 0x0A41145AB4479D80);  //  4.00555345006794114027e-02
+static constexpr FixedPoint<64, 64> ASin_P04(0, 0x0033DFC0EA036510);  //  7.91534994289814532176e-04
+static constexpr FixedPoint<64, 64> ASin_P05(0, 0x000247BC21BFBEE1);  //  3.47933107596021167570e-05
+static constexpr FixedPoint<64, 64> ASin_Q01(2, 0x6744E39145A95FFF);  //  2.40339491173441421878e+00
+static constexpr FixedPoint<64, 64> ASin_Q02(2, 0x055CB38B3158FFFF);  //  2.02094576023350569471e+00
+static constexpr FixedPoint<64, 64> ASin_Q03(0, 0xB03360DC680AC7FF);  //  6.88283971605453293030e-01
+static constexpr FixedPoint<64, 64> ASin_Q04(0, 0x13B8C5B12E9281FF);  //  7.70381505559019352791e-02
 
 template <uint16_t I, uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::ASin(FixedPoint<I, F> const &x)
@@ -2846,16 +2846,16 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ASin(FixedPoint<I, F> const &x)
     return NaN;
   }
 
-  FixedPoint P00 = static_cast<FixedPoint>(ASin_P00);  //  1.66666666666666657415e-01
-  FixedPoint P01 = static_cast<FixedPoint>(-ASin_P01); // -3.25565818622400915405e-01
-  FixedPoint P02 = static_cast<FixedPoint>(ASin_P02);  //  2.01212532134862925881e-01
-  FixedPoint P03 = static_cast<FixedPoint>(-ASin_P03); // -4.00555345006794114027e-02
-  FixedPoint P04 = static_cast<FixedPoint>(ASin_P04);  //  7.91534994289814532176e-04
-  FixedPoint P05 = static_cast<FixedPoint>(ASin_P05);  //  3.47933107596021167570e-05
-  FixedPoint Q01 = static_cast<FixedPoint>(-ASin_Q01); // -2.40339491173441421878e+00
-  FixedPoint Q02 = static_cast<FixedPoint>(ASin_Q02);  //  2.02094576023350569471e+00
-  FixedPoint Q03 = static_cast<FixedPoint>(-ASin_Q03); // -6.88283971605453293030e-01
-  FixedPoint Q04 = static_cast<FixedPoint>(ASin_Q04);  //  7.70381505559019352791e-02
+  FixedPoint P00 = static_cast<FixedPoint>(ASin_P00);   //  1.66666666666666657415e-01
+  FixedPoint P01 = static_cast<FixedPoint>(-ASin_P01);  // -3.25565818622400915405e-01
+  FixedPoint P02 = static_cast<FixedPoint>(ASin_P02);   //  2.01212532134862925881e-01
+  FixedPoint P03 = static_cast<FixedPoint>(-ASin_P03);  // -4.00555345006794114027e-02
+  FixedPoint P04 = static_cast<FixedPoint>(ASin_P04);   //  7.91534994289814532176e-04
+  FixedPoint P05 = static_cast<FixedPoint>(ASin_P05);   //  3.47933107596021167570e-05
+  FixedPoint Q01 = static_cast<FixedPoint>(-ASin_Q01);  // -2.40339491173441421878e+00
+  FixedPoint Q02 = static_cast<FixedPoint>(ASin_Q02);   //  2.02094576023350569471e+00
+  FixedPoint Q03 = static_cast<FixedPoint>(-ASin_Q03);  // -6.88283971605453293030e-01
+  FixedPoint Q04 = static_cast<FixedPoint>(ASin_Q04);   //  7.70381505559019352791e-02
   FixedPoint c;
   if (x < 0.5)
   {
@@ -2940,15 +2940,15 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ACos(FixedPoint<I, F> const &x)
  * @return the result of atan(x)
  */
 
-static constexpr FixedPoint<64, 64> ATan_P03(2, 0x08FB823EE08FB824); //  116 / 57
-static constexpr FixedPoint<64, 64> ATan_P05(1, 0x5C69E32684D5AD41); // 2198 / 1615
-static constexpr FixedPoint<64, 64> ATan_P07(0, 0x54B1152C454B1152); //   44 / 133
-static constexpr FixedPoint<64, 64> ATan_P09(0, 0x056A97A719C012E3); // 5597 / 264537
-static constexpr FixedPoint<64, 64> ATan_Q02(2, 0x5E50D79435E50D79); //   45 / 19
-static constexpr FixedPoint<64, 64> ATan_Q04(1, 0xF351A27A0E442936); //  630 / 323
-static constexpr FixedPoint<64, 64> ATan_Q06(0, 0xA6708B7E04C16312); //  210 / 323
-static constexpr FixedPoint<64, 64> ATan_Q08(0, 0x13345EDD4F51640B); //  315 / 4199
-static constexpr FixedPoint<64, 64> ATan_Q10(0, 0x0059637863300679); //   63 / 46189
+static constexpr FixedPoint<64, 64> ATan_P03(2, 0x08FB823EE08FB824);  //  116 / 57
+static constexpr FixedPoint<64, 64> ATan_P05(1, 0x5C69E32684D5AD41);  // 2198 / 1615
+static constexpr FixedPoint<64, 64> ATan_P07(0, 0x54B1152C454B1152);  //   44 / 133
+static constexpr FixedPoint<64, 64> ATan_P09(0, 0x056A97A719C012E3);  // 5597 / 264537
+static constexpr FixedPoint<64, 64> ATan_Q02(2, 0x5E50D79435E50D79);  //   45 / 19
+static constexpr FixedPoint<64, 64> ATan_Q04(1, 0xF351A27A0E442936);  //  630 / 323
+static constexpr FixedPoint<64, 64> ATan_Q06(0, 0xA6708B7E04C16312);  //  210 / 323
+static constexpr FixedPoint<64, 64> ATan_Q08(0, 0x13345EDD4F51640B);  //  315 / 4199
+static constexpr FixedPoint<64, 64> ATan_Q10(0, 0x0059637863300679);  //   63 / 46189
 
 template <uint16_t I, uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan(FixedPoint<I, F> const &x)
@@ -2975,15 +2975,15 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan(FixedPoint<I, F> const &x)
     return CONST_PI_2 - ATan(_1 / x);
   }
 
-  FixedPoint P03 = static_cast<FixedPoint>(ATan_P03); //  116 / 57
-  FixedPoint P05 = static_cast<FixedPoint>(ATan_P05); // 2198 / 1615
-  FixedPoint P07 = static_cast<FixedPoint>(ATan_P07); //   44 / 133
-  FixedPoint P09 = static_cast<FixedPoint>(ATan_P09); // 5597 / 264537
-  FixedPoint Q02 = static_cast<FixedPoint>(ATan_Q02); //   45 / 19
-  FixedPoint Q04 = static_cast<FixedPoint>(ATan_Q04); //  630 / 323
-  FixedPoint Q06 = static_cast<FixedPoint>(ATan_Q06); //  210 / 323
-  FixedPoint Q08 = static_cast<FixedPoint>(ATan_Q08); //  315 / 4199
-  FixedPoint Q10 = static_cast<FixedPoint>(ATan_Q10); //   63 / 46189
+  FixedPoint P03 = static_cast<FixedPoint>(ATan_P03);  //  116 / 57
+  FixedPoint P05 = static_cast<FixedPoint>(ATan_P05);  // 2198 / 1615
+  FixedPoint P07 = static_cast<FixedPoint>(ATan_P07);  //   44 / 133
+  FixedPoint P09 = static_cast<FixedPoint>(ATan_P09);  // 5597 / 264537
+  FixedPoint Q02 = static_cast<FixedPoint>(ATan_Q02);  //   45 / 19
+  FixedPoint Q04 = static_cast<FixedPoint>(ATan_Q04);  //  630 / 323
+  FixedPoint Q06 = static_cast<FixedPoint>(ATan_Q06);  //  210 / 323
+  FixedPoint Q08 = static_cast<FixedPoint>(ATan_Q08);  //  315 / 4199
+  FixedPoint Q10 = static_cast<FixedPoint>(ATan_Q10);  //   63 / 46189
   FixedPoint x2  = x * x;
   FixedPoint P   = x * (_1 + x2 * (P03 + x2 * (P05 + x2 * (P07 + x2 * P09))));
   FixedPoint Q   = _1 + x2 * (Q02 + x2 * (Q04 + x2 * (Q06 + x2 * (Q08 + x2 * Q10))));
