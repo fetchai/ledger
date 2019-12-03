@@ -41,6 +41,7 @@ TYPED_TEST(TensorConstructorTest, string_construction)
 
 TYPED_TEST(TensorConstructorTest, large_tensor_construction_throw_test)
 {
+  // You would need more than 1TB of RAM to construct that Tensor of any datatype
   EXPECT_THROW(fetch::math::Tensor<TypeParam>({10000, 10000, 10000}), std::runtime_error);
 }
 
