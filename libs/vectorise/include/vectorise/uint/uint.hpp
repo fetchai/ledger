@@ -52,7 +52,7 @@ class UInt
 public:
   using BaseType = uint8_t;
   using WideType = uint64_t;
-  enum
+  enum : uint64_t
   {
     UINT_SIZE         = S,
     ELEMENT_SIZE      = sizeof(BaseType) * 8,
@@ -1073,7 +1073,7 @@ constexpr std::size_t UInt<S>::lsb() const
   }
 
   auto const val{wide_[i] & RESIDUAL_BITS_MASK};
-  return val > 0 ? lsb + platform::CountTrailingZeroes64(val) : UINT_SIZE;
+  return val > 0 ? lsb + platform::CountTrailingZeroes64(val) : static_cast<uint64_t>(UINT_SIZE);
 }
 
 /////////////////////////
@@ -1197,6 +1197,8 @@ constexpr meta::EnableIf<std::is_same<meta::Decay<T>, byte_array::ByteArray>::va
     }
     return arr;
   }
+
+  return arr;  // make gcc happy
 }
 
 template <uint16_t S>
