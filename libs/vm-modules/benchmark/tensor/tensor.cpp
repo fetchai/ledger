@@ -21,6 +21,7 @@
 
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/model/model.hpp"
+#include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/vm_factory.hpp"
 
@@ -79,20 +80,22 @@ void BM_Construct(::benchmark::State &state)
   using SizeType   = fetch::math::SizeType;
   using SizeVector = std::vector<SizeType>;
 
+  SizeVector shape{};
+
+  SizeType elements = static_cast<SizeType>(state.range(0));
+
+  for (SizeType i{1}; i < elements + 1; i++)
+  {
+    shape.push_back(static_cast<SizeType>(state.range(i)));
+  }
+
+  state.counters["PaddedSize"] = static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(shape));
+
   for (auto _ : state)
   {
     state.PauseTiming();
     VMPtr vm;
     SetUp(vm);
-
-    SizeVector shape{};
-
-    SizeType elements = static_cast<SizeType>(state.range(0));
-
-    for (SizeType i{1}; i < elements + 1; i++)
-    {
-      shape.push_back(static_cast<SizeType>(state.range(i)));
-    }
 
     state.ResumeTiming();
     auto data = CreateTensor(vm, shape);
@@ -135,15 +138,15 @@ BENCHMARK(BM_Construct)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::
 BENCHMARK(BM_Construct)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Construct)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Construct)->Args({3, 1, 1000000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Construct)->Args({3, 1, 1000, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Construct)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Construct)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Construct)->Args({3, 1, 1000000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Construct)->Args({3, 1, 1, 1000000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Construct)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Construct)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Construct)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
