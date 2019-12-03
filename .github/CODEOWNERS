@@ -42,6 +42,7 @@ libs/vectorise/     @fetchai/ledger
 libs/ml/            @fetchai/ledger-vm
 libs/python/        @fetchai/ledger-vm
 libs/math/          @fetchai/ledger-vm
+libs/dmlf/          @fetchai/ledger-vm
 
 # DMLF
 libs/dmlf/          @fetchai/ledger-dmlf

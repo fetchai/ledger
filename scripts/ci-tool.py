@@ -20,6 +20,7 @@ from os.path import abspath, dirname, exists, isdir, isfile, join
 import fetchai_code_quality
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
+LOG_LEVELS = ('trace', 'debug', 'info', 'warn', 'error', 'critical', 'none')
 MAX_CPUS = 7  # as defined by CI workflow
 AVAILABLE_CPUS = multiprocessing.cpu_count()
 CONCURRENCY = min(MAX_CPUS, AVAILABLE_CPUS)
@@ -141,10 +142,19 @@ def build_type(text):
     return text
 
 
+def log_level(text):
+    if text not in LOG_LEVELS:
+        raise RuntimeError(
+            'Invalid log level {text}. Choices: {log_levels}'.format(text=text, log_levels=", ".join(LOG_LEVELS)))
+    return text
+
+
 def parse_commandline():
     parser = argparse.ArgumentParser()
     parser.add_argument('build_type', metavar='TYPE',
                         type=build_type, help='The type of build to be used')
+    parser.add_argument('--log-level',
+                        type=log_level, help='Override FETCH_LOG_LEVEL (one of '+', '.join(LOG_LEVELS)+')')
     parser.add_argument(
         '-p', '--build-path-prefix', default='build-',
         help='The prefix to be used for the naming of the build folder')
@@ -363,6 +373,8 @@ def main():
     options = {
         'CMAKE_BUILD_TYPE': args.build_type,
     }
+    if args.log_level is not None:
+        options['FETCH_COMPILE_LOGGING_LEVEL'] = args.log_level
 
     # attempt to detect the sccache path on the system
     sccache_path = shutil.which('sccache')

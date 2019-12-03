@@ -62,6 +62,10 @@ IDENT           [_a-zA-Z][_a-zA-Z0-9]*
 
     /* comments */
 "/*" {
+    yylval->offset = yyextra->offset;
+    yylval->line = yyextra->line;
+    yylval->length = yyleng;
+    yylval->text = yytext;
     yyextra->offset += yyleng;
     BEGIN(COMMENT);
 }
@@ -78,6 +82,10 @@ IDENT           [_a-zA-Z][_a-zA-Z0-9]*
 <COMMENT>\**"*/" {
     yyextra->offset += yyleng;
     BEGIN(INITIAL);
+}
+<COMMENT><<EOF>> {
+    yylval->kind = fetch::vm::Token::Kind::UnterminatedComment;
+    return 0;
 }
 
   /* single line comments */
