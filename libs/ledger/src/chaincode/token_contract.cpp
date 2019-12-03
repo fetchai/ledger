@@ -76,7 +76,6 @@ TokenContract::TokenContract()
   // TODO(tfr): I think the function CreateWealth should be OnInit?
   OnTransaction("deed", this, &TokenContract::UpdateDeed);
   OnTransaction("wealth", this, &TokenContract::CreateWealth);
-  OnTransaction("transfer", this, &TokenContract::Transfer);
   OnTransaction("addStake", this, &TokenContract::AddStake);
   OnTransaction("deStake", this, &TokenContract::DeStake);
   OnTransaction("collectStake", this, &TokenContract::CollectStake);
@@ -274,12 +273,6 @@ Contract::Result TokenContract::UpdateDeed(chain::Transaction const &tx)
   }
 
   return {Status::OK};
-}
-
-Contract::Result TokenContract::Transfer(chain::Transaction const &tx)
-{
-  FETCH_UNUSED(tx);
-  return {Status::FAILED};
 }
 
 Contract::Result TokenContract::AddStake(chain::Transaction const &tx)

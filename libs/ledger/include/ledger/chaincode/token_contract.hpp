@@ -58,7 +58,6 @@ public:
   // transaction handlers
   Result CreateWealth(chain::Transaction const &tx);
   Result UpdateDeed(chain::Transaction const &tx);
-  Result Transfer(chain::Transaction const &tx);
   Result AddStake(chain::Transaction const &tx);
   Result DeStake(chain::Transaction const &tx);
   Result CollectStake(chain::Transaction const &tx);
