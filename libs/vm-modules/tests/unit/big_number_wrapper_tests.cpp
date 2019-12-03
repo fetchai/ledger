@@ -146,6 +146,7 @@ public:
       dummy_typeid,
       0,
   };
+  UInt256Wrapper _1{dummy_vm_ptr, UInt256Wrapper::UInt256::_1};
   UInt256Wrapper uint64max{dummy_vm_ptr, dummy_typeid, std::numeric_limits<uint64_t>::max()};
   UInt256Wrapper maximum{dummy_vm_ptr, dummy_typeid, raw_32xFF, ENDIANESS_OF_TEST_DATA};
 
@@ -187,14 +188,14 @@ TEST_F(UInt256Tests, uint256_raw_increase)
   // Increase is tested via digit carriage while incrementing.
   UInt256Wrapper carriage_inside(uint64max);
 
-  carriage_inside.Increase();
+  carriage_inside.InplaceAdd(Ptr<Object>::PtrFromThis(&carriage_inside),
+                             Ptr<Object>::PtrFromThis(&_1));
 
   EXPECT_EQ(carriage_inside.number().ElementAt(0), uint64_t(0));
   EXPECT_EQ(carriage_inside.number().ElementAt(1), uint64_t(1));
 
   UInt256Wrapper overcarriage(maximum);
-
-  overcarriage.Increase();
+  overcarriage.InplaceAdd(Ptr<Object>::PtrFromThis(&overcarriage), Ptr<Object>::PtrFromThis(&_1));
 
   ASSERT_TRUE(
       zero.IsEqual(Ptr<Object>::PtrFromThis(&zero), Ptr<Object>::PtrFromThis(&overcarriage)));
@@ -207,7 +208,7 @@ TEST_F(UInt256Tests, uint256_comparisons)
       var uint64_max = 18446744073709551615u64;
       var smaller = UInt256(uint64_max);
       var bigger = UInt256(uint64_max);
-      bigger.increase();
+      bigger += UInt256(1u64);
 
       assert(smaller < bigger, "1<2 is false!");
       assert((smaller > bigger) == false, "1>2 is true!");
@@ -426,7 +427,7 @@ TEST_F(UInt256Tests, uint256_size)
   EXPECT_TRUE(SIZE_IN_BYTES == size);
 }
 
-TEST_F(UInt256Tests, uint256_logValue)
+TEST_F(UInt256Tests, uint256_ToDouble)
 {
   static constexpr double LOGARITHM_TOLERANCE  = 5e-4;
   static constexpr double CONVERSION_TOLERANCE = 0.1;
@@ -437,18 +438,15 @@ TEST_F(UInt256Tests, uint256_logValue)
     UInt256Wrapper n1{dummy_vm_ptr, dummy_typeid, input.first, ENDIANESS_OF_TEST_DATA};
 
     const auto as_double  = fetch::vectorise::ToDouble(n1.number());
-    const auto result     = n1.LogValue();
     const auto exp_double = input.second;
-    const auto expected   = std::log(exp_double);
 
     EXPECT_NEAR(as_double, exp_double, exp_double * CONVERSION_TOLERANCE);
-    EXPECT_NEAR(result, expected, expected * LOGARITHM_TOLERANCE);
   }
 
   static constexpr char const *TEXT = R"(
           function main() : Float64
             var number : UInt256 = UInt256(18446744073709551615u64);
-            var logY : Float64 = number.logValue();
+            var logY : Float64 = log10(toFloat64(number));
             return logY;
           endfunction
         )";
@@ -458,7 +456,7 @@ TEST_F(UInt256Tests, uint256_logValue)
   ASSERT_TRUE(toolkit.Run(&res));
   auto const result = res.Get<double>();
 
-  double const expected = std::log(18446744073709551615ull);
+  double const expected = std::log10(18446744073709551615ull);
 
   EXPECT_NEAR(result, expected, expected * LOGARITHM_TOLERANCE);
 }

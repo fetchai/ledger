@@ -420,17 +420,14 @@ TEST(big_number_gtest, test_bit_inverse)
 {
   UInt72 const inv{~UInt72::_0};
   EXPECT_EQ(UInt72::max, inv);
-  EXPECT_EQ(inv.ElementAt(0), UInt72_WideType_Max);
-  EXPECT_EQ(inv.ElementAt(1), 0xFF);
 
   constexpr UInt72::WideType wide_element_0{0xF0F0F0F0F0F0F0F0ull};
   constexpr UInt72::WideType wide_element_1{0xF0ull};
 
-  UInt72     val{wide_element_0, wide_element_1};
-  auto const inv_val{~val};
+  UInt72 const val{wide_element_0, wide_element_1};
+  UInt72 const expected_inv_val{~wide_element_0, UInt72::WideType{0x0Full}};
 
-  EXPECT_EQ(inv_val.ElementAt(0), ~wide_element_0);
-  EXPECT_EQ(inv_val.ElementAt(1), UInt72::WideType{0x0Full});
+  EXPECT_EQ(expected_inv_val, ~val);
 }
 
 TEST(big_number_gtest, test_default_constructor)
@@ -444,6 +441,47 @@ TEST(big_number_gtest, test_zero)
 {
   EXPECT_EQ(UInt72::_0.ElementAt(0), 0u);
   EXPECT_EQ(UInt72::_0.ElementAt(1), 0u);
+}
+
+TEST(big_number_gtest, test_issue_1383_overflow_zero_with_residual_bits)
+{
+  UInt72 x{UInt72::_0};
+  x.ElementAt(1) = ~UInt72::WideType{0xFFull};
+
+  ASSERT_EQ(UInt72::_0, x);
+  EXPECT_EQ(UInt72::_0, x + x);
+}
+
+TEST(big_number_gtest, test_issue_1383_overflow_zero_one_with_residual_bits)
+{
+  UInt72 x0{UInt72::_0};
+  x0.ElementAt(1) = ~UInt72::WideType{0xFFull};
+  UInt72 x1{UInt72::_1};
+  x1.ElementAt(1) = ~UInt72::WideType{0xFFull};
+
+  ASSERT_EQ(UInt72::_0, x0);
+  ASSERT_EQ(UInt72::_1, x1);
+
+  EXPECT_EQ(UInt72::_1, x0 + x1);
+  EXPECT_EQ(UInt72::_0, x0 / x1);
+  EXPECT_EQ(UInt72::_1, UInt72::_1 / x1);
+  EXPECT_EQ(UInt72::_1, x1 / UInt72::_1);
+}
+
+TEST(big_number_gtest, test_issue_1383_overflow_division_2)
+{
+  UInt72 x2{2ull};
+  x2.ElementAt(1) = ~UInt72::WideType{0xFFull};
+  UInt72 x4{4ull};
+  x4.ElementAt(1) = ~UInt72::WideType{0xFFull};
+
+  ASSERT_EQ(UInt72{2ull}, x2);
+  ASSERT_EQ(UInt72{4ull}, x4);
+
+  EXPECT_EQ(UInt72{2ull}, x4 / x2);
+  EXPECT_EQ(UInt72{6ull}, x4 + x2);
+  EXPECT_EQ(UInt72{2ull}, x4 - x2);
+  // EXPECT_EQ(UInt72{0ull}, x4 % x2);
 }
 
 TEST(big_number_gtest, test_issue_1383_max)
@@ -460,7 +498,9 @@ TEST(big_number_gtest, test_issue_1383_max)
   EXPECT_EQ(max_WITH_residual_bits, UInt72{UInt72::max});
 
   // Verify that max value compares equal to the one with residual bits *UN*set
-  UInt72 reference_NO_residual_bits{UInt72_WideType_Max, UInt72::WideType{0xFFull}};
+  UInt72 reference_NO_residual_bits;
+  reference_NO_residual_bits.ElementAt(0) = UInt72_WideType_Max;
+  reference_NO_residual_bits.ElementAt(1) = UInt72::WideType{0xFFull};
   EXPECT_EQ(reference_NO_residual_bits, UInt72{UInt72::max});
 }
 
@@ -522,8 +562,7 @@ TEST(big_number_gtest, test_issue_1383_division_oper)
 
   x /= 2ull;
   EXPECT_EQ(UInt72{UInt72::max} >>= 1, x);
-  EXPECT_EQ(UInt72_WideType_Max, x.ElementAt(0));
-  EXPECT_EQ(UInt72::WideType{0x7Full}, x.ElementAt(1));
+  EXPECT_EQ(UInt72(UInt72_WideType_Max, 0x7Full), x);
 }
 
 TEST(big_number_gtest, test_issue_1383_overflow_with_plus)
@@ -534,8 +573,6 @@ TEST(big_number_gtest, test_issue_1383_overflow_with_plus)
 
   x += 10ull;
   EXPECT_EQ(UInt72{9ull}, x);
-  EXPECT_EQ(9ull, x.ElementAt(0));
-  EXPECT_EQ(0ull, x.ElementAt(1));
 }
 
 }  // namespace
