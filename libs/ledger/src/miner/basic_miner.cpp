@@ -18,6 +18,7 @@
 
 #include "chain/address.hpp"
 #include "chain/transaction.hpp"
+#include "chain/transaction_validity_period.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/miner/basic_miner.hpp"
@@ -138,20 +139,13 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   }
 
   std::remove_if(mining_pool_.begin(), mining_pool_.end(), [&block](auto const &tx_layout) {
-    constexpr Block::Index DEFAULT_TX_VALIDITY_PERIOD = 10;
-    auto const             valid_from                 = tx_layout.valid_from() == 0
-                                ? tx_layout.valid_until() - DEFAULT_TX_VALIDITY_PERIOD
-                                : tx_layout.valid_from();
-
-    bool const tx_expired       = tx_layout.valid_until() < block.block_number;
-    bool const tx_not_yet_valid = valid_from > block.block_number;
-
-    return tx_expired || tx_not_yet_valid;
+    return fetch::chain::GetValidity(tx_layout, block.block_number) !=
+           chain::Transaction::Validity::VALID;
   });
 
   // detect the transactions which have already been incorporated into previous blocks
   auto const duplicates =
-      chain.DetectDuplicateTransactions(block.previous_hash, mining_pool_.digests());
+      chain.DetectDuplicateTransactions(block.previous_hash, mining_pool_.TxLayouts());
 
   duplicate_filtered_count_->add(duplicates.size());
 
