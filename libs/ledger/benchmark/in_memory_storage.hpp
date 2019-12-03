@@ -40,7 +40,7 @@ public:
 
   /// @name State Interface
   /// @{
-  Document Get(ResourceAddress const &key) override;
+  Document Get(ResourceAddress const &key) const override;
   Document GetOrCreate(ResourceAddress const &key) override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
   bool     Lock(ShardIndex shard) override;

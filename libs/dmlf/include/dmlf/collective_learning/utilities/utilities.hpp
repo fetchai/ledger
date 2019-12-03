@@ -27,6 +27,36 @@ namespace collective_learning {
 namespace utilities {
 
 /**
+ * A utility function for printing weights between all client algorithms.
+ * This method is only useful for exploration with local computation because it requires all clients
+ * to return their owned algorithms.
+ * @tparam TensorType
+ * @param clients
+ */
+template <typename TensorType>
+void PrintWeights(std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>> &clients)
+{
+  // gather all of the different clients' algorithms
+  std::vector<std::shared_ptr<ClientAlgorithm<TensorType>>> client_algorithms;
+  for (auto &client : clients)
+  {
+    std::vector<std::shared_ptr<ClientAlgorithm<TensorType>>> current_client_algorithms =
+        client->GetAlgorithms();
+    client_algorithms.insert(client_algorithms.end(), current_client_algorithms.begin(),
+                             current_client_algorithms.end());
+  }
+
+  // Sum all weights
+  for (typename TensorType::SizeType i{0}; i < client_algorithms.size(); ++i)
+  {
+    std::vector<TensorType> other_weights = client_algorithms[i]->GetWeights();
+    for (auto ws : other_weights)
+    {
+      std::cout << "weights.ToString(): " << ws.ToString() << std::endl;
+    }
+  }
+}
+/**
  * A utility function for averaging weights between all client algorithms.
  * This method is only useful for exploration with local computation because it requires all clients
  * to return their owned algorithms.
@@ -179,6 +209,11 @@ fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> Client
   using SizeType = fetch::math::SizeType;
 
   std::ifstream config_file(fname);
+  if (!config_file.is_open())
+  {
+    throw std::runtime_error("File " + fname + " cannot be opened");
+  }
+
   std::string text((std::istreambuf_iterator<char>(config_file)), std::istreambuf_iterator<char>());
   doc.Parse(text.c_str());
 
@@ -199,6 +234,10 @@ fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> Client
   {
     client_params.max_updates = doc["max_updates"].As<SizeType>();
   }
+  if (!doc["max_epochs"].IsUndefined())
+  {
+    client_params.max_epochs = doc["max_epochs"].As<SizeType>();
+  }
   if (!doc["learning_rate"].IsUndefined())
   {
     client_params.learning_rate = static_cast<DataType>(doc["learning_rate"].As<float>());
@@ -206,23 +245,6 @@ fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> Client
   if (!(doc["print_loss"].IsUndefined()))
   {
     client_params.print_loss = doc["print_loss"].As<bool>();
-  }
-  if (!doc["input_names"].IsUndefined())
-  {
-    auto const &input_names   = doc["input_names"];
-    client_params.input_names = std::vector<std::string>(input_names.size());
-    for (std::size_t i = 0; i < input_names.size(); ++i)
-    {
-      client_params.input_names.at(i) = input_names[i].As<std::string>();
-    }
-  }
-  if (!doc["label_name"].IsUndefined())
-  {
-    client_params.label_name = doc["label_name"].As<std::string>();
-  }
-  if (!doc["error_name"].IsUndefined())
-  {
-    client_params.error_name = doc["error_name"].As<std::string>();
   }
 
   return client_params;
