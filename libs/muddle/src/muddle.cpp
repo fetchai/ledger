@@ -61,7 +61,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , network_manager_(nm)
   , dispatcher_(network_id, certificate_->identity().identifier())
   , register_(std::make_shared<MuddleRegister>(network_id))
-  , router_(network_id, node_address_, *register_, dispatcher_, *certificate_)
+  , router_(network_id, node_address_, *register_, *certificate_)
   , clients_(network_id)
   , network_id_(network_id)
   , reactor_{"muddle"}

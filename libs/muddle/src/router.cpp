@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dispatcher.hpp"
+#include "router.hpp"
 #include "kademlia/peer_tracker.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
-#include "router.hpp"
 #include "routing_message.hpp"
 #include "xor_metric.hpp"
 
@@ -239,13 +238,11 @@ Packet::Address Router::ConvertAddress(Packet::RawAddress const &address)
  * @param address The address of the current node
  * @param reg The connection register
  */
-Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispatcher &dispatcher,
-               Prover const &prover)
+Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Prover const &prover)
   : name_{GenerateLoggingName(BASE_NAME, network_id)}
   , address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
-  , dispatcher_(dispatcher)
   , registrar_(network_id)
   , network_id_(network_id)
   , prover_(prover)
@@ -465,7 +462,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
                   Payload const &message)
 {
   // get the next counter for this message
-  uint16_t const counter = dispatcher_.GetNextCounter();
+  uint16_t const counter = GetNextCounter();
 
   Send(address, service, channel, counter, message, OPTION_DEFAULT);
 }
@@ -473,7 +470,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
 void Router::Send(Address const &address, uint16_t service, uint16_t channel,
                   Payload const &message, Options options)
 {
-  uint16_t const counter = dispatcher_.GetNextCounter();
+  uint16_t const counter = GetNextCounter();
 
   Send(address, service, channel, counter, message, options);
 }
@@ -541,7 +538,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
 void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payload)
 {
   // get the next counter for this message
-  uint16_t const counter = dispatcher_.GetNextCounter();
+  uint16_t const counter = GetNextCounter();
 
   auto packet =
       FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, payload);
@@ -558,39 +555,6 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
 void Router::Cleanup()
 {
   CleanEchoCache();
-}
-
-/**
- * Send a request and expect a response back from the target address
- *
- * @param request The request to be sent
- * @param service The service identifier
- * @param channel The channel identifier
- * @return The promise of a response back from the target address
- */
-Router::Response Router::Exchange(Address const &address, uint16_t service, uint16_t channel,
-                                  Payload const &request)
-{
-  // get the next counter for this message
-  uint16_t const counter = dispatcher_.GetNextCounter();
-
-  // register with the dispatcher that we are expecting a response
-  auto promise = dispatcher_.RegisterExchange(service, channel, counter, address);
-
-  FETCH_LOG_TRACE(logging_name_, "Exchange Request: ", ToBase64(address), " (", service, '-',
-                  channel, '-', counter, ") prom: ", promise->id());
-
-  // format the packet and route the packet
-  auto packet =
-      FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, request);
-  packet->SetTarget(address);
-  packet->SetExchange();
-  Sign(packet);
-
-  RoutePacket(packet, false);
-
-  // return the response
-  return Response(std::move(promise));
 }
 
 /**
@@ -821,16 +785,6 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet)
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
-    // determine if this packet originated from this node and that we are expecting an exchange
-    if (packet->IsExchange() && (address_ == packet->GetSender()))
-    {
-      // notify the dispatcher about the message so that it can associate the connection handle
-      // with any pending promises. This is required to ensure clean handling of promises which
-      // fail due to connection loss.
-      dispatcher_.NotifyMessage(handle, packet->GetService(), packet->GetChannel(),
-                                packet->GetMessageNum());
-    }
-
     // serialize the packet to the buffer
     ByteArray buffer;
     buffer.Resize(packet->GetPacketSize());
@@ -1028,16 +982,6 @@ void Router::DispatchPacket(PacketPtr const &packet, Address const &transmitter)
       // update the payload to be decrypted payload
       packet->SetPayload(decrypted_payload);
       rx_encrypted_packet_success_total_->increment();
-    }
-
-    // determine if this was an exchange based node
-    if (isPossibleExchangeResponse && dispatcher_.Dispatch(packet))
-    {
-      exchange_dispatch_total_->increment();
-      dispatch_complete_total_->increment();
-
-      // the dispatcher has "claimed" this packet as there was an outstanding promise waiting for it
-      return;
     }
 
     // If no exchange message has claimed this then attempt to dispatch it through our normal system
