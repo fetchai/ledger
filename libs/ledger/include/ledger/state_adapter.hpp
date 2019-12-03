@@ -41,7 +41,7 @@ public:
   using ScopeType = byte_array::ConstByteArray;
 
   // Resource Mapping
-  static storage::ResourceAddress CreateAddress(ScopeType const &                scope,
+  static storage::ResourceAddress CreateAddress(ScopeType const &                 scope,
                                                 byte_array::ConstByteArray const &key);
 
   enum class Mode
@@ -70,9 +70,9 @@ protected:
   // Protected construction
   StateAdapter(StorageInterface &storage, ScopeType scope, Mode mode);
 
-  StorageInterface &      storage_;
-  std::vector<ScopeType>  scope_;
-  Mode const              mode_;
+  StorageInterface &     storage_;
+  std::vector<ScopeType> scope_;
+  Mode const             mode_;
 };
 
 }  // namespace ledger

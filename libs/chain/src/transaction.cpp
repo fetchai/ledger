@@ -211,7 +211,6 @@ Transaction::ContractMode Transaction::contract_mode() const
   return contract_mode_;
 }
 
-
 /**
  * Get the contract address for this smart contract transaction
  *

@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "ledger/chaincode/smart_contract_wrapper.hpp"
 #include "moment/clocks.hpp"
 
@@ -25,9 +24,9 @@ namespace ledger {
 
 SmartContractWrapper::SmartContractWrapper(ConstByteArray source)
   : source{std::move(source)}
-  , creation_timestamp{GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))}
-{
-}
+  , creation_timestamp{
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))}
+{}
 
-} //namespace ledger
-} //namespace fetch
+}  // namespace ledger
+}  // namespace fetch

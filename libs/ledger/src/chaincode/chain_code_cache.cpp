@@ -66,7 +66,7 @@ bool IsIdentity(ConstByteArray const &value)
   return IsBase58<48, 50>(value);
 }
 
-} //namespace
+}  // namespace
 
 ChainCodeCache::ContractPtr ChainCodeCache::Lookup(ContractId const &contract_id,
                                                    StorageInterface &storage)

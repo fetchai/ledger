@@ -67,7 +67,7 @@ protected:
     contract_         = contract;
     contract_address_ = std::make_unique<Address>(contract->contract_digest());
     // populate the contract name too
-    contract_name_ = std::make_shared<ConstByteArray >(owner_address_->display());
+    contract_name_ = std::make_shared<ConstByteArray>(owner_address_->display());
 
     ASSERT_TRUE(static_cast<bool>(contract_));
     ASSERT_TRUE(static_cast<bool>(contract_name_));
@@ -543,8 +543,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
   Address address_as_name{Identity{address_raw}};
 
   // define expected values
-  auto const expected_key1 =
-      *contract_name_ + ".state." + address_as_name.display() + ".foo";
+  auto const       expected_key1 = *contract_name_ + ".state." + address_as_name.display() + ".foo";
   auto const       expected_resource1 = ResourceAddress{expected_key1};
   auto const       expected_value1    = RawBytes<int32_t>(20);
   fetch::BitVector mask{1ull << 4u};
@@ -724,7 +723,7 @@ TEST_F(SmartContractTests, CheckContextInAction)
 
   auto tx{TransactionBuilder()
               .From(Address{certificate_->identity()})
-              .TargetSmartContract(*contract_address_,  shards_)
+              .TargetSmartContract(*contract_address_, shards_)
               .Action("test_transaction")
               .Transfer(transfer0.to, transfer0.amount)
               .Transfer(transfer1.to, transfer1.amount)

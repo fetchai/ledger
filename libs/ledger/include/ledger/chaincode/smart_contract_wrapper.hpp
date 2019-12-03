@@ -32,9 +32,9 @@ struct SmartContractWrapper
   SmartContractWrapper() = default;
   explicit SmartContractWrapper(ConstByteArray source);
 
-  //contract source
+  // contract source
   ConstByteArray source;
-  //metadata
+  // metadata
   uint64_t creation_timestamp;
 };
 
@@ -50,7 +50,7 @@ public:
   using DriverType = D;
 
   static uint8_t const SOURCE = 1;
-  //metadata
+  // metadata
   static uint8_t const CREATION_TIMESTAMP = 2;
 
   template <typename Constructor>

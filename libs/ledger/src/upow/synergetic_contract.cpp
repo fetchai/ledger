@@ -295,8 +295,7 @@ Status SynergeticContract::Complete(chain::Address const &address, BitVector con
 
   // setup the storage infrastructure
   CachedStorageAdapter storage_cache(*storage_);
-  StateSentinelAdapter state_sentinel{
-      storage_cache, address.display(), shards};
+  StateSentinelAdapter state_sentinel{storage_cache, address.display(), shards};
 
   // attach the state to the VM
   vm->SetIOObserver(state_sentinel);

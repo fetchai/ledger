@@ -75,7 +75,6 @@ bool GenerateContractName(chain::Transaction const &tx, ConstByteArray &identifi
     break;
   }
 
-
   return true;
 }
 
@@ -433,7 +432,8 @@ void Executor::DeductFees(Result &result)
   telemetry::FunctionTimer const timer{*deduct_fees_duration_};
 
   // attach the token contract to the storage engine
-  StateSentinelAdapter storage_adapter{*storage_cache_, ConstByteArray{"fetch.token"}, allowed_shards_};
+  StateSentinelAdapter storage_adapter{*storage_cache_, ConstByteArray{"fetch.token"},
+                                       allowed_shards_};
 
   auto const &from = current_tx_->from();
 

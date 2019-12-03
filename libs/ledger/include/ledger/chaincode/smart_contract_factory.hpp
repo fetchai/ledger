@@ -20,8 +20,8 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/main_serializer_definition.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/chaincode/smart_contract_wrapper.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <exception>
 #include <memory>
@@ -34,14 +34,13 @@ template <typename ContractType>
 auto CreateSmartContract(byte_array::ConstByteArray const &contract_address,
                          StorageInterface &                storage) -> std::unique_ptr<ContractType>
 {
-  auto addr = SmartContractManager::CreateAddressForContract(contract_address);
-  auto const resource =
-      storage.Get(addr);
+  auto       addr     = SmartContractManager::CreateAddressForContract(contract_address);
+  auto const resource = storage.Get(addr);
 
   if (!resource.failed)
   {
     serializers::MsgPackSerializer buffer{resource.document};
-    SmartContractWrapper document{};
+    SmartContractWrapper           document{};
     buffer >> document;
 
     return std::make_unique<ContractType>(std::string(document.source));

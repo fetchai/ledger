@@ -105,8 +105,8 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
           tx_obj["data"]      = tx.data().ToBase64();
           break;
         case Transaction::ContractMode::SYNERGETIC:
-          tx_obj["action"]         = tx.action();
-          tx_obj["data"]           = tx.data().ToBase64();
+          tx_obj["action"] = tx.action();
+          tx_obj["data"]   = tx.data().ToBase64();
           break;
         }
 

@@ -88,10 +88,9 @@ bool CreateTxFromJson(Variant const &tx_obj, std::vector<ConstByteArray> &txs,
                       TransactionProcessor &processor)
 {
   auto tx = std::make_shared<chain::Transaction>();
-  std::cout << "CREATE TX FROM JSON " << std::endl;
+
   if (chain::FromJsonTransaction(tx_obj, *tx))
   {
-    std::cout<<"TX CREATED FROM JSON: digest=" << tx->digest() <<std::endl;
     txs.emplace_back(tx->digest());
     processor.AddTransaction(std::move(tx));
 
@@ -190,8 +189,7 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
 
   Post("/api/contract/(identifier=[1-9A-HJ-NP-Za-km-z]{48,50})/(query=.+)",
        "Submits a query to a contract",
-       {
-        {"identifier", "The query identifier.", http::validators::StringValue()}},
+       {{"identifier", "The query identifier.", http::validators::StringValue()}},
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          // build the contract name
          auto const contract_name = params["identifier"];
@@ -233,7 +231,7 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     doc.Parse(request.body());
     variant::Variant response;
     // dispatch the contract type
-    auto contract = contract_cache_.Lookup(contract_name , storage_);
+    auto contract = contract_cache_.Lookup(contract_name, storage_);
 
     // adapt the storage engine so that that get and sets are sandboxed for the contract
     StateAdapter storage_adapter{storage_, contract_name};

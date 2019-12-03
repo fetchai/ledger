@@ -125,7 +125,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
   if (GetStateRecord(contract, payable_address.display()))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Contract ", payable_address.display(), " already created @ ",
-        contract.creation_timestamp);
+                   contract.creation_timestamp);
     return {Status::OK};
   }
 
@@ -186,7 +186,8 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
       return init_status;
     }
   }
-  auto const status = SetStateRecord(SmartContractWrapper{contract_source}, payable_address.display());
+  auto const status =
+      SetStateRecord(SmartContractWrapper{contract_source}, payable_address.display());
   if (status != StateAdapter::Status::OK)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Failed to store smart contract to state DB!");

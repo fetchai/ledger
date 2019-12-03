@@ -105,8 +105,8 @@ struct DAGNode
   {
     serializers::MsgPackSerializer buf;
 
-    buf << type << previous << contents << contract_address << identity << hash
-        << signature << oldest_epoch_referenced << weight;
+    buf << type << previous << contents << contract_address << identity << hash << signature
+        << oldest_epoch_referenced << weight;
 
     HasherType hasher;
     hasher.Reset();

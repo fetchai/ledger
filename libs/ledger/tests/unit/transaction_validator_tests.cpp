@@ -448,20 +448,19 @@ TEST_F(TransactionValidatorTests, CheckPermissionDeniedWithDeedNoExecutePermissi
   SetDeed(deed);
   AddFunds(1);
 
-  auto tx =
-      TransactionBuilder{}
-          .From(signer_address_)
-          .TargetSmartContract(address2, BitVector{})  // reuse addresses for contract id
-          .Action("do.work")
-          .ValidUntil(100)
-          .ChargeRate(1)
-          .ChargeLimit(1)
-          .Signer(other1.identity())
-          .Signer(other2.identity())
-          .Seal()
-          .Sign(other1)
-          .Sign(other2)
-          .Build();
+  auto tx = TransactionBuilder{}
+                .From(signer_address_)
+                .TargetSmartContract(address2, BitVector{})  // reuse addresses for contract id
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(1)
+                .Signer(other1.identity())
+                .Signer(other2.identity())
+                .Seal()
+                .Sign(other1)
+                .Sign(other2)
+                .Build();
 
   EXPECT_EQ(ContractExecutionStatus::TX_PERMISSION_DENIED, validator_(*tx, 50));
 }

@@ -32,14 +32,16 @@ constexpr char SEPARATOR = '.';
 
 byte_array::ConstByteArray GetNameSpace(byte_array::ConstByteArray const &name)
 {
-  std::size_t offset = 0;
+  std::size_t offset          = 0;
   std::size_t last_token_size = 0;
-  for (;;) {
+  for (;;)
+  {
     // find the next instance of the separator
     std::size_t const index = name.Find(SEPARATOR, offset);
 
     // determine if this is the last token
-    if (byte_array::ConstByteArray::NPOS == index) {
+    if (byte_array::ConstByteArray::NPOS == index)
+    {
       last_token_size = name.size() - offset + 1;
       break;
     }
@@ -49,7 +51,7 @@ byte_array::ConstByteArray GetNameSpace(byte_array::ConstByteArray const &name)
   return name.SubArray(0, name.size() - last_token_size);
 }
 
-} //namespace
+}  // namespace
 
 uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
                            byte_array::ConstByteArray const &contract, uint32_t log2_num_lanes)

@@ -143,8 +143,7 @@ void NaiveSynergeticMiner::Mine()
   for (auto const &problem : problem_spaces)
   {
     // attempt to mine a solution to this problem
-    auto const solution =
-        MineSolution(problem.first, problem.second);
+    auto const solution = MineSolution(problem.first, problem.second);
 
     // check to see if a solution was generated
     if (solution)
