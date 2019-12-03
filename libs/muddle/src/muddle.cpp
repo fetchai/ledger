@@ -76,8 +76,10 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   router_.SetTracker(peer_tracker_);
 
   // handle the left issues
-  register_->OnConnectionLeft(
-      [this](Handle handle) { direct_message_service_.SignalConnectionLeft(handle); });
+  register_->OnConnectionLeft([this](Handle handle) {
+    peer_tracker_->RemoveConnectionHandle(handle);
+    direct_message_service_.SignalConnectionLeft(handle);
+  });
 
   register_->OnConnectionEntered(
       [this](Handle handle) { peer_tracker_->AddConnectionHandle(handle); });

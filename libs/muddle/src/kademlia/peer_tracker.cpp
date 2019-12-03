@@ -511,8 +511,8 @@ void PeerTracker::OnResolvedPull(uint64_t pull_id, Address const &peer, Address 
   }
   else
   {
-    FETCH_LOG_WARN(logging_name_.c_str(), "Unable to resolve address for: ", peer.ToBase64(),
-                   " code: ", int(promise->state()));
+    FETCH_LOG_DEBUG(logging_name_.c_str(), "Unable to resolve address for: ", peer.ToBase64(),
+                    " code: ", int(promise->state()));
 
     // In case of failure, we stop following
     if (peer_pull_map_.find(peer) != peer_pull_map_.end())

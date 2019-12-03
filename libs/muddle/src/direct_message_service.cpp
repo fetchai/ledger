@@ -228,29 +228,10 @@ void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
     // send the message to the connection
     SendMessageToConnection(handle, response);
   }
-  else if (UpdateStatus::DUPLICATE == status)
-  {
-    // format the message
-    RoutingMessage response{};
-    response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
-
-    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (duplicate) (conn: ", handle,
-                   ")");
-
-    // send the message to the connection
-    SendMessageToConnection(handle, response);
-  }
   else if (UpdateStatus::REPLACED == status)
   {
     // format the message
     RoutingMessage response{};
-    response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
-
-    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (replaced) (conn: ", handle,
-                   ")");
-
-    // send the message to the connection
-    SendMessageToConnection(previous_handle, response);
 
     // send the connection request
     response.type = RoutingMessage::Type::ROUTING_REQUEST;
