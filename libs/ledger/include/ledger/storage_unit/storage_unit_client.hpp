@@ -72,7 +72,7 @@ public:
   TxLayouts PollRecentTx(uint32_t max_to_poll) override;
 
   Document GetOrCreate(ResourceAddress const &key) override;
-  Document Get(ResourceAddress const &key) override;
+  Document Get(ResourceAddress const &key) const override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
 
   void Reset() override;

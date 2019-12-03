@@ -41,7 +41,7 @@ public:
 
   /// @name State Interface
   /// @{
-  Document Get(ResourceAddress const &key) override;
+  Document Get(ResourceAddress const &key) const override;
   Document GetOrCreate(ResourceAddress const &key) override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
   bool     Lock(ShardIndex index) override;
@@ -88,12 +88,12 @@ private:
   using StateHistory     = std::unordered_map<Hash, StatePtr>;
   using StateHashStack   = std::vector<Hash>;
 
-  std::recursive_mutex lock_;
-  TransactionStore     transaction_store_{};
-  StatePtr             state_{std::make_shared<State>()};
-  StateHistory         state_history_{};
-  StateHashStack       state_history_stack_{fetch::chain::GENESIS_MERKLE_ROOT};
-  Hash                 current_hash_{fetch::chain::GENESIS_MERKLE_ROOT};
+  mutable std::recursive_mutex lock_;
+  TransactionStore             transaction_store_{};
+  StatePtr                     state_{std::make_shared<State>()};
+  StateHistory                 state_history_{};
+  StateHashStack               state_history_stack_{fetch::chain::GENESIS_MERKLE_ROOT};
+  Hash                         current_hash_{fetch::chain::GENESIS_MERKLE_ROOT};
 };
 
 }  // namespace ledger
