@@ -171,7 +171,12 @@ for prim in math_prims:
     vm_least_squares.opcode_times(benchmarks_fit, optimes[prim], {
                                   'Math'}, prim_type=prim)
 
-# Add indivudual opcode times to relevant benchmarks
+# Delete base opcodes from primitive opcode lists
+for prim in op_prims:
+    for op in optimes['Base']:
+        del optimes[prim][op]
+    
+# Add individual opcode times to relevant benchmarks
 for bm in benchmarks_fit.values():
     if bm['class'] == 'Basic':
         bm['opcode_times'] = {op: round(optimes['Base'][op], 2)
