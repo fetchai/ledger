@@ -33,7 +33,6 @@ using fetch::DigestSet;
 using fetch::storage::ResourceID;
 using fetch::chain::Transaction;
 using fetch::storage::ObjectStoreProtocol;
-using fetch::ledger::TxFinderProtocol;
 
 using TxStoreProtocol = ObjectStoreProtocol<Transaction>;
 

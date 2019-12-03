@@ -29,7 +29,7 @@ namespace {
 
 using namespace std::chrono_literals;
 
-static constexpr char const *LOGGING_NAME = "BlkCtl";
+constexpr char const *LOGGING_NAME = "BlkCtl";
 
 }  // namespace
 

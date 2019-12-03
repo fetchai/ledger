@@ -33,7 +33,7 @@ using namespace std::chrono_literals;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
 
-static constexpr char const *LOGGING_NAME = "TxCtl";
+constexpr char const *LOGGING_NAME = "TxCtl";
 
 }  // namespace
 
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  uint32_t const       log2_num_lanes = static_cast<uint32_t>(std::atoi(argv[1]));
+  auto const           log2_num_lanes = static_cast<uint32_t>(std::atoi(argv[1]));
   ConstByteArray const mode           = argv[2];
 
   // check the mode

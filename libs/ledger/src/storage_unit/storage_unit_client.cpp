@@ -34,7 +34,6 @@
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
 using fetch::service::Promise;
-using fetch::byte_array::ToBase64;
 
 namespace fetch {
 namespace ledger {

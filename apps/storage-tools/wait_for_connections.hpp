@@ -21,7 +21,7 @@
 
 #include <chrono>
 
-bool WaitForPeerConnections(fetch::muddle::MuddleInterface &net, std::size_t count)
+inline bool WaitForPeerConnections(fetch::muddle::MuddleInterface &net, std::size_t count)
 {
   using namespace std::chrono_literals;
 

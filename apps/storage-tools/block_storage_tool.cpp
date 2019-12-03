@@ -41,16 +41,16 @@ public:
   using TrustQuality = fetch::p2p::TrustQuality;
 
   // clang-format off
-  void        AddFeedback(MuddleAddress const &, TrustSubject, TrustQuality) override {}
-  void        AddFeedback(MuddleAddress const &, ConstByteArray const &, TrustSubject,
-                          TrustQuality) override {}
-  IdentitySet GetBestPeers(std::size_t) const override { return {}; }
+  void        AddFeedback(MuddleAddress const & /*peer_ident*/, TrustSubject /*subject*/, TrustQuality /*quality*/) override {}
+  void        AddFeedback(MuddleAddress const & /*peer_ident*/, ConstByteArray const & /*object_ident*/, TrustSubject /*subject*/,
+                          TrustQuality /*quality*/) override {}
+  IdentitySet GetBestPeers(std::size_t /*maximum*/) const override { return {}; }
   PeerTrusts  GetPeersAndTrusts() const override { return {}; }
-  IdentitySet GetRandomPeers(std::size_t, double) const override { return {}; }
-  std::size_t GetRankOfPeer(MuddleAddress const &) const override {return 0;}
-  double      GetTrustRatingOfPeer(MuddleAddress const &) const override { return 0.0;}
-  bool        IsPeerTrusted(MuddleAddress const &) const override {return false;}
-  bool        IsPeerKnown(MuddleAddress const &) const override {return false;}
+  IdentitySet GetRandomPeers(std::size_t /*maximum_count*/, double /*minimum_trust*/) const override { return {}; }
+  std::size_t GetRankOfPeer(MuddleAddress const & /*peer_ident*/) const override {return 0;}
+  double      GetTrustRatingOfPeer(MuddleAddress const & /*peer_ident*/) const override { return 0.0;}
+  bool        IsPeerTrusted(MuddleAddress const & /*peer_ident*/) const override {return false;}
+  bool        IsPeerKnown(MuddleAddress const & /*peer_ident*/) const override {return false;}
   void        Debug() const override {}
   // clang-format on
 };
