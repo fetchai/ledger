@@ -34,10 +34,10 @@ namespace ledger {
 class StateSentinelAdapter : public StateAdapter
 {
 public:
-  using ScopeType = StateAdapter::ScopeType;
+  using ConstByteArray = byte_array::ConstByteArray;
 
   // Construction / Destruction
-  StateSentinelAdapter(StorageInterface &storage, ScopeType scope, BitVector const &shards);
+  StateSentinelAdapter(StorageInterface &storage, ConstByteArray scope, BitVector const &shards);
   ~StateSentinelAdapter() override;
 
   /// @name IO Observer Interface

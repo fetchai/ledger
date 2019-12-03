@@ -38,11 +38,11 @@ constexpr char const *LOGGING_NAME = "StateAdapter";
  * @param scope The reference to the scope
  * @param allow_writes Enables write functionality
  */
-StateAdapter::StateAdapter(StorageInterface &storage, ScopeType scope)
+StateAdapter::StateAdapter(StorageInterface &storage, ConstByteArray scope)
   : StateAdapter(storage, std::move(scope), Mode::READ_ONLY)
 {}
 
-StateAdapter::StateAdapter(StorageInterface &storage, ScopeType scope, Mode mode)
+StateAdapter::StateAdapter(StorageInterface &storage, ConstByteArray scope, Mode mode)
   : storage_{storage}
   , scope_{std::move(scope)}
   , mode_{mode}
@@ -144,7 +144,7 @@ StateAdapter::Status StateAdapter::Exists(std::string const &key)
  * @param key The input key to be converted
  * @return The generated resource address for this key
  */
-ResourceAddress StateAdapter::CreateAddress(ScopeType const &scope, ConstByteArray const &key)
+ResourceAddress StateAdapter::CreateAddress(ConstByteArray const &scope, ConstByteArray const &key)
 {
   FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key, " scope: ", scope);
 
@@ -161,7 +161,7 @@ void StateAdapter::PopContext()
   scope_.pop_back();
 }
 
-StateAdapter::ScopeType StateAdapter::CurrentScope() const
+StateAdapter::ConstByteArray StateAdapter::CurrentScope() const
 {
   return scope_.back();
 }

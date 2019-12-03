@@ -35,7 +35,7 @@ constexpr char const *LOGGING_NAME = "StateSentinelAdapter";
  * @param storage The reference to the storage engine
  * @param scope The reference to the scope
  */
-StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, ScopeType scope,
+StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, ConstByteArray scope,
                                            BitVector const &shards)
   : StateAdapter(storage, std::move(scope), Mode::READ_WRITE)
   , shards_{shards}

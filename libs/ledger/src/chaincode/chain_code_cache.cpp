@@ -68,8 +68,8 @@ bool IsIdentity(ConstByteArray const &value)
 
 }  // namespace
 
-ChainCodeCache::ContractPtr ChainCodeCache::Lookup(ContractId const &contract_id,
-                                                   StorageInterface &storage)
+ChainCodeCache::ContractPtr ChainCodeCache::Lookup(ConstByteArray const &contract_id,
+                                                   StorageInterface &    storage)
 {
   // attempt to locate the contract in the cache
   ContractPtr contract = FindInCache(contract_id);
@@ -101,7 +101,7 @@ ChainCodeCache::ContractPtr ChainCodeCache::Lookup(ContractId const &contract_id
   return contract;
 }
 
-ChainCodeCache::ContractPtr ChainCodeCache::FindInCache(ContractId const &contract_id)
+ChainCodeCache::ContractPtr ChainCodeCache::FindInCache(ConstByteArray const &contract_id)
 {
   ContractPtr contract;
 

@@ -133,7 +133,7 @@ steps:
 
 ---
 test_description: >
-  DISABLED - Test synergetic mining
+  Test synergetic mining
 
 setup_conditions:
   test_name: "synergetic_mining"
@@ -221,6 +221,7 @@ setup_conditions:
   max_test_time: 60
 
 steps:
+  - sleep: 6
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
   - verify_txs: { "name": "batch1", "nodes": [0, 1] }
 ...

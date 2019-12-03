@@ -34,11 +34,11 @@ class Contract;
 class ChainCodeCache
 {
 public:
-  using ContractPtr = std::shared_ptr<Contract>;
-  using StoragePtr  = ledger::StorageInterface;
-  using ContractId  = byte_array::ConstByteArray;
+  using ContractPtr    = std::shared_ptr<Contract>;
+  using StoragePtr     = ledger::StorageInterface;
+  using ConstByteArray = byte_array::ConstByteArray;
 
-  ContractPtr Lookup(ContractId const &contract_id, StorageInterface &storage);
+  ContractPtr Lookup(ConstByteArray const &contract_id, StorageInterface &storage);
 
 private:
   using Clock     = std::chrono::high_resolution_clock;
@@ -60,7 +60,7 @@ private:
   static constexpr uint64_t CLEANUP_MASK   = CLEANUP_PERIOD - 1u;
 
   // Utils
-  ContractPtr FindInCache(ContractId const &contract_id);
+  ContractPtr FindInCache(ConstByteArray const &contract_id);
   void        RunMaintenance();
 
   std::size_t     counter_{};
