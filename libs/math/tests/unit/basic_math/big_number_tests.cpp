@@ -143,20 +143,6 @@ TEST(big_number_gtest, subtraction_tests)
   EXPECT_EQ(n3.ElementAt(3), 0);
 }
 
-TEST(big_number_gtest, log_tests)
-{
-  for (const auto argument :
-       {uint64_t(1), uint64_t(64), uint64_t(65536), uint64_t(std::numeric_limits<uint64_t>::max())})
-  {
-    UInt<256> n256(argument);
-
-    const auto result   = Log(n256);
-    const auto expected = std::log(argument);
-
-    EXPECT_NEAR(result, expected, std::numeric_limits<double>::epsilon());
-  }
-}
-
 TEST(big_number_gtest, to_double_tests)
 {
   EXPECT_NEAR(ToDouble(UInt<256>(uint64_t(0))), 0., std::numeric_limits<double>::epsilon());
@@ -562,7 +548,7 @@ TEST(big_number_gtest, test_issue_1383_division_oper)
 
   x /= 2ull;
   EXPECT_EQ(UInt72{UInt72::max} >>= 1, x);
-  EXPECT_EQ(UInt72(UInt72_WideType_Max, 0x7Full), x);
+  EXPECT_EQ(UInt72(UInt72_WideType_Max, UInt72::WideType{0x7Full}), x);
 }
 
 TEST(big_number_gtest, test_issue_1383_overflow_with_plus)

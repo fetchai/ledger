@@ -1232,12 +1232,6 @@ constexpr meta::EnableIf<std::is_same<meta::Decay<T>, UInt<256>>::value, double>
   return retval;
 }
 
-template <typename T>
-constexpr meta::EnableIf<std::is_same<meta::Decay<T>, UInt<256>>::value, double> Log(T &&x)
-{
-  return std::log(ToDouble(std::forward<T>(x)));
-}
-
 }  // namespace vectorise
 
 }  // namespace fetch
