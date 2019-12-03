@@ -108,16 +108,6 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
   , notarisation_{std::move(notarisation)}
 {
   assert(stake_);
-  // if notarising then must have removal of conflicting blocks of the same weight from tips in main
-  // chain
-  if (notarisation_ && !chain_.enable_stutter_removal_)
-  {
-    assert(chain_.enable_stutter_removal_);
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "Notarising enabled when main chain allows multiple blocks of same weight. "
-                   "Notarisation disabled.");
-    notarisation_.reset();
-  }
 }
 
 // TODO(HUT): probably this is not required any more.
@@ -170,7 +160,7 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
 
   // Walk back the chain until we see a block specifying an aeon beginning (corner
   // case for true genesis)
-  while (!ret.block_entropy.IsAeonBeginning() && ret.block_number != 0)
+  while (!ret.block_entropy.IsAeonBeginning() && current.block_number != 0)
   {
     auto prior = GetBlockPriorTo(ret, chain);
 
@@ -224,6 +214,28 @@ bool Consensus::VerifyNotarisation(Block const &block) const
   return true;
 }
 
+uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address)
+{
+  auto beginning_of_aeon = GetBeginningOfAeon(previous, chain_);
+  auto cabinet           = beginning_of_aeon.block_entropy.qualified;
+
+  std::size_t weight{cabinet.size()};
+
+  // TODO(EJF): Depending on the cabinet sizes this would need to be improved
+  for (auto const &member : cabinet)
+  {
+    if (address == chain::Address::FromMuddleAddress(member))
+    {
+      break;
+    }
+
+    weight = SafeDecrement(weight, 1);
+  }
+
+  // Note: weight must always be non zero (indicates failure/not in cabinet)
+  return weight;
+}
+
 Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet const &cabinet,
                                               uint64_t                                entropy)
 {
@@ -236,37 +248,6 @@ Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet c
   }
 
   return DeterministicShuffle(ret, entropy);
-}
-
-uint64_t Consensus::ShuffledCabinetRank(BlockEntropy::Cabinet const &cabinet, Block const &previous,
-                                        Identity const &identity)
-{
-  auto entropy_shuffled_cabinet =
-      QualWeightedByEntropy(cabinet, previous.block_entropy.EntropyAsU64());
-
-  std::size_t weight{entropy_shuffled_cabinet.size()};
-
-  // TODO(EJF): Depending on the cabinet sizes this would need to be improved
-  for (auto const &member : entropy_shuffled_cabinet)
-  {
-    if (identity == member)
-    {
-      break;
-    }
-
-    weight = SafeDecrement(weight, 1);
-  }
-
-  // Note: weight must always be non zero (indicates failure/not in cabinet)
-  return weight;
-}
-
-uint64_t Consensus::GetBlockGenerationWeight(MainChain const &chain, Block const &previous,
-                                             Identity const &identity)
-{
-  auto beginning_of_aeon = GetBeginningOfAeon(previous, chain);
-  auto cabinet           = beginning_of_aeon.block_entropy.qualified;
-  return ShuffledCabinetRank(cabinet, previous, identity);
 }
 
 /**
@@ -404,13 +385,6 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                    "Note: updating consensus with a block more than one ahead than last updated "
                    "block! Current: ",
                    current_block_.block_number, " Attempt: ", current.block_number);
-  }
-
-  // If previous block is stutter block in main chain then delete notarisations for this block
-  // to prevent peers from building on this block
-  if (notarisation_ && chain_.IsStutterBlock(current_block_.block_number, current_block_.weight))
-  {
-    notarisation_->RemoveNotarisation(current_block_.block_number, current_block_.hash);
   }
 
   // Don't try to set previous when we see genesis!
@@ -556,7 +530,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->miner         = mining_address_;
   ret->miner_id      = mining_identity_;
   ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-  ret->weight    = GetBlockGenerationWeight(chain_, *ret, mining_identity_);
+  ret->weight    = GetBlockGenerationWeight(*ret, mining_address_);
 
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
@@ -574,6 +548,9 @@ NextBlockPtr Consensus::GenerateNextBlock()
       return {};
     }
     ret->block_entropy.block_notarisation = notarisation;
+
+    // Notify notarisation of new valid block
+    notarisation_->NotariseBlock(*ret);
   }
 
   return ret;
