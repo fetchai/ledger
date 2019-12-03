@@ -257,6 +257,7 @@ void yyfree ( void * , yyscan_t yyscanner );
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
 #define COMMENT 1
+#define SINGLELINECOMMENT 2
 
 #endif
 
@@ -524,10 +525,10 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 237 "tokeniser.l"
+#line 259 "tokeniser.l"
 
 
-#line 510 "../include/vm/tokeniser.hpp"
+#line 511 "../include/vm/tokeniser.hpp"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */
 // clang-format on

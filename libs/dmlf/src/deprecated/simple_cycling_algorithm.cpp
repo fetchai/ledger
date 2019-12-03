@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/deprecated/simple_cycling_algorithm.hpp"
+#include "dmlf/simple_cycling_algorithm.hpp"
 
 namespace fetch {
 namespace dmlf {
