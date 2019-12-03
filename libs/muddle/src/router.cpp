@@ -751,16 +751,13 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &raw_address) const
   Handle handle  = 0;
   auto   address = ConvertAddress(raw_address);
 
-  if (tracker_)
-  {
-    return tracker_->LookupHandle(address);
-  }
-  else
+  if (!tracker_)
   {
     FETCH_LOG_ERROR(logging_name_, "Unable handle of address: ", address.ToBase64());
+    return 0;
   }
 
-  return handle;
+  return tracker_->LookupHandle(address);
 }
 
 void Router::SetKademliaRouting(bool enable)
