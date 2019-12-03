@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dispatcher.hpp"
-#include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
+#include "muddle_logging_name.hpp"
 #include "router.hpp"
 
 #include "network/management/abstract_connection.hpp"

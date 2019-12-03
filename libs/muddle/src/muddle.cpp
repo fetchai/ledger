@@ -59,7 +59,6 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , external_address_(std::move(external_address))
   , node_address_(certificate_->identity().identifier())
   , network_manager_(nm)
-  , dispatcher_(network_id, certificate_->identity().identifier())
   , register_(std::make_shared<MuddleRegister>(network_id))
   , router_(network_id, node_address_, *register_, *certificate_)
   , clients_(network_id)
@@ -503,11 +502,6 @@ void Muddle::SetConfidence(ConfidenceMap const &map)
   }
 }
 
-Dispatcher const &Muddle::dispatcher() const
-{
-  return dispatcher_;
-}
-
 Router const &Muddle::router() const
 {
   return router_;
@@ -606,9 +600,6 @@ void Muddle::RunPeriodicMaintenance()
     Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
     if (time_since_last_cleanup >= CLEANUP_INTERVAL)
     {
-      // clean up and pending message handlers and also trigger the timeout logic
-      dispatcher_.Cleanup();
-
       // clean up echo caches and other temporary stored objects
       router_.Cleanup();
 

@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dispatcher.hpp"
 #include "muddle/network_id.hpp"
 
 #include "gmock/gmock.h"

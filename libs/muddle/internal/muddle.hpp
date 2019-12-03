@@ -19,7 +19,6 @@
 
 #include "direct_message_service.hpp"
 #include "discovery_service.hpp"
-#include "dispatcher.hpp"
 #include "peer_list.hpp"
 #include "router.hpp"
 
@@ -190,7 +189,6 @@ public:
 
   /// @name Internal Accessors
   /// @{
-  Dispatcher const &          dispatcher() const;
   Router const &              router() const;
   MuddleRegister const &      connection_register() const;
   PeerConnectionList const &  connection_list() const;
@@ -222,7 +220,6 @@ private:
   std::string const    external_address_;
   Address const        node_address_;
   NetworkManager       network_manager_;  ///< The network manager
-  Dispatcher           dispatcher_;       ///< Waiting promise store
   Register             register_;         ///< The register for all the connection
   Router               router_;           ///< The packet router for the node
   PortMapping          port_mapping_;
