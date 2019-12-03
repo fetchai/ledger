@@ -97,7 +97,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       telemetry::FunctionTimer const timer{*work_duration_};
       status = contract->Work(solution->CreateHashedNonce(), calculated_score);
     }
-    // TODO(AB): fee for invalid solution?
+    // TODO(LDGR-621): fee for invalid solution?
     if (SynergeticContract::Status::SUCCESS == status && calculated_score == solution->score())
     {
       // TODO(issue 1213): State sharding needs to be added here
@@ -114,7 +114,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       ContractContext ctx(&token_contract_, solution->address(), &storage_adapter, 0);
       contract->UpdateContractContext(ctx);
 
-      // TODO(AB): charge limit
+      // TODO(LDGR-622): charge limit
       FeeManager::TransactionDetails tx_details{
           solution->address(), solution->address(), shard_mask, solution->contract_digest(),
           CHARGE_RATE,         CHARGE_LIMIT,        false};

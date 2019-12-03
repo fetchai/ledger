@@ -23,7 +23,7 @@ namespace fetch {
 namespace ledger {
 
 /**
- * Chargeable is an abstract interface that exposes fees occurred during transaction, contract, etc.
+ * Chargeable is an abstract interface that exposes fees incurred during transaction, contract, etc.
  * execution.
  */
 class Chargeable

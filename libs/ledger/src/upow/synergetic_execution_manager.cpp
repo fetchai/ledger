@@ -116,13 +116,12 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
   for (auto const &digest : current_epoch.solution_nodes)
   {
     // look up the work from the block
-    auto work = std::make_shared<Work>();
+    auto work = std::make_shared<Work>(current.block_number);
     if (!dag_->GetWork(digest, *work))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to get work from DAG Node: 0x", digest.ToHex());
       continue;
     }
-    work->UpdateBlockIndex(current.block_number);
 
     // look up (or create) the solution queue
     auto &work_item = work_map[{work->address(), work->contract_digest()}];

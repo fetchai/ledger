@@ -334,12 +334,12 @@ bool Executor::ExecuteTransactionContract(Result &result)
     if (success)
     {
       // simple linear scale fee
-      StorageFee storage_fee_{storage_adapter};
+      StorageFee storage_fee{storage_adapter};
 
       FeeManager::TransactionDetails tx_details{*current_tx_, allowed_shards_};
 
       success =
-          fee_manager_.CalculateChargeAndValidate(tx_details, {contract, &storage_fee_}, result);
+          fee_manager_.CalculateChargeAndValidate(tx_details, {contract, &storage_fee}, result);
 
       if (success)
       {

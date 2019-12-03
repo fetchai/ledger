@@ -425,7 +425,8 @@ void SynergeticContract::Detach()
   storage_ = nullptr;
   problem_.reset();
   solution_.reset();
-  charge_ = 0;
+  charge_       = 0;
+  charge_limit_ = 0;
 }
 
 char const *ToString(SynergeticContract::Status status)
@@ -446,7 +447,7 @@ char const *ToString(SynergeticContract::Status status)
   case SynergeticContract::Status::GENERAL_ERROR:
     text = "General Error";
     break;
-  case SynergeticContract::Status ::VALIDATION_ERROR:
+  case SynergeticContract::Status::VALIDATION_ERROR:
     text = "Failed to validate";
     break;
   }

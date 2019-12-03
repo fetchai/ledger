@@ -33,6 +33,10 @@
 namespace fetch {
 namespace ledger {
 
+Work::Work(BlockIndex block_index)
+  : block_index_{block_index}
+{}
+
 Work::Work(Digest digest, chain::Address address, crypto::Identity miner)
   : contract_digest_{std::move(digest)}
   , contract_address_{std::move(address)}
@@ -92,11 +96,6 @@ void Work::UpdateScore(WorkScore score)
 void Work::UpdateNonce(UInt256 const &nonce)
 {
   nonce_ = nonce;
-}
-
-void Work::UpdateBlockIndex(Work::BlockIndex block_index)
-{
-  block_index_ = block_index;
 }
 
 Work::UInt256 Work::CreateHashedNonce() const

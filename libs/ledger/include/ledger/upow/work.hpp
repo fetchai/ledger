@@ -45,6 +45,7 @@ public:
 
   // Construction / Destruction
   Work() = default;
+  explicit Work(BlockIndex block_index);
   Work(Digest digest, chain::Address address, crypto::Identity miner);
   Work(Work const &) = default;
   ~Work()            = default;
@@ -63,7 +64,6 @@ public:
   void UpdateIdentity(crypto::Identity const &identity);
   void UpdateScore(WorkScore score);
   void UpdateNonce(UInt256 const &nonce);
-  void UpdateBlockIndex(BlockIndex block_index);
 
   // Actions
   UInt256 CreateHashedNonce() const;
