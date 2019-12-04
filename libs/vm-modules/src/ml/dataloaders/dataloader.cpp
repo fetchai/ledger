@@ -82,10 +82,10 @@ void VMDataLoader::Bind(Module &module)
       .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> {
         return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id)};
       })
-      .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles)
-      .CreateMemberFunction("addData", &VMDataLoader::AddDataByData)
-      .CreateMemberFunction("getNext", &VMDataLoader::GetNext)
-      .CreateMemberFunction("isDone", &VMDataLoader::IsDone);
+      .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("addData", &VMDataLoader::AddDataByData, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("getNext", &VMDataLoader::GetNext, vm::CHARGE_INFINITY)
+      .CreateMemberFunction("isDone", &VMDataLoader::IsDone, vm::CHARGE_INFINITY);
 }
 
 void VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename, Ptr<String> const &yfilename)

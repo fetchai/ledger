@@ -101,28 +101,6 @@ void VMTensor::Bind(Module &module)
                             use_estimator(&VMTensor::TensorEstimator::FromString))
       .CreateMemberFunction("toString", &VMTensor::ToString,
                             use_estimator(&VMTensor::TensorEstimator::ToString))
-      .CreateMemberFunction("at", &VMTensor::At<Index>)
-      .CreateMemberFunction("at", &VMTensor::At<Index, Index>)
-      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>)
-      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>)
-      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index, Index>)
-      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index, Index, Index>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, DataType>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, DataType>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, DataType>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, Index, DataType>)
-      .CreateMemberFunction("setAt",
-                            &VMTensor::SetAt<Index, Index, Index, Index, Index, Index, DataType>)
-      .CreateMemberFunction("fill", &VMTensor::Fill)
-      .CreateMemberFunction("fillRandom", &VMTensor::FillRandom)
-      .CreateMemberFunction("reshape", &VMTensor::Reshape)
-      .CreateMemberFunction("squeeze", &VMTensor::Squeeze)
-      .CreateMemberFunction("size", &VMTensor::size)
-      .CreateMemberFunction("transpose", &VMTensor::Transpose)
-      .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze)
-      .CreateMemberFunction("fromString", &VMTensor::FromString)
-      .CreateMemberFunction("toString", &VMTensor::ToString);
 
   // Add support for Array of Tensors
   module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<VMTensor>>>();
