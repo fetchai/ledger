@@ -247,12 +247,18 @@ bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) con
     auto parent_block = GetBlock(hash);
     assert(parent_block);
     assert(heaviest_.ChainLabel() != 0);
+    // check if this block is cached and known to lie on the current heaviest chain
     if (parent_block->chain_label != heaviest_.ChainLabel())
     {
-      ColourHeaviestChainBlocks(parent_block->block_number);
+      // we need to descend from tip
+      auto next_block = HeaviestChainBlockAbove(parent_block->block_number);
+      if (next_block->previous_hash == hash)
+      {
+        next_hash = next_block->hash;
+        return true;
+      }
     }
-    // check if this block lies on a currently known heaviest chain
-    if (parent_block->chain_label == heaviest_.ChainLabel())
+    else
     {
       // it does
       auto references_range = forward_references_.equal_range(hash);
@@ -272,8 +278,8 @@ bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) con
     }
     // there are several forward references from the parent hash
     // and it is not on the heaviest chain
-    return false;
   }
+  return false;
 }
 
 /**
@@ -399,7 +405,7 @@ void MainChain::AddBlockToBloomFilter(Block const &block) const
   {
     for (auto const &tx_layout : slice)
     {
-      bloom_filter_.Add(tx_layout.digest(), tx_layout.valid_until(), heaviest_.block_number);
+      bloom_filter_.Add(tx_layout.digest(), tx_layout.valid_until(), heaviest_.BlockNumber());
     }
   }
 }
@@ -567,29 +573,39 @@ MainChain::IntBlockPtr MainChain::GetLabeledSubchainStart() const
 }
 
 /**
- * Update blocks of the current heaviest chain setting their chain_label
+ * Internal: Update blocks of the current heaviest chain setting their chain_label
  * equal to heaviest_.ChainLabel().
  *
  * @param limit the earliest block number, this colouring stops at.
+ * @return the heaviest chain block right above the limit
  */
-void MainChain::ColourHeaviestChainBlocks(uint64_t limit) const
+MainChain::IntBlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
 {
-  MilliTimer myTimer("MainChain::ColourHeaviestChainBlocks");
+  MilliTimer myTimer("MainChain::HeaviestChainBlockAbove");
   FETCH_LOCK(lock_);
   assert(heaviest_.ChainLabel() != 0);
 
   auto block = GetLabeledSubchainStart();
   assert(block);
-  while (block->block_number > limit)
+
+  // Descend down to limit.
+  while (block->block_number > limit + 1)
   {
     assert(!block->IsGenesis());
     if (!LookupBlock(block->previous_hash, block))
     {
       throw std::runtime_error("Cannot find a block for hash");
     }
-    block->chain_label = heaviest_.ChainLabel();
+    if (IsBlockInCache(block->hash))
+    {
+      // Colour this block.
+      block->chain_label = heaviest_.ChainLabel();
+      // labeled_subchain_start_ is the earliest cached block known to belong to the heaviest chain.
+      labeled_subchain_start_ = block;
+    }
   }
-  labeled_subchain_start_ = block;
+
+  return block;
 }
 
 /**
@@ -1522,12 +1538,10 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash
   auto is_in_storage = LookupBlockFromStorage(hash, block, next_hash);
   assert(!is_in_cache || next_hash != nullptr);
 
-  if (is_in_storage && is_in_cache && next_hash->empty())
+  if (is_in_storage && next_hash && next_hash->empty())
   {
-    // corner case:
-    // is_in_cache set, which, here, can only mean that several forward references are known
-    // yet next_hash is empty so neither of them is kept in the storage
-    return false;
+    // Check if there's a forward reference in cache.
+    return LookupReference(hash, *next_hash);
   }
   return is_in_storage;
 }
@@ -1818,10 +1832,10 @@ void MainChain::HeaviestTip::Set(Block &block)
     return;
   }
 
-  // check if this block is not of the current heaviest chain
-  if (block.chain_label != chain_label_)
+  // check if there's no current chain, or this block does not belong to it
+  if (chain_label_ == 0 || block.chain_label != chain_label_)
   {
-    if (block.previous_hash != hash)
+    if (chain_label_ == 0 || block.previous_hash != hash)
     {
       // this block is not of this heaviest chain and is not even next to the current tip
       // then we'll need to colour a new heaviest branch,
@@ -1961,23 +1975,6 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   bloom_filter_false_positive_count_->add(false_positives);
 
   return duplicates;
-}
-
-constexpr char const *ToString(BlockStatus status)
-{
-  switch (status)
-  {
-  case BlockStatus::ADDED:
-    return "Added";
-  case BlockStatus::LOOSE:
-    return "Loose";
-  case BlockStatus::DUPLICATE:
-    return "Duplicate";
-  case BlockStatus::INVALID:
-    return "Invalid";
-  }
-
-  return "Unknown";
 }
 
 }  // namespace ledger

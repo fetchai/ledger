@@ -63,7 +63,7 @@ struct Tip
   using BlockHash = Block::Hash;
   using Weight    = Block::Weight;
 
-  BlockHash hash{fetch::chain::GENESIS_DIGEST};
+  BlockHash hash{fetch::chain::ZERO_HASH};
   Weight    total_weight{0};
   Weight    weight{0};
   uint64_t  block_number{0};
@@ -101,7 +101,22 @@ enum class BlockStatus
  * @param status The status enumeration
  * @return The output text
  */
-constexpr char const *ToString(BlockStatus status);
+constexpr char const *ToString(BlockStatus status)
+{
+  switch (status)
+  {
+  case BlockStatus::ADDED:
+    return "Added";
+  case BlockStatus::LOOSE:
+    return "Loose";
+  case BlockStatus::DUPLICATE:
+    return "Duplicate";
+  case BlockStatus::INVALID:
+    return "Invalid";
+  }
+
+  return "Unknown";
+}
 
 struct BlockDbRecord;
 
@@ -276,7 +291,7 @@ public:
   bool        UpdateTips(IntBlockPtr const &block);
   bool        DetermineHeaviestTip();
   bool        UpdateHeaviestTip(IntBlockPtr const &block);
-  void        ColourHeaviestChainBlocks(uint64_t limit) const;
+  IntBlockPtr HeaviestChainBlockAbove(uint64_t limit) const;
   IntBlockPtr GetLabeledSubchainStart() const;
   /// @}
 
