@@ -207,6 +207,8 @@ public:
   static constexpr SizeType SERIALISATION_OVERHEAD        = 5;
   static constexpr SizeType WEIGHT_SERIALISATION_OVERHEAD = 4;  // Will depend on DataType of Tensor
 
+  static constexpr ChargeAmount constant_charge{vm::CHARGE_UNIT};
+
 private:
   struct State
   {
@@ -230,8 +232,6 @@ private:
 
   VMObjectType &model_;
   State         state_;
-
-  static constexpr ChargeAmount constant_charge{vm::CHARGE_UNIT};
 
   void copy_state_from(ModelEstimator const &);
 

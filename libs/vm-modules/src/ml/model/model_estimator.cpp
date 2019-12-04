@@ -124,7 +124,7 @@ ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> cons
   {
     state_.forward_pass_cost  = state_.forward_pass_cost + RELU_FORWARD_IMPACT() * hidden_nodes;
     state_.backward_pass_cost = state_.backward_pass_cost + RELU_BACKWARD_IMPACT() * hidden_nodes;
-    state_.ops_count += 1;
+    state_.ops_count++;
   }
   else
   {
@@ -173,7 +173,7 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
           state_.forward_pass_cost + MSE_FORWARD_IMPACT() * state_.last_layer_size;
       state_.backward_pass_cost =
           state_.backward_pass_cost + MSE_BACKWARD_IMPACT() * state_.last_layer_size;
-      state_.ops_count += 1;
+      state_.ops_count++;
     }
     else if (loss->string() == "cel")
     {

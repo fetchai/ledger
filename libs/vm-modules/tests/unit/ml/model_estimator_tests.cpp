@@ -289,7 +289,7 @@ TEST_F(VMModelEstimatorTests, compile_simple_test)
 }
 
 // sanity check that estimator behaves as intended
-TEST_F(VMModelEstimatorTests, estimator_fit_test)
+TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 {
   std::string model_type      = "sequential";
   std::string layer_type      = "dense";
@@ -346,6 +346,10 @@ TEST_F(VMModelEstimatorTests, estimator_fit_test)
                                                   vm_ptr_activation_type);
           model.AddLayer(vm_ptr_layer_type, data_size_1, label_size_1, vm_ptr_activation_type);
 
+          SizeType ops_count = 0;
+          ops_count += 3; // for dense layer
+          ops_count += 1; // for relu
+
           DataType forward_pass_cost =
               DataType(data_size_1) * VmModelEstimator::FORWARD_DENSE_INPUT_COEF();
           forward_pass_cost +=
@@ -364,6 +368,9 @@ TEST_F(VMModelEstimatorTests, estimator_fit_test)
 
           model_estimator.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);
           model.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);
+
+          ops_count += 1; // for loss
+          ops_count += 1; // for optimiser
 
           forward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_FORWARD_IMPACT();
           backward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_BACKWARD_IMPACT();
@@ -384,6 +391,15 @@ TEST_F(VMModelEstimatorTests, estimator_fit_test)
 
           EXPECT_TRUE(model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size) ==
                       val);
+
+          EXPECT_TRUE(model_estimator.Evaluate() == VmModelEstimator::constant_charge);
+
+           DataType predict_val = static_cast<DataType>(n_data) * forward_pass_cost;
+           predict_val += (static_cast<DataType>(n_data) * static_cast<DataType>(ops_count) * VmModelEstimator::PREDICT_BATCH_LAYER_COEF());
+           predict_val += (VmModelEstimator::PREDICT_CONST_COEF());
+
+          EXPECT_TRUE(model_estimator.Predict(vm_ptr_tensor_data) == static_cast<SizeType>(predict_val));
+
         }
       }
     }
