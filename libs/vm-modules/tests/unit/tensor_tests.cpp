@@ -32,11 +32,65 @@ namespace {
 using DataType = fetch::vm_modules::math::DataType;
 using ::testing::Between;
 
+static char const *FILL_1_DIM_SRC = R"(
+        function main()
+          var tensor_shape = Array<UInt64>(1);
+          tensor_shape[0] = 10u64;
+          var d = NDArray<%TYPE%>(tensor_shape);
+          d.fill(to%TYPE%(123456.0));
+          assert(d.at(1u64) == to%TYPE%(123456.0));
+        endfunction
+      )";
+
+static char const *FILL_2_DIM_SRC = R"(
+        function main()
+          var tensor_shape = Array<UInt64>(2);
+          tensor_shape[0] = 10u64;
+          tensor_shape[1] = 10u64;
+          var d = NDArray<%TYPE%>(tensor_shape);
+          d.fill(to%TYPE%(123456.0));
+          assert(d.at(1u64,1u64) == to%TYPE%(123456.0));
+        endfunction
+      )";
+
+static char const *FILL_3_DIM_SRC = R"(
+        function main()
+          var tensor_shape = Array<UInt64>(3);
+          tensor_shape[0] = 10u64;
+          tensor_shape[1] = 10u64;
+          tensor_shape[2] = 10u64;
+          var d = NDArray<%TYPE%>(tensor_shape);
+          d.fill(to%TYPE%(123456.0));
+          assert(d.at(1u64,1u64,1u64) == to%TYPE%(123456.0));
+        endfunction
+      )";
+
+static char const *FILL_4_DIM_SRC = R"(
+        function main()
+          var tensor_shape = Array<UInt64>(4);
+          tensor_shape[0] = 10u64;
+          tensor_shape[1] = 10u64;
+          tensor_shape[2] = 10u64;
+          tensor_shape[3] = 10u64;
+          var d = NDArray<%TYPE%>(tensor_shape);
+          d.fill(to%TYPE%(123456.0));
+          assert(d.at(1u64,1u64,1u64,1u64) == to%TYPE%(123456.0));
+        endfunction
+      )";
+
 class VMTensorTests : public ::testing::Test
 {
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
+
+  void TestFilling(std::string const &filler_script_src, std::string const &type_name)
+  {
+    std::string const src = std::regex_replace(filler_script_src, std::regex("%TYPE%"), type_name);
+
+    ASSERT_TRUE(toolkit.Compile(src));
+    ASSERT_TRUE(toolkit.Run());
+  }
 };  // namespace
 
 TEST_F(VMTensorTests, ndarray_1_dim_creation)
@@ -172,127 +226,84 @@ TEST_F(VMTensorTests, ndarray_unsqueeze)
   EXPECT_TRUE(constructed_shape == expected.shape());
 }
 
-// Disabled: crashes the toolkit for some reason.
-TEST_F(VMTensorTests, DISABLED_ndarray_1_dim_fill)
+TEST_F(VMTensorTests, ndarray_1_dim_float32_fill)
 {
-  static char const *SOURCE = R"(
-      function main()
-        var tensor_shape = Array<UInt64>(1);
-        tensor_shape[0] = 10u64;
-
-        var a = NDArray<Float32>(tensor_shape);
-        a.fill(7.0f);
-        assert(a.at(0u64) == 7.0f);
-
-        var b = NDArray<Float64>(tensor_shape);
-        b.fill(7.0);
-        assert(b.at(1u64) == 7.0);
-
-        var c = NDArray<Fixed32>(tensor_shape);
-        c.fill(7.0fp32);
-        assert(c.at(0u64) == 7.0fp32);
-
-        var d = NDArray<Fixed64>(tensor_shape);
-        d.fill(7.0fp64);
-        assert(d.at(1u64) == 7.0fp64);
-      endfunction
-    )";
-
-  ASSERT_TRUE(toolkit.Compile(SOURCE));
-  ASSERT_TRUE(toolkit.Run());
+  TestFilling(FILL_1_DIM_SRC, "Float32");
 }
 
-TEST_F(VMTensorTests, ndarray_2_dim_fill)
+TEST_F(VMTensorTests, ndarray_1_dim_float64_fill)
 {
-  static char const *SOURCE = R"(
-      function main()
-        var tensor_shape = Array<UInt64>(2);
-        tensor_shape[0] = 10u64;
-        tensor_shape[1] = 10u64;
-
-        var a = NDArray<Float32>(tensor_shape);
-        a.fill(7.0f);
-        assert(a.at(0u64, 0u64) == 7.0f);
-
-        var b = NDArray<Float64>(tensor_shape);
-        b.fill(7.0);
-        assert(b.at(1u64, 0u64) == 7.0);
-
-        var c = NDArray<Fixed32>(tensor_shape);
-        c.fill(7.0fp32);
-        assert(c.at(0u64, 1u64) == 7.0fp32);
-
-        var d = NDArray<Fixed64>(tensor_shape);
-        d.fill(7.0fp64);
-        assert(d.at(1u64, 1u64) == 7.0fp64);
-      endfunction
-    )";
-
-  ASSERT_TRUE(toolkit.Compile(SOURCE));
-  ASSERT_TRUE(toolkit.Run());
+  TestFilling(FILL_1_DIM_SRC, "Float64");
 }
 
-TEST_F(VMTensorTests, ndarray_3_dim_fill)
+TEST_F(VMTensorTests, ndarray_1_dim_fixed32_fill)
 {
-  static char const *SOURCE = R"(
-      function main()
-        var tensor_shape = Array<UInt64>(3);
-        tensor_shape[0] = 10u64;
-        tensor_shape[1] = 10u64;
-        tensor_shape[2] = 10u64;
-
-        var a = NDArray<Float32>(tensor_shape);
-        a.fill(7.0f);
-        assert(a.at(0u64, 0u64, 0u64) == 7.0f);
-
-        var b = NDArray<Float64>(tensor_shape);
-        b.fill(7.0);
-        assert(b.at(1u64, 1u64, 1u64) == 7.0);
-
-        var c = NDArray<Fixed32>(tensor_shape);
-        c.fill(7.0fp32);
-        assert(c.at(0u64, 1u64, 0u64) == 7.0fp32);
-
-        var d = NDArray<Fixed64>(tensor_shape);
-        d.fill(7.0fp64);
-        assert(d.at(1u64, 0u64, 1u64) == 7.0fp64);
-      endfunction
-    )";
-
-  ASSERT_TRUE(toolkit.Compile(SOURCE));
-  ASSERT_TRUE(toolkit.Run());
+  TestFilling(FILL_1_DIM_SRC, "Fixed32");
 }
 
-TEST_F(VMTensorTests, ndarray_4_dim_fill)
+TEST_F(VMTensorTests, ndarray_1_dim_fixed64_fill)
 {
-  static char const *SOURCE = R"(
-      function main()
-        var tensor_shape = Array<UInt64>(4);
-        tensor_shape[0] = 2u64;
-        tensor_shape[1] = 2u64;
-        tensor_shape[2] = 2u64;
-        tensor_shape[3] = 2u64;
+  TestFilling(FILL_1_DIM_SRC, "Fixed64");
+}
 
-        var a = NDArray<Float32>(tensor_shape);
-        a.fill(12345.0f);
-        assert(a.at(0u64, 0u64, 0u64, 1u64) == 12345.0f);
+TEST_F(VMTensorTests, ndarray_2_dim_float32_fill)
+{
+  TestFilling(FILL_2_DIM_SRC, "Float32");
+}
 
-        var b = NDArray<Float64>(tensor_shape);
-        b.fill(12345.0);
-        assert(b.at(1u64, 1u64, 1u64, 1u64) == 12345.0);
+TEST_F(VMTensorTests, ndarray_2_dim_float64_fill)
+{
+  TestFilling(FILL_2_DIM_SRC, "Float64");
+}
 
-        var c = NDArray<Fixed32>(tensor_shape);
-        c.fill(12345.0fp32);
-        assert(c.at(0u64, 1u64, 0u64, 1u64) == 12345.0fp32);
+TEST_F(VMTensorTests, ndarray_2_dim_fixed32_fill)
+{
+  TestFilling(FILL_2_DIM_SRC, "Fixed32");
+}
 
-        var d = NDArray<Fixed64>(tensor_shape);
-        d.fill(12345.0fp64);
-        assert(d.at(1u64, 0u64, 1u64, 1u64) == 12345.0fp64);
-      endfunction
-    )";
+TEST_F(VMTensorTests, ndarray_2_dim_fixed64_fill)
+{
+  TestFilling(FILL_2_DIM_SRC, "Fixed64");
+}
 
-  ASSERT_TRUE(toolkit.Compile(SOURCE));
-  ASSERT_TRUE(toolkit.Run());
+TEST_F(VMTensorTests, ndarray_3_dim_float32_fill)
+{
+  TestFilling(FILL_3_DIM_SRC, "Float32");
+}
+
+TEST_F(VMTensorTests, ndarray_3_dim_float64_fill)
+{
+  TestFilling(FILL_3_DIM_SRC, "Float64");
+}
+
+TEST_F(VMTensorTests, ndarray_3_dim_fixed32_fill)
+{
+  TestFilling(FILL_3_DIM_SRC, "Fixed32");
+}
+
+TEST_F(VMTensorTests, ndarray_3_dim_fixed64_fill)
+{
+  TestFilling(FILL_3_DIM_SRC, "Fixed64");
+}
+
+TEST_F(VMTensorTests, ndarray_4_dim_float32_fill)
+{
+  TestFilling(FILL_4_DIM_SRC, "Float32");
+}
+
+TEST_F(VMTensorTests, ndarray_4_dim_float64_fill)
+{
+  TestFilling(FILL_4_DIM_SRC, "Float64");
+}
+
+TEST_F(VMTensorTests, ndarray_4_dim_fixed32_fill)
+{
+  TestFilling(FILL_4_DIM_SRC, "Fixed32");
+}
+
+TEST_F(VMTensorTests, ndarray_4_dim_fixed64_fill)
+{
+  TestFilling(FILL_4_DIM_SRC, "Fixed64");
 }
 
 // Disabled until implementation completed
@@ -338,53 +349,57 @@ TEST_F(VMTensorTests, DISABLED_ndarray_state_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
+// TODO: test for other element types!
 TEST_F(VMTensorTests, ndarray_1_dim_set_and_at)
 {
   static char const *SOURCE = R"(
-    function main() : NDArray<Fixed64>
+    function main() : NDArray<Fixed32>
       var tensor_shape = Array<UInt64>(1);
       tensor_shape[0] = 2u64;
 
-      var x = NDArray<Fixed64>(tensor_shape);
-      var y = NDArray<Fixed64>(tensor_shape);
-      x.fill(123456.0fp64);
+      var x = NDArray<Fixed32>(tensor_shape);
+      var y = NDArray<Fixed32>(tensor_shape);
+      x.fill(123456.0fp32);
+
+      assert(y.at(0u64) != x.at(0u64), "Initial test condition failed.");
+      assert(y.at(1u64) != x.at(1u64), "Initial test condition failed.");
 
       y.setAt(0u64,x.at(0u64));
       y.setAt(1u64,x.at(1u64));
+
+      assert(y.at(0u64) == x.at(0u64), "SetAt failed!");
+      assert(y.at(1u64) == x.at(1u64), "SetAt failed!");
 
      return y;
     endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(SOURCE));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const tensor =
-      res.Get<Ptr<typename fetch::vm_modules::math::NDArray<fetch::fixed_point::fp64_t>>>();
-
-  fetch::math::Tensor<DataType> gt({2});
-  gt.Fill(static_cast<DataType>(123456.0));
-
-  // EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+  ASSERT_TRUE(toolkit.Run());
 }
 
+// TODO: test for other element types!
 TEST_F(VMTensorTests, ndarray_2_dim_set_and_at)
 {
   static char const *tensor_serialiase_src = R"(
-    function main() : NDArray<Fixed64>
+    function main() : NDArray<Fixed32>
       var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;
       tensor_shape[1] = 2u64;
 
-      var x = NDArray<Fixed64>(tensor_shape);
-      var y = NDArray<Fixed64>(tensor_shape);
-      x.fill(2.0fp64);
+      var x = NDArray<Fixed32>(tensor_shape);
+      var y = NDArray<Fixed32>(tensor_shape);
+      x.fill(654321.0fp32);
+      assert(y.at(0u64,0u64) != x.at(0u64,0u64), "Initial test condition failed.");
+      assert(y.at(0u64,1u64) != x.at(0u64,1u64), "Initial test condition failed.");
 
       y.setAt(0u64,0u64,x.at(0u64,0u64));
       y.setAt(0u64,1u64,x.at(0u64,1u64));
       y.setAt(1u64,0u64,x.at(1u64,0u64));
       y.setAt(1u64,1u64,x.at(1u64,1u64));
+
+      assert(y.at(0u64,0u64) == x.at(0u64,0u64), "SetAt failed!");
+      assert(y.at(0u64,1u64) == x.at(0u64,1u64), "SetAt failed!");
 
      return y;
     endfunction
