@@ -52,18 +52,18 @@ struct MapSerializer<ledger::TimeTravelogue<B>, D>
   static constexpr uint8_t HEAVIEST_HASH = 2;
 
   template <class Constructor>
-  static void Serialize(Constructorf &map_constructor, Type const &travelogue)
+  static void Serialize(Constructor &map_constructor, Type const &travelogue)
   {
     auto map = map_constructor(2);
     map.Append(BLOCKS, travelogue.blocks);
-    map.Append(NEXT_HASH, travelogue.next_hash);
+    map.Append(HEAVIEST_HASH, travelogue.heaviest_hash);
   }
 
   template <class MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &travelogue)
   {
     map.ExpectKeyGetValue(BLOCKS, travelogue.blocks);
-    map.ExpectKeyGetValue(NEXT_HASH, travelogue.next_hash);
+    map.ExpectKeyGetValue(HEAVIEST_HASH, travelogue.heaviest_hash);
   }
 };
 
