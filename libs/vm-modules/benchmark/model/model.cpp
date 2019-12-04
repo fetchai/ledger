@@ -267,6 +267,17 @@ void BM_Predict(::benchmark::State &state)
 
 // (BM_Predict_config) batch_size, number_of_layers, input_size, hidden_1_size, ...., output_size,
 // activation_3,.... TOFIX number_of_layer should be less by 1
+
+// BOSTON
+BENCHMARK(BM_Predict)->Args({1, 4, 13, 10, 10, 1, true, true, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({10, 4, 13, 10, 10, 1, true, true, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({32, 4, 13, 10, 10, 1, true, true, false})->Unit(::benchmark::kMicrosecond);
+
+// MNIST
+BENCHMARK(BM_Predict)->Args({1,  3, 784, 10, 10, true, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({10, 3, 784, 10, 10, true, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({32, 3, 784, 10, 10, true, false})->Unit(::benchmark::kMicrosecond);
+
 BENCHMARK(BM_Predict)
     ->Args({1, 6, 1, 10, 100, 1000, 10000, 1, false, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
@@ -601,10 +612,15 @@ void BM_Fit(::benchmark::State &state)
 // (BM_Fit_config) n_datapoints, batch_size, num_layers, in_size, hidden_1_size, ...., out_size,
 // activation_1,....
 
+// BOSTON
+BENCHMARK(BM_Fit)->Args({1, 1, 4, 13, 10, 10, 1, true, true, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 10, 4, 13, 10, 10, 1, true, true, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({32, 32, 4, 13, 10, 10, 1, true, true, false})->Unit(::benchmark::kMicrosecond);
+
 // MNIST
-BENCHMARK(BM_Fit)->Args({32, 32, 3, 784, 100, 10, true, true})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({320, 32, 3, 784, 100, 10, true, true})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({3200, 32, 3, 784, 100, 10, true, true})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1, 1, 3, 784, 10, 10, true, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({320, 32, 3, 784, 100, 10, true, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({3200, 32, 3, 784, 100, 10, true, false})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Fit)->Args({10, 1, 2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)->Args({100, 1, 2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
