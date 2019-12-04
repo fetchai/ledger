@@ -637,11 +637,10 @@ def execute_expression(parameters, test_instance):
 
 
 def fail(parameters, test_instance):
-    global command_map
     for key in parameters:
         output(f"Running {key} command in fail mode")
         try:
-            func = command_map.get(key, None)
+            func = COMMAND_MAP.get(key, None)
             if func:
                 func(parameters[key], test_instance)
             else:
@@ -656,7 +655,6 @@ def fail(parameters, test_instance):
 
 
 def run_steps(test_yaml, test_instance):
-    global command_map
     output("Running steps: {}".format(test_yaml))
 
     for step in test_yaml:
@@ -674,7 +672,7 @@ def run_steps(test_yaml, test_instance):
             raise RuntimeError(
                 "Failed to parse command from step: {}".format(step))
 
-        func = command_map.get(command, None)
+        func = COMMAND_MAP.get(command, None)
 
         if func:
             func(parameters, test_instance)
@@ -685,32 +683,31 @@ def run_steps(test_yaml, test_instance):
             sys.exit(1)
 
 
+COMMAND_MAP = {
+    "send_txs": send_txs,
+    "verify_txs": verify_txs,
+    "add_node": add_node,
+    "sleep": lambda parameters, test_instance: time.sleep(parameters),
+    "print_time_elapsed": lambda parameters, test_instance: test_instance.print_time_elapsed(),
+    "run_python_test": run_python_test,
+    "restart_nodes": restart_nodes,
+    "stop_nodes": stop_nodes,
+    "start_nodes": start_nodes,
+    "destake": destake,
+    "run_dmlf_etch_client": run_dmlf_etch_client,
+    "create_wealth": create_wealth,
+    "create_synergetic_contract": create_synergetic_contract,
+    "run_contract": run_contract,
+    "wait_for_blocks": wait_for_blocks,
+    "verify_chain_sync": verify_chain_sync,
+    "wait_network_ready": wait_network_ready,
+    "query_balance": query_balance,
+    "execute_expression": execute_expression,
+    "fail": fail
+}
+
+
 def run_test(build_directory, yaml_file, node_exe, name_filter=None):
-    global command_map
-
-    command_map = {
-        "send_txs": send_txs,
-        "verify_txs": verify_txs,
-        "add_node": add_node,
-        "sleep": lambda parameters, test_instance: time.sleep(parameters),
-        "print_time_elapsed": lambda parameters, test_instance: test_instance.print_time_elapsed(),
-        "run_python_test": run_python_test,
-        "restart_nodes": restart_nodes,
-        "stop_nodes": stop_nodes,
-        "start_nodes": start_nodes,
-        "destake": destake,
-        "run_dmlf_etch_client": run_dmlf_etch_client,
-        "create_wealth": create_wealth,
-        "create_synergetic_contract": create_synergetic_contract,
-        "run_contract": run_contract,
-        "wait_for_blocks": wait_for_blocks,
-        "verify_chain_sync": verify_chain_sync,
-        "wait_network_ready": wait_network_ready,
-        "query_balance": query_balance,
-        "execute_expression": execute_expression,
-        "fail": fail
-    }
-
     # Read YAML file
     with open(yaml_file, 'r') as stream:
         try:
