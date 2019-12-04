@@ -107,18 +107,27 @@ def run(options):
 
     api.sync(contract.action(api, 'action_test', 200, [entity1]))
     v = contract.query(api, 'query_action_test')
-    assert 800 <= contract.query(api, 'query_action_test') <= 1000
+    assert 800 <= v <= 1000, \
+        'Expected query_action_test result to be between 800 and 1000, found {}'.format(
+            v)
 
     submit_synergetic_data(api, contract, [100, 20, 3], entity1)
     v = contract.query(api, 'query_clear_test')
-    assert 800 <= contract.query(api, 'query_clear_test') <= 1000
+    assert 800 <= v <= 1000, \
+        'Expected query_clear_test result to be between 800 and 1000, found {}'.format(
+            v)
 
     # Provide the contract with funds
     api.sync(api.tokens.transfer(entity1, contract.address, 1234, 200))
 
     api.sync(contract.action(api, 'action_test', 200, [entity1]))
     v = contract.query(api, 'query_action_test')
-    assert 2000 < v < 2234
+    assert 2000 < v < 2234, \
+        'Expected query_action_test result to be between 2000 and 2234, found {}'.format(
+            v)
 
     submit_synergetic_data(api, contract, [100, 20, 3], entity1)
-    assert 2000 < contract.query(api, 'query_clear_test') < 2234
+    v = contract.query(api, 'query_clear_test')
+    assert 2000 < v < 2234, \
+        'Expected query_clear_test result to be between 2000 and 2234, found {}'.format(
+            v)
