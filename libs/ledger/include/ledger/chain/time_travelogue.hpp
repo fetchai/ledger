@@ -44,10 +44,27 @@ namespace serializers {
 
 template <class B, class D>
 struct MapSerializer<ledger::TimeTravelogue<B>, D>
-  : MapSerializerTemplate<ledger::TimeTravelogue<B>, D,
-                          SERIALIZED_STRUCT_FIELD(1, ledger::TimeTravelogue<B>::blocks),
-                          SERIALIZED_STRUCT_FIELD(2, ledger::TimeTravelogue<B>::heaviest_hash)>
 {
+  using Type       = ledger::TimeTravelogue<B>;
+  using DriverType = D;
+
+  static constexpr uint8_t BLOCKS        = 1;
+  static constexpr uint8_t HEAVIEST_HASH = 2;
+
+  template <class Constructor>
+  static void Serialize(Constructorf &map_constructor, Type const &travelogue)
+  {
+    auto map = map_constructor(2);
+    map.Append(BLOCKS, travelogue.blocks);
+    map.Append(NEXT_HASH, travelogue.next_hash);
+  }
+
+  template <class MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &travelogue)
+  {
+    map.ExpectKeyGetValue(BLOCKS, travelogue.blocks);
+    map.ExpectKeyGetValue(NEXT_HASH, travelogue.next_hash);
+  }
 };
 
 }  // namespace serializers
