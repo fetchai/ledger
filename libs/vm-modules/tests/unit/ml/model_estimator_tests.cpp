@@ -394,12 +394,15 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
           EXPECT_TRUE(model_estimator.Evaluate() == VmModelEstimator::constant_charge);
 
-          SizeType predict_val = static_cast<SizeType>(static_cast<DataType>(n_data) * forward_pass_cost);
-          predict_val += static_cast<SizeType>(static_cast<DataType>(n_data * ops_count) * VmModelEstimator::PREDICT_BATCH_LAYER_COEF());
+          SizeType predict_val =
+              static_cast<SizeType>(static_cast<DataType>(n_data) * forward_pass_cost);
+          predict_val += static_cast<SizeType>(static_cast<DataType>(n_data * ops_count) *
+                                               VmModelEstimator::PREDICT_BATCH_LAYER_COEF());
           predict_val += static_cast<SizeType>(VmModelEstimator::PREDICT_CONST_COEF());
 
           EXPECT_TRUE(model_estimator.Predict(vm_ptr_tensor_data) ==
                       static_cast<SizeType>(predict_val));
+
         }
       }
     }
