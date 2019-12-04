@@ -50,9 +50,10 @@ protected:
 
   void SetUp() override
   {
+    fetch::crypto::mcl::details::MCLInitialiser();
     block_generator_.Reset();
 
-    chain_ = std::make_unique<MainChain>(false, MainChain::Mode::IN_MEMORY_DB);
+    chain_ = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
   }
 
   BlockGenerator block_generator_{NUM_LANES, NUM_SLICES};

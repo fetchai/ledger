@@ -838,7 +838,14 @@ void Graph<TensorType>::ResetGraphCache(bool input_size_changed, NodePtrType n)
     n->ResetCache(input_size_changed);
     for (auto &node : n->GetOutputs())
     {
-      ResetGraphCache(input_size_changed, node);
+      if (auto ptr = node.lock())
+      {
+        ResetGraphCache(input_size_changed, ptr);
+      }
+      else
+      {
+        throw std::runtime_error("Unable to lock weak pointer.");
+      }
     }
   }
 }

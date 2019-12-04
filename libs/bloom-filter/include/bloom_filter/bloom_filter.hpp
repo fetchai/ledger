@@ -59,11 +59,11 @@ public:
   explicit HashSourceFactory(Functions hash_functions);
   HashSourceFactory()                          = delete;
   HashSourceFactory(HashSourceFactory const &) = delete;
-  HashSourceFactory(HashSourceFactory &&)      = delete;
+  HashSourceFactory(HashSourceFactory &&)      = default;
   ~HashSourceFactory()                         = default;
 
   HashSourceFactory &operator=(HashSourceFactory const &) = delete;
-  HashSourceFactory &operator=(HashSourceFactory &&) = delete;
+  HashSourceFactory &operator=(HashSourceFactory &&) = default;
 
   /*
    * Create a HashSource which, when iterated, will pass the input parameter
@@ -72,7 +72,7 @@ public:
   HashSource operator()(fetch::byte_array::ConstByteArray const &element) const;
 
 private:
-  Functions const hash_functions_;
+  Functions hash_functions_;
 };
 
 /*
@@ -168,6 +168,7 @@ public:
    * Construct a Bloom filter with a default set of hash functions
    */
   BasicBloomFilter();
+
   /*
    * Construct a Bloom filter with the given set of hash functions
    */
@@ -177,7 +178,7 @@ public:
   ~BasicBloomFilter()                        = default;
 
   BasicBloomFilter &operator=(BasicBloomFilter const &) = delete;
-  BasicBloomFilter &operator=(BasicBloomFilter &&) = delete;
+  BasicBloomFilter &operator=(BasicBloomFilter &&) = default;
 
   /*
    * Check if the argument matches the Bloom filter. Returns a pair of
@@ -187,24 +188,50 @@ public:
    * returned. The latter number will increase as the filter's performance
    * degrades.
    */
-  std::pair<bool, std::size_t> Match(fetch::byte_array::ConstByteArray const &element);
+  std::pair<bool, std::size_t> Match(fetch::byte_array::ConstByteArray const &element) const;
+
   /*
    * Set the bits of the Bloom filter corresponding to the argument
    */
   void Add(fetch::byte_array::ConstByteArray const &element);
+
   /*
-   * Inform the Bloom filter of detected false positives. This is used to
-   * track the quality of the filter. Returns true if the quality of the
-   * filter has deteriorated below a predefined threshold; false otherwise.
+   * Empty the Bloom filter (set all bits to zero). Preserves filter size and hash set.
    */
-  bool ReportFalsePositives(std::size_t count);
+  void Reset();
 
 private:
-  BitVector                         bits_;
-  internal::HashSourceFactory const hash_source_factory_;
-  std::size_t                       entry_count_{};
-  std::size_t                       positive_count_{};
-  std::size_t                       false_positive_count_{};
+  BitVector                   bits_;
+  internal::HashSourceFactory hash_source_factory_;
+
+  template <typename, typename>
+  friend struct fetch::serializers::MapSerializer;
 };
 
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<BasicBloomFilter, D>
+{
+public:
+  using Type       = BasicBloomFilter;
+  using DriverType = D;
+
+  static const uint8_t BITS = 1;
+
+  template <typename T>
+  static void Serialize(T &map_constructor, Type const &filter)
+  {
+    auto map = map_constructor(1);
+    map.Append(BITS, filter.bits_);
+  }
+
+  template <typename T>
+  static void Deserialize(T &map, Type &filter)
+  {
+    map.ExpectKeyGetValue(BITS, filter.bits_);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch
