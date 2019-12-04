@@ -298,7 +298,7 @@ void VMModel::Bind(Module &module)
       .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
                             use_estimator(&ModelEstimator::SerializeToString))
       .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
-                            use_estimator(&ModelEstimator::DeserializeFromString))
+                            use_estimator(&ModelEstimator::DeserializeFromString));
 }
 
 void VMModel::SetModel(const VMModel::ModelPtrType &instance)

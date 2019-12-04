@@ -100,7 +100,7 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("fromString", &VMTensor::FromString,
                             use_estimator(&VMTensor::TensorEstimator::FromString))
       .CreateMemberFunction("toString", &VMTensor::ToString,
-                            use_estimator(&VMTensor::TensorEstimator::ToString))
+                            use_estimator(&VMTensor::TensorEstimator::ToString));
 
   // Add support for Array of Tensors
   module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<VMTensor>>>();
