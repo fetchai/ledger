@@ -40,6 +40,9 @@ public:
   using BlockIndex     = uint64_t;
   using Counter        = uint64_t;
 
+  constexpr static BlockIndex MAXIMUM_TX_VALIDITY_PERIOD = 40000;
+  constexpr static BlockIndex DEFAULT_TX_VALIDITY_PERIOD = 1000;
+
   /**
    * Represents a single target and token about. The transaction format allows any number of
    * transfers to be made in the course of a single transaction. This structure outlines one of them
