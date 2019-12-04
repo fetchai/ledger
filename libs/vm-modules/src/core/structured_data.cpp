@@ -21,6 +21,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "json/document.hpp"
 #include "meta/type_traits.hpp"
+#include "platform.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/array.hpp"
 #include "vm/fixed.hpp"
@@ -107,7 +108,7 @@ meta::EnableIf<std::is_same<UInt256Wrapper, T>::value, Ptr<T>> FromByteArray(
     return Ptr<T>{};
   }
 
-  return vm->CreateNewObject<UInt256Wrapper>(value_array, memory::Endian::BIG);
+  return vm->CreateNewObject<UInt256Wrapper>(value_array, platform::Endian::BIG);
 }
 
 template <typename T>
@@ -143,7 +144,7 @@ ByteArray ToByteArray(ByteArrayWrapper const &byte_array)
 
 ByteArray ToByteArray(UInt256Wrapper const &big_number)
 {
-  auto const big_endian_byte_array{big_number.number().As<ByteArray>(memory::Endian::BIG)};
+  auto const big_endian_byte_array{big_number.number().As<ByteArray>(platform::Endian::BIG)};
   return big_endian_byte_array.ToBase64();
 }
 

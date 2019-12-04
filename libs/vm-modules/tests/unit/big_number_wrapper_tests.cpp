@@ -18,6 +18,7 @@
 
 #include "gmock/gmock.h"
 #include "math/standard_functions/log.hpp"
+#include "platform.hpp"
 #include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/type.hpp"
@@ -30,7 +31,7 @@ using namespace fetch::vm;
 using fetch::byte_array::ByteArray;
 using fetch::vm_modules::math::UInt256Wrapper;
 
-constexpr memory::Endian ENDIANESS_OF_TEST_DATA{memory::Endian::LITTLE};
+constexpr platform::Endian ENDIANESS_OF_TEST_DATA{platform::Endian::LITTLE};
 
 const ByteArray raw_32xFF{
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,

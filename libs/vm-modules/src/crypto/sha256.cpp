@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/sha256.hpp"
+#include "platform.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
@@ -62,7 +63,7 @@ void SHA256Wrapper::Reset()
 
 Ptr<math::UInt256Wrapper> SHA256Wrapper::Final()
 {
-  return vm_->CreateNewObject<math::UInt256Wrapper>(hasher_.Final(), memory::Endian::BIG);
+  return vm_->CreateNewObject<math::UInt256Wrapper>(hasher_.Final(), platform::Endian::BIG);
 }
 
 Ptr<ByteArrayWrapper> SHA256Wrapper::FinalAsByteArray()

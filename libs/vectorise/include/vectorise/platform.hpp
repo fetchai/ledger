@@ -18,6 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "meta/type_traits.hpp"
+#include <algorithm>
+#include <functional>
+#include <type_traits>
+#include <utility>
 
 #if (__SIZEOF_INT128__ == 16)
 using int128_t  = __int128_t;
@@ -26,6 +30,12 @@ using uint128_t = __uint128_t;
 
 namespace fetch {
 namespace platform {
+
+enum class Endian
+{
+  BIG,
+  LITTLE,
+};
 
 inline uint8_t ToBigEndian(uint8_t x)
 {

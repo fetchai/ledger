@@ -19,6 +19,7 @@
 
 #include "meta/has_index.hpp"
 #include "meta/type_traits.hpp"
+#include "platform.hpp"
 #include "vectorise/containers/array.hpp"
 #include "vectorise/memory/endian.hpp"
 #include "vectorise/platform.hpp"
@@ -98,7 +99,7 @@ public:
   {}
 
   template <typename T, meta::IfIsAByteArray<T> * = nullptr>
-  constexpr explicit UInt(T const &other, memory::Endian endianess_of_input_data);
+  constexpr explicit UInt(T const &other, platform::Endian endianess_of_input_data);
   template <typename T, meta::IfIsUnsignedInteger<T> * = nullptr>
   constexpr explicit UInt(T number);
 
@@ -112,8 +113,8 @@ public:
 
   template <typename T>
   constexpr meta::IfIsAByteArray<T, UInt> &FromArray(
-      T const &      arr,
-      memory::Endian endianess_of_input_data);  // NOLINT
+      T const &        arr,
+      platform::Endian endianess_of_input_data);  // NOLINT
 
   /////////////////////////////////////////////
   /// comparison operators for UInt objects ///
@@ -241,7 +242,7 @@ public:
 
   template <typename T>
   constexpr meta::EnableIf<std::is_same<meta::Decay<T>, byte_array::ByteArray>::value, T> As(
-      memory::Endian endianess_of_output_data, bool include_leading_zeroes = false) const;
+      platform::Endian endianess_of_output_data, bool include_leading_zeroes = false) const;
 
   /////////////////
   /// constants ///
@@ -270,9 +271,9 @@ private:
   }
 
   template <typename T>
-  constexpr meta::IfIsAByteArray<T> FromArrayInternal(T const &      arr,
-                                                      memory::Endian endianess_of_input_data,
-                                                      bool           zero_content);  // NOLINT
+  constexpr meta::IfIsAByteArray<T> FromArrayInternal(T const &        arr,
+                                                      platform::Endian endianess_of_input_data,
+                                                      bool             zero_content);  // NOLINT
 
   struct MaxValueConstructorEnabler
   {
@@ -317,7 +318,7 @@ const UInt<S> UInt<S>::max{MaxValueConstructorEnabler{}};
 
 template <uint16_t S>
 template <typename T, meta::IfIsAByteArray<T> *>
-constexpr UInt<S>::UInt(T const &other, memory::Endian endianess_of_input_data)
+constexpr UInt<S>::UInt(T const &other, platform::Endian endianess_of_input_data)
 {
   FromArrayInternal(other, endianess_of_input_data, false);
 }
@@ -345,7 +346,7 @@ constexpr UInt<S> &UInt<S>::operator=(UInt const &v)
 template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsAByteArray<T, UInt<S>> &UInt<S>::FromArray(
-    T const &arr, memory::Endian endianess_of_input_data)  // NOLINT
+    T const &arr, platform::Endian endianess_of_input_data)  // NOLINT
 {
   FromArrayInternal(arr, endianess_of_input_data, true);
   return *this;
@@ -353,9 +354,9 @@ constexpr meta::IfIsAByteArray<T, UInt<S>> &UInt<S>::FromArray(
 
 template <uint16_t S>
 template <typename T>
-constexpr meta::IfIsAByteArray<T> UInt<S>::FromArrayInternal(T const &      arr,
-                                                             memory::Endian endianess_of_input_data,
-                                                             bool           zero_content)  // NOLINT
+constexpr meta::IfIsAByteArray<T> UInt<S>::FromArrayInternal(
+    T const &arr, platform::Endian endianess_of_input_data,
+    bool zero_content)  // NOLINT
 {
   auto const size{arr.size()};
 
@@ -380,11 +381,11 @@ constexpr meta::IfIsAByteArray<T> UInt<S>::FromArrayInternal(T const &      arr,
 
   switch (endianess_of_input_data)
   {
-  case memory::Endian::LITTLE:
+  case platform::Endian::LITTLE:
     std::copy(arr.pointer(), arr.pointer() + size, base());
     break;
 
-  case memory::Endian::BIG:
+  case platform::Endian::BIG:
     for (std::size_t i{0}, rev_i{size - 1}; i < size; ++i, --rev_i)
     {
       base()[i] = arr[rev_i];
@@ -1181,7 +1182,7 @@ UInt<S>::operator std::string() const
 template <uint16_t S>
 template <typename T>
 constexpr meta::EnableIf<std::is_same<meta::Decay<T>, byte_array::ByteArray>::value, T> UInt<S>::As(
-    memory::Endian endianess_of_output_data, bool include_leading_zeroes) const
+    platform::Endian endianess_of_output_data, bool include_leading_zeroes) const
 {
   auto const size_{include_leading_zeroes ? size() : TrimmedSize()};
 
@@ -1194,10 +1195,10 @@ constexpr meta::EnableIf<std::is_same<meta::Decay<T>, byte_array::ByteArray>::va
 
   switch (endianess_of_output_data)
   {
-  case memory::Endian::LITTLE:
+  case platform::Endian::LITTLE:
     return T{pointer(), size_};
 
-  case memory::Endian::BIG:
+  case platform::Endian::BIG:
     arr.Resize(size_);
     for (std::size_t i{0}, rev_i{size_ - 1}; i < size_; ++i, --rev_i)
     {

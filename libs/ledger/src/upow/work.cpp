@@ -24,6 +24,7 @@
 #include "crypto/sha256.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/upow/work.hpp"
+#include "platform.hpp"
 #include "vectorise/uint/uint.hpp"
 
 #include <limits>
@@ -102,7 +103,7 @@ Work::UInt256 Work::CreateHashedNonce() const
   hasher.Reset();
   hasher.Update(digest1);
 
-  return UInt256{hasher.Final(), memory::Endian::BIG};
+  return UInt256{hasher.Final(), platform::Endian::BIG};
 }
 
 }  // namespace ledger

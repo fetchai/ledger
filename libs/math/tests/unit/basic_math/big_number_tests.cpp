@@ -18,6 +18,7 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "gmock/gmock.h"
+#include "platform.hpp"
 #include "vectorise/uint/uint.hpp"
 
 #include <cstddef>
@@ -386,12 +387,12 @@ TEST(big_number_gtest, test_construction_from_byte_array_fails_if_too_long)
   constexpr std::size_t bits{256};
 
   // Verify that construction pass is size is <= bits/8
-  UInt<bits> shall_pass{ConstByteArray(bits / 8), Endian::LITTLE};
+  UInt<bits> shall_pass{ConstByteArray(bits / 8), platform::Endian::LITTLE};
 
   bool exception_thrown = false;
   try
   {
-    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1), Endian::LITTLE};
+    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1), platform::Endian::LITTLE};
   }
   catch (std::exception const &ex)
   {

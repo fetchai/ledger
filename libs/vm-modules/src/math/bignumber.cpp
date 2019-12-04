@@ -20,6 +20,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "vectorise/uint/uint.hpp"
 
+#include "platform.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_modules/math/bignumber.hpp"
@@ -53,7 +54,7 @@ Ptr<UInt256Wrapper> ConstructorFromBytesBigEndian(VM *vm, TypeId type_id,
   try
   {
     return Ptr<UInt256Wrapper>{
-        new UInt256Wrapper(vm, type_id, ba->byte_array(), memory::Endian::BIG)};
+        new UInt256Wrapper(vm, type_id, ba->byte_array(), platform::Endian::BIG)};
   }
   catch (std::exception const &e)
   {
@@ -90,7 +91,7 @@ void UInt256Wrapper::Bind(Module &module)
   module.CreateFreeFunction("toString", &ToString);
   module.CreateFreeFunction("toBuffer", [](VM *vm, Ptr<UInt256Wrapper> const &x) {
     return vm->CreateNewObject<ByteArrayWrapper>(
-        x->number().As<byte_array::ByteArray>(memory::Endian::BIG, true));
+        x->number().As<byte_array::ByteArray>(platform::Endian::BIG, true));
   });
   module.CreateFreeFunction(
       "toFloat64", [](VM * /*vm*/, Ptr<UInt256Wrapper> const &x) { return ToDouble(x->number()); });
@@ -110,7 +111,7 @@ UInt256Wrapper::UInt256Wrapper(VM *vm, UInt256 data)
 {}
 
 UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, byte_array::ConstByteArray const &data,
-                               memory::Endian endianess_of_input_data)
+                               platform::Endian endianess_of_input_data)
   : Object(vm, type_id)
   , number_(data, endianess_of_input_data)
 {}

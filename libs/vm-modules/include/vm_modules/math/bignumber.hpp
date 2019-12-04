@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "platform.hpp"
 #include "vectorise/uint/uint.hpp"
 #include "vm/object.hpp"
 
@@ -53,7 +54,7 @@ public:
 
   explicit UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                           byte_array::ConstByteArray const &data,
-                          memory::Endian                    endianess_of_input_data);
+                          platform::Endian                  endianess_of_input_data);
 
   static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                     uint64_t val);
