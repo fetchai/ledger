@@ -202,6 +202,11 @@ public:
     return DataType(100.0);
   };
 
+  static constexpr SizeType FIT_CONST_OVERHEAD            = 3;
+  static constexpr SizeType FIT_PER_BATCH_OVERHEAD        = 2;
+  static constexpr SizeType SERIALISATION_OVERHEAD        = 5;
+  static constexpr SizeType WEIGHT_SERIALISATION_OVERHEAD = 4;  // Will depend on DataType of Tensor
+
 private:
   struct State
   {
@@ -225,11 +230,6 @@ private:
 
   VMObjectType &model_;
   State         state_;
-
-  static constexpr SizeType FIT_CONST_OVERHEAD            = 3;
-  static constexpr SizeType FIT_PER_BATCH_OVERHEAD        = 2;
-  static constexpr SizeType SERIALISATION_OVERHEAD        = 5;
-  static constexpr SizeType WEIGHT_SERIALISATION_OVERHEAD = 4;  // Will depend on DataType of Tensor
 
   static constexpr ChargeAmount constant_charge{vm::CHARGE_UNIT};
 
