@@ -555,6 +555,120 @@ constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN;
 template <uint16_t I, uint16_t F>
 constexpr uint16_t FixedPoint<I, F>::DECIMAL_DIGITS;
 
+// Instantiate these constants, but define them in the cpp here, earlier compilers need this.
+
+/* e = 2.718281828459045235360287471352662498 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_E;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_E;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_E;
+
+/* log_2(e) = 1.442695040888963407359924681001892137 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_LOG2E;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_LOG2E;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_LOG2E;
+
+/* log_2(10) = 3.32192809488736234787 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_LOG210;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_LOG210;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_LOG210;
+
+/* log_10(e) = 0.434294481903251827651128918916605082 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_LOG10E;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_LOG10E;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_LOG10E;
+
+/* ln(2) = 0.693147180559945309417232121458176568 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_LN2;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_LN2;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_LN2;
+
+/* ln(10) = 2.302585092994045684017991454684364208 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_LN10;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_LN10;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_LN10;
+
+/* Pi = 3.141592653589793238462643383279502884 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_PI;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_PI;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_PI;
+
+/* Pi/2 = 1.570796326794896619231321691639751442 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_PI_2;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_PI_2;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_PI_2;
+
+/* Pi/4 = 0.785398163397448309615660845819875721 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_PI_4;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_PI_4;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_PI_4;
+
+/* 1/Pi = 0.318309886183790671537767526745028724 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_INV_PI;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_INV_PI;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_INV_PI;
+
+/* 2/Pi = 0.636619772367581343075535053490057448 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_TWO_INV_PI;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_TWO_INV_PI;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_TWO_INV_PI;
+
+/* 2/Sqrt(Pi) = 1.128379167095512573896158903121545172 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_TWO_INV_SQRTPI;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_TWO_INV_SQRTPI;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_TWO_INV_SQRTPI;
+
+/* Sqrt(2) = 1.414213562373095048801688724209698079 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_SQRT2;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_SQRT2;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_SQRT2;
+
+/* 1/Sqrt(2) = 0.707106781186547524400844362104849039 */
+template <>
+FixedPoint<64, 64> const FixedPoint<64, 64>::CONST_INV_SQRT2;
+template <>
+FixedPoint<32, 32> const FixedPoint<32, 32>::CONST_INV_SQRT2;
+template <>
+FixedPoint<16, 16> const FixedPoint<16, 16>::CONST_INV_SQRT2;
+
 template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::_0{0}; /* 0 */
 template <uint16_t I, uint16_t F>
