@@ -681,7 +681,7 @@ void PeerTracker::Periodically()
   {
 
     // Keeping those which are still not expired
-    if (item.second > now)  // TODO: Add grace period
+    if (item.second > now)  // TODO(tfr): Add grace period
     {
       new_expiry.emplace(item);
     }
@@ -702,7 +702,7 @@ void PeerTracker::Periodically()
   for (auto const &item : desired_uri_expiry_)
   {
     // Keeping those which are still not expired
-    if (item.second > now)  // TODO: Add grace period
+    if (item.second > now)  // TODO(tfr): Add grace period
     {
       new_uri_expiry.emplace(item);
     }
