@@ -32,8 +32,8 @@ save_results = True
 imgformat = 'png'
 
 # Specify maximum parameter value to use in linear fit for bm names that contain these strings
-bm_fit_ranges = {'Array': [[0, 6000], [8000, 1e20]], 
-                 'FromStr':[[0, 100000], [120000, 1e20]]}
+bm_fit_ranges = {'Array': [[0, 6000], [8000, 1e20]],
+                 'FromStr': [[0, 100000], [120000, 1e20]]}
 slope_thresh = 0.01
 
 
@@ -218,12 +218,12 @@ for (bm_type, param_bm) in param_bms.items():
         x - const_cpu_time for x in param_bm['net_medians']]
 
     # Compute least-squares linear fit through the first data point up to given range
-    fit_ranges = [[0,1e20]]
+    fit_ranges = [[0, 1e20]]
     for key in bm_fit_ranges:
         if key in benchmarks[ind0]['name']:
             fit_ranges = bm_fit_ranges[key]
     param_bm['lfit'] = [[]]*len(fit_ranges)
-    for (i,fit_range) in enumerate(fit_ranges):
+    for (i, fit_range) in enumerate(fit_ranges):
         param_bm['lfit'][i] = vm_least_squares.linear_fit(param_bm, fit_range)
 
 # Delete base opcodes from primitive opcode lists

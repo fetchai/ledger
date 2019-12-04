@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import lsq_linear
 
 
-def linear_fit(param_bm, fit_range=[0,1e20]):
+def linear_fit(param_bm, fit_range=[0, 1e20]):
     """Compute the least-squares linear fit of mean-cpu-time to parameter value (e.g. array length).
     Fit is anchored to the first data point to ensure reliable results for small parameter values.
     Since some benchmarks become non-linear for large values, allow restriction of the fit to some
