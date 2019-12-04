@@ -29,11 +29,11 @@ run_benchmarks = True
 make_plots = True
 make_tables = True
 save_results = True
-save_figures = True
 imgformat = 'png'
 
 # Specify maximum parameter value to use in linear fit for bm names that contain these strings
-max_fit_lens = {'Array': 6000, 'FromStr': 100000}
+bm_fit_ranges = {'Array': [[0, 6000], [8000, 1e20]], 
+                 'FromStr':[[0, 100000], [120000, 1e20]]}
 slope_thresh = 0.01
 
 
@@ -171,11 +171,6 @@ for prim in math_prims:
     vm_least_squares.opcode_times(benchmarks_fit, optimes[prim], {
                                   'Math'}, prim_type=prim)
 
-# Delete base opcodes from primitive opcode lists
-for prim in op_prims:
-    for op in optimes['Base']:
-        del optimes[prim][op]
-
 # Add individual opcode times to relevant benchmarks
 for bm in benchmarks_fit.values():
     if bm['class'] == 'Basic':
@@ -223,15 +218,22 @@ for (bm_type, param_bm) in param_bms.items():
         x - const_cpu_time for x in param_bm['net_medians']]
 
     # Compute least-squares linear fit through the first data point up to given range
-    max_len = 1e20
-    for key in max_fit_lens:
+    fit_ranges = [[0,1e20]]
+    for key in bm_fit_ranges:
         if key in benchmarks[ind0]['name']:
-            max_len = max_fit_lens[key]
-    param_bm['lfit'] = vm_least_squares.linear_fit(param_bm, max_len)
+            fit_ranges = bm_fit_ranges[key]
+    param_bm['lfit'] = [[]]*len(fit_ranges)
+    for (i,fit_range) in enumerate(fit_ranges):
+        param_bm['lfit'][i] = vm_least_squares.linear_fit(param_bm, fit_range)
+
+# Delete base opcodes from primitive opcode lists
+for prim in op_prims:
+    for op in optimes['Base']:
+        del optimes[prim][op]
 
 # Select parameterized benchmarks whose fit slopes satisfy the given threshold
 param_dep_bms = {name: bm for (
-    name, bm) in param_bms.items() if bm['lfit'][0] > slope_thresh}
+    name, bm) in param_bms.items() if bm['lfit'][0][0] > slope_thresh}
 
 if save_results:
 
@@ -257,7 +259,7 @@ if make_tables:
     for bm_cls in bm_classes:
         vmt.benchmark_table(benchmarks, n_reps, bm_cls)
 
-    vmt.benchmark_opcode_table(benchmarks, n_reps, 'Basic')
+    vmt.benchmark_opcode_table(benchmarks_fit, n_reps, 'Basic')
 
     for bm_cls in prim_bm_classes:
         vmt.benchmark_opcode_table(benchmarks_fit, n_reps, bm_cls)
@@ -274,6 +276,6 @@ if make_plots:
 
     fig = 0
     for (name, param_bm) in param_dep_bms.items():
-        plot_linear_fit(name, param_bm, fig=fig, savefig=save_figures,
+        plot_linear_fit(name, param_bm, fig=fig, savefig=save_results,
                         savepath=output_path+'plots/', imgformat=imgformat)
         fig += 1

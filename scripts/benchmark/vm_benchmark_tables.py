@@ -85,7 +85,7 @@ def linear_fit_table(param_bms, n_reps, bm_cls):
     lfit_table = []
     for (name, bm) in param_bms.items():
         if bm_cls in name:
-            lfit_table.append([name, bm['lfit'][0], bm['lfit'][1], bm['agg_net_mean'],
+            lfit_table.append([name, bm['lfit'][-1][0], bm['lfit'][-1][1], bm['agg_net_mean'],
                                bm['agg_net_stderr'], bm['net_opcodes']])
 
     headers = ['Benchmark (' + str(n_reps) + ' reps)', 'Slope (ns/char)',
