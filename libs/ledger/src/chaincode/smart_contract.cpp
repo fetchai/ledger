@@ -521,7 +521,18 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
     chain::Address contract_address;
     if (!id.Parse(identity) || !chain::Address::Parse(id.name(), contract_address))
     {
-      error = "Invalid contract address format.";
+      error = "Invalid contract address format";
+
+      return false;
+    }
+
+    decltype(auto) c = context();
+
+    // TODO(WK) charge for reading from storage
+    auto loaded_contract = CreateSmartContract<SmartContract>(id.qualifier().FromHex(), *c.storage);
+    if (loaded_contract == nullptr)
+    {
+      error = "Failed to load contract from storage";
 
       return false;
     }
@@ -531,11 +542,6 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
     vm::VM       vm2{module.get()};
 
     std::vector<std::string> errors{};
-
-    decltype(auto) c = context();
-
-    // TODO(WK) charge for reading from storage
-    auto loaded_contract = CreateSmartContract<SmartContract>(id.qualifier().FromHex(), *c.storage);
 
     vm2.SetIOObserver(vm->GetIOObserver());
     vm2.SetContractInvocationHandler(contract_invocation_handler);
