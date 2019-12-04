@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "kademlia/peer_tracker.hpp"
 #include "core/time/to_seconds.hpp"
+#include "kademlia/peer_tracker.hpp"
 
 #include <chrono>
 #include <memory>
@@ -725,7 +725,7 @@ void PeerTracker::Periodically()
     keep_connections_.emplace(item.first);
   }
 
-  // TODO: Add something similar for pulling
+  // TODO(tfr): Add something similar for pulling
 
   // Converting URIs into addresses if possible
   std::unordered_set<Uri> new_uris;

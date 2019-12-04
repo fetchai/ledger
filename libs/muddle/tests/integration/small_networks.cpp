@@ -225,7 +225,7 @@ TEST(SmallNetworks, DISABLED_OrganisingAddressPriority)
   optimal_connection.bucket           = 1;  // Good location
   optimal_connection.connection_value = 1;  // Good behavious
   optimal_connection.connected_since =
-      std::chrono::steady_clock::now() - std::chrono::seconds(4 * 3600);
+      AddressPriority::Clock::now() - std::chrono::seconds(4 * 3600);
   optimal_connection.UpdatePriority();
 
   // Good location, good behaviour and long term service should give close to
@@ -238,7 +238,7 @@ TEST(SmallNetworks, DISABLED_OrganisingAddressPriority)
   mediocre_loc.persistent       = true;
   mediocre_loc.bucket           = 1;  // Good location
   mediocre_loc.connection_value = 0;  // Not good, nor bad.
-  mediocre_loc.connected_since  = std::chrono::steady_clock::now() - std::chrono::seconds(4 * 3600);
+  mediocre_loc.connected_since  = AddressPriority::Clock::now() - std::chrono::seconds(4 * 3600);
   mediocre_loc.UpdatePriority();
 
   // Good location, but no evidence of good behaviour should put
@@ -251,7 +251,7 @@ TEST(SmallNetworks, DISABLED_OrganisingAddressPriority)
   mediocre_beh.persistent       = true;
   mediocre_beh.bucket           = static_cast<uint64_t>(-1);  // Bad location
   mediocre_beh.connection_value = 1;                          // Good behaviour
-  mediocre_beh.connected_since  = std::chrono::steady_clock::now() - std::chrono::seconds(4 * 3600);
+  mediocre_beh.connected_since  = AddressPriority::Clock::now() - std::chrono::seconds(4 * 3600);
   mediocre_beh.UpdatePriority();
 
   // We value good behaviour slightly worse than good location
@@ -266,8 +266,7 @@ TEST(SmallNetworks, DISABLED_OrganisingAddressPriority)
   optimal_gone_bad.persistent       = true;
   optimal_gone_bad.bucket           = 1;   // Good location
   optimal_gone_bad.connection_value = -1;  // Very bad behaviour
-  optimal_gone_bad.connected_since =
-      std::chrono::steady_clock::now() - std::chrono::seconds(4 * 3600);
+  optimal_gone_bad.connected_since = AddressPriority::Clock::now() - std::chrono::seconds(4 * 3600);
   optimal_gone_bad.UpdatePriority();
 
   // Getting lowest ranking should immediately drag you to the bottom
@@ -284,7 +283,7 @@ TEST(SmallNetworks, DISABLED_OrganisingAddressPriority)
   poor_permanent.persistent       = true;
   poor_permanent.bucket           = static_cast<uint64_t>(-1);
   poor_permanent.connection_value = 0;
-  poor_permanent.connected_since  = std::chrono::steady_clock::now() - std::chrono::seconds(30);
+  poor_permanent.connected_since  = AddressPriority::Clock::now() - std::chrono::seconds(30);
   poor_permanent.UpdatePriority();
   EXPECT_LT(0.05, poor_permanent.priority);
   EXPECT_LT(poor_permanent.priority, 0.10);
@@ -293,8 +292,8 @@ TEST(SmallNetworks, DISABLED_OrganisingAddressPriority)
   good_temporary.address          = FakeAddress(0);
   good_temporary.persistent       = false;
   good_temporary.connection_value = 0;
-  good_temporary.desired_expiry   = std::chrono::steady_clock::now() + std::chrono::seconds(30);
-  good_temporary.connected_since  = std::chrono::steady_clock::now() - std::chrono::seconds(30);
+  good_temporary.desired_expiry   = AddressPriority::Clock::now() + std::chrono::seconds(30);
+  good_temporary.connected_since  = AddressPriority::Clock::now() - std::chrono::seconds(30);
   good_temporary.bucket           = static_cast<uint64_t>(-1);
   good_temporary.UpdatePriority();
 
@@ -303,9 +302,9 @@ TEST(SmallNetworks, DISABLED_OrganisingAddressPriority)
   good_temporary_close_to_expiry.persistent       = false;
   good_temporary_close_to_expiry.connection_value = 0;
   good_temporary_close_to_expiry.desired_expiry =
-      std::chrono::steady_clock::now() + std::chrono::seconds(1);
+      AddressPriority::Clock::now() + std::chrono::seconds(1);
   good_temporary_close_to_expiry.connected_since =
-      std::chrono::steady_clock::now() - std::chrono::seconds(59);
+      AddressPriority::Clock::now() - std::chrono::seconds(59);
   good_temporary_close_to_expiry.bucket = static_cast<uint64_t>(-1);
   good_temporary_close_to_expiry.UpdatePriority();
 
@@ -317,10 +316,10 @@ TEST(SmallNetworks, DISABLED_OrganisingAddressPriority)
   good_temporary_should_upgrade.address          = FakeAddress(0);
   good_temporary_should_upgrade.persistent       = false;
   good_temporary_should_upgrade.connection_value = 0;
-  good_temporary_should_upgrade.desired_expiry   = std::chrono::steady_clock::now();
+  good_temporary_should_upgrade.desired_expiry   = AddressPriority::Clock::now();
   -std::chrono::seconds(30);
   good_temporary_should_upgrade.connected_since =
-      std::chrono::steady_clock::now() - std::chrono::seconds(60);
+      AddressPriority::Clock::now() - std::chrono::seconds(60);
   good_temporary_should_upgrade.bucket = static_cast<uint64_t>(1);
   good_temporary_should_upgrade.UpdatePriority();
 
