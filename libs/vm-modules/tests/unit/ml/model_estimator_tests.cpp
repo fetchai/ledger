@@ -298,19 +298,19 @@ TEST_F(VMModelEstimatorTests, estimator_fit_test)
   std::string activation_type = "relu";
 
   SizeType min_data_size_1  = 10;
-  SizeType max_data_size_1  = 1000;
-  SizeType data_size_1_step = 10;
+  SizeType max_data_size_1  = 100;
+  SizeType data_size_1_step = 19;
 
   SizeType min_data_points  = 10;
-  SizeType max_data_points  = 1000;
-  SizeType data_points_step = 10;
+  SizeType max_data_points  = 100;
+  SizeType data_points_step = 13;
 
   SizeType min_label_size_1  = 1;
   SizeType max_label_size_1  = 100;
-  SizeType label_size_1_step = 10;
+  SizeType label_size_1_step = 17;
 
   SizeType min_batch_size  = 1;
-  SizeType batch_size_step = 10;
+  SizeType batch_size_step = 23;
 
   fetch::vm::TypeId type_id = 0;
   VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
@@ -376,7 +376,11 @@ TEST_F(VMModelEstimatorTests, estimator_fit_test)
           val += vm_ptr_tensor_labels->GetTensor().size();
           val += (n_data / batch_size);
           val += n_data * static_cast<SizeType>(forward_pass_cost + backward_pass_cost);
-          val += static_cast<SizeType>(static_cast<DataType>(n_data / batch_size) * static_cast<DataType>(VmModelEstimator::ADAM_STEP_IMPACT_COEF() * DataType(weights_size_sum) + DataType(weights_size_sum)));
+          val += static_cast<SizeType>(
+              static_cast<DataType>(n_data / batch_size) *
+              static_cast<DataType>(VmModelEstimator::ADAM_STEP_IMPACT_COEF() *
+                                        DataType(weights_size_sum) +
+                                    DataType(weights_size_sum)));
 
           EXPECT_TRUE(model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size) ==
                       val);
