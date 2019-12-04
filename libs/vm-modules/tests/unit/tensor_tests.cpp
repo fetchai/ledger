@@ -534,7 +534,8 @@ TEST_F(VMTensorTests, DISABLED_tensor_set_from_string)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
-// Runtime crash when .at() or [] is called on ndarray of shape [..., < 8]
+// Runtime crash when .at() or [] is called on ndarray of shape [..., < 8].
+// No crash if run in etch simulator.
 TEST_F(VMTensorTests, ndarray_2_dim_inplace_subtraction)
 {
   static char const *SOURCE = R"(
@@ -543,18 +544,34 @@ TEST_F(VMTensorTests, ndarray_2_dim_inplace_subtraction)
        tensor_shape[0] = 2u64;
        tensor_shape[1] = 8u64;
        var float32_1 = NDArray<Float32>(tensor_shape);
-       float32_1[0,0] = 111.0f;
-       float32_1[1,0] = 222.0f;
-       float32_1[0,1] = 333.0f;
-       float32_1[1,1] = 444.0f;
+//       float32_1[0,0] = 123.0f;
+//       float32_1[1,0] = 123.0f;
+//       float32_1[0,1] = 123.0f;
+//       float32_1[1,1] = 123.0f;
+        float32_1.setAt(0u64,0u64, 123.0f);
+        float32_1.setAt(0u64,1u64, 123.0f);
+        float32_1.setAt(0u64,2u64, 123.0f);
+        float32_1.setAt(0u64,3u64, 123.0f);
+        float32_1.setAt(0u64,4u64, 123.0f);
+        //float32_1.setAt(0u64,5u64, 123.0f);
+        //float32_1.setAt(0u64,6u64, 123.0f);
+        //float32_1.setAt(0u64,7u64, 123.0f);
+        float32_1.setAt(1u64,0u64, 123.0f);
+        float32_1.setAt(1u64,1u64, 123.0f);
+        float32_1.setAt(1u64,2u64, 123.0f);
+//        float32_1.setAt(1u64,3u64, 123.0f);
+//        float32_1.setAt(1u64,4u64, 123.0f);
+//        float32_1.setAt(1u64,5u64, 123.0f);
+//        float32_1.setAt(1u64,6u64, 123.0f);
+        //float32_1.setAt(1u64,7u64, 123.0f);
        var float32_2 = NDArray<Float32>(tensor_shape);
-       float32_2[0,0] = 111.0f;
-       float32_2[1,0] = 222.0f;
-       float32_2[0,1] = 333.0f;
-       float32_2[1,1] = 444.0f;
+       float32_2[0,0] = 123.0f;
+       float32_2[1,0] = 123.0f;
+       float32_2[0,1] = 123.0f;
+       float32_2[1,1] = 123.0f;
        var float32_zeros = NDArray<Float32>(tensor_shape);
        float32_2 -= float32_1;
-       assert(float32_2[0,0] == float32_zeros[0,0]);
+       assert(float32_2.at(0u64,0u64) == float32_zeros.at(0u64,0u64));
        assert(float32_2[0,1] == float32_zeros[0,1]);
        assert(float32_2[1,0] == float32_zeros[1,0]);
        assert(float32_2[1,1] == float32_zeros[1,1]);
