@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "moment/clock_interfaces.hpp"
 #include "muddle/address.hpp"
 #include "muddle/peer_selection_mode.hpp"
 #include "muddle/tracker_configuration.hpp"
@@ -61,10 +62,18 @@ public:
   using Addresses     = std::unordered_set<Address>;
   using ConfidenceMap = std::unordered_map<Address, Confidence>;
   using AddressHints  = std::unordered_map<Address, network::Uri>;
+  using Clock         = std::chrono::system_clock;
+  using Timepoint     = Clock::time_point;
+  using Duration      = Clock::duration;
 
   // Construction / Destruction
   MuddleInterface()          = default;
   virtual ~MuddleInterface() = default;
+
+  constexpr static Duration NeverExpire()
+  {
+    return std::chrono::duration_cast<Duration>(std::chrono::hours(1024 * 24));
+  }
 
   /// @name Muddle Setup
   /// @{
@@ -205,21 +214,21 @@ public:
    *
    * @param address The requested address to connect to
    */
-  virtual void ConnectTo(Address const &address) = 0;
+  virtual void ConnectTo(Address const &address, Duration const &expire = NeverExpire()) = 0;
 
   /**
    * Request that muddle attempts to connect to the specified set of addresses
    *
    * @param addresses The set of addresses
    */
-  virtual void ConnectTo(Addresses const &addresses) = 0;
+  virtual void ConnectTo(Addresses const &addresses, Duration const &expire = NeverExpire()) = 0;
 
   /**
    * Request that muddle attempts to connect to the specified URI.
    *
    * @param uri The URI
    */
-  virtual void ConnectTo(network::Uri const &uri) = 0;
+  virtual void ConnectTo(network::Uri const &uri, Duration const &expire = NeverExpire()) = 0;
 
   /**
    * Connect to a specified address with the provided URI hint
@@ -227,14 +236,16 @@ public:
    * @param address The address to connect to
    * @param uri_hint The hint to the connection URI
    */
-  virtual void ConnectTo(Address const &address, network::Uri const &uri_hint) = 0;
+  virtual void ConnectTo(Address const &address, network::Uri const &uri_hint,
+                         Duration const &expire = NeverExpire()) = 0;
 
   /**
    * Connect to the specified addresses with the provided connection hints
    *
    * @param address_hints The map of address => URI hint
    */
-  virtual void ConnectTo(AddressHints const &address_hints) = 0;
+  virtual void ConnectTo(AddressHints const &address_hints,
+                         Duration const &    expire = NeverExpire()) = 0;
 
   /**
    * Request that muddle disconnected from the specified address

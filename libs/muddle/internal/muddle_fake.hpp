@@ -338,27 +338,28 @@ public:
     return FakeNetwork::GetConnections(node_address_);
   }
 
-  void ConnectTo(Address const &address) override
+  void ConnectTo(Address const &address, Duration const & /*expire*/) override
   {
     FakeNetwork::Connect(node_address_, address);
   }
 
-  void ConnectTo(Addresses const & /*addresses*/) override
+  void ConnectTo(Addresses const & /*addresses*/, Duration const & /*expire*/) override
   {
     throw std::runtime_error("ConnectTo x functionality not implemented");
   }
 
-  void ConnectTo(network::Uri const & /*uri*/) override
+  void ConnectTo(network::Uri const & /*uri*/, Duration const & /*expire*/) override
   {
     throw std::runtime_error("ConnectTo x functionality not implemented");
   }
 
-  void ConnectTo(Address const &address, network::Uri const & /*uri_hint*/) override
+  void ConnectTo(Address const &address, network::Uri const & /*uri_hint*/,
+                 Duration const & /*expire*/) override
   {
     FakeNetwork::Connect(node_address_, address);
   }
 
-  void ConnectTo(AddressHints const & /*address_hints*/) override
+  void ConnectTo(AddressHints const & /*address_hints*/, Duration const & /*expire*/) override
   {
     throw std::runtime_error("ConnectTo y functionality not implemented");
   }

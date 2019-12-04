@@ -127,6 +127,9 @@ public:
   using Server          = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList      = std::vector<Server>;
   using PeerTrackerPtr  = std::shared_ptr<PeerTracker>;
+  using Clock           = std::chrono::system_clock;
+  using Timepoint       = Clock::time_point;
+  using Duration        = Clock::duration;
 
   struct ConnectionData
   {
@@ -173,17 +176,19 @@ public:
   /// @{
 
   Addresses GetRequestedPeers() const override;
-  void      ConnectTo(Address const &address) override;
-  void      ConnectTo(Addresses const &addresses) override;
-  void      ConnectTo(network::Uri const &uri) override;
-  void      ConnectTo(Address const &address, network::Uri const &uri_hint) override;
-  void      ConnectTo(AddressHints const &address_hints) override;
-  void      DisconnectFrom(Address const &address) override;
-  void      DisconnectFrom(Addresses const &addresses) override;
-  void      SetConfidence(Address const &address, Confidence confidence) override;
-  void      SetConfidence(Addresses const &addresses, Confidence confidence) override;
-  void      SetConfidence(ConfidenceMap const &map) override;
-  void      SetTrackerConfiguration(TrackerConfiguration const &config) override;
+
+  void ConnectTo(Address const &address, Duration const &expire) override;
+  void ConnectTo(Addresses const &addresses, Duration const &expire) override;
+  void ConnectTo(network::Uri const &uri, Duration const &expire) override;
+  void ConnectTo(Address const &address, network::Uri const &uri_hint,
+                 Duration const &expire) override;
+  void ConnectTo(AddressHints const &address_hints, Duration const &expire) override;
+  void DisconnectFrom(Address const &address) override;
+  void DisconnectFrom(Addresses const &addresses) override;
+  void SetConfidence(Address const &address, Confidence confidence) override;
+  void SetConfidence(Addresses const &addresses, Confidence confidence) override;
+  void SetConfidence(ConfidenceMap const &map) override;
+  void SetTrackerConfiguration(TrackerConfiguration const &config) override;
   /// @}
 
   /// @name Internal Accessors
@@ -204,9 +209,6 @@ private:
   using Client     = std::shared_ptr<network::AbstractConnection>;
   using ThreadPool = network::ThreadPool;
   using Register   = std::shared_ptr<MuddleRegister>;
-  using Clock      = std::chrono::system_clock;
-  using Timepoint  = Clock::time_point;
-  using Duration   = Clock::duration;
 
   void RunPeriodicMaintenance();
   void UpdateExternalAddresses();

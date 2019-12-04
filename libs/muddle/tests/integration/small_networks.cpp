@@ -141,7 +141,8 @@ void LinearConnectivity(std::unique_ptr<Network> &network)
   for (std::size_t i = 0; i < N - 1; ++i)
   {
     auto &node = network->nodes[i];
-    node.muddle->ConnectTo(fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(8001 + i)));
+    node.muddle->ConnectTo(fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(8001 + i)),
+                           fetch::muddle::Muddle::NeverExpire());
   }
 }
 
@@ -151,7 +152,8 @@ void ConnectNetworks(std::unique_ptr<Network> &n1, std::unique_ptr<Network> &n2)
   {
     for (auto &node2 : n2->nodes)
     {
-      node1.muddle->ConnectTo(fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(node2.port)));
+      node1.muddle->ConnectTo(fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(node2.port)),
+                              fetch::muddle::Muddle::NeverExpire());
     }
   }
 }

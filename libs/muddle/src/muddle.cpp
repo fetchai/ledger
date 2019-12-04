@@ -365,7 +365,7 @@ Muddle::Addresses Muddle::GetRequestedPeers() const
  *
  * @param address The requested address to connect to
  */
-void Muddle::ConnectTo(Address const &address)
+void Muddle::ConnectTo(Address const &address, Duration const & /*expire*/)
 {
   if (node_address_ != address)
   {
@@ -378,11 +378,11 @@ void Muddle::ConnectTo(Address const &address)
  *
  * @param addresses The set of addresses
  */
-void Muddle::ConnectTo(Addresses const &addresses)
+void Muddle::ConnectTo(Addresses const &addresses, Duration const &expire)
 {
   for (auto const &address : addresses)
   {
-    ConnectTo(address);
+    ConnectTo(address, expire);
   }
 }
 
@@ -391,20 +391,20 @@ void Muddle::ConnectTo(Addresses const &addresses)
  *
  * @param uri The uri to connect to
  */
-void Muddle::ConnectTo(network::Uri const &uri)
+void Muddle::ConnectTo(network::Uri const &uri, Duration const & /*expire*/)
 {
   clients_.AddPersistentPeer(uri);
   peer_tracker_->AddDesiredPeer(uri);
 }
 
-void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint)
+void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint, Duration const &expire)
 {
   if (address.empty())
   {
     FETCH_LOG_WARN(logging_name_,
                    "Address is empty, use ConnectTo(uri) to connect directly to uri.",
                    uri_hint.ToString());
-    ConnectTo(uri_hint);
+    ConnectTo(uri_hint, expire);
   }
   else if (node_address_ != address)
   {
@@ -419,11 +419,11 @@ void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint)
   }
 }
 
-void Muddle::ConnectTo(AddressHints const &address_hints)
+void Muddle::ConnectTo(AddressHints const &address_hints, Duration const &expire)
 {
   for (auto const &element : address_hints)
   {
-    ConnectTo(element.first, element.second);
+    ConnectTo(element.first, element.second, expire);
   }
 }
 
