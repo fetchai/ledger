@@ -48,7 +48,7 @@ public:
   TransactionValidator(TransactionValidator &&)      = delete;
   ~TransactionValidator()                            = default;
 
-  ContractExecutionStatus operator()(chain::Transaction const &tx, uint64_t block_index);
+  ContractExecutionStatus operator()(chain::Transaction const &tx, uint64_t block_index) const;
 
   // Operators
   TransactionValidator &operator=(TransactionValidator const &) = delete;
