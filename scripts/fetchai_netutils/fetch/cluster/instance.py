@@ -1,8 +1,7 @@
-import os
-import subprocess
 import fnmatch
 import json
-
+import os
+import subprocess
 from fetchai.ledger.crypto import Entity
 
 
@@ -22,7 +21,6 @@ class Instance(object):
 
     def stop(self, timeout=None):
         if self._process is not None:
-
             # terminate the process
             self._process.terminate()
             self._process.wait(timeout=timeout)

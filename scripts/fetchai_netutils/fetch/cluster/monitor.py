@@ -1,6 +1,6 @@
 import os
-import time
 import threading
+import time
 
 
 class MonitoredLogFile(object):
@@ -36,7 +36,7 @@ class MonitoredLogFile(object):
                     break
 
                 # display the output
-                #print('{:6d} {}: {}'.format(self._offset, self._prefix, line.rstrip()))
+                # print('{:6d} {}: {}'.format(self._offset, self._prefix, line.rstrip()))
                 print('{}: {}'.format(self._prefix, line.rstrip()))
 
 
