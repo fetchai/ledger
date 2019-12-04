@@ -464,7 +464,7 @@ VMModel::SequentialModelPtr VMModel::GetMeAsSequentialIfPossible()
 }
 
 template <typename... LayerArgs>
-void VMModel::AddLayer(const char *layer, LayerArgs... args)
+void VMModel::AddLayer(fetch::vm::Ptr<fetch::vm::String> const &layer, LayerArgs... args)
 {
   try
   {

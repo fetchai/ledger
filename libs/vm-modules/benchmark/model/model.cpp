@@ -268,12 +268,18 @@ void BM_Predict(::benchmark::State &state)
 // activation_3,.... TOFIX number_of_layer should be less by 1
 
 // BOSTON
-BENCHMARK(BM_Predict)->Args({1, 4, 13, 10, 10, 1, true, true, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({10, 4, 13, 10, 10, 1, true, true, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({32, 4, 13, 10, 10, 1, true, true, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)
+    ->Args({1, 4, 13, 10, 10, 1, true, true, false})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)
+    ->Args({10, 4, 13, 10, 10, 1, true, true, false})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)
+    ->Args({32, 4, 13, 10, 10, 1, true, true, false})
+    ->Unit(::benchmark::kMicrosecond);
 
 // MNIST
-BENCHMARK(BM_Predict)->Args({1,  3, 784, 10, 10, true, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 784, 10, 10, true, false})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)->Args({10, 3, 784, 10, 10, true, false})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)->Args({32, 3, 784, 10, 10, true, false})->Unit(::benchmark::kMicrosecond);
 
@@ -612,9 +618,15 @@ void BM_Fit(::benchmark::State &state)
 // activation_1,....
 
 // BOSTON
-BENCHMARK(BM_Fit)->Args({1, 1, 4, 13, 10, 10, 1, true, true, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10, 10, 4, 13, 10, 10, 1, true, true, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({32, 32, 4, 13, 10, 10, 1, true, true, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)
+    ->Args({1, 1, 4, 13, 10, 10, 1, true, true, false})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)
+    ->Args({10, 10, 4, 13, 10, 10, 1, true, true, false})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)
+    ->Args({32, 32, 4, 13, 10, 10, 1, true, true, false})
+    ->Unit(::benchmark::kMicrosecond);
 
 // MNIST
 BENCHMARK(BM_Fit)->Args({1, 1, 3, 784, 10, 10, true, false})->Unit(::benchmark::kMicrosecond);

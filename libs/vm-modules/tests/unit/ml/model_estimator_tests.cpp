@@ -28,29 +28,36 @@ using namespace fetch::vm;
 
 namespace {
 
+using SizeType = fetch::math::SizeType;
 using DataType = fetch::vm_modules::math::DataType;
+using VmPtr = fetch::vm::Ptr<fetch::vm::String>;
+using VmModel = fetch::vm_modules::ml::model::VMModel;
+using VmModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
 
 class VMModelEstimatorTests : public ::testing::Test
 {
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
-};  // namespace
+};
 
 TEST_F(VMModelEstimatorTests, add_dense_layer_test)
 {
   std::string model_type = "sequential";
-  fetch::vm::TypeId type_id = 0;
-  fetch::vm_modules::ml::model::VMModel model(&toolkit.vm(), type_id, model_type);
-  fetch::vm_modules::ml::model::ModelEstimator model_estimator(model);
+  std::string layer_type = "dense";
 
-  for (fetch::math::SizeType inputs = 0; inputs < 1000; inputs += 10)
+  VmPtr vm_ptr_layer_type{
+      new fetch::vm::String(&toolkit.vm(), layer_type)};
+  fetch::vm::TypeId                            type_id = 0;
+  VmModel          model(&toolkit.vm(), type_id, model_type);
+  VmModelEstimator model_estimator(model);
+
+  for (SizeType inputs = 0; inputs < 1000; inputs += 10)
   {
-    for (fetch::math::SizeType outputs = 0; outputs < 1000; outputs += 10)
+    for (SizeType outputs = 0; outputs < 1000; outputs += 10)
     {
-      model.AddLayer("dense", inputs, outputs);
-
-      EXPECT_TRUE(model_estimator.LayerAddDense() == ((inputs * outputs) + outputs));
+      EXPECT_TRUE(model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs) ==
+                  ((inputs * outputs) + outputs));
     }
   }
 }
