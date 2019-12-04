@@ -231,6 +231,11 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, By
     auto next_ones = alg_->GetNextOutputs();
 
     Peers peers;
+    if (next_ones.empty())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "PushUpdateBytes got no peers from alg to send to.");
+      return;
+    }
     for (auto const &next_one : next_ones)
     {
       auto id      = supplied_peers_[next_one];
