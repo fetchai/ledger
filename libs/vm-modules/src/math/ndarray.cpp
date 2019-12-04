@@ -389,44 +389,57 @@ T *NDArray<T>::Find(AnyInteger const &row, AnyInteger const &column)
 }
 
 template <typename T>
-TemplateParameter1 NDArray<T>::At(const AnyInteger &idx1)
+TemplateParameter1 NDArray<T>::At(Index idx1) const
 {
-  auto const value = tensor_.At(idx1.Get<std::size_t>());
-  return {value, element_type_id_};
-}
-template <typename T>
-TemplateParameter1 NDArray<T>::At(AnyInteger const &idx1, AnyInteger const &idx2) const
-{
-  std::size_t r;
-  std::size_t c;
-  if (!GetNonNegativeInteger(idx2, c))
+  if (tensor_.shape().size() != 1)
   {
-    vm_->RuntimeError("negative index");
+    vm_->RuntimeError("Wrong 1-dimensional accessor called on tensor with dimensions : " +
+                      std::to_string(tensor_.shape().size()));
     return TemplateParameter1();
   }
-  if (!GetNonNegativeInteger(idx1, r))
+  T const value = tensor_.At(idx1);
+  return TemplateParameter1(value, element_type_id_);
+}
+
+template <typename T>
+TemplateParameter1 NDArray<T>::At(Index idx1, Index idx2) const
+{
+  if (tensor_.shape().size() != 2)
   {
-    vm_->RuntimeError("negative index");
+    vm_->RuntimeError("Wrong 2-dimensional accessor called on tensor with dimensions : " +
+                      std::to_string(tensor_.shape().size()));
     return TemplateParameter1();
   }
-  auto const value = tensor_.At(r, c);
-  return {value, element_type_id_};
+
+  T const value = tensor_.At(idx1, idx2);
+  return TemplateParameter1(value, element_type_id_);
 }
 template <typename T>
-TemplateParameter1 NDArray<T>::At(AnyInteger const &idx1, AnyInteger const &idx2,
-                                  AnyInteger const &idx3) const
+TemplateParameter1 NDArray<T>::At(Index idx1, Index idx2, Index idx3) const
 {
-  auto const value =
-      tensor_.At(idx1.Get<std::size_t>(), idx2.Get<std::size_t>(), idx3.Get<std::size_t>());
-  return {value, element_type_id_};
+  if (tensor_.shape().size() != 3)
+  {
+    vm_->RuntimeError("Wrong 3-dimensional accessor called on tensor with dimensions : " +
+                      std::to_string(tensor_.shape().size()));
+    return TemplateParameter1();
+  }
+
+  T const value = tensor_.At(idx1, idx2, idx3);
+  return TemplateParameter1(value, element_type_id_);
 }
+
 template <typename T>
-TemplateParameter1 NDArray<T>::At(AnyInteger const &idx1, AnyInteger const &idx2,
-                                  AnyInteger const &idx3, AnyInteger const &idx4) const
+TemplateParameter1 NDArray<T>::At(Index idx1, Index idx2, Index idx3, Index idx4) const
 {
-  auto const value = tensor_.At(idx1.Get<std::size_t>(), idx2.Get<std::size_t>(),
-                                idx3.Get<std::size_t>(), idx4.Get<std::size_t>());
-  return {value, element_type_id_};
+  if (tensor_.shape().size() != 4)
+  {
+    vm_->RuntimeError("Wrong 4-dimensional accessor called on tensor with dimensions : " +
+                      std::to_string(tensor_.shape().size()));
+    return TemplateParameter1();
+  }
+
+  T const value = tensor_.At(idx1, idx2, idx3, idx4);
+  return TemplateParameter1(value, element_type_id_);
 }
 
 template <typename T>
@@ -441,7 +454,7 @@ void NDArray<T>::SetIndexedValue(AnyInteger const &row, AnyInteger const &column
 }
 
 template <typename T>
-TemplateParameter1 NDArray<T>::GetIndexedValue(const AnyInteger &row, const AnyInteger &column)
+TemplateParameter1 NDArray<T>::GetIndexedValue(AnyInteger const &row, AnyInteger const &column)
 {
   T *ptr = Find(row, column);
   if (ptr)
@@ -556,12 +569,18 @@ Ptr<ITensor> ITensor::Constructor(
 
 void fetch::vm_modules::math::ITensor::Bind(fetch::vm::Module &module)
 {
-  auto at2 = static_cast<TemplateParameter1 (ITensor::*)(AnyInteger const &, AnyInteger const &)>(
-      &ITensor::GetIndexedValue);
+  auto at4 =
+      static_cast<TemplateParameter1 (ITensor::*)(Index, Index, Index, Index) const>(&ITensor::At);
+  auto at3 = static_cast<TemplateParameter1 (ITensor::*)(Index, Index, Index) const>(&ITensor::At);
+  auto at2 = static_cast<TemplateParameter1 (ITensor::*)(Index, Index) const>(&ITensor::At);
+  auto at1 = static_cast<TemplateParameter1 (ITensor::*)(Index) const>(&ITensor::At);
   module.CreateTemplateType<ITensor, AnyPrimitive>("NDArray")
       .CreateConstructor(&ITensor::Constructor)
       .EnableIndexOperator(&ITensor::GetIndexedValue, &ITensor::SetIndexedValue)
+      .CreateMemberFunction("at", at4)
+      .CreateMemberFunction("at", at3)
       .CreateMemberFunction("at", at2)
+      .CreateMemberFunction("at", at1)
       .CreateMemberFunction("squeeze", &ITensor::Squeeze)
       .CreateMemberFunction("unsqueeze", &ITensor::Unsqueeze)
       .CreateMemberFunction("fill", &ITensor::Fill)

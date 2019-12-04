@@ -49,12 +49,10 @@ public:
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm::Array<fetch::math::SizeType>> const &shape);
 
-  virtual TemplateParameter1 At(AnyInteger const &idx1)                               = 0;
-  virtual TemplateParameter1 At(AnyInteger const &idx1, AnyInteger const &idx2) const = 0;
-  virtual TemplateParameter1 At(AnyInteger const &idx1, AnyInteger const &idx2,
-                                AnyInteger const &idx3) const                         = 0;
-  virtual TemplateParameter1 At(AnyInteger const &idx1, AnyInteger const &idx2,
-                                AnyInteger const &idx3, AnyInteger const &idx4) const = 0;
+  virtual TemplateParameter1 At(Index idx1) const                                     = 0;
+  virtual TemplateParameter1 At(Index idx1, Index idx2) const                         = 0;
+  virtual TemplateParameter1 At(Index idx1, Index idx2, Index idx3) const             = 0;
+  virtual TemplateParameter1 At(Index idx1, Index idx2, Index idx3, Index idx4) const = 0;
 
   virtual TemplateParameter1 GetIndexedValue(AnyInteger const &row, AnyInteger const &column) = 0;
   virtual void               SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
@@ -104,12 +102,10 @@ struct NDArray : public ITensor
   ////////////////////////////////////
   /// ACCESSING AND SETTING VALUES ///
   ////////////////////////////////////
-  TemplateParameter1 At(AnyInteger const &idx1) override;
-  TemplateParameter1 At(AnyInteger const &idx1, AnyInteger const &idx2) const override;
-  TemplateParameter1 At(AnyInteger const &idx1, AnyInteger const &idx2,
-                        AnyInteger const &idx3) const override;
-  TemplateParameter1 At(AnyInteger const &idx1, AnyInteger const &idx2, AnyInteger const &idx3,
-                        AnyInteger const &idx4) const override;
+  TemplateParameter1 At(Index idx1) const override;
+  TemplateParameter1 At(Index idx1, Index idx2) const override;
+  TemplateParameter1 At(Index idx1, Index idx2, Index idx3) const override;
+  TemplateParameter1 At(Index idx1, Index idx2, Index idx3, Index idx4) const override;
 
   void SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
                        TemplateParameter1 const &value) override;
