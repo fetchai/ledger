@@ -2889,11 +2889,11 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
   }
 
   FixedPoint r   = Fmod(x, CONST_PI);
-  FixedPoint P01 = static_cast<FixedPoint>(-Tan_P01);  // -4 / 33
-  FixedPoint P02 = static_cast<FixedPoint>(Tan_P02);   //  1 / 495
-  FixedPoint Q01 = static_cast<FixedPoint>(-Tan_Q01);  // -5 / 11
-  FixedPoint Q02 = static_cast<FixedPoint>(Tan_Q02);   //  2 / 99
-  FixedPoint Q03 = static_cast<FixedPoint>(-Tan_Q03);  // -1 / 10395
+  auto P01 = static_cast<FixedPoint>(-Tan_P01);  // -4 / 33
+  auto P02 = static_cast<FixedPoint>(Tan_P02);   //  1 / 495
+  auto Q01 = static_cast<FixedPoint>(-Tan_Q01);  // -5 / 11
+  auto Q02 = static_cast<FixedPoint>(Tan_Q02);   //  2 / 99
+  auto Q03 = static_cast<FixedPoint>(-Tan_Q03);  // -1 / 10395
   if (r <= CONST_PI_4)
   {
     FixedPoint r2 = r * r;
@@ -2960,16 +2960,16 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ASin(FixedPoint<I, F> const &x)
     return NaN;
   }
 
-  FixedPoint P00 = static_cast<FixedPoint>(ASin_P00);   //  1.66666666666666657415e-01
-  FixedPoint P01 = static_cast<FixedPoint>(-ASin_P01);  // -3.25565818622400915405e-01
-  FixedPoint P02 = static_cast<FixedPoint>(ASin_P02);   //  2.01212532134862925881e-01
-  FixedPoint P03 = static_cast<FixedPoint>(-ASin_P03);  // -4.00555345006794114027e-02
-  FixedPoint P04 = static_cast<FixedPoint>(ASin_P04);   //  7.91534994289814532176e-04
-  FixedPoint P05 = static_cast<FixedPoint>(ASin_P05);   //  3.47933107596021167570e-05
-  FixedPoint Q01 = static_cast<FixedPoint>(-ASin_Q01);  // -2.40339491173441421878e+00
-  FixedPoint Q02 = static_cast<FixedPoint>(ASin_Q02);   //  2.02094576023350569471e+00
-  FixedPoint Q03 = static_cast<FixedPoint>(-ASin_Q03);  // -6.88283971605453293030e-01
-  FixedPoint Q04 = static_cast<FixedPoint>(ASin_Q04);   //  7.70381505559019352791e-02
+  auto P00 = static_cast<FixedPoint>(ASin_P00);   //  1.66666666666666657415e-01
+  auto P01 = static_cast<FixedPoint>(-ASin_P01);  // -3.25565818622400915405e-01
+  auto P02 = static_cast<FixedPoint>(ASin_P02);   //  2.01212532134862925881e-01
+  auto P03 = static_cast<FixedPoint>(-ASin_P03);  // -4.00555345006794114027e-02
+  auto P04 = static_cast<FixedPoint>(ASin_P04);   //  7.91534994289814532176e-04
+  auto P05 = static_cast<FixedPoint>(ASin_P05);   //  3.47933107596021167570e-05
+  auto Q01 = static_cast<FixedPoint>(-ASin_Q01);  // -2.40339491173441421878e+00
+  auto Q02 = static_cast<FixedPoint>(ASin_Q02);   //  2.02094576023350569471e+00
+  auto Q03 = static_cast<FixedPoint>(-ASin_Q03);  // -6.88283971605453293030e-01
+  auto Q04 = static_cast<FixedPoint>(ASin_Q04);   //  7.70381505559019352791e-02
   FixedPoint c;
   if (x < 0.5)
   {
@@ -3089,15 +3089,15 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan(FixedPoint<I, F> const &x)
     return CONST_PI_2 - ATan(_1 / x);
   }
 
-  FixedPoint P03 = static_cast<FixedPoint>(ATan_P03);  //  116 / 57
-  FixedPoint P05 = static_cast<FixedPoint>(ATan_P05);  // 2198 / 1615
-  FixedPoint P07 = static_cast<FixedPoint>(ATan_P07);  //   44 / 133
-  FixedPoint P09 = static_cast<FixedPoint>(ATan_P09);  // 5597 / 264537
-  FixedPoint Q02 = static_cast<FixedPoint>(ATan_Q02);  //   45 / 19
-  FixedPoint Q04 = static_cast<FixedPoint>(ATan_Q04);  //  630 / 323
-  FixedPoint Q06 = static_cast<FixedPoint>(ATan_Q06);  //  210 / 323
-  FixedPoint Q08 = static_cast<FixedPoint>(ATan_Q08);  //  315 / 4199
-  FixedPoint Q10 = static_cast<FixedPoint>(ATan_Q10);  //   63 / 46189
+  auto P03 = static_cast<FixedPoint>(ATan_P03);  //  116 / 57
+  auto P05 = static_cast<FixedPoint>(ATan_P05);  // 2198 / 1615
+  auto P07 = static_cast<FixedPoint>(ATan_P07);  //   44 / 133
+  auto P09 = static_cast<FixedPoint>(ATan_P09);  // 5597 / 264537
+  auto Q02 = static_cast<FixedPoint>(ATan_Q02);  //   45 / 19
+  auto Q04 = static_cast<FixedPoint>(ATan_Q04);  //  630 / 323
+  auto Q06 = static_cast<FixedPoint>(ATan_Q06);  //  210 / 323
+  auto Q08 = static_cast<FixedPoint>(ATan_Q08);  //  315 / 4199
+  auto Q10 = static_cast<FixedPoint>(ATan_Q10);  //   63 / 46189
   FixedPoint x2  = x * x;
   FixedPoint P   = x * (_1 + x2 * (P03 + x2 * (P05 + x2 * (P07 + x2 * P09))));
   FixedPoint Q   = _1 + x2 * (Q02 + x2 * (Q04 + x2 * (Q06 + x2 * (Q08 + x2 * Q10))));
