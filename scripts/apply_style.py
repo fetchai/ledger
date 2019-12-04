@@ -482,6 +482,10 @@ def check_tool_versions():
 def main():
     check_tool_versions()
 
+    testme = ['git', 'fetch', '--tags']
+
+    subprocess.check_output(testme)
+
     commit, fail_if_changes, jobs = parse_commandline()
 
     files_to_process = files_of_interest(commit)
