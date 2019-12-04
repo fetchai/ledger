@@ -171,7 +171,6 @@ void LaneService::Stop()
   state_db_protocol_.reset();
   state_db_.reset();
   tx_store_protocol_.reset();
-  //  tx_store_.reset();
   tx_sync_protocol_.reset();
   controller_protocol_.reset();
   controller_.reset();

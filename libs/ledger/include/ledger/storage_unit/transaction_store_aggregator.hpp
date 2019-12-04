@@ -22,6 +22,14 @@
 namespace fetch {
 namespace ledger {
 
+/**
+ * The transaction store aggregate is an adapter presents two transactions the two store objects
+ * as one. More concretely it is used to present a single transaction store interface to cover both
+ * the transaction memory pool and the transaction archive.
+ *
+ * The transaction memory pool is always queried first, failure to find a transaction in pool causes
+ * the transaction archive to be queried
+ */
 class TransactionStoreAggregator : public TransactionStoreInterface
 {
 public:

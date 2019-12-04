@@ -43,7 +43,7 @@ class RecentTransactionsCache
 public:
   using TxLayouts = std::vector<chain::TransactionLayout>;
 
-  explicit RecentTransactionsCache(std::size_t max_cache_size, uint32_t log2_num_lanes);
+  RecentTransactionsCache(std::size_t max_cache_size, uint32_t log2_num_lanes);
   ~RecentTransactionsCache() = default;
 
   void        Add(chain::Transaction const &tx);
