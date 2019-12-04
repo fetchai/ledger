@@ -47,6 +47,7 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
 {
   std::string model_type      = "sequential";
   std::string layer_type      = "dense";
+
   SizeType    min_input_size  = 0;
   SizeType    max_input_size  = 1000;
   SizeType    input_step      = 10;
@@ -162,8 +163,8 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_test)
 // sanity check that estimator behaves as intended
 TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
 {
-  std::string model_type = "sequential";
-  std::string layer_type = "convolution1D";
+  std::string model_type      = "sequential";
+  std::string layer_type      = "convolution1D";
   std::string activation_type = "relu";
 
   SizeType min_input_size = 0;
@@ -202,10 +203,66 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
         {
 
           EXPECT_TRUE(model_estimator.LayerAddConvActivation(vm_ptr_layer_type, output_channels,
-                                                   input_channels, kernel_size, stride_size, vm_ptr_activation_type) ==
+                                                             input_channels, kernel_size,
+                                                             stride_size, vm_ptr_activation_type) ==
                       static_cast<ChargeAmount>(CHARGE_INFINITY));
         }
       }
+    }
+  }
+}
+
+
+// sanity check that estimator behaves as intended
+TEST_F(VMModelEstimatorTests, compile_sequential_test)
+{
+  std::string model_type      = "sequential";
+  std::string layer_type      = "dense";
+  std::string loss_type       = "mse";
+  std::string opt_type        = "adam";
+
+  SizeType    min_input_size  = 0;
+  SizeType    max_input_size  = 1000;
+  SizeType    input_step      = 10;
+  SizeType    min_output_size = 0;
+  SizeType    max_output_size = 1000;
+  SizeType    output_step     = 10;
+
+
+  fetch::vm::TypeId type_id = 0;
+  VmModel           model(&toolkit.vm(), type_id, model_type);
+  VmModelEstimator  model_estimator(model);
+
+  VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
+  VmPtr             vm_ptr_loss_type{new fetch::vm::String(&toolkit.vm(), loss_type)};
+  VmPtr             vm_ptr_opt_type{new fetch::vm::String(&toolkit.vm(), opt_type)};
+
+  for (SizeType inputs = min_input_size; inputs < max_input_size; inputs += input_step)
+  {
+    for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
+    {
+      // add some layers
+      model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs);
+      SizeType weights_padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
+      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
+      SizeType weights_size_sum = inputs * outputs + outputs;
+
+      model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs);
+      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
+      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
+      weights_size_sum += inputs * outputs + outputs;
+
+      model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs);
+      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
+      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
+      weights_size_sum += inputs * outputs + outputs;
+
+      DataType val = VmModelEstimator::ADAM_PADDED_WEIGHTS_SIZE_COEF() * weights_padded_size;
+      val += VmModelEstimator::ADAM_WEIGHTS_SIZE_COEF() * weights_size_sum;
+      val += VmModelEstimator::COMPILE_CONST_COEF();
+
+      EXPECT_TRUE(model_estimator.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type) ==
+                  static_cast<ChargeAmount>(val));
     }
   }
 }

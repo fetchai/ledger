@@ -95,8 +95,8 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
     state_.weights_size_sum += inputs * hidden_nodes + hidden_nodes;
 
     // DataType of Tensor is not important for caluclating padded size
-    padded_size = fetch::math::Tensor<float>::PaddedSizeFromShape({hidden_nodes, inputs});
-    padded_size += fetch::math::Tensor<float>::PaddedSizeFromShape({hidden_nodes, 1});
+    padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, inputs});
+    padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, 1});
 
     state_.weights_padded_size_sum += padded_size;
     state_.last_layer_size = hidden_nodes;
