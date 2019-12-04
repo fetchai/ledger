@@ -496,26 +496,6 @@ TEST_F(UInt256Tests, DISABLED_uint256_to_string)
   EXPECT_TRUE(toolkit.Run());
 }
 
-// DELETEME!!
-TEST_F(UInt256Tests, matrix_debug)
-{
-  static constexpr char const *TEXT = R"(
-      function main()
-          var tensor_shape = Array<UInt64>(2);
-          tensor_shape[0] = 2u64;
-          tensor_shape[1] = 10u64;
-          //var data_tensor_1 = Tensor(tensor_shape);
-          var float32 = NDArray<Float32>(tensor_shape);
-          printLn(toString(float32.at(0, 0));
-          var float64 = NDArray<Float64>(tensor_shape);
-          var fixed32 = NDArray<Fixed32>(tensor_shape);
-          var fixed64 = NDArray<Fixed64>(tensor_shape);
-      endfunction
-    )";
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  EXPECT_TRUE(toolkit.Run());
-}
-
 // Disabled until UInt256 constructor from bytearray fix/rework.
 TEST_F(UInt256Tests, DISABLED_uint256_sha256_assignment)
 {

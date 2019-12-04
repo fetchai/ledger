@@ -45,12 +45,12 @@ void Object::RuntimeError(std::string const &message)
   vm_->RuntimeError(message);
 }
 
-TypeInfo Object::GetTypeInfo(TypeId type_id)
+TypeInfo Object::GetTypeInfo(TypeId type_id) const
 {
   return vm_->GetTypeInfo(type_id);
 }
 
-bool Object::GetNonNegativeInteger(Variant const &v, std::size_t &index)
+bool Object::GetNonNegativeInteger(Variant const &v, std::size_t &index) const
 {
   bool ok = true;
   switch (v.type_id)
