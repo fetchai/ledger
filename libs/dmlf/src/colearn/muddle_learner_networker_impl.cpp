@@ -160,6 +160,14 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(fetch::json::JSONDocument
 
   auto config_peer_count = config_peers.size();
 
+  for (unsigned int i = 0; i < config_peer_count; i++)
+  {
+    if (i != instance_number)
+    {
+      supplied_peers_.push_back(cloud_config.root()["peers"][i]["pub"].As<std::string>());
+    }
+  }
+
   std::unordered_set<std::string> remotes;
 
   if (config_peer_count <= INITIAL_PEERS_COUNT)
