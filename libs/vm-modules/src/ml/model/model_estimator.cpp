@@ -267,6 +267,7 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
   estimate = estimate + subset_size * static_cast<SizeType>(state_.forward_pass_cost +
                                                             state_.backward_pass_cost);
   // Optimiser step and clearing gradients
+
   estimate =
       estimate + static_cast<DataType>(subset_size / batch_size) *
                      static_cast<DataType>(state_.optimiser_step_impact * state_.weights_size_sum +

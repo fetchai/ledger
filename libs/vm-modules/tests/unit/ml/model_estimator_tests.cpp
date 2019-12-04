@@ -289,15 +289,15 @@ TEST_F(VMModelEstimatorTests, compile_simple_test)
 }
 
 // sanity check that estimator behaves as intended
-TEST_F(VMModelEstimatorTests, compile_fit_test)
+TEST_F(VMModelEstimatorTests, estimator_fit_test)
 {
-  std::string model_type      = "regressor";
+  std::string model_type      = "sequential";
   std::string layer_type      = "dense";
   std::string loss_type       = "mse";
   std::string opt_type        = "adam";
   std::string activation_type = "relu";
 
-  SizeType min_data_size_1  = 0;
+  SizeType min_data_size_1  = 10;
   SizeType max_data_size_1  = 1000;
   SizeType data_size_1_step = 10;
 
@@ -305,11 +305,11 @@ TEST_F(VMModelEstimatorTests, compile_fit_test)
   SizeType max_data_points  = 1000;
   SizeType data_points_step = 10;
 
-  SizeType min_label_size_1  = 0;
+  SizeType min_label_size_1  = 1;
   SizeType max_label_size_1  = 100;
   SizeType label_size_1_step = 10;
 
-  SizeType min_batch_size  = 0;
+  SizeType min_batch_size  = 1;
   SizeType batch_size_step = 10;
 
   fetch::vm::TypeId type_id = 0;
@@ -342,9 +342,9 @@ TEST_F(VMModelEstimatorTests, compile_fit_test)
           VmModel          model(&toolkit.vm(), type_id, model_type);
           VmModelEstimator model_estimator(model);
 
-          model.AddLayer(vm_ptr_layer_type, data_size_1, label_size_1, vm_ptr_activation_type);
           model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
                                                   vm_ptr_activation_type);
+          model.AddLayer(vm_ptr_layer_type, data_size_1, label_size_1, vm_ptr_activation_type);
 
           DataType forward_pass_cost =
               DataType(data_size_1) * VmModelEstimator::FORWARD_DENSE_INPUT_COEF();
@@ -362,8 +362,8 @@ TEST_F(VMModelEstimatorTests, compile_fit_test)
               DataType(data_size_1 * label_size_1) * VmModelEstimator::BACKWARD_DENSE_QUAD_COEF();
           backward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_BACKWARD_IMPACT();
 
-          model.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);
           model_estimator.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);
+          model.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);
 
           forward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_FORWARD_IMPACT();
           backward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_BACKWARD_IMPACT();
@@ -376,11 +376,7 @@ TEST_F(VMModelEstimatorTests, compile_fit_test)
           val += vm_ptr_tensor_labels->GetTensor().size();
           val += (n_data / batch_size);
           val += n_data * static_cast<SizeType>(forward_pass_cost + backward_pass_cost);
-          val += static_cast<SizeType>(
-              static_cast<DataType>(n_data) / static_cast<DataType>(batch_size) *
-              static_cast<DataType>(VmModelEstimator::ADAM_STEP_IMPACT_COEF() *
-                                        DataType(weights_size_sum) +
-                                    DataType(weights_size_sum)));
+          val += static_cast<SizeType>(static_cast<DataType>(n_data / batch_size) * static_cast<DataType>(VmModelEstimator::ADAM_STEP_IMPACT_COEF() * DataType(weights_size_sum) + DataType(weights_size_sum)));
 
           EXPECT_TRUE(model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size) ==
                       val);
