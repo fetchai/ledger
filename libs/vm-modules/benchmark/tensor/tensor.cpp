@@ -21,7 +21,6 @@
 
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/model/model.hpp"
-#include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/vm_factory.hpp"
 
@@ -89,7 +88,8 @@ void BM_Construct(::benchmark::State &state)
     shape.push_back(static_cast<SizeType>(state.range(i)));
   }
 
-  state.counters["PaddedSize"] = static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(shape));
+  state.counters["PaddedSize"] =
+      static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(shape));
 
   for (auto _ : state)
   {

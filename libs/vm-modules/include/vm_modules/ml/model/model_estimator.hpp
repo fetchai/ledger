@@ -93,6 +93,9 @@ public:
 
   bool DeserializeFrom(serializers::MsgPackSerializer &buffer);
 
+  SizeType GetPaddedSizesSum();
+  SizeType GetSizesSum();
+
 private:
   struct State
   {
@@ -101,7 +104,9 @@ private:
     ChargeAmount backward_pass_cost{0};
 
     // Optimiser
-    ChargeAmount weights_size_sum{0};
+    SizeType weights_size_sum{0};
+    SizeType weights_padded_size_sum{0};
+
     ChargeAmount optimiser_step_impact{0};
 
     SizeType last_layer_size{0};
@@ -114,6 +119,15 @@ private:
 
   VMObjectType &model_;
   State         state_;
+
+  // Forward
+  static constexpr double FORWARD_DENSE_INPUT_COEF  = 0.142857142857143;
+  static constexpr double FORWARD_DENSE_OUTPUT_COEF = 0.037037037037037;
+  static constexpr double FORWARD_DENSE_QUAD_COEF   = 0.013157894736842;
+
+  // Predict
+  static constexpr double PREDICT_BATCH_LAYER_COEF = 0.3;
+  static constexpr double PREDICT_CONST_COEF       = 40;
 
   static constexpr SizeType ADAM_STEP_IMPACT              = 15;
   static constexpr SizeType ADAM_CONSTRUCTION_IMPACT      = 15;

@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/tensor.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
 
@@ -58,9 +59,22 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
 
   if (model_.model_category_ == ModelCategory::SEQUENTIAL)
   {
-    state_.forward_pass_cost += inputs * hidden_nodes + inputs + hidden_nodes;
+    state_.forward_pass_cost +=
+        static_cast<ChargeAmount>(FORWARD_DENSE_INPUT_COEF * static_cast<double>(inputs));
+    state_.forward_pass_cost +=
+        static_cast<ChargeAmount>(FORWARD_DENSE_OUTPUT_COEF * static_cast<double>(hidden_nodes));
+    state_.forward_pass_cost += static_cast<ChargeAmount>(
+        FORWARD_DENSE_QUAD_COEF * static_cast<double>(inputs * hidden_nodes));
+
     state_.backward_pass_cost += 2 * inputs * hidden_nodes + inputs + 2 * hidden_nodes;
     state_.weights_size_sum += inputs * hidden_nodes + hidden_nodes;
+
+    // DataType of Tensor is not important for caluclating padded size
+    state_.weights_padded_size_sum +=
+        fetch::math::Tensor<float>::PaddedSizeFromShape({hidden_nodes, inputs});
+    state_.weights_padded_size_sum +=
+        fetch::math::Tensor<float>::PaddedSizeFromShape({hidden_nodes, 1});
+
     state_.last_layer_size = hidden_nodes;
     state_.ops_count += 3;
   }
@@ -234,10 +248,13 @@ ChargeAmount ModelEstimator::Evaluate()
 
 ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 {
-  SizeType batch_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
-  SizeType estimate   = (state_.forward_pass_cost) * batch_size;
+  SizeType     batch_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
+  ChargeAmount estimate   = static_cast<ChargeAmount>(state_.forward_pass_cost * batch_size);
+  estimate += static_cast<ChargeAmount>(PREDICT_BATCH_LAYER_COEF *
+                                        static_cast<double>(batch_size * state_.ops_count));
+  estimate += static_cast<ChargeAmount>(PREDICT_CONST_COEF);
 
-  return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
+  return estimate * CHARGE_UNIT;
 }
 
 ChargeAmount ModelEstimator::SerializeToString()
@@ -296,6 +313,16 @@ bool ModelEstimator::State::DeserializeFrom(serializers::MsgPackSerializer &buff
   buffer >> ops_count;
 
   return true;
+}
+
+fetch::math::SizeType ModelEstimator::GetPaddedSizesSum()
+{
+  return state_.weights_padded_size_sum;
+}
+
+fetch::math::SizeType ModelEstimator::GetSizesSum()
+{
+  return state_.weights_size_sum;
 }
 
 }  // namespace model
