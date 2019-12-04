@@ -44,18 +44,18 @@ class Muddle;
 class PeerTracker : public core::PeriodicRunnable
 {
 public:
-  using Clock                = std::chrono::steady_clock;
-  using TimePoint            = Clock::time_point;
-  using Address              = Packet::Address;
-  using Peers                = std::deque<PeerInfo>;
-  using PeerTrackerPtr       = std::shared_ptr<PeerTracker>;
-  using PeerList             = std::unordered_set<Address>;
-  using PendingUriResolution = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
-  using PendingPromised      = std::unordered_map<uint64_t, std::shared_ptr<PromiseTask>>;
-  using ConnectionHandle     = network::AbstractConnection::ConnectionHandleType;
-  using ConstByteArray       = byte_array::ConstByteArray;
+  using Clock             = std::chrono::steady_clock;
+  using TimePoint         = Clock::time_point;
+  using Address           = Packet::Address;
+  using Peers             = std::deque<PeerInfo>;
+  using PeerTrackerPtr    = std::shared_ptr<PeerTracker>;
+  using PeerList          = std::unordered_set<Address>;
+  using PendingResolution = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
+  using PendingPromised   = std::unordered_map<uint64_t, std::shared_ptr<PromiseTask>>;
+  using ConnectionHandle  = network::AbstractConnection::ConnectionHandleType;
+  using ConstByteArray    = byte_array::ConstByteArray;
 
-  // PeerTrackerProtocol::PortsList;
+  using Ports                  = PeerTrackerProtocol::Ports;
   using ConnectionPriorityMap  = std::unordered_map<Address, AddressPriority>;
   using ConnectionPriorityList = std::vector<AddressPriority>;
   using AddressSet             = std::unordered_set<Address>;
@@ -187,6 +187,7 @@ protected:
   void AddConnectionHandle(ConnectionHandle handle);
   void RemoveConnectionHandle(ConnectionHandle handle);
   void UpdateExternalUris(NetworkUris const &uris);
+  void UpdateExternalPorts(Ports const &ports);
   void SetConfiguration(TrackerConfiguration const &config);
   void Stop()
   {
@@ -275,7 +276,8 @@ private:
   /// Handling new comers
   /// @{
   std::queue<UnresolvedConnection> new_handles_;
-  PendingUriResolution             uri_resolution_promises_;
+  PendingResolution
+      uri_resolution_promises_;  // TODO: uri_resolution_promises_ -> uri_resolution_tasks_
   /// @}
 
   /// Managing connections to Kademlia subtrees

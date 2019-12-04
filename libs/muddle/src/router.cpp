@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "router.hpp"
 #include "kademlia/peer_tracker.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
-#include "router.hpp"
 #include "routing_message.hpp"
 
 #include "core/byte_array/encoders.hpp"
@@ -549,8 +549,11 @@ MuddleEndpoint::AddressList Router::GetDirectlyConnectedPeers() const
 
 Router::AddressSet Router::GetDirectlyConnectedPeerSet() const
 {
-  // TODO.
-  return {};
+  if (!tracker_)
+  {
+    return {};
+  }
+  return tracker_->directly_connected_peers();
 }
 
 /**
@@ -561,19 +564,14 @@ Router::AddressSet Router::GetDirectlyConnectedPeerSet() const
  */
 Router::Handle Router::LookupHandle(Packet::RawAddress const &raw_address) const
 {
-  Handle handle  = 0;
-  auto   address = ConvertAddress(raw_address);
-
-  if (tracker_)
+  if (!tracker_)
   {
-    return tracker_->LookupHandle(address);
-  }
-  else
-  {
-    FETCH_LOG_ERROR(logging_name_, "Unable handle of address: ", address.ToBase64());
+    FETCH_LOG_ERROR(logging_name_, "Tracker not set. Unable to lookup address.");
+    return 0;
   }
 
-  return handle;
+  auto address = ConvertAddress(raw_address);
+  return tracker_->LookupHandle(address);
 }
 
 void Router::SetKademliaRouting(bool enable)

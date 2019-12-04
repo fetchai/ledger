@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/time/to_seconds.hpp"
 #include "kademlia/peer_tracker.hpp"
+#include "core/time/to_seconds.hpp"
 
 #include <chrono>
 #include <memory>
@@ -94,6 +94,11 @@ void PeerTracker::UpdateExternalUris(NetworkUris const &uris)
   peer_tracker_protocol_.UpdateExternalUris(uris);
 }
 
+void PeerTracker::UpdateExternalPorts(Ports const &ports)
+{
+  peer_tracker_protocol_.UpdateExternalPorts(ports);
+}
+
 PeerTracker::ConnectionPriorityMap PeerTracker::connection_priority() const
 {
   FETCH_LOCK(mutex_);
@@ -142,6 +147,12 @@ void PeerTracker::ProcessConnectionHandles()
     }
     else if (state == ConnectionState::RESOLVED)
     {
+      // Checking if we are already pulling
+      if (uri_resolution_promises_.find(details.address) != uri_resolution_promises_.end())
+      {
+        FETCH_LOG_INFO(logging_name_.c_str(), "Skipping URI request as already in progress.");
+        continue;
+      }
 
       // If not ports were detected, we request the client for its server ports
       if (details.uris.empty())
@@ -654,7 +665,7 @@ void PeerTracker::Periodically()
 
   // Converting URIs into addresses if possible
   std::unordered_set<Uri> new_uris;
-  for (auto const uri : desired_uris_)
+  for (auto const &uri : desired_uris_)
   {
     if (peer_table_.HasUri(uri))
     {
@@ -773,8 +784,9 @@ void PeerTracker::Periodically()
     }
   }
 
-  auto const currently_outgoing = register_.GetOutgoingAddressSet();
-  for (auto const &p : currently_outgoing)
+  // Adding incoming to the set
+  auto const currently_incoming = register_.GetIncomingAddressSet();
+  for (auto const &p : currently_incoming)
   {
     auto connection = register_.LookupConnection(p).lock();
     if (connection)
@@ -849,16 +861,29 @@ PeerTracker::ConnectionState PeerTracker::ResolveConnectionDetails(UnresolvedCon
 void PeerTracker::OnResolveUris(UnresolvedConnection details, service::Promise const &promise)
 {
   FETCH_LOCK(mutex_);
+
+  // Deleting task.
+  uri_resolution_promises_.erase(details.address);
+
   if (promise->state() == service::PromiseState::SUCCESS)
   {
     // extract the set of addresses from which the prospective node is contactable
     auto uris    = promise->As<NetworkUris>();
     details.uris = std::move(uris);
-    RegisterConnectionDetails(details);
+
+    if (!details.uris.empty())
+    {
+      RegisterConnectionDetails(details);
+    }
+    else
+    {
+      FETCH_LOG_INFO(logging_name_.c_str(), "Peer returned an empty URI list.");
+    }
   }
   else
   {
-    FETCH_LOG_WARN(logging_name_.c_str(), "Could not pull URI details.");
+    FETCH_LOG_ERROR(logging_name_.c_str(),
+                    "Failed retreiving Uris from peer: ", static_cast<uint64_t>(promise->state()));
   }
 }
 

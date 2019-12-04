@@ -210,7 +210,7 @@ private:
   using Duration   = Clock::duration;
 
   void RunPeriodicMaintenance();
-
+  void UpdateExternalAddresses();
   void CreateTcpServer(uint16_t port);
   void CreateTcpClient(Uri const &peer);
 

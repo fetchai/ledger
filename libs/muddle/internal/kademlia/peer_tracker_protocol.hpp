@@ -32,17 +32,19 @@ namespace muddle {
 class PeerTrackerProtocol : public service::Protocol
 {
 public:
+  using Ports          = std::vector<uint16_t>;
   using Peers          = std::deque<PeerInfo>;
   using ConstByteArray = byte_array::ConstByteArray;
   using NetworkUris    = std::vector<network::Uri>;
   enum
   {
-    PING            = 1,
-    FIND_PEERS      = 2,
-    GET_MUDDLE_URIS = 3,
+    PING             = 1,
+    FIND_PEERS       = 2,
+    GET_MUDDLE_URIS  = 3,
+    GET_MUDDLE_PORTS = 4,
 
     // TODO(tfr): Not implemented
-    REQUEST_DISCONNECT = 4
+    REQUEST_DISCONNECT = 5
   };
 
   explicit PeerTrackerProtocol(KademliaTable &table, NetworkUris uris = {})
@@ -52,12 +54,19 @@ public:
     Expose(PING, this, &PeerTrackerProtocol::Ping);
     Expose(FIND_PEERS, this, &PeerTrackerProtocol::FindPeers);
     Expose(GET_MUDDLE_URIS, this, &PeerTrackerProtocol::GetMuddleUris);
+    Expose(GET_MUDDLE_PORTS, this, &PeerTrackerProtocol::GetMuddlePorts);
   }
 
   void UpdateExternalUris(NetworkUris const &uris)
   {
     FETCH_LOCK(uri_mutex_);
     uris_ = uris;
+  }
+
+  void UpdateExternalPorts(Ports const &ports)
+  {
+    FETCH_LOCK(uri_mutex_);
+    ports_ = ports;
   }
 
 private:
@@ -87,10 +96,17 @@ private:
     return uris_;
   }
 
+  Ports GetMuddlePorts()
+  {
+    FETCH_LOCK(uri_mutex_);
+    return ports_;
+  }
+
   KademliaTable &table_;
 
   std::mutex  uri_mutex_;
   NetworkUris uris_;
+  Ports       ports_;
 };
 
 }  // namespace muddle

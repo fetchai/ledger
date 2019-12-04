@@ -145,19 +145,30 @@ bool Muddle::Start(Peers const &peers, Ports const &ports)
  */
 bool Muddle::Start(Uris const &peers, Ports const &ports)
 {
+  // Setting ports prior to starting as a fallback mechanism
+  // for giving details of peer
+  peer_tracker_->UpdateExternalPorts(ports);
+
+  // Starting the router
   router_.Start();
+
+  // create all the muddle servers
+  // note that we want to start the servers first and then
+  // the clients, as incoming connections will be requested
+  // for uris
+  for (uint16_t port : ports)
+  {
+    CreateTcpServer(port);
+  }
+
+  // Updating external addresses to make this peer discoverable
+  UpdateExternalAddresses();
 
   // make the initial connections to the remote hosts
   for (auto const &peer : peers)
   {
     // mark this peer as a persistent one
     clients_.AddPersistentPeer(peer);
-  }
-
-  // create all the muddle servers
-  for (uint16_t port : ports)
-  {
-    CreateTcpServer(port);
   }
 
   // schedule the maintenance (which shall force the connection of the peers)
@@ -535,6 +546,40 @@ Muddle::ServerList const &Muddle::servers() const
   return servers_;
 }
 
+void Muddle::UpdateExternalAddresses()
+{
+  PeerTracker::NetworkUris external_uris{};
+  DiscoveryService::Peers  external_addresses{};
+  for (uint16_t port : GetListeningPorts())
+  {
+    // ignore pending ports
+    if (port == 0)
+    {
+      continue;
+    }
+
+    // determine if the port needs to be mapped to an external range
+    auto const it = port_mapping_.find(port);
+    if (it != port_mapping_.end())
+    {
+      port = it->second;
+    }
+
+    network::Peer peer{external_address_, port};
+
+    Uri uri;
+    uri.Parse(peer.ToUri());
+
+    external_uris.emplace_back(uri);
+
+    external_addresses.emplace_back(std::move(peer));
+    FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
+  }
+
+  discovery_service_.UpdatePeers(external_addresses);
+  peer_tracker_->UpdateExternalUris(external_uris);
+}
+
 /**
  * Called periodically internally in order to co-ordinate network connections and clean up
  */
@@ -543,41 +588,10 @@ void Muddle::RunPeriodicMaintenance()
   FETCH_LOG_TRACE(logging_name_, "Running periodic maintenance");
   try
   {
+    UpdateExternalAddresses();
+
     // update discovery information
     std::unordered_set<Uri> just_connected_to;
-
-    PeerTracker::NetworkUris external_uris{};
-    DiscoveryService::Peers  external_addresses{};
-    for (uint16_t port : GetListeningPorts())
-    {
-      // ignore pending ports
-      if (port == 0)
-      {
-        continue;
-      }
-
-      // determine if the port needs to be mapped to an external range
-      auto const it = port_mapping_.find(port);
-      if (it != port_mapping_.end())
-      {
-        port = it->second;
-      }
-
-      network::Peer peer{external_address_, port};
-
-      Uri uri;
-      uri.Parse(peer.ToUri());
-
-      external_uris.emplace_back(uri);
-
-      external_addresses.emplace_back(std::move(peer));
-      FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
-    }
-
-    discovery_service_.UpdatePeers(external_addresses);
-    peer_tracker_->UpdateExternalUris(external_uris);
-
-    // TODO(tfr): update external address for peer_tracker.
 
     // connect to all the required peers
     for (Uri const &peer : clients_.GetPeersToConnectTo())

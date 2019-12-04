@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/trusted_dealer.hpp"
 #include "beacon/beacon_service.hpp"
 #include "beacon/create_new_certificate.hpp"
-#include "beacon/trusted_dealer.hpp"
 #include "beacon/trusted_dealer_beacon_service.hpp"
 #include "core/reactor.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -144,6 +144,12 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
       else
       {
         ++it;
+      }
+
+      if (timer == 100)
+      {
+        FETCH_LOG_ERROR("TrustedDealerTest", "Only connected to: ",
+                        static_cast<uint32_t>(muddle.GetNumDirectlyConnectedPeers()));
       }
     }
     ++timer;

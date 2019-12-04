@@ -89,7 +89,7 @@ struct TrackerConfiguration
 
   uint64_t max_kademlia_connections{3};
   uint64_t max_longrange_connections{1};
-  uint64_t max_desired_connections{2};
+  uint64_t max_desired_connections{255};
   uint64_t max_discovery_connections{2};
 
   /// Priority paramters
