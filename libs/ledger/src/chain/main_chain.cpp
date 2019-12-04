@@ -625,12 +625,10 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
   // asserting genesis block has a number of 0, and everything else is above
   assert(GetBlock(chain::GENESIS_DIGEST));
   assert(GetBlock(chain::GENESIS_DIGEST)->block_number == 0);
-#ifndef NDEBUG
   for (auto const &block_entry : block_chain_)
   {
     assert(block_entry.second->block_number > 0 || block_entry.first == chain::GENESIS_DIGEST);
   }
-#endif
 
   Blocks result;
   bool   proceed = true;
