@@ -54,6 +54,12 @@ public:
   virtual TemplateParameter1 At(Index idx1, Index idx2, Index idx3) const             = 0;
   virtual TemplateParameter1 At(Index idx1, Index idx2, Index idx3, Index idx4) const = 0;
 
+  virtual void SetAt(Index idx1, TemplateParameter1 const &value)                         = 0;
+  virtual void SetAt(Index idx1, Index idx2, TemplateParameter1 const &value)             = 0;
+  virtual void SetAt(Index idx1, Index idx2, Index idx3, TemplateParameter1 const &value) = 0;
+  virtual void SetAt(Index idx1, Index idx2, Index idx3, Index idx4,
+                     TemplateParameter1 const &value)                                     = 0;
+
   virtual TemplateParameter1 GetIndexedValue(AnyInteger const &row, AnyInteger const &column) = 0;
   virtual void               SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
                                              TemplateParameter1 const &value)                 = 0;
@@ -106,6 +112,12 @@ struct NDArray : public ITensor
   TemplateParameter1 At(Index idx1, Index idx2) const override;
   TemplateParameter1 At(Index idx1, Index idx2, Index idx3) const override;
   TemplateParameter1 At(Index idx1, Index idx2, Index idx3, Index idx4) const override;
+
+  void SetAt(Index idx1, TemplateParameter1 const &value) override;
+  void SetAt(Index idx1, Index idx2, TemplateParameter1 const &value) override;
+  void SetAt(Index idx1, Index idx2, Index idx3, TemplateParameter1 const &value) override;
+  void SetAt(Index idx1, Index idx2, Index idx3, Index idx4,
+             TemplateParameter1 const &value) override;
 
   void SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
                        TemplateParameter1 const &value) override;

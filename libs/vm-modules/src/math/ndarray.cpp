@@ -443,6 +443,63 @@ TemplateParameter1 NDArray<T>::At(Index idx1, Index idx2, Index idx3, Index idx4
 }
 
 template <typename T>
+void NDArray<T>::SetAt(Index idx1, const TemplateParameter1 &value)
+{
+  if (tensor_.shape().size() != 1)
+  {
+    vm_->RuntimeError("Wrong 1-dimensional setter called on tensor with dimensions : " +
+                      std::to_string(tensor_.shape().size()));
+    return;
+  }
+
+  T const tval = value.Get<T>();
+  tensor_.Set(idx1, tval);
+}
+
+template <typename T>
+void NDArray<T>::SetAt(Index idx1, Index idx2, const TemplateParameter1 &value)
+{
+  if (tensor_.shape().size() != 2)
+  {
+    vm_->RuntimeError("Wrong 1-dimensional setter called on tensor with dimensions : " +
+                      std::to_string(tensor_.shape().size()));
+    return;
+  }
+
+  T const tval = value.Get<T>();
+  tensor_.Set(idx1, idx2, tval);
+}
+
+template <typename T>
+void NDArray<T>::SetAt(Index idx1, Index idx2, Index idx3, const TemplateParameter1 &value)
+{
+  if (tensor_.shape().size() != 3)
+  {
+    vm_->RuntimeError("Wrong 1-dimensional setter called on tensor with dimensions : " +
+                      std::to_string(tensor_.shape().size()));
+    return;
+  }
+
+  T const tval = value.Get<T>();
+  tensor_.Set(idx1, idx2, idx3, tval);
+}
+
+template <typename T>
+void NDArray<T>::SetAt(Index idx1, Index idx2, Index idx3, Index idx4,
+                       const TemplateParameter1 &value)
+{
+  if (tensor_.shape().size() != 4)
+  {
+    vm_->RuntimeError("Wrong 1-dimensional setter called on tensor with dimensions : " +
+                      std::to_string(tensor_.shape().size()));
+    return;
+  }
+
+  T const tval = value.Get<T>();
+  tensor_.Set(idx1, idx2, idx3, idx4, tval);
+}
+
+template <typename T>
 void NDArray<T>::SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
                                  TemplateParameter1 const &value)
 {
@@ -534,7 +591,7 @@ Ptr<ITensor> ITensor::Constructor(
   {
     if (axis < min_allowed_size)
     {
-      vm->RuntimeError("Can not construct NDArray with axis size < 1!");
+      vm->RuntimeError("Can not construct NDArray with < 1 elements in axis!");
       return Ptr<ITensor>();
     }
   }
@@ -574,6 +631,16 @@ void fetch::vm_modules::math::ITensor::Bind(fetch::vm::Module &module)
   auto at3 = static_cast<TemplateParameter1 (ITensor::*)(Index, Index, Index) const>(&ITensor::At);
   auto at2 = static_cast<TemplateParameter1 (ITensor::*)(Index, Index) const>(&ITensor::At);
   auto at1 = static_cast<TemplateParameter1 (ITensor::*)(Index) const>(&ITensor::At);
+
+  auto setAt4 =
+      static_cast<void (ITensor::*)(Index, Index, Index, Index, TemplateParameter1 const &)>(
+          &ITensor::SetAt);
+  auto setAt3 = static_cast<void (ITensor::*)(Index, Index, Index, TemplateParameter1 const &)>(
+      &ITensor::SetAt);
+  auto setAt2 =
+      static_cast<void (ITensor::*)(Index, Index, TemplateParameter1 const &)>(&ITensor::SetAt);
+  auto setAt1 = static_cast<void (ITensor::*)(Index, TemplateParameter1 const &)>(&ITensor::SetAt);
+
   module.CreateTemplateType<ITensor, AnyPrimitive>("NDArray")
       .CreateConstructor(&ITensor::Constructor)
       .EnableIndexOperator(&ITensor::GetIndexedValue, &ITensor::SetIndexedValue)
@@ -581,6 +648,10 @@ void fetch::vm_modules::math::ITensor::Bind(fetch::vm::Module &module)
       .CreateMemberFunction("at", at3)
       .CreateMemberFunction("at", at2)
       .CreateMemberFunction("at", at1)
+      .CreateMemberFunction("setAt", setAt4)
+      .CreateMemberFunction("setAt", setAt3)
+      .CreateMemberFunction("setAt", setAt2)
+      .CreateMemberFunction("setAt", setAt1)
       .CreateMemberFunction("squeeze", &ITensor::Squeeze)
       .CreateMemberFunction("unsqueeze", &ITensor::Unsqueeze)
       .CreateMemberFunction("fill", &ITensor::Fill)

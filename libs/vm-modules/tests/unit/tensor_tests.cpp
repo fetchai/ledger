@@ -362,7 +362,6 @@ TEST_F(VMTensorTests, ndarray_1_dim_set_and_at)
 
   auto const tensor =
       res.Get<Ptr<typename fetch::vm_modules::math::NDArray<fetch::fixed_point::fp64_t>>>();
-  auto const constructed_shape = tensor->shape();
 
   fetch::math::Tensor<DataType> gt({2});
   gt.Fill(static_cast<DataType>(123456.0));
