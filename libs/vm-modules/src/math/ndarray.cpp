@@ -401,12 +401,12 @@ TemplateParameter1 NDArray<T>::At(AnyInteger const &idx1, AnyInteger const &idx2
   std::size_t c;
   if (!GetNonNegativeInteger(idx2, c))
   {
-    RuntimeError("negative index");
+    vm_->RuntimeError("negative index");
     return TemplateParameter1();
   }
   if (!GetNonNegativeInteger(idx1, r))
   {
-    RuntimeError("negative index");
+    vm_->RuntimeError("negative index");
     return TemplateParameter1();
   }
   auto const value = tensor_.At(r, c);
