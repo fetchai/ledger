@@ -97,15 +97,15 @@ fetch::vm::Ptr<fetch::vm_modules::ml::model::VMModel> vmSequentialModel(
 
     if (activations[i])  // TOFIX if NOT
     {
-      model->Estimator().LayerAddDense(layer_type, input_size, output_size);
-      model->AddLayer<SizeRef, SizeRef>(layer_type, input_size, output_size);
-    }
-    else
-    {
       model->Estimator().LayerAddDenseActivation(layer_type, input_size, output_size,
                                                  activation_type);
       model->AddLayer<SizeRef, SizeRef, StringPtrRef>(layer_type, input_size, output_size,
                                                       activation_type);
+    }
+    else
+    {
+      model->Estimator().LayerAddDense(layer_type, input_size, output_size);
+      model->AddLayer<SizeRef, SizeRef>(layer_type, input_size, output_size);
     }
   }
 
@@ -254,11 +254,10 @@ void BM_Predict(::benchmark::State &state)
 
     // predict
     std::vector<SizeType> data_shape{config.sizes[0], config.batch_size};
-    auto                  data = vmTensor(vm, data_shape);
-    state.counters["charge"]   = static_cast<double>(model->Estimator().Predict(data));
-
-    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
-    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+    auto                  data    = vmTensor(vm, data_shape);
+    state.counters["charge"]      = static_cast<double>(model->Estimator().Predict(data));
+    state.counters["ForwardCost"] = static_cast<double>(model->Estimator().GetForwardCost());
+    state.counters["OpsCount"]    = static_cast<double>(model->Estimator().GetOpsCount());
 
     state.ResumeTiming();
     auto res = model->Predict(data);
