@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/common.hpp"
 #include "vm_modules/math/tensor.hpp"
 
@@ -44,6 +45,7 @@ public:
   using VMObjectType = VMModel;
   using ChargeAmount = fetch::vm::ChargeAmount;
   using SizeType     = fetch::math::SizeType;
+  using DataType     = fetch::fixed_point::FixedPoint<32, 32>;
 
   explicit ModelEstimator(VMObjectType &model);
   ~ModelEstimator() = default;
@@ -95,12 +97,14 @@ public:
 
   SizeType GetPaddedSizesSum();
   SizeType GetSizesSum();
+  SizeType GetOpsCount();
+  DataType GetForwardCost();
 
 private:
   struct State
   {
     // Model
-    ChargeAmount forward_pass_cost{0};
+    DataType     forward_pass_cost{0.0};
     ChargeAmount backward_pass_cost{0};
 
     // Optimiser
@@ -121,13 +125,28 @@ private:
   State         state_;
 
   // Forward
-  static constexpr double FORWARD_DENSE_INPUT_COEF  = 0.142857142857143;
-  static constexpr double FORWARD_DENSE_OUTPUT_COEF = 0.037037037037037;
-  static constexpr double FORWARD_DENSE_QUAD_COEF   = 0.013157894736842;
+  static constexpr DataType FORWARD_DENSE_INPUT_COEF()
+  {
+    return DataType(0.142857142857143);
+  };
+  static constexpr DataType FORWARD_DENSE_OUTPUT_COEF()
+  {
+    return DataType(0.037037037037037);
+  };
+  static constexpr DataType FORWARD_DENSE_QUAD_COEF()
+  {
+    return DataType(0.013157894736842);
+  };
 
   // Predict
-  static constexpr double PREDICT_BATCH_LAYER_COEF = 0.3;
-  static constexpr double PREDICT_CONST_COEF       = 40;
+  static constexpr DataType PREDICT_BATCH_LAYER_COEF()
+  {
+    return DataType(0.3);
+  };
+  static constexpr DataType PREDICT_CONST_COEF()
+  {
+    return DataType(40.0);
+  };
 
   static constexpr SizeType ADAM_STEP_IMPACT              = 15;
   static constexpr SizeType ADAM_CONSTRUCTION_IMPACT      = 15;

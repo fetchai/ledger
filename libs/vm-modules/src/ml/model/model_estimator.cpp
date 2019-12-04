@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
 
@@ -59,12 +60,13 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
 
   if (model_.model_category_ == ModelCategory::SEQUENTIAL)
   {
-    state_.forward_pass_cost +=
-        static_cast<ChargeAmount>(FORWARD_DENSE_INPUT_COEF * static_cast<double>(inputs));
-    state_.forward_pass_cost +=
-        static_cast<ChargeAmount>(FORWARD_DENSE_OUTPUT_COEF * static_cast<double>(hidden_nodes));
-    state_.forward_pass_cost += static_cast<ChargeAmount>(
-        FORWARD_DENSE_QUAD_COEF * static_cast<double>(inputs * hidden_nodes));
+    state_.forward_pass_cost =
+        state_.forward_pass_cost + static_cast<DataType>(inputs) * FORWARD_DENSE_INPUT_COEF();
+    state_.forward_pass_cost = state_.forward_pass_cost +
+                               static_cast<DataType>(hidden_nodes) * FORWARD_DENSE_OUTPUT_COEF();
+    state_.forward_pass_cost =
+        state_.forward_pass_cost +
+        static_cast<DataType>(inputs * hidden_nodes) * FORWARD_DENSE_QUAD_COEF();
 
     state_.backward_pass_cost += 2 * inputs * hidden_nodes + inputs + 2 * hidden_nodes;
     state_.weights_size_sum += inputs * hidden_nodes + hidden_nodes;
@@ -95,7 +97,7 @@ ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> cons
 
   if (activation->string() == "relu")
   {
-    state_.forward_pass_cost += hidden_nodes;
+    state_.forward_pass_cost = state_.forward_pass_cost + hidden_nodes;
     state_.backward_pass_cost += hidden_nodes;
     state_.ops_count += 1;
   }
@@ -142,7 +144,8 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     if (loss->string() == "mse")
     {
       // loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
-      state_.forward_pass_cost += MSE_FORWARD_IMPACT * state_.last_layer_size;
+      state_.forward_pass_cost =
+          state_.forward_pass_cost + MSE_FORWARD_IMPACT * state_.last_layer_size;
       state_.backward_pass_cost += MSE_BACKWARD_IMPACT * state_.last_layer_size;
       state_.ops_count += 1;
     }
@@ -232,7 +235,8 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
   // SetInputReference, update stats
   estimate += subset_size / batch_size;
   // Forward and backward prob
-  estimate += subset_size * (state_.forward_pass_cost + state_.backward_pass_cost);
+  estimate +=
+      subset_size * static_cast<SizeType>(state_.forward_pass_cost + state_.backward_pass_cost);
   // Optimiser step and clearing gradients
   estimate += (subset_size / batch_size) *
               (state_.weights_size_sum * state_.optimiser_step_impact + state_.weights_size_sum);
@@ -250,9 +254,10 @@ ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 {
   SizeType     batch_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
   ChargeAmount estimate   = static_cast<ChargeAmount>(state_.forward_pass_cost * batch_size);
-  estimate += static_cast<ChargeAmount>(PREDICT_BATCH_LAYER_COEF *
-                                        static_cast<double>(batch_size * state_.ops_count));
-  estimate += static_cast<ChargeAmount>(PREDICT_CONST_COEF);
+
+  estimate += static_cast<ChargeAmount>(static_cast<DataType>(batch_size * state_.ops_count) *
+                                        PREDICT_BATCH_LAYER_COEF());
+  estimate += static_cast<ChargeAmount>(PREDICT_CONST_COEF());
 
   return estimate * CHARGE_UNIT;
 }
@@ -323,6 +328,16 @@ fetch::math::SizeType ModelEstimator::GetPaddedSizesSum()
 fetch::math::SizeType ModelEstimator::GetSizesSum()
 {
   return state_.weights_size_sum;
+}
+
+fetch::math::SizeType ModelEstimator::GetOpsCount()
+{
+  return state_.ops_count;
+}
+
+fetch::fixed_point::FixedPoint<32, 32> ModelEstimator::GetForwardCost()
+{
+  return state_.forward_pass_cost;
 }
 
 }  // namespace model
