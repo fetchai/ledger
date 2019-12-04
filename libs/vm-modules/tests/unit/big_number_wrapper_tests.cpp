@@ -18,7 +18,6 @@
 
 #include "gmock/gmock.h"
 #include "math/standard_functions/log.hpp"
-#include "platform.hpp"
 #include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/type.hpp"

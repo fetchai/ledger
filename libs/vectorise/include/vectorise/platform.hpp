@@ -18,10 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "meta/type_traits.hpp"
-#include <algorithm>
-#include <functional>
-#include <type_traits>
-#include <utility>
 
 #if (__SIZEOF_INT128__ == 16)
 using int128_t  = __int128_t;

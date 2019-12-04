@@ -19,9 +19,7 @@
 
 #include "meta/has_index.hpp"
 #include "meta/type_traits.hpp"
-#include "platform.hpp"
 #include "vectorise/containers/array.hpp"
-#include "vectorise/memory/endian.hpp"
 #include "vectorise/platform.hpp"
 
 #include <algorithm>

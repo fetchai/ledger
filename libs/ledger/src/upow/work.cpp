@@ -24,7 +24,6 @@
 #include "crypto/sha256.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/upow/work.hpp"
-#include "platform.hpp"
 #include "vectorise/uint/uint.hpp"
 
 #include <limits>

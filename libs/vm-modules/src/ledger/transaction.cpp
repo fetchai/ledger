@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
-#include "platform.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/ledger/transaction.hpp"
 

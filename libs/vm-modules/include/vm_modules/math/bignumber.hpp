@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "platform.hpp"
 #include "vectorise/uint/uint.hpp"
 #include "vm/object.hpp"
 

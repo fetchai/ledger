@@ -18,7 +18,6 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "gmock/gmock.h"
-#include "platform.hpp"
 #include "vectorise/uint/uint.hpp"
 
 #include <cstddef>

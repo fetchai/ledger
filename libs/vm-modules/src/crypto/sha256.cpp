@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/sha256.hpp"
-#include "platform.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"

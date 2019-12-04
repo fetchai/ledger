@@ -21,7 +21,6 @@
 #include "core/byte_array/encoders.hpp"
 #include "json/document.hpp"
 #include "meta/type_traits.hpp"
-#include "platform.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/array.hpp"
 #include "vm/fixed.hpp"
