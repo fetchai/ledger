@@ -148,8 +148,6 @@ TEST_F(MLChargeComputationTests, )
 // 3.2 Layers number impact on Predict() Charge amount
 // 3.3 data size impact on Predict() Charge amount
 
-
-
 ////////////////////////
 // II. Maintaining the Estimator state consistent with the VMModel owner
 ////////////////////////

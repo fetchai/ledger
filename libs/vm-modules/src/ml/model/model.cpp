@@ -18,6 +18,7 @@
 
 #include "vm_modules/ml/model/model.hpp"
 
+#include "core/serializers/counter.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/model/dnn_classifier.hpp"
 #include "ml/model/dnn_regressor.hpp"
@@ -29,7 +30,6 @@
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/use_estimator.hpp"
-#include "core/serializers/counter.hpp"
 
 using namespace fetch::vm;
 
@@ -354,7 +354,7 @@ bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
     buffer << *model_config_;
     buffer << compiled_;
 
-    serializers::SizeCounter       counter{};
+    serializers::SizeCounter counter{};
 
     counter << *model_;
     buffer.Reserve(counter.size());
