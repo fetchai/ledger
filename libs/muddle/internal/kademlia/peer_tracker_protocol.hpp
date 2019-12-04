@@ -19,6 +19,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "kademlia/table.hpp"
+#include "moment/clock_interfaces.hpp"
 #include "muddle/address.hpp"
 #include "network/service/protocol.hpp"
 #include "network/uri.hpp"
@@ -32,6 +33,11 @@ namespace muddle {
 class PeerTrackerProtocol : public service::Protocol
 {
 public:
+  using ClockInterface = moment::ClockInterface;
+  using Clock          = ClockInterface::AccurateSystemClock;
+  using Timepoint      = ClockInterface::Timestamp;
+  using Duration       = ClockInterface::Duration;
+
   using Ports          = std::vector<uint16_t>;
   using Peers          = std::deque<PeerInfo>;
   using ConstByteArray = byte_array::ConstByteArray;

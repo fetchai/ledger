@@ -19,6 +19,7 @@
 
 #include "core/serializers/group_definitions.hpp"
 #include "kademlia/primitives.hpp"
+#include "moment/clock_interfaces.hpp"
 #include "network/uri.hpp"
 
 #include <chrono>
@@ -30,10 +31,13 @@ namespace muddle {
 
 struct PeerInfo
 {
-  using Clock     = std::chrono::steady_clock;
-  using Timepoint = Clock::time_point;
-  using Address   = Packet::Address;
-  using Uri       = network::Uri;
+  using ClockInterface = moment::ClockInterface;
+  using Clock          = ClockInterface::AccurateSystemClock;
+  using Timepoint      = ClockInterface::Timestamp;
+  using Duration       = ClockInterface::Duration;
+
+  using Address = Packet::Address;
+  using Uri     = network::Uri;
 
   Timepoint first_seen{Clock::now()};
   Timepoint last_activity{};

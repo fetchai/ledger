@@ -25,6 +25,7 @@
 #include "kademlia/address_priority.hpp"
 #include "kademlia/peer_tracker_protocol.hpp"
 #include "kademlia/table.hpp"
+#include "moment/clock_interfaces.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "muddle/tracker_configuration.hpp"
@@ -44,8 +45,11 @@ class Muddle;
 class PeerTracker : public core::PeriodicRunnable
 {
 public:
-  using Clock             = std::chrono::steady_clock;
-  using TimePoint         = Clock::time_point;
+  using ClockInterface = moment::ClockInterface;
+  using Clock          = ClockInterface::AccurateSystemClock;
+  using Timepoint      = ClockInterface::Timestamp;
+  using Duration       = ClockInterface::Duration;
+
   using Address           = Packet::Address;
   using Peers             = std::deque<PeerInfo>;
   using PeerTrackerPtr    = std::shared_ptr<PeerTracker>;
@@ -60,7 +64,7 @@ public:
   using ConnectionPriorityList = std::vector<AddressPriority>;
   using AddressSet             = std::unordered_set<Address>;
   using AddressMap             = std::unordered_map<Address, Address>;
-  using AddressTimestamp       = std::unordered_map<Address, TimePoint>;
+  using AddressTimestamp       = std::unordered_map<Address, Timepoint>;
   using PeerInfoList           = std::deque<PeerInfo>;
   using BlackList              = fetch::muddle::Blacklist;
   using Uri                    = network::Uri;
@@ -298,7 +302,7 @@ private:
   std::deque<Address>                    peer_pull_queue_;
   AddressMap                             peer_pull_map_;
   PendingPromised                        pull_promises_;
-  std::unordered_map<Address, TimePoint> last_pull_from_peer_;
+  std::unordered_map<Address, Timepoint> last_pull_from_peer_;
   uint64_t                               pull_next_id_{0};
   /// @}
 

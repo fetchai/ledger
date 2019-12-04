@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "kademlia/primitives.hpp"
+#include "moment/clock_interfaces.hpp"
 #include "muddle/packet.hpp"
 
 #include <chrono>
@@ -29,8 +30,10 @@ namespace muddle {
 
 struct AddressPriority
 {
-  using Clock     = std::chrono::steady_clock;
-  using TimePoint = Clock::time_point;
+  using ClockInterface = moment::ClockInterface;
+  using Clock          = ClockInterface::AccurateSystemClock;
+  using Timepoint      = ClockInterface::Timestamp;
+
   template <typename T>
   using Duration = typename std::chrono::duration<T>;
   using Address  = Packet::Address;
@@ -60,8 +63,8 @@ struct AddressPriority
   /// Lifetime
   /// @{
   bool      persistent{true};               ///< Whether or not this connnection is permanent
-  TimePoint connected_since{Clock::now()};  ///< Time at which connection was established
-  TimePoint desired_expiry{Clock::now()};   ///< Time at which this connection is no longer relevant
+  Timepoint connected_since{Clock::now()};  ///< Time at which connection was established
+  Timepoint desired_expiry{Clock::now()};   ///< Time at which this connection is no longer relevant
   /// @}
 
   /// Distance
@@ -83,7 +86,7 @@ struct AddressPriority
   {
     // TODO(tfr): Get parameters from configuration
     double const params[] = {1.0 / 30., 1. / 20., 0.05, 1.0 / 3600., 10.0};
-    TimePoint    now      = Clock::now();
+    Timepoint    now      = Clock::now();
 
     // Priority goes down exponentially with the increasing bucket number.
     auto bucket_d = static_cast<double>(bucket);

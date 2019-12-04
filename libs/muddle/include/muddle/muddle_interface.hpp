@@ -55,16 +55,17 @@ public:
     BLACKLIST
   };
 
-  using Peers         = std::unordered_set<std::string>;
-  using Uris          = std::unordered_set<network::Uri>;
-  using Ports         = std::vector<uint16_t>;
-  using PortMapping   = std::unordered_map<uint16_t, uint16_t>;
-  using Addresses     = std::unordered_set<Address>;
-  using ConfidenceMap = std::unordered_map<Address, Confidence>;
-  using AddressHints  = std::unordered_map<Address, network::Uri>;
-  using Clock         = std::chrono::system_clock;
-  using Timepoint     = Clock::time_point;
-  using Duration      = Clock::duration;
+  using Peers          = std::unordered_set<std::string>;
+  using Uris           = std::unordered_set<network::Uri>;
+  using Ports          = std::vector<uint16_t>;
+  using PortMapping    = std::unordered_map<uint16_t, uint16_t>;
+  using Addresses      = std::unordered_set<Address>;
+  using ConfidenceMap  = std::unordered_map<Address, Confidence>;
+  using AddressHints   = std::unordered_map<Address, network::Uri>;
+  using ClockInterface = moment::ClockInterface;
+  using Clock          = ClockInterface::AccurateSystemClock;
+  using Timepoint      = ClockInterface::Timestamp;
+  using Duration       = ClockInterface::Duration;
 
   // Construction / Destruction
   MuddleInterface()          = default;

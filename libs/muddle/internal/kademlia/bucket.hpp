@@ -19,6 +19,7 @@
 
 #include "kademlia/peer_info.hpp"
 #include "kademlia/primitives.hpp"
+#include "moment/clock_interfaces.hpp"
 
 #include <deque>
 #include <unordered_set>
@@ -29,10 +30,13 @@ namespace muddle {
 
 struct Bucket
 {
-  using Clock     = std::chrono::steady_clock;
-  using Timepoint = Clock::time_point;
-  using BucketId  = uint64_t;
-  using Peer      = std::shared_ptr<PeerInfo>;  // TODO(tfr): Make weak
+  using ClockInterface = moment::ClockInterface;
+  using Clock          = ClockInterface::AccurateSystemClock;
+  using Timepoint      = ClockInterface::Timestamp;
+  using Duration       = ClockInterface::Duration;
+
+  using BucketId = uint64_t;
+  using Peer     = std::shared_ptr<PeerInfo>;  // TODO(tfr): Make weak
 
   BucketId                 bucket_id;
   std::unordered_set<Peer> peers;
