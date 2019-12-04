@@ -299,20 +299,6 @@ void VMModel::Bind(Module &module)
                             use_estimator(&ModelEstimator::SerializeToString))
       .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
                             use_estimator(&ModelEstimator::DeserializeFromString))
-      .CreateMemberFunction("add", &VMModel::AddLayer<SizeRef, SizeRef>)
-      .CreateMemberFunction("add", &VMModel::AddLayer<SizeRef, SizeRef, SizeRef, SizeRef>)
-      .CreateMemberFunction("add", &VMModel::AddLayer<SizeRef, SizeRef, StringPtrRef>)
-      .CreateMemberFunction("add",
-                            &VMModel::AddLayer<SizeRef, SizeRef, SizeRef, SizeRef, StringPtrRef>)
-      .CreateMemberFunction("compile", &VMModel::CompileSequential)
-      .CreateMemberFunction("compile", &VMModel::CompileSimple)
-      .CreateMemberFunction("fit", &VMModel::Fit)
-      .CreateMemberFunction("evaluate", &VMModel::Evaluate)
-      .CreateMemberFunction("predict", &VMModel::Predict)
-      .CreateMemberFunction("evaluate", &VMModel::Evaluate)
-      .CreateMemberFunction("predict", &VMModel::Predict)
-      .CreateMemberFunction("serializeToString", &VMModel::SerializeToString)
-      .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString);
 }
 
 void VMModel::SetModel(const VMModel::ModelPtrType &instance)
