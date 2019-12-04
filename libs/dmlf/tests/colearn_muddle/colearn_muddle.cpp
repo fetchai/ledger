@@ -182,29 +182,35 @@ TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveBCast)
 TEST_F(MuddleTypedUpdatesTests, JSONhandling)
 {
   fetch::json::JSONDocument json_config;
-  std::string json_config_input = std::string(
-"{"
-"    \"peers\": ["
-"        {"
-"            \"key\": \"mVnmrf9vsW1lzHvziA75wv1fjcRGToV9wm1Aa8FKlOM=\","
-"            \"pub\": \"5GBXgYsH6IBb6vP/xIagzgldgaFUhSNrkogEwI4nqYHFYEgNVXHnGcSExZzEQAYcyqf+E13TVwQkWN1EXO4njQ==\","
-"            \"uri\": \"tcp://127.0.0.1:8000\""
-"        },"
-"        {"
-"            \"key\": \"zli9+GFCsZpxvhYYLAvr2lroyCTuA1DUelO5ds4h+xE=\","
-"            \"pub\": \"bQhZKIzqsRr+vQji2961q41Sa/X3Zodjw7XXMP1PSzxFznBWKoYnYqyWDSRDmR9qQlRcr+777xxt5354VwuLOw==\","
-"            \"uri\": \"tcp://127.0.0.1:8001\""
-"        },"
-"        {"
-"            \"key\": \"7tEio6183tl+2k6zttJvUjXcfHhq0hcCnCzP0yuQyMQ=\","
-"            \"pub\": \"WLQDnuisKHTsQjSvyfU6wewWi8ABy1Wiup54MOPN+W5MppQAqZ6MQAuNrt1uHHAbLc+mLnUcFe+A8o3FpJz5/w==\","
-"            \"uri\": \"tcp://127.0.0.1:8002\""
-"        }"
-"    ]"
-"}");
+  std::string               json_config_input = std::string(
+      "{"
+      "    \"peers\": ["
+      "        {"
+      "            \"key\": \"mVnmrf9vsW1lzHvziA75wv1fjcRGToV9wm1Aa8FKlOM=\","
+      "            \"pub\": "
+      "\"5GBXgYsH6IBb6vP/"
+      "xIagzgldgaFUhSNrkogEwI4nqYHFYEgNVXHnGcSExZzEQAYcyqf+E13TVwQkWN1EXO4njQ==\","
+      "            \"uri\": \"tcp://127.0.0.1:8000\""
+      "        },"
+      "        {"
+      "            \"key\": \"zli9+GFCsZpxvhYYLAvr2lroyCTuA1DUelO5ds4h+xE=\","
+      "            \"pub\": "
+      "\"bQhZKIzqsRr+vQji2961q41Sa/"
+      "X3Zodjw7XXMP1PSzxFznBWKoYnYqyWDSRDmR9qQlRcr+777xxt5354VwuLOw==\","
+      "            \"uri\": \"tcp://127.0.0.1:8001\""
+      "        },"
+      "        {"
+      "            \"key\": \"7tEio6183tl+2k6zttJvUjXcfHhq0hcCnCzP0yuQyMQ=\","
+      "            \"pub\": "
+      "\"WLQDnuisKHTsQjSvyfU6wewWi8ABy1Wiup54MOPN+W5MppQAqZ6MQAuNrt1uHHAbLc+mLnUcFe+A8o3FpJz5/"
+      "w==\","
+      "            \"uri\": \"tcp://127.0.0.1:8002\""
+      "        }"
+      "    ]"
+      "}");
   json_config.Parse(json_config_input.c_str());
-  auto actual          = std::make_shared<LN>(json_config, 2);
-  EXPECT_EQ(actual -> GetPeerCount(), 2);
+  auto actual = std::make_shared<LN>(json_config, 2);
+  EXPECT_EQ(actual->GetPeerCount(), 2);
 }
 
 TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveShuffle)
