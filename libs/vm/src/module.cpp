@@ -280,27 +280,6 @@ Module::Module()
   CreateFreeFunction("toFixed64", &toFixed64);
   CreateFreeFunction("toFixed128", &toFixed128);
 
-  //  CreateTemplateType<ITensor, AnyFloatingPoint>("NDArray")
-  //      .CreateConstructor(&ITensor::Constructor)
-  //      .EnableIndexOperator(&ITensor::GetIndexedValue, &ITensor::SetIndexedValue)
-  //      .CreateInstantiationType<NDArray<double>>()
-  //      .CreateInstantiationType<NDArray<float>>()
-  //      .EnableOperator(Operator::Negate)
-  //      .EnableOperator(Operator::Add)
-  //      .EnableOperator(Operator::Subtract)
-  //      .EnableOperator(Operator::Multiply)
-  //      .EnableOperator(Operator::InplaceAdd)
-  //      .EnableOperator(Operator::InplaceSubtract)
-  //      .EnableLeftOperator(Operator::Multiply)
-  //      .EnableRightOperator(Operator::Add)
-  //      .EnableRightOperator(Operator::Subtract)
-  //      .EnableRightOperator(Operator::Multiply)
-  //      .EnableRightOperator(Operator::Divide)
-  //      .EnableRightOperator(Operator::InplaceAdd)
-  //      .EnableRightOperator(Operator::InplaceSubtract)
-  //      .EnableRightOperator(Operator::InplaceMultiply)
-  //      .EnableRightOperator(Operator::InplaceDivide);
-
   GetClassInterface<IArray>()
       .CreateConstructor(&IArray::Constructor)
       .CreateSerializeDefaultConstructor(

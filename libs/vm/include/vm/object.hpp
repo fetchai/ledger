@@ -199,8 +199,8 @@ protected:
   Variant &Pop();
   Variant &Top();
   void     RuntimeError(std::string const &message);
-  TypeInfo GetTypeInfo(TypeId type_id) const;
-  bool     GetNonNegativeInteger(Variant const &v, std::size_t &index) const;
+  TypeInfo GetTypeInfo(TypeId type_id);
+  bool     GetNonNegativeInteger(Variant const &v, std::size_t &index);
 
   VM *   vm_;
   TypeId type_id_;
