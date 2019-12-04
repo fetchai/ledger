@@ -753,26 +753,31 @@ void VM::Handler__InvokeContractFunction()
   Variant &   sv       = Pop();
   std::string identity = Ptr<String>(sv.object)->string();
   sv.Reset();
-  if (contract_invocation_handler_)
+
+  if (!contract_invocation_handler_)
   {
-    std::string error;
-    Variant     output;
-    bool        ok =
-        contract_invocation_handler_(this, identity, contract, function, parameters, error, output);
-    if (ok)
-    {
-      if (function.return_type_id != TypeIds::Void)
-      {
-        assert(output.type_id == function.return_type_id);
-        Variant &top = Push();
-        top          = std::move(output);
-      }
-      return;
-    }
+    RuntimeError("Contract-to-contract calls not supported: invocation handler is null");
+    return;
+  }
+
+  std::string error;
+  Variant     output;
+
+  bool ok =
+      contract_invocation_handler_(this, identity, contract, function, parameters, error, output);
+
+  if (!ok)
+  {
     RuntimeError(error);
     return;
   }
-  RuntimeError("contract invocation handler is null");
+
+  if (function.return_type_id != TypeIds::Void)
+  {
+    assert(output.type_id == function.return_type_id);
+    Variant &top = Push();
+    top          = std::move(output);
+  }
 }
 
 void VM::Handler__PushLargeConstant()

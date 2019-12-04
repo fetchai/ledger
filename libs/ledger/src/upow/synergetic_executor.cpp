@@ -85,7 +85,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
 
       // complete the work and resolve the work queue
       contract->Attach(storage_);
-      ContractContext ctx(&token_contract_, solution->address(), &storage_adapter, 0);
+      ContractContext ctx(&token_contract_, solution->address(), nullptr, &storage_adapter, 0);
       contract->UpdateContractContext(ctx);
       status = contract->Complete(solution->address(), shard_mask);
       contract->Detach();

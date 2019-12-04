@@ -72,7 +72,8 @@ ContractExecutionStatus TransactionValidator::operator()(chain::Transaction cons
   StateAdapter storage_adapter{storage_, Identifier{"fetch.token"}};
 
   {
-    ContractContext ctx{&token_contract_, tx.contract_address(), &storage_adapter, block_index};
+    ContractContext         ctx{&token_contract_, tx.contract_address(), nullptr, &storage_adapter,
+                        block_index};
     ContractContextAttacher attacher{token_contract_, ctx};
 
     // CHECK: Ensure there is permission from the originating address to perform the transaction

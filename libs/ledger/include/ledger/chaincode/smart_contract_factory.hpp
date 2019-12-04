@@ -31,7 +31,7 @@ namespace ledger {
 
 template <typename ContractType>
 auto CreateSmartContract(byte_array::ConstByteArray const &contract_digest,
-                         StorageInterface &                storage) -> std::unique_ptr<ContractType>
+                         StorageInterface const &          storage) -> std::unique_ptr<ContractType>
 {
   auto const resource =
       storage.Get(SmartContractManager::CreateAddressForContract(contract_digest));
