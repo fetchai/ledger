@@ -18,7 +18,7 @@
 
 #include "dmlf/collective_learning/client_word2vec_algorithm.hpp"
 #include "dmlf/collective_learning/utilities/utilities.hpp"
-#include "dmlf/networkers/local_learner_networker.hpp"
+#include "dmlf/deprecated/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "json/document.hpp"
 #include "math/tensor.hpp"
@@ -39,6 +39,27 @@ using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
+
+/*  Example JSON configuration file:
+{
+        "data": "datasets/text8",
+        "analogies_test_file": "datasets/text8_first_tenth_analogies_dataset.txt",
+        "vocab_file": "/tmp/vocab.txt",
+        "test_frequency": 10000,
+        "n_clients": 5,
+        "n_peers": 3,
+        "n_rounds": 10,
+        "synchronise": false,
+        "results": "/tmp/w2v_results",
+        "batch_size": 10000,
+        "max_updates": 30,
+        "max_epochs": 20,
+        "learning_rate": 0.02,
+        "print_loss": false,
+        "random_seed": 1,
+        "test_set_ratio": 0.00
+}
+ */
 
 std::vector<std::string> SplitTrainingData(std::string const &train_file, SizeType n_clients)
 {
@@ -134,7 +155,7 @@ int main(int argc, char **argv)
 
   if (argc != 2)
   {
-    std::cout << "Usage : " << argv[0] << "config_file.json" << std::endl;
+    std::cout << "Usage : " << argv[0] << " config_file.json" << std::endl;
     return 1;
   }
 
@@ -168,14 +189,14 @@ int main(int argc, char **argv)
   std::cout << "FETCH Distributed Word2vec Demo" << std::endl;
 
   std::vector<std::string> client_data = SplitTrainingData(data_file, n_clients);
-  std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>> clients(n_clients);
-  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>>   networkers(n_clients);
+  std::vector<std::shared_ptr<CollectiveLearningClient<TensorType>>>          clients(n_clients);
+  std::vector<std::shared_ptr<fetch::dmlf::deprecated_LocalLearnerNetworker>> networkers(n_clients);
 
   // Create networkers
   for (SizeType i(0); i < n_clients; ++i)
   {
-    networkers.at(i) = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
-    networkers.at(i)->Initialize<fetch::dmlf::Update<TensorType>>();
+    networkers.at(i) = std::make_shared<fetch::dmlf::deprecated_LocalLearnerNetworker>();
+    networkers.at(i)->Initialize<fetch::dmlf::deprecated_Update<TensorType>>();
   }
 
   // Add peers to networkers and initialise shuffle algorithm

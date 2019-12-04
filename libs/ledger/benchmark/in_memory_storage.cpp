@@ -25,7 +25,7 @@ using Keys      = InMemoryStorageUnit::Keys;
 using TxLayouts = InMemoryStorageUnit::TxLayouts;
 using Hash      = InMemoryStorageUnit::Hash;
 
-Document InMemoryStorageUnit::Get(ResourceAddress const &key)
+Document InMemoryStorageUnit::Get(ResourceAddress const &key) const
 {
   Document ret;
 

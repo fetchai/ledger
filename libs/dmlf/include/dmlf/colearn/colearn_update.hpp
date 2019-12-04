@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <chrono>
 #include <string>
 #include <unordered_map>
 
@@ -29,14 +30,15 @@ namespace colearn {
 class ColearnUpdate
 {
 public:
-  using Algorithm  = std::string;
-  using UpdateType = std::string;
-  using Data       = byte_array::ConstByteArray;
-  using Source     = std::string;
-  using TimeStamp  = std::uint64_t;
-  using MetaKey    = std::string;
-  using MetaValue  = std::string;
-  using Metadata   = std::unordered_map<MetaKey, MetaValue>;
+  using Algorithm   = std::string;
+  using UpdateType  = std::string;
+  using Data        = byte_array::ConstByteArray;
+  using Source      = std::string;
+  using MetaKey     = std::string;
+  using MetaValue   = std::string;
+  using Metadata    = std::unordered_map<MetaKey, MetaValue>;
+  using Resolution  = std::chrono::nanoseconds;
+  using Fingerprint = byte_array::ConstByteArray;
 
   ColearnUpdate(Algorithm algorithm, UpdateType update_type, Data &&data, Source source,
                 Metadata metadata);
@@ -57,22 +59,31 @@ public:
   {
     return source_;
   }
-  TimeStamp const &time_stamp() const
-  {
-    return time_stamp_;
-  }
   Metadata const &metadata() const
   {
     return metadata_;
   }
 
+  Resolution TimeSinceCreation() const;
+
+  Fingerprint const &fingerprint() const
+  {
+    return fingerprint_;
+  }
+
 private:
-  Algorithm  algorithm_;
-  UpdateType update_type_;
-  Data       data_;
-  Source     source_;
-  TimeStamp  time_stamp_;
-  Metadata   metadata_;
+  using Clock     = std::chrono::steady_clock;
+  using TimePoint = Clock::time_point;
+
+  Fingerprint ComputeFingerprint();
+
+  Algorithm   algorithm_;
+  UpdateType  update_type_;
+  Data        data_;
+  Source      source_;
+  Metadata    metadata_;
+  TimePoint   creation_;
+  Fingerprint fingerprint_;
 };
 
 }  // namespace colearn

@@ -86,11 +86,21 @@ void Parser::Tokenise(std::string const &source)
   yy_switch_to_buffer(bp, scanner);
   // There is always at least one token: the last is EndOfInput
   Token token;
+  int   value;
   do
   {
-    yylex(&token, scanner);
+    value = yylex(&token, scanner);
     tokens_.push_back(token);
-  } while (token.kind != Token::Kind::EndOfInput);
+  } while (value != 0);
+  if (token.kind != Token::Kind::EndOfInput)
+  {
+    token.kind   = Token::Kind::EndOfInput;
+    token.offset = location.offset;
+    token.line   = location.line;
+    token.length = 0;
+    token.text   = "";
+    tokens_.push_back(token);
+  }
   yy_delete_buffer(bp, scanner);
   yylex_destroy(scanner);
 }
@@ -1201,13 +1211,17 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
   {
     // Get the first token of the expression
     Next();
-    if (token_->kind != Token::Kind::Unknown)
+    if (token_->kind == Token::Kind::Unknown)
     {
-      AddError("expression statement not permitted at topmost scope");
+      AddError("unrecognised token");
+    }
+    else if (token_->kind == Token::Kind::UnterminatedComment)
+    {
+      AddError("unterminated comment");
     }
     else
     {
-      AddError("unrecognised token");
+      AddError("expression statement not permitted at topmost scope");
     }
     return nullptr;
   }
@@ -1543,13 +1557,17 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     default:
       if (state_ == State::PreOperand)
       {
-        if (token_->kind != Token::Kind::Unknown)
+        if (token_->kind == Token::Kind::Unknown)
         {
-          AddError("expected expression");
+          AddError("unrecognised token");
+        }
+        else if (token_->kind == Token::Kind::UnterminatedComment)
+        {
+          AddError("unterminated comment");
         }
         else
         {
-          AddError("unrecognised token");
+          AddError("expected expression");
         }
         return nullptr;
       }

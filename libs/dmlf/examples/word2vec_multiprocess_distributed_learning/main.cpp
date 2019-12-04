@@ -18,7 +18,7 @@
 
 #include "dmlf/collective_learning/client_word2vec_algorithm.hpp"
 #include "dmlf/collective_learning/utilities/utilities.hpp"
-#include "dmlf/networkers/muddle_learner_networker.hpp"
+#include "dmlf/deprecated/muddle_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "json/document.hpp"
 #include "math/tensor.hpp"
@@ -73,6 +73,13 @@ int main(int argc, char **argv)
   auto        n_rounds        = doc["n_rounds"].As<SizeType>();
   std::string output_csv_file = doc["results"].As<std::string>();
 
+  // get the network config file
+  fetch::json::JSONDocument network_doc;
+  std::ifstream             network_config_file{networker_config};
+  std::string               text((std::istreambuf_iterator<char>(network_config_file)),
+                                 std::istreambuf_iterator<char>());
+  network_doc.Parse(text.c_str());
+
   /**
    * Prepare environment
    */
@@ -83,9 +90,9 @@ int main(int argc, char **argv)
   std::string client_data = fetch::ml::utilities::ReadFile(data_file);
 
   // Create networker and assign shuffle algorithm
-  auto networker =
-      std::make_shared<fetch::dmlf::MuddleLearnerNetworker>(networker_config, instance_number);
-  networker->Initialize<fetch::dmlf::Update<TensorType>>();
+  auto networker = std::make_shared<fetch::dmlf::deprecated_MuddleLearnerNetworker>(
+      network_doc, instance_number);
+  networker->Initialize<fetch::dmlf::deprecated_Update<TensorType>>();
   networker->SetShuffleAlgorithm(
       std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(networker->GetPeerCount(), n_peers));
 

@@ -20,7 +20,7 @@
 #include "dmlf/collective_learning/utilities/boston_housing_client_utilities.hpp"
 
 #include "dmlf/collective_learning/utilities/utilities.hpp"
-#include "dmlf/networkers/local_learner_networker.hpp"
+#include "dmlf/deprecated/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
@@ -81,11 +81,11 @@ int main(int argc, char **argv)
   std::vector<TensorType> label_tensors = utilities::Split(label_tensor, n_clients);
 
   // Create networkers
-  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(n_clients);
+  std::vector<std::shared_ptr<fetch::dmlf::deprecated_LocalLearnerNetworker>> networkers(n_clients);
   for (SizeType i(0); i < n_clients; ++i)
   {
-    networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
-    networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
+    networkers[i] = std::make_shared<fetch::dmlf::deprecated_LocalLearnerNetworker>();
+    networkers[i]->Initialize<fetch::dmlf::deprecated_Update<TensorType>>();
   }
 
   // Add peers to networkers and initialise shuffle algorithm
