@@ -81,6 +81,7 @@ void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
     auto source = std::string(fetch::byte_array::ToBase64(from));
 
     buf >> type_name >> bytes >> proportion >> random_factor;
+
     std::cout << "from:" << source << ", "
               << "serv:" << service << ", "
               << "chan:" << channel << ", "
@@ -112,6 +113,17 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
                                                        unsigned short int port,
                                                        const std::string &remote)
 {
+  std::unordered_set<std::string> remotes;
+  if (!remote.empty())
+  {
+    remotes.insert(remote);
+  }
+  Setup(priv, port, remotes);
+}
+
+void MuddleLearnerNetworkerImpl::Setup(std::string const &priv, unsigned short int port,
+                                       std::unordered_set<std::string> const &remotes)
+{
   auto ident = std::make_shared<Signer>();
   if (priv.empty())
   {
@@ -130,17 +142,43 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
 
   auto update_store = std::make_shared<UpdateStore>();
 
-  std::unordered_set<std::string> remotes;
-  if (!remote.empty())
-  {
-    remotes.insert(remote);
-  }
-
   mud->SetTrackerConfiguration(muddle::TrackerConfiguration::AllOn());
   mud->Start(remotes, {port});
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   Setup(std::move(mud), std::move(update_store));
+}
+
+MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(fetch::json::JSONDocument &cloud_config,
+                                                       std::size_t                instance_number)
+{
+  auto my_config    = cloud_config.root()["peers"][instance_number];
+  auto self_uri     = Uri(my_config["uri"].As<std::string>());
+  auto port         = self_uri.GetTcpPeer().port();
+  auto privkey      = my_config["key"].As<std::string>();
+  auto config_peers = cloud_config.root()["peers"];
+
+  auto config_peer_count = config_peers.size();
+
+  std::unordered_set<std::string> remotes;
+
+  if (config_peer_count <= INITIAL_PEERS_COUNT)
+  {
+    if (instance_number != 0)
+    {
+      remotes.insert(cloud_config.root()["peers"][0]["uri"].As<std::string>());
+    }
+  }
+  else
+  {
+    for (unsigned int i = 0; i < INITIAL_PEERS_COUNT; i++)
+    {
+      auto peer_number = (instance_number + 1 + i) % config_peer_count;
+      remotes.insert(config_peers[peer_number]["uri"].As<std::string>());
+    }
+  }
+
+  Setup(privkey, port, remotes);
 }
 
 MuddleLearnerNetworkerImpl::~MuddleLearnerNetworkerImpl()
@@ -156,13 +194,16 @@ void MuddleLearnerNetworkerImpl::submit(TaskPtr const &t)
 }
 
 void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update,
+                                                 const Peers &peers)
+{
+  PushUpdateBytes(type_name, update, peers, broadcast_proportion_);
+}
+
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update,
                                                  const Peers &peers, double broadcast_proportion)
 {
-  auto random_factor = randomiser_.GetNew();
-  if (broadcast_proportion < 0.0)
-  {
-    broadcast_proportion = broadcast_proportion_;
-  }
+  auto random_factor   = randomiser_.GetNew();
+  broadcast_proportion = std::max(0.0, std::min(1.0, broadcast_proportion));
   for (auto const &peer : peers)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating sender for ", type_name, " to target ",

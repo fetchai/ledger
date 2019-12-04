@@ -82,7 +82,7 @@ struct NotarisationNode
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
-    , chain{false, ledger::MainChain::Mode::IN_MEMORY_DB}
+    , chain{ledger::MainChain::Mode::IN_MEMORY_DB}
     , beacon_setup_service{new TrustedDealerSetupService{
           *muddle, manifest_cache, muddle_certificate, threshold, aeon_period}}
     , beacon_service{new BeaconService{*muddle, muddle_certificate, *beacon_setup_service,

@@ -25,6 +25,7 @@
 #include "dmlf/colearn/update_store.hpp"
 #include "dmlf/deprecated/abstract_learner_networker.hpp"
 #include "dmlf/deprecated/update_interface.hpp"
+#include "json/document.hpp"
 #include "logging/logging.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -81,6 +82,10 @@ public:
                                       const std::string &remote = "");
 
   explicit MuddleLearnerNetworkerImpl(MuddlePtr mud, StorePtr update_store);
+
+  explicit MuddleLearnerNetworkerImpl(fetch::json::JSONDocument &cloud_config,
+                                      std::size_t                instance_number);
+
   ~MuddleLearnerNetworkerImpl() override;
 
   MuddleLearnerNetworkerImpl(MuddleLearnerNetworkerImpl const &other) = delete;
@@ -120,8 +125,9 @@ public:
   }
 
   void PushUpdateBytes(UpdateType const &type_name, Bytes const &update);
-  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, const Peers &peers,
-                       double broadcast_proportion = -1.0);
+  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, Peers const &peers);
+  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, Peers const &peers,
+                       double broadcast_proportion);
 
   ConstUpdatePtr GetUpdate(AlgorithmClass const &algo, UpdateType const &type,
                            Criteria const &criteria);
@@ -141,7 +147,7 @@ public:
 
   void set_broadcast_proportion(double proportion)
   {
-    broadcast_proportion_ = proportion;
+    broadcast_proportion_ = std::max(0.0, std::min(1.0, proportion));
   }
 
   Address     GetAddress() const;
@@ -171,6 +177,8 @@ protected:
   void     Setup(MuddlePtr mud, StorePtr update_store);
   uint64_t ProcessUpdate(const std::string &type_name, byte_array::ConstByteArray bytes,
                          double proportion, double random_factor, const std::string &source);
+  void     Setup(std::string const &priv, unsigned short int port,
+                 std::unordered_set<std::string> const &remotes);
 
 private:
   std::shared_ptr<Taskpool>   taskpool_;
@@ -189,6 +197,8 @@ private:
   NetManPtr   netm_;
   Sources     detected_peers_;
   SourcesList supplied_peers_;
+
+  const unsigned int INITIAL_PEERS_COUNT = 10;
 
   mutable Mutex mutex_;
 
