@@ -19,7 +19,8 @@
 
 #include <functional>
 #include <map>
-#include <memory> #include <string>
+#include <memory>
+#include <string>
 #include <type_traits>
 #include <typeindex>
 
@@ -36,10 +37,8 @@ public:
   static Vocabulary New(T data)
   {
     // TODO(private issue 143): add destructor
-    Vocabulary ret;
-    ret = std::make_shared<VocabularyInstance>(std::type_index(typeid(T)), new T(data));
-
-    return ret;
+    // NOLINTNEXTLINE
+    return Vocabulary {new VocabularyInstance(std::type_index(typeid(T)), new T(data))};
   }
 
   VocabularyInstance()                                = delete;

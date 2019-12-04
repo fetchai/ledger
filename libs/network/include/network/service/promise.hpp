@@ -228,7 +228,8 @@ bool details::PromiseImplementation::GetResult(T &ret) const
   }
   catch (std::exception const &ex)
   {
-    FETCH_LOG_WARN("Promise", "Error getting promise result: ", ex.what());
+    PromiseError const error{*this};
+    FETCH_LOG_WARN("Promise", error.what(), " : ", ex.what());
   }
 
   return success;

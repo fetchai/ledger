@@ -54,7 +54,7 @@ private:
 
   NetworkManager         nm_{"main", 1};
   MuddlePtr              net_;
-  MainChain              chain_{false, MainChain::Mode::LOAD_PERSISTENT_DB};
+  MainChain              chain_{MainChain::Mode::LOAD_PERSISTENT_DB};
   Reactor                reactor_{"Reactor"};
   MainChainRpcServicePtr service_;
 };
