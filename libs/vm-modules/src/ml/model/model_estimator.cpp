@@ -286,7 +286,6 @@ ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 {
   SizeType     batch_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
   ChargeAmount estimate   = static_cast<ChargeAmount>(state_.forward_pass_cost * batch_size);
-
   estimate += static_cast<ChargeAmount>(static_cast<DataType>(batch_size * state_.ops_count) *
                                         PREDICT_BATCH_LAYER_COEF());
   estimate += static_cast<ChargeAmount>(PREDICT_CONST_COEF());
