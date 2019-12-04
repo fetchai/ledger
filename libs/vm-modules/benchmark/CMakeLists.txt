@@ -13,4 +13,5 @@ setup_compiler()
 add_fetch_gbench(benchmark_vm_modules_model fetch-vm-modules ../../vm-modules/benchmark/model)
 add_fetch_gbench(benchmark_vm_modules_tensor fetch-vm-modules ../../vm-modules/benchmark/tensor)
 
-add_fetch_gbench(benchmark_vm_modules_model_charge fetch-vm-modules ../../vm-modules/benchmark/model_charge)
+add_fetch_gbench(benchmark_vm_modules_model_charge fetch-vm-modules
+                 ../../vm-modules/benchmark/model_charge)
