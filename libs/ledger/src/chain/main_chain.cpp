@@ -625,10 +625,6 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
   // asserting genesis block has a number of 0, and everything else is above
   assert(GetBlock(chain::GENESIS_DIGEST));
   assert(GetBlock(chain::GENESIS_DIGEST)->block_number == 0);
-  for (auto const &block_entry : block_chain_)
-  {
-    assert(block_entry.second->block_number > 0 || block_entry.first == chain::GENESIS_DIGEST);
-  }
 
   Blocks result;
   bool   proceed = true;
@@ -644,6 +640,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
       throw std::runtime_error("Failed to look up block");
     }
+    assert(block->block_number > 0 || block->IsGenesis());
 
     if (block->block_number < lowest_block_number)
     {
