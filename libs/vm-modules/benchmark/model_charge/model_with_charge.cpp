@@ -459,7 +459,8 @@ void BM_Compile(::benchmark::State &state)
   }
 }
 
-// number_of_layers, input_size, hidden_1_size, ...., output_size, activation_1,....
+// (BM_Compile_config) number_of_layers, input_size, hidden_1_size, ...., output_size,
+// activation_1,....
 BENCHMARK(BM_Compile)->Args({2, 1, 1, false})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Compile)->Args({2, 1, 10, false})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Compile)->Args({2, 1, 100, false})->Unit(::benchmark::kMicrosecond);
@@ -577,7 +578,8 @@ void BM_Fit(::benchmark::State &state)
   }
 }
 
-// n_datapoints, batch_size, num_layers, in_size, hidden_1_size, ...., out_size, activation_1,....
+// (BM_Fit_config) n_datapoints, batch_size, num_layers, in_size, hidden_1_size, ...., out_size,
+// activation_1,....
 
 // MNIST
 BENCHMARK(BM_Fit)->Args({32, 32, 3, 784, 100, 10, true, true})->Unit(::benchmark::kMicrosecond);
@@ -684,215 +686,215 @@ BENCHMARK(BM_Fit)
 //*/
 
 ///*
-void BM_Serialise(::benchmark::State &state)
+struct BM_SerializeToString_config
 {
-  using VMPtr        = std::shared_ptr<VM>;
-  using SizeRef      = fetch::math::SizeType const &;
-  using SizeType     = fetch::math::SizeType;
-  using StringPtrRef = fetch::vm::Ptr<fetch::vm::String> const &;
+  explicit BM_SerializeToString_config(::benchmark::State const &state)
+  {
+    layers_number = static_cast<SizeType>(state.range(0));
 
-  SizeType args_size = static_cast<SizeType>(state.range(0) + 1);
+    sizes.reserve(layers_number);
+    for (std::size_t i = 0; i < layers_number; ++i)
+    {
+      sizes.emplace_back(static_cast<SizeType>(state.range(1 + i)));
+    }
+    activations.reserve(layers_number - 1);
+    for (std::size_t i = 0; i < (layers_number - 1); ++i)
+    {
+      activations.emplace_back(static_cast<bool>(state.range(1 + layers_number + i)));
+    }
+  }
 
+  SizeType              layers_number;
+  std::vector<SizeType> sizes;        // layers input/output sizes
+  std::vector<bool>     activations;  // layers activations
+};
+
+void BM_SerializeToString(::benchmark::State &state)
+{
   for (auto _ : state)
   {
     state.PauseTiming();
-    VMPtr vm;
-    SetUp(vm);
 
-    // set up data and labels
-    auto model = CreateSequentialModel(vm);
+    // Get args form state
+    BM_SerializeToString_config config{state};
 
-    for (SizeType i{1}; i < (args_size - 1); i++)
-    {
-      if (state.range(args_size + i - 1))
-      {
-        model->AddLayer<SizeRef, SizeRef>(
-            CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
-            static_cast<SizeType>(state.range(i + 1)));  // input_size, output_size
-      }
-      else
-      {
-        model->AddLayer<SizeRef, SizeRef, StringPtrRef>(
-            CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
-            static_cast<SizeType>(state.range(i + 1)),
-            CreateString(vm, "relu"));  // input_size, output_size
-      }
-    }
-    model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
+    // set up a compiled model
+    auto vm    = NewVM();
+    auto model = vmSequentialModel(vm, config.sizes, config.activations, "mse", "adam");
+
+    // serialise to string
+    state.counters["charge"] = model->Estimator().SerializeToString();
 
     state.ResumeTiming();
     model->SerializeToString();
   }
 }
-//// number_of_layers, input_size, hidden_1_size, ...., output_size, hidden_1_activation, ...
-BENCHMARK(BM_Serialise)->Args({2, 1, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)->Args({2, 1, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)->Args({2, 1, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)->Args({2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)->Args({2, 1, 10000, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Serialise)->Args({2, 1, 100000, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Serialise)->Args({2, 1, 1000000, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Serialise)->Args({2, 1, 10000000, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Serialise)->Args({2, 1, 100000000, false})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Serialise)->Args({2, 10, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)->Args({2, 100, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)->Args({2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Serialise)->Args({2, 10000, 1, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Serialise)->Args({2, 100000, 1, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Serialise)->Args({2, 1000000, 1, false})->Unit(::benchmark::kMicrosecond);
+//// (BM_SerializeToString_config) number_of_layers, input_size, hidden_1_size, ...., output_size,
+/// hidden_1_activation, ...
+BENCHMARK(BM_SerializeToString)->Args({2, 1, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1, 10, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1, 100, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1, 10000, false})->Unit(::benchmark::kMicrosecond);
+// BENCHMARK(BM_SerializeToString)->Args({2, 1, 100000, false})->Unit(::benchmark::kMicrosecond);
+// BENCHMARK(BM_SerializeToString)->Args({2, 1, 1000000, false})->Unit(::benchmark::kMicrosecond);
+// BENCHMARK(BM_SerializeToString)->Args({2, 1, 10000000, false})->Unit(::benchmark::kMicrosecond);
+// BENCHMARK(BM_SerializeToString)->Args({2, 1, 100000000, false})->Unit(::benchmark::kMicrosecond);
 
-// BENCHMARK(BM_Serialise)->Args({2, 10000, 10000, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Serialise)->Args({2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)->Args({2, 100, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)->Args({2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 10, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 100, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
+// BENCHMARK(BM_SerializeToString)->Args({2, 10000, 1, false})->Unit(::benchmark::kMicrosecond);
+// BENCHMARK(BM_SerializeToString)->Args({2, 100000, 1, false})->Unit(::benchmark::kMicrosecond);
+// BENCHMARK(BM_SerializeToString)->Args({2, 1000000, 1, false})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Serialise)
+// BENCHMARK(BM_SerializeToString)->Args({2, 10000, 10000, false})->Unit(::benchmark::kMicrosecond);
+// BENCHMARK(BM_SerializeToString)->Args({2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 100, 100, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_SerializeToString)
     ->Args({6, 1, 10, 100, 100, 100, 1, false, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Serialise)
+BENCHMARK(BM_SerializeToString)
     ->Args({5, 100, 100, 100, 10, 1, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)
+BENCHMARK(BM_SerializeToString)
     ->Args({4, 1, 1, 1, 1, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Serialise)->Args({8, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({8, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Serialise)
+BENCHMARK(BM_SerializeToString)
     ->Args({5, 1000, 1, 1, 1, 1, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)
+BENCHMARK(BM_SerializeToString)
     ->Args({5, 1, 1000, 1, 1, 1, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)
+BENCHMARK(BM_SerializeToString)
     ->Args({5, 1, 1, 1000, 1, 1, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)
+BENCHMARK(BM_SerializeToString)
     ->Args({5, 1, 1, 1, 1000, 1, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)
+BENCHMARK(BM_SerializeToString)
     ->Args({5, 1, 1, 1, 1, 1000, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Serialise)->Args({3, 1, 1, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)->Args({3, 1, 10, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)->Args({3, 1, 100, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)->Args({3, 1, 1000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Serialise)->Args({3, 1, 10000, false, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Serialise)->Args({3, 1, 100000, 1, false,
-false
-}  // namespace
-)->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({3, 1, 1, 1, false, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({3, 1, 10, 1, false, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)
+    ->Args({3, 1, 100, 1, false, false})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)
+    ->Args({3, 1, 1000, 1, false, false})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({3, 1, 10000, false, false})->Unit(::benchmark::kMicrosecond);
+// BENCHMARK(BM_SerializeToString)->Args({3, 1, 100000, 1, false,
+// false
+//)->Unit(::benchmark::kMicrosecond);
 
-// 2. benchmark model->DeserialiseFromString
-void BM_Deserialise(::benchmark::State &state)
+void BM_DeserializeFromString(::benchmark::State &state)
 {
-  using VMPtr        = std::shared_ptr<VM>;
-  using SizeRef      = fetch::math::SizeType const &;
-  using SizeType     = fetch::math::SizeType;
-  using StringPtrRef = fetch::vm::Ptr<fetch::vm::String> const &;
-
-  SizeType args_size = static_cast<SizeType>(state.range(0) + 1);
-
-  // state.PauseTiming();
-  VMPtr vm;
-  SetUp(vm);
-
-  // set up data and labels
-  auto model = CreateSequentialModel(vm);
-
-  for (SizeType i{1}; i < (args_size - 1); i++)
-  {
-    if (state.range(args_size + i - 1))
-    {
-      model->AddLayer<SizeRef, SizeRef>(
-          CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
-          static_cast<SizeType>(state.range(i + 1)));  // input_size, output_size
-    }
-    else
-    {
-      model->AddLayer<SizeRef, SizeRef, StringPtrRef>(
-          CreateString(vm, "dense"), static_cast<SizeType>(state.range(i)),
-          static_cast<SizeType>(state.range(i + 1)),
-          CreateString(vm, "relu"));  // input_size, output_size
-    }
-  }
-  model->CompileSequential(CreateString(vm, "mse"), CreateString(vm, "adam"));
-  fetch::vm::Ptr<fetch::vm::String> serialised_model = model->SerializeToString();
-
-  state.counters["StrLen"] = static_cast<double>(serialised_model->string().size());
-
   for (auto _ : state)
   {
-    // state.ResumeTiming();
-    model->DeserializeFromString(serialised_model);
+    state.PauseTiming();
+
+    // Get args form state
+    BM_SerializeToString_config config{state};
+
+    // set up a compiled model
+    auto vm    = NewVM();
+    auto model = vmSequentialModel(vm, config.sizes, config.activations, "mse", "adam");
+
+    // serialise to string
+    fetch::vm::Ptr<fetch::vm::String> serialized_model = model->SerializeToString();
+
+    auto new_model           = vmSequentialModel(vm);
+    state.counters["charge"] = new_model->Estimator().DeserializeFromString(serialized_model);
+
+    state.ResumeTiming();
+    new_model->DeserializeFromString(serialized_model);
   }
 }
 
-//// number_of_layers, input_size, hidden_1_size, ...., output_size, hidden_1_activation, ...
-BENCHMARK(BM_Deserialise)->Args({2, 1, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 1, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 1, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 1, 10000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 1, 100000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 1, 1000000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 1, 10000000, false})->Unit(::benchmark::kMicrosecond);
+//// (BM_SerializeToString_config) number_of_layers, input_size, hidden_1_size, ...., output_size,
+/// hidden_1_activation, ...
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 10, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 100, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 10000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 100000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 1000000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 10000000, false})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Deserialise)->Args({2, 10, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 100, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 10000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 100000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 1000000, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 10, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 100, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 10000, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 100000, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1000000, 1, false})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Deserialise)->Args({2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 100, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 100, 100, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Deserialise)
+BENCHMARK(BM_DeserializeFromString)
     ->Args({6, 1, 10, 100, 100, 100, 1, false, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Deserialise)
+BENCHMARK(BM_DeserializeFromString)
     ->Args({5, 100, 100, 100, 10, 1, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)
+BENCHMARK(BM_DeserializeFromString)
     ->Args({4, 1, 1, 1, 1, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Deserialise)->Args({8, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)
+    ->Args({8, 1, 1, 1, 1, 1, 1, 1, 1})
+    ->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Deserialise)
+BENCHMARK(BM_DeserializeFromString)
     ->Args({5, 1000, 1, 1, 1, 1, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)
+BENCHMARK(BM_DeserializeFromString)
     ->Args({5, 1, 1000, 1, 1, 1, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)
+BENCHMARK(BM_DeserializeFromString)
     ->Args({5, 1, 1, 1000, 1, 1, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)
+BENCHMARK(BM_DeserializeFromString)
     ->Args({5, 1, 1, 1, 1000, 1, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)
+BENCHMARK(BM_DeserializeFromString)
     ->Args({5, 1, 1, 1, 1, 1000, false, false, false, false})
     ->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Deserialise)->Args({3, 1, 1, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({3, 1, 10, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({3, 1, 100, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({3, 1, 1000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Deserialise)->Args({3, 1, 10000, false, false})->Unit(::benchmark::kMicrosecond);
-// BENCHMARK(BM_Deserialise)->Args({3, 1, 100000, 1, false,
+BENCHMARK(BM_DeserializeFromString)
+    ->Args({3, 1, 1, 1, false, false})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)
+    ->Args({3, 1, 10, 1, false, false})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)
+    ->Args({3, 1, 100, 1, false, false})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)
+    ->Args({3, 1, 1000, 1, false, false})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)
+    ->Args({3, 1, 10000, false, false})
+    ->Unit(::benchmark::kMicrosecond);
+// BENCHMARK(BM_DeserializeFromString)->Args({3, 1, 100000, 1, false,
 // false})->Unit(::benchmark::kMicrosecond);
 //*/
 
-}  // namespace model
+}  // namespace
 
+}  // namespace model
 }  // namespace ml
 }  // namespace benchmark
-}  // namespace vm_modules
 }  // namespace vm_modules
