@@ -32,7 +32,6 @@ namespace serializers {
 
 class MsgPackSerializer
 {
-
 public:
   using ByteArray = byte_array::ByteArray;
 
