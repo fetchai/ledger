@@ -45,14 +45,14 @@ public:
 // sanity check that estimator behaves as intended
 TEST_F(VMModelEstimatorTests, add_dense_layer_test)
 {
-  std::string model_type = "sequential";
-  std::string layer_type = "dense";
-  SizeType min_input_size = 0;
-  SizeType max_input_size = 1000;
-  SizeType input_step = 10;
-  SizeType min_output_size = 0;
-  SizeType max_output_size = 1000;
-  SizeType output_step = 10;
+  std::string model_type      = "sequential";
+  std::string layer_type      = "dense";
+  SizeType    min_input_size  = 0;
+  SizeType    max_input_size  = 1000;
+  SizeType    input_step      = 10;
+  SizeType    min_output_size = 0;
+  SizeType    max_output_size = 1000;
+  SizeType    output_step     = 10;
 
   VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
   fetch::vm::TypeId type_id = 0;
@@ -77,16 +77,16 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
 // sanity check that estimator behaves as intended
 TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
 {
-  std::string model_type = "sequential";
-  std::string layer_type = "dense";
+  std::string model_type      = "sequential";
+  std::string layer_type      = "dense";
   std::string activation_type = "relu";
 
-  SizeType min_input_size = 0;
-  SizeType max_input_size = 1000;
-  SizeType input_step = 10;
+  SizeType min_input_size  = 0;
+  SizeType max_input_size  = 1000;
+  SizeType input_step      = 10;
   SizeType min_output_size = 0;
   SizeType max_output_size = 1000;
-  SizeType output_step = 10;
+  SizeType output_step     = 10;
 
   VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
   VmPtr             vm_ptr_activation_type{new fetch::vm::String(&toolkit.vm(), activation_type)};
@@ -103,9 +103,59 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
       val += VmModelEstimator::ADD_DENSE_QUAD_COEF() * inputs * outputs;
       val += VmModelEstimator::ADD_DENSE_CONST_COEF();
 
-      EXPECT_TRUE(model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, inputs, outputs, vm_ptr_activation_type) ==
+      EXPECT_TRUE(model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, inputs, outputs,
+                                                          vm_ptr_activation_type) ==
                   static_cast<ChargeAmount>(val));
     }
   }
 }
+
+
+// sanity check that estimator behaves as intended
+TEST_F(VMModelEstimatorTests, add_conv_layer_test)
+{
+  std::string model_type      = "sequential";
+  std::string layer_type      = "convolution1D";
+
+  SizeType min_input_size  = 0;
+  SizeType max_input_size  = 1000;
+  SizeType input_step      = 10;
+
+  SizeType min_output_size = 0;
+  SizeType max_output_size = 1000;
+  SizeType output_step     = 10;
+
+  SizeType min_kernel_size = 0;
+  SizeType max_kernel_size = 100;
+  SizeType kernel_step     = 10;
+
+  SizeType min_stride_size = 0;
+  SizeType max_stride_size = 100;
+  SizeType stride_step     = 10;
+
+  VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
+  fetch::vm::TypeId type_id = 0;
+  VmModel           model(&toolkit.vm(), type_id, model_type);
+  VmModelEstimator  model_estimator(model);
+
+  for (SizeType output_channels = min_output_size; output_channels < max_output_size; output_channels += output_step)
+  {
+    for (SizeType input_channels = min_input_size; input_channels < max_input_size; input_channels += input_step)
+    {
+      for (SizeType kernel_size = min_kernel_size; kernel_size < max_kernel_size; kernel_size += kernel_step)
+      {
+        for (SizeType stride_size = min_stride_size; stride_size < max_stride_size; stride_size += stride_step)
+        {
+
+        EXPECT_TRUE(model_estimator.LayerAddConv(vm_ptr_layer_type, output_channels, input_channels, kernel_size, stride_size) ==
+                    static_cast<ChargeAmount>(CHARGE_INFINITY));
+        }
+      }
+    }
+  }
+}
+
+
+
+
 }  // namespace

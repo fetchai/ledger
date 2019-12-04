@@ -143,7 +143,7 @@ ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType con
   FETCH_UNUSED(input_channels);
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
-  return infinite_charge("Not yet implement");
+  return infinite_charge("Not yet implemented");
 }
 
 ChargeAmount ModelEstimator::LayerAddConvActivation(
