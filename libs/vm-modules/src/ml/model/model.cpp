@@ -18,6 +18,7 @@
 
 #include "vm_modules/ml/model/model.hpp"
 
+#include "core/serializers/counter.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/model/dnn_classifier.hpp"
 #include "ml/model/dnn_regressor.hpp"
@@ -319,10 +320,20 @@ bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
   // should be fine to serialise
   else
   {
+    serializers::SizeCounter counter{};
+
+    counter << static_cast<uint8_t>(model_category_);
+    counter << *model_config_;
+    counter << compiled_;
+    counter << *model_;
+
+    buffer.Reserve(counter.size());
+
     buffer << static_cast<uint8_t>(model_category_);
     buffer << *model_config_;
     buffer << compiled_;
     buffer << *model_;
+
     success = true;
   }
 
