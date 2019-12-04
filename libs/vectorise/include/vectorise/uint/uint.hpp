@@ -58,7 +58,7 @@ public:
     ELEMENT_SIZE      = sizeof(BaseType) * 8,
     ELEMENTS          = UINT_SIZE / ELEMENT_SIZE,
     WIDE_ELEMENT_SIZE = sizeof(WideType) * 8,
-    WIDE_ELEMENTS     = (UINT_SIZE + WIDE_ELEMENT_SIZE - 1) / WIDE_ELEMENT_SIZE,
+    WIDE_ELEMENTS     = ((UINT_SIZE + WIDE_ELEMENT_SIZE) - 1) / WIDE_ELEMENT_SIZE,
     RESIDUAL_BITS     = WIDE_ELEMENTS * WIDE_ELEMENT_SIZE - UINT_SIZE,
   };
   static_assert(S == (ELEMENTS * ELEMENT_SIZE),
@@ -87,12 +87,12 @@ public:
   constexpr UInt(UInt &&other) noexcept = default;
 
   template <typename... T, IfIsWideInitialiserList<T...> * = nullptr>
-  constexpr UInt(T &&... data)
+  constexpr explicit UInt(T &&... data)
     : wide_{{std::forward<T>(data)...}}
   {}
 
   template <typename... T, IfIsBaseInitialiserList<T...> * = nullptr>
-  constexpr UInt(T &&... data)
+  constexpr explicit UInt(T &&... data)
     : wide_{reinterpret_cast<WideContainerType &&>(
           core::Array<BaseType, ELEMENTS>{{std::forward<T>(data)...}})}
   {}
@@ -407,19 +407,25 @@ constexpr meta::IfHasNoIndex<T, UInt<S>> &UInt<S>::operator=(T const &v)  // NOL
 /// comparison operators for UInt objects ///
 /////////////////////////////////////////////
 
+// Suppresion of GCC-7 false-positive warning '-Werror=stringop-overflow=':
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83239
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic error "-Wstringop-overflow=0"
+#endif  //__GNUC__
+
 template <uint16_t S>
 constexpr bool UInt<S>::operator==(UInt const &other) const
 {
-  bool        ret = true;
-  std::size_t i   = 0;
-  for (; i < (WIDE_ELEMENTS - 1u); ++i)
+  std::size_t i = 0ull;
+  for (; i < WIDE_ELEMENTS - 1; ++i)
   {
-    ret &= (wide_[i] == other.ElementAt(i));
+    if (wide_[i] != other.ElementAt(i))
+    {
+      return false;
+    }
   }
-
-  ret &= ((wide_[i] & RESIDUAL_BITS_MASK) == (other.ElementAt(i) & other.RESIDUAL_BITS_MASK));
-
-  return ret;
+  return (wide_[i] & RESIDUAL_BITS_MASK) == (other.ElementAt(i) & other.RESIDUAL_BITS_MASK);
 }
 
 template <uint16_t S>
@@ -443,6 +449,10 @@ constexpr bool UInt<S>::operator<(UInt const &other) const
   }
   return false;
 }
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif  //__GNUC__
 
 template <uint16_t S>
 constexpr bool UInt<S>::operator>(UInt const &other) const
@@ -470,42 +480,42 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, bool> UInt<S>::operator==(T other) const
 {
-  return (*this == UInt<S>(other));
+  return (*this == UInt(other));
 }
 
 template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, bool> UInt<S>::operator!=(T other) const
 {
-  return (*this != UInt<S>(other));
+  return (*this != UInt(other));
 }
 
 template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, bool> UInt<S>::operator<(T other) const
 {
-  return (*this < UInt<S>(other));
+  return (*this < UInt(other));
 }
 
 template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, bool> UInt<S>::operator>(T other) const
 {
-  return (*this > UInt<S>(other));
+  return (*this > UInt(other));
 }
 
 template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, bool> UInt<S>::operator<=(T other) const
 {
-  return (*this <= UInt<S>(other));
+  return (*this <= UInt(other));
 }
 
 template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, bool> UInt<S>::operator>=(T other) const
 {
-  return (*this >= UInt<S>(other));
+  return (*this >= UInt(other));
 }
 
 ///////////////////////
@@ -537,12 +547,11 @@ constexpr UInt<S> UInt<S>::operator+() const
 template <uint16_t S>
 constexpr UInt<S> UInt<S>::operator~() const
 {
-  UInt<S> retval;
+  UInt retval;
   for (std::size_t i{0}; i < WIDE_ELEMENTS; ++i)
   {
     retval.wide_[i] = ~wide_[i];
   }
-  // retval.mask_residual_bits();
 
   return retval;
 }
@@ -552,81 +561,81 @@ constexpr UInt<S> UInt<S>::operator~() const
 //////////////////////////////
 
 template <uint16_t S>
-constexpr UInt<S> UInt<S>::operator+(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator+(UInt const &n) const
 {
-  UInt<S> ret{*this};
+  UInt ret{*this};
   ret += n;
 
   return ret;
 }
 
 template <uint16_t S>
-constexpr UInt<S> UInt<S>::operator-(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator-(UInt const &n) const
 {
-  UInt<S> ret{*this};
+  UInt ret{*this};
   ret -= n;
 
   return ret;
 }
 
 template <uint16_t S>
-constexpr UInt<S> UInt<S>::operator*(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator*(UInt const &n) const
 {
-  UInt<S> ret{*this};
+  UInt ret{*this};
   ret *= n;
 
   return ret;
 }
 
 template <uint16_t S>
-constexpr UInt<S> UInt<S>::operator/(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator/(UInt const &n) const
 {
-  UInt<S> ret{*this};
+  UInt ret{*this};
   ret /= n;
 
   return ret;
 }
 
 template <uint16_t S>
-constexpr UInt<S> UInt<S>::operator%(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator%(UInt const &n) const
 {
-  UInt<S> ret{*this};
+  UInt ret{*this};
   ret %= n;
 
   return ret;
 }
 
 template <uint16_t S>
-constexpr UInt<S> UInt<S>::operator&(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator&(UInt const &n) const
 {
-  UInt<S> ret{*this};
+  UInt ret{*this};
   ret &= n;
 
   return ret;
 }
 
 template <uint16_t S>
-constexpr UInt<S> UInt<S>::operator|(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator|(UInt const &n) const
 {
-  UInt<S> ret{*this};
+  UInt ret{*this};
   ret |= n;
 
   return ret;
 }
 
 template <uint16_t S>
-constexpr UInt<S> UInt<S>::operator^(UInt<S> const &n) const
+constexpr UInt<S> UInt<S>::operator^(UInt const &n) const
 {
-  UInt<S> ret{*this};
+  UInt ret{*this};
   ret ^= n;
 
   return ret;
 }
 
 template <uint16_t S>
-constexpr UInt<S> &UInt<S>::operator+=(UInt<S> const &n)
+constexpr UInt<S> &UInt<S>::operator+=(UInt const &n)
 {
-  UInt<S>::WideType carry = 0, new_carry = 0;
+  UInt::WideType carry = 0, new_carry = 0;
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
     // if sum of elements is smaller than the element itself, then we have overflow and carry
@@ -638,13 +647,13 @@ constexpr UInt<S> &UInt<S>::operator+=(UInt<S> const &n)
 }
 
 template <uint16_t S>
-constexpr UInt<S> &UInt<S>::operator-=(UInt<S> const &n)
+constexpr UInt<S> &UInt<S>::operator-=(UInt const &n)
 {
   if (*this < n)
   {
     *this = _0;
   }
-  UInt<S>::WideType carry = 0, new_carry = 0;
+  UInt::WideType carry = 0, new_carry = 0;
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
     // if diff of the elements is larger than the element itself, then we have underflow and carry
@@ -736,11 +745,11 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   // Actual integer division algorithm
   // First simplify dividend/divisor by shifting right by min LSB bit
   // Essentially divide both by 2 as long as the LSB is zero
-  UInt<S>     N{*this}, D{n};
+  UInt        N{*this}, D{n};
   std::size_t lsb = std::min(N.lsb(), D.lsb());
   N >>= lsb;
   D >>= lsb;
-  UInt<S> multiple(1u);
+  UInt multiple(1u);
 
   auto const D_leading_zero_bits{D.UINT_SIZE - D.msb() - 1};
   // Find smallest multiple of divisor (D) that is larger than the dividend (N)
@@ -749,7 +758,7 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
 
   // Calculate Quotient in a loop, essentially divide divisor by 2 and subtract from Remainder
   // Add multiple to Quotient
-  UInt<S> Q = _0, R = N;
+  UInt Q = _0, R = N;
   do
   {
     if (R >= D)
@@ -759,8 +768,7 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
     }
     D >>= 1;  // Divide by two.
     multiple >>= 1;
-  } while (multiple != 0u);
-
+  } while (multiple != UInt::_0);
   // Return the Quotient
   *this = Q;
 
@@ -768,15 +776,15 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
 }
 
 template <uint16_t S>
-constexpr UInt<S> &UInt<S>::operator%=(UInt<S> const &n)
+constexpr UInt<S> &UInt<S>::operator%=(UInt const &n)
 {
-  UInt<S> q = *this / n;
+  UInt q = *this / n;
   *this -= q * n;
   return *this;
 }
 
 template <uint16_t S>
-constexpr UInt<S> &UInt<S>::operator&=(UInt<S> const &n)
+constexpr UInt<S> &UInt<S>::operator&=(UInt const &n)
 {
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
@@ -787,7 +795,7 @@ constexpr UInt<S> &UInt<S>::operator&=(UInt<S> const &n)
 }
 
 template <uint16_t S>
-constexpr UInt<S> &UInt<S>::operator|=(UInt<S> const &n)
+constexpr UInt<S> &UInt<S>::operator|=(UInt const &n)
 {
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
@@ -798,7 +806,7 @@ constexpr UInt<S> &UInt<S>::operator|=(UInt<S> const &n)
 }
 
 template <uint16_t S>
-constexpr UInt<S> &UInt<S>::operator^=(UInt<S> const &n)
+constexpr UInt<S> &UInt<S>::operator^=(UInt const &n)
 {
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
@@ -811,7 +819,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator+(T n) const
 {
-  UInt<S> ret{*this}, nint{n};
+  UInt ret{*this}, nint{n};
   ret += nint;
 
   return ret;
@@ -821,7 +829,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator-(T n) const
 {
-  UInt<S> ret{*this}, nint{n};
+  UInt ret{*this}, nint{n};
   ret -= nint;
 
   return ret;
@@ -831,7 +839,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator*(T n) const
 {
-  UInt<S> ret{*this}, nint{n};
+  UInt ret{*this}, nint{n};
   ret *= nint;
 
   return ret;
@@ -841,7 +849,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator/(T n) const
 {
-  UInt<S> ret{*this}, nint{n};
+  UInt ret{*this}, nint{n};
   ret /= nint;
 
   return ret;
@@ -851,7 +859,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator%(T n) const
 {
-  UInt<S> ret{*this}, nint{n};
+  UInt ret{*this}, nint{n};
   ret %= nint;
 
   return ret;
@@ -861,7 +869,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator&(T n) const
 {
-  UInt<S> ret{*this}, nint{n};
+  UInt ret{*this}, nint{n};
   ret &= nint;
 
   return ret;
@@ -871,7 +879,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator|(T n) const
 {
-  UInt<S> ret{*this}, nint{n};
+  UInt ret{*this}, nint{n};
   ret |= nint;
 
   return ret;
@@ -881,7 +889,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator^(T n) const
 {
-  UInt<S> ret{*this}, nint{n};
+  UInt ret{*this}, nint{n};
   ret ^= nint;
 
   return ret;
@@ -891,7 +899,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> &UInt<S>::operator+=(T n)
 {
-  UInt<S> nint{n};
+  UInt nint{n};
   *this += nint;
 
   return *this;
@@ -901,7 +909,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> &UInt<S>::operator-=(T n)
 {
-  UInt<S> nint{n};
+  UInt nint{n};
   *this -= nint;
 
   return *this;
@@ -911,7 +919,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> &UInt<S>::operator*=(T n)
 {
-  UInt<S> nint{n};
+  UInt nint{n};
   *this *= nint;
 
   return *this;
@@ -921,7 +929,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> &UInt<S>::operator/=(T n)
 {
-  UInt<S> nint{n};
+  UInt nint{n};
   *this /= nint;
 
   return *this;
@@ -931,7 +939,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> &UInt<S>::operator%=(T n)
 {
-  UInt<S> nint{n};
+  UInt nint{n};
   *this %= nint;
 
   return *this;
@@ -941,7 +949,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> &UInt<S>::operator&=(T n)
 {
-  UInt<S> nint{n};
+  UInt nint{n};
   *this &= nint;
 
   return *this;
@@ -951,7 +959,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> &UInt<S>::operator|=(T n)
 {
-  UInt<S> nint{n};
+  UInt nint{n};
   *this |= nint;
 
   return *this;
@@ -961,7 +969,7 @@ template <uint16_t S>
 template <typename T>
 constexpr meta::IfIsUnsignedInteger<T, UInt<S>> &UInt<S>::operator^=(T n)
 {
-  UInt<S> nint{n};
+  UInt nint{n};
   *this ^= nint;
 
   return *this;
@@ -1235,5 +1243,4 @@ constexpr meta::EnableIf<std::is_same<meta::Decay<T>, UInt<256>>::value, double>
 }
 
 }  // namespace vectorise
-
 }  // namespace fetch

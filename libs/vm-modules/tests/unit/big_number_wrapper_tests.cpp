@@ -30,7 +30,7 @@ using namespace fetch::vm;
 using fetch::byte_array::ByteArray;
 using fetch::vm_modules::math::UInt256Wrapper;
 
-static constexpr memory::Endian ENDIANESS_OF_TEST_DATA{memory::Endian::LITTLE};
+constexpr memory::Endian ENDIANESS_OF_TEST_DATA{memory::Endian::LITTLE};
 
 const ByteArray raw_32xFF{
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
