@@ -33,7 +33,7 @@ namespace model {
 
 static constexpr char const *LOGGING_NAME = "VMModelEstimator";
 
-using SizeType     = fetch::math::SizeType;
+using SizeType = fetch::math::SizeType;
 
 // compiler requires redeclarations of static constexprs in cpp
 constexpr SizeType ModelEstimator::FIT_CONST_OVERHEAD;
