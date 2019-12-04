@@ -21,11 +21,6 @@
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_test_toolkit.hpp"
 
-#include <regex>
-#include <sstream>
-
-using namespace fetch::vm;
-
 namespace {
 
 using SizeType         = fetch::math::SizeType;
@@ -153,7 +148,7 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_test)
 
           EXPECT_TRUE(model_estimator.LayerAddConv(vm_ptr_layer_type, output_channels,
                                                    input_channels, kernel_size, stride_size) ==
-                      static_cast<ChargeAmount>(CHARGE_INFINITY));
+                      static_cast<ChargeAmount>(fetch::vm::CHARGE_INFINITY));
         }
       }
     }
@@ -205,7 +200,7 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
           EXPECT_TRUE(model_estimator.LayerAddConvActivation(vm_ptr_layer_type, output_channels,
                                                              input_channels, kernel_size,
                                                              stride_size, vm_ptr_activation_type) ==
-                      static_cast<ChargeAmount>(CHARGE_INFINITY));
+                      static_cast<ChargeAmount>(fetch::vm::CHARGE_INFINITY));
         }
       }
     }
@@ -289,77 +284,86 @@ TEST_F(VMModelEstimatorTests, compile_simple_test)
     VmModelEstimator                           model_estimator(model);
 
     EXPECT_TRUE(model_estimator.CompileSimple(vm_ptr_opt_type, vm_ptr_layers) ==
-                static_cast<ChargeAmount>(CHARGE_INFINITY));
+                static_cast<ChargeAmount>(fetch::vm::CHARGE_INFINITY));
   }
 }
-
 
 // sanity check that estimator behaves as intended
 TEST_F(VMModelEstimatorTests, compile_fit_test)
 {
-  std::string model_type = "regressor";
-  std::string layer_type   = "dense";
-  std::string loss_type  = "mse";
-  std::string opt_type   = "adam";
-  std::string activation_type   = "relu";
+  std::string model_type      = "regressor";
+  std::string layer_type      = "dense";
+  std::string loss_type       = "mse";
+  std::string opt_type        = "adam";
+  std::string activation_type = "relu";
 
-  SizeType min_data_size_1 = 0;
-  SizeType max_data_size_1 = 1000;
-  SizeType data_size_1_step     = 10;
+  SizeType min_data_size_1  = 0;
+  SizeType max_data_size_1  = 1000;
+  SizeType data_size_1_step = 10;
 
   SizeType min_data_points  = 10;
   SizeType max_data_points  = 1000;
   SizeType data_points_step = 10;
 
-  SizeType min_label_size_1 = 0;
-  SizeType max_label_size_1 = 100;
-  SizeType label_size_1_step     = 10;
+  SizeType min_label_size_1  = 0;
+  SizeType max_label_size_1  = 100;
+  SizeType label_size_1_step = 10;
 
-  SizeType min_batch_size = 0;
-  SizeType batch_size_step     = 10;
+  SizeType min_batch_size  = 0;
+  SizeType batch_size_step = 10;
 
   fetch::vm::TypeId type_id = 0;
-  VmPtr vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
-  VmPtr vm_ptr_loss_type{new fetch::vm::String(&toolkit.vm(), loss_type)};
-  VmPtr vm_ptr_opt_type{new fetch::vm::String(&toolkit.vm(), opt_type)};
-  VmPtr vm_ptr_activation_type{new fetch::vm::String(&toolkit.vm(), activation_type)};
+  VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
+  VmPtr             vm_ptr_loss_type{new fetch::vm::String(&toolkit.vm(), loss_type)};
+  VmPtr             vm_ptr_opt_type{new fetch::vm::String(&toolkit.vm(), opt_type)};
+  VmPtr             vm_ptr_activation_type{new fetch::vm::String(&toolkit.vm(), activation_type)};
 
-  for (SizeType data_size_1 = min_data_size_1; data_size_1 < max_data_size_1; data_size_1 += data_size_1_step)
+  for (SizeType data_size_1 = min_data_size_1; data_size_1 < max_data_size_1;
+       data_size_1 += data_size_1_step)
   {
     for (SizeType n_data = min_data_points; n_data < max_data_points; n_data += data_points_step)
     {
-      for (SizeType label_size_1 = min_label_size_1; label_size_1 < max_label_size_1; label_size_1 += label_size_1_step)
+      for (SizeType label_size_1 = min_label_size_1; label_size_1 < max_label_size_1;
+           label_size_1 += label_size_1_step)
       {
-        for (SizeType batch_size = min_batch_size; batch_size < n_data; batch_size += batch_size_step)
+        for (SizeType batch_size = min_batch_size; batch_size < n_data;
+             batch_size += batch_size_step)
         {
 
           SizeType weights_size_sum = data_size_1 * label_size_1 + label_size_1;
 
-          std::vector<uint64_t> data_shape{{data_size_1, n_data}};
-          std::vector<uint64_t> label_shape{{label_size_1, n_data}};
-          fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_data{new fetch::vm_modules::math::VMTensor(&toolkit.vm(), type_id, data_shape)};
-          fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_labels{new fetch::vm_modules::math::VMTensor(&toolkit.vm(), type_id, label_shape)};
+          std::vector<uint64_t>                             data_shape{{data_size_1, n_data}};
+          std::vector<uint64_t>                             label_shape{{label_size_1, n_data}};
+          fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_data{
+              new fetch::vm_modules::math::VMTensor(&toolkit.vm(), type_id, data_shape)};
+          fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_labels{
+              new fetch::vm_modules::math::VMTensor(&toolkit.vm(), type_id, label_shape)};
 
-          VmModel                                    model(&toolkit.vm(), type_id, model_type);
-          VmModelEstimator                           model_estimator(model);
+          VmModel          model(&toolkit.vm(), type_id, model_type);
+          VmModelEstimator model_estimator(model);
 
-          model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1, vm_ptr_activation_type);
+          model.AddLayer(vm_ptr_layer_type, data_size_1, label_size_1);
+          model_estimator.LayerAddDense(vm_ptr_layer_type, data_size_1, label_size_1);
 
-          DataType forward_pass_cost = DataType(data_size_1) * VmModelEstimator::FORWARD_DENSE_INPUT_COEF();
-          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::FORWARD_DENSE_OUTPUT_COEF();
-          forward_pass_cost += DataType(data_size_1 * label_size_1) * VmModelEstimator::FORWARD_DENSE_QUAD_COEF();
-          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_FORWARD_IMPACT();
+          DataType forward_pass_cost =
+              DataType(data_size_1) * VmModelEstimator::FORWARD_DENSE_INPUT_COEF();
+          forward_pass_cost +=
+              DataType(label_size_1) * VmModelEstimator::FORWARD_DENSE_OUTPUT_COEF();
+          forward_pass_cost +=
+              DataType(data_size_1 * label_size_1) * VmModelEstimator::FORWARD_DENSE_QUAD_COEF();
 
-          DataType backward_pass_cost = DataType(data_size_1) * VmModelEstimator::BACKWARD_DENSE_INPUT_COEF();
-          backward_pass_cost += DataType(label_size_1) * VmModelEstimator::BACKWARD_DENSE_OUTPUT_COEF();
-          backward_pass_cost += DataType(data_size_1 * label_size_1) * VmModelEstimator::BACKWARD_DENSE_QUAD_COEF();
-          backward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_BACKWARD_IMPACT();
+          DataType backward_pass_cost =
+              DataType(data_size_1) * VmModelEstimator::BACKWARD_DENSE_INPUT_COEF();
+          backward_pass_cost +=
+              DataType(label_size_1) * VmModelEstimator::BACKWARD_DENSE_OUTPUT_COEF();
+          backward_pass_cost +=
+              DataType(data_size_1 * label_size_1) * VmModelEstimator::BACKWARD_DENSE_QUAD_COEF();
 
+          model.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);
           model_estimator.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);
 
           forward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_FORWARD_IMPACT();
           backward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_BACKWARD_IMPACT();
-
 
           SizeType val = vm_ptr_tensor_data->GetTensor().size();
           val += vm_ptr_tensor_labels->GetTensor().size();
@@ -369,10 +373,14 @@ TEST_F(VMModelEstimatorTests, compile_fit_test)
           val += vm_ptr_tensor_labels->GetTensor().size();
           val += (n_data / batch_size);
           val += n_data * static_cast<SizeType>(forward_pass_cost + backward_pass_cost);
-          val += static_cast<SizeType>(static_cast<DataType>(n_data) / static_cast<DataType>(batch_size) *
-                     static_cast<DataType>(VmModelEstimator::ADAM_STEP_IMPACT_COEF() * DataType(weights_size_sum) + DataType(weights_size_sum)));
+          val += static_cast<SizeType>(
+              static_cast<DataType>(n_data) / static_cast<DataType>(batch_size) *
+              static_cast<DataType>(VmModelEstimator::ADAM_STEP_IMPACT_COEF() *
+                                        DataType(weights_size_sum) +
+                                    DataType(weights_size_sum)));
 
-          EXPECT_TRUE(model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size) == val);
+          EXPECT_TRUE(model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size) ==
+                      val);
         }
       }
     }
