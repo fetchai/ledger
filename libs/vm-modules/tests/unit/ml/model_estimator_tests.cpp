@@ -212,7 +212,6 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
   }
 }
 
-
 // sanity check that estimator behaves as intended
 TEST_F(VMModelEstimatorTests, compile_sequential_test)
 {
@@ -227,11 +226,8 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
   SizeType    min_output_size = 0;
   SizeType    max_output_size = 1000;
   SizeType    output_step     = 10;
-
-
+  
   fetch::vm::TypeId type_id = 0;
-  VmModel           model(&toolkit.vm(), type_id, model_type);
-  VmModelEstimator  model_estimator(model);
 
   VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
   VmPtr             vm_ptr_loss_type{new fetch::vm::String(&toolkit.vm(), loss_type)};
@@ -241,6 +237,9 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
   {
     for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
     {
+      VmModel           model(&toolkit.vm(), type_id, model_type);
+      VmModelEstimator  model_estimator(model);
+
       // add some layers
       model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs);
       SizeType weights_padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
@@ -260,6 +259,9 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
       DataType val = VmModelEstimator::ADAM_PADDED_WEIGHTS_SIZE_COEF() * weights_padded_size;
       val += VmModelEstimator::ADAM_WEIGHTS_SIZE_COEF() * weights_size_sum;
       val += VmModelEstimator::COMPILE_CONST_COEF();
+      
+      std::cout << "model_estimator.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type): " << model_estimator.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type) << std::endl;
+      std::cout << "val: " << val << std::endl;
 
       EXPECT_TRUE(model_estimator.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type) ==
                   static_cast<ChargeAmount>(val));
