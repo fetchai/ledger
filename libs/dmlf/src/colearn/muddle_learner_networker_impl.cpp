@@ -74,13 +74,14 @@ void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
     serializers::MsgPackSerializer buf{payload};
 
     std::string                type_name;
+    std::string                algo_name;
     byte_array::ConstByteArray bytes;
     double                     proportion;
     double                     random_factor;
 
     auto source = std::string(fetch::byte_array::ToBase64(from));
 
-    buf >> type_name >> bytes >> proportion >> random_factor;
+    buf >> algo_name >> type_name >> bytes >> proportion >> random_factor;
 
     std::cout << "from:" << source << ", "
               << "serv:" << service << ", "
@@ -92,7 +93,7 @@ void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
               << "prop:" << proportion << ", "
               << "fact:" << random_factor << ", " << std::endl;
     ;
-    ProcessUpdate(type_name, bytes, proportion, random_factor, source);
+    ProcessUpdate(algo_name, type_name, bytes, proportion, random_factor, source);
   });
 
   randomising_offset_   = randomiser_.GetNew();
@@ -201,13 +202,15 @@ void MuddleLearnerNetworkerImpl::submit(TaskPtr const &t)
   taskpool_->submit(t);
 }
 
-void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update,
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(AlgorithmClass const &algo_name,
+                                                 UpdateType const &type_name, Bytes const &update,
                                                  const Peers &peers)
 {
-  PushUpdateBytes(type_name, update, peers, broadcast_proportion_);
+  PushUpdateBytes(algo_name, type_name, update, peers, broadcast_proportion_);
 }
 
-void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update,
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(AlgorithmClass const &algo_name,
+                                                 UpdateType const &type_name, Bytes const &update,
                                                  const Peers &peers, double broadcast_proportion)
 {
   auto random_factor   = randomiser_.GetNew();
@@ -221,13 +224,14 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, By
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating sender for ", type_name, " to target ",
                    fetch::byte_array::ToBase64(peer));
-    auto task = std::make_shared<MuddleOutboundUpdateTask>(peer, type_name, update, client_,
-                                                           broadcast_proportion, random_factor);
+    auto task = std::make_shared<MuddleOutboundUpdateTask>(
+        peer, algo_name, type_name, update, client_, broadcast_proportion, random_factor);
     taskpool_->submit(task);
   }
 }
 
-void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, Bytes const &update)
+void MuddleLearnerNetworkerImpl::PushUpdateBytes(AlgorithmClass const &algo_name,
+                                                 UpdateType const &type_name, Bytes const &update)
 {
   auto random_factor = randomiser_.GetNew();
   if (alg_)
@@ -249,12 +253,12 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, By
                      id);
       peers.insert(idbytes);
     }
-    PushUpdateBytes(type_name, update, peers, 1.0);
+    PushUpdateBytes(algo_name, type_name, update, peers, 1.0);
   }
   else
   {
     serializers::MsgPackSerializer buf;
-    buf << type_name << update << broadcast_proportion_ << random_factor;
+    buf << algo_name << type_name << update << broadcast_proportion_ << random_factor;
     mud_->GetEndpoint().Broadcast(SERVICE_DMLF, CHANNEL_COLEARN_BROADCAST, buf.data());
   }
 }
@@ -265,7 +269,8 @@ MuddleLearnerNetworkerImpl::ConstUpdatePtr MuddleLearnerNetworkerImpl::GetUpdate
   return update_store_->GetUpdate(algo, type, criteria);
 }
 
-uint64_t MuddleLearnerNetworkerImpl::ProcessUpdate(const std::string &        type_name,
+uint64_t MuddleLearnerNetworkerImpl::ProcessUpdate(AlgorithmClass const &     algo_name,
+                                                   const std::string &        type_name,
                                                    byte_array::ConstByteArray bytes,
                                                    double proportion, double random_factor,
                                                    const std::string &source)
@@ -277,23 +282,24 @@ uint64_t MuddleLearnerNetworkerImpl::ProcessUpdate(const std::string &        ty
 
   if (std::modf(randomising_offset_ + random_factor, &whole) > proportion)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "DISCARDING ", type_name, " from ", source, randomising_offset_,
-                   "+", random_factor, ">", proportion);
+    FETCH_LOG_INFO(LOGGING_NAME, "DISCARDING ", algo_name, "/", type_name, " from ", source,
+                   randomising_offset_, "+", random_factor, ">", proportion);
     return 0;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "STORING ", type_name, " from ", source);
-  update_store_->PushUpdate("algo0", type_name, std::move(bytes), source, std::move(metadata));
+  FETCH_LOG_INFO(LOGGING_NAME, "STORING ", algo_name, "/", type_name, " from ", source);
+  update_store_->PushUpdate(algo_name, type_name, std::move(bytes), source, std::move(metadata));
   return 1;
 }
 
 uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext const &context,
+                                                          const std::string &         algo_name,
                                                           const std::string &         type_name,
                                                           byte_array::ConstByteArray  bytes,
                                                           double proportion, double random_factor)
 {
   auto source = std::string(fetch::byte_array::ToBase64(context.sender_address));
-  return ProcessUpdate(type_name, std::move(bytes), proportion, random_factor, source);
+  return ProcessUpdate(algo_name, type_name, std::move(bytes), proportion, random_factor, source);
 }
 
 }  // namespace colearn

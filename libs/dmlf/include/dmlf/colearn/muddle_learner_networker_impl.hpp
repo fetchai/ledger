@@ -99,18 +99,16 @@ public:
     PushUpdate(update->data(), algorithm, upd_class);
   }
 
-  void PushUpdate(Bytes const &      update, AlgorithmClass const & /*algorithm*/,
+  void PushUpdate(Bytes const &update, AlgorithmClass const &algo_name,
                   UpdateClass const &upd_class) override
   {
-    PushUpdateBytes(upd_class, update);
+    PushUpdateBytes(algo_name, upd_class, update);
   }
 
   std::size_t GetUpdateCount(AlgorithmClass const &algo = "algo0",
                              UpdateClass const &   type = "gradients") const override
   {
-    FETCH_UNUSED(algo);
-    FETCH_UNUSED(type);
-    return GetUpdateTotalCount();
+    return update_store_->GetUpdateCount(algo, type);
   }
 
   std::size_t GetUpdateTotalCount() const override
@@ -124,10 +122,12 @@ public:
     return update_store_->GetUpdate(algo, type);
   }
 
-  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update);
-  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, Peers const &peers);
-  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, Peers const &peers,
-                       double broadcast_proportion);
+  void PushUpdateBytes(AlgorithmClass const &algo_name, UpdateType const &type_name,
+                       Bytes const &update);
+  void PushUpdateBytes(AlgorithmClass const &algo_name, UpdateType const &type_name,
+                       Bytes const &update, Peers const &peers);
+  void PushUpdateBytes(AlgorithmClass const &algo_name, UpdateType const &type_name,
+                       Bytes const &update, Peers const &peers, double broadcast_proportion);
 
   ConstUpdatePtr GetUpdate(AlgorithmClass const &algo, UpdateType const &type,
                            Criteria const &criteria);
@@ -136,7 +136,8 @@ public:
 
   // This is the exposed interface
 
-  uint64_t NetworkColearnUpdate(service::CallContext const &context, const std::string &type_name,
+  uint64_t NetworkColearnUpdate(service::CallContext const &context,
+                                AlgorithmClass const &algo_name, const std::string &type_name,
                                 byte_array::ConstByteArray bytes, double proportion = 1.0,
                                 double random_factor = 0.0);
 
@@ -175,8 +176,9 @@ public:
 protected:
   friend class MuddleOutboundAnnounceTask;
   void     Setup(MuddlePtr mud, StorePtr update_store);
-  uint64_t ProcessUpdate(const std::string &type_name, byte_array::ConstByteArray bytes,
-                         double proportion, double random_factor, const std::string &source);
+  uint64_t ProcessUpdate(AlgorithmClass const &algo_name, const std::string &type_name,
+                         byte_array::ConstByteArray bytes, double proportion, double random_factor,
+                         const std::string &source);
   void     Setup(std::string const &priv, unsigned short int port,
                  std::unordered_set<std::string> const &remotes);
 

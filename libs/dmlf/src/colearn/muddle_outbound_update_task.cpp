@@ -31,7 +31,7 @@ MuddleOutboundUpdateTask::ExitState MuddleOutboundUpdateTask::run()
   FETCH_LOG_INFO(LOGGING_NAME, "Sending update to ", fetch::byte_array::ToBase64(target_));
   auto prom =
       client_->CallSpecificAddress(target_, RPC_COLEARN, ColearnProtocol::RPC_COLEARN_UPDATE,
-                                   type_name_, update_, proportion_, random_factor_);
+                                   algo_name_, type_name_, update_, proportion_, random_factor_);
   prom->Wait();
   return ExitState::COMPLETE;
 }

@@ -148,7 +148,7 @@ TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveBCast)
   instances[0].instance->PretendToLearn();
 
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
-  EXPECT_GT(instances[1].instance->actual->GetUpdateCount(), 0);
+  EXPECT_GT(instances[1].instance->actual->GetUpdateCount("algo0", "vocab"), 0);
   try
   {
     instances[1].instance->actual->GetUpdate("algo0", "vocab");
@@ -239,12 +239,12 @@ TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveShuffle)
 
   std::this_thread::sleep_for(std::chrono::milliseconds(700));
 
-  EXPECT_EQ(instances[0].instance->actual->GetUpdateCount(), 0);
-  EXPECT_EQ(instances[1].instance->actual->GetUpdateCount(), 1);
-  EXPECT_EQ(instances[2].instance->actual->GetUpdateCount(), 1);
-  EXPECT_EQ(instances[3].instance->actual->GetUpdateCount(), 1);
-  EXPECT_EQ(instances[4].instance->actual->GetUpdateCount(), 1);
-  EXPECT_EQ(instances[5].instance->actual->GetUpdateCount(), 0);
+  EXPECT_EQ(instances[0].instance->actual->GetUpdateTotalCount(), 0);
+  EXPECT_EQ(instances[1].instance->actual->GetUpdateTotalCount(), 1);
+  EXPECT_EQ(instances[2].instance->actual->GetUpdateTotalCount(), 1);
+  EXPECT_EQ(instances[3].instance->actual->GetUpdateTotalCount(), 1);
+  EXPECT_EQ(instances[4].instance->actual->GetUpdateTotalCount(), 1);
+  EXPECT_EQ(instances[5].instance->actual->GetUpdateTotalCount(), 0);
 }
 
 }  // namespace

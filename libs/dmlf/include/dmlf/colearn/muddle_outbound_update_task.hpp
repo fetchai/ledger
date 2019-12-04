@@ -37,6 +37,7 @@ public:
   using Address      = fetch::muddle::Address;
 
   Address                      target_;
+  std::string                  algo_name_;
   std::string                  type_name_;
   Bytes                        update_;
   RpcClientPtr                 client_;
@@ -45,9 +46,11 @@ public:
   double proportion_;
   double random_factor_;
 
-  MuddleOutboundUpdateTask(Address target, std::string type_name, Bytes update, RpcClientPtr client,
-                           double proportion, double random_factor)
+  MuddleOutboundUpdateTask(Address target, std::string algo_name, std::string type_name,
+                           Bytes update, RpcClientPtr client, double proportion,
+                           double random_factor)
     : target_(std::move(target))
+    , algo_name_(std::move(algo_name))
     , type_name_(std::move(type_name))
     , update_(std::move(update))
     , client_(std::move(client))
