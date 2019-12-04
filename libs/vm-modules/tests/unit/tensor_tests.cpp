@@ -247,7 +247,7 @@ TEST_F(VMTensorTests, DISABLED_ndarray_state_test)
 }
 
 // Disabled until implementation completed
-TEST_F(VMTensorTests, DISABLED_tensor_set_and_at_one_test)
+TEST_F(VMTensorTests, DISABLED_ndarray_1_dim_set_and_at)
 {
   static char const *tensor_serialiase_src = R"(
     function main() : Tensor
@@ -277,7 +277,7 @@ TEST_F(VMTensorTests, DISABLED_tensor_set_and_at_one_test)
 }
 
 // Disabled until implementation completed
-TEST_F(VMTensorTests, DISABLED_tensor_set_and_at_two_test)
+TEST_F(VMTensorTests, DISABLED_ndarray_2_dim_set_and_at)
 {
   static char const *tensor_serialiase_src = R"(
     function main() : Tensor
@@ -310,7 +310,7 @@ TEST_F(VMTensorTests, DISABLED_tensor_set_and_at_two_test)
 }
 
 // Disabled until implementation completed
-TEST_F(VMTensorTests, DISABLED_tensor_set_and_at_three_test)
+TEST_F(VMTensorTests, DISABLED_ndarray_3_dim_set_and_at)
 {
   static char const *tensor_serialiase_src = R"(
     function main() : Tensor
@@ -348,7 +348,7 @@ TEST_F(VMTensorTests, DISABLED_tensor_set_and_at_three_test)
 }
 
 // Disabled until implementation completed
-TEST_F(VMTensorTests, DISABLED_tensor_set_and_at_four_test)
+TEST_F(VMTensorTests, DISABLED_ndarray_4_dim_set_and_at)
 {
   static char const *tensor_serialiase_src = R"(
     function main() : Tensor
@@ -426,14 +426,14 @@ TEST_F(VMTensorTests, DISABLED_tensor_set_from_string)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
-// Disabled because of runtime crash when .at() or [] is called
-TEST_F(VMTensorTests, DISABLED_ndarray_2_dim_inplace_subtraction)
+// Runtime crash when .at() or [] is called on ndarray of shape [..., < 8]
+TEST_F(VMTensorTests, ndarray_2_dim_inplace_subtraction)
 {
   static char const *SOURCE = R"(
      function main()
        var tensor_shape = Array<UInt64>(2);
        tensor_shape[0] = 2u64;
-       tensor_shape[1] = 2u64;
+       tensor_shape[1] = 8u64;
        var float32_1 = NDArray<Float32>(tensor_shape);
        float32_1[0,0] = 111.0f;
        float32_1[1,0] = 222.0f;
@@ -447,7 +447,9 @@ TEST_F(VMTensorTests, DISABLED_ndarray_2_dim_inplace_subtraction)
        var float32_zeros = NDArray<Float32>(tensor_shape);
        float32_2 -= float32_1;
        assert(float32_2[0,0] == float32_zeros[0,0]);
-       printLn(toString(float32_2.at(1,0)));
+       assert(float32_2[0,1] == float32_zeros[0,1]);
+       assert(float32_2[1,0] == float32_zeros[1,0]);
+       assert(float32_2[1,1] == float32_zeros[1,1]);
      endfunction
     )";
 

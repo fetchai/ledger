@@ -63,7 +63,7 @@ public:
   virtual fetch::vm::Ptr<ITensor> Squeeze() const   = 0;
   virtual fetch::vm::Ptr<ITensor> Unsqueeze() const = 0;
 
-  virtual void Fill(AnyPrimitive const &value) = 0;
+  virtual void Fill(TemplateParameter1 const &value) = 0;
 
   virtual fetch::math::SizeVector shape() const = 0;
 
@@ -118,7 +118,7 @@ struct NDArray : public ITensor
 
   // void Copy(TensorType const &other);
 
-  void Fill(AnyPrimitive const &value) override;
+  void Fill(TemplateParameter1 const &value) override;
 
   // void FillRandom();
   /////////////////

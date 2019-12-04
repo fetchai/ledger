@@ -453,7 +453,7 @@ TemplateParameter1 NDArray<T>::GetIndexedValue(const AnyInteger &row, const AnyI
 }
 
 template <typename T>
-void NDArray<T>::Fill(const AnyPrimitive &value)
+void NDArray<T>::Fill(const TemplateParameter1 &value)
 {
   // TODO: is it safe enough if a float64 value is given to a Tensor of type Fixed32?...
   T const val = value.Get<T>();
