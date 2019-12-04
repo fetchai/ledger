@@ -39,6 +39,6 @@ TYPED_TEST(TensorConstructorTest, string_construction)
   ASSERT_EQ(tensor.At(0, 2), TypeParam(4));
 }
 
-  }  // namespace test
+}  // namespace test
 }  // namespace math
 }  // namespace fetch
