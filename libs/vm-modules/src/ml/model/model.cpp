@@ -80,24 +80,6 @@ std::map<std::string, uint8_t> const VMModel::model_categories_{
     {"classifier", static_cast<uint8_t>(ModelCategory::CLASSIFIER)},
 };
 
-/**
- * Converts between user specified string and output type (e.g. activation, layer etc.)
- * invokes VM runtime error if parsing failed.
- * @param name user specified string to convert
- * @param dict dictionary of existing entities
- * @param errmsg preferred display name of expected type, that was not parsed
- */
-template <typename T>
-inline T VMModel::ParseName(std::string const &name, std::map<std::string, T> const &dict,
-                            std::string const &errmsg) const
-{
-  if (dict.find(name) == dict.end())
-  {
-    throw std::runtime_error("Unknown " + errmsg + " name : " + name);
-  }
-  return dict.at(name);
-}
-
 VMModel::VMModel(VM *vm, TypeId type_id)
   : Object(vm, type_id)
   , estimator_{*this}
@@ -461,22 +443,6 @@ VMModel::SequentialModelPtr VMModel::GetMeAsSequentialIfPossible()
     throw std::runtime_error("Layer adding is allowed only for sequential models!");
   }
   return std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
-}
-
-template <typename... LayerArgs>
-void VMModel::AddLayer(fetch::vm::Ptr<fetch::vm::String> const &layer, LayerArgs... args)
-{
-  try
-  {
-    SupportedLayerType const layer_type = ParseName(layer->string(), layer_types_, "layer type");
-    AddLayerSpecificImpl(layer_type, args...);
-    compiled_ = false;
-  }
-  catch (std::exception &e)
-  {
-    vm_->RuntimeError("Impossible to add layer : " + std::string(e.what()));
-    return;
-  }
 }
 
 void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &inputs,

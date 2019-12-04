@@ -342,8 +342,9 @@ TEST_F(VMModelEstimatorTests, compile_fit_test)
           VmModel          model(&toolkit.vm(), type_id, model_type);
           VmModelEstimator model_estimator(model);
 
-          model.AddLayer(vm_ptr_layer_type, data_size_1, label_size_1);
-          model_estimator.LayerAddDense(vm_ptr_layer_type, data_size_1, label_size_1);
+          model.AddLayer(vm_ptr_layer_type, data_size_1, label_size_1, vm_ptr_activation_type);
+          model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
+                                                  vm_ptr_activation_type);
 
           DataType forward_pass_cost =
               DataType(data_size_1) * VmModelEstimator::FORWARD_DENSE_INPUT_COEF();
@@ -351,6 +352,7 @@ TEST_F(VMModelEstimatorTests, compile_fit_test)
               DataType(label_size_1) * VmModelEstimator::FORWARD_DENSE_OUTPUT_COEF();
           forward_pass_cost +=
               DataType(data_size_1 * label_size_1) * VmModelEstimator::FORWARD_DENSE_QUAD_COEF();
+          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_FORWARD_IMPACT();
 
           DataType backward_pass_cost =
               DataType(data_size_1) * VmModelEstimator::BACKWARD_DENSE_INPUT_COEF();
@@ -358,6 +360,7 @@ TEST_F(VMModelEstimatorTests, compile_fit_test)
               DataType(label_size_1) * VmModelEstimator::BACKWARD_DENSE_OUTPUT_COEF();
           backward_pass_cost +=
               DataType(data_size_1 * label_size_1) * VmModelEstimator::BACKWARD_DENSE_QUAD_COEF();
+          backward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_BACKWARD_IMPACT();
 
           model.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);
           model_estimator.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);

@@ -168,6 +168,40 @@ private:
   inline SequentialModelPtr GetMeAsSequentialIfPossible();
 };
 
+/**
+ * Converts between user specified string and output type (e.g. activation, layer etc.)
+ * invokes VM runtime error if parsing failed.
+ * @param name user specified string to convert
+ * @param dict dictionary of existing entities
+ * @param errmsg preferred display name of expected type, that was not parsed
+ */
+template <typename T>
+inline T VMModel::ParseName(std::string const &name, std::map<std::string, T> const &dict,
+                            std::string const &errmsg) const
+{
+  if (dict.find(name) == dict.end())
+  {
+    throw std::runtime_error("Unknown " + errmsg + " name : " + name);
+  }
+  return dict.at(name);
+}
+
+template <typename... LayerArgs>
+void VMModel::AddLayer(fetch::vm::Ptr<fetch::vm::String> const &layer, LayerArgs... args)
+{
+  try
+  {
+    SupportedLayerType const layer_type = ParseName(layer->string(), layer_types_, "layer type");
+    AddLayerSpecificImpl(layer_type, args...);
+    compiled_ = false;
+  }
+  catch (std::exception &e)
+  {
+    vm_->RuntimeError("Impossible to add layer : " + std::string(e.what()));
+    return;
+  }
+}
+
 }  // namespace model
 }  // namespace ml
 }  // namespace vm_modules
