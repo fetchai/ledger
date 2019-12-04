@@ -332,16 +332,6 @@ public:
 
   /// @name Peer Control
   /// @{
-  PeerSelectionMode GetPeerSelectionMode() const override
-  {
-    throw std::runtime_error("GetPeerSelectionMode functionality not implemented");
-    return {};
-  }
-
-  void SetPeerSelectionMode(PeerSelectionMode /*mode*/) override
-  {
-    throw std::runtime_error("SetPeerSelectionMode functionality not implemented");
-  }
 
   Addresses GetRequestedPeers() const override
   {

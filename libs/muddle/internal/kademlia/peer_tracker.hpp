@@ -276,8 +276,7 @@ private:
   /// Handling new comers
   /// @{
   std::queue<UnresolvedConnection> new_handles_;
-  PendingResolution
-      uri_resolution_promises_;  // TODO: uri_resolution_promises_ -> uri_resolution_tasks_
+  PendingResolution uri_resolution_tasks_;  // TODO: uri_resolution_tasks_ -> uri_resolution_tasks_
   /// @}
 
   /// Managing connections to Kademlia subtrees

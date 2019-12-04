@@ -307,8 +307,6 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Prove
                                         "The total number of normally routed packets"))
   , informed_routing_total_(CreateCounter("ledger_router_normal_routing_total",
                                           "The total number of informed routed packets"))
-  , kademlia_routing_total_(CreateCounter("ledger_router_normal_routing_total",
-                                          "The total number of kademlia routed packets"))
   , speculative_routing_total_(CreateCounter("ledger_router_normal_routing_total",
                                              "The total number of speculatively routed packets"))
   , failed_routing_total_(
@@ -572,11 +570,6 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &raw_address) const
 
   auto address = ConvertAddress(raw_address);
   return tracker_->LookupHandle(address);
-}
-
-void Router::SetKademliaRouting(bool enable)
-{
-  kademlia_routing_ = enable;
 }
 
 /**

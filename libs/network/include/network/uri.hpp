@@ -153,10 +153,7 @@ public:
 
     if (!x.Parse(uri))
     {
-      FETCH_LOG_ERROR("Uri", "Failed to deserialise URI.");
-      // TODO: This is undesired behaviour  as undefined URIs cannot be
-      // transmitted
-      // throw std::runtime_error("Failed to deserialize uri");
+      throw std::runtime_error("Failed to deserialize uri");
     }
   }
 };

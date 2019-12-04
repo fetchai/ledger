@@ -148,7 +148,7 @@ void PeerTracker::ProcessConnectionHandles()
     else if (state == ConnectionState::RESOLVED)
     {
       // Checking if we are already pulling
-      if (uri_resolution_promises_.find(details.address) != uri_resolution_promises_.end())
+      if (uri_resolution_tasks_.find(details.address) != uri_resolution_tasks_.end())
       {
         FETCH_LOG_INFO(logging_name_.c_str(), "Skipping URI request as already in progress.");
         continue;
@@ -170,7 +170,7 @@ void PeerTracker::ProcessConnectionHandles()
         reactor_.Attach(task);
 
         // add the task to the pending resolutions queue
-        uri_resolution_promises_.emplace(details.address, std::move(task));
+        uri_resolution_tasks_.emplace(details.address, std::move(task));
       }
     }
   }
@@ -659,9 +659,20 @@ void PeerTracker::ConnectToDesiredPeers()
 
 void PeerTracker::Periodically()
 {
+  FETCH_LOCK(mutex_);
+
   // Clearing arrays used to track actions on connections
   keep_connections_.clear();
   no_uri_.clear();
+
+  // Ensuring that we keep connections open which we are currently
+  // pulling data from
+  for (auto const &item : uri_resolution_tasks_)
+  {
+    keep_connections_.emplace(item.first);
+  }
+
+  // TODO: Add something similar for pulling
 
   // Converting URIs into addresses if possible
   std::unordered_set<Uri> new_uris;
@@ -863,7 +874,7 @@ void PeerTracker::OnResolveUris(UnresolvedConnection details, service::Promise c
   FETCH_LOCK(mutex_);
 
   // Deleting task.
-  uri_resolution_promises_.erase(details.address);
+  uri_resolution_tasks_.erase(details.address);
 
   if (promise->state() == service::PromiseState::SUCCESS)
   {

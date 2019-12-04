@@ -60,13 +60,13 @@ using fetch::byte_array::ToBase64;
 using fetch::chain::Address;
 using fetch::ledger::Executor;
 using fetch::ledger::GenesisFileCreator;
-using fetch::shards::Manifest;
-using fetch::shards::ServiceIdentifier;
+using fetch::ledger::StorageInterface;
 using fetch::muddle::MuddleInterface;
 using fetch::network::AtomicCounterName;
 using fetch::network::AtomicInFlightCounter;
 using fetch::network::NetworkManager;
-using fetch::ledger::StorageInterface;
+using fetch::shards::Manifest;
+using fetch::shards::ServiceIdentifier;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -371,7 +371,7 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
 
   if (cfg_.kademlia_routing)
   {
-    muddle_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
+    muddle_->SetTrackerConfiguration(muddle::TrackerConfiguration::AllOn());
   }
 
   // Enable experimental features

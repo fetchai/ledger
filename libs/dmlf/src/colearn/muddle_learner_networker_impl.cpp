@@ -136,7 +136,7 @@ MuddleLearnerNetworkerImpl::MuddleLearnerNetworkerImpl(const std::string &priv,
     remotes.insert(remote);
   }
 
-  mud->SetPeerSelectionMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
+  mud->SetTrackerConfiguration(muddle::TrackerConfiguration::AllOn());
   mud->Start(remotes, {port});
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 

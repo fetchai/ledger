@@ -131,7 +131,7 @@ void MakeKademliaNetwork(std::unique_ptr<Network> &network)
 {
   for (auto &node : network->nodes)
   {
-    node.muddle->SetPeerSelectionMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
+    node.muddle->SetTrackerConfiguration(TrackerConfiguration::AllOn());
   }
 }
 

@@ -351,27 +351,6 @@ bool Muddle::IsDirectlyConnected(Address const &address) const
 }
 
 /**
- * Query the current peer selection mode for this muddle
- *
- * @return The current mode
- */
-PeerSelectionMode Muddle::GetPeerSelectionMode() const
-{
-  return PeerSelectionMode::DEFAULT;  // TODO(tfr): Make part of peer tracker configuration
-                                      // peer_selector_->GetMode();
-}
-
-/**
- * Update the current peer selection mode for this muddle
- * @param mode
- */
-void Muddle::SetPeerSelectionMode(PeerSelectionMode mode)
-{
-  router_.SetKademliaRouting(PeerSelectionMode::KADEMLIA == mode);
-  // TODO(tfr): update peer tracker to support this peer_selector_->SetMode(mode);
-}
-
-/**
  * Get the set of addresses that have been requested to connect to
  *
  * @return The set of addresses

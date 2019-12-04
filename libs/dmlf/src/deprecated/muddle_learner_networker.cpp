@@ -28,12 +28,12 @@
 namespace fetch {
 namespace dmlf {
 
-using std::chrono::seconds;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
 using fetch::network::NetworkManager;
 using fetch::service::Promise;
+using std::chrono::seconds;
 
 using PromiseList = std::vector<Promise>;
 using SignerPtr   = std::shared_ptr<crypto::ECDSASigner>;
@@ -74,7 +74,7 @@ deprecated_MuddleLearnerNetworker::deprecated_MuddleLearnerNetworker(
   auto addr = self_uri.GetTcpPeer().address();
 
   mud_ = muddle::CreateMuddle("Test", ident_, *(this->netm_), addr);
-  mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
+  mud_->SetTrackerConfiguration(muddle::TrackerConfiguration::AllOn());
 
   std::unordered_set<std::string> initial_peers;
   auto                            config_peers = doc.root()["peers"];

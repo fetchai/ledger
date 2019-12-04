@@ -140,8 +140,6 @@ public:
     tracker_ = tracker;
   }
 
-  void SetKademliaRouting(bool enable = true);
-
   EchoCache        echo_cache() const;
   NetworkId const &network() const;
   Address const &  network_address() const;
@@ -192,7 +190,6 @@ private:
   NetworkId             network_id_;
   crypto::Prover const &prover_;
   crypto::SecureChannel secure_channel_{prover_};
-  std::atomic<bool>     kademlia_routing_{false};
 
   PeerTrackerPtr tracker_{nullptr};
 
@@ -237,7 +234,6 @@ private:
   telemetry::CounterPtr         echo_cache_removals_total_;
   telemetry::CounterPtr         normal_routing_total_;
   telemetry::CounterPtr         informed_routing_total_;
-  telemetry::CounterPtr         kademlia_routing_total_;
   telemetry::CounterPtr         speculative_routing_total_;
   telemetry::CounterPtr         failed_routing_total_;
   telemetry::CounterPtr         connection_dropped_total_;
