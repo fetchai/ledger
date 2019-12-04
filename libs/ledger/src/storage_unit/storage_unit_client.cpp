@@ -22,6 +22,7 @@
 #include "chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/storage_unit/transaction_finder_protocol.hpp"
+#include "ledger/storage_unit/transaction_storage_protocol.hpp"
 
 #include <cstddef>
 #include <iterator>
@@ -34,6 +35,7 @@
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
 using fetch::service::Promise;
+using fetch::ledger::TransactionStorageProtocol;
 using fetch::byte_array::ToBase64;
 
 namespace fetch {
@@ -59,8 +61,6 @@ constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
 constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
 
 }  // namespace
-
-using TxStoreProtocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
 
 StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const &shards,
                                      uint32_t log2_num_lanes)
@@ -354,11 +354,11 @@ void StorageUnitClient::AddTransaction(chain::Transaction const &tx)
 
   try
   {
-    ResourceID resource{tx.digest()};
+    ResourceID const resource{tx.digest()};
 
     // make the RPC request
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
-                                                    TxStoreProtocol::SET, resource, tx);
+                                                    TransactionStorageProtocol::ADD, tx);
 
     // wait the for the response
     promise->Wait();
@@ -379,9 +379,9 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
   // Assume that the lanes are roughly balanced in terms of new TXs
   for (auto const &lane_address : addresses_)
   {
-    auto promise =
-        rpc_client_->CallSpecificAddress(lane_address, RPC_TX_STORE, TxStoreProtocol::GET_RECENT,
-                                         uint32_t(max_to_poll / addresses_.size()));
+    auto promise = rpc_client_->CallSpecificAddress(lane_address, RPC_TX_STORE,
+                                                    TransactionStorageProtocol::GET_RECENT,
+                                                    uint32_t(max_to_poll / addresses_.size()));
     promises.push_back(promise);
   }
 
@@ -415,11 +415,11 @@ bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
 
   try
   {
-    ResourceID resource{digest};
+    ResourceID const resource{digest};
 
     // make the request to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
-                                                    TxStoreProtocol::GET, resource);
+                                                    TransactionStorageProtocol::GET, digest);
 
     // wait for the response to be delivered
     tx = promise->As<chain::Transaction>();
@@ -440,11 +440,11 @@ bool StorageUnitClient::HasTransaction(ConstByteArray const &digest)
 
   try
   {
-    ResourceID resource{digest};
+    ResourceID const resource{digest};
 
     // make the request to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
-                                                    TxStoreProtocol::HAS, resource);
+                                                    TransactionStorageProtocol::HAS, digest);
 
     // wait for the response to be delivered
     present = promise->As<bool>();
@@ -460,14 +460,15 @@ bool StorageUnitClient::HasTransaction(ConstByteArray const &digest)
   return present;
 }
 
-void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
+void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &digest_set)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "IssueCallForMissingTxs: ", tx_set.size(), " Tx digests");
-  std::map<Address, std::unordered_set<ResourceID>> lanes_of_interest;
-  for (auto const &hash : tx_set)
+  FETCH_LOG_WARN(LOGGING_NAME, "IssueCallForMissingTxs: ", digest_set.size(), " Tx digests");
+
+  std::map<Address, DigestSet> lanes_of_interest;
+  for (auto const &digest : digest_set)
   {
-    ResourceID resource{hash};
-    lanes_of_interest[LookupAddress(resource)].insert(std::move(resource));
+    ResourceID const resource{digest};
+    lanes_of_interest[LookupAddress(resource)].insert(digest);
   }
 
   for (auto const &lane_resources : lanes_of_interest)
