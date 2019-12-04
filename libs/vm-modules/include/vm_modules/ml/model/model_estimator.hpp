@@ -100,29 +100,42 @@ public:
   SizeType GetOpsCount();
   DataType GetForwardCost();
 
-private:
-  struct State
+  // AddLayer
+  static constexpr DataType ADD_DENSE_INPUT_COEF()
   {
-    // Model
-    DataType     forward_pass_cost{0.0};
-    ChargeAmount backward_pass_cost{0};
-
-    // Optimiser
-    SizeType weights_size_sum{0};
-    SizeType weights_padded_size_sum{0};
-
-    ChargeAmount optimiser_step_impact{0};
-
-    SizeType last_layer_size{0};
-    SizeType ops_count{0};
-
-    // serialization
-    bool SerializeTo(serializers::MsgPackSerializer &buffer);
-    bool DeserializeFrom(serializers::MsgPackSerializer &buffer);
+    return DataType(0.111111111111111);
+  };
+  static constexpr DataType ADD_DENSE_OUTPUT_COEF()
+  {
+    return DataType(0.043478260869565);
+  };
+  static constexpr DataType ADD_DENSE_QUAD_COEF()
+  {
+    return DataType(0.013513513513514);
+  };
+  static constexpr DataType ADD_DENSE_CONST_COEF()
+  {
+    return DataType(52.0);
   };
 
-  VMObjectType &model_;
-  State         state_;
+  // Compile
+  static constexpr DataType ADAM_PADDED_WEIGHTS_SIZE_COEF()
+  {
+    return DataType(0.014285714285714);
+  };
+  static constexpr DataType ADAM_WEIGHTS_SIZE_COEF()
+  {
+    return DataType(0.017857142857143);
+  };
+  static constexpr DataType ADAM_STEP_IMPACT_COEF()
+  {
+    return DataType(0.017857142857143);
+  };
+
+  static constexpr DataType COMPILE_CONST_COEF()
+  {
+    return DataType(80);
+  };
 
   // Forward
   static constexpr DataType FORWARD_DENSE_INPUT_COEF()
@@ -138,6 +151,37 @@ private:
     return DataType(0.013157894736842);
   };
 
+  static constexpr DataType RELU_FORWARD_IMPACT()
+  {
+    return DataType(0.003333333333333);
+  };
+  static constexpr DataType MSE_FORWARD_IMPACT()
+  {
+    return DataType(0.003333333333333);
+  };
+
+  // Backward
+  static constexpr DataType BACKWARD_DENSE_INPUT_COEF()
+  {
+    return DataType(0.142857142857143);
+  };
+  static constexpr DataType BACKWARD_DENSE_OUTPUT_COEF()
+  {
+    return DataType(0.037037037037037);
+  };
+  static constexpr DataType BACKWARD_DENSE_QUAD_COEF()
+  {
+    return DataType(0.013157894736842);
+  };
+  static constexpr DataType RELU_BACKWARD_IMPACT()
+  {
+    return DataType(0.003333333333333);
+  };
+  static constexpr DataType MSE_BACKWARD_IMPACT()
+  {
+    return DataType(0.003333333333333);
+  };
+
   // Predict
   static constexpr DataType PREDICT_BATCH_LAYER_COEF()
   {
@@ -148,21 +192,50 @@ private:
     return DataType(40.0);
   };
 
-  static constexpr SizeType ADAM_STEP_IMPACT              = 15;
-  static constexpr SizeType ADAM_CONSTRUCTION_IMPACT      = 15;
-  static constexpr SizeType MSE_FORWARD_IMPACT            = 6;
-  static constexpr SizeType MSE_BACKWARD_IMPACT           = 6;
+  static constexpr DataType DESERIALISATION_PER_CHAR_COEF()
+  {
+    return DataType(0.010416666666667);
+  };
+
+  static constexpr DataType DESERIALISATION_CONST_COEF()
+  {
+    return DataType(100.0);
+  };
+
+private:
+  struct State
+  {
+    // Model
+    DataType forward_pass_cost{0.0};
+    DataType backward_pass_cost{0.0};
+
+    // Optimiser
+    SizeType weights_size_sum{0};
+    SizeType weights_padded_size_sum{0};
+
+    DataType optimiser_step_impact{0};
+
+    SizeType last_layer_size{0};
+    SizeType ops_count{0};
+
+    // serialization
+    bool SerializeTo(serializers::MsgPackSerializer &buffer);
+    bool DeserializeFrom(serializers::MsgPackSerializer &buffer);
+  };
+
+  VMObjectType &model_;
+  State         state_;
+
   static constexpr SizeType FIT_CONST_OVERHEAD            = 3;
   static constexpr SizeType FIT_PER_BATCH_OVERHEAD        = 2;
   static constexpr SizeType SERIALISATION_OVERHEAD        = 5;
-  static constexpr SizeType DESERIALISATION_OVERHEAD      = 10;
   static constexpr SizeType WEIGHT_SERIALISATION_OVERHEAD = 4;  // Will depend on DataType of Tensor
 
   static constexpr ChargeAmount constant_charge{vm::CHARGE_UNIT};
 
   void copy_state_from(ModelEstimator const &);
 
-  ChargeAmount infinite_charge(std::string const &log_msg = "");
+  static ChargeAmount infinite_charge(std::string const &log_msg = "");
 };
 
 }  // namespace model

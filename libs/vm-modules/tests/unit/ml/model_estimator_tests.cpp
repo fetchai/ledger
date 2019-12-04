@@ -33,6 +33,7 @@ using DataType = fetch::vm_modules::math::DataType;
 using VmPtr = fetch::vm::Ptr<fetch::vm::String>;
 using VmModel = fetch::vm_modules::ml::model::VMModel;
 using VmModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
+using DataType = fetch::vm_modules::ml::model::ModelEstimator::DataType;
 
 class VMModelEstimatorTests : public ::testing::Test
 {
@@ -41,6 +42,7 @@ public:
   VmTestToolkit     toolkit{&stdout};
 };
 
+// sanity check that estimator behaves as intended
 TEST_F(VMModelEstimatorTests, add_dense_layer_test)
 {
   std::string model_type = "sequential";
@@ -56,8 +58,12 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
   {
     for (SizeType outputs = 0; outputs < 1000; outputs += 10)
     {
-      EXPECT_TRUE(model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs) ==
-                  ((inputs * outputs) + outputs));
+      DataType val = (model_estimator.ADD_DENSE_INPUT_COEF() * inputs);
+      val += model_estimator.ADD_DENSE_OUTPUT_COEF() * outputs;
+      val += model_estimator.ADD_DENSE_QUAD_COEF() * inputs * outputs;
+      val += model_estimator.ADD_DENSE_CONST_COEF();
+
+      EXPECT_TRUE(model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs) == static_cast<ChargeAmount>(val));
     }
   }
 }
