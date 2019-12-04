@@ -47,20 +47,26 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
 {
   std::string model_type = "sequential";
   std::string layer_type = "dense";
+  SizeType min_input_size = 0;
+  SizeType max_input_size = 1000;
+  SizeType input_step = 10;
+  SizeType min_output_size = 0;
+  SizeType max_output_size = 1000;
+  SizeType output_step = 10;
 
   VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
   fetch::vm::TypeId type_id = 0;
   VmModel           model(&toolkit.vm(), type_id, model_type);
   VmModelEstimator  model_estimator(model);
 
-  for (SizeType inputs = 0; inputs < 1000; inputs += 10)
+  for (SizeType inputs = min_input_size; inputs < max_input_size; inputs += input_step)
   {
-    for (SizeType outputs = 0; outputs < 1000; outputs += 10)
+    for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
     {
-      DataType val = (model_estimator.ADD_DENSE_INPUT_COEF() * inputs);
-      val += model_estimator.ADD_DENSE_OUTPUT_COEF() * outputs;
-      val += model_estimator.ADD_DENSE_QUAD_COEF() * inputs * outputs;
-      val += model_estimator.ADD_DENSE_CONST_COEF();
+      DataType val = (VmModelEstimator::ADD_DENSE_INPUT_COEF() * inputs);
+      val += VmModelEstimator::ADD_DENSE_OUTPUT_COEF() * outputs;
+      val += VmModelEstimator::ADD_DENSE_QUAD_COEF() * inputs * outputs;
+      val += VmModelEstimator::ADD_DENSE_CONST_COEF();
 
       EXPECT_TRUE(model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs) ==
                   static_cast<ChargeAmount>(val));
@@ -68,4 +74,38 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
   }
 }
 
+// sanity check that estimator behaves as intended
+TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
+{
+  std::string model_type = "sequential";
+  std::string layer_type = "dense";
+  std::string activation_type = "relu";
+
+  SizeType min_input_size = 0;
+  SizeType max_input_size = 1000;
+  SizeType input_step = 10;
+  SizeType min_output_size = 0;
+  SizeType max_output_size = 1000;
+  SizeType output_step = 10;
+
+  VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
+  VmPtr             vm_ptr_activation_type{new fetch::vm::String(&toolkit.vm(), activation_type)};
+  fetch::vm::TypeId type_id = 0;
+  VmModel           model(&toolkit.vm(), type_id, model_type);
+  VmModelEstimator  model_estimator(model);
+
+  for (SizeType inputs = min_input_size; inputs < max_input_size; inputs += input_step)
+  {
+    for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
+    {
+      DataType val = (VmModelEstimator::ADD_DENSE_INPUT_COEF() * inputs);
+      val += VmModelEstimator::ADD_DENSE_OUTPUT_COEF() * outputs;
+      val += VmModelEstimator::ADD_DENSE_QUAD_COEF() * inputs * outputs;
+      val += VmModelEstimator::ADD_DENSE_CONST_COEF();
+
+      EXPECT_TRUE(model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, inputs, outputs, vm_ptr_activation_type) ==
+                  static_cast<ChargeAmount>(val));
+    }
+  }
+}
 }  // namespace
