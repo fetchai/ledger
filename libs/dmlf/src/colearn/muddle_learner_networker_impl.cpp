@@ -212,6 +212,11 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, By
 {
   auto random_factor   = randomiser_.GetNew();
   broadcast_proportion = std::max(0.0, std::min(1.0, broadcast_proportion));
+  if (peers.empty())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "PushUpdateBytes(1) got no peers to send to.");
+    return;
+  }
   for (auto const &peer : peers)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating sender for ", type_name, " to target ",
@@ -233,7 +238,7 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(UpdateType const &type_name, By
     Peers peers;
     if (next_ones.empty())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "PushUpdateBytes got no peers from alg to send to.");
+      FETCH_LOG_WARN(LOGGING_NAME, "PushUpdateBytes(2) got no peers from alg to send to.");
       return;
     }
     for (auto const &next_one : next_ones)
