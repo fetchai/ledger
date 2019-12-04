@@ -1538,7 +1538,7 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash
   auto is_in_storage = LookupBlockFromStorage(hash, block, next_hash);
   assert(!is_in_cache || next_hash != nullptr);
 
-  if (is_in_storage && next_hash && next_hash->empty())
+  if (is_in_storage && next_hash != nullptr && next_hash->empty())
   {
     // Check if there's a forward reference in cache.
     return LookupReference(hash, *next_hash);
