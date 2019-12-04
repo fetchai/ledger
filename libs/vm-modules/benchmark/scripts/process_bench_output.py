@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -24,7 +25,7 @@ def plot_vmmodel_charge(csv_file_path):
 def plot_exec_time_charge(csv_file_path, root):
   df = pd.read_csv(csv_file_path)
   
-  figure = plt.figure(figsize=(8,6), dpi=100)
+  figure = plt.figure(figsize=(12,12), dpi=100)
   axe = figure.add_subplot(111)
 
   axe.plot(df['cpu_time'])
@@ -49,6 +50,8 @@ def print_exec_time_charge_corr(csv_file_path, root):
   time_charge_factors = df['charge'].divide(df['cpu_time'])
   time_charge_factor_avg = time_charge_factors.mean()
   
+  pd.options.display.max_rows = sys.maxsize
+
   aggregate_stats = os.path.join(root, os.path.splitext(csv_file_path)[0]+"_stats")
   with open(aggregate_stats, 'w') as out:
     print(correlation_coef)
