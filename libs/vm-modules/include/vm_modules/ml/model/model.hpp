@@ -88,7 +88,7 @@ public:
       fetch::vm::Ptr<fetch::vm::String> const &model_category);
 
   template <typename... LayerArgs>
-  void AddLayer(fetch::vm::Ptr<fetch::vm::String> const &layer, LayerArgs... args);
+  void AddLayer(const char *layer, LayerArgs... args);
 
   void CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                          fetch::vm::Ptr<fetch::vm::String> const &optimiser);

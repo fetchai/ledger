@@ -49,6 +49,15 @@ ModelEstimator &ModelEstimator::operator=(ModelEstimator const &&other)
   return *this;
 }
 
+/**
+ * Estimates and returns the cost of adding the relevant layer, but also updates internal state for
+ * other calls (e.g. forward_pass_cost etc.)
+ * layer add cost = ((inputs * hidden_nodes) + hidden_nodes) * CHARGE_UNIT
+ * @param layer description of layer type
+ * @param inputs number of inputs to layer
+ * @param hidden_nodes number of outputs of layer
+ * @return
+ */
 ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType const &inputs,
                                            SizeType const &hidden_nodes)
 {
@@ -58,6 +67,8 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
     return infinite_charge("invalid params specified for " + layer->string() + " layer");
   }
 
+  // dense layer adding cost =
+  //
   if (model_.model_category_ == ModelCategory::SEQUENTIAL)
   {
     state_.forward_pass_cost =
