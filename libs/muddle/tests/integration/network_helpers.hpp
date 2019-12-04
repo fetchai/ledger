@@ -134,7 +134,7 @@ struct Network
     nodes.back()->muddle->SetTrackerConfiguration(config);
     nodes.back()->muddle->ConnectTo(
         fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT + counter - 1)));
-    nodes.back()->muddle->SetTrackerConfiguration(config);
+
     ++counter;
   }
 

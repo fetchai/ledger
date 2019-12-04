@@ -22,7 +22,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(RoutingTests, DuplicateConnections)
+TEST(RoutingTests, RemovingDuplicateConnections)
 {
   // Creating network
   std::size_t N = 10;
@@ -32,18 +32,91 @@ TEST(RoutingTests, DuplicateConnections)
   // Waiting for the network to settle.
   std::this_thread::sleep_for(std::chrono::milliseconds(N * 1000));
 
+  std::size_t total{0};
   std::size_t total_in{0};
   std::size_t total_out{0};
 
   for (auto const &node : network->nodes)
   {
+    auto direct = node->muddle->GetDirectlyConnectedPeers().size();
+    EXPECT_EQ(direct, N - 1);
+
     total_in += node->muddle->GetIncomingConnectedPeers().size();
     total_out += node->muddle->GetOutgoingConnectedPeers().size();
+    total += direct;
   }
 
   network->Stop();
 
   // TODO(tfr): Fix
   EXPECT_EQ(total_out, N * (N - 1) / 2);
-  //  EXPECT_EQ(total_in, N * (N - 1) / 2);
+  EXPECT_EQ(total_in, N * (N - 1) / 2);
+}
+
+TEST(RoutingTests, NoRemoval)
+{
+  // Creating network
+  std::size_t N                = 10;
+  auto        config           = fetch::muddle::TrackerConfiguration::DefaultConfiguration();
+  config.disconnect_duplicates = false;
+  auto network                 = Network::New(N, config);
+  AllToAllConnectivity(network, std::chrono::seconds(5));
+
+  // Waiting for the network to settle.
+  std::this_thread::sleep_for(std::chrono::milliseconds(N * 1000));
+
+  std::size_t total{0};
+  std::size_t total_in{0};
+  std::size_t total_out{0};
+
+  for (auto const &node : network->nodes)
+  {
+    auto direct = node->muddle->GetDirectlyConnectedPeers().size();
+    EXPECT_EQ(direct, N - 1);
+
+    total_in += node->muddle->GetIncomingConnectedPeers().size();
+    total_out += node->muddle->GetOutgoingConnectedPeers().size();
+    total += direct;
+  }
+
+  network->Stop();
+
+  // TODO(tfr): Fix
+  EXPECT_EQ(total_out, N * (N - 1));
+  EXPECT_EQ(total_in, N * (N - 1));
+}
+
+TEST(RoutingTests, NoRemovalIncludingSelf)
+{
+  // Creating network
+  std::size_t N                = 10;
+  auto        config           = fetch::muddle::TrackerConfiguration::DefaultConfiguration();
+  config.disconnect_duplicates = false;
+  config.disconnect_from_self  = false;
+
+  auto network = Network::New(N, config);
+  AllToAllConnectivity(network, std::chrono::seconds(5));
+
+  // Waiting for the network to settle.
+  std::this_thread::sleep_for(std::chrono::milliseconds(N * 1000));
+
+  std::size_t total{0};
+  std::size_t total_in{0};
+  std::size_t total_out{0};
+
+  for (auto const &node : network->nodes)
+  {
+    auto direct = node->muddle->GetDirectlyConnectedPeers().size();
+    EXPECT_EQ(direct, N);
+
+    total_in += node->muddle->GetIncomingConnectedPeers().size();
+    total_out += node->muddle->GetOutgoingConnectedPeers().size();
+    total += direct;
+  }
+
+  network->Stop();
+
+  // TODO(tfr): Fix
+  EXPECT_EQ(total_out, N * N);
+  EXPECT_EQ(total_in, N * N);
 }

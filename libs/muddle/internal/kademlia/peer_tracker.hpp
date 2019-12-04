@@ -227,6 +227,7 @@ private:
                       uint64_t const &max_connections);
   void DisconnectDuplicates();
   void DisconnectFromPeers();
+  void DisconnectFromSelf();
   /// @}
 
   /// Pipeline for registering details of incoming and outgoing

@@ -29,6 +29,8 @@
 #include "http/middleware/telemetry.hpp"
 #include "http/module.hpp"
 #include "http/server.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/muddle_interface.hpp"
 #include "network/management/network_manager.hpp"
 
 #include <atomic>
@@ -119,10 +121,10 @@ uint16_t const BASE_HTTP_PORT   = 8100;
 
 struct Network
 {
-  static std::unique_ptr<Network> New(uint64_t number_of_nodes)
+  static std::unique_ptr<Network> New(uint64_t number_of_nodes, TrackerConfiguration config = {})
   {
     std::unique_ptr<Network> ret;
-    ret.reset(new Network(number_of_nodes));
+    ret.reset(new Network(number_of_nodes, config));
     return ret;
   }
 
@@ -136,10 +138,11 @@ struct Network
     nodes.clear();
   }
 
-  void AddNode()
+  void AddNode(TrackerConfiguration config)
   {
     nodes.emplace_back(std::make_unique<Node>(static_cast<uint16_t>(BASE_MUDDLE_PORT + counter),
                                               static_cast<uint16_t>(BASE_HTTP_PORT + counter)));
+    nodes.back()->muddle->SetTrackerConfiguration(config);
     nodes.back()->muddle->ConnectTo(
         fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT + counter - 1)));
     ++counter;
@@ -148,13 +151,14 @@ struct Network
   std::vector<std::unique_ptr<Node>> nodes;
 
 private:
-  explicit Network(uint64_t number_of_nodes)
+  explicit Network(uint64_t number_of_nodes, TrackerConfiguration config = {})
   {
     /// Creating the nodes
     for (uint64_t i = 0; i < number_of_nodes; ++i)
     {
       nodes.emplace_back(std::make_unique<Node>(static_cast<uint16_t>(BASE_MUDDLE_PORT + counter),
                                                 static_cast<uint16_t>(BASE_HTTP_PORT + counter)));
+      nodes.back()->muddle->SetTrackerConfiguration(config);
       ++counter;
     }
   }
@@ -162,46 +166,82 @@ private:
   uint64_t counter{0};
 };
 
-void MakeKademliaNetwork(std::unique_ptr<Network> &network)
+inline void MakeKademliaNetwork(std::unique_ptr<Network> &network)
 {
   for (auto &node : network->nodes)
   {
-    node->muddle->SetTrackerConfiguration(TrackerConfiguration::AllOn());
+    node->muddle->SetTrackerConfiguration(fetch::muddle::TrackerConfiguration::AllOn());
   }
 }
 
-void LinearConnectivity(std::unique_ptr<Network> &network)
+inline void LinearConnectivity(std::unique_ptr<Network> &network)
 {
   auto N = network->nodes.size();
   for (std::size_t i = 1; i < N; ++i)
   {
     auto &node = *network->nodes[i];
     node.muddle->ConnectTo(
-        fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT - 1 + i)),
-        std::chrono::seconds(10));
+        fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT - 1 + i)));
   }
 }
 
-Address FakeAddress(uint64_t i)
+inline void AllToAllConnectivity(std::unique_ptr<Network> &               network,
+                                 muddle::MuddleInterface::Duration const &expire =
+                                     std::chrono::duration_cast<muddle::MuddleInterface::Duration>(
+                                         std::chrono::hours(1024 * 24)))
 {
-  Address        ret;
-  crypto::SHA256 hasher;
+  auto N = network->nodes.size();
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    auto &node = *network->nodes[i];
+    for (std::size_t j = 0; j < N; ++j)
+    {
 
-  hasher.Update(reinterpret_cast<uint8_t *>(&i), sizeof(uint64_t));
-  ret = hasher.Final();
-
-  return ret;
-}
-
-ConstByteArray ReadibleAddress(Address const &address)
-{
-  ByteArray ret;
-  ret.Resize(address.size());
-  std::memcpy(ret.pointer(), address.pointer(), address.size());
-  return byte_array::ToBase64(ret);
+      node.muddle->ConnectTo(
+          fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT + j)), expire);
+    }
+  }
 }
 
 int main()
+{
+
+  // Creating network
+  std::size_t N                = 10;
+  auto        config           = fetch::muddle::TrackerConfiguration::DefaultConfiguration();
+  config.disconnect_duplicates = false;
+  config.disconnect_from_self  = false;
+  auto network                 = Network::New(N, config);
+  AllToAllConnectivity(network, std::chrono::seconds(5));
+
+  // Waiting for the network to settle.
+  std::this_thread::sleep_for(std::chrono::milliseconds(N * 1000));
+
+  while (true)
+  {
+    std::size_t total_in{0};
+    std::size_t total_out{0};
+    std::size_t total{0};
+    std::size_t total2{0};
+
+    for (auto const &node : network->nodes)
+    {
+      auto &ep = node->muddle->GetEndpoint();
+      //      auto const &peer_tracker = ep.peer_tracker();
+
+      total_in += node->muddle->GetIncomingConnectedPeers().size();
+      total_out += node->muddle->GetOutgoingConnectedPeers().size();
+      total += node->muddle->GetDirectlyConnectedPeers().size();
+      total2 += ep.GetDirectlyConnectedPeers().size();
+    }
+    std::cout << total_out << "  " << total_in << " " << total << " " << total2 << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+  }
+
+  network->Stop();
+}
+
+void foo()
 {
   uint64_t N       = 40;
   auto     network = Network::New(N);
@@ -209,6 +249,7 @@ int main()
   //  MakeKademliaNetwork(network);
   LinearConnectivity(network);
 
+  /*
   uint64_t step = N / 4;
   for (uint64_t i = 0; i < N; i += step)
   {
@@ -217,12 +258,13 @@ int main()
 
     network->nodes[i]->muddle->ConnectTo(address, std::chrono::seconds(90));
   }
+  */
 
   std::string input;
   while (true)
   {
     std::this_thread::sleep_for(std::chrono::seconds(400));
-    network->AddNode();
+    network->AddNode({});
   }
   std::getline(std::cin, input);
 

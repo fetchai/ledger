@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/time/to_seconds.hpp"
 #include "kademlia/peer_tracker.hpp"
+#include "core/time/to_seconds.hpp"
 
 #include <chrono>
 #include <memory>
@@ -327,10 +327,32 @@ void PeerTracker::DisconnectDuplicates()
   }
 }
 
+void PeerTracker::DisconnectFromSelf()
+{
+  // Disconnecting from self
+  auto connections = register_.LookupConnections(own_address_);
+  for (auto &conn_ptr : connections)
+  {
+    auto conn = conn_ptr.lock();
+    if (conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING)
+    {
+      auto const handle = conn->handle();
+      FETCH_LOG_DEBUG(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
+                      " connection: ", address.ToBase64());
+
+      // Note that the order of these two matters. RemovePersistentPeer must
+      // be executed first.
+      connections_.RemovePersistentPeer(handle);
+      connections_.RemoveConnection(handle);
+    }
+  }
+}
+
 void PeerTracker::DisconnectFromPeers()
 {
   // Trimming connections
   auto connecting_to = register_.GetOutgoingAddressSet();
+
   if (connecting_to.size() <= tracker_configuration_.max_kademlia_connections)
   {
     return;
@@ -661,7 +683,10 @@ void PeerTracker::ConnectToDesiredPeers()
     }
 
     // Keeping track of what we have connected to.
-    keep_connections_.insert(best_peer);
+    if (best_peer != own_address_)
+    {
+      keep_connections_.insert(best_peer);
+    }
 
     // Adding the peer to the track list.
     if (peer != best_peer)
@@ -727,7 +752,10 @@ void PeerTracker::Periodically()
   // pulling data from
   for (auto const &item : uri_resolution_tasks_)
   {
-    keep_connections_.emplace(item.first);
+    if (item.first != own_address_)
+    {
+      keep_connections_.emplace(item.first);
+    }
   }
 
   // TODO(tfr): Add something similar for pulling
@@ -751,7 +779,10 @@ void PeerTracker::Periodically()
       }
 
       // Switching to address based desired peer
-      desired_peers_.insert(std::move(address));
+      if (address != own_address_)
+      {
+        desired_peers_.insert(std::move(address));
+      }
     }
     else
     {
@@ -850,10 +881,17 @@ void PeerTracker::Periodically()
     DisconnectFromPeers();
   }
 
+  // Disconnecting from self if connected
+  if (tracker_configuration_.disconnect_from_self)
+  {
+    DisconnectFromSelf();
+  }
+
   // Finally, we create a list of accessible peers
   FETCH_LOCK(direct_mutex_);
   directly_connected_peers_.clear();
-  for (auto &p : keep_connections_)
+  auto const currently_outgoing = register_.GetOutgoingAddressSet();
+  for (auto &p : currently_outgoing)
   {
     auto connection = register_.LookupConnection(p).lock();
     if (connection)
