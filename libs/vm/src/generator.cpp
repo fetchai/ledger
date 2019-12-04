@@ -88,7 +88,7 @@ bool Generator::GenerateExecutable(IR const &ir, std::string const &executable_n
 
 void Generator::AddLineNumber(uint16_t line, uint16_t pc)
 {
-  // Store the lowest PC ecountered for each unique line that has instructions associated with it
+  // Store the lowest PC encountered for each unique line that has instructions associated with it
   auto it = line_to_pc_map_.find(line);
   if (it != line_to_pc_map_.end())
   {

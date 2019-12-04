@@ -12,8 +12,8 @@ import re
 import shutil
 import subprocess
 import sys
-import time
 import threading
+import time
 import xml.etree.ElementTree as ET
 from os.path import abspath, dirname, exists, isdir, isfile, join
 
@@ -417,7 +417,9 @@ def main():
 
         # configure the project
         if not cmake_configure(project_root, build_root, options, generator):
-            output('\n😭 Failed to configure the cmake project. This is usually because of a mismatch between generators.\n\nTry removing the build folder: {} and try again'.format(build_root))
+            output(
+                '\n😭 Failed to configure the cmake project. This is usually because of a mismatch between generators.\n\nTry removing the build folder: {} and try again'.format(
+                    build_root))
             sys.exit(1)
 
     if args.build or args.all or args.commit:
