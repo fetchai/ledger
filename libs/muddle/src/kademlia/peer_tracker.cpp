@@ -58,16 +58,23 @@ PeerTracker::AddressSet PeerTracker::GetDesiredPeers() const
   return desired_peers_;
 }
 
-void PeerTracker::AddDesiredPeer(Address const &address)
+void PeerTracker::AddDesiredPeer(Address const &address, PeerTracker::Duration const &expiry)
 {
   FETCH_LOCK(mutex_);
+  connection_expiry_.emplace(address, Clock::now() + expiry);
   desired_peers_.insert(address);
 }
 
-void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hint)
+void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hint,
+                                 PeerTracker::Duration const &expiry)
 {
   FETCH_LOCK(mutex_);
-  desired_peers_.insert(address);
+  connection_expiry_.emplace(address, Clock::now() + expiry);
+
+  if (!address.empty())
+  {
+    desired_peers_.insert(address);
+  }
 
   PeerInfo info;
   info.address = address;
@@ -75,12 +82,14 @@ void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hi
   peer_table_.ReportExistence(info, own_address_);
 
   desired_uris_.insert(info.uri);
+  desired_uri_expiry_.emplace(info.uri, Clock::now() + expiry);
 }
 
-void PeerTracker::AddDesiredPeer(PeerTracker::Uri const &uri)
+void PeerTracker::AddDesiredPeer(PeerTracker::Uri const &uri, PeerTracker::Duration const &expiry)
 {
   FETCH_LOCK(mutex_);
   desired_uris_.insert(uri);
+  desired_uri_expiry_.emplace(uri, Clock::now() + expiry);
 }
 
 void PeerTracker::RemoveDesiredPeer(Address const &address)
@@ -665,6 +674,50 @@ void PeerTracker::Periodically()
   keep_connections_.clear();
   no_uri_.clear();
 
+  // Trimming for expired connections
+  auto                                   now = Clock::now();
+  std::unordered_map<Address, Timepoint> new_expiry;
+  for (auto const &item : connection_expiry_)
+  {
+
+    // Keeping those which are still not expired
+    if (item.second > now)  // TODO: Add grace period
+    {
+      new_expiry.emplace(item);
+    }
+    else if (item.second < now)
+    {
+      // Deleting peers which has expired
+      auto it = desired_peers_.find(item.first);
+      if (it != desired_peers_.end())
+      {
+        desired_peers_.erase(it);
+      }
+    }
+  }
+  std::swap(connection_expiry_, new_expiry);
+
+  // Trimming URIs
+  std::unordered_map<Uri, Timepoint> new_uri_expiry;
+  for (auto const &item : desired_uri_expiry_)
+  {
+    // Keeping those which are still not expired
+    if (item.second > now)  // TODO: Add grace period
+    {
+      new_uri_expiry.emplace(item);
+    }
+    else if (item.second < now)
+    {
+      // Deleting peers which has expired
+      auto it = desired_uris_.find(item.first);
+      if (it != desired_uris_.end())
+      {
+        desired_uris_.erase(it);
+      }
+    }
+  }
+  std::swap(desired_uri_expiry_, new_uri_expiry);
+
   // Ensuring that we keep connections open which we are currently
   // pulling data from
   for (auto const &item : uri_resolution_tasks_)
@@ -684,6 +737,15 @@ void PeerTracker::Periodically()
       FETCH_LOG_INFO(logging_name_.c_str(), "Address from URI found ", uri.ToString(), ": ",
                      address.ToBase64());
 
+      // Moving expiry time accross based on address
+      auto expit = desired_uri_expiry_.find(uri);
+      if (expit != desired_uri_expiry_.end())
+      {
+        connection_expiry_[address] = expit->second;
+        desired_uri_expiry_.erase(expit);
+      }
+
+      // Switching to address based desired peer
       desired_peers_.insert(std::move(address));
     }
     else

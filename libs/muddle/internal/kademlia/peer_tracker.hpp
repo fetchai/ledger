@@ -26,6 +26,7 @@
 #include "kademlia/peer_tracker_protocol.hpp"
 #include "kademlia/table.hpp"
 #include "moment/clock_interfaces.hpp"
+#include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "muddle/tracker_configuration.hpp"
@@ -94,10 +95,13 @@ public:
   /// Tracker interface
   /// @{
   AddressSet GetDesiredPeers() const;
-  void       AddDesiredPeer(Address const &address);
-  void       AddDesiredPeer(Address const &      address,
-                            network::Peer const &hint);  // TODO(tfr): change hint to URI
-  void       AddDesiredPeer(Uri const &uri);
+  void       AddDesiredPeer(Address const & address,
+                            Duration const &expiry = muddle::MuddleInterface::NeverExpire());
+  void       AddDesiredPeer(Address const &address, network::Peer const &hint,
+                            Duration const &expiry =
+                                muddle::MuddleInterface::NeverExpire());  // TODO(tfr): change hint to URI
+  void       AddDesiredPeer(Uri const &     uri,
+                            Duration const &expiry = muddle::MuddleInterface::NeverExpire());
   void       RemoveDesiredPeer(Address const &address);
   /// @}
 
@@ -273,8 +277,10 @@ private:
 
   /// User defined connections
   /// @{
-  AddressSet              desired_peers_;
-  std::unordered_set<Uri> desired_uris_;
+  std::unordered_map<Address, Timepoint> connection_expiry_;
+  std::unordered_map<Uri, Timepoint>     desired_uri_expiry_;
+  AddressSet                             desired_peers_;
+  std::unordered_set<Uri>                desired_uris_;
   /// @}
 
   /// Handling new comers

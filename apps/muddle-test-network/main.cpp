@@ -177,7 +177,8 @@ void LinearConnectivity(std::unique_ptr<Network> &network)
   {
     auto &node = *network->nodes[i];
     node.muddle->ConnectTo(
-        fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT - 1 + i)));
+        fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT - 1 + i)),
+        std::chrono::seconds(10));
   }
 }
 
@@ -202,7 +203,7 @@ ConstByteArray ReadibleAddress(Address const &address)
 
 int main()
 {
-  uint64_t N       = 40;  // TODO(tfr): Make parameter
+  uint64_t N       = 40;
   auto     network = Network::New(N);
 
   //  MakeKademliaNetwork(network);
@@ -214,7 +215,7 @@ int main()
     uint64_t next    = (i + step) % N;
     auto     address = network->nodes[next]->address;
 
-    network->nodes[i]->muddle->ConnectTo(address);
+    network->nodes[i]->muddle->ConnectTo(address, std::chrono::seconds(90));
   }
 
   std::string input;

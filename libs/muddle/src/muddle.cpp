@@ -365,11 +365,11 @@ Muddle::Addresses Muddle::GetRequestedPeers() const
  *
  * @param address The requested address to connect to
  */
-void Muddle::ConnectTo(Address const &address, Duration const & /*expire*/)
+void Muddle::ConnectTo(Address const &address, Duration const &expire)
 {
   if (node_address_ != address)
   {
-    peer_tracker_->AddDesiredPeer(address);
+    peer_tracker_->AddDesiredPeer(address, expire);
   }
 }
 
@@ -391,10 +391,10 @@ void Muddle::ConnectTo(Addresses const &addresses, Duration const &expire)
  *
  * @param uri The uri to connect to
  */
-void Muddle::ConnectTo(network::Uri const &uri, Duration const & /*expire*/)
+void Muddle::ConnectTo(network::Uri const &uri, Duration const &expire)
 {
   clients_.AddPersistentPeer(uri);
-  peer_tracker_->AddDesiredPeer(uri);
+  peer_tracker_->AddDesiredPeer(uri, expire);
 }
 
 void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint, Duration const &expire)
@@ -410,7 +410,7 @@ void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint, Dur
   {
     if (uri_hint.IsTcpPeer())
     {
-      peer_tracker_->AddDesiredPeer(address, uri_hint.GetTcpPeer());
+      peer_tracker_->AddDesiredPeer(address, uri_hint.GetTcpPeer(), expire);
     }
     else
     {
