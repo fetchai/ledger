@@ -42,9 +42,6 @@ class MathTests : public ::testing::Test
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
-
-  // tensor charge estimation enforcement
-  ChargeAmount tensor_setup_charge_min{16};
 };
 
 TEST_F(MathTests, abs_test)
@@ -384,113 +381,6 @@ TEST_F(MathTests, tensor_set_from_string)
   gt.Fill(static_cast<DataType>(1.0));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
-}
-
-TEST_F(MathTests, tensor_setup_charge_estimator_min_charge_succeeds)
-{
-  static char const *tensor_setup_src = R"(
-    function main()
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 5u64;
-      tensor_shape[1] = 2u64;
-      var x = Tensor(tensor_shape);
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_setup_src));
-  ASSERT_TRUE(toolkit.Run(nullptr, tensor_setup_charge_min)) << stdout.str();
-}
-
-TEST_F(MathTests, tensor_setup_charge_estimator_min_charge_fails)
-{
-  static char const *tensor_setup_src = R"(
-    function main()
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 5u64;
-      tensor_shape[1] = 2u64;
-      var x = Tensor(tensor_shape);
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_setup_src));
-  ASSERT_FALSE(toolkit.Run(nullptr, tensor_setup_charge_min - 1)) << stdout.str();
-}
-
-TEST_F(MathTests, tensor_fill_estimator_succeeds)
-{
-  size_t       tensor_size = 10;
-  ChargeAmount charge_max  = tensor_setup_charge_min + 2 * fetch::vm::CHARGE_UNIT * tensor_size;
-
-  static char const *tensor_to_string_src = R"(
-    function main()
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 5u64;
-      tensor_shape[1] = 2u64;
-      var x = Tensor(tensor_shape);
-      x.fill(2.0fp64);
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_to_string_src));
-  ASSERT_TRUE(toolkit.Run(nullptr, charge_max)) << stdout.str();
-}
-
-TEST_F(MathTests, tensor_fill_estimator_fails)
-{
-  size_t       tensor_size = 10;
-  ChargeAmount charge_max  = tensor_setup_charge_min + 2 * fetch::vm::CHARGE_UNIT * tensor_size;
-
-  static char const *tensor_to_string_src = R"(
-    function main()
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 5u64;
-      tensor_shape[1] = 5u64;
-      var x = Tensor(tensor_shape);
-      x.fill(2.0fp64);
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_to_string_src));
-  ASSERT_FALSE(toolkit.Run(nullptr, charge_max));
-}
-
-TEST_F(MathTests, tensor_to_string_estimator_succeeds)
-{
-  size_t       tensor_size = 10;
-  ChargeAmount charge_max  = tensor_setup_charge_min + 2 * fetch::vm::CHARGE_UNIT * tensor_size;
-
-  static char const *tensor_to_string_src = R"(
-    function main()
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 5u64;
-      tensor_shape[1] = 2u64;
-      var x = Tensor(tensor_shape);
-      x.toString();
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_to_string_src));
-  ASSERT_TRUE(toolkit.Run(nullptr, charge_max));
-}
-
-TEST_F(MathTests, tensor_to_string_estimator_fails)
-{
-  size_t       tensor_size = 10;
-  ChargeAmount charge_max  = tensor_setup_charge_min + 2 * fetch::vm::CHARGE_UNIT * tensor_size;
-
-  static char const *tensor_to_string_src = R"(
-    function main()
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 5u64;
-      tensor_shape[1] = 2u64;
-      var x = Tensor(tensor_shape);
-      x.toString();
-      x.toString();
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_to_string_src));
-  ASSERT_FALSE(toolkit.Run(nullptr, charge_max));
 }
 
 }  // namespace
