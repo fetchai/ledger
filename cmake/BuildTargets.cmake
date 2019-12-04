@@ -394,6 +394,8 @@ function (generate_version_file)
 
   endif ()
 
+  message(STATUS "Parsed project version: ${version}")
+
   # determine the format of the output from the above command
   string(REGEX MATCHALL
                "^v.*"
