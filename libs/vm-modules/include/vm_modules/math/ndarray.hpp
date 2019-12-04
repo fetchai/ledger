@@ -60,6 +60,13 @@ public:
   virtual void               SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
                                              TemplateParameter1 const &value)                 = 0;
 
+  virtual fetch::vm::Ptr<ITensor> Squeeze() const   = 0;
+  virtual fetch::vm::Ptr<ITensor> Unsqueeze() const = 0;
+
+  virtual void Fill(AnyPrimitive const &value) = 0;
+
+  virtual fetch::math::SizeVector shape() const = 0;
+
   static void Bind(fetch::vm::Module &module);
 
 protected:
@@ -109,11 +116,44 @@ struct NDArray : public ITensor
 
   TemplateParameter1 GetIndexedValue(AnyInteger const &row, AnyInteger const &column) override;
 
-  void Copy(TensorType const &other);
+  // void Copy(TensorType const &other);
 
-  void Fill(T const &value);
+  void Fill(AnyPrimitive const &value) override;
 
-  void FillRandom();
+  // void FillRandom();
+  /////////////////
+  /// RESHAPING ///
+  /////////////////
+
+  fetch::vm::Ptr<ITensor> Squeeze() const override;
+
+  fetch::vm::Ptr<ITensor> Unsqueeze() const override;
+
+  // bool Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
+
+  // void Transpose();
+
+  //////////////////////////////
+  /// PRINTING AND EXPORTING ///
+  //////////////////////////////
+
+  virtual fetch::math::SizeVector shape() const override;
+
+  //  void FromString(fetch::vm::Ptr<fetch::vm::String> const &string);
+
+  //  fetch::vm::Ptr<fetch::vm::String> ToString() const;
+
+  // const fetch::math::Tensor<T> &GetTensor();
+
+  //  TensorType const &GetConstTensor();
+
+  //  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+
+  //  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+
+  ///////////////////////
+  /// MATH OPERATIONS ///
+  ///////////////////////
 
   void Negate(Ptr<Object> &object) override;
 
@@ -145,6 +185,7 @@ struct NDArray : public ITensor
 
   void InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv) override;
 
+private:
   T *Find(AnyInteger const &row, AnyInteger const &column);
 
   // TemplateParameter1 At(AnyInteger const &row, AnyInteger const &column) override;

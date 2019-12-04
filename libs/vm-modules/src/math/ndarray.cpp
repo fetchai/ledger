@@ -452,6 +452,42 @@ TemplateParameter1 NDArray<T>::GetIndexedValue(const AnyInteger &row, const AnyI
   return TemplateParameter1();
 }
 
+template <typename T>
+void NDArray<T>::Fill(const AnyPrimitive &value)
+{
+  // TODO: is it safe enough if a float64 value is given to a Tensor of type Fixed32?...
+  T const val = value.Get<T>();
+  tensor_.Fill(val);
+}
+
+template <typename T>
+fetch::vm::Ptr<ITensor> NDArray<T>::Squeeze() const
+{
+  auto squeezed_tensor = tensor_.Copy();
+  squeezed_tensor.Squeeze();
+  return fetch::vm::Ptr<ITensor>(new NDArray<T>(vm_, type_id_, squeezed_tensor));
+}
+
+template <typename T>
+fetch::vm::Ptr<ITensor> NDArray<T>::Unsqueeze() const
+{
+  auto unsqueezed_tensor = tensor_.Copy();
+  unsqueezed_tensor.Unsqueeze();
+  return fetch::vm::Ptr<ITensor>(new NDArray<T>(vm_, type_id_, unsqueezed_tensor));
+}
+
+template <typename T>
+fetch::math::SizeVector NDArray<T>::shape() const
+{
+  return tensor_.shape();
+}
+
+// template <typename T>
+// fetch::math::Tensor<T> const &NDArray<T>::GetTensor()
+//{
+//  return tensor_;
+//}
+
 // Ptr<ITensor> ITensor::Constructor(VM *vm, TypeId type_id,  // int32_t num_rows, int32_t
 // num_columns)
 //                                  int32_t num_rows, int32_t num_columns)
@@ -489,13 +525,14 @@ Ptr<ITensor> ITensor::Constructor(
       return Ptr<ITensor>();
     }
   }
-  TypeInfo const &        type_info       = vm->GetTypeInfo(type_id);
-  TypeId const            element_type_id = type_info.template_parameter_type_ids[0];
+  TypeInfo const &type_info       = vm->GetTypeInfo(type_id);
+  TypeId const    element_type_id = type_info.template_parameter_type_ids[0];
+
   static std::set<TypeId> allowed_types{TypeIds::Float32, TypeIds::Float64, TypeIds::Fixed32,
                                         TypeIds::Fixed64};
   if (allowed_types.find(element_type_id) == allowed_types.end())
   {
-    vm->RuntimeError("Can not create NDArray with element typeId " +
+    vm->RuntimeError("Can not create NDArray with element TypeId " +
                      std::to_string(element_type_id));
     return Ptr<ITensor>();
   }
@@ -510,11 +547,10 @@ Ptr<ITensor> ITensor::Constructor(
     return Ptr<ITensor>{new NDArray<fixed_point::fp32_t>(vm, type_id, shape->elements)};
   case TypeIds::Fixed64:
     return Ptr<ITensor>{new NDArray<fixed_point::fp64_t>(vm, type_id, shape->elements)};
-    // TODO (VH) : impl. proper Factory with Fixed128, Integers and so on.
   }
 
   // TEMPORARY DUMMY, SHOULD BE REWORKED
-  vm->RuntimeError("Can not create NDArray with element typeId " + std::to_string(element_type_id));
+  vm->RuntimeError("Can not create NDArray with element TypeId " + std::to_string(element_type_id));
   return Ptr<ITensor>();
 }
 
@@ -526,11 +562,13 @@ void fetch::vm_modules::math::ITensor::Bind(fetch::vm::Module &module)
       .CreateConstructor(&ITensor::Constructor)
       .EnableIndexOperator(&ITensor::GetIndexedValue, &ITensor::SetIndexedValue)
       .CreateMemberFunction("at", at2)
+      .CreateMemberFunction("squeeze", &ITensor::Squeeze)
+      .CreateMemberFunction("unsqueeze", &ITensor::Unsqueeze)
+      .CreateMemberFunction("fill", &ITensor::Fill)
       .CreateInstantiationType<NDArray<float>>()
       .CreateInstantiationType<NDArray<double>>()
       .CreateInstantiationType<NDArray<fixed_point::fp32_t>>()
       .CreateInstantiationType<NDArray<fixed_point::fp64_t>>()
-      //.CreateInstantiationType<NDArray<fixed_point::fp128_t>>() TODO(VH): impl. non-primitives
       .EnableOperator(Operator::Negate)
       .EnableOperator(Operator::Add)
       .EnableOperator(Operator::Subtract)
