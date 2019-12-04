@@ -91,10 +91,10 @@ struct TrackerConfiguration
   bool allow_connection_expiry{true};
   /// @}
 
-  uint64_t max_kademlia_connections{5};
-  uint64_t max_longrange_connections{5};
+  uint64_t max_kademlia_connections{6};
+  uint64_t max_longrange_connections{3};
   uint64_t max_desired_connections{255};
-  uint64_t max_discovery_connections{5};
+  uint64_t max_discovery_connections{2};
 
   /// Priority paramters
   /// @{

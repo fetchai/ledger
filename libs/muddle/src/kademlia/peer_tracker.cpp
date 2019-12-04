@@ -61,6 +61,7 @@ PeerTracker::AddressSet PeerTracker::GetDesiredPeers() const
 void PeerTracker::AddDesiredPeer(Address const &address, PeerTracker::Duration const &expiry)
 {
   FETCH_LOCK(mutex_);
+  FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by address: ", address.ToBase64());
   connection_expiry_.emplace(address, Clock::now() + expiry);
   desired_peers_.insert(address);
 }
@@ -83,6 +84,8 @@ void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hi
 
   desired_uris_.insert(info.uri);
   desired_uri_expiry_.emplace(info.uri, Clock::now() + expiry);
+  FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by address and uri: ", info.uri.ToString(),
+                 " - ", address.ToBase64());
 }
 
 void PeerTracker::AddDesiredPeer(PeerTracker::Uri const &uri, PeerTracker::Duration const &expiry)
@@ -90,6 +93,7 @@ void PeerTracker::AddDesiredPeer(PeerTracker::Uri const &uri, PeerTracker::Durat
   FETCH_LOCK(mutex_);
   desired_uris_.insert(uri);
   desired_uri_expiry_.emplace(uri, Clock::now() + expiry);
+  FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by uri: ", uri.ToString());
 }
 
 void PeerTracker::RemoveDesiredPeer(Address const &address)
@@ -634,6 +638,7 @@ void PeerTracker::ConnectToDesiredPeers()
     // Ignoring addresses found in incoming
     if (currently_incoming.find(best_peer) != currently_incoming.end())
     {
+      FETCH_LOG_ERROR(logging_name_.c_str(), "Connection to peer not found.");
       continue;
     }
 
@@ -681,7 +686,7 @@ void PeerTracker::Periodically()
   {
 
     // Keeping those which are still not expired
-    if (item.second > now)  // TODO(tfr): Add grace period
+    if (item.second > now)
     {
       new_expiry.emplace(item);
     }
@@ -702,7 +707,7 @@ void PeerTracker::Periodically()
   for (auto const &item : desired_uri_expiry_)
   {
     // Keeping those which are still not expired
-    if (item.second > now)  // TODO(tfr): Add grace period
+    if (item.second > now)
     {
       new_uri_expiry.emplace(item);
     }
