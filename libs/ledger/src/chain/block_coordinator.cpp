@@ -386,7 +386,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's merkle hash cannot be retrieved! block: 0x",
                       current_hash.ToHex(), " number: ", common_parent->block_number,
-                      " merkle hash: 0x", common_parent->merkle_hash.ToHex(), " Last processed: ", last_processed_block->block_number, " aka ", last_processed_block->current_hash.ToHex());
+                      " merkle hash: 0x", common_parent->merkle_hash.ToHex(), " Last processed: ", last_processed_block.block_number, " aka ", last_processed_block.current_hash.ToHex());
 
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
