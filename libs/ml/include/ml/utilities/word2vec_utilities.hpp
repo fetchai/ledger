@@ -73,10 +73,9 @@ std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>>
 }
 
 template <class TensorType>
-std::string WordAnalogyTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
-                            TensorType const &embeddings, std::string const &word1,
-                            std::string const &word2, std::string const &word3,
-                            typename TensorType::SizeType k)
+std::string WordAnalogyTest(dataloaders::Vocab const &vcb, TensorType const &embeddings,
+                            std::string const &word1, std::string const &word2,
+                            std::string const &word3, typename TensorType::SizeType k)
 {
   using SizeType = fetch::math::SizeType;
   using DataType = typename TensorType::Type;
@@ -86,16 +85,16 @@ std::string WordAnalogyTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
   outstream << "Find word that is to " << word3 << " what " << word2 << " is to " << word1
             << std::endl;
 
-  if (!dl.WordKnown(word1) || !dl.WordKnown(word2) || !dl.WordKnown(word3))
+  if (!vcb.WordKnown(word1) || !vcb.WordKnown(word2) || !vcb.WordKnown(word3))
   {
     outstream << "Error: Not all to-be-tested words are in vocabulary." << std::endl;
   }
   else
   {
     // get id for words
-    SizeType word1_idx = dl.IndexFromWord(word1);
-    SizeType word2_idx = dl.IndexFromWord(word2);
-    SizeType word3_idx = dl.IndexFromWord(word3);
+    SizeType word1_idx = vcb.IndexFromWord(word1);
+    SizeType word2_idx = vcb.IndexFromWord(word2);
+    SizeType word3_idx = vcb.IndexFromWord(word3);
 
     std::vector<std::pair<SizeType, DataType>> output =
         GetWordIDAnalogies<TensorType>(embeddings, word1_idx, word2_idx, word3_idx, k);
@@ -104,14 +103,14 @@ std::string WordAnalogyTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
     {
       outstream << "rank: " << l << ", "
                 << "distance, " << output.at(l).second << ": "
-                << dl.WordFromIndex(output.at(l).first) << std::endl;
+                << vcb.WordFromIndex(output.at(l).first) << std::endl;
     }
   }
   return outstream.str();
 }
 
 template <class TensorType>
-std::string KNNTest(dataloaders::GraphW2VLoader<TensorType> const &dl, TensorType const &embeddings,
+std::string KNNTest(dataloaders::Vocab const &vcb, TensorType const &embeddings,
                     std::string const &word0, typename TensorType::SizeType k)
 {
   using SizeType = fetch::math::SizeType;
@@ -121,13 +120,13 @@ std::string KNNTest(dataloaders::GraphW2VLoader<TensorType> const &dl, TensorTyp
 
   outstream << "Find words that are closest to \"" << word0 << "\" by cosine distance" << std::endl;
 
-  if (!dl.WordKnown(word0))
+  if (!vcb.WordKnown(word0))
   {
     outstream << "Error: could not find \"" + word0 + "\" in vocabulary" << std::endl;
   }
   else
   {
-    SizeType                                   idx        = dl.IndexFromWord(word0);
+    SizeType                                   idx        = vcb.IndexFromWord(word0);
     TensorType                                 one_vector = embeddings.Slice(idx, 1).Copy();
     std::vector<std::pair<SizeType, DataType>> output =
         fetch::math::clustering::KNNCosine(embeddings, one_vector, k);
@@ -136,17 +135,17 @@ std::string KNNTest(dataloaders::GraphW2VLoader<TensorType> const &dl, TensorTyp
     {
       outstream << "rank: " << l << ", "
                 << "distance, " << output.at(l).second << ": "
-                << dl.WordFromIndex(output.at(l).first) << std::endl;
+                << vcb.WordFromIndex(output.at(l).first) << std::endl;
     }
   }
   return outstream.str();
 }
 
 template <class TensorType>
-std::pair<std::string, float> AnalogiesFileTest(dataloaders::GraphW2VLoader<TensorType> const &dl,
-                                                TensorType const & embeddings,
-                                                std::string const &analogy_file,
-                                                bool               verbose = false)
+std::pair<std::string, float> AnalogiesFileTest(dataloaders::Vocab const &vcb,
+                                                TensorType const &        embeddings,
+                                                std::string const &       analogy_file,
+                                                bool                      verbose = false)
 {
   using SizeType = fetch::math::SizeType;
   using DataType = typename TensorType::Type;
@@ -179,8 +178,8 @@ std::pair<std::string, float> AnalogiesFileTest(dataloaders::GraphW2VLoader<Tens
 
       ss >> word1 >> word2 >> word3 >> word4;
 
-      if (!dl.WordKnown(word1) || !dl.WordKnown(word2) || !dl.WordKnown(word3) ||
-          !dl.WordKnown(word4))
+      if (!vcb.WordKnown(word1) || !vcb.WordKnown(word2) || !vcb.WordKnown(word3) ||
+          !vcb.WordKnown(word4))
       {
         unknown_count += 1;
         continue;
@@ -192,10 +191,10 @@ std::pair<std::string, float> AnalogiesFileTest(dataloaders::GraphW2VLoader<Tens
       }
 
       // get id for words
-      SizeType word1_idx = dl.IndexFromWord(word1);
-      SizeType word2_idx = dl.IndexFromWord(word2);
-      SizeType word3_idx = dl.IndexFromWord(word3);
-      SizeType word4_idx = dl.IndexFromWord(word4);
+      SizeType word1_idx = vcb.IndexFromWord(word1);
+      SizeType word2_idx = vcb.IndexFromWord(word2);
+      SizeType word3_idx = vcb.IndexFromWord(word3);
+      SizeType word4_idx = vcb.IndexFromWord(word4);
 
       std::vector<std::pair<SizeType, DataType>> results =
           GetWordIDAnalogies<TensorType>(embeddings, word1_idx, word2_idx, word3_idx, 4);
@@ -207,7 +206,7 @@ std::pair<std::string, float> AnalogiesFileTest(dataloaders::GraphW2VLoader<Tens
         {
           if (verbose)
           {
-            outstream << "Result: " << dl.WordFromIndex(result.first) << std::endl;
+            outstream << "Result: " << vcb.WordFromIndex(result.first) << std::endl;
           }
           if (idx == word4_idx)
           {
@@ -235,19 +234,19 @@ std::pair<std::string, float> AnalogiesFileTest(dataloaders::GraphW2VLoader<Tens
 
 template <class TensorType>
 void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
-                    dataloaders::GraphW2VLoader<TensorType> const &dl, std::string const &word0,
+                    dataloaders::Vocab const &vcb, std::string const &word0,
                     std::string const &word1, std::string const &word2, std::string const &word3,
                     math::SizeType K, std::string const &analogies_test_file, bool verbose = true,
                     std::string const &outfile = "")
 {
   TensorType const &weights = utilities::GetEmbeddings(g, skip_gram_name);
 
-  std::string knn_results = utilities::KNNTest(dl, weights, word0, K);
+  std::string knn_results = utilities::KNNTest(vcb, weights, word0, K);
 
   std::string word_analogy_results =
-      utilities::WordAnalogyTest(dl, weights, word1, word2, word3, K);
+      utilities::WordAnalogyTest(vcb, weights, word1, word2, word3, K);
 
-  auto analogies_file_results = utilities::AnalogiesFileTest(dl, weights, analogies_test_file);
+  auto analogies_file_results = utilities::AnalogiesFileTest(vcb, weights, analogies_test_file);
 
   if (verbose)
   {

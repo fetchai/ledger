@@ -88,11 +88,12 @@ ClientWord2VecAlgorithm<TensorType>::ClientWord2VecAlgorithm(
 
   // build vocab
   w2v_data_loader_ptr_->BuildVocabAndData({tp_.data}, tp_.min_count);
+  tp_.results_dir + '/vocab_'
 
-  // calculate the compatible linear lr decay
-  // this decay rate guarantees that the lr is reduced to zero by the
-  // end of an epoch (despite capping by ending learning rate)
-  DataType est_samples                      = w2v_data_loader_ptr_->EstimatedSampleNumber();
+      // calculate the compatible linear lr decay
+      // this decay rate guarantees that the lr is reduced to zero by the
+      // end of an epoch (despite capping by ending learning rate)
+      DataType est_samples                  = w2v_data_loader_ptr_->EstimatedSampleNumber();
   tp_.learning_rate_param.linear_decay_rate = DataType{1} / est_samples;
   std::cout << "id: " << id << ", dataloader_.EstimatedSampleNumber(): " << est_samples
             << std::endl;
@@ -135,7 +136,7 @@ float ClientWord2VecAlgorithm<TensorType>::ComputeAnalogyScore()
 {
   TensorType const &weights = fetch::ml::utilities::GetEmbeddings(*this->graph_ptr_, skipgram_);
 
-  return fetch::ml::utilities::AnalogiesFileTest(*w2v_data_loader_ptr_, weights,
+  return fetch::ml::utilities::AnalogiesFileTest(*(w2v_data_loader_ptr_->GetVocab()), weights,
                                                  tp_.analogies_test_file)
       .second;
 }

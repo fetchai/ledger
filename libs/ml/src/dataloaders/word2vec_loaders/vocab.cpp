@@ -19,6 +19,7 @@
 #include "ml/dataloaders/word2vec_loaders/vocab.hpp"
 
 #include <sstream>
+#include <ml/exceptions/exceptions.hpp>
 
 namespace fetch {
 namespace ml {
@@ -117,6 +118,10 @@ std::map<Vocab::SizeType, Vocab::SizeType> Vocab::RemoveInfrequentWord(Vocab::Si
 void Vocab::Save(std::string const &filename) const
 {
   std::ofstream outfile(filename, std::ios::binary);
+  if (outfile.fail())
+  {
+    throw ml::exceptions::InvalidFile("Cannot open file " + filename);
+  }
 
   outfile << vocab.size() << "\n";
   outfile << total_count << "\n";
@@ -141,6 +146,10 @@ void Vocab::Load(std::string const &filename)
   counts.clear();
 
   std::ifstream infile(filename, std::ios::binary);
+  if (infile.fail())
+  {
+    throw ml::exceptions::InvalidFile("Cannot open file " + filename);
+  }
 
   SizeType vocab_size;
   infile >> vocab_size;
@@ -234,6 +243,11 @@ byte_array::ConstByteArray Vocab::GetVocabHash()
 std::vector<std::string> Vocab::GetReverseVocab()
 {
   return reverse_vocab;
+}
+
+bool Vocab::WordKnown(std::string const &word) const
+{
+  return IndexFromWord(word) != Vocab::UNKNOWN_WORD;
 }
 
 }  // namespace dataloaders

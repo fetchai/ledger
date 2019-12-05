@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "file_loader.hpp"
-#include "math/clustering/knn.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
@@ -32,13 +30,11 @@
 #include <iostream>
 #include <string>
 #include <utility>
-#include <vector>
 
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
-using namespace fetch::ml::examples;
 
 using DataType   = float;
 using TensorType = fetch::math::Tensor<DataType>;
@@ -133,6 +129,9 @@ int main(int argc, char **argv)
   // set up dataloader
   /// DATA LOADING ///
   data_loader.BuildVocabAndData({utilities::ReadFile(train_file)}, tp.min_count);
+  std::string vocab_file = "/tmp/vocab.txt";
+  data_loader.SaveVocab(vocab_file);
+  std::cout << "vocab_file: " << vocab_file << std::endl;
 
   /////////////////////////////////////////
   /// SET UP PROPER TRAINING PARAMETERS ///
@@ -194,8 +193,8 @@ int main(int argc, char **argv)
     // Test trained embeddings
     if (i % tp.test_frequency == 0)
     {
-      fetch::ml::utilities::TestEmbeddings(*g, skipgram_layer, data_loader, tp.word0, tp.word1,
-                                           tp.word2, tp.word3, tp.k, analogies_test_file);
+      fetch::ml::utilities::TestEmbeddings(*g, skipgram_layer, *(data_loader.GetVocab()), tp.word0,
+                                           tp.word1, tp.word2, tp.word3, tp.k, analogies_test_file);
     }
 
     fetch::ml::utilities::SaveGraph(*g, save_file + std::to_string(i));
