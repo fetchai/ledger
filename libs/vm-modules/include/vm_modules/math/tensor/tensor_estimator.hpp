@@ -44,8 +44,9 @@ namespace math {
 class TensorEstimator
 {
 public:
-  using VMObjectType = fetch::vm_modules::math::VMTensor;
+  using VMObjectType = VMTensor;
   using ChargeAmount = fetch::vm::ChargeAmount;
+  using TensorType = typename fetch::math::Tensor<DataType>;
 
   explicit TensorEstimator(VMObjectType &tensor);
   ~TensorEstimator() = default;
