@@ -13,11 +13,3 @@ add_executable(tx-ctl
                tx_storage_tool.cpp
                tx_storage_tool.hpp)
 target_link_libraries(tx-ctl PRIVATE fetch-ledger)
-
-add_executable(blk-ctl
-               blk_ctl.cpp
-               block_storage_client.cpp
-               block_storage_client.hpp
-               block_storage_tool.cpp
-               block_storage_tool.hpp)
-target_link_libraries(blk-ctl PRIVATE fetch-ledger)

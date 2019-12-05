@@ -22,8 +22,8 @@
 #include "chain/transaction_rpc_serializers.hpp"
 #include "core/digest.hpp"
 #include "core/service_ids.hpp"
-#include "ledger/storage_unit/object_store_protocol.hpp"
 #include "ledger/storage_unit/transaction_finder_protocol.hpp"
+#include "ledger/storage_unit/transaction_storage_protocol.hpp"
 #include "logging/logging.hpp"
 #include "storage/resource_mapper.hpp"
 #include "vectorise/platform.hpp"
@@ -32,9 +32,7 @@ using fetch::Digest;
 using fetch::DigestSet;
 using fetch::storage::ResourceID;
 using fetch::chain::Transaction;
-using fetch::storage::ObjectStoreProtocol;
-
-using TxStoreProtocol = ObjectStoreProtocol<Transaction>;
+using fetch::ledger::TransactionStorageProtocol;
 
 static constexpr char const *LOGGING_NAME = "TxStorageClient";
 
@@ -54,7 +52,7 @@ bool TxStorageClient::AddTransaction(Transaction const &tx)
 
     // make the RPC request
     auto promise = rpc_client_.CallSpecificAddress(LookupAddress(resource), fetch::RPC_TX_STORE,
-                                                   TxStoreProtocol::SET, resource, tx);
+                                                   TransactionStorageProtocol::ADD, resource, tx);
 
     // wait the for the response
     promise->Wait();
@@ -75,7 +73,7 @@ bool TxStorageClient::GetTransaction(Digest const &digest, Transaction &tx)
 
   // make the request to the RPC server
   auto promise = rpc_client_.CallSpecificAddress(LookupAddress(resource), fetch::RPC_TX_STORE,
-                                                 TxStoreProtocol::GET, resource);
+                                                 TransactionStorageProtocol::GET, resource);
 
   // wait for the response to be delivered
   bool const success = promise->GetResult(tx);
@@ -93,7 +91,7 @@ bool TxStorageClient::HasTransaction(Digest const &digest)
 
   // make the request to the RPC server
   auto promise = rpc_client_.CallSpecificAddress(LookupAddress(resource), fetch::RPC_TX_STORE,
-                                                 TxStoreProtocol::HAS, resource);
+                                                 TransactionStorageProtocol::HAS, resource);
 
   // wait for the response to be delivered
   bool present{false};

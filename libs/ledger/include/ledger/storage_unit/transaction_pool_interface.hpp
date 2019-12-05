@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,21 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "block_storage_client.hpp"
+#include "transaction_store_interface.hpp"
 
-#include "core/service_ids.hpp"
-#include "ledger/protocols/main_chain_rpc_protocol.hpp"
+namespace fetch {
+namespace ledger {
 
-using fetch::ledger::MainChainProtocol;
-
-BlockStorageClient::BlockStorageClient(MuddleAddress peer, MuddleEndpoint &endpoint)
-  : peer_{std::move(peer)}
-  , client_{"BlockClient", endpoint, fetch::SERVICE_MAIN_CHAIN, fetch::CHANNEL_RPC}
-{}
-
-bool BlockStorageClient::DownloadCompleteChain(Blocks &blocks)
+class TransactionPoolInterface : public TransactionStoreInterface
 {
-  auto promise = client_.CallSpecificAddress(peer_, fetch::RPC_MAIN_CHAIN,
-                                             MainChainProtocol::HEAVIEST_CHAIN, 20000u);
-  return promise->GetResult(blocks);
-}
+public:
+  TransactionPoolInterface()           = default;
+  ~TransactionPoolInterface() override = default;
+
+  /// @name Transaction Pool Interface
+  /// @{
+
+  /**
+   * Remove a transaction from the pool
+   *
+   * @param tx_digest The transaction being removed
+   */
+  virtual void Remove(Digest const &tx_digest) = 0;
+  /// @}
+};
+
+}  // namespace ledger
+}  // namespace fetch

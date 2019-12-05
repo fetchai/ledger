@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,38 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "block_storage_tool.hpp"
+#include "vm/variant.hpp"
 
-#include "logging/logging.hpp"
+namespace fetch {
+namespace vm {
 
-#include <chrono>
-#include <cstdlib>
-#include <fstream>
-#include <thread>
+class VM;
 
-namespace {
-
-using namespace std::chrono_literals;
-
-constexpr char const *LOGGING_NAME = "BlkCtl";
-
-}  // namespace
-
-int main()
+class UserDefinedObject : public Object
 {
-  fetch::crypto::mcl::details::MCLInitialiser();
+public:
+  UserDefinedObject()           = delete;
+  ~UserDefinedObject() override = default;
+  UserDefinedObject(VM *vm, TypeId type_id);
+  bool SerializeTo(MsgPackSerializer &buffer) override;
+  bool DeserializeFrom(MsgPackSerializer &buffer) override;
 
-  int exit_code = EXIT_FAILURE;
+private:
+  Variant &GetVariable(uint16_t index);
 
-  try
-  {
-    BlockStorageTool tool;
-    exit_code = tool.Run();
-  }
-  catch (std::exception const &ex)
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Fatal Error: ", ex.what());
-  }
+  VariantArray variables_;
 
-  return exit_code;
-}
+  friend class VM;
+};
+
+}  // namespace vm
+}  // namespace fetch

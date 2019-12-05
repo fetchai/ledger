@@ -38,7 +38,7 @@ public:
   {
     // TODO(private issue 143): add destructor
     // NOLINTNEXTLINE
-    return Vocabulary {new VocabularyInstance(std::type_index(typeid(T)), new T(data))};
+    return Vocabulary{new VocabularyInstance(std::type_index(typeid(T)), new T(data))};
   }
 
   VocabularyInstance()                                = delete;
