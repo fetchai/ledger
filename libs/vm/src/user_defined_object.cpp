@@ -31,16 +31,15 @@ UserDefinedObject::UserDefinedObject(VM *vm, TypeId type_id)
   for (std::size_t i = 0; i < num_variables; ++i)
   {
     Executable::Variable const &exe_variable = user_defined_type.variables[i];
-    TypeId                      type_id      = exe_variable.type_id;
     Variant &                   variable     = variables_[i];
-    if (type_id > TypeIds::PrimitiveMaxId)
+    if (exe_variable.type_id > TypeIds::PrimitiveMaxId)
     {
-      variable.Construct(Ptr<Object>(), type_id);
+      variable.Construct(Ptr<Object>(), exe_variable.type_id);
     }
     else
     {
       Primitive p{0u};
-      variable.Construct(p, type_id);
+      variable.Construct(p, exe_variable.type_id);
     }
   }
 }
