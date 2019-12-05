@@ -36,10 +36,8 @@ public:
   static Vocabulary New(T data)
   {
     // TODO(private issue 143): add destructor
-    Vocabulary ret;
-    ret.reset(new VocabularyInstance(std::type_index(typeid(T)), new T(data)));
-
-    return ret;
+    // NOLINTNEXTLINE
+    return Vocabulary{new VocabularyInstance(std::type_index(typeid(T)), new T(data))};
   }
 
   VocabularyInstance()                                = delete;
