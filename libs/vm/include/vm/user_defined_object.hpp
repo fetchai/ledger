@@ -17,27 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/work_queue.hpp"
+#include "vm/variant.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace vm {
 
-class SynergeticExecutorInterface
+class VM;
+
+class UserDefinedObject : public Object
 {
 public:
-  using ConstByteArray = byte_array::ConstByteArray;
-  using ProblemData    = std::vector<ConstByteArray>;
+  UserDefinedObject()           = delete;
+  ~UserDefinedObject() override = default;
+  UserDefinedObject(VM *vm, TypeId type_id);
+  bool SerializeTo(MsgPackSerializer &buffer) override;
+  bool DeserializeFrom(MsgPackSerializer &buffer) override;
 
-  // Construction / Destruction
-  SynergeticExecutorInterface()          = default;
-  virtual ~SynergeticExecutorInterface() = default;
+private:
+  Variant &GetVariable(uint16_t index);
 
-  /// @name Executor Interface
-  /// @{
-  virtual void Verify(WorkQueue &solutions, ProblemData const &problem_data, std::size_t num_lanes,
-                      chain::Address const &miner) = 0;
-  /// @}
+  VariantArray variables_;
+
+  friend class VM;
 };
 
-}  // namespace ledger
+}  // namespace vm
 }  // namespace fetch
