@@ -16,3 +16,221 @@ steps:
   - sleep: 5
   - verify_txs: { "name": "batch1", "nodes": [2] }
 ...
+
+---
+test_description: >
+  Send lots of transactions to a node
+
+setup_conditions:
+  test_name: "miner_receives_more_tx"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - send_txs: { "name": "100_identities", "amount": 100, "nodes": [0] }
+  - print_time_elapsed
+  - verify_txs: { "name": "100_identities", "nodes": [0] }
+...
+
+---
+test_description: >
+  Run a smart contract which accesses the Context
+
+setup_conditions:
+  test_name: "context_accessible_from_smart_contract"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.ledger_context" }
+...
+
+---
+test_description: >
+  Shut down node cleanly and recover state
+
+setup_conditions:
+  test_name: "basic_node_recovery"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [0] }
+  - verify_txs: { "name": "batch1", "nodes": [0] }
+  - restart_nodes: { "nodes": [0] }
+  - verify_txs: { "name": "batch1", "nodes": [0], "expect_mined": true }
+...
+
+---
+test_description: >
+  DISABLED - Transactions sync and are executed across nodes when using POS
+
+setup_conditions:
+  test_name: "basic_multinode_POS"
+  number_of_nodes: 3
+  node_connections: [[0, 1], [0, 2], [1, 2]]
+  mining_nodes: [0, 1, 2]
+  pos_mode: True
+  max_test_time: 600
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1, 2] }
+...
+
+---
+test_description: >
+  DISABLED - Test synergetic mining
+
+setup_conditions:
+  test_name: "synergetic_mining"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.synergetic_mining" }
+...
+
+---
+test_description: >
+  DISABLED - Test ability of contracts to check their balance
+
+setup_conditions:
+  test_name: "contracts_checking_balance"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.balance" }
+...
+
+---
+test_description: >
+  Test ability of contracts to hold and release funds
+
+setup_conditions:
+  test_name: "transfers_between_contracts_and_people"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.transfer" }
+...
+
+---
+test_description: >
+  Test that contract owner address is passed to @init
+
+setup_conditions:
+  test_name: "init_owner_address"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.init_owner_address" }
+...
+
+---
+test_description: >
+  Single multi-lane standalone node can mine transactions which are then queried
+
+setup_conditions:
+  test_name: "multi_lane_standalone"
+  number_of_nodes: 1
+  lanes: 4
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 30 #  allow all the lanes to start
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [0] }
+  - verify_txs: { "name": "batch1", "nodes": [0] }
+...
+
+---
+test_description: >
+  Transactions sync and are executed across nodes
+
+setup_conditions:
+  test_name: "multi_lane_multinode"
+  number_of_nodes: 2
+  lanes: 4
+  node_connections: [[0, 1]]
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 6
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1] }
+...
+
+---
+test_description: >
+  Test signature malleability vulnerability
+
+setup_conditions:
+  test_name: "malleability_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.malleability_test" }
+...
+
+---
+test_description: >
+  Test synergetic contract fees
+
+setup_conditions:
+  test_name: "synergetic_fee_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 600
+
+steps:
+  - wait_network_ready: {"sleep": 5}
+  - create_wealth: {"amount": 100000000000000, "nodes": [0]}
+  - create_synergetic_contract: {"name": "contract001", "fee_limit": 10000, "nodes": [0], "transfer_amount": 1000}
+  - wait_for_blocks: {"nodes": [0], "num": 5}
+  - query_balance: {"nodes": [0], "save_as": "balance1"}
+  - run_contract: {"contract_name": "contract001", "nodes": [0], "wait_for_blocks": 15}
+  - wait_for_blocks: {"nodes": [0], "num": 5}
+  - query_balance: {"nodes": [0], "save_as": "balance2"}
+  - execute_expression: {"nodes": [0], "expression": "balance2 <= balance1"}
+  - stop_nodes: {"nodes": [0], "remove_dbs": True}
+...
+
+---
+test_description: >
+  Test synergetic contract fees in case of no funds
+
+setup_conditions:
+  test_name: "synergetic_fee_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 600
+
+steps:
+  - wait_network_ready: {"sleep": 5}
+  - create_wealth: {"amount": 100000000000000, "nodes": [0]}
+  - create_synergetic_contract: {"name": "contract001", "fee_limit": 10000, "nodes": [0], "transfer_amount": 0}
+  - wait_for_blocks: {"nodes": [0], "num": 5}
+  - query_balance: {"nodes": [0], "save_as": "balance1"}
+  - fail: {"run_contract": {"contract_name": "contract001", "nodes": [0], "wait_for_blocks": 15}}
+  - stop_nodes: {"nodes": [0], "remove_dbs": True}
+...

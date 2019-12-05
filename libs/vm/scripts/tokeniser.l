@@ -182,6 +182,8 @@ IDENT           [_a-zA-Z][_a-zA-Z0-9]*
 "null"        {return Set(yylval, fetch::vm::Token::Kind::Null, yytext, yyleng, yyextra);}
 "contract"    {return Set(yylval, fetch::vm::Token::Kind::Contract, yytext, yyleng, yyextra);}
 "endcontract" {return Set(yylval, fetch::vm::Token::Kind::EndContract, yytext, yyleng, yyextra);}
+"struct"      {return Set(yylval, fetch::vm::Token::Kind::Struct, yytext, yyleng, yyextra);}
+"endstruct"   {return Set(yylval, fetch::vm::Token::Kind::EndStruct, yytext, yyleng, yyextra);}
 "function"    {return Set(yylval, fetch::vm::Token::Kind::Function, yytext, yyleng, yyextra);}
 "endfunction" {return Set(yylval, fetch::vm::Token::Kind::EndFunction, yytext, yyleng, yyextra);}
 "while"       {return Set(yylval, fetch::vm::Token::Kind::While, yytext, yyleng, yyextra);}
