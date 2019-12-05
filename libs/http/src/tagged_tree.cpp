@@ -18,10 +18,9 @@
 
 #include "http/tagged_tree.hpp"
 
-#include <functional>
-#include <numeric>
 #include <cerrno>
 #include <cstdlib>
+#include <functional>
 #include <numeric>
 #include <ostream>
 #include <regex>
@@ -49,41 +48,44 @@ namespace {
  */
 HtmlTags::Content OpeningBracket(HtmlTags::Tag const &tag, HtmlTags::Params const &params)
 {
-	return std::accumulate(params.begin(), params.end(), "<" + tag,
-			       [](HtmlTags::Content accum, HtmlTags::Params::value_type const &param) {
-				       return accum + " " + param.first + "=\"" + param.second + "\"";
-			       });
+  return std::accumulate(params.begin(), params.end(), "<" + tag,
+                         [](HtmlTags::Content accum, HtmlTags::Params::value_type const &param) {
+                           return accum + " " + param.first + "=\"" + param.second + "\"";
+                         });
 }
 
-}
+}  // namespace
 
 HtmlTags::Content HtmlTags::operator()(Tag tag, Params const &params) const
 {
-	assert(!tag.empty());
-	return OpeningBracket(tag, params) + "/>";
+  assert(!tag.empty());
+  return OpeningBracket(tag, params) + "/>";
 }
 
 HtmlTags::Content HtmlTags::operator()(Tag tag, Params const &params, Content content) const
 {
-        // Elements can have empty tags in which case they are simply rendered in top-level space.
-        // This allows to have content interleaved with child tags.
-        // Example:
-        //
-        // HtmlTree("body",
-	// 	HtmlTree::Children{
-	// 		HtmlTree(top_level_content_tag, "Hello world!"),
-	// 		HtmlTree("br"),
-	// 		HtmlTree(top_level_content_tag, "Bye world!")
-	// 	}
-	// ).Render()
-        //
-        //    ---->
-        //
-        // <body>Hello world!<br/>Bye world!</body>
-	if (tag.empty()) { return content; }
+  // Elements can have empty tags in which case they are simply rendered in top-level space.
+  // This allows to have content interleaved with child tags.
+  // Example:
+  //
+  // HtmlTree("body",
+  // 	HtmlTree::Children{
+  // 		HtmlTree(top_level_content_tag, "Hello world!"),
+  // 		HtmlTree("br"),
+  // 		HtmlTree(top_level_content_tag, "Bye world!")
+  // 	}
+  // ).Render()
+  //
+  //    ---->
+  //
+  // <body>Hello world!<br/>Bye world!</body>
+  if (tag.empty())
+  {
+    return content;
+  }
 
-	return OpeningBracket(tag, params) + ">" + content + "</" + tag + ">";
+  return OpeningBracket(tag, params) + ">" + content + "</" + tag + ">";
 }
 
-}
-}
+}  // namespace http
+}  // namespace fetch
