@@ -40,16 +40,19 @@ public:
   virtual ~AbstractMessageController() = default;
 
   // To implement
-  virtual void           PushUpdate(UpdatePtr const &update, AlgorithmClass const &algorithm,
-                                    UpdateClass const &upd_class)                   = 0;
-  virtual void           PushUpdate(Bytes const &update, AlgorithmClass const &algorithm,
-                                    UpdateClass const &upd_class)                   = 0;
-  virtual void           PushUpdate(Bytes const &update, ColearnURI const &uri_obj) = 0;
+  virtual void PushUpdate(UpdatePtr const &update, AlgorithmClass const &algorithm,
+                          UpdateClass const &upd_class) = 0;
+  virtual void PushUpdate(Bytes const &update, AlgorithmClass const &algorithm,
+                          UpdateClass const &upd_class) = 0;
+  virtual void PushUpdate(Bytes const &update, ColearnURI const &uri_obj)
+  {
+    PushUpdate(update, uri_obj.algorithm_class(), uri_obj.update_type());
+  }
   virtual std::size_t    GetUpdateCount(AlgorithmClass const &algorithm,
-                                        UpdateClass const &   upd_class) const         = 0;
-  virtual std::size_t    GetUpdateTotalCount() const                                = 0;
+                                        UpdateClass const &   upd_class) const = 0;
+  virtual std::size_t    GetUpdateTotalCount() const                        = 0;
   virtual ConstUpdatePtr GetUpdate(AlgorithmClass const &algorithm,
-                                   UpdateClass const &   upd_class)                    = 0;
+                                   UpdateClass const &   upd_class)            = 0;
 };
 
 }  // namespace colearn
