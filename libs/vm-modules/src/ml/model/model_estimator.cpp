@@ -43,13 +43,13 @@ ModelEstimator::ModelEstimator(VMObjectType &model)
   : model_{model}
 {}
 
-ModelEstimator &ModelEstimator::operator=(ModelEstimator const &other)
+ModelEstimator &ModelEstimator::operator=(ModelEstimator const &other) noexcept
 {
   copy_state_from(other);
   return *this;
 }
 
-ModelEstimator &ModelEstimator::operator=(ModelEstimator const &&other)
+ModelEstimator &ModelEstimator::operator=(ModelEstimator &&other) noexcept
 {
   copy_state_from(other);
   return *this;
