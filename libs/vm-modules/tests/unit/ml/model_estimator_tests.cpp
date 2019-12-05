@@ -370,7 +370,6 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
           model.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);
 
           ops_count += 1;  // for loss
-          ops_count += 1;  // for optimiser
 
           forward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_FORWARD_IMPACT();
           backward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_BACKWARD_IMPACT();

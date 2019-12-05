@@ -330,6 +330,7 @@ bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
     buffer << static_cast<uint8_t>(model_category_);
     buffer << *model_config_;
     buffer << compiled_;
+    buffer << *model_;
 
     estimator_.SerializeTo(buffer);
     success = true;
