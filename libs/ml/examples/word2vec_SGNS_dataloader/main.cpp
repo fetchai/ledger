@@ -68,10 +68,10 @@ struct TrainingParams
   // (https://www.aclweb.org/anthology/Q15-1016) which has state-of-the-art scores for word
   // embedding and uses the wikipedia dataset (documents_utf8_filtered_20pageviews.csv)
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
-  SizeType negative_sample_size = 5;      // number of negative sample per word-context pair
-  SizeType window_size          = 2;      // window size for context sampling
-  DataType freq_thresh{1e-3f};  // frequency threshold for subsampling
-  SizeType min_count            = 100;    // infrequent word removal threshold
+  SizeType negative_sample_size = 5;  // number of negative sample per word-context pair
+  SizeType window_size          = 2;  // window size for context sampling
+  DataType freq_thresh{1e-3f};        // frequency threshold for subsampling
+  SizeType min_count = 100;           // infrequent word removal threshold
 
   SizeType batch_size            = 10000;  // training data batch size
   SizeType embedding_size        = 500;    // dimension of embedding vec
