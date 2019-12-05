@@ -240,32 +240,47 @@
 #  - run_python_test: { "script": ".smart_contract_tests.malleability_test" }
 #...
 
+#---
+#test_description: >
+#  Single contract-to-contract call
+#
+#setup_conditions:
+#  test_name: "c2c_single_call_test"
+#  number_of_nodes: 1
+#  mining_nodes: [0]
+#  max_test_time: 60
+#
+#steps:
+#  - sleep: 5
+#  - run_python_test: { "script": ".smart_contract_tests.c2c_single_call_test" }
+#...
+#
+#---
+#test_description: >
+#  Nested contract-to-contract call
+#
+#setup_conditions:
+#  test_name: "c2c_nested_call_test"
+#  number_of_nodes: 1
+#  mining_nodes: [0]
+#  max_test_time: 60
+#
+#steps:
+#  - sleep: 5
+#  - run_python_test: { "script": ".smart_contract_tests.c2c_nested_call_test" }
+#...
+
 ---
 test_description: >
-  Single contract-to-contract call
+  Contract-to-contract call which accesses the Context
 
 setup_conditions:
-  test_name: "c2c_single_call_test"
+  test_name: "c2c_with_context_test"
   number_of_nodes: 1
   mining_nodes: [0]
   max_test_time: 60
 
 steps:
   - sleep: 5
-  - run_python_test: { "script": ".smart_contract_tests.c2c_single_call_test" }
-...
-
----
-test_description: >
-  Nested contract-to-contract call
-
-setup_conditions:
-  test_name: "c2c_nested_call_test"
-  number_of_nodes: 1
-  mining_nodes: [0]
-  max_test_time: 60
-
-steps:
-  - sleep: 5
-  - run_python_test: { "script": ".smart_contract_tests.c2c_nested_call_test" }
+  - run_python_test: { "script": ".smart_contract_tests.c2c_with_context_test" }
 ...

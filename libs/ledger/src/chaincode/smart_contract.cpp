@@ -537,9 +537,11 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
       return false;
     }
 
-    auto         module = fetch::vm_modules::VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
-    vm::Compiler compiler{module.get()};
-    vm::VM       vm2{module.get()};
+    module_->CreateFreeFunction(
+        "getContext", [this](vm::VM *) -> vm_modules::ledger::ContextPtr { return context_; });
+
+    vm::Compiler compiler{module_.get()};
+    vm::VM       vm2{module_.get()};
 
     std::vector<std::string> errors{};
 
