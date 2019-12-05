@@ -18,17 +18,7 @@
 
 #include "http/tagged_tree.hpp"
 
-#include <cerrno>
-#include <cstdlib>
-#include <functional>
 #include <numeric>
-#include <ostream>
-#include <regex>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <utility>
-#include <vector>
 
 namespace fetch {
 namespace http {
