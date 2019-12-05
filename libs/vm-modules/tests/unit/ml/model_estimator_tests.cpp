@@ -393,7 +393,7 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
           EXPECT_TRUE(model_estimator.Evaluate() == VmModelEstimator::constant_charge);
 
-          SizeType predict_val =
+          auto predict_val =
               static_cast<SizeType>(static_cast<DataType>(n_data) * forward_pass_cost);
           predict_val += static_cast<SizeType>(static_cast<DataType>(n_data * ops_count) *
                                                VmModelEstimator::PREDICT_BATCH_LAYER_COEF());
