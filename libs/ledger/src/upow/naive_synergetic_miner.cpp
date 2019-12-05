@@ -176,13 +176,11 @@ WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_addres
 
   if (balance == 0)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Not handling contract: 0x", contract_digest.ToHex(),
-                   ", because contract address 0x", contract_address.address().ToHex(),
-                   " balance is 0");
+    FETCH_LOG_WARN(LOGGING_NAME, "Not handling contract: ", contract_address.display(), " balance is 0");
     return {};
   }
 
-  auto contract = CreateSmartContract<SynergeticContract>(contract_digest, storage_);
+  auto contract = CreateSmartContract<SynergeticContract>(contract_address.display(), storage_);
 
   contract->SetChargeLimit(CHARGE_LIMIT / search_length_);
 

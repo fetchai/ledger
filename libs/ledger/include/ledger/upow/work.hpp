@@ -46,7 +46,7 @@ public:
   // Construction / Destruction
   Work() = default;
   explicit Work(BlockIndex block_index);
-  Work(Digest digest, chain::Address address, crypto::Identity miner);
+  Work(chain::Address address, crypto::Identity miner);
   Work(Work const &) = default;
   ~Work()            = default;
 
