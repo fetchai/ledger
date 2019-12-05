@@ -1096,7 +1096,11 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   }
   else
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to find a previously executed block!");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to find a previously executed block! Doing a hard reset.");
+    Reset();
+
+    auto genesis_block = chain_.CreateGenesisBlock();
+    block = genesis_block.get();
   }
 
   reset_state_count_->increment();
