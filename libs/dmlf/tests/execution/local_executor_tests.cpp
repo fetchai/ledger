@@ -97,14 +97,14 @@ public:
 
   bool IsSuccessfullyFulfilled(PromiseOfResult &promise)
   {
-    result = promise.Get();
+    promise.GetResult(result);
     return result.succeeded() && result.console().empty() &&
            result.output().type() == VariantType::STRING;
   }
 
   bool IsSuccessfullyFulfilledWithOutput(PromiseOfResult &promise, std::string const &output)
   {
-    result = promise.Get();
+    promise.GetResult(result);
     return result.succeeded() && result.console() == output &&
            result.output().type() == VariantType::STRING;
   }
