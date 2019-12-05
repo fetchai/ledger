@@ -216,6 +216,9 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
 {
   reload_state_count_->increment();
 
+  // Default need to populate this.
+  current_block_ = chain_.CreateGenesisBlock();
+
   FETCH_LOG_INFO(LOGGING_NAME, "Loading block coordinator old state...");
 
   auto block = chain_.GetHeaviestBlock();
@@ -235,8 +238,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
   if (block && storage_unit_.HashExists(block->merkle_hash, block->block_number))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Found a block to revert to! Block: ", block->block_number,
-                   " hex: 0x", block->hash.ToHex(), " merkle hash: 0x",
-                   block->merkle_hash.ToHex());
+                   " hex: 0x", block->hash.ToHex(), " merkle hash: 0x", block->merkle_hash.ToHex());
 
     if (!storage_unit_.RevertToHash(block->merkle_hash, block->block_number))
     {
@@ -255,6 +257,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
     // 'last' block that has been executed
     execution_manager_.SetLastProcessedBlock(block->hash);
     last_executed_block_.ApplyVoid([&block](auto &digest) { digest = block->hash; });
+    current_block_ = block;
   }
   else
   {
@@ -1096,11 +1099,12 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   }
   else
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to find a previously executed block! Doing a hard reset.");
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "Unable to find a previously executed block! Doing a hard reset.");
     Reset();
 
     auto genesis_block = chain_.CreateGenesisBlock();
-    block = genesis_block.get();
+    block              = genesis_block.get();
   }
 
   reset_state_count_->increment();
@@ -1291,6 +1295,7 @@ void BlockCoordinator::Reset()
   last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::ZERO_HASH; });
   execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
   chain_.Reset();
+  current_block_ = chain_.GetHeaviestBlock();
 }
 
 }  // namespace ledger
