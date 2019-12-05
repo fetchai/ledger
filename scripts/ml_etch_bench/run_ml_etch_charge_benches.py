@@ -119,7 +119,7 @@ def main():
 
     # bench config
     bench_binary = os.path.join(
-        build_dir, './libs/vm-modules/benchmark/benchmark_vm_modules_model_charge')
+        build_dir, './libs/vm-modules/benchmark/benchmark_vm_modules_model')
 
     benchmarks = [
         'BM_AddLayer',

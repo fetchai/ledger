@@ -95,7 +95,7 @@ fetch::vm::Ptr<fetch::vm_modules::ml::model::VMModel> vmSequentialModel(
     auto input_size  = sizes[i];
     auto output_size = sizes[i + 1];
 
-    if (activations[i])  // TOFIX if NOT
+    if (activations[i])
     {
       model->Estimator().LayerAddDenseActivation(layer_type, input_size, output_size,
                                                  activation_type);
@@ -163,7 +163,6 @@ void BM_AddLayer(::benchmark::State &state)
     auto layer_type      = vmString(vm, "dense");
     auto activation_type = vmString(vm, "relu");
 
-    // TOFIX testing two different methods
     if (config.activation)
     {
       state.counters["charge"] = static_cast<double>(
@@ -219,7 +218,7 @@ struct BM_Predict_config
 {
   explicit BM_Predict_config(::benchmark::State const &state)
   {
-    batch_size    = static_cast<SizeType>(state.range(0));  // TOFIX is it batch of subset
+    batch_size    = static_cast<SizeType>(state.range(0));
     layers_number = static_cast<SizeType>(state.range(1));
 
     sizes.reserve(layers_number);
@@ -265,7 +264,7 @@ void BM_Predict(::benchmark::State &state)
 }
 
 // (BM_Predict_config) batch_size, number_of_layers, input_size, hidden_1_size, ...., output_size,
-// activation_3,.... TOFIX number_of_layer should be less by 1
+// activation_3,....
 
 // BOSTON
 BENCHMARK(BM_Predict)
@@ -557,8 +556,8 @@ struct BM_Fit_config
 {
   explicit BM_Fit_config(::benchmark::State const &state)
   {
-    datapoints_number = static_cast<SizeType>(state.range(0));  // TOFIX is it batch of subset
-    batch_size        = static_cast<SizeType>(state.range(1));  // TOFIX is it batch of subset
+    datapoints_number = static_cast<SizeType>(state.range(0));
+    batch_size        = static_cast<SizeType>(state.range(1));
     layers_number     = static_cast<SizeType>(state.range(2));
 
     sizes.reserve(layers_number);
