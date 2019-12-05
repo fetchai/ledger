@@ -36,7 +36,7 @@ using namespace fetch::ml::dataloaders;
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType   = float;
+using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = fetch::math::SizeType;
 
@@ -70,7 +70,7 @@ struct TrainingParams
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
   SizeType negative_sample_size = 5;      // number of negative sample per word-context pair
   SizeType window_size          = 2;      // window size for context sampling
-  DataType freq_thresh          = 1e-3f;  // frequency threshold for subsampling
+  DataType freq_thresh{1e-3f};  // frequency threshold for subsampling
   SizeType min_count            = 100;    // infrequent word removal threshold
 
   SizeType batch_size            = 10000;  // training data batch size
@@ -80,8 +80,8 @@ struct TrainingParams
   SizeType graph_saves_per_epoch = 10;
 
   // these are the learning rates we have for each sample
-  DataType starting_learning_rate_per_sample = 0.0025f;
-  DataType ending_learning_rate_per_sample   = 0.0001f;
+  DataType starting_learning_rate_per_sample{0.0025f};
+  DataType ending_learning_rate_per_sample{0.0001f};
   // this is the true learning rate set for the graph training
   DataType starting_learning_rate;
   DataType ending_learning_rate;

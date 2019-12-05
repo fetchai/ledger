@@ -125,8 +125,9 @@ void ClientWord2VecAlgorithm<TensorType>::Test()
     FETCH_LOCK(this->model_mutex_);
 
     fetch::ml::utilities::TestEmbeddings<TensorType>(
-        *this->graph_ptr_, skipgram_, *w2v_data_loader_ptr_, tp_.word0, tp_.word1, tp_.word2,
-        tp_.word3, tp_.k, tp_.analogies_test_file, false, "/tmp/w2v_client_" + this->id_);
+        *this->graph_ptr_, skipgram_, *(w2v_data_loader_ptr_->GetVocab()), tp_.word0, tp_.word1,
+        tp_.word2, tp_.word3, tp_.k, tp_.analogies_test_file, false,
+        "/tmp/w2v_client_" + this->id_);
   }
 }
 

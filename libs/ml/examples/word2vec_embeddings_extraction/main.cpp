@@ -27,9 +27,15 @@
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 
-using DataType   = float;
+using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = fetch::math::SizeType;
+
+TensorType word_embedding(std::string word, TensorType embeddings, Vocab vcb)
+{
+  SizeType word_idx = vcb.IndexFromWord(word);
+  return embeddings.Slice(word_idx, 1).Copy();
+}
 
 int main(int argc, char **argv)
 {
@@ -68,6 +74,18 @@ int main(int argc, char **argv)
     throw exceptions::InvalidInput(
         "Vocab size does not match embeddings size: " + std::to_string(vcb.GetVocabCount()) + " " +
         std::to_string(embeddings.shape()[1]));
+  }
+
+  std::string test_word = "king";
+  if (!vcb.WordKnown(test_word))
+  {
+    std::cout << "test_word not in vocab: " << test_word << std::endl;
+  }
+  else
+  {
+
+    TensorType one_embedding = word_embedding(test_word, embeddings, vcb);
+    std::cout << "Embedding for " << test_word << " is: " << one_embedding.ToString() << std::endl;
   }
 
   std::string knn_results = utilities::KNNTest(vcb, embeddings, "three", 20);

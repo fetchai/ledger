@@ -48,12 +48,11 @@ TensorType const &GetEmbeddings(Graph<TensorType> const &g, std::string const &s
 }
 
 template <class TensorType>
-std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> GetWordIDAnalogies(
-    TensorType const &embeddings, typename TensorType::SizeType const &word1,
-    typename TensorType::SizeType const &word2, typename TensorType::SizeType const &word3,
-    typename TensorType::SizeType k)
+std::vector<std::pair<math::SizeType, typename TensorType::Type>> GetWordIDAnalogies(
+    TensorType const &embeddings, math::SizeType const &word1, math::SizeType const &word2,
+    math::SizeType const &word3, math::SizeType k)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = math::SizeType;
   using DataType = typename TensorType::Type;
 
   // get word vectors for word_ids
@@ -61,13 +60,13 @@ std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>>
   TensorType word2_vec = embeddings.Slice(word2, 1).Copy();
   TensorType word3_vec = embeddings.Slice(word3, 1).Copy();
 
-  word1_vec /= fetch::math::L2Norm(word1_vec);
-  word2_vec /= fetch::math::L2Norm(word2_vec);
-  word3_vec /= fetch::math::L2Norm(word3_vec);
+  word1_vec /= math::L2Norm(word1_vec);
+  word2_vec /= math::L2Norm(word2_vec);
+  word3_vec /= math::L2Norm(word3_vec);
 
   TensorType                                 word4_vec = word2_vec - word1_vec + word3_vec;
   std::vector<std::pair<SizeType, DataType>> output =
-      fetch::math::clustering::KNNCosine(embeddings, word4_vec, k);
+      math::clustering::KNNCosine(embeddings, word4_vec, k);
 
   return output;
 }
@@ -75,9 +74,9 @@ std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>>
 template <class TensorType>
 std::string WordAnalogyTest(dataloaders::Vocab const &vcb, TensorType const &embeddings,
                             std::string const &word1, std::string const &word2,
-                            std::string const &word3, typename TensorType::SizeType k)
+                            std::string const &word3, math::SizeType k)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = math::SizeType;
   using DataType = typename TensorType::Type;
 
   std::stringstream outstream;
@@ -111,9 +110,9 @@ std::string WordAnalogyTest(dataloaders::Vocab const &vcb, TensorType const &emb
 
 template <class TensorType>
 std::string KNNTest(dataloaders::Vocab const &vcb, TensorType const &embeddings,
-                    std::string const &word0, typename TensorType::SizeType k)
+                    std::string const &word0, math::SizeType k)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = math::SizeType;
   using DataType = typename TensorType::Type;
 
   std::stringstream outstream;
@@ -129,7 +128,7 @@ std::string KNNTest(dataloaders::Vocab const &vcb, TensorType const &embeddings,
     SizeType                                   idx        = vcb.IndexFromWord(word0);
     TensorType                                 one_vector = embeddings.Slice(idx, 1).Copy();
     std::vector<std::pair<SizeType, DataType>> output =
-        fetch::math::clustering::KNNCosine(embeddings, one_vector, k);
+        math::clustering::KNNCosine(embeddings, one_vector, k);
 
     for (std::size_t l = 0; l < output.size(); ++l)
     {
@@ -147,7 +146,7 @@ std::pair<std::string, float> AnalogiesFileTest(dataloaders::Vocab const &vcb,
                                                 std::string const &       analogy_file,
                                                 bool                      verbose = false)
 {
-  using SizeType = fetch::math::SizeType;
+  using SizeType = math::SizeType;
   using DataType = typename TensorType::Type;
 
   std::stringstream outstream;

@@ -30,8 +30,7 @@ using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 
 // Note: DataType needs to be the same as that used for Graph if -graph option is specified
-using DataType = float;
-// using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
+using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = fetch::math::SizeType;
 
@@ -60,10 +59,12 @@ int main(int argc, char **argv)
 
     // Note: these parameters need to be the same as the ones that the graph was trained with.
     SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
+    SizeType window_size    = 2;    // window size for context sampling
+    SizeType min_count      = 100;  // infrequent word removal threshold
+
+    // These don't!
     SizeType negative_sample_size = 5;  // number of negative sample per word-context pair
-    SizeType window_size          = 2;  // window size for context sampling
     DataType freq_thresh{1e-3f};        // frequency threshold for subsampling
-    SizeType min_count = 100;           // infrequent word removal threshold
 
     GraphW2VLoader<TensorType> data_loader(window_size, negative_sample_size, freq_thresh,
                                            max_word_count);
@@ -82,8 +83,7 @@ int main(int argc, char **argv)
   if (!embeddings_file.empty())
   {
     std::cout << "Loading embeddings..." << std::endl;
-    std::string file_string = utilities::ReadFile(embeddings_file);
-    embeddings              = embeddings.FromString(file_string);
+    embeddings = TensorType::FromString(utilities::ReadFile(embeddings_file));
   }
   else if (!graph_file.empty())
   {
