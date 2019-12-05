@@ -237,6 +237,41 @@ public:
 
 int main()
 {
+
+  {
+    // Creating network
+    std::size_t N       = 10;
+    auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
+    uint64_t    idx     = 0;
+    for (auto &n : network->nodes)
+    {
+      n->muddle->SetPeerTableFile("peer_tableX" + std::to_string(idx) + ".cache");
+      ++idx;
+    }
+
+    LinearConnectivity(network, std::chrono::seconds(5));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
+    network->Stop();
+  }
+  std::cout << "RESTARTING" << std::endl;
+
+  {
+    // Restarting
+    std::size_t N       = 10;
+    auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
+    uint64_t    idx     = 0;
+    for (auto &n : network->nodes)
+    {
+      n->muddle->SetPeerTableFile("peer_tableX" + std::to_string(idx) + ".cache");
+      ++idx;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
+  }
+}
+
+int mainYY()
+{
   // Creating network
   std::size_t N       = 10;
   auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());

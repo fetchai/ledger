@@ -16,16 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include "kademlia/table.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "crypto/sha1.hpp"
-#include "kademlia/table.hpp"
 
 namespace fetch {
 namespace muddle {
 
 KademliaTable::KademliaTable(Address const &own_address)
-  : own_address_{KademliaAddress::Create(own_address)}
+  : own_address_{own_address}
+  , own_kad_address_{KademliaAddress::Create(own_address)}
 {}
 
 // TODO(tfr): This might not be what we want to do
@@ -138,7 +139,7 @@ KademliaTable::Peers KademliaTable::FindPeer(Address const &address)
   // Computing the Kademlia distance and the
   // corresponding bucket.
   auto kam_address = KademliaAddress::Create(address);
-  auto dist        = GetKademliaDistance(own_address_, kam_address);
+  auto dist        = GetKademliaDistance(own_kad_address_, kam_address);
   auto log_id      = Bucket::IdByLogarithm(dist);
 
   return FindPeerInternal(kam_address, log_id);
@@ -238,7 +239,7 @@ KademliaTable::Peers KademliaTable::FindPeerByHamming(Address const &address)
 {
   FETCH_LOCK(mutex_);
   auto kam_address = KademliaAddress::Create(address);
-  auto dist        = GetKademliaDistance(own_address_, kam_address);
+  auto dist        = GetKademliaDistance(own_kad_address_, kam_address);
   auto hamming_id  = Bucket::IdByLogarithm(dist);
 
   return FindPeerByHammingInternal(kam_address, hamming_id);
@@ -258,7 +259,7 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
   FETCH_LOCK(mutex_);
 
   auto other      = KademliaAddress::Create(address);
-  auto dist       = GetKademliaDistance(own_address_, other);
+  auto dist       = GetKademliaDistance(own_kad_address_, other);
   auto log_id     = Bucket::IdByLogarithm(dist);
   auto hamming_id = Bucket::IdByHamming(dist);
 
@@ -344,7 +345,7 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
   FETCH_LOCK(mutex_);
 
   auto other      = KademliaAddress::Create(info.address);
-  auto dist       = GetKademliaDistance(own_address_, other);
+  auto dist       = GetKademliaDistance(own_kad_address_, other);
   auto log_id     = Bucket::IdByLogarithm(dist);
   auto hamming_id = Bucket::IdByHamming(dist);
 

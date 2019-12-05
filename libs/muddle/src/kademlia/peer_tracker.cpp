@@ -54,71 +54,31 @@ bool PeerTracker::IsBlacklisted(Address const &target) const
 
 PeerTracker::AddressSet PeerTracker::GetDesiredPeers() const
 {
-  FETCH_LOCK(desired_mutex_);
-  return desired_peers_;
+  return peer_table_.desired_peers();
 }
 
 void PeerTracker::AddDesiredPeer(Address const &address, PeerTracker::Duration const &expiry)
 {
-  FETCH_LOCK(desired_mutex_);
+  peer_table_.AddDesiredPeer(address, expiry);
   FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by address: ", address.ToBase64());
-
-  auto it = connection_expiry_.find(address);
-  if (it == connection_expiry_.end())
-  {
-    connection_expiry_.emplace(address, Clock::now() + expiry);
-  }
-  else
-  {
-    it->second = std::max(Clock::now() + expiry, it->second);
-  }
-
-  desired_peers_.insert(address);
 }
 
 void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hint,
                                  PeerTracker::Duration const &expiry)
 {
-  FETCH_LOCK(desired_mutex_);
-
-  auto it = connection_expiry_.find(address);
-  if (it == connection_expiry_.end())
-  {
-    connection_expiry_.emplace(address, Clock::now() + expiry);
-  }
-  else
-  {
-    it->second = std::max(Clock::now() + expiry, it->second);
-  }
-
-  if (!address.empty())
-  {
-    desired_peers_.insert(address);
-  }
-
-  PeerInfo info;
-  info.address = address;
-  info.uri.Parse(hint.ToUri());
-  peer_table_.ReportExistence(info, own_address_);
-
-  desired_uris_.insert(info.uri);
-  desired_uri_expiry_.emplace(info.uri, Clock::now() + expiry);
-  FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by address and uri: ", info.uri.ToString(),
-                 " - ", address.ToBase64());
+  peer_table_.AddDesiredPeer(address, hint, expiry);
+  FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by address and uri: ", address.ToBase64());
 }
 
 void PeerTracker::AddDesiredPeer(PeerTracker::Uri const &uri, PeerTracker::Duration const &expiry)
 {
-  FETCH_LOCK(desired_mutex_);
-  desired_uris_.insert(uri);
-  desired_uri_expiry_.emplace(uri, Clock::now() + expiry);
+  peer_table_.AddDesiredPeer(uri, expiry);
   FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by uri: ", uri.ToString());
 }
 
 void PeerTracker::RemoveDesiredPeer(Address const &address)
 {
-  FETCH_LOCK(desired_mutex_);
-  desired_peers_.erase(address);
+  peer_table_.RemoveDesiredPeer(address);
 }
 
 void PeerTracker::UpdateExternalUris(NetworkUris const &uris)
@@ -542,8 +502,7 @@ PeerTracker::AddressSet PeerTracker::no_uri() const
 
 PeerTracker::AddressSet PeerTracker::desired_peers() const
 {
-  FETCH_LOCK(desired_mutex_);
-  return desired_peers_;
+  return peer_table_.desired_peers();
 }
 
 void PeerTracker::OnResolvedPull(uint64_t pull_id, Address const &peer, Address const &search_for,
@@ -609,11 +568,10 @@ void PeerTracker::OnResolvedPull(uint64_t pull_id, Address const &peer, Address 
 
 void PeerTracker::ConnectToDesiredPeers()
 {
-  FETCH_LOCK(desired_mutex_);
   auto const currently_outgoing = register_.GetOutgoingAddressSet();
   auto const currently_incoming = register_.GetIncomingAddressSet();
 
-  for (auto &peer : desired_peers_)
+  for (auto &peer : desired_peers())
   {
     if (peer == own_address_)
     {
@@ -743,52 +701,7 @@ void PeerTracker::Periodically()
   keep_connections_.clear();
   no_uri_.clear();
 
-  {
-    FETCH_LOCK(desired_mutex_);
-    // Trimming for expired connections
-    auto                                   now = Clock::now();
-    std::unordered_map<Address, Timepoint> new_expiry;
-    for (auto const &item : connection_expiry_)
-    {
-
-      // Keeping those which are still not expired
-      if (item.second > now)
-      {
-        new_expiry.emplace(item);
-      }
-      else if (item.second < now)
-      {
-        // Deleting peers which has expired
-        auto it = desired_peers_.find(item.first);
-        if (it != desired_peers_.end())
-        {
-          desired_peers_.erase(it);
-        }
-      }
-    }
-    std::swap(connection_expiry_, new_expiry);
-
-    // Trimming URIs
-    std::unordered_map<Uri, Timepoint> new_uri_expiry;
-    for (auto const &item : desired_uri_expiry_)
-    {
-      // Keeping those which are still not expired
-      if (item.second > now)
-      {
-        new_uri_expiry.emplace(item);
-      }
-      else if (item.second < now)
-      {
-        // Deleting peers which has expired
-        auto it = desired_uris_.find(item.first);
-        if (it != desired_uris_.end())
-        {
-          desired_uris_.erase(it);
-        }
-      }
-    }
-    std::swap(desired_uri_expiry_, new_uri_expiry);
-  }
+  peer_table_.TrimDesiredPeers();
 
   // Ensuring that we keep connections open which we are currently
   // pulling data from
@@ -804,39 +717,10 @@ void PeerTracker::Periodically()
 
   // Converting URIs into addresses if possible
   {
-    FETCH_LOCK(desired_mutex_);
-    std::unordered_set<Uri> new_uris;
-    for (auto const &uri : desired_uris_)
-    {
-      if (peer_table_.HasUri(uri))
-      {
-        auto address = peer_table_.GetAddressFromUri(uri);
-        FETCH_LOG_INFO(logging_name_.c_str(), "Address from URI found ", uri.ToString(), ": ",
-                       address.ToBase64());
-
-        // Moving expiry time accross based on address
-        auto expit = desired_uri_expiry_.find(uri);
-        if (expit != desired_uri_expiry_.end())
-        {
-          connection_expiry_[address] = expit->second;
-          desired_uri_expiry_.erase(expit);
-        }
-
-        // Switching to address based desired peer
-        if (address != own_address_)
-        {
-          desired_peers_.insert(std::move(address));
-        }
-      }
-      else
-      {
-        new_uris.insert(uri);
-      }
-    }
-    std::swap(new_uris, desired_uris_);
+    peer_table_.ConvertDesiredUrisToAddresses();
 
     // Adding the unresolved URIs to the connection pool
-    for (auto const &uri : desired_uris_)
+    for (auto const &uri : peer_table_.desired_uris())
     {
       FETCH_LOG_INFO(logging_name_.c_str(), "Adding peer with unknown address: ", uri.ToString());
       connections_.AddPersistentPeer(uri);

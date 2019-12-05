@@ -234,6 +234,7 @@ public:
 
 protected:
   friend class Muddle;
+
   /// Methods integrate new connections into the peer tracker.
   /// @{
   void AddConnectionHandle(ConnectionHandle handle);
@@ -248,9 +249,7 @@ protected:
     stopping_              = true;
     tracker_configuration_ = TrackerConfiguration::AllOff();
 
-    connection_expiry_.clear();
-    desired_uri_expiry_.clear();
-    desired_peers_.clear();
+    peer_table_.ClearDesired();
     kademlia_connection_priority_.clear();
     kademlia_prioritized_peers_.clear();
     kademlia_connections_.clear();
@@ -307,10 +306,9 @@ private:
   /// Thread-safety
   /// @{
   mutable std::mutex mutex_;
-  mutable std::mutex direct_mutex_;   ///< Use to protect directly connected
-                                      /// peers to avoid causing a deadlock
-  mutable std::mutex desired_mutex_;  ///< Use to protect desired peer variables
-                                      /// peers to avoid causing a deadlock
+  mutable std::mutex direct_mutex_;  ///< Use to protect directly connected
+                                     /// peers to avoid causing a deadlock
+
   /// @}
 
   /// Core components for maintaining connectivity.
@@ -333,14 +331,6 @@ private:
   TrackerConfiguration tracker_configuration_;
   AddressSet           keep_connections_{};
   AddressSet           directly_connected_peers_{};
-  /// @}
-
-  /// User defined connections
-  /// @{
-  std::unordered_map<Address, Timepoint> connection_expiry_;
-  std::unordered_map<Uri, Timepoint>     desired_uri_expiry_;
-  AddressSet                             desired_peers_;
-  std::unordered_set<Uri>                desired_uris_;
   /// @}
 
   /// Handling new comers

@@ -96,4 +96,34 @@ struct Bucket
 };
 
 }  // namespace muddle
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<muddle::Bucket, D>
+{
+public:
+  using Type       = muddle::Bucket;
+  using DriverType = D;
+
+  static uint8_t const BUCKET_ID = 1;
+  static uint8_t const PEERS     = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &item)
+  {
+    auto map = map_constructor(2);
+
+    map.Append(BUCKET_ID, item.bucket_id);
+    map.Append(PEERS, item.peers);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &item)
+  {
+    map.ExpectKeyGetValue(BUCKET_ID, item.bucket_id);
+    map.ExpectKeyGetValue(PEERS, item.peers);
+  }
+};
+}  // namespace serializers
 }  // namespace fetch
