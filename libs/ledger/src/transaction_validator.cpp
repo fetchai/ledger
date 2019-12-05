@@ -29,12 +29,6 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-bool IsCreateWealth(chain::Transaction const &tx)
-{
-  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
-         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
-}
-
 }  // namespace
 
 TransactionValidator::TransactionValidator(StorageInterface &storage, TokenContract &token_contract)
@@ -59,13 +53,6 @@ ContractExecutionStatus TransactionValidator::operator()(chain::Transaction cons
   if (chain::Transaction::Validity::VALID != tx_validity)
   {
     return ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK;
-  }
-
-  // SHORT TERM EXEMPTION - While no state file exists (and the wealth endpoint is still present)
-  // this and only this contract is exempt from the pre-validation checks
-  if (IsCreateWealth(tx))
-  {
-    return ContractExecutionStatus::SUCCESS;
   }
 
   // attach the token contract to the storage engine

@@ -72,7 +72,7 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 
   if (buffer.empty())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to load stakefile! : ", file_path);
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to load genesis file! : ", file_path);
   }
   else
   {
@@ -106,7 +106,7 @@ GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
 {}
 
 /**
- * Load a 'state file' with a given name
+ * Load a 'genesis file file' with a given name
  *
  * @param name The path to the file to be loaded
  */

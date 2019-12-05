@@ -6,7 +6,6 @@ project(fetch-apps)
 
 add_subdirectory(constellation)
 add_subdirectory(etch)
-add_subdirectory(tx-generator)
 add_subdirectory(muddle-node)
 add_subdirectory(muddle-probe)
 add_subdirectory(chain-tool)

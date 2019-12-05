@@ -49,12 +49,6 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-bool IsCreateWealth(chain::Transaction const &tx)
-{
-  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
-         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
-}
-
 bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
 {
   // Step 1 - Translate the tx into a common name
@@ -365,15 +359,13 @@ bool Executor::ExecuteTransactionContract(Result &result)
                       scaled_charge, " (base: ", base_charge, " storage: ", storage_charge,
                       " compute: ", compute_charge, " shards: ", allowed_shards_.PopCount(), ")");
 
-      // create wealth transactions are always free
-      if (!IsCreateWealth(*current_tx_))
-      {
-        result.charge += scaled_charge;
-      }
+      result.charge += scaled_charge;
 
       // determine if the chain code ran out of charge
       if (result.charge > current_tx_->charge_limit())
       {
+        // Cap the charge to their max limit in case of underpay
+        result.charge = current_tx_->charge_limit();
         result.status = Status::INSUFFICIENT_CHARGE;
         success       = false;
       }
