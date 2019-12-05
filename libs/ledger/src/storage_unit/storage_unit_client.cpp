@@ -200,8 +200,8 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   bool all_success{true};
   for (auto &p : promises)
   {
-    bool success{false};
-    if (!(p->GetResult(success) && success))
+    bool success2{false};
+    if (!(p->GetResult(success2) && success2))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert shard ", lane_index, " to 0x",
                      tree[lane_index].ToHex());
