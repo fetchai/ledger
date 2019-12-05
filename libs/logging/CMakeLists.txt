@@ -15,4 +15,4 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-logging)
-target_link_libraries(fetch-logging PUBLIC vendor-spdlog vendor-backward-cpp)
+target_link_libraries(fetch-logging PUBLIC fetch-meta vendor-spdlog vendor-backward-cpp)
