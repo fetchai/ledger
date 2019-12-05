@@ -364,8 +364,6 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", muddle_->GetAddress().ToBase64());
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
-  chain_.SetOnReset([this]() { block_coordinator_.PartialReset(); });
-
   // Configure/override global parameters
   chain::STAKE_WARM_UP_PERIOD   = cfg_.stake_delay_period;
   chain::STAKE_COOL_DOWN_PERIOD = cfg_.stake_delay_period;

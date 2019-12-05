@@ -173,6 +173,9 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , block_hash_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "block_hash", "The last seen block hash beginning")}
 {
+  // set OnReset callback in main chain
+  chain_.SetOnReset([this]() { PartialReset(); });
+
   // configure the state machine
   // clang-format off
   state_machine_->RegisterHandler(State::RELOAD_STATE,                 this, &BlockCoordinator::OnReloadState);
@@ -1277,7 +1280,6 @@ void BlockCoordinator::PartialReset()
 
 void BlockCoordinator::Reset()
 {
-  PartialReset();
   chain_.Reset();
 }
 
