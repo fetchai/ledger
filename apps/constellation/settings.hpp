@@ -91,9 +91,8 @@ public:
   settings::Setting<uint32_t> num_executors;
   /// @}
 
-  /// @name State File
+  /// @name Genesis File
   /// @{
-  settings::Setting<bool>        load_genesis_file;
   settings::Setting<std::string> genesis_file_location;
   /// @}
 

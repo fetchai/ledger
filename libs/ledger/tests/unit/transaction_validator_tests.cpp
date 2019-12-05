@@ -133,14 +133,20 @@ void TransactionValidatorTests::SetDeed(Deed const &deed)
   token_contract_.SetDeed(signer_address_, std::make_shared<Deed>(deed));
 }
 
+// TODO(HUT): fix these.
 TEST_F(TransactionValidatorTests, CheckWealthWhileValid)
 {
+  uint64_t funds_for_test = 10000;
+  AddFunds(funds_for_test);
+
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("fetch.token", BitVector{})
-                .Action("wealth")
+                .Action("foo-bar-baz")
                 .ValidUntil(100)
                 .Signer(signer_.identity())
+                .ChargeRate(1)
+                .ChargeLimit(funds_for_test)
                 .Seal()
                 .Sign(signer_)
                 .Build();
