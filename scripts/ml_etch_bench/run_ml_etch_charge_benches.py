@@ -64,7 +64,7 @@ def plot_time_charge_corr(csv_file_path, output_img_path):
 
 
 def run_benchmark(bench_binary, bench_name, output_dir):
-    
+
     csvfile = os.path.join(output_dir, 'bm_{}.csv'.format(bench_name))
     pngfile = os.path.join(output_dir, 'bm_{}.png'.format(bench_name))
     statsfile = os.path.join(output_dir, 'bm_{}.stats'.format(bench_name))
@@ -86,10 +86,12 @@ def run_benchmark(bench_binary, bench_name, output_dir):
     plot_time_charge_corr(csvfile, pngfile)
     compute_time_charge_corr(csvfile, statsfile)
 
+
 def verify_file(filename):
     if not os.path.isfile(filename):
         output("Couldn't find expected file: {}".format(filename))
         sys.exit(1)
+
 
 def verify_dir(dirname):
     if not os.path.isdir(dirname):
@@ -116,13 +118,13 @@ def main():
     build_dir = os.path.abspath(args.build_dir)
     output_dir = os.path.abspath(args.output_dir)
 
-    # benchmark config 
+    # benchmark config
     bench_binary = os.path.join(
         build_dir, './libs/vm-modules/benchmark/benchmark_vm_modules_model')
-    
+
     verify_file(bench_binary)
     verify_dir(output_dir)
-    
+
     benchmark_functions = [
         'BM_AddLayer',
         'BM_Predict',
@@ -130,7 +132,7 @@ def main():
         'BM_SerializeToString',
         'BM_DeserializeFromString',
         'BM_Compile',
-        '' # all
+        ''  # all
     ]
 
     for benchname in benchmark_functions:
