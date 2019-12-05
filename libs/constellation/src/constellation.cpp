@@ -337,7 +337,7 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
                                                               trust_, cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_open_api_module_{std::make_shared<OpenAPIHttpModule>()}
-  , http_{http_network_manager_}
+  , http_{http_network_manager_, true}
   , http_modules_{http_open_api_module_,
                   std::make_shared<p2p::P2PHttpInterface>(
                       cfg_.log2_num_lanes, chain_, block_packer_,

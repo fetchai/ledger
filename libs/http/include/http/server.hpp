@@ -28,13 +28,16 @@
 #include "http/response.hpp"
 #include "http/route.hpp"
 #include "http/status.hpp"
+#include "http/tagged_tree.hpp"
 #include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <deque>
 #include <functional>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <new>
@@ -71,9 +74,17 @@ public:
     Authenticator              authenticator;
   };
 
-  explicit HTTPServer(NetworkManager const &network_manager)
+  explicit HTTPServer(NetworkManager const &network_manager, bool add_default_root_module = false)
     : networkManager_(network_manager)
-  {}
+  {
+    if (add_default_root_module)
+    {
+      AddDefaultRootModule();
+    }
+  }
+
+  HTTPServer(HTTPServer &&)      = delete;
+  HTTPServer(HTTPServer const &) = delete;
 
   virtual ~HTTPServer()
   {
@@ -301,8 +312,8 @@ public:
   {
     for (auto const &view : module.views())
     {
-      this->AddView(view.description, view.method, view.route, view.parameters, view.view,
-                    view.authenticator);
+      AddView(view.description, view.method, view.route, view.parameters, view.view,
+              view.authenticator);
     }
   }
 
@@ -329,6 +340,79 @@ public:
         manager_lock->Send(client, res);
       }
     });
+  }
+
+  void AddDefaultRootModule()
+  {
+    HTTPModule root;
+    root.Get(
+        "/", "Returns a list of all paths available on this server.",
+        [this](ViewParameters && /*view_parameters*/, HTTPRequest && /*http_request*/) {
+          static const HtmlTree header(
+              "", HtmlNodes{HtmlTree(top_level_content, "The following paths can be queried here."),
+                            HtmlTree("br")});
+
+          HtmlNodes route_list;
+
+          std::size_t padding{};
+          for (auto const &view : views_)
+          {
+            auto view_len = view.route.path().size();
+            if (view_len > padding)
+            {
+              padding = view_len;
+            }
+          }
+          padding += 4;
+
+          std::map<byte_array::ConstByteArray, HtmlTree> known_paths;
+          for (auto const &view : views_)
+          {
+            auto path = view.route.path();
+            if (path == "/")
+            {
+              // this page, skip
+              continue;
+            }
+            // create next list item
+            HtmlTree list_item("li");
+            if (view.method == Method::GET && view.route.path_parameters().empty())
+            {
+              // it's a GET to request and no parameters to bind from uri — a clickable link
+              list_item.emplace_back("a", path, HtmlTree::Params{{"href", path}});
+            }
+            else
+            {
+              // formal parameters shown in the path, attach as plain text
+              if (view.method != Method::GET)
+              {
+                // display Method, for convenience and to differentiate from GET requests
+                for (std::size_t extra_spaces = path.size(); extra_spaces < padding; ++extra_spaces)
+                {
+                  path = path + "&nbsp;";
+                }
+                path = path + "(" + ToString(view.method) + ")";
+              }
+              list_item.SetContent(path);
+            }
+            known_paths.emplace(std::move(path), std::move(list_item));
+          }
+          HtmlTree body;
+          if (known_paths.empty())
+          {
+            body.SetContent("<None>");
+          }
+          else
+          {
+            body.SetTag("ul");
+            for (auto const &known_path : known_paths)
+            {
+              body.push_back(std::move(known_path.second));
+            }
+          }
+          return HTTPResponse(HtmlBody(HtmlNodes{header, body}).Render());
+        });
+    AddModule(root);
   }
 
 private:
