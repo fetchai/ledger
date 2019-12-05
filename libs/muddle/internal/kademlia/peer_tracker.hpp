@@ -263,6 +263,11 @@ protected:
   {
     stopping_ = false;
   }
+
+  void SetCacheFile(std::string const &filename)
+  {
+    peer_table_->SetCacheFile(filename);
+  }
   /// @}
 
 private:

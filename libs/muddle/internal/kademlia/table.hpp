@@ -19,10 +19,13 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/sha1.hpp"
 #include "kademlia/bucket.hpp"
 #include "kademlia/primitives.hpp"
 #include "muddle/packet.hpp"
+
+#include <fstream>
 
 namespace fetch {
 namespace muddle {
@@ -124,6 +127,62 @@ public:
     return first_non_empty_bucket_;
   }
 
+  void SetCacheFile(std::string const &filename)
+  {
+    filename_ = filename;
+  }
+
+  void Load()
+  {
+    std::fstream stream(filename_, std::ios::in | std::ios::binary);
+    if (!stream)
+    {
+      return;
+    }
+
+    // Allocating buffer
+    stream.seekg(0, ios::end);
+    auto                       length = is.tellg();
+    byte_array::ConstByteArray buffer;
+    buffer.Resize(length);
+
+    // Reading
+    stream.seekg(0, ios::end);
+    stream.read(buffer.pointer(), buffer.size());
+    stream.close();
+
+    PeerMap peers;
+
+    // Deserializing
+    try
+    {
+      serializers::MsgPackSerializer serializer(buffer);
+      serializer >> peers;
+    }
+    catch (std::exception const &e)
+    {
+      FETCH_LOG_ERROR("PeerTable", "Failed loading the full peer table, but recovered ",
+                      peers.size(), " elements.");
+    }
+
+    // Loading
+    for (auto &pair : p)
+    {
+      ReportExistence(p.second, p.second.reporter);
+    }
+  }
+
+  void Dump()
+  {
+    std::fstream stream(filename_, std::ios::out | std::ios::binary);
+
+    serializers::MsgPackSerializer serializer{};
+    serializer << know_peers_;
+    auto buffer = serializer.data();
+    stream.write(buffer.pointer(), buffer.size());
+    stream.close();
+  }
+
 private:
   Peers FindPeerInternal(KademliaAddress const &kam_address, uint64_t log_id, bool scan_left = true,
                          bool scan_right = true);
@@ -138,6 +197,11 @@ private:
 
   uint64_t first_non_empty_bucket_{KADEMLIA_MAX_ID_BITS};
   uint64_t kademlia_max_peers_per_bucket_{20};
+
+  /// Backup
+  /// @{
+  std::string filename_{};
+  /// @}
 };
 
 }  // namespace muddle
