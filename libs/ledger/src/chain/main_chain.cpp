@@ -107,7 +107,7 @@ MainChain::~MainChain()
 
       out << buffer.data();
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to save Bloom filter to file, reason: ", e.what());
     }
@@ -821,11 +821,11 @@ void MainChain::RecoverFromFile(Mode mode)
 
         buffer >> bloom_filter_;
       }
-      catch (std::exception &e)
+      catch (std::exception const &e)
       {
         FETCH_LOG_ERROR(LOGGING_NAME,
                         "Failed to load Bloom filter from storage! Reason: ", e.what());
-        bloom_filter_.Reset();
+        Reset();
       }
     }
   }

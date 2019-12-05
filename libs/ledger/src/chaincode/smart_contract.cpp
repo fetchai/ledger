@@ -742,7 +742,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     break;
   case vm::TypeIds::String:
   {
-    auto res = output.Get<vm::Ptr<vm::String>>();
+    auto const res = output.Get<vm::Ptr<vm::String>>();
     if (res)
     {
       response["result"] = res->string();
