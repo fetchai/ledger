@@ -18,30 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "http/abstract_server.hpp"
-#include "http/connection.hpp"
-#include "http/http_connection_manager.hpp"
-#include "http/method.hpp"
-#include "http/mime_types.hpp"
-#include "http/module.hpp"
-#include "http/request.hpp"
-#include "http/response.hpp"
-#include "http/route.hpp"
-#include "http/status.hpp"
-#include "logging/logging.hpp"
-#include "network/fetch_asio.hpp"
-#include "network/management/network_manager.hpp"
 
-#include <cstdint>
-#include <deque>
-#include <functional>
-#include <memory>
-#include <mutex>
-#include <new>
 #include <numeric>
-#include <system_error>
 #include <utility>
-#include <unordered_map>
 #include <vector>
 
 #include <iostream>
@@ -51,16 +30,18 @@ namespace http {
 
 struct HtmlTags
 {
-	using Tag = byte_array::ConstByteArray;
-	using Content = byte_array::ConstByteArray;
-	using Params = std::vector<std::pair<Tag, Content>>;
+  using Tag     = byte_array::ConstByteArray;
+  using Content = byte_array::ConstByteArray;
+  using Params  = std::vector<std::pair<Tag, Content>>;
 
-	HtmlTags() = default;
-	Content operator()(Tag tag, Params const &params) const;
-	Content operator()(Tag tag, Params const &params, Content content) const;
+  HtmlTags() = default;
+  Content operator()(Tag tag, Params const &params) const;
+  Content operator()(Tag tag, Params const &params, Content content) const;
 };
 
-struct TopLevelContentTag {};
+struct TopLevelContentTag
+{
+};
 
 namespace {
 
@@ -68,159 +49,162 @@ TopLevelContentTag top_level_content;
 
 FETCH_UNUSED_IN_NAMESPACE(top_level_content)
 
-}
+}  // namespace
 
 template <class TP>
 class TaggedTree
 {
 public:
-	using TaggingPolicy = TP;
-	using Tag = typename TaggingPolicy::Tag;
-	using Params = typename TaggingPolicy::Params;
-	using Content = typename TaggingPolicy::Content;
-	using Children = std::vector<TaggedTree>;
+  using TaggingPolicy = TP;
+  using Tag           = typename TaggingPolicy::Tag;
+  using Params        = typename TaggingPolicy::Params;
+  using Content       = typename TaggingPolicy::Content;
+  using Children      = std::vector<TaggedTree>;
 
-	TaggedTree(TaggingPolicy policy = {})
-		: tagging_policy_(std::move(policy))
-	{}
+  TaggedTree(TaggingPolicy policy = {})
+    : tagging_policy_(std::move(policy))
+  {}
 
-	TaggedTree(Tag tag, Params params = {}, TaggingPolicy policy = {})
-		: tagging_policy_(std::move(policy))
-		, tag_(std::move(tag))
-		, params_(std::move(params))
-	{}
+  TaggedTree(Tag tag, Params params = {}, TaggingPolicy policy = {})
+    : tagging_policy_(std::move(policy))
+    , tag_(std::move(tag))
+    , params_(std::move(params))
+  {}
 
-	TaggedTree(Tag tag, Content content, Params params = {}, TaggingPolicy policy = {})
-		: tagging_policy_(std::move(policy))
-		, tag_(std::move(tag))
-		, params_(std::move(params))
-		, content_(std::move(content))
-	{}
+  TaggedTree(Tag tag, Content content, Params params = {}, TaggingPolicy policy = {})
+    : tagging_policy_(std::move(policy))
+    , tag_(std::move(tag))
+    , params_(std::move(params))
+    , content_(std::move(content))
+  {}
 
-	TaggedTree(Tag tag, Children children, Params params = {}, TaggingPolicy policy = {})
-		: tagging_policy_(std::move(policy))
-		, tag_(std::move(tag))
-		, params_(std::move(params))
-		, children_(std::move(children))
-	{}
+  TaggedTree(Tag tag, Children children, Params params = {}, TaggingPolicy policy = {})
+    : tagging_policy_(std::move(policy))
+    , tag_(std::move(tag))
+    , params_(std::move(params))
+    , children_(std::move(children))
+  {}
 
-	TaggedTree(Tag tag, Content content, Children children, Params params = {}, TaggingPolicy policy = {})
-		: tagging_policy_(std::move(policy))
-		, tag_(std::move(tag))
-		, params_(std::move(params))
-		, content_(std::move(content))
-		, children_(std::move(children))
-	{}
+  TaggedTree(Tag tag, Content content, Children children, Params params = {},
+             TaggingPolicy policy = {})
+    : tagging_policy_(std::move(policy))
+    , tag_(std::move(tag))
+    , params_(std::move(params))
+    , content_(std::move(content))
+    , children_(std::move(children))
+  {}
 
-	TaggedTree(TopLevelContentTag /*top_level_content_tag*/, Content content, Children children = {})
-		: content_(std::move(content))
-		, children_(std::move(children))
-	{}
+  TaggedTree(TopLevelContentTag /*top_level_content_tag*/, Content content, Children children = {})
+    : content_(std::move(content))
+    , children_(std::move(children))
+  {}
 
-	TaggedTree(TaggedTree &&) = default;
-	TaggedTree(TaggedTree const &) = default;
+  TaggedTree(TaggedTree &&)      = default;
+  TaggedTree(TaggedTree const &) = default;
 
-	~TaggedTree() = default;
+  ~TaggedTree() = default;
 
-	TaggedTree &operator=(TaggedTree &&) = default;
-	TaggedTree &operator=(TaggedTree const &) = default;
+  TaggedTree &operator=(TaggedTree &&) = default;
+  TaggedTree &operator=(TaggedTree const &) = default;
 
-	TaggingPolicy GetTaggingPolicy() const
-	{
-		return tagging_policy_;
-	}
-	TaggedTree &SetTaggingPolicy(TaggingPolicy tagging_policy)
-	{
-		tagging_policy_ = std::move(tagging_policy);
-		return *this;
-	}
+  TaggingPolicy GetTaggingPolicy() const
+  {
+    return tagging_policy_;
+  }
+  TaggedTree &SetTaggingPolicy(TaggingPolicy tagging_policy)
+  {
+    tagging_policy_ = std::move(tagging_policy);
+    return *this;
+  }
 
-	Tag GetTag() const
-	{
-		return tag_;
-	}
-	TaggedTree &SetTag(Tag tag)
-	{
-		tag_ = std::move(tag);
-		return *this;
-	}
+  Tag GetTag() const
+  {
+    return tag_;
+  }
+  TaggedTree &SetTag(Tag tag)
+  {
+    tag_ = std::move(tag);
+    return *this;
+  }
 
-	Params GetParams() const
-	{
-		return params_;
-	}
-	TaggedTree &SetParams(Params params)
-	{
-		params_ = std::move(params);
-		return *this;
-	}
+  Params GetParams() const
+  {
+    return params_;
+  }
+  TaggedTree &SetParams(Params params)
+  {
+    params_ = std::move(params);
+    return *this;
+  }
 
-	Content GetContent() const
-	{
-		return content_;
-	}
-	TaggedTree &SetContent(Content content)
-	{
-		content_ = std::move(content);
-		return *this;
-	}
+  Content GetContent() const
+  {
+    return content_;
+  }
+  TaggedTree &SetContent(Content content)
+  {
+    content_ = std::move(content);
+    return *this;
+  }
 
-	Children GetChildren() const
-	{
-		return children_;
-	}
-	TaggedTree &SetChildren(Children children)
-	{
-		children_ = std::move(children);
-		return *this;
-	}
+  Children GetChildren() const
+  {
+    return children_;
+  }
+  TaggedTree &SetChildren(Children children)
+  {
+    children_ = std::move(children);
+    return *this;
+  }
 
-	void push_back(TaggedTree child)
-	{
-		children_.push_back(std::move(child));
-	}
+  void push_back(TaggedTree child)
+  {
+    children_.push_back(std::move(child));
+  }
 
-	template<class... Args>
-	void emplace_back(Args &&...args)
-	{
-		children_.emplace_back(std::forward<Args>(args)...);
-	}
+  template <class... Args>
+  void emplace_back(Args &&... args)
+  {
+    children_.emplace_back(std::forward<Args>(args)...);
+  }
 
-	Content Render() const;
+  Content Render() const;
+
 private:
-	TaggingPolicy tagging_policy_;
-	Tag tag_;
-	Params params_;
-	Content content_;
-	Children children_;
+  TaggingPolicy tagging_policy_;
+  Tag           tag_;
+  Params        params_;
+  Content       content_;
+  Children      children_;
 };
 
-using HtmlTree = TaggedTree<HtmlTags>;
-using HtmlTag = HtmlTree::Tag;
+using HtmlTree    = TaggedTree<HtmlTags>;
+using HtmlTag     = HtmlTree::Tag;
 using HtmlContent = HtmlTree::Content;
-using HtmlNodes = HtmlTree::Children;
+using HtmlNodes   = HtmlTree::Children;
 
-template<class... Elements>
+template <class... Elements>
 HtmlTree HtmlBody(Elements... elements)
 {
-	return HtmlTree("html", HtmlNodes{HtmlTree("body", std::forward<Elements>(elements)...)});
+  return HtmlTree("html", HtmlNodes{HtmlTree("body", std::forward<Elements>(elements)...)});
 }
 
-template<class TaggingPolicy>
+template <class TaggingPolicy>
 typename TaggedTree<TaggingPolicy>::Content TaggedTree<TaggingPolicy>::Render() const
 {
-        if (children_.empty() && content_.empty())
-        {
-		return tagging_policy_(tag_, params_);
-        }
+  if (children_.empty() && content_.empty())
+  {
+    return tagging_policy_(tag_, params_);
+  }
 
-        Content content = std::accumulate(children_.begin(), children_.end(), Content{},
-					  [](auto accum, auto const &child) {
-						  return std::move(accum) + child.Render();
-					  }) + content_;
+  Content content = std::accumulate(children_.begin(), children_.end(), Content{},
+                                    [](auto accum, auto const &child) {
+                                      return std::move(accum) + child.Render();
+                                    }) +
+                    content_;
 
-	return tagging_policy_(tag_, params_, content);
+  return tagging_policy_(tag_, params_, content);
 }
 
-}
-}
+}  // namespace http
+}  // namespace fetch
