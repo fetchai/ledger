@@ -279,5 +279,7 @@ int main(int argc, char **argv)
     std::cerr << "Fatal Error: " << ex.what() << std::endl;
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, " - ");
+
   return exit_code;
 }
