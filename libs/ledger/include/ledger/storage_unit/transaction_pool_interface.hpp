@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,28 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/transaction_finder_protocol.hpp"
+#include "transaction_store_interface.hpp"
 
 namespace fetch {
 namespace ledger {
 
-TxFinderProtocol::TxFinderProtocol()
+class TransactionPoolInterface : public TransactionStoreInterface
 {
-  Expose(ISSUE_CALL_FOR_MISSING_TXS, this, &Self::IssueCallForMissingTxs);
-}
+public:
+  TransactionPoolInterface()           = default;
+  ~TransactionPoolInterface() override = default;
 
-bool TxFinderProtocol::Pop(Digest &digest)
-{
-  return resource_queue_.Pop(digest, std::chrono::milliseconds::zero());
-}
+  /// @name Transaction Pool Interface
+  /// @{
 
-void TxFinderProtocol::IssueCallForMissingTxs(DigestSet const &digests)
-{
-  for (auto const &digest : digests)
-  {
-    resource_queue_.Push(digest);
-  }
-}
+  /**
+   * Remove a transaction from the pool
+   *
+   * @param tx_digest The transaction being removed
+   */
+  virtual void Remove(Digest const &tx_digest) = 0;
+  /// @}
+};
 
 }  // namespace ledger
 }  // namespace fetch
