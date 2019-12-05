@@ -186,7 +186,7 @@ private:
 
   struct FileErrors
   {
-    FileErrors(std::string filename__)
+    explicit FileErrors(std::string filename__)
       : filename{std::move(filename__)}
     {}
     std::string        filename;

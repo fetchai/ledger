@@ -1466,9 +1466,9 @@ void Parser::GoToNextStatement()
   }
 }
 
-bool Parser::IsTemplateName(std::string name) const
+bool Parser::IsTemplateName(std::string const &name) const
 {
-  auto const it = template_names_.find(std::move(name));
+  auto const it = template_names_.find(name);
   return template_names_.end() != it;
 }
 

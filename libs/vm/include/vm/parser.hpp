@@ -126,7 +126,7 @@ private:
   ExpressionNodePtr ParseExpressionStatement();
   bool              IsStatementKeyword(Token::Kind kind) const;
   void              GoToNextStatement();
-  bool              IsTemplateName(std::string name) const;
+  bool              IsTemplateName(std::string const &name) const;
   ExpressionNodePtr ParseType();
   ExpressionNodePtr ParseConditionalExpression();
   ExpressionNodePtr ParseExpression(bool is_conditional_expression = false);
