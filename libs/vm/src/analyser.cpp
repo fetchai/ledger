@@ -97,7 +97,6 @@ void Analyser::Initialise()
   EnableOperator(fixed128_type_, Operator::GreaterThanOrEqual);
   EnableOperator(fixed128_type_, Operator::Add);
   EnableOperator(fixed128_type_, Operator::InplaceAdd);
-  /*
   EnableOperator(fixed128_type_, Operator::Subtract);
   EnableOperator(fixed128_type_, Operator::InplaceSubtract);
   EnableOperator(fixed128_type_, Operator::Multiply);
@@ -105,7 +104,6 @@ void Analyser::Initialise()
   EnableOperator(fixed128_type_, Operator::Divide);
   EnableOperator(fixed128_type_, Operator::InplaceDivide);
   EnableOperator(fixed128_type_, Operator::Negate);
-  */
 
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
   EnableOperator(string_type_, Operator::Equal);
@@ -135,7 +133,8 @@ void Analyser::Initialise()
                                       int32_type_, uint32_type_, int64_type_, uint64_type_};
   TypePtrArray const number_types  = {int8_type_,    uint8_type_,   int16_type_,   uint16_type_,
                                      int32_type_,   uint32_type_,  int64_type_,   uint64_type_,
-                                     float32_type_, float64_type_, fixed32_type_, fixed64_type_};
+                                     float32_type_, float64_type_, fixed32_type_, fixed64_type_,
+                                     fixed128_type_};
   for (auto const &type : number_types)
   {
     EnableOperator(type, Operator::Equal);
@@ -317,17 +316,16 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   contract_definitions_.Clear();
   function_     = nullptr;
   use_any_node_ = nullptr;
-  errors_.clear();
+  file_errors_array_.clear();
 
   root_->symbols = CreateSymbolTable();
 
-  // Create symbol tables for all blocks
-  // Check function prototypes
   BuildBlock(root_);
+  PreAnnotateBlock(root_);
 
-  if (!errors_.empty())
+  if (!file_errors_array_.empty())
   {
-    errors = std::move(errors_);
+    errors = GetErrorList();
     root_  = nullptr;
     blocks_.clear();
     loops_.clear();
@@ -337,7 +335,7 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
     contract_definitions_.Clear();
     function_     = nullptr;
     use_any_node_ = nullptr;
-    errors_.clear();
+    file_errors_array_.clear();
     return false;
   }
 
@@ -353,12 +351,13 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   function_     = nullptr;
   use_any_node_ = nullptr;
 
-  if (!errors_.empty())
+  if (!file_errors_array_.empty())
   {
-    errors = std::move(errors_);
-    errors_.clear();
+    errors = GetErrorList();
+    file_errors_array_.clear();
     return false;
   }
+
   errors.clear();
   return true;
 }
@@ -367,7 +366,18 @@ void Analyser::AddError(uint16_t line, std::string const &message)
 {
   std::ostringstream stream;
   stream << filename_ << ": line " << line << ": error: " << message;
-  errors_.push_back(stream.str());
+  Error error{line, stream.str()};
+  for (auto &file_errors_it : file_errors_array_)
+  {
+    if (filename_ == file_errors_it.filename)
+    {
+      file_errors_it.errors.push_back(std::move(error));
+      return;
+    }
+  }
+  FileErrors file_errors(filename_);
+  file_errors.errors.push_back(std::move(error));
+  file_errors_array_.push_back(std::move(file_errors));
 }
 
 void Analyser::BuildBlock(BlockNodePtr const &block_node)
@@ -379,12 +389,10 @@ void Analyser::BuildBlock(BlockNodePtr const &block_node)
     {
     case NodeKind::File:
     {
-      BuildFile(ConvertToBlockNodePtr(child));
-      break;
-    }
-    case NodeKind::PersistentStatement:
-    {
-      BuildPersistentStatement(child);
+      BlockNodePtr file_node = ConvertToBlockNodePtr(child);
+      file_node->symbols     = CreateSymbolTable();
+      filename_              = file_node->text;
+      BuildBlock(file_node);
       break;
     }
     case NodeKind::ContractDefinition:
@@ -392,24 +400,36 @@ void Analyser::BuildBlock(BlockNodePtr const &block_node)
       BuildContractDefinition(ConvertToBlockNodePtr(child));
       break;
     }
-    case NodeKind::FunctionDefinition:
+    case NodeKind::StructDefinition:
     {
-      BuildFunctionDefinition(ConvertToBlockNodePtr(child));
+      BuildStructDefinition(ConvertToBlockNodePtr(child));
       break;
     }
-    case NodeKind::WhileStatement:
+    case NodeKind::FreeFunctionDefinition:
     {
-      BuildWhileStatement(ConvertToBlockNodePtr(child));
-      break;
-    }
-    case NodeKind::ForStatement:
-    {
-      BuildForStatement(ConvertToBlockNodePtr(child));
+      BuildFreeFunctionDefinition(ConvertToBlockNodePtr(child));
       break;
     }
     case NodeKind::IfStatement:
     {
-      BuildIfStatement(child);
+      for (NodePtr const &c : child->children)
+      {
+        BlockNodePtr block = ConvertToBlockNodePtr(c);
+        block->symbols     = CreateSymbolTable();
+        BuildBlock(block);
+      }
+      break;
+    }
+    case NodeKind::MemberFunctionDefinition:
+    case NodeKind::WhileStatement:
+    case NodeKind::ForStatement:
+    case NodeKind::If:
+    case NodeKind::ElseIf:
+    case NodeKind::Else:
+    {
+      BlockNodePtr block = ConvertToBlockNodePtr(child);
+      block->symbols     = CreateSymbolTable();
+      BuildBlock(block);
       break;
     }
     default:
@@ -421,14 +441,135 @@ void Analyser::BuildBlock(BlockNodePtr const &block_node)
   blocks_.pop_back();
 }
 
-void Analyser::BuildFile(BlockNodePtr const &file_node)
+void Analyser::BuildContractDefinition(BlockNodePtr const &contract_definition_node)
 {
-  filename_          = file_node->text;
-  file_node->symbols = CreateSymbolTable();
-  BuildBlock(file_node);
+  contract_definition_node->symbols = CreateSymbolTable();
+  ExpressionNodePtr contract_name_node =
+      ConvertToExpressionNodePtr(contract_definition_node->children[0]);
+  std::string const &contract_name = contract_name_node->text;
+  // check symbols_ as well here?
+  if (contract_definitions_.Find(contract_name) || root_->symbols->Find(contract_name))
+  {
+    AddError(contract_name_node->line, "symbol '" + contract_name + "' is already defined");
+    return;
+  }
+  TypePtr contract_type  = CreateType(TypeKind::UserDefinedContract, contract_name);
+  contract_type->symbols = CreateSymbolTable();
+  contract_definitions_.Add(contract_name, contract_type);
+  contract_name_node->type = contract_type;
+  BuildBlock(contract_definition_node);
 }
 
-void Analyser::BuildPersistentStatement(NodePtr const &persistent_statement_node)
+void Analyser::BuildStructDefinition(BlockNodePtr const &struct_definition_node)
+{
+  struct_definition_node->symbols = CreateSymbolTable();
+  ExpressionNodePtr struct_name_node =
+      ConvertToExpressionNodePtr(struct_definition_node->children[0]);
+  std::string const &struct_name = struct_name_node->text;
+  // check symbols_ as well here?
+  if (contract_definitions_.Find(struct_name) || root_->symbols->Find(struct_name))
+  {
+    AddError(struct_name_node->line, "symbol '" + struct_name + "' is already defined");
+    return;
+  }
+  TypePtr struct_type  = CreateType(TypeKind::UserDefinedStruct, struct_name);
+  struct_type->symbols = CreateSymbolTable();
+  root_->symbols->Add(struct_type);
+  struct_name_node->type = struct_type;
+  BuildBlock(struct_definition_node);
+}
+
+void Analyser::BuildFreeFunctionDefinition(BlockNodePtr const &function_definition_node)
+{
+  function_definition_node->symbols = CreateSymbolTable();
+  ExpressionNodePtr function_name_node =
+      ConvertToExpressionNodePtr(function_definition_node->children[1]);
+  std::string const &function_name = function_name_node->text;
+  if (contract_definitions_.Find(function_name))
+  {
+    AddError(function_name_node->line, "symbol '" + function_name + "' is already defined");
+    return;
+  }
+  // check symbols_ as well here?
+  FunctionGroupPtr function_group;
+  SymbolPtr        symbol = root_->symbols->Find(function_name);
+  if (symbol)
+  {
+    if (!symbol->IsFunctionGroup())
+    {
+      AddError(function_name_node->line, "symbol '" + function_name + "' is already defined");
+      return;
+    }
+    function_group = ConvertToFunctionGroupPtr(symbol);
+  }
+  else
+  {
+    function_group = CreateFunctionGroup(function_name, nullptr);
+    root_->symbols->Add(function_group);
+  }
+  function_name_node->function_group = function_group;
+  BuildBlock(function_definition_node);
+}
+
+void Analyser::PreAnnotateBlock(BlockNodePtr const &block_node)
+{
+  blocks_.push_back(block_node);
+  for (NodePtr const &child : block_node->block_children)
+  {
+    switch (child->node_kind)
+    {
+    case NodeKind::File:
+    {
+      BlockNodePtr file_node = ConvertToBlockNodePtr(child);
+      filename_              = file_node->text;
+      PreAnnotateBlock(file_node);
+      break;
+    }
+    case NodeKind::PersistentStatement:
+    {
+      PreAnnotatePersistentStatement(child);
+      break;
+    }
+    case NodeKind::ContractDefinition:
+    {
+      PreAnnotateContractDefinition(ConvertToBlockNodePtr(child));
+      break;
+    }
+    case NodeKind::ContractFunction:
+    {
+      PreAnnotateContractFunction(block_node, child);
+      break;
+    }
+    case NodeKind::StructDefinition:
+    {
+      PreAnnotateStructDefinition(ConvertToBlockNodePtr(child));
+      break;
+    }
+    case NodeKind::MemberFunctionDefinition:
+    {
+      PreAnnotateMemberFunctionDefinition(block_node, ConvertToBlockNodePtr(child));
+      break;
+    }
+    case NodeKind::MemberVarDeclarationStatement:
+    {
+      PreAnnotateMemberVarDeclarationStatement(block_node, child);
+      break;
+    }
+    case NodeKind::FreeFunctionDefinition:
+    {
+      PreAnnotateFreeFunctionDefinition(ConvertToBlockNodePtr(child));
+      break;
+    }
+    default:
+    {
+      break;
+    }
+    }  // switch
+  }
+  blocks_.pop_back();
+}
+
+void Analyser::PreAnnotatePersistentStatement(NodePtr const &persistent_statement_node)
 {
   ExpressionNodePtr state_name_node =
       ConvertToExpressionNodePtr(persistent_statement_node->children[0]);
@@ -481,98 +622,32 @@ void Analyser::BuildPersistentStatement(NodePtr const &persistent_statement_node
   state_definitions_.Add(state_name, instantation_type);
 }
 
-void Analyser::BuildContractDefinition(BlockNodePtr const &contract_definition_node)
+void Analyser::PreAnnotateContractDefinition(BlockNodePtr const &contract_definition_node)
 {
-  contract_definition_node->symbols = CreateSymbolTable();
   ExpressionNodePtr contract_name_node =
       ConvertToExpressionNodePtr(contract_definition_node->children[0]);
-  std::string const &contract_name = contract_name_node->text;
-  // check symbols_ as well here?
-  if (contract_definitions_.Find(contract_name) || root_->symbols->Find(contract_name))
+  TypePtr contract_type = contract_name_node->type;
+  if (!contract_type)
   {
-    AddError(contract_name_node->line, "symbol '" + contract_name + "' is already defined");
     return;
   }
-  TypePtr contract_type  = CreateType(TypeKind::UserDefinedContract, contract_name);
-  contract_type->symbols = CreateSymbolTable();
-  blocks_.push_back(contract_definition_node);
-  for (NodePtr const &contract_function_prototype_node : contract_definition_node->block_children)
-  {
-    ExpressionNodePtr      function_name_node;
-    ExpressionNodePtrArray parameter_nodes;
-    TypePtrArray           parameter_types;
-    VariablePtrArray       parameter_variables;
-    TypePtr                return_type;
-    if (!BuildFunctionPrototype(contract_function_prototype_node, function_name_node,
-                                parameter_nodes, parameter_types, parameter_variables, return_type))
-    {
-      continue;
-    }
-    std::string const &function_name = function_name_node->text;
-    FunctionGroupPtr   function_group;
-    SymbolPtr          symbol = contract_definition_node->symbols->Find(function_name);
-    if (symbol)
-    {
-      if (!symbol->IsFunctionGroup())
-      {
-        AddError(function_name_node->line, "symbol '" + function_name + "' is already defined");
-        continue;
-      }
-      function_group = ConvertToFunctionGroupPtr(symbol);
-      if (FindFunction(nullptr, function_group, parameter_nodes))
-      {
-        AddError(
-            function_name_node->line,
-            "function '" + function_name + "' is already defined with the same parameter types");
-        continue;
-      }
-    }
-    else
-    {
-      function_group = CreateFunctionGroup(function_name);
-      contract_definition_node->symbols->Add(function_group);
-    }
-    FunctionPtr function = CreateUserDefinedContractFunction(
-        contract_type, function_name, parameter_types, parameter_variables, return_type);
-    function_group->functions.push_back(function);
-    function_name_node->function = function;
-  }
-  blocks_.pop_back();
-  for (auto const &it : contract_definition_node->symbols->map)
-  {
-    contract_type->symbols->Add(it.second);
-  }
-  contract_name_node->type = contract_type;
-  contract_definitions_.Add(contract_name, contract_type);
+  PreAnnotateBlock(contract_definition_node);
 }
 
-void Analyser::BuildFunctionDefinition(BlockNodePtr const &function_definition_node)
+void Analyser::PreAnnotateContractFunction(BlockNodePtr const &contract_definition_node,
+                                           NodePtr const &     function_node)
 {
-  function_definition_node->symbols = CreateSymbolTable();
-
-  ExpressionNodePtr      function_name_node;
-  ExpressionNodePtrArray parameter_nodes;
-  TypePtrArray           parameter_types;
-  VariablePtrArray       parameter_variables;
-  TypePtr                return_type;
-  if (!BuildFunctionPrototype(function_definition_node, function_name_node, parameter_nodes,
-                              parameter_types, parameter_variables, return_type))
+  ExpressionNodePtr contract_name_node =
+      ConvertToExpressionNodePtr(contract_definition_node->children[0]);
+  TypePtr contract_type = contract_name_node->type;
+  if (!contract_type)
   {
     return;
   }
-  for (auto const &parameter_variable : parameter_variables)
-  {
-    function_definition_node->symbols->Add(parameter_variable);
-  }
-  std::string const &function_name = function_name_node->text;
-  if (contract_definitions_.Find(function_name))
-  {
-    AddError(function_name_node->line, "symbol '" + function_name + "' is already defined");
-    return;
-  }
-  // check symbols_ as well here?
-  FunctionGroupPtr function_group;
-  SymbolPtr        symbol = root_->symbols->Find(function_name);
+  ExpressionNodePtr  function_name_node = ConvertToExpressionNodePtr(function_node->children[1]);
+  std::string const &function_name      = function_name_node->text;
+  FunctionGroupPtr   function_group;
+  SymbolPtr          symbol = contract_definition_node->symbols->Find(function_name);
   if (symbol)
   {
     if (!symbol->IsFunctionGroup())
@@ -581,33 +656,236 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &function_definition_n
       return;
     }
     function_group = ConvertToFunctionGroupPtr(symbol);
-    if (FindFunction(nullptr, function_group, parameter_nodes))
+  }
+  else
+  {
+    function_group = CreateFunctionGroup(function_name, nullptr);
+    contract_definition_node->symbols->Add(function_group);
+    contract_type->symbols->Add(function_group);
+    function_name_node->function_group = function_group;
+  }
+  ExpressionNodePtrArray parameter_nodes;
+  TypePtrArray           parameter_types;
+  VariablePtrArray       parameter_variables;
+  TypePtr                return_type;
+  if (!PreAnnotatePrototype(function_node, parameter_nodes, parameter_types, parameter_variables,
+                            return_type))
+  {
+    return;
+  }
+  if (FindFunction(contract_type, function_group, parameter_nodes))
+  {
+    AddError(function_name_node->line,
+             "function '" + function_name + "' is already defined with the same parameter types");
+    return;
+  }
+  FunctionPtr function = CreateUserDefinedContractFunction(
+      contract_type, function_name, parameter_types, parameter_variables, return_type);
+  function_group->functions.push_back(function);
+  function_name_node->function = function;
+}
+
+void Analyser::PreAnnotateStructDefinition(BlockNodePtr const &struct_definition_node)
+{
+  ExpressionNodePtr struct_name_node =
+      ConvertToExpressionNodePtr(struct_definition_node->children[0]);
+  TypePtr struct_type = struct_name_node->type;
+  if (!struct_type)
+  {
+    return;
+  }
+  PreAnnotateBlock(struct_definition_node);
+  // If a default constructor wasn't explicitly defined, provide one
+  FunctionGroupPtr function_group;
+  FunctionPtr      function;
+  SymbolPtr        symbol = struct_definition_node->symbols->Find(CONSTRUCTOR);
+  if (symbol)
+  {
+    function_group = ConvertToFunctionGroupPtr(symbol);
+    function       = FindFunction(struct_type, function_group, {});
+    if (!function)
     {
-      AddError(function_name_node->line,
-               "function '" + function_name + "' is already defined with the same parameter types");
-      return;
+      function = CreateUserDefinedConstructor(struct_type, {}, {});
+      function_group->functions.push_back(function);
     }
   }
   else
   {
-    function_group = CreateFunctionGroup(function_name);
-    root_->symbols->Add(function_group);
+    function_group = CreateFunctionGroup(CONSTRUCTOR, struct_type);
+    function       = CreateUserDefinedConstructor(struct_type, {}, {});
+    function_group->functions.push_back(function);
+    struct_definition_node->symbols->Add(function_group);
+    struct_type->symbols->Add(function_group);
+  }
+  // Store information on the struct's default constructor
+  struct_name_node->function_group = function_group;
+  struct_name_node->function       = function;
+}
+
+void Analyser::PreAnnotateMemberFunctionDefinition(BlockNodePtr const &struct_definition_node,
+                                                   BlockNodePtr const &function_definition_node)
+{
+  ExpressionNodePtr struct_name_node =
+      ConvertToExpressionNodePtr(struct_definition_node->children[0]);
+  TypePtr struct_type = struct_name_node->type;
+  if (!struct_type)
+  {
+    return;
+  }
+  ExpressionNodePtr function_name_node =
+      ConvertToExpressionNodePtr(function_definition_node->children[1]);
+  std::string      function_name = function_name_node->text;
+  FunctionGroupPtr function_group;
+  std::string      symbol_name;
+  bool             is_constructor = function_name == struct_type->name;
+  if (is_constructor)
+  {
+    symbol_name = CONSTRUCTOR;
+  }
+  else
+  {
+    symbol_name = function_name;
+  }
+  SymbolPtr symbol = struct_definition_node->symbols->Find(symbol_name);
+  if (symbol)
+  {
+    if (!symbol->IsFunctionGroup())
+    {
+      AddError(function_name_node->line, "symbol '" + function_name + "' is already defined");
+      return;
+    }
+    function_group = ConvertToFunctionGroupPtr(symbol);
+  }
+  else
+  {
+    if (is_constructor)
+    {
+      std::size_t       index = function_definition_node->children.size() - 1;
+      ExpressionNodePtr return_type_node =
+          ConvertToExpressionNodePtr(function_definition_node->children[index]);
+      if (return_type_node)
+      {
+        AddError(function_name_node->line, "constructor '" + function_name + "' has return type");
+        return;
+      }
+    }
+    function_group = CreateFunctionGroup(symbol_name, struct_type);
+    struct_definition_node->symbols->Add(function_group);
+    struct_type->symbols->Add(function_group);
+    function_name_node->function_group = function_group;
+  }
+  ExpressionNodePtrArray parameter_nodes;
+  TypePtrArray           parameter_types;
+  VariablePtrArray       parameter_variables;
+  TypePtr                return_type;
+  if (!PreAnnotatePrototype(function_definition_node, parameter_nodes, parameter_types,
+                            parameter_variables, return_type))
+  {
+    return;
+  }
+  if (FindFunction(struct_type, function_group, parameter_nodes))
+  {
+    std::string text = is_constructor ? "constructor" : "function";
+    AddError(function_name_node->line,
+             text + " '" + function_name + "' is already defined with the same parameter types");
+    return;
+  }
+  for (auto const &parameter_variable : parameter_variables)
+  {
+    function_definition_node->symbols->Add(parameter_variable);
+  }
+  FunctionPtr function;
+  if (is_constructor)
+  {
+    function = CreateUserDefinedConstructor(struct_type, parameter_types, parameter_variables);
+  }
+  else
+  {
+    function = CreateUserDefinedMemberFunction(struct_type, function_name, parameter_types,
+                                               parameter_variables, return_type);
+  }
+  function_group->functions.push_back(function);
+  function_name_node->function = function;
+}
+
+void Analyser::PreAnnotateMemberVarDeclarationStatement(BlockNodePtr const &struct_definition_node,
+                                                        NodePtr const &     var_statement_node)
+{
+  ExpressionNodePtr struct_name_node =
+      ConvertToExpressionNodePtr(struct_definition_node->children[0]);
+  TypePtr struct_type = struct_name_node->type;
+  if (!struct_type)
+  {
+    return;
+  }
+  ExpressionNodePtr variable_name_node =
+      ConvertToExpressionNodePtr(var_statement_node->children[0]);
+  std::string const &variable_name = variable_name_node->text;
+  SymbolPtr          symbol        = struct_definition_node->symbols->Find(variable_name);
+  if (symbol)
+  {
+    AddError(variable_name_node->line, "symbol '" + variable_name + "' is already defined");
+    return;
+  }
+  ExpressionNodePtr type_node = ConvertToExpressionNodePtr(var_statement_node->children[1]);
+  if (!AnnotateTypeExpression(type_node))
+  {
+    return;
+  }
+  if (type_node->type->IsUserDefinedStruct())
+  {
+    AddError(variable_name_node->line, "member variable '" + variable_name +
+                                           "' of user defined type '" + type_node->type->name +
+                                           "' is not supported");
+    return;
+  }
+  VariablePtr variable =
+      CreateVariable(VariableKind::Member, variable_name, type_node->type, struct_type);
+  struct_definition_node->symbols->Add(variable);
+  struct_type->symbols->Add(variable);
+  variable_name_node->variable = variable;
+}
+
+void Analyser::PreAnnotateFreeFunctionDefinition(BlockNodePtr const &function_definition_node)
+{
+  ExpressionNodePtr function_name_node =
+      ConvertToExpressionNodePtr(function_definition_node->children[1]);
+  std::string const &function_name  = function_name_node->text;
+  FunctionGroupPtr   function_group = function_name_node->function_group;
+  if (!function_group)
+  {
+    return;
+  }
+  ExpressionNodePtrArray parameter_nodes;
+  TypePtrArray           parameter_types;
+  VariablePtrArray       parameter_variables;
+  TypePtr                return_type;
+  if (!PreAnnotatePrototype(function_definition_node, parameter_nodes, parameter_types,
+                            parameter_variables, return_type))
+  {
+    return;
+  }
+  if (FindFunction(nullptr, function_group, parameter_nodes))
+  {
+    AddError(function_name_node->line,
+             "function '" + function_name + "' is already defined with the same parameter types");
+    return;
+  }
+  for (auto const &parameter_variable : parameter_variables)
+  {
+    function_definition_node->symbols->Add(parameter_variable);
   }
   FunctionPtr function = CreateUserDefinedFreeFunction(function_name, parameter_types,
                                                        parameter_variables, return_type);
   function_group->functions.push_back(function);
   function_name_node->function = function;
-  BuildBlock(function_definition_node);
 }
 
-bool Analyser::BuildFunctionPrototype(NodePtr const &         prototype_node,
-                                      ExpressionNodePtr &     function_name_node,
-                                      ExpressionNodePtrArray &parameter_nodes,
-                                      TypePtrArray &          parameter_types,
-                                      VariablePtrArray &parameter_variables, TypePtr &return_type)
+bool Analyser::PreAnnotatePrototype(NodePtr const &         prototype_node,
+                                    ExpressionNodePtrArray &parameter_nodes,
+                                    TypePtrArray &          parameter_types,
+                                    VariablePtrArray &parameter_variables, TypePtr &return_type)
 {
-  function_name_node = ConvertToExpressionNodePtr(prototype_node->children[1]);
-
   parameter_nodes.clear();
   parameter_types.clear();
   parameter_variables.clear();
@@ -640,7 +918,7 @@ bool Analyser::BuildFunctionPrototype(NodePtr const &         prototype_node,
     }
     parameter_type_node->type = parameter_type;
     VariablePtr parameter_variable =
-        CreateVariable(VariableKind::Parameter, parameter_name, parameter_type);
+        CreateVariable(VariableKind::Parameter, parameter_name, parameter_type, nullptr);
     parameter_node->variable = parameter_variable;
     parameter_node->type     = parameter_variable->type;
     parameter_types.push_back(parameter_type);
@@ -666,28 +944,6 @@ bool Analyser::BuildFunctionPrototype(NodePtr const &         prototype_node,
   return (problems == 0);
 }
 
-void Analyser::BuildWhileStatement(BlockNodePtr const &while_statement_node)
-{
-  while_statement_node->symbols = CreateSymbolTable();
-  BuildBlock(while_statement_node);
-}
-
-void Analyser::BuildForStatement(BlockNodePtr const &for_statement_node)
-{
-  for_statement_node->symbols = CreateSymbolTable();
-  BuildBlock(for_statement_node);
-}
-
-void Analyser::BuildIfStatement(NodePtr const &if_statement_node)
-{
-  for (NodePtr const &child : if_statement_node->children)
-  {
-    BlockNodePtr block_node = ConvertToBlockNodePtr(child);
-    block_node->symbols     = CreateSymbolTable();
-    BuildBlock(block_node);
-  }
-}
-
 void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
 {
   blocks_.push_back(block_node);
@@ -703,18 +959,32 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
     {
     case NodeKind::File:
     {
-      AnnotateFile(ConvertToBlockNodePtr(child));
+      BlockNodePtr file_node = ConvertToBlockNodePtr(child);
+      filename_              = file_node->text;
+      AnnotateBlock(file_node);
       break;
     }
     case NodeKind::PersistentStatement:
     case NodeKind::ContractDefinition:
+    case NodeKind::ContractFunction:
     {
       // nothing to do
       break;
     }
-    case NodeKind::FunctionDefinition:
+    case NodeKind::StructDefinition:
+    {
+      AnnotateStructDefinition(ConvertToBlockNodePtr(child));
+      break;
+    }
+    case NodeKind::MemberFunctionDefinition:
+    case NodeKind::FreeFunctionDefinition:
     {
       AnnotateFunctionDefinition(ConvertToBlockNodePtr(child));
+      break;
+    }
+    case NodeKind::MemberVarDeclarationStatement:
+    {
+      // nothing to do
       break;
     }
     case NodeKind::WhileStatement:
@@ -747,11 +1017,11 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
       AnnotateContractStatement(block_node, child);
       break;
     }
-    case NodeKind::VarDeclarationStatement:
-    case NodeKind::VarDeclarationTypedAssignmentStatement:
-    case NodeKind::VarDeclarationTypelessAssignmentStatement:
+    case NodeKind::LocalVarDeclarationStatement:
+    case NodeKind::LocalVarDeclarationTypedAssignmentStatement:
+    case NodeKind::LocalVarDeclarationTypelessAssignmentStatement:
     {
-      AnnotateVarStatement(block_node, child);
+      AnnotateLocalVarStatement(block_node, child);
       break;
     }
     case NodeKind::ReturnStatement:
@@ -846,28 +1116,36 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
   blocks_.pop_back();
 }
 
-void Analyser::AnnotateFile(BlockNodePtr const &file_node)
+void Analyser::AnnotateStructDefinition(BlockNodePtr const &struct_definition_node)
 {
-  filename_ = file_node->text;
-  AnnotateBlock(file_node);
+  ExpressionNodePtr struct_name_node =
+      ConvertToExpressionNodePtr(struct_definition_node->children[0]);
+  TypePtr struct_type = struct_name_node->type;
+  if (!struct_type)
+  {
+    return;
+  }
+  AnnotateBlock(struct_definition_node);
 }
 
 void Analyser::AnnotateFunctionDefinition(BlockNodePtr const &function_definition_node)
 {
   ExpressionNodePtr function_name_node =
       ConvertToExpressionNodePtr(function_definition_node->children[1]);
+  if (!function_name_node->function)
+  {
+    return;
+  }
   function_     = function_name_node->function;
   use_any_node_ = nullptr;
   AnnotateBlock(function_definition_node);
-  if (errors_.empty())
+  bool is_constructor = function_->function_kind == FunctionKind::UserDefinedConstructor;
+  if (file_errors_array_.empty() && !is_constructor && !function_->return_type->IsVoid())
   {
-    if (!function_->return_type->IsVoid())
+    if (TestBlock(function_definition_node))
     {
-      if (TestBlock(function_definition_node))
-      {
-        AddError(function_definition_node->block_terminator_line,
-                 "control reaches end of function without returning a value");
-      }
+      AddError(function_definition_node->block_terminator_line,
+               "control reaches end of function without returning a value");
     }
   }
   function_     = nullptr;
@@ -884,7 +1162,7 @@ void Analyser::AnnotateForStatement(BlockNodePtr const &for_statement_node)
   ExpressionNodePtr  name_node = ConvertToExpressionNodePtr(for_statement_node->children[0]);
   std::string const &name      = name_node->text;
   // Note: variable is created with no type to mark as initially unresolved
-  VariablePtr variable = CreateVariable(VariableKind::For, name, nullptr);
+  VariablePtr variable = CreateVariable(VariableKind::For, name, nullptr, nullptr);
   for_statement_node->symbols->Add(variable);
   name_node->variable                  = variable;
   std::size_t const              count = for_statement_node->children.size() - 1;
@@ -990,7 +1268,7 @@ void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node,
     AddError(variable_name_node->line, "symbol '" + variable_name + "' is already defined");
     return;
   }
-  VariablePtr variable = CreateVariable(VariableKind::Use, variable_name, type);
+  VariablePtr variable = CreateVariable(VariableKind::Use, variable_name, type, nullptr);
   parent_block_node->symbols->Add(variable);
   FunctionPtr constructor = (type->template_type == sharded_state_type_)
                                 ? sharded_state_constructor_
@@ -1018,7 +1296,7 @@ void Analyser::AnnotateUseAnyStatement(BlockNodePtr const &parent_block_node,
       AddError(use_any_statement_node->line, "symbol '" + name + "' is already defined");
       return;
     }
-    VariablePtr variable = CreateVariable(VariableKind::UseAny, name, type);
+    VariablePtr variable = CreateVariable(VariableKind::UseAny, name, type, nullptr);
     parent_block_node->symbols->Add(variable);
   }
 }
@@ -1057,14 +1335,15 @@ void Analyser::AnnotateContractStatement(BlockNodePtr const &parent_block_node,
     AddError(initialiser_node->line, "contract initialiser must be String type");
     return;
   }
-  VariablePtr variable = CreateVariable(VariableKind::Var, contract_variable_name, contract_type);
+  VariablePtr variable =
+      CreateVariable(VariableKind::Local, contract_variable_name, contract_type, nullptr);
   parent_block_node->symbols->Add(variable);
   contract_variable_node->variable = variable;
   contract_type_node->type         = contract_type;
 }
 
-void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
-                                    NodePtr const &     var_statement_node)
+void Analyser::AnnotateLocalVarStatement(BlockNodePtr const &parent_block_node,
+                                         NodePtr const &     var_statement_node)
 {
   ExpressionNodePtr  name_node = ConvertToExpressionNodePtr(var_statement_node->children[0]);
   std::string const &name      = name_node->text;
@@ -1076,11 +1355,11 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
   }
 
   // Note: variable is created with no type to mark as initially unresolved
-  VariablePtr variable = CreateVariable(VariableKind::Var, name, nullptr);
+  VariablePtr variable = CreateVariable(VariableKind::Local, name, nullptr, nullptr);
   parent_block_node->symbols->Add(variable);
   name_node->variable = variable;
 
-  if (var_statement_node->node_kind == NodeKind::VarDeclarationStatement)
+  if (var_statement_node->node_kind == NodeKind::LocalVarDeclarationStatement)
   {
     ExpressionNodePtr type_node = ConvertToExpressionNodePtr(var_statement_node->children[1]);
     if (!AnnotateTypeExpression(type_node))
@@ -1089,7 +1368,7 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
     }
     variable->type = type_node->type;
   }
-  else if (var_statement_node->node_kind == NodeKind::VarDeclarationTypedAssignmentStatement)
+  else if (var_statement_node->node_kind == NodeKind::LocalVarDeclarationTypedAssignmentStatement)
   {
     ExpressionNodePtr type_node = ConvertToExpressionNodePtr(var_statement_node->children[1]);
     if (!AnnotateTypeExpression(type_node))
@@ -1126,9 +1405,10 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
 
 void Analyser::AnnotateReturnStatement(NodePtr const &return_statement_node)
 {
+  bool is_constructor = function_->function_kind == FunctionKind::UserDefinedConstructor;
   if (return_statement_node->children.size() == 1)
   {
-    if (function_->return_type->IsVoid())
+    if (is_constructor || function_->return_type->IsVoid())
     {
       AddError(return_statement_node->line, "return supplies a value");
       return;
@@ -1147,7 +1427,7 @@ void Analyser::AnnotateReturnStatement(NodePtr const &return_statement_node)
   }
   else
   {
-    if (!function_->return_type->IsVoid())
+    if (!is_constructor && !function_->return_type->IsVoid())
     {
       AddError(return_statement_node->line, "return does not supply a value");
       return;
@@ -1297,12 +1577,12 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   }
   if (node->IsTypeExpression())
   {
-    AddError(node->line, "illegal use of type '" + node->type->name + "'");
+    AddError(node->line, "invalid use of type '" + node->type->name + "'");
     return false;
   }
   if (node->IsFunctionGroupExpression())
   {
-    AddError(node->line, "illegal use of function '" + node->function_group->name + "'");
+    AddError(node->line, "invalid use of function '" + node->function_group->name + "'");
     return false;
   }
   // node->IsVariableExpression()
@@ -1310,7 +1590,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   // node->IsRVExpression()
   if (node->IsVariableExpression() && node->type->IsUserDefinedContract())
   {
-    AddError(node->line, "unable to use contract variable '" + node->variable->name + "'");
+    AddError(node->line, "invalid use of contract variable '" + node->variable->name + "'");
     return false;
   }
   return true;
@@ -1333,7 +1613,8 @@ bool Analyser::InternalAnnotateExpression(ExpressionNodePtr const &node)
     {
       // Function name
       FunctionGroupPtr function_group = ConvertToFunctionGroupPtr(symbol);
-      SetFunctionGroupExpression(node, function_group, nullptr, false);
+      // A plain identifier may also be a member function of a user defined type
+      SetFunctionGroupExpression(node, function_group, function_group->user_defined_type);
     }
     else if (symbol->IsType())
     {
@@ -1350,7 +1631,8 @@ bool Analyser::InternalAnnotateExpression(ExpressionNodePtr const &node)
         AddError(node->line, "variable '" + node->text + "' has unresolved type");
         return false;
       }
-      SetVariableExpression(node, variable);
+      // A plain identifier may also be a member variable of a user defined type
+      SetVariableExpression(node, variable, variable->user_defined_type);
     }
     break;
   }
@@ -1776,13 +2058,8 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   // lhs->IsRVExpression()
   if (!lhs->IsConcrete())
   {
-    // Prevent null[i, j] and {3, 4, 5}[i, j]
+    // Prevent null[i, j] and {3, 4, 5}[i, j] and contractvariable[i, j]
     AddError(lhs->line, "operand does not support index operator");
-    return false;
-  }
-  if (lhs->IsVariableExpression() && lhs->type->IsUserDefinedContract())
-  {
-    AddError(lhs->line, "unable to use contract variable '" + lhs->variable->name + "'");
     return false;
   }
   if (lhs->type->IsPrimitive())
@@ -1849,12 +2126,6 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
   // lhs->IsLVExpression()
   // lhs->IsRVExpression()
   // lhs->IsTypeExpression()
-  if (!lhs->IsConcrete())
-  {
-    // Prevent null.foo and {3, 4, 5}.foo
-    AddError(lhs->line, "operand does not support member-access operator");
-    return false;
-  }
   bool lhs_is_type_expression = lhs->IsTypeExpression();
   if (lhs->type->IsPrimitive())
   {
@@ -1880,18 +2151,27 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
   {
     // member is a function name
     FunctionGroupPtr function_group = ConvertToFunctionGroupPtr(member_symbol);
-    SetFunctionGroupExpression(node, function_group, lhs->type, !lhs_is_type_expression);
+    SetFunctionGroupExpression(node, function_group, lhs->type);
     return true;
   }
   if (member_symbol->IsType())
   {
     // member is a type name
-    AddError(lhs->line, "not supported");
+    AddError(node->line, "not supported");
     return false;
   }
   // member is a variable name
-  AddError(lhs->line, "not supported");
-  return false;
+  if (lhs_is_type_expression)
+  {
+    // static member variable
+    AddError(lhs->line,
+             "'" + lhs->type->name + "' has no static member named '" + member_name + "'");
+    return false;
+  }
+  // member variable
+  VariablePtr variable = ConvertToVariablePtr(member_symbol);
+  SetVariableExpression(node, variable, lhs->type);
+  return true;
 }
 
 bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
@@ -1913,8 +2193,8 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
   }
   if (lhs->IsFunctionGroupExpression())
   {
-    // Note that lhs->type is null for free functions
-    FunctionPtr f = FindFunction(lhs->type, lhs->function_group, parameter_nodes);
+    // Note that lhs->owner is null for free functions
+    FunctionPtr f = FindFunction(lhs->owner, lhs->function_group, parameter_nodes);
     if (!f)
     {
       // No matching function, or ambiguous
@@ -1922,25 +2202,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
                "unable to find matching function for '" + lhs->function_group->name + "'");
       return false;
     }
-    if (f->function_kind == FunctionKind::StaticMemberFunction)
-    {
-      if (lhs->function_invoker_is_instance)
-      {
-        AddError(lhs->line,
-                 "function '" + lhs->function_group->name + "' is a static member function");
-        return false;
-      }
-    }
-    else if (f->function_kind == FunctionKind::MemberFunction)
-    {
-      if (!lhs->function_invoker_is_instance)
-      {
-        AddError(lhs->line,
-                 "function '" + lhs->function_group->name + "' is a non-static member function");
-        return false;
-      }
-    }
-    TypePtr return_type = ResolveReturnType(f->return_type, lhs->type);
+    TypePtr return_type = ResolveReturnType(f->return_type, lhs->owner);
     SetRVExpression(node, return_type);
     node->function = f;
     return true;
@@ -1986,6 +2248,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
   // e.g.
   // null()
   // {3, 4, 5}()
+  // contractvariable()
   // variable()
   // (a + b)()
   // array[index]()
@@ -2274,7 +2537,8 @@ TypePtr Analyser::ConvertNode(ExpressionNodePtr const &node, TypePtr const &expe
   if (node->IsNull())
   {
     // Can only convert null literal to a known reference type
-    if (comparison_type->IsClass() || comparison_type->IsInstantiation())
+    if (comparison_type->IsClass() || comparison_type->IsInstantiation() ||
+        comparison_type->IsUserDefinedStruct())
     {
       node->type = comparison_type;
       return comparison_type;
@@ -2285,7 +2549,8 @@ TypePtr Analyser::ConvertNode(ExpressionNodePtr const &node, TypePtr const &expe
   if (node->IsInitialiserList())
   {
     // Can only convert initialiser list to a known reference type
-    if (comparison_type->IsClass() || comparison_type->IsInstantiation())
+    if (comparison_type->IsClass() || comparison_type->IsInstantiation() ||
+        comparison_type->IsUserDefinedStruct())
     {
       if (ConvertInitialiserList(node, comparison_type))
       {
@@ -2431,11 +2696,13 @@ SymbolPtr Analyser::SearchSymbols(std::string const &name)
   return nullptr;
 }
 
-void Analyser::SetVariableExpression(ExpressionNodePtr const &node, VariablePtr const &variable)
+void Analyser::SetVariableExpression(ExpressionNodePtr const &node, VariablePtr const &variable,
+                                     TypePtr const &owner)
 {
   node->expression_kind = ExpressionKind::Variable;
   node->variable        = variable;
   node->type            = variable->type;
+  node->owner           = owner;
   variable->referenced  = true;
 }
 
@@ -2457,18 +2724,13 @@ void Analyser::SetTypeExpression(ExpressionNodePtr const &node, TypePtr const &t
   node->type            = type;
 }
 
-// free function:     function_invoker_type is null      function_invoker_is_instance is false
-// instance function: function_invoker_type is non-null  function_invoker_is_instance is true
-// type function:     function_invoker_type is non-null  function_invoker_is_instance is false
 void Analyser::SetFunctionGroupExpression(ExpressionNodePtr const &node,
                                           FunctionGroupPtr const & function_group,
-                                          TypePtr const &          function_invoker_type,
-                                          bool                     function_invoker_is_instance)
+                                          TypePtr const &          owner)
 {
-  node->expression_kind              = ExpressionKind::FunctionGroup;
-  node->function_group               = function_group;
-  node->type                         = function_invoker_type;
-  node->function_invoker_is_instance = function_invoker_is_instance;
+  node->expression_kind = ExpressionKind::FunctionGroup;
+  node->function_group  = function_group;
+  node->owner           = owner;
 }
 
 bool Analyser::CheckType(std::string const &type_name, TypeIndex type_index)
@@ -2628,8 +2890,8 @@ void Analyser::CreateFreeFunction(std::string const &name, TypePtrArray const &p
     // Already created
     return;
   }
-  FunctionPtr f = CreateFunction(FunctionKind::FreeFunction, name, unique_name, parameter_types,
-                                 VariablePtrArray(), return_type);
+  FunctionPtr f = CreateFunction(FunctionKind::FreeFunction, name, unique_name, parameter_types, {},
+                                 return_type);
   AddFunctionToSymbolTable(symbols_, f);
   AddFunctionInfo(f, handler, static_charge);
   function_map_.Add(f);
@@ -2644,8 +2906,8 @@ void Analyser::CreateConstructor(TypePtr const &type, TypePtrArray const &parame
     // Already created
     return;
   }
-  FunctionPtr f = CreateFunction(FunctionKind::ConstructorFunction, CONSTRUCTOR, unique_name,
-                                 parameter_types, VariablePtrArray(), type);
+  FunctionPtr f = CreateFunction(FunctionKind::Constructor, CONSTRUCTOR, unique_name,
+                                 parameter_types, {}, type);
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler, static_charge);
   function_map_.Add(f);
@@ -2663,7 +2925,7 @@ void Analyser::CreateStaticMemberFunction(TypePtr const &type, std::string const
     return;
   }
   FunctionPtr f = CreateFunction(FunctionKind::StaticMemberFunction, name, unique_name,
-                                 parameter_types, VariablePtrArray(), return_type);
+                                 parameter_types, {}, return_type);
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler, static_charge);
   function_map_.Add(f);
@@ -2680,7 +2942,7 @@ void Analyser::CreateMemberFunction(TypePtr const &type, std::string const &name
     return;
   }
   FunctionPtr f = CreateFunction(FunctionKind::MemberFunction, name, unique_name, parameter_types,
-                                 VariablePtrArray(), return_type);
+                                 {}, return_type);
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler, static_charge);
   function_map_.Add(f);
@@ -2707,6 +2969,25 @@ FunctionPtr Analyser::CreateUserDefinedContractFunction(TypePtr const &         
                         parameter_types, parameter_variables, return_type);
 }
 
+FunctionPtr Analyser::CreateUserDefinedConstructor(TypePtr const &         type,
+                                                   TypePtrArray const &    parameter_types,
+                                                   VariablePtrArray const &parameter_variables)
+{
+  std::string unique_name = BuildUniqueName(type, CONSTRUCTOR, parameter_types, type);
+  return CreateFunction(FunctionKind::UserDefinedConstructor, CONSTRUCTOR, unique_name,
+                        parameter_types, parameter_variables, type);
+}
+
+FunctionPtr Analyser::CreateUserDefinedMemberFunction(TypePtr const &type, std::string const &name,
+                                                      TypePtrArray const &    parameter_types,
+                                                      VariablePtrArray const &parameter_variables,
+                                                      TypePtr const &         return_type)
+{
+  std::string unique_name = BuildUniqueName(type, name, parameter_types, return_type);
+  return CreateFunction(FunctionKind::UserDefinedMemberFunction, name, unique_name, parameter_types,
+                        parameter_variables, return_type);
+}
+
 void Analyser::EnableIndexOperator(TypePtr const &type, TypePtrArray const &input_types,
                                    TypePtr const &output_type, Handler const &get_handler,
                                    Handler const &set_handler, ChargeAmount get_static_charge,
@@ -2727,13 +3008,13 @@ void Analyser::EnableIndexOperator(TypePtr const &type, TypePtrArray const &inpu
   }
 
   FunctionPtr gf = CreateFunction(FunctionKind::MemberFunction, GET_INDEXED_VALUE, g_unique_name,
-                                  input_types, VariablePtrArray(), output_type);
+                                  input_types, {}, output_type);
   AddFunctionInfo(gf, get_handler, get_static_charge);
   AddFunctionToSymbolTable(type->symbols, gf);
   function_map_.Add(gf);
 
   FunctionPtr sf = CreateFunction(FunctionKind::MemberFunction, SET_INDEXED_VALUE, s_unique_name,
-                                  s_input_types, VariablePtrArray(), void_type_);
+                                  s_input_types, {}, void_type_);
   AddFunctionInfo(sf, set_handler, set_static_charge);
   AddFunctionToSymbolTable(type->symbols, sf);
   function_map_.Add(sf);
@@ -2801,7 +3082,7 @@ void Analyser::AddFunctionToSymbolTable(SymbolTablePtr const &symbols, FunctionP
   else
   {
     // Create new function group
-    function_group = CreateFunctionGroup(function->name);
+    function_group = CreateFunctionGroup(function->name, nullptr);
     symbols->Add(function_group);
   }
   // Add the function to the function group

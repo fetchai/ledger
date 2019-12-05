@@ -81,7 +81,7 @@ public:
   bool Analyse(BlockNodePtr const &root, std::vector<std::string> &errors);
 
   void GetDetails(TypeInfoArray &type_info_array, TypeInfoMap &type_info_map,
-                  RegisteredTypes &registered_types, FunctionInfoArray &function_info_array)
+                  RegisteredTypes &registered_types, FunctionInfoArray &function_info_array) const
   {
     type_info_array     = type_info_array_;
     type_info_map       = type_info_map_;
@@ -174,6 +174,40 @@ private:
     std::unordered_map<std::string, TypePtr> map;
   };
 
+  struct Error
+  {
+    bool operator<(Error const &other) const
+    {
+      return line < other.line;
+    }
+    uint16_t    line{};
+    std::string message;
+  };
+
+  struct FileErrors
+  {
+    FileErrors(std::string filename__)
+      : filename{std::move(filename__)}
+    {}
+    std::string        filename;
+    std::vector<Error> errors;
+  };
+  using FileErrorsArray = std::vector<FileErrors>;
+
+  std::vector<std::string> GetErrorList()
+  {
+    std::vector<std::string> list;
+    for (auto &it : file_errors_array_)
+    {
+      std::stable_sort(it.errors.begin(), it.errors.end());
+      for (auto &error : it.errors)
+      {
+        list.push_back(error.message);
+      }
+    }
+    return list;
+  }
+
   OperatorMap       operator_map_;
   TypeMap           type_map_;
   StringSet         type_set_;
@@ -214,72 +248,81 @@ private:
   TypePtr        state_type_;
   TypePtr        initialiser_list_type_;
 
-  BlockNodePtr             root_;
-  std::string              filename_;
-  BlockNodePtrArray        blocks_;
-  BlockNodePtrArray        loops_;
-  FunctionPtr              state_constructor_;
-  FunctionPtr              sharded_state_constructor_;
-  NameToTypePtrMap         state_definitions_;
-  NameToTypePtrMap         contract_definitions_;
-  FunctionPtr              function_;
-  NodePtr                  use_any_node_;
-  std::vector<std::string> errors_;
+  BlockNodePtr      root_;
+  std::string       filename_;
+  BlockNodePtrArray blocks_;
+  BlockNodePtrArray loops_;
+  FunctionPtr       state_constructor_;
+  FunctionPtr       sharded_state_constructor_;
+  NameToTypePtrMap  state_definitions_;
+  NameToTypePtrMap  contract_definitions_;
+  FunctionPtr       function_;
+  NodePtr           use_any_node_;
+  FileErrorsArray   file_errors_array_;
 
   void AddError(uint16_t line, std::string const &message);
+
   void BuildBlock(BlockNodePtr const &block_node);
-  void BuildFile(BlockNodePtr const &file_node);
-  void BuildPersistentStatement(NodePtr const &persistent_statement_node);
   void BuildContractDefinition(BlockNodePtr const &contract_definition_node);
-  void BuildFunctionDefinition(BlockNodePtr const &function_definition_node);
-  bool BuildFunctionPrototype(NodePtr const &prototype_node, ExpressionNodePtr &function_name_node,
-                              ExpressionNodePtrArray &parameter_nodes,
-                              TypePtrArray &parameter_types, VariablePtrArray &parameter_variables,
-                              TypePtr &return_type);
-  void BuildWhileStatement(BlockNodePtr const &while_statement_node);
-  void BuildForStatement(BlockNodePtr const &for_statement_node);
-  void BuildIfStatement(NodePtr const &if_statement_node);
-  void AnnotateBlock(BlockNodePtr const &block_node);
-  void AnnotateFile(BlockNodePtr const &file_node);
-  void AnnotateFunctionDefinition(BlockNodePtr const &function_definition_node);
-  void AnnotateWhileStatement(BlockNodePtr const &while_statement_node);
-  void AnnotateForStatement(BlockNodePtr const &for_statement_node);
-  void AnnotateIfStatement(NodePtr const &if_statement_node);
-  void AnnotateUseStatement(BlockNodePtr const &parent_block_node,
-                            NodePtr const &     use_statement_node);
-  void AnnotateUseAnyStatement(BlockNodePtr const &parent_block_node,
-                               NodePtr const &     use_any_statement_node);
-  void AnnotateContractStatement(BlockNodePtr const &parent_block_node,
-                                 NodePtr const &     contract_statement_node);
-  void AnnotateVarStatement(BlockNodePtr const &parent_block_node,
-                            NodePtr const &     var_statement_node);
-  void AnnotateReturnStatement(NodePtr const &return_statement_node);
-  void AnnotateConditionalBlock(BlockNodePtr const &conditional_block_node);
-  bool AnnotateTypeExpression(ExpressionNodePtr const &node);
-  bool AnnotateAssignOp(ExpressionNodePtr const &node);
-  bool AnnotateInplaceArithmeticOp(ExpressionNodePtr const &node);
-  bool AnnotateInplaceModuloOp(ExpressionNodePtr const &node);
-  bool AnnotateLHSExpression(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs);
-  bool AnnotateExpression(ExpressionNodePtr const &node);
-  bool InternalAnnotateExpression(ExpressionNodePtr const &node);
-  bool AnnotateEqualityOp(ExpressionNodePtr const &node);
-  bool AnnotateRelationalOp(ExpressionNodePtr const &node);
-  bool AnnotateBinaryLogicalOp(ExpressionNodePtr const &node);
-  bool AnnotateUnaryLogicalOp(ExpressionNodePtr const &node);
-  bool AnnotatePrefixPostfixOp(ExpressionNodePtr const &node);
-  bool AnnotateNegateOp(ExpressionNodePtr const &node);
-  bool AnnotateArithmeticOp(ExpressionNodePtr const &node);
-  bool AnnotateModuloOp(ExpressionNodePtr const &node);
-  bool AnnotateIndexOp(ExpressionNodePtr const &node);
-  bool AnnotateDotOp(ExpressionNodePtr const &node);
-  bool AnnotateInvokeOp(ExpressionNodePtr const &node);
-  bool AnnotateInitialiserList(ExpressionNodePtr const &node);
-  bool ConvertInitialiserList(ExpressionNodePtr const &node, TypePtr const &type);
-  bool ConvertInitialiserListToArray(ExpressionNodePtr const &node, TypePtr const &type);
-  bool TestBlock(BlockNodePtr const &block_node);
-  bool IsWriteable(ExpressionNodePtr const &node);
-  bool AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs,
-                          ExpressionNodePtr const &rhs);
+  void BuildStructDefinition(BlockNodePtr const &struct_definition_node);
+  void BuildFreeFunctionDefinition(BlockNodePtr const &function_definition_node);
+
+  void PreAnnotateBlock(BlockNodePtr const &block_node);
+  void PreAnnotatePersistentStatement(NodePtr const &persistent_statement_node);
+  void PreAnnotateContractDefinition(BlockNodePtr const &contract_definition_node);
+  void PreAnnotateContractFunction(BlockNodePtr const &contract_definition_node,
+                                   NodePtr const &     function_node);
+  void PreAnnotateStructDefinition(BlockNodePtr const &struct_definition_node);
+  void PreAnnotateMemberFunctionDefinition(BlockNodePtr const &struct_definition_node,
+                                           BlockNodePtr const &function_definition_node);
+  void PreAnnotateMemberVarDeclarationStatement(BlockNodePtr const &struct_definition_node,
+                                                NodePtr const &     var_statement_node);
+  void PreAnnotateFreeFunctionDefinition(BlockNodePtr const &function_definition_node);
+  bool PreAnnotatePrototype(NodePtr const &prototype_node, ExpressionNodePtrArray &parameter_nodes,
+                            TypePtrArray &parameter_types, VariablePtrArray &parameter_variables,
+                            TypePtr &return_type);
+
+  void        AnnotateBlock(BlockNodePtr const &block_node);
+  void        AnnotateStructDefinition(BlockNodePtr const &struct_definition_node);
+  void        AnnotateFunctionDefinition(BlockNodePtr const &function_definition_node);
+  void        AnnotateWhileStatement(BlockNodePtr const &while_statement_node);
+  void        AnnotateForStatement(BlockNodePtr const &for_statement_node);
+  void        AnnotateIfStatement(NodePtr const &if_statement_node);
+  void        AnnotateUseStatement(BlockNodePtr const &parent_block_node,
+                                   NodePtr const &     use_statement_node);
+  void        AnnotateUseAnyStatement(BlockNodePtr const &parent_block_node,
+                                      NodePtr const &     use_any_statement_node);
+  void        AnnotateContractStatement(BlockNodePtr const &parent_block_node,
+                                        NodePtr const &     contract_statement_node);
+  void        AnnotateLocalVarStatement(BlockNodePtr const &parent_block_node,
+                                        NodePtr const &     var_statement_node);
+  void        AnnotateReturnStatement(NodePtr const &return_statement_node);
+  void        AnnotateConditionalBlock(BlockNodePtr const &conditional_block_node);
+  bool        AnnotateTypeExpression(ExpressionNodePtr const &node);
+  bool        AnnotateAssignOp(ExpressionNodePtr const &node);
+  bool        AnnotateInplaceArithmeticOp(ExpressionNodePtr const &node);
+  bool        AnnotateInplaceModuloOp(ExpressionNodePtr const &node);
+  bool        AnnotateLHSExpression(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs);
+  bool        AnnotateExpression(ExpressionNodePtr const &node);
+  bool        InternalAnnotateExpression(ExpressionNodePtr const &node);
+  bool        AnnotateEqualityOp(ExpressionNodePtr const &node);
+  bool        AnnotateRelationalOp(ExpressionNodePtr const &node);
+  bool        AnnotateBinaryLogicalOp(ExpressionNodePtr const &node);
+  bool        AnnotateUnaryLogicalOp(ExpressionNodePtr const &node);
+  bool        AnnotatePrefixPostfixOp(ExpressionNodePtr const &node);
+  bool        AnnotateNegateOp(ExpressionNodePtr const &node);
+  bool        AnnotateArithmeticOp(ExpressionNodePtr const &node);
+  bool        AnnotateModuloOp(ExpressionNodePtr const &node);
+  bool        AnnotateIndexOp(ExpressionNodePtr const &node);
+  bool        AnnotateDotOp(ExpressionNodePtr const &node);
+  bool        AnnotateInvokeOp(ExpressionNodePtr const &node);
+  bool        AnnotateInitialiserList(ExpressionNodePtr const &node);
+  bool        ConvertInitialiserList(ExpressionNodePtr const &node, TypePtr const &type);
+  bool        ConvertInitialiserListToArray(ExpressionNodePtr const &node, TypePtr const &type);
+  bool        TestBlock(BlockNodePtr const &block_node);
+  bool        IsWriteable(ExpressionNodePtr const &node);
+  bool        AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs,
+                                 ExpressionNodePtr const &rhs);
   FunctionPtr FindFunction(TypePtr const &type, FunctionGroupPtr const &function_group,
                            ExpressionNodePtrArray const &parameter_nodes);
   TypePtr     ConvertNode(ExpressionNodePtr const &node, TypePtr const &expected_type);
@@ -289,14 +332,13 @@ private:
   TypePtr     FindType(ExpressionNodePtr const &node);
   SymbolPtr   FindSymbol(ExpressionNodePtr const &node);
   SymbolPtr   SearchSymbols(std::string const &name);
-  void        SetVariableExpression(ExpressionNodePtr const &node, VariablePtr const &variable);
+  void        SetVariableExpression(ExpressionNodePtr const &node, VariablePtr const &variable,
+                                    TypePtr const &owner);
   void        SetLVExpression(ExpressionNodePtr const &node, TypePtr const &type);
   void        SetRVExpression(ExpressionNodePtr const &node, TypePtr const &type);
   void        SetTypeExpression(ExpressionNodePtr const &node, TypePtr const &type);
   void        SetFunctionGroupExpression(ExpressionNodePtr const &node,
-                                         FunctionGroupPtr const & function_group,
-                                         TypePtr const &          function_invoker_type,
-                                         bool                     function_invoker_is_instance);
+                                         FunctionGroupPtr const &function_group, TypePtr const &owner);
   bool        CheckType(std::string const &type_name, TypeIndex type_index);
   void        CreatePrimitiveType(std::string const &type_name, TypeIndex type_index,
                                   bool add_to_symbol_table, TypeId type_id, TypePtr &type);
@@ -333,6 +375,12 @@ private:
                                                 TypePtrArray const &    parameter_types,
                                                 VariablePtrArray const &parameter_variables,
                                                 TypePtr const &         return_type);
+  FunctionPtr CreateUserDefinedConstructor(TypePtr const &type, TypePtrArray const &parameter_types,
+                                           VariablePtrArray const &parameter_variables);
+  FunctionPtr CreateUserDefinedMemberFunction(TypePtr const &type, std::string const &name,
+                                              TypePtrArray const &    parameter_types,
+                                              VariablePtrArray const &parameter_variables,
+                                              TypePtr const &         return_type);
   void        EnableIndexOperator(TypePtr const &type, TypePtrArray const &input_types,
                                   TypePtr const &output_type, Handler const &get_handler,
                                   Handler const &set_handler, ChargeAmount get_static_charge,
