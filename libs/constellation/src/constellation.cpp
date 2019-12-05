@@ -547,6 +547,8 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
     FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
   }
 
+  chain_.Reset();
+
   if (startup_success)
   {
     // beacon network
