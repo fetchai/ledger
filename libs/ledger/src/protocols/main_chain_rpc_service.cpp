@@ -24,6 +24,7 @@
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "logging/logging.hpp"
 #include "muddle/packet.hpp"
@@ -32,9 +33,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <stdexcept>
 
-static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
-static const uint64_t MAX_SUB_CHAIN_SIZE     = 1000;
+static const uint64_t MAX_SUB_CHAIN_SIZE = 1000;
 
 namespace fetch {
 namespace ledger {
@@ -61,9 +62,7 @@ constexpr State GetInitialState(Mode mode) noexcept
   {
   case Mode::STANDALONE:
     return State::SYNCHRONISED;
-  case Mode::PRIVATE_NETWORK:
-  case Mode::PUBLIC_NETWORK:
-    break;
+  default:;
   }
 
   return State::REQUEST_HEAVIEST_CHAIN;
@@ -72,12 +71,13 @@ constexpr State GetInitialState(Mode mode) noexcept
 }  // namespace
 
 MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain,
-                                         TrustSystem &trust, Mode mode)
+                                         TrustSystem &trust, Mode mode, ConsensusPtr consensus)
   : muddle::rpc::Server(endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , mode_(mode)
   , endpoint_(endpoint)
   , chain_(chain)
   , trust_(trust)
+  , consensus_(std::move(consensus))
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
   , rpc_client_("R:MChain", endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
@@ -114,6 +114,8 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
         "ledger_mainchain_service_state_synchronised_total",
         "The number of times in the sychronised state")}
 {
+  assert(consensus_);
+
   // register the main chain protocol
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);
 
@@ -186,6 +188,12 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
+  if (!ValidBlock(block, "new block"))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Block did not prove valid");
+    return;
+  }
+
   // add the new block to the chain
   auto const status = chain_.AddBlock(block);
 
@@ -232,14 +240,34 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
   return address;
 }
 
-void MainChainRpcService::HandleChainResponse(Address const &address, BlockList block_list)
+bool MainChainRpcService::ValidBlock(Block const &block, char const *action) const
+{
+  try
+  {
+    return !consensus_ || consensus_->ValidBlock(block) == ConsensusInterface::Status::YES;
+  }
+  catch (std::runtime_error const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception in consensus on validating ", action, ": ", ex.what());
+    return false;
+  }
+}
+
+void MainChainRpcService::HandleChainResponse(Address const &address, BlockList blocks)
+{
+  // default expectations is that blocks are returned in reverse order, later-to-earlier
+  HandleChainResponse(address, blocks.rbegin(), blocks.rend());
+}
+
+template <class Begin, class End>
+void MainChainRpcService::HandleChainResponse(Address const &address, Begin begin, End end)
 {
   std::size_t added{0};
   std::size_t loose{0};
   std::size_t duplicate{0};
   std::size_t invalid{0};
 
-  for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
+  for (auto it = begin; it != end; ++it)
   {
     // skip the genesis block
     if (it->IsGenesis())
@@ -251,33 +279,38 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     it->UpdateDigest();
 
     // add the block
-    // TODO(HUT): put consensus check here.
+    if (!ValidBlock(*it, "during fwd sync"))
     {
-      auto const status = chain_.AddBlock(*it);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
+                      " from: muddle://", ToBase64(address));
+      ++invalid;
+      continue;
+    }
 
-      switch (status)
-      {
-      case BlockStatus::ADDED:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", it->hash.ToHex(), " from: muddle://",
-                        ToBase64(address));
-        ++added;
-        break;
-      case BlockStatus::LOOSE:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", it->hash.ToHex(),
-                        " from: muddle://", ToBase64(address));
-        ++loose;
-        break;
-      case BlockStatus::DUPLICATE:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", it->hash.ToHex(),
-                        " from: muddle://", ToBase64(address));
-        ++duplicate;
-        break;
-      case BlockStatus::INVALID:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->hash.ToHex(),
-                        " from: muddle://", ToBase64(address));
-        ++invalid;
-        break;
-      }
+    auto const status = chain_.AddBlock(*it);
+
+    switch (status)
+    {
+    case BlockStatus::ADDED:
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", it->hash.ToHex(), " from: muddle://",
+                      ToBase64(address));
+      ++added;
+      break;
+    case BlockStatus::LOOSE:
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", it->hash.ToHex(), " from: muddle://",
+                      ToBase64(address));
+      ++loose;
+      break;
+    case BlockStatus::DUPLICATE:
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", it->hash.ToHex(),
+                      " from: muddle://", ToBase64(address));
+      ++duplicate;
+      break;
+    case BlockStatus::INVALID:
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->hash.ToHex(),
+                      " from: muddle://", ToBase64(address));
+      ++invalid;
+      break;
     }
   }
 
@@ -310,9 +343,10 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   if (!peer.empty())
   {
     current_peer_address_ = peer;
-    current_request_ =
-        rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
-                                        MainChainProtocol::HEAVIEST_CHAIN, MAX_CHAIN_REQUEST_SIZE);
+    Digest start          = chain_.GetHeaviestBlockHash();
+
+    current_request_ = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
+                                                       MainChainProtocol::TIME_TRAVEL, start);
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
@@ -337,29 +371,36 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
     // determine the status of the request that is in flight
     auto const status = current_request_->state();
 
-    if (PromiseState::WAITING != status)
+    if (status != PromiseState::WAITING)
     {
-      if (PromiseState::SUCCESS == status)
+      if (status == PromiseState::SUCCESS)
       {
-        // the request was successful, simply hand off the blocks to be added to the chain
-        HandleChainResponse(current_peer_address_, current_request_->As<BlockList>());
+        // the request was successful
+        next_state = State::REQUEST_HEAVIEST_CHAIN;  // request succeeding chunk
 
-        // now we have completed a request we can start normal synchronisation
-        next_state = State::SYNCHRONISING;
+        auto  response = current_request_->As<MainChainProtocol::Travelogue>();
+        auto &blocks   = response.blocks;
+
+        // we should receive at least one extra block in addition to what we already have
+        if (!blocks.empty())
+        {
+          HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
+          auto const &latest_hash = blocks.back().hash;
+          assert(!latest_hash.empty());  // should be set by HandleChainResponse()
+          // TODO(unknown): this is to be improved later
+          if (latest_hash == response.heaviest_hash)
+          {
+            next_state = State::SYNCHRONISING;  // we have reached the tip
+          }
+        }
       }
       else
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Heaviest chain request to: ", ToBase64(current_peer_address_),
                        " failed. Reason: ", service::ToString(status));
-
-        // since we want to sync at least with one chain before proceeding we restart the state
-        // machine back to the requesting
-        next_state = State::REQUEST_HEAVIEST_CHAIN;
       }
-
       // clear the state
-      current_peer_address_  = Address{};
-      current_missing_block_ = BlockHash{};
+      current_peer_address_ = Address{};
     }
   }
 

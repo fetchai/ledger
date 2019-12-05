@@ -32,7 +32,8 @@
 namespace fetch {
 namespace service {
 
-/* A class that defines a generic protocol.
+/**
+ * A class that defines a generic protocol.
  *
  * This class is used for defining a general protocol with
  * remote-function-calls (SERVICEs) and data feeds. The SERVICEs are defined
@@ -58,8 +59,6 @@ public:
   using ConnectionHandleType = typename network::AbstractConnection::ConnectionHandleType;
   using MiddlewareType =
       std::function<void(ConnectionHandleType const &, byte_array::ByteArray const &)>;
-
-  static constexpr char const *LOGGING_NAME = "Protocol";
 
   Protocol()          = default;
   virtual ~Protocol() = default;
@@ -150,6 +149,8 @@ public:
   }
 
 private:
+  static constexpr char const *LOGGING_NAME = "Protocol";
+
   std::map<FunctionHandlerType, StoredType> members_;
 };
 }  // namespace service
