@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
@@ -134,14 +135,28 @@ void VMTensor::FillRandom()
 Ptr<VMTensor> VMTensor::Squeeze()
 {
   auto squeezed_tensor = tensor_.Copy();
-  squeezed_tensor.Squeeze();
+  try
+  {
+    squeezed_tensor.Squeeze();
+  }
+  catch (std::exception &e)
+  {
+    RuntimeError("Squeeze failed: " + std::string(e.what()));
+  }
   return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, squeezed_tensor));
 }
 
 Ptr<VMTensor> VMTensor::Unsqueeze()
 {
   auto unsqueezed_tensor = tensor_.Copy();
-  unsqueezed_tensor.Unsqueeze();
+  try
+  {
+    unsqueezed_tensor.Unsqueeze();
+  }
+  catch (std::exception &e)
+  {
+    RuntimeError("Squeeze failed: " + std::string(e.what()));
+  }
   return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, unsqueezed_tensor));
 }
 
