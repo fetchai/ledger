@@ -129,7 +129,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   // clang-format on
 
   state_machine_->OnStateChange([](State current, State previous) {
-    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
 }
 
@@ -379,7 +379,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
         {
           FETCH_LOG_WARN(LOGGING_NAME,
                          "Received empty block response when forward syncing the chain!");
-          state_machine_->Delay(std::chrono::seconds{1});
+          state_machine_->Delay(std::chrono::seconds{8});
           next_state = GetInitialState(mode_);
         }
       }
