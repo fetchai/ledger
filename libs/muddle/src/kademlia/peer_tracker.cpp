@@ -955,6 +955,9 @@ void PeerTracker::Periodically()
       directly_connected_peers_.insert(p);
     }
   }
+
+  // Dumping the tracker table
+  peer_table_.Dump();  // TODO(tfr): make configurable.
 }
 
 PeerTracker::PeerTracker(PeerTracker::Duration const &interval, core::Reactor &reactor,
