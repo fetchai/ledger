@@ -89,7 +89,7 @@ In addition to minimizing ||*A****x*** - ***b***||<sup>2</sup>, we also need to 
 
 The solution of the above example is:
 
-<p align="center"><img src="https://lh3.googleusercontent.com/OQNoOtRSJ6kHStPb-xs-rvFCtAYVsXYalcQlRqEjEcFActzWZ5TbymZMjO-YZraDBEr46yQwZdU" alt="drawing" height="300"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/OQNoOtRSJ6kHStPb-xs-rvFCtAYVsXYalcQlRqEjEcFActzWZ5TbymZMjO-YZraDBEr46yQwZdU" alt="drawing" height="300" class="center"/></p>
 
 where the values of **x** are given in nanoseconds and the corresponding opcodes are defined as {1: VariableDeclare, 4: PushFalse, 5: PushTrue, 7: PushConstant, 14: Discard, 15: Destruct, 18: Jump, 19: JumpIfFalse,  21: Return, 23: ForRangeInit, 24: ForRangeIterate, 25: ForRangeTerminate, 26: InvokeUserDefinedFreeFunction, 31: JumpIfFalseOrPop, 32: JumpIfTrueOrPop, 33: Not}.
 
@@ -247,11 +247,11 @@ We use a similar approach to profile array operations. As shown below, there is 
 | CountArray             |            -0.001 |           15.849 |     591.189 |            2.673 | [8, 100, 14]         |
 
 <p align="center"><img src="https://lh3.googleusercontent.com/UfiJ1SiH6oGEjyFpY40euuiSFIeKPikstWsH_DrBCv3wMj58-FSqUJN2wz_7fFNuf6WFbm311Tc" width="600"/></p>
-<p align="center"><img src="https://lh3.googleusercontent.com/TO0q5ZNpeU5gbttuaDqskclm2vypVyPRq5ZhZJNlP0nalfIg1ZbUYh22RvFQ3B9Y32XOEKlovuA" width="600"/></p>
-<p align="center"><img src="https://lh3.googleusercontent.com/iSK3mlbFRhqq7CkgdoUlvkglT1EH_HPEmc06l_LEQTWuNsGxayA30iFUeET0ptr15mV5uf3XMYE" width="600"/></p>
-<p align="center"><img src="https://lh3.googleusercontent.com/wXoM1NIO199bHXSVHhqrS67SBZB7r_pOrtBP917xgTZK5fA96pa7mAQRO4Qx6Wzn48Te_AbwLk8" width="600"/></p>
-<p align="center"><img src="https://lh3.googleusercontent.com/_4Mb9lC19WUurTI8bHrNBokSAbvzbs9YYrcpn36IIwVufWZ9y8V18G7sQqhdzKfg2PynZuoW5sM" width="600"/></p>
-<p align="center"><img src="https://lh3.googleusercontent.com/AHZQ2UblQZxx75ag3Ptg0h7_IlX6_6PjO1wAWTh7KvoVednW_HW_vlPd74OBS2gSZhgGR1La74Y" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/HF2r6H2U6hBM2M5TSI-CYYZuThxEsVfq--fX3W1LN6gHqWmqkA0HAsOEYm88I_UKmF28rQ8Bu7s" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/iSrgeIvhH7qt5wRdbcjtQtP2TU5gDXFu0lJzTQJLMPUsPiaTflURRSLKLFRjc4byj4-sVdUcLFc" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/B0AwMC-Ee00bKHMg42lFOt6GRScOzDlzmVNSr6iL88gnFPwZWvqPunaB1hLC-uLs9OpYp0259Tk" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/fBZPSicVkzb41U3vMOw3uQrEbFyMaewhP7tn2p06ieMqHFaa8tu4GuncesQo_fcwa7SUnv_cLSA" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/_QHkdsqYvNsv4d7yX7PEL1ATEyMSAUtZe0Bwod3vksAc7kuLwKY7EFGPKV1RC4biJ9V0D-u4mHA" width="600"/></p>
 
 ## Tensor-based opcodes
 
@@ -276,9 +276,9 @@ We profile tensor-based operations using a similar approach. To ensure that they
 | SizeTensor_2           |             0.002 |           26.582 |    28530.266 |           25.250 | [8, 419, 14]                                                                  |
 | SizeTensor_3           |            -0.001 |           15.156 |    28087.432 |           27.902 | [8, 419, 14]                                                                  |
 
-<p align="center"><img src="https://lh3.googleusercontent.com/oJNMuMOKUsBiVlA8F7jreAgeq-yQ7lVb542ky3JoN7K6HOITzCD1FKWh_IklyRDvzEx9_fyFDv8" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/g8_zO9xpEmQ9Yc18sF8pQQ1twbFbiSrzIzMG78WO76IcNJC8TKnIoW86uRixEEyEhpyEK35mtpM" width="600"/></p>
 <p align="center"><img src="https://lh3.googleusercontent.com/wU7uOueyDmyWTef0S0oBmrLqlw0IL_VTpciNQpPMv_LmzKPcd4scQG3AkB3uOIU458_Kcns4Ibw" width="600"/></p>
-<p align="center"><img src="https://lh3.googleusercontent.com/Csu8HlTqcu9cYvpTaKQMKnHFKy26ICaZK8uTIxM9oof5pznGKvafkiyyW0dtxAnC05-PyKRPtSE" width="600"/></p>
+<p align="center"><img src="https://lh3.googleusercontent.com/sYVW4_KXe3bus6wj4JmNxTyow3qY05HNfuKuu4S-DnKb3KK9QBPXwplGser29NhdolYrLGY5n1diWD4deNizoYLF5N31fGtMr0o23-HcyqWIvelB7AnvzRZn64If7mh7U_E3Fr6f=w2400" width="600"/></p>
 <p align="center"><img src="https://lh3.googleusercontent.com/awDzFVNDZbiNk2avZTqJHfW_8wNZdsZE3eewJ4mWm3Fw83IG234LeDFqswvthmxiJLodtxgUjTY" width="600"/></p>
 
 ## Crypto-based opcodes
