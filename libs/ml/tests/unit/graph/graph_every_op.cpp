@@ -73,6 +73,9 @@
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
 
+// metrics
+#include "ml/ops/metrics/categorical_accuracy.hpp"
+
 // layers
 #include "ml/layers/PRelu.hpp"
 #include "ml/layers/convolution_1d.hpp"
@@ -214,6 +217,10 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   std::string scel = AddOp<ops::SoftmaxCrossEntropyLoss<TensorType>>(
       g, {input_logits_transpose, input_binary_transpose});
 
+  // Metrics
+  std::string acc = AddOp<ops::CategoricalAccuracy<TensorType>>(
+      g, {input_logits_transpose, input_binary_transpose});
+
   // Layers
   std::string layer_layernorm =
       AddOp<layers::LayerNorm<TensorType>>(g, {input_1}, std::vector<math::SizeType>({1}));
@@ -350,6 +357,9 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   ComparePrediction<GraphPtrType, TensorType>(g, g2, cel);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, mse);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, scel);
+
+  // Metrics
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, acc);
 
   // Layers
   ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_layernorm);

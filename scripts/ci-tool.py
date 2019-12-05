@@ -12,14 +12,15 @@ import re
 import shutil
 import subprocess
 import sys
-import time
 import threading
+import time
 import xml.etree.ElementTree as ET
 from os.path import abspath, dirname, exists, isdir, isfile, join
 
 import fetchai_code_quality
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
+LOG_LEVELS = ('trace', 'debug', 'info', 'warn', 'error', 'critical', 'none')
 MAX_CPUS = 7  # as defined by CI workflow
 AVAILABLE_CPUS = multiprocessing.cpu_count()
 CONCURRENCY = min(MAX_CPUS, AVAILABLE_CPUS)
@@ -141,10 +142,19 @@ def build_type(text):
     return text
 
 
+def log_level(text):
+    if text not in LOG_LEVELS:
+        raise RuntimeError(
+            'Invalid log level {text}. Choices: {log_levels}'.format(text=text, log_levels=", ".join(LOG_LEVELS)))
+    return text
+
+
 def parse_commandline():
     parser = argparse.ArgumentParser()
     parser.add_argument('build_type', metavar='TYPE',
                         type=build_type, help='The type of build to be used')
+    parser.add_argument('--log-level',
+                        type=log_level, help='Override FETCH_LOG_LEVEL (one of '+', '.join(LOG_LEVELS)+')')
     parser.add_argument(
         '-p', '--build-path-prefix', default='build-',
         help='The prefix to be used for the naming of the build folder')
@@ -180,6 +190,8 @@ def parse_commandline():
         help='Specify the folder directly that should be used for the build / test')
     parser.add_argument('-m', '--metrics',
                         action='store_true', help='Store the metrics')
+    parser.add_argument('--test-names', type=lambda cli_arg: frozenset(cli_arg.split(',')),
+                        help='Comma-separated list of specific tests to run (default: all)')
 
     return parser.parse_args()
 
@@ -230,7 +242,7 @@ def clean_files(build_root):
             os.remove(data_path)
 
 
-def test_project(build_root, include_regex=None, exclude_regex=None):
+def test_project(build_root, include_regex=None, exclude_regex=None, test_names=None):
     TEST_NAME = 'Test'
 
     if not isdir(build_root):
@@ -247,6 +259,10 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
         '-T', TEST_NAME
     ]
 
+    if test_names is not None:
+        # Need to convert test names from set to a regex of ORs
+        names_as_regex = "|".join(str(x) for x in test_names)
+        cmd = cmd + ['-R', names_as_regex]
     if include_regex is not None:
         cmd = cmd + ['-L', str(include_regex)]
     if exclude_regex is not None:
@@ -281,7 +297,7 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
         sys.exit(exit_code)
 
 
-def test_end_to_end(project_root, build_root):
+def test_end_to_end(project_root, build_root, name_filter=None):
     from end_to_end_test import run_end_to_end_test
 
     yaml_file = join(
@@ -298,7 +314,8 @@ def test_end_to_end(project_root, build_root):
 
     clean_files(build_root)
 
-    run_end_to_end_test.run_test(build_root, yaml_file, constellation_exe)
+    run_end_to_end_test.run_test(
+        build_root, yaml_file, constellation_exe, name_filter)
 
 
 def test_language(build_root):
@@ -356,6 +373,8 @@ def main():
     options = {
         'CMAKE_BUILD_TYPE': args.build_type,
     }
+    if args.log_level is not None:
+        options['FETCH_COMPILE_LOGGING_LEVEL'] = args.log_level
 
     # attempt to detect the sccache path on the system
     sccache_path = shutil.which('sccache')
@@ -398,7 +417,9 @@ def main():
 
         # configure the project
         if not cmake_configure(project_root, build_root, options, generator):
-            output('\n😭 Failed to configure the cmake project. This is usually because of a mismatch between generators.\n\nTry removing the build folder: {} and try again'.format(build_root))
+            output(
+                '\n😭 Failed to configure the cmake project. This is usually because of a mismatch between generators.\n\nTry removing the build folder: {} and try again'.format(
+                    build_root))
             sys.exit(1)
 
     if args.build or args.all or args.commit:
@@ -407,7 +428,8 @@ def main():
     if args.test or args.all:
         test_project(
             build_root,
-            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
+            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS),
+            test_names=args.test_names)
 
     if args.language_tests or args.all:
         test_language(build_root)
@@ -415,15 +437,17 @@ def main():
     if args.slow_tests or args.all:
         test_project(
             build_root,
-            include_regex=SLOW_TEST_LABEL)
+            include_regex=SLOW_TEST_LABEL,
+            test_names=args.test_names)
 
     if args.integration_tests or args.all:
         test_project(
             build_root,
-            include_regex=INTEGRATION_TEST_LABEL)
+            include_regex=INTEGRATION_TEST_LABEL,
+            test_names=args.test_names)
 
     if args.end_to_end_tests or args.all:
-        test_end_to_end(project_root, build_root)
+        test_end_to_end(project_root, build_root, args.test_names)
 
     if args.lint or args.all:
         fetchai_code_quality.static_analysis(

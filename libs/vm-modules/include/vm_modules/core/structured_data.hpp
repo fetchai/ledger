@@ -18,7 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "variant/variant.hpp"
+#include "vm/address.hpp"
+#include "vm/fixed.hpp"
 #include "vm/object.hpp"
+#include "vm_modules/core/byte_array_wrapper.hpp"
+#include "vm_modules/math/bignumber.hpp"
 
 namespace fetch {
 
@@ -32,6 +36,14 @@ namespace vm_modules {
 class StructuredData : public vm::Object
 {
 public:
+  template <typename T, typename Y = void>
+  static constexpr bool IsSupportedRefType =
+      type_util::IsAnyOfV<meta::Decay<T>, vm::String, vm::Address, vm::Fixed128,
+                          vm_modules::ByteArrayWrapper, vm_modules::math::UInt256Wrapper>;
+
+  template <typename T, typename Y = void>
+  using IfIsSupportedRefType = meta::EnableIf<IsSupportedRefType<T>, Y>;
+
   static void                    Bind(vm::Module &module);
   static vm::Ptr<StructuredData> Constructor(vm::VM *vm, vm::TypeId type_id);
   static vm::Ptr<StructuredData> ConstructorFromVariant(vm::VM *vm, vm::TypeId type_id,
@@ -51,17 +63,24 @@ protected:
 private:
   bool Has(vm::Ptr<vm::String> const &s);
 
-  vm::Ptr<vm::String> GetString(vm::Ptr<vm::String> const &s);
   template <typename T>
   T GetPrimitive(vm::Ptr<vm::String> const &s);
   template <typename T>
+  IfIsSupportedRefType<T, vm::Ptr<T>> GetObject(vm::Ptr<vm::String> const &s);
+  template <typename T>
   vm::Ptr<vm::Array<T>> GetArray(vm::Ptr<vm::String> const &s);
+  template <typename T>
+  IfIsSupportedRefType<T, vm::Ptr<vm::Array<vm::Ptr<T>>>> GetObjectArray(
+      vm::Ptr<vm::String> const &s);
 
   template <typename T>
   void SetPrimitive(vm::Ptr<vm::String> const &s, T value);
   template <typename T>
+  IfIsSupportedRefType<T> SetObject(vm::Ptr<vm::String> const &s, vm::Ptr<T> const &value);
+  template <typename T>
   void SetArray(vm::Ptr<vm::String> const &s, vm::Ptr<vm::Array<T>> const &arr);
-  void SetString(vm::Ptr<vm::String> const &s, vm::Ptr<vm::String> const &value);
+  template <typename T>
+  void SetObjectArray(vm::Ptr<vm::String> const &s, vm::Ptr<vm::Array<vm::Ptr<T>>> const &arr);
 
   // Data
   variant::Variant contents_{variant::Variant::Object()};

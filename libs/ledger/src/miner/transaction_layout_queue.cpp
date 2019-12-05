@@ -257,5 +257,10 @@ DigestSet const &TransactionLayoutQueue::digests() const
   return digests_;
 }
 
+TransactionLayoutQueue::TxLayoutSet TransactionLayoutQueue::TxLayouts() const
+{
+  return {list_.cbegin(), list_.cend()};
+}
+
 }  // namespace ledger
 }  // namespace fetch

@@ -28,10 +28,10 @@
 #include "constellation/telemetry_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/telemetry.hpp"
-#include "ledger/chain/consensus/bad_miner.hpp"
-#include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
+#include "ledger/consensus/consensus.hpp"
+#include "ledger/consensus/simulated_pow_consensus.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
@@ -218,6 +218,10 @@ ConsensusPtr CreateConsensus(constellation::Constellation::Config const &cfg, St
                                                     identity, cfg.aeon_period, cfg.max_cabinet_size,
                                                     cfg.block_interval_ms);
   }
+  else
+  {
+    consensus = std::make_shared<ledger::SimulatedPowConsensus>(identity, cfg.block_interval_ms);
+  }
 
   return consensus;
 }
@@ -312,8 +316,7 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] { return std::make_shared<Executor>(storage_); }, tx_status_cache_)}
-  , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
-           ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
+  , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,
                        dag_,
@@ -324,7 +327,6 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
                        certificate,
                        cfg_.log2_num_lanes,
                        cfg_.num_slices,
-                       cfg_.block_difficulty,
                        consensus_,
                        std::make_unique<ledger::SynergeticExecutionManager>(
                            dag_, 1u,
@@ -459,12 +461,6 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   // Step 1. Start all the components
   //---------------------------------------------------------------
 
-  // if a non-zero block interval it set then the application will generate blocks
-  if (cfg_.block_interval_ms > 0)
-  {
-    block_coordinator_.SetBlockPeriod(std::chrono::milliseconds{cfg_.block_interval_ms});
-  }
-
   /// NETWORKING INFRASTRUCTURE
 
   // start all the services
@@ -596,9 +592,6 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   {
     // determine the status of the main chain server
     bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
-
-    // control from the top level block production based on the chain sync state
-    block_coordinator_.EnableMining(is_in_sync);
 
     if (synergetic_miner_)
     {

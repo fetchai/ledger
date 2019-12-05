@@ -65,21 +65,11 @@ public:
   /// ACCESSING AND SETTING VALUES ///
   ////////////////////////////////////
 
-  DataType AtOne(TensorType::SizeType idx1) const;
+  template <typename... Indices>
+  DataType At(Indices... indices) const;
 
-  DataType AtTwo(uint64_t idx1, uint64_t idx2) const;
-
-  DataType AtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3) const;
-
-  DataType AtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4) const;
-
-  void SetAtOne(uint64_t idx1, DataType const &value);
-
-  void SetAtTwo(uint64_t idx1, uint64_t idx2, DataType const &value);
-
-  void SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType const &value);
-
-  void SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4, DataType const &value);
+  template <typename... Args>
+  void SetAt(Args... args);
 
   void Copy(TensorType const &other);
 

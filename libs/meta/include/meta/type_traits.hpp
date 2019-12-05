@@ -101,6 +101,9 @@ template <typename T>
 constexpr bool IsAny8BitInteger = std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value;
 
 template <typename T>
+constexpr bool IsNotAny8BitInteger = !IsAny8BitInteger<T>;
+
+template <typename T>
 using Decay = std::decay_t<T>;
 
 template <bool C, typename R = void>

@@ -24,6 +24,8 @@
 #include "crypto/ecdsa.hpp"
 #include "dmlf/colearn/muddle_learner_networker_impl.hpp"
 #include "dmlf/colearn/update_store.hpp"
+#include "dmlf/collective_learning/utilities/typed_update_adaptor.hpp"
+#include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -39,45 +41,45 @@ namespace {
 using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 
-using LNBase  = fetch::dmlf::AbstractLearnerNetworker;
-using LN      = fetch::dmlf::colearn::MuddleLearnerNetworkerImpl;
-using LNBaseP = std::shared_ptr<LNBase>;
-using LNP     = std::shared_ptr<LN>;
-using NetMan  = fetch::network::NetworkManager;
-using NetManP = std::shared_ptr<NetMan>;
+using LNBase   = fetch::dmlf::colearn::AbstractMessageController;
+using LNBaseT  = fetch::dmlf::collective_learning::utilities::TypedUpdateAdaptor;
+using LN       = fetch::dmlf::colearn::MuddleLearnerNetworkerImpl;
+using LNBaseP  = std::shared_ptr<LNBase>;
+using LNBaseTP = std::shared_ptr<LNBaseT>;
+using LNP      = std::shared_ptr<LN>;
+using NetMan   = fetch::network::NetworkManager;
+using NetManP  = std::shared_ptr<NetMan>;
 
 using MuddlePtr      = fetch::muddle::MuddlePtr;
 using CertificatePtr = fetch::muddle::ProverPtr;
 using Store          = fetch::dmlf::colearn::UpdateStore;
 using StorePtr       = std::shared_ptr<Store>;
 
-using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
+using UpdateTypeForTesting = fetch::dmlf::deprecated_Update<TensorType>;
 using UpdatePayload        = UpdateTypeForTesting::Payload;
 
-char const *SERVER_PRIV = "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
-char const *SERVER_PUB =
-    "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==";
-char const *CLIENT_PRIV = "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
-char const *CLIENT_PUB =
-    "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
+// char const *SERVER_PRIV = "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
+// char const *SERVER_PUB =
+//    "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==";
+// char const *CLIENT_PRIV = "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
+// char const *CLIENT_PUB =
+//    "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
 
 char const *LOGGING_NAME = "colearn_muddle";
 
 class LearnerTypedUpdates
 {
 public:
-  LNP         actual;
-  LNBaseP     interface;
-  NetManP     netm_;
-  MuddlePtr   mud_;
-  std::string pub_;
-  StorePtr    store_;
+  LNP       actual;
+  LNBaseP   interface;
+  LNBaseTP  interface_typed;
+  NetManP   netm_;
+  MuddlePtr mud_;
+  StorePtr  store_;
 
-  LearnerTypedUpdates(const std::string &pub, const std::string &priv, unsigned short int port,
+  LearnerTypedUpdates(const std::string &priv, unsigned short int port,
                       unsigned short int remote = 0)
   {
-    pub_ = pub;
-
     std::string r;
     if (remote != 0)
     {
@@ -85,10 +87,11 @@ public:
       r += std::to_string(remote);
     }
 
-    actual    = std::make_shared<LN>(priv, port, r);
-    interface = actual;
-    interface->RegisterUpdateType<UpdateTypeForTesting>("update");
-    interface->RegisterUpdateType<fetch::dmlf::Update<std::string>>("vocab");
+    actual          = std::make_shared<LN>(priv, port, r);
+    interface       = actual;
+    interface_typed = std::make_shared<LNBaseT>(interface);
+    interface_typed->RegisterUpdateType<UpdateTypeForTesting>("update");
+    interface_typed->RegisterUpdateType<fetch::dmlf::deprecated_Update<std::string>>("vocab");
   }
 
   void PretendToLearn()
@@ -99,49 +102,56 @@ public:
     t.Fill(DataType(sequence_number++));
     auto r = std::vector<TensorType>();
     r.push_back(t);
-    interface->PushUpdateType("update", std::make_shared<UpdateTypeForTesting>(r));
-    interface->PushUpdateType("vocab", std::make_shared<fetch::dmlf::Update<std::string>>(
-                                           std::vector<std::string>{"cat", "dog"}));
+    interface_typed->PushUpdate(std::make_shared<UpdateTypeForTesting>(r));
+    interface_typed->PushUpdate(std::make_shared<fetch::dmlf::deprecated_Update<std::string>>(
+        std::vector<std::string>{"cat", "dog"}));
   }
 };
 
 class MuddleTypedUpdatesTests : public ::testing::Test
 {
 public:
-  using Inst                   = LNP;
-  using Insts                  = std::vector<Inst>;
-  using MuddleLearnerNetworker = LN;
+  using Inst = struct
+  {
+    std::shared_ptr<LearnerTypedUpdates> instance;
+    unsigned short int                   port;
+    LN::Address                          pub;
+    std::string                          pubstr;
+  };
 
-  std::shared_ptr<LearnerTypedUpdates> server;
-  std::shared_ptr<LearnerTypedUpdates> client;
-  unsigned short int                   server_port = 1766;
-  unsigned short int                   client_port = 1767;
+  using Insts = std::vector<Inst>;
 
-  void SetUp() override
+  Insts instances;
+
+  void CreateServers(unsigned int peercount = 3)
   {
     srand(static_cast<unsigned int>(time(nullptr)));
-    server_port = static_cast<unsigned short int>(rand() % 10000 + 10000);
-    client_port = static_cast<unsigned short int>(server_port + 1);
+    auto base_port = static_cast<unsigned short int>(rand() % 10000 + 10000);
 
-    server = std::make_shared<LearnerTypedUpdates>(SERVER_PUB, SERVER_PRIV, server_port, 0);
-    client =
-        std::make_shared<LearnerTypedUpdates>(CLIENT_PUB, CLIENT_PRIV, client_port, server_port);
+    for (unsigned int i = 0; i < peercount; i++)
+    {
+      Inst inst;
+      inst.port     = static_cast<unsigned short int>(base_port + i);
+      inst.instance = std::make_shared<LearnerTypedUpdates>("", inst.port, (i > 0) ? base_port : 0);
+      inst.pub      = inst.instance->actual->GetAddress();
+      inst.pubstr   = inst.instance->actual->GetAddressAsString();
+      instances.push_back(inst);
+    }
   }
 };
 
-TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
+TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveBCast)
 {
+  CreateServers(2);
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
-  server->actual->addTarget(client->pub_);
 
-  server->PretendToLearn();
+  instances[0].instance->PretendToLearn();
 
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
-  EXPECT_GT(client->actual->GetUpdateCount(), 0);
-
+  EXPECT_GT(instances[1].instance->actual->GetUpdateCount(), 0);
   try
   {
-    client->actual->GetUpdate("algo1", "vocab");
+    instances[1].instance->actual->GetUpdate("algo0", "vocab");
   }
   catch (std::exception const &e)
   {
@@ -150,7 +160,7 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
 
   try
   {
-    client->actual->GetUpdate("algo1", "weights");
+    instances[1].instance->actual->GetUpdate("algo0", "weights");
     EXPECT_EQ("weights", "should not be present");
   }
   catch (std::exception const &e)
@@ -160,13 +170,47 @@ TEST_F(MuddleTypedUpdatesTests, singleThreadedVersion)
 
   try
   {
-    auto upd = client->actual->GetUpdate("algo1", "vocab");
+    auto upd = instances[1].instance->actual->GetUpdate("algo0", "vocab");
     EXPECT_EQ("vocab", "should not be present (already emptied)");
   }
   catch (std::exception const &e)
   {
     // get should throw, because vocab Q is empty.
   }
+}
+
+TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveShuffle)
+{
+  CreateServers(6);
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+  for (unsigned int i = 0; i < instances.size(); i++)
+  {
+    for (unsigned int j = 0; j < instances.size(); j++)
+    {
+      if (i != j)
+      {
+        instances[i].instance->actual->AddPeers({instances[j].pubstr});
+      }
+    }
+  }
+
+  auto cycle = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(instances.size() - 1, 2);
+  for (auto &inst : instances)
+  {
+    inst.instance->actual->SetShuffleAlgorithm(cycle);
+  }
+
+  instances[0].instance->PretendToLearn();
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(700));
+
+  EXPECT_EQ(instances[0].instance->actual->GetUpdateCount(), 0);
+  EXPECT_EQ(instances[1].instance->actual->GetUpdateCount(), 1);
+  EXPECT_EQ(instances[2].instance->actual->GetUpdateCount(), 1);
+  EXPECT_EQ(instances[3].instance->actual->GetUpdateCount(), 1);
+  EXPECT_EQ(instances[4].instance->actual->GetUpdateCount(), 1);
+  EXPECT_EQ(instances[5].instance->actual->GetUpdateCount(), 0);
 }
 
 }  // namespace

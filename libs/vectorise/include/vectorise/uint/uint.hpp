@@ -219,6 +219,7 @@ public:
   constexpr WideType &ElementAt(std::size_t n);
 
   constexpr uint64_t TrimmedSize() const;
+  constexpr uint64_t TrimmedWideSize() const;
   constexpr uint64_t size() const;
   constexpr uint64_t elements() const;
 
@@ -656,7 +657,6 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   }
   if (n == _1)
   {
-    *this = n;
     return *this;
   }
   if (*this == n)
@@ -1038,14 +1038,26 @@ constexpr typename UInt<S>::WideType &UInt<S>::ElementAt(std::size_t n)
 }
 
 template <uint16_t S>
-constexpr uint64_t UInt<S>::TrimmedSize() const
+constexpr uint64_t UInt<S>::TrimmedWideSize() const
 {
   uint64_t ret = WIDE_ELEMENTS;
-  while ((ret > 1) && (wide_[ret - 1] == 0))
+  while ((ret > 0) && (wide_[ret - 1] == 0))
   {
     --ret;
   }
   return ret;
+}
+
+template <uint16_t S>
+constexpr uint64_t UInt<S>::TrimmedSize() const
+{
+  uint64_t wide_size{TrimmedWideSize()};
+  uint64_t remainder{WIDE_ELEMENT_SIZE / ELEMENT_SIZE};
+  while ((remainder > 0) && (base()[remainder - 1] == 0))
+  {
+    --remainder;
+  }
+  return wide_size * (WIDE_ELEMENT_SIZE / ELEMENT_SIZE) + remainder;
 }
 
 template <uint16_t S>
@@ -1089,7 +1101,7 @@ inline std::ostream &operator<<(std::ostream &s, UInt<S> const &x)
 
 inline double ToDouble(UInt<256> const &x)
 {
-  if (x.TrimmedSize() == 1)
+  if (x.TrimmedWideSize() < 2)
   {
     return static_cast<double>(x.ElementAt(0));
   }

@@ -23,7 +23,6 @@
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
-#include "ledger/storage_unit/object_store_protocol.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "logging/logging.hpp"
 #include "muddle/muddle_endpoint.hpp"
@@ -68,11 +67,11 @@ public:
   void      AddTransaction(chain::Transaction const &tx) override;
   bool      GetTransaction(ConstByteArray const &digest, chain::Transaction &tx) override;
   bool      HasTransaction(ConstByteArray const &digest) override;
-  void      IssueCallForMissingTxs(DigestSet const &tx_set) override;
+  void      IssueCallForMissingTxs(DigestSet const &digest_set) override;
   TxLayouts PollRecentTx(uint32_t max_to_poll) override;
 
   Document GetOrCreate(ResourceAddress const &key) override;
-  Document Get(ResourceAddress const &key) override;
+  Document Get(ResourceAddress const &key) const override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
 
   void Reset() override;

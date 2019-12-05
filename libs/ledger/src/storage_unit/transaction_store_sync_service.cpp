@@ -18,6 +18,7 @@
 
 #include "chain/transaction_rpc_serializers.hpp"
 #include "core/macros.hpp"
+#include "ledger/storage_unit/transaction_storage_engine_interface.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
@@ -71,7 +72,7 @@ namespace fetch {
 namespace ledger {
 
 TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, MuddleEndpoint &muddle,
-                                                         ObjectStorePtr    store,
+                                                         TransactionStorageEngineInterface &store,
                                                          TxFinderProtocol *tx_finder_protocol,
                                                          TrimCacheCallback trim_cache_callback)
   : trim_cache_callback_(std::move(trim_cache_callback))
@@ -82,7 +83,7 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
   , muddle_(muddle)
   , client_(std::make_shared<Client>("R:TxSync-L" + std::to_string(cfg_.lane_id), muddle,
                                      SERVICE_LANE, CHANNEL_RPC))
-  , store_(std::move(store))
+  , store_(store)
   , verifier_(*this, cfg_.verification_threads, "TxV-L" + std::to_string(cfg_.lane_id))
   , stored_transactions_{telemetry::Registry::Instance().CreateCounter(
         "ledger_tx_store_sync_service_stored_transactions_total",
@@ -125,7 +126,6 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
 TransactionStoreSyncService::~TransactionStoreSyncService()
 {
   client_ = nullptr;
-  store_  = nullptr;
 }
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnInitial()
@@ -157,8 +157,11 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjectCou
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjectCounts()
 {
-  auto counts = pending_object_count_.Resolve();
-  for (auto &result : pending_object_count_.Get(MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE))
+  auto const counts    = pending_object_count_.Resolve();
+  auto const completed = pending_object_count_.Get(MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE);
+  pending_object_count_.DiscardFailures();
+
+  for (auto &result : completed)
   {
     max_object_count_ = std::max(max_object_count_, result.promised);
   }
@@ -336,20 +339,20 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
 {
-  std::vector<ResourceID> rids;
-  rids.reserve(TX_FINDER_PROTO_LIMIT);
+  DigestSet digests{};
+  digests.reserve(TX_FINDER_PROTO_LIMIT);
 
   // collect up all the explicitly requested transactions from the block coordinator process
-  ResourceID rid;
-  while (rids.size() < TX_FINDER_PROTO_LIMIT && tx_finder_protocol_->Pop(rid))
+  Digest digest;
+  while (digests.size() < TX_FINDER_PROTO_LIMIT && tx_finder_protocol_->Pop(digest))
   {
-    rids.push_back(rid);
+    digests.emplace(digest);
   }
 
   // Early exit: If it is not time to request the recent transaction and there are no explicit
   // requests for transactions then we should simply hold in this state
   bool const is_time_to_pull{fetch_object_wait_timeout_.IsDue()};
-  if (rids.empty() && !is_time_to_pull)
+  if (digests.empty() && !is_time_to_pull)
   {
     state_machine_->Delay(10ms);
     return State::QUERY_OBJECTS;
@@ -367,14 +370,14 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
       FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": Periodically requesting recent TXs");
     }
 
-    if (!rids.empty())
+    if (!digests.empty())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": Explicitly requesting ", rids.size(),
-                     " TXs");
+      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": Explicitly requesting ",
+                     digests.size(), " TXs");
 
-      auto p2 = PromiseOfTxList(
-          client_->CallSpecificAddress(connection, RPC_TX_STORE_SYNC,
-                                       TransactionStoreSyncProtocol::PULL_SPECIFIC_OBJECTS, rids));
+      auto p2 = PromiseOfTxList(client_->CallSpecificAddress(
+          connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_SPECIFIC_OBJECTS,
+          digests));
       pending_objects_.Add(connection, p2);
     }
   }
@@ -449,12 +452,12 @@ void TransactionStoreSyncService::OnTransaction(TransactionPtr const &tx)
 {
   ResourceID const rid(tx->digest());
 
-  if (!store_->Has(rid))
+  if (!store_.Has(tx->digest()))
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Sync TX: ", tx->digest().ToBase64(), " (",
                     tx->contract_digest().display(), ')');
 
-    store_->Set(rid, *tx, true);
+    store_.Add(*tx, true);
     stored_transactions_->increment();
   }
 }
