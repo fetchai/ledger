@@ -243,6 +243,11 @@ public:
 
   /// @name Muddle Setup
   /// @{
+  void SetPeerTableFile(std::string const & /*filename*/) override
+  {
+    throw std::runtime_error("Not implemented");
+  }
+
   bool Start(Peers const & /*peers*/, Ports const & /*ports*/) override
   {
     FakeNetwork::Register(node_address_);

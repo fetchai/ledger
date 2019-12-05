@@ -366,10 +366,10 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
   // Configure the cache tables
-  muddle_->SetPeerTableFile(cfg.ihub_peer_cache);
+  muddle_->SetPeerTableFile(cfg_.ihub_peer_cache);
   if (beacon_network_)
   {
-    beacon_network_->SetPeerTableFile(cfg.beacon_peer_cache);
+    beacon_network_->SetPeerTableFile(cfg_.beacon_peer_cache);
   }
 
   // Configure/override global parameters
