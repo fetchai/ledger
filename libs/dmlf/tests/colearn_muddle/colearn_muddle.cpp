@@ -67,6 +67,8 @@ using UpdatePayload        = UpdateTypeForTesting::Payload;
 
 char const *LOGGING_NAME = "colearn_muddle";
 
+char const *ALGO_NAME = "colearn_muddle_test_algo";
+
 class LearnerTypedUpdates
 {
 public:
@@ -92,6 +94,8 @@ public:
     interface_typed = std::make_shared<LNBaseT>(interface);
     interface_typed->RegisterUpdateType<UpdateTypeForTesting>("update");
     interface_typed->RegisterUpdateType<fetch::dmlf::deprecated_Update<std::string>>("vocab");
+
+    actual -> default_uri().algorithm_class(ALGO_NAME);
   }
 
   void PretendToLearn()
@@ -151,7 +155,7 @@ TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveBCast)
   EXPECT_GT(instances[1].instance->actual->GetUpdateCount(), 0);
   try
   {
-    instances[1].instance->actual->GetUpdate("algo0", "vocab");
+    instances[1].instance->actual->GetUpdate(ALGO_NAME, "vocab");
   }
   catch (std::exception const &e)
   {
@@ -160,7 +164,7 @@ TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveBCast)
 
   try
   {
-    instances[1].instance->actual->GetUpdate("algo0", "weights");
+    instances[1].instance->actual->GetUpdate(ALGO_NAME, "weights");
     EXPECT_EQ("weights", "should not be present");
   }
   catch (std::exception const &e)
@@ -170,7 +174,7 @@ TEST_F(MuddleTypedUpdatesTests, correctMessagesArriveBCast)
 
   try
   {
-    auto upd = instances[1].instance->actual->GetUpdate("algo0", "vocab");
+    auto upd = instances[1].instance->actual->GetUpdate(ALGO_NAME, "vocab");
     EXPECT_EQ("vocab", "should not be present (already emptied)");
   }
   catch (std::exception const &e)

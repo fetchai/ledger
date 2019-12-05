@@ -124,9 +124,10 @@ public:
     return update_store_->GetUpdate(algo, type);
   }
 
+  void PushUpdateBytes(ColearnURI const &uri_obj, Bytes const &update);
   void PushUpdateBytes(UpdateType const &type_name, Bytes const &update);
-  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, Peers const &peers);
-  void PushUpdateBytes(UpdateType const &type_name, Bytes const &update, Peers const &peers,
+  void PushUpdateBytes(ColearnURI const &uri_obj, Bytes const &update, Peers const &peers);
+  void PushUpdateBytes(ColearnURI const &uri_obj, Bytes const &update, Peers const &peers,
                        double broadcast_proportion);
 
   ConstUpdatePtr GetUpdate(AlgorithmClass const &algo, UpdateType const &type,
@@ -172,11 +173,17 @@ public:
     supplied_peers_.clear();
   }
 
+  ColearnURI &default_uri() { return default_uri_; }
+
 protected:
   friend class MuddleOutboundAnnounceTask;
   void     Setup(MuddlePtr mud, StorePtr update_store);
-  uint64_t ProcessUpdate(const std::string &type_name, byte_array::ConstByteArray bytes,
-                         double proportion, double random_factor, const std::string &source);
+
+  uint64_t ProcessUpdate(std::string const &uri_str,
+                         std::string const &source,
+                         byte_array::ConstByteArray update_bytes,
+                         double proportion, double random_factor);
+
   void     Setup(std::string const &priv, unsigned short int port,
                  std::unordered_set<std::string> const &remotes);
 
@@ -197,6 +204,8 @@ private:
   NetManPtr   netm_;
   Sources     detected_peers_;
   SourcesList supplied_peers_;
+
+  ColearnURI default_uri_;
 
   const unsigned int INITIAL_PEERS_COUNT = 10;
 

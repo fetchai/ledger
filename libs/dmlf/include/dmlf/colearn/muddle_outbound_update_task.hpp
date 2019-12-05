@@ -37,7 +37,7 @@ public:
   using Address      = fetch::muddle::Address;
 
   Address                      target_;
-  std::string                  type_name_;
+  std::string                  uri_str_;
   Bytes                        update_;
   RpcClientPtr                 client_;
   static constexpr char const *LOGGING_NAME = "MuddleOutboundUpdateTask";
@@ -45,10 +45,10 @@ public:
   double proportion_;
   double random_factor_;
 
-  MuddleOutboundUpdateTask(Address target, std::string type_name, Bytes update, RpcClientPtr client,
+  MuddleOutboundUpdateTask(Address target, std::string uri_str, Bytes update, RpcClientPtr client,
                            double proportion, double random_factor)
     : target_(std::move(target))
-    , type_name_(std::move(type_name))
+    , uri_str_(std::move(uri_str))
     , update_(std::move(update))
     , client_(std::move(client))
     , proportion_(proportion)
