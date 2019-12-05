@@ -100,7 +100,7 @@ public:
   SizeType GetOpsCount();
   DataType GetForwardCost();
 
-  // AddLayer
+  // AddLayerFORWARD_DENSE_INPUT_COEF
   static constexpr DataType ADD_DENSE_INPUT_COEF()
   {
     return DataType(0.111111111111111);

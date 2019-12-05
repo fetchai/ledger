@@ -22,6 +22,7 @@
 #include "core/random/lcg.hpp"
 #include "core/state_machine.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -32,6 +33,7 @@
 #include "network/p2pservice/p2ptrust_interface.hpp"
 #include "telemetry/telemetry.hpp"
 
+#include <limits>
 #include <memory>
 
 namespace fetch {
@@ -71,6 +73,7 @@ public:
   using RpcClient       = muddle::rpc::Client;
   using TrustSystem     = p2p::P2PTrustInterface<Address>;
   using FutureTimepoint = core::FutureTimepoint;
+  using ConsensusPtr    = std::shared_ptr<ConsensusInterface>;
 
   static constexpr char const *LOGGING_NAME = "MainChainRpc";
 
@@ -82,7 +85,8 @@ public:
   };
 
   // Construction / Destruction
-  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust, Mode mode);
+  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust, Mode mode,
+                      ConsensusPtr consensus);
   MainChainRpcService(MainChainRpcService const &) = delete;
   MainChainRpcService(MainChainRpcService &&)      = delete;
   ~MainChainRpcService() override                  = default;
@@ -117,6 +121,7 @@ private:
   using BlockList       = fetch::ledger::MainChainProtocol::Blocks;
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
+  using BlockPtr        = MainChain::BlockPtr;
 
   /// @name Subscription Handlers
   /// @{
@@ -127,7 +132,10 @@ private:
   /// @{
   static constexpr char const *ToString(State state) noexcept;
   Address                      GetRandomTrustedPeer() const;
-  void                         HandleChainResponse(Address const &address, BlockList block_list);
+
+  void HandleChainResponse(Address const &address, BlockList blocks);
+  template <class Begin, class End>
+  void HandleChainResponse(Address const &address, Begin begin, End end);
   /// @}
 
   /// @name State Machine Handlers
@@ -145,6 +153,12 @@ private:
   MuddleEndpoint &endpoint_;
   MainChain &     chain_;
   TrustSystem &   trust_;
+  /// @}
+
+  /// @name Block Validation
+  /// @{
+  ConsensusPtr consensus_;
+  bool         ValidBlock(Block const &block, char const *action) const;
   /// @}
 
   /// @name RPC Server

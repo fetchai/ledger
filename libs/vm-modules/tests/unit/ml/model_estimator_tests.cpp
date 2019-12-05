@@ -402,7 +402,6 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
           EXPECT_TRUE(model_estimator.Predict(vm_ptr_tensor_data) ==
                       static_cast<SizeType>(predict_val));
-
         }
       }
     }
