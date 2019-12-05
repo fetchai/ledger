@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,28 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/transaction_finder_protocol.hpp"
+#include "chain/transaction.hpp"
+#include "core/digest.hpp"
+#include "core/mutex.hpp"
+#include "ledger/storage_unit/transaction_pool_interface.hpp"
+
+#include <unordered_map>
 
 namespace fetch {
 namespace ledger {
 
-TxFinderProtocol::TxFinderProtocol()
+class TransactionMemoryPool : public TransactionPoolInterface
 {
-  Expose(ISSUE_CALL_FOR_MISSING_TXS, this, &Self::IssueCallForMissingTxs);
-}
+public:
+  /// @name Transaction Storage Interface
+  /// @{
+  void     Add(chain::Transaction const &tx) override;
+  bool     Has(Digest const &tx_digest) const override;
+  bool     Get(Digest const &tx_digest, chain::Transaction &tx) const override;
+  uint64_t GetCount() const override;
+  void     Remove(Digest const &tx_digest) override;
+  /// @}
 
-bool TxFinderProtocol::Pop(Digest &digest)
-{
-  return resource_queue_.Pop(digest, std::chrono::milliseconds::zero());
-}
+private:
+  using TxStore = DigestMap<chain::Transaction>;
 
-void TxFinderProtocol::IssueCallForMissingTxs(DigestSet const &digests)
-{
-  for (auto const &digest : digests)
-  {
-    resource_queue_.Push(digest);
-  }
-}
+  mutable Mutex lock_;
+  TxStore       transaction_store_;
+};
 
 }  // namespace ledger
 }  // namespace fetch
