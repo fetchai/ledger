@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "constellation/constellation.hpp"
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/event_manager.hpp"
 #include "bloom_filter/bloom_filter.hpp"
-#include "constellation/constellation.hpp"
 #include "constellation/health_check_http_module.hpp"
 #include "constellation/logging_http_module.hpp"
 #include "constellation/muddle_status_http_module.hpp"
@@ -364,6 +364,13 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
                  "              :: ", Address::FromMuddleAddress(muddle_->GetAddress()).display());
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", muddle_->GetAddress().ToBase64());
   FETCH_LOG_INFO(LOGGING_NAME, "");
+
+  // Configure the cache tables
+  muddle_->SetPeerTableFile("peer_table.ihub.cache");
+  if (beacon_network_)
+  {
+    beacon_network_->SetPeerTableFile("peer_table.dkgn.cache");
+  }
 
   // Configure/override global parameters
   chain::STAKE_WARM_UP_PERIOD   = cfg_.stake_delay_period;

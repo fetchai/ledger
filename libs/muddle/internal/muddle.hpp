@@ -150,6 +150,7 @@ public:
 
   /// @name Muddle Setup
   /// @{
+  void            SetPeerTableFile(std::string const &filename) override;
   bool            Start(Peers const &peers, Ports const &ports) override;
   bool            Start(Uris const &peers, Ports const &ports) override;
   bool            Start(Uris const &peers, PortMapping const &port_mapping) override;
