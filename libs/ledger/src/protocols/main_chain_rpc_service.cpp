@@ -365,6 +365,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
   {
     // something went wrong we should attempt to request the chain again
     next_state = State::REQUEST_HEAVIEST_CHAIN;
+    state_machine_->Delay(std::chrono::milliseconds{500});
   }
   else
   {
