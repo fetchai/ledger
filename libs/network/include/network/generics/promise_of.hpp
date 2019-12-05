@@ -45,8 +45,12 @@ public:
   ~PromiseOf() override           = default;
 
   // Promise Accessors
-  RESULT Get() const override;
-  bool   Wait(bool throw_exception = true) const;
+  bool Wait(bool throw_exception = true) const;
+
+  bool GetResult(RESULT &result) const
+  {
+    return promise_->GetResult(result);
+  }
 
   Promise const &GetInnerPromise() const
   {
@@ -98,18 +102,6 @@ template <typename TYPE>
 PromiseOf<TYPE>::PromiseOf(Promise promise)
   : promise_(std::move(promise))
 {}
-
-/**
- * Gets the value of the promise
- *
- * @tparam TYPE The expected return type of the promise
- * @return Return the value from the promise, or throw an exception if not possible
- */
-template <typename TYPE>
-TYPE PromiseOf<TYPE>::Get() const
-{
-  return promise_->As<TYPE>();
-}
 
 /**
  * Checks to see if the promise has been fulfilled
