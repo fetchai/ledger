@@ -75,7 +75,7 @@ void Executor_BasicBenchmark(benchmark::State &state)
 
   // add funds to ensure the transaction passes
   {
-    StateSentinelAdapter adapter{*storage, {"fetch.token"}, shards};
+    StateSentinelAdapter adapter{*storage, "fetch.token", shards};
 
     TokenContract tokens{};
 

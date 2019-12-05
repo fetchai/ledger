@@ -38,7 +38,7 @@ void StateSentinelAdapter_BasicBenchmark(benchmark::State &state)
   BitVector shards{1};
   shards.SetAllOne();
 
-  StateSentinelAdapter adapter{storage, {"foo.bar"}, shards};
+  StateSentinelAdapter adapter{storage, "foo.bar", shards};
 
   std::string          key{"baz"};
   std::vector<uint8_t> buffer(256);

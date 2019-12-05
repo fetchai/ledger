@@ -121,7 +121,7 @@ StateAdapter::Status StateAdapter::Write(std::string const &key, void const *dat
  * Checks to see if the specified key exists in the database
  *
  * @param key The key to be checked
- * @return OK if the key exists, PERMISSION_DENIED if the key is incorrect, ERROR is thSe key does
+ * @return OK if the key exists, PERMISSION_DENIED if the key is incorrect, ERROR is the key does
  * not exist
  */
 StateAdapter::Status StateAdapter::Exists(std::string const &key)

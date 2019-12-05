@@ -119,12 +119,12 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
   }
 
   nonce = FromBase64(nonce);
-  chain::Address const payable_address{crypto::Hash<crypto::SHA256>(tx.from().address() + nonce)};
+  chain::Address const contract_address{crypto::Hash<crypto::SHA256>(tx.from().address() + nonce)};
 
   SmartContractWrapper contract;
-  if (GetStateRecord(contract, payable_address.display()))
+  if (GetStateRecord(contract, contract_address.display()))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Contract ", payable_address.display(), " already created @ ",
+    FETCH_LOG_INFO(LOGGING_NAME, "Contract ", contract_address.display(), " already created @ ",
                    contract.creation_timestamp);
     return {Status::OK};
   }
@@ -171,7 +171,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
   Result init_status;
   if (!on_init_function.empty())
   {
-    state().PushContext(payable_address.display());
+    state().PushContext(contract_address.display());
 
     {
       ContractContext         ctx{context().token_contract, tx.contract_address(), &state(),
@@ -187,7 +187,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
     }
   }
   auto const status =
-      SetStateRecord(SmartContractWrapper{contract_source}, payable_address.display());
+      SetStateRecord(SmartContractWrapper{contract_source}, contract_address.display());
   if (status != StateAdapter::Status::OK)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Failed to store smart contract to state DB!");

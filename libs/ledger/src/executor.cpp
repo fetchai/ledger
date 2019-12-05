@@ -397,7 +397,7 @@ bool Executor::ProcessTransfers(Result &result)
   if (!current_tx_->transfers().empty())
   {
     // attach the token contract to the storage engine
-    StateSentinelAdapter storage_adapter{*storage_cache_, ConstByteArray{"fetch.token"},
+    StateSentinelAdapter storage_adapter{*storage_cache_, "fetch.token",
                                          allowed_shards_};
 
     ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
@@ -432,7 +432,7 @@ void Executor::DeductFees(Result &result)
   telemetry::FunctionTimer const timer{*deduct_fees_duration_};
 
   // attach the token contract to the storage engine
-  StateSentinelAdapter storage_adapter{*storage_cache_, ConstByteArray{"fetch.token"},
+  StateSentinelAdapter storage_adapter{*storage_cache_, "fetch.token",
                                        allowed_shards_};
 
   auto const &from = current_tx_->from();
