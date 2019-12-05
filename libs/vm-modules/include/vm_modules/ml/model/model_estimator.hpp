@@ -50,10 +50,10 @@ public:
   explicit ModelEstimator(VMObjectType &model);
   ~ModelEstimator() = default;
 
-  ModelEstimator(ModelEstimator const &other)  = delete;
-  ModelEstimator &operator                     =(ModelEstimator const &other);
-  ModelEstimator(ModelEstimator const &&other) = delete;
-  ModelEstimator &operator                     =(ModelEstimator const &&other);
+  ModelEstimator(ModelEstimator const &other) = delete;
+  ModelEstimator &operator                    =(ModelEstimator const &other) noexcept;
+  ModelEstimator(ModelEstimator &&other)      = delete;
+  ModelEstimator &operator                    =(ModelEstimator &&other) noexcept;
 
   ChargeAmount LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
                              math::SizeType const &inputs, math::SizeType const &hidden_nodes);
@@ -254,7 +254,7 @@ private:
   VMObjectType &model_;
   State         state_;
 
-  void copy_state_from(ModelEstimator const &);
+  void copy_state_from(ModelEstimator const &src);
 
   static ChargeAmount infinite_charge(std::string const &log_msg = "");
 };

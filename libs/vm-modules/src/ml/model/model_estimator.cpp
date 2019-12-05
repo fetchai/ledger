@@ -43,13 +43,13 @@ ModelEstimator::ModelEstimator(VMObjectType &model)
   : model_{model}
 {}
 
-ModelEstimator &ModelEstimator::operator=(ModelEstimator const &other)
+ModelEstimator &ModelEstimator::operator=(ModelEstimator const &other) noexcept
 {
   copy_state_from(other);
   return *this;
 }
 
-ModelEstimator &ModelEstimator::operator=(ModelEstimator const &&other)
+ModelEstimator &ModelEstimator::operator=(ModelEstimator &&other) noexcept
 {
   copy_state_from(other);
   return *this;
@@ -164,6 +164,8 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
 {
   DataType optimiser_construction_impact(0.0);
 
+  bool success = false;
+
   if (!model_.model_->loss_set_)
   {
     if (loss->string() == "mse")
@@ -174,6 +176,7 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       state_.backward_pass_cost =
           state_.backward_pass_cost + MSE_BACKWARD_IMPACT() * state_.last_layer_size;
       state_.ops_count++;
+      success = true;
     }
     else if (loss->string() == "cel")
     {
@@ -183,15 +186,16 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       state_.backward_pass_cost =
           state_.backward_pass_cost + CEL_BACKWARD_IMPACT() * state_.last_layer_size;
       state_.ops_count++;
+      success = true;
     }
     else if (loss->string() == "scel")
     {
       // loss_type = fetch::ml::ops::LossType::SOFTMAX_CROSS_ENTROPY;
-      return infinite_charge("Not yet implement");
+      success = false;
     }
     else
     {
-      return infinite_charge("invalid loss function");
+      success = false;
     }
   }
 
@@ -209,16 +213,17 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       optimiser_construction_impact =
           ADAM_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
           ADAM_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
+      success = true;
     }
     else if (optimiser->string() == "momentum")
     {
       // optimiser_type = fetch::ml::OptimiserType::MOMENTUM;
-      return infinite_charge("Not yet implement");
+      success = false;
     }
     else if (optimiser->string() == "rmsprop")
     {
       //  optimiser_type = fetch::ml::OptimiserType::RMSPROP;
-      return infinite_charge("Not yet implement");
+      success = false;
     }
     else if (optimiser->string() == "sgd")
     {
@@ -227,15 +232,23 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       optimiser_construction_impact =
           SGD_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
           SGD_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
+      success = true;
     }
     else
     {
-      return infinite_charge("invalid optimiser");
+      success = false;
     }
   }
 
-  return static_cast<ChargeAmount>(optimiser_construction_impact + COMPILE_CONST_COEF()) *
-         CHARGE_UNIT;
+  if (success)
+  {
+    return static_cast<ChargeAmount>(optimiser_construction_impact + COMPILE_CONST_COEF()) *
+           CHARGE_UNIT;
+  }
+  else
+  {
+    return infinite_charge("Not yet implement");
+  }
 }
 
 ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,
@@ -290,8 +303,8 @@ ChargeAmount ModelEstimator::Evaluate()
 
 ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 {
-  SizeType     batch_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
-  ChargeAmount estimate   = static_cast<ChargeAmount>(state_.forward_pass_cost * batch_size);
+  SizeType batch_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
+  auto     estimate   = static_cast<ChargeAmount>(state_.forward_pass_cost * batch_size);
   estimate += static_cast<ChargeAmount>(static_cast<DataType>(batch_size * state_.ops_count) *
                                         PREDICT_BATCH_LAYER_COEF());
   estimate += static_cast<ChargeAmount>(PREDICT_CONST_COEF());

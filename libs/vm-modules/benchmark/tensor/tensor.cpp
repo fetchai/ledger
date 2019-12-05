@@ -73,27 +73,27 @@ Ptr<fetch::vm_modules::math::VMTensor> CreateTensor(std::shared_ptr<VM> &       
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(shape);
 }
 
-    struct BM_Tensor_config
+struct BM_Tensor_config
+{
+  using SizeType = fetch::math::SizeType;
+
+  explicit BM_Tensor_config(::benchmark::State const &state)
+  {
+    SizeType size_len = static_cast<SizeType>(state.range(0));
+
+    shape.reserve(size_len);
+    for (SizeType i{0}; i < size_len; ++i)
     {
-        using SizeType   = fetch::math::SizeType;
+      shape.emplace_back(static_cast<SizeType>(state.range(1 + i)));
+    }
+  }
 
-        explicit BM_Tensor_config(::benchmark::State const &state)
-        {
-          SizeType size_len = static_cast<SizeType>(state.range(0));
+  std::vector<SizeType> shape;  // layers input/output sizes
+};
 
-          shape.reserve(size_len);
-          for (SizeType i{0}; i < size_len; ++i)
-          {
-            shape.emplace_back(static_cast<SizeType>(state.range(1 + i)));
-          }
-        }
-
-        std::vector<SizeType> shape;        // layers input/output sizes
-    };
-/*
 void BM_Construct(::benchmark::State &state)
 {
-  using VMPtr      = std::shared_ptr<VM>;
+  using VMPtr = std::shared_ptr<VM>;
 
   // Get args form state
   BM_Tensor_config config{state};
@@ -185,342 +185,339 @@ BENCHMARK(BM_Construct)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicr
 BENCHMARK(BM_Construct)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 
-    void BM_Fill(::benchmark::State &state)
+void BM_Fill(::benchmark::State &state)
+{
+  using VMPtr    = std::shared_ptr<VM>;
+  using DataType = fetch::vm_modules::math::DataType;
+
+  // Get args form state
+  BM_Tensor_config config{state};
+
+  state.counters["PaddedSize"] =
+      static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    VMPtr vm;
+    SetUp(vm);
+
+    DataType val;
+    auto     data = CreateTensor(vm, config.shape);
+
+    state.ResumeTiming();
+    data->Fill(val);
+  }
+}
+
+BENCHMARK(BM_Fill)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Fill)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Fill)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Fill)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Fill)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Fill)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Fill)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Fill)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Fill)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Fill)->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+
+struct BM_Reshape_config
+{
+  using SizeType = fetch::math::SizeType;
+
+  explicit BM_Reshape_config(::benchmark::State const &state)
+  {
+    SizeType size_len = static_cast<SizeType>(state.range(0));
+
+    shape_from.reserve(size_len);
+    for (SizeType i{0}; i < size_len; ++i)
     {
-      using VMPtr      = std::shared_ptr<VM>;
-      using DataType   = fetch::vm_modules::math::DataType;
-
-      // Get args form state
-      BM_Tensor_config config{state};
-
-      state.counters["PaddedSize"] =
-              static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
-
-      for (auto _ : state)
-      {
-        state.PauseTiming();
-        VMPtr vm;
-        SetUp(vm);
-
-        DataType val;
-        auto data = CreateTensor(vm, config.shape);
-
-        state.ResumeTiming();
-        data->Fill(val);
-      }
+      shape_from.emplace_back(static_cast<SizeType>(state.range(1 + i)));
     }
 
-    BENCHMARK(BM_Fill)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
-
-    BENCHMARK(BM_Fill)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
-
-    BENCHMARK(BM_Fill)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
-
-    BENCHMARK(BM_Fill)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
-
-    BENCHMARK(BM_Fill)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
-
-    BENCHMARK(BM_Fill)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
-
-    BENCHMARK(BM_Fill)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
-
-    BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
-
-    BENCHMARK(BM_Fill)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-
-    BENCHMARK(BM_Fill)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-
-    BENCHMARK(BM_Fill)->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Fill)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-
-    struct BM_Reshape_config
+    shape_to.reserve(size_len);
+    for (SizeType i{0}; i < size_len; ++i)
     {
-        using SizeType   = fetch::math::SizeType;
+      shape_to.emplace_back(static_cast<SizeType>(state.range(1 + size_len + i)));
+    }
+  }
 
-        explicit BM_Reshape_config(::benchmark::State const &state)
-        {
-          SizeType size_len = static_cast<SizeType>(state.range(0));
+  std::vector<SizeType> shape_from;  // layers input/output sizes
+  std::vector<SizeType> shape_to;    // layers input/output sizes
+};
 
-          shape_from.reserve(size_len);
-          for (SizeType i{0}; i < size_len; ++i)
-          {
-            shape_from.emplace_back(static_cast<SizeType>(state.range(1 + i)));
-          }
+void BM_Reshape(::benchmark::State &state)
+{
+  using VMPtr = std::shared_ptr<VM>;
 
-          shape_to.reserve(size_len);
-          for (SizeType i{0}; i < size_len; ++i)
-          {
-            shape_to.emplace_back(static_cast<SizeType>(state.range(1 + size_len + i)));
-          }
-        }
+  // Get args form state
+  BM_Reshape_config config{state};
 
-        std::vector<SizeType> shape_from;        // layers input/output sizes
-        std::vector<SizeType> shape_to;        // layers input/output sizes
-    };
+  state.counters["PaddedSizeFrom"] =
+      static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape_from));
 
-    void BM_Reshape(::benchmark::State &state)
+  state.counters["SizeFrom"] =
+      static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape_from));
+
+  state.counters["PaddedSizeTo"] =
+      static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape_to));
+
+  state.counters["SizeTo"] =
+      static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape_to));
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    VMPtr vm;
+    SetUp(vm);
+
+    auto data      = CreateTensor(vm, config.shape_from);
+    auto new_shape = CreateArray(vm, config.shape_to);
+
+    state.ResumeTiming();
+    data->Reshape(new_shape);
+  }
+}
+
+BENCHMARK(BM_Reshape)->Args({3, 10, 1, 1, 1, 10, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 10, 1, 1, 1, 1, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1, 10, 1, 10, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1, 10, 1, 1, 1, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1, 1, 10, 10, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1, 1, 10, 1, 10, 1})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Reshape)->Args({3, 1000000, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1000000, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1, 1000000, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1, 1000000, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1, 1, 1000000, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1, 1, 1000000, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Reshape)->Args({3, 1, 1000, 1000, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1, 1000, 1000, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1000, 1, 1000, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1000, 1, 1000, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1000, 1000, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1000, 1000, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+
+// Same shape reshape
+BENCHMARK(BM_Reshape)->Args({3, 100, 100, 100, 100, 100, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1000000, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1, 1000000, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1, 1, 1000000, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Reshape)->Args({3, 1, 1000, 1000, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1000, 1, 1000, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)->Args({3, 1000, 1000, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Reshape)->Args({3, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Reshape)
+    ->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})
+    ->Unit(::benchmark::kMicrosecond);
+
+void BM_Transpose(::benchmark::State &state)
+{
+  using VMPtr = std::shared_ptr<VM>;
+
+  // Get args form state
+  BM_Tensor_config config{state};
+
+  state.counters["PaddedSizeBefore"] =
+      static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
+
+  state.counters["PaddedSizeAfter"] = static_cast<double>(
+      fetch::math::Tensor<float>::PaddedSizeFromShape({config.shape.at(1), config.shape.at(0)}));
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    VMPtr vm;
+    SetUp(vm);
+
+    auto data = CreateTensor(vm, config.shape);
+
+    state.ResumeTiming();
+    data->Transpose();
+  }
+}
+
+BENCHMARK(BM_Transpose)->Args({2, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 1, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 1, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 1, 10000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 1, 10000000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Transpose)->Args({2, 10, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 100, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 1000, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 100, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 10000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 1000, 10000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 10000, 10000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Transpose)->Args({2, 10, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 100, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 10000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Transpose)->Args({2, 10000000, 1})->Unit(::benchmark::kMicrosecond);
+
+struct BM_At_config
+{
+  using SizeType = fetch::math::SizeType;
+
+  explicit BM_At_config(::benchmark::State const &state)
+  {
+    SizeType size_len = static_cast<SizeType>(state.range(0));
+
+    shape.reserve(size_len);
+    for (SizeType i{0}; i < size_len; ++i)
     {
-      using VMPtr      = std::shared_ptr<VM>;
-
-      // Get args form state
-      BM_Reshape_config config{state};
-
-      state.counters["PaddedSizeFrom"] =
-              static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape_from));
-
-        state.counters["SizeFrom"] =
-                static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape_from));
-
-        state.counters["PaddedSizeTo"] =
-              static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape_to));
-
-        state.counters["SizeTo"] =
-                static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape_to));
-
-        for (auto _ : state)
-      {
-        state.PauseTiming();
-        VMPtr vm;
-        SetUp(vm);
-
-        auto data = CreateTensor(vm, config.shape_from);
-        auto new_shape = CreateArray(vm,config.shape_to);
-
-        state.ResumeTiming();
-        data->Reshape(new_shape);
-      }
+      shape.emplace_back(static_cast<SizeType>(state.range(1 + i)));
     }
 
-    BENCHMARK(BM_Reshape)->Args({3, 10, 1, 1, 1, 10, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 10, 1, 1, 1, 1, 10})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1, 10, 1, 10, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1, 10, 1, 1, 1, 10})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1, 1, 10, 10, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1, 1, 10, 1, 10, 1})->Unit(::benchmark::kMicrosecond);
-
-
-    BENCHMARK(BM_Reshape)->Args({3, 1000000, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1000000, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1, 1000000, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1, 1000000, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1, 1, 1000000, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1, 1, 1000000, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-
-    BENCHMARK(BM_Reshape)->Args({3, 1, 1000,1000, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1, 1000,1000, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1000, 1,1000, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1000, 1,1000, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1000, 1000,1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1000, 1000,1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-
-    // Same shape reshape
-    BENCHMARK(BM_Reshape)->Args({3, 100, 100, 100, 100, 100, 100})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1000000, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1, 1000000, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1, 1, 1000000, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-
-    BENCHMARK(BM_Reshape)->Args({3, 1, 1000, 1000, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1000, 1, 1000, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({3, 1000, 1000, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-
-    BENCHMARK(BM_Reshape)->Args({3, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Reshape)->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-
-
-    void BM_Transpose(::benchmark::State &state)
+    indices.reserve(size_len);
+    for (SizeType i{0}; i < size_len; ++i)
     {
-        using VMPtr      = std::shared_ptr<VM>;
-
-        // Get args form state
-        BM_Tensor_config config{state};
-
-        state.counters["PaddedSizeBefore"] =
-                static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
-
-        state.counters["PaddedSizeAfter"] =
-                static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape({config.shape.at(1),config.shape.at(0)}));
-
-        for (auto _ : state)
-        {
-            state.PauseTiming();
-            VMPtr vm;
-            SetUp(vm);
-
-            auto data = CreateTensor(vm, config.shape);
-
-            state.ResumeTiming();
-            data->Transpose();
-        }
+      indices.emplace_back(static_cast<SizeType>(state.range(1 + size_len + i)));
     }
+  }
 
-    BENCHMARK(BM_Transpose)->Args({2, 1, 1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 1, 10})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 1, 100})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 1, 1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 1, 10000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 1, 10000000})->Unit(::benchmark::kMicrosecond);
+  std::vector<SizeType> shape;    // layers input/output sizes
+  std::vector<SizeType> indices;  // layers input/output sizes
+};
 
-    BENCHMARK(BM_Transpose)->Args({2, 10,100})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 100,10})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 1000,100})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 100,1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 10000,1000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 1000,10000})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 10000,10000})->Unit(::benchmark::kMicrosecond);
+void BM_At(::benchmark::State &state)
+{
+  using VMPtr = std::shared_ptr<VM>;
 
-    BENCHMARK(BM_Transpose)->Args({2, 10,1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 100,1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 1000,1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 10000,1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 100000,1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 1000000,1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_Transpose)->Args({2, 10000000,1})->Unit(::benchmark::kMicrosecond);
-*/
+  // Get args form state
+  BM_At_config config{state};
 
-    struct BM_At_config
+  state.counters["PaddedSizeFrom"] =
+      static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
+
+  state.counters["SizeFrom"] =
+      static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape));
+
+  VMPtr vm;
+  SetUp(vm);
+
+  auto data      = CreateTensor(vm, config.shape);
+  auto new_shape = CreateArray(vm, config.indices);
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+
+    switch (config.shape.size())
     {
-        using SizeType   = fetch::math::SizeType;
+    case 1:
+      state.ResumeTiming();
+      data->At(config.indices.at(0));
+      state.PauseTiming();
+      break;
 
-        explicit BM_At_config(::benchmark::State const &state)
-        {
-            SizeType size_len = static_cast<SizeType>(state.range(0));
+    case 2:
+      state.ResumeTiming();
+      data->At(config.indices.at(0), config.indices.at(1));
+      state.PauseTiming();
+      break;
 
-            shape.reserve(size_len);
-            for (SizeType i{0}; i < size_len; ++i)
-            {
-                shape.emplace_back(static_cast<SizeType>(state.range(1 + i)));
-            }
+    case 3:
+      state.ResumeTiming();
+      data->At(config.indices.at(0), config.indices.at(1), config.indices.at(2));
+      state.PauseTiming();
+      break;
 
-            indices.reserve(size_len);
-            for (SizeType i{0}; i < size_len; ++i)
-            {
-                indices.emplace_back(static_cast<SizeType>(state.range(1 + size_len + i)));
-            }
-        }
-
-        std::vector<SizeType> shape;        // layers input/output sizes
-        std::vector<SizeType> indices;        // layers input/output sizes
-    };
-
-    void BM_At(::benchmark::State &state)
-    {
-        using VMPtr      = std::shared_ptr<VM>;
-
-        // Get args form state
-        BM_At_config config{state};
-
-        state.counters["PaddedSizeFrom"] =
-                static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
-
-        state.counters["SizeFrom"] =
-                static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape));
-
-        VMPtr vm;
-        SetUp(vm);
-
-        auto data = CreateTensor(vm, config.shape);
-        auto new_shape = CreateArray(vm,config.indices);
-
-        for (auto _ : state)
-        {
-            state.PauseTiming();
-
-            switch(config.shape.size())
-            {
-                case 1:
-                    state.ResumeTiming();
-                    data->At(config.indices.at(0));
-                    state.PauseTiming();
-                    break;
-
-                case 2:
-                    state.ResumeTiming();
-                    data->At(config.indices.at(0),config.indices.at(1));
-                    state.PauseTiming();
-                    break;
-
-                case 3:
-                    state.ResumeTiming();
-                    data->At(config.indices.at(0),config.indices.at(1),config.indices.at(2));
-                    state.PauseTiming();
-                    break;
-
-                case 4:
-                    state.ResumeTiming();
-                    data->At(config.indices.at(0),config.indices.at(1),config.indices.at(2),config.indices.at(3));
-                    state.PauseTiming();
-                    break;
-
-            }
-        }
+    case 4:
+      state.ResumeTiming();
+      data->At(config.indices.at(0), config.indices.at(1), config.indices.at(2),
+               config.indices.at(3));
+      state.PauseTiming();
+      break;
     }
+  }
+}
 
-    BENCHMARK(BM_At)->Args({4, 30, 30, 30,30, 1,1,1,1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_At)->Args({4, 30, 30, 30,30, 29,1,1,1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_At)->Args({4, 30, 30, 30,30, 1,29,1,1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_At)->Args({4, 30, 30, 30,30, 1,1,29,1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_At)->Args({4, 30, 30, 30,30, 1,1,1,29})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_At)->Args({4, 30, 30, 30,30, 29,29,29,29})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_At)->Args({4, 30, 30, 30, 30, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_At)->Args({4, 30, 30, 30, 30, 29, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_At)->Args({4, 30, 30, 30, 30, 1, 29, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_At)->Args({4, 30, 30, 30, 30, 1, 1, 29, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_At)->Args({4, 30, 30, 30, 30, 1, 1, 1, 29})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_At)->Args({4, 30, 30, 30, 30, 29, 29, 29, 29})->Unit(::benchmark::kMicrosecond);
 
-    BENCHMARK(BM_At)->Args({3, 100, 100, 100, 1,1,1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_At)->Args({3, 100, 100, 100, 99,1,1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_At)->Args({3, 100, 100, 100, 1,99,1})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_At)->Args({3, 100, 100, 100, 1,1,99})->Unit(::benchmark::kMicrosecond);
-    BENCHMARK(BM_At)->Args({3, 100, 100, 100, 99,99,99})->Unit(::benchmark::kMicrosecond);
-
-
+BENCHMARK(BM_At)->Args({3, 100, 100, 100, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_At)->Args({3, 100, 100, 100, 99, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_At)->Args({3, 100, 100, 100, 1, 99, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_At)->Args({3, 100, 100, 100, 1, 1, 99})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_At)->Args({3, 100, 100, 100, 99, 99, 99})->Unit(::benchmark::kMicrosecond);
 
 }  // namespace tensor
 }  // namespace ml

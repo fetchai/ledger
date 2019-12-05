@@ -17,26 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/work_queue.hpp"
+#include "ledger/fees/chargeable.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class SynergeticExecutorInterface
+class StateSentinelAdapter;
+
+class StorageFee : public Chargeable
 {
 public:
-  using ConstByteArray = byte_array::ConstByteArray;
-  using ProblemData    = std::vector<ConstByteArray>;
-
   // Construction / Destruction
-  SynergeticExecutorInterface()          = default;
-  virtual ~SynergeticExecutorInterface() = default;
+  explicit StorageFee(StateSentinelAdapter &storage_adapter);
+  StorageFee(StorageFee const &) = delete;
+  StorageFee(StorageFee &&)      = delete;
+  ~StorageFee() override         = default;
 
-  /// @name Executor Interface
-  /// @{
-  virtual void Verify(WorkQueue &solutions, ProblemData const &problem_data, std::size_t num_lanes,
-                      chain::Address const &miner) = 0;
-  /// @}
+  uint64_t CalculateFee() const override;
+
+  // Operators
+  StorageFee &operator=(StorageFee const &) = delete;
+  StorageFee &operator=(StorageFee &&) = delete;
+
+private:
+  StateSentinelAdapter &storage_adapter_;
 };
 
 }  // namespace ledger
