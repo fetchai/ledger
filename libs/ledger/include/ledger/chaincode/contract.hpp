@@ -21,6 +21,7 @@
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/fees/chargeable.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -48,7 +49,7 @@ namespace ledger {
 /**
  * Contract - Base class for all smart contract and chain code instances
  */
-class Contract
+class Contract : public Chargeable
 {
 public:
   enum class Status
@@ -83,7 +84,7 @@ public:
   Contract()                 = default;
   Contract(Contract const &) = delete;
   Contract(Contract &&)      = delete;
-  virtual ~Contract()        = default;
+  ~Contract() override       = default;
 
   /// @name Contract Lifecycle Handlers
   /// @{
@@ -100,7 +101,7 @@ public:
   TransactionHandlerMap const &transaction_handlers() const;
   /// @}
 
-  virtual uint64_t CalculateFee() const
+  uint64_t CalculateFee() const override
   {
     return 0;
   }
