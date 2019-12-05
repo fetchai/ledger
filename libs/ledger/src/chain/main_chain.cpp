@@ -40,7 +40,6 @@
 #include <string>
 #include <utility>
 
-using fetch::byte_array::ToBase64;
 using fetch::byte_array::ToHex;
 using fetch::generics::MilliTimer;
 

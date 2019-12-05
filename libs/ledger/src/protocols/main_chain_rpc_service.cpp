@@ -379,6 +379,8 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
         {
           FETCH_LOG_WARN(LOGGING_NAME,
                          "Received empty block response when forward syncing the chain!");
+          state_machine_->Delay(std::chrono::seconds{8});
+          next_state = GetInitialState(mode_);
         }
       }
       else
