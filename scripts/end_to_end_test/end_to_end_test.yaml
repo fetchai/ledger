@@ -269,18 +269,33 @@
 #  - sleep: 5
 #  - run_python_test: { "script": ".smart_contract_tests.c2c_nested_call_test" }
 #...
+#
+#---
+#test_description: >
+#  Contract-to-contract call which accesses the Context
+#
+#setup_conditions:
+#  test_name: "c2c_with_context_test"
+#  number_of_nodes: 1
+#  mining_nodes: [0]
+#  max_test_time: 60
+#
+#steps:
+#  - sleep: 5
+#  - run_python_test: { "script": ".smart_contract_tests.c2c_with_context_test" }
+#...
 
 ---
 test_description: >
-  Contract-to-contract call which accesses the Context
+  Contract-to-contract call which checks the contract's balance
 
 setup_conditions:
-  test_name: "c2c_with_context_test"
+  test_name: "c2c_balance"
   number_of_nodes: 1
   mining_nodes: [0]
   max_test_time: 60
 
 steps:
   - sleep: 5
-  - run_python_test: { "script": ".smart_contract_tests.c2c_with_context_test" }
+  - run_python_test: { "script": ".smart_contract_tests.c2c_balance" }
 ...

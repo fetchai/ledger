@@ -502,7 +502,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
 
   vm::ContractInvocationHandler contract_invocation_handler;
   contract_invocation_handler =
-      [this, &contract_invocation_handler](
+      [this, &contract_invocation_handler, tx](
           vm::VM *vm, std::string const &identity, Executable::Contract const & /* contract */,
           Executable::Function const &function, fetch::vm::VariantArray parameters,
           std::string &error, vm::Variant &output) -> bool {
@@ -518,8 +518,8 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
     }
 
     Identifier     id;
-    chain::Address contract_address;
-    if (!id.Parse(identity) || !chain::Address::Parse(id.name(), contract_address))
+    chain::Address called_contract_address;
+    if (!id.Parse(identity) || !chain::Address::Parse(id.name(), called_contract_address))
     {
       error = "Invalid contract address format";
 
@@ -537,11 +537,20 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
       return false;
     }
 
-    module_->CreateFreeFunction(
-        "getContext", [this](vm::VM *) -> vm_modules::ledger::ContextPtr { return context_; });
+    auto &module = *(loaded_contract->module_);
 
-    vm::Compiler compiler{module_.get()};
-    vm::VM       vm2{module_.get()};
+    vm_modules::ledger::BindBalanceFunction(module, *loaded_contract);
+    vm_modules::ledger::BindTransferFunction(module, *loaded_contract);
+    module.CreateFreeFunction("getContext",
+                              [&loaded_contract](vm::VM *) -> vm_modules::ledger::ContextPtr {
+                                return loaded_contract->context_;
+                              });
+
+    vm::VM vm2{&module};
+    loaded_contract->context_ =
+        vm_modules::ledger::Context::Factory(&vm2, tx, context().block_index);
+
+    vm::Compiler compiler{&module};
 
     std::vector<std::string> errors{};
 
@@ -549,33 +558,32 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
     vm2.SetContractInvocationHandler(contract_invocation_handler);
     vm2.AttachOutputDevice(fetch::vm::VM::STDOUT, vm->GetOutputDevice(fetch::vm::VM::STDOUT));
 
+    // Ensure the new VM breaks when charge limit is reached
+    auto const reference_charge = vm->GetChargeTotal();
     vm2.SetChargeLimit(vm->GetChargeLimit());
-    vm2.IncreaseChargeTotal(vm->GetChargeTotal());
+    vm2.IncreaseChargeTotal(reference_charge);
 
     vm::ParameterPack param_pack{vm2.registered_types(), std::move(parameters)};
 
-    ContractContext         ctx{c.token_contract, contract_address, c.storage, c.state_adapter,
+    ContractContext ctx{c.token_contract, called_contract_address, c.storage, c.state_adapter,
                         c.block_index};
     ContractContextAttacher raii{*loaded_contract, ctx};
     c.state_adapter->PushContext(identity);
 
-    if (!vm2.Execute(*loaded_contract->executable(), function.name, error, output, param_pack))
+    bool const success =
+        vm2.Execute(*loaded_contract->executable(), function.name, error, output, param_pack);
+    if (!success)
     {
       std::ostringstream ss;
       ss << "Execution of function " << function.name << " from contract " << identity
          << " failed with error \"" << error << "\"";
       error = ss.str();
-
-      c.state_adapter->PopContext();
-      vm->IncreaseChargeTotal(vm2.GetChargeTotal() - vm->GetChargeTotal());
-
-      return false;
     }
 
     c.state_adapter->PopContext();
-    vm->IncreaseChargeTotal(vm2.GetChargeTotal() - vm->GetChargeTotal());
+    vm->IncreaseChargeTotal(vm2.GetChargeTotal() - reference_charge);
 
-    return true;
+    return success;
   };
 
   vm->SetContractInvocationHandler(contract_invocation_handler);
@@ -621,7 +629,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
 
   if (!vm->Execute(*executable_, name, error, output, params))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
+    FETCH_LOG_WARN(LOGGING_NAME, "Runtime error: ", error);
     status = Status::FAILED;
   }
 
@@ -684,7 +692,7 @@ Contract::Result SmartContract::InvokeInit(chain::Address const &    owner,
 
   if (!vm->Execute(*executable_, init_fn_name_, error, output, params))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
+    FETCH_LOG_WARN(LOGGING_NAME, "Runtime error: ", error);
     status = Status::FAILED;
   }
 
