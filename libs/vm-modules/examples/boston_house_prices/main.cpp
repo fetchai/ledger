@@ -51,7 +51,8 @@ int main(int argc, char **argv)
   std::ifstream file(pp.GetArg(1), std::ios::binary);
   if (file.fail())
   {
-    throw std::runtime_error("Cannot open file " + std::string(pp.GetArg(1)));
+    std::cout << "Cannot open file " << std::string(pp.GetArg(1)) << std::endl;
+    return -1;
   }
   std::ostringstream ss;
   ss << file.rdbuf();
