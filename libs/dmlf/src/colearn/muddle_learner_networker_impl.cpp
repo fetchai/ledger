@@ -51,7 +51,9 @@ void MuddleLearnerNetworkerImpl::SetShuffleAlgorithm(
 
 void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
 {
-  default_uri_.owner("default_owner").algorithm_class("default_algorithm").update_type("default_updatetype");
+  default_uri_.owner("default_owner")
+      .algorithm_class("default_algorithm")
+      .update_type("default_updatetype");
   mud_           = std::move(mud);
   update_store_  = std::move(update_store);
   taskpool_      = std::make_shared<Taskpool>();
@@ -203,15 +205,15 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(ColearnURI const &uri_obj, Byte
 void MuddleLearnerNetworkerImpl::PushUpdateBytes(ColearnURI const &uri_obj, Bytes const &update,
                                                  const Peers &peers, double broadcast_proportion)
 {
-  auto random_factor   = randomiser_.GetNew();
+  auto random_factor = randomiser_.GetNew();
   FETCH_LOG_INFO(LOGGING_NAME, "PushUpdateBytes(2) uri=", uri_obj.ToString());
   broadcast_proportion = std::max(0.0, std::min(1.0, broadcast_proportion));
   for (auto const &peer : peers)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Creating sender for ", uri_obj.ToString(), " to target ",
                    fetch::byte_array::ToBase64(peer));
-    auto task = std::make_shared<MuddleOutboundUpdateTask>(peer, uri_obj.ToString(), update, client_,
-                                                           broadcast_proportion, random_factor);
+    auto task = std::make_shared<MuddleOutboundUpdateTask>(
+        peer, uri_obj.ToString(), update, client_, broadcast_proportion, random_factor);
     taskpool_->submit(task);
   }
 }
@@ -260,17 +262,16 @@ MuddleLearnerNetworkerImpl::ConstUpdatePtr MuddleLearnerNetworkerImpl::GetUpdate
   return update_store_->GetUpdate(algo, type, criteria);
 }
 
-uint64_t MuddleLearnerNetworkerImpl::ProcessUpdate(std::string const &uri_str,
-                                                   std::string const &source,
+uint64_t MuddleLearnerNetworkerImpl::ProcessUpdate(std::string const &        uri_str,
+                                                   std::string const &        source,
                                                    byte_array::ConstByteArray update_bytes,
                                                    double proportion, double random_factor)
 {
   double whole;
   if (std::modf(randomising_offset_ + random_factor, &whole) > proportion)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "DISCARDING ", uri_str,
-                   " because ", randomising_offset_,
-                   "+", random_factor, ">", proportion);
+    FETCH_LOG_INFO(LOGGING_NAME, "DISCARDING ", uri_str, " because ", randomising_offset_, "+",
+                   random_factor, ">", proportion);
     return 0;
   }
 
@@ -285,8 +286,8 @@ uint64_t MuddleLearnerNetworkerImpl::ProcessUpdate(std::string const &uri_str,
 }
 
 uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext const &context,
-                                                          const std::string &uri_str,
-                                                          byte_array::ConstByteArray update_bytes,
+                                                          const std::string &         uri_str,
+                                                          byte_array::ConstByteArray  update_bytes,
                                                           double proportion, double random_factor)
 {
   auto source = std::string(fetch::byte_array::ToBase64(context.sender_address));

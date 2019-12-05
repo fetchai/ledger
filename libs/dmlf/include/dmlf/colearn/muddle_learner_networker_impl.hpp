@@ -173,19 +173,21 @@ public:
     supplied_peers_.clear();
   }
 
-  ColearnURI &default_uri() { return default_uri_; }
+  ColearnURI &default_uri()
+  {
+    return default_uri_;
+  }
 
 protected:
   friend class MuddleOutboundAnnounceTask;
-  void     Setup(MuddlePtr mud, StorePtr update_store);
+  void Setup(MuddlePtr mud, StorePtr update_store);
 
-  uint64_t ProcessUpdate(std::string const &uri_str,
-                         std::string const &source,
-                         byte_array::ConstByteArray update_bytes,
-                         double proportion, double random_factor);
+  uint64_t ProcessUpdate(std::string const &uri_str, std::string const &source,
+                         byte_array::ConstByteArray update_bytes, double proportion,
+                         double random_factor);
 
-  void     Setup(std::string const &priv, unsigned short int port,
-                 std::unordered_set<std::string> const &remotes);
+  void Setup(std::string const &priv, unsigned short int port,
+             std::unordered_set<std::string> const &remotes);
 
 private:
   std::shared_ptr<Taskpool>   taskpool_;

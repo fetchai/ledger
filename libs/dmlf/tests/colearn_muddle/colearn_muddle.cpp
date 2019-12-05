@@ -95,7 +95,7 @@ public:
     interface_typed->RegisterUpdateType<UpdateTypeForTesting>("update");
     interface_typed->RegisterUpdateType<fetch::dmlf::deprecated_Update<std::string>>("vocab");
 
-    actual -> default_uri().algorithm_class(ALGO_NAME);
+    actual->default_uri().algorithm_class(ALGO_NAME);
   }
 
   void PretendToLearn()

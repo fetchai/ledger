@@ -30,7 +30,7 @@ namespace colearn {
 class ColearnURI
 {
 public:
-  ColearnURI() = default;
+  ColearnURI()                      = default;
   ColearnURI(ColearnURI const &src) = default;
   explicit ColearnURI(ColearnUpdate const &update);
 
