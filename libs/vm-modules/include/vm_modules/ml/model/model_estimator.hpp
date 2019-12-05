@@ -19,7 +19,7 @@
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/common.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 
 namespace fetch {
 

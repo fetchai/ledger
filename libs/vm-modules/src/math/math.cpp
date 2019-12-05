@@ -25,7 +25,7 @@
 #include "vm_modules/math/random.hpp"
 #include "vm_modules/math/read_csv.hpp"
 #include "vm_modules/math/sqrt.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/trigonometry.hpp"
 
 using namespace fetch::vm;

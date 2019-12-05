@@ -19,7 +19,7 @@
 
 #include "vm/array.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 
 #include <utility>
 

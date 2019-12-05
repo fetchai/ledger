@@ -21,6 +21,7 @@
 #include "vm/common.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -43,7 +44,7 @@ namespace math {
 class TensorEstimator
 {
 public:
-  using VMObjectType = VMTensor;
+  using VMObjectType = fetch::vm_modules::math::VMTensor;
   using ChargeAmount = fetch::vm::ChargeAmount;
 
   explicit TensorEstimator(VMObjectType &tensor);

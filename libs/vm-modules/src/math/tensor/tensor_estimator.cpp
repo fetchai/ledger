@@ -20,7 +20,7 @@
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
-//#include "vm_modules/math/tensor.hpp"
+//#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/tensor_estimator.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/use_estimator.hpp"

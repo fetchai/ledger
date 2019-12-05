@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/module.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/ml.hpp"
