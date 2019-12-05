@@ -378,7 +378,7 @@ public:
             HtmlTree list_item("li");
             if (view.method == Method::GET && view.route.path_parameters().empty())
             {
-              // it's a GET to request and no parameters to bind from uri — a clickable link
+              // it's a GET endpoint and no parameters to bind from uri — a clickable link
               list_item.emplace_back("a", path, HtmlTree::Params{{"href", path}});
             }
             else
@@ -400,12 +400,12 @@ public:
           HtmlTree body;
           if (known_paths.empty())
           {
-            body.SetContent("<None>");
+            body.SetContent("&lt;None&gt;");
           }
           else
           {
             body.SetTag("ul");
-            for (auto const &known_path : known_paths)
+            for (auto &known_path : known_paths)
             {
               body.push_back(std::move(known_path.second));
             }
