@@ -79,6 +79,8 @@ public:
   /// @name Muddle Setup
   /// @{
 
+  virtual void SetPeerTableFile(std::string const &filename) = 0;
+
   /**
    * Start the muddle instance connecting to the initial set of peers and listing on the specified
    * set of ports

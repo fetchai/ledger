@@ -99,6 +99,9 @@ public:
     NetworkMode  network_mode{NetworkMode::PUBLIC_NETWORK};
     FeatureFlags features{};
 
+    std::string ihub_peer_cache{"peer_table.ihub.cache"};
+    std::string beacon_peer_cache{"peer_table.dkgn.cache"};
+
     uint32_t num_lanes() const
     {
       return 1u << log2_num_lanes;

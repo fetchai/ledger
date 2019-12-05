@@ -165,16 +165,24 @@ public:
 
   void Dump()
   {
+    if (filename_.empty())
+    {
+      return;
+    }
+
     std::fstream stream(filename_, std::ios::out | std::ios::binary | std::ios::trunc);
 
     // Dumping table to file.
-    serializers::LargeObjectSerializeHelper serializer{};
-    serializer << know_peers_;
+    if (stream)
+    {
+      serializers::LargeObjectSerializeHelper serializer{};
+      serializer << know_peers_;
 
-    auto buffer = serializer.data();
-    stream << buffer;
+      auto buffer = serializer.data();
+      stream << buffer;
 
-    stream.close();
+      stream.close();
+    }
   }
 
 private:

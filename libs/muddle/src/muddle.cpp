@@ -135,6 +135,11 @@ bool Muddle::Start(Peers const &peers, Ports const &ports)
   return Start(uris, ports);
 }
 
+void Muddle::SetPeerTableFile(std::string const &filename)
+{
+  peer_tracker_->SetCacheFile(filename);
+}
+
 /**
  * Start the muddle instance connecting to the initial set of peers and listing on the specified
  * set of ports
@@ -148,7 +153,6 @@ bool Muddle::Start(Uris const &peers, Ports const &ports)
   // Setting ports prior to starting as a fallback mechanism
   // for giving details of peer
   peer_tracker_->UpdateExternalPorts(ports);
-  peer_tracker_->SetCacheFile("peer_table.cache");  // TODO(tfr): Move to configuration
   peer_tracker_->Start();
 
   // Starting the router
