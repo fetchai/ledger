@@ -23,7 +23,8 @@
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
-#include "ledger/storage_unit/transient_object_store.hpp"
+#include "ledger/storage_unit/transaction_storage_engine.hpp"
+#include "ledger/storage_unit/transaction_store.hpp"
 
 #include "benchmark/benchmark.h"
 
@@ -33,14 +34,13 @@
 
 namespace {
 
-using fetch::storage::ResourceID;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
 using fetch::crypto::ECDSASigner;
+using fetch::ledger::TransactionStore;
+using fetch::ledger::TransactionStorageEngine;
 
-using TransientStore   = fetch::storage::TransientObjectStore<Transaction>;
-using TransactionStore = fetch::storage::ObjectStore<Transaction>;
-using TransactionList  = std::vector<TransactionBuilder::TransactionPtr>;
+using TransactionList = std::vector<TransactionBuilder::TransactionPtr>;
 
 constexpr uint32_t LOG2_NUM_LANES = 2;
 
@@ -58,7 +58,7 @@ void TxSubmitFixedLarge(benchmark::State &state)
   {
     for (auto const &tx : transactions)
     {
-      tx_store.Set(ResourceID{tx->digest()}, *tx);
+      tx_store.Add(*tx);
     }
   }
 }
@@ -78,7 +78,7 @@ void TxSubmitFixedSmall(benchmark::State &state)
   {
     for (auto const &tx : transactions)
     {
-      tx_store.Set(ResourceID{tx->digest()}, *tx);
+      tx_store.Add(*tx);
     }
   }
 }
@@ -98,7 +98,7 @@ void TxSubmitSingleLarge(benchmark::State &state)
   for (auto _ : state)
   {
     auto const &tx = transactions.at(tx_index++);
-    tx_store.Set(ResourceID{tx->digest()}, *tx);
+    tx_store.Add(*tx);
   }
 }
 
@@ -117,7 +117,7 @@ void TxSubmitSingleSmall(benchmark::State &state)
   for (auto _ : state)
   {
     auto const &tx = transactions.at(tx_index++);
-    tx_store.Set(ResourceID{tx->digest()}, *tx);
+    tx_store.Add(*tx);
   }
 }
 
@@ -126,7 +126,7 @@ void TxSubmitSingleSmallAlt(benchmark::State &state)
   ECDSASigner const signer;
 
   // create the transaction store
-  TransientStore tx_store{LOG2_NUM_LANES};
+  TransactionStorageEngine tx_store{LOG2_NUM_LANES};
   tx_store.New("transaction.db", "transaction_index.db", true);
 
   // create a whole series of transaction
@@ -136,7 +136,7 @@ void TxSubmitSingleSmallAlt(benchmark::State &state)
   for (auto _ : state)
   {
     auto const &tx = transactions.at(tx_index++);
-    tx_store.Set(ResourceID{tx->digest()}, *tx, false);
+    tx_store.Add(*tx, false);
   }
 }
 
@@ -145,7 +145,7 @@ void TransientStoreExpectedOperation(benchmark::State &state)
   ECDSASigner const signer;
 
   // create the transient store
-  TransientStore tx_store{LOG2_NUM_LANES};
+  TransactionStorageEngine tx_store{LOG2_NUM_LANES};
   tx_store.New("transaction.db", "transaction_index.db", true);
 
   Transaction dummy;
@@ -159,16 +159,16 @@ void TransientStoreExpectedOperation(benchmark::State &state)
 
     for (auto const &tx : transactions)
     {
-      ResourceID const rid{tx->digest()};
+      auto const &digest{tx->digest()};
 
       // Basic pattern for a transient store is to intake X transactions into the mempool,
       // then read some subset N of them (for block verification/packing), then commit
       // those to the underlying object store.
-      tx_store.Set(rid, *tx, false);
+      tx_store.Add(*tx, false);
 
       // also trigger the read from the store and the subsequent right schedule
-      tx_store.Get(rid, dummy);
-      tx_store.Confirm(rid);
+      tx_store.Get(digest, dummy);
+      tx_store.Confirm(digest);
 
       benchmark::DoNotOptimize(dummy);
     }
