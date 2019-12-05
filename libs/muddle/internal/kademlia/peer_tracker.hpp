@@ -266,7 +266,7 @@ protected:
 
   void SetCacheFile(std::string const &filename)
   {
-    peer_table_->SetCacheFile(filename);
+    peer_table_.SetCacheFile(filename);
   }
   /// @}
 

@@ -140,23 +140,14 @@ public:
       return;
     }
 
-    // Allocating buffer
-    stream.seekg(0, ios::end);
-    auto                       length = is.tellg();
-    byte_array::ConstByteArray buffer;
-    buffer.Resize(length);
-
-    // Reading
-    stream.seekg(0, ios::end);
-    stream.read(buffer.pointer(), buffer.size());
-    stream.close();
-
-    PeerMap peers;
+    // Loading buffer
+    byte_array::ConstByteArray buffer{stream};
+    PeerMap                    peers;
 
     // Deserializing
     try
     {
-      serializers::MsgPackSerializer serializer(buffer);
+      serializers::LargeObjectSerializeHelper serializer(buffer);
       serializer >> peers;
     }
     catch (std::exception const &e)
@@ -166,20 +157,23 @@ public:
     }
 
     // Loading
-    for (auto &pair : p)
+    for (auto &p : peers)
     {
-      ReportExistence(p.second, p.second.reporter);
+      ReportExistence(*p.second, p.second->last_reporter);
     }
   }
 
   void Dump()
   {
-    std::fstream stream(filename_, std::ios::out | std::ios::binary);
+    std::fstream stream(filename_, std::ios::out | std::ios::binary | std::ios::trunc);
 
-    serializers::MsgPackSerializer serializer{};
+    // Dumping table to file.
+    serializers::LargeObjectSerializeHelper serializer{};
     serializer << know_peers_;
+
     auto buffer = serializer.data();
-    stream.write(buffer.pointer(), buffer.size());
+    stream << buffer;
+
     stream.close();
   }
 

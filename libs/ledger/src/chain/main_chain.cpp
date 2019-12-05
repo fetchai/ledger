@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/main_chain.hpp"
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "chain/transaction_validity_period.hpp"
 #include "core/assert.hpp"
@@ -24,7 +25,6 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block_db_record.hpp"
-#include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/time_travelogue.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
@@ -100,11 +100,18 @@ MainChain::~MainChain()
 
   if (mode_ != Mode::IN_MEMORY_DB)
   {
-    std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
-    LargeObjectSerializeHelper buffer{};
-    buffer << bloom_filter_;
+    try
+    {
+      std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
+      LargeObjectSerializeHelper buffer{};
+      buffer << bloom_filter_;
 
-    out << buffer.data();
+      out << buffer.data();
+    }
+    catch (std::exception const &e)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to save Bloom filter to file, reason: ", e.what());
+    }
   }
 }
 
@@ -995,11 +1002,20 @@ void MainChain::RecoverFromFile(Mode mode)
 
     if (in.is_open())
     {
-      byte_array::ByteArray bloom_filter_data{in};
+      try
+      {
+        byte_array::ByteArray bloom_filter_data{in};
 
-      LargeObjectSerializeHelper buffer{bloom_filter_data};
+        LargeObjectSerializeHelper buffer{bloom_filter_data};
 
-      buffer >> bloom_filter_;
+        buffer >> bloom_filter_;
+      }
+      catch (std::exception const &e)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME,
+                        "Failed to load Bloom filter from storage! Reason: ", e.what());
+        Reset();
+      }
     }
   }
 

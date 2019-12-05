@@ -16,14 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "kademlia/peer_info.hpp"
+#include "kademlia/table.hpp"
 #include "muddle.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
-#include "network_helpers.hpp"
 #include "router.hpp"
 
 #include "gtest/gtest.h"
 using namespace fetch::muddle;
+using namespace fetch;
 
 Address FakeAddress(uint64_t i)
 {
@@ -53,14 +55,14 @@ TEST(Kademlia, TableRecovery)
 
   // Generating table
   {
-    KademliaTable table;
-    table.SetCacheFilename("test.peer_table");
+    KademliaTable table{FakeAddress(N + 1)};
+    table.SetCacheFile("test.peer_table");
 
     for (uint64_t i = 0; i < N; ++i)
     {
       auto info = GeneratePeerInfo(i);
       generated_info.push_back(info);
-      table.ReportExistence(info);
+      table.ReportExistence(info, FakeAddress(N + 1));
     }
 
     table.Dump();
@@ -68,8 +70,9 @@ TEST(Kademlia, TableRecovery)
 
   // Loading table
   {
-    KademliaTable table;
-    table.SetCacheFilename("test.peer_table");
+    KademliaTable table{FakeAddress(N + 1)};
+
+    table.SetCacheFile("test.peer_table");
     table.Load();
 
     EXPECT_EQ(table.size(), N);

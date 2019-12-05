@@ -148,6 +148,7 @@ bool Muddle::Start(Uris const &peers, Ports const &ports)
   // Setting ports prior to starting as a fallback mechanism
   // for giving details of peer
   peer_tracker_->UpdateExternalPorts(ports);
+  peer_tracker_->SetCacheFile("peer_table.cache");  // TODO(tfr): Move to configuration
   peer_tracker_->Start();
 
   // Starting the router
