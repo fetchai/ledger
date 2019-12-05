@@ -748,7 +748,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
       response["result"] = res->string();
       break;
     }
-    /* fall through */
+    /*FALLTHROUGH*/
   }
   default:
     if (output.IsPrimitive())
