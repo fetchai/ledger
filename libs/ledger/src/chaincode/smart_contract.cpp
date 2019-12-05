@@ -748,7 +748,11 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
       response["result"] = res->string();
       break;
     }
-    // Falls through.
+    else
+    {
+      response["result"] = variant::Variant::Null();
+    }
+    break;
   }
   default:
     if (output.IsPrimitive())
