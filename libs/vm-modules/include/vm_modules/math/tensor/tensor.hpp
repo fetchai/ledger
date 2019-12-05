@@ -20,8 +20,8 @@
 #include "math/tensor.hpp"
 #include "vm/common.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/type.hpp"
 #include "vm_modules/math/tensor/tensor_estimator.hpp"
+#include "vm_modules/math/type.hpp"
 
 #include <cstdint>
 #include <vector>

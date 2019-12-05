@@ -23,12 +23,12 @@
 
 namespace {
 
-using SizeType         = fetch::math::SizeType;
-using DataType         = fetch::vm_modules::math::DataType;
-using VmPtr            = fetch::vm::Ptr<fetch::vm::String>;
-//using VmModel          = fetch::vm_modules::ml::model::VMModel;
-//using VmModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
-//using DataType         = fetch::vm_modules::ml::model::ModelEstimator::DataType;
+using SizeType = fetch::math::SizeType;
+using DataType = fetch::vm_modules::math::DataType;
+using VmPtr    = fetch::vm::Ptr<fetch::vm::String>;
+// using VmModel          = fetch::vm_modules::ml::model::VMModel;
+// using VmModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
+// using DataType         = fetch::vm_modules::ml::model::ModelEstimator::DataType;
 
 class VMModelEstimatorTests : public ::testing::Test
 {
@@ -38,7 +38,7 @@ public:
 };
 
 //// sanity check that estimator behaves as intended
-//TEST_F(VMModelEstimatorTests, add_dense_layer_test)
+// TEST_F(VMModelEstimatorTests, add_dense_layer_test)
 //{
 //  std::string model_type = "sequential";
 //  std::string layer_type = "dense";
@@ -71,7 +71,7 @@ public:
 //}
 //
 //// sanity check that estimator behaves as intended
-//TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
+// TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
 //{
 //  std::string model_type      = "sequential";
 //  std::string layer_type      = "dense";
@@ -107,7 +107,7 @@ public:
 //}
 //
 //// sanity check that estimator behaves as intended
-//TEST_F(VMModelEstimatorTests, add_conv_layer_test)
+// TEST_F(VMModelEstimatorTests, add_conv_layer_test)
 //{
 //  std::string model_type = "sequential";
 //  std::string layer_type = "convolution1D";
@@ -156,7 +156,7 @@ public:
 //}
 //
 //// sanity check that estimator behaves as intended
-//TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
+// TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
 //{
 //  std::string model_type      = "sequential";
 //  std::string layer_type      = "convolution1D";
@@ -199,7 +199,8 @@ public:
 //
 //          EXPECT_TRUE(model_estimator.LayerAddConvActivation(vm_ptr_layer_type, output_channels,
 //                                                             input_channels, kernel_size,
-//                                                             stride_size, vm_ptr_activation_type) ==
+//                                                             stride_size, vm_ptr_activation_type)
+//                                                             ==
 //                      static_cast<ChargeAmount>(fetch::vm::CHARGE_INFINITY));
 //        }
 //      }
@@ -208,7 +209,7 @@ public:
 //}
 //
 //// sanity check that estimator behaves as intended
-//TEST_F(VMModelEstimatorTests, compile_sequential_test)
+// TEST_F(VMModelEstimatorTests, compile_sequential_test)
 //{
 //  std::string model_type = "sequential";
 //  std::string layer_type = "dense";
@@ -243,14 +244,16 @@ public:
 //      SizeType weights_size_sum = inputs * outputs + outputs;
 //
 //      model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs);
-//      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
-//      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
-//      weights_size_sum += inputs * outputs + outputs;
+//      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs,
+//      inputs}); weights_padded_size +=
+//      fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1}); weights_size_sum += inputs
+//      * outputs + outputs;
 //
 //      model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs);
-//      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
-//      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
-//      weights_size_sum += inputs * outputs + outputs;
+//      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs,
+//      inputs}); weights_padded_size +=
+//      fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1}); weights_size_sum += inputs
+//      * outputs + outputs;
 //
 //      DataType val = VmModelEstimator::ADAM_PADDED_WEIGHTS_SIZE_COEF() * weights_padded_size;
 //      val += VmModelEstimator::ADAM_WEIGHTS_SIZE_COEF() * weights_size_sum;
@@ -263,7 +266,7 @@ public:
 //}
 //
 //// sanity check that estimator behaves as intended
-//TEST_F(VMModelEstimatorTests, compile_simple_test)
+// TEST_F(VMModelEstimatorTests, compile_simple_test)
 //{
 //  std::string model_type = "regressor";
 //  std::string opt_type   = "adam";
@@ -289,7 +292,7 @@ public:
 //}
 //
 //// sanity check that estimator behaves as intended
-//TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
+// TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 //{
 //  std::string model_type      = "sequential";
 //  std::string layer_type      = "dense";
