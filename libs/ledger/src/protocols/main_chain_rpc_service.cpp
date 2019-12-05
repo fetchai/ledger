@@ -236,7 +236,6 @@ bool MainChainRpcService::ValidBlock(Block const &block, char const *action) con
 
 void MainChainRpcService::HandleChainResponse(Address const &address, BlockList blocks)
 {
-  // FETCH_LOG_INFO(LOGGING_NAME, "thing thing thing");
   // default expectations is that blocks are returned in reverse order, later-to-earlier
   HandleChainResponse(address, blocks.rbegin(), blocks.rend());
 }
@@ -248,8 +247,6 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
   std::size_t loose{0};
   std::size_t duplicate{0};
   std::size_t invalid{0};
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Handling chain response from peer. Size: ", end - begin);
 
   for (auto it = begin; it != end; ++it)
   {
@@ -329,8 +326,6 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
     current_peer_address_ = peer;
     Digest start          = chain_.GetHeaviestBlockHash();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "\n\ndigest start: ", start.ToHex());
-
     current_request_ = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
                                                        MainChainProtocol::TIME_TRAVEL, start);
 
@@ -362,8 +357,6 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
     {
       if (status == PromiseState::SUCCESS)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "successful request. deleteme");
-
         // the request was successful
         next_state = State::REQUEST_HEAVIEST_CHAIN;  // request succeeding chunk
 

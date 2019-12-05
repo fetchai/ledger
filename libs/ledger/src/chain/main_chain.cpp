@@ -639,10 +639,6 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
     if (!block)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToHex(current_hash));
-
-      FETCH_LOG_INFO(LOGGING_NAME, "thing thing thing!!");
-
-      // ERROR_BACKTRACE;
       throw std::runtime_error("Failed to look up block");
     }
     assert(block->block_number > 0 || block->IsGenesis());
@@ -698,7 +694,6 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToHex(current_hash),
                       " note, next hash: ", next_hash);
-      // ERROR_BACKTRACE;
       throw std::runtime_error("Failed to lookup block");
     }
   }
@@ -717,10 +712,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
       if (!block)
       {
         // there is no block such hashed neither in cache, nor in storage
-        FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block.: ", ToHex(current_hash));
-
-        // ERROR_BACKTRACE;
-
+        FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToHex(current_hash));
         throw std::runtime_error("Failed to lookup block");
       }
       // The block is in cache yet LookupBlock() failed.

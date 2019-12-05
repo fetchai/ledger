@@ -364,6 +364,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
       // determine if the chain code ran out of charge
       if (result.charge > current_tx_->charge_limit())
       {
+        // Cap the charge to their max limit in case of underpay
+        result.charge = current_tx_->charge_limit();
         result.status = Status::INSUFFICIENT_CHARGE;
         success       = false;
       }
