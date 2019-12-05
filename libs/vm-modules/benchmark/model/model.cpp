@@ -267,14 +267,14 @@ void BM_Predict(::benchmark::State &state)
 // activation_3,....
 
 // BOSTON
-BENCHMARK(BM_Predict)->Args({1, 4, 13, 10, 10, 1, true, true, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({10, 4, 13, 10, 10, 1, true, true, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({32, 4, 13, 10, 10, 1, true, true, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({10, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({32, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
 
 // MNIST
-BENCHMARK(BM_Predict)->Args({1, 3, 784, 10, 10, true, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({10, 3, 784, 10, 10, true, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({32, 3, 784, 10, 10, true, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({10, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({32, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Predict)
     ->Args({1, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
@@ -591,14 +591,14 @@ void BM_Fit(::benchmark::State &state)
 // activation_1,....
 
 // BOSTON
-BENCHMARK(BM_Fit)->Args({1, 1, 4, 13, 10, 10, 1, true, true, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10, 10, 4, 13, 10, 10, 1, true, true, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({32, 32, 4, 13, 10, 10, 1, true, true, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1, 1, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 10, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({32, 32, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
 
 // MNIST
-BENCHMARK(BM_Fit)->Args({1, 1, 3, 784, 10, 10, true, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({320, 32, 3, 784, 100, 10, true, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({3200, 32, 3, 784, 100, 10, true, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1, 1, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({320, 32, 3, 784, 100, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({3200, 32, 3, 784, 100, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Fit)->Args({10, 1, 2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)->Args({100, 1, 2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
