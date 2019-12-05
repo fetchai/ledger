@@ -174,6 +174,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   if (!ValidBlock(block, "new block"))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Gossiped block did not prove valid");
+    loose_blocks_seen_++;
     return;
   }
 
@@ -490,15 +491,13 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
   FETCH_UNUSED(current);
 
   MainChain::BlockPtr head_of_chain = chain_.GetHeaviestBlock();
-  uint64_t const      seconds_since_last_block =
-      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) -
-      head_of_chain->timestamp;
 
   // Assume if the chain is quite old that there are peers who have a heavier chain we haven't
   // heard about
-  if (seconds_since_last_block > 100 && head_of_chain->block_number != 0)
+  if (loose_blocks_seen_ > 5)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation appears to be lost - chain is old.");
+    loose_blocks_seen_ = 0;
+    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation appears to be lost - loose blocks detected");
     state_machine_->Delay(std::chrono::milliseconds{1000});
     next_state = State::REQUEST_HEAVIEST_CHAIN;
   }

@@ -171,11 +171,12 @@ private:
 
   /// @name State Machine Data
   /// @{
-  RpcClient       rpc_client_;
-  StateMachinePtr state_machine_;
-  Address         current_peer_address_;
-  BlockHash       current_missing_block_;
-  Promise         current_request_;
+  RpcClient             rpc_client_;
+  StateMachinePtr       state_machine_;
+  Address               current_peer_address_;
+  BlockHash             current_missing_block_;
+  Promise               current_request_;
+  std::atomic<uint16_t> loose_blocks_seen_{0};
   /// @}
 
   /// @name Telemetry
