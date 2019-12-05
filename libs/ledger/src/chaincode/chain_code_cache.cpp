@@ -30,44 +30,6 @@
 namespace fetch {
 namespace ledger {
 
-namespace {
-
-using byte_array::ConstByteArray;
-
-template <std::size_t MIN_LENGTH, std::size_t MAX_LENGTH>
-bool IsBase58(ConstByteArray const &value)
-{
-  char const *buffer = value.char_pointer();
-
-  if (!(value.size() >= MIN_LENGTH && value.size() <= MAX_LENGTH))
-  {
-    return false;
-  }
-
-  for (std::size_t i = 0; i < value.size(); ++i, ++buffer)
-  {
-    // 1-9A-HJ-NP-Za-km-z
-    bool const valid =
-        ((('1' <= *buffer) && ('9' >= *buffer)) || (('A' <= *buffer) && ('H' >= *buffer)) ||
-         (('J' <= *buffer) && ('N' >= *buffer)) || (('P' <= *buffer) && ('Z' >= *buffer)) ||
-         (('a' <= *buffer) && ('k' >= *buffer)) || (('m' <= *buffer) && ('z' >= *buffer)));
-
-    if (!valid)
-    {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-bool IsIdentity(ConstByteArray const &value)
-{
-  return IsBase58<48, 50>(value);
-}
-
-}  // namespace
-
 ChainCodeCache::ContractPtr ChainCodeCache::Lookup(ConstByteArray const &contract_id,
                                                    StorageInterface &    storage)
 {
@@ -77,9 +39,10 @@ ChainCodeCache::ContractPtr ChainCodeCache::Lookup(ConstByteArray const &contrac
   // if this fails create the contract
   if (!contract)
   {
-    if (IsIdentity(contract_id))
+    chain::Address address;
+    if (chain::Address::Parse(contract_id, address))
     {
-      contract = CreateSmartContract<SmartContract>(contract_id, storage);
+      contract = CreateSmartContract<SmartContract>(address.display(), storage);
     }
     else
     {
