@@ -46,7 +46,7 @@ int main(int argc, char **argv)
   std::string analogy_file    = parser.GetParam("analogies", "");
   std::string embeddings_file = parser.GetParam("embeddings", "");
 
-  Vocab vcb;
+  Vocab      vcb;
   TensorType embeddings;
 
   if (!vocab_file.empty())
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     GraphW2VLoader<TensorType> data_loader(window_size, negative_sample_size, freq_thresh,
                                            max_word_count);
     data_loader.BuildVocabAndData({utilities::ReadFile(data_file)}, min_count, false);
-    vcb = *(data_loader.GetVocab());
+    vcb        = *(data_loader.GetVocab());
     vocab_file = "/tmp/vocab.txt";
     vcb.Save(vocab_file);
     std::cout << "Saved vocab to vocab_file: " << vocab_file << std::endl;
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
   {
     std::cout << "Loading embeddings..." << std::endl;
     std::string file_string = utilities::ReadFile(embeddings_file);
-    embeddings = embeddings.FromString(file_string);
+    embeddings              = embeddings.FromString(file_string);
   }
   else if (!graph_file.empty())
   {
@@ -92,8 +92,8 @@ int main(int argc, char **argv)
         fetch::ml::utilities::LoadGraph<Graph<TensorType>>(graph_file);
 
     std::string skip_gram_name = "SkipGram";
-    embeddings                    = utilities::GetEmbeddings(*g_ptr, skip_gram_name);
-    embeddings_file = "/tmp/embeddings.txt";
+    embeddings                 = utilities::GetEmbeddings(*g_ptr, skip_gram_name);
+    embeddings_file            = "/tmp/embeddings.txt";
     std::ofstream t(embeddings_file);
     if (t.fail())
     {
@@ -111,9 +111,9 @@ int main(int argc, char **argv)
 
   if (vcb.GetVocabCount() != embeddings.shape()[1])
   {
-    throw exceptions::InvalidInput("Vocab size does not match embeddings size: " +
-    std::to_string(vcb.GetVocabCount()) + " " +
-    std::to_string(embeddings.shape()[1]));
+    throw exceptions::InvalidInput(
+        "Vocab size does not match embeddings size: " + std::to_string(vcb.GetVocabCount()) + " " +
+        std::to_string(embeddings.shape()[1]));
   }
 
   std::string knn_results = utilities::KNNTest(vcb, embeddings, "three", 20);
