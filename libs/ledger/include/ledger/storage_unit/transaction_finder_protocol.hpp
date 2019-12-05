@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/queue.hpp"
+#include "core/digest.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -55,19 +56,19 @@ public:
    * @param rid the Resource ID output
    * @return true if a Resource ID had been retrieved from the queue, false if the queue was empty
    */
-  bool Pop(storage::ResourceID &rid);
+  bool Pop(Digest &digest);
 
   /**
    * Store missing Tx IDs required by peer in a queue,
    *
    * @param rids The collection of resource IDs
    */
-  void IssueCallForMissingTxs(ResourceIDs const &rids);
+  void IssueCallForMissingTxs(DigestSet const &digests);
 
 private:
   using Self = TxFinderProtocol;
 
-  fetch::core::MPSCQueue<storage::ResourceID, 1u << 15u> resource_queue_;
+  fetch::core::MPSCQueue<Digest, 1u << 15u> resource_queue_;
 };
 
 }  // namespace ledger
