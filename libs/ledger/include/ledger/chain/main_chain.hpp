@@ -133,7 +133,6 @@ public:
   using BlockHashSet         = std::unordered_set<BlockHash>;
   using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
   using Travelogue           = TimeTravelogue<BlockPtr>;
-  using OnReset              = std::function<void(void)>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
   static constexpr uint64_t    UPPER_BOUND  = 5000ull;
@@ -159,8 +158,6 @@ public:
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();
-
-  void SetOnReset(OnReset on_reset);
 
   void Reset();
 
@@ -308,8 +305,6 @@ public:
   Mode          mode_{Mode::IN_MEMORY_DB};
   BlockStorePtr block_store_;  ///< Long term storage and backup
   std::fstream  head_store_;
-
-  OnReset on_reset_;  ///< Method to be called in Reset (e.g. resetting for block coordinator)
 
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory

@@ -173,8 +173,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , block_hash_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "block_hash", "The last seen block hash beginning")}
 {
-  // set OnReset callback in main chain
-  chain_.SetOnReset([this]() { PartialReset(); });
 
   // configure the state machine
   // clang-format off
@@ -1272,14 +1270,10 @@ char const *BlockCoordinator::ToString(ExecutionStatus state)
   return text;
 }
 
-void BlockCoordinator::PartialReset()
+void BlockCoordinator::Reset()
 {
   last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::ZERO_HASH; });
   execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
-}
-
-void BlockCoordinator::Reset()
-{
   chain_.Reset();
 }
 

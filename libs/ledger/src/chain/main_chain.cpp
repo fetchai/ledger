@@ -115,18 +115,8 @@ MainChain::~MainChain()
   }
 }
 
-void MainChain::SetOnReset(OnReset on_reset)
-{
-  on_reset_ = std::move(on_reset);
-}
-
 void MainChain::Reset()
 {
-  if (on_reset_)
-  {
-    on_reset_();
-  }
-
   FETCH_LOCK(lock_);
 
   tips_.clear();
