@@ -75,9 +75,8 @@ private:
     }
     catch (std::exception const &ex)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Failed to respond to time travel request for block hash: 0x", start.ToHex(),
-                     ". Error : ", ex.what());
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to respond to time travel request for block hash: 0x",
+                     start.ToHex(), ". Error : ", ex.what());
       return {};
     }
   }

@@ -501,12 +501,6 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
     state_machine_->Delay(std::chrono::milliseconds{1000});
     next_state = State::REQUEST_HEAVIEST_CHAIN;
   }
-  else if (chain_.HasMissingBlocks())
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation lost - chain has missing blocks");
-
-    next_state = State::SYNCHRONISING;
-  }
   else if (previous != State::SYNCHRONISED)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronised");

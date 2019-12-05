@@ -572,9 +572,9 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
     reactor_.Start();
 
     /// BLOCK EXECUTION & MINING
-
     execution_manager_->Start();
     tx_processor_.Start();
+    main_chain_service_->Start();
 
     /// INPUT INTERFACES
 
