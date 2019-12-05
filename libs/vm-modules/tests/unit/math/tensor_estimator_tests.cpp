@@ -26,9 +26,9 @@ namespace {
 using SizeType         = fetch::math::SizeType;
 using DataType         = fetch::vm_modules::math::DataType;
 using VmPtr            = fetch::vm::Ptr<fetch::vm::String>;
-using VmModel          = fetch::vm_modules::ml::model::VMModel;
-using VmModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
-using DataType         = fetch::vm_modules::ml::model::ModelEstimator::DataType;
+//using VmModel          = fetch::vm_modules::ml::model::VMModel;
+//using VmModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
+//using DataType         = fetch::vm_modules::ml::model::ModelEstimator::DataType;
 
 class VMModelEstimatorTests : public ::testing::Test
 {
