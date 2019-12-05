@@ -137,7 +137,7 @@ bool Muddle::Start(Peers const &peers, Ports const &ports)
 
 void Muddle::SetPeerTableFile(std::string const &filename)
 {
-  peer_tracker_->SetCacheFile("peer_table.cache");
+  peer_tracker_->SetCacheFile(filename);
 }
 
 /**
