@@ -521,20 +521,14 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   }
 
   // BEFORE the block coordinator starts its state set up special genesis
+  std::string const genesis_file_location = cfg_.genesis_file_location.empty() ? GENESIS_FILENAME : cfg_.genesis_file_location;
   FETCH_LOG_INFO(LOGGING_NAME,
-                 "Loading from genesis save file. Location: ", cfg_.genesis_file_location);
+                 "Loading from genesis save file. Location: ", genesis_file_location);
 
   GenesisFileCreator creator(block_coordinator_, *storage_, consensus_, external_identity_,
                              cfg_.db_prefix);
 
-  if (cfg_.genesis_file_location.empty())
-  {
-    startup_success &= creator.LoadFile(GENESIS_FILENAME);
-  }
-  else
-  {
-    startup_success &= creator.LoadFile(cfg_.genesis_file_location);
-  }
+  startup_success &= creator.LoadFile(genesis_file_location);
 
   if (!startup_success)
   {
