@@ -38,13 +38,13 @@ public:
 };
 
 // sanity check that estimator behaves as intended
-TEST_F(MathTensorEstimatorTests, tensor_min_test)
+TEST_F(MathTensorEstimatorTests, tensor_estimator_min_test)
 {
   fetch::vm::TypeId type_id = 0;
 
   SizeType min_dim_size = 1;
-  SizeType max_dim_size = 100;
-  SizeType dim_step     = 17;
+  SizeType max_dim_size = 20;
+  SizeType dim_step     = 7;
 
   SizeType min_dims  = 1;
   SizeType max_dims  = 8;
