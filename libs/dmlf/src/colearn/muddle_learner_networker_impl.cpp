@@ -291,7 +291,7 @@ uint64_t MuddleLearnerNetworkerImpl::NetworkColearnUpdate(service::CallContext c
                                                           double proportion, double random_factor)
 {
   auto source = std::string(fetch::byte_array::ToBase64(context.sender_address));
-  return ProcessUpdate(uri_str, source, update_bytes, proportion, random_factor);
+  return ProcessUpdate(uri_str, source, std::move(update_bytes), proportion, random_factor);
 }
 
 }  // namespace colearn

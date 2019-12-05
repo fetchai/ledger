@@ -137,8 +137,8 @@ public:
 
   // This is the exposed interface
 
-  uint64_t NetworkColearnUpdate(service::CallContext const &context, const std::string &type_name,
-                                byte_array::ConstByteArray bytes, double proportion = 1.0,
+  uint64_t NetworkColearnUpdate(service::CallContext const &context, const std::string &uri_str,
+                                byte_array::ConstByteArray update_bytes, double proportion = 1.0,
                                 double random_factor = 0.0);
 
   Randomiser &access_randomiser()
