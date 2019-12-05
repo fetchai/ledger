@@ -132,6 +132,19 @@ public:
     return DataType(0.017857142857143);
   };
 
+  static constexpr DataType SGD_PADDED_WEIGHTS_SIZE_COEF()
+  {
+    return DataType(0.014285714285714);
+  };
+  static constexpr DataType SGD_WEIGHTS_SIZE_COEF()
+  {
+    return DataType(0.017857142857143);
+  };
+  static constexpr DataType SGD_STEP_IMPACT_COEF()
+  {
+    return DataType(0.017857142857143);
+  };
+
   static constexpr DataType COMPILE_CONST_COEF()
   {
     return DataType(80);
@@ -159,6 +172,10 @@ public:
   {
     return DataType(0.003333333333333);
   };
+  static constexpr DataType CEL_FORWARD_IMPACT()
+  {
+    return DataType(0.003333333333333);
+  };
 
   // Backward
   static constexpr DataType BACKWARD_DENSE_INPUT_COEF()
@@ -178,6 +195,10 @@ public:
     return DataType(0.003333333333333);
   };
   static constexpr DataType MSE_BACKWARD_IMPACT()
+  {
+    return DataType(0.003333333333333);
+  };
+  static constexpr DataType CEL_BACKWARD_IMPACT()
   {
     return DataType(0.003333333333333);
   };

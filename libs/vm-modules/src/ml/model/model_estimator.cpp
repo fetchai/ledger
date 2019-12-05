@@ -178,7 +178,11 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     else if (loss->string() == "cel")
     {
       // loss_type = fetch::ml::ops::LossType::CROSS_ENTROPY;
-      return infinite_charge("Not yet implement");
+      state_.forward_pass_cost =
+          state_.forward_pass_cost + CEL_FORWARD_IMPACT() * state_.last_layer_size;
+      state_.backward_pass_cost =
+          state_.backward_pass_cost + CEL_BACKWARD_IMPACT() * state_.last_layer_size;
+      state_.ops_count++;
     }
     else if (loss->string() == "scel")
     {
@@ -205,7 +209,6 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       optimiser_construction_impact =
           ADAM_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
           ADAM_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
-      state_.ops_count++;
     }
     else if (optimiser->string() == "momentum")
     {
@@ -220,7 +223,10 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     else if (optimiser->string() == "sgd")
     {
       // optimiser_type = fetch::ml::OptimiserType::SGD;
-      return infinite_charge("Not yet implement");
+      state_.optimiser_step_impact = SGD_STEP_IMPACT_COEF();
+      optimiser_construction_impact =
+          SGD_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
+          SGD_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
     }
     else
     {
