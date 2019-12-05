@@ -55,6 +55,7 @@ public:
   Block() = default;
 
   bool operator==(Block const &rhs) const;
+  bool operator!=(Block const &rhs) const;
 
   // Block core information
   Digest         hash;               ///< The hash of the block
@@ -69,6 +70,8 @@ public:
   uint64_t       timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
   BlockEntropy   block_entropy;      ///< Entropy that determines miner priority for the next block
   Weight         weight = 1;         ///< Block weight
+  uint64_t       chain_label{0};     ///< The label of a heaviest chain this block once belonged to
+                                     ///< A more detailed explanation in MainChain::HeaviestTip.
 
   // The qual miner must sign the block
   Digest miner_signature;
@@ -88,6 +91,7 @@ public:
 private:
   SystemClock clock_ = moment::GetClock("block:body", moment::ClockType::SYSTEM);
 };
+
 }  // namespace ledger
 
 namespace serializers {

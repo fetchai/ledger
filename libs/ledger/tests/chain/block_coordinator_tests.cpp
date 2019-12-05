@@ -92,15 +92,16 @@ protected:
     // generate a public/private key pair
     auto signer = std::make_shared<ECDSASigner>();
 
-    consensus_ = std::make_shared<fetch::ledger::SimulatedPowConsensus>(signer->identity(),
-                                                                        block_interval_ms_);
-
     address_           = std::make_unique<fetch::chain::Address>(signer->identity());
     main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<StrictMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<StrictMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<StrictMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
+
+    consensus_ = std::make_shared<fetch::ledger::SimulatedPowConsensus>(
+        signer->identity(), block_interval_ms_, *main_chain_);
+
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
         LOG2_NUM_LANES, NUM_SLICES, consensus_, nullptr);
@@ -130,6 +131,7 @@ protected:
 
       state_machine.Execute();
     }
+    EXPECT_EQ(state_machine.state(), state);
 
     return success;
   }
@@ -140,7 +142,7 @@ protected:
    * @param starting_state The expected state before the state machine is run
    * @param final_state The expected state after the state machine has run
    */
-  void Tick(State starting_state, State final_state)
+  void Tick(State starting_state, State final_state, int line_no)
   {
     auto const &state_machine = block_coordinator_->GetStateMachine();
 
@@ -151,8 +153,11 @@ protected:
     block_coordinator_->GetRunnable().Execute();
 
     ASSERT_EQ(std::string(block_coordinator_->ToString(final_state)),
-              std::string(block_coordinator_->ToString(state_machine.state())));
+              std::string(block_coordinator_->ToString(state_machine.state())))
+        << " at line " << line_no;
   }
+
+#define Tick(...) Tick(__VA_ARGS__, __LINE__)
 
   /**
    * Run the state machine until it reaches the next state, or times out
@@ -160,12 +165,13 @@ protected:
    * @param starting_state The expected state before the state machine is run
    * @param final_state The expected state after the state machine has run
    */
-  void Tock(State starting_state, State final_state, uint64_t max_iterations = 50)
+  void Tock(State starting_state, State final_state, int line_no)
   {
-    auto const &state_machine = block_coordinator_->GetStateMachine();
+    uint64_t    max_iterations = 50;
+    auto const &state_machine  = block_coordinator_->GetStateMachine();
 
     // match the current state of the machine
-    ASSERT_EQ(starting_state, state_machine.state());
+    ASSERT_EQ(starting_state, state_machine.state()) << " at line " << line_no;
 
     while (final_state != state_machine.state())
     {
@@ -180,8 +186,10 @@ protected:
       }
     }
 
-    ASSERT_EQ(final_state, state_machine.state());
+    ASSERT_EQ(final_state, state_machine.state()) << " at line " << line_no;
   }
+
+#define Tock(...) Tock(__VA_ARGS__, __LINE__)
 
   StakeManagerPtr     stake_mgr_;
   AddressPtr          address_;
@@ -988,15 +996,15 @@ protected:
     // generate a public/private key pair
     auto signer = std::make_shared<ECDSASigner>();
 
-    consensus_ = std::make_shared<fetch::ledger::SimulatedPowConsensus>(signer->identity(),
-                                                                        block_interval_ms_);
-
     clock_             = fetch::moment::CreateAdjustableClock("bc:deadline");
     main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<NiceMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<NiceMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
+
+    consensus_ = std::make_shared<fetch::ledger::SimulatedPowConsensus>(
+        signer->identity(), block_interval_ms_, *main_chain_);
 
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
