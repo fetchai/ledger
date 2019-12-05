@@ -70,7 +70,8 @@ int main(int argc, char **argv)
   std::ifstream file(etch_filename, std::ios::binary);
   if (file.fail())
   {
-    throw std::runtime_error("Cannot open file " + etch_filename);
+    std::cout << "Cannot open file " << etch_filename << std::endl;
+    return -1;
   }
   std::ostringstream ss;
   ss << file.rdbuf();

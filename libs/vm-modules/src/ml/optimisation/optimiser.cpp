@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/optimisation/optimiser.hpp"
+
 #include "ml/optimisation/adagrad_optimiser.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/momentum_optimiser.hpp"
-#include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/rmsprop_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/serializers/ml_types.hpp"
@@ -53,7 +54,6 @@ VMOptimiser::VMOptimiser(VM *vm, TypeId type_id, std::string const &mode, GraphT
                          std::string const &label_node_name, std::string const &output_node_name)
   : Object(vm, type_id)
 {
-  loader_ = (loader->GetDataLoader());
   if (mode == "adagrad")
   {
     mode_ = OptimiserMode::ADAGRAD;
@@ -91,8 +91,10 @@ VMOptimiser::VMOptimiser(VM *vm, TypeId type_id, std::string const &mode, GraphT
   }
   else
   {
-    throw std::runtime_error("unrecognised optimiser mode");
+    RuntimeError("unrecognised optimiser mode: " + mode);
+    return;
   }
+  loader_ = (loader->GetDataLoader());
 }
 
 void VMOptimiser::Bind(Module &module)
