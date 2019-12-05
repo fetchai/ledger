@@ -111,7 +111,8 @@ ContractExecutionStatus TransactionValidator::operator()(chain::Transaction cons
     if (balance < max_charge)
     {
       // TODO(HUT): deleteme
-      FETCH_LOG_INFO("argh.", "Insufficient funds found.  balance: ", balance, " max_charge: ", max_charge);
+      FETCH_LOG_INFO("argh.", "Insufficient funds found.  balance: ", balance,
+                     " max_charge: ", max_charge);
       return ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS;
     }
   }

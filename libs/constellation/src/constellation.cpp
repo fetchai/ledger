@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "constellation/constellation.hpp"
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/event_manager.hpp"
 #include "bloom_filter/bloom_filter.hpp"
+#include "constellation/constellation.hpp"
 #include "constellation/health_check_http_module.hpp"
 #include "constellation/logging_http_module.hpp"
 #include "constellation/muddle_status_http_module.hpp"

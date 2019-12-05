@@ -128,7 +128,9 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
       chain::GENESIS_MERKLE_ROOT = genesis_block_.merkle_hash;
       chain::GENESIS_DIGEST      = genesis_block_.hash;
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Found genesis save file from previous session! Merkle root: ", chain::GENESIS_MERKLE_ROOT.ToHex(), " block hash: ", chain::GENESIS_DIGEST.ToHex());
+      FETCH_LOG_INFO(LOGGING_NAME, "Found genesis save file from previous session! Merkle root: ",
+                     chain::GENESIS_MERKLE_ROOT.ToHex(),
+                     " block hash: ", chain::GENESIS_DIGEST.ToHex());
       loaded_genesis_ = true;
     }
     else

@@ -211,41 +211,54 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   // startup. RecoverFromStartup();
 }
 
+// Reload state ONCE on first start up of the block coordinator
 BlockCoordinator::State BlockCoordinator::OnReloadState()
 {
   reload_state_count_->increment();
 
-  // if no current block then this is the first time in the state therefore look up the heaviest
-  // block
-  if (!current_block_)
+  FETCH_LOG_INFO(LOGGING_NAME, "Loading block coordinator old state...");
+
+  auto block = chain_.GetHeaviestBlock();
+
+  if (block->IsGenesis())
   {
-    current_block_ = chain_.GetHeaviestBlock();
+    FETCH_LOG_INFO(LOGGING_NAME, "The main chain's heaviest is genesis. Nothing to load.");
+    return State::RESET;
   }
 
-  // if we have reached genesis then this is either because we have no state to reload in the case
-  // of a fresh node, or a long series of errors prevents us from reloading previous state. In
-  // either case we transition to the restarting the coordination
-  assert(static_cast<bool>(current_block_));
-  if (!current_block_->IsGenesis())
+  // Walk back down the chain until we find a state we can revert to
+  while (block && !storage_unit_.HashExists(block->merkle_hash, block->block_number))
   {
-    // normal case we have found a block from which point we want to revert. Attempt to revert to it
-    bool const revert_success =
-        storage_unit_.RevertToHash(current_block_->merkle_hash, current_block_->block_number);
+    block = chain_.GetBlock(block->previous_hash);
+  }
 
-    bool revert_success_dag = true;
+  if (block && storage_unit_.HashExists(block->merkle_hash, block->block_number))
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Found a block to revert to! Block: ", block->block_number,
+                   " hex: 0x", block->hash.ToHex(), " merkle hash: 0x",
+                   block->merkle_hash.ToHex());
 
-    if (dag_)
+    if (!storage_unit_.RevertToHash(block->merkle_hash, block->block_number))
     {
-      revert_success_dag = dag_->RevertToEpoch(current_block_->block_number);
+      FETCH_LOG_WARN(LOGGING_NAME, "The revert operation failed!");
+      return State::RESET;
     }
 
-    if (revert_success && revert_success_dag)
+    // Need to revert the DAG too
+    if (!dag_->RevertToEpoch(block->block_number))
     {
-      // we need to update the execution manager state and also our locally cached state about the
-      // last block that has been executed
-      execution_manager_.SetLastProcessedBlock(current_block_->hash);
-      last_executed_block_.ApplyVoid([this](auto &digest) { digest = current_block_->hash; });
+      FETCH_LOG_WARN(LOGGING_NAME, "Reverting the DAG failed!");
+      return State::RESET;
     }
+
+    // we need to update the execution manager state and also our locally cached state about the
+    // 'last' block that has been executed
+    execution_manager_.SetLastProcessedBlock(block->hash);
+    last_executed_block_.ApplyVoid([&block](auto &digest) { digest = block->hash; });
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Didn't find any prior merkle state to revert to.");
   }
 
   return State::RESET;
@@ -386,7 +399,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's merkle hash cannot be retrieved! block: 0x",
                       current_hash.ToHex(), " number: ", common_parent->block_number,
-                      " merkle hash: 0x", common_parent->merkle_hash.ToHex(), " Last processed: ", last_processed_block.ToHex());
+                      " merkle hash: 0x", common_parent->merkle_hash.ToHex(),
+                      " Last processed: ", last_processed_block.ToHex());
 
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
