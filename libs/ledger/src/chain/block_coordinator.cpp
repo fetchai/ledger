@@ -173,7 +173,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , block_hash_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "block_hash", "The last seen block hash beginning")}
 {
-
   // configure the state machine
   // clang-format off
   state_machine_->RegisterHandler(State::RELOAD_STATE,                 this, &BlockCoordinator::OnReloadState);
