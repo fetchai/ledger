@@ -101,6 +101,11 @@ ChargeAmount TensorEstimator::FillRandom()
   return charge_func_of_tensor_size();
 }
 
+ChargeAmount TensorEstimator::Min()
+{
+  return charge_func_of_tensor_size();
+}
+
 ChargeAmount TensorEstimator::Squeeze()
 {
   return charge_func_of_tensor_size();

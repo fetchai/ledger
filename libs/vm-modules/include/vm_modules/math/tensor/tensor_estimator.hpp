@@ -75,6 +75,8 @@ public:
 
   ChargeAmount FillRandom();
 
+  ChargeAmount Min();
+
   ChargeAmount Squeeze();
 
   ChargeAmount Unsqueeze();
