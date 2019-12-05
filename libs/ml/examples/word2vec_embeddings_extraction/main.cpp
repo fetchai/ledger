@@ -31,7 +31,7 @@ using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = fetch::math::SizeType;
 
-TensorType word_embedding(std::string word, TensorType embeddings, Vocab vcb)
+TensorType word_embedding(std::string const &word, TensorType const &embeddings, Vocab vcb)
 {
   SizeType word_idx = vcb.IndexFromWord(word);
   return embeddings.Slice(word_idx, 1).Copy();
@@ -61,8 +61,7 @@ int main(int argc, char **argv)
   if (!embeddings_file.empty())
   {
     std::cout << "Loading embeddings..." << std::endl;
-    std::string file_string = utilities::ReadFile(embeddings_file);
-    embeddings              = embeddings.FromString(file_string);
+    embeddings = TensorType::FromString(utilities::ReadFile(embeddings_file));
   }
   else
   {
