@@ -23,7 +23,6 @@
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
-#include "ledger/storage_unit/transient_object_store.hpp"
 
 #include "benchmark/benchmark.h"
 
