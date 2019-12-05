@@ -20,6 +20,7 @@
 #include "chain/address.hpp"
 #include "core/mutex.hpp"
 #include "ledger/dag/dag_interface.hpp"
+#include "ledger/fees/fee_manager.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
 #include "ledger/upow/work.hpp"
 #include "ledger/upow/work_queue.hpp"
@@ -73,7 +74,8 @@ private:
   using WorkQueueStack = std::vector<WorkItemPtr>;
   using ThreadPool     = threading::Pool;
 
-  void ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, std::size_t num_lanes);
+  void ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, std::size_t num_lanes,
+                   chain::Address const &miner);
 
   // System Components
   DAGPtr dag_;
@@ -82,15 +84,18 @@ private:
   /// @{
   Mutex          lock_;
   WorkQueueStack solution_stack_;
+  chain::Address current_miner_;
   Executors      executors_;
   ThreadPool     threads_;
   /// @}
 
   /// @name Telemetry
   /// @{
-  telemetry::CounterPtr no_executor_count_;
-  telemetry::CounterPtr no_executor_loop_count_;
-  telemetry::CounterPtr execute_item_failed_count_;
+  telemetry::CounterPtr   no_executor_count_;
+  telemetry::CounterPtr   no_executor_loop_count_;
+  telemetry::CounterPtr   execute_item_failed_count_;
+  telemetry::HistogramPtr prepare_queue_duration_;
+  telemetry::HistogramPtr execute_duration_;
   /// @}
 };
 

@@ -17,26 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/work_queue.hpp"
+#include <cstdint>
 
 namespace fetch {
 namespace ledger {
 
-class SynergeticExecutorInterface
+/**
+ * Chargeable is an abstract interface that exposes fees incurred during transaction, contract, etc.
+ * execution.
+ */
+class Chargeable
 {
 public:
-  using ConstByteArray = byte_array::ConstByteArray;
-  using ProblemData    = std::vector<ConstByteArray>;
-
   // Construction / Destruction
-  SynergeticExecutorInterface()          = default;
-  virtual ~SynergeticExecutorInterface() = default;
+  Chargeable()          = default;
+  virtual ~Chargeable() = default;
 
-  /// @name Executor Interface
-  /// @{
-  virtual void Verify(WorkQueue &solutions, ProblemData const &problem_data, std::size_t num_lanes,
-                      chain::Address const &miner) = 0;
-  /// @}
+  /**
+   * Calculate the fee as a result of the execution calls on this object.
+   *
+   * @return The fee
+   */
+  virtual uint64_t CalculateFee() const = 0;
 };
 
 }  // namespace ledger

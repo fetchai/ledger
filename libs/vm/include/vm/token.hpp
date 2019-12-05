@@ -50,6 +50,8 @@ struct Token
     Null,
     Contract,
     EndContract,
+    Struct,
+    EndStruct,
     Function,
     EndFunction,
     While,
