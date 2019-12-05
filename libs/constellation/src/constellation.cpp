@@ -549,6 +549,9 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
     }
   }
 
+  // Need to set new genesis hash etc.
+  chain_.Reset();
+
   if (startup_success)
   {
     // beacon network
