@@ -1269,10 +1269,15 @@ char const *BlockCoordinator::ToString(ExecutionStatus state)
   return text;
 }
 
-void BlockCoordinator::Reset()
+void BlockCoordinator::PartialReset()
 {
   last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::ZERO_HASH; });
   execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
+}
+
+void BlockCoordinator::Reset()
+{
+  PartialReset();
   chain_.Reset();
 }
 

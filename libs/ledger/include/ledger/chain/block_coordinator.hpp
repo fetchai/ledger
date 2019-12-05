@@ -231,6 +231,7 @@ public:
     });
   }
 
+  void PartialReset();
   void Reset();
 
   // Operators
