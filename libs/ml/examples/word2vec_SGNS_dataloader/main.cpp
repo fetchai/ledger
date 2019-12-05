@@ -130,8 +130,8 @@ int main(int argc, char **argv)
   /// DATA LOADING ///
   data_loader.BuildVocabAndData({utilities::ReadFile(train_file)}, tp.min_count);
   std::string vocab_file = "/tmp/vocab.txt";
+  std::cout << "Saving vocab to vocab_file: " << vocab_file << std::endl;
   data_loader.SaveVocab(vocab_file);
-  std::cout << "vocab_file: " << vocab_file << std::endl;
 
   /////////////////////////////////////////
   /// SET UP PROPER TRAINING PARAMETERS ///

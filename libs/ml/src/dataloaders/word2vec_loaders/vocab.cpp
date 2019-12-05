@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "ml/dataloaders/word2vec_loaders/vocab.hpp"
+#include "ml/exceptions/exceptions.hpp"
 
 #include <sstream>
-#include <ml/exceptions/exceptions.hpp>
 
 namespace fetch {
 namespace ml {
