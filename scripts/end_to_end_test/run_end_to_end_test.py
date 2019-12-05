@@ -671,7 +671,7 @@ COMMAND_MAP = {
     "start_nodes": start_nodes,
     "destake": destake,
     "run_dmlf_etch_client": run_dmlf_etch_client,
-    "create_funds": create_funds,
+    "create_balance": create_balance,
     "create_synergetic_contract": create_synergetic_contract,
     "run_contract": run_contract,
     "wait_for_blocks": wait_for_blocks,

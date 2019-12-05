@@ -169,7 +169,7 @@ setup_conditions:
   lanes: 4
   node_connections: [[0, 1]]
   mining_nodes: [0]
-  max_test_time: 60
+  max_test_time: 120
 
 steps:
   - sleep: 6
@@ -194,7 +194,7 @@ steps:
 
 ---
 test_description: >
-  Test synergetic contract fees
+  DISABLED - Test synergetic contract fees
 
 setup_conditions:
   test_name: "synergetic_fee_test"
@@ -204,7 +204,7 @@ setup_conditions:
 
 steps:
   - wait_network_ready: {"sleep": 5}
-  - create_funds: {"amount": 100000000000000, "nodes": [0]}
+  - create_balance: {"amount": 100000, "nodes": [0]}
   - create_synergetic_contract: {"name": "contract001", "fee_limit": 10000, "nodes": [0], "transfer_amount": 1000}
   - wait_for_blocks: {"nodes": [0], "num": 5}
   - query_balance: {"nodes": [0], "save_as": "balance1"}
@@ -217,17 +217,17 @@ steps:
 
 ---
 test_description: >
-  Test synergetic contract fees in case of no funds
+  DISABLED - Test synergetic contract fees in case of no funds
 
 setup_conditions:
-  test_name: "synergetic_fee_test"
+  test_name: "synergetic_fee_test_no_funds"
   number_of_nodes: 1
   mining_nodes: [0]
   max_test_time: 600
 
 steps:
   - wait_network_ready: {"sleep": 5}
-  - create_funds: {"amount": 100000000000000, "nodes": [0]}
+  - create_balance: {"amount": 100000, "nodes": [0]}
   - create_synergetic_contract: {"name": "contract001", "fee_limit": 10000, "nodes": [0], "transfer_amount": 0}
   - wait_for_blocks: {"nodes": [0], "num": 5}
   - query_balance: {"nodes": [0], "save_as": "balance1"}

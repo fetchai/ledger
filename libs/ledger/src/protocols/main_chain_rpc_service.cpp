@@ -129,7 +129,9 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   // clang-format on
 
   state_machine_->OnStateChange([](State current, State previous) {
-    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+    FETCH_UNUSED(current);
+    FETCH_UNUSED(previous);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
 }
 
