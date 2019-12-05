@@ -28,6 +28,13 @@ namespace fetch {
 namespace dmlf {
 namespace colearn {
 
+ColearnURI::ColearnURI(std::string const &algo_name, std::string const &type_name)
+  : algorithm_class_(algo_name)
+  , update_type_(type_name)
+{
+}
+
+
 ColearnURI::ColearnURI(ColearnUpdate const &update)
   : algorithm_class_(update.algorithm())
   , update_type_(update.update_type())
@@ -72,8 +79,25 @@ ColearnURI ColearnURI::Parse(std::string const &uriString)
 
 std::string ColearnURI::ToString() const
 {
-  return protocol() + "://" + owner() + '/' + algorithm_class() + '/' + update_type() + '/' +
-         source() + '/' + fingerprint();
+  std::string r = protocol() + "://" + owner();
+
+  std::vector parts({
+    algorithm_class(),
+    update_type(),
+    source(),
+    fingerprint()
+  });
+
+  for(auto const &part : parts)
+  {
+    if (part.empty())
+    {
+      break;
+    }
+    r += "/";
+    r += part;
+  }
+  return r;
 }
 
 bool ColearnURI::IsEmpty() const

@@ -32,6 +32,7 @@ class ColearnURI
 public:
   ColearnURI() = default;
   explicit ColearnURI(ColearnUpdate const &update);
+  explicit ColearnURI(std::string const &algo_name, std::string const &type_name);
 
   std::string       ToString() const;
   static ColearnURI Parse(std::string const &uriString);  // Fingerprint must be Base58
