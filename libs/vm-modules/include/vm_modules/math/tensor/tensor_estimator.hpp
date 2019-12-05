@@ -21,7 +21,6 @@
 #include "vm/common.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
-#include "vm_modules/math/tensor/tensor.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -40,6 +39,8 @@ struct Array;
 
 namespace vm_modules {
 namespace math {
+
+class VMTensor;
 
 class TensorEstimator
 {
