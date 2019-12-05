@@ -31,7 +31,7 @@
 
 using namespace fetch::vm;
 
-namespace {
+namespace math_tests {
 
 using ::testing::Between;
 
@@ -142,4 +142,4 @@ TEST_F(MathTests, sqrt_test)
   ASSERT_EQ(result, gt);
 }
 
-}  // namespace
+}  // namespace math_tests

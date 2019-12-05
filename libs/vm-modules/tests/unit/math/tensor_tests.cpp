@@ -16,10 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/standard_functions/abs.hpp"
-#include "math/standard_functions/exp.hpp"
-#include "math/standard_functions/log.hpp"
-#include "math/standard_functions/pow.hpp"
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
@@ -31,20 +27,20 @@
 
 using namespace fetch::vm;
 
-namespace {
+namespace math_tensor_tests {
 
 using ::testing::Between;
 
 using DataType = fetch::vm_modules::math::DataType;
 
-class MathTests : public ::testing::Test
+class MathTensorTests : public ::testing::Test
 {
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
 };
 
-TEST_F(MathTests, tensor_squeeze_test)
+TEST_F(MathTensorTests, tensor_squeeze_test)
 {
   static char const *tensor_serialiase_src = R"(
     function main() : Tensor
@@ -70,7 +66,7 @@ TEST_F(MathTests, tensor_squeeze_test)
 
 /// GETTER AND SETTER TESTS ///
 
-TEST_F(MathTests, tensor_set_and_at_one_test)
+TEST_F(MathTensorTests, tensor_set_and_at_one_test)
 {
   static char const *tensor_serialiase_src = R"(
     function main() : Tensor
@@ -99,7 +95,7 @@ TEST_F(MathTests, tensor_set_and_at_one_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
-TEST_F(MathTests, tensor_set_and_at_two_test)
+TEST_F(MathTensorTests, tensor_set_and_at_two_test)
 {
   static char const *tensor_serialiase_src = R"(
     function main() : Tensor
@@ -131,7 +127,7 @@ TEST_F(MathTests, tensor_set_and_at_two_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
-TEST_F(MathTests, tensor_set_and_at_three_test)
+TEST_F(MathTensorTests, tensor_set_and_at_three_test)
 {
   static char const *tensor_serialiase_src = R"(
     function main() : Tensor
@@ -168,7 +164,7 @@ TEST_F(MathTests, tensor_set_and_at_three_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
-TEST_F(MathTests, tensor_set_and_at_four_test)
+TEST_F(MathTensorTests, tensor_set_and_at_four_test)
 {
   static char const *tensor_serialiase_src = R"(
     function main() : Tensor
@@ -214,7 +210,7 @@ TEST_F(MathTests, tensor_set_and_at_four_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
-TEST_F(MathTests, tensor_set_from_string)
+TEST_F(MathTensorTests, tensor_set_from_string)
 {
   static char const *tensor_from_string_src = R"(
     function main() : Tensor
@@ -247,21 +243,51 @@ TEST_F(MathTests, tensor_set_from_string)
 
 /// MATRIX OPERATION TESTS ///
 
-TEST_F(MathTests, tensor_min_test)
+TEST_F(MathTensorTests, tensor_min_test)
 {
-  fetch::math::Tensor<DataType> tensor =
-      fetch::math::Tensor::FromString("1, 2, 3; 4, 5, 6; 7, 8, 9;");
-  fetch::vm_modules::math::VMTensor vm_tensor(tensor);
+  fetch::math::Tensor<DataType> tensor = fetch::math::Tensor<DataType>::FromString(
+      "0.5, 7.1, 9.1; 6.2, 7.1, 4.; -99.1, 14328.1, 10.0;");
+  fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
   DataType result = vm_tensor.Min();
-  DataType gt     = 1;
+  DataType gt{-99.1};
 
   EXPECT_TRUE(result == gt);
 }
 
+TEST_F(MathTensorTests, tensor_min_etch_test)
+{
+  static char const *tensor_min_src = R"(
+    function main() : Fixed64
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 3u64;
+      tensor_shape[1] = 3u64;
+      var x = Tensor(tensor_shape);
+      x.fill(7.0fp64);
+      x.set(0, 1, -7.0fp64);
+      x.set(1, 1, 23.1fp64);
+      return x.min();
+    endfunction
+  )";
+
+  std::string const state_name{"tensor"};
+
+  ASSERT_TRUE(toolkit.Compile(tensor_min_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const min_val = res.Get<DataType>();
+  DataType   gt{-7.0};
+
+  std::cout << "gt: " << gt << std::endl;
+  std::cout << "min_val: " << min_val << std::endl;
+
+  EXPECT_TRUE(gt == min_val);
+}
+
 /// SERIALISATION TESTS ///
 
-TEST_F(MathTests, tensor_state_test)
+TEST_F(MathTensorTests, tensor_state_test)
 {
   static char const *tensor_serialiase_src = R"(
     function main()
@@ -303,4 +329,4 @@ TEST_F(MathTests, tensor_state_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
-}  // namespace
+}  // namespace math_tensor_tests

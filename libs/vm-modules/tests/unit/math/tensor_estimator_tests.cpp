@@ -21,7 +21,7 @@
 #include "vm_modules/math/tensor/tensor_estimator.hpp"
 #include "vm_test_toolkit.hpp"
 
-namespace {
+namespace math_tensor_estimator_tests {
 
 using SizeType = fetch::math::SizeType;
 using DataType = fetch::vm_modules::math::DataType;
@@ -30,7 +30,7 @@ using VmPtr    = fetch::vm::Ptr<fetch::vm::String>;
 // using VmModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
 // using DataType         = fetch::vm_modules::ml::model::ModelEstimator::DataType;
 
-class VMModelEstimatorTests : public ::testing::Test
+class MathTensorEstimatorTests : public ::testing::Test
 {
 public:
   std::stringstream stdout;
@@ -411,4 +411,4 @@ public:
 //  }
 //}
 
-}  // namespace
+}  // namespace math_tensor_estimator_tests
