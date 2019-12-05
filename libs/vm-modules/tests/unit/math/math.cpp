@@ -20,6 +20,7 @@
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/log.hpp"
 #include "math/standard_functions/pow.hpp"
+#include "math/standard_functions/sqrt.hpp"
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_test_toolkit.hpp"

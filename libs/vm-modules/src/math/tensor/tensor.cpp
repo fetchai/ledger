@@ -87,8 +87,7 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("fill", &VMTensor::Fill, use_estimator(&TensorEstimator::Fill))
       .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
                             use_estimator(&TensorEstimator::FillRandom))
-      .CreateMemberFunction("min", &VMTensor::Min,
-                            use_estimator(&TensorEstimator::Min))
+      .CreateMemberFunction("min", &VMTensor::Min, use_estimator(&TensorEstimator::Min))
       .CreateMemberFunction("reshape", &VMTensor::Reshape, use_estimator(&TensorEstimator::Reshape))
       .CreateMemberFunction("squeeze", &VMTensor::Squeeze, use_estimator(&TensorEstimator::Squeeze))
       .CreateMemberFunction("transpose", &VMTensor::Transpose,
