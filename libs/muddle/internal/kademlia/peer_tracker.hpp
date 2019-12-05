@@ -258,6 +258,11 @@ protected:
     longrange_prioritized_peers_.clear();
     longrange_connections_.clear();
   }
+
+  void Start()
+  {
+    stopping_ = false;
+  }
   /// @}
 
 private:

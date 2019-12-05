@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/time/to_seconds.hpp"
 #include "kademlia/peer_tracker.hpp"
+#include "core/time/to_seconds.hpp"
 
 #include <chrono>
 #include <memory>
@@ -613,7 +613,6 @@ void PeerTracker::ConnectToDesiredPeers()
   auto const currently_outgoing = register_.GetOutgoingAddressSet();
   auto const currently_incoming = register_.GetIncomingAddressSet();
 
-  FETCH_LOG_INFO(logging_name_.c_str(), "Number of desired peers: ", desired_peers_.size());
   for (auto &peer : desired_peers_)
   {
     if (peer == own_address_)
@@ -692,10 +691,10 @@ void PeerTracker::ConnectToDesiredPeers()
       }
     }
 
-    // Ignoring addresses found in incoming
+    // If we are already connected, we schedule a pull
     if (currently_incoming.find(best_peer) != currently_incoming.end())
     {
-      FETCH_LOG_ERROR(logging_name_.c_str(), "Connection to peer not found.");
+      SchedulePull(best_peer, peer);
       continue;
     }
 

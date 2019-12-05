@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "router.hpp"
 #include "kademlia/peer_tracker.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
-#include "router.hpp"
 #include "routing_message.hpp"
 
 #include "core/byte_array/encoders.hpp"
@@ -305,12 +305,12 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Prove
                       "The total number of entries removed from the echo cache"))
   , normal_routing_total_(CreateCounter("ledger_router_normal_routing_total",
                                         "The total number of normally routed packets"))
-  , informed_routing_total_(CreateCounter("ledger_router_normal_routing_total",
+  , informed_routing_total_(CreateCounter("ledger_router_informed_routing_total",
                                           "The total number of informed routed packets"))
-  , speculative_routing_total_(CreateCounter("ledger_router_normal_routing_total",
+  , speculative_routing_total_(CreateCounter("ledger_router_speculative_routing_total",
                                              "The total number of speculatively routed packets"))
   , failed_routing_total_(
-        CreateCounter("ledger_router_normal_routing_total",
+        CreateCounter("ledger_router_failed_routing_total",
                       "The total number of packets that have failed to be routed"))
   , connection_dropped_total_(CreateCounter("ledger_router_connection_dropped_total",
                                             "The total number of connections dropped"))
@@ -690,6 +690,8 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     Handle handle = LookupHandle(packet->GetTargetRaw());
     if (handle != 0u)
     {
+      FETCH_LOG_WARN(logging_name_, "Normal routing to peer: ", packet->GetTarget().ToBase64());
+
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
       normal_routing_total_->increment();
