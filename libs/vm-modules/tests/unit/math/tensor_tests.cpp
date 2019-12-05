@@ -264,9 +264,10 @@ TEST_F(MathTensorTests, tensor_min_etch_test)
       tensor_shape[1] = 3u64;
       var x = Tensor(tensor_shape);
       x.fill(7.0fp64);
-      x.set(0, 1, -7.0fp64);
-      x.set(1, 1, 23.1fp64);
-      return x.min();
+      x.setAt(0u64, 1u64, -7.0fp64);
+      x.setAt(1u64, 1u64, 23.1fp64);
+      var ret = x.min();
+      return ret;
     endfunction
   )";
 
