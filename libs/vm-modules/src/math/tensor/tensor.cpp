@@ -69,39 +69,39 @@ void VMTensor::Bind(Module &module)
         return Ptr<VMTensor>{new VMTensor(vm, type_id)};
       })
       .CreateMemberFunction("at", &VMTensor::At<Index>,
-                            use_estimator(&VMTensor::TensorEstimator::AtOne))
+                            use_estimator(&TensorEstimator::AtOne))
       .CreateMemberFunction("at", &VMTensor::At<Index, Index>,
-                            use_estimator(&VMTensor::TensorEstimator::AtTwo))
+                            use_estimator(&TensorEstimator::AtTwo))
       .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>,
-                            use_estimator(&VMTensor::TensorEstimator::AtThree))
+                            use_estimator(&TensorEstimator::AtThree))
       .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>,
-                            use_estimator(&VMTensor::TensorEstimator::AtFour))
+                            use_estimator(&TensorEstimator::AtFour))
       .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, DataType>,
-                            use_estimator(&VMTensor::TensorEstimator::SetAtOne))
+                            use_estimator(&TensorEstimator::SetAtOne))
       .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, DataType>,
-                            use_estimator(&VMTensor::TensorEstimator::SetAtTwo))
+                            use_estimator(&TensorEstimator::SetAtTwo))
       .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, DataType>,
-                            use_estimator(&VMTensor::TensorEstimator::SetAtThree))
+                            use_estimator(&TensorEstimator::SetAtThree))
       .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>,
-                            use_estimator(&VMTensor::TensorEstimator::SetAtFour))
+                            use_estimator(&TensorEstimator::SetAtFour))
       .CreateMemberFunction("size", &VMTensor::size,
-                            use_estimator(&VMTensor::TensorEstimator::size))
+                            use_estimator(&TensorEstimator::size))
       .CreateMemberFunction("fill", &VMTensor::Fill,
-                            use_estimator(&VMTensor::TensorEstimator::Fill))
+                            use_estimator(&TensorEstimator::Fill))
       .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
-                            use_estimator(&VMTensor::TensorEstimator::FillRandom))
+                            use_estimator(&TensorEstimator::FillRandom))
       .CreateMemberFunction("reshape", &VMTensor::Reshape,
-                            use_estimator(&VMTensor::TensorEstimator::Reshape))
+                            use_estimator(&TensorEstimator::Reshape))
       .CreateMemberFunction("squeeze", &VMTensor::Squeeze,
-                            use_estimator(&VMTensor::TensorEstimator::Squeeze))
+                            use_estimator(&TensorEstimator::Squeeze))
       .CreateMemberFunction("transpose", &VMTensor::Transpose,
-                            use_estimator(&VMTensor::TensorEstimator::Transpose))
+                            use_estimator(&TensorEstimator::Transpose))
       .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze,
-                            use_estimator(&VMTensor::TensorEstimator::Unsqueeze))
+                            use_estimator(&TensorEstimator::Unsqueeze))
       .CreateMemberFunction("fromString", &VMTensor::FromString,
-                            use_estimator(&VMTensor::TensorEstimator::FromString))
+                            use_estimator(&TensorEstimator::FromString))
       .CreateMemberFunction("toString", &VMTensor::ToString,
-                            use_estimator(&VMTensor::TensorEstimator::ToString));
+                            use_estimator(&TensorEstimator::ToString));
 
   // Add support for Array of Tensors
   module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<VMTensor>>>();
@@ -208,7 +208,7 @@ bool VMTensor::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   return true;
 }
 
-VMTensor::TensorEstimator &VMTensor::Estimator()
+TensorEstimator &VMTensor::Estimator()
 {
   return estimator_;
 }
