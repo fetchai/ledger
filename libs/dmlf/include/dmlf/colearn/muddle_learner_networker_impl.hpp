@@ -99,6 +99,11 @@ public:
     PushUpdate(update->data(), algorithm, upd_class);
   }
 
+  void PushUpdate(Bytes const &update, ColearnURI const &uri_obj) override
+  {
+    PushUpdateBytes(uri_obj, update);
+  }
+
   void PushUpdate(Bytes const &      update, AlgorithmClass const & /*algorithm*/,
                   UpdateClass const &upd_class) override
   {

@@ -21,6 +21,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "dmlf/colearn/colearn_update.hpp"
+#include "dmlf/colearn/colearn_uri.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -40,14 +41,15 @@ public:
 
   // To implement
   virtual void           PushUpdate(UpdatePtr const &update, AlgorithmClass const &algorithm,
-                                    UpdateClass const &upd_class)           = 0;
+                                    UpdateClass const &upd_class)                   = 0;
   virtual void           PushUpdate(Bytes const &update, AlgorithmClass const &algorithm,
-                                    UpdateClass const &upd_class)           = 0;
+                                    UpdateClass const &upd_class)                   = 0;
+  virtual void           PushUpdate(Bytes const &update, ColearnURI const &uri_obj) = 0;
   virtual std::size_t    GetUpdateCount(AlgorithmClass const &algorithm,
-                                        UpdateClass const &   upd_class) const = 0;
-  virtual std::size_t    GetUpdateTotalCount() const                        = 0;
+                                        UpdateClass const &   upd_class) const         = 0;
+  virtual std::size_t    GetUpdateTotalCount() const                                = 0;
   virtual ConstUpdatePtr GetUpdate(AlgorithmClass const &algorithm,
-                                   UpdateClass const &   upd_class)            = 0;
+                                   UpdateClass const &   upd_class)                    = 0;
 };
 
 }  // namespace colearn
