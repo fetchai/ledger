@@ -33,6 +33,10 @@
 namespace fetch {
 namespace ledger {
 
+Work::Work(BlockIndex block_index)
+  : block_index_{block_index}
+{}
+
 Work::Work(Digest digest, chain::Address address, crypto::Identity miner)
   : contract_digest_{std::move(digest)}
   , contract_address_{std::move(address)}
@@ -62,6 +66,11 @@ Work::UInt256 const &Work::nonce() const
 WorkScore Work::score() const
 {
   return score_;
+}
+
+Work::BlockIndex Work::block_index() const
+{
+  return block_index_;
 }
 
 void Work::UpdateDigest(Digest digest)

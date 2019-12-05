@@ -19,8 +19,10 @@
 #include "core/digest.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/smart_contract_factory.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "ledger/state_adapter.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/problem_id.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
@@ -36,6 +38,8 @@ namespace ledger {
 namespace {
 
 constexpr char const *LOGGING_NAME = "NaiveSynMiner";
+
+constexpr uint64_t const CHARGE_LIMIT = 10000000000;
 
 using UInt256  = vectorise::UInt<256>;
 using DagNodes = NaiveSynergeticMiner::DagNodes;
@@ -165,7 +169,24 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
                                            chain::Address const &contract_address,
                                            ProblemData const &   problem_data)
 {
+  StateAdapter storage_adapter{storage_, Identifier{"fetch.token"}};
+
+  ContractContext         context{&token_contract_, contract_address, &storage_adapter, 0};
+  ContractContextAttacher raii(token_contract_, context);
+
+  uint64_t const balance = token_contract_.GetBalance(contract_address);
+
+  if (balance == 0)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Not handling contract: 0x", contract_digest.ToHex(),
+                   ", because contract address 0x", contract_address.address().ToHex(),
+                   " balance is 0");
+    return {};
+  }
+
   auto contract = CreateSmartContract<SynergeticContract>(contract_digest, storage_);
+
+  contract->SetChargeLimit(CHARGE_LIMIT / search_length_);
 
   // if no contract can be loaded then simple return
   if (!contract)
@@ -183,7 +204,6 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
   if (SynergeticContract::Status::SUCCESS != status)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to define the problem. Reason: ", ToString(status));
-
     return {};
   }
 
@@ -206,6 +226,17 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
     if (!(best_work && best_work->score() >= work->score()))
     {
       best_work = std::make_shared<Work>(*work);
+    }
+
+    if (i == 0)
+    {
+      auto const fee = contract->CalculateFee();
+      // TODO(AB): scaling? charge approx search_length_*one
+      if (fee >= balance)
+      {
+        // not enough balance, stop using contract
+        return {};
+      }
     }
   }
 
