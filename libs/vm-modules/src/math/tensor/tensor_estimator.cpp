@@ -20,8 +20,7 @@
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
-//#include "vm_modules/math/tensor/tensor.hpp"
-#include "vm_modules/math/tensor_estimator.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/use_estimator.hpp"
 
@@ -38,105 +37,105 @@ using ArrayType  = fetch::math::Tensor<VMTensor::DataType>;
 using SizeType   = ArrayType::SizeType;
 using SizeVector = ArrayType::SizeVector;
 
-VMTensor::TensorEstimator::TensorEstimator(VMTensor &tensor)
+TensorEstimator::TensorEstimator(VMTensor &tensor)
   : tensor_{tensor}
 {}
 
-ChargeAmount VMTensor::TensorEstimator::size()
+ChargeAmount TensorEstimator::size()
 {
   return low_charge;
 }
 
-ChargeAmount VMTensor::TensorEstimator::AtOne(TensorType::SizeType /*idx1*/)
+ChargeAmount TensorEstimator::AtOne(TensorType::SizeType /*idx1*/)
 {
   return low_charge;
 }
 
-ChargeAmount VMTensor::TensorEstimator::AtTwo(uint64_t /*idx1*/, uint64_t /*idx2*/)
+ChargeAmount TensorEstimator::AtTwo(uint64_t /*idx1*/, uint64_t /*idx2*/)
 {
   return low_charge;
 }
 
-ChargeAmount VMTensor::TensorEstimator::AtThree(uint64_t /*idx1*/, uint64_t /*idx2*/,
+ChargeAmount TensorEstimator::AtThree(uint64_t /*idx1*/, uint64_t /*idx2*/,
                                                 uint64_t /*idx3*/)
 {
   return low_charge;
 }
 
-ChargeAmount VMTensor::TensorEstimator::AtFour(uint64_t /*idx1*/, uint64_t /*idx2*/,
+ChargeAmount TensorEstimator::AtFour(uint64_t /*idx1*/, uint64_t /*idx2*/,
                                                uint64_t /*idx3*/, uint64_t /*idx4*/)
 {
   return low_charge;
 }
 
-ChargeAmount VMTensor::TensorEstimator::SetAtOne(uint64_t /*idx1*/, DataType const & /*value*/)
+ChargeAmount TensorEstimator::SetAtOne(uint64_t /*idx1*/, DataType const & /*value*/)
 {
   return low_charge;
 }
 
-ChargeAmount VMTensor::TensorEstimator::SetAtTwo(uint64_t /*idx1*/, uint64_t /*idx2*/,
+ChargeAmount TensorEstimator::SetAtTwo(uint64_t /*idx1*/, uint64_t /*idx2*/,
                                                  DataType const & /*value*/)
 {
   return low_charge;
 }
 
-ChargeAmount VMTensor::TensorEstimator::SetAtThree(uint64_t /*idx1*/, uint64_t /*idx2*/,
+ChargeAmount TensorEstimator::SetAtThree(uint64_t /*idx1*/, uint64_t /*idx2*/,
                                                    uint64_t /*idx3*/, DataType const & /*value*/)
 {
   return low_charge;
 }
 
-ChargeAmount VMTensor::TensorEstimator::SetAtFour(uint64_t /*idx1*/, uint64_t /*idx2*/,
+ChargeAmount TensorEstimator::SetAtFour(uint64_t /*idx1*/, uint64_t /*idx2*/,
                                                   uint64_t /*idx3*/, uint64_t /*idx4*/,
                                                   DataType const & /*value*/)
 {
   return low_charge;
 }
 
-ChargeAmount VMTensor::TensorEstimator::Fill(DataType const & /*value*/)
+ChargeAmount TensorEstimator::Fill(DataType const & /*value*/)
 {
   return charge_func_of_tensor_size();
 }
 
-ChargeAmount VMTensor::TensorEstimator::FillRandom()
+ChargeAmount TensorEstimator::FillRandom()
 {
   return charge_func_of_tensor_size();
 }
 
-ChargeAmount VMTensor::TensorEstimator::Squeeze()
+ChargeAmount TensorEstimator::Squeeze()
 {
   return charge_func_of_tensor_size();
 }
 
-ChargeAmount VMTensor::TensorEstimator::Unsqueeze()
+ChargeAmount TensorEstimator::Unsqueeze()
 {
   return charge_func_of_tensor_size();
 }
 
-ChargeAmount VMTensor::TensorEstimator::Reshape(
+ChargeAmount TensorEstimator::Reshape(
     fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape)
 {
   FETCH_UNUSED(new_shape);
   return charge_func_of_tensor_size();
 }
 
-ChargeAmount VMTensor::TensorEstimator::Transpose()
+ChargeAmount TensorEstimator::Transpose()
 {
   return charge_func_of_tensor_size();
 }
 
-ChargeAmount VMTensor::TensorEstimator::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
+ChargeAmount TensorEstimator::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
 {
   std::size_t val_size = 2;
   return static_cast<ChargeAmount>(static_cast<std::size_t>(string->Length()) / val_size);
 }
 
-ChargeAmount VMTensor::TensorEstimator::ToString()
+ChargeAmount TensorEstimator::ToString()
 {
   return charge_func_of_tensor_size();
 }
 
-ChargeAmount VMTensor::TensorEstimator::charge_func_of_tensor_size(std::size_t factor)
+ChargeAmount TensorEstimator::charge_func_of_tensor_size(std::size_t factor)
 {
   return static_cast<ChargeAmount>(vm::CHARGE_UNIT * factor * tensor_.size());
 }
