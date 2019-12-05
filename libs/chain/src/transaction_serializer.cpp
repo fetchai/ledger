@@ -48,7 +48,7 @@ using TokenAmount  = Transaction::TokenAmount;
 using ContractMode = Transaction::ContractMode;
 
 const uint8_t MAGIC              = 0xA1;
-const uint8_t VERSION            = 2u;
+const uint8_t VERSION            = 3u;
 const int8_t  UNIT_MEGA          = -2;
 const int8_t  UNIT_KILO          = -1;
 const int8_t  UNIT_DEFAULT       = 0;
