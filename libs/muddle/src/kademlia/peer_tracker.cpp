@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "kademlia/peer_tracker.hpp"
 #include "core/time/to_seconds.hpp"
+#include "kademlia/peer_tracker.hpp"
 
 #include <chrono>
 #include <memory>
@@ -54,23 +54,42 @@ bool PeerTracker::IsBlacklisted(Address const &target) const
 
 PeerTracker::AddressSet PeerTracker::GetDesiredPeers() const
 {
-  FETCH_LOCK(mutex_);
+  FETCH_LOCK(desired_mutex_);
   return desired_peers_;
 }
 
 void PeerTracker::AddDesiredPeer(Address const &address, PeerTracker::Duration const &expiry)
 {
-  FETCH_LOCK(mutex_);
+  FETCH_LOCK(desired_mutex_);
   FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by address: ", address.ToBase64());
-  connection_expiry_.emplace(address, Clock::now() + expiry);
+
+  auto it = connection_expiry_.find(address);
+  if (it == connection_expiry_.end())
+  {
+    connection_expiry_.emplace(address, Clock::now() + expiry);
+  }
+  else
+  {
+    it->second = std::max(Clock::now() + expiry, it->second);
+  }
+
   desired_peers_.insert(address);
 }
 
 void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hint,
                                  PeerTracker::Duration const &expiry)
 {
-  FETCH_LOCK(mutex_);
-  connection_expiry_.emplace(address, Clock::now() + expiry);
+  FETCH_LOCK(desired_mutex_);
+
+  auto it = connection_expiry_.find(address);
+  if (it == connection_expiry_.end())
+  {
+    connection_expiry_.emplace(address, Clock::now() + expiry);
+  }
+  else
+  {
+    it->second = std::max(Clock::now() + expiry, it->second);
+  }
 
   if (!address.empty())
   {
@@ -90,7 +109,7 @@ void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hi
 
 void PeerTracker::AddDesiredPeer(PeerTracker::Uri const &uri, PeerTracker::Duration const &expiry)
 {
-  FETCH_LOCK(mutex_);
+  FETCH_LOCK(desired_mutex_);
   desired_uris_.insert(uri);
   desired_uri_expiry_.emplace(uri, Clock::now() + expiry);
   FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by uri: ", uri.ToString());
@@ -98,7 +117,7 @@ void PeerTracker::AddDesiredPeer(PeerTracker::Uri const &uri, PeerTracker::Durat
 
 void PeerTracker::RemoveDesiredPeer(Address const &address)
 {
-  FETCH_LOCK(mutex_);
+  FETCH_LOCK(desired_mutex_);
   desired_peers_.erase(address);
 }
 
@@ -284,8 +303,8 @@ void PeerTracker::ConnectToPeers(AddressSet &                  connections_made,
         continue;
       }
 
-      FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to ", uri.ToString(), " with address ",
-                     p.address.ToBase64());
+      FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to prioritised peer ", uri.ToString(),
+                     " with address ", p.address.ToBase64());
       connections_.AddPersistentPeer(uri);
     }
 
@@ -403,30 +422,44 @@ void PeerTracker::PullPeerKnowledge()
     return;
   }
 
-  auto address    = peer_pull_queue_.front();
-  auto search_for = peer_pull_map_[address];
+  // Searching in parallel to different nodes
+  int64_t tasks_to_setup = 3 - static_cast<int64_t>(pull_promises_.size());  // TODO: parameter
 
-  peer_pull_queue_.pop_front();
+  tasks_to_setup = std::min(tasks_to_setup, static_cast<int64_t>(peer_pull_queue_.size()));
 
-  // Increasing the tracker id.
-  auto pull_id = pull_next_id_++;
+  for (int64_t task = 0; task < tasks_to_setup; ++task)
+  {
+    auto address = peer_pull_queue_.front();
+    if (address.size() != Packet::ADDRESS_SIZE)
+    {
+      continue;
+    }
 
-  // make the call to the remote service
-  auto promise = rpc_client_.CallSpecificAddress(address, RPC_MUDDLE_KADEMLIA,
-                                                 PeerTrackerProtocol::FIND_PEERS, search_for);
+    auto search_for = peer_pull_map_[address];
 
-  // wrap the promise is a task
-  auto call_task = std::make_shared<PromiseTask>(
-      promise, tracker_configuration_.promise_timeout,
-      [this, address, search_for, pull_id](service::Promise const &promise) {
-        OnResolvedPull(pull_id, address, search_for, promise);
-      });
+    peer_pull_queue_.pop_front();
 
-  // add the task to the reactor
-  reactor_.Attach(call_task);
+    // Increasing the tracker id.
+    auto pull_id = pull_next_id_++;
 
-  // add the task to the pending resolutions queue
-  pull_promises_.emplace(pull_id, std::move(call_task));
+    // make the call to the remote service
+    auto promise = rpc_client_.CallSpecificAddress(address, RPC_MUDDLE_KADEMLIA,
+                                                   PeerTrackerProtocol::FIND_PEERS, search_for);
+
+    // wrap the promise is a task
+
+    auto call_task = std::make_shared<PromiseTask>(
+        promise, tracker_configuration_.promise_timeout,
+        [this, address, search_for, pull_id](service::Promise const &promise) {
+          OnResolvedPull(pull_id, address, search_for, promise);
+        });
+
+    // add the task to the reactor
+    reactor_.Attach(call_task);
+
+    // add the task to the pending resolutions queue
+    pull_promises_.emplace(pull_id, std::move(call_task));
+  }
 }
 
 void PeerTracker::SchedulePull(Address const &address)
@@ -509,7 +542,7 @@ PeerTracker::AddressSet PeerTracker::no_uri() const
 
 PeerTracker::AddressSet PeerTracker::desired_peers() const
 {
-  FETCH_LOCK(mutex_);
+  FETCH_LOCK(desired_mutex_);
   return desired_peers_;
 }
 
@@ -576,9 +609,11 @@ void PeerTracker::OnResolvedPull(uint64_t pull_id, Address const &peer, Address 
 
 void PeerTracker::ConnectToDesiredPeers()
 {
+  FETCH_LOCK(desired_mutex_);
   auto const currently_outgoing = register_.GetOutgoingAddressSet();
   auto const currently_incoming = register_.GetIncomingAddressSet();
 
+  FETCH_LOG_INFO(logging_name_.c_str(), "Number of desired peers: ", desired_peers_.size());
   for (auto &peer : desired_peers_)
   {
     if (peer == own_address_)
@@ -677,8 +712,8 @@ void PeerTracker::ConnectToDesiredPeers()
         continue;
       }
 
-      FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to ", uri.ToString(), " with address ",
-                     best_peer.ToBase64());
+      FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to desired peer ", uri.ToString(),
+                     " with address ", best_peer.ToBase64());
       connections_.AddPersistentPeer(uri);
     }
 
@@ -698,55 +733,63 @@ void PeerTracker::ConnectToDesiredPeers()
 
 void PeerTracker::Periodically()
 {
+  if (stopping_)
+  {
+    return;
+  }
+
   FETCH_LOCK(mutex_);
 
   // Clearing arrays used to track actions on connections
   keep_connections_.clear();
   no_uri_.clear();
 
-  // Trimming for expired connections
-  auto                                   now = Clock::now();
-  std::unordered_map<Address, Timepoint> new_expiry;
-  for (auto const &item : connection_expiry_)
   {
+    FETCH_LOCK(desired_mutex_);
+    // Trimming for expired connections
+    auto                                   now = Clock::now();
+    std::unordered_map<Address, Timepoint> new_expiry;
+    for (auto const &item : connection_expiry_)
+    {
 
-    // Keeping those which are still not expired
-    if (item.second > now)
-    {
-      new_expiry.emplace(item);
-    }
-    else if (item.second < now)
-    {
-      // Deleting peers which has expired
-      auto it = desired_peers_.find(item.first);
-      if (it != desired_peers_.end())
+      // Keeping those which are still not expired
+      if (item.second > now)
       {
-        desired_peers_.erase(it);
+        new_expiry.emplace(item);
+      }
+      else if (item.second < now)
+      {
+        // Deleting peers which has expired
+        auto it = desired_peers_.find(item.first);
+        if (it != desired_peers_.end())
+        {
+          desired_peers_.erase(it);
+        }
       }
     }
-  }
-  std::swap(connection_expiry_, new_expiry);
+    std::swap(connection_expiry_, new_expiry);
 
-  // Trimming URIs
-  std::unordered_map<Uri, Timepoint> new_uri_expiry;
-  for (auto const &item : desired_uri_expiry_)
-  {
-    // Keeping those which are still not expired
-    if (item.second > now)
+    // Trimming URIs
+    std::unordered_map<Uri, Timepoint> new_uri_expiry;
+    for (auto const &item : desired_uri_expiry_)
     {
-      new_uri_expiry.emplace(item);
-    }
-    else if (item.second < now)
-    {
-      // Deleting peers which has expired
-      auto it = desired_uris_.find(item.first);
-      if (it != desired_uris_.end())
+      // Keeping those which are still not expired
+      if (item.second > now)
       {
-        desired_uris_.erase(it);
+        new_uri_expiry.emplace(item);
+      }
+      else if (item.second < now)
+      {
+        // Deleting peers which has expired
+        auto it = desired_uris_.find(item.first);
+        if (it != desired_uris_.end())
+        {
+          desired_uris_.erase(it);
+        }
       }
     }
+    std::swap(desired_uri_expiry_, new_uri_expiry);
   }
-  std::swap(desired_uri_expiry_, new_uri_expiry);
 
   // Ensuring that we keep connections open which we are currently
   // pulling data from
@@ -761,41 +804,44 @@ void PeerTracker::Periodically()
   // TODO(tfr): Add something similar for pulling
 
   // Converting URIs into addresses if possible
-  std::unordered_set<Uri> new_uris;
-  for (auto const &uri : desired_uris_)
   {
-    if (peer_table_.HasUri(uri))
+    FETCH_LOCK(desired_mutex_);
+    std::unordered_set<Uri> new_uris;
+    for (auto const &uri : desired_uris_)
     {
-      auto address = peer_table_.GetAddressFromUri(uri);
-      FETCH_LOG_INFO(logging_name_.c_str(), "Address from URI found ", uri.ToString(), ": ",
-                     address.ToBase64());
-
-      // Moving expiry time accross based on address
-      auto expit = desired_uri_expiry_.find(uri);
-      if (expit != desired_uri_expiry_.end())
+      if (peer_table_.HasUri(uri))
       {
-        connection_expiry_[address] = expit->second;
-        desired_uri_expiry_.erase(expit);
+        auto address = peer_table_.GetAddressFromUri(uri);
+        FETCH_LOG_INFO(logging_name_.c_str(), "Address from URI found ", uri.ToString(), ": ",
+                       address.ToBase64());
+
+        // Moving expiry time accross based on address
+        auto expit = desired_uri_expiry_.find(uri);
+        if (expit != desired_uri_expiry_.end())
+        {
+          connection_expiry_[address] = expit->second;
+          desired_uri_expiry_.erase(expit);
+        }
+
+        // Switching to address based desired peer
+        if (address != own_address_)
+        {
+          desired_peers_.insert(std::move(address));
+        }
       }
-
-      // Switching to address based desired peer
-      if (address != own_address_)
+      else
       {
-        desired_peers_.insert(std::move(address));
+        new_uris.insert(uri);
       }
     }
-    else
-    {
-      new_uris.insert(uri);
-    }
-  }
-  std::swap(new_uris, desired_uris_);
+    std::swap(new_uris, desired_uris_);
 
-  // Adding the unresolved URIs to the connection pool
-  for (auto const &uri : desired_uris_)
-  {
-    FETCH_LOG_INFO(logging_name_.c_str(), "Adding peer with unknown address: ", uri.ToString());
-    connections_.AddPersistentPeer(uri);
+    // Adding the unresolved URIs to the connection pool
+    for (auto const &uri : desired_uris_)
+    {
+      FETCH_LOG_INFO(logging_name_.c_str(), "Adding peer with unknown address: ", uri.ToString());
+      connections_.AddPersistentPeer(uri);
+    }
   }
 
   if (tracker_configuration_.allow_desired_connections)

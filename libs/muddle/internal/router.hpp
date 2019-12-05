@@ -26,6 +26,7 @@
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/network_id.hpp"
 #include "muddle/packet.hpp"
+#include "muddle/router_configuration.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "telemetry/telemetry.hpp"
@@ -161,8 +162,6 @@ private:
 
   static constexpr std::size_t NUMBER_OF_ROUTER_THREADS = 1;
 
-  Handle LookupRandomHandle(Packet::RawAddress const &address) const;
-
   void SendToConnection(Handle handle, PacketPtr const &packet);
   void RoutePacket(PacketPtr const &packet, bool external = true);
   void DispatchDirect(Handle handle, PacketPtr const &packet);
@@ -190,6 +189,8 @@ private:
   NetworkId             network_id_;
   crypto::Prover const &prover_;
   crypto::SecureChannel secure_channel_{prover_};
+  std::atomic<bool>     stopping_{false};
+  RouterConfiguration   config_{};
 
   PeerTrackerPtr tracker_{nullptr};
 
@@ -198,12 +199,27 @@ private:
 
   ThreadPool dispatch_thread_pool_;
 
+  /// Redelivery of packages
+  /// @{
+  mutable Mutex                           delivery_attempts_lock_;
+  std::unordered_map<PacketPtr, uint64_t> delivery_attempts_;
+
+  void ClearDeliveryAttempt(PacketPtr packet)
+  {
+    FETCH_LOCK(delivery_attempts_lock_);
+    delivery_attempts_.erase(packet);
+  }
+  /// @}
+
+  /// Message "entropy"
+  /// @{
   uint16_t GetNextCounter()
   {
     return counter_++;
   }
 
   std::atomic<uint16_t> counter_{0};
+  /// @}
 
   /// Telemetry
   /// @{

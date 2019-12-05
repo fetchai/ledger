@@ -322,6 +322,7 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Prove
 void Router::Start()
 {
   dispatch_thread_pool_->Start();
+  stopping_ = false;
 }
 
 /**
@@ -329,6 +330,10 @@ void Router::Start()
  */
 void Router::Stop()
 {
+  FETCH_LOCK(delivery_attempts_lock_);
+  stopping_ = true;
+  delivery_attempts_.clear();
+
   dispatch_thread_pool_->Stop();
 }
 
@@ -573,21 +578,6 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &raw_address) const
 }
 
 /**
- * Looks up a random handle from the routing table.
- * @param address paremeter not used
- * @return The random handle, or zero if the routing table is empty
- */
-Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) const
-{
-  if (tracker_)
-  {
-    // TODO(tfr): add some randomness
-    return tracker_->LookupHandle(ConvertAddress(address));
-  }
-  return 0;
-}
-
-/**
  * Internal: Takes a given packet and sends it to the connection specified by the handle
  *
  * @param handle The handle to the network connection
@@ -648,6 +638,8 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
       ttl_expired_packet_total_->increment();
 
       FETCH_LOG_WARN(logging_name_, "Message has timed out (TTL): ", DescribePacket(*packet));
+
+      ClearDeliveryAttempt(packet);
       return;
     }
     // decrement the TTL
@@ -656,6 +648,7 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     // if this packet is a broadcast echo we should no longer route this packet
     if (packet->IsBroadcast() && IsEcho(*packet))
     {
+      ClearDeliveryAttempt(packet);
       return;
     }
   }
@@ -688,6 +681,8 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     {
       FETCH_LOG_WARN(logging_name_, "Failed to serialise muddle packet to stream");
     }
+
+    ClearDeliveryAttempt(packet);
   }
   else
   {
@@ -698,6 +693,8 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
       normal_routing_total_->increment();
+
+      ClearDeliveryAttempt(packet);
       return;
     }
 
@@ -716,26 +713,70 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
 
         SendToConnection(handle, packet);
         informed_routing_total_->increment();
+
+        ClearDeliveryAttempt(packet);
         return;
       }
 
       FETCH_LOG_ERROR(logging_name_, "Informed routing; Invalid handle");
     }
 
-    // if direct routing fails then randomly select a handle. In future a better routing scheme
-    // should be implemented.
-    handle = LookupRandomHandle(packet->GetTargetRaw());
-    if (handle != 0u)
+    // If the router is stopping we do not attempt redelivery
+    if (stopping_)
     {
-      FETCH_LOG_WARN(logging_name_,
-                     "Speculative routing to peer: ", packet->GetTarget().ToBase64());
-      SendToConnection(handle, packet);
-      speculative_routing_total_->increment();
+      ClearDeliveryAttempt(packet);
       return;
     }
 
-    FETCH_LOG_ERROR(logging_name_, "Unable to route packet to: ", packet->GetTarget().ToBase64());
-    failed_routing_total_->increment();
+    // Taking note of packet attempted delivery
+    uint64_t attempts{0};
+    {
+      FETCH_LOCK(delivery_attempts_lock_);
+
+      if (delivery_attempts_.find(packet) == delivery_attempts_.end())
+      {
+        delivery_attempts_[packet] = 0;
+
+        // Tracking the peer and connecting for some time
+        tracker_->AddDesiredPeer(packet->GetTarget(), config_.temporary_connection_length);
+      }
+
+      attempts = ++delivery_attempts_[packet];
+    }
+
+    // Giving up
+    if (attempts > config_.max_delivery_attempts)
+    {
+      // As a last resort we just deliver the message to a random peer
+      ClearDeliveryAttempt(packet);
+
+      // if direct routing fails then randomly select a handle. In future a better routing scheme
+      // should be implemented.
+      handle = tracker_->LookupRandomHandle();
+      if (handle != 0u)
+      {
+        FETCH_LOG_WARN(logging_name_,
+                       "Speculative routing to peer: ", packet->GetTarget().ToBase64());
+        SendToConnection(handle, packet);
+        speculative_routing_total_->increment();
+        return;
+      }
+
+      FETCH_LOG_ERROR(logging_name_, "Unable to route packet to: ", packet->GetTarget().ToBase64());
+      failed_routing_total_->increment();
+      return;
+    }
+
+    // Retrying at a later point
+    FETCH_LOG_INFO(logging_name_, "Retrying packet delivery: ", packet->GetTarget().ToBase64());
+
+    dispatch_thread_pool_->Post(
+        [this, packet, external]() {
+          // We delibrately set external to false to not update TTL and echo filter again
+          RoutePacket(packet, external);
+        },
+        config_.retry_delay_ms);
+    return;
   }
 }
 

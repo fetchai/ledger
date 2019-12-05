@@ -174,14 +174,17 @@ inline void MakeKademliaNetwork(std::unique_ptr<Network> &network)
   }
 }
 
-inline void LinearConnectivity(std::unique_ptr<Network> &network)
+inline void LinearConnectivity(std::unique_ptr<Network> &               network,
+                               muddle::MuddleInterface::Duration const &expire =
+                                   std::chrono::duration_cast<muddle::MuddleInterface::Duration>(
+                                       std::chrono::hours(1024 * 24)))
 {
   auto N = network->nodes.size();
   for (std::size_t i = 1; i < N; ++i)
   {
     auto &node = *network->nodes[i];
     node.muddle->ConnectTo(
-        fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT - 1 + i)));
+        fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT - 1 + i)), expire);
   }
 }
 
@@ -203,15 +206,78 @@ inline void AllToAllConnectivity(std::unique_ptr<Network> &               networ
   }
 }
 
+static constexpr uint16_t SERVICE_ID = 1920;
+static constexpr uint16_t CHANNEL_ID = 101;
+
+class MessageCounter
+{
+public:
+  using MuddleInterface = fetch::muddle::MuddleInterface;
+  using SubscriptionPtr = fetch::muddle::MuddleEndpoint::SubscriptionPtr;
+  using Address         = fetch::muddle::Address;
+  using Endpoint        = fetch::muddle::MuddleEndpoint;
+
+  MessageCounter(fetch::muddle::MuddlePtr &muddle)
+    : message_endpoint{muddle->GetEndpoint()}
+    , message_subscription{message_endpoint.Subscribe(SERVICE_ID, CHANNEL_ID)}
+  {
+    message_subscription->SetMessageHandler(this, &MessageCounter::NewMessage);
+  }
+
+  void NewMessage(fetch::muddle::Packet const &packet, Address const & /*last_hop*/)
+  {
+    std::cout << packet.GetPayload() << std::endl;
+    ++counter;
+  }
+
+  Endpoint &            message_endpoint;
+  SubscriptionPtr       message_subscription;
+  std::atomic<uint64_t> counter{0};
+};
+
 int main()
+{
+  // Creating network
+  std::size_t N       = 10;
+  auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
+  LinearConnectivity(network, std::chrono::seconds(5));
+
+  auto &reciever = network->nodes[0];
+
+  MessageCounter msgcounter{reciever->muddle};
+
+  for (uint64_t i = 1; i < N; ++i)
+  {
+    auto &sender = network->nodes[i]->muddle->GetEndpoint();
+    sender.Send(reciever->address, SERVICE_ID, CHANNEL_ID, "Hello world");
+  }
+
+  // Waiting for all messages to arrive
+  int m = 0;
+  while (msgcounter.counter != N - 1)
+  {
+    ++m;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    // Maximum wait 100s
+    if (m > 100)
+    {
+      throw std::runtime_error("Did not work!!!");
+    }
+  }
+  std::cout << "STOPPING STOPPING STOPPING STOPPING STOPPING STOPPING " << std::endl;
+
+  network->Stop();
+  return 0;
+}
+
+int mainXXX()
 {
 
   // Creating network
-  std::size_t N                = 10;
-  auto        config           = fetch::muddle::TrackerConfiguration::DefaultConfiguration();
-  config.disconnect_duplicates = false;
-  config.disconnect_from_self  = false;
-  auto network                 = Network::New(N, config);
+  std::size_t N       = 10;
+  auto        config  = fetch::muddle::TrackerConfiguration::DefaultConfiguration();
+  auto        network = Network::New(N, config);
   AllToAllConnectivity(network, std::chrono::seconds(5));
 
   // Waiting for the network to settle.
@@ -241,15 +307,14 @@ int main()
   network->Stop();
 }
 
-void foo()
+int mainXX()
 {
-  uint64_t N       = 40;
+  uint64_t N       = 10;
   auto     network = Network::New(N);
 
   //  MakeKademliaNetwork(network);
-  LinearConnectivity(network);
+  LinearConnectivity(network, std::chrono::seconds(5));
 
-  /*
   uint64_t step = N / 4;
   for (uint64_t i = 0; i < N; i += step)
   {
@@ -258,7 +323,6 @@ void foo()
 
     network->nodes[i]->muddle->ConnectTo(address, std::chrono::seconds(90));
   }
-  */
 
   std::string input;
   while (true)
@@ -269,4 +333,5 @@ void foo()
   std::getline(std::cin, input);
 
   network->Stop();
+  return 0;
 }

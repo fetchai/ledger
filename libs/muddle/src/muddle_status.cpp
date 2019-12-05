@@ -205,6 +205,7 @@ void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output, bool exte
   }
 
   BuildConnectionList(muddle.connection_register(), output["connections"]);
+
   BuildPeerLists(muddle.connection_list(), output["peers"]);
   // TODO(tfr): remove  BuildPeerSelection(muddle.peer_selector(), output["peerSelection"]);
   BuildPeerTracker(muddle.peer_tracker(), output["peerTracker"]);
@@ -289,7 +290,6 @@ variant::Variant GetStatusSummary(std::string const &network)
 
     ++index;
   }
-
   return output;
 }
 

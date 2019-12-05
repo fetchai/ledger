@@ -35,8 +35,10 @@
 #include "promise_runnable.hpp"
 
 #include <chrono>
+#include <functional>
 #include <memory>
 #include <queue>
+#include <random>
 #include <vector>
 
 namespace fetch {
@@ -91,6 +93,10 @@ public:
   static PeerTrackerPtr New(Duration const &interval, core::Reactor &reactor,
                             MuddleRegister const &reg, PeerConnectionList &connections,
                             MuddleEndpoint &endpoint);
+  ~PeerTracker()
+  {
+    Stop();
+  }
 
   /// Tracker interface
   /// @{
@@ -127,18 +133,29 @@ public:
     {
       FETCH_LOCK(direct_mutex_);
 
-      auto own_kad = KademliaAddress::Create(own_address_);
-
+      // Finding best address
+      auto target_kad = KademliaAddress::Create(address);
       for (auto &peer : directly_connected_peers_)
       {
         KademliaAddress cmp  = KademliaAddress::Create(peer);
-        auto            dist = GetKademliaDistance(own_kad, cmp);
+        auto            dist = GetKademliaDistance(target_kad, cmp);
 
         if (dist < best)
         {
           best         = dist;
           best_address = peer;
         }
+      }
+
+      // Comparing against own address
+      auto own_kad = KademliaAddress::Create(own_address_);
+      auto dist    = GetKademliaDistance(target_kad, own_kad);
+
+      // In case the current node has a shorter distance, we return
+      // 0 to indicate that the packet should not move
+      if (dist < best)
+      {
+        return 0;
       }
     }
 
@@ -149,6 +166,33 @@ public:
     {
       // TODO(tfr): add to cache
       return connection->handle();
+    }
+
+    return 0;
+  }
+
+  Handle LookupRandomHandle() const
+  {
+    FETCH_LOCK(direct_mutex_);
+    std::vector<Address> all_addresses{directly_connected_peers_.begin(),
+                                       directly_connected_peers_.end()};
+
+    thread_local std::random_device rd;
+    thread_local std::mt19937       g(rd());
+    std::shuffle(all_addresses.begin(), all_addresses.end(), g);
+
+    while (!all_addresses.empty())
+    {
+      auto const address = all_addresses.back();
+      all_addresses.pop_back();
+
+      auto wptr = register_.LookupConnection(address);
+
+      auto connection = wptr.lock();
+      if (connection)
+      {
+        return connection->handle();
+      }
     }
 
     return 0;
@@ -201,9 +245,11 @@ protected:
   {
     FETCH_LOG_WARN(logging_name_.c_str(), "Stopping peer tracker.");
     FETCH_LOCK(mutex_);
-
+    stopping_              = true;
     tracker_configuration_ = TrackerConfiguration::AllOff();
 
+    connection_expiry_.clear();
+    desired_uri_expiry_.clear();
     desired_peers_.clear();
     kademlia_connection_priority_.clear();
     kademlia_prioritized_peers_.clear();
@@ -251,12 +297,15 @@ private:
   /// Thread-safety
   /// @{
   mutable std::mutex mutex_;
-  mutable std::mutex direct_mutex_;  ///< Use to protect directly connected
-                                     /// peers to avoid causing a deadlock
+  mutable std::mutex direct_mutex_;   ///< Use to protect directly connected
+                                      /// peers to avoid causing a deadlock
+  mutable std::mutex desired_mutex_;  ///< Use to protect desired peer variables
+                                      /// peers to avoid causing a deadlock
   /// @}
 
   /// Core components for maintaining connectivity.
   /// @{
+  std::atomic<bool>     stopping_{false};
   core::Reactor &       reactor_;
   MuddleRegister const &register_;
   MuddleEndpoint &      endpoint_;

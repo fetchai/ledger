@@ -163,14 +163,17 @@ inline void MakeKademliaNetwork(std::unique_ptr<Network> &network)
   }
 }
 
-inline void LinearConnectivity(std::unique_ptr<Network> &network)
+inline void LinearConnectivity(
+    std::unique_ptr<Network> &             network,
+    fetch::muddle::Muddle::Duration const &expire =
+        std::chrono::duration_cast<fetch::muddle::Muddle::Duration>(std::chrono::hours(1024 * 24)))
 {
   auto N = network->nodes.size();
   for (std::size_t i = 1; i < N; ++i)
   {
     auto &node = *network->nodes[i];
     node.muddle->ConnectTo(
-        fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT - 1 + i)));
+        fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT - 1 + i)), expire);
   }
 }
 

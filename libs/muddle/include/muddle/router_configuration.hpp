@@ -17,27 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
-#include "logging/logging.hpp"
-
-#include <atomic>
-#include <csignal>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <sstream>
-#include <string>
-#include <thread>
-#include <utility>
+#include "moment/clock_interfaces.hpp"
+#include "network/service/promise.hpp"
 
 namespace fetch {
+namespace muddle {
 
-using Mutex = std::mutex;
+struct RouterConfiguration
+{
+  using ClockInterface = moment::ClockInterface;
+  using Clock          = ClockInterface::AccurateSystemClock;
+  using Timepoint      = ClockInterface::Timestamp;
+  using Duration       = ClockInterface::Duration;
 
-#define FETCH_JOIN_IMPL(x, y) x##y
-#define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
+  uint64_t max_delivery_attempts{3};
+  Duration temporary_connection_length{std::chrono::seconds(10)};
+  uint32_t retry_delay_ms{2500};
+};
 
-#define FETCH_LOCK(lockable) \
-  std::lock_guard<decltype(lockable)> FETCH_JOIN(mutex_locked_on_line, __LINE__)(lockable)
-
+}  // namespace muddle
 }  // namespace fetch
