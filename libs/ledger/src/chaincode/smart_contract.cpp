@@ -746,7 +746,6 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     if (res)
     {
       response["result"] = res->string();
-      break;
     }
     else
     {
