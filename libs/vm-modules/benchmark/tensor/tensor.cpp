@@ -81,7 +81,7 @@ void BM_Construct(::benchmark::State &state)
 
   SizeVector shape{};
 
-  SizeType elements = static_cast<SizeType>(state.range(0));
+  auto elements = static_cast<SizeType>(state.range(0));
 
   for (SizeType i{1}; i < elements + 1; i++)
   {

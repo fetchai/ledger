@@ -192,25 +192,25 @@ void BM_AddLayer(::benchmark::State &state)
 }
 
 // (BM_AddLayer_config) input_size, output_size, activation
-BENCHMARK(BM_AddLayer)->Args({1, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({10, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({1000, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({100, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({1000, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({10, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({10, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({100, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({100, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({1000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({1, 10000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({10000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({1, 100000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({100000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({200, 200, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({2000, 20, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({3000, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddLayer)->Args({10, 3000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({1000, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({100, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({1000, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({10, 100, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({10, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({100, 100, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({100, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({1, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({1000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({1, 10000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({10000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({1, 100000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({100000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({200, 200, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({2000, 20, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({3000, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLayer)->Args({10, 3000, 0})->Unit(::benchmark::kMicrosecond);
 //*/
 
 ///*
@@ -267,174 +267,158 @@ void BM_Predict(::benchmark::State &state)
 // activation_3,....
 
 // BOSTON
-BENCHMARK(BM_Predict)
-    ->Args({1, 4, 13, 10, 10, 1, true, true, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({10, 4, 13, 10, 10, 1, true, true, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({32, 4, 13, 10, 10, 1, true, true, false})
-    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({10, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({32, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
 
 // MNIST
-BENCHMARK(BM_Predict)->Args({1, 3, 784, 10, 10, true, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({10, 3, 784, 10, 10, true, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({32, 3, 784, 10, 10, true, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({10, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({32, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Predict)
-    ->Args({1, 6, 1, 10, 100, 1000, 10000, 1, false, false, false, false, false})
+    ->Args({1, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({2, 6, 1, 10, 100, 1000, 10000, 1, false, false, false, false, false})
+    ->Args({2, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({4, 6, 1, 10, 100, 1000, 10000, 1, false, false, false, false, false})
+    ->Args({4, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({8, 6, 1, 10, 100, 1000, 10000, 1, false, false, false, false, false})
+    ->Args({8, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({16, 6, 1, 10, 100, 1000, 10000, 1, false, false, false, false, false})
+    ->Args({16, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({32, 6, 1, 10, 100, 1000, 10000, 1, false, false, false, false, false})
+    ->Args({32, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({64, 6, 1, 10, 100, 1000, 10000, 1, false, false, false, false, false})
+    ->Args({64, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({128, 6, 1, 10, 100, 1000, 10000, 1, false, false, false, false, false})
+    ->Args({128, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({256, 6, 1, 10, 100, 1000, 10000, 1, false, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(BM_Predict)
-    ->Args({1, 5, 10000, 1000, 100, 10, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({2, 5, 10000, 1000, 100, 10, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({4, 5, 10000, 1000, 100, 10, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({8, 5, 10000, 1000, 100, 10, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({16, 5, 10000, 1000, 100, 10, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({32, 5, 10000, 1000, 100, 10, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({64, 5, 10000, 1000, 100, 10, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({128, 5, 10000, 1000, 100, 10, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({256, 5, 10000, 1000, 100, 10, 1, false, false, false, false})
+    ->Args({256, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Predict)
-    ->Args({128, 4, 1, 1, 1, 1, false, false, false})
+    ->Args({1, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({256, 4, 1, 1, 1, 1, false, false, false})
+    ->Args({2, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({512, 4, 1, 1, 1, 1, false, false, false})
+    ->Args({4, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({1024, 4, 1, 1, 1, 1, false, false, false})
+    ->Args({8, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({2048, 4, 1, 1, 1, 1, false, false, false})
+    ->Args({16, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)
+    ->Args({32, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)
+    ->Args({64, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)
+    ->Args({128, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)
+    ->Args({256, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
+    ->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Predict)->Args({128, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({256, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({512, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1024, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({2048, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Predict)
+    ->Args({128, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)
+    ->Args({256, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)
+    ->Args({512, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)
+    ->Args({1024, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)
+    ->Args({2048, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Predict)
-    ->Args({128, 8, 1, 1, 1, 1, 1, 1, 1, 1, false, false, false, false, false, false, false})
+    ->Args({128, 5, 10000, 1, 1, 1, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({256, 8, 1, 1, 1, 1, 1, 1, 1, 1, false, false, false, false, false, false, false})
+    ->Args({128, 5, 1, 10000, 1, 1, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({512, 8, 1, 1, 1, 1, 1, 1, 1, 1, false, false, false, false, false, false, false})
+    ->Args({128, 5, 1, 1, 10000, 1, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({1024, 8, 1, 1, 1, 1, 1, 1, 1, 1, false, false, false, false, false, false, false})
+    ->Args({128, 5, 1, 1, 1, 10000, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({2048, 8, 1, 1, 1, 1, 1, 1, 1, 1, false, false, false, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(BM_Predict)
-    ->Args({128, 5, 10000, 1, 1, 1, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({128, 5, 1, 10000, 1, 1, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({128, 5, 1, 1, 10000, 1, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({128, 5, 1, 1, 1, 10000, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)
-    ->Args({128, 5, 1, 1, 1, 1, 10000, false, false, false, false})
+    ->Args({128, 5, 1, 1, 1, 1, 10000, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Predict)
-    ->Args({512, 5, 10000, 1, 1, 1, 1, false, false, false, false})
+    ->Args({512, 5, 10000, 1, 1, 1, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({512, 5, 1, 10000, 1, 1, 1, false, false, false, false})
+    ->Args({512, 5, 1, 10000, 1, 1, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({512, 5, 1, 1, 10000, 1, 1, false, false, false, false})
+    ->Args({512, 5, 1, 1, 10000, 1, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({512, 5, 1, 1, 1, 10000, 1, false, false, false, false})
+    ->Args({512, 5, 1, 1, 1, 10000, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({512, 5, 1, 1, 1, 1, 10000, false, false, false, false})
+    ->Args({512, 5, 1, 1, 1, 1, 10000, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Predict)->Args({1, 2, 1, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1, 10000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1, 100000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1, 100, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1, 10000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1, 100000, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Predict)->Args({1, 3, 1, 1, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 3, 1, 10, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 3, 1, 100, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 3, 1, 1000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 3, 1, 10000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 3, 1, 100000, 1, false, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 1, 1, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 1, 10, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 1, 100, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 1, 10000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 1, 100000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Predict)->Args({1, 2, 10, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 100, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 10000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 100000, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 100, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 10000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 100000, 1, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Predict)->Args({1, 2, 10000, 10000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 100, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 10000, 10000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1000, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 100, 100, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Predict)
-    ->Args({128, 5, 1000, 1000, 1000, 1000, 1000, false, false, false, false})
+    ->Args({128, 5, 1000, 1000, 1000, 1000, 1000, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({256, 5, 1000, 1000, 1000, 1000, 1000, false, false, false, false})
+    ->Args({256, 5, 1000, 1000, 1000, 1000, 1000, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Predict)
-    ->Args({512, 5, 1000, 1000, 1000, 1000, 1000, false, false, false, false})
+    ->Args({512, 5, 1000, 1000, 1000, 1000, 1000, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 //*/
 
@@ -492,62 +476,52 @@ void BM_Compile(::benchmark::State &state)
 
 // (BM_Compile_config) number_of_layers, input_size, hidden_1_size, ...., output_size,
 // activation_1,....
-BENCHMARK(BM_Compile)->Args({2, 1, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 1, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 1, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 1, 10000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 1, 100000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 1, 1000000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 1, 10000000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 1, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 1, 100, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 1, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 1, 10000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 1, 100000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 1, 1000000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 1, 10000000, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Compile)->Args({2, 10, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 100, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 10000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 100000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 1000000, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 100, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 1000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 10000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 100000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 1000000, 1, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Compile)->Args({2, 10000, 10000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 100, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 10000, 10000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 1000, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 100, 100, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Compile)
-    ->Args({6, 1, 10, 100, 1000, 10000, 1, false, false, false, false, false})
+    ->Args({6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Compile)
-    ->Args({5, 10000, 1000, 100, 10, 1, false, false, false, false})
+    ->Args({5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({4, 1, 1, 1, 1, false, false, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Compile)->Args({8, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Compile)
-    ->Args({5, 10000, 1, 1, 1, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)
-    ->Args({5, 1, 10000, 1, 1, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)
-    ->Args({5, 1, 1, 10000, 1, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)
-    ->Args({5, 1, 1, 1, 10000, 1, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)
-    ->Args({5, 1, 1, 1, 1, 10000, false, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({5, 10000, 1, 1, 1, 1, 0, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({5, 1, 10000, 1, 1, 1, 0, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({5, 1, 1, 10000, 1, 1, 0, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({5, 1, 1, 1, 10000, 1, 0, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({5, 1, 1, 1, 1, 10000, 0, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Compile)->Args({3, 1, 1, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({3, 1, 10, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({3, 1, 100, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({3, 1, 1000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({3, 1, 10000, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Compile)->Args({3, 1, 100000, 1, false, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({3, 1, 1, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({3, 1, 10, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({3, 1, 100, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({3, 1, 10000, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Compile)->Args({3, 1, 100000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Compile)
-    ->Args({5, 1000, 1000, 1000, 1000, 1000, false, false, false, false})
+    ->Args({5, 1000, 1000, 1000, 1000, 1000, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 //*/
 
@@ -617,117 +591,107 @@ void BM_Fit(::benchmark::State &state)
 // activation_1,....
 
 // BOSTON
-BENCHMARK(BM_Fit)
-    ->Args({1, 1, 4, 13, 10, 10, 1, true, true, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)
-    ->Args({10, 10, 4, 13, 10, 10, 1, true, true, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)
-    ->Args({32, 32, 4, 13, 10, 10, 1, true, true, false})
-    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1, 1, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 10, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({32, 32, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
 
 // MNIST
-BENCHMARK(BM_Fit)->Args({1, 1, 3, 784, 10, 10, true, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({320, 32, 3, 784, 100, 10, true, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({3200, 32, 3, 784, 100, 10, true, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1, 1, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({320, 32, 3, 784, 100, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({3200, 32, 3, 784, 100, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Fit)->Args({10, 1, 2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({100, 1, 2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({1000, 1, 2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 1, 2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 10, 2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 100, 2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 1000, 2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 10000, 2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 1, 2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({100, 1, 2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1000, 1, 2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 1, 2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 10, 2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 100, 2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 1000, 2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 10000, 2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Fit)->Args({10, 1, 2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({100, 1, 2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({1000, 1, 2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 1, 2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 10, 2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 100, 2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 1000, 2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 10000, 2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 1, 2, 1000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({100, 1, 2, 1000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1000, 1, 2, 1000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 1, 2, 1000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 10, 2, 1000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 100, 2, 1000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 1000, 2, 1000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 10000, 2, 1000, 1, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Fit)->Args({10, 1, 2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({100, 1, 2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({1000, 1, 2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 1, 2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 10, 2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 100, 2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 1000, 2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 10000, 2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 1, 2, 1, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({100, 1, 2, 1, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1000, 1, 2, 1, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 1, 2, 1, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 10, 2, 1, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 100, 2, 1, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 1000, 2, 1, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 10000, 2, 1, 1000, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Fit)->Args({10, 1, 3, 1, 1000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({100, 1, 3, 1, 1000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({1000, 1, 3, 1, 1000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 1, 3, 1, 1000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 10, 3, 1, 1000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10000, 100, 3, 1, 1000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)
-    ->Args({10000, 1000, 3, 1, 1000, 1, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)
-    ->Args({10000, 10000, 3, 1, 1000, 1, false, false})
-    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 1, 3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({100, 1, 3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1000, 1, 3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 1, 3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 10, 3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 100, 3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 1000, 3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10000, 10000, 3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Fit)
-    ->Args({10, 1, 5, 10, 100, 1, 100, 10, false, false, false, false})
+    ->Args({10, 1, 5, 10, 100, 1, 100, 10, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)
-    ->Args({100, 1, 5, 10, 100, 1, 100, 10, false, false, false, false})
+    ->Args({100, 1, 5, 10, 100, 1, 100, 10, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)
-    ->Args({1000, 1, 5, 10, 100, 1, 100, 10, false, false, false, false})
+    ->Args({1000, 1, 5, 10, 100, 1, 100, 10, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)
-    ->Args({10000, 1, 5, 10, 100, 1, 100, 10, false, false, false, false})
+    ->Args({10000, 1, 5, 10, 100, 1, 100, 10, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)
-    ->Args({10000, 10, 5, 10, 100, 1, 100, 10, false, false, false, false})
+    ->Args({10000, 10, 5, 10, 100, 1, 100, 10, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)
-    ->Args({10000, 100, 5, 10, 100, 1, 100, 10, false, false, false, false})
+    ->Args({10000, 100, 5, 10, 100, 1, 100, 10, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)
-    ->Args({10000, 1000, 5, 10, 100, 1, 100, 10, false, false, false, false})
+    ->Args({10000, 1000, 5, 10, 100, 1, 100, 10, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)
-    ->Args({10000, 10000, 5, 10, 100, 1, 100, 10, false, false, false, false})
+    ->Args({10000, 10000, 5, 10, 100, 1, 100, 10, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Fit)->Args({1, 1, 3, 1, 1000000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({1, 1, 2, 1000000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({1, 1, 2, 1, 1000000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({1, 1, 2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1, 1, 3, 1, 1000000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1, 1, 2, 1000000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1, 1, 2, 1, 1000000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({1, 1, 2, 1000, 1000, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Fit)->Args({10, 1, 3, 1, 1000000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10, 1, 2, 1000000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10, 1, 2, 1, 1000000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10, 1, 2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 1, 3, 1, 1000000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 1, 2, 1000000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 1, 2, 1, 1000000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 1, 2, 1000, 1000, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Fit)->Args({10, 10, 3, 1, 1000000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10, 10, 2, 1000000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10, 10, 2, 1, 1000000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({10, 10, 2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 10, 3, 1, 1000000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 10, 2, 1000000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 10, 2, 1, 1000000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({10, 10, 2, 1000, 1000, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Fit)->Args({100, 10, 3, 1, 1000000, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({100, 10, 2, 1000000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({100, 10, 2, 1, 1000000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fit)->Args({100, 10, 2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({100, 10, 3, 1, 1000000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({100, 10, 2, 1000000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({100, 10, 2, 1, 1000000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fit)->Args({100, 10, 2, 1000, 1000, 0})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Fit)
-    ->Args({1, 1, 8, 1, 1, 1, 1, 1, 1, 1, 1, false, false, false, false, false, false, false})
+    ->Args({1, 1, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)
-    ->Args({10, 10, 8, 1, 1, 1, 1, 1, 1, 1, 1, false, false, false, false, false, false, false})
+    ->Args({10, 10, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)
-    ->Args({100, 10, 8, 1, 1, 1, 1, 1, 1, 1, 1, false, false, false, false, false, false, false})
+    ->Args({100, 10, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fit)
-    ->Args({100, 100, 8, 1, 1, 1, 1, 1, 1, 1, 1, false, false, false, false, false, false, false})
+    ->Args({100, 100, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 //*/
 
@@ -781,70 +745,60 @@ void BM_SerializeToString(::benchmark::State &state)
 
 //// (BM_SerializeToString_config) number_of_layers, input_size, hidden_1_size, ...., output_size,
 /// hidden_1_activation, ...
-BENCHMARK(BM_SerializeToString)->Args({2, 1, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 1, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 1, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 1, 10000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 1, 100000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 1, 1000000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 1, 10000000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1, 100, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1, 10000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1, 100000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1, 1000000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1, 10000000, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_SerializeToString)->Args({2, 10, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 100, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 10000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 100000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 1000000, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 100, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 10000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 100000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1000000, 1, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_SerializeToString)->Args({2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 100, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 1000, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 100, 100, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_SerializeToString)
-    ->Args({6, 1, 10, 100, 1000, 10000, 1, false, false, false, false, false})
+    ->Args({6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_SerializeToString)
-    ->Args({5, 10000, 1000, 100, 10, 1, false, false, false, false})
+    ->Args({5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)
-    ->Args({4, 1, 1, 1, 1, false, false, false})
-    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_SerializeToString)->Args({8, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_SerializeToString)
-    ->Args({5, 100000, 1, 1, 1, 1, false, false, false, false})
+    ->Args({5, 100000, 1, 1, 1, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_SerializeToString)
-    ->Args({5, 1, 100000, 1, 1, 1, false, false, false, false})
+    ->Args({5, 1, 100000, 1, 1, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_SerializeToString)
-    ->Args({5, 1, 1, 100000, 1, 1, false, false, false, false})
+    ->Args({5, 1, 1, 100000, 1, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_SerializeToString)
-    ->Args({5, 1, 1, 1, 100000, 1, false, false, false, false})
+    ->Args({5, 1, 1, 1, 100000, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_SerializeToString)
-    ->Args({5, 1, 1, 1, 1, 100000, false, false, false, false})
+    ->Args({5, 1, 1, 1, 1, 100000, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_SerializeToString)->Args({3, 1, 1, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({3, 1, 10, 1, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)
-    ->Args({3, 1, 100, 1, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)
-    ->Args({3, 1, 1000, 1, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)->Args({3, 1, 10000, false, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)
-    ->Args({3, 1, 100000, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SerializeToString)
-    ->Args({3, 1, 100000, false, false})
-    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({3, 1, 1, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({3, 1, 10, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({3, 1, 100, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({3, 1, 10000, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({3, 1, 100000, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_SerializeToString)->Args({3, 1, 100000, 0, 0})->Unit(::benchmark::kMicrosecond);
 
 void BM_DeserializeFromString(::benchmark::State &state)
 {
@@ -871,35 +825,35 @@ void BM_DeserializeFromString(::benchmark::State &state)
 
 //// (BM_SerializeToString_config) number_of_layers, input_size, hidden_1_size, ...., output_size,
 /// hidden_1_activation, ...
-BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 10, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 10000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 100000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 1000000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 10000000, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 100, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 10000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 100000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 1000000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1, 10000000, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_DeserializeFromString)->Args({2, 10, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 100, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 1000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 10000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 100000, 1, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 1000000, 1, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 100, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 10000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 100000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1000000, 1, 0})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_DeserializeFromString)->Args({2, 1000, 1000, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 100, 100, false})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)->Args({2, 10, 10, false})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 1000, 1000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 100, 100, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_DeserializeFromString)
-    ->Args({6, 1, 10, 100, 1000, 10000, 1, false, false, false, false, false})
+    ->Args({6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_DeserializeFromString)
-    ->Args({5, 10000, 1000, 100, 10, 1, false, false, false, false})
+    ->Args({5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_DeserializeFromString)
-    ->Args({4, 1, 1, 1, 1, false, false, false})
+    ->Args({4, 1, 1, 1, 1, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_DeserializeFromString)
@@ -907,42 +861,28 @@ BENCHMARK(BM_DeserializeFromString)
     ->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_DeserializeFromString)
-    ->Args({5, 100000, 1, 1, 1, 1, false, false, false, false})
+    ->Args({5, 100000, 1, 1, 1, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_DeserializeFromString)
-    ->Args({5, 1, 100000, 1, 1, 1, false, false, false, false})
+    ->Args({5, 1, 100000, 1, 1, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_DeserializeFromString)
-    ->Args({5, 1, 1, 100000, 1, 1, false, false, false, false})
+    ->Args({5, 1, 1, 100000, 1, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_DeserializeFromString)
-    ->Args({5, 1, 1, 1, 100000, 1, false, false, false, false})
+    ->Args({5, 1, 1, 1, 100000, 1, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_DeserializeFromString)
-    ->Args({5, 1, 1, 1, 1, 100000, false, false, false, false})
+    ->Args({5, 1, 1, 1, 1, 100000, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_DeserializeFromString)
-    ->Args({3, 1, 1, 1, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)
-    ->Args({3, 1, 10, 1, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)
-    ->Args({3, 1, 100, 1, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)
-    ->Args({3, 1, 1000, 1, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)
-    ->Args({3, 1, 10000, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)
-    ->Args({3, 1, 100000, false, false})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DeserializeFromString)
-    ->Args({3, 1, 100000, false, false})
-    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({3, 1, 1, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({3, 1, 10, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({3, 1, 100, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({3, 1, 10000, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({3, 1, 100000, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_DeserializeFromString)->Args({3, 1, 100000, 0, 0})->Unit(::benchmark::kMicrosecond);
 
 }  // namespace
 

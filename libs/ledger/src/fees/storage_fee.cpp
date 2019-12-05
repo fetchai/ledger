@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,27 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/work_queue.hpp"
+#include "ledger/fees/storage_fee.hpp"
+#include "ledger/state_sentinel_adapter.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class SynergeticExecutorInterface
+StorageFee::StorageFee(StateSentinelAdapter &storage_adapter)
+  : storage_adapter_{storage_adapter}
+{}
+
+uint64_t StorageFee::CalculateFee() const
 {
-public:
-  using ConstByteArray = byte_array::ConstByteArray;
-  using ProblemData    = std::vector<ConstByteArray>;
-
-  // Construction / Destruction
-  SynergeticExecutorInterface()          = default;
-  virtual ~SynergeticExecutorInterface() = default;
-
-  /// @name Executor Interface
-  /// @{
-  virtual void Verify(WorkQueue &solutions, ProblemData const &problem_data, std::size_t num_lanes,
-                      chain::Address const &miner) = 0;
-  /// @}
-};
+  return storage_adapter_.num_bytes_written() * 2u;
+}
 
 }  // namespace ledger
 }  // namespace fetch
