@@ -57,14 +57,13 @@ ChargeAmount TensorEstimator::AtTwo(uint64_t /*idx1*/, uint64_t /*idx2*/)
   return low_charge;
 }
 
-ChargeAmount TensorEstimator::AtThree(uint64_t /*idx1*/, uint64_t /*idx2*/,
-                                                uint64_t /*idx3*/)
+ChargeAmount TensorEstimator::AtThree(uint64_t /*idx1*/, uint64_t /*idx2*/, uint64_t /*idx3*/)
 {
   return low_charge;
 }
 
-ChargeAmount TensorEstimator::AtFour(uint64_t /*idx1*/, uint64_t /*idx2*/,
-                                               uint64_t /*idx3*/, uint64_t /*idx4*/)
+ChargeAmount TensorEstimator::AtFour(uint64_t /*idx1*/, uint64_t /*idx2*/, uint64_t /*idx3*/,
+                                     uint64_t /*idx4*/)
 {
   return low_charge;
 }
@@ -75,20 +74,19 @@ ChargeAmount TensorEstimator::SetAtOne(uint64_t /*idx1*/, DataType const & /*val
 }
 
 ChargeAmount TensorEstimator::SetAtTwo(uint64_t /*idx1*/, uint64_t /*idx2*/,
-                                                 DataType const & /*value*/)
+                                       DataType const & /*value*/)
 {
   return low_charge;
 }
 
-ChargeAmount TensorEstimator::SetAtThree(uint64_t /*idx1*/, uint64_t /*idx2*/,
-                                                   uint64_t /*idx3*/, DataType const & /*value*/)
+ChargeAmount TensorEstimator::SetAtThree(uint64_t /*idx1*/, uint64_t /*idx2*/, uint64_t /*idx3*/,
+                                         DataType const & /*value*/)
 {
   return low_charge;
 }
 
-ChargeAmount TensorEstimator::SetAtFour(uint64_t /*idx1*/, uint64_t /*idx2*/,
-                                                  uint64_t /*idx3*/, uint64_t /*idx4*/,
-                                                  DataType const & /*value*/)
+ChargeAmount TensorEstimator::SetAtFour(uint64_t /*idx1*/, uint64_t /*idx2*/, uint64_t /*idx3*/,
+                                        uint64_t /*idx4*/, DataType const & /*value*/)
 {
   return low_charge;
 }
@@ -99,6 +97,11 @@ ChargeAmount TensorEstimator::Fill(DataType const & /*value*/)
 }
 
 ChargeAmount TensorEstimator::FillRandom()
+{
+  return charge_func_of_tensor_size();
+}
+
+ChargeAmount TensorEstimator::Min()
 {
   return charge_func_of_tensor_size();
 }

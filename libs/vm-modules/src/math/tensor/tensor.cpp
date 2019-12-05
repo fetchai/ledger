@@ -68,8 +68,7 @@ void VMTensor::Bind(Module &module)
       .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
         return Ptr<VMTensor>{new VMTensor(vm, type_id)};
       })
-      .CreateMemberFunction("at", &VMTensor::At<Index>,
-                            use_estimator(&TensorEstimator::AtOne))
+      .CreateMemberFunction("at", &VMTensor::At<Index>, use_estimator(&TensorEstimator::AtOne))
       .CreateMemberFunction("at", &VMTensor::At<Index, Index>,
                             use_estimator(&TensorEstimator::AtTwo))
       .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>,
@@ -84,16 +83,13 @@ void VMTensor::Bind(Module &module)
                             use_estimator(&TensorEstimator::SetAtThree))
       .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>,
                             use_estimator(&TensorEstimator::SetAtFour))
-      .CreateMemberFunction("size", &VMTensor::size,
-                            use_estimator(&TensorEstimator::size))
-      .CreateMemberFunction("fill", &VMTensor::Fill,
-                            use_estimator(&TensorEstimator::Fill))
+      .CreateMemberFunction("size", &VMTensor::size, use_estimator(&TensorEstimator::size))
+      .CreateMemberFunction("fill", &VMTensor::Fill, use_estimator(&TensorEstimator::Fill))
       .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
                             use_estimator(&TensorEstimator::FillRandom))
-      .CreateMemberFunction("reshape", &VMTensor::Reshape,
-                            use_estimator(&TensorEstimator::Reshape))
-      .CreateMemberFunction("squeeze", &VMTensor::Squeeze,
-                            use_estimator(&TensorEstimator::Squeeze))
+      .CreateMemberFunction("min", &VMTensor::Min, use_estimator(&TensorEstimator::Min))
+      .CreateMemberFunction("reshape", &VMTensor::Reshape, use_estimator(&TensorEstimator::Reshape))
+      .CreateMemberFunction("squeeze", &VMTensor::Squeeze, use_estimator(&TensorEstimator::Squeeze))
       .CreateMemberFunction("transpose", &VMTensor::Transpose,
                             use_estimator(&TensorEstimator::Transpose))
       .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze,
@@ -170,6 +166,15 @@ bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
 void VMTensor::Transpose()
 {
   tensor_.Transpose();
+}
+
+/////////////////////////
+/// MATRIX OPERATIONS ///
+/////////////////////////
+
+DataType VMTensor::Min()
+{
+  return fetch::math::Min(tensor_);
 }
 
 //////////////////////////////

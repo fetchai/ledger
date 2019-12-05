@@ -47,7 +47,7 @@ class TensorEstimator
 public:
   using VMObjectType = VMTensor;
   using ChargeAmount = fetch::vm::ChargeAmount;
-  using TensorType = typename fetch::math::Tensor<DataType>;
+  using TensorType   = typename fetch::math::Tensor<DataType>;
 
   explicit TensorEstimator(VMObjectType &tensor);
   ~TensorEstimator() = default;
@@ -74,6 +74,8 @@ public:
   ChargeAmount Fill(DataType const &value);
 
   ChargeAmount FillRandom();
+
+  ChargeAmount Min();
 
   ChargeAmount Squeeze();
 

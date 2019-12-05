@@ -20,8 +20,8 @@
 #include "math/tensor.hpp"
 #include "vm/common.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/type.hpp"
 #include "vm_modules/math/tensor/tensor_estimator.hpp"
+#include "vm_modules/math/type.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -90,6 +90,12 @@ public:
   bool Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
 
   void Transpose();
+
+  /////////////////////////
+  /// MATRIX OPERATIONS ///
+  /////////////////////////
+
+  DataType Min();
 
   //////////////////////////////
   /// PRINTING AND EXPORTING ///
