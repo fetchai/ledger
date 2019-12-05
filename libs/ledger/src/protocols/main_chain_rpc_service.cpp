@@ -128,29 +128,10 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   state_machine_->RegisterHandler(State::SYNCHRONISED,            this, &MainChainRpcService::OnSynchronised);
   // clang-format on
 
-#ifdef FETCH_LOG_DEBUG_ENABLED
   state_machine_->OnStateChange([](State current, State previous) {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
-  });
-#endif // FETCH_LOG_DEBUG_ENABLED
-
-  // set the main chain
-  block_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
-                                                Packet::Payload const &payload,
-                                                Address                transmitter) {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
-
-    BlockSerializer serialiser(payload);
-
-    // deserialize the block
-    Block block;
-    serialiser >> block;
-
-    // recalculate the block hash
-    block.UpdateDigest();
-
-    // dispatch the event
-    OnNewBlock(from, block, transmitter);
+    FETCH_UNUSED(current);
+    FETCH_UNUSED(previous);
+    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
 }
 
@@ -192,7 +173,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   if (!ValidBlock(block, "new block"))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Block did not prove valid");
+    FETCH_LOG_WARN(LOGGING_NAME, "Gossiped block did not prove valid");
+    loose_blocks_seen_++;
     return;
   }
 
@@ -365,6 +347,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
 
   if (!current_request_)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Issue found when requesting heaviest chain. Re-attempt.");
     // something went wrong we should attempt to request the chain again
     next_state = State::REQUEST_HEAVIEST_CHAIN;
     state_machine_->Delay(std::chrono::milliseconds{500});
@@ -396,11 +379,21 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             next_state = State::SYNCHRONISING;  // we have reached the tip
           }
         }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME,
+                         "Received empty block response when forward syncing the chain!");
+          state_machine_->Delay(std::chrono::seconds{8});
+          next_state = GetInitialState(mode_);
+        }
       }
       else
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Heaviest chain request to: ", ToBase64(current_peer_address_),
                        " failed. Reason: ", service::ToString(status));
+
+        state_machine_->Delay(std::chrono::seconds{1});
+        next_state = GetInitialState(mode_);
       }
       // clear the state
       current_peer_address_ = Address{};
@@ -431,7 +424,7 @@ MainChainRpcService::State MainChainRpcService::OnSynchronising()
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Requesting chain from muddle://", ToBase64(current_peer_address_),
-                   " for block ", ToBase64(current_missing_block_));
+                   " for block 0x", current_missing_block_.ToHex());
 
     // make the RPC call to the block source with a request for the chain
     current_request_ = rpc_client_.CallSpecificAddress(
@@ -499,23 +492,15 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
   FETCH_UNUSED(current);
 
   MainChain::BlockPtr head_of_chain = chain_.GetHeaviestBlock();
-  uint64_t const      seconds_since_last_block =
-      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) -
-      head_of_chain->timestamp;
 
   // Assume if the chain is quite old that there are peers who have a heavier chain we haven't
   // heard about
-  if (seconds_since_last_block > 100 && head_of_chain->block_number != 0)
+  if (loose_blocks_seen_ > 5)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation appears to be lost - chain is old.");
+    loose_blocks_seen_ = 0;
+    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation appears to be lost - loose blocks detected");
     state_machine_->Delay(std::chrono::milliseconds{1000});
     next_state = State::REQUEST_HEAVIEST_CHAIN;
-  }
-  else if (chain_.HasMissingBlocks())
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation lost - chain has missing blocks");
-
-    next_state = State::SYNCHRONISING;
   }
   else if (previous != State::SYNCHRONISED)
   {
@@ -527,6 +512,28 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
   }
 
   return next_state;
+}
+
+void MainChainRpcService::Start()
+{
+  // set the main chain rpc sync to accept gossip blocks
+  block_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
+                                                Packet::Payload const &payload,
+                                                Address                transmitter) {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
+
+    BlockSerializer serialiser(payload);
+
+    // deserialize the block
+    Block block;
+    serialiser >> block;
+
+    // recalculate the block hash
+    block.UpdateDigest();
+
+    // dispatch the event
+    OnNewBlock(from, block, transmitter);
+  });
 }
 
 }  // namespace ledger
