@@ -690,8 +690,6 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     Handle handle = LookupHandle(packet->GetTargetRaw());
     if (handle != 0u)
     {
-      FETCH_LOG_WARN(logging_name_, "Normal routing to peer: ", packet->GetTarget().ToBase64());
-
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
       normal_routing_total_->increment();
