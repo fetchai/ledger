@@ -101,6 +101,9 @@ void BM_Construct(::benchmark::State &state)
   state.counters["PaddedSize"] =
       static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
 
+  state.counters["Size"] =
+      static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape));
+
   for (auto _ : state)
   {
     state.PauseTiming();
@@ -196,16 +199,19 @@ void BM_Fill(::benchmark::State &state)
   state.counters["PaddedSize"] =
       static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
 
+  state.counters["Size"] =
+      static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape));
+
+  VMPtr vm;
+  SetUp(vm);
+
+  DataType val;
+  auto     data = CreateTensor(vm, config.shape);
+
+  state.counters["charge"] = static_cast<double>(data->Estimator().Fill(val));
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    VMPtr vm;
-    SetUp(vm);
-
-    DataType val;
-    auto     data = CreateTensor(vm, config.shape);
-
-    state.ResumeTiming();
     data->Fill(val);
   }
 }
@@ -214,6 +220,7 @@ BENCHMARK(BM_Fill)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Fill)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({2, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_Fill)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
@@ -293,15 +300,18 @@ void BM_FillRandom(::benchmark::State &state)
   state.counters["PaddedSize"] =
       static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
 
+  state.counters["Size"] =
+      static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape));
+
+  VMPtr vm;
+  SetUp(vm);
+
+  auto data = CreateTensor(vm, config.shape);
+
+  state.counters["charge"] = static_cast<double>(data->Estimator().FillRandom());
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    VMPtr vm;
-    SetUp(vm);
-
-    auto data = CreateTensor(vm, config.shape);
-
-    state.ResumeTiming();
     data->FillRandom();
   }
 }
@@ -432,6 +442,8 @@ void BM_Reshape(::benchmark::State &state)
     auto data      = CreateTensor(vm, config.shape_from);
     auto new_shape = CreateArray(vm, config.shape_to);
 
+    state.counters["charge"] = static_cast<double>(data->Estimator().Reshape(new_shape));
+
     state.ResumeTiming();
     data->Reshape(new_shape);
   }
@@ -480,6 +492,9 @@ void BM_Transpose(::benchmark::State &state)
   // Get args form state
   BM_Tensor_config config{state};
 
+  state.counters["Size"] =
+      static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape));
+
   state.counters["PaddedSizeBefore"] =
       static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
 
@@ -493,6 +508,8 @@ void BM_Transpose(::benchmark::State &state)
     SetUp(vm);
 
     auto data = CreateTensor(vm, config.shape);
+
+    state.counters["charge"] = static_cast<double>(data->Estimator().Transpose());
 
     state.ResumeTiming();
     data->Transpose();
@@ -575,24 +592,31 @@ void BM_At(::benchmark::State &state)
     switch (config.shape.size())
     {
     case 1:
+      state.counters["charge"] = static_cast<double>(data->Estimator().AtOne(config.indices.at(0)));
       state.ResumeTiming();
       data->At(config.indices.at(0));
       state.PauseTiming();
       break;
 
     case 2:
+      state.counters["charge"] =
+          static_cast<double>(data->Estimator().AtTwo(config.indices.at(0), config.indices.at(1)));
       state.ResumeTiming();
       data->At(config.indices.at(0), config.indices.at(1));
       state.PauseTiming();
       break;
 
     case 3:
+      state.counters["charge"] = static_cast<double>(data->Estimator().AtThree(
+          config.indices.at(0), config.indices.at(1), config.indices.at(2)));
       state.ResumeTiming();
       data->At(config.indices.at(0), config.indices.at(1), config.indices.at(2));
       state.PauseTiming();
       break;
 
     case 4:
+      state.counters["charge"] = static_cast<double>(data->Estimator().AtFour(
+          config.indices.at(0), config.indices.at(1), config.indices.at(2), config.indices.at(3)));
       state.ResumeTiming();
       data->At(config.indices.at(0), config.indices.at(1), config.indices.at(2),
                config.indices.at(3));
@@ -646,7 +670,7 @@ void BM_SetAt(::benchmark::State &state)
   using DataType = fetch::vm_modules::math::DataType;
 
   // Get args form state
-  BM_At_config config{state};
+  BM_SetAt_config config{state};
 
   state.counters["PaddedSizeFrom"] =
       static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
@@ -669,24 +693,33 @@ void BM_SetAt(::benchmark::State &state)
     switch (config.shape.size())
     {
     case 1:
+      state.counters["charge"] =
+          static_cast<double>(data->Estimator().SetAtOne(config.indices.at(0), val));
       state.ResumeTiming();
       data->SetAt(config.indices.at(0), val);
       state.PauseTiming();
       break;
 
     case 2:
+      state.counters["charge"] = static_cast<double>(
+          data->Estimator().SetAtTwo(config.indices.at(0), config.indices.at(1), val));
       state.ResumeTiming();
       data->SetAt(config.indices.at(0), config.indices.at(1), val);
       state.PauseTiming();
       break;
 
     case 3:
+      state.counters["charge"] = static_cast<double>(data->Estimator().SetAtThree(
+          config.indices.at(0), config.indices.at(1), config.indices.at(2), val));
       state.ResumeTiming();
       data->SetAt(config.indices.at(0), config.indices.at(1), config.indices.at(2), val);
       state.PauseTiming();
       break;
 
     case 4:
+      state.counters["charge"] = static_cast<double>(
+          data->Estimator().SetAtFour(config.indices.at(0), config.indices.at(1),
+                                      config.indices.at(2), config.indices.at(3), val));
       state.ResumeTiming();
       data->SetAt(config.indices.at(0), config.indices.at(1), config.indices.at(2),
                   config.indices.at(3), val);
@@ -727,6 +760,8 @@ void BM_ToString(::benchmark::State &state)
 
   auto data = CreateTensor(vm, config.shape);
 
+  state.counters["charge"] = static_cast<double>(data->Estimator().ToString());
+
   for (auto _ : state)
   {
     data->ToString();
@@ -764,6 +799,7 @@ void BM_FromString(::benchmark::State &state)
   auto str  = data->ToString();
 
   state.counters["StrLen"] = static_cast<double>(str->string().size());
+  state.counters["charge"] = static_cast<double>(data->Estimator().FromString(str));
 
   for (auto _ : state)
   {
@@ -801,15 +837,15 @@ void BM_Min(::benchmark::State &state)
   state.counters["Size"] =
       static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape));
 
+  VMPtr vm;
+  SetUp(vm);
+
+  auto data = CreateTensor(vm, config.shape);
+
+  state.counters["charge"] = static_cast<double>(data->Estimator().Min());
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    VMPtr vm;
-    SetUp(vm);
-
-    auto data = CreateTensor(vm, config.shape);
-
-    state.ResumeTiming();
     data->Min();
   }
 }
