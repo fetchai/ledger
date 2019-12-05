@@ -85,6 +85,7 @@ class ConstellationTestCase(TestCase):
         self._watchdog = None
         self._creation_time = time.perf_counter()
         self._block_interval = 1000
+        self._genesis_file_location = ""
 
         # In order for the tests to have tokens, allocate
         # a benefactor address enough at genesis
@@ -191,15 +192,17 @@ class ConstellationTestCase(TestCase):
         nodes_identities.append(
             (self._benefactor_address, 100000000, 0))
 
-        genesis_file = GenesisFile(
-            nodes_identities, 20, 5, self._block_interval)
-        genesis_file_location = os.path.abspath(
-            os.path.join(self._workspace, "genesis_file.json"))
-        genesis_file.dump_to_file(genesis_file_location)
+        # Only do this once to avoid different genesis due to timestamp
+        if not self._genesis_file_location:
+            genesis_file = GenesisFile(
+                nodes_identities, 20, 5, self._block_interval)
+            self._genesis_file_location = os.path.abspath(
+                os.path.join(self._workspace, "genesis_file.json"))
+            genesis_file.dump_to_file(self._genesis_file_location)
 
         # Give all nodes this stake file
         # for index in range(self._number_of_nodes):
-        shutil.copy(genesis_file_location, self._nodes[index].root)
+        shutil.copy(self._genesis_file_location, self._nodes[index].root)
 
     def setup_pos_for_nodes(self):
 
@@ -224,11 +227,12 @@ class ConstellationTestCase(TestCase):
         # set benefactor to node1
         self._benefactor_address = self._nodes[index]._entity
 
+        # Force overwrite of POS case
         genesis_file = GenesisFile(
             nodes_identities, 20, 5, self._block_interval)
-        genesis_file_location = os.path.abspath(
+        self._genesis_file_location = os.path.abspath(
             os.path.join(self._workspace, "genesis_file.json"))
-        genesis_file.dump_to_file(genesis_file_location)
+        genesis_file.dump_to_file(self._genesis_file_location)
 
         # Give all nodes this stake file, plus append POS flag for when node starts
         for index in range(self._number_of_nodes):
