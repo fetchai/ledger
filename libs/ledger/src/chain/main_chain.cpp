@@ -91,20 +91,32 @@ MainChain::MainChain(Mode mode)
 
 MainChain::~MainChain()
 {
-  using namespace fetch::serializers;
-
   if (block_store_)
   {
     block_store_->Flush(false);
   }
 
+  SaveBloom();
+}
+
+void MainChain::SaveBloom()
+{
+  using namespace fetch::serializers;
+
   if (mode_ != Mode::IN_MEMORY_DB)
   {
-    std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
-    LargeObjectSerializeHelper buffer{};
-    buffer << bloom_filter_;
+    try
+    {
+      std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
+      LargeObjectSerializeHelper buffer{};
+      buffer << bloom_filter_;
 
-    out << buffer.data();
+      out << buffer.data();
+    }
+    catch (std::exception const &e)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to save Bloom filter to file, reason: ", e.what());
+    }
   }
 }
 
@@ -159,6 +171,7 @@ BlockStatus MainChain::AddBlock(Block const &blk)
   if (status == BlockStatus::ADDED)
   {
     AddBlockToBloomFilter(*block);
+    SaveBloom();
   }
 
   return status;
