@@ -472,18 +472,18 @@ bool BeaconManager::RunReconstruction()
     CabinetIndex            victim_index = identity_to_index_[in.first];
     std::set<CabinetIndex>  parties{in.second.first};
     std::vector<PrivateKey> shares{in.second.second};
+    if (in.first == certificate_->identity().identifier())
+    {
+      // Do not run reconstruction for myself
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " polynomial being reconstructed.");
+      continue;
+    }
     if (parties.size() <= polynomial_degree_)
     {
       // Do not have enough good shares to be able to do reconstruction
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " reconstruction for node ",
                      victim_index, " failed with party size ", parties.size());
       return false;
-    }
-    if (in.first == certificate_->identity().identifier())
-    {
-      // Do not run reconstruction for myself
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " polynomial being reconstructed.");
-      continue;
     }
     std::vector<PrivateKey> points;
     std::vector<PrivateKey> shares_f;
