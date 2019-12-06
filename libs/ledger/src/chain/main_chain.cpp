@@ -691,7 +691,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
   {
     if (!LookupBlock(current_hash, block, &next_hash))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToHex(current_hash),
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
                       " note, next hash: ", next_hash);
       throw std::runtime_error("Failed to lookup block");
     }
