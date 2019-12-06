@@ -292,14 +292,24 @@ void QualComplaintsManager::Finish(Cabinet const &qual, MuddleAddress const &nod
   FETCH_LOCK(mutex_);
   if (!finished_)
   {
+    QualComplaints qual_complaints;
     for (auto const &qualified_member : qual)
     {
-      if (qualified_member != node_id &&
-          complaints_received_.find(qualified_member) == complaints_received_.end())
+      if (qualified_member == node_id)
+      {
+        continue;
+      }
+      if (complaints_received_.find(qualified_member) == complaints_received_.end())
       {
         complaints_.insert(qualified_member);
       }
+      else
+      {
+        qual_complaints.insert({qualified_member, complaints_received_.at(qualified_member)});
+      }
     }
+
+    complaints_received_ = qual_complaints;
     finished_ = true;
   }
 }
@@ -318,20 +328,11 @@ uint32_t QualComplaintsManager::NumComplaintsReceived(Cabinet const &qual) const
   return qual_complaints;
 }
 
-QualComplaintsManager::QualComplaints QualComplaintsManager::ComplaintsReceived(
-    Cabinet const &qual) const
+QualComplaintsManager::QualComplaints QualComplaintsManager::ComplaintsReceived() const
 {
   FETCH_LOCK(mutex_);
   assert(finished_);
-  QualComplaints qual_complaints;
-  for (auto const &mem : qual)
-  {
-    if (complaints_received_.find(mem) != complaints_received_.end())
-    {
-      qual_complaints.insert({mem, complaints_received_.at(mem)});
-    }
-  }
-  return qual_complaints;
+  return complaints_received_;
 }
 
 std::size_t QualComplaintsManager::ComplaintsSize() const

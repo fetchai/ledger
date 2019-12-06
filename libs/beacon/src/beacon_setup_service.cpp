@@ -1016,8 +1016,10 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &              from,
   case DKGMessage::MessageType::CONNECTIONS:
   {
     auto connections_ptr = std::dynamic_pointer_cast<ConnectionsMessage>(msg_ptr);
-
-    ready_connections_.insert({from, connections_ptr->connections_});
+    if (connections_ptr != nullptr)
+    {
+      ready_connections_.insert({from, connections_ptr->connections_});
+    }
     break;
   }
   case DKGMessage::MessageType::COEFFICIENT:
@@ -1404,7 +1406,7 @@ bool BeaconSetupService::BuildQual()
 void BeaconSetupService::CheckQualComplaints()
 {
   std::set<MuddleAddress> qual{beacon_->manager.qual()};
-  for (const auto &complaint : qual_complaints_manager_.ComplaintsReceived(qual))
+  for (const auto &complaint : qual_complaints_manager_.ComplaintsReceived())
   {
     MuddleAddress sender = complaint.first;
     for (auto const &share : complaint.second)
