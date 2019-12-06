@@ -39,23 +39,30 @@ void BindML(Module &module, bool const enable_experimental)
   // Tensor - required by later functions
   math::VMTensor::Bind(module, enable_experimental);
 
-  // ml fundamentals
-  VMStateDict::Bind(module, enable_experimental);
-  VMGraph::Bind(module, enable_experimental);
-  VMTrainingPair::Bind(module, enable_experimental);
+  // do not enable bindings that do not have well defined charge estimation
+  if (enable_experimental)
+  {
+    // ml fundamentals
+    VMStateDict::Bind(module);
+    VMGraph::Bind(module);
+    VMTrainingPair::Bind(module);
 
-  // dataloader
-  VMDataLoader::Bind(module, enable_experimental);
+    // dataloader
+    VMDataLoader::Bind(module);
 
-  // optimisers
-  VMOptimiser::Bind(module, enable_experimental);
+    // optimisers
+    VMOptimiser::Bind(module);
+  }
 
   // model
   model::VMModel::Bind(module, enable_experimental);
 
-  // utilities
-  utilities::VMScaler::Bind(module, enable_experimental);
-  utilities::BindMNISTUtils(module, enable_experimental);
+  if (enable_experimental)
+  {
+    // utilities
+    utilities::VMScaler::Bind(module, enable_experimental);
+    utilities::BindMNISTUtils(module, enable_experimental);
+  }
 }
 
 }  // namespace ml
