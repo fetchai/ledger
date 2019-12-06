@@ -100,11 +100,18 @@ MainChain::~MainChain()
 
   if (mode_ != Mode::IN_MEMORY_DB)
   {
-    std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
-    LargeObjectSerializeHelper buffer{};
-    buffer << bloom_filter_;
+    try
+    {
+      std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
+      LargeObjectSerializeHelper buffer{};
+      buffer << bloom_filter_;
 
-    out << buffer.data();
+      out << buffer.data();
+    }
+    catch (std::exception const &e)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to save Bloom filter to file, reason: ", e.what());
+    }
   }
 }
 
@@ -986,11 +993,20 @@ void MainChain::RecoverFromFile(Mode mode)
 
     if (in.is_open())
     {
-      byte_array::ByteArray bloom_filter_data{in};
+      try
+      {
+        byte_array::ByteArray bloom_filter_data{in};
 
-      LargeObjectSerializeHelper buffer{bloom_filter_data};
+        LargeObjectSerializeHelper buffer{bloom_filter_data};
 
-      buffer >> bloom_filter_;
+        buffer >> bloom_filter_;
+      }
+      catch (std::exception const &e)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME,
+                        "Failed to load Bloom filter from storage! Reason: ", e.what());
+        Reset();
+      }
     }
   }
 
