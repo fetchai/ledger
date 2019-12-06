@@ -134,6 +134,16 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
                      chain::GENESIS_MERKLE_ROOT.ToHex(),
                      " block hash: ", chain::GENESIS_DIGEST.ToHex());
       loaded_genesis_ = true;
+
+      auto block = chain_.GetHeaviestBlock();
+
+      if (block->IsGenesis())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME,
+                       "The main chain's heaviest is genesis. That seems suspicious. Hash: 0x",
+                       block->hash.ToHex(), " Merkle: 0x", block->merkle_hash.ToHex(),
+                       " number: ", block->block_number);
+      }
     }
     else
     {
