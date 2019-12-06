@@ -244,7 +244,7 @@ public:
   constexpr FixedPoint(Type const &integer, UnsignedType const &fraction);
   template <uint16_t N, uint16_t M>
   constexpr explicit FixedPoint(FixedPoint<N, M> const &o);
-  constexpr explicit FixedPoint(std::string const &s);
+  explicit FixedPoint(std::string const &s);
 
   ///////////////////
   /// conversions ///
@@ -952,7 +952,7 @@ constexpr FixedPoint<16, 16>::FixedPoint(FixedPoint<32, 32> const &o)
 }
 
 template <uint16_t I, uint16_t F>
-constexpr FixedPoint<I, F>::FixedPoint(std::string const &s)
+FixedPoint<I, F>::FixedPoint(std::string const &s)
   : data_{0}
 {
   std::cout << "Constructing from string: " << s << std::endl;
@@ -2346,11 +2346,11 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sign(FixedPoint<I, F> const &x)
  * @return the result of e^x
  */
 
-static constexpr FixedPoint<64, 64> Exp_P01(0, 0x8000000000000000);  //  1 / 2
-static constexpr FixedPoint<64, 64> Exp_P02(0, 0x1C71C71C71C71C71);  //  1 / 9
-static constexpr FixedPoint<64, 64> Exp_P03(0, 0x038E38E38E38E38E);  //  1 / 72
-static constexpr FixedPoint<64, 64> Exp_P04(0, 0x0041041041041041);  //  1 / 1008
-static constexpr FixedPoint<64, 64> Exp_P05(0, 0x00022ACD578022AC);  //  1 / 30240
+static const FixedPoint<64, 64> Exp_P01(0, 0x8000000000000000);  //  1 / 2
+static const FixedPoint<64, 64> Exp_P02(0, 0x1C71C71C71C71C71);  //  1 / 9
+static const FixedPoint<64, 64> Exp_P03(0, 0x038E38E38E38E38E);  //  1 / 72
+static const FixedPoint<64, 64> Exp_P04(0, 0x0041041041041041);  //  1 / 1008
+static const FixedPoint<64, 64> Exp_P05(0, 0x00022ACD578022AC);  //  1 / 30240
 
 template <uint16_t I, uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::Exp(FixedPoint<I, F> const &x)
