@@ -243,22 +243,22 @@ public:
   // Serialisation
   static constexpr DataType SERIALISATION_PER_OP_COEF()
   {
-    return DataType(10.0);
+    return DataType(139);
   };
 
   static constexpr DataType SERIALISATION_WEIGHT_SUM_COEF()
   {
-    return DataType(0.00107809);
+    return DataType(0.05292996);
   };
 
   static constexpr DataType SERIALISATION_PADDED_WEIGHT_SUM_COEF()
   {
-    return DataType(0.00023451);
+    return DataType(0.2);
   };
 
   static constexpr DataType SERIALISATION_CONST_COEF()
   {
-    return DataType(100.0);
+    return DataType(210);
   };
 
   static constexpr ChargeAmount constant_charge{vm::CHARGE_UNIT};

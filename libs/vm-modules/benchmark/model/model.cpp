@@ -734,6 +734,7 @@ void BM_SerializeToString(::benchmark::State &state)
     // serialise to string
     state.counters["charge"] = static_cast<double>(model->Estimator().SerializeToString());
 
+    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
     state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
     state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
 
