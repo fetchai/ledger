@@ -336,7 +336,7 @@ TEST_F(MathTensorTests, tensor_sum_test)
   fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
   DataType result = vm_tensor.Sum();
-  DataType gt{14269.0};
+  DataType gt{14273.0};
 
   EXPECT_TRUE(result == gt);
 }
@@ -364,7 +364,7 @@ TEST_F(MathTensorTests, tensor_sum_etch_test)
   ASSERT_TRUE(toolkit.Run(&res));
 
   auto const sum_val = res.Get<DataType>();
-  DataType   gt{23.1};
+  DataType   gt{65.1};
 
   std::cout << "gt: " << gt << std::endl;
   std::cout << "sum_val: " << sum_val << std::endl;
