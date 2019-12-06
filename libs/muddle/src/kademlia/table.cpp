@@ -31,7 +31,7 @@ std::string GenerateLoggingName(NetworkId const &network)
   return "KademliaTable:" + network.ToString();
 }
 
-} // namespace
+}  // namespace
 
 KademliaTable::KademliaTable(Address const &own_address, NetworkId const &network)
   : logging_name_{GenerateLoggingName(network)}
