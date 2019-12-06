@@ -74,8 +74,8 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
 
   state_.forward_pass_cost =
       state_.forward_pass_cost + static_cast<DataType>(inputs) * FORWARD_DENSE_INPUT_COEF();
-  state_.forward_pass_cost = state_.forward_pass_cost +
-                             static_cast<DataType>(hidden_nodes) * FORWARD_DENSE_OUTPUT_COEF();
+  state_.forward_pass_cost =
+      state_.forward_pass_cost + static_cast<DataType>(hidden_nodes) * FORWARD_DENSE_OUTPUT_COEF();
   state_.forward_pass_cost =
       state_.forward_pass_cost +
       static_cast<DataType>(inputs * hidden_nodes) * FORWARD_DENSE_QUAD_COEF();
@@ -111,7 +111,7 @@ ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> cons
 {
   ChargeAmount estimate = LayerAddDense(layer, inputs, hidden_nodes);
 
-  FETCH_UNUSED(activation); // only relu is valid
+  FETCH_UNUSED(activation);  // only relu is valid
   state_.forward_pass_cost  = state_.forward_pass_cost + RELU_FORWARD_IMPACT() * hidden_nodes;
   state_.backward_pass_cost = state_.backward_pass_cost + RELU_BACKWARD_IMPACT() * hidden_nodes;
   state_.ops_count++;
@@ -127,10 +127,9 @@ ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> cons
  * @param activation
  * @return
  */
-ChargeAmount ModelEstimator::LayerAddDenseActivationExperimental(Ptr<fetch::vm::String> const &layer,
-                                                     SizeType const &              inputs,
-                                                     SizeType const &              hidden_nodes,
-                                                     Ptr<fetch::vm::String> const &activation)
+ChargeAmount ModelEstimator::LayerAddDenseActivationExperimental(
+    Ptr<fetch::vm::String> const &layer, SizeType const &inputs, SizeType const &hidden_nodes,
+    Ptr<fetch::vm::String> const &activation)
 {
 
   FETCH_UNUSED(layer);

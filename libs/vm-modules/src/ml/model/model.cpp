@@ -451,23 +451,26 @@ VMModel::SequentialModelPtr VMModel::GetMeAsSequentialIfPossible()
   return std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
 }
 
-void VMModel::LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
-                                   math::SizeType const &hidden_nodes)
+void VMModel::LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                            math::SizeType const &inputs, math::SizeType const &hidden_nodes)
 {
   LayerAddDenseActivationImplementation(layer, inputs, hidden_nodes, ActivationType::NOTHING);
 }
 
-void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
-                                   math::SizeType const &                   hidden_nodes,
-                                   fetch::vm::Ptr<fetch::vm::String> const &activation)
+void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                      math::SizeType const &                   inputs,
+                                      math::SizeType const &                   hidden_nodes,
+                                      fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
-  LayerAddDenseActivationImplementation(layer, inputs, hidden_nodes,
-                       ParseName(activation->string(), activations_, "activation function"));
+  LayerAddDenseActivationImplementation(
+      layer, inputs, hidden_nodes,
+      ParseName(activation->string(), activations_, "activation function"));
 }
 
-void VMModel::LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
-                                   math::SizeType const &             hidden_nodes,
-                                   fetch::ml::details::ActivationType activation)
+void VMModel::LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                                    math::SizeType const &                   inputs,
+                                                    math::SizeType const &             hidden_nodes,
+                                                    fetch::ml::details::ActivationType activation)
 {
   try
   {
@@ -484,30 +487,33 @@ void VMModel::LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::St
   }
 }
 
-void VMModel::LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
-                                   math::SizeType const &input_channels,
-                                   math::SizeType const &kernel_size,
-                                   math::SizeType const &stride_size)
+void VMModel::LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                           math::SizeType const &                   output_channels,
+                           math::SizeType const &input_channels, math::SizeType const &kernel_size,
+                           math::SizeType const &stride_size)
 {
-  LayerAddConvActivationImplementation(layer, output_channels, input_channels, kernel_size, stride_size,
-                       ActivationType::NOTHING);
+  LayerAddConvActivationImplementation(layer, output_channels, input_channels, kernel_size,
+                                       stride_size, ActivationType::NOTHING);
 }
 
-void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
-                                   math::SizeType const &                   input_channels,
-                                   math::SizeType const &                   kernel_size,
-                                   math::SizeType const &                   stride_size,
-                                   fetch::vm::Ptr<fetch::vm::String> const &activation)
+void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                     math::SizeType const &                   output_channels,
+                                     math::SizeType const &                   input_channels,
+                                     math::SizeType const &                   kernel_size,
+                                     math::SizeType const &                   stride_size,
+                                     fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
-  LayerAddConvActivationImplementation(layer, output_channels, input_channels, kernel_size, stride_size,
-                       ParseName(activation->string(), activations_, "activation function"));
+  LayerAddConvActivationImplementation(
+      layer, output_channels, input_channels, kernel_size, stride_size,
+      ParseName(activation->string(), activations_, "activation function"));
 }
 
-void VMModel::LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
-                                   math::SizeType const &             input_channels,
-                                   math::SizeType const &             kernel_size,
-                                   math::SizeType const &             stride_size,
-                                   fetch::ml::details::ActivationType activation)
+void VMModel::LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                                   math::SizeType const &output_channels,
+                                                   math::SizeType const &input_channels,
+                                                   math::SizeType const &kernel_size,
+                                                   math::SizeType const &stride_size,
+                                                   fetch::ml::details::ActivationType activation)
 {
   try
   {

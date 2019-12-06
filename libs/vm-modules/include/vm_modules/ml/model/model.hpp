@@ -135,24 +135,15 @@ private:
 
   void PrepareDataloader();
 
-  void LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs, math::SizeType const &hidden_nodes);
-  void LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
-                            math::SizeType const &                   hidden_nodes,
-                            fetch::vm::Ptr<fetch::vm::String> const &activation);
-  void LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
-                            math::SizeType const &             hidden_nodes,
-                            fetch::ml::details::ActivationType activation);
-  void LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
-                            math::SizeType const &input_channels, math::SizeType const &kernel_size,
-                            math::SizeType const &stride_size);
-  void LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
-                            math::SizeType const &input_channels, math::SizeType const &kernel_size,
-                            math::SizeType const &                   stride_size,
-                            fetch::vm::Ptr<fetch::vm::String> const &activation);
-  void LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
-                            math::SizeType const &input_channels, math::SizeType const &kernel_size,
-                            math::SizeType const &             stride_size,
-                            fetch::ml::details::ActivationType activation);
+  void LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+                     math::SizeType const &hidden_nodes);
+  void LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                               math::SizeType const &inputs, math::SizeType const &hidden_nodes,
+                               fetch::vm::Ptr<fetch::vm::String> const &activation);
+  void LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                             math::SizeType const &                   inputs,
+                                             math::SizeType const &                   hidden_nodes,
+                                             fetch::ml::details::ActivationType       activation);
 
   inline void AssertLayerTypeMatches(SupportedLayerType                layer,
                                      std::vector<SupportedLayerType> &&valids) const;
@@ -163,12 +154,25 @@ private:
 
   inline SequentialModelPtr GetMeAsSequentialIfPossible();
 
-
   // Experimental Layers
-  void LayerAddDenseActivationExperimental(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
-                            math::SizeType const &                   hidden_nodes,
-                            fetch::vm::Ptr<fetch::vm::String> const &activation);
-
+  void LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                    math::SizeType const &output_channels, math::SizeType const &input_channels,
+                    math::SizeType const &kernel_size, math::SizeType const &stride_size);
+  void LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                              math::SizeType const &                   output_channels,
+                              math::SizeType const &                   input_channels,
+                              math::SizeType const &kernel_size, math::SizeType const &stride_size,
+                              fetch::vm::Ptr<fetch::vm::String> const &activation);
+  void LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                            math::SizeType const &             output_channels,
+                                            math::SizeType const &             input_channels,
+                                            math::SizeType const &             kernel_size,
+                                            math::SizeType const &             stride_size,
+                                            fetch::ml::details::ActivationType activation);
+  void LayerAddDenseActivationExperimental(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                           math::SizeType const &                   inputs,
+                                           math::SizeType const &                   hidden_nodes,
+                                           fetch::vm::Ptr<fetch::vm::String> const &activation);
 };
 
 /**
