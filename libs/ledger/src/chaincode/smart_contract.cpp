@@ -62,6 +62,8 @@ namespace ledger {
 
 namespace {
 
+constexpr std::size_t MAX_C2C_CALL_DEPTH = 16u;
+
 /**
  * Validate any addresses in the params list against the TX given
  *
@@ -500,9 +502,11 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
   vm->AttachOutputDevice(vm::VM::STDOUT, console);
   vm->SetIOObserver(state());
 
-  vm::ContractInvocationHandler contract_invocation_handler;
+  std::unordered_set<ConstByteArray> call_history{digest_.ToHex() + "." +
+                                                  tx.contract_address().display()};
+  vm::ContractInvocationHandler      contract_invocation_handler;
   contract_invocation_handler =
-      [this, &contract_invocation_handler, tx](
+      [this, &contract_invocation_handler, tx, &call_history](
           vm::VM *vm, std::string const &identity, Executable::Contract const & /* contract */,
           Executable::Function const &function, fetch::vm::VariantArray parameters,
           std::string &error, vm::Variant &output) -> bool {
@@ -516,6 +520,24 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
 
       return false;
     }
+
+    if (call_history.size() > MAX_C2C_CALL_DEPTH)
+    {
+      error = "Maximum contract-to-contract call depth (" + std::to_string(MAX_C2C_CALL_DEPTH) +
+              ") exceeded";
+
+      return false;
+    }
+
+    auto const it = call_history.find(identity);
+    if (it != call_history.end())
+    {
+      error = "Contract-to-contract call cycle detected";
+
+      return false;
+    }
+
+    call_history.insert(identity);
 
     Identifier     id;
     chain::Address called_contract_address;
