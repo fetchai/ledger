@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
 
-pip3 install --no-cache-dir --ignore-installed --force-reinstall wheel pyyaml requests
-pip3 install --no-cache-dir --ignore-installed --force-reinstall fetchai-ledger-api==0.10.2
-pip3 install --no-cache-dir --ignore-installed --force-reinstall ./scripts/fetchai_netutils
+pip3 install  wheel pyyaml requests --force-reinstall
+pip3 install  fetchai-ledger-api==0.10.2 --force-reinstall
+pip3 install ./scripts/fetchai_netutils --force-reinstall
