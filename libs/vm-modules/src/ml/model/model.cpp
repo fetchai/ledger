@@ -460,15 +460,23 @@ void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &l
                                       math::SizeType const &                   hidden_nodes,
                                       fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
-  fetch::ml::details::ActivationType activation_type =
-      ParseName(activation->string(), activations_, "activation function");
-  if (activation_type == fetch::ml::details::ActivationType::RELU)
+  try
   {
-    LayerAddDenseActivationImplementation(layer, inputs, hidden_nodes, activation_type);
+    fetch::ml::details::ActivationType activation_type =
+        ParseName(activation->string(), activations_, "activation function");
+
+    if (activation_type == fetch::ml::details::ActivationType::RELU)
+    {
+      LayerAddDenseActivationImplementation(layer, inputs, hidden_nodes, activation_type);
+    }
+    else
+    {
+      vm_->RuntimeError("cannot add activation type : " + activation->string());
+    }
   }
-  else
+  catch (std::exception const &e)
   {
-    vm_->RuntimeError("cannot add activation type : " + activation->string());
+    vm_->RuntimeError(std::string(e.what()));
   }
 }
 
@@ -476,9 +484,16 @@ void VMModel::LayerAddDenseActivationExperimental(
     fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
     math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
-  fetch::ml::details::ActivationType activation_type =
-      ParseName(activation->string(), activations_, "activation function");
-  LayerAddDenseActivationImplementation(layer, inputs, hidden_nodes, activation_type);
+  try
+  {
+    fetch::ml::details::ActivationType activation_type =
+        ParseName(activation->string(), activations_, "activation function");
+    LayerAddDenseActivationImplementation(layer, inputs, hidden_nodes, activation_type);
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(std::string(e.what()));
+  }
 }
 
 void VMModel::LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer,
@@ -517,9 +532,16 @@ void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &la
                                      math::SizeType const &                   stride_size,
                                      fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
-  LayerAddConvActivationImplementation(
-      layer, output_channels, input_channels, kernel_size, stride_size,
-      ParseName(activation->string(), activations_, "activation function"));
+  try
+  {
+    LayerAddConvActivationImplementation(
+        layer, output_channels, input_channels, kernel_size, stride_size,
+        ParseName(activation->string(), activations_, "activation function"));
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(std::string(e.what()));
+  }
 }
 
 void VMModel::LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer,

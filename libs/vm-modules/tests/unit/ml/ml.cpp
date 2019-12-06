@@ -407,22 +407,22 @@ TEST_F(MLTests, graph_string_serialisation_test)
   EXPECT_TRUE(initial_loss->GetTensor().AllClose(loss->GetTensor()));
 }
 
-TEST_F(MLTests, optimiser_construction_adam)
+TEST_F(MLTests, DISABLED_optimiser_construction_adam)
 {
   TestOptimizerConstruction("adam");
 }
 
-TEST_F(MLTests, optimiser_construction_adagrad)
+TEST_F(MLTests, DISABLED_optimiser_construction_adagrad)
 {
   TestOptimizerConstruction("adagrad");
 }
 
-TEST_F(MLTests, optimiser_construction_rmsprop)
+TEST_F(MLTests, DISABLED_optimiser_construction_rmsprop)
 {
   TestOptimizerConstruction("rmsprop");
 }
 
-TEST_F(MLTests, optimiser_construction_sgd)
+TEST_F(MLTests, DISABLED_optimiser_construction_sgd)
 {
   TestOptimizerConstruction("sgd");
 }
@@ -435,7 +435,7 @@ TEST_F(MLTests, optimiser_construction_invalid_type)
   ASSERT_FALSE(toolkit.Run());
 }
 
-TEST_F(MLTests, optimiser_adagrad_serialisation_failed)
+TEST_F(MLTests, DISABLED_optimiser_adagrad_serialisation_failed)
 {
   static char const *SOURCE = R"(
       function main()

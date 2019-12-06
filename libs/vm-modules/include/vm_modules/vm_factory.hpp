@@ -55,7 +55,7 @@ public:
   enum UseCases : uint64_t
   {
     USE_SMART_CONTRACTS = (MOD_CORE | MOD_MATH | MOD_ML | MOD_BITWISE | MOD_LEDGER),
-    USE_ALL             = (~uint64_t(0)),
+    USE_ALL             = (~(uint64_t(0))),
   };
 
   /**

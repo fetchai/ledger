@@ -67,7 +67,7 @@ public:
   }
 };
 
-TEST_F(VMScalerTests, scaler_construction)
+TEST_F(VMScalerTests, DISABLED_scaler_construction)
 {
   static char const *SOURCE = R"(
         function main()
@@ -90,7 +90,7 @@ TEST_F(VMScalerTests, scaler_setscale_invalid_mode)
   ASSERT_FALSE(toolkit.Run());
 }
 
-TEST_F(VMScalerTests, scaler_setscale_valid_range)
+TEST_F(VMScalerTests, DISABLED_scaler_setscale_valid_range)
 {
   ASSERT_TRUE(toolkit.Compile(Substitute(SCALER_SET_SCALE_BY_RANGE_SRC, "0fp64, 1fp64")));
   ASSERT_TRUE(toolkit.Run());
