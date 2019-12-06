@@ -385,6 +385,8 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
   DbRecord record;
   if (block_store_->Get(storage::ResourceID(hash), record))
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "loaded block ");
+
     block = record.block;
     AddBlockToBloomFilter(block);
     if (next_hash != nullptr)
@@ -402,6 +404,10 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
     }
 
     return true;
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "didn't load block ");
   }
 
   return false;
@@ -1016,7 +1022,7 @@ void MainChain::RecoverFromFile(Mode mode)
       {
         FETCH_LOG_ERROR(LOGGING_NAME,
                         "Failed to load Bloom filter from storage! Reason: ", e.what());
-        Reset();
+        /* Reset(); */
       }
     }
   }
@@ -1087,7 +1093,7 @@ void MainChain::RecoverFromFile(Mode mode)
   else
   {
     FETCH_LOG_INFO(LOGGING_NAME,
-                   "No head block found in chain data store! Resetting chain data store.");
+                   "No head block found in chain data store! Resetting chain data store. ", head_block_hash.empty());
   }
 
   // Recovering the chain has failed in some way, reset the storage.
@@ -1905,6 +1911,8 @@ MainChain::BlockHash MainChain::GetHeadHash()
 void MainChain::SetHeadHash(BlockHash const &hash)
 {
   assert(hash.size() == chain::HASH_SIZE);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Setting head hash: ", hash.ToHex());
 
   // move to the beginning of the file and write out the hash
   head_store_.seekp(0);
