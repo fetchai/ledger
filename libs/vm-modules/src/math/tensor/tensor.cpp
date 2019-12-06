@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
@@ -131,13 +132,29 @@ SizeType VMTensor::size() const
 template <typename... Indices>
 VMTensor::DataType VMTensor::At(Indices... indices) const
 {
-  return tensor_.At(indices...);
+  VMTensor::DataType result(0.0);
+  try
+  {
+    result = tensor_.At(indices...);
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(std::string(e.what()));
+  }
+  return result;
 }
 
 template <typename... Args>
 void VMTensor::SetAt(Args... args)
 {
-  tensor_.Set(args...);
+  try
+  {
+    tensor_.Set(args...);
+  }
+  catch (std::exception const &e)
+  {
+    RuntimeError(std::string(e.what()));
+  }
 }
 
 void VMTensor::Copy(ArrayType const &other)
@@ -158,7 +175,14 @@ void VMTensor::FillRandom()
 Ptr<VMTensor> VMTensor::Squeeze()
 {
   auto squeezed_tensor = tensor_.Copy();
-  squeezed_tensor.Squeeze();
+  try
+  {
+    squeezed_tensor.Squeeze();
+  }
+  catch (std::exception const &e)
+  {
+    RuntimeError("Squeeze failed: " + std::string(e.what()));
+  }
   return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, squeezed_tensor));
 }
 
@@ -204,12 +228,28 @@ DataType VMTensor::Sum()
 
 void VMTensor::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
 {
-  tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->string()));
+  try
+  {
+    tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->string()));
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(std::string(e.what()));
+  }
 }
 
 Ptr<String> VMTensor::ToString() const
 {
-  return Ptr<String>{new String(vm_, tensor_.ToString())};
+  std::string as_string;
+  try
+  {
+    as_string = tensor_.ToString();
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(std::string(e.what()));
+  }
+  return Ptr<String>{new String(vm_, as_string)};
 }
 
 ArrayType &VMTensor::GetTensor()

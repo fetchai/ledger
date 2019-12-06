@@ -146,7 +146,7 @@ void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
     compiled_ = false;
     model_->Compile(optimiser_type, loss_type);
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     vm_->RuntimeError("Compilation of a sequential model failed : " + std::string(e.what()));
     return;
@@ -210,7 +210,7 @@ void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        opt
     }
     model_->Compile(optimiser_type);
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     vm_->RuntimeError("Compilation of a regressor/classifier model failed : " +
                       std::string(e.what()));
@@ -451,6 +451,22 @@ VMModel::SequentialModelPtr VMModel::GetMeAsSequentialIfPossible()
     throw std::runtime_error("Layer adding is allowed only for sequential models!");
   }
   return std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
+}
+
+template <typename... LayerArgs>
+void VMModel::AddLayer(fetch::vm::Ptr<fetch::vm::String> const &layer, LayerArgs... args)
+{
+  try
+  {
+    SupportedLayerType const layer_type = ParseName(layer->string(), layer_types_, "layer type");
+    AddLayerSpecificImpl(layer_type, args...);
+    compiled_ = false;
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Impossible to add layer : " + std::string(e.what()));
+    return;
+  }
 }
 
 void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &inputs,
