@@ -42,4 +42,8 @@ TEST(RoutingTests, PeerTestReboot)
     std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
     network->Stop();
   }
+
+  // Restart
+  {
+  }
 }
