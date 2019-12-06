@@ -811,7 +811,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, Bloc
       right = GetBlock(right_hash);
       if (!right)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up block (right): ", ToHex(right_hash));
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up block (right): 0x", ToHex(right_hash));
         success = false;
         break;
       }
