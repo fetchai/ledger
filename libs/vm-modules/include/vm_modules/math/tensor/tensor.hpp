@@ -111,6 +111,9 @@ public:
 
   void Divide(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
 
+  void InplaceMultiply(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void InplaceDivide(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
 
   void Negate(vm::Ptr<Object> &object) override;
 

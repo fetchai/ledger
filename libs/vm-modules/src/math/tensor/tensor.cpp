@@ -102,8 +102,8 @@ void VMTensor::Bind(Module &module)
       .EnableOperator(Operator::InplaceSubtract)
       .EnableOperator(Operator::Multiply)
       .EnableOperator(Operator::Divide)
-      //      .EnableOperator(Operator::InplaceMultiply)
-      //      .EnableOperator(Operator::InplaceDivide)
+      .EnableOperator(Operator::InplaceMultiply)
+      .EnableOperator(Operator::InplaceDivide)
       //      .EnableOperator(Operator::GreaterThan)
       .CreateMemberFunction("transpose", &VMTensor::Transpose,
                             use_estimator(&TensorEstimator::Transpose))
@@ -252,6 +252,20 @@ void VMTensor::Divide(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso)
   Ptr<VMTensor> left  = lhso;
   Ptr<VMTensor> right = rhso;
   this->GetTensor()   = (left->GetTensor() / right->GetTensor());
+}
+
+void VMTensor::InplaceMultiply(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso)
+{
+  Ptr<VMTensor> left  = lhso;
+  Ptr<VMTensor> right = rhso;
+  left->GetTensor().InlineMultiply(right->GetTensor());
+}
+
+void VMTensor::InplaceDivide(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso)
+{
+  Ptr<VMTensor> left  = lhso;
+  Ptr<VMTensor> right = rhso;
+  left->GetTensor().InlineDivide(right->GetTensor());
 }
 
 void VMTensor::Negate(fetch::vm::Ptr<Object> &object)
