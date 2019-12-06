@@ -776,7 +776,6 @@ TEST_F(MathTensorTests, tensor_state_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
-
 TEST_F(MathTensorTests, tensor_failed_from_string)
 {
   static char const *SOURCE = R"(
