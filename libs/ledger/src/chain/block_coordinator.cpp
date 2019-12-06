@@ -201,7 +201,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
 
   state_machine_->OnStateChange([this](State current, State previous) {
     FETCH_UNUSED(this);
-    // if (periodic_print_.Poll())
+    if (periodic_print_.Poll())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
                      " (previous: ", ToString(previous), ")");
