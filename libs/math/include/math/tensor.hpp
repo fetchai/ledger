@@ -463,9 +463,9 @@ private:
     {
       throw exceptions::WrongIndices(
           "Tensor::At : index " + std::to_string(SizeType(index)) + " is out of bounds of axis " +
-          std::to_string(N) + " (max possible index is " + std::to_string(shape_[N] - 1) + ").");
+          std::to_string(N) + " (max possible index is " + std::to_string(shape_.at(N) - 1) + ").");
     }
-    return static_cast<SizeType>(index) * stride_[N] +
+    return static_cast<SizeType>(index) * stride_.at(N) +
            UnrollComputeColIndex<N + 1>(std::forward<Indices>(indices)...);
   }
 
@@ -476,9 +476,9 @@ private:
     {
       throw exceptions::WrongIndices(
           "Tensor::At : index " + std::to_string(SizeType(index)) + " is out of bounds of axis " +
-          std::to_string(N) + " (max possible index is " + std::to_string(shape_[N] - 1) + ").");
+          std::to_string(N) + " (max possible index is " + std::to_string(shape_.at(N) - 1) + ").");
     }
-    return static_cast<SizeType>(index) * stride_[N];
+    return static_cast<SizeType>(index) * stride_.at(N);
   }
 
   void UpdateStrides()
