@@ -92,13 +92,14 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("reshape", &VMTensor::Reshape, use_estimator(&TensorEstimator::Reshape))
       .CreateMemberFunction("squeeze", &VMTensor::Squeeze, use_estimator(&TensorEstimator::Squeeze))
       .CreateMemberFunction("sum", &VMTensor::Sum, use_estimator(&TensorEstimator::Sum))
+      // TODO - need to add the estimators, but enableOperator can't handle estimators yet
       .EnableOperator(Operator::Negate)
       .EnableOperator(Operator::Equal)
       .EnableOperator(Operator::NotEqual)
       .EnableOperator(Operator::Add)
-      //      .EnableOperator(Operator::Subtract)
-      //      .EnableOperator(Operator::InplaceAdd)
-      //      .EnableOperator(Operator::InplaceSubtract)
+      .EnableOperator(Operator::Subtract)
+      .EnableOperator(Operator::InplaceAdd)
+      .EnableOperator(Operator::InplaceSubtract)
       //      .EnableOperator(Operator::Multiply)
       //      .EnableOperator(Operator::Divide)
       //      .EnableOperator(Operator::InplaceMultiply)
@@ -216,6 +217,20 @@ void VMTensor::Add(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso)
   Ptr<VMTensor> left  = lhso;
   Ptr<VMTensor> right = rhso;
   this->GetTensor()   = (left->GetTensor() + right->GetTensor());
+}
+
+void VMTensor::Subtract(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso)
+{
+  Ptr<VMTensor> left  = lhso;
+  Ptr<VMTensor> right = rhso;
+  this->GetTensor()   = (left->GetTensor() - right->GetTensor());
+}
+
+void VMTensor::InplaceAdd(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso)
+{
+  Ptr<VMTensor> left  = lhso;
+  Ptr<VMTensor> right = rhso;
+  this->GetTensor()   = (left->GetTensor() - right->GetTensor());
 }
 
 void VMTensor::Negate(fetch::vm::Ptr<Object> &object)

@@ -364,6 +364,62 @@ TEST_F(MathTensorTests, tensor_add_test)
   EXPECT_TRUE(gt.AllClose(tensor));
 }
 
+TEST_F(MathTensorTests, tensor_subtract_test)
+{
+  static char const *tensor_add_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 3u64;
+      tensor_shape[1] = 3u64;
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(7.0fp64);
+      y.fill(9.0fp64);
+      var result = x - y;
+      return result;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_add_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto       tensor     = tensor_ptr->GetTensor();
+  fetch::math::Tensor<DataType> gt({3, 3});
+  gt.Fill(DataType(-2.0));
+
+  EXPECT_TRUE(gt.AllClose(tensor));
+}
+
+TEST_F(MathTensorTests, tensor_inplace_add_test)
+{
+  static char const *tensor_add_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 3u64;
+      tensor_shape[1] = 3u64;
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(7.0fp64);
+      y.fill(7.0fp64);
+      x += y;
+      return x;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_add_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto       tensor     = tensor_ptr->GetTensor();
+  fetch::math::Tensor<DataType> gt({3, 3});
+  gt.Fill(DataType(14.0));
+
+  EXPECT_TRUE(gt.AllClose(tensor));
+}
+
 TEST_F(MathTensorTests, tensor_negate_etch_test)
 {
   static char const *tensor_negate_src = R"(

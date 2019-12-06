@@ -101,6 +101,10 @@ public:
 
   void Add(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
 
+  void Subtract(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+
+  void InplaceAdd(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
   void Negate(vm::Ptr<Object> &object) override;
 
   /////////////////////////
