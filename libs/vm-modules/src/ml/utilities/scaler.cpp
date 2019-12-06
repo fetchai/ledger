@@ -88,14 +88,17 @@ Ptr<VMTensorType> VMScaler::DeNormalise(Ptr<VMTensorType> const &input_tensor)
   return this->vm_->CreateNewObject<VMTensorType>(output_tensor);
 }
 
-void VMScaler::Bind(Module &module)
+void VMScaler::Bind(Module &module, bool const enable_experimental)
 {
-  module.CreateClassType<VMScaler>("Scaler")
-      .CreateConstructor(VMScaler::Constructor, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("setScale", &VMScaler::SetScaleByData, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("setScale", &VMScaler::SetScaleByRange, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("normalise", &VMScaler::Normalise, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("deNormalise", &VMScaler::DeNormalise, vm::CHARGE_INFINITY);
+  if (enable_experimental)
+  {
+    module.CreateClassType<VMScaler>("Scaler")
+        .CreateConstructor(VMScaler::Constructor, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("setScale", &VMScaler::SetScaleByData, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("setScale", &VMScaler::SetScaleByRange, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("normalise", &VMScaler::Normalise, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("deNormalise", &VMScaler::DeNormalise, vm::MAXIMUM_CHARGE);
+  }
 }
 
 bool VMScaler::SerializeTo(serializers::MsgPackSerializer &buffer)

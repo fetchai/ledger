@@ -28,7 +28,7 @@
 
 using namespace fetch::vm;
 
-namespace math_tensor_tests {
+namespace {
 
 using ::testing::Between;
 
@@ -797,4 +797,4 @@ TEST_F(MathTensorTests, tensor_failed_from_string)
   ASSERT_FALSE(toolkit.Run());
 }
 
-}  // namespace math_tensor_tests
+}  // namespace

@@ -31,7 +31,7 @@
 
 using namespace fetch::vm;
 
-namespace math_tests {
+namespace {
 
 using DataType = fetch::vm_modules::math::DataType;
 
@@ -140,4 +140,4 @@ TEST_F(MathTests, sqrt_test)
   ASSERT_EQ(result, gt);
 }
 
-}  // namespace math_tests
+}  // namespace

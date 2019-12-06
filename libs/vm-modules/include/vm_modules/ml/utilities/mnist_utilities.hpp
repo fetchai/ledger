@@ -27,7 +27,7 @@ namespace vm_modules {
 namespace ml {
 namespace utilities {
 
-void BindMNISTUtils(vm::Module &module);
+void BindMNISTUtils(vm::Module &module, bool enable_experimental);
 
 }  // namespace utilities
 }  // namespace ml

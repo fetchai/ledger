@@ -238,7 +238,7 @@ class Object;
 
 using ChargeAmount                            = uint64_t;
 static constexpr ChargeAmount CHARGE_UNIT     = 1u;
-static constexpr ChargeAmount CHARGE_INFINITY = std::numeric_limits<ChargeAmount>::max();
+static constexpr ChargeAmount MAXIMUM_CHARGE = std::numeric_limits<ChargeAmount>::max();
 template <typename... Args>
 using ChargeEstimator = std::function<ChargeAmount(Args const &...)>;
 

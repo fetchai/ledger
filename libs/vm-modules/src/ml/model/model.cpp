@@ -258,9 +258,9 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
           .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMModel> {
             return Ptr<VMModel>{new VMModel(vm, type_id)};
           })
-          .CreateMemberFunction("add", &VMModel::AddLayer<SizeRef, SizeRef>,
+          .CreateMemberFunction("add", &VMModel::LayerAddDense,
                                 use_estimator(&ModelEstimator::LayerAddDense))
-          .CreateMemberFunction("add", &VMModel::AddLayer<SizeRef, SizeRef, StringPtrRef>,
+          .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation,
                                 use_estimator(&ModelEstimator::LayerAddDenseActivation))
           .CreateMemberFunction("compile", &VMModel::CompileSequential,
                                 use_estimator(&ModelEstimator::CompileSequential))
@@ -277,13 +277,11 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
   // experimental features are bound only if the VMFactory given the flag to do so
   if (experimental_enabled)
   {
-    interface.CreateMemberFunction("add", &VMModel::AddLayer<SizeRef, SizeRef, SizeRef, SizeRef>,
-                            use_estimator(&ModelEstimator::LayerAddConv))
-                            .CreateMemberFunction("add",
-                            &VMModel::AddLayer<SizeRef, SizeRef, SizeRef, SizeRef, StringPtrRef>,
-                            use_estimator(&ModelEstimator::LayerAddConvActivation))
-                            .CreateMemberFunction("compile", &VMModel::CompileSimple,
-                            use_estimator(&ModelEstimator::CompileSimple));
+    interface.CreateMemberFunction("add", &VMModel::LayerAddConv, use_estimator(&ModelEstimator::LayerAddConv))
+                            .CreateMemberFunction("add", &VMModel::LayerAddConvActivation, use_estimator(&ModelEstimator::LayerAddConvActivation))
+                            .CreateMemberFunction("compile", &VMModel::CompileSimple, use_estimator(&ModelEstimator::CompileSimple))
+                            .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
+                                use_estimator(&ModelEstimator::LayerAddDenseActivationExperimental));
   }
 }
 
@@ -453,13 +451,30 @@ VMModel::SequentialModelPtr VMModel::GetMeAsSequentialIfPossible()
   return std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
 }
 
-template <typename... LayerArgs>
-void VMModel::AddLayer(fetch::vm::Ptr<fetch::vm::String> const &layer, LayerArgs... args)
+void VMModel::LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+                                   math::SizeType const &hidden_nodes)
+{
+  LayerAddDenseActivationImplementation(layer, inputs, hidden_nodes, ActivationType::NOTHING);
+}
+
+void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+                                   math::SizeType const &                   hidden_nodes,
+                                   fetch::vm::Ptr<fetch::vm::String> const &activation)
+{
+  LayerAddDenseActivationImplementation(layer, inputs, hidden_nodes,
+                       ParseName(activation->string(), activations_, "activation function"));
+}
+
+void VMModel::LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+                                   math::SizeType const &             hidden_nodes,
+                                   fetch::ml::details::ActivationType activation)
 {
   try
   {
     SupportedLayerType const layer_type = ParseName(layer->string(), layer_types_, "layer type");
-    AddLayerSpecificImpl(layer_type, args...);
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::DENSE});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+    me->Add<fetch::ml::layers::FullyConnected<TensorType>>(inputs, hidden_nodes, activation);
     compiled_ = false;
   }
   catch (std::exception const &e)
@@ -469,65 +484,52 @@ void VMModel::AddLayer(fetch::vm::Ptr<fetch::vm::String> const &layer, LayerArgs
   }
 }
 
-void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &inputs,
-                                   math::SizeType const &hidden_nodes)
-{
-  AddLayerSpecificImpl(layer, inputs, hidden_nodes, ActivationType::NOTHING);
-}
-
-void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &inputs,
-                                   math::SizeType const &                   hidden_nodes,
-                                   fetch::vm::Ptr<fetch::vm::String> const &activation)
-{
-  AddLayerSpecificImpl(layer, inputs, hidden_nodes,
-                       ParseName(activation->string(), activations_, "activation function"));
-}
-
-void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &inputs,
-                                   math::SizeType const &             hidden_nodes,
-                                   fetch::ml::details::ActivationType activation)
-{
-  AssertLayerTypeMatches(layer, {SupportedLayerType::DENSE});
-  SequentialModelPtr me = GetMeAsSequentialIfPossible();
-  me->Add<fetch::ml::layers::FullyConnected<TensorType>>(inputs, hidden_nodes, activation);
-}
-
-void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &output_channels,
+void VMModel::LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
                                    math::SizeType const &input_channels,
                                    math::SizeType const &kernel_size,
                                    math::SizeType const &stride_size)
 {
-  AddLayerSpecificImpl(layer, output_channels, input_channels, kernel_size, stride_size,
+  LayerAddConvActivationImplementation(layer, output_channels, input_channels, kernel_size, stride_size,
                        ActivationType::NOTHING);
 }
 
-void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &output_channels,
+void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
                                    math::SizeType const &                   input_channels,
                                    math::SizeType const &                   kernel_size,
                                    math::SizeType const &                   stride_size,
                                    fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
-  AddLayerSpecificImpl(layer, output_channels, input_channels, kernel_size, stride_size,
+  LayerAddConvActivationImplementation(layer, output_channels, input_channels, kernel_size, stride_size,
                        ParseName(activation->string(), activations_, "activation function"));
 }
 
-void VMModel::AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &output_channels,
+void VMModel::LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
                                    math::SizeType const &             input_channels,
                                    math::SizeType const &             kernel_size,
                                    math::SizeType const &             stride_size,
                                    fetch::ml::details::ActivationType activation)
 {
-  AssertLayerTypeMatches(layer, {SupportedLayerType::CONV1D, SupportedLayerType::CONV2D});
-  SequentialModelPtr me = GetMeAsSequentialIfPossible();
-  if (layer == SupportedLayerType::CONV1D)
+  try
   {
-    me->Add<fetch::ml::layers::Convolution1D<TensorType>>(output_channels, input_channels,
-                                                          kernel_size, stride_size, activation);
+    SupportedLayerType const layer_type = ParseName(layer->string(), layer_types_, "layer type");
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::CONV1D, SupportedLayerType::CONV2D});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+    if (layer_type == SupportedLayerType::CONV1D)
+    {
+      me->Add<fetch::ml::layers::Convolution1D<TensorType>>(output_channels, input_channels,
+                                                            kernel_size, stride_size, activation);
+    }
+    else if (layer_type == SupportedLayerType::CONV2D)
+    {
+      me->Add<fetch::ml::layers::Convolution2D<TensorType>>(output_channels, input_channels,
+                                                            kernel_size, stride_size, activation);
+    }
+    compiled_ = false;
   }
-  else if (layer == SupportedLayerType::CONV2D)
+  catch (std::exception const &e)
   {
-    me->Add<fetch::ml::layers::Convolution2D<TensorType>>(output_channels, input_channels,
-                                                          kernel_size, stride_size, activation);
+    vm_->RuntimeError("Impossible to add layer : " + std::string(e.what()));
+    return;
   }
 }
 

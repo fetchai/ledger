@@ -26,7 +26,7 @@ class Module;
 namespace vm_modules {
 namespace ml {
 
-void BindML(fetch::vm::Module &module, bool const enable_experimental);
+void BindML(fetch::vm::Module &module, bool enable_experimental);
 
 }  // namespace ml
 }  // namespace vm_modules

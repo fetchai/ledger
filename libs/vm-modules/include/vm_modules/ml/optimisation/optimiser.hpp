@@ -96,7 +96,7 @@ public:
               vm::Ptr<VMDataLoader> const &loader, std::vector<std::string> const &input_node_names,
               std::string const &label_node_name, std::string const &output_node_name);
 
-  static void Bind(vm::Module &module);
+  static void Bind(vm::Module &module, bool enable_experimental);
 
   static fetch::vm::Ptr<VMOptimiser> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode,
