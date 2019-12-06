@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/main_chain.hpp"
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "chain/transaction_validity_period.hpp"
 #include "core/assert.hpp"
@@ -25,6 +24,7 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block_db_record.hpp"
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/time_travelogue.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
@@ -41,7 +41,6 @@
 #include <utility>
 
 using fetch::byte_array::ToBase64;
-using fetch::byte_array::ToHex;
 using fetch::generics::MilliTimer;
 
 namespace fetch {
@@ -71,8 +70,6 @@ MainChain::MainChain(Mode mode)
   , bloom_filter_false_positive_count_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_bloom_filter_false_positive_total",
         "Total number of false positive queries to the Ledger Main Chain Bloom filter"))
-  , block_loads_from_disk_(telemetry::Registry::Instance().CreateCounter(
-        "block_loads_from_disk_total", "Total block loads from disk"))
 {
   if (Mode::IN_MEMORY_DB != mode)
   {
@@ -388,11 +385,6 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
   if (block_store_->Get(storage::ResourceID(hash), record))
   {
     block = record.block;
-
-    FETCH_LOG_INFO(LOGGING_NAME, "loaded block: ", hash.ToHex(), " Num: ", block.block_number);
-
-    block_loads_from_disk_->add(1);
-
     AddBlockToBloomFilter(block);
     if (next_hash != nullptr)
     {
@@ -409,10 +401,6 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
     }
 
     return true;
-  }
-  else
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "didn't load block ");
   }
 
   return false;
@@ -656,7 +644,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
     auto block = GetBlock(current_hash);
     if (!block)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToHex(current_hash));
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
       throw std::runtime_error("Failed to look up block");
     }
     assert(block->block_number > 0 || block->IsGenesis());
@@ -710,8 +698,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
   {
     if (!LookupBlock(current_hash, block, &next_hash))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToHex(current_hash),
-                      " note, next hash: ", next_hash);
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
       throw std::runtime_error("Failed to lookup block");
     }
   }
@@ -730,7 +717,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
       if (!block)
       {
         // there is no block such hashed neither in cache, nor in storage
-        FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToHex(current_hash));
+        FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
         throw std::runtime_error("Failed to lookup block");
       }
       // The block is in cache yet LookupBlock() failed.
@@ -792,7 +779,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, Bloc
       left = GetBlock(left_hash);
       if (!left)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up block (left): ", ToHex(left_hash));
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up block (left): ", ToBase64(left_hash));
         success = false;
         break;
       }
@@ -830,14 +817,14 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, Bloc
       right = GetBlock(right_hash);
       if (!right)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up block (right): ", ToHex(right_hash));
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up block (right): ", ToBase64(right_hash));
         success = false;
         break;
       }
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Left: ", ToHex(left_hash), " -> ", left->block_number,
-                    " Right: ", ToHex(right_hash), " -> ", right->block_number);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Left: ", ToBase64(left_hash), " -> ", left->block_number,
+                    " Right: ", ToBase64(right_hash), " -> ", right->block_number);
 
     if (left_hash == right_hash)
     {
@@ -1098,8 +1085,7 @@ void MainChain::RecoverFromFile(Mode mode)
   else
   {
     FETCH_LOG_INFO(LOGGING_NAME,
-                   "No head block found in chain data store! Resetting chain data store. ",
-                   head_block_hash.empty());
+                   "No head block found in chain data store! Resetting chain data store.");
   }
 
   // Recovering the chain has failed in some way, reset the storage.
@@ -1271,7 +1257,7 @@ void MainChain::TrimCache()
   auto loose_it = loose_blocks_.begin();
   while (loose_it != loose_blocks_.end())
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Cleaning loose map entry: ", loose_it->first.ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Cleaning loose map entry: ", loose_it->first.ToBase64());
 
     if (loose_it->second.empty())
     {
@@ -1475,7 +1461,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
       block->is_loose = true;
 
       FETCH_LOG_DEBUG(LOGGING_NAME,
-                      "Previous block not found: ", byte_array::ToHex(block->previous_hash));
+                      "Previous block not found: ", byte_array::ToBase64(block->previous_hash));
     }
   }
   else  // special case - being called from inside CompleteLooseBlocks
@@ -1917,8 +1903,6 @@ MainChain::BlockHash MainChain::GetHeadHash()
 void MainChain::SetHeadHash(BlockHash const &hash)
 {
   assert(hash.size() == chain::HASH_SIZE);
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Setting head hash: ", hash.ToHex());
 
   // move to the beginning of the file and write out the hash
   head_store_.seekp(0);

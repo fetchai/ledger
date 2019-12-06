@@ -532,22 +532,31 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   }
 
   // BEFORE the block coordinator starts its state set up special genesis
-  std::string const genesis_file_location =
-      cfg_.genesis_file_location.empty() ? GENESIS_FILENAME : cfg_.genesis_file_location;
-  FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis save file. Location: ", genesis_file_location);
-
-  GenesisFileCreator creator(block_coordinator_, *storage_, consensus_, external_identity_,
-                             cfg_.db_prefix, chain_);
-
-  startup_success &= creator.LoadFile(genesis_file_location);
-
-  if (!startup_success)
+  if (cfg_.proof_of_stake || cfg_.load_genesis_file)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to restore state from genesis file");
-  }
-  else
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Loading from genesis save file. Location: ", cfg_.genesis_file_location);
+
+    GenesisFileCreator creator(block_coordinator_, *storage_, consensus_, external_identity_,
+                               cfg_.db_prefix);
+
+    if (cfg_.genesis_file_location.empty())
+    {
+      startup_success &= creator.LoadFile(GENESIS_FILENAME);
+    }
+    else
+    {
+      startup_success &= creator.LoadFile(cfg_.genesis_file_location);
+    }
+
+    if (!startup_success)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to restore state from genesis file");
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
+    }
   }
 
   if (startup_success)
@@ -572,7 +581,6 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
     /// BLOCK EXECUTION & MINING
     execution_manager_->Start();
     tx_processor_.Start();
-    main_chain_service_->Start();
 
     /// INPUT INTERFACES
 

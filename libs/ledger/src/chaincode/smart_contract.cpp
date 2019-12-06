@@ -126,13 +126,6 @@ SmartContract::SmartContract(std::string const &source)
   // if there are any compilation errors
   if (!errors.empty())
   {
-
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "there are errors. segfaulting for testing ");  // TODO(HUT): remove thisk.
-    int *argh = nullptr;
-    argh[99]  = 90;
-    FETCH_UNUSED(argh);
-
     throw SmartContractException(SmartContractException::Category::COMPILATION, std::move(errors));
   }
 

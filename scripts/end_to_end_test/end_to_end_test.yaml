@@ -56,15 +56,14 @@ setup_conditions:
   number_of_nodes: 2
   node_connections: [[0, 1]]
   mining_nodes: [0]
-  max_test_time: 300
+  max_test_time: 60
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
   - verify_txs: { "name": "batch1", "nodes": [0, 1] }
   - add_node: { "index": 2, "node_connections": [[2, 1]] }
-  - sleep: 10
+  - sleep: 5
   - verify_txs: { "name": "batch1", "nodes": [2] }
-  - sleep: 10
 ...
 
 ---
@@ -117,7 +116,7 @@ steps:
 
 ---
 test_description: >
-  Transactions sync and are executed across nodes when using POS
+  DISABLED - Transactions sync and are executed across nodes when using POS
 
 setup_conditions:
   test_name: "basic_multinode_POS"
@@ -201,14 +200,12 @@ setup_conditions:
   number_of_nodes: 1
   lanes: 4
   mining_nodes: [0]
-  max_test_time: 300
+  max_test_time: 60
 
 steps:
   - sleep: 30 #  allow all the lanes to start
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [0] }
-  - sleep: 10 #  waiting
   - verify_txs: { "name": "batch1", "nodes": [0] }
-  - sleep: 10 #  allow all the lanes to start
 ...
 
 ---
