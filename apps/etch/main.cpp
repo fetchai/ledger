@@ -33,8 +33,10 @@
 #include "vm/string.hpp"
 #include "vm/variant.hpp"
 #include "vm/vm.hpp"
+#include "vm_modules/core/disaster.hpp"
 #include "vm_modules/vm_factory.hpp"
 
+#include <csignal>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -48,13 +50,24 @@
 
 namespace {
 
-using fetch::vm_modules::VMFactory;
-using fetch::json::JSONDocument;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
 using fetch::byte_array::ToHex;
+using fetch::json::JSONDocument;
+using fetch::vm_modules::VMFactory;
 
 using namespace fetch::vm;
+
+void ThrowExeception(int signal)
+{
+  switch (signal)
+  {
+  case SIGSEGV:
+    throw std::runtime_error("Segmentation fault.");
+  case SIGFPE:
+    throw std::runtime_error("Floating point exception.");
+  }
+}
 
 class Parameters
 {
@@ -282,6 +295,9 @@ bool HasVersionFlag(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+  std::signal(SIGSEGV, ThrowExeception);
+  std::signal(SIGFPE, ThrowExeception);
+
   // version checking
   if (HasVersionFlag(argc, argv))
   {
@@ -320,6 +336,9 @@ int main(int argc, char **argv)
   module->CreateClassType<System>("System")
       .CreateStaticMemberFunction("Argc", &Argc)
       .CreateStaticMemberFunction("Argv", &Argv);
+
+  // Module to test dooms day scenarios
+  fetch::vm_modules::CreateDisaster(*module);
 
   // attempt to compile the program
   auto errors = VMFactory::Compile(module, files, *executable);

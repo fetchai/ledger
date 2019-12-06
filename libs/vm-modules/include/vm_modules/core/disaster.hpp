@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,34 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle.hpp"
-#include "muddle/muddle_endpoint.hpp"
-#include "muddle/muddle_interface.hpp"
-#include "network_helpers.hpp"
-#include "router.hpp"
+namespace fetch {
 
-#include "gtest/gtest.h"
-
-TEST(RoutingTests, PeerTestReboot)
-{
-  {
-    // Creating network
-    std::size_t N       = 10;
-    auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
-    uint64_t    idx     = 0;
-    for (auto &n : network->nodes)
-    {
-      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
-      ++idx;
-    }
-
-    LinearConnectivity(network, std::chrono::seconds(5));
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
-    network->Stop();
-  }
-
-  // Restart
-  {
-  }
+namespace vm {
+class Module;
 }
+
+namespace vm_modules {
+
+void CreateDisaster(vm::Module &module);
+
+}  // namespace vm_modules
+}  // namespace fetch

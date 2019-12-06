@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,34 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle.hpp"
-#include "muddle/muddle_endpoint.hpp"
-#include "muddle/muddle_interface.hpp"
-#include "network_helpers.hpp"
-#include "router.hpp"
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wunused-value"
+#endif
 
-#include "gtest/gtest.h"
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wpedantic"
+#pragma clang diagnostic ignored "-Wshadow"
+#pragma clang diagnostic ignored "-Wreturn-std-move"
+#endif
 
-TEST(RoutingTests, PeerTestReboot)
-{
-  {
-    // Creating network
-    std::size_t N       = 10;
-    auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
-    uint64_t    idx     = 0;
-    for (auto &n : network->nodes)
-    {
-      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
-      ++idx;
-    }
+#include "memu.h"
 
-    LinearConnectivity(network, std::chrono::seconds(5));
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
-    network->Stop();
-  }
-
-  // Restart
-  {
-  }
-}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
