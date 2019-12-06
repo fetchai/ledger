@@ -50,10 +50,11 @@ ChainCodeCache::ContractPtr ChainCodeCache::Lookup(Identifier const &contract_id
       contract                  = CreateChainCode(contract_name);
     }
 
-    assert(static_cast<bool>(contract));
-
     // update the cache
-    cache_.emplace(contract_id.qualifier(), contract);
+    if (contract)
+    {
+      cache_.emplace(contract_id.qualifier(), contract);
+    }
   }
 
   // periodically run cache maintenance
