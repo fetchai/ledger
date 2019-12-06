@@ -89,13 +89,13 @@ def run_benchmark(bench_binary, bench_name, output_dir):
 
 def verify_file(filename):
     if not os.path.isfile(filename):
-        output("Couldn't find expected file: {}".format(filename))
+        print("Couldn't find expected file: {}".format(filename))
         sys.exit(1)
 
 
 def verify_dir(dirname):
     if not os.path.isdir(dirname):
-        output("Couldn't find expected directory: {}".format(dirname))
+        print("Couldn't find expected directory: {}".format(dirname))
         sys.exit(1)
 
 
