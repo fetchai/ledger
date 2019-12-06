@@ -92,12 +92,18 @@ public:
   void Transpose();
 
   ////////////////////////
-  /// BASIC ARITHMETIC ///
+  /// BASIC COMPARISON ///
   ////////////////////////
 
   bool IsEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
 
   bool IsNotEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void Negate(vm::Ptr<Object> &object) override;
+
+  ////////////////////////
+  /// BASIC ARITHMETIC ///
+  ////////////////////////
 
   void Add(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
 
@@ -114,8 +120,6 @@ public:
   void InplaceMultiply(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
 
   void InplaceDivide(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
-
-  void Negate(vm::Ptr<Object> &object) override;
 
   /////////////////////////
   /// MATRIX OPERATIONS ///

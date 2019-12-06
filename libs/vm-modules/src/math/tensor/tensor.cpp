@@ -183,7 +183,7 @@ void VMTensor::Transpose()
 }
 
 /////////////////////////
-/// BASIC ARITHMETIC  ///
+/// BASIC COMPARATOR  ///
 /////////////////////////
 
 bool VMTensor::IsEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso)
@@ -201,6 +201,18 @@ bool VMTensor::IsNotEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rh
   bool          result = (left->GetTensor() != right->GetTensor());
   return result;
 }
+
+void VMTensor::Negate(fetch::vm::Ptr<Object> &object)
+{
+  Ptr<VMTensor> operand = object;
+  Ptr<VMTensor> t       = Ptr<VMTensor>{new VMTensor(this->vm_, this->type_id_, shape())};
+  fetch::math::Multiply(operand->GetTensor(), DataType(-1), t->GetTensor());
+  object = std::move(t);
+}
+
+/////////////////////////
+/// BASIC ARITHMETIC  ///
+/////////////////////////
 
 void VMTensor::Add(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso)
 {
@@ -256,14 +268,6 @@ void VMTensor::InplaceDivide(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const 
   Ptr<VMTensor> left  = lhso;
   Ptr<VMTensor> right = rhso;
   left->GetTensor().InlineDivide(right->GetTensor());
-}
-
-void VMTensor::Negate(fetch::vm::Ptr<Object> &object)
-{
-  Ptr<VMTensor> operand = object;
-  Ptr<VMTensor> t       = Ptr<VMTensor>{new VMTensor(this->vm_, this->type_id_, shape())};
-  fetch::math::Multiply(operand->GetTensor(), DataType(-1), t->GetTensor());
-  object = std::move(t);
 }
 
 /////////////////////////
