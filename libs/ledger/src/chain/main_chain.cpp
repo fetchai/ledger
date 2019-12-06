@@ -817,7 +817,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, Bloc
       }
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Left: ", ToHex(left_hash), " -> ", left->block_number,
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Left: 0x", ToHex(left_hash), " -> ", left->block_number,
                     " Right: ", ToHex(right_hash), " -> ", right->block_number);
 
     if (left_hash == right_hash)
