@@ -49,10 +49,11 @@ ChainCodeCache::ContractPtr ChainCodeCache::Lookup(ConstByteArray const &contrac
       contract = CreateChainCode(contract_id);
     }
 
-    assert(static_cast<bool>(contract));
-
     // update the cache
-    cache_.emplace(contract_id, contract);
+    if (contract)
+    {
+      cache_.emplace(contract_id, contract);
+    }
   }
 
   // periodically run cache maintenance
