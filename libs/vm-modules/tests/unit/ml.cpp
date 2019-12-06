@@ -23,7 +23,9 @@
 #include "vm_modules/ml/training_pair.hpp"
 #include "vm_test_toolkit.hpp"
 
+#include <regex>
 #include <sstream>
+#include <string>
 
 using namespace fetch::vm;
 
@@ -31,11 +33,37 @@ namespace {
 
 using DataType = fetch::vm_modules::math::DataType;
 
+/// A minimal compileable etch code to test construction of an Optimizer.
+/// Note: the constructed optimiser can not be used.
+const char *OPTIMIZER_MINIMAL_CONSTRUCTION = R"(
+     function main()
+         var tensor_shape = Array<UInt64>(1);
+         tensor_shape[0] = 1u64;
+         var data_tensor = Tensor(tensor_shape);
+         var label_tensor = Tensor(tensor_shape);
+
+         var graph = Graph();
+
+         var dataloader = DataLoader("tensor");
+         dataloader.addData({data_tensor}, label_tensor);
+
+         var optimiser = Optimiser("%NAME%", graph, dataloader, {"",""}, "", "");
+     endfunction
+  )";
+
 class MLTests : public ::testing::Test
 {
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
+
+  void TestOptimizerConstruction(std::string const &name)
+  {
+    std::string const src =
+        std::regex_replace(OPTIMIZER_MINIMAL_CONSTRUCTION, std::regex("%NAME%"), name);
+    ASSERT_TRUE(toolkit.Compile(src));
+    ASSERT_TRUE(toolkit.Run());
+  }
 };
 
 TEST_F(MLTests, trivial_tensor_dataloader_serialisation_test)
@@ -317,6 +345,34 @@ TEST_F(MLTests, graph_string_serialisation_test)
   auto const loss         = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
   EXPECT_TRUE(initial_loss->GetTensor().AllClose(loss->GetTensor()));
+}
+
+TEST_F(MLTests, optimiser_construction_adam)
+{
+  TestOptimizerConstruction("adam");
+}
+
+TEST_F(MLTests, optimiser_construction_adagrad)
+{
+  TestOptimizerConstruction("adagrad");
+}
+
+TEST_F(MLTests, optimiser_construction_rmsprop)
+{
+  TestOptimizerConstruction("rmsprop");
+}
+
+TEST_F(MLTests, optimiser_construction_sgd)
+{
+  TestOptimizerConstruction("sgd");
+}
+
+TEST_F(MLTests, optimiser_construction_invalid_type)
+{
+  std::string const src =
+      std::regex_replace(OPTIMIZER_MINIMAL_CONSTRUCTION, std::regex("%NAME%"), "INVALID_NAME");
+  ASSERT_TRUE(toolkit.Compile(src));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 TEST_F(MLTests, sgd_optimiser_serialisation_test)

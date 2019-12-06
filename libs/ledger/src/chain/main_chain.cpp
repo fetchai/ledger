@@ -1027,7 +1027,7 @@ void MainChain::RecoverFromFile(Mode mode)
       {
         FETCH_LOG_ERROR(LOGGING_NAME,
                         "Failed to load Bloom filter from storage! Reason: ", e.what());
-        /* Reset(); */
+        Reset();
       }
     }
   }

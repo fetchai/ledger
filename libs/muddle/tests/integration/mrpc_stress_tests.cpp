@@ -176,12 +176,14 @@ protected:
           client->CallSpecificAddress(FromBase64(target), PROTOCOL, TestProtocol::EXCHANGE, data);
       promise->WithHandlers()
           .Then([promise, fill]() {
-            auto const result = promise->As<ConstByteArray>();
+            ConstByteArray result{};
+            ASSERT_TRUE(promise->GetResult(result));
             EXPECT_EQ(PAYLOAD_LENGTH, result.size());
 
+            ConstByteArray const &result_ref{result};
             for (std::size_t i = 0; i < result.size(); ++i)
             {
-              EXPECT_EQ(result[i], fill);
+              EXPECT_EQ(result_ref[i], fill);
             }
           })
           .Catch([]() { FAIL(); });

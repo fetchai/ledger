@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/protocols/main_chain_rpc_service.hpp"
+
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/counter.hpp"
@@ -25,7 +27,6 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/consensus/consensus_interface.hpp"
-#include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "logging/logging.hpp"
 #include "muddle/packet.hpp"
 #include "telemetry/counter.hpp"
@@ -362,19 +363,23 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
         // the request was successful
         next_state = State::REQUEST_HEAVIEST_CHAIN;  // request succeeding chunk
 
-        auto  response = current_request_->As<MainChainProtocol::Travelogue>();
-        auto &blocks   = response.blocks;
-
-        // we should receive at least one extra block in addition to what we already have
-        if (!blocks.empty())
+        MainChainProtocol::Travelogue response{};
+        if (current_request_->GetResult(response))
         {
-          HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
-          auto const &latest_hash = blocks.back().hash;
-          assert(!latest_hash.empty());  // should be set by HandleChainResponse()
-          // TODO(unknown): this is to be improved later
-          if (latest_hash == response.heaviest_hash)
+          auto &blocks = response.blocks;
+
+          // we should receive at least one extra block in addition to what we already have
+          if (!blocks.empty())
           {
-            next_state = State::SYNCHRONISING;  // we have reached the tip
+            HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
+            auto const &latest_hash = blocks.back().hash;
+            assert(!latest_hash.empty());  // should be set by HandleChainResponse()
+
+            // TODO(unknown): this is to be improved later
+            if (latest_hash == response.heaviest_hash)
+            {
+              next_state = State::SYNCHRONISING;  // we have reached the tip
+            }
           }
         }
         else
@@ -393,6 +398,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
         state_machine_->Delay(std::chrono::seconds{1});
         next_state = GetInitialState(mode_);
       }
+
       // clear the state
       current_peer_address_ = Address{};
     }
@@ -454,8 +460,13 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
     {
       if (PromiseState::SUCCESS == status)
       {
+        BlockList blocks{};
+
         // the request was successful, simply hand off the blocks to be added to the chain
-        HandleChainResponse(current_peer_address_, current_request_->As<BlockList>());
+        if (current_request_->GetResult(blocks))
+        {
+          HandleChainResponse(current_peer_address_, blocks);
+        }
       }
       else
       {
@@ -490,19 +501,8 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
   FETCH_UNUSED(current);
 
   MainChain::BlockPtr head_of_chain = chain_.GetHeaviestBlock();
-  uint64_t const      seconds_since_last_block =
-      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) -
-      head_of_chain->timestamp;
 
-  // Assume if the chain is quite old that there are peers who have a heavier chain we haven't
-  // heard about
-  if (seconds_since_last_block > 100 && head_of_chain->block_number != 0)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation appears to be lost - chain is old.");
-    state_machine_->Delay(std::chrono::milliseconds{1000});
-    next_state = State::REQUEST_HEAVIEST_CHAIN;
-  }
-  else if (chain_.HasMissingBlocks())
+  if (chain_.HasMissingBlocks())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation lost - chain has missing blocks");
 
