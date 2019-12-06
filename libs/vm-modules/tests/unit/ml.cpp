@@ -66,7 +66,57 @@ public:
   }
 };
 
-TEST_F(MLTests, trivial_tensor_dataloader_serialisation_test)
+TEST_F(MLTests, dataloader_commodity_construction)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var dataloader = DataLoader("commodity");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, dataloader_tensor_construction)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var dataloader = DataLoader("tensor");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, dataloader_invalid_mode_construction)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var dataloader = DataLoader("INVALID_MODE");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(MLTests, dataloader_commodity_failed_serialisation)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var dataloader = DataLoader("commodity");
+      var state = State<DataLoader>("dataloader");
+      state.set(dataloader);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  EXPECT_THROW(toolkit.Run(), std::exception);
+}
+
+TEST_F(MLTests, dataloader_tensor_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(
     function main()
@@ -122,16 +172,34 @@ TEST_F(MLTests, trivial_persistent_tensor_dataloader_serialisation_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, trivial_commodity_dataloader_test)
+TEST_F(MLTests, dataloader_commodity_mode_failed_add_data_by_tensor)
 {
-  static char const *dataloader_serialise_src = R"(
+  static char const *SOURCE = R"(
     function main()
-      var dataloader = DataLoader("commodity");
+        var tensor_shape = Array<UInt64>(1);
+        tensor_shape[0] = 1u64;
+        var data_tensor = Tensor(tensor_shape);
+        var label_tensor = Tensor(tensor_shape);
+        var dataloader = DataLoader("commodity");
+        dataloader.addData({data_tensor}, label_tensor);
     endfunction
   )";
 
-  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
-  ASSERT_TRUE(toolkit.Run());
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(MLTests, dataloader_tensor_mode_failed_add_data_by_files)
+{
+  static char const *SOURCE = R"(
+    function main()
+        var dataloader = DataLoader("tensor");
+        dataloader.addData("x_filename", "y_filename");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 TEST_F(MLTests, dataloader_serialisation_test)
