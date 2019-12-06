@@ -955,12 +955,9 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F>::FixedPoint(std::string const &s)
   : data_{0}
 {
-  std::cout << "Constructing from string: " << s << std::endl;
   auto index  = s.find("fp");
   auto s_copy = std::string(s, 0, index);
-  std::cout << "Constructing from string: " << s_copy << std::endl;
   std::string fp_regex = "[-+]?[0-9]+";
-  std::cout << "Matching against " << fp_regex << std::endl;
 
   Type         integer_part{0};
   UnsignedType fractional_part{0};
@@ -973,7 +970,6 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
   {
     std::smatch match     = *i;
     std::string match_str = match.str();
-    std::cout << "integer_part  : " << match_str << '\n';
     if (match_str.length() > DECIMAL_DIGITS)
     {
       // We definitely have an overflow, check the sign and set to MAX/MIN
@@ -987,15 +983,12 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
         fp_state |= STATE_OVERFLOW;
         data_ = MAX;
       }
-      std::cout << "overflow: this = " << *this << std::endl;
       return;
     }
     integer_part = static_cast<Type>(std::strtoll(match_str.c_str(), nullptr, 10));
-    std::cout << "integer_part: " << integer_part << std::endl;
     if (integer_part < 0)
     {
       --integer_part;
-      std::cout << "integer_part: " << integer_part << std::endl;
     }
   }
   ++i;
@@ -1003,20 +996,16 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
   {
     std::smatch match     = *i;
     std::string match_str = match.str();
-    std::cout << "fractional_part: " << match_str << std::endl;
     if (match_str.length() > DECIMAL_DIGITS)
     {
       match_str.erase(DECIMAL_DIGITS, match_str.length() - DECIMAL_DIGITS);
-      std::cout << "fractional_part (trimmed): " << match_str << std::endl;
     }
     fractional_part = static_cast<UnsignedType>(std::strtoul(match_str.c_str(), nullptr, 10));
-    std::cout << "fractional_part: " << fractional_part << std::endl;
     UnsignedType power10{1};
     while (power10 < fractional_part)
     {
       power10 *= 10;
     }
-    std::cout << "power10:       : " << power10 << std::endl;
     fractional_part = (fractional_part * ONE_MASK) / power10;
   }
   ++i;
@@ -1024,22 +1013,17 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
   {
     std::smatch match     = *i;
     std::string match_str = match.str();
-    std::cout << "exponent_part : " << match_str << '\n';
     exponent_part = static_cast<Type>(std::strtoll(match_str.c_str(), nullptr, 10));
   }
 
-  std::cout << "integer_part: " << integer_part << std::endl;
   data_ = (INTEGER_MASK & (Type(integer_part) << FRACTIONAL_BITS)) |
           Type(fractional_part & FRACTIONAL_MASK);
-  std::cout << "data_ = " << data_ << std::endl;
   if (exponent_part != 1)
   {
     auto exponent = Pow(FixedPoint{10}, FixedPoint{exponent_part});
     std::cout << *this << std::endl;
-    std::cout << "exponent : " << exponent << std::endl;
     *this *= exponent;
   }
-  std::cout << "this = " << *this << std::endl;
 
   if (CheckOverflow(static_cast<NextType>(data_)))
   {
