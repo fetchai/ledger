@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm_modules/math/math.hpp"
+#include "math/standard_functions/abs.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_test_toolkit.hpp"
@@ -366,10 +367,7 @@ TEST_F(MathTensorTests, tensor_sum_etch_test)
   auto const sum_val = res.Get<DataType>();
   DataType   gt{65.1};
 
-  std::cout << "gt: " << gt << std::endl;
-  std::cout << "sum_val: " << sum_val << std::endl;
-
-  EXPECT_TRUE(gt == sum_val);
+  EXPECT_TRUE(fetch::math::Abs(gt - sum_val) < DataType::TOLERANCE);
 }
 
 /// SERIALISATION TESTS ///
