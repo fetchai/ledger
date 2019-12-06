@@ -460,9 +460,25 @@ void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &l
                                       math::SizeType const &                   hidden_nodes,
                                       fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
-  LayerAddDenseActivationImplementation(
-      layer, inputs, hidden_nodes,
-      ParseName(activation->string(), activations_, "activation function"));
+  fetch::ml::details::ActivationType activation_type =
+      ParseName(activation->string(), activations_, "activation function");
+  if (activation_type == fetch::ml::details::ActivationType::RELU)
+  {
+    LayerAddDenseActivationImplementation(layer, inputs, hidden_nodes, activation_type);
+  }
+  else
+  {
+    vm_->RuntimeError("cannot add activation type : " + activation->string());
+  }
+}
+
+void VMModel::LayerAddDenseActivationExperimental(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+    math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation)
+{
+  fetch::ml::details::ActivationType activation_type =
+      ParseName(activation->string(), activations_, "activation function");
+  LayerAddDenseActivationImplementation(layer, inputs, hidden_nodes, activation_type);
 }
 
 void VMModel::LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer,

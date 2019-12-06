@@ -99,13 +99,12 @@ fetch::vm::Ptr<fetch::vm_modules::ml::model::VMModel> vmSequentialModel(
     {
       model->Estimator().LayerAddDenseActivation(layer_type, input_size, output_size,
                                                  activation_type);
-      model->AddLayer<SizeRef, SizeRef, StringPtrRef>(layer_type, input_size, output_size,
-                                                      activation_type);
+      model->LayerAddDenseActivation(layer_type, input_size, output_size, activation_type);
     }
     else
     {
       model->Estimator().LayerAddDense(layer_type, input_size, output_size);
-      model->AddLayer<SizeRef, SizeRef>(layer_type, input_size, output_size);
+      model->LayerAddDense(layer_type, input_size, output_size);
     }
   }
 
@@ -173,7 +172,7 @@ void BM_AddLayer(::benchmark::State &state)
       state.counters["SizesSum"] = static_cast<double>(model->Estimator().GetSizesSum());
 
       state.ResumeTiming();
-      model->AddLayer<SizeRef, SizeRef>(layer_type, config.input_size, config.output_size);
+      model->LayerAddDense(layer_type, config.input_size, config.output_size);
     }
     else
     {
@@ -185,8 +184,8 @@ void BM_AddLayer(::benchmark::State &state)
       state.counters["SizesSum"] = static_cast<double>(model->Estimator().GetSizesSum());
 
       state.ResumeTiming();
-      model->AddLayer<SizeRef, SizeRef, StringPtrRef>(layer_type, config.input_size,
-                                                      config.output_size, activation_type);
+      model->LayerAddDenseActivation(layer_type, config.input_size, config.output_size,
+                                     activation_type);
     }
   }
 }

@@ -344,7 +344,8 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
           model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
                                                   vm_ptr_activation_type);
-          model.AddLayer(vm_ptr_layer_type, data_size_1, label_size_1, vm_ptr_activation_type);
+          model.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
+                                        vm_ptr_activation_type);
 
           SizeType ops_count = 0;
           ops_count += 3;  // for dense layer

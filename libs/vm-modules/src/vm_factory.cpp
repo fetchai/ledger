@@ -104,7 +104,7 @@ std::shared_ptr<Module> VMFactory::GetModule(uint64_t enabled)
   // math modules
   if ((MOD_MATH & enabled) != 0u)
   {
-    math::BindMath(*module);
+    math::BindMath(*module, enabled & MOD_EXPERIMENTAL_ML);
   }
 
   // bitwise operation modules
