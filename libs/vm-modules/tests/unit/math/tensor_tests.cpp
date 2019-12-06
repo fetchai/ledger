@@ -415,7 +415,7 @@ TEST_F(MathTensorTests, tensor_multiply_test)
   auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto       tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(45.0));
+  gt.Fill(DataType(49.0));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
@@ -431,7 +431,7 @@ TEST_F(MathTensorTests, tensor_divide_test)
       var y = Tensor(tensor_shape);
       x.fill(7.0fp64);
       y.fill(14.0fp64);
-      var result = x * y;
+      var result = x / y;
       return result;
     endfunction
   )";

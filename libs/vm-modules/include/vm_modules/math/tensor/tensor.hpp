@@ -107,9 +107,9 @@ public:
 
   void InplaceSubtract(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
 
-  void VMTensor::Multiply(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+  void Multiply(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
 
-  void VMTensor::Divide(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+  void Divide(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
 
 
   void Negate(vm::Ptr<Object> &object) override;
