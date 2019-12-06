@@ -459,7 +459,7 @@ private:
   template <SizeType N, typename FirstIndex, typename... Indices>
   SizeType UnrollComputeColIndex(FirstIndex &&index, Indices &&... indices) const
   {
-    if (shape_[N] <= SizeType(index))
+    if (shape_.at(N) <= SizeType(index))
     {
       throw exceptions::WrongIndices(
           "Tensor::At : index " + std::to_string(SizeType(index)) + " is out of bounds of axis " +
@@ -472,7 +472,7 @@ private:
   template <SizeType N, typename FirstIndex>
   SizeType UnrollComputeColIndex(FirstIndex &&index) const
   {
-    if (shape_[N] <= SizeType(index))
+    if (shape_.at(N) <= SizeType(index))
     {
       throw exceptions::WrongIndices(
           "Tensor::At : index " + std::to_string(SizeType(index)) + " is out of bounds of axis " +
