@@ -443,7 +443,26 @@ TEST_F(MLTests, optimiser_construction_invalid_type)
   ASSERT_FALSE(toolkit.Run());
 }
 
-TEST_F(MLTests, sgd_optimiser_serialisation_test)
+TEST_F(MLTests, optimiser_adagrad_serialisation_failed)
+{
+  static char const *SOURCE = R"(
+      function main()
+        var tensor_shape = Array<UInt64>(1);
+        tensor_shape[0] = 1u64;
+        var data_tensor = Tensor(tensor_shape);
+        var label_tensor = Tensor(tensor_shape);
+        var graph = Graph();
+        var dataloader = DataLoader("tensor");
+        var optimiser = Optimiser("adagrad", graph, dataloader, {"",""}, "", "");
+        var state = State<Optimiser>("optimiser");
+        state.set(optimiser);
+     endfunction
+   )";
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  EXPECT_THROW(toolkit.Run(), std::exception);
+}
+
+TEST_F(MLTests, optimiser_sgd_serialisation)
 {
   static char const *optimiser_serialise_src = R"(
     function main() : Fixed64
