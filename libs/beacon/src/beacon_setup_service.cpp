@@ -441,7 +441,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
 
   if (!condition_to_proceed_)
   {
-    FETCH_LOG_DEBUG(
+    FETCH_LOG_INFO(
         LOGGING_NAME, NodeString(),
         "Waiting for all peers to be ready before starting DKG. We have: ", can_see.size(),
         " expect: ", require_connections, " Other ready peers: ", ready_connections_.size());
