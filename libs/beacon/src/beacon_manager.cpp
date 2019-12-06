@@ -341,9 +341,9 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
   rhs    = crypto::mcl::ComputeRHS(from_index, C_ik[victim_index]);
   if (lhs != rhs || lhs.isZero())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                   " received shares failing initial coefficients verification from node ",
-                   from_index, " for node ", victim_index);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", cabinet_index_,
+                    " received shares failing initial coefficients verification from node ",
+                    from_index, " for node ", victim_index);
     return from;
   }
 
@@ -351,9 +351,9 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
   rhs = crypto::mcl::ComputeRHS(from_index, A_ik[victim_index]);
   if (lhs != rhs || rhs.isZero())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                   " received shares failing qual coefficients verification from node ", from_index,
-                   " for node ", victim_index);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", cabinet_index_,
+                    " received shares failing qual coefficients verification from node ",
+                    from_index, " for node ", victim_index);
     return answer.first;
   }
 

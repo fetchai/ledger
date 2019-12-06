@@ -310,7 +310,7 @@ void QualComplaintsManager::Finish(Cabinet const &qual, MuddleAddress const &nod
     }
 
     complaints_received_ = qual_complaints;
-    finished_ = true;
+    finished_            = true;
   }
 }
 

@@ -483,7 +483,8 @@ void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
   {
     return;
   }
-  // If have not set message_hash then we did not send a request message, return. Or if original message is already set
+  // If have not set message_hash then we did not send a request message, return. Or if original
+  // message is already set
   if (broadcasts_[tag].message_hash.empty() || !broadcasts_[tag].original_message.empty())
   {
     return;
