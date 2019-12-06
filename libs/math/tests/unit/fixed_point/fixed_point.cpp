@@ -236,6 +236,82 @@ TEST(FixedPointTest, Conversion_64_64)
               static_cast<double>(fp32_t::TOLERANCE));
 }
 
+TEST(FixedPointTest, FromString_16_16)
+{
+  // Get raw value
+  fp32_t one("1fp32");
+  fp32_t zero_point_five("0.5fp32");
+  fp32_t one_point_five("1.5fp32");
+  fp32_t two_point_five("2.5fp64");
+  fp32_t m_one_point_five("-1.5fp");
+  fp32_t m_one_point_five_em10("-1.5e-3fp32_t");
+  fp32_t m_one_point_five_e10("-1.5e+3fp32_t");
+  fp32_t m_one_point_five_flt(-1.5);
+
+  EXPECT_EQ(zero_point_five.Data(), 0x08000);
+  EXPECT_EQ(one.Data(), 0x10000);
+  EXPECT_EQ(one_point_five.Data(), 0x18000);
+  EXPECT_EQ(two_point_five.Data(), 0x28000);
+  EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
+  fp32_t m_fifteen_million(-1500);
+  fp32_t m_tiny(-0.0015);
+
+  EXPECT_EQ(m_one_point_five_em10, m_tiny);
+  EXPECT_EQ(m_one_point_five_e10, m_fifteen_million);
+
+  fp32_t e1("2.718281828459045235360287471352662498");
+  fp32_t e2(2.718281828459045235360287471352662498);
+  EXPECT_TRUE(e1.Near(e2));
+  EXPECT_NE(e1, e2);
+
+  fp32_t::StateClear();
+  fp32_t large1("1442695040888963407359924681001892137");
+  EXPECT_TRUE(fp32_t::IsStateOverflow());
+  fp32_t::StateClear();
+  fp32_t large2("-1442695040888963407359924681001892137");
+  EXPECT_TRUE(fp32_t::IsStateOverflow());
+  EXPECT_EQ(large1, fp32_t::FP_MAX);
+  EXPECT_EQ(large2, fp32_t::FP_MIN);
+}
+
+TEST(FixedPointTest, FromString_32_32)
+{
+  // Get raw value
+  fp64_t one("1fp64_t");
+  fp64_t zero_point_five("0.5fp64_t");
+  fp64_t one_point_five("1.5fp64_t");
+  fp64_t two_point_five("2.5fp64_t");
+  fp64_t m_one_point_five("-1.5fp64_t");
+  fp64_t m_one_point_five_em10("-1.5e-5fp64_t");
+  fp64_t m_one_point_five_e10("-1.5e+5fp64_t");
+  fp64_t m_one_point_five_flt(-1.5);
+
+  EXPECT_EQ(zero_point_five.Data(), 0x080000000);
+  EXPECT_EQ(one.Data(), 0x100000000);
+  EXPECT_EQ(one_point_five.Data(), 0x180000000);
+  EXPECT_EQ(two_point_five.Data(), 0x280000000);
+  EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
+  fp64_t m_fifteen_million(-150000);
+  fp64_t m_tiny(-0.000015);
+
+  EXPECT_EQ(m_one_point_five_em10, m_tiny);
+  EXPECT_EQ(m_one_point_five_e10, m_fifteen_million);
+
+  fp64_t e1("2.718281828459045235360287471352662498");
+  fp64_t e2(2.718281828459045235360287471352662498);
+  EXPECT_TRUE(e1.Near(e2));
+  EXPECT_NE(e1, e2);
+
+  fp64_t::StateClear();
+  fp64_t large1("1442695040888963407359924681001892137");
+  EXPECT_TRUE(fp64_t::IsStateOverflow());
+  fp64_t::StateClear();
+  fp64_t large2("-1442695040888963407359924681001892137");
+  EXPECT_TRUE(fp64_t::IsStateOverflow());
+  EXPECT_EQ(large1, fp64_t::FP_MAX);
+  EXPECT_EQ(large2, fp64_t::FP_MIN);
+}
+
 TEST(FixedPointTest, FromString_64_64)
 {
   // Get raw value
