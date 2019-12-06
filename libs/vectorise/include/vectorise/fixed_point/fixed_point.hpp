@@ -955,8 +955,8 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F>::FixedPoint(std::string const &s)
   : data_{0}
 {
-  auto index  = s.find("fp");
-  auto s_copy = std::string(s, 0, index);
+  auto        index    = s.find("fp");
+  auto        s_copy   = std::string(s, 0, index);
   std::string fp_regex = "[-+]?[0-9]+";
 
   Type         integer_part{0};
@@ -1013,7 +1013,7 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
   {
     std::smatch match     = *i;
     std::string match_str = match.str();
-    exponent_part = static_cast<Type>(std::strtoll(match_str.c_str(), nullptr, 10));
+    exponent_part         = static_cast<Type>(std::strtoll(match_str.c_str(), nullptr, 10));
   }
 
   data_ = (INTEGER_MASK & (Type(integer_part) << FRACTIONAL_BITS)) |
