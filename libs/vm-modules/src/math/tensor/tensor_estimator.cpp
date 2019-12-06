@@ -106,6 +106,11 @@ ChargeAmount TensorEstimator::Min()
   return charge_func_of_tensor_size();
 }
 
+ChargeAmount TensorEstimator::Max()
+{
+  return charge_func_of_tensor_size();
+}
+
 ChargeAmount TensorEstimator::Squeeze()
 {
   return charge_func_of_tensor_size();
@@ -120,6 +125,11 @@ ChargeAmount TensorEstimator::Reshape(
     fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape)
 {
   FETCH_UNUSED(new_shape);
+  return charge_func_of_tensor_size();
+}
+
+ChargeAmount TensorEstimator::Sum()
+{
   return charge_func_of_tensor_size();
 }
 
