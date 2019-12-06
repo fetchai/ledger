@@ -1446,7 +1446,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
       block->is_loose = true;
 
       FETCH_LOG_DEBUG(LOGGING_NAME,
-                      "Previous block not found: ", byte_array::ToHex(block->previous_hash));
+                      "Previous block not found: 0x", ToHex(block->previous_hash));
     }
   }
   else  // special case - being called from inside CompleteLooseBlocks
