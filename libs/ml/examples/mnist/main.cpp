@@ -32,7 +32,7 @@
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType   = float;
+using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = fetch::math::SizeType;
 

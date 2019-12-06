@@ -22,6 +22,7 @@
 #include "ledger/chaincode/chain_code_cache.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/executor_interface.hpp"
+#include "ledger/fees/fee_manager.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_validator.hpp"
 #include "telemetry/telemetry.hpp"
@@ -70,7 +71,6 @@ private:
   bool ValidationChecks(Result &result);
   bool ExecuteTransactionContract(Result &result);
   bool ProcessTransfers(Result &result);
-  void DeductFees(Result &result);
 
   /// @name Resources
   /// @{
@@ -90,12 +90,13 @@ private:
   TransactionValidator    tx_validator_;
   /// @}
 
+  FeeManager fee_manager_;
+
   telemetry::HistogramPtr overall_duration_;
   telemetry::HistogramPtr tx_retrieve_duration_;
   telemetry::HistogramPtr validation_checks_duration_;
   telemetry::HistogramPtr contract_execution_duration_;
   telemetry::HistogramPtr transfers_duration_;
-  telemetry::HistogramPtr deduct_fees_duration_;
   telemetry::HistogramPtr settle_fees_duration_;
 };
 
