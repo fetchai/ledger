@@ -153,12 +153,6 @@ public:
     FakeNetwork::BroadcastPacket(packet);
   }
 
-  Response Exchange(Address const & /*address*/, uint16_t /*service*/, uint16_t /*channel*/,
-                    Payload const & /*request*/) override
-  {
-    throw std::runtime_error("Exchange functionality not implemented");
-  }
-
   SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) override
   {
     return registrar_.Register(service, channel);
@@ -249,6 +243,11 @@ public:
 
   /// @name Muddle Setup
   /// @{
+  void SetPeerTableFile(std::string const & /*filename*/) override
+  {
+    throw std::runtime_error("Not implemented");
+  }
+
   bool Start(Peers const & /*peers*/, Ports const & /*ports*/) override
   {
     FakeNetwork::Register(node_address_);
@@ -338,38 +337,34 @@ public:
 
   /// @name Peer Control
   /// @{
-  PeerSelectionMode GetPeerSelectionMode() const override
-  {
-    throw std::runtime_error("GetPeerSelectionMode functionality not implemented");
-    return {};
-  }
-
-  void SetPeerSelectionMode(PeerSelectionMode /*mode*/) override
-  {
-    throw std::runtime_error("SetPeerSelectionMode functionality not implemented");
-  }
 
   Addresses GetRequestedPeers() const override
   {
     return FakeNetwork::GetConnections(node_address_);
   }
 
-  void ConnectTo(Address const &address) override
+  void ConnectTo(Address const &address, Duration const & /*expire*/) override
   {
     FakeNetwork::Connect(node_address_, address);
   }
 
-  void ConnectTo(Addresses const & /*addresses*/) override
+  void ConnectTo(Addresses const & /*addresses*/, Duration const & /*expire*/) override
   {
     throw std::runtime_error("ConnectTo x functionality not implemented");
   }
 
-  void ConnectTo(Address const &address, network::Uri const & /*uri_hint*/) override
+  void ConnectTo(network::Uri const & /*uri*/, Duration const & /*expire*/) override
+  {
+    throw std::runtime_error("ConnectTo x functionality not implemented");
+  }
+
+  void ConnectTo(Address const &address, network::Uri const & /*uri_hint*/,
+                 Duration const & /*expire*/) override
   {
     FakeNetwork::Connect(node_address_, address);
   }
 
-  void ConnectTo(AddressHints const & /*address_hints*/) override
+  void ConnectTo(AddressHints const & /*address_hints*/, Duration const & /*expire*/) override
   {
     throw std::runtime_error("ConnectTo y functionality not implemented");
   }
@@ -400,6 +395,11 @@ public:
   void SetConfidence(ConfidenceMap const & /*map*/) override
   {
     throw std::runtime_error("SetConfidence z functionality not implemented");
+  }
+
+  void SetTrackerConfiguration(TrackerConfiguration const & /*config*/) override
+  {
+    throw std::runtime_error("SetTrackerConfiguration functionality not implemented");
   }
   /// @}
 

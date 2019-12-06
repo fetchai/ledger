@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,23 +16,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle/address.hpp"
+#include "muddle.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/muddle_interface.hpp"
+#include "network_helpers.hpp"
+#include "router.hpp"
 
-#include <array>
-#include <cstdint>
+#include "gtest/gtest.h"
 
-namespace fetch {
-namespace muddle {
-
-uint64_t CalculateDistance(Address const &from, Address const &to);
-uint64_t CalculateDistance(void const *from, void const *to, std::size_t length);
-
-template <std::size_t LENGTH>
-uint64_t CalculateDistance(std::array<uint8_t, LENGTH> const &from,
-                           std::array<uint8_t, LENGTH> const &to)
+TEST(RoutingTests, PeerTestReboot)
 {
-  return CalculateDistance(from.data(), to.data(), LENGTH);
-}
+  {
+    // Creating network
+    std::size_t N       = 10;
+    auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
+    uint64_t    idx     = 0;
+    for (auto &n : network->nodes)
+    {
+      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
+      ++idx;
+    }
 
-}  // namespace muddle
-}  // namespace fetch
+    LinearConnectivity(network, std::chrono::seconds(5));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
+    network->Stop();
+  }
+
+  // Restart
+  {
+  }
+}

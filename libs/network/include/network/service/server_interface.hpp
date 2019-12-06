@@ -37,7 +37,8 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ServiceServerInterface";
 
-  ServiceServerInterface()          = default;
+  ServiceServerInterface() = default;
+
   virtual ~ServiceServerInterface() = default;
 
   void Add(ProtocolHandlerType const &name,

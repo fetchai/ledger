@@ -118,17 +118,6 @@ public:
   virtual void Broadcast(uint16_t service, uint16_t channel, Payload const &payload) = 0;
 
   /**
-   * Send a request and expect a response back from the target address
-   *
-   * @param request The request to be sent
-   * @param service The service identifier
-   * @param channel The channel identifier
-   * @return The promise of a response back from the target address
-   */
-  virtual Response Exchange(Address const &address, uint16_t service, uint16_t channel,
-                            Payload const &request) = 0;
-
-  /**
    * Subscribes to messages from network with a given service and channel
    *
    * @param service The identifier for the service

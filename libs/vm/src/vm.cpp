@@ -266,35 +266,44 @@ bool VM::Execute(std::string &error, Variant &output)
   error_.clear();
   error.clear();
 
-  do
+  try
   {
-    instruction_pc_ = pc_;
-    instruction_    = &function_->instructions[pc_++];
-
-    assert(instruction_->opcode < opcode_info_array_.size());
-
-    current_op_ = &opcode_info_array_[instruction_->opcode];
-
-    if (!current_op_->handler)
+    do
     {
-      RuntimeError("unknown opcode");
-      break;
-    }
+      instruction_pc_ = pc_;
+      instruction_    = &function_->instructions[pc_++];
 
-    // update the charge total
-    charge_total_ += current_op_->static_charge;
+      assert(instruction_->opcode < opcode_info_array_.size());
 
-    // check for charge limit being reached
-    if ((charge_limit_ != 0u) && (charge_total_ >= charge_limit_))
-    {
-      RuntimeError("Charge limit exceeded");
-      break;
-    }
+      current_op_ = &opcode_info_array_[instruction_->opcode];
 
-    // execute the handler for the op code
-    current_op_->handler(this);
+      if (!current_op_->handler)
+      {
+        RuntimeError("unknown opcode");
+        break;
+      }
 
-  } while (!stop_);
+      // update the charge total
+      charge_total_ += current_op_->static_charge;
+
+      // check for charge limit being reached
+      if ((charge_limit_ != 0u) && (charge_total_ >= charge_limit_))
+      {
+        RuntimeError("Charge limit exceeded");
+        break;
+      }
+
+      // execute the handler for the op code
+
+      current_op_->handler(this);
+
+    } while (!stop_);
+  }
+  catch (std::exception const &e)
+  {
+    RuntimeError(static_cast<std::string>("Fatal error: ") + static_cast<std::string>(e.what()));
+    stop_ = true;
+  }
 
   bool const ok = !HasError();
 

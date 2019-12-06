@@ -232,6 +232,10 @@ function (configure_vendor_targets)
     enable_testing()
   endif (FETCH_ENABLE_TESTS)
 
+  # memu vendor library
+  add_library(vendor-memu INTERFACE)
+  target_include_directories(vendor-memu INTERFACE ${FETCH_ROOT_VENDOR_DIR}/memu)
+
   # asio vendor library
   add_library(vendor-asio INTERFACE)
   target_include_directories(vendor-asio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/asio/asio/include)

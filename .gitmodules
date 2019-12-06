@@ -31,3 +31,6 @@
 [submodule "vendor/openssl"]
 	path = vendor/openssl
 	url = https://github.com/janbar/openssl-cmake.git
+[submodule "vendor/memu"]
+	path = vendor/memu
+	url = git@github.com:kabsly/memu.git

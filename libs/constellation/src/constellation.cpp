@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#define MEMU_IMPLEMENTATION
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/event_manager.hpp"
@@ -26,6 +27,7 @@
 #include "constellation/muddle_status_http_module.hpp"
 #include "constellation/open_api_http_module.hpp"
 #include "constellation/telemetry_http_module.hpp"
+#include "core/fetch_memu.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/telemetry.hpp"
 #include "ledger/chaincode/contract_context.hpp"
@@ -60,13 +62,13 @@ using fetch::byte_array::ToBase64;
 using fetch::chain::Address;
 using fetch::ledger::Executor;
 using fetch::ledger::GenesisFileCreator;
-using fetch::shards::Manifest;
-using fetch::shards::ServiceIdentifier;
+using fetch::ledger::StorageInterface;
 using fetch::muddle::MuddleInterface;
 using fetch::network::AtomicCounterName;
 using fetch::network::AtomicInFlightCounter;
 using fetch::network::NetworkManager;
-using fetch::ledger::StorageInterface;
+using fetch::shards::Manifest;
+using fetch::shards::ServiceIdentifier;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -356,6 +358,8 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   , uptime_{telemetry::Registry::Instance().CreateCounter(
         "ledger_uptime_ticks_total",
         "The number of intervals that ledger instance has been alive for")}
+  , memory_usage_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_memory_usage", "The total amount of memory used by the process.")}
 {
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",
@@ -365,13 +369,20 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", muddle_->GetAddress().ToBase64());
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
+  // Configure the cache tables
+  muddle_->SetPeerTableFile(cfg_.ihub_peer_cache);
+  if (beacon_network_)
+  {
+    beacon_network_->SetPeerTableFile(cfg_.beacon_peer_cache);
+  }
+
   // Configure/override global parameters
   chain::STAKE_WARM_UP_PERIOD   = cfg_.stake_delay_period;
   chain::STAKE_COOL_DOWN_PERIOD = cfg_.stake_delay_period;
 
   if (cfg_.kademlia_routing)
   {
-    muddle_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
+    muddle_->SetTrackerConfiguration(muddle::TrackerConfiguration::AllOn());
   }
 
   // Enable experimental features
@@ -625,6 +636,7 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
 
     // update the uptime counter
     uptime_->increment();
+    memory_usage_->set(memu_get_curr_rss());
   }
 
   //---------------------------------------------------------------

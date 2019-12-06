@@ -26,10 +26,12 @@
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/network_id.hpp"
 #include "muddle/packet.hpp"
+#include "muddle/router_configuration.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "telemetry/telemetry.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -41,8 +43,8 @@
 namespace fetch {
 namespace muddle {
 
-class Dispatcher;
 class MuddleRegister;
+class PeerTracker;
 
 /**
  * The router if the fundamental object of the muddle system an routes external and internal packets
@@ -61,6 +63,7 @@ public:
   using Prover               = crypto::Prover;
   using DirectMessageHandler = std::function<void(Handle, PacketPtr)>;
   using Handles              = std::vector<Handle>;
+  using PeerTrackerPtr       = std::shared_ptr<PeerTracker>;
 
   struct RoutingData
   {
@@ -78,8 +81,7 @@ public:
   static Packet::Address    ConvertAddress(Packet::RawAddress const &address);
 
   // Construction / Destruction
-  Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispatcher &dispatcher,
-         Prover const &prover);
+  Router(NetworkId network_id, Address address, MuddleRegister &reg, Prover const &prover);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
@@ -94,7 +96,6 @@ public:
   void Stop();
 
   void Route(Handle handle, PacketPtr const &packet);
-  void ConnectionDropped(Handle handle);
 
   /// @name Endpoint Methods (Publicly visible)
   /// @{
@@ -114,9 +115,6 @@ public:
 
   void Broadcast(uint16_t service, uint16_t channel, Payload const &payload) override;
 
-  Response Exchange(Address const &address, uint16_t service, uint16_t channel,
-                    Payload const &request) override;
-
   SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) override;
   SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) override;
 
@@ -131,16 +129,18 @@ public:
   void Whitelist(Address const &target);
   bool IsBlacklisted(Address const &target) const;
 
-  Handle LookupHandle(Packet::RawAddress const &address) const;
+  Handle LookupHandle(Packet::RawAddress const &raw_address) const;
 
   void SetDirectHandler(DirectMessageHandler handler)
   {
     direct_message_handler_ = std::move(handler);
   }
 
-  void SetKademliaRouting(bool enable = true);
+  void SetTracker(PeerTrackerPtr const &tracker)
+  {
+    tracker_ = tracker;
+  }
 
-  RoutingTable     routing_table() const;
   EchoCache        echo_cache() const;
   NetworkId const &network() const;
   Address const &  network_address() const;
@@ -161,12 +161,6 @@ private:
   };
 
   static constexpr std::size_t NUMBER_OF_ROUTER_THREADS = 1;
-
-  UpdateStatus AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address,
-                                          bool direct, bool broadcast);
-
-  Handle LookupRandomHandle(Packet::RawAddress const &address) const;
-  Handle LookupKademliaClosestHandle(Address const &address) const;
 
   void SendToConnection(Handle handle, PacketPtr const &packet);
   void RoutePacket(PacketPtr const &packet, bool external = true);
@@ -191,22 +185,44 @@ private:
   MuddleRegister &      register_;
   DirectMessageHandler  direct_message_handler_;
   BlackList             blacklist_;
-  Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
   NetworkId             network_id_;
   crypto::Prover const &prover_;
   crypto::SecureChannel secure_channel_{prover_};
-  std::atomic<bool>     kademlia_routing_{false};
+  std::atomic<bool>     stopping_{false};
+  RouterConfiguration   config_{};
 
-  mutable Mutex routing_table_lock_;
-  RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by
+  PeerTrackerPtr tracker_{nullptr};
 
   mutable Mutex echo_cache_lock_;
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;
 
-  // telemetry
+  /// Redelivery of packages
+  /// @{
+  mutable Mutex                           delivery_attempts_lock_;
+  std::unordered_map<PacketPtr, uint64_t> delivery_attempts_;
+
+  void ClearDeliveryAttempt(PacketPtr packet)
+  {
+    FETCH_LOCK(delivery_attempts_lock_);
+    delivery_attempts_.erase(packet);
+  }
+  /// @}
+
+  /// Message "entropy"
+  /// @{
+  uint16_t GetNextCounter()
+  {
+    return counter_++;
+  }
+
+  std::atomic<uint16_t> counter_{0};
+  /// @}
+
+  /// Telemetry
+  /// @{
   telemetry::GaugePtr<uint64_t> rx_max_packet_length;
   telemetry::GaugePtr<uint64_t> tx_max_packet_length;
   telemetry::GaugePtr<uint64_t> bx_max_packet_length;
@@ -234,10 +250,10 @@ private:
   telemetry::CounterPtr         echo_cache_removals_total_;
   telemetry::CounterPtr         normal_routing_total_;
   telemetry::CounterPtr         informed_routing_total_;
-  telemetry::CounterPtr         kademlia_routing_total_;
   telemetry::CounterPtr         speculative_routing_total_;
   telemetry::CounterPtr         failed_routing_total_;
   telemetry::CounterPtr         connection_dropped_total_;
+  /// @}
 
   friend class DirectMessageService;
 };

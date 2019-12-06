@@ -17,8 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "moment/clock_interfaces.hpp"
 #include "muddle/address.hpp"
 #include "muddle/peer_selection_mode.hpp"
+#include "muddle/tracker_configuration.hpp"
 #include "network/uri.hpp"
 
 #include <cstdint>
@@ -53,20 +55,31 @@ public:
     BLACKLIST
   };
 
-  using Peers         = std::unordered_set<std::string>;
-  using Uris          = std::unordered_set<network::Uri>;
-  using Ports         = std::vector<uint16_t>;
-  using PortMapping   = std::unordered_map<uint16_t, uint16_t>;
-  using Addresses     = std::unordered_set<Address>;
-  using ConfidenceMap = std::unordered_map<Address, Confidence>;
-  using AddressHints  = std::unordered_map<Address, network::Uri>;
+  using Peers          = std::unordered_set<std::string>;
+  using Uris           = std::unordered_set<network::Uri>;
+  using Ports          = std::vector<uint16_t>;
+  using PortMapping    = std::unordered_map<uint16_t, uint16_t>;
+  using Addresses      = std::unordered_set<Address>;
+  using ConfidenceMap  = std::unordered_map<Address, Confidence>;
+  using AddressHints   = std::unordered_map<Address, network::Uri>;
+  using ClockInterface = moment::ClockInterface;
+  using Clock          = ClockInterface::AccurateSystemClock;
+  using Timepoint      = ClockInterface::Timestamp;
+  using Duration       = ClockInterface::Duration;
 
   // Construction / Destruction
   MuddleInterface()          = default;
   virtual ~MuddleInterface() = default;
 
+  constexpr static Duration NeverExpire()
+  {
+    return std::chrono::duration_cast<Duration>(std::chrono::hours(1024 * 24));
+  }
+
   /// @name Muddle Setup
   /// @{
+
+  virtual void SetPeerTableFile(std::string const &filename) = 0;
 
   /**
    * Start the muddle instance connecting to the initial set of peers and listing on the specified
@@ -193,19 +206,6 @@ public:
   /// @{
 
   /**
-   * Query the current peer selection mode for this muddle
-   *
-   * @return The current mode
-   */
-  virtual PeerSelectionMode GetPeerSelectionMode() const = 0;
-
-  /**
-   * Update the current peer selection mode for this muddle
-   * @param mode
-   */
-  virtual void SetPeerSelectionMode(PeerSelectionMode mode) = 0;
-
-  /**
    * Get the set of addresses that have been requested to connect to
    *
    * @return The set of addresses
@@ -217,14 +217,21 @@ public:
    *
    * @param address The requested address to connect to
    */
-  virtual void ConnectTo(Address const &address) = 0;
+  virtual void ConnectTo(Address const &address, Duration const &expire = NeverExpire()) = 0;
 
   /**
    * Request that muddle attempts to connect to the specified set of addresses
    *
    * @param addresses The set of addresses
    */
-  virtual void ConnectTo(Addresses const &addresses) = 0;
+  virtual void ConnectTo(Addresses const &addresses, Duration const &expire = NeverExpire()) = 0;
+
+  /**
+   * Request that muddle attempts to connect to the specified URI.
+   *
+   * @param uri The URI
+   */
+  virtual void ConnectTo(network::Uri const &uri, Duration const &expire = NeverExpire()) = 0;
 
   /**
    * Connect to a specified address with the provided URI hint
@@ -232,14 +239,16 @@ public:
    * @param address The address to connect to
    * @param uri_hint The hint to the connection URI
    */
-  virtual void ConnectTo(Address const &address, network::Uri const &uri_hint) = 0;
+  virtual void ConnectTo(Address const &address, network::Uri const &uri_hint,
+                         Duration const &expire = NeverExpire()) = 0;
 
   /**
    * Connect to the specified addresses with the provided connection hints
    *
    * @param address_hints The map of address => URI hint
    */
-  virtual void ConnectTo(AddressHints const &address_hints) = 0;
+  virtual void ConnectTo(AddressHints const &address_hints,
+                         Duration const &    expire = NeverExpire()) = 0;
 
   /**
    * Request that muddle disconnected from the specified address
@@ -277,6 +286,13 @@ public:
    * @param map The map of address to confidence level
    */
   virtual void SetConfidence(ConfidenceMap const &map) = 0;
+
+  /**
+   * Sets the tracker configuration
+   *
+   * @param config The configuration for the peer tracker
+   */
+  virtual void SetTrackerConfiguration(TrackerConfiguration const &config) = 0;
   /// @}
 };
 

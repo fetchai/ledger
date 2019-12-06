@@ -322,6 +322,7 @@ public:
   telemetry::CounterPtr            bloom_filter_query_count_;
   telemetry::CounterPtr            bloom_filter_positive_count_;
   telemetry::CounterPtr            bloom_filter_false_positive_count_;
+  telemetry::CounterPtr            block_loads_from_disk_;
 };
 
 }  // namespace ledger
