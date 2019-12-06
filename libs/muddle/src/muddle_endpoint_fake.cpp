@@ -141,7 +141,6 @@ Response FakeMuddleEndpoint::Exchange(Address const & /*address*/, uint16_t /*se
                                       uint16_t /*channel*/, Payload const & /*request*/)
 {
   throw std::runtime_error("Exchange functionality not implemented");
-  return {};
 }
 
 SubscriptionPtr FakeMuddleEndpoint::Subscribe(uint16_t service, uint16_t channel)

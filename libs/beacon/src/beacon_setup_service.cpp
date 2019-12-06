@@ -108,6 +108,8 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &       muddle,
         "beacon_dkg_aborts_total", "The total number of DKG forced aborts")}
   , beacon_dkg_successes_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_successes_total", "The total number of DKG successes")}
+  , beacon_dkg_duplicate_creates_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_dkg_duplicate_creates_total", "The total number of duplicate create attempts")}
   , time_slot_map_{{BeaconSetupService::State::RESET, 0},
                    {BeaconSetupService::State::CONNECT_TO_ALL, 1},
                    {BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS, 1},
@@ -1499,6 +1501,21 @@ void BeaconSetupService::StartNewCabinet(CabinetMemberList members, uint32_t thr
   beacon->aeon.members                   = std::move(members);
   beacon->aeon.start_reference_timepoint = start_time;
   beacon->aeon.block_entropy_previous    = prev_entropy;
+
+  bool const is_current_round = (beacon_) ? (beacon_->aeon == beacon->aeon) : false;
+  bool const is_already_queued =
+      std::find_if(aeon_exe_queue_.begin(), aeon_exe_queue_.end(), [&beacon](auto const &item) {
+        return (item->aeon == beacon->aeon);
+      }) != aeon_exe_queue_.end();
+
+  if (is_current_round || is_already_queued)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, NodeString(),
+                   "Duplicate creation of entropy: current_round: ", is_current_round,
+                   " is_queued: ", is_already_queued);
+    beacon_dkg_duplicate_creates_total_->increment();
+    return;
+  }
 
   aeon_exe_queue_.push_back(beacon);
 }
