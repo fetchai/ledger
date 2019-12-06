@@ -1021,7 +1021,6 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
   if (exponent_part != 1)
   {
     auto exponent = Pow(FixedPoint{10}, FixedPoint{exponent_part});
-    std::cout << *this << std::endl;
     *this *= exponent;
   }
 
