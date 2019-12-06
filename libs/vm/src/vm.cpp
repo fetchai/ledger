@@ -265,9 +265,9 @@ bool VM::Execute(std::string &error, Variant &output)
   self_.Reset();
   error_.clear();
   error.clear();
-
   try
   {
+
     do
     {
       instruction_pc_ = pc_;
@@ -283,8 +283,15 @@ bool VM::Execute(std::string &error, Variant &output)
         break;
       }
 
-      // update the charge total
-      charge_total_ += current_op_->static_charge;
+      // update the charge total (or set to max if it would overflow)
+      if ((std::numeric_limits<ChargeAmount>::max() - charge_total_) < current_op_->static_charge)
+      {
+        charge_total_ = std::numeric_limits<ChargeAmount>::max();
+      }
+      else
+      {
+        charge_total_ += current_op_->static_charge;
+      }
 
       // check for charge limit being reached
       if ((charge_limit_ != 0u) && (charge_total_ >= charge_limit_))
@@ -294,7 +301,6 @@ bool VM::Execute(std::string &error, Variant &output)
       }
 
       // execute the handler for the op code
-
       current_op_->handler(this);
 
     } while (!stop_);
@@ -370,7 +376,15 @@ ChargeAmount VM::GetChargeTotal() const
 
 void VM::IncreaseChargeTotal(ChargeAmount const amount)
 {
-  charge_total_ += amount;
+  // if charge total would overflow, set it to max
+  if ((std::numeric_limits<ChargeAmount>::max() - charge_total_) < amount)
+  {
+    charge_total_ = std::numeric_limits<ChargeAmount>::max();
+  }
+  else
+  {
+    charge_total_ += amount;
+  }
 }
 
 ChargeAmount VM::GetChargeLimit() const

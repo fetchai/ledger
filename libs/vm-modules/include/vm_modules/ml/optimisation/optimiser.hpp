@@ -213,7 +213,7 @@ struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
     }
     default:
     {
-      throw std::runtime_error("unknown dataloader type");
+      throw std::runtime_error("unknown optimiser type, serialisation is not possible.");
     }
     }
   }
@@ -264,7 +264,7 @@ struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
     }
     default:
     {
-      throw std::runtime_error("optimiser mode not recognised");
+      throw std::runtime_error("optimiser mode not recognised, deserialisation is not possible.");
     }
     }
   }
