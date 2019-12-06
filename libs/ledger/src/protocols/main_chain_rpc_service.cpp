@@ -429,7 +429,7 @@ MainChainRpcService::State MainChainRpcService::OnSynchronising()
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Requesting chain from muddle://", ToBase64(current_peer_address_),
-                   " for block ", current_missing_block_.ToHex());
+                   " for block 0x", current_missing_block_.ToHex());
 
     // make the RPC call to the block source with a request for the chain
     current_request_ = rpc_client_.CallSpecificAddress(
