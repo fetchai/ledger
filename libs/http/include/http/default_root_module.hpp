@@ -28,19 +28,19 @@ namespace http {
 
 struct MountedView
 {
-	using ViewType           = HTTPModule::ViewType;
-	using Authenticator      = HTTPModule::Authenticator;
+  using ViewType      = HTTPModule::ViewType;
+  using Authenticator = HTTPModule::Authenticator;
 
-	byte_array::ConstByteArray description;
-	Method                     method;
-	Route                      route;
-	HTTPModule::ViewType                   view;
-	HTTPModule::Authenticator              authenticator;
+  byte_array::ConstByteArray description;
+  Method                     method;
+  Route                      route;
+  HTTPModule::ViewType       view;
+  HTTPModule::Authenticator  authenticator;
 };
 
 using MountedViews = std::vector<MountedView>;
 
 HTTPModule DefaultRootModule(MountedViews const &views);
 
-}
-}
+}  // namespace http
+}  // namespace fetch

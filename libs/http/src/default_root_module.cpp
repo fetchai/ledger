@@ -24,59 +24,59 @@ namespace http {
 
 HTTPModule DefaultRootModule(MountedViews const &views)
 {
-	HTTPModule root;
-	root.Get(
-		"/", "Returns a list of all paths available on this server.",
-		[&views](ViewParameters && /*view_parameters*/, HTTPRequest && /*http_request*/) {
-			static const HtmlTree header("h4", "The following paths can be queried here");
+  HTTPModule root;
+  root.Get("/", "Returns a list of all paths available on this server.",
+           [&views](ViewParameters && /*view_parameters*/, HTTPRequest && /*http_request*/) {
+             static const HtmlTree header("h4", "The following paths can be queried here");
 
-			std::map<byte_array::ConstByteArray, HtmlTree> known_paths;
-			for (auto const &view : views)
-			{
-				auto path = view.route.path();
-				if (path == "/")
-				{
-					// this page, skip
-					continue;
-				}
-				// create next list item
-				HtmlTree list_item("li");
-				if (view.method == Method::GET && view.route.path_parameters().empty())
-				{
-					// it's a GET endpoint and no parameters to bind from uri — a clickable link
-					list_item.emplace_back("a", path, HtmlParams{{"href", path}});
-				}
-				else
-				{
-					// not a GET request, or formal parameters shown in the path, attach as plain text
-					list_item.SetContent(path);
-				}
-				HtmlTree row("tr");
-				row.push_back(HtmlTree("td", HtmlNodes{list_item}));
-				if (view.method != Method::GET)
-				{
-					// display Method, for convenience and to differentiate from GET requests
-					row.push_back(HtmlTree("td", HtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;") + ToString(view.method)));
-				}
-				known_paths.emplace(std::move(path), std::move(row));
-			}
+             std::map<byte_array::ConstByteArray, HtmlTree> known_paths;
+             for (auto const &view : views)
+             {
+               auto path = view.route.path();
+               if (path == "/")
+               {
+                 // this page, skip
+                 continue;
+               }
+               // create next list item
+               HtmlTree list_item("li");
+               if (view.method == Method::GET && view.route.path_parameters().empty())
+               {
+                 // it's a GET endpoint and no parameters to bind from uri — a clickable link
+                 list_item.emplace_back("a", path, HtmlParams{{"href", path}});
+               }
+               else
+               {
+                 // not a GET request, or formal parameters shown in the path, attach as plain text
+                 list_item.SetContent(path);
+               }
+               HtmlTree row("tr");
+               row.push_back(HtmlTree("td", HtmlNodes{list_item}));
+               if (view.method != Method::GET)
+               {
+                 // display Method, for convenience and to differentiate from GET requests
+                 row.push_back(HtmlTree("td", HtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;") +
+                                                  ToString(view.method)));
+               }
+               known_paths.emplace(std::move(path), std::move(row));
+             }
 
-			HtmlTree body;
-			if (known_paths.empty())
-			{
-				body.SetContent("&lt;None&gt;");
-			}
-			else
-			{
-				body.SetTag("table");
-				for (auto &known_path : known_paths)
-				{
-					body.push_back(std::move(known_path.second));
-				}
-			}
-			return HTTPResponse(HtmlBody(HtmlNodes{header, body}).Render());
-		});
-	return root;
+             HtmlTree body;
+             if (known_paths.empty())
+             {
+               body.SetContent("&lt;None&gt;");
+             }
+             else
+             {
+               body.SetTag("table");
+               for (auto &known_path : known_paths)
+               {
+                 body.push_back(std::move(known_path.second));
+               }
+             }
+             return HTTPResponse(HtmlBody(HtmlNodes{header, body}).Render());
+           });
+  return root;
 }
 
 }  // namespace http
