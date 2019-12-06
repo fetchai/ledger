@@ -35,10 +35,6 @@ static constexpr char const *LOGGING_NAME = "VMModelEstimator";
 
 using SizeType = fetch::math::SizeType;
 
-// compiler requires redeclarations of static constexprs in cpp
-constexpr SizeType ModelEstimator::FIT_CONST_OVERHEAD;
-constexpr SizeType ModelEstimator::FIT_PER_BATCH_OVERHEAD;
-
 ModelEstimator::ModelEstimator(VMObjectType &model)
   : model_{model}
 {}
@@ -252,7 +248,6 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
 ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,
                                            Ptr<Array<SizeType>> const &in_layers)
 {
-
   FETCH_UNUSED(optimiser);
   FETCH_UNUSED(in_layers);
   return infinite_charge("Not yet implement");
@@ -261,34 +256,28 @@ ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser
 ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTensor> const &labels,
                                  SizeType const &batch_size)
 {
+  FETCH_UNUSED(labels);
+
   DataType estimate(0);
-  SizeType subset_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
-  SizeType data_size   = data->GetTensor().size();
-  SizeType labels_size = labels->GetTensor().size();
+  SizeType subset_size       = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
+  SizeType number_of_batches = subset_size / batch_size;
 
-  // Assign input data to dataloader
-  estimate = data_size;
-  // Assign label data to dataloader
-  estimate = estimate + labels_size;
-  // SetRandomMode, UpdateConfig, etc.
-  estimate = estimate + FIT_CONST_OVERHEAD;
-  // PrepareBatch overhead
-  estimate = estimate + FIT_PER_BATCH_OVERHEAD * (subset_size / batch_size);
-  // PrepareBatch-input
-  estimate = estimate + data_size;
-  // PrepareBatch-label
-  estimate = estimate + labels_size;
-  // SetInputReference, update stats
-  estimate = estimate + subset_size / batch_size;
-  // Forward and backward prob
-  estimate = estimate + subset_size * static_cast<SizeType>(state_.forward_pass_cost +
-                                                            state_.backward_pass_cost);
-  // Optimiser step and clearing gradients
+  // Forward pass
+  estimate = estimate + state_.forward_pass_cost * subset_size;
+  estimate = estimate + PREDICT_BATCH_LAYER_COEF() * subset_size * state_.ops_count;
+  estimate = estimate + PREDICT_CONST_COEF();
 
-  estimate =
-      estimate + static_cast<DataType>(subset_size / batch_size) *
-                     static_cast<DataType>(state_.optimiser_step_impact * state_.weights_size_sum +
-                                           state_.weights_size_sum);
+  // Backward pass
+  estimate = estimate + state_.backward_pass_cost * subset_size;
+  estimate = estimate + BACKWARD_BATCH_LAYER_COEF() * subset_size * state_.ops_count;
+  estimate = estimate + BACKWARD_PER_BATCH_COEF() * number_of_batches;
+
+  // Optimiser step
+  estimate = estimate + static_cast<DataType>(number_of_batches) * state_.optimiser_step_impact *
+                            state_.weights_size_sum;
+
+  // Call overhead
+  estimate = estimate + FIT_CONST_COEF();
 
   return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
 }
@@ -301,19 +290,24 @@ ChargeAmount ModelEstimator::Evaluate()
 
 ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 {
+  DataType estimate{0};
   SizeType batch_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
-  auto     estimate   = static_cast<ChargeAmount>(state_.forward_pass_cost * batch_size);
-  estimate += static_cast<ChargeAmount>(static_cast<DataType>(batch_size * state_.ops_count) *
-                                        PREDICT_BATCH_LAYER_COEF());
-  estimate += static_cast<ChargeAmount>(PREDICT_CONST_COEF());
 
-  return estimate * CHARGE_UNIT;
+  estimate = estimate + state_.forward_pass_cost * batch_size;
+  estimate = estimate + PREDICT_BATCH_LAYER_COEF() * batch_size * state_.ops_count;
+  estimate = estimate + PREDICT_CONST_COEF();
+
+  return static_cast<ChargeAmount>(estimate * CHARGE_UNIT);
 }
 
 ChargeAmount ModelEstimator::SerializeToString()
 {
-  SizeType estimate = state_.ops_count * SERIALISATION_OVERHEAD +
-                      state_.weights_size_sum * WEIGHT_SERIALISATION_OVERHEAD;
+  DataType estimate{0};
+  estimate = estimate + SERIALISATION_PER_OP_COEF() * state_.ops_count;
+  estimate = estimate + SERIALISATION_PADDED_WEIGHT_SUM_COEF() * state_.weights_padded_size_sum;
+  estimate = estimate + SERIALISATION_WEIGHT_SUM_COEF() * state_.weights_size_sum;
+  estimate = estimate + SERIALISATION_CONST_COEF();
+
   return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
 }
 
