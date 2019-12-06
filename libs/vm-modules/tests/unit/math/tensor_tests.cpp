@@ -286,6 +286,92 @@ TEST_F(MathTensorTests, tensor_min_etch_test)
   EXPECT_TRUE(gt == min_val);
 }
 
+TEST_F(MathTensorTests, tensor_max_test)
+{
+  fetch::math::Tensor<DataType> tensor = fetch::math::Tensor<DataType>::FromString(
+      "0.5, 7.1, 9.1; 6.2, 7.1, 4.; -99.1, 14328.1, 10.0;");
+  fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
+
+  DataType result = vm_tensor.Max();
+  DataType gt{14328.1};
+
+  EXPECT_TRUE(result == gt);
+}
+
+TEST_F(MathTensorTests, tensor_max_etch_test)
+{
+  static char const *tensor_max_src = R"(
+    function main() : Fixed64
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 3u64;
+      tensor_shape[1] = 3u64;
+      var x = Tensor(tensor_shape);
+      x.fill(7.0fp64);
+      x.setAt(0u64, 1u64, -7.0fp64);
+      x.setAt(1u64, 1u64, 23.1fp64);
+      var ret = x.max();
+      return ret;
+    endfunction
+  )";
+
+  std::string const state_name{"tensor"};
+
+  ASSERT_TRUE(toolkit.Compile(tensor_max_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const max_val = res.Get<DataType>();
+  DataType   gt{23.1};
+
+  std::cout << "gt: " << gt << std::endl;
+  std::cout << "max_val: " << max_val << std::endl;
+
+  EXPECT_TRUE(gt == max_val);
+}
+
+TEST_F(MathTensorTests, tensor_sum_test)
+{
+  fetch::math::Tensor<DataType> tensor = fetch::math::Tensor<DataType>::FromString(
+      "0.5, 7.1, 9.1; 6.2, 7.1, 4.; -99.1, 14328.1, 10.0;");
+  fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
+
+  DataType result = vm_tensor.Sum();
+  DataType gt{14269.0};
+
+  EXPECT_TRUE(result == gt);
+}
+
+TEST_F(MathTensorTests, tensor_sum_etch_test)
+{
+  static char const *tensor_sum_src = R"(
+    function main() : Fixed64
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 3u64;
+      tensor_shape[1] = 3u64;
+      var x = Tensor(tensor_shape);
+      x.fill(7.0fp64);
+      x.setAt(0u64, 1u64, -7.0fp64);
+      x.setAt(1u64, 1u64, 23.1fp64);
+      var ret = x.sum();
+      return ret;
+    endfunction
+  )";
+
+  std::string const state_name{"tensor"};
+
+  ASSERT_TRUE(toolkit.Compile(tensor_sum_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const sum_val = res.Get<DataType>();
+  DataType   gt{23.1};
+
+  std::cout << "gt: " << gt << std::endl;
+  std::cout << "sum_val: " << sum_val << std::endl;
+
+  EXPECT_TRUE(gt == sum_val);
+}
+
 /// SERIALISATION TESTS ///
 
 TEST_F(MathTensorTests, tensor_state_test)

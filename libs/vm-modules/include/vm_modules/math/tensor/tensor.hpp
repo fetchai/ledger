@@ -97,6 +97,10 @@ public:
 
   DataType Min();
 
+  DataType Max();
+
+  DataType Sum();
+
   //////////////////////////////
   /// PRINTING AND EXPORTING ///
   //////////////////////////////

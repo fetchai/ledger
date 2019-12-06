@@ -77,11 +77,15 @@ public:
 
   ChargeAmount Min();
 
+  ChargeAmount Max();
+
   ChargeAmount Squeeze();
 
   ChargeAmount Unsqueeze();
 
   ChargeAmount Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
+
+  ChargeAmount Sum();
 
   ChargeAmount Transpose();
 
