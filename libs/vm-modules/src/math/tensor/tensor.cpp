@@ -107,6 +107,7 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
   if (enable_experimental)
   {
     // no tensor features are experimental
+    FETCH_UNUSED(interface);
   }
 
   // Add support for Array of Tensors
