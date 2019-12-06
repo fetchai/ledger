@@ -117,7 +117,7 @@ std::shared_ptr<Module> VMFactory::GetModule(uint64_t enabled)
   // ml modules
   if ((MOD_ML & enabled) != 0u)
   {
-    ml::BindML(*module);
+    ml::BindML(*module, enabled & MOD_EXPERIMENTAL_ML);
   }
 
   // ledger modules

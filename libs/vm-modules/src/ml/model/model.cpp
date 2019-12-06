@@ -248,39 +248,43 @@ vm::Ptr<VMModel::VMTensor> VMModel::Predict(vm::Ptr<VMTensor> const &data)
   return prediction;
 }
 
-void VMModel::Bind(Module &module)
+void VMModel::Bind(Module &module, bool const experimental_enabled)
 {
   using StringPtrRef = fetch::vm::Ptr<fetch::vm::String> const &;
   using SizeRef      = math::SizeType const &;
-  module.CreateClassType<VMModel>("Model")
-      .CreateConstructor(&VMModel::Constructor)
-      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMModel> {
-        return Ptr<VMModel>{new VMModel(vm, type_id)};
-      })
-      .CreateMemberFunction("add", &VMModel::AddLayer<SizeRef, SizeRef>,
-                            use_estimator(&ModelEstimator::LayerAddDense))
-      .CreateMemberFunction("add", &VMModel::AddLayer<SizeRef, SizeRef, SizeRef, SizeRef>,
+  auto interface =
+      module.CreateClassType<VMModel>("Model")
+          .CreateConstructor(&VMModel::Constructor)
+          .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMModel> {
+            return Ptr<VMModel>{new VMModel(vm, type_id)};
+          })
+          .CreateMemberFunction("add", &VMModel::AddLayer<SizeRef, SizeRef>,
+                                use_estimator(&ModelEstimator::LayerAddDense))
+          .CreateMemberFunction("add", &VMModel::AddLayer<SizeRef, SizeRef, StringPtrRef>,
+                                use_estimator(&ModelEstimator::LayerAddDenseActivation))
+          .CreateMemberFunction("compile", &VMModel::CompileSequential,
+                                use_estimator(&ModelEstimator::CompileSequential))
+          .CreateMemberFunction("fit", &VMModel::Fit, use_estimator(&ModelEstimator::Fit))
+          .CreateMemberFunction("evaluate", &VMModel::Evaluate,
+                                use_estimator(&ModelEstimator::Evaluate))
+          .CreateMemberFunction("predict", &VMModel::Predict,
+                                use_estimator(&ModelEstimator::Predict))
+          .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
+                                use_estimator(&ModelEstimator::SerializeToString))
+          .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
+                                use_estimator(&ModelEstimator::DeserializeFromString));
+
+  // experimental features are bound only if the VMFactory given the flag to do so
+  if (experimental_enabled)
+  {
+    interface.CreateMemberFunction("add", &VMModel::AddLayer<SizeRef, SizeRef, SizeRef, SizeRef>,
                             use_estimator(&ModelEstimator::LayerAddConv))
-      .CreateMemberFunction("add", &VMModel::AddLayer<SizeRef, SizeRef, StringPtrRef>,
-                            use_estimator(&ModelEstimator::LayerAddDenseActivation))
-      .CreateMemberFunction("add",
+                            .CreateMemberFunction("add",
                             &VMModel::AddLayer<SizeRef, SizeRef, SizeRef, SizeRef, StringPtrRef>,
                             use_estimator(&ModelEstimator::LayerAddConvActivation))
-      .CreateMemberFunction("compile", &VMModel::CompileSequential,
-                            use_estimator(&ModelEstimator::CompileSequential))
-      .CreateMemberFunction("compile", &VMModel::CompileSimple,
-                            use_estimator(&ModelEstimator::CompileSimple))
-      .CreateMemberFunction("fit", &VMModel::Fit, use_estimator(&ModelEstimator::Fit))
-      .CreateMemberFunction("evaluate", &VMModel::Evaluate,
-                            use_estimator(&ModelEstimator::Evaluate))
-      .CreateMemberFunction("predict", &VMModel::Predict, use_estimator(&ModelEstimator::Predict))
-      .CreateMemberFunction("evaluate", &VMModel::Evaluate,
-                            use_estimator(&ModelEstimator::Evaluate))
-      .CreateMemberFunction("predict", &VMModel::Predict, use_estimator(&ModelEstimator::Predict))
-      .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
-                            use_estimator(&ModelEstimator::SerializeToString))
-      .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
-                            use_estimator(&ModelEstimator::DeserializeFromString));
+                            .CreateMemberFunction("compile", &VMModel::CompileSimple,
+                            use_estimator(&ModelEstimator::CompileSimple));
+  }
 }
 
 void VMModel::SetModel(const VMModel::ModelPtrType &instance)

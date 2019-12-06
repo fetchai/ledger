@@ -103,7 +103,7 @@ public:
 
   vm::Ptr<VMTensor> Predict(vm::Ptr<VMTensor> const &data);
 
-  static void Bind(fetch::vm::Module &module);
+  static void Bind(fetch::vm::Module &module, bool const experimental_enabled);
 
   void SetModel(ModelPtrType const &instance);
 

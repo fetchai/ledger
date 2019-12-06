@@ -44,11 +44,12 @@ public:
 
   enum Modules : uint64_t
   {
-    MOD_CORE    = (1ull << 0ull),
-    MOD_MATH    = (1ull << 1ull),
-    MOD_BITWISE = (1ull << 2ull),
-    MOD_ML      = (1ull << 3ull),
-    MOD_LEDGER  = (1ull << 4ull),
+    MOD_CORE            = (1ull << 0ull),
+    MOD_MATH            = (1ull << 1ull),
+    MOD_BITWISE         = (1ull << 2ull),
+    MOD_ML              = (1ull << 3ull),
+    MOD_LEDGER          = (1ull << 4ull),
+    MOD_EXPERIMENTAL_ML = (1ull << 5ull),
   };
 
   enum UseCases : uint64_t

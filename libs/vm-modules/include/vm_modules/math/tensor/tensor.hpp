@@ -57,7 +57,7 @@ public:
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &shape);
 
-  static void Bind(fetch::vm::Module &module);
+  static void Bind(fetch::vm::Module &module, bool const enable_experimental);
 
   TensorType::SizeVector shape() const;
 
