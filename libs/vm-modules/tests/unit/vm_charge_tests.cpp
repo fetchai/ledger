@@ -482,8 +482,8 @@ TEST_F(
   ASSERT_TRUE(toolkit.Run(nullptr, high_charge_limit));
 }
 
-TEST_F(
-    VmChargeTests, function_bind_with_charge_estimate_execution_fails_when_charge_would_overflow_with_estimator)
+TEST_F(VmChargeTests,
+       function_bind_with_charge_estimate_execution_fails_when_charge_would_overflow_with_estimator)
 {
   toolkit.module()
       .CreateClassType<CustomType>("CustomType")
@@ -496,7 +496,7 @@ TEST_F(
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run(nullptr, max_charge_amount));
+  ASSERT_FALSE(toolkit.Run(nullptr, max_charge_amount));
 }
 
 TEST_F(VmChargeTests,
