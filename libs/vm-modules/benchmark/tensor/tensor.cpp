@@ -79,7 +79,7 @@ struct BM_Tensor_config
 
   explicit BM_Tensor_config(::benchmark::State const &state)
   {
-    SizeType size_len = static_cast<SizeType>(state.range(0));
+    auto size_len = static_cast<SizeType>(state.range(0));
 
     shape.reserve(size_len);
     for (SizeType i{0}; i < size_len; ++i)
@@ -395,7 +395,7 @@ struct BM_Reshape_config
 
   explicit BM_Reshape_config(::benchmark::State const &state)
   {
-    SizeType size_len = static_cast<SizeType>(state.range(0));
+    auto size_len = static_cast<SizeType>(state.range(0));
 
     shape_from.reserve(size_len);
     for (SizeType i{0}; i < size_len; ++i)
@@ -547,7 +547,7 @@ struct BM_At_config
 
   explicit BM_At_config(::benchmark::State const &state)
   {
-    SizeType size_len = static_cast<SizeType>(state.range(0));
+    auto size_len = static_cast<SizeType>(state.range(0));
 
     shape.reserve(size_len);
     for (SizeType i{0}; i < size_len; ++i)
@@ -645,7 +645,7 @@ struct BM_SetAt_config
 
   explicit BM_SetAt_config(::benchmark::State const &state)
   {
-    SizeType size_len = static_cast<SizeType>(state.range(0));
+    auto size_len = static_cast<SizeType>(state.range(0));
 
     shape.reserve(size_len);
     for (SizeType i{0}; i < size_len; ++i)

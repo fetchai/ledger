@@ -33,8 +33,6 @@ using namespace fetch::vm;
 
 namespace math_tests {
 
-using ::testing::Between;
-
 using DataType = fetch::vm_modules::math::DataType;
 
 class MathTests : public ::testing::Test
