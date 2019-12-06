@@ -250,8 +250,6 @@ vm::Ptr<VMModel::VMTensor> VMModel::Predict(vm::Ptr<VMTensor> const &data)
 
 void VMModel::Bind(Module &module, bool const experimental_enabled)
 {
-  using StringPtrRef = fetch::vm::Ptr<fetch::vm::String> const &;
-  using SizeRef      = math::SizeType const &;
   auto interface =
       module.CreateClassType<VMModel>("Model")
           .CreateConstructor(&VMModel::Constructor)

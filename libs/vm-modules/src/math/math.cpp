@@ -34,7 +34,7 @@ namespace fetch {
 namespace vm_modules {
 namespace math {
 
-void BindMath(Module &module)
+void BindMath(Module &module, bool const enable_experimental)
 {
   // bind math functions
   BindAbs(module);
@@ -46,7 +46,7 @@ void BindMath(Module &module)
   BindTrigonometry(module);
 
   // bind math classes
-  VMTensor::Bind(module);
+  VMTensor::Bind(module, enable_experimental);
 
   // ReadCSV depends on VMTensor so must be bound after it
   BindReadCSV(module);
