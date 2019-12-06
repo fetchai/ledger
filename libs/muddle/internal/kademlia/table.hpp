@@ -31,6 +31,8 @@
 namespace fetch {
 namespace muddle {
 
+class NetworkId;
+
 class KademliaTable
 {
 public:
@@ -53,7 +55,7 @@ public:
   using Timepoint      = ClockInterface::Timestamp;
   using Duration       = ClockInterface::Duration;
 
-  explicit KademliaTable(Address const &own_address);
+  KademliaTable(Address const &own_address, NetworkId const &network);
 
   /// Construtors & destructors
   /// @{
@@ -177,7 +179,7 @@ public:
     {
       serializers::LargeObjectSerializeHelper serializer{};
 
-      FETCH_LOG_WARN("KademliaTable", "Dumping table.");
+      FETCH_LOG_DEBUG("KademliaTable", "Dumping table.");
       serializer << *this;
 
       auto buffer = serializer.data();
@@ -358,6 +360,7 @@ private:
   Peers FindPeerByHammingInternal(KademliaAddress const &kam_address, uint64_t hamming_id,
                                   bool scan_left = true, bool scan_right = true);
   mutable std::mutex mutex_;
+  std::string const  logging_name_;
   Address            own_address_;
   KademliaAddress    own_kad_address_;
   Buckets            by_logarithm_;

@@ -26,15 +26,26 @@
 
 namespace fetch {
 namespace muddle {
+namespace {
+
+std::string GenerateLoggingName(NetworkId const &network_id)
+{
+  return "PeerTracker:" + network_id.ToString();
+}
+
+} // namespace
 
 PeerTracker::PeerTrackerPtr PeerTracker::New(PeerTracker::Duration const &interval,
                                              core::Reactor &reactor, MuddleRegister const &reg,
                                              PeerConnectionList &connections,
                                              MuddleEndpoint &    endpoint)
 {
-  PeerTrackerPtr ret;
-  ret.reset(new PeerTracker(interval, reactor, reg, connections, endpoint));
-  return ret;
+  return PeerTrackerPtr{new PeerTracker(interval, reactor, reg, connections, endpoint)};
+}
+
+PeerTracker::~PeerTracker()
+{
+  Stop();
 }
 
 void PeerTracker::Blacklist(Address const &target)
@@ -849,11 +860,12 @@ PeerTracker::PeerTracker(PeerTracker::Duration const &interval, core::Reactor &r
                          MuddleRegister const &reg, PeerConnectionList &connections,
                          MuddleEndpoint &endpoint)
   : core::PeriodicRunnable(interval)
+  , logging_name_{GenerateLoggingName(endpoint.network_id())}
   , reactor_{reactor}
   , register_{reg}
   , endpoint_{endpoint}
   , connections_{connections}
-  , peer_table_{endpoint_.GetAddress()}
+  , peer_table_{endpoint_.GetAddress(), endpoint_.network_id()}
   , own_address_{endpoint_.GetAddress()}
   , rpc_client_{"PeerTracker", endpoint_, SERVICE_MUDDLE_PEER_TRACKER, CHANNEL_RPC}
   , rpc_server_(endpoint_, SERVICE_MUDDLE_PEER_TRACKER, CHANNEL_RPC)

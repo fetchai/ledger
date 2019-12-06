@@ -20,12 +20,22 @@
 #include "core/mutex.hpp"
 #include "crypto/sha1.hpp"
 #include "kademlia/table.hpp"
+#include "muddle/network_id.hpp"
 
 namespace fetch {
 namespace muddle {
+namespace {
 
-KademliaTable::KademliaTable(Address const &own_address)
-  : own_address_{own_address}
+std::string GenerateLoggingName(NetworkId const &network)
+{
+  return "KademliaTable:" + network.ToString();
+}
+
+} // namespace
+
+KademliaTable::KademliaTable(Address const &own_address, NetworkId const &network)
+  : logging_name_{GenerateLoggingName(network)}
+  , own_address_{own_address}
   , own_kad_address_{KademliaAddress::Create(own_address)}
 {}
 
