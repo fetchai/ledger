@@ -181,6 +181,7 @@ private:
 
 using HtmlTree    = TaggedTree<HtmlTags>;
 using HtmlTag     = HtmlTree::Tag;
+using HtmlParams  = HtmlTree::Params;
 using HtmlContent = HtmlTree::Content;
 using HtmlNodes   = HtmlTree::Children;
 
