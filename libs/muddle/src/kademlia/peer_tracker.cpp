@@ -71,20 +71,20 @@ PeerTracker::AddressSet PeerTracker::GetDesiredPeers() const
 void PeerTracker::AddDesiredPeer(Address const &address, PeerTracker::Duration const &expiry)
 {
   peer_table_.AddDesiredPeer(address, expiry);
-  FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by address: ", address.ToBase64());
+  FETCH_LOG_DEBUG(logging_name_.c_str(), "Desired peer by address: ", address.ToBase64());
 }
 
 void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hint,
                                  PeerTracker::Duration const &expiry)
 {
   peer_table_.AddDesiredPeer(address, hint, expiry);
-  FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by address and uri: ", address.ToBase64());
+  FETCH_LOG_DEBUG(logging_name_.c_str(), "Desired peer by address and uri: ", address.ToBase64());
 }
 
 void PeerTracker::AddDesiredPeer(PeerTracker::Uri const &uri, PeerTracker::Duration const &expiry)
 {
   peer_table_.AddDesiredPeer(uri, expiry);
-  FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by uri: ", uri.ToString());
+  FETCH_LOG_DEBUG(logging_name_.c_str(), "Desired peer by uri: ", uri.ToString());
 }
 
 void PeerTracker::RemoveDesiredPeer(Address const &address)
@@ -734,7 +734,7 @@ void PeerTracker::Periodically()
     // Adding the unresolved URIs to the connection pool
     for (auto const &uri : peer_table_.desired_uris())
     {
-      FETCH_LOG_INFO(logging_name_.c_str(), "Adding peer with unknown address: ", uri.ToString());
+      FETCH_LOG_DEBUG(logging_name_.c_str(), "Adding peer with unknown address: ", uri.ToString());
       connections_.AddPersistentPeer(uri);
     }
   }
