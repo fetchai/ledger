@@ -15,7 +15,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
+#define MEMU_IMPLEMENTATION
 #include "constellation/constellation.hpp"
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
@@ -625,7 +625,7 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
 
     // update the uptime counter
     uptime_->increment();
-    //    memory_usage_->set(memu_get_curr_rss());
+    memory_usage_->set(memu_get_curr_rss());
   }
 
   //---------------------------------------------------------------
