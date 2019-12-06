@@ -146,7 +146,8 @@ TEST_F(VmChargeTests, execution_fails_when_charge_limit_exceeded)
 
 TEST_F(VmChargeTests, functor_bind_with_charge_estimate_execution_fails_when_limit_exceeded)
 {
-  toolkit.module().CreateFreeFunction("soExpensiveItShouldOverflow", handler, std::numeric_limits<ChargeAmount>::max());
+  toolkit.module().CreateFreeFunction("soExpensiveItShouldOverflow", handler,
+                                      std::numeric_limits<ChargeAmount>::max());
 
   static char const *TEXT = R"(
     function main()
