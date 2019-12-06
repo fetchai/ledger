@@ -1066,7 +1066,7 @@ typename Tensor<T, C>::Type &Tensor<T, C>::At(Indices... indices)
   if (sizeof...(indices) != stride_.size())
   {
     throw exceptions::WrongIndices(
-        "Wrong arguments quantity (" + std::to_string(stride_.size()) +
+        "Wrong arguments quantity (" + std::to_string(sizeof...(indices)) +
         ") given to Tensor::At, expected: " + std::to_string(stride_.size()));
   }
   return this->data()[UnrollComputeColIndex<0>(std::forward<Indices>(indices)...)];
@@ -1087,7 +1087,7 @@ typename Tensor<T, C>::Type Tensor<T, C>::At(Indices... indices) const
   if (sizeof...(indices) != stride_.size())
   {
     throw exceptions::WrongIndices(
-        "Wrong arguments quantity (" + std::to_string(stride_.size()) +
+        "Wrong arguments quantity (" + std::to_string(sizeof...(indices)) +
         ") given to Tensor::At, expected: " + std::to_string(stride_.size()));
   }
   SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...);
@@ -1309,7 +1309,7 @@ void Tensor<T, C>::Set(Args... args)
   if (sizeof...(args) != (stride_.size() + 1))
   {
     throw exceptions::WrongIndices(
-        "Wrong arguments quantity (" + std::to_string(stride_.size() + 1) +
+        "Wrong arguments quantity (" + std::to_string(sizeof...(args)) +
         ") given to Tensor::Set, expected: " + std::to_string(stride_.size() + 1));
   }
 

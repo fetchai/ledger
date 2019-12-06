@@ -77,7 +77,7 @@ Ptr<VMDataLoader> VMDataLoader::Constructor(VM *vm, TypeId type_id, Ptr<String> 
   {
     return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id, mode)};
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     vm->RuntimeError(e.what());
     return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id)};
@@ -142,7 +142,7 @@ void VMDataLoader::AddCommodityData(Ptr<String> const &xfilename, Ptr<String> co
 
     std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData({data}, label);
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     RuntimeError(e.what());
   }

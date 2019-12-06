@@ -113,7 +113,7 @@ VMTensor::DataType VMTensor::At(Indices... indices) const
   {
     result = tensor_.At(indices...);
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     vm_->RuntimeError(std::string(e.what()));
   }
@@ -127,7 +127,7 @@ void VMTensor::SetAt(Args... args)
   {
     tensor_.Set(args...);
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     RuntimeError(std::string(e.what()));
   }
@@ -155,7 +155,7 @@ Ptr<VMTensor> VMTensor::Squeeze()
   {
     squeezed_tensor.Squeeze();
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     RuntimeError("Squeeze failed: " + std::string(e.what()));
   }
@@ -189,7 +189,7 @@ void VMTensor::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
   {
     tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->string()));
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     vm_->RuntimeError(std::string(e.what()));
   }
@@ -202,7 +202,7 @@ Ptr<String> VMTensor::ToString() const
   {
     as_string = tensor_.ToString();
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     vm_->RuntimeError(std::string(e.what()));
   }
