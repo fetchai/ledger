@@ -2719,7 +2719,10 @@ struct Tensor<T, C>::TensorSetter
   static SizeType IndexOf(SizeVector const &stride, SizeVector const &shape, TSType const &index,
                           Args &&... args)
   {
-    assert(SizeType(index) < shape[N]);
+    if (SizeType(index) < shape[N])
+    {
+      throw std::runtime_error("Tensor index out of bounds");
+    }
     return stride[N] * SizeType(index) +
            TensorSetter<N + 1, Args...>::IndexOf(stride, shape, std::forward<Args>(args)...);
   }

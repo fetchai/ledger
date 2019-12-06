@@ -322,6 +322,48 @@ TEST_F(MathTests, tensor_state_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
+TEST_F(MathTests, DISABLED_tensor_at_on_invalid_index)
+{
+  static char const *SRC = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(1);
+      tensor_shape[0] = 2u64;
+
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(2.0fp64);
+
+      y.setAt(0u64,x.at(999u64));
+
+     return y;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_THROW(toolkit.Run(), std::runtime_error);
+}
+
+TEST_F(MathTests, tensor_set_on_invalid_index)
+{
+  static char const *SRC = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(1);
+      tensor_shape[0] = 2u64;
+
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(2.0fp64);
+
+      y.setAt(999u64,x.at(0u64));
+
+     return y;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_THROW(toolkit.Run(), std::runtime_error);
+}
+
 TEST_F(MathTests, tensor_set_and_at_one_test)
 {
   static char const *tensor_serialiase_src = R"(
@@ -495,6 +537,27 @@ TEST_F(MathTests, tensor_set_from_string)
   gt.Fill(static_cast<DataType>(1.0));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+}
+
+TEST_F(MathTests, tensor_failed_from_string)
+{
+  static char const *SOURCE = R"(
+      function main()
+        var tensor_shape = Array<UInt64>(3);
+        tensor_shape[0] = 4u64;
+        tensor_shape[1] = 1u64;
+        tensor_shape[2] = 1u64;
+
+        var x = Tensor(tensor_shape);
+        x.fill(2.0fp64);
+
+        var string_vals = "INVALID_STRING";
+        x.fromString(string_vals);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 }  // namespace

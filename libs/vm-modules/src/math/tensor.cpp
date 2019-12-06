@@ -108,13 +108,29 @@ SizeType VMTensor::size() const
 template <typename... Indices>
 VMTensor::DataType VMTensor::At(Indices... indices) const
 {
-  return tensor_.At(indices...);
+  VMTensor::DataType result(0.0);
+  try
+  {
+    result = tensor_.At(indices...);
+  }
+  catch (std::exception &e)
+  {
+    vm_->RuntimeError(std::string(e.what()));
+  }
+  return result;
 }
 
 template <typename... Args>
 void VMTensor::SetAt(Args... args)
 {
-  tensor_.Set(args...);
+  try
+  {
+    tensor_.Set(args...);
+  }
+  catch (std::exception &e)
+  {
+    RuntimeError(std::string(e.what()));
+  }
 }
 
 void VMTensor::Copy(ArrayType const &other)
@@ -149,14 +165,7 @@ Ptr<VMTensor> VMTensor::Squeeze()
 Ptr<VMTensor> VMTensor::Unsqueeze()
 {
   auto unsqueezed_tensor = tensor_.Copy();
-  try
-  {
-    unsqueezed_tensor.Unsqueeze();
-  }
-  catch (std::exception &e)
-  {
-    RuntimeError("Squeeze failed: " + std::string(e.what()));
-  }
+  unsqueezed_tensor.Unsqueeze();
   return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, unsqueezed_tensor));
 }
 
@@ -176,12 +185,28 @@ void VMTensor::Transpose()
 
 void VMTensor::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
 {
-  tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->string()));
+  try
+  {
+    tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->string()));
+  }
+  catch (std::exception &e)
+  {
+    vm_->RuntimeError(std::string(e.what()));
+  }
 }
 
 Ptr<String> VMTensor::ToString() const
 {
-  return Ptr<String>{new String(vm_, tensor_.ToString())};
+  std::string as_string;
+  try
+  {
+    as_string = tensor_.ToString();
+  }
+  catch (std::exception &e)
+  {
+    vm_->RuntimeError(std::string(e.what()));
+  }
+  return Ptr<String>{new String(vm_, as_string)};
 }
 
 ArrayType &VMTensor::GetTensor()
