@@ -252,7 +252,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
     }
 
     // Need to revert the DAG too
-    if (!dag_->RevertToEpoch(block->block_number))
+    if (dag_ && !dag_->RevertToEpoch(block->block_number))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Reverting the DAG failed!");
       return State::RESET;
