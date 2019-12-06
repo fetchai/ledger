@@ -135,7 +135,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
     FETCH_UNUSED(previous);
     FETCH_LOG_DEBUG(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
-#endif // FETCH_LOG_DEBUG_ENABLED
+#endif  // FETCH_LOG_DEBUG_ENABLED
 }
 
 void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block)

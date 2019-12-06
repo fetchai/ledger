@@ -35,7 +35,7 @@ constexpr char const *LOGGING_NAME = "TxArchiver";
 
 }  // namespace
 
-TransactionArchiver::TransactionArchiver(uint32_t lane, TransactionPoolInterface & pool,
+TransactionArchiver::TransactionArchiver(uint32_t lane, TransactionPoolInterface &pool,
                                          TransactionStoreInterface &archive)
   : lane_{lane}
   , pool_{pool}
@@ -47,7 +47,7 @@ TransactionArchiver::TransactionArchiver(uint32_t lane, TransactionPoolInterface
   , additions_total_{CreateCounter("ledger_txarchiver_additions_total", "The total number of transactions archived by the archiver")}
   , lost_total_{CreateCounter("ledger_txarchiver_lost_total", "The total number of transactions lost by the archiver")}
   , processed_total_{CreateCounter("ledger_txarchiver_processed_total", "The total number of transactions processed by the archiver")}
-  // clang-format on
+// clang-format on
 {
   // make the reservation
   digests_.reserve(BATCH_SIZE);
@@ -145,7 +145,8 @@ TransactionArchiver::State TransactionArchiver::OnFlushing()
   return State::FLUSHING;
 }
 
-telemetry::CounterPtr TransactionArchiver::CreateCounter(char const *name, char const *description) const
+telemetry::CounterPtr TransactionArchiver::CreateCounter(char const *name,
+                                                         char const *description) const
 {
   telemetry::Measurement::Labels labels{{"lane", std::to_string(lane_)}};
   return telemetry::Registry::Instance().CreateCounter(name, description, std::move(labels));
