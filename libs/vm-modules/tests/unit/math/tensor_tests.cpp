@@ -356,8 +356,8 @@ TEST_F(MathTensorTests, tensor_add_test)
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto       tensor     = tensor_ptr->GetTensor();
+  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
   gt.Fill(DataType(14.0));
 
@@ -384,8 +384,8 @@ TEST_F(MathTensorTests, tensor_subtract_test)
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto       tensor     = tensor_ptr->GetTensor();
+  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
   gt.Fill(DataType(-2.0));
 
@@ -412,8 +412,8 @@ TEST_F(MathTensorTests, tensor_multiply_test)
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto       tensor     = tensor_ptr->GetTensor();
+  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
   gt.Fill(DataType(49.0));
 
@@ -440,8 +440,8 @@ TEST_F(MathTensorTests, tensor_divide_test)
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto       tensor     = tensor_ptr->GetTensor();
+  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
   gt.Fill(DataType(0.5));
 
@@ -468,11 +468,11 @@ TEST_F(MathTensorTests, tensor_inplace_multiply_test)
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto       tensor     = tensor_ptr->GetTensor();
+  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
   gt.Fill(DataType(49.0));
-  
+
   std::cout << "gt.ToString(): " << gt.ToString() << std::endl;
   std::cout << "tensor.ToString(): " << tensor.ToString() << std::endl;
 
@@ -499,8 +499,8 @@ TEST_F(MathTensorTests, tensor_inplace_divide_test)
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto       tensor     = tensor_ptr->GetTensor();
+  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
   gt.Fill(DataType(0.5));
 
@@ -530,8 +530,8 @@ TEST_F(MathTensorTests, tensor_inplace_add_test)
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto       tensor     = tensor_ptr->GetTensor();
+  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
   gt.Fill(DataType(14.0));
 
@@ -558,8 +558,8 @@ TEST_F(MathTensorTests, tensor_inplace_subtract_test)
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto       tensor     = tensor_ptr->GetTensor();
+  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
   gt.Fill(DataType(-2.0));
 
