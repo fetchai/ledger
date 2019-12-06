@@ -169,7 +169,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   if (tree.root() != hash)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Index given for merkle hash didn't match merkle stack! root: ",
-                    tree.root().ToBase64(), " expected: ", hash.ToBase64());
+                    tree.root().ToBase64(), " expected: ", hash.ToBase64(), " Note: index: ", index);
     return false;
   }
 
