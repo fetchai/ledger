@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/macros.hpp"
 
 #include <numeric>
 #include <utility>

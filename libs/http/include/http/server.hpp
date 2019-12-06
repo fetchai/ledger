@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "http/abstract_server.hpp"
 #include "http/connection.hpp"
+#include "http/default_root_module.hpp"
 #include "http/http_connection_manager.hpp"
 #include "http/method.hpp"
 #include "http/mime_types.hpp"
@@ -59,20 +60,11 @@ public:
   using ConnectionManager = HTTPConnectionManager;
 
   using RequestMiddleware  = std::function<void(HTTPRequest &)>;
-  using ViewType           = typename HTTPModule::ViewType;
-  using Authenticator      = typename HTTPModule::Authenticator;
+  using ViewType           = MountedView::ViewType;
+  using Authenticator      = MountedView::Authenticator;
   using ResponseMiddleware = std::function<void(HTTPResponse &, HTTPRequest const &)>;
 
   static constexpr char const *LOGGING_NAME = "HTTPServer";
-
-  struct MountedView
-  {
-    byte_array::ConstByteArray description;
-    Method                     method;
-    Route                      route;
-    ViewType                   view;
-    Authenticator              authenticator;
-  };
 
   explicit HTTPServer(NetworkManager const &network_manager, bool add_default_root_module = false)
     : networkManager_(network_manager)
@@ -317,13 +309,13 @@ public:
     }
   }
 
-  std::vector<MountedView> views()
+  MountedViews views()
   {
     FETCH_LOCK(eval_mutex_);
-    return views_;
+    return views_unsafe();
   }
 
-  std::vector<MountedView> views_unsafe()
+  MountedViews views_unsafe()
   {
     return views_;
   }
@@ -344,82 +336,14 @@ public:
 
   void AddDefaultRootModule()
   {
-    HTTPModule root;
-    root.Get(
-        "/", "Returns a list of all paths available on this server.",
-        [this](ViewParameters && /*view_parameters*/, HTTPRequest && /*http_request*/) {
-          static const HtmlTree header(
-              "", HtmlNodes{HtmlTree(top_level_content, "The following paths can be queried here."),
-                            HtmlTree("br")});
-
-          HtmlNodes route_list;
-
-          std::size_t padding{};
-          for (auto const &view : views_)
-          {
-            auto view_len = view.route.path().size();
-            if (view_len > padding)
-            {
-              padding = view_len;
-            }
-          }
-          padding += 4;
-
-          std::map<byte_array::ConstByteArray, HtmlTree> known_paths;
-          for (auto const &view : views_)
-          {
-            auto path = view.route.path();
-            if (path == "/")
-            {
-              // this page, skip
-              continue;
-            }
-            // create next list item
-            HtmlTree list_item("li");
-            if (view.method == Method::GET && view.route.path_parameters().empty())
-            {
-              // it's a GET endpoint and no parameters to bind from uri — a clickable link
-              list_item.emplace_back("a", path, HtmlTree::Params{{"href", path}});
-            }
-            else
-            {
-              // formal parameters shown in the path, attach as plain text
-              if (view.method != Method::GET)
-              {
-                // display Method, for convenience and to differentiate from GET requests
-                for (std::size_t extra_spaces = path.size(); extra_spaces < padding; ++extra_spaces)
-                {
-                  path = path + "&nbsp;";
-                }
-                path = path + "(" + ToString(view.method) + ")";
-              }
-              list_item.SetContent(path);
-            }
-            known_paths.emplace(std::move(path), std::move(list_item));
-          }
-          HtmlTree body;
-          if (known_paths.empty())
-          {
-            body.SetContent("&lt;None&gt;");
-          }
-          else
-          {
-            body.SetTag("ul");
-            for (auto &known_path : known_paths)
-            {
-              body.push_back(std::move(known_path.second));
-            }
-          }
-          return HTTPResponse(HtmlBody(HtmlNodes{header, body}).Render());
-        });
-    AddModule(root);
+    AddModule(DefaultRootModule(views_));
   }
 
 private:
   std::mutex eval_mutex_;
 
   std::vector<RequestMiddleware>  pre_view_middleware_;
-  std::vector<MountedView>        views_;
+  MountedViews                    views_;
   std::vector<ResponseMiddleware> post_view_middleware_;
 
   NetworkManager                   networkManager_;
