@@ -200,7 +200,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   assert(consensus_);
 
   state_machine_->OnStateChange([this](State current, State previous) {
-    if (periodic_print_.Poll())
+      FETCH_UNUSED(this);
+    //if (periodic_print_.Poll())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
                      " (previous: ", ToString(previous), ")");
@@ -245,6 +246,10 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
       FETCH_LOG_WARN(LOGGING_NAME, "The revert operation failed!");
       return State::RESET;
     }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Reverted storage unit.");
+    }
 
     // Need to revert the DAG too
     if (!dag_->RevertToEpoch(block->block_number))
@@ -252,12 +257,18 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
       FETCH_LOG_WARN(LOGGING_NAME, "Reverting the DAG failed!");
       return State::RESET;
     }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "reverted dag.");
+    }
 
     // we need to update the execution manager state and also our locally cached state about the
     // 'last' block that has been executed
     execution_manager_.SetLastProcessedBlock(block->hash);
     last_executed_block_.ApplyVoid([&block](auto &digest) { digest = block->hash; });
     current_block_ = block;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Success.");
   }
   else
   {
