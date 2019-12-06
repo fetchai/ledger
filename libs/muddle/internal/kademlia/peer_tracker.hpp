@@ -93,10 +93,7 @@ public:
   static PeerTrackerPtr New(Duration const &interval, core::Reactor &reactor,
                             MuddleRegister const &reg, PeerConnectionList &connections,
                             MuddleEndpoint &endpoint);
-  ~PeerTracker()
-  {
-    Stop();
-  }
+  ~PeerTracker();
 
   /// Tracker interface
   /// @{
@@ -313,6 +310,7 @@ private:
 
   /// Core components for maintaining connectivity.
   /// @{
+  std::string const     logging_name_;
   std::atomic<bool>     stopping_{false};
   core::Reactor &       reactor_;
   MuddleRegister const &register_;
@@ -367,7 +365,6 @@ private:
   AddressSet no_uri_{};  ///< TODO(tfr):  Get rid of it?
   /// @}
 
-  std::string logging_name_{"not-set"};
 };  // namespace muddle
 
 }  // namespace muddle

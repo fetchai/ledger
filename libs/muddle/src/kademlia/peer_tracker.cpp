@@ -26,15 +26,26 @@
 
 namespace fetch {
 namespace muddle {
+namespace {
+
+std::string GenerateLoggingName(NetworkId const &network_id)
+{
+  return "PeerTracker:" + network_id.ToString();
+}
+
+} // namespace
 
 PeerTracker::PeerTrackerPtr PeerTracker::New(PeerTracker::Duration const &interval,
                                              core::Reactor &reactor, MuddleRegister const &reg,
                                              PeerConnectionList &connections,
                                              MuddleEndpoint &    endpoint)
 {
-  PeerTrackerPtr ret;
-  ret.reset(new PeerTracker(interval, reactor, reg, connections, endpoint));
-  return ret;
+  return PeerTrackerPtr{new PeerTracker(interval, reactor, reg, connections, endpoint)};
+}
+
+PeerTracker::~PeerTracker()
+{
+  Stop();
 }
 
 void PeerTracker::Blacklist(Address const &target)
@@ -60,20 +71,20 @@ PeerTracker::AddressSet PeerTracker::GetDesiredPeers() const
 void PeerTracker::AddDesiredPeer(Address const &address, PeerTracker::Duration const &expiry)
 {
   peer_table_.AddDesiredPeer(address, expiry);
-  FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by address: ", address.ToBase64());
+  FETCH_LOG_DEBUG(logging_name_.c_str(), "Desired peer by address: ", address.ToBase64());
 }
 
 void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hint,
                                  PeerTracker::Duration const &expiry)
 {
   peer_table_.AddDesiredPeer(address, hint, expiry);
-  FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by address and uri: ", address.ToBase64());
+  FETCH_LOG_DEBUG(logging_name_.c_str(), "Desired peer by address and uri: ", address.ToBase64());
 }
 
 void PeerTracker::AddDesiredPeer(PeerTracker::Uri const &uri, PeerTracker::Duration const &expiry)
 {
   peer_table_.AddDesiredPeer(uri, expiry);
-  FETCH_LOG_INFO(logging_name_.c_str(), "Desired peer by uri: ", uri.ToString());
+  FETCH_LOG_DEBUG(logging_name_.c_str(), "Desired peer by uri: ", uri.ToString());
 }
 
 void PeerTracker::RemoveDesiredPeer(Address const &address)
@@ -723,7 +734,7 @@ void PeerTracker::Periodically()
     // Adding the unresolved URIs to the connection pool
     for (auto const &uri : peer_table_.desired_uris())
     {
-      FETCH_LOG_INFO(logging_name_.c_str(), "Adding peer with unknown address: ", uri.ToString());
+      FETCH_LOG_DEBUG(logging_name_.c_str(), "Adding peer with unknown address: ", uri.ToString());
       connections_.AddPersistentPeer(uri);
     }
   }
@@ -849,11 +860,12 @@ PeerTracker::PeerTracker(PeerTracker::Duration const &interval, core::Reactor &r
                          MuddleRegister const &reg, PeerConnectionList &connections,
                          MuddleEndpoint &endpoint)
   : core::PeriodicRunnable(interval)
+  , logging_name_{GenerateLoggingName(endpoint.network_id())}
   , reactor_{reactor}
   , register_{reg}
   , endpoint_{endpoint}
   , connections_{connections}
-  , peer_table_{endpoint_.GetAddress()}
+  , peer_table_{endpoint_.GetAddress(), endpoint_.network_id()}
   , own_address_{endpoint_.GetAddress()}
   , rpc_client_{"PeerTracker", endpoint_, SERVICE_MUDDLE_PEER_TRACKER, CHANNEL_RPC}
   , rpc_server_(endpoint_, SERVICE_MUDDLE_PEER_TRACKER, CHANNEL_RPC)
