@@ -318,9 +318,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   uint64_t const current_dag_epoch    = dag_ ? dag_->CurrentEpoch() : 0;
   bool const     is_genesis           = current_block_->IsGenesis();
 
-#ifdef FETCH_LOG_DEBUG_ENABLED
-  if (extra_debug)
-  {
+//#ifdef FETCH_LOG_DEBUG_ENABLED
+//  if (extra_debug)
+//  {
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Heaviest.....: 0x", chain_.GetHeaviestBlockHash().ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current......: 0x", current_hash.ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Previous.....: 0x", previous_hash.ToHex());
@@ -331,8 +331,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last BlockInt: 0x",
                    last_executed_block_.Apply([](auto const &hash) { return hash; }).ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last DAGEpoch: 0x", current_dag_epoch);
-  }
-#endif  // FETCH_LOG_DEBUG_ENABLED
+//  }
+//#endif  // FETCH_LOG_DEBUG_ENABLED
 
   FETCH_UNUSED(current_dag_epoch);
 

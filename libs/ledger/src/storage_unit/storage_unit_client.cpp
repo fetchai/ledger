@@ -115,6 +115,7 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
   return tree.root();
 }
 
+// TODO(HUT): delete this - underused.
 // return the last committed hash (should correspond to the state hash before you began execution)
 byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 {
@@ -169,7 +170,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   if (tree.root() != hash)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Index given for merkle hash didn't match merkle stack! root: ",
-                    tree.root().ToBase64(), " expected: ", hash.ToBase64(), " Note: index: ", index);
+                    tree.root().ToBase64(), " expected: ", hash.ToBase64(), " Note: index: ", index, " genesis merk: 0x", chain::GENESIS_MERKLE_ROOT.ToHex());
     return false;
   }
 
@@ -222,6 +223,11 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 
     // since the state has now been restored we can update the current merkle reference
     current_merkle_ = tree;
+  }
+
+  if(!all_success)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert to hash! Index: ", index);
   }
 
   return all_success;
