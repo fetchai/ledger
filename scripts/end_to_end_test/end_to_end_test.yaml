@@ -403,3 +403,18 @@ steps:
   - sleep: 5
   - run_python_test: { "script": ".smart_contract_tests.c2c_call_depth_limit_test" }
 ...
+
+---
+test_description: >
+  Multiple contract-to-contract calls in one action
+
+setup_conditions:
+  test_name: "c2c_multiple_calls"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.c2c_multiple_calls" }
+...

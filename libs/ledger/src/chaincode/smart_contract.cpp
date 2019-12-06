@@ -529,8 +529,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
       return false;
     }
 
-    auto const it = call_history.find(identity);
-    if (it != call_history.end())
+    if (call_history.find(identity) != call_history.end())
     {
       error = "Contract-to-contract call cycle detected";
 
@@ -604,6 +603,9 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
 
     c.state_adapter->PopContext();
     vm->IncreaseChargeTotal(vm2.GetChargeTotal() - reference_charge);
+
+    auto it = call_history.find(identity);
+    call_history.erase(it);
 
     return success;
   };
