@@ -227,7 +227,8 @@ private:
 
   /// @name Telemetry
   /// @{
-  telemetry::CounterPtr uptime_;
+  telemetry::CounterPtr         uptime_;
+  telemetry::GaugePtr<uint64_t> memory_usage_;
   /// @}
 };
 

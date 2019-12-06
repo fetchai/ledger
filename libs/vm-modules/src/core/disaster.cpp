@@ -16,34 +16,32 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle.hpp"
-#include "muddle/muddle_endpoint.hpp"
-#include "muddle/muddle_interface.hpp"
-#include "network_helpers.hpp"
-#include "router.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
 
-#include "gtest/gtest.h"
+using namespace fetch::vm;
 
-TEST(RoutingTests, PeerTestReboot)
+namespace fetch {
+namespace vm_modules {
+
+void Disaster(VM * /*vm*/, int32_t mode)
 {
+  switch (mode)
   {
-    // Creating network
-    std::size_t N       = 10;
-    auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
-    uint64_t    idx     = 0;
-    for (auto &n : network->nodes)
-    {
-      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
-      ++idx;
-    }
-
-    LinearConnectivity(network, std::chrono::seconds(5));
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
-    network->Stop();
+  case 9:
+    break;
+  default:
+  {
+    volatile int *x{0};
+    *x = 0;
   }
-
-  // Restart
-  {
   }
 }
+
+void CreateDisaster(Module &module)
+{
+  module.CreateFreeFunction("disaster", &Disaster);
+}
+
+}  // namespace vm_modules
+}  // namespace fetch

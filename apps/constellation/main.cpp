@@ -119,6 +119,21 @@ void InterruptHandler(int /*signal*/)
 }
 
 /**
+ * The makes sure that segmentation faults become catchable.
+ * This serves as a means to make the VM resiliant to malformed modules.
+ */
+void ThrowExeception(int signal)
+{
+  switch (signal)
+  {
+  case SIGSEGV:
+    throw std::runtime_error("Segmentation fault.");
+  case SIGFPE:
+    throw std::runtime_error("Floating point exception.");
+  }
+}
+
+/**
  * Determine is a version flag has been present on the command line
  *
  * @param argc The number of args
@@ -256,6 +271,10 @@ int main(int argc, char **argv)
       // register the signal handlers
       std::signal(SIGINT, InterruptHandler);
       std::signal(SIGTERM, InterruptHandler);
+
+      // Making the system resillient to segmentation faults
+      std::signal(SIGSEGV, ThrowExeception);
+      std::signal(SIGFPE, ThrowExeception);
 
       // run the application
       try
