@@ -97,12 +97,13 @@ using ConsensusPtr = std::shared_ptr<fetch::ledger::ConsensusInterface>;
 
 GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
                                        StorageUnitInterface &storage_unit, ConsensusPtr consensus,
-                                       CertificatePtr certificate, std::string const &db_prefix)
+                                       CertificatePtr certificate, std::string const &db_prefix, MainChain &chain)
   : certificate_{std::move(certificate)}
   , block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
   , consensus_{std::move(consensus)}
   , db_name_{db_prefix + "genesis_block"}
+  , chain_{chain}
 {}
 
 /**
@@ -128,7 +129,9 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
       chain::GENESIS_MERKLE_ROOT = genesis_block_.merkle_hash;
       chain::GENESIS_DIGEST      = genesis_block_.hash;
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Found genesis save file from previous session! Merkle root: ", chain::GENESIS_MERKLE_ROOT.ToHex(), " block hash: ", chain::GENESIS_DIGEST.ToHex());
+      FETCH_LOG_INFO(LOGGING_NAME, "Found genesis save file from previous session! Merkle root: ",
+                     chain::GENESIS_MERKLE_ROOT.ToHex(),
+                     " block hash: ", chain::GENESIS_DIGEST.ToHex());
       loaded_genesis_ = true;
     }
     else
@@ -179,6 +182,11 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
     FETCH_LOG_INFO(LOGGING_NAME, "Saving successful genesis block");
     genesis_store_.Set(storage::ResourceAddress("HEAD"), genesis_block_);
     genesis_store_.Flush(false);
+  }
+
+  if(!loaded_genesis_)
+  {
+    chain_.Reset();
   }
 
   return success;

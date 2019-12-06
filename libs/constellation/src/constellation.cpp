@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 #define MEMU_IMPLEMENTATION
-#include "constellation/constellation.hpp"
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/event_manager.hpp"
 #include "bloom_filter/bloom_filter.hpp"
+#include "constellation/constellation.hpp"
 #include "constellation/health_check_http_module.hpp"
 #include "constellation/logging_http_module.hpp"
 #include "constellation/muddle_status_http_module.hpp"
@@ -537,7 +537,7 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis save file. Location: ", genesis_file_location);
 
   GenesisFileCreator creator(block_coordinator_, *storage_, consensus_, external_identity_,
-                             cfg_.db_prefix);
+                             cfg_.db_prefix, chain_);
 
   startup_success &= creator.LoadFile(genesis_file_location);
 
@@ -549,8 +549,6 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
   }
-
-  chain_.Reset();
 
   if (startup_success)
   {

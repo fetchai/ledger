@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/main_chain.hpp"
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "chain/transaction_validity_period.hpp"
 #include "core/assert.hpp"
@@ -25,6 +24,7 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block_db_record.hpp"
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/time_travelogue.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
@@ -71,6 +71,9 @@ MainChain::MainChain(Mode mode)
   , bloom_filter_false_positive_count_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_bloom_filter_false_positive_total",
         "Total number of false positive queries to the Ledger Main Chain Bloom filter"))
+  , block_loads_from_disk_(telemetry::Registry::Instance().CreateCounter(
+        "block_loads_from_disk_total",
+        "Total block loads from disk"))
 {
   if (Mode::IN_MEMORY_DB != mode)
   {
@@ -386,6 +389,12 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
   if (block_store_->Get(storage::ResourceID(hash), record))
   {
     block = record.block;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "loaded block: ", hash.ToHex(), " Num: ", block.block_number);
+    ERROR_BACKTRACE;
+
+    block_loads_from_disk_->add(1);
+
     AddBlockToBloomFilter(block);
     if (next_hash != nullptr)
     {
@@ -402,6 +411,10 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
     }
 
     return true;
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "didn't load block ");
   }
 
   return false;
@@ -1016,7 +1029,7 @@ void MainChain::RecoverFromFile(Mode mode)
       {
         FETCH_LOG_ERROR(LOGGING_NAME,
                         "Failed to load Bloom filter from storage! Reason: ", e.what());
-        Reset();
+        /* Reset(); */
       }
     }
   }
@@ -1087,7 +1100,7 @@ void MainChain::RecoverFromFile(Mode mode)
   else
   {
     FETCH_LOG_INFO(LOGGING_NAME,
-                   "No head block found in chain data store! Resetting chain data store.");
+                   "No head block found in chain data store! Resetting chain data store. ", head_block_hash.empty());
   }
 
   // Recovering the chain has failed in some way, reset the storage.
@@ -1905,6 +1918,8 @@ MainChain::BlockHash MainChain::GetHeadHash()
 void MainChain::SetHeadHash(BlockHash const &hash)
 {
   assert(hash.size() == chain::HASH_SIZE);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Setting head hash: ", hash.ToHex());
 
   // move to the beginning of the file and write out the hash
   head_store_.seekp(0);
