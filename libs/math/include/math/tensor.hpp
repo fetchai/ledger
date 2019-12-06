@@ -459,6 +459,12 @@ private:
   template <SizeType N, typename FirstIndex, typename... Indices>
   SizeType UnrollComputeColIndex(FirstIndex &&index, Indices &&... indices) const
   {
+    if (shape_[N] <= SizeType(index))
+    {
+      throw exceptions::WrongIndices(
+          "Tensor::At : index " + std::to_string(SizeType(index)) + " is out of bounds of axis " +
+          std::to_string(N) + " (max possible index is " + std::to_string(shape_[N] - 1) + ").");
+    }
     return static_cast<SizeType>(index) * stride_[N] +
            UnrollComputeColIndex<N + 1>(std::forward<Indices>(indices)...);
   }
@@ -466,6 +472,12 @@ private:
   template <SizeType N, typename FirstIndex>
   SizeType UnrollComputeColIndex(FirstIndex &&index) const
   {
+    if (shape_[N] <= SizeType(index))
+    {
+      throw exceptions::WrongIndices(
+          "Tensor::At : index " + std::to_string(SizeType(index)) + " is out of bounds of axis " +
+          std::to_string(N) + " (max possible index is " + std::to_string(shape_[N] - 1) + ").");
+    }
     return static_cast<SizeType>(index) * stride_[N];
   }
 
@@ -2741,7 +2753,8 @@ struct Tensor<T, C>::TensorSetter
     {
       throw exceptions::WrongIndices("Tensor::IndexOf : index " + std::to_string(SizeType(index)) +
                                      " is out of bounds of axis " + std::to_string(N) +
-                                     " (max possible index " + std::to_string(shape[N] - 1) + ").");
+                                     " (max possible index is " + std::to_string(shape[N] - 1) +
+                                     ").");
     }
     return stride[N] * SizeType(index) +
            TensorSetter<N + 1, Args...>::IndexOf(stride, shape, std::forward<Args>(args)...);
