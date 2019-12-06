@@ -264,8 +264,12 @@ TEST(FixedPointTest, FromString_64_64)
   EXPECT_TRUE(e1.Near(e2));
   EXPECT_NE(e1, e2);
 
+  fp128_t::StateClear();
   fp128_t large1("1442695040888963407359924681001892137");
+  EXPECT_TRUE(fp128_t::IsStateOverflow());
+  fp128_t::StateClear();
   fp128_t large2("-1442695040888963407359924681001892137");
+  EXPECT_TRUE(fp128_t::IsStateOverflow());
   EXPECT_EQ(large1, fp128_t::FP_MAX);
   EXPECT_EQ(large2, fp128_t::FP_MIN);
 }
