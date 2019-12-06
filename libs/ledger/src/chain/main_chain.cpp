@@ -71,6 +71,9 @@ MainChain::MainChain(Mode mode)
   , bloom_filter_false_positive_count_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_bloom_filter_false_positive_total",
         "Total number of false positive queries to the Ledger Main Chain Bloom filter"))
+  , block_loads_from_disk_(telemetry::Registry::Instance().CreateCounter(
+        "block_loads_from_disk_total",
+        "Total block loads from disk"))
 {
   if (Mode::IN_MEMORY_DB != mode)
   {
@@ -385,9 +388,13 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
   DbRecord record;
   if (block_store_->Get(storage::ResourceID(hash), record))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "loaded block ");
-
     block = record.block;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "loaded block: ", hash.ToHex(), " Num: ", block.block_number);
+    ERROR_BACKTRACE;
+
+    block_loads_from_disk_->add(1);
+
     AddBlockToBloomFilter(block);
     if (next_hash != nullptr)
     {
