@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/math/math.hpp"
 #include "math/standard_functions/abs.hpp"
+#include "vm_modules/math/math.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_test_toolkit.hpp"
@@ -339,7 +339,7 @@ TEST_F(MathTensorTests, tensor_sum_test)
   DataType result = vm_tensor.Sum();
   DataType gt{14273.0};
 
-  EXPECT_TRUE(result == gt);
+  EXPECT_TRUE(fetch::math::Abs(gt - result) < DataType::TOLERANCE);
 }
 
 TEST_F(MathTensorTests, tensor_sum_etch_test)
