@@ -169,6 +169,7 @@ TEST_F(MathTests, tensor_2_dim_fixed64_fill)
               assert(d.at(1u64,1u64) == toFixed64(123456.0));
             endfunction
           )";
+
   ASSERT_TRUE(toolkit.Compile(FILL_2_DIM_SRC));
   ASSERT_TRUE(toolkit.Run());
 }
@@ -247,7 +248,6 @@ TEST_F(MathTests, tensor_failed_squeeze_test)
     endfunction
   )";
 
-  Variant res;
   ASSERT_TRUE(toolkit.Compile(SOURCE));
   ASSERT_FALSE(toolkit.Run());
 }
