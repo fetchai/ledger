@@ -397,7 +397,7 @@ setup_conditions:
   test_name: "c2c_call_cycle_test"
   number_of_nodes: 1
   mining_nodes: [0]
-  max_test_time: 60
+  max_test_time: 600
 
 steps:
   - sleep: 5
