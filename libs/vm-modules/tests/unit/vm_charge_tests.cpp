@@ -146,6 +146,20 @@ TEST_F(VmChargeTests, execution_fails_when_charge_limit_exceeded)
 
 TEST_F(VmChargeTests, functor_bind_with_charge_estimate_execution_fails_when_limit_exceeded)
 {
+  toolkit.module().CreateFreeFunction("soExpensiveItShouldOverflow", handler, std::numeric_limits<ChargeAmount>::max());
+
+  static char const *TEXT = R"(
+    function main()
+      soExpensiveItShouldOverflow(3u8, 4u16);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run(nullptr, low_charge_limit));
+}
+
+TEST_F(VmChargeTests, functor_bind_with_charge_estimate_execution_does_not_overflow_charge_total)
+{
   toolkit.module().CreateFreeFunction("tooExpensive", handler, expensive_charge);
 
   static char const *TEXT = R"(
