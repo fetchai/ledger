@@ -135,7 +135,6 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_max_test)
   }
 }
 
-
 // sanity check that estimator behaves as intended
 TEST_F(MathTensorEstimatorTests, tensor_estimator_sum_test)
 {
