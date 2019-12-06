@@ -91,6 +91,36 @@ public:
 
   void Transpose();
 
+  ////////////////////////
+  /// BASIC COMPARISON ///
+  ////////////////////////
+
+  bool IsEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  bool IsNotEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void Negate(vm::Ptr<Object> &object) override;
+
+  ////////////////////////
+  /// BASIC ARITHMETIC ///
+  ////////////////////////
+
+  void Add(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+
+  void Subtract(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+
+  void InplaceAdd(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void InplaceSubtract(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void Multiply(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+
+  void Divide(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+
+  void InplaceMultiply(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void InplaceDivide(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
   /////////////////////////
   /// MATRIX OPERATIONS ///
   /////////////////////////

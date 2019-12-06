@@ -92,6 +92,18 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("reshape", &VMTensor::Reshape, use_estimator(&TensorEstimator::Reshape))
       .CreateMemberFunction("squeeze", &VMTensor::Squeeze, use_estimator(&TensorEstimator::Squeeze))
       .CreateMemberFunction("sum", &VMTensor::Sum, use_estimator(&TensorEstimator::Sum))
+      // TODO - need to add the estimators, but enableOperator can't handle estimators yet
+      .EnableOperator(Operator::Negate)
+      .EnableOperator(Operator::Equal)
+      .EnableOperator(Operator::NotEqual)
+      .EnableOperator(Operator::Add)
+      .EnableOperator(Operator::Subtract)
+      .EnableOperator(Operator::InplaceAdd)
+      .EnableOperator(Operator::InplaceSubtract)
+      .EnableOperator(Operator::Multiply)
+      .EnableOperator(Operator::Divide)
+      .EnableOperator(Operator::InplaceMultiply)
+      .EnableOperator(Operator::InplaceDivide)
       .CreateMemberFunction("transpose", &VMTensor::Transpose,
                             use_estimator(&TensorEstimator::Transpose))
       .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze,
@@ -168,6 +180,94 @@ bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
 void VMTensor::Transpose()
 {
   tensor_.Transpose();
+}
+
+/////////////////////////
+/// BASIC COMPARATOR  ///
+/////////////////////////
+
+bool VMTensor::IsEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso)
+{
+  Ptr<VMTensor> left   = lhso;
+  Ptr<VMTensor> right  = rhso;
+  bool          result = (left->GetTensor() == right->GetTensor());
+  return result;
+}
+
+bool VMTensor::IsNotEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso)
+{
+  Ptr<VMTensor> left   = lhso;
+  Ptr<VMTensor> right  = rhso;
+  bool          result = (left->GetTensor() != right->GetTensor());
+  return result;
+}
+
+void VMTensor::Negate(fetch::vm::Ptr<Object> &object)
+{
+  Ptr<VMTensor> operand = object;
+  Ptr<VMTensor> t       = Ptr<VMTensor>{new VMTensor(this->vm_, this->type_id_, shape())};
+  fetch::math::Multiply(operand->GetTensor(), DataType(-1), t->GetTensor());
+  object = std::move(t);
+}
+
+/////////////////////////
+/// BASIC ARITHMETIC  ///
+/////////////////////////
+
+void VMTensor::Add(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso)
+{
+  Ptr<VMTensor> left  = lhso;
+  Ptr<VMTensor> right = rhso;
+  this->GetTensor()   = (left->GetTensor() + right->GetTensor());
+}
+
+void VMTensor::Subtract(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso)
+{
+  Ptr<VMTensor> left  = lhso;
+  Ptr<VMTensor> right = rhso;
+  this->GetTensor()   = (left->GetTensor() - right->GetTensor());
+}
+
+void VMTensor::InplaceAdd(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso)
+{
+  Ptr<VMTensor> left  = lhso;
+  Ptr<VMTensor> right = rhso;
+  left->GetTensor().InlineAdd(right->GetTensor());
+}
+
+void VMTensor::InplaceSubtract(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso)
+{
+  Ptr<VMTensor> left  = lhso;
+  Ptr<VMTensor> right = rhso;
+  left->GetTensor().InlineSubtract(right->GetTensor());
+}
+
+void VMTensor::Multiply(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso)
+{
+  Ptr<VMTensor> left  = lhso;
+  Ptr<VMTensor> right = rhso;
+  this->GetTensor()   = (left->GetTensor() * right->GetTensor());
+}
+
+void VMTensor::Divide(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso)
+{
+  Ptr<VMTensor> left  = lhso;
+  Ptr<VMTensor> right = rhso;
+  this->GetTensor()   = (left->GetTensor() / right->GetTensor());
+}
+
+void VMTensor::InplaceMultiply(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso)
+{
+  Ptr<VMTensor> left  = lhso;
+  Ptr<VMTensor> right = rhso;
+  left->GetTensor().InlineMultiply(right->GetTensor());
+}
+
+void VMTensor::InplaceDivide(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso)
+{
+  Ptr<VMTensor> left  = lhso;
+  Ptr<VMTensor> right = rhso;
+  left->GetTensor().InlineDivide(right->GetTensor());
 }
 
 /////////////////////////
