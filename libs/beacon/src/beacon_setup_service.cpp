@@ -975,9 +975,14 @@ void BeaconSetupService::BroadcastQualComplaints()
 {
   // Qual complaints consist of all nodes from which we did not receive qual shares, or verification
   // of qual shares failed
+  auto complaints = beacon_->manager.ComputeQualComplaints(qual_coefficients_received_);
+  // Record own complaints
+  for (auto const &mem : complaints)
+  {
+    qual_complaints_manager_.AddComplaintAgainst(mem.first);
+  }
   SendBroadcast(DKGEnvelope{
-      SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-                    beacon_->manager.ComputeQualComplaints(qual_coefficients_received_)}});
+      SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS), complaints}});
 }
 
 /**
