@@ -26,7 +26,7 @@
 using namespace fetch::ml::model;
 using namespace fetch::ml::optimisers;
 
-using DataType   = float;
+using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = fetch::math::SizeType;
 
