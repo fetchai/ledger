@@ -122,8 +122,13 @@ void InterruptHandler(int /*signal*/)
  * The makes sure that segmentation faults become catchable.
  * This serves as a means to make the VM resiliant to malformed modules.
  */
-void ThrowExeception(int signal)
+void ThrowException(int signal)
 {
+  // Gracefully shutting down
+  gConstellationInstance.load()->SignalStop();
+
+  // Throwing an exception that can be caught by the
+  // system to allow it to run until shutdown
   switch (signal)
   {
   case SIGSEGV:
@@ -273,8 +278,8 @@ int main(int argc, char **argv)
       std::signal(SIGTERM, InterruptHandler);
 
       // Making the system resillient to segmentation faults
-      std::signal(SIGSEGV, ThrowExeception);
-      std::signal(SIGFPE, ThrowExeception);
+      std::signal(SIGSEGV, ThrowException);
+      std::signal(SIGFPE, ThrowException);
 
       // run the application
       try
