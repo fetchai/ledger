@@ -83,22 +83,8 @@ public:
   void ReportExistence(PeerInfo const &info, Address const &reporter);
   void ReportFailure(Address const &address, Address const &reporter);
   PeerInfoPtr GetPeerDetails(Address const &address);
-  bool        HasUri(Uri const &uri) const
-  {
-    auto it = known_uris_.find(uri);
-    return (it != known_uris_.end()) && (!it->second->address.empty());
-  }
-
-  Address GetAddressFromUri(Uri const &uri) const
-  {
-    auto it = known_uris_.find(uri);
-    if (it == known_uris_.end())
-    {
-      return {};
-    }
-    return it->second->address;
-  }
-
+  bool        HasUri(Uri const &uri) const;
+  Address     GetAddressFromUri(Uri const &uri) const;
   std::size_t size() const;
   Uri         GetUri(Address const &address);
   std::size_t active_buckets() const;

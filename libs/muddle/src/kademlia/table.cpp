@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "kademlia/table.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "crypto/sha1.hpp"
+#include "kademlia/table.hpp"
 #include "muddle/network_id.hpp"
 
 namespace fetch {
@@ -658,6 +658,22 @@ void KademliaTable::RemoveDesiredPeer(Address const &address)
 {
   FETCH_LOCK(desired_mutex_);
   desired_peers_.erase(address);
+}
+
+bool KademliaTable::HasUri(Uri const &uri) const
+{
+  auto it = known_uris_.find(uri);
+  return (it != known_uris_.end()) && (!it->second->address.empty());
+}
+
+Address KademliaTable::GetAddressFromUri(Uri const &uri) const
+{
+  auto it = known_uris_.find(uri);
+  if (it == known_uris_.end())
+  {
+    return {};
+  }
+  return it->second->address;
 }
 
 void KademliaTable::ReportFailure(Address const & /*address*/, Address const & /*reporter*/)
