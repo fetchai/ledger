@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/block_coordinator.hpp"
 #include "chain/constants.hpp"
 #include "chain/transaction.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -25,7 +26,6 @@
 #include "core/time/to_seconds.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
-#include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/dag/dag_interface.hpp"
