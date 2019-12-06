@@ -1242,7 +1242,7 @@ void MainChain::TrimCache()
   auto loose_it = loose_blocks_.begin();
   while (loose_it != loose_blocks_.end())
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Cleaning loose map entry: ", loose_it->first.ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Cleaning loose map entry: 0x", loose_it->first.ToHex());
 
     if (loose_it->second.empty())
     {
