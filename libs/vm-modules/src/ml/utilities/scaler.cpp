@@ -20,7 +20,7 @@
 #include "ml/utilities/scaler.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/utilities/scaler.hpp"
 
 #include <memory>

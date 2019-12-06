@@ -26,7 +26,7 @@
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 

@@ -19,7 +19,7 @@
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/vm_factory.hpp"

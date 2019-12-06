@@ -23,7 +23,7 @@
 #include "vm_modules/core/system.hpp"
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/read_csv.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/ml.hpp"
 
 #include <cstddef>

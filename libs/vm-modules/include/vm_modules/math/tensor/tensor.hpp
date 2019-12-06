@@ -20,6 +20,7 @@
 #include "math/tensor.hpp"
 #include "vm/common.hpp"
 #include "vm/object.hpp"
+#include "vm_modules/math/tensor/tensor_estimator.hpp"
 #include "vm_modules/math/type.hpp"
 
 #include <cstdint>
@@ -45,57 +46,6 @@ class VMTensor : public fetch::vm::Object
 public:
   using DataType   = fetch::vm_modules::math::DataType;
   using TensorType = typename fetch::math::Tensor<DataType>;
-
-  class TensorEstimator
-  {
-  public:
-    using VMObjectType = VMTensor;
-    using ChargeAmount = fetch::vm::ChargeAmount;
-
-    explicit TensorEstimator(VMObjectType &tensor);
-    ~TensorEstimator() = default;
-
-    ChargeAmount size();
-
-    ChargeAmount AtOne(TensorType::SizeType idx1);
-
-    ChargeAmount AtTwo(uint64_t idx1, uint64_t idx2);
-
-    ChargeAmount AtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3);
-
-    ChargeAmount AtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4);
-
-    ChargeAmount SetAtOne(uint64_t idx1, DataType const &value);
-
-    ChargeAmount SetAtTwo(uint64_t idx1, uint64_t idx2, DataType const &value);
-
-    ChargeAmount SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType const &value);
-
-    ChargeAmount SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4,
-                           DataType const &value);
-
-    ChargeAmount Fill(DataType const &value);
-
-    ChargeAmount FillRandom();
-
-    ChargeAmount Squeeze();
-
-    ChargeAmount Unsqueeze();
-
-    ChargeAmount Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
-
-    ChargeAmount Transpose();
-
-    ChargeAmount FromString(fetch::vm::Ptr<fetch::vm::String> const &string);
-
-    ChargeAmount ToString();
-
-  private:
-    ChargeAmount const low_charge{fetch::vm::CHARGE_UNIT};
-    ChargeAmount       charge_func_of_tensor_size(std::size_t factor = 1);
-
-    VMObjectType &tensor_;
-  };
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<uint64_t> const &shape);
 
@@ -140,6 +90,12 @@ public:
   bool Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
 
   void Transpose();
+
+  /////////////////////////
+  /// MATRIX OPERATIONS ///
+  /////////////////////////
+
+  DataType Min();
 
   //////////////////////////////
   /// PRINTING AND EXPORTING ///

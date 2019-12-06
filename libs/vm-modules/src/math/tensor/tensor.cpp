@@ -20,7 +20,8 @@
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
+#include "vm_modules/math/tensor/tensor_estimator.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/use_estimator.hpp"
 
@@ -67,40 +68,36 @@ void VMTensor::Bind(Module &module)
       .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
         return Ptr<VMTensor>{new VMTensor(vm, type_id)};
       })
-      .CreateMemberFunction("at", &VMTensor::At<Index>,
-                            use_estimator(&VMTensor::TensorEstimator::AtOne))
+      .CreateMemberFunction("at", &VMTensor::At<Index>, use_estimator(&TensorEstimator::AtOne))
       .CreateMemberFunction("at", &VMTensor::At<Index, Index>,
-                            use_estimator(&VMTensor::TensorEstimator::AtTwo))
+                            use_estimator(&TensorEstimator::AtTwo))
       .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>,
-                            use_estimator(&VMTensor::TensorEstimator::AtThree))
+                            use_estimator(&TensorEstimator::AtThree))
       .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>,
-                            use_estimator(&VMTensor::TensorEstimator::AtFour))
+                            use_estimator(&TensorEstimator::AtFour))
       .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, DataType>,
-                            use_estimator(&VMTensor::TensorEstimator::SetAtOne))
+                            use_estimator(&TensorEstimator::SetAtOne))
       .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, DataType>,
-                            use_estimator(&VMTensor::TensorEstimator::SetAtTwo))
+                            use_estimator(&TensorEstimator::SetAtTwo))
       .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, DataType>,
-                            use_estimator(&VMTensor::TensorEstimator::SetAtThree))
+                            use_estimator(&TensorEstimator::SetAtThree))
       .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>,
-                            use_estimator(&VMTensor::TensorEstimator::SetAtFour))
-      .CreateMemberFunction("size", &VMTensor::size,
-                            use_estimator(&VMTensor::TensorEstimator::size))
-      .CreateMemberFunction("fill", &VMTensor::Fill,
-                            use_estimator(&VMTensor::TensorEstimator::Fill))
+                            use_estimator(&TensorEstimator::SetAtFour))
+      .CreateMemberFunction("size", &VMTensor::size, use_estimator(&TensorEstimator::size))
+      .CreateMemberFunction("fill", &VMTensor::Fill, use_estimator(&TensorEstimator::Fill))
       .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
-                            use_estimator(&VMTensor::TensorEstimator::FillRandom))
-      .CreateMemberFunction("reshape", &VMTensor::Reshape,
-                            use_estimator(&VMTensor::TensorEstimator::Reshape))
-      .CreateMemberFunction("squeeze", &VMTensor::Squeeze,
-                            use_estimator(&VMTensor::TensorEstimator::Squeeze))
+                            use_estimator(&TensorEstimator::FillRandom))
+      .CreateMemberFunction("min", &VMTensor::Min, use_estimator(&TensorEstimator::Min))
+      .CreateMemberFunction("reshape", &VMTensor::Reshape, use_estimator(&TensorEstimator::Reshape))
+      .CreateMemberFunction("squeeze", &VMTensor::Squeeze, use_estimator(&TensorEstimator::Squeeze))
       .CreateMemberFunction("transpose", &VMTensor::Transpose,
-                            use_estimator(&VMTensor::TensorEstimator::Transpose))
+                            use_estimator(&TensorEstimator::Transpose))
       .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze,
-                            use_estimator(&VMTensor::TensorEstimator::Unsqueeze))
+                            use_estimator(&TensorEstimator::Unsqueeze))
       .CreateMemberFunction("fromString", &VMTensor::FromString,
-                            use_estimator(&VMTensor::TensorEstimator::FromString))
+                            use_estimator(&TensorEstimator::FromString))
       .CreateMemberFunction("toString", &VMTensor::ToString,
-                            use_estimator(&VMTensor::TensorEstimator::ToString));
+                            use_estimator(&TensorEstimator::ToString));
 
   // Add support for Array of Tensors
   module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<VMTensor>>>();
@@ -171,6 +168,15 @@ void VMTensor::Transpose()
   tensor_.Transpose();
 }
 
+/////////////////////////
+/// MATRIX OPERATIONS ///
+/////////////////////////
+
+DataType VMTensor::Min()
+{
+  return fetch::math::Min(tensor_);
+}
+
 //////////////////////////////
 /// PRINTING AND EXPORTING ///
 //////////////////////////////
@@ -207,116 +213,9 @@ bool VMTensor::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   return true;
 }
 
-VMTensor::TensorEstimator &VMTensor::Estimator()
+TensorEstimator &VMTensor::Estimator()
 {
   return estimator_;
-}
-
-//////////////////////////
-/// CHARGE ESTIMATIONS ///
-//////////////////////////
-
-VMTensor::TensorEstimator::TensorEstimator(VMTensor &tensor)
-  : tensor_{tensor}
-{}
-
-ChargeAmount VMTensor::TensorEstimator::size()
-{
-  return low_charge;
-}
-
-ChargeAmount VMTensor::TensorEstimator::AtOne(TensorType::SizeType /*idx1*/)
-{
-  return low_charge;
-}
-
-ChargeAmount VMTensor::TensorEstimator::AtTwo(uint64_t /*idx1*/, uint64_t /*idx2*/)
-{
-  return low_charge;
-}
-
-ChargeAmount VMTensor::TensorEstimator::AtThree(uint64_t /*idx1*/, uint64_t /*idx2*/,
-                                                uint64_t /*idx3*/)
-{
-  return low_charge;
-}
-
-ChargeAmount VMTensor::TensorEstimator::AtFour(uint64_t /*idx1*/, uint64_t /*idx2*/,
-                                               uint64_t /*idx3*/, uint64_t /*idx4*/)
-{
-  return low_charge;
-}
-
-ChargeAmount VMTensor::TensorEstimator::SetAtOne(uint64_t /*idx1*/, DataType const & /*value*/)
-{
-  return low_charge;
-}
-
-ChargeAmount VMTensor::TensorEstimator::SetAtTwo(uint64_t /*idx1*/, uint64_t /*idx2*/,
-                                                 DataType const & /*value*/)
-{
-  return low_charge;
-}
-
-ChargeAmount VMTensor::TensorEstimator::SetAtThree(uint64_t /*idx1*/, uint64_t /*idx2*/,
-                                                   uint64_t /*idx3*/, DataType const & /*value*/)
-{
-  return low_charge;
-}
-
-ChargeAmount VMTensor::TensorEstimator::SetAtFour(uint64_t /*idx1*/, uint64_t /*idx2*/,
-                                                  uint64_t /*idx3*/, uint64_t /*idx4*/,
-                                                  DataType const & /*value*/)
-{
-  return low_charge;
-}
-
-ChargeAmount VMTensor::TensorEstimator::Fill(DataType const & /*value*/)
-{
-  return charge_func_of_tensor_size();
-}
-
-ChargeAmount VMTensor::TensorEstimator::FillRandom()
-{
-  return charge_func_of_tensor_size();
-}
-
-ChargeAmount VMTensor::TensorEstimator::Squeeze()
-{
-  return charge_func_of_tensor_size();
-}
-
-ChargeAmount VMTensor::TensorEstimator::Unsqueeze()
-{
-  return charge_func_of_tensor_size();
-}
-
-ChargeAmount VMTensor::TensorEstimator::Reshape(
-    fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape)
-{
-  FETCH_UNUSED(new_shape);
-  return charge_func_of_tensor_size();
-}
-
-ChargeAmount VMTensor::TensorEstimator::Transpose()
-{
-  return charge_func_of_tensor_size();
-}
-
-ChargeAmount VMTensor::TensorEstimator::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
-{
-  std::size_t val_size = 2;
-  return static_cast<ChargeAmount>(static_cast<std::size_t>(string->Length()) / val_size);
-}
-
-ChargeAmount VMTensor::TensorEstimator::ToString()
-{
-  return charge_func_of_tensor_size();
-}
-
-ChargeAmount VMTensor::TensorEstimator::charge_func_of_tensor_size(std::size_t factor)
-{
-  return static_cast<ChargeAmount>(vm::CHARGE_UNIT * factor * tensor_.size());
 }
 
 }  // namespace math
