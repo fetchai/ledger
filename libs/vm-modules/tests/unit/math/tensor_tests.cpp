@@ -416,6 +416,9 @@ TEST_F(MathTensorTests, tensor_inplace_add_test)
   auto       tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
   gt.Fill(DataType(14.0));
+  
+  std::cout << "gt: " << gt.ToString() << std::endl;
+  std::cout << "tensor.ToString(): " << tensor.ToString() << std::endl;
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }

@@ -230,7 +230,7 @@ void VMTensor::InplaceAdd(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rh
 {
   Ptr<VMTensor> left  = lhso;
   Ptr<VMTensor> right = rhso;
-  this->GetTensor()   = (left->GetTensor() - right->GetTensor());
+  left->GetTensor() -= right->GetTensor();
 }
 
 void VMTensor::Negate(fetch::vm::Ptr<Object> &object)
