@@ -268,6 +268,8 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   // aeon beginning.
   Block beginning_of_aeon = GetBeginningOfAeon(proposed, chain_);
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Found beg of aeon: ", beginning_of_aeon.block_number);
+
   BlockEntropy::Cabinet qualified_cabinet = beginning_of_aeon.block_entropy.qualified;
   auto                  qualified_cabinet_weighted =
       QualWeightedByEntropy(qualified_cabinet, previous.block_entropy.EntropyAsU64());
@@ -318,6 +320,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   // the block period
   if (proposed_block_timestamp_ms < previous_block_window_ends)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Cannot produce within block interval.");
     return false;
   }
 
@@ -334,7 +337,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   {
     if (identity == mining_identity_)
     {
-      FETCH_LOG_DEBUG(
+      FETCH_LOG_INFO(
           LOGGING_NAME, "Minting block. Time now: ", time_now_ms,
           " Timestamp: ", block_interval_ms_, " proposed: ", proposed_block_timestamp_ms,
           " Prev window ends: ", previous_block_window_ends,
@@ -520,6 +523,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   if (EntropyGeneratorInterface::Status::OK !=
       beacon_->GenerateEntropy(block_number, ret->block_entropy))
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Failed to generate entropy for block: ", block_number);
     return {};
   }
 
@@ -535,6 +539,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Failed to generate valid block timing for: ", block_number);
     return {};
   }
 
