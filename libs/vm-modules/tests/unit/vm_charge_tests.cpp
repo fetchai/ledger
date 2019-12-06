@@ -484,7 +484,8 @@ TEST_F(
   ASSERT_TRUE(toolkit.Run(nullptr, high_charge_limit));
 }
 
-TEST_F(VmChargeTests, functor_bind_with_charge_estimate_execution_does_not_overflow_charge_total_with_estimator)
+TEST_F(VmChargeTests,
+       functor_bind_with_charge_estimate_execution_does_not_overflow_charge_total_with_estimator)
 {
   toolkit.module().CreateFreeFunction("overflowExpensive", handler, max_charge_estimator);
 
