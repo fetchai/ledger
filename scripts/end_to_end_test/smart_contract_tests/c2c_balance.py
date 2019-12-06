@@ -102,8 +102,3 @@ def run(options):
     result_balance2 = contract.query(api, 'query_c2c_balance_state')
     assert result_balance2 == BALANCE2, \
         'Expected BALANCE2 {}, found {}'.format(BALANCE2, result_balance2)
-
-
-# ???
-if __name__ == '__main__':
-    run({'host': '127.0.0.1', 'port': 8000})

@@ -123,8 +123,3 @@ def run(options):
     assert str(result) == str(contract.address), \
         'Expected query_contract_address_state to return calling contract\'s ' \
         'address ({}), but instead got {}'.format(contract.address, result)
-
-
-# ???
-if __name__ == '__main__':
-    run({'host': '127.0.0.1', 'port': 8000})

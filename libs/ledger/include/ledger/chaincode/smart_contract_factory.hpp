@@ -46,7 +46,7 @@ auto CreateSmartContract(byte_array::ConstByteArray const &contract_digest,
   }
 
   FETCH_LOG_ERROR("SmartContractFactory",
-                  "Unable to construct requested smart contract: ", contract_digest);
+                  "Unable to construct requested smart contract: ", contract_digest.ToHex());
 
   return {};
 }
