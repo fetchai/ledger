@@ -218,7 +218,7 @@ TEST(FixedPointTest, Conversion_64_64)
   EXPECT_TRUE(largest_fixed_point.Data() < std::numeric_limits<int128_t>::max());
 
   EXPECT_EQ(fp128_t::TOLERANCE.Data(), 0x100000000000);
-  EXPECT_EQ(fp128_t::DECIMAL_DIGITS, 18);
+  EXPECT_EQ(fp128_t::DECIMAL_DIGITS, 19);
 
   double r    = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
   auto   x128 = static_cast<fp128_t>(r) * static_cast<fp128_t>(fp64_t::FP_MAX) -
@@ -234,6 +234,40 @@ TEST(FixedPointTest, Conversion_64_64)
   x128_2   = static_cast<fp128_t>(x32);
   EXPECT_NEAR(static_cast<double>(x128), static_cast<double>(x128_2),
               static_cast<double>(fp32_t::TOLERANCE));
+}
+
+TEST(FixedPointTest, FromString_64_64)
+{
+  // Get raw value
+  fp128_t one("1fp128");
+  fp128_t zero_point_five("0.5fp128");
+  fp128_t one_point_five("1.5fp128");
+  fp128_t two_point_five("2.5fp128");
+  fp128_t m_one_point_five("-1.5fp128");
+  fp128_t m_one_point_five_em10("-1.5e-10fp128");
+  fp128_t m_one_point_five_e10("-1.5e+10fp128");
+  fp128_t m_one_point_five_flt(-1.5);
+
+  EXPECT_EQ(zero_point_five.Data(), static_cast<int128_t>(0x8000000000000000));
+  EXPECT_EQ(one.Data(), static_cast<int128_t>(1) << 64);
+  EXPECT_EQ(one_point_five.Data(), static_cast<int128_t>(0x18) << 60);
+  EXPECT_EQ(two_point_five.Data(), static_cast<int128_t>(0x28) << 60);
+  EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
+  fp128_t m_fifteen_million(-15000000000);
+  fp128_t m_tiny(-0.00000000015);
+
+  EXPECT_EQ(m_one_point_five_em10, m_tiny);
+  EXPECT_EQ(m_one_point_five_e10, m_fifteen_million);
+
+  fp128_t e1("2.718281828459045235360287471352662498");
+  fp128_t e2(2.718281828459045235360287471352662498);
+  EXPECT_TRUE(e1.Near(e2));
+  EXPECT_NE(e1, e2);
+
+  fp128_t large1("1442695040888963407359924681001892137");
+  fp128_t large2("-1442695040888963407359924681001892137");
+  EXPECT_EQ(large1, fp128_t::FP_MAX);
+  EXPECT_EQ(large2, fp128_t::FP_MIN);
 }
 
 TEST(FixedPointTest, Constants_16_16)

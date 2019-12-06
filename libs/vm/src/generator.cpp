@@ -1341,7 +1341,7 @@ void Generator::HandleFloat64(IRExpressionNodePtr const &node)
 void Generator::HandleFixed32(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  fixed_point::fp32_t     value = fixed_point::fp32_t(std::atof(node->text.c_str()));
+  fixed_point::fp32_t     value = fixed_point::fp32_t(node->text.c_str());
   instruction.index             = AddConstant(Variant(value, TypeIds::Fixed32));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1350,7 +1350,7 @@ void Generator::HandleFixed32(IRExpressionNodePtr const &node)
 void Generator::HandleFixed64(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  fixed_point::fp64_t     value = fixed_point::fp64_t(std::atof(node->text.c_str()));
+  fixed_point::fp64_t     value = fixed_point::fp64_t(node->text.c_str());
   instruction.index             = AddConstant(Variant(value, TypeIds::Fixed64));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1359,7 +1359,7 @@ void Generator::HandleFixed64(IRExpressionNodePtr const &node)
 void Generator::HandleFixed128(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushLargeConstant);
-  fixed_point::fp128_t    value = fixed_point::fp128_t(std::atof(node->text.c_str()));
+  fixed_point::fp128_t    value = fixed_point::fp128_t(node->text.c_str());
   instruction.index             = AddLargeConstant(Executable::LargeConstant(value));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
