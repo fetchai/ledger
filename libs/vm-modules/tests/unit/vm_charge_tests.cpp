@@ -65,6 +65,9 @@ public:
   void TooExpensive(uint8_t /*unused*/, uint16_t /*unused*/)
   {}
 
+  void OverflowExpensive(uint8_t /*unused*/, uint16_t /*unused*/)
+  {}
+
   int16_t GetIndexedValue(AnyInteger const & /*unused*/)
   {
     return 0;
@@ -79,6 +82,8 @@ ChargeAmount const high_charge_limit = 1000;
 
 ChargeAmount const affordable_charge = 10;
 ChargeAmount const expensive_charge  = 1000;
+
+ChargeAmount const max_charge_amount = std::numeric_limits<ChargeAmount>::max();
 
 auto affordable_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
   return static_cast<ChargeAmount>(low_charge_limit + x * y);
@@ -144,22 +149,21 @@ TEST_F(VmChargeTests, execution_fails_when_charge_limit_exceeded)
   ASSERT_FALSE(toolkit.Run(nullptr, low_charge_limit));
 }
 
-TEST_F(VmChargeTests, functor_bind_with_charge_estimate_execution_fails_when_limit_exceeded)
+TEST_F(VmChargeTests, functor_bind_with_charge_estimate_execution_does_not_overflow_charge_total)
 {
-  toolkit.module().CreateFreeFunction("soExpensiveItShouldOverflow", handler,
-                                      std::numeric_limits<ChargeAmount>::max());
+  toolkit.module().CreateFreeFunction("overflowExpensive", handler, max_charge_amount);
 
   static char const *TEXT = R"(
     function main()
-      soExpensiveItShouldOverflow(3u8, 4u16);
+      overflowExpensive(3u8, 4u16);
     endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_FALSE(toolkit.Run(nullptr, low_charge_limit));
+  ASSERT_FALSE(toolkit.Run(nullptr, max_charge_amount));
 }
 
-TEST_F(VmChargeTests, functor_bind_with_charge_estimate_execution_does_not_overflow_charge_total)
+TEST_F(VmChargeTests, functor_bind_with_charge_estimate_execution_fails_when_limit_exceeded)
 {
   toolkit.module().CreateFreeFunction("tooExpensive", handler, expensive_charge);
 
@@ -476,6 +480,23 @@ TEST_F(
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run(nullptr, high_charge_limit));
+}
+
+TEST_F(
+    VmChargeTests, function_bind_with_charge_estimate_execution_fails_when_charge_would_overflow_with_estimator)
+{
+  toolkit.module()
+      .CreateClassType<CustomType>("CustomType")
+      .CreateMemberFunction("overflowExpensive", &CustomType::OverflowExpensive, max_charge_amount);
+
+  static char const *TEXT = R"(
+    function main()
+      CustomType.overflowExpensive(3u8, 4u16);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run(nullptr, max_charge_amount));
 }
 
 TEST_F(VmChargeTests,
