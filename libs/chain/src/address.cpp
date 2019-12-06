@@ -69,7 +69,7 @@ bool Address::Parse(ConstByteArray const &input, Address &output)
     if (TOTAL_LENGTH == decoded.size())
     {
       // split the decoded into address and checksum
-      auto const address = decoded.SubArray(0, RAW_LENGTH);
+      auto const address  = decoded.SubArray(0, RAW_LENGTH);
       auto const checksum = decoded.SubArray(RAW_LENGTH, CHECKSUM_LENGTH);
 
       // compute the expected checksum and compare
@@ -77,11 +77,11 @@ bool Address::Parse(ConstByteArray const &input, Address &output)
       {
         output.address_ = address;
         output.display_ = input;
-        success = true;
+        success         = true;
       }
     }
   }
-  catch(...)
+  catch (...)
   {
     success = false;
   }

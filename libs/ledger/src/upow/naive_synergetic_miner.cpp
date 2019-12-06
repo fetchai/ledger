@@ -176,7 +176,8 @@ WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_addres
 
   if (balance == 0)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Not handling contract: ", contract_address.display(), " balance is 0");
+    FETCH_LOG_WARN(LOGGING_NAME, "Not handling contract: ", contract_address.display(),
+                   " balance is 0");
     return {};
   }
 

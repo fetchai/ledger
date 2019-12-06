@@ -67,8 +67,6 @@ Work::BlockIndex Work::block_index() const
   return block_index_;
 }
 
-
-
 void Work::UpdateAddress(chain::Address address)
 {
   contract_address_ = std::move(address);

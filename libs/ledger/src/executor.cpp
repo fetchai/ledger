@@ -360,8 +360,7 @@ bool Executor::ProcessTransfers(Result &result)
   if (!current_tx_->transfers().empty())
   {
     // attach the token contract to the storage engine
-    StateSentinelAdapter storage_adapter{*storage_cache_, "fetch.token",
-                                         allowed_shards_};
+    StateSentinelAdapter storage_adapter{*storage_cache_, "fetch.token", allowed_shards_};
 
     ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
                             block_};
