@@ -93,6 +93,7 @@ public:
     uint32_t     peers_update_cycle_ms{0};
     bool         disable_signing{false};
     bool         sign_broadcasts{false};
+    bool         load_genesis_file{false};
     bool         kademlia_routing{true};
     std::string  genesis_file_location{""};
     bool         proof_of_stake{false};

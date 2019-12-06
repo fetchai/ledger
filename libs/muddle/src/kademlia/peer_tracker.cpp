@@ -515,7 +515,8 @@ void PeerTracker::OnResolvedPull(uint64_t pull_id, Address const &peer, Address 
     peer_table_.ReportLiveliness(peer, own_address_);
 
     // extract the set of addresses from which the prospective node is contactable
-    auto peer_info_list        = promise->As<std::deque<PeerInfo>>();
+    std::deque<PeerInfo> peer_info_list;
+    promise->GetResult(peer_info_list);
     last_pull_from_peer_[peer] = Clock::now();
 
     // create the new entry and populate
@@ -916,7 +917,8 @@ void PeerTracker::OnResolveUris(UnresolvedConnection details, service::Promise c
   if (promise->state() == service::PromiseState::SUCCESS)
   {
     // extract the set of addresses from which the prospective node is contactable
-    auto uris    = promise->As<NetworkUris>();
+    NetworkUris uris;
+    promise->GetResult(uris);
     details.uris = std::move(uris);
 
     if (!details.uris.empty())
