@@ -92,6 +92,18 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("reshape", &VMTensor::Reshape, use_estimator(&TensorEstimator::Reshape))
       .CreateMemberFunction("squeeze", &VMTensor::Squeeze, use_estimator(&TensorEstimator::Squeeze))
       .CreateMemberFunction("sum", &VMTensor::Sum, use_estimator(&TensorEstimator::Sum))
+      .EnableOperator(Operator::Negate)
+      .EnableOperator(Operator::Equal)
+      .EnableOperator(Operator::NotEqual)
+      .EnableOperator(Operator::Add)
+      //      .EnableOperator(Operator::Subtract)
+      //      .EnableOperator(Operator::InplaceAdd)
+      //      .EnableOperator(Operator::InplaceSubtract)
+      //      .EnableOperator(Operator::Multiply)
+      //      .EnableOperator(Operator::Divide)
+      //      .EnableOperator(Operator::InplaceMultiply)
+      //      .EnableOperator(Operator::InplaceDivide)
+      //      .EnableOperator(Operator::GreaterThan)
       .CreateMemberFunction("transpose", &VMTensor::Transpose,
                             use_estimator(&TensorEstimator::Transpose))
       .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze,
@@ -104,6 +116,15 @@ void VMTensor::Bind(Module &module)
   // Add support for Array of Tensors
   module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<VMTensor>>>();
 }
+
+// void RightAdd(Variant &objectv, Variant &rhsv) override;
+// void RightSubtract(Variant &objectv, Variant &rhsv) override;
+// void InplaceRightSubtract(Ptr<Object> const &lhso, Variant const &rhsv) override;
+// void LeftMultiply(Variant &lhsv, Variant &objectv) override;
+// void RightMultiply(Variant &objectv, Variant &rhsv) override;
+// void InplaceRightMultiply(Ptr<Object> const &lhso, Variant const &rhsv) override;
+// void RightDivide(Variant &objectv, Variant &rhsv) override;
+// void InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv) override;
 
 SizeVector VMTensor::shape() const
 {
@@ -169,6 +190,99 @@ void VMTensor::Transpose()
 {
   tensor_.Transpose();
 }
+
+/////////////////////////
+/// BASIC ARITHMETIC  ///
+/////////////////////////
+
+bool VMTensor::IsEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso)
+{
+  Ptr<VMTensor> left   = lhso;
+  Ptr<VMTensor> right  = rhso;
+  bool          result = (left->GetTensor() == right->GetTensor());
+  return result;
+}
+
+bool VMTensor::IsNotEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso)
+{
+  Ptr<VMTensor> left   = lhso;
+  Ptr<VMTensor> right  = rhso;
+  bool          result = (left->GetTensor() != right->GetTensor());
+  return result;
+}
+
+void VMTensor::Add(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso)
+{
+  Ptr<VMTensor> left  = lhso;
+  Ptr<VMTensor> right = rhso;
+  this->GetTensor()   = (left->GetTensor() + right->GetTensor());
+}
+
+void VMTensor::Negate(fetch::vm::Ptr<Object> &object)
+{
+  Ptr<VMTensor> operand = object;
+  Ptr<VMTensor> t       = Ptr<VMTensor>{new VMTensor(this->vm_, this->type_id_, shape())};
+  fetch::math::Multiply(operand->GetTensor(), DataType(-1), t->GetTensor());
+  object = std::move(t);
+}
+
+//  virtual void        InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+//  virtual void        InplaceRightAdd(Ptr<Object> const &lhso, Variant const &rhsv);
+//  virtual void        Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso);
+//  virtual void        LeftSubtract(Variant &lhsv, Variant &objectv);
+//  virtual void        RightSubtract(Variant &objectv, Variant &rhsv);
+//  virtual void        InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+//  virtual void        InplaceRightSubtract(Ptr<Object> const &lhso, Variant const &rhsv);
+//  virtual void        Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso);
+//  virtual void        LeftMultiply(Variant &lhsv, Variant &objectv);
+//  virtual void        RightMultiply(Variant &objectv, Variant &rhsv);
+//  virtual void        InplaceMultiply(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+//  virtual void        InplaceRightMultiply(Ptr<Object> const &lhso, Variant const &rhsv);
+//  virtual void        Divide(Ptr<Object> &lhso, Ptr<Object> &rhso);
+//  virtual void        LeftDivide(Variant &lhsv, Variant &objectv);
+//  virtual void        RightDivide(Variant &objectv, Variant &rhsv);
+//  virtual void        InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+//  virtual void        InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv);
+
+//      .EnableOperator(Operator::Equal)
+//      .EnableOperator(Operator::NotEqual)
+//      .EnableOperator(Operator::LessThan)
+//      .EnableOperator(Operator::Add)
+//      .EnableOperator(Operator::Subtract)
+//      .EnableOperator(Operator::InplaceAdd)
+//      .EnableOperator(Operator::InplaceSubtract)
+//      .EnableOperator(Operator::Multiply)
+//      .EnableOperator(Operator::Divide)
+//      .EnableOperator(Operator::InplaceMultiply)
+//      .EnableOperator(Operator::InplaceDivide)
+//      .EnableOperator(Operator::GreaterThan)
+// void Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
+//
+// void RightAdd(Variant &objectv, Variant &rhsv) override;
+//
+// void InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+//
+// void InplaceRightAdd(Ptr<Object> const &lhso, Variant const &rhsv) override;
+//
+// void Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
+//
+// void RightSubtract(Variant &objectv, Variant &rhsv) override;
+//
+// void InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+//
+// void InplaceRightSubtract(Ptr<Object> const &lhso, Variant const &rhsv) override;
+//
+// void Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
+//
+// void LeftMultiply(Variant &lhsv, Variant &objectv) override;
+//
+// void RightMultiply(Variant &objectv, Variant &rhsv) override;
+//
+// void InplaceRightMultiply(Ptr<Object> const &lhso, Variant const &rhsv) override;
+//
+// void RightDivide(Variant &objectv, Variant &rhsv) override;
+//
+// void InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv) override;
 
 /////////////////////////
 /// MATRIX OPERATIONS ///
