@@ -322,7 +322,7 @@ TEST_F(MathTests, tensor_state_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
-TEST_F(MathTests, DISABLED_tensor_at_on_invalid_index)
+TEST_F(MathTests, tensor_at_on_invalid_index)
 {
   static char const *SRC = R"(
     function main() : Tensor
@@ -333,7 +333,7 @@ TEST_F(MathTests, DISABLED_tensor_at_on_invalid_index)
       var y = Tensor(tensor_shape);
       x.fill(2.0fp64);
 
-      y.setAt(0u64,x.at(999u64));
+      printLn(toString(x.at(999u64)));
 
      return y;
     endfunction
