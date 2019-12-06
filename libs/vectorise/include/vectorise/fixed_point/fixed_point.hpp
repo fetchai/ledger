@@ -956,22 +956,22 @@ constexpr FixedPoint<I, F>::FixedPoint(std::string const &s)
   : data_{0}
 {
   std::cout << "Constructing from string: " << s << std::endl;
-  auto index = s.find("fp");
+  auto index  = s.find("fp");
   auto s_copy = std::string(s, 0, index);
   std::cout << "Constructing from string: " << s_copy << std::endl;
   std::string fp_regex = "[-+]?[0-9]+";
   std::cout << "Matching against " << fp_regex << std::endl;
 
-  Type integer_part{0};
+  Type         integer_part{0};
   UnsignedType fractional_part{0};
-  Type exponent_part{1};
-  std::regex numbers_regex(fp_regex);
-  auto numbers_begin = std::sregex_iterator(s_copy.begin(), s_copy.end(), numbers_regex);
-  auto numbers_end = std::sregex_iterator();
-  std::sregex_iterator i = numbers_begin;
+  Type         exponent_part{1};
+  std::regex   numbers_regex(fp_regex);
+  auto         numbers_begin = std::sregex_iterator(s_copy.begin(), s_copy.end(), numbers_regex);
+  auto         numbers_end   = std::sregex_iterator();
+  std::sregex_iterator i     = numbers_begin;
   if (i != numbers_end)
   {
-    std::smatch match = *i;
+    std::smatch match     = *i;
     std::string match_str = match.str();
     std::cout << "integer_part  : " << match_str << '\n';
     if (match_str.length() > DECIMAL_DIGITS)
@@ -1001,7 +1001,7 @@ constexpr FixedPoint<I, F>::FixedPoint(std::string const &s)
   ++i;
   if (i != numbers_end)
   {
-    std::smatch match = *i;
+    std::smatch match     = *i;
     std::string match_str = match.str();
     std::cout << "fractional_part: " << match_str << std::endl;
     if (match_str.length() > DECIMAL_DIGITS)
@@ -1009,10 +1009,10 @@ constexpr FixedPoint<I, F>::FixedPoint(std::string const &s)
       match_str.erase(DECIMAL_DIGITS, match_str.length() - DECIMAL_DIGITS);
       std::cout << "fractional_part (trimmed): " << match_str << std::endl;
     }
-    fractional_part  = static_cast<UnsignedType>(std::strtoul(match_str.c_str(), nullptr, 10));
+    fractional_part = static_cast<UnsignedType>(std::strtoul(match_str.c_str(), nullptr, 10));
     std::cout << "fractional_part: " << fractional_part << std::endl;
     UnsignedType power10{1};
-    while(power10 < fractional_part)
+    while (power10 < fractional_part)
     {
       power10 *= 10;
     }
@@ -1022,21 +1022,22 @@ constexpr FixedPoint<I, F>::FixedPoint(std::string const &s)
   ++i;
   if (i != numbers_end)
   {
-    std::smatch match = *i;
+    std::smatch match     = *i;
     std::string match_str = match.str();
     std::cout << "exponent_part : " << match_str << '\n';
     exponent_part = static_cast<Type>(std::strtoll(match_str.c_str(), nullptr, 10));
   }
 
   std::cout << "integer_part: " << integer_part << std::endl;
-  data_ = (INTEGER_MASK & (Type(integer_part) << FRACTIONAL_BITS)) | Type(fractional_part & FRACTIONAL_MASK);
+  data_ = (INTEGER_MASK & (Type(integer_part) << FRACTIONAL_BITS)) |
+          Type(fractional_part & FRACTIONAL_MASK);
   std::cout << "data_ = " << data_ << std::endl;
   if (exponent_part != 1)
   {
-     auto exponent = Pow(FixedPoint{10}, FixedPoint{exponent_part});
-     std::cout << *this << std::endl;
-     std::cout << "exponent : " << exponent << std::endl;
-     *this *= exponent;
+    auto exponent = Pow(FixedPoint{10}, FixedPoint{exponent_part});
+    std::cout << *this << std::endl;
+    std::cout << "exponent : " << exponent << std::endl;
+    *this *= exponent;
   }
   std::cout << "this = " << *this << std::endl;
 
