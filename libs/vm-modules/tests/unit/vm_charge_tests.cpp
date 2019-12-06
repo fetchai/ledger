@@ -65,9 +65,6 @@ public:
   void TooExpensive(uint8_t /*unused*/, uint16_t /*unused*/)
   {}
 
-  void OverflowExpensive(uint8_t /*unused*/, uint16_t /*unused*/)
-  {}
-
   int16_t GetIndexedValue(AnyInteger const & /*unused*/)
   {
     return 0;
@@ -98,6 +95,11 @@ auto affordable_member_estimator = [](Ptr<CustomType> const & /*this_*/, uint8_t
 auto expensive_member_estimator = [](Ptr<CustomType> const & /*this_*/, uint8_t x,
                                      uint16_t y) -> ChargeAmount {
   return static_cast<ChargeAmount>(high_charge_limit + x * y);
+};
+auto max_charge_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
+  return max_charge_amount;
+  FETCH_UNUSED(x);
+  FETCH_UNUSED(y);
 };
 
 class VmChargeTests : public ::testing::Test
@@ -482,16 +484,13 @@ TEST_F(
   ASSERT_TRUE(toolkit.Run(nullptr, high_charge_limit));
 }
 
-TEST_F(VmChargeTests,
-       function_bind_with_charge_estimate_execution_fails_when_charge_would_overflow_with_estimator)
+TEST_F(VmChargeTests, functor_bind_with_charge_estimate_execution_does_not_overflow_charge_total_with_estimator)
 {
-  toolkit.module()
-      .CreateClassType<CustomType>("CustomType")
-      .CreateMemberFunction("overflowExpensive", &CustomType::OverflowExpensive, max_charge_amount);
+  toolkit.module().CreateFreeFunction("overflowExpensive", handler, max_charge_estimator);
 
   static char const *TEXT = R"(
     function main()
-      CustomType.overflowExpensive(3u8, 4u16);
+      overflowExpensive(3u8, 4u16);
     endfunction
   )";
 
