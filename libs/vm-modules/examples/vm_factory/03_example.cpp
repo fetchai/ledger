@@ -42,7 +42,8 @@ int main(int argc, char **argv)
   std::ifstream file(argv[1], std::ios::binary);
   if (!file)
   {
-    throw std::runtime_error("Failed to find input file.");
+    std::cout << "Cannot open file " << std::string(argv[1]) << std::endl;
+    return -1;
   }
   std::ostringstream ss;
   ss << file.rdbuf();
