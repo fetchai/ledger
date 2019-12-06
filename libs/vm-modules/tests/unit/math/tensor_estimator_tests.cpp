@@ -35,6 +35,36 @@ class MathTensorEstimatorTests : public ::testing::Test
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
+
+  SizeType MinDimSize()
+  {
+    return SizeType(1);
+  }
+
+  SizeType MaxDimSize()
+  {
+    return SizeType(20);
+  }
+
+  SizeType DimStep()
+  {
+    return SizeType(7);
+  }
+
+  SizeType MinDims()
+  {
+    return SizeType(1);
+  }
+
+  SizeType MaxDims()
+  {
+    return SizeType(8);
+  }
+
+  SizeType DimsStep()
+  {
+    return SizeType(1);
+  }
 };
 
 // sanity check that estimator behaves as intended
@@ -42,13 +72,13 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_min_test)
 {
   fetch::vm::TypeId type_id = 0;
 
-  SizeType min_dim_size = 1;
-  SizeType max_dim_size = 20;
-  SizeType dim_step     = 7;
+  SizeType min_dim_size = MinDimSize();
+  SizeType max_dim_size = MaxDimSize();
+  SizeType dim_step     = DimStep();
 
-  SizeType min_dims  = 1;
-  SizeType max_dims  = 8;
-  SizeType dims_step = 1;
+  SizeType min_dims  = MinDims();
+  SizeType max_dims  = MaxDims();
+  SizeType dims_step = DimsStep();
 
   for (SizeType n_dims = min_dims; n_dims < max_dims; n_dims += dims_step)
   {
@@ -67,6 +97,74 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_min_test)
 
       ChargeAmount val = tensor.size();
       EXPECT_TRUE(tensor_estimator.Min() == val);
+    }
+  }
+}
+
+// sanity check that estimator behaves as intended
+TEST_F(MathTensorEstimatorTests, tensor_estimator_max_test)
+{
+  fetch::vm::TypeId type_id = 0;
+
+  SizeType min_dim_size = MinDimSize();
+  SizeType max_dim_size = MaxDimSize();
+  SizeType dim_step     = DimStep();
+
+  SizeType min_dims  = MinDims();
+  SizeType max_dims  = MaxDims();
+  SizeType dims_step = DimsStep();
+
+  for (SizeType n_dims = min_dims; n_dims < max_dims; n_dims += dims_step)
+  {
+    for (SizeType cur_dim_size = min_dim_size; cur_dim_size < max_dim_size;
+         cur_dim_size += dim_step)
+    {
+      std::vector<SizeType> tensor_shape{};
+      for (SizeType cur_dim = 0; cur_dim < n_dims; ++cur_dim)
+      {
+        tensor_shape.emplace_back(cur_dim_size);
+      }
+
+      MathTensor        tensor{tensor_shape};
+      VmTensor          vm_tensor(&toolkit.vm(), type_id, tensor);
+      VmTensorEstimator tensor_estimator(vm_tensor);
+
+      ChargeAmount val = tensor.size();
+      EXPECT_TRUE(tensor_estimator.Max() == val);
+    }
+  }
+}
+
+// sanity check that estimator behaves as intended
+TEST_F(MathTensorEstimatorTests, tensor_estimator_sum_test)
+{
+  fetch::vm::TypeId type_id = 0;
+
+  SizeType min_dim_size = MinDimSize();
+  SizeType max_dim_size = MaxDimSize();
+  SizeType dim_step     = DimStep();
+
+  SizeType min_dims  = MinDims();
+  SizeType max_dims  = MaxDims();
+  SizeType dims_step = DimsStep();
+
+  for (SizeType n_dims = min_dims; n_dims < max_dims; n_dims += dims_step)
+  {
+    for (SizeType cur_dim_size = min_dim_size; cur_dim_size < max_dim_size;
+         cur_dim_size += dim_step)
+    {
+      std::vector<SizeType> tensor_shape{};
+      for (SizeType cur_dim = 0; cur_dim < n_dims; ++cur_dim)
+      {
+        tensor_shape.emplace_back(cur_dim_size);
+      }
+
+      MathTensor        tensor{tensor_shape};
+      VmTensor          vm_tensor(&toolkit.vm(), type_id, tensor);
+      VmTensorEstimator tensor_estimator(vm_tensor);
+
+      ChargeAmount val = tensor.size();
+      EXPECT_TRUE(tensor_estimator.Sum() == val);
     }
   }
 }

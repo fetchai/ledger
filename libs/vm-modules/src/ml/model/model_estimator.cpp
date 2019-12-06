@@ -204,7 +204,7 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     if (optimiser->string() == "adagrad")
     {
       // optimiser_type = fetch::ml::OptimiserType::ADAGRAD;
-      return infinite_charge("Not yet implement");
+      success = false;
     }
     else if (optimiser->string() == "adam")
     {
@@ -240,15 +240,13 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     }
   }
 
-  if (success)
-  {
-    return static_cast<ChargeAmount>(optimiser_construction_impact + COMPILE_CONST_COEF()) *
-           CHARGE_UNIT;
-  }
-  else
+  if (!success)
   {
     return infinite_charge("Not yet implement");
   }
+
+  return static_cast<ChargeAmount>(optimiser_construction_impact + COMPILE_CONST_COEF()) *
+         CHARGE_UNIT;
 }
 
 ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,

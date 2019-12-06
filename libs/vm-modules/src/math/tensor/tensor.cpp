@@ -88,8 +88,10 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
                             use_estimator(&TensorEstimator::FillRandom))
       .CreateMemberFunction("min", &VMTensor::Min, use_estimator(&TensorEstimator::Min))
+      .CreateMemberFunction("max", &VMTensor::Max, use_estimator(&TensorEstimator::Max))
       .CreateMemberFunction("reshape", &VMTensor::Reshape, use_estimator(&TensorEstimator::Reshape))
       .CreateMemberFunction("squeeze", &VMTensor::Squeeze, use_estimator(&TensorEstimator::Squeeze))
+      .CreateMemberFunction("sum", &VMTensor::Sum, use_estimator(&TensorEstimator::Sum))
       .CreateMemberFunction("transpose", &VMTensor::Transpose,
                             use_estimator(&TensorEstimator::Transpose))
       .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze,
@@ -175,6 +177,16 @@ void VMTensor::Transpose()
 DataType VMTensor::Min()
 {
   return fetch::math::Min(tensor_);
+}
+
+DataType VMTensor::Max()
+{
+  return fetch::math::Max(tensor_);
+}
+
+DataType VMTensor::Sum()
+{
+  return fetch::math::Sum(tensor_);
 }
 
 //////////////////////////////
