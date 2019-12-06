@@ -37,16 +37,8 @@ using DataType = fetch::vm_modules::math::DataType;
 /// Note: the constructed optimiser can not be used.
 const char *OPTIMIZER_MINIMAL_CONSTRUCTION = R"(
      function main()
-         var tensor_shape = Array<UInt64>(1);
-         tensor_shape[0] = 1u64;
-         var data_tensor = Tensor(tensor_shape);
-         var label_tensor = Tensor(tensor_shape);
-
          var graph = Graph();
-
          var dataloader = DataLoader("tensor");
-         dataloader.addData({data_tensor}, label_tensor);
-
          var optimiser = Optimiser("%NAME%", graph, dataloader, {"",""}, "", "");
      endfunction
   )";
@@ -447,10 +439,6 @@ TEST_F(MLTests, optimiser_adagrad_serialisation_failed)
 {
   static char const *SOURCE = R"(
       function main()
-        var tensor_shape = Array<UInt64>(1);
-        tensor_shape[0] = 1u64;
-        var data_tensor = Tensor(tensor_shape);
-        var label_tensor = Tensor(tensor_shape);
         var graph = Graph();
         var dataloader = DataLoader("tensor");
         var optimiser = Optimiser("adagrad", graph, dataloader, {"",""}, "", "");
