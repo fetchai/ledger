@@ -80,8 +80,13 @@ std::vector<ExecutionResult> WaitAll(std::vector<PromiseOfResult> const &promise
   results.reserve(promises.size());
   for (auto &promise : promises)
   {
-    results.push_back(promise.Get());
+    results.emplace_back(ExecutionResult{});
+    if (!promise.GetResult(results.back()))
+    {
+      results.pop_back();
+    }
   }
+
   return results;
 }
 
@@ -229,16 +234,24 @@ private:
 
     FETCH_LOG_INFO(LOGGING_NAME, "Creating executable ", call_id, " on node ", node);
     auto create_exec_prom = client_->CreateExecutable(node, call_id, {{"source.etch", etch}});
-    if (!create_exec_prom.Get().succeeded())
+
     {
-      return create_exec_prom;
+      ExecutionResult result{};
+      if (!(create_exec_prom.GetResult(result) && result.succeeded()))
+      {
+        return create_exec_prom;
+      }
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Creating state ", call_id, " on node ", node);
     auto create_state_prom = register_state_(node, call_id);
-    if (!create_state_prom.Get().succeeded())
+
     {
-      return create_state_prom;
+      ExecutionResult result{};
+      if (!(create_state_prom.GetResult(result) && result.succeeded()))
+      {
+        return create_state_prom;
+      }
     }
 
     auto execute_prom = client_->Run(node, call_id, call_id, "main", {});

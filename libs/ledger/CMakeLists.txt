@@ -16,20 +16,20 @@ setup_compiler()
 
 setup_library(fetch-ledger)
 target_link_libraries(fetch-ledger
-                      PUBLIC fetch-core
-                             fetch-http
-                             fetch-network
+                      PUBLIC fetch-beacon
+                             fetch-bloomfilter
+                             fetch-core
                              fetch-crypto
+                             fetch-entropy
+                             fetch-http
+                             fetch-logging
                              fetch-math
+                             fetch-moment
+                             fetch-network
+                             fetch-shards
                              fetch-storage
                              fetch-vm
                              fetch-vm-modules
-                             fetch-moment
-                             fetch-beacon
-                             fetch-bloomfilter
-                             fetch-logging
-                             fetch-entropy
-                             fetch-shards
                              vendor-msgpack)
 
 add_test_target()
