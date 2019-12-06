@@ -299,6 +299,7 @@ public:
 
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);
+  void      SaveBloom();
 
   bool RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks);
 
