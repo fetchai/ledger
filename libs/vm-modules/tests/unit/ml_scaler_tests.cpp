@@ -103,7 +103,101 @@ TEST_F(VMScalerTests, scaler_setscale_invalid_range)
   ASSERT_FALSE(toolkit.Run());
 }
 
-TEST_F(VMScalerTests, scaler_normalize)
-{}
+TEST_F(VMScalerTests, scaler_normalize_different_values)
+{
+  static char const *SOURCE = R"(
+      function main()
+        var height = 20u64;
+        var width = 20u64;
+        var data_shape = Array<UInt64>(2);
+        data_shape[0] = height;
+        data_shape[1] = width;
+
+        var data_tensor = Tensor(data_shape);
+        // Middle value is 100.
+        data_tensor.fill(100fp64);
+        // Set min to 99 and max to 101:
+        data_tensor.setAt(0u64, 0u64, 101.0fp64);
+        data_tensor.setAt(19u64, 19u64, 99.0fp64);
+
+        var scaler = Scaler();
+        scaler.setScale(data_tensor, "min_max");
+
+        var norm_data_tensor = scaler.normalise(data_tensor);
+
+        // After normalization min value is expected to become 0,
+        // max value to become +1, while middle (min+max)/2 should be 0.5.
+        assert(norm_data_tensor.at(0u64, 0u64) == 1.0fp64);
+        assert(norm_data_tensor.at(10u64, 10u64) == 0.5fp64);
+        assert(norm_data_tensor.at(19u64, 19u64) == 0.0fp64);
+      endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+// Disabled until ml-327 resolved
+TEST_F(VMScalerTests, DISABLED_scaler_normalize_equal_values)
+{
+  static char const *SOURCE = R"(
+      function main()
+        var height = 20u64;
+        var width = 20u64;
+        var data_shape = Array<UInt64>(2);
+        data_shape[0] = height;
+        data_shape[1] = width;
+
+        var data_tensor = Tensor(data_shape);
+        // all values are -100.
+        data_tensor.fill(-100fp64);
+
+        var scaler = Scaler();
+        scaler.setScale(data_tensor, "min_max");
+
+        var norm_data_tensor = scaler.normalise(data_tensor);
+
+        assert(norm_data_tensor.at(0u64, 0u64) == 0.0fp64);
+        assert(norm_data_tensor.at(10u64, 10u64) == 0.0fp64);
+        assert(norm_data_tensor.at(19u64, 19u64) == 0.0fp64);
+      endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(VMScalerTests, scaler_denormalize_different_values)
+{
+  static char const *SOURCE = R"(
+      function main()
+        var height = 20u64;
+        var width = 20u64;
+        var data_shape = Array<UInt64>(2);
+        data_shape[0] = height;
+        data_shape[1] = width;
+
+        var data_tensor = Tensor(data_shape);
+        // Middle value is 100.
+        data_tensor.fill(100fp64);
+        // Set min to 99 and max to 101:
+        data_tensor.setAt(0u64, 0u64, 101.0fp64);
+        data_tensor.setAt(19u64, 19u64, 99.0fp64);
+
+        var scaler = Scaler();
+        scaler.setScale(data_tensor, "min_max");
+
+        var norm_data_tensor = scaler.normalise(data_tensor);
+        var denorm_data_tensor = scaler.deNormalise(norm_data_tensor);
+
+        assert(denorm_data_tensor.at(0u64, 0u64) == 101.0fp64);
+        assert(denorm_data_tensor.at(10u64, 10u64) == 100.0fp64);
+        assert(denorm_data_tensor.at(19u64, 19u64) == 99.0fp64);
+      endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_TRUE(toolkit.Run());
+}
 
 }  // namespace
