@@ -108,6 +108,13 @@ public:
   void       RemoveDesiredPeer(Address const &address);
   /// @}
 
+  /// Reporting
+  /// @{
+  void ReportSuccessfulConnectAttempt(Uri const &uri);
+  void ReportFailedConnectAttempt(Uri const &uri);
+  void ReportLeaving(Uri const &uri);
+  /// @}
+
   /// Low-level
   /// @{
   Handle LookupHandle(Address const &address) const

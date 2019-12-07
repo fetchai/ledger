@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "kademlia/peer_tracker.hpp"
 #include "core/time/to_seconds.hpp"
+#include "kademlia/peer_tracker.hpp"
 
 #include <chrono>
 #include <memory>
@@ -90,6 +90,21 @@ void PeerTracker::AddDesiredPeer(PeerTracker::Uri const &uri, PeerTracker::Durat
 void PeerTracker::RemoveDesiredPeer(Address const &address)
 {
   peer_table_.RemoveDesiredPeer(address);
+}
+
+void PeerTracker::ReportSuccessfulConnectAttempt(Uri const &uri)
+{
+  peer_table_.ReportSuccessfulConnectAttempt(uri);
+}
+
+void PeerTracker::ReportFailedConnectAttempt(Uri const &uri)
+{
+  peer_table_.ReportFailedConnectAttempt(uri);
+}
+
+void PeerTracker::ReportLeaving(Uri const &uri)
+{
+  peer_table_.ReportLeaving(uri);
 }
 
 void PeerTracker::UpdateExternalUris(NetworkUris const &uris)

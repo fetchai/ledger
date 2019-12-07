@@ -27,8 +27,6 @@ option(FETCH_FIXEDPOINT_DEBUG_HEX       "Print Hex value of FixedPoint numbers" 
 option(FETCH_FORCE_COLORED_OUTPUT       "Always produce ANSI-colored output."   ON)
 # cmake-format: on
 
-
-
 # custom string options
 set(FETCH_DEBUG_SANITIZER "" CACHE STRING "The clang based sanitizer to be enabled")
 set(FETCH_COMPILE_LOGGING_LEVEL "info" CACHE STRING "The precompiled logging level for the project")

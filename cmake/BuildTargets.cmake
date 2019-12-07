@@ -85,12 +85,11 @@ macro (setup_compiler)
   # ensuring that Ninja produces color output
   if (FETCH_FORCE_COLORED_OUTPUT)
     if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-      add_compile_options (-fdiagnostics-color=always)
-    elseif(_is_clang_compiler)
-      add_compile_options (-fcolor-diagnostics)
-    endif()
+      add_compile_options(-fdiagnostics-color=always)
+    elseif (_is_clang_compiler)
+      add_compile_options(-fcolor-diagnostics)
+    endif ()
   endif (FETCH_FORCE_COLORED_OUTPUT)
-
 
   if (FETCH_WARNINGS_AS_ERRORS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
