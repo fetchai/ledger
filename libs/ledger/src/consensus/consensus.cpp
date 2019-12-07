@@ -235,6 +235,8 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Identity con
       qualified_cabinet_weighted.begin(),
       std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity)));
 
+  FETCH_LOG_INFO(LOGGING_NAME, "dist is: ", dist, " and size is: ", qualified_cabinet_weighted.size());
+
   // Top rank, miner 0 should get the highest weight of qual size
   return static_cast<uint64_t>(qualified_cabinet_weighted.size() - dist);
 }
