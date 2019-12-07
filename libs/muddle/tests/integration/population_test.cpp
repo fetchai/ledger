@@ -59,7 +59,7 @@ TEST(RoutingTests, PopulationTest)
   {
 
     // Waiting up to 40 seconds for the connections to come around
-    while ((n->muddle->GetNumDirectlyConnectedPeers() != config.max_kademlia_connections) &&
+    while ((n->muddle->GetNumDirectlyConnectedPeers() < config.max_kademlia_connections) &&
            (q < 100))
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(400));
@@ -78,4 +78,5 @@ TEST(RoutingTests, PopulationTest)
   EXPECT_EQ(all_addresses1.size(), N);
   EXPECT_EQ(all_addresses1, all_addresses2);
   network->Stop();
+  network->Shutdown();
 }

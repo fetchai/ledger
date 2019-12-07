@@ -287,6 +287,12 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
 {
   FETCH_LOCK(mutex_);
 
+  // We never register our own address
+  if (address == own_address_)
+  {
+    return;
+  }
+
   auto other      = KademliaAddress::Create(address);
   auto dist       = GetKademliaDistance(own_kad_address_, other);
   auto log_id     = Bucket::IdByLogarithm(dist);
@@ -370,6 +376,11 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
 void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporter)
 {
   FETCH_LOCK(mutex_);
+
+  if (info.address == own_address_)
+  {
+    return;
+  }
 
   auto other      = KademliaAddress::Create(info.address);
   auto dist       = GetKademliaDistance(own_kad_address_, other);
@@ -498,7 +509,7 @@ void KademliaTable::Load()
   }
   catch (std::exception const &e)
   {
-    FETCH_LOG_ERROR("KademliaTable", "Failed loading the peer table.");
+    FETCH_LOG_ERROR("KademliaTable", "Failed loading the peer table: ", e.what());
   }
 }
 

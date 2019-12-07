@@ -87,4 +87,5 @@ TEST(RoutingTests, MessagingWhileReorging)
   EXPECT_EQ(msgcounter.counter, N - 1);
 
   network->Stop();
+  network->Shutdown();
 }

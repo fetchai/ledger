@@ -178,8 +178,21 @@ public:
   {
     auto map = map_constructor(5);
 
-    map.Append(KNOWN_PEERS, item.known_peers_);
+    // Convering the known peers into a vector and only store
+    // those that has a valid URI.
+    std::vector<muddle::PeerInfo> peers;
+    for (auto &p : item.known_peers_)
+    {
+      if (p.second)
+      {
+        if (p.second->uri.IsValid())
+        {
+          peers.push_back(*p.second);
+        }
+      }
+    }
 
+    map.Append(KNOWN_PEERS, peers);
     map.Append(CONNECTION_EXPIRY, item.connection_expiry_);
     map.Append(DESIRED_EXPIRY, item.desired_uri_expiry_);
     map.Append(DESIRED_PEERS, item.desired_peers_);
@@ -189,7 +202,7 @@ public:
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &item)
   {
-    Type::PeerMap peers;
+    std::vector<muddle::PeerInfo> peers;
     // We reconstruct the table from the peer list.
     // This invalidates all information about the liveness
     // of the peer which would be needed any way on a fresh restart
@@ -198,11 +211,7 @@ public:
     map.ExpectKeyGetValue(KNOWN_PEERS, peers);
     for (auto &p : peers)
     {
-      // Note that p in theory can be null.
-      if (p.second != nullptr)
-      {
-        item.ReportExistence(*p.second, p.second->last_reporter);
-      }
+      item.ReportExistence(p, p.last_reporter);
     }
 
     map.ExpectKeyGetValue(CONNECTION_EXPIRY, item.connection_expiry_);

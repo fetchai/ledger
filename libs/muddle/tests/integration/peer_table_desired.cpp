@@ -26,7 +26,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(RoutingTests, PeerTestReboot)
+TEST(RoutingTests, DesiredAfterReboot)
 {
   auto        config = fetch::muddle::TrackerConfiguration::AllOn();
   std::size_t N      = 10;
@@ -52,24 +52,7 @@ TEST(RoutingTests, PeerTestReboot)
 
     LinearConnectivity(network, std::chrono::seconds(5));
 
-    // Waiting for the network to come up
-    uint64_t q = 0;
-    for (auto &n : network->nodes)
-    {
-      // Waiting up to 120 seconds for the connections to come around
-      while ((n->muddle->GetNumDirectlyConnectedPeers() < config.max_kademlia_connections) &&
-             (q < 300))
-      {
-        std::this_thread::sleep_for(std::chrono::milliseconds(400));
-        ++q;
-      }
-
-      EXPECT_GE(n->muddle->GetNumDirectlyConnectedPeers(), config.max_kademlia_connections);
-    }
-    std::cout << "Total setup: " << static_cast<double>(q * 400) / 1000. << " seconds" << std::endl;
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(1400));
-
+    std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
     network->Stop();
   }
 
