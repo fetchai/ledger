@@ -214,26 +214,23 @@ bool Consensus::VerifyNotarisation(Block const &block) const
   return true;
 }
 
-uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address)
+uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Identity const &identity)
 {
   auto beginning_of_aeon = GetBeginningOfAeon(previous, chain_);
-  auto cabinet           = beginning_of_aeon.block_entropy.qualified;
 
-  std::size_t weight{cabinet.size()};
+  auto                  qualified_cabinet_weighted =
+      QualWeightedByEntropy(beginning_of_aeon.block_entropy.qualified, previous.block_entropy.EntropyAsU64());
 
-  // TODO(EJF): Depending on the cabinet sizes this would need to be improved
-  for (auto const &member : cabinet)
+  if(qualified_cabinet_weighted.find(identity) == qualified_cabinet_weighted.end())
   {
-    if (address == chain::Address::FromMuddleAddress(member))
-    {
-      break;
-    }
-
-    weight = SafeDecrement(weight, 1);
+    // Note: weight being non zero indicates not in cabinet
+    return 0;
   }
 
-  // Note: weight must always be non zero (indicates failure/not in cabinet)
-  return weight;
+  // Top rank, miner 0 should get the highest weight of qual size
+  return qualified_cabinet_weighted.size() - std::distance(
+      qualified_cabinet_weighted.begin(),
+      std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity));
 }
 
 Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet const &cabinet,
@@ -534,7 +531,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->miner         = mining_address_;
   ret->miner_id      = mining_identity_;
   ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-  ret->weight    = GetBlockGenerationWeight(*ret, mining_address_);
+  ret->weight    = GetBlockGenerationWeight(*ret, mining_identity_);
 
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
