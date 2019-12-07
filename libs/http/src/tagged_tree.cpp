@@ -46,13 +46,13 @@ HtmlTags::Content OpeningBracket(HtmlTags::Tag const &tag, HtmlTags::Params cons
 
 }  // namespace
 
-HtmlTags::Content HtmlTags::operator()(Tag tag, Params const &params) const
+HtmlTags::Content HtmlTags::operator()(Tag const &tag, Params const &params) const
 {
   assert(!tag.empty());
   return OpeningBracket(tag, params) + "/>";
 }
 
-HtmlTags::Content HtmlTags::operator()(Tag tag, Params const &params, Content content) const
+HtmlTags::Content HtmlTags::operator()(Tag const &tag, Params const &params, Content content) const
 {
   // Elements can have empty tags in which case they are simply rendered in top-level space.
   // This allows to have content interleaved with child tags.

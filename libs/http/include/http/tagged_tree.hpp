@@ -36,8 +36,8 @@ struct HtmlTags
   using Params  = std::vector<std::pair<Tag, Content>>;
 
   HtmlTags() = default;
-  Content operator()(Tag tag, Params const &params) const;
-  Content operator()(Tag tag, Params const &params, Content content) const;
+  Content operator()(Tag const &tag, Params const &params) const;
+  Content operator()(Tag const &tag, Params const &params, Content content) const;
 };
 
 struct TopLevelContentTag
@@ -101,7 +101,7 @@ public:
 
   ~TaggedTree() = default;
 
-  TaggedTree &operator=(TaggedTree &&) = default;
+  TaggedTree &operator=(TaggedTree &&) noexcept = default;
   TaggedTree &operator=(TaggedTree const &) = default;
 
   TaggingPolicy GetTaggingPolicy() const
