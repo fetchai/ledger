@@ -314,8 +314,7 @@ int main(int argc, char **argv)
   }
 
   auto executable = std::make_unique<Executable>();
-  auto module =
-      VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS | VMFactory::MOD_EXPERIMENTAL_ML);
+  auto module     = VMFactory::GetModule(VMFactory::USE_ALL);
 
   // additional module bindings
   module->CreateClassType<System>("System")
