@@ -394,6 +394,415 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   return true;
 }
 
+void Analyser::EnforceLedgerRestrictions(BlockNodePtr const &block_node)
+{
+  LedgerRestrictionMetadata metadata;
+
+  ValidateBlock(block_node, metadata);
+
+  CheckInitFunctionUnique(metadata);
+  if (CheckSynergeticFunctionsPresentAndUnique(metadata))
+  {
+    CheckSynergeticContract(metadata);
+  }
+}
+
+void Analyser::ValidateBlock(BlockNodePtr const &block_node, LedgerRestrictionMetadata &metadata)
+{
+  for (NodePtr const &child : block_node->block_children)
+  {
+    switch (child->node_kind)
+    {
+    case NodeKind::File:
+    {
+      BlockNodePtr file_node = ConvertToBlockNodePtr(child);
+      filename_              = file_node->text;
+      ValidateBlock(file_node, metadata);
+      break;
+    }
+    case NodeKind::ContractDefinition:
+    case NodeKind::StructDefinition:
+    {
+      ExpressionNodePtr name_node = ConvertToExpressionNodePtr(child->children[0]);
+      TypePtr           type      = name_node->type;
+      if (type)
+      {
+        ValidateBlock(ConvertToBlockNodePtr(child), metadata);
+      }
+      break;
+    }
+    case NodeKind::ContractFunction:
+    {
+      ValidateFunctionAnnotations(child);
+      ValidateFunctionPrototype(child, metadata);
+      break;
+    }
+    case NodeKind::FreeFunctionDefinition:
+    case NodeKind::MemberFunctionDefinition:
+    {
+      ValidateFunctionAnnotations(ConvertToBlockNodePtr(child));
+      ValidateFunctionPrototype(ConvertToBlockNodePtr(child), metadata);
+      break;
+    }
+    default:
+    {
+      break;
+    }
+    }  // switch
+  }
+}
+
+void Analyser::ValidateFunctionAnnotations(NodePtr const &function_node)
+{
+  auto const &annotations_node = function_node->children[0];
+  if (annotations_node == nullptr)
+  {
+    return;
+  }
+  assert(annotations_node->node_kind == NodeKind::Annotations);
+
+  if (annotations_node->children.size() != 1u)
+  {
+    AddError(annotations_node->line, "Functions are only allowed to bear one annotation");
+  }
+
+  for (auto const &annotation : annotations_node->children)
+  {
+    auto const &text = annotation->text;
+    if (text != INIT_ANNOTATION && text != ACTION_ANNOTATION && text != QUERY_ANNOTATION &&
+        text != PROBLEM_ANNOTATION && text != OBJECTIVE_ANNOTATION && text != WORK_ANNOTATION &&
+        text != CLEAR_ANNOTATION)
+    {
+      AddError(annotation->line, "Invalid annotation");
+    }
+  }
+}
+
+void Analyser::ValidateFunctionPrototype(NodePtr const &            function_node,
+                                         LedgerRestrictionMetadata &metadata)
+{
+  auto const &function_name_node = ConvertToExpressionNodePtr(function_node->children[1]);
+  auto const &annotations        = function_node->children[0];
+
+  bool is_action = false;
+  bool is_init   = false;
+  bool is_query  = false;
+
+  assert(!annotations || annotations->node_kind == NodeKind::Annotations);
+
+  switch (function_node->node_kind)
+  {
+  case NodeKind::ContractFunction:
+  {
+    if (HasAnnotation(annotations, ACTION_ANNOTATION))
+    {
+      is_action = true;
+    }
+    else
+    {
+      AddError(function_name_node->line, "Contract functions must carry the @action annotation");
+    }
+  }
+  break;
+  case NodeKind::FreeFunctionDefinition:
+  {
+    if (HasAnnotation(annotations, ACTION_ANNOTATION))
+    {
+      is_action = true;
+    }
+    if (HasAnnotation(annotations, INIT_ANNOTATION))
+    {
+      is_init = true;
+      metadata.init_functions.emplace_back(function_node, filename_);
+    }
+    if (HasAnnotation(annotations, QUERY_ANNOTATION))
+    {
+      is_query = true;
+    }
+    if (HasAnnotation(annotations, CLEAR_ANNOTATION))
+    {
+      metadata.clear_functions.emplace_back(function_node, filename_);
+    }
+    if (HasAnnotation(annotations, OBJECTIVE_ANNOTATION))
+    {
+      metadata.objective_functions.emplace_back(function_node, filename_);
+    }
+    if (HasAnnotation(annotations, PROBLEM_ANNOTATION))
+    {
+      metadata.problem_functions.emplace_back(function_node, filename_);
+    }
+    if (HasAnnotation(annotations, WORK_ANNOTATION))
+    {
+      metadata.work_functions.emplace_back(function_node, filename_);
+    }
+  }
+  break;
+  case NodeKind::MemberFunctionDefinition:
+  {
+    if (annotations)
+    {
+      AddError(annotations->line, "Annotations on member functions are not permitted");
+    }
+  }
+  break;
+  default:
+    assert(false);
+    break;
+  }
+
+  auto const &return_type = function_name_node->function->return_type != nullptr
+                                ? function_name_node->function->return_type
+                                : void_type_;
+
+  if (is_action)
+  {
+    if (return_type != int64_type_ && return_type != void_type_)
+    {
+      AddError(function_name_node->line, "@action functions must either be void or return Int64");
+    }
+  }
+
+  if (is_init)
+  {
+    if (return_type != int64_type_ && return_type != void_type_)
+    {
+      AddError(function_name_node->line, "@init functions must either be void or return Int64");
+    }
+
+    auto const param_types = function_name_node->function->parameter_types;
+    if (!param_types.empty() && !(param_types.size() == 1 && param_types.back() == address_type_))
+    {
+      AddError(function_name_node->line,
+               "@init functions must accept eithoer no parameters or exactly one parameter of type "
+               "Address");
+    }
+  }
+
+  if (is_query)
+  {
+    if (return_type == void_type_)
+    {
+      AddError(function_name_node->line, "@query functions must not be void");
+    }
+  }
+}
+
+void Analyser::CheckInitFunctionUnique(LedgerRestrictionMetadata const &metadata)
+{
+  if (metadata.init_functions.size() > 1)
+  {
+    for (auto const &x : metadata.init_functions)
+    {
+      AddError(x.filename, x.node->line,
+               "Multiple @init functions found; only one @init function is allowed per contract");
+    }
+  }
+}
+
+bool Analyser::CheckSynergeticFunctionsPresentAndUnique(LedgerRestrictionMetadata const &metadata)
+{
+  if (metadata.clear_functions.empty() && metadata.objective_functions.empty() &&
+      metadata.problem_functions.empty() && metadata.work_functions.empty())
+  {
+    return false;
+  }
+
+  if (metadata.clear_functions.size() == 1 && metadata.objective_functions.size() == 1 &&
+      metadata.problem_functions.size() == 1 && metadata.work_functions.size() == 1)
+  {
+    return true;
+  }
+
+  bool const clear_missing     = metadata.clear_functions.empty();
+  bool const objective_missing = metadata.objective_functions.empty();
+  bool const problem_missing   = metadata.problem_functions.empty();
+  bool const work_missing      = metadata.work_functions.empty();
+
+  bool const any_missing = clear_missing || objective_missing || problem_missing || work_missing;
+
+  std::ostringstream ss;
+  if (clear_missing)
+  {
+    ss << " " << CLEAR_ANNOTATION;
+  }
+  if (objective_missing)
+  {
+    ss << " " << OBJECTIVE_ANNOTATION;
+  }
+  if (problem_missing)
+  {
+    ss << " " << PROBLEM_ANNOTATION;
+  }
+  if (work_missing)
+  {
+    ss << " " << WORK_ANNOTATION;
+  }
+  std::string const missing_synergetic_names = ss.str();
+
+  auto report_missing_and_multiple_synergetics = [this, missing_synergetic_names, any_missing](
+                                                     auto const &annotation_name,
+                                                     auto const &filename_nodes) {
+    for (auto const &x : filename_nodes)
+    {
+      if (filename_nodes.size() > 1u)
+      {
+        std::ostringstream ss;
+        ss << "Multiple " << annotation_name << " functions found; only one " << annotation_name
+           << " function is allowed per contract";
+        AddError(x.filename, x.node->line, ss.str());
+      }
+
+      if (any_missing)
+      {
+        std::ostringstream ss;
+        ss << annotation_name
+           << " function found, but the following synergetic functions are missing:"
+           << missing_synergetic_names;
+        AddError(x.filename, x.node->line, ss.str());
+      }
+    }
+  };
+
+  report_missing_and_multiple_synergetics(CLEAR_ANNOTATION, metadata.clear_functions);
+  report_missing_and_multiple_synergetics(OBJECTIVE_ANNOTATION, metadata.objective_functions);
+  report_missing_and_multiple_synergetics(PROBLEM_ANNOTATION, metadata.problem_functions);
+  report_missing_and_multiple_synergetics(WORK_ANNOTATION, metadata.work_functions);
+
+  return false;
+}
+
+void Analyser::CheckSynergeticContract(LedgerRestrictionMetadata const &metadata)
+{
+  assert(metadata.clear_functions.size() == 1);
+  assert(metadata.objective_functions.size() == 1);
+  assert(metadata.problem_functions.size() == 1);
+  assert(metadata.work_functions.size() == 1);
+
+  auto const &clear_file     = metadata.clear_functions.back().filename;
+  auto const &objective_file = metadata.objective_functions.back().filename;
+  auto const &problem_file   = metadata.problem_functions.back().filename;
+  auto const &work_file      = metadata.work_functions.back().filename;
+
+  auto const &clear_node     = metadata.clear_functions.back().node;
+  auto const &objective_node = metadata.objective_functions.back().node;
+  auto const &problem_node   = metadata.problem_functions.back().node;
+  auto const &work_node      = metadata.work_functions.back().node;
+
+  auto const &clear     = *ConvertToExpressionNodePtr(clear_node->children[1])->function;
+  auto const &objective = *ConvertToExpressionNodePtr(objective_node->children[1])->function;
+  auto const &problem   = *ConvertToExpressionNodePtr(problem_node->children[1])->function;
+  auto const &work      = *ConvertToExpressionNodePtr(work_node->children[1])->function;
+
+  // @problem
+  TypePtr problem_param_type;
+  if (!problem.parameter_types.empty())
+  {
+    problem_param_type = problem.parameter_types[0];
+  }
+
+  bool const problem_params_correct = problem.parameter_types.size() == 1 && problem_param_type &&
+                                      problem_param_type->name == "Array<StructuredData>";
+  if (!problem_params_correct)
+  {
+    AddError(
+        problem_file, problem_node->line,
+        "The @problem function should accept a single parameter of type Array<StructuredData>");
+  }
+
+  if (problem.return_type == nullptr || problem.return_type == void_type_)
+  {
+    AddError(problem_file, problem_node->line, "The @problem function must not be void");
+    return;
+  }
+
+  // @work
+  TypePtr work_first_param_type;
+  TypePtr work_second_param_type;
+  if (!work.parameter_types.empty())
+  {
+    work_first_param_type = work.parameter_types[0];
+  }
+  if (work.parameter_types.size() > 1)
+  {
+    work_second_param_type = work.parameter_types[1];
+  }
+
+  bool const work_params_correct = work.parameter_types.size() == 2 && work_first_param_type &&
+                                   work_first_param_type == problem.return_type &&
+                                   work_second_param_type &&
+                                   work_second_param_type->name == "UInt256";
+  if (!work_params_correct)
+  {
+    AddError(work_file, work_node->line,
+             "The @work function should accept two parameters: the first should have the same "
+             "type as that returned by the @problem function; the second should be UInt256");
+  }
+
+  if (work.return_type == nullptr || work.return_type == void_type_)
+  {
+    AddError(work_file, work_node->line, "The @work function must not be void");
+    return;
+  }
+
+  // @objective
+  if (objective.return_type == nullptr || objective.return_type != int64_type_)
+  {
+    AddError(objective_file, objective_node->line, "The @objective function must return Int64");
+  }
+
+  TypePtr objective_first_param_type;
+  TypePtr objective_second_param_type;
+  if (!objective.parameter_types.empty())
+  {
+    objective_first_param_type = objective.parameter_types[0];
+  }
+  if (objective.parameter_types.size() > 1)
+  {
+    objective_second_param_type = objective.parameter_types[1];
+  }
+
+  bool const objective_params_correct =
+      objective.parameter_types.size() == 2 && objective_first_param_type &&
+      objective_first_param_type == problem.return_type && objective_second_param_type &&
+      objective_second_param_type == work.return_type;
+  if (!objective_params_correct)
+  {
+    AddError(objective_file, objective_node->line,
+             "The @objective function should accept two parameters: the first should have the same "
+             "type as that returned by the @problem function; the second should have the same type "
+             "as that returned by the @work function");
+  }
+
+  // @clear
+  if (clear.return_type != nullptr && clear.return_type != void_type_)
+  {
+    AddError(clear_file, clear_node->line, "The @clear function must be void");
+  }
+
+  TypePtr clear_first_param_type;
+  TypePtr clear_second_param_type;
+  if (!clear.parameter_types.empty())
+  {
+    clear_first_param_type = clear.parameter_types[0];
+  }
+  if (clear.parameter_types.size() > 1)
+  {
+    clear_second_param_type = clear.parameter_types[1];
+  }
+
+  bool const clear_params_correct = clear.parameter_types.size() == 2 && clear_first_param_type &&
+                                    clear_first_param_type == problem.return_type &&
+                                    clear_second_param_type &&
+                                    clear_second_param_type == work.return_type;
+  if (!clear_params_correct)
+  {
+    AddError(clear_file, clear_node->line,
+             "The @clear function should accept two parameters: the first should have the same "
+             "type as that returned by the @problem function; the second should have the same type "
+             "as that returned by the @work function");
+  }
+}
+
 void Analyser::AddError(uint16_t line, std::string const &message)
 {
   AddError(filename_, line, message);
@@ -604,415 +1013,6 @@ void Analyser::PreAnnotateBlock(BlockNodePtr const &block_node)
     }  // switch
   }
   blocks_.pop_back();
-}
-
-void Analyser::ValidateBlock(BlockNodePtr const &block_node, LedgerRestrictionMetadata &metadata)
-{
-  for (NodePtr const &child : block_node->block_children)
-  {
-    switch (child->node_kind)
-    {
-    case NodeKind::File:
-    {
-      BlockNodePtr file_node = ConvertToBlockNodePtr(child);
-      filename_              = file_node->text;
-      ValidateBlock(file_node, metadata);
-      break;
-    }
-    case NodeKind::ContractDefinition:
-    case NodeKind::StructDefinition:
-    {
-      ExpressionNodePtr name_node = ConvertToExpressionNodePtr(child->children[0]);
-      TypePtr           type      = name_node->type;
-      if (type)
-      {
-        ValidateBlock(ConvertToBlockNodePtr(child), metadata);
-      }
-      break;
-    }
-    case NodeKind::ContractFunction:
-    {
-      ValidateFunctionAnnotations(child);
-      ValidateFunctionPrototype(child, metadata);
-      break;
-    }
-    case NodeKind::FreeFunctionDefinition:
-    case NodeKind::MemberFunctionDefinition:
-    {
-      ValidateFunctionAnnotations(ConvertToBlockNodePtr(child));
-      ValidateFunctionPrototype(ConvertToBlockNodePtr(child), metadata);
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }  // switch
-  }
-}
-
-void Analyser::ValidateFunctionAnnotations(NodePtr const &function_node)
-{
-  auto const &annotations_node = function_node->children[0];
-  if (annotations_node == nullptr)
-  {
-    return;
-  }
-  assert(annotations_node->node_kind == NodeKind::Annotations);
-
-  if (annotations_node->children.size() != 1u)
-  {
-    AddError(annotations_node->line, "Functions are only allowed to bear one annotation");
-  }
-
-  for (auto const &annotation : annotations_node->children)
-  {
-    auto const &text = annotation->text;
-    if (text != INIT_ANNOTATION && text != ACTION_ANNOTATION && text != QUERY_ANNOTATION &&
-        text != PROBLEM_ANNOTATION && text != OBJECTIVE_ANNOTATION && text != WORK_ANNOTATION &&
-        text != CLEAR_ANNOTATION)
-    {
-      AddError(annotation->line, "Invalid annotation");
-    }
-  }
-}
-
-void Analyser::ValidateFunctionPrototype(NodePtr const &            function_node,
-                                         LedgerRestrictionMetadata &metadata)
-{
-  auto const &function_name_node = ConvertToExpressionNodePtr(function_node->children[1]);
-  auto const &annotations        = function_node->children[0];
-
-  bool is_action = false;
-  bool is_init   = false;
-  bool is_query  = false;
-
-  assert(!annotations || annotations->node_kind == NodeKind::Annotations);
-
-  switch (function_node->node_kind)
-  {
-  case NodeKind::ContractFunction:
-  {
-    if (HasAnnotation(annotations, ACTION_ANNOTATION))
-    {
-      is_action = true;
-    }
-    else
-    {
-      AddError(function_name_node->line, "Contract functions must carry the @action annotation");
-    }
-  }
-  break;
-  case NodeKind::FreeFunctionDefinition:
-  {
-    if (HasAnnotation(annotations, ACTION_ANNOTATION))
-    {
-      is_action = true;
-    }
-    if (HasAnnotation(annotations, INIT_ANNOTATION))
-    {
-      is_init = true;
-      metadata.init_functions.emplace_back(function_node, filename_);
-    }
-    if (HasAnnotation(annotations, QUERY_ANNOTATION))
-    {
-      is_query = true;
-    }
-    if (HasAnnotation(annotations, CLEAR_ANNOTATION))
-    {
-      metadata.clear_functions.emplace_back(function_node, filename_);
-    }
-    if (HasAnnotation(annotations, OBJECTIVE_ANNOTATION))
-    {
-      metadata.objective_functions.emplace_back(function_node, filename_);
-    }
-    if (HasAnnotation(annotations, PROBLEM_ANNOTATION))
-    {
-      metadata.problem_functions.emplace_back(function_node, filename_);
-    }
-    if (HasAnnotation(annotations, WORK_ANNOTATION))
-    {
-      metadata.work_functions.emplace_back(function_node, filename_);
-    }
-  }
-  break;
-  case NodeKind::MemberFunctionDefinition:
-  {
-    if (annotations)
-    {
-      AddError(annotations->line, "Annotations on member functions are not permitted");
-    }
-  }
-  break;
-  default:
-    assert(false);
-    break;
-  }
-
-  auto const &return_type = function_name_node->function->return_type != nullptr
-                                ? function_name_node->function->return_type
-                                : void_type_;
-
-  if (is_action)
-  {
-    if (return_type != int64_type_ && return_type != void_type_)
-    {
-      AddError(function_name_node->line, "@action functions must either be void or return Int64");
-    }
-  }
-
-  if (is_init)
-  {
-    if (return_type != int64_type_ && return_type != void_type_)
-    {
-      AddError(function_name_node->line, "@init functions must either be void or return Int64");
-    }
-
-    auto const param_types = function_name_node->function->parameter_types;
-    if (!param_types.empty() && !(param_types.size() == 1 && param_types.back() == address_type_))
-    {
-      AddError(function_name_node->line,
-               "@init functions must accept eithoer no parameters or exactly one parameter of type "
-               "Address");
-    }
-  }
-
-  if (is_query)
-  {
-    if (return_type == void_type_)
-    {
-      AddError(function_name_node->line, "@query functions must not be void");
-    }
-  }
-}
-
-void Analyser::EnforceLedgerRestrictions(BlockNodePtr const &block_node)
-{
-  LedgerRestrictionMetadata metadata;
-
-  ValidateBlock(block_node, metadata);
-
-  CheckInitFunctionUnique(metadata);
-  if (CheckSynergeticFunctionsPresentAndUnique(metadata))
-  {
-    CheckSynergeticContract(metadata);
-  }
-}
-
-bool Analyser::CheckSynergeticFunctionsPresentAndUnique(LedgerRestrictionMetadata const &metadata)
-{
-  if (metadata.clear_functions.empty() && metadata.objective_functions.empty() &&
-      metadata.problem_functions.empty() && metadata.work_functions.empty())
-  {
-    return false;
-  }
-
-  if (metadata.clear_functions.size() == 1 && metadata.objective_functions.size() == 1 &&
-      metadata.problem_functions.size() == 1 && metadata.work_functions.size() == 1)
-  {
-    return true;
-  }
-
-  bool const clear_missing     = metadata.clear_functions.empty();
-  bool const objective_missing = metadata.objective_functions.empty();
-  bool const problem_missing   = metadata.problem_functions.empty();
-  bool const work_missing      = metadata.work_functions.empty();
-
-  bool const any_missing = clear_missing || objective_missing || problem_missing || work_missing;
-
-  std::ostringstream ss;
-  if (clear_missing)
-  {
-    ss << " " << CLEAR_ANNOTATION;
-  }
-  if (objective_missing)
-  {
-    ss << " " << OBJECTIVE_ANNOTATION;
-  }
-  if (problem_missing)
-  {
-    ss << " " << PROBLEM_ANNOTATION;
-  }
-  if (work_missing)
-  {
-    ss << " " << WORK_ANNOTATION;
-  }
-  std::string const missing_synergetic_names = ss.str();
-
-  auto report_missing_and_multiple_synergetics = [this, missing_synergetic_names, any_missing](
-                                                     auto const &annotation_name,
-                                                     auto const &filename_nodes) {
-    for (auto const &x : filename_nodes)
-    {
-      if (filename_nodes.size() > 1u)
-      {
-        std::ostringstream ss;
-        ss << "Multiple " << annotation_name << " functions found; only one " << annotation_name
-           << " function is allowed per contract";
-        AddError(x.filename, x.node->line, ss.str());
-      }
-
-      if (any_missing)
-      {
-        std::ostringstream ss;
-        ss << annotation_name
-           << " function found, but the following synergetic functions are missing:"
-           << missing_synergetic_names;
-        AddError(x.filename, x.node->line, ss.str());
-      }
-    }
-  };
-
-  report_missing_and_multiple_synergetics(CLEAR_ANNOTATION, metadata.clear_functions);
-  report_missing_and_multiple_synergetics(OBJECTIVE_ANNOTATION, metadata.objective_functions);
-  report_missing_and_multiple_synergetics(PROBLEM_ANNOTATION, metadata.problem_functions);
-  report_missing_and_multiple_synergetics(WORK_ANNOTATION, metadata.work_functions);
-
-  return false;
-}
-
-void Analyser::CheckSynergeticContract(LedgerRestrictionMetadata const &metadata)
-{
-  assert(metadata.clear_functions.size() == 1);
-  assert(metadata.objective_functions.size() == 1);
-  assert(metadata.problem_functions.size() == 1);
-  assert(metadata.work_functions.size() == 1);
-
-  auto const &clear_file     = metadata.clear_functions.back().filename;
-  auto const &objective_file = metadata.objective_functions.back().filename;
-  auto const &problem_file   = metadata.problem_functions.back().filename;
-  auto const &work_file      = metadata.work_functions.back().filename;
-
-  auto const &clear_node     = metadata.clear_functions.back().node;
-  auto const &objective_node = metadata.objective_functions.back().node;
-  auto const &problem_node   = metadata.problem_functions.back().node;
-  auto const &work_node      = metadata.work_functions.back().node;
-
-  auto const &clear     = *ConvertToExpressionNodePtr(clear_node->children[1])->function;
-  auto const &objective = *ConvertToExpressionNodePtr(objective_node->children[1])->function;
-  auto const &problem   = *ConvertToExpressionNodePtr(problem_node->children[1])->function;
-  auto const &work      = *ConvertToExpressionNodePtr(work_node->children[1])->function;
-
-  // @problem
-  TypePtr problem_param_type;
-  if (!problem.parameter_types.empty())
-  {
-    problem_param_type = problem.parameter_types[0];
-  }
-
-  bool const problem_params_correct = problem.parameter_types.size() == 1 && problem_param_type &&
-                                      problem_param_type->name == "Array<StructuredData>";
-  if (!problem_params_correct)
-  {
-    AddError(
-        problem_file, problem_node->line,
-        "The @problem function should accept a single parameter of type Array<StructuredData>");
-  }
-
-  if (problem.return_type == nullptr || problem.return_type == void_type_)
-  {
-    AddError(problem_file, problem_node->line, "The @problem function must not be void");
-    return;
-  }
-
-  // @work
-  TypePtr work_first_param_type;
-  TypePtr work_second_param_type;
-  if (!work.parameter_types.empty())
-  {
-    work_first_param_type = work.parameter_types[0];
-  }
-  if (work.parameter_types.size() > 1)
-  {
-    work_second_param_type = work.parameter_types[1];
-  }
-
-  bool const work_params_correct = work.parameter_types.size() == 2 && work_first_param_type &&
-                                   work_first_param_type == problem.return_type &&
-                                   work_second_param_type &&
-                                   work_second_param_type->name == "UInt256";
-  if (!work_params_correct)
-  {
-    AddError(work_file, work_node->line,
-             "The @work function should accept two parameters: the first should have the same "
-             "type as that returned by the @problem function; the second should be UInt256");
-  }
-
-  if (work.return_type == nullptr || work.return_type == void_type_)
-  {
-    AddError(work_file, work_node->line, "The @work function must not be void");
-    return;
-  }
-
-  // @objective
-  if (objective.return_type == nullptr || objective.return_type != int64_type_)
-  {
-    AddError(objective_file, objective_node->line, "The @objective function must return Int64");
-  }
-
-  TypePtr objective_first_param_type;
-  TypePtr objective_second_param_type;
-  if (!objective.parameter_types.empty())
-  {
-    objective_first_param_type = objective.parameter_types[0];
-  }
-  if (objective.parameter_types.size() > 1)
-  {
-    objective_second_param_type = objective.parameter_types[1];
-  }
-
-  bool const objective_params_correct =
-      objective.parameter_types.size() == 2 && objective_first_param_type &&
-      objective_first_param_type == problem.return_type && objective_second_param_type &&
-      objective_second_param_type == work.return_type;
-  if (!objective_params_correct)
-  {
-    AddError(objective_file, objective_node->line,
-             "The @objective function should accept two parameters: the first should have the same "
-             "type as that returned by the @problem function; the second should have the same type "
-             "as that returned by the @work function");
-  }
-
-  // @clear
-  if (clear.return_type != nullptr && clear.return_type != void_type_)
-  {
-    AddError(clear_file, clear_node->line, "The @clear function must be void");
-  }
-
-  TypePtr clear_first_param_type;
-  TypePtr clear_second_param_type;
-  if (!clear.parameter_types.empty())
-  {
-    clear_first_param_type = clear.parameter_types[0];
-  }
-  if (clear.parameter_types.size() > 1)
-  {
-    clear_second_param_type = clear.parameter_types[1];
-  }
-
-  bool const clear_params_correct = clear.parameter_types.size() == 2 && clear_first_param_type &&
-                                    clear_first_param_type == problem.return_type &&
-                                    clear_second_param_type &&
-                                    clear_second_param_type == work.return_type;
-  if (!clear_params_correct)
-  {
-    AddError(clear_file, clear_node->line,
-             "The @clear function should accept two parameters: the first should have the same "
-             "type as that returned by the @problem function; the second should have the same type "
-             "as that returned by the @work function");
-  }
-}
-
-void Analyser::CheckInitFunctionUnique(LedgerRestrictionMetadata const &metadata)
-{
-  if (metadata.init_functions.size() > 1)
-  {
-    for (auto const &x : metadata.init_functions)
-    {
-      AddError(x.filename, x.node->line,
-               "Multiple @init functions found; only one @init function is allowed per contract");
-    }
-  }
 }
 
 void Analyser::PreAnnotatePersistentStatement(NodePtr const &persistent_statement_node)

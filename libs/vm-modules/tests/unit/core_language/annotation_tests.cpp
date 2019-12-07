@@ -29,8 +29,8 @@ using namespace testing;
 class EtchFunctionDefinitionAnnotationTests : public Test
 {
 public:
-  //  std::stringstream stdout;
-  VmTestToolkit toolkit{};
+  std::stringstream stdout;
+  VmTestToolkit     toolkit{&stdout};
 };
 
 TEST_F(EtchFunctionDefinitionAnnotationTests, unannotated_functions_are_permitted)
