@@ -35,7 +35,8 @@ TEST(RoutingTests, PopulationTest)
   // Waiting for initial settlement
   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
-  for (uint64_t i = 0; i < 20; ++i)
+  // Killing 5 connections and adding 5 new ones
+  for (uint64_t i = 0; i < 5; ++i)
   {
     // Adding new node
     network->AddNode(config);
@@ -46,12 +47,35 @@ TEST(RoutingTests, PopulationTest)
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
 
+  // Giving the system time to settle
+  std::this_thread::sleep_for(std::chrono::milliseconds(N * 1000));
+
   // We expect the total number of connections (in and out) that any one node has to be
   // be at least the maximum number of kademlia connections
+  std::unordered_set<fetch::muddle::Address> all_addresses1;
+  std::unordered_set<fetch::muddle::Address> all_addresses2;
+  uint64_t                                   q = 0;
   for (auto &n : network->nodes)
   {
+
+    // Waiting up to 40 seconds for the connections to come around
+    while ((n->muddle->GetNumDirectlyConnectedPeers() != config.max_kademlia_connections) &&
+           (q < 100))
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(400));
+      ++q;
+    }
+
+    for (auto const &adr : n->muddle->GetDirectlyConnectedPeers())
+    {
+      all_addresses1.emplace(adr);
+    }
+    all_addresses2.emplace(n->address);
+
     EXPECT_GE(n->muddle->GetNumDirectlyConnectedPeers(), config.max_kademlia_connections);
   }
 
+  EXPECT_EQ(all_addresses1.size(), N);
+  EXPECT_EQ(all_addresses1, all_addresses2);
   network->Stop();
 }

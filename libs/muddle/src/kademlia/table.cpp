@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "kademlia/table.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "crypto/sha1.hpp"
-#include "kademlia/table.hpp"
 #include "muddle/network_id.hpp"
 
 namespace fetch {
@@ -38,31 +38,6 @@ KademliaTable::KademliaTable(Address const &own_address, NetworkId const &networ
   , own_address_{own_address}
   , own_kad_address_{KademliaAddress::Create(own_address)}
 {}
-
-// TODO(tfr): This might not be what we want to do
-KademliaTable::Peers KademliaTable::ProposePermanentConnections() const
-{
-  FETCH_LOCK(mutex_);
-
-  uint64_t n = 0;
-  Peers    ret;
-  for (auto &p : by_logarithm_[n].peers)
-  {
-    ret.push_back(*p);
-  }
-
-  ++n;
-
-  while ((n < by_logarithm_.size()) && (ret.size() < kademlia_max_peers_per_bucket_))
-  {
-    for (auto const &p : by_logarithm_[n].peers)
-    {
-      ret.push_back(*p);
-    }
-  }
-
-  return ret;
-}
 
 KademliaTable::Peers KademliaTable::FindPeerInternal(KademliaAddress const &kam_address,
                                                      uint64_t log_id, bool scan_left,
@@ -302,8 +277,8 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
   // Peer is already known but not in any
   // log_bucket.
   PeerInfoPtr peerinfo;
-  auto        it = know_peers_.find(address);
-  if (it != know_peers_.end())
+  auto        it = known_peers_.find(address);
+  if (it != known_peers_.end())
   {
     peerinfo = it->second;
   }
@@ -317,7 +292,7 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
 
     // Ensures that peer information persists over time
     // even if the peer disappears from the log_bucket.
-    know_peers_[address]       = peerinfo;
+    known_peers_[address]      = peerinfo;
     known_uris_[peerinfo->uri] = peerinfo;
   }
 
@@ -362,11 +337,11 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
   assert(log_id <= KADEMLIA_MAX_ID_BITS);
 
   // Do nothing if we already know about the existence
-  auto it = know_peers_.find(info.address);
+  auto it = known_peers_.find(info.address);
 
   // Fetching the bucket and finding the peer if it is in the
   // bucket
-  if (it == know_peers_.end())
+  if (it == known_peers_.end())
   {
     auto &      log_bucket  = by_logarithm_[log_id];
     auto &      ham_bucket  = by_hamming_[hamming_id];
@@ -374,7 +349,7 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
     peerinfo->verified      = false;
     peerinfo->last_reporter = reporter;
 
-    know_peers_[info.address] = peerinfo;
+    known_peers_[info.address] = peerinfo;
 
     //
     if (log_bucket.peers.size() < kademlia_max_peers_per_bucket_)
@@ -408,8 +383,8 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
 
 KademliaTable::PeerInfoPtr KademliaTable::GetPeerDetails(Address const &address)
 {
-  auto it = know_peers_.find(address);
-  if (it == know_peers_.end())
+  auto it = known_peers_.find(address);
+  if (it == known_peers_.end())
   {
     return nullptr;
   }

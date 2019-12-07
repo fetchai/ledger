@@ -41,6 +41,8 @@ struct PeerInfo
 
   Timepoint first_seen{Clock::now()};
   Timepoint last_activity{};
+  Timepoint last_connection_attempt{};
+  uint64_t  connection_attempts{0};
 
   /// Serializable fields
   /// @{
@@ -53,8 +55,6 @@ struct PeerInfo
 
   Address  last_reporter{};
   uint64_t message_count{0};
-  uint64_t failures{0};
-  bool     unreachable{false};
 
   bool operator<(PeerInfo const &other) const
   {

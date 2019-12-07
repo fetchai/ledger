@@ -22,6 +22,7 @@
 #include "muddle/packet.hpp"
 
 #include <chrono>
+#include <deque>
 #include <memory>
 #include <thread>
 
@@ -140,12 +141,12 @@ struct Network
 
   void PopFrontNode()
   {
-    auto node = nodes.front();
-    nodes.pop_front();
+    auto &node = nodes.front();
     node->muddle->Stop();
+    nodes.pop_front();
   }
 
-  std::vector<std::unique_ptr<Node>> nodes;
+  std::deque<std::unique_ptr<Node>> nodes;
 
 private:
   explicit Network(uint64_t number_of_nodes, TrackerConfiguration config = {})
@@ -200,4 +201,15 @@ inline void AllToAllConnectivity(
           fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT + j)), expire);
     }
   }
+}
+
+inline fetch::muddle::Address FakeAddress(uint64_t i)
+{
+  fetch::muddle::Address ret;
+  fetch::crypto::SHA256  hasher;
+
+  hasher.Update(reinterpret_cast<uint8_t *>(&i), sizeof(uint64_t));
+  ret = hasher.Final();
+
+  return ret;
 }

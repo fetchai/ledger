@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/time/to_seconds.hpp"
 #include "kademlia/peer_tracker.hpp"
+#include "core/time/to_seconds.hpp"
 
 #include <chrono>
 #include <memory>
@@ -274,8 +274,8 @@ void PeerTracker::ConnectToPeers(AddressSet &                  connections_made,
         continue;
       }
 
-      FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to prioritised peer ", uri.ToString(),
-                     " with address ", p.address.ToBase64());
+      FETCH_LOG_DEBUG(logging_name_.c_str(), "Connecting to prioritised peer ", uri.ToString(),
+                      " with address ", p.address.ToBase64());
       connections_.AddPersistentPeer(uri);
     }
 

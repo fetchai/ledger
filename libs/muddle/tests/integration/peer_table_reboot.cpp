@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "kademlia/table.hpp"
 #include "muddle.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
+
 #include "network_helpers.hpp"
 #include "router.hpp"
 
@@ -32,15 +34,14 @@ TEST(RoutingTests, PeerTestReboot)
     // Clearing tables
     for (uint64_t idx = 0; idx < N; ++idx)
     {
-      fetch::muddle::PeerTable table(FakeAddress(10), fetch::muddle::NetworkId("TEST"));
-      table.SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
+      fetch::muddle::KademliaTable table(FakeAddress(10), fetch::muddle::NetworkId("TEST"));
+      table.SetCacheFile("peer_table" + std::to_string(idx) + ".cache", false);
       table.Dump();
     }
   }
 
   {
     // Creating network
-
     auto     network = Network::New(N, config);
     uint64_t idx     = 0;
     for (auto &n : network->nodes)
@@ -57,9 +58,8 @@ TEST(RoutingTests, PeerTestReboot)
 
   {
     // Restarting
-    std::size_t N       = 10;
-    auto        network = Network::New(N, config);
-    uint64_t    idx     = 0;
+    auto     network = Network::New(N, config);
+    uint64_t idx     = 0;
     for (auto &n : network->nodes)
     {
       n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");

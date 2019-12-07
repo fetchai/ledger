@@ -100,21 +100,16 @@ public:
   }
   /// @}
 
-  /// For connection maintenance
-  /// @{
-  Peers ProposePermanentConnections() const;
-  /// @}
-
   std::size_t size() const
   {
     FETCH_LOCK(mutex_);
-    return know_peers_.size();
+    return known_peers_.size();
   }
 
   Uri GetUri(Address const &address)
   {
-    auto it = know_peers_.find(address);
-    if (it == know_peers_.end())
+    auto it = known_peers_.find(address);
+    if (it == known_peers_.end())
     {
       return {};
     }
@@ -368,7 +363,7 @@ private:
   KademliaAddress    own_kad_address_;
   Buckets            by_logarithm_;
   Buckets            by_hamming_;
-  PeerMap            know_peers_;
+  PeerMap            known_peers_;
   UriToPeerMap       known_uris_;
 
   uint64_t first_non_empty_bucket_{KADEMLIA_MAX_ID_BITS};
@@ -420,7 +415,7 @@ public:
 
     map.Append(BY_LOGARITHM, item.by_logarithm_);
     map.Append(BY_HAMMING, item.by_hamming_);
-    map.Append(KNOWN_PEERS, item.know_peers_);
+    map.Append(KNOWN_PEERS, item.known_peers_);
     map.Append(KNOWN_URIS, item.known_uris_);
     map.Append(CONNECTION_EXPIRY, item.connection_expiry_);
     map.Append(DESIRED_EXPIRY, item.desired_uri_expiry_);
@@ -433,7 +428,7 @@ public:
   {
     map.ExpectKeyGetValue(BY_LOGARITHM, item.by_logarithm_);
     map.ExpectKeyGetValue(BY_HAMMING, item.by_hamming_);
-    map.ExpectKeyGetValue(KNOWN_PEERS, item.know_peers_);
+    map.ExpectKeyGetValue(KNOWN_PEERS, item.known_peers_);
     map.ExpectKeyGetValue(KNOWN_URIS, item.known_uris_);
     map.ExpectKeyGetValue(CONNECTION_EXPIRY, item.connection_expiry_);
     map.ExpectKeyGetValue(DESIRED_EXPIRY, item.desired_uri_expiry_);

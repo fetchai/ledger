@@ -24,7 +24,10 @@ option(FETCH_STATIC_LINK                "Enable static linking"                 
 option(FETCH_ENABLE_LTO                 "Enable link-time optimisation"         ON)
 option(FETCH_ENABLE_BACKTRACE           "Enable backtrace on errors"            ON)
 option(FETCH_FIXEDPOINT_DEBUG_HEX       "Print Hex value of FixedPoint numbers" OFF)
+option(FETCH_FORCE_COLORED_OUTPUT       "Always produce ANSI-colored output."   ON)
 # cmake-format: on
+
+
 
 # custom string options
 set(FETCH_DEBUG_SANITIZER "" CACHE STRING "The clang based sanitizer to be enabled")
