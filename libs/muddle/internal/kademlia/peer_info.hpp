@@ -39,11 +39,14 @@ struct PeerInfo
   using Address = Packet::Address;
   using Uri     = network::Uri;
 
+  /// Meta information
+  /// @{
   Timepoint first_seen{Clock::now()};
   Timepoint last_activity{};
-  Timepoint earliest_next_attempt{};
+  Timepoint earliest_next_attempt{Clock::now()};
   uint64_t  connection_attempts{0};
   uint64_t  failed_attempts{0};
+  /// @}
 
   /// Serializable fields
   /// @{
@@ -56,6 +59,11 @@ struct PeerInfo
 
   Address  last_reporter{};
   uint64_t message_count{0};
+
+  bool CanConnect() const
+  {
+    return earliest_next_attempt < Clock::now();
+  }
 
   bool operator<(PeerInfo const &other) const
   {

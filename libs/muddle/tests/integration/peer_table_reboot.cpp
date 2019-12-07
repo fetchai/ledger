@@ -39,7 +39,6 @@ TEST(RoutingTests, PeerTestReboot)
       table.Dump();
     }
   }
-
   {
     // Creating network
     auto     network = Network::New(N, config);
@@ -56,6 +55,10 @@ TEST(RoutingTests, PeerTestReboot)
     network->Stop();
   }
 
+  std::cout << "==============================================================" << std::endl;
+  std::cout << "==========================REBOOTING===========================" << std::endl;
+  std::cout << "==============================================================" << std::endl;
+
   {
     // Restarting
     auto     network = Network::New(N, config);
@@ -65,14 +68,39 @@ TEST(RoutingTests, PeerTestReboot)
       n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
       ++idx;
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
 
     // We expect the total number of connections (in and out) that any one node has to be
     // be at least the maximum number of kademlia connections
+    std::unordered_set<fetch::muddle::Address> all_addresses1;
+    std::unordered_set<fetch::muddle::Address> all_addresses2;
+    uint64_t                                   q = 0;
+
+    std::cout << "==============================================================" << std::endl;
+    std::cout << "===========================TESTING============================" << std::endl;
+    std::cout << "==============================================================" << std::endl;
+
     for (auto &n : network->nodes)
     {
+
+      // Waiting up to 40 seconds for the connections to come around
+      while ((n->muddle->GetNumDirectlyConnectedPeers() != config.max_kademlia_connections) &&
+             (q < 100))
+      {
+        std::this_thread::sleep_for(std::chrono::milliseconds(400));
+        ++q;
+      }
+
+      for (auto const &adr : n->muddle->GetDirectlyConnectedPeers())
+      {
+        all_addresses1.emplace(adr);
+      }
+      all_addresses2.emplace(n->address);
+
       EXPECT_GE(n->muddle->GetNumDirectlyConnectedPeers(), config.max_kademlia_connections);
     }
+
+    EXPECT_EQ(all_addresses1.size(), N);
+    EXPECT_EQ(all_addresses1, all_addresses2);
 
     network->Stop();
   }

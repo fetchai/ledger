@@ -167,24 +167,19 @@ public:
   using Type       = muddle::KademliaTable;
   using DriverType = D;
 
-  static uint8_t const BY_LOGARITHM      = 1;
-  static uint8_t const BY_HAMMING        = 2;
-  static uint8_t const KNOWN_PEERS       = 3;
-  static uint8_t const KNOWN_URIS        = 4;
-  static uint8_t const CONNECTION_EXPIRY = 5;
-  static uint8_t const DESIRED_EXPIRY    = 6;
-  static uint8_t const DESIRED_PEERS     = 7;
-  static uint8_t const DESIRED_URIS      = 8;
+  static uint8_t const KNOWN_PEERS       = 1;
+  static uint8_t const CONNECTION_EXPIRY = 2;
+  static uint8_t const DESIRED_EXPIRY    = 3;
+  static uint8_t const DESIRED_PEERS     = 4;
+  static uint8_t const DESIRED_URIS      = 5;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &item)
   {
-    auto map = map_constructor(8);
+    auto map = map_constructor(5);
 
-    map.Append(BY_LOGARITHM, item.by_logarithm_);
-    map.Append(BY_HAMMING, item.by_hamming_);
     map.Append(KNOWN_PEERS, item.known_peers_);
-    map.Append(KNOWN_URIS, item.known_uris_);
+
     map.Append(CONNECTION_EXPIRY, item.connection_expiry_);
     map.Append(DESIRED_EXPIRY, item.desired_uri_expiry_);
     map.Append(DESIRED_PEERS, item.desired_peers_);
@@ -194,10 +189,22 @@ public:
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &item)
   {
-    map.ExpectKeyGetValue(BY_LOGARITHM, item.by_logarithm_);
-    map.ExpectKeyGetValue(BY_HAMMING, item.by_hamming_);
-    map.ExpectKeyGetValue(KNOWN_PEERS, item.known_peers_);
-    map.ExpectKeyGetValue(KNOWN_URIS, item.known_uris_);
+    Type::PeerMap peers;
+    // We reconstruct the table from the peer list.
+    // This invalidates all information about the liveness
+    // of the peer which would be needed any way on a fresh restart
+    // This is also needed to ensure that pointers are constructed
+    // correctly
+    map.ExpectKeyGetValue(KNOWN_PEERS, peers);
+    for (auto &p : peers)
+    {
+      // Note that p in theory can be null.
+      if (p.second != nullptr)
+      {
+        item.ReportExistence(*p.second, p.second->last_reporter);
+      }
+    }
+
     map.ExpectKeyGetValue(CONNECTION_EXPIRY, item.connection_expiry_);
     map.ExpectKeyGetValue(DESIRED_EXPIRY, item.desired_uri_expiry_);
     map.ExpectKeyGetValue(DESIRED_PEERS, item.desired_peers_);

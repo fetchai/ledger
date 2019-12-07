@@ -204,7 +204,7 @@ private:
   mutable Mutex                           delivery_attempts_lock_;
   std::unordered_map<PacketPtr, uint64_t> delivery_attempts_;
 
-  void ClearDeliveryAttempt(PacketPtr packet)
+  void ClearDeliveryAttempt(PacketPtr const &packet)
   {
     FETCH_LOCK(delivery_attempts_lock_);
     delivery_attempts_.erase(packet);

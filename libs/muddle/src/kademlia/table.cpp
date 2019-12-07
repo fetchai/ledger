@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "kademlia/table.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "crypto/sha1.hpp"
-#include "kademlia/table.hpp"
 #include "muddle/network_id.hpp"
 
 namespace fetch {
@@ -369,8 +369,6 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
 
 void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporter)
 {
-  //  ReportLiveliness(info.address, info);
-  //  return;
   FETCH_LOCK(mutex_);
 
   auto other      = KademliaAddress::Create(info.address);
@@ -404,6 +402,11 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
     if (ham_bucket.peers.size() < kademlia_max_peers_per_bucket_)
     {
       ham_bucket.peers.insert(peerinfo);
+    }
+
+    if (peerinfo->uri.IsMuddleAddress())
+    {
+      known_uris_[peerinfo->uri] = peerinfo;
     }
   }
   else

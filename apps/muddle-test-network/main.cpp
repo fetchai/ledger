@@ -235,17 +235,19 @@ public:
   std::atomic<uint64_t> counter{0};
 };
 
-int main()
+int mainXXX()
 {
+
+  auto        config = fetch::muddle::TrackerConfiguration::AllOn();
+  std::size_t N      = 10;
 
   {
     // Creating network
-    std::size_t N       = 10;
-    auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
-    uint64_t    idx     = 0;
+    auto     network = Network::New(N, config);
+    uint64_t idx     = 0;
     for (auto &n : network->nodes)
     {
-      n->muddle->SetPeerTableFile("peer_tableX" + std::to_string(idx) + ".cache");
+      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
       ++idx;
     }
 
@@ -254,20 +256,57 @@ int main()
     std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
     network->Stop();
   }
-  std::cout << "RESTARTING" << std::endl;
+
+  std::cout << "==============================================================" << std::endl;
+  std::cout << "==========================REBOOTING===========================" << std::endl;
+  std::cout << "==============================================================" << std::endl;
 
   {
     // Restarting
-    std::size_t N       = 10;
-    auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
-    uint64_t    idx     = 0;
+    auto     network = Network::New(N, config);
+    uint64_t idx     = 0;
     for (auto &n : network->nodes)
     {
-      n->muddle->SetPeerTableFile("peer_tableX" + std::to_string(idx) + ".cache");
+      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
       ++idx;
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
+
+    // We expect the total number of connections (in and out) that any one node has to be
+    // be at least the maximum number of kademlia connections
+    std::unordered_set<fetch::muddle::Address> all_addresses1;
+    std::unordered_set<fetch::muddle::Address> all_addresses2;
+    uint64_t                                   q = 0;
+
+    std::cout << "==============================================================" << std::endl;
+    std::cout << "===========================TESTING============================" << std::endl;
+    std::cout << "==============================================================" << std::endl;
+
+    for (auto &n : network->nodes)
+    {
+
+      // Waiting up to 40 seconds for the connections to come around
+      while ((n->muddle->GetNumDirectlyConnectedPeers() != config.max_kademlia_connections) &&
+             (q < 100))
+      {
+        std::this_thread::sleep_for(std::chrono::milliseconds(400));
+        ++q;
+      }
+
+      for (auto const &adr : n->muddle->GetDirectlyConnectedPeers())
+      {
+        all_addresses1.emplace(adr);
+      }
+      all_addresses2.emplace(n->address);
+
+      if (n->muddle->GetNumDirectlyConnectedPeers() < config.max_kademlia_connections)
+      {
+        std::cout << "FAIL FAIL FAIL" << std::endl;
+      }
+    }
+
+    network->Stop();
   }
+  return 0;
 }
 
 int mainYY()
@@ -306,7 +345,7 @@ int mainYY()
   return 0;
 }
 
-int mainXXX()
+int mainXZX()
 {
 
   // Creating network
@@ -340,12 +379,16 @@ int mainXXX()
   }
 
   network->Stop();
+  return 0;
 }
 
-int mainXX()
+int main()
 {
-  uint64_t N       = 10;
-  auto     network = Network::New(N);
+  auto config                     = fetch::muddle::TrackerConfiguration::AllOn();
+  config.max_kademlia_connections = 2;
+
+  uint64_t N       = 40;
+  auto     network = Network::New(N, config);
 
   //  MakeKademliaNetwork(network);
   LinearConnectivity(network, std::chrono::seconds(5));

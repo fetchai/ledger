@@ -66,7 +66,7 @@ struct Node
 
   using Milliseconds = std::chrono::milliseconds;
 
-  Node(uint16_t port)
+  explicit Node(uint16_t port)
     : network_manager{std::make_shared<NetworkManager>("NetMgr" + std::to_string(port), 1)}
 
   {

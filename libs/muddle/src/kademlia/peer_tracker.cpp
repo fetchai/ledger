@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/time/to_seconds.hpp"
 #include "kademlia/peer_tracker.hpp"
+#include "core/time/to_seconds.hpp"
 
 #include <chrono>
 #include <memory>
@@ -409,7 +409,8 @@ void PeerTracker::PullPeerKnowledge()
   }
 
   // Searching in parallel to different nodes
-  int64_t tasks_to_setup = 3 - static_cast<int64_t>(pull_promises_.size());  // TODO: parameter
+  int64_t tasks_to_setup = tracker_configuration_.max_discovery_connections -
+                           static_cast<int64_t>(pull_promises_.size());
 
   tasks_to_setup = std::min(tasks_to_setup, static_cast<int64_t>(peer_pull_queue_.size()));
 
@@ -674,6 +675,12 @@ void PeerTracker::ConnectToDesiredPeers()
       {
         continue;
       }
+    }
+
+    // Skipping own address
+    if (best_peer == own_address_)
+    {
+      continue;
     }
 
     // If we are already connected, we schedule a pull
