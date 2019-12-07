@@ -380,12 +380,12 @@ TEST_F(VMModelTests, model_add_invalid_layer_type)
 
 TEST_F(VMModelTests, model_add_dense_invalid_params_noact)
 {
-  TestAddingUncompilableLayer(R"(model.add("dense", 1u64, 1u64, 1u64, 1u64);)");
+  TestInvalidLayerAdding(R"(model.add("dense", 1u64, 1u64, 1u64, 1u64);)");
 }
 
 TEST_F(VMModelTests, model_add_dense_invalid_params_relu)
 {
-  TestAddingUncompilableLayer(R"(model.add("dense", 1u64, 1u64, 1u64, 1u64, "relu");)");
+  TestInvalidLayerAdding(R"(model.add("dense", 1u64, 1u64, 1u64, 1u64, "relu");)");
 }
 
 TEST_F(VMModelTests, model_add_conv_invalid_params_noact)
@@ -405,7 +405,7 @@ TEST_F(VMModelTests, model_add_layers_invalid_activation_dense)
 
 TEST_F(VMModelTests, model_add_layers_invalid_activation_conv)
 {
-  TestAddingUncompilableLayer(
+  TestInvalidLayerAdding(
       R"(model.add("conv1d", 1u64, 1u64, 1u64, 1u64, "INVALID_ACTIVATION_CONV");)");
 }
 
@@ -437,7 +437,9 @@ TEST_F(VMModelTests, model_add_layer_to_non_sequential)
           model.add("conv1d", 1u64, 1u64, 1u64, 1u64);
         endfunction
       )";
-  EXPECT_FALSE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Compile(SRC));
+  std::cout << "Testing manual layer adding to a regressor model" << std::endl;
+  EXPECT_FALSE(toolkit.Run());
 }
 
 TEST_F(VMModelTests, model_empty_sequential_compilation)
@@ -516,7 +518,9 @@ TEST_F(VMModelTests, model_compilation_sequential_from_layer_shapes)
       endfunction
     )";
 
-  ASSERT_FALSE(toolkit.Compile(HIDDEN_TO_SEQUENTIAL_SRC));
+  ASSERT_TRUE(toolkit.Compile(HIDDEN_TO_SEQUENTIAL_SRC));
+  std::cout << "Testing misuse of sequential compile by passing hidden layers" << std::endl;
+  EXPECT_FALSE(toolkit.Run());
 }  // namespace
 
 TEST_F(VMModelTests, dense_sequential_model_test)
