@@ -338,8 +338,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
   if (is_genesis)
   {
-    // once we have got back to genesis then we need to start executing from the beginning
     FETCH_LOG_INFO(LOGGING_NAME, "No need to execute genesis - reset condition.");
+
+    last_executed_block_.ApplyVoid([this](auto &digest) { digest = current_block_->hash; });
     return State::RESET;
   }
 
