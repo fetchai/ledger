@@ -110,6 +110,20 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
   assert(stake_);
 }
 
+Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet const &cabinet,
+                                              uint64_t                                entropy)
+{
+  Consensus::WeightedQual ret;
+  ret.reserve(cabinet.size());
+
+  for (auto const &i : cabinet)
+  {
+    ret.emplace_back(i);
+  }
+
+  return DeterministicShuffle(ret, entropy);
+}
+
 // TODO(HUT): probably this is not required any more.
 Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous) const
 {
@@ -231,20 +245,6 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Identity con
   return qualified_cabinet_weighted.size() - std::distance(
       qualified_cabinet_weighted.begin(),
       std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity));
-}
-
-Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet const &cabinet,
-                                              uint64_t                                entropy)
-{
-  Consensus::WeightedQual ret;
-  ret.reserve(cabinet.size());
-
-  for (auto const &i : cabinet)
-  {
-    ret.emplace_back(i);
-  }
-
-  return DeterministicShuffle(ret, entropy);
 }
 
 /**
