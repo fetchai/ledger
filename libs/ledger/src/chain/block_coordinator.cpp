@@ -336,18 +336,16 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
   FETCH_UNUSED(current_dag_epoch);
 
+  if (is_genesis)
+  {
+    // once we have got back to genesis then we need to start executing from the beginning
+    FETCH_LOG_INFO(LOGGING_NAME, "No need to execute genesis - reset condition.");
+    return State::RESET;
+  }
+
   // initial condition, the last processed block is empty
   if (chain::ZERO_HASH == last_processed_block)
   {
-    // start up - we need to work out which of the blocks has been executed previously
-
-    if (is_genesis)
-    {
-      // once we have got back to genesis then we need to start executing from the beginning
-      FETCH_LOG_INFO(LOGGING_NAME, "No need to execute genesis - reset condition.");
-      return State::RESET;
-    }
-
     // look up the previous block
     auto previous_block = chain_.GetBlock(previous_hash);
     if (!previous_block)
