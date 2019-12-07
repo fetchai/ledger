@@ -631,7 +631,7 @@ TEST_P(MainChainTests, AdditionOfBlocksWithABreak)
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->hash);
 }
 
-TEST_P(MainChainTests, disabled_CheckChainPreceding)  // TODO(tfr): needs fixing
+TEST_P(MainChainTests, DISABLED_CheckChainPreceding)  // TODO(tfr): needs fixing
 {
   auto genesis = generator_->Generate();
   auto main1   = generator_->Generate(genesis);
