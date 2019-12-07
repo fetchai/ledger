@@ -42,6 +42,7 @@ using fetch::ledger::TransactionStorageEngine;
 
 using TransactionList = std::vector<TransactionBuilder::TransactionPtr>;
 
+constexpr uint32_t LANE_ID        = 0;
 constexpr uint32_t LOG2_NUM_LANES = 2;
 
 void TxSubmitFixedLarge(benchmark::State &state)
@@ -126,7 +127,7 @@ void TxSubmitSingleSmallAlt(benchmark::State &state)
   ECDSASigner const signer;
 
   // create the transaction store
-  TransactionStorageEngine tx_store{LOG2_NUM_LANES};
+  TransactionStorageEngine tx_store{LOG2_NUM_LANES, LANE_ID};
   tx_store.New("transaction.db", "transaction_index.db", true);
 
   // create a whole series of transaction
@@ -145,7 +146,7 @@ void TransientStoreExpectedOperation(benchmark::State &state)
   ECDSASigner const signer;
 
   // create the transient store
-  TransactionStorageEngine tx_store{LOG2_NUM_LANES};
+  TransactionStorageEngine tx_store{LOG2_NUM_LANES, LANE_ID};
   tx_store.New("transaction.db", "transaction_index.db", true);
 
   Transaction dummy;
