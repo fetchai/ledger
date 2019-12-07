@@ -26,11 +26,23 @@
 
 TEST(RoutingTests, PeerTestReboot)
 {
+  auto        config = fetch::muddle::TrackerConfiguration::AllOn();
+  std::size_t N      = 10;
+  {
+    // Clearing tables
+    for (uint64_t idx = 0; idx < N; ++idx)
+    {
+      fetch::muddle::PeerTable table(FakeAddress(10), fetch::muddle::NetworkId("TEST"));
+      table.SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
+      table.Dump();
+    }
+  }
+
   {
     // Creating network
-    std::size_t N       = 10;
-    auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
-    uint64_t    idx     = 0;
+
+    auto     network = Network::New(N, config);
+    uint64_t idx     = 0;
     for (auto &n : network->nodes)
     {
       n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
@@ -43,7 +55,25 @@ TEST(RoutingTests, PeerTestReboot)
     network->Stop();
   }
 
-  // Restart
   {
+    // Restarting
+    std::size_t N       = 10;
+    auto        network = Network::New(N, config);
+    uint64_t    idx     = 0;
+    for (auto &n : network->nodes)
+    {
+      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
+      ++idx;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
+
+    // We expect the total number of connections (in and out) that any one node has to be
+    // be at least the maximum number of kademlia connections
+    for (auto &n : network->nodes)
+    {
+      EXPECT_GE(n->muddle->GetNumDirectlyConnectedPeers(), config.max_kademlia_connections);
+    }
+
+    network->Stop();
   }
 }

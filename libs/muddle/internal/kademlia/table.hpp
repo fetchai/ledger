@@ -136,10 +136,13 @@ public:
     return first_non_empty_bucket_;
   }
 
-  void SetCacheFile(std::string const &filename)
+  void SetCacheFile(std::string const &filename, bool load = true)
   {
     filename_ = filename;
-    Load();
+    if (load)
+    {
+      Load();
+    }
   }
 
   void Load()

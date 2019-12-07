@@ -138,6 +138,13 @@ struct Network
     ++counter;
   }
 
+  void PopFrontNode()
+  {
+    auto node = nodes.front();
+    nodes.pop_front();
+    node->muddle->Stop();
+  }
+
   std::vector<std::unique_ptr<Node>> nodes;
 
 private:
