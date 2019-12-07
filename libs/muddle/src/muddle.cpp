@@ -356,6 +356,12 @@ bool Muddle::IsDirectlyConnected(Address const &address) const
   return current_direct_peers.find(address) != current_direct_peers.end();
 }
 
+bool Muddle::IsConnectingOrConnected(Address const &address) const
+{
+  auto const desired = peer_tracker_->GetDesiredPeers();
+  return desired.find(address) != desired.end();
+}
+
 /**
  * Get the set of addresses that have been requested to connect to
  *

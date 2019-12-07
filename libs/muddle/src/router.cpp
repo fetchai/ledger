@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "router.hpp"
 #include "kademlia/peer_tracker.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
-#include "router.hpp"
 #include "routing_message.hpp"
 
 #include "core/byte_array/encoders.hpp"
@@ -737,7 +737,7 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
       {
         delivery_attempts_[packet] = 0;
 
-        // Tracking the peer and connecting for some time
+        // Ensuring that the tracker is looking for the desired connection
         tracker_->AddDesiredPeer(packet->GetTarget(), config_.temporary_connection_length);
       }
 
@@ -768,7 +768,7 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     }
 
     // Retrying at a later point
-    FETCH_LOG_INFO(logging_name_, "Retrying packet delivery: ", packet->GetTarget().ToBase64());
+    FETCH_LOG_DEBUG(logging_name_, "Retrying packet delivery: ", packet->GetTarget().ToBase64());
 
     dispatch_thread_pool_->Post(
         [this, packet, external]() {

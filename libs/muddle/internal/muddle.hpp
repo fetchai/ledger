@@ -171,6 +171,7 @@ public:
 
   std::size_t GetNumDirectlyConnectedPeers() const override;
   bool        IsDirectlyConnected(Address const &address) const override;
+  bool        IsConnectingOrConnected(Address const &address) const override;
   /// @}
 
   /// @name Peer Control

@@ -694,6 +694,7 @@ void KademliaTable::RemoveDesiredPeer(Address const &address)
 {
   FETCH_LOCK(desired_mutex_);
   desired_peers_.erase(address);
+  connection_expiry_.erase(address);
 }
 
 bool KademliaTable::HasUri(Uri const &uri) const
