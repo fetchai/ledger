@@ -409,8 +409,8 @@ void PeerTracker::PullPeerKnowledge()
   }
 
   // Searching in parallel to different nodes
-  int64_t tasks_to_setup = tracker_configuration_.max_discovery_connections -
-                           static_cast<int64_t>(pull_promises_.size());
+  int64_t tasks_to_setup =
+      tracker_configuration_.max_discovery_tasks - static_cast<int64_t>(pull_promises_.size());
 
   tasks_to_setup = std::min(tasks_to_setup, static_cast<int64_t>(peer_pull_queue_.size()));
 
