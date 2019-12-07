@@ -55,7 +55,7 @@ protected:
   NiceMock<MockTransactionPool>  pool_;
   NiceMock<MockTransactionStore> store_;
   TransactionGenerator           tx_gen_;
-  TransactionArchiver            archiver_{pool_, store_};
+  TransactionArchiver            archiver_{0, pool_, store_};
 };
 
 MATCHER_P(IsTransaction, digest, "")  // NOLINT
