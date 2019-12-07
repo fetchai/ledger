@@ -71,16 +71,6 @@ using fetch::ledger::Block;
 
 using DRNG = fetch::random::LinearCongruentialGenerator;
 
-std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
-{
-  if (decrement >= value)
-  {
-    return 0;
-  }
-
-  return value - decrement;
-}
-
 template <typename T>
 T DeterministicShuffle(T &container, uint64_t entropy)
 {
@@ -235,16 +225,18 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Identity con
   auto                  qualified_cabinet_weighted =
       QualWeightedByEntropy(beginning_of_aeon.block_entropy.qualified, previous.block_entropy.EntropyAsU64());
 
-  if(qualified_cabinet_weighted.find(identity) == qualified_cabinet_weighted.end())
+  if(std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity) == qualified_cabinet_weighted.end())
   {
     // Note: weight being non zero indicates not in cabinet
     return 0;
   }
 
-  // Top rank, miner 0 should get the highest weight of qual size
-  return static_cast<uint64_t>(qualified_cabinet_weighted.size() - std::distance(
+  uint64_t const dist = static_cast<uint64_t>(std::distance(
       qualified_cabinet_weighted.begin(),
       std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity)));
+
+  // Top rank, miner 0 should get the highest weight of qual size
+  return static_cast<uint64_t>(qualified_cabinet_weighted.size() - dist);
 }
 
 /**
