@@ -341,7 +341,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     FETCH_LOG_INFO(LOGGING_NAME, "No need to execute genesis - reset condition.");
 
     last_executed_block_.ApplyVoid([this](auto &digest) { digest = current_block_->hash; });
-    return State::RESET;
+    return State::SYNCHRONISED;
   }
 
   // initial condition, the last processed block is empty
