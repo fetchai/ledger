@@ -56,10 +56,9 @@ bool HasAnnotation(NodePtr const &annotations_node, std::string const &annotatio
   {
     assert(annotations_node->node_kind == NodeKind::Annotations);
 
-    for (auto const &annotation_ptr : annotations_node->children)
+    for (auto const &annotation : annotations_node->children)
     {
-      if (annotation_ptr->node_kind == NodeKind::Annotation &&
-          annotation_ptr->text == annotation_name)
+      if (annotation->node_kind == NodeKind::Annotation && annotation->text == annotation_name)
       {
         return true;
       }
@@ -421,11 +420,9 @@ void Analyser::ValidateBlock(BlockNodePtr const &block_node, LedgerRestrictionMe
       break;
     }
     case NodeKind::ContractDefinition:
-    case NodeKind::StructDefinition:
     {
-      ExpressionNodePtr name_node = ConvertToExpressionNodePtr(child->children[0]);
-      TypePtr           type      = name_node->type;
-      if (type)
+      ExpressionNodePtr contract_name_node = ConvertToExpressionNodePtr(child->children[0]);
+      if (contract_name_node->type)
       {
         ValidateBlock(ConvertToBlockNodePtr(child), metadata);
       }
@@ -433,15 +430,22 @@ void Analyser::ValidateBlock(BlockNodePtr const &block_node, LedgerRestrictionMe
     }
     case NodeKind::ContractFunction:
     {
-      ValidateFunctionAnnotations(child);
-      ValidateFunctionPrototype(child, metadata);
+      ExpressionNodePtr function_name_node = ConvertToExpressionNodePtr(child->children[1]);
+      if (function_name_node->function)
+      {
+        ValidateFunctionAnnotations(child);
+        ValidateFunctionPrototype(child, metadata);
+      }
       break;
     }
     case NodeKind::FreeFunctionDefinition:
-    case NodeKind::MemberFunctionDefinition:
     {
-      ValidateFunctionAnnotations(ConvertToBlockNodePtr(child));
-      ValidateFunctionPrototype(ConvertToBlockNodePtr(child), metadata);
+      ExpressionNodePtr function_name_node = ConvertToExpressionNodePtr(child->children[1]);
+      if (function_name_node->function)
+      {
+        ValidateFunctionAnnotations(ConvertToBlockNodePtr(child));
+        ValidateFunctionPrototype(ConvertToBlockNodePtr(child), metadata);
+      }
       break;
     }
     default:
@@ -454,6 +458,12 @@ void Analyser::ValidateBlock(BlockNodePtr const &block_node, LedgerRestrictionMe
 
 void Analyser::ValidateFunctionAnnotations(NodePtr const &function_node)
 {
+  {
+    auto const &function_name_node = ConvertToExpressionNodePtr(function_node->children[1]);
+    FETCH_UNUSED(function_name_node);
+    assert(function_name_node->function != nullptr);
+  }
+
   auto const &annotations_node = function_node->children[0];
   if (annotations_node == nullptr)
   {
@@ -473,7 +483,7 @@ void Analyser::ValidateFunctionAnnotations(NodePtr const &function_node)
         text != PROBLEM_ANNOTATION && text != OBJECTIVE_ANNOTATION && text != WORK_ANNOTATION &&
         text != CLEAR_ANNOTATION)
     {
-      AddError(annotation->line, "Invalid annotation");
+      AddError(annotation->line, "Invalid annotation '" + text + "'");
     }
   }
 }
@@ -482,7 +492,9 @@ void Analyser::ValidateFunctionPrototype(NodePtr const &            function_nod
                                          LedgerRestrictionMetadata &metadata)
 {
   auto const &function_name_node = ConvertToExpressionNodePtr(function_node->children[1]);
-  auto const &annotations        = function_node->children[0];
+  assert(function_name_node->function != nullptr);
+
+  auto const &annotations = function_node->children[0];
 
   bool is_action = false;
   bool is_init   = false;
@@ -537,28 +549,19 @@ void Analyser::ValidateFunctionPrototype(NodePtr const &            function_nod
     }
   }
   break;
-  case NodeKind::MemberFunctionDefinition:
-  {
-    if (annotations)
-    {
-      AddError(annotations->line, "Annotations on member functions are not permitted");
-    }
-  }
-  break;
   default:
     assert(false);
     break;
   }
 
-  auto const &return_type = function_name_node->function->return_type != nullptr
-                                ? function_name_node->function->return_type
-                                : void_type_;
+  auto const &return_type = function_name_node->function->return_type;
 
   if (is_action)
   {
     if (return_type != int64_type_ && return_type != void_type_)
     {
-      AddError(function_name_node->line, "@action functions must either be void or return Int64");
+      AddError(function_name_node->line,
+               "@action functions must either return Int64 or have no return type");
     }
   }
 
@@ -566,14 +569,15 @@ void Analyser::ValidateFunctionPrototype(NodePtr const &            function_nod
   {
     if (return_type != int64_type_ && return_type != void_type_)
     {
-      AddError(function_name_node->line, "@init functions must either be void or return Int64");
+      AddError(function_name_node->line,
+               "@init functions must either return Int64 or have no return type");
     }
 
     auto const param_types = function_name_node->function->parameter_types;
     if (!param_types.empty() && !(param_types.size() == 1 && param_types.back() == address_type_))
     {
       AddError(function_name_node->line,
-               "@init functions must accept eithoer no parameters or exactly one parameter of type "
+               "@init functions must accept either no parameters or exactly one parameter of type "
                "Address");
     }
   }
@@ -582,7 +586,7 @@ void Analyser::ValidateFunctionPrototype(NodePtr const &            function_nod
   {
     if (return_type == void_type_)
     {
-      AddError(function_name_node->line, "@query functions must not be void");
+      AddError(function_name_node->line, "@query functions must have a return type");
     }
   }
 }
@@ -601,8 +605,12 @@ void Analyser::CheckInitFunctionUnique(LedgerRestrictionMetadata const &metadata
 
 bool Analyser::CheckSynergeticFunctionsPresentAndUnique(LedgerRestrictionMetadata const &metadata)
 {
-  if (metadata.clear_functions.empty() && metadata.objective_functions.empty() &&
-      metadata.problem_functions.empty() && metadata.work_functions.empty())
+  bool const clear_missing     = metadata.clear_functions.empty();
+  bool const objective_missing = metadata.objective_functions.empty();
+  bool const problem_missing   = metadata.problem_functions.empty();
+  bool const work_missing      = metadata.work_functions.empty();
+
+  if (clear_missing && objective_missing && problem_missing && work_missing)
   {
     return false;
   }
@@ -612,13 +620,6 @@ bool Analyser::CheckSynergeticFunctionsPresentAndUnique(LedgerRestrictionMetadat
   {
     return true;
   }
-
-  bool const clear_missing     = metadata.clear_functions.empty();
-  bool const objective_missing = metadata.objective_functions.empty();
-  bool const problem_missing   = metadata.problem_functions.empty();
-  bool const work_missing      = metadata.work_functions.empty();
-
-  bool const any_missing = clear_missing || objective_missing || problem_missing || work_missing;
 
   std::ostringstream ss;
   if (clear_missing)
@@ -638,6 +639,8 @@ bool Analyser::CheckSynergeticFunctionsPresentAndUnique(LedgerRestrictionMetadat
     ss << " " << WORK_ANNOTATION;
   }
   std::string const missing_synergetic_names = ss.str();
+
+  bool const any_missing = clear_missing || objective_missing || problem_missing || work_missing;
 
   auto report_missing_and_multiple_synergetics = [this, missing_synergetic_names, any_missing](
                                                      auto const &annotation_name,
@@ -688,19 +691,21 @@ void Analyser::CheckSynergeticContract(LedgerRestrictionMetadata const &metadata
   auto const &problem_node   = metadata.problem_functions.back().node;
   auto const &work_node      = metadata.work_functions.back().node;
 
-  auto const &clear     = *ConvertToExpressionNodePtr(clear_node->children[1])->function;
-  auto const &objective = *ConvertToExpressionNodePtr(objective_node->children[1])->function;
-  auto const &problem   = *ConvertToExpressionNodePtr(problem_node->children[1])->function;
-  auto const &work      = *ConvertToExpressionNodePtr(work_node->children[1])->function;
+  auto const &clear_function = *ConvertToExpressionNodePtr(clear_node->children[1])->function;
+  auto const &objective_function =
+      *ConvertToExpressionNodePtr(objective_node->children[1])->function;
+  auto const &problem_function = *ConvertToExpressionNodePtr(problem_node->children[1])->function;
+  auto const &work_function    = *ConvertToExpressionNodePtr(work_node->children[1])->function;
 
   // @problem
   TypePtr problem_param_type;
-  if (!problem.parameter_types.empty())
+  if (!problem_function.parameter_types.empty())
   {
-    problem_param_type = problem.parameter_types[0];
+    problem_param_type = problem_function.parameter_types[0];
   }
 
-  bool const problem_params_correct = problem.parameter_types.size() == 1 && problem_param_type &&
+  bool const problem_params_correct = problem_function.parameter_types.size() == 1 &&
+                                      problem_param_type &&
                                       problem_param_type->name == "Array<StructuredData>";
   if (!problem_params_correct)
   {
@@ -709,28 +714,28 @@ void Analyser::CheckSynergeticContract(LedgerRestrictionMetadata const &metadata
         "The @problem function should accept a single parameter of type Array<StructuredData>");
   }
 
-  if (problem.return_type == nullptr || problem.return_type == void_type_)
+  if (problem_function.return_type == void_type_)
   {
-    AddError(problem_file, problem_node->line, "The @problem function must not be void");
+    AddError(problem_file, problem_node->line, "The @problem function must have a return type");
     return;
   }
 
   // @work
   TypePtr work_first_param_type;
   TypePtr work_second_param_type;
-  if (!work.parameter_types.empty())
+  if (!work_function.parameter_types.empty())
   {
-    work_first_param_type = work.parameter_types[0];
+    work_first_param_type = work_function.parameter_types[0];
   }
-  if (work.parameter_types.size() > 1)
+  if (work_function.parameter_types.size() > 1)
   {
-    work_second_param_type = work.parameter_types[1];
+    work_second_param_type = work_function.parameter_types[1];
   }
 
-  bool const work_params_correct = work.parameter_types.size() == 2 && work_first_param_type &&
-                                   work_first_param_type == problem.return_type &&
-                                   work_second_param_type &&
-                                   work_second_param_type->name == "UInt256";
+  bool const work_params_correct =
+      work_function.parameter_types.size() == 2 && work_first_param_type &&
+      work_first_param_type == problem_function.return_type && work_second_param_type &&
+      work_second_param_type->name == "UInt256";
   if (!work_params_correct)
   {
     AddError(work_file, work_node->line,
@@ -738,33 +743,33 @@ void Analyser::CheckSynergeticContract(LedgerRestrictionMetadata const &metadata
              "type as that returned by the @problem function; the second should be UInt256");
   }
 
-  if (work.return_type == nullptr || work.return_type == void_type_)
+  if (work_function.return_type == void_type_)
   {
-    AddError(work_file, work_node->line, "The @work function must not be void");
+    AddError(work_file, work_node->line, "The @work function must have a return type");
     return;
   }
 
   // @objective
-  if (objective.return_type == nullptr || objective.return_type != int64_type_)
+  if (objective_function.return_type != int64_type_)
   {
     AddError(objective_file, objective_node->line, "The @objective function must return Int64");
   }
 
   TypePtr objective_first_param_type;
   TypePtr objective_second_param_type;
-  if (!objective.parameter_types.empty())
+  if (!objective_function.parameter_types.empty())
   {
-    objective_first_param_type = objective.parameter_types[0];
+    objective_first_param_type = objective_function.parameter_types[0];
   }
-  if (objective.parameter_types.size() > 1)
+  if (objective_function.parameter_types.size() > 1)
   {
-    objective_second_param_type = objective.parameter_types[1];
+    objective_second_param_type = objective_function.parameter_types[1];
   }
 
   bool const objective_params_correct =
-      objective.parameter_types.size() == 2 && objective_first_param_type &&
-      objective_first_param_type == problem.return_type && objective_second_param_type &&
-      objective_second_param_type == work.return_type;
+      objective_function.parameter_types.size() == 2 && objective_first_param_type &&
+      objective_first_param_type == problem_function.return_type && objective_second_param_type &&
+      objective_second_param_type == work_function.return_type;
   if (!objective_params_correct)
   {
     AddError(objective_file, objective_node->line,
@@ -774,26 +779,26 @@ void Analyser::CheckSynergeticContract(LedgerRestrictionMetadata const &metadata
   }
 
   // @clear
-  if (clear.return_type != nullptr && clear.return_type != void_type_)
+  if (clear_function.return_type != void_type_)
   {
-    AddError(clear_file, clear_node->line, "The @clear function must be void");
+    AddError(clear_file, clear_node->line, "The @clear function must not have a return type");
   }
 
   TypePtr clear_first_param_type;
   TypePtr clear_second_param_type;
-  if (!clear.parameter_types.empty())
+  if (!clear_function.parameter_types.empty())
   {
-    clear_first_param_type = clear.parameter_types[0];
+    clear_first_param_type = clear_function.parameter_types[0];
   }
-  if (clear.parameter_types.size() > 1)
+  if (clear_function.parameter_types.size() > 1)
   {
-    clear_second_param_type = clear.parameter_types[1];
+    clear_second_param_type = clear_function.parameter_types[1];
   }
 
-  bool const clear_params_correct = clear.parameter_types.size() == 2 && clear_first_param_type &&
-                                    clear_first_param_type == problem.return_type &&
-                                    clear_second_param_type &&
-                                    clear_second_param_type == work.return_type;
+  bool const clear_params_correct =
+      clear_function.parameter_types.size() == 2 && clear_first_param_type &&
+      clear_first_param_type == problem_function.return_type && clear_second_param_type &&
+      clear_second_param_type == work_function.return_type;
   if (!clear_params_correct)
   {
     AddError(clear_file, clear_node->line,
