@@ -1227,4 +1227,56 @@ TEST_F(EtchMemberFunctionDefinitionAnnotationTests, annotated_member_functions_a
   ASSERT_FALSE(toolkit.Compile(TEXT4));
 }
 
+TEST_F(EtchMemberFunctionDefinitionAnnotationTests, unannotated_constructors_are_permitted)
+{
+  static char const *TEXT = R"(
+    struct Clazz
+      function Clazz(x : Int16)
+      endfunction
+    endstruct
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+}
+
+TEST_F(EtchMemberFunctionDefinitionAnnotationTests, annotated_constructors_are_forbidden)
+{
+  static char const *TEXT1 = R"(
+    struct Clazz
+      @action
+      function Clazz(x : Int16)
+      endfunction
+    endstruct
+  )";
+
+  static char const *TEXT2 = R"(
+    struct Clazz
+      @init
+      function Clazz(x : Int16)
+      endfunction
+    endstruct
+  )";
+
+  static char const *TEXT3 = R"(
+    struct Clazz
+      @query
+      function Clazz(x : Int16)
+      endfunction
+    endstruct
+  )";
+
+  static char const *TEXT4 = R"(
+    struct Clazz
+      @abc
+      function Clazz(x : Int16)
+      endfunction
+    endstruct
+  )";
+
+  ASSERT_FALSE(toolkit.Compile(TEXT1));
+  ASSERT_FALSE(toolkit.Compile(TEXT2));
+  ASSERT_FALSE(toolkit.Compile(TEXT3));
+  ASSERT_FALSE(toolkit.Compile(TEXT4));
+}
+
 }  // namespace

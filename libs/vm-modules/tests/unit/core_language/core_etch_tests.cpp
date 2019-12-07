@@ -473,6 +473,117 @@ TEST_F(CoreEtchTests, range_with_equal_bounds_is_empty)
   ASSERT_EQ(stdout.str(), "");
 }
 
+TEST_F(CoreEtchTests, duplicate_unannotated_functions_fail_compilation_gracefully)
+{
+  static char const *TEXT = R"(
+    function main(x : Int32) : Int32
+    endfunction
+
+    function main(x : Int32) : Int32
+    endfunction
+  )";
+
+  ASSERT_FALSE(toolkit.Compile(TEXT));
+}
+
+TEST_F(CoreEtchTests, duplicate_functions_fail_compilation_gracefully)
+{
+  static char const *TEXT = R"(
+    @query
+    function main(x : Int32) : Int32
+    endfunction
+
+    @query
+    function main(x : Int32) : Int32
+    endfunction
+  )";
+
+  ASSERT_FALSE(toolkit.Compile(TEXT));
+}
+
+TEST_F(CoreEtchTests, duplicate_contract_functions_fail_compilation_gracefully)
+{
+  static char const *TEXT = R"(
+    contract contract_interface
+      @action
+      function main(x : Int32) : Int32;
+
+      @action
+      function main(x : Int32) : Int32;
+    endcontract
+  )";
+
+  ASSERT_FALSE(toolkit.Compile(TEXT));
+}
+
+TEST_F(CoreEtchTests, duplicate_contracts_fail_compilation_gracefully)
+{
+  static char const *TEXT = R"(
+    contract contract_interface
+      @action
+      function main(x : Int32) : Int32;
+    endcontract
+
+    contract contract_interface
+      @action
+      function main(x : Int32) : Int32;
+    endcontract
+  )";
+
+  ASSERT_FALSE(toolkit.Compile(TEXT));
+}
+
+TEST_F(CoreEtchTests, duplicate_structs_fail_compilation_gracefully)
+{
+  static char const *TEXT = R"(
+    struct Clazz
+      function foo(text : String) : UInt64
+        return 99u64;
+      endfunction
+    endstruct
+
+    struct Clazz
+      function foo(text : String) : UInt64
+        return 99u64;
+      endfunction
+    endstruct
+  )";
+
+  ASSERT_FALSE(toolkit.Compile(TEXT));
+}
+
+TEST_F(CoreEtchTests, duplicate_member_functions_fail_compilation_gracefully)
+{
+  static char const *TEXT = R"(
+    struct Clazz
+      function foo(text : String) : UInt64
+        return 99u64;
+      endfunction
+
+      function foo(text : String) : UInt64
+        return 99u64;
+      endfunction
+    endstruct
+  )";
+
+  ASSERT_FALSE(toolkit.Compile(TEXT));
+}
+
+TEST_F(CoreEtchTests, duplicate_constructors_fail_compilation_gracefully)
+{
+  static char const *TEXT = R"(
+    struct Clazz
+      function Clazz(text : String)
+      endfunction
+
+      function Clazz(text : String)
+      endfunction
+    endstruct
+  )";
+
+  ASSERT_FALSE(toolkit.Compile(TEXT));
+}
+
 class CoreEtchValidNumericLiteralsTests : public TestWithParam<std::string>
 {
 public:
