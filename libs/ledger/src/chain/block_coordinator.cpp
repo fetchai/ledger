@@ -344,7 +344,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     if (is_genesis)
     {
       // once we have got back to genesis then we need to start executing from the beginning
-      return State::PRE_EXEC_BLOCK_VALIDATION;
+      FETCH_LOG_INFO(LOGGING_NAME, "No need to execute genesis - reset condition.");
+      return State::RESET;
     }
 
     // look up the previous block
@@ -1312,7 +1313,7 @@ void BlockCoordinator::Reset()
   last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::ZERO_HASH; });
   execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
   chain_.Reset();
-  current_block_ = chain_.GetHeaviestBlock();
+  current_block_ = chain_.CreateGenesisBlock();
 }
 
 }  // namespace ledger
