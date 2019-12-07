@@ -477,9 +477,11 @@ TEST_F(CoreEtchTests, duplicate_unannotated_functions_fail_compilation_gracefull
 {
   static char const *TEXT = R"(
     function main(x : Int32) : Int32
+      return 123;
     endfunction
 
     function main(x : Int32) : Int32
+      return 123;
     endfunction
   )";
 
@@ -491,10 +493,12 @@ TEST_F(CoreEtchTests, duplicate_functions_fail_compilation_gracefully)
   static char const *TEXT = R"(
     @query
     function main(x : Int32) : Int32
+      return 123;
     endfunction
 
     @query
     function main(x : Int32) : Int32
+      return 123;
     endfunction
   )";
 
