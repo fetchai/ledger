@@ -299,7 +299,7 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index
       }
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Committing merkle hash at index: ", commit_index,
+    FETCH_LOG_INFO(LOGGING_NAME, "Committing merkle hash at index: ", commit_index,
                     " to stack: 0x", tree.root().ToHex());
 
     permanent_state_merkle_stack_.Push(tree);
