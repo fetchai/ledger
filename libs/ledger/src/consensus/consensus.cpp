@@ -111,6 +111,8 @@ Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet c
     ret.emplace_back(i);
   }
 
+  std::sort(ret.begin(), ret.end());
+
   return DeterministicShuffle(ret, entropy);
 }
 
@@ -236,6 +238,20 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Identity con
       std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity)));
 
   FETCH_LOG_INFO(LOGGING_NAME, "dist is: ", dist, " and size is: ", qualified_cabinet_weighted.size());
+  FETCH_LOG_INFO(LOGGING_NAME, "entropy: ", previous.block_entropy.EntropyAsU64());
+  FETCH_LOG_INFO(LOGGING_NAME, "initial: ");
+
+  for (auto const &member : beginning_of_aeon.block_entropy.qualified)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, member.ToBase64());
+  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "qualified: ");
+
+  for (auto const &member : qualified_cabinet_weighted)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, member.identifier().ToBase64());
+  }
 
   // Top rank, miner 0 should get the highest weight of qual size
   return static_cast<uint64_t>(qualified_cabinet_weighted.size() - dist);
@@ -264,6 +280,21 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   BlockEntropy::Cabinet qualified_cabinet = beginning_of_aeon.block_entropy.qualified;
   auto                  qualified_cabinet_weighted =
       QualWeightedByEntropy(qualified_cabinet, previous.block_entropy.EntropyAsU64());
+
+  FETCH_LOG_INFO(LOGGING_NAME, "entropy: ", previous.block_entropy.EntropyAsU64());
+  FETCH_LOG_INFO(LOGGING_NAME, "initial: ");
+
+  for (auto const &member : qualified_cabinet)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, member.ToBase64());
+  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "qualified: ");
+
+  for (auto const &member : qualified_cabinet_weighted)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, member.identifier().ToBase64());
+  }
 
   if (qualified_cabinet.find(identity.identifier()) == qualified_cabinet.end())
   {
