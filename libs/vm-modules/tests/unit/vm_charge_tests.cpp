@@ -80,6 +80,8 @@ ChargeAmount const high_charge_limit = 1000;
 ChargeAmount const affordable_charge = 10;
 ChargeAmount const expensive_charge  = 1000;
 
+ChargeAmount const max_charge_amount = std::numeric_limits<ChargeAmount>::max();
+
 auto affordable_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
   return static_cast<ChargeAmount>(low_charge_limit + x * y);
 };
@@ -93,6 +95,11 @@ auto affordable_member_estimator = [](Ptr<CustomType> const & /*this_*/, uint8_t
 auto expensive_member_estimator = [](Ptr<CustomType> const & /*this_*/, uint8_t x,
                                      uint16_t y) -> ChargeAmount {
   return static_cast<ChargeAmount>(high_charge_limit + x * y);
+};
+auto max_charge_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
+  return max_charge_amount;
+  FETCH_UNUSED(x);
+  FETCH_UNUSED(y);
 };
 
 class VmChargeTests : public ::testing::Test
@@ -142,6 +149,20 @@ TEST_F(VmChargeTests, execution_fails_when_charge_limit_exceeded)
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_FALSE(toolkit.Run(nullptr, low_charge_limit));
+}
+
+TEST_F(VmChargeTests, functor_bind_with_charge_estimate_execution_does_not_overflow_charge_total)
+{
+  toolkit.module().CreateFreeFunction("overflowExpensive", handler, max_charge_amount);
+
+  static char const *TEXT = R"(
+    function main()
+      overflowExpensive(3u8, 4u16);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run(nullptr, max_charge_amount));
 }
 
 TEST_F(VmChargeTests, functor_bind_with_charge_estimate_execution_fails_when_limit_exceeded)
@@ -461,6 +482,21 @@ TEST_F(
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run(nullptr, high_charge_limit));
+}
+
+TEST_F(VmChargeTests,
+       functor_bind_with_charge_estimate_execution_does_not_overflow_charge_total_with_estimator)
+{
+  toolkit.module().CreateFreeFunction("overflowExpensive", handler, max_charge_estimator);
+
+  static char const *TEXT = R"(
+    function main()
+      overflowExpensive(3u8, 4u16);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run(nullptr, max_charge_amount));
 }
 
 TEST_F(VmChargeTests,
