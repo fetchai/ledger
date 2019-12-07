@@ -78,7 +78,7 @@ TEST_F(VMScalerTests, DISABLED_scaler_construction)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(VMScalerTests, scaler_setscale_minmax)
+TEST_F(VMScalerTests, DISABLED_scaler_setscale_minmax)
 {
   ASSERT_TRUE(toolkit.Compile(Substitute(SCALER_SET_SCALE_BY_DATA_SRC, "min_max")));
   ASSERT_TRUE(toolkit.Run());
@@ -103,7 +103,7 @@ TEST_F(VMScalerTests, scaler_setscale_invalid_range)
   ASSERT_FALSE(toolkit.Run());
 }
 
-TEST_F(VMScalerTests, scaler_normalize_different_values)
+TEST_F(VMScalerTests, DISABLED_scaler_normalize_different_values)
 {
   static char const *SOURCE = R"(
       function main()
@@ -167,7 +167,7 @@ TEST_F(VMScalerTests, DISABLED_scaler_normalize_equal_values)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(VMScalerTests, scaler_denormalize_different_values)
+TEST_F(VMScalerTests, DISABLED_scaler_denormalize_different_values)
 {
   static char const *SOURCE = R"(
       function main()

@@ -556,7 +556,7 @@ TEST_F(VMModelTests, dense_sequential_model_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(VMModelTests, conv1d_sequential_model_test)
+TEST_F(VMModelTests, DISABLED_conv1d_sequential_model_test)
 {
   static char const *sequential_model_src = R"(
     function main() : Tensor
@@ -623,7 +623,7 @@ TEST_F(VMModelTests, conv1d_sequential_model_test)
                             fetch::math::function_tolerance<DataType>()));
 }
 
-TEST_F(VMModelTests, conv2d_sequential_model_test)
+TEST_F(VMModelTests, DISABLED_conv2d_sequential_model_test)
 {
   static char const *sequential_model_src = R"(
     function main() : Tensor
@@ -696,7 +696,7 @@ TEST_F(VMModelTests, conv2d_sequential_model_test)
                             fetch::math::function_tolerance<DataType>()));
 }
 
-TEST_F(VMModelTests, classifier_model_test)
+TEST_F(VMModelTests, DISABLED_classifier_model_test)
 {
   static char const *classifier_model_src = R"(
     function main()
@@ -732,7 +732,7 @@ TEST_F(VMModelTests, classifier_model_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(VMModelTests, regressor_model_test)
+TEST_F(VMModelTests, DISABLED_regressor_model_test)
 {
   static char const *regressor_model_src = R"(
     function main()

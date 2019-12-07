@@ -307,7 +307,7 @@ void ModelEstimator::copy_state_from(ModelEstimator const &src)
 
 ChargeAmount ModelEstimator::maximum_charge(std::string const &log_msg)
 {
-  FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::CHARGE_INIFITY : " + log_msg);
+  FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::MAXIMUM_CHARGE : " + log_msg);
   return vm::MAXIMUM_CHARGE;
 }
 
