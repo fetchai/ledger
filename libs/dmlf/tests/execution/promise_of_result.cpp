@@ -48,7 +48,7 @@ public:
     bool isit = !promise.empty() && promise && promise.GetState() == State::SUCCESS;
     if (isit)
     {
-      fulfillment = promise.Get();
+      promise.GetResult(fulfillment);
     }
     return isit;
   }

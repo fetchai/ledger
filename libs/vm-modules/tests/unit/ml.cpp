@@ -23,7 +23,9 @@
 #include "vm_modules/ml/training_pair.hpp"
 #include "vm_test_toolkit.hpp"
 
+#include <regex>
 #include <sstream>
+#include <string>
 
 using namespace fetch::vm;
 
@@ -31,14 +33,82 @@ namespace {
 
 using DataType = fetch::vm_modules::math::DataType;
 
+/// A minimal compileable etch code to test construction of an Optimizer.
+/// Note: the constructed optimiser can not be used.
+const char *OPTIMIZER_MINIMAL_CONSTRUCTION = R"(
+     function main()
+         var graph = Graph();
+         var dataloader = DataLoader("tensor");
+         var optimiser = Optimiser("%NAME%", graph, dataloader, {"",""}, "", "");
+     endfunction
+  )";
+
 class MLTests : public ::testing::Test
 {
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
+
+  void TestOptimizerConstruction(std::string const &name)
+  {
+    std::string const src =
+        std::regex_replace(OPTIMIZER_MINIMAL_CONSTRUCTION, std::regex("%NAME%"), name);
+    ASSERT_TRUE(toolkit.Compile(src));
+    ASSERT_TRUE(toolkit.Run());
+  }
 };
 
-TEST_F(MLTests, trivial_tensor_dataloader_serialisation_test)
+TEST_F(MLTests, dataloader_commodity_construction)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var dataloader = DataLoader("commodity");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, dataloader_tensor_construction)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var dataloader = DataLoader("tensor");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, dataloader_invalid_mode_construction)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var dataloader = DataLoader("INVALID_MODE");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(MLTests, dataloader_commodity_failed_serialisation)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var dataloader = DataLoader("commodity");
+      var state = State<DataLoader>("dataloader");
+      state.set(dataloader);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  EXPECT_THROW(toolkit.Run(), std::exception);
+}
+
+TEST_F(MLTests, dataloader_tensor_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(
     function main()
@@ -94,16 +164,34 @@ TEST_F(MLTests, trivial_persistent_tensor_dataloader_serialisation_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, trivial_commodity_dataloader_test)
+TEST_F(MLTests, dataloader_commodity_mode_failed_add_data_by_tensor)
 {
-  static char const *dataloader_serialise_src = R"(
+  static char const *SOURCE = R"(
     function main()
-      var dataloader = DataLoader("commodity");
+        var tensor_shape = Array<UInt64>(1);
+        tensor_shape[0] = 1u64;
+        var data_tensor = Tensor(tensor_shape);
+        var label_tensor = Tensor(tensor_shape);
+        var dataloader = DataLoader("commodity");
+        dataloader.addData({data_tensor}, label_tensor);
     endfunction
   )";
 
-  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
-  ASSERT_TRUE(toolkit.Run());
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(MLTests, dataloader_tensor_mode_failed_add_data_by_files)
+{
+  static char const *SOURCE = R"(
+    function main()
+        var dataloader = DataLoader("tensor");
+        dataloader.addData("x_filename", "y_filename");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 TEST_F(MLTests, dataloader_serialisation_test)
@@ -319,7 +407,50 @@ TEST_F(MLTests, graph_string_serialisation_test)
   EXPECT_TRUE(initial_loss->GetTensor().AllClose(loss->GetTensor()));
 }
 
-TEST_F(MLTests, sgd_optimiser_serialisation_test)
+TEST_F(MLTests, optimiser_construction_adam)
+{
+  TestOptimizerConstruction("adam");
+}
+
+TEST_F(MLTests, optimiser_construction_adagrad)
+{
+  TestOptimizerConstruction("adagrad");
+}
+
+TEST_F(MLTests, optimiser_construction_rmsprop)
+{
+  TestOptimizerConstruction("rmsprop");
+}
+
+TEST_F(MLTests, optimiser_construction_sgd)
+{
+  TestOptimizerConstruction("sgd");
+}
+
+TEST_F(MLTests, optimiser_construction_invalid_type)
+{
+  std::string const src =
+      std::regex_replace(OPTIMIZER_MINIMAL_CONSTRUCTION, std::regex("%NAME%"), "INVALID_NAME");
+  ASSERT_TRUE(toolkit.Compile(src));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(MLTests, optimiser_adagrad_serialisation_failed)
+{
+  static char const *SOURCE = R"(
+      function main()
+        var graph = Graph();
+        var dataloader = DataLoader("tensor");
+        var optimiser = Optimiser("adagrad", graph, dataloader, {"",""}, "", "");
+        var state = State<Optimiser>("optimiser");
+        state.set(optimiser);
+     endfunction
+   )";
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  EXPECT_THROW(toolkit.Run(), std::exception);
+}
+
+TEST_F(MLTests, optimiser_sgd_serialisation)
 {
   static char const *optimiser_serialise_src = R"(
     function main() : Fixed64
