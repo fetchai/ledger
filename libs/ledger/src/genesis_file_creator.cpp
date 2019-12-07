@@ -280,6 +280,12 @@ bool GenesisFileCreator::LoadState(Variant const &object)
 
   block_coordinator_.Reset();
 
+
+  if(!storage_unit_.RevertToHash(chain::GENESIS_MERKLE_ROOT))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed test to revert to merkle root!");
+  }
+
   return true;
 }
 
