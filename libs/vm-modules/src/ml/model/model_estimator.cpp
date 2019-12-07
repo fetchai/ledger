@@ -170,8 +170,6 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
 {
   DataType optimiser_construction_impact(0.0);
 
-  bool success = false;
-
   if (!model_.model_->loss_set_)
   {
     if (loss->string() == "mse")
@@ -182,7 +180,6 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       state_.backward_pass_cost =
           state_.backward_pass_cost + MSE_BACKWARD_IMPACT() * state_.last_layer_size;
       state_.ops_count++;
-      success = true;
     }
     else if (loss->string() == "cel")
     {
@@ -192,44 +189,18 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       state_.backward_pass_cost =
           state_.backward_pass_cost + CEL_BACKWARD_IMPACT() * state_.last_layer_size;
       state_.ops_count++;
-      success = true;
-    }
-    else if (loss->string() == "scel")
-    {
-      // loss_type = fetch::ml::ops::LossType::SOFTMAX_CROSS_ENTROPY;
-      success = false;
-    }
-    else
-    {
-      success = false;
     }
   }
 
   if (!model_.model_->optimiser_set_)
   {
-    if (optimiser->string() == "adagrad")
-    {
-      // optimiser_type = fetch::ml::OptimiserType::ADAGRAD;
-      success = false;
-    }
-    else if (optimiser->string() == "adam")
+    if (optimiser->string() == "adam")
     {
       // optimiser_type = fetch::ml::OptimiserType::ADAM;
       state_.optimiser_step_impact = ADAM_STEP_IMPACT_COEF();
       optimiser_construction_impact =
           ADAM_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
           ADAM_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
-      success = true;
-    }
-    else if (optimiser->string() == "momentum")
-    {
-      // optimiser_type = fetch::ml::OptimiserType::MOMENTUM;
-      success = false;
-    }
-    else if (optimiser->string() == "rmsprop")
-    {
-      //  optimiser_type = fetch::ml::OptimiserType::RMSPROP;
-      success = false;
     }
     else if (optimiser->string() == "sgd")
     {
@@ -238,11 +209,6 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       optimiser_construction_impact =
           SGD_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
           SGD_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
-      success = true;
-    }
-    else
-    {
-      success = false;
     }
   }
 
