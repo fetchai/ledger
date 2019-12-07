@@ -58,7 +58,7 @@ public:
   }
 };
 
-TEST_F(MLTests, dataloader_commodity_construction)
+TEST_F(MLTests, DISABLED_dataloader_commodity_construction)
 {
   static char const *SOURCE = R"(
     function main()
@@ -70,7 +70,7 @@ TEST_F(MLTests, dataloader_commodity_construction)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, dataloader_tensor_construction)
+TEST_F(MLTests, DISABLED_dataloader_tensor_construction)
 {
   static char const *SOURCE = R"(
     function main()
@@ -82,7 +82,7 @@ TEST_F(MLTests, dataloader_tensor_construction)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, dataloader_invalid_mode_construction)
+TEST_F(MLTests, DISABLED_dataloader_invalid_mode_construction)
 {
   static char const *SOURCE = R"(
     function main()
@@ -94,7 +94,7 @@ TEST_F(MLTests, dataloader_invalid_mode_construction)
   ASSERT_FALSE(toolkit.Run());
 }
 
-TEST_F(MLTests, dataloader_commodity_invalid_serialisation)
+TEST_F(MLTests, DISABLED_dataloader_commodity_invalid_serialisation)
 {
   static char const *SOURCE = R"(
     function main()
@@ -108,7 +108,7 @@ TEST_F(MLTests, dataloader_commodity_invalid_serialisation)
   EXPECT_THROW(toolkit.Run(), std::exception);
 }
 
-TEST_F(MLTests, dataloader_tensor_serialisation_test)
+TEST_F(MLTests, DISABLED_dataloader_tensor_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(
     function main()
@@ -136,7 +136,7 @@ TEST_F(MLTests, dataloader_tensor_serialisation_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, trivial_persistent_tensor_dataloader_serialisation_test)
+TEST_F(MLTests, DISABLED_trivial_persistent_tensor_dataloader_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(
     persistent dataloader_state : DataLoader;
@@ -164,7 +164,7 @@ TEST_F(MLTests, trivial_persistent_tensor_dataloader_serialisation_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, dataloader_commodity_mode_invalid_add_data_by_tensor)
+TEST_F(MLTests, DISABLED_dataloader_commodity_mode_invalid_add_data_by_tensor)
 {
   static char const *SOURCE = R"(
     function main()
@@ -181,7 +181,7 @@ TEST_F(MLTests, dataloader_commodity_mode_invalid_add_data_by_tensor)
   ASSERT_FALSE(toolkit.Run());
 }
 
-TEST_F(MLTests, dataloader_tensor_mode_invalid_add_data_by_files)
+TEST_F(MLTests, DISABLED_dataloader_tensor_mode_invalid_add_data_by_files)
 {
   static char const *SOURCE = R"(
     function main()
@@ -429,7 +429,7 @@ TEST_F(MLTests, DISABLED_optimiser_construction_sgd)
   TestOptimizerConstruction("sgd");
 }
 
-TEST_F(MLTests, optimiser_construction_invalid_type)
+TEST_F(MLTests, DISABLED_optimiser_construction_invalid_type)
 {
   std::string const src =
       std::regex_replace(OPTIMIZER_MINIMAL_CONSTRUCTION, std::regex("%NAME%"), "INVALID_NAME");
