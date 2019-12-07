@@ -44,13 +44,9 @@ struct TopLevelContentTag
 {
 };
 
-namespace {
-
-TopLevelContentTag top_level_content;
+static TopLevelContentTag top_level_content;
 
 FETCH_UNUSED_IN_NAMESPACE(top_level_content)
-
-}  // namespace
 
 template <class TP>
 class TaggedTree
@@ -62,11 +58,11 @@ public:
   using Content       = typename TaggingPolicy::Content;
   using Children      = std::vector<TaggedTree>;
 
-  TaggedTree(TaggingPolicy policy = {})
+  explicit TaggedTree(TaggingPolicy policy = {})
     : tagging_policy_(std::move(policy))
   {}
 
-  TaggedTree(Tag tag, Params params = {}, TaggingPolicy policy = {})
+  explicit TaggedTree(Tag tag, Params params = {}, TaggingPolicy policy = {})
     : tagging_policy_(std::move(policy))
     , tag_(std::move(tag))
     , params_(std::move(params))
@@ -100,8 +96,8 @@ public:
     , children_(std::move(children))
   {}
 
-  TaggedTree(TaggedTree &&)      = default;
-  TaggedTree(TaggedTree const &) = default;
+  TaggedTree(TaggedTree &&) noexcept = default;
+  TaggedTree(TaggedTree const &)     = default;
 
   ~TaggedTree() = default;
 
