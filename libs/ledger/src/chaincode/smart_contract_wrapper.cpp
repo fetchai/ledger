@@ -17,15 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/smart_contract_wrapper.hpp"
-#include "moment/clocks.hpp"
 
 namespace fetch {
 namespace ledger {
 
-SmartContractWrapper::SmartContractWrapper(ConstByteArray source)
+SmartContractWrapper::SmartContractWrapper(ConstByteArray source, uint64_t timestamp)
   : source{std::move(source)}
-  , creation_timestamp{
-        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM))}
+  , creation_timestamp{timestamp}
 {}
 
 }  // namespace ledger

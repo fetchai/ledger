@@ -61,8 +61,9 @@ public:
 
   struct Result
   {
-    Status  status{Status::NOT_FOUND};
-    int64_t return_value{0};
+    Status   status{Status::NOT_FOUND};
+    int64_t  return_value{0};
+    uint64_t block_index{0};
   };
 
   using BlockIndex     = chain::TransactionLayout::BlockIndex;

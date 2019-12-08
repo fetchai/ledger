@@ -30,7 +30,7 @@ struct SmartContractWrapper
   using ConstByteArray = byte_array::ConstByteArray;
 
   SmartContractWrapper() = default;
-  explicit SmartContractWrapper(ConstByteArray source);
+  SmartContractWrapper(ConstByteArray source, uint64_t timestamp);
 
   // contract source
   ConstByteArray source;

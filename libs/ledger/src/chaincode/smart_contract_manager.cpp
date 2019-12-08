@@ -186,8 +186,8 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
       return init_status;
     }
   }
-  auto const status =
-      SetStateRecord(SmartContractWrapper{contract_source}, contract_address.display());
+  auto const status = SetStateRecord(SmartContractWrapper{contract_source, init_status.block_index},
+                                     contract_address.display());
   if (status != StateAdapter::Status::OK)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Failed to store smart contract to state DB!");
