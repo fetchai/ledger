@@ -72,7 +72,7 @@ PeerTracker::AddressSet PeerTracker::GetDesiredPeers() const
 
 void PeerTracker::AddDesiredPeer(Address const &address, PeerTracker::Duration const &expiry)
 {
-  assert(address.size() != 0);
+  assert(!address.empty());
   peer_table_.AddDesiredPeer(address, expiry);
   FETCH_LOG_DEBUG(logging_name_.c_str(), "Desired peer by address: ", address.ToBase64());
 }
@@ -80,7 +80,7 @@ void PeerTracker::AddDesiredPeer(Address const &address, PeerTracker::Duration c
 void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hint,
                                  PeerTracker::Duration const &expiry)
 {
-  assert(address.size() != 0);
+  assert(!address.empty());
   peer_table_.AddDesiredPeer(address, hint, expiry);
   FETCH_LOG_DEBUG(logging_name_.c_str(), "Desired peer by address and uri: ", address.ToBase64());
 }
@@ -997,6 +997,162 @@ void PeerTracker::RegisterConnectionDetails(UnresolvedConnection const &details)
   {
     FETCH_LOG_WARN(logging_name_.c_str(), "Could not resolve URI.");
   }
+}
+
+void PeerTracker::PrintRoutingReport(Address const &address) const
+{
+  std::stringstream ss("");
+
+  // Finding best address
+  Address          best_address{};
+  KademliaDistance best = MaxKademliaDistance();
+  ss << std::endl;
+  ss << "Routing report" << std::endl;
+  ss << "==============" << std::endl;
+  // Comparing against own address
+  auto target_kad = KademliaAddress::Create(address);
+  auto own_kad    = KademliaAddress::Create(own_address_);
+  auto own_dist   = GetKademliaDistance(target_kad, own_kad);
+  ss << Bucket::IdByLogarithm(own_dist) << " " << Bucket::IdByHamming(own_dist) << ": "
+     << own_address_.ToBase64() << std::endl;
+
+  ss << "Peers: " << std::endl;
+  {
+    FETCH_LOCK(direct_mutex_);
+
+    // Finding best address
+    for (auto &peer : directly_connected_peers_)
+    {
+      KademliaAddress cmp  = KademliaAddress::Create(peer);
+      auto            dist = GetKademliaDistance(target_kad, cmp);
+
+      ss << Bucket::IdByLogarithm(dist) << " " << Bucket::IdByHamming(dist) << ": "
+         << peer.ToBase64();
+      if (dist < best)
+      {
+        ss << " *";
+        best         = dist;
+        best_address = peer;
+      }
+      if (dist < own_dist)
+      {
+        ss << " +";
+      }
+      ss << std::endl;
+    }
+  }
+  std::cout << ss.str();
+}
+
+PeerTracker::Handle PeerTracker::LookupHandle(Address const &address)
+{
+  auto wptr = register_.LookupConnection(address);
+
+  // If it is a direct connection we just return the handle
+  auto connection = wptr.lock();
+  if (connection)
+  {
+    // TODO: Causes deadlock peer_table_.ReportLiveliness(address, own_address_);
+    return connection->handle();
+  }
+  // TODO(tfr): Create a cache for the search below
+
+  // Finding best address
+  Address own_copy = endpoint_.GetAddress();
+
+  //    KademliaDistance                    best = MaxKademliaDistance();
+  std::map<KademliaDistance, Address> candidates;
+
+  {
+    FETCH_LOCK(direct_mutex_);
+
+    // Finding best address
+    auto target_kad = KademliaAddress::Create(address);
+    for (auto &peer : directly_connected_peers_)
+    {
+      KademliaAddress cmp  = KademliaAddress::Create(peer);
+      auto            dist = GetKademliaDistance(target_kad, cmp);
+      candidates[dist]     = peer;
+    }
+
+    // Comparing against own address
+    auto own_kad     = KademliaAddress::Create(own_copy);
+    auto dist        = GetKademliaDistance(target_kad, own_kad);
+    candidates[dist] = own_address_;
+  }
+
+  for (auto &pair : candidates)
+  {
+    if (pair.second == own_copy)
+    {
+      return 0;
+    }
+
+    // Finding handle
+    wptr       = register_.LookupConnection(pair.second);
+    connection = wptr.lock();
+    if (connection)
+    {
+      // TODO(tfr): add to cache for efficiency
+
+      // TODO(tfr): Causes deadlock        peer_table_.ReportLiveliness(pair.second, own_address_);
+      return connection->handle();
+    }
+  }
+  return 0;
+}
+
+PeerTracker::Handle PeerTracker::LookupRandomHandle() const
+{
+  FETCH_LOCK(direct_mutex_);
+  std::vector<Address> all_addresses{directly_connected_peers_.begin(),
+                                     directly_connected_peers_.end()};
+
+  thread_local std::random_device rd;
+  thread_local std::mt19937       g(rd());
+  std::shuffle(all_addresses.begin(), all_addresses.end(), g);
+
+  while (!all_addresses.empty())
+  {
+    auto const address = all_addresses.back();
+    all_addresses.pop_back();
+
+    auto wptr = register_.LookupConnection(address);
+
+    auto connection = wptr.lock();
+    if (connection)
+    {
+      return connection->handle();
+    }
+  }
+
+  return 0;
+}
+
+void PeerTracker::Stop()
+{
+  FETCH_LOG_WARN(logging_name_.c_str(), "Stopping peer tracker.");
+  FETCH_LOCK(mutex_);
+  stopping_              = true;
+  tracker_configuration_ = TrackerConfiguration::AllOff();
+
+  peer_table_.ClearDesired();
+  kademlia_connection_priority_.clear();
+  kademlia_prioritized_peers_.clear();
+  kademlia_connections_.clear();
+  longrange_connection_priority_.clear();
+  longrange_prioritized_peers_.clear();
+  longrange_connections_.clear();
+}
+
+void PeerTracker::Start()
+{
+  stopping_ = false;
+}
+
+void PeerTracker::SetCacheFile(std::string const &filename)
+{
+  peer_table_.SetCacheFile(filename);
 }
 
 }  // namespace muddle
