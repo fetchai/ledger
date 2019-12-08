@@ -50,7 +50,7 @@ public:
   void SetWeights(fetch::vm::Ptr<fetch::vm::String> const &                nodename,
                   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &weights);
 
-  static void Bind(fetch::vm::Module &module);
+  static void Bind(fetch::vm::Module &module, bool enable_experimental);
 
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 

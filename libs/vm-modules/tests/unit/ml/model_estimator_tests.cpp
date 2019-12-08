@@ -148,7 +148,7 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_test)
 
           EXPECT_TRUE(model_estimator.LayerAddConv(vm_ptr_layer_type, output_channels,
                                                    input_channels, kernel_size, stride_size) ==
-                      static_cast<ChargeAmount>(fetch::vm::CHARGE_INFINITY));
+                      static_cast<ChargeAmount>(fetch::vm::MAXIMUM_CHARGE));
         }
       }
     }
@@ -200,7 +200,7 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
           EXPECT_TRUE(model_estimator.LayerAddConvActivation(vm_ptr_layer_type, output_channels,
                                                              input_channels, kernel_size,
                                                              stride_size, vm_ptr_activation_type) ==
-                      static_cast<ChargeAmount>(fetch::vm::CHARGE_INFINITY));
+                      static_cast<ChargeAmount>(fetch::vm::MAXIMUM_CHARGE));
         }
       }
     }
@@ -284,7 +284,7 @@ TEST_F(VMModelEstimatorTests, compile_simple_test)
     VmModelEstimator                           model_estimator(model);
 
     EXPECT_TRUE(model_estimator.CompileSimple(vm_ptr_opt_type, vm_ptr_layers) ==
-                static_cast<ChargeAmount>(fetch::vm::CHARGE_INFINITY));
+                static_cast<ChargeAmount>(fetch::vm::MAXIMUM_CHARGE));
   }
 }
 
@@ -344,7 +344,8 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
           model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
                                                   vm_ptr_activation_type);
-          model.AddLayer(vm_ptr_layer_type, data_size_1, label_size_1, vm_ptr_activation_type);
+          model.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
+                                        vm_ptr_activation_type);
 
           SizeType ops_count = 0;
           ops_count += 3;  // for dense layer

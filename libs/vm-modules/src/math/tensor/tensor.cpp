@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
@@ -60,46 +61,55 @@ Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>>
   return Ptr<VMTensor>{new VMTensor(vm, type_id, shape->elements)};
 }
 
-void VMTensor::Bind(Module &module)
+void VMTensor::Bind(Module &module, bool const enable_experimental)
 {
   using Index = fetch::math::SizeType;
-  module.CreateClassType<VMTensor>("Tensor")
-      .CreateConstructor(&VMTensor::Constructor)
-      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
-        return Ptr<VMTensor>{new VMTensor(vm, type_id)};
-      })
-      .CreateMemberFunction("at", &VMTensor::At<Index>, use_estimator(&TensorEstimator::AtOne))
-      .CreateMemberFunction("at", &VMTensor::At<Index, Index>,
-                            use_estimator(&TensorEstimator::AtTwo))
-      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>,
-                            use_estimator(&TensorEstimator::AtThree))
-      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>,
-                            use_estimator(&TensorEstimator::AtFour))
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, DataType>,
-                            use_estimator(&TensorEstimator::SetAtOne))
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, DataType>,
-                            use_estimator(&TensorEstimator::SetAtTwo))
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, DataType>,
-                            use_estimator(&TensorEstimator::SetAtThree))
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>,
-                            use_estimator(&TensorEstimator::SetAtFour))
-      .CreateMemberFunction("size", &VMTensor::size, use_estimator(&TensorEstimator::size))
-      .CreateMemberFunction("fill", &VMTensor::Fill, use_estimator(&TensorEstimator::Fill))
-      .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
-                            use_estimator(&TensorEstimator::FillRandom))
-      .CreateMemberFunction("min", &VMTensor::Min, use_estimator(&TensorEstimator::Min))
-      .CreateMemberFunction("max", &VMTensor::Max, use_estimator(&TensorEstimator::Max))
-      .CreateMemberFunction("reshape", &VMTensor::Reshape, use_estimator(&TensorEstimator::Reshape))
-      .CreateMemberFunction("squeeze", &VMTensor::Squeeze, use_estimator(&TensorEstimator::Squeeze))
-      .CreateMemberFunction("sum", &VMTensor::Sum, use_estimator(&TensorEstimator::Sum))
-      .CreateMemberFunction("transpose", &VMTensor::Transpose,
-                            use_estimator(&TensorEstimator::Transpose))
-      .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze,
-                            use_estimator(&TensorEstimator::Unsqueeze))
-      .CreateMemberFunction("fromString", &VMTensor::FromString,
-                            use_estimator(&TensorEstimator::FromString))
-      .CreateMemberFunction("toString", &VMTensor::ToString,
-                            use_estimator(&TensorEstimator::ToString));
+  auto interface =
+      module.CreateClassType<VMTensor>("Tensor")
+          .CreateConstructor(&VMTensor::Constructor)
+          .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
+            return Ptr<VMTensor>{new VMTensor(vm, type_id)};
+          })
+          .CreateMemberFunction("at", &VMTensor::At<Index>, use_estimator(&TensorEstimator::AtOne))
+          .CreateMemberFunction("at", &VMTensor::At<Index, Index>,
+                                use_estimator(&TensorEstimator::AtTwo))
+          .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>,
+                                use_estimator(&TensorEstimator::AtThree))
+          .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>,
+                                use_estimator(&TensorEstimator::AtFour))
+          .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, DataType>,
+                                use_estimator(&TensorEstimator::SetAtOne))
+          .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, DataType>,
+                                use_estimator(&TensorEstimator::SetAtTwo))
+          .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, DataType>,
+                                use_estimator(&TensorEstimator::SetAtThree))
+          .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>,
+                                use_estimator(&TensorEstimator::SetAtFour))
+          .CreateMemberFunction("size", &VMTensor::size, use_estimator(&TensorEstimator::size))
+          .CreateMemberFunction("fill", &VMTensor::Fill, use_estimator(&TensorEstimator::Fill))
+          .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
+                                use_estimator(&TensorEstimator::FillRandom))
+          .CreateMemberFunction("min", &VMTensor::Min, use_estimator(&TensorEstimator::Min))
+          .CreateMemberFunction("max", &VMTensor::Max, use_estimator(&TensorEstimator::Max))
+          .CreateMemberFunction("reshape", &VMTensor::Reshape,
+                                use_estimator(&TensorEstimator::Reshape))
+          .CreateMemberFunction("squeeze", &VMTensor::Squeeze,
+                                use_estimator(&TensorEstimator::Squeeze))
+          .CreateMemberFunction("sum", &VMTensor::Sum, use_estimator(&TensorEstimator::Sum))
+          .CreateMemberFunction("transpose", &VMTensor::Transpose,
+                                use_estimator(&TensorEstimator::Transpose))
+          .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze,
+                                use_estimator(&TensorEstimator::Unsqueeze))
+          .CreateMemberFunction("fromString", &VMTensor::FromString,
+                                use_estimator(&TensorEstimator::FromString))
+          .CreateMemberFunction("toString", &VMTensor::ToString,
+                                use_estimator(&TensorEstimator::ToString));
+
+  if (enable_experimental)
+  {
+    // no tensor features are experimental
+    FETCH_UNUSED(interface);
+  }
 
   // Add support for Array of Tensors
   module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<VMTensor>>>();
@@ -122,13 +132,29 @@ SizeType VMTensor::size() const
 template <typename... Indices>
 VMTensor::DataType VMTensor::At(Indices... indices) const
 {
-  return tensor_.At(indices...);
+  VMTensor::DataType result(0.0);
+  try
+  {
+    result = tensor_.At(indices...);
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(std::string(e.what()));
+  }
+  return result;
 }
 
 template <typename... Args>
 void VMTensor::SetAt(Args... args)
 {
-  tensor_.Set(args...);
+  try
+  {
+    tensor_.Set(args...);
+  }
+  catch (std::exception const &e)
+  {
+    RuntimeError(std::string(e.what()));
+  }
 }
 
 void VMTensor::Copy(ArrayType const &other)
@@ -149,7 +175,14 @@ void VMTensor::FillRandom()
 Ptr<VMTensor> VMTensor::Squeeze()
 {
   auto squeezed_tensor = tensor_.Copy();
-  squeezed_tensor.Squeeze();
+  try
+  {
+    squeezed_tensor.Squeeze();
+  }
+  catch (std::exception const &e)
+  {
+    RuntimeError("Squeeze failed: " + std::string(e.what()));
+  }
   return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, squeezed_tensor));
 }
 
@@ -195,12 +228,28 @@ DataType VMTensor::Sum()
 
 void VMTensor::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
 {
-  tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->string()));
+  try
+  {
+    tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->string()));
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(std::string(e.what()));
+  }
 }
 
 Ptr<String> VMTensor::ToString() const
 {
-  return Ptr<String>{new String(vm_, tensor_.ToString())};
+  std::string as_string;
+  try
+  {
+    as_string = tensor_.ToString();
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(std::string(e.what()));
+  }
+  return Ptr<String>{new String(vm_, as_string)};
 }
 
 ArrayType &VMTensor::GetTensor()

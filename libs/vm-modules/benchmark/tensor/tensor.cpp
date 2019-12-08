@@ -44,7 +44,7 @@ void SetUp(std::shared_ptr<VM> &vm)
   using VMFactory = fetch::vm_modules::VMFactory;
 
   // setup the VM
-  auto module = VMFactory::GetModule(fetch::vm_modules::VMFactory::USE_SMART_CONTRACTS);
+  auto module = VMFactory::GetModule(fetch::vm_modules::VMFactory::USE_ALL);
   vm          = std::make_shared<VM>(module.get());
 }
 
@@ -282,7 +282,7 @@ BENCHMARK(BM_Fill)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1000} < < <)->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);

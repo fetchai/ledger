@@ -152,34 +152,37 @@ Ptr<VMStateDict> VMGraph::StateDict()
   return ret;
 }
 
-void VMGraph::Bind(Module &module)
+void VMGraph::Bind(Module &module, bool const enable_experimental)
 {
-  module.CreateClassType<VMGraph>("Graph")
-      .CreateConstructor(&VMGraph::Constructor, vm::CHARGE_INFINITY)
-      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMGraph> {
-        return Ptr<VMGraph>{new VMGraph(vm, type_id)};
-      })
-      .CreateMemberFunction("setInput", &VMGraph::SetInput, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("evaluate", &VMGraph::Evaluate, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("backPropagate", &VMGraph::BackPropagate, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("step", &VMGraph::Step, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("addConv1D", &VMGraph::AddConv1D, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("addRelu", &VMGraph::AddRelu, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("addSoftmax", &VMGraph::AddSoftmax, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("addDropout", &VMGraph::AddDropout, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("addCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss,
-                            vm::CHARGE_INFINITY)
-      .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss,
-                            vm::CHARGE_INFINITY)
-      .CreateMemberFunction("addTranspose", &VMGraph::AddTranspose, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("addExp", &VMGraph::AddExp, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("stateDict", &VMGraph::StateDict, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("serializeToString", &VMGraph::SerializeToString, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("deserializeFromString", &VMGraph::DeserializeFromString,
-                            vm::CHARGE_INFINITY);
+  if (enable_experimental)
+  {
+    module.CreateClassType<VMGraph>("Graph")
+        .CreateConstructor(&VMGraph::Constructor, vm::MAXIMUM_CHARGE)
+        .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMGraph> {
+          return Ptr<VMGraph>{new VMGraph(vm, type_id)};
+        })
+        .CreateMemberFunction("setInput", &VMGraph::SetInput, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("evaluate", &VMGraph::Evaluate, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("backPropagate", &VMGraph::BackPropagate, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("step", &VMGraph::Step, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("addConv1D", &VMGraph::AddConv1D, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("addRelu", &VMGraph::AddRelu, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("addSoftmax", &VMGraph::AddSoftmax, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("addDropout", &VMGraph::AddDropout, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("addCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss,
+                              vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss,
+                              vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("addTranspose", &VMGraph::AddTranspose, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("addExp", &VMGraph::AddExp, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("stateDict", &VMGraph::StateDict, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("serializeToString", &VMGraph::SerializeToString, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("deserializeFromString", &VMGraph::DeserializeFromString,
+                              vm::MAXIMUM_CHARGE);
+  }
 }
 
 VMGraph::GraphType &VMGraph::GetGraph()

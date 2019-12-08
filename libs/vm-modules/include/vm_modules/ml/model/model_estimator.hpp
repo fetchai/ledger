@@ -72,6 +72,9 @@ public:
                                       math::SizeType const &                   kernel_size,
                                       math::SizeType const &                   stride_size,
                                       fetch::vm::Ptr<fetch::vm::String> const &activation);
+  ChargeAmount LayerAddDenseActivationExperimental(
+      fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+      math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation);
 
   ChargeAmount CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                  fetch::vm::Ptr<fetch::vm::String> const &optimiser);
@@ -256,7 +259,7 @@ private:
 
   void copy_state_from(ModelEstimator const &src);
 
-  static ChargeAmount infinite_charge(std::string const &log_msg = "");
+  static ChargeAmount maximum_charge(std::string const &log_msg = "");
 };
 
 }  // namespace model

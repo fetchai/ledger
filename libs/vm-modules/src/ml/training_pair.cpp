@@ -36,14 +36,17 @@ VMTrainingPair::VMTrainingPair(
   this->second = std::move(tb);
 }
 
-void VMTrainingPair::Bind(Module &module)
+void VMTrainingPair::Bind(Module &module, bool const enable_experimental)
 {
-  module.CreateClassType<fetch::vm_modules::ml::VMTrainingPair>("TrainingPair")
-      .CreateConstructor(&VMTrainingPair::Constructor, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("data", &fetch::vm_modules::ml::VMTrainingPair::data,
-                            vm::CHARGE_INFINITY)
-      .CreateMemberFunction("label", &fetch::vm_modules::ml::VMTrainingPair::label,
-                            vm::CHARGE_INFINITY);
+  if (enable_experimental)
+  {
+    module.CreateClassType<fetch::vm_modules::ml::VMTrainingPair>("TrainingPair")
+        .CreateConstructor(&VMTrainingPair::Constructor, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("data", &fetch::vm_modules::ml::VMTrainingPair::data,
+                              vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("label", &fetch::vm_modules::ml::VMTrainingPair::label,
+                              vm::MAXIMUM_CHARGE);
+  }
 }
 
 Ptr<VMTrainingPair> VMTrainingPair::Constructor(

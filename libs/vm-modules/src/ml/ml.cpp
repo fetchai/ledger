@@ -34,28 +34,28 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-void BindML(Module &module)
+void BindML(Module &module, bool const enable_experimental)
 {
   // Tensor - required by later functions
-  math::VMTensor::Bind(module);
+  math::VMTensor::Bind(module, enable_experimental);
 
   // ml fundamentals
-  VMStateDict::Bind(module);
-  VMGraph::Bind(module);
-  VMTrainingPair::Bind(module);
+  VMStateDict::Bind(module, enable_experimental);
+  VMGraph::Bind(module, enable_experimental);
+  VMTrainingPair::Bind(module, enable_experimental);
 
   // dataloader
-  VMDataLoader::Bind(module);
+  VMDataLoader::Bind(module, enable_experimental);
 
   // optimisers
-  VMOptimiser::Bind(module);
+  VMOptimiser::Bind(module, enable_experimental);
 
   // model
-  model::VMModel::Bind(module);
+  model::VMModel::Bind(module, enable_experimental);
 
   // utilities
-  utilities::VMScaler::Bind(module);
-  utilities::BindMNISTUtils(module);
+  utilities::VMScaler::Bind(module, enable_experimental);
+  utilities::BindMNISTUtils(module, enable_experimental);
 }
 
 }  // namespace ml
