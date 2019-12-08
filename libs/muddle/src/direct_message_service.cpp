@@ -246,8 +246,8 @@ void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
   FETCH_LOG_TRACE(logging_name_, "OnRoutingPong (conn: ", handle, ") complete");
 }
 
-void DirectMessageService::OnRoutingRequest(Handle handle, PacketPtr const &packet,
-                                            RoutingMessage const &msg)
+void DirectMessageService::OnRoutingRequest(Handle /*handle*/, PacketPtr const & /*packet*/,
+                                            RoutingMessage const & /*msg*/)
 {
   FETCH_UNUSED(msg);
   FETCH_LOG_TRACE(logging_name_, "OnRoutingRequest (conn: ", handle, ")");

@@ -81,6 +81,7 @@ public:
                                 bool scan_right = true);
   PeerInfoPtr GetPeerDetails(Address const &address);
   bool        HasUri(Uri const &uri) const;
+  bool        IsConnectedToUri(Uri const &uri) const;
   Address     GetAddressFromUri(Uri const &uri) const;
   std::size_t size() const;
   Uri         GetUri(Address const &address);
