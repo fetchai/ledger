@@ -220,12 +220,12 @@ bool Consensus::VerifyNotarisation(Block const &block) const
   return true;
 }
 
-uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Identity const &identity)
+uint64_t Consensus::GetBlockGenerationWeight(Block const &current, Identity const &identity)
 {
-  auto beginning_of_aeon = GetBeginningOfAeon(previous, chain_);
+  auto beginning_of_aeon = GetBeginningOfAeon(current, chain_);
 
   auto                  qualified_cabinet_weighted =
-      QualWeightedByEntropy(beginning_of_aeon.block_entropy.qualified, previous.block_entropy.EntropyAsU64());
+      QualWeightedByEntropy(beginning_of_aeon.block_entropy.qualified, current.block_entropy.EntropyAsU64());
 
   if(std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity) == qualified_cabinet_weighted.end())
   {
@@ -236,22 +236,6 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Identity con
   uint64_t const dist = static_cast<uint64_t>(std::distance(
       qualified_cabinet_weighted.begin(),
       std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity)));
-
-  FETCH_LOG_INFO(LOGGING_NAME, "dist is: ", dist, " and size is: ", qualified_cabinet_weighted.size());
-  FETCH_LOG_INFO(LOGGING_NAME, "entropy: ", previous.block_entropy.EntropyAsU64());
-  FETCH_LOG_INFO(LOGGING_NAME, "initial: ");
-
-  for (auto const &member : beginning_of_aeon.block_entropy.qualified)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, member.ToBase64());
-  }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "qualified: ");
-
-  for (auto const &member : qualified_cabinet_weighted)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, member.identifier().ToBase64());
-  }
 
   // Top rank, miner 0 should get the highest weight of qual size
   return static_cast<uint64_t>(qualified_cabinet_weighted.size() - dist);
@@ -275,26 +259,9 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   // aeon beginning.
   Block beginning_of_aeon = GetBeginningOfAeon(proposed, chain_);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Found beg of aeon: ", beginning_of_aeon.block_number);
-
   BlockEntropy::Cabinet qualified_cabinet = beginning_of_aeon.block_entropy.qualified;
   auto                  qualified_cabinet_weighted =
-      QualWeightedByEntropy(qualified_cabinet, previous.block_entropy.EntropyAsU64());
-
-  FETCH_LOG_INFO(LOGGING_NAME, "entropy: ", previous.block_entropy.EntropyAsU64());
-  FETCH_LOG_INFO(LOGGING_NAME, "initial: ");
-
-  for (auto const &member : qualified_cabinet)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, member.ToBase64());
-  }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "qualified: ");
-
-  for (auto const &member : qualified_cabinet_weighted)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, member.identifier().ToBase64());
-  }
+      QualWeightedByEntropy(qualified_cabinet, proposed.block_entropy.EntropyAsU64());
 
   if (qualified_cabinet.find(identity.identifier()) == qualified_cabinet.end())
   {
