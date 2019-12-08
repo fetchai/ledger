@@ -23,6 +23,7 @@
 
 namespace {
 
+constexpr uint32_t LANE_ID        = 0;
 constexpr uint32_t LOG2_NUM_LANES = 1;
 
 using fetch::chain::Transaction;
@@ -36,7 +37,7 @@ protected:
     storage_.New("tx.storage.engine.tests.db", "tx.storage.engine.tests.index.db", true);
   }
 
-  TransactionStorageEngine storage_{LOG2_NUM_LANES};
+  TransactionStorageEngine storage_{LOG2_NUM_LANES, LANE_ID};
   TransactionGenerator     tx_gen_;
 };
 
