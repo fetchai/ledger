@@ -225,7 +225,7 @@ KademliaTable::Peers KademliaTable::FindPeerByHamming(Address const &address)
   FETCH_LOCK(mutex_);
   auto kam_address = KademliaAddress::Create(address);
   auto dist        = GetKademliaDistance(own_kad_address_, kam_address);
-  auto hamming_id  = Bucket::IdByLogarithm(dist);
+  auto hamming_id  = Bucket::IdByHamming(dist);
 
   return FindPeerByHammingInternal(kam_address, hamming_id);
 }

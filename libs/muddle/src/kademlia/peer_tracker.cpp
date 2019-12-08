@@ -19,6 +19,7 @@
 #include "kademlia/peer_tracker.hpp"
 #include "core/time/to_seconds.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <memory>
 #include <queue>
@@ -30,7 +31,8 @@ namespace {
 
 std::string GenerateLoggingName(NetworkId const &network_id)
 {
-  return "PeerTracker:" + network_id.ToString();
+  static std::atomic<uint64_t> tc{0};
+  return "PeerTracker:" + network_id.ToString() + "-" + std::to_string(++tc);
 }
 
 }  // namespace
@@ -70,6 +72,7 @@ PeerTracker::AddressSet PeerTracker::GetDesiredPeers() const
 
 void PeerTracker::AddDesiredPeer(Address const &address, PeerTracker::Duration const &expiry)
 {
+  assert(address.size() != 0);
   peer_table_.AddDesiredPeer(address, expiry);
   FETCH_LOG_DEBUG(logging_name_.c_str(), "Desired peer by address: ", address.ToBase64());
 }
@@ -77,6 +80,7 @@ void PeerTracker::AddDesiredPeer(Address const &address, PeerTracker::Duration c
 void PeerTracker::AddDesiredPeer(Address const &address, network::Peer const &hint,
                                  PeerTracker::Duration const &expiry)
 {
+  assert(address.size() != 0);
   peer_table_.AddDesiredPeer(address, hint, expiry);
   FETCH_LOG_DEBUG(logging_name_.c_str(), "Desired peer by address and uri: ", address.ToBase64());
 }
@@ -289,8 +293,8 @@ void PeerTracker::ConnectToPeers(AddressSet &                  connections_made,
         continue;
       }
 
-      FETCH_LOG_DEBUG(logging_name_.c_str(), "Connecting to prioritised peer ", uri.ToString(),
-                      " with address ", p.address.ToBase64());
+      FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to prioritised peer ", uri.ToString(),
+                     " with address ", p.address.ToBase64());
       connections_.AddPersistentPeer(uri);
     }
 
@@ -318,8 +322,8 @@ void PeerTracker::DisconnectDuplicates()
           if (conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING)
           {
             auto const handle = conn->handle();
-            FETCH_LOG_DEBUG(logging_name_.c_str(), "Disconnecting from bilateral ", handle,
-                            " connection: ", adr.ToBase64());
+            FETCH_LOG_WARN(logging_name_.c_str(), "Disconnecting from bilateral ", handle,
+                           " connection: ", adr.ToBase64());
 
             // Note that the order of these two matters. RemovePersistentPeer must
             // be executed first.
@@ -342,8 +346,8 @@ void PeerTracker::DisconnectFromSelf()
     if (conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING)
     {
       auto const handle = conn->handle();
-      FETCH_LOG_DEBUG(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
-                      " connection: ", address.ToBase64());
+      FETCH_LOG_WARN(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
+                     " connection");
 
       // Note that the order of these two matters. RemovePersistentPeer must
       // be executed first.
@@ -378,8 +382,8 @@ void PeerTracker::DisconnectFromPeers()
       if (conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING)
       {
         auto const handle = conn->handle();
-        FETCH_LOG_DEBUG(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
-                        " connection: ", address.ToBase64());
+        FETCH_LOG_WARN(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
+                       " connection: ", address.ToBase64());
 
         // Note that the order of these two matters. RemovePersistentPeer must
         // be executed first.
@@ -622,7 +626,7 @@ void PeerTracker::ConnectToDesiredPeers()
     // Finding known details
     auto    known_details = peer_table_.GetPeerDetails(peer);
     Address best_peer;
-    FETCH_LOG_INFO(logging_name_.c_str(), "Looking for connections to ", peer.ToBase64());
+    FETCH_LOG_DEBUG(logging_name_.c_str(), "Looking for connections to ", peer.ToBase64());
 
     // If we have details, we can connect directly
     if (known_details != nullptr)
@@ -699,7 +703,7 @@ void PeerTracker::ConnectToDesiredPeers()
       if (!uri.IsValid())
       {
         no_uri_.insert(best_peer);
-        FETCH_LOG_WARN(logging_name_.c_str(), " - URI failed! ", peer.ToBase64());
+        FETCH_LOG_WARN(logging_name_.c_str(), "Uri not found for peer ", peer.ToBase64());
         continue;
       }
 
@@ -709,10 +713,7 @@ void PeerTracker::ConnectToDesiredPeers()
     }
 
     // Keeping track of what we have connected to.
-    if (best_peer != own_address_)
-    {
-      keep_connections_.insert(best_peer);
-    }
+    keep_connections_.insert(best_peer);
 
     // Adding the peer to the track list.
     if (peer != best_peer)
@@ -736,16 +737,6 @@ void PeerTracker::Periodically()
   no_uri_.clear();
 
   peer_table_.TrimDesiredPeers();
-
-  // Ensuring that we keep connections open which we are currently
-  // pulling data from
-  for (auto const &item : uri_resolution_tasks_)
-  {
-    if (item.first != own_address_)
-    {
-      keep_connections_.emplace(item.first);
-    }
-  }
 
   // TODO(tfr): Add something similar for pulling
 
@@ -773,6 +764,16 @@ void PeerTracker::Periodically()
     ProcessConnectionHandles();
   }
 
+  // Ensuring that we keep connections open which we are currently
+  // pulling data from
+  for (auto const &item : uri_resolution_tasks_)
+  {
+    if (item.first != own_address_)
+    {
+      keep_connections_.emplace(item.first);
+    }
+  }
+
   if (tracker_configuration_.pull_peers)
   {
     // Scheduling tracking every now and then
@@ -794,7 +795,7 @@ void PeerTracker::Periodically()
   {
     // TODO(tfr): Move into a functino
     // Finding peers close to us
-    auto peers = peer_table_.FindPeer(own_address_);
+    auto peers = peer_table_.FindPeerByHamming(own_address_);
 
     // Updating the connectivity priority list with the nearest known neighbours
     // Adding the cloest known peers to the priority list
@@ -809,7 +810,7 @@ void PeerTracker::Periodically()
       // Creating a priority for the list
       AddressPriority priority;
       priority.address = p.address;
-      priority.bucket  = Bucket::IdByLogarithm(p.distance);
+      priority.bucket  = Bucket::IdByHamming(p.distance);
 
       longrange_connection_priority_.insert({p.address, std::move(priority)});
     }
@@ -827,6 +828,12 @@ void PeerTracker::Periodically()
       p.second.UpdatePriority();
       longrange_prioritized_peers_.push_back(p.second);
     }
+
+    std::sort(longrange_prioritized_peers_.begin(), longrange_prioritized_peers_.end(),
+            [](auto const &a, auto const &b) -> bool {
+              // Making highest priority appear first
+              return a.priority > b.priority;
+            });    
 
     ConnectToPeers(longrange_connections_, longrange_prioritized_peers_,
                    tracker_configuration_.max_longrange_connections);

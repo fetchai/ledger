@@ -738,7 +738,9 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
         delivery_attempts_[packet] = 0;
 
         // Ensuring that the tracker is looking for the desired connection
-        tracker_->AddDesiredPeer(packet->GetTarget(), config_.temporary_connection_length);
+        tracker_->PrintRoutingReport(packet->GetTarget());
+        //        tracker_->AddDesiredPeer(packet->GetTarget(),
+        //        config_.temporary_connection_length);
       }
 
       attempts = ++delivery_attempts_[packet];

@@ -208,8 +208,9 @@ inline void AllToAllConnectivity(std::unique_ptr<Network> &               networ
 
 int main()
 {
-  auto config                     = fetch::muddle::TrackerConfiguration::AllOn();
-  config.max_kademlia_connections = 2;
+  auto config                      = fetch::muddle::TrackerConfiguration::AllOn();
+  config.max_kademlia_connections  = 2;
+  config.max_longrange_connections = 3;
 
   uint64_t N       = 40;
   auto     network = Network::New(N, config);

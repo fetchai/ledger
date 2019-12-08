@@ -117,6 +117,50 @@ public:
 
   /// Low-level
   /// @{
+  void PrintRoutingReport(Address const &address) const
+  {
+    std::stringstream ss("");
+
+    // Finding best address
+    Address          best_address{};
+    KademliaDistance best = MaxKademliaDistance();
+    ss << std::endl;
+    ss << "Routing report" << std::endl;
+    ss << "==============" << std::endl;
+    // Comparing against own address
+    auto target_kad = KademliaAddress::Create(address);
+    auto own_kad    = KademliaAddress::Create(own_address_);
+    auto own_dist   = GetKademliaDistance(target_kad, own_kad);
+    ss << Bucket::IdByLogarithm(own_dist) << " " << Bucket::IdByHamming(own_dist) << ": "
+       << own_address_.ToBase64() << std::endl;
+
+    ss << "Peers: " << std::endl;
+    {
+      FETCH_LOCK(direct_mutex_);
+
+      // Finding best address
+      for (auto &peer : directly_connected_peers_)
+      {
+        KademliaAddress cmp  = KademliaAddress::Create(peer);
+        auto            dist = GetKademliaDistance(target_kad, cmp);
+
+        ss << Bucket::IdByLogarithm(dist) << " " << Bucket::IdByHamming(dist) << ": "
+           << peer.ToBase64();
+        if (dist < best)
+        {
+          ss << " *";
+          best         = dist;
+          best_address = peer;
+        }
+        if (dist < own_dist)
+        {
+          ss << " +";
+        }
+        ss << std::endl;
+      }
+    }
+    std::cout << ss.str();
+  }
   Handle LookupHandle(Address const &address) const
   {
     auto wptr = register_.LookupConnection(address);

@@ -95,7 +95,75 @@ struct KademliaAddress
   uint8_t words[ADDRESS_SIZE];
 };
 
-using KademliaDistance = std::array<uint8_t, KademliaAddress::ADDRESS_SIZE>;
+// using KademliaDistance = std::array<uint8_t, KademliaAddress::ADDRESS_SIZE>;
+
+class KademliaDistance
+{
+public:
+  using ContainerType  = std::array<uint8_t, KademliaAddress::ADDRESS_SIZE>;
+  using iterator       = ContainerType::iterator;
+  using const_iterator = ContainerType::const_iterator;
+
+  iterator begin()
+  {
+    return value_.begin();
+  }
+
+  iterator end()
+  {
+    return value_.end();
+  }
+
+  const_iterator begin() const
+  {
+    return value_.begin();
+  }
+
+  const_iterator end() const
+  {
+    return value_.end();
+  }
+
+  const_iterator cbegin() const
+  {
+    return value_.cbegin();
+  }
+
+  const_iterator cend() const
+  {
+    return value_.cend();
+  }
+
+  uint8_t operator[](std::size_t const &i) const
+  {
+    return value_[i];
+  }
+  uint8_t &operator[](std::size_t const &i)
+  {
+    return value_[i];
+  }
+
+  std::size_t size() const
+  {
+    return value_.size();
+  }
+
+  bool operator<(KademliaDistance const &other)
+  {
+    std::size_t i = size();
+
+    do
+    {
+      --i;
+    } while ((i != 0) && (value_[i] == other.value_[i]));
+    return value_[i] < other.value_[i];
+  }
+
+private:
+  ContainerType value_;
+  template <typename T, typename D>
+  friend struct serializers::ForwardSerializer;
+};
 
 inline KademliaDistance GetKademliaDistance(KademliaAddress const &a, KademliaAddress const &b)
 {
@@ -144,6 +212,26 @@ public:
     byte_array::ConstByteArray a;
     deserializer >> a;
     adr = Type::FromByteArray(a);
+  }
+};
+
+template <typename D>
+struct ForwardSerializer<muddle::KademliaDistance, D>
+{
+public:
+  using Type       = muddle::KademliaDistance;
+  using DriverType = D;
+
+  template <typename Serializer>
+  static void Serialize(Serializer &serializer, Type const &dist)
+  {
+    serializer << dist.value_;
+  }
+
+  template <typename Deserializer>
+  static void Deserialize(Deserializer &deserializer, Type &dist)
+  {
+    deserializer >> dist.value_;
   }
 };
 
