@@ -388,7 +388,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
           {
             FETCH_LOG_INFO(LOGGING_NAME, "Received empty block response. Walking back.");
 
-            block_resolving_ = GetBlock(block_resolving_->hash);
+            block_resolving_ = chain_.GetBlock(block_resolving_->hash);
 
             HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
             auto const &latest_hash = blocks.back().hash;
