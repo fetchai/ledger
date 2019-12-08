@@ -1588,7 +1588,7 @@ bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block
 {
   bool success{false};
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Read from storage");
+  /* FETCH_LOG_INFO(LOGGING_NAME, "Read from storage"); */
 
   if (block_store_)
   {

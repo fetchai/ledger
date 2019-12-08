@@ -528,7 +528,6 @@ NextBlockPtr Consensus::GenerateNextBlock()
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Failed to generate valid block timing for: ", block_number);
     return {};
   }
 

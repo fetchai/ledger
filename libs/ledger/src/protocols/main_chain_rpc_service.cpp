@@ -66,7 +66,7 @@ constexpr State GetInitialState(Mode mode) noexcept
   default:;
   }
 
-  return State::SYNCHRONISED;
+  return State::REQUEST_HEAVIEST_CHAIN;
 }
 
 }  // namespace
@@ -82,7 +82,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
   , rpc_client_("R:MChain", endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
-  , state_machine_{std::make_shared<StateMachine>("MainChain", GetInitialState(mode_),
+  , state_machine_{std::make_shared<StateMachine>("MainChain", State::SYNCHRONISED,
                                                   [](State state) { return ToString(state); })}
   , recv_block_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_recv_block_total",
@@ -129,13 +129,11 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   state_machine_->RegisterHandler(State::SYNCHRONISED,            this, &MainChainRpcService::OnSynchronised);
   // clang-format on
 
-#ifdef FETCH_LOG_DEBUG_ENABLED
   state_machine_->OnStateChange([](State current, State previous) {
     FETCH_UNUSED(current);
     FETCH_UNUSED(previous);
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
-#endif  // FETCH_LOG_DEBUG_ENABLED
 }
 
 void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block)
@@ -176,7 +174,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   if (!ValidBlock(block, "new block"))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Gossiped block did not prove valid");
+    FETCH_LOG_WARN(LOGGING_NAME, "Gossiped block did not prove valid. Loose blocks seen: ", loose_blocks_seen_);
     loose_blocks_seen_++;
     return;
   }
