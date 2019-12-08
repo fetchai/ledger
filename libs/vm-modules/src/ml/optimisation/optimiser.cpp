@@ -25,7 +25,7 @@
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/optimisation/optimiser.hpp"
@@ -97,18 +97,21 @@ VMOptimiser::VMOptimiser(VM *vm, TypeId type_id, std::string const &mode, GraphT
   loader_ = (loader->GetDataLoader());
 }
 
-void VMOptimiser::Bind(Module &module)
+void VMOptimiser::Bind(Module &module, bool const enable_experimental)
 {
-  module.CreateClassType<VMOptimiser>("Optimiser")
-      .CreateConstructor(&VMOptimiser::Constructor)
-      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMOptimiser> {
-        return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id)};
-      })
-      .CreateMemberFunction("run", &VMOptimiser::RunData)
-      .CreateMemberFunction("run", &VMOptimiser::RunLoader)
-      .CreateMemberFunction("run", &VMOptimiser::RunLoaderNoSubset)
-      .CreateMemberFunction("setGraph", &VMOptimiser::SetGraph)
-      .CreateMemberFunction("setDataloader", &VMOptimiser::SetDataloader);
+  if (enable_experimental)
+  {
+    module.CreateClassType<VMOptimiser>("Optimiser")
+        .CreateConstructor(&VMOptimiser::Constructor, vm::MAXIMUM_CHARGE)
+        .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMOptimiser> {
+          return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id)};
+        })
+        .CreateMemberFunction("run", &VMOptimiser::RunData, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("run", &VMOptimiser::RunLoader, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("run", &VMOptimiser::RunLoaderNoSubset, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("setGraph", &VMOptimiser::SetGraph, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("setDataloader", &VMOptimiser::SetDataloader, vm::MAXIMUM_CHARGE);
+  }
 }
 
 Ptr<VMOptimiser> VMOptimiser::Constructor(

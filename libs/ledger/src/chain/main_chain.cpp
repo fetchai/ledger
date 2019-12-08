@@ -91,28 +91,8 @@ MainChain::MainChain(Mode mode)
 
 MainChain::~MainChain()
 {
-  using namespace fetch::serializers;
-
-  if (block_store_)
-  {
-    block_store_->Flush(false);
-  }
-
-  if (mode_ != Mode::IN_MEMORY_DB)
-  {
-    try
-    {
-      std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
-      LargeObjectSerializeHelper buffer{};
-      buffer << bloom_filter_;
-
-      out << buffer.data();
-    }
-    catch (std::exception const &e)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to save Bloom filter to file, reason: ", e.what());
-    }
-  }
+  // ensure the chain has been flushed to disk
+  FlushToDisk();
 }
 
 void MainChain::Reset()
@@ -1187,7 +1167,7 @@ void MainChain::WriteToFile()
     FlushBlock(block);
 
     // Force flush of the file object!
-    block_store_->Flush(false);
+    FlushToDisk();
 
     // as final step do some sanity checks
     TrimCache();
@@ -1986,6 +1966,32 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   bloom_filter_false_positive_count_->add(false_positives);
 
   return duplicates;
+}
+
+void MainChain::FlushToDisk()
+{
+  using namespace fetch::serializers;
+
+  if (block_store_)
+  {
+    block_store_->Flush(false);
+  }
+
+  if (mode_ != Mode::IN_MEMORY_DB)
+  {
+    try
+    {
+      std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
+      LargeObjectSerializeHelper buffer{};
+      buffer << bloom_filter_;
+
+      out << buffer.data();
+    }
+    catch (std::exception const &e)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to save Bloom filter to file, reason: ", e.what());
+    }
+  }
 }
 
 }  // namespace ledger

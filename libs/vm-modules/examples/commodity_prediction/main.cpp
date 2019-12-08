@@ -30,7 +30,7 @@
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/system.hpp"
 #include "vm_modules/math/read_csv.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/ml.hpp"
 
 #include <cstddef>
@@ -279,7 +279,7 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::System::Bind(*module);
 
-  fetch::vm_modules::ml::BindML(*module);
+  fetch::vm_modules::ml::BindML(*module, true);
 
   fetch::vm_modules::CreatePrint(*module);
 
