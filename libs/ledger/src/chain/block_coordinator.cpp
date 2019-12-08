@@ -1005,7 +1005,6 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
   }
 
   case ExecutionStatus::RUNNING:
-    FETCH_LOG_INFO(LOGGING_NAME, "Merkle Hash3: ", ToBase64(next_block_->merkle_hash));
     if (exec_wait_periodic_.Poll())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Waiting for new block execution (following: ",

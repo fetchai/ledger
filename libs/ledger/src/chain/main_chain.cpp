@@ -567,7 +567,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
   // Note: min needs a reference to something, so this is a workaround since UPPER_BOUND is a
   // constexpr
-  MilliTimer myTimer("MainChain::HeaviestChain");
+  MilliTimer myTimer("MainChain::HeaviestChain", 2000);
 
   FETCH_LOCK(lock_);
 
@@ -625,7 +625,7 @@ MainChain::IntBlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
-  MilliTimer myTimer("MainChain::ChainPreceding");
+  MilliTimer myTimer("MainChain::ChainPreceding", 2000);
 
   FETCH_LOCK(lock_);
 
