@@ -400,9 +400,14 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
           }
           else
           {
+            block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
+
             FETCH_LOG_INFO(LOGGING_NAME, "Received empty block response. Walking back.");
 
-            block_resolving_ = chain_.GetBlock(block_resolving_->hash);
+            if(block_resolving_)
+            {
+              FETCH_LOG_INFO(LOGGING_NAME, "Walked to: ", block_resolving_->block_number);
+            }
           }
         }
         else
