@@ -150,6 +150,8 @@ void Muddle::SetPeerTableFile(std::string const &filename)
  */
 bool Muddle::Start(Uris const &peers, Ports const &ports)
 {
+  stopping_ = false;
+
   // Setting ports prior to starting as a fallback mechanism
   // for giving details of peer
   peer_tracker_->UpdateExternalPorts(ports);
@@ -227,6 +229,7 @@ bool Muddle::Start(Ports const &ports)
  */
 void Muddle::Stop()
 {
+  stopping_ = true;
   peer_tracker_->Stop();
 
   // stop all the periodic actions
@@ -576,6 +579,13 @@ void Muddle::UpdateExternalAddresses()
  */
 void Muddle::RunPeriodicMaintenance()
 {
+  // If we are stopping the muddle, we do not want to connect to new nodes
+  // and otherwise do periodic maintenance.
+  if (stopping_)
+  {
+    return;
+  }
+
   FETCH_LOG_TRACE(logging_name_, "Running periodic maintenance");
   try
   {
