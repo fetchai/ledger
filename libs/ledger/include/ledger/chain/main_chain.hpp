@@ -302,6 +302,8 @@ public:
 
   bool RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks);
 
+  void FlushToDisk();
+
   Mode          mode_{Mode::IN_MEMORY_DB};
   BlockStorePtr block_store_;  ///< Long term storage and backup
   std::fstream  head_store_;
