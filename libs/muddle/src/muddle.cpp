@@ -659,7 +659,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
   assert(strong_conn);
   auto conn_handle = strong_conn->handle();
 
-  FETCH_LOG_INFO(logging_name_, "Creating connection to ", peer.ToString(), " (conn: ", conn_handle,
+  FETCH_LOG_DEBUG(logging_name_, "Creating connection to ", peer.ToString(), " (conn: ", conn_handle,
                  ")");
 
   ConnectionRegPtr reg = std::static_pointer_cast<network::AbstractConnectionRegister>(register_);

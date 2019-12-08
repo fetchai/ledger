@@ -256,11 +256,6 @@ int main(int argc, char **argv)
       auto initial_peers = ToUriSet(settings.peers.value());
       auto bootstrap     = CreateBootstrap(settings, cfg, p2p_key, initial_peers);
 
-      for (auto const &uri : initial_peers)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Initial Peer: ", uri);
-      }
-
       // create and run the constellation
       auto constellation =
           std::make_unique<fetch::constellation::Constellation>(std::move(p2p_key), std::move(cfg));

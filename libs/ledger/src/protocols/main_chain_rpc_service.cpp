@@ -66,7 +66,7 @@ constexpr State GetInitialState(Mode mode) noexcept
   default:;
   }
 
-  return State::REQUEST_HEAVIEST_CHAIN;
+  return State::SYNCHRONISED;
 }
 
 }  // namespace

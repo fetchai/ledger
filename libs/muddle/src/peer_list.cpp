@@ -162,7 +162,7 @@ void PeerConnectionList::OnConnectionEstablished(Uri const &peer)
     status_callback_(peer, connection_handle, ConnectionState::CONNECTED);
   }
 
-  FETCH_LOG_INFO(logging_name_, "Connection to ", peer.uri(),
+  FETCH_LOG_DEBUG(logging_name_, "Connection to ", peer.uri(),
                  " established (conn: ", connection_handle, ")");
 }
 
