@@ -113,6 +113,7 @@ public:
   /// @name Error handling
   /// @{
   settings::Setting<bool> shutdown_on_critical_failure;
+  settings::Setting<bool> allow_crashing;
   /// @}
 
   // Operators

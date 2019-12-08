@@ -80,6 +80,7 @@ Settings::Settings()
   , stake_delay_period    {*this, "stake-delay-period",      DEFAULT_STAKE_DELAY_PERIOD,   ""}
   , aeon_period           {*this, "aeon-period",             DEFAULT_AEON_PERIOD,          "The number of blocks one cabinet is governing"}
   , shutdown_on_critical_failure {*this, "shutdown-on-fail", false, "Whether or not to shutdown on critical system failures"}
+  , allow_crashing {*this, "allow-crashing", false, "Whether or not to allow critical system failures to cause a crash"}  
 {}
 // clang-format on
 
