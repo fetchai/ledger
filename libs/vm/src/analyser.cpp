@@ -704,9 +704,9 @@ void Analyser::CheckSynergeticContract(LedgerRestrictionMetadata const &metadata
     problem_param_type = problem_function.parameter_types[0];
   }
 
-  bool const problem_params_correct = problem_function.parameter_types.size() == 1 &&
-                                      problem_param_type &&
-                                      problem_param_type->name == "Array<StructuredData>";
+  bool const problem_params_correct = (problem_function.parameter_types.size() == 1) &&
+                                      (problem_param_type != nullptr) &&
+                                      (problem_param_type->name == "Array<StructuredData>");
   if (!problem_params_correct)
   {
     AddError(
@@ -733,9 +733,9 @@ void Analyser::CheckSynergeticContract(LedgerRestrictionMetadata const &metadata
   }
 
   bool const work_params_correct =
-      work_function.parameter_types.size() == 2 && work_first_param_type &&
-      work_first_param_type == problem_function.return_type && work_second_param_type &&
-      work_second_param_type->name == "UInt256";
+      (work_function.parameter_types.size() == 2) && (work_first_param_type != nullptr) &&
+      (work_first_param_type == problem_function.return_type) &&
+      (work_second_param_type != nullptr) && (work_second_param_type->name == "UInt256");
   if (!work_params_correct)
   {
     AddError(work_file, work_node->line,
@@ -767,9 +767,10 @@ void Analyser::CheckSynergeticContract(LedgerRestrictionMetadata const &metadata
   }
 
   bool const objective_params_correct =
-      objective_function.parameter_types.size() == 2 && objective_first_param_type &&
-      objective_first_param_type == problem_function.return_type && objective_second_param_type &&
-      objective_second_param_type == work_function.return_type;
+      (objective_function.parameter_types.size() == 2) && (objective_first_param_type != nullptr) &&
+      (objective_first_param_type == problem_function.return_type) &&
+      (objective_second_param_type != nullptr) &&
+      (objective_second_param_type == work_function.return_type);
   if (!objective_params_correct)
   {
     AddError(objective_file, objective_node->line,
@@ -795,10 +796,11 @@ void Analyser::CheckSynergeticContract(LedgerRestrictionMetadata const &metadata
     clear_second_param_type = clear_function.parameter_types[1];
   }
 
-  bool const clear_params_correct =
-      clear_function.parameter_types.size() == 2 && clear_first_param_type &&
-      clear_first_param_type == problem_function.return_type && clear_second_param_type &&
-      clear_second_param_type == work_function.return_type;
+  bool const clear_params_correct = (clear_function.parameter_types.size() == 2) &&
+                                    (clear_first_param_type != nullptr) &&
+                                    (clear_first_param_type == problem_function.return_type) &&
+                                    (clear_second_param_type != nullptr) &&
+                                    (clear_second_param_type == work_function.return_type);
   if (!clear_params_correct)
   {
     AddError(clear_file, clear_node->line,
