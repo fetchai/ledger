@@ -127,29 +127,29 @@ namespace {
 std::atomic<bool> shutdown_on_critical_failure{false};
 }
 
-void ThrowException(int signal)
-{
-  FETCH_LOG_ERROR(LOGGING_NAME, "Encountered segmentation fault or floating point exception.");
-  ERROR_BACKTRACE;
-
-  if (shutdown_on_critical_failure && (gConstellationInstance != nullptr))
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Shutting down and restarting.");
-
-    // Gracefully shutting down
-    gConstellationInstance.load()->SignalStop();
-  }
-
-  // Throwing an exception that can be caught by the
-  // system to allow it to run until shutdown
-  switch (signal)
-  {
-  case SIGSEGV:
-    throw std::runtime_error("Segmentation fault.");
-  case SIGFPE:
-    throw std::runtime_error("Floating point exception.");
-  }
-}
+//void ThrowException(int signal)
+//{
+//  FETCH_LOG_ERROR(LOGGING_NAME, "Encountered segmentation fault or floating point exception.");
+//  ERROR_BACKTRACE;
+//
+//  if (shutdown_on_critical_failure && (gConstellationInstance != nullptr))
+//  {
+//    FETCH_LOG_ERROR(LOGGING_NAME, "Shutting down and restarting.");
+//
+//    // Gracefully shutting down
+//    gConstellationInstance.load()->SignalStop();
+//  }
+//
+//  // Throwing an exception that can be caught by the
+//  // system to allow it to run until shutdown
+//  switch (signal)
+//  {
+//  case SIGSEGV:
+//    throw std::runtime_error("Segmentation fault.");
+//  case SIGFPE:
+//    throw std::runtime_error("Floating point exception.");
+//  }
+//}
 
 /**
  * Determine is a version flag has been present on the command line
@@ -289,11 +289,11 @@ int main(int argc, char **argv)
       std::signal(SIGTERM, InterruptHandler);
 
       // Making the system resillient to segmentation faults
-      if (!settings.allow_crashing)
-      {
-        std::signal(SIGSEGV, ThrowException);
-        std::signal(SIGFPE, ThrowException);
-      }
+      //if (!settings.allow_crashing)
+      //{
+      //  std::signal(SIGSEGV, ThrowException);
+      //  std::signal(SIGFPE, ThrowException);
+      //}
 
       // run the application
       try
