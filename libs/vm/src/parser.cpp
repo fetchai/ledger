@@ -569,97 +569,93 @@ BlockNodePtr Parser::ParseFreeFunctionDefinition()
 
 bool Parser::ParsePrototype(NodePtr const &prototype_node)
 {
-  bool ok = false;
-  do
+  Next();
+  if (token_->kind != Token::Kind::Identifier)
   {
-    Next();
-    if (token_->kind != Token::Kind::Identifier)
+    AddError("expected identifier");
+    return false;
+  }
+  ExpressionNodePtr function_name_node =
+      CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+  prototype_node->children.push_back(function_name_node);
+  Next();
+  if (token_->kind != Token::Kind::LeftParenthesis)
+  {
+    AddError("expected '('");
+    return false;
+  }
+  Next();
+  if (token_->kind != Token::Kind::RightParenthesis)
+  {
+    bool inner_ok = false;
+    int  count    = 0;
+    do
     {
-      AddError("expected identifier");
-      break;
-    }
-    ExpressionNodePtr function_name_node =
-        CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
-    prototype_node->children.push_back(function_name_node);
-    Next();
-    if (token_->kind != Token::Kind::LeftParenthesis)
-    {
-      AddError("expected '('");
-      break;
-    }
-    Next();
-    if (token_->kind != Token::Kind::RightParenthesis)
-    {
-      bool inner_ok = false;
-      int  count    = 0;
-      do
+      if (token_->kind != Token::Kind::Identifier)
       {
-        if (token_->kind != Token::Kind::Identifier)
+        if (count != 0)
         {
-          if (count != 0)
-          {
-            AddError("expected identifier");
-          }
-          else
-          {
-            AddError("expected identifier or ')'");
-          }
-          break;
+          AddError("expected identifier");
         }
-        ExpressionNodePtr parameter_node =
-            CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
-        prototype_node->children.push_back(parameter_node);
-        Next();
-        if (token_->kind != Token::Kind::Colon)
+        else
         {
-          AddError("expected ':'");
-          break;
+          AddError("expected identifier or ')'");
         }
-        ExpressionNodePtr parameter_type_node = ParseType();
-        if (parameter_type_node == nullptr)
-        {
-          break;
-        }
-        prototype_node->children.push_back(parameter_type_node);
-        Next();
-        if (token_->kind == Token::Kind::RightParenthesis)
-        {
-          inner_ok = true;
-          break;
-        }
-        if (token_->kind != Token::Kind::Comma)
-        {
-          AddError("expected ',' or ')'");
-          break;
-        }
-        Next();
-        ++count;
-      } while (true);
-      if (!inner_ok)
+        break;
+      }
+      ExpressionNodePtr parameter_node =
+          CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+      prototype_node->children.push_back(parameter_node);
+      Next();
+      if (token_->kind != Token::Kind::Colon)
+      {
+        AddError("expected ':'");
+        break;
+      }
+      ExpressionNodePtr parameter_type_node = ParseType();
+      if (parameter_type_node == nullptr)
       {
         break;
       }
-    }
-    // Scan for optional return type
-    ExpressionNodePtr return_type_node;
-    Next();
-    if (token_->kind == Token::Kind::Colon)
-    {
-      return_type_node = ParseType();
-      if (return_type_node == nullptr)
+      prototype_node->children.push_back(parameter_type_node);
+      Next();
+      if (token_->kind == Token::Kind::RightParenthesis)
       {
+        inner_ok = true;
         break;
       }
-    }
-    else
+      if (token_->kind != Token::Kind::Comma)
+      {
+        AddError("expected ',' or ')'");
+        break;
+      }
+      Next();
+      ++count;
+    } while (true);
+    if (!inner_ok)
     {
-      Undo();
+      return false;
     }
-    // NOTE: the return type node is legitimately null if no return type is supplied
-    prototype_node->children.push_back(return_type_node);
-    ok = true;
-  } while (false);
-  return ok;
+  }
+  // Scan for optional return type
+  ExpressionNodePtr return_type_node;
+  Next();
+  if (token_->kind == Token::Kind::Colon)
+  {
+    return_type_node = ParseType();
+    if (return_type_node == nullptr)
+    {
+      return false;
+    }
+  }
+  else
+  {
+    Undo();
+  }
+  // NOTE: the return type node is legitimately null if no return type is supplied
+  prototype_node->children.push_back(return_type_node);
+
+  return true;
 }
 
 NodePtr Parser::ParseAnnotations()
