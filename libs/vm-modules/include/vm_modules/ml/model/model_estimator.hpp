@@ -72,6 +72,9 @@ public:
                                       math::SizeType const &                   kernel_size,
                                       math::SizeType const &                   stride_size,
                                       fetch::vm::Ptr<fetch::vm::String> const &activation);
+  ChargeAmount LayerAddDenseActivationExperimental(
+      fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+      math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation);
 
   ChargeAmount CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                  fetch::vm::Ptr<fetch::vm::String> const &optimiser);
@@ -228,7 +231,7 @@ public:
   static constexpr SizeType SERIALISATION_OVERHEAD        = 5;
   static constexpr SizeType WEIGHT_SERIALISATION_OVERHEAD = 4;  // Will depend on DataType of Tensor
 
-  static constexpr ChargeAmount constant_charge{vm::CHARGE_UNIT};
+  static constexpr ChargeAmount CONSTANT_CHARGE{vm::COMPUTE_CHARGE_COST};
 
 private:
   struct State
@@ -254,9 +257,9 @@ private:
   VMObjectType &model_;
   State         state_;
 
-  void copy_state_from(ModelEstimator const &src);
+  void CopyStateFrom(ModelEstimator const &src);
 
-  static ChargeAmount infinite_charge(std::string const &log_msg = "");
+  static ChargeAmount MaximumCharge(std::string const &log_msg = "");
 };
 
 }  // namespace model

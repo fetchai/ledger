@@ -21,7 +21,7 @@
 #include "vm_modules/math/tensor/tensor_estimator.hpp"
 #include "vm_test_toolkit.hpp"
 
-namespace math_tensor_estimator_tests {
+namespace {
 
 using SizeType          = fetch::math::SizeType;
 using DataType          = fetch::vm_modules::math::DataType;
@@ -169,4 +169,4 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_sum_test)
   }
 }
 
-}  // namespace math_tensor_estimator_tests
+}  // namespace

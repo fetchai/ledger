@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/dataloaders/dataloader.hpp"
+
 #include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
 #include "math/utilities/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
-#include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "vm/array.hpp"
 #include "vm/module.hpp"
@@ -66,26 +67,37 @@ VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, Ptr<String> const &mode)
   }
   else
   {
-    throw std::runtime_error("unknown dataloader mode");
+    throw std::runtime_error("Unknown dataloader mode : " + mode->string());
   }
 }
 
 Ptr<VMDataLoader> VMDataLoader::Constructor(VM *vm, TypeId type_id, Ptr<String> const &mode)
 {
-  return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id, mode)};
+  try
+  {
+    return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id, mode)};
+  }
+  catch (std::exception const &e)
+  {
+    vm->RuntimeError(e.what());
+    return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id)};
+  }
 }
 
-void VMDataLoader::Bind(Module &module)
+void VMDataLoader::Bind(Module &module, bool const enable_experimental)
 {
-  module.CreateClassType<VMDataLoader>("DataLoader")
-      .CreateConstructor(&VMDataLoader::Constructor)
-      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> {
-        return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id)};
-      })
-      .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("addData", &VMDataLoader::AddDataByData, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("getNext", &VMDataLoader::GetNext, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("isDone", &VMDataLoader::IsDone, vm::CHARGE_INFINITY);
+  if (enable_experimental)
+  {
+    module.CreateClassType<VMDataLoader>("DataLoader")
+        .CreateConstructor(&VMDataLoader::Constructor)
+        .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> {
+          return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id)};
+        })
+        .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("addData", &VMDataLoader::AddDataByData, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("getNext", &VMDataLoader::GetNext, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("isDone", &VMDataLoader::IsDone, vm::MAXIMUM_CHARGE);
+  }
 }
 
 void VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
@@ -99,7 +111,8 @@ void VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename, Ptr<String> cons
   }
   default:
   {
-    throw std::runtime_error("current dataloader mode does not support AddDataByFiles");
+    RuntimeError("current dataloader mode does not support AddDataByFiles");
+    return;
   }
   }
 }
@@ -117,17 +130,25 @@ void VMDataLoader::AddDataByData(
   }
   default:
   {
-    throw std::runtime_error("current dataloader mode does not support AddDataByData");
+    RuntimeError("Current dataloader mode does not support AddDataByData");
+    return;
   }
   }
 }
 
 void VMDataLoader::AddCommodityData(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
 {
-  auto data  = fetch::math::utilities::ReadCSV<MathTensorType>(xfilename->string());
-  auto label = fetch::math::utilities::ReadCSV<MathTensorType>(yfilename->string());
+  try
+  {
+    auto data  = fetch::math::utilities::ReadCSV<MathTensorType>(xfilename->string());
+    auto label = fetch::math::utilities::ReadCSV<MathTensorType>(yfilename->string());
 
-  std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData({data}, label);
+    std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData({data}, label);
+  }
+  catch (std::exception const &e)
+  {
+    RuntimeError(e.what());
+  }
 }
 
 void VMDataLoader::AddTensorData(

@@ -45,19 +45,20 @@ ModelEstimator::ModelEstimator(VMObjectType &model)
 
 ModelEstimator &ModelEstimator::operator=(ModelEstimator const &other) noexcept
 {
-  copy_state_from(other);
+  CopyStateFrom(other);
   return *this;
 }
 
 ModelEstimator &ModelEstimator::operator=(ModelEstimator &&other) noexcept
 {
-  copy_state_from(other);
+  CopyStateFrom(other);
   return *this;
 }
 
 /**
  * Estimates and returns the cost of adding the relevant layer, but also updates internal state for
- * other calls (e.g. forward_pass_cost etc.)
+ * other calls (e.g. forward_pass_cost etc.).
+ * Must be a sequential model
  * @param layer description of layer type
  * @param inputs number of inputs to layer
  * @param hidden_nodes number of outputs of layer
@@ -66,51 +67,41 @@ ModelEstimator &ModelEstimator::operator=(ModelEstimator &&other) noexcept
 ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType const &inputs,
                                            SizeType const &hidden_nodes)
 {
-  // guarantee it's a dense layer
-  if (!(layer->string() == "dense"))
-  {
-    return infinite_charge("invalid params specified for " + layer->string() + " layer");
-  }
-
   SizeType padded_size{0};
 
-  if (model_.model_category_ == ModelCategory::SEQUENTIAL)
-  {
-    state_.forward_pass_cost =
-        state_.forward_pass_cost + static_cast<DataType>(inputs) * FORWARD_DENSE_INPUT_COEF();
-    state_.forward_pass_cost = state_.forward_pass_cost +
-                               static_cast<DataType>(hidden_nodes) * FORWARD_DENSE_OUTPUT_COEF();
-    state_.forward_pass_cost =
-        state_.forward_pass_cost +
-        static_cast<DataType>(inputs * hidden_nodes) * FORWARD_DENSE_QUAD_COEF();
+  // must be a dense layer
+  FETCH_UNUSED(layer);
 
-    state_.backward_pass_cost =
-        state_.backward_pass_cost + static_cast<DataType>(inputs) * BACKWARD_DENSE_INPUT_COEF();
-    state_.backward_pass_cost = state_.backward_pass_cost +
-                                static_cast<DataType>(hidden_nodes) * BACKWARD_DENSE_OUTPUT_COEF();
-    state_.backward_pass_cost =
-        state_.backward_pass_cost +
-        static_cast<DataType>(inputs * hidden_nodes) * BACKWARD_DENSE_QUAD_COEF();
+  state_.forward_pass_cost =
+      state_.forward_pass_cost + static_cast<DataType>(inputs) * FORWARD_DENSE_INPUT_COEF();
+  state_.forward_pass_cost =
+      state_.forward_pass_cost + static_cast<DataType>(hidden_nodes) * FORWARD_DENSE_OUTPUT_COEF();
+  state_.forward_pass_cost =
+      state_.forward_pass_cost +
+      static_cast<DataType>(inputs * hidden_nodes) * FORWARD_DENSE_QUAD_COEF();
 
-    state_.weights_size_sum += inputs * hidden_nodes + hidden_nodes;
+  state_.backward_pass_cost =
+      state_.backward_pass_cost + static_cast<DataType>(inputs) * BACKWARD_DENSE_INPUT_COEF();
+  state_.backward_pass_cost = state_.backward_pass_cost +
+                              static_cast<DataType>(hidden_nodes) * BACKWARD_DENSE_OUTPUT_COEF();
+  state_.backward_pass_cost =
+      state_.backward_pass_cost +
+      static_cast<DataType>(inputs * hidden_nodes) * BACKWARD_DENSE_QUAD_COEF();
 
-    // DataType of Tensor is not important for caluclating padded size
-    padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, inputs});
-    padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, 1});
+  state_.weights_size_sum += inputs * hidden_nodes + hidden_nodes;
 
-    state_.weights_padded_size_sum += padded_size;
-    state_.last_layer_size = hidden_nodes;
-    state_.ops_count += 3;
-  }
-  else
-  {
-    return infinite_charge("no add method for non-sequential methods");
-  }
+  // DataType of Tensor is not important for caluclating padded size
+  padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, inputs});
+  padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, 1});
+
+  state_.weights_padded_size_sum += padded_size;
+  state_.last_layer_size = hidden_nodes;
+  state_.ops_count += 3;
 
   return static_cast<ChargeAmount>(
              ADD_DENSE_INPUT_COEF() * inputs + ADD_DENSE_OUTPUT_COEF() * hidden_nodes +
              ADD_DENSE_QUAD_COEF() * inputs * hidden_nodes + ADD_DENSE_CONST_COEF()) *
-         CHARGE_UNIT;
+         COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> const &layer,
@@ -120,18 +111,33 @@ ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> cons
 {
   ChargeAmount estimate = LayerAddDense(layer, inputs, hidden_nodes);
 
-  if (activation->string() == "relu")
-  {
-    state_.forward_pass_cost  = state_.forward_pass_cost + RELU_FORWARD_IMPACT() * hidden_nodes;
-    state_.backward_pass_cost = state_.backward_pass_cost + RELU_BACKWARD_IMPACT() * hidden_nodes;
-    state_.ops_count++;
-  }
-  else
-  {
-    return infinite_charge("attempted to estimate unknown layer with unknown activation type");
-  }
+  FETCH_UNUSED(activation);  // only relu is valid
+  state_.forward_pass_cost  = state_.forward_pass_cost + RELU_FORWARD_IMPACT() * hidden_nodes;
+  state_.backward_pass_cost = state_.backward_pass_cost + RELU_BACKWARD_IMPACT() * hidden_nodes;
+  state_.ops_count++;
 
   return estimate;
+}
+
+/**
+ * Method for giving charge estimate for experimental layers
+ * @param layer
+ * @param inputs
+ * @param hidden_nodes
+ * @param activation
+ * @return
+ */
+ChargeAmount ModelEstimator::LayerAddDenseActivationExperimental(
+    Ptr<fetch::vm::String> const &layer, SizeType const &inputs, SizeType const &hidden_nodes,
+    Ptr<fetch::vm::String> const &activation)
+{
+
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(inputs);
+  FETCH_UNUSED(hidden_nodes);
+  FETCH_UNUSED(activation);
+
+  return MaximumCharge("attempted to estimate unknown layer with unknown activation type");
 }
 
 ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType const &output_channels,
@@ -143,7 +149,7 @@ ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType con
   FETCH_UNUSED(input_channels);
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
-  return infinite_charge("Not yet implemented");
+  return MaximumCharge("Not yet implemented");
 }
 
 ChargeAmount ModelEstimator::LayerAddConvActivation(
@@ -156,15 +162,13 @@ ChargeAmount ModelEstimator::LayerAddConvActivation(
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
   FETCH_UNUSED(activation);
-  return infinite_charge("Not yet implement");
+  return MaximumCharge("Not yet implement");
 }
 
 ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
                                                Ptr<String> const &optimiser)
 {
   DataType optimiser_construction_impact(0.0);
-
-  bool success = false;
 
   if (!model_.model_->loss_set_)
   {
@@ -176,7 +180,6 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       state_.backward_pass_cost =
           state_.backward_pass_cost + MSE_BACKWARD_IMPACT() * state_.last_layer_size;
       state_.ops_count++;
-      success = true;
     }
     else if (loss->string() == "cel")
     {
@@ -186,44 +189,18 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       state_.backward_pass_cost =
           state_.backward_pass_cost + CEL_BACKWARD_IMPACT() * state_.last_layer_size;
       state_.ops_count++;
-      success = true;
-    }
-    else if (loss->string() == "scel")
-    {
-      // loss_type = fetch::ml::ops::LossType::SOFTMAX_CROSS_ENTROPY;
-      success = false;
-    }
-    else
-    {
-      success = false;
     }
   }
 
   if (!model_.model_->optimiser_set_)
   {
-    if (optimiser->string() == "adagrad")
-    {
-      // optimiser_type = fetch::ml::OptimiserType::ADAGRAD;
-      success = false;
-    }
-    else if (optimiser->string() == "adam")
+    if (optimiser->string() == "adam")
     {
       // optimiser_type = fetch::ml::OptimiserType::ADAM;
       state_.optimiser_step_impact = ADAM_STEP_IMPACT_COEF();
       optimiser_construction_impact =
           ADAM_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
           ADAM_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
-      success = true;
-    }
-    else if (optimiser->string() == "momentum")
-    {
-      // optimiser_type = fetch::ml::OptimiserType::MOMENTUM;
-      success = false;
-    }
-    else if (optimiser->string() == "rmsprop")
-    {
-      //  optimiser_type = fetch::ml::OptimiserType::RMSPROP;
-      success = false;
     }
     else if (optimiser->string() == "sgd")
     {
@@ -232,21 +209,11 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       optimiser_construction_impact =
           SGD_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
           SGD_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
-      success = true;
     }
-    else
-    {
-      success = false;
-    }
-  }
-
-  if (!success)
-  {
-    return infinite_charge("Not yet implement");
   }
 
   return static_cast<ChargeAmount>(optimiser_construction_impact + COMPILE_CONST_COEF()) *
-         CHARGE_UNIT;
+         COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,
@@ -255,7 +222,7 @@ ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser
 
   FETCH_UNUSED(optimiser);
   FETCH_UNUSED(in_layers);
-  return infinite_charge("Not yet implement");
+  return MaximumCharge("Not yet implement");
 }
 
 ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTensor> const &labels,
@@ -290,13 +257,13 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
                      static_cast<DataType>(state_.optimiser_step_impact * state_.weights_size_sum +
                                            state_.weights_size_sum);
 
-  return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
+  return static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount ModelEstimator::Evaluate()
 {
   // Just return loss_, constant charge
-  return static_cast<ChargeAmount>(constant_charge);
+  return static_cast<ChargeAmount>(CONSTANT_CHARGE);
 }
 
 ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
@@ -307,20 +274,20 @@ ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
                                         PREDICT_BATCH_LAYER_COEF());
   estimate += static_cast<ChargeAmount>(PREDICT_CONST_COEF());
 
-  return estimate * CHARGE_UNIT;
+  return estimate * COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount ModelEstimator::SerializeToString()
 {
   SizeType estimate = state_.ops_count * SERIALISATION_OVERHEAD +
                       state_.weights_size_sum * WEIGHT_SERIALISATION_OVERHEAD;
-  return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
+  return static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount ModelEstimator::DeserializeFromString(Ptr<String> const &model_string)
 {
   DataType estimate = DESERIALISATION_PER_CHAR_COEF() * model_string->string().size();
-  return static_cast<ChargeAmount>(estimate + DESERIALISATION_CONST_COEF()) * CHARGE_UNIT;
+  return static_cast<ChargeAmount>(estimate + DESERIALISATION_CONST_COEF()) * COMPUTE_CHARGE_COST;
 }
 
 bool ModelEstimator::SerializeTo(serializers::MsgPackSerializer &buffer)
@@ -333,15 +300,15 @@ bool ModelEstimator::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   return state_.DeserializeFrom(buffer);
 }
 
-void ModelEstimator::copy_state_from(ModelEstimator const &src)
+void ModelEstimator::CopyStateFrom(ModelEstimator const &src)
 {
   state_ = src.state_;
 }
 
-ChargeAmount ModelEstimator::infinite_charge(std::string const &log_msg)
+ChargeAmount ModelEstimator::MaximumCharge(std::string const &log_msg)
 {
-  FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::CHARGE_INIFITY : " + log_msg);
-  return vm::CHARGE_INFINITY;
+  FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::MAXIMUM_CHARGE : " + log_msg);
+  return vm::MAXIMUM_CHARGE;
 }
 
 bool ModelEstimator::State::SerializeTo(serializers::MsgPackSerializer &buffer)

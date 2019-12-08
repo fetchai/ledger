@@ -50,7 +50,7 @@ struct EstimatorFromMemberFunction
 */
 
 template <typename Callable>
-auto use_estimator(Callable &&estimator)
+auto UseEstimator(Callable &&estimator)
 {
   using EtchArgs = typename meta::CallableTraits<Callable>::ArgsTupleType;
   return meta::UnpackTuple<EtchArgs, internal::EstimatorFromMemberFunction>::MakeEstimator(

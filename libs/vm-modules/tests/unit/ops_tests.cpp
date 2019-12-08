@@ -40,7 +40,7 @@ public:
   VmTestToolkit     toolkit{&stdout};
 };
 
-TEST_F(OpsTests, tranpose_test)
+TEST_F(OpsTests, DISABLED_tranpose_test)
 {
   using TypeParam = fetch::math::Tensor<DataType>;
 
@@ -82,7 +82,7 @@ TEST_F(OpsTests, tranpose_test)
   ASSERT_TRUE(result.AllClose(gt));
 }
 
-TEST_F(OpsTests, exp_test)
+TEST_F(OpsTests, DISABLED_exp_test)
 {
   using TypeParam = fetch::math::Tensor<DataType>;
 

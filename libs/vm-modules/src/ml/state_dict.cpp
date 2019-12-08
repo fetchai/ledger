@@ -67,11 +67,14 @@ bool VMStateDict::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   return true;
 }
 
-void VMStateDict::Bind(Module &module)
+void VMStateDict::Bind(Module &module, bool const enable_experimental)
 {
-  module.CreateClassType<VMStateDict>("StateDict")
-      .CreateConstructor(&VMStateDict::Constructor, vm::CHARGE_INFINITY)
-      .CreateMemberFunction("setWeights", &VMStateDict::SetWeights, vm::CHARGE_INFINITY);
+  if (enable_experimental)
+  {
+    module.CreateClassType<VMStateDict>("StateDict")
+        .CreateConstructor(&VMStateDict::Constructor, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("setWeights", &VMStateDict::SetWeights, vm::MAXIMUM_CHARGE);
+  }
 }
 
 }  // namespace ml
