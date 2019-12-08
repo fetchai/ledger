@@ -61,7 +61,8 @@ public:
 
   bool is_alive() const override;
 
-  void Send(MessageType const &omsg) override;
+  void Send(MessageBuffer const &omsg, Callback const &success = nullptr,
+            Callback const &fail = nullptr) override;
 
   uint16_t Type() const override;
 

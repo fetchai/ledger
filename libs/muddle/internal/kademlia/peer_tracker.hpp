@@ -161,7 +161,8 @@ public:
     }
     std::cout << ss.str();
   }
-  Handle LookupHandle(Address const &address) const
+
+  Handle LookupHandle(Address const &address)
   {
     auto wptr = register_.LookupConnection(address);
 
@@ -169,6 +170,7 @@ public:
     auto connection = wptr.lock();
     if (connection)
     {
+      // TODO: Causes deadlock peer_table_.ReportLiveliness(address, own_address_);
       return connection->handle();
     }
     // TODO(tfr): Create a cache for the search below
@@ -210,6 +212,8 @@ public:
       if (connection)
       {
         // TODO(tfr): add to cache for efficiency
+
+        // TODO: Causes deadlock        peer_table_.ReportLiveliness(pair.second, own_address_);
         return connection->handle();
       }
     }
