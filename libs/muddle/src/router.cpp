@@ -793,15 +793,18 @@ void Router::DispatchDirect(Handle handle, PacketPtr const &packet)
   dispatch_enqueued_total_->increment();
 
   dispatch_thread_pool_->Post([this, packet, handle]() {
+
     // dispatch to the direct message handler if needed
     if (direct_message_handler_)
     {
       direct_message_handler_(handle, packet);
       dispatch_direct_total_->increment();
     }
+    else
+    {
+      dispatch_failure_total_->increment();
+    }
 
-    dispatch_failure_total_->increment();  // TODO(tfr): Why does this increase total? possibly
-                                           // missing return in previous if
     dispatch_complete_total_->increment();
   });
 }
