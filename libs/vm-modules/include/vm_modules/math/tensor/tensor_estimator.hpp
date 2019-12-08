@@ -94,8 +94,8 @@ public:
   ChargeAmount ToString();
 
 private:
-  ChargeAmount const low_charge{fetch::vm::CHARGE_UNIT};
-  ChargeAmount       charge_func_of_tensor_size(std::size_t factor = 1);
+  static ChargeAmount const LOW_CHARGE{fetch::vm::COMPUTE_CHARGE_COST};
+  ChargeAmount              ComputeChargeFromTensorSize(std::size_t factor = 1);
 
   VMObjectType &tensor_;
 };

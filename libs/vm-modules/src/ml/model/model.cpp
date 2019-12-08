@@ -257,29 +257,29 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
             return Ptr<VMModel>{new VMModel(vm, type_id)};
           })
           .CreateMemberFunction("add", &VMModel::LayerAddDense,
-                                use_estimator(&ModelEstimator::LayerAddDense))
+                                UseEstimator(&ModelEstimator::LayerAddDense))
           .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation,
-                                use_estimator(&ModelEstimator::LayerAddDenseActivation))
+                                UseEstimator(&ModelEstimator::LayerAddDenseActivation))
           .CreateMemberFunction("compile", &VMModel::CompileSequential,
-                                use_estimator(&ModelEstimator::CompileSequential))
-          .CreateMemberFunction("fit", &VMModel::Fit, use_estimator(&ModelEstimator::Fit))
+                                UseEstimator(&ModelEstimator::CompileSequential))
+          .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
           .CreateMemberFunction("evaluate", &VMModel::Evaluate,
-                                use_estimator(&ModelEstimator::Evaluate))
+                                UseEstimator(&ModelEstimator::Evaluate))
           .CreateMemberFunction("predict", &VMModel::Predict,
-                                use_estimator(&ModelEstimator::Predict))
+                                UseEstimator(&ModelEstimator::Predict))
           .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
-                                use_estimator(&ModelEstimator::SerializeToString))
+                                UseEstimator(&ModelEstimator::SerializeToString))
           .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
-                                use_estimator(&ModelEstimator::DeserializeFromString));
+                                UseEstimator(&ModelEstimator::DeserializeFromString));
 
   // experimental features are bound only if the VMFactory given the flag to do so
   if (experimental_enabled)
   {
-    interface.CreateMemberFunction("add", &VMModel::LayerAddConv, use_estimator(&ModelEstimator::LayerAddConv))
-                            .CreateMemberFunction("add", &VMModel::LayerAddConvActivation, use_estimator(&ModelEstimator::LayerAddConvActivation))
-                            .CreateMemberFunction("compile", &VMModel::CompileSimple, use_estimator(&ModelEstimator::CompileSimple))
+    interface.CreateMemberFunction("add", &VMModel::LayerAddConv, UseEstimator(&ModelEstimator::LayerAddConv))
+                            .CreateMemberFunction("add", &VMModel::LayerAddConvActivation, UseEstimator(&ModelEstimator::LayerAddConvActivation))
+                            .CreateMemberFunction("compile", &VMModel::CompileSimple, UseEstimator(&ModelEstimator::CompileSimple))
                             .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
-                                use_estimator(&ModelEstimator::LayerAddDenseActivationExperimental));
+                                UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental));
   }
 }
 
