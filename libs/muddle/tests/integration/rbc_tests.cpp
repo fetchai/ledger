@@ -164,7 +164,7 @@ private:
       SendBadAnswer(msg, address);
       return;
     }
-    else if (Failure(Failures::NO_ANSWER) && msg.type() == RBCMessageType::R_ANSWER)
+    if (Failure(Failures::NO_ANSWER) && msg.type() == RBCMessageType::R_ANSWER)
     {
       return;
     }
