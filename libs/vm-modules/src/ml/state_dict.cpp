@@ -19,7 +19,7 @@
 #include "ml/state_dict.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 
@@ -67,11 +67,14 @@ bool VMStateDict::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   return true;
 }
 
-void VMStateDict::Bind(Module &module)
+void VMStateDict::Bind(Module &module, bool const enable_experimental)
 {
-  module.CreateClassType<VMStateDict>("StateDict")
-      .CreateConstructor(&VMStateDict::Constructor)
-      .CreateMemberFunction("setWeights", &VMStateDict::SetWeights);
+  if (enable_experimental)
+  {
+    module.CreateClassType<VMStateDict>("StateDict")
+        .CreateConstructor(&VMStateDict::Constructor, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("setWeights", &VMStateDict::SetWeights, vm::MAXIMUM_CHARGE);
+  }
 }
 
 }  // namespace ml

@@ -65,7 +65,7 @@ public:
   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> DeNormalise(
       fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &input_tensor);
 
-  static void Bind(fetch::vm::Module &module);
+  static void Bind(fetch::vm::Module &module, bool enable_experimental);
 
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
