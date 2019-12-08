@@ -125,6 +125,8 @@ private:
   using StateMachinePtr = std::shared_ptr<StateMachine>;
   using BlockPtr        = MainChain::BlockPtr;
 
+  BlockPtr block_resolving_;
+
   /// @name Subscription Handlers
   /// @{
   void OnNewBlock(Address const &from, Block &block, Address const &transmitter);

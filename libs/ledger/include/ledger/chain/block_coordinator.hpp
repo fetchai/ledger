@@ -328,6 +328,7 @@ private:
   PeriodicAction  exec_wait_periodic_;      ///< Periodic print for execution
   PeriodicAction  syncing_periodic_;        ///< Periodic print for synchronisation
   Timepoint       start_waiting_for_tx_{};  ///< The time at which we started waiting for txs
+  Timepoint       start_block_packing_{};  ///< The time at which we started block packing
   /// Timeout when waiting for transactions
   DeadlineTimer wait_for_tx_timeout_{"bc:deadline"};
   /// Time to wait before asking peers for any missing txs
@@ -367,6 +368,7 @@ private:
   telemetry::GaugePtr<uint64_t> current_block_num_;
   telemetry::GaugePtr<uint64_t> next_block_num_;
   telemetry::GaugePtr<uint64_t> block_hash_;
+  telemetry::GaugePtr<uint64_t> total_time_to_create_block_;
   /// @}
 };
 

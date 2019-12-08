@@ -172,6 +172,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
         "The number of the next block which is scheduled to be executed by the block coordinator")}
   , block_hash_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "block_hash", "The last seen block hash beginning")}
+  , total_time_to_create_block_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "total_time_to_create_block", "Total time required to create a block")}
 {
   // configure the state machine
   // clang-format off
@@ -512,6 +514,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
 
   FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->block_number,
                  " beacon: ", next_block_->block_entropy.EntropyAsU64());
+
+  start_block_packing_       = Clock::now();
 
   // Attach current DAG state
   if (dag_)
@@ -1088,6 +1092,9 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
       // dispatch the block that has been generated
       block_sink_.OnBlock(*next_block_);
+
+      // Metrics on block time
+      total_time_to_create_block_->(ToSeconds(Clock::now() - start_block_packing_));
     }
   }
   catch (std::exception const &ex)

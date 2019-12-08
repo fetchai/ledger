@@ -330,10 +330,21 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   if (!peer.empty())
   {
     current_peer_address_ = peer;
-    Digest start          = chain_.GetHeaviestBlockHash();
+
+    if(!block_resolving_)
+    {
+      block_resolving_      = chain_.GetHeaviestBlock();
+    }
+
+    if(!block_resolving_)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to get heaviest block from the main chain!");
+      state_machine_->Delay(std::chrono::milliseconds{1000});
+      return next_state;
+    }
 
     current_request_ = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
-                                                       MainChainProtocol::TIME_TRAVEL, start);
+                                                       MainChainProtocol::TIME_TRAVEL, block_resolving_->hash);
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
@@ -375,6 +386,10 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
           // we should receive at least one extra block in addition to what we already have
           if (!blocks.empty())
           {
+            FETCH_LOG_INFO(LOGGING_NAME, "Received empty block response. Walking back.");
+
+            block_resolving_ = GetBlock(block_resolving_->hash);
+
             HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
             auto const &latest_hash = blocks.back().hash;
             assert(!latest_hash.empty());  // should be set by HandleChainResponse()
@@ -384,6 +399,10 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             {
               next_state = State::SYNCHRONISING;  // we have reached the tip
             }
+          }
+          else
+          {
+            block_resolving_ = {};
           }
         }
         else
