@@ -194,7 +194,7 @@ steps:
 
 ---
 test_description: >
-  Single multi-lane standalone node can mine transactions which are then queried
+  DISABLED - Single multi-lane standalone node can mine transactions which are then queried
 
 setup_conditions:
   test_name: "multi_lane_standalone"
