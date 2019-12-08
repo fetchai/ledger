@@ -109,6 +109,12 @@ public:
   settings::Setting<uint64_t> aeon_period;
   /// @}
 
+  /// @name Error handling
+  /// @{
+  settings::Setting<bool> shutdown_on_critical_failure;
+  settings::Setting<bool> allow_crashing;
+  /// @}
+
   // Operators
   Settings &operator=(Settings const &) = delete;
   Settings &operator=(Settings &&) = delete;
