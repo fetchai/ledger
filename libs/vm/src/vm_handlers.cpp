@@ -785,7 +785,7 @@ void VM::Handler__InvokeContractFunction()
   std::string identity = Ptr<String>(sv.object)->string();
   sv.Reset();
 
-  if (!contract_invocation_handler_)
+  if (contract_invocation_handler_)
   {
     RuntimeError("Contract-to-contract calls not supported: invocation handler is null");
     return;
@@ -803,9 +803,15 @@ void VM::Handler__InvokeContractFunction()
     return;
   }
 
+  if (output.type_id != function.return_type_id)
+  {
+    RuntimeError("Call to " + function.name + " in contract " + identity +
+                 " returned unexpected type_id");
+    return;
+  }
+
   if (function.return_type_id != TypeIds::Void)
   {
-    assert(output.type_id == function.return_type_id);
     Variant &top = Push();
     top          = std::move(output);
   }

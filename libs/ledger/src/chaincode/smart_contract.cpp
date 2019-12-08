@@ -853,8 +853,18 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     response["result"] = output.Get<fixed_point::fp64_t>();
     break;
   case vm::TypeIds::String:
-    response["result"] = output.Get<vm::Ptr<vm::String>>()->string();
+  {
+    auto const res = output.Get<vm::Ptr<vm::String>>();
+    if (res)
+    {
+      response["result"] = res->string();
+    }
+    else
+    {
+      response["result"] = variant::Variant::Null();
+    }
     break;
+  }
   default:
     if (output.IsPrimitive())
     {
