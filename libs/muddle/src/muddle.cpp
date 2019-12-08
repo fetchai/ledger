@@ -150,6 +150,8 @@ void Muddle::SetPeerTableFile(std::string const &filename)
  */
 bool Muddle::Start(Uris const &peers, Ports const &ports)
 {
+  stopping_ = false;
+
   // Setting ports prior to starting as a fallback mechanism
   // for giving details of peer
   peer_tracker_->UpdateExternalPorts(ports);
@@ -227,6 +229,7 @@ bool Muddle::Start(Ports const &ports)
  */
 void Muddle::Stop()
 {
+  stopping_ = true;
   peer_tracker_->Stop();
 
   // stop all the periodic actions
@@ -354,6 +357,12 @@ bool Muddle::IsDirectlyConnected(Address const &address) const
 {
   auto const current_direct_peers = GetDirectlyConnectedPeers();
   return current_direct_peers.find(address) != current_direct_peers.end();
+}
+
+bool Muddle::IsConnectingOrConnected(Address const &address) const
+{
+  auto const desired = peer_tracker_->GetDesiredPeers();
+  return desired.find(address) != desired.end();
 }
 
 /**
@@ -570,6 +579,13 @@ void Muddle::UpdateExternalAddresses()
  */
 void Muddle::RunPeriodicMaintenance()
 {
+  // If we are stopping the muddle, we do not want to connect to new nodes
+  // and otherwise do periodic maintenance.
+  if (stopping_)
+  {
+    return;
+  }
+
   FETCH_LOG_TRACE(logging_name_, "Running periodic maintenance");
   try
   {
@@ -674,19 +690,24 @@ void Muddle::CreateTcpClient(Uri const &peer)
   clients_.AddConnection(peer, strong_conn);
 
   // debug handlers
-  strong_conn->OnConnectionSuccess([this, peer]() { clients_.OnConnectionEstablished(peer); });
+  strong_conn->OnConnectionSuccess([this, peer]() {
+    peer_tracker_->ReportSuccessfulConnectAttempt(peer);
+    clients_.OnConnectionEstablished(peer);
+  });
 
   strong_conn->OnConnectionFailed([this, peer]() {
     FETCH_LOG_INFO(logging_name_, "Connection to ", peer.ToString(), " failed");
+    peer_tracker_->ReportFailedConnectAttempt(peer);
     clients_.RemoveConnection(peer);
   });
 
   strong_conn->OnLeave([this, peer]() {
     FETCH_LOG_INFO(logging_name_, "Connection to ", peer.ToString(), " left");
+    peer_tracker_->ReportLeaving(peer);
     clients_.RemoveConnection(peer);
   });
 
-  strong_conn->OnMessage([this, peer, conn_handle](network::MessageType const &msg) {
+  strong_conn->OnMessage([this, peer, conn_handle](network::MessageBuffer const &msg) {
     try
     {
       auto packet = std::make_shared<Packet>();

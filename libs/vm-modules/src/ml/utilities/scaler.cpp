@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/utilities/min_max_scaler.hpp"
 #include "ml/utilities/scaler.hpp"
+
+#include "ml/utilities/min_max_scaler.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/tensor.hpp"
@@ -40,9 +41,8 @@ using MinMaxScalerType = fetch::ml::utilities::MinMaxScaler<MathTensorType>;
 
 VMScaler::VMScaler(VM *vm, TypeId type_id)
   : Object(vm, type_id)
-{
-  scaler_ = std::make_shared<MinMaxScalerType>();
-}
+  , scaler_(std::make_shared<MinMaxScalerType>())
+{}
 
 Ptr<VMScaler> VMScaler::Constructor(VM *vm, TypeId type_id)
 {
@@ -57,7 +57,8 @@ void VMScaler::SetScaleByData(Ptr<VMTensorType> const &reference_tensor, Ptr<Str
   }
   else
   {
-    throw std::runtime_error("unrecognised mode type");
+    RuntimeError("unrecognised mode type");
+    return;
   }
 
   scaler_->SetScale(reference_tensor->GetConstTensor());
@@ -65,6 +66,11 @@ void VMScaler::SetScaleByData(Ptr<VMTensorType> const &reference_tensor, Ptr<Str
 
 void VMScaler::SetScaleByRange(DataType const &min_val, DataType const &max_val)
 {
+  if (max_val < min_val)
+  {
+    RuntimeError("setScale using a numeric range [min, max] failed: max < min");
+    return;
+  }
   scaler_->SetScale(min_val, max_val);
 }
 

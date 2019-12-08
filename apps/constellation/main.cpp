@@ -289,11 +289,11 @@ int main(int argc, char **argv)
       std::signal(SIGTERM, InterruptHandler);
 
       // Making the system resillient to segmentation faults
-      //if (!settings.allow_crashing)
-      //{
-      //  std::signal(SIGSEGV, ThrowException);
-      //  std::signal(SIGFPE, ThrowException);
-      //}
+      if (!settings.allow_crashing.value())
+      {
+        std::signal(SIGSEGV, ThrowException);
+        std::signal(SIGFPE, ThrowException);
+      }
 
       // run the application
       try

@@ -39,31 +39,6 @@ KademliaTable::KademliaTable(Address const &own_address, NetworkId const &networ
   , own_kad_address_{KademliaAddress::Create(own_address)}
 {}
 
-// TODO(tfr): This might not be what we want to do
-KademliaTable::Peers KademliaTable::ProposePermanentConnections() const
-{
-  FETCH_LOCK(mutex_);
-
-  uint64_t n = 0;
-  Peers    ret;
-  for (auto &p : by_logarithm_[n].peers)
-  {
-    ret.push_back(*p);
-  }
-
-  ++n;
-
-  while ((n < by_logarithm_.size()) && (ret.size() < kademlia_max_peers_per_bucket_))
-  {
-    for (auto const &p : by_logarithm_[n].peers)
-    {
-      ret.push_back(*p);
-    }
-  }
-
-  return ret;
-}
-
 KademliaTable::Peers KademliaTable::FindPeerInternal(KademliaAddress const &kam_address,
                                                      uint64_t log_id, bool scan_left,
                                                      bool scan_right)
@@ -250,7 +225,7 @@ KademliaTable::Peers KademliaTable::FindPeerByHamming(Address const &address)
   FETCH_LOCK(mutex_);
   auto kam_address = KademliaAddress::Create(address);
   auto dist        = GetKademliaDistance(own_kad_address_, kam_address);
-  auto hamming_id  = Bucket::IdByLogarithm(dist);
+  auto hamming_id  = Bucket::IdByHamming(dist);
 
   return FindPeerByHammingInternal(kam_address, hamming_id);
 }
@@ -263,10 +238,58 @@ KademliaTable::Peers KademliaTable::FindPeerByHamming(Address const &address, ui
   return FindPeerInternal(kam_address, hamming_id, scan_left, scan_right);
 }
 
+void KademliaTable::ReportSuccessfulConnectAttempt(Uri const &uri)
+{
+  auto it = known_uris_.find(uri);
+  if (it == known_uris_.end())
+  {
+    // TODO(tfr): Consider creating the entry if it does not exist
+    return;
+  }
+
+  it->second->failed_attempts = 0;
+  ++(it->second->connection_attempts);
+
+  // In case we loose connectivity we allow to immediately reconmnect.
+  it->second->earliest_next_attempt = Clock::now();
+}
+
+void KademliaTable::ReportFailedConnectAttempt(Uri const &uri)
+{
+  auto it = known_uris_.find(uri);
+  if (it == known_uris_.end())
+  {
+    // TODO(tfr): Consider creating the entry if it does not exist
+    return;
+  }
+
+  ++(it->second->connection_attempts);
+  ++(it->second->failed_attempts);
+
+  // Exponentially killing the likelihood that we will connect again if failed
+  it->second->earliest_next_attempt =
+      Clock::now() + std::chrono::seconds(10 * (1 << it->second->failed_attempts));
+}
+
+void KademliaTable::ReportLeaving(Uri const &uri)
+{
+  auto it = known_uris_.find(uri);
+  if (it == known_uris_.end())
+  {
+    return;
+  }
+}
+
 void KademliaTable::ReportLiveliness(Address const &address, Address const &reporter,
                                      PeerInfo const &info)
 {
   FETCH_LOCK(mutex_);
+
+  // We never register our own address
+  if (address == own_address_)
+  {
+    return;
+  }
 
   auto other      = KademliaAddress::Create(address);
   auto dist       = GetKademliaDistance(own_kad_address_, other);
@@ -302,8 +325,8 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
   // Peer is already known but not in any
   // log_bucket.
   PeerInfoPtr peerinfo;
-  auto        it = know_peers_.find(address);
-  if (it != know_peers_.end())
+  auto        it = known_peers_.find(address);
+  if (it != known_peers_.end())
   {
     peerinfo = it->second;
   }
@@ -317,7 +340,7 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
 
     // Ensures that peer information persists over time
     // even if the peer disappears from the log_bucket.
-    know_peers_[address]       = peerinfo;
+    known_peers_[address]      = peerinfo;
     known_uris_[peerinfo->uri] = peerinfo;
   }
 
@@ -350,9 +373,12 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
 
 void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporter)
 {
-  //  ReportLiveliness(info.address, info);
-  //  return;
   FETCH_LOCK(mutex_);
+
+  if (info.address == own_address_)
+  {
+    return;
+  }
 
   auto other      = KademliaAddress::Create(info.address);
   auto dist       = GetKademliaDistance(own_kad_address_, other);
@@ -362,11 +388,11 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
   assert(log_id <= KADEMLIA_MAX_ID_BITS);
 
   // Do nothing if we already know about the existence
-  auto it = know_peers_.find(info.address);
+  auto it = known_peers_.find(info.address);
 
   // Fetching the bucket and finding the peer if it is in the
   // bucket
-  if (it == know_peers_.end())
+  if (it == known_peers_.end())
   {
     auto &      log_bucket  = by_logarithm_[log_id];
     auto &      ham_bucket  = by_hamming_[hamming_id];
@@ -374,7 +400,7 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
     peerinfo->verified      = false;
     peerinfo->last_reporter = reporter;
 
-    know_peers_[info.address] = peerinfo;
+    known_peers_[info.address] = peerinfo;
 
     //
     if (log_bucket.peers.size() < kademlia_max_peers_per_bucket_)
@@ -385,6 +411,11 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
     if (ham_bucket.peers.size() < kademlia_max_peers_per_bucket_)
     {
       ham_bucket.peers.insert(peerinfo);
+    }
+
+    if (peerinfo->uri.IsMuddleAddress())
+    {
+      known_uris_[peerinfo->uri] = peerinfo;
     }
   }
   else
@@ -408,13 +439,276 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
 
 KademliaTable::PeerInfoPtr KademliaTable::GetPeerDetails(Address const &address)
 {
-  auto it = know_peers_.find(address);
-  if (it == know_peers_.end())
+  auto it = known_peers_.find(address);
+  if (it == known_peers_.end())
   {
     return nullptr;
   }
 
   return it->second;
+}
+
+std::size_t KademliaTable::size() const
+{
+  FETCH_LOCK(mutex_);
+  return known_peers_.size();
+}
+
+KademliaTable::Uri KademliaTable::GetUri(Address const &address)
+{
+  auto it = known_peers_.find(address);
+  if (it == known_peers_.end())
+  {
+    return {};
+  }
+  return it->second->uri;
+}
+
+std::size_t KademliaTable::active_buckets() const
+{
+  std::size_t ret{0};
+  for (auto &b : by_logarithm_)
+  {
+    ret += static_cast<std::size_t>(!b.peers.empty());
+  }
+  return ret;
+}
+
+uint64_t KademliaTable::first_non_empty_bucket() const
+{
+  return first_non_empty_bucket_;
+}
+
+void KademliaTable::SetCacheFile(std::string const &filename, bool load)
+{
+  filename_ = filename;
+  if (load)
+  {
+    Load();
+  }
+}
+
+void KademliaTable::Load()
+{
+  std::fstream stream(filename_, std::ios::in | std::ios::binary);
+  if (!stream)
+  {
+    return;
+  }
+
+  // Loading buffer
+  byte_array::ConstByteArray buffer{stream};
+
+  // Deserializing
+  try
+  {
+    serializers::LargeObjectSerializeHelper serializer(buffer);
+    serializer >> *this;
+  }
+  catch (std::exception const &e)
+  {
+    FETCH_LOG_ERROR("KademliaTable", "Failed loading the peer table: ", e.what());
+  }
+}
+
+void KademliaTable::Dump()
+{
+  if (filename_.empty())
+  {
+    return;
+  }
+
+  std::fstream stream(filename_, std::ios::out | std::ios::binary | std::ios::trunc);
+
+  // Dumping table to file.
+  if (stream)
+  {
+    serializers::LargeObjectSerializeHelper serializer{};
+
+    FETCH_LOG_DEBUG("KademliaTable", "Dumping table.");
+    serializer << *this;
+
+    auto buffer = serializer.data();
+    stream << buffer;
+
+    stream.close();
+  }
+}
+
+void KademliaTable::ClearDesired()
+{
+  connection_expiry_.clear();
+  desired_uri_expiry_.clear();
+  desired_peers_.clear();
+  desired_uris_.clear();
+}
+
+void KademliaTable::TrimDesiredPeers()
+{
+  FETCH_LOCK(desired_mutex_);
+  // Trimming for expired connections
+  auto                                   now = Clock::now();
+  std::unordered_map<Address, Timepoint> new_expiry;
+  for (auto const &item : connection_expiry_)
+  {
+
+    // Keeping those which are still not expired
+    if (item.second > now)
+    {
+      new_expiry.emplace(item);
+    }
+    else if (item.second < now)
+    {
+      // Deleting peers which has expired
+      auto it = desired_peers_.find(item.first);
+      if (it != desired_peers_.end())
+      {
+        desired_peers_.erase(it);
+      }
+    }
+  }
+  std::swap(connection_expiry_, new_expiry);
+
+  // Trimming URIs
+  std::unordered_map<Uri, Timepoint> new_uri_expiry;
+  for (auto const &item : desired_uri_expiry_)
+  {
+    // Keeping those which are still not expired
+    if (item.second > now)
+    {
+      new_uri_expiry.emplace(item);
+    }
+    else if (item.second < now)
+    {
+      // Deleting peers which has expired
+      auto it = desired_uris_.find(item.first);
+      if (it != desired_uris_.end())
+      {
+        desired_uris_.erase(it);
+      }
+    }
+  }
+  std::swap(desired_uri_expiry_, new_uri_expiry);
+}
+
+void KademliaTable::ConvertDesiredUrisToAddresses()
+{
+  FETCH_LOCK(desired_mutex_);
+  std::unordered_set<Uri> new_uris;
+  for (auto const &uri : desired_uris_)
+  {
+    if (HasUri(uri))
+    {
+      auto address = GetAddressFromUri(uri);
+
+      // Moving expiry time accross based on address
+      auto expit = desired_uri_expiry_.find(uri);
+      if (expit != desired_uri_expiry_.end())
+      {
+        connection_expiry_[address] = expit->second;
+        desired_uri_expiry_.erase(expit);
+      }
+
+      // Switching to address based desired peer
+      if (address != own_address_)
+      {
+        desired_peers_.insert(std::move(address));
+      }
+    }
+    else
+    {
+      new_uris.insert(uri);
+    }
+  }
+  std::swap(new_uris, desired_uris_);
+}
+
+std::unordered_set<KademliaTable::Uri> KademliaTable::desired_uris() const
+{
+  FETCH_LOCK(desired_mutex_);
+  return desired_uris_;
+}
+
+KademliaTable::AddressSet KademliaTable::desired_peers() const
+{
+  FETCH_LOCK(desired_mutex_);
+  return desired_peers_;
+}
+
+void KademliaTable::AddDesiredPeer(Address const &address, Duration const &expiry)
+{
+  FETCH_LOCK(desired_mutex_);
+
+  auto it = connection_expiry_.find(address);
+  if (it == connection_expiry_.end())
+  {
+    connection_expiry_.emplace(address, Clock::now() + expiry);
+  }
+  else
+  {
+    it->second = std::max(Clock::now() + expiry, it->second);
+  }
+
+  desired_peers_.insert(address);
+}
+
+void KademliaTable::AddDesiredPeer(Address const &address, network::Peer const &hint,
+                                   Duration const &expiry)
+{
+  FETCH_LOCK(desired_mutex_);
+
+  auto it = connection_expiry_.find(address);
+  if (it == connection_expiry_.end())
+  {
+    connection_expiry_.emplace(address, Clock::now() + expiry);
+  }
+  else
+  {
+    it->second = std::max(Clock::now() + expiry, it->second);
+  }
+
+  if (!address.empty())
+  {
+    desired_peers_.insert(address);
+  }
+
+  PeerInfo info;
+  info.address = address;
+  info.uri.Parse(hint.ToUri());
+  ReportExistence(info, own_address_);
+
+  desired_uris_.insert(info.uri);
+  desired_uri_expiry_.emplace(info.uri, Clock::now() + expiry);
+}
+
+void KademliaTable::AddDesiredPeer(Uri const &uri, Duration const &expiry)
+{
+  FETCH_LOCK(desired_mutex_);
+  desired_uris_.insert(uri);
+  desired_uri_expiry_.emplace(uri, Clock::now() + expiry);
+}
+
+void KademliaTable::RemoveDesiredPeer(Address const &address)
+{
+  FETCH_LOCK(desired_mutex_);
+  desired_peers_.erase(address);
+  connection_expiry_.erase(address);
+}
+
+bool KademliaTable::HasUri(Uri const &uri) const
+{
+  auto it = known_uris_.find(uri);
+  return (it != known_uris_.end()) && (!it->second->address.empty());
+}
+
+KademliaTable::Address KademliaTable::GetAddressFromUri(Uri const &uri) const
+{
+  auto it = known_uris_.find(uri);
+  if (it == known_uris_.end())
+  {
+    return {};
+  }
+  return it->second->address;
 }
 
 void KademliaTable::ReportFailure(Address const & /*address*/, Address const & /*reporter*/)

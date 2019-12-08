@@ -219,7 +219,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
   reload_state_count_->increment();
 
   // By default we need to populate this.
-  current_block_ = chain_.CreateGenesisBlock();
+  current_block_ = MainChain::CreateGenesisBlock();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Loading block coordinator old state...");
 
@@ -252,10 +252,8 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
       FETCH_LOG_WARN(LOGGING_NAME, "The revert operation failed!");
       return State::RESET;
     }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Reverted storage unit.");
-    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Reverted storage unit.");
 
     // Need to revert the DAG too
     if (dag_ && !dag_->RevertToEpoch(block->block_number))
@@ -263,10 +261,8 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
       FETCH_LOG_WARN(LOGGING_NAME, "Reverting the DAG failed!");
       return State::RESET;
     }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "reverted dag.");
-    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "reverted dag.");
 
     // we need to update the execution manager state and also our locally cached state about the
     // 'last' block that has been executed
@@ -1120,7 +1116,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
                     "Unable to find a previously executed block! Doing a hard reset.");
     Reset();
 
-    auto genesis_block = chain_.CreateGenesisBlock();
+    auto genesis_block = MainChain::CreateGenesisBlock();
     block              = genesis_block.get();
   }
 

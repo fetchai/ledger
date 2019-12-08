@@ -93,7 +93,7 @@ public:
   static PeerTrackerPtr New(Duration const &interval, core::Reactor &reactor,
                             MuddleRegister const &reg, PeerConnectionList &connections,
                             MuddleEndpoint &endpoint);
-  ~PeerTracker();
+  ~PeerTracker() override;
 
   /// Tracker interface
   /// @{
@@ -108,92 +108,18 @@ public:
   void       RemoveDesiredPeer(Address const &address);
   /// @}
 
+  /// Reporting
+  /// @{
+  void ReportSuccessfulConnectAttempt(Uri const &uri);
+  void ReportFailedConnectAttempt(Uri const &uri);
+  void ReportLeaving(Uri const &uri);
+  /// @}
+
   /// Low-level
   /// @{
-  Handle LookupHandle(Address const &address) const
-  {
-    auto wptr = register_.LookupConnection(address);
-
-    // If it is a direct connection we just return the handle
-    auto connection = wptr.lock();
-    if (connection)
-    {
-      return connection->handle();
-    }
-
-    // TODO(tfr): Create a cache for the search below
-
-    // Finding best address
-    Address          best_address{};
-    KademliaDistance best = MaxKademliaDistance();
-
-    {
-      FETCH_LOCK(direct_mutex_);
-
-      // Finding best address
-      auto target_kad = KademliaAddress::Create(address);
-      for (auto &peer : directly_connected_peers_)
-      {
-        KademliaAddress cmp  = KademliaAddress::Create(peer);
-        auto            dist = GetKademliaDistance(target_kad, cmp);
-
-        if (dist < best)
-        {
-          best         = dist;
-          best_address = peer;
-        }
-      }
-
-      // Comparing against own address
-      auto own_kad = KademliaAddress::Create(own_address_);
-      auto dist    = GetKademliaDistance(target_kad, own_kad);
-
-      // In case the current node has a shorter distance, we return
-      // 0 to indicate that the packet should not move
-      if (dist < best)
-      {
-        return 0;
-      }
-    }
-
-    // Finding handle
-    wptr       = register_.LookupConnection(best_address);
-    connection = wptr.lock();
-    if (connection)
-    {
-      // TODO(tfr): add to cache
-      return connection->handle();
-    }
-
-    return 0;
-  }
-
-  Handle LookupRandomHandle() const
-  {
-    FETCH_LOCK(direct_mutex_);
-    std::vector<Address> all_addresses{directly_connected_peers_.begin(),
-                                       directly_connected_peers_.end()};
-
-    thread_local std::random_device rd;
-    thread_local std::mt19937       g(rd());
-    std::shuffle(all_addresses.begin(), all_addresses.end(), g);
-
-    while (!all_addresses.empty())
-    {
-      auto const address = all_addresses.back();
-      all_addresses.pop_back();
-
-      auto wptr = register_.LookupConnection(address);
-
-      auto connection = wptr.lock();
-      if (connection)
-      {
-        return connection->handle();
-      }
-    }
-
-    return 0;
-  }
+  void   PrintRoutingReport(Address const &address) const;
+  Handle LookupHandle(Address const &address);
+  Handle LookupRandomHandle() const;
   /// @}
 
   /// Trust interface
@@ -239,31 +165,9 @@ protected:
   void UpdateExternalUris(NetworkUris const &uris);
   void UpdateExternalPorts(Ports const &ports);
   void SetConfiguration(TrackerConfiguration const &config);
-  void Stop()
-  {
-    FETCH_LOG_WARN(logging_name_.c_str(), "Stopping peer tracker.");
-    FETCH_LOCK(mutex_);
-    stopping_              = true;
-    tracker_configuration_ = TrackerConfiguration::AllOff();
-
-    peer_table_.ClearDesired();
-    kademlia_connection_priority_.clear();
-    kademlia_prioritized_peers_.clear();
-    kademlia_connections_.clear();
-    longrange_connection_priority_.clear();
-    longrange_prioritized_peers_.clear();
-    longrange_connections_.clear();
-  }
-
-  void Start()
-  {
-    stopping_ = false;
-  }
-
-  void SetCacheFile(std::string const &filename)
-  {
-    peer_table_.SetCacheFile(filename);
-  }
+  void Stop();
+  void Start();
+  void SetCacheFile(std::string const &filename);
   /// @}
 
 private:

@@ -1,3 +1,52 @@
+# End-to-end test scenarios
+
+---
+test_description: >
+  Single standalone node can mine transactions which are then queried
+
+setup_conditions:
+  test_name: "basic_standalone"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [0] }
+  - verify_txs: { "name": "batch1", "nodes": [0] }
+...
+
+---
+test_description: >
+  DISABLED - Transactions sync and are executed across nodes
+
+setup_conditions:
+  test_name: "basic_multinode"
+  number_of_nodes: 2
+  node_connections: [[0, 1]]
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1] }
+...
+
+---
+test_description: >
+  DISABLED - Transactions sync - corner case with connection order
+
+setup_conditions:
+  test_name: "basic_multinode_corner_case"
+  number_of_nodes: 2
+  node_connections: [[1, 0]]
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1] }
+...
+
 ---
 test_description: >
   Two nodes are having a fun time and then a third connects - tune in to find out if they can sync
@@ -7,14 +56,15 @@ setup_conditions:
   number_of_nodes: 2
   node_connections: [[0, 1]]
   mining_nodes: [0]
-  max_test_time: 60
+  max_test_time: 300
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
   - verify_txs: { "name": "batch1", "nodes": [0, 1] }
   - add_node: { "index": 2, "node_connections": [[2, 1]] }
-  - sleep: 5
+  - sleep: 10
   - verify_txs: { "name": "batch1", "nodes": [2] }
+  - sleep: 10
 ...
 
 ---
@@ -144,19 +194,21 @@ steps:
 
 ---
 test_description: >
-  Single multi-lane standalone node can mine transactions which are then queried
+  DISABLED - Single multi-lane standalone node can mine transactions which are then queried
 
 setup_conditions:
   test_name: "multi_lane_standalone"
   number_of_nodes: 1
   lanes: 4
   mining_nodes: [0]
-  max_test_time: 60
+  max_test_time: 300
 
 steps:
   - sleep: 30 #  allow all the lanes to start
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [0] }
+  - sleep: 10 #  waiting
   - verify_txs: { "name": "batch1", "nodes": [0] }
+  - sleep: 10 #  allow all the lanes to start
 ...
 
 ---
@@ -172,7 +224,6 @@ setup_conditions:
   max_test_time: 120
 
 steps:
-  - sleep: 6
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
   - verify_txs: { "name": "batch1", "nodes": [0, 1] }
 ...
