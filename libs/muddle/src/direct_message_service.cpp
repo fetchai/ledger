@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/service_ids.hpp"
 #include "direct_message_service.hpp"
+#include "core/service_ids.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "peer_list.hpp"
@@ -246,8 +246,8 @@ void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
   FETCH_LOG_TRACE(logging_name_, "OnRoutingPong (conn: ", handle, ") complete");
 }
 
-void DirectMessageService::OnRoutingRequest(Handle /*handle*/, PacketPtr const & /*packet*/,
-                                            RoutingMessage const & /*msg*/)
+void DirectMessageService::OnRoutingRequest(Handle handle, PacketPtr const &packet,
+                                            RoutingMessage const &msg)
 {
   FETCH_UNUSED(msg);
   FETCH_LOG_TRACE(logging_name_, "OnRoutingRequest (conn: ", handle, ")");
