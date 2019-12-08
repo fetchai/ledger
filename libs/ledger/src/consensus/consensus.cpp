@@ -160,7 +160,7 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
 
   // Walk back the chain until we see a block specifying an aeon beginning (corner
   // case for true genesis)
-  while (!ret.block_entropy.IsAeonBeginning() && current.block_number != 0)
+  while (!ret.block_entropy.IsAeonBeginning() && !ret.IsGenesis())
   {
     auto prior = GetBlockPriorTo(ret, chain);
 
@@ -214,28 +214,6 @@ bool Consensus::VerifyNotarisation(Block const &block) const
   return true;
 }
 
-uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address)
-{
-  auto beginning_of_aeon = GetBeginningOfAeon(previous, chain_);
-  auto cabinet           = beginning_of_aeon.block_entropy.qualified;
-
-  std::size_t weight{cabinet.size()};
-
-  // TODO(EJF): Depending on the cabinet sizes this would need to be improved
-  for (auto const &member : cabinet)
-  {
-    if (address == chain::Address::FromMuddleAddress(member))
-    {
-      break;
-    }
-
-    weight = SafeDecrement(weight, 1);
-  }
-
-  // Note: weight must always be non zero (indicates failure/not in cabinet)
-  return weight;
-}
-
 Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet const &cabinet,
                                               uint64_t                                entropy)
 {
@@ -248,6 +226,29 @@ Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet c
   }
 
   return DeterministicShuffle(ret, entropy);
+}
+
+uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, Identity const &identity)
+{
+  auto beginning_of_aeon        = GetBeginningOfAeon(previous, chain_);
+  auto entropy_shuffled_cabinet = QualWeightedByEntropy(beginning_of_aeon.block_entropy.qualified,
+                                                        previous.block_entropy.EntropyAsU64());
+
+  std::size_t weight{entropy_shuffled_cabinet.size()};
+
+  // TODO(EJF): Depending on the cabinet sizes this would need to be improved
+  for (auto const &member : entropy_shuffled_cabinet)
+  {
+    if (identity == member)
+    {
+      break;
+    }
+
+    weight = SafeDecrement(weight, 1);
+  }
+
+  // Note: weight must always be non zero (indicates failure/not in cabinet)
+  return weight;
 }
 
 /**
@@ -530,7 +531,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->miner         = mining_address_;
   ret->miner_id      = mining_identity_;
   ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-  ret->weight    = GetBlockGenerationWeight(*ret, mining_address_);
+  ret->weight    = GetBlockGenerationWeight(*ret, mining_identity_);
 
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
