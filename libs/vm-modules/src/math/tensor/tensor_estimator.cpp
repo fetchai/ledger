@@ -111,20 +111,15 @@ ChargeAmount TensorEstimator::Max()
   return ComputeChargeFromTensorSize();
 }
 
-ChargeAmount TensorEstimator::Squeeze()
-{
-  return ComputeChargeFromTensorSize();
-}
-
-ChargeAmount TensorEstimator::Unsqueeze()
-{
-  return ComputeChargeFromTensorSize();
-}
-
 ChargeAmount TensorEstimator::Reshape(
     fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape)
 {
   FETCH_UNUSED(new_shape);
+  return ComputeChargeFromTensorSize();
+}
+
+ChargeAmount TensorEstimator::Squeeze()
+{
   return ComputeChargeFromTensorSize();
 }
 
@@ -133,7 +128,62 @@ ChargeAmount TensorEstimator::Sum()
   return ComputeChargeFromTensorSize();
 }
 
+ChargeAmount TensorEstimator::Negate()
+{
+  return ComputeChargeFromTensorSize();
+}
+
+ChargeAmount TensorEstimator::Equal()
+{
+  return ComputeChargeFromTensorSize(std::size_t{2});
+}
+
+ChargeAmount TensorEstimator::NotEqual()
+{
+  return ComputeChargeFromTensorSize(std::size_t{2});
+}
+
+ChargeAmount TensorEstimator::Add()
+{
+  return ComputeChargeFromTensorSize(std::size_t{2});
+}
+
+ChargeAmount TensorEstimator::Subtract()
+{
+  return ComputeChargeFromTensorSize(std::size_t{2});
+}
+
+ChargeAmount TensorEstimator::InplaceAdd()
+{
+  return ComputeChargeFromTensorSize(std::size_t{2});
+}
+
+ChargeAmount TensorEstimator::Multiply()
+{
+  return ComputeChargeFromTensorSize(std::size_t{2});
+}
+
+ChargeAmount TensorEstimator::Divide()
+{
+  return ComputeChargeFromTensorSize(std::size_t{2});
+}
+
+ChargeAmount TensorEstimator::InplaceMultiply()
+{
+  return ComputeChargeFromTensorSize(std::size_t{2});
+}
+
+ChargeAmount TensorEstimator::InplaceDivide()
+{
+  return ComputeChargeFromTensorSize(std::size_t{2});
+}
+
 ChargeAmount TensorEstimator::Transpose()
+{
+  return ComputeChargeFromTensorSize();
+}
+
+ChargeAmount TensorEstimator::Unsqueeze()
 {
   return ComputeChargeFromTensorSize();
 }

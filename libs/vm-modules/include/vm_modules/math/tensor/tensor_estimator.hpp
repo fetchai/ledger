@@ -79,15 +79,35 @@ public:
 
   ChargeAmount Max();
 
-  ChargeAmount Squeeze();
-
-  ChargeAmount Unsqueeze();
-
   ChargeAmount Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
+
+  ChargeAmount Squeeze();
 
   ChargeAmount Sum();
 
+  ChargeAmount Negate();
+
+  ChargeAmount Equal();
+
+  ChargeAmount NotEqual();
+
+  ChargeAmount Add();
+
+  ChargeAmount Subtract();
+
+  ChargeAmount InplaceAdd();
+
+  ChargeAmount Multiply();
+
+  ChargeAmount Divide();
+
+  ChargeAmount InplaceMultiply();
+
+  ChargeAmount InplaceDivide();
+
   ChargeAmount Transpose();
+
+  ChargeAmount Unsqueeze();
 
   ChargeAmount FromString(fetch::vm::Ptr<fetch::vm::String> const &string);
 
