@@ -148,7 +148,7 @@ public:
     return value_.size();
   }
 
-  bool operator<(KademliaDistance const &other)
+  bool operator<(KademliaDistance const &other) const
   {
     std::size_t i = size();
 

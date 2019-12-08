@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "router.hpp"
 #include "kademlia/peer_tracker.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
+#include "router.hpp"
 #include "routing_message.hpp"
 
 #include "core/byte_array/encoders.hpp"
@@ -729,6 +729,7 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
     }
 
     // Taking note of packet attempted delivery
+    // This is only suppose to happen in extraordinary circumstansed
     uint64_t attempts{0};
     {
       FETCH_LOCK(delivery_attempts_lock_);
@@ -738,7 +739,6 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
         delivery_attempts_[packet] = 0;
 
         // Ensuring that the tracker is looking for the desired connection
-        //        tracker_->PrintRoutingReport(packet->GetTarget());
         tracker_->AddDesiredPeer(packet->GetTarget(), config_.temporary_connection_length);
       }
 

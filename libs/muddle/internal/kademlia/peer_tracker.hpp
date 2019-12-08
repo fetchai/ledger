@@ -171,12 +171,13 @@ public:
     {
       return connection->handle();
     }
-
     // TODO(tfr): Create a cache for the search below
 
     // Finding best address
-    Address          best_address{};
-    KademliaDistance best = MaxKademliaDistance();
+    Address own_copy = endpoint_.GetAddress();
+
+    //    KademliaDistance                    best = MaxKademliaDistance();
+    std::map<KademliaDistance, Address> candidates;
 
     {
       FETCH_LOCK(direct_mutex_);
@@ -187,35 +188,31 @@ public:
       {
         KademliaAddress cmp  = KademliaAddress::Create(peer);
         auto            dist = GetKademliaDistance(target_kad, cmp);
-
-        if (dist < best)
-        {
-          best         = dist;
-          best_address = peer;
-        }
+        candidates[dist]     = peer;
       }
 
       // Comparing against own address
-      auto own_kad = KademliaAddress::Create(own_address_);
-      auto dist    = GetKademliaDistance(target_kad, own_kad);
+      auto own_kad     = KademliaAddress::Create(own_copy);
+      auto dist        = GetKademliaDistance(target_kad, own_kad);
+      candidates[dist] = own_address_;
+    }
 
-      // In case the current node has a shorter distance, we return
-      // 0 to indicate that the packet should not move
-      if (dist < best)
+    for (auto &pair : candidates)
+    {
+      if (pair.second == own_copy)
       {
         return 0;
       }
-    }
 
-    // Finding handle
-    wptr       = register_.LookupConnection(best_address);
-    connection = wptr.lock();
-    if (connection)
-    {
-      // TODO(tfr): add to cache
-      return connection->handle();
+      // Finding handle
+      wptr       = register_.LookupConnection(pair.second);
+      connection = wptr.lock();
+      if (connection)
+      {
+        // TODO(tfr): add to cache for efficiency
+        return connection->handle();
+      }
     }
-
     return 0;
   }
 

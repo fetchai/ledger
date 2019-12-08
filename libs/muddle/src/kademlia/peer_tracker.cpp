@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "kademlia/peer_tracker.hpp"
 #include "core/time/to_seconds.hpp"
+#include "kademlia/peer_tracker.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -172,7 +172,7 @@ void PeerTracker::ProcessConnectionHandles()
       // Checking if we are already pulling
       if (uri_resolution_tasks_.find(details.address) != uri_resolution_tasks_.end())
       {
-        FETCH_LOG_INFO(logging_name_.c_str(), "Skipping URI request as already in progress.");
+        FETCH_LOG_DEBUG(logging_name_.c_str(), "Skipping URI request as already in progress.");
         continue;
       }
 
@@ -293,8 +293,8 @@ void PeerTracker::ConnectToPeers(AddressSet &                  connections_made,
         continue;
       }
 
-      FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to prioritised peer ", uri.ToString(),
-                     " with address ", p.address.ToBase64());
+      FETCH_LOG_DEBUG(logging_name_.c_str(), "Connecting to prioritised peer ", uri.ToString(),
+                      " with address ", p.address.ToBase64());
       connections_.AddPersistentPeer(uri);
     }
 
@@ -322,8 +322,8 @@ void PeerTracker::DisconnectDuplicates()
           if (conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING)
           {
             auto const handle = conn->handle();
-            FETCH_LOG_WARN(logging_name_.c_str(), "Disconnecting from bilateral ", handle,
-                           " connection: ", adr.ToBase64());
+            FETCH_LOG_DEBUG(logging_name_.c_str(), "Disconnecting from bilateral ", handle,
+                            " connection: ", adr.ToBase64());
 
             // Note that the order of these two matters. RemovePersistentPeer must
             // be executed first.
@@ -346,8 +346,8 @@ void PeerTracker::DisconnectFromSelf()
     if (conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING)
     {
       auto const handle = conn->handle();
-      FETCH_LOG_WARN(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
-                     " connection");
+      FETCH_LOG_DEBUG(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
+                      " connection");
 
       // Note that the order of these two matters. RemovePersistentPeer must
       // be executed first.
@@ -382,8 +382,8 @@ void PeerTracker::DisconnectFromPeers()
       if (conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING)
       {
         auto const handle = conn->handle();
-        FETCH_LOG_WARN(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
-                       " connection: ", address.ToBase64());
+        FETCH_LOG_DEBUG(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
+                        " connection: ", address.ToBase64());
 
         // Note that the order of these two matters. RemovePersistentPeer must
         // be executed first.
@@ -707,8 +707,8 @@ void PeerTracker::ConnectToDesiredPeers()
         continue;
       }
 
-      FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to desired peer ", uri.ToString(),
-                     " with address ", best_peer.ToBase64());
+      FETCH_LOG_DEBUG(logging_name_.c_str(), "Connecting to desired peer ", uri.ToString(),
+                      " with address ", best_peer.ToBase64());
       connections_.AddPersistentPeer(uri);
     }
 
@@ -830,10 +830,10 @@ void PeerTracker::Periodically()
     }
 
     std::sort(longrange_prioritized_peers_.begin(), longrange_prioritized_peers_.end(),
-            [](auto const &a, auto const &b) -> bool {
-              // Making highest priority appear first
-              return a.priority > b.priority;
-            });    
+              [](auto const &a, auto const &b) -> bool {
+                // Making highest priority appear first
+                return a.priority > b.priority;
+              });
 
     ConnectToPeers(longrange_connections_, longrange_prioritized_peers_,
                    tracker_configuration_.max_longrange_connections);
