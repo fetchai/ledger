@@ -85,7 +85,7 @@ TEST(Colearn_UpdateStore, pushPushPopPop)
   EXPECT_EQ(result2->source(), "test");
 }
 
-TEST(Colearn_UpdateStore, pushPushPopPop_defaultCriteria)
+TEST(DISABLE_Colearn_UpdateStore, pushPushPopPop_defaultCriteria)
 {
   UpdateStore store;
 
@@ -285,7 +285,7 @@ TEST(Colearn_UpdateStore, pushPop_repetition)
   EXPECT_THROW(store.GetUpdate("algo", "update", LifoCriteria, consumer), std::runtime_error);
 }
 
-TEST(Colearn_UpdateStore, samePushDifferentSources)
+TEST(DISABLE_Colearn_UpdateStore, samePushDifferentSources)
 {
   UpdateStore store;
 
@@ -320,7 +320,7 @@ TEST(Colearn_UpdateStore, pushPushPushPopPopPop_SelectSource)
     {
       return std::nan("");
     }
-    return static_cast<double>(-update->TimeSinceCreation().count());
+    return static_cast<double>(std::string(update->data())[0]);
   };
 
   UpdateStore store;
@@ -377,7 +377,7 @@ TEST(Colearn_UpdateStore, pushPushPushPopPopPop_SelectMetadata)
     {
       return std::nan("");
     }
-    return static_cast<double>(-update->TimeSinceCreation().count());
+    return static_cast<double>(std::string(update->data())[0]);
   };
 
   UpdateStore store;
@@ -441,7 +441,7 @@ TEST(Colearn_UpdateStore, URI_pushPushPushPopPopPop_SelectMetadata)
     {
       return std::nan("");
     }
-    return static_cast<double>(-update->TimeSinceCreation().count());
+    return static_cast<double>(std::string(update->data())[0]);
   };
 
   UpdateStore store;

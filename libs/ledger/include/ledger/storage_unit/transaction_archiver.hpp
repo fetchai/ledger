@@ -20,6 +20,7 @@
 #include "core/containers/queue.hpp"
 #include "core/digest.hpp"
 #include "core/state_machine.hpp"
+#include "telemetry/telemetry.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -56,7 +57,8 @@ public:
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
 
-  TransactionArchiver(TransactionPoolInterface &pool, TransactionStoreInterface &archive);
+  TransactionArchiver(uint32_t lane, TransactionPoolInterface &pool,
+                      TransactionStoreInterface &archive);
   ~TransactionArchiver() = default;
 
   void Confirm(Digest const &digest);
@@ -72,6 +74,10 @@ private:
   State OnCollecting();
   State OnFlushing();
 
+  // telemetry helpers
+  telemetry::CounterPtr CreateCounter(char const *name, char const *description) const;
+
+  uint32_t const             lane_;
   TransactionPoolInterface & pool_;
   TransactionStoreInterface &archive_;
   ConfirmationQueue          confirmation_queue_;
@@ -79,6 +85,13 @@ private:
   // State Machine state
   StateMachinePtr state_machine_;
   Digests         digests_;
+
+  // telemetry
+  telemetry::CounterPtr confirmed_total_;
+  telemetry::CounterPtr duplicate_total_;
+  telemetry::CounterPtr additions_total_;
+  telemetry::CounterPtr lost_total_;
+  telemetry::CounterPtr processed_total_;
 };
 
 char const *ToString(TransactionArchiver::State state);

@@ -42,7 +42,7 @@ public:
   using Callback = std::function<void(chain::Transaction const &)>;
 
   // Construction / Destruction
-  explicit TransactionStorageEngine(uint32_t log2_num_lanes);
+  explicit TransactionStorageEngine(uint32_t log2_num_lanes, uint32_t lane);
   TransactionStorageEngine(TransactionStorageEngine const &) = delete;
   TransactionStorageEngine(TransactionStorageEngine &&)      = delete;
   ~TransactionStorageEngine() override                       = default;
@@ -71,10 +71,11 @@ public:
 private:
   static const std::size_t MAX_NUM_RECENT_TX = 1u << 15u;
 
+  uint32_t const             lane_;
   TransactionMemoryPool      mem_pool_;
   TransactionStore           archive_;
   TransactionStoreAggregator store_{mem_pool_, archive_};
-  TransactionArchiver        archiver_{mem_pool_, archive_};
+  TransactionArchiver        archiver_{lane_, mem_pool_, archive_};
   RecentTransactionsCache    recent_tx_;
   Callback                   new_tx_callback_;
 };

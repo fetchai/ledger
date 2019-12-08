@@ -19,6 +19,8 @@
 #include "chain/transaction.hpp"
 #include "ledger/storage_unit/transaction_archiver.hpp"
 #include "ledger/storage_unit/transaction_pool_interface.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 
 #include <chrono>
 
@@ -33,11 +35,19 @@ constexpr char const *LOGGING_NAME = "TxArchiver";
 
 }  // namespace
 
-TransactionArchiver::TransactionArchiver(TransactionPoolInterface & pool,
+TransactionArchiver::TransactionArchiver(uint32_t lane, TransactionPoolInterface &pool,
                                          TransactionStoreInterface &archive)
-  : pool_{pool}
+  : lane_{lane}
+  , pool_{pool}
   , archive_{archive}
   , state_machine_{std::make_shared<StateMachine>(LOGGING_NAME, State::COLLECTING, ToString)}
+  // clang-format off
+  , confirmed_total_{CreateCounter("ledger_txarchiver_confirmed_total", "The total number of transactions added to the confirmed queue")}
+  , duplicate_total_{CreateCounter("ledger_txarchiver_duplicate_total", "The total number of transactions duplicate transactions processed")}
+  , additions_total_{CreateCounter("ledger_txarchiver_additions_total", "The total number of transactions archived by the archiver")}
+  , lost_total_{CreateCounter("ledger_txarchiver_lost_total", "The total number of transactions lost by the archiver")}
+  , processed_total_{CreateCounter("ledger_txarchiver_processed_total", "The total number of transactions processed by the archiver")}
+// clang-format on
 {
   // make the reservation
   digests_.reserve(BATCH_SIZE);
@@ -50,6 +60,7 @@ TransactionArchiver::TransactionArchiver(TransactionPoolInterface & pool,
 void TransactionArchiver::Confirm(Digest const &digest)
 {
   confirmation_queue_.Push(digest);
+  confirmed_total_->increment();
 }
 
 TransactionArchiver::StateMachinePtr const &TransactionArchiver::GetStateMachine() const
@@ -103,26 +114,42 @@ TransactionArchiver::State TransactionArchiver::OnFlushing()
     auto const &current = digests_.back();
 
     chain::Transaction tx{};
-    if (pool_.Get(current, tx))
+    if (archive_.Has(current))
+    {
+      // no op
+      duplicate_total_->increment();
+    }
+    else if (pool_.Get(current, tx))
     {
       // add the transaction to the store
       archive_.Add(tx);
 
       // remove the transaction from the pool
       pool_.Remove(current);
+
+      additions_total_->increment();
     }
     else
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup tx: 0x", current.ToHex(), " from cache");
 
-      //      cache_rid_removed_->increment();
+      lost_total_->increment();
     }
   }
 
   // remove the current element
   digests_.pop_back();
 
+  processed_total_->increment();
+
   return State::FLUSHING;
+}
+
+telemetry::CounterPtr TransactionArchiver::CreateCounter(char const *name,
+                                                         char const *description) const
+{
+  telemetry::Measurement::Labels labels{{"lane", std::to_string(lane_)}};
+  return telemetry::Registry::Instance().CreateCounter(name, description, std::move(labels));
 }
 
 char const *ToString(TransactionArchiver::State state)
