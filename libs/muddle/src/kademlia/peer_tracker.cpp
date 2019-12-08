@@ -1052,7 +1052,7 @@ PeerTracker::Handle PeerTracker::LookupHandle(Address const &address)
   auto connection = wptr.lock();
   if (connection)
   {
-    // TODO: Causes deadlock peer_table_.ReportLiveliness(address, own_address_);
+    // TODO(tfr): Causes deadlock peer_table_.ReportLiveliness(address, own_address_);
     return connection->handle();
   }
   // TODO(tfr): Create a cache for the search below

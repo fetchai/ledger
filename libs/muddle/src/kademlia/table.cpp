@@ -243,8 +243,7 @@ void KademliaTable::ReportSuccessfulConnectAttempt(Uri const &uri)
   auto it = known_uris_.find(uri);
   if (it == known_uris_.end())
   {
-    // TODO(tfr): Consider creating the entry if
-    // it does not exist
+    // TODO(tfr): Consider creating the entry if it does not exist
     return;
   }
 
@@ -260,8 +259,7 @@ void KademliaTable::ReportFailedConnectAttempt(Uri const &uri)
   auto it = known_uris_.find(uri);
   if (it == known_uris_.end())
   {
-    // TODO(tfr): Consider creating the entry if
-    // it does not exist
+    // TODO(tfr): Consider creating the entry if it does not exist
     return;
   }
 
