@@ -693,6 +693,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
   }
   else
   {
+    // Note: this is inefficient
     if (!LookupBlock(current_hash, block, &next_hash))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
@@ -700,6 +701,9 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
       throw std::runtime_error("Failed to lookup block");
     }
   }
+
+  // We have the block we want to sync forward from. Check if it is on the heaviest chain.
+  bool const not_heaviest = block->chain_label != heaviest_.ChainLabel();
 
   bool not_done = true;
   for (current_hash = std::move(next_hash);
@@ -727,7 +731,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
     result.push_back(std::move(block));
   }
 
-  return {std::move(result), GetHeaviestBlockHash()};
+  return {std::move(result), GetHeaviestBlockHash(), not_heaviest};
 }
 
 /**

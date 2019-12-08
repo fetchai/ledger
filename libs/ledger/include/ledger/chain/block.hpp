@@ -70,8 +70,6 @@ public:
   uint64_t       timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
   BlockEntropy   block_entropy;      ///< Entropy that determines miner priority for the next block
   Weight         weight = 1;         ///< Block weight
-  uint64_t       chain_label{0};     ///< The label of a heaviest chain this block once belonged to
-                                     ///< A more detailed explanation in MainChain::HeaviestTip.
 
   // The qual miner must sign the block
   Digest miner_signature;
@@ -80,6 +78,8 @@ public:
   /// @{
   Weight total_weight = 1;
   bool   is_loose     = false;
+  uint64_t       chain_label{0};     ///< The label of a heaviest chain this block once belonged to
+                                     ///< A more detailed explanation in MainChain::HeaviestTip.
   /// @}
 
   // Helper functions

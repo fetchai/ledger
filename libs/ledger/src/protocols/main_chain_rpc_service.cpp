@@ -398,15 +398,16 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
               next_state = State::SYNCHRONISING;  // we have reached the tip
             }
           }
-          else
+
+          if(response.not_on_heaviest)
           {
             block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
 
-            FETCH_LOG_INFO(LOGGING_NAME, "Received empty block response. Walking back.");
+            FETCH_LOG_WARN(LOGGING_NAME, "Received indication we are on a dead fork. Walking back.");
 
             if(block_resolving_)
             {
-              FETCH_LOG_INFO(LOGGING_NAME, "Walked to: ", block_resolving_->block_number);
+              FETCH_LOG_WARN(LOGGING_NAME, "Walked to: ", block_resolving_->block_number);
             }
           }
         }
