@@ -386,9 +386,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
           // we should receive at least one extra block in addition to what we already have
           if (!blocks.empty())
           {
-            FETCH_LOG_INFO(LOGGING_NAME, "Received empty block response. Walking back.");
-
-            block_resolving_ = chain_.GetBlock(block_resolving_->hash);
+            block_resolving_ = {};
 
             HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
             auto const &latest_hash = blocks.back().hash;
@@ -402,7 +400,9 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
           }
           else
           {
-            block_resolving_ = {};
+            FETCH_LOG_INFO(LOGGING_NAME, "Received empty block response. Walking back.");
+
+            block_resolving_ = chain_.GetBlock(block_resolving_->hash);
           }
         }
         else
