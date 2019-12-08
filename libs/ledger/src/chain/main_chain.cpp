@@ -1588,6 +1588,8 @@ bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block
 {
   bool success{false};
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Read from storage");
+
   if (block_store_)
   {
     // create the output block

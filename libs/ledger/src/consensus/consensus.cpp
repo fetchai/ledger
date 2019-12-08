@@ -166,7 +166,7 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
 
   // Walk back the chain until we see a block specifying an aeon beginning (corner
   // case for true genesis)
-  while (!ret.block_entropy.IsAeonBeginning() && current.block_number != 0)
+  while (!ret.block_entropy.IsAeonBeginning() && ret.block_number != 0)
   {
     auto prior = GetBlockPriorTo(ret, chain);
 
@@ -545,7 +545,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   if (EntropyGeneratorInterface::Status::OK !=
       beacon_->GenerateEntropy(block_number, ret->block_entropy))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Failed to generate entropy for block: ", block_number);
+    /*FETCH_LOG_DEBUG(LOGGING_NAME, "Failed to generate entropy for block: ", block_number);*/
     return {};
   }
 

@@ -318,9 +318,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
   uint64_t const current_dag_epoch    = dag_ ? dag_->CurrentEpoch() : 0;
   bool const     is_genesis           = current_block_->IsGenesis();
 
-//#ifdef FETCH_LOG_DEBUG_ENABLED
-//  if (extra_debug)
-//  {
+#ifdef FETCH_LOG_DEBUG_ENABLED
+  if (extra_debug)
+  {
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Heaviest.....: 0x", chain_.GetHeaviestBlockHash().ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current......: 0x", current_hash.ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Previous.....: 0x", previous_hash.ToHex());
@@ -331,22 +331,22 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last BlockInt: 0x",
                    last_executed_block_.Apply([](auto const &hash) { return hash; }).ToHex());
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last DAGEpoch: 0x", current_dag_epoch);
-//  }
-//#endif  // FETCH_LOG_DEBUG_ENABLED
+  }
+#endif  // FETCH_LOG_DEBUG_ENABLED
 
   FETCH_UNUSED(current_dag_epoch);
-
-  if (is_genesis)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "No need to execute genesis - reset condition.");
-
-    last_executed_block_.ApplyVoid([this](auto &digest) { digest = current_block_->hash; });
-    return State::SYNCHRONISED;
-  }
 
   // initial condition, the last processed block is empty
   if (chain::ZERO_HASH == last_processed_block)
   {
+    // start up - we need to work out which of the blocks has been executed previously
+
+    if (is_genesis)
+    {
+      // once we have got back to genesis then we need to start executing from the beginning
+      return State::PRE_EXEC_BLOCK_VALIDATION;
+    }
+
     // look up the previous block
     auto previous_block = chain_.GetBlock(previous_hash);
     if (!previous_block)
@@ -1309,10 +1309,10 @@ char const *BlockCoordinator::ToString(ExecutionStatus state)
 
 void BlockCoordinator::Reset()
 {
-  last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::ZERO_HASH; });
-  execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
   chain_.Reset();
   current_block_ = chain_.CreateGenesisBlock();
+  last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::GENESIS_DIGEST; });
+  execution_manager_.SetLastProcessedBlock(chain::GENESIS_DIGEST);
 }
 
 }  // namespace ledger
