@@ -181,6 +181,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
     return;
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Gossiped block DID prove valid");
+
   // add the new block to the chain
   auto const status = chain_.AddBlock(block);
 
