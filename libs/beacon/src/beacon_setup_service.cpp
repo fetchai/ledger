@@ -406,9 +406,9 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   }
 
   // Whether to proceed (if threshold peers have also met this condition)
-  const bool is_ok = (ready_connections_.size() >= require_connections &&
+  const bool is_ok      = (ready_connections_.size() >= require_connections &&
                       connections_.size() >= require_connections);
-
+  condition_to_proceed_ = true;  // TODO(tfr): Temporary
   if (!condition_to_proceed_ && is_ok)
   {
     condition_to_proceed_ = true;

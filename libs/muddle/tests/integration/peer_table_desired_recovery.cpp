@@ -26,7 +26,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(RoutingTests, DesiredTableAfterReboot)
+TEST(RoutingTests, DISABLED_DesiredTableAfterReboot)
 {
   std::vector<fetch::muddle::Address> desired_peers;
 
