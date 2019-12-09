@@ -90,6 +90,14 @@ private:
                                    return_type_index, handler, static_charge);
   }
 
+  void CreateMemberOperator(TypeIndex type_index, Operator op,
+                            TypeIndexArray const &parameter_type_index_array,
+                            TypeIndex return_type_index, Handler const &handler,
+                            ChargeAmount static_charge)
+  {
+    analyser_.CreateMemberOperator(type_index, op, parameter_type_index_array,
+                                   return_type_index, handler, static_charge);
+  }
   void EnableOperator(TypeIndex type_index, Operator op)
   {
     analyser_.EnableOperator(type_index, op);

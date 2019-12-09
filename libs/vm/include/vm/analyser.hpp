@@ -67,6 +67,11 @@ public:
                             TypeIndex return_type_index, Handler const &handler,
                             ChargeAmount static_charge);
 
+  void CreateMemberOperator(TypeIndex type_index, Operator const &op,
+                                    TypeIndexArray const &parameter_type_index_array,
+                                    TypeIndex return_type_index, Handler const &handler,
+                                    ChargeAmount static_charge);
+
   void EnableOperator(TypeIndex type_index, Operator op);
 
   void EnableLeftOperator(TypeIndex type_index, Operator op);
@@ -398,6 +403,9 @@ private:
                                          TypePtrArray const &parameter_types, TypePtr const &return_type,
                                          Handler const &handler, ChargeAmount static_charge);
   void        CreateMemberFunction(TypePtr const &type, std::string const &name,
+                                   TypePtrArray const &parameter_types, TypePtr const &return_type,
+                                   Handler const &handler, ChargeAmount static_charge);
+  void        CreateMemberOperator(TypePtr const &type, Operator op,
                                    TypePtrArray const &parameter_types, TypePtr const &return_type,
                                    Handler const &handler, ChargeAmount static_charge);
   FunctionPtr CreateUserDefinedFreeFunction(std::string const &     name,

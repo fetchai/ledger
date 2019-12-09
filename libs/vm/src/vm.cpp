@@ -27,6 +27,22 @@
 namespace fetch {
 namespace vm {
 
+// TODO - how to get estimator into operators:
+//
+// TODO - proposal 1:
+// 1. rework vm/common.hpp FunctionInfo to contain a Charge estimator instead of a charge_amount
+// 2. AddOpcodeInfo calls in vm can then either pass a charge estimator that gives charge = 1, or the relevant Estimator
+// N.B. this can't work because there is the same OpCode for Tensor.operator+ as for SomeOtherObject.operator+
+
+// TODO - proposal 2:
+// 1. maybe we can bind a pseudo operator somehow (e.g. by overloading EnableOperator with something that
+// follows the CreateMemberFunction code path)
+//
+//
+
+
+
+
 VM::VM(Module *module)
 {
   FunctionInfoArray function_info_array;

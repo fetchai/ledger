@@ -187,7 +187,13 @@ public:
       return InternalCreateMemberFunction(name, callable, 0, estimator);
     }
 
-    ClassInterface &EnableOperator(Operator op, ChargeAmount static_charge)
+    template <typename Estimator, typename Callable>
+    ClassInterface &EnableOperator(Operator op, Callable callable, Estimator estimator)
+    {
+      return InternalCreateMemberOperator(op, callable, 0, estimator);
+    }
+
+    ClassInterface &EnableOperator(Operator op)
     {
       TypeIndex const type_index__            = type_index_;
       auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
@@ -197,7 +203,7 @@ public:
       return *this;
     }
 
-    ClassInterface &EnableLeftOperator(Operator op, ChargeAmount static_charge)
+    ClassInterface &EnableLeftOperator(Operator op)
     {
       TypeIndex const type_index__            = type_index_;
       auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
@@ -207,40 +213,7 @@ public:
       return *this;
     }
 
-    ClassInterface &EnableRightOperator(Operator op, ChargeAmount static_charge)
-    {
-      TypeIndex const type_index__            = type_index_;
-      auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
-        compiler->EnableRightOperator(type_index__, op);
-      };
-      module_->AddCompilerSetupFunction(compiler_setup_function);
-      return *this;
-    }
-
-    template <typename Estimator>
-    ClassInterface &EnableOperator(Operator op, Estimator &&estimator)
-    {
-      TypeIndex const type_index__            = type_index_;
-      auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
-        compiler->EnableOperator(type_index__, op);
-      };
-      module_->AddCompilerSetupFunction(compiler_setup_function);
-      return *this;
-    }
-
-    template <typename Estimator>
-    ClassInterface &EnableLeftOperator(Operator op, Estimator &&estimator)
-    {
-      TypeIndex const type_index__            = type_index_;
-      auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
-        compiler->EnableLeftOperator(type_index__, op);
-      };
-      module_->AddCompilerSetupFunction(compiler_setup_function);
-      return *this;
-    }
-
-    template <typename Estimator>
-    ClassInterface &EnableRightOperator(Operator op, Estimator &&estimator)
+    ClassInterface &EnableRightOperator(Operator op)
     {
       TypeIndex const type_index__            = type_index_;
       auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
@@ -433,6 +406,34 @@ public:
                                       return_type_index, handler,
                                       static_charge](Compiler *compiler) {
         compiler->CreateMemberFunction(type_index__, name, parameter_type_index_array,
+                                       return_type_index, handler, static_charge);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+
+      return *this;
+    }
+
+
+    template <typename Estimator, typename Callable>
+    ClassInterface &InternalCreateMemberOperator(Operator op, Callable callable,
+                                                 ChargeAmount static_charge, Estimator estimator)
+    {
+      using EtchParams = typename meta::CallableTraits<Callable>::ArgsTupleType;
+      using ReturnType = typename meta::CallableTraits<Callable>::ReturnType;
+
+      TypeIndex const type_index__ = type_index_;
+      TypeIndexArray  parameter_type_index_array;
+      UnrollTupleParameterTypes<EtchParams>::Unroll(parameter_type_index_array);
+      TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
+
+      Handler handler = [callable, estimator](VM *vm) {
+        MemberFunction<EtchParams>::InvokeHandler(vm, estimator, callable);
+      };
+
+      auto compiler_setup_function = [type_index__, op, parameter_type_index_array,
+                                      return_type_index, handler,
+                                      static_charge](Compiler *compiler) {
+        compiler->CreateMemberOperator(type_index__, op, parameter_type_index_array,
                                        return_type_index, handler, static_charge);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);

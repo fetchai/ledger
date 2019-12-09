@@ -305,6 +305,15 @@ void Analyser::CreateMemberFunction(TypeIndex type_index, std::string const &fun
                        GetType(return_type_index), handler, static_charge);
 }
 
+void Analyser::CreateMemberOperator(TypeIndex type_index, Operator const &op,
+                                    TypeIndexArray const &parameter_type_index_array,
+                                    TypeIndex return_type_index, Handler const &handler,
+                                    ChargeAmount static_charge)
+{
+  CreateMemberOperator(GetType(type_index), op, GetTypes(parameter_type_index_array),
+                       GetType(return_type_index), handler, static_charge);
+}
+
 void Analyser::EnableOperator(TypeIndex type_index, Operator op)
 {
   EnableOperator(GetType(type_index), op);
@@ -3396,6 +3405,25 @@ void Analyser::CreateMemberFunction(TypePtr const &type, std::string const &name
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler, static_charge);
   function_map_.Add(f);
+}
+
+void Analyser::CreateMemberOperator(TypePtr const &type, Operator op,
+                                    TypePtrArray const &parameter_types, TypePtr const &return_type,
+                                    Handler const &handler, ChargeAmount static_charge)
+{
+  std::string op_as_string(std::to_string(static_cast<char>(op)));
+
+  std::string unique_name = BuildUniqueName(type, op_as_string, parameter_types, return_type);
+  if (function_map_.Find(unique_name))
+  {
+    return;
+  }
+
+  FunctionPtr gf = CreateFunction(FunctionKind::MemberFunction, op_as_string, unique_name,
+                                  parameter_types, {}, return_type);
+  AddFunctionInfo(gf, handler, static_charge);
+  AddFunctionToSymbolTable(type->symbols, gf);
+  function_map_.Add(gf);
 }
 
 FunctionPtr Analyser::CreateUserDefinedFreeFunction(std::string const &     name,
