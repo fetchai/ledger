@@ -301,6 +301,21 @@ steps:
 
 ---
 test_description: >
+  Single void contract-to-contract call with arguments
+
+setup_conditions:
+  test_name: "c2c_argument_passing_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.c2c_argument_passing_test" }
+...
+
+---
+test_description: >
   Nested contract-to-contract call
 
 setup_conditions:

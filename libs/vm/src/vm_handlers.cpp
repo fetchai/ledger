@@ -803,15 +803,15 @@ void VM::Handler__InvokeContractFunction()
     return;
   }
 
-  if (function.return_type_id != TypeIds::Void && output.type_id != function.return_type_id)
-  {
-    RuntimeError("Call to " + function.name + " in contract " + identity +
-                 " returned unexpected type_id");
-    return;
-  }
-
   if (function.return_type_id != TypeIds::Void)
   {
+    if (output.type_id != function.return_type_id)
+    {
+      RuntimeError("Call to " + function.name + " in contract " + identity +
+                   " returned unexpected type_id");
+      return;
+    }
+
     Variant &top = Push();
     top          = std::move(output);
   }
