@@ -738,7 +738,7 @@ void PeerTracker::Periodically()
   {
     std::stringstream ss("");
     ss << std::endl;
-    ss << "Connectivity report" << std::endl;
+    ss << "Connectivity report: " << logging_name_ << std::endl;
     ss << "===================" << std::endl ss << register_.GetOutgoingAddressSet().size() << " / "
        << register_.GetIncomingAddressSet().size() << " / "
        << register_.GetCurrentAddressSet().size() << std::endl;
