@@ -688,7 +688,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
   SizeType          n = 1;
   std::vector<Type> elems;
   elems.reserve(1024);
-  bool failed = false;
+  bool failed         = false;
   bool prev_backslash = false;
 
   // Text parsing loop
@@ -743,7 +743,6 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       break;
     }
   }
-
 
   SizeType m = elems.size() / n;
 
