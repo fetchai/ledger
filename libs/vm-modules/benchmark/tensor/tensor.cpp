@@ -44,7 +44,7 @@ void SetUp(std::shared_ptr<VM> &vm)
   using VMFactory = fetch::vm_modules::VMFactory;
 
   // setup the VM
-  auto module = VMFactory::GetModule(fetch::vm_modules::VMFactory::USE_SMART_CONTRACTS);
+  auto module = VMFactory::GetModule(fetch::vm_modules::VMFactory::USE_ALL);
   vm          = std::make_shared<VM>(module.get());
 }
 

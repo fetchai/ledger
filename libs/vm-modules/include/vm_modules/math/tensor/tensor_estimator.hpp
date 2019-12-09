@@ -204,9 +204,9 @@ public:
   };
 
 private:
-  ChargeAmount const low_charge{5 * fetch::vm::CHARGE_UNIT};
+  static ChargeAmount const LOW_CHARGE{5 * fetch::vm::COMPUTE_CHARGE_COST};
 
-  static ChargeAmount infinite_charge(std::string const &log_msg = "");
+  static ChargeAmount MaximumCharge(std::string const &log_msg = "");
 
   VMObjectType &tensor_;
 };

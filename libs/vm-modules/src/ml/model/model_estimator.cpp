@@ -41,19 +41,20 @@ ModelEstimator::ModelEstimator(VMObjectType &model)
 
 ModelEstimator &ModelEstimator::operator=(ModelEstimator const &other) noexcept
 {
-  copy_state_from(other);
+  CopyStateFrom(other);
   return *this;
 }
 
 ModelEstimator &ModelEstimator::operator=(ModelEstimator &&other) noexcept
 {
-  copy_state_from(other);
+  CopyStateFrom(other);
   return *this;
 }
 
 /**
  * Estimates and returns the cost of adding the relevant layer, but also updates internal state for
- * other calls (e.g. forward_pass_cost etc.)
+ * other calls (e.g. forward_pass_cost etc.).
+ * Must be a sequential model
  * @param layer description of layer type
  * @param inputs number of inputs to layer
  * @param hidden_nodes number of outputs of layer
@@ -65,7 +66,7 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
   // guarantee it's a dense layer
   if (!(layer->string() == "dense"))
   {
-    return infinite_charge("invalid params specified for " + layer->string() + " layer");
+    return MaximumCharge("invalid params specified for " + layer->string() + " layer");
   }
 
   SizeType padded_size{0};
@@ -100,13 +101,13 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
   }
   else
   {
-    return infinite_charge("no add method for non-sequential methods");
+    return MaximumCharge("no add method for non-sequential methods");
   }
 
   return static_cast<ChargeAmount>(
              ADD_DENSE_INPUT_COEF() * inputs + ADD_DENSE_OUTPUT_COEF() * hidden_nodes +
              ADD_DENSE_QUAD_COEF() * inputs * hidden_nodes + ADD_DENSE_CONST_COEF()) *
-         CHARGE_UNIT;
+         COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> const &layer,
@@ -124,10 +125,31 @@ ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> cons
   }
   else
   {
-    return infinite_charge("attempted to estimate unknown layer with unknown activation type");
+    return MaximumCharge("attempted to estimate unknown layer with unknown activation type");
   }
 
   return estimate;
+}
+
+/**
+ * Method for giving charge estimate for experimental layers
+ * @param layer
+ * @param inputs
+ * @param hidden_nodes
+ * @param activation
+ * @return
+ */
+ChargeAmount ModelEstimator::LayerAddDenseActivationExperimental(
+    Ptr<fetch::vm::String> const &layer, SizeType const &inputs, SizeType const &hidden_nodes,
+    Ptr<fetch::vm::String> const &activation)
+{
+
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(inputs);
+  FETCH_UNUSED(hidden_nodes);
+  FETCH_UNUSED(activation);
+
+  return MaximumCharge("attempted to estimate unknown layer with unknown activation type");
 }
 
 ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType const &output_channels,
@@ -139,7 +161,7 @@ ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType con
   FETCH_UNUSED(input_channels);
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
-  return infinite_charge("Not yet implemented");
+  return MaximumCharge("Not yet implemented");
 }
 
 ChargeAmount ModelEstimator::LayerAddConvActivation(
@@ -152,7 +174,7 @@ ChargeAmount ModelEstimator::LayerAddConvActivation(
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
   FETCH_UNUSED(activation);
-  return infinite_charge("Not yet implement");
+  return MaximumCharge("Not yet implement");
 }
 
 ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
@@ -238,11 +260,11 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
 
   if (!success)
   {
-    return infinite_charge("Not yet implement");
+    return MaximumCharge("Not yet implement");
   }
 
   return static_cast<ChargeAmount>(optimiser_construction_impact + COMPILE_CONST_COEF()) *
-         CHARGE_UNIT;
+         COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,
@@ -250,7 +272,7 @@ ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser
 {
   FETCH_UNUSED(optimiser);
   FETCH_UNUSED(in_layers);
-  return infinite_charge("Not yet implement");
+  return MaximumCharge("Not yet implement");
 }
 
 ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTensor> const &labels,
@@ -279,13 +301,13 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
   // Call overhead
   estimate = estimate + FIT_CONST_COEF();
 
-  return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
+  return static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount ModelEstimator::Evaluate()
 {
   // Just return loss_, constant charge
-  return static_cast<ChargeAmount>(constant_charge);
+  return static_cast<ChargeAmount>(CONSTANT_CHARGE);
 }
 
 ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
@@ -297,7 +319,7 @@ ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
   estimate = estimate + PREDICT_BATCH_LAYER_COEF() * batch_size * state_.ops_count;
   estimate = estimate + PREDICT_CONST_COEF();
 
-  return static_cast<ChargeAmount>(estimate * CHARGE_UNIT);
+  return static_cast<ChargeAmount>(estimate * COMPUTE_CHARGE_COST);
 }
 
 ChargeAmount ModelEstimator::SerializeToString()
@@ -308,13 +330,13 @@ ChargeAmount ModelEstimator::SerializeToString()
   estimate = estimate + SERIALISATION_WEIGHT_SUM_COEF() * state_.weights_size_sum;
   estimate = estimate + SERIALISATION_CONST_COEF();
 
-  return static_cast<ChargeAmount>(estimate) * CHARGE_UNIT;
+  return static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount ModelEstimator::DeserializeFromString(Ptr<String> const &model_string)
 {
   DataType estimate = DESERIALISATION_PER_CHAR_COEF() * model_string->string().size();
-  return static_cast<ChargeAmount>(estimate + DESERIALISATION_CONST_COEF()) * CHARGE_UNIT;
+  return static_cast<ChargeAmount>(estimate + DESERIALISATION_CONST_COEF()) * COMPUTE_CHARGE_COST;
 }
 
 bool ModelEstimator::SerializeTo(serializers::MsgPackSerializer &buffer)
@@ -327,15 +349,15 @@ bool ModelEstimator::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   return state_.DeserializeFrom(buffer);
 }
 
-void ModelEstimator::copy_state_from(ModelEstimator const &src)
+void ModelEstimator::CopyStateFrom(ModelEstimator const &src)
 {
   state_ = src.state_;
 }
 
-ChargeAmount ModelEstimator::infinite_charge(std::string const &log_msg)
+ChargeAmount ModelEstimator::MaximumCharge(std::string const &log_msg)
 {
-  FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::CHARGE_INIFITY : " + log_msg);
-  return vm::CHARGE_INFINITY;
+  FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::MAXIMUM_CHARGE : " + log_msg);
+  return vm::MAXIMUM_CHARGE;
 }
 
 bool ModelEstimator::State::SerializeTo(serializers::MsgPackSerializer &buffer)

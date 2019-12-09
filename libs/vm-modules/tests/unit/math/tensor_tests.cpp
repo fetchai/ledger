@@ -28,7 +28,7 @@
 
 using namespace fetch::vm;
 
-namespace math_tensor_tests {
+namespace {
 
 using ::testing::Between;
 
@@ -66,6 +66,117 @@ TEST_F(MathTensorTests, tensor_squeeze_test)
 }
 
 /// GETTER AND SETTER TESTS ///
+
+TEST_F(MathTensorTests, tensor_1_dim_fixed64_fill)
+{
+  static char const *FILL_1_DIM_SRC = R"(
+            function main()
+              var tensor_shape = Array<UInt64>(1);
+              tensor_shape[0] = 10u64;
+              var d = Tensor(tensor_shape);
+              d.fill(toFixed64(123456.0));
+              assert(d.at(1u64) == toFixed64(123456.0));
+            endfunction
+          )";
+  ASSERT_TRUE(toolkit.Compile(FILL_1_DIM_SRC));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_2_dim_fixed64_fill)
+{
+  static char const *FILL_2_DIM_SRC = R"(
+            function main()
+              var tensor_shape = Array<UInt64>(2);
+              tensor_shape[0] = 10u64;
+              tensor_shape[1] = 10u64;
+              var d = Tensor(tensor_shape);
+              d.fill(toFixed64(123456.0));
+              assert(d.at(1u64,1u64) == toFixed64(123456.0));
+            endfunction
+          )";
+
+  ASSERT_TRUE(toolkit.Compile(FILL_2_DIM_SRC));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_3_dim_fixed64_fill)
+{
+  static char const *FILL_3_DIM_SRC = R"(
+            function main()
+              var tensor_shape = Array<UInt64>(3);
+              tensor_shape[0] = 10u64;
+              tensor_shape[1] = 10u64;
+              tensor_shape[2] = 10u64;
+              var d = Tensor(tensor_shape);
+              d.fill(toFixed64(123456.0));
+              assert(d.at(1u64,1u64,1u64) == toFixed64(123456.0));
+            endfunction
+          )";
+
+  ASSERT_TRUE(toolkit.Compile(FILL_3_DIM_SRC));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_4_dim_fixed64_fill)
+{
+  static char const *FILL_4_DIM_SRC = R"(
+            function main()
+              var tensor_shape = Array<UInt64>(4);
+              tensor_shape[0] = 10u64;
+              tensor_shape[1] = 10u64;
+              tensor_shape[2] = 10u64;
+              tensor_shape[3] = 10u64;
+              var d = Tensor(tensor_shape);
+              d.fill(toFixed64(123456.0));
+              assert(d.at(1u64,1u64,1u64,1u64) == toFixed64(123456.0));
+            endfunction
+          )";
+  ASSERT_TRUE(toolkit.Compile(FILL_4_DIM_SRC));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+// Disabled until ML-329 resolved
+TEST_F(MathTensorTests, DISABLED_tensor_at_on_invalid_index)
+{
+  static char const *SRC = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(1);
+      tensor_shape[0] = 2u64;
+
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(2.0fp64);
+
+      printLn(toString(x.at(999u64)));
+
+     return y;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_set_on_invalid_index)
+{
+  static char const *SRC = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(1);
+      tensor_shape[0] = 2u64;
+
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(2.0fp64);
+
+      y.setAt(999u64,x.at(0u64));
+
+     return y;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
 
 TEST_F(MathTensorTests, tensor_set_and_at_one_test)
 {
@@ -242,360 +353,6 @@ TEST_F(MathTensorTests, tensor_set_from_string)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
-/// TENSOR ARITHMETIC TESTS ///
-
-TEST_F(MathTensorTests, tensor_equal_etch_test)
-{
-  static char const *tensor_equal_true_src = R"(
-    function main() : Bool
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      var result : Bool = (x == y);
-      return result;
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_equal_true_src));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const result = res.Get<bool>();
-  EXPECT_TRUE(result == true);
-
-  // test again for when not equal
-  static char const *tensor_equal_false_src = R"(
-    function main() : Bool
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      y.setAt(0u64, 0u64, 1.0fp64);
-      var result : Bool = (x == y);
-      return result;
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_equal_false_src));
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const result2 = res.Get<bool>();
-  EXPECT_TRUE(result2 == false);
-}
-
-TEST_F(MathTensorTests, tensor_not_equal_etch_test)
-{
-  static char const *tensor_not_equal_true_src = R"(
-    function main() : Bool
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      var result : Bool = (x != y);
-      return result;
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_not_equal_true_src));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const result = res.Get<bool>();
-  EXPECT_TRUE(result == false);
-
-  // test again for when not equal
-  static char const *tensor_not_equal_false_src = R"(
-    function main() : Bool
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      y.setAt(0u64, 0u64, 1.0fp64);
-      var result : Bool = (x != y);
-      return result;
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_not_equal_false_src));
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const result2 = res.Get<bool>();
-  EXPECT_TRUE(result2 == true);
-}
-
-TEST_F(MathTensorTests, tensor_add_test)
-{
-  static char const *tensor_add_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      var result = x + y;
-      return result;
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_add_src));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto                          tensor     = tensor_ptr->GetTensor();
-  fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(14.0));
-
-  EXPECT_TRUE(gt.AllClose(tensor));
-}
-
-TEST_F(MathTensorTests, tensor_subtract_test)
-{
-  static char const *tensor_add_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(9.0fp64);
-      var result = x - y;
-      return result;
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_add_src));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto                          tensor     = tensor_ptr->GetTensor();
-  fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(-2.0));
-
-  EXPECT_TRUE(gt.AllClose(tensor));
-}
-
-TEST_F(MathTensorTests, tensor_multiply_test)
-{
-  static char const *tensor_mul_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      var result = x * y;
-      return result;
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_mul_src));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto                          tensor     = tensor_ptr->GetTensor();
-  fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(49.0));
-
-  EXPECT_TRUE(gt.AllClose(tensor));
-}
-
-TEST_F(MathTensorTests, tensor_divide_test)
-{
-  static char const *tensor_div_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(14.0fp64);
-      var result = x / y;
-      return result;
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_div_src));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto                          tensor     = tensor_ptr->GetTensor();
-  fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(0.5));
-
-  EXPECT_TRUE(gt.AllClose(tensor));
-}
-
-TEST_F(MathTensorTests, tensor_inplace_multiply_test)
-{
-  static char const *tensor_inplace_mul_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      x *= y;
-      return x;
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_inplace_mul_src));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto                          tensor     = tensor_ptr->GetTensor();
-  fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(49.0));
-
-  std::cout << "gt.ToString(): " << gt.ToString() << std::endl;
-  std::cout << "tensor.ToString(): " << tensor.ToString() << std::endl;
-
-  EXPECT_TRUE(gt.AllClose(tensor));
-}
-
-TEST_F(MathTensorTests, tensor_inplace_divide_test)
-{
-  static char const *tensor_inplace_div_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(14.0fp64);
-      x /= y;
-      return x;
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_inplace_div_src));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto                          tensor     = tensor_ptr->GetTensor();
-  fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(0.5));
-
-  std::cout << "gt.ToString(): " << gt.ToString() << std::endl;
-  std::cout << "tensor.ToString(): " << tensor.ToString() << std::endl;
-
-  EXPECT_TRUE(gt.AllClose(tensor));
-}
-
-TEST_F(MathTensorTests, tensor_inplace_add_test)
-{
-  static char const *tensor_add_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      x += y;
-      return x;
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_add_src));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto                          tensor     = tensor_ptr->GetTensor();
-  fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(14.0));
-
-  EXPECT_TRUE(gt.AllClose(tensor));
-}
-
-TEST_F(MathTensorTests, tensor_inplace_subtract_test)
-{
-  static char const *tensor_add_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(9.0fp64);
-      x -= y;
-      return x;
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(tensor_add_src));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto                          tensor     = tensor_ptr->GetTensor();
-  fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(-2.0));
-
-  EXPECT_TRUE(gt.AllClose(tensor));
-}
-
-TEST_F(MathTensorTests, tensor_negate_etch_test)
-{
-  static char const *tensor_negate_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      x = -x;
-      return x;
-    endfunction
-  )";
-
-  std::string const state_name{"tensor"};
-
-  ASSERT_TRUE(toolkit.Compile(tensor_negate_src));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  auto       tensor     = tensor_ptr->GetTensor();
-  std::cout << "tensor: " << tensor.ToString() << std::endl;
-
-  fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(-7.0));
-
-  EXPECT_TRUE(gt.AllClose(tensor));
-}
-
 /// MATRIX OPERATION TESTS ///
 
 TEST_F(MathTensorTests, tensor_min_test)
@@ -721,6 +478,52 @@ TEST_F(MathTensorTests, tensor_sum_etch_test)
   EXPECT_TRUE(fetch::math::Abs(gt - sum_val) < DataType::TOLERANCE);
 }
 
+TEST_F(MathTensorTests, tensor_invalid_squeeze_test)
+{
+  static char const *SOURCE = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(3);
+      tensor_shape[0] = 4u64;
+      tensor_shape[1] = 4u64;
+      tensor_shape[2] = 4u64;
+      var x = Tensor(tensor_shape);
+      var squeezed_x = x.squeeze();
+      return squeezed_x;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_unsqueeze_test)
+{
+  static char const *SOURCE = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(4);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 3u64;
+      tensor_shape[2] = 4u64;
+      tensor_shape[3] = 5u64;
+      var x = Tensor(tensor_shape);
+      var unsqueezed_x = x.unsqueeze();
+      return unsqueezed_x;
+    endfunction
+  )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const tensor            = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const constructed_shape = tensor->shape();
+
+  // Expected shape of a unsqueezed [2,3,4,5] is [2,3,4,5,1]
+  fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({2, 3, 4, 5, 1});
+
+  EXPECT_TRUE(constructed_shape == expected.shape());
+}
+
 /// SERIALISATION TESTS ///
 
 TEST_F(MathTensorTests, tensor_state_test)
@@ -765,4 +568,25 @@ TEST_F(MathTensorTests, tensor_state_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
-}  // namespace math_tensor_tests
+TEST_F(MathTensorTests, tensor_invalid_from_string)
+{
+  static char const *SOURCE = R"(
+      function main()
+        var tensor_shape = Array<UInt64>(3);
+        tensor_shape[0] = 4u64;
+        tensor_shape[1] = 1u64;
+        tensor_shape[2] = 1u64;
+
+        var x = Tensor(tensor_shape);
+        x.fill(2.0fp64);
+
+        var string_vals = "INVALID_STRING";
+        x.fromString(string_vals);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+}  // namespace

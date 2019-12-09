@@ -29,9 +29,11 @@ using TxLayouts = TransactionStorageEngineInterface::TxLayouts;
  * Create a transaction storage engine with the define number of lanes
  *
  * @param log2_num_lanes The log2 of the number of lanes in the system
+ * @param lane The lane id for the storage engine
  */
-TransactionStorageEngine::TransactionStorageEngine(uint32_t log2_num_lanes)
-  : recent_tx_{MAX_NUM_RECENT_TX, log2_num_lanes}
+TransactionStorageEngine::TransactionStorageEngine(uint32_t log2_num_lanes, uint32_t lane)
+  : lane_{lane}
+  , recent_tx_{MAX_NUM_RECENT_TX, log2_num_lanes}
 {}
 
 /**
