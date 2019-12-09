@@ -743,7 +743,7 @@ void PeerTracker::Periodically()
     ss << register_.GetOutgoingAddressSet().size() << " / "
        << register_.GetIncomingAddressSet().size() << " / "
        << register_.GetCurrentAddressSet().size() << std::endl;
-    ss << keep_connections_.size() << " / " << desired_peers_.size() << " / "
+    ss << keep_connections_.size() << " / " << peer_table_.desired_peers().size() << " / "
        << kademlia_connections_.size() << " / " << longrange_connections_.size() << std::endl;
 
     ss << std::endl;

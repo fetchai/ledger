@@ -89,7 +89,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
 
         if (state == PeerConnectionList::ConnectionState::CONNECTED)
         {
-          FETCH_LOG_INFO("Successfully connected. SetStatusCallback");
+          FETCH_LOG_INFO(logging_name_, "Successfully connected. SetStatusCallback");
           direct_message_service_.InitiateConnection(handle);
         }
       });

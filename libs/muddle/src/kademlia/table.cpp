@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "kademlia/table.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "crypto/sha1.hpp"
-#include "kademlia/table.hpp"
 #include "muddle/network_id.hpp"
 
 namespace fetch {
@@ -681,8 +681,30 @@ void KademliaTable::AddDesiredPeer(Address const &address, network::Peer const &
   PeerInfo info;
   info.address = address;
   info.uri.Parse(hint.ToUri());
-  ReportExistence(info, own_address_);
 
+  // Deleting information that is contracdictary
+  auto it2 = known_peers_.find(address);
+  if (it2 != known_peers_.end())
+  {
+    if (it2->second->uri != info.uri)
+    {
+      known_peers_.erase(it2);
+    }
+  }
+
+  auto it3 = known_uris_.find(info.uri);
+  if (it3 != known_uris_.end())
+  {
+    if (it3->second->address != info.address)
+    {
+      known_uris_.erase(it3);
+    }
+  }
+
+  // TODO: Remove from bucket
+
+  // Reporting
+  ReportExistence(info, own_address_);
   desired_uris_.insert(info.uri);
   desired_uri_expiry_.emplace(info.uri, Clock::now() + expiry);
 }
