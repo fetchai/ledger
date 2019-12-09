@@ -83,13 +83,13 @@ public:
   /// RESHAPING ///
   /////////////////
 
-  fetch::vm::Ptr<VMTensor> Squeeze();
+  fetch::vm::Ptr<VMTensor> Squeeze() const;
 
-  fetch::vm::Ptr<VMTensor> Unsqueeze();
+  fetch::vm::Ptr<VMTensor> Unsqueeze() const;
 
   bool Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
 
-  void Transpose();
+  fetch::vm::Ptr<VMTensor> Transpose() const;
 
   ////////////////////////
   /// BASIC COMPARISON ///
@@ -168,6 +168,8 @@ public:
   bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
 
   TensorEstimator &Estimator();
+
+  static const std::size_t RECTANGULAR_SHAPE_SIZE = 2;
 
 private:
   TensorType      tensor_;

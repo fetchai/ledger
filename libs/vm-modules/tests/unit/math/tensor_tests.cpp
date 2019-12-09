@@ -877,8 +877,6 @@ TEST_F(MathTensorTests, tensor_min_etch_test)
     endfunction
   )";
 
-  std::string const state_name{"tensor"};
-
   ASSERT_TRUE(toolkit.Compile(tensor_min_src));
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
@@ -916,8 +914,6 @@ TEST_F(MathTensorTests, tensor_max_etch_test)
       return ret;
     endfunction
   )";
-
-  std::string const state_name{"tensor"};
 
   ASSERT_TRUE(toolkit.Compile(tensor_max_src));
   Variant res;
@@ -960,16 +956,85 @@ TEST_F(MathTensorTests, tensor_sum_etch_test)
     endfunction
   )";
 
-  std::string const state_name{"tensor"};
-
   ASSERT_TRUE(toolkit.Compile(tensor_sum_src));
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const sum_val = res.Get<DataType>();
-  DataType   gt{65.1};
+  auto const     sum_val = res.Get<DataType>();
+  DataType const expected{65.1};
 
-  EXPECT_TRUE(fetch::math::Abs(gt - sum_val) < DataType::TOLERANCE);
+  EXPECT_TRUE(fetch::math::Abs(expected - sum_val) < DataType::TOLERANCE);
+}
+
+TEST_F(MathTensorTests, tensor_transpose_test)
+{
+  fetch::math::Tensor<DataType> tensor =
+      fetch::math::Tensor<DataType>::FromString("1.1, 2.2, 3.3; 4.4, 5.5, 6.6;");
+  ASSERT_TRUE(tensor.shape().size() == 2);
+
+  fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
+
+  auto const transposed = vm_tensor.Transpose()->GetTensor();
+
+  DataType const result = transposed.At<fetch::math::SizeType, fetch::math::SizeType>(1, 0);
+  DataType const expected{2.2};
+
+  EXPECT_EQ(tensor.shape().at(0), transposed.shape().at(1));
+  EXPECT_EQ(tensor.shape().at(1), transposed.shape().at(0));
+
+  EXPECT_TRUE(fetch::math::Abs(expected - result) < DataType::TOLERANCE);
+}
+
+TEST_F(MathTensorTests, tensor_invalid_shape_transpose_test)
+{
+  fetch::math::Tensor<DataType> tensor;
+  tensor.Reshape({4, 4, 4});
+  fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
+
+  EXPECT_THROW(vm_tensor.GetTensor().Transpose(), std::exception);
+}
+
+TEST_F(MathTensorTests, tensor_transpose_etch_test)
+{
+  static char const *SOURCE = R"(
+    function main() : Fixed64
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 10u64;
+      tensor_shape[1] = 2u64;
+      var x = Tensor(tensor_shape);
+      x.fill(42.0fp64);
+      x.setAt(0u64, 1u64, -1.0fp64);
+      var transposed = x.transpose();
+      var ret = transposed.at(0u64, 1u64);
+      return ret;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const     val = res.Get<DataType>();
+  DataType const expected{42.0};
+
+  EXPECT_TRUE(fetch::math::Abs(expected - val) < DataType::TOLERANCE);
+}
+
+TEST_F(MathTensorTests, tensor_invalid_shape_transpose_etch_test)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var tensor_shape = Array<UInt64>(3);
+      tensor_shape[0] = 10u64;
+      tensor_shape[1] = 2u64;
+      tensor_shape[2] = 2u64;
+      var x = Tensor(tensor_shape);
+      var transposed = x.transpose();
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 TEST_F(MathTensorTests, tensor_squeeze_test)

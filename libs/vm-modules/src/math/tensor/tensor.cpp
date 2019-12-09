@@ -200,7 +200,7 @@ void VMTensor::FillRandom()
   tensor_.FillUniformRandom();
 }
 
-Ptr<VMTensor> VMTensor::Squeeze()
+Ptr<VMTensor> VMTensor::Squeeze() const
 {
   auto squeezed_tensor = tensor_.Copy();
   try
@@ -209,12 +209,12 @@ Ptr<VMTensor> VMTensor::Squeeze()
   }
   catch (std::exception const &e)
   {
-    RuntimeError("Squeeze failed: " + std::string(e.what()));
+    vm_->RuntimeError("Squeeze failed: " + std::string(e.what()));
   }
   return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, squeezed_tensor));
 }
 
-Ptr<VMTensor> VMTensor::Unsqueeze()
+Ptr<VMTensor> VMTensor::Unsqueeze() const
 {
   auto unsqueezed_tensor = tensor_.Copy();
   unsqueezed_tensor.Unsqueeze();
@@ -226,9 +226,15 @@ bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
   return tensor_.Reshape(new_shape->elements);
 }
 
-void VMTensor::Transpose()
+Ptr<VMTensor> VMTensor::Transpose() const
 {
-  tensor_.Transpose();
+  if (tensor_.shape().size() != RECTANGULAR_SHAPE_SIZE)
+  {
+    vm_->RuntimeError("Can not transpose a tensor which is not 2-dimensional!");
+    return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, tensor_.Copy()));
+  }
+  auto transposed = tensor_.Transpose();
+  return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, transposed));
 }
 
 /////////////////////////
