@@ -772,7 +772,7 @@ TEST_F(VMModelTests, DISABLED_regressor_model_test)
 TEST_F(VMModelTests, model_with_metric)
 {
   static char const *SRC_METRIC = R"(
-        function main()
+        function main() : Array<Fixed64>
           // set up data and labels
           var data_shape = Array<UInt64>(2);
           data_shape[0] = 10u64;
@@ -795,10 +795,17 @@ TEST_F(VMModelTests, model_with_metric)
 
           // evaluate
           var mets = model.evaluateMetrics();
+          return mets;
         endfunction
       )";
+
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
-  EXPECT_TRUE(toolkit.Run());
+
+  Variant res;
+  EXPECT_TRUE(toolkit.Run(&res));
+
+  auto const metrics = res.Get<Ptr<Array<fetch::vm_modules::math::DataType>>>();
+  EXPECT_EQ(metrics->elements.at(0), metrics->elements.at(1));
 }
 
 }  // namespace
