@@ -31,6 +31,7 @@
 #include "muddle/packet.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
+#include "network/generics/milli_timer.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -559,6 +560,8 @@ void MainChainRpcService::Start()
                                                 Packet::Payload const &payload,
                                                 Address                transmitter) {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
+
+    generics::MilliTimer myTimer("BeaconManager::OnNewBlock");
 
     BlockSerializer serialiser(payload);
 

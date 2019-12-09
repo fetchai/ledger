@@ -133,8 +133,6 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
       FETCH_LOG_INFO(LOGGING_NAME, "Found genesis save file from previous session! Merkle root: ",
                      chain::GENESIS_MERKLE_ROOT.ToHex(),
                      " block hash: ", chain::GENESIS_DIGEST.ToHex());
-      loaded_genesis_ = true;
-
       auto block = chain_.GetHeaviestBlock();
 
       if (block->IsGenesis())
@@ -143,6 +141,15 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
                        "The main chain's heaviest is genesis. That seems suspicious. Hash: 0x",
                        block->hash.ToHex(), " Merkle: 0x", block->merkle_hash.ToHex(),
                        " number: ", block->block_number);
+
+        if(block->hash == FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=") || block->merkle_hash == FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="))
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Main chain needs a reset since it is in a bad state.");
+        }
+      }
+      else
+      {
+        loaded_genesis_ = true;
       }
     }
     else
