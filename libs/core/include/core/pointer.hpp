@@ -22,13 +22,13 @@
 
 namespace fetch {
 
-template<class T>
+template <class T>
 std::shared_ptr<T> const_pointer_cast(std::shared_ptr<std::add_const_t<T>> &&u)
 {
   return std::make_shared<T>(const_cast<T &&>(std::move(*u)));
 }
 
-template<class T>
+template <class T>
 std::shared_ptr<T> const_pointer_cast(std::shared_ptr<std::remove_const_t<T>> &&u)
 {
   return std::make_shared<T>(const_cast<T &&>(std::move(*u)));
