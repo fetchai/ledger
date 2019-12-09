@@ -84,17 +84,20 @@ Ptr<VMDataLoader> VMDataLoader::Constructor(VM *vm, TypeId type_id, Ptr<String> 
   }
 }
 
-void VMDataLoader::Bind(Module &module)
+void VMDataLoader::Bind(Module &module, bool const enable_experimental)
 {
-  module.CreateClassType<VMDataLoader>("DataLoader")
-      .CreateConstructor(&VMDataLoader::Constructor)
-      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> {
-        return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id)};
-      })
-      .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles)
-      .CreateMemberFunction("addData", &VMDataLoader::AddDataByData)
-      .CreateMemberFunction("getNext", &VMDataLoader::GetNext)
-      .CreateMemberFunction("isDone", &VMDataLoader::IsDone);
+  if (enable_experimental)
+  {
+    module.CreateClassType<VMDataLoader>("DataLoader")
+        .CreateConstructor(&VMDataLoader::Constructor)
+        .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> {
+          return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id)};
+        })
+        .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("addData", &VMDataLoader::AddDataByData, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("getNext", &VMDataLoader::GetNext, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("isDone", &VMDataLoader::IsDone, vm::MAXIMUM_CHARGE);
+  }
 }
 
 void VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
