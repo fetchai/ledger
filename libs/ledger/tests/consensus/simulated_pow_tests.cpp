@@ -18,11 +18,13 @@
 
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/consensus/simulated_pow_consensus.hpp"
 #include "moment/deadline_timer.hpp"
 
 #include "gtest/gtest.h"
 
+using fetch::ledger::MainChain;
 using fetch::moment::DeadlineTimer;
 using fetch::ledger::Block;
 using fetch::crypto::ECDSASigner;
@@ -33,14 +35,15 @@ using fetch::crypto::ECDSASigner;
 TEST(ledger_simulated_pow_gtest, test_block_emission)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
+  MainChain dummy(MainChain::Mode::IN_MEMORY_DB);
 
   uint64_t const block_interval_ms = 2000;
 
   // generate a public/private key pair for the constructor (not needed for the test)
   auto signer = std::make_shared<ECDSASigner>();
 
-  auto consensus =
-      std::make_shared<fetch::ledger::SimulatedPowConsensus>(signer->identity(), block_interval_ms);
+  auto consensus = std::make_shared<fetch::ledger::SimulatedPowConsensus>(signer->identity(),
+                                                                          block_interval_ms, dummy);
 
   std::shared_ptr<Block> block = std::make_shared<Block>();
   block->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
@@ -71,14 +74,15 @@ TEST(ledger_simulated_pow_gtest, test_block_emission)
 TEST(ledger_simulated_pow_gtest, test_disable_functionality)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
+  MainChain dummy(MainChain::Mode::IN_MEMORY_DB);
 
   uint64_t const block_interval_ms = 0;
 
   // generate a public/private key pair for the constructor (not needed for the test)
   auto signer = std::make_shared<ECDSASigner>();
 
-  auto consensus =
-      std::make_shared<fetch::ledger::SimulatedPowConsensus>(signer->identity(), block_interval_ms);
+  auto consensus = std::make_shared<fetch::ledger::SimulatedPowConsensus>(signer->identity(),
+                                                                          block_interval_ms, dummy);
 
   std::shared_ptr<Block> block = std::make_shared<Block>();
   block->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));

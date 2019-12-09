@@ -19,7 +19,7 @@
 
 #include "vm/array.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 
 #include <utility>
 
@@ -44,7 +44,7 @@ public:
       fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>                                   ta,
       fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>> tb);
 
-  static void Bind(vm::Module &module);
+  static void Bind(vm::Module &module, bool enable_experimental);
 
   static fetch::vm::Ptr<VMTrainingPair> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,

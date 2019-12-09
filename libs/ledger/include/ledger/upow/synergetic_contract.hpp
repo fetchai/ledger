@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
+#include "ledger/fees/chargeable.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "vm/analyser.hpp"
 #include "vm/common.hpp"
@@ -57,11 +58,12 @@ namespace ledger {
 class StorageInterface;
 struct ContractContext;
 
-class SynergeticContract
+class SynergeticContract : public Chargeable
 {
 public:
-  using ConstByteArray = byte_array::ConstByteArray;
-  using ProblemData    = std::vector<ConstByteArray>;
+  using ConstByteArray      = byte_array::ConstByteArray;
+  using ProblemData         = std::vector<ConstByteArray>;
+  using CompletionValidator = std::function<bool(void)>;
 
   enum class Status
   {
@@ -69,10 +71,11 @@ public:
     VM_EXECUTION_ERROR,
     NO_STATE_ACCESS,
     GENERAL_ERROR,
+    VALIDATION_ERROR
   };
 
   explicit SynergeticContract(ConstByteArray const &source);
-  ~SynergeticContract() = default;
+  ~SynergeticContract() override = default;
 
   // Accessors
   Digest const &     digest() const;
@@ -92,7 +95,8 @@ public:
   /// @{
   Status DefineProblem(ProblemData const &problem_data);
   Status Work(vectorise::UInt<256> const &nonce, WorkScore &score);
-  Status Complete(chain::Address const &address, BitVector const &shards);
+  Status Complete(chain::Address const &address, BitVector const &shards,
+                  CompletionValidator const &validator);
   /// @}
 
   /// @name Synergetic State Access
@@ -102,6 +106,9 @@ public:
   bool               HasSolution() const;
   vm::Variant const &GetSolution() const;
   /// @}
+
+  uint64_t CalculateFee() const override;
+  void     SetChargeLimit(uint64_t charge_limit);
 
 private:
   using ModulePtr     = std::shared_ptr<vm::Module>;
@@ -126,6 +133,9 @@ private:
   StorageInterface *storage_{nullptr};
   VariantPtr        problem_;
   VariantPtr        solution_;
+
+  uint64_t charge_{0};
+  uint64_t charge_limit_{0};
 };
 
 char const *ToString(SynergeticContract::Status status);

@@ -59,6 +59,8 @@ enum class State
 };
 }  // namespace tx_sync
 
+class TransactionStorageEngineInterface;
+
 class TransactionStoreSyncService : public TransactionSink
 {
 public:
@@ -66,7 +68,6 @@ public:
   using Uri                   = network::Uri;
   using Client                = muddle::rpc::Client;
   using ClientPtr             = std::shared_ptr<Client>;
-  using ObjectStore           = storage::TransientObjectStore<chain::Transaction>;
   using FutureTimepoint       = core::FutureTimepoint;
   using RequestingObjectCount = network::RequestingQueueOf<Address, uint64_t>;
   using PromiseOfObjectCount  = network::PromiseOf<uint64_t>;
@@ -79,7 +80,6 @@ public:
   using TrimCacheCallback     = std::function<void()>;
   using State                 = tx_sync::State;
   using StateMachine          = core::StateMachine<State>;
-  using ObjectStorePtr        = std::shared_ptr<ObjectStore>;
   using LaneControllerPtr     = std::shared_ptr<LaneController>;
   using TxFinderProtocolPtr   = std::shared_ptr<TxFinderProtocol>;
   using MuddleEndpoint        = muddle::MuddleEndpoint;
@@ -102,9 +102,10 @@ public:
     std::chrono::milliseconds fetch_object_wait_duration{5000};
   };
 
-  TransactionStoreSyncService(Config const &cfg, MuddleEndpoint &muddle, ObjectStorePtr store,
-                              TxFinderProtocol *tx_finder_protocol,
-                              TrimCacheCallback trim_cache_callback);
+  TransactionStoreSyncService(Config const &cfg, MuddleEndpoint &muddle,
+                              TransactionStorageEngineInterface &store,
+                              TxFinderProtocol *                 tx_finder_protocol,
+                              TrimCacheCallback                  trim_cache_callback);
   ~TransactionStoreSyncService() override;
 
   void Start()
@@ -144,14 +145,14 @@ private:
   State OnResolvingObjects();
   State OnTrimCache();
 
-  TrimCacheCallback             trim_cache_callback_;
-  std::shared_ptr<StateMachine> state_machine_;
-  TxFinderProtocol *            tx_finder_protocol_;
-  Config const                  cfg_;
-  MuddleEndpoint &              muddle_;
-  ClientPtr                     client_;
-  ObjectStorePtr                store_;  ///< The pointer to the object store
-  TransactionVerifier           verifier_;
+  TrimCacheCallback                  trim_cache_callback_;
+  std::shared_ptr<StateMachine>      state_machine_;
+  TxFinderProtocol *                 tx_finder_protocol_;
+  Config const                       cfg_;
+  MuddleEndpoint &                   muddle_;
+  ClientPtr                          client_;
+  TransactionStorageEngineInterface &store_;  ///< The pointer to the object store
+  TransactionVerifier                verifier_;
 
   FutureTimepoint promise_wait_timeout_;
   FutureTimepoint fetch_object_wait_timeout_;

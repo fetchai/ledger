@@ -198,7 +198,7 @@ PunishmentBroadcastChannel::State PunishmentBroadcastChannel::OnResolvePromises(
     {
       QuestionStruct recvd_question;
 
-      if (!promise->As<QuestionStruct>(recvd_question))
+      if (!promise->GetResult(recvd_question))
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to deserialize response from: ", address.ToBase64());
       }

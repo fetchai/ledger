@@ -23,6 +23,7 @@
 #include "vm/object.hpp"
 #include "vm/opcodes.hpp"
 #include "vm/string.hpp"
+#include "vm/user_defined_object.hpp"
 #include "vm/variant.hpp"
 
 #include <cassert>
@@ -445,12 +446,15 @@ public:
     output_buffer_ << line << '\n';
   }
 
-  // These two are public for the benefit of the static Constructor() functions in
-  // each of the Object-derived classes
   void RuntimeError(std::string const &message);
   bool HasError() const
   {
     return !error_.empty();
+  }
+
+  Executable::UserDefinedType const &GetUserDefinedType(uint16_t type_id) const
+  {
+    return executable_->GetUserDefinedType(type_id);
   }
 
   void LoadExecutable(Executable const *executable)
@@ -593,9 +597,10 @@ private:
 
   struct Frame
   {
-    Executable::Function const *function;
-    int                         bsp;
-    uint16_t                    pc;
+    Executable::Function const *function{};
+    int                         bsp{};
+    uint16_t                    pc{};
+    Variant                     self;
   };
 
   struct ForRangeLoop
@@ -645,6 +650,7 @@ private:
   LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS]{};
   int                            live_object_sp_{};
   uint16_t                       pc_{};
+  Variant                        self_;
   uint16_t                       instruction_pc_{};
   Executable::Instruction const *instruction_{};
   bool                           stop_{};
@@ -694,6 +700,30 @@ private:
     return Opcodes::Unknown;
   }
 
+  bool PushFrame()
+  {
+    if (frame_sp_ >= FRAME_STACK_SIZE - 1)
+    {
+      RuntimeError("frame stack overflow");
+      return false;
+    }
+    Frame &frame   = frame_stack_[++frame_sp_];
+    frame.function = function_;
+    frame.bsp      = bsp_;
+    frame.pc       = pc_;
+    frame.self     = self_;
+    return true;
+  }
+
+  void PopFrame()
+  {
+    Frame &frame = frame_stack_[frame_sp_--];
+    function_    = frame.function;
+    bsp_         = frame.bsp;
+    pc_          = frame.pc;
+    self_        = std::move(frame.self);
+  }
+
   Variant &Push()
   {
     return stack_[++sp_];
@@ -709,7 +739,7 @@ private:
     return stack_[sp_];
   }
 
-  Variant &GetVariable(uint16_t variable_index)
+  Variant &GetLocalVariable(uint16_t variable_index)
   {
     return stack_[bsp_ + variable_index];
   }
@@ -1473,9 +1503,9 @@ private:
   }
 
   template <typename Op>
-  void DoVariablePrefixPostfixOp()
+  void DoLocalVariablePrefixPostfixOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoPrefixPostfixOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
@@ -1597,46 +1627,120 @@ private:
   }
 
   template <typename Op>
-  void DoVariableIntegralInplaceOp()
+  void DoLocalVariableIntegralInplaceOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoIntegralInplaceOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
   template <typename Op>
-  void DoVariableNumericInplaceOp()
+  void DoLocalVariableNumericInplaceOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoNumericInplaceOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
   template <typename Op>
-  void DoVariableObjectInplaceOp()
+  void DoLocalVariableObjectInplaceOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoObjectInplaceOp<Op>(variable.object);
   }
 
   template <typename Op>
-  void DoVariableObjectInplaceRightOp()
+  void DoLocalVariableObjectInplaceRightOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoObjectInplaceRightOp<Op>(variable.object);
+  }
+
+  template <typename Op>
+  void DoMemberVariablePrefixPostfixOp()
+  {
+    Variant                objectv             = std::move(Pop());
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoPrefixPostfixOp<Op>(instruction_->type_id, &variable.primitive);
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoMemberVariableIntegralInplaceOp()
+  {
+    Variant                objectv             = std::move(stack_[sp_ - 1]);
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoIntegralInplaceOp<Op>(instruction_->type_id, &variable.primitive);
+      --sp_;
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoMemberVariableNumericInplaceOp()
+  {
+    Variant                objectv             = std::move(stack_[sp_ - 1]);
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoNumericInplaceOp<Op>(instruction_->type_id, &variable.primitive);
+      --sp_;
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoMemberVariableObjectInplaceOp()
+  {
+    Variant                objectv             = std::move(stack_[sp_ - 1]);
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoObjectInplaceOp<Op>(variable.object);
+      --sp_;
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoMemberVariableObjectInplaceRightOp()
+  {
+    Variant                objectv             = std::move(stack_[sp_ - 1]);
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoObjectInplaceRightOp<Op>(variable.object);
+      --sp_;
+      return;
+    }
+    RuntimeError("null reference");
   }
 
   //
   // Opcode handler prototypes
   //
 
-  void Handler__VariableDeclare();
-  void Handler__VariableDeclareAssign();
+  void Handler__LocalVariableDeclare();
+  void Handler__LocalVariableDeclareAssign();
   void Handler__PushNull();
   void Handler__PushFalse();
   void Handler__PushTrue();
   void Handler__PushString();
   void Handler__PushConstant();
-  void Handler__PushVariable();
-  void Handler__PopToVariable();
+  void Handler__PushLocalVariable();
+  void Handler__PopToLocalVariable();
   void Handler__Inc();
   void Handler__Dec();
   void Handler__Duplicate();
@@ -1653,10 +1757,10 @@ private:
   void Handler__ForRangeIterate();
   void Handler__ForRangeTerminate();
   void Handler__InvokeUserDefinedFreeFunction();
-  void Handler__VariablePrefixInc();
-  void Handler__VariablePrefixDec();
-  void Handler__VariablePostfixInc();
-  void Handler__VariablePostfixDec();
+  void Handler__LocalVariablePrefixInc();
+  void Handler__LocalVariablePrefixDec();
+  void Handler__LocalVariablePostfixInc();
+  void Handler__LocalVariablePostfixDec();
   void Handler__JumpIfFalseOrPop();
   void Handler__JumpIfTrueOrPop();
   void Handler__Not();
@@ -1678,36 +1782,58 @@ private:
   void Handler__ObjectAdd();
   void Handler__ObjectLeftAdd();
   void Handler__ObjectRightAdd();
-  void Handler__VariablePrimitiveInplaceAdd();
-  void Handler__VariableObjectInplaceAdd();
-  void Handler__VariableObjectInplaceRightAdd();
+  void Handler__LocalVariablePrimitiveInplaceAdd();
+  void Handler__LocalVariableObjectInplaceAdd();
+  void Handler__LocalVariableObjectInplaceRightAdd();
   void Handler__PrimitiveSubtract();
   void Handler__ObjectSubtract();
   void Handler__ObjectLeftSubtract();
   void Handler__ObjectRightSubtract();
-  void Handler__VariablePrimitiveInplaceSubtract();
-  void Handler__VariableObjectInplaceSubtract();
-  void Handler__VariableObjectInplaceRightSubtract();
+  void Handler__LocalVariablePrimitiveInplaceSubtract();
+  void Handler__LocalVariableObjectInplaceSubtract();
+  void Handler__LocalVariableObjectInplaceRightSubtract();
   void Handler__PrimitiveMultiply();
   void Handler__ObjectMultiply();
   void Handler__ObjectLeftMultiply();
   void Handler__ObjectRightMultiply();
-  void Handler__VariablePrimitiveInplaceMultiply();
-  void Handler__VariableObjectInplaceMultiply();
-  void Handler__VariableObjectInplaceRightMultiply();
+  void Handler__LocalVariablePrimitiveInplaceMultiply();
+  void Handler__LocalVariableObjectInplaceMultiply();
+  void Handler__LocalVariableObjectInplaceRightMultiply();
   void Handler__PrimitiveDivide();
   void Handler__ObjectDivide();
   void Handler__ObjectLeftDivide();
   void Handler__ObjectRightDivide();
-  void Handler__VariablePrimitiveInplaceDivide();
-  void Handler__VariableObjectInplaceDivide();
-  void Handler__VariableObjectInplaceRightDivide();
+  void Handler__LocalVariablePrimitiveInplaceDivide();
+  void Handler__LocalVariableObjectInplaceDivide();
+  void Handler__LocalVariableObjectInplaceRightDivide();
   void Handler__PrimitiveModulo();
-  void Handler__VariablePrimitiveInplaceModulo();
+  void Handler__LocalVariablePrimitiveInplaceModulo();
   void Handler__InitialiseArray();
   void Handler__ContractVariableDeclareAssign();
   void Handler__InvokeContractFunction();
   void Handler__PushLargeConstant();
+  void Handler__PushMemberVariable();
+  void Handler__PopToMemberVariable();
+  void Handler__MemberVariablePrefixInc();
+  void Handler__MemberVariablePrefixDec();
+  void Handler__MemberVariablePostfixInc();
+  void Handler__MemberVariablePostfixDec();
+  void Handler__MemberVariablePrimitiveInplaceAdd();
+  void Handler__MemberVariableObjectInplaceAdd();
+  void Handler__MemberVariableObjectInplaceRightAdd();
+  void Handler__MemberVariablePrimitiveInplaceSubtract();
+  void Handler__MemberVariableObjectInplaceSubtract();
+  void Handler__MemberVariableObjectInplaceRightSubtract();
+  void Handler__MemberVariablePrimitiveInplaceMultiply();
+  void Handler__MemberVariableObjectInplaceMultiply();
+  void Handler__MemberVariableObjectInplaceRightMultiply();
+  void Handler__MemberVariablePrimitiveInplaceDivide();
+  void Handler__MemberVariableObjectInplaceDivide();
+  void Handler__MemberVariableObjectInplaceRightDivide();
+  void Handler__MemberVariablePrimitiveInplaceModulo();
+  void Handler__PushSelf();
+  void Handler__InvokeUserDefinedConstructor();
+  void Handler__InvokeUserDefinedMemberFunction();
 
   friend class Object;
   friend class Module;

@@ -39,10 +39,13 @@ vm::Ptr<math::VMTensor> load_mnist_labels(vm::VM *vm, vm::Ptr<vm::String> const 
   return vm->CreateNewObject<math::VMTensor>(tensor);
 }
 
-void BindMNISTUtils(vm::Module &module)
+void BindMNISTUtils(vm::Module &module, bool const enable_experimental)
 {
-  module.CreateFreeFunction("loadMNISTImages", &load_mnist_images);
-  module.CreateFreeFunction("loadMNISTLabels", &load_mnist_labels);
+  if (enable_experimental)
+  {
+    module.CreateFreeFunction("loadMNISTImages", &load_mnist_images, vm::MAXIMUM_CHARGE);
+    module.CreateFreeFunction("loadMNISTLabels", &load_mnist_labels, vm::MAXIMUM_CHARGE);
+  }
 }
 
 }  // namespace utilities
