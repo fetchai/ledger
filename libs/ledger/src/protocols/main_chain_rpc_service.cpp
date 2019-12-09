@@ -402,7 +402,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             // TODO(unknown): this is to be improved later
             if (latest_hash == response.heaviest_hash)
             {
-              return State::SYNCHRONISING;  // we have reached the tip
+              return State::SYNCHRONISED;  // we have reached the tip
             }
           }
 
