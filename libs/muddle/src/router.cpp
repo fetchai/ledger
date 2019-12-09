@@ -590,13 +590,13 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet, bool exter
   assert(static_cast<bool>(packet));
 
   // Callbacks to deal with package redelivery
-  auto success = [this, packet]() { ClearDeliveryAttempt(packet); };
-  auto fail    = [this, packet, external, reschedule_on_fail]() {
-    if (reschedule_on_fail)
-    {
-      SchedulePacketForRedelivery(packet, external);
-    }
-  };
+//  auto success = [this, packet]() { ClearDeliveryAttempt(packet); };
+//  auto fail    = [this, packet, external, reschedule_on_fail]() {
+//    if (reschedule_on_fail)
+//    {
+//      SchedulePacketForRedelivery(packet, external);
+//    }
+//  };
 
   // look up the connection
   auto conn = register_.LookupConnection(handle).lock();
@@ -610,7 +610,7 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet, bool exter
       FETCH_LOG_TRACE(logging_name_, "TX: (conn: ", handle, ") ", DescribePacket(*packet));
 
       // dispatch to the connection object
-      conn->Send(buffer, success, fail);
+      conn->Send(buffer, nullptr, nullptr);
 
       tx_packet_total_->increment();
       tx_max_packet_length->max(buffer.size());
