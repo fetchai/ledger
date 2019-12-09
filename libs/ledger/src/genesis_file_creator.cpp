@@ -210,7 +210,7 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
     chain_.Reset();
   }
 
-  block_coordinator_.Reset();
+  block_coordinator_.ResetGenesis();
 
   return success;
 }

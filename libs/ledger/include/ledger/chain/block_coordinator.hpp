@@ -232,6 +232,7 @@ public:
   }
 
   void Reset();
+  void ResetGenesis();
 
   // Operators
   BlockCoordinator &operator=(BlockCoordinator const &) = delete;
