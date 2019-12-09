@@ -856,10 +856,10 @@ TEST_F(MathTensorTests, tensor_min_test)
       "0.5, 7.1, 9.1; 6.2, 7.1, 4.; -99.1, 14328.1, 10.0;");
   fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
-  DataType result = vm_tensor.Min();
-  DataType gt{-99.1};
+  DataType const result = vm_tensor.Min();
+  DataType const expected{-99.1};
 
-  EXPECT_TRUE(result == gt);
+  EXPECT_EQ(result, expected);
 }
 
 TEST_F(MathTensorTests, tensor_min_etch_test)
@@ -882,10 +882,10 @@ TEST_F(MathTensorTests, tensor_min_etch_test)
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const min_val = res.Get<DataType>();
-  DataType   gt{-7.0};
+  auto const     min_val = res.Get<DataType>();
+  DataType const expected{-7.0};
 
-  EXPECT_TRUE(gt == min_val);
+  EXPECT_EQ(expected, min_val);
 }
 
 TEST_F(MathTensorTests, tensor_max_test)
@@ -894,10 +894,10 @@ TEST_F(MathTensorTests, tensor_max_test)
       "0.5, 7.1, 9.1; 6.2, 7.1, 4.; -99.1, 14328.1, 10.0;");
   fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
-  DataType result = vm_tensor.Max();
-  DataType gt{14328.1};
+  DataType const result = vm_tensor.Max();
+  DataType const expected{14328.1};
 
-  EXPECT_TRUE(result == gt);
+  EXPECT_EQ(result, expected);
 }
 
 TEST_F(MathTensorTests, tensor_max_etch_test)
@@ -920,13 +920,10 @@ TEST_F(MathTensorTests, tensor_max_etch_test)
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const max_val = res.Get<DataType>();
-  DataType   gt{23.1};
+  auto const     max_val = res.Get<DataType>();
+  DataType const expected{23.1};
 
-  std::cout << "gt: " << gt << std::endl;
-  std::cout << "max_val: " << max_val << std::endl;
-
-  EXPECT_TRUE(gt == max_val);
+  EXPECT_EQ(expected, max_val);
 }
 
 TEST_F(MathTensorTests, tensor_sum_test)
@@ -935,8 +932,8 @@ TEST_F(MathTensorTests, tensor_sum_test)
       "0.5, 7.1, 9.1; 6.2, 7.1, 4.; -99.1, 14328.1, 10.0;");
   fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
-  DataType result = vm_tensor.Sum();
-  DataType expected{14273.0};
+  DataType const result = vm_tensor.Sum();
+  DataType const expected{14273.0};
 
   EXPECT_EQ(expected, result);
 }
