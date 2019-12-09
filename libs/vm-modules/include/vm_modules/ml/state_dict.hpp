@@ -21,7 +21,7 @@
 #include "ml/serializers/ml_types.hpp"
 #include "ml/state_dict.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 
 #include <utility>
@@ -50,7 +50,7 @@ public:
   void SetWeights(fetch::vm::Ptr<fetch::vm::String> const &                nodename,
                   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &weights);
 
-  static void Bind(fetch::vm::Module &module);
+  static void Bind(fetch::vm::Module &module, bool enable_experimental);
 
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
