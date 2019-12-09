@@ -209,7 +209,7 @@ public:
 private:
   static ChargeAmount const LOW_CHARGE{LOW_CHARGE_CONST_COEF * fetch::vm::COMPUTE_CHARGE_COST};
 
-  static ChargeAmount infinite_charge(std::string const &log_msg = "");
+  static ChargeAmount MaximumCharge(std::string const &log_msg = "");
 
   VMObjectType &tensor_;
 };

@@ -159,7 +159,7 @@ ChargeAmount TensorEstimator::Squeeze()
 
   if (not_found)
   {
-    return infinite_charge("Cannot squeeze tensor, no dimensions of size 1");
+    return MaximumCharge("Cannot squeeze tensor, no dimensions of size 1");
   }
   return GetReshapeCost(new_shape);
 }
@@ -215,7 +215,7 @@ ChargeAmount TensorEstimator::Transpose()
 {
   if (tensor_.shape().size() != 2)
   {
-    return infinite_charge("Cannot squeeze tensor, no dimensions of size 1");
+    return MaximumCharge("Cannot squeeze tensor, no dimensions of size 1");
   }
 
   return GetReshapeCost({tensor_.shape().at(1), tensor_.shape().at(0)});
@@ -238,9 +238,9 @@ ChargeAmount TensorEstimator::ToString()
          COMPUTE_CHARGE_COST;
 }
 
-ChargeAmount TensorEstimator::infinite_charge(std::string const &log_msg)
+ChargeAmount TensorEstimator::MaximumCharge(std::string const &log_msg)
 {
-  FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::CHARGE_INIFITY : " + log_msg);
+  FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::MAXIMUM_CHARGE : " + log_msg);
   return vm::MAXIMUM_CHARGE;
 }
 
