@@ -74,6 +74,7 @@ using DRNG = fetch::random::LinearCongruentialGenerator;
 template <typename T>
 T DeterministicShuffle(T &container, uint64_t entropy)
 {
+  std::sort(container.begin(), container.end());
   DRNG rng(entropy);
   std::shuffle(container.begin(), container.end(), rng);
   return container;
@@ -110,8 +111,6 @@ Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet c
   {
     ret.emplace_back(i);
   }
-
-  std::sort(ret.begin(), ret.end());
 
   return DeterministicShuffle(ret, entropy);
 }

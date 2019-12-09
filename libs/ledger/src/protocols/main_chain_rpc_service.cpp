@@ -400,11 +400,11 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             }
           }
 
-          if(response.not_on_heaviest)
+          if(response.not_on_heaviest || (response.block_number > (block_resolving_->block_number + 10)))
           {
             block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
 
-            FETCH_LOG_WARN(LOGGING_NAME, "Received indication we are on a dead fork. Walking back.");
+            FETCH_LOG_WARN(LOGGING_NAME, "Received indication we are on a dead fork. Walking back. Peer heaviest: ", response.block_number);
 
             if(block_resolving_)
             {

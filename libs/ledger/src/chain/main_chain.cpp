@@ -698,6 +698,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
                       " during time travel. Note, next hash: ", next_hash);
+
       throw std::runtime_error("Failed to lookup block");
     }
   }
@@ -731,7 +732,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
     result.push_back(std::move(block));
   }
 
-  return {std::move(result), GetHeaviestBlockHash(), not_heaviest};
+  return {std::move(result), GetHeaviestBlock()->hash, GetHeaviestBlock()->block_number, not_heaviest};
 }
 
 /**
