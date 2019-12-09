@@ -210,7 +210,7 @@ inline void AllToAllConnectivity(std::unique_ptr<Network> &               networ
   }
 }
 
-int main()
+int mainXX()
 {
   auto config                      = fetch::muddle::TrackerConfiguration::AllOn();
   config.max_kademlia_connections  = 2;
@@ -255,7 +255,7 @@ int main()
   return 0;
 }
 
-int mainX()
+int main()
 {
   auto config                      = fetch::muddle::TrackerConfiguration::AllOn();
   config.max_kademlia_connections  = 2;

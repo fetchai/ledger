@@ -41,7 +41,7 @@ struct PeerInfo
 
   /// Meta information
   /// @{
-  Timepoint first_seen{Clock::now()};
+  Timepoint connection_start{Clock::now()};
   Timepoint last_activity{};
   Timepoint earliest_next_attempt{Clock::now()};
   uint64_t  connection_attempts{0};

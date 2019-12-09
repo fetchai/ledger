@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "kademlia/table.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "crypto/sha1.hpp"
-#include "kademlia/table.hpp"
 #include "muddle/network_id.hpp"
 
 namespace fetch {
@@ -249,8 +249,9 @@ void KademliaTable::ReportSuccessfulConnectAttempt(Uri const &uri)
     it               = known_uris_.find(uri);
   }
 
-  it->second->failed_attempts = 0;
-  it->second->connected       = true;
+  it->second->failed_attempts  = 0;
+  it->second->connected        = true;
+  it->second->connection_start = Clock::now();
   ++(it->second->connection_attempts);
 
   // In case we loose connectivity we allow to immediately reconmnect.

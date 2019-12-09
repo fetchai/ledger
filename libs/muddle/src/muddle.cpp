@@ -81,9 +81,6 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
     direct_message_service_.SignalConnectionLeft(handle);
   });
 
-  register_->OnConnectionEntered(
-      [this](Handle handle) { peer_tracker_->AddConnectionHandle(handle); });
-
   // register the status update
   clients_.SetStatusCallback(
       [this](Uri const &peer, Handle handle, PeerConnectionList::ConnectionState state) {

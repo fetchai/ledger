@@ -148,7 +148,6 @@ void DirectMessageService::SendMessageToConnection(Handle handle, T const &msg, 
 void DirectMessageService::OnDirectMessage(Handle handle, PacketPtr const &packet)
 {
   FETCH_LOCK(lock_);
-  register_.UpdateAddress(handle, packet->GetSender());
 
   // inform the register about the address update for the connection (always applicable if not
   // always used for routing)

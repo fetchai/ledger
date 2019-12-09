@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "router.hpp"
 #include "kademlia/peer_tracker.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
-#include "router.hpp"
 #include "routing_message.hpp"
 
 #include "core/byte_array/encoders.hpp"
@@ -819,6 +819,14 @@ void Router::DispatchDirect(Handle handle, PacketPtr const &packet)
   dispatch_enqueued_total_->increment();
 
   dispatch_thread_pool_->Post([this, packet, handle]() {
+    // Updating the association between handle and address
+    if (register_.UpdateAddress(handle, packet->GetSender()) ==
+        MuddleRegister::UpdateStatus::NEW_ADDRESS)
+    {
+      dispatch_thread_pool_->Post(
+          [this, packet, handle]() { tracker_->DownloadPeerDetails(handle, packet->GetSender()); });
+    }
+
     // dispatch to the direct message handler if needed
     if (direct_message_handler_)
     {

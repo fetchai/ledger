@@ -77,6 +77,7 @@ public:
 
   struct UnresolvedConnection
   {
+    bool             outgoing{false};
     ConnectionHandle handle;
     Address          address{};
     std::string      partial_uri{};
@@ -106,6 +107,7 @@ public:
   void       AddDesiredPeer(Uri const &     uri,
                             Duration const &expiry = muddle::MuddleInterface::NeverExpire());
   void       RemoveDesiredPeer(Address const &address);
+  void       DownloadPeerDetails(Handle handle, Address const &address);
   /// @}
 
   /// Reporting
@@ -160,7 +162,6 @@ protected:
 
   /// Methods integrate new connections into the peer tracker.
   /// @{
-  void AddConnectionHandle(ConnectionHandle handle);
   void RemoveConnectionHandle(ConnectionHandle handle);
   void UpdateExternalUris(NetworkUris const &uris);
   void UpdateExternalPorts(Ports const &ports);
@@ -189,7 +190,6 @@ private:
   /// Pipeline for registering details of incoming and outgoing
   /// connections
   /// @{
-  void            ProcessConnectionHandles();
   ConnectionState ResolveConnectionDetails(UnresolvedConnection &details);
   void            OnResolveUris(UnresolvedConnection details, service::Promise const &promise);
   void            RegisterConnectionDetails(UnresolvedConnection const &details);
@@ -237,8 +237,7 @@ private:
 
   /// Handling new comers
   /// @{
-  std::queue<UnresolvedConnection> new_handles_;
-  PendingResolution                uri_resolution_tasks_;
+  PendingResolution uri_resolution_tasks_;
   /// @}
 
   /// Managing connections to Kademlia subtrees
