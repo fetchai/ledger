@@ -27,16 +27,15 @@ This documents contains guidelines regarding:
 * Include header definitions in the same file.
 
 * Order of includes
-	1. Related header.
-	2. `C` library.
-	3. `C++` library.
-	4. Other libraries.
-	5. Fetch library.
+	1. Internal library headers
+	2. Other Fetch library headers
+	3. Vendor library headers
+	4. System/standard library headers
 
 * Class access specifiers in this order
-	1. `public`.
-	2. `protected`.
-	3. `private`.
+	1. `public`
+	2. `protected`
+	3. `private`
 
 
 ## Comments and documentation

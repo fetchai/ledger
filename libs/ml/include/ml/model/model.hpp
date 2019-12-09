@@ -32,6 +32,17 @@
 #include <utility>
 
 namespace fetch {
+
+namespace vm_modules {
+namespace ml {
+namespace model {
+class ModelEstimator;
+}
+}  // namespace ml
+}  // namespace vm_modules
+}  // namespace fetch
+
+namespace fetch {
 namespace dmlf {
 namespace collective_learning {
 template <class TensorType>
@@ -98,6 +109,7 @@ public:
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
+  friend class fetch::vm_modules::ml::model::ModelEstimator;
 
 protected:
   ModelConfig<DataType> model_config_;
