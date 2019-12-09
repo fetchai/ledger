@@ -62,6 +62,7 @@ struct TrackerConfiguration
     conf.connect_to_nearest        = true;
     conf.disconnect_duplicates     = true;
     conf.trim_peer_list            = true;
+    conf.long_range_connectivity   = true;
     conf.disconnect_from_self      = true;
     conf.allow_connection_expiry   = true;
     return conf;
@@ -77,6 +78,7 @@ struct TrackerConfiguration
     conf.connect_to_nearest        = false;
     conf.disconnect_duplicates     = true;
     conf.trim_peer_list            = false;
+    conf.long_range_connectivity   = false;
     conf.disconnect_from_self      = true;
     conf.allow_connection_expiry   = true;
     return conf;

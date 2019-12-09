@@ -740,11 +740,13 @@ void PeerTracker::Periodically()
     ss << std::endl;
     ss << "Connectivity report: " << logging_name_ << std::endl;
     ss << "===================" << std::endl;
-    ss << register_.GetOutgoingAddressSet().size() << " / "
-       << register_.GetIncomingAddressSet().size() << " / "
-       << register_.GetCurrentAddressSet().size() << std::endl;
-    ss << keep_connections_.size() << " / " << peer_table_.desired_peers().size() << " / "
-       << kademlia_connections_.size() << " / " << longrange_connections_.size() << std::endl;
+    ss << "Out: " << register_.GetOutgoingAddressSet().size() << " / "
+       << "In: " << register_.GetIncomingAddressSet().size() << " / "
+       << "All: " << register_.GetCurrentAddressSet().size() << std::endl;
+    ss << "Keep: " << keep_connections_.size() << " / "
+       << "Desired: " << peer_table_.desired_peers().size() << " / "
+       << "Kad: " << kademlia_connections_.size() << " / "
+       << "Long: " << longrange_connections_.size() << std::endl;
 
     ss << std::endl;
     std::cout << ss.str() << std::endl;
