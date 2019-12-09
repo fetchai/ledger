@@ -34,7 +34,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <stdexcept>
 
 static const uint64_t MAX_SUB_CHAIN_SIZE = 1000;
