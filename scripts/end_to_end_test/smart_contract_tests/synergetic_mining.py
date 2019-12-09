@@ -118,6 +118,8 @@ def run(options):
     print('Create contract...')
     api.sync(api.contracts.create(entity1, contract, 10000))
 
+    api.sync(api.tokens.transfer(entity1, contract.address, 10000, 500))
+
     submit_synergetic_data(api, contract, [100, 20, 3], entity1)
 
     print('Query init state...')

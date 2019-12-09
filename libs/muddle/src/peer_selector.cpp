@@ -273,20 +273,23 @@ void PeerSelector::OnResolvedAddress(Address const &address, service::Promise co
 {
   if (promise->state() == service::PromiseState::SUCCESS)
   {
+    std::vector<network::Peer> peer_addresses{};
+
     // extract the set of addresses from which the prospective node is contactable
-    auto peer_addresses = promise->As<std::vector<network::Peer>>();
-
-    // remove any previous entries for this address (avoid stale information)
-    peers_info_.erase(address);
-
-    FETCH_LOG_TRACE(logging_name_, "Successful resolution for ", address.ToBase64());
-
-    // create the new entry and populate
-    auto &metadata = peers_info_[address];
-    for (auto const &peer_address : peer_addresses)
+    if (promise->GetResult(peer_addresses))
     {
-      FETCH_LOG_TRACE(logging_name_, "- Candidate: ", peer_address.ToString());
-      metadata.peer_data.emplace_back(peer_address);
+      // remove any previous entries for this address (avoid stale information)
+      peers_info_.erase(address);
+
+      FETCH_LOG_TRACE(logging_name_, "Successful resolution for ", address.ToBase64());
+
+      // create the new entry and populate
+      auto &metadata = peers_info_[address];
+      for (auto const &peer_address : peer_addresses)
+      {
+        FETCH_LOG_TRACE(logging_name_, "- Candidate: ", peer_address.ToString());
+        metadata.peer_data.emplace_back(peer_address);
+      }
     }
   }
   else

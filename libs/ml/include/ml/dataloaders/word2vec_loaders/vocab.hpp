@@ -61,6 +61,8 @@ public:
   SizeType                   GetVocabCount() const;
   byte_array::ConstByteArray GetVocabHash();
 
+  bool WordKnown(std::string const &word) const;
+
 private:
   void                            SetVocabHash();
   SizeType                        total_count = 0;
