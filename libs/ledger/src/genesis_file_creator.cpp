@@ -208,6 +208,8 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
     chain_.Reset();
   }
 
+  block_coordinator_.Reset();
+
   return success;
 }
 
@@ -284,9 +286,6 @@ bool GenesisFileCreator::LoadState(Variant const &object)
 
   chain::GENESIS_MERKLE_ROOT = merkle_commit_hash;
   chain::GENESIS_DIGEST      = genesis_block_.hash;
-
-  block_coordinator_.Reset();
-
 
   if(!storage_unit_.RevertToHash(chain::GENESIS_MERKLE_ROOT, 0))
   {

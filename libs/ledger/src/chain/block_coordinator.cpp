@@ -1315,6 +1315,7 @@ char const *BlockCoordinator::ToString(ExecutionStatus state)
 
 void BlockCoordinator::Reset()
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Resetting block coordinator");
   chain_.Reset();
   current_block_ = chain_.CreateGenesisBlock();
   last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::GENESIS_DIGEST; });
