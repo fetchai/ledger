@@ -117,12 +117,10 @@ def call_transfer_action_and_verify_balances(api, master_contract, source_contra
     assert from_balance_before > amount, \
         'Insufficient funds'
 
-    source_contract_name = '{}.{}'.format(
-        source_contract.digest.to_hex(), source_contract.address)
-    print('Transfer from {} to {} mediated by {}.{}'.format(
-        source_contract.address, target_address, master_contract.digest.to_hex(), master_contract.address))
+    print('Transfer from {} to {} mediated by {}'.format(
+        source_contract.address, target_address, master_contract.address))
     api.sync(master_contract.action(
-        api, 'execute_transfer', 100, signers, source_contract_name, target_address, amount))
+        api, 'execute_transfer', 100, signers, str(source_contract.address), target_address, amount))
 
     from_balance_after = api.tokens.balance(source_contract.address)
     assert balance_within_range(from_balance_after, from_balance_before - amount), \

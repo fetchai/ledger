@@ -81,10 +81,9 @@ def run(options):
     api.sync(api.contracts.create(entity1, contract2, 20000))
 
     current_block = api.tokens._current_block_number()
-    contract2_name = "{}.{}".format(
-        contract2.digest.to_hex(), contract2.address)
+
     api.sync(contract.action(api, 'c2c_call',
-                             40000, [entity1], contract2_name))
+                             40000, [entity1], str(contract2.address)))
 
     time.sleep(2)
 

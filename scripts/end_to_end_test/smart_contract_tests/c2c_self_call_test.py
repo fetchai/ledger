@@ -62,12 +62,9 @@ def run(options):
 
     api.sync(api.contracts.create(entity1, contract, 2000))
 
-    contract_name = "{}.{}".format(
-        contract.digest.to_hex(), contract.address)
-
     try:
         api.sync(contract.action(api, 'c2c_call',
-                                 400, [entity1], contract_name))
+                                 400, [entity1], str(contract.address)))
         assert False, \
             'Expected transaction to fail'
     except RuntimeError:

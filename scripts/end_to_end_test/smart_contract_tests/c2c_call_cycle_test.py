@@ -63,23 +63,14 @@ def run(options):
     api.sync(api.contracts.create(entity1, contract2, 2000))
     api.sync(api.contracts.create(entity1, contract3, 2000))
 
-    contract_name0 = "{}.{}".format(
-        contract0.digest.to_hex(), contract0.address)
-    contract_name1 = "{}.{}".format(
-        contract1.digest.to_hex(), contract1.address)
-    contract_name2 = "{}.{}".format(
-        contract2.digest.to_hex(), contract2.address)
-    contract_name3 = "{}.{}".format(
-        contract3.digest.to_hex(), contract3.address)
-
     api.sync(contract0.action(api, 'set_callee',
-                              400, [entity1], contract_name1))
+                              400, [entity1], str(contract1.address)))
     api.sync(contract1.action(api, 'set_callee',
-                              400, [entity1], contract_name2))
+                              400, [entity1], str(contract2.address)))
     api.sync(contract2.action(api, 'set_callee',
-                              400, [entity1], contract_name3))
+                              400, [entity1], str(contract3.address)))
     api.sync(contract3.action(api, 'set_callee',
-                              400, [entity1], contract_name0))
+                              400, [entity1], str(contract0.address)))
 
     try:
         api.sync(contract0.action(api, 'c2c_call',

@@ -502,8 +502,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
   vm->AttachOutputDevice(vm::VM::STDOUT, console);
   vm->SetIOObserver(state());
 
-  std::unordered_set<ConstByteArray> call_history{digest_.ToHex() + "." +
-                                                  tx.contract_address().display()};
+  std::unordered_set<chain::Address> call_history{tx.contract_address()};
   vm::ContractInvocationHandler      contract_invocation_handler;
   contract_invocation_handler =
       [this, &contract_invocation_handler, tx, &call_history](
@@ -529,31 +528,31 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
       return false;
     }
 
-    if (call_history.find(identity) != call_history.end())
+    chain::Address called_contract_address;
+    if (!chain::Address::Parse(identity, called_contract_address))
+    {
+      error = "Invalid contract address format '" + identity + "'";
+
+      return false;
+    }
+
+    if (call_history.find(called_contract_address) != call_history.end())
     {
       error = "Contract-to-contract call cycle detected";
 
       return false;
     }
 
-    call_history.insert(identity);
-
-    Identifier     id;
-    chain::Address called_contract_address;
-    if (!id.Parse(identity) || !chain::Address::Parse(id.name(), called_contract_address))
-    {
-      error = "Invalid contract address format";
-
-      return false;
-    }
+    call_history.insert(called_contract_address);
 
     decltype(auto) c = context();
 
     // TODO(WK) charge for reading from storage
-    auto loaded_contract = CreateSmartContract<SmartContract>(id.qualifier().FromHex(), *c.storage);
+    auto loaded_contract = CreateSmartContract<SmartContract>(called_contract_address, *c.storage);
     if (loaded_contract == nullptr)
     {
-      error = "Failed to load contract from storage";
+      error = "Failed to load contract " +
+              static_cast<std::string>(called_contract_address.display()) + " from storage";
 
       return false;
     }
@@ -604,7 +603,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
     c.state_adapter->PopContext();
     vm->IncreaseChargeTotal(vm2.GetChargeTotal() - reference_charge);
 
-    auto it = call_history.find(identity);
+    auto it = call_history.find(called_contract_address);
     call_history.erase(it);
 
     return success;

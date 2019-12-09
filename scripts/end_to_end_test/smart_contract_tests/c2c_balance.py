@@ -90,10 +90,8 @@ def run(options):
     api.sync(api.tokens.transfer(entity1, contract.address, BALANCE1, 200))
     api.sync(api.tokens.transfer(entity1, contract2.address, BALANCE2, 200))
 
-    contract2_name = '{}.{}'.format(
-        contract2.digest.to_hex(), contract2.address)
     api.sync(contract.action(api, 'c2c_call',
-                             10000, [entity1], contract2_name))
+                             10000, [entity1], str(contract2.address)))
 
     result_balance1 = contract.query(api, 'query_balance_state')
     assert result_balance1 == BALANCE1, \

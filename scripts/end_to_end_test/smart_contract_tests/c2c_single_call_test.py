@@ -66,9 +66,8 @@ def run(options):
     api.sync(api.contracts.create(entity1, contract, 2000))
     api.sync(api.contracts.create(entity1, contract2, 2000))
 
-    contract_name = "{}.{}".format(
-        contract2.digest.to_hex(), contract2.address)
-    api.sync(contract.action(api, 'c2c_call', 400, [entity1], contract_name))
+    api.sync(contract.action(api, 'c2c_call', 400,
+                             [entity1], str(contract2.address)))
 
     result = contract.query(api, 'query_eleven')
     assert result == 11, \
