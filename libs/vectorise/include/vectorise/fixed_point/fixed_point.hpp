@@ -31,7 +31,6 @@
 #include <iomanip>
 #include <limits>
 #include <ostream>
-#include <regex>
 
 namespace fetch {
 namespace fixed_point {
@@ -955,74 +954,95 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F>::FixedPoint(std::string const &s)
   : data_{0}
 {
-  auto        index    = s.find("fp");
-  auto        s_copy   = std::string(s, 0, index);
-  std::string fp_regex = "[-+]?[0-9]+";
-
+  std::cout << "s       : " << s << std::endl;
+  auto index  = s.find("fp");
+  auto s_copy = std::string(s, 0, index);
+  std::cout << "s_copy  : " << s_copy << std::endl;
+  std::transform(s_copy.begin(), s_copy.end(), s_copy.begin(), [](char c){ return std::tolower(c); });
+  std::cout << "s_copy  : " << s_copy << std::endl;
+  
   Type         integer_part{0};
   UnsignedType fractional_part{0};
   Type         exponent_part{1};
-  std::regex   numbers_regex(fp_regex);
-  auto         numbers_begin = std::sregex_iterator(s_copy.begin(), s_copy.end(), numbers_regex);
-  auto         numbers_end   = std::sregex_iterator();
-  std::sregex_iterator i     = numbers_begin;
-  if (i != numbers_end)
+  
+  // first find exponent part if it exists
+  auto exponent_pos  = s_copy.find('e');
+  if (exponent_pos != std::string::npos)
   {
-    std::smatch match     = *i;
-    std::string match_str = match.str();
-    if (match_str.length() > DECIMAL_DIGITS)
-    {
-      // We definitely have an overflow, check the sign and set to MAX/MIN
-      if (match_str[0] == '-')
-      {
-        fp_state |= STATE_OVERFLOW;
-        data_ = MIN;
-      }
-      else
-      {
-        fp_state |= STATE_OVERFLOW;
-        data_ = MAX;
-      }
-      return;
-    }
-    integer_part = static_cast<Type>(std::strtoll(match_str.c_str(), nullptr, 10));
-    if (integer_part < 0)
-    {
-      --integer_part;
-    }
+    auto exponent_match = std::string(s_copy, exponent_pos + 1, s_copy.length());
+    std::cout << "exponent_match : " << exponent_match << std::endl;
+    exponent_part = static_cast<Type>(std::strtoll(exponent_match.c_str(), nullptr, 10));
+    std::cout << "exponent_part : " << exponent_part << std::endl;
+    s_copy.erase(exponent_pos, s_copy.length() - exponent_pos);
+    std::cout << "s_copy  : " << s_copy << std::endl;
   }
-  ++i;
-  if (i != numbers_end)
+
+  std::string integer_match;
+  std::string fractional_match;
+  auto decimal_pos  = s_copy.find('.');
+  if (decimal_pos != std::string::npos)
   {
-    std::smatch match     = *i;
-    std::string match_str = match.str();
-    if (match_str.length() > DECIMAL_DIGITS)
+    integer_match = std::string(s_copy, 0, decimal_pos);
+    fractional_match = std::string(s_copy, decimal_pos + 1, s_copy.length());
+    std::cout << "integer_part  : " << integer_match << std::endl;
+    std::cout << "fractional_part: " << fractional_match << std::endl;
+    // Parse the fractional part and convert to FixedPoint.
+    if (fractional_match.length() > DECIMAL_DIGITS)
     {
-      match_str.erase(DECIMAL_DIGITS, match_str.length() - DECIMAL_DIGITS);
+      fractional_match.erase(DECIMAL_DIGITS, fractional_match.length() - DECIMAL_DIGITS);
+      std::cout << "fractional_part (trimmed): " << fractional_match << std::endl;
     }
-    fractional_part = static_cast<UnsignedType>(std::strtoul(match_str.c_str(), nullptr, 10));
+    fractional_part = static_cast<UnsignedType>(std::strtoul(fractional_match.c_str(), nullptr, 10));
+    std::cout << "fractional_part: " << fractional_part << std::endl;
     UnsignedType power10{1};
     while (power10 < fractional_part)
     {
       power10 *= 10;
     }
+    std::cout << "power10:       : " << power10 << std::endl;
     fractional_part = (fractional_part * ONE_MASK) / power10;
   }
-  ++i;
-  if (i != numbers_end)
+  else
   {
-    std::smatch match     = *i;
-    std::string match_str = match.str();
-    exponent_part         = static_cast<Type>(std::strtoll(match_str.c_str(), nullptr, 10));
+    integer_match = s_copy;
+  }
+
+  if (integer_match.length() > DECIMAL_DIGITS)
+  {
+    // We definitely have an overflow, check the sign and set to MAX/MIN
+    if (integer_match[0] == '-')
+    {
+      fp_state |= STATE_OVERFLOW;
+      data_ = MIN;
+    }
+    else
+    {
+      fp_state |= STATE_OVERFLOW;
+      data_ = MAX;
+    }
+    std::cout << "overflow: this = " << *this << std::endl;
+    return;
+  }
+
+  integer_part = static_cast<Type>(std::strtoll(integer_match.c_str(), nullptr, 10));
+  std::cout << "integer_part: " << integer_part << std::endl;
+  if (integer_part < 0)
+  {
+    --integer_part;
+    std::cout << "integer_part: " << integer_part << std::endl;
   }
 
   data_ = (INTEGER_MASK & (Type(integer_part) << FRACTIONAL_BITS)) |
           Type(fractional_part & FRACTIONAL_MASK);
+  std::cout << "data_ = " << data_ << std::endl;
   if (exponent_part != 1)
   {
     auto exponent = Pow(FixedPoint{10}, FixedPoint{exponent_part});
+    std::cout << *this << std::endl;
+    std::cout << "exponent : " << exponent << std::endl;
     *this *= exponent;
   }
+  std::cout << "this = " << *this << std::endl;
 
   if (CheckOverflow(static_cast<NextType>(data_)))
   {
