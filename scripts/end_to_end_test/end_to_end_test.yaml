@@ -56,13 +56,13 @@ setup_conditions:
   number_of_nodes: 2
   node_connections: [[0, 1]]
   mining_nodes: [0]
-  max_test_time: 60
+  max_test_time: 300
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
   - verify_txs: { "name": "batch1", "nodes": [0, 1] }
   - add_node: { "index": 2, "node_connections": [[2, 1]] }
-  - sleep: 5
+  - sleep: 10
   - verify_txs: { "name": "batch1", "nodes": [2] }
 ...
 
