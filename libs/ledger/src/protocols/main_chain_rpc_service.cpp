@@ -349,7 +349,7 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
         rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
                                         MainChainProtocol::TIME_TRAVEL, block_resolving_->hash);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Attempting to resolve: ", block_resolving_->block_number, " aka 0x", block_resolving_->hash.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Attempting to resolve: ", block_resolving_->block_number, " aka 0x", block_resolving_->hash.ToHex(), " Note: gen is: 0x", chain::GENESIS_DIGEST.ToHex());
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
@@ -402,7 +402,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             // TODO(unknown): this is to be improved later
             if (latest_hash == response.heaviest_hash)
             {
-              next_state = State::SYNCHRONISING;  // we have reached the tip
+              return State::SYNCHRONISING;  // we have reached the tip
             }
           }
 
