@@ -24,7 +24,6 @@
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
-#include "ledger/upow/problem_id.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/upow/work.hpp"
 #include "logging/logging.hpp"
@@ -104,7 +103,7 @@ NaiveSynergeticMiner::State NaiveSynergeticMiner::OnMine()
 
 void NaiveSynergeticMiner::Mine()
 {
-  using ProblemSpaces = std::unordered_map<ProblemId, ProblemData>;
+  using ProblemSpaces = std::unordered_map<chain::Address, ProblemData>;
 
   // iterate through the latest DAG nodes and build a complete set of addresses to mine solutions
   // for
@@ -118,7 +117,7 @@ void NaiveSynergeticMiner::Mine()
     if (DAGNode::DATA == node.type)
     {
       // look up the problem data
-      auto &problem_data = problem_spaces[{node.contract_address, node.contract_digest}];
+      auto &problem_data = problem_spaces[node.contract_address];
 
       problem_data.emplace_back(node.contents);
     }
@@ -147,8 +146,7 @@ void NaiveSynergeticMiner::Mine()
   for (auto const &problem : problem_spaces)
   {
     // attempt to mine a solution to this problem
-    auto const solution =
-        MineSolution(problem.first.contract_digest, problem.first.contract_address, problem.second);
+    auto const solution = MineSolution(problem.first, problem.second);
 
     // check to see if a solution was generated
     if (solution)
@@ -165,11 +163,10 @@ void NaiveSynergeticMiner::EnableMining(bool enable)
   is_mining_ = enable;
 }
 
-WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest,
-                                           chain::Address const &contract_address,
+WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_address,
                                            ProblemData const &   problem_data)
 {
-  StateAdapter storage_adapter{storage_, Identifier{"fetch.token"}};
+  StateAdapter storage_adapter{storage_, "fetch.token"};
 
   ContractContext         context{&token_contract_, contract_address, &storage_adapter, 0};
   ContractContextAttacher raii(token_contract_, context);
@@ -178,32 +175,32 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &        contract_digest
 
   if (balance == 0)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Not handling contract: 0x", contract_digest.ToHex(),
-                   ", because contract address 0x", contract_address.address().ToHex(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Not handling contract: ", contract_address.display(),
                    " balance is 0");
     return {};
   }
 
-  auto contract = CreateSmartContract<SynergeticContract>(contract_digest, storage_);
+  auto contract = CreateSmartContract<SynergeticContract>(contract_address, storage_);
 
   contract->SetChargeLimit(CHARGE_LIMIT / search_length_);
 
   // if no contract can be loaded then simple return
   if (!contract)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up contract: 0x", contract_digest.ToHex());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up contract: ", contract_address.display());
 
     return {};
   }
 
   // build up a work instance
-  auto work = std::make_shared<Work>(contract_digest, contract_address, prover_->identity());
+  auto work = std::make_shared<Work>(contract_address, prover_->identity());
 
   // Preparing to mine
   auto status = contract->DefineProblem(problem_data);
   if (SynergeticContract::Status::SUCCESS != status)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to define the problem. Reason: ", ToString(status));
+
     return {};
   }
 
