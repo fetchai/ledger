@@ -103,128 +103,56 @@ public:
   SizeType GetOpsCount();
   DataType GetForwardCost();
 
-  // AddLayerFORWARD_DENSE_INPUT_COEF
-  static constexpr DataType ADD_DENSE_INPUT_COEF()
-  {
-    return DataType(0.111111111111111);
-  };
-  static constexpr DataType ADD_DENSE_OUTPUT_COEF()
-  {
-    return DataType(0.043478260869565);
-  };
-  static constexpr DataType ADD_DENSE_QUAD_COEF()
-  {
-    return DataType(0.013513513513514);
-  };
-  static constexpr DataType ADD_DENSE_CONST_COEF()
-  {
-    return DataType(52.0);
-  };
+  // AddLayer
+  static const fixed_point::fp64_t ADD_DENSE_INPUT_COEF;
+  static const fixed_point::fp64_t ADD_DENSE_OUTPUT_COEF;
+  static const fixed_point::fp64_t ADD_DENSE_QUAD_COEF;
+  static const fixed_point::fp64_t ADD_DENSE_CONST_COEF;
 
   // Compile
-  static constexpr DataType ADAM_PADDED_WEIGHTS_SIZE_COEF()
-  {
-    return DataType(0.014285714285714);
-  };
-  static constexpr DataType ADAM_WEIGHTS_SIZE_COEF()
-  {
-    return DataType(0.017857142857143);
-  };
-  static constexpr DataType ADAM_STEP_IMPACT_COEF()
-  {
-    return DataType(0.017857142857143);
-  };
+  static const fixed_point::fp64_t ADAM_PADDED_WEIGHTS_SIZE_COEF;
+  static const fixed_point::fp64_t ADAM_WEIGHTS_SIZE_COEF;
+  static const fixed_point::fp64_t ADAM_STEP_IMPACT_COEF;
 
-  static constexpr DataType SGD_PADDED_WEIGHTS_SIZE_COEF()
-  {
-    return DataType(0.014285714285714);
-  };
-  static constexpr DataType SGD_WEIGHTS_SIZE_COEF()
-  {
-    return DataType(0.017857142857143);
-  };
-  static constexpr DataType SGD_STEP_IMPACT_COEF()
-  {
-    return DataType(0.017857142857143);
-  };
-
-  static constexpr DataType COMPILE_CONST_COEF()
-  {
-    return DataType(80);
-  };
+  static const fixed_point::fp64_t SGD_PADDED_WEIGHTS_SIZE_COEF;
+  static const fixed_point::fp64_t SGD_WEIGHTS_SIZE_COEF;
+  static const fixed_point::fp64_t SGD_STEP_IMPACT_COEF;
+  static const fixed_point::fp64_t COMPILE_CONST_COEF;
 
   // Forward
-  static constexpr DataType FORWARD_DENSE_INPUT_COEF()
-  {
-    return DataType(0.142857142857143);
-  };
-  static constexpr DataType FORWARD_DENSE_OUTPUT_COEF()
-  {
-    return DataType(0.037037037037037);
-  };
-  static constexpr DataType FORWARD_DENSE_QUAD_COEF()
-  {
-    return DataType(0.013157894736842);
-  };
+  static const fixed_point::fp64_t FORWARD_DENSE_INPUT_COEF;
 
-  static constexpr DataType RELU_FORWARD_IMPACT()
-  {
-    return DataType(0.003333333333333);
-  };
-  static constexpr DataType MSE_FORWARD_IMPACT()
-  {
-    return DataType(0.003333333333333);
-  };
-  static constexpr DataType CEL_FORWARD_IMPACT()
-  {
-    return DataType(0.003333333333333);
-  };
+  static const fixed_point::fp64_t FORWARD_DENSE_OUTPUT_COEF;
+
+  static const fixed_point::fp64_t FORWARD_DENSE_QUAD_COEF;
+
+  static const fixed_point::fp64_t RELU_FORWARD_IMPACT;
+
+  static const fixed_point::fp64_t MSE_FORWARD_IMPACT;
+
+  static const fixed_point::fp64_t CEL_FORWARD_IMPACT;
 
   // Backward
-  static constexpr DataType BACKWARD_DENSE_INPUT_COEF()
-  {
-    return DataType(0.142857142857143);
-  };
-  static constexpr DataType BACKWARD_DENSE_OUTPUT_COEF()
-  {
-    return DataType(0.037037037037037);
-  };
-  static constexpr DataType BACKWARD_DENSE_QUAD_COEF()
-  {
-    return DataType(0.013157894736842);
-  };
-  static constexpr DataType RELU_BACKWARD_IMPACT()
-  {
-    return DataType(0.003333333333333);
-  };
-  static constexpr DataType MSE_BACKWARD_IMPACT()
-  {
-    return DataType(0.003333333333333);
-  };
-  static constexpr DataType CEL_BACKWARD_IMPACT()
-  {
-    return DataType(0.003333333333333);
-  };
+  static const fixed_point::fp64_t BACKWARD_DENSE_INPUT_COEF;
+
+  static const fixed_point::fp64_t BACKWARD_DENSE_OUTPUT_COEF;
+
+  static const fixed_point::fp64_t BACKWARD_DENSE_QUAD_COEF;
+
+  static const fixed_point::fp64_t RELU_BACKWARD_IMPACT;
+
+  static const fixed_point::fp64_t MSE_BACKWARD_IMPACT;
+
+  static const fixed_point::fp64_t CEL_BACKWARD_IMPACT;
 
   // Predict
-  static constexpr DataType PREDICT_BATCH_LAYER_COEF()
-  {
-    return DataType(0.3);
-  };
-  static constexpr DataType PREDICT_CONST_COEF()
-  {
-    return DataType(40.0);
-  };
+  static const fixed_point::fp64_t PREDICT_BATCH_LAYER_COEF;
 
-  static constexpr DataType DESERIALISATION_PER_CHAR_COEF()
-  {
-    return DataType(0.010416666666667);
-  };
+  static const fixed_point::fp64_t PREDICT_CONST_COEF;
 
-  static constexpr DataType DESERIALISATION_CONST_COEF()
-  {
-    return DataType(100.0);
-  };
+  static const fixed_point::fp64_t DESERIALISATION_PER_CHAR_COEF;
+
+  static const fixed_point::fp64_t DESERIALISATION_CONST_COEF;
 
   static constexpr SizeType FIT_CONST_OVERHEAD            = 3;
   static constexpr SizeType FIT_PER_BATCH_OVERHEAD        = 2;
