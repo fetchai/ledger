@@ -43,8 +43,7 @@ public:
 
     Get("/api/health/ready", "Retrieves the current synchronisation status.",
         [this](http::ViewParameters const &, http::HTTPRequest const &) {
-
-          MainChainRpcService const * const chain_service = chain_service_.load();
+          MainChainRpcService const *const chain_service = chain_service_.load();
 
           // determine the state of the machine system state machines
           bool const chain_synced = chain_service && chain_service->IsSynced();

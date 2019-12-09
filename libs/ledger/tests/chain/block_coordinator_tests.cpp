@@ -556,7 +556,6 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
-
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b4->hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);

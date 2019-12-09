@@ -145,7 +145,6 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   block_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
                                                 Packet::Payload const &payload,
                                                 Address                transmitter) {
-
     telemetry::FunctionTimer timer{*new_block_duration_};
 
     BlockSerializer serialiser(payload);
@@ -226,9 +225,9 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
     break;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "New Block: 0x", block.hash.ToHex(),
-                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(),
-                 " num: ", block.block_number, " status: ", status_text, ")");
+  FETCH_LOG_INFO(LOGGING_NAME, "New Block: 0x", block.hash.ToHex(), " (from peer: ", ToBase64(from),
+                 " num txs: ", block.GetTransactionCount(), " num: ", block.block_number,
+                 " status: ", status_text, ")");
 }
 
 MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
@@ -432,7 +431,8 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             }
           }
 
-          uint64_t const attempting_to_resolve = !block_resolving_ ? 0 : block_resolving_->block_number;
+          uint64_t const attempting_to_resolve =
+              !block_resolving_ ? 0 : block_resolving_->block_number;
 
           if (!block_resolving_)
           {
