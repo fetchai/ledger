@@ -831,11 +831,12 @@ void Router::DispatchDirect(Handle handle, PacketPtr const &packet)
     if (direct_message_handler_)
     {
       direct_message_handler_(handle, packet);
-      dispatch_direct_total_->increment();
+    }
+    else
+    {
+      dispatch_failure_total_->increment();
     }
 
-    dispatch_failure_total_->increment();  // TODO(tfr): Why does this increase total? possibly
-                                           // missing return in previous if
     dispatch_complete_total_->increment();
   });
 }

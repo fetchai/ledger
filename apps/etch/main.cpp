@@ -330,7 +330,16 @@ int main(int argc, char **argv)
   }
 
   auto executable = std::make_unique<Executable>();
-  auto module     = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
+
+  std::shared_ptr<Module> module;
+  if (params.program().GetParam("experimental", false))
+  {
+    module = VMFactory::GetModule(VMFactory::USE_ALL);
+  }
+  else
+  {
+    module = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
+  }
 
   // additional module bindings
   module->CreateClassType<System>("System")

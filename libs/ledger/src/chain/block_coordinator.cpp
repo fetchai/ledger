@@ -490,7 +490,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   // if we have detected a change in the chain then we need to re-evaluate the chain
   if (chain_.GetHeaviestBlockHash() != current_block_->hash)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "reset synchronised state!");
     return State::RESET;
   }
 
