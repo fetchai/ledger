@@ -689,6 +689,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
   std::vector<Type> elems;
   elems.reserve(1024);
   bool failed = false;
+  bool prev_backslash = false;
 
   // Text parsing loop
   for (SizeType i = 0; i < c.size();)
@@ -697,23 +698,41 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     switch (c[i])
     {
     case ';':
-      if (i < c.size() - 1)
+    case '\r':
+    case '\n':
+      if (i < c.size() - 2)
       {
         ++n;
       }
       ++i;
       break;
-    case '+':
+    case '\\':
+      prev_backslash = true;
+      ++i;
+      break;
+    case 'r':
+    case 'n':
+      if (prev_backslash)
+      {
+        prev_backslash = false;
+        if (i < c.size() - 2)
+        {
+          ++n;
+        }
+        ++i;
+      }
+      break;
     case ',':
     case ' ':
-    case '\n':
     case '\t':
-    case '\r':
+      prev_backslash = false;
       ++i;
       break;
     default:
       if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
       {
+        std::cout << "c[i]: " << c[i] << std::endl;
+        std::cout << "c[i+1]: " << c[i+1] << std::endl;
         throw exceptions::InvalidNumericCharacter("invalid character used in string to set tensor");
       }
       else
@@ -721,10 +740,13 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
         auto        float_val = std::atof(cur_elem.c_str());
         elems.emplace_back(Type(float_val));
+        prev_backslash = false;
       }
       break;
     }
   }
+
+
   SizeType m = elems.size() / n;
 
   if ((m * n) != elems.size())
