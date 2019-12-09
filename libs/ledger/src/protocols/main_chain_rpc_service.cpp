@@ -406,16 +406,20 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
 
           FETCH_LOG_INFO(LOGGING_NAME, "Resolved: ", response.block_number);
 
+          uint64_t const attempting_to_resolve = !block_resolving_ ? 0 : block_resolving_->block_number;
+
+
+          if(!block_resolving_)
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "No block set (?)");
+          }
+
           if (blocks.empty() || response.not_on_heaviest ||
-              (response.block_number > (block_resolving_->block_number + 10)))
+              (response.block_number > (attempting_to_resolve + 10)))
           {
             if(block_resolving_)
             {
               block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
-            }
-            else
-            {
-              FETCH_LOG_WARN(LOGGING_NAME, "No block set (?)");
             }
 
             FETCH_LOG_WARN(
