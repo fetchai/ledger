@@ -174,6 +174,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
         "block_hash", "The last seen block hash beginning")}
   , total_time_to_create_block_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "total_time_to_create_block", "Total time required to create a block")}
+  , current_block_weight_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "current_block_weight", "Weight of current block")}
 {
   // configure the state machine
   // clang-format off
@@ -1127,6 +1129,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
     block              = genesis_block.get();
   }
 
+  current_block_weight_->set(block->weight);
   reset_state_count_->increment();
 
   if (block != nullptr && !block->hash.empty())
