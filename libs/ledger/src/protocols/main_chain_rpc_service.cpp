@@ -570,14 +570,14 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
     state_machine_->Delay(std::chrono::milliseconds{1000});
     next_state = State::REQUEST_HEAVIEST_CHAIN;
   }
-  else if (previous != State::SYNCHRONISED)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synchronised");
-  }
   else if (timer_to_proceed_.HasExpired())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Kicking forward sync periodically");
     next_state = State::REQUEST_HEAVIEST_CHAIN;
+  }
+  else if (previous != State::SYNCHRONISED)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Synchronised");
   }
   else
   {
