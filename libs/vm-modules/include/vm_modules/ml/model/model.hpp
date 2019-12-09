@@ -105,7 +105,8 @@ public:
   void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
            ::fetch::math::SizeType const &batch_size);
 
-  DataType Evaluate();
+  DataType                           Evaluate();
+  vm::Ptr<vm::Array<math::DataType>> EvaluateWithMetrics();
 
   vm::Ptr<VMTensor> Predict(vm::Ptr<VMTensor> const &data);
 

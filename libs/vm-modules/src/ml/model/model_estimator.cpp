@@ -220,7 +220,7 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
     Ptr<String> const &loss, Ptr<String> const &optimiser,
     Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics)
 {
-  FETCH_UNUSED(metrics);  // todo: fixme
+  FETCH_UNUSED(metrics);  // fixme
   DataType optimiser_construction_impact(0.0);
 
   if (!model_.model_->loss_set_)
@@ -315,6 +315,14 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
 
 ChargeAmount ModelEstimator::Evaluate()
 {
+  // fixme
+  // Just return loss_, constant charge
+  return static_cast<ChargeAmount>(CONSTANT_CHARGE);
+}
+
+ChargeAmount ModelEstimator::EvaluateWithMetrics()
+{
+  // fixme
   // Just return loss_, constant charge
   return static_cast<ChargeAmount>(CONSTANT_CHARGE);
 }

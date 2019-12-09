@@ -92,6 +92,8 @@ public:
 
   ChargeAmount Evaluate();
 
+  ChargeAmount EvaluateWithMetrics();
+
   ChargeAmount Predict(vm::Ptr<vm_modules::math::VMTensor> const &data);
 
   ChargeAmount SerializeToString();

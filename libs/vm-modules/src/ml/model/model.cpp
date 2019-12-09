@@ -26,9 +26,7 @@
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/loss_functions/types.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
-#include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/use_estimator.hpp"
 
 using namespace fetch::vm;
@@ -167,7 +165,7 @@ void VMModel::CompileSequentialWithMetrics(Ptr<String> const &loss, Ptr<String> 
 }
 
 void VMModel::CompileSequentialImplementation(Ptr<String> const &loss, Ptr<String> const &optimiser,
-                                              std::vector<MetricType> const &mets)
+                                              std::vector<MetricType> const &metrics)
 {
   try
   {
@@ -181,7 +179,7 @@ void VMModel::CompileSequentialImplementation(Ptr<String> const &loss, Ptr<Strin
     }
     PrepareDataloader();
     compiled_ = false;
-    model_->Compile(optimiser_type, loss_type, mets);
+    model_->Compile(optimiser_type, loss_type, metrics);
   }
   catch (std::exception const &e)
   {
@@ -278,6 +276,22 @@ typename VMModel::DataType VMModel::Evaluate()
   return (model_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TRAIN)).at(0);
 }
 
+vm::Ptr<Array<math::DataType>> VMModel::EvaluateWithMetrics()
+{
+  auto          ml_scores = model_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+  unsigned long n_scores  = ml_scores.size();
+
+  vm::Ptr<Array<math::DataType>> scores = this->vm_->CreateNewObject<Array<math::DataType>>(
+      this->vm_->GetTypeId<math::DataType>(), static_cast<int32_t>(n_scores));
+
+  for (ulong i{0}; i < n_scores; i++)
+  {
+    scores->elements.at(i) = ml_scores.at(i);
+  }
+
+  return scores;
+}
+
 vm::Ptr<VMModel::VMTensor> VMModel::Predict(vm::Ptr<VMTensor> const &data)
 {
   vm::Ptr<VMTensor> prediction = this->vm_->CreateNewObject<VMTensor>(data->shape());
@@ -304,6 +318,8 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
           .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
           .CreateMemberFunction("evaluate", &VMModel::Evaluate,
                                 UseEstimator(&ModelEstimator::Evaluate))
+          .CreateMemberFunction("evaluateMetrics", &VMModel::EvaluateWithMetrics,
+                                UseEstimator(&ModelEstimator::EvaluateWithMetrics))
           .CreateMemberFunction("predict", &VMModel::Predict,
                                 UseEstimator(&ModelEstimator::Predict))
           .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
