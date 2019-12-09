@@ -404,7 +404,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
 
           FETCH_LOG_INFO(LOGGING_NAME, "Resolved: ", response.block_number);
 
-          if (response.not_on_heaviest ||
+          if (blocks.empty() || response.not_on_heaviest ||
               (response.block_number > (block_resolving_->block_number + 10)))
           {
             block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
