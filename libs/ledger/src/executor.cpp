@@ -334,6 +334,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     if (success)
     {
       // simple linear scale fee
+
       StorageFee storage_fee{storage_adapter};
 
       FeeManager::TransactionDetails tx_details{*current_tx_, allowed_shards_};
