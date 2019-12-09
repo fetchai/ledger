@@ -41,7 +41,6 @@
 static constexpr char const *LOGGING_NAME    = "Executor";
 static constexpr uint64_t    TRANSFER_CHARGE = 1;
 
-using fetch::byte_array::ConstByteArray;
 using fetch::telemetry::Histogram;
 using fetch::telemetry::Registry;
 
