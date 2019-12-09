@@ -192,10 +192,6 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
 #endif  // FETCH_LOG_INFO_ENABLED
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: 0x", block.hash.ToHex(),
-                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(),
-                 " num: ", block.block_number, ")");
-
   trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
   if (!ValidBlock(block, "new block"))
@@ -209,25 +205,30 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   // add the new block to the chain
   auto const status = chain_.AddBlock(block);
 
+  char const *status_text = "Unknown";
   switch (status)
   {
   case BlockStatus::ADDED:
+    status_text = "Added";
     recv_block_valid_count_->increment();
-    FETCH_LOG_INFO(LOGGING_NAME, "Added new block: 0x", block.hash.ToHex());
     break;
   case BlockStatus::LOOSE:
+    status_text = "Loose";
     recv_block_loose_count_->increment();
-    FETCH_LOG_INFO(LOGGING_NAME, "Added loose block: 0x", block.hash.ToHex());
     break;
   case BlockStatus::DUPLICATE:
+    status_text = "Duplicate";
     recv_block_duplicate_count_->increment();
-    FETCH_LOG_INFO(LOGGING_NAME, "Duplicate block: 0x", block.hash.ToHex());
     break;
   case BlockStatus::INVALID:
+    status_text = "Invalid";
     recv_block_invalid_count_->increment();
-    FETCH_LOG_INFO(LOGGING_NAME, "Attempted to add invalid block: 0x", block.hash.ToHex());
     break;
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "New Block: 0x", block.hash.ToHex(),
+                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(),
+                 " num: ", block.block_number, " status: ", status_text, ")");
 }
 
 MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
