@@ -27,7 +27,7 @@ namespace {
 
 using SizeType         = fetch::math::SizeType;
 using DataType         = fetch::vm_modules::math::DataType;
-using vmStringPtr            = fetch::vm::Ptr<fetch::vm::String>;
+using vmStringPtr      = fetch::vm::Ptr<fetch::vm::String>;
 using VmModel          = fetch::vm_modules::ml::model::VMModel;
 using VmModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
 using DataType         = fetch::vm_modules::ml::model::ModelEstimator::DataType;
@@ -46,17 +46,20 @@ public:
     // setup vm
     vm = maf::NewVM();
   }
-  
-  ChargeAmount LayerAddDenseCharge(fetch::vm::Ptr<VmModel> model, vmStringPtr layer_type, SizeType input_size, SizeType output_size)
+
+  ChargeAmount LayerAddDenseCharge(fetch::vm::Ptr<VmModel> model, vmStringPtr layer_type,
+                                   SizeType input_size, SizeType output_size)
   {
     return model->Estimator().LayerAddDense(layer_type, input_size, output_size);
   }
-  
-  ChargeAmount LayerAddDenseActivationCharge(fetch::vm::Ptr<VmModel> model, vmStringPtr layer_type, SizeType input_size, SizeType output_size, vmStringPtr activation)
-  {
-    return model->Estimator().LayerAddDenseActivation(layer_type, input_size, output_size, activation);
-  }
 
+  ChargeAmount LayerAddDenseActivationCharge(fetch::vm::Ptr<VmModel> model, vmStringPtr layer_type,
+                                             SizeType input_size, SizeType output_size,
+                                             vmStringPtr activation)
+  {
+    return model->Estimator().LayerAddDenseActivation(layer_type, input_size, output_size,
+                                                      activation);
+  }
 };
 
 /////////////////////////////////////////////////////
@@ -75,7 +78,7 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
   SizeType max_output_size = 1000;
   SizeType output_step     = 10;
 
-  vmStringPtr             vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
+  vmStringPtr       vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
   fetch::vm::TypeId type_id = 0;
   VmModel           model(vm.get(), type_id, model_type);
   VmModelEstimator  model_estimator(model);
@@ -108,8 +111,8 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
   SizeType max_output_size = 1000;
   SizeType output_step     = 10;
 
-  vmStringPtr             vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
-  vmStringPtr             vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
+  vmStringPtr       vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
+  vmStringPtr       vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
   fetch::vm::TypeId type_id = 0;
   VmModel           model(vm.get(), type_id, model_type);
   VmModelEstimator  model_estimator(model);
@@ -151,7 +154,7 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_test)
   SizeType max_stride_size = 100;
   SizeType stride_step     = 10;
 
-  vmStringPtr             vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
+  vmStringPtr       vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
   fetch::vm::TypeId type_id = 0;
   VmModel           model(vm.get(), type_id, model_type);
   VmModelEstimator  model_estimator(model);
@@ -200,8 +203,8 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
   SizeType max_stride_size = 100;
   SizeType stride_step     = 10;
 
-  vmStringPtr             vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
-  vmStringPtr             vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
+  vmStringPtr       vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
+  vmStringPtr       vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
   fetch::vm::TypeId type_id = 0;
   VmModel           model(vm.get(), type_id, model_type);
   VmModelEstimator  model_estimator(model);
@@ -332,10 +335,10 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
   SizeType batch_size_step = 23;
 
   fetch::vm::TypeId type_id = 0;
-  vmStringPtr             vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
-  vmStringPtr             vm_ptr_loss_type{new fetch::vm::String(vm.get(), loss_type)};
-  vmStringPtr             vm_ptr_opt_type{new fetch::vm::String(vm.get(), opt_type)};
-  vmStringPtr             vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
+  vmStringPtr       vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
+  vmStringPtr       vm_ptr_loss_type{new fetch::vm::String(vm.get(), loss_type)};
+  vmStringPtr       vm_ptr_opt_type{new fetch::vm::String(vm.get(), opt_type)};
+  vmStringPtr       vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
 
   for (SizeType data_size_1 = min_data_size_1; data_size_1 < max_data_size_1;
        data_size_1 += data_size_1_step)
@@ -434,15 +437,17 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 TEST_F(VMModelEstimatorTests, layeradd_charge_correlate_with_input_size)
 {
   SizeType output_size = 10;
-  auto layer_type = maf::vmString(vm, "dense");
-  
-  auto model_small = mlf::vmSequentialModel(vm);
-  SizeType input_size_small = 10;
-  auto layeradd_charge_small = LayerAddDenseCharge(model_small, layer_type, input_size_small, output_size);
+  auto     layer_type  = maf::vmString(vm, "dense");
 
-  auto model_big = mlf::vmSequentialModel(vm);
+  auto     model_small      = mlf::vmSequentialModel(vm);
+  SizeType input_size_small = 10;
+  auto     layeradd_charge_small =
+      LayerAddDenseCharge(model_small, layer_type, input_size_small, output_size);
+
+  auto     model_big      = mlf::vmSequentialModel(vm);
   SizeType input_size_big = 100;
-  auto layeradd_charge_big = LayerAddDenseCharge(model_big, layer_type, input_size_big, output_size);
+  auto     layeradd_charge_big =
+      LayerAddDenseCharge(model_big, layer_type, input_size_big, output_size);
 
   EXPECT_LT(layeradd_charge_small, layeradd_charge_big);
 }
@@ -450,15 +455,17 @@ TEST_F(VMModelEstimatorTests, layeradd_charge_correlate_with_input_size)
 TEST_F(VMModelEstimatorTests, layeradd_correlate_with_output_size)
 {
   SizeType input_size = 10;
-  auto layer_type = maf::vmString(vm, "dense");
-  
-  auto model_small = mlf::vmSequentialModel(vm);
-  SizeType output_size_small = 10;
-  auto layeradd_charge_small = LayerAddDenseCharge(model_small, layer_type, input_size, output_size_small);
+  auto     layer_type = maf::vmString(vm, "dense");
 
-  auto model_big = mlf::vmSequentialModel(vm);
+  auto     model_small       = mlf::vmSequentialModel(vm);
+  SizeType output_size_small = 10;
+  auto     layeradd_charge_small =
+      LayerAddDenseCharge(model_small, layer_type, input_size, output_size_small);
+
+  auto     model_big       = mlf::vmSequentialModel(vm);
   SizeType output_size_big = 100;
-  auto layeradd_charge_big = LayerAddDenseCharge(model_big, layer_type, input_size, output_size_big);
+  auto     layeradd_charge_big =
+      LayerAddDenseCharge(model_big, layer_type, input_size, output_size_big);
 
   EXPECT_LT(layeradd_charge_small, layeradd_charge_big);
 }
@@ -466,71 +473,78 @@ TEST_F(VMModelEstimatorTests, layeradd_correlate_with_output_size)
 TEST_F(VMModelEstimatorTests, layeradd_correlate_with_input_size_output_size)
 {
   auto layer_type = maf::vmString(vm, "dense");
-  
-  auto model_small = mlf::vmSequentialModel(vm);
-  SizeType input_size_small = 10;
-  SizeType output_size_small = 10;
-  auto layeradd_charge_small = LayerAddDenseCharge(model_small, layer_type, input_size_small, output_size_small);
 
-  auto model_big = mlf::vmSequentialModel(vm);
-  SizeType input_size_big = 100;
+  auto     model_small       = mlf::vmSequentialModel(vm);
+  SizeType input_size_small  = 10;
+  SizeType output_size_small = 10;
+  auto     layeradd_charge_small =
+      LayerAddDenseCharge(model_small, layer_type, input_size_small, output_size_small);
+
+  auto     model_big       = mlf::vmSequentialModel(vm);
+  SizeType input_size_big  = 100;
   SizeType output_size_big = 100;
-  auto layeradd_charge_big = LayerAddDenseCharge(model_big, layer_type, input_size_big, output_size_big);
+  auto     layeradd_charge_big =
+      LayerAddDenseCharge(model_big, layer_type, input_size_big, output_size_big);
 
   EXPECT_LT(layeradd_charge_small, layeradd_charge_big);
 }
 
 TEST_F(VMModelEstimatorTests, layeraddactivation_correlate_with_input_size)
 {
-  SizeType output_size = 10;
-  auto layer_type = maf::vmString(vm, "dense");
-  auto activation_type = maf::vmString(vm, "relu");
-  
-  auto model_small = mlf::vmSequentialModel(vm);
-  SizeType input_size_small = 10;
-  auto layeradd_charge_small = LayerAddDenseActivationCharge(model_small, layer_type, input_size_small, output_size, activation_type);
+  SizeType output_size     = 10;
+  auto     layer_type      = maf::vmString(vm, "dense");
+  auto     activation_type = maf::vmString(vm, "relu");
 
-  auto model_big = mlf::vmSequentialModel(vm);
-  SizeType input_size_big = 100;
-  auto layeradd_charge_big = LayerAddDenseActivationCharge(model_big, layer_type, input_size_big, output_size, activation_type);
+  auto     model_small           = mlf::vmSequentialModel(vm);
+  SizeType input_size_small      = 10;
+  auto     layeradd_charge_small = LayerAddDenseActivationCharge(
+      model_small, layer_type, input_size_small, output_size, activation_type);
+
+  auto     model_big       = mlf::vmSequentialModel(vm);
+  SizeType input_size_big  = 100;
+  auto layeradd_charge_big = LayerAddDenseActivationCharge(model_big, layer_type, input_size_big,
+                                                           output_size, activation_type);
 
   EXPECT_LT(layeradd_charge_small, layeradd_charge_big);
 }
 
 TEST_F(VMModelEstimatorTests, layeraddactivation_correlate_with_output_size)
 {
-  SizeType input_size = 10;
-  auto layer_type = maf::vmString(vm, "dense");
-  auto activation_type = maf::vmString(vm, "relu");
-  
-  auto model_small = mlf::vmSequentialModel(vm);
-  SizeType output_size_small = 10;
-  auto layeradd_charge_small = LayerAddDenseActivationCharge(model_small, layer_type, input_size, output_size_small, activation_type);
+  SizeType input_size      = 10;
+  auto     layer_type      = maf::vmString(vm, "dense");
+  auto     activation_type = maf::vmString(vm, "relu");
 
-  auto model_big = mlf::vmSequentialModel(vm);
-  SizeType output_size_big = 100;
-  auto layeradd_charge_big = LayerAddDenseActivationCharge(model_big, layer_type, input_size, output_size_big, activation_type);
+  auto     model_small       = mlf::vmSequentialModel(vm);
+  SizeType output_size_small = 10;
+  auto layeradd_charge_small = LayerAddDenseActivationCharge(model_small, layer_type, input_size,
+                                                             output_size_small, activation_type);
+
+  auto     model_big           = mlf::vmSequentialModel(vm);
+  SizeType output_size_big     = 100;
+  auto     layeradd_charge_big = LayerAddDenseActivationCharge(model_big, layer_type, input_size,
+                                                           output_size_big, activation_type);
 
   EXPECT_LT(layeradd_charge_small, layeradd_charge_big);
 }
 
 TEST_F(VMModelEstimatorTests, layeraddactivation_correlate_with_input_size_output_size)
 {
-  auto layer_type = maf::vmString(vm, "dense");
+  auto layer_type      = maf::vmString(vm, "dense");
   auto activation_type = maf::vmString(vm, "relu");
-  
-  auto model_small = mlf::vmSequentialModel(vm);
-  SizeType input_size_small = 10;
-  SizeType output_size_small = 10;
-  auto layeradd_charge_small = LayerAddDenseActivationCharge(model_small, layer_type, input_size_small, output_size_small, activation_type);
 
-  auto model_big = mlf::vmSequentialModel(vm);
-  SizeType input_size_big = 100;
+  auto     model_small           = mlf::vmSequentialModel(vm);
+  SizeType input_size_small      = 10;
+  SizeType output_size_small     = 10;
+  auto     layeradd_charge_small = LayerAddDenseActivationCharge(
+      model_small, layer_type, input_size_small, output_size_small, activation_type);
+
+  auto     model_big       = mlf::vmSequentialModel(vm);
+  SizeType input_size_big  = 100;
   SizeType output_size_big = 100;
-  auto layeradd_charge_big = LayerAddDenseActivationCharge(model_big, layer_type, input_size_big, output_size_big, activation_type);
+  auto layeradd_charge_big = LayerAddDenseActivationCharge(model_big, layer_type, input_size_big,
+                                                           output_size_big, activation_type);
 
   EXPECT_LT(layeradd_charge_small, layeradd_charge_big);
 }
-
 
 }  // namespace
