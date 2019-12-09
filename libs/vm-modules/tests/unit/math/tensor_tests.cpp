@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/standard_functions/abs.hpp"
+#include "vm/array.hpp"
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
@@ -1035,6 +1036,99 @@ TEST_F(MathTensorTests, tensor_invalid_shape_transpose_etch_test)
 
   ASSERT_TRUE(toolkit.Compile(SOURCE));
   ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_reshape_to_invalid_shape_test)
+{
+  // TODO: impl me!
+}
+
+TEST_F(MathTensorTests, tensor_reshape_to_compatible_shape_test)
+{
+  using namespace fetch::vm;
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<DataType> const tensor =
+      fetch::math::Tensor<DataType>::FromString("1.1, 2.2, 3.3; 4.4, 5.5, 6.6;");
+
+  // Index transposition table from [6,1] to [2,3]
+  static std::map<SizeType, std::pair<SizeType, SizeType>> const TRANSPOSED_INDEXES = {
+      {0, {0, 0}}, {1, {1, 0}}, {2, {0, 1}}, {3, {1, 1}}, {4, {0, 2}}, {5, {1, 2}},
+  };
+
+  // Initial shape of the Tensor is [2, 3]
+  fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
+
+  Array<SizeType> e_shape(&toolkit.vm(), TypeIds::Unknown, TypeIds::Int32, int32_t(0));
+  static std::vector<SizeType> const COMPATIBLE_SHAPE_RAW = {6, 1};
+  for (SizeType dim_size : COMPATIBLE_SHAPE_RAW)
+  {
+    e_shape.Append(TemplateParameter1(dim_size, TypeIds::Int32));
+  }
+  auto const new_equal_shape = Ptr<IArray>::PtrFromThis(&e_shape);
+
+  // Reshaping to an compatible shape should return TRUE;
+  EXPECT_TRUE(vm_tensor.Reshape(new_equal_shape));
+
+  fetch::math::Tensor<DataType> const reshaped = vm_tensor.GetTensor();
+
+  // Assert the new shape is correct
+  for (std::size_t i = 0; i < COMPATIBLE_SHAPE_RAW.size(); ++i)
+  {
+    EXPECT_EQ(reshaped.shape().at(i), COMPATIBLE_SHAPE_RAW.at(i));
+  }
+
+  // Assert all new elements are equal to initial ones and element indexes are transposed properly.
+  for (SizeType i = 0; i < COMPATIBLE_SHAPE_RAW.at(0); ++i)
+  {
+    DataType const result = reshaped.At<fetch::math::SizeType, fetch::math::SizeType>(i, 0);
+
+    std::pair<SizeType, SizeType> const index = TRANSPOSED_INDEXES.at(i);
+
+    DataType const expected =
+        tensor.At<fetch::math::SizeType, fetch::math::SizeType>(index.first, index.second);
+
+    EXPECT_TRUE(fetch::math::Abs(expected - result) < DataType::TOLERANCE);
+  }
+}
+
+TEST_F(MathTensorTests, tensor_reshape_to_incompatible_shape_test)
+{
+  using namespace fetch::vm;
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<DataType> const tensor =
+      fetch::math::Tensor<DataType>::FromString("1.1, 2.2, 3.3; 4.4, 5.5, 6.6;");
+  // Initial shape of the Tensor is [2, 3]
+  fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
+
+  static std::vector<SizeType> const INCOMPATIBLE_SHAPE_RAW = {1, 2, 3, 4, 5, 6};
+  Array<SizeType> shape(&toolkit.vm(), TypeIds::Unknown, TypeIds::Int32, int32_t(0));
+  for (SizeType dim_size : INCOMPATIBLE_SHAPE_RAW)
+  {
+    shape.Append(TemplateParameter1(dim_size, TypeIds::Int32));
+  }
+  auto const incompatible_shape = Ptr<IArray>::PtrFromThis(&shape);
+
+  // Reshaping to an uncompatible shape should return false;
+  EXPECT_FALSE(vm_tensor.Reshape(incompatible_shape));
+
+  fetch::math::Tensor<DataType> const reshaped = vm_tensor.GetTensor();
+
+  // Assert the new shape is correct
+  for (std::size_t i = 0; i < INCOMPATIBLE_SHAPE_RAW.size(); ++i)
+  {
+    EXPECT_EQ(reshaped.shape().at(i), INCOMPATIBLE_SHAPE_RAW.at(i));
+  }
+
+  // Assert the new elements (at least one) are set to 0.0
+  DataType const result =
+      reshaped.At<fetch::math::SizeType, fetch::math::SizeType, fetch::math::SizeType,
+                  fetch::math::SizeType, fetch::math::SizeType, fetch::math::SizeType>(0, 0, 0, 0,
+                                                                                       0, 0);
+  DataType const expected{0.0};
+
+  EXPECT_TRUE(fetch::math::Abs(expected - result) < DataType::TOLERANCE);
 }
 
 TEST_F(MathTensorTests, tensor_squeeze_test)

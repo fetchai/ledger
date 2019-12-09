@@ -223,6 +223,19 @@ Ptr<VMTensor> VMTensor::Unsqueeze() const
 
 bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
 {
+  if (new_shape->elements.empty())
+  {
+    RuntimeError("Can not reshape a Tensor : new shape is empty!");
+    return false;
+  }
+  for (SizeType axis_size : new_shape->elements)
+  {
+    if (axis_size == 0)
+    {
+      RuntimeError("Can not reshape a Tensor : axis of size 0 found in new shape!");
+      return false;
+    }
+  }
   return tensor_.Reshape(new_shape->elements);
 }
 

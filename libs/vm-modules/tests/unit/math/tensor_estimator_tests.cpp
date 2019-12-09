@@ -26,7 +26,6 @@ namespace {
 
 using SizeType          = fetch::math::SizeType;
 using DataType          = fetch::vm_modules::math::DataType;
-using VmPtr             = fetch::vm::Ptr<fetch::vm::String>;
 using MathTensor        = fetch::math::Tensor<DataType>;
 using VmTensor          = fetch::vm_modules::math::VMTensor;
 using VmTensorEstimator = fetch::vm_modules::math::TensorEstimator;
@@ -236,14 +235,13 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_transpose_test)
 TEST_F(MathTensorEstimatorTests, tensor_estimator_reshape_test)
 {
   using namespace fetch::vm;
-  fetch::vm::Array<SizeType> a(&toolkit.vm(), fetch::vm::TypeIds::Unknown,
-                               fetch::vm::TypeIds::Int32, int32_t(0));
+  Array<SizeType> a(&toolkit.vm(), TypeIds::Unknown, TypeIds::Int32, int32_t(0));
   for (SizeType i = 0; i < MaxDims(); ++i)
   {
-    a.Append(TemplateParameter1(MaxDimSize(), fetch::vm::TypeIds::Int32));
+    a.Append(TemplateParameter1(MaxDimSize(), TypeIds::Int32));
   }
 
-  auto const new_shape = fetch::vm::Ptr<IArray>::PtrFromThis(&a);
+  auto const new_shape = Ptr<IArray>::PtrFromThis(&a);
 
   ChargeAmount const expected_charge = ChargeAmount(pow(MaxDimSize(), MaxDims()));
 
@@ -256,7 +254,7 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_reshape_test)
 
       MathTensor tensor{tensor_shape};
 
-      VmTensor          vm_tensor(&toolkit.vm(), fetch::vm::TypeIds::Unknown, tensor);
+      VmTensor          vm_tensor(&toolkit.vm(), TypeIds::Unknown, tensor);
       VmTensorEstimator tensor_estimator(vm_tensor);
 
       ChargeAmount const estimated_charge = tensor_estimator.Reshape(new_shape);
