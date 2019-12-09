@@ -250,9 +250,9 @@ void KademliaTable::ReportSuccessfulConnectAttempt(Uri const &uri)
   }
 
   it->second->failed_attempts  = 0;
-  it->second->connected        = true;
   it->second->connection_start = Clock::now();
   ++(it->second->connection_attempts);
+  ++(it->second->connections);
 
   // In case we loose connectivity we allow to immediately reconmnect.
   it->second->earliest_next_attempt = Clock::now();
@@ -269,7 +269,6 @@ void KademliaTable::ReportFailedConnectAttempt(Uri const &uri)
 
   ++(it->second->connection_attempts);
   ++(it->second->failed_attempts);
-  it->second->connected = false;
   // Exponentially killing the likelihood that we will connect again if failed
   it->second->earliest_next_attempt =
       Clock::now() + std::chrono::seconds(10 * (1 << it->second->failed_attempts));
@@ -282,8 +281,7 @@ void KademliaTable::ReportLeaving(Uri const &uri)
   {
     return;
   }
-
-  it->second->connected = false;
+  --(it->second->connections);
 }
 
 void KademliaTable::ReportLiveliness(Address const &address, Address const &reporter,
@@ -605,6 +603,7 @@ void KademliaTable::ConvertDesiredUrisToAddresses()
   {
     if (IsConnectedToUri(uri))
     {
+      FETCH_LOG_INFO(logging_name_.c_str(), "Is connected to ", uri);
       auto address = GetAddressFromUri(uri);
 
       // Moving expiry time accross based on address
@@ -623,6 +622,7 @@ void KademliaTable::ConvertDesiredUrisToAddresses()
     }
     else
     {
+      FETCH_LOG_INFO(logging_name_.c_str(), "NOT connected to ", uri);
       new_uris.insert(uri);
     }
   }
@@ -673,11 +673,6 @@ void KademliaTable::AddDesiredPeer(Address const &address, network::Peer const &
     it->second = std::max(Clock::now() + expiry, it->second);
   }
 
-  if (!address.empty())
-  {
-    desired_peers_.insert(address);
-  }
-
   PeerInfo info;
   info.address = address;
   info.uri.Parse(hint.ToUri());
@@ -701,17 +696,25 @@ void KademliaTable::AddDesiredPeer(Address const &address, network::Peer const &
     }
   }
 
-  // TODO: Remove from bucket
-
   // Reporting
   ReportExistence(info, own_address_);
-  desired_uris_.insert(info.uri);
-  desired_uri_expiry_.emplace(info.uri, Clock::now() + expiry);
+
+  // Note we might previously have erased it2
+  it2 = known_peers_.find(address);
+  if (!address.empty() && (it2 != known_peers_.end()))
+  {
+    AddDesiredPeer(address, expiry);
+  }
+  else
+  {
+    AddDesiredPeer(info.uri, expiry);
+  }
 }
 
 void KademliaTable::AddDesiredPeer(Uri const &uri, Duration const &expiry)
 {
   FETCH_LOCK(desired_mutex_);
+  // TODO: Will not work if spammed with URIs
   desired_uris_.insert(uri);
   desired_uri_expiry_.emplace(uri, Clock::now() + expiry);
 }
@@ -732,7 +735,7 @@ bool KademliaTable::HasUri(Uri const &uri) const
 bool KademliaTable::IsConnectedToUri(Uri const &uri) const
 {
   auto it = known_uris_.find(uri);
-  return (it != known_uris_.end()) && it->second->connected;
+  return (it != known_uris_.end()) && (it->second->connections > 0);
 }
 
 KademliaTable::Address KademliaTable::GetAddressFromUri(Uri const &uri) const

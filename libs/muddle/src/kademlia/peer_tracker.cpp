@@ -293,8 +293,8 @@ void PeerTracker::ConnectToPeers(AddressSet &                  connections_made,
         continue;
       }
 
-      FETCH_LOG_DEBUG(logging_name_.c_str(), "Connecting to prioritised peer ", uri.ToString(),
-                      " with address ", p.address.ToBase64());
+      FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to prioritised peer ", uri.ToString(),
+                     " with address ", p.address.ToBase64());
       connections_.AddPersistentPeer(uri);
     }
 
@@ -322,8 +322,8 @@ void PeerTracker::DisconnectDuplicates()
           if (conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING)
           {
             auto const handle = conn->handle();
-            FETCH_LOG_DEBUG(logging_name_.c_str(), "Disconnecting from bilateral ", handle,
-                            " connection: ", adr.ToBase64());
+            FETCH_LOG_WARN(logging_name_.c_str(), "Disconnecting from bilateral ", handle,
+                           " connection: ", adr.ToBase64());
 
             // Note that the order of these two matters. RemovePersistentPeer must
             // be executed first.
@@ -346,8 +346,8 @@ void PeerTracker::DisconnectFromSelf()
     if (conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING)
     {
       auto const handle = conn->handle();
-      FETCH_LOG_DEBUG(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
-                      " connection");
+      FETCH_LOG_WARN(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
+                     " connection");
 
       // Note that the order of these two matters. RemovePersistentPeer must
       // be executed first.
@@ -383,8 +383,8 @@ void PeerTracker::DisconnectFromPeers()
       {
 
         auto const handle = conn->handle();
-        FETCH_LOG_DEBUG(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
-                        " connection: ", address.ToBase64());
+        FETCH_LOG_WARN(logging_name_.c_str(), "Disconnecting from low priority peer ", handle,
+                       " connection: ", address.ToBase64());
 
         // Note that the order of these two matters. RemovePersistentPeer must
         // be executed first.
@@ -708,8 +708,8 @@ void PeerTracker::ConnectToDesiredPeers()
         continue;
       }
 
-      FETCH_LOG_DEBUG(logging_name_.c_str(), "Connecting to desired peer ", uri.ToString(),
-                      " with address ", best_peer.ToBase64());
+      FETCH_LOG_INFO(logging_name_.c_str(), "Connecting to desired peer ", uri.ToString(),
+                     " with address ", best_peer.ToBase64());
       connections_.AddPersistentPeer(uri);
     }
 
@@ -767,7 +767,7 @@ void PeerTracker::Periodically()
     // Adding the unresolved URIs to the connection pool
     for (auto const &uri : peer_table_.desired_uris())
     {
-      FETCH_LOG_DEBUG(logging_name_.c_str(), "Adding peer with unknown address: ", uri.ToString());
+      FETCH_LOG_INFO(logging_name_.c_str(), "Adding peer with unknown address: ", uri.ToString());
       connections_.AddPersistentPeer(uri);
     }
   }

@@ -210,7 +210,7 @@ inline void AllToAllConnectivity(std::unique_ptr<Network> &               networ
   }
 }
 
-int mainXX()
+int main()
 {
   auto config                      = fetch::muddle::TrackerConfiguration::AllOn();
   config.max_kademlia_connections  = 2;
@@ -247,7 +247,7 @@ int mainXX()
         n1->muddle->ConnectTo(n2->address, n2->uri);
       }
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
   std::getline(std::cin, input);
 
@@ -255,7 +255,7 @@ int mainXX()
   return 0;
 }
 
-int main()
+int mainXX()
 {
   auto config                      = fetch::muddle::TrackerConfiguration::AllOn();
   config.max_kademlia_connections  = 2;

@@ -79,7 +79,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   register_->OnConnectionLeft([this](Handle handle) {
     peer_tracker_->RemoveConnectionHandle(handle);
     direct_message_service_.SignalConnectionLeft(handle);
-    FETCH_LOG_INFO("Connection left - register (", handle, ")");
+    FETCH_LOG_INFO(logging_name_, "Connection left - register (", static_cast<int>(handle), ")");
   });
 
   // register the status update
