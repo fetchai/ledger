@@ -161,6 +161,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , unable_to_find_tx_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_invalidated_tx_total",
         "The total number of times a block was invalidated because transactions were not found")}
+  , blocks_minted_{telemetry::Registry::Instance().CreateCounter("blocks_minted_total",
+                                                                 "Blocks minted")}
   , tx_sync_times_{telemetry::Registry::Instance().CreateHistogram(
         {0.001, 0.01, 0.1, 1, 10, 100}, "ledger_block_coordinator_tx_sync_times",
         "The histogram of the time it takes to sync transactions")}
@@ -1098,6 +1100,7 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
       // Metrics on block time
       total_time_to_create_block_->set(
           static_cast<uint64_t>(ToSeconds(Clock::now() - start_block_packing_)));
+      blocks_minted_->add(1);
     }
   }
   catch (std::exception const &ex)
