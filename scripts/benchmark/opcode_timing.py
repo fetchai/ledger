@@ -257,18 +257,21 @@ if make_tables:
     import vm_benchmark_tables as vmt
 
     for bm_cls in bm_classes:
-        vmt.benchmark_table(benchmarks, n_reps, bm_cls)
+        print('\n' + vmt.benchmark_table(benchmarks, n_reps, bm_cls))
 
-    vmt.benchmark_opcode_table(benchmarks_fit, n_reps, 'Basic')
+    print('\n' + vmt.benchmark_opcode_table(benchmarks_fit, n_reps, 'Basic'))
 
     for bm_cls in prim_bm_classes:
-        vmt.benchmark_opcode_table(benchmarks_fit, n_reps, bm_cls)
-        vmt.primitive_table(benchmarks, n_reps, bm_cls)
+        print('\n' + vmt.benchmark_opcode_table(benchmarks_fit, n_reps, bm_cls))
+        tab_int, tab_fp = vmt.primitive_table(benchmarks, n_reps, bm_cls)
+        print('\n' + tab_int)
+        print('\n' + tab_fp)
 
     for bm_cls in param_bm_classes:
-        vmt.linear_fit_table(param_bms, n_reps, bm_cls)
+        print('\n' + vmt.linear_fit_table(param_bms, n_reps, bm_cls))
 
-    vmt.opcode_time_table(optimes, opcode_defs)
+    for optype in optimes:
+        print('\n' + vmt.opcode_time_table(optimes, optype, opcode_defs))
 
 if make_plots:
 

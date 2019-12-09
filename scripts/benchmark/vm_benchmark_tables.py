@@ -16,8 +16,9 @@ def benchmark_table(benchmarks, n_reps, bm_class=''):
              for (i, bm) in benchmarks.items() if bm_class in bm['class']]
 
     if len(table) > 0:
-        print('\n' + tabulate(table, headers=headers,
-                              floatfmt='.2f', tablefmt=tablefmt))
+        return tabulate(table, headers=headers, floatfmt='.2f', tablefmt=tablefmt)
+    else:
+        return ''
 
 
 def benchmark_opcode_table(benchmarks, n_reps, bm_class=''):
@@ -29,9 +30,10 @@ def benchmark_opcode_table(benchmarks, n_reps, bm_class=''):
              for (i, bm) in benchmarks.items() if bm_class in bm['class']]
 
     if len(table) > 0:
-        print('\n' + tabulate(table, headers=headers,
-                              floatfmt=".2f", tablefmt=tablefmt))
-
+        return tabulate(table, headers=headers, floatfmt=".2f", tablefmt=tablefmt)
+    else:
+        return ''
+    
 
 def primitive_table(benchmarks, n_reps, bm_class):
 
@@ -73,12 +75,12 @@ def primitive_table(benchmarks, n_reps, bm_class):
     table_fp = [[row[0]] + [elem for (i, elem) in enumerate(
         row[1:]) if prim_types[i] in fp_prim_types] for row in prim_bm_table]
 
-    if len(table_int[0]) > 1:
-        print('\n' + tabulate(table_int, headers=headers_int, stralign='left'))
-
-    if len(table_fp[0]) > 1:
-        print('\n' + tabulate(table_fp, headers=headers_fp, stralign='left'))
-
+    if len(table_int[0]) > 1 and len(table_fp[0]) > 1:
+        return [tabulate(table_int, headers=headers_int, stralign='left', tablefmt=tablefmt),
+                tabulate(table_fp, headers=headers_fp, stralign='left', tablefmt=tablefmt)]
+    else:
+        return ['','']
+    
 
 def linear_fit_table(param_bms, n_reps, bm_cls):
 
@@ -92,18 +94,19 @@ def linear_fit_table(param_bms, n_reps, bm_cls):
                'Intercept (ns)', 'Mean (ns)', 'Std error (ns)', 'Net opcodes']
 
     if len(lfit_table) > 0:
-        print('\n' + tabulate(lfit_table, headers=headers,
-                              floatfmt=".3f", tablefmt=tablefmt))
+        return tabulate(lfit_table, headers=headers, floatfmt=".3f", tablefmt=tablefmt)
+    else:
+        return ''
+    
 
+def opcode_time_table(optimes, optype, opcode_defs):
 
-def opcode_time_table(optimes, opcode_defs):
+    headers = ['Opcode (' + optype + ')', 'Name', 'Estimated time (ns)']
 
-    for optype in sorted(optimes):
-        headers = ['Opcode (' + optype + ')', 'Name', 'Estimated time (ns)']
+    table = [[op, opcode_defs[op], optimes[optype][op]]
+             for op in sorted(optimes[optype].keys())]
 
-        table = [[op, opcode_defs[op], optimes[optype][op]]
-                 for op in sorted(optimes[optype].keys())]
-
-        if len(table) > 0:
-            print('\n' + tabulate(table, headers=headers,
-                                  floatfmt=".2f", tablefmt=tablefmt))
+    if len(table) > 0:
+        return tabulate(table, headers=headers, floatfmt=".2f", tablefmt=tablefmt)
+    else:
+        return ''
