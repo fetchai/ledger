@@ -98,13 +98,13 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_min_test)
       SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_shape);
       SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_shape);
 
-      ChargeAmount val =
+      ChargeAmount const expected_charge =
           static_cast<ChargeAmount>(VmTensorEstimator::MIN_PADDED_SIZE_COEF() * padded_size +
                                     VmTensorEstimator::MIN_SIZE_COEF() * size +
                                     VmTensorEstimator::MIN_CONST_COEF()) *
           fetch::vm::COMPUTE_CHARGE_COST;
 
-      EXPECT_TRUE(tensor_estimator.Min() == val);
+      EXPECT_EQ(tensor_estimator.Min(), expected_charge);
     }
   }
 }
@@ -140,13 +140,13 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_max_test)
       SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_shape);
       SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_shape);
 
-      ChargeAmount val =
+      ChargeAmount const expected_charge =
           static_cast<ChargeAmount>(VmTensorEstimator::MAX_PADDED_SIZE_COEF() * padded_size +
                                     VmTensorEstimator::MAX_SIZE_COEF() * size +
                                     VmTensorEstimator::MAX_CONST_COEF()) *
           fetch::vm::COMPUTE_CHARGE_COST;
 
-      EXPECT_TRUE(tensor_estimator.Max() == val);
+      EXPECT_EQ(tensor_estimator.Max(), expected_charge);
     }
   }
 }
@@ -182,13 +182,13 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_sum_test)
       SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_shape);
       SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_shape);
 
-      ChargeAmount val =
+      ChargeAmount const expected_charge =
           static_cast<ChargeAmount>(VmTensorEstimator::SUM_PADDED_SIZE_COEF() * padded_size +
                                     VmTensorEstimator::SUM_SIZE_COEF() * size +
                                     VmTensorEstimator::SUM_CONST_COEF()) *
           fetch::vm::COMPUTE_CHARGE_COST;
 
-      EXPECT_TRUE(tensor_estimator.Sum() == val);
+      EXPECT_EQ(tensor_estimator.Sum(), expected_charge);
     }
   }
 }

@@ -223,11 +223,7 @@ Ptr<VMTensor> VMTensor::Unsqueeze() const
 
 bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
 {
-  if (new_shape->elements.empty())
-  {
-    RuntimeError("Can not reshape a Tensor : new shape is empty!");
-    return false;
-  }
+  std::size_t total_new_elements = 0;
   for (SizeType axis_size : new_shape->elements)
   {
     if (axis_size == 0)
@@ -235,6 +231,14 @@ bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
       RuntimeError("Can not reshape a Tensor : axis of size 0 found in new shape!");
       return false;
     }
+    total_new_elements += axis_size;
+  }
+  if (total_new_elements != tensor_.size())
+  {
+    RuntimeError("Can not reshape a Tensor : total elements count in the new shape (" +
+                 std::to_string(total_new_elements) +
+                 ") mismatch. Expected : " + std::to_string(tensor_.size()));
+    return false;
   }
   return tensor_.Reshape(new_shape->elements);
 }
@@ -243,7 +247,7 @@ Ptr<VMTensor> VMTensor::Transpose() const
 {
   if (tensor_.shape().size() != RECTANGULAR_SHAPE_SIZE)
   {
-    vm_->RuntimeError("Can not transpose a tensor which is not 2-dimensional!");
+    vm_->RuntimeError("Can not transpose a Tensor which is not 2-dimensional!");
     return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, tensor_.Copy()));
   }
   auto transposed = tensor_.Transpose();

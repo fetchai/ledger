@@ -936,9 +936,9 @@ TEST_F(MathTensorTests, tensor_sum_test)
   fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
   DataType result = vm_tensor.Sum();
-  DataType gt{14273.0};
+  DataType expected{14273.0};
 
-  EXPECT_TRUE(fetch::math::Abs(gt - result) < DataType::TOLERANCE);
+  EXPECT_EQ(expected, result);
 }
 
 TEST_F(MathTensorTests, tensor_sum_etch_test)
@@ -983,7 +983,7 @@ TEST_F(MathTensorTests, tensor_transpose_test)
   EXPECT_EQ(tensor.shape().at(0), transposed.shape().at(1));
   EXPECT_EQ(tensor.shape().at(1), transposed.shape().at(0));
 
-  EXPECT_TRUE(fetch::math::Abs(expected - result) < DataType::TOLERANCE);
+  EXPECT_EQ(expected, result);
 }
 
 TEST_F(MathTensorTests, tensor_invalid_shape_transpose_test)
@@ -1015,10 +1015,10 @@ TEST_F(MathTensorTests, tensor_transpose_etch_test)
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const     val = res.Get<DataType>();
+  auto const     result = res.Get<DataType>();
   DataType const expected{42.0};
 
-  EXPECT_TRUE(fetch::math::Abs(expected - val) < DataType::TOLERANCE);
+  EXPECT_EQ(expected, result);
 }
 
 TEST_F(MathTensorTests, tensor_invalid_shape_transpose_etch_test)
@@ -1055,6 +1055,28 @@ TEST_F(MathTensorTests, tensor_reshape_to_invalid_shape_etch_test)
         x.reshape(new_shape);
       endfunction
     )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_reshape_to_incompatible_shape_etch_test)
+{
+  static char const *SRC = R"(
+    function main()
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 2u64;
+
+      var x = Tensor(tensor_shape);
+
+      var new_shape = Array<UInt64>(2);
+      new_shape[0] = 3u64;
+      new_shape[1] = 2u64;
+
+      x.reshape(new_shape);
+    endfunction
+  )";
 
   ASSERT_TRUE(toolkit.Compile(SRC));
   EXPECT_FALSE(toolkit.Run());
@@ -1105,47 +1127,8 @@ TEST_F(MathTensorTests, tensor_reshape_to_compatible_shape_test)
     DataType const expected =
         tensor.At<fetch::math::SizeType, fetch::math::SizeType>(index.first, index.second);
 
-    EXPECT_TRUE(fetch::math::Abs(expected - result) < DataType::TOLERANCE);
+    EXPECT_EQ(expected, result);
   }
-}
-
-TEST_F(MathTensorTests, tensor_reshape_to_incompatible_shape_test)
-{
-  using namespace fetch::vm;
-  using SizeType = fetch::math::SizeType;
-
-  fetch::math::Tensor<DataType> const tensor =
-      fetch::math::Tensor<DataType>::FromString("1.1, 2.2, 3.3; 4.4, 5.5, 6.6;");
-  // Initial shape of the Tensor is [2, 3]
-  fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
-
-  static std::vector<SizeType> const INCOMPATIBLE_SHAPE_RAW = {1, 2, 3, 4, 5, 6};
-  Array<SizeType> shape(&toolkit.vm(), TypeIds::Unknown, TypeIds::Int32, int32_t(0));
-  for (SizeType dim_size : INCOMPATIBLE_SHAPE_RAW)
-  {
-    shape.Append(TemplateParameter1(dim_size, TypeIds::Int32));
-  }
-  auto const incompatible_shape = Ptr<IArray>::PtrFromThis(&shape);
-
-  // Reshaping to an uncompatible shape should return false;
-  EXPECT_FALSE(vm_tensor.Reshape(incompatible_shape));
-
-  fetch::math::Tensor<DataType> const reshaped = vm_tensor.GetTensor();
-
-  // Assert the new shape is correct
-  for (std::size_t i = 0; i < INCOMPATIBLE_SHAPE_RAW.size(); ++i)
-  {
-    EXPECT_EQ(reshaped.shape().at(i), INCOMPATIBLE_SHAPE_RAW.at(i));
-  }
-
-  // Assert the new elements (at least one) are set to 0.0
-  DataType const result =
-      reshaped.At<fetch::math::SizeType, fetch::math::SizeType, fetch::math::SizeType,
-                  fetch::math::SizeType, fetch::math::SizeType, fetch::math::SizeType>(0, 0, 0, 0,
-                                                                                       0, 0);
-  DataType const expected{0.0};
-
-  EXPECT_TRUE(fetch::math::Abs(expected - result) < DataType::TOLERANCE);
 }
 
 TEST_F(MathTensorTests, tensor_squeeze_test)

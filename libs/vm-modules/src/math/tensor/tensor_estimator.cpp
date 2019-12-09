@@ -355,7 +355,7 @@ ChargeAmount TensorEstimator::Transpose()
 {
   if (tensor_.shape().size() != 2)
   {
-    return MaximumCharge("Cannot transpose tensor, only two-dimensional one can be transposed.");
+    return MaximumCharge("Cannot transpose tensor, only two-dimensional Tensor can be transposed.");
   }
 
   return GetReshapeCost({tensor_.shape().at(1), tensor_.shape().at(0)});
