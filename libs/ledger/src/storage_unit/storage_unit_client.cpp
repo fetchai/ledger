@@ -115,7 +115,6 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
   return tree.root();
 }
 
-// TODO(HUT): delete this - underused.
 // return the last committed hash (should correspond to the state hash before you began execution)
 byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 {

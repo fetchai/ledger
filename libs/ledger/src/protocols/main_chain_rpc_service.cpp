@@ -133,7 +133,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   state_machine_->OnStateChange([](State current, State previous) {
     FETCH_UNUSED(current);
     FETCH_UNUSED(previous);
-    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
 }
 
@@ -180,8 +180,6 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
     loose_blocks_seen_++;
     return;
   }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Gossiped block DID prove valid");
 
   // add the new block to the chain
   auto const status = chain_.AddBlock(block);
@@ -534,6 +532,12 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
 
 MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, State previous)
 {
+
+  if(state_machine_->previous_state() == State::SYNCHRONISED)
+  {
+    timer_to_proceed_.Restart(std::chrono::seconds{PERIODIC_RESYNC_SECONDS});
+  }
+
   state_synchronised_->increment();
 
   State next_state{State::SYNCHRONISED};
@@ -554,6 +558,11 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
   else if (previous != State::SYNCHRONISED)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronised");
+  }
+  else if(timer_to_proceed_.HasExpired())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Kicking forward sync periodically");
+    next_state = State::REQUEST_HEAVIEST_CHAIN;
   }
   else
   {

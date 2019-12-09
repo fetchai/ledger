@@ -512,7 +512,6 @@ NextBlockPtr Consensus::GenerateNextBlock()
   if (EntropyGeneratorInterface::Status::OK !=
       beacon_->GenerateEntropy(block_number, ret->block_entropy))
   {
-    /*FETCH_LOG_DEBUG(LOGGING_NAME, "Failed to generate entropy for block: ", block_number);*/
     return {};
   }
 

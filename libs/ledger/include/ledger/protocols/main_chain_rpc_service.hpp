@@ -32,6 +32,7 @@
 #include "network/generics/requesting_queue.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 #include "telemetry/telemetry.hpp"
+#include "moment/deadline_timer.hpp"
 
 #include <limits>
 #include <memory>
@@ -75,7 +76,8 @@ public:
   using FutureTimepoint = core::FutureTimepoint;
   using ConsensusPtr    = std::shared_ptr<ConsensusInterface>;
 
-  static constexpr char const *LOGGING_NAME = "MainChainRpc";
+  static constexpr char const *LOGGING_NAME    = "MainChainRpc";
+  static constexpr uint64_t PERIODIC_RESYNC_SECONDS = 60;
 
   enum class Mode
   {
@@ -124,8 +126,10 @@ private:
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
   using BlockPtr        = MainChain::BlockPtr;
+  using DeadlineTimer           = fetch::moment::DeadlineTimer;
 
   BlockPtr block_resolving_;
+  DeadlineTimer    timer_to_proceed_{"MC_RPC:main"};
 
   /// @name Subscription Handlers
   /// @{

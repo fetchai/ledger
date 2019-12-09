@@ -95,30 +95,7 @@ MainChain::~MainChain()
   {
     block_store_->Flush(false);
   }
-
-  //SaveBloom();
 }
-
-//void MainChain::SaveBloom()
-//{
-//  using namespace fetch::serializers;
-//
-//  if (mode_ != Mode::IN_MEMORY_DB)
-//  {
-//    try
-//    {
-//      std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
-//      LargeObjectSerializeHelper buffer{};
-//      buffer << bloom_filter_;
-//
-//      out << buffer.data();
-//    }
-//    catch (std::exception const &e)
-//    {
-//      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to save Bloom filter to file, reason: ", e.what());
-//    }
-//  }
-//}
 
 void MainChain::Reset()
 {
@@ -173,7 +150,6 @@ BlockStatus MainChain::AddBlock(Block const &blk)
   if (status == BlockStatus::ADDED)
   {
     AddBlockToBloomFilter(*block);
-    //SaveBloom();
   }
 
   return status;
@@ -1597,8 +1573,6 @@ bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block
                                        BlockHash *next_hash) const
 {
   bool success{false};
-
-  /* FETCH_LOG_INFO(LOGGING_NAME, "Read from storage"); */
 
   if (block_store_)
   {
