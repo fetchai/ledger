@@ -406,17 +406,17 @@ steps:
 
 ---
 test_description: >
-  Contract-to-contract call exceeding maximum depth
+  Nested contract-to-contract call exceeding maximum depth
 
 setup_conditions:
-  test_name: "c2c_call_cycle_test"
+  test_name: "c2c_nested_call_depth_limit_test"
   number_of_nodes: 1
   mining_nodes: [0]
   max_test_time: 600
 
 steps:
   - sleep: 5
-  - run_python_test: { "script": ".smart_contract_tests.c2c_call_depth_limit_test" }
+  - run_python_test: { "script": ".smart_contract_tests.c2c_nested_call_depth_limit_test" }
 ...
 
 ---
