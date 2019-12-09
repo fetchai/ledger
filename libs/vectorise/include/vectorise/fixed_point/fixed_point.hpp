@@ -23,6 +23,7 @@
 #include "vectorise/uint/int.hpp"
 #include "vectorise/uint/uint.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -961,16 +962,6 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
 
   Type         integer_part{0};
   UnsignedType fractional_part{0};
-  Type         exponent_part{1};
-
-  // first find exponent part if it exists
-  auto exponent_pos = s_copy.find('e');
-  if (exponent_pos != std::string::npos)
-  {
-    auto exponent_match = std::string(s_copy, exponent_pos + 1, s_copy.length());
-    exponent_part       = static_cast<Type>(std::strtoll(exponent_match.c_str(), nullptr, 10));
-    s_copy.erase(exponent_pos, s_copy.length() - exponent_pos);
-  }
 
   std::string integer_match;
   std::string fractional_match;
@@ -979,21 +970,29 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
   {
     integer_match    = std::string(s_copy, 0, decimal_pos);
     fractional_match = std::string(s_copy, decimal_pos + 1, s_copy.length());
+
+    // Trim right zeroes in fractional part
+    fractional_match.erase(fractional_match.find_last_not_of('0') + 1, std::string::npos);
+
     // Parse the fractional part and convert to FixedPoint.
     // Ignore more than the supported decimal digits
     if (fractional_match.length() > DECIMAL_DIGITS)
     {
       fractional_match.erase(DECIMAL_DIGITS, fractional_match.length() - DECIMAL_DIGITS);
     }
+    UnsignedType power10{10};
+
+    // find last digit in the fraction and calculate the power of 10 to divide by
+    auto digit_pos = std::min(fractional_match.find_last_not_of('0'), fractional_match.size() - 1);
+    for (size_t zeros = 0; zeros < digit_pos; zeros++)
+    {
+      power10 *= 10;
+    }
     // read into the integer type and divide by largest possible power of 10 to get
     // the needed fractional part in binary
     fractional_part =
         static_cast<UnsignedType>(std::strtoul(fractional_match.c_str(), nullptr, 10));
-    UnsignedType power10{1};
-    while (power10 < fractional_part)
-    {
-      power10 *= 10;
-    }
+
     fractional_part = (fractional_part * ONE_MASK) / power10;
   }
   else
@@ -1001,9 +1000,13 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
     integer_match = s_copy;
   }
 
+  // Trim left zeroes
+  integer_match.erase(0, std::min(integer_match.find_first_not_of('0'), integer_match.size() - 1));
+
+  // We definitely have an overflow, check the sign and set to MAX/MIN
   if (integer_match.length() > DECIMAL_DIGITS)
   {
-    // We definitely have an overflow, check the sign and set to MAX/MIN
+
     if (integer_match[0] == '-')
     {
       fp_state |= STATE_OVERFLOW;
@@ -1028,12 +1031,6 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
   // Construct the data value from integer and fractional parts
   data_ = (INTEGER_MASK & (Type(integer_part) << FRACTIONAL_BITS)) |
           Type(fractional_part & FRACTIONAL_MASK);
-  if (exponent_part != 1)
-  {
-    // Apply the exponent if it's there
-    auto exponent = Pow(FixedPoint{10}, FixedPoint{exponent_part});
-    *this *= exponent;
-  }
 
   // Finally check for overflow/underflow
   if (CheckOverflow(static_cast<NextType>(data_)))

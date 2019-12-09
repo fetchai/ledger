@@ -244,8 +244,6 @@ TEST(FixedPointTest, FromString_16_16)
   fp32_t one_point_five("1.5fp32");
   fp32_t two_point_five("2.5fp64");
   fp32_t m_one_point_five("-1.5fp");
-  fp32_t m_one_point_five_em10("-1.5e-3fp32_t");
-  fp32_t m_one_point_five_e10("-1.5e+3fp32_t");
   fp32_t m_one_point_five_flt(-1.5);
 
   EXPECT_EQ(zero_point_five.Data(), 0x08000);
@@ -253,11 +251,6 @@ TEST(FixedPointTest, FromString_16_16)
   EXPECT_EQ(one_point_five.Data(), 0x18000);
   EXPECT_EQ(two_point_five.Data(), 0x28000);
   EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
-  fp32_t m_fifteen_million(-1500);
-  fp32_t m_tiny(-0.0015);
-
-  EXPECT_EQ(m_one_point_five_em10, m_tiny);
-  EXPECT_EQ(m_one_point_five_e10, m_fifteen_million);
 
   fp32_t e1("2.718281828459045235360287471352662498");
   fp32_t e2(2.718281828459045235360287471352662498);
@@ -273,8 +266,15 @@ TEST(FixedPointTest, FromString_16_16)
   EXPECT_EQ(large1, fp32_t::FP_MAX);
   EXPECT_EQ(large2, fp32_t::FP_MIN);
 
-  fp32_t e3("0E-12fp32");
-  EXPECT_EQ(e3, fp32_t::_0);
+  fp32_t e4("000000000000001.00010000000000000000000000000000000000000000000");
+  std::cout << e4 << std::endl;
+  EXPECT_EQ(e4, fp32_t("1.0001"));
+  std::cout << fp32_t("1.0001") << std::endl;
+
+  fp32_t e5("000000000000001.010000000000000000000000000000000000000000000");
+  std::cout << e5 << std::endl;
+  EXPECT_EQ(e5, fp32_t("1.01"));
+  std::cout << fp32_t("1.01") << std::endl;
 }
 
 TEST(FixedPointTest, FromString_32_32)
@@ -294,11 +294,6 @@ TEST(FixedPointTest, FromString_32_32)
   EXPECT_EQ(one_point_five.Data(), 0x180000000);
   EXPECT_EQ(two_point_five.Data(), 0x280000000);
   EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
-  fp64_t m_fifteen_million(-150000);
-  fp64_t m_tiny(-0.000015);
-
-  EXPECT_EQ(m_one_point_five_em10, m_tiny);
-  EXPECT_EQ(m_one_point_five_e10, m_fifteen_million);
 
   fp64_t e1("2.718281828459045235360287471352662498");
   fp64_t e2(2.718281828459045235360287471352662498);
@@ -314,8 +309,15 @@ TEST(FixedPointTest, FromString_32_32)
   EXPECT_EQ(large1, fp64_t::FP_MAX);
   EXPECT_EQ(large2, fp64_t::FP_MIN);
 
-  fp64_t e3("0E-12fp64");
-  EXPECT_EQ(e3, fp64_t::_0);
+  fp64_t e4("000000000000001.0000000010000000000000000000000000000000000000000000");
+  std::cout << e4 << std::endl;
+  EXPECT_EQ(e4, fp64_t("1.000000001"));
+  std::cout << fp64_t("1.000000001") << std::endl;
+
+  fp64_t e5("000000000000001.00000010000000000000000000000000000000000000000000");
+  std::cout << e5 << std::endl;
+  EXPECT_EQ(e5, fp64_t("1.0000001"));
+  std::cout << fp64_t("1.0000001") << std::endl;
 }
 
 TEST(FixedPointTest, FromString_64_64)
@@ -326,8 +328,6 @@ TEST(FixedPointTest, FromString_64_64)
   fp128_t one_point_five("1.5fp128");
   fp128_t two_point_five("2.5fp128");
   fp128_t m_one_point_five("-1.5fp128");
-  fp128_t m_one_point_five_em10("-1.5e-10fp128");
-  fp128_t m_one_point_five_e10("-1.5e+10fp128");
   fp128_t m_one_point_five_flt(-1.5);
 
   EXPECT_EQ(zero_point_five.Data(), static_cast<int128_t>(0x8000000000000000));
@@ -335,11 +335,6 @@ TEST(FixedPointTest, FromString_64_64)
   EXPECT_EQ(one_point_five.Data(), static_cast<int128_t>(0x18) << 60);
   EXPECT_EQ(two_point_five.Data(), static_cast<int128_t>(0x28) << 60);
   EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
-  fp128_t m_fifteen_million(-15000000000);
-  fp128_t m_tiny(-0.00000000015);
-
-  EXPECT_EQ(m_one_point_five_em10, m_tiny);
-  EXPECT_EQ(m_one_point_five_e10, m_fifteen_million);
 
   fp128_t e1("2.718281828459045235360287471352662498");
   fp128_t e2(2.718281828459045235360287471352662498);
@@ -355,8 +350,14 @@ TEST(FixedPointTest, FromString_64_64)
   EXPECT_EQ(large1, fp128_t::FP_MAX);
   EXPECT_EQ(large2, fp128_t::FP_MIN);
 
-  fp128_t e3("0E-12fp128");
-  EXPECT_EQ(e3, fp128_t::_0);
+  fp128_t e4("000000000000001.000000000000000010000000000000000000000000000000000000000000");
+  std::cout << e4 << std::endl;
+  EXPECT_EQ(e4, fp128_t("1.00000000000000001"));
+
+  fp128_t e5("000000000000001.000000000010000000000000000000000000000000000000000000");
+  std::cout << e5 << std::endl;
+  EXPECT_EQ(e5, fp128_t("1.00000000001"));
+  std::cout << fp128_t("1.00000000001") << std::endl;
 }
 
 TEST(FixedPointTest, Constants_16_16)
