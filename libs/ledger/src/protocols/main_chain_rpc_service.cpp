@@ -45,8 +45,8 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using fetch::muddle::Packet;
 using fetch::byte_array::ToBase64;
+using fetch::muddle::Packet;
 
 using BlockSerializer        = fetch::serializers::MsgPackSerializer;
 using BlockSerializerCounter = fetch::serializers::SizeCounter;
@@ -375,7 +375,9 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
         rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
                                         MainChainProtocol::TIME_TRAVEL, block_resolving_->hash);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Attempting to resolve: ", block_resolving_->block_number, " aka 0x", block_resolving_->hash.ToHex(), " Note: gen is: 0x", chain::GENESIS_DIGEST.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Attempting to resolve: ", block_resolving_->block_number,
+                   " aka 0x", block_resolving_->hash.ToHex(), " Note: gen is: 0x",
+                   chain::GENESIS_DIGEST.ToHex());
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
@@ -432,7 +434,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
 
           uint64_t const attempting_to_resolve = !block_resolving_ ? 0 : block_resolving_->block_number;
 
-          if(!block_resolving_)
+          if (!block_resolving_)
           {
             FETCH_LOG_WARN(LOGGING_NAME, "No block set (?)");
           }
@@ -448,7 +450,8 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             FETCH_LOG_WARN(
                 LOGGING_NAME,
                 "Received indication we are on a dead fork. Walking back. Peer heaviest: ",
-                response.block_number, " blocks: ", blocks.size(), " heaviest: ", response.heaviest_hash.ToBase64());
+                response.block_number, " blocks: ", blocks.size(),
+                " heaviest: ", response.heaviest_hash.ToBase64());
 
             if (block_resolving_)
             {

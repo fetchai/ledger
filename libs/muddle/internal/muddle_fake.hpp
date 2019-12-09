@@ -333,6 +333,12 @@ public:
     throw std::runtime_error("IsDirectlyConnected functionality not implemented");
     return {};
   }
+
+  bool IsConnectingOrConnected(Address const & /*address*/) const override
+  {
+    throw std::runtime_error("IsConnectingOrConnected functionality not implemented");
+    return {};
+  }
   /// @}
 
   /// @name Peer Control

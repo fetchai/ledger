@@ -38,6 +38,8 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "ledger/transaction_status_cache.hpp"
+#include "messenger/messenger_api.hpp"
+#include "messenger/messenger_http_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 #include "open_api_http_module.hpp"
@@ -77,6 +79,12 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using ConsensusPtr   = std::shared_ptr<ledger::ConsensusInterface>;
 
+  using MessengerHttpModule = messenger::MessengerHttpModule;
+  using Mailbox             = messenger::Mailbox;
+  using MessengerAPI        = messenger::MessengerAPI;
+  using MailboxPtr          = std::unique_ptr<Mailbox>;
+  using MessengerAPIPtr     = std::unique_ptr<MessengerAPI>;
+
   struct Config
   {
     Manifest     manifest{};
@@ -104,6 +112,10 @@ public:
 
     std::string ihub_peer_cache{"peer_table.ihub.cache"};
     std::string beacon_peer_cache{"peer_table.dkgn.cache"};
+
+    bool     enable_agents{false};
+    uint16_t messenger_port{0};
+    uint16_t mailbox_port{0};
 
     uint32_t num_lanes() const
     {
@@ -221,6 +233,13 @@ private:
   /// @{
   MainChainRpcServicePtr main_chain_service_;  ///< Service for block transmission over the network
   TransactionProcessor   tx_processor_;        ///< The transaction entrypoint
+  /// @}
+
+  /// @name Agent support
+  /// @{
+  MuddlePtr       agent_network_{nullptr};
+  MailboxPtr      mailbox_{nullptr};
+  MessengerAPIPtr messenger_api_{nullptr};
   /// @}
 
   /// @name HTTP Server

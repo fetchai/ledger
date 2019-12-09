@@ -265,6 +265,10 @@ TEST(MessengerMailboxTest, MessagesRouting)
     ++i;
   }
 
+  std::cout << "==============================================================" << std::endl;
+  std::cout << "========================SHUTTING DOWN=========================" << std::endl;
+  std::cout << "==============================================================" << std::endl;
+
   // Shutting down
   for (auto &server : servers)
   {

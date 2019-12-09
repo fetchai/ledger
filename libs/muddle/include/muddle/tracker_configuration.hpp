@@ -62,6 +62,7 @@ struct TrackerConfiguration
     conf.connect_to_nearest        = true;
     conf.disconnect_duplicates     = true;
     conf.trim_peer_list            = true;
+    conf.long_range_connectivity   = true;
     conf.disconnect_from_self      = true;
     conf.allow_connection_expiry   = true;
     return conf;
@@ -77,6 +78,7 @@ struct TrackerConfiguration
     conf.connect_to_nearest        = false;
     conf.disconnect_duplicates     = true;
     conf.trim_peer_list            = false;
+    conf.long_range_connectivity   = false;
     conf.disconnect_from_self      = true;
     conf.allow_connection_expiry   = true;
     return conf;
@@ -86,19 +88,19 @@ struct TrackerConfiguration
   /// @{
   bool allow_desired_connections{true};
   bool register_connections{true};
-  bool pull_peers{true};
-  bool connect_to_nearest{true};
+  bool pull_peers{false};
+  bool connect_to_nearest{false};
   bool disconnect_duplicates{true};
-  bool trim_peer_list{true};
-  bool long_range_connectivity{true};
+  bool trim_peer_list{false};
+  bool long_range_connectivity{false};
   bool disconnect_from_self{true};
   bool allow_connection_expiry{true};
   /// @}
 
   uint64_t max_kademlia_connections{6};
-  uint64_t max_longrange_connections{3};
+  uint64_t max_longrange_connections{5};
   uint64_t max_desired_connections{255};
-  uint64_t max_discovery_connections{2};
+  int64_t  max_discovery_tasks{3};
 
   /// Priority paramters
   /// @{

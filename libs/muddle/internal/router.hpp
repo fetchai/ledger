@@ -162,7 +162,8 @@ private:
 
   static constexpr std::size_t NUMBER_OF_ROUTER_THREADS = 1;
 
-  void SendToConnection(Handle handle, PacketPtr const &packet);
+  void SendToConnection(Handle handle, PacketPtr const &packet, bool external = true,
+                        bool reschedule_on_fail = false);
   void RoutePacket(PacketPtr const &packet, bool external = true);
   void DispatchDirect(Handle handle, PacketPtr const &packet);
 
@@ -204,11 +205,12 @@ private:
   mutable Mutex                           delivery_attempts_lock_;
   std::unordered_map<PacketPtr, uint64_t> delivery_attempts_;
 
-  void ClearDeliveryAttempt(PacketPtr packet)
+  void ClearDeliveryAttempt(PacketPtr const &packet)
   {
     FETCH_LOCK(delivery_attempts_lock_);
     delivery_attempts_.erase(packet);
   }
+  void SchedulePacketForRedelivery(PacketPtr const &packet, bool external);
   /// @}
 
   /// Message "entropy"

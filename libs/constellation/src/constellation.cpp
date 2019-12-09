@@ -275,6 +275,49 @@ BeaconServicePtr CreateBeaconService(constellation::Constellation::Config const 
   return beacon;
 }
 
+muddle::MuddlePtr CreateMessengerNetwork(Config const &cfg, CertificatePtr /*certificate*/,
+                                         NetworkManager const & /*nm*/)
+{
+  muddle::MuddlePtr network;
+
+  if (cfg.enable_agents)
+  {
+    /*
+    TODO: Make work in order to enable
+    network =
+        muddle::CreateMuddle("AGEN", std::move(certificate), nm,
+                             cfg.manifest.FindExternalAddress(ServiceIdentifier::Type::AGENTS));
+                             */
+  }
+
+  return network;
+}
+
+Constellation::MailboxPtr CreateMessengerMailbox(Config const &cfg, muddle::MuddlePtr &network)
+{
+  Constellation::MailboxPtr ret{nullptr};
+
+  if (cfg.enable_agents && network)
+  {
+    ret = std::make_unique<Constellation::Mailbox>(network);
+  }
+
+  return ret;
+}
+
+Constellation::MessengerAPIPtr CreateMessengerAPI(Config const &cfg, muddle::MuddlePtr &network,
+                                                  Constellation::MailboxPtr &mailbox)
+{
+  Constellation::MessengerAPIPtr ret{nullptr};
+
+  if (cfg.enable_agents && network && mailbox)
+  {
+    ret = std::make_unique<Constellation::MessengerAPI>(network, *mailbox);
+  }
+
+  return ret;
+}
+
 /**
  * Construct a constellation instance
  *
@@ -338,6 +381,9 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
                              return std::make_shared<ledger::SynergeticExecutor>(*storage_);
                            })}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
+  , agent_network_{CreateMessengerNetwork(cfg_, certificate, network_manager_)}
+  , mailbox_{CreateMessengerMailbox(cfg_, agent_network_)}
+  , messenger_api_{CreateMessengerAPI(cfg_, agent_network_, mailbox_)}
   , http_open_api_module_{std::make_shared<OpenAPIHttpModule>()}
   , health_check_module_{std::make_shared<HealthCheckHttpModule>(chain_, block_coordinator_)}
   , http_{http_network_manager_}
@@ -372,6 +418,12 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   if (beacon_network_)
   {
     beacon_network_->SetPeerTableFile(cfg_.beacon_peer_cache);
+  }
+
+  // Adding agent http inteface if network exists
+  if (agent_network_)
+  {
+    http_modules_.push_back(std::make_shared<messenger::MessengerHttpModule>(*messenger_api_));
   }
 
   // Configure/override global parameters
@@ -564,6 +616,21 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
       beacon_network_->Start({}, beacon_port_mapping);
     }
 
+    // Adding agent ntwork if it is enabled
+    if (agent_network_)
+    {
+
+      uint16_t const agents_bind_port =
+          LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::AGENTS);
+      uint16_t const agents_ext_port =
+          LookupRemotePort(cfg_.manifest, ServiceIdentifier::Type::AGENTS);
+
+      muddle::MuddleInterface::PortMapping const agents_port_mapping{
+          {agents_bind_port, agents_ext_port}};
+
+      agent_network_->Start({}, agents_port_mapping);
+    }
+
     // reactor important to run the block/chain state machine
     reactor_.Start();
 
@@ -643,6 +710,11 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
   http_.Stop();
   tx_processor_.Stop();
   reactor_.Stop();
+  if (agent_network_)
+  {
+    agent_network_->Stop();
+  }
+
   execution_manager_->Stop();
   storage_.reset();
   lane_services_.Stop();
