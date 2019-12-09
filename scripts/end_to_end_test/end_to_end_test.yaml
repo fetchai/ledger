@@ -228,7 +228,7 @@ steps:
 
 ---
 test_description: >
-  DISABLED - Test signature malleability vulnerability
+  Test signature malleability vulnerability
 
 setup_conditions:
   test_name: "malleability_test"
