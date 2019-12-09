@@ -203,8 +203,11 @@ public:
     return DataType(5);
   };
 
+  // Function call overhead for LOW_CHARGE functions
+  static constexpr SizeType LOW_CHARGE_CONST_COEF = 5;
+
 private:
-  static ChargeAmount const LOW_CHARGE{5 * fetch::vm::COMPUTE_CHARGE_COST};
+  static ChargeAmount const LOW_CHARGE{LOW_CHARGE_CONST_COEF * fetch::vm::COMPUTE_CHARGE_COST};
 
   static ChargeAmount MaximumCharge(std::string const &log_msg = "");
 

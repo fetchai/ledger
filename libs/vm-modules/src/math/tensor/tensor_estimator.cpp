@@ -147,14 +147,13 @@ ChargeAmount TensorEstimator::Squeeze()
       not_found = false;
       break;
     }
-    else
+
+    if (cur_dim == 0)
     {
-      if (cur_dim == 0)
-      {
-        break;
-      }
-      --cur_dim;
+      break;
     }
+
+    --cur_dim;
   }
 
   if (not_found)

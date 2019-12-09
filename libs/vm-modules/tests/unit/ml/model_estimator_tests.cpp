@@ -377,8 +377,8 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
           SizeType val = vm_ptr_tensor_data->GetTensor().size();
           val += vm_ptr_tensor_labels->GetTensor().size();
-          val += VmModelEstimator::FIT_CONST_OVERHEAD;
-          val += VmModelEstimator::FIT_PER_BATCH_OVERHEAD * (n_data / batch_size);
+          // val += VmModelEstimator::FIT_CONST_OVERHEAD;
+          // val += VmModelEstimator::FIT_PER_BATCH_OVERHEAD * (n_data / batch_size);
           val += vm_ptr_tensor_data->GetTensor().size();
           val += vm_ptr_tensor_labels->GetTensor().size();
           val += (n_data / batch_size);
