@@ -19,7 +19,6 @@
 
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
-#include "ledger/storage_unit/object_store_protocol.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "storage/document_store_protocol.hpp"

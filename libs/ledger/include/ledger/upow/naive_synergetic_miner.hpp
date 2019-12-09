@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/state_machine.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "ledger/upow/synergetic_miner_interface.hpp"
@@ -78,8 +79,7 @@ private:
 
   /// @name Utils
   /// @{
-  WorkPtr MineSolution(Digest const &contract_digest, chain::Address const &contract_address,
-                       ProblemData const &problem_data);
+  WorkPtr MineSolution(chain::Address const &contract_address, ProblemData const &problem_data);
   /// @}
 
   DAGPtr                        dag_;
@@ -88,6 +88,7 @@ private:
   std::size_t                   search_length_{DEFAULT_SEARCH_LENGTH};
   std::shared_ptr<StateMachine> state_machine_;
   std::atomic<bool>             is_mining_{false};
+  TokenContract                 token_contract_{};
 };
 
 }  // namespace ledger

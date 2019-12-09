@@ -27,4 +27,9 @@ target_link_libraries(fetch-vm-modules
 add_test_target()
 
 add_subdirectory(examples)
+
+# ------------------------------------------------------------------------------
+# Benchmark Targets
+# ------------------------------------------------------------------------------
+
 add_subdirectory(benchmark)

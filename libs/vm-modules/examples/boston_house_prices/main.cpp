@@ -20,7 +20,7 @@
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/system.hpp"
 #include "vm_modules/math/read_csv.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/ml.hpp"
 
 #include <iostream>
@@ -51,7 +51,8 @@ int main(int argc, char **argv)
   std::ifstream file(pp.GetArg(1), std::ios::binary);
   if (file.fail())
   {
-    throw std::runtime_error("Cannot open file " + std::string(pp.GetArg(1)));
+    std::cout << "Cannot open file " << std::string(pp.GetArg(1)) << std::endl;
+    return -1;
   }
   std::ostringstream ss;
   ss << file.rdbuf();
@@ -62,7 +63,7 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::System::Bind(*module);
 
-  fetch::vm_modules::ml::BindML(*module);
+  fetch::vm_modules::ml::BindML(*module, true);
 
   fetch::vm_modules::CreatePrint(*module);
   fetch::vm_modules::math::BindReadCSV(*module);
