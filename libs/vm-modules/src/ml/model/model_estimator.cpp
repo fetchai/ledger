@@ -220,7 +220,6 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
     Ptr<String> const &loss, Ptr<String> const &optimiser,
     Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics)
 {
-  FETCH_UNUSED(metrics);  // fixme
   DataType optimiser_construction_impact(0.0);
 
   if (!model_.model_->loss_set_)
@@ -242,6 +241,29 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
       state_.backward_pass_cost =
           state_.backward_pass_cost + CEL_BACKWARD_IMPACT() * state_.last_layer_size;
       state_.ops_count++;
+    }
+  }
+
+  std::size_t const n_metrics = metrics->elements.size();
+
+  for (std::size_t i = 0; i < n_metrics; ++i)
+  {
+    Ptr<String> ptr_string = metrics->elements.at(i);
+    if (ptr_string->string() == "categorical accuracy")
+    {
+      state_.metrics_cost += CATEGORICAL_ACCURACY_FORWARD_IMPACT() * state_.last_layer_size;
+    }
+    else if (ptr_string->string() == "mse")
+    {
+      state_.metrics_cost += MSE_FORWARD_IMPACT() * state_.last_layer_size;
+    }
+    else if (ptr_string->string() == "cel")
+    {
+      state_.metrics_cost += CEL_FORWARD_IMPACT() * state_.last_layer_size;
+    }
+    else if (ptr_string->string() == "scel")
+    {
+      state_.metrics_cost += SCEL_FORWARD_IMPACT() * state_.last_layer_size;
     }
   }
 
@@ -275,14 +297,14 @@ ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser
 
   FETCH_UNUSED(optimiser);
   FETCH_UNUSED(in_layers);
-  return MaximumCharge("Not yet implement");
+  return MaximumCharge("Not yet implemented");
 }
 
 ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTensor> const &labels,
                                  SizeType const &batch_size)
 {
   DataType estimate(0);
-  SizeType subset_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
+  state_.subset_size   = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
   SizeType data_size   = data->GetTensor().size();
   SizeType labels_size = labels->GetTensor().size();
 
@@ -293,20 +315,20 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
   // SetRandomMode, UpdateConfig, etc.
   estimate = estimate + FIT_CONST_OVERHEAD;
   // PrepareBatch overhead
-  estimate = estimate + FIT_PER_BATCH_OVERHEAD * (subset_size / batch_size);
+  estimate = estimate + FIT_PER_BATCH_OVERHEAD * (state_.subset_size / batch_size);
   // PrepareBatch-input
   estimate = estimate + data_size;
   // PrepareBatch-label
   estimate = estimate + labels_size;
   // SetInputReference, update stats
-  estimate = estimate + subset_size / batch_size;
+  estimate = estimate + state_.subset_size / batch_size;
   // Forward and backward prob
-  estimate = estimate + subset_size * static_cast<SizeType>(state_.forward_pass_cost +
-                                                            state_.backward_pass_cost);
+  estimate = estimate + state_.subset_size * static_cast<SizeType>(state_.forward_pass_cost +
+                                                                   state_.backward_pass_cost);
   // Optimiser step and clearing gradients
 
   estimate =
-      estimate + static_cast<DataType>(subset_size / batch_size) *
+      estimate + static_cast<DataType>(state_.subset_size / batch_size) *
                      static_cast<DataType>(state_.optimiser_step_impact * state_.weights_size_sum +
                                            state_.weights_size_sum);
 
@@ -315,16 +337,33 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
 
 ChargeAmount ModelEstimator::Evaluate()
 {
-  // fixme
-  // Just return loss_, constant charge
-  return static_cast<ChargeAmount>(CONSTANT_CHARGE);
+  DataType estimate(0);
+  // SetRandomMode, UpdateConfig, etc.
+  estimate = estimate + FIT_CONST_OVERHEAD;
+  // PrepareBatch overhead
+  estimate = estimate + FIT_PER_BATCH_OVERHEAD;
+  // Forward pass
+  estimate = estimate + state_.subset_size * static_cast<SizeType>(state_.forward_pass_cost);
+
+  // Metrics
+  estimate = estimate + state_.metrics_cost;
+  return static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount ModelEstimator::EvaluateWithMetrics()
 {
-  // fixme
-  // Just return loss_, constant charge
-  return static_cast<ChargeAmount>(CONSTANT_CHARGE);
+  DataType estimate(0);
+  // SetRandomMode, UpdateConfig, etc.
+  estimate = estimate + FIT_CONST_OVERHEAD;
+  // PrepareBatch overhead
+  estimate = estimate + FIT_PER_BATCH_OVERHEAD;
+  // Forward pass
+  estimate = estimate + state_.subset_size * static_cast<SizeType>(state_.forward_pass_cost);
+
+  // Metrics
+  estimate = estimate + state_.metrics_cost;
+
+  return static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)

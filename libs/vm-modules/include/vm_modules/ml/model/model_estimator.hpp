@@ -185,6 +185,14 @@ public:
   {
     return DataType(0.003333333333333);
   };
+  static constexpr DataType SCEL_FORWARD_IMPACT()
+  {
+    return DataType(0.003333333333333);
+  };
+  static constexpr DataType CATEGORICAL_ACCURACY_FORWARD_IMPACT()
+  {
+    return DataType(0.003333333333333);
+  };
 
   // Backward
   static constexpr DataType BACKWARD_DENSE_INPUT_COEF()
@@ -245,6 +253,7 @@ private:
     // Model
     DataType forward_pass_cost{0.0};
     DataType backward_pass_cost{0.0};
+    DataType metrics_cost{0.0};
 
     // Optimiser
     SizeType weights_size_sum{0};
@@ -254,6 +263,9 @@ private:
 
     SizeType last_layer_size{0};
     SizeType ops_count{0};
+
+    // data
+    SizeType subset_size{0};
 
     // serialization
     bool SerializeTo(serializers::MsgPackSerializer &buffer);
