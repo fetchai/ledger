@@ -687,18 +687,33 @@ void Muddle::CreateTcpClient(Uri const &peer)
   clients_.AddConnection(peer, strong_conn);
 
   // debug handlers
-  strong_conn->OnConnectionSuccess([this, peer]() {
-    peer_tracker_->ReportSuccessfulConnectAttempt(peer);
+  std::weak_ptr<PeerTracker> wptr = peer_tracker_;
+  strong_conn->OnConnectionSuccess([this, peer, wptr]() {
+    auto ptr = wptr.lock();
+    if (ptr)
+    {
+      peer_tracker_->ReportSuccessfulConnectAttempt(peer);
+    }
     clients_.OnConnectionEstablished(peer);
   });
 
-  strong_conn->OnConnectionFailed([this, peer]() {
-    peer_tracker_->ReportFailedConnectAttempt(peer);
+  strong_conn->OnConnectionFailed([this, peer, wptr]() {
+    auto ptr = wptr.lock();
+    if (ptr)
+    {
+      ptr->ReportFailedConnectAttempt(peer);
+    }
+
     clients_.RemoveConnection(peer);
   });
 
-  strong_conn->OnLeave([this, peer]() {
-    peer_tracker_->ReportLeaving(peer);
+  strong_conn->OnLeave([this, peer, wptr]() {
+    auto ptr = wptr.lock();
+    if (ptr)
+    {
+      ptr->ReportLeaving(peer);
+    }
+
     clients_.RemoveConnection(peer);
   });
 

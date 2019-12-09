@@ -240,6 +240,7 @@ KademliaTable::Peers KademliaTable::FindPeerByHamming(Address const &address, ui
 
 void KademliaTable::ReportSuccessfulConnectAttempt(Uri const &uri)
 {
+  FETCH_LOCK(mutex_);
   auto it = known_uris_.find(uri);
   if (it == known_uris_.end())
   {
@@ -260,6 +261,7 @@ void KademliaTable::ReportSuccessfulConnectAttempt(Uri const &uri)
 
 void KademliaTable::ReportFailedConnectAttempt(Uri const &uri)
 {
+  FETCH_LOCK(mutex_);
   auto it = known_uris_.find(uri);
   if (it == known_uris_.end())
   {
@@ -276,6 +278,7 @@ void KademliaTable::ReportFailedConnectAttempt(Uri const &uri)
 
 void KademliaTable::ReportLeaving(Uri const &uri)
 {
+  FETCH_LOCK(mutex_);
   auto it = known_uris_.find(uri);
   if (it == known_uris_.end())
   {
