@@ -309,7 +309,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   // the block period
   if (proposed_block_timestamp_ms < previous_block_window_ends)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Cannot produce within block interval.");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Cannot produce within block interval.");
     return false;
   }
 
