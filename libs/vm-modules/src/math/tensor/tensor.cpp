@@ -21,8 +21,10 @@
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
+#include "vm_modules/math/tensor/tensor_estimator.hpp"
 #include "vm_modules/math/type.hpp"
+#include "vm_modules/use_estimator.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -40,15 +42,18 @@ using SizeVector = ArrayType::SizeVector;
 VMTensor::VMTensor(VM *vm, TypeId type_id, std::vector<uint64_t> const &shape)
   : Object(vm, type_id)
   , tensor_(shape)
+  , estimator_(*this)
 {}
 
 VMTensor::VMTensor(VM *vm, TypeId type_id, ArrayType tensor)
   : Object(vm, type_id)
   , tensor_(std::move(tensor))
+  , estimator_(*this)
 {}
 
 VMTensor::VMTensor(VM *vm, TypeId type_id)
   : Object(vm, type_id)
+  , estimator_(*this)
 {}
 
 Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> const &shape)
@@ -56,36 +61,55 @@ Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>>
   return Ptr<VMTensor>{new VMTensor(vm, type_id, shape->elements)};
 }
 
-void VMTensor::Bind(Module &module)
+void VMTensor::Bind(Module &module, bool const enable_experimental)
 {
   using Index = fetch::math::SizeType;
-  module.CreateClassType<VMTensor>("Tensor")
-      .CreateConstructor(&VMTensor::Constructor)
-      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
-        return Ptr<VMTensor>{new VMTensor(vm, type_id)};
-      })
-      .CreateMemberFunction("at", &VMTensor::At<Index>)
-      .CreateMemberFunction("at", &VMTensor::At<Index, Index>)
-      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>)
-      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>)
-      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index, Index>)
-      .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index, Index, Index>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, DataType>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, DataType>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, DataType>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, Index, DataType>)
-      .CreateMemberFunction("setAt",
-                            &VMTensor::SetAt<Index, Index, Index, Index, Index, Index, DataType>)
-      .CreateMemberFunction("fill", &VMTensor::Fill)
-      .CreateMemberFunction("fillRandom", &VMTensor::FillRandom)
-      .CreateMemberFunction("reshape", &VMTensor::Reshape)
-      .CreateMemberFunction("squeeze", &VMTensor::Squeeze)
-      .CreateMemberFunction("size", &VMTensor::size)
-      .CreateMemberFunction("transpose", &VMTensor::Transpose)
-      .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze)
-      .CreateMemberFunction("fromString", &VMTensor::FromString)
-      .CreateMemberFunction("toString", &VMTensor::ToString);
+  auto interface =
+      module.CreateClassType<VMTensor>("Tensor")
+          .CreateConstructor(&VMTensor::Constructor)
+          .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
+            return Ptr<VMTensor>{new VMTensor(vm, type_id)};
+          })
+          .CreateMemberFunction("at", &VMTensor::At<Index>, UseEstimator(&TensorEstimator::AtOne))
+          .CreateMemberFunction("at", &VMTensor::At<Index, Index>,
+                                UseEstimator(&TensorEstimator::AtTwo))
+          .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>,
+                                UseEstimator(&TensorEstimator::AtThree))
+          .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>,
+                                UseEstimator(&TensorEstimator::AtFour))
+          .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, DataType>,
+                                UseEstimator(&TensorEstimator::SetAtOne))
+          .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, DataType>,
+                                UseEstimator(&TensorEstimator::SetAtTwo))
+          .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, DataType>,
+                                UseEstimator(&TensorEstimator::SetAtThree))
+          .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>,
+                                UseEstimator(&TensorEstimator::SetAtFour))
+          .CreateMemberFunction("size", &VMTensor::size, UseEstimator(&TensorEstimator::size))
+          .CreateMemberFunction("fill", &VMTensor::Fill, UseEstimator(&TensorEstimator::Fill))
+          .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
+                                UseEstimator(&TensorEstimator::FillRandom))
+          .CreateMemberFunction("min", &VMTensor::Min, UseEstimator(&TensorEstimator::Min))
+          .CreateMemberFunction("max", &VMTensor::Max, UseEstimator(&TensorEstimator::Max))
+          .CreateMemberFunction("reshape", &VMTensor::Reshape,
+                                UseEstimator(&TensorEstimator::Reshape))
+          .CreateMemberFunction("squeeze", &VMTensor::Squeeze,
+                                UseEstimator(&TensorEstimator::Squeeze))
+          .CreateMemberFunction("sum", &VMTensor::Sum, UseEstimator(&TensorEstimator::Sum))
+          .CreateMemberFunction("transpose", &VMTensor::Transpose,
+                                UseEstimator(&TensorEstimator::Transpose))
+          .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze,
+                                UseEstimator(&TensorEstimator::Unsqueeze))
+          .CreateMemberFunction("fromString", &VMTensor::FromString,
+                                UseEstimator(&TensorEstimator::FromString))
+          .CreateMemberFunction("toString", &VMTensor::ToString,
+                                UseEstimator(&TensorEstimator::ToString));
+
+  if (enable_experimental)
+  {
+    // no tensor features are experimental
+    FETCH_UNUSED(interface);
+  }
 
   // Add support for Array of Tensors
   module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<VMTensor>>>();
@@ -179,6 +203,25 @@ void VMTensor::Transpose()
   tensor_.Transpose();
 }
 
+/////////////////////////
+/// MATRIX OPERATIONS ///
+/////////////////////////
+
+DataType VMTensor::Min()
+{
+  return fetch::math::Min(tensor_);
+}
+
+DataType VMTensor::Max()
+{
+  return fetch::math::Max(tensor_);
+}
+
+DataType VMTensor::Sum()
+{
+  return fetch::math::Sum(tensor_);
+}
+
 //////////////////////////////
 /// PRINTING AND EXPORTING ///
 //////////////////////////////
@@ -229,6 +272,11 @@ bool VMTensor::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
   buffer >> tensor_;
   return true;
+}
+
+TensorEstimator &VMTensor::Estimator()
+{
+  return estimator_;
 }
 
 }  // namespace math
