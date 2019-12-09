@@ -517,7 +517,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->block_number,
                  " beacon: ", next_block_->block_entropy.EntropyAsU64());
 
-  start_block_packing_       = Clock::now();
+  start_block_packing_ = Clock::now();
 
   // Attach current DAG state
   if (dag_)
@@ -1096,7 +1096,8 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
       block_sink_.OnBlock(*next_block_);
 
       // Metrics on block time
-      total_time_to_create_block_->set(static_cast<uint64_t>(ToSeconds(Clock::now() - start_block_packing_)));
+      total_time_to_create_block_->set(
+          static_cast<uint64_t>(ToSeconds(Clock::now() - start_block_packing_)));
     }
   }
   catch (std::exception const &ex)

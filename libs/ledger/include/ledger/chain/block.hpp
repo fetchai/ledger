@@ -76,10 +76,10 @@ public:
 
   /// @name Metadata for block management (not serialized)
   /// @{
-  Weight total_weight = 1;
-  bool   is_loose     = false;
-  uint64_t       chain_label{0};     ///< The label of a heaviest chain this block once belonged to
-                                     ///< A more detailed explanation in MainChain::HeaviestTip.
+  Weight   total_weight = 1;
+  bool     is_loose     = false;
+  uint64_t chain_label{0};  ///< The label of a heaviest chain this block once belonged to
+                            ///< A more detailed explanation in MainChain::HeaviestTip.
   /// @}
 
   // Helper functions

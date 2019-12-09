@@ -170,7 +170,8 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   if (tree.root() != hash)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Index given for merkle hash didn't match merkle stack! root: 0x",
-                    tree.root().ToHex(), " expected: 0x", hash.ToHex(), " Note: index: ", index, " genesis merk: 0x", chain::GENESIS_MERKLE_ROOT.ToHex());
+                    tree.root().ToHex(), " expected: 0x", hash.ToHex(), " Note: index: ", index,
+                    " genesis merk: 0x", chain::GENESIS_MERKLE_ROOT.ToHex());
     return false;
   }
 
@@ -225,7 +226,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
     current_merkle_ = tree;
   }
 
-  if(!all_success)
+  if (!all_success)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert to hash! Index: ", index);
   }
@@ -299,8 +300,8 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index
       }
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Committing merkle hash at index: ", commit_index,
-                    " to stack: 0x", tree.root().ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Committing merkle hash at index: ", commit_index, " to stack: 0x",
+                   tree.root().ToHex());
 
     permanent_state_merkle_stack_.Push(tree);
     permanent_state_merkle_stack_.Flush(false);

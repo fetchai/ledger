@@ -142,7 +142,9 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
                        block->hash.ToHex(), " Merkle: 0x", block->merkle_hash.ToHex(),
                        " number: ", block->block_number);
 
-        if(block->hash == byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=") || block->merkle_hash == byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="))
+        if (block->hash == byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=") ||
+            block->merkle_hash ==
+                byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="))
         {
           FETCH_LOG_WARN(LOGGING_NAME, "Main chain needs a reset since it is in a bad state.");
         }
@@ -287,7 +289,7 @@ bool GenesisFileCreator::LoadState(Variant const &object)
   chain::GENESIS_MERKLE_ROOT = merkle_commit_hash;
   chain::GENESIS_DIGEST      = genesis_block_.hash;
 
-  if(!storage_unit_.RevertToHash(chain::GENESIS_MERKLE_ROOT, 0))
+  if (!storage_unit_.RevertToHash(chain::GENESIS_MERKLE_ROOT, 0))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed test to revert to merkle root!");
   }

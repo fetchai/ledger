@@ -163,7 +163,7 @@ void PeerConnectionList::OnConnectionEstablished(Uri const &peer)
   }
 
   FETCH_LOG_DEBUG(logging_name_, "Connection to ", peer.uri(),
-                 " established (conn: ", connection_handle, ")");
+                  " established (conn: ", connection_handle, ")");
 }
 
 void PeerConnectionList::RemoveConnection(Uri const &peer)

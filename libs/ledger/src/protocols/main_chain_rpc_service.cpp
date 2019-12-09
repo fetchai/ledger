@@ -29,9 +29,9 @@
 #include "ledger/consensus/consensus_interface.hpp"
 #include "logging/logging.hpp"
 #include "muddle/packet.hpp"
+#include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
-#include "network/generics/milli_timer.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -175,7 +175,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   if (!ValidBlock(block, "new block"))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Gossiped block did not prove valid. Loose blocks seen: ", loose_blocks_seen_);
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Gossiped block did not prove valid. Loose blocks seen: ", loose_blocks_seen_);
     loose_blocks_seen_++;
     return;
   }
@@ -332,20 +333,21 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   {
     current_peer_address_ = peer;
 
-    if(!block_resolving_)
+    if (!block_resolving_)
     {
-      block_resolving_      = chain_.GetHeaviestBlock();
+      block_resolving_ = chain_.GetHeaviestBlock();
     }
 
-    if(!block_resolving_)
+    if (!block_resolving_)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to get heaviest block from the main chain!");
       state_machine_->Delay(std::chrono::milliseconds{1000});
       return next_state;
     }
 
-    current_request_ = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
-                                                       MainChainProtocol::TIME_TRAVEL, block_resolving_->hash);
+    current_request_ =
+        rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
+                                        MainChainProtocol::TIME_TRAVEL, block_resolving_->hash);
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
@@ -400,13 +402,17 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             }
           }
 
-          if(response.not_on_heaviest || (response.block_number > (block_resolving_->block_number + 10)))
+          if (response.not_on_heaviest ||
+              (response.block_number > (block_resolving_->block_number + 10)))
           {
             block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
 
-            FETCH_LOG_WARN(LOGGING_NAME, "Received indication we are on a dead fork. Walking back. Peer heaviest: ", response.block_number);
+            FETCH_LOG_WARN(
+                LOGGING_NAME,
+                "Received indication we are on a dead fork. Walking back. Peer heaviest: ",
+                response.block_number);
 
-            if(block_resolving_)
+            if (block_resolving_)
             {
               FETCH_LOG_WARN(LOGGING_NAME, "Walked to: ", block_resolving_->block_number);
             }

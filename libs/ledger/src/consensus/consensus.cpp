@@ -223,10 +223,11 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &current, Identity cons
 {
   auto beginning_of_aeon = GetBeginningOfAeon(current, chain_);
 
-  auto                  qualified_cabinet_weighted =
-      QualWeightedByEntropy(beginning_of_aeon.block_entropy.qualified, current.block_entropy.EntropyAsU64());
+  auto qualified_cabinet_weighted = QualWeightedByEntropy(beginning_of_aeon.block_entropy.qualified,
+                                                          current.block_entropy.EntropyAsU64());
 
-  if(std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity) == qualified_cabinet_weighted.end())
+  if (std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity) ==
+      qualified_cabinet_weighted.end())
   {
     // Note: weight being non zero indicates not in cabinet
     return 0;
