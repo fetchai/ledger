@@ -957,8 +957,6 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
 {
   auto index  = s.find("fp");
   auto s_copy = std::string(s, 0, index);
-  std::transform(s_copy.begin(), s_copy.end(), s_copy.begin(),
-                 [](char c) { return std::tolower(c); });
 
   Type         integer_part{0};
   UnsignedType fractional_part{0};
@@ -983,7 +981,16 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
     UnsignedType power10{10};
 
     // find last digit in the fraction and calculate the power of 10 to divide by
-    auto digit_pos = std::min(fractional_match.find_last_not_of('0'), fractional_match.size() - 1);
+    auto   last_digit = fractional_match.find_last_not_of('0');
+    size_t digit_pos;
+    if (last_digit != std::string::npos)
+    {
+      digit_pos = std::min(fractional_match.find_last_not_of('0'), fractional_match.size() - 1);
+    }
+    else
+    {
+      digit_pos = fractional_match.size();
+    }
     for (size_t zeros = 0; zeros < digit_pos; zeros++)
     {
       power10 *= 10;
