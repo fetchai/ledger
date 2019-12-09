@@ -57,7 +57,7 @@ public:
   static fetch::vm::Ptr<VMDataLoader> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                   fetch::vm::Ptr<fetch::vm::String> const &mode);
 
-  static void Bind(fetch::vm::Module &module);
+  static void Bind(fetch::vm::Module &module, bool enable_experimental);
 
   /**
    * Add data to a dataloader by passing the filenames
