@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/fnv.hpp"  // needed for std::hash<ConstByteArray>
-#include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "meta/log2.hpp"
 
@@ -35,10 +34,11 @@ class Contract;
 class ChainCodeCache
 {
 public:
-  using ContractPtr = std::shared_ptr<Contract>;
-  using StoragePtr  = ledger::StorageInterface;
+  using ContractPtr    = std::shared_ptr<Contract>;
+  using StoragePtr     = ledger::StorageInterface;
+  using ConstByteArray = byte_array::ConstByteArray;
 
-  ContractPtr Lookup(Identifier const &contract_id, StorageInterface &storage);
+  ContractPtr Lookup(ConstByteArray const &contract_id, StorageInterface &storage);
 
 private:
   using Clock     = std::chrono::high_resolution_clock;
@@ -60,7 +60,7 @@ private:
   static constexpr uint64_t CLEANUP_MASK   = CLEANUP_PERIOD - 1u;
 
   // Utils
-  ContractPtr FindInCache(Identifier const &contract_id);
+  ContractPtr FindInCache(ConstByteArray const &contract_id);
   void        RunMaintenance();
 
   std::size_t     counter_{};
