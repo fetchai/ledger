@@ -763,22 +763,6 @@ private:
     }
   };
 
-//  template <typename Estimator>
-//  bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso, Estimator &&estimator) const
-//  {
-//    if (lhso)
-//    {
-//      if (rhso)
-//      {
-//        if (EstimateCharge(std::forward<Estimator>(estimator, lhso, rhso)))
-//        {
-//          return lhso->IsEqual(lhso, rhso);
-//        }
-//      }
-//      return false;
-//    }
-//    return (rhso == nullptr);
-//  }
   bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const
   {
     if (lhso)
@@ -1287,78 +1271,77 @@ private:
   template <typename Op>
   void ExecuteNumericOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
-      switch (type_id)
-      {
-      case TypeIds::Int8:
-      {
-        Op::Apply(this, lhsv.primitive.i8, rhsv.primitive.i8);
-        break;
-      }
-      case TypeIds::UInt8:
-      {
-        Op::Apply(this, lhsv.primitive.ui8, rhsv.primitive.ui8);
-        break;
-      }
-      case TypeIds::Int16:
-      {
-        Op::Apply(this, lhsv.primitive.i16, rhsv.primitive.i16);
-        break;
-      }
-      case TypeIds::UInt16:
-      {
-        Op::Apply(this, lhsv.primitive.ui16, rhsv.primitive.ui16);
-        break;
-      }
-      case TypeIds::Int32:
-      {
-        Op::Apply(this, lhsv.primitive.i32, rhsv.primitive.i32);
-        break;
-      }
-      case TypeIds::UInt32:
-      {
-        Op::Apply(this, lhsv.primitive.ui32, rhsv.primitive.ui32);
-        break;
-      }
-      case TypeIds::Int64:
-      {
-        Op::Apply(this, lhsv.primitive.i64, rhsv.primitive.i64);
-        break;
-      }
-      case TypeIds::UInt64:
-      {
-        Op::Apply(this, lhsv.primitive.ui64, rhsv.primitive.ui64);
-        break;
-      }
-      case TypeIds::Float32:
-      {
-        Op::Apply(this, lhsv.primitive.f32, rhsv.primitive.f32);
-        break;
-      }
-      case TypeIds::Float64:
-      {
-        Op::Apply(this, lhsv.primitive.f64, rhsv.primitive.f64);
-        break;
-      }
-      case TypeIds::Fixed32:
-      {
-        auto *              lhsv_fp32 = reinterpret_cast<fixed_point::fp32_t *>(&lhsv);
-        fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
-        Op::Apply(this, *lhsv_fp32, rhsv_fp32);
-        break;
-      }
-      case TypeIds::Fixed64:
-      {
-        auto *              lhsv_fp64 = reinterpret_cast<fixed_point::fp64_t *>(&lhsv);
-        fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
-        Op::Apply(this, *lhsv_fp64, rhsv_fp64);
-        break;
-      }
-      default:
-      {
-        break;
-      }
-      }  // switch
-//    }
+    switch (type_id)
+    {
+    case TypeIds::Int8:
+    {
+      Op::Apply(this, lhsv.primitive.i8, rhsv.primitive.i8);
+      break;
+    }
+    case TypeIds::UInt8:
+    {
+      Op::Apply(this, lhsv.primitive.ui8, rhsv.primitive.ui8);
+      break;
+    }
+    case TypeIds::Int16:
+    {
+      Op::Apply(this, lhsv.primitive.i16, rhsv.primitive.i16);
+      break;
+    }
+    case TypeIds::UInt16:
+    {
+      Op::Apply(this, lhsv.primitive.ui16, rhsv.primitive.ui16);
+      break;
+    }
+    case TypeIds::Int32:
+    {
+      Op::Apply(this, lhsv.primitive.i32, rhsv.primitive.i32);
+      break;
+    }
+    case TypeIds::UInt32:
+    {
+      Op::Apply(this, lhsv.primitive.ui32, rhsv.primitive.ui32);
+      break;
+    }
+    case TypeIds::Int64:
+    {
+      Op::Apply(this, lhsv.primitive.i64, rhsv.primitive.i64);
+      break;
+    }
+    case TypeIds::UInt64:
+    {
+      Op::Apply(this, lhsv.primitive.ui64, rhsv.primitive.ui64);
+      break;
+    }
+    case TypeIds::Float32:
+    {
+      Op::Apply(this, lhsv.primitive.f32, rhsv.primitive.f32);
+      break;
+    }
+    case TypeIds::Float64:
+    {
+      Op::Apply(this, lhsv.primitive.f64, rhsv.primitive.f64);
+      break;
+    }
+    case TypeIds::Fixed32:
+    {
+      auto *              lhsv_fp32 = reinterpret_cast<fixed_point::fp32_t *>(&lhsv);
+      fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
+      Op::Apply(this, *lhsv_fp32, rhsv_fp32);
+      break;
+    }
+    case TypeIds::Fixed64:
+    {
+      auto *              lhsv_fp64 = reinterpret_cast<fixed_point::fp64_t *>(&lhsv);
+      fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
+      Op::Apply(this, *lhsv_fp64, rhsv_fp64);
+      break;
+    }
+    default:
+    {
+      break;
+    }
+    }  // switch
   }
 
   template <typename Op>
@@ -1744,26 +1727,6 @@ private:
       return;
     }
     RuntimeError("null reference");
-  }
-
-
-  template <typename ArgsTuple, typename... Args>
-  bool EstimateCharge(ChargeEstimator<Args...> &&e, ArgsTuple const &args)
-  {
-    if (e)
-    {
-      // compute the estimate for this function invocation
-      auto const charge_estimate = meta::Apply(std::move(e), args);
-
-      IncreaseChargeTotal(charge_estimate);
-
-      if (GetChargeTotal() > GetChargeLimit())
-      {
-        RuntimeError("Charge limit exceeded");
-
-        return false;
-      }
-    }
   }
 
   //
