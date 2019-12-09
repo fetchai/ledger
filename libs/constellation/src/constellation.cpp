@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #define MEMU_IMPLEMENTATION
-#include "constellation/constellation.hpp"
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/event_manager.hpp"
 #include "bloom_filter/bloom_filter.hpp"
+#include "constellation/constellation.hpp"
 #include "constellation/health_check_http_module.hpp"
 #include "constellation/logging_http_module.hpp"
 #include "constellation/muddle_status_http_module.hpp"
@@ -274,16 +274,19 @@ BeaconServicePtr CreateBeaconService(constellation::Constellation::Config const 
   return beacon;
 }
 
-muddle::MuddlePtr CreateMessengerNetwork(Config const &cfg, CertificatePtr certificate,
-                                         NetworkManager const &nm)
+muddle::MuddlePtr CreateMessengerNetwork(Config const &cfg, CertificatePtr /*certificate*/,
+                                         NetworkManager const & /*nm*/)
 {
   muddle::MuddlePtr network;
 
   if (cfg.enable_agents)
   {
+    /*
+    TODO: Make work in order to enable
     network =
         muddle::CreateMuddle("AGEN", std::move(certificate), nm,
                              cfg.manifest.FindExternalAddress(ServiceIdentifier::Type::AGENTS));
+                             */
   }
 
   return network;
@@ -293,7 +296,7 @@ Constellation::MailboxPtr CreateMessengerMailbox(Config const &cfg, muddle::Mudd
 {
   Constellation::MailboxPtr ret{nullptr};
 
-  if (cfg.enable_agents)
+  if (cfg.enable_agents && network)
   {
     ret = std::make_unique<Constellation::Mailbox>(network);
   }
@@ -306,7 +309,7 @@ Constellation::MessengerAPIPtr CreateMessengerAPI(Config const &cfg, muddle::Mud
 {
   Constellation::MessengerAPIPtr ret{nullptr};
 
-  if (cfg.enable_agents)
+  if (cfg.enable_agents && network && mailbox)
   {
     ret = std::make_unique<Constellation::MessengerAPI>(network, *mailbox);
   }
@@ -631,7 +634,16 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
     // Adding agent ntwork if it is enabled
     if (agent_network_)
     {
-      agent_network_->Start({cfg_.messenger_port});
+
+      uint16_t const agents_bind_port =
+          LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::AGENTS);
+      uint16_t const agents_ext_port =
+          LookupRemotePort(cfg_.manifest, ServiceIdentifier::Type::AGENTS);
+
+      muddle::MuddleInterface::PortMapping const agents_port_mapping{
+          {agents_bind_port, agents_ext_port}};
+
+      agent_network_->Start({}, agents_port_mapping);
     }
 
     // reactor important to run the block/chain state machine
