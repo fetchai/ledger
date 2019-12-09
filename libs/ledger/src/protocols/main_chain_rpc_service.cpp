@@ -224,6 +224,8 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
     address = direct_peers[index];
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Querying: ", address.ToBase64());
+
   return address;
 }
 
@@ -419,7 +421,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             FETCH_LOG_WARN(
                 LOGGING_NAME,
                 "Received indication we are on a dead fork. Walking back. Peer heaviest: ",
-                response.block_number, " blocks: ", blocks.size());
+                response.block_number, " blocks: ", blocks.size(), " heaviest: ", response.heaviest_hash.ToBase64());
 
             if (block_resolving_)
             {
