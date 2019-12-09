@@ -149,7 +149,7 @@ TEST_F(MathTensorTests, tensor_at_invalid_index_count_too_few)
 {
   static char const *SRC = R"(
     function main()
-      var tensor_shape = Array<UInt64>(1);
+      var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;
       tensor_shape[1] = 2u64;
 
