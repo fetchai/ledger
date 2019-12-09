@@ -33,7 +33,7 @@ std::string GenerateLoggingName(NetworkId const &network_id)
   return "PeerTracker:" + network_id.ToString();
 }
 
-} // namespace
+}  // namespace
 
 PeerTracker::PeerTrackerPtr PeerTracker::New(PeerTracker::Duration const &interval,
                                              core::Reactor &reactor, MuddleRegister const &reg,
