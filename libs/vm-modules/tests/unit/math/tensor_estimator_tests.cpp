@@ -195,20 +195,25 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_sum_test)
 
 TEST_F(MathTensorEstimatorTests, tensor_estimator_transpose_test)
 {
-  for (SizeType n_dims = MinDims(); n_dims < MaxDims(); n_dims += DimsStep())
+  SizeType const n_dims = 2;
+  for (SizeType cur_dim_size = MinDimSize(); cur_dim_size < MaxDimSize(); cur_dim_size += DimStep())
   {
-    for (SizeType cur_dim_size = MinDimSize(); cur_dim_size < MaxDimSize();
-         cur_dim_size += DimStep())
-    {
-      std::vector<SizeType> const tensor_shape(n_dims, cur_dim_size);
+    std::vector<SizeType> const tensor_shape(n_dims, cur_dim_size);
 
-      MathTensor        tensor{tensor_shape};
-      VmTensor          vm_tensor(&toolkit.vm(), fetch::vm::TypeIds::Unknown, tensor);
-      VmTensorEstimator tensor_estimator(vm_tensor);
+    MathTensor        tensor{tensor_shape};
+    VmTensor          vm_tensor(&toolkit.vm(), fetch::vm::TypeIds::Unknown, tensor);
+    VmTensorEstimator tensor_estimator(vm_tensor);
 
-      ChargeAmount const expected_charge_amount = tensor.size();
-      EXPECT_EQ(tensor_estimator.Transpose(), expected_charge_amount);
-    }
+    SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_shape);
+    SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_shape);
+
+    ChargeAmount const expected_charge =
+        static_cast<ChargeAmount>(VmTensorEstimator::SUM_PADDED_SIZE_COEF() * padded_size +
+                                  VmTensorEstimator::SUM_SIZE_COEF() * size +
+                                  VmTensorEstimator::SUM_CONST_COEF()) *
+        fetch::vm::COMPUTE_CHARGE_COST;
+    ChargeAmount const estimated_charge = tensor_estimator.Transpose();
+    EXPECT_EQ(estimated_charge, expected_charge);
   }
 }
 
