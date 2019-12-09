@@ -550,7 +550,7 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
 
   if (state_machine_->previous_state() == State::SYNCHRONISED)
   {
-    timer_to_proceed_.Restart(std::chrono::seconds{PERIODIC_RESYNC_SECONDS});
+    timer_to_proceed_.Restart(std::chrono::seconds{uint64_t{PERIODIC_RESYNC_SECONDS}});
   }
 
   state_synchronised_->increment();
