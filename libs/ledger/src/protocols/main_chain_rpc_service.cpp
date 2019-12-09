@@ -349,6 +349,8 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
         rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
                                         MainChainProtocol::TIME_TRAVEL, block_resolving_->hash);
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Attempting to resolve: ", block_resolving_->block_number, " aka 0x", block_resolving_->hash.ToHex());
+
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
 
