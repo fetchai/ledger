@@ -20,6 +20,7 @@
 #include "chain/constants.hpp"
 #include "core/serializers/base_types.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/chain/main_chain.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -27,10 +28,9 @@ namespace ledger {
 /**
  * Packet format used to convey heaviest chain for node sync.
  */
-template <class B>
 struct TimeTravelogue
 {
-  using Block     = B;
+  using Block     = MainChain::BlockPtr;
   using BlockHash = Digest;
   using Blocks    = std::vector<Block>;
 
@@ -42,10 +42,10 @@ struct TimeTravelogue
 
 namespace serializers {
 
-template <class B, class D>
-struct MapSerializer<ledger::TimeTravelogue<B>, D>
+template <class D>
+struct MapSerializer<ledger::TimeTravelogue, D>
 {
-  using Type       = ledger::TimeTravelogue<B>;
+  using Type       = ledger::TimeTravelogue;
   using DriverType = D;
 
   static constexpr uint8_t BLOCKS        = 1;

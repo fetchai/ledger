@@ -21,6 +21,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/pointer.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block_db_record.hpp"
@@ -134,8 +135,28 @@ void MainChain::Reset()
 BlockStatus MainChain::AddBlock(Block const &blk)
 {
   // create a copy of the block
-  auto block = std::make_shared<Block>(blk);
+  return AddBlock(std::make_shared<Block>(blk));
+}
 
+/**
+ * Adds a block to the chain
+ *
+ * @param block The block that will be added to the chain.
+ * @return The status enumeration signalling the operation result
+ */
+BlockStatus MainChain::AddBlock(BlockPtr blk)
+{
+  return AddBlock(const_pointer_cast<Block>(std::move(blk)));
+}
+
+/**
+ * Adds a block to the chain
+ *
+ * @param block The block that will be added to the chain.
+ * @return The status enumeration signalling the operation result
+ */
+BlockStatus MainChain::AddBlock(IntBlockPtr block)
+{
   // At this point we assume that the weight has been correctly set by the miner
   block->total_weight = 1;
 

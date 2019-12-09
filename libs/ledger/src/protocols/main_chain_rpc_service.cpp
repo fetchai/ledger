@@ -34,6 +34,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <stdexcept>
 
 static const uint64_t MAX_SUB_CHAIN_SIZE = 1000;
@@ -271,44 +272,46 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
   for (auto it = begin; it != end; ++it)
   {
     // skip the genesis block
-    if (it->IsGenesis())
+    if ((*it)->IsGenesis())
     {
       continue;
     }
 
+    auto block = std::const_pointer_cast<Block>(*it);
+
     // recompute the digest
-    it->UpdateDigest();
+    block->UpdateDigest();
 
     // add the block
-    if (!ValidBlock(*it, "during fwd sync"))
+    if (!ValidBlock(*block, "during fwd sync"))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", block->hash.ToHex(),
                       " from: muddle://", ToBase64(address));
       ++invalid;
       continue;
     }
 
-    auto const status = chain_.AddBlock(*it);
+    auto const status = chain_.AddBlock(block);
 
     switch (status)
     {
     case BlockStatus::ADDED:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", it->hash.ToHex(), " from: muddle://",
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", block->hash.ToHex(), " from: muddle://",
                       ToBase64(address));
       ++added;
       break;
     case BlockStatus::LOOSE:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", it->hash.ToHex(), " from: muddle://",
-                      ToBase64(address));
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", block->hash.ToHex(),
+                      " from: muddle://", ToBase64(address));
       ++loose;
       break;
     case BlockStatus::DUPLICATE:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", it->hash.ToHex(),
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", block->hash.ToHex(),
                       " from: muddle://", ToBase64(address));
       ++duplicate;
       break;
     case BlockStatus::INVALID:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->hash.ToHex(),
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", block->hash.ToHex(),
                       " from: muddle://", ToBase64(address));
       ++invalid;
       break;
@@ -388,7 +391,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
           if (!blocks.empty())
           {
             HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
-            auto const &latest_hash = blocks.back().hash;
+            auto const &latest_hash = blocks.back()->hash;
             assert(!latest_hash.empty());  // should be set by HandleChainResponse()
 
             // TODO(unknown): this is to be improved later

@@ -862,6 +862,48 @@ public:
 };
 
 template <typename V, typename D>
+struct ArraySerializer<std::shared_ptr<const V>, D>
+{
+public:
+  using Type       = std::shared_ptr<const V>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &input)
+  {
+    if (input)
+    {
+      auto array = array_constructor(1);
+      array.Append(*input);
+    }
+    else
+    {
+      array_constructor(0);
+    }
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &output)
+  {
+    if (array.size() >= 2)
+    {
+      throw SerializableException(std::string("std::shared_ptr should have 0 or 1 elements"));
+    }
+
+    if (array.size() == 1)
+    {
+      std::remove_const_t<V> v;
+      array.GetNextValue(v);
+      output = std::make_shared<V>(std::move(v));
+    }
+    else
+    {
+      output = Type{};
+    }
+  }
+};
+
+template <typename V, typename D>
 struct ArraySerializer<std::unique_ptr<V>, D>
 {
 public:

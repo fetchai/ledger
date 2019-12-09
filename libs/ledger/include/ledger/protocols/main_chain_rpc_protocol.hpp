@@ -29,7 +29,7 @@ namespace ledger {
 class MainChainProtocol : public service::Protocol
 {
 public:
-  using Travelogue = TimeTravelogue<Block>;
+  using Travelogue = TimeTravelogue;
   using Blocks     = Travelogue::Blocks;
 
   enum
@@ -50,7 +50,7 @@ public:
 private:
   Blocks GetHeaviestChain(uint64_t maxsize)
   {
-    return Copy(chain_.GetHeaviestChain(maxsize));
+    return chain_.GetHeaviestChain(maxsize);
   }
 
   Blocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit)
@@ -62,26 +62,12 @@ private:
     {
       return Blocks{};
     }
-    return Copy(blocks);
+    return blocks;
   }
 
   Travelogue TimeTravel(Digest start)
   {
-    auto ret_val = chain_.TimeTravel(std::move(start));
-    return {Copy(ret_val.blocks), ret_val.heaviest_hash};
-  }
-
-  static Blocks Copy(MainChain::Blocks const &blocks)
-  {
-    Blocks output{};
-    output.reserve(blocks.size());
-
-    for (auto const &block : blocks)
-    {
-      output.push_back(*block);
-    }
-
-    return output;
+    return chain_.TimeTravel(std::move(start));
   }
 
   MainChain &chain_;

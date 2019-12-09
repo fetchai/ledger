@@ -120,7 +120,6 @@ constexpr char const *ToString(BlockStatus status)
 
 struct BlockDbRecord;
 
-template <class B>
 struct TimeTravelogue;
 
 class MainChain
@@ -132,7 +131,7 @@ public:
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
   using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
-  using Travelogue           = TimeTravelogue<BlockPtr>;
+  using Travelogue           = TimeTravelogue;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
   static constexpr uint64_t    UPPER_BOUND  = 5000ull;
@@ -163,6 +162,7 @@ public:
 
   /// @name Block Management
   /// @{
+  BlockStatus AddBlock(BlockPtr blk);
   BlockStatus AddBlock(Block const &blk);
   BlockPtr    GetBlock(BlockHash const &hash) const;
   bool        RemoveBlock(BlockHash const &hash);
@@ -296,6 +296,8 @@ public:
   /// @}
 
   static IntBlockPtr CreateGenesisBlock();
+
+  BlockStatus AddBlock(IntBlockPtr block);
 
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);
