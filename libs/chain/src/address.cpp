@@ -60,23 +60,31 @@ bool Address::Parse(ConstByteArray const &input, Address &output)
   bool success{false};
 
   // decode the whole buffer
-  auto const decoded = FromBase58(input);
-
-  // ensure that the decode completed successfully (failure would result in 0 length byte array)
-  // and that the buffer is the correct size for an address
-  if (TOTAL_LENGTH == decoded.size())
+  try
   {
-    // split the decoded into address and checksum
-    auto const address  = decoded.SubArray(0, RAW_LENGTH);
-    auto const checksum = decoded.SubArray(RAW_LENGTH, CHECKSUM_LENGTH);
+    auto const decoded = FromBase58(input);
 
-    // compute the expected checksum and compare
-    if (CalculateChecksum(address) == checksum)
+    // ensure that the decode completed successfully (failure would result in 0 length byte array)
+    // and that the buffer is the correct size for an address
+    if (TOTAL_LENGTH == decoded.size())
     {
-      output.address_ = address;
-      output.display_ = input;
-      success         = true;
+      // split the decoded into address and checksum
+      auto const address  = decoded.SubArray(0, RAW_LENGTH);
+      auto const checksum = decoded.SubArray(RAW_LENGTH, CHECKSUM_LENGTH);
+
+      // compute the expected checksum and compare
+      if (CalculateChecksum(address) == checksum)
+      {
+        output.address_ = address;
+        output.display_ = input;
+        success         = true;
+      }
     }
+  }
+  catch (...)
+  {
+    FETCH_LOG_DEBUG("Address", "Failed to decode input (", input, ")");
+    success = false;
   }
 
   return success;
