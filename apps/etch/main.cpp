@@ -58,7 +58,7 @@ using fetch::vm_modules::VMFactory;
 
 using namespace fetch::vm;
 
-void ThrowExeception(int signal)
+void ThrowException(int signal)
 {
   switch (signal)
   {
@@ -295,8 +295,8 @@ bool HasVersionFlag(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-  std::signal(SIGSEGV, ThrowExeception);
-  std::signal(SIGFPE, ThrowExeception);
+  std::signal(SIGSEGV, ThrowException);
+  std::signal(SIGFPE, ThrowException);
 
   // version checking
   if (HasVersionFlag(argc, argv))

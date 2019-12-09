@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/tcp/client_connection.hpp"
 #include "network/tcp/tcp_server.hpp"
+#include "network/tcp/client_connection.hpp"
 
 #include <chrono>
 #include <exception>
@@ -139,7 +139,7 @@ uint16_t TCPServer::GetListeningPort() const
   return port_;
 }
 
-void TCPServer::PushRequest(ConnectionHandleType client, MessageType const &msg)
+void TCPServer::PushRequest(ConnectionHandleType client, MessageBuffer const &msg)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Got request from ", client);
 
@@ -147,12 +147,12 @@ void TCPServer::PushRequest(ConnectionHandleType client, MessageType const &msg)
   requests_.push_back({client, msg});
 }
 
-void TCPServer::Broadcast(MessageType const &msg)
+void TCPServer::Broadcast(MessageBuffer const &msg)
 {
   manager_->Broadcast(msg);
 }
 
-bool TCPServer::Send(ConnectionHandleType const &client, MessageType const &msg)
+bool TCPServer::Send(ConnectionHandleType const &client, MessageBuffer const &msg)
 {
   return manager_->Send(client, msg);
 }

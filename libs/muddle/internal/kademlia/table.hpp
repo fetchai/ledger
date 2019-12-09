@@ -77,281 +77,48 @@ public:
   Peers          FindPeer(Address const &address, uint64_t log_id, bool scan_left = true,
                           bool scan_right = true);
   Peers          FindPeerByHamming(Address const &address);
-  Peers FindPeerByHamming(Address const &address, uint64_t hamming_id, bool scan_left = true,
-                          bool scan_right = true);
+  Peers       FindPeerByHamming(Address const &address, uint64_t hamming_id, bool scan_left = true,
+                                bool scan_right = true);
+  PeerInfoPtr GetPeerDetails(Address const &address);
+  bool        HasUri(Uri const &uri) const;
+  bool        IsConnectedToUri(Uri const &uri) const;
+  Address     GetAddressFromUri(Uri const &uri) const;
+  std::size_t size() const;
+  Uri         GetUri(Address const &address);
+  std::size_t active_buckets() const;
+  uint64_t    first_non_empty_bucket() const;
+  /// @}
+
+  /// Reporting
+  /// @{
+  void ReportSuccessfulConnectAttempt(Uri const &uri);
+  void ReportFailedConnectAttempt(Uri const &uri);
+  void ReportLeaving(Uri const &uri);
   void ReportLiveliness(Address const &address, Address const &reporter, PeerInfo const &info = {});
   void ReportExistence(PeerInfo const &info, Address const &reporter);
   void ReportFailure(Address const &address, Address const &reporter);
-  PeerInfoPtr GetPeerDetails(Address const &address);
-  bool        HasUri(Uri const &uri) const
-  {
-    auto it = known_uris_.find(uri);
-    return (it != known_uris_.end()) && (!it->second->address.empty());
-  }
-
-  Address GetAddressFromUri(Uri const &uri) const
-  {
-    auto it = known_uris_.find(uri);
-    if (it == known_uris_.end())
-    {
-      return {};
-    }
-    return it->second->address;
-  }
   /// @}
 
-  /// For connection maintenance
+  /// Storage of peer table.
   /// @{
-  Peers ProposePermanentConnections() const;
+  void Dump();
+  void Load();
+  void SetCacheFile(std::string const &filename, bool load = true);
   /// @}
-
-  std::size_t size() const
-  {
-    FETCH_LOCK(mutex_);
-    return know_peers_.size();
-  }
-
-  Uri GetUri(Address const &address)
-  {
-    auto it = know_peers_.find(address);
-    if (it == know_peers_.end())
-    {
-      return {};
-    }
-    return it->second->uri;
-  }
-
-  std::size_t active_buckets() const
-  {
-    std::size_t ret{0};
-    for (auto &b : by_logarithm_)
-    {
-      ret += static_cast<std::size_t>(!b.peers.empty());
-    }
-    return ret;
-  }
-
-  uint64_t first_non_empty_bucket() const
-  {
-    return first_non_empty_bucket_;
-  }
-
-  void SetCacheFile(std::string const &filename)
-  {
-    filename_ = filename;
-    Load();
-  }
-
-  void Load()
-  {
-    std::fstream stream(filename_, std::ios::in | std::ios::binary);
-    if (!stream)
-    {
-      return;
-    }
-
-    // Loading buffer
-    byte_array::ConstByteArray buffer{stream};
-
-    // Deserializing
-    try
-    {
-      serializers::LargeObjectSerializeHelper serializer(buffer);
-      serializer >> *this;
-    }
-    catch (std::exception const &e)
-    {
-      FETCH_LOG_ERROR("KademliaTable", "Failed loading the peer table.");
-    }
-  }
-
-  void Dump()
-  {
-    if (filename_.empty())
-    {
-      return;
-    }
-
-    std::fstream stream(filename_, std::ios::out | std::ios::binary | std::ios::trunc);
-
-    // Dumping table to file.
-    if (stream)
-    {
-      serializers::LargeObjectSerializeHelper serializer{};
-
-      FETCH_LOG_DEBUG("KademliaTable", "Dumping table.");
-      serializer << *this;
-
-      auto buffer = serializer.data();
-      stream << buffer;
-
-      stream.close();
-    }
-  }
-
 protected:
   friend class PeerTracker;
 
   /// Methods to manage desired peers
   /// @{
-  void ClearDesired()
-  {
-    connection_expiry_.clear();
-    desired_uri_expiry_.clear();
-    desired_peers_.clear();
-    desired_uris_.clear();
-  }
-
-  void TrimDesiredPeers()
-  {
-    FETCH_LOCK(desired_mutex_);
-    // Trimming for expired connections
-    auto                                   now = Clock::now();
-    std::unordered_map<Address, Timepoint> new_expiry;
-    for (auto const &item : connection_expiry_)
-    {
-
-      // Keeping those which are still not expired
-      if (item.second > now)
-      {
-        new_expiry.emplace(item);
-      }
-      else if (item.second < now)
-      {
-        // Deleting peers which has expired
-        auto it = desired_peers_.find(item.first);
-        if (it != desired_peers_.end())
-        {
-          desired_peers_.erase(it);
-        }
-      }
-    }
-    std::swap(connection_expiry_, new_expiry);
-
-    // Trimming URIs
-    std::unordered_map<Uri, Timepoint> new_uri_expiry;
-    for (auto const &item : desired_uri_expiry_)
-    {
-      // Keeping those which are still not expired
-      if (item.second > now)
-      {
-        new_uri_expiry.emplace(item);
-      }
-      else if (item.second < now)
-      {
-        // Deleting peers which has expired
-        auto it = desired_uris_.find(item.first);
-        if (it != desired_uris_.end())
-        {
-          desired_uris_.erase(it);
-        }
-      }
-    }
-    std::swap(desired_uri_expiry_, new_uri_expiry);
-  }
-
-  void ConvertDesiredUrisToAddresses()
-  {
-    FETCH_LOCK(desired_mutex_);
-    std::unordered_set<Uri> new_uris;
-    for (auto const &uri : desired_uris_)
-    {
-      if (HasUri(uri))
-      {
-        auto address = GetAddressFromUri(uri);
-
-        // Moving expiry time accross based on address
-        auto expit = desired_uri_expiry_.find(uri);
-        if (expit != desired_uri_expiry_.end())
-        {
-          connection_expiry_[address] = expit->second;
-          desired_uri_expiry_.erase(expit);
-        }
-
-        // Switching to address based desired peer
-        if (address != own_address_)
-        {
-          desired_peers_.insert(std::move(address));
-        }
-      }
-      else
-      {
-        new_uris.insert(uri);
-      }
-    }
-    std::swap(new_uris, desired_uris_);
-  }
-
-  std::unordered_set<Uri> desired_uris() const
-  {
-    FETCH_LOCK(desired_mutex_);
-    return desired_uris_;
-  }
-
-  AddressSet desired_peers() const
-  {
-    FETCH_LOCK(desired_mutex_);
-    return desired_peers_;
-  }
-
-  void AddDesiredPeer(Address const &address, Duration const &expiry)
-  {
-    FETCH_LOCK(desired_mutex_);
-
-    auto it = connection_expiry_.find(address);
-    if (it == connection_expiry_.end())
-    {
-      connection_expiry_.emplace(address, Clock::now() + expiry);
-    }
-    else
-    {
-      it->second = std::max(Clock::now() + expiry, it->second);
-    }
-
-    desired_peers_.insert(address);
-  }
-
-  void AddDesiredPeer(Address const &address, network::Peer const &hint, Duration const &expiry)
-  {
-    FETCH_LOCK(desired_mutex_);
-
-    auto it = connection_expiry_.find(address);
-    if (it == connection_expiry_.end())
-    {
-      connection_expiry_.emplace(address, Clock::now() + expiry);
-    }
-    else
-    {
-      it->second = std::max(Clock::now() + expiry, it->second);
-    }
-
-    if (!address.empty())
-    {
-      desired_peers_.insert(address);
-    }
-
-    PeerInfo info;
-    info.address = address;
-    info.uri.Parse(hint.ToUri());
-    ReportExistence(info, own_address_);
-
-    desired_uris_.insert(info.uri);
-    desired_uri_expiry_.emplace(info.uri, Clock::now() + expiry);
-  }
-
-  void AddDesiredPeer(Uri const &uri, Duration const &expiry)
-  {
-    FETCH_LOCK(desired_mutex_);
-    desired_uris_.insert(uri);
-    desired_uri_expiry_.emplace(uri, Clock::now() + expiry);
-  }
-
-  void RemoveDesiredPeer(Address const &address)
-  {
-    FETCH_LOCK(desired_mutex_);
-    desired_peers_.erase(address);
-  }
-
+  void                    ClearDesired();
+  void                    TrimDesiredPeers();
+  void                    ConvertDesiredUrisToAddresses();
+  std::unordered_set<Uri> desired_uris() const;
+  AddressSet              desired_peers() const;
+  void                    AddDesiredPeer(Address const &address, Duration const &expiry);
+  void AddDesiredPeer(Address const &address, network::Peer const &hint, Duration const &expiry);
+  void AddDesiredPeer(Uri const &uri, Duration const &expiry);
+  void RemoveDesiredPeer(Address const &address);
   /// @}
 
 private:
@@ -365,7 +132,7 @@ private:
   KademliaAddress    own_kad_address_;
   Buckets            by_logarithm_;
   Buckets            by_hamming_;
-  PeerMap            know_peers_;
+  PeerMap            known_peers_;
   UriToPeerMap       known_uris_;
 
   uint64_t first_non_empty_bucket_{KADEMLIA_MAX_ID_BITS};
@@ -401,24 +168,32 @@ public:
   using Type       = muddle::KademliaTable;
   using DriverType = D;
 
-  static uint8_t const BY_LOGARITHM      = 1;
-  static uint8_t const BY_HAMMING        = 2;
-  static uint8_t const KNOWN_PEERS       = 3;
-  static uint8_t const KNOWN_URIS        = 4;
-  static uint8_t const CONNECTION_EXPIRY = 5;
-  static uint8_t const DESIRED_EXPIRY    = 6;
-  static uint8_t const DESIRED_PEERS     = 7;
-  static uint8_t const DESIRED_URIS      = 8;
+  static uint8_t const KNOWN_PEERS       = 1;
+  static uint8_t const CONNECTION_EXPIRY = 2;
+  static uint8_t const DESIRED_EXPIRY    = 3;
+  static uint8_t const DESIRED_PEERS     = 4;
+  static uint8_t const DESIRED_URIS      = 5;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &item)
   {
-    auto map = map_constructor(8);
+    auto map = map_constructor(5);
 
-    map.Append(BY_LOGARITHM, item.by_logarithm_);
-    map.Append(BY_HAMMING, item.by_hamming_);
-    map.Append(KNOWN_PEERS, item.know_peers_);
-    map.Append(KNOWN_URIS, item.known_uris_);
+    // Convering the known peers into a vector and only store
+    // those that has a valid URI.
+    std::vector<muddle::PeerInfo> peers;
+    for (auto &p : item.known_peers_)
+    {
+      if (p.second)
+      {
+        if (p.second->uri.IsValid())
+        {
+          peers.push_back(*p.second);
+        }
+      }
+    }
+
+    map.Append(KNOWN_PEERS, peers);
     map.Append(CONNECTION_EXPIRY, item.connection_expiry_);
     map.Append(DESIRED_EXPIRY, item.desired_uri_expiry_);
     map.Append(DESIRED_PEERS, item.desired_peers_);
@@ -428,10 +203,18 @@ public:
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &item)
   {
-    map.ExpectKeyGetValue(BY_LOGARITHM, item.by_logarithm_);
-    map.ExpectKeyGetValue(BY_HAMMING, item.by_hamming_);
-    map.ExpectKeyGetValue(KNOWN_PEERS, item.know_peers_);
-    map.ExpectKeyGetValue(KNOWN_URIS, item.known_uris_);
+    std::vector<muddle::PeerInfo> peers;
+    // We reconstruct the table from the peer list.
+    // This invalidates all information about the liveness
+    // of the peer which would be needed any way on a fresh restart
+    // This is also needed to ensure that pointers are constructed
+    // correctly
+    map.ExpectKeyGetValue(KNOWN_PEERS, peers);
+    for (auto &p : peers)
+    {
+      item.ReportExistence(p, p.last_reporter);
+    }
+
     map.ExpectKeyGetValue(CONNECTION_EXPIRY, item.connection_expiry_);
     map.ExpectKeyGetValue(DESIRED_EXPIRY, item.desired_uri_expiry_);
     map.ExpectKeyGetValue(DESIRED_PEERS, item.desired_peers_);

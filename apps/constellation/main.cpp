@@ -53,6 +53,7 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <stdlib.h>
 #include <string>
 #include <thread>
 #include <unordered_set>
@@ -122,8 +123,25 @@ void InterruptHandler(int /*signal*/)
  * The makes sure that segmentation faults become catchable.
  * This serves as a means to make the VM resiliant to malformed modules.
  */
-void ThrowExeception(int signal)
+namespace {
+std::atomic<bool> shutdown_on_critical_failure{false};
+}
+
+void ThrowException(int signal)
 {
+  FETCH_LOG_ERROR(LOGGING_NAME, "Encountered segmentation fault or floating point exception.");
+  ERROR_BACKTRACE;
+
+  if (shutdown_on_critical_failure && (gConstellationInstance != nullptr))
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Shutting down and restarting.");
+
+    // Gracefully shutting down
+    gConstellationInstance.load()->SignalStop();
+  }
+
+  // Throwing an exception that can be caught by the
+  // system to allow it to run until shutdown
   switch (signal)
   {
   case SIGSEGV:
@@ -252,6 +270,9 @@ int main(int argc, char **argv)
       // attempt to build the configuration for constellation
       fetch::constellation::Constellation::Config cfg = BuildConstellationConfig(settings);
 
+      // setting policy for critical signals
+      shutdown_on_critical_failure = settings.shutdown_on_critical_failure.value();
+
       // create the bootrap monitor (if configued to do so)
       auto initial_peers = ToUriSet(settings.peers.value());
       auto bootstrap     = CreateBootstrap(settings, cfg, p2p_key, initial_peers);
@@ -273,8 +294,11 @@ int main(int argc, char **argv)
       std::signal(SIGTERM, InterruptHandler);
 
       // Making the system resillient to segmentation faults
-      std::signal(SIGSEGV, ThrowExeception);
-      std::signal(SIGFPE, ThrowExeception);
+      if (!settings.allow_crashing.value())
+      {
+        std::signal(SIGSEGV, ThrowException);
+        std::signal(SIGFPE, ThrowException);
+      }
 
       // run the application
       try

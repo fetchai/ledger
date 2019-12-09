@@ -35,7 +35,7 @@ public:
   using Address         = fetch::muddle::Address;
   using Endpoint        = fetch::muddle::MuddleEndpoint;
 
-  MessageCounter(fetch::muddle::MuddlePtr &muddle)
+  explicit MessageCounter(fetch::muddle::MuddlePtr &muddle)
     : message_endpoint{muddle->GetEndpoint()}
     , message_subscription{message_endpoint.Subscribe(SERVICE_ID, CHANNEL_ID)}
   {
@@ -87,4 +87,5 @@ TEST(RoutingTests, MessagingWhileReorging)
   EXPECT_EQ(msgcounter.counter, N - 1);
 
   network->Stop();
+  network->Shutdown();
 }
