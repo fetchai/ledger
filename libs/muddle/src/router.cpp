@@ -793,7 +793,6 @@ void Router::DispatchDirect(Handle handle, PacketPtr const &packet)
   dispatch_enqueued_total_->increment();
 
   dispatch_thread_pool_->Post([this, packet, handle]() {
-
     // dispatch to the direct message handler if needed
     if (direct_message_handler_)
     {

@@ -407,7 +407,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
           if (blocks.empty() || response.not_on_heaviest ||
               (response.block_number > (block_resolving_->block_number + 10)))
           {
-            if(block_resolving_)
+            if (block_resolving_)
             {
               block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
             }
@@ -542,7 +542,7 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
 
   if (state_machine_->previous_state() == State::SYNCHRONISED)
   {
-    timer_to_proceed_.Restart(std::chrono::seconds{PERIODIC_RESYNC_SECONDS});
+    timer_to_proceed_.Restart(std::chrono::seconds{uint64_t{PERIODIC_RESYNC_SECONDS}});
   }
 
   state_synchronised_->increment();
