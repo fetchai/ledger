@@ -83,6 +83,7 @@ bool Address::Parse(ConstByteArray const &input, Address &output)
   }
   catch (...)
   {
+    FETCH_LOG_DEBUG("Address", "Failed to decode input (", input, ")");
     success = false;
   }
 

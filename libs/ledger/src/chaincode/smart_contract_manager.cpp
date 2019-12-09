@@ -205,10 +205,10 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
  * @param contract_id The identifier for the smart contract being stored
  * @return The generated address
  */
-storage::ResourceAddress SmartContractManager::CreateAddressForContract(Digest const &digest)
+storage::ResourceAddress SmartContractManager::CreateAddressForContract(ConstByteArray const &contract_id)
 {
   // create the resource address in the form fetch.contract.state.<digest of contract>
-  return StateAdapter::CreateAddress(NAME, digest);
+  return StateAdapter::CreateAddress(NAME, contract_id);
 }
 
 }  // namespace ledger

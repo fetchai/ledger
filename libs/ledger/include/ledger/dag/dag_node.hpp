@@ -183,7 +183,7 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &node)
   {
-    auto map = map_constructor(10);
+    auto map = map_constructor(9);
     map.Append(TYPE, node.type);
     map.Append(PREVIOUS, node.previous);
     map.Append(CONTENTS, node.contents);
