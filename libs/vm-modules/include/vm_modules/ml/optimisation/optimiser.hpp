@@ -96,7 +96,7 @@ public:
               vm::Ptr<VMDataLoader> const &loader, std::vector<std::string> const &input_node_names,
               std::string const &label_node_name, std::string const &output_node_name);
 
-  static void Bind(vm::Module &module);
+  static void Bind(vm::Module &module, bool enable_experimental);
 
   static fetch::vm::Ptr<VMOptimiser> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode,
@@ -213,7 +213,7 @@ struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
     }
     default:
     {
-      throw std::runtime_error("unknown dataloader type");
+      throw std::runtime_error("unknown optimiser type, serialisation is not possible.");
     }
     }
   }
@@ -264,7 +264,7 @@ struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
     }
     default:
     {
-      throw std::runtime_error("optimiser mode not recognised");
+      throw std::runtime_error("optimiser mode not recognised, deserialisation is not possible.");
     }
     }
   }
