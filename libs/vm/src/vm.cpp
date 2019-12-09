@@ -29,7 +29,7 @@ namespace vm {
 
 // TODO - how to get estimator into operators:
 //
-// TODO - proposal 1:
+// TODO - proposal 1: Don't think this can work
 // 1. rework vm/common.hpp FunctionInfo to contain a Charge estimator instead of a charge_amount
 // 2. AddOpcodeInfo calls in vm can then either pass a charge estimator that gives charge = 1, or the relevant Estimator
 // N.B. this can't work because there is the same OpCode for Tensor.operator+ as for SomeOtherObject.operator+
@@ -37,8 +37,9 @@ namespace vm {
 // TODO - proposal 2:
 // 1. maybe we can bind a pseudo operator somehow (e.g. by overloading EnableOperator with something that
 // follows the CreateMemberFunction code path)
-//
-//
+// 2. this seems quite similar to the existing EnableIndexOperator
+// 3. Not exactly clear how this gets invoked correctly (i.e. via an operator, rather than VM searching for a function
+// with a name that looks like the operator)
 
 
 
