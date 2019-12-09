@@ -115,13 +115,16 @@ protected:
   void                    ConvertDesiredUrisToAddresses();
   std::unordered_set<Uri> desired_uris() const;
   AddressSet              desired_peers() const;
-  void                    AddDesiredPeer(Address const &address, Duration const &expiry);
   void AddDesiredPeer(Address const &address, network::Peer const &hint, Duration const &expiry);
+  void AddDesiredPeer(Address const &address, Duration const &expiry);
   void AddDesiredPeer(Uri const &uri, Duration const &expiry);
   void RemoveDesiredPeer(Address const &address);
   /// @}
 
 private:
+  void AddDesiredPeerInternal(Address const &address, Duration const &expiry);
+  void AddDesiredPeerInternal(Uri const &uri, Duration const &expiry);
+
   Peers FindPeerInternal(KademliaAddress const &kam_address, uint64_t log_id, bool scan_left = true,
                          bool scan_right = true);
   Peers FindPeerByHammingInternal(KademliaAddress const &kam_address, uint64_t hamming_id,

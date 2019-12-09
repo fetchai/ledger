@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "kademlia/table.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "crypto/sha1.hpp"
-#include "kademlia/table.hpp"
 #include "muddle/network_id.hpp"
 
 namespace fetch {
@@ -541,6 +541,7 @@ void KademliaTable::Dump()
 
 void KademliaTable::ClearDesired()
 {
+  FETCH_LOCK(desired_mutex_);
   connection_expiry_.clear();
   desired_uri_expiry_.clear();
   desired_peers_.clear();
@@ -641,23 +642,6 @@ KademliaTable::AddressSet KademliaTable::desired_peers() const
   return desired_peers_;
 }
 
-void KademliaTable::AddDesiredPeer(Address const &address, Duration const &expiry)
-{
-  FETCH_LOCK(desired_mutex_);
-
-  auto it = connection_expiry_.find(address);
-  if (it == connection_expiry_.end())
-  {
-    connection_expiry_.emplace(address, Clock::now() + expiry);
-  }
-  else
-  {
-    it->second = std::max(Clock::now() + expiry, it->second);
-  }
-
-  desired_peers_.insert(address);
-}
-
 void KademliaTable::AddDesiredPeer(Address const &address, network::Peer const &hint,
                                    Duration const &expiry)
 {
@@ -703,17 +687,43 @@ void KademliaTable::AddDesiredPeer(Address const &address, network::Peer const &
   it2 = known_peers_.find(address);
   if (!address.empty() && (it2 != known_peers_.end()))
   {
-    AddDesiredPeer(address, expiry);
+    AddDesiredPeerInternal(address, expiry);
   }
   else
   {
-    AddDesiredPeer(info.uri, expiry);
+    AddDesiredPeerInternal(info.uri, expiry);
   }
+}
+
+void KademliaTable::AddDesiredPeer(Address const &address, Duration const &expiry)
+{
+  FETCH_LOCK(desired_mutex_);
+  AddDesiredPeerInternal(address, expiry);
 }
 
 void KademliaTable::AddDesiredPeer(Uri const &uri, Duration const &expiry)
 {
   FETCH_LOCK(desired_mutex_);
+  AddDesiredPeerInternal(uri, expiry);
+}
+
+void KademliaTable::AddDesiredPeerInternal(Address const &address, Duration const &expiry)
+{
+  auto it = connection_expiry_.find(address);
+  if (it == connection_expiry_.end())
+  {
+    connection_expiry_.emplace(address, Clock::now() + expiry);
+  }
+  else
+  {
+    it->second = std::max(Clock::now() + expiry, it->second);
+  }
+
+  desired_peers_.insert(address);
+}
+
+void KademliaTable::AddDesiredPeerInternal(Uri const &uri, Duration const &expiry)
+{
   // TODO: Will not work if spammed with URIs
   desired_uris_.insert(uri);
   desired_uri_expiry_.emplace(uri, Clock::now() + expiry);
