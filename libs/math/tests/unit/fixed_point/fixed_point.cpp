@@ -274,7 +274,7 @@ TEST(FixedPointTest, FromString_16_16)
   EXPECT_EQ(large2, fp32_t::FP_MIN);
 
   fp32_t e3("0E-12fp32");
-  std::cout << e3 << std::endl;
+  EXPECT_EQ(e3, fp32_t::_0);
 }
 
 TEST(FixedPointTest, FromString_32_32)
@@ -314,8 +314,8 @@ TEST(FixedPointTest, FromString_32_32)
   EXPECT_EQ(large1, fp64_t::FP_MAX);
   EXPECT_EQ(large2, fp64_t::FP_MIN);
 
-  fp64_t e3("0E-12fp32");
-  std::cout << e3 << std::endl;
+  fp64_t e3("0E-12fp64");
+  EXPECT_EQ(e3, fp64_t::_0);
 }
 
 TEST(FixedPointTest, FromString_64_64)
@@ -355,8 +355,8 @@ TEST(FixedPointTest, FromString_64_64)
   EXPECT_EQ(large1, fp128_t::FP_MAX);
   EXPECT_EQ(large2, fp128_t::FP_MIN);
 
-  fp128_t e3("0E-12fp32");
-  std::cout << e3 << std::endl;
+  fp128_t e3("0E-12fp128");
+  EXPECT_EQ(e3, fp128_t::_0);
 }
 
 TEST(FixedPointTest, Constants_16_16)
