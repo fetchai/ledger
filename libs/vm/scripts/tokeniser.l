@@ -150,17 +150,17 @@ IDENT           [_a-zA-Z][_a-zA-Z0-9]*
 }
 
 {FP_LITERAL}fp32 |
-{INTEGER_LITERAL}fp32 {
+{INT}fp32 {
     return Set(yylval, fetch::vm::Token::Kind::Fixed32, yytext, yyleng, yyextra);
 }
 
 {FP_LITERAL}fp64 |
-{INTEGER_LITERAL}fp64 {
+{INT}fp64 {
     return Set(yylval, fetch::vm::Token::Kind::Fixed64, yytext, yyleng, yyextra);
 }
 
 {FP_LITERAL}fp128 |
-{INTEGER_LITERAL}fp128 {
+{INT}fp128 {
     return Set(yylval, fetch::vm::Token::Kind::Fixed128, yytext, yyleng, yyextra);
 }
 
