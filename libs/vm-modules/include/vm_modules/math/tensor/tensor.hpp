@@ -18,7 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "vm/common.hpp"
 #include "vm/object.hpp"
+#include "vm_modules/math/tensor/tensor_estimator.hpp"
 #include "vm_modules/math/type.hpp"
 
 #include <cstdint>
@@ -55,7 +57,7 @@ public:
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &shape);
 
-  static void Bind(fetch::vm::Module &module);
+  static void Bind(fetch::vm::Module &module, bool enable_experimental);
 
   TensorType::SizeVector shape() const;
 
@@ -89,6 +91,16 @@ public:
 
   void Transpose();
 
+  /////////////////////////
+  /// MATRIX OPERATIONS ///
+  /////////////////////////
+
+  DataType Min();
+
+  DataType Max();
+
+  DataType Sum();
+
   //////////////////////////////
   /// PRINTING AND EXPORTING ///
   //////////////////////////////
@@ -105,8 +117,11 @@ public:
 
   bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
 
+  TensorEstimator &Estimator();
+
 private:
-  TensorType tensor_;
+  TensorType      tensor_;
+  TensorEstimator estimator_;
 };
 
 }  // namespace math

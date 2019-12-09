@@ -41,6 +41,7 @@ struct IRBuilder
   IRVariablePtr      BuildVariable(VariablePtr const &variable);
   IRFunctionPtr      BuildFunction(FunctionPtr const &function);
   IRTypePtrArray     BuildTypes(TypePtrArray const &types);
+  IRFunctionPtrArray BuildFunctions(FunctionPtrArray const &functions);
   IRVariablePtrArray BuildVariables(VariablePtrArray const &variables);
 
   IR *                                ir_;
