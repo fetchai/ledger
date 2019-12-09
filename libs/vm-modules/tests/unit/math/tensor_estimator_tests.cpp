@@ -193,4 +193,23 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_sum_test)
   }
 }
 
+TEST_F(MathTensorEstimatorTests, tensor_estimator_transpose_test)
+{
+  for (SizeType n_dims = MinDims(); n_dims < MaxDims(); n_dims += DimsStep())
+  {
+    for (SizeType cur_dim_size = MinDimSize(); cur_dim_size < MaxDimSize();
+         cur_dim_size += DimStep())
+    {
+      std::vector<SizeType> const tensor_shape(n_dims, cur_dim_size);
+
+      MathTensor        tensor{tensor_shape};
+      VmTensor          vm_tensor(&toolkit.vm(), fetch::vm::TypeIds::Unknown, tensor);
+      VmTensorEstimator tensor_estimator(vm_tensor);
+
+      ChargeAmount const expected_charge_amount = tensor.size();
+      EXPECT_EQ(tensor_estimator.Transpose(), expected_charge_amount);
+    }
+  }
+}
+
 }  // namespace
