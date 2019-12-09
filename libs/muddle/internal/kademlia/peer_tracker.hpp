@@ -75,6 +75,8 @@ public:
   using Handle                 = network::AbstractConnection::ConnectionHandleType;
   using AddressToHandles       = std::unordered_map<Address, std::unordered_set<Handle>>;
 
+  int counter{0};
+
   struct UnresolvedConnection
   {
     bool             outgoing{false};
