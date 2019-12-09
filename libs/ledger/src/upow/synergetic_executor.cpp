@@ -75,14 +75,14 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
     // in the case of the first iteration we need to create the contract and define the problem
     if (!contract)
     {
-      auto const &address = solution->address().display();
+      auto const &address = solution->address();
 
       // create the contract
       contract = CreateSmartContract<SynergeticContract>(address, storage_);
 
       if (!contract)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to create synergetic contract: ", address);
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to create synergetic contract: ", address.display());
         return;
       }
 

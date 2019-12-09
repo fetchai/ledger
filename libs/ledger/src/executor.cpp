@@ -47,32 +47,6 @@ using fetch::telemetry::Registry;
 
 namespace fetch {
 namespace ledger {
-namespace {
-
-bool GenerateContractName(chain::Transaction const &tx, ConstByteArray &identifier)
-{
-  // Step 1 - Translate the tx into a common name
-  using ContractMode = chain::Transaction::ContractMode;
-
-  switch (tx.contract_mode())
-  {
-  case ContractMode::NOT_PRESENT:
-    break;
-  case ContractMode::PRESENT:
-    identifier = tx.contract_address().display();
-    break;
-  case ContractMode::CHAIN_CODE:
-    identifier = tx.chain_code();
-    break;
-  case ContractMode::SYNERGETIC:
-    // synergetic contracts are not supported through normal pipeline
-    break;
-  }
-
-  return true;
-}
-
-}  // namespace
 
 /**
  * Construct a Executor given a storage unit
@@ -248,6 +222,7 @@ bool Executor::ValidationChecks(Result &result)
 
 bool Executor::ExecuteTransactionContract(Result &result)
 {
+  using ContractMode = chain::Transaction::ContractMode;
   telemetry::FunctionTimer const timer{*contract_execution_duration_};
 
   bool success{false};
@@ -255,13 +230,16 @@ bool Executor::ExecuteTransactionContract(Result &result)
   try
   {
     ConstByteArray contract_id{};
-
-    // generate the contract name (identifier)
-    if (!GenerateContractName(*current_tx_, contract_id))
+    switch (current_tx_->contract_mode())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate the contract name");
-      result.status = Status::CONTRACT_NAME_PARSE_FAILURE;
-      return false;
+    case ContractMode::PRESENT:
+      contract_id = current_tx_->contract_address().display();
+      break;
+    case ContractMode::CHAIN_CODE:
+      contract_id = current_tx_->chain_code();
+      break;
+    default:
+      break;
     }
 
     // when there is no contract signalled in the transaction the identifier will be empty. This is

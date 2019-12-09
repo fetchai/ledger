@@ -180,7 +180,7 @@ WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_addres
     return {};
   }
 
-  auto contract = CreateSmartContract<SynergeticContract>(contract_address.display(), storage_);
+  auto contract = CreateSmartContract<SynergeticContract>(contract_address, storage_);
 
   contract->SetChargeLimit(CHARGE_LIMIT / search_length_);
 

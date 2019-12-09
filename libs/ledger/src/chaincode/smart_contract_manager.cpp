@@ -122,7 +122,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
   chain::Address const contract_address{crypto::Hash<crypto::SHA256>(tx.from().address() + nonce)};
 
   SmartContractWrapper contract;
-  if (GetStateRecord(contract, contract_address.display()))
+  if (GetStateRecord(contract, contract_address))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Contract ", contract_address.display(), " already created @ ",
                    contract.creation_timestamp);
@@ -187,7 +187,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
     }
   }
   auto const status = SetStateRecord(SmartContractWrapper{contract_source, init_status.block_index},
-                                     contract_address.display());
+                                     contract_address);
   if (status != StateAdapter::Status::OK)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Failed to store smart contract to state DB!");
@@ -205,10 +205,11 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
  * @param contract_id The identifier for the smart contract being stored
  * @return The generated address
  */
-storage::ResourceAddress SmartContractManager::CreateAddressForContract(ConstByteArray const &contract_id)
+storage::ResourceAddress SmartContractManager::CreateAddressForContract(
+    chain::Address const &contract_id)
 {
   // create the resource address in the form fetch.contract.state.<digest of contract>
-  return StateAdapter::CreateAddress(NAME, contract_id);
+  return StateAdapter::CreateAddress(NAME, contract_id.display());
 }
 
 }  // namespace ledger

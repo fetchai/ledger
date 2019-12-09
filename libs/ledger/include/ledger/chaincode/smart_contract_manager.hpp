@@ -35,7 +35,7 @@ public:
 
   using ConstByteArray = byte_array::ConstByteArray;
 
-  static storage::ResourceAddress CreateAddressForContract(ConstByteArray const &digest);
+  static storage::ResourceAddress CreateAddressForContract(chain::Address const &digest);
 
   SmartContractManager();
   ~SmartContractManager() override = default;

@@ -31,8 +31,8 @@ namespace fetch {
 namespace ledger {
 
 template <typename ContractType>
-auto CreateSmartContract(byte_array::ConstByteArray const &contract_address,
-                         StorageInterface &                storage) -> std::unique_ptr<ContractType>
+auto CreateSmartContract(chain::Address const &contract_address, StorageInterface &storage)
+    -> std::unique_ptr<ContractType>
 {
   auto       addr     = SmartContractManager::CreateAddressForContract(contract_address);
   auto const resource = storage.Get(addr);

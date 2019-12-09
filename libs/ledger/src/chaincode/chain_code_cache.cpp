@@ -42,7 +42,7 @@ ChainCodeCache::ContractPtr ChainCodeCache::Lookup(ConstByteArray const &contrac
     chain::Address address;
     if (chain::Address::Parse(contract_id, address))
     {
-      contract = CreateSmartContract<SmartContract>(address.display(), storage);
+      contract = CreateSmartContract<SmartContract>(address, storage);
     }
     else
     {
