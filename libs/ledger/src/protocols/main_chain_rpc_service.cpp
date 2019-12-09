@@ -386,6 +386,8 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
         {
           auto &blocks = response.blocks;
 
+          FETCH_LOG_INFO(LOGGING_NAME, "Resolved: ", blocks.size());
+
           // we should receive at least one extra block in addition to what we already have
           if (!blocks.empty())
           {
