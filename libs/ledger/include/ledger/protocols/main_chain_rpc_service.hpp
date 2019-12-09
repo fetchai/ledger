@@ -185,16 +185,17 @@ private:
 
   /// @name Telemetry
   /// @{
-  telemetry::CounterPtr recv_block_count_;
-  telemetry::CounterPtr recv_block_valid_count_;
-  telemetry::CounterPtr recv_block_loose_count_;
-  telemetry::CounterPtr recv_block_duplicate_count_;
-  telemetry::CounterPtr recv_block_invalid_count_;
-  telemetry::CounterPtr state_request_heaviest_;
-  telemetry::CounterPtr state_wait_heaviest_;
-  telemetry::CounterPtr state_synchronising_;
-  telemetry::CounterPtr state_wait_response_;
-  telemetry::CounterPtr state_synchronised_;
+  telemetry::CounterPtr   recv_block_count_;
+  telemetry::CounterPtr   recv_block_valid_count_;
+  telemetry::CounterPtr   recv_block_loose_count_;
+  telemetry::CounterPtr   recv_block_duplicate_count_;
+  telemetry::CounterPtr   recv_block_invalid_count_;
+  telemetry::CounterPtr   state_request_heaviest_;
+  telemetry::CounterPtr   state_wait_heaviest_;
+  telemetry::CounterPtr   state_synchronising_;
+  telemetry::CounterPtr   state_wait_response_;
+  telemetry::CounterPtr   state_synchronised_;
+  telemetry::HistogramPtr new_block_duration_;
   /// @}
 };
 

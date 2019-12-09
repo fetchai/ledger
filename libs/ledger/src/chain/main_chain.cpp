@@ -654,7 +654,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  */
 MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
 {
-  MilliTimer myTimer("MainChain::TimeTravel");
+  MilliTimer myTimer("MainChain::TimeTravel", 750);
 
   // Moving forward in time, towards tip
   BlockHash next_hash;
@@ -1096,7 +1096,7 @@ void MainChain::WriteToFile()
   // skip if the block store is not persistent
   if (block_store_ && (block->block_number >= chain::FINALITY_PERIOD))
   {
-    MilliTimer myTimer("MainChain::WriteToFile", 500);
+    MilliTimer myTimer("MainChain::WriteToFile", 750);
 
     // Add confirmed blocks to file, minus finality
 
@@ -1388,7 +1388,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 {
   assert(!block->previous_hash.empty());
 
-  MilliTimer myTimer("MainChain::InsertBlock", 500);
+  MilliTimer myTimer("MainChain::InsertBlock", 750);
 
   FETCH_LOCK(lock_);
 

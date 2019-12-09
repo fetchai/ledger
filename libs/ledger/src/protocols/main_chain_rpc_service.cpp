@@ -31,7 +31,9 @@
 #include "muddle/packet.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
+#include "telemetry/utils/timer.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -115,6 +117,9 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   , state_synchronised_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_state_synchronised_total",
         "The number of times in the sychronised state")}
+  , new_block_duration_{telemetry::Registry::Instance().CreateHistogram(
+        {1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 1e1, 1e2, 1e3},
+        "ledger_mainchain_service_new_block_duration", "The duration of the new block handler")}
 {
   assert(consensus_);
 
@@ -140,9 +145,8 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   block_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
                                                 Packet::Payload const &payload,
                                                 Address                transmitter) {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
 
-    generics::MilliTimer myTimer("BeaconManager::OnNewBlock");
+    telemetry::FunctionTimer timer{*new_block_duration_};
 
     BlockSerializer serialiser(payload);
 
@@ -409,8 +413,6 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
         {
           auto &blocks = response.blocks;
 
-          FETCH_LOG_INFO(LOGGING_NAME, "Resolved: ", blocks.size());
-
           // we should receive at least one extra block in addition to what we already have
           if (!blocks.empty())
           {
@@ -427,10 +429,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             }
           }
 
-          FETCH_LOG_INFO(LOGGING_NAME, "Resolved: ", response.block_number);
-
           uint64_t const attempting_to_resolve = !block_resolving_ ? 0 : block_resolving_->block_number;
-
 
           if(!block_resolving_)
           {
