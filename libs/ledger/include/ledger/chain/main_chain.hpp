@@ -297,7 +297,7 @@ public:
 
   static IntBlockPtr CreateGenesisBlock();
 
-  BlockStatus AddBlock(IntBlockPtr block);
+  BlockStatus AddBlock(IntBlockPtr const &block);
 
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);
