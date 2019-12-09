@@ -32,7 +32,7 @@ void Disaster(VM * /*vm*/, int32_t mode)
     break;
   default:
   {
-    volatile int *x{nullptr};
+    volatile int *x{0};
     *x = 0;
   }
   }

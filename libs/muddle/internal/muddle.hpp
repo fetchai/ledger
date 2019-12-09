@@ -171,7 +171,6 @@ public:
 
   std::size_t GetNumDirectlyConnectedPeers() const override;
   bool        IsDirectlyConnected(Address const &address) const override;
-  bool        IsConnectingOrConnected(Address const &address) const override;
   /// @}
 
   /// @name Peer Control
@@ -226,7 +225,6 @@ private:
   Register             register_;         ///< The register for all the connection
   Router               router_;           ///< The packet router for the node
   PortMapping          port_mapping_;
-  std::atomic<bool>    stopping_{false};
 
   mutable Mutex servers_lock_;
   ServerList    servers_;  ///< The list of listening servers

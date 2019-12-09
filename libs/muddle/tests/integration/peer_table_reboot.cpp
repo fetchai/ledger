@@ -16,11 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "kademlia/table.hpp"
 #include "muddle.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
-
 #include "network_helpers.hpp"
 #include "router.hpp"
 
@@ -28,22 +26,11 @@
 
 TEST(RoutingTests, PeerTestReboot)
 {
-  auto        config = fetch::muddle::TrackerConfiguration::AllOn();
-  std::size_t N      = 10;
-  {
-    // Clearing tables
-    for (uint64_t idx = 0; idx < N; ++idx)
-    {
-      fetch::muddle::KademliaTable table(FakeAddress(10), fetch::muddle::NetworkId("TEST"));
-      table.SetCacheFile("peer_table" + std::to_string(idx) + ".cache", false);
-      table.Dump();
-    }
-  }
-
-  auto network = Network::New(N, config);
   {
     // Creating network
-    uint64_t idx = 0;
+    std::size_t N       = 10;
+    auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
+    uint64_t    idx     = 0;
     for (auto &n : network->nodes)
     {
       n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
@@ -52,76 +39,11 @@ TEST(RoutingTests, PeerTestReboot)
 
     LinearConnectivity(network, std::chrono::seconds(5));
 
-    // Waiting for the network to come up
-    uint64_t q = 0;
-    for (auto &n : network->nodes)
-    {
-      // Waiting up to 120 seconds for the connections to come around
-      while ((n->muddle->GetNumDirectlyConnectedPeers() < config.max_kademlia_connections) &&
-             (q < 300))
-      {
-        std::this_thread::sleep_for(std::chrono::milliseconds(400));
-        ++q;
-      }
-
-      EXPECT_GE(n->muddle->GetNumDirectlyConnectedPeers(), config.max_kademlia_connections);
-    }
-    std::cout << "Total setup: " << static_cast<double>(q * 400) / 1000. << " seconds" << std::endl;
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(1400));
-
+    std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
     network->Stop();
   }
 
-  std::cout << "==============================================================" << std::endl;
-  std::cout << "==========================REBOOTING===========================" << std::endl;
-  std::cout << "==============================================================" << std::endl;
-  network->Reboot(config);
-
+  // Restart
   {
-    // Restarting
-    uint64_t idx = 0;
-    for (auto &n : network->nodes)
-    {
-      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
-      ++idx;
-    }
-
-    // We expect the total number of connections (in and out) that any one node has to be
-    // be at least the maximum number of kademlia connections
-    std::unordered_set<fetch::muddle::Address> all_addresses1;
-    std::unordered_set<fetch::muddle::Address> all_addresses2;
-    uint64_t                                   q = 0;
-
-    std::cout << "==============================================================" << std::endl;
-    std::cout << "===========================TESTING============================" << std::endl;
-    std::cout << "==============================================================" << std::endl;
-
-    for (auto &n : network->nodes)
-    {
-
-      // Waiting up to 40 seconds for the connections to come around
-      while ((n->muddle->GetNumDirectlyConnectedPeers() < config.max_kademlia_connections) &&
-             (q < 100))
-      {
-        std::this_thread::sleep_for(std::chrono::milliseconds(400));
-        ++q;
-      }
-
-      for (auto const &adr : n->muddle->GetDirectlyConnectedPeers())
-      {
-        all_addresses1.emplace(adr);
-      }
-      all_addresses2.emplace(n->address);
-
-      EXPECT_GE(n->muddle->GetNumDirectlyConnectedPeers(), config.max_kademlia_connections);
-    }
-    std::cout << "Total delay: " << static_cast<double>(q * 400) / 1000. << " seconds" << std::endl;
-
-    EXPECT_EQ(all_addresses1.size(), N);
-    EXPECT_EQ(all_addresses1, all_addresses2);
-
-    network->Stop();
   }
-  network->Shutdown();
 }

@@ -22,7 +22,6 @@
 #include "muddle/packet.hpp"
 
 #include <chrono>
-#include <deque>
 #include <memory>
 #include <thread>
 
@@ -61,38 +60,25 @@ struct Node
   using Uri               = fetch::network::Uri;
   using Payload           = fetch::muddle::Packet::Payload;
   using Certificate       = fetch::crypto::Prover;
-  using CertificatePtr    = std::shared_ptr<Certificate>;
+  using CertificatePtr    = std::unique_ptr<Certificate>;
   using MuddlePtr         = fetch::muddle::MuddlePtr;
 
   using Milliseconds = std::chrono::milliseconds;
 
-  explicit Node(uint16_t p)
-    : network_manager{std::make_shared<NetworkManager>("NetMgr" + std::to_string(p), 1)}
+  Node(uint16_t port)
+    : network_manager{std::make_shared<NetworkManager>("NetMgr" + std::to_string(port), 1)}
 
   {
-    port = p;
     network_manager->Start();
 
     char const *external         = std::getenv("MUDDLE_EXTERNAL");
     char const *external_address = (external == nullptr) ? "127.0.0.1" : external;
-    certificate                  = CertificateGenerator::New();
-    muddle  = fetch::muddle::CreateMuddle("TEST", certificate, *network_manager, external_address);
+    muddle  = fetch::muddle::CreateMuddle("TEST", CertificateGenerator::New(), *network_manager,
+                                         external_address);
     address = muddle->GetAddress();
 
-    muddle->Start({p});
-    muddle->SetTrackerConfiguration(TrackerConfiguration::AllOn());
-  }
-
-  void Reboot(TrackerConfiguration configuration = {})
-  {
-    char const *external         = std::getenv("MUDDLE_EXTERNAL");
-    char const *external_address = (external == nullptr) ? "127.0.0.1" : external;
-
-    network_manager = std::make_shared<NetworkManager>("NetMgr" + std::to_string(port), 1);
-    network_manager->Start();
-    muddle = fetch::muddle::CreateMuddle("TEST", certificate, *network_manager, external_address);
     muddle->Start({port});
-    muddle->SetTrackerConfiguration(configuration);
+    muddle->SetTrackerConfiguration(TrackerConfiguration::AllOn());
   }
 
   Node(Node const &other) = delete;
@@ -105,10 +91,8 @@ struct Node
   }
 
   NetworkManagerPtr network_manager;
-  CertificatePtr    certificate;
   MuddlePtr         muddle;
   Address           address;
-  uint16_t          port;
 };
 
 struct Network
@@ -134,25 +118,13 @@ struct Network
     return ret;
   }
 
-  void Reboot(TrackerConfiguration configuration = {})
-  {
-    for (auto &node : nodes)
-    {
-      node->Reboot(configuration);
-    }
-  }
-
   void Stop()
   {
     for (auto &node : nodes)
     {
       node->Stop();
     }
-  }
 
-  void Shutdown()
-  {
-    Stop();
     nodes.clear();
   }
 
@@ -166,14 +138,7 @@ struct Network
     ++counter;
   }
 
-  void PopFrontNode()
-  {
-    auto &node = nodes.front();
-    node->muddle->Stop();
-    nodes.pop_front();
-  }
-
-  std::deque<std::unique_ptr<Node>> nodes;
+  std::vector<std::unique_ptr<Node>> nodes;
 
 private:
   explicit Network(uint64_t number_of_nodes, TrackerConfiguration config = {})
@@ -228,15 +193,4 @@ inline void AllToAllConnectivity(
           fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT + j)), expire);
     }
   }
-}
-
-inline fetch::muddle::Address FakeAddress(uint64_t i)
-{
-  fetch::muddle::Address ret;
-  fetch::crypto::SHA256  hasher;
-
-  hasher.Update(reinterpret_cast<uint8_t *>(&i), sizeof(uint64_t));
-  ret = hasher.Final();
-
-  return ret;
 }

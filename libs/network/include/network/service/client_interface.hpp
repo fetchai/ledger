@@ -53,8 +53,8 @@ protected:
   using CallIdPromiseMap = std::unordered_map<CallId, Promise>;
   using PromiseMap       = std::unordered_map<PromiseCounter, Promise>;
 
-  bool ProcessServerMessage(network::MessageBuffer const &msg);
-  void ProcessRPCResult(network::MessageBuffer const &msg, service::SerializerType &params);
+  bool ProcessServerMessage(network::MessageType const &msg);
+  void ProcessRPCResult(network::MessageType const &msg, service::SerializerType &params);
 
   // Pending promise issues
   void    AddPromise(Promise const &promise);

@@ -21,19 +21,10 @@
 #include "core/byte_array/const_byte_array.hpp"
 
 #include <deque>
-#include <functional>
 
 namespace fetch {
 namespace network {
-using MessageBuffer = byte_array::ByteArray;
-struct MessageType
-{
-  using Callback = std::function<void()>;
-
-  MessageBuffer buffer;
-  Callback      success{nullptr};
-  Callback      failure{nullptr};
-};
+using MessageType      = byte_array::ByteArray;
 using MessageQueueType = std::deque<MessageType>;
 }  // namespace network
 }  // namespace fetch

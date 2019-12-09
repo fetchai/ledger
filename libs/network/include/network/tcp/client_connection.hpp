@@ -114,8 +114,7 @@ public:
     ReadHeader(strong_strand);
   }
 
-  void Send(MessageBuffer const &msg, Callback const &success = nullptr,
-            Callback const &fail = nullptr) override
+  void Send(MessageType const &msg) override
   {
     if (shutting_down_)
     {
@@ -125,8 +124,7 @@ public:
 
     {
       FETCH_LOCK(queue_mutex_);
-      // write_queue_.emplace_back(msg);
-      write_queue_.push_back({msg, success, fail});
+      write_queue_.push_back(msg);
     }
 
     std::weak_ptr<AbstractConnection> self   = shared_from_this();
@@ -332,7 +330,7 @@ private:
       }
     }
 
-    MessageType message;
+    MessageType buffer;
     {
       FETCH_LOCK(queue_mutex_);
       if (write_queue_.empty())
@@ -341,20 +339,19 @@ private:
         can_write_ = true;
         return;
       }
-      message = write_queue_.front();
+      buffer = write_queue_.front();
       write_queue_.pop_front();
     }
 
     byte_array::ByteArray header;
-    SetHeader(header, message.buffer.size());
+    SetHeader(header, buffer.size());
 
-    std::vector<asio::const_buffer> buffers{
-        asio::buffer(header.pointer(), header.size()),
-        asio::buffer(message.buffer.pointer(), message.buffer.size())};
+    std::vector<asio::const_buffer> buffers{asio::buffer(header.pointer(), header.size()),
+                                            asio::buffer(buffer.pointer(), buffer.size())};
 
     auto socket = socket_.lock();
 
-    auto cb = [this, selfLock, socket, message, header](std::error_code ec, std::size_t len) {
+    auto cb = [this, selfLock, socket, buffer, header](std::error_code ec, std::size_t len) {
       FETCH_UNUSED(len);
 
       {
@@ -366,20 +363,10 @@ private:
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Error writing to socket, closing.");
         SignalLeave();
-
-        if (message.failure)
-        {
-          message.failure();
-        }
       }
       else
       {
         // TODO(issue 16): this strand should be unnecessary
-        if (message.success)
-        {
-          message.success();
-        }
-
         auto strandLock = strand_.lock();
         if (strandLock)
         {
@@ -403,10 +390,6 @@ private:
       }
 
       SignalLeave();
-      if (message.failure)
-      {
-        message.failure();
-      }
     }
   }
 };

@@ -34,8 +34,8 @@ using namespace fetch::byte_array;
 
 constexpr char const *LOGGING_NAME = "TcpClientServerStressTests";
 
-std::vector<MessageBuffer> globalMessagesFromServer_{};
-std::mutex                 messages_;
+std::vector<MessageType> globalMessagesFromServer_{};
+std::mutex               messages_;
 
 // Basic server
 class Server : public TCPServer
@@ -47,7 +47,7 @@ public:
 
   ~Server() override = default;
 
-  void PushRequest(ConnectionHandleType /*client*/, MessageBuffer const &msg) override
+  void PushRequest(ConnectionHandleType /*client*/, MessageType const &msg) override
   {
     FETCH_LOCK(messages_);
     globalMessagesFromServer_.push_back(msg);
@@ -281,7 +281,7 @@ void TestCase5(std::string host, uint16_t port)
     waitUntilConnected(host, port);
 
     // Create packets of varying sizes
-    std::vector<MessageBuffer> to_send;
+    std::vector<MessageType> to_send;
 
     {
       FETCH_LOCK(messages_);
@@ -375,8 +375,8 @@ void TestCase6(std::string host, uint16_t port)
     waitUntilConnected(host, port);
 
     // Create packets of varying sizes
-    std::vector<MessageBuffer> to_send;
-    std::vector<MessageBuffer> to_receive;
+    std::vector<MessageType> to_send;
+    std::vector<MessageType> to_receive;
 
     for (std::size_t i = 0; i < 5; ++i)
     {
@@ -397,7 +397,7 @@ void TestCase6(std::string host, uint16_t port)
 
     std::mutex messages_receive;
 
-    auto lam = [&](MessageBuffer const &msg) {
+    auto lam = [&](MessageType const &msg) {
       FETCH_LOCK(messages_receive);
       to_receive.push_back(msg);
     };
@@ -473,10 +473,10 @@ void TestCase7(std::string host, uint16_t port)
     waitUntilConnected(host, port);
 
     // Create packets of varying sizes
-    std::vector<MessageBuffer> to_send_from_server;
-    std::vector<MessageBuffer> to_send_from_client;
+    std::vector<MessageType> to_send_from_server;
+    std::vector<MessageType> to_send_from_client;
 
-    std::vector<MessageBuffer> received_client;
+    std::vector<MessageType> received_client;
 
     {
       FETCH_LOCK(messages_);
@@ -510,7 +510,7 @@ void TestCase7(std::string host, uint16_t port)
 
     std::mutex messages_receive;
 
-    auto lam = [&](MessageBuffer const &msg) {
+    auto lam = [&](MessageType const &msg) {
       FETCH_LOCK(messages_receive);
       received_client.push_back(msg);
     };

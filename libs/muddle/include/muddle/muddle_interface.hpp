@@ -1,6 +1,4 @@
 #pragma once
-
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -201,15 +199,6 @@ public:
    * @return true if directly connected, otherwise false
    */
   virtual bool IsDirectlyConnected(Address const &address) const = 0;
-
-  /**
-   * Determines if the muddle is trying to establish/have established
-   * a connection to an address.
-   *
-   * @param address The address to check
-   * @return true if directly connected or connecting, otherwise false
-   */
-  virtual bool IsConnectingOrConnected(Address const &address) const = 0;
 
   /// @}
 

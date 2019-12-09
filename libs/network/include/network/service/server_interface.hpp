@@ -61,9 +61,9 @@ public:
   }
 
 protected:
-  virtual bool DeliverResponse(ConstByteArray const &address, network::MessageBuffer const &) = 0;
+  virtual bool DeliverResponse(ConstByteArray const &address, network::MessageType const &) = 0;
 
-  bool PushProtocolRequest(ConstByteArray const &address, network::MessageBuffer const &msg,
+  bool PushProtocolRequest(ConstByteArray const &address, network::MessageType const &msg,
                            CallContext const &context = CallContext())
   {
     SerializerType            params(msg);

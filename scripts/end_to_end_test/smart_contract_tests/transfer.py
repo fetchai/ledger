@@ -55,10 +55,10 @@ def balance_within_range(actual, expected, fees=150):
     return actual >= expected - fees
 
 
-def setup(api, benefactor):
+def setup(api):
     entity1 = Entity()
 
-    api.sync(api.tokens.transfer(benefactor, entity1, 100000, 1000))
+    api.sync(api.tokens.wealth(entity1, 100000))
 
     contract1 = Contract(TRANSFER_CONTRACT_TEXT, entity1)
     contract2 = Contract(CONTRACT_TEXT, entity1)
@@ -118,9 +118,9 @@ def call_transfer_action_and_verify_balances(api, source_contract, action, signe
             amount, to_balance_before, to_balance_after)
 
 
-def run(options, benefactor):
+def run(options):
     api = LedgerApi(options['host'], options['port'])
-    entity1, contract1, contract2 = setup(api, benefactor)
+    entity1, contract1, contract2 = setup(api)
 
     transfer_and_verify_balances(api, entity1, contract1.address, 2345)
     call_transfer_action_and_verify_balances(
