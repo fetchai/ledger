@@ -116,6 +116,12 @@ public:
   settings::Setting<bool> allow_crashing;
   /// @}
 
+  /// @name Agent support functionality
+  /// @{
+  settings::Setting<bool>     enable_agents;
+  settings::Setting<uint16_t> messenger_port;
+  /// @}
+
   // Operators
   Settings &operator=(Settings const &) = delete;
   Settings &operator=(Settings &&) = delete;
