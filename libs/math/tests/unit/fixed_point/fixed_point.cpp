@@ -272,6 +272,9 @@ TEST(FixedPointTest, FromString_16_16)
   EXPECT_TRUE(fp32_t::IsStateOverflow());
   EXPECT_EQ(large1, fp32_t::FP_MAX);
   EXPECT_EQ(large2, fp32_t::FP_MIN);
+
+  fp32_t e3("0E-12fp32");
+  std::cout << e3 << std::endl;
 }
 
 TEST(FixedPointTest, FromString_32_32)
@@ -310,6 +313,9 @@ TEST(FixedPointTest, FromString_32_32)
   EXPECT_TRUE(fp64_t::IsStateOverflow());
   EXPECT_EQ(large1, fp64_t::FP_MAX);
   EXPECT_EQ(large2, fp64_t::FP_MIN);
+
+  fp64_t e3("0E-12fp32");
+  std::cout << e3 << std::endl;
 }
 
 TEST(FixedPointTest, FromString_64_64)
@@ -348,6 +354,9 @@ TEST(FixedPointTest, FromString_64_64)
   EXPECT_TRUE(fp128_t::IsStateOverflow());
   EXPECT_EQ(large1, fp128_t::FP_MAX);
   EXPECT_EQ(large2, fp128_t::FP_MIN);
+
+  fp128_t e3("0E-12fp32");
+  std::cout << e3 << std::endl;
 }
 
 TEST(FixedPointTest, Constants_16_16)
