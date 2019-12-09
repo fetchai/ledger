@@ -79,6 +79,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   register_->OnConnectionLeft([this](Handle handle) {
     peer_tracker_->RemoveConnectionHandle(handle);
     direct_message_service_.SignalConnectionLeft(handle);
+    FETCH_LOG_INFO("Connection left - register (", handle, ")");
   });
 
   // register the status update
@@ -88,6 +89,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
 
         if (state == PeerConnectionList::ConnectionState::CONNECTED)
         {
+          FETCH_LOG_INFO("Successfully connected. SetStatusCallback");
           direct_message_service_.InitiateConnection(handle);
         }
       });
@@ -688,6 +690,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
   // debug handlers
   strong_conn->OnConnectionSuccess([this, peer]() {
+    FETCH_LOG_INFO(logging_name_, "Connection to ", peer.ToString(), " successful");
     peer_tracker_->ReportSuccessfulConnectAttempt(peer);
     clients_.OnConnectionEstablished(peer);
   });

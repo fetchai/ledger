@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/time/to_seconds.hpp"
 #include "kademlia/peer_tracker.hpp"
+#include "core/time/to_seconds.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -732,6 +732,22 @@ void PeerTracker::Periodically()
   }
 
   FETCH_LOCK(mutex_);
+
+  ++counter;
+  if ((counter % 10) == 0)
+  {
+    std::stringstream ss("");
+    ss << std::endl;
+    ss << "Connectivity report" << std::endl;
+    ss << "===================" << std::endl ss << register_.GetOutgoingAddressSet().size() << " / "
+       << register_.GetIncomingAddressSet().size() << " / "
+       << register_.GetCurrentAddressSet().size() << std::endl;
+    ss << keep_connections_.size() << " / " << desired_peers_.size() << " / "
+       << kademlia_connections_.size() << " / " << longrange_connections_.size() << std::endl;
+
+    ss << std::endl;
+    std::cout << ss.str() << std::endl;
+  }
 
   // Clearing arrays used to track actions on connections
   keep_connections_.clear();

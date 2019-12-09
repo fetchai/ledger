@@ -86,11 +86,11 @@ struct TrackerConfiguration
   /// @{
   bool allow_desired_connections{true};
   bool register_connections{true};
-  bool pull_peers{true};
-  bool connect_to_nearest{true};
+  bool pull_peers{false};
+  bool connect_to_nearest{false};
   bool disconnect_duplicates{true};
-  bool trim_peer_list{true};
-  bool long_range_connectivity{true};
+  bool trim_peer_list{false};
+  bool long_range_connectivity{false};
   bool disconnect_from_self{true};
   bool allow_connection_expiry{true};
   /// @}
