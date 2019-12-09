@@ -954,52 +954,46 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F>::FixedPoint(std::string const &s)
   : data_{0}
 {
-  std::cout << "s       : " << s << std::endl;
   auto index  = s.find("fp");
   auto s_copy = std::string(s, 0, index);
-  std::cout << "s_copy  : " << s_copy << std::endl;
-  std::transform(s_copy.begin(), s_copy.end(), s_copy.begin(), [](char c){ return std::tolower(c); });
-  std::cout << "s_copy  : " << s_copy << std::endl;
-  
+  std::transform(s_copy.begin(), s_copy.end(), s_copy.begin(),
+                 [](char c) { return std::tolower(c); });
+
   Type         integer_part{0};
   UnsignedType fractional_part{0};
   Type         exponent_part{1};
-  
+
   // first find exponent part if it exists
-  auto exponent_pos  = s_copy.find('e');
+  auto exponent_pos = s_copy.find('e');
   if (exponent_pos != std::string::npos)
   {
     auto exponent_match = std::string(s_copy, exponent_pos + 1, s_copy.length());
-    std::cout << "exponent_match : " << exponent_match << std::endl;
-    exponent_part = static_cast<Type>(std::strtoll(exponent_match.c_str(), nullptr, 10));
-    std::cout << "exponent_part : " << exponent_part << std::endl;
+    exponent_part       = static_cast<Type>(std::strtoll(exponent_match.c_str(), nullptr, 10));
     s_copy.erase(exponent_pos, s_copy.length() - exponent_pos);
-    std::cout << "s_copy  : " << s_copy << std::endl;
   }
 
   std::string integer_match;
   std::string fractional_match;
-  auto decimal_pos  = s_copy.find('.');
+  auto        decimal_pos = s_copy.find('.');
   if (decimal_pos != std::string::npos)
   {
-    integer_match = std::string(s_copy, 0, decimal_pos);
+    integer_match    = std::string(s_copy, 0, decimal_pos);
     fractional_match = std::string(s_copy, decimal_pos + 1, s_copy.length());
-    std::cout << "integer_part  : " << integer_match << std::endl;
-    std::cout << "fractional_part: " << fractional_match << std::endl;
     // Parse the fractional part and convert to FixedPoint.
+    // Ignore more than the supported decimal digits
     if (fractional_match.length() > DECIMAL_DIGITS)
     {
       fractional_match.erase(DECIMAL_DIGITS, fractional_match.length() - DECIMAL_DIGITS);
-      std::cout << "fractional_part (trimmed): " << fractional_match << std::endl;
     }
-    fractional_part = static_cast<UnsignedType>(std::strtoul(fractional_match.c_str(), nullptr, 10));
-    std::cout << "fractional_part: " << fractional_part << std::endl;
+    // read into the integer type and divide by largest possible power of 10 to get
+    // the needed fractional part in binary
+    fractional_part =
+        static_cast<UnsignedType>(std::strtoul(fractional_match.c_str(), nullptr, 10));
     UnsignedType power10{1};
     while (power10 < fractional_part)
     {
       power10 *= 10;
     }
-    std::cout << "power10:       : " << power10 << std::endl;
     fractional_part = (fractional_part * ONE_MASK) / power10;
   }
   else
@@ -1020,30 +1014,28 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
       fp_state |= STATE_OVERFLOW;
       data_ = MAX;
     }
-    std::cout << "overflow: this = " << *this << std::endl;
     return;
   }
 
+  // Read the (signed) integer
   integer_part = static_cast<Type>(std::strtoll(integer_match.c_str(), nullptr, 10));
-  std::cout << "integer_part: " << integer_part << std::endl;
   if (integer_part < 0)
   {
+    // If it's negative, we need to subtract one
     --integer_part;
-    std::cout << "integer_part: " << integer_part << std::endl;
   }
 
+  // Construct the data value from integer and fractional parts
   data_ = (INTEGER_MASK & (Type(integer_part) << FRACTIONAL_BITS)) |
           Type(fractional_part & FRACTIONAL_MASK);
-  std::cout << "data_ = " << data_ << std::endl;
   if (exponent_part != 1)
   {
+    // Apply the exponent if it's there
     auto exponent = Pow(FixedPoint{10}, FixedPoint{exponent_part});
-    std::cout << *this << std::endl;
-    std::cout << "exponent : " << exponent << std::endl;
     *this *= exponent;
   }
-  std::cout << "this = " << *this << std::endl;
 
+  // Finally check for overflow/underflow
   if (CheckOverflow(static_cast<NextType>(data_)))
   {
     fp_state |= STATE_OVERFLOW;
