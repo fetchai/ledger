@@ -122,6 +122,8 @@ void MainChain::SaveBloom()
 
 void MainChain::Reset()
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Resetting the main chain.");
+
   FETCH_LOCK(lock_);
 
   tips_.clear();
