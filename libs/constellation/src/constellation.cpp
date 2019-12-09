@@ -17,11 +17,12 @@
 //------------------------------------------------------------------------------
 
 #define MEMU_IMPLEMENTATION
+#include "constellation/constellation.hpp"
+
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/event_manager.hpp"
 #include "bloom_filter/bloom_filter.hpp"
-#include "constellation/constellation.hpp"
 #include "constellation/health_check_http_module.hpp"
 #include "constellation/logging_http_module.hpp"
 #include "constellation/muddle_status_http_module.hpp"
@@ -336,25 +337,22 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
                            [this]() {
                              return std::make_shared<ledger::SynergeticExecutor>(*storage_);
                            })}
-  , main_chain_service_{std::make_shared<MainChainRpcService>(
-        muddle_->GetEndpoint(), chain_, trust_, cfg_.network_mode, consensus_)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_open_api_module_{std::make_shared<OpenAPIHttpModule>()}
+  , health_check_module_{std::make_shared<HealthCheckHttpModule>(chain_, block_coordinator_)}
   , http_{http_network_manager_}
   , http_modules_{http_open_api_module_,
+                  health_check_module_,
                   std::make_shared<p2p::P2PHttpInterface>(
                       cfg_.log2_num_lanes, chain_, block_packer_,
                       p2p::P2PHttpInterface::WeakStateMachines{
-                          main_chain_service_->GetWeakStateMachine(),
                           block_coordinator_.GetWeakStateMachine()}),
                   std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
                   std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
                   std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
                   std::make_shared<LoggingHttpModule>(),
                   std::make_shared<TelemetryHttpModule>(),
-                  std::make_shared<MuddleStatusModule>(),
-                  std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_,
-                                                          block_coordinator_)}
+                  std::make_shared<MuddleStatusModule>()}
   , uptime_{telemetry::Registry::Instance().CreateCounter(
         "ledger_uptime_ticks_total",
         "The number of intervals that ledger instance has been alive for")}
@@ -411,7 +409,6 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   }
 
   // attach the services to the reactor
-  reactor_.Attach(main_chain_service_->GetWeakRunnable());
   reactor_.Attach(shard_management_);
 
   // configure all the lane services
@@ -573,12 +570,22 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
     /// BLOCK EXECUTION & MINING
     execution_manager_->Start();
     tx_processor_.Start();
-    main_chain_service_->Start();
+
+    // create the main chain service (from this point it will be able to start accepting) external
+    // requests
+    main_chain_service_ = std::make_shared<MainChainRpcService>(
+        muddle_->GetEndpoint(), chain_, trust_, cfg_.network_mode, consensus_);
+
+    // the health check module needs the latest chain service
+    health_check_module_->UpdateChainService(*main_chain_service_);
 
     /// INPUT INTERFACES
 
     // Finally start the HTTP server
     http_.Start(http_port_);
+
+    // Start the main syncing state machine for main chain service
+    reactor_.Attach(main_chain_service_->GetWeakRunnable());
 
     // The block coordinator needs to access correctly started lanes to recover state in the case of
     // a crash.
@@ -652,7 +659,10 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
 
 void Constellation::OnBlock(ledger::Block const &block)
 {
-  main_chain_service_->BroadcastBlock(block);
+  if (main_chain_service_)
+  {
+    main_chain_service_->BroadcastBlock(block);
+  }
 }
 
 void Constellation::SignalStop()

@@ -93,8 +93,6 @@ public:
   MainChainRpcService(MainChainRpcService &&)      = delete;
   ~MainChainRpcService() override                  = default;
 
-  void Start();
-
   core::WeakRunnable GetWeakRunnable()
   {
     return state_machine_;
@@ -152,7 +150,7 @@ private:
   State OnWaitForHeaviestChain();
   State OnSynchronising();
   State OnWaitingForResponse();
-  State OnSynchronised(State current, State previous);
+  State OnSynchronised();
   /// @}
 
   /// @name System Components

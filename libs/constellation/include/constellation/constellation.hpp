@@ -61,6 +61,8 @@ class BeaconSetupService;
 
 namespace constellation {
 
+class HealthCheckHttpModule;
+
 /**
  * Top level container for all components that are required to run a ledger instance
  */
@@ -156,6 +158,9 @@ private:
   using TxStatusCache          = ledger::TransactionStatusCache;
   using TxStatusCachePtr       = std::shared_ptr<TxStatusCache>;
 
+  using OpenAPIHttpModulePtr     = std::shared_ptr<OpenAPIHttpModule>;
+  using HealthCheckHttpModulePtr = std::shared_ptr<HealthCheckHttpModule>;
+
   /// @name Configuration
   /// @{
   Flag         active_;           ///< Flag to control running of main thread
@@ -220,10 +225,12 @@ private:
 
   /// @name HTTP Server
   /// @{
-  std::shared_ptr<OpenAPIHttpModule>
-              http_open_api_module_;  //< HTTP module that returns the API definition
-  HttpServer  http_;                  ///< The HTTP server
-  HttpModules http_modules_;          ///< The set of modules currently configured
+  //< HTTP module that returns the API definition
+  OpenAPIHttpModulePtr     http_open_api_module_;
+  HealthCheckHttpModulePtr health_check_module_;
+  HttpServer               http_;          ///< The HTTP server
+  HttpModules              http_modules_;  ///< The set of modules currently configured
+
   /// @}
 
   /// @name Telemetry

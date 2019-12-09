@@ -83,7 +83,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
   , rpc_client_("R:MChain", endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
-  , state_machine_{std::make_shared<StateMachine>("MainChain", State::SYNCHRONISED,
+  , state_machine_{std::make_shared<StateMachine>("MainChain", GetInitialState(mode),
                                                   [](State state) { return ToString(state); })}
   , recv_block_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_recv_block_total",
@@ -134,6 +134,27 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
     FETCH_UNUSED(current);
     FETCH_UNUSED(previous);
     FETCH_LOG_DEBUG(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+  });
+
+  // set the main chain rpc sync to accept gossip blocks
+  block_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
+                                                Packet::Payload const &payload,
+                                                Address                transmitter) {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
+
+    generics::MilliTimer myTimer("BeaconManager::OnNewBlock");
+
+    BlockSerializer serialiser(payload);
+
+    // deserialize the block
+    Block block;
+    serialiser >> block;
+
+    // recalculate the block hash
+    block.UpdateDigest();
+
+    // dispatch the event
+    OnNewBlock(from, block, transmitter);
   });
 }
 
@@ -545,19 +566,16 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
   return next_state;
 }
 
-MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, State previous)
+MainChainRpcService::State MainChainRpcService::OnSynchronised()
 {
+  State next_state{State::SYNCHRONISED};
+  state_synchronised_->increment();
 
+  // reset the timer if we have just transitioned from another state
   if (state_machine_->previous_state() != State::SYNCHRONISED)
   {
     timer_to_proceed_.Restart(std::chrono::seconds{uint64_t{PERIODIC_RESYNC_SECONDS}});
   }
-
-  state_synchronised_->increment();
-
-  State next_state{State::SYNCHRONISED};
-
-  FETCH_UNUSED(current);
 
   MainChain::BlockPtr head_of_chain = chain_.GetHeaviestBlock();
 
@@ -585,30 +603,6 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
   }
 
   return next_state;
-}
-
-void MainChainRpcService::Start()
-{
-  // set the main chain rpc sync to accept gossip blocks
-  block_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
-                                                Packet::Payload const &payload,
-                                                Address                transmitter) {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
-
-    generics::MilliTimer myTimer("BeaconManager::OnNewBlock");
-
-    BlockSerializer serialiser(payload);
-
-    // deserialize the block
-    Block block;
-    serialiser >> block;
-
-    // recalculate the block hash
-    block.UpdateDigest();
-
-    // dispatch the event
-    OnNewBlock(from, block, transmitter);
-  });
 }
 
 }  // namespace ledger
