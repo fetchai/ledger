@@ -142,7 +142,7 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
                        block->hash.ToHex(), " Merkle: 0x", block->merkle_hash.ToHex(),
                        " number: ", block->block_number);
 
-        if(block->hash == FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=") || block->merkle_hash == FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="))
+        if(block->hash == byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=") || block->merkle_hash == byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="))
         {
           FETCH_LOG_WARN(LOGGING_NAME, "Main chain needs a reset since it is in a bad state.");
         }
