@@ -41,30 +41,6 @@ public:
   VmTestToolkit     toolkit{&stdout};
 };
 
-TEST_F(MathTensorTests, tensor_squeeze_test)
-{
-  static char const *tensor_serialiase_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(3);
-      tensor_shape[0] = 4u64;
-      tensor_shape[1] = 1u64;
-      tensor_shape[2] = 4u64;
-      var x = Tensor(tensor_shape);
-      var squeezed_x = x.squeeze();
-      return squeezed_x;
-    endfunction
-  )";
-
-  Variant res;
-  ASSERT_TRUE(toolkit.Compile(tensor_serialiase_src));
-  ASSERT_TRUE(toolkit.Run(&res));
-
-  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-  fetch::math::Tensor<DataType> gt({4, 4});
-
-  EXPECT_TRUE(tensor->GetTensor().shape() == gt.shape());
-}
-
 /// GETTER AND SETTER TESTS ///
 
 TEST_F(MathTensorTests, tensor_1_dim_fixed64_fill)
@@ -135,21 +111,51 @@ TEST_F(MathTensorTests, tensor_4_dim_fixed64_fill)
   ASSERT_TRUE(toolkit.Run());
 }
 
-// Disabled until ML-329 resolved
-TEST_F(MathTensorTests, DISABLED_tensor_at_on_invalid_index)
+TEST_F(MathTensorTests, tensor_at_on_invalid_index)
 {
   static char const *SRC = R"(
-    function main() : Tensor
+    function main()
       var tensor_shape = Array<UInt64>(1);
       tensor_shape[0] = 2u64;
 
       var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(2.0fp64);
 
-      printLn(toString(x.at(999u64)));
+      printLn(toString(x.at(3u64)));
+    endfunction
+  )";
 
-     return y;
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_at_invalid_index_count_too_many)
+{
+  static char const *SRC = R"(
+    function main()
+      var tensor_shape = Array<UInt64>(1);
+      tensor_shape[0] = 2u64;
+
+      var x = Tensor(tensor_shape);
+
+      printLn(toString(x.at(0u64, 0u64)));
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_at_invalid_index_count_too_few)
+{
+  static char const *SRC = R"(
+    function main()
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 2u64;
+
+      var x = Tensor(tensor_shape);
+
+      printLn(toString(x.at(0u64)));
     endfunction
   )";
 
@@ -160,17 +166,13 @@ TEST_F(MathTensorTests, DISABLED_tensor_at_on_invalid_index)
 TEST_F(MathTensorTests, tensor_set_on_invalid_index)
 {
   static char const *SRC = R"(
-    function main() : Tensor
+    function main()
       var tensor_shape = Array<UInt64>(1);
       tensor_shape[0] = 2u64;
 
       var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(2.0fp64);
 
-      y.setAt(999u64,x.at(0u64));
-
-     return y;
+      x.setAt(3u64, 1.0fp64);
     endfunction
   )";
 
@@ -476,6 +478,30 @@ TEST_F(MathTensorTests, tensor_sum_etch_test)
   DataType   gt{65.1};
 
   EXPECT_TRUE(fetch::math::Abs(gt - sum_val) < DataType::TOLERANCE);
+}
+
+TEST_F(MathTensorTests, tensor_squeeze_test)
+{
+  static char const *tensor_serialiase_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(3);
+      tensor_shape[0] = 4u64;
+      tensor_shape[1] = 1u64;
+      tensor_shape[2] = 4u64;
+      var x = Tensor(tensor_shape);
+      var squeezed_x = x.squeeze();
+      return squeezed_x;
+    endfunction
+  )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(tensor_serialiase_src));
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({4, 4});
+
+  EXPECT_TRUE(tensor->GetTensor().shape() == gt.shape());
 }
 
 TEST_F(MathTensorTests, tensor_invalid_squeeze_test)
