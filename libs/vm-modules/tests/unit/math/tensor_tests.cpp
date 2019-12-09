@@ -1038,9 +1038,26 @@ TEST_F(MathTensorTests, tensor_invalid_shape_transpose_etch_test)
   ASSERT_FALSE(toolkit.Run());
 }
 
-TEST_F(MathTensorTests, tensor_reshape_to_invalid_shape_test)
+TEST_F(MathTensorTests, tensor_reshape_to_invalid_shape_etch_test)
 {
-  // TODO: impl me!
+  static char const *SRC = R"(
+      function main()
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 2u64;
+        tensor_shape[1] = 2u64;
+
+        var x = Tensor(tensor_shape);
+
+        var new_shape = Array<UInt64>(2);
+        new_shape[0] = 0u64;
+        new_shape[1] = 2u64;
+
+        x.reshape(new_shape);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_FALSE(toolkit.Run());
 }
 
 TEST_F(MathTensorTests, tensor_reshape_to_compatible_shape_test)
