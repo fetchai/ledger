@@ -152,14 +152,9 @@ bool TCPClientImplementation::is_alive() const
   return !socket_.expired() && connected_;
 }
 
-void TCPClientImplementation::Send(MessageBuffer const &omsg, Callback const &success,
-                                   Callback const &fail)
+void TCPClientImplementation::Send(MessageType const &omsg)
 {
-  MessageType msg;
-  msg.buffer  = omsg.Copy();
-  msg.success = success;
-  msg.failure = fail;
-
+  MessageType msg = omsg.Copy();
   if (!connected_)
   {
     return;
@@ -361,7 +356,7 @@ void TCPClientImplementation::WriteNext(SharedSelfType const &selfLock)
     }
   }
 
-  MessageType message;
+  MessageType buffer;
   {
     FETCH_LOCK(queue_mutex_);
     if (write_queue_.empty())
@@ -370,20 +365,19 @@ void TCPClientImplementation::WriteNext(SharedSelfType const &selfLock)
       can_write_ = true;
       return;
     }
-    message = write_queue_.front();
+    buffer = write_queue_.front();
     write_queue_.pop_front();
   }
 
   byte_array::ByteArray header;
-  SetHeader(header, message.buffer.size());
+  SetHeader(header, buffer.size());
 
-  std::vector<asio::const_buffer> buffers{
-      asio::buffer(header.pointer(), header.size()),
-      asio::buffer(message.buffer.pointer(), message.buffer.size())};
+  std::vector<asio::const_buffer> buffers{asio::buffer(header.pointer(), header.size()),
+                                          asio::buffer(buffer.pointer(), buffer.size())};
 
   auto socket = socket_.lock();
 
-  auto cb = [this, selfLock, socket, message, header](std::error_code ec, std::size_t len) {
+  auto cb = [this, selfLock, socket, buffer, header](std::error_code ec, std::size_t len) {
     FETCH_UNUSED(len);
 
     {
@@ -395,19 +389,9 @@ void TCPClientImplementation::WriteNext(SharedSelfType const &selfLock)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Error writing to socket, closing.");
       SignalLeave();
-
-      if (message.failure)
-      {
-        message.failure();
-      }
     }
     else
     {
-      if (message.success)
-      {
-        message.success();
-      }
-
       // TODO(issue 16): this strand should be unnecessary
       auto strandLock = strand_.lock();
       if (strandLock)
@@ -432,11 +416,6 @@ void TCPClientImplementation::WriteNext(SharedSelfType const &selfLock)
     }
 
     SignalLeave();
-
-    if (message.failure)
-    {
-      message.failure();
-    }
   }
 }
 

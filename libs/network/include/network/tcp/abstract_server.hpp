@@ -34,8 +34,8 @@ public:
 
   /// @name Abstract Network Server Interface
   /// @{
-  virtual uint16_t GetListeningPort() const                                           = 0;
-  virtual void     PushRequest(ConnectionHandleType client, MessageBuffer const &msg) = 0;
+  virtual uint16_t GetListeningPort() const                                         = 0;
+  virtual void     PushRequest(ConnectionHandleType client, MessageType const &msg) = 0;
   /// @}
 };
 

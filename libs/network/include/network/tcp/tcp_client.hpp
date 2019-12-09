@@ -78,7 +78,7 @@ public:
     }
   }
 
-  void OnMessage(std::function<void(network::MessageBuffer const &msg)> const &f)
+  void OnMessage(std::function<void(network::MessageType const &msg)> const &f)
   {
     if (pointer_)
     {
@@ -104,7 +104,7 @@ public:
     return pointer_->Closed();
   }
 
-  void Send(MessageBuffer const &msg) noexcept
+  void Send(MessageType const &msg) noexcept
   {
     pointer_->Send(msg);
   }

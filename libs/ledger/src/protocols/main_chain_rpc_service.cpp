@@ -29,6 +29,7 @@
 #include "ledger/consensus/consensus_interface.hpp"
 #include "logging/logging.hpp"
 #include "muddle/packet.hpp"
+#include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
 
@@ -42,8 +43,8 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using fetch::muddle::Packet;
 using fetch::byte_array::ToBase64;
+using fetch::muddle::Packet;
 
 using BlockSerializer        = fetch::serializers::MsgPackSerializer;
 using BlockSerializerCounter = fetch::serializers::SizeCounter;
@@ -82,7 +83,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
   , rpc_client_("R:MChain", endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
-  , state_machine_{std::make_shared<StateMachine>("MainChain", GetInitialState(mode_),
+  , state_machine_{std::make_shared<StateMachine>("MainChain", State::SYNCHRONISED,
                                                   [](State state) { return ToString(state); })}
   , recv_block_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_recv_block_total",
@@ -129,13 +130,11 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   state_machine_->RegisterHandler(State::SYNCHRONISED,            this, &MainChainRpcService::OnSynchronised);
   // clang-format on
 
-#ifdef FETCH_LOG_DEBUG_ENABLED
   state_machine_->OnStateChange([](State current, State previous) {
     FETCH_UNUSED(current);
     FETCH_UNUSED(previous);
     FETCH_LOG_DEBUG(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
-#endif  // FETCH_LOG_DEBUG_ENABLED
 }
 
 void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block)
@@ -176,7 +175,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   if (!ValidBlock(block, "new block"))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Gossiped block did not prove valid");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Gossiped block did not prove valid. Loose blocks seen: ", loose_blocks_seen_);
     loose_blocks_seen_++;
     return;
   }
@@ -223,6 +223,8 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
     // select the address
     address = direct_peers[index];
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Querying: ", address.ToBase64());
 
   return address;
 }
@@ -330,10 +332,26 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   if (!peer.empty())
   {
     current_peer_address_ = peer;
-    Digest start          = chain_.GetHeaviestBlockHash();
 
-    current_request_ = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
-                                                       MainChainProtocol::TIME_TRAVEL, start);
+    if (!block_resolving_)
+    {
+      block_resolving_ = chain_.GetHeaviestBlock();
+    }
+
+    if (!block_resolving_)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to get heaviest block from the main chain!");
+      state_machine_->Delay(std::chrono::milliseconds{1000});
+      return next_state;
+    }
+
+    current_request_ =
+        rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
+                                        MainChainProtocol::TIME_TRAVEL, block_resolving_->hash);
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Attempting to resolve: ", block_resolving_->block_number,
+                   " aka 0x", block_resolving_->hash.ToHex(), " Note: gen is: 0x",
+                   chain::GENESIS_DIGEST.ToHex());
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
@@ -372,9 +390,13 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
         {
           auto &blocks = response.blocks;
 
+          FETCH_LOG_INFO(LOGGING_NAME, "Resolved: ", blocks.size());
+
           // we should receive at least one extra block in addition to what we already have
           if (!blocks.empty())
           {
+            block_resolving_ = {};
+
             HandleChainResponse(current_peer_address_, blocks.begin(), blocks.end());
             auto const &latest_hash = blocks.back().hash;
             assert(!latest_hash.empty());  // should be set by HandleChainResponse()
@@ -382,7 +404,37 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             // TODO(unknown): this is to be improved later
             if (latest_hash == response.heaviest_hash)
             {
-              next_state = State::SYNCHRONISING;  // we have reached the tip
+              return State::SYNCHRONISED;  // we have reached the tip
+            }
+          }
+
+          FETCH_LOG_INFO(LOGGING_NAME, "Resolved: ", response.block_number);
+
+          uint64_t const attempting_to_resolve =
+              !block_resolving_ ? 0 : block_resolving_->block_number;
+
+          if (!block_resolving_)
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "No block set (?)");
+          }
+
+          if (blocks.empty() || response.not_on_heaviest ||
+              (response.block_number > (attempting_to_resolve + 10)))
+          {
+            if (block_resolving_)
+            {
+              block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
+            }
+
+            FETCH_LOG_WARN(
+                LOGGING_NAME,
+                "Received indication we are on a dead fork. Walking back. Peer heaviest: ",
+                response.block_number, " blocks: ", blocks.size(),
+                " heaviest: ", response.heaviest_hash.ToBase64());
+
+            if (block_resolving_)
+            {
+              FETCH_LOG_WARN(LOGGING_NAME, "Walked to: ", block_resolving_->block_number);
             }
           }
         }
@@ -498,6 +550,13 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
 
 MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, State previous)
 {
+  FETCH_UNUSED(previous);
+
+  if (state_machine_->previous_state() != State::SYNCHRONISED)
+  {
+    timer_to_proceed_.Restart(std::chrono::seconds{uint64_t{PERIODIC_RESYNC_SECONDS}});
+  }
+
   state_synchronised_->increment();
 
   State next_state{State::SYNCHRONISED};
@@ -515,7 +574,12 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
     state_machine_->Delay(std::chrono::milliseconds{1000});
     next_state = State::REQUEST_HEAVIEST_CHAIN;
   }
-  else if (previous != State::SYNCHRONISED)
+  else if (timer_to_proceed_.HasExpired())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Kicking forward sync periodically");
+    next_state = State::REQUEST_HEAVIEST_CHAIN;
+  }
+  else if (state_machine_->previous_state() != State::SYNCHRONISED)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronised");
   }
@@ -534,6 +598,8 @@ void MainChainRpcService::Start()
                                                 Packet::Payload const &payload,
                                                 Address                transmitter) {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
+
+    generics::MilliTimer myTimer("BeaconManager::OnNewBlock");
 
     BlockSerializer serialiser(payload);
 

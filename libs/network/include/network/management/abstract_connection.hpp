@@ -40,7 +40,6 @@ public:
   using ConnectionHandleType = typename AbstractConnectionRegister::ConnectionHandleType;
   using WeakPointerType      = std::weak_ptr<AbstractConnection>;
   using WeakRegisterType     = std::weak_ptr<AbstractConnectionRegister>;
-  using Callback             = MessageType::Callback;
 
   static constexpr char const *LOGGING_NAME = "AbstractConnection";
 
@@ -57,12 +56,11 @@ public:
   // Interface
   virtual ~AbstractConnection();
 
-  virtual void     Send(MessageBuffer const &, Callback const &success = nullptr,
-                        Callback const &fail = nullptr) = 0;
-  virtual uint16_t Type() const                         = 0;
-  virtual void     Close()                              = 0;
-  virtual bool     Closed() const                       = 0;
-  virtual bool     is_alive() const                     = 0;
+  virtual void     Send(MessageType const &) = 0;
+  virtual uint16_t Type() const              = 0;
+  virtual void     Close()                   = 0;
+  virtual bool     Closed() const            = 0;
+  virtual bool     is_alive() const          = 0;
 
   // Common to allx
   std::string          Address() const;
@@ -72,7 +70,7 @@ public:
 
   WeakPointerType connection_pointer();
 
-  void OnMessage(std::function<void(network::MessageBuffer const &msg)> const &f);
+  void OnMessage(std::function<void(network::MessageType const &msg)> const &f);
 
   void OnConnectionSuccess(std::function<void()> const &fnc);
 
@@ -88,15 +86,15 @@ protected:
   void SetPort(uint16_t p);
 
   void SignalLeave();
-  void SignalMessage(network::MessageBuffer const &msg);
+  void SignalMessage(network::MessageType const &msg);
   void SignalConnectionFailed();
   void SignalConnectionSuccess();
 
 private:
-  std::function<void(network::MessageBuffer const &msg)> on_message_;
-  std::function<void()>                                  on_connection_success_;
-  std::function<void()>                                  on_connection_failed_;
-  std::function<void()>                                  on_leave_;
+  std::function<void(network::MessageType const &msg)> on_message_;
+  std::function<void()>                                on_connection_success_;
+  std::function<void()>                                on_connection_failed_;
+  std::function<void()>                                on_leave_;
 
   std::string           address_{};
   std::atomic<uint16_t> port_{0};

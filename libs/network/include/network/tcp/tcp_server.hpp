@@ -55,7 +55,7 @@ public:
   struct Request
   {
     ConnectionHandleType handle{};
-    MessageBuffer        message;
+    MessageType          message;
   };
 
   TCPServer(uint16_t port, NetworkManagerType const &network_manager);
@@ -66,10 +66,10 @@ public:
   virtual void Stop();
 
   uint16_t GetListeningPort() const override;
-  void     PushRequest(ConnectionHandleType client, MessageBuffer const &msg) override;
+  void     PushRequest(ConnectionHandleType client, MessageType const &msg) override;
 
-  void Broadcast(MessageBuffer const &msg);
-  bool Send(ConnectionHandleType const &client, MessageBuffer const &msg);
+  void Broadcast(MessageType const &msg);
+  bool Send(ConnectionHandleType const &client, MessageType const &msg);
 
   bool has_requests();
 

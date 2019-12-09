@@ -72,7 +72,7 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 
   if (buffer.empty())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to load stakefile! : ", file_path);
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to load genesis file! : ", file_path);
   }
   else
   {
@@ -97,16 +97,18 @@ using ConsensusPtr = std::shared_ptr<fetch::ledger::ConsensusInterface>;
 
 GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
                                        StorageUnitInterface &storage_unit, ConsensusPtr consensus,
-                                       CertificatePtr certificate, std::string const &db_prefix)
+                                       CertificatePtr certificate, std::string const &db_prefix,
+                                       MainChain &chain)
   : certificate_{std::move(certificate)}
   , block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
   , consensus_{std::move(consensus)}
   , db_name_{db_prefix + "genesis_block"}
+  , chain_{chain}
 {}
 
 /**
- * Load a 'state file' with a given name
+ * Load a 'genesis file file' with a given name
  *
  * @param name The path to the file to be loaded
  */
@@ -128,8 +130,28 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
       chain::GENESIS_MERKLE_ROOT = genesis_block_.merkle_hash;
       chain::GENESIS_DIGEST      = genesis_block_.hash;
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Found genesis save file from previous session!");
-      loaded_genesis_ = true;
+      FETCH_LOG_INFO(LOGGING_NAME, "Found genesis save file from previous session! Merkle root: ",
+                     chain::GENESIS_MERKLE_ROOT.ToHex(),
+                     " block hash: ", chain::GENESIS_DIGEST.ToHex());
+      auto block = chain_.GetHeaviestBlock();
+
+      if (block->IsGenesis())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME,
+                       "The main chain's heaviest is genesis. That seems suspicious. Hash: 0x",
+                       block->hash.ToHex(), " Merkle: 0x", block->merkle_hash.ToHex(),
+                       " number: ", block->block_number);
+
+        if (block->hash == chain::GENESIS_DIGEST_DEFAULT ||
+            block->merkle_hash == chain::GENESIS_MERKLE_ROOT_DEFAULT)
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Main chain needs a reset since it is in a bad state.");
+        }
+      }
+      else
+      {
+        loaded_genesis_ = true;
+      }
     }
     else
     {
@@ -180,6 +202,14 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
     genesis_store_.Set(storage::ResourceAddress("HEAD"), genesis_block_);
     genesis_store_.Flush(false);
   }
+
+  if (!loaded_genesis_)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Resetting main chain.");
+    chain_.Reset();
+  }
+
+  block_coordinator_.ResetGenesis();
 
   return success;
 }
@@ -258,7 +288,10 @@ bool GenesisFileCreator::LoadState(Variant const &object)
   chain::GENESIS_MERKLE_ROOT = merkle_commit_hash;
   chain::GENESIS_DIGEST      = genesis_block_.hash;
 
-  block_coordinator_.Reset();
+  if (!storage_unit_.RevertToHash(chain::GENESIS_MERKLE_ROOT, 0))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed test to revert to merkle root!");
+  }
 
   return true;
 }

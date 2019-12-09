@@ -349,7 +349,7 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
   Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 }
 
-TEST_F(BlockCoordinatorTests, DISABLED_CheckLongBlockStartUp)  // TODO(tfr): Test needs fixing
+TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 {
   auto genesis = block_generator_();
   auto b1      = block_generator_(genesis);

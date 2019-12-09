@@ -370,7 +370,7 @@ TEST_F(VMModelTests, model_init_with_wrong_name)
       endfunction
     )";
   ASSERT_TRUE(toolkit.Compile(SRC_WRONG_NAME));
-  EXPECT_FALSE(toolkit.Run());
+  EXPECT_THROW(toolkit.Run(), std::runtime_error);
 }
 
 TEST_F(VMModelTests, model_add_invalid_layer_type)

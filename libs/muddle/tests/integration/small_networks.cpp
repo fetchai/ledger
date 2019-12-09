@@ -525,7 +525,7 @@ TEST(SmallNetworks, DISABLED_KademliaPrimitives)
 
   constexpr uint64_t const N = 1000;
 
-  KademliaTable table(raw_address1, fetch::muddle::NetworkId("TEST"));
+  KademliaTable table(raw_address1, NetworkId{"TEST"});
 
   std::vector<PeerInfo> all_peers;
   all_peers.resize(N);

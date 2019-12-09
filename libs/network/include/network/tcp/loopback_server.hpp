@@ -62,7 +62,7 @@ public:
 private:
   asio::ip::tcp::tcp::socket socket_;
   std::size_t                lengthPerRead_ = 1024;
-  MessageBuffer              message_;
+  MessageType                message_;
 
   void Read() noexcept
   {

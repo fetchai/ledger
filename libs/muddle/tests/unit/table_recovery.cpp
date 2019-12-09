@@ -55,7 +55,7 @@ TEST(Kademlia, TableRecovery)
 
   // Generating table
   {
-    KademliaTable table{FakeAddress(N + 1), fetch::muddle::NetworkId("TEST")};
+    KademliaTable table{FakeAddress(N + 1), NetworkId{"TEST"}};
     table.SetCacheFile("test.peer_table");
 
     for (uint64_t i = 0; i < N; ++i)
@@ -70,7 +70,7 @@ TEST(Kademlia, TableRecovery)
 
   // Loading table
   {
-    KademliaTable table{FakeAddress(N + 1), fetch::muddle::NetworkId("TEST")};
+    KademliaTable table{FakeAddress(N + 1), NetworkId{"TEST"}};
 
     table.SetCacheFile("test.peer_table");
     table.Load();
