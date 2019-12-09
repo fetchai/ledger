@@ -223,7 +223,16 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_reshape_test)
 
   auto const new_shape = Ptr<IArray>::PtrFromThis(&a);
 
-  ChargeAmount const expected_charge = ChargeAmount(pow(MaxDimSize(), MaxDims()));
+  std::vector<SizeType> const exp_tensor_shape(MaxDims(), MaxDimSize());
+
+  SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(exp_tensor_shape);
+  SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(exp_tensor_shape);
+
+  ChargeAmount const expected_charge =
+      static_cast<ChargeAmount>(VmTensorEstimator::SUM_PADDED_SIZE_COEF() * padded_size +
+                                VmTensorEstimator::SUM_SIZE_COEF() * size +
+                                VmTensorEstimator::SUM_CONST_COEF()) *
+      fetch::vm::COMPUTE_CHARGE_COST;
 
   for (SizeType n_dims = MinDims(); n_dims < MaxDims(); n_dims += DimsStep())
   {
