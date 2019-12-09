@@ -649,7 +649,7 @@ TEST_P(MainChainTests, CheckChainPreceding)
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->hash);
 
   {
-    auto const preceding = chain_->GetChainPreceding(main4->hash, 2);
+    auto const preceding = chain_->GetChainPreceding(main4->hash, 3);
     ASSERT_EQ(preceding.size(), 3);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main4));
     EXPECT_TRUE(IsSameBlock(*preceding[1], *main3));
@@ -657,25 +657,27 @@ TEST_P(MainChainTests, CheckChainPreceding)
   }
 
   {
-    auto const preceding = chain_->GetChainPreceding(main3->hash, 2);
-    ASSERT_EQ(preceding.size(), 2);
+    auto const preceding = chain_->GetChainPreceding(main3->hash, 3);
+    ASSERT_EQ(preceding.size(), 3);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main3));
     EXPECT_TRUE(IsSameBlock(*preceding[1], *main2));
   }
 
   {
-    auto const preceding = chain_->GetChainPreceding(main2->hash, 2);
-    ASSERT_EQ(preceding.size(), 1);
+    auto const preceding = chain_->GetChainPreceding(main2->hash, 3);
+    ASSERT_EQ(preceding.size(), 3);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main2));
   }
 
   {
     auto const preceding = chain_->GetChainPreceding(main1->hash, 3);
-    ASSERT_TRUE(preceding.empty());
+    ASSERT_EQ(preceding.size(), 2);
+    EXPECT_TRUE(IsSameBlock(*preceding[0], *main1));
+    EXPECT_TRUE(IsSameBlock(*preceding[1], *genesis));
   }
 
   {
-    auto const heaviest = chain_->GetHeaviestChain(2);
+    auto const heaviest = chain_->GetHeaviestChain(3);
     ASSERT_EQ(heaviest.size(), 3);
     EXPECT_TRUE(IsSameBlock(*heaviest[0], *main4));
     EXPECT_TRUE(IsSameBlock(*heaviest[1], *main3));

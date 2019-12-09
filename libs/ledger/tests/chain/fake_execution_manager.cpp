@@ -32,6 +32,8 @@ FakeExecutionManager::FakeExecutionManager(FakeStorageUnit &storage)
 
 FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block const &block)
 {
+  FETCH_LOG_INFO("FakeExecMgr", "Executing block: 0x", block.hash.ToHex(), " - ", block.block_number);
+
   if (!current_hash_.empty())
   {
     return ScheduleStatus::ALREADY_RUNNING;

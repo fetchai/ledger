@@ -19,6 +19,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/macros.hpp"
 #include "crypto/sha256.hpp"
+#include "chain/constants.hpp"
 #include "ledger/storage_unit/fake_storage_unit.hpp"
 
 #include <algorithm>
@@ -168,6 +169,8 @@ FakeStorageUnit::Hash FakeStorageUnit::LastCommitHash()
 
 bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t index)
 {
+  FETCH_LOG_INFO("FakeStorageUnit", "RevertToHash 0x", hash.ToHex(), " - ", index);
+
   FETCH_LOCK(lock_);
 
   FETCH_UNUSED(index);
@@ -183,15 +186,24 @@ bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t index)
     state_history_stack_.erase(it.base(), state_history_stack_.end());
 
     // sanity check
-    if (state_history_.find(hash) == state_history_.end())
+    if ((hash == fetch::chain::ZERO_HASH) && (index == 0))
+    {
+      // perform the reverting options
+      current_hash_ = hash;
+      state_        = std::make_shared<State>();
+      success       = true;
+    }
+    else if (state_history_.find(hash) == state_history_.end())
     {
       throw std::runtime_error("Synchronisation issue between map and stack");
     }
-
-    // perform the reverting options
-    current_hash_ = hash;
-    state_        = std::make_shared<State>(*state_history_[hash]);
-    success       = true;
+    else
+    {
+      // perform the reverting options
+      current_hash_ = hash;
+      state_        = std::make_shared<State>(*state_history_[hash]);
+      success       = true;
+    }
   }
 
   return success;
@@ -207,8 +219,10 @@ FakeStorageUnit::Hash FakeStorageUnit::Commit(uint64_t index)
   return EmulateCommit(commit_hash, index);
 }
 
-bool FakeStorageUnit::HashExists(Hash const &hash, uint64_t /*index*/)
+bool FakeStorageUnit::HashExists(Hash const &hash, uint64_t index)
 {
+  FETCH_LOG_INFO("FakeStorageUnit", "HashExits 0x", hash.ToHex(), " - ", index);
+
   FETCH_LOCK(lock_);
 
   auto const it  = std::find(state_history_stack_.begin(), state_history_stack_.end(), hash);

@@ -681,7 +681,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
   }
 
   // We have the block we want to sync forward from. Check if it is on the heaviest chain.
-  bool const not_heaviest = block->chain_label != heaviest_.ChainLabel();
+  bool const not_heaviest = !(block && (block->chain_label == heaviest_.ChainLabel()));
 
   bool not_done = true;
   for (current_hash = std::move(next_hash);
