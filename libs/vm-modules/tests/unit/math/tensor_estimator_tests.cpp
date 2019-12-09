@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "gmock/gmock.h"
+#include "vm/array.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/tensor/tensor_estimator.hpp"
 #include "vm_test_toolkit.hpp"
@@ -225,10 +226,42 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_transpose_test)
       VmTensor          vm_tensor(&toolkit.vm(), fetch::vm::TypeIds::Unknown, tensor);
       VmTensorEstimator tensor_estimator(vm_tensor);
 
-      ChargeAmount const expected_charge_amount = tensor.size();
-      EXPECT_EQ(tensor_estimator.Transpose(), expected_charge_amount);
+      ChargeAmount const expected_charge  = tensor.size();
+      ChargeAmount const estimated_charge = tensor_estimator.Transpose();
+      EXPECT_EQ(estimated_charge, expected_charge);
     }
   }
 }
 
+TEST_F(MathTensorEstimatorTests, tensor_estimator_reshape_test)
+{
+  using namespace fetch::vm;
+  fetch::vm::Array<SizeType> a(&toolkit.vm(), fetch::vm::TypeIds::Unknown,
+                               fetch::vm::TypeIds::Int32, int32_t(0));
+  for (SizeType i = 0; i < MaxDims(); ++i)
+  {
+    a.Append(TemplateParameter1(MaxDimSize(), fetch::vm::TypeIds::Int32));
+  }
+
+  auto const new_shape = fetch::vm::Ptr<IArray>::PtrFromThis(&a);
+
+  ChargeAmount const expected_charge = ChargeAmount(pow(MaxDimSize(), MaxDims()));
+
+  for (SizeType n_dims = MinDims(); n_dims < MaxDims(); n_dims += DimsStep())
+  {
+    for (SizeType cur_dim_size = MinDimSize(); cur_dim_size < MaxDimSize();
+         cur_dim_size += DimStep())
+    {
+      std::vector<SizeType> const tensor_shape(n_dims, cur_dim_size);
+
+      MathTensor tensor{tensor_shape};
+
+      VmTensor          vm_tensor(&toolkit.vm(), fetch::vm::TypeIds::Unknown, tensor);
+      VmTensorEstimator tensor_estimator(vm_tensor);
+
+      ChargeAmount const estimated_charge = tensor_estimator.Reshape(new_shape);
+      EXPECT_EQ(estimated_charge, expected_charge);
+    }
+  }
+}
 }  // namespace
