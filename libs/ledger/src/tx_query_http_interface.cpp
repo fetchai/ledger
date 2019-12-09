@@ -18,10 +18,8 @@
 
 #include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/byte_array/encoders.hpp"
 #include "core/macros.hpp"
 #include "http/json_response.hpp"
-#include "ledger/resource_mapper.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/tx_query_http_interface.hpp"
 #include "logging/logging.hpp"
@@ -95,7 +93,6 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
         case Transaction::ContractMode::NOT_PRESENT:
           break;
         case Transaction::ContractMode::PRESENT:
-          tx_obj["contractDigest"]  = tx.contract_digest().address().ToHex();
           tx_obj["contractAddress"] = tx.contract_address().display();
           tx_obj["action"]          = tx.action();
           tx_obj["data"]            = tx.data().ToBase64();
@@ -106,9 +103,8 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
           tx_obj["data"]      = tx.data().ToBase64();
           break;
         case Transaction::ContractMode::SYNERGETIC:
-          tx_obj["contractDigest"] = tx.contract_digest().address().ToHex();
-          tx_obj["action"]         = tx.action();
-          tx_obj["data"]           = tx.data().ToBase64();
+          tx_obj["action"] = tx.action();
+          tx_obj["data"]   = tx.data().ToBase64();
           break;
         }
 

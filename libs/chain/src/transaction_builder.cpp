@@ -259,12 +259,10 @@ TransactionBuilder &TransactionBuilder::Counter(CounterValue counter)
  * @param shard_mask The resource shard mask
  * @return The current builder instance
  */
-TransactionBuilder &TransactionBuilder::TargetSmartContract(Address const &  digest,
-                                                            Address const &  address,
+TransactionBuilder &TransactionBuilder::TargetSmartContract(Address const &  address,
                                                             BitVector const &shard_mask)
 {
   partial_transaction_->contract_mode_    = Transaction::ContractMode::PRESENT;
-  partial_transaction_->contract_digest_  = digest;
   partial_transaction_->contract_address_ = address;
   partial_transaction_->chain_code_       = byte_array::ConstByteArray{};
   partial_transaction_->shard_mask_       = shard_mask;
@@ -282,7 +280,6 @@ TransactionBuilder &TransactionBuilder::TargetChainCode(byte_array::ConstByteArr
                                                         BitVector const &shard_mask)
 {
   partial_transaction_->contract_mode_    = Transaction::ContractMode::CHAIN_CODE;
-  partial_transaction_->contract_digest_  = Address{};
   partial_transaction_->contract_address_ = Address{};
   partial_transaction_->chain_code_       = ref;
   partial_transaction_->shard_mask_       = shard_mask;
