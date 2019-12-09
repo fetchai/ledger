@@ -548,7 +548,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
 MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, State previous)
 {
 
-  if (state_machine_->previous_state() == State::SYNCHRONISED)
+  if (state_machine_->previous_state() != State::SYNCHRONISED)
   {
     timer_to_proceed_.Restart(std::chrono::seconds{uint64_t{PERIODIC_RESYNC_SECONDS}});
   }
@@ -575,7 +575,7 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
     FETCH_LOG_INFO(LOGGING_NAME, "Kicking forward sync periodically");
     next_state = State::REQUEST_HEAVIEST_CHAIN;
   }
-  else if (previous != State::SYNCHRONISED)
+  else if (state_machine_->previous_state() != State::SYNCHRONISED)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronised");
   }
