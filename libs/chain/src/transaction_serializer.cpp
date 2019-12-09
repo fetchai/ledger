@@ -48,7 +48,7 @@ using TokenAmount  = Transaction::TokenAmount;
 using ContractMode = Transaction::ContractMode;
 
 const uint8_t MAGIC              = 0xA1;
-const uint8_t VERSION            = 2u;
+const uint8_t VERSION            = 3u;
 const int8_t  UNIT_MEGA          = -2;
 const int8_t  UNIT_KILO          = -1;
 const int8_t  UNIT_DEFAULT       = 0;
@@ -343,7 +343,7 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
     {
     case ContractMode::SYNERGETIC:
     case ContractMode::PRESENT:
-      buffer.Append(Encode(tx.contract_digest()), Encode(tx.contract_address()));
+      buffer.Append(Encode(tx.contract_address()));
       break;
     case ContractMode::CHAIN_CODE:
       buffer.Append(Encode(tx.chain_code()));
@@ -489,7 +489,6 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
   {
     tx.contract_mode_    = Transaction::ContractMode::NOT_PRESENT;
     tx.contract_address_ = Address{};
-    tx.contract_digest_  = Address{};
     tx.chain_code_       = ConstByteArray{};
   }
   else
@@ -540,14 +539,12 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
       tx.contract_mode_ = Transaction::ContractMode::PRESENT;
       tx.chain_code_    = ConstByteArray{};
 
-      Decode(buffer, tx.contract_digest_);
       Decode(buffer, tx.contract_address_);
     }
     else if (CHAIN_CODE_PRESENT == contract_type)
     {
       tx.contract_mode_    = Transaction::ContractMode::CHAIN_CODE;
       tx.contract_address_ = Address{};
-      tx.contract_digest_  = Address{};
 
       Decode(buffer, tx.chain_code_);
     }
@@ -556,7 +553,6 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
       tx.contract_mode_ = Transaction::ContractMode::SYNERGETIC;
       tx.chain_code_    = ConstByteArray{};
 
-      Decode(buffer, tx.contract_digest_);
       Decode(buffer, tx.contract_address_);
     }
 

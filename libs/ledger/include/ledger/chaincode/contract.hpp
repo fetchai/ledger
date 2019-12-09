@@ -22,7 +22,6 @@
 #include "crypto/identity.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/fees/chargeable.hpp"
-#include "ledger/identifier.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -62,8 +61,9 @@ public:
 
   struct Result
   {
-    Status  status{Status::NOT_FOUND};
-    int64_t return_value{0};
+    Status   status{Status::NOT_FOUND};
+    int64_t  return_value{0};
+    uint64_t block_index{0};
   };
 
   using BlockIndex     = chain::TransactionLayout::BlockIndex;
@@ -140,9 +140,9 @@ protected:
   bool ParseAsJson(chain::Transaction const &tx, variant::Variant &output);
 
   template <typename T>
-  bool GetStateRecord(T &record, ConstByteArray const &key);
+  bool GetStateRecord(T &record, chain::Address const &address);
   template <typename T>
-  StateAdapter::Status SetStateRecord(T const &record, ConstByteArray const &key);
+  StateAdapter::Status SetStateRecord(T const &record, chain::Address const &address);
 
   ledger::StateAdapter &state();
   /// @}
@@ -229,7 +229,7 @@ void Contract::OnQuery(std::string const &name, C *instance,
  * @return true if successful, otherwise false
  */
 template <typename T>
-bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
+bool Contract::GetStateRecord(T &record, chain::Address const &address)
 {
   using fetch::byte_array::ByteArray;
 
@@ -239,7 +239,7 @@ bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
   buffer.Resize(std::size_t{DEFAULT_BUFFER_SIZE});  // initial guess, can be tuned over time
 
   uint64_t buffer_length = buffer.size();
-  auto     status        = state().Read(std::string{key}, buffer.pointer(), buffer_length);
+  auto     status = state().Read(std::string{address.display()}, buffer.pointer(), buffer_length);
 
   // in rare cases the initial buffer might be too small in this case we need to reallocate and then
   // re-query
@@ -249,7 +249,7 @@ bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
     buffer.Resize(buffer_length);
 
     // retry the read
-    status = state().Read(std::string{key}, buffer.pointer(), buffer_length);
+    status = state().Read(std::string{address.display()}, buffer.pointer(), buffer_length);
   }
 
   switch (status)
@@ -280,7 +280,7 @@ bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
  * @param key The key for the state record
  */
 template <typename T>
-StateAdapter::Status Contract::SetStateRecord(T const &record, ConstByteArray const &key)
+StateAdapter::Status Contract::SetStateRecord(T const &record, chain::Address const &address)
 {
   // serialize the record to the buffer
   serializers::MsgPackSerializer buffer;
@@ -290,7 +290,7 @@ StateAdapter::Status Contract::SetStateRecord(T const &record, ConstByteArray co
   auto const &data = buffer.data();
 
   // store the buffer
-  return state().Write(std::string{key}, data.pointer(), data.size());
+  return state().Write(std::string{address.display()}, data.pointer(), data.size());
 }
 
 }  // namespace ledger

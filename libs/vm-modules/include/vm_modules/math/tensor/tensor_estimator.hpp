@@ -85,6 +85,8 @@ public:
 
   ChargeAmount Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
 
+  ChargeAmount GetReshapeCost(SizeVector const &new_shape);
+
   ChargeAmount Sum();
 
   ChargeAmount Transpose();
@@ -93,9 +95,121 @@ public:
 
   ChargeAmount ToString();
 
+  // Fill
+  static constexpr DataType FILL_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType FILL_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType FILL_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // FillRandom
+  static constexpr DataType FILL_RANDOM_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType FILL_RANDOM_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType FILL_RANDOM_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // Min
+  static constexpr DataType MIN_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType MIN_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType MIN_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // MAX
+  static constexpr DataType MAX_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType MAX_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType MAX_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // SUM
+  static constexpr DataType SUM_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType SUM_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType SUM_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // RESHAPE
+  static constexpr DataType RESHAPE_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType RESHAPE_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType RESHAPE_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // FROM_STRING
+  static constexpr DataType FROM_STRING_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType FROM_STRING_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // TO_STRING
+  static constexpr DataType TO_STRING_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType TO_STRING_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType TO_STRING_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // Function call overhead for LOW_CHARGE functions
+  static constexpr SizeType LOW_CHARGE_CONST_COEF = 5;
+
 private:
-  static ChargeAmount const LOW_CHARGE{fetch::vm::COMPUTE_CHARGE_COST};
-  ChargeAmount              ComputeChargeFromTensorSize(std::size_t factor = 1);
+  static ChargeAmount const LOW_CHARGE{LOW_CHARGE_CONST_COEF * fetch::vm::COMPUTE_CHARGE_COST};
+
+  static ChargeAmount MaximumCharge(std::string const &log_msg = "");
 
   VMObjectType &tensor_;
 };
