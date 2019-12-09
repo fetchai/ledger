@@ -37,16 +37,10 @@ Work::Work(BlockIndex block_index)
   : block_index_{block_index}
 {}
 
-Work::Work(Digest digest, chain::Address address, crypto::Identity miner)
-  : contract_digest_{std::move(digest)}
-  , contract_address_{std::move(address)}
+Work::Work(chain::Address address, crypto::Identity miner)
+  : contract_address_{std::move(address)}
   , miner_{std::move(miner)}
 {}
-
-Digest const &Work::contract_digest() const
-{
-  return contract_digest_;
-}
 
 chain::Address const &Work::address() const
 {
@@ -71,11 +65,6 @@ WorkScore Work::score() const
 Work::BlockIndex Work::block_index() const
 {
   return block_index_;
-}
-
-void Work::UpdateDigest(Digest digest)
-{
-  contract_digest_ = std::move(digest);
 }
 
 void Work::UpdateAddress(chain::Address address)
@@ -103,7 +92,6 @@ Work::UInt256 Work::CreateHashedNonce() const
   crypto::SHA256 hasher{};
   hasher.Reset();
 
-  hasher.Update(contract_digest_);
   hasher.Update(miner_.identifier());
   hasher.Update(nonce_.pointer(), nonce_.size());
 

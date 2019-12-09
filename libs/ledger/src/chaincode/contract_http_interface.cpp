@@ -187,13 +187,12 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
     }
   }
 
-  Post("/api/contract/(digest=[a-fA-F0-9]{64})/(identifier=[1-9A-HJ-NP-Za-km-z]{48,50})/(query=.+)",
+  Post("/api/contract/(identifier=[1-9A-HJ-NP-Za-km-z]{48,50})/(query=.+)",
        "Submits a query to a contract",
-       {{"digest", "The contract digest.", http::validators::StringValue()},
-        {"identifier", "The query identifier.", http::validators::StringValue()}},
+       {{"identifier", "The query identifier.", http::validators::StringValue()}},
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          // build the contract name
-         auto const contract_name = params["digest"] + "." + params["identifier"];
+         auto const contract_name = params["identifier"];
 
          // proxy the call to the query handler
          return OnQuery(contract_name, params["query"], request);
@@ -224,8 +223,6 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
                     " from: ", request.originating_address(), ':', request.originating_port());
     FETCH_LOG_DEBUG(LOGGING_NAME, request.body());
 
-    Identifier contract_id{contract_name};
-
     // record an entry in the access log
     RecordQuery(contract_name, query, request);
 
@@ -234,16 +231,19 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     doc.Parse(request.body());
     variant::Variant response;
     // dispatch the contract type
-    auto contract = contract_cache_.Lookup(contract_id, storage_);
+    auto contract = contract_cache_.Lookup(contract_name, storage_);
 
     // adapt the storage engine so that that get and sets are sandboxed for the contract
-    StateAdapter storage_adapter{storage_, contract_id};
+    StateAdapter storage_adapter{storage_, contract_name};
 
     // Current block index does not apply to queries - set to 0
     Contract::Status status;
     {
       chain::Address address;
-      chain::Address::Parse(contract_id.name(), address);
+      if (contract_name != "fetch.token" && !chain::Address::Parse(contract_name, address))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse address: ", contract_name);
+      }
       ContractContext context{&token_contract_, std::move(address), nullptr, &storage_adapter, 0};
       ContractContextAttacher raii(*contract, context);
       status = contract->DispatchQuery(query, doc.root(), response);
@@ -328,6 +328,7 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
   }
   catch (std::exception const &ex)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception@OnTransaction: ", ex.what());
     json["error"] = Quoted(ex.what());
   }
 
