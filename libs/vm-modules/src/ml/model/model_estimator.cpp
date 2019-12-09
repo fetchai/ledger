@@ -216,6 +216,59 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
          COMPUTE_CHARGE_COST;
 }
 
+ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
+    Ptr<String> const &loss, Ptr<String> const &optimiser,
+    Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics)
+{
+  FETCH_UNUSED(metrics);  // todo: fixme
+  DataType optimiser_construction_impact(0.0);
+
+  if (!model_.model_->loss_set_)
+  {
+    if (loss->string() == "mse")
+    {
+      // loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
+      state_.forward_pass_cost =
+          state_.forward_pass_cost + MSE_FORWARD_IMPACT() * state_.last_layer_size;
+      state_.backward_pass_cost =
+          state_.backward_pass_cost + MSE_BACKWARD_IMPACT() * state_.last_layer_size;
+      state_.ops_count++;
+    }
+    else if (loss->string() == "cel")
+    {
+      // loss_type = fetch::ml::ops::LossType::CROSS_ENTROPY;
+      state_.forward_pass_cost =
+          state_.forward_pass_cost + CEL_FORWARD_IMPACT() * state_.last_layer_size;
+      state_.backward_pass_cost =
+          state_.backward_pass_cost + CEL_BACKWARD_IMPACT() * state_.last_layer_size;
+      state_.ops_count++;
+    }
+  }
+
+  if (!model_.model_->optimiser_set_)
+  {
+    if (optimiser->string() == "adam")
+    {
+      // optimiser_type = fetch::ml::OptimiserType::ADAM;
+      state_.optimiser_step_impact = ADAM_STEP_IMPACT_COEF();
+      optimiser_construction_impact =
+          ADAM_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
+          ADAM_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
+    }
+    else if (optimiser->string() == "sgd")
+    {
+      // optimiser_type = fetch::ml::OptimiserType::SGD;
+      state_.optimiser_step_impact = SGD_STEP_IMPACT_COEF();
+      optimiser_construction_impact =
+          SGD_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
+          SGD_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
+    }
+  }
+
+  return static_cast<ChargeAmount>(optimiser_construction_impact + COMPILE_CONST_COEF()) *
+         COMPUTE_CHARGE_COST;
+}
+
 ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,
                                            Ptr<Array<SizeType>> const &in_layers)
 {

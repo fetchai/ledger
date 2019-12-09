@@ -137,30 +137,37 @@ Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
  * @param loss a valid loss function ["mse", ...]
  * @param optimiser a valid optimiser name ["adam", "sgd" ...]
  */
-void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
-                                fetch::vm::Ptr<fetch::vm::String> const &optimiser)
+void VMModel::CompileSequential(Ptr<String> const &loss, Ptr<String> const &optimiser)
 {
-  fetch::vm::Ptr<vm::Array<fetch::vm::String>> const &metrics{};
-  CompileSequentialImplementation(loss, optimiser, metrics);
+  std::vector<MetricType> mets;
+  CompileSequentialImplementation(loss, optimiser, mets);
 }
 
 /**
- * @brief VMModel::CompileSequential
+ * @brief VMModel::CompileSequentialWithMetrics
  * @param loss a valid loss function ["mse", ...]
  * @param optimiser a valid optimiser name ["adam", "sgd" ...]
+ * @param metrics an array of valid metric names ["categorical accuracy", "mse" ...]
  */
-void VMModel::CompileSequentialWithMetrics(
-    fetch::vm::Ptr<fetch::vm::String> const &           loss,
-    fetch::vm::Ptr<fetch::vm::String> const &           optimiser,
-    fetch::vm::Ptr<vm::Array<fetch::vm::String>> const &metrics)
+void VMModel::CompileSequentialWithMetrics(Ptr<String> const &loss, Ptr<String> const &optimiser,
+                                           Ptr<vm::Array<Ptr<String>>> const &metrics)
 {
-  CompileSequentialImplementation(loss, optimiser, metrics);
+  // Make vector<MetricType> from vm::Array
+  std::size_t const       n_metrics = metrics->elements.size();
+  std::vector<MetricType> mets;
+  mets.reserve(n_metrics);
+
+  for (std::size_t i = 0; i < n_metrics; ++i)
+  {
+    Ptr<String> ptr_string = metrics->elements.at(i);
+    MetricType  mt         = ParseName(ptr_string->string(), metrics_, "metric");
+    mets.emplace_back(mt);
+  }
+  CompileSequentialImplementation(loss, optimiser, mets);
 }
 
-void VMModel::CompileSequentialImplementation(
-    fetch::vm::Ptr<fetch::vm::String> const &           loss,
-    fetch::vm::Ptr<fetch::vm::String> const &           optimiser,
-    fetch::vm::Ptr<vm::Array<fetch::vm::String>> const &metrics)
+void VMModel::CompileSequentialImplementation(Ptr<String> const &loss, Ptr<String> const &optimiser,
+                                              std::vector<MetricType> const &mets)
 {
   try
   {
@@ -174,16 +181,6 @@ void VMModel::CompileSequentialImplementation(
     }
     PrepareDataloader();
     compiled_ = false;
-
-    // parse metrics
-    std::size_t const       total_layer_shapes = metrics->elements.size();
-    std::vector<MetricType> mets;
-    mets.reserve(total_layer_shapes);
-    for (std::size_t i = 0; i < total_layer_shapes; ++i)
-    {
-      MetricType mt = ParseName((metrics->elements.at(i)).string(), metrics_, "metric");
-      mets.emplace_back(mt);
-    }
     model_->Compile(optimiser_type, loss_type, mets);
   }
   catch (std::exception const &e)
@@ -302,9 +299,8 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                                 UseEstimator(&ModelEstimator::LayerAddDenseActivation))
           .CreateMemberFunction("compile", &VMModel::CompileSequential,
                                 UseEstimator(&ModelEstimator::CompileSequential))
-          .CreateMemberFunction(
-              "compile", &VMModel::CompileSequentialWithMetrics,
-              UseEstimator(&ModelEstimator::CompileSequential))  // todo: estimator
+          .CreateMemberFunction("compile", &VMModel::CompileSequentialWithMetrics,
+                                UseEstimator(&ModelEstimator::CompileSequentialWithMetrics))
           .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
           .CreateMemberFunction("evaluate", &VMModel::Evaluate,
                                 UseEstimator(&ModelEstimator::Evaluate))

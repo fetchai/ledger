@@ -90,13 +90,14 @@ public:
   void CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                          fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
-  void CompileSequentialWithMetrics(fetch::vm::Ptr<fetch::vm::String> const &           loss,
-                                    fetch::vm::Ptr<fetch::vm::String> const &           optimiser,
-                                    fetch::vm::Ptr<vm::Array<fetch::vm::String>> const &metrics);
+  void CompileSequentialWithMetrics(
+      fetch::vm::Ptr<fetch::vm::String> const &                    loss,
+      fetch::vm::Ptr<fetch::vm::String> const &                    optimiser,
+      fetch::vm::Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics);
 
-  void CompileSequentialImplementation(fetch::vm::Ptr<fetch::vm::String> const &loss,
-                                       fetch::vm::Ptr<fetch::vm::String> const &optimiser,
-                                       fetch::vm::Ptr<vm::Array<fetch::vm::String>> const &metrics);
+  void CompileSequentialImplementation(fetch::vm::Ptr<fetch::vm::String> const &      loss,
+                                       fetch::vm::Ptr<fetch::vm::String> const &      optimiser,
+                                       std::vector<fetch::ml::ops::MetricType> const &metrics);
 
   void CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
                      fetch::vm::Ptr<vm::Array<math::SizeType>> const &layer_shapes);

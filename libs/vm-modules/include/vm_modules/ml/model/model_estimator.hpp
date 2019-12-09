@@ -79,6 +79,10 @@ public:
   ChargeAmount CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                  fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
+  ChargeAmount CompileSequentialWithMetrics(
+      vm::Ptr<vm::String> const &loss, vm::Ptr<vm::String> const &optimiser,
+      vm::Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics);
+
   ChargeAmount CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
                              fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers);
 
