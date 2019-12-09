@@ -100,7 +100,7 @@ ChargeAmount TensorEstimator::Fill(DataType const & /*value*/)
 
   return static_cast<ChargeAmount>(FILL_PADDED_SIZE_COEF() * padded_size + FILL_SIZE_COEF() * size +
                                    FILL_CONST_COEF()) *
-          COMPUTE_CHARGE_COST;
+         COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount TensorEstimator::FillRandom()
@@ -110,7 +110,7 @@ ChargeAmount TensorEstimator::FillRandom()
 
   return static_cast<ChargeAmount>(FILL_RANDOM_PADDED_SIZE_COEF() * padded_size +
                                    FILL_RANDOM_SIZE_COEF() * size + FILL_RANDOM_CONST_COEF()) *
-          COMPUTE_CHARGE_COST;
+         COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount TensorEstimator::Min()
@@ -120,7 +120,7 @@ ChargeAmount TensorEstimator::Min()
 
   return static_cast<ChargeAmount>(MIN_PADDED_SIZE_COEF() * padded_size + MIN_SIZE_COEF() * size +
                                    MIN_CONST_COEF()) *
-          COMPUTE_CHARGE_COST;
+         COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount TensorEstimator::Max()
@@ -130,7 +130,7 @@ ChargeAmount TensorEstimator::Max()
 
   return static_cast<ChargeAmount>(MAX_PADDED_SIZE_COEF() * padded_size + MAX_SIZE_COEF() * size +
                                    MAX_CONST_COEF()) *
-          COMPUTE_CHARGE_COST;
+         COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount TensorEstimator::Squeeze()
@@ -198,7 +198,7 @@ ChargeAmount TensorEstimator::GetReshapeCost(SizeVector const &new_shape)
 
   return static_cast<ChargeAmount>(RESHAPE_PADDED_SIZE_COEF() * padded_size +
                                    RESHAPE_SIZE_COEF() * size + RESHAPE_CONST_COEF()) *
-          COMPUTE_CHARGE_COST;
+         COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount TensorEstimator::Sum()
@@ -208,7 +208,7 @@ ChargeAmount TensorEstimator::Sum()
 
   return static_cast<ChargeAmount>(SUM_PADDED_SIZE_COEF() * padded_size + SUM_SIZE_COEF() * size +
                                    SUM_CONST_COEF()) *
-          COMPUTE_CHARGE_COST;
+         COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount TensorEstimator::Transpose()
@@ -225,7 +225,7 @@ ChargeAmount TensorEstimator::FromString(fetch::vm::Ptr<fetch::vm::String> const
 {
   return static_cast<ChargeAmount>(FROM_STRING_SIZE_COEF() * string->Length() +
                                    FROM_STRING_CONST_COEF()) *
-          COMPUTE_CHARGE_COST;
+         COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount TensorEstimator::ToString()
@@ -235,7 +235,7 @@ ChargeAmount TensorEstimator::ToString()
 
   return static_cast<ChargeAmount>(TO_STRING_PADDED_SIZE_COEF() * padded_size +
                                    TO_STRING_SIZE_COEF() * size + TO_STRING_CONST_COEF()) *
-          COMPUTE_CHARGE_COST;
+         COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount TensorEstimator::infinite_charge(std::string const &log_msg)

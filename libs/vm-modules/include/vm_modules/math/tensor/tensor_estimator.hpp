@@ -204,11 +204,11 @@ public:
   };
 
 private:
-    static ChargeAmount const LOW_CHARGE{5*fetch::vm::COMPUTE_CHARGE_COST};
+  static ChargeAmount const LOW_CHARGE{5 * fetch::vm::COMPUTE_CHARGE_COST};
 
   static ChargeAmount infinite_charge(std::string const &log_msg = "");
 
-    ChargeAmount              ComputeChargeFromTensorSize(std::size_t factor = 1);
+  ChargeAmount ComputeChargeFromTensorSize(std::size_t factor = 1);
 
   VMObjectType &tensor_;
 };
