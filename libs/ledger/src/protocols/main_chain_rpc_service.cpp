@@ -404,6 +404,8 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             }
           }
 
+          FETCH_LOG_INFO(LOGGING_NAME, "Resolved: ", response.block_number);
+
           if (response.not_on_heaviest ||
               (response.block_number > (block_resolving_->block_number + 10)))
           {
@@ -412,7 +414,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             FETCH_LOG_WARN(
                 LOGGING_NAME,
                 "Received indication we are on a dead fork. Walking back. Peer heaviest: ",
-                response.block_number);
+                response.block_number, " blocks: ", blocks.size());
 
             if (block_resolving_)
             {

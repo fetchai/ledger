@@ -79,7 +79,10 @@ private:
       FETCH_LOG_DEBUG(LOGGING_NAME,
                       "Failed to respond to time travel request for block hash: ", start.ToHex(),
                       ". Error : ", ex.what());
-      return {};
+
+      uint64_t const block_number = chain_.GetHeaviestBlock()->block_number;
+
+      return {Blocks(), Digest(), block_number, false};
     }
   }
 
