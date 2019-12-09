@@ -224,6 +224,8 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
     address = direct_peers[index];
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Querying: ", address.ToBase64());
+
   return address;
 }
 
@@ -347,6 +349,8 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
         rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
                                         MainChainProtocol::TIME_TRAVEL, block_resolving_->hash);
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Attempting to resolve: ", block_resolving_->block_number, " aka 0x", block_resolving_->hash.ToHex(), " Note: gen is: 0x", chain::GENESIS_DIGEST.ToHex());
+
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
 
@@ -398,28 +402,32 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
             // TODO(unknown): this is to be improved later
             if (latest_hash == response.heaviest_hash)
             {
-              next_state = State::SYNCHRONISING;  // we have reached the tip
+              return State::SYNCHRONISED;  // we have reached the tip
             }
           }
 
           FETCH_LOG_INFO(LOGGING_NAME, "Resolved: ", response.block_number);
 
+          uint64_t const attempting_to_resolve = !block_resolving_ ? 0 : block_resolving_->block_number;
+
+
+          if(!block_resolving_)
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "No block set (?)");
+          }
+
           if (blocks.empty() || response.not_on_heaviest ||
-              (response.block_number > (block_resolving_->block_number + 10)))
+              (response.block_number > (attempting_to_resolve + 10)))
           {
             if (block_resolving_)
             {
               block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
             }
-            else
-            {
-              FETCH_LOG_WARN(LOGGING_NAME, "No block set (?)");
-            }
 
             FETCH_LOG_WARN(
                 LOGGING_NAME,
                 "Received indication we are on a dead fork. Walking back. Peer heaviest: ",
-                response.block_number, " blocks: ", blocks.size());
+                response.block_number, " blocks: ", blocks.size(), " heaviest: ", response.heaviest_hash.ToBase64());
 
             if (block_resolving_)
             {
@@ -540,7 +548,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
 MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, State previous)
 {
 
-  if (state_machine_->previous_state() == State::SYNCHRONISED)
+  if (state_machine_->previous_state() != State::SYNCHRONISED)
   {
     timer_to_proceed_.Restart(std::chrono::seconds{uint64_t{PERIODIC_RESYNC_SECONDS}});
   }
@@ -562,14 +570,14 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
     state_machine_->Delay(std::chrono::milliseconds{1000});
     next_state = State::REQUEST_HEAVIEST_CHAIN;
   }
-  else if (previous != State::SYNCHRONISED)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synchronised");
-  }
   else if (timer_to_proceed_.HasExpired())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Kicking forward sync periodically");
     next_state = State::REQUEST_HEAVIEST_CHAIN;
+  }
+  else if (state_machine_->previous_state() != State::SYNCHRONISED)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Synchronised");
   }
   else
   {
