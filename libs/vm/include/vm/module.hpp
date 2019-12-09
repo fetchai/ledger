@@ -187,7 +187,7 @@ public:
       return InternalCreateMemberFunction(name, callable, 0, estimator);
     }
 
-    ClassInterface &EnableOperator(Operator op)
+    ClassInterface &EnableOperator(Operator op, ChargeAmount static_charge)
     {
       TypeIndex const type_index__            = type_index_;
       auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
@@ -197,7 +197,7 @@ public:
       return *this;
     }
 
-    ClassInterface &EnableLeftOperator(Operator op)
+    ClassInterface &EnableLeftOperator(Operator op, ChargeAmount static_charge)
     {
       TypeIndex const type_index__            = type_index_;
       auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
@@ -207,7 +207,40 @@ public:
       return *this;
     }
 
-    ClassInterface &EnableRightOperator(Operator op)
+    ClassInterface &EnableRightOperator(Operator op, ChargeAmount static_charge)
+    {
+      TypeIndex const type_index__            = type_index_;
+      auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
+        compiler->EnableRightOperator(type_index__, op);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+      return *this;
+    }
+
+    template <typename Estimator>
+    ClassInterface &EnableOperator(Operator op, Estimator &&estimator)
+    {
+      TypeIndex const type_index__            = type_index_;
+      auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
+        compiler->EnableOperator(type_index__, op);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+      return *this;
+    }
+
+    template <typename Estimator>
+    ClassInterface &EnableLeftOperator(Operator op, Estimator &&estimator)
+    {
+      TypeIndex const type_index__            = type_index_;
+      auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
+        compiler->EnableLeftOperator(type_index__, op);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+      return *this;
+    }
+
+    template <typename Estimator>
+    ClassInterface &EnableRightOperator(Operator op, Estimator &&estimator)
     {
       TypeIndex const type_index__            = type_index_;
       auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
