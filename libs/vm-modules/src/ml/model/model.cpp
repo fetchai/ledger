@@ -40,6 +40,7 @@ namespace model {
 
 using fetch::math::SizeType;
 using fetch::ml::ops::LossType;
+using fetch::ml::ops::MetricType;
 using fetch::ml::OptimiserType;
 using fetch::ml::details::ActivationType;
 using VMPtrString = Ptr<String>;
@@ -78,6 +79,13 @@ std::map<std::string, uint8_t> const VMModel::model_categories_{
     {"sequential", static_cast<uint8_t>(ModelCategory::SEQUENTIAL)},
     {"regressor", static_cast<uint8_t>(ModelCategory::REGRESSOR)},
     {"classifier", static_cast<uint8_t>(ModelCategory::CLASSIFIER)},
+};
+
+std::map<std::string, MetricType> const VMModel::metrics_{
+    {"categorical accuracy", MetricType::CATEGORICAL_ACCURACY},
+    {"cel", MetricType::CROSS_ENTROPY},
+    {"mse", MetricType ::MEAN_SQUARE_ERROR},
+    {"scel", MetricType ::SOFTMAX_CROSS_ENTROPY},
 };
 
 VMModel::VMModel(VM *vm, TypeId type_id)
@@ -132,6 +140,28 @@ Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
 void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                 fetch::vm::Ptr<fetch::vm::String> const &optimiser)
 {
+  fetch::vm::Ptr<vm::Array<fetch::vm::String>> const &metrics{};
+  CompileSequentialImplementation(loss, optimiser, metrics);
+}
+
+/**
+ * @brief VMModel::CompileSequential
+ * @param loss a valid loss function ["mse", ...]
+ * @param optimiser a valid optimiser name ["adam", "sgd" ...]
+ */
+void VMModel::CompileSequentialWithMetrics(
+    fetch::vm::Ptr<fetch::vm::String> const &           loss,
+    fetch::vm::Ptr<fetch::vm::String> const &           optimiser,
+    fetch::vm::Ptr<vm::Array<fetch::vm::String>> const &metrics)
+{
+  CompileSequentialImplementation(loss, optimiser, metrics);
+}
+
+void VMModel::CompileSequentialImplementation(
+    fetch::vm::Ptr<fetch::vm::String> const &           loss,
+    fetch::vm::Ptr<fetch::vm::String> const &           optimiser,
+    fetch::vm::Ptr<vm::Array<fetch::vm::String>> const &metrics)
+{
   try
   {
     LossType const      loss_type      = ParseName(loss->string(), losses_, "loss function");
@@ -144,7 +174,17 @@ void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
     }
     PrepareDataloader();
     compiled_ = false;
-    model_->Compile(optimiser_type, loss_type);
+
+    // parse metrics
+    std::size_t const       total_layer_shapes = metrics->elements.size();
+    std::vector<MetricType> mets;
+    mets.reserve(total_layer_shapes);
+    for (std::size_t i = 0; i < total_layer_shapes; ++i)
+    {
+      MetricType mt = ParseName((metrics->elements.at(i)).string(), metrics_, "metric");
+      mets.emplace_back(mt);
+    }
+    model_->Compile(optimiser_type, loss_type, mets);
   }
   catch (std::exception const &e)
   {
@@ -262,6 +302,9 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                                 UseEstimator(&ModelEstimator::LayerAddDenseActivation))
           .CreateMemberFunction("compile", &VMModel::CompileSequential,
                                 UseEstimator(&ModelEstimator::CompileSequential))
+          .CreateMemberFunction(
+              "compile", &VMModel::CompileSequentialWithMetrics,
+              UseEstimator(&ModelEstimator::CompileSequential))  // todo: estimator
           .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
           .CreateMemberFunction("evaluate", &VMModel::Evaluate,
                                 UseEstimator(&ModelEstimator::Evaluate))

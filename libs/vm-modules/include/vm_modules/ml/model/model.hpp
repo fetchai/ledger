@@ -90,6 +90,14 @@ public:
   void CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                          fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
+  void CompileSequentialWithMetrics(fetch::vm::Ptr<fetch::vm::String> const &           loss,
+                                    fetch::vm::Ptr<fetch::vm::String> const &           optimiser,
+                                    fetch::vm::Ptr<vm::Array<fetch::vm::String>> const &metrics);
+
+  void CompileSequentialImplementation(fetch::vm::Ptr<fetch::vm::String> const &loss,
+                                       fetch::vm::Ptr<fetch::vm::String> const &optimiser,
+                                       fetch::vm::Ptr<vm::Array<fetch::vm::String>> const &metrics);
+
   void CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
                      fetch::vm::Ptr<vm::Array<math::SizeType>> const &layer_shapes);
 
@@ -148,6 +156,7 @@ private:
   static const std::map<std::string, SupportedLayerType>                 layer_types_;
   static const std::map<std::string, fetch::ml::details::ActivationType> activations_;
   static const std::map<std::string, fetch::ml::ops::LossType>           losses_;
+  static const std::map<std::string, fetch::ml::ops::MetricType>         metrics_;
   static const std::map<std::string, fetch::ml::OptimiserType>           optimisers_;
   static const std::map<std::string, uint8_t>                            model_categories_;
 
