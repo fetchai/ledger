@@ -278,13 +278,13 @@ typename VMModel::DataType VMModel::Evaluate()
 
 vm::Ptr<Array<math::DataType>> VMModel::EvaluateWithMetrics()
 {
-  auto          ml_scores = model_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
-  unsigned long n_scores  = ml_scores.size();
+  auto     ml_scores = model_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+  SizeType n_scores  = ml_scores.size();
 
   vm::Ptr<Array<math::DataType>> scores = this->vm_->CreateNewObject<Array<math::DataType>>(
       this->vm_->GetTypeId<math::DataType>(), static_cast<int32_t>(n_scores));
 
-  for (ulong i{0}; i < n_scores; i++)
+  for (SizeType i{0}; i < n_scores; i++)
   {
     scores->elements.at(i) = ml_scores.at(i);
   }
