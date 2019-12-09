@@ -768,4 +768,37 @@ TEST_F(VMModelTests, DISABLED_regressor_model_test)
   ASSERT_TRUE(toolkit.Compile(regressor_model_src));
   ASSERT_TRUE(toolkit.Run());
 }
+
+TEST_F(VMModelTests, model_with_metric)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          // set up data and labels
+          var data_shape = Array<UInt64>(2);
+          data_shape[0] = 10u64;
+          data_shape[1] = 1000u64;
+          var label_shape = Array<UInt64>(2);
+          label_shape[0] = 1u64;
+          label_shape[1] = 1000u64;
+          var data = Tensor(data_shape);
+          var label = Tensor(label_shape);
+
+          // set up model
+          var model = Model("sequential");
+          model.add("dense", 10u64, 10u64, "relu");
+          model.add("dense", 10u64, 10u64, "relu");
+          model.add("dense", 10u64, 1u64);
+          model.compile("mse", "adam", {"mse"});
+
+          // train the model
+          model.fit(data, label, 32u64);
+
+          // evaluate
+          var mets = model.evaluateMetrics();
+        endfunction
+      )";
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
 }  // namespace

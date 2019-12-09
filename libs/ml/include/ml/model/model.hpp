@@ -107,6 +107,8 @@ public:
   std::string OutputName();
   std::string ErrorName();
 
+  bool DataLoaderIsSet();
+
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
   friend class fetch::vm_modules::ml::model::ModelEstimator;
@@ -276,6 +278,10 @@ void Model<TensorType>::Test(DataType &test_loss)
   {
     throw ml::exceptions::InvalidMode("must compile model before testing");
   }
+  if (!DataLoaderIsSet())
+  {
+    throw ml::exceptions::InvalidMode("must set data before testing");
+  }
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TEST);
 
@@ -297,6 +303,10 @@ void Model<TensorType>::Predict(TensorType &input, TensorType &output)
   {
     throw ml::exceptions::InvalidMode("must compile model before predicting");
   }
+  if (!DataLoaderIsSet())
+  {
+    throw ml::exceptions::InvalidMode("must set data before predicting");
+  }
 
   this->graph_ptr_->SetInput(input_, input);
   output = this->graph_ptr_->Evaluate(output_);
@@ -309,6 +319,10 @@ typename Model<TensorType>::DataVectorType Model<TensorType>::Evaluate(
   if (!compiled_)
   {
     throw ml::exceptions::InvalidMode("must compile model before evaluating");
+  }
+  if (!DataLoaderIsSet())
+  {
+    throw ml::exceptions::InvalidMode("must set data before evaluating");
   }
 
   dataloader_ptr_->SetMode(dl_mode);
@@ -429,6 +443,10 @@ void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
   {
     throw ml::exceptions::InvalidMode("must compile model before training");
   }
+  if (!DataLoaderIsSet())
+  {
+    throw ml::exceptions::InvalidMode("must set data before training");
+  }
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
 
@@ -490,6 +508,11 @@ void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
   loss = loss_;
 }
 
+template <typename TensorType>
+bool Model<TensorType>::DataLoaderIsSet()
+{
+  return dataloader_ptr_->Size() != 0;
+}
 }  // namespace model
 }  // namespace ml
 
