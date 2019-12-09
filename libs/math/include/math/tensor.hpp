@@ -731,8 +731,6 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     default:
       if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
       {
-        std::cout << "c[i]: " << c[i] << std::endl;
-        std::cout << "c[i+1]: " << c[i+1] << std::endl;
         throw exceptions::InvalidNumericCharacter("invalid character used in string to set tensor");
       }
       else
