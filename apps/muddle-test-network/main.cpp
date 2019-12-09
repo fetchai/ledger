@@ -82,6 +82,8 @@ struct Node
     muddle  = muddle::CreateMuddle("TEST", NewCertificate(), *network_manager, external_address);
     address = muddle->GetAddress();
 
+    uri = fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(port));
+
     muddle->Start({port});
     muddle->SetTrackerConfiguration(TrackerConfiguration::AllOn());
 
@@ -110,6 +112,7 @@ struct Node
   NetworkManagerPtr network_manager;
   MuddlePtr         muddle;
   Address           address;
+  Uri               uri;
 
   NetworkManagerPtr http_network_manager;  ///< A separate net. coordinator for the http service(s)
   HTTPServer        http;                  ///< The HTTP server
@@ -140,11 +143,12 @@ struct Network
 
   void AddNode(TrackerConfiguration config)
   {
+    auto uri =
+        fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT + counter - 1));
     nodes.emplace_back(std::make_unique<Node>(static_cast<uint16_t>(BASE_MUDDLE_PORT + counter),
                                               static_cast<uint16_t>(BASE_HTTP_PORT + counter)));
     nodes.back()->muddle->SetTrackerConfiguration(config);
-    nodes.back()->muddle->ConnectTo(
-        fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT + counter - 1)));
+    nodes.back()->muddle->ConnectTo(uri);
     ++counter;
   }
 
@@ -207,6 +211,51 @@ inline void AllToAllConnectivity(std::unique_ptr<Network> &               networ
 }
 
 int main()
+{
+  auto config                      = fetch::muddle::TrackerConfiguration::AllOn();
+  config.max_kademlia_connections  = 2;
+  config.max_longrange_connections = 1;
+
+  uint64_t N       = 10;
+  auto     network = Network::New(N, config);
+
+  //  MakeKademliaNetwork(network);
+  LinearConnectivity(network, std::chrono::seconds(5));
+
+  uint64_t step = N / 4;
+  for (uint64_t i = 0; i < N; i += step)
+  {
+    uint64_t next    = (i + step) % N;
+    auto     address = network->nodes[next]->address;
+
+    network->nodes[i]->muddle->ConnectTo(address);
+  }
+
+  std::string input;
+  while (true)
+  {
+    for (uint64_t i = 0; i < N; ++i)
+    {
+      auto &n1 = network->nodes[i];
+      for (uint64_t j = 0; j < N; ++j)
+      {
+        if (i == j)
+        {
+          continue;
+        }
+        auto &n2 = network->nodes[j];
+        n1->muddle->ConnectTo(n2->address, n2->uri);
+      }
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  }
+  std::getline(std::cin, input);
+
+  network->Stop();
+  return 0;
+}
+
+int mainX()
 {
   auto config                      = fetch::muddle::TrackerConfiguration::AllOn();
   config.max_kademlia_connections  = 2;

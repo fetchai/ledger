@@ -243,11 +243,14 @@ void KademliaTable::ReportSuccessfulConnectAttempt(Uri const &uri)
   auto it = known_uris_.find(uri);
   if (it == known_uris_.end())
   {
-    // TODO(tfr): Consider creating the entry if it does not exist
-    return;
+    PeerInfoPtr info = std::make_shared<PeerInfo>();
+    info->uri        = uri;
+    known_uris_[uri] = info;
+    it               = known_uris_.find(uri);
   }
 
   it->second->failed_attempts = 0;
+  it->second->connected       = true;
   ++(it->second->connection_attempts);
 
   // In case we loose connectivity we allow to immediately reconmnect.
@@ -265,7 +268,7 @@ void KademliaTable::ReportFailedConnectAttempt(Uri const &uri)
 
   ++(it->second->connection_attempts);
   ++(it->second->failed_attempts);
-
+  it->second->connected = false;
   // Exponentially killing the likelihood that we will connect again if failed
   it->second->earliest_next_attempt =
       Clock::now() + std::chrono::seconds(10 * (1 << it->second->failed_attempts));
@@ -278,6 +281,8 @@ void KademliaTable::ReportLeaving(Uri const &uri)
   {
     return;
   }
+
+  it->second->connected = false;
 }
 
 void KademliaTable::ReportLiveliness(Address const &address, Address const &reporter,
@@ -597,7 +602,7 @@ void KademliaTable::ConvertDesiredUrisToAddresses()
   std::unordered_set<Uri> new_uris;
   for (auto const &uri : desired_uris_)
   {
-    if (HasUri(uri))
+    if (IsConnectedToUri(uri))
     {
       auto address = GetAddressFromUri(uri);
 
@@ -698,7 +703,13 @@ void KademliaTable::RemoveDesiredPeer(Address const &address)
 bool KademliaTable::HasUri(Uri const &uri) const
 {
   auto it = known_uris_.find(uri);
-  return (it != known_uris_.end()) && (!it->second->address.empty());
+  return (it != known_uris_.end());
+}
+
+bool KademliaTable::IsConnectedToUri(Uri const &uri) const
+{
+  auto it = known_uris_.find(uri);
+  return (it != known_uris_.end()) && it->second->connected;
 }
 
 KademliaTable::Address KademliaTable::GetAddressFromUri(Uri const &uri) const

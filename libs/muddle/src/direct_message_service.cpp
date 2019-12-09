@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/service_ids.hpp"
 #include "direct_message_service.hpp"
+#include "core/service_ids.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "peer_list.hpp"

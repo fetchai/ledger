@@ -46,6 +46,7 @@ struct PeerInfo
   Timepoint earliest_next_attempt{Clock::now()};
   uint64_t  connection_attempts{0};
   uint64_t  failed_attempts{0};
+  bool      connected{false};
   /// @}
 
   /// Serializable fields
