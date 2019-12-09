@@ -313,6 +313,7 @@ bool VM::Execute(std::string &error, Variant &output)
       Variant &result = stack_[sp_--];
       output          = std::move(result);
     }
+
     // Success
     return true;
   }

@@ -21,11 +21,11 @@ from fetchai.ledger.contract import Contract
 from fetchai.ledger.crypto import Entity
 
 CONTRACT_TEXT = """
-persistent x : UInt8;
+persistent x : Int64;
 
 contract c1_interface
   @action
-  function eleven() : UInt8;
+  function eleven() : Int64;
 endcontract
 
 @action
@@ -72,7 +72,7 @@ function c2c_call(contract_name : String)
 endfunction
 
 @query
-function query_eleven() : UInt8
+function query_eleven() : Int64
   use x;
 
   return x.get();
@@ -81,8 +81,8 @@ endfunction
 
 CONTRACT_TEXT2 = """
 @action
-function eleven() : UInt8
-  return 11u8;
+function eleven() : Int64
+  return 11i64;
 endfunction
 """
 
@@ -99,11 +99,11 @@ def run(options):
     contract2 = Contract(CONTRACT_TEXT2, entity1)
 
     api.sync(api.contracts.create(entity1, contract, 20000))
-    api.sync(api.contracts.create(entity1, contract2, 2000))
+    api.sync(api.contracts.create(entity1, contract2, 20000))
 
     contract_name = "{}.{}".format(
         contract2.digest.to_hex(), contract2.address)
-    api.sync(contract.action(api, 'c2c_call', 400, [entity1], contract_name))
+    api.sync(contract.action(api, 'c2c_call', 1000, [entity1], contract_name))
 
     result = contract.query(api, 'query_eleven')
     assert result == 11, \

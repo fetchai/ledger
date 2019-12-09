@@ -21,12 +21,12 @@ from fetchai.ledger.contract import Contract
 from fetchai.ledger.crypto import Entity
 
 CONTRACT_TEXT = """
-persistent balance_state : UInt64;
-persistent c2c_balance_state : UInt64;
+persistent balance_state : Int64;
+persistent c2c_balance_state : Int64;
 
 contract c1_interface
   @action
-  function c2c_balance() : UInt64;
+  function c2c_balance() : Int64;
 endcontract
 
 @action
@@ -38,7 +38,7 @@ function c2c_call(contract_address : String)
   var c2c_bal = c.c2c_balance();
   c2c_balance_state.set(c2c_bal);
 
-  var bal = balance();
+  var bal = toInt64(balance());
   balance_state.set(bal);
 
   // Test scenario ensures the two have different amounts of funds
@@ -49,14 +49,14 @@ function c2c_call(contract_address : String)
 endfunction
 
 @query
-function query_balance_state() : UInt64
+function query_balance_state() : Int64
   use balance_state;
 
   return balance_state.get();
 endfunction
 
 @query
-function query_c2c_balance_state() : UInt64
+function query_c2c_balance_state() : Int64
   use c2c_balance_state;
 
   return c2c_balance_state.get();
@@ -65,8 +65,8 @@ endfunction
 
 CONTRACT_TEXT2 = """
 @action
-function c2c_balance() : UInt64
-  return balance();
+function c2c_balance() : Int64
+  return toInt64(balance());
 endfunction
 """
 

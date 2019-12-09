@@ -21,11 +21,11 @@ from fetchai.ledger.contract import Contract
 from fetchai.ledger.crypto import Entity
 
 CONTRACT_TEXT = """
-persistent x : UInt8;
+persistent x : Int64;
 
 contract c1_interface
   @action
-  function eleven() : UInt8;
+  function eleven() : Int64;
 endcontract
 
 @action
@@ -37,15 +37,15 @@ function c2c_call(contract_name : String)
 endfunction
 
 @query
-function query_eleven() : UInt8
+function query_eleven() : Int64
   use x;
 
   return x.get();
 endfunction
 
 @action
-function eleven() : UInt8
-  return 11u8;
+function eleven() : Int64
+  return 11i64;
 endfunction
 """
 
