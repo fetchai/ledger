@@ -25,7 +25,6 @@
 #include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/executor.hpp"
-#include "ledger/identifier.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 
 #include "benchmark/benchmark.h"
@@ -40,7 +39,6 @@ using fetch::chain::TransactionBuilder;
 using fetch::chain::Address;
 using fetch::ledger::TokenContract;
 using fetch::ledger::StateSentinelAdapter;
-using fetch::ledger::Identifier;
 using fetch::crypto::ECDSASigner;
 using fetch::BitVector;
 
@@ -77,7 +75,7 @@ void Executor_BasicBenchmark(benchmark::State &state)
 
   // add funds to ensure the transaction passes
   {
-    StateSentinelAdapter adapter{*storage, Identifier{"fetch.token"}, shards};
+    StateSentinelAdapter adapter{*storage, "fetch.token", shards};
 
     TokenContract tokens{};
 

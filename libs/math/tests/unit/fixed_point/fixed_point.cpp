@@ -218,7 +218,7 @@ TEST(FixedPointTest, Conversion_64_64)
   EXPECT_TRUE(largest_fixed_point.Data() < std::numeric_limits<int128_t>::max());
 
   EXPECT_EQ(fp128_t::TOLERANCE.Data(), 0x100000000000);
-  EXPECT_EQ(fp128_t::DECIMAL_DIGITS, 18);
+  EXPECT_EQ(fp128_t::DECIMAL_DIGITS, 19);
 
   double r    = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
   auto   x128 = static_cast<fp128_t>(r) * static_cast<fp128_t>(fp64_t::FP_MAX) -
@@ -234,6 +234,136 @@ TEST(FixedPointTest, Conversion_64_64)
   x128_2   = static_cast<fp128_t>(x32);
   EXPECT_NEAR(static_cast<double>(x128), static_cast<double>(x128_2),
               static_cast<double>(fp32_t::TOLERANCE));
+}
+
+TEST(FixedPointTest, FromString_16_16)
+{
+  // Get raw value
+  fp32_t one("1fp32");
+  fp32_t one2("1.0fp32");
+  fp32_t zero_point_five("0.5fp32");
+  fp32_t one_point_five("1.5fp32");
+  fp32_t two_point_five("2.5fp64");
+  fp32_t m_one_point_five("-1.5fp");
+  fp32_t m_one_point_five_flt(-1.5);
+
+  EXPECT_EQ(zero_point_five.Data(), 0x08000);
+  EXPECT_EQ(one.Data(), 0x10000);
+  EXPECT_EQ(one, one2);
+  EXPECT_EQ(one_point_five.Data(), 0x18000);
+  EXPECT_EQ(two_point_five.Data(), 0x28000);
+  EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
+
+  fp32_t e1("2.718281828459045235360287471352662498");
+  fp32_t e2(2.718281828459045235360287471352662498);
+  EXPECT_TRUE(e1.Near(e2));
+  EXPECT_NE(e1, e2);
+
+  fp32_t::StateClear();
+  fp32_t large1("1442695040888963407359924681001892137");
+  EXPECT_TRUE(fp32_t::IsStateOverflow());
+  fp32_t::StateClear();
+  fp32_t large2("-1442695040888963407359924681001892137");
+  EXPECT_TRUE(fp32_t::IsStateOverflow());
+  EXPECT_EQ(large1, fp32_t::FP_MAX);
+  EXPECT_EQ(large2, fp32_t::FP_MIN);
+
+  fp32_t e4("000000000000001.00010000000000000000000000000000000000000000000");
+  std::cout << e4 << std::endl;
+  EXPECT_EQ(e4, fp32_t("1.0001"));
+  std::cout << fp32_t("1.0001") << std::endl;
+
+  fp32_t e5("000000000000001.010000000000000000000000000000000000000000000");
+  std::cout << e5 << std::endl;
+  EXPECT_EQ(e5, fp32_t("1.01"));
+  std::cout << fp32_t("1.01") << std::endl;
+}
+
+TEST(FixedPointTest, FromString_32_32)
+{
+  // Get raw value
+  fp64_t one("1fp64_t");
+  fp32_t one2("1.0fp64");
+  fp64_t zero_point_five("0.5fp64_t");
+  fp64_t one_point_five("1.5fp64_t");
+  fp64_t two_point_five("2.5fp64_t");
+  fp64_t m_one_point_five("-1.5fp64_t");
+  fp64_t m_one_point_five_em10("-1.5e-5fp64_t");
+  fp64_t m_one_point_five_e10("-1.5e+5fp64_t");
+  fp64_t m_one_point_five_flt(-1.5);
+
+  EXPECT_EQ(zero_point_five.Data(), 0x080000000);
+  EXPECT_EQ(one.Data(), 0x100000000);
+  EXPECT_EQ(one, one2);
+  EXPECT_EQ(one_point_five.Data(), 0x180000000);
+  EXPECT_EQ(two_point_five.Data(), 0x280000000);
+  EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
+
+  fp64_t e1("2.718281828459045235360287471352662498");
+  fp64_t e2(2.718281828459045235360287471352662498);
+  EXPECT_TRUE(e1.Near(e2));
+  EXPECT_NE(e1, e2);
+
+  fp64_t::StateClear();
+  fp64_t large1("1442695040888963407359924681001892137");
+  EXPECT_TRUE(fp64_t::IsStateOverflow());
+  fp64_t::StateClear();
+  fp64_t large2("-1442695040888963407359924681001892137");
+  EXPECT_TRUE(fp64_t::IsStateOverflow());
+  EXPECT_EQ(large1, fp64_t::FP_MAX);
+  EXPECT_EQ(large2, fp64_t::FP_MIN);
+
+  fp64_t e4("000000000000001.0000000010000000000000000000000000000000000000000000");
+  std::cout << e4 << std::endl;
+  EXPECT_EQ(e4, fp64_t("1.000000001"));
+  std::cout << fp64_t("1.000000001") << std::endl;
+
+  fp64_t e5("000000000000001.00000010000000000000000000000000000000000000000000");
+  std::cout << e5 << std::endl;
+  EXPECT_EQ(e5, fp64_t("1.0000001"));
+  std::cout << fp64_t("1.0000001") << std::endl;
+}
+
+TEST(FixedPointTest, FromString_64_64)
+{
+  // Get raw value
+  fp128_t one("1fp128");
+  fp128_t one2("1.0fp128");
+  fp128_t zero_point_five("0.5fp128");
+  fp128_t one_point_five("1.5fp128");
+  fp128_t two_point_five("2.5fp128");
+  fp128_t m_one_point_five("-1.5fp128");
+  fp128_t m_one_point_five_flt(-1.5);
+
+  EXPECT_EQ(zero_point_five.Data(), static_cast<int128_t>(0x8000000000000000));
+  EXPECT_EQ(one.Data(), static_cast<int128_t>(1) << 64);
+  EXPECT_EQ(one, one2);
+  EXPECT_EQ(one_point_five.Data(), static_cast<int128_t>(0x18) << 60);
+  EXPECT_EQ(two_point_five.Data(), static_cast<int128_t>(0x28) << 60);
+  EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
+
+  fp128_t e1("2.718281828459045235360287471352662498");
+  fp128_t e2(2.718281828459045235360287471352662498);
+  EXPECT_TRUE(e1.Near(e2));
+  EXPECT_NE(e1, e2);
+
+  fp128_t::StateClear();
+  fp128_t large1("1442695040888963407359924681001892137");
+  EXPECT_TRUE(fp128_t::IsStateOverflow());
+  fp128_t::StateClear();
+  fp128_t large2("-1442695040888963407359924681001892137");
+  EXPECT_TRUE(fp128_t::IsStateOverflow());
+  EXPECT_EQ(large1, fp128_t::FP_MAX);
+  EXPECT_EQ(large2, fp128_t::FP_MIN);
+
+  fp128_t e4("000000000000001.000000000000000010000000000000000000000000000000000000000000");
+  std::cout << e4 << std::endl;
+  EXPECT_EQ(e4, fp128_t("1.00000000000000001"));
+
+  fp128_t e5("000000000000001.000000000010000000000000000000000000000000000000000000");
+  std::cout << e5 << std::endl;
+  EXPECT_EQ(e5, fp128_t("1.00000000001"));
+  std::cout << fp128_t("1.00000000001") << std::endl;
 }
 
 TEST(FixedPointTest, Constants_16_16)

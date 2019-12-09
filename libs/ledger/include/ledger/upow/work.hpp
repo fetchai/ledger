@@ -46,12 +46,11 @@ public:
   // Construction / Destruction
   Work() = default;
   explicit Work(BlockIndex block_index);
-  Work(Digest digest, chain::Address address, crypto::Identity miner);
+  Work(chain::Address address, crypto::Identity miner);
   Work(Work const &) = default;
   ~Work()            = default;
 
   // Getters
-  Digest const &          contract_digest() const;
   chain::Address const &  address() const;
   crypto::Identity const &miner() const;
   UInt256 const &         nonce() const;
@@ -59,7 +58,6 @@ public:
   BlockIndex              block_index() const;
 
   // Setters
-  void UpdateDigest(Digest digest);
   void UpdateAddress(chain::Address address);
   void UpdateIdentity(crypto::Identity const &identity);
   void UpdateScore(WorkScore score);
@@ -69,7 +67,6 @@ public:
   UInt256 CreateHashedNonce() const;
 
 private:
-  Digest           contract_digest_{};
   chain::Address   contract_address_{};
   crypto::Identity miner_{};
   UInt256          nonce_{};
