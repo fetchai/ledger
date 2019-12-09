@@ -406,9 +406,9 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   }
 
   // Whether to proceed (if threshold peers have also met this condition)
-  const bool is_ok      = (ready_connections_.size() >= require_connections &&
+  const bool is_ok = (ready_connections_.size() >= require_connections &&
                       connections_.size() >= require_connections);
-  condition_to_proceed_ = true;  // TODO(tfr): Temporary
+
   if (!condition_to_proceed_ && is_ok)
   {
     condition_to_proceed_ = true;
@@ -441,7 +441,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
 
   if (!condition_to_proceed_)
   {
-    FETCH_LOG_INFO(
+    FETCH_LOG_DEBUG(
         LOGGING_NAME, NodeString(),
         "Waiting for all peers to be ready before starting DKG. We have: ", can_see.size(),
         " expect: ", require_connections, " Other ready peers: ", ready_connections_.size());

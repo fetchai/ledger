@@ -82,8 +82,6 @@ struct Node
     muddle  = muddle::CreateMuddle("TEST", NewCertificate(), *network_manager, external_address);
     address = muddle->GetAddress();
 
-    uri = fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(port));
-
     muddle->Start({port});
     muddle->SetTrackerConfiguration(TrackerConfiguration::AllOn());
 
@@ -112,7 +110,6 @@ struct Node
   NetworkManagerPtr network_manager;
   MuddlePtr         muddle;
   Address           address;
-  Uri               uri;
 
   NetworkManagerPtr http_network_manager;  ///< A separate net. coordinator for the http service(s)
   HTTPServer        http;                  ///< The HTTP server
@@ -143,12 +140,11 @@ struct Network
 
   void AddNode(TrackerConfiguration config)
   {
-    auto uri =
-        fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT + counter - 1));
     nodes.emplace_back(std::make_unique<Node>(static_cast<uint16_t>(BASE_MUDDLE_PORT + counter),
                                               static_cast<uint16_t>(BASE_HTTP_PORT + counter)));
     nodes.back()->muddle->SetTrackerConfiguration(config);
-    nodes.back()->muddle->ConnectTo(uri);
+    nodes.back()->muddle->ConnectTo(
+        fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(BASE_MUDDLE_PORT + counter - 1)));
     ++counter;
   }
 
@@ -210,59 +206,146 @@ inline void AllToAllConnectivity(std::unique_ptr<Network> &               networ
   }
 }
 
+static constexpr uint16_t SERVICE_ID = 1920;
+static constexpr uint16_t CHANNEL_ID = 101;
+
+class MessageCounter
+{
+public:
+  using MuddleInterface = fetch::muddle::MuddleInterface;
+  using SubscriptionPtr = fetch::muddle::MuddleEndpoint::SubscriptionPtr;
+  using Address         = fetch::muddle::Address;
+  using Endpoint        = fetch::muddle::MuddleEndpoint;
+
+  MessageCounter(fetch::muddle::MuddlePtr &muddle)
+    : message_endpoint{muddle->GetEndpoint()}
+    , message_subscription{message_endpoint.Subscribe(SERVICE_ID, CHANNEL_ID)}
+  {
+    message_subscription->SetMessageHandler(this, &MessageCounter::NewMessage);
+  }
+
+  void NewMessage(fetch::muddle::Packet const &packet, Address const & /*last_hop*/)
+  {
+    std::cout << packet.GetPayload() << std::endl;
+    ++counter;
+  }
+
+  Endpoint &            message_endpoint;
+  SubscriptionPtr       message_subscription;
+  std::atomic<uint64_t> counter{0};
+};
+
 int main()
 {
-  auto config                      = fetch::muddle::TrackerConfiguration::AllOn();
-  config.max_kademlia_connections  = 2;
-  config.max_longrange_connections = 1;
 
-  uint64_t N       = 10;
-  auto     network = Network::New(N, config);
+  {
+    // Creating network
+    std::size_t N       = 10;
+    auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
+    uint64_t    idx     = 0;
+    for (auto &n : network->nodes)
+    {
+      n->muddle->SetPeerTableFile("peer_tableX" + std::to_string(idx) + ".cache");
+      ++idx;
+    }
 
-  //  MakeKademliaNetwork(network);
+    LinearConnectivity(network, std::chrono::seconds(5));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
+    network->Stop();
+  }
+  std::cout << "RESTARTING" << std::endl;
+
+  {
+    // Restarting
+    std::size_t N       = 10;
+    auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
+    uint64_t    idx     = 0;
+    for (auto &n : network->nodes)
+    {
+      n->muddle->SetPeerTableFile("peer_tableX" + std::to_string(idx) + ".cache");
+      ++idx;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(N * 2000));
+  }
+}
+
+int mainYY()
+{
+  // Creating network
+  std::size_t N       = 10;
+  auto        network = Network::New(N, fetch::muddle::TrackerConfiguration::AllOn());
   LinearConnectivity(network, std::chrono::seconds(5));
 
-  uint64_t step = N / 4;
-  for (uint64_t i = 0; i < N; i += step)
-  {
-    uint64_t next    = (i + step) % N;
-    auto     address = network->nodes[next]->address;
+  auto &reciever = network->nodes[0];
 
-    network->nodes[i]->muddle->ConnectTo(address);
+  MessageCounter msgcounter{reciever->muddle};
+
+  for (uint64_t i = 1; i < N; ++i)
+  {
+    auto &sender = network->nodes[i]->muddle->GetEndpoint();
+    sender.Send(reciever->address, SERVICE_ID, CHANNEL_ID, "Hello world");
   }
 
-  std::string input;
-  while (true)
+  // Waiting for all messages to arrive
+  int m = 0;
+  while (msgcounter.counter != N - 1)
   {
-    for (uint64_t i = 0; i < N; ++i)
+    ++m;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    // Maximum wait 100s
+    if (m > 100)
     {
-      auto &n1 = network->nodes[i];
-      for (uint64_t j = 0; j < N; ++j)
-      {
-        if (i == j)
-        {
-          continue;
-        }
-        auto &n2 = network->nodes[j];
-        n1->muddle->ConnectTo(n2->address, n2->uri);
-      }
+      throw std::runtime_error("Did not work!!!");
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
   }
-  std::getline(std::cin, input);
+  std::cout << "STOPPING STOPPING STOPPING STOPPING STOPPING STOPPING " << std::endl;
 
   network->Stop();
   return 0;
 }
 
-int mainX()
+int mainXXX()
 {
-  auto config                      = fetch::muddle::TrackerConfiguration::AllOn();
-  config.max_kademlia_connections  = 2;
-  config.max_longrange_connections = 1;
 
-  uint64_t N       = 40;
-  auto     network = Network::New(N, config);
+  // Creating network
+  std::size_t N       = 10;
+  auto        config  = fetch::muddle::TrackerConfiguration::DefaultConfiguration();
+  auto        network = Network::New(N, config);
+  AllToAllConnectivity(network, std::chrono::seconds(5));
+
+  // Waiting for the network to settle.
+  std::this_thread::sleep_for(std::chrono::milliseconds(N * 1000));
+
+  while (true)
+  {
+    std::size_t total_in{0};
+    std::size_t total_out{0};
+    std::size_t total{0};
+    std::size_t total2{0};
+
+    for (auto const &node : network->nodes)
+    {
+      auto &ep = node->muddle->GetEndpoint();
+      //      auto const &peer_tracker = ep.peer_tracker();
+
+      total_in += node->muddle->GetIncomingConnectedPeers().size();
+      total_out += node->muddle->GetOutgoingConnectedPeers().size();
+      total += node->muddle->GetDirectlyConnectedPeers().size();
+      total2 += ep.GetDirectlyConnectedPeers().size();
+    }
+    std::cout << total_out << "  " << total_in << " " << total << " " << total2 << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+  }
+
+  network->Stop();
+}
+
+int mainXX()
+{
+  uint64_t N       = 10;
+  auto     network = Network::New(N);
 
   //  MakeKademliaNetwork(network);
   LinearConnectivity(network, std::chrono::seconds(5));

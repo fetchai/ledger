@@ -91,8 +91,9 @@ public:
   settings::Setting<uint32_t> num_executors;
   /// @}
 
-  /// @name Genesis File
+  /// @name State File
   /// @{
+  settings::Setting<bool>        load_genesis_file;
   settings::Setting<std::string> genesis_file_location;
   /// @}
 
@@ -107,12 +108,6 @@ public:
   settings::Setting<uint64_t> max_cabinet_size;
   settings::Setting<uint64_t> stake_delay_period;
   settings::Setting<uint64_t> aeon_period;
-  /// @}
-
-  /// @name Error handling
-  /// @{
-  settings::Setting<bool> shutdown_on_critical_failure;
-  settings::Setting<bool> allow_crashing;
   /// @}
 
   // Operators

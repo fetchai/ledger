@@ -74,6 +74,7 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
   cfg.peers_update_cycle_ms = settings.peer_update_interval.value();
   cfg.disable_signing       = settings.disable_signing.value();
   cfg.sign_broadcasts       = false;
+  cfg.load_genesis_file     = settings.load_genesis_file.value();
   cfg.kademlia_routing      = settings.kademlia_routing.value();
   cfg.genesis_file_location = settings.genesis_file_location.value();
   cfg.proof_of_stake        = settings.proof_of_stake.value();
