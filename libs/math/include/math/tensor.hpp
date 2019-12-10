@@ -35,6 +35,7 @@
 #include "math/tensor_iterator.hpp"
 #include "math/tensor_slice_iterator.hpp"
 #include "math/tensor_view.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/memory/array.hpp"
 
 #include <cassert>
@@ -121,7 +122,10 @@ public:
     data_ = container_data;
   }
 
-  static Tensor FromString(byte_array::ConstByteArray const &c);
+  template<typename T1 = T>
+  static Tensor FromString(byte_array::ConstByteArray const &c, fetch::math::meta::IfIsNonFixedPointArithmetic<T1> * /*unused */  = nullptr);
+  template<typename T1 = T>
+  static Tensor FromString(byte_array::ConstByteArray const &c, fetch::math::meta::IfIsFixedPoint<T1> * /*unused */ = nullptr);
   explicit Tensor(SizeType const &n);
   Tensor(Tensor &&other) noexcept = default;
   Tensor(Tensor const &other)     = default;
@@ -694,7 +698,8 @@ private:
  * @return Return Tensor with the specified values
  */
 template <typename T, typename C>
-Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
+template<typename T1>
+Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c, fetch::math::meta::IfIsNonFixedPointArithmetic<T1> * /*unused */)
 {
   Tensor            ret;
   SizeType          n = 1;
@@ -731,7 +736,76 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       else
       {
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
-        auto        float_val = std::atof(cur_elem.c_str());
+        auto        float_val = static_cast<T>(std::stod(cur_elem));
+        elems.emplace_back(Type(float_val));
+      }
+      break;
+    }
+  }
+  SizeType m = elems.size() / n;
+
+  if ((m * n) != elems.size())
+  {
+    failed = true;
+  }
+
+  if (!failed)
+  {
+    ret.Resize({n, m});
+
+    SizeType k = 0;
+    for (SizeType i = 0; i < n; ++i)
+    {
+      for (SizeType j = 0; j < m; ++j)
+      {
+        ret(i, j) = elems[k++];
+      }
+    }
+  }
+
+  return ret;
+}
+
+template <typename T, typename C>
+template<typename T1>
+Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c, fetch::math::meta::IfIsFixedPoint<T1> * /*unused */)
+{
+  Tensor            ret;
+  SizeType          n = 1;
+  std::vector<Type> elems;
+  elems.reserve(1024);
+  bool failed = false;
+
+  // Text parsing loop
+  for (SizeType i = 0; i < c.size();)
+  {
+    SizeType last = i;
+    switch (c[i])
+    {
+    case ';':
+      if (i < c.size() - 1)
+      {
+        ++n;
+      }
+      ++i;
+      break;
+    case '+':
+    case ',':
+    case ' ':
+    case '\n':
+    case '\t':
+    case '\r':
+      ++i;
+      break;
+    default:
+      if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
+      {
+        throw exceptions::InvalidNumericCharacter("invalid character used in string to set tensor");
+      }
+      else
+      {
+        std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
+        auto        float_val = static_cast<T>(cur_elem);
         elems.emplace_back(Type(float_val));
       }
       break;
