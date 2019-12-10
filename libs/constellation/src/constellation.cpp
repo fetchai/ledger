@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#define MEMU_IMPLEMENTATION
 #include "constellation/constellation.hpp"
 
 #include "beacon/beacon_service.hpp"
@@ -402,8 +401,6 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   , uptime_{telemetry::Registry::Instance().CreateCounter(
         "ledger_uptime_ticks_total",
         "The number of intervals that ledger instance has been alive for")}
-  , memory_usage_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
-        "ledger_memory_usage", "The total amount of memory used by the process.")}
 {
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",
@@ -703,7 +700,6 @@ bool Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
 
     // update the uptime counter
     uptime_->increment();
-    memory_usage_->set(memu_get_curr_rss());
   }
 
   //---------------------------------------------------------------

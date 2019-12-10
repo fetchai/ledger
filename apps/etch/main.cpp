@@ -33,10 +33,8 @@
 #include "vm/string.hpp"
 #include "vm/variant.hpp"
 #include "vm/vm.hpp"
-#include "vm_modules/core/disaster.hpp"
 #include "vm_modules/vm_factory.hpp"
 
-#include <csignal>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -53,21 +51,8 @@ namespace {
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
 using fetch::byte_array::ToHex;
-using fetch::json::JSONDocument;
-using fetch::vm_modules::VMFactory;
 
 using namespace fetch::vm;
-
-void ThrowException(int signal)
-{
-  switch (signal)
-  {
-  case SIGSEGV:
-    throw std::runtime_error("Segmentation fault.");
-  case SIGFPE:
-    throw std::runtime_error("Floating point exception.");
-  }
-}
 
 class Parameters
 {
@@ -295,9 +280,6 @@ bool HasVersionFlag(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-  std::signal(SIGSEGV, ThrowException);
-  std::signal(SIGFPE, ThrowException);
-
   // version checking
   if (HasVersionFlag(argc, argv))
   {

@@ -17,18 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
-#include "logging/logging.hpp"
-
-#include <atomic>
-#include <csignal>
-#include <map>
-#include <memory>
 #include <mutex>
-#include <sstream>
-#include <string>
-#include <thread>
-#include <utility>
 
 namespace fetch {
 
