@@ -26,6 +26,7 @@
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"
+#include "ledger/chaincode/smart_contract_factory.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/fetch_msgpack.hpp"
 #include "ledger/state_adapter.hpp"
@@ -60,6 +61,8 @@ namespace fetch {
 namespace ledger {
 
 namespace {
+
+constexpr std::size_t MAX_C2C_CALL_DEPTH = 16u;
 
 /**
  * Validate any addresses in the params list against the TX given
@@ -495,7 +498,117 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
   // vm->SetChargeLimit(123);
   // vm->UpdateCharges({});
 
+  std::stringstream console;
+  vm->AttachOutputDevice(vm::VM::STDOUT, console);
   vm->SetIOObserver(state());
+
+  std::unordered_set<chain::Address> call_history{tx.contract_address()};
+  vm::ContractInvocationHandler      contract_invocation_handler;
+  contract_invocation_handler =
+      [this, &contract_invocation_handler, tx, &call_history](
+          vm::VM *vm, std::string const &identity, Executable::Contract const & /* contract */,
+          Executable::Function const &function, fetch::vm::VariantArray parameters,
+          std::string &error, vm::Variant &output) -> bool {
+    //
+    auto const kind = vm::DetermineKind(function);
+    if (kind != FunctionDecoratorKind::ACTION)
+    {
+      error =
+          "Contract-to-contract calls are currently allowed only between @action-annotated "
+          "functions";
+
+      return false;
+    }
+
+    if (call_history.size() > MAX_C2C_CALL_DEPTH)
+    {
+      error = "Maximum contract-to-contract call depth (" + std::to_string(MAX_C2C_CALL_DEPTH) +
+              ") exceeded";
+
+      return false;
+    }
+
+    chain::Address called_contract_address;
+    if (!chain::Address::Parse(identity, called_contract_address))
+    {
+      error = "Invalid contract address format '" + identity + "'";
+
+      return false;
+    }
+
+    if (call_history.find(called_contract_address) != call_history.end())
+    {
+      error = "Contract-to-contract call cycle detected";
+
+      return false;
+    }
+
+    call_history.insert(called_contract_address);
+
+    decltype(auto) c = context();
+
+    // TODO(LDGR-642) charge for reading from storage
+    auto loaded_contract = CreateSmartContract<SmartContract>(called_contract_address, *c.storage);
+    if (loaded_contract == nullptr)
+    {
+      error = "Failed to load contract " +
+              static_cast<std::string>(called_contract_address.display()) + " from storage";
+
+      return false;
+    }
+
+    auto &module = *(loaded_contract->module_);
+
+    vm_modules::ledger::BindBalanceFunction(module, *loaded_contract);
+    vm_modules::ledger::BindTransferFunction(module, *loaded_contract);
+    module.CreateFreeFunction("getContext",
+                              [&loaded_contract](vm::VM *) -> vm_modules::ledger::ContextPtr {
+                                return loaded_contract->context_;
+                              });
+
+    vm::VM vm2{&module};
+    loaded_contract->context_ =
+        vm_modules::ledger::Context::Factory(&vm2, tx, context().block_index);
+
+    vm::Compiler compiler{&module};
+
+    std::vector<std::string> errors{};
+
+    vm2.SetIOObserver(vm->GetIOObserver());
+    vm2.SetContractInvocationHandler(contract_invocation_handler);
+    vm2.AttachOutputDevice(fetch::vm::VM::STDOUT, vm->GetOutputDevice(fetch::vm::VM::STDOUT));
+
+    // Ensure the new VM breaks when charge limit is reached
+    auto const reference_charge = vm->GetChargeTotal();
+    vm2.SetChargeLimit(vm->GetChargeLimit());
+    vm2.IncreaseChargeTotal(reference_charge);
+
+    vm::ParameterPack param_pack{vm2.registered_types(), std::move(parameters)};
+
+    ContractContext ctx{c.token_contract, called_contract_address, c.storage, c.state_adapter,
+                        c.block_index};
+    ContractContextAttacher raii{*loaded_contract, ctx};
+    c.state_adapter->PushContext(identity);
+
+    bool const success =
+        vm2.Execute(*loaded_contract->executable(), function.name, error, output, param_pack);
+    if (!success)
+    {
+      std::ostringstream ss;
+      ss << "Execution of function " << function.name << " from contract " << identity
+         << " failed with error \"" << error << "\"";
+      error = ss.str();
+    }
+
+    c.state_adapter->PopContext();
+    vm->IncreaseChargeTotal(vm2.GetChargeTotal() - reference_charge);
+
+    call_history.erase(called_contract_address);
+
+    return success;
+  };
+
+  vm->SetContractInvocationHandler(contract_invocation_handler);
 
   // look up the function / entry point which will be executed
   Executable::Function const *target_function = executable_->FindFunction(name);
@@ -533,15 +646,12 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
 
   // Execute the requested function
   std::string        error;
-  std::stringstream  console;
   fetch::vm::Variant output;
   auto               status{Status::OK};
 
-  vm->AttachOutputDevice(vm::VM::STDOUT, console);
-
   if (!vm->Execute(*executable_, name, error, output, params))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
+    FETCH_LOG_WARN(LOGGING_NAME, "Runtime error: ", error);
     status = Status::FAILED;
   }
 
@@ -606,7 +716,7 @@ Contract::Result SmartContract::InvokeInit(chain::Address const &    owner,
 
   if (!vm->Execute(*executable_, init_fn_name_, error, output, params))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
+    FETCH_LOG_WARN(LOGGING_NAME, "Runtime error: ", error);
     status = Status::FAILED;
   }
 
