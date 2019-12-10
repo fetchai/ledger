@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/array.hpp"
+#include "vm/variant.hpp"
 #include "vm_test_toolkit.hpp"
 
 #include "gtest/gtest.h"
@@ -26,19 +28,6 @@
 namespace {
 
 using namespace fetch::vm;
-
-ChargeAmount const low_charge_limit  = 10;
-ChargeAmount const high_charge_limit = 1000;
-
-ChargeAmount const affordable_charge = 10;
-ChargeAmount const expensive_charge  = 1000;
-
-auto affordable_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
-  return static_cast<ChargeAmount>(low_charge_limit + x * y);
-};
-auto expensive_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
-  return static_cast<ChargeAmount>(high_charge_limit + x * y);
-};
 
 auto const handler = [](VM * /*vm*/, uint8_t /*unused*/, uint16_t /*unused*/) -> bool {
   return true;
@@ -83,6 +72,34 @@ public:
 
   void SetIndexedValue(AnyInteger const & /*unused*/, int16_t /*unused*/)
   {}
+};
+
+ChargeAmount const low_charge_limit  = 10;
+ChargeAmount const high_charge_limit = 1000;
+
+ChargeAmount const affordable_charge = 10;
+ChargeAmount const expensive_charge  = 1000;
+
+ChargeAmount const max_charge_amount = std::numeric_limits<ChargeAmount>::max();
+
+auto affordable_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
+  return static_cast<ChargeAmount>(low_charge_limit + x * y);
+};
+auto expensive_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
+  return static_cast<ChargeAmount>(high_charge_limit + x * y);
+};
+auto affordable_member_estimator = [](Ptr<CustomType> const & /*this_*/, uint8_t x,
+                                      uint16_t y) -> ChargeAmount {
+  return static_cast<ChargeAmount>(low_charge_limit + x * y);
+};
+auto expensive_member_estimator = [](Ptr<CustomType> const & /*this_*/, uint8_t x,
+                                     uint16_t y) -> ChargeAmount {
+  return static_cast<ChargeAmount>(high_charge_limit + x * y);
+};
+auto max_charge_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
+  return max_charge_amount;
+  FETCH_UNUSED(x);
+  FETCH_UNUSED(y);
 };
 
 class VmChargeTests : public ::testing::Test
@@ -132,6 +149,20 @@ TEST_F(VmChargeTests, execution_fails_when_charge_limit_exceeded)
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_FALSE(toolkit.Run(nullptr, low_charge_limit));
+}
+
+TEST_F(VmChargeTests, functor_bind_with_charge_estimate_execution_does_not_overflow_charge_total)
+{
+  toolkit.module().CreateFreeFunction("overflowExpensive", handler, max_charge_amount);
+
+  static char const *TEXT = R"(
+    function main()
+      overflowExpensive(3u8, 4u16);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run(nullptr, max_charge_amount));
 }
 
 TEST_F(VmChargeTests, functor_bind_with_charge_estimate_execution_fails_when_limit_exceeded)
@@ -382,7 +413,7 @@ TEST_F(VmChargeTests,
   toolkit.module()
       .CreateClassType<CustomType>("CustomType")
       .CreateConstructor(&CustomType::Constructor)
-      .CreateMemberFunction("tooExpensive", &CustomType::TooExpensive, expensive_estimator);
+      .CreateMemberFunction("tooExpensive", &CustomType::TooExpensive, expensive_member_estimator);
 
   static char const *TEXT = R"(
     function main()
@@ -402,7 +433,7 @@ TEST_F(
   toolkit.module()
       .CreateClassType<CustomType>("CustomType")
       .CreateConstructor(&CustomType::Constructor)
-      .CreateMemberFunction("affordable", &CustomType::Affordable, affordable_estimator);
+      .CreateMemberFunction("affordable", &CustomType::Affordable, affordable_member_estimator);
 
   static char const *TEXT = R"(
     function main()
@@ -454,15 +485,32 @@ TEST_F(
 }
 
 TEST_F(VmChargeTests,
+       functor_bind_with_charge_estimate_execution_does_not_overflow_charge_total_with_estimator)
+{
+  toolkit.module().CreateFreeFunction("overflowExpensive", handler, max_charge_estimator);
+
+  static char const *TEXT = R"(
+    function main()
+      overflowExpensive(3u8, 4u16);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_FALSE(toolkit.Run(nullptr, max_charge_amount));
+}
+
+TEST_F(VmChargeTests,
        index_operator_bind_with_charge_estimate_execution_fails_when_limit_exceeded_with_estimator)
 {
   toolkit.module()
       .CreateClassType<CustomType>("CustomType")
       .CreateConstructor(&CustomType::Constructor)
-      .EnableIndexOperator(
-          &CustomType::GetIndexedValue, &CustomType::SetIndexedValue,
-          [](AnyInteger const &) -> ChargeAmount { return expensive_charge; },
-          [](AnyInteger const &, int16_t const &) -> ChargeAmount { return expensive_charge; });
+      .EnableIndexOperator(&CustomType::GetIndexedValue, &CustomType::SetIndexedValue,
+                           [](Ptr<CustomType> const &, AnyInteger const &) -> ChargeAmount {
+                             return expensive_charge;
+                           },
+                           [](Ptr<CustomType> const &, AnyInteger const &,
+                              int16_t const &) -> ChargeAmount { return expensive_charge; });
 
   static char const *TEXT = R"(
     function main()
@@ -482,10 +530,12 @@ TEST_F(VmChargeTests,
   toolkit.module()
       .CreateClassType<CustomType>("CustomType")
       .CreateConstructor(&CustomType::Constructor)
-      .EnableIndexOperator(
-          &CustomType::GetIndexedValue, &CustomType::SetIndexedValue,
-          [](AnyInteger const &) -> ChargeAmount { return affordable_charge; },
-          [](AnyInteger const &, int16_t const &) -> ChargeAmount { return affordable_charge; });
+      .EnableIndexOperator(&CustomType::GetIndexedValue, &CustomType::SetIndexedValue,
+                           [](Ptr<CustomType> const &, AnyInteger const &) -> ChargeAmount {
+                             return affordable_charge;
+                           },
+                           [](Ptr<CustomType> const &, AnyInteger const &,
+                              int16_t const &) -> ChargeAmount { return affordable_charge; });
 
   static char const *TEXT = R"(
     function main()

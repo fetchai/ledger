@@ -63,7 +63,7 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
         handle_query_result.reset();
       });
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());
       SendExceptionReply("search", current_uri, e, endpoint);
@@ -96,7 +96,7 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
         });
       }
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());
       SendExceptionReply("update", current_uri, e, endpoint);
@@ -133,7 +133,7 @@ void SearchTaskFactory::ProcessMessageWithUri(const Uri &current_uri, ConstCharA
         }
       });
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "EXCEPTION: ", e.what());
       SendExceptionReply("remove", current_uri, e, endpoint);
@@ -191,8 +191,9 @@ void SearchTaskFactory::ExecuteQuery(std::shared_ptr<Branch> &          root,
   auto                             this_sp = shared_from_this();
   std::weak_ptr<SearchTaskFactory> this_wp = this_sp;
 
-  auto result_future = std::make_shared<
-      FutureCombiner<FutureComplexType<std::shared_ptr<IdentifierSequence>>, IdentifierSequence>>();
+  auto result_future = std::make_shared<fetch::oef::base::FutureCombiner<
+      fetch::oef::base::FutureComplexType<std::shared_ptr<IdentifierSequence>>,
+      IdentifierSequence>>();
 
   result_future->SetResultMerger([](std::shared_ptr<IdentifierSequence> &      results,
                                     const std::shared_ptr<IdentifierSequence> &res) {

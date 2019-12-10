@@ -40,6 +40,7 @@ class Ptr;
 struct Variant;
 class Address;
 struct String;
+struct Fixed128;
 
 template <typename T>
 using IsPrimitive =
@@ -72,6 +73,12 @@ using IsAddress = std::is_base_of<Address, T>;
 
 template <typename T>
 using IsString = std::is_base_of<String, std::decay_t<T>>;
+
+template <typename T>
+using IsFixed128 = std::is_base_of<Fixed128, std::decay_t<T>>;
+
+template <typename T, typename R = void>
+using IfIsPtrFixed128 = std::enable_if_t<IsFixed128<T>::value, R>;
 
 template <typename T, typename R = void>
 using IfIsExternal = std::enable_if_t<
@@ -177,7 +184,17 @@ public:
 
   std::string GetTypeName() const;
 
+  bool IsTemporary() const
+  {
+    return ref_count_ == 1;
+  }
+
 protected:
+  std::size_t RefCount() const noexcept
+  {
+    return ref_count_;
+  }
+
   Variant &Push();
   Variant &Pop();
   Variant &Top();
@@ -316,7 +333,7 @@ public:
 
   std::size_t RefCount() const noexcept
   {
-    return ptr_->ref_count_;
+    return ptr_->RefCount();
   }
 
 private:
@@ -447,6 +464,15 @@ auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
 
   case TypeIds::Float64:
     return Functor<double>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Fixed32:
+    return Functor<fixed_point::fp32_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Fixed64:
+    return Functor<fixed_point::fp64_t>{}(std::forward<Args>(args)...);
+
+  case TypeIds::Fixed128:
+    return Functor<Ptr<fixed_point::fp128_t>>{}(std::forward<Args>(args)...);
 
   case TypeIds::String:
     return Functor<Ptr<String>>{}(std::forward<Args>(args)...);

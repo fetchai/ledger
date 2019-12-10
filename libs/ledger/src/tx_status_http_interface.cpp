@@ -56,33 +56,33 @@ constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_
     case ContractExecutionStatus::SUCCESS:
       return PublicTxStatus::EXECUTED;
 
-    case ContractExecutionStatus::CHAIN_CODE_LOOKUP_FAILURE:
-      return PublicTxStatus::CHAIN_CODE_LOOKUP_FAILURE;
-
-    case ContractExecutionStatus::CHAIN_CODE_EXEC_FAILURE:
-      return PublicTxStatus::CHAIN_CODE_EXEC_FAILURE;
-
-    case ContractExecutionStatus::CONTRACT_LOOKUP_FAILURE:
-      return PublicTxStatus::CONTRACT_LOOKUP_FAILURE;
+    case ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS:
+      return PublicTxStatus::INSUFFICIENT_AVAILABLE_FUNDS;
 
     case ContractExecutionStatus::CONTRACT_NAME_PARSE_FAILURE:
       return PublicTxStatus::CONTRACT_NAME_PARSE_FAILURE;
 
-    case ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS:
-      return PublicTxStatus::INSUFFICIENT_AVAILABLE_FUNDS;
+    case ContractExecutionStatus::CONTRACT_LOOKUP_FAILURE:
+      return PublicTxStatus::CONTRACT_LOOKUP_FAILURE;
 
-    case ContractExecutionStatus::INSUFFICIENT_CHARGE:
-      return PublicTxStatus::INSUFFICIENT_CHARGE;
+    case ContractExecutionStatus::ACTION_LOOKUP_FAILURE:
+      return PublicTxStatus::ACTION_LOOKUP_FAILURE;
+
+    case ContractExecutionStatus::CONTRACT_EXECUTION_FAILURE:
+      return PublicTxStatus::CONTRACT_EXECUTION_FAILURE;
 
     case ContractExecutionStatus::TRANSFER_FAILURE:
       return PublicTxStatus::TRANSFER_FAILURE;
 
-    case ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK:
-      return PublicTxStatus::TX_NOT_VALID_FOR_BLOCK;
+    case ContractExecutionStatus::INSUFFICIENT_CHARGE:
+      return PublicTxStatus::INSUFFICIENT_CHARGE;
 
-    case ContractExecutionStatus::NOT_RUN:
-    case ContractExecutionStatus::RESOURCE_FAILURE:
     case ContractExecutionStatus::TX_LOOKUP_FAILURE:
+    case ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK:
+    case ContractExecutionStatus::TX_PERMISSION_DENIED:
+    case ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE:
+    case ContractExecutionStatus::NOT_RUN:
+    case ContractExecutionStatus::INTERNAL_ERROR:
     case ContractExecutionStatus::INEXPLICABLE_FAILURE:
       break;
     }

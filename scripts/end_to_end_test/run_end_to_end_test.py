@@ -25,12 +25,13 @@ import yaml
 from threading import Event
 from pathlib import Path
 from threading import Event
+import operator
 
 from fetch.testing.testcase import ConstellationTestCase, DmlfEtchTestCase
 from fetch.cluster.utils import output, verify_file, yaml_extract
 
 from fetchai.ledger.api import LedgerApi
-from fetchai.ledger.crypto import Entity
+from fetchai.ledger.crypto import Entity, Address
 
 from .smart_contract_tests.synergetic_utils import SynergeticContractTestHelper
 
@@ -112,6 +113,8 @@ def setup_test(test_yaml, test_instance):
                                  expected=False, expect_type=int, default=10)
     pos_mode = yaml_extract(test_yaml, 'pos_mode', expected=False,
                             expect_type=bool, default=False)
+    num_lanes = yaml_extract(test_yaml, 'lanes', expected=False,
+                             expect_type=int, default=1)
 
     test_instance._number_of_nodes = number_of_nodes
     test_instance._node_load_directory = node_load_directory
@@ -119,6 +122,7 @@ def setup_test(test_yaml, test_instance):
     test_instance._nodes_are_mining = mining_nodes
     test_instance._max_test_time = max_test_time
     test_instance._pos_mode = pos_mode
+    test_instance._lanes = num_lanes
 
     # Watchdog will trigger this if the tests exceeds allowed bounds. Note stopping the test cleanly is
     # necessary to preserve output logs etc.
@@ -126,7 +130,7 @@ def setup_test(test_yaml, test_instance):
         output(
             "***** Shutting down test due to failure!. Debug YAML: {} *****\n".format(test_yaml))
         test_instance.stop()
-        # test_instance.dump_debug()
+        test_instance.dump_debug()
         os._exit(1)
 
     watchdog = TimerWatchdog(
@@ -360,11 +364,25 @@ def get_nodes_private_key(test_instance, index):
         os.path.dirname(test_instance._yaml_file) + "/input_files")
 
     key_path = expected_ouptut_dir + "/{}.key".format(index)
-    verify_file(key_path)
+    if not os.path.isfile(key_path):
+        output("Couldn't find expected file: {}".format(key_path))
+        return None
 
     private_key = open(key_path, "rb").read(32)
 
     return private_key
+
+
+def set_nodes_private_key(test_instance, index, entity):
+    # Path to config files (should already be generated)
+    expected_ouptut_dir = os.path.abspath(
+        os.path.dirname(test_instance._yaml_file) + "/input_files")
+
+    if not os.path.exists(expected_ouptut_dir):
+        os.makedirs(expected_ouptut_dir)
+
+    key_path = expected_ouptut_dir + "/{}.key".format(index)
+    open(key_path, "wb").write(entity.private_key_bytes)
 
 
 def destake(parameters, test_instance):
@@ -447,13 +465,26 @@ def create_wealth(parameters, test_instance):
 
         # create the entity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
-        api.sync(api.tokens.wealth(entity, amount))
+        set_nodes_private_key(test_instance, node_index, entity)
+        tx = api.tokens.wealth(entity, amount)
+        for i in range(10):
+            output('Create balance of: ', amount)
+            api.sync(tx, timeout=120, hold_state_sec=20)
+            for j in range(5):
+                b = api.tokens.balance(entity)
+                output('Current balance: ', b)
+                if b >= amount:
+                    return
+                time.sleep(5)
+            time.sleep(5)
+        raise Exception("Failed to create wealth")
 
 
 def create_synergetic_contract(parameters, test_instance):
     nodes = parameters["nodes"]
     name = parameters["name"]
     fee_limit = parameters["fee_limit"]
+    transfer_amount = parameters.get("transfer_amount", -1)
     for node_index in nodes:
         node_host = "localhost"
         node_port = test_instance._nodes[node_index]._port_start
@@ -462,11 +493,15 @@ def create_synergetic_contract(parameters, test_instance):
 
         # create the entity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
-
+        output('Create contract, available balance: ',
+               api.tokens.balance(entity))
         helper = SynergeticContractTestHelper(
             name, api, entity, test_instance._workspace)
         helper.create_new(fee_limit)
         test_instance._nodes[node_index]._contract = helper
+        if transfer_amount > 0:
+            api.sync(api.tokens.transfer(
+                entity, helper.contract.address, transfer_amount, 1000))
 
 
 def run_contract(parameters, test_instance):
@@ -490,7 +525,7 @@ def run_contract(parameters, test_instance):
             contract_helper = SynergeticContractTestHelper(
                 contract_name, api, entity, test_instance._workspace)
             contract_helper.load()
-
+        output('Submit data, available balance: ', api.tokens.balance(entity))
         contract_helper.submit_random_data(10, (0, 200))
         api.wait_for_blocks(wait_for_blocks_num)
         valid = contract_helper.validate_execution()
@@ -523,7 +558,7 @@ def verify_chain_sync(parameters, test_instance):
 
 def wait_network_ready(parameters, test_instance):
     sleep_time = parameters.get("sleep", 2)
-    max_trials = parameters.get("max_trials", 10)
+    max_trials = parameters.get("max_trials", 20)
     for i in range(max_trials):
         try:
             if test_instance.network_ready():
@@ -533,6 +568,90 @@ def wait_network_ready(parameters, test_instance):
         time.sleep(sleep_time)
     raise RuntimeError(
         f"Network readiness check failed, because reached max trials ({max_trials})")
+
+
+def query_balance(parameters, test_instance):
+    nodes = parameters["nodes"]
+    variable = parameters["save_as"]
+    for node_index in nodes:
+        node_instance = test_instance._nodes[node_index]
+        node_host = "localhost"
+        node_port = node_instance._port_start
+
+        api = LedgerApi(node_host, node_port)
+
+        # create the entity from the node's private key
+        entity = Entity(get_nodes_private_key(test_instance, node_index))
+        b = api.tokens.balance(entity)
+        address = Address(entity)
+        output(
+            f"Requested balance ({b}) {address.to_hex()}, saved as {variable}")
+        if not hasattr(node_instance, "_variables"):
+            setattr(node_instance, "_variables", {})
+        node_instance._variables[variable] = b
+
+
+def execute_expression(parameters, test_instance):
+    nodes = parameters["nodes"]
+    expression = parameters["expression"]
+    ops = {
+        "==": operator.eq,
+        "<=": operator.le,
+        ">=": operator.ge,
+        ">": operator.gt,
+        "<": operator.lt,
+    }
+    op = None
+    ls = None
+    rs = None
+    for key in ops:
+        if expression.find(key) != -1:
+            ls, rs = expression.split(key)
+            ls = ls.replace(" ", "")
+            rs = rs.replace(" ", "")
+            op = key
+            break
+    print("ls='", ls, "'")
+    print("op='", op, "'")
+    print("rs='", rs, "'")
+    if op is None:
+        raise RuntimeError(
+            f"Expression '{expression}' not supported! Available ops: {ops.keys()}")
+
+    for node_index in nodes:
+        node_instance = test_instance._nodes[node_index]
+
+        if not hasattr(node_instance, "_variables"):
+            raise RuntimeError(
+                f"Expression '{expression}' can't be evaluated because node {node_instance} doesn't have the required variables!")
+        ls = node_instance._variables.get(ls, None)
+        rs = node_instance._variables.get(rs, None)
+        if ls is None or rs is None:
+            raise RuntimeError(
+                f"Expression '{expression}' can't be evaluated because node {node_instance} doesn't have one of the required variables!")
+        result = ops[op](ls, rs)
+        if not result:
+            raise RuntimeError(
+                f"Evaluation of '{expression}' failed or false!")
+        output(f"Result of execution of '{expression}' is '{result}'")
+
+
+def fail(parameters, test_instance):
+    for key in parameters:
+        output(f"Running {key} command in fail mode")
+        try:
+            func = COMMAND_MAP.get(key, None)
+            if func:
+                func(parameters[key], test_instance)
+            else:
+                output(
+                    "Found unknown command when running steps: '{}'".format(
+                        key))
+                sys.exit(1)
+            output(f"Running command {key} not failed!")
+            sys.exit(1)
+        except BaseException:
+            pass
 
 
 def run_steps(test_yaml, test_instance):
@@ -553,40 +672,10 @@ def run_steps(test_yaml, test_instance):
             raise RuntimeError(
                 "Failed to parse command from step: {}".format(step))
 
-        if command == 'send_txs':
-            send_txs(parameters, test_instance)
-        elif command == 'verify_txs':
-            verify_txs(parameters, test_instance)
-        elif command == 'add_node':
-            add_node(parameters, test_instance)
-        elif command == 'sleep':
-            time.sleep(parameters)
-        elif command == 'print_time_elapsed':
-            test_instance.print_time_elapsed()
-        elif command == 'run_python_test':
-            run_python_test(parameters, test_instance)
-        elif command == 'restart_nodes':
-            restart_nodes(parameters, test_instance)
-        elif command == 'stop_nodes':
-            stop_nodes(parameters, test_instance)
-        elif command == 'start_nodes':
-            start_nodes(parameters, test_instance)
-        elif command == 'destake':
-            destake(parameters, test_instance)
-        elif command == 'run_dmlf_etch_client':
-            run_dmlf_etch_client(parameters, test_instance)
-        elif command == "create_wealth":
-            create_wealth(parameters, test_instance)
-        elif command == "create_synergetic_contract":
-            create_synergetic_contract(parameters, test_instance)
-        elif command == "run_contract":
-            run_contract(parameters, test_instance)
-        elif command == "wait_for_blocks":
-            wait_for_blocks(parameters, test_instance)
-        elif command == "verify_chain_sync":
-            verify_chain_sync(parameters, test_instance)
-        elif command == "wait_network_ready":
-            wait_network_ready(parameters, test_instance)
+        func = COMMAND_MAP.get(command, None)
+
+        if func:
+            func(parameters, test_instance)
         else:
             output(
                 "Found unknown command when running steps: '{}'".format(
@@ -594,8 +683,31 @@ def run_steps(test_yaml, test_instance):
             sys.exit(1)
 
 
-def run_test(build_directory, yaml_file, node_exe):
+COMMAND_MAP = {
+    "send_txs": send_txs,
+    "verify_txs": verify_txs,
+    "add_node": add_node,
+    "sleep": lambda parameters, test_instance: time.sleep(parameters),
+    "print_time_elapsed": lambda parameters, test_instance: test_instance.print_time_elapsed(),
+    "run_python_test": run_python_test,
+    "restart_nodes": restart_nodes,
+    "stop_nodes": stop_nodes,
+    "start_nodes": start_nodes,
+    "destake": destake,
+    "run_dmlf_etch_client": run_dmlf_etch_client,
+    "create_wealth": create_wealth,
+    "create_synergetic_contract": create_synergetic_contract,
+    "run_contract": run_contract,
+    "wait_for_blocks": wait_for_blocks,
+    "verify_chain_sync": verify_chain_sync,
+    "wait_network_ready": wait_network_ready,
+    "query_balance": query_balance,
+    "execute_expression": execute_expression,
+    "fail": fail
+}
 
+
+def run_test(build_directory, yaml_file, node_exe, name_filter=None):
     # Read YAML file
     with open(yaml_file, 'r') as stream:
         try:
@@ -603,6 +715,15 @@ def run_test(build_directory, yaml_file, node_exe):
 
             # Parse yaml documents as tests (sequentially)
             for test in all_yaml:
+                # Get test setup conditions
+                setup_conditions = yaml_extract(test, 'setup_conditions')
+
+                # Check if name is not filtered out
+                if name_filter is not None:
+                    name = yaml_extract(setup_conditions, 'test_name')
+                    if name not in name_filter:
+                        continue
+
                 # Create a new test instance
                 description = yaml_extract(test, 'test_description')
                 output("\n=================================================")
@@ -612,9 +733,6 @@ def run_test(build_directory, yaml_file, node_exe):
                 if "DISABLED" in description:
                     output("Skipping disabled test")
                     continue
-
-                # Get test setup conditions
-                setup_conditions = yaml_extract(test, 'setup_conditions')
 
                 # Create a test instance
                 test_instance = create_test(
@@ -631,10 +749,10 @@ def run_test(build_directory, yaml_file, node_exe):
             print('Failed to parse yaml or to run test! Error: "{}"'.format(e))
             traceback.print_exc()
             test_instance.stop()
-            # test_instance.dump_debug()
+            test_instance.dump_debug()
             sys.exit(1)
 
-    output("\nAll end to end tests have passed")
+    output("\nAll end to end tests have passed :)")
 
 
 def parse_commandline():

@@ -19,8 +19,8 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/analyser.hpp"
 #include "vm/array.hpp"
+#include "vm/fixed.hpp"
 #include "vm/map.hpp"
-#include "vm/matrix.hpp"
 #include "vm/sharded_state.hpp"
 #include "vm/state.hpp"
 #include "vm/string.hpp"
@@ -36,9 +36,39 @@
 namespace fetch {
 namespace vm {
 
-std::string Analyser::CONSTRUCTOR       = "[Constructor]";
-std::string Analyser::GET_INDEXED_VALUE = "[GetIndexedValue]";
-std::string Analyser::SET_INDEXED_VALUE = "[SetIndexedValue]";
+std::string const Analyser::CONSTRUCTOR       = "[Constructor]";
+std::string const Analyser::GET_INDEXED_VALUE = "[GetIndexedValue]";
+std::string const Analyser::SET_INDEXED_VALUE = "[SetIndexedValue]";
+
+namespace {
+
+std::string const INIT_ANNOTATION      = "@init";
+std::string const ACTION_ANNOTATION    = "@action";
+std::string const QUERY_ANNOTATION     = "@query";
+std::string const PROBLEM_ANNOTATION   = "@problem";
+std::string const OBJECTIVE_ANNOTATION = "@objective";
+std::string const WORK_ANNOTATION      = "@work";
+std::string const CLEAR_ANNOTATION     = "@clear";
+
+bool HasAnnotation(NodePtr const &annotations_node, std::string const &annotation_name)
+{
+  if (annotations_node)
+  {
+    assert(annotations_node->node_kind == NodeKind::Annotations);
+
+    for (auto const &annotation : annotations_node->children)
+    {
+      if (annotation->node_kind == NodeKind::Annotation && annotation->text == annotation_name)
+      {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+}  // namespace
 
 void Analyser::Initialise()
 {
@@ -87,6 +117,23 @@ void Analyser::Initialise()
   CreatePrimitiveType("Fixed64", TypeIndex(typeid(fixed_point::fp64_t)), true, TypeIds::Fixed64,
                       fixed64_type_);
 
+  CreateClassType("Fixed128", TypeIndex(typeid(Fixed128)), TypeIds::Fixed128, fixed128_type_);
+  EnableOperator(fixed128_type_, Operator::Equal);
+  EnableOperator(fixed128_type_, Operator::NotEqual);
+  EnableOperator(fixed128_type_, Operator::LessThan);
+  EnableOperator(fixed128_type_, Operator::LessThanOrEqual);
+  EnableOperator(fixed128_type_, Operator::GreaterThan);
+  EnableOperator(fixed128_type_, Operator::GreaterThanOrEqual);
+  EnableOperator(fixed128_type_, Operator::Add);
+  EnableOperator(fixed128_type_, Operator::InplaceAdd);
+  EnableOperator(fixed128_type_, Operator::Subtract);
+  EnableOperator(fixed128_type_, Operator::InplaceSubtract);
+  EnableOperator(fixed128_type_, Operator::Multiply);
+  EnableOperator(fixed128_type_, Operator::InplaceMultiply);
+  EnableOperator(fixed128_type_, Operator::Divide);
+  EnableOperator(fixed128_type_, Operator::InplaceDivide);
+  EnableOperator(fixed128_type_, Operator::Negate);
+
   CreateClassType("String", TypeIndex(typeid(String)), TypeIds::String, string_type_);
   EnableOperator(string_type_, Operator::Equal);
   EnableOperator(string_type_, Operator::NotEqual);
@@ -115,7 +162,8 @@ void Analyser::Initialise()
                                       int32_type_, uint32_type_, int64_type_, uint64_type_};
   TypePtrArray const number_types  = {int8_type_,    uint8_type_,   int16_type_,   uint16_type_,
                                      int32_type_,   uint32_type_,  int64_type_,   uint64_type_,
-                                     float32_type_, float64_type_, fixed32_type_, fixed64_type_};
+                                     float32_type_, float64_type_, fixed32_type_, fixed64_type_,
+                                     fixed128_type_};
   for (auto const &type : number_types)
   {
     EnableOperator(type, Operator::Equal);
@@ -181,6 +229,7 @@ void Analyser::UnInitialise()
   float64_type_             = nullptr;
   fixed32_type_             = nullptr;
   fixed64_type_             = nullptr;
+  fixed128_type_            = nullptr;
   string_type_              = nullptr;
   address_type_             = nullptr;
   template_parameter1_type_ = nullptr;
@@ -296,17 +345,18 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   contract_definitions_.Clear();
   function_     = nullptr;
   use_any_node_ = nullptr;
-  errors_.clear();
+  file_errors_array_.clear();
 
   root_->symbols = CreateSymbolTable();
 
-  // Create symbol tables for all blocks
-  // Check function prototypes
   BuildBlock(root_);
+  PreAnnotateBlock(root_);
 
-  if (!errors_.empty())
+  EnforceLedgerRestrictions(root_);
+
+  if (!file_errors_array_.empty())
   {
-    errors = std::move(errors_);
+    errors = GetErrorList();
     root_  = nullptr;
     blocks_.clear();
     loops_.clear();
@@ -316,7 +366,8 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
     contract_definitions_.Clear();
     function_     = nullptr;
     use_any_node_ = nullptr;
-    errors_.clear();
+    file_errors_array_.clear();
+
     return false;
   }
 
@@ -332,21 +383,449 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   function_     = nullptr;
   use_any_node_ = nullptr;
 
-  if (!errors_.empty())
+  if (!file_errors_array_.empty())
   {
-    errors = std::move(errors_);
-    errors_.clear();
+    errors = GetErrorList();
+    file_errors_array_.clear();
     return false;
   }
   errors.clear();
   return true;
 }
 
+void Analyser::EnforceLedgerRestrictions(BlockNodePtr const &block_node)
+{
+  LedgerRestrictionMetadata metadata;
+
+  ValidateBlock(block_node, metadata);
+
+  CheckInitFunctionUnique(metadata);
+  if (CheckSynergeticFunctionsPresentAndUnique(metadata))
+  {
+    CheckSynergeticContract(metadata);
+  }
+}
+
+void Analyser::ValidateBlock(BlockNodePtr const &block_node, LedgerRestrictionMetadata &metadata)
+{
+  for (NodePtr const &child : block_node->block_children)
+  {
+    switch (child->node_kind)
+    {
+    case NodeKind::File:
+    {
+      BlockNodePtr file_node = ConvertToBlockNodePtr(child);
+      filename_              = file_node->text;
+      ValidateBlock(file_node, metadata);
+      break;
+    }
+    case NodeKind::ContractDefinition:
+    {
+      ExpressionNodePtr contract_name_node = ConvertToExpressionNodePtr(child->children[0]);
+      if (contract_name_node->type)
+      {
+        ValidateBlock(ConvertToBlockNodePtr(child), metadata);
+      }
+      break;
+    }
+    case NodeKind::ContractFunction:
+    {
+      ExpressionNodePtr function_name_node = ConvertToExpressionNodePtr(child->children[1]);
+      if (function_name_node->function)
+      {
+        ValidateFunctionAnnotations(child);
+        ValidateFunctionPrototype(child, metadata);
+      }
+      break;
+    }
+    case NodeKind::FreeFunctionDefinition:
+    {
+      ExpressionNodePtr function_name_node = ConvertToExpressionNodePtr(child->children[1]);
+      if (function_name_node->function)
+      {
+        ValidateFunctionAnnotations(ConvertToBlockNodePtr(child));
+        ValidateFunctionPrototype(ConvertToBlockNodePtr(child), metadata);
+      }
+      break;
+    }
+    default:
+    {
+      break;
+    }
+    }  // switch
+  }
+}
+
+void Analyser::ValidateFunctionAnnotations(NodePtr const &function_node)
+{
+  {
+    auto const &function_name_node = ConvertToExpressionNodePtr(function_node->children[1]);
+    FETCH_UNUSED(function_name_node);
+    assert(function_name_node->function != nullptr);
+  }
+
+  auto const &annotations_node = function_node->children[0];
+  if (annotations_node == nullptr)
+  {
+    return;
+  }
+  assert(annotations_node->node_kind == NodeKind::Annotations);
+
+  if (annotations_node->children.size() != 1u)
+  {
+    AddError(annotations_node->line, "Functions are only allowed to bear one annotation");
+  }
+
+  for (auto const &annotation : annotations_node->children)
+  {
+    auto const &text = annotation->text;
+    if (text != INIT_ANNOTATION && text != ACTION_ANNOTATION && text != QUERY_ANNOTATION &&
+        text != PROBLEM_ANNOTATION && text != OBJECTIVE_ANNOTATION && text != WORK_ANNOTATION &&
+        text != CLEAR_ANNOTATION)
+    {
+      AddError(annotation->line, "Invalid annotation '" + text + "'");
+    }
+  }
+}
+
+void Analyser::ValidateFunctionPrototype(NodePtr const &            function_node,
+                                         LedgerRestrictionMetadata &metadata)
+{
+  auto const &function_name_node = ConvertToExpressionNodePtr(function_node->children[1]);
+  assert(function_name_node->function != nullptr);
+
+  auto const &annotations = function_node->children[0];
+
+  bool is_action = false;
+  bool is_init   = false;
+  bool is_query  = false;
+
+  assert(!annotations || annotations->node_kind == NodeKind::Annotations);
+
+  switch (function_node->node_kind)
+  {
+  case NodeKind::ContractFunction:
+  {
+    if (HasAnnotation(annotations, ACTION_ANNOTATION))
+    {
+      is_action = true;
+    }
+    else
+    {
+      AddError(function_name_node->line, "Contract functions must carry the @action annotation");
+    }
+  }
+  break;
+  case NodeKind::FreeFunctionDefinition:
+  {
+    if (HasAnnotation(annotations, ACTION_ANNOTATION))
+    {
+      is_action = true;
+    }
+    if (HasAnnotation(annotations, INIT_ANNOTATION))
+    {
+      is_init = true;
+      metadata.init_functions.emplace_back(function_node, filename_);
+    }
+    if (HasAnnotation(annotations, QUERY_ANNOTATION))
+    {
+      is_query = true;
+    }
+    if (HasAnnotation(annotations, CLEAR_ANNOTATION))
+    {
+      metadata.clear_functions.emplace_back(function_node, filename_);
+    }
+    if (HasAnnotation(annotations, OBJECTIVE_ANNOTATION))
+    {
+      metadata.objective_functions.emplace_back(function_node, filename_);
+    }
+    if (HasAnnotation(annotations, PROBLEM_ANNOTATION))
+    {
+      metadata.problem_functions.emplace_back(function_node, filename_);
+    }
+    if (HasAnnotation(annotations, WORK_ANNOTATION))
+    {
+      metadata.work_functions.emplace_back(function_node, filename_);
+    }
+  }
+  break;
+  default:
+    assert(false);
+    break;
+  }
+
+  auto const &return_type = function_name_node->function->return_type;
+
+  if (is_action)
+  {
+    if (return_type != int64_type_ && return_type != void_type_)
+    {
+      AddError(function_name_node->line,
+               "@action functions must either return Int64 or have no return type");
+    }
+  }
+
+  if (is_init)
+  {
+    if (return_type != int64_type_ && return_type != void_type_)
+    {
+      AddError(function_name_node->line,
+               "@init functions must either return Int64 or have no return type");
+    }
+
+    auto const param_types = function_name_node->function->parameter_types;
+    if (!param_types.empty() && !(param_types.size() == 1 && param_types.back() == address_type_))
+    {
+      AddError(function_name_node->line,
+               "@init functions must accept either no parameters or exactly one parameter of type "
+               "Address");
+    }
+  }
+
+  if (is_query)
+  {
+    if (return_type == void_type_)
+    {
+      AddError(function_name_node->line, "@query functions must have a return type");
+    }
+  }
+}
+
+void Analyser::CheckInitFunctionUnique(LedgerRestrictionMetadata const &metadata)
+{
+  if (metadata.init_functions.size() > 1)
+  {
+    for (auto const &x : metadata.init_functions)
+    {
+      AddError(x.filename, x.node->line,
+               "Multiple @init functions found; only one @init function is allowed per contract");
+    }
+  }
+}
+
+bool Analyser::CheckSynergeticFunctionsPresentAndUnique(LedgerRestrictionMetadata const &metadata)
+{
+  bool const clear_missing     = metadata.clear_functions.empty();
+  bool const objective_missing = metadata.objective_functions.empty();
+  bool const problem_missing   = metadata.problem_functions.empty();
+  bool const work_missing      = metadata.work_functions.empty();
+
+  if (clear_missing && objective_missing && problem_missing && work_missing)
+  {
+    return false;
+  }
+
+  if (metadata.clear_functions.size() == 1 && metadata.objective_functions.size() == 1 &&
+      metadata.problem_functions.size() == 1 && metadata.work_functions.size() == 1)
+  {
+    return true;
+  }
+
+  std::ostringstream ss;
+  if (clear_missing)
+  {
+    ss << " " << CLEAR_ANNOTATION;
+  }
+  if (objective_missing)
+  {
+    ss << " " << OBJECTIVE_ANNOTATION;
+  }
+  if (problem_missing)
+  {
+    ss << " " << PROBLEM_ANNOTATION;
+  }
+  if (work_missing)
+  {
+    ss << " " << WORK_ANNOTATION;
+  }
+  std::string const missing_synergetic_names = ss.str();
+
+  bool const any_missing = clear_missing || objective_missing || problem_missing || work_missing;
+
+  auto report_missing_and_multiple_synergetics = [this, missing_synergetic_names, any_missing](
+                                                     auto const &annotation_name,
+                                                     auto const &filename_nodes) {
+    for (auto const &x : filename_nodes)
+    {
+      if (filename_nodes.size() > 1u)
+      {
+        std::ostringstream ss;
+        ss << "Multiple " << annotation_name << " functions found; only one " << annotation_name
+           << " function is allowed per contract";
+        AddError(x.filename, x.node->line, ss.str());
+      }
+
+      if (any_missing)
+      {
+        std::ostringstream ss;
+        ss << annotation_name
+           << " function found, but the following synergetic functions are missing:"
+           << missing_synergetic_names;
+        AddError(x.filename, x.node->line, ss.str());
+      }
+    }
+  };
+
+  report_missing_and_multiple_synergetics(CLEAR_ANNOTATION, metadata.clear_functions);
+  report_missing_and_multiple_synergetics(OBJECTIVE_ANNOTATION, metadata.objective_functions);
+  report_missing_and_multiple_synergetics(PROBLEM_ANNOTATION, metadata.problem_functions);
+  report_missing_and_multiple_synergetics(WORK_ANNOTATION, metadata.work_functions);
+
+  return false;
+}
+
+void Analyser::CheckSynergeticContract(LedgerRestrictionMetadata const &metadata)
+{
+  assert(metadata.clear_functions.size() == 1);
+  assert(metadata.objective_functions.size() == 1);
+  assert(metadata.problem_functions.size() == 1);
+  assert(metadata.work_functions.size() == 1);
+
+  auto const &clear_file     = metadata.clear_functions.back().filename;
+  auto const &objective_file = metadata.objective_functions.back().filename;
+  auto const &problem_file   = metadata.problem_functions.back().filename;
+  auto const &work_file      = metadata.work_functions.back().filename;
+
+  auto const &clear_node     = metadata.clear_functions.back().node;
+  auto const &objective_node = metadata.objective_functions.back().node;
+  auto const &problem_node   = metadata.problem_functions.back().node;
+  auto const &work_node      = metadata.work_functions.back().node;
+
+  auto const &clear_function = *ConvertToExpressionNodePtr(clear_node->children[1])->function;
+  auto const &objective_function =
+      *ConvertToExpressionNodePtr(objective_node->children[1])->function;
+  auto const &problem_function = *ConvertToExpressionNodePtr(problem_node->children[1])->function;
+  auto const &work_function    = *ConvertToExpressionNodePtr(work_node->children[1])->function;
+
+  // @problem
+  TypePtr problem_param_type;
+  if (!problem_function.parameter_types.empty())
+  {
+    problem_param_type = problem_function.parameter_types[0];
+  }
+
+  bool const problem_params_correct = (problem_function.parameter_types.size() == 1) &&
+                                      (problem_param_type->name == "Array<StructuredData>");
+  if (!problem_params_correct)
+  {
+    AddError(
+        problem_file, problem_node->line,
+        "The @problem function should accept a single parameter of type Array<StructuredData>");
+  }
+
+  if (problem_function.return_type == void_type_)
+  {
+    AddError(problem_file, problem_node->line, "The @problem function must have a return type");
+    return;
+  }
+
+  // @work
+  TypePtr work_first_param_type;
+  TypePtr work_second_param_type;
+  if (!work_function.parameter_types.empty())
+  {
+    work_first_param_type = work_function.parameter_types[0];
+  }
+  if (work_function.parameter_types.size() > 1)
+  {
+    work_second_param_type = work_function.parameter_types[1];
+  }
+
+  bool const work_params_correct = (work_function.parameter_types.size() == 2) &&
+                                   (work_first_param_type == problem_function.return_type) &&
+                                   (work_second_param_type->name == "UInt256");
+  if (!work_params_correct)
+  {
+    AddError(work_file, work_node->line,
+             "The @work function should accept two parameters: the first should have the same "
+             "type as that returned by the @problem function; the second should be UInt256");
+  }
+
+  if (work_function.return_type == void_type_)
+  {
+    AddError(work_file, work_node->line, "The @work function must have a return type");
+    return;
+  }
+
+  // @objective
+  if (objective_function.return_type != int64_type_)
+  {
+    AddError(objective_file, objective_node->line, "The @objective function must return Int64");
+  }
+
+  TypePtr objective_first_param_type;
+  TypePtr objective_second_param_type;
+  if (!objective_function.parameter_types.empty())
+  {
+    objective_first_param_type = objective_function.parameter_types[0];
+  }
+  if (objective_function.parameter_types.size() > 1)
+  {
+    objective_second_param_type = objective_function.parameter_types[1];
+  }
+
+  bool const objective_params_correct =
+      (objective_function.parameter_types.size() == 2) &&
+      (objective_first_param_type == problem_function.return_type) &&
+      (objective_second_param_type == work_function.return_type);
+  if (!objective_params_correct)
+  {
+    AddError(objective_file, objective_node->line,
+             "The @objective function should accept two parameters: the first should have the same "
+             "type as that returned by the @problem function; the second should have the same type "
+             "as that returned by the @work function");
+  }
+
+  // @clear
+  if (clear_function.return_type != void_type_)
+  {
+    AddError(clear_file, clear_node->line, "The @clear function must not have a return type");
+  }
+
+  TypePtr clear_first_param_type;
+  TypePtr clear_second_param_type;
+  if (!clear_function.parameter_types.empty())
+  {
+    clear_first_param_type = clear_function.parameter_types[0];
+  }
+  if (clear_function.parameter_types.size() > 1)
+  {
+    clear_second_param_type = clear_function.parameter_types[1];
+  }
+
+  bool const clear_params_correct = (clear_function.parameter_types.size() == 2) &&
+                                    (clear_first_param_type == problem_function.return_type) &&
+                                    (clear_second_param_type == work_function.return_type);
+  if (!clear_params_correct)
+  {
+    AddError(clear_file, clear_node->line,
+             "The @clear function should accept two parameters: the first should have the same "
+             "type as that returned by the @problem function; the second should have the same type "
+             "as that returned by the @work function");
+  }
+}
+
 void Analyser::AddError(uint16_t line, std::string const &message)
 {
+  AddError(filename_, line, message);
+}
+
+void Analyser::AddError(std::string const &filename, uint16_t line, std::string const &message)
+{
   std::ostringstream stream;
-  stream << filename_ << ": line " << line << ": error: " << message;
-  errors_.push_back(stream.str());
+  stream << filename << ": line " << line << ": error: " << message;
+  Error error{line, stream.str()};
+  for (auto &file_errors_it : file_errors_array_)
+  {
+    if (filename == file_errors_it.filename)
+    {
+      file_errors_it.errors.push_back(std::move(error));
+      return;
+    }
+  }
+  FileErrors file_errors(filename);
+  file_errors.errors.push_back(std::move(error));
+  file_errors_array_.push_back(std::move(file_errors));
 }
 
 void Analyser::BuildBlock(BlockNodePtr const &block_node)
@@ -358,12 +837,10 @@ void Analyser::BuildBlock(BlockNodePtr const &block_node)
     {
     case NodeKind::File:
     {
-      BuildFile(ConvertToBlockNodePtr(child));
-      break;
-    }
-    case NodeKind::PersistentStatement:
-    {
-      BuildPersistentStatement(child);
+      BlockNodePtr file_node = ConvertToBlockNodePtr(child);
+      file_node->symbols     = CreateSymbolTable();
+      filename_              = file_node->text;
+      BuildBlock(file_node);
       break;
     }
     case NodeKind::ContractDefinition:
@@ -371,24 +848,36 @@ void Analyser::BuildBlock(BlockNodePtr const &block_node)
       BuildContractDefinition(ConvertToBlockNodePtr(child));
       break;
     }
-    case NodeKind::FunctionDefinition:
+    case NodeKind::StructDefinition:
     {
-      BuildFunctionDefinition(ConvertToBlockNodePtr(child));
+      BuildStructDefinition(ConvertToBlockNodePtr(child));
       break;
     }
-    case NodeKind::WhileStatement:
+    case NodeKind::FreeFunctionDefinition:
     {
-      BuildWhileStatement(ConvertToBlockNodePtr(child));
-      break;
-    }
-    case NodeKind::ForStatement:
-    {
-      BuildForStatement(ConvertToBlockNodePtr(child));
+      BuildFreeFunctionDefinition(ConvertToBlockNodePtr(child));
       break;
     }
     case NodeKind::IfStatement:
     {
-      BuildIfStatement(child);
+      for (NodePtr const &c : child->children)
+      {
+        BlockNodePtr block = ConvertToBlockNodePtr(c);
+        block->symbols     = CreateSymbolTable();
+        BuildBlock(block);
+      }
+      break;
+    }
+    case NodeKind::MemberFunctionDefinition:
+    case NodeKind::WhileStatement:
+    case NodeKind::ForStatement:
+    case NodeKind::If:
+    case NodeKind::ElseIf:
+    case NodeKind::Else:
+    {
+      BlockNodePtr block = ConvertToBlockNodePtr(child);
+      block->symbols     = CreateSymbolTable();
+      BuildBlock(block);
       break;
     }
     default:
@@ -400,14 +889,135 @@ void Analyser::BuildBlock(BlockNodePtr const &block_node)
   blocks_.pop_back();
 }
 
-void Analyser::BuildFile(BlockNodePtr const &file_node)
+void Analyser::BuildContractDefinition(BlockNodePtr const &contract_definition_node)
 {
-  filename_          = file_node->text;
-  file_node->symbols = CreateSymbolTable();
-  BuildBlock(file_node);
+  contract_definition_node->symbols = CreateSymbolTable();
+  ExpressionNodePtr contract_name_node =
+      ConvertToExpressionNodePtr(contract_definition_node->children[0]);
+  std::string const &contract_name = contract_name_node->text;
+  // check symbols_ as well here?
+  if (contract_definitions_.Find(contract_name) || root_->symbols->Find(contract_name))
+  {
+    AddError(contract_name_node->line, "symbol '" + contract_name + "' is already defined");
+    return;
+  }
+  TypePtr contract_type  = CreateType(TypeKind::UserDefinedContract, contract_name);
+  contract_type->symbols = CreateSymbolTable();
+  contract_definitions_.Add(contract_name, contract_type);
+  contract_name_node->type = contract_type;
+  BuildBlock(contract_definition_node);
 }
 
-void Analyser::BuildPersistentStatement(NodePtr const &persistent_statement_node)
+void Analyser::BuildStructDefinition(BlockNodePtr const &struct_definition_node)
+{
+  struct_definition_node->symbols = CreateSymbolTable();
+  ExpressionNodePtr struct_name_node =
+      ConvertToExpressionNodePtr(struct_definition_node->children[0]);
+  std::string const &struct_name = struct_name_node->text;
+  // check symbols_ as well here?
+  if (contract_definitions_.Find(struct_name) || root_->symbols->Find(struct_name))
+  {
+    AddError(struct_name_node->line, "symbol '" + struct_name + "' is already defined");
+    return;
+  }
+  TypePtr struct_type  = CreateType(TypeKind::UserDefinedStruct, struct_name);
+  struct_type->symbols = CreateSymbolTable();
+  root_->symbols->Add(struct_type);
+  struct_name_node->type = struct_type;
+  BuildBlock(struct_definition_node);
+}
+
+void Analyser::BuildFreeFunctionDefinition(BlockNodePtr const &function_definition_node)
+{
+  function_definition_node->symbols = CreateSymbolTable();
+  ExpressionNodePtr function_name_node =
+      ConvertToExpressionNodePtr(function_definition_node->children[1]);
+  std::string const &function_name = function_name_node->text;
+  if (contract_definitions_.Find(function_name))
+  {
+    AddError(function_name_node->line, "symbol '" + function_name + "' is already defined");
+    return;
+  }
+  // check symbols_ as well here?
+  FunctionGroupPtr function_group;
+  SymbolPtr        symbol = root_->symbols->Find(function_name);
+  if (symbol)
+  {
+    if (!symbol->IsFunctionGroup())
+    {
+      AddError(function_name_node->line, "symbol '" + function_name + "' is already defined");
+      return;
+    }
+    function_group = ConvertToFunctionGroupPtr(symbol);
+  }
+  else
+  {
+    function_group = CreateFunctionGroup(function_name, nullptr);
+    root_->symbols->Add(function_group);
+  }
+  function_name_node->function_group = function_group;
+  BuildBlock(function_definition_node);
+}
+
+void Analyser::PreAnnotateBlock(BlockNodePtr const &block_node)
+{
+  blocks_.push_back(block_node);
+  for (NodePtr const &child : block_node->block_children)
+  {
+    switch (child->node_kind)
+    {
+    case NodeKind::File:
+    {
+      BlockNodePtr file_node = ConvertToBlockNodePtr(child);
+      filename_              = file_node->text;
+      PreAnnotateBlock(file_node);
+      break;
+    }
+    case NodeKind::PersistentStatement:
+    {
+      PreAnnotatePersistentStatement(child);
+      break;
+    }
+    case NodeKind::ContractDefinition:
+    {
+      PreAnnotateContractDefinition(ConvertToBlockNodePtr(child));
+      break;
+    }
+    case NodeKind::ContractFunction:
+    {
+      PreAnnotateContractFunction(block_node, child);
+      break;
+    }
+    case NodeKind::StructDefinition:
+    {
+      PreAnnotateStructDefinition(ConvertToBlockNodePtr(child));
+      break;
+    }
+    case NodeKind::MemberFunctionDefinition:
+    {
+      PreAnnotateMemberFunctionDefinition(block_node, ConvertToBlockNodePtr(child));
+      break;
+    }
+    case NodeKind::MemberVarDeclarationStatement:
+    {
+      PreAnnotateMemberVarDeclarationStatement(block_node, child);
+      break;
+    }
+    case NodeKind::FreeFunctionDefinition:
+    {
+      PreAnnotateFreeFunctionDefinition(ConvertToBlockNodePtr(child));
+      break;
+    }
+    default:
+    {
+      break;
+    }
+    }  // switch
+  }
+  blocks_.pop_back();
+}
+
+void Analyser::PreAnnotatePersistentStatement(NodePtr const &persistent_statement_node)
 {
   ExpressionNodePtr state_name_node =
       ConvertToExpressionNodePtr(persistent_statement_node->children[0]);
@@ -460,99 +1070,32 @@ void Analyser::BuildPersistentStatement(NodePtr const &persistent_statement_node
   state_definitions_.Add(state_name, instantation_type);
 }
 
-void Analyser::BuildContractDefinition(BlockNodePtr const &contract_definition_node)
+void Analyser::PreAnnotateContractDefinition(BlockNodePtr const &contract_definition_node)
 {
-  contract_definition_node->symbols = CreateSymbolTable();
   ExpressionNodePtr contract_name_node =
       ConvertToExpressionNodePtr(contract_definition_node->children[0]);
-  std::string const &contract_name = contract_name_node->text;
-  // check symbols_ as well here?
-  if (contract_definitions_.Find(contract_name) || root_->symbols->Find(contract_name))
+  TypePtr contract_type = contract_name_node->type;
+  if (!contract_type)
   {
-    AddError(contract_name_node->line, "symbol '" + contract_name + "' is already defined");
     return;
   }
-  TypePtr contract_type  = CreateType(TypeKind::UserDefinedContract, contract_name);
-  contract_type->symbols = CreateSymbolTable();
-  blocks_.push_back(contract_definition_node);
-  for (NodePtr const &contract_function_prototype_node : contract_definition_node->block_children)
-  {
-    ExpressionNodePtr      function_name_node;
-    ExpressionNodePtrArray parameter_nodes;
-    TypePtrArray           parameter_types;
-    VariablePtrArray       parameter_variables;
-    TypePtr                return_type;
-    if (!BuildFunctionPrototype(contract_function_prototype_node, function_name_node,
-                                parameter_nodes, parameter_types, parameter_variables, return_type))
-    {
-      continue;
-    }
-    std::string const &function_name = function_name_node->text;
-    FunctionGroupPtr   function_group;
-    SymbolPtr          symbol = contract_definition_node->symbols->Find(function_name);
-    if (symbol)
-    {
-      if (!symbol->IsFunctionGroup())
-      {
-        AddError(function_name_node->line, "symbol '" + function_name + "' is already defined");
-        continue;
-      }
-      function_group = ConvertToFunctionGroupPtr(symbol);
-      TypePtrArray dummy;
-      if (FindFunction(nullptr, function_group, parameter_nodes, dummy))
-      {
-        AddError(
-            function_name_node->line,
-            "function '" + function_name + "' is already defined with the same parameter types");
-        continue;
-      }
-    }
-    else
-    {
-      function_group = CreateFunctionGroup(function_name);
-      contract_definition_node->symbols->Add(function_group);
-    }
-    FunctionPtr function = CreateUserDefinedContractFunction(
-        contract_type, function_name, parameter_types, parameter_variables, return_type);
-    function_group->functions.push_back(function);
-    function_name_node->function = function;
-  }
-  blocks_.pop_back();
-  for (auto const &it : contract_definition_node->symbols->map)
-  {
-    contract_type->symbols->Add(it.second);
-  }
-  contract_name_node->type = contract_type;
-  contract_definitions_.Add(contract_name, contract_type);
+  PreAnnotateBlock(contract_definition_node);
 }
 
-void Analyser::BuildFunctionDefinition(BlockNodePtr const &function_definition_node)
+void Analyser::PreAnnotateContractFunction(BlockNodePtr const &contract_definition_node,
+                                           NodePtr const &     function_node)
 {
-  function_definition_node->symbols = CreateSymbolTable();
-
-  ExpressionNodePtr      function_name_node;
-  ExpressionNodePtrArray parameter_nodes;
-  TypePtrArray           parameter_types;
-  VariablePtrArray       parameter_variables;
-  TypePtr                return_type;
-  if (!BuildFunctionPrototype(function_definition_node, function_name_node, parameter_nodes,
-                              parameter_types, parameter_variables, return_type))
+  ExpressionNodePtr contract_name_node =
+      ConvertToExpressionNodePtr(contract_definition_node->children[0]);
+  TypePtr contract_type = contract_name_node->type;
+  if (!contract_type)
   {
     return;
   }
-  for (auto const &parameter_variable : parameter_variables)
-  {
-    function_definition_node->symbols->Add(parameter_variable);
-  }
-  std::string const &function_name = function_name_node->text;
-  if (contract_definitions_.Find(function_name))
-  {
-    AddError(function_name_node->line, "symbol '" + function_name + "' is already defined");
-    return;
-  }
-  // check symbols_ as well here?
-  FunctionGroupPtr function_group;
-  SymbolPtr        symbol = root_->symbols->Find(function_name);
+  ExpressionNodePtr  function_name_node = ConvertToExpressionNodePtr(function_node->children[1]);
+  std::string const &function_name      = function_name_node->text;
+  FunctionGroupPtr   function_group;
+  SymbolPtr          symbol = contract_definition_node->symbols->Find(function_name);
   if (symbol)
   {
     if (!symbol->IsFunctionGroup())
@@ -561,34 +1104,236 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &function_definition_n
       return;
     }
     function_group = ConvertToFunctionGroupPtr(symbol);
-    TypePtrArray dummy;
-    if (FindFunction(nullptr, function_group, parameter_nodes, dummy))
+  }
+  else
+  {
+    function_group = CreateFunctionGroup(function_name, nullptr);
+    contract_definition_node->symbols->Add(function_group);
+    contract_type->symbols->Add(function_group);
+    function_name_node->function_group = function_group;
+  }
+  ExpressionNodePtrArray parameter_nodes;
+  TypePtrArray           parameter_types;
+  VariablePtrArray       parameter_variables;
+  TypePtr                return_type;
+  if (!PreAnnotatePrototype(function_node, parameter_nodes, parameter_types, parameter_variables,
+                            return_type))
+  {
+    return;
+  }
+  if (FindFunction(contract_type, function_group, parameter_nodes))
+  {
+    AddError(function_name_node->line,
+             "function '" + function_name + "' is already defined with the same parameter types");
+    return;
+  }
+  FunctionPtr function = CreateUserDefinedContractFunction(
+      contract_type, function_name, parameter_types, parameter_variables, return_type);
+  function_group->functions.push_back(function);
+  function_name_node->function = function;
+}
+
+void Analyser::PreAnnotateStructDefinition(BlockNodePtr const &struct_definition_node)
+{
+  ExpressionNodePtr struct_name_node =
+      ConvertToExpressionNodePtr(struct_definition_node->children[0]);
+  TypePtr struct_type = struct_name_node->type;
+  if (!struct_type)
+  {
+    return;
+  }
+  PreAnnotateBlock(struct_definition_node);
+  // If a default constructor wasn't explicitly defined, provide one
+  FunctionGroupPtr function_group;
+  FunctionPtr      function;
+  SymbolPtr        symbol = struct_definition_node->symbols->Find(CONSTRUCTOR);
+  if (symbol)
+  {
+    function_group = ConvertToFunctionGroupPtr(symbol);
+    function       = FindFunction(struct_type, function_group, {});
+    if (!function)
     {
-      AddError(function_name_node->line,
-               "function '" + function_name + "' is already defined with the same parameter types");
-      return;
+      function = CreateUserDefinedConstructor(struct_type, {}, {});
+      function_group->functions.push_back(function);
     }
   }
   else
   {
-    function_group = CreateFunctionGroup(function_name);
-    root_->symbols->Add(function_group);
+    function_group = CreateFunctionGroup(CONSTRUCTOR, struct_type);
+    function       = CreateUserDefinedConstructor(struct_type, {}, {});
+    function_group->functions.push_back(function);
+    struct_definition_node->symbols->Add(function_group);
+    struct_type->symbols->Add(function_group);
+  }
+  // Store information on the struct's default constructor
+  struct_name_node->function_group = function_group;
+  struct_name_node->function       = function;
+}
+
+void Analyser::PreAnnotateMemberFunctionDefinition(BlockNodePtr const &struct_definition_node,
+                                                   BlockNodePtr const &function_definition_node)
+{
+  ExpressionNodePtr struct_name_node =
+      ConvertToExpressionNodePtr(struct_definition_node->children[0]);
+  TypePtr struct_type = struct_name_node->type;
+  if (!struct_type)
+  {
+    return;
+  }
+  ExpressionNodePtr function_name_node =
+      ConvertToExpressionNodePtr(function_definition_node->children[1]);
+  std::string      function_name = function_name_node->text;
+  FunctionGroupPtr function_group;
+  std::string      symbol_name;
+  bool             is_constructor = function_name == struct_type->name;
+  if (is_constructor)
+  {
+    symbol_name = CONSTRUCTOR;
+  }
+  else
+  {
+    symbol_name = function_name;
+  }
+  SymbolPtr symbol = struct_definition_node->symbols->Find(symbol_name);
+  if (symbol)
+  {
+    if (!symbol->IsFunctionGroup())
+    {
+      AddError(function_name_node->line, "symbol '" + function_name + "' is already defined");
+      return;
+    }
+    function_group = ConvertToFunctionGroupPtr(symbol);
+  }
+  else
+  {
+    if (is_constructor)
+    {
+      std::size_t       index = function_definition_node->children.size() - 1;
+      ExpressionNodePtr return_type_node =
+          ConvertToExpressionNodePtr(function_definition_node->children[index]);
+      if (return_type_node)
+      {
+        AddError(function_name_node->line, "constructor '" + function_name + "' has return type");
+        return;
+      }
+    }
+    function_group = CreateFunctionGroup(symbol_name, struct_type);
+    struct_definition_node->symbols->Add(function_group);
+    struct_type->symbols->Add(function_group);
+    function_name_node->function_group = function_group;
+  }
+  ExpressionNodePtrArray parameter_nodes;
+  TypePtrArray           parameter_types;
+  VariablePtrArray       parameter_variables;
+  TypePtr                return_type;
+  if (!PreAnnotatePrototype(function_definition_node, parameter_nodes, parameter_types,
+                            parameter_variables, return_type))
+  {
+    return;
+  }
+  if (FindFunction(struct_type, function_group, parameter_nodes))
+  {
+    std::string text = is_constructor ? "constructor" : "function";
+    AddError(function_name_node->line,
+             text + " '" + function_name + "' is already defined with the same parameter types");
+    return;
+  }
+  for (auto const &parameter_variable : parameter_variables)
+  {
+    function_definition_node->symbols->Add(parameter_variable);
+  }
+  FunctionPtr function;
+  if (is_constructor)
+  {
+    function = CreateUserDefinedConstructor(struct_type, parameter_types, parameter_variables);
+  }
+  else
+  {
+    function = CreateUserDefinedMemberFunction(struct_type, function_name, parameter_types,
+                                               parameter_variables, return_type);
+  }
+  function_group->functions.push_back(function);
+  function_name_node->function = function;
+}
+
+void Analyser::PreAnnotateMemberVarDeclarationStatement(BlockNodePtr const &struct_definition_node,
+                                                        NodePtr const &     var_statement_node)
+{
+  ExpressionNodePtr struct_name_node =
+      ConvertToExpressionNodePtr(struct_definition_node->children[0]);
+  TypePtr struct_type = struct_name_node->type;
+  if (!struct_type)
+  {
+    return;
+  }
+  ExpressionNodePtr variable_name_node =
+      ConvertToExpressionNodePtr(var_statement_node->children[0]);
+  std::string const &variable_name = variable_name_node->text;
+  SymbolPtr          symbol        = struct_definition_node->symbols->Find(variable_name);
+  if (symbol)
+  {
+    AddError(variable_name_node->line, "symbol '" + variable_name + "' is already defined");
+    return;
+  }
+  ExpressionNodePtr type_node = ConvertToExpressionNodePtr(var_statement_node->children[1]);
+  if (!AnnotateTypeExpression(type_node))
+  {
+    return;
+  }
+  if (type_node->type->IsUserDefinedStruct())
+  {
+    AddError(variable_name_node->line, "member variable '" + variable_name +
+                                           "' of user defined type '" + type_node->type->name +
+                                           "' is not supported");
+    return;
+  }
+  VariablePtr variable =
+      CreateVariable(VariableKind::Member, variable_name, type_node->type, struct_type);
+  struct_definition_node->symbols->Add(variable);
+  struct_type->symbols->Add(variable);
+  variable_name_node->variable = variable;
+}
+
+void Analyser::PreAnnotateFreeFunctionDefinition(BlockNodePtr const &function_definition_node)
+{
+  ExpressionNodePtr function_name_node =
+      ConvertToExpressionNodePtr(function_definition_node->children[1]);
+  std::string const &function_name  = function_name_node->text;
+  FunctionGroupPtr   function_group = function_name_node->function_group;
+  if (!function_group)
+  {
+    return;
+  }
+  ExpressionNodePtrArray parameter_nodes;
+  TypePtrArray           parameter_types;
+  VariablePtrArray       parameter_variables;
+  TypePtr                return_type;
+  if (!PreAnnotatePrototype(function_definition_node, parameter_nodes, parameter_types,
+                            parameter_variables, return_type))
+  {
+    return;
+  }
+  if (FindFunction(nullptr, function_group, parameter_nodes))
+  {
+    AddError(function_name_node->line,
+             "function '" + function_name + "' is already defined with the same parameter types");
+    return;
+  }
+  for (auto const &parameter_variable : parameter_variables)
+  {
+    function_definition_node->symbols->Add(parameter_variable);
   }
   FunctionPtr function = CreateUserDefinedFreeFunction(function_name, parameter_types,
                                                        parameter_variables, return_type);
   function_group->functions.push_back(function);
   function_name_node->function = function;
-  BuildBlock(function_definition_node);
 }
 
-bool Analyser::BuildFunctionPrototype(NodePtr const &         prototype_node,
-                                      ExpressionNodePtr &     function_name_node,
-                                      ExpressionNodePtrArray &parameter_nodes,
-                                      TypePtrArray &          parameter_types,
-                                      VariablePtrArray &parameter_variables, TypePtr &return_type)
+bool Analyser::PreAnnotatePrototype(NodePtr const &         prototype_node,
+                                    ExpressionNodePtrArray &parameter_nodes,
+                                    TypePtrArray &          parameter_types,
+                                    VariablePtrArray &parameter_variables, TypePtr &return_type)
 {
-  function_name_node = ConvertToExpressionNodePtr(prototype_node->children[1]);
-
   parameter_nodes.clear();
   parameter_types.clear();
   parameter_variables.clear();
@@ -596,8 +1341,8 @@ bool Analyser::BuildFunctionPrototype(NodePtr const &         prototype_node,
 
   auto const count          = prototype_node->children.size();
   auto const num_parameters = (count - 3) / 2;
-  int        problems       = 0;
 
+  bool ok = true;
   for (std::size_t i = 0; i < num_parameters; ++i)
   {
     ExpressionNodePtr parameter_node =
@@ -606,7 +1351,7 @@ bool Analyser::BuildFunctionPrototype(NodePtr const &         prototype_node,
     if (parameter_names.Find(parameter_name))
     {
       AddError(parameter_node->line, "parameter name '" + parameter_name + "' is already defined");
-      ++problems;
+      ok = false;
       continue;
     }
     parameter_names.Add(parameter_name);
@@ -616,17 +1361,19 @@ bool Analyser::BuildFunctionPrototype(NodePtr const &         prototype_node,
     if (!parameter_type)
     {
       AddError(parameter_type_node->line, "unknown type '" + parameter_type_node->text + "'");
-      ++problems;
+      ok = false;
       continue;
     }
+    parameter_type_node->type = parameter_type;
     VariablePtr parameter_variable =
-        CreateVariable(VariableKind::Parameter, parameter_name, parameter_type);
+        CreateVariable(VariableKind::Parameter, parameter_name, parameter_type, nullptr);
     parameter_node->variable = parameter_variable;
     parameter_node->type     = parameter_variable->type;
     parameter_types.push_back(parameter_type);
-    parameter_variables.push_back(parameter_variable);
-    parameter_nodes.push_back(parameter_node);
+    parameter_variables.push_back(std::move(parameter_variable));
+    parameter_nodes.push_back(std::move(parameter_node));
   }
+
   ExpressionNodePtr return_type_node =
       ConvertToExpressionNodePtr(prototype_node->children[std::size_t(count - 1)]);
   if (return_type_node)
@@ -635,36 +1382,16 @@ bool Analyser::BuildFunctionPrototype(NodePtr const &         prototype_node,
     if (!return_type)
     {
       AddError(return_type_node->line, "unknown type '" + return_type_node->text + "'");
-      ++problems;
+      ok = false;
     }
+    return_type_node->type = return_type;
   }
   else
   {
     return_type = void_type_;
   }
-  return (problems == 0);
-}
 
-void Analyser::BuildWhileStatement(BlockNodePtr const &while_statement_node)
-{
-  while_statement_node->symbols = CreateSymbolTable();
-  BuildBlock(while_statement_node);
-}
-
-void Analyser::BuildForStatement(BlockNodePtr const &for_statement_node)
-{
-  for_statement_node->symbols = CreateSymbolTable();
-  BuildBlock(for_statement_node);
-}
-
-void Analyser::BuildIfStatement(NodePtr const &if_statement_node)
-{
-  for (NodePtr const &child : if_statement_node->children)
-  {
-    BlockNodePtr block_node = ConvertToBlockNodePtr(child);
-    block_node->symbols     = CreateSymbolTable();
-    BuildBlock(block_node);
-  }
+  return ok;
 }
 
 void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
@@ -682,18 +1409,32 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
     {
     case NodeKind::File:
     {
-      AnnotateFile(ConvertToBlockNodePtr(child));
+      BlockNodePtr file_node = ConvertToBlockNodePtr(child);
+      filename_              = file_node->text;
+      AnnotateBlock(file_node);
       break;
     }
     case NodeKind::PersistentStatement:
     case NodeKind::ContractDefinition:
+    case NodeKind::ContractFunction:
     {
       // nothing to do
       break;
     }
-    case NodeKind::FunctionDefinition:
+    case NodeKind::StructDefinition:
+    {
+      AnnotateStructDefinition(ConvertToBlockNodePtr(child));
+      break;
+    }
+    case NodeKind::MemberFunctionDefinition:
+    case NodeKind::FreeFunctionDefinition:
     {
       AnnotateFunctionDefinition(ConvertToBlockNodePtr(child));
+      break;
+    }
+    case NodeKind::MemberVarDeclarationStatement:
+    {
+      // nothing to do
       break;
     }
     case NodeKind::WhileStatement:
@@ -726,11 +1467,11 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
       AnnotateContractStatement(block_node, child);
       break;
     }
-    case NodeKind::VarDeclarationStatement:
-    case NodeKind::VarDeclarationTypedAssignmentStatement:
-    case NodeKind::VarDeclarationTypelessAssignmentStatement:
+    case NodeKind::LocalVarDeclarationStatement:
+    case NodeKind::LocalVarDeclarationTypedAssignmentStatement:
+    case NodeKind::LocalVarDeclarationTypelessAssignmentStatement:
     {
-      AnnotateVarStatement(block_node, child);
+      AnnotateLocalVarStatement(block_node, child);
       break;
     }
     case NodeKind::ReturnStatement:
@@ -772,9 +1513,10 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
       AnnotateInplaceModuloOp(ConvertToExpressionNodePtr(child));
       break;
     }
+    case NodeKind::Null:
     case NodeKind::InitialiserList:
     {
-      AddError(child->line, "cannot infer list type");
+      AddError(child->line, "unable to infer type");
       break;
     }
     default:
@@ -812,7 +1554,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
                                       ? sharded_state_constructor_
                                       : state_constructor_;
         child->function = constructor;
-        use_any_node_->children.push_back(child);
+        use_any_node_->children.push_back(std::move(child));
       }
     }
   }
@@ -824,28 +1566,36 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
   blocks_.pop_back();
 }
 
-void Analyser::AnnotateFile(BlockNodePtr const &file_node)
+void Analyser::AnnotateStructDefinition(BlockNodePtr const &struct_definition_node)
 {
-  filename_ = file_node->text;
-  AnnotateBlock(file_node);
+  ExpressionNodePtr struct_name_node =
+      ConvertToExpressionNodePtr(struct_definition_node->children[0]);
+  TypePtr struct_type = struct_name_node->type;
+  if (!struct_type)
+  {
+    return;
+  }
+  AnnotateBlock(struct_definition_node);
 }
 
 void Analyser::AnnotateFunctionDefinition(BlockNodePtr const &function_definition_node)
 {
   ExpressionNodePtr function_name_node =
       ConvertToExpressionNodePtr(function_definition_node->children[1]);
+  if (!function_name_node->function)
+  {
+    return;
+  }
   function_     = function_name_node->function;
   use_any_node_ = nullptr;
   AnnotateBlock(function_definition_node);
-  if (errors_.empty())
+  bool is_constructor = function_->function_kind == FunctionKind::UserDefinedConstructor;
+  if (file_errors_array_.empty() && !is_constructor && !function_->return_type->IsVoid())
   {
-    if (!function_->return_type->IsVoid())
+    if (TestBlock(function_definition_node))
     {
-      if (TestBlock(function_definition_node))
-      {
-        AddError(function_definition_node->block_terminator_line,
-                 "control reaches end of function without returning a value");
-      }
+      AddError(function_definition_node->block_terminator_line,
+               "control reaches end of function without returning a value");
     }
   }
   function_     = nullptr;
@@ -862,7 +1612,7 @@ void Analyser::AnnotateForStatement(BlockNodePtr const &for_statement_node)
   ExpressionNodePtr  name_node = ConvertToExpressionNodePtr(for_statement_node->children[0]);
   std::string const &name      = name_node->text;
   // Note: variable is created with no type to mark as initially unresolved
-  VariablePtr variable = CreateVariable(VariableKind::For, name, nullptr);
+  VariablePtr variable = CreateVariable(VariableKind::For, name, nullptr, nullptr);
   for_statement_node->symbols->Add(variable);
   name_node->variable                  = variable;
   std::size_t const              count = for_statement_node->children.size() - 1;
@@ -877,13 +1627,13 @@ void Analyser::AnnotateForStatement(BlockNodePtr const &for_statement_node)
       ++problems;
       continue;
     }
-    if (!MatchType(child_node->type, any_integer_type_))
+    if (!ConvertNode(child_node, any_integer_type_))
     {
       ++problems;
       AddError(child_node->line, "integral type expected");
       continue;
     }
-    nodes.push_back(child_node);
+    nodes.push_back(std::move(child_node));
   }
   if (problems == 0)
   {
@@ -953,6 +1703,7 @@ void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node,
       {
         return;
       }
+      // Note that the "null" literal will not be accepted here
       if ((child->type != string_type_) && (child->type != address_type_))
       {
         AddError(child->line, "key must be String or Address type");
@@ -967,7 +1718,7 @@ void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node,
     AddError(variable_name_node->line, "symbol '" + variable_name + "' is already defined");
     return;
   }
-  VariablePtr variable = CreateVariable(VariableKind::Use, variable_name, type);
+  VariablePtr variable = CreateVariable(VariableKind::Use, variable_name, type, nullptr);
   parent_block_node->symbols->Add(variable);
   FunctionPtr constructor = (type->template_type == sharded_state_type_)
                                 ? sharded_state_constructor_
@@ -995,7 +1746,7 @@ void Analyser::AnnotateUseAnyStatement(BlockNodePtr const &parent_block_node,
       AddError(use_any_statement_node->line, "symbol '" + name + "' is already defined");
       return;
     }
-    VariablePtr variable = CreateVariable(VariableKind::UseAny, name, type);
+    VariablePtr variable = CreateVariable(VariableKind::UseAny, name, type, nullptr);
     parent_block_node->symbols->Add(variable);
   }
 }
@@ -1029,20 +1780,20 @@ void Analyser::AnnotateContractStatement(BlockNodePtr const &parent_block_node,
   {
     return;
   }
-  if (initialiser_node->type != string_type_)
+  if (!ConvertNode(initialiser_node, string_type_))
   {
     AddError(initialiser_node->line, "contract initialiser must be String type");
     return;
   }
-
-  VariablePtr variable = CreateVariable(VariableKind::Var, contract_variable_name, contract_type);
+  VariablePtr variable =
+      CreateVariable(VariableKind::Local, contract_variable_name, contract_type, nullptr);
   parent_block_node->symbols->Add(variable);
   contract_variable_node->variable = variable;
   contract_type_node->type         = contract_type;
 }
 
-void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
-                                    NodePtr const &     var_statement_node)
+void Analyser::AnnotateLocalVarStatement(BlockNodePtr const &parent_block_node,
+                                         NodePtr const &     var_statement_node)
 {
   ExpressionNodePtr  name_node = ConvertToExpressionNodePtr(var_statement_node->children[0]);
   std::string const &name      = name_node->text;
@@ -1054,11 +1805,11 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
   }
 
   // Note: variable is created with no type to mark as initially unresolved
-  VariablePtr variable = CreateVariable(VariableKind::Var, name, nullptr);
+  VariablePtr variable = CreateVariable(VariableKind::Local, name, nullptr, nullptr);
   parent_block_node->symbols->Add(variable);
   name_node->variable = variable;
 
-  if (var_statement_node->node_kind == NodeKind::VarDeclarationStatement)
+  if (var_statement_node->node_kind == NodeKind::LocalVarDeclarationStatement)
   {
     ExpressionNodePtr type_node = ConvertToExpressionNodePtr(var_statement_node->children[1]);
     if (!AnnotateTypeExpression(type_node))
@@ -1067,7 +1818,7 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
     }
     variable->type = type_node->type;
   }
-  else if (var_statement_node->node_kind == NodeKind::VarDeclarationTypedAssignmentStatement)
+  else if (var_statement_node->node_kind == NodeKind::LocalVarDeclarationTypedAssignmentStatement)
   {
     ExpressionNodePtr type_node = ConvertToExpressionNodePtr(var_statement_node->children[1]);
     if (!AnnotateTypeExpression(type_node))
@@ -1079,32 +1830,10 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
     {
       return;
     }
-    if (expression_node->node_kind == NodeKind::InitialiserList)
+    if (!ConvertNode(expression_node, type_node->type))
     {
-      if (!ConvertInitialiserList(expression_node, type_node->type))
-      {
-        AddError(type_node->line, "incompatible types");
-        return;
-      }
-    }
-    else if (!expression_node->type->IsNull())
-    {
-      if (type_node->type != expression_node->type)
-      {
-        AddError(type_node->line, "incompatible types");
-        return;
-      }
-    }
-    else
-    {
-      if (type_node->type->IsPrimitive())
-      {
-        // Can't assign null to a primitive type
-        AddError(type_node->line, "unable to assign null to primitive type");
-        return;
-      }
-      // Convert the null type to the declared type
-      expression_node->type = type_node->type;
+      AddError(type_node->line, "incompatible types");
+      return;
     }
     variable->type = type_node->type;
   }
@@ -1115,8 +1844,7 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
     {
       return;
     }
-    if (expression_node->type->IsVoid() || expression_node->type->IsNull() ||
-        expression_node->node_kind == NodeKind::InitialiserList)
+    if (!expression_node->IsConcrete())
     {
       AddError(expression_node->line, "unable to infer type");
       return;
@@ -1127,46 +1855,29 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
 
 void Analyser::AnnotateReturnStatement(NodePtr const &return_statement_node)
 {
+  bool is_constructor = function_->function_kind == FunctionKind::UserDefinedConstructor;
   if (return_statement_node->children.size() == 1)
   {
+    if (is_constructor || function_->return_type->IsVoid())
+    {
+      AddError(return_statement_node->line, "return supplies a value");
+      return;
+    }
     ExpressionNodePtr expression_node =
         ConvertToExpressionNodePtr(return_statement_node->children[0]);
     if (!AnnotateExpression(expression_node))
     {
       return;
     }
-    if (expression_node->node_kind == NodeKind::InitialiserList)
+    if (!ConvertNode(expression_node, function_->return_type))
     {
-      if (!ConvertInitialiserList(expression_node, function_->return_type))
-      {
-        AddError(expression_node->line, "incompatible types");
-        return;
-      }
-    }
-    else if (!expression_node->type->IsNull())
-    {
-      // note: function_->return_type can be Void
-      if (expression_node->type != function_->return_type)
-      {
-        AddError(expression_node->line, "type does not match function return type");
-        return;
-      }
-    }
-    else
-    {
-      // note: function_->return_type can be Void
-      if (function_->return_type->IsPrimitive())
-      {
-        AddError(expression_node->line, "unable to return null");
-        return;
-      }
-      // Convert the null type to the known return type of the function
-      expression_node->type = function_->return_type;
+      AddError(expression_node->line, "incompatible types");
+      return;
     }
   }
   else
   {
-    if (!function_->return_type->IsVoid())
+    if (!is_constructor && !function_->return_type->IsVoid())
     {
       AddError(return_statement_node->line, "return does not supply a value");
       return;
@@ -1180,7 +1891,7 @@ void Analyser::AnnotateConditionalBlock(BlockNodePtr const &conditional_block_no
       ConvertToExpressionNodePtr(conditional_block_node->children[0]);
   if (AnnotateExpression(expression_node))
   {
-    if (expression_node->type != bool_type_)
+    if (!ConvertNode(expression_node, bool_type_))
     {
       AddError(expression_node->line, "boolean type expected");
     }
@@ -1208,40 +1919,12 @@ bool Analyser::AnnotateAssignOp(ExpressionNodePtr const &node)
   {
     return false;
   }
-
-  if (rhs->node_kind == NodeKind::InitialiserList)
+  if (!ConvertNode(rhs, lhs->type))
   {
-    if (!ConvertInitialiserList(rhs, lhs->type))
-    {
-      AddError(node->line, "incompatible types");
-      return false;
-    }
-  }
-  else if (rhs->type->IsVoid())
-  {
-    // Can't assign from a function with no return value
     AddError(node->line, "incompatible types");
     return false;
   }
-  else if (!rhs->type->IsNull())
-  {
-    if (lhs->type != rhs->type)
-    {
-      AddError(node->line, "incompatible types");
-      return false;
-    }
-  }
-  else
-  {
-    if (lhs->type->IsPrimitive())
-    {
-      // Can't assign null to a primitive type
-      AddError(node->line, "incompatible types");
-      return false;
-    }
-    // Convert the null type to the correct type
-    rhs->type = lhs->type;
-  }
+  assert(lhs->type == rhs->type);
   SetRVExpression(node, lhs->type);
   return true;
 }
@@ -1265,9 +1948,14 @@ bool Analyser::AnnotateInplaceModuloOp(ExpressionNodePtr const &node)
   {
     return false;
   }
-  if (lhs->type != rhs->type || !MatchType(lhs->type, any_integer_type_))
+  if (!ConvertNode(lhs, any_integer_type_) || !ConvertNode(rhs, any_integer_type_))
   {
-    AddError(node->line, "integral operands expected");
+    AddError(node->line, "matching integral operands expected");
+    return false;
+  }
+  if (lhs->type != rhs->type)
+  {
+    AddError(node->line, "matching integral operands expected");
     return false;
   }
   SetRVExpression(node, lhs->type);
@@ -1300,13 +1988,12 @@ bool Analyser::AnnotateLHSExpression(ExpressionNodePtr const &node, ExpressionNo
     symbols = container_node->type->symbols;
   }
 
-  std::size_t const      num_supplied_indexes = lhs->children.size() - 1;
-  ExpressionNodePtrArray supplied_index_nodes;
-  for (std::size_t i = 1; i <= num_supplied_indexes; ++i)
+  std::size_t const      num_indexes = lhs->children.size() - 1;
+  ExpressionNodePtrArray index_nodes;
+  for (std::size_t i = 1; i <= num_indexes; ++i)
   {
-    NodePtr const &   supplied_index      = lhs->children[i];
-    ExpressionNodePtr supplied_index_node = ConvertToExpressionNodePtr(supplied_index);
-    supplied_index_nodes.push_back(supplied_index_node);
+    ExpressionNodePtr index_node = ConvertToExpressionNodePtr(lhs->children[i]);
+    index_nodes.push_back(std::move(index_node));
   }
 
   SymbolPtr setter_symbol = symbols->Find(SET_INDEXED_VALUE);
@@ -1319,11 +2006,8 @@ bool Analyser::AnnotateLHSExpression(ExpressionNodePtr const &node, ExpressionNo
 
   FunctionGroupPtr setter_fg = ConvertToFunctionGroupPtr(setter_symbol);
 
-  TypePtrArray           dummy;
-  ExpressionNodePtrArray setter_supplied_nodes = supplied_index_nodes;
-  setter_supplied_nodes.push_back(lhs);
-  FunctionPtr setter_f =
-      FindFunction(container_node->type, setter_fg, setter_supplied_nodes, dummy);
+  index_nodes.push_back(lhs);
+  FunctionPtr setter_f = FindFunction(container_node->type, setter_fg, index_nodes);
   if (!setter_f)
   {
     AddError(container_node->line, "unable to find matching index operator for type '" +
@@ -1343,12 +2027,12 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   }
   if (node->IsTypeExpression())
   {
-    AddError(node->line, "illegal use of type '" + node->type->name + "'");
+    AddError(node->line, "invalid use of type '" + node->type->name + "'");
     return false;
   }
   if (node->IsFunctionGroupExpression())
   {
-    AddError(node->line, "illegal use of function '" + node->function_group->name + "'");
+    AddError(node->line, "invalid use of function '" + node->function_group->name + "'");
     return false;
   }
   // node->IsVariableExpression()
@@ -1356,7 +2040,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   // node->IsRVExpression()
   if (node->IsVariableExpression() && node->type->IsUserDefinedContract())
   {
-    AddError(node->line, "unable to use contract variable '" + node->variable->name + "'");
+    AddError(node->line, "invalid use of contract variable '" + node->variable->name + "'");
     return false;
   }
   return true;
@@ -1379,7 +2063,8 @@ bool Analyser::InternalAnnotateExpression(ExpressionNodePtr const &node)
     {
       // Function name
       FunctionGroupPtr function_group = ConvertToFunctionGroupPtr(symbol);
-      SetFunctionGroupExpression(node, function_group, nullptr, false);
+      // A plain identifier may also be a member function of a user defined type
+      SetFunctionGroupExpression(node, function_group, function_group->user_defined_type);
     }
     else if (symbol->IsType())
     {
@@ -1396,7 +2081,8 @@ bool Analyser::InternalAnnotateExpression(ExpressionNodePtr const &node)
         AddError(node->line, "variable '" + node->text + "' has unresolved type");
         return false;
       }
-      SetVariableExpression(node, variable);
+      // A plain identifier may also be a member variable of a user defined type
+      SetVariableExpression(node, variable, variable->user_defined_type);
     }
     break;
   }
@@ -1458,6 +2144,11 @@ bool Analyser::InternalAnnotateExpression(ExpressionNodePtr const &node)
   case NodeKind::Fixed64:
   {
     SetRVExpression(node, fixed64_type_);
+    break;
+  }
+  case NodeKind::Fixed128:
+  {
+    SetRVExpression(node, fixed128_type_);
     break;
   }
   case NodeKind::String:
@@ -1602,82 +2293,36 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
       return false;
     }
   }
-  ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
-  ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (lhs->type->IsVoid() || rhs->type->IsVoid())
+  ExpressionNodePtr lhs             = ConvertToExpressionNodePtr(node->children[0]);
+  ExpressionNodePtr rhs             = ConvertToExpressionNodePtr(node->children[1]);
+  bool              lhs_is_concrete = lhs->IsConcrete();
+  bool              rhs_is_concrete = rhs->IsConcrete();
+  if (!lhs_is_concrete && !rhs_is_concrete)
   {
-    AddError(node->line, "unable to compare operand(s) of type Void");
+    AddError(node->line, "unable to infer types");
     return false;
   }
-  bool const lhs_is_concrete_type = !lhs->type->IsNull();
-  bool const rhs_is_concrete_type = !rhs->type->IsNull();
-  if (lhs_is_concrete_type)
+  if (lhs_is_concrete)
   {
-    bool const lhs_is_primitive = lhs->type->IsPrimitive();
-    if (rhs_is_concrete_type)
+    if (!ConvertNode(rhs, lhs->type))
     {
-      if (rhs->node_kind == NodeKind::InitialiserList)
-      {
-        if (!ConvertInitialiserList(rhs, lhs->type))
-        {
-          AddError(node->line, "incompatible types");
-          return false;
-        }
-      }
-      else if (lhs->node_kind == NodeKind::InitialiserList)
-      {
-        if (!ConvertInitialiserList(lhs, rhs->type))
-        {
-          AddError(node->line, "incompatible types");
-          return false;
-        }
-      }
-
-      if (lhs->type != rhs->type)
-      {
-        AddError(node->line, "incompatible types");
-        return false;
-      }
-      bool const enabled = IsOperatorEnabled(lhs->type, op);
-      if (!enabled)
-      {
-        AddError(node->line, "operator not supported");
-        return false;
-      }
-    }
-    else
-    {
-      if (lhs_is_primitive && lhs->node_kind != NodeKind::InitialiserList)
-      {
-        // unable to compare LHS primitive type to RHS null
-        AddError(node->line, "incompatible types");
-        return false;
-      }
-      // Convert the RHS null type to the correct type
-      rhs->type = lhs->type;
+      AddError(node->line, "incompatible types");
+      return false;
     }
   }
-  else
+  else  // rhs_is_concrete
   {
-    if (rhs_is_concrete_type)
+    if (!ConvertNode(lhs, rhs->type))
     {
-      bool const rhs_is_primitive = rhs->type->IsPrimitive();
-      if (rhs_is_primitive && rhs->node_kind != NodeKind::InitialiserList)
-      {
-        // unable to compare LHS null to RHS primitive type
-        AddError(node->line, "incompatible types");
-        return false;
-      }
-      // Convert the LHS null type to the correct type
-      lhs->type = rhs->type;
+      AddError(node->line, "incompatible types");
+      return false;
     }
-    else
-    {
-      // Comparing two nulls...
-      // Type-uninferable nulls will be transformed to boolean false
-      lhs->type = bool_type_;
-      rhs->type = bool_type_;
-    }
+  }
+  assert(lhs->type == rhs->type);
+  if (!IsOperatorEnabled(lhs->type, op))
+  {
+    AddError(node->line, "operator not supported");
+    return false;
   }
   SetRVExpression(node, bool_type_);
   return true;
@@ -1695,27 +2340,35 @@ bool Analyser::AnnotateRelationalOp(ExpressionNodePtr const &node)
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (rhs->node_kind == NodeKind::InitialiserList)
-  {
-    if (!ConvertInitialiserList(rhs, lhs->type))
-    {
-      AddError(node->line, "incompatible types");
-      return false;
-    }
-  }
-  else if (lhs->node_kind == NodeKind::InitialiserList)
-  {
-    if (!ConvertInitialiserList(lhs, rhs->type))
-    {
-      AddError(node->line, "incompatible types");
-      return false;
-    }
-  }
-  if (lhs->type != rhs->type)
+  if (lhs->IsNull() || rhs->IsNull())
   {
     AddError(node->line, "incompatible types");
     return false;
   }
+  bool lhs_is_concrete = lhs->IsConcrete();
+  bool rhs_is_concrete = rhs->IsConcrete();
+  if (!lhs_is_concrete && !rhs_is_concrete)
+  {
+    AddError(node->line, "unable to infer types");
+    return false;
+  }
+  if (lhs_is_concrete)
+  {
+    if (!ConvertNode(rhs, lhs->type))
+    {
+      AddError(node->line, "incompatible types");
+      return false;
+    }
+  }
+  else  // rhs_is_concrete
+  {
+    if (!ConvertNode(lhs, rhs->type))
+    {
+      AddError(node->line, "incompatible types");
+      return false;
+    }
+  }
+  assert(lhs->type == rhs->type);
   if (!IsOperatorEnabled(lhs->type, op))
   {
     AddError(node->line, "operator not supported");
@@ -1736,7 +2389,7 @@ bool Analyser::AnnotateBinaryLogicalOp(ExpressionNodePtr const &node)
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if ((lhs->type != bool_type_) || (rhs->type != bool_type_))
+  if (!ConvertNode(lhs, bool_type_) || !ConvertNode(rhs, bool_type_))
   {
     AddError(node->line, "boolean operands expected");
     return false;
@@ -1752,7 +2405,7 @@ bool Analyser::AnnotateUnaryLogicalOp(ExpressionNodePtr const &node)
   {
     return false;
   }
-  if (operand->type != bool_type_)
+  if (!ConvertNode(operand, bool_type_))
   {
     AddError(node->line, "boolean operand expected");
     return false;
@@ -1768,7 +2421,7 @@ bool Analyser::AnnotatePrefixPostfixOp(ExpressionNodePtr const &node)
   {
     return false;
   }
-  if (!MatchType(operand->type, any_integer_type_))
+  if (!ConvertNode(operand, any_integer_type_))
   {
     AddError(node->line, "integral type expected");
     return false;
@@ -1783,6 +2436,11 @@ bool Analyser::AnnotateNegateOp(ExpressionNodePtr const &node)
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
   if (!AnnotateExpression(operand))
   {
+    return false;
+  }
+  if (!operand->IsConcrete())
+  {
+    AddError(node->line, "unable to infer type");
     return false;
   }
   if (!IsOperatorEnabled(operand->type, op))
@@ -1819,9 +2477,14 @@ bool Analyser::AnnotateModuloOp(ExpressionNodePtr const &node)
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (lhs->type != rhs->type || !MatchType(lhs->type, any_integer_type_))
+  if (!ConvertNode(lhs, any_integer_type_) || !ConvertNode(rhs, any_integer_type_))
   {
-    AddError(node->line, "integral operands expected");
+    AddError(node->line, "matching integral operands expected");
+    return false;
+  }
+  if (lhs->type != rhs->type)
+  {
+    AddError(node->line, "matching integral operands expected");
     return false;
   }
   SetRVExpression(node, lhs->type);
@@ -1843,19 +2506,15 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   // lhs->IsVariableExpression()
   // lhs->IsLVExpression()
   // lhs->IsRVExpression()
-  if (lhs->IsVariableExpression() && lhs->type->IsUserDefinedContract())
+  if (!lhs->IsConcrete())
   {
-    AddError(lhs->line, "unable to use contract variable '" + lhs->variable->name + "'");
-    return false;
-  }
-  if (lhs->node_kind == NodeKind::InitialiserList)
-  {
-    AddError(lhs->line, "indexing into initialiser lists not supported");
+    // Prevent null[i, j] and {3, 4, 5}[i, j] and contractvariable[i, j]
+    AddError(lhs->line, "operand does not support index operator");
     return false;
   }
   if (lhs->type->IsPrimitive())
   {
-    AddError(lhs->line, "primitive type '" + lhs->type->name + "' does not support index operator");
+    AddError(lhs->line, "type '" + lhs->type->name + "' does not support index operator");
     return false;
   }
   SymbolTablePtr symbols;
@@ -1867,17 +2526,16 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   {
     symbols = lhs->type->symbols;
   }
-  std::size_t const      num_supplied_indexes = node->children.size() - 1;
-  ExpressionNodePtrArray supplied_index_nodes;
-  for (std::size_t i = 1; i <= num_supplied_indexes; ++i)
+  std::size_t const      num_indexes = node->children.size() - 1;
+  ExpressionNodePtrArray index_nodes;
+  for (std::size_t i = 1; i <= num_indexes; ++i)
   {
-    NodePtr const &   supplied_index      = node->children[i];
-    ExpressionNodePtr supplied_index_node = ConvertToExpressionNodePtr(supplied_index);
-    if (!AnnotateExpression(supplied_index_node))
+    ExpressionNodePtr index_node = ConvertToExpressionNodePtr(node->children[i]);
+    if (!AnnotateExpression(index_node))
     {
       return false;
     }
-    supplied_index_nodes.push_back(supplied_index_node);
+    index_nodes.push_back(std::move(index_node));
   }
   SymbolPtr symbol = symbols->Find(GET_INDEXED_VALUE);
   if (!symbol)
@@ -1887,22 +2545,15 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
     return false;
   }
   FunctionGroupPtr fg = ConvertToFunctionGroupPtr(symbol);
-  TypePtrArray     actual_index_types;
-  FunctionPtr      f = FindFunction(lhs->type, fg, supplied_index_nodes, actual_index_types);
+  FunctionPtr      f  = FindFunction(lhs->type, fg, index_nodes);
   if (!f)
   {
     AddError(lhs->line,
              "unable to find matching index operator for type '" + lhs->type->name + "'");
     return false;
   }
-  for (std::size_t i = 1; i <= num_supplied_indexes; ++i)
-  {
-    NodePtr const &   supplied_index      = node->children[i];
-    ExpressionNodePtr supplied_index_node = ConvertToExpressionNodePtr(supplied_index);
-    supplied_index_node->type             = actual_index_types[i - 1];
-  }
-  TypePtr output_type = ResolveType(f->return_type, lhs->type);
-  SetLVExpression(node, output_type);
+  TypePtr return_type = ResolveReturnType(f->return_type, lhs->type);
+  SetLVExpression(node, return_type);
   node->function = f;
   return true;
 }
@@ -1928,8 +2579,7 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
   bool lhs_is_type_expression = lhs->IsTypeExpression();
   if (lhs->type->IsPrimitive())
   {
-    AddError(lhs->line,
-             "primitive type '" + lhs->type->name + "' does not support member-access operator");
+    AddError(lhs->line, "type '" + lhs->type->name + "' does not support member-access operator");
     return false;
   }
   SymbolTablePtr symbols;
@@ -1951,18 +2601,27 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
   {
     // member is a function name
     FunctionGroupPtr function_group = ConvertToFunctionGroupPtr(member_symbol);
-    SetFunctionGroupExpression(node, function_group, lhs->type, !lhs_is_type_expression);
+    SetFunctionGroupExpression(node, function_group, lhs->type);
     return true;
   }
   if (member_symbol->IsType())
   {
     // member is a type name
-    AddError(lhs->line, "not supported");
+    AddError(node->line, "not supported");
     return false;
   }
   // member is a variable name
-  AddError(lhs->line, "not supported");
-  return false;
+  if (lhs_is_type_expression)
+  {
+    // static member variable
+    AddError(lhs->line,
+             "'" + lhs->type->name + "' has no static member named '" + member_name + "'");
+    return false;
+  }
+  // member variable
+  VariablePtr variable = ConvertToVariablePtr(member_symbol);
+  SetVariableExpression(node, variable, lhs->type);
+  return true;
 }
 
 bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
@@ -1972,23 +2631,20 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
   {
     return false;
   }
-  ExpressionNodePtrArray supplied_parameter_nodes;
+  ExpressionNodePtrArray parameter_nodes;
   for (std::size_t i = 1; i < node->children.size(); ++i)
   {
-    NodePtr const &   supplied_parameter      = node->children[i];
-    ExpressionNodePtr supplied_parameter_node = ConvertToExpressionNodePtr(supplied_parameter);
-    if (!AnnotateExpression(supplied_parameter_node))
+    ExpressionNodePtr parameter_node = ConvertToExpressionNodePtr(node->children[i]);
+    if (!AnnotateExpression(parameter_node))
     {
       return false;
     }
-    supplied_parameter_nodes.push_back(supplied_parameter_node);
+    parameter_nodes.push_back(std::move(parameter_node));
   }
   if (lhs->IsFunctionGroupExpression())
   {
-    // Note that lhs->type is null for free functions
-    TypePtrArray actual_parameter_types;
-    FunctionPtr  f = FindFunction(lhs->type, lhs->function_group, supplied_parameter_nodes,
-                                 actual_parameter_types);
+    // Note that lhs->owner is null for free functions
+    FunctionPtr f = FindFunction(lhs->owner, lhs->function_group, parameter_nodes);
     if (!f)
     {
       // No matching function, or ambiguous
@@ -1996,31 +2652,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
                "unable to find matching function for '" + lhs->function_group->name + "'");
       return false;
     }
-    if (f->function_kind == FunctionKind::StaticMemberFunction)
-    {
-      if (lhs->function_invoker_is_instance)
-      {
-        AddError(lhs->line,
-                 "function '" + lhs->function_group->name + "' is a static member function");
-        return false;
-      }
-    }
-    else if (f->function_kind == FunctionKind::MemberFunction)
-    {
-      if (!lhs->function_invoker_is_instance)
-      {
-        AddError(lhs->line,
-                 "function '" + lhs->function_group->name + "' is a non-static member function");
-        return false;
-      }
-    }
-    for (std::size_t i = 1; i < node->children.size(); ++i)
-    {
-      NodePtr const &   supplied_parameter      = node->children[i];
-      ExpressionNodePtr supplied_parameter_node = ConvertToExpressionNodePtr(supplied_parameter);
-      supplied_parameter_node->type             = actual_parameter_types[i - 1];
-    }
-    TypePtr return_type = ResolveType(f->return_type, lhs->type);
+    TypePtr return_type = ResolveReturnType(f->return_type, lhs->owner);
     SetRVExpression(node, return_type);
     node->function = f;
     return true;
@@ -2030,7 +2662,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     // Type constructor
     if (lhs->type->IsPrimitive())
     {
-      AddError(lhs->line, "primitive type '" + lhs->type->name + "' is not constructible");
+      AddError(lhs->line, "type '" + lhs->type->name + "' is not constructible");
       return false;
     }
     SymbolTablePtr symbols;
@@ -2049,19 +2681,12 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
       return false;
     }
     FunctionGroupPtr fg = ConvertToFunctionGroupPtr(symbol);
-    TypePtrArray     actual_parameter_types;
-    FunctionPtr f = FindFunction(lhs->type, fg, supplied_parameter_nodes, actual_parameter_types);
+    FunctionPtr      f  = FindFunction(lhs->type, fg, parameter_nodes);
     if (!f)
     {
       // No matching constructor, or ambiguous
       AddError(lhs->line, "unable to find matching constructor for type '" + lhs->type->name + "'");
       return false;
-    }
-    for (std::size_t i = 1; i < node->children.size(); ++i)
-    {
-      NodePtr const &   supplied_parameter      = node->children[i];
-      ExpressionNodePtr supplied_parameter_node = ConvertToExpressionNodePtr(supplied_parameter);
-      supplied_parameter_node->type             = actual_parameter_types[i - 1];
     }
     SetRVExpression(node, lhs->type);
     node->function = f;
@@ -2071,15 +2696,19 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
   // lhs->IsLVExpression()
   // lhs->IsRVExpression()
   // e.g.
-  // variable();
-  // (a + b)();
-  // array[index]();
+  // null()
+  // {3, 4, 5}()
+  // contractvariable()
+  // variable()
+  // (a + b)()
+  // array[index]()
   AddError(lhs->line, "operand does not support function-call operator");
   return false;
 }
 
 bool Analyser::AnnotateInitialiserList(ExpressionNodePtr const &node)
 {
+  node->type = initialiser_list_type_;
   for (NodePtr const &child : node->children)
   {
     if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
@@ -2093,50 +2722,29 @@ bool Analyser::AnnotateInitialiserList(ExpressionNodePtr const &node)
 
 bool Analyser::ConvertInitialiserList(ExpressionNodePtr const &node, TypePtr const &type)
 {
+  node->type = initialiser_list_type_;
   return type->IsInstantiation() && (type->template_type == array_type_) &&
          ConvertInitialiserListToArray(node, type);
 }
 
 bool Analyser::ConvertInitialiserListToArray(ExpressionNodePtr const &node, TypePtr const &type)
 {
-  node->type                          = initialiser_list_type_;
-  TypePtr const &element_type         = type->types[0];
-  bool           element_is_primitive = element_type->IsPrimitive();
+  TypePtr const &element_type = type->types[0];
   for (NodePtr const &c : node->children)
   {
     auto child = ConvertToExpressionNodePtr(c);
-    switch (child->node_kind)
+    if (!ConvertNode(child, element_type))
     {
-    case NodeKind::InitialiserList:
-      if (!ConvertInitialiserList(child, element_type))
-      {
-        return false;
-      }
-      break;
-
-    case NodeKind::Null:
-      if (element_is_primitive)
-      {
-        child->type = null_type_;
-        return false;
-      }
-      child->type = element_type;
-      break;
-
-    default:
-      if (child->type->IsVoid() || child->type != element_type)
-      {
-        return false;
-      }
+      return false;
     }
   }
-  // all children were convertible to the element type, so set the type
+  // All children were convertible to the element type, so set the type
   node->type = type;
   return true;
 }
 
 // Returns true if control is able to reach the end of the block
-bool Analyser::TestBlock(BlockNodePtr const &block_node)
+bool Analyser::TestBlock(BlockNodePtr const &block_node) const
 {
   for (NodePtr const &child : block_node->block_children)
   {
@@ -2208,88 +2816,56 @@ bool Analyser::AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodeP
                                   ExpressionNodePtr const &rhs)
 {
   Operator const op = GetOperator(node->node_kind);
-  if (lhs->type->IsVoid() || lhs->type->IsNull())
+  if (lhs->IsNull() || rhs->IsNull())
   {
     AddError(node->line, "incompatible types");
     return false;
   }
-  if (rhs->type->IsVoid() || rhs->type->IsNull())
+  bool lhs_is_concrete = lhs->IsConcrete();
+  bool rhs_is_concrete = rhs->IsConcrete();
+  if (!lhs_is_concrete && !rhs_is_concrete)
   {
-    AddError(node->line, "incompatible types");
+    AddError(node->line, "unable to infer types");
     return false;
   }
-  bool const lhs_is_primitive     = lhs->type->IsPrimitive();
-  bool const rhs_is_primitive     = rhs->type->IsPrimitive();
-  bool const lhs_is_instantiation = lhs->type->IsInstantiation();
-  bool const rhs_is_instantiation = rhs->type->IsInstantiation();
-  if (lhs_is_primitive)
+  if (lhs_is_concrete)
   {
-    if (rhs_is_primitive)
+    if (IsOperatorEnabled(lhs->type, op))
     {
-      // primitive op primitive
-      if ((lhs->type == rhs->type) && IsOperatorEnabled(lhs->type, op))
+      if (ConvertNode(rhs, lhs->type))
       {
         SetRVExpression(node, lhs->type);
         return true;
       }
     }
-    else
+    bool lhs_is_instantiation = lhs->type->IsInstantiation();
+    if (lhs_is_instantiation && IsRightOperatorEnabled(lhs->type, op))
     {
-      if (rhs_is_instantiation && IsLeftOperatorEnabled(rhs->type, op))
+      TypePtr const &lhs_inner_type = lhs->type->types[0];
+      if (ConvertNode(rhs, lhs_inner_type))
       {
-        if (lhs->node_kind == NodeKind::InitialiserList)
-        {
-          if (!ConvertInitialiserList(lhs, rhs->type))
-          {
-            AddError(node->line, "incompatible types");
-            return false;
-          }
-        }
-        else
-        {
-          // primitive op object
-          TypePtr const &rhs_type = rhs->type->types[0];
-          if (lhs->type == rhs_type)
-          {
-            SetRVExpression(node, rhs->type);
-            return true;
-          }
-        }
+        SetRVExpression(node, lhs->type);
+        return true;
       }
     }
   }
-  else
+  if (rhs_is_concrete)
   {
-    if (rhs_is_primitive)
+    if (IsOperatorEnabled(rhs->type, op))
     {
-      // object op primitive
-      if (lhs_is_instantiation && IsRightOperatorEnabled(lhs->type, op))
+      if (ConvertNode(lhs, rhs->type))
       {
-        if (rhs->node_kind == NodeKind::InitialiserList)
-        {
-          if (!ConvertInitialiserList(rhs, lhs->type))
-          {
-            AddError(node->line, "incompatible types");
-            return false;
-          }
-        }
-        else
-        {
-          TypePtr const &lhs_type = lhs->type->types[0];
-          if (lhs_type == rhs->type)
-          {
-            SetRVExpression(node, lhs->type);
-            return true;
-          }
-        }
+        SetRVExpression(node, rhs->type);
+        return true;
       }
     }
-    else
+    bool rhs_is_instantiation = rhs->type->IsInstantiation();
+    if (rhs_is_instantiation && IsLeftOperatorEnabled(rhs->type, op))
     {
-      // object op object
-      if ((lhs->type == rhs->type) && IsOperatorEnabled(lhs->type, op))
+      TypePtr const &rhs_inner_type = rhs->type->types[0];
+      if (ConvertNode(lhs, rhs_inner_type))
       {
-        SetRVExpression(node, lhs->type);
+        SetRVExpression(node, rhs->type);
         return true;
       }
     }
@@ -2298,132 +2874,189 @@ bool Analyser::AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodeP
   return false;
 }
 
-TypePtr Analyser::ResolveType(TypePtr const &type, TypePtr const &instantiation_type)
-{
-  if (type->type_kind == TypeKind::Template)
-  {
-    return instantiation_type;
-  }
-  if (type == template_parameter1_type_)
-  {
-    return instantiation_type->types[0];
-  }
-  if (type == template_parameter2_type_)
-  {
-    return instantiation_type->types[1];
-  }
-  return type;
-}
-
-bool Analyser::MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const
-{
-  if (expected_type == any_type_)
-  {
-    return true;
-  }
-  if (expected_type == any_primitive_type_)
-  {
-    return supplied_type->IsPrimitive();
-  }
-  if (expected_type->IsGroup())
-  {
-    for (auto const &possible_type : expected_type->types)
-    {
-      if (supplied_type == possible_type)
-      {
-        return true;
-      }
-    }
-  }
-  else if (supplied_type == expected_type)
-  {
-    return true;
-  }
-  return false;
-}
-
-bool Analyser::MatchTypes(TypePtr const &type, ExpressionNodePtrArray const &supplied_nodes,
-                          TypePtrArray const &expected_types, TypePtrArray &actual_types)
-{
-  actual_types.clear();
-  std::size_t const num_types = expected_types.size();
-  if (supplied_nodes.size() != num_types)
-  {
-    // Not a match
-    return false;
-  }
-  for (std::size_t i = 0; i < num_types; ++i)
-  {
-    auto const &   supplied_node = supplied_nodes[i];
-    TypePtr const &supplied_type = supplied_node->type;
-    if (supplied_type->IsVoid())
-    {
-      return false;
-    }
-    TypePtr expected_type = ResolveType(expected_types[i], type);
-    if (supplied_type->IsNull())
-    {
-      if (!expected_type->IsClass() && !expected_type->IsInstantiation())
-      {
-        // Not a match, can only convert null to a known reference type
-        return false;
-      }
-      actual_types.push_back(expected_type);
-    }
-    else if (supplied_node->node_kind == NodeKind::InitialiserList)
-    {
-      // if there's a matching type set, this node's type will be properly set in the end
-      // otherwise, the whole script does not compile
-      // so it does not matter if we change node's type now
-      if (!ConvertInitialiserList(supplied_node, expected_type))
-      {
-        return false;
-      }
-      actual_types.push_back(expected_type);
-    }
-    else
-    {
-      if (!MatchType(supplied_type, expected_type))
-      {
-        return false;
-      }
-      actual_types.push_back(supplied_type);
-    }
-  }
-  // Got a match
-  return true;
-}
-
 FunctionPtr Analyser::FindFunction(TypePtr const &type, FunctionGroupPtr const &function_group,
-                                   ExpressionNodePtrArray const &supplied_nodes,
-                                   TypePtrArray &                actual_types)
+                                   ExpressionNodePtrArray const &parameter_nodes)
 {
   FunctionPtrArray          functions;
   std::vector<TypePtrArray> array;
   for (FunctionPtr const &function : function_group->functions)
   {
-    TypePtrArray temp_actual_types;
-    if (MatchTypes(type, supplied_nodes, function->parameter_types, temp_actual_types))
+    std::size_t const num_types = function->parameter_types.size();
+    if (parameter_nodes.size() != num_types)
     {
-      array.push_back(temp_actual_types);
+      continue;
+    }
+    bool         match = true;
+    TypePtrArray temp_resolved_types;
+    for (std::size_t i = 0; i < num_types; ++i)
+    {
+      auto const &   parameter_node = parameter_nodes[i];
+      TypePtr const &expected_type  = function->parameter_types[i];
+      TypePtr        resolved_type  = ConvertNode(parameter_node, expected_type, type);
+      if (!resolved_type)
+      {
+        match = false;
+        break;
+      }
+      temp_resolved_types.push_back(std::move(resolved_type));
+    }
+    if (match)
+    {
       functions.push_back(function);
+      array.push_back(std::move(temp_resolved_types));
     }
   }
   if (functions.size() == 1)
   {
-    actual_types = array[0];
-    for (std::size_t i{}; i < actual_types.size(); ++i)
+    TypePtrArray const &resolved_types = array[0];
+    for (std::size_t i = 0; i < parameter_nodes.size(); ++i)
     {
-      auto const &supplied_node = supplied_nodes[i];
-      if (supplied_node->node_kind == NodeKind::InitialiserList)
+      auto const &parameter_node = parameter_nodes[i];
+      if (parameter_node->IsNull() || parameter_node->IsInitialiserList())
       {
-        ConvertInitialiserList(supplied_node, actual_types[i]);
+        ConvertNode(parameter_node, resolved_types[i]);
       }
     }
     return functions[0];
   }
   // Matching function not found, or ambiguous
   return nullptr;
+}
+
+TypePtr Analyser::ConvertNode(ExpressionNodePtr const &node, TypePtr const &expected_type)
+{
+  return ConvertNode(node, expected_type, nullptr);
+}
+
+TypePtr Analyser::ConvertNode(ExpressionNodePtr const &node, TypePtr const &expected_type,
+                              TypePtr const &type)
+{
+  TypePtr const &input_type = node->type;
+
+  if (input_type->IsTemplate() || input_type->IsMeta() || input_type->IsGroup() ||
+      input_type->IsUserDefinedContract())
+  {
+    return nullptr;
+  }
+
+  if ((expected_type == null_type_) || (expected_type == initialiser_list_type_) ||
+      (expected_type == void_type_) || expected_type->IsUserDefinedContract())
+  {
+    return nullptr;
+  }
+
+  TypePtr comparison_type;
+  if (expected_type->IsTemplate())
+  {
+    if (type && type->IsInstantiation())
+    {
+      comparison_type = type;
+    }
+    else
+    {
+      return nullptr;
+    }
+  }
+  else if (expected_type == template_parameter1_type_)
+  {
+    if (type && type->IsInstantiation() && !type->types.empty())
+    {
+      comparison_type = type->types[0];
+    }
+    else
+    {
+      return nullptr;
+    }
+  }
+  else if (expected_type == template_parameter2_type_)
+  {
+    if (type && type->IsInstantiation() && (type->types.size() >= 2))
+    {
+      comparison_type = type->types[1];
+    }
+    else
+    {
+      return nullptr;
+    }
+  }
+  else
+  {
+    comparison_type = expected_type;
+  }
+
+  if (node->IsNull())
+  {
+    // Can only convert null literal to a known reference type
+    if (comparison_type->IsClass() || comparison_type->IsInstantiation() ||
+        comparison_type->IsUserDefinedStruct())
+    {
+      node->type = comparison_type;
+      return comparison_type;
+    }
+    return nullptr;
+  }
+
+  if (node->IsInitialiserList())
+  {
+    // Can only convert initialiser list to a known reference type
+    if (comparison_type->IsClass() || comparison_type->IsInstantiation() ||
+        comparison_type->IsUserDefinedStruct())
+    {
+      if (ConvertInitialiserList(node, comparison_type))
+      {
+        node->type = comparison_type;
+        return comparison_type;
+      }
+    }
+    return nullptr;
+  }
+
+  if (input_type == void_type_)
+  {
+    // Can't convert Void to anything
+    return nullptr;
+  }
+
+  if (comparison_type == any_type_)
+  {
+    return input_type;
+  }
+
+  if (comparison_type == any_primitive_type_)
+  {
+    return input_type->IsPrimitive() ? input_type : nullptr;
+  }
+
+  if (comparison_type->IsGroup())
+  {
+    for (auto const &possible_type : comparison_type->types)
+    {
+      if (input_type == possible_type)
+      {
+        return input_type;
+      }
+    }
+    return nullptr;
+  }
+
+  return (input_type == comparison_type) ? input_type : nullptr;
+}
+
+TypePtr Analyser::ResolveReturnType(TypePtr const &return_type, TypePtr const &type)
+{
+  if (return_type->IsTemplate())
+  {
+    return type;
+  }
+  if (return_type == template_parameter1_type_)
+  {
+    return type->types[0];
+  }
+  if (return_type == template_parameter2_type_)
+  {
+    return type->types[1];
+  }
+  return return_type;
 }
 
 TypePtr Analyser::FindType(ExpressionNodePtr const &node)
@@ -2454,6 +3087,10 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
       // Template type doesn't exist
       return nullptr;
     }
+    if (!symbol->IsType())
+    {
+      return nullptr;
+    }
     TypePtr           template_type                = ConvertToTypePtr(symbol);
     std::size_t const num_supplied_parameter_types = node->children.size() - 1;
     std::size_t const num_expected_parameter_types = template_type->types.size();
@@ -2470,8 +3107,9 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
       {
         return nullptr;
       }
+      parameter_type_node->type              = parameter_type;
       TypePtr const &expected_parameter_type = template_type->types[i - 1];
-      if (!MatchType(parameter_type, expected_parameter_type))
+      if (!ConvertNode(parameter_type_node, expected_parameter_type))
       {
         return nullptr;
       }
@@ -2508,11 +3146,13 @@ SymbolPtr Analyser::SearchSymbols(std::string const &name)
   return nullptr;
 }
 
-void Analyser::SetVariableExpression(ExpressionNodePtr const &node, VariablePtr const &variable)
+void Analyser::SetVariableExpression(ExpressionNodePtr const &node, VariablePtr const &variable,
+                                     TypePtr const &owner)
 {
   node->expression_kind = ExpressionKind::Variable;
   node->variable        = variable;
   node->type            = variable->type;
+  node->owner           = owner;
   variable->referenced  = true;
 }
 
@@ -2534,18 +3174,13 @@ void Analyser::SetTypeExpression(ExpressionNodePtr const &node, TypePtr const &t
   node->type            = type;
 }
 
-// free function:     function_invoker_type is null      function_invoker_is_instance is false
-// instance function: function_invoker_type is non-null  function_invoker_is_instance is true
-// type function:     function_invoker_type is non-null  function_invoker_is_instance is false
 void Analyser::SetFunctionGroupExpression(ExpressionNodePtr const &node,
                                           FunctionGroupPtr const & function_group,
-                                          TypePtr const &          function_invoker_type,
-                                          bool                     function_invoker_is_instance)
+                                          TypePtr const &          owner)
 {
-  node->expression_kind              = ExpressionKind::FunctionGroup;
-  node->function_group               = function_group;
-  node->type                         = function_invoker_type;
-  node->function_invoker_is_instance = function_invoker_is_instance;
+  node->expression_kind = ExpressionKind::FunctionGroup;
+  node->function_group  = function_group;
+  node->owner           = owner;
 }
 
 bool Analyser::CheckType(std::string const &type_name, TypeIndex type_index)
@@ -2705,8 +3340,8 @@ void Analyser::CreateFreeFunction(std::string const &name, TypePtrArray const &p
     // Already created
     return;
   }
-  FunctionPtr f = CreateFunction(FunctionKind::FreeFunction, name, unique_name, parameter_types,
-                                 VariablePtrArray(), return_type);
+  FunctionPtr f = CreateFunction(FunctionKind::FreeFunction, name, unique_name, parameter_types, {},
+                                 return_type);
   AddFunctionToSymbolTable(symbols_, f);
   AddFunctionInfo(f, handler, static_charge);
   function_map_.Add(f);
@@ -2721,8 +3356,8 @@ void Analyser::CreateConstructor(TypePtr const &type, TypePtrArray const &parame
     // Already created
     return;
   }
-  FunctionPtr f = CreateFunction(FunctionKind::ConstructorFunction, CONSTRUCTOR, unique_name,
-                                 parameter_types, VariablePtrArray(), type);
+  FunctionPtr f = CreateFunction(FunctionKind::Constructor, CONSTRUCTOR, unique_name,
+                                 parameter_types, {}, type);
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler, static_charge);
   function_map_.Add(f);
@@ -2740,7 +3375,7 @@ void Analyser::CreateStaticMemberFunction(TypePtr const &type, std::string const
     return;
   }
   FunctionPtr f = CreateFunction(FunctionKind::StaticMemberFunction, name, unique_name,
-                                 parameter_types, VariablePtrArray(), return_type);
+                                 parameter_types, {}, return_type);
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler, static_charge);
   function_map_.Add(f);
@@ -2757,7 +3392,7 @@ void Analyser::CreateMemberFunction(TypePtr const &type, std::string const &name
     return;
   }
   FunctionPtr f = CreateFunction(FunctionKind::MemberFunction, name, unique_name, parameter_types,
-                                 VariablePtrArray(), return_type);
+                                 {}, return_type);
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler, static_charge);
   function_map_.Add(f);
@@ -2784,6 +3419,25 @@ FunctionPtr Analyser::CreateUserDefinedContractFunction(TypePtr const &         
                         parameter_types, parameter_variables, return_type);
 }
 
+FunctionPtr Analyser::CreateUserDefinedConstructor(TypePtr const &         type,
+                                                   TypePtrArray const &    parameter_types,
+                                                   VariablePtrArray const &parameter_variables)
+{
+  std::string unique_name = BuildUniqueName(type, CONSTRUCTOR, parameter_types, type);
+  return CreateFunction(FunctionKind::UserDefinedConstructor, CONSTRUCTOR, unique_name,
+                        parameter_types, parameter_variables, type);
+}
+
+FunctionPtr Analyser::CreateUserDefinedMemberFunction(TypePtr const &type, std::string const &name,
+                                                      TypePtrArray const &    parameter_types,
+                                                      VariablePtrArray const &parameter_variables,
+                                                      TypePtr const &         return_type)
+{
+  std::string unique_name = BuildUniqueName(type, name, parameter_types, return_type);
+  return CreateFunction(FunctionKind::UserDefinedMemberFunction, name, unique_name, parameter_types,
+                        parameter_variables, return_type);
+}
+
 void Analyser::EnableIndexOperator(TypePtr const &type, TypePtrArray const &input_types,
                                    TypePtr const &output_type, Handler const &get_handler,
                                    Handler const &set_handler, ChargeAmount get_static_charge,
@@ -2804,13 +3458,13 @@ void Analyser::EnableIndexOperator(TypePtr const &type, TypePtrArray const &inpu
   }
 
   FunctionPtr gf = CreateFunction(FunctionKind::MemberFunction, GET_INDEXED_VALUE, g_unique_name,
-                                  input_types, VariablePtrArray(), output_type);
+                                  input_types, {}, output_type);
   AddFunctionInfo(gf, get_handler, get_static_charge);
   AddFunctionToSymbolTable(type->symbols, gf);
   function_map_.Add(gf);
 
   FunctionPtr sf = CreateFunction(FunctionKind::MemberFunction, SET_INDEXED_VALUE, s_unique_name,
-                                  s_input_types, VariablePtrArray(), void_type_);
+                                  s_input_types, {}, void_type_);
   AddFunctionInfo(sf, set_handler, set_static_charge);
   AddFunctionToSymbolTable(type->symbols, sf);
   function_map_.Add(sf);
@@ -2878,7 +3532,7 @@ void Analyser::AddFunctionToSymbolTable(SymbolTablePtr const &symbols, FunctionP
   else
   {
     // Create new function group
-    function_group = CreateFunctionGroup(function->name);
+    function_group = CreateFunctionGroup(function->name, nullptr);
     symbols->Add(function_group);
   }
   // Add the function to the function group

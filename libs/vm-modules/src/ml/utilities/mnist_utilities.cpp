@@ -26,23 +26,26 @@ namespace utilities {
 vm::Ptr<math::VMTensor> load_mnist_images(vm::VM *vm, vm::Ptr<vm::String> const &filename)
 {
   math::VMTensor::TensorType tensor =
-      fetch::ml::utilities::read_mnist_images<math::VMTensor::TensorType>(filename->str);
+      fetch::ml::utilities::read_mnist_images<math::VMTensor::TensorType>(filename->string());
   return vm->CreateNewObject<math::VMTensor>(tensor);
 }
 
 vm::Ptr<math::VMTensor> load_mnist_labels(vm::VM *vm, vm::Ptr<vm::String> const &filename)
 {
   math::VMTensor::TensorType tensor =
-      fetch::ml::utilities::read_mnist_labels<math::VMTensor::TensorType>(filename->str);
+      fetch::ml::utilities::read_mnist_labels<math::VMTensor::TensorType>(filename->string());
   tensor = fetch::ml::utilities::convert_labels_to_onehot(tensor);
 
   return vm->CreateNewObject<math::VMTensor>(tensor);
 }
 
-void BindMNISTUtils(vm::Module &module)
+void BindMNISTUtils(vm::Module &module, bool const enable_experimental)
 {
-  module.CreateFreeFunction("loadMNISTImages", &load_mnist_images);
-  module.CreateFreeFunction("loadMNISTLabels", &load_mnist_labels);
+  if (enable_experimental)
+  {
+    module.CreateFreeFunction("loadMNISTImages", &load_mnist_images, vm::MAXIMUM_CHARGE);
+    module.CreateFreeFunction("loadMNISTLabels", &load_mnist_labels, vm::MAXIMUM_CHARGE);
+  }
 }
 
 }  // namespace utilities

@@ -55,12 +55,12 @@ public:
   using Timepoint = Clock::time_point;
   using Addresses = std::unordered_set<Address>;
   using UriSet    = std::unordered_set<network::Uri>;
+  using Peers     = std::vector<network::Peer>;
 
   struct PeerMetadata
   {
     network::Peer peer;
     bool          unreachable{false};
-    Timepoint     last_attempt{Clock::now()};  // replace with connection attempts
 
     explicit PeerMetadata(network::Peer addr)
       : peer{std::move(addr)}
@@ -74,7 +74,6 @@ public:
     PeerData    peer_data{};
     std::size_t peer_index{0};  // The current peer being evaluated
     std::size_t consecutive_failures{0};
-    Timepoint   last_updated{Clock::now()};
   };
 
   using PeersInfo = std::unordered_map<Address, Metadata>;
@@ -96,6 +95,8 @@ public:
   PeersInfo         GetPeerCache() const;
   PeerSelectionMode GetMode() const;
   void              SetMode(PeerSelectionMode mode);
+
+  void UpdatePeers(Peers peers);
 
   // Operators
   PeerSelector &operator=(PeerSelector const &) = delete;
@@ -145,6 +146,7 @@ private:
   SubscriptionPtr       announcement_subscription_;
 
   mutable Mutex     lock_;
+  Peers             external_peers_;
   Rng               rng_{};
   DeadlineTimer     announcement_interval_{CLOCK_NAME};
   PeerSelectionMode mode_{PeerSelectionMode::DEFAULT};

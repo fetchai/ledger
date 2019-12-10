@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "core/common.hpp"
 #include "logging/logging.hpp"
 #include "meta/value_util.hpp"
@@ -30,6 +31,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <initializer_list>
+#include <istream>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -87,6 +89,7 @@ public:
 
   ConstByteArray(ConstByteArray const &other) = default;
   ConstByteArray(ConstByteArray &&other)      = default;
+
   // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
   // details - absolute vs relative[against `other.start_`] size)
   ConstByteArray(ConstByteArray const &other, std::size_t start, std::size_t length) noexcept
@@ -96,6 +99,19 @@ public:
     , arr_pointer_(data_.pointer() + start_)
   {
     assert(start_ + length_ <= data_.size());
+  }
+
+  explicit ConstByteArray(std::istream &in)
+  {
+    detailed_assert(in.good());
+
+    in.seekg(0, std::ios::end);
+    auto const size_in_bytes = in.tellg();
+    in.seekg(0, std::ios::beg);
+
+    Resize(static_cast<std::size_t>(size_in_bytes), ResizeParadigm::ABSOLUTE);
+
+    in.read(char_pointer(), size_in_bytes);
   }
 
   ConstByteArray &operator=(ConstByteArray const &) = default;
@@ -376,18 +392,7 @@ protected:
   void Resize(std::size_t n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
               bool const zero_reserved_space = true)
   {
-    std::size_t new_length{0};
-
-    switch (resize_paradigm)
-    {
-    case ResizeParadigm::RELATIVE:
-      new_length = length_ + n;
-      break;
-
-    case ResizeParadigm::ABSOLUTE:
-      new_length = n;
-      break;
-    }
+    std::size_t const new_length = resize_paradigm == ResizeParadigm::ABSOLUTE ? n : length_ + n;
 
     auto const new_capacity_for_reserve = start_ + new_length;
 
@@ -417,18 +422,8 @@ protected:
   void Reserve(std::size_t n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
                bool const zero_reserved_space = true)
   {
-    std::size_t new_capacity_for_reserve{0};
-
-    switch (resize_paradigm)
-    {
-    case ResizeParadigm::RELATIVE:
-      new_capacity_for_reserve = data_.size() + n;
-      break;
-
-    case ResizeParadigm::ABSOLUTE:
-      new_capacity_for_reserve = n;
-      break;
-    }
+    std::size_t const new_capacity_for_reserve =
+        resize_paradigm == ResizeParadigm::ABSOLUTE ? n : data_.size() + n;
 
     if (new_capacity_for_reserve <= data_.size())
     {
@@ -604,9 +599,8 @@ struct hash<fetch::byte_array::ConstByteArray>
   std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const noexcept
   {
     uint64_t h = 2166136261U;
-    uint64_t i;
 
-    for (i = 0; i < value.size(); ++i)
+    for (uint64_t i = 0; i < value.size(); ++i)
     {
       h = (h * 16777619) ^ value[i];
     }

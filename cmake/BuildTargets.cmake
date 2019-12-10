@@ -183,6 +183,10 @@ macro (setup_compiler)
       )
   endif ()
 
+  if (FETCH_FIXEDPOINT_DEBUG_HEX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_FIXEDPOINT_DEBUG_HEX")
+  endif ()
+
 endmacro (setup_compiler)
 
 function (conditionally_enable_lto)
@@ -308,6 +312,16 @@ function (configure_library_targets)
   set(library_root ${FETCH_ROOT_DIR}/libs)
 
   file(GLOB children RELATIVE ${library_root} ${library_root}/*)
+
+  if (APPLE)
+    # Temporarily disable oef builds
+    list(FILTER
+         children
+         EXCLUDE
+         REGEX
+         ".*oef-core.*")
+  endif (APPLE)
+
   set(dirlist "")
   foreach (child ${children})
     set(element_path ${library_root}/${child})

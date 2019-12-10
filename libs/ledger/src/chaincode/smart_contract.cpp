@@ -566,7 +566,9 @@ Contract::Result SmartContract::InvokeInit(chain::Address const &    owner,
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
 
-  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, context().block_index);
+  auto const block_index = context().block_index;
+
+  context_ = vm_modules::ledger::Context::Factory(vm.get(), tx, block_index);
 
   // TODO(WK) inject charge limit
   // vm->SetChargeLimit(123);
@@ -614,7 +616,7 @@ Contract::Result SmartContract::InvokeInit(chain::Address const &    owner,
   {
     return_value = output.Get<ResponseType>();
   }
-  return {status, return_value};
+  return {status, return_value, block_index};
 }
 
 /**
@@ -741,8 +743,18 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     response["result"] = output.Get<fixed_point::fp64_t>();
     break;
   case vm::TypeIds::String:
-    response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
+  {
+    auto const res = output.Get<vm::Ptr<vm::String>>();
+    if (res)
+    {
+      response["result"] = res->string();
+    }
+    else
+    {
+      response["result"] = variant::Variant::Null();
+    }
     break;
+  }
   default:
     if (output.IsPrimitive())
     {

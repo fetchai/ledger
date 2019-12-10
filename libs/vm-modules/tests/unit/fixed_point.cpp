@@ -189,4 +189,52 @@ TEST_F(FixedPointTest, pow_32_fixed_point)
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 
+TEST_F(FixedPointTest, multidigit_integral_fixed_point32)
+{
+  char const *TEXT = R"(
+    function main()
+      var val32_1 = 123fp32;
+      var val32_2 = toFixed32(123);
+      assert(val32_1 == val32_2);
+    endfunction
+  )";
+
+  EXPECT_TRUE(toolkit.Compile(TEXT));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(FixedPointTest, multidigit_integral_fixed_point64)
+{
+  char const *TEXT = R"(
+    function main()
+      var val64_1 = 123fp64;
+      var val64_2 = toFixed64(123);
+      assert(val64_1 == val64_2);
+    endfunction
+  )";
+
+  EXPECT_TRUE(toolkit.Compile(TEXT));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(FixedPointTest, multidigit_integral_fixed_point128)
+{
+  char const *TEXT = R"(
+    function main()
+      var val128_1 = 123fp128;
+      var val128_2 = toFixed128(123);
+      assert(val128_1 == val128_2);
+      var val128_3 = 123.456fp128;
+      var val128_4 = toFixed128(123.456);
+      var val32_1 = 123.456fp32;
+      var val64_1 = 123.456fp64;
+      assert(abs(val128_3 - toFixed128(val32_1)) < toFixed128(0.0003));
+      assert(abs(val128_3 - toFixed128(val64_1)) < toFixed128(0.00000012));
+    endfunction
+  )";
+
+  EXPECT_TRUE(toolkit.Compile(TEXT));
+  EXPECT_TRUE(toolkit.Run());
+}
+
 }  // namespace

@@ -23,6 +23,10 @@
 
 #include "oef-base/threading/ExitState.hpp"
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 class Taskpool;
 
 class Task : public std::enable_shared_from_this<Task>
@@ -47,7 +51,7 @@ public:
 
   bool IsCancelled() const
   {
-    return cancelled;
+    return cancelled_;
   }
 
   Task();
@@ -67,11 +71,11 @@ public:
 
   std::size_t GetTaskId()
   {
-    return task_id;
+    return task_id_;
   }
   std::size_t GetGroupId()
   {
-    return group_id;
+    return group_id_;
   }
 
   std::size_t SetGroupId(std::size_t new_group_id);
@@ -94,10 +98,14 @@ public:
   }
 
 private:
-  std::shared_ptr<Taskpool> pool;
+  std::shared_ptr<Taskpool> pool_;
   std::atomic<TaskState>    task_state_;
-  std::atomic<bool>         cancelled;
-  std::size_t               group_id;
-  std::size_t               task_id;
+  std::atomic<bool>         cancelled_;
+  std::size_t               group_id_;
+  std::size_t               task_id_;
   std::atomic<uint16_t>     made_runnable_;
 };
+
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

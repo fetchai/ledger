@@ -60,13 +60,12 @@ public:
 
   /// @name Charge Accessors
   /// @{
-  NativeTokenAmount charge() const;
+  NativeTokenAmount charge_rate() const;
   NativeTokenAmount charge_limit() const;
   /// @}
 
   /// @name Contract Accessors
   /// @{
-  AddressPtr   contract_digest() const;
   AddressPtr   contract_address() const;
   StringPtr    action() const;
   AddressesPtr signatories() const;
@@ -76,7 +75,6 @@ private:
   DigestPtr                                  digest_;
   AddressPtr                                 from_;
   TransfersPtr                               transfers_;
-  AddressPtr                                 contract_digest_;
   AddressPtr                                 contract_address_;
   StringPtr                                  action_;
   AddressesPtr                               signatories_;

@@ -25,6 +25,7 @@
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/protocols/notarisation_service.hpp"
+#include "ledger/storage_unit/fake_storage_unit.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -66,6 +67,7 @@ struct NotarisationNode
   Muddle                                     muddle;
   DummyManifestCache                         manifest_cache;
   MainChain                                  chain;
+  FakeStorageUnit                            storage_unit;
   std::shared_ptr<TrustedDealerSetupService> beacon_setup_service;
   std::shared_ptr<BeaconService>             beacon_service;
   std::shared_ptr<NotarisationService>       notarisation_service;
@@ -80,23 +82,19 @@ struct NotarisationNode
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
-    , chain{false, ledger::MainChain::Mode::IN_MEMORY_DB}
+    , chain{ledger::MainChain::Mode::IN_MEMORY_DB}
     , beacon_setup_service{new TrustedDealerSetupService{
           *muddle, manifest_cache, muddle_certificate, threshold, aeon_period}}
     , beacon_service{new BeaconService{*muddle, muddle_certificate, *beacon_setup_service,
                                        event_manager}}
     , notarisation_service{new NotarisationService{*muddle, muddle_certificate,
                                                    *beacon_setup_service}}
-    , stake_manager{new StakeManager{cabinet_size}}
-    , consensus{stake_manager,
-                beacon_setup_service,
-                beacon_service,
-                chain,
-                muddle_certificate->identity(),
-                aeon_period,
-                cabinet_size,
-                1000,
-                notarisation_service}
+    , stake_manager{new StakeManager{}}
+    , consensus{stake_manager,  beacon_setup_service,
+                beacon_service, chain,
+                storage_unit,   muddle_certificate->identity(),
+                aeon_period,    cabinet_size,
+                1000,           notarisation_service}
   {
     network_manager.Start();
     muddle->Start({muddle_port});
@@ -179,8 +177,7 @@ TEST(notarisation, notarise_blocks)
   for (auto &node : nodes)
   {
     node->reactor.Start();
-    node->consensus.SetCabinetSize(cabinet_size);
-    node->consensus.SetThreshold(threshold);
+    node->consensus.SetMaxCabinetSize(static_cast<uint16_t>(cabinet_size));
   }
 
   // Stake setup
@@ -196,7 +193,7 @@ TEST(notarisation, notarise_blocks)
   // Completely change over committee and queue updates
   for (auto &node : nodes)
   {
-    node->consensus.Reset(snapshot);
+    node->consensus.Reset(snapshot, node->storage_unit);
     for (uint32_t j = 0; j < num_nodes; ++j)
     {
       if (j >= cabinet_size)
@@ -244,15 +241,15 @@ TEST(notarisation, notarise_blocks)
           // Set block hash and ficticious weight for first block
           if (block_number == 1)
           {
-            next_block->body.previous_hash = node->chain.GetHeaviestBlock()->body.hash;
-            next_block->weight             = static_cast<uint64_t>(
+            next_block->previous_hash = node->chain.GetHeaviestBlock()->hash;
+            next_block->weight        = static_cast<uint64_t>(
                 cabinet_size -
                 std::distance(nodes.begin(), std::find(nodes.begin(), nodes.end(), node)));
           }
 
           next_block->UpdateDigest();
           next_block->UpdateTimestamp();
-          next_block->miner_signature = node->muddle_certificate->Sign(next_block->body.hash);
+          next_block->miner_signature = node->muddle_certificate->Sign(next_block->hash);
           assert(next_block->weight != 0);
 
           blocks_this_round.push_back(std::move(next_block));

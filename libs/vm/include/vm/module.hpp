@@ -169,9 +169,13 @@ public:
     ClassInterface &CreateMemberFunction(std::string const &name, Callable callable,
                                          ChargeAmount static_charge = 1)
     {
-      using Traits        = typename meta::CallableTraits<Callable>;
-      using EtchParams    = typename Traits::ArgsTupleType;
-      using EstimatorType = meta::UnpackTuple<EtchParams, ChargeEstimator>;
+      using Traits     = typename meta::CallableTraits<Callable>;
+      using EtchParams = typename Traits::ArgsTupleType;
+
+      using EstimatorArgs =
+          typename meta::Tuple<EtchParams>::template Prepend<std::tuple<Ptr<Type> const &>>::type;
+
+      using EstimatorType = meta::UnpackTuple<EstimatorArgs, ChargeEstimator>;
 
       return InternalCreateMemberFunction(name, callable, static_charge, EstimatorType{});
     }
@@ -221,8 +225,8 @@ public:
                                         ChargeAmount static_setter_charge = 1)
     {
       return InternalEnableIndexOperator(getter, setter, static_getter_charge, static_setter_charge,
-                                         ChargeEstimator<GetterArgs...>{},
-                                         ChargeEstimator<SetterArgs...>{});
+                                         ChargeEstimator<Ptr<Type> const &, GetterArgs...>{},
+                                         ChargeEstimator<Ptr<Type> const &, SetterArgs...>{});
     }
 
     template <typename GetterReturnType, typename... GetterArgs, typename SetterReturnType,
@@ -232,9 +236,9 @@ public:
                                         GetterEstimator getter_estimator,
                                         SetterEstimator setter_estimator)
     {
-      return InternalEnableIndexOperator(getter, setter, 0, 0,
-                                         ChargeEstimator<GetterArgs...>{getter_estimator},
-                                         ChargeEstimator<SetterArgs...>{setter_estimator});
+      return InternalEnableIndexOperator(
+          getter, setter, 0, 0, ChargeEstimator<Ptr<Type> const &, GetterArgs...>{getter_estimator},
+          ChargeEstimator<Ptr<Type> const &, SetterArgs...>{setter_estimator});
     }
 
     template <typename InstantiationType>
@@ -294,7 +298,7 @@ public:
                                                        Estimator    estimator)
     {
       using Traits      = typename meta::CallableTraits<Callable>;
-      using Params      = typename meta::CallableTraits<Callable>::ArgsTupleType;
+      using Params      = typename Traits::ArgsTupleType;
       using EtchParams  = typename meta::Tuple<Params>::template DropInitial<2>::type;
       using ExtraParams = typename meta::Tuple<Params>::template TakeInitial<2>::type;
       using ReturnType  = typename Traits::ReturnType;
@@ -308,8 +312,7 @@ public:
       TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
 
       Handler handler = [callable, estimator](VM *vm) {
-        using EstimatorType = meta::UnpackTuple<EtchParams, ChargeEstimator>;
-        StaticMemberFunction<EtchParams>::InvokeHandler(vm, EstimatorType{estimator}, callable, vm,
+        StaticMemberFunction<EtchParams>::InvokeHandler(vm, estimator, callable, vm,
                                                         vm->instruction_->data);
       };
       auto compiler_setup_function = [type_index__, name, parameter_type_index_array,
@@ -390,8 +393,7 @@ public:
       TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
 
       Handler handler = [callable, estimator](VM *vm) {
-        using EstimatorType = meta::UnpackTuple<EtchParams, ChargeEstimator>;
-        MemberFunction<EtchParams>::InvokeHandler(vm, EstimatorType{estimator}, callable);
+        MemberFunction<EtchParams>::InvokeHandler(vm, estimator, callable);
       };
 
       auto compiler_setup_function = [type_index__, name, parameter_type_index_array,
@@ -515,7 +517,7 @@ private:
   void GetDetails(TypeInfoArray &type_info_array, TypeInfoMap &type_info_map,
                   RegisteredTypes &registered_types, FunctionInfoArray &function_info_array,
                   DeserializeConstructorMap &deserialization_constructors,
-                  CPPCopyConstructorMap &    cpp_copy_constructors)
+                  CPPCopyConstructorMap &    cpp_copy_constructors) const
   {
     type_info_array              = type_info_array_;
     type_info_map                = type_info_map_;

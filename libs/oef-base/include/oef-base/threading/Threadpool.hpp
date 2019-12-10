@@ -22,63 +22,73 @@
 #include <thread>
 #include <vector>
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 class Threadpool
 {
 public:
   using ThreadP = std::shared_ptr<std::thread>;
   using Threads = std::vector<ThreadP>;
 
-  Threadpool()
-  {}
+  Threadpool() = default;
   virtual ~Threadpool()
   {
     try
     {
       stop();
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       std::cerr << " Exception while shuting down threads: " << e.what() << std::endl;
     }
   }
 
-  void start(std::size_t threadcount, std::function<void(void)> runnable)
+  void start(std::size_t threadcount, const std::function<void(void)> &runnable)
   {
-    threads.reserve(threadcount);
+    threads_.reserve(threadcount);
     for (std::size_t thread_idx = 0; thread_idx < threadcount; ++thread_idx)
     {
-      threads.emplace_back(std::make_shared<std::thread>(runnable));
+      threads_.emplace_back(std::make_shared<std::thread>(runnable));
     }
   }
 
-  void start(std::size_t threadcount, std::function<void(std::size_t thread_number)> runnable)
+  void start(std::size_t                                           threadcount,
+             const std::function<void(std::size_t thread_number)> &runnable)
   {
-    threads.reserve(threadcount);
+    threads_.reserve(threadcount);
     for (std::size_t thread_number = 0; thread_number < threadcount; ++thread_number)
     {
-      threads.emplace_back(
+      threads_.emplace_back(
           std::make_shared<std::thread>([runnable, thread_number]() { runnable(thread_number); }));
     }
   }
 
   virtual void stop()
   {
-    for (auto &thread : threads)
+    Threads tmp;
+    std::swap(tmp, threads_);
+    for (auto &thread : tmp)
     {
       if (std::this_thread::get_id() != thread->get_id())
       {
         thread->join();
       }
     }
-    threads.empty();
+    threads_.empty();
   }
-
-protected:
-private:
-  Threads threads;
 
   Threadpool(const Threadpool &other) = delete;
   Threadpool &operator=(const Threadpool &other)  = delete;
   bool        operator==(const Threadpool &other) = delete;
   bool        operator<(const Threadpool &other)  = delete;
+
+protected:
+private:
+  Threads threads_;
 };
+
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

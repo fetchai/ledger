@@ -75,7 +75,6 @@ public:
   using Block                         = ledger::Block;
   using BlockHash                     = Block::Hash;
   using Identity                      = Block::Identity;
-  using BlockBody                     = Block::Body;
   using BlockNumber                   = uint64_t;
   using BlockWeight                   = Block::Weight;
   using BlockEntropy                  = beacon::BlockEntropy;
@@ -120,10 +119,10 @@ public:
 
   /// Calls from other services
   /// @{
-  void               NotariseBlock(BlockBody const &block);
+  void               NotariseBlock(Block const &block);
   void               SetAeonDetails(uint64_t round_start, uint64_t round_end, uint32_t threshold,
                                     AeonNotarisationKeys const &cabinet_public_keys);
-  AggregateSignature GetAggregateNotarisation(BlockBody const &block);
+  AggregateSignature GetAggregateNotarisation(Block const &block);
   /// @}
 
   /// Verifying notarised blocks
@@ -137,14 +136,6 @@ public:
   std::weak_ptr<core::Runnable> GetWeakRunnable();
 
 private:
-  struct AeonDetails
-  {
-    uint64_t             round_start{0};
-    uint64_t             round_end{0};
-    uint32_t             threshold{0};
-    AeonNotarisationKeys cabinet_public_keys{};
-  };
-
   /// Helper function
   /// @{
   uint64_t BlockNumberCutoff() const;
@@ -175,10 +166,8 @@ private:
   BlockHeightGroupNotarisations
            notarisations_built_;  ///< Group signatures for blocks at a particular block number
   uint64_t notarised_chain_height_{0};          ///< Current highest notarised block number in chain
-  uint64_t notarisation_collection_height_{0};  // Block number current collecting signatures for
+  uint64_t notarisation_collection_height_{0};  ///< Block number current collecting signatures for
   static const uint32_t cutoff_ = 2;            ///< Number of blocks behind
-  AeonDetails current_aeon_details;  ///< Details of current aeon which are necessary if not a
-                                     ///< cabinet member
   /// @}
 };
 }  // namespace ledger

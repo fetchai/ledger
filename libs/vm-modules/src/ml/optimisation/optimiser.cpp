@@ -16,15 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/optimisation/optimiser.hpp"
+
 #include "ml/optimisation/adagrad_optimiser.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/momentum_optimiser.hpp"
-#include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/rmsprop_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/optimisation/optimiser.hpp"
@@ -53,7 +54,6 @@ VMOptimiser::VMOptimiser(VM *vm, TypeId type_id, std::string const &mode, GraphT
                          std::string const &label_node_name, std::string const &output_node_name)
   : Object(vm, type_id)
 {
-  loader_ = (loader->GetDataLoader());
   if (mode == "adagrad")
   {
     mode_ = OptimiserMode::ADAGRAD;
@@ -91,22 +91,27 @@ VMOptimiser::VMOptimiser(VM *vm, TypeId type_id, std::string const &mode, GraphT
   }
   else
   {
-    throw std::runtime_error("unrecognised optimiser mode");
+    RuntimeError("unrecognised optimiser mode: " + mode);
+    return;
   }
+  loader_ = (loader->GetDataLoader());
 }
 
-void VMOptimiser::Bind(Module &module)
+void VMOptimiser::Bind(Module &module, bool const enable_experimental)
 {
-  module.CreateClassType<VMOptimiser>("Optimiser")
-      .CreateConstructor(&VMOptimiser::Constructor)
-      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMOptimiser> {
-        return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id)};
-      })
-      .CreateMemberFunction("run", &VMOptimiser::RunData)
-      .CreateMemberFunction("run", &VMOptimiser::RunLoader)
-      .CreateMemberFunction("run", &VMOptimiser::RunLoaderNoSubset)
-      .CreateMemberFunction("setGraph", &VMOptimiser::SetGraph)
-      .CreateMemberFunction("setDataloader", &VMOptimiser::SetDataloader);
+  if (enable_experimental)
+  {
+    module.CreateClassType<VMOptimiser>("Optimiser")
+        .CreateConstructor(&VMOptimiser::Constructor, vm::MAXIMUM_CHARGE)
+        .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMOptimiser> {
+          return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id)};
+        })
+        .CreateMemberFunction("run", &VMOptimiser::RunData, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("run", &VMOptimiser::RunLoader, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("run", &VMOptimiser::RunLoaderNoSubset, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("setGraph", &VMOptimiser::SetGraph, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("setDataloader", &VMOptimiser::SetDataloader, vm::MAXIMUM_CHARGE);
+  }
 }
 
 Ptr<VMOptimiser> VMOptimiser::Constructor(
@@ -121,12 +126,12 @@ Ptr<VMOptimiser> VMOptimiser::Constructor(
   for (fetch::math::SizeType i{0}; i < n_elements; i++)
   {
     Ptr<fetch::vm::String> ptr_string = input_node_names->elements.at(i);
-    input_names.at(i)                 = (ptr_string)->str;
+    input_names.at(i)                 = (ptr_string)->string();
   }
 
-  return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id, mode->str, graph->GetGraph(), loader,
-                                          input_names, label_node_name->str,
-                                          output_node_names->str)};
+  return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id, mode->string(), graph->GetGraph(), loader,
+                                          input_names, label_node_name->string(),
+                                          output_node_names->string())};
 }
 
 VMOptimiser::DataType VMOptimiser::RunData(Ptr<fetch::vm_modules::math::VMTensor> const &data,

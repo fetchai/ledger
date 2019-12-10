@@ -19,7 +19,7 @@
 #include "ml/state_dict.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 
@@ -51,7 +51,7 @@ Ptr<VMStateDict> VMStateDict::Constructor(VM *vm, TypeId type_id)
 
 void VMStateDict::SetWeights(Ptr<String> const &nodename, Ptr<math::VMTensor> const &weights)
 {
-  auto weights_tensor = state_dict_.dict_[nodename->str].weights_;
+  auto weights_tensor = state_dict_.dict_[nodename->string()].weights_;
   *weights_tensor     = weights->GetTensor();
 }
 
@@ -67,11 +67,14 @@ bool VMStateDict::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   return true;
 }
 
-void VMStateDict::Bind(Module &module)
+void VMStateDict::Bind(Module &module, bool const enable_experimental)
 {
-  module.CreateClassType<VMStateDict>("StateDict")
-      .CreateConstructor(&VMStateDict::Constructor)
-      .CreateMemberFunction("setWeights", &VMStateDict::SetWeights);
+  if (enable_experimental)
+  {
+    module.CreateClassType<VMStateDict>("StateDict")
+        .CreateConstructor(&VMStateDict::Constructor, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("setWeights", &VMStateDict::SetWeights, vm::MAXIMUM_CHARGE);
+  }
 }
 
 }  // namespace ml

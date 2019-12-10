@@ -54,7 +54,7 @@ bool OutboundConversationWorkerTask::connect()
     FETCH_LOG_WARN(LOGGING_NAME, "Connected to ", uri.ToString());
     return true;
   }
-  catch (std::exception &ex)
+  catch (std::exception const &ex)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Connection to ", uri.ToString(), " failed: ", ex.what());
     ++connect_failures_;
@@ -63,14 +63,14 @@ bool OutboundConversationWorkerTask::connect()
   return false;
 }
 
-WorkloadProcessed OutboundConversationWorkerTask::process(WorkloadP workload,
-                                                          WorkloadState /*state*/)
+fetch::oef::base::WorkloadProcessed OutboundConversationWorkerTask::process(
+    WorkloadP workload, fetch::oef::base::WorkloadState /*state*/)
 {
   if (connect_failures_ > CONNECT_FAILURE_LIMIT)
   {
     OnPeerError(workload->GetIdentifier(), 61,
                 "Connection (" + uri.ToString() + ") failure because limit reached! ");
-    return WorkloadProcessed ::COMPLETE;
+    return fetch::oef::base::WorkloadProcessed ::COMPLETE;
   }
   FETCH_LOG_WARN(LOGGING_NAME, "process search conversation (uri=", uri.ToString(), ")...");
   if (!ep || !ep->connected())
@@ -78,7 +78,7 @@ WorkloadProcessed OutboundConversationWorkerTask::process(WorkloadP workload,
     FETCH_LOG_INFO(LOGGING_NAME, "no search conn with ", uri.ToString());
     if (!connect())
     {
-      return WorkloadProcessed::NOT_STARTED;
+      return fetch::oef::base::WorkloadProcessed::NOT_STARTED;
     }
   }
 
@@ -90,5 +90,5 @@ WorkloadProcessed OutboundConversationWorkerTask::process(WorkloadP workload,
   FETCH_LOG_INFO(LOGGING_NAME, "Starting search ep send loop (uri=", u.ToString(), ")...");
   ep->run_sending();
   FETCH_LOG_INFO(LOGGING_NAME, "done (uri=", u.ToString(), ")..");
-  return WorkloadProcessed::COMPLETE;
+  return fetch::oef::base::WorkloadProcessed::COMPLETE;
 }

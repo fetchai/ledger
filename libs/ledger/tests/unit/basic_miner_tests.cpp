@@ -21,7 +21,6 @@
 #include "chain/transaction_layout.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/miner/basic_miner.hpp"
-#include "ledger/resource_mapper.hpp"
 #include "meta/log2.hpp"
 #include "tx_generator.hpp"
 #include "vectorise/platform.hpp"
@@ -109,13 +108,13 @@ TEST_P(BasicMinerTests, SimpleExample)
   PopulateWithTransactions(num_tx);
 
   Block     block;
-  MainChain dummy{false, MainChain::Mode::IN_MEMORY_DB};
+  MainChain dummy{MainChain::Mode::IN_MEMORY_DB};
 
-  block.body.previous_hash = dummy.GetHeaviestBlockHash();
+  block.previous_hash = dummy.GetHeaviestBlockHash();
 
   miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, dummy);
 
-  for (auto const &slice : block.body.slices)
+  for (auto const &slice : block.slices)
   {
     BitVector lanes{NUM_LANES};
 
@@ -140,7 +139,7 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
 
   auto const layout = PopulateWithTransactions(num_tx, 1);
 
-  MainChain chain{false, MainChain::Mode::IN_MEMORY_DB};
+  MainChain chain{MainChain::Mode::IN_MEMORY_DB};
 
   DigestSet transactions_already_seen{};
   DigestSet transactions_within_block{};
@@ -149,13 +148,13 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
   {
     Block block;
 
-    block.body.previous_hash = chain.GetHeaviestBlockHash();
+    block.previous_hash = chain.GetHeaviestBlockHash();
 
     miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, chain);
 
     // Check no duplicate transactions within a block
     transactions_within_block.clear();
-    for (auto const &slice : block.body.slices)
+    for (auto const &slice : block.slices)
     {
       for (auto const &tx : slice)
       {
@@ -195,18 +194,18 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
   {
     Block block;
 
-    block.body.previous_hash = chain.GetHeaviestBlockHash();
+    block.previous_hash = chain.GetHeaviestBlockHash();
 
     miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, chain);
 
-    for (auto const &slice : block.body.slices)
+    for (auto const &slice : block.slices)
     {
       EXPECT_EQ(slice.size(), 0);
     }
 
     // Check no duplicate transactions within a block
     transactions_within_block.clear();
-    for (auto const &slice : block.body.slices)
+    for (auto const &slice : block.slices)
     {
       for (auto const &tx : slice)
       {

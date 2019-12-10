@@ -5,6 +5,8 @@ import datetime
 import glob
 import shutil
 import subprocess
+import sys
+from pathlib import Path
 
 from fetch.cluster.instance import ConstellationInstance, DmlfEtchInstance
 from fetch.cluster.utils import output, verify_file
@@ -268,11 +270,13 @@ class ConstellationTestCase(TestCase):
                 self._nodes[index].append_to_cmd(["-private-network", ])
             self.start_node(index)
 
-        time.sleep(5)  # TODO(HUT): blocking http call to node for ready state
+        sleep_time = 5 + (3 * self._lanes)
 
         if self._pos_mode:
+            sleep_time *= 2
             output("POS mode. sleep extra time.")
-            time.sleep(5)
+
+        time.sleep(sleep_time)
 
     def stop(self):
         if self._nodes:

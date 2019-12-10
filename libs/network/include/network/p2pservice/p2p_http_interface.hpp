@@ -27,7 +27,6 @@
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chaincode/token_contract.hpp"
-#include "ledger/resource_mapper.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "logging/logging.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
@@ -153,14 +152,13 @@ private:
 
       // format the block number
       block                 = Variant::Object();
-      block["hash"]         = "0x" + b->body.hash.ToHex();
-      block["previousHash"] = "0x" + b->body.previous_hash.ToHex();
-      block["merkleHash"]   = "0x" + b->body.merkle_hash.ToHex();
-      block["proof"]        = "0x" + b->proof.header().ToHex();
-      block["miner"]        = b->body.miner.display();
-      block["blockNumber"]  = b->body.block_number;
-      block["timestamp"]    = b->body.timestamp;
-      block["entropy"]      = b->body.block_entropy.EntropyAsU64();
+      block["hash"]         = "0x" + b->hash.ToHex();
+      block["previousHash"] = "0x" + b->previous_hash.ToHex();
+      block["merkleHash"]   = "0x" + b->merkle_hash.ToHex();
+      block["miner"]        = b->miner.display();
+      block["blockNumber"]  = b->block_number;
+      block["timestamp"]    = b->timestamp;
+      block["entropy"]      = b->block_entropy.EntropyAsU64();
       block["weight"]       = b->weight;
 
       if (include_transactions)
@@ -172,7 +170,7 @@ private:
 
         std::size_t tx_idx{0};
         std::size_t slice_idx{0};
-        for (auto const &slice : b->body.slices)
+        for (auto const &slice : b->slices)
         {
           for (auto const &transaction : slice)
           {

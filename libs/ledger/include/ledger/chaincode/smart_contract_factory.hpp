@@ -20,6 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/main_serializer_definition.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "ledger/chaincode/smart_contract_wrapper.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <exception>
@@ -30,26 +31,25 @@ namespace fetch {
 namespace ledger {
 
 template <typename ContractType>
-auto CreateSmartContract(byte_array::ConstByteArray const &contract_digest,
-                         StorageInterface &                storage) -> std::unique_ptr<ContractType>
+auto CreateSmartContract(chain::Address const &contract_address, StorageInterface &storage)
+    -> std::unique_ptr<ContractType>
 {
-  auto const resource =
-      storage.Get(SmartContractManager::CreateAddressForContract(contract_digest));
+  auto       addr     = SmartContractManager::CreateAddressForContract(contract_address);
+  auto const resource = storage.Get(addr);
 
   if (!resource.failed)
   {
     serializers::MsgPackSerializer buffer{resource.document};
-    byte_array::ConstByteArray     document{};
+    SmartContractWrapper           document{};
     buffer >> document;
 
-    return std::make_unique<ContractType>(std::string(document));
+    return std::make_unique<ContractType>(std::string(document.source));
   }
 
   FETCH_LOG_ERROR("SmartContractFactory",
-                  "Unable to construct requested smart contract: ", contract_digest);
+                  "Unable to construct requested smart contract: ", addr.address());
 
-  throw std::runtime_error(std::string{"Unable to create requested smart contract "} +
-                           std::string(contract_digest));
+  return {};
 }
 
 }  // namespace ledger

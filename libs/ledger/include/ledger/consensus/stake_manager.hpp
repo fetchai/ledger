@@ -18,7 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
 
 #include <vector>
@@ -31,8 +34,9 @@ class Identity;
 
 namespace ledger {
 
-class StakeSnapshot;
+class Block;
 class EntropyGeneratorInterface;
+class StorageInterface;
 
 /**
  * The stake manager manages and verifies who the stakers are on a block by block basis (stake
@@ -56,29 +60,35 @@ public:
   using CabinetPtr = std::shared_ptr<Cabinet const>;
 
   // Construction / Destruction
-  explicit StakeManager(uint64_t cabinet_size);
+  StakeManager()                     = default;
   StakeManager(StakeManager const &) = delete;
   StakeManager(StakeManager &&)      = delete;
   ~StakeManager() override           = default;
 
   /// @name Stake Manager Interface
   /// @{
-  void       UpdateCurrentBlock(Block const &current) override;
-  CabinetPtr BuildCabinet(Block const &current);
+  void UpdateCurrentBlock(BlockIndex block_index) override;
   /// @}
 
-  uint32_t BlockInterval();
+  /// @name Committee Generation
+  CabinetPtr BuildCabinet(Block const &current, uint64_t cabinet_size);
+  CabinetPtr BuildCabinet(uint64_t block_number, uint64_t entropy, uint64_t cabinet_size) const;
+  /// @}
+
+  /// @name Persistence
+  /// @{
+  bool Save(StorageInterface &storage);
+  bool Load(StorageInterface &storage);
+  /// @}
 
   // Accessors for the executor
   StakeUpdateQueue &      update_queue();
   StakeUpdateQueue const &update_queue() const;
-  uint64_t                cabinet_size() const;
-  void                    SetCabinetSize(uint64_t size);
 
   std::shared_ptr<StakeSnapshot const> GetCurrentStakeSnapshot() const;
 
-  StakeManager::CabinetPtr Reset(StakeSnapshot const &snapshot);
-  StakeManager::CabinetPtr Reset(StakeSnapshot &&snapshot);
+  StakeManager::CabinetPtr Reset(StakeSnapshot const &snapshot, uint64_t cabinet_size);
+  StakeManager::CabinetPtr Reset(StakeSnapshot &&snapshot, uint64_t cabinet_size);
 
   // Operators
   StakeManager &operator=(StakeManager const &) = delete;
@@ -91,27 +101,17 @@ private:
   using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
   using StakeHistory     = std::map<BlockIndex, StakeSnapshotPtr>;
 
-  StakeSnapshotPtr         LookupStakeSnapshot(BlockIndex block);
-  StakeManager::CabinetPtr ResetInternal(StakeSnapshotPtr &&snapshot);
-
-  // Config & Components
-  uint64_t cabinet_size_{0};  ///< The "static" size of the cabinet
+  StakeSnapshotPtr         LookupStakeSnapshot(BlockIndex block) const;
+  StakeManager::CabinetPtr ResetInternal(StakeSnapshotPtr &&snapshot, uint64_t cabinet_size);
 
   StakeUpdateQueue update_queue_;            ///< The update queue of events
   StakeHistory     stake_history_{};         ///< Cache of historical snapshots
   StakeSnapshotPtr current_{};               ///< Most recent snapshot
   BlockIndex       current_block_index_{0};  ///< Block index of most recent snapshot
+
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 };
-
-inline uint64_t StakeManager::cabinet_size() const
-{
-  return cabinet_size_;
-}
-
-inline void StakeManager::SetCabinetSize(uint64_t size)
-{
-  cabinet_size_ = size;
-}
 
 inline StakeUpdateQueue &StakeManager::update_queue()
 {
@@ -146,4 +146,41 @@ void TrimToSize(T &container, uint64_t max_allowed)
 }
 
 }  // namespace ledger
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<ledger::StakeManager, D>
+{
+public:
+  using Type       = ledger::StakeManager;
+  using DriverType = D;
+
+  static uint8_t const UPDATE_QUEUE        = 1;
+  static uint8_t const STAKE_HISTORY       = 2;
+  static uint8_t const CURRENT_SNAPSHOT    = 3;
+  static uint8_t const CURRENT_BLOCK_INDEX = 4;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &stake_manager)
+  {
+    auto map = map_constructor(5);
+    map.Append(UPDATE_QUEUE, stake_manager.update_queue_);
+    map.Append(STAKE_HISTORY, stake_manager.stake_history_);
+    map.Append(CURRENT_SNAPSHOT, stake_manager.current_);
+    map.Append(CURRENT_BLOCK_INDEX, stake_manager.current_block_index_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &stake_manager)
+  {
+    map.ExpectKeyGetValue(UPDATE_QUEUE, stake_manager.update_queue_);
+    map.ExpectKeyGetValue(STAKE_HISTORY, stake_manager.stake_history_);
+    map.ExpectKeyGetValue(CURRENT_SNAPSHOT, stake_manager.current_);
+    map.ExpectKeyGetValue(CURRENT_BLOCK_INDEX, stake_manager.current_block_index_);
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch

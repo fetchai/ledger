@@ -22,9 +22,9 @@
 #include "crypto/ecdsa.hpp"
 #include "in_memory_storage.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/executor.hpp"
-#include "ledger/identifier.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 
 #include "benchmark/benchmark.h"
@@ -39,7 +39,6 @@ using fetch::chain::TransactionBuilder;
 using fetch::chain::Address;
 using fetch::ledger::TokenContract;
 using fetch::ledger::StateSentinelAdapter;
-using fetch::ledger::Identifier;
 using fetch::crypto::ECDSASigner;
 using fetch::BitVector;
 
@@ -65,7 +64,7 @@ std::shared_ptr<Transaction> CreateSampleTransaction()
 void Executor_BasicBenchmark(benchmark::State &state)
 {
   auto     storage = std::make_shared<InMemoryStorageUnit>();
-  Executor executor{storage, nullptr};
+  Executor executor{storage};
 
   // create and add the transaction to storage
   auto tx = CreateSampleTransaction();
@@ -76,13 +75,13 @@ void Executor_BasicBenchmark(benchmark::State &state)
 
   // add funds to ensure the transaction passes
   {
-    StateSentinelAdapter adapter{*storage, Identifier{"fetch.token"}, shards};
+    StateSentinelAdapter adapter{*storage, "fetch.token", shards};
 
     TokenContract tokens{};
 
-    tokens.Attach({&tokens, tx->contract_address(), &adapter, 0});
+    fetch::ledger::ContractContext         context{&tokens, tx->contract_address(), &adapter, 0};
+    fetch::ledger::ContractContextAttacher raii(tokens, context);
     tokens.AddTokens(tx->from(), 500000);
-    tokens.Detach();
   }
 
   for (auto _ : state)

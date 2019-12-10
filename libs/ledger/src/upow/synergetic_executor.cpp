@@ -16,15 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_builder.hpp"
 #include "core/bitvector.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/smart_contract_factory.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/chaincode/token_contract.hpp"
+#include "ledger/execution_result.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
 #include "logging/logging.hpp"
+#include "meta/log2.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
+#include "telemetry/utils/timer.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -32,14 +38,30 @@
 namespace fetch {
 namespace ledger {
 
+namespace {
+
 constexpr char const *LOGGING_NAME = "SynergeticExecutor";
+
+constexpr TokenAmount const CHARGE_RATE  = 1;
+constexpr TokenAmount const CHARGE_LIMIT = 10000000000;
+
+using fetch::telemetry::Histogram;
+using fetch::telemetry::Registry;
+using fetch::meta::Log2;
+
+}  // namespace
 
 SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
   : storage_{storage}
+  , fee_manager_{token_contract_, "ledger_synergetic_executor_deduct_fees_duration"}
+  , work_duration_{Registry::Instance().LookupMeasurement<Histogram>(
+        "ledger_synergetic_executor_work_duration")}
+  , complete_duration_{Registry::Instance().LookupMeasurement<Histogram>(
+        "ledger_synergetic_executor_complete_duration")}
 {}
 
 void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem_data,
-                                std::size_t num_lanes)
+                                std::size_t num_lanes, chain::Address const &miner)
 {
   std::unique_ptr<SynergeticContract> contract;
 
@@ -53,10 +75,16 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
     // in the case of the first iteration we need to create the contract and define the problem
     if (!contract)
     {
-      auto const &digest = solution->contract_digest();
+      auto const &address = solution->address();
 
       // create the contract
-      contract = CreateSmartContract<SynergeticContract>(digest, storage_);
+      contract = CreateSmartContract<SynergeticContract>(address, storage_);
+
+      if (!contract)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to create synergetic contract: ", address.display());
+        return;
+      }
 
       // define the problem
       auto const status = contract->DefineProblem(problem_data);
@@ -69,26 +97,40 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
     }
 
     // validate the work that has been done
-    WorkScore calculated_score{0};
-    auto      status = contract->Work(solution->CreateHashedNonce(), calculated_score);
-
+    WorkScore                  calculated_score{0};
+    SynergeticContract::Status status;
+    {
+      telemetry::FunctionTimer const timer{*work_duration_};
+      status = contract->Work(solution->CreateHashedNonce(), calculated_score);
+    }
+    // TODO(LDGR-621): fee for invalid solution?
     if (SynergeticContract::Status::SUCCESS == status && calculated_score == solution->score())
     {
       // TODO(issue 1213): State sharding needs to be added here
       BitVector shard_mask{num_lanes};
       shard_mask.SetAllOne();
 
-      Identifier contract_id(solution->contract_digest().ToHex() + "." +
-                             solution->address().display());
-
-      StateSentinelAdapter storage_adapter{storage_, contract_id, shard_mask};
+      StateSentinelAdapter storage_adapter{storage_, solution->address().display(), shard_mask};
 
       // complete the work and resolve the work queue
       contract->Attach(storage_);
       ContractContext ctx(&token_contract_, solution->address(), &storage_adapter, 0);
       contract->UpdateContractContext(ctx);
-      status = contract->Complete(solution->address(), shard_mask);
-      contract->Detach();
+
+      // TODO(LDGR-622): charge limit
+      FeeManager::TransactionDetails tx_details{
+          solution->address(), solution->address(), shard_mask, solution->address().display(),
+          CHARGE_RATE,         CHARGE_LIMIT,        false};
+
+      ContractExecutionResult result;
+
+      {
+        telemetry::FunctionTimer const timer{*complete_duration_};
+        status = contract->Complete(
+            solution->address(), shard_mask, [this, &contract, &tx_details, &result]() -> bool {
+              return fee_manager_.CalculateChargeAndValidate(tx_details, {contract.get()}, result);
+            });
+      }
 
       if (SynergeticContract::Status::SUCCESS != status)
       {
@@ -96,6 +138,15 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
                        " Reason: ", ToString(status));
         return;
       }
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Calculated fee: ", result.charge);
+      fee_manager_.Execute(tx_details, result, solution->block_index(), storage_);
+
+      fee_manager_.SettleFees(miner, result.fee, tx_details.contract_address,
+                              Log2(static_cast<uint32_t>(num_lanes)), solution->block_index(),
+                              storage_);
+
+      contract->Detach();
+
       break;
     }
 

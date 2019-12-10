@@ -24,7 +24,7 @@
 
 class OefAgentEndpoint;
 
-class OefLoginTimeoutTask : public Task
+class OefLoginTimeoutTask : public fetch::oef::base::Task
 {
 public:
   static constexpr char const *LOGGING_NAME = "OefLoginTimeoutTask";
@@ -39,7 +39,7 @@ public:
   {
     return true;
   }
-  ExitState run() override;
+  fetch::oef::base::ExitState run() override;
 
 protected:
   std::weak_ptr<OefAgentEndpoint> ep;

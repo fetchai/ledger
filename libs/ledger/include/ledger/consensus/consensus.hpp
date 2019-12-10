@@ -36,6 +36,8 @@
 namespace fetch {
 namespace ledger {
 
+class StorageInterface;
+
 class Consensus final : public ConsensusInterface
 {
 public:
@@ -49,23 +51,33 @@ public:
   using BlockEntropy          = ledger::Block::BlockEntropy;
   using NotarisationPtr       = std::shared_ptr<ledger::NotarisationService>;
   using NotarisationResult    = NotarisationService::NotarisationResult;
+  using BlockPtr              = MainChain::BlockPtr;
 
+  // Construction / Destruction
   Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup, BeaconServicePtr beacon,
-            MainChain const &chain, Identity mining_identity, uint64_t aeon_period,
-            uint64_t max_cabinet_size, uint32_t block_interval_ms = 1000,
-            NotarisationPtr notarisation = nullptr);
+            MainChain const &chain, StorageInterface &storage, Identity mining_identity,
+            uint64_t aeon_period, uint64_t max_cabinet_size, uint64_t block_interval_ms = 1000,
+            NotarisationPtr notarisation = NotarisationPtr{});
+  Consensus(Consensus const &) = delete;
+  Consensus(Consensus &&)      = delete;
+  ~Consensus() override        = default;
 
   void         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
   Status       ValidBlock(Block const &current) const override;
   bool         VerifyNotarisation(Block const &block) const;
-  void         Reset(StakeSnapshot const &snapshot);
-  void         Refresh() override;
+
+  void SetMaxCabinetSize(uint16_t size) override;
+  void SetBlockInterval(uint64_t block_interval_ms) override;
+  void SetAeonPeriod(uint16_t aeon_period) override;
+  void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
+  void SetDefaultStartTime(uint64_t default_start_time) override;
 
   StakeManagerPtr stake();
-  void            SetThreshold(double threshold);
-  void            SetCabinetSize(uint64_t size);
-  void            SetDefaultStartTime(uint64_t default_start_time);
+
+  // Operators
+  Consensus &operator=(Consensus const &) = delete;
+  Consensus &operator=(Consensus &&) = delete;
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
@@ -75,6 +87,7 @@ private:
   using BlockIndex     = uint64_t;
   using CabinetHistory = std::map<BlockIndex, CabinetPtr>;
 
+  StorageInterface &    storage_;
   StakeManagerPtr       stake_;
   BeaconSetupServicePtr cabinet_creator_;
   BeaconServicePtr      beacon_;
@@ -105,6 +118,7 @@ private:
   bool       ShouldTriggerNewCabinet(Block const &block);
   bool       EnoughQualSigned(BlockEntropy const &block_entropy) const;
   uint32_t   GetThreshold(Block const &block) const;
+  void       AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
 };
 
 }  // namespace ledger

@@ -50,7 +50,7 @@ public:
 
   ~ProtoMessageEndpoint() override = default;
 
-  void SetEndianness(Endianness newstate);
+  void SetEndianness(fetch::oef::base::Endianness newstate);
 
   void setup(std::shared_ptr<ProtoMessageEndpoint> &myself);
 

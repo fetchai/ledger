@@ -54,15 +54,23 @@ enum class SymbolKind : uint8_t
   FunctionGroup = 3
 };
 
+struct Type;
+using TypePtr      = std::shared_ptr<Type>;
+using TypePtrArray = std::vector<TypePtr>;
+using Operators    = std::unordered_set<Operator>;
+
 struct Symbol
 {
-  Symbol(SymbolKind symbol_kind__, std::string name__)
+  Symbol(SymbolKind symbol_kind__, std::string name__, TypePtr user_defined_type__)
     : symbol_kind{symbol_kind__}
     , name{std::move(name__)}
+    , user_defined_type{std::move(user_defined_type__)}
   {}
   virtual ~Symbol() = default;
   virtual void Reset()
-  {}
+  {
+    user_defined_type = nullptr;
+  }
   bool IsType() const
   {
     return (symbol_kind == SymbolKind::Type);
@@ -77,6 +85,7 @@ struct Symbol
   }
   SymbolKind  symbol_kind{SymbolKind::Unknown};
   std::string name;
+  TypePtr     user_defined_type;
 };
 using SymbolPtr = std::shared_ptr<Symbol>;
 
@@ -108,33 +117,25 @@ using SymbolTablePtr = std::shared_ptr<SymbolTable>;
 
 inline SymbolTablePtr CreateSymbolTable()
 {
-  return std::make_shared<SymbolTable>(SymbolTable());
+  return std::make_shared<SymbolTable>();
 }
-
-struct Type;
-using TypePtr      = std::shared_ptr<Type>;
-using TypePtrArray = std::vector<TypePtr>;
-using Operators    = std::unordered_set<Operator>;
 
 struct Type : public Symbol
 {
   Type(TypeKind type_kind__, std::string name)
-    : Symbol(SymbolKind::Type, std::move(name))
+    : Symbol(SymbolKind::Type, std::move(name), nullptr)
     , type_kind{type_kind__}
   {}
   ~Type() override = default;
   void Reset() override
   {
+    Symbol::Reset();
     if (symbols)
     {
       symbols->Reset();
     }
     template_type = nullptr;
     types.clear();
-  }
-  bool IsNull() const
-  {
-    return (name == "Null");
   }
   bool IsVoid() const
   {
@@ -176,7 +177,10 @@ struct Type : public Symbol
   {
     return (type_kind == TypeKind::UserDefinedContract);
   }
-
+  bool IsUserDefinedStruct() const
+  {
+    return (type_kind == TypeKind::UserDefinedStruct);
+  }
   TypeKind       type_kind{TypeKind::Unknown};
   SymbolTablePtr symbols;
   TypePtr        template_type;
@@ -189,7 +193,7 @@ struct Type : public Symbol
 
 inline TypePtr CreateType(TypeKind type_kind, std::string name)
 {
-  return std::make_shared<Type>(Type(type_kind, std::move(name)));
+  return std::make_shared<Type>(type_kind, std::move(name));
 }
 inline TypePtr ConvertToTypePtr(SymbolPtr const &symbol)
 {
@@ -199,8 +203,9 @@ inline TypePtr ConvertToTypePtr(SymbolPtr const &symbol)
 
 struct Variable : public Symbol
 {
-  Variable(VariableKind variable_kind__, std::string name, TypePtr type__)
-    : Symbol(SymbolKind::Variable, std::move(name))
+  Variable(VariableKind variable_kind__, std::string name, TypePtr type__,
+           TypePtr user_defined_type)
+    : Symbol(SymbolKind::Variable, std::move(name), std::move(user_defined_type))
     , variable_kind{variable_kind__}
     , type{std::move(type__)}
   {}
@@ -208,6 +213,7 @@ struct Variable : public Symbol
 
   void Reset() override
   {
+    Symbol::Reset();
     type = nullptr;
   }
   VariableKind variable_kind{VariableKind::Unknown};
@@ -217,9 +223,11 @@ struct Variable : public Symbol
 using VariablePtr      = std::shared_ptr<Variable>;
 using VariablePtrArray = std::vector<VariablePtr>;
 
-inline VariablePtr CreateVariable(VariableKind variable_kind, std::string name, TypePtr type)
+inline VariablePtr CreateVariable(VariableKind variable_kind, std::string name, TypePtr type,
+                                  TypePtr user_defined_type)
 {
-  return std::make_shared<Variable>(Variable(variable_kind, std::move(name), std::move(type)));
+  return std::make_shared<Variable>(variable_kind, std::move(name), std::move(type),
+                                    std::move(user_defined_type));
 }
 inline VariablePtr ConvertToVariablePtr(SymbolPtr const &symbol)
 {
@@ -259,20 +267,21 @@ inline FunctionPtr CreateFunction(FunctionKind function_kind, std::string name,
                                   std::string unique_name, TypePtrArray parameter_types,
                                   VariablePtrArray parameter_variables, TypePtr return_type)
 {
-  return std::make_shared<Function>(
-      Function(function_kind, std::move(name), std::move(unique_name), std::move(parameter_types),
-               std::move(parameter_variables), std::move(return_type)));
+  return std::make_shared<Function>(function_kind, std::move(name), std::move(unique_name),
+                                    std::move(parameter_types), std::move(parameter_variables),
+                                    std::move(return_type));
 }
 
 struct FunctionGroup : public Symbol
 {
-  explicit FunctionGroup(std::string name)
-    : Symbol(SymbolKind::FunctionGroup, std::move(name))
+  FunctionGroup(std::string name, TypePtr user_defined_type)
+    : Symbol(SymbolKind::FunctionGroup, std::move(name), std::move(user_defined_type))
   {}
   ~FunctionGroup() override = default;
 
   void Reset() override
   {
+    Symbol::Reset();
     for (auto &function : functions)
     {
       function->Reset();
@@ -283,9 +292,9 @@ struct FunctionGroup : public Symbol
 using FunctionGroupPtr      = std::shared_ptr<FunctionGroup>;
 using FunctionGroupPtrArray = std::vector<FunctionGroupPtr>;
 
-inline FunctionGroupPtr CreateFunctionGroup(std::string name)
+inline FunctionGroupPtr CreateFunctionGroup(std::string name, TypePtr user_defined_type)
 {
-  return std::make_shared<FunctionGroup>(FunctionGroup(std::move(name)));
+  return std::make_shared<FunctionGroup>(std::move(name), std::move(user_defined_type));
 }
 inline FunctionGroupPtr ConvertToFunctionGroupPtr(SymbolPtr const &symbol)
 {
@@ -327,6 +336,14 @@ struct Node
   {
     return (node_category == NodeCategory::Expression);
   }
+  bool IsNull() const
+  {
+    return (node_kind == NodeKind::Null);
+  }
+  bool IsInitialiserList() const
+  {
+    return (node_kind == NodeKind::InitialiserList);
+  }
   NodeCategory node_category{NodeCategory::Unknown};
   NodeKind     node_kind{NodeKind::Unknown};
   std::string  text;
@@ -336,7 +353,7 @@ struct Node
 
 inline NodePtr CreateBasicNode(NodeKind node_kind, std::string text, uint16_t line)
 {
-  return std::make_shared<Node>(Node(NodeCategory::Basic, node_kind, std::move(text), line));
+  return std::make_shared<Node>(NodeCategory::Basic, node_kind, std::move(text), line);
 }
 
 struct BlockNode : public Node
@@ -368,7 +385,7 @@ using BlockNodePtrArray = std::vector<BlockNodePtr>;
 
 inline BlockNodePtr CreateBlockNode(NodeKind node_kind, std::string text, uint16_t line)
 {
-  return std::make_shared<BlockNode>(BlockNode(node_kind, std::move(text), line));
+  return std::make_shared<BlockNode>(node_kind, std::move(text), line);
 }
 
 struct ExpressionNode : public Node
@@ -384,6 +401,7 @@ struct ExpressionNode : public Node
     type           = nullptr;
     variable       = nullptr;
     function_group = nullptr;
+    owner          = nullptr;
     function       = nullptr;
   }
   bool IsVariableExpression() const
@@ -406,11 +424,20 @@ struct ExpressionNode : public Node
   {
     return (expression_kind == ExpressionKind::FunctionGroup);
   }
+  bool IsConcrete() const
+  {
+    if (IsNull() || IsInitialiserList() || type->IsVoid())
+    {
+      return false;
+    }
+    return type->IsPrimitive() || type->IsClass() || type->IsInstantiation() ||
+           type->IsUserDefinedStruct();
+  }
   ExpressionKind   expression_kind{ExpressionKind::Unknown};
   TypePtr          type;
   VariablePtr      variable;
   FunctionGroupPtr function_group;
-  bool             function_invoker_is_instance{false};
+  TypePtr          owner;
   FunctionPtr      function;
 };
 using ExpressionNodePtr      = std::shared_ptr<ExpressionNode>;
@@ -418,7 +445,7 @@ using ExpressionNodePtrArray = std::vector<ExpressionNodePtr>;
 
 inline ExpressionNodePtr CreateExpressionNode(NodeKind node_kind, std::string text, uint16_t line)
 {
-  return std::make_shared<ExpressionNode>(ExpressionNode(node_kind, std::move(text), line));
+  return std::make_shared<ExpressionNode>(node_kind, std::move(text), line);
 }
 
 inline BlockNodePtr ConvertToBlockNodePtr(NodePtr const &node)

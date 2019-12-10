@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/graph.hpp"
+#include "ml/ops/metrics/categorical_accuracy.hpp"
 
 #include "ml/layers/PRelu.hpp"
 #include "ml/layers/convolution_1d.hpp"
@@ -66,6 +67,7 @@
 #include "ml/ops/slice.hpp"
 #include "ml/ops/sqrt.hpp"
 #include "ml/ops/squeeze.hpp"
+#include "ml/ops/strided_slice.hpp"
 #include "ml/ops/subtract.hpp"
 #include "ml/ops/switch.hpp"
 #include "ml/ops/tanh.hpp"
@@ -396,6 +398,13 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
+  case ops::StridedSlice<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::StridedSlice<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
   case ops::ReduceMean<T>::OpCode():
   {
     op_ptr = GetOp<ops::ReduceMean<T>>(nsp.op_save_params);
@@ -542,6 +551,21 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     node->SetNodeSaveableParams(nsp, op_ptr);
     g->AddTrainable(node, name);
     break;
+  }
+  case OpType::METRIC_CATEGORICAL_ACCURACY:
+  {
+    op_ptr = GetOp<ops::CategoricalAccuracy<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case OpType::GRAPH:
+  case OpType::NONE:
+  case OpType::SUBGRAPH:
+  case OpType::OP_VARIABLE:
+  case OpType::OP_DATAHOLDER:
+  {
+    throw ml::exceptions::NotImplemented();
   }
   default:
     throw ml::exceptions::NotImplemented("unknown node type");

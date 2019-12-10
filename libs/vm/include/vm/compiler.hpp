@@ -34,6 +34,7 @@ class Compiler
 public:
   explicit Compiler(Module *module);
   ~Compiler();
+
   bool Compile(SourceFiles const &files, std::string const &ir_name, IR &ir,
                std::vector<std::string> &errors);
 
@@ -114,7 +115,7 @@ private:
   }
 
   void GetDetails(TypeInfoArray &type_info_array, TypeInfoMap &type_info_map,
-                  RegisteredTypes &registered_types, FunctionInfoArray &function_info_array)
+                  RegisteredTypes &registered_types, FunctionInfoArray &function_info_array) const
   {
     analyser_.GetDetails(type_info_array, type_info_map, registered_types, function_info_array);
   }

@@ -18,6 +18,7 @@
 
 #include "chain/transaction.hpp"
 #include "chain/transaction_serializer.hpp"
+#include "chain/transaction_validity_period.hpp"
 #include "crypto/verifier.hpp"
 
 #include <algorithm>
@@ -109,6 +110,16 @@ Digest const &Transaction::digest() const
 }
 
 /**
+ * Get the counter value for the transaction
+ *
+ * @return The counter value (if one exists)
+ */
+Transaction::Counter Transaction::counter() const
+{
+  return counter_;
+}
+
+/**
  * Get the sender address for the transaction
  *
  * @return The sender address
@@ -156,29 +167,17 @@ Transaction::BlockIndex Transaction::valid_until() const
  */
 Transaction::Validity Transaction::GetValidity(BlockIndex block_index) const
 {
-  Validity validity{Validity::INVALID};
-
-  if (block_index < valid_until_)
-  {
-    validity = Validity::VALID;
-
-    if ((valid_from_ != 0u) && (valid_from_ > block_index))
-    {
-      validity = Validity::PENDING;
-    }
-  }
-
-  return validity;
+  return fetch::chain::GetValidity(*this, block_index);
 }
 
 /**
- * Return the charge associated with the transaction
+ * Return the charge rate associated with the transaction
  *
  * @return The charge amount
  */
-Transaction::TokenAmount Transaction::charge() const
+Transaction::TokenAmount Transaction::charge_rate() const
 {
-  return charge_;
+  return charge_rate_;
 }
 
 /**
@@ -199,16 +198,6 @@ Transaction::TokenAmount Transaction::charge_limit() const
 Transaction::ContractMode Transaction::contract_mode() const
 {
   return contract_mode_;
-}
-
-/**
- * Get the contract digest for this smart contract transaction
- *
- * @return The contract digest
- */
-Address const &Transaction::contract_digest() const
-{
-  return contract_digest_;
 }
 
 /**

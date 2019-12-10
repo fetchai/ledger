@@ -22,6 +22,7 @@
 #include "core/mutex.hpp"
 #include "core/set_thread_name.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/consensus/stake_update_event.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/state_adapter.hpp"
@@ -150,7 +151,7 @@ ExecutionManager::ExecutionManager(std::size_t num_executors, uint32_t log2_num_
  * @param block The block to be executed
  * @return the status of the execution
  */
-ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &block)
+ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
 {
   // if the execution manager is not running then no further transactions
   // should be scheduled
@@ -175,9 +176,10 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
 
   // update the last block hash
   state_.ApplyVoid([&block](Summary &summary) {
-    summary.last_block_hash  = block.hash;
-    summary.last_block_miner = block.miner;
-    summary.state            = State::ACTIVE;
+    summary.last_block_hash   = block.hash;
+    summary.last_block_miner  = block.miner;
+    summary.last_block_number = block.block_number;
+    summary.state             = State::ACTIVE;
   });
   num_slices_ = block.slices.size();
 
@@ -197,7 +199,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
  * @param block The input block to plan
  * @return true if successful, otherwise false
  */
-bool ExecutionManager::PlanExecution(Block::Body const &block)
+bool ExecutionManager::PlanExecution(Block const &block)
 {
   FETCH_LOCK(execution_plan_lock_);
 
@@ -334,8 +336,11 @@ void ExecutionManager::Stop()
   }
 
   // wait for the monitor thread to exit
-  monitor_thread_->join();
-  monitor_thread_.reset();
+  if (monitor_thread_)
+  {
+    monitor_thread_->join();
+    monitor_thread_.reset();
+  }
 
   // tear down the thread pool
   thread_pool_->Stop();
@@ -380,8 +385,9 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
   MonitorState monitor_state = MonitorState::COMPLETED;
 
-  std::size_t current_slice        = 0;
-  uint64_t    aggregate_block_fees = 0;
+  std::size_t       current_slice        = 0;
+  uint64_t          aggregate_block_fees = 0;
+  StakeUpdateEvents aggregated_stake_events{};
 
   Digest current_block;
 
@@ -439,6 +445,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
         monitor_state        = MonitorState::SCHEDULE_NEXT_SLICE;
         current_slice        = 0;
         aggregate_block_fees = 0;
+        aggregated_stake_events.clear();
       }
 
       break;
@@ -506,24 +513,21 @@ void ExecutionManager::MonitorThreadEntrypoint()
         {
           assert(item);
 
-          switch (item->result().status)
+          switch (Categorise(item->result().status))
           {
-          case ExecutionItem::Status::SUCCESS:
+          case ExecutionStatusCategory::SUCCESS:
             ++num_complete;
             break;
-          case ExecutionItem::Status::TX_LOOKUP_FAILURE:
-            ++num_stalls;
-            break;
-          case ExecutionItem::Status::CHAIN_CODE_LOOKUP_FAILURE:
-          case ExecutionItem::Status::CHAIN_CODE_EXEC_FAILURE:
-          case ExecutionItem::Status::CONTRACT_NAME_PARSE_FAILURE:
-          case ExecutionItem::Status::CONTRACT_LOOKUP_FAILURE:
-          case ExecutionItem::Status::TX_NOT_VALID_FOR_BLOCK:
-          case ExecutionItem::Status::INSUFFICIENT_AVAILABLE_FUNDS:
-          case ExecutionItem::Status::TRANSFER_FAILURE:
-          case ExecutionItem::Status::INSUFFICIENT_CHARGE:
+
+          case ExecutionStatusCategory::NORMAL_ERROR:
             ++num_errors;
             break;
+
+          case ExecutionStatusCategory::INTERNAL_ERROR:
+            ++num_stalls;
+            break;
+
+          case ExecutionStatusCategory::BLOCK_INVALIDATING_ERROR:
           default:
             ++num_fatal_errors;
             break;
@@ -531,6 +535,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
           // update aggregate fees
           aggregate_block_fees += item->fee();
+          item->AggregateStakeUpdates(aggregated_stake_events);
 
           if (tx_status_cache_)
           {
@@ -599,13 +604,20 @@ void ExecutionManager::MonitorThreadEntrypoint()
           FETCH_LOCK(idle_executors_lock_);
           if (!idle_executors_.empty())
           {
-            // look up the last block miner
-            chain::Address const last_block_miner =
-                state_.Apply([](Summary const &summary) { return summary.last_block_miner; });
+            // lookup the last block miner
+            chain::Address last_block_miner;
+            BlockIndex     last_block_number{0};
+
+            // extract the information from the summary structure
+            state_.ApplyVoid([&last_block_miner, &last_block_number](Summary const &summary) {
+              last_block_miner  = summary.last_block_miner;
+              last_block_number = summary.last_block_number;
+            });
 
             // get the first one and settle the fees
-            idle_executors_.front()->SettleFees(last_block_miner, aggregate_block_fees,
-                                                log2_num_lanes_);
+            idle_executors_.front()->SettleFees(last_block_miner, last_block_number,
+                                                aggregate_block_fees, log2_num_lanes_,
+                                                aggregated_stake_events);
             fees_settled_count_->increment();
             break;
           }

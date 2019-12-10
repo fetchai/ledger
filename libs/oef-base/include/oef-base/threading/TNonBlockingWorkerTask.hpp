@@ -31,6 +31,10 @@
 #include <unordered_set>
 #include <utility>
 
+namespace fetch {
+namespace oef {
+namespace base {
+
 template <class WORKLOAD, int N = 1>
 class TNonBlockingWorkerTask : public Task
 {
@@ -145,7 +149,7 @@ public:
           }
         }
       }
-      catch (std::exception &e)
+      catch (std::exception const &e)
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Exception in the worker (", GetTaskId(),
                         ") loop: ", e.what());
@@ -179,3 +183,6 @@ private:
 
 // namespace std { template<> void swap(TWorkerTask& lhs, TWorkerTask& rhs) { lhs.swap(rhs); } }
 // std::ostream& operator<<(std::ostream& os, const TWorkerTask &output) {}
+}  // namespace base
+}  // namespace oef
+}  // namespace fetch

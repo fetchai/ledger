@@ -55,11 +55,6 @@ public:
   DirectMessageService &operator=(DirectMessageService &&) = delete;
 
 private:
-  struct ConnectionData
-  {
-    Address address;
-  };
-
   enum class Phase : uint8_t
   {
     INITIAL = 0,
@@ -109,8 +104,8 @@ private:
   MuddleRegister &    register_;
   PeerConnectionList &peers_;
 
-  Mutex        lock_;
-  Reservations reservations_;
+  std::recursive_mutex lock_;
+  Reservations         reservations_;
 };
 
 }  // namespace muddle

@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/is_in.hpp"
 #include "core/containers/set_difference.hpp"
 #include "core/containers/set_intersection.hpp"
 #include "core/containers/set_join.hpp"
@@ -41,12 +42,12 @@ namespace {
 using namespace std::chrono;
 using namespace std::chrono_literals;
 
-constexpr auto        MIN_ANNOUNCEMENT_INTERVAL = 15min;
-constexpr auto        MAX_ANNOUNCEMENT_INTERVAL = 30min;
-constexpr std::size_t MINIMUM_PEERS             = 3;
+constexpr auto        MIN_ANNOUNCEMENT_INTERVAL = 10s;
+constexpr auto        MAX_ANNOUNCEMENT_INTERVAL = 30s;
+constexpr std::size_t MINIMUM_PEERS             = 6;
 constexpr char const *BASE_NAME                 = "PeerSelector";
 constexpr std::size_t MAX_CACHE_KAD_NODES       = 20;
-constexpr std::size_t MAX_CONNECTED_KAD_NODES   = 3;
+constexpr std::size_t MAX_CONNECTED_KAD_NODES   = 8;
 constexpr std::size_t MAX_LOG2_BACKOFF          = 11;  // 2048
 
 PromiseTask::Duration CalculatePromiseTimeout(std::size_t consecutive_failures)
@@ -164,6 +165,12 @@ void PeerSelector::SetMode(PeerSelectionMode mode)
   }
 }
 
+void PeerSelector::UpdatePeers(Peers peers)
+{
+  FETCH_LOCK(lock_);
+  external_peers_ = std::move(peers);
+}
+
 void PeerSelector::Periodically()
 {
   FETCH_LOCK(lock_);
@@ -243,8 +250,6 @@ void PeerSelector::ResolveAddresses(Addresses const &addresses)
 
   for (auto const &address : unresolved_addresses)
   {
-    FETCH_LOG_TRACE(logging_name_, "Requesting connection info from: ", address.ToBase64());
-
     // make the call to the remote service
     auto promise = rpc_client_.CallSpecificAddress(address, RPC_MUDDLE_DISCOVERY,
                                                    DiscoveryService::CONNECTION_INFORMATION);
@@ -268,20 +273,23 @@ void PeerSelector::OnResolvedAddress(Address const &address, service::Promise co
 {
   if (promise->state() == service::PromiseState::SUCCESS)
   {
+    std::vector<network::Peer> peer_addresses{};
+
     // extract the set of addresses from which the prospective node is contactable
-    auto peer_addresses = promise->As<std::vector<network::Peer>>();
-
-    // remove any previous entries for this address (avoid stale information)
-    peers_info_.erase(address);
-
-    FETCH_LOG_INFO(logging_name_, "Successful resolution for ", address.ToBase64());
-
-    // create the new entry and populate
-    auto &metadata = peers_info_[address];
-    for (auto const &peer_address : peer_addresses)
+    if (promise->GetResult(peer_addresses))
     {
-      FETCH_LOG_TRACE(logging_name_, "- Candidate: ", peer_address.ToString());
-      metadata.peer_data.emplace_back(peer_address);
+      // remove any previous entries for this address (avoid stale information)
+      peers_info_.erase(address);
+
+      FETCH_LOG_TRACE(logging_name_, "Successful resolution for ", address.ToBase64());
+
+      // create the new entry and populate
+      auto &metadata = peers_info_[address];
+      for (auto const &peer_address : peer_addresses)
+      {
+        FETCH_LOG_TRACE(logging_name_, "- Candidate: ", peer_address.ToString());
+        metadata.peer_data.emplace_back(peer_address);
+      }
     }
   }
   else
@@ -354,41 +362,125 @@ void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArra
   static constexpr auto CACHE_LIFETIME = MAX_ANNOUNCEMENT_INTERVAL + MIN_ANNOUNCEMENT_INTERVAL;
   FETCH_UNUSED(payload);
 
-  FETCH_LOG_INFO(logging_name_, "Received announcement from: ", from.ToBase64());
+  // load the peer list from the network
+  Peers peer_list{};
+  try
+  {
+    serializers::MsgPackSerializer serializer{payload};
+    serializer >> peer_list;
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_ERROR(logging_name_, "Unable to deserialise announcement packet: ", ex.what());
+  }
+
+  // convert to a set
+  std::unordered_set<network::Peer> const peers{peer_list.begin(), peer_list.end()};
+
+  FETCH_LOG_TRACE(logging_name_, "Received announcement from: ", from.ToBase64());
 
   FETCH_LOCK(lock_);
 
-  // attempt to locate the existing node
-  auto const it = std::find_if(kademlia_nodes_.begin(), kademlia_nodes_.end(),
-                               [&](KademliaNode const &node) { return node.address == from; });
-
-  if (it != kademlia_nodes_.end())
   {
-    // clear the lifetime
-    it->lifetime.Restart(CACHE_LIFETIME);
+    // attempt to locate the existing node
+    auto const it = std::find_if(kademlia_nodes_.begin(), kademlia_nodes_.end(),
+                                 [&](KademliaNode const &node) { return node.address == from; });
+
+    if (it != kademlia_nodes_.end())
+    {
+      // clear the lifetime
+      it->lifetime.Restart(CACHE_LIFETIME);
+    }
+    else
+    {
+      // add the node into the list
+      kademlia_nodes_.emplace_back(KademliaNode{from, CACHE_LIFETIME});
+
+      // sort by distance
+      kademlia_nodes_.sort([this](KademliaNode const &a, KademliaNode const &b) {
+        auto const distance_a = CalculateDistance(address_, a.address);
+        auto const distance_b = CalculateDistance(address_, b.address);
+
+        if (distance_a == distance_b)
+        {
+          return a.address < b.address;
+        }
+
+        return distance_a < distance_b;
+      });
+
+      // trim the kademlia cache nodes
+      while (kademlia_nodes_.size() > MAX_CACHE_KAD_NODES)
+      {
+        kademlia_nodes_.pop_back();
+      }
+    }
+  }
+
+  // remove all internal references to this objects address and peer
+  std::unordered_set<Address> removed_addresses{};
+  {
+    for (auto it = peers_info_.begin(); it != peers_info_.end();)
+    {
+      Metadata &metadata  = it->second;
+      auto &    peer_data = metadata.peer_data;
+
+      // remove the peer address from the cache
+      bool peers_removed{false};
+      for (auto peer_it = peer_data.begin(); peer_it != peer_data.end();)
+      {
+        if (core::IsIn(peers, peer_it->peer))
+        {
+          peer_it       = peer_data.erase(peer_it);
+          peers_removed = true;
+        }
+        else
+        {
+          ++peer_it;
+        }
+      }
+
+      // remove the entry completely if we have removed all previous peers
+      if (peers_removed && peer_data.empty())
+      {
+        removed_addresses.emplace(it->first);
+        it = peers_info_.erase(it);
+      }
+      else
+      {
+        ++it;
+      }
+    }
+  }
+
+  // for all the addresses that have been removed, they must be removed from the desired and kad
+  // peers lists too.
+  desired_addresses_  = desired_addresses_ - removed_addresses;
+  kademlia_addresses_ = kademlia_addresses_ - removed_addresses;
+
+  Metadata *metadata{nullptr};
+
+  // lookup or create the metadata object
+  auto it = peers_info_.find(from);
+  if (it != peers_info_.end())
+  {
+    // lookup existing entry
+    metadata = &(it->second);
   }
   else
   {
-    // add the node into the list
-    kademlia_nodes_.emplace_back(KademliaNode{from, CACHE_LIFETIME});
+    // create a new entry
+    metadata = &peers_info_[from];
+  }
 
-    // sort by distance
-    kademlia_nodes_.sort([this](KademliaNode const &a, KademliaNode const &b) {
-      auto const distance_a = CalculateDistance(address_, a.address);
-      auto const distance_b = CalculateDistance(address_, b.address);
+  if (metadata != nullptr)
+  {
+    PeerData &peer_data = metadata->peer_data;
 
-      if (distance_a == distance_b)
-      {
-        return a.address < b.address;
-      }
-
-      return distance_a < distance_b;
-    });
-
-    // trim the kademlia cache nodes
-    while (kademlia_nodes_.size() > MAX_CACHE_KAD_NODES)
+    peer_data.reserve(peer_data.size() + peers.size());
+    for (auto const &peer : peers)
     {
-      kademlia_nodes_.pop_back();
+      peer_data.emplace_back(PeerMetadata{peer});
     }
   }
 }
@@ -421,8 +513,11 @@ void PeerSelector::MakeAnnouncement()
 
     FETCH_LOG_TRACE(logging_name_, "Making kad announcement");
 
+    serializers::LargeObjectSerializeHelper serialiser{};
+    serialiser << external_peers_;
+
     // send out the announcement
-    endpoint_.Broadcast(SERVICE_MUDDLE, CHANNEL_ANNOUNCEMENT, {});
+    endpoint_.Broadcast(SERVICE_MUDDLE, CHANNEL_ANNOUNCEMENT, serialiser.data());
 
     // schedule the next announcement
     ScheduleNextAnnouncement();

@@ -354,7 +354,7 @@ void EndpointBase<TXType>::complete_sending(StateTypeP current, std::error_code 
     run_sending();
   }
 
-  catch (std::exception &ex)
+  catch (std::exception const &ex)
   {
     close();
     return;
@@ -414,7 +414,7 @@ void EndpointBase<TXType>::complete_reading(StateTypeP current, std::error_code 
       Lock lock(mutex);
       consumed_needed = reader->CheckForMessage(readBuffer.GetDataBuffers());
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       proto_error(ex.what());
       return;
@@ -441,7 +441,7 @@ void EndpointBase<TXType>::complete_reading(StateTypeP current, std::error_code 
     }
     run_reading();
   }
-  catch (std::exception &ex)
+  catch (std::exception const &ex)
   {
     close();
     return;
@@ -449,13 +449,13 @@ void EndpointBase<TXType>::complete_reading(StateTypeP current, std::error_code 
 }
 
 template <typename TXType>
-Notification::NotificationBuilder EndpointBase<TXType>::send(TXType s)
+fetch::oef::base::Notification::NotificationBuilder EndpointBase<TXType>::send(TXType s)
 {
   Lock lock(txq_mutex);
   if (txq.size() < BUFFER_SIZE_LIMIT)
   {
     txq.push_back(s);
-    return Notification::NotificationBuilder();
+    return fetch::oef::base::Notification::NotificationBuilder();
   }
 
   return MakeNotification();

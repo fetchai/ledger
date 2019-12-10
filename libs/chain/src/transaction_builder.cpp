@@ -120,16 +120,14 @@ TransactionBuilder::TransactionPtr TransactionBuilder::Sealer::Build()
   if (!signatories.empty())
   {
     // ensure that none of the signatories have an empty signature field
-    valid =
-        std::all_of(signatories.begin(), signatories.end(), [&hash_function](Signatory const &s) {
-          bool success{false};
-          if (!s.signature.empty())
-          {
-            hash_function.Update(s.signature);
-            success = true;
-          }
-          return success;
-        });
+    valid = std::all_of(signatories.begin(), signatories.end(), [](Signatory const &s) {
+      bool success{false};
+      if (!s.signature.empty())
+      {
+        success = true;
+      }
+      return success;
+    });
   }
 
   // if valid, extract the transaction
@@ -225,7 +223,7 @@ TransactionBuilder &TransactionBuilder::ValidUntil(BlockIndex index)
  */
 TransactionBuilder &TransactionBuilder::ChargeRate(TokenAmount amount)
 {
-  partial_transaction_->charge_ = amount;
+  partial_transaction_->charge_rate_ = amount;
   return *this;
 }
 
@@ -242,6 +240,18 @@ TransactionBuilder &TransactionBuilder::ChargeLimit(TokenAmount amount)
 }
 
 /**
+ * Set the counter value for the transaction
+ *
+ * @param counter The value for the counter
+ * @return The current builder instance
+ */
+TransactionBuilder &TransactionBuilder::Counter(CounterValue counter)
+{
+  partial_transaction_->counter_ = counter;
+  return *this;
+}
+
+/**
  * Set the target smart contract
  *
  * @param digest The target contract digest
@@ -249,12 +259,10 @@ TransactionBuilder &TransactionBuilder::ChargeLimit(TokenAmount amount)
  * @param shard_mask The resource shard mask
  * @return The current builder instance
  */
-TransactionBuilder &TransactionBuilder::TargetSmartContract(Address const &  digest,
-                                                            Address const &  address,
+TransactionBuilder &TransactionBuilder::TargetSmartContract(Address const &  address,
                                                             BitVector const &shard_mask)
 {
   partial_transaction_->contract_mode_    = Transaction::ContractMode::PRESENT;
-  partial_transaction_->contract_digest_  = digest;
   partial_transaction_->contract_address_ = address;
   partial_transaction_->chain_code_       = byte_array::ConstByteArray{};
   partial_transaction_->shard_mask_       = shard_mask;
@@ -272,7 +280,6 @@ TransactionBuilder &TransactionBuilder::TargetChainCode(byte_array::ConstByteArr
                                                         BitVector const &shard_mask)
 {
   partial_transaction_->contract_mode_    = Transaction::ContractMode::CHAIN_CODE;
-  partial_transaction_->contract_digest_  = Address{};
   partial_transaction_->contract_address_ = Address{};
   partial_transaction_->chain_code_       = ref;
   partial_transaction_->shard_mask_       = shard_mask;

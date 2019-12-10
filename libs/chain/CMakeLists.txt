@@ -16,3 +16,5 @@ setup_compiler()
 
 setup_library(fetch-chain)
 target_link_libraries(fetch-chain PUBLIC fetch-core fetch-variant fetch-storage)
+
+add_test_target()

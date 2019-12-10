@@ -19,6 +19,11 @@
 
 #include "meta/type_traits.hpp"
 
+#if (__SIZEOF_INT128__ == 16)
+using int128_t  = __int128_t;
+using uint128_t = __uint128_t;
+#endif
+
 namespace fetch {
 namespace platform {
 
@@ -256,6 +261,25 @@ constexpr int32_t HighestSetBit(T n_input)
 
   return static_cast<int32_t>((sizeof(uint64_t) * 8)) -
          static_cast<int32_t>(CountLeadingZeroes64(n));
+}
+
+/**
+ * finds most significant set bit in type
+ * @tparam T
+ * @param n
+ * @return
+ */
+template <>
+constexpr int32_t HighestSetBit(int128_t n_input)
+{
+  auto const high = static_cast<uint64_t>(n_input >> 64);
+  auto const low  = static_cast<uint64_t>(n_input >> 64);
+
+  if (high == 0)
+  {
+    return HighestSetBit(low);
+  }
+  return HighestSetBit(high) + 64;
 }
 
 // Return the minimum number of bits required to represent x
