@@ -22,9 +22,9 @@ features. Fetch.AI will be delivering regular updates.
 1. [Website](https://fetch.ai/)
 2. [Blog](https://fetch.ai/blog)
 3. [Community Website](https://community.fetch.ai/)
-4. [Community Telegram Group](https://t.me/fetchai)
-5. [Whitepapers](https://fetch.ai/publications.html)
-6. [Roadmap](https://fetch.ai/#/roadmap)
+4. [Community Telegram Group](https://t.me/fetch_ai)
+5. [Whitepapers](https://fetch.ai/press-partners-publications/#publications)
+6. [Roadmap](https://fetch.ai/fetch-ais-2019-technical-roadmap/)
 
 
 ## Supported platforms
