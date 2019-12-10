@@ -216,6 +216,23 @@ public:
     return DataType(40.0);
   };
 
+  // Fit
+  static constexpr DataType BACKWARD_BATCH_LAYER_COEF()
+  {
+    return DataType(0.3);
+  };
+
+  static constexpr DataType BACKWARD_PER_BATCH_COEF()
+  {
+    return DataType(0.3);
+  };
+
+  static constexpr DataType FIT_CONST_COEF()
+  {
+    return DataType(40.0);
+  };
+
+  // Deserialisation
   static constexpr DataType DESERIALISATION_PER_CHAR_COEF()
   {
     return DataType(0.010416666666667);
@@ -226,10 +243,26 @@ public:
     return DataType(100.0);
   };
 
-  static constexpr SizeType FIT_CONST_OVERHEAD            = 3;
-  static constexpr SizeType FIT_PER_BATCH_OVERHEAD        = 2;
-  static constexpr SizeType SERIALISATION_OVERHEAD        = 5;
-  static constexpr SizeType WEIGHT_SERIALISATION_OVERHEAD = 4;  // Will depend on DataType of Tensor
+  // Serialisation
+  static constexpr DataType SERIALISATION_PER_OP_COEF()
+  {
+    return DataType(139);
+  };
+
+  static constexpr DataType SERIALISATION_WEIGHT_SUM_COEF()
+  {
+    return DataType(0.05292996);
+  };
+
+  static constexpr DataType SERIALISATION_PADDED_WEIGHT_SUM_COEF()
+  {
+    return DataType(0.2);
+  };
+
+  static constexpr DataType SERIALISATION_CONST_COEF()
+  {
+    return DataType(210);
+  };
 
   static constexpr ChargeAmount CONSTANT_CHARGE{vm::COMPUTE_CHARGE_COST};
 
