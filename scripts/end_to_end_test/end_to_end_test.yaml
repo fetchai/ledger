@@ -283,3 +283,18 @@ steps:
   - fail: {"run_contract": {"contract_name": "contract001", "nodes": [0], "wait_for_blocks": 15}}
   - stop_nodes: {"nodes": [0], "remove_dbs": True}
 ...
+
+---
+test_description: >
+  Test simple state manipulation
+
+setup_conditions:
+  test_name: "simple_state_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.simple_state_test" }
+...
