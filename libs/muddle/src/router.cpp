@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "router.hpp"
 #include "kademlia/peer_tracker.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
-#include "router.hpp"
 #include "routing_message.hpp"
 
 #include "core/byte_array/encoders.hpp"
@@ -330,9 +330,12 @@ void Router::Start()
  */
 void Router::Stop()
 {
-  FETCH_LOCK(delivery_attempts_lock_);
   stopping_ = true;
-  delivery_attempts_.clear();
+
+  {
+    FETCH_LOCK(delivery_attempts_lock_);
+    delivery_attempts_.clear();
+  }
 
   dispatch_thread_pool_->Stop();
 }
@@ -590,9 +593,17 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet, bool exter
   assert(static_cast<bool>(packet));
 
   // Callbacks to deal with package redelivery
-  auto success = [this, packet]() { ClearDeliveryAttempt(packet); };
-  auto fail    = [this, packet, external, reschedule_on_fail]() {
-    if (reschedule_on_fail)
+  std::weak_ptr<Packet> wpacket = packet;
+  auto                  success = [this, wpacket]() {
+    auto packet = wpacket.lock();
+    if (packet)
+    {
+      ClearDeliveryAttempt(packet);
+    }
+  };
+  auto fail = [this, wpacket, external, reschedule_on_fail]() {
+    auto packet = wpacket.lock();
+    if (packet && reschedule_on_fail)
     {
       SchedulePacketForRedelivery(packet, external);
     }

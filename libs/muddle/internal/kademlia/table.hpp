@@ -79,7 +79,8 @@ public:
   Peers          FindPeerByHamming(Address const &address);
   Peers       FindPeerByHamming(Address const &address, uint64_t hamming_id, bool scan_left = true,
                                 bool scan_right = true);
-  PeerInfoPtr GetPeerDetails(Address const &address);
+  bool        HasPeerDetails(Address const &address);
+  PeerInfo    GetPeerDetails(Address const &address);
   bool        HasUri(Uri const &uri) const;
   bool        IsConnectedToUri(Uri const &uri) const;
   Address     GetAddressFromUri(Uri const &uri) const;
@@ -131,12 +132,21 @@ private:
                                   bool scan_left = true, bool scan_right = true);
   mutable std::mutex mutex_;
   std::string const  logging_name_;
-  Address            own_address_;
-  KademliaAddress    own_kad_address_;
-  Buckets            by_logarithm_;
-  Buckets            by_hamming_;
-  PeerMap            known_peers_;
-  UriToPeerMap       known_uris_;
+
+  /// @{
+  Address         own_address_;
+  KademliaAddress own_kad_address_;
+  /// @}
+
+  /// @{
+  Buckets by_logarithm_;
+  Buckets by_hamming_;
+  /// @}
+
+  /// @{
+  PeerMap      known_peers_;
+  UriToPeerMap known_uris_;
+  /// @}
 
   uint64_t first_non_empty_bucket_{KADEMLIA_MAX_ID_BITS};
   uint64_t kademlia_max_peers_per_bucket_{20};
@@ -184,6 +194,7 @@ public:
 
     // Convering the known peers into a vector and only store
     // those that has a valid URI.
+    FETCH_LOCK(item.mutex_);
     std::vector<muddle::PeerInfo> peers;
     for (auto &p : item.known_peers_)
     {
@@ -196,6 +207,7 @@ public:
       }
     }
 
+    FETCH_LOCK(item.desired_mutex_);
     map.Append(KNOWN_PEERS, peers);
     map.Append(CONNECTION_EXPIRY, item.connection_expiry_);
     map.Append(DESIRED_EXPIRY, item.desired_uri_expiry_);
@@ -218,6 +230,8 @@ public:
       item.ReportExistence(p, p.last_reporter);
     }
 
+    FETCH_LOCK(item.desired_mutex_);
+    FETCH_LOCK(item.mutex_);
     map.ExpectKeyGetValue(CONNECTION_EXPIRY, item.connection_expiry_);
     map.ExpectKeyGetValue(DESIRED_EXPIRY, item.desired_uri_expiry_);
     map.ExpectKeyGetValue(DESIRED_PEERS, item.desired_peers_);

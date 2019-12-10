@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "kademlia/table.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "crypto/sha1.hpp"
-#include "kademlia/table.hpp"
 #include "muddle/network_id.hpp"
 
 namespace fetch {
@@ -444,15 +444,25 @@ void KademliaTable::ReportExistence(PeerInfo const &info, Address const &reporte
   }
 }
 
-KademliaTable::PeerInfoPtr KademliaTable::GetPeerDetails(Address const &address)
+bool KademliaTable::HasPeerDetails(Address const &address)
 {
+  FETCH_LOCK(mutex_);
+
+  auto it = known_peers_.find(address);
+  return (it != known_peers_.end());
+}
+
+PeerInfo KademliaTable::GetPeerDetails(Address const &address)
+{
+  FETCH_LOCK(mutex_);
+
   auto it = known_peers_.find(address);
   if (it == known_peers_.end())
   {
-    return nullptr;
+    return {};
   }
 
-  return it->second;
+  return *(it->second);
 }
 
 std::size_t KademliaTable::size() const
@@ -473,6 +483,8 @@ KademliaTable::Uri KademliaTable::GetUri(Address const &address)
 
 std::size_t KademliaTable::active_buckets() const
 {
+  FETCH_LOCK(mutex_);
+
   std::size_t ret{0};
   for (auto &b : by_logarithm_)
   {
@@ -483,6 +495,7 @@ std::size_t KademliaTable::active_buckets() const
 
 uint64_t KademliaTable::first_non_empty_bucket() const
 {
+  FETCH_LOCK(mutex_);
   return first_non_empty_bucket_;
 }
 
@@ -607,7 +620,6 @@ void KademliaTable::ConvertDesiredUrisToAddresses()
   {
     if (IsConnectedToUri(uri))
     {
-      FETCH_LOG_INFO(logging_name_.c_str(), "Is connected to ", uri);
       auto address = GetAddressFromUri(uri);
 
       // Moving expiry time accross based on address
@@ -626,7 +638,6 @@ void KademliaTable::ConvertDesiredUrisToAddresses()
     }
     else
     {
-      FETCH_LOG_INFO(logging_name_.c_str(), "NOT connected to ", uri);
       new_uris.insert(uri);
     }
   }
@@ -741,12 +752,14 @@ void KademliaTable::RemoveDesiredPeer(Address const &address)
 
 bool KademliaTable::HasUri(Uri const &uri) const
 {
+  FETCH_LOCK(mutex_);
   auto it = known_uris_.find(uri);
   return (it != known_uris_.end());
 }
 
 bool KademliaTable::IsConnectedToUri(Uri const &uri) const
 {
+  FETCH_LOCK(mutex_);
   auto it = known_uris_.find(uri);
   return (it != known_uris_.end()) && (it->second->connections > 0);
 }

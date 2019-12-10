@@ -34,6 +34,7 @@
 #include "peer_list.hpp"
 #include "promise_runnable.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -55,7 +56,7 @@ public:
 
   using Address           = Packet::Address;
   using Peers             = std::deque<PeerInfo>;
-  using PeerTrackerPtr    = std::shared_ptr<PeerTracker>;
+  using PeerTrackerPtr    = std::unique_ptr<PeerTracker>;
   using PeerList          = std::unordered_set<Address>;
   using PendingResolution = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
   using PendingPromised   = std::unordered_map<uint64_t, std::shared_ptr<PromiseTask>>;
@@ -282,7 +283,7 @@ private:
   AddressMap                             peer_pull_map_;
   PendingPromised                        pull_promises_;
   std::unordered_map<Address, Timepoint> last_pull_from_peer_;
-  uint64_t                               pull_next_id_{0};
+  std::atomic<uint64_t>                  pull_next_id_{0};
   /// @}
 
   /// Logging sets
