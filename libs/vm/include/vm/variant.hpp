@@ -524,11 +524,6 @@ struct AnyInteger : Variant
   using Variant::Variant;
 };
 
-struct AnyFloatingPoint : Variant
-{
-  using Variant::Variant;
-};
-
 }  // namespace vm
 
 namespace serializers {
