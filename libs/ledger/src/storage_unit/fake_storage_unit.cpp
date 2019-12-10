@@ -219,6 +219,7 @@ FakeStorageUnit::Hash FakeStorageUnit::Commit(uint64_t index)
 
 bool FakeStorageUnit::HashExists(Hash const &hash, uint64_t index)
 {
+  FETCH_UNUSED(index);
   FETCH_LOCK(lock_);
 
   auto const it  = std::find(state_history_stack_.begin(), state_history_stack_.end(), hash);
