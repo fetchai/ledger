@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block.hpp"
-#include "ledger/upow/problem_id.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
 #include "logging/logging.hpp"
@@ -104,7 +103,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
 {
   telemetry::FunctionTimer const timer{*prepare_queue_duration_};
 
-  using WorkMap = std::unordered_map<ProblemId, WorkItemPtr>;
+  using WorkMap = std::unordered_map<chain::Address, WorkItemPtr>;
 
   auto const &current_epoch  = current.dag_epoch;
   auto const &previous_epoch = previous.dag_epoch;
@@ -124,7 +123,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     }
 
     // look up (or create) the solution queue
-    auto &work_item = work_map[{work->address(), work->contract_digest()}];
+    auto &work_item = work_map[work->address()];
 
     if (!work_item)
     {
@@ -154,11 +153,11 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     }
 
     // attempt to look up the contract being referenced
-    auto it = work_map.find({node.contract_address, node.contract_digest});
+    auto it = work_map.find(node.contract_address);
     if (it == work_map.end())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up references contract: address ",
-                     node.contract_address.display(), " digest 0x", node.contract_digest.ToHex());
+                     node.contract_address.display());
       continue;
     }
 

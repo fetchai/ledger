@@ -172,8 +172,8 @@ public:
   /// @{
   BlockPtr   GetHeaviestBlock() const;
   BlockHash  GetHeaviestBlockHash() const;
-  Blocks     GetHeaviestChain(uint64_t lowest_block_number = 0) const;
-  Blocks     GetChainPreceding(BlockHash start, uint64_t lowest_block_number = 0) const;
+  Blocks     GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
+  Blocks     GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
   Travelogue TimeTravel(BlockHash current_hash) const;
   bool       GetPathToCommonAncestor(
             Blocks &blocks, BlockHash tip_hash, BlockHash node_hash, uint64_t limit = UPPER_BOUND,
@@ -301,6 +301,8 @@ public:
   void      SetHeadHash(BlockHash const &hash);
 
   bool RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks);
+
+  void FlushToDisk();
 
   Mode          mode_{Mode::IN_MEMORY_DB};
   BlockStorePtr block_store_;  ///< Long term storage and backup
