@@ -400,7 +400,6 @@ void PeerTracker::DisconnectFromPeers()
 
 void PeerTracker::PullPeerKnowledge()
 {
-
   auto cfg = tracker_configuration();
 
   // Scheduling for data pull

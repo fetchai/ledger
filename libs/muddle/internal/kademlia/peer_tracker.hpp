@@ -227,7 +227,7 @@ private:
 
   /// Core components for maintaining connectivity.
   /// @{
-  mutable std::mutex    core_mutex_;
+  mutable Mutex         core_mutex_;
   std::string const     logging_name_;
   std::atomic<bool>     stopping_{false};
   core::Reactor &       reactor_;
@@ -249,20 +249,20 @@ private:
 
   /// Direct connections
   /// @{
-  mutable std::mutex direct_mutex_;
-  AddressSet         keep_connections_{};
-  AddressSet         directly_connected_peers_{};
+  mutable Mutex direct_mutex_;
+  AddressSet    keep_connections_{};
+  AddressSet    directly_connected_peers_{};
   /// @}
 
   /// Handling new comers
   /// @{
-  mutable std::mutex uri_mutex_;
-  PendingResolution  uri_resolution_tasks_;
+  mutable Mutex     uri_mutex_;
+  PendingResolution uri_resolution_tasks_;
   /// @}
 
   /// Managing connections to Kademlia subtrees
   /// @{
-  mutable std::mutex     kademlia_mutex_;
+  mutable Mutex          kademlia_mutex_;
   ConnectionPriorityMap  kademlia_connection_priority_;
   ConnectionPriorityList kademlia_prioritized_peers_;
   AddressSet             kademlia_connections_;
@@ -270,7 +270,7 @@ private:
 
   /// Managing connections accross subtrees.
   /// @{
-  mutable std::mutex     longrange_mutex_;
+  mutable Mutex          longrange_mutex_;
   ConnectionPriorityMap  longrange_connection_priority_;
   ConnectionPriorityList longrange_prioritized_peers_;
   AddressSet             longrange_connections_;
@@ -278,7 +278,7 @@ private:
 
   /// Management variables for network discovery
   /// @{
-  mutable std::mutex                     pull_mutex_;
+  mutable Mutex                          pull_mutex_;
   std::deque<Address>                    peer_pull_queue_;
   AddressMap                             peer_pull_map_;
   PendingPromised                        pull_promises_;

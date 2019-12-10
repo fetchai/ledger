@@ -160,7 +160,7 @@ private:
   std::string const logging_name_;
 
   /// @{
-  mutable std::mutex    core_mutex_;
+  mutable Mutex         core_mutex_;
   Address               own_address_;
   KademliaAddress       own_kad_address_;
   uint64_t              first_non_empty_bucket_{KADEMLIA_MAX_ID_BITS};
@@ -169,17 +169,17 @@ private:
   /// @}
 
   /// @{
-  mutable std::mutex peer_info_mutex_;
-  Buckets            by_logarithm_;
-  Buckets            by_hamming_;
-  PeerMap            known_peers_;
-  UriToPeerMap       known_uris_;
+  mutable Mutex peer_info_mutex_;
+  Buckets       by_logarithm_;
+  Buckets       by_hamming_;
+  PeerMap       known_peers_;
+  UriToPeerMap  known_uris_;
   /// @}
 
   /// User defined connections
   /// @{
-  mutable std::mutex desired_mutex_;  ///< Use to protect desired peer variables
-                                      /// peers to avoid causing a deadlock
+  mutable Mutex desired_mutex_;  ///< Use to protect desired peer variables
+                                 /// peers to avoid causing a deadlock
   std::unordered_map<Address, Timepoint> desired_connection_expiry_;
   std::unordered_map<Uri, Timepoint>     desired_uri_expiry_;
   AddressSet                             desired_peers_;

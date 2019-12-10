@@ -506,8 +506,10 @@ std::size_t KademliaTable::active_buckets() const
 
 void KademliaTable::SetCacheFile(std::string const &filename, bool load)
 {
-  FETCH_LOCK(core_mutex_);
-  filename_ = filename;
+  {
+    FETCH_LOCK(core_mutex_);
+    filename_ = filename;
+  }
   if (load)
   {
     Load();
@@ -519,6 +521,7 @@ void KademliaTable::Load()
   std::fstream stream(filename(), std::ios::in | std::ios::binary);
   if (!stream)
   {
+
     return;
   }
 
