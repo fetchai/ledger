@@ -158,6 +158,11 @@ ChargeAmount TensorEstimator::InplaceAdd()
   return ComputeChargeFromTensorSize(std::size_t{2});
 }
 
+ChargeAmount TensorEstimator::InplaceSubtract()
+{
+  return ComputeChargeFromTensorSize(std::size_t{2});
+}
+
 ChargeAmount TensorEstimator::Multiply()
 {
   return ComputeChargeFromTensorSize(std::size_t{2});

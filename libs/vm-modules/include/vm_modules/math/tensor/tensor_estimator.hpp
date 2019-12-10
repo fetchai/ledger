@@ -97,6 +97,8 @@ public:
 
   ChargeAmount InplaceAdd();
 
+  ChargeAmount InplaceSubtract();
+
   ChargeAmount Multiply();
 
   ChargeAmount Divide();
