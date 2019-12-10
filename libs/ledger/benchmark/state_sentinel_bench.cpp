@@ -18,7 +18,6 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "in_memory_storage.hpp"
-#include "ledger/identifier.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 
 #include "benchmark/benchmark.h"
@@ -30,7 +29,6 @@
 namespace {
 
 using fetch::ledger::StateSentinelAdapter;
-using fetch::ledger::Identifier;
 using fetch::BitVector;
 
 void StateSentinelAdapter_BasicBenchmark(benchmark::State &state)
@@ -40,7 +38,7 @@ void StateSentinelAdapter_BasicBenchmark(benchmark::State &state)
   BitVector shards{1};
   shards.SetAllOne();
 
-  StateSentinelAdapter adapter{storage, Identifier{"foo.bar"}, shards};
+  StateSentinelAdapter adapter{storage, "foo.bar", shards};
 
   std::string          key{"baz"};
   std::vector<uint8_t> buffer(256);

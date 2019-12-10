@@ -56,7 +56,8 @@ std::string GeneratePrefix(std::string const &storage_path, uint32_t lane)
 }  // namespace
 
 LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode)
-  : tx_store_(std::make_shared<TransactionStorageEngine>(meta::Log2(config.num_lanes)))
+  : tx_store_(
+        std::make_shared<TransactionStorageEngine>(meta::Log2(config.num_lanes), config.lane_id))
   , reactor_("LaneServiceReactor")
   , cfg_{std::move(config)}
 {

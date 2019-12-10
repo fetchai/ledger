@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "gmock/gmock.h"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/training_pair.hpp"
@@ -37,16 +37,8 @@ using DataType = fetch::vm_modules::math::DataType;
 /// Note: the constructed optimiser can not be used.
 const char *OPTIMIZER_MINIMAL_CONSTRUCTION = R"(
      function main()
-         var tensor_shape = Array<UInt64>(1);
-         tensor_shape[0] = 1u64;
-         var data_tensor = Tensor(tensor_shape);
-         var label_tensor = Tensor(tensor_shape);
-
          var graph = Graph();
-
          var dataloader = DataLoader("tensor");
-         dataloader.addData({data_tensor}, label_tensor);
-
          var optimiser = Optimiser("%NAME%", graph, dataloader, {"",""}, "", "");
      endfunction
   )";
@@ -66,7 +58,57 @@ public:
   }
 };
 
-TEST_F(MLTests, trivial_tensor_dataloader_serialisation_test)
+TEST_F(MLTests, DISABLED_dataloader_commodity_construction)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var dataloader = DataLoader("commodity");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, DISABLED_dataloader_tensor_construction)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var dataloader = DataLoader("tensor");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, DISABLED_dataloader_invalid_mode_construction)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var dataloader = DataLoader("INVALID_MODE");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(MLTests, DISABLED_dataloader_commodity_invalid_serialisation)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var dataloader = DataLoader("commodity");
+      var state = State<DataLoader>("dataloader");
+      state.set(dataloader);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  EXPECT_THROW(toolkit.Run(), std::exception);
+}
+
+TEST_F(MLTests, DISABLED_dataloader_tensor_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(
     function main()
@@ -94,7 +136,7 @@ TEST_F(MLTests, trivial_tensor_dataloader_serialisation_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, trivial_persistent_tensor_dataloader_serialisation_test)
+TEST_F(MLTests, DISABLED_trivial_persistent_tensor_dataloader_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(
     persistent dataloader_state : DataLoader;
@@ -122,19 +164,37 @@ TEST_F(MLTests, trivial_persistent_tensor_dataloader_serialisation_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, trivial_commodity_dataloader_test)
+TEST_F(MLTests, DISABLED_dataloader_commodity_mode_invalid_add_data_by_tensor)
 {
-  static char const *dataloader_serialise_src = R"(
+  static char const *SOURCE = R"(
     function main()
-      var dataloader = DataLoader("commodity");
+        var tensor_shape = Array<UInt64>(1);
+        tensor_shape[0] = 1u64;
+        var data_tensor = Tensor(tensor_shape);
+        var label_tensor = Tensor(tensor_shape);
+        var dataloader = DataLoader("commodity");
+        dataloader.addData({data_tensor}, label_tensor);
     endfunction
   )";
 
-  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
-  ASSERT_TRUE(toolkit.Run());
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
 }
 
-TEST_F(MLTests, dataloader_serialisation_test)
+TEST_F(MLTests, DISABLED_dataloader_tensor_mode_invalid_add_data_by_files)
+{
+  static char const *SOURCE = R"(
+    function main()
+        var dataloader = DataLoader("tensor");
+        dataloader.addData("x_filename", "y_filename");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(MLTests, DISABLED_dataloader_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(
     function main() : TrainingPair
@@ -202,10 +262,12 @@ TEST_F(MLTests, dataloader_serialisation_test)
   EXPECT_TRUE(label1.AllClose(label2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
 
-TEST_F(MLTests, graph_serialisation_test)
+TEST_F(MLTests, DISABLED_graph_serialisation_test)
 {
   static char const *graph_serialise_src = R"(
+    persistent graph_state : Graph;
     function main() : Tensor
+      use graph_state;
 
       var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;
@@ -224,15 +286,14 @@ TEST_F(MLTests, graph_serialisation_test)
       graph.setInput("Input", data_tensor);
       graph.setInput("Label", label_tensor);
 
-      var state = State<Graph>("graph");
-      state.set(graph);
+      graph_state.set(graph);
 
       return graph.evaluate("Error");
 
     endfunction
   )";
 
-  std::string const state_name{"graph"};
+  std::string const state_name{"graph_state"};
   Variant           first_res;
   ASSERT_TRUE(toolkit.Compile(graph_serialise_src));
 
@@ -241,6 +302,8 @@ TEST_F(MLTests, graph_serialisation_test)
 
   static char const *graph_deserialise_src = R"(
     function main() : Tensor
+      use graph_state;
+
       var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;
       tensor_shape[1] = 10u64;
@@ -249,8 +312,7 @@ TEST_F(MLTests, graph_serialisation_test)
       data_tensor.fill(7.0fp64);
       label_tensor.fill(7.0fp64);
 
-      var state = State<Graph>("graph");
-      var graph = state.get();
+      var graph = graph_state.get();
 
       graph.setInput("Input", data_tensor);
       graph.setInput("Label", label_tensor);
@@ -272,7 +334,7 @@ TEST_F(MLTests, graph_serialisation_test)
   EXPECT_TRUE(initial_loss->GetTensor().AllClose(loss->GetTensor()));
 }
 
-TEST_F(MLTests, graph_string_serialisation_test)
+TEST_F(MLTests, DISABLED_graph_string_serialisation_test)
 {
   static char const *graph_serialise_src = R"(
     function main() : Tensor
@@ -347,27 +409,27 @@ TEST_F(MLTests, graph_string_serialisation_test)
   EXPECT_TRUE(initial_loss->GetTensor().AllClose(loss->GetTensor()));
 }
 
-TEST_F(MLTests, optimiser_construction_adam)
+TEST_F(MLTests, DISABLED_optimiser_construction_adam)
 {
   TestOptimizerConstruction("adam");
 }
 
-TEST_F(MLTests, optimiser_construction_adagrad)
+TEST_F(MLTests, DISABLED_optimiser_construction_adagrad)
 {
   TestOptimizerConstruction("adagrad");
 }
 
-TEST_F(MLTests, optimiser_construction_rmsprop)
+TEST_F(MLTests, DISABLED_optimiser_construction_rmsprop)
 {
   TestOptimizerConstruction("rmsprop");
 }
 
-TEST_F(MLTests, optimiser_construction_sgd)
+TEST_F(MLTests, DISABLED_optimiser_construction_sgd)
 {
   TestOptimizerConstruction("sgd");
 }
 
-TEST_F(MLTests, optimiser_construction_invalid_type)
+TEST_F(MLTests, DISABLED_optimiser_construction_invalid_type)
 {
   std::string const src =
       std::regex_replace(OPTIMIZER_MINIMAL_CONSTRUCTION, std::regex("%NAME%"), "INVALID_NAME");
@@ -375,7 +437,22 @@ TEST_F(MLTests, optimiser_construction_invalid_type)
   ASSERT_FALSE(toolkit.Run());
 }
 
-TEST_F(MLTests, sgd_optimiser_serialisation_test)
+TEST_F(MLTests, DISABLED_optimiser_adagrad_serialisation_failed)
+{
+  static char const *SOURCE = R"(
+      function main()
+        var graph = Graph();
+        var dataloader = DataLoader("tensor");
+        var optimiser = Optimiser("adagrad", graph, dataloader, {"",""}, "", "");
+        var state = State<Optimiser>("optimiser");
+        state.set(optimiser);
+     endfunction
+   )";
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  EXPECT_THROW(toolkit.Run(), std::exception);
+}
+
+TEST_F(MLTests, DISABLED_optimiser_sgd_serialisation)
 {
   static char const *optimiser_serialise_src = R"(
     function main() : Fixed64
@@ -441,7 +518,7 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
   EXPECT_TRUE(loss1 == loss2);
 }
 
-TEST_F(MLTests, serialisation_several_components_test)
+TEST_F(MLTests, DISABLED_serialisation_several_components_test)
 {
   static char const *several_serialise_src = R"(
       function main()
@@ -512,7 +589,7 @@ TEST_F(MLTests, serialisation_several_components_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, optimiser_set_graph_test)
+TEST_F(MLTests, DISABLED_optimiser_set_graph_test)
 {
   static char const *several_serialise_src = R"(
       function main()
@@ -551,7 +628,7 @@ TEST_F(MLTests, optimiser_set_graph_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MLTests, graph_step_test)
+TEST_F(MLTests, DISABLED_graph_step_test)
 {
   static char const *src = R"(
     function main() : Tensor
