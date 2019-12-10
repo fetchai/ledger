@@ -227,7 +227,6 @@ TEST_F(TokenContractTests, CheckInitialBalance)
   EXPECT_EQ(balance, 0);
 }
 
-// TODO(HUT): this is disabled - by whom and why?
 TEST_F(TokenContractTests, DISABLED_CheckTransferWithoutPreexistingDeed)
 {
   Entities entities(2);
@@ -306,7 +305,6 @@ TEST_F(TokenContractTests, CheckDeedAmend)
                          signees_modif, thresholds_modif));
 }
 
-// TODO(HUT): this is disabled - by whom and why?
 TEST_F(TokenContractTests, DISABLED_CheckDeedDeletion)
 {
   uint64_t const origina_wealth  = 1000;
@@ -409,7 +407,6 @@ TEST_F(TokenContractTests, CheckDeedAmendDoesNotAffectBalance)
   EXPECT_EQ(orig_balance, current_balance);
 }
 
-// TODO(HUT): this is disabled - by whom and why?
 TEST_F(TokenContractTests, DISABLED_CheckTransferIsAuthorisedByPreexistingDeed)
 {
   Entities       entities(3);
