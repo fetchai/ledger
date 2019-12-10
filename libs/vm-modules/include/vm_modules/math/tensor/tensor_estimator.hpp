@@ -225,7 +225,7 @@ public:
     return DataType(5);
   };
 
-  static fixed_point::fp64_t const DEFAULT_PADDED_SIZE_COEF = fixed_point::fp64_t("0.00023451");
+  fixed_point::fp64_t const DEFAULT_PADDED_SIZE_COEF = fixed_point::fp64_t("0.00023451");
   fixed_point::fp64_t const        DEFAULT_SIZE_COEF        = fixed_point::fp64_t("0.00107809");
   fixed_point::fp64_t const        DEFAULT_CONST_COEF       = fixed_point::fp64_t("5");
 
