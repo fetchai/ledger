@@ -401,9 +401,6 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
           EXPECT_TRUE(model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size) ==
                       static_cast<SizeType>(val));
 
-          EXPECT_TRUE(model_estimator.Evaluate() < static_cast<ChargeAmount>(val));
-          EXPECT_TRUE(model_estimator.Evaluate() > ChargeAmount{0});
-
           DataType predict_val{0};
 
           predict_val = predict_val + forward_pass_cost * n_data;
@@ -423,6 +420,10 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
 TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
 {
+  using fetch::vm::Ptr;
+  using fetch::vm::Array;
+  using fetch::vm::String;
+
   std::string model_type      = "sequential";
   std::string layer_type      = "dense";
   std::string loss_type       = "mse";
@@ -450,19 +451,19 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
   VmPtr             vm_ptr_opt_type{new fetch::vm::String(&toolkit.vm(), opt_type)};
   VmPtr             vm_ptr_activation_type{new fetch::vm::String(&toolkit.vm(), activation_type)};
 
-  //  auto test_vm = toolkit.vm();
-  using fetch::vm::Ptr;
-  using fetch::vm::Array;
-  using fetch::vm::String;
-  int32_t n_metrics = 3;
+  std::vector<std::string> mets      = {"categorical accuracy", "mse", "cel", "scel"};
+  SizeType                 n_metrics = mets.size();
+
+  toolkit.Compile("");  // necessary to populate the registered types for GetTypeID
 
   Ptr<Array<Ptr<String>>> metrics = Ptr<Array<Ptr<String>>>(
       new Array<Ptr<String>>(&toolkit.vm(), toolkit.vm().GetTypeId<fetch::vm::IArray>(),
-                             toolkit.vm().GetTypeId<String>(), n_metrics));
+                             toolkit.vm().GetTypeId<String>(), static_cast<int32_t>(n_metrics)));
 
-  metrics->elements.at(0) = VmPtr(new fetch::vm::String(&toolkit.vm(), "categorical accuracy"));
-  metrics->elements.at(1) = VmPtr(new fetch::vm::String(&toolkit.vm(), "mse"));
-  metrics->elements.at(2) = VmPtr(new fetch::vm::String(&toolkit.vm(), "cel"));
+  for (SizeType i{0}; i < n_metrics; i++)
+  {
+    metrics->elements.at(i) = VmPtr(new fetch::vm::String(&toolkit.vm(), mets.at(i)));
+  }
 
   for (SizeType data_size_1 = min_data_size_1; data_size_1 < max_data_size_1;
        data_size_1 += data_size_1_step)
@@ -475,9 +476,6 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
         for (SizeType batch_size = min_batch_size; batch_size < n_data;
              batch_size += batch_size_step)
         {
-
-          SizeType weights_size_sum = data_size_1 * label_size_1 + label_size_1;
-
           std::vector<uint64_t>                             data_shape{{data_size_1, n_data}};
           std::vector<uint64_t>                             label_shape{{label_size_1, n_data}};
           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_data{
@@ -505,23 +503,12 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
               DataType(data_size_1 * label_size_1) * VmModelEstimator::FORWARD_DENSE_QUAD_COEF();
           forward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_FORWARD_IMPACT();
 
-          DataType backward_pass_cost =
-              DataType(data_size_1) * VmModelEstimator::BACKWARD_DENSE_INPUT_COEF();
-          backward_pass_cost +=
-              DataType(label_size_1) * VmModelEstimator::BACKWARD_DENSE_OUTPUT_COEF();
-          backward_pass_cost +=
-              DataType(data_size_1 * label_size_1) * VmModelEstimator::BACKWARD_DENSE_QUAD_COEF();
-          backward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_BACKWARD_IMPACT();
-
           model_estimator.CompileSequentialWithMetrics(vm_ptr_loss_type, vm_ptr_opt_type, metrics);
           model.CompileSequentialWithMetrics(vm_ptr_loss_type, vm_ptr_opt_type, metrics);
 
           ops_count += 1;  // for loss
 
           forward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_FORWARD_IMPACT();
-          backward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_BACKWARD_IMPACT();
-
-          SizeType number_of_batches = n_data / batch_size;
 
           DataType val(0);
 
@@ -530,34 +517,31 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
           val = val + VmModelEstimator::PREDICT_BATCH_LAYER_COEF() * n_data * ops_count;
           val = val + VmModelEstimator::PREDICT_CONST_COEF();
 
-          // Backward pass
-          val = val + backward_pass_cost * n_data;
-          val = val + VmModelEstimator::BACKWARD_BATCH_LAYER_COEF() * n_data * ops_count;
-          val = val + VmModelEstimator::BACKWARD_PER_BATCH_COEF() * number_of_batches;
+          // Metrics
+          for (auto m_it : mets)
+          {
+            if (m_it == "categorical accuracy")
+            {
+              val += VmModelEstimator::CATEGORICAL_ACCURACY_FORWARD_IMPACT() * label_size_1;
+            }
+            else if (m_it == "mse")
+            {
+              val += VmModelEstimator::MSE_FORWARD_IMPACT() * label_size_1;
+            }
+            else if (m_it == "cel")
+            {
+              val += VmModelEstimator::CEL_FORWARD_IMPACT() * label_size_1;
+            }
+            else if (m_it == "scel")
+            {
+              val += VmModelEstimator::SCEL_FORWARD_IMPACT() * label_size_1;
+            }
+          }
 
-          // Optimiser step
-          val = val + static_cast<DataType>(number_of_batches) *
-                          VmModelEstimator::ADAM_STEP_IMPACT_COEF() * weights_size_sum;
-
-          // Call overhead
-          val = val + VmModelEstimator::FIT_CONST_COEF();
-
-          val = val * fetch::vm::COMPUTE_CHARGE_COST;
-
-          EXPECT_TRUE(model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size) ==
-                      static_cast<SizeType>(val));
-
-          EXPECT_TRUE(model_estimator.EvaluateWithMetrics() < static_cast<ChargeAmount>(val));
-          EXPECT_TRUE(model_estimator.EvaluateWithMetrics() > ChargeAmount{0});
-
-          auto predict_val =
-              static_cast<SizeType>(static_cast<DataType>(n_data) * forward_pass_cost);
-          predict_val += static_cast<SizeType>(static_cast<DataType>(n_data * ops_count) *
-                                               VmModelEstimator::PREDICT_BATCH_LAYER_COEF());
-          predict_val += static_cast<SizeType>(VmModelEstimator::PREDICT_CONST_COEF());
-
-          EXPECT_TRUE(model_estimator.Predict(vm_ptr_tensor_data) ==
-                      static_cast<SizeType>(predict_val));
+          // Calling Fit is needed to set the data
+          model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size);
+          EXPECT_EQ(model_estimator.EvaluateWithMetrics(), static_cast<ChargeAmount>(val));
+          EXPECT_EQ(model_estimator.Evaluate(), static_cast<ChargeAmount>(val));
         }
       }
     }
