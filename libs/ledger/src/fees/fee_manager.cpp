@@ -124,7 +124,7 @@ void FeeManager::Execute(TransactionDetails &tx, Result &result, BlockIndex cons
 
   auto const &from = tx.from;
 
-  ContractContext         context{&token_contract_, tx.contract_address, &storage_adapter, block};
+  ContractContext context{&token_contract_, tx.contract_address, nullptr, &storage_adapter, block};
   ContractContextAttacher raii(token_contract_, context);
   uint64_t const          balance = token_contract_.GetBalance(from);
 
@@ -162,7 +162,7 @@ void FeeManager::SettleFees(chain::Address const &miner, TokenAmount amount,
   // attach the token contract to the storage engine
   StateSentinelAdapter storage_adapter{storage, "fetch.token", shard};
 
-  ContractContext         context{&token_contract_, contract_address, &storage_adapter, block};
+  ContractContext context{&token_contract_, contract_address, nullptr, &storage_adapter, block};
   ContractContextAttacher raii(token_contract_, context);
   token_contract_.AddTokens(miner, amount);
 }
