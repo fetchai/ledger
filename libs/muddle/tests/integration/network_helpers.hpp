@@ -85,6 +85,8 @@ struct Node
 
   void Reboot(TrackerConfiguration configuration = {})
   {
+    Stop();
+
     char const *external         = std::getenv("MUDDLE_EXTERNAL");
     char const *external_address = (external == nullptr) ? "127.0.0.1" : external;
 
