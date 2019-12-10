@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/standard_functions/abs.hpp"
+#include "vm/array.hpp"
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
@@ -356,6 +357,40 @@ TEST_F(MathTensorTests, tensor_set_from_string)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
+TEST_F(MathTensorTests, tensor_shape_from_tensor)
+{
+  static char const *tensor_from_string_src = R"(
+    function main() : Array<UInt64>
+      var tensor_shape = Array<UInt64>(3);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 3u64;
+      tensor_shape[2] = 4u64;
+      var x = Tensor(tensor_shape);
+
+      var shape = x.shape();
+
+      return shape;
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto tensor_shape{res.Get<Ptr<IArray>>()};
+
+  std::vector<SizeType> ret;
+  std::vector<SizeType> gt({2, 3, 4});
+
+  while (tensor_shape->Count() > 0)
+  {
+    ret.emplace_back(tensor_shape->PopFrontOne().Get<uint64_t>());
+  }
+
+  EXPECT_TRUE(gt == ret);
+}
+
 TEST_F(MathTensorTests, tensor_copy_from_tensor)
 {
   static char const *tensor_from_string_src = R"(
@@ -367,6 +402,7 @@ TEST_F(MathTensorTests, tensor_copy_from_tensor)
       var y = Tensor(tensor_shape);
       x.fill(2.0fp64);
       y = x.copy();
+      x.setAt(0u64, 1.0fp64);
 
       return y;
 
@@ -868,7 +904,6 @@ TEST_F(MathTensorTests, tensor_negate_etch_test)
 
   auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto       tensor     = tensor_ptr->GetTensor();
-  std::cout << "tensor: " << tensor.ToString() << std::endl;
 
   fetch::math::Tensor<DataType> gt({3, 3});
   gt.Fill(DataType(-7.0));
@@ -954,9 +989,6 @@ TEST_F(MathTensorTests, tensor_max_etch_test)
 
   auto const max_val = res.Get<DataType>();
   DataType   gt{23.1};
-
-  std::cout << "gt: " << gt << std::endl;
-  std::cout << "max_val: " << max_val << std::endl;
 
   EXPECT_TRUE(gt == max_val);
 }
@@ -1080,9 +1112,6 @@ TEST_F(MathTensorTests, tensor_dot_test)
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({2, 2});
   gt.Fill(static_cast<DataType>(2.0));
-
-  std::cout << "gt.ToString(): " << gt.ToString() << std::endl;
-  std::cout << "tensor->GetTensor().ToString(): " << tensor->GetTensor().ToString() << std::endl;
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }

@@ -49,6 +49,11 @@ ChargeAmount TensorEstimator::size()
   return LOW_CHARGE;
 }
 
+ChargeAmount TensorEstimator::VMShape()
+{
+  return LOW_CHARGE;
+}
+
 ChargeAmount TensorEstimator::Copy()
 {
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());

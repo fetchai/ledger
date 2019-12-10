@@ -88,6 +88,8 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
           .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>,
                                 UseEstimator(&TensorEstimator::SetAtFour))
           .CreateMemberFunction("size", &VMTensor::size, UseEstimator(&TensorEstimator::size))
+          .CreateMemberFunction("shape", &VMTensor::VMShape,
+                                UseEstimator(&TensorEstimator::VMShape))
           .CreateMemberFunction("fill", &VMTensor::Fill, UseEstimator(&TensorEstimator::Fill))
           .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
                                 UseEstimator(&TensorEstimator::FillRandom))
@@ -157,6 +159,20 @@ SizeVector VMTensor::shape() const
 SizeType VMTensor::size() const
 {
   return tensor_.size();
+}
+
+vm::Ptr<vm::Array<SizeType>> VMTensor::VMShape() const
+{
+  auto array = this->vm_->CreateNewObject<Array<SizeType>>(this->vm_->GetTypeId<SizeType>(),
+                                                           static_cast<int32_t>(tensor_.shape().size()));
+
+  for (std::size_t i = 0; i < tensor_.shape().size(); ++i)
+  {
+    auto val = tensor_.shape().at(i);
+    array->elements.at(i) = static_cast<SizeType>(val);
+  }
+
+  return array;
 }
 
 ////////////////////////////////////

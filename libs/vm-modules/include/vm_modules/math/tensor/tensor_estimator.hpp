@@ -54,6 +54,8 @@ public:
 
   ChargeAmount size();
 
+  ChargeAmount VMShape();
+
   ChargeAmount Copy();
 
   ChargeAmount AtOne(TensorType::SizeType idx1);

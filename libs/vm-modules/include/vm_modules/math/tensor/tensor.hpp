@@ -63,6 +63,8 @@ public:
 
   TensorType::SizeType size() const;
 
+  vm::Ptr<vm::Array<TensorType::SizeType>> VMShape() const;
+
   ////////////////////////////////////
   /// ACCESSING AND SETTING VALUES ///
   ////////////////////////////////////
