@@ -80,8 +80,8 @@ Settings::Settings()
   , max_cabinet_size      {*this, "max-cabinet-size",        DEFAULT_CABINET_SIZE,         "The maximum cabinet size"}
   , stake_delay_period    {*this, "stake-delay-period",      DEFAULT_STAKE_DELAY_PERIOD,   ""}
   , aeon_period           {*this, "aeon-period",             DEFAULT_AEON_PERIOD,          "The number of blocks one cabinet is governing"}
-  , shutdown_on_critical_failure {*this, "shutdown-on-fail", false,                        "Whether or not to shutdown on critical system failures"}
-  , allow_crashing        {*this, "allow-crashing",          false,                        "Whether or not to allow critical system failures to cause a crash"}
+  , graceful_failure      {*this, "graceful-failure",        false,                        "Whether or not to shutdown on critical system failures"}
+  , fault_tolerant        {*this, "fault-tolerant",          false,                        "Whether or not to allow critical system failures to cause a crash"}
   , enable_agents         {*this, "enable-agents",           false,                        "Run the node with agent support"}
   , messenger_port        {*this, "messenger-port",          DEFAULT_MESSENGER_PORT,       "Port that agents connect to"}
 {}

@@ -244,18 +244,15 @@ private:
 
   /// @name HTTP Server
   /// @{
-  //< HTTP module that returns the API definition
   OpenAPIHttpModulePtr     http_open_api_module_;
   HealthCheckHttpModulePtr health_check_module_;
   HttpServer               http_;          ///< The HTTP server
   HttpModules              http_modules_;  ///< The set of modules currently configured
-
   /// @}
 
   /// @name Telemetry
   /// @{
-  telemetry::CounterPtr         uptime_;
-  telemetry::GaugePtr<uint64_t> memory_usage_;
+  telemetry::CounterPtr uptime_;
   /// @}
 };
 

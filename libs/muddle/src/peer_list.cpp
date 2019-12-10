@@ -62,7 +62,6 @@ void PeerConnectionList::RemovePersistentPeer(Handle handle)
   {
     if (peer_connection.second->handle() == handle)
     {
-
       persistent_peers_.erase(peer_connection.first);
       break;
     }

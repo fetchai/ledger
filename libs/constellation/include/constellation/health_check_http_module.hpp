@@ -46,7 +46,7 @@ public:
           MainChainRpcService const *const chain_service = chain_service_.load();
 
           // determine the state of the machine system state machines
-          bool const chain_synced = chain_service && chain_service->IsSynced();
+          bool const chain_synced = (chain_service != nullptr) && chain_service->IsSynced();
           bool const chain_executed_finished =
               block_coordinator_.GetStateMachine().state() == BlockCoordinator::State::SYNCHRONISED;
           bool const chain_execution_complete =

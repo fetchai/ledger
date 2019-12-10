@@ -112,8 +112,8 @@ public:
 
   /// @name Error handling
   /// @{
-  settings::Setting<bool> shutdown_on_critical_failure;
-  settings::Setting<bool> allow_crashing;
+  settings::Setting<bool> graceful_failure;
+  settings::Setting<bool> fault_tolerant;
   /// @}
 
   /// @name Agent support functionality

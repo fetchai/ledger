@@ -15,11 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-core)
-target_link_libraries(fetch-core
-                      PUBLIC fetch-vectorise
-                             fetch-logging
-                             fetch-telemetry
-                             vendor-memu)
+target_link_libraries(fetch-core PUBLIC fetch-vectorise fetch-logging fetch-telemetry)
 
 # ------------------------------------------------------------------------------
 # Example Targets

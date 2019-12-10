@@ -53,7 +53,6 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
-#include <stdlib.h>
 #include <string>
 #include <thread>
 #include <unordered_set>
@@ -271,7 +270,7 @@ int main(int argc, char **argv)
       fetch::constellation::Constellation::Config cfg = BuildConstellationConfig(settings);
 
       // setting policy for critical signals
-      shutdown_on_critical_failure = settings.shutdown_on_critical_failure.value();
+      shutdown_on_critical_failure = settings.graceful_failure.value();
 
       // create the bootrap monitor (if configued to do so)
       auto initial_peers = ToUriSet(settings.peers.value());
@@ -294,7 +293,7 @@ int main(int argc, char **argv)
       std::signal(SIGTERM, InterruptHandler);
 
       // Making the system resillient to segmentation faults
-      if (!settings.allow_crashing.value())
+      if (settings.fault_tolerant.value())
       {
         std::signal(SIGSEGV, ThrowException);
         std::signal(SIGFPE, ThrowException);
