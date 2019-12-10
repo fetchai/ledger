@@ -313,21 +313,22 @@ void BasicBenchmarks(benchmark::State &state)
                            VAL_STRING = "\"x\"", EMPTY;
 
   // Boolean and type-neutral benchmark codes
-  static BenchmarkPair RETURN("Return", FunMain(""));
-  static BenchmarkPair PUSH_FALSE("PushFalse", FunMain(FALSE + ";\n"));
-  static BenchmarkPair PUSH_TRUE("PushTrue", FunMain(TRUE + ";\n"));
-  static BenchmarkPair JUMP_IF_FALSE("JumpIfFalse", FunMain(IfThen(FALSE, EMPTY)));
-  static BenchmarkPair JUMP("Jump", FunMain(IfThenElse(FALSE, EMPTY, EMPTY)));
-  static BenchmarkPair NOT("Not", FunMain("!true;\n"));
-  static BenchmarkPair AND("And", FunMain("true && true;\n"));
-  static BenchmarkPair OR("Or", FunMain("false || true ;\n"));
-  static BenchmarkPair FOR_LOOP("ForLoop", FunMain(For(EMPTY, ONE)));
-  static BenchmarkPair BREAK("Break", FunMain(For(BRK, ONE)));
-  static BenchmarkPair CONTINUE("Continue", FunMain(For(CONT, ONE)));
-  static BenchmarkPair DESTRUCT_BASE("DestructBase", FunMain(VarDec(STRING) + For(EMPTY, ONE)));
-  static BenchmarkPair DESTRUCT("Destruct", FunMain(For(VarDec(STRING), ONE)));
-  static BenchmarkPair FUNC("Function", FunMain(FUN_CALL) + FunUser(""));
-  static BenchmarkPair VAR_DEC_STRING("VariableDeclareStr", FunMain(VarDec(STRING)));
+  const static BenchmarkPair RETURN("Return", FunMain(""));
+  const static BenchmarkPair PUSH_FALSE("PushFalse", FunMain(FALSE + ";\n"));
+  const static BenchmarkPair PUSH_TRUE("PushTrue", FunMain(TRUE + ";\n"));
+  const static BenchmarkPair JUMP_IF_FALSE("JumpIfFalse", FunMain(IfThen(FALSE, EMPTY)));
+  const static BenchmarkPair JUMP("Jump", FunMain(IfThenElse(FALSE, EMPTY, EMPTY)));
+  const static BenchmarkPair NOT("Not", FunMain("!true;\n"));
+  const static BenchmarkPair AND("And", FunMain("true && true;\n"));
+  const static BenchmarkPair OR("Or", FunMain("false || true ;\n"));
+  const static BenchmarkPair FOR_LOOP("ForLoop", FunMain(For(EMPTY, ONE)));
+  const static BenchmarkPair BREAK("Break", FunMain(For(BRK, ONE)));
+  const static BenchmarkPair CONTINUE("Continue", FunMain(For(CONT, ONE)));
+  const static BenchmarkPair DESTRUCT_BASE("DestructBase",
+                                           FunMain(VarDec(STRING) + For(EMPTY, ONE)));
+  const static BenchmarkPair DESTRUCT("Destruct", FunMain(For(VarDec(STRING), ONE)));
+  const static BenchmarkPair FUNC("Function", FunMain(FUN_CALL) + FunUser(""));
+  const static BenchmarkPair VAR_DEC_STRING("VariableDeclareStr", FunMain(VarDec(STRING)));
 
   std::unordered_map<std::string, std::string> baseline_map({{"Return", "Return"},
                                                              {"PushFalse", "Return"},
@@ -548,10 +549,10 @@ void PrimitiveOpBenchmarks(benchmark::State &state)
 
 void MathBenchmarks(benchmark::State &state)
 {
-  static std::vector<std::string> primitives{"Float32", "Float64", "Fixed32", "Fixed64",
-                                             "Fixed128"};
-  static std::vector<std::string> values{"0.5f", "0.5", "0.5fp32", "0.5fp64", "0.5fp128"};
-  static std::vector<std::string> alt_values{"1.5f", "1.5", "1.5fp32", "1.5fp64", "1.5fp128"};
+  const static std::vector<std::string> primitives{"Float32", "Float64", "Fixed32", "Fixed64",
+                                                   "Fixed128"};
+  const static std::vector<std::string> values{"0.5f", "0.5", "0.5fp32", "0.5fp64", "0.5fp128"};
+  const static std::vector<std::string> alt_values{"1.5f", "1.5", "1.5fp32", "1.5fp64", "1.5fp128"};
 
   auto bm_ind = static_cast<uint32_t>(state.range(0));
 
