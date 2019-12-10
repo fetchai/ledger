@@ -85,6 +85,23 @@ public:
 
   ChargeAmount Sum();
 
+  /// OPERATORS ///
+
+  ChargeAmount EqualOperator(vm::Ptr<VMTensor> const &other);
+
+  ChargeAmount NotEqualOperator(vm::Ptr<VMTensor> const &other);
+
+  ChargeAmount NegateOperator();
+
+  ChargeAmount AddOperator(vm::Ptr<VMTensor> const & /*other*/);
+
+  ChargeAmount SubtractOperator(vm::Ptr<VMTensor> const & /*other*/);
+
+  ChargeAmount MultiplyOperator(vm::Ptr<VMTensor> const & /*other*/);
+
+  ChargeAmount DivideOperator(vm::Ptr<VMTensor> const & /*other*/);
+
+  // TODO (ML-340) - replace member functions with operators when operators can take estimators
   ChargeAmount Negate();
 
   ChargeAmount Equal();
@@ -106,6 +123,8 @@ public:
   ChargeAmount InplaceMultiply();
 
   ChargeAmount InplaceDivide();
+
+  /// END OF OPERATORS ///
 
   ChargeAmount GetReshapeCost(SizeVector const &new_shape);
 
@@ -226,8 +245,8 @@ public:
   };
 
   fixed_point::fp64_t const DEFAULT_PADDED_SIZE_COEF = fixed_point::fp64_t("0.00023451");
-  fixed_point::fp64_t const        DEFAULT_SIZE_COEF        = fixed_point::fp64_t("0.00107809");
-  fixed_point::fp64_t const        DEFAULT_CONST_COEF       = fixed_point::fp64_t("5");
+  fixed_point::fp64_t const DEFAULT_SIZE_COEF        = fixed_point::fp64_t("0.00107809");
+  fixed_point::fp64_t const DEFAULT_CONST_COEF       = fixed_point::fp64_t("5");
 
   // Function call overhead for LOW_CHARGE functions
   static constexpr SizeType LOW_CHARGE_CONST_COEF = 5;
