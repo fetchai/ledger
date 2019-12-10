@@ -150,8 +150,8 @@ protected:
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
 
     // dispatch the transaction to the contract
-    fetch::ledger::ContractContext context{nullptr, tx_->contract_address(), &storage_adapter,
-                                           block_number_++};
+    fetch::ledger::ContractContext         context{nullptr, tx_->contract_address(), nullptr,
+                                           &storage_adapter, block_number_++};
     fetch::ledger::ContractContextAttacher raii(*contract_, context);
     auto const                             status = contract_->DispatchTransaction(*tx_);
 
@@ -182,8 +182,8 @@ protected:
     StateSentinelAdapter storage_adapter{*storage_, std::move(id), shards_};
 
     // dispatch the transaction to the contract
-    fetch::ledger::ContractContext context{nullptr, tx->contract_address(), &storage_adapter,
-                                           block_number_++};
+    fetch::ledger::ContractContext         context{nullptr, tx->contract_address(), nullptr,
+                                           &storage_adapter, block_number_++};
     fetch::ledger::ContractContextAttacher raii(*contract_, context);
     auto const                             status = contract_->DispatchTransaction(*tx);
 
@@ -196,7 +196,8 @@ protected:
     StateAdapter storage_adapter{*storage_, *contract_name_};
 
     // Current block index does not apply to queries - set to 0
-    fetch::ledger::ContractContext context{nullptr, fetch::chain::Address{}, &storage_adapter, 0};
+    fetch::ledger::ContractContext         context{nullptr, fetch::chain::Address{}, nullptr,
+                                           &storage_adapter, 0};
     fetch::ledger::ContractContextAttacher raii(*contract_, context);
     auto const status = contract_->DispatchQuery(query, request, response);
 
@@ -208,8 +209,8 @@ protected:
   {
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
 
-    fetch::ledger::ContractContext         context{nullptr, tx.contract_address(), &storage_adapter,
-                                           block_number_};
+    fetch::ledger::ContractContext         context{nullptr, tx.contract_address(), nullptr,
+                                           &storage_adapter, block_number_};
     fetch::ledger::ContractContextAttacher raii(*contract_, context);
     auto const status = contract_->DispatchInitialise(fetch::chain::Address{owner}, tx);
 
