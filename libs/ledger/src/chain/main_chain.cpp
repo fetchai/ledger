@@ -558,13 +558,13 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
 }
 
 /**
- * Walk the block history starting from the heaviest block
+ * Walk the block history downwards starting from the heaviest block.
  *
- * @param lowest_block_number The minimum allowed block_number to be returned
+ * @param limit The maximum amount of blocks returned
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Blocks MainChain::GetHeaviestChain(uint64_t lowest_block_number) const
+MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
   // Note: min needs a reference to something, so this is a workaround since UPPER_BOUND is a
   // constexpr
@@ -572,7 +572,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t lowest_block_number) cons
 
   FETCH_LOCK(lock_);
 
-  return GetChainPreceding(GetHeaviestBlockHash(), lowest_block_number);
+  return GetChainPreceding(GetHeaviestBlockHash(), limit);
 }
 
 MainChain::IntBlockPtr MainChain::GetLabeledSubchainStart() const
@@ -620,11 +620,11 @@ MainChain::IntBlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
  * Walk the block history collecting blocks until either genesis or the block limit is reached
  *
  * @param start The hash of the first block
- * @param lowest_block_number The minimum allowed block_number to be returned
+ * @param limit The maximum amount of blocks returned
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_block_number) const
+MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
   MilliTimer myTimer("MainChain::ChainPreceding", 2000);
 
@@ -635,11 +635,11 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
   assert(GetBlock(chain::GENESIS_DIGEST)->block_number == 0);
 
   Blocks result;
-  bool   proceed = true;
+  bool   not_at_genesis = true;
 
   for (BlockHash current_hash = std::move(start);
        // exit once we have gathered enough blocks or reached genesis
-       proceed && result.size() < MainChain::UPPER_BOUND;)
+       not_at_genesis && result.size() < static_cast<Blocks::size_type>(limit);)
   {
     // look up the block
     auto block = GetBlock(current_hash);
@@ -650,18 +650,9 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
     }
     assert(block->block_number > 0 || block->IsGenesis());
 
-    if (block->block_number < lowest_block_number)
-    {
-      break;
-    }
-
     // walk the hash
-    proceed = block->block_number > lowest_block_number;
-
-    if (proceed)
-    {
-      current_hash = block->previous_hash;
-    }
+    not_at_genesis = !block->IsGenesis();
+    current_hash   = block->previous_hash;
 
     // update the results
     result.push_back(std::move(block));
