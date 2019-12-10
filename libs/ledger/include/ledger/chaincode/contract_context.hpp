@@ -25,6 +25,7 @@ namespace ledger {
 
 class TokenContract;
 class StateAdapter;
+class StorageInterface;
 
 struct ContractContext
 {
@@ -33,11 +34,12 @@ struct ContractContext
   ContractContext(ContractContext &&)      = default;
 
   ContractContext(TokenContract *token_contract_param, chain::Address address,
-                  StateAdapter *                       state_adapter_param,
+                  StorageInterface const *storage_param, StateAdapter *state_adapter_param,
                   chain::TransactionLayout::BlockIndex block_index_param);
 
   TokenContract *const                       token_contract{nullptr};
   chain::Address const                       contract_address{};
+  StorageInterface const *const              storage{nullptr};
   StateAdapter *const                        state_adapter{nullptr};
   chain::TransactionLayout::BlockIndex const block_index{0};
 };
