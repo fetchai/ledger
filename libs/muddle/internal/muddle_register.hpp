@@ -120,11 +120,11 @@ private:
   std::string const name_;
   char const *const logging_name_{name_.c_str()};
 
-  mutable Mutex             lock_;
-  ConnectionLeftCallback    left_callback_;
-  ConnectionEnteredCallback entered_callback_;
-  HandleIndex               handle_index_;
-  AddressIndex              address_index_;
+  mutable std::recursive_mutex  lock_;
+  ConnectionLeftCallback        left_callback_;
+  ConnectionEnteredCallback     entered_callback_;
+  HandleIndex                   handle_index_;
+  AddressIndex                  address_index_;
 };
 
 }  // namespace muddle
