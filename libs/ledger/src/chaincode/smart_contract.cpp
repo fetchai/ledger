@@ -603,8 +603,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
     c.state_adapter->PopContext();
     vm->IncreaseChargeTotal(vm2.GetChargeTotal() - reference_charge);
 
-    auto it = call_history.find(called_contract_address);
-    call_history.erase(it);
+    call_history.erase(called_contract_address);
 
     return success;
   };
