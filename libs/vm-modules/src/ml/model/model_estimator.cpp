@@ -35,10 +35,6 @@ static constexpr char const *LOGGING_NAME = "VMModelEstimator";
 
 using SizeType = fetch::math::SizeType;
 
-// compiler requires redeclarations of static constexprs in cpp
-constexpr SizeType ModelEstimator::FIT_CONST_OVERHEAD;
-constexpr SizeType ModelEstimator::FIT_PER_BATCH_OVERHEAD;
-
 ModelEstimator::ModelEstimator(VMObjectType &model)
   : model_{model}
 {}
@@ -177,6 +173,8 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
 {
   DataType optimiser_construction_impact(0.0);
 
+  bool success = false;
+
   if (!model_.model_->loss_set_)
   {
     if (loss->string() == "mse")
@@ -187,6 +185,7 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       state_.backward_pass_cost =
           state_.backward_pass_cost + MSE_BACKWARD_IMPACT() * state_.last_layer_size;
       state_.ops_count++;
+      success = true;
     }
     else if (loss->string() == "cel")
     {
@@ -196,18 +195,44 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       state_.backward_pass_cost =
           state_.backward_pass_cost + CEL_BACKWARD_IMPACT() * state_.last_layer_size;
       state_.ops_count++;
+      success = true;
+    }
+    else if (loss->string() == "scel")
+    {
+      // loss_type = fetch::ml::ops::LossType::SOFTMAX_CROSS_ENTROPY;
+      success = false;
+    }
+    else
+    {
+      success = false;
     }
   }
 
   if (!model_.model_->optimiser_set_)
   {
-    if (optimiser->string() == "adam")
+    if (optimiser->string() == "adagrad")
+    {
+      // optimiser_type = fetch::ml::OptimiserType::ADAGRAD;
+      success = false;
+    }
+    else if (optimiser->string() == "adam")
     {
       // optimiser_type = fetch::ml::OptimiserType::ADAM;
       state_.optimiser_step_impact = ADAM_STEP_IMPACT_COEF();
       optimiser_construction_impact =
           ADAM_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
           ADAM_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
+      success = true;
+    }
+    else if (optimiser->string() == "momentum")
+    {
+      // optimiser_type = fetch::ml::OptimiserType::MOMENTUM;
+      success = false;
+    }
+    else if (optimiser->string() == "rmsprop")
+    {
+      //  optimiser_type = fetch::ml::OptimiserType::RMSPROP;
+      success = false;
     }
     else if (optimiser->string() == "sgd")
     {
@@ -216,7 +241,17 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
       optimiser_construction_impact =
           SGD_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
           SGD_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
+      success = true;
     }
+    else
+    {
+      success = false;
+    }
+  }
+
+  if (!success)
+  {
+    return MaximumCharge("Not yet implement");
   }
 
   return static_cast<ChargeAmount>(optimiser_construction_impact + COMPILE_CONST_COEF()) *
@@ -235,34 +270,28 @@ ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser
 ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTensor> const &labels,
                                  SizeType const &batch_size)
 {
+  FETCH_UNUSED(labels);
+
   DataType estimate(0);
-  SizeType subset_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
-  SizeType data_size   = data->GetTensor().size();
-  SizeType labels_size = labels->GetTensor().size();
+  SizeType subset_size       = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
+  SizeType number_of_batches = subset_size / batch_size;
 
-  // Assign input data to dataloader
-  estimate = data_size;
-  // Assign label data to dataloader
-  estimate = estimate + labels_size;
-  // SetRandomMode, UpdateConfig, etc.
-  estimate = estimate + FIT_CONST_OVERHEAD;
-  // PrepareBatch overhead
-  estimate = estimate + FIT_PER_BATCH_OVERHEAD * (subset_size / batch_size);
-  // PrepareBatch-input
-  estimate = estimate + data_size;
-  // PrepareBatch-label
-  estimate = estimate + labels_size;
-  // SetInputReference, update stats
-  estimate = estimate + subset_size / batch_size;
-  // Forward and backward prob
-  estimate = estimate + subset_size * static_cast<SizeType>(state_.forward_pass_cost +
-                                                            state_.backward_pass_cost);
-  // Optimiser step and clearing gradients
+  // Forward pass
+  estimate = estimate + state_.forward_pass_cost * subset_size;
+  estimate = estimate + PREDICT_BATCH_LAYER_COEF() * subset_size * state_.ops_count;
+  estimate = estimate + PREDICT_CONST_COEF();
 
-  estimate =
-      estimate + static_cast<DataType>(subset_size / batch_size) *
-                     static_cast<DataType>(state_.optimiser_step_impact * state_.weights_size_sum +
-                                           state_.weights_size_sum);
+  // Backward pass
+  estimate = estimate + state_.backward_pass_cost * subset_size;
+  estimate = estimate + BACKWARD_BATCH_LAYER_COEF() * subset_size * state_.ops_count;
+  estimate = estimate + BACKWARD_PER_BATCH_COEF() * number_of_batches;
+
+  // Optimiser step
+  estimate = estimate + static_cast<DataType>(number_of_batches) * state_.optimiser_step_impact *
+                            state_.weights_size_sum;
+
+  // Call overhead
+  estimate = estimate + FIT_CONST_COEF();
 
   return static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
 }
@@ -275,19 +304,24 @@ ChargeAmount ModelEstimator::Evaluate()
 
 ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 {
+  DataType estimate{0};
   SizeType batch_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
-  auto     estimate   = static_cast<ChargeAmount>(state_.forward_pass_cost * batch_size);
-  estimate += static_cast<ChargeAmount>(static_cast<DataType>(batch_size * state_.ops_count) *
-                                        PREDICT_BATCH_LAYER_COEF());
-  estimate += static_cast<ChargeAmount>(PREDICT_CONST_COEF());
 
-  return estimate * COMPUTE_CHARGE_COST;
+  estimate = estimate + state_.forward_pass_cost * batch_size;
+  estimate = estimate + PREDICT_BATCH_LAYER_COEF() * batch_size * state_.ops_count;
+  estimate = estimate + PREDICT_CONST_COEF();
+
+  return static_cast<ChargeAmount>(estimate * COMPUTE_CHARGE_COST);
 }
 
 ChargeAmount ModelEstimator::SerializeToString()
 {
-  SizeType estimate = state_.ops_count * SERIALISATION_OVERHEAD +
-                      state_.weights_size_sum * WEIGHT_SERIALISATION_OVERHEAD;
+  DataType estimate{0};
+  estimate = estimate + SERIALISATION_PER_OP_COEF() * state_.ops_count;
+  estimate = estimate + SERIALISATION_PADDED_WEIGHT_SUM_COEF() * state_.weights_padded_size_sum;
+  estimate = estimate + SERIALISATION_WEIGHT_SUM_COEF() * state_.weights_size_sum;
+  estimate = estimate + SERIALISATION_CONST_COEF();
+
   return static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
 }
 

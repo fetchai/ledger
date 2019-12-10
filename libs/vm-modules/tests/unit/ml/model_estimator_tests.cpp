@@ -24,7 +24,7 @@
 
 #include "gmock/gmock.h"
 
-//namespace {
+namespace {
 
 using SizeType         = fetch::math::SizeType;
 using DataType         = fetch::vm_modules::math::DataType;
@@ -502,30 +502,42 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
           forward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_FORWARD_IMPACT();
           backward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_BACKWARD_IMPACT();
 
-          SizeType val = vm_ptr_tensor_data->GetTensor().size();
-          val += vm_ptr_tensor_labels->GetTensor().size();
-          val += VmModelEstimator::FIT_CONST_OVERHEAD;
-          val += VmModelEstimator::FIT_PER_BATCH_OVERHEAD * (n_data / batch_size);
-          val += vm_ptr_tensor_data->GetTensor().size();
-          val += vm_ptr_tensor_labels->GetTensor().size();
-          val += (n_data / batch_size);
-          val += n_data * static_cast<SizeType>(forward_pass_cost + backward_pass_cost);
-          val += static_cast<SizeType>(
-              static_cast<DataType>(n_data / batch_size) *
-              static_cast<DataType>(VmModelEstimator::ADAM_STEP_IMPACT_COEF() *
-                                        DataType(weights_size_sum) +
-                                    DataType(weights_size_sum)));
+          SizeType number_of_batches = n_data / batch_size;
+
+          DataType val(0);
+
+          // Forward pass
+          val = val + forward_pass_cost * n_data;
+          val = val + VmModelEstimator::PREDICT_BATCH_LAYER_COEF() * n_data * ops_count;
+          val = val + VmModelEstimator::PREDICT_CONST_COEF();
+
+          // Backward pass
+          val = val + backward_pass_cost * n_data;
+          val = val + VmModelEstimator::BACKWARD_BATCH_LAYER_COEF() * n_data * ops_count;
+          val = val + VmModelEstimator::BACKWARD_PER_BATCH_COEF() * number_of_batches;
+
+          // Optimiser step
+          val = val + static_cast<DataType>(number_of_batches) *
+                          VmModelEstimator::ADAM_STEP_IMPACT_COEF() * weights_size_sum;
+
+          // Call overhead
+          val = val + VmModelEstimator::FIT_CONST_COEF();
+
+          val = val * fetch::vm::COMPUTE_CHARGE_COST;
 
           EXPECT_TRUE(model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size) ==
-                      val);
+                      static_cast<SizeType>(val));
 
           EXPECT_TRUE(model_estimator.Evaluate() == VmModelEstimator::CONSTANT_CHARGE);
 
-          auto predict_val =
-              static_cast<SizeType>(static_cast<DataType>(n_data) * forward_pass_cost);
-          predict_val += static_cast<SizeType>(static_cast<DataType>(n_data * ops_count) *
-                                               VmModelEstimator::PREDICT_BATCH_LAYER_COEF());
-          predict_val += static_cast<SizeType>(VmModelEstimator::PREDICT_CONST_COEF());
+          DataType predict_val{0};
+
+          predict_val = predict_val + forward_pass_cost * n_data;
+          predict_val =
+              predict_val + VmModelEstimator::PREDICT_BATCH_LAYER_COEF() * n_data * ops_count;
+          predict_val = predict_val + VmModelEstimator::PREDICT_CONST_COEF();
+
+          predict_val = predict_val * fetch::vm::COMPUTE_CHARGE_COST;
 
           EXPECT_TRUE(model_estimator.Predict(vm_ptr_tensor_data) ==
                       static_cast<SizeType>(predict_val));
