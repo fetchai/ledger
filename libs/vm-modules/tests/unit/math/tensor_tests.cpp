@@ -380,7 +380,7 @@ TEST_F(MathTensorTests, tensor_shape_from_tensor)
 
   auto tensor_shape{res.Get<Ptr<IArray>>()};
 
-  std::vector<SizeType> ret;
+  std::vector<SizeType>       ret;
   std::vector<SizeType> const gt({2, 3, 4});
 
   while (tensor_shape->Count() > 0)
