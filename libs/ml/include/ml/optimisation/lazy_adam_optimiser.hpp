@@ -53,23 +53,23 @@ public:
 
   LazyAdamOptimiser() = default;
 
-  LazyAdamOptimiser(std::shared_ptr<Graph<T>>       graph,
-                    std::vector<std::string> const &input_node_names,
-                    std::string const &label_node_name, std::string const &output_node_name,
-                    DataType const &learning_rate      = static_cast<DataType>(0.001f),
-                    DataType const &beta1              = static_cast<DataType>(0.9f),
-                    DataType const &beta2              = static_cast<DataType>(0.999f),
-                    SizeType        sparsity_threshold = 2,
-                    DataType const &epsilon            = static_cast<DataType>(1e-4f));
+  LazyAdamOptimiser(
+      std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+      std::string const &label_node_name, std::string const &output_node_name,
+      DataType const &learning_rate = static_cast<DataType>(fetch::fixed_point::fp64_t("0.001")),
+      DataType const &beta1         = static_cast<DataType>(fetch::fixed_point::fp64_t("0.9")),
+      DataType const &beta2         = static_cast<DataType>(fetch::fixed_point::fp64_t("0.999")),
+      SizeType        sparsity_threshold = 2,
+      DataType const &epsilon = static_cast<DataType>(fetch::fixed_point::fp64_t("0.0001")));
 
-  LazyAdamOptimiser(std::shared_ptr<Graph<T>>       graph,
-                    std::vector<std::string> const &input_node_names,
-                    std::string const &label_node_name, std::string const &output_node_name,
-                    fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
-                    DataType const &beta1              = static_cast<DataType>(0.9f),
-                    DataType const &beta2              = static_cast<DataType>(0.999f),
-                    SizeType        sparsity_threshold = 2,
-                    DataType const &epsilon            = static_cast<DataType>(1e-4f));
+  LazyAdamOptimiser(
+      std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
+      std::string const &label_node_name, std::string const &output_node_name,
+      fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
+      DataType const &beta1 = static_cast<DataType>(fetch::fixed_point::fp64_t("0.9")),
+      DataType const &beta2 = static_cast<DataType>(fetch::fixed_point::fp64_t("0.999")),
+      SizeType        sparsity_threshold = 2,
+      DataType const &epsilon = static_cast<DataType>(fetch::fixed_point::fp64_t("0.0001")));
 
   ~LazyAdamOptimiser() override = default;
 
