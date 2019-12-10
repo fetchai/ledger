@@ -731,8 +731,8 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       else
       {
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
-        auto        float_val = std::atof(cur_elem.c_str());
-        elems.emplace_back(Type(float_val));
+        auto        fp_val = fixed_point::fp128_t(cur_elem.c_str());
+        elems.emplace_back(static_cast<Type>(fp_val));
       }
       break;
     }

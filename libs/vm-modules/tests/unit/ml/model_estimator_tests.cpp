@@ -353,8 +353,7 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
           DataType forward_pass_cost =
               DataType(data_size_1) * VmModelEstimator::FORWARD_DENSE_INPUT_COEF;
-          forward_pass_cost +=
-              DataType(label_size_1) * VmModelEstimator::FORWARD_DENSE_OUTPUT_COEF;
+          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::FORWARD_DENSE_OUTPUT_COEF;
           forward_pass_cost +=
               DataType(data_size_1 * label_size_1) * VmModelEstimator::FORWARD_DENSE_QUAD_COEF;
           forward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_FORWARD_IMPACT;
@@ -383,11 +382,11 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
           val += vm_ptr_tensor_labels->GetTensor().size();
           val += (n_data / batch_size);
           val += n_data * static_cast<SizeType>(forward_pass_cost + backward_pass_cost);
-          val += static_cast<SizeType>(
-              static_cast<DataType>(n_data / batch_size) *
-              static_cast<DataType>(VmModelEstimator::ADAM_STEP_IMPACT_COEF *
-                                        DataType(weights_size_sum) +
-                                    DataType(weights_size_sum)));
+          val +=
+              static_cast<SizeType>(static_cast<DataType>(n_data / batch_size) *
+                                    static_cast<DataType>(VmModelEstimator::ADAM_STEP_IMPACT_COEF *
+                                                              DataType(weights_size_sum) +
+                                                          DataType(weights_size_sum)));
 
           EXPECT_TRUE(model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size) ==
                       val);
