@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "semanticsearch/query/error_message.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
@@ -28,40 +28,52 @@
 namespace fetch {
 namespace semanticsearch {
 
-class ErrorMessage
+using ConstByteArray = fetch::byte_array::ConstByteArray;
+using Token          = fetch::byte_array::Token;
+
+ErrorMessage::ErrorMessage(ConstByteArray filename, ConstByteArray source, ConstByteArray message,
+                           Token token, Type type)
+  : filename_(std::move(filename))
+  , source_(std::move(source))
+  , message_(std::move(message))
+  , token_(std::move(token))
+  , type_(type)
+{}
+
+ConstByteArray ErrorMessage::filename() const
 {
-public:
-  using ConstByteArray = fetch::byte_array::ConstByteArray;
-  using Token          = fetch::byte_array::Token;
+  return filename_;
+}
 
-  enum Type
-  {
-    WARNING,
-    SYNTAX_ERROR,
-    RUNTIME_ERROR,
-    INTERNAL_ERROR,
-    INFO,
-    APPEND
-  };
+ConstByteArray ErrorMessage::source() const
+{
+  return source_;
+}
 
-  ErrorMessage(ConstByteArray filename, ConstByteArray source, ConstByteArray message, Token token,
-               Type type = SYNTAX_ERROR);
+ConstByteArray ErrorMessage::message() const
+{
+  return message_;
+}
 
-  ConstByteArray filename() const;
-  ConstByteArray source() const;
-  ConstByteArray message() const;
-  Token          token() const;
-  Type           type() const;
-  int            line() const;
-  uint64_t       character() const;
+Token ErrorMessage::token() const
+{
+  return token_;
+}
 
-private:
-  ConstByteArray filename_;
-  ConstByteArray source_;
-  ConstByteArray message_;
-  Token          token_;
-  Type           type_;
-};
+ErrorMessage::Type ErrorMessage::type() const
+{
+  return type_;
+}
+
+int ErrorMessage::line() const
+{
+  return token_.line();
+}
+
+uint64_t ErrorMessage::character() const
+{
+  return token_.character();
+}
 
 }  // namespace semanticsearch
 }  // namespace fetch

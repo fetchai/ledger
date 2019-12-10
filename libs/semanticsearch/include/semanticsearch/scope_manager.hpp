@@ -7,21 +7,25 @@
 namespace fetch {
 namespace semanticsearch {
 
+class ScopeManager;
+using ScopeManagerPtr = std::shared_ptr<ScopeManager>;
+
 class ScopeManager : std::enable_shared_from_this<ScopeManager>
 {
 public:
-  using ScopeManagerPtr     = std::shared_ptr<ScopeManager>;
   using UniqueIdentifierPtr = std::shared_ptr<UniqueIdentifier>;
+  using TypeId              = UniqueIdentifier::TypeId;
   using TypeIdToUIDMap      = std::unordered_map<TypeId, UniqueIdentifierPtr>;
 
-  ScopeManager() = delete;
-
+  /// @{
   static ScopeManagerPtr New(ScopeManagerPtr const &parent = nullptr);
+  ScopeManager() = delete;
+  /// @}
 
   /// Id management
   /// @{
   bool                HasUniqueID(std::string const uid) const;
-  UniqueIdentifierPtr GetUniqueUID(std::string const uid) const;
+  UniqueIdentifierPtr GetUniqueID(std::string const uid) const;
   void                RegisterUniqueID(UniqueIdentifierPtr ptr);
   /// @}
 

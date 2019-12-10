@@ -7,9 +7,9 @@ namespace semanticsearch {
 UniqueIdentifier::UniqueIdentifierPtr UniqueIdentifier::Parse(std::string     str_uid,
                                                               ScopeManagerPtr scope_manager)
 {
-  if (scope_manager->HasUniqueUID(str_uid))
+  if (scope_manager->HasUniqueID(str_uid))
   {
-    return scope_manager->GetUniqueUID(str_uid);
+    return scope_manager->GetUniqueID(str_uid);
   }
 
   // Identifying type

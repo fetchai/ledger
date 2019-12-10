@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace fetch {
@@ -8,13 +9,16 @@ namespace semanticsearch {
 
 class ScopeManager;
 
+class UniqueIdentifier;
+using UniqueIdentifierPtr = std::shared_ptr<UniqueIdentifier>;
+
 class UniqueIdentifier
 {
 public:
-  using Taxonomy            = std::vector<std::string>;
-  using UniqueIdentifierPtr = std::shared_ptr<UniqueIdentifier>;
-  using TypeId              = uint64_t;
-  using ScopeManagerPtßr    = std::shared_ptr<ScopeManager>;
+  using Taxonomy = std::vector<std::string>;
+
+  using TypeId          = uint64_t;
+  using ScopeManagerPtr = std::shared_ptr<ScopeManager>;
 
   enum Kind
   {

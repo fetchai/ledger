@@ -43,33 +43,13 @@ public:
   std::type_index type_index() const;
 
   template <typename T>
-  explicit operator T() const
-  {
-    if (std::type_index(typeid(T)) != type_index_)
-    {
-      throw std::runtime_error("Type mismatch in QueryVariant.");
-    }
-    return *reinterpret_cast<T *>(data());
-  }
+  explicit operator T() const;
 
   template <typename T>
-  bool IsType() const
-  {
-    return std::type_index(typeid(T)) == type_index_;
-  }
+  bool IsType() const;
 
   template <typename T>
-  T const &As() const
-  {
-    if (std::type_index(typeid(T)) != type_index_)
-    {
-      auto t = std::type_index(typeid(T));
-      throw std::runtime_error("Type mismatch in QueryVariant: stored " +
-                               std::string(type_index_.name()) + " vs. requested " +
-                               std::string(t.name()));
-    }
-    return *reinterpret_cast<T const *>(data());
-  }
+  T const &As() const;
 
   template <typename T>
   friend class SpecialisedQueryVariant;
@@ -85,6 +65,35 @@ private:
   Token           token_;
   std::type_index type_index_;
 };
+
+template <typename T>
+AbstractQueryVariant::operator T() const
+{
+  if (std::type_index(typeid(T)) != type_index_)
+  {
+    throw std::runtime_error("Type mismatch in QueryVariant.");
+  }
+  return *reinterpret_cast<T *>(data());
+}
+
+template <typename T>
+bool AbstractQueryVariant::IsType() const
+{
+  return std::type_index(typeid(T)) == type_index_;
+}
+
+template <typename T>
+T const &AbstractQueryVariant::As() const
+{
+  if (std::type_index(typeid(T)) != type_index_)
+  {
+    auto t = std::type_index(typeid(T));
+    throw std::runtime_error("Type mismatch in QueryVariant: stored " +
+                             std::string(type_index_.name()) + " vs. requested " +
+                             std::string(t.name()));
+  }
+  return *reinterpret_cast<T const *>(data());
+}
 
 template <typename T>
 class SpecialisedQueryVariant final : public AbstractQueryVariant
