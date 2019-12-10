@@ -137,8 +137,8 @@ private:
   Condition          work_available_;       ///< Work available condition
   mutable std::mutex idle_mutex_;           ///< Associated mutex for condition
   Flag               shutdown_{false};      ///< Flag to signal the pool should stop
-  Counter       counter_{0};           ///< The number of jobs executed
-  Counter       inactive_threads_{0};  ///< The number of threads waiting for work
+  Counter            counter_{0};           ///< The number of jobs executed
+  Counter            inactive_threads_{0};  ///< The number of threads waiting for work
 
   std::string name_{};
 };
