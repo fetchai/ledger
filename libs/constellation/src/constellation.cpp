@@ -27,7 +27,6 @@
 #include "constellation/muddle_status_http_module.hpp"
 #include "constellation/open_api_http_module.hpp"
 #include "constellation/telemetry_http_module.hpp"
-#include "core/fetch_memu.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/telemetry.hpp"
 #include "ledger/chaincode/contract_context.hpp"
