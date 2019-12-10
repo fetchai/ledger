@@ -88,7 +88,7 @@ void Mutexregister::FindDeadlock(DebugMutex *mutex, std::thread::id thread)
     }
   }
 
-  // TODO: Handle mutli thread, multi mutex case
+  // TODO(tfr): Handle mutli thread, multi mutex case
 }
 
 }  // namespace fetch

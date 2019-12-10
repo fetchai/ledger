@@ -160,12 +160,12 @@ private:
   std::string const logging_name_;
 
   /// @{
-  mutable std::mutex core_mutex_;
-  Address            own_address_;
-  KademliaAddress    own_kad_address_;
-  uint64_t           first_non_empty_bucket_{KADEMLIA_MAX_ID_BITS};
-  uint64_t           kademlia_max_peers_per_bucket_{20};  // TODO: Make atomic
-  std::string        filename_{};
+  mutable std::mutex    core_mutex_;
+  Address               own_address_;
+  KademliaAddress       own_kad_address_;
+  uint64_t              first_non_empty_bucket_{KADEMLIA_MAX_ID_BITS};
+  std::atomic<uint64_t> kademlia_max_peers_per_bucket_{20};
+  std::string           filename_{};
   /// @}
 
   /// @{

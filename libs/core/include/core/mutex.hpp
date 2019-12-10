@@ -20,7 +20,8 @@
 #include <mutex>
 #include <string>
 #include <thread>
-#include <unordered_set>
+#include <unordered_map>
+#include <vector>
 
 namespace fetch {
 class DebugMutex;
@@ -30,7 +31,7 @@ class Mutexregister
 public:
   void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
   void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
-  void FindDeadlock(DebugMutex *mutex, std::thread::id);
+  void FindDeadlock(DebugMutex *mutex, std::thread::id thread);
 
 private:
   std::mutex                                                     mutex_;
@@ -42,7 +43,7 @@ void RegisterMutex(DebugMutex *mutex);
 void UnregisterMutex(DebugMutex *mutex);
 void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
 void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
-void FindDeadlock(DebugMutex *mutex, std::thread::id);
+void FindDeadlock(DebugMutex *mutex, std::thread::id thread);
 
 class DebugMutex
 {
@@ -57,12 +58,11 @@ public:
     , line_{line}
   {}
 
-  ~DebugMutex()
-  {}
+  ~DebugMutex() = default;
 
   void lock()
   {
-    FindDeadlock(this, std::this_thread::get_id());  // TODO: Finding should be combined with
+    FindDeadlock(this, std::this_thread::get_id());
     mutex_.lock();
     RegisterMutexAcquisition(this, std::this_thread::get_id());
   }
