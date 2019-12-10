@@ -55,7 +55,8 @@ enum class SupportedLayerType : uint8_t
 {
   DENSE,
   CONV1D,
-  CONV2D
+  CONV2D,
+  FLATTEN
 };
 
 class VMModel : public fetch::vm::Object
@@ -134,6 +135,7 @@ public:
                                            math::SizeType const &                   inputs,
                                            math::SizeType const &                   hidden_nodes,
                                            fetch::vm::Ptr<fetch::vm::String> const &activation);
+  void LayerAddFlatten(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &input_channels);
 
 private:
   ModelPtrType       model_;
