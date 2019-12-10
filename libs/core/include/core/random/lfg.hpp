@@ -19,6 +19,7 @@
 
 #include "lcg.hpp"
 
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <cstdint>
 #include <limits>
 #include <vector>
@@ -31,6 +32,7 @@ class LaggedFibonacciGenerator
 {
 public:
   using RandomType = uint64_t;
+  using fp64_t     = fetch::fixed_point::fp64_t;
 
   // Note, breaking naming convention for STL compatibility
   using result_type = RandomType;
@@ -78,6 +80,11 @@ public:
   double AsDouble() noexcept
   {
     return double(this->operator()()) * inv_double_max_;
+  }
+
+  fp64_t AsFP64() noexcept
+  {
+    return static_cast<fp64_t>(this->operator()()) * inv_fp64_max_;
   }
 
   static constexpr RandomType min() noexcept
@@ -142,6 +149,13 @@ private:
   RandomType              buffer_[Q]{};
   static constexpr double inv_double_max_ =
       1. / static_cast<double>(std::numeric_limits<RandomType>::max());
+
+  static const fp64_t inv_fp64_max_;
 };
+
+template <uint64_t P, uint64_t Q>
+const fetch::fixed_point::fp64_t LaggedFibonacciGenerator<P, Q>::inv_fp64_max_ =
+    static_cast<fp64_t>(1) / static_cast<fp64_t>(std::numeric_limits<RandomType>::max());
+
 }  // namespace random
 }  // namespace fetch
