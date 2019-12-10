@@ -91,6 +91,56 @@ public:
 
   void Transpose();
 
+  ////////////////////////
+  /// BASIC COMPARISON ///
+  ////////////////////////
+
+  bool IsEqualOperator(vm::Ptr<VMTensor> const &other);
+
+  bool IsNotEqualOperator(vm::Ptr<VMTensor> const &other);
+
+  vm::Ptr<VMTensor> NegateOperator();
+
+  // TODO (ML-340) - Below Operators should be bound and above operators removed when operators can
+  // take estimators
+
+  bool IsEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  bool IsNotEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void Negate(vm::Ptr<Object> &object) override;
+
+  ////////////////////////
+  /// BASIC ARITHMETIC ///
+  ////////////////////////
+
+  vm::Ptr<VMTensor> AddOperator(vm::Ptr<VMTensor> const &other);
+
+  vm::Ptr<VMTensor> SubtractOperator(vm::Ptr<VMTensor> const &other);
+
+  vm::Ptr<VMTensor> MultiplyOperator(vm::Ptr<VMTensor> const &other);
+
+  vm::Ptr<VMTensor> DivideOperator(vm::Ptr<VMTensor> const &other);
+
+  // TODO (ML-340) - Below Operators should be bound and above operators removed when operators can
+  // take estimators
+
+  void Add(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+
+  void Subtract(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+
+  void InplaceAdd(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void InplaceSubtract(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void Multiply(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+
+  void Divide(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+
+  void InplaceMultiply(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void InplaceDivide(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
   /////////////////////////
   /// MATRIX OPERATIONS ///
   /////////////////////////
