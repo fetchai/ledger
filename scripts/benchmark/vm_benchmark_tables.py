@@ -33,7 +33,7 @@ def benchmark_opcode_table(benchmarks, n_reps, bm_class=''):
         return tabulate(table, headers=headers, floatfmt=".2f", tablefmt=tablefmt)
     else:
         return ''
-    
+
 
 def primitive_table(benchmarks, n_reps, bm_class):
 
@@ -79,8 +79,8 @@ def primitive_table(benchmarks, n_reps, bm_class):
         return [tabulate(table_int, headers=headers_int, stralign='left', tablefmt=tablefmt),
                 tabulate(table_fp, headers=headers_fp, stralign='left', tablefmt=tablefmt)]
     else:
-        return ['','']
-    
+        return ['', '']
+
 
 def linear_fit_table(param_bms, n_reps, bm_cls):
 
@@ -97,7 +97,7 @@ def linear_fit_table(param_bms, n_reps, bm_cls):
         return tabulate(lfit_table, headers=headers, floatfmt=".3f", tablefmt=tablefmt)
     else:
         return ''
-    
+
 
 def opcode_time_table(optimes, optype, opcode_defs):
 
