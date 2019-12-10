@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "network/details/thread_pool.hpp"
 #include "core/assert.hpp"
 #include "core/set_thread_name.hpp"
 #include "logging/logging.hpp"
-#include "network/details/thread_pool.hpp"
 
 #include <algorithm>
 #include <chrono>

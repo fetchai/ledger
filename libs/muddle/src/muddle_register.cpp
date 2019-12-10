@@ -316,37 +316,39 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
  */
 void MuddleRegister::Leave(ConnectionHandle handle)
 {
-  std::unique_lock<std::mutex> lock(lock_);
-
-  FETCH_LOG_TRACE(logging_name_, "### Connection ", handle, " ended");
-
-  auto it = handle_index_.find(handle);
-  if (it != handle_index_.end())
+  ConnectionLeftCallback callback_copy;
   {
-    std::size_t removal_count{0};
-    for (;;)
-    {
-      // attempt to find a corresponding index in the addres map
-      auto addr_it = std::find_if(address_index_.begin(), address_index_.end(),
-                                  [&](AddressIndex::value_type const &entry) {
-                                    return (!entry.second) || (entry.second->handle == handle);
-                                  });
+    FETCH_LOCK(lock_);
 
-      if (addr_it == address_index_.end())
+    FETCH_LOG_TRACE(logging_name_, "### Connection ", handle, " ended");
+
+    auto it = handle_index_.find(handle);
+    if (it != handle_index_.end())
+    {
+      std::size_t removal_count{0};
+      for (;;)
       {
-        break;
+        // attempt to find a corresponding index in the addres map
+        auto addr_it = std::find_if(address_index_.begin(), address_index_.end(),
+                                    [&](AddressIndex::value_type const &entry) {
+                                      return (!entry.second) || (entry.second->handle == handle);
+                                    });
+
+        if (addr_it == address_index_.end())
+        {
+          break;
+        }
+
+        // remove the entry
+        address_index_.erase(addr_it);
+        ++removal_count;
       }
 
-      // remove the entry
-      address_index_.erase(addr_it);
-      ++removal_count;
+      handle_index_.erase(it);
     }
 
-    handle_index_.erase(it);
+    callback_copy = left_callback_;
   }
-
-  auto callback_copy = left_callback_;
-  lock.unlock();
 
   // signal the router
   if (callback_copy)

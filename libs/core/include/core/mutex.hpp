@@ -56,6 +56,11 @@ void FindDeadlock(DebugMutex *mutex, std::thread::id);
 class DebugMutex
 {
 public:
+  DebugMutex()
+    : filename_{"unknown"}
+    , line_{0}
+  {}
+
   DebugMutex(std::string const &filename, int32_t line)
     : filename_{filename}
     , line_{line}
@@ -66,7 +71,7 @@ public:
 
   void lock()
   {
-    FindDeadlock(this, std::this_thread::get_id());
+    FindDeadlock(this, std::this_thread::get_id());  // TODO: Finding should be combined with
     mutex_.lock();
     RegisterMutexAcquisition(this, std::this_thread::get_id());
   }
@@ -77,9 +82,15 @@ public:
     mutex_.unlock();
   }
 
-  std::lock_guard<DebugMutex> guard()
+  bool try_lock()
   {
-    return std::lock_guard<DebugMutex>(this);
+    if (mutex_.try_lock())
+    {
+      RegisterMutexAcquisition(this, std::this_thread::get_id());
+      return true;
+    }
+
+    return false;
   }
 
   std::string filename() const
@@ -98,7 +109,7 @@ private:
   int32_t     line_{0};
 };
 
-using Mutex = std::mutex;
+using Mutex = DebugMutex;
 
 #define FETCH_JOIN_IMPL(x, y) x##y
 #define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
