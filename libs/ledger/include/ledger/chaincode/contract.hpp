@@ -140,7 +140,11 @@ protected:
   bool ParseAsJson(chain::Transaction const &tx, variant::Variant &output);
 
   template <typename T>
+  bool GetStateRecord(T &record, ConstByteArray const &key);
+  template <typename T>
   bool GetStateRecord(T &record, chain::Address const &address);
+  template <typename T>
+  StateAdapter::Status SetStateRecord(T const &record, ConstByteArray const &key);
   template <typename T>
   StateAdapter::Status SetStateRecord(T const &record, chain::Address const &address);
 
@@ -220,6 +224,12 @@ void Contract::OnQuery(std::string const &name, C *instance,
   });
 }
 
+template <typename T>
+bool Contract::GetStateRecord(T &record, chain::Address const &address)
+{
+  return GetStateRecord(record, address.display());
+}
+
 /**
  * Look up the state record stored with the specified key
  *
@@ -229,7 +239,7 @@ void Contract::OnQuery(std::string const &name, C *instance,
  * @return true if successful, otherwise false
  */
 template <typename T>
-bool Contract::GetStateRecord(T &record, chain::Address const &address)
+bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
 {
   using fetch::byte_array::ByteArray;
 
@@ -239,7 +249,7 @@ bool Contract::GetStateRecord(T &record, chain::Address const &address)
   buffer.Resize(std::size_t{DEFAULT_BUFFER_SIZE});  // initial guess, can be tuned over time
 
   uint64_t buffer_length = buffer.size();
-  auto     status = state().Read(std::string{address.display()}, buffer.pointer(), buffer_length);
+  auto     status        = state().Read(std::string{key}, buffer.pointer(), buffer_length);
 
   // in rare cases the initial buffer might be too small in this case we need to reallocate and then
   // re-query
@@ -249,7 +259,7 @@ bool Contract::GetStateRecord(T &record, chain::Address const &address)
     buffer.Resize(buffer_length);
 
     // retry the read
-    status = state().Read(std::string{address.display()}, buffer.pointer(), buffer_length);
+    status = state().Read(std::string{key}, buffer.pointer(), buffer_length);
   }
 
   switch (status)
@@ -272,6 +282,12 @@ bool Contract::GetStateRecord(T &record, chain::Address const &address)
   return success;
 }
 
+template <typename T>
+StateAdapter::Status Contract::SetStateRecord(T const &record, chain::Address const &address)
+{
+  return SetStateRecord(record, address.display());
+}
+
 /**
  * Store a state record at a specified key
  *
@@ -280,7 +296,7 @@ bool Contract::GetStateRecord(T &record, chain::Address const &address)
  * @param key The key for the state record
  */
 template <typename T>
-StateAdapter::Status Contract::SetStateRecord(T const &record, chain::Address const &address)
+StateAdapter::Status Contract::SetStateRecord(T const &record, ConstByteArray const &key)
 {
   // serialize the record to the buffer
   serializers::MsgPackSerializer buffer;
@@ -290,7 +306,7 @@ StateAdapter::Status Contract::SetStateRecord(T const &record, chain::Address co
   auto const &data = buffer.data();
 
   // store the buffer
-  return state().Write(std::string{address.display()}, data.pointer(), data.size());
+  return state().Write(std::string{key}, data.pointer(), data.size());
 }
 
 }  // namespace ledger

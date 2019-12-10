@@ -237,7 +237,10 @@ bool Executor::ExecuteTransactionContract(Result &result)
     case ContractMode::CHAIN_CODE:
       contract_id = current_tx_->chain_code();
       break;
-    default:
+    case ContractMode::NOT_PRESENT:
+      break;
+    case ContractMode::SYNERGETIC:
+      // synergetic contracts are not supported through normal pipeline
       break;
     }
 
