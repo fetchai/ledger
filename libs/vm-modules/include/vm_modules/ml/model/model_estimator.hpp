@@ -251,15 +251,15 @@ private:
   struct State
   {
     // Model
-    DataType forward_pass_cost{0.0};
-    DataType backward_pass_cost{0.0};
-    DataType metrics_cost{0.0};
+    DataType forward_pass_cost{"0.0"};
+    DataType backward_pass_cost{"0.0"};
+    DataType metrics_cost{"0.0"};
 
     // Optimiser
     SizeType weights_size_sum{0};
     SizeType weights_padded_size_sum{0};
 
-    DataType optimiser_step_impact{0};
+    DataType optimiser_step_impact{"0"};
 
     SizeType last_layer_size{0};
     SizeType ops_count{0};

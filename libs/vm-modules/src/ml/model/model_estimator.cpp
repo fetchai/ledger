@@ -162,13 +162,13 @@ ChargeAmount ModelEstimator::LayerAddConvActivation(
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
   FETCH_UNUSED(activation);
-  return MaximumCharge("Not yet implement");
+  return MaximumCharge("Not yet implemented");
 }
 
 ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
                                                Ptr<String> const &optimiser)
 {
-  DataType optimiser_construction_impact(0.0);
+  DataType optimiser_construction_impact{"0.0"};
 
   if (!model_.model_->loss_set_)
   {
@@ -220,7 +220,7 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
     Ptr<String> const &loss, Ptr<String> const &optimiser,
     Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics)
 {
-  DataType optimiser_construction_impact(0.0);
+  DataType optimiser_construction_impact{"0.0"};
 
   if (!model_.model_->loss_set_)
   {
@@ -303,7 +303,7 @@ ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser
 ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTensor> const &labels,
                                  SizeType const &batch_size)
 {
-  DataType estimate(0);
+  DataType estimate{"0"};
   state_.subset_size   = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
   SizeType data_size   = data->GetTensor().size();
   SizeType labels_size = labels->GetTensor().size();
@@ -337,7 +337,7 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
 
 ChargeAmount ModelEstimator::Evaluate()
 {
-  DataType estimate(0);
+  DataType estimate{"0"};
   // SetRandomMode, UpdateConfig, etc.
   estimate = estimate + FIT_CONST_OVERHEAD;
   // PrepareBatch overhead
@@ -352,7 +352,7 @@ ChargeAmount ModelEstimator::Evaluate()
 
 ChargeAmount ModelEstimator::EvaluateWithMetrics()
 {
-  DataType estimate(0);
+  DataType estimate{"0"};
   // SetRandomMode, UpdateConfig, etc.
   estimate = estimate + FIT_CONST_OVERHEAD;
   // PrepareBatch overhead

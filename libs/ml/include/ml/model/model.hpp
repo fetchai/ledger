@@ -511,6 +511,10 @@ void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
 template <typename TensorType>
 bool Model<TensorType>::DataLoaderIsSet()
 {
+  if (!dataloader_ptr_)
+  {
+    return false;
+  }
   return dataloader_ptr_->Size() != 0;
 }
 }  // namespace model
