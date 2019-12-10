@@ -1,0 +1,23 @@
+# benchmarks
+
+---
+bench_binary: "./libs/vm-modules/benchmark/benchmark_vm_modules_model"
+bench_functions: [
+  'BM_AddLayer',
+  'BM_Predict',
+  'BM_Fit',
+  'BM_SerializeToString',
+  'BM_DeserializeFromString',
+  'BM_Compile',
+  ''  # all  
+]
+...
+
+---
+bench_binary: "./libs/vm-modules/benchmark/benchmark_vm_modules_tensor"
+bench_functions: [
+  'BM_Fill',
+]
+...
+
+
