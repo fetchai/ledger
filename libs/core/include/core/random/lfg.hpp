@@ -84,7 +84,21 @@ public:
 
   fp128_t AsFP128() noexcept
   {
-    return static_cast<fp128_t>(this->operator()()) * inv_fp128_max_;
+    // fp128 values can be only between -int64_max and int64_max
+    // Casting to int64 prevents loosing resolution
+    auto val    = static_cast<int64_t>(this->operator()());
+    auto fp_val = static_cast<fp128_t>(val);
+
+    // Normalize between -1 and +1
+    fp_val = fp_val / fp128_max_;
+
+    // shift range to 0 to 2
+    fp_val = fp_val + FP128_ONE;
+
+    // change range to 0 to 1
+    fp_val = fp_val / FP128_TWO;
+
+    return fp_val;
   }
 
   static constexpr RandomType min() noexcept
@@ -150,12 +164,22 @@ private:
   static constexpr double inv_double_max_ =
       1. / static_cast<double>(std::numeric_limits<RandomType>::max());
 
-  static const fp128_t inv_fp128_max_;
+  static const fp128_t fp128_max_;
+  static const fp128_t FP128_ONE;
+  static const fp128_t FP128_TWO;
 };
 
 template <uint64_t P, uint64_t Q>
-const fetch::fixed_point::fp128_t LaggedFibonacciGenerator<P, Q>::inv_fp128_max_ =
-    static_cast<fp128_t>(1) / static_cast<fp128_t>(std::numeric_limits<RandomType>::max());
+const fetch::fixed_point::fp128_t LaggedFibonacciGenerator<P, Q>::fp128_max_ =
+    static_cast<fp128_t>(std::numeric_limits<int64_t>::max());
+
+template <uint64_t P, uint64_t Q>
+const fetch::fixed_point::fp128_t LaggedFibonacciGenerator<P, Q>::FP128_ONE =
+    static_cast<fp128_t>(1);
+
+template <uint64_t P, uint64_t Q>
+const fetch::fixed_point::fp128_t LaggedFibonacciGenerator<P, Q>::FP128_TWO =
+    static_cast<fp128_t>(2);
 
 }  // namespace random
 }  // namespace fetch

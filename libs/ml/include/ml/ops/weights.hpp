@@ -284,9 +284,10 @@ private:
     while (it.is_valid())
     {
       auto ran_val = lfg.AsFP128();  // random value in range 0 <-> 1
-      ran_val      = ran_val - HALF;
-      ran_val      = ran_val * 2;  // random value in range -1 <-> +1
-      ran_val      = ran_val * static_cast<fetch::fixed_point::fp128_t>(
+      std::cout << ran_val << std::endl;
+      ran_val = ran_val - HALF;
+      ran_val = ran_val * 2;  // random value in range -1 <-> +1
+      ran_val = ran_val * static_cast<fetch::fixed_point::fp128_t>(
                               normalising_factor);  // random value in range -sigma <-> +sigma
 
       *it = static_cast<DataType>(ran_val);
