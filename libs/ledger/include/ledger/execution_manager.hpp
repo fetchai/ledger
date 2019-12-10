@@ -124,9 +124,9 @@ private:
   Mutex         execution_plan_lock_;  ///< guards `execution_plan_`
   ExecutionPlan execution_plan_;
 
-  Mutex     monitor_lock_;
-  Condition monitor_wake_;
-  Condition monitor_notify_;
+  std::mutex monitor_lock_;
+  Condition  monitor_wake_;
+  Condition  monitor_notify_;
 
   Mutex        idle_executors_lock_;  ///< guards `idle_executors`
   ExecutorList idle_executors_;
