@@ -794,7 +794,7 @@ TEST_F(VMModelTests, model_with_metric)
           model.fit(data, label, 32u64);
 
           // evaluate
-          var mets = model.evaluateMetrics();
+          var mets = model.evaluate();
           return mets;
         endfunction
       )";
@@ -833,7 +833,7 @@ TEST_F(VMModelTests, model_with_accuracy_metric)
           model.fit(data, label, 32u64);
 
           // evaluate
-          var mets = model.evaluateMetrics();
+          var mets = model.evaluate();
           return mets;
         endfunction
       )";

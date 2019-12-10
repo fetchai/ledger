@@ -271,12 +271,7 @@ void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels
   model_->Train();
 }
 
-typename VMModel::DataType VMModel::Evaluate()
-{
-  return (model_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TRAIN)).at(0);
-}
-
-vm::Ptr<Array<math::DataType>> VMModel::EvaluateWithMetrics()
+vm::Ptr<Array<math::DataType>> VMModel::Evaluate()
 {
   auto     ml_scores = model_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
   SizeType n_scores  = ml_scores.size();
@@ -318,8 +313,6 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
           .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
           .CreateMemberFunction("evaluate", &VMModel::Evaluate,
                                 UseEstimator(&ModelEstimator::Evaluate))
-          .CreateMemberFunction("evaluateMetrics", &VMModel::EvaluateWithMetrics,
-                                UseEstimator(&ModelEstimator::EvaluateWithMetrics))
           .CreateMemberFunction("predict", &VMModel::Predict,
                                 UseEstimator(&ModelEstimator::Predict))
           .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,

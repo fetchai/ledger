@@ -518,7 +518,7 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
           val = val + VmModelEstimator::PREDICT_CONST_COEF();
 
           // Metrics
-          for (auto m_it : mets)
+          for (auto const &m_it : mets)
           {
             if (m_it == "categorical accuracy")
             {
@@ -540,7 +540,6 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
 
           // Calling Fit is needed to set the data
           model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size);
-          EXPECT_EQ(model_estimator.EvaluateWithMetrics(), static_cast<ChargeAmount>(val));
           EXPECT_EQ(model_estimator.Evaluate(), static_cast<ChargeAmount>(val));
         }
       }

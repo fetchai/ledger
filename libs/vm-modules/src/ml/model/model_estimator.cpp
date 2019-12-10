@@ -343,11 +343,6 @@ ChargeAmount ModelEstimator::Evaluate()
   return static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
 }
 
-ChargeAmount ModelEstimator::EvaluateWithMetrics()
-{
-  return Evaluate();
-}
-
 ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 {
   DataType estimate{"0"};
