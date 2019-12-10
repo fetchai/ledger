@@ -187,7 +187,7 @@ public:
   };
   static constexpr DataType SCEL_FORWARD_IMPACT()
   {
-    return DataType(0.003333333333333);
+    return DataType(0.006666666666666);
   };
   static constexpr DataType CATEGORICAL_ACCURACY_FORWARD_IMPACT()
   {
@@ -218,6 +218,10 @@ public:
   static constexpr DataType CEL_BACKWARD_IMPACT()
   {
     return DataType(0.003333333333333);
+  };
+  static constexpr DataType SCEL_BACKWARD_IMPACT()
+  {
+    return DataType(0.006666666666666);
   };
 
   // Predict

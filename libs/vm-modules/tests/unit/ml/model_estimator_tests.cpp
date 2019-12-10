@@ -401,8 +401,8 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
           EXPECT_TRUE(model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size) ==
                       static_cast<SizeType>(val));
 
-          EXPECT_TRUE(model_estimator.Evaluate() < val);
-          EXPECT_TRUE(model_estimator.Evaluate() > 0);
+          EXPECT_TRUE(model_estimator.Evaluate() < static_cast<ChargeAmount>(val));
+          EXPECT_TRUE(model_estimator.Evaluate() > ChargeAmount{0});
 
           DataType predict_val{0};
 

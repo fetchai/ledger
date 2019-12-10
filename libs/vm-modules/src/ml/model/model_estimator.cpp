@@ -166,57 +166,6 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
 {
   DataType optimiser_construction_impact{"0.0"};
 
-  if (!model_.model_->loss_set_)
-  {
-    if (loss->string() == "mse")
-    {
-      // loss_type = fetch::ml::ops::LossType::MEAN_SQUARE_ERROR;
-      state_.forward_pass_cost =
-          state_.forward_pass_cost + MSE_FORWARD_IMPACT() * state_.last_layer_size;
-      state_.backward_pass_cost =
-          state_.backward_pass_cost + MSE_BACKWARD_IMPACT() * state_.last_layer_size;
-      state_.ops_count++;
-    }
-    else if (loss->string() == "cel")
-    {
-      // loss_type = fetch::ml::ops::LossType::CROSS_ENTROPY;
-      state_.forward_pass_cost =
-          state_.forward_pass_cost + CEL_FORWARD_IMPACT() * state_.last_layer_size;
-      state_.backward_pass_cost =
-          state_.backward_pass_cost + CEL_BACKWARD_IMPACT() * state_.last_layer_size;
-      state_.ops_count++;
-    }
-  }
-
-  if (!model_.model_->optimiser_set_)
-  {
-    if (optimiser->string() == "adam")
-    {
-      // optimiser_type = fetch::ml::OptimiserType::ADAM;
-      state_.optimiser_step_impact = ADAM_STEP_IMPACT_COEF();
-      optimiser_construction_impact =
-          ADAM_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
-          ADAM_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
-    }
-    else if (optimiser->string() == "sgd")
-    {
-      // optimiser_type = fetch::ml::OptimiserType::SGD;
-      state_.optimiser_step_impact = SGD_STEP_IMPACT_COEF();
-      optimiser_construction_impact =
-          SGD_PADDED_WEIGHTS_SIZE_COEF() * state_.weights_padded_size_sum +
-          SGD_WEIGHTS_SIZE_COEF() * state_.weights_size_sum;
-    }
-  }
-
-  return static_cast<ChargeAmount>(optimiser_construction_impact + COMPILE_CONST_COEF()) *
-         COMPUTE_CHARGE_COST;
-}
-
-ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
-    Ptr<String> const &loss, Ptr<String> const &optimiser,
-    Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics)
-{
-  DataType optimiser_construction_impact{"0.0"};
   bool success = false;
 
   if (!model_.model_->loss_set_)
@@ -244,34 +193,16 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
     else if (loss->string() == "scel")
     {
       // loss_type = fetch::ml::ops::LossType::SOFTMAX_CROSS_ENTROPY;
-      success = false;
+      state_.forward_pass_cost =
+          state_.forward_pass_cost + SCEL_FORWARD_IMPACT() * state_.last_layer_size;
+      state_.backward_pass_cost =
+          state_.backward_pass_cost + SCEL_BACKWARD_IMPACT() * state_.last_layer_size;
+      state_.ops_count++;
+      success = true;
     }
     else
     {
       success = false;
-    }
-  }
-
-  std::size_t const n_metrics = metrics->elements.size();
-
-  for (std::size_t i = 0; i < n_metrics; ++i)
-  {
-    Ptr<String> ptr_string = metrics->elements.at(i);
-    if (ptr_string->string() == "categorical accuracy")
-    {
-      state_.metrics_cost += CATEGORICAL_ACCURACY_FORWARD_IMPACT() * state_.last_layer_size;
-    }
-    else if (ptr_string->string() == "mse")
-    {
-      state_.metrics_cost += MSE_FORWARD_IMPACT() * state_.last_layer_size;
-    }
-    else if (ptr_string->string() == "cel")
-    {
-      state_.metrics_cost += CEL_FORWARD_IMPACT() * state_.last_layer_size;
-    }
-    else if (ptr_string->string() == "scel")
-    {
-      state_.metrics_cost += SCEL_FORWARD_IMPACT() * state_.last_layer_size;
     }
   }
 
@@ -318,11 +249,46 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
 
   if (!success)
   {
-    return MaximumCharge("Not yet implement");
+    return MaximumCharge("Not yet implemented");
   }
 
   return static_cast<ChargeAmount>(optimiser_construction_impact + COMPILE_CONST_COEF()) *
          COMPUTE_CHARGE_COST;
+}
+
+ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
+    Ptr<String> const &loss, Ptr<String> const &optimiser,
+    Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics)
+{
+
+  std::size_t const n_metrics = metrics->elements.size();
+
+  for (std::size_t i = 0; i < n_metrics; ++i)
+  {
+    Ptr<String> ptr_string = metrics->elements.at(i);
+    if (ptr_string->string() == "categorical accuracy")
+    {
+      state_.metrics_cost += CATEGORICAL_ACCURACY_FORWARD_IMPACT() * state_.last_layer_size;
+    }
+    else if (ptr_string->string() == "mse")
+    {
+      state_.metrics_cost += MSE_FORWARD_IMPACT() * state_.last_layer_size;
+    }
+    else if (ptr_string->string() == "cel")
+    {
+      state_.metrics_cost += CEL_FORWARD_IMPACT() * state_.last_layer_size;
+    }
+    else if (ptr_string->string() == "scel")
+    {
+      state_.metrics_cost += SCEL_FORWARD_IMPACT() * state_.last_layer_size;
+    }
+    else
+    {
+      return MaximumCharge("Not yet implemented");
+    }
+  }
+
+  return CompileSequential(loss, optimiser);
 }
 
 ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,
@@ -340,7 +306,7 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
   FETCH_UNUSED(labels);
 
   DataType estimate{"0"};
-  state_.subset_size       = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
+  state_.subset_size         = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
   SizeType number_of_batches = state_.subset_size / batch_size;
 
   // Forward pass
