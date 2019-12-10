@@ -933,9 +933,9 @@ TEST_F(MathTensorTests, tensor_sum_test)
   fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
   DataType const result = vm_tensor.Sum();
-  DataType const expected{14273.0};
+  DataType const expected{"14273.0"};
 
-  EXPECT_EQ(expected, result);
+  EXPECT_LE(fetch::math::Abs(expected - result), DataType::TOLERANCE);
 }
 
 TEST_F(MathTensorTests, tensor_sum_etch_test)
@@ -959,9 +959,9 @@ TEST_F(MathTensorTests, tensor_sum_etch_test)
   ASSERT_TRUE(toolkit.Run(&res));
 
   auto const     sum_val = res.Get<DataType>();
-  DataType const expected{65.1};
+  DataType const expected{"65.1"};
 
-  EXPECT_TRUE(fetch::math::Abs(expected - sum_val) < DataType::TOLERANCE);
+  EXPECT_LE(fetch::math::Abs(expected - sum_val), DataType::TOLERANCE);
 }
 
 TEST_F(MathTensorTests, tensor_transpose_test)
@@ -1013,7 +1013,7 @@ TEST_F(MathTensorTests, tensor_transpose_etch_test)
   ASSERT_TRUE(toolkit.Run(&res));
 
   auto const     result = res.Get<DataType>();
-  DataType const expected{42.0};
+  DataType const expected{"42.0"};
 
   EXPECT_EQ(expected, result);
 }
