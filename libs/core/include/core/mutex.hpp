@@ -28,9 +28,75 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <unordered_set>
 #include <utility>
 
 namespace fetch {
+class DebugMutex;
+
+class Mutexregister
+{
+public:
+  void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
+  void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
+  void FindDeadlock(DebugMutex *mutex, std::thread::id);
+
+private:
+  std::mutex                                                     mutex_;
+  std::unordered_map<DebugMutex *, std::thread::id>              lock_owners_;
+  std::unordered_map<std::thread::id, std::vector<DebugMutex *>> acquired_locks_;
+};
+
+void RegisterMutex(DebugMutex *mutex);
+void UnregisterMutex(DebugMutex *mutex);
+void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
+void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
+void FindDeadlock(DebugMutex *mutex, std::thread::id);
+
+class DebugMutex
+{
+public:
+  DebugMutex(std::string const &filename, int32_t line)
+    : filename_{filename}
+    , line_{line}
+  {}
+
+  ~DebugMutex()
+  {}
+
+  void lock()
+  {
+    FindDeadlock(this, std::this_thread::get_id());
+    mutex_.lock();
+    RegisterMutexAcquisition(this, std::this_thread::get_id());
+  }
+
+  void unlock()
+  {
+    UnregisterMutexAcquisition(this, std::this_thread::get_id());
+    mutex_.unlock();
+  }
+
+  std::lock_guard<DebugMutex> guard()
+  {
+    return std::lock_guard<DebugMutex>(this);
+  }
+
+  std::string filename() const
+  {
+    return filename_;
+  }
+
+  int32_t line() const
+  {
+    return line_;
+  };
+
+private:
+  std::mutex  mutex_;
+  std::string filename_{};
+  int32_t     line_{0};
+};
 
 using Mutex = std::mutex;
 

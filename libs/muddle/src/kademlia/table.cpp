@@ -659,38 +659,41 @@ KademliaTable::AddressSet KademliaTable::desired_peers() const
 void KademliaTable::AddDesiredPeer(Address const &address, network::Peer const &hint,
                                    Duration const &expiry)
 {
-  FETCH_LOCK(desired_mutex_);
-
-  auto it = connection_expiry_.find(address);
-  if (it == connection_expiry_.end())
-  {
-    connection_expiry_.emplace(address, Clock::now() + expiry);
-  }
-  else
-  {
-    it->second = std::max(Clock::now() + expiry, it->second);
-  }
-
   PeerInfo info;
-  info.address = address;
-  info.uri.Parse(hint.ToUri());
-
-  // Deleting information that is contracdictary
-  auto it2 = known_peers_.find(address);
-  if (it2 != known_peers_.end())
   {
-    if (it2->second->uri != info.uri)
+    FETCH_LOCK(desired_mutex_);
+    FETCH_LOCK(mutex_);
+
+    auto it = connection_expiry_.find(address);
+    if (it == connection_expiry_.end())
     {
-      known_peers_.erase(it2);
+      connection_expiry_.emplace(address, Clock::now() + expiry);
     }
-  }
-
-  auto it3 = known_uris_.find(info.uri);
-  if (it3 != known_uris_.end())
-  {
-    if (it3->second->address != info.address)
+    else
     {
-      known_uris_.erase(it3);
+      it->second = std::max(Clock::now() + expiry, it->second);
+    }
+
+    info.address = address;
+    info.uri.Parse(hint.ToUri());
+
+    // Deleting information that is contracdictary
+    auto it2 = known_peers_.find(address);
+    if (it2 != known_peers_.end())
+    {
+      if (it2->second->uri != info.uri)
+      {
+        known_peers_.erase(it2);
+      }
+    }
+
+    auto it3 = known_uris_.find(info.uri);
+    if (it3 != known_uris_.end())
+    {
+      if (it3->second->address != info.address)
+      {
+        known_uris_.erase(it3);
+      }
     }
   }
 
@@ -698,8 +701,14 @@ void KademliaTable::AddDesiredPeer(Address const &address, network::Peer const &
   ReportExistence(info, own_address_);
 
   // Note we might previously have erased it2
-  it2 = known_peers_.find(address);
-  if (!address.empty() && (it2 != known_peers_.end()))
+  bool add_address{false};
+  {
+    FETCH_LOCK(mutex_);
+    auto it2    = known_peers_.find(address);
+    add_address = (it2 != known_peers_.end());
+  }
+
+  if (!address.empty() && add_address)
   {
     AddDesiredPeerInternal(address, expiry);
   }

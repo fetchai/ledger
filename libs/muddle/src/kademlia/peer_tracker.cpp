@@ -429,7 +429,7 @@ void PeerTracker::PullPeerKnowledge()
   }
 
   // If it is still empty
-  if (peer_pull_queue_.empty())
+  if (queue_size == 0)
   {
     return;
   }
@@ -466,7 +466,7 @@ void PeerTracker::PullPeerKnowledge()
     // wrap the promise is a task
 
     auto call_task = std::make_shared<PromiseTask>(
-        promise, tracker_configuration_.promise_timeout,
+        promise, cfg.promise_timeout,
         [this, address, search_for, pull_id](service::Promise const &promise) {
           OnResolvedPull(pull_id, address, search_for, promise);
         });
@@ -636,6 +636,7 @@ void PeerTracker::ConnectToDesiredPeers()
 
   for (auto &peer : desired_peers())
   {
+
     if (peer == my_address)
     {
       continue;
@@ -658,10 +659,9 @@ void PeerTracker::ConnectToDesiredPeers()
 
     // Finding known details
     Address best_peer;
-    FETCH_LOG_DEBUG(logging_name_.c_str(), "Looking for connections to ", peer.ToBase64());
 
     // If we have details, we can connect directly
-    if (!peer_table_.HasPeerDetails(peer))
+    if (peer_table_.HasPeerDetails(peer))
     {
       best_peer = peer;
     }

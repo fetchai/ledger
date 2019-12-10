@@ -227,7 +227,6 @@ bool Muddle::Start(Ports const &ports)
 void Muddle::Stop()
 {
   stopping_ = true;
-  std::cout << "Stopping Muddle" << std::endl;
   peer_tracker_->Stop();
 
   // stop all the periodic actions
@@ -244,7 +243,6 @@ void Muddle::Stop()
   clients_.DisconnectAll();
 
   network_manager_.Stop();
-  std::cout << "Done" << std::endl;
 }
 
 /**

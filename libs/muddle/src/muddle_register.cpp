@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
+#include "muddle_logging_name.hpp"
 #include "router.hpp"
 
 #include "network/management/abstract_connection.hpp"
@@ -51,11 +51,6 @@ void MuddleRegister::OnConnectionLeft(ConnectionLeftCallback cb)
   left_callback_ = std::move(cb);
 }
 
-void MuddleRegister::OnConnectionEntered(ConnectionLeftCallback cb)
-{
-  FETCH_LOCK(lock_);
-  entered_callback_ = std::move(cb);
-}
 /**
  * Broadcast data to all active connections
  *
@@ -289,12 +284,11 @@ Address MuddleRegister::GetAddress(ConnectionHandle handle) const
  */
 void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
 {
-  std::unique_lock<std::mutex> lock(lock_);
+  FETCH_LOCK(lock_);
 
   auto strong_conn = ptr.lock();
   if (!strong_conn)
   {
-    lock.unlock();
     FETCH_LOG_WARN(logging_name_, "Attempting to register lost connection!");
     return;
   }
@@ -305,7 +299,6 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
   // extra level of debug
   if (handle_index_.find(handle) != handle_index_.end())
   {
-    lock.unlock();
     FETCH_LOG_WARN(logging_name_, "Trying to update an existing connection ID");
     return;
   }
@@ -314,15 +307,6 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
 
   // add the connection to the map
   handle_index_.emplace(handle, std::make_shared<Entry>(ptr));
-
-  auto callback_copy = entered_callback_;
-  lock.unlock();
-
-  // signal the router
-  if (callback_copy)
-  {
-    callback_copy(handle);
-  }
 }
 
 /**
