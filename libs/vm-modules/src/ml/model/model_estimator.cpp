@@ -70,7 +70,10 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
   SizeType padded_size{0};
 
   // must be a dense layer
-  FETCH_UNUSED(layer);
+  if(layer->string() != "dense")
+  {
+    return MaximumCharge("Only dense layers are supported");
+  }
 
   state_.forward_pass_cost =
       state_.forward_pass_cost + static_cast<DataType>(inputs) * FORWARD_DENSE_INPUT_COEF();
@@ -111,7 +114,11 @@ ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> cons
 {
   ChargeAmount estimate = LayerAddDense(layer, inputs, hidden_nodes);
 
-  FETCH_UNUSED(activation);  // only relu is valid
+  if(activation->string() != "relu")
+  {
+    return MaximumCharge("Only relu activations are supported");
+  }
+
   state_.forward_pass_cost  = state_.forward_pass_cost + RELU_FORWARD_IMPACT() * hidden_nodes;
   state_.backward_pass_cost = state_.backward_pass_cost + RELU_BACKWARD_IMPACT() * hidden_nodes;
   state_.ops_count++;

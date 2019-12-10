@@ -24,7 +24,7 @@
 
 #include "gmock/gmock.h"
 
-namespace {
+//namespace {
 
 using SizeType         = fetch::math::SizeType;
 using DataType         = fetch::vm_modules::math::DataType;
@@ -1128,16 +1128,30 @@ TEST_F(VMModelEstimatorTests,
 // VMModel operations WITHOUT estimators should have an infinite charge //
 //////////////////////////////////////////////////////////////////////////
 
-TEST_F(VMModelEstimatorTests, model_non_squential_should_have_infinite_charge)
-{}
+TEST_F(VMModelEstimatorTests, layer_non_dense_should_have_infinite_charge)
+{
+  SizeType input_size = 10;
+  SizeType output_size     = 10;
+  auto     model      = VmSequentialModel(vm);
+  auto     layer_type      = VmString(vm, "dense");
 
-TEST_F(VMModelEstimatorTests, optimizer_non_adam_should_have_infinite_charge)
-{}
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseActivationCharge(model, layer_type, input_size, output_size, VmString(vm, "conv1d")));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseActivationCharge(model, layer_type, input_size, output_size, VmString(vm, "conv2d")));
+}
 
 TEST_F(VMModelEstimatorTests, activation_non_relu_should_have_infinite_charge)
-{}
+{
+  SizeType input_size = 10;
+  SizeType output_size     = 10;
+  auto     model      = VmSequentialModel(vm);
 
-TEST_F(VMModelEstimatorTests, layer_non_dense_should_have_infinite_charge)
-{}
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "nothing"), input_size, output_size));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "leaky_relu"), input_size, output_size));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "log_sigmoid"), input_size, output_size));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "log_softmax"), input_size, output_size));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "sigmoid"), input_size, output_size));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "softmax"), input_size, output_size));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "gelu"), input_size, output_size));
+}
 
 }  // namespace
