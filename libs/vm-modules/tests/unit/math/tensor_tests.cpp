@@ -33,6 +33,7 @@ namespace {
 using ::testing::Between;
 
 using DataType = fetch::vm_modules::math::DataType;
+using SizeType = fetch::vm_modules::math::SizeType;
 
 class MathTensorTests : public ::testing::Test
 {
@@ -351,6 +352,34 @@ TEST_F(MathTensorTests, tensor_set_from_string)
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({4, 1, 1});
   gt.Fill(static_cast<DataType>(1.0));
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+}
+
+TEST_F(MathTensorTests, tensor_copy_from_tensor)
+{
+  static char const *tensor_from_string_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(1);
+      tensor_shape[0] = 4u64;
+
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(2.0fp64);
+      y = x.copy();
+
+      return y;
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({4});
+  gt.Fill(static_cast<DataType>(2.0));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
@@ -970,6 +999,92 @@ TEST_F(MathTensorTests, tensor_sum_etch_test)
   DataType   gt{65.1};
 
   EXPECT_TRUE(fetch::math::Abs(gt - sum_val) < DataType::TOLERANCE);
+}
+
+TEST_F(MathTensorTests, tensor_argmax_test)
+{
+  static char const *tensor_argmax_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 2u64;
+
+      var x = Tensor(tensor_shape);
+      x.setAt(0u64, 0u64, 1.0fp64);
+      x.setAt(0u64, 1u64, 2.0fp64);
+      x.setAt(1u64, 0u64, 4.0fp64);
+      x.setAt(1u64, 1u64, 3.0fp64);
+
+
+      var ret_shape = Array<UInt64>(2);
+      ret_shape[0] = 3u64;
+      ret_shape[1] = 2u64;
+      var ret = Tensor(ret_shape);
+
+      var res1 = x.argMax();
+      var res2 = x.argMax(0u64);
+      var res3 = x.argMax(1u64);
+
+      ret.setAt(0u64, 0u64, res1.at(0u64));
+      ret.setAt(0u64, 1u64, res1.at(1u64));
+      ret.setAt(1u64, 0u64, res2.at(0u64));
+      ret.setAt(1u64, 1u64, res2.at(1u64));
+      ret.setAt(2u64, 0u64, res3.at(0u64));
+      ret.setAt(2u64, 1u64, res3.at(1u64));
+
+      return ret;
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_argmax_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({3, 2});
+  gt.Set(SizeType(0), SizeType(0), DataType{1.0});
+  gt.Set(SizeType(0), SizeType(1), DataType{1.0});
+  gt.Set(SizeType(1), SizeType(0), DataType{1.0});
+  gt.Set(SizeType(1), SizeType(1), DataType{1.0});
+  gt.Set(SizeType(2), SizeType(0), DataType{1.0});
+  gt.Set(SizeType(2), SizeType(1), DataType{0.0});
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+}
+
+TEST_F(MathTensorTests, tensor_dot_test)
+{
+  static char const *tensor_dot_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 2u64;
+
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(1.0fp64);
+      y.fill(1.0fp64);
+
+      var ret = x.dot(y);
+
+      return ret;
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_dot_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({2, 2});
+  gt.Fill(static_cast<DataType>(2.0));
+
+  std::cout << "gt.ToString(): " << gt.ToString() << std::endl;
+  std::cout << "tensor->GetTensor().ToString(): " << tensor->GetTensor().ToString() << std::endl;
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
 TEST_F(MathTensorTests, tensor_squeeze_test)

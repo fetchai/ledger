@@ -54,6 +54,8 @@ public:
 
   ChargeAmount size();
 
+  ChargeAmount Copy();
+
   ChargeAmount AtOne(TensorType::SizeType idx1);
 
   ChargeAmount AtTwo(uint64_t idx1, uint64_t idx2);
@@ -84,6 +86,12 @@ public:
   ChargeAmount Squeeze();
 
   ChargeAmount Sum();
+
+  ChargeAmount ArgMax(SizeType const &indices);
+
+  ChargeAmount ArgMaxNoIndices();
+
+  ChargeAmount Dot(vm::Ptr<VMTensor> const &other);
 
   /// OPERATORS ///
 

@@ -71,6 +71,7 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
           .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
             return Ptr<VMTensor>{new VMTensor(vm, type_id)};
           })
+          .CreateMemberFunction("copy", &VMTensor::Copy, UseEstimator(&TensorEstimator::Copy))
           .CreateMemberFunction("at", &VMTensor::At<Index>, UseEstimator(&TensorEstimator::AtOne))
           .CreateMemberFunction("at", &VMTensor::At<Index, Index>,
                                 UseEstimator(&TensorEstimator::AtTwo))
@@ -97,6 +98,11 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
           .CreateMemberFunction("squeeze", &VMTensor::Squeeze,
                                 UseEstimator(&TensorEstimator::Squeeze))
           .CreateMemberFunction("sum", &VMTensor::Sum, UseEstimator(&TensorEstimator::Sum))
+          .CreateMemberFunction("argMax", &VMTensor::ArgMax, UseEstimator(&TensorEstimator::ArgMax))
+          .CreateMemberFunction("argMax", &VMTensor::ArgMaxNoIndices,
+                                UseEstimator(&TensorEstimator::ArgMaxNoIndices))
+          .CreateMemberFunction("dot", &VMTensor::Dot, UseEstimator(&TensorEstimator::Dot))
+
           // TODO(ML-340) - rework operator bindings when it becomes possible to add estimators to
           // operators
           .CreateMemberFunction("negate", &VMTensor::NegateOperator,
@@ -185,9 +191,11 @@ void VMTensor::SetAt(Args... args)
   }
 }
 
-void VMTensor::Copy(ArrayType const &other)
+vm::Ptr<VMTensor> VMTensor::Copy()
 {
-  tensor_.Copy(other);
+  Ptr<VMTensor> ret = Ptr<VMTensor>{new VMTensor(this->vm_, this->type_id_, shape())};
+  (ret->GetTensor()).Copy(GetTensor());
+  return ret;
 }
 
 void VMTensor::Fill(DataType const &value)
@@ -386,6 +394,25 @@ DataType VMTensor::Max()
 DataType VMTensor::Sum()
 {
   return fetch::math::Sum(tensor_);
+}
+
+vm::Ptr<VMTensor> VMTensor::ArgMaxNoIndices()
+{
+  return ArgMax();
+}
+
+vm::Ptr<VMTensor> VMTensor::ArgMax(SizeType const &indices)
+{
+  auto          ret_tensor = fetch::math::ArgMax(GetTensor(), indices);
+  Ptr<VMTensor> ret        = Ptr<VMTensor>{new VMTensor(this->vm_, this->type_id_, ret_tensor)};
+  return ret;
+}
+
+vm::Ptr<VMTensor> VMTensor::Dot(vm::Ptr<VMTensor> const &other)
+{
+  auto ret_tensor = fetch::math::Dot(GetTensor(), other->GetTensor());
+  Ptr<VMTensor> ret = Ptr<VMTensor>{new VMTensor(this->vm_, this->type_id_, ret_tensor)};
+  return ret;
 }
 
 //////////////////////////////
