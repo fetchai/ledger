@@ -34,75 +34,35 @@ public:
   using Variant      = std::shared_ptr<VocabularyInstance>;
   using FieldVisitor = std::function<void(std::string, std::string, VocabularyInstancePtr)>;
 
-  ///
+  /// Constructors and destructors
   /// @{
+  static FieldModel New();
   TypedSchemaField()                         = delete;
   TypedSchemaField(TypedSchemaField const &) = delete;
   TypedSchemaField &operator=(TypedSchemaField const &) = delete;
+  ~TypedSchemaField() override                          = default;
   /// @}
 
-  ~TypedSchemaField() override = default;
+  /// Traversal and validation
+  /// @{
+  SemanticPosition Reduce(VocabularyInstancePtr const &v) override;
+  bool             Validate(VocabularyInstancePtr const &v) override;
+  bool             IsSame(ModelInterface const &optr) const override;
+  bool             VisitFields(FieldVisitor callback, VocabularyInstancePtr obj,
+                               std::string name = "") override;
+  /// @}
 
-  static FieldModel New()
-  {
-    FieldModel ret = FieldModel(new TypedSchemaField<T>(std::type_index(typeid(T))));
-    return ret;
-  }
+  /// Properties
+  /// @{
+  int              rank() const override;
+  std::type_index  type() const override;
+  SemanticReducer &constrained_data_reducer();
+  /// @}
 
-  SemanticPosition Reduce(VocabularyInstancePtr const &v) override
-  {
-    if (std::type_index(typeid(T)) != type_)
-    {
-      throw std::runtime_error("Reducer does not match schema type.");
-    }
-
-    return constrained_data_reducer_.Reduce(v->data_);
-  }
-
-  bool Validate(VocabularyInstancePtr const &v) override
-  {
-    if (type_ != v->type())
-    {
-      return false;
-    }
-
-    return constrained_data_reducer_.Validate(v->data_);
-  }
-
-  int rank() const override
-  {
-    return constrained_data_reducer_.rank();
-  }
-
-  std::type_index type() const override
-  {
-    return type_;
-  }
-
-  bool IsSame(ModelInterface const &optr) const override
-  {
-    return (type() == optr->type());
-    // TODO(private issue AEA-130): Check reducers and validators - they are currently ignored.
-  }
-
-  bool VisitFields(FieldVisitor /*callback*/, VocabularyInstancePtr /*obj*/,
-                   std::string /*name*/ = "") override
-  {
-    // A typed field does not have any sub fields, hence we just
-    // return
-    return true;
-  }
-
-  void SetSemanticReducer(SemanticReducer r)
-  {
-    constrained_data_reducer_ = std::move(r);
-  }
-
-  SemanticReducer &constrained_data_reducer()
-  {
-    return constrained_data_reducer_;
-  }
-
+  /// Setters
+  /// @{
+  void SetSemanticReducer(SemanticReducer r);
+  /// @}
 private:
   explicit TypedSchemaField(std::type_index type)
     : type_{type}
@@ -112,6 +72,75 @@ private:
   std::type_index type_;
   int             rank_{0};
 };
+
+template <typename T>
+typename TypedSchemaField<T>::FieldModel TypedSchemaField<T>::New()
+{
+  FieldModel ret = FieldModel(new TypedSchemaField<T>(std::type_index(typeid(T))));
+  return ret;
+}
+
+template <typename T>
+SemanticPosition TypedSchemaField<T>::Reduce(VocabularyInstancePtr const &v)
+{
+  if (std::type_index(typeid(T)) != type_)
+  {
+    throw std::runtime_error("Reducer does not match schema type.");
+  }
+
+  return constrained_data_reducer_.Reduce(v->data_);
+}
+
+template <typename T>
+bool TypedSchemaField<T>::Validate(VocabularyInstancePtr const &v)
+{
+  if (type_ != v->type())
+  {
+    return false;
+  }
+
+  return constrained_data_reducer_.Validate(v->data_);
+}
+
+template <typename T>
+int TypedSchemaField<T>::rank() const
+{
+  return constrained_data_reducer_.rank();
+}
+
+template <typename T>
+std::type_index TypedSchemaField<T>::type() const
+{
+  return type_;
+}
+
+template <typename T>
+bool TypedSchemaField<T>::IsSame(ModelInterface const &optr) const
+{
+  return (type() == optr->type());
+  // TODO(private issue AEA-130): Check reducers and validators - they are currently ignored.
+}
+
+template <typename T>
+bool TypedSchemaField<T>::VisitFields(FieldVisitor /*callback*/, VocabularyInstancePtr /*obj*/,
+                                      std::string /*name*/)
+{
+  // A typed field does not have any sub fields, hence we just
+  // return
+  return true;
+}
+
+template <typename T>
+void TypedSchemaField<T>::SetSemanticReducer(SemanticReducer r)
+{
+  constrained_data_reducer_ = std::move(r);
+}
+
+template <typename T>
+SemanticReducer &TypedSchemaField<T>::constrained_data_reducer()
+{
+  return constrained_data_reducer_;
+}
 
 }  // namespace semanticsearch
 }  // namespace fetch
