@@ -547,7 +547,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
 
     decltype(auto) c = context();
 
-    // TODO(WK) charge for reading from storage
+    // TODO(LDGR-642) charge for reading from storage
     auto loaded_contract = CreateSmartContract<SmartContract>(called_contract_address, *c.storage);
     if (loaded_contract == nullptr)
     {
