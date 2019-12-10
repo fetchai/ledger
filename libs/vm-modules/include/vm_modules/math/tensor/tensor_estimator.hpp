@@ -79,17 +79,58 @@ public:
 
   ChargeAmount Max();
 
-  ChargeAmount Squeeze();
-
-  ChargeAmount Unsqueeze();
-
   ChargeAmount Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
 
-  ChargeAmount GetReshapeCost(SizeVector const &new_shape);
+  ChargeAmount Squeeze();
 
   ChargeAmount Sum();
 
+  /// OPERATORS ///
+
+  ChargeAmount EqualOperator(vm::Ptr<VMTensor> const &other);
+
+  ChargeAmount NotEqualOperator(vm::Ptr<VMTensor> const &other);
+
+  ChargeAmount NegateOperator();
+
+  ChargeAmount AddOperator(vm::Ptr<VMTensor> const & /*other*/);
+
+  ChargeAmount SubtractOperator(vm::Ptr<VMTensor> const & /*other*/);
+
+  ChargeAmount MultiplyOperator(vm::Ptr<VMTensor> const & /*other*/);
+
+  ChargeAmount DivideOperator(vm::Ptr<VMTensor> const & /*other*/);
+
+  // TODO (ML-340) - replace member functions with operators when operators can take estimators
+  ChargeAmount Negate();
+
+  ChargeAmount Equal();
+
+  ChargeAmount NotEqual();
+
+  ChargeAmount Add();
+
+  ChargeAmount Subtract();
+
+  ChargeAmount InplaceAdd();
+
+  ChargeAmount InplaceSubtract();
+
+  ChargeAmount Multiply();
+
+  ChargeAmount Divide();
+
+  ChargeAmount InplaceMultiply();
+
+  ChargeAmount InplaceDivide();
+
+  /// END OF OPERATORS ///
+
+  ChargeAmount GetReshapeCost(SizeVector const &new_shape);
+
   ChargeAmount Transpose();
+
+  ChargeAmount Unsqueeze();
 
   ChargeAmount FromString(fetch::vm::Ptr<fetch::vm::String> const &string);
 
@@ -202,6 +243,10 @@ public:
   {
     return DataType(5);
   };
+
+  fixed_point::fp64_t const DEFAULT_PADDED_SIZE_COEF = fixed_point::fp64_t("0.00023451");
+  fixed_point::fp64_t const DEFAULT_SIZE_COEF        = fixed_point::fp64_t("0.00107809");
+  fixed_point::fp64_t const DEFAULT_CONST_COEF       = fixed_point::fp64_t("5");
 
   // Function call overhead for LOW_CHARGE functions
   static constexpr SizeType LOW_CHARGE_CONST_COEF = 5;
