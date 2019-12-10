@@ -63,18 +63,35 @@ void MuddleRegister::OnConnectionEntered(ConnectionLeftCallback cb)
  */
 void MuddleRegister::Broadcast(ConstByteArray const &data) const
 {
-  FETCH_LOCK(lock_);
+  using ConnectionPtr  = std::shared_ptr<network::AbstractConnection>;
+  using ConnectionPtrs = std::vector<ConnectionPtr>;
 
-  // loop through all of our current connections
-  for (auto const &elem : handle_index_)
+  // Hold the connections until the lock has gone
+  // to avoid a deadlock if a connection dies while
+  // being accessed for the send.
+  ConnectionPtrs held_connections;
+
   {
-    // ensure the connection is valid
-    auto connection = elem.second->connection.lock();
-    if (connection)
+    FETCH_LOCK(lock_);
+    held_connections.reserve(handle_index_.size());
+
+    // loop through all of our current connections
+    for (auto const &elem : handle_index_)
     {
-      // schedule sending of the data
-      connection->Send(data);
+      // ensure the connection is valid
+      auto connection = elem.second->connection.lock();
+      if (connection)
+      {
+        // schedule sending of the data, once we hold a strong
+        // connection to the data
+        held_connections.emplace_back(std::move(connection));
+      }
     }
+  }
+
+  for(auto const &conn : held_connections)
+  {
+    conn->Send(data);
   }
 }
 
