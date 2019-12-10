@@ -410,8 +410,8 @@ vm::Ptr<VMTensor> VMTensor::ArgMax(SizeType const &indices)
 
 vm::Ptr<VMTensor> VMTensor::Dot(vm::Ptr<VMTensor> const &other)
 {
-  auto ret_tensor = fetch::math::Dot(GetTensor(), other->GetTensor());
-  Ptr<VMTensor> ret = Ptr<VMTensor>{new VMTensor(this->vm_, this->type_id_, ret_tensor)};
+  auto          ret_tensor = fetch::math::Dot(GetTensor(), other->GetTensor());
+  Ptr<VMTensor> ret        = Ptr<VMTensor>{new VMTensor(this->vm_, this->type_id_, ret_tensor)};
   return ret;
 }
 
