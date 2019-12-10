@@ -76,6 +76,9 @@ public:
       fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
       math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation);
 
+  ChargeAmount LayerAddFlatten(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                               math::SizeType const &input_channels);
+
   ChargeAmount CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                  fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 

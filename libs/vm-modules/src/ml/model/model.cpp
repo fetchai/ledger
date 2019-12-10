@@ -47,6 +47,7 @@ std::map<std::string, SupportedLayerType> const VMModel::layer_types_{
     {"dense", SupportedLayerType::DENSE},
     {"conv1d", SupportedLayerType::CONV1D},
     {"conv2d", SupportedLayerType::CONV2D},
+    {"flatten", SupportedLayerType::FLATTEN},
 };
 
 std::map<std::string, ActivationType> const VMModel::activations_{
@@ -129,7 +130,6 @@ Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
 {
   return Ptr<VMModel>{new VMModel(vm, type_id, model_category)};
 }
-
 /**
  * @brief VMModel::CompileSequential
  * @param loss a valid loss function ["mse", ...]
@@ -309,6 +309,8 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                                 UseEstimator(&ModelEstimator::LayerAddDense))
           .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation,
                                 UseEstimator(&ModelEstimator::LayerAddDenseActivation))
+          .CreateMemberFunction("add", &VMModel::LayerAddFlatten,
+                                UseEstimator(&ModelEstimator::LayerAddFlatten))
           .CreateMemberFunction("compile", &VMModel::CompileSequential,
                                 UseEstimator(&ModelEstimator::CompileSequential))
           .CreateMemberFunction("compile", &VMModel::CompileSequentialWithMetrics,
@@ -616,6 +618,28 @@ void VMModel::LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::Str
     {
       me->Add<fetch::ml::layers::Convolution2D<TensorType>>(output_channels, input_channels,
                                                             kernel_size, stride_size, activation);
+    }
+    compiled_ = false;
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Impossible to add layer : " + std::string(e.what()));
+    return;
+  }
+}
+
+
+void VMModel::LayerAddFlatten(const fetch::vm::Ptr<String> &layer, math::SizeType const &input_channels)
+{
+  FETCH_UNUSED(input_channels); // not sure which parameters shoul be passed
+  try
+  {
+    SupportedLayerType const layer_type = ParseName(layer->string(), layer_types_, "layer type");
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::FLATTEN});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+    if (layer_type == SupportedLayerType::FLATTEN)
+    {
+        me->Add<fetch::ml::ops::Flatten<TensorType>>();
     }
     compiled_ = false;
   }
