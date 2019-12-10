@@ -30,11 +30,49 @@ using MathTensor        = fetch::math::Tensor<DataType>;
 using VmTensor          = fetch::vm_modules::math::VMTensor;
 using VmTensorEstimator = fetch::vm_modules::math::TensorEstimator;
 
+using ShapeFrom = std::vector<SizeType>;
+using ShapeTo   = std::vector<SizeType>;
+using ShapePair = std::pair<ShapeFrom, ShapeTo>;
+std::vector<ShapePair> const VALID_TRANSFORMATIONS{
+    {{1, 1, 1, 1}, {1}},                                 //
+    {{2, 2, 2, 2}, {4, 4}},                              //
+    {{4, 4, 4, 4}, {16, 8, 2}},                          //
+    {{4, 4, 4, 4}, {16, 4, 4, 1}},                       //
+    {{8, 8, 8, 8}, {64, 8, 4, 2}},                       //
+    {{16, 16, 16, 16}, {2, 2, 2, 2, 4, 4, 8, 2, 4, 4}},  //
+};
+std::vector<ShapePair> const EQUAL_TRANSFORMATIONS{
+    {{1, 1, 1, 1}, {1, 1, 1, 1}},                                      //
+    {{2, 2, 2, 2}, {2, 2, 2, 2}},                                      //
+    {{2, 2, 2, 2, 4, 4, 8, 2, 4, 4}, {2, 2, 2, 2, 4, 4, 8, 2, 4, 4}},  //
+    {{64, 8, 4, 2}, {64, 8, 4, 2}},                                    //
+    {{1, 2, 3, 4, 5, 6}, {1, 2, 3, 4, 5, 6}},                          //
+};
+std::vector<ShapePair> const INVALID_TRANSFORMATIONS{
+    {{1, 1, 1, 1}, {0}},                                 //
+    {{2, 2, 2, 2}, {3, 4}},                              //
+    {{4, 4, 4, 4}, {19, 8, 2}},                          //
+    {{4, 4, 4, 4}, {0, 4, 4, 1}},                        //
+    {{8, 8, 8, 8}, {64, 8, 4, 1, 1}},                    //
+    {{16, 16, 16, 16}, {2, 2, 2, 3, 4, 4, 8, 2, 4, 4}},  //
+};
+
 class MathTensorEstimatorTests : public ::testing::Test
 {
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
+
+  fetch::vm::Array<SizeType> GetShapeArray(std::vector<SizeType> const &shape)
+  {
+    using namespace fetch::vm;
+    Array<SizeType> a(&toolkit.vm(), TypeIds::Unknown, TypeIds::Int32, int32_t(0));
+    for (auto const &el : shape)
+    {
+      a.Append(TemplateParameter1(el, TypeIds::Int32));
+    }
+    return a;
+  }
 
   SizeType MinDimSize()
   {
@@ -64,6 +102,17 @@ public:
   SizeType DimsStep()
   {
     return SizeType(1);
+  }
+
+  ChargeAmount GetReferenceReshapeEstimation(ShapeTo const &new_shape)
+  {
+    SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(new_shape);
+    SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(new_shape);
+
+    return static_cast<ChargeAmount>(VmTensorEstimator::SUM_PADDED_SIZE_COEF() * padded_size +
+                                     VmTensorEstimator::SUM_SIZE_COEF() * size +
+                                     VmTensorEstimator::SUM_CONST_COEF()) *
+           fetch::vm::COMPUTE_CHARGE_COST;
   }
 };
 
@@ -217,43 +266,68 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_transpose_test)
   }
 }
 
-TEST_F(MathTensorEstimatorTests, tensor_estimator_reshape_test)
+TEST_F(MathTensorEstimatorTests, tensor_estimator_valid_reshape_test)
 {
   using namespace fetch::vm;
-  Array<SizeType> a(&toolkit.vm(), TypeIds::Unknown, TypeIds::Int32, int32_t(0));
-  for (SizeType i = 0; i < MaxDims(); ++i)
+  for (ShapePair const &shapes : VALID_TRANSFORMATIONS)
   {
-    a.Append(TemplateParameter1(MaxDimSize(), TypeIds::Int32));
-  }
+    ShapeFrom const   initial_shape = shapes.first;
+    MathTensor        initial_tensor{initial_shape};
+    VmTensor          vm_tensor(&toolkit.vm(), TypeIds::Unknown, initial_tensor);
+    VmTensorEstimator tensor_estimator(vm_tensor);
 
-  auto const new_shape = Ptr<IArray>::PtrFromThis(&a);
+    ShapeTo const      new_shape_raw   = shapes.second;
+    ChargeAmount const expected_charge = GetReferenceReshapeEstimation(new_shape_raw);
 
-  std::vector<SizeType> const exp_tensor_shape(MaxDims(), MaxDimSize());
+    Array<SizeType>    shape_array      = GetShapeArray(new_shape_raw);
+    Ptr<IArray>        new_shape_ptr    = Ptr<IArray>::PtrFromThis(&shape_array);
+    ChargeAmount const estimated_charge = tensor_estimator.Reshape(new_shape_ptr);
 
-  SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(exp_tensor_shape);
-  SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(exp_tensor_shape);
-
-  ChargeAmount const expected_charge =
-      static_cast<ChargeAmount>(VmTensorEstimator::SUM_PADDED_SIZE_COEF() * padded_size +
-                                VmTensorEstimator::SUM_SIZE_COEF() * size +
-                                VmTensorEstimator::SUM_CONST_COEF()) *
-      fetch::vm::COMPUTE_CHARGE_COST;
-
-  for (SizeType n_dims = MinDims(); n_dims < MaxDims(); n_dims += DimsStep())
-  {
-    for (SizeType cur_dim_size = MinDimSize(); cur_dim_size < MaxDimSize();
-         cur_dim_size += DimStep())
-    {
-      std::vector<SizeType> const tensor_shape(n_dims, cur_dim_size);
-
-      MathTensor tensor{tensor_shape};
-
-      VmTensor          vm_tensor(&toolkit.vm(), TypeIds::Unknown, tensor);
-      VmTensorEstimator tensor_estimator(vm_tensor);
-
-      ChargeAmount const estimated_charge = tensor_estimator.Reshape(new_shape);
-      EXPECT_EQ(estimated_charge, expected_charge);
-    }
+    EXPECT_EQ(expected_charge, estimated_charge);
   }
 }
+
+TEST_F(MathTensorEstimatorTests, tensor_estimator_equal_reshape_test)
+{
+  using namespace fetch::vm;
+  for (ShapePair const &shapes : EQUAL_TRANSFORMATIONS)
+  {
+    ShapeFrom const   initial_shape = shapes.first;
+    MathTensor        initial_tensor{initial_shape};
+    VmTensor          vm_tensor(&toolkit.vm(), TypeIds::Unknown, initial_tensor);
+    VmTensorEstimator tensor_estimator(vm_tensor);
+
+    ShapeTo const      new_shape_raw = shapes.second;
+    ChargeAmount const expected_charge =
+        VmTensorEstimator::LOW_CHARGE_CONST_COEF * fetch::vm::COMPUTE_CHARGE_COST;
+
+    Array<SizeType>    shape_array      = GetShapeArray(new_shape_raw);
+    Ptr<IArray>        new_shape_ptr    = Ptr<IArray>::PtrFromThis(&shape_array);
+    ChargeAmount const estimated_charge = tensor_estimator.Reshape(new_shape_ptr);
+
+    EXPECT_EQ(expected_charge, estimated_charge);
+  }
+}
+
+TEST_F(MathTensorEstimatorTests, tensor_estimator_invalid_reshape_test)
+{
+  using namespace fetch::vm;
+  for (ShapePair const &shapes : INVALID_TRANSFORMATIONS)
+  {
+    ShapeFrom const   initial_shape = shapes.first;
+    MathTensor        initial_tensor{initial_shape};
+    VmTensor          vm_tensor(&toolkit.vm(), TypeIds::Unknown, initial_tensor);
+    VmTensorEstimator tensor_estimator(vm_tensor);
+
+    ShapeTo const      new_shape_raw   = shapes.second;
+    ChargeAmount const expected_charge = fetch::vm::MAXIMUM_CHARGE;
+
+    Array<SizeType>    shape_array      = GetShapeArray(new_shape_raw);
+    Ptr<IArray>        new_shape_ptr    = Ptr<IArray>::PtrFromThis(&shape_array);
+    ChargeAmount const estimated_charge = tensor_estimator.Reshape(new_shape_ptr);
+
+    EXPECT_EQ(expected_charge, estimated_charge);
+  }
+}
+
 }  // namespace

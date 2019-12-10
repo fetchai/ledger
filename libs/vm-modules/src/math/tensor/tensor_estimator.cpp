@@ -136,14 +136,29 @@ ChargeAmount TensorEstimator::Max()
 ChargeAmount TensorEstimator::Reshape(
     fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape)
 {
+  if (new_shape->elements.empty())
+  {
+    return MaximumCharge("Can not reshape a Tensor : new shape is empty!");
+  }
   auto                  n_elements = new_shape->elements.size();
   std::vector<SizeType> c_data(n_elements);
 
+  std::size_t new_total_elements = 1;
   for (fetch::math::SizeType i{0}; i < n_elements; i++)
   {
-    c_data.at(i) = new_shape->elements.at(i);
+    SizeType const axis_size = new_shape->elements.at(i);
+    if (axis_size == 0)
+    {
+      return MaximumCharge("Can not reshape a Tensor : axis of size 0 found in new shape!");
+    }
+    new_total_elements *= c_data.at(i) = new_shape->elements.at(i);
   }
-
+  if (new_total_elements != tensor_.size())
+  {
+    return MaximumCharge("Can not reshape a Tensor : total elements count in the new shape (" +
+                         std::to_string(new_total_elements) +
+                         ") mismatch. Expected : " + std::to_string(tensor_.size()));
+  }
   return GetReshapeCost(c_data);
 }
 
