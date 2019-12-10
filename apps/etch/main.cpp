@@ -51,6 +51,8 @@ namespace {
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
 using fetch::byte_array::ToHex;
+using fetch::json::JSONDocument;
+using fetch::vm_modules::VMFactory;
 
 using namespace fetch::vm;
 
@@ -327,9 +329,6 @@ int main(int argc, char **argv)
   module->CreateClassType<System>("System")
       .CreateStaticMemberFunction("Argc", &Argc)
       .CreateStaticMemberFunction("Argv", &Argv);
-
-  // Module to test dooms day scenarios
-  fetch::vm_modules::CreateDisaster(*module);
 
   // attempt to compile the program
   auto errors = VMFactory::Compile(module, files, *executable);
