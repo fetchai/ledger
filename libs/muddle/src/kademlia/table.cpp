@@ -727,7 +727,7 @@ void KademliaTable::AddDesiredPeerInternal(Address const &address, Duration cons
 
 void KademliaTable::AddDesiredPeerInternal(Uri const &uri, Duration const &expiry)
 {
-  // TODO: Will not work if spammed with URIs
+  // TODO(LDGR-641): Will not work if spammed with URIs
   desired_uris_.insert(uri);
   desired_uri_expiry_.emplace(uri, Clock::now() + expiry);
 }

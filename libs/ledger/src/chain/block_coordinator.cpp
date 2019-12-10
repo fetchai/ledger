@@ -1320,7 +1320,7 @@ void BlockCoordinator::Reset()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Hard resetting block coordinator");
   chain_.Reset();
-  current_block_ = chain_.CreateGenesisBlock();
+  current_block_ = MainChain::CreateGenesisBlock();
   last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::GENESIS_DIGEST; });
   execution_manager_.SetLastProcessedBlock(chain::GENESIS_DIGEST);
 }
@@ -1328,7 +1328,7 @@ void BlockCoordinator::Reset()
 void BlockCoordinator::ResetGenesis()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Resetting block coordinator");
-  current_block_ = chain_.CreateGenesisBlock();
+  current_block_ = MainChain::CreateGenesisBlock();
   last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::GENESIS_DIGEST; });
   execution_manager_.SetLastProcessedBlock(chain::GENESIS_DIGEST);
 }

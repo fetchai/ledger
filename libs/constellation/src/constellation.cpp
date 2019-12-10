@@ -275,7 +275,7 @@ BeaconServicePtr CreateBeaconService(constellation::Constellation::Config const 
   return beacon;
 }
 
-muddle::MuddlePtr CreateMessengerNetwork(Config const &cfg, CertificatePtr /*certificate*/,
+muddle::MuddlePtr CreateMessengerNetwork(Config const &cfg, CertificatePtr const &/*certificate*/,
                                          NetworkManager const & /*nm*/)
 {
   muddle::MuddlePtr network;
