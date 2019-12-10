@@ -24,7 +24,6 @@
 #include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
-#include "ledger/identifier.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/fake_storage_unit.hpp"
 #include "ledger/transaction_validator.hpp"
@@ -55,7 +54,6 @@ using fetch::ledger::ContractContext;
 using fetch::ledger::ContractContextAttacher;
 using fetch::ledger::ContractExecutionStatus;
 using fetch::ledger::FakeStorageUnit;
-using fetch::ledger::Identifier;
 using fetch::ledger::StateSentinelAdapter;
 using fetch::ledger::TokenContract;
 using fetch::ledger::TransactionValidator;
@@ -110,8 +108,8 @@ void TransactionValidatorTests::AddFunds(uint64_t amount)
   shards.SetAllOne();
 
   // create storage infrastructure
-  StateSentinelAdapter    storage_adapter{storage_, Identifier{"fetch.token"}, shards};
-  ContractContext         ctx{nullptr, Address{}, &storage_adapter, 0};
+  StateSentinelAdapter    storage_adapter{storage_, "fetch.token", shards};
+  ContractContext         ctx{nullptr, Address{}, nullptr, &storage_adapter, 0};
   ContractContextAttacher attacher{token_contract_, ctx};
 
   // add the tokens to the account
@@ -125,8 +123,8 @@ void TransactionValidatorTests::SetDeed(Deed const &deed)
   shards.SetAllOne();
 
   // create storage infrastructure
-  StateSentinelAdapter    storage_adapter{storage_, Identifier{"fetch.token"}, shards};
-  ContractContext         ctx{nullptr, Address{}, &storage_adapter, 0};
+  StateSentinelAdapter    storage_adapter{storage_, "fetch.token", shards};
+  ContractContext         ctx{nullptr, Address{}, nullptr, &storage_adapter, 0};
   ContractContextAttacher attacher{token_contract_, ctx};
 
   // add the tokens to the account
@@ -456,20 +454,19 @@ TEST_F(TransactionValidatorTests, CheckPermissionDeniedWithDeedNoExecutePermissi
   SetDeed(deed);
   AddFunds(1);
 
-  auto tx =
-      TransactionBuilder{}
-          .From(signer_address_)
-          .TargetSmartContract(address1, address2, BitVector{})  // reuse addresses for contract id
-          .Action("do.work")
-          .ValidUntil(100)
-          .ChargeRate(1)
-          .ChargeLimit(1)
-          .Signer(other1.identity())
-          .Signer(other2.identity())
-          .Seal()
-          .Sign(other1)
-          .Sign(other2)
-          .Build();
+  auto tx = TransactionBuilder{}
+                .From(signer_address_)
+                .TargetSmartContract(address2, BitVector{})  // reuse addresses for contract id
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(1)
+                .Signer(other1.identity())
+                .Signer(other2.identity())
+                .Seal()
+                .Sign(other1)
+                .Sign(other2)
+                .Build();
 
   EXPECT_EQ(ContractExecutionStatus::TX_PERMISSION_DENIED, validator_(*tx, 50));
 }

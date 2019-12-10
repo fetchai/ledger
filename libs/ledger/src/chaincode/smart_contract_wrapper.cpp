@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,16 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
+#include "ledger/chaincode/smart_contract_wrapper.hpp"
 
 namespace fetch {
-namespace byte_array {
-class ConstByteArray;
-}
 namespace ledger {
 
-uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
-                           byte_array::ConstByteArray const &contract, uint32_t log2_num_lanes);
+SmartContractWrapper::SmartContractWrapper(ConstByteArray source, uint64_t timestamp)
+  : source{std::move(source)}
+  , creation_timestamp{timestamp}
+{}
 
 }  // namespace ledger
 }  // namespace fetch

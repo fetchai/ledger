@@ -459,14 +459,26 @@ private:
   template <SizeType N, typename FirstIndex, typename... Indices>
   SizeType UnrollComputeColIndex(FirstIndex &&index, Indices &&... indices) const
   {
-    return static_cast<SizeType>(index) * stride_[N] +
+    if (shape_.at(N) <= SizeType(index))
+    {
+      throw exceptions::WrongIndices(
+          "Tensor::At : index " + std::to_string(SizeType(index)) + " is out of bounds of axis " +
+          std::to_string(N) + " (max possible index is " + std::to_string(shape_.at(N) - 1) + ").");
+    }
+    return static_cast<SizeType>(index) * stride_.at(N) +
            UnrollComputeColIndex<N + 1>(std::forward<Indices>(indices)...);
   }
 
   template <SizeType N, typename FirstIndex>
   SizeType UnrollComputeColIndex(FirstIndex &&index) const
   {
-    return static_cast<SizeType>(index) * stride_[N];
+    if (shape_.at(N) <= SizeType(index))
+    {
+      throw exceptions::WrongIndices(
+          "Tensor::At : index " + std::to_string(SizeType(index)) + " is out of bounds of axis " +
+          std::to_string(N) + " (max possible index is " + std::to_string(shape_.at(N) - 1) + ").");
+    }
+    return static_cast<SizeType>(index) * stride_.at(N);
   }
 
   void UpdateStrides()
@@ -1063,7 +1075,12 @@ template <typename T, typename C>
 template <typename... Indices>
 typename Tensor<T, C>::Type &Tensor<T, C>::At(Indices... indices)
 {
-  assert(sizeof...(indices) == stride_.size());
+  if (sizeof...(indices) != stride_.size())
+  {
+    throw exceptions::WrongIndices(
+        "Wrong arguments quantity (" + std::to_string(sizeof...(indices)) +
+        ") given to Tensor::At, expected: " + std::to_string(stride_.size()));
+  }
   return this->data()[UnrollComputeColIndex<0>(std::forward<Indices>(indices)...)];
 }
 
@@ -1079,7 +1096,12 @@ template <typename T, typename C>
 template <typename... Indices>
 typename Tensor<T, C>::Type Tensor<T, C>::At(Indices... indices) const
 {
-  assert(sizeof...(indices) == stride_.size());
+  if (sizeof...(indices) != stride_.size())
+  {
+    throw exceptions::WrongIndices(
+        "Wrong arguments quantity (" + std::to_string(sizeof...(indices)) +
+        ") given to Tensor::At, expected: " + std::to_string(stride_.size()));
+  }
   SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...);
   return this->data()[N];
 }
@@ -1295,10 +1317,12 @@ template <typename T, typename C>
 template <typename... Args>
 void Tensor<T, C>::Set(Args... args)
 {
-  assert(sizeof...(args) == stride_.size() + 1);  // Plus one as last arg is value
+  // Plus one as last arg is value
   if (sizeof...(args) != (stride_.size() + 1))
   {
-    throw exceptions::WrongIndices("too many or not enough indices given to Tensor::Set");
+    throw exceptions::WrongIndices(
+        "Wrong arguments quantity (" + std::to_string(sizeof...(args)) +
+        ") given to Tensor::Set, expected: " + std::to_string(stride_.size() + 1));
   }
 
   uint64_t index = TensorSetter<0, Args...>::IndexOf(stride_, shape_, std::forward<Args>(args)...);
@@ -1731,7 +1755,13 @@ template <typename S>
 fetch::meta::IfIsUnsignedInteger<S, void> Tensor<T, C>::Set(std::vector<S> const &indices,
                                                             Type const &          val)
 {
-  assert(indices.size() == shape_.size());
+  if (indices.size() != shape_.size())
+  {
+    throw exceptions::WrongIndices(
+        "Wrong indices quantity (" + std::to_string(indices.size()) +
+        ") given to Tensor::Set, expected: " + std::to_string(shape_.size()));
+  }
+
   this->operator[](ComputeColIndex(indices)) = val;
 }
 
@@ -2719,7 +2749,13 @@ struct Tensor<T, C>::TensorSetter
   static SizeType IndexOf(SizeVector const &stride, SizeVector const &shape, TSType const &index,
                           Args &&... args)
   {
-    assert(SizeType(index) < shape[N]);
+    if (SizeType(index) >= shape[N])
+    {
+      throw exceptions::WrongIndices("Tensor::IndexOf : index " + std::to_string(SizeType(index)) +
+                                     " is out of bounds of axis " + std::to_string(N) +
+                                     " (max possible index is " + std::to_string(shape[N] - 1) +
+                                     ").");
+    }
     return stride[N] * SizeType(index) +
            TensorSetter<N + 1, Args...>::IndexOf(stride, shape, std::forward<Args>(args)...);
   }

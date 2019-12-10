@@ -80,6 +80,8 @@ def run(options, benefactor):
     # deploy the contract to the network
     status = api.sync(api.contracts.create(entity1, contract, 2000))[0]
 
+    api.sync(api.tokens.transfer(entity1, contract.address, 10000, 500))
+
     block_number = status.exit_code
     v = contract.query(api, 'get_init_block_number_state')
     assert block_number > 0

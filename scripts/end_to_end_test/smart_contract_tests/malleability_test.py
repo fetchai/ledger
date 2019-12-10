@@ -39,12 +39,12 @@ def run(options, benefactor):
     id2 = Entity.from_hex(id2PrivateKey)
 
     # Load 1000 tokens to id1
-    api.sync(api.tokens.transfer(benefactor, id1, 1000, 1000))
+    api.sync(api.tokens.transfer(benefactor, id1, 100000, 1000))
 
-    # signed transaction that transfers 250 FET from id1 to id2. Signed with (r,s)
-    orig_tx = 'a1440000c5ab20e3ab845cb4a1d2c3e4c3b08f5ff42a6ff2a71d7697ba8f32c415b77c7f8d850b3ef025b189a2d9bb4a515a84c3673db6d3ef25385d2c8d1e34b06e2de1c0fac08501140000000000000000040bafbc61a08524372f495d9dee08adbc39824e980506947091395cece16636ddc094b9d409d5b34ef0bbd9c99c5caf21fc373802472cf96a8a280f84e833f992402192a0a125d551b60800d441cb3483cd36573c22a73f22563d6dd7b27e677b98ba4e2f77596888839a3c6f2439c97949ea28923f168d360a6d155c2be79570af'
+    # signed transaction that transfers 2500 FET from id1 to id2. Signed with (r,s) Fees are 1000
+    orig_tx = 'a1640000c5ab20e3ab845cb4a1d2c3e4c3b08f5ff42a6ff2a71d7697ba8f32c415b77c7f8d850b3ef025b189a2d9bb4a515a84c3673db6d3ef25385d2c8d1e34b06e2de1c109c46501c103e8565596cd793442c5040bafbc61a08524372f495d9dee08adbc39824e980506947091395cece16636ddc094b9d409d5b34ef0bbd9c99c5caf21fc373802472cf96a8a280f84e833f99240f1c72a58927153d6fdc19f178f69c5b02db29f33541e2b946c78a54ce693c7c81082f22531b85a1707cf290f73fddd2df88681084b0cc7aff38e977215ae5899'
     # signed Malicious transaction of the previous transaction. Signed with (r,n-s)
-    mal_tx = 'a1440000c5ab20e3ab845cb4a1d2c3e4c3b08f5ff42a6ff2a71d7697ba8f32c415b77c7f8d850b3ef025b189a2d9bb4a515a84c3673db6d3ef25385d2c8d1e34b06e2de1c0fac08501140000000000000000040bafbc61a08524372f495d9dee08adbc39824e980506947091395cece16636ddc094b9d409d5b34ef0bbd9c99c5caf21fc373802472cf96a8a280f84e833f99240f1a0311cc9b42edaa41d537e3d1f9d54ac159504276c27be2973cea85c8e8a17148a2b1dc3e188f911c6b05f163d95b964ae594a347870973e59b3c93d35b895'
+    mal_tx = 'a1640000c5ab20e3ab845cb4a1d2c3e4c3b08f5ff42a6ff2a71d7697ba8f32c415b77c7f8d850b3ef025b189a2d9bb4a515a84c3673db6d3ef25385d2c8d1e34b06e2de1c109c46501c103e8565596cd793442c5040bafbc61a08524372f495d9dee08adbc39824e980506947091395cece16636ddc094b9d409d5b34ef0bbd9c99c5caf21fc373802472cf96a8a280f84e833f99240cb13a3a05600cd45c7abe860515801941d6eef439e697ab31015543b515e5b85495f2a3f95a352747eda205cc70e0bca7a4d8b1240dfbd43f3a047a1faad30bd'
 
     # Creating jsons for the above mentioned transactions
     legit_trans = submit_json_transaction(host=HOST, port=PORT, tx_data=dict(
@@ -59,4 +59,4 @@ def run(options, benefactor):
     # If transaction malleability is feasible, id2 should have 500 FET.
     # If balance of id2 is more than 250 raise an exception
     assert api.tokens.balance(
-        id2) == 250, "Vulnerable to transaction malleability attack"
+        id2) == 2500, "Vulnerable to transaction malleability attack"
