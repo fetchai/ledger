@@ -168,8 +168,7 @@ vm::Ptr<vm::Array<SizeType>> VMTensor::VMShape() const
 
   for (std::size_t i = 0; i < tensor_.shape().size(); ++i)
   {
-    auto val              = tensor_.shape().at(i);
-    array->elements.at(i) = static_cast<SizeType>(val);
+    array->elements.at(i) = static_cast<SizeType>(tensor_.shape().at(i));
   }
 
   return array;

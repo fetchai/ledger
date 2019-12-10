@@ -381,14 +381,14 @@ TEST_F(MathTensorTests, tensor_shape_from_tensor)
   auto tensor_shape{res.Get<Ptr<IArray>>()};
 
   std::vector<SizeType> ret;
-  std::vector<SizeType> gt({2, 3, 4});
+  std::vector<SizeType> const gt({2, 3, 4});
 
   while (tensor_shape->Count() > 0)
   {
     ret.emplace_back(tensor_shape->PopFrontOne().Get<uint64_t>());
   }
 
-  EXPECT_TRUE(gt == ret);
+  EXPECT_EQ(gt, ret);
 }
 
 TEST_F(MathTensorTests, tensor_copy_from_tensor)
