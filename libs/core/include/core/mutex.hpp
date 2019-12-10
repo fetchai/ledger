@@ -109,7 +109,11 @@ private:
   int32_t     line_{0};
 };
 
+#ifndef NDEBUG
 using Mutex = DebugMutex;
+#else
+using Mutex = std::mutex;
+#endif
 
 #define FETCH_JOIN_IMPL(x, y) x##y
 #define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
