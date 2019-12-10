@@ -163,12 +163,12 @@ SizeType VMTensor::size() const
 
 vm::Ptr<vm::Array<SizeType>> VMTensor::VMShape() const
 {
-  auto array = this->vm_->CreateNewObject<Array<SizeType>>(this->vm_->GetTypeId<SizeType>(),
-                                                           static_cast<int32_t>(tensor_.shape().size()));
+  auto array = this->vm_->CreateNewObject<Array<SizeType>>(
+      this->vm_->GetTypeId<SizeType>(), static_cast<int32_t>(tensor_.shape().size()));
 
   for (std::size_t i = 0; i < tensor_.shape().size(); ++i)
   {
-    auto val = tensor_.shape().at(i);
+    auto val              = tensor_.shape().at(i);
     array->elements.at(i) = static_cast<SizeType>(val);
   }
 
