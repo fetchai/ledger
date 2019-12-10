@@ -122,10 +122,13 @@ public:
     data_ = container_data;
   }
 
-  template<typename T1 = T>
-  static Tensor FromString(byte_array::ConstByteArray const &c, fetch::math::meta::IfIsNonFixedPointArithmetic<T1> * /*unused */  = nullptr);
-  template<typename T1 = T>
-  static Tensor FromString(byte_array::ConstByteArray const &c, fetch::math::meta::IfIsFixedPoint<T1> * /*unused */ = nullptr);
+  template <typename T1 = T>
+  static Tensor FromString(
+      byte_array::ConstByteArray const &c,
+      fetch::math::meta::IfIsNonFixedPointArithmetic<T1> * /*unused */ = nullptr);
+  template <typename T1 = T>
+  static Tensor FromString(byte_array::ConstByteArray const &c,
+                           fetch::math::meta::IfIsFixedPoint<T1> * /*unused */ = nullptr);
   explicit Tensor(SizeType const &n);
   Tensor(Tensor &&other) noexcept = default;
   Tensor(Tensor const &other)     = default;
@@ -698,8 +701,10 @@ private:
  * @return Return Tensor with the specified values
  */
 template <typename T, typename C>
-template<typename T1>
-Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c, fetch::math::meta::IfIsNonFixedPointArithmetic<T1> * /*unused */)
+template <typename T1>
+Tensor<T, C> Tensor<T, C>::FromString(
+    byte_array::ConstByteArray const &c,
+    fetch::math::meta::IfIsNonFixedPointArithmetic<T1> * /*unused */)
 {
   Tensor            ret;
   SizeType          n = 1;
@@ -767,8 +772,9 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c, fetch
 }
 
 template <typename T, typename C>
-template<typename T1>
-Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c, fetch::math::meta::IfIsFixedPoint<T1> * /*unused */)
+template <typename T1>
+Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c,
+                                      fetch::math::meta::IfIsFixedPoint<T1> * /*unused */)
 {
   Tensor            ret;
   SizeType          n = 1;
