@@ -364,7 +364,7 @@ TEST_F(MathTensorTests, tensor_min_test)
   fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
   DataType result = vm_tensor.Min();
-  DataType gt{-99.1};
+  DataType gt{"-99.1"};
 
   EXPECT_TRUE(result == gt);
 }
@@ -447,7 +447,7 @@ TEST_F(MathTensorTests, tensor_sum_test)
   fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
   DataType result = vm_tensor.Sum();
-  DataType gt{14273.0};
+  DataType gt{"14273.0"};
 
   EXPECT_TRUE(fetch::math::Abs(gt - result) < DataType::TOLERANCE);
 }
