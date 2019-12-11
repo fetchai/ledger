@@ -220,35 +220,31 @@ void CategoricalPlusOneTest(bool add_softmax = false)
   gt.Set(3, 0, static_cast<DataType>(1));
 
   /////////////////////////
-  /// PRE-TRAINING LOOP ///
+  /// ONE TRAINING STEP ///
   /////////////////////////
 
-  auto     loss = static_cast<DataType>(0);
-  DataType current_loss;
+  auto loss = static_cast<DataType>(0);
 
-  for (std::size_t i = 0; i < 3; ++i)
+  for (SizeType step{0}; step < n_data; ++step)
   {
-    for (SizeType step{0}; step < n_data; ++step)
-    {
-      auto cur_input = data.View(step).Copy();
-      g.SetInput(input_name, cur_input);
-      auto cur_gt = gt.View(step).Copy();
-      g.SetInput(label_name, cur_gt);
+    auto cur_input = data.View(step).Copy();
+    g.SetInput(input_name, cur_input);
+    auto cur_gt = gt.View(step).Copy();
+    g.SetInput(label_name, cur_gt);
 
-      auto error_tensor = g.Evaluate(error_name);
-      loss += error_tensor(0, 0);
-      g.BackPropagate(error_name);
-    }
-
-    current_loss = loss;
-
-    for (auto &w : g.GetTrainables())
-    {
-      TypeParam grad = w->GetGradientsReferences();
-      fetch::math::Multiply(grad, DataType{-alpha}, grad);
-      w->ApplyGradient(grad);
-    }
+    auto error_tensor = g.Evaluate(error_name);
+    loss += error_tensor(0, 0);
+    g.BackPropagate(error_name);
   }
+
+  for (auto &w : g.GetTrainables())
+  {
+    TypeParam grad = w->GetGradientsReferences();
+    fetch::math::Multiply(grad, DataType{-alpha}, grad);
+    w->ApplyGradient(grad);
+  }
+
+  DataType current_loss = loss;
 
   /////////////////////
   /// TRAINING LOOP ///
@@ -324,37 +320,33 @@ void CategoricalXorTest(bool add_softmax = false)
   TypeParam gt   = GenerateXorGt<TypeParam>(SizeType(n_classes.At(0)));
 
   /////////////////////////
-  /// PRE-TRAINING LOOP ///
+  /// ONE TRAINING STEP ///
   /////////////////////////
 
   TypeParam cur_gt{{SizeType(1), SizeType(n_classes.At(0))}};
   TypeParam cur_input{{SizeType(1), SizeType(n_classes.At(0))}};
   auto      loss = static_cast<DataType>(0);
-  DataType  current_loss;
 
-  for (std::size_t i = 0; i < 3; ++i)
+  for (SizeType step{0}; step < n_data; ++step)
   {
-    for (SizeType step{0}; step < n_data; ++step)
-    {
-      auto cur_input = data.View(step).Copy();
-      g.SetInput(input_name, cur_input);
-      auto cur_gt = gt.View(step).Copy();
-      g.SetInput(label_name, cur_gt);
+    cur_input = data.View(step).Copy();
+    g.SetInput(input_name, cur_input);
+    cur_gt = gt.View(step).Copy();
+    g.SetInput(label_name, cur_gt);
 
-      auto error_tensor = g.Evaluate(error_name);
-      loss += error_tensor(0, 0);
-      g.BackPropagate(error_name);
-    }
-
-    current_loss = loss;
-
-    for (auto &w : g.GetTrainables())
-    {
-      TypeParam grad = w->GetGradientsReferences();
-      fetch::math::Multiply(grad, DataType{-alpha}, grad);
-      w->ApplyGradient(grad);
-    }
+    auto error_tensor = g.Evaluate(error_name);
+    loss += error_tensor(0, 0);
+    g.BackPropagate(error_name);
   }
+
+  for (auto &w : g.GetTrainables())
+  {
+    TypeParam grad = w->GetGradientsReferences();
+    fetch::math::Multiply(grad, DataType{-alpha}, grad);
+    w->ApplyGradient(grad);
+  }
+
+  DataType current_loss = loss;
 
   /////////////////////
   /// TRAINING LOOP ///
