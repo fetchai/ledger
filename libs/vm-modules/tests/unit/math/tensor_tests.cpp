@@ -206,7 +206,7 @@ TEST_F(MathTensorTests, tensor_set_and_at_one_test)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({2});
-  gt.Fill(static_cast<DataType>(2.0));
+  gt.Fill(fetch::math::Type<DataType>("2.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
@@ -238,7 +238,7 @@ TEST_F(MathTensorTests, tensor_set_and_at_two_test)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({2, 2});
-  gt.Fill(static_cast<DataType>(2.0));
+  gt.Fill(fetch::math::Type<DataType>("2.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
@@ -275,7 +275,7 @@ TEST_F(MathTensorTests, tensor_set_and_at_three_test)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({2, 2, 2});
-  gt.Fill(static_cast<DataType>(2.0));
+  gt.Fill(fetch::math::Type<DataType>("2.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
@@ -321,7 +321,7 @@ TEST_F(MathTensorTests, tensor_set_and_at_four_test)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({2, 2, 2, 2});
-  gt.Fill(static_cast<DataType>(2.0));
+  gt.Fill(fetch::math::Type<DataType>("2.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
@@ -352,7 +352,7 @@ TEST_F(MathTensorTests, tensor_set_from_string)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({4, 1, 1});
-  gt.Fill(static_cast<DataType>(1.0));
+  gt.Fill(fetch::math::Type<DataType>("1.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
@@ -619,7 +619,7 @@ TEST_F(MathTensorTests, tensor_add_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(14.0));
+  gt.Fill(fetch::math::Type<DataType>("14.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
@@ -661,7 +661,7 @@ TEST_F(MathTensorTests, tensor_subtract_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(-2.0));
+  gt.Fill(fetch::math::Type<DataType>("-2.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
@@ -703,7 +703,7 @@ TEST_F(MathTensorTests, tensor_multiply_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(49.0));
+  gt.Fill(fetch::math::Type<DataType>("49.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
@@ -745,7 +745,7 @@ TEST_F(MathTensorTests, tensor_divide_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(0.5));
+  gt.Fill(fetch::math::Type<DataType>("0.5"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
@@ -775,7 +775,7 @@ TEST_F(MathTensorTests, DISABLED_tensor_inplace_multiply_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(49.0));
+  gt.Fill(fetch::math::Type<DataType>("49.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
@@ -805,7 +805,7 @@ TEST_F(MathTensorTests, DISABLED_tensor_inplace_divide_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(0.5));
+  gt.Fill(fetch::math::Type<DataType>("0.5"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
@@ -835,7 +835,7 @@ TEST_F(MathTensorTests, DISABLED_tensor_inplace_add_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(14.0));
+  gt.Fill(fetch::math::Type<DataType>("14.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
@@ -865,7 +865,7 @@ TEST_F(MathTensorTests, DISABLED_tensor_inplace_subtract_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(-2.0));
+  gt.Fill(fetch::math::Type<DataType>("-2.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
@@ -906,7 +906,7 @@ TEST_F(MathTensorTests, tensor_negate_etch_test)
   auto       tensor     = tensor_ptr->GetTensor();
 
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(-7.0));
+  gt.Fill(fetch::math::Type<DataType>("-7.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
@@ -1382,7 +1382,7 @@ TEST_F(MathTensorTests, tensor_state_test)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({2, 10});
-  gt.Fill(static_cast<DataType>(7.0));
+  gt.Fill(fetch::math::Type<DataType>("7.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
