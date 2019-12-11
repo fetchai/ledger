@@ -41,8 +41,9 @@ void Gelu(ArrayType const &t, ArrayType &ret)
   assert(t.size() == ret.size());
   using DataType = typename ArrayType::Type;
 
-  DataType one{1}, half{static_cast<DataType>(0.5)}, three{static_cast<DataType>(3)},
-      coeff1{static_cast<DataType>(0.797885)}, coeff2{static_cast<DataType>(0.035677)};
+  DataType one{1}, half{fetch::math::Type<DataType>("0.5")},
+      three{fetch::math::Type<DataType>("3")}, coeff1{fetch::math::Type<DataType>("0.797885")},
+      coeff2{fetch::math::Type<DataType>("0.035677")};
   ArrayType intermediate(t.shape());
 
   Multiply(t, coeff1, intermediate);
