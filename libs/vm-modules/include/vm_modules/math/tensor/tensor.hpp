@@ -63,6 +63,8 @@ public:
 
   TensorType::SizeType size() const;
 
+  vm::Ptr<vm::Array<TensorType::SizeType>> VMShape() const;
+
   ////////////////////////////////////
   /// ACCESSING AND SETTING VALUES ///
   ////////////////////////////////////
@@ -73,7 +75,7 @@ public:
   template <typename... Args>
   void SetAt(Args... args);
 
-  void Copy(TensorType const &other);
+  vm::Ptr<VMTensor> Copy();
 
   void Fill(DataType const &value);
 
@@ -83,13 +85,63 @@ public:
   /// RESHAPING ///
   /////////////////
 
-  fetch::vm::Ptr<VMTensor> Squeeze();
+  fetch::vm::Ptr<VMTensor> Squeeze() const;
 
-  fetch::vm::Ptr<VMTensor> Unsqueeze();
+  fetch::vm::Ptr<VMTensor> Unsqueeze() const;
 
   bool Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
 
-  void Transpose();
+  fetch::vm::Ptr<VMTensor> Transpose() const;
+
+  ////////////////////////
+  /// BASIC COMPARISON ///
+  ////////////////////////
+
+  bool IsEqualOperator(vm::Ptr<VMTensor> const &other);
+
+  bool IsNotEqualOperator(vm::Ptr<VMTensor> const &other);
+
+  vm::Ptr<VMTensor> NegateOperator();
+
+  // TODO (ML-340) - Below Operators should be bound and above operators removed when operators can
+  // take estimators
+
+  bool IsEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  bool IsNotEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void Negate(vm::Ptr<Object> &object) override;
+
+  ////////////////////////
+  /// BASIC ARITHMETIC ///
+  ////////////////////////
+
+  vm::Ptr<VMTensor> AddOperator(vm::Ptr<VMTensor> const &other);
+
+  vm::Ptr<VMTensor> SubtractOperator(vm::Ptr<VMTensor> const &other);
+
+  vm::Ptr<VMTensor> MultiplyOperator(vm::Ptr<VMTensor> const &other);
+
+  vm::Ptr<VMTensor> DivideOperator(vm::Ptr<VMTensor> const &other);
+
+  // TODO (ML-340) - Below Operators should be bound and above operators removed when operators can
+  // take estimators
+
+  void Add(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+
+  void Subtract(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+
+  void InplaceAdd(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void InplaceSubtract(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void Multiply(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+
+  void Divide(vm::Ptr<Object> &lhso, vm::Ptr<Object> &rhso) override;
+
+  void InplaceMultiply(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
+
+  void InplaceDivide(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso) override;
 
   /////////////////////////
   /// MATRIX OPERATIONS ///
@@ -100,6 +152,12 @@ public:
   DataType Max();
 
   DataType Sum();
+
+  vm::Ptr<VMTensor> ArgMax(SizeType const &indices = SizeType{0});
+
+  vm::Ptr<VMTensor> ArgMaxNoIndices();
+
+  vm::Ptr<VMTensor> Dot(vm::Ptr<VMTensor> const &other);
 
   //////////////////////////////
   /// PRINTING AND EXPORTING ///
@@ -118,6 +176,8 @@ public:
   bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
 
   TensorEstimator &Estimator();
+
+  static const std::size_t RECTANGULAR_SHAPE_SIZE = 2;
 
 private:
   TensorType      tensor_;

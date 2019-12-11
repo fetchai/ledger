@@ -79,6 +79,10 @@ public:
   ChargeAmount CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                  fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
+  ChargeAmount CompileSequentialWithMetrics(
+      vm::Ptr<vm::String> const &loss, vm::Ptr<vm::String> const &optimiser,
+      vm::Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics);
+
   ChargeAmount CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
                              fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers);
 
@@ -132,6 +136,10 @@ public:
 
   static const fixed_point::fp64_t CEL_FORWARD_IMPACT;
 
+  static const fixed_point::fp64_t SCEL_FORWARD_IMPACT;
+
+  static const fixed_point::fp64_t CATEGORICAL_ACCURACY_FORWARD_IMPACT;
+
   // Backward
   static const fixed_point::fp64_t BACKWARD_DENSE_INPUT_COEF;
 
@@ -145,19 +153,28 @@ public:
 
   static const fixed_point::fp64_t CEL_BACKWARD_IMPACT;
 
+  static const fixed_point::fp64_t SCEL_BACKWARD_IMPACT;
+
   // Predict
   static const fixed_point::fp64_t PREDICT_BATCH_LAYER_COEF;
 
   static const fixed_point::fp64_t PREDICT_CONST_COEF;
 
+  // Fit
+  static const fixed_point::fp64_t BACKWARD_BATCH_LAYER_COEF;
+  static const fixed_point::fp64_t BACKWARD_PER_BATCH_COEF;
+  static const fixed_point::fp64_t FIT_CONST_COEF;
+
+  // Deserialisation
   static const fixed_point::fp64_t DESERIALISATION_PER_CHAR_COEF;
 
   static const fixed_point::fp64_t DESERIALISATION_CONST_COEF;
 
-  static constexpr SizeType FIT_CONST_OVERHEAD            = 3;
-  static constexpr SizeType FIT_PER_BATCH_OVERHEAD        = 2;
-  static constexpr SizeType SERIALISATION_OVERHEAD        = 5;
-  static constexpr SizeType WEIGHT_SERIALISATION_OVERHEAD = 4;  // Will depend on DataType of Tensor
+  // Serialisation
+  static const fixed_point::fp64_t SERIALISATION_PER_OP_COEF;
+  static const fixed_point::fp64_t SERIALISATION_WEIGHT_SUM_COEF;
+  static const fixed_point::fp64_t SERIALISATION_PADDED_WEIGHT_SUM_COEF;
+  static const fixed_point::fp64_t SERIALISATION_CONST_COEF;
 
   static constexpr ChargeAmount CONSTANT_CHARGE{vm::COMPUTE_CHARGE_COST};
 
@@ -165,17 +182,21 @@ private:
   struct State
   {
     // Model
-    DataType forward_pass_cost{0.0};
-    DataType backward_pass_cost{0.0};
+    DataType forward_pass_cost{"0.0"};
+    DataType backward_pass_cost{"0.0"};
+    DataType metrics_cost{"0.0"};
 
     // Optimiser
     SizeType weights_size_sum{0};
     SizeType weights_padded_size_sum{0};
 
-    DataType optimiser_step_impact{0};
+    DataType optimiser_step_impact{"0"};
 
     SizeType last_layer_size{0};
     SizeType ops_count{0};
+
+    // data
+    SizeType subset_size{0};
 
     // serialization
     bool SerializeTo(serializers::MsgPackSerializer &buffer);
