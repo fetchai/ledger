@@ -161,21 +161,21 @@ private:
   DebugMutex &lockable_;
 };
 
-#ifndef NDEBUG
+//#ifndef NDEBUG
 using Mutex = DebugMutex;
-#else
-using Mutex = std::mutex;
-#endif
+//#else
+// using Mutex = std::mutex;
+//#endif
 
 #define FETCH_JOIN_IMPL(x, y) x##y
 #define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
 
-#ifndef NDEBUG
+//#ifndef NDEBUG
 #define FETCH_LOCK(lockable)                                                       \
   fetch::DebugLockGuard<typename std::decay<decltype(lockable)>::type> FETCH_JOIN( \
       mutex_locked_on_line, __LINE__)(lockable, __FILE__, __LINE__)
-#else
-#define FETCH_LOCK(lockable) \
-  std::lock_guard<decltype(lockable)> FETCH_JOIN(mutex_locked_on_line, __LINE__)(lockable)
-#endif
+//#else
+//#define FETCH_LOCK(lockable) \
+//  std::lock_guard<decltype(lockable)> FETCH_JOIN(mutex_locked_on_line, __LINE__)(lockable)
+//#endif
 }  // namespace fetch
