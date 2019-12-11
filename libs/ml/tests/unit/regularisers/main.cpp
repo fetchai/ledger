@@ -44,7 +44,7 @@ TYPED_TEST(WeightsTest, l1_regulariser_test)
   using RegType    = fetch::ml::regularisers::L1Regulariser<TensorType>;
 
   // Initialise values
-  auto regularisation_rate = static_cast<DataType>(0.1f);
+  auto regularisation_rate = fetch::math::Type<DataType>("0.1");
   auto regulariser         = std::make_shared<RegType>();
 
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
@@ -75,7 +75,7 @@ TYPED_TEST(WeightsTest, l2_regulariser_test)
   using RegType    = fetch::ml::regularisers::L2Regulariser<TensorType>;
 
   // Initialise values
-  auto regularisation_rate = static_cast<DataType>(0.1f);
+  auto regularisation_rate = fetch::math::Type<DataType>("0.1");
   auto regulariser         = std::make_shared<RegType>();
 
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
