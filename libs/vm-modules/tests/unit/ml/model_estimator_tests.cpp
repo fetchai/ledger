@@ -1142,28 +1142,61 @@ TEST_F(VMModelEstimatorTests,
 
 TEST_F(VMModelEstimatorTests, layer_non_dense_should_have_infinite_charge)
 {
-  SizeType input_size = 10;
+  SizeType input_size      = 10;
   SizeType output_size     = 10;
-  auto     model      = VmSequentialModel(vm);
-  auto     layer_type      = VmString(vm, "dense");
+  auto     model           = VmSequentialModel(vm);
+  auto     activation_type = VmString(vm, "relu");
 
-  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseActivationCharge(model, layer_type, input_size, output_size, VmString(vm, "conv1d")));
-  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseActivationCharge(model, layer_type, input_size, output_size, VmString(vm, "conv2d")));
+  EXPECT_GT(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseCharge(model, VmString(vm, "dense"), input_size, output_size));
+  EXPECT_GT(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseActivationCharge(model, VmString(vm, "dense"), input_size, output_size,
+                                          activation_type));
+
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseCharge(model, VmString(vm, "conv1d"), input_size, output_size));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseCharge(model, VmString(vm, "conv2d"), input_size, output_size));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseActivationCharge(model, VmString(vm, "conv1d"), input_size, output_size,
+                                          activation_type));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseActivationCharge(model, VmString(vm, "conv2d"), input_size, output_size,
+                                          activation_type));
 }
 
 TEST_F(VMModelEstimatorTests, activation_non_relu_should_have_infinite_charge)
 {
-  SizeType input_size = 10;
-  SizeType output_size     = 10;
-  auto     model      = VmSequentialModel(vm);
+  SizeType input_size  = 10;
+  SizeType output_size = 10;
+  auto     model       = VmSequentialModel(vm);
+  auto     layer_type  = VmString(vm, "dense");
 
-  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "nothing"), input_size, output_size));
-  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "leaky_relu"), input_size, output_size));
-  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "log_sigmoid"), input_size, output_size));
-  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "log_softmax"), input_size, output_size));
-  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "sigmoid"), input_size, output_size));
-  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "softmax"), input_size, output_size));
-  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE, LayerAddDenseCharge(model, VmString(vm, "gelu"), input_size, output_size));
+  EXPECT_GT(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseActivationCharge(model, layer_type, input_size, output_size,
+                                          VmString(vm, "relu")));
+
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseActivationCharge(model, layer_type, input_size, output_size,
+                                          VmString(vm, "nothing")));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseActivationCharge(model, layer_type, input_size, output_size,
+                                          VmString(vm, "leaky_relu")));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseActivationCharge(model, layer_type, input_size, output_size,
+                                          VmString(vm, "log_sigmoid")));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseActivationCharge(model, layer_type, input_size, output_size,
+                                          VmString(vm, "log_softmax")));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseActivationCharge(model, layer_type, input_size, output_size,
+                                          VmString(vm, "sigmoid")));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseActivationCharge(model, layer_type, input_size, output_size,
+                                          VmString(vm, "softmax")));
+  EXPECT_EQ(fetch::vm::MAXIMUM_CHARGE,
+            LayerAddDenseActivationCharge(model, layer_type, input_size, output_size,
+                                          VmString(vm, "gelu")));
 }
 
 }  // namespace

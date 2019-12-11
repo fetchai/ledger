@@ -66,7 +66,7 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
   SizeType padded_size{0};
 
   // must be a dense layer
-  if(layer->string() != "dense")
+  if (layer->string() != "dense")
   {
     return MaximumCharge("Only dense layers are supported");
   }
@@ -110,7 +110,7 @@ ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> cons
 {
   ChargeAmount estimate = LayerAddDense(layer, inputs, hidden_nodes);
 
-  if(activation->string() != "relu")
+  if (activation->string() != "relu")
   {
     return MaximumCharge("Only relu activations are supported");
   }
