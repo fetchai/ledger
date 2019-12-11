@@ -93,10 +93,18 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
   state_.last_layer_size = hidden_nodes;
   state_.ops_count += 3;
 
-  return static_cast<ChargeAmount>(
-             ADD_DENSE_INPUT_COEF * inputs + ADD_DENSE_OUTPUT_COEF * hidden_nodes +
-             ADD_DENSE_QUAD_COEF * inputs * hidden_nodes + ADD_DENSE_CONST_COEF) *
-         COMPUTE_CHARGE_COST;
+  auto ret = static_cast<ChargeAmount>(
+                 ADD_DENSE_INPUT_COEF * inputs + ADD_DENSE_OUTPUT_COEF * hidden_nodes +
+                 ADD_DENSE_QUAD_COEF * inputs * hidden_nodes + ADD_DENSE_CONST_COEF) *
+             COMPUTE_CHARGE_COST;
+
+  // Ensure that estimate will never be 0
+  if (ret < std::numeric_limits<uint64_t>::max())
+  {
+    ret += 1;
+  }
+
+  return ret;
 }
 
 ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> const &layer,
@@ -110,6 +118,12 @@ ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> cons
   state_.forward_pass_cost  = state_.forward_pass_cost + RELU_FORWARD_IMPACT * hidden_nodes;
   state_.backward_pass_cost = state_.backward_pass_cost + RELU_BACKWARD_IMPACT * hidden_nodes;
   state_.ops_count++;
+
+  // Ensure that estimate will never be 0
+  if (estimate < std::numeric_limits<uint64_t>::max())
+  {
+    estimate += 1;
+  }
 
   return estimate;
 }
@@ -251,8 +265,16 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     return MaximumCharge("Not yet implemented");
   }
 
-  return static_cast<ChargeAmount>(optimiser_construction_impact + COMPILE_CONST_COEF) *
-         COMPUTE_CHARGE_COST;
+  auto ret = static_cast<ChargeAmount>(optimiser_construction_impact + COMPILE_CONST_COEF) *
+             COMPUTE_CHARGE_COST;
+
+  // Ensure that estimate will never be 0
+  if (ret < std::numeric_limits<uint64_t>::max())
+  {
+    ret += 1;
+  }
+
+  return ret;
 }
 
 ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
@@ -325,7 +347,15 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
   // Call overhead
   estimate = estimate + FIT_CONST_COEF;
 
-  return static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
+  auto ret = static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
+
+  // Ensure that estimate will never be 0
+  if (ret < std::numeric_limits<uint64_t>::max())
+  {
+    ret += 1;
+  }
+
+  return ret;
 }
 
 ChargeAmount ModelEstimator::Evaluate()
@@ -339,7 +369,15 @@ ChargeAmount ModelEstimator::Evaluate()
 
   // Metrics
   estimate = estimate + state_.metrics_cost;
-  return static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
+  auto ret = static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
+
+  // Ensure that estimate will never be 0
+  if (ret < std::numeric_limits<uint64_t>::max())
+  {
+    ret += 1;
+  }
+
+  return ret;
 }
 
 ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
@@ -351,7 +389,15 @@ ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
   estimate = estimate + PREDICT_BATCH_LAYER_COEF * batch_size * state_.ops_count;
   estimate = estimate + PREDICT_CONST_COEF;
 
-  return static_cast<ChargeAmount>(estimate * COMPUTE_CHARGE_COST);
+  auto ret = static_cast<ChargeAmount>(estimate * COMPUTE_CHARGE_COST);
+
+  // Ensure that estimate will never be 0
+  if (ret < std::numeric_limits<uint64_t>::max())
+  {
+    ret += 1;
+  }
+
+  return ret;
 }
 
 ChargeAmount ModelEstimator::SerializeToString()
@@ -362,13 +408,29 @@ ChargeAmount ModelEstimator::SerializeToString()
   estimate = estimate + SERIALISATION_WEIGHT_SUM_COEF * state_.weights_size_sum;
   estimate = estimate + SERIALISATION_CONST_COEF;
 
-  return static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
+  auto ret = static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
+
+  // Ensure that estimate will never be 0
+  if (ret < std::numeric_limits<uint64_t>::max())
+  {
+    ret += 1;
+  }
+
+  return ret;
 }
 
 ChargeAmount ModelEstimator::DeserializeFromString(Ptr<String> const &model_string)
 {
   DataType estimate = DESERIALISATION_PER_CHAR_COEF * model_string->string().size();
-  return static_cast<ChargeAmount>(estimate + DESERIALISATION_CONST_COEF) * COMPUTE_CHARGE_COST;
+  auto ret = static_cast<ChargeAmount>(estimate + DESERIALISATION_CONST_COEF) * COMPUTE_CHARGE_COST;
+
+  // Ensure that estimate will never be 0
+  if (ret < std::numeric_limits<uint64_t>::max())
+  {
+    ret += 1;
+  }
+
+  return ret;
 }
 
 bool ModelEstimator::SerializeTo(serializers::MsgPackSerializer &buffer)
