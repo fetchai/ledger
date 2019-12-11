@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/model/sequential.hpp"
 #include "gtest/gtest.h"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/model/sequential.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
@@ -90,8 +90,8 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   ModelType model = SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
                                                                train_data, train_labels);
   // test loss decreases
-  DataType loss{0};
-  DataType later_loss{0};
+  DataType loss{"0"};
+  DataType later_loss{"0"};
 
   model.Train(1, loss);
   model.Train(training_steps);

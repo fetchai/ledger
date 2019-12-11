@@ -82,7 +82,7 @@ public:
     assert(inputs.size() == 2);
     assert(inputs.at(0)->shape() == inputs.at(1)->shape());
 
-    DataType num_correct{0};
+    DataType num_correct{"0"};
 
     TensorType test_results = fetch::math::ArgMax(*inputs.at(0));
     TensorType ground_truth = fetch::math::ArgMax(*inputs.at(1));

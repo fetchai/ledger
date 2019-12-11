@@ -92,7 +92,7 @@ public:
   {
     // Initialise variables
     output_symmetric_affinities_.Fill(static_cast<DataType>(0));
-    DataType min_gain{0.01f};
+    DataType min_gain{"0.01"};
     DataType momentum = initial_momentum;
     assert(output_matrix_.shape().size() == 2);
 
