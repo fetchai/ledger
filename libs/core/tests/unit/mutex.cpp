@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#define FETCH_DEBUG_MUTEX_THROW_INSTEAD_OF_ABORT
 #include "core/mutex.hpp"
 
 #include "gmock/gmock.h"
@@ -29,14 +30,14 @@ TEST(DebugMutex, SimpleProblem)
 {
 
   {
-    fetch::DebugMutex                  mutex{__FILE__, __LINE__};
+    fetch::DebugMutex                  mutex;
     std::lock_guard<fetch::DebugMutex> guard1(mutex);
     EXPECT_THROW(std::lock_guard<fetch::DebugMutex> guard2(mutex), std::runtime_error);
   }
 
   {
-    fetch::DebugMutex                  mutex1{__FILE__, __LINE__};
-    fetch::DebugMutex                  mutex2{__FILE__, __LINE__};
+    fetch::DebugMutex                  mutex1;
+    fetch::DebugMutex                  mutex2;
     std::lock_guard<fetch::DebugMutex> guard1(mutex1);
     std::lock_guard<fetch::DebugMutex> guard2(mutex2);
 

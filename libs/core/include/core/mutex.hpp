@@ -45,37 +45,28 @@ void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
 void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
 void FindDeadlock(DebugMutex *mutex, std::thread::id thread);
 
-class DebugMutex
+class DebugMutex : public std::mutex
 {
 public:
-  DebugMutex()
-    : filename_{"unknown"}
-    , line_{0}
-  {}
-
-  DebugMutex(std::string const &filename, int32_t line)
-    : filename_{filename}
-    , line_{line}
-  {}
-
+  DebugMutex()  = default;
   ~DebugMutex() = default;
 
   void lock()
   {
     FindDeadlock(this, std::this_thread::get_id());
-    mutex_.lock();
+    std::mutex::lock();
     RegisterMutexAcquisition(this, std::this_thread::get_id());
   }
 
   void unlock()
   {
     UnregisterMutexAcquisition(this, std::this_thread::get_id());
-    mutex_.unlock();
+    std::mutex::unlock();
   }
 
   bool try_lock()
   {
-    if (mutex_.try_lock())
+    if (std::mutex::try_lock())
     {
       RegisterMutexAcquisition(this, std::this_thread::get_id());
       return true;
@@ -95,8 +86,7 @@ public:
   };
 
 private:
-  std::mutex  mutex_;
-  std::string filename_{};
+  std::string filename_{"unknown"};
   int32_t     line_{0};
 };
 

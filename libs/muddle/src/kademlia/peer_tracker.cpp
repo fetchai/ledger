@@ -444,6 +444,7 @@ void PeerTracker::PullPeerKnowledge()
     {
       FETCH_LOCK(pull_mutex_);
       address = peer_pull_queue_.front();
+      peer_pull_queue_.pop_front();
 
       if (address.size() != Packet::ADDRESS_SIZE)
       {
@@ -451,7 +452,6 @@ void PeerTracker::PullPeerKnowledge()
       }
 
       search_for = peer_pull_map_[address];
-      peer_pull_queue_.pop_front();
     }
 
     // Increasing the tracker id.
