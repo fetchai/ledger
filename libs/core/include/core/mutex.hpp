@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <atomic>
 #include <cstdlib>
 #include <iostream>
 #include <mutex>
@@ -43,8 +44,7 @@ public:
   void QueueUpFor(DebugMutex *mutex, std::thread::id thread, LockLocation const &location);
   void DeadlockDetected(std::string const &message)
   {
-    // TODO: Print lock stack;
-    if (throw_on_deadlock_)
+    if (static_cast<bool>(throw_on_deadlock_))
     {
       throw std::runtime_error(message);
     }

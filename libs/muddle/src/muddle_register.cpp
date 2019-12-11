@@ -84,7 +84,7 @@ void MuddleRegister::Broadcast(ConstByteArray const &data) const
     }
   }
 
-  for(auto const &conn : held_connections)
+  for (auto const &conn : held_connections)
   {
     conn->Send(data);
   }

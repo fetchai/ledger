@@ -83,16 +83,9 @@ struct Node
     muddle->SetTrackerConfiguration(TrackerConfiguration::AllOn());
   }
 
-  void Reboot(TrackerConfiguration configuration = {})
+  void Start(TrackerConfiguration configuration = {})
   {
-    Stop();
-
-    char const *external         = std::getenv("MUDDLE_EXTERNAL");
-    char const *external_address = (external == nullptr) ? "127.0.0.1" : external;
-
-    network_manager = std::make_shared<NetworkManager>("NetMgr" + std::to_string(port), 1);
     network_manager->Start();
-    muddle = fetch::muddle::CreateMuddle("TEST", certificate, *network_manager, external_address);
     muddle->Start({port});
     muddle->SetTrackerConfiguration(configuration);
   }
@@ -104,6 +97,12 @@ struct Node
   {
     muddle->Stop();
     network_manager->Stop();
+
+    char const *external         = std::getenv("MUDDLE_EXTERNAL");
+    char const *external_address = (external == nullptr) ? "127.0.0.1" : external;
+
+    network_manager = std::make_shared<NetworkManager>("NetMgr" + std::to_string(port), 1);
+    muddle = fetch::muddle::CreateMuddle("TEST", certificate, *network_manager, external_address);
   }
 
   NetworkManagerPtr network_manager;
@@ -136,11 +135,11 @@ struct Network
     return ret;
   }
 
-  void Reboot(TrackerConfiguration configuration = {})
+  void Start(TrackerConfiguration configuration = {})
   {
     for (auto &node : nodes)
     {
-      node->Reboot(configuration);
+      node->Start(configuration);
     }
   }
 
@@ -150,6 +149,7 @@ struct Network
     {
       node->Stop();
     }
+    std::this_thread::sleep_for(std::chrono::seconds(5));
   }
 
   void Shutdown()
