@@ -510,7 +510,7 @@ TYPED_TEST(MaxPoolTest, backward_test_2d)
   {
     for (SizeType j{0}; j < output_height; ++j)
     {
-      error(0, i, j, 0) = DataType{1 + i + j};
+      error(0, i, j, 0) = static_cast<DataType>(1 + i + j);
     }
   }
 
