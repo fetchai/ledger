@@ -88,6 +88,7 @@ void MuddleLearnerNetworkerImpl::Setup(MuddlePtr mud, StorePtr update_store)
               << "chan:" << channel << ", "
               << "cntr:" << counter << ", "
               << "addr:" << fetch::byte_array::ToBase64(my_address) << ", "
+              << "algo:" << algo_name << ", "
               << "type:" << type_name << ", "
               << "size:" << bytes.size() << " bytes, "
               << "prop:" << proportion << ", "
@@ -217,7 +218,7 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(AlgorithmClass const &algo_name
   broadcast_proportion = std::max(0.0, std::min(1.0, broadcast_proportion));
   if (peers.empty())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "PushUpdateBytes(1) got no peers to send to.");
+    FETCH_LOG_WARN(LOGGING_NAME, "PushUpdateBytes(1) was given no peers to send to.");
     return;
   }
   for (auto const &peer : peers)
@@ -242,7 +243,7 @@ void MuddleLearnerNetworkerImpl::PushUpdateBytes(AlgorithmClass const &algo_name
     Peers peers;
     if (next_ones.empty())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "PushUpdateBytes(2) got no peers from alg to send to.");
+      FETCH_LOG_WARN(LOGGING_NAME, "PushUpdateBytes(2) was given no peers from alg to send to.");
       return;
     }
     for (auto const &next_one : next_ones)
