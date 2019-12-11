@@ -942,8 +942,8 @@ void PeerTracker::Periodically()
   }
 
   // Dumping the tracker table
-  peer_table_.Dump();  // TODO(tfr): make configurable.
-}  // namespace muddle
+  peer_table_.Dump();
+}
 
 PeerTracker::PeerTracker(PeerTracker::Duration const &interval, core::Reactor &reactor,
                          MuddleRegister const &reg, PeerConnectionList &connections,
