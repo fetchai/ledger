@@ -24,6 +24,11 @@ namespace {
 Mutexregister mutex_register;
 }
 
+void QueueUpFor(DebugMutex *mutex, std::thread::id thread)
+{
+  mutex_register.QueueUpFor(mutex, thread);
+}
+
 void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread)
 {
   mutex_register.RegisterMutexAcquisition(mutex, thread);
@@ -39,35 +44,33 @@ void FindDeadlock(DebugMutex *mutex, std::thread::id thread)
   mutex_register.FindDeadlock(mutex, thread);
 }
 
+void Mutexregister::QueueUpFor(DebugMutex *mutex, std::thread::id thread)
+{
+  std::lock_guard<std::mutex> guard(mutex_);
+
+  FindDeadlock(mutex, thread);
+  waiting_for_.insert({thread, mutex});
+}
+
 void Mutexregister::RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread)
 {
   std::lock_guard<std::mutex> guard(mutex_);
+
+  // Registering the matrix diagonal
   lock_owners_.insert({mutex, thread});
-
-  auto it = acquired_locks_.find(thread);
-
-  if (it == acquired_locks_.end())
-  {
-    acquired_locks_.insert({thread, std::vector<DebugMutex *>()});
-    it = acquired_locks_.find(thread);
-  }
-
-  it->second.push_back(mutex);
+  waiting_for_.erase(thread);
 }
 
-void Mutexregister::UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread)
+void Mutexregister::UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id /*thread*/)
 {
   std::lock_guard<std::mutex> guard(mutex_);
   lock_owners_.erase(mutex);
-
-  auto it = acquired_locks_.find(thread);
-  it->second.pop_back();
 }
 
 void Mutexregister::FindDeadlock(DebugMutex *mutex, std::thread::id thread)
 {
-  std::lock_guard<std::mutex> guard(mutex_);
-  auto                        it = lock_owners_.find(mutex);
+  //  std::lock_guard<std::mutex> guard(mutex_);
+  auto it = lock_owners_.find(mutex);
 
   // If the lock is not aquired, we proceed.
   if (it == lock_owners_.end())
@@ -80,24 +83,30 @@ void Mutexregister::FindDeadlock(DebugMutex *mutex, std::thread::id thread)
     throw std::runtime_error("Simple single mutex recursion.");
   }
 
-  // Creating a list if it does not exist
-  auto it2 = acquired_locks_.find(thread);
-  if (it2 == acquired_locks_.end())
+  auto next_mutex = mutex;
+  while (true)
   {
-    acquired_locks_.insert({thread, std::vector<DebugMutex *>()});
-    it2 = acquired_locks_.find(thread);
-  }
-
-  auto mutices = it2->second;
-  for (auto &m : mutices)
-  {
-    if (m == mutex)
+    auto own_it = lock_owners_.find(next_mutex);
+    // All good, nobody is holding a lock on this one.
+    if (own_it == lock_owners_.end())
     {
-      throw std::runtime_error("Single thread, multi-mutex recursion.");
+      break;
     }
-  }
+    auto owner = own_it->second;
 
-  // TODO(tfr): Handle mutli thread, multi mutex case
+    // If we have found a path back to the current thread
+    if (owner == thread)
+    {
+      throw std::runtime_error("Deadlock detected.");
+    }
+
+    auto wfit = waiting_for_.find(owner);
+    if (wfit == waiting_for_.end())
+    {
+      break;
+    }
+    next_mutex = wfit->second;
+  }
 }
 
 }  // namespace fetch

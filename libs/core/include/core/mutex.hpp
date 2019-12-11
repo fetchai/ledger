@@ -31,19 +31,18 @@ class Mutexregister
 public:
   void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
   void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
+  void QueueUpFor(DebugMutex *mutex, std::thread::id thread);
   void FindDeadlock(DebugMutex *mutex, std::thread::id thread);
 
 private:
-  std::mutex                                                     mutex_;
-  std::unordered_map<DebugMutex *, std::thread::id>              lock_owners_;
-  std::unordered_map<std::thread::id, std::vector<DebugMutex *>> acquired_locks_;
+  std::mutex                                        mutex_;
+  std::unordered_map<DebugMutex *, std::thread::id> lock_owners_;
+  std::unordered_map<std::thread::id, DebugMutex *> waiting_for_;
 };
 
-void RegisterMutex(DebugMutex *mutex);
-void UnregisterMutex(DebugMutex *mutex);
 void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
 void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
-void FindDeadlock(DebugMutex *mutex, std::thread::id thread);
+void QueueUpFor(DebugMutex *mutex, std::thread::id thread);
 
 class DebugMutex : public std::mutex
 {
@@ -53,7 +52,7 @@ public:
 
   void lock()
   {
-    FindDeadlock(this, std::this_thread::get_id());
+    QueueUpFor(this, std::this_thread::get_id());
     std::mutex::lock();
     RegisterMutexAcquisition(this, std::this_thread::get_id());
   }
@@ -74,20 +73,6 @@ public:
 
     return false;
   }
-
-  std::string filename() const
-  {
-    return filename_;
-  }
-
-  int32_t line() const
-  {
-    return line_;
-  };
-
-private:
-  std::string filename_{"unknown"};
-  int32_t     line_{0};
 };
 
 #ifndef NDEBUG
