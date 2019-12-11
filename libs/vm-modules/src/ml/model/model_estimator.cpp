@@ -165,13 +165,13 @@ ChargeAmount ModelEstimator::LayerAddConvActivation(
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
   FETCH_UNUSED(activation);
-  return MaximumCharge("Not yet implement");
+  return MaximumCharge("Not yet implemented");
 }
 
 ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
                                                Ptr<String> const &optimiser)
 {
-  DataType optimiser_construction_impact(0.0);
+  DataType optimiser_construction_impact{"0.0"};
 
   bool success = false;
 
@@ -200,7 +200,12 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
     else if (loss->string() == "scel")
     {
       // loss_type = fetch::ml::ops::LossType::SOFTMAX_CROSS_ENTROPY;
-      success = false;
+      state_.forward_pass_cost =
+          state_.forward_pass_cost + SCEL_FORWARD_IMPACT() * state_.last_layer_size;
+      state_.backward_pass_cost =
+          state_.backward_pass_cost + SCEL_BACKWARD_IMPACT() * state_.last_layer_size;
+      state_.ops_count++;
+      success = true;
     }
     else
     {
@@ -251,11 +256,46 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
 
   if (!success)
   {
-    return MaximumCharge("Not yet implement");
+    return MaximumCharge("Not yet implemented");
   }
 
   return static_cast<ChargeAmount>(optimiser_construction_impact + COMPILE_CONST_COEF()) *
          COMPUTE_CHARGE_COST;
+}
+
+ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
+    Ptr<String> const &loss, Ptr<String> const &optimiser,
+    Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics)
+{
+
+  std::size_t const n_metrics = metrics->elements.size();
+
+  for (std::size_t i = 0; i < n_metrics; ++i)
+  {
+    Ptr<String> ptr_string = metrics->elements.at(i);
+    if (ptr_string->string() == "categorical accuracy")
+    {
+      state_.metrics_cost += CATEGORICAL_ACCURACY_FORWARD_IMPACT() * state_.last_layer_size;
+    }
+    else if (ptr_string->string() == "mse")
+    {
+      state_.metrics_cost += MSE_FORWARD_IMPACT() * state_.last_layer_size;
+    }
+    else if (ptr_string->string() == "cel")
+    {
+      state_.metrics_cost += CEL_FORWARD_IMPACT() * state_.last_layer_size;
+    }
+    else if (ptr_string->string() == "scel")
+    {
+      state_.metrics_cost += SCEL_FORWARD_IMPACT() * state_.last_layer_size;
+    }
+    else
+    {
+      return MaximumCharge("Not yet implemented");
+    }
+  }
+
+  return CompileSequential(loss, optimiser);
 }
 
 ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,
@@ -264,7 +304,7 @@ ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser
 
   FETCH_UNUSED(optimiser);
   FETCH_UNUSED(in_layers);
-  return MaximumCharge("Not yet implement");
+  return MaximumCharge("Not yet implemented");
 }
 
 ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTensor> const &labels,
@@ -272,18 +312,18 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
 {
   FETCH_UNUSED(labels);
 
-  DataType estimate(0);
-  SizeType subset_size       = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
-  SizeType number_of_batches = subset_size / batch_size;
+  DataType estimate{"0"};
+  state_.subset_size         = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
+  SizeType number_of_batches = state_.subset_size / batch_size;
 
   // Forward pass
-  estimate = estimate + state_.forward_pass_cost * subset_size;
-  estimate = estimate + PREDICT_BATCH_LAYER_COEF() * subset_size * state_.ops_count;
+  estimate = estimate + state_.forward_pass_cost * state_.subset_size;
+  estimate = estimate + PREDICT_BATCH_LAYER_COEF() * state_.subset_size * state_.ops_count;
   estimate = estimate + PREDICT_CONST_COEF();
 
   // Backward pass
-  estimate = estimate + state_.backward_pass_cost * subset_size;
-  estimate = estimate + BACKWARD_BATCH_LAYER_COEF() * subset_size * state_.ops_count;
+  estimate = estimate + state_.backward_pass_cost * state_.subset_size;
+  estimate = estimate + BACKWARD_BATCH_LAYER_COEF() * state_.subset_size * state_.ops_count;
   estimate = estimate + BACKWARD_PER_BATCH_COEF() * number_of_batches;
 
   // Optimiser step
@@ -298,13 +338,21 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
 
 ChargeAmount ModelEstimator::Evaluate()
 {
-  // Just return loss_, constant charge
-  return static_cast<ChargeAmount>(CONSTANT_CHARGE);
+  DataType estimate{"0"};
+
+  // Forward pass
+  estimate = estimate + state_.forward_pass_cost * state_.subset_size;
+  estimate = estimate + PREDICT_BATCH_LAYER_COEF() * state_.subset_size * state_.ops_count;
+  estimate = estimate + PREDICT_CONST_COEF();
+
+  // Metrics
+  estimate = estimate + state_.metrics_cost;
+  return static_cast<ChargeAmount>(estimate) * COMPUTE_CHARGE_COST;
 }
 
 ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 {
-  DataType estimate{0};
+  DataType estimate{"0"};
   SizeType batch_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
 
   estimate = estimate + state_.forward_pass_cost * batch_size;
@@ -316,7 +364,7 @@ ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
 
 ChargeAmount ModelEstimator::SerializeToString()
 {
-  DataType estimate{0};
+  DataType estimate{"0"};
   estimate = estimate + SERIALISATION_PER_OP_COEF() * state_.ops_count;
   estimate = estimate + SERIALISATION_PADDED_WEIGHT_SUM_COEF() * state_.weights_padded_size_sum;
   estimate = estimate + SERIALISATION_WEIGHT_SUM_COEF() * state_.weights_size_sum;
