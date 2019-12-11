@@ -43,7 +43,7 @@ using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 using namespace fetch::math;
 
-static const DataType LEARNING_RATE{0.1f};
+static const DataType LEARNING_RATE = fetch::math::Type<DataType>("0.1");
 static const SizeType EPOCHS{200};
 static const SizeType BATCH_SIZE{64};
 static const SizeType PATIENCE = 25;
