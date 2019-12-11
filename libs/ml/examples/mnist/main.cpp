@@ -31,6 +31,7 @@
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
+using namespace fetch::math;
 
 using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
@@ -42,7 +43,7 @@ using DataLoaderType = typename fetch::ml::dataloaders::TensorDataLoader<TensorT
 
 int main(int ac, char **av)
 {
-  DataType learning_rate{0.01f};
+  DataType learning_rate = Type<DataType>("0.01");
   SizeType subset_size{100};
   SizeType epochs{10};
   SizeType batch_size{10};
