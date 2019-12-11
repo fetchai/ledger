@@ -38,10 +38,10 @@ TYPED_TEST(PerplexityTest, entropy)
 
   ArrayType A(4);
 
-  A.Set(SizeType{0}, DataType(0.1));
-  A.Set(SizeType{1}, DataType(0.2));
-  A.Set(SizeType{2}, DataType(0.3));
-  A.Set(SizeType{3}, DataType(0.4));
+  A.Set(SizeType{0}, fetch::math::Type<DataType>("0.1"));
+  A.Set(SizeType{1}, fetch::math::Type<DataType>("0.2"));
+  A.Set(SizeType{2}, fetch::math::Type<DataType>("0.3"));
+  A.Set(SizeType{3}, fetch::math::Type<DataType>("0.4"));
 
   EXPECT_NEAR(double(statistics::Perplexity(A)), 3.59611546662432, 1e-3);
 }
