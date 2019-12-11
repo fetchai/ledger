@@ -18,6 +18,7 @@
 
 #include "core/mutex.hpp"
 
+#include <iostream>
 namespace fetch {
 namespace {
 Mutexregister mutex_register;
@@ -79,7 +80,15 @@ void Mutexregister::FindDeadlock(DebugMutex *mutex, std::thread::id thread)
     throw std::runtime_error("Simple single mutex recursion.");
   }
 
-  auto mutices = acquired_locks_.find(thread)->second;
+  // Creating a list if it does not exist
+  auto it2 = acquired_locks_.find(thread);
+  if (it2 == acquired_locks_.end())
+  {
+    acquired_locks_.insert({thread, std::vector<DebugMutex *>()});
+    it2 = acquired_locks_.find(thread);
+  }
+
+  auto mutices = it2->second;
   for (auto &m : mutices)
   {
     if (m == mutex)
