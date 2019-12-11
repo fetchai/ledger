@@ -424,8 +424,6 @@ TEST_F(MathTensorTests, tensor_copy_from_tensor)
 
 TEST_F(MathTensorTests, tensor_equal_etch_test)
 {
-
-  // TODO (ML-340) - replace member function test with operator test
   static char const *tensor_equal_true_src = R"(
     function main() : Bool
       var tensor_shape = Array<UInt64>(2);
@@ -435,24 +433,10 @@ TEST_F(MathTensorTests, tensor_equal_etch_test)
       var y = Tensor(tensor_shape);
       x.fill(7.0fp64);
       y.fill(7.0fp64);
-      var result : Bool = x.isEqual(y);
+      var result : Bool = (x == y);
       return result;
     endfunction
   )";
-
-  //  static char const *tensor_equal_true_src = R"(
-  //    function main() : Bool
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(7.0fp64);
-  //      var result : Bool = (x == y);
-  //      return result;
-  //    endfunction
-  //  )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_equal_true_src));
   Variant res;
@@ -460,8 +444,6 @@ TEST_F(MathTensorTests, tensor_equal_etch_test)
 
   auto const result = res.Get<bool>();
   EXPECT_TRUE(result == true);
-
-  // TODO (ML-340) - replace member function test with operator test
   // test again for when not equal
   static char const *tensor_equal_false_src = R"(
     function main() : Bool
@@ -473,26 +455,10 @@ TEST_F(MathTensorTests, tensor_equal_etch_test)
       x.fill(7.0fp64);
       y.fill(7.0fp64);
       y.setAt(0u64, 0u64, 1.0fp64);
-      var result : Bool = x.isEqual(y);
+      var result : Bool = (x == y);
       return result;
     endfunction
   )";
-
-  //  // test again for when not equal
-  //  static char const *tensor_equal_false_src = R"(
-  //    function main() : Bool
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(7.0fp64);
-  //      y.setAt(0u64, 0u64, 1.0fp64);
-  //      var result : Bool = (x == y);
-  //      return result;
-  //    endfunction
-  //  )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_equal_false_src));
   ASSERT_TRUE(toolkit.Run(&res));
@@ -504,34 +470,19 @@ TEST_F(MathTensorTests, tensor_equal_etch_test)
 TEST_F(MathTensorTests, tensor_not_equal_etch_test)
 {
 
-  // TODO (ML-340) - replace member function test with operator test
-
   static char const *tensor_not_equal_true_src = R"(
-    function main() : Bool
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      var result : Bool = x.isNotEqual(y);
-      return result;
-    endfunction
-  )";
-  //  static char const *tensor_not_equal_true_src = R"(
-  //    function main() : Bool
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(7.0fp64);
-  //      var result : Bool = (x != y);
-  //      return result;
-  //    endfunction
-  //  )";
+      function main() : Bool
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 3u64;
+        tensor_shape[1] = 3u64;
+        var x = Tensor(tensor_shape);
+        var y = Tensor(tensor_shape);
+        x.fill(7.0fp64);
+        y.fill(7.0fp64);
+        var result : Bool = (x != y);
+        return result;
+      endfunction
+    )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_not_equal_true_src));
   Variant res;
@@ -540,39 +491,21 @@ TEST_F(MathTensorTests, tensor_not_equal_etch_test)
   auto const result = res.Get<bool>();
   EXPECT_TRUE(result == false);
 
-  // TODO (ML-340) - replace member function test with operator test
-
   // test again for when not equal
   static char const *tensor_not_equal_false_src = R"(
-    function main() : Bool
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      y.setAt(0u64, 0u64, 1.0fp64);
-      var result : Bool = x.isNotEqual(y);
-      return result;
-    endfunction
-  )";
-
-  //  // test again for when not equal
-  //  static char const *tensor_not_equal_false_src = R"(
-  //    function main() : Bool
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(7.0fp64);
-  //      y.setAt(0u64, 0u64, 1.0fp64);
-  //      var result : Bool = (x != y);
-  //      return result;
-  //    endfunction
-  //  )";
+      function main() : Bool
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 3u64;
+        tensor_shape[1] = 3u64;
+        var x = Tensor(tensor_shape);
+        var y = Tensor(tensor_shape);
+        x.fill(7.0fp64);
+        y.fill(7.0fp64);
+        y.setAt(0u64, 0u64, 1.0fp64);
+        var result : Bool = (x != y);
+        return result;
+      endfunction
+    )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_not_equal_false_src));
   ASSERT_TRUE(toolkit.Run(&res));
@@ -584,33 +517,19 @@ TEST_F(MathTensorTests, tensor_not_equal_etch_test)
 TEST_F(MathTensorTests, tensor_add_test)
 {
 
-  // TODO (ML-340) - replace member function test with operator test
   static char const *tensor_add_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      var result = x.add(y);
-      return result;
-    endfunction
-  )";
-  //  static char const *tensor_add_src = R"(
-  //    function main() : Tensor
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(7.0fp64);
-  //      var result = x + y;
-  //      return result;
-  //    endfunction
-  //  )";
+      function main() : Tensor
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 3u64;
+        tensor_shape[1] = 3u64;
+        var x = Tensor(tensor_shape);
+        var y = Tensor(tensor_shape);
+        x.fill(7.0fp64);
+        y.fill(7.0fp64);
+        var result = x + y;
+        return result;
+      endfunction
+    )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_add_src));
   Variant res;
@@ -626,7 +545,7 @@ TEST_F(MathTensorTests, tensor_add_test)
 
 TEST_F(MathTensorTests, tensor_subtract_test)
 {
-  // TODO (ML-340) - replace member function test with operator test
+
   static char const *tensor_add_src = R"(
     function main() : Tensor
       var tensor_shape = Array<UInt64>(2);
@@ -636,23 +555,10 @@ TEST_F(MathTensorTests, tensor_subtract_test)
       var y = Tensor(tensor_shape);
       x.fill(7.0fp64);
       y.fill(9.0fp64);
-      var result = x.subtract(y);
+      var result = x - y;
       return result;
     endfunction
   )";
-  //  static char const *tensor_add_src = R"(
-  //    function main() : Tensor
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(9.0fp64);
-  //      var result = x - y;
-  //      return result;
-  //    endfunction
-  //  )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_add_src));
   Variant res;
@@ -668,33 +574,20 @@ TEST_F(MathTensorTests, tensor_subtract_test)
 
 TEST_F(MathTensorTests, tensor_multiply_test)
 {
-  // TODO (ML-340) - replace member function test with operator test
+
   static char const *tensor_mul_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      var result = x.multiply(y);
-      return result;
-    endfunction
-  )";
-  //  static char const *tensor_mul_src = R"(
-  //    function main() : Tensor
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(7.0fp64);
-  //      var result = x * y;
-  //      return result;
-  //    endfunction
-  //  )";
+      function main() : Tensor
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 3u64;
+        tensor_shape[1] = 3u64;
+        var x = Tensor(tensor_shape);
+        var y = Tensor(tensor_shape);
+        x.fill(7.0fp64);
+        y.fill(7.0fp64);
+        var result = x * y;
+        return result;
+      endfunction
+    )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_mul_src));
   Variant res;
@@ -710,33 +603,20 @@ TEST_F(MathTensorTests, tensor_multiply_test)
 
 TEST_F(MathTensorTests, tensor_divide_test)
 {
-  // TODO (ML-340) - replace member function test with operator test
+
   static char const *tensor_div_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(14.0fp64);
-      var result = x.divide(y);
-      return result;
-    endfunction
-  )";
-  //  static char const *tensor_div_src = R"(
-  //    function main() : Tensor
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(14.0fp64);
-  //      var result = x / y;
-  //      return result;
-  //    endfunction
-  //  )";
+      function main() : Tensor
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 3u64;
+        tensor_shape[1] = 3u64;
+        var x = Tensor(tensor_shape);
+        var y = Tensor(tensor_shape);
+        x.fill(7.0fp64);
+        y.fill(14.0fp64);
+        var result = x / y;
+        return result;
+      endfunction
+    )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_div_src));
   Variant res;
@@ -750,9 +630,7 @@ TEST_F(MathTensorTests, tensor_divide_test)
   EXPECT_TRUE(gt.AllClose(tensor));
 }
 
-// TODO (ML-340) - enable test when operators can take estimators and inplace operator can be bound
-// to tensor
-TEST_F(MathTensorTests, DISABLED_tensor_inplace_multiply_test)
+TEST_F(MathTensorTests, tensor_inplace_multiply_test)
 {
   static char const *tensor_inplace_mul_src = R"(
     function main() : Tensor
@@ -780,9 +658,7 @@ TEST_F(MathTensorTests, DISABLED_tensor_inplace_multiply_test)
   EXPECT_TRUE(gt.AllClose(tensor));
 }
 
-// TODO (ML-340) - enable test when operators can take estimators and inplace operator can be bound
-// to tensor
-TEST_F(MathTensorTests, DISABLED_tensor_inplace_divide_test)
+TEST_F(MathTensorTests, tensor_inplace_divide_test)
 {
   static char const *tensor_inplace_div_src = R"(
     function main() : Tensor
@@ -810,9 +686,7 @@ TEST_F(MathTensorTests, DISABLED_tensor_inplace_divide_test)
   EXPECT_TRUE(gt.AllClose(tensor));
 }
 
-// TODO (ML-340) - enable test when operators can take estimators and inplace operator can be bound
-// to tensor
-TEST_F(MathTensorTests, DISABLED_tensor_inplace_add_test)
+TEST_F(MathTensorTests, tensor_inplace_add_test)
 {
   static char const *tensor_add_src = R"(
     function main() : Tensor
@@ -840,9 +714,7 @@ TEST_F(MathTensorTests, DISABLED_tensor_inplace_add_test)
   EXPECT_TRUE(gt.AllClose(tensor));
 }
 
-// TODO (ML-340) - enable test when operators can take estimators and inplace operator can be bound
-// to tensor
-TEST_F(MathTensorTests, DISABLED_tensor_inplace_subtract_test)
+TEST_F(MathTensorTests, tensor_inplace_subtract_test)
 {
   static char const *tensor_add_src = R"(
     function main() : Tensor
@@ -872,29 +744,18 @@ TEST_F(MathTensorTests, DISABLED_tensor_inplace_subtract_test)
 
 TEST_F(MathTensorTests, tensor_negate_etch_test)
 {
-  // TODO (ML-340) - replace member function test with operator test
+
   static char const *tensor_negate_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      x = x.negate();
-      return x;
-    endfunction
-  )";
-  //  static char const *tensor_negate_src = R"(
-  //    function main() : Tensor
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      x = -x;
-  //      return x;
-  //    endfunction
-  //  )";
+      function main() : Tensor
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 3u64;
+        tensor_shape[1] = 3u64;
+        var x = Tensor(tensor_shape);
+        x.fill(7.0fp64);
+        x = -x;
+        return x;
+      endfunction
+    )";
 
   std::string const state_name{"tensor"};
 
