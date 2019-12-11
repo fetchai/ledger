@@ -54,9 +54,9 @@ public:
   SelfAttentionEncoder() = default;
 
   SelfAttentionEncoder(SizeType n_heads, SizeType model_dim, SizeType ff_dim,
-                       DataType       residual_dropout    = static_cast<DataType>(0.9),
-                       DataType       attention_dropout   = static_cast<DataType>(0.9),
-                       DataType       feedforward_dropout = static_cast<DataType>(0.9),
+                       DataType       residual_dropout    = fetch::math::Type<DataType>("0.9"),
+                       DataType       attention_dropout   = fetch::math::Type<DataType>("0.9"),
+                       DataType       feedforward_dropout = fetch::math::Type<DataType>("0.9"),
                        DataType       epsilon         = fetch::math::function_tolerance<DataType>(),
                        ActivationType activation_type = ActivationType::GELU)
     : n_heads_(n_heads)

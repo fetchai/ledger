@@ -48,17 +48,17 @@ public:
 
   AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
                 std::string const &label_node_name, std::string const &output_node_name,
-                DataType const &learning_rate = math::Type<DataType>("0.001"),
-                DataType const &beta1         = math::Type<DataType>("0.9"),
-                DataType const &beta2         = math::Type<DataType>("0.999"),
-                DataType const &epsilon       = math::Type<DataType>("0.0001"));
+                DataType const &learning_rate = fetch::math::Type<DataType>("0.001"),
+                DataType const &beta1         = fetch::math::Type<DataType>("0.9"),
+                DataType const &beta2         = fetch::math::Type<DataType>("0.999"),
+                DataType const &epsilon       = fetch::math::Type<DataType>("0.0001"));
 
   AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
                 std::string const &label_node_name, std::string const &output_node_name,
                 fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
-                DataType const &beta1   = math::Type<DataType>("0.9"),
-                DataType const &beta2   = math::Type<DataType>("0.999"),
-                DataType const &epsilon = math::Type<DataType>("0.0001"));
+                DataType const &beta1   = fetch::math::Type<DataType>("0.9"),
+                DataType const &beta2   = fetch::math::Type<DataType>("0.999"),
+                DataType const &epsilon = fetch::math::Type<DataType>("0.0001"));
 
   ~AdamOptimiser() override = default;
 
