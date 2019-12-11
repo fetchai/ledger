@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/avg_pool_2d.hpp"
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "ml/ops/avg_pool_2d.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -161,35 +161,35 @@ TYPED_TEST(AvgPool2DTest, backward_test)
   {
     for (SizeType j{0}; j < output_height; ++j)
     {
-      error(0, i, j, 0) = DataType{1 + i + j};
+      error(0, i, j, 0) = static_cast<DataType>(1 + i + j);
     }
   }
 
-  gt(0, 0, 0, 0) = DataType{1.0f / 9.0f};
-  gt(0, 0, 1, 0) = DataType{1.0f / 9.0f};
-  gt(0, 0, 2, 0) = DataType{3.0f / 9.0f};
-  gt(0, 0, 3, 0) = DataType{2.0f / 9.0f};
-  gt(0, 0, 4, 0) = DataType{2.0f / 9.0f};
-  gt(0, 1, 0, 0) = DataType{1.0f / 9.0f};
-  gt(0, 1, 1, 0) = DataType{1.0f / 9.0f};
-  gt(0, 1, 2, 0) = DataType{3.0f / 9.0f};
-  gt(0, 1, 3, 0) = DataType{2.0f / 9.0f};
-  gt(0, 1, 4, 0) = DataType{2.0f / 9.0f};
-  gt(0, 2, 0, 0) = DataType{3.0f / 9.0f};
-  gt(0, 2, 1, 0) = DataType{3.0f / 9.0f};
-  gt(0, 2, 2, 0) = DataType{8.0f / 9.0f};
-  gt(0, 2, 3, 0) = DataType{5.0f / 9.0f};
-  gt(0, 2, 4, 0) = DataType{5.0f / 9.0f};
-  gt(0, 3, 0, 0) = DataType{2.0f / 9.0f};
-  gt(0, 3, 1, 0) = DataType{2.0f / 9.0f};
-  gt(0, 3, 2, 0) = DataType{5.0f / 9.0f};
-  gt(0, 3, 3, 0) = DataType{3.0f / 9.0f};
-  gt(0, 3, 4, 0) = DataType{3.0f / 9.0f};
-  gt(0, 4, 0, 0) = DataType{2.0f / 9.0f};
-  gt(0, 4, 1, 0) = DataType{2.0f / 9.0f};
-  gt(0, 4, 2, 0) = DataType{5.0f / 9.0f};
-  gt(0, 4, 3, 0) = DataType{3.0f / 9.0f};
-  gt(0, 4, 4, 0) = DataType{3.0f / 9.0f};
+  gt(0, 0, 0, 0) = DataType{1} / DataType{9};
+  gt(0, 0, 1, 0) = DataType{1} / DataType{9};
+  gt(0, 0, 2, 0) = DataType{3} / DataType{9};
+  gt(0, 0, 3, 0) = DataType{2} / DataType{9};
+  gt(0, 0, 4, 0) = DataType{2} / DataType{9};
+  gt(0, 1, 0, 0) = DataType{1} / DataType{9};
+  gt(0, 1, 1, 0) = DataType{1} / DataType{9};
+  gt(0, 1, 2, 0) = DataType{3} / DataType{9};
+  gt(0, 1, 3, 0) = DataType{2} / DataType{9};
+  gt(0, 1, 4, 0) = DataType{2} / DataType{9};
+  gt(0, 2, 0, 0) = DataType{3} / DataType{9};
+  gt(0, 2, 1, 0) = DataType{3} / DataType{9};
+  gt(0, 2, 2, 0) = DataType{8} / DataType{9};
+  gt(0, 2, 3, 0) = DataType{5} / DataType{9};
+  gt(0, 2, 4, 0) = DataType{5} / DataType{9};
+  gt(0, 3, 0, 0) = DataType{2} / DataType{9};
+  gt(0, 3, 1, 0) = DataType{2} / DataType{9};
+  gt(0, 3, 2, 0) = DataType{5} / DataType{9};
+  gt(0, 3, 3, 0) = DataType{3} / DataType{9};
+  gt(0, 3, 4, 0) = DataType{3} / DataType{9};
+  gt(0, 4, 0, 0) = DataType{2} / DataType{9};
+  gt(0, 4, 1, 0) = DataType{2} / DataType{9};
+  gt(0, 4, 2, 0) = DataType{5} / DataType{9};
+  gt(0, 4, 3, 0) = DataType{3} / DataType{9};
+  gt(0, 4, 4, 0) = DataType{3} / DataType{9};
 
   fetch::ml::ops::AvgPool2D<TensorType> op(3, 2);
   std::vector<TensorType>               prediction =
@@ -241,56 +241,56 @@ TYPED_TEST(AvgPool2DTest, backward_2_channels_test)
     }
   }
 
-  gt(0, 0, 0, 0) = DataType{1.0f / 9.0f};
-  gt(0, 0, 1, 0) = DataType{1.0f / 9.0f};
-  gt(0, 0, 2, 0) = DataType{3.0f / 9.0f};
-  gt(0, 0, 3, 0) = DataType{2.0f / 9.0f};
-  gt(0, 0, 4, 0) = DataType{2.0f / 9.0f};
-  gt(0, 1, 0, 0) = DataType{1.0f / 9.0f};
-  gt(0, 1, 1, 0) = DataType{1.0f / 9.0f};
-  gt(0, 1, 2, 0) = DataType{3.0f / 9.0f};
-  gt(0, 1, 3, 0) = DataType{2.0f / 9.0f};
-  gt(0, 1, 4, 0) = DataType{2.0f / 9.0f};
-  gt(0, 2, 0, 0) = DataType{3.0f / 9.0f};
-  gt(0, 2, 1, 0) = DataType{3.0f / 9.0f};
-  gt(0, 2, 2, 0) = DataType{8.0f / 9.0f};
-  gt(0, 2, 3, 0) = DataType{5.0f / 9.0f};
-  gt(0, 2, 4, 0) = DataType{5.0f / 9.0f};
-  gt(0, 3, 0, 0) = DataType{2.0f / 9.0f};
-  gt(0, 3, 1, 0) = DataType{2.0f / 9.0f};
-  gt(0, 3, 2, 0) = DataType{5.0f / 9.0f};
-  gt(0, 3, 3, 0) = DataType{3.0f / 9.0f};
-  gt(0, 3, 4, 0) = DataType{3.0f / 9.0f};
-  gt(0, 4, 0, 0) = DataType{2.0f / 9.0f};
-  gt(0, 4, 1, 0) = DataType{2.0f / 9.0f};
-  gt(0, 4, 2, 0) = DataType{5.0f / 9.0f};
-  gt(0, 4, 3, 0) = DataType{3.0f / 9.0f};
-  gt(0, 4, 4, 0) = DataType{3.0f / 9.0f};
-  gt(1, 0, 0, 0) = DataType{2.0f / 9.0f};
-  gt(1, 0, 1, 0) = DataType{2.0f / 9.0f};
-  gt(1, 0, 2, 0) = DataType{6.0f / 9.0f};
-  gt(1, 0, 3, 0) = DataType{4.0f / 9.0f};
-  gt(1, 0, 4, 0) = DataType{4.0f / 9.0f};
-  gt(1, 1, 0, 0) = DataType{2.0f / 9.0f};
-  gt(1, 1, 1, 0) = DataType{2.0f / 9.0f};
-  gt(1, 1, 2, 0) = DataType{6.0f / 9.0f};
-  gt(1, 1, 3, 0) = DataType{4.0f / 9.0f};
-  gt(1, 1, 4, 0) = DataType{4.0f / 9.0f};
-  gt(1, 2, 0, 0) = DataType{6.0f / 9.0f};
-  gt(1, 2, 1, 0) = DataType{6.0f / 9.0f};
-  gt(1, 2, 2, 0) = DataType{16.0f / 9.0f};
-  gt(1, 2, 3, 0) = DataType{10.0f / 9.0f};
-  gt(1, 2, 4, 0) = DataType{10.0f / 9.0f};
-  gt(1, 3, 0, 0) = DataType{4.0f / 9.0f};
-  gt(1, 3, 1, 0) = DataType{4.0f / 9.0f};
-  gt(1, 3, 2, 0) = DataType{10.0f / 9.0f};
-  gt(1, 3, 3, 0) = DataType{6.0f / 9.0f};
-  gt(1, 3, 4, 0) = DataType{6.0f / 9.0f};
-  gt(1, 4, 0, 0) = DataType{4.0f / 9.0f};
-  gt(1, 4, 1, 0) = DataType{4.0f / 9.0f};
-  gt(1, 4, 2, 0) = DataType{10.0f / 9.0f};
-  gt(1, 4, 3, 0) = DataType{6.0f / 9.0f};
-  gt(1, 4, 4, 0) = DataType{6.0f / 9.0f};
+  gt(0, 0, 0, 0) = DataType{1} / DataType{9};
+  gt(0, 0, 1, 0) = DataType{1} / DataType{9};
+  gt(0, 0, 2, 0) = DataType{3} / DataType{9};
+  gt(0, 0, 3, 0) = DataType{2} / DataType{9};
+  gt(0, 0, 4, 0) = DataType{2} / DataType{9};
+  gt(0, 1, 0, 0) = DataType{1} / DataType{9};
+  gt(0, 1, 1, 0) = DataType{1} / DataType{9};
+  gt(0, 1, 2, 0) = DataType{3} / DataType{9};
+  gt(0, 1, 3, 0) = DataType{2} / DataType{9};
+  gt(0, 1, 4, 0) = DataType{2} / DataType{9};
+  gt(0, 2, 0, 0) = DataType{3} / DataType{9};
+  gt(0, 2, 1, 0) = DataType{3} / DataType{9};
+  gt(0, 2, 2, 0) = DataType{8} / DataType{9};
+  gt(0, 2, 3, 0) = DataType{5} / DataType{9};
+  gt(0, 2, 4, 0) = DataType{5} / DataType{9};
+  gt(0, 3, 0, 0) = DataType{2} / DataType{9};
+  gt(0, 3, 1, 0) = DataType{2} / DataType{9};
+  gt(0, 3, 2, 0) = DataType{5} / DataType{9};
+  gt(0, 3, 3, 0) = DataType{3} / DataType{9};
+  gt(0, 3, 4, 0) = DataType{3} / DataType{9};
+  gt(0, 4, 0, 0) = DataType{2} / DataType{9};
+  gt(0, 4, 1, 0) = DataType{2} / DataType{9};
+  gt(0, 4, 2, 0) = DataType{5} / DataType{9};
+  gt(0, 4, 3, 0) = DataType{3} / DataType{9};
+  gt(0, 4, 4, 0) = DataType{3} / DataType{9};
+  gt(1, 0, 0, 0) = DataType{2} / DataType{9};
+  gt(1, 0, 1, 0) = DataType{2} / DataType{9};
+  gt(1, 0, 2, 0) = DataType{6} / DataType{9};
+  gt(1, 0, 3, 0) = DataType{4} / DataType{9};
+  gt(1, 0, 4, 0) = DataType{4} / DataType{9};
+  gt(1, 1, 0, 0) = DataType{2} / DataType{9};
+  gt(1, 1, 1, 0) = DataType{2} / DataType{9};
+  gt(1, 1, 2, 0) = DataType{6} / DataType{9};
+  gt(1, 1, 3, 0) = DataType{4} / DataType{9};
+  gt(1, 1, 4, 0) = DataType{4} / DataType{9};
+  gt(1, 2, 0, 0) = DataType{6} / DataType{9};
+  gt(1, 2, 1, 0) = DataType{6} / DataType{9};
+  gt(1, 2, 2, 0) = DataType{16} / DataType{9};
+  gt(1, 2, 3, 0) = DataType{10} / DataType{9};
+  gt(1, 2, 4, 0) = DataType{10} / DataType{9};
+  gt(1, 3, 0, 0) = DataType{4} / DataType{9};
+  gt(1, 3, 1, 0) = DataType{4} / DataType{9};
+  gt(1, 3, 2, 0) = DataType{10} / DataType{9};
+  gt(1, 3, 3, 0) = DataType{6} / DataType{9};
+  gt(1, 3, 4, 0) = DataType{6} / DataType{9};
+  gt(1, 4, 0, 0) = DataType{4} / DataType{9};
+  gt(1, 4, 1, 0) = DataType{4} / DataType{9};
+  gt(1, 4, 2, 0) = DataType{10} / DataType{9};
+  gt(1, 4, 3, 0) = DataType{6} / DataType{9};
+  gt(1, 4, 4, 0) = DataType{6} / DataType{9};
 
   fetch::ml::ops::AvgPool2D<TensorType> op(3, 2);
   std::vector<TensorType>               prediction =
