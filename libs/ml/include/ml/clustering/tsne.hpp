@@ -92,8 +92,8 @@ public:
   {
     // Initialise variables
     output_symmetric_affinities_.Fill(static_cast<DataType>(0));
-    DataType min_gain{0.01f};
-    DataType momentum = initial_momentum;
+    DataType const min_gain = fetch::math::Type<DataType>("0.01");
+    DataType       momentum = initial_momentum;
     assert(output_matrix_.shape().size() == 2);
 
     // i_y is output_matrix value from last iteration
