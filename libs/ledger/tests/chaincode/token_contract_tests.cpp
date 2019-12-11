@@ -27,6 +27,7 @@
 
 #include "gmock/gmock.h"
 
+#include <ledger/chaincode/wallet_record.hpp>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -243,6 +244,23 @@ protected:
 
     return success;
   }
+
+  bool QueryDeed(Address const &address, Query &deed)
+  {
+    EXPECT_CALL(*storage_, Get(_)).Times(1);
+    EXPECT_CALL(*storage_, GetOrCreate(_)).Times(0);
+    EXPECT_CALL(*storage_, Set(_, _)).Times(0);
+    EXPECT_CALL(*storage_, Lock(_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*storage_, Unlock(_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
+    EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
+
+    // formulate the query
+    Query query      = Variant::Object();
+    query["address"] = address.display();
+
+    return Contract::Status::OK == SendQuery("deed", query, deed);
+  }
 };
 
 TEST_F(TokenContractTests, CheckWealthCreation)
@@ -284,6 +302,34 @@ TEST_F(TokenContractTests, DISABLED_CheckTransferWithoutPreexistingDeed)
 
   EXPECT_TRUE(GetBalance(entities[1].address, balance));
   EXPECT_EQ(balance, 400);
+}
+
+TEST_F(TokenContractTests, QueryDeed)
+{
+  Entities entities(4);
+
+  // PRE-CONDITION: Create DEED
+  SigneesPtr signees{std::make_shared<Deed::Signees>()};
+  (*signees)[entities[0].address] = 2;
+  (*signees)[entities[1].address] = 5;
+  (*signees)[entities[2].address] = 5;
+
+  ThresholdsPtr thresholds{std::make_shared<Deed::OperationTresholds>()};
+  (*thresholds)["transfer"] = 7;
+  (*thresholds)["amend"]    = 12;
+
+  ASSERT_TRUE(SendDeedTx(entities[0].address, {&entities[0]}, signees, thresholds));
+
+  Deed const expected_deed{*signees, *thresholds};
+
+  // TEST OBJECTIVE: Query Deed
+  Query v_deed;
+  EXPECT_TRUE(QueryDeed(entities[0].address, v_deed));
+
+  WalletRecord wr;
+  wr.CreateDeed(v_deed);
+
+  EXPECT_EQ(expected_deed, *wr.deed);
 }
 
 TEST_F(TokenContractTests, CheckDeedCreation)

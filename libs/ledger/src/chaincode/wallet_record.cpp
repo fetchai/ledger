@@ -20,6 +20,7 @@
 #include "variant/variant.hpp"
 
 using fetch::byte_array::ConstByteArray;
+using fetch::variant::Variant;
 
 namespace fetch {
 namespace ledger {
@@ -38,7 +39,7 @@ namespace {
  *
  * @return true if deserialisation passed successfully, false otherwise.
  */
-bool DeedFromVariant(variant::Variant const &variant_deed, DeedPtr &deed)
+bool DeedFromVariant(Variant const &variant_deed, DeedPtr &deed)
 {
   auto const num_of_items_in_deed = variant_deed.size();
   if (num_of_items_in_deed == 0)
@@ -63,11 +64,11 @@ bool DeedFromVariant(variant::Variant const &variant_deed, DeedPtr &deed)
   }
 
   Deed::OperationTresholds thresholds;
-  v_thresholds.IterateObject([&thresholds](byte_array::ConstByteArray const &operation,
-                                           variant::Variant const &          v_threshold) -> bool {
-    thresholds[operation] = v_threshold.As<Deed::Weight>();
-    return true;
-  });
+  v_thresholds.IterateObject(
+      [&thresholds](ConstByteArray const &operation, Variant const &v_threshold) -> bool {
+        thresholds[operation] = v_threshold.As<Deed::Weight>();
+        return true;
+      });
 
   auto const v_signees{variant_deed[SIGNEES_NAME]};
   if (!v_signees.IsObject())
@@ -76,19 +77,53 @@ bool DeedFromVariant(variant::Variant const &variant_deed, DeedPtr &deed)
   }
 
   Deed::Signees signees;
-  v_signees.IterateObject([&signees](byte_array::ConstByteArray const &display_address,
-                                     variant::Variant const &          v_weight) -> bool {
-    chain::Address address{};
-    if (chain::Address::Parse(display_address, address))
-    {
-      signees[address] = v_weight.As<Deed::Weight>();
-    }
+  v_signees.IterateObject(
+      [&signees](ConstByteArray const &display_address, Variant const &v_weight) -> bool {
+        chain::Address address{};
+        if (chain::Address::Parse(display_address, address))
+        {
+          signees[address] = v_weight.As<Deed::Weight>();
+        }
 
-    return true;
-  });
+        return true;
+      });
 
   deed = std::make_shared<Deed>(std::move(signees), std::move(thresholds));
   return true;
+}
+
+Variant DeedToVariant(DeedPtr const &deed)
+{
+  auto v_deed{Variant::Object()};
+
+  if (!deed)
+  {
+    return v_deed;
+  }
+
+  auto v_signees{Variant::Object()};
+  for (auto const &signee : deed->signees())
+  {
+    v_signees[signee.first.display()] = signee.second;
+  }
+
+  auto v_thresholds{Variant::Object()};
+  for (auto const &threshold : deed->operation_thresholds())
+  {
+    v_thresholds[threshold.first] = threshold.second;
+  }
+
+  if (v_signees.size() > 0)
+  {
+    v_deed[SIGNEES_NAME] = std::move(v_signees);
+  }
+
+  if (v_thresholds.size() > 0)
+  {
+    v_deed[THRESHOLDS_NAME] = std::move(v_thresholds);
+  }
+
+  return v_deed;
 }
 
 }  // namespace
@@ -114,7 +149,7 @@ extern ConstByteArray const SIGNEES_NAME{"signees"};
  *
  * @return true if deserialisation passed successfully, false otherwise.
  */
-bool WalletRecord::CreateDeed(variant::Variant const &data)
+bool WalletRecord::CreateDeed(Variant const &data)
 {
   if (!DeedFromVariant(data, deed))
   {
@@ -135,6 +170,11 @@ bool WalletRecord::CreateDeed(variant::Variant const &data)
 
   deed.reset();
   return false;
+}
+
+variant::Variant WalletRecord::ExtractDeed() const
+{
+  return DeedToVariant(deed);
 }
 
 void WalletRecord::CollectStake(uint64_t block_index)

@@ -65,6 +65,7 @@ public:
 
   // queries
   Status Balance(Query const &query, Query &response);
+  Status QueryDeed(Query const &query, Query &response);
   Status Stake(Query const &query, Query &response);
   Status CooldownStake(Query const &query, Query &response);
 

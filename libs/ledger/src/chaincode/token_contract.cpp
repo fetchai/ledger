@@ -81,6 +81,7 @@ TokenContract::TokenContract()
   OnTransaction("deStake", this, &TokenContract::DeStake);
   OnTransaction("collectStake", this, &TokenContract::CollectStake);
   OnQuery("balance", this, &TokenContract::Balance);
+  OnQuery("deed", this, &TokenContract::QueryDeed);
   OnQuery("stake", this, &TokenContract::Stake);
   OnQuery("cooldownStake", this, &TokenContract::CooldownStake);
 }
@@ -422,6 +423,32 @@ Contract::Status TokenContract::Balance(Query const &query, Query &response)
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to balance query");
+  }
+
+  return Status::FAILED;
+}
+
+Contract::Status TokenContract::QueryDeed(Query const &query, Query &response)
+{
+  ConstByteArray input;
+  if (Extract(query, ADDRESS_NAME, input))
+  {
+    // attempt to parse the input address
+    chain::Address address{};
+    if (chain::Address::Parse(input, address))
+    {
+      // look up the record
+      WalletRecord record{};
+      GetStateRecord(record, address);
+
+      // formulate the response
+      response = record.ExtractDeed();
+      return Status::OK;
+    }
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to deed query");
   }
 
   return Status::FAILED;
