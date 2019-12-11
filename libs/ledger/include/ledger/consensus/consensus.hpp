@@ -79,6 +79,8 @@ public:
   Consensus &operator=(Consensus const &) = delete;
   Consensus &operator=(Consensus &&) = delete;
 
+  uint64_t   GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
+
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
 
@@ -113,7 +115,6 @@ private:
   NotarisationPtr notarisation_;
 
   CabinetPtr GetCabinet(Block const &previous) const;
-  uint64_t   GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
   bool       ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool       ShouldTriggerNewCabinet(Block const &block);
   bool       EnoughQualSigned(BlockEntropy const &block_entropy) const;

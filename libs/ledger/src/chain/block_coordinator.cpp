@@ -68,7 +68,6 @@ const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{5};
 const std::size_t               MIN_BLOCK_SYNC_SLIPPAGE_FOR_WAITLESS_SYNC_OF_MISSING_TXS{30};
 const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
-const std::size_t               DIGEST_LENGTH_BYTES{32};
 
 }  // namespace
 
@@ -505,38 +504,20 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   if (!is_genesis)
   {
     BlockPtr previous = chain_.GetBlock(current_block_->previous_hash);
-    if (!previous)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: No previous block in chain (0x",
-                     current_block_->hash.ToHex(), ')');
 
-      RemoveBlock(current_block_->hash);
-      return State::RESET;
-    }
-
-    consensus_->UpdateCurrentBlock(*previous);  // Only update with valid blocks
     auto result = consensus_->ValidBlock(*current_block_);
 
     if (!(result == ConsensusInterface::Status::YES))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Consensus failed to verify block (0x",
-                     current_block_->hash.ToHex(), ')');
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block validation failed: Block coordinator failed to verify block (0x",
+                     current_block_->hash.ToHex(), ')', ". This should not happen.");
 
       RemoveBlock(current_block_->hash);
+      Reset();
       return State::RESET;
     }
 
-    // Check: Ensure the block number is continuous
-    uint64_t const expected_block_number = previous->block_number + 1u;
-    if (expected_block_number != current_block_->block_number)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Block number mismatch. Expected: ",
-                     expected_block_number, " Actual: ", current_block_->block_number, " (0x",
-                     current_block_->hash.ToHex(), ')');
-
-      RemoveBlock(current_block_->hash);
-      return State::RESET;
-    }
+    consensus_->UpdateCurrentBlock(*previous);
 
     // Check: Ensure the number of lanes is correct
     if (num_lanes_ != (1u << current_block_->log2_num_lanes))
@@ -560,18 +541,6 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       RemoveBlock(current_block_->hash);
       return State::RESET;
     }
-  }
-
-  // Check: Ensure the digests are the correct size
-  if (DIGEST_LENGTH_BYTES != current_block_->previous_hash.size())
-  {
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "Block validation failed: Previous block hash size mismatch. Expected: ",
-                   DIGEST_LENGTH_BYTES, " Actual: ", current_block_->previous_hash.size(), " (0x",
-                   current_block_->hash.ToHex(), ')');
-
-    RemoveBlock(current_block_->hash);
-    return State::RESET;
   }
 
   // Validating DAG hashes

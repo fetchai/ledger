@@ -71,6 +71,8 @@ using fetch::ledger::Block;
 
 using DRNG = fetch::random::LinearCongruentialGenerator;
 
+const std::size_t               DIGEST_LENGTH_BYTES{32};
+
 std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
 {
   if (decrement >= value)
@@ -615,6 +617,16 @@ Status Consensus::ValidBlock(Block const &current) const
     return Status::YES;
   }
 
+  if(current.hash.size() != DIGEST_LENGTH_BYTES || current.previous_hash.size() != DIGEST_LENGTH_BYTES)
+  {
+    return Status::NO;
+  }
+
+  if(current.block_number != current.block_entropy.block_number)
+  {
+    return Status::NO;
+  }
+
   auto const block_preceeding = GetBlockPriorTo(current, chain_);
 
   // This will happen if the block is loose
@@ -655,6 +667,12 @@ Status Consensus::ValidBlock(Block const &current) const
     qualified_cabinet = block_entropy.qualified;
     group_pub_key     = block_entropy.group_public_key;
 
+    if(qualified_cabinet.size() > max_cabinet_size_)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Found a block that had too many members in qual!");
+      return Status::NO;
+    }
+
     if (notarisation_ &&
         !ValidNotarisationKeys(qualified_cabinet, block_entropy.aeon_notarisation_keys))
     {
@@ -669,7 +687,7 @@ Status Consensus::ValidBlock(Block const &current) const
     group_pub_key          = beginning_of_aeon.block_entropy.group_public_key;
   }
 
-  if (!dkg::BeaconManager::Verify(group_pub_key, block_preceeding->block_entropy.EntropyAsSHA256(),
+  if (beacon_ && !dkg::BeaconManager::Verify(group_pub_key, block_preceeding->block_entropy.EntropyAsSHA256(),
                                   current.block_entropy.group_signature))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Found block whose entropy isn't a signature of the previous!");
