@@ -42,7 +42,9 @@ PeerTracker::PeerTrackerPtr PeerTracker::New(PeerTracker::Duration const &interv
                                              PeerConnectionList &connections,
                                              MuddleEndpoint &    endpoint)
 {
-  return PeerTrackerPtr{new PeerTracker(interval, reactor, reg, connections, endpoint)};
+  auto ret        = PeerTrackerPtr{new PeerTracker(interval, reactor, reg, connections, endpoint)};
+  ret->weak_self_ = ret;
+  return ret;
 }
 
 PeerTracker::~PeerTracker()
@@ -188,9 +190,15 @@ void PeerTracker::DownloadPeerDetails(Handle handle, Address const &address)
                                                    PeerTrackerProtocol::GET_MUDDLE_URIS);
 
     // wrap the promise is a task
-    auto task = std::make_shared<PromiseTask>(
-        promise, tracker_configuration_.promise_timeout,
-        [this, details](service::Promise const &promise) { OnResolveUris(details, promise); });
+    auto weakptr = weak_self_;
+    auto task    = std::make_shared<PromiseTask>(promise, config.promise_timeout,
+                                              [weakptr, details](service::Promise const &promise) {
+                                                auto ptr = weakptr.lock();
+                                                if (ptr)
+                                                {
+                                                  ptr->OnResolveUris(details, promise);
+                                                }
+                                              });
 
     // add the task to the reactor
     reactor_.Attach(task);
@@ -210,7 +218,7 @@ void PeerTracker::UpdatePriorityList(ConnectionPriorityMap & connection_priority
   for (auto const &p : peers)
   {
     // Skipping own address
-    if (p.address == own_address_)
+    if (p.address == own_address())
     {
       continue;
     }
@@ -227,7 +235,7 @@ void PeerTracker::UpdatePriorityList(ConnectionPriorityMap & connection_priority
   for (auto &p : connection_priority)
   {
     // Skipping own address
-    if (p.first == own_address_)
+    if (p.first == own_address())
     {
       continue;
     }
@@ -268,7 +276,7 @@ void PeerTracker::ConnectToPeers(AddressSet &                  connections_made,
 
     // Getting the peer details
     auto &p = prioritized_peers[n];
-    if (p.address == own_address_)
+    if (p.address == own_address())
     {
       continue;
     }
@@ -451,7 +459,7 @@ void PeerTracker::PullPeerKnowledge()
         continue;
       }
 
-      search_for = peer_pull_map_[address];
+      search_for = peer_pull_map_[address].Copy();
     }
 
     // Increasing the tracker id.
@@ -463,11 +471,15 @@ void PeerTracker::PullPeerKnowledge()
                                                    PeerTrackerProtocol::FIND_PEERS, search_for);
 
     // wrap the promise is a task
-
+    auto weakptr   = weak_self_;
     auto call_task = std::make_shared<PromiseTask>(
         promise, cfg.promise_timeout,
-        [this, address, search_for, pull_id](service::Promise const &promise) {
-          OnResolvedPull(pull_id, address, search_for, promise);
+        [weakptr, address, search_for, pull_id](service::Promise const &promise) {
+          auto ptr = weakptr.lock();
+          if (ptr)
+          {
+            ptr->OnResolvedPull(pull_id, address, search_for, promise);
+          }
         });
 
     // add the task to the reactor
@@ -502,7 +514,7 @@ void PeerTracker::SchedulePull(Address const &address, Address const &search_for
   }
 
   // Scheduling
-  peer_pull_queue_.push_back(address);
+  peer_pull_queue_.push_back(address.Copy());
   peer_pull_map_.emplace(address, search_for);
 }
 
@@ -556,6 +568,11 @@ PeerTracker::AddressSet PeerTracker::desired_peers() const
 void PeerTracker::OnResolvedPull(uint64_t pull_id, Address const &peer, Address const &search_for,
                                  service::Promise const &promise)
 {
+  if (stopping_)
+  {
+    return;
+  }
+
   if (promise->state() == service::PromiseState::SUCCESS)
   {
     // Reporting that peer is still responding
@@ -978,6 +995,10 @@ PeerTracker::ConnectionState PeerTracker::ResolveConnectionDetails(UnresolvedCon
 
 void PeerTracker::OnResolveUris(UnresolvedConnection details, service::Promise const &promise)
 {
+  if (stopping_)
+  {
+    return;
+  }
 
   // Deleting task.
   {

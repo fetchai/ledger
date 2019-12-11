@@ -346,7 +346,7 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
     peerinfo                   = std::make_shared<PeerInfo>(info);
     peerinfo->kademlia_address = other;
     peerinfo->distance         = dist;
-    peerinfo->address          = address;
+    peerinfo->address          = address.Copy();
 
     // Ensures that peer information persists over time
     // even if the peer disappears from the log_bucket.
@@ -683,7 +683,7 @@ void KademliaTable::AddDesiredPeer(Address const &address, network::Peer const &
       it->second = std::max(Clock::now() + expiry, it->second);
     }
 
-    info.address = address;
+    info.address = address.Copy();
     info.uri.Parse(hint.ToUri());
 
     // Deleting information that is contracdictary

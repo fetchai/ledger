@@ -54,14 +54,15 @@ public:
   using Timepoint      = ClockInterface::Timestamp;
   using Duration       = ClockInterface::Duration;
 
-  using Address           = Packet::Address;
-  using Peers             = std::deque<PeerInfo>;
-  using PeerTrackerPtr    = std::unique_ptr<PeerTracker>;
-  using PeerList          = std::unordered_set<Address>;
-  using PendingResolution = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
-  using PendingPromised   = std::unordered_map<uint64_t, std::shared_ptr<PromiseTask>>;
-  using ConnectionHandle  = network::AbstractConnection::ConnectionHandleType;
-  using ConstByteArray    = byte_array::ConstByteArray;
+  using Address            = Packet::Address;
+  using Peers              = std::deque<PeerInfo>;
+  using PeerTrackerPtr     = std::shared_ptr<PeerTracker>;
+  using WeakPeerTrackerPtr = std::weak_ptr<PeerTracker>;
+  using PeerList           = std::unordered_set<Address>;
+  using PendingResolution  = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
+  using PendingPromised    = std::unordered_map<uint64_t, std::shared_ptr<PromiseTask>>;
+  using ConnectionHandle   = network::AbstractConnection::ConnectionHandleType;
+  using ConstByteArray     = byte_array::ConstByteArray;
 
   using Ports                  = PeerTrackerProtocol::Ports;
   using ConnectionPriorityMap  = std::unordered_map<Address, AddressPriority>;
@@ -238,6 +239,7 @@ private:
   Address               own_address_;
   BlackList             blacklist_;
   TrackerConfiguration  tracker_configuration_;
+  WeakPeerTrackerPtr    weak_self_;
   /// @}
 
   /// Peer tracker protocol
