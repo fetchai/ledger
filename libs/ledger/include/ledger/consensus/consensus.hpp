@@ -79,7 +79,7 @@ public:
   Consensus &operator=(Consensus const &) = delete;
   Consensus &operator=(Consensus &&) = delete;
 
-  uint64_t GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
+  uint64_t GetBlockGenerationWeight(Block const &previous, chain::Address const &address) const;
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
