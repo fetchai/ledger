@@ -8,6 +8,7 @@ import pandas as pd
 import csv
 import yaml
 
+
 def remove_sysinfo(csv_file):
     new_csv_file = '{}_wo_sysinfo.csv'.format(os.path.splitext(csv_file)[0])
 
@@ -88,18 +89,24 @@ def run_benchmark(bench_binary, bench_name, output_dir):
     compute_time_charge_corr(csvfile, statsfile)
 
 # from ledger
+
+
 def verify_file(filename):
     if not os.path.isfile(filename):
         print("Couldn't find expected file: {}".format(filename))
         sys.exit(1)
 
 # from ledger
+
+
 def verify_dir(dirname):
     if not os.path.isdir(dirname):
         print("Couldn't find expected directory: {}".format(dirname))
         sys.exit(1)
 
 # from ledger
+
+
 def yaml_extract(test, key, expected=True, expect_type=None, default=None):
     """
     Convenience function to remove an item from a YAML string, specifying the type you expect to find
@@ -151,7 +158,7 @@ def main():
     verify_dir(build_dir)
     verify_file(yaml_file)
     verify_dir(output_dir)
-    
+
     # Read YAML file
     with open(yaml_file, 'r') as stream:
         try:
@@ -161,13 +168,13 @@ def main():
                 path = yaml_extract(bench, 'bench_binary')
                 bench_binary = os.path.join(build_dir, path)
                 verify_file(bench_binary)
-                
+
                 # Get benchmarks for this binary
                 bench_list = yaml_extract(bench, 'bench_functions')
 
                 # Run benchmarks
                 for benchname in bench_list:
-                  run_benchmark(bench_binary, benchname, output_dir)
+                    run_benchmark(bench_binary, benchname, output_dir)
         except Exception as e:
             print('Failed to parse yaml or to run benchmark! Error: "{}"'.format(e))
             traceback.print_exc()

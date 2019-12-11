@@ -9,7 +9,7 @@ bench_functions: [
   'BM_SerializeToString',
   'BM_DeserializeFromString',
   'BM_Compile',
-  ''  # all  
+  ''  # all
 ]
 ...
 
@@ -19,5 +19,3 @@ bench_functions: [
   'BM_Fill',
 ]
 ...
-
-
