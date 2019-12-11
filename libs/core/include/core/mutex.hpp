@@ -48,11 +48,9 @@ public:
     {
       throw std::runtime_error(message);
     }
-    else
-    {
-      std::cerr << message << std::endl;
-      abort();
-    }
+
+    std::cerr << message << std::endl;
+    abort();
   }
 
   static void ThrowOnDeadlock()
@@ -66,8 +64,9 @@ public:
   }
 
 private:
-  void        FindDeadlock(DebugMutex *mutex, std::thread::id thread, LockLocation const &location);
-  std::string CreateTrace(DebugMutex *mutex, std::thread::id thread, LockLocation const &location);
+  void FindDeadlock(DebugMutex *first_mutex, std::thread::id thread, LockLocation const &location);
+  std::string CreateTrace(DebugMutex *first_mutex, std::thread::id thread,
+                          LockLocation const &location);
 
   static std::atomic<bool>                          throw_on_deadlock_;
   std::mutex                                        mutex_;
