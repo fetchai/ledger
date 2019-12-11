@@ -185,8 +185,6 @@ void Analyser::Initialise()
 
   CreateGroupType("[AnyInteger]", TypeIndex(typeid(AnyInteger)), integer_types, TypeIds::Unknown,
                   any_integer_type_);
-  CreateGroupType("[AnyFloatingPoint]", TypeIndex(typeid(AnyFloatingPoint)),
-                  {float32_type_, float64_type_}, TypeIds::Unknown, any_floating_point_type_);
 
   CreateTemplateType("Array", TypeIndex(typeid(IArray)), {any_type_}, TypeIds::Unknown,
                      array_type_);
@@ -237,7 +235,6 @@ void Analyser::UnInitialise()
   any_type_                 = nullptr;
   any_primitive_type_       = nullptr;
   any_integer_type_         = nullptr;
-  any_floating_point_type_  = nullptr;
   array_type_               = nullptr;
   map_type_                 = nullptr;
   state_type_               = nullptr;

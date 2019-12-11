@@ -213,5 +213,17 @@ static constexpr meta::IfIsFixedPoint<T, bool> is_inf(T const &val)
   return (T::IsNegInfinity(val) || T::IsPosInfinity(val) || state_division_by_zero<T>());
 }
 
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, T> Type(std::string const &val)
+{
+  return T(std::stod(val));
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, T> Type(std::string const &val)
+{
+  return T(val);
+}
+
 }  // namespace math
 }  // namespace fetch

@@ -125,8 +125,10 @@ class ParameterPack
 {
 public:
   // Construction / Destruction
-  explicit ParameterPack(RegisteredTypes const &registered_types, VM *vm = nullptr)
+  explicit ParameterPack(RegisteredTypes const &registered_types, VariantArray params = {},
+                         VM *vm = nullptr)
     : registered_types_{registered_types}
+    , params_{std::move(params)}
     , vm_{vm}
   {}
 
@@ -230,13 +232,13 @@ private:
   }
 
   RegisteredTypes const &registered_types_;
-  VariantArray           params_{};
-  VM *                   vm_;
+  VariantArray           params_;
+  VM *const              vm_;
 };
 
 using ContractInvocationHandler = std::function<bool(
     VM * /* vm */, std::string const & /* identity */, Executable::Contract const & /* contract */,
-    Executable::Function const & /* function */, VariantArray const & /* parameters */,
+    Executable::Function const & /* function */, VariantArray /* parameters */,
     std::string & /* error */, Variant & /* output */)>;
 
 class VM
