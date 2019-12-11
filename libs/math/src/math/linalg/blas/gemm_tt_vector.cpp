@@ -38,19 +38,18 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
   std::size_t i;
   std::size_t j;
   if ((c.height() == 0) ||
-      ((c.width() == 0) || (((alpha == static_cast<Type>(0.0)) || (a.height() == 0)) &&
-                            (beta == static_cast<Type>(1.0)))))
+      ((c.width() == 0) || (((alpha == Type{0}) || (a.height() == 0)) && (beta == Type{1}))))
   {
     return;
   }
 
-  if (alpha == static_cast<Type>(0.0))
+  if (alpha == Type{0})
   {
-    if (beta == static_cast<Type>(0.0))
+    if (beta == Type{0})
     {
       for (j = 0; j < c.width(); ++j)
       {
-        Type zero{0.0};
+        auto zero = Type{0};
 
         auto          ret_slice = c.data().slice(c.padded_height() * j, c.height());
         memory::Range range(std::size_t(0), std::size_t(c.height()));
@@ -84,13 +83,13 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
     {
       Type        temp;
       std::size_t l;
-      temp = static_cast<Type>(0.0);
+      temp = Type{0};
       for (l = 0; l < a.height(); ++l)
       {
         temp = temp + a(l, i) * b(j, l);
       }
 
-      if (beta == static_cast<Type>(0.0))
+      if (beta == Type{0})
       {
         c(i, j) = alpha * temp;
       }
