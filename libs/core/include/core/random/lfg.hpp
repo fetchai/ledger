@@ -19,6 +19,7 @@
 
 #include "lcg.hpp"
 
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <cstdint>
 #include <limits>
 #include <vector>
@@ -31,6 +32,9 @@ class LaggedFibonacciGenerator
 {
 public:
   using RandomType = uint64_t;
+  using fp128_t    = fetch::fixed_point::fp128_t;
+  using fp64_t     = fetch::fixed_point::fp64_t;
+  using fp32_t     = fetch::fixed_point::fp32_t;
 
   // Note, breaking naming convention for STL compatibility
   using result_type = RandomType;
@@ -78,6 +82,29 @@ public:
   double AsDouble() noexcept
   {
     return double(this->operator()()) * inv_double_max_;
+  }
+
+  fp128_t AsFP128() noexcept
+  {
+    uint64_t fp128_u_max_ = static_cast<uint64_t>(fp128_t::FP_MAX);
+
+    auto fp_val = static_cast<fp128_t>(this->operator()() % fp128_u_max_);
+    return fp_val / fp128_t::FP_MAX;
+  }
+
+  fp64_t AsFP64() noexcept
+  {
+    uint64_t fp64_u_max_ = static_cast<uint64_t>(fp64_t::FP_MAX);
+
+    auto fp_val = static_cast<fp64_t>(this->operator()() % fp64_u_max_);
+    return fp_val / fp64_t::FP_MAX;
+  }
+
+  fp32_t AsFP32() noexcept
+  {
+    auto fp_val = fp32_t::FromBase(this->operator()() % fp64_t::MAX);  // yes, fp64_t::MAX
+    fp_val /= fp32_t::FP_MAX;
+    return fp32_t::Abs(fp_val);
   }
 
   static constexpr RandomType min() noexcept
@@ -143,5 +170,6 @@ private:
   static constexpr double inv_double_max_ =
       1. / static_cast<double>(std::numeric_limits<RandomType>::max());
 };
+
 }  // namespace random
 }  // namespace fetch
