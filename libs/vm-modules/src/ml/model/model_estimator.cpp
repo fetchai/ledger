@@ -422,6 +422,7 @@ ChargeAmount ModelEstimator::SerializeToString()
 ChargeAmount ModelEstimator::DeserializeFromString(Ptr<String> const &model_string)
 {
   DataType estimate = DESERIALISATION_PER_CHAR_COEF * model_string->string().size();
+
   auto ret = static_cast<ChargeAmount>(estimate + DESERIALISATION_CONST_COEF) * COMPUTE_CHARGE_COST;
 
   // Ensure that estimate will never be 0
