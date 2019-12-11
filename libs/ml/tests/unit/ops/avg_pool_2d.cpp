@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/avg_pool_2d.hpp"
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "ml/ops/avg_pool_2d.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -161,7 +161,7 @@ TYPED_TEST(AvgPool2DTest, backward_test)
   {
     for (SizeType j{0}; j < output_height; ++j)
     {
-      error(0, i, j, 0) = DataType{1 + i + j};
+      error(0, i, j, 0) = static_cast<DataType>(1 + i + j);
     }
   }
 
