@@ -55,7 +55,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
   data_loader_ptr->AddData({data}, gt);
 
   // run model in training mode
-  auto model = ModelType(model_config, {3, 100, 100, 3});
+  auto model = ModelType(model_config, {3, 50, 50, 3});
   model.SetDataloader(std::move(data_loader_ptr));
   model.Compile(optimiser_type, ops::LossType::NONE, {ops::MetricType::CATEGORICAL_ACCURACY});
 
@@ -120,7 +120,7 @@ TYPED_TEST(DNNClassifierModelTest, adagrad_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD,
-                                                     DataType{1e-2f}, DataType{0.01f}, 200));
+                                                     DataType{1e-2f}, DataType{0.03f}, 400));
 }
 
 TYPED_TEST(DNNClassifierModelTest, adam_dnnclasifier)
