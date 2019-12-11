@@ -75,11 +75,10 @@ TYPED_TEST(SoftmaxTest, multi_dimension_test)
   // test correct values
   ASSERT_TRUE(
       test_axis0.AllClose(gt_axis0, fetch::math::function_tolerance<typename TypeParam::Type>()) ||
-      test_axis0.AllClose(gt_axis0, static_cast<typename TypeParam::Type>(1e-5)));
+      test_axis0.AllClose(gt_axis0, math::function_tolerance<typename TypeParam::Type>()));
   ASSERT_TRUE(
       test_axis1.AllClose(gt_axis1, fetch::math::function_tolerance<typename TypeParam::Type>()) ||
-      test_axis0.AllClose(gt_axis0, static_cast<typename TypeParam::Type>(1e-5)));
-}
+      test_axis0.AllClose(gt_axis0, math::function_tolerance<typename TypeParam::Type>()));
 
 TYPED_TEST(SoftmaxTest, exact_values_test)
 {
