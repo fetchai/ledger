@@ -35,7 +35,6 @@
 #include "math/tensor_iterator.hpp"
 #include "math/tensor_slice_iterator.hpp"
 #include "math/tensor_view.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/memory/array.hpp"
 
 #include <cassert>
