@@ -376,7 +376,7 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
           SizeType number_of_batches = n_data / batch_size;
 
-          DataType val(0);
+          DataType val{0};
 
           // Forward pass
           val = val + forward_pass_cost * n_data;
@@ -508,7 +508,7 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
 
           forward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_FORWARD_IMPACT;
 
-          DataType val(0);
+          DataType val{0};
 
           // Forward pass
           val = val + forward_pass_cost * n_data;
