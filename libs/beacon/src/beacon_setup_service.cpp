@@ -299,9 +299,8 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
   }
 
   // request removal of unwanted connections
-  // TODO(tfr): fix
-  // auto unwanted_connections = muddle_.GetRequestedPeers() - aeon_members;
-  // muddle_.DisconnectFrom(unwanted_connections);
+  auto unwanted_connections = muddle_.GetRequestedPeers() - aeon_members;
+  muddle_.DisconnectFrom(unwanted_connections);
 
   // Update telemetry
   beacon_dkg_all_connections_gauge_->set(muddle_.GetDirectlyConnectedPeers().size());
