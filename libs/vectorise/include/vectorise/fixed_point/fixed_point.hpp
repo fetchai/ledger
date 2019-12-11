@@ -958,7 +958,7 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F>::FixedPoint(std::string const &s)
   : data_{0}
 {
-  if (s.find("e") != std::string::npos || s.find("E") != std::string::npos)
+  if (s.find('e') != std::string::npos || s.find('E') != std::string::npos)
   {
     throw std::runtime_error("FixedPoint string parsing does not support scientific notation!");
   }
@@ -2313,10 +2313,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Abs(FixedPoint<I, F> const &x)
   {
     return x;
   }
-  else
-  {
-    return -x;
-  }
+  return -x;
 }
 
 /**
