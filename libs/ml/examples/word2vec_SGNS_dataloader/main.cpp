@@ -80,8 +80,8 @@ struct TrainingParams
   SizeType graph_saves_per_epoch = 10;
 
   // these are the learning rates we have for each sample
-  DataType starting_learning_rate_per_sample = fetch::math::Type<DataType>("0.0025f");
-  DataType ending_learning_rate_per_sample   = fetch::math::Type<DataType>("0.0001f");
+  DataType starting_learning_rate_per_sample = fetch::math::Type<DataType>("0.0025");
+  DataType ending_learning_rate_per_sample   = fetch::math::Type<DataType>("0.0001");
   // this is the true learning rate set for the graph training
   DataType starting_learning_rate;
   DataType ending_learning_rate;

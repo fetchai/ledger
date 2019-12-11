@@ -267,10 +267,10 @@ private:
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg.AsDouble();  // random value in range 0 <-> 1
-      ran_val -= 0.5;
-      ran_val *= 2.0;                 // random value in range -1 <-> +1
-      ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma
+      auto ran_val = lfg.AsFP64();  // random value in range 0 <-> 1
+      ran_val      = ran_val - HALF;
+      ran_val      = ran_val * 2;                   // random value in range -1 <-> +1
+      ran_val      = ran_val * normalising_factor;  // random value in range -sigma <-> +sigma
 
       *it = typename TensorType::Type(ran_val);
       ++it;
@@ -288,10 +288,10 @@ private:
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg.AsDouble();  // random value in range 0 <-> 1
-      ran_val -= 0.5;
-      ran_val *= 2.0;                 // random value in range -1 <-> +1
-      ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma
+      auto ran_val = lfg.AsFP64();  // random value in range 0 <-> 1
+      ran_val      = ran_val - HALF;
+      ran_val      = ran_val * 2;                   // random value in range -1 <-> +1
+      ran_val      = ran_val * normalising_factor;  // random value in range -sigma <-> +sigma
 
       *it = typename TensorType::Type(ran_val);
       ++it;

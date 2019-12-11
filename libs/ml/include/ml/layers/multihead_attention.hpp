@@ -48,7 +48,7 @@ public:
   MultiheadAttention() = default;
 
   MultiheadAttention(SizeType n_heads, SizeType model_dim,
-                     DataType dropout = static_cast<DataType>(0.9))
+                     DataType dropout = fetch::math::Type<DataType>("0.9"))
     : n_heads_(n_heads)
     , model_dim_(model_dim)
     , dropout_(dropout)
@@ -91,7 +91,7 @@ public:
         this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
             name + "_Final_Transformation", {concatenated_attention_heads},
             static_cast<SizeType>(model_dim_), static_cast<SizeType>(model_dim_),
-            ActivationType::NOTHING, RegType::NONE, static_cast<DataType>(0),
+            ActivationType::NOTHING, RegType::NONE, fetch::math::Type<DataType>("0"),
             WeightsInitType::XAVIER_GLOROT, true);
 
     this->AddInputNode(query);
@@ -111,17 +111,17 @@ public:
         this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
             head_name + "_Query_Transform", {query}, static_cast<SizeType>(model_dim_),
             static_cast<SizeType>(key_dim_), ActivationType::NOTHING, RegType::NONE,
-            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
+            fetch::math::Type<DataType>("0"), WeightsInitType::XAVIER_GLOROT, true);
     std::string transformed_key =
         this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
             head_name + "_Key_Transform", {key}, static_cast<SizeType>(model_dim_),
             static_cast<SizeType>(key_dim_), ActivationType::NOTHING, RegType::NONE,
-            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
+            fetch::math::Type<DataType>("0"), WeightsInitType::XAVIER_GLOROT, true);
     std::string transformed_value =
         this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
             head_name + "_Value_Transform", {value}, static_cast<SizeType>(model_dim_),
             static_cast<SizeType>(value_dim_), ActivationType::NOTHING, RegType::NONE,
-            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
+            fetch::math::Type<DataType>("0"), WeightsInitType::XAVIER_GLOROT, true);
     // do the scaled dot product attention
     std::string attention_output =
         this->template AddNode<fetch::ml::layers::ScaledDotProductAttention<TensorType>>(

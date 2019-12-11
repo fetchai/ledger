@@ -51,7 +51,8 @@ public:
   using SPType        = LayerScaledDotProductAttentionSaveableParams<T>;
 
   ScaledDotProductAttention() = default;
-  explicit ScaledDotProductAttention(SizeType dk, DataType dropout = static_cast<DataType>(0.9))
+  explicit ScaledDotProductAttention(SizeType dk,
+                                     DataType dropout = fetch::math::Type<DataType>("0.9"))
     : key_dim_(dk)
     , dropout_(dropout)
   {
@@ -89,7 +90,8 @@ public:
     // masking: make sure u mask along the feature dimension, if the mask is to be broadcasted
     std::string masked_scaled_kq_matmul =
         this->template AddNode<fetch::ml::ops::MaskFill<TensorType>>(
-            name + "_Masking", {mask, scaled_kq_matmul}, static_cast<DataType>(-1e9));
+            name + "_Masking", {mask, scaled_kq_matmul},
+            fetch::math::Type<DataType>("-0.000000001"));
 
     // softmax
     std::string attention_weight = this->template AddNode<fetch::ml::ops::Softmax<TensorType>>(

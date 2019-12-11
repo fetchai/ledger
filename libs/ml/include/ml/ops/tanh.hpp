@@ -117,7 +117,7 @@ public:
 private:
   // minimum possible output value of the tanh should not be -1, but actually (-1 + epsilon)
   // likewise maximum output should be (1 - epsilon)
-  DataType epsilon_ = DataType(1e-12);
+  DataType epsilon_ = fetch::math::numeric_min<DataType>();
 };
 
 }  // namespace ops

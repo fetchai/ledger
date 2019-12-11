@@ -42,16 +42,16 @@ public:
   RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
                    std::vector<std::string> const &input_node_names,
                    std::string const &label_node_name, std::string const &output_node_name,
-                   DataType const &learning_rate = DataType{0.001f},
-                   DataType const &decay_rate    = DataType{0.9f},
-                   DataType const &epsilon       = DataType{1e-8f});
+                   DataType const &learning_rate = fetch::math::Type<DataType>("0.001"),
+                   DataType const &decay_rate    = fetch::math::Type<DataType>("0.9"),
+                   DataType const &epsilon       = fetch::math::Type<DataType>("1e-8"));
 
   RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
                    std::vector<std::string> const &input_node_names,
                    std::string const &label_node_name, std::string const &output_node_name,
                    fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
-                   DataType const &decay_rate = DataType{0.9f},
-                   DataType const &epsilon    = DataType{1e-8f});
+                   DataType const &decay_rate = fetch::math::Type<DataType>("0.9"),
+                   DataType const &epsilon    = fetch::math::Type<DataType>("1e-8"));
 
   ~RMSPropOptimiser() override = default;
 

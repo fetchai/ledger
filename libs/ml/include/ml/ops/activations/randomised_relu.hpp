@@ -157,7 +157,7 @@ private:
   void UpdateRandomValue()
   {
     random_value_ =
-        lower_bound_ + static_cast<DataType>(rng_.AsDouble()) * (upper_bound_ - lower_bound_);
+        lower_bound_ + static_cast<DataType>(rng_.AsFP64()) * (upper_bound_ - lower_bound_);
   }
 
   DataType random_value_;
