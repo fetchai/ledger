@@ -1,3 +1,4 @@
+
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/time/to_seconds.hpp"
 #include "kademlia/peer_tracker.hpp"
+#include "core/time/to_seconds.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -785,6 +786,15 @@ void PeerTracker::Periodically()
   // Getting the tracker configuration
   auto config     = tracker_configuration();
   auto my_address = own_address();
+
+  ++counter;
+  if ((static_cast<int32_t>(counter) % 30) == 0)
+  {
+    std::stringstream ss{""};
+    ss << "Configuration for " << logging_name_ << std::endl;
+    ss << config.ToString() << std::endl;
+    std::cout << ss.str() << std::endl;
+  }
 
   // Clearing arrays used to track actions on connections
   {
