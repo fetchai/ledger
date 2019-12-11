@@ -214,7 +214,13 @@ static constexpr meta::IfIsFixedPoint<T, bool> is_inf(T const &val)
 }
 
 template <typename T>
-static constexpr meta::IfIsNonFixedPointArithmetic<T, T> Type(std::string const &val)
+static constexpr meta::IfIsInteger<T, T> Type(std::string const &val)
+{
+  return T(std::stoi(val));
+}
+
+template <typename T>
+static constexpr meta::IfIsFloat<T, T> Type(std::string const &val)
 {
   return T(std::stod(val));
 }
