@@ -22,7 +22,6 @@
 #include "crypto/identity.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/fees/chargeable.hpp"
-#include "ledger/identifier.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -62,8 +61,9 @@ public:
 
   struct Result
   {
-    Status  status{Status::NOT_FOUND};
-    int64_t return_value{0};
+    Status   status{Status::NOT_FOUND};
+    int64_t  return_value{0};
+    uint64_t block_index{0};
   };
 
   using BlockIndex     = chain::TransactionLayout::BlockIndex;
@@ -142,7 +142,11 @@ protected:
   template <typename T>
   bool GetStateRecord(T &record, ConstByteArray const &key);
   template <typename T>
+  bool GetStateRecord(T &record, chain::Address const &address);
+  template <typename T>
   StateAdapter::Status SetStateRecord(T const &record, ConstByteArray const &key);
+  template <typename T>
+  StateAdapter::Status SetStateRecord(T const &record, chain::Address const &address);
 
   ledger::StateAdapter &state();
   /// @}
@@ -220,6 +224,12 @@ void Contract::OnQuery(std::string const &name, C *instance,
   });
 }
 
+template <typename T>
+bool Contract::GetStateRecord(T &record, chain::Address const &address)
+{
+  return GetStateRecord(record, address.display());
+}
+
 /**
  * Look up the state record stored with the specified key
  *
@@ -270,6 +280,12 @@ bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
   }
 
   return success;
+}
+
+template <typename T>
+StateAdapter::Status Contract::SetStateRecord(T const &record, chain::Address const &address)
+{
+  return SetStateRecord(record, address.display());
 }
 
 /**

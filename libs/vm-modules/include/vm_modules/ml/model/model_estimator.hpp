@@ -79,6 +79,10 @@ public:
   ChargeAmount CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                  fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
+  ChargeAmount CompileSequentialWithMetrics(
+      vm::Ptr<vm::String> const &loss, vm::Ptr<vm::String> const &optimiser,
+      vm::Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics);
+
   ChargeAmount CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
                              fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers);
 
@@ -179,6 +183,14 @@ public:
   {
     return DataType(0.003333333333333);
   };
+  static constexpr DataType SCEL_FORWARD_IMPACT()
+  {
+    return DataType(0.006666666666666);
+  };
+  static constexpr DataType CATEGORICAL_ACCURACY_FORWARD_IMPACT()
+  {
+    return DataType(0.003333333333333);
+  };
 
   // Backward
   static constexpr DataType BACKWARD_DENSE_INPUT_COEF()
@@ -205,6 +217,10 @@ public:
   {
     return DataType(0.003333333333333);
   };
+  static constexpr DataType SCEL_BACKWARD_IMPACT()
+  {
+    return DataType(0.006666666666666);
+  };
 
   // Predict
   static constexpr DataType PREDICT_BATCH_LAYER_COEF()
@@ -216,6 +232,23 @@ public:
     return DataType(40.0);
   };
 
+  // Fit
+  static constexpr DataType BACKWARD_BATCH_LAYER_COEF()
+  {
+    return DataType(0.3);
+  };
+
+  static constexpr DataType BACKWARD_PER_BATCH_COEF()
+  {
+    return DataType(0.3);
+  };
+
+  static constexpr DataType FIT_CONST_COEF()
+  {
+    return DataType(40.0);
+  };
+
+  // Deserialisation
   static constexpr DataType DESERIALISATION_PER_CHAR_COEF()
   {
     return DataType(0.010416666666667);
@@ -226,10 +259,26 @@ public:
     return DataType(100.0);
   };
 
-  static constexpr SizeType FIT_CONST_OVERHEAD            = 3;
-  static constexpr SizeType FIT_PER_BATCH_OVERHEAD        = 2;
-  static constexpr SizeType SERIALISATION_OVERHEAD        = 5;
-  static constexpr SizeType WEIGHT_SERIALISATION_OVERHEAD = 4;  // Will depend on DataType of Tensor
+  // Serialisation
+  static constexpr DataType SERIALISATION_PER_OP_COEF()
+  {
+    return DataType(139);
+  };
+
+  static constexpr DataType SERIALISATION_WEIGHT_SUM_COEF()
+  {
+    return DataType(0.05292996);
+  };
+
+  static constexpr DataType SERIALISATION_PADDED_WEIGHT_SUM_COEF()
+  {
+    return DataType(0.2);
+  };
+
+  static constexpr DataType SERIALISATION_CONST_COEF()
+  {
+    return DataType(210);
+  };
 
   static constexpr ChargeAmount CONSTANT_CHARGE{vm::COMPUTE_CHARGE_COST};
 
@@ -237,17 +286,21 @@ private:
   struct State
   {
     // Model
-    DataType forward_pass_cost{0.0};
-    DataType backward_pass_cost{0.0};
+    DataType forward_pass_cost{"0.0"};
+    DataType backward_pass_cost{"0.0"};
+    DataType metrics_cost{"0.0"};
 
     // Optimiser
     SizeType weights_size_sum{0};
     SizeType weights_padded_size_sum{0};
 
-    DataType optimiser_step_impact{0};
+    DataType optimiser_step_impact{"0"};
 
     SizeType last_layer_size{0};
     SizeType ops_count{0};
+
+    // data
+    SizeType subset_size{0};
 
     // serialization
     bool SerializeTo(serializers::MsgPackSerializer &buffer);
