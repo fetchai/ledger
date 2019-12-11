@@ -102,10 +102,9 @@ public:
 
   fp32_t AsFP32() noexcept
   {
-    uint64_t fp32_u_max_ = static_cast<uint64_t>(fp32_t::FP_MAX);
-
-    auto fp_val = static_cast<fp32_t>(this->operator()() % fp32_u_max_);
-    return fp_val / fp32_t::FP_MAX;
+    auto fp_val = fp32_t::FromBase(this->operator()() % fp64_t::MAX);  // yes, fp64_t::MAX
+    fp_val /= fp32_t::FP_MAX;
+    return fp32_t::Abs(fp_val);
   }
 
   static constexpr RandomType min() noexcept
