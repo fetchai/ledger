@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstdlib>
+#include <iostream>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -26,29 +28,75 @@
 namespace fetch {
 class DebugMutex;
 
+struct LockLocation
+{
+  std::string filename{};
+  int32_t     line{};
+};
+
 class Mutexregister
 {
 public:
-  void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
+  void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread,
+                                LockLocation const &location);
   void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
-  void QueueUpFor(DebugMutex *mutex, std::thread::id thread);
-  void FindDeadlock(DebugMutex *mutex, std::thread::id thread);
+  void QueueUpFor(DebugMutex *mutex, std::thread::id thread, LockLocation const &location);
+  void DeadlockDetected(std::string const &message)
+  {
+    // TODO: Print lock stack;
+    if (throw_on_deadlock_)
+    {
+      throw std::runtime_error(message);
+    }
+    else
+    {
+      std::cerr << message << std::endl;
+      abort();
+    }
+  }
+
+  static void ThrowOnDeadlock()
+  {
+    throw_on_deadlock_ = true;
+  }
+
+  static void AbortOnDeadlock()
+  {
+    throw_on_deadlock_ = false;
+  }
 
 private:
+  void        FindDeadlock(DebugMutex *mutex, std::thread::id thread, LockLocation const &location);
+  std::string CreateTrace(DebugMutex *mutex, std::thread::id thread, LockLocation const &location);
+
+  static std::atomic<bool>                          throw_on_deadlock_;
   std::mutex                                        mutex_;
   std::unordered_map<DebugMutex *, std::thread::id> lock_owners_;
   std::unordered_map<std::thread::id, DebugMutex *> waiting_for_;
+
+  std::unordered_map<DebugMutex *, LockLocation>    lock_location_;
+  std::unordered_map<std::thread::id, LockLocation> waiting_location_;
 };
 
-void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
+void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread,
+                              LockLocation const &location = LockLocation());
 void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
-void QueueUpFor(DebugMutex *mutex, std::thread::id thread);
+void QueueUpFor(DebugMutex *mutex, std::thread::id thread,
+                LockLocation const &location = LockLocation());
 
 class DebugMutex : public std::mutex
 {
 public:
   DebugMutex()  = default;
   ~DebugMutex() = default;
+
+  void lock(std::string const &filename, int32_t line)
+  {
+    LockLocation loc{filename, line};
+    QueueUpFor(this, std::this_thread::get_id(), loc);
+    std::mutex::lock();
+    RegisterMutexAcquisition(this, std::this_thread::get_id(), loc);
+  }
 
   void lock()
   {
@@ -75,6 +123,44 @@ public:
   }
 };
 
+template <typename T>
+class DebugLockGuard
+{
+public:
+  DebugLockGuard(T &lockable, std::string const & /*filename*/, int32_t /*line*/)
+    : lockable_{lockable}
+  {
+    lockable_.lock();
+  }
+
+  ~DebugLockGuard()
+  {
+    lockable_.unlock();
+  }
+
+private:
+  T &lockable_;
+};
+
+template <>
+class DebugLockGuard<DebugMutex>
+{
+public:
+  DebugLockGuard(DebugMutex &lockable, std::string const &filename, int32_t line)
+    : lockable_{lockable}
+  {
+    lockable_.lock(filename, line);
+  }
+
+  ~DebugLockGuard()
+  {
+    lockable_.unlock();
+  }
+
+private:
+  DebugMutex &lockable_;
+};
+
 #ifndef NDEBUG
 using Mutex = DebugMutex;
 #else
@@ -84,7 +170,12 @@ using Mutex = std::mutex;
 #define FETCH_JOIN_IMPL(x, y) x##y
 #define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
 
+#ifndef NDEBUG
+#define FETCH_LOCK(lockable)                                                       \
+  fetch::DebugLockGuard<typename std::decay<decltype(lockable)>::type> FETCH_JOIN( \
+      mutex_locked_on_line, __LINE__)(lockable, __FILE__, __LINE__)
+#else
 #define FETCH_LOCK(lockable) \
   std::lock_guard<decltype(lockable)> FETCH_JOIN(mutex_locked_on_line, __LINE__)(lockable)
-
+#endif
 }  // namespace fetch

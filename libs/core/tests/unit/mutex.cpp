@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#define FETCH_DEBUG_MUTEX_THROW_INSTEAD_OF_ABORT
 #include "core/mutex.hpp"
 
 #include "gmock/gmock.h"
@@ -28,7 +27,7 @@
 
 TEST(DebugMutex, SimpleProblem)
 {
-
+  fetch::Mutexregister::ThrowOnDeadlock();
   {
     fetch::DebugMutex                  mutex;
     std::lock_guard<fetch::DebugMutex> guard1(mutex);
@@ -43,4 +42,74 @@ TEST(DebugMutex, SimpleProblem)
 
     EXPECT_THROW(std::lock_guard<fetch::DebugMutex> guard3(mutex2), std::runtime_error);
   }
+}
+
+TEST(DebugMutex, MultiThreadDeadlock)
+{
+  fetch::Mutexregister::ThrowOnDeadlock();
+  fetch::DebugMutex m[5];
+  auto              f = [&m](int32_t n) {
+    std::lock_guard<fetch::DebugMutex> guard1(m[n]);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    if (n != 0)
+    {
+      std::lock_guard<fetch::DebugMutex> guard2(m[n - 1]);
+    }
+  };
+
+  std::vector<std::thread> threads;
+
+  {
+    std::lock_guard<fetch::DebugMutex> guard1(m[0]);
+    threads.emplace_back(f, 1);
+    threads.emplace_back(f, 2);
+    threads.emplace_back(f, 3);
+    threads.emplace_back(f, 4);
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    EXPECT_THROW(std::lock_guard<fetch::DebugMutex> guard2(m[4]), std::runtime_error);
+  }
+  //  t0.join();
+  threads[0].join();
+  threads[1].join();
+  threads[2].join();
+  threads[3].join();
+  threads.clear();
+}
+
+TEST(DebugMutex, DISABLED_MultiThreadDeadlock2)
+{
+  fetch::Mutexregister::AbortOnDeadlock();
+  fetch::DebugMutex m[5];
+  auto              f = [&m](int32_t n) {
+    FETCH_LOCK(m[n]);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    if (n != 0)
+    {
+      FETCH_LOCK(m[n - 1]);
+    }
+  };
+
+  std::vector<std::thread> threads;
+
+  {
+    FETCH_LOCK(m[0]);
+    threads.emplace_back(f, 1);
+    threads.emplace_back(f, 2);
+    threads.emplace_back(f, 3);
+    threads.emplace_back(f, 4);
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    EXPECT_THROW(FETCH_LOCK(m[4]), std::runtime_error);
+  }
+  //  t0.join();
+  threads[0].join();
+  threads[1].join();
+  threads[2].join();
+  threads[3].join();
+  threads.clear();
 }
