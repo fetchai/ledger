@@ -120,7 +120,7 @@ TYPED_TEST(DNNClassifierModelTest, adagrad_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD,
-                                                     DataType{1e-2f}, DataType{0.01f}, 400));
+                                                     DataType{1e-2f}, DataType{0.01f}, 200));
 }
 
 TYPED_TEST(DNNClassifierModelTest, adam_dnnclasifier)

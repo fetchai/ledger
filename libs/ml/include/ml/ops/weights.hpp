@@ -283,10 +283,10 @@ private:
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg.AsFP32();  // random value in range 0 <-> 1
+      auto ran_val = lfg.AsFP64();  // random value in range 0 <-> 1
       ran_val      = ran_val - HALF;
       ran_val      = ran_val * 2;  // random value in range -1 <-> +1
-      ran_val      = ran_val * static_cast<fetch::fixed_point::fp32_t>(
+      ran_val      = ran_val * static_cast<fetch::fixed_point::fp64_t>(
                               normalising_factor);  // random value in range -sigma <-> +sigma
 
       *it = static_cast<DataType>(ran_val);
@@ -305,10 +305,10 @@ private:
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg.AsFP32();  // random value in range 0 <-> 1
+      auto ran_val = lfg.AsFP64();  // random value in range 0 <-> 1
       ran_val      = ran_val - HALF;
       ran_val      = ran_val * 2;  // random value in range -1 <-> +1
-      ran_val      = ran_val * static_cast<fetch::fixed_point::fp32_t>(
+      ran_val      = ran_val * static_cast<fetch::fixed_point::fp64_t>(
                               normalising_factor);  // random value in range -sigma <-> +sigma
 
       *it = static_cast<DataType>(ran_val);
@@ -316,7 +316,7 @@ private:
     }
   }
 
-  static const fetch::fixed_point::fp32_t HALF;
+  static const fetch::fixed_point::fp64_t HALF;
 };
 
 }  // namespace ops
@@ -328,8 +328,8 @@ struct OpWeightsSaveableParams : public OpVariableSaveableParams<TensorType>
 };
 
 template <class T>
-const fetch::fixed_point::fp32_t ops::Weights<T>::HALF =
-    static_cast<fetch::fixed_point::fp32_t>("0.5");
+const fetch::fixed_point::fp64_t ops::Weights<T>::HALF =
+    static_cast<fetch::fixed_point::fp64_t>("0.5");
 
 }  // namespace ml
 }  // namespace fetch

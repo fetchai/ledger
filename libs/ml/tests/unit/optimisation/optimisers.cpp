@@ -157,16 +157,16 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.00071218842640519142,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.00037039007293060422,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.29203245043754578,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.24058516323566437,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.0021721683442592621,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.0024778733495622873,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.054290771484375,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.33308404684066772,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -202,16 +202,16 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.000231940284720622,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.00036449235631152987,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.25892940163612366,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.21178488433361053,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.00037371920188888907,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.00055545743089169264,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.277923583984375,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.22925795614719391,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -294,16 +294,16 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.11926319450139999,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.06953313946723938,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.57360750436782837,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.54472243785858154,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.35343021154403687,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.43430191278457642,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.054290771484375,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.7578970193862915,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -339,16 +339,16 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.0032417818438261747,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.0051308656111359596,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.279984831809997561,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.21178488433361053,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.0052213761955499649,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.0078205317258834839,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.277923583984375,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.23670780658721924,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -384,16 +384,16 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.066400617361068726,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.068447768688201904,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.35673052072525024,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.30608183145523071,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.064657971262931824,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.064945906400680542,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.054290771484375,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.39790481328964233,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -429,16 +429,16 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.056325681507587433,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.061900380998849869,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.31351795792579651,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.21178488433361053,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.056437797844409943,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.063398018479347229,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.277923583984375,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.30402284860610962,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -474,16 +474,16 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.053533975134652467,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.054797373712062836,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.34385548658475557,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.29292047023773193,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.052464239299297333,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.052629902958869934,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.054290771484375,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.38475692272186279,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -519,16 +519,16 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.048283889889717102,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.051219813525676727,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.30555030703544617,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.21178488433361053,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.048086009919643402,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.051959723234176636,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.277923583984375,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.28830838203430176,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -564,16 +564,16 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.021633736789226532,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.021644443273544312,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.31192097067832947,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.26056835055351257,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.021622385829687119,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.021624732296913862,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.054290771484375,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.35242897272109985,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -609,16 +609,16 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.021581145003437996,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.021613573655486107,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.27889171242713928,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.21178488433361053,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.02157139778137207,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.021623954176902771,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.277923583984375,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.25041872262954712,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -655,16 +655,16 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.021633736789226532,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.021644443273544312,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.31192097067832947,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.26056835055351257,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.021622385829687119,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.021624732296913862,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.054290771484375,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.35242897272109985,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }

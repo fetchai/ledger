@@ -33,6 +33,7 @@ class LaggedFibonacciGenerator
 public:
   using RandomType = uint64_t;
   using fp128_t    = fetch::fixed_point::fp128_t;
+  using fp64_t     = fetch::fixed_point::fp64_t;
   using fp32_t     = fetch::fixed_point::fp32_t;
 
   // Note, breaking naming convention for STL compatibility
@@ -89,6 +90,14 @@ public:
 
     auto fp_val = static_cast<fp128_t>(this->operator()() % fp128_u_max_);
     return fp_val / fp128_t::FP_MAX;
+  }
+
+  fp64_t AsFP64() noexcept
+  {
+    uint64_t fp64_u_max_ = static_cast<uint64_t>(fp64_t::FP_MAX);
+
+    auto fp_val = static_cast<fp64_t>(this->operator()() % fp64_u_max_);
+    return fp_val / fp64_t::FP_MAX;
   }
 
   fp32_t AsFP32() noexcept
