@@ -49,6 +49,21 @@ ChargeAmount TensorEstimator::size()
   return LOW_CHARGE;
 }
 
+ChargeAmount TensorEstimator::VMShape()
+{
+  return LOW_CHARGE;
+}
+
+ChargeAmount TensorEstimator::Copy()
+{
+  SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
+  SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
+
+  return static_cast<ChargeAmount>(DEFAULT_PADDED_SIZE_COEF * padded_size +
+                                   DEFAULT_SIZE_COEF * size + DEFAULT_CONST_COEF) *
+         COMPUTE_CHARGE_COST;
+}
+
 ChargeAmount TensorEstimator::AtOne(TensorType::SizeType /*idx1*/)
 {
   return LOW_CHARGE;
@@ -136,14 +151,29 @@ ChargeAmount TensorEstimator::Max()
 ChargeAmount TensorEstimator::Reshape(
     fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape)
 {
+  if (new_shape->elements.empty())
+  {
+    return MaximumCharge("Can not reshape a Tensor : new shape is empty!");
+  }
   auto                  n_elements = new_shape->elements.size();
   std::vector<SizeType> c_data(n_elements);
 
+  std::size_t new_total_elements = 1;
   for (fetch::math::SizeType i{0}; i < n_elements; i++)
   {
-    c_data.at(i) = new_shape->elements.at(i);
+    SizeType const axis_size = new_shape->elements.at(i);
+    if (axis_size == 0)
+    {
+      return MaximumCharge("Can not reshape a Tensor : axis of size 0 found in new shape!");
+    }
+    new_total_elements *= c_data.at(i) = new_shape->elements.at(i);
   }
-
+  if (new_total_elements != tensor_.size())
+  {
+    return MaximumCharge("Can not reshape a Tensor : total elements count in the new shape (" +
+                         std::to_string(new_total_elements) +
+                         ") mismatch. Expected : " + std::to_string(tensor_.size()));
+  }
   return GetReshapeCost(c_data);
 }
 
@@ -161,6 +191,36 @@ ChargeAmount TensorEstimator::Sum()
 
   return static_cast<ChargeAmount>(SUM_PADDED_SIZE_COEF() * padded_size + SUM_SIZE_COEF() * size +
                                    SUM_CONST_COEF()) *
+         COMPUTE_CHARGE_COST;
+}
+
+ChargeAmount TensorEstimator::ArgMax(SizeType const & /*indices*/)
+{
+  SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
+  SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
+
+  return static_cast<ChargeAmount>(DEFAULT_PADDED_SIZE_COEF * padded_size +
+                                   DEFAULT_SIZE_COEF * size + DEFAULT_CONST_COEF) *
+         COMPUTE_CHARGE_COST;
+}
+
+ChargeAmount TensorEstimator::ArgMaxNoIndices()
+{
+  SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
+  SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
+
+  return static_cast<ChargeAmount>(DEFAULT_PADDED_SIZE_COEF * padded_size +
+                                   DEFAULT_SIZE_COEF * size + DEFAULT_CONST_COEF) *
+         COMPUTE_CHARGE_COST;
+}
+
+ChargeAmount TensorEstimator::Dot(vm::Ptr<VMTensor> const & /*other*/)
+{
+  SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
+  SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
+
+  return static_cast<ChargeAmount>(DEFAULT_PADDED_SIZE_COEF * padded_size +
+                                   DEFAULT_SIZE_COEF * size + DEFAULT_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -355,7 +415,7 @@ ChargeAmount TensorEstimator::Transpose()
 {
   if (tensor_.shape().size() != 2)
   {
-    return MaximumCharge("Cannot squeeze tensor, no dimensions of size 1");
+    return MaximumCharge("Cannot transpose tensor, only two-dimensional Tensor can be transposed.");
   }
 
   return GetReshapeCost({tensor_.shape().at(1), tensor_.shape().at(0)});

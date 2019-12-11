@@ -109,7 +109,7 @@ void TransactionValidatorTests::AddFunds(uint64_t amount)
 
   // create storage infrastructure
   StateSentinelAdapter    storage_adapter{storage_, "fetch.token", shards};
-  ContractContext         ctx{nullptr, Address{}, &storage_adapter, 0};
+  ContractContext         ctx{nullptr, Address{}, nullptr, &storage_adapter, 0};
   ContractContextAttacher attacher{token_contract_, ctx};
 
   // add the tokens to the account
@@ -124,7 +124,7 @@ void TransactionValidatorTests::SetDeed(Deed const &deed)
 
   // create storage infrastructure
   StateSentinelAdapter    storage_adapter{storage_, "fetch.token", shards};
-  ContractContext         ctx{nullptr, Address{}, &storage_adapter, 0};
+  ContractContext         ctx{nullptr, Address{}, nullptr, &storage_adapter, 0};
   ContractContextAttacher attacher{token_contract_, ctx};
 
   // add the tokens to the account

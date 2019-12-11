@@ -74,7 +74,7 @@ public:
     assert(inputs.at(0)->size() == inputs.at(1)->size());
 
     // sanity check the softmax adds up to 1
-    assert(Sum(fetch::math::Softmax((*inputs.at(0)))) - (DataType(inputs.at(0)->shape().at(0))) <
+    assert(Sum(fetch::math::Softmax((*inputs.at(0)))) - (DataType(inputs.at(0)->shape().at(1))) <
            0.0001);
 
     // softmax forward & then CrossEntropy

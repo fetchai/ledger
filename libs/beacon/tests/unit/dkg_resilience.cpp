@@ -212,12 +212,8 @@ private:
     if (Failure(Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES))
     {
       complaints_local.insert("Unknown sender");
-      SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
     }
-    else
-    {
-      SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
-    }
+    SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
     if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
     {
       SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
@@ -291,7 +287,8 @@ private:
 
   void BroadcastQualComplaints() override
   {
-    MessageShare fake;
+    MessageShare     fake;
+    SharesExposedMap complaints;
     if (Failure(Failures::SEND_FALSE_QUAL_COMPLAINT))
     {
       auto victim = beacon_->aeon.members.begin();
@@ -299,20 +296,11 @@ private:
       {
         ++victim;
       }
-      SendBroadcast(
-          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-                                    {{*victim, beacon_->manager.GetReceivedShares(*victim)}}}});
+      complaints.insert({*victim, beacon_->manager.GetReceivedShares(*victim)});
     }
     else if (Failure(Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES))
     {
-      SendBroadcast(
-          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-                                    {{"unknown sender", {fake, fake}}}}});
-    }
-    else if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
-    {
-      SendBroadcast(
-          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS), {}}});
+      complaints.insert({"unknown sender", {fake, fake}});
     }
     else if (Failure(Failures::QUAL_MESSAGES_WITH_INVALID_CRYPTO))
     {
@@ -321,20 +309,24 @@ private:
       {
         ++victim;
       }
-      SendBroadcast(DKGEnvelope{SharesMessage{
-          static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS), {{*victim, {fake, fake}}}}});
+      complaints.insert({*victim, {fake, fake}});
     }
-    else
+    else if (!Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
+    {
+      complaints = beacon_->manager.ComputeQualComplaints(qual_coefficients_received_);
+      // Record own valid complaints
+      for (auto const &mem : complaints)
+      {
+        qual_complaints_manager_.AddComplaintAgainst(mem.first);
+      }
+    }
+
+    SendBroadcast(DKGEnvelope{
+        SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS), complaints}});
+    if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
     {
       SendBroadcast(DKGEnvelope{
-          SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-                        beacon_->manager.ComputeQualComplaints(qual_coefficients_received_)}});
-      if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
-      {
-        SendBroadcast(DKGEnvelope{
-            SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-                          beacon_->manager.ComputeQualComplaints(qual_coefficients_received_)}});
-      }
+          SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS), complaints}});
     }
   }
 
@@ -342,16 +334,10 @@ private:
   {
     MessageShare     fake;
     SharesExposedMap complaint_shares;
-    if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
-    {
-      SendBroadcast(DKGEnvelope{SharesMessage{
-          static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
-    }
-    else if (Failure(Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES))
+
+    if (Failure(Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES))
     {
       complaint_shares.insert({"unknown address", {fake, fake}});
-      SendBroadcast(DKGEnvelope{SharesMessage{
-          static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
     }
     else if (Failure(Failures::QUAL_MESSAGES_WITH_INVALID_CRYPTO))
     {
@@ -360,23 +346,21 @@ private:
         beacon_->manager.AddReconstructionShare(in);
         complaint_shares.insert({in, {fake, fake}});
       }
-      SendBroadcast(DKGEnvelope{SharesMessage{
-          static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
     }
-    else
+    else if (!Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
     {
       for (auto const &in : qual_complaints_manager_.Complaints())
       {
         beacon_->manager.AddReconstructionShare(in);
         complaint_shares.insert({in, beacon_->manager.GetReceivedShares(in)});
       }
+    }
+    SendBroadcast(DKGEnvelope{SharesMessage{
+        static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
+    if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
+    {
       SendBroadcast(DKGEnvelope{SharesMessage{
           static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
-      if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
-      {
-        SendBroadcast(DKGEnvelope{SharesMessage{
-            static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
-      }
     }
   }
 };
