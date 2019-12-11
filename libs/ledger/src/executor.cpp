@@ -26,6 +26,7 @@
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
 #include "ledger/executor.hpp"
+#include "ledger/fees/storage_fee.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "telemetry/histogram.hpp"
@@ -40,55 +41,11 @@
 static constexpr char const *LOGGING_NAME    = "Executor";
 static constexpr uint64_t    TRANSFER_CHARGE = 1;
 
-using fetch::byte_array::ConstByteArray;
-using fetch::storage::ResourceAddress;
 using fetch::telemetry::Histogram;
 using fetch::telemetry::Registry;
 
 namespace fetch {
 namespace ledger {
-namespace {
-
-bool IsCreateWealth(chain::Transaction const &tx)
-{
-  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
-         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
-}
-
-bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
-{
-  // Step 1 - Translate the tx into a common name
-  using ContractMode = chain::Transaction::ContractMode;
-
-  ConstByteArray contract_name{};
-  switch (tx.contract_mode())
-  {
-  case ContractMode::NOT_PRESENT:
-    break;
-  case ContractMode::PRESENT:
-    contract_name = tx.contract_digest().address().ToHex() + "." + tx.contract_address().display();
-    break;
-  case ContractMode::CHAIN_CODE:
-    contract_name = tx.chain_code();
-    break;
-  case ContractMode::SYNERGETIC:
-    // synergetic contracts are not supported through normal pipeline
-    break;
-  }
-
-  // if there is a contract present simply parse the name
-  if (!contract_name.empty())
-  {
-    if (!identifier.Parse(std::move(contract_name)))
-    {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-}  // namespace
 
 /**
  * Construct a Executor given a storage unit
@@ -98,6 +55,7 @@ bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
 Executor::Executor(StorageUnitPtr storage)
   : storage_{std::move(storage)}
   , tx_validator_{*storage_, token_contract_}
+  , fee_manager_{token_contract_, "ledger_executor_deduct_fees_duration"}
   , overall_duration_{Registry::Instance().LookupMeasurement<Histogram>(
         "ledger_executor_overall_duration")}
   , tx_retrieve_duration_{Registry::Instance().LookupMeasurement<Histogram>(
@@ -108,8 +66,6 @@ Executor::Executor(StorageUnitPtr storage)
         "ledger_executor_contract_execution_duration")}
   , transfers_duration_{Registry::Instance().LookupMeasurement<Histogram>(
         "ledger_executor_transfers_duration")}
-  , deduct_fees_duration_{Registry::Instance().LookupMeasurement<Histogram>(
-        "ledger_executor_deduct_fees_duration")}
   , settle_fees_duration_{
         Registry::Instance().LookupMeasurement<Histogram>("ledger_executor_settle_fees_duration")}
 {}
@@ -170,8 +126,10 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
       storage_cache_->Clear();
     }
 
+    FeeManager::TransactionDetails tx_details{*current_tx_, allowed_shards_};
+
     // deduct the fees from the originator
-    DeductFees(result);
+    fee_manager_.Execute(tx_details, result, block_, *storage_cache_);
 
     // flush the storage so that all changes are now persistent
     storage_cache_->Flush();
@@ -187,24 +145,8 @@ void Executor::SettleFees(chain::Address const &miner, BlockIndex block, TokenAm
 
   FETCH_LOG_TRACE(LOGGING_NAME, "Settling fees");
 
-  // only if there are fees to settle then update the state database
-  if (amount > 0)
-  {
-    // compute the resource address
-    ResourceAddress resource_address{"fetch.token.state." + miner.display()};
-
-    // create the complete shard mask
-    BitVector shard{1u << log2_num_lanes};
-    shard.set(resource_address.lane(log2_num_lanes), 1);
-
-    // attach the token contract to the storage engine
-    StateSentinelAdapter storage_adapter{*storage_, Identifier{"fetch.token"}, shard};
-
-    ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
-                            block_};
-    ContractContextAttacher raii(token_contract_, context);
-    token_contract_.AddTokens(miner, amount);
-  }
+  fee_manager_.SettleFees(miner, amount, current_tx_->contract_address(), log2_num_lanes, block_,
+                          *storage_);
 
   FETCH_LOG_TRACE(LOGGING_NAME, "Aggregating stake updates...");
 
@@ -279,20 +221,27 @@ bool Executor::ValidationChecks(Result &result)
 
 bool Executor::ExecuteTransactionContract(Result &result)
 {
+  using ContractMode = chain::Transaction::ContractMode;
   telemetry::FunctionTimer const timer{*contract_execution_duration_};
 
   bool success{false};
 
   try
   {
-    Identifier contract_id{};
-
-    // generate the contract name (identifier)
-    if (!GenerateContractName(*current_tx_, contract_id))
+    ConstByteArray contract_id{};
+    switch (current_tx_->contract_mode())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate the contract name");
-      result.status = Status::CONTRACT_NAME_PARSE_FAILURE;
-      return false;
+    case ContractMode::PRESENT:
+      contract_id = current_tx_->contract_address().display();
+      break;
+    case ContractMode::CHAIN_CODE:
+      contract_id = current_tx_->chain_code();
+      break;
+    case ContractMode::NOT_PRESENT:
+      break;
+    case ContractMode::SYNERGETIC:
+      // synergetic contracts are not supported through normal pipeline
+      break;
     }
 
     // when there is no contract signalled in the transaction the identifier will be empty. This is
@@ -307,13 +256,13 @@ bool Executor::ExecuteTransactionContract(Result &result)
     StateSentinelAdapter storage_adapter{*storage_cache_, contract_id, allowed_shards_};
 
     // look up or create the instance of the contract as is needed
-    bool const is_token_contract = (contract_id.full_name() == "fetch.token");
+    bool const is_token_contract = (contract_id == "fetch.token");
 
     Contract *contract = is_token_contract ? &token_contract_
                                            : chain_code_cache_.Lookup(contract_id, *storage_).get();
     if (!static_cast<bool>(contract))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract_id.full_name());
+      FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract_id);
       result.status = Status::CONTRACT_LOOKUP_FAILURE;
       return false;
     }
@@ -323,8 +272,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
     Contract::Result contract_status;
     {
-      ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
-                              block_};
+      ContractContext context{&token_contract_, current_tx_->contract_address(), storage_.get(),
+                              &storage_adapter, block_};
       ContractContextAttacher raii(*contract, context);
       contract_status = contract->DispatchTransaction(*current_tx_);
     }
@@ -355,28 +304,12 @@ bool Executor::ExecuteTransactionContract(Result &result)
     if (success)
     {
       // simple linear scale fee
-      uint64_t const compute_charge = contract->CalculateFee();
-      uint64_t const storage_charge = (storage_adapter.num_bytes_written() * 2u);
-      uint64_t const base_charge    = compute_charge + storage_charge;
-      uint64_t const scaled_charge =
-          std::max<uint64_t>(allowed_shards_.PopCount(), 1) * base_charge;
+      StorageFee storage_fee{storage_adapter};
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Calculated charge for 0x", current_tx_->digest().ToHex(), ": ",
-                      scaled_charge, " (base: ", base_charge, " storage: ", storage_charge,
-                      " compute: ", compute_charge, " shards: ", allowed_shards_.PopCount(), ")");
+      FeeManager::TransactionDetails tx_details{*current_tx_, allowed_shards_};
 
-      // create wealth transactions are always free
-      if (!IsCreateWealth(*current_tx_))
-      {
-        result.charge += scaled_charge;
-      }
-
-      // determine if the chain code ran out of charge
-      if (result.charge > current_tx_->charge_limit())
-      {
-        result.status = Status::INSUFFICIENT_CHARGE;
-        success       = false;
-      }
+      success =
+          fee_manager_.CalculateChargeAndValidate(tx_details, {contract, &storage_fee}, result);
 
       if (success)
       {
@@ -407,11 +340,10 @@ bool Executor::ProcessTransfers(Result &result)
   if (!current_tx_->transfers().empty())
   {
     // attach the token contract to the storage engine
-    StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"},
-                                         allowed_shards_};
+    StateSentinelAdapter storage_adapter{*storage_cache_, "fetch.token", allowed_shards_};
 
-    ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
-                            block_};
+    ContractContext         context{&token_contract_, current_tx_->contract_address(), nullptr,
+                            &storage_adapter, block_};
     ContractContextAttacher raii(token_contract_, context);
 
     // only process transfers if the previous steps have been successful
@@ -435,34 +367,6 @@ bool Executor::ProcessTransfers(Result &result)
   }
 
   return success;
-}
-
-void Executor::DeductFees(Result &result)
-{
-  telemetry::FunctionTimer const timer{*deduct_fees_duration_};
-
-  // attach the token contract to the storage engine
-  StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}, allowed_shards_};
-
-  auto const &from = current_tx_->from();
-
-  ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
-                          block_};
-  ContractContextAttacher raii(token_contract_, context);
-  uint64_t const          balance = token_contract_.GetBalance(from);
-
-  // calculate the fee to deduct
-  TokenAmount tx_fee = result.charge * current_tx_->charge_rate();
-  if (Status::SUCCESS != result.status)
-  {
-    tx_fee = current_tx_->charge_limit() * current_tx_->charge_rate();
-  }
-
-  // on failed transactions
-  result.fee = std::min(balance, tx_fee);
-
-  // deduct the fee from the originator
-  token_contract_.SubtractTokens(from, result.fee);
 }
 
 }  // namespace ledger

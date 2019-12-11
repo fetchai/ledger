@@ -21,7 +21,7 @@
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chaincode/contract_context.hpp"
-#include "ledger/identifier.hpp"
+#include "ledger/fees/chargeable.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -49,7 +49,7 @@ namespace ledger {
 /**
  * Contract - Base class for all smart contract and chain code instances
  */
-class Contract
+class Contract : public Chargeable
 {
 public:
   enum class Status
@@ -61,8 +61,9 @@ public:
 
   struct Result
   {
-    Status  status{Status::NOT_FOUND};
-    int64_t return_value{0};
+    Status   status{Status::NOT_FOUND};
+    int64_t  return_value{0};
+    uint64_t block_index{0};
   };
 
   using BlockIndex     = chain::TransactionLayout::BlockIndex;
@@ -84,7 +85,7 @@ public:
   Contract()                 = default;
   Contract(Contract const &) = delete;
   Contract(Contract &&)      = delete;
-  virtual ~Contract()        = default;
+  ~Contract() override       = default;
 
   /// @name Contract Lifecycle Handlers
   /// @{
@@ -101,7 +102,7 @@ public:
   TransactionHandlerMap const &transaction_handlers() const;
   /// @}
 
-  virtual uint64_t CalculateFee() const
+  uint64_t CalculateFee() const override
   {
     return 0;
   }
@@ -141,7 +142,11 @@ protected:
   template <typename T>
   bool GetStateRecord(T &record, ConstByteArray const &key);
   template <typename T>
+  bool GetStateRecord(T &record, chain::Address const &address);
+  template <typename T>
   StateAdapter::Status SetStateRecord(T const &record, ConstByteArray const &key);
+  template <typename T>
+  StateAdapter::Status SetStateRecord(T const &record, chain::Address const &address);
 
   ledger::StateAdapter &state();
   /// @}
@@ -219,6 +224,12 @@ void Contract::OnQuery(std::string const &name, C *instance,
   });
 }
 
+template <typename T>
+bool Contract::GetStateRecord(T &record, chain::Address const &address)
+{
+  return GetStateRecord(record, address.display());
+}
+
 /**
  * Look up the state record stored with the specified key
  *
@@ -269,6 +280,12 @@ bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
   }
 
   return success;
+}
+
+template <typename T>
+StateAdapter::Status Contract::SetStateRecord(T const &record, chain::Address const &address)
+{
+  return SetStateRecord(record, address.display());
 }
 
 /**

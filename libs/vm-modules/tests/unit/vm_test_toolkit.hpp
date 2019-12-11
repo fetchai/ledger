@@ -59,7 +59,7 @@ public:
   explicit VmTestToolkit(std::ostream *stdout = nullptr)
     : stdout_{stdout ? stdout : &std::cout}
     , observer_{std::make_unique<MockIoObserver>()}
-    , module_{fetch::vm_modules::VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
+    , module_{fetch::vm_modules::VMFactory::GetModule(VMFactory::USE_ALL)}
   {}
 
   bool Compile(std::string const &text)

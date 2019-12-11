@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "messenger/messenger_prototype.hpp"
+
+#include "logging/logging.hpp"
 
 #include <cassert>
 
@@ -117,7 +118,11 @@ void MessengerPrototype::ResolveMessages()
       break;
     case service::PromiseState::SUCCESS:
     {
-      MessageList list = p->As<MessageList>();
+      MessageList list{};
+      if (!p->GetResult(list))
+      {
+        break;
+      }
 
       // Adding the resulting messages to the inbox
       for (auto const &msg : list)
@@ -176,10 +181,13 @@ MessengerPrototype::MessageList MessengerPrototype::GetMessages(uint64_t wait)
       }
 
       // Adding results to return value
-      auto messages = p->As<MessageList>();
-      for (auto &m : messages)
+      MessageList messages{};
+      if (p->GetResult(messages))
       {
-        ret.push_back(m);
+        for (auto &m : messages)
+        {
+          ret.push_back(m);
+        }
       }
     }
   }
