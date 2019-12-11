@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/histogram.hpp"
 #include "telemetry/histogram_map.hpp"
+#include "telemetry/histogram.hpp"
 
 namespace fetch {
 namespace telemetry {
@@ -57,7 +57,7 @@ void HistogramMap::Add(std::string const &key, double const &value)
  */
 void HistogramMap::ToStream(OutputStream &stream) const
 {
-  std::lock_guard<std::mutex> guard(lock_);
+  FETCH_LOCK(lock_);
   WriteHeader(stream, "histogram");
 
   for (auto const &e : histograms_)
@@ -74,7 +74,7 @@ void HistogramMap::ToStream(OutputStream &stream) const
  */
 HistogramPtr HistogramMap::LookupHistogram(std::string const &key)
 {
-  std::lock_guard<std::mutex> guard(lock_);
+  FETCH_LOCK(lock_);
 
   auto it = histograms_.find(key);
   if (it == histograms_.end())

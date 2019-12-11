@@ -99,7 +99,7 @@ Gauge<V>::Gauge(std::string const &name, std::string const &description, Labels 
 template <typename V>
 V Gauge<V>::get() const
 {
-  std::lock_guard<std::mutex> guard(lock_);
+  FETCH_LOCK(lock_);
   return value_;
 }
 
@@ -112,7 +112,7 @@ V Gauge<V>::get() const
 template <typename V>
 void Gauge<V>::set(V const &value)
 {
-  std::lock_guard<std::mutex> guard(lock_);
+  FETCH_LOCK(lock_);
   value_ = value;
 }
 
@@ -124,7 +124,7 @@ void Gauge<V>::set(V const &value)
 template <typename V>
 void Gauge<V>::increment(V const &value)
 {
-  std::lock_guard<std::mutex> guard(lock_);
+  FETCH_LOCK(lock_);
   value_ += value;
 }
 
@@ -136,7 +136,7 @@ void Gauge<V>::increment(V const &value)
 template <typename V>
 void Gauge<V>::decrement(V const &value)
 {
-  std::lock_guard<std::mutex> guard(lock_);
+  FETCH_LOCK(lock_);
   value_ -= value;
 }
 
@@ -149,7 +149,7 @@ void Gauge<V>::decrement(V const &value)
 template <typename V>
 void Gauge<V>::max(V const &value)
 {
-  std::lock_guard<std::mutex> guard(lock_);
+  FETCH_LOCK(lock_);
   if (value > value_)
   {
     value_ = value;

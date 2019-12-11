@@ -47,7 +47,7 @@ void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread)
 void Mutexregister::QueueUpFor(DebugMutex *mutex, std::thread::id thread,
                                LockLocation const &location)
 {
-  std::lock_guard<std::mutex> guard(mutex_);
+  FETCH_LOCK(mutex_);
 
   FindDeadlock(mutex, thread, location);
   waiting_for_.insert({thread, mutex});
@@ -57,7 +57,7 @@ void Mutexregister::QueueUpFor(DebugMutex *mutex, std::thread::id thread,
 void Mutexregister::RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread,
                                              LockLocation const &location)
 {
-  std::lock_guard<std::mutex> guard(mutex_);
+  FETCH_LOCK(mutex_);
 
   // Registering the matrix diagonal
   lock_owners_.insert({mutex, thread});
@@ -68,7 +68,7 @@ void Mutexregister::RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id 
 
 void Mutexregister::UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id /*thread*/)
 {
-  std::lock_guard<std::mutex> guard(mutex_);
+  FETCH_LOCK(mutex_);
   lock_owners_.erase(mutex);
   lock_location_.erase(mutex);
 }

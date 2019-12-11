@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "telemetry/gauge.hpp"
 
 #include "gtest/gtest.h"

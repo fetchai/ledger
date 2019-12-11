@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-search/dap_manager/visitors/PopulateActionsVisitorDescentPass.hpp"
+#include "core/mutex.hpp"
 #include "oef-search/dap_manager/DapManager.hpp"
 #include "oef-search/dap_manager/DapStore.hpp"
-#include "oef-search/dap_manager/visitors/PopulateActionsVisitorDescentPass.hpp"
 
 PopulateActionsVisitorDescentPass::PopulateActionsVisitorDescentPass(
     std::shared_ptr<DapManager> dap_manager, std::shared_ptr<DapStore> dap_store)
