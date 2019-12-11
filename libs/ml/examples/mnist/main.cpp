@@ -35,7 +35,6 @@ using namespace fetch::math;
 
 using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = fetch::math::SizeType;
 
 using GraphType      = typename fetch::ml::Graph<TensorType>;
 using OptimiserType  = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
