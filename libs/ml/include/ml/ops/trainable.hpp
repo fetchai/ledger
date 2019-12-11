@@ -59,8 +59,7 @@ public:
   virtual void ApplySparseGradient(TensorType const &grad, SizeSet &update_rows)           = 0;
   virtual void ApplyRegularisation()                                                       = 0;
 
-  void SetRegularisation(RegPtrType regulariser,
-                         DataType   regularisation_rate = fetch::math::Type<DataType>("0.0"))
+  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0})
   {
     regulariser_         = regulariser;
     regularisation_rate_ = regularisation_rate;
@@ -82,7 +81,7 @@ public:
 
 protected:
   RegPtrType regulariser_;
-  DataType   regularisation_rate_ = fetch::math::Type<DataType>("0");
+  DataType   regularisation_rate_ = static_cast<DataType>(0);
   bool       value_frozen_        = false;
 };
 
