@@ -693,7 +693,6 @@ private:
  * @param c bytearray indicating the values to fill the array with
  * @return Return Tensor with the specified values
  */
-
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
 {
@@ -703,6 +702,12 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
   elems.reserve(1024);
   bool failed         = false;
   bool prev_backslash = false;
+  enum
+  {
+    UNSET,
+    COLON,
+    NEWLINE
+  } new_row_marker = UNSET;
 
   // Text parsing loop
   for (SizeType i = 0; i < c.size();)
@@ -711,8 +716,32 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     switch (c[i])
     {
     case ';':
+      if (new_row_marker == UNSET || new_row_marker == COLON)
+      {
+        new_row_marker = COLON;
+      }
+      if (new_row_marker == NEWLINE)
+      {
+        ++i;
+        break;
+      }
+      if (i < c.size() - 1)
+      {
+        ++n;
+      }
+      ++i;
+      break;
     case '\r':
     case '\n':
+      if (new_row_marker == UNSET || new_row_marker == NEWLINE)
+      {
+        new_row_marker = NEWLINE;
+      }
+      if (new_row_marker == COLON)
+      {
+        ++i;
+        break;
+      }
       if (i < c.size() - 1)
       {
         ++n;
