@@ -56,7 +56,7 @@ struct BERTConfig
   SizeType vocab_size        = 30522u;
   SizeType segment_size      = 2u;
   DataType epsilon           = static_cast<DataType>(1e-12);
-  DataType dropout_keep_prob = static_cast<DataType>(0.9);
+  DataType dropout_keep_prob = fetch::math::Type<DataType>("0.9");
 };
 
 template <class TensorType>
@@ -163,13 +163,13 @@ void EvaluateGraph(fetch::ml::Graph<TensorType> &g, std::vector<std::string> inp
     total_val_loss += val_loss;
 
     // count correct guesses
-    if (model_output.At(0, 0) > static_cast<DataType>(0.5) &&
-        output_data.At(0, b) == static_cast<DataType>(1))
+    if (model_output.At(0, 0) > fetch::math::Type<DataType>("0.5") &&
+        output_data.At(0, b) == DataType{1})
     {
       correct_counter++;
     }
-    else if (model_output.At(0, 0) < static_cast<DataType>(0.5) &&
-             output_data.At(0, b) == static_cast<DataType>(0))
+    else if (model_output.At(0, 0) < fetch::math::Type<DataType>("0.5") &&
+             output_data.At(0, b) == DataType{0})
     {
       correct_counter++;
     }
