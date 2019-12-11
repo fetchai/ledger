@@ -79,23 +79,182 @@ public:
 
   ChargeAmount Max();
 
-  ChargeAmount Squeeze();
-
-  ChargeAmount Unsqueeze();
-
   ChargeAmount Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
+
+  ChargeAmount Squeeze();
 
   ChargeAmount Sum();
 
+  /// OPERATORS ///
+
+  ChargeAmount EqualOperator(vm::Ptr<VMTensor> const &other);
+
+  ChargeAmount NotEqualOperator(vm::Ptr<VMTensor> const &other);
+
+  ChargeAmount NegateOperator();
+
+  ChargeAmount AddOperator(vm::Ptr<VMTensor> const & /*other*/);
+
+  ChargeAmount SubtractOperator(vm::Ptr<VMTensor> const & /*other*/);
+
+  ChargeAmount MultiplyOperator(vm::Ptr<VMTensor> const & /*other*/);
+
+  ChargeAmount DivideOperator(vm::Ptr<VMTensor> const & /*other*/);
+
+  // TODO (ML-340) - replace member functions with operators when operators can take estimators
+  ChargeAmount Negate();
+
+  ChargeAmount Equal();
+
+  ChargeAmount NotEqual();
+
+  ChargeAmount Add();
+
+  ChargeAmount Subtract();
+
+  ChargeAmount InplaceAdd();
+
+  ChargeAmount InplaceSubtract();
+
+  ChargeAmount Multiply();
+
+  ChargeAmount Divide();
+
+  ChargeAmount InplaceMultiply();
+
+  ChargeAmount InplaceDivide();
+
+  /// END OF OPERATORS ///
+
+  ChargeAmount GetReshapeCost(SizeVector const &new_shape);
+
   ChargeAmount Transpose();
+
+  ChargeAmount Unsqueeze();
 
   ChargeAmount FromString(fetch::vm::Ptr<fetch::vm::String> const &string);
 
   ChargeAmount ToString();
 
+  // Fill
+  static constexpr DataType FILL_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType FILL_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType FILL_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // FillRandom
+  static constexpr DataType FILL_RANDOM_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType FILL_RANDOM_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType FILL_RANDOM_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // Min
+  static constexpr DataType MIN_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType MIN_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType MIN_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // MAX
+  static constexpr DataType MAX_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType MAX_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType MAX_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // SUM
+  static constexpr DataType SUM_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType SUM_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType SUM_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // RESHAPE
+  static constexpr DataType RESHAPE_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType RESHAPE_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType RESHAPE_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // FROM_STRING
+  static constexpr DataType FROM_STRING_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType FROM_STRING_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  // TO_STRING
+  static constexpr DataType TO_STRING_PADDED_SIZE_COEF()
+  {
+    return DataType(0.00023451);
+  };
+  static constexpr DataType TO_STRING_SIZE_COEF()
+  {
+    return DataType(0.00107809);
+  };
+  static constexpr DataType TO_STRING_CONST_COEF()
+  {
+    return DataType(5);
+  };
+
+  fixed_point::fp64_t const DEFAULT_PADDED_SIZE_COEF = fixed_point::fp64_t("0.00023451");
+  fixed_point::fp64_t const DEFAULT_SIZE_COEF        = fixed_point::fp64_t("0.00107809");
+  fixed_point::fp64_t const DEFAULT_CONST_COEF       = fixed_point::fp64_t("5");
+
+  // Function call overhead for LOW_CHARGE functions
+  static constexpr SizeType LOW_CHARGE_CONST_COEF = 5;
+
 private:
-  static ChargeAmount const LOW_CHARGE{fetch::vm::COMPUTE_CHARGE_COST};
-  ChargeAmount              ComputeChargeFromTensorSize(std::size_t factor = 1);
+  static ChargeAmount const LOW_CHARGE{LOW_CHARGE_CONST_COEF * fetch::vm::COMPUTE_CHARGE_COST};
+
+  static ChargeAmount MaximumCharge(std::string const &log_msg = "");
 
   VMObjectType &tensor_;
 };

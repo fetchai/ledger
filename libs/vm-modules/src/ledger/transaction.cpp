@@ -83,7 +83,6 @@ void Transaction::Bind(vm::Module &module)
       .CreateMemberFunction("validUntil", &Transaction::valid_until)
       .CreateMemberFunction("chargeRate", &Transaction::charge_rate)
       .CreateMemberFunction("chargeLimit", &Transaction::charge_limit)
-      .CreateMemberFunction("contractDigest", &Transaction::contract_digest)
       .CreateMemberFunction("contractAddress", &Transaction::contract_address)
       .CreateMemberFunction("action", &Transaction::action)
       .CreateMemberFunction("signatories", &Transaction::signatories);
@@ -95,7 +94,6 @@ Transaction::Transaction(vm::VM *vm, vm::TypeId type_id, fetch::chain::Transacti
   , digest_{vm->CreateNewObject<math::UInt256Wrapper>(tx.digest())}
   , from_{CreateAddress(vm, tx.from(), tx.signatories())}
   , transfers_{CreateTransfers(vm, tx)}
-  , contract_digest_{CreateAddress(vm, tx.contract_digest(), tx.signatories())}
   , contract_address_{CreateAddress(vm, tx.contract_address(), tx.signatories())}
   , action_{new String{vm, static_cast<std::string>(tx.action())}}
   , signatories_{CreateSignatories(vm, tx)}
@@ -139,11 +137,6 @@ NativeTokenAmount Transaction::charge_rate() const
 NativeTokenAmount Transaction::charge_limit() const
 {
   return tx_->charge_limit();
-}
-
-AddressPtr Transaction::contract_digest() const
-{
-  return contract_digest_;
 }
 
 AddressPtr Transaction::contract_address() const

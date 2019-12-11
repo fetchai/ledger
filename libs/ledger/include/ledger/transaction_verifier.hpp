@@ -37,8 +37,6 @@ class TransactionSink;
 class TransactionVerifier
 {
 public:
-  static constexpr char const *LOGGING_NAME = "TxVerifier";
-
   using TransactionPtr = std::shared_ptr<chain::Transaction>;
 
   // Construction / Destruction

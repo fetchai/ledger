@@ -533,7 +533,6 @@ protected:
     EXPECT_EQ(a.charge_rate(), b.charge_rate());
     EXPECT_EQ(a.charge_limit(), b.charge_limit());
     EXPECT_EQ(a.contract_mode(), b.contract_mode());
-    EXPECT_EQ(a.contract_digest(), b.contract_digest());
     EXPECT_EQ(a.contract_address(), b.contract_address());
     EXPECT_EQ(a.chain_code(), b.chain_code());
     EXPECT_EQ(a.action(), b.action());
@@ -562,9 +561,9 @@ TransactionSerializerTests::Addresses TransactionSerializerTests::addresses_{};
 TEST_F(TransactionSerializerTests, SimpleTransfer)
 {
   static const std::string EXPECTED_DIGEST =
-      "7fff24ca77fbb23b9b3c460104ab1a74011bafe3965e15dc6ea6f25a4ac44392";
+      "257c5e1de3a0a895d66d57792f1a44425336bb05bc6c8479be83b4572e1b4d45";
   static const std::string EXPECTED_DATA =
-      "a1440000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d44235130ac5aab442e39f"
+      "a1640000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d44235130ac5aab442e39f"
       "9aa27118956695229212dd2f1ab5b714e9f6bd581511c1010000000000000000000000000418c2a33af8bd2cba7f"
       "a714a840a308a217aa4483880b1ef14b4fdffe08ab956e3f4b921cec33be7c258cfd7025a2b9a942770e5b17758b"
       "cc4961bbdc75a0251c";
@@ -605,13 +604,15 @@ TEST_F(TransactionSerializerTests, SimpleTransfer)
 TEST_F(TransactionSerializerTests, MultipleTransfers)
 {
   static const std::string EXPECTED_DIGEST =
-      "7e6a95a8c773755d349209d8f3bb60ec2a5f3c683075540f953863f124eb1250";
+      "35c19ceff72218a36f9807c370e5625efc36e43ce4e9f2047f1b820162b8b3d9";
   static const std::string EXPECTED_DATA =
-      "a1460000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d4014235130ac5aab442e3"
+      "a1660000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d4014235130ac5aab442e3"
       "9f9aa27118956695229212dd2f1ab5b714e9f6bd581511c1010020f478c7f74b50c187bf9a8836f382bd62977bae"
       "eaf19625608e7e912aa60098c10200da2e9c3191e3768d1c59ea43f6318367ed9b21e6974f46a60d0dd8976740af"
-      "6dc2000186a000000000000000000000000418c2a33af8bd2cba7fa714a840a308a217aa4483880b1ef14b4fdffe"
-      "08ab956e3f4b921cec33be7c258cfd7025a2b9a942770e5b17758bcc4961bbdc75a0251c";
+      "6"
+      "dc2000186a000000000000000000000000418c2a33af8bd2cba7fa714a840a308a217aa4483880b1ef14b4fdffe0"
+      "8"
+      "ab956e3f4b921cec33be7c258cfd7025a2b9a942770e5b17758bcc4961bbdc75a0251c";
 
   // build the transaction
   auto tx = TransactionBuilder()
@@ -651,9 +652,9 @@ TEST_F(TransactionSerializerTests, MultipleTransfers)
 TEST_F(TransactionSerializerTests, ChainCodeExecute)
 {
   static const std::string EXPECTED_DIGEST =
-      "7032dd625b0a93aec85fa03696d0ecbc9de19d834ce3fd1d1ed9cf8a56d9f62e";
+      "25cc72ca7d4871aaaabd027af129ecd4327adde5ec0c9977bfe11018d4bab64a";
   static const std::string EXPECTED_DATA =
-      "a1408000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d400c103e8c2000f424080"
+      "a1608000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d400c103e8c2000f424080"
       "0b666f6f2e6261722e62617a066c61756e636802676f00000000000000000418c2a33af8bd2cba7fa714a840a308"
       "a217aa4483880b1ef14b4fdffe08ab956e3f4b921cec33be7c258cfd7025a2b9a942770e5b17758bcc4961bbdc75"
       "a0251c";
@@ -698,13 +699,12 @@ TEST_F(TransactionSerializerTests, ChainCodeExecute)
 TEST_F(TransactionSerializerTests, SmartContract)
 {
   static const std::string EXPECTED_DIGEST =
-      "032a72029ae2ac5cdbf9e07cf57d9ecab97a6de34ed5cdf785d1d98037cd5dcd";
+      "9ea094e71cbe846192429db3d7e8b02b649730c8b525c3268eb9ff5633c27130";
   static const std::string EXPECTED_DATA =
-      "a1404000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d400c103e8c2000f424080"
-      "da2e9c3191e3768d1c59ea43f6318367ed9b21e6974f46a60d0dd8976740af6de6672a9d98da667e5dc25b2bca8a"
-      "cf9644a7ac0797f01cb5968abf39de011df2066c61756e636802676f00000000000000000418c2a33af8bd2cba7f"
-      "a714a840a308a217aa4483880b1ef14b4fdffe08ab956e3f4b921cec33be7c258cfd7025a2b9a942770e5b17758b"
-      "cc4961bbdc75a0251c";
+      "a1604000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d400c103e8c2000f424080"
+      "e6672a9d98da667e5dc25b2bca8acf9644a7ac0797f01cb5968abf39de011df2066c61756e636802676f00000000"
+      "000000000418c2a33af8bd2cba7fa714a840a308a217aa4483880b1ef14b4fdffe08ab956e3f4b921cec33be7c25"
+      "8cfd7025a2b9a942770e5b17758bcc4961bbdc75a0251c";
 
   // build the transaction
   auto tx = TransactionBuilder()
@@ -712,7 +712,7 @@ TEST_F(TransactionSerializerTests, SmartContract)
                 .Signer(signers_[0]->identity())
                 .ChargeRate(1000)
                 .ChargeLimit(1000000)
-                .TargetSmartContract(addresses_[3], addresses_[4], BitVector{})
+                .TargetSmartContract(addresses_[4], BitVector{})
                 .Action("launch")
                 .Data("go")
                 .Seal()
@@ -746,9 +746,9 @@ TEST_F(TransactionSerializerTests, SmartContract)
 TEST_F(TransactionSerializerTests, CrazyNumOfSignatures)
 {
   static const std::string EXPECTED_DIGEST =
-      "a3e41d1e8e78b40c2d580177d0c189d17d24ba964463ebf9afc9097f4cc289a2";
+      "ddee28bf22974b273ecab0ee96f6d557fefb7d937dc7821ba1c00117a90286bc";
   static const std::string EXPECTED_DATA =
-      "a1443f00532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d44235130ac5aab442e39f"
+      "a1643f00532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d44235130ac5aab442e39f"
       "9aa27118956695229212dd2f1ab5b714e9f6bd581511c103e8000000000000000000000006043a3f06c75a491de9"
       "7ff3bf892a5862647ff9988bff2dc44f31fbe5976db2cc4526d031c39347cf7311145271b2312849b31b9a977a83"
       "a6f4e29cfc26cceaf7ab04abdb127c821e4d60722ce3766779f8b027b708128df08a59c5a077a969b08fb15d2199"
@@ -895,9 +895,9 @@ TEST_F(TransactionSerializerTests, CrazyNumOfSignatures)
 TEST_F(TransactionSerializerTests, ValidityRanges)
 {
   static const std::string EXPECTED_DIGEST =
-      "98f10e8aa0bf4507db9eca66f0ff0b6a3eff35fe4def9ed86150c7ce72e71e80";
+      "5451e302ba1fd323b623c1c9a0fc626b9c9249bb5d91ec60be1bb924efa3f1ac";
   static const std::string EXPECTED_DATA =
-      "a1470000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d4024235130ac5aab442e3"
+      "a1670000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d4024235130ac5aab442e3"
       "9f9aa27118956695229212dd2f1ab5b714e9f6bd581511c103e820f478c7f74b50c187bf9a8836f382bd62977bae"
       "eaf19625608e7e912aa60098c103e8da2e9c3191e3768d1c59ea43f6318367ed9b21e6974f46a60d0dd8976740af"
       "6dc103e8e6672a9d98da667e5dc25b2bca8acf9644a7ac0797f01cb5968abf39de011df2c103e864c0c8c103e8c2"
@@ -947,9 +947,9 @@ TEST_F(TransactionSerializerTests, ValidityRanges)
 TEST_F(TransactionSerializerTests, ContractWithSmallShardMask)
 {
   static const std::string EXPECTED_DIGEST =
-      "7915d6393fb07dbb4ff6896ef0f57025e5153b744d3a652b0f4815f129a9033c";
+      "e1ac018356792e492aaac92bf6928af1e47ed987761b81cafb51f1106f403eee";
   static const std::string EXPECTED_DATA =
-      "a1418000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d464c0c8c103e8c2000f42"
+      "a1618000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d464c0c8c103e8c2000f42"
       "401c0b666f6f2e6261722e62617a066c61756e63680000000000000000000418c2a33af8bd2cba7fa714a840a308"
       "a217aa4483880b1ef14b4fdffe08ab956e3f4b921cec33be7c258cfd7025a2b9a942770e5b17758bcc4961bbdc75"
       "a0251c";
@@ -1000,9 +1000,9 @@ TEST_F(TransactionSerializerTests, ContractWithSmallShardMask)
 TEST_F(TransactionSerializerTests, ContractWithLargeShardMask)
 {
   static const std::string EXPECTED_DIGEST =
-      "a4eff45d0374d29f259aba25fb06dd67394149b636927d199062102d91c0f7bf";
+      "86a1c9e380fe5154243af3d50603aadb75327513373c0e2917b8319d3391b3ae";
   static const std::string EXPECTED_DATA =
-      "a1418000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d464c0c8c103e8c2000f42"
+      "a1618000532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d464c0c8c103e8c2000f42"
       "4041eaab0b666f6f2e6261722e62617a066c61756e63680000000000000000000418c2a33af8bd2cba7fa714a840"
       "a308a217aa4483880b1ef14b4fdffe08ab956e3f4b921cec33be7c258cfd7025a2b9a942770e5b17758bcc4961bb"
       "dc75a0251c";
