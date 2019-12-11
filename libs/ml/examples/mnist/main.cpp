@@ -41,7 +41,7 @@ using DataLoaderType = typename fetch::ml::dataloaders::TensorDataLoader<TensorT
 
 int main(int ac, char **av)
 {
-  DataType learning_rate = fetch::math::Type<DataType>("0.01");
+  DataType              learning_rate = fetch::math::Type<DataType>("0.01");
   fetch::math::SizeType subset_size{100};
   fetch::math::SizeType epochs{10};
   fetch::math::SizeType batch_size{10};
@@ -68,8 +68,7 @@ int main(int ac, char **av)
       "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
   std::string output = g->AddNode<FullyConnected<TensorType>>(
       "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
-  std::string error =
-      g->AddNode<CrossEntropyLoss<TensorType>>("Error", {output, label});
+  std::string error = g->AddNode<CrossEntropyLoss<TensorType>>("Error", {output, label});
 
   auto mnist_images = fetch::ml::utilities::read_mnist_images<TensorType>(av[1]);
   auto mnist_labels = fetch::ml::utilities::read_mnist_labels<TensorType>(av[2]);
