@@ -848,4 +848,117 @@ TEST_F(VMModelTests, model_with_accuracy_metric)
   EXPECT_LE(metrics->elements.at(1), 1);
 }
 
+TEST_F(VMModelTests, model_sequential_no_layers_with_metrics)
+{
+  static char const *SRC_METRIC = R"(
+        function main() : Array<Fixed64>
+          // set up data and labels
+          var data_shape = Array<UInt64>(2);
+          data_shape[0] = 10u64;
+          data_shape[1] = 1000u64;
+          var label_shape = Array<UInt64>(2);
+          label_shape[0] = 7u64;
+          label_shape[1] = 1000u64;
+          var data = Tensor(data_shape);
+          var label = Tensor(label_shape);
+
+          // set up model
+          var model = Model("sequential");
+          model.compile("scel", "adam", {"categorical accuracy"});
+
+          // train the model
+          model.fit(data, label, 32u64);
+
+          // evaluate
+          var mets = model.evaluate();
+          return mets;
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_sequential_no_layers)
+{
+  static char const *SEQUENTIAL_SRC = R"(
+        function main()
+          var model = Model("sequential");
+          model.compile("mse", "adam");
+        endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_sequential_multiple_compile)
+{
+  static char const *SEQUENTIAL_SRC = R"(
+        function main()
+          var model = Model("sequential");
+          model.add("dense", 10u64, 10u64, "relu");
+          model.compile("mse", "adam");
+          model.compile("scel", "adam");
+          model.compile("mse", "adam");
+        endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_sequential_add_after_compile)
+{
+  static char const *SEQUENTIAL_SRC = R"(
+      function main()
+         var model = Model("sequential");
+         model.add("dense", 10u64, 10u64, "relu");
+         model.compile("mse", "adam");
+         model.add("dense", 10u64, 1u64, "relu");
+         model.compile("mse", "adam");
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_sequential_predict_before_fit)
+{
+  static char const *SEQUENTIAL_SRC = R"(
+      function main() : Array<Fixed64>
+        // set up data and labels
+        var data_shape = Array<UInt64>(2);
+        data_shape[0] = 10u64;
+        data_shape[1] = 1000u64;
+        var label_shape = Array<UInt64>(2);
+        label_shape[0] = 7u64;
+        label_shape[1] = 1000u64;
+        var data = Tensor(data_shape);
+        var label = Tensor(label_shape);
+
+        // set up model
+        var model = Model("sequential");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 7u64);
+        model.compile("scel", "adam", {"categorical accuracy"});
+
+        var prediction = model.predict(data);
+
+        // train the model
+        model.fit(data, label, 32u64);
+
+        // evaluate performance
+        var mets = model.evaluate();
+
+        return mets;
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
+  ASSERT_TRUE(toolkit.Run());
+}
+
 }  // namespace
