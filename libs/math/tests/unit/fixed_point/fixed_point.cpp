@@ -288,8 +288,6 @@ TEST(FixedPointTest, FromString_32_32)
   fp64_t one_point_five("1.5fp64_t");
   fp64_t two_point_five("2.5fp64_t");
   fp64_t m_one_point_five("-1.5fp64_t");
-  fp64_t m_one_point_five_em10("-1.5e-5fp64_t");
-  fp64_t m_one_point_five_e10("-1.5e+5fp64_t");
   fp64_t m_one_point_five_flt(-1.5);
 
   EXPECT_EQ(zero_point_five.Data(), 0x080000000);
