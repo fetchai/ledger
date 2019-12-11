@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/consensus.hpp"
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "moment/deadline_timer.hpp"
+#include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/storage_unit/fake_storage_unit.hpp"
+#include "moment/deadline_timer.hpp"
 
 #include "gtest/gtest.h"
 
@@ -62,7 +62,7 @@ protected:
     // Set up our initial cabinet as stakers
     for (std::size_t i = 0; i < max_cabinet_size_; ++i)
     {
-      auto signer = std::make_shared<ECDSASigner>();
+      auto     signer   = std::make_shared<ECDSASigner>();
       Identity identity = Identity{signer->identity().identifier()};
       cabinet_priv_keys_.push_back(signer);
       cabinet_.emplace_back(identity);
@@ -72,12 +72,14 @@ protected:
 
     mining_identity_ = cabinet_[0];
 
-    stake_ = std::make_shared<StakeManager>();
+    stake_        = std::make_shared<StakeManager>();
     beacon_setup_ = nullptr;
-    beacon_ = nullptr;
+    beacon_       = nullptr;
     notarisation_ = nullptr;
 
-    consensus_ = std::make_shared<Consensus>(stake_, beacon_setup_, beacon_, chain_, storage_, mining_identity_, aeon_period_, max_cabinet_size_, block_interval_ms_, notarisation_);
+    consensus_ = std::make_shared<Consensus>(stake_, beacon_setup_, beacon_, chain_, storage_,
+                                             mining_identity_, aeon_period_, max_cabinet_size_,
+                                             block_interval_ms_, notarisation_);
 
     consensus_->Reset(*snapshot, storage_);
   }
@@ -86,7 +88,7 @@ protected:
   // populated fully)
   BlockPtr ValidNthBlock(uint64_t desired_block_number)
   {
-    BlockPtr ret = std::make_shared<Block>();
+    BlockPtr ret     = std::make_shared<Block>();
     BlockPtr genesis = MainChain::CreateGenesisBlock();
 
     ret->block_number               = desired_block_number;
@@ -94,10 +96,10 @@ protected:
     ret->block_entropy.block_number = ret->block_number;
     ret->previous_hash              = genesis->hash;
     ret->miner_id                   = mining_identity_;
-    ret->timestamp                  = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
+    ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
     // Need to 'trick' the entropy as appearing as an aeon beginning
-    if(desired_block_number == 1)
+    if (desired_block_number == 1)
     {
       ret->block_entropy.confirmations[ConstByteArray("test")];
       assert(!ret->block_entropy.confirmations.empty());
@@ -105,15 +107,15 @@ protected:
     else
     {
       // This relies on generating blocks in order
-      ret->previous_hash              = chain_.GetHeaviestBlock()->hash;
+      ret->previous_hash = chain_.GetHeaviestBlock()->hash;
     }
 
-    for(auto const &i : qual_)
+    for (auto const &i : qual_)
     {
       ret->block_entropy.qualified.insert(i.identifier());
     }
 
-    ret->weight                     = consensus_->GetBlockGenerationWeight(*ret, chain::Address{mining_identity_});
+    ret->weight = consensus_->GetBlockGenerationWeight(*ret, chain::Address{mining_identity_});
 
     ret->UpdateDigest();
     ret->miner_signature = cabinet_priv_keys_[0]->Sign(ret->hash);
@@ -124,20 +126,20 @@ protected:
   }
 
   fetch::crypto::mcl::details::MCLInitialiser init_before_others_{};
-  ConsensusPtr consensus_;
-  Signers cabinet_priv_keys_;
-  Members cabinet_; // The identities that are in the cabinet
-  Members qual_;    // The identities that are in qual
-  StakeManagerPtr stake_;
-  BeaconSetupServicePtr beacon_setup_;
-  BeaconServicePtr beacon_;
-  MainChain chain_;
-  StorageInterface storage_;
-  Identity mining_identity_;
-  uint64_t const aeon_period_{10};
-  uint64_t const max_cabinet_size_{10};
-  uint64_t const block_interval_ms_{5000};
-  NotarisationPtr notarisation_;
+  ConsensusPtr                                consensus_;
+  Signers                                     cabinet_priv_keys_;
+  Members                                     cabinet_;  // The identities that are in the cabinet
+  Members                                     qual_;     // The identities that are in qual
+  StakeManagerPtr                             stake_;
+  BeaconSetupServicePtr                       beacon_setup_;
+  BeaconServicePtr                            beacon_;
+  MainChain                                   chain_;
+  StorageInterface                            storage_;
+  Identity                                    mining_identity_;
+  uint64_t const                              aeon_period_{10};
+  uint64_t const                              max_cabinet_size_{10};
+  uint64_t const                              block_interval_ms_{5000};
+  NotarisationPtr                             notarisation_;
 };
 
 TEST_F(ConsensusTests, test_valid_block)
@@ -155,7 +157,6 @@ TEST_F(ConsensusTests, test_loose_block)
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
 }
 
-
 TEST_F(ConsensusTests, test_entropy_block_number_mismatch)
 {
   BlockPtr block = ValidNthBlock(1);
@@ -164,19 +165,17 @@ TEST_F(ConsensusTests, test_entropy_block_number_mismatch)
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
 }
 
-
 TEST_F(ConsensusTests, test_hash_empty)
 {
   BlockPtr block = ValidNthBlock(1);
-  block->hash = "";
+  block->hash    = "";
 
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
 }
 
-
 TEST_F(ConsensusTests, test_wrong_miner_identity)
 {
-  BlockPtr block = ValidNthBlock(1);
+  BlockPtr block  = ValidNthBlock(1);
   block->miner_id = qual_[1];
 
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
@@ -193,7 +192,7 @@ TEST_F(ConsensusTests, test_not_an_aeon)
 TEST_F(ConsensusTests, DISABLED_test_zero_weight)
 {
   BlockPtr block = ValidNthBlock(1);
-  block->weight = 0;
+  block->weight  = 0;
 
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
 }
@@ -206,11 +205,10 @@ TEST_F(ConsensusTests, DISABLED_test_wrong_weight)
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
 }
 
-
 TEST_F(ConsensusTests, test_timestamp_too_early)
 {
   BlockPtr block = ValidNthBlock(1);
-  block = ValidNthBlock(2);
+  block          = ValidNthBlock(2);
 
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
 }
@@ -218,7 +216,7 @@ TEST_F(ConsensusTests, test_timestamp_too_early)
 TEST_F(ConsensusTests, test_timestamp_before_previous)
 {
   BlockPtr block = ValidNthBlock(1);
-  block = ValidNthBlock(2);
+  block          = ValidNthBlock(2);
 
   block->timestamp = 0;
 
@@ -229,7 +227,7 @@ TEST_F(ConsensusTests, test_not_member_of_qual)
 {
   BlockPtr block = ValidNthBlock(1);
 
-  auto signer = std::make_shared<ECDSASigner>();
+  auto     signer          = std::make_shared<ECDSASigner>();
   Identity random_identity = Identity{signer->identity().identifier()};
 
   block->miner_id = random_identity;

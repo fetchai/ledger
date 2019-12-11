@@ -509,8 +509,9 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
     if (!(result == ConsensusInterface::Status::YES))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Block validation failed: Block coordinator failed to verify block (0x",
-                     current_block_->hash.ToHex(), ')', ". This should not happen.");
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Block validation failed: Block coordinator failed to verify block (0x",
+                      current_block_->hash.ToHex(), ')', ". This should not happen.");
 
       RemoveBlock(current_block_->hash);
       Reset();
