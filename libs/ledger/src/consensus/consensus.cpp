@@ -216,7 +216,8 @@ bool Consensus::VerifyNotarisation(Block const &block) const
   return true;
 }
 
-uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address) const
+uint64_t Consensus::GetBlockGenerationWeight(Block const &         previous,
+                                             chain::Address const &address) const
 {
   auto beginning_of_aeon = GetBeginningOfAeon(previous, chain_);
   auto cabinet           = beginning_of_aeon.block_entropy.qualified;
