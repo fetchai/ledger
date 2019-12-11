@@ -405,6 +405,9 @@ void RBC::OnRReady(MessageReady const &msg, uint32_t sender_index)
   {
     if (!SetDbar(tag, msg))
     {
+      // Clear incorrect message
+      broadcasts_[tag].original_message = {};
+
       MessageRequest send_msg =
           RBCMessage::New<RRequest>(msg->channel(), msg->id(), msg->counter());
 
@@ -480,8 +483,9 @@ void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
   {
     return;
   }
-  // If have not set message_hash then we did not send a request message
-  if (broadcasts_[tag].message_hash.empty())
+  // If have not set message_hash then we did not send a request message, return. Or if original
+  // message is already set
+  if (broadcasts_[tag].message_hash.empty() || !broadcasts_[tag].original_message.empty())
   {
     return;
   }
@@ -491,15 +495,7 @@ void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
   if (msg_hash == broadcasts_[tag].message_hash)
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RAnswer from node ", sender_index);
-    if (broadcasts_[tag].original_message.empty())
-    {
-      broadcasts_[tag].original_message = msg->message();
-    }
-    else
-    {
-      // TODO(jmw): Double check this part of protocol
-      broadcasts_[tag].original_message = msg->message();
-    }
+    broadcasts_[tag].original_message = msg->message();
   }
   else
   {
@@ -530,7 +526,7 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
 
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
 
-  // Unlock and lock here to allow the callback funtion to use the RBC
+  // Unlock and lock here to allow the callback function to use the RBC
   lock_.unlock();
   deliver_msg_callback_(miner_id, msg);
   lock_.lock();
@@ -589,6 +585,13 @@ bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
   if ((current_cabinet_.find(from) == current_cabinet_.end()) || (msg.channel() != channel_))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Received message from unknown sender/wrong channel");
+    return false;
+  }
+
+  // Check id is valid
+  if (msg.id() >= parties_.size())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received message with unknown tag id");
     return false;
   }
 
@@ -666,17 +669,13 @@ uint32_t RBC::CabinetIndex(MuddleAddress const &other_address) const
  */
 bool RBC::CheckTag(RBCMessage const &msg)
 {
-  if (msg.id() >= current_cabinet_.size() || msg.id() >= parties_.size())
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received message with unknown tag id");
-    return false;
-  }
+  assert(msg.id() < current_cabinet_.size());
   assert(parties_.size() == current_cabinet_.size());
+  assert(msg.channel() == channel_);
 
   uint8_t msg_counter = parties_[msg.id()].deliver_s;
 
   FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter, " for node ", msg.id());
-  assert(msg.channel() == channel_);
   if (ordered_delivery_)
   {
     if (msg.counter() == msg_counter)

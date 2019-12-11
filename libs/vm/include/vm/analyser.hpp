@@ -262,7 +262,6 @@ private:
   TypePtr        any_type_;
   TypePtr        any_primitive_type_;
   TypePtr        any_integer_type_;
-  TypePtr        any_floating_point_type_;
   TypePtr        array_type_;
   TypePtr        map_type_;
   TypePtr        sharded_state_type_;

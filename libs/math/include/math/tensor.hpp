@@ -1691,7 +1691,10 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Transpose() const
 {
   // TODO (private 867) -
-  assert(shape_.size() == 2);
+  if (shape_.size() != 2)
+  {
+    throw exceptions::WrongShape("Can not transpose a tensor which is not 2-dimensional!");
+  }
   SizeVector new_axes{1, 0};
 
   Tensor ret({shape().at(1), shape().at(0)});
