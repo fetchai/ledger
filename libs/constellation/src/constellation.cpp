@@ -416,9 +416,9 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
     beacon_network_->SetPeerTableFile(cfg_.beacon_peer_cache);
     auto beacon_conf = muddle::TrackerConfiguration::AllOn();
 
-    //    beacon_conf.max_kademlia_connections  = 0;
-    //    beacon_conf.max_longrange_connections = 0;
-    muddle_->SetTrackerConfiguration(beacon_conf);
+    beacon_conf.max_kademlia_connections  = 0;
+    beacon_conf.max_longrange_connections = 0;
+    beacon_network_->SetTrackerConfiguration(beacon_conf);
   }
 
   // Adding agent http inteface if network exists
