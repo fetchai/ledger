@@ -89,12 +89,6 @@ using IfIsNotVectorRegister = fetch::meta::EnableIf<IsNotVectorRegister<T>, R>;
 template <typename DataType, typename ReturnType>
 using IfIsNotImplemented = fetch::meta::IfIsNotImplemented<DataType, ReturnType>;
 
-// template <typename DataType>
-// using IfIsSignedInteger = fetch::math::meta::IfIsSignedInteger<DataType>;
-//
-// template <typename DataType>
-// using IfIsUnsignedInteger = fetch::math::meta::IfIsUnsignedInteger<DataType>;
-
 ////////////////////////////////////
 /// MATH LIKE SPECIALIZATIONS
 ////////////////////////////////////
