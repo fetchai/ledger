@@ -55,7 +55,7 @@ struct BERTConfig
   SizeType ff_dims           = 3072u;
   SizeType vocab_size        = 30522u;
   SizeType segment_size      = 2u;
-  DataType epsilon           = static_cast<DataType>(1e-12);
+  DataType epsilon           = fetch::math::Type<DataType>("0.0000000000001");
   DataType dropout_keep_prob = fetch::math::Type<DataType>("0.9");
 };
 
@@ -470,14 +470,14 @@ TensorType RunPseudoForwardPass(std::vector<std::string> input_nodes, std::strin
   SizeType seq_len     = 256u;
 
   TensorType tokens_data({max_seq_len, batch_size});
-  tokens_data.Fill(static_cast<DataType>(1));
+  tokens_data.Fill(DataType{1});
 
   TensorType mask_data({max_seq_len, 1, batch_size});
   for (SizeType i = 0; i < seq_len; i++)
   {
     for (SizeType b = 0; b < batch_size; b++)
     {
-      mask_data.Set(i, 0, b, static_cast<DataType>(1));
+      mask_data.Set(i, 0, b, DataType{1});
     }
   }
   TensorType position_data({max_seq_len, batch_size});
@@ -554,7 +554,7 @@ std::vector<TensorType> PrepareTensorForBert(TensorType const &            data,
       {
         break;
       }
-      mask_data.Set(i, 0, b, static_cast<DataType>(1));
+      mask_data.Set(i, 0, b, DataType{1});
     }
   }
   return {segment_data, position_data, data, mask_data};

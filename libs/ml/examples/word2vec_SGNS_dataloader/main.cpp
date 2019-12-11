@@ -147,7 +147,7 @@ int main(int argc, char **argv)
 
   // calc the compatiable linear lr decay
   DataType est_total_samples               = data_loader.EstimatedSampleNumber();
-  tp.learning_rate_param.linear_decay_rate = static_cast<DataType>(1) / est_total_samples;
+  tp.learning_rate_param.linear_decay_rate = DataType{1} / est_total_samples;
   // this decay rate gurantees that the lr is reduced to zero by the
   // end of an epoch (despite capping by ending learning rate)
 

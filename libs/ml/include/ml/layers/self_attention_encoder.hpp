@@ -166,8 +166,8 @@ private:
     std::string ff_first_layer =
         this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
             name + "_Feedforward_No_1", {input}, static_cast<SizeType>(model_dim_),
-            static_cast<SizeType>(ff_dim_), activation_type_, RegType::NONE,
-            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
+            static_cast<SizeType>(ff_dim_), activation_type_, RegType::NONE, DataType{0},
+            WeightsInitType::XAVIER_GLOROT, true);
 
     // do dropout
     std::string ff_first_layer_dropout =
@@ -178,8 +178,8 @@ private:
     std::string ff_second_layer =
         this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
             name + "_Feedforward_No_2", {ff_first_layer_dropout}, static_cast<SizeType>(ff_dim_),
-            static_cast<SizeType>(model_dim_), ActivationType::NOTHING, RegType::NONE,
-            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
+            static_cast<SizeType>(model_dim_), ActivationType::NOTHING, RegType::NONE, DataType{0},
+            WeightsInitType::XAVIER_GLOROT, true);
 
     return ff_second_layer;
   }

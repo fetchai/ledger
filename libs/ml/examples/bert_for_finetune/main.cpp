@@ -67,7 +67,7 @@ int main(int ac, char **av)
   SizeType batch_size = 4;
   SizeType epochs     = 20;
   SizeType layer_no   = 12;
-  auto     lr         = static_cast<DataType>(1e-5);
+  auto     lr         = fetch::math::Type<DataType>("0.00001");
   // load data into memory
   std::string file_path = av[1];
   std::string IMDB_path = av[2];
@@ -93,8 +93,8 @@ int main(int ac, char **av)
   std::string classification_output =
       g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
           "ClassificationOutput", {cls_token_output}, config.model_dims, 2u,
-          ActivationType::SOFTMAX, RegType::NONE, static_cast<DataType>(0),
-          WeightsInitType::XAVIER_GLOROT, false);
+          ActivationType::SOFTMAX, RegType::NONE, DataType{0}, WeightsInitType::XAVIER_GLOROT,
+          false);
 
   // Set up error signal
   std::string label = g.template AddNode<PlaceHolder<TensorType>>("Label", {});
@@ -147,10 +147,8 @@ std::vector<std::pair<std::vector<TensorType>, TensorType>> PrepareIMDBFinetuneT
   TensorType train_labels({static_cast<SizeType>(2), static_cast<SizeType>(2) * train_size});
   for (SizeType i = 0; i < train_size; i++)
   {
-    train_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2) * i,
-                     static_cast<DataType>(1));
-    train_labels.Set(static_cast<SizeType>(1), static_cast<SizeType>(2) * i + 1,
-                     static_cast<DataType>(1));
+    train_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2) * i, DataType{1});
+    train_labels.Set(static_cast<SizeType>(1), static_cast<SizeType>(2) * i + 1, DataType{1});
   }
 
   // evenly mix pos and neg test data together
@@ -166,10 +164,8 @@ std::vector<std::pair<std::vector<TensorType>, TensorType>> PrepareIMDBFinetuneT
   TensorType test_labels({static_cast<SizeType>(2), static_cast<SizeType>(2) * test_size});
   for (SizeType i = 0; i < test_size; i++)
   {
-    test_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2) * i,
-                    static_cast<DataType>(1));
-    test_labels.Set(static_cast<SizeType>(1), static_cast<SizeType>(2) * i + 1,
-                    static_cast<DataType>(1));
+    test_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2) * i, DataType{1});
+    test_labels.Set(static_cast<SizeType>(1), static_cast<SizeType>(2) * i + 1, DataType{1});
   }
   std::cout << "finish preparing train test data" << std::endl;
 

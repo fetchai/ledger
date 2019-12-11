@@ -112,7 +112,7 @@ void ComparePrediction(GraphPtrType g, GraphPtrType g2, std::string node_name)
   using DataType         = typename TensorType::Type;
   TensorType prediction  = g->Evaluate(node_name);
   TensorType prediction2 = g2->Evaluate(node_name);
-  EXPECT_TRUE(prediction.AllClose(prediction2, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(prediction.AllClose(prediction2, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
@@ -132,7 +132,7 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   TensorType data_logits = TensorType::FromString(R"(0.2 , 0.2 , 0.2, 0.2 , 0.1 , 0.1)");
   TensorType data_embed({5, 5});
   TensorType query_data = TensorType({12, 25, 4});
-  query_data.Fill(static_cast<DataType>(0));
+  query_data.Fill(DataType{0});
   TensorType key_data   = query_data;
   TensorType value_data = query_data;
   TensorType mask_data  = TensorType({25, 25, 4});
@@ -178,7 +178,7 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   std::string flatten      = AddOp<ops::Flatten<TensorType>>(g, {input_1});
   std::string layernorm_op = AddOp<ops::LayerNorm<TensorType>>(g, {input_1});
   std::string log          = AddOp<ops::Log<TensorType>>(g, {input_1});
-  std::string maskfill     = AddOp<ops::MaskFill<TensorType>>(g, {input_1, input_1}, DataType(0));
+  std::string maskfill     = AddOp<ops::MaskFill<TensorType>>(g, {input_1, input_1}, DataType{0});
   std::string matmul      = AddOp<ops::MatrixMultiply<TensorType>>(g, {input_1, input_1_transpose});
   std::string maxpool     = AddOp<ops::MaxPool<TensorType>>(g, {input_3d}, 1, 1);
   std::string maxpool1d   = AddOp<ops::MaxPool1D<TensorType>>(g, {input_3d}, 1, 1);
@@ -206,7 +206,7 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   std::string logsigmoid = AddOp<ops::LogSigmoid<TensorType>>(g, {input_1});
   std::string logsoftmax = AddOp<ops::LogSoftmax<TensorType>>(g, {input_1});
   std::string randomisedrelu =
-      AddOp<ops::RandomisedRelu<TensorType>>(g, {input_1}, DataType(0), DataType(1));
+      AddOp<ops::RandomisedRelu<TensorType>>(g, {input_1}, DataType{0}, DataType{1});
   std::string relu    = AddOp<ops::Relu<TensorType>>(g, {input_1});
   std::string sigmoid = AddOp<ops::Sigmoid<TensorType>>(g, {input_1});
   std::string softmax = AddOp<ops::Softmax<TensorType>>(g, {input_1});

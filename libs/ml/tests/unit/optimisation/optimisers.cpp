@@ -78,16 +78,16 @@ void PrepareTestDataAndLabels1D(TypeParam &data, TypeParam &gt)
   using DataType = typename TypeParam::Type;
 
   data.Resize({1, 4});
-  data.Set(0, 0, static_cast<DataType>(1));
-  data.Set(0, 1, DataType(2));
-  data.Set(0, 2, DataType(3));
-  data.Set(0, 3, DataType(4));
+  data.Set(0, 0, DataType{1});
+  data.Set(0, 1, DataType{2});
+  data.Set(0, 2, DataType{3});
+  data.Set(0, 3, DataType{4});
 
   gt.Resize({1, 4});
-  gt.Set(0, 0, DataType(2));
-  gt.Set(0, 1, DataType(3));
-  gt.Set(0, 2, DataType(4));
-  gt.Set(0, 3, DataType(5));
+  gt.Set(0, 0, DataType{2});
+  gt.Set(0, 1, DataType{3});
+  gt.Set(0, 2, DataType{4});
+  gt.Set(0, 3, DataType{5});
 }
 
 template <typename TypeParam>
@@ -96,30 +96,30 @@ void PrepareTestDataAndLabels2D(TypeParam &data, TypeParam &gt)
   using DataType = typename TypeParam::Type;
 
   data.Resize({2, 2, 3});
-  data.Set(0, 0, 0, static_cast<DataType>(1));
-  data.Set(0, 1, 0, DataType(2));
-  data.Set(1, 0, 0, DataType(3));
-  data.Set(1, 1, 0, DataType(4));
+  data.Set(0, 0, 0, DataType{1});
+  data.Set(0, 1, 0, DataType{2});
+  data.Set(1, 0, 0, DataType{3});
+  data.Set(1, 1, 0, DataType{4});
 
-  data.Set(0, 0, 1, DataType(5));
-  data.Set(0, 1, 1, DataType(6));
-  data.Set(1, 0, 1, DataType(7));
-  data.Set(1, 1, 1, DataType(8));
+  data.Set(0, 0, 1, DataType{5});
+  data.Set(0, 1, 1, DataType{6});
+  data.Set(1, 0, 1, DataType{7});
+  data.Set(1, 1, 1, DataType{8});
 
-  data.Set(0, 0, 2, DataType(9));
-  data.Set(0, 1, 2, DataType(10));
-  data.Set(1, 0, 2, DataType(11));
-  data.Set(1, 1, 2, DataType(12));
+  data.Set(0, 0, 2, DataType{9});
+  data.Set(0, 1, 2, DataType{10});
+  data.Set(1, 0, 2, DataType{11});
+  data.Set(1, 1, 2, DataType{12});
 
   gt.Resize({2, 3});
-  gt.Set(0, 0, DataType(2));
-  gt.Set(1, 0, DataType(3));
+  gt.Set(0, 0, DataType{2});
+  gt.Set(1, 0, DataType{3});
 
-  gt.Set(0, 1, DataType(6));
-  gt.Set(1, 1, DataType(7));
+  gt.Set(0, 1, DataType{6});
+  gt.Set(1, 1, DataType{7});
 
-  gt.Set(0, 2, DataType(10));
-  gt.Set(1, 2, DataType(11));
+  gt.Set(0, 2, DataType{10});
+  gt.Set(1, 2, DataType{11});
 }
 
 /////////////////

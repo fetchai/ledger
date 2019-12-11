@@ -47,13 +47,13 @@ TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class a
   std::string mask  = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Mask", {});
   g.template AddNode<fetch::ml::layers::MultiheadAttention<TypeParam>>(
       "MultiheadAttention", {query, key, value, mask}, static_cast<SizeType>(4),
-      static_cast<SizeType>(12), DataType(0.1));
+      static_cast<SizeType>(12), fetch::math::Type<DataType>("0.1"));
   TypeParam query_data = TypeParam({12, 25, 4});
-  query_data.Fill(static_cast<DataType>(0));
+  query_data.Fill(DataType{0});
   TypeParam key_data   = query_data;
   TypeParam value_data = query_data;
   TypeParam mask_data  = TypeParam({25, 25, 4});
-  mask_data.Fill(static_cast<DataType>(1));
+  mask_data.Fill(DataType{1});
   g.SetInput(query, query_data);
   g.SetInput(key, key_data);
   g.SetInput(value, value_data);
@@ -75,7 +75,7 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({12, 20, 5}));
 
   TypeParam mask_data = TypeParam({20, 20, 5});
-  mask_data.Fill(static_cast<DataType>(1));
+  mask_data.Fill(DataType{1});
   TypeParam output(m_att.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
   m_att.Forward({std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(input_data),
                  std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(mask_data)},
@@ -140,7 +140,7 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
   TypeParam value_data = query_data.Copy();
 
   TypeParam mask_data = TypeParam({12, 12, 3});
-  mask_data.Fill(static_cast<DataType>(1));
+  mask_data.Fill(DataType{1});
 
   // create labels data
   TypeParam labels({6, 12, 3});
