@@ -176,8 +176,8 @@ public:
   static constexpr std::uint16_t DECIMAL_DIGITS{BaseTypeInfo::decimals};
 
   static FixedPoint const TOLERANCE;
-  static FixedPoint const _0; /* 0 */
-  static FixedPoint const _1; /* 1 */
+  static FixedPoint const _0;    /* 0 */
+  static FixedPoint const _1;    /* 1 */
   static FixedPoint const _half; /* 0.5 */
 
   static FixedPoint const CONST_SMALLEST_FRACTION;
