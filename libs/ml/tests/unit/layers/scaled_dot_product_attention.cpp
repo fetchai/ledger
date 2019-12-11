@@ -303,7 +303,7 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   labels.FillUniformRandom();
 
   // Create layer
-  LayerType layer(key_dim, fetch::math::Type<DataType>("1"));
+  LayerType layer(key_dim, DataType{1});
 
   // add label node
   std::string label_name =

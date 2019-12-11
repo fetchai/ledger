@@ -959,12 +959,12 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
   {
     throw std::runtime_error("FixedPoint string parsing does not support scientific notation!");
   }
-  auto index = s.find("fp");
+  auto index  = s.find("fp");
   auto s_copy = std::string(s, 0, index);
 
   Type         integer_part{0};
   UnsignedType fractional_part{0};
-  bool is_negative{false};
+  bool         is_negative{false};
 
   std::string integer_match;
   std::string fractional_match;

@@ -559,7 +559,6 @@ TEST_F(VMModelTests, dense_sequential_model_test)
 
 TEST_F(VMModelTests, DISABLED_conv1d_sequential_model_test)
 {
-  using namespace fetch::math;
   static char const *sequential_model_src = R"(
     function main() : Tensor
 
@@ -613,12 +612,12 @@ TEST_F(VMModelTests, DISABLED_conv1d_sequential_model_test)
   ASSERT_TRUE(toolkit.Run(&res));
   auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
-  Tensor<fetch::vm_modules::math::DataType> gt({5, 1});
-  gt(0, 0) = Type<DataType>("+7.29641703");
-  gt(1, 0) = Type<DataType>("+5.42749771");
-  gt(2, 0) = Type<DataType>("+1.89785659");
-  gt(3, 0) = Type<DataType>("-0.52079467");
-  gt(4, 0) = Type<DataType>("+0.57897364");
+  fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1});
+  gt(0, 0) = fetch::math::Type<DataType>("+7.29641703");
+  gt(1, 0) = fetch::math::Type<DataType>("+5.42749771");
+  gt(2, 0) = fetch::math::Type<DataType>("+1.89785659");
+  gt(3, 0) = fetch::math::Type<DataType>("-0.52079467");
+  gt(4, 0) = fetch::math::Type<DataType>("+0.57897364");
 
   ASSERT_TRUE((prediction->GetTensor())
                   .AllClose(gt, fetch::math::function_tolerance<DataType>(),
@@ -627,8 +626,6 @@ TEST_F(VMModelTests, DISABLED_conv1d_sequential_model_test)
 
 TEST_F(VMModelTests, DISABLED_conv2d_sequential_model_test)
 {
-  using namespace fetch::math;
-
   static char const *sequential_model_src = R"(
     function main() : Tensor
 
@@ -688,12 +685,12 @@ TEST_F(VMModelTests, DISABLED_conv2d_sequential_model_test)
   ASSERT_TRUE(toolkit.Run(&res));
   auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
-  Tensor<fetch::vm_modules::math::DataType> gt({5, 1, 1});
-  gt.Set(0, 0, 0, Type<DataType>("+2.96216551"));
-  gt.Set(1, 0, 0, Type<DataType>("+10.21055092"));
-  gt.Set(2, 0, 0, Type<DataType>("-2.11563497"));
-  gt.Set(3, 0, 0, Type<DataType>("+1.88992180"));
-  gt.Set(4, 0, 0, Type<DataType>("+14.14585049"));
+  fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1, 1});
+  gt.Set(0, 0, 0, fetch::math::Type<DataType>("+2.96216551"));
+  gt.Set(1, 0, 0, fetch::math::Type<DataType>("+10.21055092"));
+  gt.Set(2, 0, 0, fetch::math::Type<DataType>("-2.11563497"));
+  gt.Set(3, 0, 0, fetch::math::Type<DataType>("+1.88992180"));
+  gt.Set(4, 0, 0, fetch::math::Type<DataType>("+14.14585049"));
 
   ASSERT_TRUE((prediction->GetTensor())
                   .AllClose(gt, fetch::math::function_tolerance<DataType>(),
