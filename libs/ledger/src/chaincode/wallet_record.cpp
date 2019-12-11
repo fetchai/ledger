@@ -30,8 +30,7 @@ namespace {
  *
  * @details The deserialised `deed` data-member can be nullptr (non-initialised
  * `std::smart_ptr<Deed>`) in the case when the objective is to REMOVE the deed
- * (Tx JSON data contain only `address` element, but `signees` and `thresholds`
- * are **NOT** present).
+ * (Tx data contain empty JSON (`signees` and `thresholds` are **NOT** present).
  *
  * @param data Variant type object deserialised from Tx JSON data, which is
  * expected to contain the deed definition. This variant object will be used
@@ -42,18 +41,18 @@ namespace {
 bool DeedFromVariant(variant::Variant const &variant_deed, DeedPtr &deed)
 {
   auto const num_of_items_in_deed = variant_deed.size();
-  if (num_of_items_in_deed == 1 && variant_deed.Has(ADDRESS_NAME))
+  if (num_of_items_in_deed == 0)
   {
     // This indicates request to REMOVE the deed (only `address` field has been
     // provided).
     deed.reset();
     return true;
   }
-  if (num_of_items_in_deed != 3)
+  if (num_of_items_in_deed != 2)
   {
     // This is INVALID attempt to AMEND the deed. Input deed variant is structurally
-    // unsound for amend operation because it does NOT contain exactly 3 expected
-    // elements (`address`, `signees` and `thresholds`).
+    // unsound for amend operation because it does NOT contain exactly 2 expected
+    // elements (`signees` and `thresholds`).
     return false;
   }
 
@@ -107,8 +106,7 @@ extern ConstByteArray const SIGNEES_NAME{"signees"};
  *
  * @details The deserialised `deed` data-member can be nullptr (non-initialised
  * `std::smart_ptr<Deed>`) in the case when the objective is to REMOVE the deed
- * (Tx JSON data contain only `address` element, but `signees` and `thresholds`
- * are **NOT** present).
+ * (when Tx data contains empty JSON dictionary).
  *
  * @param data Variant type object deserialised from Tx JSON data, which is
  * expected to contain the deed definition. This variant object will be used
