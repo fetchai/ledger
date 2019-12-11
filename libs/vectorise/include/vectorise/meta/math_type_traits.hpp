@@ -31,7 +31,6 @@ struct BaseVectorRegisterType
 }  // namespace vectorise
 
 namespace math {
-
 namespace meta {
 
 ////////////////////////////////////
@@ -90,8 +89,11 @@ using IfIsNotVectorRegister = fetch::meta::EnableIf<IsNotVectorRegister<T>, R>;
 template <typename DataType, typename ReturnType>
 using IfIsNotImplemented = fetch::meta::IfIsNotImplemented<DataType, ReturnType>;
 
-template <typename DataType>
-using IfIsUnsignedInteger = fetch::meta::IfIsUnsignedInteger<DataType>;
+// template <typename DataType>
+// using IfIsSignedInteger = fetch::math::meta::IfIsSignedInteger<DataType>;
+//
+// template <typename DataType>
+// using IfIsUnsignedInteger = fetch::math::meta::IfIsUnsignedInteger<DataType>;
 
 ////////////////////////////////////
 /// MATH LIKE SPECIALIZATIONS

@@ -214,9 +214,16 @@ static constexpr meta::IfIsFixedPoint<T, bool> is_inf(T const &val)
 }
 
 template <typename T>
-static constexpr meta::IfIsInteger<T, T> Type(std::string const &val)
+static constexpr meta::IfIsUnsignedInteger<T, T> Type(std::string const &val)
 {
-  return T(std::stoi(val));
+  T x      = static_cast<T>(std::stoull(val));
+  return x;
+}
+
+template <typename T>
+static constexpr meta::IfIsSignedInteger<T, T> Type(std::string const &val)
+{
+  return T(std::stoll(val));
 }
 
 template <typename T>
