@@ -59,10 +59,10 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
   {
     for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
     {
-      DataType val = (VmModelEstimator::ADD_DENSE_INPUT_COEF() * inputs);
-      val += VmModelEstimator::ADD_DENSE_OUTPUT_COEF() * outputs;
-      val += VmModelEstimator::ADD_DENSE_QUAD_COEF() * inputs * outputs;
-      val += VmModelEstimator::ADD_DENSE_CONST_COEF();
+      DataType val = (VmModelEstimator::ADD_DENSE_INPUT_COEF * inputs);
+      val += VmModelEstimator::ADD_DENSE_OUTPUT_COEF * outputs;
+      val += VmModelEstimator::ADD_DENSE_QUAD_COEF * inputs * outputs;
+      val += VmModelEstimator::ADD_DENSE_CONST_COEF;
 
       EXPECT_TRUE(model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs) ==
                   static_cast<ChargeAmount>(val));
@@ -94,10 +94,10 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
   {
     for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
     {
-      DataType val = (VmModelEstimator::ADD_DENSE_INPUT_COEF() * inputs);
-      val += VmModelEstimator::ADD_DENSE_OUTPUT_COEF() * outputs;
-      val += VmModelEstimator::ADD_DENSE_QUAD_COEF() * inputs * outputs;
-      val += VmModelEstimator::ADD_DENSE_CONST_COEF();
+      DataType val = (VmModelEstimator::ADD_DENSE_INPUT_COEF * inputs);
+      val += VmModelEstimator::ADD_DENSE_OUTPUT_COEF * outputs;
+      val += VmModelEstimator::ADD_DENSE_QUAD_COEF * inputs * outputs;
+      val += VmModelEstimator::ADD_DENSE_CONST_COEF;
 
       EXPECT_TRUE(model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, inputs, outputs,
                                                           vm_ptr_activation_type) ==
@@ -252,9 +252,9 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
       weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
       weights_size_sum += inputs * outputs + outputs;
 
-      DataType val = VmModelEstimator::ADAM_PADDED_WEIGHTS_SIZE_COEF() * weights_padded_size;
-      val += VmModelEstimator::ADAM_WEIGHTS_SIZE_COEF() * weights_size_sum;
-      val += VmModelEstimator::COMPILE_CONST_COEF();
+      DataType val = VmModelEstimator::ADAM_PADDED_WEIGHTS_SIZE_COEF * weights_padded_size;
+      val += VmModelEstimator::ADAM_WEIGHTS_SIZE_COEF * weights_size_sum;
+      val += VmModelEstimator::COMPILE_CONST_COEF;
 
       EXPECT_TRUE(model_estimator.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type) ==
                   static_cast<ChargeAmount>(val));
@@ -352,49 +352,48 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
           ops_count += 1;  // for relu
 
           DataType forward_pass_cost =
-              DataType(data_size_1) * VmModelEstimator::FORWARD_DENSE_INPUT_COEF();
+              DataType(data_size_1) * VmModelEstimator::FORWARD_DENSE_INPUT_COEF;
+          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::FORWARD_DENSE_OUTPUT_COEF;
           forward_pass_cost +=
-              DataType(label_size_1) * VmModelEstimator::FORWARD_DENSE_OUTPUT_COEF();
-          forward_pass_cost +=
-              DataType(data_size_1 * label_size_1) * VmModelEstimator::FORWARD_DENSE_QUAD_COEF();
-          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_FORWARD_IMPACT();
+              DataType(data_size_1 * label_size_1) * VmModelEstimator::FORWARD_DENSE_QUAD_COEF;
+          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_FORWARD_IMPACT;
 
           DataType backward_pass_cost =
-              DataType(data_size_1) * VmModelEstimator::BACKWARD_DENSE_INPUT_COEF();
+              DataType(data_size_1) * VmModelEstimator::BACKWARD_DENSE_INPUT_COEF;
           backward_pass_cost +=
-              DataType(label_size_1) * VmModelEstimator::BACKWARD_DENSE_OUTPUT_COEF();
+              DataType(label_size_1) * VmModelEstimator::BACKWARD_DENSE_OUTPUT_COEF;
           backward_pass_cost +=
-              DataType(data_size_1 * label_size_1) * VmModelEstimator::BACKWARD_DENSE_QUAD_COEF();
-          backward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_BACKWARD_IMPACT();
+              DataType(data_size_1 * label_size_1) * VmModelEstimator::BACKWARD_DENSE_QUAD_COEF;
+          backward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_BACKWARD_IMPACT;
 
           model_estimator.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);
           model.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);
 
           ops_count += 1;  // for loss
 
-          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_FORWARD_IMPACT();
-          backward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_BACKWARD_IMPACT();
+          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_FORWARD_IMPACT;
+          backward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_BACKWARD_IMPACT;
 
           SizeType number_of_batches = n_data / batch_size;
 
-          DataType val(0);
+          DataType val{0};
 
           // Forward pass
           val = val + forward_pass_cost * n_data;
-          val = val + VmModelEstimator::PREDICT_BATCH_LAYER_COEF() * n_data * ops_count;
-          val = val + VmModelEstimator::PREDICT_CONST_COEF();
+          val = val + VmModelEstimator::PREDICT_BATCH_LAYER_COEF * n_data * ops_count;
+          val = val + VmModelEstimator::PREDICT_CONST_COEF;
 
           // Backward pass
           val = val + backward_pass_cost * n_data;
-          val = val + VmModelEstimator::BACKWARD_BATCH_LAYER_COEF() * n_data * ops_count;
-          val = val + VmModelEstimator::BACKWARD_PER_BATCH_COEF() * number_of_batches;
+          val = val + VmModelEstimator::BACKWARD_BATCH_LAYER_COEF * n_data * ops_count;
+          val = val + VmModelEstimator::BACKWARD_PER_BATCH_COEF * number_of_batches;
 
           // Optimiser step
           val = val + static_cast<DataType>(number_of_batches) *
-                          VmModelEstimator::ADAM_STEP_IMPACT_COEF() * weights_size_sum;
+                          VmModelEstimator::ADAM_STEP_IMPACT_COEF * weights_size_sum;
 
           // Call overhead
-          val = val + VmModelEstimator::FIT_CONST_COEF();
+          val = val + VmModelEstimator::FIT_CONST_COEF;
 
           val = val * fetch::vm::COMPUTE_CHARGE_COST;
 
@@ -405,8 +404,8 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
           predict_val = predict_val + forward_pass_cost * n_data;
           predict_val =
-              predict_val + VmModelEstimator::PREDICT_BATCH_LAYER_COEF() * n_data * ops_count;
-          predict_val = predict_val + VmModelEstimator::PREDICT_CONST_COEF();
+              predict_val + VmModelEstimator::PREDICT_BATCH_LAYER_COEF * n_data * ops_count;
+          predict_val = predict_val + VmModelEstimator::PREDICT_CONST_COEF;
 
           predict_val = predict_val * fetch::vm::COMPUTE_CHARGE_COST;
 
@@ -496,45 +495,44 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
           ops_count += 1;  // for relu
 
           DataType forward_pass_cost =
-              DataType(data_size_1) * VmModelEstimator::FORWARD_DENSE_INPUT_COEF();
+              DataType(data_size_1) * VmModelEstimator::FORWARD_DENSE_INPUT_COEF;
+          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::FORWARD_DENSE_OUTPUT_COEF;
           forward_pass_cost +=
-              DataType(label_size_1) * VmModelEstimator::FORWARD_DENSE_OUTPUT_COEF();
-          forward_pass_cost +=
-              DataType(data_size_1 * label_size_1) * VmModelEstimator::FORWARD_DENSE_QUAD_COEF();
-          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_FORWARD_IMPACT();
+              DataType(data_size_1 * label_size_1) * VmModelEstimator::FORWARD_DENSE_QUAD_COEF;
+          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_FORWARD_IMPACT;
 
           model_estimator.CompileSequentialWithMetrics(vm_ptr_loss_type, vm_ptr_opt_type, metrics);
           model.CompileSequentialWithMetrics(vm_ptr_loss_type, vm_ptr_opt_type, metrics);
 
           ops_count += 1;  // for loss
 
-          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_FORWARD_IMPACT();
+          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_FORWARD_IMPACT;
 
-          DataType val(0);
+          DataType val{0};
 
           // Forward pass
           val = val + forward_pass_cost * n_data;
-          val = val + VmModelEstimator::PREDICT_BATCH_LAYER_COEF() * n_data * ops_count;
-          val = val + VmModelEstimator::PREDICT_CONST_COEF();
+          val = val + VmModelEstimator::PREDICT_BATCH_LAYER_COEF * n_data * ops_count;
+          val = val + VmModelEstimator::PREDICT_CONST_COEF;
 
           // Metrics
           for (auto const &m_it : mets)
           {
             if (m_it == "categorical accuracy")
             {
-              val += VmModelEstimator::CATEGORICAL_ACCURACY_FORWARD_IMPACT() * label_size_1;
+              val += VmModelEstimator::CATEGORICAL_ACCURACY_FORWARD_IMPACT * label_size_1;
             }
             else if (m_it == "mse")
             {
-              val += VmModelEstimator::MSE_FORWARD_IMPACT() * label_size_1;
+              val += VmModelEstimator::MSE_FORWARD_IMPACT * label_size_1;
             }
             else if (m_it == "cel")
             {
-              val += VmModelEstimator::CEL_FORWARD_IMPACT() * label_size_1;
+              val += VmModelEstimator::CEL_FORWARD_IMPACT * label_size_1;
             }
             else if (m_it == "scel")
             {
-              val += VmModelEstimator::SCEL_FORWARD_IMPACT() * label_size_1;
+              val += VmModelEstimator::SCEL_FORWARD_IMPACT * label_size_1;
             }
           }
 
