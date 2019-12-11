@@ -141,112 +141,43 @@ public:
   ChargeAmount ToString();
 
   // Fill
-  static constexpr DataType FILL_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType FILL_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType FILL_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t FILL_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t FILL_SIZE_COEF;
+  static const fixed_point::fp64_t FILL_CONST_COEF;
 
   // FillRandom
-  static constexpr DataType FILL_RANDOM_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType FILL_RANDOM_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType FILL_RANDOM_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t FILL_RANDOM_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t FILL_RANDOM_SIZE_COEF;
+  static const fixed_point::fp64_t FILL_RANDOM_CONST_COEF;
 
   // Min
-  static constexpr DataType MIN_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType MIN_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType MIN_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t MIN_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t MIN_SIZE_COEF;
+  static const fixed_point::fp64_t MIN_CONST_COEF;
 
   // MAX
-  static constexpr DataType MAX_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType MAX_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType MAX_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t MAX_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t MAX_SIZE_COEF;
+  static const fixed_point::fp64_t MAX_CONST_COEF;
 
   // SUM
-  static constexpr DataType SUM_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType SUM_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType SUM_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t SUM_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t SUM_SIZE_COEF;
+  static const fixed_point::fp64_t SUM_CONST_COEF;
 
   // RESHAPE
-  static constexpr DataType RESHAPE_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType RESHAPE_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType RESHAPE_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t RESHAPE_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t RESHAPE_SIZE_COEF;
+  static const fixed_point::fp64_t RESHAPE_CONST_COEF;
 
   // FROM_STRING
-  static constexpr DataType FROM_STRING_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType FROM_STRING_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t FROM_STRING_SIZE_COEF;
+  static const fixed_point::fp64_t FROM_STRING_CONST_COEF;
 
   // TO_STRING
-  static constexpr DataType TO_STRING_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType TO_STRING_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType TO_STRING_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t TO_STRING_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t TO_STRING_SIZE_COEF;
+  static const fixed_point::fp64_t TO_STRING_CONST_COEF;
 
   fixed_point::fp64_t const DEFAULT_PADDED_SIZE_COEF = fixed_point::fp64_t("0.00023451");
   fixed_point::fp64_t const DEFAULT_SIZE_COEF        = fixed_point::fp64_t("0.00107809");
