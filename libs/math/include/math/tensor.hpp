@@ -697,7 +697,7 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
 {
   Tensor            ret;
-  SizeType          n = 1;
+  SizeType          n = 0;
   std::vector<Type> elems;
   elems.reserve(1024);
   bool failed         = false;
@@ -727,7 +727,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
         {
           if ((i < c.size() - 1))
           {
-            ++n;
+            reached_actual_data = false;
           }
         }
       }
@@ -745,7 +745,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
         {
           if ((i < c.size() - 1))
           {
-            ++n;
+            reached_actual_data = false;
           }
         }
       }
@@ -783,8 +783,13 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
         auto        float_val = math::Type<T>(cur_elem);
         elems.emplace_back(Type(float_val));
-        prev_backslash      = false;
-        reached_actual_data = true;
+        prev_backslash = false;
+        if (reached_actual_data == false)
+        {
+          // Where we actually start counting rows
+          ++n;
+          reached_actual_data = true;
+        }
       }
       break;
     }
