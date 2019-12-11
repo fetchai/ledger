@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "router.hpp"
 #include "kademlia/peer_tracker.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
-#include "router.hpp"
 #include "routing_message.hpp"
 
 #include "core/byte_array/encoders.hpp"
@@ -601,6 +601,7 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet, bool exter
       ClearDeliveryAttempt(packet);
     }
   };
+
   auto fail = [this, wpacket, external, reschedule_on_fail]() {
     auto packet = wpacket.lock();
     if (packet && reschedule_on_fail)
