@@ -88,88 +88,90 @@ VM::VM(Module *module)
   AddOpcodeInfo(Opcodes::Not, "Not", [](VM *vm) { vm->Handler__Not(); });
   AddOpcodeInfo(Opcodes::PrimitiveEqual, "PrimitiveEqual",
                 [](VM *vm) { vm->Handler__PrimitiveEqual(); });
-  AddOpcodeInfo(Opcodes::ObjectEqual, "ObjectEqual", [](VM *vm) { vm->Handler__ObjectEqual(); });
+  AddOpcodeInfo(Opcodes::ObjectEqual, "ObjectEqual", [](VM *vm) { vm->Handler__ObjectEqual(); }, 0);
   AddOpcodeInfo(Opcodes::PrimitiveNotEqual, "PrimitiveNotEqual",
                 [](VM *vm) { vm->Handler__PrimitiveNotEqual(); });
   AddOpcodeInfo(Opcodes::ObjectNotEqual, "ObjectNotEqual",
-                [](VM *vm) { vm->Handler__ObjectNotEqual(); });
+                [](VM *vm) { vm->Handler__ObjectNotEqual(); }, 0);
   AddOpcodeInfo(Opcodes::PrimitiveLessThan, "PrimitiveLessThan",
                 [](VM *vm) { vm->Handler__PrimitiveLessThan(); });
   AddOpcodeInfo(Opcodes::ObjectLessThan, "ObjectLessThan",
-                [](VM *vm) { vm->Handler__ObjectLessThan(); });
+                [](VM *vm) { vm->Handler__ObjectLessThan(); }, 0);
   AddOpcodeInfo(Opcodes::PrimitiveLessThanOrEqual, "PrimitiveLessThanOrEqual",
                 [](VM *vm) { vm->Handler__PrimitiveLessThanOrEqual(); });
   AddOpcodeInfo(Opcodes::ObjectLessThanOrEqual, "ObjectLessThanOrEqual",
-                [](VM *vm) { vm->Handler__ObjectLessThanOrEqual(); });
+                [](VM *vm) { vm->Handler__ObjectLessThanOrEqual(); }, 0);
   AddOpcodeInfo(Opcodes::PrimitiveGreaterThan, "PrimitiveGreaterThan",
                 [](VM *vm) { vm->Handler__PrimitiveGreaterThan(); });
   AddOpcodeInfo(Opcodes::ObjectGreaterThan, "ObjectGreaterThan",
-                [](VM *vm) { vm->Handler__ObjectGreaterThan(); });
+                [](VM *vm) { vm->Handler__ObjectGreaterThan(); }, 0);
   AddOpcodeInfo(Opcodes::PrimitiveGreaterThanOrEqual, "PrimitiveGreaterThanOrEqual",
                 [](VM *vm) { vm->Handler__PrimitiveGreaterThanOrEqual(); });
   AddOpcodeInfo(Opcodes::ObjectGreaterThanOrEqual, "ObjectGreaterThanOrEqual",
-                [](VM *vm) { vm->Handler__ObjectGreaterThanOrEqual(); });
+                [](VM *vm) { vm->Handler__ObjectGreaterThanOrEqual(); }, 0);
   AddOpcodeInfo(Opcodes::PrimitiveNegate, "PrimitiveNegate",
                 [](VM *vm) { vm->Handler__PrimitiveNegate(); });
-  AddOpcodeInfo(Opcodes::ObjectNegate, "ObjectNegate", [](VM *vm) { vm->Handler__ObjectNegate(); });
+  AddOpcodeInfo(Opcodes::ObjectNegate, "ObjectNegate", [](VM *vm) { vm->Handler__ObjectNegate(); },
+                0);
   AddOpcodeInfo(Opcodes::PrimitiveAdd, "PrimitiveAdd", [](VM *vm) { vm->Handler__PrimitiveAdd(); });
-  AddOpcodeInfo(Opcodes::ObjectAdd, "ObjectAdd", [](VM *vm) { vm->Handler__ObjectAdd(); });
+  AddOpcodeInfo(Opcodes::ObjectAdd, "ObjectAdd", [](VM *vm) { vm->Handler__ObjectAdd(); }, 0);
   AddOpcodeInfo(Opcodes::ObjectLeftAdd, "ObjectLeftAdd",
-                [](VM *vm) { vm->Handler__ObjectLeftAdd(); });
+                [](VM *vm) { vm->Handler__ObjectLeftAdd(); }, 0);
   AddOpcodeInfo(Opcodes::ObjectRightAdd, "ObjectRightAdd",
-                [](VM *vm) { vm->Handler__ObjectRightAdd(); });
+                [](VM *vm) { vm->Handler__ObjectRightAdd(); }, 0);
   AddOpcodeInfo(Opcodes::LocalVariablePrimitiveInplaceAdd, "LocalVariablePrimitiveInplaceAdd",
                 [](VM *vm) { vm->Handler__LocalVariablePrimitiveInplaceAdd(); });
   AddOpcodeInfo(Opcodes::LocalVariableObjectInplaceAdd, "LocalVariableObjectInplaceAdd",
-                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceAdd(); });
+                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceAdd(); }, 0);
   AddOpcodeInfo(Opcodes::LocalVariableObjectInplaceRightAdd, "LocalVariableObjectInplaceRightAdd",
-                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceRightAdd(); });
+                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceRightAdd(); }, 0);
   AddOpcodeInfo(Opcodes::PrimitiveSubtract, "PrimitiveSubtract",
                 [](VM *vm) { vm->Handler__PrimitiveSubtract(); });
   AddOpcodeInfo(Opcodes::ObjectSubtract, "ObjectSubtract",
-                [](VM *vm) { vm->Handler__ObjectSubtract(); });
+                [](VM *vm) { vm->Handler__ObjectSubtract(); }, 0);
   AddOpcodeInfo(Opcodes::ObjectLeftSubtract, "ObjectLeftSubtract",
-                [](VM *vm) { vm->Handler__ObjectLeftSubtract(); });
+                [](VM *vm) { vm->Handler__ObjectLeftSubtract(); }, 0);
   AddOpcodeInfo(Opcodes::ObjectRightSubtract, "ObjectRightSubtract",
-                [](VM *vm) { vm->Handler__ObjectRightSubtract(); });
+                [](VM *vm) { vm->Handler__ObjectRightSubtract(); }, 0);
   AddOpcodeInfo(Opcodes::LocalVariablePrimitiveInplaceSubtract,
                 "LocalVariablePrimitiveInplaceSubtract",
                 [](VM *vm) { vm->Handler__LocalVariablePrimitiveInplaceSubtract(); });
   AddOpcodeInfo(Opcodes::LocalVariableObjectInplaceSubtract, "LocalVariableObjectInplaceSubtract",
-                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceSubtract(); });
+                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceSubtract(); }, 0);
   AddOpcodeInfo(Opcodes::LocalVariableObjectInplaceRightSubtract,
                 "LocalVariableObjectInplaceRightSubtract",
-                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceRightSubtract(); });
+                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceRightSubtract(); }, 0);
   AddOpcodeInfo(Opcodes::PrimitiveMultiply, "PrimitiveMultiply",
                 [](VM *vm) { vm->Handler__PrimitiveMultiply(); });
   AddOpcodeInfo(Opcodes::ObjectMultiply, "ObjectMultiply",
-                [](VM *vm) { vm->Handler__ObjectMultiply(); });
+                [](VM *vm) { vm->Handler__ObjectMultiply(); }, 0);
   AddOpcodeInfo(Opcodes::ObjectLeftMultiply, "ObjectLeftMultiply",
-                [](VM *vm) { vm->Handler__ObjectLeftMultiply(); });
+                [](VM *vm) { vm->Handler__ObjectLeftMultiply(); }, 0);
   AddOpcodeInfo(Opcodes::ObjectRightMultiply, "ObjectRightMultiply",
-                [](VM *vm) { vm->Handler__ObjectRightMultiply(); });
+                [](VM *vm) { vm->Handler__ObjectRightMultiply(); }, 0);
   AddOpcodeInfo(Opcodes::LocalVariablePrimitiveInplaceMultiply,
                 "LocalVariablePrimitiveInplaceMultiply",
                 [](VM *vm) { vm->Handler__LocalVariablePrimitiveInplaceMultiply(); });
   AddOpcodeInfo(Opcodes::LocalVariableObjectInplaceMultiply, "LocalVariableObjectInplaceMultiply",
-                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceMultiply(); });
+                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceMultiply(); }, 0);
   AddOpcodeInfo(Opcodes::LocalVariableObjectInplaceRightMultiply,
                 "LocalVariableObjectInplaceRightMultiply",
-                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceRightMultiply(); });
+                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceRightMultiply(); }, 0);
   AddOpcodeInfo(Opcodes::PrimitiveDivide, "PrimitiveDivide",
                 [](VM *vm) { vm->Handler__PrimitiveDivide(); });
-  AddOpcodeInfo(Opcodes::ObjectDivide, "ObjectDivide", [](VM *vm) { vm->Handler__ObjectDivide(); });
+  AddOpcodeInfo(Opcodes::ObjectDivide, "ObjectDivide", [](VM *vm) { vm->Handler__ObjectDivide(); },
+                0);
   AddOpcodeInfo(Opcodes::ObjectLeftDivide, "ObjectLeftDivide",
-                [](VM *vm) { vm->Handler__ObjectLeftDivide(); });
+                [](VM *vm) { vm->Handler__ObjectLeftDivide(); }, 0);
   AddOpcodeInfo(Opcodes::ObjectRightDivide, "ObjectRightDivide",
-                [](VM *vm) { vm->Handler__ObjectRightDivide(); });
+                [](VM *vm) { vm->Handler__ObjectRightDivide(); }, 0);
   AddOpcodeInfo(Opcodes::LocalVariablePrimitiveInplaceDivide, "LocalVariablePrimitiveInplaceDivide",
                 [](VM *vm) { vm->Handler__LocalVariablePrimitiveInplaceDivide(); });
   AddOpcodeInfo(Opcodes::LocalVariableObjectInplaceDivide, "LocalVariableObjectInplaceDivide",
-                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceDivide(); });
+                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceDivide(); }, 0);
   AddOpcodeInfo(Opcodes::LocalVariableObjectInplaceRightDivide,
                 "LocalVariableObjectInplaceRightDivide",
-                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceRightDivide(); });
+                [](VM *vm) { vm->Handler__LocalVariableObjectInplaceRightDivide(); }, 0);
   AddOpcodeInfo(Opcodes::PrimitiveModulo, "PrimitiveModulo",
                 [](VM *vm) { vm->Handler__PrimitiveModulo(); });
   AddOpcodeInfo(Opcodes::LocalVariablePrimitiveInplaceModulo, "LocalVariablePrimitiveInplaceModulo",
@@ -197,33 +199,33 @@ VM::VM(Module *module)
   AddOpcodeInfo(Opcodes::MemberVariablePrimitiveInplaceAdd, "MemberVariablePrimitiveInplaceAdd",
                 [](VM *vm) { vm->Handler__MemberVariablePrimitiveInplaceAdd(); });
   AddOpcodeInfo(Opcodes::MemberVariableObjectInplaceAdd, "MemberVariableObjectInplaceAdd",
-                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceAdd(); });
+                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceAdd(); }, 0);
   AddOpcodeInfo(Opcodes::MemberVariableObjectInplaceRightAdd, "MemberVariableObjectInplaceRightAdd",
-                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceRightAdd(); });
+                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceRightAdd(); }, 0);
   AddOpcodeInfo(Opcodes::MemberVariablePrimitiveInplaceSubtract,
                 "MemberVariablePrimitiveInplaceSubtract",
                 [](VM *vm) { vm->Handler__MemberVariablePrimitiveInplaceSubtract(); });
   AddOpcodeInfo(Opcodes::MemberVariableObjectInplaceSubtract, "MemberVariableObjectInplaceSubtract",
-                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceSubtract(); });
+                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceSubtract(); }, 0);
   AddOpcodeInfo(Opcodes::MemberVariableObjectInplaceRightSubtract,
                 "MemberVariableObjectInplaceRightSubtract",
-                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceRightSubtract(); });
+                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceRightSubtract(); }, 0);
   AddOpcodeInfo(Opcodes::MemberVariablePrimitiveInplaceMultiply,
                 "MemberVariablePrimitiveInplaceMultiply",
                 [](VM *vm) { vm->Handler__MemberVariablePrimitiveInplaceMultiply(); });
   AddOpcodeInfo(Opcodes::MemberVariableObjectInplaceMultiply, "MemberVariableObjectInplaceMultiply",
-                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceMultiply(); });
+                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceMultiply(); }, 0);
   AddOpcodeInfo(Opcodes::MemberVariableObjectInplaceRightMultiply,
                 "MemberVariableObjectInplaceRightMultiply",
-                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceRightMultiply(); });
+                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceRightMultiply(); }, 0);
   AddOpcodeInfo(Opcodes::MemberVariablePrimitiveInplaceDivide,
                 "MemberVariablePrimitiveInplaceDivide",
                 [](VM *vm) { vm->Handler__MemberVariablePrimitiveInplaceDivide(); });
   AddOpcodeInfo(Opcodes::MemberVariableObjectInplaceDivide, "MemberVariableObjectInplaceDivide",
-                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceDivide(); });
+                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceDivide(); }, 0);
   AddOpcodeInfo(Opcodes::MemberVariableObjectInplaceRightDivide,
                 "MemberVariableObjectInplaceRightDivide",
-                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceRightDivide(); });
+                [](VM *vm) { vm->Handler__MemberVariableObjectInplaceRightDivide(); }, 0);
   AddOpcodeInfo(Opcodes::MemberVariablePrimitiveInplaceModulo,
                 "MemberVariablePrimitiveInplaceModulo",
                 [](VM *vm) { vm->Handler__MemberVariablePrimitiveInplaceModulo(); });
@@ -281,20 +283,10 @@ bool VM::Execute(std::string &error, Variant &output)
       break;
     }
 
-    // update the charge total (or set to max if it would overflow)
-    if ((std::numeric_limits<ChargeAmount>::max() - charge_total_) < current_op_->static_charge)
-    {
-      charge_total_ = std::numeric_limits<ChargeAmount>::max();
-    }
-    else
-    {
-      charge_total_ += current_op_->static_charge;
-    }
+    IncreaseChargeTotal(current_op_->static_charge);
 
-    // check for charge limit being reached
-    if ((charge_limit_ != 0u) && (charge_total_ >= charge_limit_))
+    if (ChargeLimitExceeded())
     {
-      RuntimeError("Charge limit exceeded");
       break;
     }
 
@@ -383,6 +375,18 @@ void VM::IncreaseChargeTotal(ChargeAmount const amount)
 ChargeAmount VM::GetChargeLimit() const
 {
   return charge_limit_;
+}
+
+bool VM::ChargeLimitExceeded()
+{
+  if ((charge_limit_ != 0u) && (charge_total_ >= charge_limit_))
+  {
+    RuntimeError("Charge limit reached");
+
+    return true;
+  }
+
+  return false;
 }
 
 void VM::SetChargeLimit(ChargeAmount limit)

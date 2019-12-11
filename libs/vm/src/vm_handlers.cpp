@@ -576,7 +576,13 @@ void VM::Handler__ObjectNegate()
   Variant &top = Top();
   if (top.object)
   {
-    top.object->Negate(top.object);
+    if (EstimateCharge(this, ChargeEstimator<>([top]() -> ChargeAmount {
+                         return top.object->NegateChargeEstimator(top.object);
+                       }),
+                       std::tuple<>{}))
+    {
+      top.object->Negate(top.object);
+    }
     return;
   }
   RuntimeError("null reference");

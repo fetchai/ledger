@@ -406,6 +406,67 @@ bool UInt256Wrapper::IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &r
   return rhs->number_ < lhs->number_;
 }
 
+vm::ChargeAmount UInt256Wrapper::AddChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                    fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+vm::ChargeAmount UInt256Wrapper::InplaceAddChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                           fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+vm::ChargeAmount UInt256Wrapper::SubtractChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                         fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+vm::ChargeAmount UInt256Wrapper::InplaceSubtractChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+vm::ChargeAmount UInt256Wrapper::MultiplyChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                         fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+vm::ChargeAmount UInt256Wrapper::InplaceMultiplyChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+vm::ChargeAmount UInt256Wrapper::DivideChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                       fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+vm::ChargeAmount UInt256Wrapper::InplaceDivideChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+vm::ChargeAmount UInt256Wrapper::IsEqualChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                        fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+vm::ChargeAmount UInt256Wrapper::IsNotEqualChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                           fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+vm::ChargeAmount UInt256Wrapper::IsLessThanChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                           fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+vm::ChargeAmount UInt256Wrapper::IsGreaterThanChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
 }  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch
