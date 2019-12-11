@@ -200,7 +200,7 @@ void VMTensor::FillRandom()
   tensor_.FillUniformRandom();
 }
 
-Ptr<VMTensor> VMTensor::Squeeze()
+Ptr<VMTensor> VMTensor::Squeeze() const
 {
   auto squeezed_tensor = tensor_.Copy();
   try
@@ -209,12 +209,12 @@ Ptr<VMTensor> VMTensor::Squeeze()
   }
   catch (std::exception const &e)
   {
-    RuntimeError("Squeeze failed: " + std::string(e.what()));
+    vm_->RuntimeError("Squeeze failed: " + std::string(e.what()));
   }
   return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, squeezed_tensor));
 }
 
-Ptr<VMTensor> VMTensor::Unsqueeze()
+Ptr<VMTensor> VMTensor::Unsqueeze() const
 {
   auto unsqueezed_tensor = tensor_.Copy();
   unsqueezed_tensor.Unsqueeze();
@@ -223,12 +223,40 @@ Ptr<VMTensor> VMTensor::Unsqueeze()
 
 bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
 {
+  if (new_shape->elements.empty())
+  {
+    RuntimeError("Can not reshape a Tensor : new shape is empty!");
+    return false;
+  }
+  std::size_t total_new_elements = 1;
+  for (SizeType axis_size : new_shape->elements)
+  {
+    if (axis_size == 0)
+    {
+      RuntimeError("Can not reshape a Tensor : axis of size 0 found in new shape!");
+      return false;
+    }
+    total_new_elements *= axis_size;
+  }
+  if (total_new_elements != tensor_.size())
+  {
+    RuntimeError("Can not reshape a Tensor : total elements count in the new shape (" +
+                 std::to_string(total_new_elements) +
+                 ") mismatch. Expected : " + std::to_string(tensor_.size()));
+    return false;
+  }
   return tensor_.Reshape(new_shape->elements);
 }
 
-void VMTensor::Transpose()
+Ptr<VMTensor> VMTensor::Transpose() const
 {
-  tensor_.Transpose();
+  if (tensor_.shape().size() != RECTANGULAR_SHAPE_SIZE)
+  {
+    vm_->RuntimeError("Can not transpose a Tensor which is not 2-dimensional!");
+    return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, tensor_.Copy()));
+  }
+  auto transposed = tensor_.Transpose();
+  return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, transposed));
 }
 
 /////////////////////////
