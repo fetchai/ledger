@@ -178,6 +178,7 @@ public:
   static FixedPoint const TOLERANCE;
   static FixedPoint const _0; /* 0 */
   static FixedPoint const _1; /* 1 */
+  static FixedPoint const _half; /* 0.5 */
 
   static FixedPoint const CONST_SMALLEST_FRACTION;
   static FixedPoint const CONST_E;              /* e */
@@ -675,6 +676,8 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::_0{0}; /* 0 */
 template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::_1{1}; /* 1 */
+template <uint16_t I, uint16_t F>
+FixedPoint<I, F> const FixedPoint<I, F>::_half{0.5}; /* 0.5 */
 template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::TOLERANCE(
     0, FixedPoint<I, F>::BaseTypeInfo::tolerance); /* 0 */
