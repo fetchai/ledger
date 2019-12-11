@@ -697,7 +697,7 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
 {
   Tensor            ret;
-  SizeType          n = 1;
+  SizeType          n = 0;
   std::vector<Type> elems;
   elems.reserve(1024);
   bool failed         = false;
@@ -707,7 +707,8 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     UNSET,
     COLON,
     NEWLINE
-  } new_row_marker = UNSET;
+  } new_row_marker         = UNSET;
+  bool reached_actual_data = false;
 
   // Text parsing loop
   for (SizeType i = 0; i < c.size();)
@@ -716,35 +717,37 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     switch (c[i])
     {
     case ';':
-      if (new_row_marker == UNSET || new_row_marker == COLON)
+      if (reached_actual_data == true)
       {
-        new_row_marker = COLON;
-      }
-      if (new_row_marker == NEWLINE)
-      {
-        ++i;
-        break;
-      }
-      if (i < c.size() - 1)
-      {
-        ++n;
+        if (new_row_marker == UNSET)
+        {
+          new_row_marker = COLON;
+        }
+        if (new_row_marker == COLON)
+        {
+          if ((i < c.size() - 1))
+          {
+            reached_actual_data = false;
+          }
+        }
       }
       ++i;
       break;
     case '\r':
     case '\n':
-      if (new_row_marker == UNSET || new_row_marker == NEWLINE)
+      if (reached_actual_data == true)
       {
-        new_row_marker = NEWLINE;
-      }
-      if (new_row_marker == COLON)
-      {
-        ++i;
-        break;
-      }
-      if (i < c.size() - 1)
-      {
-        ++n;
+        if (new_row_marker == UNSET)
+        {
+          new_row_marker = NEWLINE;
+        }
+        if (new_row_marker == NEWLINE)
+        {
+          if ((i < c.size() - 1))
+          {
+            reached_actual_data = false;
+          }
+        }
       }
       ++i;
       break;
@@ -781,6 +784,12 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
         auto        float_val = math::Type<T>(cur_elem);
         elems.emplace_back(Type(float_val));
         prev_backslash = false;
+        if (reached_actual_data == false)
+        {
+          // Where we actually start counting rows
+          ++n;
+          reached_actual_data = true;
+        }
       }
       break;
     }
