@@ -309,8 +309,6 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                                 UseEstimator(&ModelEstimator::LayerAddDense))
           .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation,
                                 UseEstimator(&ModelEstimator::LayerAddDenseActivation))
-          .CreateMemberFunction("add", &VMModel::LayerAddFlatten,
-                                UseEstimator(&ModelEstimator::LayerAddFlatten))
           .CreateMemberFunction("compile", &VMModel::CompileSequential,
                                 UseEstimator(&ModelEstimator::CompileSequential))
           .CreateMemberFunction("compile", &VMModel::CompileSequentialWithMetrics,
@@ -330,6 +328,7 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
   {
     interface.CreateMemberFunction("add", &VMModel::LayerAddConv, UseEstimator(&ModelEstimator::LayerAddConv))
                             .CreateMemberFunction("add", &VMModel::LayerAddConvActivation, UseEstimator(&ModelEstimator::LayerAddConvActivation))
+                            .CreateMemberFunction("add", &VMModel::LayerAddFlatten, UseEstimator(&ModelEstimator::LayerAddFlatten))
                             .CreateMemberFunction("compile", &VMModel::CompileSimple, UseEstimator(&ModelEstimator::CompileSimple))
                             .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
                                 UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental));
@@ -629,9 +628,8 @@ void VMModel::LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::Str
 }
 
 
-void VMModel::LayerAddFlatten(const fetch::vm::Ptr<String> &layer, math::SizeType const &input_channels)
+void VMModel::LayerAddFlatten(const fetch::vm::Ptr<String> &layer)
 {
-  FETCH_UNUSED(input_channels); // not sure which parameters shoul be passed
   try
   {
     SupportedLayerType const layer_type = ParseName(layer->string(), layer_types_, "layer type");

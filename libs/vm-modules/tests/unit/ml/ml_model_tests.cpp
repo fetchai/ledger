@@ -424,6 +424,11 @@ TEST_F(VMModelTests, model_uncompilable_add_layer__dense_invalid_params)
   TestAddingUncompilableLayer(R"(model.add("dense", 10fp32, 10u64, "relu");)");
 }
 
+TEST_F(VMModelTests, model_uncompilable_add_layer__flatten_invalid_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("flatten", 10fp32);)");
+}
+
 TEST_F(VMModelTests, model_uncompilable_add_layer__conv_invalid_params)
 {
   TestAddingUncompilableLayer(R"(model.add("conv1d", 0u64, 10fp32, 10u64, 10u64, "relu");)");
@@ -543,6 +548,40 @@ TEST_F(VMModelTests, dense_sequential_model_test)
       model.add("dense", 10u64, 10u64, "relu");
       model.add("dense", 10u64, 10u64, "relu");
       model.add("dense", 10u64, 1u64);
+      model.compile("mse", "adam");
+
+      // train the model
+      model.fit(data, label, 32u64);
+
+      // make a prediction
+      var loss = model.evaluate();
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(sequential_model_src));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, flatten_sequential_model_test)
+{
+  static char const *sequential_model_src = R"(
+    function main()
+
+      // set up data and labels
+      var data_shape = Array<UInt64>(2);
+      data_shape[0] = 10u64;
+      data_shape[1] = 1000u64;
+      var label_shape = Array<UInt64>(2);
+      label_shape[0] = 1u64;
+      label_shape[1] = 1000u64;
+      var data = Tensor(data_shape);
+      var label = Tensor(label_shape);
+
+      // set up a model
+      var model = Model("sequential");
+      model.add("dense", 10u64, 10u64, "relu");
+      model.add("dense", 10u64, 10u64, "relu");
+      model.add("flatten");
       model.compile("mse", "adam");
 
       // train the model

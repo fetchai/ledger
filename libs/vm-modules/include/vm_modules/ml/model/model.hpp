@@ -144,7 +144,7 @@ public:
                                            math::SizeType const &                   inputs,
                                            math::SizeType const &                   hidden_nodes,
                                            fetch::vm::Ptr<fetch::vm::String> const &activation);
-  void LayerAddFlatten(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &input_channels);
+  void LayerAddFlatten(fetch::vm::Ptr<fetch::vm::String> const &layer);
 
 private:
   ModelPtrType       model_;
