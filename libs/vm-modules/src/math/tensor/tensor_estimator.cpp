@@ -113,8 +113,8 @@ ChargeAmount TensorEstimator::Fill(DataType const & /*value*/)
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(FILL_PADDED_SIZE_COEF() * padded_size + FILL_SIZE_COEF() * size +
-                                   FILL_CONST_COEF()) *
+  return static_cast<ChargeAmount>(FILL_PADDED_SIZE_COEF * padded_size + FILL_SIZE_COEF * size +
+                                   FILL_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -123,8 +123,8 @@ ChargeAmount TensorEstimator::FillRandom()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(FILL_RANDOM_PADDED_SIZE_COEF() * padded_size +
-                                   FILL_RANDOM_SIZE_COEF() * size + FILL_RANDOM_CONST_COEF()) *
+  return static_cast<ChargeAmount>(FILL_RANDOM_PADDED_SIZE_COEF * padded_size +
+                                   FILL_RANDOM_SIZE_COEF * size + FILL_RANDOM_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -133,8 +133,8 @@ ChargeAmount TensorEstimator::Min()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(MIN_PADDED_SIZE_COEF() * padded_size + MIN_SIZE_COEF() * size +
-                                   MIN_CONST_COEF()) *
+  return static_cast<ChargeAmount>(MIN_PADDED_SIZE_COEF * padded_size + MIN_SIZE_COEF * size +
+                                   MIN_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -143,8 +143,8 @@ ChargeAmount TensorEstimator::Max()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(MAX_PADDED_SIZE_COEF() * padded_size + MAX_SIZE_COEF() * size +
-                                   MAX_CONST_COEF()) *
+  return static_cast<ChargeAmount>(MAX_PADDED_SIZE_COEF * padded_size + MAX_SIZE_COEF * size +
+                                   MAX_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -189,8 +189,8 @@ ChargeAmount TensorEstimator::Sum()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(SUM_PADDED_SIZE_COEF() * padded_size + SUM_SIZE_COEF() * size +
-                                   SUM_CONST_COEF()) *
+  return static_cast<ChargeAmount>(SUM_PADDED_SIZE_COEF * padded_size + SUM_SIZE_COEF * size +
+                                   SUM_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -235,8 +235,8 @@ ChargeAmount TensorEstimator::GetReshapeCost(SizeVector const &new_shape)
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(new_shape);
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(new_shape);
 
-  return static_cast<ChargeAmount>(RESHAPE_PADDED_SIZE_COEF() * padded_size +
-                                   RESHAPE_SIZE_COEF() * size + RESHAPE_CONST_COEF()) *
+  return static_cast<ChargeAmount>(RESHAPE_PADDED_SIZE_COEF * padded_size +
+                                   RESHAPE_SIZE_COEF * size + RESHAPE_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -314,8 +314,8 @@ ChargeAmount TensorEstimator::Negate()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(SUM_PADDED_SIZE_COEF() * padded_size + SUM_SIZE_COEF() * size +
-                                   SUM_CONST_COEF()) *
+  return static_cast<ChargeAmount>(SUM_PADDED_SIZE_COEF * padded_size + SUM_SIZE_COEF * size +
+                                   SUM_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -430,8 +430,8 @@ ChargeAmount TensorEstimator::Unsqueeze()
 
 ChargeAmount TensorEstimator::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
 {
-  return static_cast<ChargeAmount>(FROM_STRING_SIZE_COEF() * string->Length() +
-                                   FROM_STRING_CONST_COEF()) *
+  return static_cast<ChargeAmount>(FROM_STRING_SIZE_COEF * string->Length() +
+                                   FROM_STRING_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -440,8 +440,8 @@ ChargeAmount TensorEstimator::ToString()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(TO_STRING_PADDED_SIZE_COEF() * padded_size +
-                                   TO_STRING_SIZE_COEF() * size + TO_STRING_CONST_COEF()) *
+  return static_cast<ChargeAmount>(TO_STRING_PADDED_SIZE_COEF * padded_size +
+                                   TO_STRING_SIZE_COEF * size + TO_STRING_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -450,6 +450,51 @@ ChargeAmount TensorEstimator::MaximumCharge(std::string const &log_msg)
   FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::MAXIMUM_CHARGE : " + log_msg);
   return vm::MAXIMUM_CHARGE;
 }
+
+// Fill
+fixed_point::fp64_t const TensorEstimator::FILL_PADDED_SIZE_COEF =
+    fixed_point::fp64_t("0.00023451");
+fixed_point::fp64_t const TensorEstimator::FILL_SIZE_COEF  = fixed_point::fp64_t("0.00107809");
+fixed_point::fp64_t const TensorEstimator::FILL_CONST_COEF = fixed_point::fp64_t("5");
+
+// FillRandom
+fixed_point::fp64_t const TensorEstimator::FILL_RANDOM_PADDED_SIZE_COEF =
+    fixed_point::fp64_t("0.00023451");
+fixed_point::fp64_t const TensorEstimator::FILL_RANDOM_SIZE_COEF =
+    fixed_point::fp64_t("0.00107809");
+fixed_point::fp64_t const TensorEstimator::FILL_RANDOM_CONST_COEF = fixed_point::fp64_t("5");
+
+// Min
+fixed_point::fp64_t const TensorEstimator::MIN_PADDED_SIZE_COEF = fixed_point::fp64_t("0.00023451");
+fixed_point::fp64_t const TensorEstimator::MIN_SIZE_COEF        = fixed_point::fp64_t("0.00107809");
+fixed_point::fp64_t const TensorEstimator::MIN_CONST_COEF       = fixed_point::fp64_t("5");
+
+// MAX
+fixed_point::fp64_t const TensorEstimator::MAX_PADDED_SIZE_COEF = fixed_point::fp64_t("0.00023451");
+fixed_point::fp64_t const TensorEstimator::MAX_SIZE_COEF        = fixed_point::fp64_t("0.00107809");
+fixed_point::fp64_t const TensorEstimator::MAX_CONST_COEF       = fixed_point::fp64_t("5");
+
+// SUM
+fixed_point::fp64_t const TensorEstimator::SUM_PADDED_SIZE_COEF = fixed_point::fp64_t("0.00023451");
+fixed_point::fp64_t const TensorEstimator::SUM_SIZE_COEF        = fixed_point::fp64_t("0.00107809");
+fixed_point::fp64_t const TensorEstimator::SUM_CONST_COEF       = fixed_point::fp64_t("5");
+
+// RESHAPE
+fixed_point::fp64_t const TensorEstimator::RESHAPE_PADDED_SIZE_COEF =
+    fixed_point::fp64_t("0.00023451");
+fixed_point::fp64_t const TensorEstimator::RESHAPE_SIZE_COEF  = fixed_point::fp64_t("0.00107809");
+fixed_point::fp64_t const TensorEstimator::RESHAPE_CONST_COEF = fixed_point::fp64_t("5");
+
+// FROM_STRING
+fixed_point::fp64_t const TensorEstimator::FROM_STRING_SIZE_COEF =
+    fixed_point::fp64_t("0.00107809");
+fixed_point::fp64_t const TensorEstimator::FROM_STRING_CONST_COEF = fixed_point::fp64_t("5");
+
+// TO_STRING
+fixed_point::fp64_t const TensorEstimator::TO_STRING_PADDED_SIZE_COEF =
+    fixed_point::fp64_t("0.00023451");
+fixed_point::fp64_t const TensorEstimator::TO_STRING_SIZE_COEF  = fixed_point::fp64_t("0.00107809");
+fixed_point::fp64_t const TensorEstimator::TO_STRING_CONST_COEF = fixed_point::fp64_t("5");
 
 }  // namespace math
 }  // namespace vm_modules
