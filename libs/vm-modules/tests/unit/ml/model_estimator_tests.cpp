@@ -574,17 +574,17 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
   SizeType batch_size_step = 23;
 
   fetch::vm::TypeId type_id = 0;
-  VmStringPtr             vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
-  VmStringPtr             vm_ptr_loss_type{new fetch::vm::String(vm.get(), loss_type)};
-  VmStringPtr             vm_ptr_opt_type{new fetch::vm::String(vm.get(), opt_type)};
-  VmStringPtr             vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
+  VmStringPtr       vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
+  VmStringPtr       vm_ptr_loss_type{new fetch::vm::String(vm.get(), loss_type)};
+  VmStringPtr       vm_ptr_opt_type{new fetch::vm::String(vm.get(), opt_type)};
+  VmStringPtr       vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
 
   std::vector<std::string> mets      = {"categorical accuracy", "mse", "cel", "scel"};
   SizeType                 n_metrics = mets.size();
 
   Ptr<Array<Ptr<String>>> metrics = Ptr<Array<Ptr<String>>>(
-      new Array<Ptr<String>>(vm.get(), vm->GetTypeId<fetch::vm::IArray>(),
-                             vm->GetTypeId<String>(), static_cast<int32_t>(n_metrics)));
+      new Array<Ptr<String>>(vm.get(), vm->GetTypeId<fetch::vm::IArray>(), vm->GetTypeId<String>(),
+                             static_cast<int32_t>(n_metrics)));
 
   for (SizeType i{0}; i < n_metrics; i++)
   {
