@@ -707,7 +707,8 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     UNSET,
     COLON,
     NEWLINE
-  } new_row_marker = UNSET;
+  } new_row_marker         = UNSET;
+  bool reached_actual_data = false;
 
   // Text parsing loop
   for (SizeType i = 0; i < c.size();)
@@ -716,35 +717,37 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     switch (c[i])
     {
     case ';':
-      if (new_row_marker == UNSET || new_row_marker == COLON)
+      if (reached_actual_data == true)
       {
-        new_row_marker = COLON;
-      }
-      if (new_row_marker == NEWLINE)
-      {
-        ++i;
-        break;
-      }
-      if (i < c.size() - 1)
-      {
-        ++n;
+        if (new_row_marker == UNSET)
+        {
+          new_row_marker = COLON;
+        }
+        if (new_row_marker == COLON)
+        {
+          if ((i < c.size() - 1))
+          {
+            ++n;
+          }
+        }
       }
       ++i;
       break;
     case '\r':
     case '\n':
-      if (new_row_marker == UNSET || new_row_marker == NEWLINE)
+      if (reached_actual_data == true)
       {
-        new_row_marker = NEWLINE;
-      }
-      if (new_row_marker == COLON)
-      {
-        ++i;
-        break;
-      }
-      if (i < c.size() - 1)
-      {
-        ++n;
+        if (new_row_marker == UNSET)
+        {
+          new_row_marker = NEWLINE;
+        }
+        if (new_row_marker == NEWLINE)
+        {
+          if ((i < c.size() - 1))
+          {
+            ++n;
+          }
+        }
       }
       ++i;
       break;
@@ -780,7 +783,8 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
         auto        float_val = math::Type<T>(cur_elem);
         elems.emplace_back(Type(float_val));
-        prev_backslash = false;
+        prev_backslash      = false;
+        reached_actual_data = true;
       }
       break;
     }
