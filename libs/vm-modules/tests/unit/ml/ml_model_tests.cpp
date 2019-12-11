@@ -559,6 +559,7 @@ TEST_F(VMModelTests, dense_sequential_model_test)
 
 TEST_F(VMModelTests, DISABLED_conv1d_sequential_model_test)
 {
+  using namespace fetch::math;
   static char const *sequential_model_src = R"(
     function main() : Tensor
 
@@ -626,6 +627,8 @@ TEST_F(VMModelTests, DISABLED_conv1d_sequential_model_test)
 
 TEST_F(VMModelTests, DISABLED_conv2d_sequential_model_test)
 {
+  using namespace fetch::math;
+
   static char const *sequential_model_src = R"(
     function main() : Tensor
 
