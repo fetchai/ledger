@@ -717,7 +717,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     switch (c[i])
     {
     case ';':
-      if (reached_actual_data == true)
+      if (reached_actual_data)
       {
         if (new_row_marker == UNSET)
         {
@@ -735,7 +735,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       break;
     case '\r':
     case '\n':
-      if (reached_actual_data == true)
+      if (reached_actual_data)
       {
         if (new_row_marker == UNSET)
         {
@@ -784,7 +784,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
         auto        float_val = math::Type<T>(cur_elem);
         elems.emplace_back(Type(float_val));
         prev_backslash = false;
-        if (reached_actual_data == false)
+        if (!reached_actual_data)
         {
           // Where we actually start counting rows
           ++n;
