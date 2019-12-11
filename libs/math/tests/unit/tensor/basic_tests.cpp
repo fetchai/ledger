@@ -38,7 +38,7 @@ Tensor<fetch::fixed_point::FixedPoint<I, F>,
        fetch::memory::SharedArray<fetch::fixed_point::FixedPoint<I, F>>>
 RandomArray(std::size_t n, fetch::fixed_point::FixedPoint<I, F> adj)
 {
-  static fetch::random::LinearCongruentialGenerator gen;
+  static fetch::random::Random gen;
   Tensor<fetch::fixed_point::FixedPoint<I, F>,
          fetch::memory::SharedArray<fetch::fixed_point::FixedPoint<I, F>>>
       a1(n);
@@ -46,7 +46,7 @@ RandomArray(std::size_t n, fetch::fixed_point::FixedPoint<I, F> adj)
   fetch::fixed_point::FixedPoint<I, F> rn{0};
   for (std::size_t i = 0; i < n; ++i)
   {
-    rn       = fetch::fixed_point::FixedPoint<I, F>(gen.AsDouble());
+    rn       = fetch::fixed_point::FixedPoint<I, F>(gen.generator.AsFP64());
     a1.At(i) = rn + adj;
   }
   return a1;
@@ -57,8 +57,8 @@ template <typename T>
 fetch::meta::IfIsInteger<T, Tensor<T, fetch::memory::SharedArray<T>>> RandomArray(std::size_t n,
                                                                                   T           adj)
 {
-  static fetch::random::LinearCongruentialGenerator gen;
-  Tensor<T, fetch::memory::SharedArray<T>>          a1(n);
+  static fetch::random::Random             gen;
+  Tensor<T, fetch::memory::SharedArray<T>> a1(n);
 
   // because random numbers are between 0 and 1 which doesn't work for integers
   double scale = 1000;
@@ -66,7 +66,7 @@ fetch::meta::IfIsInteger<T, Tensor<T, fetch::memory::SharedArray<T>>> RandomArra
   T rn{0};
   for (std::size_t i = 0; i < n; ++i)
   {
-    rn       = T(gen.AsDouble() * scale);
+    rn       = T(gen.generator.AsFP64() * scale);
     a1.At(i) = rn + adj;
   }
   return a1;
@@ -77,13 +77,13 @@ template <typename T>
 fetch::meta::IfIsFloat<T, Tensor<T, fetch::memory::SharedArray<T>>> RandomArray(std::size_t n,
                                                                                 T           adj)
 {
-  static fetch::random::LinearCongruentialGenerator gen;
-  Tensor<T, fetch::memory::SharedArray<T>>          a1(n);
+  static fetch::random::Random             gen;
+  Tensor<T, fetch::memory::SharedArray<T>> a1(n);
 
   T rn{0};
   for (std::size_t i = 0; i < n; ++i)
   {
-    rn       = T(gen.AsDouble());
+    rn       = T(gen.generator.AsFP64());
     a1.At(i) = rn + adj;
   }
   return a1;
