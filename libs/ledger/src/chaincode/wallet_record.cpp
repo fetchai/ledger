@@ -41,6 +41,13 @@ namespace {
  */
 bool DeedFromVariant(Variant const &variant_deed, DeedPtr &deed)
 {
+  // Provided variant is required to be either of Object type or Null to clearly
+  // indicate the intention.
+  if (!variant_deed.IsObject() && !variant_deed.IsNull())
+  {
+    return false;
+  }
+
   auto const num_of_items_in_deed = variant_deed.size();
   if (num_of_items_in_deed == 0)
   {
@@ -49,6 +56,7 @@ bool DeedFromVariant(Variant const &variant_deed, DeedPtr &deed)
     deed.reset();
     return true;
   }
+
   if (num_of_items_in_deed != 2)
   {
     // This is INVALID attempt to AMEND the deed. Input deed variant is structurally
