@@ -574,23 +574,21 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
   SizeType batch_size_step = 23;
 
   fetch::vm::TypeId type_id = 0;
-  VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
-  VmPtr             vm_ptr_loss_type{new fetch::vm::String(&toolkit.vm(), loss_type)};
-  VmPtr             vm_ptr_opt_type{new fetch::vm::String(&toolkit.vm(), opt_type)};
-  VmPtr             vm_ptr_activation_type{new fetch::vm::String(&toolkit.vm(), activation_type)};
+  VmStringPtr             vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
+  VmStringPtr             vm_ptr_loss_type{new fetch::vm::String(vm.get(), loss_type)};
+  VmStringPtr             vm_ptr_opt_type{new fetch::vm::String(vm.get(), opt_type)};
+  VmStringPtr             vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
 
   std::vector<std::string> mets      = {"categorical accuracy", "mse", "cel", "scel"};
   SizeType                 n_metrics = mets.size();
 
-  toolkit.Compile("");  // necessary to populate the registered types for GetTypeID
-
   Ptr<Array<Ptr<String>>> metrics = Ptr<Array<Ptr<String>>>(
-      new Array<Ptr<String>>(&toolkit.vm(), toolkit.vm().GetTypeId<fetch::vm::IArray>(),
-                             toolkit.vm().GetTypeId<String>(), static_cast<int32_t>(n_metrics)));
+      new Array<Ptr<String>>(vm.get(), vm->GetTypeId<fetch::vm::IArray>(),
+                             vm->GetTypeId<String>(), static_cast<int32_t>(n_metrics)));
 
   for (SizeType i{0}; i < n_metrics; i++)
   {
-    metrics->elements.at(i) = VmPtr(new fetch::vm::String(&toolkit.vm(), mets.at(i)));
+    metrics->elements.at(i) = VmStringPtr(new fetch::vm::String(vm.get(), mets.at(i)));
   }
 
   for (SizeType data_size_1 = min_data_size_1; data_size_1 < max_data_size_1;
@@ -607,11 +605,11 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
           std::vector<uint64_t>                             data_shape{{data_size_1, n_data}};
           std::vector<uint64_t>                             label_shape{{label_size_1, n_data}};
           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_data{
-              new fetch::vm_modules::math::VMTensor(&toolkit.vm(), type_id, data_shape)};
+              new fetch::vm_modules::math::VMTensor(vm.get(), type_id, data_shape)};
           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_labels{
-              new fetch::vm_modules::math::VMTensor(&toolkit.vm(), type_id, label_shape)};
+              new fetch::vm_modules::math::VMTensor(vm.get(), type_id, label_shape)};
 
-          VmModel          model(&toolkit.vm(), type_id, model_type);
+          VmModel          model(vm.get(), type_id, model_type);
           VmModelEstimator model_estimator(model);
 
           model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
