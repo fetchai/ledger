@@ -63,6 +63,8 @@ public:
 
   TensorType::SizeType size() const;
 
+  vm::Ptr<vm::Array<TensorType::SizeType>> VMShape() const;
+
   ////////////////////////////////////
   /// ACCESSING AND SETTING VALUES ///
   ////////////////////////////////////
@@ -73,7 +75,7 @@ public:
   template <typename... Args>
   void SetAt(Args... args);
 
-  void Copy(TensorType const &other);
+  vm::Ptr<VMTensor> Copy();
 
   void Fill(DataType const &value);
 
@@ -150,6 +152,12 @@ public:
   DataType Max();
 
   DataType Sum();
+
+  vm::Ptr<VMTensor> ArgMax(SizeType const &indices = SizeType{0});
+
+  vm::Ptr<VMTensor> ArgMaxNoIndices();
+
+  vm::Ptr<VMTensor> Dot(vm::Ptr<VMTensor> const &other);
 
   //////////////////////////////
   /// PRINTING AND EXPORTING ///
