@@ -216,7 +216,11 @@ static constexpr meta::IfIsFixedPoint<T, bool> is_inf(T const &val)
 template <typename T>
 static constexpr meta::IfIsUnsignedInteger<T, T> Type(std::string const &val)
 {
-  T x      = static_cast<T>(std::stoull(val));
+  if (std::stoll(val) < 0)
+  {
+    throw std::runtime_error("cannot initialise uint with negative value");
+  }
+  T x = static_cast<T>(std::stoull(val));
   return x;
 }
 

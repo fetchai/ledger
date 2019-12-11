@@ -31,9 +31,20 @@ T TypeConstructor(std::string const &val)
 template <typename T>
 void TestEquivalence(std::string const &val, T expected)
 {
-  std::cout << "val: " << val << std::endl;
-  std::cout << "expected: " << expected << std::endl;
   EXPECT_EQ(TypeConstructor<T>(val), expected);
+}
+
+template <typename T>
+void TestNear(std::string const &val, T expected, T tolerance)
+{
+  EXPECT_NEAR(static_cast<double>(TypeConstructor<T>(val)), static_cast<double>(expected),
+              static_cast<double>(tolerance));
+}
+
+template <typename T>
+void TestThrow(std::string const &val)
+{
+  EXPECT_ANY_THROW(TypeConstructor<T>(val));
 }
 
 template <typename T>
@@ -74,10 +85,10 @@ TEST(TypeConstructionTest, min_one_construction)
   TestEquivalence<std::int64_t>("-1", std::int64_t(-1));
 
   // unsigned integers
-  TestEquivalence<std::uint8_t>("-1", std::uint8_t(-1));
-  TestEquivalence<std::uint16_t>("-1", std::uint16_t(-1));
-  TestEquivalence<std::uint32_t>("-1", std::uint32_t(-1));
-  TestEquivalence<std::uint64_t>("-1", std::uint64_t(-1));
+  TestThrow<std::uint8_t>("-1");
+  TestThrow<std::uint16_t>("-1");
+  TestThrow<std::uint32_t>("-1");
+  TestThrow<std::uint64_t>("-1");
 
   // floating
   TestEquivalence<float>("-1", float(-1));
@@ -122,10 +133,10 @@ TEST(TypeConstructionTest, min_one_point_zero_construction)
   TestEquivalence<std::int64_t>("-1.0", std::int64_t(-1.0));
 
   // unsigned integers
-  TestEquivalence<std::uint8_t>("-1.0", std::uint8_t(-1.0));
-  TestEquivalence<std::uint16_t>("-1.0", std::uint16_t(-1.0));
-  TestEquivalence<std::uint32_t>("-1.0", std::uint32_t(-1.0));
-  TestEquivalence<std::uint64_t>("-1.0", std::uint64_t(-1.0));
+  TestThrow<std::uint8_t>("-1.0");
+  TestThrow<std::uint16_t>("-1.0");
+  TestThrow<std::uint32_t>("-1.0");
+  TestThrow<std::uint64_t>("-1.0");
 
   // floating
   TestEquivalence<float>("-1.0", float(-1.0));
@@ -137,7 +148,34 @@ TEST(TypeConstructionTest, min_one_point_zero_construction)
   TestEquivalence<fetch::fixed_point::fp128_t>("-1.0", fetch::fixed_point::fp128_t(-1.0));
 }
 
-// TODO - test bools and chars negative cases
-// test 1.5 for int
+TEST(TypeConstructionTest, rounding_construction)
+{
+  // integers
+  TestEquivalence<std::int8_t>("-1.123456789", std::int8_t(-1.123456789));
+  TestEquivalence<std::int16_t>("-1.123456789", std::int16_t(-1.123456789));
+  TestEquivalence<std::int32_t>("-1.123456789", std::int32_t(-1.123456789));
+  TestEquivalence<std::int64_t>("-1.123456789", std::int64_t(-1.123456789));
+
+  // unsigned integers
+  TestThrow<std::uint8_t>("-1.5");
+  TestThrow<std::uint16_t>("-1.5");
+  TestThrow<std::uint32_t>("-1.5");
+  TestThrow<std::uint64_t>("-1.5");
+
+  // floating
+  TestEquivalence<float>("-1.123456789", float(-1.123456789));
+  TestEquivalence<double>("-1.123456789", double(-1.123456789));
+
+  // fixed
+  TestNear<fetch::fixed_point::fp32_t>(
+      "-1.123456789", fetch::fixed_point::fp32_t(-1.123456789),
+      fetch::math::function_tolerance<fetch::fixed_point::fp32_t>());
+  TestNear<fetch::fixed_point::fp64_t>(
+      "-1.123456789", fetch::fixed_point::fp64_t(-1.123456789),
+      fetch::math::function_tolerance<fetch::fixed_point::fp64_t>());
+  TestNear<fetch::fixed_point::fp128_t>(
+      "-1.123456789", fetch::fixed_point::fp128_t(-1.123456789),
+      fetch::math::function_tolerance<fetch::fixed_point::fp128_t>());
+}
 
 }  // namespace
