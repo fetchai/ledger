@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/compiler.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/vm_factory.hpp"
@@ -1069,72 +1068,6 @@ TEST_F(VMModelEstimatorTests, deserializefromstring_charge_correlate_with_size_o
 // Estimator state consistency with its VMModel //
 //////////////////////////////////////////////////
 
-TEST_F(VMModelEstimatorTests, estimator_state_consistency_after_copying_vmmodel)
-{
-  std::vector<SizeType> sizes          = {10, 10, 10};
-  std::vector<bool>     activations    = {true, true};
-  auto                  model_original = VmSequentialModel(vm, sizes, activations);
-
-  auto         model_copy      = model_original;
-  //auto         model_copy      = VmSequentialModel(vm);
-  ChargeAmount charge_original = 0;
-  ChargeAmount charge_copy     = 0;
-
-  //
-  SizeType input_size  = 10;
-  SizeType output_size = 100;
-  auto     layer_type  = VmString(vm, "dense");
-  charge_original      = LayerAddDenseCharge(model_original, layer_type, input_size, output_size);
-  charge_copy          = LayerAddDenseCharge(model_copy, layer_type, input_size, output_size);
-  EXPECT_EQ(charge_original, charge_copy);
-
-  //
-  auto activation_type = VmString(vm, "relu");
-  charge_original      = LayerAddDenseActivationCharge(model_original, layer_type, input_size,
-                                                  output_size, activation_type);
-  charge_copy = LayerAddDenseActivationCharge(model_copy, layer_type, input_size, output_size,
-                                              activation_type);
-  EXPECT_EQ(charge_original, charge_copy);
-
-  //
-  auto loss       = VmString(vm, "mse");
-  auto optimiser  = VmString(vm, "adam");
-  charge_original = CompileSequentialCharge(model_original, loss, optimiser);
-  charge_copy     = CompileSequentialCharge(model_copy, loss, optimiser);
-  EXPECT_EQ(charge_original, charge_copy);
-
-  //
-  SizeType              batch_size = 64;
-  SizeType              datapoints = 128;
-  std::vector<SizeType> data_shape{sizes[0], datapoints};
-  std::vector<SizeType> label_shape{sizes[sizes.size() - 1], datapoints};
-  auto                  data  = VmTensor(vm, data_shape);
-  auto                  label = VmTensor(vm, label_shape);
-  charge_original             = FitCharge(model_original, data, label, batch_size);
-  charge_copy                 = FitCharge(model_copy, data, label, batch_size);
-  EXPECT_EQ(charge_original, charge_copy);
-
-  //
-  charge_original = PredictCharge(model_original, data);
-  charge_copy     = PredictCharge(model_copy, data);
-  EXPECT_EQ(charge_original, charge_copy);
-
-  //
-  charge_original = SerializeToStringCharge(model_original);
-  charge_copy     = SerializeToStringCharge(model_copy);
-  EXPECT_EQ(charge_original, charge_copy);
-
-  //
-  model_original->CompileSequential(loss, optimiser);
-  //model_copy->CompileSequential(loss, optimiser);
-  //auto original_serialized = model_original->SerializeToString();
-  //auto copy_serialized = model_copy->SerializeToString();
-  //charge_original = DeserializeFromStringCharge(model_original, original_serialized);
-  //charge_copy = DeserializeFromStringCharge(model_copy, copy_serialized);
-  //EXPECT_EQ(charge_original, charge_copy);
-  EXPECT_EQ(1,-1);
-}
-
 TEST_F(VMModelEstimatorTests, estimator_state_consistency_after_serialization_deserialization)
 {
   fetch::serializers::MsgPackSerializer serializer;
@@ -1145,7 +1078,9 @@ TEST_F(VMModelEstimatorTests, estimator_state_consistency_after_serialization_de
   auto                  model_from_serializer = VmSequentialModel(vm);
 
   model_original->SerializeTo(serializer);
+  serializer.seek(0);
   model_from_serializer->DeserializeFrom(serializer);
+
   ChargeAmount charge_original        = 0;
   ChargeAmount charge_from_serializer = 0;
 
@@ -1215,7 +1150,6 @@ TEST_F(VMModelEstimatorTests,
   ChargeAmount charge_original        = 0;
   ChargeAmount charge_from_serializer = 0;
   
-  /*
   //
   SizeType input_size  = 10;
   SizeType output_size = 100;
@@ -1239,7 +1173,6 @@ TEST_F(VMModelEstimatorTests,
   charge_original        = CompileSequentialCharge(model_original, loss, optimiser);
   charge_from_serializer = CompileSequentialCharge(model_from_serializer, loss, optimiser);
   EXPECT_EQ(charge_original, charge_from_serializer);
-  */
 
   //
   SizeType              batch_size = 64;
@@ -1252,7 +1185,6 @@ TEST_F(VMModelEstimatorTests,
   charge_from_serializer      = FitCharge(model_from_serializer, data, label, batch_size);
   EXPECT_EQ(charge_original, charge_from_serializer);
   
-  /*
   //
   charge_original        = PredictCharge(model_original, data);
   charge_from_serializer = PredictCharge(model_from_serializer, data);
@@ -1269,6 +1201,5 @@ TEST_F(VMModelEstimatorTests,
   charge_original = DeserializeFromStringCharge(model_original, original_serialized);
   charge_from_serializer = DeserializeFromStringCharge(model_from_serializer, from_serializer_serialized);
   EXPECT_EQ(charge_original, charge_from_serializer);
-  */
 }
 }  // namespace
