@@ -1145,7 +1145,6 @@ TEST_F(MathTensorTests, tensor_reshape_to_incompatible_shape_etch_test)
 TEST_F(MathTensorTests, tensor_reshape_to_compatible_shape_test)
 {
   using namespace fetch::vm;
-  using SizeType = fetch::math::SizeType;
 
   fetch::math::Tensor<DataType> const tensor =
       fetch::math::Tensor<DataType>::FromString("1.1, 2.2, 3.3; 4.4, 5.5, 6.6;");
