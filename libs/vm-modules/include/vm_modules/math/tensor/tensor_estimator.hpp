@@ -166,8 +166,8 @@ public:
   static const fixed_point::fp64_t SUM_CONST_COEF;
 
   // RESHAPE
-  static const fixed_point::fp64_t RESHAPE_PADDED_SIZE_COEF;
-  static const fixed_point::fp64_t RESHAPE_SIZE_COEF;
+  static const fixed_point::fp64_t RESHAPE_PADDED_SIZE_FROM_COEF;
+  static const fixed_point::fp64_t RESHAPE_PADDED_SIZE_TO_COEF;
   static const fixed_point::fp64_t RESHAPE_CONST_COEF;
 
   // FROM_STRING

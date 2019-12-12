@@ -1171,7 +1171,7 @@ void BM_ArgMax(::benchmark::State &state)
 
   auto data = CreateTensor(vm, config.shape);
 
-  state.counters["charge"] = static_cast<double>(data->Estimator().Sum());
+  state.counters["charge"] = static_cast<double>(data->Estimator().ArgMax(config.index));
 
   for (auto _ : state)
   {
@@ -1279,7 +1279,7 @@ void BM_ArgMaxNoIndices(::benchmark::State &state)
 
   auto data = CreateTensor(vm, config.shape);
 
-  state.counters["charge"] = static_cast<double>(data->Estimator().Sum());
+  state.counters["charge"] = static_cast<double>(data->Estimator().ArgMaxNoIndices());
 
   for (auto _ : state)
   {
