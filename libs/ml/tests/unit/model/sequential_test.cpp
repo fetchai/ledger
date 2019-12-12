@@ -203,6 +203,33 @@ TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
   EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
 }
 
+TYPED_TEST(SequentialModelTest, sequential_predict_without_dataloader)
+{
+  using ModelType = fetch::ml::model::Sequential<TypeParam>;
+  using DataType  = typename TypeParam::Type;
+
+  fetch::ml::model::ModelConfig<DataType> model_config;
+  model_config.learning_rate_param.mode =
+      fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
+  model_config.learning_rate_param.starting_learning_rate = DataType{0.03f};
+  model_config.learning_rate_param.exponential_decay_rate = DataType{0.99f};
+
+  // set up data
+  TypeParam train_data, train_labels;
+  sequential_details::PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels);
+
+  // run model in training modeConfig
+  auto model = ModelType(model_config);
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
+      3, 7, fetch::ml::details::ActivationType::RELU);
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
+      7, 5, fetch::ml::details::ActivationType::RELU);
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(5, 1);
+
+  model.Compile(fetch::ml::OptimiserType::ADAM, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
+  // Predicting without setting a dataloader is fine
+  EXPECT_NO_FATAL_FAILURE(model.Predict(train_data, train_labels));
+}
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch
