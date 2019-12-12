@@ -439,6 +439,12 @@ fixed_point::fp64_t const TensorEstimator::TO_STRING_PADDED_SIZE_COEF =
 fixed_point::fp64_t const TensorEstimator::TO_STRING_SIZE_COEF  = fixed_point::fp64_t("0.00107809");
 fixed_point::fp64_t const TensorEstimator::TO_STRING_CONST_COEF = fixed_point::fp64_t("5");
 
+// DEFAULT
+fixed_point::fp64_t const TensorEstimator::DEFAULT_PADDED_SIZE_COEF =
+    fixed_point::fp64_t("0.00023451");
+fixed_point::fp64_t const TensorEstimator::DEFAULT_SIZE_COEF  = fixed_point::fp64_t("0.00107809");
+fixed_point::fp64_t const TensorEstimator::DEFAULT_CONST_COEF = fixed_point::fp64_t("5");
+
 }  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch
