@@ -1,3 +1,52 @@
+# End-to-end test scenarios
+
+---
+test_description: >
+  Single standalone node can mine transactions which are then queried
+
+setup_conditions:
+  test_name: "basic_standalone"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [0] }
+  - verify_txs: { "name": "batch1", "nodes": [0] }
+...
+
+---
+test_description: >
+  Transactions sync and are executed across nodes
+
+setup_conditions:
+  test_name: "basic_multinode"
+  number_of_nodes: 2
+  node_connections: [[0, 1]]
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1] }
+...
+
+---
+test_description: >
+  DISABLED - Transactions sync - corner case with connection order
+
+setup_conditions:
+  test_name: "basic_multinode_corner_case"
+  number_of_nodes: 2
+  node_connections: [[1, 0]]
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1] }
+...
+
 ---
 test_description: >
   Two nodes are having a fun time and then a third connects - tune in to find out if they can sync
@@ -170,7 +219,7 @@ setup_conditions:
   lanes: 4
   node_connections: [[0, 1]]
   mining_nodes: [0]
-  max_test_time: 120
+  max_test_time: 60
 
 steps:
   - sleep: 6
@@ -205,7 +254,7 @@ setup_conditions:
 
 steps:
   - wait_network_ready: {"sleep": 2}
-  - create_balance: {"amount": 100000, "nodes": [0]}
+  - create_wealth: {"amount": 100000, "nodes": [0]}
   - create_synergetic_contract: {"name": "contract001", "fee_limit": 10000, "nodes": [0], "transfer_amount": 1000}
   - wait_for_blocks: {"nodes": [0], "num": 5}
   - query_balance: {"nodes": [0], "save_as": "balance1"}
@@ -221,14 +270,14 @@ test_description: >
   DISABLED - Test synergetic contract fees in case of no funds
 
 setup_conditions:
-  test_name: "synergetic_fee_test_no_funds"
+  test_name: "synergetic_fee_test"
   number_of_nodes: 1
   mining_nodes: [0]
   max_test_time: 600
 
 steps:
   - wait_network_ready: {"sleep": 10}
-  - create_balance: {"amount": 100000, "nodes": [0]}
+  - create_wealth: {"amount": 1000000, "nodes": [0]}
   - create_synergetic_contract: {"name": "contract001", "fee_limit": 10000, "nodes": [0], "transfer_amount": 0}
   - wait_for_blocks: {"nodes": [0], "num": 5}
   - query_balance: {"nodes": [0], "save_as": "balance1"}
