@@ -233,13 +233,12 @@ TEST_F(TokenContractTests, CheckInitialBalance)
   EXPECT_EQ(balance, 0);
 }
 
-
 TEST_F(TokenContractTests, DISABLED_CheckTransferWithoutPreexistingDeed)
 {
   Entities entities(2);
 
   // create wealth for the first address
-  //EXPECT_TRUE(CreateWealth(entities[0], 1000));
+  // EXPECT_TRUE(CreateWealth(entities[0], 1000));
 
   // transfer from wealth
   EXPECT_TRUE(Transfer(entities[0].address, entities[1].address, {&entities[0]}, 400));
@@ -320,7 +319,7 @@ TEST_F(TokenContractTests, DISABLED_CheckDeedDeletion)
   Entities entities(4);
 
   // 1st PRE-CONDITION: Create WEALTH
-  //ASSERT_TRUE(CreateWealth(entities[0], origina_wealth));
+  // ASSERT_TRUE(CreateWealth(entities[0], origina_wealth));
 
   // 2nd PRE-CONDITION: Create DEED
   SigneesPtr signees{std::make_shared<Deed::Signees>()};
@@ -420,7 +419,7 @@ TEST_F(TokenContractTests, DISABLED_CheckTransferIsAuthorisedByPreexistingDeed)
   uint64_t const starting_balance{1000};
 
   // 1st PRE-CONDITION: Create wealth
-  //ASSERT_TRUE(CreateWealth(entities[0], starting_balance));
+  // ASSERT_TRUE(CreateWealth(entities[0], starting_balance));
   uint64_t balance = std::numeric_limits<uint64_t>::max();
   ASSERT_TRUE(GetBalance(entities[0].address, balance));
   ASSERT_EQ(starting_balance, balance);
