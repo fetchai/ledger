@@ -25,21 +25,6 @@
 namespace fetch {
 namespace vm {
 
-Variant &Object::Push()
-{
-  return vm_->Push();
-}
-
-Variant &Object::Pop()
-{
-  return vm_->Pop();
-}
-
-Variant &Object::Top()
-{
-  return vm_->Top();
-}
-
 void Object::RuntimeError(std::string const &message)
 {
   vm_->RuntimeError(message);
