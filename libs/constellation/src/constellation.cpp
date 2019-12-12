@@ -909,10 +909,13 @@ bool Constellation::GenesisSanityChecks(GenesisFileCreator::Result genesis_statu
       return false;
     }
 
-    FETCH_LOG_CRITICAL(LOGGING_NAME,
-                       "Internal error, genesis block in chain does not match system genesis "
-                       "digest and/or merkle digest");
-    return false;
+    if (!is_genesis_correct)
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME,
+                         "Internal error, genesis block in chain does not match system genesis "
+                         "digest and/or merkle digest");
+      return false;
+    }
   }
 
   return true;
