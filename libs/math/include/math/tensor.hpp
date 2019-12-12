@@ -707,10 +707,10 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     UNSET,
     COLON,
     NEWLINE
-  } new_row_marker           = UNSET;
-  bool   reached_actual_data = false;
-  size_t first_row_size      = 0;
-  size_t current_row_size    = 0;
+  } new_row_marker                = UNSET;
+  bool        reached_actual_data = false;
+  std::size_t first_row_size      = 0;
+  std::size_t current_row_size    = 0;
 
   // Text parsing loop
   for (SizeType i = 0; i < c.size();)
