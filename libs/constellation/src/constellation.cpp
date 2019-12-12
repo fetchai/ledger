@@ -95,7 +95,7 @@ class Defer
 public:
   using Callback = void (Constellation::*)();
 
-  explicit Defer(Constellation *instance, Callback callback)
+  Defer(Constellation *instance, Callback callback)
     : instance_{instance}
     , callback_{callback}
   {}
