@@ -962,7 +962,7 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
   auto s_copy = std::string(s, 0, index);
 
   bool contains_alpha = std::find_if(s_copy.begin(), s_copy.end(),
-                                     [](char c) { return !std::isalpha(c); }) != s_copy.end();
+                                     [](char c) { return std::isalpha(c); }) != s_copy.end();
   if (contains_alpha)
   {
     throw std::runtime_error("FixedPoint parsing from string does not allow alpha characters!");
