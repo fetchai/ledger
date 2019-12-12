@@ -42,7 +42,8 @@ TYPED_TEST(EntropyTest, entropy)
   A.Set(SizeType{2}, fetch::math::Type<DataType>("0.3"));
   A.Set(SizeType{3}, fetch::math::Type<DataType>("0.4"));
 
-  EXPECT_NEAR(double(statistics::Entropy(A)), 1.84643934467102, 1e-4);
+  EXPECT_NEAR(double(statistics::Entropy(A)), 1.84643934467102,
+              double(fetch::math::function_tolerance<DataType>()));
 }
 
 }  // namespace test

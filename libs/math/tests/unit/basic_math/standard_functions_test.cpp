@@ -95,8 +95,7 @@ TYPED_TEST(StandardFunctionTests, clamp_array_1D_test)
   // Compare results with expected results
   Clamp(DataType{2}, DataType{3}, A);
 
-  ASSERT_TRUE(A.AllClose(A_clamp_expected, fetch::math::Type<DataType>("0.00001"),
-                         fetch::math::Type<DataType>("0.00001")));
+  EXPECT_EQ(A, A_clamp_expected);
 }
 
 TYPED_TEST(StandardFunctionTests, clamp_array_2D_test)
@@ -125,8 +124,7 @@ TYPED_TEST(StandardFunctionTests, clamp_array_2D_test)
   // Compare results with expected results
   Clamp(DataType{2}, DataType{3}, A);
 
-  ASSERT_TRUE(A.AllClose(A_clamp_expected, fetch::math::Type<DataType>("0.00001"),
-                         fetch::math::Type<DataType>("0.00001")));
+  EXPECT_EQ(A, A_clamp_expected);
 }
 
 }  // namespace test

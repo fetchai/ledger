@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "lcg.hpp"
-
 #include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <cstdint>
 #include <limits>
 #include <vector>
