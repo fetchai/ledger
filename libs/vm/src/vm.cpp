@@ -29,6 +29,8 @@ namespace vm {
 
 VM::VM(Module *module)
 {
+  live_object_stack_.reserve(100);
+
   FunctionInfoArray function_info_array;
 
   module->GetDetails(type_info_array_, type_info_map_, registered_types_, function_info_array,
@@ -257,51 +259,59 @@ bool VM::Execute(std::string &error, Variant &output)
   bsp_            = 0;
   sp_             = function_->num_variables - 1;
   range_loop_sp_  = -1;
-  live_object_sp_ = -1;
   pc_             = 0;
   instruction_pc_ = 0;
   instruction_    = nullptr;
+  current_op_     = nullptr;
   stop_           = false;
+  live_object_stack_.clear();
   self_.Reset();
   error_.clear();
   error.clear();
 
-  do
+  if (sp_ < STACK_SIZE)
   {
-    instruction_pc_ = pc_;
-    instruction_    = &function_->instructions[pc_++];
-
-    assert(instruction_->opcode < opcode_info_array_.size());
-
-    current_op_ = &opcode_info_array_[instruction_->opcode];
-
-    if (!current_op_->handler)
+    do
     {
-      RuntimeError("unknown opcode");
-      break;
-    }
+      instruction_pc_ = pc_;
+      instruction_    = &function_->instructions[pc_++];
 
-    // update the charge total (or set to max if it would overflow)
-    if ((std::numeric_limits<ChargeAmount>::max() - charge_total_) < current_op_->static_charge)
-    {
-      charge_total_ = std::numeric_limits<ChargeAmount>::max();
-    }
-    else
-    {
-      charge_total_ += current_op_->static_charge;
-    }
+      assert(instruction_->opcode < opcode_info_array_.size());
 
-    // check for charge limit being reached
-    if ((charge_limit_ != 0u) && (charge_total_ >= charge_limit_))
-    {
-      RuntimeError("Charge limit exceeded");
-      break;
-    }
+      current_op_ = &opcode_info_array_[instruction_->opcode];
 
-    // execute the handler for the op code
-    current_op_->handler(this);
+      if (!current_op_->handler)
+      {
+        RuntimeError("unknown opcode");
+        break;
+      }
 
-  } while (!stop_);
+      // update the charge total (or set to max if it would overflow)
+      if ((std::numeric_limits<ChargeAmount>::max() - charge_total_) < current_op_->static_charge)
+      {
+        charge_total_ = std::numeric_limits<ChargeAmount>::max();
+      }
+      else
+      {
+        charge_total_ += current_op_->static_charge;
+      }
+
+      // check for charge limit being reached
+      if ((charge_limit_ != 0u) && (charge_total_ >= charge_limit_))
+      {
+        RuntimeError("Charge limit exceeded");
+        break;
+      }
+
+      // execute the handler for the op code
+      current_op_->handler(this);
+
+    } while (!stop_);
+  }
+  else
+  {
+    RuntimeError("stack overflow");
+  }
 
   bool const ok = !HasError();
 
@@ -318,15 +328,18 @@ bool VM::Execute(std::string &error, Variant &output)
   }
 
   // We've got a runtime error
+
   // Reset all variables
-  for (auto &variable : stack_)
+  for (int i=0; i<STACK_SIZE; ++i)
   {
+    Variant &variable = stack_[i];
     variable.Reset();
   }
 
-  for (int i = 0; i <= frame_sp_; ++i)
+  // Reset all frames
+  for (int i=0; i<FRAME_STACK_SIZE; ++i)
   {
-    Frame &frame = frame_stack_[std::size_t(i)];
+    Frame &frame = frame_stack_[i];
     frame.self.Reset();
   }
 
@@ -348,16 +361,16 @@ void VM::RuntimeError(std::string const &message)
 void VM::Destruct(uint16_t scope_number)
 {
   // Destruct all live objects in the current frame and with scope >= scope_number
-  while (live_object_sp_ >= 0)
+  while (!live_object_stack_.empty())
   {
-    LiveObjectInfo const &info = live_object_stack_[live_object_sp_];
+    LiveObjectInfo const &info = live_object_stack_.back();
     if ((info.frame_sp != frame_sp_) || (info.scope_number < scope_number))
     {
       break;
     }
     Variant &variable = GetLocalVariable(info.variable_index);
     variable.Reset();
-    --live_object_sp_;
+    live_object_stack_.pop_back();
   }
 }
 

@@ -33,10 +33,7 @@ void VM::Handler__LocalVariableDeclare()
   if (instruction_->type_id > TypeIds::PrimitiveMaxId)
   {
     variable.Construct(Ptr<Object>(), instruction_->type_id);
-    LiveObjectInfo &info = live_object_stack_[++live_object_sp_];
-    info.frame_sp        = frame_sp_;
-    info.variable_index  = instruction_->index;
-    info.scope_number    = instruction_->data;
+    live_object_stack_.emplace_back(frame_sp_, instruction_->index, instruction_->data);
   }
   else
   {
@@ -51,49 +48,76 @@ void VM::Handler__LocalVariableDeclareAssign()
   variable          = std::move(Pop());
   if (instruction_->type_id > TypeIds::PrimitiveMaxId)
   {
-    LiveObjectInfo &info = live_object_stack_[++live_object_sp_];
-    info.frame_sp        = frame_sp_;
-    info.variable_index  = instruction_->index;
-    info.scope_number    = instruction_->data;
+    live_object_stack_.emplace_back(frame_sp_, instruction_->index, instruction_->data);
   }
 }
 
 void VM::Handler__PushNull()
 {
-  Variant &top = Push();
-  top.Construct(Ptr<Object>(), instruction_->type_id);
+  if (++sp_ < STACK_SIZE)
+  {
+    Top().Construct(Ptr<Object>(), instruction_->type_id);
+    return;
+  }
+  --sp_;
+  RuntimeError("stack overflow");
 }
 
 void VM::Handler__PushFalse()
 {
-  Variant &top = Push();
-  top.Construct(false, TypeIds::Bool);
+  if (++sp_ < STACK_SIZE)
+  {
+    Top().Construct(false, TypeIds::Bool);
+    return;
+  }
+  --sp_;
+  RuntimeError("stack overflow");
 }
 
 void VM::Handler__PushTrue()
 {
-  Variant &top = Push();
-  top.Construct(true, TypeIds::Bool);
+  if (++sp_ < STACK_SIZE)
+  {
+    Top().Construct(true, TypeIds::Bool);
+    return;
+  }
+  --sp_;
+  RuntimeError("stack overflow");
 }
 
 void VM::Handler__PushString()
 {
-  Variant &top = Push();
-  top.Construct(strings_[instruction_->index], TypeIds::String);
+  if (++sp_ < STACK_SIZE)
+  {
+    Top().Construct(strings_[instruction_->index], TypeIds::String);
+    return;
+  }
+  --sp_;
+  RuntimeError("stack overflow");
 }
 
 void VM::Handler__PushConstant()
 {
-  Variant &      top      = Push();
-  Variant const &constant = executable_->constants[instruction_->index];
-  top.Construct(constant);
+  if (++sp_ < STACK_SIZE)
+  {
+    Variant const &constant = executable_->constants[instruction_->index];
+    Top().Construct(constant);
+    return;
+  }
+  --sp_;
+  RuntimeError("stack overflow");
 }
 
 void VM::Handler__PushLocalVariable()
 {
-  Variant const &variable = GetLocalVariable(instruction_->index);
-  Variant &      top      = Push();
-  top.Construct(variable);
+  if (++sp_ < STACK_SIZE)
+  {
+    Variant const &variable = GetLocalVariable(instruction_->index);
+    Top().Construct(variable);
+    return;
+  }
+  --sp_;
+  RuntimeError("stack overflow");
 }
 
 void VM::Handler__PopToLocalVariable()
@@ -116,22 +140,32 @@ void VM::Handler__Dec()
 
 void VM::Handler__Duplicate()
 {
-  int end = sp_;
-  int p   = sp_ - instruction_->data;
-  do
+  if (sp_ + instruction_->data < STACK_SIZE)
   {
-    stack_[++sp_].Construct(stack_[++p]);
-  } while (p < end);
+    int end = sp_;
+    int p   = sp_ - instruction_->data;
+    do
+    {
+      stack_[++sp_].Construct(stack_[++p]);
+    } while (p < end);
+    return;
+  }
+  RuntimeError("stack overflow");
 }
 
 void VM::Handler__DuplicateInsert()
 {
-  int end = sp_ - instruction_->data;
-  for (int p = sp_; p >= end; --p)
+  if (sp_ + 1 < STACK_SIZE)
   {
-    stack_[p + 1] = std::move(stack_[p]);
+    int end = sp_ - instruction_->data;
+    for (int p = sp_; p >= end; --p)
+    {
+      stack_[p + 1] = std::move(stack_[p]);
+    }
+    stack_[end] = stack_[++sp_];
+    return;
   }
-  stack_[end] = stack_[++sp_];
+  RuntimeError("stack overflow");
 }
 
 void VM::Handler__Discard()
@@ -244,8 +278,14 @@ void VM::Handler__Return()
       stack_[i].Reset();
     }
     // Store the constructed object
-    stack_[bsp_] = std::move(self_);
-    sp_          = bsp_;
+    if (bsp_ < STACK_SIZE)
+    {
+      stack_[bsp_] = std::move(self_);
+      sp_          = bsp_;
+      return;
+    }
+    RuntimeError("stack overflow");
+    return;
   }
 
   if (frame_sp_ != -1)
@@ -287,7 +327,13 @@ void VM::Handler__ForRangeInit()
     targetv.Reset();
     startv.Reset();
   }
-  range_loop_stack_[++range_loop_sp_] = loop;
+  if (++range_loop_sp_ < MAX_RANGE_LOOPS)
+  {
+    range_loop_stack_[range_loop_sp_] = loop;
+    return;
+  }
+  --range_loop_sp_;
+  RuntimeError("for stack overflow");
 }
 
 void VM::Handler__ForRangeIterate()
@@ -437,12 +483,20 @@ void VM::Handler__InvokeUserDefinedFreeFunction()
   {
     return;
   }
+
   function_ = &(executable_->functions[instruction_->index]);
   bsp_      = sp_ - function_->num_parameters + 1;  // first parameter
   pc_       = 0;
   self_.Reset();
+
   int const num_locals = function_->num_variables - function_->num_parameters;
   sp_ += num_locals;
+  if (sp_ < STACK_SIZE)
+  {
+    return;
+  }
+  sp_ -= num_locals;
+  RuntimeError("stack overflow");
 }
 
 void VM::Handler__LocalVariablePrefixInc()
@@ -745,7 +799,13 @@ void VM::Handler__InitialiseArray()
     ret_val->SetIndexedValue(i, element);
   }
 
-  Push().Construct(ret_val, instruction_->type_id);
+  if (++sp_ < STACK_SIZE)
+  {
+    Top().Construct(ret_val, instruction_->type_id);
+    return;
+  }
+  --sp_;
+  RuntimeError("stack overflow");
 }
 
 void VM::Handler__ContractVariableDeclareAssign()
@@ -763,10 +823,7 @@ void VM::Handler__ContractVariableDeclareAssign()
   sv.object            = Ptr<String>(new String(this, identity));
   Variant &variable    = GetLocalVariable(instruction_->index);
   variable             = std::move(sv);
-  LiveObjectInfo &info = live_object_stack_[++live_object_sp_];
-  info.frame_sp        = frame_sp_;
-  info.variable_index  = instruction_->index;
-  info.scope_number    = instruction_->data;
+  live_object_stack_.emplace_back(frame_sp_, instruction_->index, instruction_->data);
 }
 
 void VM::Handler__InvokeContractFunction()
@@ -811,19 +868,29 @@ void VM::Handler__InvokeContractFunction()
                    " returned unexpected type_id");
       return;
     }
-
-    Variant &top = Push();
-    top          = std::move(output);
+    if (++sp_ < STACK_SIZE)
+    {
+      Variant &top = Top();
+      top          = std::move(output);
+      return;
+    }
+    --sp_;
+    RuntimeError("stack overflow");
   }
 }
 
 void VM::Handler__PushLargeConstant()
 {
-  Variant &                        top      = Push();
-  Executable::LargeConstant const &constant = executable_->large_constants[instruction_->index];
-  assert(constant.type_id == TypeIds::Fixed128);
-  auto object = Ptr<Fixed128>(new Fixed128(this, constant.fp128));
-  top.Construct(object, TypeIds::Fixed128);
+  if (++sp_ < STACK_SIZE)
+  {
+    Executable::LargeConstant const &constant = executable_->large_constants[instruction_->index];
+    assert(constant.type_id == TypeIds::Fixed128);
+    auto object = Ptr<Fixed128>(new Fixed128(this, constant.fp128));
+    Top().Construct(object, TypeIds::Fixed128);
+    return;
+  }
+  --sp_;
+  RuntimeError("stack overflow");
 }
 
 void VM::Handler__PushMemberVariable()
@@ -941,7 +1008,13 @@ void VM::Handler__MemberVariablePrimitiveInplaceModulo()
 
 void VM::Handler__PushSelf()
 {
-  Push().Construct(self_);
+  if (++sp_ < STACK_SIZE)
+  {
+    Top().Construct(self_);
+    return;
+  }
+  --sp_;
+  RuntimeError("stack overflow");
 }
 
 void VM::Handler__InvokeUserDefinedConstructor()
@@ -953,20 +1026,34 @@ void VM::Handler__InvokeUserDefinedConstructor()
   if (constructor->instructions.empty())
   {
     // System-supplied default constructor means no user code to run, so just push the new object
-    Variant &top = Push();
-    top.Construct(std::move(selfv));
+    if (++sp_ < STACK_SIZE)
+    {
+      Top().Construct(std::move(selfv));
+      return;
+    }
+    --sp_;
+    RuntimeError("stack overflow");
     return;
   }
+
   if (!PushFrame())
   {
     return;
   }
+
   function_            = constructor;
   bsp_                 = sp_ - function_->num_parameters + 1;  // first parameter
   pc_                  = 0;
   self_                = std::move(selfv);
+
   int const num_locals = function_->num_variables - function_->num_parameters;
   sp_ += num_locals;
+  if (sp_ < STACK_SIZE)
+  {
+    return;
+  }
+  sp_ -= num_locals;
+  RuntimeError("stack overflow");
 }
 
 void VM::Handler__InvokeUserDefinedMemberFunction()
@@ -975,19 +1062,28 @@ void VM::Handler__InvokeUserDefinedMemberFunction()
   {
     return;
   }
+
   TypeId                             invoker_type_id   = instruction_->data;
   Executable::UserDefinedType const &user_defined_type = GetUserDefinedType(invoker_type_id);
+
   function_ = &(user_defined_type.functions[instruction_->index]);
   bsp_      = sp_ - function_->num_parameters + 1;  // first parameter
   pc_       = 0;
-  // Store the invoker
-  self_                = std::move(stack_[bsp_ - 1]);
-  int const num_locals = function_->num_variables - function_->num_parameters;
-  sp_ += num_locals;
-  if (!self_.object)
+  self_     = std::move(stack_[bsp_ - 1]); // the invoker
+
+  if (self_.object)
   {
-    RuntimeError("null reference");
+    int const num_locals = function_->num_variables - function_->num_parameters;
+    sp_ += num_locals;
+    if (sp_ < STACK_SIZE)
+    {
+      return;
+    }
+    sp_ -= num_locals;
+    RuntimeError("stack overflow");
+    return;
   }
+  RuntimeError("null reference");
 }
 
 }  // namespace vm
