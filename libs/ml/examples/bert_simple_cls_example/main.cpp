@@ -67,7 +67,7 @@ int main()
   config.ff_dims           = 12u;
   config.vocab_size        = 4u;
   config.segment_size      = 1u;
-  config.dropout_keep_prob = static_cast<DataType>(0.9);
+  config.dropout_keep_prob = fetch::math::Type<DataType>("0.9");
 
   BERTInterface<TensorType> interface(config);
 
