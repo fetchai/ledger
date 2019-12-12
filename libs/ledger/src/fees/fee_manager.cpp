@@ -89,7 +89,6 @@ bool FeeManager::CalculateChargeAndValidate(TransactionDetails &             tx,
   // determine if the chain code ran out of charge
   if (result.charge > tx.charge_limit)
   {
-    result.charge = scaled_charge;
     FETCH_LOG_INFO(LOGGING_NAME, "Insufficient charge, charge (", result.charge,
                    ") greater then limit (", tx.charge_limit, ")");
     result.status = Status::INSUFFICIENT_CHARGE;

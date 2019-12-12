@@ -93,8 +93,6 @@ public:
   MainChainRpcService(MainChainRpcService &&)      = delete;
   ~MainChainRpcService() override                  = default;
 
-  void Start();
-
   core::WeakRunnable GetWeakRunnable()
   {
     return state_machine_;
