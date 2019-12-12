@@ -721,10 +721,6 @@ template <uint16_t I, uint16_t F>
 inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
 {
   std::ios_base::fmtflags f(s.flags());
-  s << std::setfill('0');
-  s << std::setw(I / 4);
-  s << std::setprecision(FixedPoint<I, F>::DECIMAL_DIGITS);
-  s << std::fixed;
   if (FixedPoint<I, F>::IsNaN(n))
   {
     s << "NaN";
@@ -739,6 +735,10 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   }
   else
   {
+    s << std::setfill('0');
+    s << std::setw(I / 4);
+    s << std::setprecision(FixedPoint<I, F>::DECIMAL_DIGITS);
+    s << std::fixed;
     s << double(n);
   }
 #ifdef FETCH_FIXEDPOINT_DEBUG_HEX
