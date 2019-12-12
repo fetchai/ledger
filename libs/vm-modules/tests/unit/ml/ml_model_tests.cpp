@@ -961,4 +961,27 @@ TEST_F(VMModelTests, model_sequential_predict_before_fit)
   ASSERT_TRUE(toolkit.Run());
 }
 
+TEST_F(VMModelTests, DISABLED_model_sequential_predict_bad_data)
+{
+  static char const *SEQUENTIAL_SRC = R"(
+      function main()
+        // set up malformed data tensor with shape 0,0
+        var data_shape = Array<UInt64>(2);
+        var data = Tensor(data_shape);
+
+        // set up model
+        var model = Model("sequential");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 7u64);
+        model.compile("mse", "adam", {"categorical accuracy"});
+
+        var prediction = model.predict(data);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
+  ASSERT_FALSE(toolkit.Run());
+}
+
 }  // namespace
