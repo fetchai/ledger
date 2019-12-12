@@ -84,8 +84,10 @@ public:
   ~LaneService();
 
   // Lane Control
-  void Start();
-  void Stop();
+  void StartInternal();
+  void StartExternal();
+  void StopExternal();
+  void StopInternal();
 
   bool SyncIsReady();
 

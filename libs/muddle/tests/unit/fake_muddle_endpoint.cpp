@@ -114,17 +114,6 @@ void FakeMuddleEndpoint::Broadcast(uint16_t service, uint16_t channel, Payload c
   FETCH_UNUSED(payload);
 }
 
-FakeMuddleEndpoint::Response FakeMuddleEndpoint::Exchange(Address const &address, uint16_t service,
-                                                          uint16_t channel, Payload const &request)
-{
-  FETCH_UNUSED(address);
-  FETCH_UNUSED(service);
-  FETCH_UNUSED(channel);
-  FETCH_UNUSED(request);
-
-  throw std::runtime_error{"Exchange not supported in fake muddle currently"};
-}
-
 FakeMuddleEndpoint::SubscriptionPtr FakeMuddleEndpoint::Subscribe(uint16_t service,
                                                                   uint16_t channel)
 {
