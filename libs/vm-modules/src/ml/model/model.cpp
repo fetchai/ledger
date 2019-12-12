@@ -439,6 +439,9 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 
   // assign compiled status
   vm_model.compiled_ = compiled;
+  
+  // assign estimator
+  vm_model.estimator_ = estimator_;
 
   // point this object pointer at the deserialised model
   *this = vm_model;
