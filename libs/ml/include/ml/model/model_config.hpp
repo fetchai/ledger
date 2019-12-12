@@ -31,7 +31,7 @@ struct ModelConfig
   bool     early_stopping = false;
   bool     test           = false;
   SizeType patience       = 10;
-  DataType min_delta      = fetch::math::Type<DataType>("0.0");
+  DataType min_delta      = DataType{0};
 
   fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param;
 

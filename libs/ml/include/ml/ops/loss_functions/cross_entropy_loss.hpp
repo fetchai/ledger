@@ -91,7 +91,7 @@ public:
     auto           a_it = inputs.at(0)->cbegin();
     auto           b_it = inputs.at(1)->cbegin();
     auto           r_it = ret.begin();
-    DataType const one  = fetch::math::Type<DataType>("1");
+    DataType const one  = DataType{1};
 
     while (a_it.is_valid())
     {
