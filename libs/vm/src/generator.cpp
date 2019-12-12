@@ -1548,30 +1548,27 @@ void Generator::HandleFloat64(IRExpressionNodePtr const &node)
 void Generator::HandleFixed32(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  auto                    numeric_only = std::string(node->text, 0, node->text.find("fp"));
-  fixed_point::fp32_t     value        = fixed_point::fp32_t(numeric_only);
-  instruction.index                    = AddConstant(Variant(value, TypeIds::Fixed32));
-  uint16_t pc                          = function_->AddInstruction(instruction);
+  fixed_point::fp32_t     value = fixed_point::fp32_t(node->text);
+  instruction.index             = AddConstant(Variant(value, TypeIds::Fixed32));
+  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleFixed64(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  auto                    numeric_only = std::string(node->text, 0, node->text.find("fp"));
-  fixed_point::fp64_t     value        = fixed_point::fp64_t(numeric_only);
-  instruction.index                    = AddConstant(Variant(value, TypeIds::Fixed64));
-  uint16_t pc                          = function_->AddInstruction(instruction);
+  fixed_point::fp64_t     value = fixed_point::fp64_t(node->text);
+  instruction.index             = AddConstant(Variant(value, TypeIds::Fixed64));
+  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleFixed128(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushLargeConstant);
-  auto                    numeric_only = std::string(node->text, 0, node->text.find("fp"));
-  fixed_point::fp128_t    value        = fixed_point::fp128_t(numeric_only);
-  instruction.index                    = AddLargeConstant(Executable::LargeConstant(value));
-  uint16_t pc                          = function_->AddInstruction(instruction);
+  fixed_point::fp128_t    value = fixed_point::fp128_t(node->text);
+  instruction.index             = AddLargeConstant(Executable::LargeConstant(value));
+  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
