@@ -68,7 +68,7 @@ def balance_within_range(actual, expected, fees=150):
     return actual >= expected - fees
 
 
-def setup(api):
+def setup(api, benefactor):
     entity1 = Entity()
 
     api.sync(api.tokens.transfer(benefactor, entity1, 100000, 1000))
