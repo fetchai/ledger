@@ -67,7 +67,7 @@ int main(int ac, char **av)
   SizeType batch_size = 4;
   SizeType epochs     = 20;
   SizeType layer_no   = 12;
-  auto     lr         = static_cast<DataType>(1e-5);
+  auto     lr         = static_cast<DataType>(0.00001);
   // load data into memory
   std::string file_path = av[1];
   std::string IMDB_path = av[2];
