@@ -1387,6 +1387,27 @@ TEST_F(MathTensorTests, tensor_state_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
+TEST_F(MathTensorTests, tensor_reshape_from_string)
+{
+  static char const *SOURCE = R"(
+      function main()
+        var tensor_shape = Array<UInt64>(3);
+        tensor_shape[0] = 4u64;
+        tensor_shape[1] = 1u64;
+        tensor_shape[2] = 1u64;
+
+        var x = Tensor(tensor_shape);
+        x.fill(2.0fp64);
+
+        var string_vals = "1.0, 2.0;";
+        x.fromString(string_vals);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
+}
+
 TEST_F(MathTensorTests, tensor_invalid_from_string)
 {
   static char const *SOURCE = R"(
