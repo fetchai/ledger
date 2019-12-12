@@ -185,9 +185,9 @@ public:
   static const fixed_point::fp64_t TO_STRING_SIZE_COEF;
   static const fixed_point::fp64_t TO_STRING_CONST_COEF;
 
-  fixed_point::fp64_t const DEFAULT_PADDED_SIZE_COEF = fixed_point::fp64_t("0.00023451");
-  fixed_point::fp64_t const DEFAULT_SIZE_COEF        = fixed_point::fp64_t("0.00107809");
-  fixed_point::fp64_t const DEFAULT_CONST_COEF       = fixed_point::fp64_t("5");
+  static const fixed_point::fp64_t DEFAULT_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t DEFAULT_SIZE_COEF;
+  static const fixed_point::fp64_t DEFAULT_CONST_COEF;
 
   // Function call overhead for LOW_CHARGE functions
   static constexpr SizeType LOW_CHARGE_CONST_COEF = 5;
