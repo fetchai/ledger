@@ -85,7 +85,8 @@ void UInt256Wrapper::Bind(Module &module)
       .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
       .CreateMemberFunction("toFloat64", &UInt256Wrapper::ToFloat64)
       .CreateMemberFunction("toInt32", &UInt256Wrapper::ToInt32)
-      .CreateMemberFunction("size", &UInt256Wrapper::size);
+      .CreateMemberFunction("size", &UInt256Wrapper::size)
+      .CreateMemberFunction("copy", &UInt256Wrapper::Copy);
 
   module.CreateFreeFunction("toString", &UInt256Wrapper::ToString);
   module.CreateFreeFunction("toUInt64", &UInt256Wrapper::ToPrimitive<uint64_t>);
@@ -164,6 +165,11 @@ bool UInt256Wrapper::LessThan(Ptr<UInt256Wrapper> const &other) const
 void UInt256Wrapper::Increase()
 {
   ++number_;
+}
+
+vm::Ptr<UInt256Wrapper> UInt256Wrapper::Copy() const
+{
+  return Ptr<UInt256Wrapper>{new UInt256Wrapper(this->vm_, UInt256{number_})};
 }
 
 fetch::math::SizeType UInt256Wrapper::size() const
