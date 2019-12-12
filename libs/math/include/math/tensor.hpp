@@ -815,7 +815,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     }
   }
   // Check last line parsed also
-  if (first_row_size && current_row_size != first_row_size)
+  if ((first_row_size > 0) && (current_row_size != first_row_size))
   {
     // size is not a multiple of first_row_size
     std::stringstream s;
