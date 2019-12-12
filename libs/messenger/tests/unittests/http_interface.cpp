@@ -34,7 +34,7 @@ TEST(MessengerMailboxTest, BasicHTTPRegisteringUnregistering)
   for (uint64_t i = 0; i < 10; ++i)
   {
     auto messenger = NewHTTPMessenger(8000);
-    messenger->Register();
+    EXPECT_TRUE(messenger->Register());
     messengers.push_back(messenger);
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
