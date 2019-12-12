@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "math/standard_functions/pow.hpp"
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/core/graph.hpp"
@@ -47,17 +48,17 @@ public:
 
   AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
                 std::string const &label_node_name, std::string const &output_node_name,
-                DataType const &learning_rate = static_cast<DataType>(0.001f),
-                DataType const &beta1         = static_cast<DataType>(0.9f),
-                DataType const &beta2         = static_cast<DataType>(0.999f),
-                DataType const &epsilon       = static_cast<DataType>(1e-4f));
+                DataType const &learning_rate = math::Type<DataType>("0.001"),
+                DataType const &beta1         = math::Type<DataType>("0.9"),
+                DataType const &beta2         = math::Type<DataType>("0.999"),
+                DataType const &epsilon       = math::Type<DataType>("0.0001"));
 
   AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
                 std::string const &label_node_name, std::string const &output_node_name,
                 fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
-                DataType const &beta1   = static_cast<DataType>(0.9f),
-                DataType const &beta2   = static_cast<DataType>(0.999f),
-                DataType const &epsilon = static_cast<DataType>(1e-4f));
+                DataType const &beta1   = math::Type<DataType>("0.9"),
+                DataType const &beta2   = math::Type<DataType>("0.999"),
+                DataType const &epsilon = math::Type<DataType>("0.0001"));
 
   ~AdamOptimiser() override = default;
 
@@ -160,25 +161,24 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
       // cache[i] = (beta1_t_ * cache[i]) + ((1.0 - beta1_t_) * (input_gradients[i]/batch_size));
       fetch::math::Multiply(
           (*trainable_it)->GetGradientsReferences(),
-          (static_cast<DataType>(1.0) - beta1_t_) / static_cast<DataType>(batch_size),
-          *gradient_it);
+          (static_cast<DataType>(1) - beta1_t_) / static_cast<DataType>(batch_size), *gradient_it);
       fetch::math::Multiply(*cached_weight_it, beta1_t_, *cached_weight_it);
       fetch::math::Add(*cached_weight_it, *gradient_it, *cached_weight_it);
 
       // mt   = cache[i] / (1.0 - beta1_t_);
-      fetch::math::Divide(*cached_weight_it, (static_cast<DataType>(1.0) - beta1_t_), *mt_it);
+      fetch::math::Divide(*cached_weight_it, (static_cast<DataType>(1) - beta1_t_), *mt_it);
 
       // momentum[i] = (beta2_t_ * momentum[i]) + ((1.0 - beta2_t_) *
       // ((input_gradients[i]/batch_size)^2));
       fetch::math::Divide((*trainable_it)->GetGradientsReferences(),
                           static_cast<DataType>(batch_size), *vt_it);
       fetch::math::Square(*vt_it, *vt_it);
-      fetch::math::Multiply(*vt_it, (static_cast<DataType>(1.0) - beta2_t_), *vt_it);
+      fetch::math::Multiply(*vt_it, (static_cast<DataType>(1) - beta2_t_), *vt_it);
       fetch::math::Multiply(*momentum_it, beta2_t_, *momentum_it);
       fetch::math::Add(*momentum_it, *vt_it, *momentum_it);
 
       // vt   = momentum[i] / (1.0 - beta2_t_);
-      fetch::math::Divide(*momentum_it, (static_cast<DataType>(1.0) - beta2_t_), *vt_it);
+      fetch::math::Divide(*momentum_it, (static_cast<DataType>(1) - beta2_t_), *vt_it);
 
       // output_gradients[i] = -this->learning_rate_ * mt / (sqrt(vt) + epsilon_);
       fetch::math::Sqrt(*vt_it, *gradient_it);
