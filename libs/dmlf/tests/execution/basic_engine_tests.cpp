@@ -196,16 +196,6 @@ endfunction
 
 )";
 
-auto const IntToFloatCompare = R"(
-function compare(a : Int32, b: Float64) : Int32
-  if (a < toInt32(b))
-    return 1;
-  else
-    return 0;
-  endif
-endfunction
-)";
-
 auto const BoolCompare = R"(
 function compare(a : Bool) : Int32
   if (a)
@@ -502,12 +492,6 @@ endfunction
 )";
 
 auto const ReturnArray = R"(
-function ReturnArrayFloat32() : Array<Float32>
-  var arr = Array<Float32>(2);
-  arr[0] = 0.5f;
-  arr[1] = 6.7f;
-  return arr;
-endfunction
 
 function ReturnArrayBool() : Array<Bool>
   var arr = Array<Bool>(2);
@@ -1280,15 +1264,6 @@ TEST(BasicVmEngineDmlfTests, FalseBoolCompare)
   EXPECT_EQ(result.output().As<int>(), 0);
 }
 
-TEST(DISABLED_BasicVmEngineDmlfTests, BadParamsTrueIntToFloatCompare)
-{
-  ExecutionResult result =
-      RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(6.5), LedgerVariant(5)});
-  EXPECT_FALSE(result.succeeded());
-  EXPECT_EQ(result.error().stage(), Stage::ENGINE);
-  EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
-}
-
 TEST(BasicVmEngineDmlfTests, AddMatrix)
 {
   BasicVmEngine engine;
@@ -1532,17 +1507,6 @@ TEST(DISABLED_BasicVmEngineDmlfTests, DisabledArrayArrayOpTests)
 {
   RunArrayTest("doBool", std::vector<bool>{true, true, false, false});
   EXPECT_EQ(1, 1);
-}
-
-TEST(DISABLED_BasicVmEngineDmlfTests, ReturnArrayFloat32)
-{
-  ExecutionResult result = RunStatelessTest(ReturnArray, "ReturnArrayFloat32", Params{});
-  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  auto output = result.output();
-  ASSERT_TRUE(output.IsArray());
-  ASSERT_EQ(output.size(), 2);
-  EXPECT_EQ(output[0].As<float>(), 0.5f);
-  EXPECT_EQ(output[1].As<float>(), 6.7f);
 }
 
 TEST(DISABLED_BasicVmEngineDmlfTests, ReturnArrayBool)
