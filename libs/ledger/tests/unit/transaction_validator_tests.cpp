@@ -93,6 +93,11 @@ class TransactionValidatorTests : public ::testing::Test
 protected:
   using DeedPtr = std::shared_ptr<Deed>;
 
+  static void SetUpTestCase()
+  {
+    fetch::chain::InitialiseTestConstants();
+  }
+
   void AddFunds(uint64_t amount);
   void SetDeed(Deed const &deed);
 

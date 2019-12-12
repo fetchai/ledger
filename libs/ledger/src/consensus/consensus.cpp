@@ -687,12 +687,7 @@ Status Consensus::ValidBlock(Block const &current) const
 
 void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)
 {
-  cabinet_history_[0] = stake_->Reset(snapshot, max_cabinet_size_);
-
-  if (cabinet_history_.find(0) == cabinet_history_.end())
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "No cabinet history found for block when resetting.");
-  }
+  Reset(snapshot);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Resetting stake aggregate...");
 
@@ -706,6 +701,18 @@ void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Resetting stake aggregate...FAILED");
+  }
+}
+
+void Consensus::Reset(StakeSnapshot const &snapshot)
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Consensus::Reset");
+
+  cabinet_history_[0] = stake_->Reset(snapshot, max_cabinet_size_);
+
+  if (cabinet_history_.find(0) == cabinet_history_.end())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "No cabinet history found for block when resetting.");
   }
 }
 

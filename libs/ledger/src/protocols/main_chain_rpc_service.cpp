@@ -249,8 +249,6 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
     address = direct_peers[index];
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Querying: ", address.ToBase64());
-
   return address;
 }
 
@@ -376,9 +374,15 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
 
     FETCH_LOG_INFO(LOGGING_NAME, "Attempting to resolve: ", block_resolving_->block_number,
                    " aka 0x", block_resolving_->hash.ToHex(), " Note: gen is: 0x",
-                   chain::GENESIS_DIGEST.ToHex());
+                   chain::GetGenesisDigest().ToHex(), " from: muddle://",
+                   current_peer_address_.ToBase64());
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "No peers available to query from");
+    return State::SYNCHRONISED;
   }
 
   state_machine_->Delay(std::chrono::milliseconds{500});

@@ -128,7 +128,7 @@ void TCPServer::Start()
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Listening for incoming connections on tcp://0.0.0.0:", port_);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Listening for incoming connections on tcp://0.0.0.0:", port_);
 }
 
 void TCPServer::Stop()

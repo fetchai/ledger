@@ -18,6 +18,7 @@
 
 #include "bloom_filter/bloom_filter.hpp"
 #include "chain/transaction.hpp"
+#include "chain/constants.hpp"
 #include "chain/transaction_layout.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/miner/basic_miner.hpp"
@@ -44,6 +45,13 @@ using fetch::DigestMap;
 
 class BasicMinerTests : public ::testing::TestWithParam<std::size_t>
 {
+public:
+
+  static void SetUpTestCase()
+  {
+    fetch::chain::InitialiseTestConstants();
+  }
+
 protected:
   static constexpr uint32_t    NUM_LANES      = 16;
   static constexpr std::size_t NUM_SLICES     = 16;

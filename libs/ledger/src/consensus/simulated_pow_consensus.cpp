@@ -177,5 +177,8 @@ void SimulatedPowConsensus::Reset(StakeSnapshot const & /*snapshot*/,
                                   StorageInterface & /*storage*/)
 {}
 
+void SimulatedPowConsensus::Reset(StakeSnapshot const &/*snapshot*/)
+{}
+
 void SimulatedPowConsensus::SetDefaultStartTime(uint64_t /*default_start_time*/)
 {}

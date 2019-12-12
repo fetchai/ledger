@@ -38,6 +38,7 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "ledger/transaction_status_cache.hpp"
+#include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "messenger/messenger_api.hpp"
 #include "messenger/messenger_http_interface.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -126,10 +127,8 @@ public:
   Constellation(CertificatePtr const &certificate, Config config);
   ~Constellation() override = default;
 
-  bool Run(UriSet const &initial_peers, core::WeakRunnable bootstrap_monitor);
+  bool Run(UriSet const &initial_peers, core::WeakRunnable const &bootstrap_monitor);
   void SignalStop();
-
-  void DumpOpenAPI(std::ostream &stream);
 
 protected:
   void OnBlock(ledger::Block const &block) override;
@@ -138,8 +137,10 @@ private:
   using MuddlePtr              = muddle::MuddlePtr;
   using NetworkManager         = network::NetworkManager;
   using BlockPackingAlgorithm  = ledger::BasicMiner;
+  using BlockPackingAlgorithmPtr  = std::unique_ptr<ledger::BasicMiner>;
   using BlockCoordinator       = ledger::BlockCoordinator;
-  using MainChain              = ledger::MainChain;
+  using BlockCoordinatorPtr    = std::unique_ptr<ledger::BlockCoordinator>;
+  using MainChainPtr           = std::unique_ptr<ledger::MainChain>;
   using MainChainRpcService    = ledger::MainChainRpcService;
   using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
   using LaneServices           = ledger::StorageUnitBundledService;
@@ -150,11 +151,14 @@ private:
   using ExecutionManager       = ledger::ExecutionManager;
   using ExecutionManagerPtr    = std::shared_ptr<ExecutionManager>;
   using LaneRemoteControl      = ledger::LaneRemoteControl;
+  using LaneRemoteControlPtr   = std::unique_ptr<LaneRemoteControl>;
   using HttpServer             = http::HTTPServer;
+  using HttpServerPtr          = std::unique_ptr<HttpServer>;
   using HttpModule             = http::HTTPModule;
   using HttpModulePtr          = std::shared_ptr<HttpModule>;
   using HttpModules            = std::vector<HttpModulePtr>;
   using TransactionProcessor   = ledger::TransactionProcessor;
+  using TransactionProcessorPtr   = std::unique_ptr<ledger::TransactionProcessor>;
   using TrustSystem            = p2p::P2PTrustBayRank<muddle::Address>;
   using DAGPtr                 = std::shared_ptr<ledger::DAGInterface>;
   using DAGServicePtr          = std::shared_ptr<ledger::DAGService>;
@@ -172,6 +176,22 @@ private:
 
   using OpenAPIHttpModulePtr     = std::shared_ptr<OpenAPIHttpModule>;
   using HealthCheckHttpModulePtr = std::shared_ptr<HealthCheckHttpModule>;
+
+  /// @name Application Lifecycle
+  /// @{
+  bool OnStartup();
+  bool OnBringUpLaneServices();
+  bool OnRestorePreviousData(ledger::GenesisFileCreator::ConsensusParameters &params);
+  bool OnBringUpExternalNetwork(ledger::GenesisFileCreator::ConsensusParameters &params, UriSet const &initial_peers);
+  bool OnRunning(core::WeakRunnable const &bootstrap_monitor);
+  void OnTearDownExternalNetwork();
+  void OnTearDownLaneServices();
+  void OnCleanup();
+
+  bool StartInternalMuddle();
+  bool GenesisSanityChecks(ledger::GenesisFileCreator::Result genesis_status);
+  bool CheckStateIntegrity();
+  /// @}
 
   /// @name Configuration
   /// @{
@@ -200,7 +220,7 @@ private:
   TxStatusCachePtr     tx_status_cache_;  ///< Cache of transaction status
   LaneServices         lane_services_;    ///< The lane services
   StorageUnitClientPtr storage_;          ///< The storage client to the lane services
-  LaneRemoteControl    lane_control_;     ///< The lane control client for the lane services
+  LaneRemoteControlPtr lane_control_;     ///< The lane control client for the lane services
   ShardMgmtServicePtr  shard_management_;
 
   DAGPtr             dag_;
@@ -224,15 +244,15 @@ private:
 
   /// @name Blockchain and Mining
   /// @[
-  MainChain             chain_;              ///< The main block chain component
-  BlockPackingAlgorithm block_packer_;       ///< The block packing / mining algorithm
-  BlockCoordinator      block_coordinator_;  ///< The block execution coordinator
+  MainChainPtr             chain_;              ///< The main block chain component
+  BlockPackingAlgorithmPtr block_packer_;       ///< The block packing / mining algorithm
+  BlockCoordinatorPtr      block_coordinator_;  ///< The block execution coordinator
   /// @}
 
   /// @name Top Level Services
   /// @{
   MainChainRpcServicePtr main_chain_service_;  ///< Service for block transmission over the network
-  TransactionProcessor   tx_processor_;        ///< The transaction entrypoint
+  TransactionProcessorPtr   tx_processor_;        ///< The transaction entrypoint
   /// @}
 
   /// @name Agent support
@@ -246,7 +266,7 @@ private:
   /// @{
   OpenAPIHttpModulePtr     http_open_api_module_;
   HealthCheckHttpModulePtr health_check_module_;
-  HttpServer               http_;          ///< The HTTP server
+  HttpServerPtr            http_;          ///< The HTTP server
   HttpModules              http_modules_;  ///< The set of modules currently configured
   /// @}
 

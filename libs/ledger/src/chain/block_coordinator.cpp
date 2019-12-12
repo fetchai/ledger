@@ -426,7 +426,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
-      if (!storage_unit_.RevertToHash(chain::GENESIS_MERKLE_ROOT, 0))
+      if (!storage_unit_.RevertToHash(chain::GetGenesisMerkleRoot(), 0))
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert back to genesis");
       }
@@ -912,7 +912,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
       {
         dag_->RevertToEpoch(0);
       }
-      storage_unit_.RevertToHash(chain::GENESIS_MERKLE_ROOT, 0);
+      storage_unit_.RevertToHash(chain::GetGenesisMerkleRoot(), 0);
       execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
     }
 
@@ -1073,7 +1073,7 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     next_block_->UpdateDigest();
     next_block_->miner_signature = certificate_->Sign(next_block_->hash);
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block Hash: 0x", next_block_->hash.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: 0x", next_block_->hash.ToHex(), " #", next_block_->block_number, " Merkle: 0x", next_block_->merkle_hash.ToHex());
 
     // this step is needed because the execution manager is actually unaware of the actual last
     // block that is executed because the merkle hash was not known at this point.
@@ -1321,16 +1321,16 @@ void BlockCoordinator::Reset()
   FETCH_LOG_INFO(LOGGING_NAME, "Hard resetting block coordinator");
   chain_.Reset();
   current_block_ = MainChain::CreateGenesisBlock();
-  last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::GENESIS_DIGEST; });
-  execution_manager_.SetLastProcessedBlock(chain::GENESIS_DIGEST);
+  last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::GetGenesisDigest(); });
+  execution_manager_.SetLastProcessedBlock(chain::GetGenesisDigest());
 }
 
 void BlockCoordinator::ResetGenesis()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Resetting block coordinator");
   current_block_ = MainChain::CreateGenesisBlock();
-  last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::GENESIS_DIGEST; });
-  execution_manager_.SetLastProcessedBlock(chain::GENESIS_DIGEST);
+  last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::GetGenesisDigest(); });
+  execution_manager_.SetLastProcessedBlock(chain::GetGenesisDigest());
 }
 
 }  // namespace ledger

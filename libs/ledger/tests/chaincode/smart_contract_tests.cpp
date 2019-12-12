@@ -60,6 +60,12 @@ using Query              = SmartContract::Query;
 class SmartContractTests : public ContractTest
 {
 protected:
+
+  static void SetUpTestCase()
+  {
+    fetch::chain::InitialiseTestConstants();
+  }
+
   void CreateContract(std::string const &source)
   {
     // generate the smart contract instance for this contract

@@ -171,7 +171,13 @@ bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t index)
 {
   FETCH_LOCK(lock_);
 
-  FETCH_UNUSED(index);
+  if ((hash == fetch::chain::ZERO_HASH) && (index == 0))
+  {
+    // perform the reverting options
+    current_hash_ = hash;
+    state_        = std::make_shared<State>();
+    return true;
+  }
 
   bool success{false};
 
@@ -184,14 +190,7 @@ bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t index)
     state_history_stack_.erase(it.base(), state_history_stack_.end());
 
     // sanity check
-    if ((hash == fetch::chain::ZERO_HASH) && (index == 0))
-    {
-      // perform the reverting options
-      current_hash_ = hash;
-      state_        = std::make_shared<State>();
-      success       = true;
-    }
-    else if (state_history_.find(hash) == state_history_.end())
+    if (state_history_.find(hash) == state_history_.end())
     {
       throw std::runtime_error("Synchronisation issue between map and stack");
     }
@@ -219,6 +218,11 @@ FakeStorageUnit::Hash FakeStorageUnit::Commit(uint64_t index)
 
 bool FakeStorageUnit::HashExists(Hash const &hash, uint64_t index)
 {
+  if ((hash == chain::ZERO_HASH) && (index == 0))
+  {
+    return true;
+  }
+
   FETCH_UNUSED(index);
   FETCH_LOCK(lock_);
 
