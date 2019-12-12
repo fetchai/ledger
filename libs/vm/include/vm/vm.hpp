@@ -590,9 +590,8 @@ public:
 
 private:
   static const int FRAME_STACK_SIZE = 50;
-  static const int STACK_SIZE       = 5000;
-  static const int MAX_LIVE_OBJECTS = 200;
-  static const int MAX_RANGE_LOOPS  = 50;
+  static const int STACK_SIZE       = 1024;
+  static const int MAX_RANGE_LOOPS  = 16;
 
   using OpcodeInfoArray = std::vector<OpcodeInfo>;
   using OpcodeMap       = std::unordered_map<std::string, uint16_t>;
@@ -615,9 +614,14 @@ private:
 
   struct LiveObjectInfo
   {
-    int      frame_sp;
-    uint16_t variable_index;
-    uint16_t scope_number;
+    LiveObjectInfo(int frame_sp__, uint16_t variable_index__, uint16_t scope_number__)
+      : frame_sp(frame_sp__)
+      , variable_index(variable_index__)
+      , scope_number(scope_number__)
+    {}
+    int      frame_sp{};
+    uint16_t variable_index{};
+    uint16_t scope_number{};
   };
 
   template <typename T>
@@ -649,8 +653,7 @@ private:
   int                            sp_{};
   ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS]{};
   int                            range_loop_sp_{};
-  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS]{};
-  int                            live_object_sp_{};
+  std::vector<LiveObjectInfo>    live_object_stack_;
   uint16_t                       pc_{};
   Variant                        self_;
   uint16_t                       instruction_pc_{};
@@ -704,17 +707,18 @@ private:
 
   bool PushFrame()
   {
-    if (frame_sp_ >= FRAME_STACK_SIZE - 1)
+    if (++frame_sp_ < FRAME_STACK_SIZE)
     {
-      RuntimeError("frame stack overflow");
-      return false;
+      Frame &frame   = frame_stack_[frame_sp_];
+      frame.function = function_;
+      frame.bsp      = bsp_;
+      frame.pc       = pc_;
+      frame.self     = self_;
+      return true;
     }
-    Frame &frame   = frame_stack_[++frame_sp_];
-    frame.function = function_;
-    frame.bsp      = bsp_;
-    frame.pc       = pc_;
-    frame.self     = self_;
-    return true;
+    --frame_sp_;
+    RuntimeError("frame stack overflow");
+    return false;
   }
 
   void PopFrame()
@@ -724,11 +728,6 @@ private:
     bsp_         = frame.bsp;
     pc_          = frame.pc;
     self_        = std::move(frame.self);
-  }
-
-  Variant &Push()
-  {
-    return stack_[++sp_];
   }
 
   Variant &Pop()
@@ -1469,9 +1468,15 @@ private:
   template <typename Op>
   void DoPrefixPostfixOp(TypeId type_id, void *lhs)
   {
-    Variant &rhsv = Push();
-    ExecuteIntegralInplaceOp<Op>(type_id, lhs, rhsv);
-    rhsv.type_id = instruction_->type_id;
+    if (++sp_ < STACK_SIZE)
+    {
+      Variant &rhsv = Top();
+      ExecuteIntegralInplaceOp<Op>(type_id, lhs, rhsv);
+      rhsv.type_id = instruction_->type_id;
+      return;
+    }
+    --sp_;
+    RuntimeError("stack overflow");
   }
 
   template <typename Op>
