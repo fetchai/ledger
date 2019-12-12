@@ -439,7 +439,7 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 
   // assign compiled status
   vm_model.compiled_ = compiled;
-  
+
   // assign estimator
   vm_model.estimator_ = estimator_;
 
