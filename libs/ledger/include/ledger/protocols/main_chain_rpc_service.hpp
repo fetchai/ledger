@@ -24,6 +24,7 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
+#include "moment/deadline_timer.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "muddle/subscription.hpp"
@@ -75,7 +76,8 @@ public:
   using FutureTimepoint = core::FutureTimepoint;
   using ConsensusPtr    = std::shared_ptr<ConsensusInterface>;
 
-  static constexpr char const *LOGGING_NAME = "MainChainRpc";
+  static constexpr char const *LOGGING_NAME            = "MainChainRpc";
+  static constexpr uint64_t    PERIODIC_RESYNC_SECONDS = 60;
 
   enum class Mode
   {
@@ -122,6 +124,10 @@ private:
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
   using BlockPtr        = MainChain::BlockPtr;
+  using DeadlineTimer   = fetch::moment::DeadlineTimer;
+
+  BlockPtr      block_resolving_;
+  DeadlineTimer timer_to_proceed_{"MC_RPC:main"};
 
   /// @name Subscription Handlers
   /// @{
@@ -144,7 +150,7 @@ private:
   State OnWaitForHeaviestChain();
   State OnSynchronising();
   State OnWaitingForResponse();
-  State OnSynchronised(State current, State previous);
+  State OnSynchronised();
   /// @}
 
   /// @name System Components
@@ -169,25 +175,27 @@ private:
 
   /// @name State Machine Data
   /// @{
-  RpcClient       rpc_client_;
-  StateMachinePtr state_machine_;
-  Address         current_peer_address_;
-  BlockHash       current_missing_block_;
-  Promise         current_request_;
+  RpcClient             rpc_client_;
+  StateMachinePtr       state_machine_;
+  Address               current_peer_address_;
+  BlockHash             current_missing_block_;
+  Promise               current_request_;
+  std::atomic<uint16_t> loose_blocks_seen_{0};
   /// @}
 
   /// @name Telemetry
   /// @{
-  telemetry::CounterPtr recv_block_count_;
-  telemetry::CounterPtr recv_block_valid_count_;
-  telemetry::CounterPtr recv_block_loose_count_;
-  telemetry::CounterPtr recv_block_duplicate_count_;
-  telemetry::CounterPtr recv_block_invalid_count_;
-  telemetry::CounterPtr state_request_heaviest_;
-  telemetry::CounterPtr state_wait_heaviest_;
-  telemetry::CounterPtr state_synchronising_;
-  telemetry::CounterPtr state_wait_response_;
-  telemetry::CounterPtr state_synchronised_;
+  telemetry::CounterPtr   recv_block_count_;
+  telemetry::CounterPtr   recv_block_valid_count_;
+  telemetry::CounterPtr   recv_block_loose_count_;
+  telemetry::CounterPtr   recv_block_duplicate_count_;
+  telemetry::CounterPtr   recv_block_invalid_count_;
+  telemetry::CounterPtr   state_request_heaviest_;
+  telemetry::CounterPtr   state_wait_heaviest_;
+  telemetry::CounterPtr   state_synchronising_;
+  telemetry::CounterPtr   state_wait_response_;
+  telemetry::CounterPtr   state_synchronised_;
+  telemetry::HistogramPtr new_block_duration_;
   /// @}
 };
 

@@ -17,23 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle/address.hpp"
-
-#include <array>
-#include <cstdint>
+#include "moment/clock_interfaces.hpp"
+#include "network/service/promise.hpp"
 
 namespace fetch {
 namespace muddle {
 
-uint64_t CalculateDistance(Address const &from, Address const &to);
-uint64_t CalculateDistance(void const *from, void const *to, std::size_t length);
-
-template <std::size_t LENGTH>
-uint64_t CalculateDistance(std::array<uint8_t, LENGTH> const &from,
-                           std::array<uint8_t, LENGTH> const &to)
+struct RouterConfiguration
 {
-  return CalculateDistance(from.data(), to.data(), LENGTH);
-}
+  using ClockInterface = moment::ClockInterface;
+  using Clock          = ClockInterface::AccurateSystemClock;
+  using Timepoint      = ClockInterface::Timestamp;
+  using Duration       = ClockInterface::Duration;
+
+  uint64_t max_delivery_attempts{3};
+  Duration temporary_connection_length{
+      std::chrono::seconds(4)};  ///< Time should be slightly longer than the retry period
+  uint32_t retry_delay_ms{2000};
+};
 
 }  // namespace muddle
 }  // namespace fetch

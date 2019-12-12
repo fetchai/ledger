@@ -36,8 +36,8 @@ using namespace fetch::beacon;
 
 using fetch::crypto::Prover;
 
-using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
+using std::this_thread::sleep_for;
 using MuddleAddress = byte_array::ConstByteArray;
 
 class DummyManifestCache : public fetch::shards::ManifestCacheInterface
@@ -128,6 +128,7 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
     pending_nodes.emplace(ii);
   }
 
+  uint64_t timer = 0;
   while (!pending_nodes.empty())
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -144,6 +145,18 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
       {
         ++it;
       }
+
+      if (timer == 100)
+      {
+        FETCH_LOG_ERROR("TrustedDealerTest", "Only connected to: ",
+                        static_cast<uint32_t>(muddle.GetNumDirectlyConnectedPeers()));
+      }
+    }
+    ++timer;
+
+    if (timer > 100)
+    {
+      throw std::runtime_error("Could not connect to other cabinet members");
     }
   }
 

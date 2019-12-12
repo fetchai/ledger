@@ -96,8 +96,8 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uin
   else
   {
     block->previous_hash = chain::ZERO_HASH;
-    block->hash          = chain::GENESIS_DIGEST;
-    block->merkle_hash   = chain::GENESIS_MERKLE_ROOT;
+    block->hash          = chain::GetGenesisDigest();
+    block->merkle_hash   = chain::GetGenesisMerkleRoot();
     block->miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
     block->UpdateTimestamp();
   }

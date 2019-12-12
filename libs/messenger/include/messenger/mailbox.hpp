@@ -34,7 +34,7 @@
 namespace fetch {
 namespace messenger {
 
-class Mailbox : public MailboxInterface
+class Mailbox final : public MailboxInterface
 {
 public:
   using Address         = muddle::Address;
@@ -43,6 +43,7 @@ public:
   using SubscriptionPtr = muddle::MuddleEndpoint::SubscriptionPtr;
 
   explicit Mailbox(muddle::MuddlePtr &muddle);
+  ~Mailbox() override = default;
 
   void SetDeliveryFunction(DeliveryFunction const &attempt_delivery) override;
 

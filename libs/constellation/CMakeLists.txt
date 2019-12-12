@@ -28,6 +28,7 @@ target_link_libraries(fetch-constellation
                              fetch-moment
                              fetch-dkg
                              fetch-beacon
+                             fetch-messenger
                              vendor-msgpack)
 
 # TODO(HUT): Will do in subsequent PR add_test_target()
