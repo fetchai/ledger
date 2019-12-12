@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/constants.hpp"
 #include "chain/transaction_builder.hpp"
 #include "contract_test.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -55,6 +56,11 @@ using ThresholdsPtr  = std::shared_ptr<Deed::OperationTresholds>;
 class TokenContractTests : public ContractTest
 {
 protected:
+  static void SetUpTestCase()
+  {
+    fetch::chain::InitialiseTestConstants();
+  }
+
   using Query              = Contract::Query;
   using TokenContractPtr   = std::unique_ptr<TokenContract>;
   using MockStorageUnitPtr = std::unique_ptr<MockStorageUnit>;

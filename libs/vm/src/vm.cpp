@@ -267,33 +267,40 @@ bool VM::Execute(std::string &error, Variant &output)
   self_.Reset();
   error_.clear();
   error.clear();
-
-  do
+  try
   {
-    instruction_pc_ = pc_;
-    instruction_    = &function_->instructions[pc_++];
-
-    assert(instruction_->opcode < opcode_info_array_.size());
-
-    current_op_ = &opcode_info_array_[instruction_->opcode];
-
-    if (!current_op_->handler)
+    do
     {
-      RuntimeError("unknown opcode");
-      break;
-    }
+      instruction_pc_ = pc_;
+      instruction_    = &function_->instructions[pc_++];
 
-    IncreaseChargeTotal(current_op_->static_charge);
+      assert(instruction_->opcode < opcode_info_array_.size());
 
-    if (ChargeLimitExceeded())
-    {
-      break;
-    }
+      current_op_ = &opcode_info_array_[instruction_->opcode];
 
-    // execute the handler for the op code
-    current_op_->handler(this);
+      if (!current_op_->handler)
+      {
+        RuntimeError("unknown opcode");
+        break;
+      }
 
-  } while (!stop_);
+      IncreaseChargeTotal(current_op_->static_charge);
+
+      if (ChargeLimitExceeded())
+      {
+        break;
+      }
+
+      // execute the handler for the op code
+      current_op_->handler(this);
+
+    } while (!stop_);
+  }
+  catch (std::exception const &e)
+  {
+    RuntimeError(static_cast<std::string>("Fatal error: ") + static_cast<std::string>(e.what()));
+    stop_ = true;
+  }
 
   bool const ok = !HasError();
 

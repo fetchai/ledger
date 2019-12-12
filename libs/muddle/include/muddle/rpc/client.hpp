@@ -98,7 +98,7 @@ public:
   Client &operator=(Client &&) = delete;
 
 protected:
-  bool DeliverRequest(muddle::Address const &address, network::MessageType const &data);
+  bool DeliverRequest(muddle::Address const &address, network::MessageBuffer const &data);
 
 private:
   using Flag            = std::atomic<bool>;
