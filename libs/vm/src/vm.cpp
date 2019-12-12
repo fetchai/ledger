@@ -268,49 +268,56 @@ bool VM::Execute(std::string &error, Variant &output)
   self_.Reset();
   error_.clear();
   error.clear();
-
-  if (sp_ < STACK_SIZE)
+  try
   {
-    do
+    if (sp_ < STACK_SIZE)
     {
-      instruction_pc_ = pc_;
-      instruction_    = &function_->instructions[pc_++];
-
-      assert(instruction_->opcode < opcode_info_array_.size());
-
-      current_op_ = &opcode_info_array_[instruction_->opcode];
-
-      if (!current_op_->handler)
+      do
       {
-        RuntimeError("unknown opcode");
-        break;
-      }
+        instruction_pc_ = pc_;
+        instruction_    = &function_->instructions[pc_++];
 
-      // update the charge total (or set to max if it would overflow)
-      if ((std::numeric_limits<ChargeAmount>::max() - charge_total_) < current_op_->static_charge)
-      {
-        charge_total_ = std::numeric_limits<ChargeAmount>::max();
-      }
-      else
-      {
-        charge_total_ += current_op_->static_charge;
-      }
+        assert(instruction_->opcode < opcode_info_array_.size());
 
-      // check for charge limit being reached
-      if ((charge_limit_ != 0u) && (charge_total_ >= charge_limit_))
-      {
-        RuntimeError("Charge limit exceeded");
-        break;
-      }
+        current_op_ = &opcode_info_array_[instruction_->opcode];
 
-      // execute the handler for the op code
-      current_op_->handler(this);
+        if (!current_op_->handler)
+        {
+          RuntimeError("unknown opcode");
+          break;
+        }
 
-    } while (!stop_);
+        // update the charge total (or set to max if it would overflow)
+        if ((std::numeric_limits<ChargeAmount>::max() - charge_total_) < current_op_->static_charge)
+        {
+          charge_total_ = std::numeric_limits<ChargeAmount>::max();
+        }
+        else
+        {
+          charge_total_ += current_op_->static_charge;
+        }
+
+        // check for charge limit being reached
+        if ((charge_limit_ != 0u) && (charge_total_ >= charge_limit_))
+        {
+          RuntimeError("Charge limit exceeded");
+          break;
+        }
+
+        // execute the handler for the op code
+        current_op_->handler(this);
+
+      } while (!stop_);
+    }
+    else
+    {
+      RuntimeError("stack overflow");
+    }
   }
-  else
+  catch (std::exception const &e)
   {
-    RuntimeError("stack overflow");
+    RuntimeError(std::string{"Fatal error: "} + e.what());
+    stop_ = true;
   }
 
   bool const ok = !HasError();
@@ -329,7 +336,6 @@ bool VM::Execute(std::string &error, Variant &output)
   }
 
   // We've got a runtime error
-
   // Reset all variables
   for (auto &variable : stack_)
   {

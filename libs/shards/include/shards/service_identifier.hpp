@@ -37,6 +37,7 @@ public:
     CORE    = 1,
     HTTP,
     DKG,
+    AGENTS,
     LANE = 10,
   };
 

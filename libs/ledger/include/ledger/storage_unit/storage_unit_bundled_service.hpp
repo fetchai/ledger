@@ -59,20 +59,38 @@ public:
     }
   }
 
-  void Start()
+  void StartInternal()
   {
     for (auto &lane : lanes_)
     {
-      lane->Start();
+      lane->StartInternal();
     }
   }
 
-  void Stop()
+  void StartExternal()
   {
     for (auto &lane : lanes_)
     {
-      lane->Stop();
+      lane->StartExternal();
     }
+  }
+
+  void StopExternal()
+  {
+    for (auto &lane : lanes_)
+    {
+      lane->StopExternal();
+    }
+  }
+
+  void StopInternal()
+  {
+    for (auto &lane : lanes_)
+    {
+      lane->StopInternal();
+    }
+
+    lanes_.clear();
   }
 
 private:

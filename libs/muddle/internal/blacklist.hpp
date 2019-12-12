@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "muddle/packet.hpp"
 
 #include <set>

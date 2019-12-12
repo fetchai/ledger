@@ -71,6 +71,7 @@ public:
   void SetBlockInterval(uint64_t block_interval_ms) override;
   void SetAeonPeriod(uint16_t aeon_period) override;
   void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
+  void Reset(StakeSnapshot const &snapshot) override;
   void SetDefaultStartTime(uint64_t default_start_time) override;
 
   StakeManagerPtr stake();
@@ -113,7 +114,7 @@ private:
   NotarisationPtr notarisation_;
 
   CabinetPtr GetCabinet(Block const &previous) const;
-  uint64_t   GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
+  uint64_t   GetBlockGenerationWeight(Block const &current, Identity const &identity);
   bool       ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool       ShouldTriggerNewCabinet(Block const &block);
   bool       EnoughQualSigned(BlockEntropy const &block_entropy) const;
