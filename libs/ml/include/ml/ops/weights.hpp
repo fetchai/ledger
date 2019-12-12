@@ -121,42 +121,56 @@ public:
     {
     case WeightsInitialisation::ZEROS:
     {
-      array.Fill(typename TensorType::Type(0));
+      array.Fill(static_cast<DataType>(0));
       break;
     }
     case WeightsInitialisation::ONES:
     {
-      array.Fill(typename TensorType::Type(1));
+      array.Fill(static_cast<DataType>(1));
       break;
     }
     case WeightsInitialisation::XAVIER_GLOROT:
     {
-      XavierInitialisation(array, std::sqrt(2.0 / double(in_size + out_size)), seed);
+      XavierInitialisation(
+          array,
+          fetch::math::Sqrt(static_cast<DataType>(2) / static_cast<DataType>(in_size + out_size)),
+          seed);
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_IN:
     {
-      XavierInitialisation(array, std::sqrt(1.0 / double(in_size)), seed);
+      XavierInitialisation(
+          array, fetch::math::Sqrt(static_cast<DataType>(1) / static_cast<DataType>(in_size)),
+          seed);
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_OUT:
     {
-      XavierInitialisation(array, std::sqrt(1.0 / double(out_size)), seed);
+      XavierInitialisation(
+          array, fetch::math::Sqrt(static_cast<DataType>(1) / static_cast<DataType>(out_size)),
+          seed);
       break;
     }
     case WeightsInitialisation::XAVIER_GLOROT_UNIFORM:
     {
-      XavierInitialisationUniform(array, std::sqrt(6.0 / double(in_size + out_size)), seed);
+      XavierInitialisationUniform(
+          array,
+          fetch::math::Sqrt(static_cast<DataType>(6) / static_cast<DataType>(in_size + out_size)),
+          seed);
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_IN_UNIFORM:
     {
-      XavierInitialisationUniform(array, std::sqrt(3.0 / double(in_size)), seed);
+      XavierInitialisationUniform(
+          array, fetch::math::Sqrt(static_cast<DataType>(3) / static_cast<DataType>(in_size)),
+          seed);
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_OUT_UNIFORM:
     {
-      XavierInitialisationUniform(array, std::sqrt(3.0 / double(out_size)), seed);
+      XavierInitialisationUniform(
+          array, fetch::math::Sqrt(static_cast<DataType>(3) / static_cast<DataType>(out_size)),
+          seed);
       break;
     }
     default:
@@ -178,17 +192,19 @@ public:
     {
     case WeightsInitialisation::ONES:
     {
-      array.Fill(static_cast<typename TensorType::Type>(1));
+      array.Fill(static_cast<DataType>(1));
       break;
     }
     case WeightsInitialisation::ZEROS:
     {
-      array.Fill(static_cast<typename TensorType::Type>(0));
+      array.Fill(static_cast<DataType>(0));
       break;
     }
     case WeightsInitialisation::XAVIER_GLOROT:
     {
-      XavierInitialisation(array, std::sqrt(2.0 / double(data_size)), seed);
+      XavierInitialisation(
+          array, fetch::math::Sqrt(static_cast<DataType>(2) / static_cast<DataType>(data_size)),
+          seed);
       break;
     }
     default:
@@ -256,7 +272,7 @@ private:
    * using a normal distribution with mean 0 and variance 2 / (input nodes + output nodes)
    * @param weights
    */
-  static void XavierInitialisation(TensorType &array, double normalising_factor,
+  static void XavierInitialisation(TensorType &array, DataType normalising_factor,
                                    SizeType seed = 123456789)
   {
     // TODO (665) this is a uniform distribution; in principle we should be using a guassian
@@ -272,12 +288,12 @@ private:
       ran_val      = ran_val * 2;                   // random value in range -1 <-> +1
       ran_val      = ran_val * normalising_factor;  // random value in range -sigma <-> +sigma
 
-      *it = typename TensorType::Type(ran_val);
+      *it = static_cast<DataType>(ran_val);
       ++it;
     }
   }
 
-  static void XavierInitialisationUniform(TensorType &array, double normalising_factor,
+  static void XavierInitialisationUniform(TensorType &array, DataType normalising_factor,
                                           SizeType seed = 123456789)
   {
     // TODO (#1562) this is based on uniform random generator, and it should be set to default
@@ -293,10 +309,12 @@ private:
       ran_val      = ran_val * 2;                   // random value in range -1 <-> +1
       ran_val      = ran_val * normalising_factor;  // random value in range -sigma <-> +sigma
 
-      *it = typename TensorType::Type(ran_val);
+      *it = static_cast<DataType>(ran_val);
       ++it;
     }
   }
+
+  static const fetch::fixed_point::fp64_t HALF;
 };
 
 }  // namespace ops
@@ -306,6 +324,10 @@ struct OpWeightsSaveableParams : public OpVariableSaveableParams<TensorType>
 {
   fetch::ml::OpType op_type = OpType::OP_WEIGHTS;
 };
+
+template <class T>
+const fetch::fixed_point::fp64_t ops::Weights<T>::HALF =
+    static_cast<fetch::fixed_point::fp64_t>("0.5");
 
 }  // namespace ml
 }  // namespace fetch
