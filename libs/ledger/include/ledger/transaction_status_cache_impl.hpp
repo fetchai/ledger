@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/digest.hpp"
 #include "core/mutex.hpp"
 #include "core/synchronisation/waitable.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/execution_result.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "network/generics/milli_timer.hpp"
@@ -103,8 +103,8 @@ void TransactionStatusCacheImpl<CLOCK>::Update(Digest digest, TransactionStatus 
   {
     FETCH_LOG_WARN("TransactionStatusCache",
                    "Using inappropriate method to update contract "
-                   "execution result, tx digest = " +
-                       digest.ToBase64());
+                   "execution result. (tx digest: 0x",
+                   digest.ToHex(), ")");
 
     throw std::runtime_error(
         "TransactionStatusCache::Update(...): Using inappropriate method to update"
@@ -137,17 +137,17 @@ void TransactionStatusCacheImpl<CLOCK>::Update(Digest digest, ContractExecutionR
   auto it = cache_.find(digest);
   if (it == cache_.end())
   {
-    FETCH_LOG_WARN("TransactionStatusCache",
-                   "Updating contract execution status for transaction"
-                   "which is missing in the tx statuc cache, tx digest = " +
-                       digest.ToBase64());
+    FETCH_LOG_DEBUG("TransactionStatusCache",
+                    "Updating contract execution status for transaction "
+                    "which is missing in the tx status cache. (tx digest: 0x",
+                    digest.ToHex(), ")");
 
-    cache_.emplace(digest, TxStatusEx{TxStatus{tx_workflow_status, std::move(exec_result)}, now});
+    cache_.emplace(digest, TxStatusEx{TxStatus{tx_workflow_status, exec_result}, now});
   }
   else
   {
     it->second.status.status               = tx_workflow_status;
-    it->second.status.contract_exec_result = std::move(exec_result);
+    it->second.status.contract_exec_result = exec_result;
   }
 
   PruneCacheIfNecessary(now);

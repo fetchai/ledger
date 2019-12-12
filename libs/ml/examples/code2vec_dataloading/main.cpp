@@ -43,7 +43,6 @@ std::string ReadFile(std::string const &path)
 
 int main(int ac, char **av)
 {
-
   if (ac < 2)
   {
     std::cerr << "Usage: " << av[0] << " INPUT_FILES_TXT" << std::endl;

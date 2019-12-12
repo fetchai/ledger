@@ -29,7 +29,7 @@ template <typename TensorType>
 class W2VModel
 {
 private:
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using DataType      = typename TensorType::Type;
   using ContainerType = typename TensorType::ContainerType;
 
@@ -70,8 +70,8 @@ public:
 
   void UpdateLearningRate(SizeType i, SizeType iter, SizeType iterations);
   void Train(SizeType iter, SizeType print_frequency, bool cbow = true);
-  void CBOWTrain(TensorType &context, TensorType &target);
-  void SGNSTrain(TensorType const &context, TensorType const &target);
+  void CBOWTrain(TensorType &target, TensorType &context);
+  void SGNSTrain(TensorType const &target, TensorType const &context);
 
   TensorType Embeddings();
 };
@@ -304,23 +304,22 @@ void W2VModel<TensorType>::SGNSTrain(  // TODO (#1304) CBOW implementation not S
       // value. but we're using a single set of 25 random samples for one who dynamic window
 
       // Embeddings: step for all weights
-      float learning_rate      = alpha_;
-      using VectorRegisterType = typename fetch::math::TensorView<DataType>::VectorRegisterType;
-      fetch::memory::TrivialRange range(0, std::size_t(gradient_weights_.height()));
-      VectorRegisterType          rate(learning_rate);
-      VectorRegisterType          zero(static_cast<DataType>(0));
+      float                learning_rate = alpha_;
+      fetch::memory::Range range(0, std::size_t(gradient_weights_.height()));
+      DataType             zero{0};
 
       for (auto const &r : updated_rows_weights_)
       {
         auto input = gradient_weights_.View(r);
         auto ret   = weights_.View(r);  // embeddings.View(r);
 
-        ret.data().in_parallel().Apply(
+        ret.data().in_parallel().RangedApplyMultiple(
             range,
-            [rate](VectorRegisterType const &a, VectorRegisterType const &b,
-                   VectorRegisterType &c) { c = b + a * rate; },
+            [learning_rate](auto const &a, auto const &b, auto &c) {
+              c = b + a * decltype(a)(learning_rate);
+            },
             input.data(), ret.data());
-        input.data().in_parallel().Apply([zero](VectorRegisterType &a) { a = zero; });
+        input.data().in_parallel().Apply([zero](auto &a) { a = decltype(a)(zero); });
       }
 
       updated_rows_weights_.clear();
@@ -449,22 +448,22 @@ void W2VModel<TensorType>::CBOWTrain(TensorType &target, TensorType &context)
   ///////////////////////
 
   // Embeddings: Step in
-  float learning_rate      = alpha_;
-  using VectorRegisterType = typename fetch::math::TensorView<DataType>::VectorRegisterType;
-  fetch::memory::TrivialRange range(0, std::size_t(gradient_weights_.height()));
-  VectorRegisterType          rate(learning_rate);
-  VectorRegisterType          zero(static_cast<DataType>(0));
+  float                learning_rate = alpha_;
+  fetch::memory::Range range(0, std::size_t(gradient_weights_.height()));
+  DataType             zero{0};
 
   for (auto const &r : updated_rows_weights_)
   {
     auto input = gradient_weights_.View(r);
     auto ret   = weights_.View(r);  // embeddings.View(r);
 
-    ret.data().in_parallel().Apply(range,
-                                   [rate](VectorRegisterType const &a, VectorRegisterType const &b,
-                                          VectorRegisterType &c) { c = b + a * rate; },
-                                   input.data(), ret.data());
-    input.data().in_parallel().Apply([zero](VectorRegisterType &a) { a = zero; });
+    ret.data().in_parallel().RangedApplyMultiple(
+        range,
+        [learning_rate](auto const &a, auto const &b, auto &c) {
+          c = b + a * decltype(a)(learning_rate);
+        },
+        input.data(), ret.data());
+    input.data().in_parallel().Apply([zero](auto &a) { a = decltype(a)(zero); });
   }
 
   updated_rows_weights_.clear();

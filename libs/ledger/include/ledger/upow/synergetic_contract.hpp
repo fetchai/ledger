@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/address.hpp"
-#include "ledger/chain/digest.hpp"
+#include "chain/address.hpp"
+#include "ledger/fees/chargeable.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "vm/analyser.hpp"
 #include "vm/common.hpp"
@@ -56,12 +56,14 @@ struct Variant;
 namespace ledger {
 
 class StorageInterface;
+struct ContractContext;
 
-class SynergeticContract
+class SynergeticContract : public Chargeable
 {
 public:
-  using ConstByteArray = byte_array::ConstByteArray;
-  using ProblemData    = std::vector<ConstByteArray>;
+  using ConstByteArray      = byte_array::ConstByteArray;
+  using ProblemData         = std::vector<ConstByteArray>;
+  using CompletionValidator = std::function<bool(void)>;
 
   enum class Status
   {
@@ -69,10 +71,11 @@ public:
     VM_EXECUTION_ERROR,
     NO_STATE_ACCESS,
     GENERAL_ERROR,
+    VALIDATION_ERROR
   };
 
   explicit SynergeticContract(ConstByteArray const &source);
-  ~SynergeticContract() = default;
+  ~SynergeticContract() override = default;
 
   // Accessors
   Digest const &     digest() const;
@@ -85,11 +88,15 @@ public:
   void Attach(StorageInterface &storage);
   void Detach();
 
+  void                   UpdateContractContext(ContractContext const &context);
+  ContractContext const &context() const;
+
   /// @name Actions to be taken on the synergetic contract
   /// @{
   Status DefineProblem(ProblemData const &problem_data);
   Status Work(vectorise::UInt<256> const &nonce, WorkScore &score);
-  Status Complete(uint64_t block, BitVector const &shards);
+  Status Complete(chain::Address const &address, BitVector const &shards,
+                  CompletionValidator const &validator);
   /// @}
 
   /// @name Synergetic State Access
@@ -100,12 +107,17 @@ public:
   vm::Variant const &GetSolution() const;
   /// @}
 
+  uint64_t CalculateFee() const override;
+  void     SetChargeLimit(uint64_t charge_limit);
+
 private:
   using ModulePtr     = std::shared_ptr<vm::Module>;
   using CompilerPtr   = std::shared_ptr<vm::Compiler>;
   using IRPtr         = std::shared_ptr<vm::IR>;
   using ExecutablePtr = std::shared_ptr<vm::Executable>;
   using VariantPtr    = std::shared_ptr<vm::Variant>;
+
+  std::unique_ptr<ContractContext> context_{};
 
   Digest        digest_;
   ModulePtr     module_;
@@ -121,6 +133,9 @@ private:
   StorageInterface *storage_{nullptr};
   VariantPtr        problem_;
   VariantPtr        solution_;
+
+  uint64_t charge_{0};
+  uint64_t charge_limit_{0};
 };
 
 char const *ToString(SynergeticContract::Status status);

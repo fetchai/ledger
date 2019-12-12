@@ -36,7 +36,7 @@ public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Weights<T>::VecTensorType;
   using SPType        = OpEmbeddingsSaveableParams<TensorType>;
   using MyType        = Embeddings<TensorType>;
@@ -55,12 +55,7 @@ public:
 
   explicit Embeddings(SPType const &sp)
     : Weights<T>(sp)
-  {
-    updated_rows_ =
-        std::set<typename TensorType::SizeType>(sp.updated_rows.begin(), sp.updated_rows.begin());
-    trailing_indices1_ = sp.trailing_indices1;
-    trailing_indices2_ = sp.trailing_indices2;
-  }
+  {}
 
   ~Embeddings() override = default;
 
@@ -71,10 +66,6 @@ public:
 
     auto cast_sp = std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(sp);
     *cast_sp     = *(std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(w_sp));
-
-    std::copy(updated_rows_.begin(), updated_rows_.end(), std::back_inserter(sp->updated_rows));
-    sp->trailing_indices1 = trailing_indices1_;
-    sp->trailing_indices2 = trailing_indices2_;
 
     return sp;
   }
@@ -87,25 +78,20 @@ public:
 
     SizeType batch_size = inputs.front()->shape().at(1);
 
-    assert(output.shape().at(0) == this->data_->shape().at(0));
     assert(output.shape().at(1) == inputs.front()->shape().at(0));
+    assert(output.shape().at(0) == this->data_->shape().at(0));
     assert(output.shape().at(2) == batch_size);
 
-    TensorType transposed_input = inputs.front()->Transpose();
-    auto       e_it             = transposed_input.begin();
-
-    for (SizeType i{0}; i < inputs.front()->shape().at(0); i++)
+    auto indices  = inputs.front()->shape().at(0);
+    auto input_it = inputs.front()->begin();
+    for (SizeType i{0}; i < indices; i++)
     {
       for (SizeType n{0}; n < batch_size; n++)
       {
-        trailing_indices1_.at(0) = i;
-        trailing_indices1_.at(1) = n;
-        auto embedding_view      = output.View(trailing_indices1_);
-        trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
-        auto output_view         = this->data_->View(trailing_indices2_);
-
-        embedding_view.Assign(output_view);
-        ++e_it;
+        auto output_view    = output.View({i, n});
+        auto embedding_view = this->data_->View(static_cast<SizeType>(*input_it));
+        output_view.Assign(embedding_view);
+        ++input_it;
       }
     }
   }
@@ -116,32 +102,36 @@ public:
     assert(inputs.size() == 1);
     assert(inputs.front()->shape().size() == 2);
 
-    SizeType batch_size = inputs.front()->shape(1);
-
-    TensorType transposed_input = inputs.front()->Transpose();
-    auto       e_it             = transposed_input.begin();
-    for (SizeType i{0}; i < inputs.front()->shape().at(0); i++)
+    if (!this->value_frozen_)
     {
-      for (SizeType n{0}; n < batch_size; n++)
+      SizeType batch_size = inputs.front()->shape(1);
+
+      auto indices  = inputs.front()->shape().at(0);
+      auto input_it = inputs.front()->begin();
+
+      for (SizeType i{0}; i < indices; i++)
       {
-
-        trailing_indices1_.at(0) = i;
-        trailing_indices1_.at(1) = n;
-        auto error_view          = error_signal.View(trailing_indices1_);
-        trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
-        updated_rows_.insert(static_cast<SizeType>(*e_it));
-        auto gradient_view = this->gradient_accumulation_->View(trailing_indices2_);
-
-        auto error_view_it    = error_view.cbegin();
-        auto gradient_view_it = gradient_view.begin();
-        while (error_view_it.is_valid())
+        for (SizeType n{0}; n < batch_size; n++)
         {
-          *gradient_view_it += *error_view_it;
-          ++error_view_it;
-          ++gradient_view_it;
+          auto error_view    = error_signal.View({i, n});
+          auto gradient_view = this->gradient_accumulation_->View(static_cast<SizeType>(*input_it));
+
+          // Mark update
+          this->updated_rows_.insert(static_cast<SizeType>(*input_it));
+
+          auto error_view_it    = error_view.cbegin();
+          auto gradient_view_it = gradient_view.begin();
+          while (error_view_it.is_valid())
+          {
+            *gradient_view_it += *error_view_it;
+            ++error_view_it;
+            ++gradient_view_it;
+          }
+          ++input_it;
         }
-        ++e_it;
       }
+
+      this->reset_gradients_ = true;
     }
 
     return {TensorType(error_signal.shape())};
@@ -149,8 +139,9 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    std::vector<SizeType> output_shape = {this->data_->shape().at(0), inputs.front()->shape().at(0),
-                                          inputs.front()->shape().at(1)};
+    auto                  feature_size = this->data_->shape().at(0);
+    std::vector<SizeType> output_shape{feature_size, inputs.front()->shape().at(0),
+                                       inputs.front()->shape().at(1)};
     return output_shape;
   }
 
@@ -159,11 +150,6 @@ public:
     return OpType::OP_EMBEDDINGS;
   }
   static constexpr char const *DESCRIPTOR = "Embedding";
-
-private:
-  std::set<typename TensorType::SizeType> updated_rows_;
-  std::vector<SizeType>                   trailing_indices1_ = {0, 0};
-  std::vector<SizeType>                   trailing_indices2_ = {0};
 };
 
 }  // namespace ops

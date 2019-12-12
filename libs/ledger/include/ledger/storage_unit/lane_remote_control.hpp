@@ -19,8 +19,8 @@
 
 #include "core/mutex.hpp"
 #include "ledger/shard_config.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/p2pservice/p2p_lane_management.hpp"
+#include "muddle/rpc/client.hpp"
+#include "shards/shard_management_interface.hpp"
 
 #include <cstdint>
 #include <unordered_set>
@@ -29,7 +29,7 @@
 namespace fetch {
 namespace ledger {
 
-class LaneRemoteControl : public p2p::LaneManagement
+class LaneRemoteControl : public shards::ShardManagementInterface
 {
 public:
   static constexpr char const *LOGGING_NAME = "LaneRemoteControl";
@@ -47,19 +47,14 @@ public:
   LaneRemoteControl &operator=(LaneRemoteControl &&other) = delete;
 
 protected:
-  /// @name Lane Management
+  /// @name Shard Management
   /// @{
-  void     UseThesePeers(LaneIndex lane, std::unordered_set<Uri> const &uris) override;
-  void     Shutdown(LaneIndex lane) override;
-  uint32_t GetLaneNumber(LaneIndex lane) override;
-  int      IncomingPeers(LaneIndex lane) override;
-  int      OutgoingPeers(LaneIndex lane) override;
-  bool     IsAlive(LaneIndex lane) override;
+  void UseThesePeers(LaneIndex lane, AddressMap const &addresses) override;
   /// @}
 
 private:
   using RpcClient   = muddle::rpc::Client;
-  using Address     = muddle::MuddleEndpoint::Address;
+  using Address     = muddle::Address;
   using AddressList = std::vector<Address>;
 
   Address const &LookupAddress(LaneIndex lane) const;

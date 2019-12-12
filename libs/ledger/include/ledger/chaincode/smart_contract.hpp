@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/fnv.hpp"  // needed for std::hash<ConstByteArray> !!!
+#include "crypto/fnv.hpp"  // needed for std::hash<ConstByteArray>
 #include "ledger/chaincode/contract.hpp"
+#include "vm_modules/ledger/context.hpp"
 
 #include <memory>
 #include <string>
@@ -30,14 +31,16 @@ struct Executable;
 class Module;
 }  // namespace vm
 
-namespace ledger {
+namespace chain {
 
 class Address;
 
+}  // namespace chain
+
+namespace ledger {
+
 /**
- * Smart Contract instance.
- *
- * Contains an instance of the virtual machine
+ * Smart Contract instance
  */
 class SmartContract : public Contract
 {
@@ -45,8 +48,6 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using Executable     = fetch::vm::Executable;
   using ExecutablePtr  = std::shared_ptr<Executable>;
-
-  static constexpr char const *LOGGING_NAME = "SmartContract";
 
   // Construction / Destruction
   explicit SmartContract(std::string const &source);
@@ -66,16 +67,16 @@ private:
   using ModulePtr = std::shared_ptr<vm::Module>;
 
   // Transaction /
-  Result InvokeAction(std::string const &name, Transaction const &tx, BlockIndex index);
+  Result InvokeAction(std::string const &name, chain::Transaction const &tx);
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
-  Result InvokeInit(Address const &owner);
+  Result InvokeInit(chain::Address const &owner, chain::Transaction const &tx);
 
-  BlockIndex     block_index_{};  ///< The index current contract's block
-  std::string    source_;         ///< The source of the current contract
-  ConstByteArray digest_;         ///< The digest of the current contract
-  ExecutablePtr  executable_;     ///< The internal script object of the parsed source
-  ModulePtr      module_;         ///< The internal module instance for the contract
-  std::string    init_fn_name_;
+  std::string                    source_;      ///< The source of the current contract
+  ConstByteArray                 digest_;      ///< The digest of the current contract
+  ExecutablePtr                  executable_;  ///< The internal script object of the parsed source
+  ModulePtr                      module_;      ///< The internal module instance for the contract
+  std::string                    init_fn_name_;
+  vm_modules::ledger::ContextPtr context_;
 };
 
 }  // namespace ledger

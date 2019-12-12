@@ -52,8 +52,7 @@ private:
  */
 inline void UnigramTable::ResetTable(std::vector<SizeType> const &count, SizeType size)
 {
-
-  if (size && !count.empty())
+  if ((size != 0u) && !count.empty())
   {
     data_.resize(size);
 

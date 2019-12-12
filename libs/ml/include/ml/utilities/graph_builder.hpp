@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/graph.hpp"
+#include "ml/ops/metrics/categorical_accuracy.hpp"
 
 #include "ml/layers/PRelu.hpp"
 #include "ml/layers/convolution_1d.hpp"
@@ -41,6 +42,8 @@
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/add.hpp"
+#include "ml/ops/avg_pool_1d.hpp"
+#include "ml/ops/avg_pool_2d.hpp"
 #include "ml/ops/concatenate.hpp"
 #include "ml/ops/convolution_1d.hpp"
 #include "ml/ops/convolution_2d.hpp"
@@ -52,17 +55,23 @@
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/mask_fill.hpp"
 #include "ml/ops/matrix_multiply.hpp"
+#include "ml/ops/max_pool.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "ml/ops/max_pool_2d.hpp"
 #include "ml/ops/maximum.hpp"
 #include "ml/ops/multiply.hpp"
+#include "ml/ops/one_hot.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "ml/ops/reduce_mean.hpp"
 #include "ml/ops/reshape.hpp"
 #include "ml/ops/slice.hpp"
 #include "ml/ops/sqrt.hpp"
+#include "ml/ops/squeeze.hpp"
+#include "ml/ops/strided_slice.hpp"
 #include "ml/ops/subtract.hpp"
 #include "ml/ops/switch.hpp"
 #include "ml/ops/tanh.hpp"
+#include "ml/ops/top_k.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/saveparams/saveable_params.hpp"
@@ -88,7 +97,7 @@ void BuildGraph(GraphSaveableParams<T> const &sp, std::shared_ptr<Graph<T>> ret)
     if (node_name.size() >= suffix.size() &&
         node_name.compare(node_name.size() - suffix.size(), suffix.size(), suffix) == 0)
     {
-      throw std::runtime_error("Cannot currently deserialize shared-weights graph");
+      throw ml::exceptions::NotImplemented("Cannot currently deserialize shared-weights graph");
     }
 
     BuildNodeAndInsertTrainables(*(std::dynamic_pointer_cast<NodeSaveableParams<T>>(node.second)),
@@ -119,14 +128,12 @@ std::shared_ptr<OperationType> BuildLayer(std::shared_ptr<OpsSaveableParams> op_
   return ret;
 }
 
-namespace {
 template <class OperationType>
 std::shared_ptr<OperationType> GetOp(std::shared_ptr<OpsSaveableParams> op_save_params)
 {
   return std::make_shared<OperationType>(
       *(std::dynamic_pointer_cast<typename OperationType::SPType>(op_save_params)));
 }
-}  // namespace
 
 template <typename T>
 void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string const &name,
@@ -251,9 +258,9 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
-  case ops::LeakyReluOp<T>::OpCode():
+  case ops::PReluOp<T>::OpCode():
   {
-    op_ptr = GetOp<ops::LeakyReluOp<T>>(nsp.op_save_params);
+    op_ptr = GetOp<ops::PReluOp<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
     g->AddTrainable(node, name);
     break;
@@ -314,6 +321,27 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
+  case ops::MaxPool<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::MaxPool<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::AvgPool1D<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::AvgPool1D<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::AvgPool2D<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::AvgPool2D<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
   case ops::Maximum<T>::OpCode():
   {
     op_ptr = GetOp<ops::Maximum<T>>(nsp.op_save_params);
@@ -370,6 +398,20 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
+  case ops::StridedSlice<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::StridedSlice<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::ReduceMean<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::ReduceMean<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
   case ops::Softmax<T>::OpCode():
   {
     op_ptr = GetOp<ops::Softmax<T>>(nsp.op_save_params);
@@ -415,6 +457,27 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   case ops::Transpose<T>::OpCode():
   {
     op_ptr = GetOp<ops::Transpose<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::OneHot<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::OneHot<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::TopK<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::TopK<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case ops::Squeeze<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Squeeze<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
     g->AddTrainable(node, name);
     break;
@@ -489,13 +552,28 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
+  case OpType::METRIC_CATEGORICAL_ACCURACY:
+  {
+    op_ptr = GetOp<ops::CategoricalAccuracy<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
+  case OpType::GRAPH:
+  case OpType::NONE:
+  case OpType::SUBGRAPH:
+  case OpType::OP_VARIABLE:
+  case OpType::OP_DATAHOLDER:
+  {
+    throw ml::exceptions::NotImplemented();
+  }
   default:
-    throw std::runtime_error("unknown node type");
+    throw ml::exceptions::NotImplemented("unknown node type");
   }
 
   if (!(g->InsertNode(name, node)))
   {
-    throw std::runtime_error("BuildGraph unable to insert node");
+    throw ml::exceptions::InvalidMode("BuildGraph unable to insert node");
   }
 }
 

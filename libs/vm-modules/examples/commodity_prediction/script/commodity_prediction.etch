@@ -1,0 +1,76 @@
+function build_graph(graph: Graph)
+// make graph with correct architecture
+var dropout_prob = 1.0fp64;
+var input_size = 118;
+var first_dense_size = 216;
+var second_dense_size = 108;
+var output_size = 54;
+
+graph.addPlaceholder("num_input");
+graph.addPlaceholder("label");
+graph.addDropout("dropout_0", "num_input", dropout_prob);
+graph.addFullyConnected("hidden_dense_1", "dropout_0", input_size, first_dense_size);
+graph.addSoftmax("softmax_1", "hidden_dense_1");
+graph.addDropout("dropout_1", "softmax_1", dropout_prob);
+graph.addFullyConnected("hidden_dense_2", "dropout_1", first_dense_size, second_dense_size);
+graph.addSoftmax("softmax_2", "hidden_dense_2");
+graph.addDropout("dropout_2", "softmax_2", dropout_prob);
+graph.addFullyConnected("output_dense", "dropout_2", second_dense_size, output_size);
+graph.addSoftmax("softmax_3", "output_dense");
+
+graph.addMeanSquareErrorLoss("Error", "softmax_3", "label");
+
+endfunction
+
+function read_weights(graph: Graph)
+// read in weights
+var state = State<StateDict>("foo");
+var new_sd = state.get();
+printLn("Loaded sd from state");
+graph.loadStateDict(new_sd);
+endfunction
+
+function main()
+
+if (System.Argc() != 4)
+  printLn("Usage: VM SCRIPT_FILE PATH/TO/model_files/ /PATH/TO/input_file.csv /PATH/TO/label_file.csv");
+  return;
+endif
+
+var loader = DataLoader();
+loader.addData("commodity", System.Argv(2), System.Argv(3));
+
+var graph = Graph();
+build_graph(graph);
+
+var testing = true;
+
+if (testing)
+    read_weights(graph);
+    printLn("Weights read");
+    var pred_string = "";
+    while(!loader.isDone())
+        var input_data = loader.getNext();
+        graph.setInput("num_input", input_data.data());
+        var pred = graph.evaluate("softmax_3");
+        pred_string = pred.toString();
+    endwhile
+    print(pred_string);
+    printLn("Finished successfully");
+else
+    // Set up the optimiser
+    var optimiser = Optimiser("adam", graph, {"num_input"}, "softmax_3", "error");
+
+    // Begin the training loop
+    var training_iterations = 10;
+    var batch_size = 64u64;
+    var subset_size = (100u64 * 64u64);
+    for(i in 0:training_iterations)
+        var loss = optimiser.run(loader, batch_size, subset_size);
+        print("Current Loss: ");
+        printLn(loss);
+    endfor
+endif
+
+
+endfunction

@@ -42,7 +42,7 @@ public:
 
 private:
   ClockType clock_;
-  Duration  offset_;
+  Duration  offset_{};
 };
 
 }  // namespace detail

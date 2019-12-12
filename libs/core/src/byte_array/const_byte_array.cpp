@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 
 namespace fetch {
@@ -34,7 +35,7 @@ ConstByteArray ConstByteArray::ToHex() const
 
 std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
 {
-  char const *arr = reinterpret_cast<char const *>(str.pointer());
+  auto const *arr = reinterpret_cast<char const *>(str.pointer());
   for (std::size_t i = 0; i < str.size(); ++i)
   {
     os << arr[i];
@@ -47,6 +48,16 @@ ConstByteArray operator+(char const *a, ConstByteArray const &b)
   ConstByteArray s(a);
   s = s + b;
   return s;
+}
+
+ConstByteArray ConstByteArray::FromBase64() const
+{
+  return fetch::byte_array::FromBase64(*this);
+}
+
+ConstByteArray ConstByteArray::FromHex() const
+{
+  return fetch::byte_array::FromHex(*this);
 }
 
 }  // namespace byte_array

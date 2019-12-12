@@ -72,6 +72,7 @@ public:
   settings::Setting<uint32_t>    transient_peers;
   settings::Setting<uint32_t>    peer_update_interval;
   settings::Setting<bool>        disable_signing;
+  settings::Setting<bool>        kademlia_routing;
   /// @}
 
   /// @name Bootstrap Config
@@ -92,9 +93,8 @@ public:
 
   /// @name State File
   /// @{
-  settings::Setting<bool>        dump_state;
-  settings::Setting<bool>        load_state;
-  settings::Setting<std::string> stakefile_location;
+  settings::Setting<bool>        load_genesis_file;
+  settings::Setting<std::string> genesis_file_location;
   /// @}
 
   /// @name Experimental
@@ -104,8 +104,10 @@ public:
 
   /// @name Proof of Stake
   /// @{
-  settings::Setting<bool>        proof_of_stake;
-  settings::Setting<std::string> beacon_address;
+  settings::Setting<bool>     proof_of_stake;
+  settings::Setting<uint64_t> max_cabinet_size;
+  settings::Setting<uint64_t> stake_delay_period;
+  settings::Setting<uint64_t> aeon_period;
   /// @}
 
   // Operators

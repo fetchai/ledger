@@ -17,20 +17,50 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/vectorise.hpp"
+#ifdef __AVX2__
+#include "vectorise/arch/avx2/math/max.hpp"
+#endif
+
+#include <cmath>
+#include <cstddef>
+
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
-inline VectorRegister<float, 128> max(VectorRegister<float, 128> const &a,
-                                      VectorRegister<float, 128> const &b)
+template <typename T>
+inline fetch::math::meta::IfIsNonFixedPointArithmetic<T, T> Max(T const &a, T const &b)
 {
-  return VectorRegister<float, 128>(_mm_max_ps(a.data(), b.data()));
+  return T(std::max(a, b));
 }
 
-inline VectorRegister<double, 128> max(VectorRegister<double, 128> const &a,
-                                       VectorRegister<double, 128> const &b)
+template <typename T>
+inline fetch::math::meta::IfIsFixedPoint<T, T> Max(T const &a, T const &b)
 {
-  return VectorRegister<double, 128>(_mm_max_pd(a.data(), b.data()));
+  return T::FromBase(std::max(a.Data(), b.Data()));
 }
 
-}  // namespace vectorize
+template <typename T>
+inline VectorRegister<T, 8 * sizeof(T)> Max(VectorRegister<T, 8 * sizeof(T)> const &a,
+                                            VectorRegister<T, 8 * sizeof(T)> const &b)
+{
+  return VectorRegister<T, 8 * sizeof(T)>(fetch::vectorise::Max(a.data(), b.data()));
+}
+
+template <typename T, std::size_t N>
+inline T Max(VectorRegister<T, N> const &a)
+{
+
+  constexpr std::size_t                            size = N / (8 * sizeof(T));
+  alignas(VectorRegister<T, N>::E_REGISTER_SIZE) T A[size];
+  a.Store(A);
+  T max{A[0]};
+  for (std::size_t i = 1; i < size; i++)
+  {
+    max = Max(A[i], max);
+  }
+  return max;
+}
+
+}  // namespace vectorise
 }  // namespace fetch

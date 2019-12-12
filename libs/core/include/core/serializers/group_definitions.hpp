@@ -17,13 +17,32 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstdint>
+
 namespace fetch {
 namespace serializers {
+
+enum class SerializerTypes
+{
+  BOOLEAN,
+  INTEGER,
+  UNSIGNED_INTEGER,
+  FLOATING_POINT,
+  BINARY,
+  ARRAY,
+  MAP,
+  STRING,
+  EXTENSION,
+  NULL_VALUE,
+  UNKNOWN
+};
 
 struct TypeCodes
 {
   enum
   {
+    NIL = 0xc0,
+
     BOOL_TRUE  = 0xc3,
     BOOL_FALSE = 0xc2,
     INT8       = 0xd0,
@@ -39,9 +58,18 @@ struct TypeCodes
     FLOAT  = 0xca,
     DOUBLE = 0xcb,
 
-    BINARY_CODE_FIXED = 0xc4,
-    BINARY_CODE16     = 0xc5,
-    BINARY_CODE32     = 0xc6,
+    BINARY_CODE8  = 0xc4,
+    BINARY_CODE16 = 0xc5,
+    BINARY_CODE32 = 0xc6,
+
+    EXTENSION_CODE8   = 0xc7,  // TODO(tfr): Make EXTENSION implementation
+    EXTENSION_CODE16  = 0xc8,
+    EXTENSION_CODE32  = 0xc9,
+    EXTENSION_FIXED1  = 0xd4,
+    EXTENSION_FIXED2  = 0xd5,
+    EXTENSION_FIXED4  = 0xd6,
+    EXTENSION_FIXED8  = 0xd7,
+    EXTENSION_FIXED16 = 0xd8,
 
     ARRAY_CODE_FIXED = 0x90,
     ARRAY_CODE16     = 0xdc,
@@ -62,6 +90,87 @@ struct TypeCodes
     STRING_CODE32     = 0xdb
   };
 };
+
+inline SerializerTypes DetermineType(uint8_t b)
+{
+  switch (b)
+  {
+  case TypeCodes::NIL:
+    return SerializerTypes::NULL_VALUE;
+  case TypeCodes::BOOL_TRUE:
+  case TypeCodes::BOOL_FALSE:
+    return SerializerTypes::BOOLEAN;
+  case TypeCodes::INT8:
+  case TypeCodes::INT16:
+  case TypeCodes::INT32:
+  case TypeCodes::INT64:
+    return SerializerTypes::INTEGER;
+  case TypeCodes::UINT8:
+  case TypeCodes::UINT16:
+  case TypeCodes::UINT32:
+  case TypeCodes::UINT64:
+    return SerializerTypes::UNSIGNED_INTEGER;
+  case TypeCodes::FLOAT:
+  case TypeCodes::DOUBLE:
+    return SerializerTypes::FLOATING_POINT;
+  case TypeCodes::BINARY_CODE8:
+  case TypeCodes::BINARY_CODE16:
+  case TypeCodes::BINARY_CODE32:
+    return SerializerTypes::BINARY;
+  case TypeCodes::EXTENSION_CODE8:
+  case TypeCodes::EXTENSION_CODE16:
+  case TypeCodes::EXTENSION_CODE32:
+  case TypeCodes::EXTENSION_FIXED1:
+  case TypeCodes::EXTENSION_FIXED2:
+  case TypeCodes::EXTENSION_FIXED4:
+  case TypeCodes::EXTENSION_FIXED8:
+  case TypeCodes::EXTENSION_FIXED16:
+    return SerializerTypes::EXTENSION;
+  case TypeCodes::ARRAY_CODE16:
+  case TypeCodes::ARRAY_CODE32:
+    return SerializerTypes::ARRAY;
+  case TypeCodes::MAP_CODE16:
+  case TypeCodes::MAP_CODE32:
+    return SerializerTypes::MAP;
+  case TypeCodes::STRING_CODE8:
+  case TypeCodes::STRING_CODE16:
+  case TypeCodes::STRING_CODE32:
+    return SerializerTypes::STRING;
+  }
+
+  switch (b & TypeCodes::FIXED_MASK1)
+  {
+  case TypeCodes::ARRAY_CODE_FIXED:
+    return SerializerTypes::ARRAY;
+  case TypeCodes::MAP_CODE_FIXED:
+    return SerializerTypes::MAP;
+  }
+
+  switch (b & TypeCodes::FIXED_MASK2)
+  {
+  case TypeCodes::STRING_CODE_FIXED:
+    return SerializerTypes::STRING;
+  }
+
+  if (b < 128)
+  {
+    return SerializerTypes::UNSIGNED_INTEGER;
+  }
+
+  union
+  {
+    uint8_t code;
+    int8_t  value;
+  } conversion{};
+  conversion.code = b;
+
+  if (-0x20 <= conversion.value)
+  {
+    return SerializerTypes::INTEGER;
+  }
+
+  return SerializerTypes::UNKNOWN;
+}
 
 template <typename T, typename D>
 struct IgnoredSerializer;

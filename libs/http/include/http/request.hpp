@@ -19,12 +19,12 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/json/document.hpp"
-#include "core/logging.hpp"
 #include "http/authentication_level.hpp"
 #include "http/header.hpp"
 #include "http/method.hpp"
 #include "http/query.hpp"
+#include "json/document.hpp"
+#include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 
 #include <chrono>
@@ -152,7 +152,7 @@ public:
 
   void AddAuthentication(byte_array::ConstByteArray const &auth_method, uint32_t level)
   {
-    if (auth_method_.size() != 0)
+    if (!auth_method_.empty())
     {
       auth_method_.Append(", ");
     }

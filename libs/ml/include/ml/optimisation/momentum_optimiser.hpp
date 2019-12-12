@@ -36,7 +36,7 @@ class MomentumOptimiser : public Optimiser<T>
 public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
-  using SizeType   = typename TensorType::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   MomentumOptimiser(std::shared_ptr<Graph<T>>       graph,
                     std::vector<std::string> const &input_node_names,
@@ -51,6 +51,11 @@ public:
                     DataType const &momentum_update = DataType{0.9f});
 
   ~MomentumOptimiser() override = default;
+
+  OptimiserType OptimiserCode() override
+  {
+    return OptimiserType::MOMENTUM;
+  }
 
 private:
   std::vector<TensorType> momentum_;
@@ -68,7 +73,7 @@ void MomentumOptimiser<T>::Init()
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->momentum_.emplace_back(TensorType(train->get_weights().shape()));
+    this->momentum_.emplace_back(TensorType(train->GetWeights().shape()));
   }
   ResetMomentum();
 }
@@ -109,23 +114,32 @@ void MomentumOptimiser<T>::ApplyGradients(SizeType batch_size)
 
   while (gradient_it != this->gradients_.end())
   {
-    // momentum[i] = momentum_update * momentum[i] + learning_rate * (input_grad[i]/batch_size)
-    fetch::math::Multiply(*mit, momentum_update_, *mit);
-    fetch::math::Multiply((*trainable_it)->GetGradientsReferences(),
-                          (this->learning_rate_) / (static_cast<DataType>(batch_size)),
-                          *gradient_it);
-    fetch::math::Add(*mit, *gradient_it, *mit);
+    // Skip frozen trainables
+    if (!(*trainable_it)->GetFrozenState())
+    {
 
-    // output_grad[i]=-momentum[i]
-    fetch::math::Multiply(*mit, negative_one_, *gradient_it);
+      // momentum[i] = momentum_update * momentum[i] + learning_rate * (input_grad[i]/batch_size)
+      fetch::math::Multiply(*mit, momentum_update_, *mit);
+      fetch::math::Multiply((*trainable_it)->GetGradientsReferences(),
+                            (this->learning_rate_) / (static_cast<DataType>(batch_size)),
+                            *gradient_it);
+      fetch::math::Add(*mit, *gradient_it, *mit);
 
-    // Apply gradient weights[i]+=output_grad[i]
-    (*trainable_it)->ApplyGradient(*gradient_it);
+      // output_grad[i]=-momentum[i]
+      fetch::math::Multiply(*mit, negative_one_, *gradient_it);
+
+      // we need to explicitly reset the gradients for this shared op to avoid double counting
+      // in the case of shared ops
+      (*trainable_it)->ResetGradients();
+    }
 
     ++trainable_it;
     ++gradient_it;
     ++mit;
   }
+
+  // calling apply gradients on the graph ensures that the node caches are reset properly
+  this->graph_->ApplyGradients(this->gradients_);
 }
 
 template <class T>

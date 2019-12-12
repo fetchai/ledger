@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/future_timepoint.hpp"
 #include "core/mutex.hpp"
 #include "core/periodic_action.hpp"
@@ -24,7 +25,7 @@
 #include "core/synchronisation/protected.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/synergetic_execution_manager_interface.hpp"
@@ -41,6 +42,7 @@
 #include <vector>
 
 namespace fetch {
+
 namespace core {
 class FeatureFlags;
 }
@@ -50,9 +52,6 @@ class Prover;
 }
 
 namespace ledger {
-namespace consensus {
-class ConsensusMinerInterface;
-}
 
 class TransactionStatusCache;
 class BlockPackerInterface;
@@ -60,7 +59,6 @@ class ExecutionManagerInterface;
 class MainChain;
 class StorageUnitInterface;
 class BlockSinkInterface;
-class StakeManagerInterface;
 
 /**
  * The Block Coordinator is in charge of executing all the blocks that come into the system. It will
@@ -120,7 +118,7 @@ class StakeManagerInterface;
  *                  │─ ─ ─ ─ ─ ─              │─ ─ ─ ─ ─ ─ ┘         │                  │
  *                  ▼                         ▼                      │                  │
  *        ┌──────────────────┐      ┌──────────────────┐             │                  │
- *        │ Post Exec. Block │      │   Proof Search   │             │                  │
+ *        │ Post Exec. Block │      │                  │             │                  │
  *        │    Validation    │      │                  │◀ ─          │                  │
  *        └──────────────────┘      └──────────────────┘   │         │                  │
  *                  │                         │                      │                  │
@@ -147,10 +145,10 @@ class BlockCoordinator
 public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using DAGPtr          = std::shared_ptr<ledger::DAGInterface>;
-  using ProverPtr       = std::shared_ptr<crypto::Prover>;
-  using StakeManagerPtr = std::shared_ptr<StakeManagerInterface>;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using DAGPtr         = std::shared_ptr<ledger::DAGInterface>;
+  using ProverPtr      = std::shared_ptr<crypto::Prover>;
+  using ConsensusPtr   = std::shared_ptr<ledger::ConsensusInterface>;
 
   enum class State
   {
@@ -173,30 +171,25 @@ public:
     NEW_SYNERGETIC_EXECUTION,
     EXECUTE_NEW_BLOCK,             ///< Schedule the execution of the new block
     WAIT_FOR_NEW_BLOCK_EXECUTION,  ///< Wait for the new block to be executed
-    PROOF_SEARCH,                  ///< New Block: Waiting until a hash can be found
     TRANSMIT_BLOCK,                ///< Transmit the new block to
 
     // Main loop
     RESET  ///< Cycle complete
   };
-  using StateMachine = core::StateMachine<State>;
+  using StateMachine         = core::StateMachine<State>;
+  using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
 
   static char const *ToString(State state);
 
   // Construction / Destruction
-  BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr stake_mgr,
-                   ExecutionManagerInterface &execution_manager, StorageUnitInterface &storage_unit,
-                   BlockPackerInterface &packer, BlockSinkInterface &block_sink,
-                   core::FeatureFlags const &features, ProverPtr const &prover,
-                   std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty);
+  BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
+                   StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
+                   BlockSinkInterface &block_sink, ProverPtr prover, uint32_t log2_num_lanes,
+                   std::size_t num_slices, ConsensusPtr consensus,
+                   SynergeticExecMgrPtr synergetic_exec_manager);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
-
-  template <typename R, typename P>
-  void SetBlockPeriod(std::chrono::duration<R, P> const &period);
-  void EnableMining(bool enable = true);
-  void TriggerBlockGeneration();  // useful in tests
 
   std::weak_ptr<core::Runnable> GetWeakRunnable()
   {
@@ -255,22 +248,20 @@ private:
 
   static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 5000;
 
-  using BlockPtr             = MainChain::BlockPtr;
-  using NextBlockPtr         = std::unique_ptr<Block>;
-  using PendingBlocks        = std::deque<BlockPtr>;
-  using PendingStack         = std::vector<BlockPtr>;
-  using Flag                 = std::atomic<bool>;
-  using BlockPeriod          = std::chrono::milliseconds;
-  using Clock                = std::chrono::system_clock;
-  using Timepoint            = Clock::time_point;
-  using StateMachinePtr      = std::shared_ptr<StateMachine>;
-  using MinerPtr             = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxDigestSetPtr       = std::unique_ptr<DigestSet>;
-  using LastExecutedBlock    = Protected<ConstByteArray>;
-  using FutureTimepoint      = fetch::core::FutureTimepoint;
-  using DeadlineTimer        = fetch::moment::DeadlineTimer;
-  using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
-  using SynExecStatus        = SynergeticExecutionManagerInterface::ExecStatus;
+  using BlockPtr          = MainChain::BlockPtr;
+  using NextBlockPtr      = std::unique_ptr<Block>;
+  using PendingBlocks     = std::deque<BlockPtr>;
+  using PendingStack      = std::vector<BlockPtr>;
+  using Flag              = std::atomic<bool>;
+  using BlockPeriod       = std::chrono::milliseconds;
+  using Clock             = std::chrono::system_clock;
+  using Timepoint         = Clock::time_point;
+  using StateMachinePtr   = std::shared_ptr<StateMachine>;
+  using TxDigestSetPtr    = std::unique_ptr<DigestSet>;
+  using LastExecutedBlock = Protected<ConstByteArray>;
+  using FutureTimepoint   = fetch::core::FutureTimepoint;
+  using DeadlineTimer     = fetch::moment::DeadlineTimer;
+  using SynExecStatus     = SynergeticExecutionManagerInterface::ExecStatus;
 
   /// @name Monitor State
   /// @{
@@ -291,7 +282,6 @@ private:
   State OnNewSynergeticExecution();
   State OnExecuteNewBlock();
   State OnWaitForNewBlockExecution();
-  State OnProofSearch();
   State OnTransmitBlock();
   State OnReset();
   /// @}
@@ -300,21 +290,20 @@ private:
   bool            ScheduleNextBlock();
   bool            ScheduleBlock(Block const &block);
   ExecutionStatus QueryExecutorStatus();
-  void            UpdateNextBlockTime();
+  void            RemoveBlock(MainChain::BlockHash const &hash);
 
   static char const *ToString(ExecutionStatus state);
 
   /// @name External Components
   /// @{
-  MainChain &                chain_;              ///< Ref to system chain
-  DAGPtr                     dag_;                ///< Ref to DAG
-  StakeManagerPtr            stake_;              ///< Ref to Stake manager
+  MainChain &                chain_;  ///< Ref to system chain
+  DAGPtr                     dag_;    ///< Ref to DAG
+  ConsensusPtr               consensus_;
   ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
   BlockSinkInterface &       block_sink_;         ///< Ref to the output sink interface
   PeriodicAction             periodic_print_;
-  MinerPtr                   miner_;
   MainChain::Blocks blocks_to_common_ancestor_;  ///< Partial vector of blocks from main chain HEAD
                                                  ///< to block coord. last executed block.
   /// @}
@@ -326,15 +315,12 @@ private:
 
   /// @name State Machine State
   /// @{
-  Address         mining_address_;          ///< The miners address
-  StateMachinePtr state_machine_;           ///< The main state machine for this service
-  std::size_t     block_difficulty_;        ///< The number of leading zeros needed in the proof
-  std::size_t     num_lanes_;               ///< The current number of lanes
-  std::size_t     num_slices_;              ///< The current number of slices
-  Flag            mining_{false};           ///< Flag to signal if this node generating blocks
-  Flag            mining_enabled_{false};   ///< Short term signal to toggle on and off
-  BlockPeriod     block_period_;            ///< The desired period before a block is generated
-  Timepoint       next_block_time_;         ///< The next point that a block should be generated
+  ProverPtr       certificate_;     ///< The miners identity
+  chain::Address  mining_address_;  ///< The miners address
+  StateMachinePtr state_machine_;   ///< The main state machine for this service
+  uint32_t        log2_num_lanes_{};
+  std::size_t     num_lanes_{1u << log2_num_lanes_};  ///< The current number of lanes
+  std::size_t     num_slices_;                        ///< The current number of slices
   BlockPtr        current_block_{};         ///< The pointer to the current block (read only)
   NextBlockPtr    next_block_{};            ///< The next block being created (read / write)
   TxDigestSetPtr  pending_txs_{};           ///< The list of pending txs that are being waited on
@@ -342,11 +328,12 @@ private:
   PeriodicAction  exec_wait_periodic_;      ///< Periodic print for execution
   PeriodicAction  syncing_periodic_;        ///< Periodic print for synchronisation
   Timepoint       start_waiting_for_tx_{};  ///< The time at which we started waiting for txs
-  DeadlineTimer   wait_for_tx_timeout_{"bc:deadline"};  ///< Timeout when waiting for transactions
-  DeadlineTimer   wait_before_asking_for_missing_tx_{
-      "bc:deadline"};              ///< Time to wait before asking peers for any missing txs
-  bool have_asked_for_missing_txs_;  ///< true if a request for missing Txs has been issued for the
-                                     ///< current block
+  /// Timeout when waiting for transactions
+  DeadlineTimer wait_for_tx_timeout_{"bc:deadline"};
+  /// Time to wait before asking peers for any missing txs
+  DeadlineTimer wait_before_asking_for_missing_tx_{"bc:deadline"};
+  /// true if a request for missing Txs has been issued for the current block
+  bool have_asked_for_missing_txs_{};
   /// @}
 
   /// @name Synergetic Contracts
@@ -369,7 +356,6 @@ private:
   telemetry::CounterPtr         new_syn_state_count_;
   telemetry::CounterPtr         new_exec_state_count_;
   telemetry::CounterPtr         new_wait_exec_state_count_;
-  telemetry::CounterPtr         proof_search_state_count_;
   telemetry::CounterPtr         transmit_state_count_;
   telemetry::CounterPtr         reset_state_count_;
   telemetry::CounterPtr         executed_block_count_;
@@ -380,21 +366,9 @@ private:
   telemetry::HistogramPtr       tx_sync_times_;
   telemetry::GaugePtr<uint64_t> current_block_num_;
   telemetry::GaugePtr<uint64_t> next_block_num_;
+  telemetry::GaugePtr<uint64_t> block_hash_;
   /// @}
 };
-
-template <typename R, typename P>
-void BlockCoordinator::SetBlockPeriod(std::chrono::duration<R, P> const &period)
-{
-  using std::chrono::duration_cast;
-
-  // convert and store
-  block_period_ = duration_cast<BlockPeriod>(period);
-  UpdateNextBlockTime();
-
-  // signal that we are mining
-  mining_ = true;
-}
 
 }  // namespace ledger
 }  // namespace fetch

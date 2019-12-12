@@ -45,7 +45,7 @@ void Object::RuntimeError(std::string const &message)
   vm_->RuntimeError(message);
 }
 
-TypeInfo const &Object::GetTypeInfo(TypeId type_id)
+TypeInfo Object::GetTypeInfo(TypeId type_id)
 {
   return vm_->GetTypeInfo(type_id);
 }
@@ -256,31 +256,31 @@ void Object::InplaceRightDivide(Ptr<Object> const & /* lhso*/, Variant const & /
 
 bool Object::SerializeTo(MsgPackSerializer & /*buffer*/)
 {
-  vm_->RuntimeError("Serializer for " + GetUniqueId() + " is not defined.");
+  vm_->RuntimeError("Serializer for " + GetTypeName() + " is not defined.");
   return false;
 }
 
 bool Object::DeserializeFrom(MsgPackSerializer & /*buffer*/)
 {
-  vm_->RuntimeError("Deserializer for " + GetUniqueId() + " is not defined.");
+  vm_->RuntimeError("Deserializer for " + GetTypeName() + " is not defined.");
   return false;
 }
 
-std::string Object::GetUniqueId() const
+std::string Object::GetTypeName() const
 {
-  return vm_->GetUniqueId(type_id_);
+  return vm_->GetTypeName(type_id_);
 }
 
 bool Object::ToJSON(JSONVariant &variant)
 {
-  variant = "JSON serializer for " + GetUniqueId() + " is not defined.";
-  vm_->RuntimeError("JSON serializer for " + GetUniqueId() + " is not defined.");
+  variant = "JSON serializer for " + GetTypeName() + " is not defined.";
+  vm_->RuntimeError("JSON serializer for " + GetTypeName() + " is not defined.");
   return false;
 }
 
 bool Object::FromJSON(JSONVariant const & /*variant*/)
 {
-  vm_->RuntimeError("JSON deserializer for " + GetUniqueId() + " is not defined.");
+  vm_->RuntimeError("JSON deserializer for " + GetTypeName() + " is not defined.");
   return false;
 }
 

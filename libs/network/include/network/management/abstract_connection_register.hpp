@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 
 #include <atomic>
 #include <functional>
@@ -36,10 +37,10 @@ class AbstractConnection;
 class AbstractConnectionRegister : public std::enable_shared_from_this<AbstractConnectionRegister>
 {
 public:
-  using connection_handle_type     = uint64_t;
-  using weak_service_client_type   = std::weak_ptr<service::ServiceClient>;
-  using shared_service_client_type = std::shared_ptr<service::ServiceClient>;
-  using service_map_type = std::unordered_map<connection_handle_type, weak_service_client_type>;
+  using ConnectionHandleType    = uint64_t;
+  using WeakServiceClientType   = std::weak_ptr<service::ServiceClient>;
+  using SharedServiceClientType = std::shared_ptr<service::ServiceClient>;
+  using ServiceMapType          = std::unordered_map<ConnectionHandleType, WeakServiceClientType>;
 
   static constexpr char const *LOGGING_NAME = "AbstractConnectionRegister";
 
@@ -54,10 +55,10 @@ public:
 
   virtual ~AbstractConnectionRegister() = default;
 
-  virtual void Leave(connection_handle_type id)                 = 0;
+  virtual void Leave(ConnectionHandleType id)                   = 0;
   virtual void Enter(std::weak_ptr<AbstractConnection> const &) = 0;
 
-  shared_service_client_type GetService(connection_handle_type const &i)
+  SharedServiceClientType GetService(ConnectionHandleType const &i)
   {
     FETCH_LOCK(service_lock_);
     if (services_.find(i) == services_.end())
@@ -67,16 +68,16 @@ public:
     return services_[i].lock();
   }
 
-  // TODO(kll): Rename this to match ServiceClients below.
-  void WithServices(std::function<void(service_map_type const &)> f) const
+  // TODO(issue 1673): Rename this to match ServiceClients below.
+  void WithServices(std::function<void(ServiceMapType const &)> const &f) const
   {
     FETCH_LOCK(service_lock_);
     f(services_);
   }
 
-  void VisitServiceClients(std::function<void(service_map_type::value_type const &)> f) const
+  void VisitServiceClients(std::function<void(ServiceMapType::value_type const &)> const &f) const
   {
-    std::list<service_map_type::value_type> keys;
+    std::list<ServiceMapType ::value_type> keys;
 
     {
       FETCH_LOCK(service_lock_);
@@ -98,10 +99,10 @@ public:
   }
 
   void VisitServiceClients(
-      std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
+      std::function<void(ConnectionHandleType const &, SharedServiceClientType)> const &f) const
   {
     FETCH_LOG_WARN(LOGGING_NAME, "About to visit ", services_.size(), " service clients");
-    std::list<service_map_type::value_type> keys;
+    std::list<ServiceMapType ::value_type> keys;
 
     {
       FETCH_LOCK(service_lock_);
@@ -132,7 +133,7 @@ public:
   }
 
 protected:
-  void RemoveService(connection_handle_type const &n)
+  void RemoveService(ConnectionHandleType const &n)
   {
     --number_of_services_;
     FETCH_LOCK(service_lock_);
@@ -143,7 +144,7 @@ protected:
     }
   }
 
-  void AddService(connection_handle_type const &n, weak_service_client_type const &ptr)
+  void AddService(ConnectionHandleType const &n, WeakServiceClientType const &ptr)
   {
     ++number_of_services_;
 
@@ -153,7 +154,7 @@ protected:
 
 private:
   mutable Mutex         service_lock_;
-  service_map_type      services_;
+  ServiceMapType        services_;
   std::atomic<uint64_t> number_of_services_;
 };
 

@@ -35,7 +35,7 @@ class MultiheadAttention : public SubGraph<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using DataType      = typename T::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
@@ -173,11 +173,11 @@ public:
   static constexpr char const *DESCRIPTOR = "MultiheadAttention";
 
 private:
-  SizeType key_dim_;
-  SizeType value_dim_;
-  SizeType n_heads_;
-  SizeType model_dim_;
-  DataType dropout_;
+  SizeType key_dim_{};
+  SizeType value_dim_{};
+  SizeType n_heads_{};
+  SizeType model_dim_{};
+  DataType dropout_{};
 };
 
 }  // namespace layers

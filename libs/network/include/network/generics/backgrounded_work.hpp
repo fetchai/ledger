@@ -144,7 +144,7 @@ public:
     {
       std::copy_n(worklist_for_state.begin(), limit, std::inserter(results, results.begin()));
       auto copy_end = worklist_for_state.begin();
-      advance(copy_end, static_cast<long>(limit));
+      advance(copy_end, static_cast<int64_t>(limit));
       worklist_for_state.erase(worklist_for_state.begin(), copy_end);
     }
     return results;
@@ -238,7 +238,7 @@ public:
   }
 
   template <class KEY>
-  bool Cancel(const KEY &key)
+  bool Cancel(KEY const &key)
   {
     bool r = false;
 

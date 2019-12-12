@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "chain/transaction.hpp"
 #include "core/set_thread_name.hpp"
 #include "core/string/to_lower.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
-#include "metrics/metrics.hpp"
+#include "logging/logging.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -32,14 +31,15 @@
 #include <chrono>
 #include <string>
 
-static const std::chrono::milliseconds POP_TIMEOUT{300};
-
 namespace fetch {
 namespace ledger {
 
 namespace {
 
 using telemetry::Registry;
+
+constexpr char const *          LOGGING_NAME = "TxVerifier";
+const std::chrono::milliseconds POP_TIMEOUT{300};
 
 std::string CreateMetricName(std::string const &prefix, std::string const &name)
 {
@@ -52,10 +52,8 @@ std::string CreateMetricName(std::string const &prefix, std::string const &name)
     {
       return '_';
     }
-    else
-    {
-      return static_cast<char>(std::tolower(c));
-    }
+
+    return static_cast<char>(std::tolower(c));
   });
 
   return metric_name;

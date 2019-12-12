@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "storage/resource_mapper.hpp"
@@ -31,11 +31,12 @@
 class FakeExecutor : public fetch::ledger::ExecutorInterface
 {
 public:
-  using Digest    = fetch::ledger::Digest;
-  using Address   = fetch::ledger::Address;
-  using BitVector = fetch::BitVector;
-  using Clock     = std::chrono::high_resolution_clock;
-  using Timepoint = Clock::time_point;
+  using Digest            = fetch::Digest;
+  using Address           = fetch::chain::Address;
+  using BitVector         = fetch::BitVector;
+  using StakeUpdateEvents = fetch::ledger::StakeUpdateEvents;
+  using Clock             = std::chrono::high_resolution_clock;
+  using Timepoint         = Clock::time_point;
 
   struct HistoryElement
   {
@@ -55,7 +56,7 @@ public:
     history_.emplace_back(HistoryElement{digest, block, slice, shards, Clock::now()});
 
     // if we have a state then make some changes to it
-    if (state_)
+    if (state_ != nullptr)
     {
       state_->Set(fetch::storage::ResourceAddress{digest}, "executed");
     }
@@ -63,11 +64,14 @@ public:
     return {Status::SUCCESS};
   }
 
-  void SettleFees(Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override
+  void SettleFees(Address const &miner, BlockIndex block, TokenAmount amount,
+                  uint32_t log2_num_lanes, StakeUpdateEvents const &stake_updates) override
   {
     FETCH_UNUSED(miner);
+    FETCH_UNUSED(block);
     FETCH_UNUSED(amount);
     FETCH_UNUSED(log2_num_lanes);
+    FETCH_UNUSED(stake_updates);
   }
 
   std::size_t GetNumExecutions() const

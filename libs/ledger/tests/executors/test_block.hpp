@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/constants.hpp"
+#include "chain/constants.hpp"
 #include "ledger/execution_manager.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -27,14 +27,14 @@
 struct TestBlock
 {
   using ResourceIdMap = std::vector<std::string>;
-  using BlockBody     = fetch::ledger::Block::Body;
-  using Digest        = fetch::ledger::Digest;
+  using Block         = fetch::ledger::Block;
+  using Digest        = fetch::Digest;
 
   static constexpr uint64_t    IV          = uint64_t(-1);
   static constexpr std::size_t HASH_LENGTH = 32;
 
-  BlockBody block;
-  int       num_transactions = 0;
+  Block block;
+  int   num_transactions = 0;
 
   template <typename RNG>
   static Digest GenerateHash(RNG &rng)
@@ -86,9 +86,8 @@ struct TestBlock
         std::size_t remaining_lanes = num_lanes;
         std::size_t lane_offset     = 0;
 
-        while (remaining_lanes)
+        while (remaining_lanes != 0u)
         {
-
           // decide how many lanes will be consumed this round
           std::size_t const consumed_lanes =
               std::min(std::max<std::size_t>(rng() % remaining_lanes, 1u), remaining_lanes);
@@ -105,7 +104,7 @@ struct TestBlock
 
             // create the transaction summary
             current_slice.emplace_back(
-                fetch::ledger::TransactionLayout{GenerateHash(rng), mask, 1, 0, 100});
+                fetch::chain::TransactionLayout{GenerateHash(rng), mask, 1, 0, 100});
 
             ++num_transactions;
           }
@@ -142,11 +141,10 @@ struct TestBlock
     std::size_t index = 0;
     while (!set.empty())
     {
-
       // create a value
       std::ostringstream oss;
       oss << "Resource: " << index++;
-      std::string const prefix = "fetch.dummy.state.";
+      std::string const prefix = "fetch.token.state.";
       std::string const value  = oss.str();
 
       // create the resource
@@ -174,7 +172,7 @@ struct TestBlock
   }
 
   static TestBlock Generate(std::size_t log2_num_lanes, std::size_t num_slices, uint32_t seed,
-                            Digest const &previous_hash = fetch::ledger::GENESIS_DIGEST)
+                            Digest const &previous_hash = fetch::chain::ZERO_HASH)
   {
     TestBlock block;
     block.GenerateBlock(seed, static_cast<uint32_t>(log2_num_lanes), num_slices, previous_hash);

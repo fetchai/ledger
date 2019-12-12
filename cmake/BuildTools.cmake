@@ -4,11 +4,13 @@
 # header only or static library.
 function (setup_library name)
 
-  # lookup the files for the library
+  # look up the files for the library
   file(GLOB_RECURSE headers include/*.hpp)
   file(GLOB_RECURSE srcs src/*.cpp)
   list(LENGTH headers headers_length)
   list(LENGTH srcs srcs_length)
+
+  set(internal_headers_path ${CMAKE_CURRENT_SOURCE_DIR}/internal)
 
   # main library configuration
   if (srcs_length EQUAL 0)
@@ -23,6 +25,11 @@ function (setup_library name)
     # define the normal library
     add_library(${name} ${headers} ${srcs})
     target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+    # add internal headers if one exists
+    if (EXISTS ${internal_headers_path})
+      target_include_directories(${name} PRIVATE ${internal_headers_path})
+    endif ()
 
     # CoreFoundation Support on MacOS
     if (APPLE)
@@ -114,10 +121,12 @@ endfunction ()
 function (_internal_add_fetch_test
           name
           library
-          directory)
+          directory
+          timeout)
   if (FETCH_ENABLE_TESTS)
 
     # remove all the arguments
+    list(REMOVE_AT ARGV 0)
     list(REMOVE_AT ARGV 0)
     list(REMOVE_AT ARGV 0)
     list(REMOVE_AT ARGV 0)
@@ -140,8 +149,14 @@ function (_internal_add_fetch_test
     target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
     target_include_directories(${name}
                                PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
+    target_include_directories(${name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/${directory}")
     target_include_directories(${name}
                                PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
+
+    get_filename_component(internal_headers_path "${CMAKE_CURRENT_SOURCE_DIR}/../internal" ABSOLUTE)
+    if (EXISTS ${internal_headers_path})
+      target_include_directories(${name} PRIVATE ${internal_headers_path})
+    endif ()
 
     # CoreFoundation Support on MacOS
     if (APPLE)
@@ -154,7 +169,7 @@ function (_internal_add_fetch_test
              ${ARGV}
              --gtest_shuffle
              --gtest_random_seed=123)
-    set_tests_properties(${name} PROPERTIES TIMEOUT 300)
+    set_tests_properties(${name} PROPERTIES TIMEOUT ${timeout})
     if (test_label)
       set_tests_properties(${name} PROPERTIES LABELS "${test_label}")
     endif ()
@@ -173,7 +188,10 @@ function (fetch_add_test
   if ("DISABLED" IN_LIST ARGV)
     fetch_warning("Disabled test: ${name} - ${file}")
   else ()
-    _internal_add_fetch_test("${name}" "${library}" "${directory}")
+    _internal_add_fetch_test("${name}"
+                             "${library}"
+                             "${directory}"
+                             120)
   endif ()
 endfunction ()
 
@@ -191,6 +209,7 @@ function (fetch_add_slow_test
     _internal_add_fetch_test("${name}"
                              "${library}"
                              "${directory}"
+                             600
                              SLOW)
   endif ()
 endfunction ()
@@ -209,6 +228,7 @@ function (fetch_add_integration_test
     _internal_add_fetch_test("${name}"
                              "${library}"
                              "${directory}"
+                             600
                              INTEGRATION)
   endif ()
 endfunction ()
@@ -243,8 +263,11 @@ function (add_fetch_gbench
       # define the target
       add_executable(${name} ${headers} ${srcs})
 
-      target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
-      target_link_libraries(${name} PRIVATE ${library} benchmark)
+      target_link_libraries(${name}
+                            PRIVATE ${library}
+                                    gmock
+                                    gmock_main
+                                    benchmark)
 
       # CoreFoundation Support on MacOS
       if (APPLE)

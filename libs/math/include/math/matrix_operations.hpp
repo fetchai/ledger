@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "math/comparison.hpp"
+#include "math/exceptions/exceptions.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemm_nn_novector.hpp"
@@ -30,6 +30,7 @@
 #include "math/linalg/prototype.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor_reduce.hpp"
+#include "vectorise/math/standard_functions.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -50,11 +51,8 @@ namespace details_vectorisation {
 template <typename ArrayType>
 void Min(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  using VectorRegisterType = typename ArrayType::VectorRegisterType;
-
-  ret = array.data().in_parallel().Reduce(
-      memory::TrivialRange(0, array.size()),
-      [](VectorRegisterType const &a, VectorRegisterType const &b) { return min(a, b); });
+  ret = array.data().in_parallel().Reduce(memory::Range(0, array.size()),
+                                          [](auto const &a, auto const &b) { return min(a, b); });
 }
 
 /**
@@ -70,11 +68,8 @@ void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
   // TODO(private issue 994): Create test for this function
   if (obj1.padding() == 1)
   {
-    ret =
-        obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
-                                         [](typename ArrayType::VectorRegisterType const &a,
-                                            typename ArrayType::VectorRegisterType const &b) ->
-                                         typename ArrayType::VectorRegisterType { return a * b; });
+    ret = obj1.data().in_parallel().Reduce(memory::Range(0, obj1.size()),
+                                           [](auto const &a, auto const &b) { return a * b; });
   }
   else
   {
@@ -98,10 +93,8 @@ void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
 template <typename ArrayType>
 void Sum(ArrayType const &obj1, typename ArrayType::Type &ret)
 {
-  ret = obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
-                                         [](typename ArrayType::VectorRegisterType const &a,
-                                            typename ArrayType::VectorRegisterType const &b) ->
-                                         typename ArrayType::VectorRegisterType { return a + b; });
+  ret = obj1.data().in_parallel().Reduce(memory::Range(0, obj1.size()),
+                                         [](auto const &a, auto const &b) { return a + b; });
 }
 
 }  // namespace details_vectorisation
@@ -154,30 +147,28 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
                                                  ArrayType const &mask, ArrayType &ret)
 {
-  // TODO (#1453) this is a wrong implementation of boolean mask, the return array will always be
-  // all zero unless all conditions are true
   assert(input_array.size() == mask.size());
   assert(ret.size() >= typename ArrayType::SizeType(Sum(mask)));
 
+  // Easier to resize before, so we avoid a possible copy.
+  ret.Resize({typename ArrayType::SizeType(Sum(mask))});
   auto     it1 = input_array.cbegin();
   auto     it2 = mask.cbegin();
   auto     rit = ret.begin();
   SizeType counter{0};
   while (rit.is_valid())
   {
-    // TODO(private issue 193): implement boolean only array
     assert((*it2 == 1) || (*it2 == 0));
     if (static_cast<uint64_t>(*it2))
     {
       *rit = *it1;
       ++counter;
+      ++rit;
     }
     ++it1;
     ++it2;
-    ++rit;
   }
-
-  ret.Resize({counter});
+  assert(ret.size() == counter);
 }
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, ArrayType const &mask)
@@ -255,7 +246,7 @@ meta::IfIsMathArray<Tensor<T, C>, T> Product(Tensor<T, C> const &array1)
 template <typename T>
 void Product(std::vector<T> const &obj1, T &ret)
 {
-  if (obj1.size() == 0)
+  if (obj1.empty())
   {
     ret = 0;
   }
@@ -570,7 +561,7 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
   using DataType = typename ArrayType::Type;
   ret.Fill(static_cast<DataType>(0));
 
-  Reduce(axis, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
+  Reduce(axis, [](DataType const &x, DataType &y) { y += x; }, obj1, ret);
 }
 
 /**
@@ -604,7 +595,7 @@ void ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
   using DataType = typename ArrayType::Type;
   ret.Fill(static_cast<DataType>(0));
 
-  Reduce(axes, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
+  Reduce(axes, [](DataType const &x, DataType &y) { y += x; }, obj1, ret);
 }
 
 /**
@@ -643,7 +634,7 @@ meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &               
 {
   using Type = typename ArrayType::Type;
 
-  Type n = static_cast<Type>(obj1.shape().at(axis));
+  auto n = static_cast<Type>(obj1.shape().at(axis));
   ReduceSum(obj1, axis, ret);
   Divide(ret, n, ret);
 }
@@ -661,7 +652,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
 {
   using Type = typename ArrayType::Type;
 
-  Type      n   = static_cast<Type>(obj1.shape().at(axis));
+  auto      n   = static_cast<Type>(obj1.shape().at(axis));
   ArrayType ret = ReduceSum(obj1, axis);
   Divide(ret, n, ret);
   return ret;
@@ -867,9 +858,8 @@ void ReduceMax(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
 
   using DataType = typename ArrayType::Type;
-  ret.Fill(std::numeric_limits<DataType>::lowest());
-
-  Reduce(axis, [](const DataType &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
+  ret.Fill(numeric_lowest<DataType>());
+  Reduce(axis, [](DataType const &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
 }
 
 /**
@@ -901,9 +891,9 @@ void ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
 {
 
   using DataType = typename ArrayType::Type;
-  ret.Fill(std::numeric_limits<DataType>::min());
+  ret.Fill(numeric_lowest<DataType>());
 
-  Reduce(axes, [](const DataType &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
+  Reduce(axes, [](DataType const &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
 }
 
 /**
@@ -948,7 +938,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
     auto     it       = array.begin();
     Type     value    = numeric_lowest<Type>();
 
-    SizeType counter = SizeType{0};
+    auto counter = SizeType{0};
     while (it.is_valid())
     {
       if (*it > value)
@@ -1071,7 +1061,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
 
   if (aview.width() != bview.height())
   {
-    throw std::runtime_error("expected A width to equal and B height.");
+    throw fetch::math::exceptions::WrongShape("expected A width to equal B height.");
   }
 
   if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
@@ -1121,7 +1111,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &
 
   if (aview.width() != bview.width())
   {
-    throw std::runtime_error("expected A and B to have same width.");
+    throw exceptions::WrongShape("expected A and B to have same width.");
   }
 
   if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
@@ -1172,7 +1162,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &
 
   if (aview.height() != bview.height())
   {
-    throw std::runtime_error("expected A and B to have same height.");
+    throw exceptions::WrongShape("expected A and B to have same height.");
   }
 
   if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))

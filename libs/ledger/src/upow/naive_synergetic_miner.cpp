@@ -16,12 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/digest.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "ledger/chain/digest.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/contract_context_attacher.hpp"
+#include "ledger/chaincode/smart_contract_factory.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "ledger/state_adapter.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/upow/work.hpp"
+#include "logging/logging.hpp"
 #include "vm_modules/math/bignumber.hpp"
 
 #include <random>
@@ -33,20 +38,19 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "NaiveSynMiner";
 
-using UInt256 = vectorise::UInt<256>;
-using serializers::MsgPackSerializer;
-using byte_array::ConstByteArray;
+constexpr uint64_t const CHARGE_LIMIT = 10000000000;
 
+using UInt256  = vectorise::UInt<256>;
 using DagNodes = NaiveSynergeticMiner::DagNodes;
 
-void ExecuteWork(SynergeticContractPtr const &contract, WorkPtr const &work)
+void ExecuteWork(SynergeticContract &contract, WorkPtr const &work)
 {
   WorkScore score{0};
 
   // execute the work
   auto const nonce_work = work->CreateHashedNonce();
 
-  auto const status = contract->Work(nonce_work, score);
+  auto const status = contract.Work(nonce_work, score);
 
   if (SynergeticContract::Status::SUCCESS != status)
   {
@@ -58,7 +62,7 @@ void ExecuteWork(SynergeticContractPtr const &contract, WorkPtr const &work)
 
   // update the score for the piece of work
   work->UpdateScore(score);
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Execute Nonce: ", nonce_work.ToHex(), " score: ", score);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Execute Nonce: 0x", std::string(nonce_work), " score: ", score);
 }
 
 }  // namespace
@@ -99,7 +103,7 @@ NaiveSynergeticMiner::State NaiveSynergeticMiner::OnMine()
 
 void NaiveSynergeticMiner::Mine()
 {
-  using ProblemSpaces = DigestMap<ProblemData>;
+  using ProblemSpaces = std::unordered_map<chain::Address, ProblemData>;
 
   // iterate through the latest DAG nodes and build a complete set of addresses to mine solutions
   // for
@@ -112,10 +116,9 @@ void NaiveSynergeticMiner::Mine()
   {
     if (DAGNode::DATA == node.type)
     {
-      // lookup the problem data
-      auto &problem_data = problem_spaces[node.contract_digest];
+      // look up the problem data
+      auto &problem_data = problem_spaces[node.contract_address];
 
-      // add the problem data to the
       problem_data.emplace_back(node.contents);
     }
   }
@@ -132,7 +135,7 @@ void NaiveSynergeticMiner::Mine()
     std::ostringstream oss;
     for (auto const &element : problem_spaces)
     {
-      oss << "\n -> 0x" << element.first.ToHex();
+      oss << "\n -> 0x" << element.first.contract_address.display();
     }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Available synergetic contracts to be mined", oss.str());
@@ -160,58 +163,44 @@ void NaiveSynergeticMiner::EnableMining(bool enable)
   is_mining_ = enable;
 }
 
-SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_digest)
+WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_address,
+                                           ProblemData const &   problem_data)
 {
-  SynergeticContractPtr contract{};
+  StateAdapter storage_adapter{storage_, "fetch.token"};
 
-  // attempt to retrieve the document stored in the database
-  auto const resource_document =
-      storage_.Get(SmartContractManager::CreateAddressForSynergeticContract(contract_digest));
+  ContractContext         context{&token_contract_, contract_address, nullptr, &storage_adapter, 0};
+  ContractContextAttacher raii(token_contract_, context);
 
-  if (!resource_document.failed)
+  uint64_t const balance = token_contract_.GetBalance(contract_address);
+
+  if (balance == 0)
   {
-    try
-    {
-      // create and decode the document buffer
-      MsgPackSerializer buffer{resource_document.document};
-
-      // parse the contents of the document
-      ConstByteArray document{};
-      buffer >> document;
-
-      // create the instance of the synergetic contract
-      contract = std::make_shared<SynergeticContract>(document);
-    }
-    catch (std::exception const &ex)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Error creating contract: ", ex.what());
-    }
+    FETCH_LOG_WARN(LOGGING_NAME, "Not handling contract: ", contract_address.display(),
+                   " balance is 0");
+    return {};
   }
 
-  return contract;
-}
+  auto contract = CreateSmartContract<SynergeticContract>(contract_address, storage_);
 
-WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &     contract_digest,
-                                           ProblemData const &problem_data)
-{
-  // create the synergetic contract
-  auto contract = LoadContract(contract_digest);
+  contract->SetChargeLimit(CHARGE_LIMIT / search_length_);
 
   // if no contract can be loaded then simple return
   if (!contract)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up contract: 0x", contract_digest.ToHex());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up contract: ", contract_address.display());
+
     return {};
   }
 
   // build up a work instance
-  auto work = std::make_shared<Work>(contract_digest, prover_->identity());
+  auto work = std::make_shared<Work>(contract_address, prover_->identity());
 
   // Preparing to mine
   auto status = contract->DefineProblem(problem_data);
   if (SynergeticContract::Status::SUCCESS != status)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to define the problem. Reason: ", ToString(status));
+
     return {};
   }
 
@@ -228,12 +217,23 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &     contract_digest,
     ++nonce;
 
     // execute the work
-    ExecuteWork(contract, work);
+    ExecuteWork(*contract, work);
 
     // update the cached work if this one is better than previous solutions
     if (!(best_work && best_work->score() >= work->score()))
     {
       best_work = std::make_shared<Work>(*work);
+    }
+
+    if (i == 0)
+    {
+      auto const fee = contract->CalculateFee();
+      // TODO(AB): scaling? charge approx search_length_*one
+      if (fee >= balance)
+      {
+        // not enough balance, stop using contract
+        return {};
+      }
     }
   }
 

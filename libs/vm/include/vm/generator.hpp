@@ -42,10 +42,6 @@ enum class AnnotationLiteralType : uint8_t
 
 struct AnnotationLiteral
 {
-  AnnotationLiteral()
-  {
-    type = AnnotationLiteralType::Unknown;
-  }
   void SetBoolean(bool b)
   {
     type    = AnnotationLiteralType::Boolean;
@@ -71,7 +67,7 @@ struct AnnotationLiteral
     type = AnnotationLiteralType::Identifier;
     str  = s;
   }
-  AnnotationLiteralType type;
+  AnnotationLiteralType type{AnnotationLiteralType::Unknown};
   union
   {
     bool    boolean;
@@ -90,11 +86,7 @@ enum class AnnotationElementType : uint8_t
 
 struct AnnotationElement
 {
-  AnnotationElement()
-  {
-    type = AnnotationElementType::Unknown;
-  }
-  AnnotationElementType type;
+  AnnotationElementType type{AnnotationElementType::Unknown};
   AnnotationLiteral     name;
   AnnotationLiteral     value;
 };
@@ -110,108 +102,228 @@ using AnnotationArray = std::vector<Annotation>;
 struct Executable
 {
   Executable() = default;
-  Executable(std::string name__)
+  Executable(std::string name__, uint16_t num_system_types__)
     : name{std::move(name__)}
+    , num_system_types{num_system_types__}
   {}
   ~Executable() = default;
 
   struct Instruction
   {
-    Instruction(uint16_t opcode__)
+    explicit Instruction(uint16_t opcode__)
       : opcode{opcode__}
     {}
 
-    uint16_t opcode;
-    uint16_t type_id = 0;
-    uint16_t index   = 0;
-    uint16_t data    = 0;
+    uint16_t opcode{};
+    uint16_t type_id{};
+    uint16_t index{};
+    uint16_t data{};
   };
   using InstructionArray = std::vector<Instruction>;
 
-  struct Variable
+  struct Parameter
   {
-    Variable(std::string name__, TypeId type_id__, uint16_t scope_number__)
+    Parameter(std::string name__, TypeId type_id__)
       : name{std::move(name__)}
       , type_id{type_id__}
+    {}
+    std::string name;
+    TypeId      type_id{TypeIds::Unknown};
+  };
+  using ParameterArray = std::vector<Parameter>;
+
+  struct Variable : public Parameter
+  {
+    Variable(VariableKind kind__, std::string name, TypeId type_id, uint16_t scope_number__)
+      : Parameter(std::move(name), type_id)
+      , kind{kind__}
       , scope_number{scope_number__}
     {}
-
-    std::string name;
-    TypeId      type_id;
-    uint16_t    scope_number;
+    VariableKind kind{VariableKind::Unknown};
+    uint16_t     scope_number{};
   };
   using VariableArray = std::vector<Variable>;
 
   using PcToLineMap = std::map<uint16_t, uint16_t>;
-  using FunctionMap = std::unordered_map<std::string, uint16_t>;
 
   struct Function
   {
-    Function(std::string name__, AnnotationArray annotations__, int num_parameters__,
+    Function() = default;
+    Function(FunctionKind kind__, std::string name__, AnnotationArray annotations__,
              TypeId return_type_id__)
-      : name{std::move(name__)}
+      : kind{kind__}
+      , name{std::move(name__)}
       , annotations{std::move(annotations__)}
-      , num_parameters{num_parameters__}
       , return_type_id{return_type_id__}
     {}
-
-    uint16_t AddVariable(std::string name, TypeId type_id, uint16_t scope_number)
+    void AddParameter(std::string variable_name, TypeId type_id)
     {
-      auto const index = static_cast<uint16_t>(num_variables++);
-      variables.emplace_back(std::move(name), type_id, scope_number);
-      return index;
+      parameters.emplace_back(std::move(variable_name), type_id);
+      ++num_parameters;
     }
-    uint16_t AddInstruction(Instruction instruction)
+    uint16_t AddVariable(IRVariablePtr const &variable, uint16_t scope_number)
+    {
+      auto const id = static_cast<uint16_t>(num_variables++);
+      variables.emplace_back(variable->variable_kind, variable->name, variable->type->id,
+                             scope_number);
+      return id;
+    }
+    uint16_t AddInstruction(Instruction const &instruction)
     {
       auto const pc = static_cast<uint16_t>(instructions.size());
-      instructions.push_back(std::move(instruction));
+      instructions.push_back(instruction);
       return pc;
     }
     uint16_t FindLineNumber(uint16_t pc) const
     {
-      auto it = pc_to_line_map_.lower_bound(uint16_t(pc + 1));
+      auto it = pc_to_line_map.lower_bound(static_cast<uint16_t>(pc + 1));
       return (--it)->second;
     }
-
+    FunctionKind     kind{FunctionKind::Unknown};
     std::string      name;
     AnnotationArray  annotations;
-    int              num_variables = 0;  // parameters + locals
-    int              num_parameters;
-    TypeId           return_type_id;
-    VariableArray    variables;  // parameters + locals
+    TypeId           return_type_id{TypeIds::Unknown};
+    int              num_parameters{};
+    ParameterArray   parameters;
+    int              num_variables{};  // parameters + locals
+    VariableArray    variables;        // parameters + locals
     InstructionArray instructions;
-    PcToLineMap      pc_to_line_map_;
+    PcToLineMap      pc_to_line_map;
   };
   using FunctionArray = std::vector<Function>;
 
+  struct Contract
+  {
+    explicit Contract(std::string name__)
+      : name{std::move(name__)}
+    {}
+    uint16_t AddFunction(Function function)
+    {
+      auto const id = static_cast<uint16_t>(functions.size());
+      functions.push_back(std::move(function));
+      return id;
+    }
+    std::string   name;
+    FunctionArray functions;
+  };
+  using ContractArray = std::vector<Contract>;
+
+  struct UserDefinedType
+  {
+    explicit UserDefinedType(std::string name__)
+      : name{std::move(name__)}
+    {}
+    uint16_t AddFunction(Function function)
+    {
+      auto const id = static_cast<uint16_t>(functions.size());
+      functions.push_back(std::move(function));
+      return id;
+    }
+    uint16_t AddVariable(IRVariablePtr const &variable)
+    {
+      auto const id = static_cast<uint16_t>(variables.size());
+      variables.emplace_back(variable->variable_kind, variable->name, variable->type->id, 0);
+      return id;
+    }
+    std::string   name;
+    FunctionArray functions;
+    VariableArray variables;
+  };
+  using UserDefinedTypeArray = std::vector<UserDefinedType>;
+
+  UserDefinedType const &GetUserDefinedType(uint16_t type_id) const
+  {
+    auto index = static_cast<uint16_t>(type_id - user_defined_types_start_type_id);
+    return user_defined_types[index];
+  }
+
+  UserDefinedType &InternalGetUserDefinedType(uint16_t type_id)
+  {
+    auto index = static_cast<uint16_t>(type_id - user_defined_types_start_type_id);
+    return user_defined_types[index];
+  }
+
+  struct LargeConstant
+  {
+    LargeConstant() = delete;
+    LargeConstant(LargeConstant const &other)
+    {
+      Copy(other);
+    }
+    LargeConstant &operator=(LargeConstant const &other)
+    {
+      if (this != &other)
+      {
+        Copy(other);
+      }
+      return *this;
+    }
+    void Copy(const LargeConstant &other)
+    {
+      type_id = other.type_id;
+      if (type_id == TypeIds::Fixed128)
+      {
+        new (&fp128) fixed_point::fp128_t(other.fp128);
+      }
+    }
+    explicit LargeConstant(fixed_point::fp128_t const &fp128__)
+    {
+      type_id = TypeIds::Fixed128;
+      new (&fp128) fixed_point::fp128_t(fp128__);
+    }
+    TypeId type_id{TypeIds::Unknown};
+    union
+    {
+      fixed_point::fp128_t fp128;
+    };
+  };
+  using LargeConstantArray = std::vector<LargeConstant>;
+
   std::string              name;
   std::vector<std::string> strings;
-  std::vector<Variant>     constants;
+  VariantArray             constants;
+  LargeConstantArray       large_constants;
   TypeInfoArray            types;
+  ContractArray            contracts;
   FunctionArray            functions;
-  FunctionMap              function_map;
+  UserDefinedTypeArray     user_defined_types;
+  uint16_t                 num_system_types{};
+  uint16_t                 user_defined_types_start_type_id{};
 
-  uint16_t AddFunction(Function &function)
+  void AddTypeInfo(TypeInfo type_info)
   {
-    auto const index            = static_cast<uint16_t>(functions.size());
-    function_map[function.name] = index;
-    functions.push_back(std::move(function));
-    return index;
-  }
-
-  uint16_t AddType(TypeInfo type_info)
-  {
-    auto const index = static_cast<uint16_t>(types.size());
     types.push_back(std::move(type_info));
-    return index;
   }
 
-  Function const *FindFunction(std::string const &name) const
+  uint16_t AddContract(Contract contract)
   {
-    auto it = function_map.find(name);
-    if (it != function_map.end())
+    auto const id = static_cast<uint16_t>(contracts.size());
+    contracts.push_back(std::move(contract));
+    return id;
+  }
+
+  uint16_t AddUserDefinedType(UserDefinedType type)
+  {
+    auto const id = static_cast<uint16_t>(user_defined_types.size());
+    user_defined_types.push_back(std::move(type));
+    return static_cast<uint16_t>(user_defined_types_start_type_id + id);
+  }
+
+  uint16_t AddFunction(Function function)
+  {
+    auto const id = static_cast<uint16_t>(functions.size());
+    functions.push_back(std::move(function));
+    return id;
+  }
+
+  Function const *FindFunction(std::string const &fn_name) const
+  {
+    for (auto const &function : functions)
     {
-      return &(functions[it->second]);
+      if (function.name == fn_name)
+      {
+        return &function;
+      }
     }
     return nullptr;
   }
@@ -220,9 +332,9 @@ struct Executable
 class Generator
 {
 public:
-  Generator();
+  Generator()  = default;
   ~Generator() = default;
-  bool GenerateExecutable(IR const &ir, std::string const &name, Executable &executable,
+  bool GenerateExecutable(IR const &ir, std::string const &executable_name, Executable &executable,
                           std::vector<std::string> &errors);
 
 private:
@@ -233,7 +345,7 @@ private:
 
   struct Loop
   {
-    uint16_t              scope_number;
+    uint16_t              scope_number{};
     std::vector<uint16_t> continue_pcs;
     std::vector<uint16_t> break_pcs;
   };
@@ -241,7 +353,7 @@ private:
   struct Chain
   {
     Chain() = default;
-    Chain(NodeKind kind__)
+    explicit Chain(NodeKind kind__)
       : kind{kind__}
     {}
 
@@ -254,7 +366,7 @@ private:
       pcs.insert(pcs.end(), other_pcs.begin(), other_pcs.end());
     }
 
-    NodeKind              kind = NodeKind::Unknown;
+    NodeKind              kind{NodeKind::Unknown};
     std::vector<uint16_t> pcs;
   };
 
@@ -263,43 +375,64 @@ private:
     bool operator()(Variant const &lhs, Variant const &rhs) const;
   };
 
-  using StringsMap   = std::unordered_map<std::string, uint16_t>;
-  using ConstantsMap = std::map<Variant, uint16_t, ConstantComparator>;
-  using LineToPcMap  = std::map<uint16_t, uint16_t>;
+  struct LargeConstantComparator
+  {
+    bool operator()(Executable::LargeConstant const &lhs,
+                    Executable::LargeConstant const &rhs) const;
+  };
 
-  VM *                     vm_;
-  uint16_t                 num_system_types_;
+  using StringsMap        = std::unordered_map<std::string, uint16_t>;
+  using ConstantsMap      = std::map<Variant, uint16_t, ConstantComparator>;
+  using LargeConstantsMap = std::map<Executable::LargeConstant, uint16_t, LargeConstantComparator>;
+  using LineToPcMap       = std::map<uint16_t, uint16_t>;
+
+  VM *                     vm_{};
+  uint16_t                 num_system_types_{};
   Executable               executable_;
   std::vector<Scope>       scopes_;
   std::vector<Loop>        loops_;
   StringsMap               strings_map_;
   ConstantsMap             constants_map_;
-  Executable::Function *   function_;
+  LargeConstantsMap        large_constants_map_;
+  Executable::Function *   function_{};
   LineToPcMap              line_to_pc_map_;
   std::vector<std::string> errors_;
 
-  void     Initialise(VM *vm, uint16_t num_system_types);
-  void     AddLineNumber(uint16_t line, uint16_t pc);
-  void     ResolveTypes(IR const &ir);
-  void     ResolveFunctions(IR const &ir);
-  void     CreateFunctions(IRBlockNodePtr const &block_node);
-  void     CreateAnnotations(IRNodePtr const &node, AnnotationArray &annotations);
-  void     SetAnnotationLiteral(IRNodePtr const &node, AnnotationLiteral &literal);
-  void     HandleBlock(IRBlockNodePtr const &block_node);
-  void     HandleFile(IRBlockNodePtr const &block_node);
-  void     HandleFunctionDefinitionStatement(IRBlockNodePtr const &block_node);
-  void     HandleWhileStatement(IRBlockNodePtr const &block_node);
-  void     HandleForStatement(IRBlockNodePtr const &block_node);
-  void     HandleIfStatement(IRNodePtr const &node);
-  void     HandleUseStatement(IRNodePtr const &node);
-  void     HandleUseAnyStatement(IRNodePtr const &node);
-  void     HandleUseVariable(IRExpressionNodePtr const &node);
-  void     HandleVarStatement(IRNodePtr const &node);
-  void     HandleReturnStatement(IRNodePtr const &node);
-  void     HandleBreakStatement(IRNodePtr const &node);
-  void     HandleContinueStatement(IRNodePtr const &node);
-  void     HandleAssignmentStatement(IRExpressionNodePtr const &node);
-  void     HandleInplaceAssignmentStatement(IRExpressionNodePtr const &node);
+  void          Initialise(VM *vm, uint16_t num_system_types);
+  void          AddLineNumber(uint16_t line, uint16_t pc);
+  void          ResolveTypes(IR const &ir);
+  void          ResolveFunctions(IR const &ir);
+  void          CreateUserDefinedTemplateInstantiationTypes(IR const &ir);
+  void          CreateUserDefinedContracts(IR const &ir);
+  void          CreateUserDefinedTypes(IR const &ir);
+  void          CreateUserDefinedContractFunctions(IRBlockNodePtr const &block_node);
+  void          CreateUserDefinedTypeMembers(IRBlockNodePtr const &block_node);
+  void          CreateUserDefinedFreeFunctions(IRBlockNodePtr const &block_node);
+  IRFunctionPtr CreateFunction(IRNodePtr const &     function_definition_node,
+                               Executable::Function &exe_function);
+  void          CreateAnnotations(IRNodePtr const &node, AnnotationArray &annotations);
+  void          SetAnnotationLiteral(IRNodePtr const &node, AnnotationLiteral &literal);
+  void          HandleBlock(IRBlockNodePtr const &block_node);
+  void          HandleFile(IRBlockNodePtr const &block_node);
+  void          HandleMemberFunctionBody(IRBlockNodePtr const &struct_definition_node,
+                                         IRBlockNodePtr const &function_definition_node);
+  void          HandleFreeFunctionBody(IRBlockNodePtr const &function_definition_node);
+  void          HandleFunctionBody(IRBlockNodePtr const &function_definition_node);
+  void          HandleWhileStatement(IRBlockNodePtr const &block_node);
+  void          HandleForStatement(IRBlockNodePtr const &block_node);
+  void          HandleIfStatement(IRNodePtr const &node);
+  void          HandleUseStatement(IRNodePtr const &node);
+  void          HandleUseAnyStatement(IRNodePtr const &node);
+  void HandleUseVariable(std::string const &name, uint16_t line, IRExpressionNodePtr const &node);
+  void HandleContractStatement(IRNodePtr const &node);
+  void HandleLocalVarStatement(IRNodePtr const &node);
+  void HandleReturnStatement(IRNodePtr const &node);
+  void HandleBreakStatement(IRNodePtr const &node);
+  void HandleContinueStatement(IRNodePtr const &node);
+  void HandleAssignmentStatement(IRExpressionNodePtr const &node);
+  void HandleInplaceAssignmentStatement(IRExpressionNodePtr const &node);
+  void HandleMemberVariableOwner(IRExpressionNodePtr const &node);
+
   void     HandleVariableAssignmentStatement(IRExpressionNodePtr const &lhs,
                                              IRExpressionNodePtr const &rhs);
   void     HandleVariableInplaceAssignmentStatement(IRExpressionNodePtr const &node,
@@ -312,6 +445,7 @@ private:
                                                    IRExpressionNodePtr const &lhs,
                                                    IRExpressionNodePtr const &rhs);
   void     HandleExpression(IRExpressionNodePtr const &node);
+  void     PushSelf(IRExpressionNodePtr const &node);
   void     HandleIdentifier(IRExpressionNodePtr const &node);
   void     HandleInteger8(IRExpressionNodePtr const &node);
   void     HandleUnsignedInteger8(IRExpressionNodePtr const &node);
@@ -325,6 +459,7 @@ private:
   void     HandleFloat64(IRExpressionNodePtr const &node);
   void     HandleFixed32(IRExpressionNodePtr const &node);
   void     HandleFixed64(IRExpressionNodePtr const &node);
+  void     HandleFixed128(IRExpressionNodePtr const &node);
   void     HandleString(IRExpressionNodePtr const &node);
   void     PushString(std::string const &s, uint16_t line);
   void     HandleTrue(IRExpressionNodePtr const &node);
@@ -336,7 +471,7 @@ private:
   void     HandleUnaryOp(IRExpressionNodePtr const &node);
   Chain    HandleConditionExpression(IRBlockNodePtr const &     block_node,
                                      IRExpressionNodePtr const &node);
-  Chain    HandleShortCircuitOp(IRNodePtr const &parent, IRExpressionNodePtr const &node);
+  Chain    HandleShortCircuitOp(IRNodePtr const &parent_node, IRExpressionNodePtr const &node);
   void     FinaliseShortCircuitChain(Chain const &chain, bool is_condition_chain,
                                      uint16_t destination_pc);
   void     HandleIndexOp(IRExpressionNodePtr const &node);
@@ -349,8 +484,9 @@ private:
   void     ScopeEnter();
   void     ScopeLeave(IRBlockNodePtr const &block_node);
   uint16_t AddConstant(Variant const &c);
+  uint16_t AddLargeConstant(Executable::LargeConstant const &c);
   uint16_t GetInplaceArithmeticOpcode(bool is_primitive, TypeId lhs_type_id, TypeId rhs_type_id,
-                                      uint16_t opcode1, uint16_t opcode2, uint16_t opcode3);
+                                      uint16_t group, std::vector<uint16_t> const &opcodes);
   uint16_t GetArithmeticOpcode(bool lhs_is_primitive, TypeId node_type_id, TypeId lhs_type_id,
                                TypeId rhs_type_id, uint16_t opcode1, uint16_t opcode2,
                                uint16_t opcode3, uint16_t opcode4, TypeId &type_id,

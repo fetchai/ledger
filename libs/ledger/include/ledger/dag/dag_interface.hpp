@@ -18,15 +18,18 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/dag/dag_epoch.hpp"
+#include "ledger/dag/dag_hash.hpp"
 #include "ledger/dag/dag_node.hpp"
 #include "ledger/upow/work.hpp"
-#include "network/p2pservice/p2p_service.hpp"
 
 #include <cstdint>
 #include <set>
 #include <vector>
 
 namespace fetch {
+namespace crypto {
+class Prover;
+}
 namespace ledger {
 
 /**
@@ -36,9 +39,9 @@ class DAGInterface
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
-  using NodeHash       = ConstByteArray;
-  using EpochHash      = ConstByteArray;
-  using CertificatePtr = p2p::P2PService::CertificatePtr;
+  using NodeHash       = DAGHash;
+  using EpochHash      = DAGHash;
+  using CertificatePtr = std::shared_ptr<crypto::Prover>;
 
   // TODO(HUT): cleanly define things here
   using MissingTXs   = std::set<NodeHash>;
@@ -53,9 +56,9 @@ public:
   virtual ~DAGInterface() = default;
 
   // TODO(HUT): resolve this part of the interface
-  virtual void AddTransaction(Transaction const &tx, DAGTypes type) = 0;
-  virtual void AddWork(Work const &work)                            = 0;
-  virtual void AddArbitrary(ConstByteArray const &payload)          = 0;
+  virtual void AddTransaction(chain::Transaction const &tx, DAGTypes type) = 0;
+  virtual void AddWork(Work const &work)                                   = 0;
+  virtual void AddArbitrary(ConstByteArray const &payload)                 = 0;
 
   virtual DAGEpoch             CreateEpoch(uint64_t block_number)  = 0;
   virtual bool                 CommitEpoch(DAGEpoch)               = 0;
@@ -66,11 +69,11 @@ public:
   virtual std::vector<DAGNode> GetLatest(bool previous_epoch_only) = 0;
 
   // Functions used for syncing
-  virtual std::vector<DAGNode> GetRecentlyAdded()                                    = 0;
-  virtual MissingTXs           GetRecentlyMissing()                                  = 0;
-  virtual bool                 GetDAGNode(ConstByteArray const &hash, DAGNode &node) = 0;
-  virtual bool                 GetWork(ConstByteArray const &hash, Work &work)       = 0;
-  virtual bool                 AddDAGNode(DAGNode node)                              = 0;
+  virtual std::vector<DAGNode> GetRecentlyAdded()                             = 0;
+  virtual MissingTXs           GetRecentlyMissing()                           = 0;
+  virtual bool                 GetDAGNode(DAGHash const &hash, DAGNode &node) = 0;
+  virtual bool                 GetWork(DAGHash const &hash, Work &work)       = 0;
+  virtual bool                 AddDAGNode(DAGNode node)                       = 0;
 };
 
 }  // namespace ledger

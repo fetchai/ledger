@@ -19,7 +19,7 @@
 #include "settings.hpp"
 
 #include "core/commandline/parameter_parser.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "vectorise/platform.hpp"
 
 #include <cstddef>
@@ -30,15 +30,17 @@
 namespace fetch {
 namespace {
 
-static const uint32_t DEFAULT_NUM_LANES       = 1;
-static const uint32_t DEFAULT_NUM_SLICES      = 500;
-static const uint32_t DEFAULT_NUM_EXECUTORS   = DEFAULT_NUM_LANES;
-static const uint16_t DEFAULT_PORT            = 8000;
-static const uint32_t DEFAULT_BLOCK_INTERVAL  = 0;  // milliseconds - zero means no mining
-static const uint32_t DEFAULT_MAX_PEERS       = 3;
-static const uint32_t DEFAULT_TRANSIENT_PEERS = 1;
-static const uint32_t NUM_SYSTEM_THREADS =
-    static_cast<uint32_t>(std::thread::hardware_concurrency());
+const uint32_t DEFAULT_NUM_LANES          = 1;
+const uint32_t DEFAULT_NUM_SLICES         = 500;
+const uint32_t DEFAULT_NUM_EXECUTORS      = DEFAULT_NUM_LANES;
+const uint16_t DEFAULT_PORT               = 8000;
+const uint32_t DEFAULT_BLOCK_INTERVAL     = 0;  // milliseconds - zero means no mining
+const uint32_t DEFAULT_CABINET_SIZE       = 10;
+const uint32_t DEFAULT_STAKE_DELAY_PERIOD = 5;
+const uint32_t DEFAULT_AEON_PERIOD        = 25;
+const uint32_t DEFAULT_MAX_PEERS          = 3;
+const uint32_t DEFAULT_TRANSIENT_PEERS    = 1;
+const uint32_t NUM_SYSTEM_THREADS = static_cast<uint32_t>(std::thread::hardware_concurrency());
 
 }  // namespace
 
@@ -47,34 +49,36 @@ static const uint32_t NUM_SYSTEM_THREADS =
  * Construct the settings object
  */
 Settings::Settings()
-  : num_lanes             {*this, "lanes",                   DEFAULT_NUM_LANES,        "The number of lanes to be used"}
-  , num_slices            {*this, "slices",                  DEFAULT_NUM_SLICES,       "The number of slices to be used"}
-  , block_interval        {*this, "block-interval",          DEFAULT_BLOCK_INTERVAL,   "The block interval is milliseconds"}
-  , standalone            {*this, "standalone",              false,                    "Signal the network should run in standalone mode"}
-  , private_network       {*this, "private-network",         false,                    "Signal the network should run as part of a private network"}
-  , db_prefix             {*this, "db-prefix",               "node_storage",           "Prefix for database file names"}
-  , port                  {*this, "port",                    DEFAULT_PORT,             "The starting port for ledger services"}
-  , peers                 {*this, "peers",                   {},                       "The comma separated list of addresses to initially connect to"}
-  , external              {*this, "external",                "",                       "This node's global IP address or hostname"}
-  , config                {*this, "config",                  "",                       "The path to the manifest configuration"}
-  , max_peers             {*this, "max-peers",               DEFAULT_MAX_PEERS,        "The max number of peers to connect to"}
-  , transient_peers       {*this, "transient-peers",         DEFAULT_TRANSIENT_PEERS,  "The number of the peers which will be random in answer sent to peer requests"}
-  , peer_update_interval  {*this, "peers-update-cycle-ms",   0,                        "How fast to do peering updates"}
-  , disable_signing       {*this, "disable-signing",         false,                    "Disable the signing of all network messages"}
-  , bootstrap             {*this, "bootstrap",               false,                    "Signal that we should connect to the bootstrap server"}
-  , discoverable          {*this, "discoverable",            false,                    "Signal that this node can be advertised on the bootstrap server"}
-  , hostname              {*this, "host-name",               "",                       "The hostname or identifier for this node"}
-  , network_name          {*this, "network",                 "",                       "The name of the bootstrap network to connect to"}
-  , token                 {*this, "token",                   "",                       "The authentication token when talking to bootstrap"}
-  , num_processor_threads {*this, "processor-threads",       NUM_SYSTEM_THREADS,       "The number of processor threads"}
-  , num_verifier_threads  {*this, "verifier-threads",        NUM_SYSTEM_THREADS,       "The number of verifier threads"}
-  , num_executors         {*this, "executors",               DEFAULT_NUM_EXECUTORS,    "The number of transaction executors"}
-  , dump_state            {*this, "dump-state",              false,                    "Trigger the state file dump on shutdown"}
-  , load_state            {*this, "load-state",              false,                    "Trigger the state file to be loaded on startup"}
-  , stakefile_location    {*this, "stakefile-location",      "",                       "Path to the stakefile (usually snapshot.json)"}
-  , experimental_features {*this, "experimental",            {},                       "The comma separated set of experimental features to enable"}
-  , proof_of_stake        {*this, "pos",                     false,                    "Enable Proof of Stake consensus"}
-  , beacon_address        {*this, "beacon",                  "",                       "The address of the dealer node"}
+  : num_lanes             {*this, "lanes",                   DEFAULT_NUM_LANES,            "The number of lanes to be used"}
+  , num_slices            {*this, "slices",                  DEFAULT_NUM_SLICES,           "The number of slices to be used"}
+  , block_interval        {*this, "block-interval",          DEFAULT_BLOCK_INTERVAL,       "The block interval is milliseconds"}
+  , standalone            {*this, "standalone",              false,                        "Signal the network should run in standalone mode"}
+  , private_network       {*this, "private-network",         false,                        "Signal the network should run as part of a private network"}
+  , db_prefix             {*this, "db-prefix",               "node_storage",               "The prefix for filenames related to constellation databases"}
+  , port                  {*this, "port",                    DEFAULT_PORT,                 "The starting port for ledger services"}
+  , peers                 {*this, "peers",                   {},                           "The comma separated list of addresses to initially connect to"}
+  , external              {*this, "external",                "127.0.0.1",                  "This node's global IP address or hostname"}
+  , config                {*this, "config",                  "",                           "The path to the manifest configuration"}
+  , max_peers             {*this, "max-peers",               DEFAULT_MAX_PEERS,            "The max number of peers to connect to"}
+  , transient_peers       {*this, "transient-peers",         DEFAULT_TRANSIENT_PEERS,      "The number of the peers which will be random in answer sent to peer requests"}
+  , peer_update_interval  {*this, "peers-update-cycle-ms",   0,                            "How fast to do peering updates"}
+  , disable_signing       {*this, "disable-signing",         false,                        "Disable the signing of all network messages"}
+  , kademlia_routing      {*this, "kademlia-routing",        true,                         "Controls if kademalia routing is used in the main P2P network"}
+  , bootstrap             {*this, "bootstrap",               false,                        "Signal that we should connect to the bootstrap server"}
+  , discoverable          {*this, "discoverable",            false,                        "Signal that this node can be advertised on the bootstrap server"}
+  , hostname              {*this, "host-name",               "",                           "The hostname or identifier for this node"}
+  , network_name          {*this, "network",                 "",                           "The name of the bootstrap network to connect to"}
+  , token                 {*this, "token",                   "",                           "The authentication token when talking to bootstrap"}
+  , num_processor_threads {*this, "processor-threads",       NUM_SYSTEM_THREADS,           "The number of processor threads"}
+  , num_verifier_threads  {*this, "verifier-threads",        NUM_SYSTEM_THREADS,           "The number of verifier threads"}
+  , num_executors         {*this, "executors",               DEFAULT_NUM_EXECUTORS,        "The number of transaction executors"}
+  , load_genesis_file     {*this, "load-genesis-file",       false,                        "Specify the contents of the genesis block"}
+  , genesis_file_location {*this, "genesis-file-location",   "",                           "Path to the genesis file (usually genesis_file.json)"}
+  , experimental_features {*this, "experimental",            {},                           "The comma separated set of experimental features to enable"}
+  , proof_of_stake        {*this, "pos",                     false,                        "Enable Proof of Stake consensus"}
+  , max_cabinet_size    {*this, "max-cabinet-size",      DEFAULT_CABINET_SIZE,       ""}
+  , stake_delay_period    {*this, "stake-delay-period",      DEFAULT_STAKE_DELAY_PERIOD,   ""}
+  , aeon_period           {*this, "aeon-period",             DEFAULT_AEON_PERIOD,          ""}
 {}
 // clang-format on
 

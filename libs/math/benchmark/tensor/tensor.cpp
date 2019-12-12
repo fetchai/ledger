@@ -24,7 +24,7 @@
 template <class T, int C, int H, int W>
 void BM_TensorSize(benchmark::State &state)
 {
-  fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+  fetch::math::Tensor<T> t(std::vector<uint64_t>{C, H, W});
   for (auto _ : state)
   {
     benchmark::DoNotOptimize(t.size());
@@ -47,7 +47,7 @@ BENCHMARK_TEMPLATE(BM_TensorSize, double, 256, 256, 256)->Unit(benchmark::kNanos
 template <class T, int C, int H, int W>
 void BM_TensorShape(benchmark::State &state)
 {
-  fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+  fetch::math::Tensor<T> t(std::vector<uint64_t>{C, H, W});
   for (auto _ : state)
   {
     benchmark::DoNotOptimize(t.shape());
@@ -74,7 +74,7 @@ void BM_TensorNaiveIteration(benchmark::State &state)
     state.PauseTiming();
 
     // Construct reference tensor
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    fetch::math::Tensor<T> t(std::vector<uint64_t>{C, H, W});
 
     state.ResumeTiming();
 
@@ -106,7 +106,7 @@ void VectorBaselineRangeIterator(benchmark::State &state)
     state.PauseTiming();
 
     // Construct reference tensor
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    fetch::math::Tensor<T> t(std::vector<uint64_t>{C, H, W});
 
     // Baseline - iterate over vector of same number of elements
     std::vector<T> baseline;
@@ -142,7 +142,7 @@ void BM_TensorRangeIterator(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    fetch::math::Tensor<T> t(std::vector<uint64_t>{C, H, W});
     state.ResumeTiming();
 
     for (auto const &e : t)
@@ -167,8 +167,8 @@ BENCHMARK_TEMPLATE(BM_TensorRangeIterator, double, 256, 256, 256)->Unit(benchmar
 template <class T, int C, int H, int W>
 void BM_TensorConcat(benchmark::State &state)
 {
-  fetch::math::Tensor<T>              t1(std::vector<std::uint64_t>{C, H, W});
-  fetch::math::Tensor<T>              t2(std::vector<std::uint64_t>{C, H, W});
+  fetch::math::Tensor<T>              t1(std::vector<uint64_t>{C, H, W});
+  fetch::math::Tensor<T>              t2(std::vector<uint64_t>{C, H, W});
   std::vector<fetch::math::Tensor<T>> vt{t1, t2};
 
   for (auto _ : state)
@@ -195,7 +195,7 @@ void BM_TensorSum(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    fetch::math::Tensor<T> t(std::vector<uint64_t>{C, H, W});
     state.ResumeTiming();
 
     benchmark::DoNotOptimize(t.Sum());
@@ -217,7 +217,7 @@ BENCHMARK_TEMPLATE(BM_TensorSum, double, 256, 256, 256)->Unit(benchmark::kMillis
 template <class T, int C, int H, int W>
 void BM_TensorSlice(benchmark::State &state)
 {
-  fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+  fetch::math::Tensor<T> t(std::vector<uint64_t>{C, H, W});
 
   for (auto _ : state)
   {

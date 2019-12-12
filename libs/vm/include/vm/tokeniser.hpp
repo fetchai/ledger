@@ -23,9 +23,9 @@
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
 
-#line 5 "../include/vm/tokeniser.hpp"
+#line 6 "../include/vm/tokeniser.hpp"
 
-#line 7 "../include/vm/tokeniser.hpp"
+#line 8 "../include/vm/tokeniser.hpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -257,6 +257,7 @@ void yyfree ( void * , yyscan_t yyscanner );
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
 #define COMMENT 1
+#define SINGLELINECOMMENT 2
 
 #endif
 
@@ -524,10 +525,10 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 233 "tokeniser.l"
+#line 262 "tokeniser.l"
 
 
-#line 509 "../include/vm/tokeniser.hpp"
+#line 511 "../include/vm/tokeniser.hpp"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */
 // clang-format on

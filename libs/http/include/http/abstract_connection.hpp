@@ -30,12 +30,13 @@ namespace http {
 class AbstractHTTPConnection
 {
 public:
-  using shared_type = std::shared_ptr<AbstractHTTPConnection>;
+  using SharedType = std::shared_ptr<AbstractHTTPConnection>;
 
   AbstractHTTPConnection()          = default;
   virtual ~AbstractHTTPConnection() = default;
 
   virtual void        Send(HTTPResponse const &) = 0;
+  virtual void        CloseConnnection()         = 0;
   virtual std::string Address()                  = 0;
 };
 

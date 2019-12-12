@@ -41,11 +41,17 @@ struct Token
     Float64,
     Fixed32,
     Fixed64,
+    Fixed128,
     String,
     BadString,
+    UnterminatedComment,
     True,
     False,
     Null,
+    Contract,
+    EndContract,
+    Struct,
+    EndStruct,
     Function,
     EndFunction,
     While,
@@ -100,9 +106,9 @@ struct Token
     As
   };
   Kind        kind;
-  uint32_t    offset;
-  uint16_t    line;
-  uint16_t    length;
+  uint32_t    offset{};
+  uint16_t    line{};
+  uint16_t    length{};
   std::string text;
 };
 

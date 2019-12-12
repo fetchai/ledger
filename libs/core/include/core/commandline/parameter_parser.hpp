@@ -37,7 +37,7 @@ public:
   ParamsParser(ParamsParser &&)      = delete;
   ~ParamsParser()                    = default;
 
-  void Parse(int argc, const char *const argv[]);
+  void Parse(int argc, char const *const argv[]);
 
   template <typename T>
   T GetArg(std::size_t i, T const &default_value) const;

@@ -31,7 +31,7 @@
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #endif
 
-#include <mio/mmap.hpp>
+#include "mio/mmap.hpp"
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

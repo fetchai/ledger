@@ -21,14 +21,17 @@
 #include <vector>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 class Transaction;
+
+}  // namespace chain
+namespace ledger {
 
 class TransactionSink
 {
 public:
-  using TransactionPtr  = std::shared_ptr<Transaction>;
+  using TransactionPtr  = std::shared_ptr<chain::Transaction>;
   using TransactionList = std::vector<TransactionPtr>;
 
   // Construction / Destruction

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/string/ends_with.hpp"
+#include "telemetry/utils/ends_with.hpp"
 
 #include <algorithm>
 #include <string>
@@ -26,8 +27,7 @@ namespace core {
 
 bool EndsWith(std::string const &value, std::string const &suffix)
 {
-  return value.size() >= suffix.size() &&
-         std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
+  return telemetry::details::EndsWith(value, suffix);
 }
 
 }  // namespace core

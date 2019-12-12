@@ -17,8 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/chain_code_cache.hpp"
-#include "ledger/chaincode/factory.hpp"
-#include "meta/log2.hpp"
+#include "ledger/chaincode/chain_code_factory.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/smart_contract.hpp"
+#include "ledger/chaincode/smart_contract_factory.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -28,8 +30,8 @@
 namespace fetch {
 namespace ledger {
 
-ChainCodeCache::ContractPtr ChainCodeCache::Lookup(Identifier const &contract_id,
-                                                   StorageInterface &storage)
+ChainCodeCache::ContractPtr ChainCodeCache::Lookup(ConstByteArray const &contract_id,
+                                                   StorageInterface &    storage)
 {
   // attempt to locate the contract in the cache
   ContractPtr contract = FindInCache(contract_id);
@@ -37,12 +39,21 @@ ChainCodeCache::ContractPtr ChainCodeCache::Lookup(Identifier const &contract_id
   // if this fails create the contract
   if (!contract)
   {
-    // it is expected that the create function will throw on errors
-    contract = factory_.Create(contract_id, storage);
-    assert(static_cast<bool>(contract));
+    chain::Address address;
+    if (chain::Address::Parse(contract_id, address))
+    {
+      contract = CreateSmartContract<SmartContract>(address, storage);
+    }
+    else
+    {
+      contract = CreateChainCode(contract_id);
+    }
 
     // update the cache
-    cache_.emplace(contract_id.qualifier(), contract);
+    if (contract)
+    {
+      cache_.emplace(contract_id, contract);
+    }
   }
 
   // periodically run cache maintenance
@@ -54,12 +65,12 @@ ChainCodeCache::ContractPtr ChainCodeCache::Lookup(Identifier const &contract_id
   return contract;
 }
 
-ChainCodeCache::ContractPtr ChainCodeCache::FindInCache(Identifier const &contract_id)
+ChainCodeCache::ContractPtr ChainCodeCache::FindInCache(ConstByteArray const &contract_id)
 {
   ContractPtr contract;
 
-  // attempt to lookup the contract in the cache
-  auto it = cache_.find(contract_id.qualifier());
+  // attempt to look up the contract in the cache
+  auto it = cache_.find(contract_id);
   if (it != cache_.end())
   {
     // extract the contract and refresh the cache timestamp

@@ -27,7 +27,7 @@ using fetch::storage::RandomAccessStack;
 class RandomAccessStackBench : public ::benchmark::Fixture
 {
 protected:
-  void SetUp(const ::benchmark::State & /*st*/) override
+  void SetUp(::benchmark::State const & /*st*/) override
   {
     stack_.New("RAS_bench.db");
 
@@ -35,14 +35,11 @@ protected:
     EXPECT_TRUE(stack_.DirectWrite()) << "Expected random access stack to be direct write";
   }
 
-  void TearDown(const ::benchmark::State &) override
-  {}
-
   RandomAccessStack<uint64_t>               stack_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;
 };
 
-BENCHMARK_F(RandomAccessStackBench, WritingIntToStack)(benchmark::State &st)
+BENCHMARK_F(RandomAccessStackBench, WritingIntToStack)(benchmark::State &st)  // NOLINT
 {
   uint64_t random;
   for (auto _ : st)

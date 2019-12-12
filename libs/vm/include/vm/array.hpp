@@ -19,6 +19,7 @@
 
 #include "core/serializers/base_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vm/fixed.hpp"
 #include "vm/vm.hpp"
 
 #include <algorithm>
@@ -135,7 +136,7 @@ struct Array : public IArray
 
     elements.resize(elements.size() - static_cast<std::size_t>(num_to_pop));
 
-    return array;
+    return Ptr<IArray>{array};
   }
 
   TemplateParameter1 PopFrontOne() override
@@ -187,7 +188,7 @@ struct Array : public IArray
 
     elements.resize(elements.size() - popped_size);
 
-    return array;
+    return Ptr<IArray>{array};
   }
 
   void Reverse() override
@@ -205,7 +206,7 @@ struct Array : public IArray
     elements.insert(elements.cend(), other_elements.cbegin(), other_elements.cend());
   }
 
-  void Erase(const int32_t index) override
+  void Erase(int32_t const index) override
   {
     if (index < 0)
     {
@@ -278,25 +279,33 @@ private:
   {
     if (!vm_->IsDefaultSerializeConstructable(element_type_id))
     {
-      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
+      vm_->RuntimeError("Cannot serialize type " + vm_->GetTypeName(element_type_id) +
                         " as no serialisation constructor exists.");
       return false;
     }
 
-    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
-    for (Ptr<Object> v : data)
+    // Creating new array
+    auto constructor  = buffer.NewArrayConstructor();
+    auto array_buffer = constructor(elements.size());
+
+    // Serializing elements
+    for (Ptr<Object> const &v : data)
     {
       if (!v)
       {
-        RuntimeError("Cannot serialise null reference element in " + GetUniqueId());
+        RuntimeError("Cannot serialise null reference element in " + GetTypeName());
         return false;
       }
 
-      if (!v->SerializeTo(buffer))
+      auto success = array_buffer.AppendUsingFunction(
+          [&v](MsgPackSerializer &serializer) { return v->SerializeTo(serializer); });
+
+      if (!success)
       {
         return false;
       }
     }
+
     return true;
   }
 
@@ -304,41 +313,44 @@ private:
   std::enable_if_t<IsPrimitive<G>::value, bool> ApplySerialize(MsgPackSerializer &   buffer,
                                                                std::vector<G> const &data)
   {
-    buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
+    // Creating new array
+    auto constructor  = buffer.NewArrayConstructor();
+    auto array_buffer = constructor(elements.size());
+
+    // Serializing elements
     for (G const &v : data)
     {
-      buffer << v;
+      array_buffer.Append(v);
     }
+
     return true;
   }
 
   bool ApplyDeserialize(MsgPackSerializer &buffer, std::vector<Ptr<Object>> &data)
   {
-    uint64_t    size;
-    std::string uid;
-    buffer >> uid >> size;
-
-    if (uid != GetUniqueId())
-    {
-      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
-                        GetUniqueId());
-      return false;
-    }
-
-    data.resize(size);
-
     if (!vm_->IsDefaultSerializeConstructable(element_type_id))
     {
-      vm_->RuntimeError("Cannot deserialize type " + vm_->GetUniqueId(element_type_id) +
+      vm_->RuntimeError("Cannot deserialize type " + vm_->GetTypeName(element_type_id) +
                         " as no serialisation constructor exists.");
       return false;
     }
 
-    data.resize(size);
+    auto array = buffer.NewArrayDeserializer();
+    data.resize(array.size());
+
     for (Ptr<Object> &v : data)
     {
       v = vm_->DefaultSerializeConstruct(element_type_id);
-      if (!v || !v->DeserializeFrom(buffer))
+      if (!v)
+      {
+        return false;
+      }
+
+      // Deserializing next elemtn
+      auto success = array.GetNextValueUsingFunction(
+          [&v](MsgPackSerializer &serializer) { return v->DeserializeFrom(serializer); });
+
+      if (!success)
       {
         return false;
       }
@@ -350,21 +362,14 @@ private:
   std::enable_if_t<IsPrimitive<G>::value, bool> ApplyDeserialize(MsgPackSerializer &buffer,
                                                                  std::vector<G> &   data)
   {
-    uint64_t    size;
-    std::string uid;
-    buffer >> uid >> size;
-    if (uid != GetUniqueId())
-    {
-      vm_->RuntimeError("Type mismatch during deserialization. Got " + uid + " but expected " +
-                        GetUniqueId());
-      return false;
-    }
+    auto array = buffer.NewArrayDeserializer();
 
-    data.resize(size);
+    data.resize(array.size());
     for (G &v : data)
     {
-      buffer >> v;
+      array.GetNextValue(v);
     }
+
     return true;
   }
 };
@@ -373,66 +378,82 @@ template <typename... Args>
 Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
 {
   TypeInfo const &type_info       = vm->GetTypeInfo(type_id);
-  TypeId const    element_type_id = type_info.parameter_type_ids[0];
+  TypeId const    element_type_id = type_info.template_parameter_type_ids[0];
   switch (element_type_id)
   {
   case TypeIds::Bool:
   {
-    return new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Int8:
   {
-    return new Array<int8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<int8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::UInt8:
   {
-    return new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Int16:
   {
-    return new Array<int16_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<int16_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::UInt16:
   {
-    return new Array<uint16_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<uint16_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Int32:
   {
-    return new Array<int32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<int32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::UInt32:
   {
-    return new Array<uint32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<uint32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Int64:
   {
-    return new Array<int64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<int64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::UInt64:
   {
-    return new Array<uint64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<uint64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Float32:
   {
-    return new Array<float>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{new Array<float>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Float64:
   {
-    return new Array<double>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<double>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Fixed32:
   {
-    return new Array<fixed_point::fp32_t>(vm, type_id, element_type_id,
-                                          std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<fixed_point::fp32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Fixed64:
   {
-    return new Array<fixed_point::fp64_t>(vm, type_id, element_type_id,
-                                          std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<fixed_point::fp64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
+  }
+  case TypeIds::Fixed128:
+  {
+    return Ptr<IArray>{
+        new Array<Ptr<Fixed128>>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   default:
   {
-    return new Array<Ptr<Object>>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<Ptr<Object>>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   }  // switch
 }

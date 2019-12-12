@@ -18,7 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/future_timepoint.hpp"
-#include "core/logging.hpp"
+#include "core/mutex.hpp"
+#include "logging/logging.hpp"
 
 #include <condition_variable>
 
@@ -64,7 +65,7 @@ public:
     counter.cv.notify_all();
   }
 
-  static bool Wait(const core::FutureTimepoint &until)
+  static bool Wait(core::FutureTimepoint const &until)
   {
     auto &the_counter = GetCounter();
 
@@ -85,7 +86,6 @@ public:
 
 private:
   using CondVar = std::condition_variable;
-  using Mutex   = std::mutex;
   using Lock    = std::unique_lock<Mutex>;
 
   struct Counter

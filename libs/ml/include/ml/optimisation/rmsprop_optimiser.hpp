@@ -37,7 +37,7 @@ class RMSPropOptimiser : public Optimiser<T>
 public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
-  using SizeType   = typename TensorType::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
                    std::vector<std::string> const &input_node_names,
@@ -55,6 +55,11 @@ public:
 
   ~RMSPropOptimiser() override = default;
 
+  OptimiserType OptimiserCode() override
+  {
+    return OptimiserType::RMSPROP;
+  }
+
 private:
   std::vector<TensorType> cache_;
   DataType                decay_rate_;
@@ -69,10 +74,9 @@ private:
 template <class T>
 void RMSPropOptimiser<T>::Init()
 {
-  auto weights = this->graph_->get_weights();
   for (auto &train : this->graph_trainables_)
   {
-    this->cache_.emplace_back(TensorType(train->get_weights().shape()));
+    this->cache_.emplace_back(TensorType(train->GetWeights().shape()));
   }
 
   ResetCache();
@@ -117,30 +121,40 @@ void RMSPropOptimiser<T>::ApplyGradients(SizeType batch_size)
 
   while (gradient_it != this->gradients_.end())
   {
-    // cache[i] = decay_rate * cache[i] + (1 - decay_rate) * ((input_grad[i]/batch_size)^2)
-    fetch::math::Divide((*trainable_it)->GetGradientsReferences(),
-                        static_cast<DataType>(batch_size), *gradient_it);
-    fetch::math::Square(*gradient_it, *gradient_it);
+    // Skip frozen trainables
+    if (!(*trainable_it)->GetFrozenState())
+    {
 
-    fetch::math::Multiply(*gradient_it, (one_ - decay_rate_), *gradient_it);
-    fetch::math::Multiply(*cached_weight_it, decay_rate_, *cached_weight_it);
-    fetch::math::Add(*cached_weight_it, *gradient_it, *cached_weight_it);
+      // cache[i] = decay_rate * cache[i] + (1 - decay_rate) * ((input_grad[i]/batch_size)^2)
+      fetch::math::Divide((*trainable_it)->GetGradientsReferences(),
+                          static_cast<DataType>(batch_size), *gradient_it);
+      fetch::math::Square(*gradient_it, *gradient_it);
 
-    // epsilon is added to prevent division by 0
-    // output_grad[i] = learning_rate * (input_grad[i]/batch_size) / (sqrt(cache[i]) + epsilon)
-    fetch::math::Sqrt(*cached_weight_it, *gradient_it);
-    fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
-    fetch::math::Divide((*trainable_it)->GetGradientsReferences(), *gradient_it, *gradient_it);
-    fetch::math::Multiply(
-        *gradient_it, (-this->learning_rate_) / (static_cast<DataType>(batch_size)), *gradient_it);
+      fetch::math::Multiply(*gradient_it, (one_ - decay_rate_), *gradient_it);
+      fetch::math::Multiply(*cached_weight_it, decay_rate_, *cached_weight_it);
+      fetch::math::Add(*cached_weight_it, *gradient_it, *cached_weight_it);
 
-    // Apply gradient weights[i]+=output_grad[i]
-    (*trainable_it)->ApplyGradient(*gradient_it);
+      // epsilon is added to prevent division by 0
+      // output_grad[i] = learning_rate * (input_grad[i]/batch_size) / (sqrt(cache[i]) + epsilon)
+      fetch::math::Sqrt(*cached_weight_it, *gradient_it);
+      fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
+      fetch::math::Divide((*trainable_it)->GetGradientsReferences(), *gradient_it, *gradient_it);
+      fetch::math::Multiply(*gradient_it,
+                            (-this->learning_rate_) / (static_cast<DataType>(batch_size)),
+                            *gradient_it);
+
+      // we need to explicitly reset the gradients for this shared op to avoid double counting
+      // in the case of shared ops
+      (*trainable_it)->ResetGradients();
+    }
 
     ++cached_weight_it;
     ++gradient_it;
     ++trainable_it;
   }
+
+  // calling apply gradients on the graph ensures that the node caches are reset properly
+  this->graph_->ApplyGradients(this->gradients_);
 }
 
 template <class T>

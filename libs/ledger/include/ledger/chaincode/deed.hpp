@@ -17,29 +17,39 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
-#include "ledger/chain/address.hpp"
 
 #include <cstdint>
+#include <memory>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 class Transaction;
 
-struct Deed
+}  // namespace chain
+namespace ledger {
+
+class Deed
 {
+public:
   using Weight             = uint64_t;
   using Threshold          = Weight;
-  using DeedOperation      = byte_array::ConstByteArray;
-  using Signees            = std::unordered_map<Address, Weight>;
-  using OperationTresholds = std::unordered_map<DeedOperation, Threshold>;
+  using Operation          = byte_array::ConstByteArray;
+  using Signees            = std::unordered_map<chain::Address, Weight>;
+  using OperationTresholds = std::unordered_map<Operation, Threshold>;
   using Weights            = std::unordered_map<Weight, uint64_t>;
   using MandatorityMatrix  = std::unordered_map<Threshold, Weights>;
 
+  static Operation const TRANSFER;
+  static Operation const STAKE;
+  static Operation const AMEND;
+  static Operation const EXECUTE;
+
   bool              IsSane() const;
-  bool              Verify(Transaction const &tx, DeedOperation const &operation) const;
+  bool              Verify(chain::Transaction const &tx, Operation const &operation) const;
   MandatorityMatrix InferMandatoryWeights() const;
 
   Deed()             = default;
@@ -60,6 +70,8 @@ private:
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
 };
+
+using DeedPtr = std::shared_ptr<Deed>;
 
 }  // namespace ledger
 

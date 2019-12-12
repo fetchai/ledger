@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/exception.hpp"
+#include "logging/logging.hpp"
 #include "network/service/types.hpp"
 
 #include <array>
@@ -36,7 +36,14 @@
 #include <utility>
 
 namespace fetch {
+
+namespace serializers {
+class SerializableException;
+}
+
 namespace service {
+
+class PromiseError;
 
 namespace details {
 
@@ -47,19 +54,13 @@ class PromiseImplementation
   friend PromiseBuilder;
 
 public:
-  PromiseImplementation() = default;
-  PromiseImplementation(uint64_t pro, uint64_t func);
-
-  using Counter               = uint64_t;
-  using ConstByteArray        = byte_array::ConstByteArray;
-  using SerializableException = serializers::SerializableException;
-  using ExceptionPtr          = std::unique_ptr<SerializableException>;
-  using Callback              = std::function<void()>;
-  using Clock                 = std::chrono::high_resolution_clock;
-  using Timepoint             = Clock::time_point;
-
-  static constexpr char const *LOGGING_NAME = "Promise";
-  static constexpr uint32_t    FOREVER      = std::numeric_limits<uint32_t>::max();
+  using Counter        = uint64_t;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using ExceptionPtr   = std::unique_ptr<serializers::SerializableException>;
+  using Callback       = std::function<void()>;
+  using Clock          = std::chrono::steady_clock;
+  using Timepoint      = Clock::time_point;
+  using Duration       = Clock::duration;
 
   enum class State
   {
@@ -69,20 +70,60 @@ public:
     TIMEDOUT
   };
 
-  ConstByteArray const &       value() const;
-  Counter                      id() const;
-  uint64_t                     protocol() const;
-  uint64_t                     function() const;
-  State                        state() const;
-  SerializableException const &exception() const;
+  static constexpr char const *     LOGGING_NAME = "Promise";
+  static std::chrono::seconds const DEFAULT_TIMEOUT;
+  static const uint64_t             INVALID = uint64_t(-1);
 
-  /// @name State Access
+  // Construction / Destruction
+  PromiseImplementation() = default;
+  PromiseImplementation(uint64_t protocol, uint64_t function);
+  PromiseImplementation(PromiseImplementation const &) = delete;
+  PromiseImplementation(PromiseImplementation &&)      = delete;
+  ~PromiseImplementation()                             = default;
+
+  /// @name Accessors
+  /// @{
+  ConstByteArray const &value() const;
+  Counter               id() const;
+  Timepoint const &     created_at() const;
+  Timepoint const &     deadline() const;
+  uint64_t              protocol() const;
+  uint64_t              function() const;
+  State                 state() const;
+  std::string const &   name() const;
+  /// @}
+
+  /// @name Basic State Helpers
   /// @{
   bool IsWaiting() const;
   bool IsSuccessful() const;
   bool IsFailed() const;
   /// @}
-private:
+
+  // Handler building
+  PromiseBuilder WithHandlers();
+
+  /// @name Promise Results
+  /// @{
+  void Fulfill(ConstByteArray const &value);
+  void Fail(serializers::SerializableException const &exception);
+  void Timeout();
+  void Fail();
+  /// @}
+
+  /// @name Result Access
+  /// @{
+  bool Wait(bool throw_exception = true) const;
+
+  template <typename T>
+  bool GetResult(T &ret) const;
+  /// @}
+
+  // Operators
+  PromiseImplementation &operator=(PromiseImplementation const &) = delete;
+  PromiseImplementation &operator=(PromiseImplementation &&) = delete;
+
+protected:
   /// @name Callback Handlers
   /// @{
   void SetSuccessCallback(Callback const &cb);
@@ -90,86 +131,34 @@ private:
   void SetCompletionCallback(Callback const &cb);
   /// @}
 
-  uint64_t protocol_ = uint64_t(-1);
-  uint64_t function_ = uint64_t(-1);
-
-public:
-  PromiseBuilder WithHandlers();
-
-  /// @name Promise Results
-  /// @{
-  void Fulfill(ConstByteArray const &value);
-  void Fail(SerializableException const &exception);
-  void Fail();
-  /// @}
-
-  std::string &      name();
-  const std::string &name() const;
-
-  State GetState() const;
-
-  /// @name Waits
-  /// @{
-  bool Wait(uint32_t timeout_ms = FOREVER, bool throw_exception = true) const;
-  bool Wait(bool throw_exception) const;
-  /// @}
-
-  /// @name Result Access
-  /// @{
-  template <typename T>
-  T As() const
-  {
-    T result{};
-    if (!As<T>(result))
-    {
-      throw std::runtime_error("Timeout or connection lost");
-    }
-
-    return result;
-  }
-
-  template <typename T>
-  bool As(T &ret) const
-  {
-    if (!Wait())
-    {
-      return false;
-    }
-
-    serializer_type ser(value_);
-    ser >> ret;
-
-    return true;
-  }
-  /// @}
-
 private:
   using AtomicState = std::atomic<State>;
   using Condition   = std::condition_variable;
 
-  void UpdateState(State state);
-  void DispatchCallbacks();
+  void UpdateState(State state) const;
+  void DispatchCallbacks() const;
 
   static Counter counter_;
   static Mutex   counter_lock_;
   static Counter GetNextId();
 
-  Counter const  id_{GetNextId()};
-  AtomicState    state_{State::WAITING};
-  ConstByteArray value_;
-  ExceptionPtr   exception_;
-  std::string    name_;
+  Counter const       id_{GetNextId()};
+  Timepoint const     created_{Clock::now()};
+  Timepoint const     deadline_{created_ + DEFAULT_TIMEOUT};
+  uint64_t const      protocol_ = INVALID;
+  uint64_t const      function_ = INVALID;
+  mutable AtomicState state_{State::WAITING};
+  ConstByteArray      value_;
+  ExceptionPtr        exception_;
+  std::string         name_;
 
-  mutable Mutex callback_lock_;
-  Callback      callback_success_;
-  Callback      callback_failure_;
-  Callback      callback_completion_;
+  mutable Mutex    callback_lock_;
+  mutable Callback callback_success_;
+  mutable Callback callback_failure_;
+  mutable Callback callback_completion_;
 
-#define FETCH_PROMISE_CV
-#ifdef FETCH_PROMISE_CV
   mutable Mutex     notify_lock_;
   mutable Condition notify_;
-#endif
 };
 
 class PromiseBuilder
@@ -194,6 +183,57 @@ private:
 };
 
 }  // namespace details
+
+class PromiseError final : public std::exception
+{
+public:
+  using ConstByteArray = byte_array::ConstByteArray;
+  using Counter        = details::PromiseImplementation::Counter;
+  using Timepoint      = details::PromiseImplementation::Timepoint;
+  using State          = details::PromiseImplementation::State;
+
+  explicit PromiseError(details::PromiseImplementation const &promise);
+  PromiseError(PromiseError const &other) noexcept;
+  ~PromiseError() noexcept override = default;
+
+  char const *what() const noexcept override;
+
+private:
+  static std::string BuildErrorMessage(PromiseError const &error);
+
+  Counter const     id_;
+  Timepoint const   created_;
+  Timepoint const   deadline_;
+  uint64_t const    protocol_;
+  uint64_t const    function_;
+  State const       state_;
+  std::string const name_;
+  std::string const message_;
+};
+
+template <typename T>
+bool details::PromiseImplementation::GetResult(T &ret) const
+{
+  bool success{false};
+
+  try
+  {
+    if (Wait())
+    {
+      SerializerType ser(value_);
+      ser >> ret;
+
+      success = true;
+    }
+  }
+  catch (std::exception const &ex)
+  {
+    PromiseError const error{*this};
+    FETCH_LOG_WARN("Promise", error.what(), " : ", ex.what());
+  }
+
+  return success;
+}
 
 using PromiseCounter = details::PromiseImplementation::Counter;
 using PromiseState   = details::PromiseImplementation::State;

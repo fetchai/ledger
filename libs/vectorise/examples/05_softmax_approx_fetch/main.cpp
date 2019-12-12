@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/math/standard_functions.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
@@ -31,20 +32,18 @@ using vector_type = typename array_type::VectorRegisterType;
 
 void SoftMax(array_type const &A, array_type &B)
 {
-  vector_type sum(type(0));
+  type sum{0};
 
-  auto kernel1 = [&sum](vector_type const &a, vector_type &b) {
-    vector_type e = approx_exp(a);
-    sum           = sum + e;
-    b             = e;
-  };
+  B.in_parallel().Apply(
+      [&sum](auto const &a, auto &b) {
+        decltype(a) e = approx_exp(a);
+        sum           = sum + reduce(e);
+        b             = e;
+      },
+      A);
 
-  B.in_parallel().Apply(kernel1, A);
-
-  vector_type scale(type(1. / reduce(sum)));
-  auto        kernel2 = [scale](vector_type const &a, vector_type &b) { b = a * scale; };
-
-  B.in_parallel().Apply(kernel2, B);
+  auto scale(type(1.0 / sum));
+  B.in_parallel().Apply([scale](auto const &a, auto &b) { b = a * decltype(a)(scale); }, B);
 }
 
 int main(int argc, char const **argv)

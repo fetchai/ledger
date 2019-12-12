@@ -16,11 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
+#include "logging/logging.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
+#include "telemetry/utils/timer.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -34,12 +37,60 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
   : dag_{std::move(dag)}
   , executors_(num_executors)
   , threads_{num_executors, "SynEx"}
+  , no_executor_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_upow_exec_manager_rid_no_executor_total",
+        "The number of cases where ExecuteItem had missing executor.")}
+  , no_executor_loop_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_upow_exec_manager_rid_no_executor_loop_iter_total",
+        "The total number of iterations we had to make when executor was missing in ExecuteItem")}
+  , execute_item_failed_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_upow_exec_manager_rid_no_executor_loop_fails_total",
+        "Counts how many times ExecuteItem failed, because executor not available after wait.")}
 {
   if (num_executors != 1)
   {
     throw std::runtime_error(
         "The number of executors must be 1 because state concurrency not implemented");
   }
+
+  telemetry::Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_synergetic_executor_deduct_fees_duration",
+      "The execution duration in seconds for executing a transaction");
+
+  prepare_queue_duration_ = telemetry::Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_synergetic_executor_prepare_queue_duration",
+      "Preparing work queue duration in seconds");
+
+  execute_duration_ = telemetry::Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_synergetic_executor_execute_duration", "The execution duration in seconds");
+
+  telemetry::Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_synergetic_executor_work_duration",
+      "The execution duration in seconds for executing the work method of the contract");
+
+  telemetry::Registry::Instance().CreateHistogram(
+      {0.000001, 0.000002, 0.000003, 0.000004, 0.000005, 0.000006, 0.000007, 0.000008, 0.000009,
+       0.00001,  0.00002,  0.00003,  0.00004,  0.00005,  0.00006,  0.00007,  0.00008,  0.00009,
+       0.0001,   0.0002,   0.0003,   0.0004,   0.0005,   0.0006,   0.0007,   0.0008,   0.0009,
+       0.001,    0.01,     0.1,      1,        10.,      100.},
+      "ledger_synergetic_executor_complete_duration",
+      "The execution duration in seconds for executing the complete method of the contract");
 
   // build the required number of executors
   for (auto &executor : executors_)
@@ -50,27 +101,30 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
 
 ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Block const &previous)
 {
-  using WorkMap = std::unordered_map<Digest, WorkItemPtr, DigestHashAdapter>;
+  telemetry::FunctionTimer const timer{*prepare_queue_duration_};
 
-  auto const &current_epoch  = current.body.dag_epoch;
-  auto const &previous_epoch = previous.body.dag_epoch;
+  using WorkMap = std::unordered_map<chain::Address, WorkItemPtr>;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number);
+  auto const &current_epoch  = current.dag_epoch;
+  auto const &previous_epoch = previous.dag_epoch;
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number);
 
   // Step 1. loop through all the solutions which were presented in this epoch
   WorkMap work_map{};
   for (auto const &digest : current_epoch.solution_nodes)
   {
-    // lookup the work from the block
-    auto work = std::make_shared<Work>();
+    // look up the work from the block
+    auto work = std::make_shared<Work>(current.block_number);
     if (!dag_->GetWork(digest, *work))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to get work from DAG. Node: 0x", digest.ToHex());
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to get work from DAG Node: 0x", digest.ToHex());
       continue;
     }
 
-    // lookup (or create) the solution queue
-    auto &work_item = work_map[work->contract_digest()];
+    // look up (or create) the solution queue
+    auto &work_item = work_map[work->address()];
+
     if (!work_item)
     {
       work_item = std::make_shared<WorkItem>();
@@ -80,11 +134,11 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     work_item->work_queue.push(std::move(work));
   }
 
-  // Step 2. Loop through previous epochs data in order form the problem data
+  // Step 2. Loop through previous epochs data in order to form the problem data
   DAGNode node{};
   for (auto const &digest : previous_epoch.data_nodes)
   {
-    // lookup the referenced DAG node
+    // look up the referenced DAG node
     if (!dag_->GetDAGNode(digest, node))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to retrieve referenced DAG node: 0x", digest.ToHex());
@@ -98,12 +152,12 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
       continue;
     }
 
-    // attempt to lookup the contract being referenced
-    auto it = work_map.find(node.contract_digest);
+    // attempt to look up the contract being referenced
+    auto it = work_map.find(node.contract_address);
     if (it == work_map.end())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup references contract: 0x",
-                     node.contract_digest.ToHex());
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up references contract: address ",
+                     node.contract_address.display());
       continue;
     }
 
@@ -111,8 +165,8 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     it->second->problem_data.emplace_back(node.contents);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number,
-                 " (complete)");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number,
+                  " (complete)");
 
   // Step 3. Update the final queue
   {
@@ -124,18 +178,21 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     {
       solution_stack_.emplace_back(std::move(item.second));
     }
+    current_miner_ = current.miner;
   }
 
   return SUCCESS;
 }
 
-bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std::size_t num_lanes)
+bool SynergeticExecutionManager::ValidateWorkAndUpdateState(std::size_t num_lanes)
 {
   // get the current solution stack
   WorkQueueStack solution_stack;
+  chain::Address miner;
   {
     FETCH_LOCK(lock_);
     std::swap(solution_stack, solution_stack_);
+    miner = std::move(current_miner_);
   }
 
   // post all the work into the thread queues
@@ -146,8 +203,8 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std:
     solution_stack.pop_back();
 
     // dispatch the work
-    threads_.Dispatch([this, work_item, block, num_lanes] {
-      ExecuteItem(work_item->work_queue, work_item->problem_data, block, num_lanes);
+    threads_.Dispatch([this, work_item, num_lanes, miner] {
+      ExecuteItem(work_item->work_queue, work_item->problem_data, num_lanes, miner);
     });
   }
 
@@ -158,19 +215,47 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std:
 }
 
 void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const &problem_data,
-                                             uint64_t block, std::size_t num_lanes)
+                                             std::size_t num_lanes, chain::Address const &miner)
 {
+  telemetry::FunctionTimer const timer{*execute_duration_};
+
   ExecutorPtr executor;
+
+  bool first = true;
+  for (uint8_t i = 0; i < 5; ++i)
+  {
+    {
+      FETCH_LOCK(lock_);
+      if (!executors_.empty())
+      {
+        break;
+      }
+    }
+    if (first)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Executors empty, can't execute item! Waiting...");
+      no_executor_count_->increment();
+      first = false;
+    }
+    no_executor_loop_count_->increment();
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+  }
 
   // pick up an executor from the stack
   {
     FETCH_LOCK(lock_);
+    if (executors_.empty())
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "ExecuteItem: executors empty after 500ms wait!");
+      execute_item_failed_count_->increment();
+      return;
+    }
     executor = executors_.back();
     executors_.pop_back();
   }
 
   assert(static_cast<bool>(executor));
-  executor->Verify(queue, problem_data, block, num_lanes);
+  executor->Verify(queue, problem_data, num_lanes, miner);
 
   // return the executor to the stack
   FETCH_LOCK(lock_);

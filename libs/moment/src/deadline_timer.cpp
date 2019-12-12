@@ -26,7 +26,7 @@ namespace fetch {
 namespace moment {
 
 DeadlineTimer::DeadlineTimer(char const *clock)
-  : clock_{GetClock(clock, ClockType::STEADY)}
+  : clock_{GetClock(clock, ClockType::SYSTEM)}
 {}
 
 void DeadlineTimer::Restart(uint64_t period_ms)

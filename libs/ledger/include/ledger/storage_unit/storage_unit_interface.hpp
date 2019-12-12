@@ -17,18 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction_layout.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "ledger/chain/digest.hpp"
-#include "ledger/chain/transaction_layout.hpp"
+#include "core/digest.hpp"
 #include "storage/document.hpp"
 #include "storage/resource_mapper.hpp"
 
 #include <vector>
 
 namespace fetch {
-namespace ledger {
+
+namespace chain {
 
 class Transaction;
+
+}  // namespace chain
+
+namespace ledger {
 
 class StorageInterface
 {
@@ -45,12 +50,11 @@ public:
 
   /// @name State Interface
   /// @{
-  virtual Document Get(ResourceAddress const &key)                          = 0;
+  virtual Document Get(ResourceAddress const &key) const                    = 0;
   virtual Document GetOrCreate(ResourceAddress const &key)                  = 0;
   virtual void     Set(ResourceAddress const &key, StateValue const &value) = 0;
   virtual bool     Lock(ShardIndex shard)                                   = 0;
   virtual bool     Unlock(ShardIndex shard)                                 = 0;
-  virtual Keys     KeyDump() const                                          = 0;
   virtual void     Reset()                                                  = 0;
   /// @}
 };
@@ -60,7 +64,7 @@ class StorageUnitInterface : public StorageInterface
 public:
   using Hash           = byte_array::ConstByteArray;
   using ConstByteArray = byte_array::ConstByteArray;
-  using TxLayouts      = std::vector<TransactionLayout>;
+  using TxLayouts      = std::vector<chain::TransactionLayout>;
 
   // Construction / Destruction
   StorageUnitInterface()           = default;
@@ -68,10 +72,10 @@ public:
 
   /// @name Transaction Interface
   /// @{
-  virtual void AddTransaction(Transaction const &tx)                 = 0;
-  virtual bool GetTransaction(Digest const &digest, Transaction &tx) = 0;
-  virtual bool HasTransaction(Digest const &digest)                  = 0;
-  virtual void IssueCallForMissingTxs(DigestSet const &tx_set)       = 0;
+  virtual void AddTransaction(chain::Transaction const &tx)                 = 0;
+  virtual bool GetTransaction(Digest const &digest, chain::Transaction &tx) = 0;
+  virtual bool HasTransaction(Digest const &digest)                         = 0;
+  virtual void IssueCallForMissingTxs(DigestSet const &tx_set)              = 0;
   /// @}
 
   virtual TxLayouts PollRecentTx(uint32_t) = 0;

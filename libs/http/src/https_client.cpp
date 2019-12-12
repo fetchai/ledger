@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
 #include "http/https_client.hpp"
+#include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 
 #include <utility>
@@ -33,10 +33,7 @@ namespace http {
  */
 HttpsClient::HttpsClient(std::string host, uint16_t port)
   : HttpClient{std::move(host), port}
-{
-  context_.set_default_verify_paths();
-  socket_.set_verify_mode(asio::ssl::verify_peer);
-}
+{}
 
 /**
  * Establish the connection to the remote server

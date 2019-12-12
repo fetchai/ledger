@@ -19,6 +19,7 @@
 
 #include "core/bitvector.hpp"
 #include "ledger/executor_interface.hpp"
+#include "logging/logging.hpp"
 
 #include <atomic>
 #include <cstdint>
@@ -55,6 +56,7 @@ public:
   /// @}
 
   void Execute(ExecutorInterface &executor);
+  void AggregateStakeUpdates(StakeUpdateEvents &events);
 
   // Operators
   ExecutionItem &operator=(ExecutionItem const &) = delete;
@@ -110,7 +112,15 @@ inline void ExecutionItem::Execute(ExecutorInterface &executor)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Exception thrown while executing transaction: ", ex.what());
 
-    result_ = {ContractExecutionStatus::RESOURCE_FAILURE};
+    result_ = {ContractExecutionStatus::INTERNAL_ERROR};
+  }
+}
+
+inline void ExecutionItem::AggregateStakeUpdates(StakeUpdateEvents &events)
+{
+  for (auto const &update : result_.stake_updates)
+  {
+    events.push_back(update);
   }
 }
 

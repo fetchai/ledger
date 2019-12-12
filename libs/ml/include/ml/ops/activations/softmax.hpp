@@ -24,6 +24,7 @@
 #include <cassert>
 #include <memory>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -36,7 +37,7 @@ class Softmax : public fetch::ml::ops::Ops<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpSoftmaxSaveableParams<T>;
   using MyType        = Softmax<TensorType>;
@@ -46,7 +47,7 @@ public:
   {}
 
   explicit Softmax(std::vector<SizeType> axes)
-    : axes_(axes)
+    : axes_(std::move(axes))
   {}
 
   explicit Softmax(SPType const &sp)
@@ -115,7 +116,7 @@ public:
     // N-D softmax
     else
     {
-      if (axes_.size() == 0)
+      if (axes_.empty())
       {
         TensorType sum = ReduceSum(return_signal, axis_);
         fetch::math::Multiply(t, sum, t);

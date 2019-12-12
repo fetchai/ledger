@@ -55,7 +55,7 @@ byte_array::ConstByteArray ResourceID::id() const
 /**
  * Gets the resource group value.
  *
- * @return THe resource group value
+ * @return The resource group value
  */
 ResourceID::Group ResourceID::resource_group() const
 {
@@ -103,7 +103,6 @@ ResourceAddress::ResourceAddress(byte_array::ConstByteArray const &address)
 
 ResourceAddress::ResourceAddress(ResourceID const &rid)
   : ResourceID(rid)
-  , address_{}
 {}
 
 byte_array::ConstByteArray ResourceAddress::address() const

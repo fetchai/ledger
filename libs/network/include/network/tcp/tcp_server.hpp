@@ -45,37 +45,38 @@ class ClientManager;
 class TCPServer : public AbstractNetworkServer
 {
 public:
-  using connection_handle_type = typename AbstractConnection::connection_handle_type;
-  using network_manager_type   = NetworkManager;
-  using acceptor_type          = asio::ip::tcp::tcp::acceptor;
-  using mutex_type             = std::mutex;
+  using ConnectionHandleType = typename AbstractConnection::ConnectionHandleType;
+  using NetworkManagerType   = NetworkManager;
+  using AcceptorType         = asio::ip::tcp::tcp::acceptor;
+  using MutexType            = std::mutex;
 
   static constexpr char const *LOGGING_NAME = "TCPServer";
 
   struct Request
   {
-    connection_handle_type handle;
-    message_type           message;
+    ConnectionHandleType handle{};
+    MessageType          message;
   };
 
-  TCPServer(uint16_t port, network_manager_type const &network_manager);
+  TCPServer(uint16_t port, NetworkManagerType const &network_manager);
   ~TCPServer() override;
 
   // Start will block until the server has started
   virtual void Start();
   virtual void Stop();
 
-  void PushRequest(connection_handle_type client, message_type const &msg) override;
+  uint16_t GetListeningPort() const override;
+  void     PushRequest(ConnectionHandleType client, MessageType const &msg) override;
 
-  void Broadcast(message_type const &msg);
-  bool Send(connection_handle_type const &client, message_type const &msg);
+  void Broadcast(MessageType const &msg);
+  bool Send(ConnectionHandleType const &client, MessageType const &msg);
 
   bool has_requests();
 
   Request Top();
   void    Pop();
 
-  std::string GetAddress(connection_handle_type const &client);
+  std::string GetAddress(ConnectionHandleType const &client);
 
   template <typename X>
   void SetConnectionRegister(X &reg)
@@ -96,15 +97,15 @@ public:
 private:
   using InFlightCounter = AtomicInFlightCounter<network::AtomicCounterName::TCP_PORT_STARTUP>;
 
-  void Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor);
+  void Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> const &acceptor);
 
-  network_manager_type                      network_manager_;
-  uint16_t                                  port_;
+  NetworkManagerType                        network_manager_;
+  std::atomic<uint16_t>                     port_{0};
   std::deque<Request>                       requests_;
-  mutex_type                                request_mutex_;
+  MutexType                                 request_mutex_;
   std::weak_ptr<AbstractConnectionRegister> connection_register_;
   std::shared_ptr<ClientManager>            manager_;
-  std::weak_ptr<acceptor_type>              acceptor_;
+  std::weak_ptr<AcceptorType>               acceptor_;
   std::mutex                                start_mutex_;
 
   // Use this class to keep track of whether we are ready to accept connections

@@ -29,7 +29,7 @@ namespace fetch {
 namespace crypto {
 namespace {
 
-const std::unordered_set<ConstByteArray> FETCH_IDENTITIES{
+std::unordered_set<ConstByteArray> const FETCH_IDENTITIES{
     "MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB",
     "2bBYqHp5uK8fQgTqeBP3B3rogHQPYiC6wZcnBP2WVocsuiMgg9",
     "LAxzfxivjQSgUhv6ju6Q6tMjc8G996HGBGtG482jZwH3P77MF",
@@ -50,7 +50,7 @@ const std::unordered_set<ConstByteArray> FETCH_IDENTITIES{
     "Lz2yNwzXSDDMCEU3Mt8ARfK8aqRiX35d6XWGhdhWYiBQymtvB",
     "H381FKAkk9aVCF4SWcocDZYe9Wgs6dGxvFERMRkGYG5yt6dff",
     "2m5bhKu4SrRqJpbeKk3Th3gc5gedYDPfT7BELhLnpvTugjmS4r"};
-}
+}  // namespace
 
 bool IsFetchIdentity(byte_array::ConstByteArray const &identity)
 {

@@ -75,7 +75,7 @@ public:
     {
       double   d;
       uint32_t i[2];
-    } conv;
+    } conv{};
 
     conv.i[E_LITTLE_ENDIAN]     = static_cast<uint32_t>(in);
     conv.i[1 - E_LITTLE_ENDIAN] = 0;
@@ -117,13 +117,14 @@ private:
     {
       a = 0;
     }
-    for (double l = 0.; l < 5; l += 0.0000001)
+    for (std::size_t i = 0; i < 50000000; i++)
     {  // FIXME: set limit
+      double l  = static_cast<double>(i) / 1e7;
       double r1 = exp(l);
       double r2 = fexp(l);
 
       double   z    = l * a_ + b_;
-      uint64_t v    = static_cast<uint64_t>(z);
+      auto     v    = static_cast<uint64_t>(z);
       uint64_t idx  = (v >> E_BIN_SIZE) & (E_ENTRIES - 1);
       double   corr = r1 / r2;
 
@@ -172,7 +173,7 @@ public:
     {
       double   d;
       uint32_t i[2];
-    } conv;
+    } conv{};
 
     conv.i[E_LITTLE_ENDIAN]     = static_cast<uint32_t>(x * a_ + b_);
     conv.i[1 - E_LITTLE_ENDIAN] = 0;
@@ -190,5 +191,6 @@ bool ApproxExpImplementation<N, C, OF>::initialised_ = false;
 
 template <uint8_t N, uint64_t C, bool OF>
 double ApproxExpImplementation<N, C, OF>::corrections_[E_ENTRIES] = {0};
+
 }  // namespace math
 }  // namespace fetch

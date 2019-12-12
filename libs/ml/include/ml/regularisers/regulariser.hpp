@@ -35,17 +35,17 @@ public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
 
-  Regulariser()
-    : reg_type(RegularisationType::NONE)
-  {}
-  Regulariser(RegularisationType reg_type)
+  Regulariser() = default;
+
+  explicit Regulariser(RegularisationType reg_type)
     : reg_type(reg_type)
   {}
 
-  virtual ~Regulariser()                                                             = default;
+  virtual ~Regulariser() = default;
+
   virtual void ApplyRegularisation(TensorType &weight, DataType regularisation_rate) = 0;
 
-  RegularisationType reg_type;
+  RegularisationType reg_type{RegularisationType::NONE};
 };
 
 }  // namespace regularisers

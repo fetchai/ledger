@@ -17,11 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
+#include "chain/common_types.hpp"
+#include "core/digest.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/common_types.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "vectorise/uint/uint.hpp"
 
@@ -29,27 +30,35 @@
 #include <memory>
 
 namespace fetch {
+namespace chain {
+
+class Address;
+
+}  // namespace chain
 namespace ledger {
 
 class Work
 {
 public:
-  using UInt256 = vectorise::UInt<256>;
+  using UInt256    = vectorise::UInt<256>;
+  using BlockIndex = uint64_t;
 
   // Construction / Destruction
   Work() = default;
-  Work(Digest digest, crypto::Identity miner);
+  explicit Work(BlockIndex block_index);
+  Work(chain::Address address, crypto::Identity miner);
   Work(Work const &) = default;
   ~Work()            = default;
 
   // Getters
-  Digest const &          contract_digest() const;
+  chain::Address const &  address() const;
   crypto::Identity const &miner() const;
   UInt256 const &         nonce() const;
   WorkScore               score() const;
+  BlockIndex              block_index() const;
 
   // Setters
-  void UpdateDigest(Digest digest);
+  void UpdateAddress(chain::Address address);
   void UpdateIdentity(crypto::Identity const &identity);
   void UpdateScore(WorkScore score);
   void UpdateNonce(UInt256 const &nonce);
@@ -58,10 +67,11 @@ public:
   UInt256 CreateHashedNonce() const;
 
 private:
-  Digest           contract_digest_{};
+  chain::Address   contract_address_{};
   crypto::Identity miner_{};
   UInt256          nonce_{};
   WorkScore        score_{std::numeric_limits<WorkScore>::max()};
+  BlockIndex       block_index_{0};
 
   template <typename T, typename S>
   friend struct serializers::MapSerializer;

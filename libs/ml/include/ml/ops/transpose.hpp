@@ -20,6 +20,7 @@
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -31,14 +32,14 @@ class Transpose : public fetch::ml::ops::Ops<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpTransposeSaveableParams<T>;
   using MyType        = Transpose<TensorType>;
 
   explicit Transpose(std::vector<SizeType> transpose_vector = {1, 0, 2})
-    : transpose_vector_(transpose_vector)
+    : transpose_vector_(std::move(transpose_vector))
   {}
 
   explicit Transpose(SPType const &sp)
@@ -92,10 +93,8 @@ public:
     {
       return {error_signal.Transpose()};
     }
-    else
-    {
-      return {error_signal.Transpose(transpose_vector_)};
-    }
+
+    return {error_signal.Transpose(transpose_vector_)};
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
@@ -106,28 +105,27 @@ public:
       return {inputs.front()->shape().at(1), inputs.front()->shape().at(0)};
     }
     // Transpose by given vector
-    else
+
+    std::vector<SizeType> input_shape = inputs.front()->shape();
+    std::vector<SizeType> shape;
+
+    shape.reserve(shape.size());
+    for (auto &current_size : transpose_vector_)
     {
-      std::vector<SizeType> input_shape = inputs.front()->shape();
-      std::vector<SizeType> shape;
-
-      shape.reserve(shape.size());
-      for (auto &current_size : transpose_vector_)
-      {
-        shape.push_back(input_shape.at(current_size));
-      }
-
-      return shape;
+      shape.push_back(input_shape.at(current_size));
     }
-  }
 
-  std::vector<SizeType> transpose_vector_;
+    return shape;
+  }
 
   static constexpr OpType OpCode()
   {
     return OpType::OP_TRANSPOSE;
   }
   static constexpr char const *DESCRIPTOR = "Transpose";
+
+private:
+  std::vector<SizeType> transpose_vector_;
 };
 
 }  // namespace ops

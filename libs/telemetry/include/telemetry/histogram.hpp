@@ -56,17 +56,16 @@ public:
   Histogram &operator=(Histogram &&) = delete;
 
 private:
-  using Mutex     = std::mutex;
   using BucketMap = std::map<double, uint64_t>;
 
   template <typename Iterator>
   Histogram(Iterator const &begin, Iterator const &end, std::string const &name,
             std::string const &description, Labels const &labels = Labels{});
 
-  mutable Mutex lock_;
-  BucketMap     buckets_;
-  uint64_t      count_{0};
-  double        sum_{0.0};
+  mutable std::mutex lock_;
+  BucketMap          buckets_;
+  uint64_t           count_{0};
+  double             sum_{0.0};
 };
 
 }  // namespace telemetry

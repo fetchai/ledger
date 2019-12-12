@@ -31,10 +31,6 @@ class ByteArray;
 class ConstByteArray;
 }  // namespace byte_array
 
-namespace fixed_point {
-struct BaseFixedpointType;
-}  // namespace fixed_point
-
 namespace meta {
 
 template <typename... T>
@@ -83,12 +79,6 @@ template <typename T>
 static constexpr bool IsFloat = std::is_floating_point<T>::value;
 
 template <typename T>
-static constexpr bool IsFixedPoint = std::is_base_of<fixed_point::BaseFixedpointType, T>::value;
-
-template <typename T>
-static constexpr bool IsNotFixedPoint = !IsFixedPoint<T>;
-
-template <typename T>
 static constexpr bool IsConstByteArray = std::is_same<T, fetch::byte_array::ConstByteArray>::value;
 
 template <typename T>
@@ -111,6 +101,9 @@ template <typename T>
 constexpr bool IsAny8BitInteger = std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value;
 
 template <typename T>
+constexpr bool IsNotAny8BitInteger = !IsAny8BitInteger<T>;
+
+template <typename T>
 using Decay = std::decay_t<T>;
 
 template <bool C, typename R = void>
@@ -118,6 +111,9 @@ using EnableIf = std::enable_if_t<C, R>;
 
 template <typename T, typename U, typename R = void>
 using EnableIfSame = EnableIf<std::is_same<T, U>::value, R>;
+
+template <typename T, typename U, typename R = void>
+using EnableIfNotSame = EnableIf<!std::is_same<T, U>::value, R>;
 
 template <typename T, typename R = void>
 using IfIsInteger = EnableIf<IsInteger<T>, R>;
@@ -146,24 +142,22 @@ using IfIsUnsignedInteger = EnableIf<IsUnsignedInteger<T>, R>;
 template <typename T, typename R = void>
 using IfIsSignedInteger = EnableIf<IsSignedInteger<T>, R>;
 
-template <typename T, typename R = void>
-using IfIsFixedPoint = EnableIf<IsFixedPoint<T>, R>;
+//////////////////////////////////////////////////////////////
+/// TEMPLATE FOR FUNCTIONS THAT ARE NOT YET IMPLEMENTED
+//////////////////////////////////////////////////////////////
 
-template <typename T, typename R = void>
-using IfIsNotFixedPoint = EnableIf<IsNotFixedPoint<T>, R>;
+template <typename A, typename R>
+struct IsNotImplementedImpl
+{
+};
+template <typename A, typename R>
+using IfIsNotImplemented = typename IsNotImplementedImpl<A, R>::Type;
 
 template <typename T, typename R = void>
 using IfIsNullPtr = EnableIf<IsNullPtr<T>, R>;
 
 template <typename T, typename R = void>
-using IfIsPod = EnableIf<std::is_pod<T>::value, R>;
-
-template <typename T, typename R = void>
-// using IfIsPodOrFixedPoint = EnableIf<std::is_pod<T>::value || IsFixedPoint<T>, R>;
-using IfIsPodOrFixedPoint = EnableIf<std::is_pod<T>::value, R>;
-
-template <typename T, typename R = void>
-using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
+using IfIsPod = EnableIf<IsPOD<T>, R>;
 
 }  // namespace meta
 }  // namespace fetch

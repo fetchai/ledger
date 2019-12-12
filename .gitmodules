@@ -22,9 +22,12 @@
 [submodule "vendor/mcl"]
 	path = vendor/mcl
 	url = https://github.com/herumi/mcl.git
-[submodule "vendor/bls"]
-	path = vendor/bls
-	url = https://github.com/herumi/bls.git
 [submodule "vendor/utfcpp"]
 	path = vendor/utfcpp
 	url = https://github.com/pbukva/utfcpp.git
+[submodule "vendor/pybind11"]
+	path = vendor/pybind11
+	url = https://github.com/pybind/pybind11.git
+[submodule "vendor/openssl"]
+	path = vendor/openssl
+	url = https://github.com/janbar/openssl-cmake.git

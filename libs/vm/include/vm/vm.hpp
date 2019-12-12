@@ -23,6 +23,7 @@
 #include "vm/object.hpp"
 #include "vm/opcodes.hpp"
 #include "vm/string.hpp"
+#include "vm/user_defined_object.hpp"
 #include "vm/variant.hpp"
 
 #include <cassert>
@@ -118,12 +119,16 @@ class IR;
 class IoObserverInterface;
 class Module;
 
+class VM;
 class ParameterPack
 {
 public:
   // Construction / Destruction
-  explicit ParameterPack(RegisteredTypes const &registered_types)
+  explicit ParameterPack(RegisteredTypes const &registered_types, VariantArray params = {},
+                         VM *vm = nullptr)
     : registered_types_{registered_types}
+    , params_{std::move(params)}
+    , vm_{vm}
   {}
 
   ParameterPack(ParameterPack const &) = delete;
@@ -157,7 +162,7 @@ public:
 
   bool AddSingle(Variant parameter)
   {
-    // TODO: Probably should make a deep copy
+    // TODO(1669): Probably should make a deep copy
 
     params_.push_back(std::move(parameter));
     return true;
@@ -181,6 +186,11 @@ public:
 
     return success;
   }
+
+  // Implementation is at the bottom of file
+  // due to dependency on VM
+  template <typename T>
+  IfIsExternal<T, bool> AddSingle(T val);
 
   bool Add()
   {
@@ -213,18 +223,22 @@ private:
   bool AddInternal(Ptr<Object> const &value)
   {
     // add the value to the map
-    Variant v;
-    v.Construct(value, value->GetTypeId());
+    // TODO(tfr): Check ownership of Ptr.
+    Variant v(value, value->GetTypeId());
     params_.emplace_back(std::move(v));
 
     return true;
   }
 
-  using VariantArray = std::vector<Variant>;
-
   RegisteredTypes const &registered_types_;
-  VariantArray           params_{};
+  VariantArray           params_;
+  VM *const              vm_;
 };
+
+using ContractInvocationHandler = std::function<bool(
+    VM * /* vm */, std::string const & /* identity */, Executable::Contract const & /* contract */,
+    Executable::Function const & /* function */, VariantArray /* parameters */,
+    std::string & /* error */, Variant & /* output */)>;
 
 class VM
 {
@@ -248,7 +262,6 @@ public:
   template <typename... Ts>
   bool Execute(Executable const &executable, std::string const &name, std::string &error,
                Variant &output, Ts const &... parameters)
-
   {
     ParameterPack parameter_pack{registered_types_};
 
@@ -267,7 +280,7 @@ public:
     bool success{false};
 
     Executable::Function const *f = executable.FindFunction(name);
-    if (f)
+    if (f != nullptr)
     {
       auto const num_parameters = static_cast<std::size_t>(f->num_parameters);
 
@@ -282,8 +295,8 @@ public:
           if (parameter.type_id != f->variables[i].type_id)
           {
             error = "mismatched parameters: expected argument " + std::to_string(i);
-            error += "to be of type " + GetUniqueId(f->variables[i].type_id) + " but got ";
-            error += GetUniqueId(parameter.type_id);
+            error += "to be of type " + GetTypeName(f->variables[i].type_id) + " but got ";
+            error += GetTypeName(parameter.type_id);
             // clean up
             for (std::size_t j = 0; j < num_parameters; ++j)
             {
@@ -297,11 +310,19 @@ public:
           stack_[i].Assign(parameter, parameter.type_id);
         }
 
-        executable_ = &executable;
-        function_   = f;
+        if (executable_ != nullptr)
+        {
+          error = "Executable already loaded. Please unload first.";
+        }
+        else
+        {
+          LoadExecutable(&executable);
+          function_ = f;
 
-        // execute the function
-        success = Execute(error, output);
+          // execute the function
+          success = Execute(error, output);
+          UnloadExecutable();
+        }
       }
       else
       {
@@ -317,7 +338,7 @@ public:
     return success;
   }
 
-  std::string GetUniqueId(TypeId type_id) const
+  std::string GetTypeName(TypeId type_id) const
   {
     auto info = GetTypeInfo(type_id);
     return info.name;
@@ -332,7 +353,12 @@ public:
   template <typename T, typename... Ts>
   Ptr<T> CreateNewObject(Ts &&... args)
   {
-    return new T(this, GetTypeId<T>(), std::forward<Ts>(args)...);
+    return Ptr<T>{new T(this, GetTypeId<T>(), std::forward<Ts>(args)...)};
+  }
+
+  void SetContractInvocationHandler(ContractInvocationHandler handler)
+  {
+    contract_invocation_handler_ = std::move(handler);
   }
 
   void SetIOObserver(IoObserverInterface &observer)
@@ -355,7 +381,7 @@ public:
   {
     if (output_devices_.find(name) == output_devices_.end())
     {
-      RuntimeError("output device " + name + " does not exist.");
+      RuntimeError("Output device " + name + " does not exist.");
       return std::cout;
     }
     return *output_devices_[name];
@@ -365,7 +391,7 @@ public:
   {
     if (input_devices_.find(name) == input_devices_.end())
     {
-      RuntimeError("input device " + name + " does not exist.");
+      RuntimeError("Input device " + name + " does not exist.");
       return std::cin;
     }
     return *input_devices_[name];
@@ -411,7 +437,7 @@ public:
   {
     if (output_devices_.find(name) != output_devices_.end())
     {
-      throw std::runtime_error("output device already exists.");
+      throw std::runtime_error("Output device already exists.");
     }
 
     output_devices_.insert({std::move(name), &device});
@@ -422,25 +448,62 @@ public:
     output_buffer_ << line << '\n';
   }
 
-  // These two are public for the benefit of the static Constructor() functions in
-  // each of the Object-derived classes
   void RuntimeError(std::string const &message);
   bool HasError() const
   {
     return !error_.empty();
   }
+
+  Executable::UserDefinedType const &GetUserDefinedType(uint16_t type_id) const
+  {
+    return executable_->GetUserDefinedType(type_id);
+  }
+
+  void LoadExecutable(Executable const *executable)
+  {
+    executable_                   = executable;
+    std::size_t const num_strings = executable_->strings.size();
+    strings_                      = std::vector<Ptr<String>>(num_strings);
+    for (std::size_t i = 0; i < num_strings; ++i)
+    {
+      std::string const &str = executable_->strings[i];
+      strings_[i]            = Ptr<String>(new String(this, str));
+    }
+
+    std::size_t const num_local_types = executable_->types.size();
+    for (std::size_t i = 0; i < num_local_types; ++i)
+    {
+      TypeInfo const &type_info = executable_->types[i];
+      type_info_array_.push_back(type_info);
+    }
+  }
+
+  void UnloadExecutable()
+  {
+    strings_.clear();
+
+    std::size_t const num_local_types = executable_->types.size();
+    for (std::size_t i = 0; i < num_local_types; ++i)
+    {
+      type_info_array_.pop_back();
+    }
+
+    executable_ = nullptr;
+  }
+
   TypeInfo const &GetTypeInfo(TypeId type_id) const
   {
     return type_info_array_[type_id];
   }
 
-  bool IsDefaultSerializeConstructable(TypeId type_id) const
+  bool IsDefaultSerializeConstructable(TypeId type_id)
   {
     TypeIndex idx = registered_types_.GetTypeIndex(type_id);
     auto      it  = deserialization_constructors_.find(idx);
 
     if (it == deserialization_constructors_.end())
     {
+
       TypeInfo tinfo = GetTypeInfo(type_id);
       if (tinfo.template_type_id == TypeIds::Unknown)
       {
@@ -449,8 +512,10 @@ public:
 
       idx = registered_types_.GetTypeIndex(tinfo.template_type_id);
       it  = deserialization_constructors_.find(idx);
+
       return (it != deserialization_constructors_.end());
     }
+
     return true;
   }
 
@@ -474,34 +539,54 @@ public:
     if (it == deserialization_constructors_.end())
     {
       RuntimeError("object is not default constructible.");
-      return nullptr;
+      return {};
     }
 
     auto &constructor = it->second;
-    return constructor(this, type_id);
+    auto  ret         = constructor(this, type_id);
+
+    return ret;
+  }
+
+  template <typename T>
+  bool HasCPPCopyConstructor()
+  {
+    auto type_index = TypeIndex(typeid(T));
+    return (cpp_copy_constructors_.find(type_index) != cpp_copy_constructors_.end());
+  }
+
+  template <typename T>
+  Ptr<Object> CPPCopyConstruct(T const &val)
+  {
+    auto it = cpp_copy_constructors_.find(TypeIndex(typeid(T)));
+    if (it == cpp_copy_constructors_.end())
+    {
+      return {};
+    }
+
+    return it->second(this, static_cast<void const *>(&val));
   }
 
   struct OpcodeInfo
   {
     OpcodeInfo() = default;
-
-    OpcodeInfo(std::string name__, Handler handler__, ChargeAmount charge)
-      : name(std::move(name__))
+    OpcodeInfo(std::string unique_name__, Handler handler__, ChargeAmount static_charge__)
+      : unique_name(std::move(unique_name__))
       , handler(std::move(handler__))
-      , static_charge{charge}
+      , static_charge{static_charge__}
     {}
 
-    std::string  name;
+    std::string  unique_name;
     Handler      handler;
-    ChargeAmount static_charge;
+    ChargeAmount static_charge{};
   };
 
   ChargeAmount GetChargeTotal() const;
-  void         IncreaseChargeTotal(ChargeAmount const amount);
+  void         IncreaseChargeTotal(ChargeAmount amount);
   ChargeAmount GetChargeLimit() const;
   void         SetChargeLimit(ChargeAmount limit);
 
-  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &);
+  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_static_charges);
 
 private:
   static const int FRAME_STACK_SIZE = 50;
@@ -514,9 +599,10 @@ private:
 
   struct Frame
   {
-    Executable::Function const *function;
-    int                         bsp;
-    uint16_t                    pc;
+    Executable::Function const *function{};
+    int                         bsp{};
+    uint16_t                    pc{};
+    Variant                     self;
   };
 
   struct ForRangeLoop
@@ -553,29 +639,32 @@ private:
   OpcodeInfoArray                opcode_info_array_;
   OpcodeMap                      opcode_map_;
   Generator                      generator_;
-  Executable const *             executable_;
-  Executable::Function const *   function_;
+  Executable const *             executable_{};
+  Executable::Function const *   function_{};
   std::vector<Ptr<String>>       strings_;
-  Frame                          frame_stack_[FRAME_STACK_SIZE];
-  int                            frame_sp_;
-  int                            bsp_;
+  Frame                          frame_stack_[FRAME_STACK_SIZE]{};
+  int                            frame_sp_{};
+  int                            bsp_{};
   Variant                        stack_[STACK_SIZE];
-  int                            sp_;
-  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS];
-  int                            range_loop_sp_;
-  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS];
-  int                            live_object_sp_;
-  uint16_t                       pc_;
-  uint16_t                       instruction_pc_;
-  Executable::Instruction const *instruction_;
-  bool                           stop_;
+  int                            sp_{};
+  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS]{};
+  int                            range_loop_sp_{};
+  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS]{};
+  int                            live_object_sp_{};
+  uint16_t                       pc_{};
+  Variant                        self_;
+  uint16_t                       instruction_pc_{};
+  Executable::Instruction const *instruction_{};
+  bool                           stop_{};
   std::string                    error_;
+  ContractInvocationHandler      contract_invocation_handler_{};
   std::ostringstream             output_buffer_;
-  IoObserverInterface *          io_observer_{nullptr};
+  IoObserverInterface *          io_observer_{};
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
   DeserializeConstructorMap      deserialization_constructors_;
-  OpcodeInfo *                   current_op_{nullptr};
+  CPPCopyConstructorMap          cpp_copy_constructors_;
+  OpcodeInfo *                   current_op_{};
 
   /// @name Charges
   /// @{
@@ -583,10 +672,11 @@ private:
   ChargeAmount charge_total_{0};
   /// @}
 
-  void AddOpcodeInfo(uint16_t opcode, std::string name, Handler handler,
+  void AddOpcodeInfo(uint16_t opcode, std::string unique_name, Handler handler,
                      ChargeAmount static_charge = 1)
   {
-    opcode_info_array_[opcode] = OpcodeInfo(std::move(name), std::move(handler), static_charge);
+    opcode_info_array_[opcode] =
+        OpcodeInfo(std::move(unique_name), std::move(handler), static_charge);
   }
 
   bool Execute(std::string &error, Variant &output);
@@ -612,6 +702,30 @@ private:
     return Opcodes::Unknown;
   }
 
+  bool PushFrame()
+  {
+    if (frame_sp_ >= FRAME_STACK_SIZE - 1)
+    {
+      RuntimeError("frame stack overflow");
+      return false;
+    }
+    Frame &frame   = frame_stack_[++frame_sp_];
+    frame.function = function_;
+    frame.bsp      = bsp_;
+    frame.pc       = pc_;
+    frame.self     = self_;
+    return true;
+  }
+
+  void PopFrame()
+  {
+    Frame &frame = frame_stack_[frame_sp_--];
+    function_    = frame.function;
+    bsp_         = frame.bsp;
+    pc_          = frame.pc;
+    self_        = std::move(frame.self);
+  }
+
   Variant &Push()
   {
     return stack_[++sp_];
@@ -627,7 +741,7 @@ private:
     return stack_[sp_];
   }
 
-  Variant &GetVariable(uint16_t variable_index)
+  Variant &GetLocalVariable(uint16_t variable_index)
   {
     return stack_[bsp_ + variable_index];
   }
@@ -1212,15 +1326,15 @@ private:
     }
     case TypeIds::Fixed32:
     {
-      fixed_point::fp32_t *lhsv_fp32 = reinterpret_cast<fixed_point::fp32_t *>(&lhsv);
-      fixed_point::fp32_t  rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
+      auto *              lhsv_fp32 = reinterpret_cast<fixed_point::fp32_t *>(&lhsv);
+      fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
       Op::Apply(this, *lhsv_fp32, rhsv_fp32);
       break;
     }
     case TypeIds::Fixed64:
     {
-      fixed_point::fp64_t *lhsv_fp64 = reinterpret_cast<fixed_point::fp64_t *>(&lhsv);
-      fixed_point::fp64_t  rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
+      auto *              lhsv_fp64 = reinterpret_cast<fixed_point::fp64_t *>(&lhsv);
+      fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
       Op::Apply(this, *lhsv_fp64, rhsv_fp64);
       break;
     }
@@ -1340,15 +1454,15 @@ private:
     }
     case TypeIds::Fixed32:
     {
-      fixed_point::fp32_t *lhs_fp32  = reinterpret_cast<fixed_point::fp32_t *>(lhs);
-      fixed_point::fp32_t  rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
+      auto *              lhs_fp32  = reinterpret_cast<fixed_point::fp32_t *>(lhs);
+      fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
       Op::Apply(this, *lhs_fp32, rhsv_fp32);
       break;
     }
     case TypeIds::Fixed64:
     {
-      fixed_point::fp64_t *lhs_fp64  = reinterpret_cast<fixed_point::fp64_t *>(lhs);
-      fixed_point::fp64_t  rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
+      auto *              lhs_fp64  = reinterpret_cast<fixed_point::fp64_t *>(lhs);
+      fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
       Op::Apply(this, *lhs_fp64, rhsv_fp64);
       break;
     }
@@ -1391,9 +1505,9 @@ private:
   }
 
   template <typename Op>
-  void DoVariablePrefixPostfixOp()
+  void DoLocalVariablePrefixPostfixOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoPrefixPostfixOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
@@ -1436,6 +1550,11 @@ private:
     Variant &lhsv = Top();
     if (rhsv.object)
     {
+      if (!lhsv.IsPrimitive() && !lhsv.object)
+      {
+        RuntimeError("null reference");
+        return;
+      }
       Op::Apply(lhsv, rhsv);
       rhsv.Reset();
       return;
@@ -1450,6 +1569,11 @@ private:
     Variant &lhsv = Top();
     if (lhsv.object)
     {
+      if (!rhsv.IsPrimitive() && !rhsv.object)
+      {
+        RuntimeError("null reference");
+        return;
+      }
       Op::Apply(lhsv, rhsv);
       rhsv.Reset();
       return;
@@ -1492,6 +1616,11 @@ private:
     Variant &rhsv = Pop();
     if (lhso)
     {
+      if (!rhsv.IsPrimitive() && !rhsv.object)
+      {
+        RuntimeError("null reference");
+        return;
+      }
       Op::Apply(lhso, rhsv);
       rhsv.Reset();
       return;
@@ -1500,46 +1629,120 @@ private:
   }
 
   template <typename Op>
-  void DoVariableIntegralInplaceOp()
+  void DoLocalVariableIntegralInplaceOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoIntegralInplaceOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
   template <typename Op>
-  void DoVariableNumericInplaceOp()
+  void DoLocalVariableNumericInplaceOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoNumericInplaceOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
   template <typename Op>
-  void DoVariableObjectInplaceOp()
+  void DoLocalVariableObjectInplaceOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoObjectInplaceOp<Op>(variable.object);
   }
 
   template <typename Op>
-  void DoVariableObjectInplaceRightOp()
+  void DoLocalVariableObjectInplaceRightOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoObjectInplaceRightOp<Op>(variable.object);
+  }
+
+  template <typename Op>
+  void DoMemberVariablePrefixPostfixOp()
+  {
+    Variant                objectv             = std::move(Pop());
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoPrefixPostfixOp<Op>(instruction_->type_id, &variable.primitive);
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoMemberVariableIntegralInplaceOp()
+  {
+    Variant                objectv             = std::move(stack_[sp_ - 1]);
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoIntegralInplaceOp<Op>(instruction_->type_id, &variable.primitive);
+      --sp_;
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoMemberVariableNumericInplaceOp()
+  {
+    Variant                objectv             = std::move(stack_[sp_ - 1]);
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoNumericInplaceOp<Op>(instruction_->type_id, &variable.primitive);
+      --sp_;
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoMemberVariableObjectInplaceOp()
+  {
+    Variant                objectv             = std::move(stack_[sp_ - 1]);
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoObjectInplaceOp<Op>(variable.object);
+      --sp_;
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoMemberVariableObjectInplaceRightOp()
+  {
+    Variant                objectv             = std::move(stack_[sp_ - 1]);
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoObjectInplaceRightOp<Op>(variable.object);
+      --sp_;
+      return;
+    }
+    RuntimeError("null reference");
   }
 
   //
   // Opcode handler prototypes
   //
 
-  void Handler__VariableDeclare();
-  void Handler__VariableDeclareAssign();
+  void Handler__LocalVariableDeclare();
+  void Handler__LocalVariableDeclareAssign();
   void Handler__PushNull();
   void Handler__PushFalse();
   void Handler__PushTrue();
   void Handler__PushString();
   void Handler__PushConstant();
-  void Handler__PushVariable();
-  void Handler__PopToVariable();
+  void Handler__PushLocalVariable();
+  void Handler__PopToLocalVariable();
   void Handler__Inc();
   void Handler__Dec();
   void Handler__Duplicate();
@@ -1556,10 +1759,10 @@ private:
   void Handler__ForRangeIterate();
   void Handler__ForRangeTerminate();
   void Handler__InvokeUserDefinedFreeFunction();
-  void Handler__VariablePrefixInc();
-  void Handler__VariablePrefixDec();
-  void Handler__VariablePostfixInc();
-  void Handler__VariablePostfixDec();
+  void Handler__LocalVariablePrefixInc();
+  void Handler__LocalVariablePrefixDec();
+  void Handler__LocalVariablePostfixInc();
+  void Handler__LocalVariablePostfixDec();
   void Handler__JumpIfFalseOrPop();
   void Handler__JumpIfTrueOrPop();
   void Handler__Not();
@@ -1581,38 +1784,81 @@ private:
   void Handler__ObjectAdd();
   void Handler__ObjectLeftAdd();
   void Handler__ObjectRightAdd();
-  void Handler__VariablePrimitiveInplaceAdd();
-  void Handler__VariableObjectInplaceAdd();
-  void Handler__VariableObjectInplaceRightAdd();
+  void Handler__LocalVariablePrimitiveInplaceAdd();
+  void Handler__LocalVariableObjectInplaceAdd();
+  void Handler__LocalVariableObjectInplaceRightAdd();
   void Handler__PrimitiveSubtract();
   void Handler__ObjectSubtract();
   void Handler__ObjectLeftSubtract();
   void Handler__ObjectRightSubtract();
-  void Handler__VariablePrimitiveInplaceSubtract();
-  void Handler__VariableObjectInplaceSubtract();
-  void Handler__VariableObjectInplaceRightSubtract();
+  void Handler__LocalVariablePrimitiveInplaceSubtract();
+  void Handler__LocalVariableObjectInplaceSubtract();
+  void Handler__LocalVariableObjectInplaceRightSubtract();
   void Handler__PrimitiveMultiply();
   void Handler__ObjectMultiply();
   void Handler__ObjectLeftMultiply();
   void Handler__ObjectRightMultiply();
-  void Handler__VariablePrimitiveInplaceMultiply();
-  void Handler__VariableObjectInplaceMultiply();
-  void Handler__VariableObjectInplaceRightMultiply();
+  void Handler__LocalVariablePrimitiveInplaceMultiply();
+  void Handler__LocalVariableObjectInplaceMultiply();
+  void Handler__LocalVariableObjectInplaceRightMultiply();
   void Handler__PrimitiveDivide();
   void Handler__ObjectDivide();
   void Handler__ObjectLeftDivide();
   void Handler__ObjectRightDivide();
-  void Handler__VariablePrimitiveInplaceDivide();
-  void Handler__VariableObjectInplaceDivide();
-  void Handler__VariableObjectInplaceRightDivide();
+  void Handler__LocalVariablePrimitiveInplaceDivide();
+  void Handler__LocalVariableObjectInplaceDivide();
+  void Handler__LocalVariableObjectInplaceRightDivide();
   void Handler__PrimitiveModulo();
-  void Handler__VariablePrimitiveInplaceModulo();
+  void Handler__LocalVariablePrimitiveInplaceModulo();
   void Handler__InitialiseArray();
+  void Handler__ContractVariableDeclareAssign();
+  void Handler__InvokeContractFunction();
+  void Handler__PushLargeConstant();
+  void Handler__PushMemberVariable();
+  void Handler__PopToMemberVariable();
+  void Handler__MemberVariablePrefixInc();
+  void Handler__MemberVariablePrefixDec();
+  void Handler__MemberVariablePostfixInc();
+  void Handler__MemberVariablePostfixDec();
+  void Handler__MemberVariablePrimitiveInplaceAdd();
+  void Handler__MemberVariableObjectInplaceAdd();
+  void Handler__MemberVariableObjectInplaceRightAdd();
+  void Handler__MemberVariablePrimitiveInplaceSubtract();
+  void Handler__MemberVariableObjectInplaceSubtract();
+  void Handler__MemberVariableObjectInplaceRightSubtract();
+  void Handler__MemberVariablePrimitiveInplaceMultiply();
+  void Handler__MemberVariableObjectInplaceMultiply();
+  void Handler__MemberVariableObjectInplaceRightMultiply();
+  void Handler__MemberVariablePrimitiveInplaceDivide();
+  void Handler__MemberVariableObjectInplaceDivide();
+  void Handler__MemberVariableObjectInplaceRightDivide();
+  void Handler__MemberVariablePrimitiveInplaceModulo();
+  void Handler__PushSelf();
+  void Handler__InvokeUserDefinedConstructor();
+  void Handler__InvokeUserDefinedMemberFunction();
 
   friend class Object;
   friend class Module;
   friend class Generator;
 };
+
+template <typename T>
+IfIsExternal<T, bool> ParameterPack::AddSingle(T val)
+{
+  if (vm_ == nullptr)
+  {
+    throw std::runtime_error("Cannot copy construct C++-to-Etch objects without a VM instance.");
+  }
+  using DecayedType = typename std::decay<T>::type;
+
+  if (!vm_->HasCPPCopyConstructor<DecayedType>())
+  {
+    throw std::runtime_error("No C++-to-Etch copy constructor availble for type.");
+  }
+
+  AddInternal(vm_->CPPCopyConstruct<DecayedType>(val));
+  return true;
+}
 
 }  // namespace vm
 }  // namespace fetch

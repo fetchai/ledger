@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/chaincode/deed.hpp"
 
 #include <unordered_set>
@@ -95,6 +95,11 @@ Deed::Weight SigneesFullWeight(Deed::Signees const &signees)
 }
 }  // namespace
 
+Deed::Operation const Deed::TRANSFER{"transfer"};
+Deed::Operation const Deed::STAKE{"stake"};
+Deed::Operation const Deed::AMEND{"amend"};
+Deed::Operation const Deed::EXECUTE{"execute"};
+
 Deed::Deed(Signees signees, OperationTresholds thresholds)
   : signees_{std::move(signees)}
   , operation_thresholds_{std::move(thresholds)}
@@ -116,7 +121,7 @@ Deed::Deed(Signees signees, OperationTresholds thresholds)
  */
 bool Deed::IsSane() const
 {
-  if (operation_thresholds_.size() == 0 || signees_.size() == 0)
+  if (operation_thresholds_.empty() || signees_.empty())
   {
     return false;
   }
@@ -154,7 +159,7 @@ bool Deed::IsSane() const
  */
 
 // TODO(EJF): Rework to use signatories
-bool Deed::Verify(Transaction const &tx, DeedOperation const &operation) const
+bool Deed::Verify(chain::Transaction const &tx, Operation const &operation) const
 {
   auto const op = operation_thresholds_.find(operation);
   if (op == operation_thresholds_.end())
@@ -164,11 +169,11 @@ bool Deed::Verify(Transaction const &tx, DeedOperation const &operation) const
   }
 
   // cache all the addresses that are present in this current transaction
-  using AddressSet = std::unordered_set<Address>;
+  using AddressSet = std::unordered_set<chain::Address>;
   AddressSet tx_address_set{};
   for (auto const &signee : tx.signatories())
   {
-    tx_address_set.insert(Address{signee.identity});
+    tx_address_set.insert(chain::Address{signee.identity});
   }
 
   Weight vote = 0;

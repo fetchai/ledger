@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/string/to_lower.hpp"
 #include "core/string/trim.hpp"
 #include "http/response.hpp"
+#include "logging/logging.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -82,7 +82,7 @@ bool HTTPResponse::ParseHeader(asio::streambuf &buffer, std::size_t length)
 
   auto linear_buffer = CopyBuffer(buffer, length);
 
-  char const *current    = reinterpret_cast<char const *>(linear_buffer.pointer());
+  auto const *current    = reinterpret_cast<char const *>(linear_buffer.pointer());
   char const *line_start = current;
 
   std::size_t       line_idx              = 0;

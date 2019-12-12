@@ -48,6 +48,17 @@ public:
     serializer_ << val;
   }
 
+  bool AppendUsingFunction(std::function<bool(Driver &)> serialize_function)
+  {
+    ++pos_;
+    if (pos_ > size_)
+    {
+      throw SerializableException(
+          std::string("exceded number of allocated elements in array serialization"));
+    }
+    return serialize_function(serializer_);
+  }
+
   Driver &serializer()
   {
     return serializer_;
@@ -68,9 +79,9 @@ public:
     CODE_FIXED = TypeCodes::ARRAY_CODE_FIXED,
     CODE16     = TypeCodes::ARRAY_CODE16,
     CODE32     = TypeCodes::ARRAY_CODE32
-
   };
-  ArrayDeserializer(Driver &serializer)
+
+  explicit ArrayDeserializer(Driver &serializer)
     : serializer_{serializer}
   {
     uint8_t  opcode;
@@ -98,6 +109,7 @@ public:
                         " vs " + std::to_string(int(CODE_FIXED))));
       }
       size = static_cast<uint32_t>(opcode & TypeCodes::FIXED_VAL_MASK);
+      break;
     }
     size_ = static_cast<uint64_t>(size);
   }
@@ -112,6 +124,18 @@ public:
           std::string("tried to deserialise more fields in map than there exists."));
     }
     serializer_ >> value;
+  }
+
+  bool GetNextValueUsingFunction(std::function<bool(Driver &)> serialize_function)
+  {
+    ++pos_;
+    if (pos_ > size_)
+    {
+      throw SerializableException(
+          std::string("tried to deserialise more fields in map than there exists."));
+    }
+
+    return serialize_function(serializer_);
   }
 
   uint64_t size() const

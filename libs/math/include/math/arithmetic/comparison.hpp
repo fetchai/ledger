@@ -122,7 +122,7 @@ inline bool IsLessThan(double const &a, double const &b)
 }
 
 template <typename T>
-bool IsLessThan(const T a, const T b)
+bool IsLessThan(T a, T b)
 {
   return a < b;
 }
@@ -138,7 +138,7 @@ inline bool IsLessThanOrEqual(double const &a, double const &b)
 }
 
 template <typename T>
-bool IsLessThanOrEqual(const T a, const T b)
+bool IsLessThanOrEqual(T a, T b)
 {
   return a <= b;
 }
@@ -154,7 +154,7 @@ inline bool IsGreaterThan(double const &a, const double b)
 }
 
 template <typename T>
-bool IsGreaterThan(const T a, const T b)
+bool IsGreaterThan(T a, T b)
 {
   return a > b;
 }
@@ -170,7 +170,7 @@ inline bool IsGreaterThanOrEqual(double const &a, double const &b)
 }
 
 template <typename T>
-bool IsGreaterThanOrEqual(const T a, const T b)
+bool IsGreaterThanOrEqual(T a, T b)
 {
   return a >= b;
 }

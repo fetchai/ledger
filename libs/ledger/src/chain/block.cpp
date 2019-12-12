@@ -16,22 +16,29 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/constants.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/constants.hpp"
+#include "moment/clocks.hpp"
 
 #include <cstddef>
 #include <cstdint>
-#include <ctime>
 
 namespace fetch {
 namespace ledger {
 
-Block::Block()
-  : first_seen_timestamp{static_cast<uint64_t>(std::time(nullptr))}
-{}
+bool Block::operator==(Block const &rhs) const
+{
+  // Invalid to compare blocks with no block hash
+  return !hash.empty() && hash == rhs.hash;
+}
+
+bool Block::operator!=(Block const &rhs) const
+{
+  return !operator==(rhs);
+}
 
 /**
  * Get the number of transactions present in the block
@@ -42,7 +49,7 @@ std::size_t Block::GetTransactionCount() const
 {
   std::size_t count{0};
 
-  for (auto const &slice : body.slices)
+  for (auto const &slice : slices)
   {
     count += slice.size();
   }
@@ -55,11 +62,18 @@ std::size_t Block::GetTransactionCount() const
  */
 void Block::UpdateDigest()
 {
+  if (IsGenesis())
+  {
+    // genesis block's hash should be already set to a proper value and needs not to be updated
+    assert(hash == chain::GENESIS_DIGEST);
+    return;
+  }
+
   crypto::MerkleTree tx_merkle_tree{GetTransactionCount()};
 
   // Populate the merkle tree
   std::size_t index{0};
-  for (auto const &slice : body.slices)
+  for (auto const &slice : slices)
   {
     for (auto const &tx : slice)
     {
@@ -72,24 +86,27 @@ void Block::UpdateDigest()
 
   // Generate hash stream
   serializers::MsgPackSerializer buf;
-  buf << body.previous_hash << body.merkle_hash << body.block_number << body.miner
-      << body.log2_num_lanes << body.timestamp << tx_merkle_tree.root() << nonce;
+  buf << previous_hash << merkle_hash << block_number << miner << log2_num_lanes << timestamp
+      << tx_merkle_tree.root();
 
   // Generate the hash
-  crypto::SHA256 hash;
-  hash.Reset();
-  hash.Update(buf.data());
-  body.hash = hash.Final();
-
-  proof.SetHeader(body.hash);
+  crypto::SHA256 hash_builder;
+  hash_builder.Reset();
+  hash_builder.Update(buf.data());
+  hash = hash_builder.Final();
 }
 
 void Block::UpdateTimestamp()
 {
-  if (body.previous_hash != GENESIS_DIGEST)
+  if (!IsGenesis())
   {
-    body.timestamp = static_cast<uint64_t>(std::time(nullptr));
+    timestamp = GetTime(clock_);
   }
+}
+
+bool Block::IsGenesis() const
+{
+  return previous_hash == chain::ZERO_HASH;
 }
 
 }  // namespace ledger

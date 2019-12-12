@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "logging/logging.hpp"
 #include "network/management/client_manager.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
@@ -42,20 +42,20 @@ class ClientConnection : public AbstractConnection
 public:
   static constexpr char const *LOGGING_NAME = "ClientConnection";
 
-  using connection_type = typename AbstractConnection::shared_type;
+  using ConnectionType = typename AbstractConnection::SharedType;
 
-  using handle_type      = typename AbstractConnection::connection_handle_type;
-  using Strand           = asio::io_service::strand;
-  using StrongStrand     = std::shared_ptr<asio::io_service::strand>;
-  using Socket           = asio::ip::tcp::tcp::socket;
-  using shared_self_type = std::shared_ptr<AbstractConnection>;
-  using mutex_type       = std::mutex;
+  using HandleType     = typename AbstractConnection::ConnectionHandleType;
+  using Strand         = asio::io_service::strand;
+  using StrongStrand   = std::shared_ptr<asio::io_service::strand>;
+  using Socket         = asio::ip::tcp::tcp::socket;
+  using SharedSelfType = std::shared_ptr<AbstractConnection>;
+  using MutexType      = std::mutex;
 
   ClientConnection(std::weak_ptr<asio::ip::tcp::tcp::socket> socket,
                    std::weak_ptr<ClientManager> manager, NetworkManager network_manager)
     : socket_(std::move(socket))
     , manager_(std::move(manager))
-    , network_manager_(network_manager)
+    , network_manager_(network_manager)  // NOLINT
   {
     auto socket_ptr = socket_.lock();
     if (socket_ptr)
@@ -79,7 +79,7 @@ public:
     }
   }
 
-  ~ClientConnection()
+  ~ClientConnection() override
   {
     auto ptr = manager_.lock();
     if (!ptr)
@@ -114,7 +114,7 @@ public:
     ReadHeader(strong_strand);
   }
 
-  void Send(message_type const &msg) override
+  void Send(MessageType const &msg) override
   {
     if (shutting_down_)
     {
@@ -131,8 +131,8 @@ public:
     std::weak_ptr<Strand>             strand = strand_;
 
     network_manager_.Post([this, self, strand] {
-      shared_self_type selfLock   = self.lock();
-      auto             strandLock = strand_.lock();
+      SharedSelfType selfLock   = self.lock();
+      auto           strandLock = strand_.lock();
       if (!selfLock || !strandLock)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to lock. Strand: ", bool(selfLock),
@@ -151,6 +151,8 @@ public:
 
   void Close() override
   {
+    DeactivateSelfManage();
+
     shutting_down_ = true;
     auto socket    = socket_.lock();
     if (socket)
@@ -184,10 +186,10 @@ private:
   // bool                  posted_close_ = false;
   std::weak_ptr<Strand> strand_;
 
-  message_queue_type write_queue_;
-  mutable mutex_type can_write_mutex_;
-  bool               can_write_{true};
-  mutable mutex_type queue_mutex_;
+  MessageQueueType  write_queue_;
+  mutable MutexType can_write_mutex_;
+  bool              can_write_{true};
+  mutable MutexType queue_mutex_;
 
   // TODO(issue 17): put this in shared class
   static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
@@ -201,9 +203,9 @@ private:
       uint64_t magic;
       uint64_t length;
     } content;
-  } header_;
+  } header_{};
 
-  void ReadHeader(StrongStrand strong_strand)
+  void ReadHeader(StrongStrand const &strong_strand)
   {
     if (shutting_down_)
     {
@@ -241,7 +243,7 @@ private:
     asio::async_read(*socket_ptr, asio::buffer(header_.bytes, 2 * sizeof(uint64_t)), cb);
   }
 
-  void ReadBody(StrongStrand strong_strand)
+  void ReadBody(StrongStrand const &strong_strand)
   {
     if (shutting_down_)
     {
@@ -312,7 +314,7 @@ private:
   }
 
   // Always executed in a run(), in a strand
-  void WriteNext(shared_self_type selfLock)
+  void WriteNext(SharedSelfType const &selfLock)
   {
     // Only one thread can get past here at a time. Effectively a try_lock
     // except that we can't unlock a mutex in the callback (undefined behaviour)
@@ -328,7 +330,7 @@ private:
       }
     }
 
-    message_type buffer;
+    MessageType buffer;
     {
       FETCH_LOCK(queue_mutex_);
       if (write_queue_.empty())
@@ -382,7 +384,11 @@ private:
     }
     else
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to lock socket in WriteNext!");
+      if (!shutting_down_)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to lock socket in WriteNext!");
+      }
+
       SignalLeave();
     }
   }

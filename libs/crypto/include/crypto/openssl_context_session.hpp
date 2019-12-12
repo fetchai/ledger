@@ -32,16 +32,16 @@ template <typename T, typename T_SessionPrimitive = detail::SessionPrimitive<T>,
 class Session
 {
 public:
-  using type                   = T;
-  using context_smart_ptr      = T_ContextSmartPtr;
-  using session_primitive_type = T_SessionPrimitive;
+  using Type                 = T;
+  using ContextSmartPtr      = T_ContextSmartPtr;
+  using SessionPrimitiveType = T_SessionPrimitive;
 
 private:
-  context_smart_ptr context_;
-  bool              is_started_;
+  ContextSmartPtr context_;
+  bool            is_started_{};
 
 public:
-  explicit Session(context_smart_ptr context, const bool is_already_started = false)
+  explicit Session(ContextSmartPtr context, const bool is_already_started = false)
     : context_(std::move(context))
     , is_started_(is_already_started)
   {
@@ -49,7 +49,7 @@ public:
   }
 
   Session()
-    : Session(context_smart_ptr(BN_CTX_new()))
+    : Session(ContextSmartPtr(BN_CTX_new()))
   {}
 
   ~Session()
@@ -64,7 +64,7 @@ public:
       return;
     }
 
-    session_primitive_type::start(context_.get());
+    SessionPrimitiveType::start(context_.get());
     is_started_ = true;
   }
 
@@ -76,15 +76,15 @@ public:
     }
 
     is_started_ = false;
-    session_primitive_type::end(context_.get());
+    SessionPrimitiveType::end(context_.get());
   }
 
-  context_smart_ptr context() const
+  ContextSmartPtr context() const
   {
     return context_;
   }
 
-  bool isStarted() const
+  bool IsStarted() const
   {
     return is_started_;
   }

@@ -46,10 +46,10 @@ template <typename T, typename D = uint64_t>
 class CacheLineLRURandomAccessStack
 {
 public:
-  using event_handler_type = std::function<void()>;
-  using stack_type         = RandomAccessStack<T, D>;
-  using header_extra_type  = D;
-  using type               = T;
+  using EventHandlerType = std::function<void()>;
+  using StackType        = RandomAccessStack<T, D>;
+  using HeaderExtraType  = D;
+  using type             = T;
 
   CacheLineLRURandomAccessStack() = default;
 
@@ -90,12 +90,12 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f)
+  void OnFileLoaded(EventHandlerType const &f)
   {
     on_file_loaded_ = f;
   }
 
-  void OnBeforeFlush(event_handler_type const &f)
+  void OnBeforeFlush(EventHandlerType const &f)
   {
     on_before_flush_ = f;
   }
@@ -166,12 +166,12 @@ public:
     stack_.Close(false);
   }
 
-  void SetExtraHeader(header_extra_type const &he)
+  void SetExtraHeader(HeaderExtraType const &he)
   {
     stack_.SetExtraHeader(he);
   }
 
-  header_extra_type const &header_extra() const
+  HeaderExtraType const &header_extra() const
   {
     return stack_.header_extra();
   }
@@ -302,11 +302,11 @@ private:
 
   T dummy_;
 
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
+  EventHandlerType on_file_loaded_;
+  EventHandlerType on_before_flush_;
 
   // Underlying stack
-  mutable stack_type stack_;
+  mutable StackType stack_;
 
   struct CachedDataItem
   {

@@ -47,7 +47,7 @@ void recursively_increment_n_times(Wrapper &protected_value, uint8_t n)
 }
 
 template <typename Type>
-bool is_read_only(Type &)
+bool is_read_only(Type & /*unused*/)
 {
   return std::is_const<std::remove_reference_t<Type>>();
 }

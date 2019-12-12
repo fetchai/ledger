@@ -17,16 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fake_storage_unit.hpp"
+#include "ledger/storage_unit/fake_storage_unit.hpp"
 
 #include "gmock/gmock.h"
 
 class MockStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
-  using Transaction = fetch::ledger::Transaction;
-  using Digest      = fetch::ledger::Digest;
-  using DigestSet   = fetch::ledger::DigestSet;
+  using Transaction     = fetch::chain::Transaction;
+  using Digest          = fetch::Digest;
+  using DigestSet       = fetch::DigestSet;
+  using FakeStorageUnit = fetch::ledger::FakeStorageUnit;
 
   MockStorageUnit()
   {
@@ -55,7 +56,7 @@ public:
     ON_CALL(*this, HashExists(_, _)).WillByDefault(Invoke(&fake, &FakeStorageUnit::HashExists));
   }
 
-  MOCK_METHOD1(Get, Document(ResourceAddress const &));
+  MOCK_CONST_METHOD1(Get, Document(ResourceAddress const &));
   MOCK_METHOD1(GetOrCreate, Document(ResourceAddress const &));
   MOCK_METHOD2(Set, void(ResourceAddress const &, StateValue const &));
   MOCK_METHOD1(Lock, bool(ShardIndex));
@@ -74,7 +75,6 @@ public:
   MOCK_METHOD1(Commit, Hash(uint64_t));
   MOCK_METHOD2(HashExists, bool(Hash const &, uint64_t));
 
-  MOCK_CONST_METHOD0(KeyDump, Keys());
   MOCK_METHOD0(Reset, void());
 
   FakeStorageUnit fake;

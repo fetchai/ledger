@@ -22,12 +22,14 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/layer_norm.hpp"
 #include "ml/ops/multiply.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
 
 #include <cmath>
 #include <functional>
 #include <random>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -40,17 +42,16 @@ class LayerNorm : public SubGraph<T>
 public:
   using TensorType    = T;
   using TensorPtrType = std::shared_ptr<TensorType>;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using DataType      = typename TensorType::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
   using SPType        = LayerLayerNormSaveableParams<T>;
 
   LayerNorm() = default;
 
-  explicit LayerNorm(std::vector<SizeType> const &data_shape,
-                     SizeType                     axis = static_cast<SizeType>(0),
+  explicit LayerNorm(std::vector<SizeType> data_shape, SizeType axis = static_cast<SizeType>(0),
                      DataType epsilon = fetch::math::function_tolerance<DataType>())
-    : data_shape_(data_shape)
+    : data_shape_(std::move(data_shape))
     , axis_(axis)
     , epsilon_(epsilon)
   {
@@ -141,8 +142,8 @@ public:
 
 private:
   std::vector<SizeType> data_shape_;
-  SizeType              axis_;
-  DataType              epsilon_;
+  SizeType              axis_{};
+  DataType              epsilon_{};
 };
 
 }  // namespace layers

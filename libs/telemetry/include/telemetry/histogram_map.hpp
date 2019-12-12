@@ -52,7 +52,6 @@ public:
   HistogramMap &operator=(HistogramMap &&) = delete;
 
 private:
-  using Mutex               = std::mutex;
   using HistogramCollection = std::unordered_map<std::string, HistogramPtr>;
 
   HistogramPtr LookupHistogram(std::string const &key);
@@ -60,7 +59,7 @@ private:
   std::string const         field_;
   std::vector<double> const buckets_;
 
-  mutable Mutex       lock_;
+  mutable std::mutex  lock_;
   HistogramCollection histograms_;
 };
 

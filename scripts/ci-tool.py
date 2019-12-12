@@ -8,19 +8,24 @@ import argparse
 import fnmatch
 import multiprocessing
 import os
-from os.path import abspath, dirname, exists, isdir, isfile, join
 import re
 import shutil
 import subprocess
 import sys
+import threading
+import time
 import xml.etree.ElementTree as ET
+from os.path import abspath, dirname, exists, isdir, isfile, join
+
+import fetchai_code_quality
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
+LOG_LEVELS = ('trace', 'debug', 'info', 'warn', 'error', 'critical', 'none')
 MAX_CPUS = 7  # as defined by CI workflow
 AVAILABLE_CPUS = multiprocessing.cpu_count()
 CONCURRENCY = min(MAX_CPUS, AVAILABLE_CPUS)
 
-SCRIPT_ROOT = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_ROOT = dirname(abspath(__file__))
 
 SLOW_TEST_LABEL = 'Slow'
 INTEGRATION_TEST_LABEL = 'Integration'
@@ -28,6 +33,8 @@ INTEGRATION_TEST_LABEL = 'Integration'
 LABELS_TO_EXCLUDE_FOR_FAST_TESTS = [
     SLOW_TEST_LABEL,
     INTEGRATION_TEST_LABEL]
+
+NINJA_IS_PRESENT = shutil.which('ninja') is not None
 
 
 def output(*args):
@@ -114,7 +121,7 @@ def create_junit_format(output_path, data):
                     testcase,
                     'failure',
                     type=status,
-                    message='Test {}'.format(status))
+                    message='Test {status}'.format(status=status))
                 stdout = ET.SubElement(testcase, 'system-out').text = output
 
     # update the final aggregations
@@ -130,8 +137,15 @@ def create_junit_format(output_path, data):
 
 def build_type(text):
     if text not in BUILD_TYPES:
-        raise RuntimeError('Invalid build type {}. Choices: {}'.format(
-            text, ','.join(BUILD_TYPES)))
+        raise RuntimeError(
+            'Invalid build type {text}. Choices: {build_types}'.format(text=text, build_types=", ".join(BUILD_TYPES)))
+    return text
+
+
+def log_level(text):
+    if text not in LOG_LEVELS:
+        raise RuntimeError(
+            'Invalid log level {text}. Choices: {log_levels}'.format(text=text, log_levels=", ".join(LOG_LEVELS)))
     return text
 
 
@@ -139,6 +153,8 @@ def parse_commandline():
     parser = argparse.ArgumentParser()
     parser.add_argument('build_type', metavar='TYPE',
                         type=build_type, help='The type of build to be used')
+    parser.add_argument('--log-level',
+                        type=log_level, help='Override FETCH_LOG_LEVEL (one of '+', '.join(LOG_LEVELS)+')')
     parser.add_argument(
         '-p', '--build-path-prefix', default='build-',
         help='The prefix to be used for the naming of the build folder')
@@ -147,20 +163,26 @@ def parse_commandline():
     parser.add_argument('-j', '--jobs', type=int, default=CONCURRENCY,
                         help=('The number of jobs to do in parallel. If \'0\' then number of '
                               'available CPU cores will be used. '
-                              'Defaults to {}'.format(CONCURRENCY)))
+                              'Defaults to {CONCURRENCY}'.format(CONCURRENCY=CONCURRENCY)))
     parser.add_argument('-T', '--test', action='store_true',
-                        help='Run unit tests. Skips tests marked with the following CTest labels: {}'
-                        .format(', '.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS)))
+                        help='Run unit tests. Skips tests marked with the following CTest '
+                             'labels: {labels}'.format(labels=", ".join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS)))
     parser.add_argument('-S', '--slow-tests', action='store_true',
-                        help='Run tests marked with the \'{}\' CTest label'
-                        .format(SLOW_TEST_LABEL))
+                        help='Run tests marked with the \'{SLOW_TEST_LABEL}\' CTest label'.format(
+                            SLOW_TEST_LABEL=SLOW_TEST_LABEL))
     parser.add_argument('-I', '--integration-tests', action='store_true',
-                        help='Run tests marked with the \'{}\' CTest label'
-                        .format(INTEGRATION_TEST_LABEL))
+                        help='Run tests marked with the \'{INTEGRATION_TEST_LABEL}\' CTest label'.format(
+                            INTEGRATION_TEST_LABEL=INTEGRATION_TEST_LABEL))
     parser.add_argument('-E', '--end-to-end-tests', action='store_true',
                         help='Run the end-to-end tests for the project')
     parser.add_argument('-L', '--language-tests', action='store_true',
                         help='Run the etch language tests')
+    parser.add_argument('--lint', action='store_true',
+                        help='Run clang-tidy')
+    parser.add_argument('--fix', action='store_true',
+                        help='Run clang-tidy and attempt to fix lint errors')
+    parser.add_argument('-c', '--commit', nargs=1, default=None,
+                        help='when linting, including fixing, scan and fix only files that changed between Git\'s HEAD and the ' 'given commit or ref. \nUseful: HEAD will lint staged files')
     parser.add_argument('-A', '--all', action='store_true',
                         help='Run build and all tests')
     parser.add_argument(
@@ -168,46 +190,43 @@ def parse_commandline():
         help='Specify the folder directly that should be used for the build / test')
     parser.add_argument('-m', '--metrics',
                         action='store_true', help='Store the metrics')
+    parser.add_argument('--test-names', type=lambda cli_arg: frozenset(cli_arg.split(',')),
+                        help='Comma-separated list of specific tests to run (default: all)')
 
     return parser.parse_args()
 
 
-def build_project(project_root, build_root, options, concurrency):
+def cmake_configure(project_root, build_root, options, generator):
     output('Source.:', project_root)
     output('Build..:', build_root)
     output('Options:')
     for key, value in options.items():
-        output(' - {} = {}'.format(key, value))
+        output(' - {key} = {value}'.format(key=key, value=value))
     output('\n')
-
-    # determine if this is the first time that we are building the project
-    new_build_folder = not exists(build_root)
 
     # ensure the build directory exists
     os.makedirs(build_root, exist_ok=True)
 
     cmake_cmd = ['cmake']
-
-    # determine if this system has the ninja build system
-    if new_build_folder and shutil.which('ninja') is not None:
-        cmake_cmd += ['-G', 'Ninja']
+    cmake_cmd += ['-G', generator]
 
     # add all the configuration options
-    cmake_cmd += ['-D{}={}'.format(k, v) for k, v in options.items()]
+    cmake_cmd += ['-D{k}={v}'.format(k=k, v=v) for k, v in options.items()]
     cmake_cmd += [project_root]
 
     # execute the cmake configurations
     exit_code = subprocess.call(cmake_cmd, cwd=build_root)
-    if exit_code != 0:
-        output('Failed to configure cmake project')
-        sys.exit(exit_code)
+    return exit_code == 0
 
+
+def build_project(build_root, concurrency):
     build_cmd = ['ninja'] if exists(
         join(build_root, 'build.ninja')) else ['make']
-    build_cmd += ['-j{}'.format(concurrency)]
+    build_cmd += ['-j{concurrency}'.format(concurrency=concurrency)]
 
-    output('Building project with command: {} (detected cpus: {})'.format(
-        ' '.join(build_cmd), AVAILABLE_CPUS))
+    output(
+        'Building project with command: {cmd} (detected cpus: {AVAILABLE_CPUS})'.format(cmd=" ".join(build_cmd),
+                                                                                        AVAILABLE_CPUS=AVAILABLE_CPUS))
     exit_code = subprocess.call(build_cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to make the project')
@@ -219,11 +238,11 @@ def clean_files(build_root):
     for root, _, files in os.walk(build_root):
         for path in fnmatch.filter(files, '*.db'):
             data_path = join(root, path)
-            print('Removing file:', data_path)
+            output('Removing file:', data_path)
             os.remove(data_path)
 
 
-def test_project(build_root, include_regex=None, exclude_regex=None):
+def test_project(build_root, include_regex=None, exclude_regex=None, test_names=None):
     TEST_NAME = 'Test'
 
     if not isdir(build_root):
@@ -240,6 +259,10 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
         '-T', TEST_NAME
     ]
 
+    if test_names is not None:
+        # Need to convert test names from set to a regex of ORs
+        names_as_regex = "|".join(str(x) for x in test_names)
+        cmd = cmd + ['-R', names_as_regex]
     if include_regex is not None:
         cmd = cmd + ['-L', str(include_regex)]
     if exclude_regex is not None:
@@ -256,7 +279,7 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
     # load the tag
     tag_folder = open(test_tag_path, 'r').read().splitlines()[0]
     tag_folder_path = join(build_root, 'Testing',
-                           tag_folder, '{}.xml'.format(TEST_NAME))
+                           tag_folder, '{TEST_NAME}.xml'.format(TEST_NAME=TEST_NAME))
 
     if not isfile(tag_folder_path):
         output('Unable to locate CTest summary XML:', tag_folder_path)
@@ -274,7 +297,7 @@ def test_project(build_root, include_regex=None, exclude_regex=None):
         sys.exit(exit_code)
 
 
-def test_end_to_end(project_root, build_root):
+def test_end_to_end(project_root, build_root, name_filter=None):
     from end_to_end_test import run_end_to_end_test
 
     yaml_file = join(
@@ -291,13 +314,45 @@ def test_end_to_end(project_root, build_root):
 
     clean_files(build_root)
 
-    run_end_to_end_test.run_test(build_root, yaml_file, constellation_exe)
+    run_end_to_end_test.run_test(
+        build_root, yaml_file, constellation_exe, name_filter)
 
 
 def test_language(build_root):
-    LANGUAGE_TEST_RUNNER = os.path.join(SCRIPT_ROOT, 'run-language-tests.py')
+    LANGUAGE_TEST_RUNNER = join(SCRIPT_ROOT, 'run-language-tests.py')
     cmd = [LANGUAGE_TEST_RUNNER, build_root]
     subprocess.check_call(cmd)
+
+
+def run_sccache_server(sccache_path):
+    cmd = [
+        sccache_path,
+    ]
+    env = {
+        'SCCACHE_START_SERVER': '1',
+        'SCCACHE_NO_DAEMON': '1',
+        'SCCACHE_IDLE_TIMEOUT': '0',
+        'RUST_LOG': 'info',
+    }
+
+    # pull in local sccache configuration
+    for key, value in os.environ.items():
+        if key.startswith('SCCACHE'):
+            env[key] = value
+
+    print('sccache Server Config:', env)
+
+    with open('sccache.log', 'w') as sccache_log:
+        try:
+            subprocess.check_call(
+                cmd, env=env, stdout=sccache_log, stderr=subprocess.STDOUT)
+        except:
+            print("Failed to run sccache server. You may already have one running.")
+
+
+def stop_sscache_server(sccache_path):
+    cmd = [sccache_path, '--stop-server']
+    subprocess.call(cmd)
 
 
 def main():
@@ -310,25 +365,71 @@ def main():
 
     # define all the build roots
     project_root = abspath(dirname(dirname(__file__)))
-    build_root = join(project_root, '{}{}'.format(
-        args.build_path_prefix, args.build_type.lower()))
+    build_root = join(
+        project_root, '{prefix}{build_type}'.format(prefix=args.build_path_prefix, build_type=args.build_type.lower()))
     if args.force_build_folder:
         build_root = abspath(args.force_build_folder)
 
     options = {
-        'CMAKE_BUILD_TYPE': args.build_type
+        'CMAKE_BUILD_TYPE': args.build_type,
     }
+    if args.log_level is not None:
+        options['FETCH_COMPILE_LOGGING_LEVEL'] = args.log_level
 
-    if args.metrics:
-        options['FETCH_ENABLE_METRICS'] = 1
+    # attempt to detect the sccache path on the system
+    sccache_path = shutil.which('sccache')
+    if (args.build or args.lint or args.all) and sccache_path:
+        t = threading.Thread(target=run_sccache_server, args=(sccache_path,))
+        t.daemon = True
+        t.start()
 
-    if args.build or args.all:
-        build_project(project_root, build_root, options, concurrency)
+        # allow the sccache server to start up
+        time.sleep(5)
+
+    if args.build or args.lint or args.all:
+        # choose the generater initially based on what already exists there
+        if isdir(build_root):
+            if isfile(join(build_root, 'Makefile')):
+                generator = 'Unix Makefiles'
+            elif isfile(join(build_root, 'build.ninja')):
+                generator = 'Ninja'
+            elif isfile(join(build_root, 'CMakeCache.txt')):
+                # in the case of a failed build it might be necessary to interrogate the cache file
+                with open(join(build_root, 'CMakeCache.txt'), 'r') as cache_file:
+                    for line in cache_file:
+                        match = re.match(
+                            r'^CMAKE_GENERATOR:INTERNAL=(.*)', line.strip())
+                        if match is not None:
+                            generator = match.group(1)
+                            break
+
+            else:
+                raise RuntimeError('Unable to detect existing generator type')
+        else:
+
+            # in the case of a new build prefer Ninja over make (because it is faster)
+            generator = 'Ninja' if NINJA_IS_PRESENT else 'Unix Makefiles'
+
+        # due to the version of the header dependency detection that is used when trying to
+        # determine affected files, when running commit filtered lints must use make
+        if generator == 'Ninja' and args.commit is not None:
+            generator = 'Unix Makefiles'
+
+        # configure the project
+        if not cmake_configure(project_root, build_root, options, generator):
+            output(
+                '\n😭 Failed to configure the cmake project. This is usually because of a mismatch between generators.\n\nTry removing the build folder: {} and try again'.format(
+                    build_root))
+            sys.exit(1)
+
+    if args.build or args.all or args.commit:
+        build_project(build_root, concurrency)
 
     if args.test or args.all:
         test_project(
             build_root,
-            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS))
+            exclude_regex='|'.join(LABELS_TO_EXCLUDE_FOR_FAST_TESTS),
+            test_names=args.test_names)
 
     if args.language_tests or args.all:
         test_language(build_root)
@@ -336,15 +437,35 @@ def main():
     if args.slow_tests or args.all:
         test_project(
             build_root,
-            include_regex=SLOW_TEST_LABEL)
+            include_regex=SLOW_TEST_LABEL,
+            test_names=args.test_names)
 
     if args.integration_tests or args.all:
         test_project(
             build_root,
-            include_regex=INTEGRATION_TEST_LABEL)
+            include_regex=INTEGRATION_TEST_LABEL,
+            test_names=args.test_names)
 
     if args.end_to_end_tests or args.all:
-        test_end_to_end(project_root, build_root)
+        test_end_to_end(project_root, build_root, args.test_names)
+
+    if args.lint or args.all:
+        fetchai_code_quality.static_analysis(
+            project_root, build_root, args.fix, concurrency, args.commit, verbose=False)
+
+    if (args.build or args.lint or args.all) and sccache_path:
+        subprocess.check_call([sccache_path, '-s'])
+
+        # stop the server
+        stop_sscache_server(sccache_path)
+
+        # wait for the process to send
+        t.join()
+
+        output('SCCACHE_LOG:')
+        with open('sccache.log', 'r') as sccache_log:
+            for line in sccache_log:
+                output(line.strip())
 
 
 if __name__ == '__main__':

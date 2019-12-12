@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/optimisation/adagrad_optimiser.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/momentum_optimiser.hpp"
@@ -27,15 +28,6 @@
 namespace fetch {
 namespace ml {
 namespace optimisers {
-
-enum class OptimiserType
-{
-  ADAGRAD,
-  ADAM,
-  MOMENTUM,
-  RMSPROP,
-  SGD
-};
 
 template <class T, typename... Params>
 bool AddOptimiser(OptimiserType type, std::shared_ptr<Optimiser<T>> &optimiser_ptr,

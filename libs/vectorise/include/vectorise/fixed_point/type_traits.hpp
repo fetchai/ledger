@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/type_traits.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <type_traits>
@@ -52,26 +53,41 @@ template <typename DataType>
 constexpr bool IsNonFixedPointUnsignedArithmetic =
     std::is_arithmetic<DataType>::value && !(std::is_signed<DataType>::value);
 
-template <typename DataType, typename ReturnType>
-using IfIsFixedPoint = std::enable_if_t<IsFixedPoint<DataType>, ReturnType>;
+template <typename DataType, typename ReturnType = void>
+using IfIsFixedPoint = fetch::meta::EnableIf<IsFixedPoint<DataType>, ReturnType>;
 
-template <typename DataType, typename ReturnType>
-using IfIsNotFixedPoint = std::enable_if_t<IsNotFixedPoint<DataType>, ReturnType>;
+template <typename DataType, typename ReturnType = void>
+using IfIsNotFixedPoint = fetch::meta::EnableIf<IsNotFixedPoint<DataType>, ReturnType>;
 
-template <typename DataType, typename ReturnType>
+template <typename DataType, typename ReturnType = void>
 using IfIsArithmetic = fetch::meta::EnableIf<IsArithmetic<DataType>, ReturnType>;
 
-template <typename DataType, typename ReturnType>
+template <typename DataType, typename ReturnType = void>
 using IfIsNonFixedPointArithmetic =
     fetch::meta::EnableIf<IsNonFixedPointArithmetic<DataType>, ReturnType>;
 
-template <typename DataType, typename ReturnType>
+template <typename DataType, typename ReturnType = void>
 using IfIsNonFixedPointSignedArithmetic =
     fetch::meta::EnableIf<IsNonFixedPointSignedArithmetic<DataType>, ReturnType>;
 
-template <typename DataType, typename ReturnType>
+template <typename DataType, typename ReturnType = void>
 using IfIsNonFixedPointUnsignedArithmetic =
     fetch::meta::EnableIf<IsNonFixedPointUnsignedArithmetic<DataType>, ReturnType>;
+
+template <typename T>
+constexpr bool IsPodOrFixedPoint = fetch::meta::IsPOD<T> || IsFixedPoint<T>;
+
+template <typename T, typename R = void>
+using IfIsPodOrFixedPoint = fetch::meta::EnableIf<IsPodOrFixedPoint<T>, R>;
+
+template <typename T>
+constexpr bool IsFixedPoint128 = std::is_same<T, fixed_point::FixedPoint<64, 64>>::value;
+
+template <typename T>
+constexpr bool IsNotFixedPoint128 = !IsFixedPoint128<T> && IsFixedPoint<T>;
+
+template <typename DataType, typename ReturnType = void>
+using IfIsFixedPoint128 = fetch::meta::EnableIf<IsFixedPoint128<DataType>, ReturnType>;
 
 }  // namespace meta
 }  // namespace math

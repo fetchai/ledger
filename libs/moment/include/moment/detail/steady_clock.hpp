@@ -25,26 +25,26 @@ namespace fetch {
 namespace moment {
 namespace detail {
 
-class SteadyClock : public ClockInterface
+class SystemClock : public ClockInterface
 {
 public:
   // Construction / Destruction
-  SteadyClock()                    = default;
-  SteadyClock(SteadyClock const &) = delete;
-  SteadyClock(SteadyClock &&)      = delete;
-  ~SteadyClock() override          = default;
+  SystemClock()                    = default;
+  SystemClock(SystemClock const &) = delete;
+  SystemClock(SystemClock &&)      = delete;
+  ~SystemClock() override          = default;
 
   /// @name Clock Interface
   /// @{
   Timestamp Now() const override
   {
-    return ChronoClock::now();
+    return AccurateSystemClock::now();
   }
   /// @}
 
   // Operators
-  SteadyClock &operator=(SteadyClock const &) = delete;
-  SteadyClock &operator=(SteadyClock &&) = delete;
+  SystemClock &operator=(SystemClock const &) = delete;
+  SystemClock &operator=(SystemClock &&) = delete;
 };
 
 }  // namespace detail

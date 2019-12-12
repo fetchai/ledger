@@ -16,7 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/encoders.hpp"
 #include "ledger/state_adapter.hpp"
+#include "logging/logging.hpp"
 #include "storage/resource_mapper.hpp"
 
 using fetch::storage::ResourceAddress;
@@ -36,11 +38,11 @@ constexpr char const *LOGGING_NAME = "StateAdapter";
  * @param scope The reference to the scope
  * @param allow_writes Enables write functionality
  */
-StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope)
+StateAdapter::StateAdapter(StorageInterface &storage, ConstByteArray scope)
   : StateAdapter(storage, std::move(scope), Mode::READ_ONLY)
 {}
 
-StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope, Mode mode)
+StateAdapter::StateAdapter(StorageInterface &storage, ConstByteArray scope, Mode mode)
   : storage_{storage}
   , scope_{std::move(scope)}
   , mode_{mode}
@@ -61,10 +63,8 @@ StateAdapter::Status StateAdapter::Read(std::string const &key, void *data, uint
 
   Status status{Status::ERROR};
 
-  auto new_key = WrapKeyWithScope(key);
-
   // make the request to the storage engine
-  auto const result = storage_.Get(CreateAddress(new_key));
+  auto const result = storage_.Get(CreateAddress(CurrentScope(), key));
 
   // ensure the check was not found
   if (!result.failed)
@@ -109,12 +109,10 @@ StateAdapter::Status StateAdapter::Write(std::string const &key, void const *dat
     return Status::PERMISSION_DENIED;
   }
 
-  auto new_key = WrapKeyWithScope(key);
-
   auto write_val = ConstByteArray{reinterpret_cast<uint8_t const *>(data), size};
 
   // set the value on the storage engine
-  storage_.Set(CreateAddress(new_key), write_val);
+  storage_.Set(CreateAddress(CurrentScope(), key), write_val);
 
   return Status::OK;
 }
@@ -128,21 +126,15 @@ StateAdapter::Status StateAdapter::Write(std::string const &key, void const *dat
  */
 StateAdapter::Status StateAdapter::Exists(std::string const &key)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Exists: ", key);
-
-  Status status{Status::ERROR};
-
-  auto new_key = WrapKeyWithScope(key);
-
   // request the result
-  auto const result = storage_.Get(CreateAddress(new_key));
+  auto const result = storage_.Get(CreateAddress(CurrentScope(), key));
 
-  if (!result.failed)
+  if (result.failed)
   {
-    status = Status::OK;
+    return Status::ERROR;
   }
 
-  return status;
+  return Status::OK;
 }
 
 /**
@@ -152,27 +144,16 @@ StateAdapter::Status StateAdapter::Exists(std::string const &key)
  * @param key The input key to be converted
  * @return The generated resource address for this key
  */
-ResourceAddress StateAdapter::CreateAddress(Identifier const &scope, ConstByteArray const &key)
+ResourceAddress StateAdapter::CreateAddress(ConstByteArray const &scope, ConstByteArray const &key)
 {
-  FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key, " scope: ", scope.full_name());
-  return ResourceAddress{scope.full_name() + ".state." + key};
+  FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key, " scope: ", scope);
+
+  return ResourceAddress{scope + ".state." + key};
 }
 
-/**
- * Creates a non-scoped address
- *
- * @param key The input key to be converted
- * @return The generated resource address for this key
- */
-ResourceAddress StateAdapter::CreateAddress(ConstByteArray const &key)
+void StateAdapter::PushContext(byte_array::ConstByteArray const &scope)
 {
-  FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key, " (no scope)");
-  return ResourceAddress{key};
-}
-
-void StateAdapter::PushContext(Identifier const &scope)
-{
-  scope_.push_back(scope);
+  scope_.emplace_back(scope);
 }
 
 void StateAdapter::PopContext()
@@ -180,9 +161,9 @@ void StateAdapter::PopContext()
   scope_.pop_back();
 }
 
-std::string StateAdapter::WrapKeyWithScope(std::string const &key)
+StateAdapter::ConstByteArray StateAdapter::CurrentScope() const
 {
-  return std::string{scope_.back().full_name() + ".state." + key};
+  return scope_.back();
 }
 
 }  // namespace ledger

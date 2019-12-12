@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "bootstrap_monitor.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 #include "version/fetch_version.hpp"
@@ -132,7 +133,7 @@ BootstrapMonitor::BootstrapMonitor(ProverPtr entity, uint16_t p2p_port, std::str
   state_machine_->RegisterHandler(State::Notify, this, &BootstrapMonitor::OnNotify);
 }
 
-bool BootstrapMonitor::DiscoverPeers(UriList &peers, std::string const &external_address)
+bool BootstrapMonitor::DiscoverPeers(UriSet &peers, std::string const &external_address)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Bootstrapping network node @ ", BOOTSTRAP_HOST);
 
@@ -170,7 +171,7 @@ bool BootstrapMonitor::UpdateExternalAddress()
   {
     auto const &ip_address = response["ip"];
 
-    if (ip_address.Is<std::string>())
+    if (ip_address.IsString())
     {
       external_address_ = ip_address.As<std::string>();
       FETCH_LOG_INFO(LOGGING_NAME, "Detected external address as: ", external_address_);
@@ -190,7 +191,7 @@ bool BootstrapMonitor::UpdateExternalAddress()
   return success;
 }
 
-bool BootstrapMonitor::RunDiscovery(UriList &peers)
+bool BootstrapMonitor::RunDiscovery(UriSet &peers)
 {
   bool success{false};
 
@@ -214,6 +215,7 @@ bool BootstrapMonitor::RunDiscovery(UriList &peers)
   request["signature"]      = attestation.signature.ToBase64();
   request["host"]           = external_address_;
   request["port"]           = port_;
+  request["component"]      = "ledger";
   request["client_name"]    = "constellation";
   request["client_version"] = fetch::version::FULL;
 
@@ -265,60 +267,56 @@ bool BootstrapMonitor::RunDiscovery(UriList &peers)
 
     return false;
   }
-  else
+
+  if (!response.Has("result"))
   {
-    if (!response.Has("result"))
+    FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (no result)");
+    FETCH_LOG_WARN(LOGGING_NAME, "Server Response: ", response);
+    return false;
+  }
+
+  auto const &result = response["result"];
+  if (!result.IsArray())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (result not array)");
+    FETCH_LOG_WARN(LOGGING_NAME, "Server Response: ", response);
+    return false;
+  }
+
+  // assume all goes well
+  success = true;
+
+  // loop through all the results
+  for (std::size_t i = 0, size = result.size(); i < size; ++i)
+  {
+    auto const &peer_object = result[i];
+
+    // formatting is correct check
+    if (!peer_object.IsObject())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (no result)");
+      return false;
+    }
+
+    std::string host;
+    uint16_t    port = 0;
+    Uri         uri{};
+    if (!(Extract(peer_object, "host", host) && Extract(peer_object, "port", port)))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (no host, no port)");
       FETCH_LOG_WARN(LOGGING_NAME, "Server Response: ", response);
       return false;
     }
 
-    auto const &result = response["result"];
-    if (!result.IsArray())
+    std::string const uri_string = "tcp://" + host + ':' + std::to_string(port);
+
+    // attempt to parse the URL being given
+    if (!uri.Parse(uri_string))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (result not array)");
-      FETCH_LOG_WARN(LOGGING_NAME, "Server Response: ", response);
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse the URI: ", uri_string);
       return false;
     }
 
-    // assume all goes well
-    success = true;
-
-    // loop through all the results
-    for (std::size_t i = 0, size = result.size(); i < size; ++i)
-    {
-      auto const &peer_object = result[i];
-
-      // formatting is correct check
-      if (!peer_object.IsObject())
-      {
-        return false;
-      }
-
-      std::string host;
-      uint16_t    port = 0;
-      Uri         uri{};
-      if (!(Extract(peer_object, "host", host) && Extract(peer_object, "port", port)))
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (no host, no port)");
-        FETCH_LOG_WARN(LOGGING_NAME, "Server Response: ", response);
-        return false;
-      }
-      else
-      {
-        std::string const uri_string = "tcp://" + host + ':' + std::to_string(port);
-
-        // attempt to parse the URL being given
-        if (!uri.Parse(uri_string))
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse the URI: ", uri_string);
-          return false;
-        }
-
-        peers.emplace_back(std::move(uri));
-      }
-    }
+    peers.emplace(std::move(uri));
   }
 
   return success;

@@ -21,10 +21,12 @@
 #include "math/statistics/mean.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/optimisation/learning_rate_params.hpp"
 #include "ml/utilities/graph_builder.hpp"
 
 #include <chrono>
+#include <utility>
 
 namespace fetch {
 namespace ml {
@@ -43,7 +45,7 @@ class Optimiser
 public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
-  using SizeType   = typename TensorType::SizeType;
+  using SizeType   = fetch::math::SizeType;
 
   Optimiser() = default;
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
@@ -52,9 +54,14 @@ public:
 
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
             std::string label_node_name, std::string output_node_name,
-            LearningRateParam<DataType> const &learning_rate_param);
+            LearningRateParam<DataType> learning_rate_param);
 
   virtual ~Optimiser() = default;
+
+  void SetGraph(std::shared_ptr<Graph<T>> graph)
+  {
+    graph_ = graph;
+  }
 
   /// DATA RUN INTERFACES ///
   DataType Run(std::vector<TensorType> const &data, TensorType const &labels,
@@ -68,6 +75,8 @@ public:
                SizeType subset_size = SIZE_NOT_SET);
 
   void     UpdateLearningRate();
+  void     IncrementEpochCounter();
+  void     IncrementBatchCounters(SizeType batch_size);
   SizeType UpdateBatchSize(SizeType const &batch_size, SizeType const &data_size,
                            SizeType const &subset_size = SIZE_NOT_SET);
 
@@ -76,6 +85,7 @@ public:
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
+  virtual OptimiserType OptimiserCode() = 0;
 
 protected:
   std::shared_ptr<Graph<T>> graph_;
@@ -88,16 +98,16 @@ protected:
   SizeType                                                            epoch_ = SIZE_NOT_SET;
 
 private:
-  DataType                                       loss_;
-  DataType                                       loss_sum_;
-  SizeType                                       step_;
+  DataType                                       loss_{};
+  DataType                                       loss_sum_{};
+  SizeType                                       step_{};
   SizeType                                       cumulative_step_ = 0;
   std::pair<TensorType, std::vector<TensorType>> input_;
   TensorType                                     cur_label_;
   TensorType                                     pred_label_;
   std::chrono::high_resolution_clock::time_point cur_time_;
   std::chrono::high_resolution_clock::time_point start_time_;
-  std::chrono::duration<double>                  time_span_;
+  std::chrono::duration<double>                  time_span_{};
   std::string                                    stat_string_;
   std::vector<TensorType>                        batch_data_;
   TensorType                                     batch_labels_;
@@ -120,9 +130,11 @@ void Optimiser<T>::Init()
   graph_->Compile();
 
   graph_trainables_ = graph_->GetTrainables();
+
+  gradients_.clear();
   for (auto &train : graph_trainables_)
   {
-    gradients_.emplace_back(TensorType(train->get_weights().shape()));
+    gradients_.emplace_back(TensorType(train->GetWeights().shape()));
   }
 }
 
@@ -130,7 +142,7 @@ template <class T>
 Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
                         std::string label_node_name, std::string output_node_name,
                         DataType const &learning_rate)
-  : graph_(graph)
+  : graph_(std::move(graph))
   , input_node_names_(std::move(input_node_names))
   , label_node_name_(std::move(label_node_name))
   , output_node_name_(std::move(output_node_name))
@@ -141,16 +153,15 @@ Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string
 }
 
 template <class T>
-Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>>      graph,
-                        std::vector<std::string> const input_node_names,
-                        std::string const label_node_name, std::string const output_node_name,
-                        LearningRateParam<DataType> const &learning_rate_param)
-  : graph_(graph)
+Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
+                        std::string label_node_name, std::string output_node_name,
+                        LearningRateParam<DataType> learning_rate_param)
+  : graph_(std::move(graph))
   , input_node_names_(std::move(input_node_names))
   , label_node_name_(std::move(label_node_name))
   , output_node_name_(std::move(output_node_name))
   , epoch_(0)
-  , learning_rate_param_(learning_rate_param)
+  , learning_rate_param_(std::move(learning_rate_param))
 {
   // initialise learning rate
   learning_rate_ = learning_rate_param_.starting_learning_rate;
@@ -171,7 +182,7 @@ template <class T>
 typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorType const &labels,
                                    SizeType batch_size)
 {
-  assert(data.size() > 0);
+  assert(!data.empty());
   // Get trailing dimensions
   SizeType n_data_dimm = data.at(0).shape().size() - 1;
   SizeType n_data      = data.at(0).shape().at(n_data_dimm);
@@ -234,17 +245,16 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
     auto name_it = input_node_names_.begin();
     for (auto &input : batch_data_)
     {
-      graph_->SetInput(*name_it, input);
+      graph_->SetInputReference(*name_it, input);
       ++name_it;
     }
 
     // Set Label
-    graph_->SetInput(label_node_name_, batch_labels_);
+    graph_->SetInputReference(label_node_name_, batch_labels_);
 
     auto loss_tensor = graph_->ForwardPropagate(output_node_name_);
     loss_ += *(loss_tensor.begin());
     graph_->BackPropagate(output_node_name_);
-    graph_->ApplyRegularisation();
 
     // Compute and apply gradient
     ApplyGradients(batch_size);
@@ -261,7 +271,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
 
     UpdateLearningRate();
   }
-  epoch_++;
+  IncrementEpochCounter();
 
   return loss_sum_ / static_cast<DataType>(k);
 }
@@ -338,17 +348,16 @@ typename T::Type Optimiser<T>::RunImplementation(
     auto name_it = input_node_names_.begin();
     for (auto &cur_input : input.second)
     {
-      graph_->SetInput(*name_it, cur_input);
+      graph_->SetInputReference(*name_it, cur_input);
       ++name_it;
     }
 
     // Set Label
-    graph_->SetInput(label_node_name_, input.first);
+    graph_->SetInputReference(label_node_name_, input.first);
 
     auto loss_tensor = graph_->ForwardPropagate(output_node_name_);
     loss_ += *(loss_tensor.begin());
     graph_->BackPropagate(output_node_name_);
-    graph_->ApplyRegularisation();
 
     // Compute and apply gradient
     ApplyGradients(batch_size);
@@ -400,6 +409,7 @@ void Optimiser<T>::PrintStats(SizeType batch_size, SizeType subset_size)
   }
   // print it in log
   FETCH_LOG_INFO("ML_LIB", "Training speed: ", stat_string_);
+  // NOLINTNEXTLINE
   FETCH_LOG_INFO("ML_LIB", "Batch loss: ", loss_sum_ / static_cast<DataType>(step_ / batch_size));
 }
 /**
@@ -437,9 +447,30 @@ void Optimiser<T>::UpdateLearningRate()
   }
   default:
   {
-    throw std::runtime_error("Please specify learning rate schedule method");
+    throw exceptions::InvalidMode("Please specify learning rate schedule method");
   }
   }
+}
+
+/**
+ * Increments epoch counter
+ * @tparam T
+ */
+template <class T>
+void Optimiser<T>::IncrementEpochCounter()
+{
+  epoch_++;
+}
+
+/**
+ * Increments batch counters
+ * @tparam T
+ */
+template <class T>
+void Optimiser<T>::IncrementBatchCounters(SizeType batch_size)
+{
+  step_ += batch_size;
+  cumulative_step_ += batch_size;
 }
 
 /**

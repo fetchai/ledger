@@ -1,25 +1,28 @@
-DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.3.0'
+DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.2'
+STATIC_ANALYSIS_IMAGE = 'gcr.io/organic-storm-201412/ledger-ci-clang-tidy:v0.1.3'
 HIGH_LOAD_NODE_LABEL = 'ledger'
 MACOS_NODE_LABEL = 'mac-mini'
 
 enum Platform
 {
-  DEFAULT_CLANG('Clang',      'clang',     'clang++'    ),
-  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0'),
-  CLANG7       ('Clang 7',    'clang-7',   'clang++-7'  ),
-  GCC7         ('GCC 7',      'gcc-7',     'g++-7'      ),
-  GCC8         ('GCC 8',      'gcc-8',     'g++-8'      )
+  DEFAULT_CLANG('Clang',      'clang',     'clang++',     ''),
+  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:v0.1.1'),
+  CLANG7       ('Clang 7',    'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:v0.1.1'),
+  GCC7         ('GCC 7',      'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:v0.1.1'),
+  GCC8         ('GCC 8',      'gcc-8',     'g++-8',       'gcr.io/organic-storm-201412/ledger-ci-gcc8:v0.1.1')
 
-  public Platform(label, cc, cxx)
+  public Platform(label, cc, cxx, image)
   {
     this.label = label
     this.env_cc = cc
     this.env_cxx = cxx
+    this.docker_image = image
   }
 
   public final String label
   public final String env_cc
   public final String env_cxx
+  public final String docker_image
 }
 
 LINUX_PLATFORMS_CORE = [
@@ -43,28 +46,23 @@ enum Configuration
   public final String label
 }
 
-def is_master_or_pull_request_head_branch()
+def run_full_build()
 {
-  return BRANCH_NAME == 'master' || BRANCH_NAME ==~ /^PR-\d+-head$/ || BRANCH_NAME ==~ /^PR-\d+$/
+  return true
 }
 
-def static_analysis()
+def static_analysis(Configuration config)
 {
   return {
     stage('Static Analysis') {
-      node {
+      node(HIGH_LOAD_NODE_LABEL) {
         stage('SCM Static Analysis') {
           checkout scm
         }
 
         stage('Run Static Analysis') {
-          docker.image(DOCKER_IMAGE_NAME).inside {
-            sh '''\
-              mkdir -p build-analysis
-              cd build-analysis
-              cmake ..
-            '''
-            sh './scripts/run_static_analysis.py build-analysis'
+          docker.image(STATIC_ANALYSIS_IMAGE).inside {
+            sh "./scripts/ci-tool.py --lint ${config.label}"
           }
         }
       }
@@ -111,7 +109,7 @@ def slow_tests_stage(Platform platform, Configuration config)
     }
 
     stage("End-to-End Tests ${stage_name_suffix(platform, config)}") {
-      sh './scripts/ci/install-test-dependencies.sh'
+      sh './scripts/install-test-dependencies.sh'
       sh "./scripts/ci-tool.py -E ${config.label}"
     }
   }
@@ -167,7 +165,7 @@ full_run = { platform_, config_ ->
 def create_docker_build(Platform platform, Configuration config, stages)
 {
   def build = { build_stages ->
-    docker.image(DOCKER_IMAGE_NAME).inside {
+    docker.image(platform.docker_image).inside {
       build_stages()
     }
   }
@@ -207,7 +205,7 @@ def run_builds_in_parallel()
     }
 
     // Only run macOS builds on master and head branches
-    if (is_master_or_pull_request_head_branch())
+    if (run_full_build())
     {
       stages["macOS ${Platform.DEFAULT_CLANG.label} ${config.label}"] = create_macos_build(
         Platform.DEFAULT_CLANG,
@@ -215,20 +213,20 @@ def run_builds_in_parallel()
     }
   }
 
-  for (config in (is_master_or_pull_request_head_branch() ? Configuration.values() : [Configuration.RELEASE]))
+  for (config in (run_full_build() ? Configuration.values() : [Configuration.RELEASE]))
   {
     for (platform in LINUX_PLATFORMS_AUX)
     {
       stages["${platform.label} ${config.label}"] = create_docker_build(
         platform,
         config,
-        is_master_or_pull_request_head_branch() ? full_run : fast_run)
+        run_full_build() ? full_run : fast_run)
     }
   }
 
-  if (is_master_or_pull_request_head_branch())
+  if (run_full_build())
   {
-    stages['Static Analysis'] = static_analysis()
+    stages['Static Analysis'] = static_analysis(Configuration.DEBUG)
   }
 
   stage('Build and Test') {
@@ -248,6 +246,10 @@ def run_basic_checks()
       docker.image(DOCKER_IMAGE_NAME).inside {
         stage('Style Check') {
           sh './scripts/apply_style.py -d'
+        }
+
+        stage('Circular Dependencies') {
+          sh 'mkdir -p build-deps && cd build-deps && cmake ../ && cd - && ./scripts/detect-circular-dependencies.py build-deps/'
         }
       }
     }

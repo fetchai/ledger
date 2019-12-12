@@ -38,21 +38,20 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
   std::size_t i;
   std::size_t j;
   if ((c.height() == 0) ||
-      ((c.width() == 0) || (((alpha == static_cast<Type>(0.0)) || (a.height() == 0)) &&
-                            (beta == static_cast<Type>(1.0)))))
+      ((c.width() == 0) || (((alpha == Type{0}) || (a.height() == 0)) && (beta == Type{1}))))
   {
     return;
   }
 
-  if (alpha == static_cast<Type>(0.0))
+  if (alpha == Type{0})
   {
-    if (beta == static_cast<Type>(0.0))
+    if (beta == Type{0})
     {
       for (j = 0; j < c.width(); ++j)
       {
         for (i = 0; i < c.height(); ++i)
         {
-          c(i, j) = static_cast<Type>(0.0);
+          c(i, j) = Type{0};
         }
       }
     }
@@ -76,13 +75,13 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
     {
       Type        temp;
       std::size_t l;
-      temp = static_cast<Type>(0.0);
+      temp = Type{0};
       for (l = 0; l < a.height(); ++l)
       {
         temp = temp + a(l, i) * b(l, j);
       }
 
-      if (beta == static_cast<Type>(0.0))
+      if (beta == Type{0})
       {
         c(i, j) = alpha * temp;
       }
@@ -92,7 +91,6 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
       }
     }
   }
-  return;
 }
 
 template class Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
@@ -125,6 +123,10 @@ template class Blas<
 
 template class Blas<
     fetch::fixed_point::FixedPoint<32, 32>, Signature(_C <= _alpha, _A, _B, _beta, _C),
+    Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>;
+
+template class Blas<
+    fetch::fixed_point::FixedPoint<64, 64>, Signature(_C <= _alpha, _A, _B, _beta, _C),
     Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>;
 
 }  // namespace linalg

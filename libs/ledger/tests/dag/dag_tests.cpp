@@ -59,10 +59,7 @@ protected:
 
   DAG MakeDAG(std::string const &id, bool load_from_file)
   {
-    auto certificate = CreateNewCertificate();
-    DAG  dag;
-    dag.reset(new DAGChild(id, load_from_file, certificate));
-    return dag;
+    return std::make_shared<DAGChild>(id, load_from_file, CreateNewCertificate());
   }
 
   // Verify that the nodes in the latest dag epoch match the sanity check epoch_history_
@@ -286,6 +283,7 @@ TEST_F(DagTests, CheckDagGetNode)
   EXPECT_EQ(dag_nodes.size(), 1);
 
   ledger::DAGNode dummy;
+  ledger::DAGHash dummy_hash(crypto::Hash<crypto::SHA256>("not here"));
   EXPECT_EQ(dag_->GetDAGNode(dag_nodes.back().hash, dummy), true);
-  EXPECT_EQ(dag_->GetDAGNode(crypto::Hash<crypto::SHA256>("not here"), dummy), false);
+  EXPECT_EQ(dag_->GetDAGNode(dummy_hash, dummy), false);
 }

@@ -122,34 +122,48 @@ bool UpgradeIteratorFromBroadcast(SizeVector const &a, IteratorType &iterator)
   return true;
 }
 
+template <typename T, typename C>
+std::vector<SizeVector> PrepareRange(Tensor<T, C> const &a)
+{
+  std::vector<SizeVector> range;
+  for (auto &i : a.shape())
+  {
+    range.push_back({0, i});
+  }
+  return range;
+}
+
+/**
+ * Two inputs Broadcast using given function
+ * ret will be reshaped to shape of largest input
+ * @tparam F
+ * @tparam T
+ * @tparam C
+ * @param function
+ * @param a first input tensor
+ * @param b second input tensor
+ * @param ret output tensor
+ * @return bool true if broadcasting was successful
+ */
 template <typename F, typename T, typename C>
 bool Broadcast(F function, const Tensor<T, C> &a, const Tensor<T, C> &b, Tensor<T, C> &ret)
 {
+  // Compute output shape
   SizeVector ret_shape;
-
   ShapeFromBroadcast(a.shape(), b.shape(), ret_shape);
   ret.Reshape(ret_shape);
 
-  std::vector<SizeVector> a_range, b_range, ret_range;
-  for (auto &i : a.shape())
-  {
-    a_range.push_back({0, i});
-  }
+  // Prepare ranges
+  std::vector<SizeVector> a_range   = PrepareRange(a);
+  std::vector<SizeVector> b_range   = PrepareRange(b);
+  std::vector<SizeVector> ret_range = PrepareRange(ret);
 
-  for (auto &i : b.shape())
-  {
-    b_range.push_back({0, i});
-  }
-
-  for (auto &i : ret.shape())
-  {
-    ret_range.push_back({0, i});
-  }
-
+  // Prepare iterators
   ConstTensorSliceIterator<T, C> it_a(a, a_range);
   ConstTensorSliceIterator<T, C> it_b(b, b_range);
   TensorSliceIterator<T, C>      it_ret(ret, ret_range);
 
+  // Change iterators to be broadcasted
   if (!UpgradeIteratorFromBroadcast<ConstTensorSliceIterator<T, C>>(ret_shape, it_a))
   {
     return false;
@@ -160,12 +174,54 @@ bool Broadcast(F function, const Tensor<T, C> &a, const Tensor<T, C> &b, Tensor<
     return false;
   }
 
+  // Apply function
   while (it_ret)
   {
     function(*it_a, *it_b, *it_ret);
 
     ++it_a;
     ++it_b;
+    ++it_ret;
+  }
+
+  return true;
+}
+
+/**
+ * One input Broadcast using given function
+ * Input has to be broadcastable along ret shape
+ * ret shape is preserved
+ * @tparam F
+ * @tparam T
+ * @tparam C
+ * @param function
+ * @param a input tensor
+ * @param ret output tensor
+ * @return bool true if broadcasting was successful
+ */
+template <typename F, typename T, typename C>
+bool Broadcast(F function, const Tensor<T, C> &a, Tensor<T, C> &ret)
+{
+  // Prepare ranges
+  std::vector<SizeVector> a_range   = PrepareRange(a);
+  std::vector<SizeVector> ret_range = PrepareRange(ret);
+
+  // Prepare iterators
+  ConstTensorSliceIterator<T, C> it_a(a, a_range);
+  TensorSliceIterator<T, C>      it_ret(ret, ret_range);
+
+  // Change iterators to be broadcasted
+  if (!UpgradeIteratorFromBroadcast<ConstTensorSliceIterator<T, C>>(ret.shape(), it_a))
+  {
+    return false;
+  }
+
+  // Apply function
+  while (it_ret)
+  {
+    function(*it_a, *it_ret);
+
+    ++it_a;
     ++it_ret;
   }
 

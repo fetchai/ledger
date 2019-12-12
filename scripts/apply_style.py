@@ -25,6 +25,8 @@ from functools import wraps
 from multiprocessing import Lock, Pool
 from os.path import abspath, basename, commonpath, dirname, isdir, isfile, join
 
+from fetchai_code_quality.internal.toolchains import ClangToolchain
+
 PROJECT_ROOT = abspath(dirname(dirname(__file__)))
 SUPPORTED_TEXT_FILE_PATTERNS = (
     '*.cmake',
@@ -52,8 +54,8 @@ INCLUDE_GUARD = '#pragma once'
 DISALLOWED_HEADER_FILE_EXTENSIONS = ('*.h', '*.hxx', '*.hh')
 CMAKE_VERSION_REQUIREMENT = 'cmake_minimum_required(VERSION 3.10 FATAL_ERROR)'
 
+CLANG_TOOLCHAIN = ClangToolchain()
 CLANG_FORMAT_REQUIRED_VERSION = '6.0'
-CLANG_FORMAT_EXE_NAME = 'clang-format-{}'.format(CLANG_FORMAT_REQUIRED_VERSION)
 CMAKE_FORMAT_EXE_NAME = 'cmake-format'
 CMAKE_FORMAT_REQUIRED_VERSION = '0.5.1'
 AUTOPEP8_REQUIRED_VERSION = '1.4.4'
@@ -95,7 +97,7 @@ LICENSE_TEMPLATE = """//--------------------------------------------------------
 //
 //   Copyright 2018-{} Fetch.AI Limited
 //
-//   Licensed under the Apache License, Version 2.0 {}the "License"{};
+//   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
 //   You may obtain a copy of the License at
 //
@@ -107,15 +109,17 @@ LICENSE_TEMPLATE = """//--------------------------------------------------------
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 //
-//------------------------------------------------------------------------------{}"""
+//------------------------------------------------------------------------------
 
-LICENSE = LICENSE_TEMPLATE.format(CURRENT_YEAR, '(', ')', '\n\n')
-RE_LICENSE = LICENSE_TEMPLATE.format('(-\\d+)?', '\\(', '\\)', '([\\s\\n]*)')
+"""
+
+LICENSE = LICENSE_TEMPLATE.format(CURRENT_YEAR)
+RE_LICENSE = r'//------------------------------------------------------------------------------([\n/\s\w\.\-\,\(\"\);:]+)//------------------------------------------------------------------------------\n+'
 
 SUPPORTED_LANGUAGES = {
     'cpp': {
         'cmd_prefix': [
-            CLANG_FORMAT_EXE_NAME,
+            CLANG_TOOLCHAIN.clang_format_path,
             '-style=file'
         ],
         'filename_patterns': ('*.cpp', '*.hpp')
@@ -210,26 +214,24 @@ def external_formatter(cmd_prefix, filename_patterns):
 
 @include_patterns('*.cpp', '*.hpp')
 def fix_license_header(text, path_to_file):
-    if LICENSE in text:
-        return text
 
     # determine if an old license is already present
     existing_license_present = bool(re.search(RE_LICENSE, text, re.MULTILINE))
-
     if existing_license_present:
         # replace the contents of the license
-        return re.sub(RE_LICENSE, LICENSE, text)
+        updated = re.sub(RE_LICENSE, LICENSE, text)
     elif fnmatch.fnmatch(basename(path_to_file), '*.cpp'):
         # add license to the top of the file
-        return LICENSE + text
+        updated = LICENSE + text
     elif fnmatch.fnmatch(basename(path_to_file), '*.hpp'):
         if has_include_guard(text):
             # add the license after the header guard
-            return re.sub(r'{}\s+'.format(INCLUDE_GUARD), '{}\n{}'.format(INCLUDE_GUARD, LICENSE), text)
+            updated = re.sub(r'{}\s+'.format(INCLUDE_GUARD),
+                             '{}\n{}'.format(INCLUDE_GUARD, LICENSE), text)
         else:
-            return LICENSE + text
+            updated = INCLUDE_GUARD + '\n' + LICENSE + text
 
-    return text
+    return updated
 
 
 @include_patterns('*.py')
@@ -384,7 +386,7 @@ TRANSFORMATIONS = [
     fix_terminal_newlines,
     external_formatter(**SUPPORTED_LANGUAGES['cpp']),
     external_formatter(**SUPPORTED_LANGUAGES['cmake']),
-    format_python
+    format_python,
 ]
 
 
@@ -438,13 +440,13 @@ def process_in_parallel(files_to_process, jobs):
 
 
 def check_tool_versions():
-    clang_format_cmd = [CLANG_FORMAT_EXE_NAME, '--version']
+    clang_format_cmd = [CLANG_TOOLCHAIN.clang_format_path, '--version']
     try:
         clang_format_version = subprocess.check_output(
             clang_format_cmd).decode().strip()
     except:
         output(
-            'Could not run "{}". Make sure {} is installed.'.format(' '.join(clang_format_cmd), CLANG_FORMAT_EXE_NAME))
+            'Could not run "{}". Make sure {} is installed.'.format(' '.join(clang_format_cmd), CLANG_TOOLCHAIN.clang_format_path))
         sys.exit(1)
     assert clang_format_version.startswith('clang-format version {}'.format(
         CLANG_FORMAT_REQUIRED_VERSION)), \

@@ -22,6 +22,7 @@
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/dag/dag_hash.hpp"
 
 #include <set>
 
@@ -32,21 +33,25 @@ struct DAGEpoch
 {
   using ConstByteArray = byte_array::ConstByteArray;
 
-  uint64_t block_number;
+  DAGEpoch()
+    : hash{{}, DAGHash::Type::EPOCH}
+  {}
+
+  uint64_t block_number{0};
 
   // TODO(issue 1229): The order of these nodes will need to be revised
-  std::set<ConstByteArray> tips{};
-  std::set<ConstByteArray> data_nodes{};
-  std::set<ConstByteArray> solution_nodes{};
+  std::set<DAGHash> tips{};
+  std::set<DAGHash> data_nodes{};
+  std::set<DAGHash> solution_nodes{};
 
-  ConstByteArray hash;
+  DAGHash hash{};
 
   // TODO(HUT): consider whether to actually transmit
   // Not transmitted, but built up and compared against the hash for validity
   // map of dag node hash to dag node
-  std::set<ConstByteArray> all_nodes;
+  std::set<DAGHash> all_nodes;
 
-  bool Contains(ConstByteArray const &digest) const;
+  bool Contains(DAGHash const &digest) const;
   void Finalise();
 };
 

@@ -21,6 +21,7 @@
 #include "math/matrix_operations.hpp"
 #include "math/trigonometry.hpp"
 #include "ml/ops/ops.hpp"
+#include "vectorise/math/max.hpp"
 
 #include <cassert>
 #include <vector>
@@ -35,7 +36,7 @@ class TanH : public fetch::ml::ops::Ops<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpTanhSaveableParams<T>;
   using MyType        = TanH<TensorType>;
@@ -73,9 +74,9 @@ public:
     for (auto &val : output)
     {
       // Minimum value of tanh is restricted to -1+epsilon
-      fetch::math::Max(val, fetch::math::Add(DataType(-1), epsilon_), val);
+      val = fetch::vectorise::Max(val, fetch::math::Add(DataType(-1), epsilon_));
       // Maximum value of tanh is restricted to 1-epsilon
-      fetch::math::Min(val, fetch::math::Subtract(static_cast<DataType>(1), epsilon_), val);
+      val = fetch::vectorise::Min(val, fetch::math::Subtract(static_cast<DataType>(1), epsilon_));
     }
   }
 

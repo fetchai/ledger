@@ -98,14 +98,14 @@ public:
     return g;
   }
 
-  Gaussian operator*(const Gaussian &g) const
+  Gaussian operator*(Gaussian const &g) const
   {
     // Multiply two Gaussians.
     T new_pi  = this->pi_ + g.pi_;
     T new_tau = this->tau_ + g.tau_;
     return Gaussian(new_pi, new_tau);
   }
-  Gaussian operator*=(const Gaussian &g)
+  Gaussian operator*=(Gaussian const &g)
   {
     // Multiply myself and another Gaussian.
     this->pi_ += g.pi_;
@@ -130,14 +130,14 @@ public:
     return *this;
   }
 
-  Gaussian operator/(const Gaussian &g) const
+  Gaussian operator/(Gaussian const &g) const
   {
     // Divide two Gaussians.
     T new_pi  = this->pi_ - g.pi_;
     T new_tau = this->tau_ - g.tau_;
     return Gaussian(new_pi, new_tau);
   }
-  Gaussian operator/=(const Gaussian &g)
+  Gaussian operator/=(Gaussian const &g)
   {
     // Divide by Gaussian.
     this->pi_ -= g.pi_;
@@ -145,14 +145,14 @@ public:
     return *this;
   }
 
-  Gaussian operator+(const Gaussian &g) const
+  Gaussian operator+(Gaussian const &g) const
   {
     // Add two Gaussians.
     T new_pi  = 1. / (1. / this->pi_ + 1. / g.pi_);
     T new_tau = new_pi * (this->tau_ / this->pi_ + g.tau_ / g.pi_);
     return Gaussian(new_pi, new_tau);
   }
-  Gaussian operator+=(const Gaussian &g)
+  Gaussian operator+=(Gaussian const &g)
   {
     // Add myself and a Gaussian.
     T new_pi   = 1. / (1. / this->pi_ + 1. / g.pi_);
@@ -166,14 +166,14 @@ public:
     // Invert the mean value.
     return Gaussian(this->pi_, -this->tau_);
   }
-  Gaussian operator-(const Gaussian &g) const
+  Gaussian operator-(Gaussian const &g) const
   {
     // Subtract two Gaussians.
     T new_pi  = 1. / (1. / this->pi_ + 1. / g.pi_);
     T new_tau = new_pi * (this->tau_ / this->pi_ - g.tau_ / g.pi_);
     return Gaussian(new_pi, new_tau);
   }
-  Gaussian operator-=(const Gaussian &g)
+  Gaussian operator-=(Gaussian const &g)
   {
     // Subtract a Gaussian from myself.
     T new_pi   = 1. / (1. / this->pi_ + 1. / g.pi_);

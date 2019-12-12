@@ -24,11 +24,14 @@ namespace utilities {
 template <typename TensorType>
 class Scaler
 {
+  using DataType = typename TensorType::Type;
+
 public:
   Scaler()          = default;
   virtual ~Scaler() = default;
 
   virtual void SetScale(TensorType const &reference_tensor)                           = 0;
+  virtual void SetScale(DataType const &min_val, DataType const &max_val)             = 0;
   virtual void Normalise(TensorType const &input_tensor, TensorType &output_tensor)   = 0;
   virtual void DeNormalise(TensorType const &input_tensor, TensorType &output_tensor) = 0;
 };

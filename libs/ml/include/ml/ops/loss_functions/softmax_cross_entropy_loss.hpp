@@ -37,7 +37,7 @@ class SoftmaxCrossEntropyLoss : public Ops<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpSoftmaxCrossEntropySaveableParams<T>;
   using MyType        = SoftmaxCrossEntropyLoss<TensorType>;
@@ -74,7 +74,7 @@ public:
     assert(inputs.at(0)->size() == inputs.at(1)->size());
 
     // sanity check the softmax adds up to 1
-    assert(Sum(fetch::math::Softmax((*inputs.at(0)))) - (DataType(inputs.at(0)->shape().at(0))) <
+    assert(Sum(fetch::math::Softmax((*inputs.at(0)))) - (DataType(inputs.at(0)->shape().at(1))) <
            0.0001);
 
     // softmax forward & then CrossEntropy

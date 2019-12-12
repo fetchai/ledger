@@ -18,8 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "http/module.hpp"
 #include "ledger/chaincode/chain_code_cache.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 
 #include <fstream>
 #include <string>
@@ -43,7 +45,7 @@ public:
   ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor);
   ContractHttpInterface(ContractHttpInterface const &) = delete;
   ContractHttpInterface(ContractHttpInterface &&)      = delete;
-  ~ContractHttpInterface()                             = default;
+  ~ContractHttpInterface() override                    = default;
 
   // Operators
   ContractHttpInterface &operator=(ContractHttpInterface const &) = delete;
@@ -81,25 +83,26 @@ private:
 
   /// @name Transaction Handlers
   /// @{
-  http::HTTPResponse OnTransaction(http::HTTPRequest const &req, ConstByteArray expected_contract);
-  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &req, TxHashes &txs);
-  SubmitTxStatus     SubmitBulkTx(http::HTTPRequest const &req, TxHashes &txs);
+  http::HTTPResponse OnTransaction(http::HTTPRequest const &request,
+                                   ConstByteArray const &   expected_contract);
+  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &request, TxHashes &txs);
+  SubmitTxStatus     SubmitBulkTx(http::HTTPRequest const &request, TxHashes &txs);
   /// @}
 
   /// @name Access Log
   /// @{
   void RecordTransaction(SubmitTxStatus const &status, http::HTTPRequest const &request,
-                         ConstByteArray expected_contract);
+                         ConstByteArray const &expected_contract);
   void RecordQuery(ConstByteArray const &contract_name, ConstByteArray const &query,
                    http::HTTPRequest const &request);
   void WriteToAccessLog(variant::Variant const &entry);
   /// @}
 
-  StorageInterface &    storage_;
-  TransactionProcessor &processor_;
-  ChainCodeCache        contract_cache_{};
-  Mutex                 access_log_lock_;
-  std::ofstream         access_log_;
+  TokenContract            token_contract_{};
+  StorageInterface &       storage_;
+  TransactionProcessor &   processor_;
+  ChainCodeCache           contract_cache_{};
+  Protected<std::ofstream> access_log_;
 };
 
 }  // namespace ledger

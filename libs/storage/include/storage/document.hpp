@@ -27,7 +27,7 @@ namespace storage {
 
 struct Document
 {
-  explicit operator byte_array::ConstByteArray()
+  explicit operator byte_array::ConstByteArray() const
   {
     return document;
   }

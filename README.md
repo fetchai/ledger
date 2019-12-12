@@ -22,9 +22,9 @@ features. Fetch.AI will be delivering regular updates.
 1. [Website](https://fetch.ai/)
 2. [Blog](https://fetch.ai/blog)
 3. [Community Website](https://community.fetch.ai/)
-4. [Community Telegram Group](https://t.me/fetchai)
-5. [Whitepapers](https://fetch.ai/publications.html)
-6. [Roadmap](https://fetch.ai/#/roadmap)
+4. [Community Telegram Group](https://t.me/fetch_ai)
+5. [Whitepapers](https://fetch.ai/press-partners-publications/#publications)
+6. [Roadmap](https://fetch.ai/fetch-ais-2019-technical-roadmap/)
 
 
 ## Supported platforms
@@ -61,13 +61,15 @@ rm -f *.db
 Connect to the `alpha` test network:
 
 ```
+git checkout release/v0.7.x
+./scripts/quickstart.sh
 ./constellation -bootstrap -network alpha
 ```
 
 ## Running the ledger locally
 
-Alternatively, you can run the ledger locally:
+Alternatively, you can run the ledger locally (1 second block interval in this case):
 
 ```
-./constellation
+./constellation -standalone -block-interval 1000
 ```

@@ -19,13 +19,15 @@
 #include "core/assert.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/set_thread_name.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "ledger/consensus/stake_update_event.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_status_cache.hpp"
+#include "logging/logging.hpp"
 #include "moment/deadline_timer.hpp"
 #include "storage/resource_mapper.hpp"
 #include "telemetry/counter.hpp"
@@ -57,7 +59,6 @@ ExecutionManager::ExecutionManager(std::size_t num_executors, uint32_t log2_num_
                                    TransactionStatusCache::ShrdPtr tx_status_cache)
   : log2_num_lanes_{log2_num_lanes}
   , storage_{std::move(storage)}
-  , idle_executors_{}
   , thread_pool_{network::MakeThreadPool(num_executors, "Executor")}
   , tx_status_cache_{std::move(tx_status_cache)}
   , tx_executed_count_(Registry::Instance().CreateCounter(
@@ -150,7 +151,7 @@ ExecutionManager::ExecutionManager(std::size_t num_executors, uint32_t log2_num_
  * @param block The block to be executed
  * @return the status of the execution
  */
-ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &block)
+ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
 {
   // if the execution manager is not running then no further transactions
   // should be scheduled
@@ -174,12 +175,13 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   }
 
   // update the last block hash
-  last_block_hash_  = block.hash;
-  last_block_miner_ = block.miner;
-  num_slices_       = block.slices.size();
-
-  // update the state otherwise there is a race between when the executor thread wakes up
-  state_.ApplyVoid([](auto &state) { state = State::ACTIVE; });
+  state_.ApplyVoid([&block](Summary &summary) {
+    summary.last_block_hash   = block.hash;
+    summary.last_block_miner  = block.miner;
+    summary.last_block_number = block.block_number;
+    summary.state             = State::ACTIVE;
+  });
+  num_slices_ = block.slices.size();
 
   // trigger the monitor / dispatch thread
   {
@@ -197,7 +199,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
  * @param block The input block to plan
  * @return true if successful, otherwise false
  */
-bool ExecutionManager::PlanExecution(Block::Body const &block)
+bool ExecutionManager::PlanExecution(Block const &block)
 {
   FETCH_LOCK(execution_plan_lock_);
 
@@ -239,7 +241,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
 {
   ExecutorPtr executor;
 
-  // lookup a free executor
+  // look up a free executor
   {
     FETCH_LOCK(idle_executors_lock_);
     if (!idle_executors_.empty())
@@ -334,8 +336,11 @@ void ExecutionManager::Stop()
   }
 
   // wait for the monitor thread to exit
-  monitor_thread_->join();
-  monitor_thread_.reset();
+  if (monitor_thread_)
+  {
+    monitor_thread_->join();
+    monitor_thread_.reset();
+  }
 
   // tear down the thread pool
   thread_pool_->Stop();
@@ -343,19 +348,17 @@ void ExecutionManager::Stop()
 
 void ExecutionManager::SetLastProcessedBlock(Digest hash)
 {
-  // TODO(issue 33): thread safety
-  last_block_hash_ = hash;
+  state_.ApplyVoid([&hash](Summary &summary) { summary.last_block_hash = std::move(hash); });
 }
 
-Digest ExecutionManager::LastProcessedBlock()
+Digest ExecutionManager::LastProcessedBlock() const
 {
-  // TODO(issue 33): thread safety
-  return last_block_hash_;
+  return state_.Apply([](Summary const &summary) { return summary.last_block_hash; });
 }
 
 ExecutionManager::State ExecutionManager::GetState()
 {
-  return state_.Apply([](auto const &state) -> State { return state; });
+  return state_.Apply([](Summary const &summary) { return summary.state; });
 }
 
 bool ExecutionManager::Abort()
@@ -382,8 +385,9 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
   MonitorState monitor_state = MonitorState::COMPLETED;
 
-  std::size_t current_slice        = 0;
-  uint64_t    aggregate_block_fees = 0;
+  std::size_t       current_slice        = 0;
+  uint64_t          aggregate_block_fees = 0;
+  StakeUpdateEvents aggregated_stake_events{};
 
   Digest current_block;
 
@@ -396,21 +400,21 @@ void ExecutionManager::MonitorThreadEntrypoint()
     case MonitorState::FAILED:
       FETCH_LOG_WARN(LOGGING_NAME, "Execution Engine experience fatal error");
 
-      state_.ApplyVoid([](auto &state) { state = State::EXECUTION_FAILED; });
+      state_.ApplyVoid([](Summary &summary) { summary.state = State::EXECUTION_FAILED; });
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::STALLED:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Stalled");
 
-      state_.ApplyVoid([](auto &state) { state = State::TRANSACTIONS_UNAVAILABLE; });
+      state_.ApplyVoid([](Summary &summary) { summary.state = State::TRANSACTIONS_UNAVAILABLE; });
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::COMPLETED:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Complete");
 
-      state_.ApplyVoid([](auto &state) { state = State::IDLE; });
+      state_.ApplyVoid([](Summary &summary) { summary.state = State::IDLE; });
       monitor_state = MonitorState::IDLE;
       break;
 
@@ -418,7 +422,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
     {
       blocks_completed_count_->increment();
 
-      state_.ApplyVoid([](auto &state) { state = State::IDLE; });
+      state_.ApplyVoid([](Summary &summary) { summary.state = State::IDLE; });
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Idle");
 
@@ -428,8 +432,10 @@ void ExecutionManager::MonitorThreadEntrypoint()
         monitor_wake_.wait(lock);
       }
 
-      state_.ApplyVoid([](auto &state) { state = State::ACTIVE; });
-      current_block = last_block_hash_;
+      current_block = state_.Apply([](Summary &summary) {
+        summary.state = State::ACTIVE;
+        return summary.last_block_hash;
+      });
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Active");
 
@@ -439,6 +445,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
         monitor_state        = MonitorState::SCHEDULE_NEXT_SLICE;
         current_slice        = 0;
         aggregate_block_fees = 0;
+        aggregated_stake_events.clear();
       }
 
       break;
@@ -506,24 +513,21 @@ void ExecutionManager::MonitorThreadEntrypoint()
         {
           assert(item);
 
-          switch (item->result().status)
+          switch (Categorise(item->result().status))
           {
-          case ExecutionItem::Status::SUCCESS:
+          case ExecutionStatusCategory::SUCCESS:
             ++num_complete;
             break;
-          case ExecutionItem::Status::TX_LOOKUP_FAILURE:
-            ++num_stalls;
-            break;
-          case ExecutionItem::Status::CHAIN_CODE_LOOKUP_FAILURE:
-          case ExecutionItem::Status::CHAIN_CODE_EXEC_FAILURE:
-          case ExecutionItem::Status::CONTRACT_NAME_PARSE_FAILURE:
-          case ExecutionItem::Status::CONTRACT_LOOKUP_FAILURE:
-          case ExecutionItem::Status::TX_NOT_VALID_FOR_BLOCK:
-          case ExecutionItem::Status::INSUFFICIENT_AVAILABLE_FUNDS:
-          case ExecutionItem::Status::TRANSFER_FAILURE:
-          case ExecutionItem::Status::INSUFFICIENT_CHARGE:
+
+          case ExecutionStatusCategory::NORMAL_ERROR:
             ++num_errors;
             break;
+
+          case ExecutionStatusCategory::INTERNAL_ERROR:
+            ++num_stalls;
+            break;
+
+          case ExecutionStatusCategory::BLOCK_INVALIDATING_ERROR:
           default:
             ++num_fatal_errors;
             break;
@@ -531,6 +535,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
           // update aggregate fees
           aggregate_block_fees += item->fee();
+          item->AggregateStakeUpdates(aggregated_stake_events);
 
           if (tx_status_cache_)
           {
@@ -539,9 +544,9 @@ void ExecutionManager::MonitorThreadEntrypoint()
         }
 
         // only provide debug if required
-        if (num_complete + num_stalls + num_errors + num_fatal_errors)
+        if ((num_complete + num_stalls + num_errors + num_fatal_errors) != 0u)
         {
-          if (num_stalls + num_errors + num_fatal_errors)
+          if ((num_stalls + num_errors + num_fatal_errors) != 0u)
           {
             FETCH_LOG_WARN(LOGGING_NAME, "Slice ", current_slice,
                            " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
@@ -559,11 +564,11 @@ void ExecutionManager::MonitorThreadEntrypoint()
         ++current_slice;
 
         // decide the next monitor state based on the status of the slice execution
-        if (num_fatal_errors)
+        if (num_fatal_errors != 0u)
         {
           monitor_state = MonitorState::FAILED;
         }
-        else if (num_stalls)
+        else if (num_stalls != 0u)
         {
           monitor_state = MonitorState::STALLED;
         }
@@ -599,9 +604,20 @@ void ExecutionManager::MonitorThreadEntrypoint()
           FETCH_LOCK(idle_executors_lock_);
           if (!idle_executors_.empty())
           {
+            // lookup the last block miner
+            chain::Address last_block_miner;
+            BlockIndex     last_block_number{0};
+
+            // extract the information from the summary structure
+            state_.ApplyVoid([&last_block_miner, &last_block_number](Summary const &summary) {
+              last_block_miner  = summary.last_block_miner;
+              last_block_number = summary.last_block_number;
+            });
+
             // get the first one and settle the fees
-            idle_executors_.front()->SettleFees(last_block_miner_, aggregate_block_fees,
-                                                log2_num_lanes_);
+            idle_executors_.front()->SettleFees(last_block_miner, last_block_number,
+                                                aggregate_block_fees, log2_num_lanes_,
+                                                aggregated_stake_events);
             fees_settled_count_->increment();
             break;
           }

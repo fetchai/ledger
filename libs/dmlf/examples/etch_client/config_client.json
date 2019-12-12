@@ -1,0 +1,12 @@
+{
+	"client" : {
+		"key" : "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y="
+	},
+	"nodes" : [
+		{
+			"uri" : "tcp://127.0.0.1:5555",
+			"pub" : "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA=="
+
+		}
+	]
+}

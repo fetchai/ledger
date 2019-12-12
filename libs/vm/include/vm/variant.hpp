@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/object.hpp"
 
@@ -35,11 +37,6 @@ union Primitive
   uint64_t ui64;
   float    f32;
   double   f64;
-
-  constexpr void Zero() noexcept
-  {
-    ui64 = 0;
-  }
 
   template <typename T>
   auto Get() const noexcept;
@@ -99,12 +96,12 @@ union Primitive
     f64 = value;
   }
 
-  void Set(fixed_point::fp32_t value) noexcept
+  void Set(fixed_point::fp32_t const &value) noexcept
   {
     i32 = value.Data();
   }
 
-  void Set(fixed_point::fp64_t value) noexcept
+  void Set(fixed_point::fp64_t const &value) noexcept
   {
     i64 = value.Data();
   }
@@ -192,7 +189,7 @@ struct Variant
 {
   union
   {
-    Primitive   primitive;
+    Primitive   primitive{};
     Ptr<Object> object;
   };
   TypeId type_id = TypeIds::Unknown;
@@ -500,6 +497,7 @@ struct Variant
     type_id = TypeIds::Unknown;
   }
 };
+using VariantArray = std::vector<Variant>;
 
 struct TemplateParameter1 : Variant
 {
@@ -526,10 +524,59 @@ struct AnyInteger : Variant
   using Variant::Variant;
 };
 
-struct AnyFloatingPoint : Variant
+}  // namespace vm
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<fetch::vm::Variant, D>
 {
-  using Variant::Variant;
+public:
+  using Type       = fetch::vm::Variant;
+  using DriverType = D;
+
+  static uint8_t const TYPEID    = 1;
+  static uint8_t const PRIMITIVE = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &variant)
+  {
+    auto map = map_constructor(2);
+    // TODO(tfr): This is dangerous: Type Id should never be serialized
+    map.Append(TYPEID, variant.type_id);
+
+    // primitive type variant
+    if (variant.IsPrimitive())
+    {
+      // Since primitive is a union it suffices
+      // that we store one of the values.
+      uint64_t val = variant.primitive.ui64;
+      map.Append(PRIMITIVE, val);
+    }
+    else
+    {
+      // not supported yet
+      throw std::runtime_error{"Serialization of Variant of Object type is not supported"};
+    }
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &variant)
+  {
+    map.ExpectKeyGetValue(TYPEID, variant.type_id);
+
+    if (variant.IsPrimitive())
+    {
+      uint64_t val;
+      map.ExpectKeyGetValue(PRIMITIVE, val);
+      variant.primitive.ui64 = val;
+    }
+    else
+    {
+      throw std::runtime_error{"Deserialization of objects not possible for variants."};
+    }
+  }
 };
 
-}  // namespace vm
+}  // namespace serializers
 }  // namespace fetch

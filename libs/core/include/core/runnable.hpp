@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <memory>
+#include <vector>
 
 namespace fetch {
 namespace core {
@@ -39,6 +40,8 @@ public:
     return true;
   }
   virtual void Execute() = 0;
+
+  virtual char const *GetId() const = 0;
   /// @}
 
   // Helper operators
@@ -48,7 +51,9 @@ public:
   }
 };
 
-using WeakRunnable = std::weak_ptr<Runnable>;
+using WeakRunnables = std::vector<std::weak_ptr<Runnable>>;
+using WeakRunnable  = std::weak_ptr<Runnable>;
+using RunnablePtr   = std::shared_ptr<Runnable>;
 
 }  // namespace core
 }  // namespace fetch

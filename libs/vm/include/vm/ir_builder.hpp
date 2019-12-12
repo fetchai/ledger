@@ -40,8 +40,9 @@ struct IRBuilder
   IRTypePtr          BuildType(TypePtr const &type);
   IRVariablePtr      BuildVariable(VariablePtr const &variable);
   IRFunctionPtr      BuildFunction(FunctionPtr const &function);
-  IRTypePtrArray     BuildTypes(const TypePtrArray &types);
-  IRVariablePtrArray BuildVariables(const VariablePtrArray &variables);
+  IRTypePtrArray     BuildTypes(TypePtrArray const &types);
+  IRFunctionPtrArray BuildFunctions(FunctionPtrArray const &functions);
+  IRVariablePtrArray BuildVariables(VariablePtrArray const &variables);
 
   IR *                                ir_;
   IR::Map<TypePtr, IRTypePtr>         type_map_;

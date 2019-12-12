@@ -120,6 +120,9 @@ public:
           std::string("Cannot create container type with more than 1 << 32 elements"));
     }
 
+    // Allocating needed memory
+    serializer_.Allocate(count);
+
     created_ = true;
     return BinaryInterface<Driver>(serializer_, count);
   }
@@ -140,7 +143,7 @@ class BinaryDeserializer
 public:
   enum
   {
-    CODE8  = TypeCodes::BINARY_CODE_FIXED,
+    CODE8  = TypeCodes::BINARY_CODE8,
     CODE16 = TypeCodes::BINARY_CODE16,
     CODE32 = TypeCodes::BINARY_CODE32
   };
@@ -178,7 +181,8 @@ public:
       break;
     }
     default:
-      throw SerializableException(std::string("incorrect size opcode for binary stream size."));
+      throw SerializableException(
+          std::string("incorrect size opcode for binary stream size: " + std::to_string(opcode)));
     }
 
     size_ = static_cast<uint64_t>(size);

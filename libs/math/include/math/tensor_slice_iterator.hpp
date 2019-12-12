@@ -28,7 +28,7 @@ namespace math {
 
 struct TensorSliceIteratorRange
 {
-  using SizeType       = uint64_t;
+  using SizeType       = fetch::math::SizeType;
   SizeType index       = 0;
   SizeType from        = 0;
   SizeType to          = 0;
@@ -50,12 +50,12 @@ class TensorSliceIterator
 {
 public:
   using Type     = T;
-  using SizeType = uint64_t;
+  using SizeType = fetch::math::SizeType;
   /**
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array
    */
-  TensorSliceIterator(TensorType &array)
+  explicit TensorSliceIterator(TensorType &array)
     : array_(array)
   {
     std::vector<std::vector<SizeType>> step{};
@@ -68,8 +68,8 @@ public:
 
   TensorSliceIterator(TensorSliceIterator const &other) = default;
   TensorSliceIterator &operator=(TensorSliceIterator const &other) = default;
-  TensorSliceIterator(TensorSliceIterator &&other)                 = default;
-  TensorSliceIterator &operator=(TensorSliceIterator &&other) = default;
+  TensorSliceIterator(TensorSliceIterator &&other) noexcept        = default;
+  TensorSliceIterator &operator=(TensorSliceIterator &&other) noexcept = default;
 
   /**
    * Iterator for more interesting ranges
@@ -114,7 +114,7 @@ public:
    * same as is_valid
    * @return
    */
-  operator bool() const
+  explicit operator bool() const
   {
     return is_valid();
   }
@@ -215,18 +215,18 @@ public:
     new_ranges.reserve(ranges_.size());
 
     // Insert axes at beginning
-    for (SizeType i = 0; i < axes.size(); ++i)
+    for (uint64_t axis : axes)
     {
-      new_ranges.push_back(ranges_[axes[i]]);
+      new_ranges.push_back(ranges_[axis]);
     }
 
     for (SizeType i = 0; i < ranges_.size(); ++i)
     {
       // Search for axis
       bool add_axis = true;
-      for (SizeType j = 0; j < axes.size(); ++j)
+      for (uint64_t axis : axes)
       {
-        if (i == axes[j])
+        if (i == axis)
         {
           add_axis = false;
           break;
@@ -234,7 +234,9 @@ public:
       }
       // Add axis if wasn't added at beginning
       if (!add_axis)
+      {
         continue;
+      }
       new_ranges.push_back(ranges_[i]);
     }
     std::swap(new_ranges, ranges_);
@@ -313,6 +315,7 @@ public:
   }
 
   template <class IteratorType>
+  // NOLINTNEXTLINE
   friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &, IteratorType &);
 
   /**
@@ -360,7 +363,7 @@ private:
     assert(array_.shape().size() == step.size());
     SizeType volume = 1;
 
-    if (step.size() == 0)
+    if (step.empty())
     {
       size_     = 0;
       position_ = 0;
@@ -384,16 +387,10 @@ private:
         volume = stride[i];
 
         s.volume      = volume;
-        SizeType diff = (s.to - s.from);
-        s.total_steps = diff / s.step;
-        if (s.total_steps * s.step < diff)
-        {
-          ++s.total_steps;
-        }
+        s.total_steps = ((s.to - s.from - 1) / s.step) + 1;
 
-        s.total_steps *= s.step;
         s.step_volume  = s.step * volume;
-        s.total_volume = (s.total_steps) * volume;
+        s.total_volume = (s.total_steps) * s.step_volume;
 
         position_ += volume * s.from;
         size_ *= s.total_steps;

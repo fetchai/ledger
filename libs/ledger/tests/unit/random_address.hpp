@@ -17,7 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/address.hpp"
+#include "chain/address.hpp"
+#include "crypto/identity.hpp"
 
 #include <type_traits>
 
@@ -29,9 +30,9 @@
  * @return The generated address
  */
 template <typename RNG>
-fetch::ledger::Address GenerateRandomAddress(RNG &&rng)
+fetch::chain::Address GenerateRandomAddress(RNG &&rng)
 {
-  using Address = fetch::ledger::Address;
+  using Address = fetch::chain::Address;
   using RngWord = typename std::decay_t<RNG>::RandomType;
 
   static constexpr std::size_t ADDRESS_WORD_SIZE = Address::RAW_LENGTH / sizeof(RngWord);
@@ -46,4 +47,27 @@ fetch::ledger::Address GenerateRandomAddress(RNG &&rng)
   }
 
   return Address{raw_address};
+}
+
+/**
+ * Generate a random identity based on a specified RNG
+ *
+ * @tparam RNG The RNG type
+ * @param rng The reference to the RNG to be used
+ * @return The generated identity
+ */
+template <typename RNG>
+fetch::crypto::Identity GenerateRandomIdentity(RNG &&rng)
+{
+  static constexpr std::size_t IDENTITY_BYTES = 64;
+
+  fetch::byte_array::ByteArray array{};
+  array.Resize(IDENTITY_BYTES);
+
+  for (std::size_t i = 0; i < IDENTITY_BYTES; ++i)
+  {
+    array[i] = uint8_t(rng());
+  }
+
+  return fetch::crypto::Identity{array};
 }

@@ -17,15 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/macros.hpp"
+#include "fake_block_packer.hpp"
 #include "ledger/chain/block.hpp"
 #include "vectorise/platform.hpp"
 
-#include "fake_block_packer.hpp"
-
-void FakeBlockPacker::EnqueueTransaction(fetch::ledger::Transaction const &)
+void FakeBlockPacker::EnqueueTransaction(fetch::chain::Transaction const & /*tx*/)
 {}
 
-void FakeBlockPacker::EnqueueTransaction(fetch::ledger::TransactionLayout const &)
+void FakeBlockPacker::EnqueueTransaction(fetch::chain::TransactionLayout const & /*layout*/)
 {}
 
 void FakeBlockPacker::GenerateBlock(fetch::ledger::Block &block, std::size_t num_lanes,
@@ -34,8 +33,8 @@ void FakeBlockPacker::GenerateBlock(fetch::ledger::Block &block, std::size_t num
   FETCH_UNUSED(chain);
 
   // populate the fields required
-  block.body.log2_num_lanes = fetch::platform::ToLog2(static_cast<uint32_t>(num_lanes));
-  block.body.slices.resize(num_slices);
+  block.log2_num_lanes = fetch::platform::ToLog2(static_cast<uint32_t>(num_lanes));
+  block.slices.resize(num_slices);
 
   // cache the last block
   last_generated_block_ = block;

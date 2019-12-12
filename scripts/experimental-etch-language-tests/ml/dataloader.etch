@@ -1,0 +1,4 @@
+function main()
+    var data_loader1 = DataLoader("tensor");
+    var data_loader2 = DataLoader("commodity");
+endfunction

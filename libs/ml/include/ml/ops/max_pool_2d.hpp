@@ -31,7 +31,7 @@ class MaxPool2D : public Ops<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using DataType      = typename TensorType::Type;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
@@ -92,7 +92,7 @@ public:
     DataType max;
     auto     oit = output.begin();
 
-    for (SizeType n_i{0}; n_i < output.shape().at(2); n_i++)  // iterate over batch
+    for (SizeType n_i{0}; n_i < output.shape().at(3); n_i++)  // iterate over batch
     {
       for (SizeType ih{0}; ih < output.shape().at(2); ih++)  // Iterate height over kernel stride
       {

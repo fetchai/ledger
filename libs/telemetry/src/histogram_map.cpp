@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/histogram_map.hpp"
 
@@ -58,7 +57,7 @@ void HistogramMap::Add(std::string const &key, double const &value)
  */
 void HistogramMap::ToStream(OutputStream &stream) const
 {
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
   WriteHeader(stream, "histogram");
 
   for (auto const &e : histograms_)
@@ -68,14 +67,15 @@ void HistogramMap::ToStream(OutputStream &stream) const
 }
 
 /**
- * Internal: Lookup or create a new histogram for the specified key
+ * Internal: Look up or create a new histogram for the specified key
  *
  * @param key The key being queried
  * @return The existing or created histogram
  */
 HistogramPtr HistogramMap::LookupHistogram(std::string const &key)
 {
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
+
   auto it = histograms_.find(key);
   if (it == histograms_.end())
   {
@@ -91,11 +91,9 @@ HistogramPtr HistogramMap::LookupHistogram(std::string const &key)
 
     return histogram;
   }
-  else
-  {
-    // return the existing histogram
-    return it->second;
-  }
+
+  // return the existing histogram
+  return it->second;
 }
 
 }  // namespace telemetry

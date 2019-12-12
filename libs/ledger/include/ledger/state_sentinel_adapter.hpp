@@ -34,8 +34,10 @@ namespace ledger {
 class StateSentinelAdapter : public StateAdapter
 {
 public:
+  using ConstByteArray = byte_array::ConstByteArray;
+
   // Construction / Destruction
-  StateSentinelAdapter(StorageInterface &storage, Identifier scope, BitVector const &shards);
+  StateSentinelAdapter(StorageInterface &storage, ConstByteArray scope, BitVector const &shards);
   ~StateSentinelAdapter() override;
 
   /// @name IO Observer Interface
@@ -57,7 +59,7 @@ private:
 
   /// @name Shard Limits
   /// @{
-  BitVector shards_;
+  BitVector const shards_;
   /// @}
 
   /// @name Counters

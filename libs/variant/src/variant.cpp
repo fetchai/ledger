@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
 #include "variant/variant.hpp"
 
 #include <cstddef>
@@ -144,7 +143,7 @@ bool Variant::operator==(Variant const &other) const
 
       for (auto const &element : object_)
       {
-        // lookup key in the other array
+        // look up key in the other array
         auto it = other.object_.find(element.first);
         if (it == other.object_.end())
         {
@@ -251,54 +250,49 @@ std::ostream &operator<<(std::ostream &stream, Variant const &variant)
   return stream;
 }
 
-Variant::Type Variant::type() const
-{
-  return type_;
-}
-
 bool Variant::IsUndefined() const
 {
-  return type() == Type::UNDEFINED;
+  return type_ == Type::UNDEFINED;
 }
 
 bool Variant::IsInteger() const
 {
-  return type() == Type::INTEGER;
+  return type_ == Type::INTEGER;
 }
 
 bool Variant::IsFloatingPoint() const
 {
-  return type() == Type::FLOATING_POINT;
+  return type_ == Type::FLOATING_POINT;
 }
 
 bool Variant::IsFixedPoint() const
 {
-  return type() == Type::FIXED_POINT;
+  return type_ == Type::FIXED_POINT;
 }
 
 bool Variant::IsBoolean() const
 {
-  return type() == Type::BOOLEAN;
+  return type_ == Type::BOOLEAN;
 }
 
 bool Variant::IsString() const
 {
-  return type() == Type::STRING;
+  return type_ == Type::STRING;
 }
 
 bool Variant::IsNull() const
 {
-  return type() == Type::NULL_VALUE;
+  return type_ == Type::NULL_VALUE;
 }
 
 bool Variant::IsArray() const
 {
-  return type() == Type::ARRAY;
+  return type_ == Type::ARRAY;
 }
 
 bool Variant::IsObject() const
 {
-  return type() == Type::OBJECT;
+  return type_ == Type::OBJECT;
 }
 
 /**
@@ -397,7 +391,7 @@ Variant &Variant::operator=(char const *value)
  */
 Variant &Variant::operator[](std::size_t index)
 {
-  if (type() != Type::ARRAY)
+  if (!IsArray())
   {
     throw std::runtime_error("Unable to access index of non-array variant");
   }
@@ -414,7 +408,7 @@ Variant &Variant::operator[](std::size_t index)
  */
 Variant const &Variant::operator[](std::size_t index) const
 {
-  if (type() != Type::ARRAY)
+  if (!IsArray())
   {
     throw std::runtime_error("Unable to access index of non-array variant");
   }
@@ -432,7 +426,7 @@ Variant const &Variant::operator[](std::size_t index) const
  */
 Variant &Variant::operator[](ConstByteArray const &key)
 {
-  if (type_ != Type::OBJECT)
+  if (!IsObject())
   {
     throw std::runtime_error("Unable to access keys of non-object variant");
   }
@@ -463,7 +457,7 @@ Variant &Variant::operator[](ConstByteArray const &key)
  */
 Variant const &Variant::operator[](ConstByteArray const &key) const
 {
-  if (type_ != Type::OBJECT)
+  if (!IsObject())
   {
     throw std::runtime_error("Unable to access keys of non-object variant");
   }
@@ -486,7 +480,7 @@ Variant const &Variant::operator[](ConstByteArray const &key) const
  */
 bool Variant::Has(ConstByteArray const &key) const
 {
-  if (type_ != Type::OBJECT)
+  if (!IsObject())
   {
     throw std::runtime_error("Unable to access keys of non-object variant");
   }
@@ -551,7 +545,7 @@ std::size_t Variant::size() const
 void Variant::ResizeArray(std::size_t length)
 {
   // ensure the at the element is of the correct type
-  if (type_ != Type::ARRAY)
+  if (!IsArray())
   {
     throw std::runtime_error("Unable to resize non-array type");
   }
@@ -568,7 +562,7 @@ void Variant::ResizeArray(std::size_t length)
  */
 bool Variant::operator!=(Variant const &other) const
 {
-  return !(*this == other);
+  return !operator==(other);
 }
 
 }  // namespace variant

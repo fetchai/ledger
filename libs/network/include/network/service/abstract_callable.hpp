@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/serializers/type_register.hpp"
+#include "logging/logging.hpp"
 #include "network/service/types.hpp"
 
 #include <cstdint>
@@ -33,14 +33,14 @@ namespace service {
 namespace details {
 
 template <typename T>
-using base_type = std::remove_cv_t<std::remove_reference_t<T>>;
+using BaseType = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template <typename R, typename F, typename... Args>
 struct ArgsToString
 {
   static std::string Value()
   {
-    return serializers::TypeRegister<base_type<F>>::name() + std::string(", ") +
+    return serializers::TypeRegister<BaseType<F>>::name() + std::string(", ") +
            ArgsToString<R, Args...>::Value();
   }
 };
@@ -50,7 +50,7 @@ struct ArgsToString<R, F>
 {
   static std::string Value()
   {
-    return serializers::TypeRegister<base_type<F>>::name();
+    return serializers::TypeRegister<BaseType<F>>::name();
   }
 };
 
@@ -68,8 +68,8 @@ struct SignatureToString
 {
   static std::string Signature()
   {
-    return std::string(serializers::TypeRegister<base_type<R>>::name()) + std::string(" ") +
-           std::string(serializers::TypeRegister<base_type<C>>::name()) +
+    return std::string(serializers::TypeRegister<BaseType<R>>::name()) + std::string(" ") +
+           std::string(serializers::TypeRegister<BaseType<C>>::name()) +
            std::string("::function_pointer") + std::string("(") +
            ArgsToString<R, Args...>::Value() + std::string(")");
   }
@@ -136,8 +136,8 @@ struct Packer<T>
  * The serializer is is always left at position 0.
  */
 template <typename S, typename... arguments>
-void PackCall(S &serializer, protocol_handler_type const &protocol,
-              function_handler_type const &function, arguments &&... args)
+void PackCall(S &serializer, ProtocolHandlerType const &protocol,
+              FunctionHandlerType const &function, arguments &&... args)
 {
   serializer << protocol;
   serializer << function;
@@ -154,8 +154,8 @@ void PackCall(S &serializer, protocol_handler_type const &protocol,
  * serializer is is always left at position 0.
  */
 template <typename S>
-void PackCall(S &serializer, protocol_handler_type const &protocol,
-              function_handler_type const &function)
+void PackCall(S &serializer, ProtocolHandlerType const &protocol,
+              FunctionHandlerType const &function)
 {
   serializer << protocol;
   serializer << function;
@@ -174,8 +174,8 @@ void PackCall(S &serializer, protocol_handler_type const &protocol,
  * The serializer is left at position 0.
  */
 template <typename S>
-void PackCallWithPackedArguments(S &serializer, protocol_handler_type const &protocol,
-                                 function_handler_type const &function,
+void PackCallWithPackedArguments(S &serializer, ProtocolHandlerType const &protocol,
+                                 FunctionHandlerType const &  function,
                                  byte_array::ByteArray const &args)
 {
   serializer << protocol;
@@ -212,7 +212,6 @@ void PackArgs(S &serializer)
 
 enum Callable
 {
-  CLIENT_ID_ARG      = 1ull,
   CLIENT_CONTEXT_ARG = 2ull,
 };
 
@@ -228,7 +227,8 @@ public:
   template <typename T>
   void PushArgument(T *value)
   {
-    std::vector<CallableArgumentType>::push_back(CallableArgumentType{typeid(T), (void *)value});
+    std::vector<CallableArgumentType>::push_back(
+        CallableArgumentType{typeid(T), (void *)value});  // NOLINT
   }
 
   CallableArgumentType const &operator[](std::size_t n) const
@@ -258,9 +258,9 @@ public:
    * @result is a serializer used to serialize the result.
    * @params is a serializer that is used to deserialize the arguments.
    */
-  virtual void operator()(serializer_type &result, serializer_type &params) = 0;
-  virtual void operator()(serializer_type &result, CallableArgumentList const &additional_args,
-                          serializer_type &params)                          = 0;
+  virtual void operator()(SerializerType &result, SerializerType &params) = 0;
+  virtual void operator()(SerializerType &result, CallableArgumentList const &additional_args,
+                          SerializerType &params)                         = 0;
 
   uint64_t meta_data() const
   {

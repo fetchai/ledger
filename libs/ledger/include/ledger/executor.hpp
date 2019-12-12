@@ -20,18 +20,24 @@
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chaincode/chain_code_cache.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/executor_interface.hpp"
+#include "ledger/fees/fee_manager.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "ledger/transaction_validator.hpp"
 #include "telemetry/telemetry.hpp"
 
 #include <cstdint>
 #include <memory>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 class Address;
-class TokenContract;
+
+}  // namespace chain
+namespace ledger {
+
 class CachedStorageAdapter;
 class StateSentinelAdapter;
 class StakeUpdateInterface;
@@ -46,51 +52,51 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
 
   // Construction / Destruction
-  explicit Executor(StorageUnitPtr storage, StakeUpdateInterface *stake_updates);
+  explicit Executor(StorageUnitPtr storage);
   ~Executor() override = default;
 
   /// @name Executor Interface
   /// @{
   Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
                  BitVector const &shards) override;
-  void   SettleFees(Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
+  void   SettleFees(chain::Address const &miner, BlockIndex block, TokenAmount amount,
+                    uint32_t log2_num_lanes, StakeUpdateEvents const &stake_updates) override;
   /// @}
 
 private:
-  using TokenContractPtr        = std::shared_ptr<TokenContract>;
-  using TransactionPtr          = std::shared_ptr<Transaction>;
+  using TransactionPtr          = std::shared_ptr<chain::Transaction>;
   using CachedStorageAdapterPtr = std::shared_ptr<CachedStorageAdapter>;
 
   bool RetrieveTransaction(Digest const &digest);
   bool ValidationChecks(Result &result);
   bool ExecuteTransactionContract(Result &result);
   bool ProcessTransfers(Result &result);
-  void DeductFees(Result &result);
 
   /// @name Resources
   /// @{
-  StakeUpdateInterface *stake_updates_{nullptr};
-  StorageUnitPtr        storage_;             ///< The collection of resources
-  ChainCodeCache        chain_code_cache_{};  //< The factory to create new chain code instances
-  TokenContractPtr      token_contract_;
+  StorageUnitPtr storage_;             ///< The collection of resources
+  ChainCodeCache chain_code_cache_{};  //< The factory to create new chain code instances
+  TokenContract  token_contract_{};
   /// @}
 
   /// @name Per Execution State
   /// @{
-  BlockIndex              block_;
-  SliceIndex              slice_;
+  BlockIndex              block_{};
+  SliceIndex              slice_{};
   BitVector               allowed_shards_{};
   LaneIndex               log2_num_lanes_{0};
   TransactionPtr          current_tx_{};
   CachedStorageAdapterPtr storage_cache_;
+  TransactionValidator    tx_validator_;
   /// @}
+
+  FeeManager fee_manager_;
 
   telemetry::HistogramPtr overall_duration_;
   telemetry::HistogramPtr tx_retrieve_duration_;
   telemetry::HistogramPtr validation_checks_duration_;
   telemetry::HistogramPtr contract_execution_duration_;
   telemetry::HistogramPtr transfers_duration_;
-  telemetry::HistogramPtr deduct_fees_duration_;
   telemetry::HistogramPtr settle_fees_duration_;
 };
 

@@ -33,7 +33,7 @@ class Convolution2D : public Ops<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using DataType      = typename TensorType::Type;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
@@ -85,31 +85,28 @@ public:
   static constexpr char const *DESCRIPTOR = "Convolution2D";
 
 private:
-  void FillVerticalStride(TensorType &input, TensorType &vertical_stride,
-                          SizeType const output_channels, SizeType const input_channels,
-                          SizeType const kernel_height, SizeType const kernel_width);
+  void FillVerticalStride(TensorType &input, TensorType &vertical_stride, SizeType output_channels,
+                          SizeType input_channels, SizeType kernel_height, SizeType kernel_width);
 
   void ReverseFillVerticalStride(TensorType &input, TensorType &vertical_stride,
-                                 SizeType const output_channels, SizeType const input_channels,
-                                 SizeType const kernel_height, SizeType const kernel_width);
+                                 SizeType output_channels, SizeType input_channels,
+                                 SizeType kernel_height, SizeType kernel_width);
 
   void FillHorizontalStride(TensorType &input, TensorType &horizontal_stride,
-                            SizeType const output_height, SizeType const output_width,
-                            SizeType const input_channels, SizeType const kernel_height,
-                            SizeType const kernel_width, SizeType const batch_size);
+                            SizeType output_height, SizeType output_width, SizeType input_channels,
+                            SizeType kernel_height, SizeType kernel_width, SizeType batch_size);
 
   void ReverseFillHorizontalStride(TensorType &input, TensorType &horizontal_stride,
-                                   SizeType const output_height, SizeType const output_width,
-                                   SizeType const input_channels, SizeType const kernel_height,
-                                   SizeType const kernel_width, SizeType const batch_size);
+                                   SizeType output_height, SizeType output_width,
+                                   SizeType input_channels, SizeType kernel_height,
+                                   SizeType kernel_width, SizeType batch_size);
 
-  void FillOutput(TensorType const &gemm_output, TensorType &output, SizeType const output_channels,
-                  SizeType const output_height, SizeType const output_width,
-                  SizeType const batch_size);
+  void FillOutput(TensorType const &gemm_output, TensorType &output, SizeType output_channels,
+                  SizeType output_height, SizeType output_width, SizeType batch_size);
 
   void ReverseFillOutput(TensorType &gemm_output, TensorType const &output,
-                         SizeType const output_channels, SizeType const output_height,
-                         SizeType const output_width, SizeType const batch_size);
+                         SizeType output_channels, SizeType output_height, SizeType output_width,
+                         SizeType batch_size);
 
   SizeType stride_size_;
 };
@@ -128,9 +125,9 @@ template <class TensorType>
 void Convolution2D<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
-  // Input should be a 3D tensor [C x H x W x N]
+  // Input should be a 4D tensor [C x H x W x N]
   assert(inputs.at(0)->shape().size() == 4);
-  // Kernels should be a 4D tensor [oC x iC x H x W x N]
+  // Kernels should be a 5D tensor [oC x iC x H x W x N]
   assert(inputs.at(1)->shape().size() == 5);
   assert(output.shape() == ComputeOutputShape(inputs));
 

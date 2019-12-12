@@ -16,21 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/model/dnn_classifier.hpp"
 #include "ml/optimisation/types.hpp"
+#include "ml/utilities/mnist_utilities.hpp"
 
 #include <iostream>
 
 using namespace fetch::ml::model;
 using namespace fetch::ml::optimisers;
 
-using DataType   = float;
+using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = typename TensorType::SizeType;
+using SizeType   = fetch::math::SizeType;
 
 using ModelType      = typename fetch::ml::model::DNNClassifier<TensorType>;
-using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>;
+using DataLoaderType = typename fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
+using OptimiserType  = fetch::ml::OptimiserType;
 
 int main(int ac, char **av)
 {
@@ -50,23 +52,29 @@ int main(int ac, char **av)
   model_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.001);
   model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
   model_config.batch_size                                 = 64;  // minibatch training size
-  model_config.subset_size    = 1000;  // only train on the first 1000 samples
-  model_config.early_stopping = true;  // stop early if no improvement
-  model_config.patience       = 30;
-  model_config.print_stats    = true;
+  model_config.subset_size         = 1000;  // train on 1000 samples then run tests/save graph
+  model_config.early_stopping      = true;  // stop early if no improvement
+  model_config.patience            = 30;
+  model_config.print_stats         = true;
+  model_config.save_graph          = true;
+  model_config.graph_save_location = "/tmp/mnist_model";
 
-  // setup dataloader
-  auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
+  // setup dataloader with 20% test set
+  auto mnist_images = fetch::ml::utilities::read_mnist_images<TensorType>(av[1]);
+  auto mnist_labels = fetch::ml::utilities::read_mnist_labels<TensorType>(av[2]);
+  mnist_labels      = fetch::ml::utilities::convert_labels_to_onehot(mnist_labels);
 
-  // Allocate test set of size 20% of MNIST
+  auto data_loader_ptr = std::make_unique<DataLoaderType>();
+  data_loader_ptr->AddData({mnist_images}, mnist_labels);
   data_loader_ptr->SetTestRatio(0.2f);
 
-  DataType loss;
-
-  // run model in training mode
-  ModelType model(data_loader_ptr, OptimiserType::ADAM, model_config, {784, 100, 20, 10});
+  // setup model and pass dataloader
+  ModelType model(model_config, {784, 100, 20, 10});
+  model.SetDataloader(std::move(data_loader_ptr));
+  model.Compile(OptimiserType::ADAM);
 
   // training loop - early stopping will prevent long training time
+  DataType loss;
   model.Train(1000000, loss);
 
   // Run model on a test set

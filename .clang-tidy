@@ -1,41 +1,29 @@
 Checks: "-*,\
 bugprone-*,\
-modernize-use-override,\
-modernize-use-using,\
-modernize-make-shared,\
-modernize-make-unique,\
-modernize-pass-by-value,\
-readability-identifier-naming,\
-google-readability-todo,\
-readability-braces-around-statements,\
--bugprone-macro-parentheses,\
-misc-unused-alias-decls,\
-misc-unused-parameters,\
-misc-unused-using-decls"
+cert-dcl*,\
+cert-env*,\
+cert-err52-cpp,\
+cert-err60-cpp,\
+cert-flp30-c,\
+clang-analyzer-security.FloatLoopCounter,\
+google-build-explicit-make-pair,\
+google-build-namespaces,\
+google-explicit-constructor,\
+google-readability-*,\
+google-runtime-operator,\
+hicpp-exception-baseclass,\
+hicpp-explicit-conversions,\
+hicpp-use-*,\
+misc-*,\
+-misc-misplaced-widening-cast,\
+modernize-*,\
+performance-*,\
+readability-*,\
+-readability-identifier-naming"
 
-FormatStyle: file
-
-# Note: it is possible to exclude specific files using ';xxx'
-HeaderFilterRegex: '(apps|libs)/[a-zA-Z]+/include;-vm/include/tokeniser.hpp'
-
-CheckOptions:
-  - key:             readability-identifier-naming.FunctionCase
-    value:           aNy_CasE
-  - key:             readability-identifier-naming.MemberCase
-    value:           lower_case
-  - key:             readability-identifier-naming.PublicMemberSuffix
-    value:           ''
-  - key:             readability-identifier-naming.ProtectedMemberSuffix
-    value:           '_'
-  - key:             readability-identifier-naming.PrivateMemberSuffix
-    value:           '_'
-  - key:             readability-identifier-naming.ClassCase
-    value:           CamelCase
-  #- key:             readability-identifier-naming.EnumCase
-  #  value:           CamelCase
-  #- key:             readability-identifier-naming.ParameterCase
-  #  value:           lower_case
-  #- key:             readability-identifier-naming.UnionCase
-  #  value:           CamelCase
-  #- key:             readability-identifier-naming.VariableCase
-  #  value:           lower_case
+# TODO(WK):
+#   remove -* exclusion
+#   cert-*
+#   google-build-*
+#   hicpp-signed-bitwise
+#   hicpp-special-member-functions

@@ -33,25 +33,26 @@ class StringProxy
 {
 public:
   StringProxy()
+    : string_as_chars{}
   {
-    memset(this, 0, sizeof(decltype(*this)));
+    memset(string_as_chars, 0, sizeof string_as_chars);
   }
 
-  // Implicitly convert strings to this class
-  StringProxy(std::string const &in)
+  explicit StringProxy(std::string const &in)
+    : string_as_chars{}
   {
-    memset(this, 0, sizeof(decltype(*this)));
+    memset(string_as_chars, 0, sizeof string_as_chars);
     std::memcpy(string_as_chars, in.c_str(), std::min(in.size(), std::size_t(127)));
-  }
-
-  bool operator!=(StringProxy const &rhs) const
-  {
-    return memcmp(string_as_chars, rhs.string_as_chars, 128) != 0;
   }
 
   bool operator==(StringProxy const &rhs) const
   {
     return memcmp(string_as_chars, rhs.string_as_chars, 128) == 0;
+  }
+
+  bool operator!=(StringProxy const &rhs) const
+  {
+    return !operator==(rhs);
   }
 
   char string_as_chars[128];
@@ -82,8 +83,8 @@ inline std::unordered_set<fetch::byte_array::ByteArray> GenerateUniqueHashes(uin
     fetch::byte_array::ByteArray to_push = reference.Copy();
 
     // Flip one bit
-    byte_flip_position          = bit_flip_position >> 3;
-    sub_byte_flip_position      = uint8_t(1ull << (bit_flip_position & 0x7));
+    byte_flip_position          = bit_flip_position >> 3u;
+    sub_byte_flip_position      = uint8_t(1ull << (bit_flip_position & 0x7u));
     to_push[byte_flip_position] = to_push[byte_flip_position] ^ sub_byte_flip_position;
 
     ret.emplace(to_push);

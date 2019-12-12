@@ -39,7 +39,7 @@ bool Peer::Parse(std::string const &address)
 {
   std::smatch matches;
 
-  if (address == "")
+  if (address.empty())
   {
     Update("", 0);
     return true;

@@ -44,14 +44,14 @@ class ScaledDotProductAttention : public SubGraph<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using DataType      = typename T::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
   using SPType        = LayerScaledDotProductAttentionSaveableParams<T>;
 
   ScaledDotProductAttention() = default;
-  ScaledDotProductAttention(SizeType dk, DataType dropout = static_cast<DataType>(0.9))
+  explicit ScaledDotProductAttention(SizeType dk, DataType dropout = static_cast<DataType>(0.9))
     : key_dim_(dk)
     , dropout_(dropout)
   {
@@ -76,8 +76,8 @@ public:
     std::string kq_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
         name + "_Key_Query_MatMul", {transpose_key, query});
 
-    TensorType sqrt_dk_tensor = std::vector<SizeType>({1, 1, 1});
-    sqrt_dk_tensor(0, 0, 0)   = fetch::math::Sqrt(static_cast<DataType>(key_dim_));
+    TensorType sqrt_dk_tensor(std::vector<SizeType>({1, 1, 1}));
+    sqrt_dk_tensor(0, 0, 0) = fetch::math::Sqrt(static_cast<DataType>(key_dim_));
     std::string sqrt_dk_ph =
         this->template AddNode<fetch::ml::ops::Constant<TensorType>>(name + "_Sqrt_Key_Dim", {});
     this->SetInput(sqrt_dk_ph, sqrt_dk_tensor);
@@ -151,8 +151,8 @@ public:
   static constexpr char const *DESCRIPTOR = "ScaledDotProductAttention";
 
 private:
-  SizeType key_dim_;
-  DataType dropout_;
+  SizeType key_dim_{};
+  DataType dropout_{};
 };
 
 }  // namespace layers

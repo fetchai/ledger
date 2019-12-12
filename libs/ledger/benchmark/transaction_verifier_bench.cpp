@@ -33,7 +33,6 @@ namespace {
 
 class DummySink : public fetch::ledger::TransactionSink
 {
-
   std::size_t const       threshold_;
   std::size_t             count_{0};
   std::mutex              lock_;
@@ -44,7 +43,7 @@ public:
     : threshold_(threshold)
   {}
 
-  void OnTransaction(TransactionPtr const &) override
+  void OnTransaction(TransactionPtr const & /*tx*/) override
   {
     FETCH_LOCK(lock_);
     ++count_;
@@ -105,7 +104,7 @@ void TransactionVerifierBench(benchmark::State &state)
 
 void CreateRanges(benchmark::internal::Benchmark *b)
 {
-  int const max_threads = static_cast<int>(std::thread::hardware_concurrency());
+  auto const max_threads = static_cast<int>(std::thread::hardware_concurrency());
 
   for (int i = 1; i <= max_threads; ++i)
   {

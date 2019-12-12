@@ -24,15 +24,15 @@
 //  │      │           │           │           │           │
 //  └──────┴───────────┴───────────┴───────────┴───────────┘
 
+#include "core/assert.hpp"
+#include "storage/fetch_mmap.hpp"
+#include "storage/storage_exception.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <functional>
 #include <string>
-
-#include "core/assert.hpp"
-#include "storage/fetch_mmap.hpp"
-#include "storage/storage_exception.hpp"
 
 namespace fetch {
 namespace platform {
@@ -55,8 +55,7 @@ namespace storage {
  *
  * MAX is the count of map-able Objects at one time
  */
-
-template <typename T, typename D = uint64_t, unsigned long MAX = 256>
+template <typename T, typename D = uint64_t, unsigned long MAX = 256>  // NOLINT
 class MMapRandomAccessStack
 {
 private:
@@ -72,7 +71,7 @@ private:
   {
     uint16_t    magic   = platform::LITTLE_ENDIAN_MAGIC;
     uint64_t    objects = 0;
-    D           extra;
+    D           extra{};
     std::size_t size() const
     {
       return sizeof(magic) + sizeof(objects) + sizeof(extra);
@@ -84,7 +83,7 @@ private:
       {
         return false;
       }
-      stream.seekg(0, stream.beg);
+      stream.seekg(0, std::fstream::beg);
       stream.write(reinterpret_cast<char const *>(&magic), sizeof(magic));
       stream.write(reinterpret_cast<char const *>(&objects), sizeof(objects));
       stream.write(reinterpret_cast<char const *>(&extra), sizeof(extra));
@@ -94,9 +93,9 @@ private:
   };
 #pragma pack(pop)
 public:
-  using header_extra_type  = D;
-  using type               = T;
-  using event_handler_type = std::function<void()>;
+  using HeaderExtraType  = D;
+  using type             = T;
+  using EventHandlerType = std::function<void()>;
 
   MMapRandomAccessStack()
   {
@@ -104,9 +103,9 @@ public:
   }
 
   // Enable constructor for unit tests
-  MMapRandomAccessStack(char const *is_testing)
+  explicit MMapRandomAccessStack(char const *is_testing)
   {
-    if (!(std::string(is_testing).compare(std::string("test")) == 0))
+    if (std::string(is_testing) != std::string("test"))
     {
       throw std::runtime_error("This class hasn't been fully tested for production code");
     }
@@ -126,12 +125,12 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f)
+  void OnFileLoaded(EventHandlerType const &f)
   {
     on_file_loaded_ = f;
   }
 
-  void OnBeforeFlush(event_handler_type const &f)
+  void OnBeforeFlush(EventHandlerType const &f)
   {
     on_before_flush_ = f;
   }
@@ -239,7 +238,7 @@ public:
    */
   void Get(std::size_t i, type &object)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     assert(i < size());
     if (!IsMapped(i))
     {
@@ -247,7 +246,7 @@ public:
     }
 
     std::size_t index          = i - mapped_index_;
-    type *      mapped_objects = reinterpret_cast<type *>(mapped_data_.data());
+    auto *      mapped_objects = reinterpret_cast<type *>(mapped_data_.data());
     memcpy((&object), &(mapped_objects[index]), sizeof(object));
   }
 
@@ -260,7 +259,7 @@ public:
    */
   void Set(std::size_t i, type const &object)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     assert(i <= size());
     if (!IsMapped(i))
     {
@@ -268,7 +267,7 @@ public:
     }
 
     std::size_t index          = i - mapped_index_;
-    type *      mapped_objects = reinterpret_cast<type *>(mapped_data_.data());
+    auto *      mapped_objects = reinterpret_cast<type *>(mapped_data_.data());
     memcpy(&(mapped_objects[index]), &object, sizeof(type));
   }
 
@@ -283,7 +282,7 @@ public:
    */
   void SetBulk(std::size_t i, std::size_t elements, type *objects)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     if ((i + elements) > header_->objects)
     {
       ResizeFile(i, elements);  // Resize file if needed
@@ -316,7 +315,7 @@ public:
    */
   void GetBulk(std::size_t i, std::size_t &elements, type *objects)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     assert(header_->objects > i);
     assert(objects != nullptr);
 
@@ -337,14 +336,14 @@ public:
     }
   }
 
-  void SetExtraHeader(header_extra_type const &he)
+  void SetExtraHeader(HeaderExtraType const &he)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
     header_->extra = he;
   }
 
-  header_extra_type const &header_extra() const
+  HeaderExtraType const &header_extra() const
   {
     return header_->extra;
   }
@@ -385,7 +384,7 @@ public:
       return;
     }
 
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
     // If both indexes lies in already mapped area
     if (IsMapped(i) && IsMapped(j))
@@ -435,7 +434,7 @@ public:
   void Clear()
   {
     Header empty_header;
-    assert(filename_ != "");
+    assert(!filename_.empty());
     std::fstream fin(filename_, std::ios::out | std::ios::binary);
     if (!empty_header.Write(fin))
     {
@@ -523,8 +522,8 @@ private:
   std::size_t GetFileLength()
   {
     file_handle_.clear();
-    file_handle_.seekg(0, file_handle_.end);
-    std::size_t pos = std::size_t(file_handle_.tellg());
+    file_handle_.seekg(0, decltype(file_handle_)::end);
+    auto pos = std::size_t(file_handle_.tellg());
     return pos;
   }
   /*
@@ -535,7 +534,7 @@ private:
   void ResizeFile()
   {
     int64_t resize_length = sizeof(type) * MAX;
-    int64_t total_length  = int64_t(header_->size() + (sizeof(type) * (MAX + mapped_index_)));
+    auto    total_length  = int64_t(header_->size() + (sizeof(type) * (MAX + mapped_index_)));
     file_handle_.seekg(total_length, std::ios::beg);
     std::fill_n((std::ostreambuf_iterator<char>(file_handle_)), resize_length, '\0');
     file_handle_.flush();
@@ -565,7 +564,7 @@ private:
     total_length = GetFileLength() + adjusted_obj_count * sizeof(type);
     try
     {
-      file_handle_.seekg((long)total_length, std::ios::beg);
+      file_handle_.seekg(static_cast<int64_t>(total_length), std::ios::beg);
       std::fill_n((std::ostreambuf_iterator<char>(file_handle_)), adjusted_obj_count * sizeof(type),
                   '\0');
       file_handle_.flush();
@@ -586,14 +585,14 @@ private:
     header_ = reinterpret_cast<Header *>(mapped_header_.data());
   }
 
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
-  mio::mmap_sink     mapped_data_;    // This map handles read/write objects from/to file
-  mio::mmap_sink     mapped_header_;  // This map handles header part in the file
-  std::fstream       file_handle_;
-  std::string        filename_ = "";
-  Header *           header_;
-  std::size_t        mapped_index_ = 0;  // It holds the mapped index value
+  EventHandlerType on_file_loaded_;
+  EventHandlerType on_before_flush_;
+  mio::mmap_sink   mapped_data_;    // This map handles read/write objects from/to file
+  mio::mmap_sink   mapped_header_;  // This map handles header part in the file
+  std::fstream     file_handle_;
+  std::string      filename_ = "";
+  Header *         header_;
+  std::size_t      mapped_index_ = 0;  // It holds the mapped index value
 };
 }  // namespace storage
 }  // namespace fetch

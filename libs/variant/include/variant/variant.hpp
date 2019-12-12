@@ -18,10 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/fnv.hpp"
 #include "meta/type_traits.hpp"
 #include "variant/detail/element_pool.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/meta/math_type_traits.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -54,19 +57,6 @@ class Variant
 public:
   using ConstByteArray = byte_array::ConstByteArray;
 
-  enum class Type
-  {
-    UNDEFINED,
-    INTEGER,
-    FLOATING_POINT,
-    FIXED_POINT,
-    BOOLEAN,
-    STRING,
-    NULL_VALUE,
-    ARRAY,
-    OBJECT,
-  };
-
   /// @name Non Value Helpers
   /// @{
   static Variant Null();
@@ -77,26 +67,24 @@ public:
 
   // Construction / Destruction
   Variant() = default;
-  Variant(Variant const &);
+  Variant(Variant const &other);
   Variant(Variant &&) noexcept = default;
   ~Variant()                   = default;
 
   template <typename T>
-  explicit Variant(T const &value, meta::IfIsBoolean<T> * = nullptr);
+  explicit Variant(T const &value, meta::IfIsBoolean<T> * /*unused*/ = nullptr);
   template <typename T>
-  explicit Variant(T const &value, meta::IfIsInteger<T> * = nullptr);
+  explicit Variant(T const &value, meta::IfIsInteger<T> * /*unused*/ = nullptr);
   template <typename T>
-  explicit Variant(T const &value, meta::IfIsFloat<T> * = nullptr);
+  explicit Variant(T const &value, meta::IfIsFloat<T> * /*unused*/ = nullptr);
   template <typename T>
-  explicit Variant(T const &value, meta::IfIsFixedPoint<T> * = nullptr);
+  explicit Variant(T const &value, math::meta::IfIsFixedPoint<T> * /*unused*/ = nullptr);
   template <typename T>
-  explicit Variant(T &&value, meta::IfIsString<T> * = nullptr);
+  explicit Variant(T &&value, meta::IfIsString<T> * /*unused*/ = nullptr);
   explicit Variant(char const *value);
 
   /// @name Basic Type Access
   /// @{
-  Type type() const;
-
   bool IsUndefined() const;
   bool IsInteger() const;
   bool IsFloatingPoint() const;
@@ -117,7 +105,7 @@ public:
   template <typename T>
   meta::IfIsFloat<T, bool> Is() const;
   template <typename T>
-  meta::IfIsFixedPoint<T, bool> Is() const;
+  math::meta::IfIsFixedPoint<T, bool> Is() const;
   template <typename T>
   meta::IfIsString<T, bool> Is() const;
   /// @}
@@ -131,7 +119,7 @@ public:
   template <typename T>
   meta::IfIsFloat<T, T> As() const;
   template <typename T>
-  meta::IfIsFixedPoint<T, T> As() const;
+  math::meta::IfIsFixedPoint<T, T> As() const;
   template <typename T>
   meta::IfIsConstByteArray<T, ConstByteArray const &> As() const;
   template <typename T>
@@ -157,17 +145,17 @@ public:
   /// @name Operators
   /// @{
   template <typename T>
-  meta::IfIsBoolean<T, Variant &> operator=(T const &value);
+  meta::IfIsBoolean<T, Variant &> operator=(T const &value);  // NOLINT
   template <typename T>
-  meta::IfIsInteger<T, Variant &> operator=(T const &value);
+  meta::IfIsInteger<T, Variant &> operator=(T const &value);  // NOLINT
   template <typename T>
-  meta::IfIsFloat<T, Variant &> operator=(T const &value);
+  meta::IfIsFloat<T, Variant &> operator=(T const &value);  // NOLINT
   template <typename T>
-  meta::IfIsFixedPoint<T, Variant &> operator=(T const &value);
+  math::meta::IfIsFixedPoint<T, Variant &> operator=(T const &value);  // NOLINT
   template <typename T>
-  meta::IfIsAByteArray<T, Variant &> operator=(T const &value);
+  meta::IfIsAByteArray<T, Variant &> operator=(T const &value);  // NOLINT
   template <typename T>
-  meta::IfIsStdString<T, Variant &> operator=(T const &value);
+  meta::IfIsStdString<T, Variant &> operator=(T const &value);  // NOLINT
   Variant &                         operator=(char const *value);
 
   Variant &operator=(Variant const &value);
@@ -184,6 +172,24 @@ public:
 
   friend std::ostream &operator<<(std::ostream &stream, Variant const &variant);
 
+  enum class Type
+  {
+    UNDEFINED,
+    INTEGER,
+    FLOATING_POINT,
+    FIXED_POINT,
+    BOOLEAN,
+    STRING,
+    NULL_VALUE,
+    ARRAY,
+    OBJECT,
+  };
+
+  constexpr Type type() const
+  {
+    return type_;
+  }
+
 private:
   using VariantList   = std::vector<Variant>;
   using VariantObject = std::unordered_map<ConstByteArray, std::unique_ptr<Variant>>;
@@ -198,7 +204,7 @@ private:
 
   // Data Elements
   Type           type_{Type::UNDEFINED};  ///< The type of the variant
-  PrimitiveData  primitive_;              ///< Union of primitive data values
+  PrimitiveData  primitive_{};            ///< Union of primitive data values
   ConstByteArray string_;                 ///< The string value of the variant
   VariantList    array_;                  ///< The array value of the variant
   VariantObject  object_;                 ///< The object value of the variant
@@ -211,7 +217,7 @@ private:
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T const &value, meta::IfIsBoolean<T> *)
+Variant::Variant(T const &value, meta::IfIsBoolean<T> * /*unused*/)
   : Variant()
 {
   type_              = Type::BOOLEAN;
@@ -225,7 +231,7 @@ Variant::Variant(T const &value, meta::IfIsBoolean<T> *)
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T const &value, meta::IfIsInteger<T> *)
+Variant::Variant(T const &value, meta::IfIsInteger<T> * /*unused*/)
   : Variant()
 {
   type_              = Type::INTEGER;
@@ -239,7 +245,7 @@ Variant::Variant(T const &value, meta::IfIsInteger<T> *)
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T const &value, meta::IfIsFloat<T> *)
+Variant::Variant(T const &value, meta::IfIsFloat<T> * /*unused*/)
   : Variant()
 {
   type_                  = Type::FLOATING_POINT;
@@ -253,7 +259,7 @@ Variant::Variant(T const &value, meta::IfIsFloat<T> *)
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T const &value, meta::IfIsFixedPoint<T> *)
+Variant::Variant(T const &value, math::meta::IfIsFixedPoint<T> * /*unused*/)
   : Variant()
 {
   type_              = Type::FIXED_POINT;
@@ -267,7 +273,7 @@ Variant::Variant(T const &value, meta::IfIsFixedPoint<T> *)
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T &&value, meta::IfIsString<T> *)
+Variant::Variant(T &&value, meta::IfIsString<T> * /*unused*/)
   : Variant()
 {
   type_   = Type::STRING;
@@ -283,7 +289,7 @@ Variant::Variant(T &&value, meta::IfIsString<T> *)
 template <typename T>
 meta::IfIsBoolean<T, bool> Variant::Is() const
 {
-  return type() == Type::BOOLEAN;
+  return IsBoolean();
 }
 
 /**
@@ -295,7 +301,7 @@ meta::IfIsBoolean<T, bool> Variant::Is() const
 template <typename T>
 meta::IfIsInteger<T, bool> Variant::Is() const
 {
-  return type() == Type::INTEGER;
+  return IsInteger();
 }
 
 /**
@@ -307,7 +313,7 @@ meta::IfIsInteger<T, bool> Variant::Is() const
 template <typename T>
 meta::IfIsFloat<T, bool> Variant::Is() const
 {
-  return type() == Type::FLOATING_POINT;
+  return IsFloatingPoint();
 }
 
 /**
@@ -317,9 +323,9 @@ meta::IfIsFloat<T, bool> Variant::Is() const
  * @return true if the value is compatible fixed point, otherwise false
  */
 template <typename T>
-meta::IfIsFixedPoint<T, bool> Variant::Is() const
+math::meta::IfIsFixedPoint<T, bool> Variant::Is() const
 {
-  return type() == Type::FIXED_POINT;
+  return IsFixedPoint();
 }
 
 /**
@@ -331,7 +337,7 @@ meta::IfIsFixedPoint<T, bool> Variant::Is() const
 template <typename T>
 meta::IfIsString<T, bool> Variant::Is() const
 {
-  return type() == Type::STRING;
+  return IsString();
 }
 
 /**
@@ -344,7 +350,7 @@ meta::IfIsString<T, bool> Variant::Is() const
 template <typename T>
 meta::IfIsBoolean<T, T> Variant::As() const
 {
-  if (type() != Type::BOOLEAN)
+  if (!IsBoolean())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract boolean value");
   }
@@ -362,7 +368,7 @@ meta::IfIsBoolean<T, T> Variant::As() const
 template <typename T>
 meta::IfIsInteger<T, T> Variant::As() const
 {
-  if (type() != Type::INTEGER)
+  if (!IsInteger())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract integer value");
   }
@@ -380,7 +386,7 @@ meta::IfIsInteger<T, T> Variant::As() const
 template <typename T>
 meta::IfIsFloat<T, T> Variant::As() const
 {
-  if (type() != Type::FLOATING_POINT)
+  if (!IsFloatingPoint())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract floating point value");
   }
@@ -396,11 +402,11 @@ meta::IfIsFloat<T, T> Variant::As() const
  * @throws std::runtime_error in the case where the conversion is not possible
  */
 template <typename T>
-meta::IfIsFixedPoint<T, T> Variant::As() const
+math::meta::IfIsFixedPoint<T, T> Variant::As() const
 {
-  if (type() != Type::FIXED_POINT)
+  if (!IsFixedPoint())
   {
-    throw std::runtime_error("Variant type mismatch, unable to extract floating point value");
+    throw std::runtime_error("Variant type mismatch, unable to extract fixed point value");
   }
 
   return static_cast<T>(fixed_point::fp64_t::FromBase(primitive_.integer));
@@ -416,7 +422,7 @@ meta::IfIsFixedPoint<T, T> Variant::As() const
 template <typename T>
 meta::IfIsConstByteArray<T, Variant::ConstByteArray const &> Variant::As() const
 {
-  if (type() != Type::STRING)
+  if (!IsString())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract string value");
   }
@@ -434,7 +440,7 @@ meta::IfIsConstByteArray<T, Variant::ConstByteArray const &> Variant::As() const
 template <typename T>
 meta::IfIsStdString<T, std::string> Variant::As() const
 {
-  if (type() != Type::STRING)
+  if (!IsString())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract string value");
   }
@@ -450,7 +456,7 @@ meta::IfIsStdString<T, std::string> Variant::As() const
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsBoolean<T, Variant &> Variant::operator=(T const &value)
+meta::IfIsBoolean<T, Variant &> Variant::operator=(T const &value)  // NOLINT
 {
   type_              = Type::BOOLEAN;
   primitive_.boolean = value;
@@ -466,7 +472,7 @@ meta::IfIsBoolean<T, Variant &> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsInteger<T, Variant &> Variant::operator=(T const &value)
+meta::IfIsInteger<T, Variant &> Variant::operator=(T const &value)  // NOLINT
 {
   type_              = Type::INTEGER;
   primitive_.integer = static_cast<int64_t>(value);
@@ -482,7 +488,7 @@ meta::IfIsInteger<T, Variant &> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsFloat<T, Variant &> Variant::operator=(T const &value)
+meta::IfIsFloat<T, Variant &> Variant::operator=(T const &value)  // NOLINT
 {
   type_                  = Type::FLOATING_POINT;
   primitive_.float_point = static_cast<double>(value);
@@ -498,7 +504,7 @@ meta::IfIsFloat<T, Variant &> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)
+math::meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)  // NOLINT
 {
   type_              = Type::FIXED_POINT;
   primitive_.integer = value.Data();
@@ -514,7 +520,7 @@ meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsAByteArray<T, Variant &> Variant::operator=(T const &value)
+meta::IfIsAByteArray<T, Variant &> Variant::operator=(T const &value)  // NOLINT
 {
   type_   = Type::STRING;
   string_ = value;
@@ -530,7 +536,7 @@ meta::IfIsAByteArray<T, Variant &> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsStdString<T, Variant &> Variant::operator=(T const &value)
+meta::IfIsStdString<T, Variant &> Variant::operator=(T const &value)  // NOLINT
 {
   type_   = Type::STRING;
   string_ = ConstByteArray{value};
@@ -573,6 +579,180 @@ void Variant::IterateObject(Function const &function) const
     throw std::runtime_error("Variant type mismatch, expected `object` type.");
   }
 }
-
 }  // namespace variant
+
+namespace serializers {
+
+template <typename D>
+struct ForwardSerializer<fetch::variant::Variant, D>
+{
+public:
+  using Type       = variant::Variant;
+  using DriverType = D;
+  using Variant    = fetch::variant::Variant;
+
+  template <typename Serializer>
+  static void Serialize(Serializer &serializer, Type const &var)
+  {
+    switch (var.type())
+    {
+    case Type::Type::UNDEFINED:
+    {
+      throw std::runtime_error{"Unsupported variant type for serialisation"};
+    }
+    case Type::Type::NULL_VALUE:
+    {
+      serializer.WriteNil();
+      return;
+    }
+    case Type::Type::INTEGER:
+    {
+      serializer << var.As<int64_t>();
+      return;
+    }
+    case Type::Type::FLOATING_POINT:
+    {
+      serializer << var.As<double>();
+      return;
+    }
+    case Type::Type::FIXED_POINT:
+    {
+      serializer << var.As<fixed_point::fp64_t>();
+      return;
+    }
+    case Type::Type::BOOLEAN:
+    {
+      serializer << var.As<bool>();
+      return;
+    }
+    case Type::Type::STRING:
+    {
+      serializer << var.As<byte_array::ConstByteArray>();
+      return;
+    }
+    case Type::Type::ARRAY:
+    {
+      auto constructor  = serializer.NewArrayConstructor();
+      auto array_buffer = constructor(var.size());
+
+      for (std::size_t i = 0; i < var.size(); i++)
+      {
+        array_buffer.Append(var[i]);
+      }
+      return;
+    }
+    case Type::Type::OBJECT:
+    {
+      auto constructor = serializer.NewMapConstructor();
+      auto map_buffer  = constructor(var.size());
+
+      var.IterateObject([&](auto const &k, auto const &v) {
+        map_buffer.Append(k, v);
+        return true;
+      });
+      return;
+    }
+    };
+    throw std::runtime_error{"Variant has unknown type."};
+  }
+
+  template <typename Deserializer>
+  static void Deserialize(Deserializer &deserializer, Type &var)
+  {
+    using SerializerTypes = serializers::SerializerTypes;
+
+    switch (deserializer.GetNextType())
+    {
+
+    // TODO(tfr): Add MsgPack support
+    case SerializerTypes::BINARY:
+    case SerializerTypes::EXTENSION:
+    case SerializerTypes::UNKNOWN:
+    {
+      var = Variant::Undefined();
+      return;
+    }
+
+    case SerializerTypes::NULL_VALUE:
+    {
+      var = Variant::Null();
+      return;
+    }
+    case SerializerTypes::UNSIGNED_INTEGER:
+    {
+      uint64_t tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
+    case SerializerTypes::INTEGER:
+    {
+      int64_t tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
+    case SerializerTypes::FLOATING_POINT:
+    {
+      double tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
+    /*
+    // TODO(tfr): ADD SUPPORT
+    case SerializerTypes::FIXED_POINT:
+    {
+      fixed_point::fp64_t tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
+    */
+    case SerializerTypes::BOOLEAN:
+    {
+      bool tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
+    case SerializerTypes::STRING:
+    {
+      byte_array::ConstByteArray tmp;
+      deserializer >> tmp;
+      var = tmp;
+      return;
+    }
+    case SerializerTypes::ARRAY:
+    {
+      auto array = deserializer.NewArrayDeserializer();
+
+      var = variant::Variant::Array(array.size());
+      for (std::size_t i = 0; i < array.size(); i++)
+      {
+        array.GetNextValue(var[i]);
+      }
+      return;
+    }
+    case SerializerTypes::MAP:
+    {
+      auto map = deserializer.NewMapDeserializer();
+
+      var = variant::Variant::Array(map.size());
+      for (std::size_t i = 0; i < map.size(); i++)
+      {
+        byte_array::ConstByteArray key;
+        Type                       value;
+        map.GetNextKeyPair(key, value);
+
+        var[key] = value;
+      }
+      return;
+    }
+    };
+    throw std::runtime_error{"Variant has unknown type."};
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

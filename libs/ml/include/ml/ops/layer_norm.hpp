@@ -34,7 +34,7 @@ class LayerNorm : public Ops<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using DataType      = typename TensorType::Type;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
@@ -50,25 +50,17 @@ public:
   explicit LayerNorm(SPType const &sp)
     : Ops<T>(sp)
   {
-    epsilon_             = sp.epsilon;
-    axis_                = sp.axis;
-    prev_input_          = sp.prev_input;
-    cached_inv_sqrt_var_ = sp.cached_inv_sqrt_var;
-    cached_output_       = sp.cached_output;
+    epsilon_ = sp.epsilon;
+    axis_    = sp.axis;
   }
 
   ~LayerNorm() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
-    auto sp = std::make_shared<SPType>();
-
-    sp->epsilon             = epsilon_;
-    sp->axis                = axis_;
-    sp->prev_input          = prev_input_;
-    sp->cached_inv_sqrt_var = cached_inv_sqrt_var_;
-    sp->cached_output       = cached_output_;
-
+    auto sp     = std::make_shared<SPType>();
+    sp->epsilon = epsilon_;
+    sp->axis    = axis_;
     return sp;
   }
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
@@ -136,7 +128,7 @@ public:
     // 1.0 / N * ivar * (N * dxhat - np.sum(dxhat, axis=0) - xhat * np.sum(dxhat * xhat, axis=0))
     // where N = feature_length, dxhat = error_signal, xhat = cached_output_
     TensorType output_error_signal;
-    DataType   feature_length = static_cast<DataType>(inputs.front()->shape()[axis_]);
+    auto       feature_length = static_cast<DataType>(inputs.front()->shape()[axis_]);
     TensorType dmu_dx         = fetch::math::Multiply(error_signal, feature_length);
     TensorType dout_dx        = fetch::math::ReduceSum(error_signal, axis_);
     TensorType dvar_dx =

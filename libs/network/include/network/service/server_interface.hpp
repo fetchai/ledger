@@ -32,41 +32,41 @@ namespace service {
 class ServiceServerInterface
 {
 public:
-  using connection_handle_type = network::AbstractConnection::connection_handle_type;
-  using byte_array_type        = byte_array::ConstByteArray;
+  using Handle         = network::AbstractConnection::ConnectionHandleType;
+  using ConstByteArray = byte_array::ConstByteArray;
 
   static constexpr char const *LOGGING_NAME = "ServiceServerInterface";
 
+  ServiceServerInterface()          = default;
   virtual ~ServiceServerInterface() = default;
 
-  void Add(protocol_handler_type const &name,
-           Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol
+  void Add(ProtocolHandlerType const &name,
+           Protocol *                 protocol)  // TODO(issue 19): Rename to AddProtocol
   {
     if (name < 1 || name > 255)
     {
       throw serializers::SerializableException(
           error::PROTOCOL_RANGE,
-          byte_array_type(std::to_string(name) + " is out of protocol range."));
+          ConstByteArray(std::to_string(name) + " is out of protocol range."));
     }
 
     // TODO(issue 19): better reporting of errors
     if (members_[name] != nullptr)
     {
-      throw serializers::SerializableException(error::PROTOCOL_EXISTS,
-                                               byte_array_type("Protocol already exists. "));
+      throw serializers::SerializableException(error::PROTOCOL_EXISTS, "Protocol already exists. ");
     }
 
     members_[name] = protocol;
   }
 
 protected:
-  virtual bool DeliverResponse(connection_handle_type, network::message_type const &) = 0;
+  virtual bool DeliverResponse(ConstByteArray const &address, network::MessageType const &) = 0;
 
-  bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg,
+  bool PushProtocolRequest(ConstByteArray const &address, network::MessageType const &msg,
                            CallContext const &context = CallContext())
   {
-    serializer_type             params(msg);
-    service_classification_type type;
+    SerializerType            params(msg);
+    ServiceClassificationType type;
     params >> type;
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "PushProtocolRequest type=", type);
@@ -76,13 +76,7 @@ protected:
     switch (type)
     {
     case SERVICE_FUNCTION_CALL:
-      success = HandleRPCCallRequest(client, params, context);
-      break;
-    case SERVICE_SUBSCRIBE:
-      success = HandleSubscribeRequest(client, params);
-      break;
-    case SERVICE_UNSUBSCRIBE:
-      success = HandleUnsubscribeRequest(client, params);
+      success = HandleRPCCallRequest(address, params, context);
       break;
     default:
       FETCH_LOG_WARN(LOGGING_NAME, "PushProtocolRequest type not recognised ", type);
@@ -92,12 +86,12 @@ protected:
     return success;
   }
 
-  bool HandleRPCCallRequest(connection_handle_type client, serializer_type params,
-                            CallContext context = CallContext())
+  bool HandleRPCCallRequest(ConstByteArray const &address, SerializerType params,
+                            CallContext const &context = CallContext())
   {
-    bool            ret = true;
-    serializer_type result;
-    PromiseCounter  id;
+    bool           ret = true;
+    SerializerType result;
+    PromiseCounter id;
 
     try
     {
@@ -105,130 +99,54 @@ protected:
       FETCH_LOG_DEBUG(LOGGING_NAME, "HandleRPCCallRequest prom =", id);
       result << SERVICE_RESULT << id;
 
-      ExecuteCall(result, client, params, context);
+      ExecuteCall(result, params, context);
     }
     catch (serializers::SerializableException const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Function Call): ", e.what());
-      result = serializer_type();
+      result = SerializerType();
       result << SERVICE_ERROR << id << e;
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Service Server responding to call from ", client,
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Service Server responding to call from ", address.ToHex(),
                     " data size=", result.tell());
 
     {
-      DeliverResponse(client, result.data());
+      DeliverResponse(address, result.data());
     }
     return ret;
-  }
-  bool HandleSubscribeRequest(connection_handle_type client, serializer_type params)
-  {
-    bool                      ret = true;
-    protocol_handler_type     protocol;
-    feed_handler_type         feed;
-    subscription_handler_type subid;
-
-    try
-    {
-      params >> protocol >> feed >> subid;
-      auto &mod = *members_[protocol];
-
-      mod.Subscribe(client, feed, subid);
-    }
-    catch (serializers::SerializableException const &e)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Subscribe): ", e.what());
-      // result = serializer_type();
-      // result << SERVICE_ERROR << id << e;
-      throw e;  // TODO(ed): propagate error other other size
-    }
-    // DeliverResponse(client, result.data());
-    return ret;
-  }
-
-  bool HandleUnsubscribeRequest(connection_handle_type client, serializer_type params)
-  {
-    bool                      ret = true;
-    protocol_handler_type     protocol;
-    feed_handler_type         feed;
-    subscription_handler_type subid;
-
-    try
-    {
-      params >> protocol >> feed >> subid;
-      auto &mod = *members_[protocol];
-
-      mod.Unsubscribe(client, feed, subid);
-    }
-    catch (serializers::SerializableException const &e)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Unsubscribe): ", e.what());
-      // result = serializer_type();
-      // result << SERVICE_ERROR << id << e;
-      throw e;  // TODO(ed): propagate error other other size
-    }
-    // DeliverResponse(client, result.data());
-    return ret;
-  }
-
-  virtual void ConnectionDropped(connection_handle_type connection_handle)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "ConnectionDropped: ", connection_handle);
-    for (int protocol_number = 0; protocol_number < 256; protocol_number++)
-    {
-      if (members_[protocol_number])
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "ConnectionDropped removing handler for protocol ",
-                       protocol_number, " from connection handle ", connection_handle);
-        members_[protocol_number]->ConnectionDropped(connection_handle);
-        members_[protocol_number] = 0;
-      }
-    }
   }
 
 private:
-  void ExecuteCall(serializer_type &result, connection_handle_type const &connection_handle,
-                   serializer_type params, CallContext const &context = CallContext())
+  void ExecuteCall(SerializerType &result, SerializerType params,
+                   CallContext const &context = CallContext())
   {
-    protocol_handler_type protocol_number;
-    function_handler_type function_number;
+    ProtocolHandlerType protocol_number;
+    FunctionHandlerType function_number;
     params >> protocol_number >> function_number;
-
-    auto identifier = std::to_string(protocol_number) + ":" + std::to_string(function_number) +
-                      "@" + std::to_string(connection_handle);
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "ServerInterface::ExecuteCall " + identifier);
 
     auto protocol_pointer = members_[protocol_number];
     if (protocol_pointer == nullptr)
     {
-      auto err = std::string("ServerInterface::ExecuteCall: Could not find protocol ") + identifier;
-      FETCH_LOG_WARN(LOGGING_NAME, err);
-      throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND, err);
+      FETCH_LOG_WARN(LOGGING_NAME, "ServerInterface::ExecuteCall: Could not find protocol ",
+                     protocol_number, ":", function_number);
+      throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND,
+                                               "Could not find protocol");
     }
-
-    protocol_pointer->ApplyMiddleware(connection_handle, params.data());
 
     auto function = (*protocol_pointer)[function_number];
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, std::string("ServerInterface::ExecuteCall: ") + identifier +
-                                      " expecting following signature " + function->signature());
+    FETCH_LOG_DEBUG(LOGGING_NAME, std::string("ServerInterface::ExecuteCall: "), protocol_number,
+                    " expecting following signature " + function->signature());
 
     // If we need to add client id to function arguments
     try
     {
-
       CallableArgumentList extra_args;
 
-      if (function->meta_data() & Callable::CLIENT_ID_ARG)
+      if ((function->meta_data() & Callable::CLIENT_CONTEXT_ARG) != 0u)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Adding connection_handle ID meta data to ", identifier);
-        extra_args.PushArgument(&connection_handle);
-      }
-      if (function->meta_data() & Callable::CLIENT_CONTEXT_ARG)
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Adding call context meta data to ", identifier);
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Adding call context meta data to ", function_number);
         extra_args.PushArgument(&context);
       }
 
@@ -243,9 +161,8 @@ private:
     }
     catch (serializers::SerializableException const &e)
     {
-      std::string new_explanation = e.explanation() + std::string(" (Function signature: ") +
-                                    function->signature() + std::string(") (Identification: ") +
-                                    identifier;
+      std::string new_explanation =
+          e.explanation() + std::string(" (Function signature: ") + function->signature() + ")";
 
       FETCH_LOG_INFO(LOGGING_NAME, "EXCEPTION:", e.error_code(), new_explanation);
 
@@ -253,16 +170,13 @@ private:
     }
     catch (std::exception const &ex)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "ServerInterface::ExecuteCall - ", ex.what(), " - ",
-                      identifier);
-
-      std::string new_explanation = ex.what() + std::string(") (Identification: ") + identifier;
-      throw serializers::SerializableException(0, new_explanation);
+      FETCH_LOG_ERROR(LOGGING_NAME, "ServerInterface::ExecuteCall - ", ex.what());
+      throw serializers::SerializableException(0, ex.what());
     }
   }
 
   Protocol *members_[256] = {nullptr};  // TODO(issue 19): Not thread-safe
-  friend class FeedSubscriptionManager;
 };
+
 }  // namespace service
 }  // namespace fetch

@@ -83,7 +83,7 @@ struct OpenSSLDeleter
 
   void operator()(T *ptr) const
   {
-    (*DeleterPrimitive::function)(const_cast<typename std::remove_const<T>::type *>(ptr));
+    (DeleterPrimitive::function)(const_cast<typename std::remove_const<T>::type *>(ptr));
   }
 };
 

@@ -17,9 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-#include "core/string/ends_with.hpp"
 #include "telemetry/measurement.hpp"
+#include "telemetry/utils/ends_with.hpp"
 
 #include <iomanip>
 #include <iostream>
@@ -66,10 +65,8 @@ public:
   Gauge &operator=(Gauge &&) = delete;
 
 private:
-  using Mutex = std::mutex;
-
-  mutable Mutex lock_{};
-  ValueType     value_{0};
+  mutable std::mutex lock_{};
+  ValueType          value_{0};
 
   static_assert(std::is_arithmetic<ValueType>::value, "");
 };
@@ -87,7 +84,7 @@ Gauge<V>::Gauge(std::string const &name, std::string const &description, Labels 
   : Measurement(name, description, labels)
 {
   // validate the name
-  if (core::EndsWith(this->name(), "_count"))
+  if (details::EndsWith(this->name(), "_count"))
   {
     throw std::runtime_error("Incorrect name for the gauge, can't end with '_count'");
   }
@@ -102,7 +99,7 @@ Gauge<V>::Gauge(std::string const &name, std::string const &description, Labels 
 template <typename V>
 V Gauge<V>::get() const
 {
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
   return value_;
 }
 
@@ -115,7 +112,7 @@ V Gauge<V>::get() const
 template <typename V>
 void Gauge<V>::set(V const &value)
 {
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
   value_ = value;
 }
 
@@ -127,7 +124,7 @@ void Gauge<V>::set(V const &value)
 template <typename V>
 void Gauge<V>::increment(V const &value)
 {
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
   value_ += value;
 }
 
@@ -139,7 +136,7 @@ void Gauge<V>::increment(V const &value)
 template <typename V>
 void Gauge<V>::decrement(V const &value)
 {
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
   value_ -= value;
 }
 
@@ -152,7 +149,7 @@ void Gauge<V>::decrement(V const &value)
 template <typename V>
 void Gauge<V>::max(V const &value)
 {
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
   if (value > value_)
   {
     value_ = value;

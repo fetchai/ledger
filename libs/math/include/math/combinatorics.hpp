@@ -33,7 +33,7 @@ namespace combinatorics {
  * @param n - Integer for which this function calculates the factorial
  * @return - Integer solution to n!
  */
-inline std::size_t factorial(std::size_t n)
+inline std::size_t Factorial(std::size_t n)
 {
   // Trivial case
   if (n == 0)
@@ -57,7 +57,7 @@ inline std::size_t factorial(std::size_t n)
  * @param r - The size of each combination
  * @return - Number of combinations as float
  */
-inline std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
+inline std::size_t CalculateNumCombinations(std::size_t n, std::size_t r)
 {
   assert(r <= n);
 
@@ -69,13 +69,13 @@ inline std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
   case 1:
     return n;
   case 2:
-    return n % 2 ? n * ((n - 1) >> 1) : (n >> 1) * (n - 1);
+    return (n % 2) != 0u ? n * ((n - 1) >> 1) : (n >> 1) * (n - 1);
   }
 
   // Sometimes faster to calculate equivalent definition "n Choose n-r" than "n Choose r"
   if (r > n / 2)
   {
-    return calculateNumCombinations(n, n - r);
+    return CalculateNumCombinations(n, n - r);
   }
 
   // Recursive implementation
@@ -95,7 +95,7 @@ inline std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
  * combination of r items
  */
 template <typename ArrayType>
-ArrayType combinations(std::size_t n, std::size_t r)
+ArrayType Combinations(std::size_t n, std::size_t r)
 {
   assert(r <= n);
   if (r == 0)
@@ -104,7 +104,7 @@ ArrayType combinations(std::size_t n, std::size_t r)
     return output_array;
   }
 
-  std::size_t n_combinations = calculateNumCombinations(n, r);
+  std::size_t n_combinations = CalculateNumCombinations(n, r);
   std::size_t current_dim    = 0;
   std::size_t current_row    = 0;
 

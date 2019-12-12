@@ -1,0 +1,17 @@
+# End-to-end test DMLF scenarios
+
+---
+test_description: >
+  Remote Etch execution using Dmlf in a client-server setup
+
+setup_conditions:
+  test_type: "DmlfEtch"
+  test_name: "dmlf_etch_client_server"
+  number_of_nodes: 2
+  node_connections: []
+  max_test_time: 60
+
+steps:
+  - sleep: 1
+  - run_dmlf_etch_client: { "nodes": [0,1], "exe" : "example-dmlf-etch-client", "etch" : "main.etch"}
+...

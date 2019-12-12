@@ -60,7 +60,7 @@ private:
   using MissingTXs   = DAG::MissingTXs;
   using MissingNodes = DAG::MissingNodes;
 
-  DAG::MissingNodes RequestNodes(MissingTXs);
+  DAG::MissingNodes RequestNodes(MissingTXs missing_txs);
 
   std::shared_ptr<ledger::DAGInterface> dag_;
 };

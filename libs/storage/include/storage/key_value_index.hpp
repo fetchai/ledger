@@ -133,13 +133,13 @@ struct KeyValuePair
     return true;
   }
 
-  bool UpdateNode(KeyValuePair const &left, KeyValuePair const &right)
+  bool UpdateNode(KeyValuePair const &lhs, KeyValuePair const &rhs)
   {
     HashFunction hasher;
     hasher.Reset();
 
-    hasher.Update(right.hash, N);
-    hasher.Update(left.hash, N);
+    hasher.Update(rhs.hash, N);
+    hasher.Update(lhs.hash, N);
     hasher.Final(hash);
 
     return true;
@@ -179,13 +179,11 @@ class KeyValueIndex
   };
 
 public:
-  using self_type      = KeyValueIndex<KV, D>;
-  using stack_type     = D;
+  using SelfType       = KeyValueIndex<KV, D>;
+  using StackType      = D;
   using key_value_pair = KeyValuePair<>;
-  using index_type     = key_value_pair::IndexType;
+  using IndexType      = key_value_pair::IndexType;
   using key_type       = typename key_value_pair::KeyType;
-
-  static constexpr char const *LOGGING_NAME = "KeyValueIndex";
 
   KeyValueIndex()
   {
@@ -268,7 +266,7 @@ public:
       }
     }
 
-    UpdateTask task;
+    UpdateTask task{};
     while (!q.empty())
     {
       task = q.top();
@@ -295,20 +293,20 @@ public:
     throw StorageException("Not implemented");
   }
 
-  void GetElement(uint64_t i, index_type &v)
+  void GetElement(uint64_t i, IndexType &v)
   {
     key_value_pair p;
     stack_.Get(i, p);
     v = p.value;
   }
 
-  bool GetIfExists(byte_array::ConstByteArray const &key_str, index_type &value)
+  bool GetIfExists(byte_array::ConstByteArray const &key_str, IndexType &value)
   {
     key_type       key(key_str);
     bool           split      = true;
     int            pos        = 0;
     int            left_right = 0;
-    index_type     depth      = 0;
+    IndexType      depth      = 0;
     key_value_pair kv;
 
     FindNearest(key, kv, split, pos, left_right, depth);
@@ -321,14 +319,14 @@ public:
     return !split;
   }
 
-  index_type Get(byte_array::ConstByteArray const &key_str)
+  IndexType Get(byte_array::ConstByteArray const &key_str)
   {
     key_type       key(key_str);
     bool           split;
     int            pos;
     key_value_pair kv;
     int            left_right;
-    index_type     depth;
+    IndexType      depth;
     FindNearest(key, kv, split, pos, left_right, depth);
     assert(!split);
     return kv.value;
@@ -351,8 +349,8 @@ public:
     key_value_pair kv;
     int            left_right;
 
-    index_type depth;
-    index_type index = FindNearest(key, kv, split, pos, left_right, depth);
+    IndexType depth;
+    IndexType index = FindNearest(key, kv, split, pos, left_right, depth);
 
     bool update_parent = false;
 
@@ -361,7 +359,7 @@ public:
     {
       kv.key        = key;
       kv.parent     = key_value_pair::TREE_ROOT_VALUE;
-      kv.split      = uint16_t{key.size_in_bits()};
+      kv.split      = uint16_t{decltype(key)::size_in_bits()};
       update_parent = kv.UpdateLeaf(val, data);
 
       index = stack_.Push(kv);
@@ -371,7 +369,7 @@ public:
     else if (split)
     {
       key_value_pair left, right, parent;
-      index_type     rid = 0, lid = 0, pid = 0, cid = 0;
+      IndexType      rid = 0, lid = 0, pid = 0, cid = 0;
       bool           update_root = (index == root_);
 
       switch (left_right)
@@ -383,7 +381,7 @@ public:
         pid = right.parent;
 
         left.key   = key;
-        left.split = uint16_t(key.size_in_bits());
+        left.split = uint16_t(decltype(key)::size_in_bits());
 
         left.parent  = stack_.size() + 1;
         right.parent = stack_.size() + 1;
@@ -400,7 +398,7 @@ public:
         pid = left.parent;
 
         right.key   = key;
-        right.split = uint16_t(key.size_in_bits());
+        right.split = uint16_t(decltype(key)::size_in_bits());
 
         right.parent = stack_.size() + 1;
         left.parent  = stack_.size() + 1;
@@ -457,7 +455,7 @@ public:
 
     // Depending on whether the underlying stack is caching or not, we write to it or defer writing
     // to it by scheduling updates until the next flush
-    if ((kv.parent != index_type(-1)) && (update_parent))
+    if ((kv.parent != IndexType(-1)) && (update_parent))
     {
       if (stack_.DirectWrite())
       {
@@ -482,7 +480,7 @@ public:
     return kv.Hash();
   }
 
-  stack_type &underlying_stack()
+  StackType &underlying_stack()
   {
     return stack_;
   }
@@ -513,18 +511,18 @@ public:
   }
 
   // TODO(private 1067): this will be removed when updating the versioned stack
-  using bookmark_type = uint64_t;
-  bookmark_type Commit()
+  using BookmarkType = uint64_t;
+  BookmarkType Commit()
   {
     return stack_.Commit();
   }
 
-  bookmark_type Commit(bookmark_type const &b)
+  BookmarkType Commit(BookmarkType const &b)
   {
     return stack_.Commit(b);
   }
 
-  void Revert(bookmark_type const &b)
+  void Revert(BookmarkType const &b)
   {
     stack_.Revert(b);
 
@@ -541,7 +539,7 @@ public:
   class Iterator
   {
   public:
-    Iterator(self_type *self, key_value_pair kv, bool node_iterator = false)
+    Iterator(SelfType *self, key_value_pair kv, bool node_iterator = false)
       : kv_{kv}
       , kv_node_{kv}
       , node_iterator_{node_iterator}
@@ -553,11 +551,11 @@ public:
       }
     }
 
-    Iterator()                    = default;
-    Iterator(Iterator const &rhs) = default;
-    Iterator(Iterator &&rhs)      = default;
+    Iterator()                        = default;
+    Iterator(Iterator const &rhs)     = default;
+    Iterator(Iterator &&rhs) noexcept = default;
     Iterator &operator=(Iterator const &rhs) = default;
-    Iterator &operator=(Iterator &&rhs) = default;
+    Iterator &operator=(Iterator &&rhs) noexcept = default;
 
     bool operator==(Iterator const &rhs) const
     {
@@ -590,10 +588,10 @@ public:
     key_value_pair kv_;
     key_value_pair kv_node_;
     bool           node_iterator_ = false;
-    self_type *    self_;
+    SelfType *     self_;
   };
 
-  self_type::Iterator begin()
+  SelfType::Iterator begin()
   {
     if (this->empty())
     {
@@ -610,19 +608,19 @@ public:
     return Iterator(this, kv);
   }
 
-  self_type::Iterator end()
+  SelfType::Iterator end()
   {
     return Iterator(this, key_value_pair());
   }
 
-  self_type::Iterator Find(byte_array::ConstByteArray const &key_str)
+  SelfType::Iterator Find(byte_array::ConstByteArray const &key_str)
   {
 
     key_type       key(key_str);
     bool           split      = true;
     int            pos        = 0;
     int            left_right = 0;
-    index_type     depth      = 0;
+    IndexType      depth      = 0;
     key_value_pair kv;
     FindNearest(key, kv, split, pos, left_right, depth);
 
@@ -634,7 +632,7 @@ public:
     return Iterator(this, kv);
   }
 
-  self_type::Iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t max_bits)
+  SelfType::Iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t max_bits)
   {
     if (this->empty())
     {
@@ -645,7 +643,7 @@ public:
     bool           split      = true;
     int            pos        = 0;
     int            left_right = 0;
-    index_type     depth      = 0;
+    IndexType      depth      = 0;
     key_value_pair kv;
 
     FindNearest(key, kv, split, pos, left_right, depth, max_bits);
@@ -691,10 +689,10 @@ public:
     bool           split      = true;
     int            pos        = 0;
     int            left_right = 0;
-    index_type     depth      = 0;
+    IndexType      depth      = 0;
     key_value_pair kv;
 
-    index_type kv_index = FindNearest(key, kv, split, pos, left_right, depth);
+    IndexType kv_index = FindNearest(key, kv, split, pos, left_right, depth);
 
     // Leaf not found
     if (split)
@@ -718,8 +716,8 @@ public:
     // Get our sibling, and our parent
     key_value_pair parent;
     key_value_pair sibling;
-    index_type     parent_index = kv.parent;
-    index_type     sibling_index;
+    IndexType      parent_index = kv.parent;
+    IndexType      sibling_index;
     stack_.Get(parent_index, parent);
 
     assert(parent_index != uint64_t(-1));
@@ -796,7 +794,7 @@ public:
   }
 
 private:
-  stack_type stack_;
+  StackType stack_;
 
   uint64_t                                     root_ = 0;
   std::unordered_map<uint64_t, key_value_pair> schedule_update_;
@@ -809,11 +807,11 @@ private:
    * @param: child Changed node
    *
    */
-  void UpdateParents(index_type pid, index_type cid, key_value_pair child)
+  void UpdateParents(IndexType pid, IndexType cid, key_value_pair child)
   {
     key_value_pair parent, left, right;
 
-    while (pid != index_type(-1))
+    while (pid != IndexType(-1))
     {
       stack_.Get(pid, parent);
       if (cid == parent.left)
@@ -849,8 +847,8 @@ private:
    *
    * @return: the index which this kv can be found in the stack
    */
-  index_type FindNearest(key_type const &key, key_value_pair &kv, bool &split, int &pos,
-                         int &left_right, uint64_t &depth, uint64_t max_bits = key_type::BITS)
+  IndexType FindNearest(key_type const &key, key_value_pair &kv, bool &split, int &pos,
+                        int &left_right, uint64_t &depth, uint64_t max_bits = key_type::BITS)
   {
     depth = 0;
     if (this->empty())
@@ -858,14 +856,21 @@ private:
       return key_value_pair::TREE_ROOT_VALUE;
     }
 
-    index_type next = root_;
-    index_type index;
+    IndexType next = root_;
+    IndexType index;
     do
     {
       ++depth;
+
+      if (depth > key_type::BITS)
+      {
+        throw StorageException(
+            "Depth of binary search reached higher value than size of key in bits");
+      }
+
       index = next;
 
-      pos = int(key.size_in_bits());
+      pos = int(key_type::size_in_bits());
 
       stack_.Get(next, kv);
 
@@ -1015,7 +1020,7 @@ private:
    *
    * @param: index Index of the element to erase
    */
-  void Erase(index_type const &index)
+  void Erase(IndexType const &index)
   {
     const std::size_t stack_end = stack_.size() - 1;
 
@@ -1032,7 +1037,7 @@ private:
     stack_.Get(stack_end, last_element);
 
     // Get parent of last element, update its index to where the last element is going.
-    if (last_element.parent != index_type(-1))
+    if (last_element.parent != IndexType(-1))
     {
       key_value_pair last_element_parent;
       stack_.Get(last_element.parent, last_element_parent);
@@ -1111,7 +1116,7 @@ private:
     }
 
     // To verify, do a depth first search of the tree
-    while (nodes_stack.size() > 0)
+    while (!nodes_stack.empty())
     {
       // Get node of stack
       auto &stack_end = nodes_stack.back();
@@ -1220,7 +1225,7 @@ private:
     key_value_pair kv_dummy;
 
     // To verify, do a depth first search of the tree
-    while (nodes_stack.size() > 0)
+    while (!nodes_stack.empty())
     {
       // Get node of stack
       auto &stack_end = nodes_stack.back();

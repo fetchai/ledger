@@ -17,12 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "config_builder.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "manifest_builder.hpp"
 #include "settings.hpp"
 #include "vectorise/platform.hpp"
 
+using namespace fetch::constellation;
+
 namespace fetch {
-namespace {
 
 /**
  * Determine the network mode based on the settings configuration
@@ -46,8 +48,6 @@ Constellation::NetworkMode GetNetworkMode(Settings const &settings)
   return mode;
 }
 
-}  // namespace
-
 /**
  * Build the Constellation's configuration based on the settings based in.
  *
@@ -68,15 +68,17 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
   cfg.max_peers             = settings.max_peers.value();
   cfg.transient_peers       = settings.transient_peers.value();
   cfg.block_interval_ms     = settings.block_interval.value();
+  cfg.aeon_period           = settings.aeon_period.value();
+  cfg.max_cabinet_size      = settings.max_cabinet_size.value();
+  cfg.stake_delay_period    = settings.stake_delay_period.value();
   cfg.peers_update_cycle_ms = settings.peer_update_interval.value();
   cfg.disable_signing       = settings.disable_signing.value();
   cfg.sign_broadcasts       = false;
-  cfg.dump_state_file       = settings.dump_state.value();
-  cfg.load_state_file       = settings.load_state.value();
-  cfg.stakefile_location    = settings.stakefile_location.value();
+  cfg.load_genesis_file     = settings.load_genesis_file.value();
+  cfg.kademlia_routing      = settings.kademlia_routing.value();
+  cfg.genesis_file_location = settings.genesis_file_location.value();
   cfg.proof_of_stake        = settings.proof_of_stake.value();
   cfg.network_mode          = GetNetworkMode(settings);
-  cfg.beacon_address        = settings.beacon_address.value();
   cfg.features              = settings.experimental_features.value();
 
   return cfg;

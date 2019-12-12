@@ -29,21 +29,21 @@ class HTTPRequest;
 class AbstractHTTPServer
 {
 public:
-  using handle_type = uint64_t;
+  using HandleType = uint64_t;
 
-  virtual void PushRequest(handle_type client, HTTPRequest req) = 0;
+  virtual void PushRequest(HandleType client, HTTPRequest req) = 0;
 
-  static handle_type next_handle()
+  static HandleType next_handle()
   {
     FETCH_LOCK(global_handle_mutex_);
-    handle_type ret = global_handle_counter_;
+    HandleType ret = global_handle_counter_;
     ++global_handle_counter_;
     return ret;
   }
 
 private:
-  static handle_type global_handle_counter_;
-  static Mutex       global_handle_mutex_;
+  static HandleType global_handle_counter_;
+  static Mutex      global_handle_mutex_;
 };
 
 }  // namespace http

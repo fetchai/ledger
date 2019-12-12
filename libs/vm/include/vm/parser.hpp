@@ -32,8 +32,8 @@ class Parser
 public:
   Parser();
   ~Parser() = default;
-  BlockNodePtr Parse(std::string const &filename, std::string const &source,
-                     std::vector<std::string> &errors);
+  void         AddTemplateName(std::string name);
+  BlockNodePtr Parse(SourceFiles const &files, std::vector<std::string> &errors);
 
 private:
   enum class State
@@ -52,8 +52,7 @@ private:
 
   struct OpInfo
   {
-    OpInfo()
-    {}
+    OpInfo() = default;
     OpInfo(int precedence__, Association association__, int arity__)
     {
       precedence  = precedence__;
@@ -67,47 +66,66 @@ private:
 
   struct Expr
   {
-    bool              is_operator;
+    bool              is_operator{};
     ExpressionNodePtr node;
-    OpInfo            op_info;
+    OpInfo            op_info{};
     Token::Kind       closer_token_kind;
     std::string       closer_token_text;
-    int               num_members;
+    int               num_members{};
   };
 
   using StringSet = std::unordered_set<std::string>;
 
-  StringSet const          template_names_;
+  struct Block
+  {
+    BlockNodePtr node;
+    bool         error_reporting_enabled{true};
+  };
+
+  StringSet                template_names_;
+  std::string              filename_;
   std::vector<Token>       tokens_;
-  int                      index_;
-  Token *                  token_;
+  int                      index_{};
+  Token *                  token_{};
   std::vector<std::string> errors_;
-  std::vector<NodeKind>    blocks_;
+  std::vector<Block>       blocks_;
   State                    state_;
-  bool                     found_expression_terminator_;
+  bool                     found_expression_terminator_{};
   std::vector<std::size_t> groups_;
   std::vector<Expr>        operators_;
   std::vector<Expr>        rpn_;
   std::vector<Expr>        infix_stack_;
 
   void              Tokenise(std::string const &source);
-  bool              ParseBlock(BlockNode &node);
+  bool              IsCodeBlock(NodeKind block_kind) const;
+  bool              ParseBlock(BlockNodePtr const &block_node);
   NodePtr           ParsePersistentStatement();
-  BlockNodePtr      ParseFunctionDefinition();
+  NodePtr           ParseContract();
+  NodePtr           ParseFunction();
+  BlockNodePtr      ParseContractDefinition();
+  NodePtr           ParseContractFunction();
+  BlockNodePtr      ParseStructDefinition();
+  BlockNodePtr      ParseMemberFunctionDefinition();
+  BlockNodePtr      ParseFreeFunctionDefinition();
+  bool              ParsePrototype(NodePtr const &prototype_node);
   NodePtr           ParseAnnotations();
   NodePtr           ParseAnnotation();
   ExpressionNodePtr ParseAnnotationLiteral();
+  void              SkipAnnotations();
   BlockNodePtr      ParseWhileStatement();
   BlockNodePtr      ParseForStatement();
   NodePtr           ParseIfStatement();
+  NodePtr           ParseContractStatement();
   NodePtr           ParseUseStatement();
-  NodePtr           ParseVarStatement();
+  NodePtr           ParseVar();
+  NodePtr           ParseMemberVarStatement();
+  NodePtr           ParseLocalVarStatement();
   NodePtr           ParseReturnStatement();
   NodePtr           ParseBreakStatement();
   NodePtr           ParseContinueStatement();
   ExpressionNodePtr ParseExpressionStatement();
+  bool              IsStatementKeyword(Token::Kind kind) const;
   void              GoToNextStatement();
-  void              SkipFunctionDefinition();
   bool              IsTemplateName(std::string const &name) const;
   ExpressionNodePtr ParseType();
   ExpressionNodePtr ParseConditionalExpression();
@@ -135,7 +153,7 @@ private:
 
   void IncrementGroupMembers()
   {
-    if (groups_.size())
+    if (!groups_.empty())
     {
       Expr &groupop = operators_[groups_.back()];
       ++(groupop.num_members);

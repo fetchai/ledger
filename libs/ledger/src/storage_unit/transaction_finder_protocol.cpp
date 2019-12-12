@@ -22,24 +22,20 @@ namespace fetch {
 namespace ledger {
 
 TxFinderProtocol::TxFinderProtocol()
-  : fetch::service::Protocol()
-  , resource_queue_()
 {
-  this->Expose(ISSUE_CALL_FOR_MISSING_TXS, this, &Self::IssueCallForMissingTxs);
+  Expose(ISSUE_CALL_FOR_MISSING_TXS, this, &Self::IssueCallForMissingTxs);
 }
 
-bool TxFinderProtocol::Pop(storage::ResourceID &rid)
+bool TxFinderProtocol::Pop(Digest &digest)
 {
-  FETCH_LOG_DEBUG("FinderProto", "Popping resource ", rid.ToString());
-  return resource_queue_.Pop(rid, std::chrono::milliseconds::zero());
+  return resource_queue_.Pop(digest, std::chrono::milliseconds::zero());
 }
 
-void TxFinderProtocol::IssueCallForMissingTxs(ResourceIDs const &rids)
+void TxFinderProtocol::IssueCallForMissingTxs(DigestSet const &digests)
 {
-  for (auto const &rid : rids)
+  for (auto const &digest : digests)
   {
-    FETCH_LOG_DEBUG("FinderProto", "Stashing resource ", rid.ToString());
-    resource_queue_.Push(rid);
+    resource_queue_.Push(digest);
   }
 }
 

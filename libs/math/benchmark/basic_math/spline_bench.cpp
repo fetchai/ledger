@@ -55,7 +55,7 @@ static void BM_sin_spline(benchmark::State &state)
 {
   fetch::math::spline::Spline<> spline;
   spline.SetFunction(dsin, 0, 100, N);
-  double x = (double)state.range(0);
+  auto   x = static_cast<double>(state.range(0));
   double result;
   for (auto _ : state)
   {
@@ -68,7 +68,7 @@ BENCHMARK_TEMPLATE(BM_sin_spline, 20)->RangeMultiplier(10)->Range(1, 100);
 
 static void BM_sin(benchmark::State &state)
 {
-  double x = (double)state.range(0);
+  auto   x = static_cast<double>(state.range(0));
   double result;
   for (auto _ : state)
   {
@@ -82,7 +82,7 @@ static void BM_cos_spline(benchmark::State &state)
 {
   fetch::math::spline::Spline<> spline;
   spline.SetFunction(dcos, 0, 100, N);
-  double x = (double)state.range(0);
+  auto   x = static_cast<double>(state.range(0));
   double result;
   for (auto _ : state)
   {
@@ -95,7 +95,7 @@ BENCHMARK_TEMPLATE(BM_cos_spline, 20)->RangeMultiplier(10)->Range(1, 100);
 
 static void BM_cos(benchmark::State &state)
 {
-  double x = (double)state.range(0);
+  auto   x = static_cast<double>(state.range(0));
   double result;
   for (auto _ : state)
   {
@@ -109,7 +109,7 @@ static void BM_tan_spline(benchmark::State &state)
 {
   fetch::math::spline::Spline<> spline;
   spline.SetFunction(dtan, 0, 100, N);
-  double x = (double)state.range(0);
+  auto   x = static_cast<double>(state.range(0));
   double result;
   for (auto _ : state)
   {
@@ -122,7 +122,7 @@ BENCHMARK_TEMPLATE(BM_tan_spline, 20)->RangeMultiplier(10)->Range(1, 100);
 
 static void BM_tan(benchmark::State &state)
 {
-  double x = (double)state.range(0);
+  auto   x = static_cast<double>(state.range(0));
   double result;
   for (auto _ : state)
   {
@@ -136,7 +136,7 @@ static void BM_exp_spline(benchmark::State &state)
 {
   fetch::math::spline::Spline<> spline;
   spline.SetFunction(dexp, 0, 100, N);
-  double x = (double)state.range(0);
+  auto   x = static_cast<double>(state.range(0));
   double result;
   for (auto _ : state)
   {
@@ -149,7 +149,7 @@ BENCHMARK_TEMPLATE(BM_exp_spline, 20)->RangeMultiplier(10)->Range(1, 100);
 
 static void BM_exponent(benchmark::State &state)
 {
-  double x = (double)state.range(0);
+  auto   x = static_cast<double>(state.range(0));
   double result;
   for (auto _ : state)
   {

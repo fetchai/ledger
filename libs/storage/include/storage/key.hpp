@@ -43,15 +43,15 @@ namespace storage {
  * all of 0xF
  *
  */
-template <std::size_t V_BITS = 256, typename BLOCK_TYPE = uint64_t>
+template <std::size_t V_BITS = 256, typename BlockTypeParam = uint64_t>
 struct Key
 {
-  static_assert(std::is_unsigned<BLOCK_TYPE>::value,
-                "The BLOCK_TYPE must be of unsigned integer type.");
+  static_assert(std::is_unsigned<BlockTypeParam>::value,
+                "The BlockType must be of unsigned integer type.");
   static_assert(meta::IsLog2(V_BITS) && (V_BITS >= 128),
                 "Keys expected to be a cryptographic hash function output");
 
-  using BlockType = BLOCK_TYPE;
+  using BlockType = BlockTypeParam;
 
   enum : std::size_t
   {
@@ -63,16 +63,14 @@ struct Key
   };
 
   static_assert(meta::IsLog2(static_cast<std::size_t>(BLOCK_SIZE_BITS)) && BITS >= BLOCK_SIZE_BITS,
-                "Size of BLOCK_TYPE [in bits] must be power of 2");
+                "Size of BlockType [in bits] must be power of 2");
 
   using KeyArrayNative = BlockType[BLOCKS];
   using KeyArray       = std::array<BlockType, BLOCKS>;
 
   Key() = default;
 
-  // TODO(private issue 957): There are a number of implicit conversions for this key, in many
-  //                          places it might be a bug.
-  /*explicit*/ Key(byte_array::ConstByteArray const &key)
+  explicit Key(byte_array::ConstByteArray const &key)
   {
     assert(key.size() == BYTES);
 

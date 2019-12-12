@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/chain/address.hpp"
-#include "ledger/identifier.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "ledger/fees/chargeable.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "variant/variant.hpp"
 
 #include <atomic>
 #include <cstddef>
@@ -37,15 +37,19 @@ namespace fetch {
 namespace variant {
 class Variant;
 }
-namespace ledger {
+
+namespace chain {
 
 class Transaction;
-class Address;
+
+}  // namespace chain
+
+namespace ledger {
 
 /**
  * Contract - Base class for all smart contract and chain code instances
  */
-class Contract
+class Contract : public Chargeable
 {
 public:
   enum class Status
@@ -57,17 +61,19 @@ public:
 
   struct Result
   {
-    Status  status{Status::NOT_FOUND};
-    int64_t return_value{0};
+    Status   status{Status::NOT_FOUND};
+    int64_t  return_value{0};
+    uint64_t block_index{0};
   };
 
-  using BlockIndex            = TransactionLayout::BlockIndex;
-  using Identity              = crypto::Identity;
-  using ConstByteArray        = byte_array::ConstByteArray;
-  using ContractName          = ConstByteArray;
-  using Query                 = variant::Variant;
-  using InitialiseHandler     = std::function<Result(Address const &)>;
-  using TransactionHandler    = std::function<Result(Transaction const &, BlockIndex)>;
+  using BlockIndex     = chain::TransactionLayout::BlockIndex;
+  using Identity       = crypto::Identity;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using ContractName   = ConstByteArray;
+  using Query          = variant::Variant;
+  using InitialiseHandler =
+      std::function<Result(chain::Address const &, chain::Transaction const &)>;
+  using TransactionHandler    = std::function<Result(chain::Transaction const &)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
   using QueryHandlerMap       = std::unordered_map<ContractName, QueryHandler>;
@@ -75,24 +81,20 @@ public:
   using CounterMap            = std::unordered_map<ContractName, Counter>;
   using StorageInterface      = ledger::StorageInterface;
 
-  static constexpr char const *LOGGING_NAME = "Contract";
-
   // Construction / Destruction
   Contract()                 = default;
   Contract(Contract const &) = delete;
   Contract(Contract &&)      = delete;
-  virtual ~Contract()        = default;
+  ~Contract() override       = default;
 
   /// @name Contract Lifecycle Handlers
   /// @{
-  void Attach(ledger::StateAdapter &state);
-  void Detach();
-
-  Result DispatchInitialise(Address const &owner);
+  Result DispatchInitialise(chain::Address const &owner, chain::Transaction const &tx);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Result DispatchTransaction(ConstByteArray const &name, Transaction const &tx,
-                             TransactionLayout::BlockIndex index);
+  Result DispatchTransaction(chain::Transaction const &tx);
   /// @}
+
+  ContractContext const &context() const;
 
   /// @name Dispatch Maps Accessors
   /// @{
@@ -100,7 +102,7 @@ public:
   TransactionHandlerMap const &transaction_handlers() const;
   /// @}
 
-  virtual uint64_t CalculateFee() const
+  uint64_t CalculateFee() const override
   {
     return 0;
   }
@@ -114,7 +116,8 @@ protected:
   /// @{
   void OnInitialise(InitialiseHandler &&handler);
   template <typename C>
-  void OnInitialise(C *instance, Result (C::*func)(Address const &));
+  void OnInitialise(C *instance,
+                    Result (C::*func)(chain::Address const &, chain::Transaction const &));
   /// @}
 
   /// @name Transaction Handlers
@@ -122,7 +125,7 @@ protected:
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
   template <typename C>
   void OnTransaction(std::string const &name, C *instance,
-                     Result (C::*func)(Transaction const &, BlockIndex));
+                     Result (C::*func)(chain::Transaction const &));
   /// @}
 
   /// @name Query Handler Registration
@@ -134,17 +137,26 @@ protected:
 
   /// @name Chain Code State Utils
   /// @{
-  bool ParseAsJson(Transaction const &tx, variant::Variant &output);
+  bool ParseAsJson(chain::Transaction const &tx, variant::Variant &output);
 
   template <typename T>
   bool GetStateRecord(T &record, ConstByteArray const &key);
   template <typename T>
+  bool GetStateRecord(T &record, chain::Address const &address);
+  template <typename T>
   StateAdapter::Status SetStateRecord(T const &record, ConstByteArray const &key);
+  template <typename T>
+  StateAdapter::Status SetStateRecord(T const &record, chain::Address const &address);
 
   ledger::StateAdapter &state();
   /// @}
 
 private:
+  void Attach(ContractContext context);
+  void Detach();
+
+  std::unique_ptr<ContractContext> context_{};
+
   static constexpr std::size_t DEFAULT_BUFFER_SIZE = 512;
 
   /// @name Dispatch Maps - built on construction
@@ -159,10 +171,7 @@ private:
   CounterMap query_counters_{};
   /// @}
 
-  /// @name State
-  /// @{
-  ledger::StateAdapter *state_ = nullptr;
-  /// @}
+  friend class ContractContextAttacher;
 };
 
 /**
@@ -173,9 +182,12 @@ private:
  * @param func The member function pointer
  */
 template <typename C>
-void Contract::OnInitialise(C *instance, Result (C::*func)(Address const &))
+void Contract::OnInitialise(C *instance,
+                            Result (C::*func)(chain::Address const &, chain::Transaction const &))
 {
-  OnInitialise([instance, func](Address const &owner) { return (instance->*func)(owner); });
+  OnInitialise([instance, func](chain::Address const &owner, chain::Transaction const &tx) {
+    return (instance->*func)(owner, tx);
+  });
 }
 
 /**
@@ -188,21 +200,20 @@ void Contract::OnInitialise(C *instance, Result (C::*func)(Address const &))
  */
 template <typename C>
 void Contract::OnTransaction(std::string const &name, C *instance,
-                             Result (C::*func)(Transaction const &, BlockIndex))
+                             Result (C::*func)(chain::Transaction const &))
 {
   // create the function handler and pass it to the normal function
-  OnTransaction(name, [instance, func](Transaction const &tx, BlockIndex block_index) {
-    return (instance->*func)(tx, block_index);
-  });
+  OnTransaction(name,
+                [instance, func](chain::Transaction const &tx) { return (instance->*func)(tx); });
 }
 
 /**
  * Register class member query handler
  *
  * @tparam C The class type
- * @param name THe query name
+ * @param name The query name
  * @param instance The pointer to the class instance
- * @param func THe member function pointer
+ * @param func The member function pointer
  */
 template <typename C>
 void Contract::OnQuery(std::string const &name, C *instance,
@@ -213,8 +224,14 @@ void Contract::OnQuery(std::string const &name, C *instance,
   });
 }
 
+template <typename T>
+bool Contract::GetStateRecord(T &record, chain::Address const &address)
+{
+  return GetStateRecord(record, address.display());
+}
+
 /**
- * Lookup the state record stored with the specified key
+ * Look up the state record stored with the specified key
  *
  * @tparam T The type of the state record
  * @param record The reference to the record to be populated
@@ -257,14 +274,18 @@ bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
     break;
   }
   case vm::IoObserverInterface::Status::ERROR:
-    break;
   case vm::IoObserverInterface::Status::PERMISSION_DENIED:
-    break;
   case vm::IoObserverInterface::Status::BUFFER_TOO_SMALL:
     break;
   }
 
   return success;
+}
+
+template <typename T>
+StateAdapter::Status Contract::SetStateRecord(T const &record, chain::Address const &address)
+{
+  return SetStateRecord(record, address.display());
 }
 
 /**
@@ -281,7 +302,7 @@ StateAdapter::Status Contract::SetStateRecord(T const &record, ConstByteArray co
   serializers::MsgPackSerializer buffer;
   buffer << record;
 
-  // lookup reference to the underlying buffer
+  // look up reference to the underlying buffer
   auto const &data = buffer.data();
 
   // store the buffer

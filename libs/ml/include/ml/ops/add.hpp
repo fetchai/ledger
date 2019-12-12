@@ -33,7 +33,7 @@ class Add : public fetch::ml::ops::Ops<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpAddSaveableParams<T>;
   using MyType        = Add<TensorType>;
@@ -88,20 +88,16 @@ public:
       // Non-broadcast Add
       return {error_signal, error_signal};
     }
-    else
-    {
-      // Broadcast Add
-      UpdateAxes(inputs);
-      return {error_signal, fetch::math::ReduceSum(error_signal, axes_)};
-    }
+
+    // Broadcast Add
+    UpdateAxes(inputs);
+    return {error_signal, fetch::math::ReduceSum(error_signal, axes_)};
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.at(0)->shape();
   }
-
-  std::vector<SizeType> axes_;
 
   static constexpr OpType OpCode()
   {
@@ -111,6 +107,8 @@ public:
   static constexpr char const *DESCRIPTOR = "Add";
 
 private:
+  std::vector<SizeType> axes_;
+
   void UpdateAxes(VecTensorType const &inputs)
   {
     bool axes_changed = false;
@@ -130,7 +128,7 @@ private:
       }
     }
 
-    if (axes_.size() == 0)
+    if (axes_.empty())
     {
       axes_changed = true;
     }

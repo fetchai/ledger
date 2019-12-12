@@ -35,12 +35,8 @@ namespace vm {
 class Analyser
 {
 public:
-  Analyser() = default;
-
-  ~Analyser()
-  {
-    UnInitialise();
-  }
+  Analyser()  = default;
+  ~Analyser() = default;
 
   void Initialise();
 
@@ -48,36 +44,44 @@ public:
 
   void CreateClassType(std::string const &name, TypeIndex type_index);
 
-  void CreateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
-                               TypeIndexArray const &parameter_type_index_array);
+  void CreateTemplateType(std::string const &name, TypeIndex type_index,
+                          TypeIndexArray const &allowed_types_index_array);
+
+  void CreateTemplateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
+                                       TypeIndexArray const &template_parameter_type_index_array);
 
   void CreateFreeFunction(std::string const &name, TypeIndexArray const &parameter_type_index_array,
-                          TypeIndex return_type_index, Handler const &handler, ChargeAmount charge);
+                          TypeIndex return_type_index, Handler const &handler,
+                          ChargeAmount static_charge);
 
   void CreateConstructor(TypeIndex type_index, TypeIndexArray const &parameter_type_index_array,
-                         Handler const &handler, ChargeAmount charge);
+                         Handler const &handler, ChargeAmount static_charge);
 
   void CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
                                   TypeIndexArray const &parameter_type_index_array,
                                   TypeIndex return_type_index, Handler const &handler,
-                                  ChargeAmount charge);
+                                  ChargeAmount static_charge);
 
   void CreateMemberFunction(TypeIndex type_index, std::string const &function_name,
                             TypeIndexArray const &parameter_type_index_array,
                             TypeIndex return_type_index, Handler const &handler,
-                            ChargeAmount charge);
+                            ChargeAmount static_charge);
 
   void EnableOperator(TypeIndex type_index, Operator op);
 
+  void EnableLeftOperator(TypeIndex type_index, Operator op);
+
+  void EnableRightOperator(TypeIndex type_index, Operator op);
+
   void EnableIndexOperator(TypeIndex type_index, TypeIndexArray const &input_type_index_array,
                            TypeIndex output_type_index, Handler const &get_handler,
-                           Handler const &set_handler, ChargeAmount get_charge,
-                           ChargeAmount set_charge);
+                           Handler const &set_handler, ChargeAmount get_static_charge,
+                           ChargeAmount set_static_charge);
 
   bool Analyse(BlockNodePtr const &root, std::vector<std::string> &errors);
 
   void GetDetails(TypeInfoArray &type_info_array, TypeInfoMap &type_info_map,
-                  RegisteredTypes &registered_types, FunctionInfoArray &function_info_array)
+                  RegisteredTypes &registered_types, FunctionInfoArray &function_info_array) const
   {
     type_info_array     = type_info_array_;
     type_info_map       = type_info_map_;
@@ -86,9 +90,10 @@ public:
   }
 
 private:
-  static std::string CONSTRUCTOR;
-  static std::string GET_INDEXED_VALUE;
-  static std::string SET_INDEXED_VALUE;
+  static std::string const CONSTRUCTOR;
+  static std::string const GET_INDEXED_VALUE;
+  static std::string const SET_INDEXED_VALUE;
+
   using OperatorMap = std::unordered_map<NodeKind, Operator>;
 
   struct TypeMap
@@ -132,13 +137,13 @@ private:
 
   struct FunctionMap
   {
-    void Add(std::string const &unique_id, FunctionPtr const &function)
+    void Add(FunctionPtr const &function)
     {
-      map[unique_id] = function;
+      map[function->unique_name] = function;
     }
-    FunctionPtr Find(std::string const &unique_id)
+    FunctionPtr Find(std::string const &unique_name)
     {
-      auto it = map.find(unique_id);
+      auto it = map.find(unique_name);
       if (it != map.end())
       {
         return it->second;
@@ -148,7 +153,7 @@ private:
     std::unordered_map<std::string, FunctionPtr> map;
   };
 
-  struct StateDefinitions
+  struct NameToTypePtrMap
   {
     void Add(std::string const &name, TypePtr const &type)
     {
@@ -169,6 +174,60 @@ private:
     }
     std::unordered_map<std::string, TypePtr> map;
   };
+
+  struct LedgerRestrictionMetadata
+  {
+    struct NodeAndFilename
+    {
+      NodeAndFilename(NodePtr node__, std::string filename__)
+        : node{std::move(node__)}
+        , filename{std::move(filename__)}
+      {}
+
+      NodePtr     node;
+      std::string filename;
+    };
+
+    std::vector<NodeAndFilename> init_functions{};
+    std::vector<NodeAndFilename> clear_functions{};
+    std::vector<NodeAndFilename> objective_functions{};
+    std::vector<NodeAndFilename> problem_functions{};
+    std::vector<NodeAndFilename> work_functions{};
+  };
+
+  struct Error
+  {
+    bool operator<(Error const &other) const
+    {
+      return line < other.line;
+    }
+    uint16_t    line{};
+    std::string message;
+  };
+
+  struct FileErrors
+  {
+    explicit FileErrors(std::string filename__)
+      : filename{std::move(filename__)}
+    {}
+    std::string        filename;
+    std::vector<Error> errors;
+  };
+  using FileErrorsArray = std::vector<FileErrors>;
+
+  std::vector<std::string> GetErrorList()
+  {
+    std::vector<std::string> list;
+    for (auto &it : file_errors_array_)
+    {
+      std::stable_sort(it.errors.begin(), it.errors.end());
+      for (auto &error : it.errors)
+      {
+        list.push_back(error.message);
+      }
+    }
+    return list;
+  }
 
   OperatorMap       operator_map_;
   TypeMap           type_map_;
@@ -195,6 +254,7 @@ private:
   TypePtr        float64_type_;
   TypePtr        fixed32_type_;
   TypePtr        fixed64_type_;
+  TypePtr        fixed128_type_;
   TypePtr        string_type_;
   TypePtr        address_type_;
   TypePtr        template_parameter1_type_;
@@ -202,86 +262,115 @@ private:
   TypePtr        any_type_;
   TypePtr        any_primitive_type_;
   TypePtr        any_integer_type_;
-  TypePtr        any_floating_point_type_;
-  TypePtr        matrix_type_;
   TypePtr        array_type_;
   TypePtr        map_type_;
   TypePtr        sharded_state_type_;
   TypePtr        state_type_;
   TypePtr        initialiser_list_type_;
 
-  BlockNodePtr             root_;
-  BlockNodePtrArray        blocks_;
-  BlockNodePtrArray        loops_;
-  FunctionPtr              state_constructor_;
-  FunctionPtr              sharded_state_constructor_;
-  StateDefinitions         state_definitions_;
-  FunctionPtr              function_;
-  NodePtr                  use_any_node_;
-  std::vector<std::string> errors_;
+  BlockNodePtr      root_;
+  std::string       filename_;
+  BlockNodePtrArray blocks_;
+  BlockNodePtrArray loops_;
+  FunctionPtr       state_constructor_;
+  FunctionPtr       sharded_state_constructor_;
+  NameToTypePtrMap  state_definitions_;
+  NameToTypePtrMap  contract_definitions_;
+  FunctionPtr       function_;
+  NodePtr           use_any_node_;
+  FileErrorsArray   file_errors_array_;
 
-  void    AddError(uint16_t line, std::string const &message);
-  void    BuildBlock(BlockNodePtr const &block_node);
-  void    BuildFile(BlockNodePtr const &file_node);
-  void    BuildPersistentStatement(NodePtr const &node);
-  void    BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
-                                  BlockNodePtr const &function_definition_node);
-  void    BuildWhileStatement(BlockNodePtr const &while_statement_node);
-  void    BuildForStatement(BlockNodePtr const &for_statement_node);
-  void    BuildIfStatement(NodePtr const &if_statement_node);
-  void    AnnotateBlock(BlockNodePtr const &block_node);
-  void    AnnotateFile(BlockNodePtr const &file_node);
-  void    AnnotateFunctionDefinitionStatement(BlockNodePtr const &function_definition_node);
-  void    AnnotateWhileStatement(BlockNodePtr const &while_statement_node);
-  void    AnnotateForStatement(BlockNodePtr const &for_statement_node);
-  void    AnnotateIfStatement(NodePtr const &if_statement_node);
-  void    AnnotateUseStatement(BlockNodePtr const &parent_block_node, NodePtr const &node);
-  void    AnnotateUseAnyStatement(BlockNodePtr const &parent_block_node, NodePtr const &node);
-  void    AnnotateVarStatement(BlockNodePtr const &parent_block_node,
-                               NodePtr const &     var_statement_node);
-  void    AnnotateReturnStatement(NodePtr const &return_statement_node);
-  void    AnnotateConditionalBlock(BlockNodePtr const &conditional_node);
-  bool    AnnotateTypeExpression(ExpressionNodePtr const &node);
-  bool    AnnotateAssignOp(ExpressionNodePtr const &node);
-  bool    AnnotateInplaceArithmeticOp(ExpressionNodePtr const &node);
-  bool    AnnotateInplaceModuloOp(ExpressionNodePtr const &node);
-  bool    AnnotateLHSExpression(ExpressionNodePtr const &parent, ExpressionNodePtr const &lhs);
-  bool    AnnotateExpression(ExpressionNodePtr const &node);
-  bool    AnnotateEqualityOp(ExpressionNodePtr const &node);
-  bool    AnnotateRelationalOp(ExpressionNodePtr const &node);
-  bool    AnnotateBinaryLogicalOp(ExpressionNodePtr const &node);
-  bool    AnnotateUnaryLogicalOp(ExpressionNodePtr const &node);
-  bool    AnnotatePrefixPostfixOp(ExpressionNodePtr const &node);
-  bool    AnnotateNegateOp(ExpressionNodePtr const &node);
-  bool    AnnotateArithmeticOp(ExpressionNodePtr const &node);
-  bool    AnnotateModuloOp(ExpressionNodePtr const &node);
-  bool    AnnotateIndexOp(ExpressionNodePtr const &node);
-  bool    AnnotateDotOp(ExpressionNodePtr const &node);
-  bool    AnnotateInvokeOp(ExpressionNodePtr const &node);
-  bool    AnnotateInitialiserList(ExpressionNodePtr const &node);
-  bool    TestBlock(BlockNodePtr const &block_node);
-  bool    IsWriteable(ExpressionNodePtr const &lhs);
-  bool    AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs,
-                             ExpressionNodePtr const &rhs);
-  TypePtr ResolveType(TypePtr const &type, TypePtr const &instantiated_template_type);
-  bool    ConvertInitialiserList(ExpressionNodePtr const &node, TypePtr const &type);
-  bool    ConvertInitialiserListToArray(ExpressionNodePtr const &node, TypePtr const &type);
+  void AddError(uint16_t line, std::string const &message);
+  void AddError(std::string const &filename, uint16_t line, std::string const &message);
 
-  bool        MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const;
-  bool        MatchTypes(TypePtr const &type, ExpressionNodePtrArray const &supplied_nodes,
-                         TypePtrArray const &expected_types, TypePtrArray &actual_types);
-  FunctionPtr FindFunction(TypePtr const &type, FunctionGroupPtr const &fg,
-                           ExpressionNodePtrArray const &supplied_nodes,
-                           TypePtrArray &                actual_types);
+  void BuildBlock(BlockNodePtr const &block_node);
+  void BuildContractDefinition(BlockNodePtr const &contract_definition_node);
+  void BuildStructDefinition(BlockNodePtr const &struct_definition_node);
+  void BuildFreeFunctionDefinition(BlockNodePtr const &function_definition_node);
+
+  void PreAnnotateBlock(BlockNodePtr const &block_node);
+  void PreAnnotatePersistentStatement(NodePtr const &persistent_statement_node);
+  void PreAnnotateContractDefinition(BlockNodePtr const &contract_definition_node);
+  void PreAnnotateContractFunction(BlockNodePtr const &contract_definition_node,
+                                   NodePtr const &     function_node);
+  void PreAnnotateStructDefinition(BlockNodePtr const &struct_definition_node);
+  void PreAnnotateMemberFunctionDefinition(BlockNodePtr const &struct_definition_node,
+                                           BlockNodePtr const &function_definition_node);
+  void PreAnnotateMemberVarDeclarationStatement(BlockNodePtr const &struct_definition_node,
+                                                NodePtr const &     var_statement_node);
+  void PreAnnotateFreeFunctionDefinition(BlockNodePtr const &function_definition_node);
+  bool PreAnnotatePrototype(NodePtr const &prototype_node, ExpressionNodePtrArray &parameter_nodes,
+                            TypePtrArray &parameter_types, VariablePtrArray &parameter_variables,
+                            TypePtr &return_type);
+
+  void CheckInitFunctionUnique(LedgerRestrictionMetadata const &metadata);
+  bool CheckSynergeticFunctionsPresentAndUnique(LedgerRestrictionMetadata const &metadata);
+  void CheckSynergeticContract(LedgerRestrictionMetadata const &metadata);
+
+  void EnforceLedgerRestrictions(BlockNodePtr const &block_node);
+
+  void ValidateFunctionAnnotations(NodePtr const &function_node);
+  void ValidateBlock(BlockNodePtr const &block_node, LedgerRestrictionMetadata &metadata);
+  void ValidateFunctionPrototype(NodePtr const &function_node, LedgerRestrictionMetadata &metadata);
+
+  void AnnotateBlock(BlockNodePtr const &block_node);
+  void AnnotateStructDefinition(BlockNodePtr const &struct_definition_node);
+  void AnnotateFunctionDefinition(BlockNodePtr const &function_definition_node);
+  void AnnotateWhileStatement(BlockNodePtr const &while_statement_node);
+  void AnnotateForStatement(BlockNodePtr const &for_statement_node);
+  void AnnotateIfStatement(NodePtr const &if_statement_node);
+  void AnnotateUseStatement(BlockNodePtr const &parent_block_node,
+                            NodePtr const &     use_statement_node);
+  void AnnotateUseAnyStatement(BlockNodePtr const &parent_block_node,
+                               NodePtr const &     use_any_statement_node);
+  void AnnotateContractStatement(BlockNodePtr const &parent_block_node,
+                                 NodePtr const &     contract_statement_node);
+  void AnnotateLocalVarStatement(BlockNodePtr const &parent_block_node,
+                                 NodePtr const &     var_statement_node);
+  void AnnotateReturnStatement(NodePtr const &return_statement_node);
+  void AnnotateConditionalBlock(BlockNodePtr const &conditional_block_node);
+  bool AnnotateTypeExpression(ExpressionNodePtr const &node);
+  bool AnnotateAssignOp(ExpressionNodePtr const &node);
+  bool AnnotateInplaceArithmeticOp(ExpressionNodePtr const &node);
+  bool AnnotateInplaceModuloOp(ExpressionNodePtr const &node);
+  bool AnnotateLHSExpression(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs);
+  bool AnnotateExpression(ExpressionNodePtr const &node);
+  bool InternalAnnotateExpression(ExpressionNodePtr const &node);
+  bool AnnotateEqualityOp(ExpressionNodePtr const &node);
+  bool AnnotateRelationalOp(ExpressionNodePtr const &node);
+  bool AnnotateBinaryLogicalOp(ExpressionNodePtr const &node);
+  bool AnnotateUnaryLogicalOp(ExpressionNodePtr const &node);
+  bool AnnotatePrefixPostfixOp(ExpressionNodePtr const &node);
+  bool AnnotateNegateOp(ExpressionNodePtr const &node);
+  bool AnnotateArithmeticOp(ExpressionNodePtr const &node);
+  bool AnnotateModuloOp(ExpressionNodePtr const &node);
+  bool AnnotateIndexOp(ExpressionNodePtr const &node);
+  bool AnnotateDotOp(ExpressionNodePtr const &node);
+  bool AnnotateInvokeOp(ExpressionNodePtr const &node);
+  bool AnnotateInitialiserList(ExpressionNodePtr const &node);
+  bool ConvertInitialiserList(ExpressionNodePtr const &node, TypePtr const &type);
+  bool ConvertInitialiserListToArray(ExpressionNodePtr const &node, TypePtr const &type);
+  bool TestBlock(BlockNodePtr const &block_node) const;
+  bool IsWriteable(ExpressionNodePtr const &node);
+  bool AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs,
+                          ExpressionNodePtr const &rhs);
+
+  FunctionPtr FindFunction(TypePtr const &type, FunctionGroupPtr const &function_group,
+                           ExpressionNodePtrArray const &parameter_nodes);
+  TypePtr     ConvertNode(ExpressionNodePtr const &node, TypePtr const &expected_type);
+  TypePtr     ConvertNode(ExpressionNodePtr const &node, TypePtr const &expected_type,
+                          TypePtr const &type);
+  TypePtr     ResolveReturnType(TypePtr const &return_type, TypePtr const &type);
   TypePtr     FindType(ExpressionNodePtr const &node);
   SymbolPtr   FindSymbol(ExpressionNodePtr const &node);
   SymbolPtr   SearchSymbols(std::string const &name);
-  void        SetVariableExpression(ExpressionNodePtr const &node, VariablePtr const &variable);
+  void        SetVariableExpression(ExpressionNodePtr const &node, VariablePtr const &variable,
+                                    TypePtr const &owner);
   void        SetLVExpression(ExpressionNodePtr const &node, TypePtr const &type);
   void        SetRVExpression(ExpressionNodePtr const &node, TypePtr const &type);
   void        SetTypeExpression(ExpressionNodePtr const &node, TypePtr const &type);
-  void        SetFunctionGroupExpression(ExpressionNodePtr const &node, FunctionGroupPtr const &fg,
-                                         TypePtr const &fg_owner, bool function_invoked_on_instance);
+  void        SetFunctionGroupExpression(ExpressionNodePtr const &node,
+                                         FunctionGroupPtr const &function_group, TypePtr const &owner);
   bool        CheckType(std::string const &type_name, TypeIndex type_index);
   void        CreatePrimitiveType(std::string const &type_name, TypeIndex type_index,
                                   bool add_to_symbol_table, TypeId type_id, TypePtr &type);
@@ -291,36 +380,50 @@ private:
                               TypePtr &type);
   void        CreateTemplateType(std::string const &type_name, TypeIndex type_index,
                                  TypePtrArray const &allowed_types, TypeId type_id, TypePtr &type);
-  void        CreateInstantiationType(TypeIndex type_index, TypePtr const &template_type,
-                                      TypePtrArray const &parameter_types, TypeId type_id, TypePtr &type);
+  void        CreateTemplateInstantiationType(TypeIndex type_index, TypePtr const &template_type,
+                                              TypePtrArray const &template_parameter_types, TypeId type_id,
+                                              TypePtr &type);
   void        CreateGroupType(std::string const &type_name, TypeIndex type_index,
                               TypePtrArray const &allowed_types, TypeId type_id, TypePtr &type);
-  TypePtr     InternalCreateInstantiationType(TypeKind type_kind, TypePtr const &template_type,
-                                              TypePtrArray const &parameter_types);
-  void        CreateFreeFunction(std::string const &name, TypePtrArray const &parameter_types,
-                                 TypePtr const &return_type, Handler const &handler, ChargeAmount charge);
-  void        CreateConstructor(TypePtr const &type, TypePtrArray const &parameter_types,
-                                Handler const &handler, ChargeAmount charge);
+  TypePtr InternalCreateTemplateInstantiationType(TypeKind type_kind, TypePtr const &template_type,
+                                                  TypePtrArray const &template_parameter_types);
+  void    CreateFreeFunction(std::string const &name, TypePtrArray const &parameter_types,
+                             TypePtr const &return_type, Handler const &handler,
+                             ChargeAmount static_charge);
+  void    CreateConstructor(TypePtr const &type, TypePtrArray const &parameter_types,
+                            Handler const &handler, ChargeAmount static_charge);
 
   void        CreateStaticMemberFunction(TypePtr const &type, std::string const &name,
                                          TypePtrArray const &parameter_types, TypePtr const &return_type,
-                                         Handler const &handler, ChargeAmount charge);
+                                         Handler const &handler, ChargeAmount static_charge);
   void        CreateMemberFunction(TypePtr const &type, std::string const &name,
                                    TypePtrArray const &parameter_types, TypePtr const &return_type,
-                                   Handler const &handler, ChargeAmount charge);
+                                   Handler const &handler, ChargeAmount static_charge);
   FunctionPtr CreateUserDefinedFreeFunction(std::string const &     name,
                                             TypePtrArray const &    parameter_types,
                                             VariablePtrArray const &parameter_variables,
                                             TypePtr const &         return_type);
+  FunctionPtr CreateUserDefinedContractFunction(TypePtr const &type, std::string const &name,
+                                                TypePtrArray const &    parameter_types,
+                                                VariablePtrArray const &parameter_variables,
+                                                TypePtr const &         return_type);
+  FunctionPtr CreateUserDefinedConstructor(TypePtr const &type, TypePtrArray const &parameter_types,
+                                           VariablePtrArray const &parameter_variables);
+  FunctionPtr CreateUserDefinedMemberFunction(TypePtr const &type, std::string const &name,
+                                              TypePtrArray const &    parameter_types,
+                                              VariablePtrArray const &parameter_variables,
+                                              TypePtr const &         return_type);
   void        EnableIndexOperator(TypePtr const &type, TypePtrArray const &input_types,
                                   TypePtr const &output_type, Handler const &get_handler,
-                                  Handler const &set_handler, ChargeAmount get_charge,
-                                  ChargeAmount set_charge);
-  void        AddTypeInfo(TypeInfo const &info, TypeId type_id, TypePtr const &type);
+                                  Handler const &set_handler, ChargeAmount get_static_charge,
+                                  ChargeAmount set_static_charge);
+  void        AddTypeInfo(TypeKind type_kind, std::string const &type_name, TypeId type_id,
+                          TypeId template_type_id, TypeIdArray const &template_parameter_type_ids,
+                          TypePtr const &type);
   void        AddFunctionInfo(FunctionPtr const &function, Handler const &handler,
                               ChargeAmount static_charge);
-  std::string BuildUniqueId(TypePtr const &type, std::string const &function_name,
-                            TypePtrArray const &parameter_types, TypePtr const &return_type);
+  std::string BuildUniqueName(TypePtr const &type, std::string const &function_name,
+                              TypePtrArray const &parameter_types, TypePtr const &return_type);
   void        AddFunctionToSymbolTable(SymbolTablePtr const &symbols, FunctionPtr const &function);
 
   TypePtr GetType(TypeIndex type_index)

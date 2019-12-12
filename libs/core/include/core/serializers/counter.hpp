@@ -20,7 +20,6 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/serializers/array_interface.hpp"
 #include "core/serializers/binary_interface.hpp"
@@ -43,7 +42,21 @@ namespace serializers {
 class SizeCounter
 {
 public:
-  using self_type = SizeCounter;
+  using SelfType = SizeCounter;
+  /// Array Helpers
+  /// @{
+  using ArrayConstructor = interfaces::ContainerConstructorInterface<
+      SizeCounter, interfaces::ArrayInterface<SizeCounter>, TypeCodes::ARRAY_CODE_FIXED,
+      TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
+  /// @}
+
+  /// Map Helpers
+  /// @{
+  using MapConstructor =
+      interfaces::ContainerConstructorInterface<SizeCounter, interfaces::MapInterface<SizeCounter>,
+                                                TypeCodes::MAP_CODE_FIXED, TypeCodes::MAP_CODE16,
+                                                TypeCodes::MAP_CODE32>;
+  /// @}
 
   void Allocate(std::size_t delta)
   {
@@ -93,12 +106,12 @@ public:
     };
   }
 
-  void WriteByte(uint8_t)
+  void WriteByte(uint8_t /*unused*/)
   {
     ++pos_;
   }
 
-  void WriteBytes(uint8_t const *, std::size_t size)
+  void WriteBytes(uint8_t const * /*unused*/, std::size_t size)
   {
     pos_ += size;
   }
@@ -108,11 +121,16 @@ public:
     pos_ += size;
   }
 
-  template <typename T>
-  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator<<(T const &);
+  void WriteNil()
+  {
+    ++pos_;
+  }
 
   template <typename T>
-  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator>>(T &);
+  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator<<(T const & /*unused*/);
+
+  template <typename T>
+  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator>>(T & /*unused*/);
 
   template <typename T>
   typename ForwardSerializer<T, SizeCounter>::DriverType &operator<<(T const &val);
@@ -150,11 +168,16 @@ public:
   template <typename T>
   typename BinarySerializer<T, SizeCounter>::DriverType &operator>>(T &val);
 
+  ArrayConstructor NewArrayConstructor();
+
   template <typename T>
   typename ArraySerializer<T, SizeCounter>::DriverType &operator<<(T const &val);
 
   template <typename T>
   typename ArraySerializer<T, SizeCounter>::DriverType &operator>>(T &val);
+
+  MapConstructor NewMapConstructor();
+
   template <typename T>
   typename MapSerializer<T, SizeCounter>::DriverType &operator<<(T const &val);
 
@@ -162,13 +185,13 @@ public:
   typename MapSerializer<T, SizeCounter>::DriverType &operator>>(T &val);
 
   template <typename T>
-  self_type &Pack(T const *val)
+  SelfType &Pack(T const *val)
   {
     return this->operator<<(val);
   }
 
   template <typename T>
-  self_type &Pack(T const &val)
+  SelfType &Pack(T const &val)
   {
     return this->operator<<(val);
   }
@@ -199,7 +222,7 @@ public:
   }
 
   template <typename... ARGS>
-  self_type &Append(ARGS const &... args)
+  SelfType &Append(ARGS const &... args)
   {
     AppendInternal(args...);
     return *this;
@@ -222,13 +245,14 @@ private:
 };
 
 template <typename T>
-typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &)
+typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(
+    T const & /*unused*/)
 {
   return *this;
 }
 
 template <typename T>
-typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &)
+typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T & /*unused*/)
 {
   return *this;
 }
@@ -397,7 +421,7 @@ typename BinarySerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T
 {
   using Serializer = BinarySerializer<T, SizeCounter>;
   using Constructor =
-      interfaces::BinaryConstructorInterface<SizeCounter, TypeCodes::BINARY_CODE_FIXED,
+      interfaces::BinaryConstructorInterface<SizeCounter, TypeCodes::BINARY_CODE8,
                                              TypeCodes::BINARY_CODE16, TypeCodes::BINARY_CODE32>;
 
   try
@@ -432,17 +456,18 @@ typename BinarySerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T
   return *this;
 }
 
+inline SizeCounter::ArrayConstructor SizeCounter::NewArrayConstructor()
+{
+  return ArrayConstructor(*this);
+}
+
 template <typename T>
 typename ArraySerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
 {
-  using Serializer  = ArraySerializer<T, SizeCounter>;
-  using Constructor = interfaces::ContainerConstructorInterface<
-      SizeCounter, interfaces::ArrayInterface<SizeCounter>, TypeCodes::ARRAY_CODE_FIXED,
-      TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
-
+  using Serializer = ArraySerializer<T, SizeCounter>;
   try
   {
-    Constructor constructor(*this);
+    ArrayConstructor constructor(*this);
     Serializer::Serialize(constructor, val);
   }
   catch (std::exception const &e)
@@ -457,10 +482,12 @@ typename ArraySerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T 
 template <typename T>
 typename ArraySerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
 {
-  using Serializer = ArraySerializer<T, SizeCounter>;
+  using Serializer        = ArraySerializer<T, SizeCounter>;
+  using ArrayDeserializer = interfaces::ArrayDeserializer<SizeCounter>;
+
   try
   {
-    interfaces::ArrayDeserializer<SizeCounter> array(*this);
+    ArrayDeserializer array(*this);
     Serializer::Deserialize(array, val);
   }
   catch (std::exception const &e)
@@ -472,18 +499,19 @@ typename ArraySerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T 
   return *this;
 }
 
+inline SizeCounter::MapConstructor SizeCounter::NewMapConstructor()
+{
+  return MapConstructor(*this);
+}
+
 template <typename T>
 typename MapSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
 {
   using Serializer = MapSerializer<T, SizeCounter>;
-  using Constructor =
-      interfaces::ContainerConstructorInterface<SizeCounter, interfaces::MapInterface<SizeCounter>,
-                                                TypeCodes::MAP_CODE_FIXED, TypeCodes::MAP_CODE16,
-                                                TypeCodes::MAP_CODE32>;
 
   try
   {
-    Constructor constructor(*this);
+    MapConstructor constructor(*this);
     Serializer::Serialize(constructor, val);
   }
   catch (std::exception const &e)
@@ -498,10 +526,12 @@ typename MapSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T co
 template <typename T>
 typename MapSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
 {
-  using Serializer = MapSerializer<T, SizeCounter>;
+  using Serializer      = MapSerializer<T, SizeCounter>;
+  using MapDeserializer = interfaces::MapDeserializer<SizeCounter>;
+
   try
   {
-    interfaces::MapDeserializer<SizeCounter> map(*this);
+    MapDeserializer map(*this);
     Serializer::Deserialize(map, val);
   }
   catch (std::exception const &e)
@@ -535,23 +565,19 @@ template <typename T>
 class SizeCounterGuard
 {
 public:
-  using size_counter_type = T;
+  using SizeCounterType = T;
 
 private:
   friend auto sizeCounterGuardFactory<T>(T &size_counter);
 
   T *size_counter_;
 
-  SizeCounterGuard(T *size_counter)
+  explicit SizeCounterGuard(T *size_counter)
     : size_counter_{size_counter}
   {}
 
-  SizeCounterGuard(SizeCounterGuard const &) = delete;
-  SizeCounterGuard &operator=(SizeCounterGuard const &) = delete;
-  SizeCounterGuard &operator=(SizeCounterGuard &&) = delete;
-
 public:
-  SizeCounterGuard(SizeCounterGuard &&) = default;
+  SizeCounterGuard(SizeCounterGuard &&) noexcept = default;
 
   /**
    * @brief Destructor ensures that size counting instance is reset to zero at the end
@@ -565,9 +591,13 @@ public:
     if (size_counter_)
     {
       // Resetting size counter to zero size by reconstructing it
-      *size_counter_ = size_counter_type{};
+      *size_counter_ = SizeCounterType{};
     }
   }
+
+  SizeCounterGuard(SizeCounterGuard const &) = delete;
+  SizeCounterGuard &operator=(SizeCounterGuard const &) = delete;
+  SizeCounterGuard &operator=(SizeCounterGuard &&) = delete;
 
   /**
    * @brief Indicates whether we are already in size counting process

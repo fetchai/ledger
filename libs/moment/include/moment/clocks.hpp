@@ -24,11 +24,20 @@ namespace moment {
 
 enum class ClockType
 {
-  STEADY,
+  SYSTEM,
 };
 
-ClockPtr           GetClock(char const *name, ClockType default_type = ClockType::STEADY);
-AdjustableClockPtr CreateAdjustableClock(char const *name, ClockType type = ClockType::STEADY);
+enum class TimeAccuracy
+{
+  SECONDS,
+  MILLISECONDS,
+};
+
+ClockPtr           GetClock(char const *name, ClockType default_type = ClockType::SYSTEM);
+AdjustableClockPtr CreateAdjustableClock(char const *name, ClockType type = ClockType::SYSTEM);
+
+// Convenience function to provide the time as a uint64
+uint64_t GetTime(moment::ClockPtr const &clock, TimeAccuracy accuracy = TimeAccuracy::SECONDS);
 
 }  // namespace moment
 }  // namespace fetch

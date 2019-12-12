@@ -17,18 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/dag/dag.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/transaction_verifier.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
+#include "muddle/subscription.hpp"
 #include "network/generics/requesting_queue.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "network/muddle/subscription.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -48,7 +48,7 @@ enum class State
   QUERY_MISSING,
   RESOLVE_MISSING,
 };
-}
+}  // namespace dag_sync
 
 /**
  * DAG implementation.
@@ -58,9 +58,8 @@ class DAGSyncService
 public:
   static constexpr char const *LOGGING_NAME = "DAGSyncService";
 
-  using Muddle         = muddle::Muddle;
   using MuddleEndpoint = muddle::MuddleEndpoint;
-  using TransactionPtr = std::shared_ptr<Transaction>;
+  using TransactionPtr = std::shared_ptr<chain::Transaction>;
 
   using Client          = muddle::rpc::Client;
   using ClientPtr       = std::shared_ptr<Client>;
@@ -72,7 +71,7 @@ public:
   using MissingNodes           = DAG::MissingNodes;
   using RequestingMissingNodes = network::RequestingQueueOf<muddle::Packet::Address, MissingNodes>;
   using PromiseOfMissingNodes  = network::PromiseOf<MissingNodes>;
-  using MissingDAGNodes        = std::set<byte_array::ConstByteArray>;
+  using MissingDAGNodes        = std::set<DAGHash>;
 
   DAGSyncService(MuddleEndpoint &muddle_endpoint, std::shared_ptr<ledger::DAGInterface> dag);
   ~DAGSyncService() = default;

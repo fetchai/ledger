@@ -28,17 +28,17 @@ namespace details {
 template <std::size_t BLOCK_SIZE = 2048>
 struct ByteArrayMapConfigurator
 {
-  using kvi_pair_type  = KeyValuePair<>;
-  using kvi_stack_type = RandomAccessStack<kvi_pair_type, uint64_t>;
+  using KVIPairType  = KeyValuePair<>;
+  using KVIStackType = RandomAccessStack<KVIPairType, uint64_t>;
 
-  using kvi_store_type = KeyValueIndex<kvi_pair_type, kvi_stack_type>;
+  using KVIStoreType = KeyValueIndex<KVIPairType, KVIStackType>;
 
-  using file_block_type     = FileBlockType<BLOCK_SIZE>;
-  using document_stack_type = RandomAccessStack<file_block_type>;
-  using file_object_type    = FileObject<document_stack_type>;
+  using SpecificFileBlockType = FileBlockType<BLOCK_SIZE>;
+  using DocumentStackType     = RandomAccessStack<SpecificFileBlockType>;
+  using FileObjectType        = FileObject<DocumentStackType>;
 
-  using type = DocumentStore<BLOCK_SIZE, file_block_type, kvi_store_type, document_stack_type,
-                             file_object_type>;
+  using Type = DocumentStore<BLOCK_SIZE, SpecificFileBlockType, KVIStoreType, DocumentStackType,
+                             FileObjectType>;
 };
 
 }  // namespace details
@@ -46,7 +46,7 @@ struct ByteArrayMapConfigurator
 // this is simply a cleaner way of defining the template parameters to
 // DocumentStore
 template <std::size_t S>
-using KeyByteArrayStore = typename details::ByteArrayMapConfigurator<S>::type;
+using KeyByteArrayStore = typename details::ByteArrayMapConfigurator<S>::Type;
 
 }  // namespace storage
 }  // namespace fetch

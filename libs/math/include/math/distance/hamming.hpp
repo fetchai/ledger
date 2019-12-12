@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/base_types.hpp"
 
 namespace fetch {
 namespace math {
@@ -28,10 +29,10 @@ typename ArrayType::Type Hamming(ArrayType const &a, ArrayType const &b)
 {
   detailed_assert(a.size() == b.size());
   using Type     = typename ArrayType::Type;
-  using SizeType = typename ArrayType::SizeType;
+  using SizeType = fetch::math::SizeType;
 
-  Type     result = Type(0);
-  SizeType count  = SizeType(0);
+  auto result = Type(0);
+  auto count  = SizeType(0);
   for (auto &val : a)
   {
     // TODO(private issue 193): implement boolean only array

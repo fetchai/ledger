@@ -19,17 +19,15 @@
 #include "file_loader.hpp"
 #include "math/distance/cosine.hpp"
 #include "math/tensor.hpp"
+#include "math/utilities/ReadCSV.hpp"
 #include "ml/core/graph.hpp"
-#include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-#include "ml/ops/transpose.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
-#include "ml/state_dict.hpp"
 
-#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -45,7 +43,7 @@ using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 using namespace fetch::math;
 
-static const DataType LEARNING_RATE{0.1f};
+static const DataType LEARNING_RATE = fetch::math::Type<DataType>("0.1");
 static const SizeType EPOCHS{200};
 static const SizeType BATCH_SIZE{64};
 static const SizeType PATIENCE = 25;
@@ -81,7 +79,7 @@ LayerType GetLayerType(std::string const &layer_name)
 
   if (match_counter != 1)
   {
-    throw std::runtime_error("Node name does not uniquely specify the node type.");
+    throw fetch::ml::exceptions::InvalidInput("Node name does not uniquely specify the node type.");
   }
   return layer_type;
 }
@@ -118,10 +116,10 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
 
   if (file.fail())
   {
-    throw std::runtime_error("ReadArchitecture cannot open file " + filename);
+    throw fetch::ml::exceptions::InvalidFile("ReadArchitecture cannot open file " + filename);
   }
 
-  while (line_num--)  // continue reading until we get to the desired line
+  while ((line_num--) != 0u)  // continue reading until we get to the desired line
   {
     std::getline(file, buf, '\n');
   }
@@ -175,7 +173,7 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
     }
     default:
     {
-      throw std::runtime_error("Unknown node type");
+      throw fetch::ml::exceptions::InvalidInput("Unknown node type");
     }
     }
 
@@ -193,7 +191,7 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   }
   else
   {
-    throw std::runtime_error("Unexpected node type");
+    throw fetch::ml::exceptions::InvalidInput("Unexpected node type");
   }
 
   // Add loss function
@@ -204,12 +202,12 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   return std::make_pair(dataname, node_names);
 }
 
-int ArgPos(char *str, int argc, char **argv)
+int ArgPos(char const *str, int argc, char **argv)
 {
   int a;
   for (a = 1; a < argc; a++)
   {
-    if (!strcmp(str, argv[a]))
+    if (strcmp(str, argv[a]) == 0)
     {
       if (a == argc - 1)
       {
@@ -229,9 +227,11 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
   DataType                                                            loss_counter = 0;
   fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
 
-  auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
-  auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(test_y_file);
-  loader.AddData(data, label);
+  auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file);
+  data.Transpose();
+  auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file);
+  label.Transpose();
+  loader.AddData({data}, label);
 
   while (!loader.IsDone())
   {
@@ -261,22 +261,22 @@ int main(int argc, char **argv)
   bool        testing             = false;
 
   /// READ ARGUMENTS
-  if ((i = ArgPos((char *)"-model_num", argc, argv)) > 0)
+  if ((i = ArgPos("-model_num", argc, argv)) > 0)
   {
     model_num = static_cast<SizeType>(std::stoul(argv[i + 1]));
   }
-  if ((i = ArgPos((char *)"-input_dir", argc, argv)) > 0)
+  if ((i = ArgPos("-input_dir", argc, argv)) > 0)
   {
     input_dir = argv[i + 1];
   }
-  if ((i = ArgPos((char *)"-testing", argc, argv)) > 0)
+  if ((i = ArgPos("-testing", argc, argv)) > 0)
   {
     testing = static_cast<bool>(std::stoi(argv[i + 1]));
   }
 
   if (input_dir.empty())
   {
-    throw std::runtime_error("Please specify an input directory");
+    throw fetch::ml::exceptions::InvalidInput("Please specify an input directory");
   }
 
   std::string architecture_file = input_dir + "/architecture.csv";
@@ -303,9 +303,9 @@ int main(int argc, char **argv)
       {
         // if it is a dense layer there will be weights and bias files
         std::vector<std::string> dir_list =
-            fetch::ml::examples::GetAllTextFiles(weights_dir + "/" + name, "");
+            fetch::ml::examples::GetAllTextFiles(weights_dir.append("/").append(name), "");
         std::vector<std::string> actual_dirs;
-        for (auto dir : dir_list)
+        for (auto const &dir : dir_list)
         {
           if (dir != "." && dir != "..")
           {
@@ -314,12 +314,15 @@ int main(int argc, char **argv)
         }
         assert(actual_dirs.size() == 1);
 
-        std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
+        std::string node_weights_dir =
+            weights_dir.append("/").append(name).append("/").append(actual_dirs[0]);
+
         // the weights array for the node has number of columns = number of features
-        TensorType weights = fetch::ml::dataloaders::ReadCSV<TensorType>(
-            node_weights_dir + "/kernel:0.csv", 0, 0, true);
-        TensorType bias = fetch::ml::dataloaders::ReadCSV<TensorType>(
-            node_weights_dir + "/bias:0.csv", 0, 0, false);
+        TensorType weights =
+            fetch::math::utilities::ReadCSV<TensorType>(node_weights_dir + "/kernel:0.csv", 0, 0);
+        TensorType bias =
+            fetch::math::utilities::ReadCSV<TensorType>(node_weights_dir + "/bias:0.csv", 0, 0);
+        bias.Transpose();
 
         assert(bias.shape().at(0) == weights.shape().at(0));
 
@@ -340,9 +343,11 @@ int main(int argc, char **argv)
     std::string test_x_file = filename_root + "x_test.csv";
     std::string test_y_file = filename_root + "y_pred_test.csv";
     fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
-    auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
-    auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(test_y_file);
-    loader.AddData(data, label);
+    auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file);
+    data.Transpose();
+    auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file);
+    label.Transpose();
+    loader.AddData({data}, label);
 
     /// FORWARD PASS PREDICTIONS ///
 
@@ -404,14 +409,16 @@ int main(int argc, char **argv)
       std::string valid_y_file = filename_root + std::to_string(j) + "_y_val.csv";
 
       loader.Reset();
-      auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(train_x_file);
-      auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(train_y_file);
-      loader.AddData(data, label);
+      auto data = fetch::math::utilities::ReadCSV<TensorType>(train_x_file);
+      data.Transpose();
+      auto label = fetch::math::utilities::ReadCSV<TensorType>(train_y_file);
+      label.Transpose();
+      loader.AddData({data}, label);
 
       // Training loop
       // run first loop to get loss
 
-      DataType min_loss       = std::numeric_limits<DataType>::max();
+      DataType min_loss       = numeric_max<DataType>();
       SizeType patience_count = 0;
 
       for (SizeType k{0}; k < EPOCHS; k++)
@@ -449,15 +456,17 @@ int main(int argc, char **argv)
     std::string test_y_file = filename_root + "y_pred_test.csv";
 
     loader.Reset();
-    auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
-    auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(test_y_file);
-    loader.AddData(data, label);
+    auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file);
+    data.Transpose();
+    auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file);
+    label.Transpose();
+    loader.AddData({data}, label);
 
     DataType    distance         = 0;
     DataType    distance_counter = 0;
     std::string our_y_output = filename_root + "y_pred_test_fetch_" + std::to_string(EPOCHS) + "_" +
-                               std::to_string(use_random) + "_" + std::to_string(LEARNING_RATE) +
-                               ".csv";
+                               std::to_string(static_cast<int>(use_random)) + "_" +
+                               std::to_string(LEARNING_RATE) + ".csv";
 
     bool          first = true;
     std::ofstream file(our_y_output);

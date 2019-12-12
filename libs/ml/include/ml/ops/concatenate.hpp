@@ -104,7 +104,7 @@ public:
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     std::vector<SizeType> ret_shape{inputs.front()->shape()};
-    for (size_t i = 1; i < inputs.size(); i++)
+    for (std::size_t i = 1; i < inputs.size(); i++)
     {
       ret_shape[axis_] += inputs.at(i)->shape(axis_);
     }

@@ -28,31 +28,31 @@ namespace byte_array {
 class ByteArray : public ConstByteArray
 {
 public:
-  using self_type  = ByteArray;
-  using super_type = ConstByteArray;
-  using super_type::super_type;
-  using super_type::Resize;
-  using super_type::Reserve;
-  using super_type::operator+;
-  using super_type::operator[];
-  using super_type::pointer;
-  using super_type::char_pointer;
-  using super_type::SubArray;
-  using super_type::Append;
-  using super_type::Replace;
+  using SelfType  = ByteArray;
+  using SuperType = ConstByteArray;
+  using SuperType::Reserve;
+  using SuperType::Resize;
+  using SuperType::SuperType;
+  using SuperType::operator+;
+  using SuperType::operator[];
+  using SuperType::Append;
+  using SuperType::char_pointer;
+  using SuperType::pointer;
+  using SuperType::Replace;
+  using SuperType::SubArray;
 
   ByteArray() = default;
 
-  ByteArray(super_type const &other)
-    : super_type(other.Copy())
+  ByteArray(SuperType const &other)  // NOLINT
+    : SuperType(other.Copy())
   {}
-  ByteArray(super_type &&other)
-    : super_type(other.IsUnique() ? std::move(other) : other.Copy())
+  ByteArray(SuperType &&other)  // NOLINT
+    : SuperType(other.IsUnique() ? std::move(other) : other.Copy())
   {}
 
-  self_type SubArray(std::size_t start, std::size_t length = std::size_t(-1)) const
+  SelfType SubArray(std::size_t start, std::size_t length = std::size_t(-1)) const
   {
-    return SubArrayInternal<self_type>(start, length);
+    return SubArrayInternal<SelfType>(start, length);
   }
 };
 

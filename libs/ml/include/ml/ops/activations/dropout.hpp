@@ -36,7 +36,7 @@ class Dropout : public fetch::ml::ops::Ops<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpDropoutSaveableParams<TensorType>;
@@ -54,7 +54,6 @@ public:
     : Ops<T>(sp)
   {
     probability_ = sp.probability;
-    drop_values_ = sp.drop_values;
     rng_.Seed(sp.random_seed);
     rng_.SetBuffer(sp.buffer);
     rng_.SetIndex(sp.index);
@@ -66,7 +65,6 @@ public:
   {
     SPType sp{};
     sp.probability = probability_;
-    sp.drop_values = drop_values_;
     sp.random_seed = rng_.Seed();
     sp.buffer      = rng_.GetBuffer();
     sp.index       = rng_.GetIndex();

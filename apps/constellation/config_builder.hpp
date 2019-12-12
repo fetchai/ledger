@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "constellation.hpp"
+#include "constellation/constellation.hpp"
 
 namespace fetch {
 
 class Settings;
 
-Constellation::Config BuildConstellationConfig(Settings const &settings);
+constellation::Constellation::Config BuildConstellationConfig(Settings const &settings);
 
 }  // namespace fetch

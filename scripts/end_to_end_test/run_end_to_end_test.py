@@ -7,37 +7,33 @@
 # and test it can handle certain conditions (such as single or multiple
 # node failure)
 
-import sys
-import os
 import argparse
-import yaml
-import io
-import random
+import codecs
 import datetime
-import importlib
-import time
-import threading
 import glob
-import shutil
-import traceback
-import time
+import importlib
+import os
 import pickle
+import shutil
 import subprocess
+import sys
+import threading
+import time
+import traceback
+import json
+import yaml
 from threading import Event
 from pathlib import Path
+from threading import Event
+import operator
 
-from fetch.cluster.instance import ConstellationInstance
+from fetch.testing.testcase import ConstellationTestCase, DmlfEtchTestCase
+from fetch.cluster.utils import output, verify_file, yaml_extract
 
 from fetchai.ledger.api import LedgerApi
-from fetchai.ledger.crypto import Entity
+from fetchai.ledger.crypto import Entity, Address
 
-
-def output(*args):
-    text = ' '.join(map(str, args))
-    if text != '':
-        sys.stdout.write(text)
-        sys.stdout.write('\n')
-        sys.stdout.flush()
+from .smart_contract_tests.synergetic_utils import SynergeticContractTestHelper
 
 
 class TimerWatchdog():
@@ -84,303 +80,41 @@ class TimerWatchdog():
         self.stop()
 
 
-class TestInstance():
-    """
-    Sets up an instance of a test, containing references to started nodes and other relevant data
-    """
-
-    def __init__(self, build_directory, constellation_exe, yaml_file):
-
-        self._number_of_nodes = 0
-        self._node_load_directory = []
-        self._node_connections = None
-        self._nodes_are_mining = []
-        self._port_start_range = 8000
-        self._port_range = 20
-        self._workspace = ""
-        self._lanes = 1
-        self._slices = 16
-        self._max_test_time = 1000
-        self._nodes = []
-        self._metadata = None
-        self._watchdog = None
-        self._creation_time = time.perf_counter()
-        self._block_interval = 1000
-
-        # Variables related to temporary pos mode
-        self._pos_mode = False
-        self._nodes_pubkeys = []
-
-        # Default to removing old tests
-        for f in glob.glob(build_directory + "/end_to_end_test_*"):
-            shutil.rmtree(f)
-
-        # To avoid possible collisions, prepend output files with the date
-        self._random_identifer = '{0:%Y_%m_%d_%H_%M_%S}'.format(
-            datetime.datetime.now())
-        self._workspace = os.path.join(
-            build_directory, 'end_to_end_test_{}'.format(
-                self._random_identifer))
-        self._build_directory = build_directory
-        self._constellation_exe = os.path.abspath(constellation_exe)
-        self._yaml_file = os.path.abspath(yaml_file)
-        self._test_files_dir = os.path.dirname(self._yaml_file)
-
-        verify_file(constellation_exe)
-        verify_file(self._yaml_file)
-
-        # Ensure that build/end_to_end_output_XXX/ exists for the test output
-        os.makedirs(self._workspace, exist_ok=True)
-
-    def append_node(self, index, load_directory=None):
-        # Create a folder for the node to write logs to etc.
-        root = os.path.abspath(os.path.join(
-            self._workspace, 'node{}'.format(index)))
-
-        # ensure the workspace folder exits
-        os.makedirs(root, exist_ok=True)
-
-        if load_directory and index in load_directory:
-            load_from = self._test_files_dir + \
-                "/nodes_saved/" + load_directory[index]
-            files = os.listdir(load_from)
-
-            for f in files:
-                shutil.copy(load_from + f, root)
-
-        port = self._port_start_range + (self._port_range * index)
-
-        # Create an instance of the constellation - note we don't clear path since
-        # it should be clear unless load_directory is used
-        instance = ConstellationInstance(
-            self._constellation_exe,
-            port,
-            root,
-            clear_path=False
-        )
-
-        # Possibly soon to be depreciated functionality - set the block interval
-        instance._block_interval = self._block_interval
-
-        # configure the lanes and slices
-        instance.lanes = self._lanes
-        instance.slices = self._slices
-
-        assert len(self._nodes) == index, "Attempt to add node with an index mismatch. Current len: {}, index: {}".format(
-            len(self._nodes), index)
-
-        self._nodes.append(instance)
-
-    def connect_nodes(self, node_connections):
-        for connect_from, connect_to in node_connections:
-            self._nodes[connect_from].add_peer(self._nodes[connect_to])
-            output("Connect node {} to {}".format(connect_from, connect_to))
-
-    def start_node(self, index):
-        print('Starting Node {}...'.format(index))
-
-        self._nodes[index].start()
-        print('Starting Node {}...complete'.format(index))
-
-        time.sleep(0.5)
-
-    def setup_pos_for_nodes(self):
-
-        # Path to config files
-        expected_ouptut_dir = os.path.abspath(
-            os.path.dirname(self._yaml_file)+"/input_files")
-
-        # Create required files for this test
-        file_gen = os.path.abspath(
-            "./scripts/end_to_end_test/input_files/create-input-files.py")
-        verify_file(file_gen)
-        exit_code = subprocess.call([file_gen, str(self._number_of_nodes)])
-
-        infofile = expected_ouptut_dir+"/info.txt"
-
-        # Required files for this operation
-        verify_file(infofile)
-
-        # infofile specifies the address of each numbered key
-        all_lines_in_file = open(infofile, "r").readlines()
-
-        nodes_mining_identities = []
-
-        # First give each node that is mining a unique identity
-        for index in range(self._number_of_nodes):
-
-            # max 200 mining nodes due to consensus requirements
-            assert(index <= 200)
-
-            node = self._nodes[index]
-
-            if(node.mining):
-                node_key = all_lines_in_file[index].strip().split()[-1]
-
-                print('Setting up POS for node {}...'.format(index))
-                print('Giving node the identity: {}'.format(node_key))
-
-                nodes_mining_identities.append(node_key)
-
-                key_path = expected_ouptut_dir+"/{}.key".format(index)
-                verify_file(key_path)
-
-                # Copy the keyfile from its location to the node's cwd
-                shutil.copy(key_path, node.root+"/p2p.key")
-
-        stake_gen = os.path.abspath("./scripts/generate-initial-state.py")
-        verify_file(stake_gen)
-
-        # Create a stake file into the logging directory for all nodes
-        snapshot_location = self._workspace+"/snapshot.json"
-        cmd = [stake_gen, *nodes_mining_identities, "-t",
-               str(len(nodes_mining_identities) - 1), "-o", snapshot_location]
-
-        # After giving the relevant nodes identities, make a stake file
-        exit_code = subprocess.call(cmd)
-
-        # Give all nodes this stake file, plus append POS flag for when node starts
-        for index in range(self._number_of_nodes):
-            shutil.copy(snapshot_location, self._nodes[index].root)
-            self._nodes[index].append_to_cmd(["-pos", "-private-network", ])
-
-    def restart_node(self, index):
-        print('Restarting Node {}...'.format(index))
-
-        self._nodes[index].stop()
-
-        # Optically remove db files when testing recovering from a genesis file
-        if False:
-            self.dump_debug(index)
-
-            pattern = ["*.db"]
-            for p in pattern:
-                [os.remove(x) for x in glob.iglob('./**/' + p, recursive=True)]
-
-        self.start_node(index)
-        time.sleep(3)
-
-    def print_time_elapsed(self):
-        output("Elapsed time: {}".format(
-            time.perf_counter() - self._creation_time))
-
-    def run(self):
-
-        # build up all the node instances
-        for index in range(self._number_of_nodes):
-            self.append_node(index, self._node_load_directory)
-
-        # Now connect the nodes as specified
-        if self._node_connections:
-            self.connect_nodes(self._node_connections)
-
-        # Enable mining node(s)
-        for miner_index in self._nodes_are_mining:
-            self._nodes[miner_index].mining = True
-
-        # In the case only one miner node, it runs in standalone mode
-        if(len(self._nodes) == 1 and len(self._nodes_are_mining) > 0):
-            self._nodes[0].standalone = True
-        else:
-            for node in self._nodes:
-                node.private_network = True
-
-        # Temporary special case for POS mode
-        if(self._pos_mode):
-            self.setup_pos_for_nodes()
-
-        # start all the nodes
-        for index in range(self._number_of_nodes):
-            if self._number_of_nodes > 1 and not self._pos_mode:
-                self._nodes[index].append_to_cmd(["-private-network", ])
-            self.start_node(index)
-
-        time.sleep(2)  # TODO(HUT): blocking http call to node for ready state
-
-        if(self._pos_mode):
-            output("POS mode. sleep extra time.")
-            time.sleep(10)
-
-    def stop(self):
-        if self._nodes:
-            for n, node in enumerate(self._nodes):
-                print('Stopping Node {}...'.format(n))
-                node.stop()
-                print('Stopping Node {}...complete'.format(n))
-
-        if self._watchdog:
-            self._watchdog.stop()
-
-    # If something goes wrong, print out debug state (mainly node log files)
-    def dump_debug(self, only_node=None):
-        if self._nodes:
-            for n, node in enumerate(self._nodes):
-
-                if only_node is not None and n is not only_node:
-                    continue
-
-                print('\nNode debug. Node:{}'.format(n))
-                node_log_path = node.log_path
-
-                if not os.path.isfile(node_log_path):
-                    output("Couldn't find supposed node log file: {}".format(
-                        node_log_path))
-                else:
-                    # Send raw bytes directly to stdout since it contains
-                    # non-ascii
-                    data = Path(node_log_path).read_bytes()
-                    sys.stdout.buffer.write(data)
-                    sys.stdout.flush()
-
-
-def verify_file(filename):
-    if not os.path.isfile(filename):
-        output("Couldn't find expected file: {}".format(filename))
-        sys.exit(1)
-
-
-def extract(test, key, expected=True, expect_type=None, default=None):
-    """
-    Convenience function to remove an item from a YAML string, specifying the type you expect to find
-    """
-    if key in test:
-        result = test[key]
-
-        if expect_type is not None and not isinstance(result, expect_type):
-            output(
-                "Failed to get expected type from YAML! Key: {} YAML: {}".format(
-                    key, test))
-            output("Note: expected type: {} got: {}".format(
-                expect_type, type(result)))
-            sys.exit(1)
-
-        return result
+def create_test(setup_conditions, build_directory, node_exe, yaml_file):
+    test_type = yaml_extract(
+        setup_conditions, 'test_type', expected=False, expect_type=str)
+
+    # default case
+    if test_type is None:
+        return ConstellationTestCase(build_directory, node_exe, yaml_file)
+
+    if test_type == "Constellation":
+        return ConstellationTestCase(build_directory, node_exe, yaml_file)
+    elif test_type == "DmlfEtch":
+        return DmlfEtchTestCase(build_directory, node_exe, yaml_file)
     else:
-        if expected:
-            output(
-                "Failed to find key in YAML! \nKey: {} \nYAML: {}".format(
-                    key, test))
-            sys.exit(1)
-        else:
-            return default
+        raise ValueError("Unkown test type: {}".format(test_type))
 
 
 def setup_test(test_yaml, test_instance):
     output("Setting up test: {}".format(test_yaml))
 
-    test_name = extract(test_yaml, 'test_name', expected=True, expect_type=str)
-    number_of_nodes = extract(
+    test_name = yaml_extract(test_yaml, 'test_name',
+                             expected=True, expect_type=str)
+    number_of_nodes = yaml_extract(
         test_yaml, 'number_of_nodes', expected=True, expect_type=int)
-    node_load_directory = extract(
+    node_load_directory = yaml_extract(
         test_yaml, 'node_load_directory', expected=False, expect_type=dict)
-    node_connections = extract(
+    node_connections = yaml_extract(
         test_yaml, 'node_connections', expected=False, expect_type=list)
-    mining_nodes = extract(test_yaml, 'mining_nodes',
-                           expected=False, expect_type=list, default=[])
-    max_test_time = extract(test_yaml, 'max_test_time',
-                            expected=False, expect_type=int, default=10)
-    pos_mode = extract(test_yaml, 'pos_mode', expected=False,
-                       expect_type=bool, default=False)
+    mining_nodes = yaml_extract(test_yaml, 'mining_nodes',
+                                expected=False, expect_type=list, default=[])
+    max_test_time = yaml_extract(test_yaml, 'max_test_time',
+                                 expected=False, expect_type=int, default=10)
+    pos_mode = yaml_extract(test_yaml, 'pos_mode', expected=False,
+                            expect_type=bool, default=False)
+    num_lanes = yaml_extract(test_yaml, 'lanes', expected=False,
+                             expect_type=int, default=1)
 
     test_instance._number_of_nodes = number_of_nodes
     test_instance._node_load_directory = node_load_directory
@@ -388,6 +122,7 @@ def setup_test(test_yaml, test_instance):
     test_instance._nodes_are_mining = mining_nodes
     test_instance._max_test_time = max_test_time
     test_instance._pos_mode = pos_mode
+    test_instance._lanes = num_lanes
 
     # Watchdog will trigger this if the tests exceeds allowed bounds. Note stopping the test cleanly is
     # necessary to preserve output logs etc.
@@ -412,7 +147,6 @@ def setup_test(test_yaml, test_instance):
 
 
 def send_txs(parameters, test_instance):
-
     name = parameters["name"]
     amount = parameters["amount"]
     nodes = parameters["nodes"]
@@ -450,7 +184,6 @@ def send_txs(parameters, test_instance):
         tx_and_identity = []
 
         for index in range(amount):
-
             # get next identity
             identity = identities[index]
 
@@ -474,6 +207,8 @@ def run_python_test(parameters, test_instance):
     host = parameters.get('host', 'localhost')
     port = parameters.get('port', test_instance._nodes[0]._port_start)
 
+    sys.path.append(os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "../"))
     test_script = importlib.import_module(
         parameters['script'], 'end_to_end_test')
     test_script.run({
@@ -482,8 +217,61 @@ def run_python_test(parameters, test_instance):
     })
 
 
-def verify_txs(parameters, test_instance):
+def run_dmlf_etch_client(parameters, test_instance):
+    indexes = parameters["nodes"]
+    client_exe = parameters["exe"]
+    etch_file = parameters["etch"]
 
+    dmlf_etch_nodes = []
+    for index in indexes:
+        dmlf_etch_nodes.append(test_instance._nodes[index])
+
+    build_directory = os.path.abspath(test_instance._build_directory)
+
+    # get dmlf etch client executable
+    client_exe = os.path.abspath(os.path.join(build_directory, client_exe))
+    verify_file(client_exe)
+
+    # get etch file
+    etch_file = os.path.abspath(os.path.join(build_directory, etch_file))
+    verify_file(etch_file)
+
+    client_output_dir = os.path.abspath(
+        os.path.join(test_instance._workspace, "steps/"))
+    os.makedirs(client_output_dir, exist_ok=True)
+
+    # generate config file
+    config_path = os.path.join(client_output_dir, "e2e_config_client.json")
+    nodes = [
+        {
+            "uri": node.uri,
+            "pub": node.public_key
+        }
+        for node in dmlf_etch_nodes
+    ]
+
+    key = Entity()
+    config = {
+        "client": {
+            "key": key.private_key
+        },
+        "nodes": nodes
+    }
+
+    with open(config_path, 'w') as f:
+        json.dump(config, f)
+
+    # generate client command
+    cmd = [client_exe, config_path, etch_file]
+
+    # run client
+    logfile_path = os.path.join(client_output_dir, "dmlf_etch_client.log")
+    logfile = open(logfile_path, 'w')
+    subprocess.check_call(cmd, cwd=build_directory,
+                          stdout=logfile, stderr=subprocess.STDOUT)
+
+
+def verify_txs(parameters, test_instance):
     name = parameters["name"]
     nodes = parameters["nodes"]
     expect_mined = False
@@ -498,7 +286,6 @@ def verify_txs(parameters, test_instance):
 
     # Load these from file if specified
     if "load_from_file" in parameters and parameters["load_from_file"] == True:
-
         filename = "{}/identities_pickled/{}_meta.pickle".format(
             test_instance._test_files_dir, name)
 
@@ -515,47 +302,356 @@ def verify_txs(parameters, test_instance):
 
         # Verify TXs - will block until they have executed
         for tx, identity, balance in tx_and_identity:
+            error_message = ""
 
             # Check TX has executed, unless we expect it should already have been mined
             while True:
-                status = api.tx.status(tx)
+                status = api.tx.status(tx).status
 
                 if status == "Executed" or expect_mined:
                     output("found executed TX")
+                    error_message = ""
                     break
 
-                time.sleep(0.5)
-                output("Waiting for TX to get executed (node {}). Found: {}".format(
-                    node_index, status))
+                tx_b64 = codecs.encode(codecs.decode(
+                    tx, 'hex'), 'base64').decode()
 
-            seen_balance = api.tokens.balance(identity)
-            if balance != seen_balance:
-                output(
-                    "Balance mismatch found after sending to node. Found {} expected {}".format(
-                        seen_balance, balance))
-                test_instance._watchdog.trigger()
+                next_error_message = "Waiting for TX to get executed (node {}). Found: {} Tx: {}".format(
+                    node_index, status, tx_b64)
+
+                time.sleep(0.5)
+
+                if next_error_message != error_message:
+                    output(next_error_message)
+                    error_message = next_error_message
+
+            failed_to_find = 0
+
+            while True:
+                seen_balance = api.tokens.balance(identity)
+
+                # There is an unavoidable race that can cause you to see a balance of 0
+                # since the TX can be lost even after supposedly being executed.
+                if seen_balance == 0 and balance is not 0:
+                    output(
+                        f"Note: found a balance of 0 when expecting {balance}. Retrying.")
+
+                    time.sleep(1)
+
+                    failed_to_find = failed_to_find + 1
+
+                    if failed_to_find > 5:
+                        # Forces the resubmission of wealth TX to the chain (TX most likely was lost)
+                        api.tokens.wealth(identity, balance)
+                        failed_to_find = 0
+                else:
+                    # Non-zero balance at this point. Stop waiting.
+                    if balance != seen_balance:
+                        output(
+                            "Balance mismatch found after sending to node. Found {} expected {}".format(
+                                seen_balance, balance))
+                        test_instance._watchdog.trigger()
+                    break
 
             output("Verified a wealth of {}".format(seen_balance))
 
         output("Verified balances for node: {}".format(node_index))
 
 
-def restart_nodes(parameters, test_instance):
+def get_nodes_private_key(test_instance, index):
+    # Path to config files (should already be generated)
+    expected_ouptut_dir = os.path.abspath(
+        os.path.dirname(test_instance._yaml_file) + "/input_files")
 
+    key_path = expected_ouptut_dir + "/{}.key".format(index)
+    if not os.path.isfile(key_path):
+        output("Couldn't find expected file: {}".format(key_path))
+        return None
+
+    private_key = open(key_path, "rb").read(32)
+
+    return private_key
+
+
+def set_nodes_private_key(test_instance, index, entity):
+    # Path to config files (should already be generated)
+    expected_ouptut_dir = os.path.abspath(
+        os.path.dirname(test_instance._yaml_file) + "/input_files")
+
+    if not os.path.exists(expected_ouptut_dir):
+        os.makedirs(expected_ouptut_dir)
+
+    key_path = expected_ouptut_dir + "/{}.key".format(index)
+    open(key_path, "wb").write(entity.private_key_bytes)
+
+
+def destake(parameters, test_instance):
     nodes = parameters["nodes"]
 
     for node_index in nodes:
-        test_instance.restart_node(node_index)
+        node_host = "localhost"
+        node_port = test_instance._nodes[node_index]._port_start
+
+        # create the API objects we use to interface with the nodes
+        api = LedgerApi(node_host, node_port)
+
+        # create the entity from the node's private key
+        entity = Entity(get_nodes_private_key(test_instance, node_index))
+
+        current_stake = api.tokens.stake(entity)
+
+        output(f'Destaking node {node_index}. Current stake: ', current_stake)
+        output(
+            f'Destaking node {node_index}. Current balance: ', api.tokens.balance(entity))
+
+        api.sync(api.tokens.add_stake(entity, 1, 500))
+        api.sync(api.tokens.de_stake(entity, current_stake, 500))
+        api.sync(api.tokens.collect_stake(entity, 500))
+
+        output(f'Destaked node {node_index}. Current stake: ', current_stake)
+        output(
+            f'Destaked node {node_index}. Current balance: ', api.tokens.balance(entity))
+        output(f'Destaked node {node_index}. Current cooldown stake: ',
+               api.tokens.stake_cooldown(entity))
+
+
+def restart_nodes(parameters, test_instance):
+    nodes = parameters["nodes"]
+    remove_dbs = parameters.get("remove_dbs", False)
+
+    for node_index in nodes:
+        test_instance.restart_node(node_index, remove_dbs)
+
+    time.sleep(5)
+
+
+def stop_nodes(parameters, test_instance):
+    nodes = parameters["nodes"]
+    remove_dbs = parameters.get("remove_dbs", False)
+
+    for node_index in nodes:
+        test_instance.stop_node(node_index, remove_dbs)
+
+    time.sleep(5)
+
+
+def start_nodes(parameters, test_instance):
+    nodes = parameters["nodes"]
+
+    for node_index in nodes:
+        test_instance.start_node(node_index)
+
+    time.sleep(5)
 
 
 def add_node(parameters, test_instance):
-
     index = parameters["index"]
     node_connections = parameters["node_connections"]
 
     test_instance.append_node(index)
     test_instance.connect_nodes(node_connections)
     test_instance.start_node(index)
+
+
+def create_wealth(parameters, test_instance):
+    nodes = parameters["nodes"]
+    amount = parameters["amount"]
+
+    for node_index in nodes:
+        node_host = "localhost"
+        node_port = test_instance._nodes[node_index]._port_start
+
+        api = LedgerApi(node_host, node_port)
+
+        # create the entity from the node's private key
+        entity = Entity(get_nodes_private_key(test_instance, node_index))
+        set_nodes_private_key(test_instance, node_index, entity)
+        tx = api.tokens.wealth(entity, amount)
+        for i in range(10):
+            output('Create balance of: ', amount)
+            api.sync(tx, timeout=120, hold_state_sec=20)
+            for j in range(5):
+                b = api.tokens.balance(entity)
+                output('Current balance: ', b)
+                if b >= amount:
+                    return
+                time.sleep(5)
+            time.sleep(5)
+        raise Exception("Failed to create wealth")
+
+
+def create_synergetic_contract(parameters, test_instance):
+    nodes = parameters["nodes"]
+    name = parameters["name"]
+    fee_limit = parameters["fee_limit"]
+    transfer_amount = parameters.get("transfer_amount", -1)
+    for node_index in nodes:
+        node_host = "localhost"
+        node_port = test_instance._nodes[node_index]._port_start
+
+        api = LedgerApi(node_host, node_port)
+
+        # create the entity from the node's private key
+        entity = Entity(get_nodes_private_key(test_instance, node_index))
+        output('Create contract, available balance: ',
+               api.tokens.balance(entity))
+        helper = SynergeticContractTestHelper(
+            name, api, entity, test_instance._workspace)
+        helper.create_new(fee_limit)
+        test_instance._nodes[node_index]._contract = helper
+        if transfer_amount > 0:
+            api.sync(api.tokens.transfer(
+                entity, helper.contract.address, transfer_amount, 1000))
+
+
+def run_contract(parameters, test_instance):
+    nodes = parameters["nodes"]
+    contract_name = parameters["contract_name"]
+    wait_for_blocks_num = parameters["wait_for_blocks"]
+    for node_index in nodes:
+        node_host = "localhost"
+        node_port = test_instance._nodes[node_index]._port_start
+
+        api = LedgerApi(node_host, node_port)
+
+        # create the entity from the node's private key
+        entity = Entity(get_nodes_private_key(test_instance, node_index))
+
+        try:
+            contract_helper = test_instance._nodes[node_index]._contract
+        except AttributeError:
+            output(
+                f"No contract stored in test_instance (node_index={node_index})! Loading from file...")
+            contract_helper = SynergeticContractTestHelper(
+                contract_name, api, entity, test_instance._workspace)
+            contract_helper.load()
+        output('Submit data, available balance: ', api.tokens.balance(entity))
+        contract_helper.submit_random_data(10, (0, 200))
+        api.wait_for_blocks(wait_for_blocks_num)
+        valid = contract_helper.validate_execution()
+        if not valid:
+            output(
+                f"Synergetic contract ({contract_name}) execution failed on node {node_index}!")
+            raise Exception(
+                f"Synergetic contract ({contract_name}) execution failed on node {node_index}!")
+        else:
+            output(
+                f"Synergetic contract ({contract_name}) executed on node {node_index} ")
+
+
+def wait_for_blocks(parameters, test_instance):
+    nodes = parameters["nodes"]
+    wait_for_blocks_num = parameters["num"]
+    for node_index in nodes:
+        test_instance.wait_for_blocks(node_index, wait_for_blocks_num)
+
+
+def verify_chain_sync(parameters, test_instance):
+    max_trials = parameters.get("max_trials", 20)
+    node_idx = parameters["node"]
+    output(f"verify_chain_sync: node={node_idx}")
+
+    if not test_instance.verify_chain_sync(node_idx, max_trials):
+        raise RuntimeError(
+            f"Node {node_idx} chain not synced with the network!")
+
+
+def wait_network_ready(parameters, test_instance):
+    sleep_time = parameters.get("sleep", 2)
+    max_trials = parameters.get("max_trials", 20)
+    for i in range(max_trials):
+        try:
+            if test_instance.network_ready():
+                return
+        except Exception as e:
+            print("Exception: ", e)
+        time.sleep(sleep_time)
+    raise RuntimeError(
+        f"Network readiness check failed, because reached max trials ({max_trials})")
+
+
+def query_balance(parameters, test_instance):
+    nodes = parameters["nodes"]
+    variable = parameters["save_as"]
+    for node_index in nodes:
+        node_instance = test_instance._nodes[node_index]
+        node_host = "localhost"
+        node_port = node_instance._port_start
+
+        api = LedgerApi(node_host, node_port)
+
+        # create the entity from the node's private key
+        entity = Entity(get_nodes_private_key(test_instance, node_index))
+        b = api.tokens.balance(entity)
+        address = Address(entity)
+        output(
+            f"Requested balance ({b}) {address.to_hex()}, saved as {variable}")
+        if not hasattr(node_instance, "_variables"):
+            setattr(node_instance, "_variables", {})
+        node_instance._variables[variable] = b
+
+
+def execute_expression(parameters, test_instance):
+    nodes = parameters["nodes"]
+    expression = parameters["expression"]
+    ops = {
+        "==": operator.eq,
+        "<=": operator.le,
+        ">=": operator.ge,
+        ">": operator.gt,
+        "<": operator.lt,
+    }
+    op = None
+    ls = None
+    rs = None
+    for key in ops:
+        if expression.find(key) != -1:
+            ls, rs = expression.split(key)
+            ls = ls.replace(" ", "")
+            rs = rs.replace(" ", "")
+            op = key
+            break
+    print("ls='", ls, "'")
+    print("op='", op, "'")
+    print("rs='", rs, "'")
+    if op is None:
+        raise RuntimeError(
+            f"Expression '{expression}' not supported! Available ops: {ops.keys()}")
+
+    for node_index in nodes:
+        node_instance = test_instance._nodes[node_index]
+
+        if not hasattr(node_instance, "_variables"):
+            raise RuntimeError(
+                f"Expression '{expression}' can't be evaluated because node {node_instance} doesn't have the required variables!")
+        ls = node_instance._variables.get(ls, None)
+        rs = node_instance._variables.get(rs, None)
+        if ls is None or rs is None:
+            raise RuntimeError(
+                f"Expression '{expression}' can't be evaluated because node {node_instance} doesn't have one of the required variables!")
+        result = ops[op](ls, rs)
+        if not result:
+            raise RuntimeError(
+                f"Evaluation of '{expression}' failed or false!")
+        output(f"Result of execution of '{expression}' is '{result}'")
+
+
+def fail(parameters, test_instance):
+    for key in parameters:
+        output(f"Running {key} command in fail mode")
+        try:
+            func = COMMAND_MAP.get(key, None)
+            if func:
+                func(parameters[key], test_instance)
+            else:
+                output(
+                    "Found unknown command when running steps: '{}'".format(
+                        key))
+                sys.exit(1)
+            output(f"Running command {key} not failed!")
+            sys.exit(1)
+        except BaseException:
+            pass
 
 
 def run_steps(test_yaml, test_instance):
@@ -576,20 +672,10 @@ def run_steps(test_yaml, test_instance):
             raise RuntimeError(
                 "Failed to parse command from step: {}".format(step))
 
-        if command == 'send_txs':
-            send_txs(parameters, test_instance)
-        elif command == 'verify_txs':
-            verify_txs(parameters, test_instance)
-        elif command == 'add_node':
-            add_node(parameters, test_instance)
-        elif command == 'sleep':
-            time.sleep(parameters)
-        elif command == 'print_time_elapsed':
-            test_instance.print_time_elapsed()
-        elif command == 'run_python_test':
-            run_python_test(parameters, test_instance)
-        elif command == 'restart_nodes':
-            restart_nodes(parameters, test_instance)
+        func = COMMAND_MAP.get(command, None)
+
+        if func:
+            func(parameters, test_instance)
         else:
             output(
                 "Found unknown command when running steps: '{}'".format(
@@ -597,8 +683,31 @@ def run_steps(test_yaml, test_instance):
             sys.exit(1)
 
 
-def run_test(build_directory, yaml_file, constellation_exe):
+COMMAND_MAP = {
+    "send_txs": send_txs,
+    "verify_txs": verify_txs,
+    "add_node": add_node,
+    "sleep": lambda parameters, test_instance: time.sleep(parameters),
+    "print_time_elapsed": lambda parameters, test_instance: test_instance.print_time_elapsed(),
+    "run_python_test": run_python_test,
+    "restart_nodes": restart_nodes,
+    "stop_nodes": stop_nodes,
+    "start_nodes": start_nodes,
+    "destake": destake,
+    "run_dmlf_etch_client": run_dmlf_etch_client,
+    "create_wealth": create_wealth,
+    "create_synergetic_contract": create_synergetic_contract,
+    "run_contract": run_contract,
+    "wait_for_blocks": wait_for_blocks,
+    "verify_chain_sync": verify_chain_sync,
+    "wait_network_ready": wait_network_ready,
+    "query_balance": query_balance,
+    "execute_expression": execute_expression,
+    "fail": fail
+}
 
+
+def run_test(build_directory, yaml_file, node_exe, name_filter=None):
     # Read YAML file
     with open(yaml_file, 'r') as stream:
         try:
@@ -606,8 +715,17 @@ def run_test(build_directory, yaml_file, constellation_exe):
 
             # Parse yaml documents as tests (sequentially)
             for test in all_yaml:
+                # Get test setup conditions
+                setup_conditions = yaml_extract(test, 'setup_conditions')
+
+                # Check if name is not filtered out
+                if name_filter is not None:
+                    name = yaml_extract(setup_conditions, 'test_name')
+                    if name not in name_filter:
+                        continue
+
                 # Create a new test instance
-                description = extract(test, 'test_description')
+                description = yaml_extract(test, 'test_description')
                 output("\n=================================================")
                 output("Test: {}".format(description))
                 output("=================================================\n")
@@ -617,24 +735,24 @@ def run_test(build_directory, yaml_file, constellation_exe):
                     continue
 
                 # Create a test instance
-                test_instance = TestInstance(
-                    build_directory, constellation_exe, yaml_file)
+                test_instance = create_test(
+                    setup_conditions, build_directory, node_exe, yaml_file)
 
                 # Configure the test - this will start the nodes asynchronously
-                setup_test(extract(test, 'setup_conditions'), test_instance)
+                setup_test(setup_conditions, test_instance)
 
                 # Run the steps in the test
-                run_steps(extract(test, 'steps'), test_instance)
+                run_steps(yaml_extract(test, 'steps'), test_instance)
 
                 test_instance.stop()
         except Exception as e:
-            print('Failed to parse yaml or to run test! Error: "{}"'.format(str(e)))
+            print('Failed to parse yaml or to run test! Error: "{}"'.format(e))
             traceback.print_exc()
             test_instance.stop()
             test_instance.dump_debug()
             sys.exit(1)
 
-    output("\nAll end to end tests have passed")
+    output("\nAll end to end tests have passed :)")
 
 
 def parse_commandline():
@@ -646,8 +764,8 @@ def parse_commandline():
         'build_directory', type=str,
         help='Location of the build directory relative to current path')
     parser.add_argument(
-        'constellation_exe', type=str,
-        help='Location of the constellation binary relative to current path')
+        'node_exe', type=str,
+        help='Location of the application binary to deploy relative to current path (should be compatible with the test_type in the yaml_file)')
     parser.add_argument('yaml_file', type=str,
                         help='Location of the yaml file dictating the tests')
 
@@ -658,7 +776,7 @@ def main():
     args = parse_commandline()
 
     return run_test(args.build_directory, args.yaml_file,
-                    args.constellation_exe)
+                    args.node_exe)
 
 
 if __name__ == '__main__':

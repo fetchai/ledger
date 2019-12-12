@@ -47,13 +47,12 @@ public:
   CounterMap &operator=(CounterMap &&) = delete;
 
 private:
-  using Mutex    = std::mutex;
   using Counters = std::unordered_map<Labels, CounterPtr>;
 
   CounterPtr LookupCounter(Labels const &keys);
 
-  mutable Mutex lock_;
-  Counters      counters_;
+  mutable std::mutex lock_;
+  Counters           counters_;
 };
 
 }  // namespace telemetry

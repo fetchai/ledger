@@ -26,7 +26,7 @@
 
 namespace {
 
-using namespace fetch::vectorize;
+using namespace fetch::vectorise;
 
 template <typename T>
 using NativeRegister = VectorRegister<T>;
@@ -51,7 +51,7 @@ fetch::random::LinearCongruentialGenerator lcg;
     }                                                                           \
     NativeRegister<T> A(a), B(b);                                               \
     NativeRegister<T> C          = A OP B;                                      \
-    T                          c = T(a OP b);                                   \
+    auto                       c = T(a OP b);                                   \
     ASSERT_EQ(T(C), c) << T(C) << " != " << c << "for " #NAME << " using " #OP; \
   }
 

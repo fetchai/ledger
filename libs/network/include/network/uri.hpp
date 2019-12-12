@@ -55,7 +55,9 @@ public:
   Uri(Uri &&) noexcept = default;
   ~Uri()               = default;
 
+  bool Parse(char const *uri);
   bool Parse(ConstByteArray const &uri);
+  bool Parse(std::string const &uri);
 
   /// @name Basic Accessors
   /// @{
@@ -66,8 +68,11 @@ public:
 
   /// @name Type based Accessors
   /// @{
-  Peer const &          AsPeer() const;
-  ConstByteArray const &AsIdentity() const;
+  bool IsTcpPeer() const;
+  bool IsMuddleAddress() const;
+
+  Peer const &          GetTcpPeer() const;
+  ConstByteArray const &GetMuddleAddress() const;
   /// @}
 
   // Operators
@@ -80,11 +85,6 @@ public:
 
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
-
-  static Uri  FromIdentity(ConstByteArray const &identity);
-  static bool IsUri(const std::string &possible_uri);
-
-  bool IsDirectlyConnectable() const;
 
   friend std::ostream &operator<<(std::ostream &stream, Uri const &uri);
   friend std::istream &operator>>(std::istream &stream, Uri &uri);
@@ -111,18 +111,6 @@ inline Uri::ConstByteArray const &Uri::authority() const
   return authority_;
 }
 
-inline Peer const &Uri::AsPeer() const
-{
-  assert(scheme_ == Scheme::Tcp);
-  return tcp_;
-}
-
-inline Uri::ConstByteArray const &Uri::AsIdentity() const
-{
-  assert(scheme_ == Scheme::Muddle);
-  return authority_;
-}
-
 inline bool Uri::operator==(Uri const &other) const
 {
   return uri_ == other.uri_;
@@ -131,16 +119,6 @@ inline bool Uri::operator==(Uri const &other) const
 inline bool Uri::operator!=(Uri const &other) const
 {
   return !(*this == other);
-}
-
-inline bool Uri::IsDirectlyConnectable() const
-{
-  return scheme_ != Uri::Scheme::Muddle && scheme_ != Uri::Scheme::Unknown;
-}
-
-inline Uri Uri::FromIdentity(ConstByteArray const &identity)
-{
-  return Uri{"muddle://" + byte_array::ToBase64(identity)};
 }
 
 }  // namespace network
@@ -167,8 +145,7 @@ public:
   static void Deserialize(T &map, Type &x)
   {
     byte_array::ConstByteArray uri;
-    uint8_t                    key;
-    map.GetNextKeyPair(key, uri);  // TODO(tfr): check
+    map.ExpectKeyGetValue(URI, uri);
 
     if (!x.Parse(uri))
     {

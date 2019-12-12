@@ -20,6 +20,8 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "core/synchronisation/protected.hpp"
+#include "logging/logging.hpp"
+#include "network/service/call_context.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/document_store.hpp"
 #include "storage/new_revertible_document_store.hpp"
@@ -36,9 +38,9 @@ namespace storage {
 class RevertibleDocumentStoreProtocol : public fetch::service::Protocol
 {
 public:
-  using connection_handle_type = network::AbstractConnection::connection_handle_type;
-  using lane_type              = uint32_t;  // TODO(issue 12): Fetch from some other palce
-  using CallContext            = service::CallContext;
+  using ConnectionHandleType = network::AbstractConnection::ConnectionHandleType;
+  using LaneType             = uint32_t;  // TODO(issue 12): Fetch from some other palce
+  using CallContext          = service::CallContext;
 
   using Identifier = byte_array::ConstByteArray;
 
@@ -48,14 +50,12 @@ public:
   {
     GET = 0,
     GET_OR_CREATE,
-    LAZY_GET,
     SET,
 
     COMMIT,
     REVERT_TO_HASH,
     CURRENT_HASH,
     HASH_EXISTS,
-    KEY_DUMP,
     RESET,
 
     LOCK = 20,
@@ -63,9 +63,8 @@ public:
     HAS_LOCK
   };
 
-  explicit RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, lane_type lane)
-    : fetch::service::Protocol()
-    , doc_store_(doc_store)
+  explicit RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, LaneType lane)
+    : doc_store_(doc_store)
     , get_count_(CreateCounter(lane, "ledger_statedb_get_total", "The total no. get ops"))
     , get_create_count_(
           CreateCounter(lane, "ledger_statedb_get_create_total", "The total no. get/create ops"))
@@ -76,8 +75,6 @@ public:
                                         "The total no. current_hash ops"))
     , hash_exists_count_(
           CreateCounter(lane, "ledger_statedb_hash_exist_total", "The total no. hash_exists ops"))
-    , key_dump_count_(
-          CreateCounter(lane, "ledger_statedb_key_dump_total", "The total no. key dump ops"))
     , reset_count_(CreateCounter(lane, "ledger_statedb_reset_total", "The total no. reset ops"))
     , lock_count_(CreateCounter(lane, "ledger_statedb_lock_total", "The total no. lock ops"))
     , unlock_count_(CreateCounter(lane, "ledger_statedb_unlock_total", "The total no. unlock ops"))
@@ -101,7 +98,6 @@ public:
     this->Expose(REVERT_TO_HASH, this, &RevertibleDocumentStoreProtocol::RevertToHash);
     this->Expose(CURRENT_HASH, this, &RevertibleDocumentStoreProtocol::CurrentHash);
     this->Expose(HASH_EXISTS, this, &RevertibleDocumentStoreProtocol::HashExists);
-    this->Expose(KEY_DUMP, this, &RevertibleDocumentStoreProtocol::KeyDump);
     this->Expose(RESET, this, &RevertibleDocumentStoreProtocol::Reset);
 
     this->ExposeWithClientContext(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
@@ -109,8 +105,8 @@ public:
     this->ExposeWithClientContext(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
   }
 
-  RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, lane_type const &lane,
-                                  lane_type const &maxlanes)
+  RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, LaneType const &lane,
+                                  LaneType const &maxlanes)
     : RevertibleDocumentStoreProtocol(doc_store, lane)
   {
     SetLaneLog2(maxlanes);
@@ -122,7 +118,7 @@ public:
     if (!context.is_valid())
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-          0, byte_array_type(std::string("No context for HasLock.")));
+          0, ByteArrayType(std::string("No context for HasLock.")));
     }
 
     bool has_lock = false;
@@ -141,7 +137,7 @@ public:
     if (!context.is_valid())
     {
       // TODO(issue 11): set exception number
-      throw serializers::SerializableException(0, byte_array_type{"No context for HasLock."});
+      throw serializers::SerializableException(0, ByteArrayType{"No context for HasLock."});
     }
 
     // attempt to lock this shard
@@ -152,6 +148,10 @@ public:
         status.is_locked = true;
         status.client    = context.sender_address;
         success          = true;
+      }
+      else if (status.client == context.sender_address)
+      {
+        success = true;
       }
     });
 
@@ -172,13 +172,18 @@ public:
     if (!context.is_valid())
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-          0, byte_array_type(std::string("No context for HasLock.")));
+          0, ByteArrayType(std::string("No context for HasLock.")));
     }
 
     // attempt to unlock this shard
     bool success = false;
     lock_status_.ApplyVoid([&context, &success](LockStatus &status) {
-      if (status.is_locked && (status.client == context.sender_address))
+      if (!status.is_locked)
+      {
+        status.client = Identifier{};
+        success       = true;
+      }
+      else if (status.client == context.sender_address)
       {
         status.is_locked = false;
         status.client    = Identifier{};
@@ -198,14 +203,14 @@ public:
   }
 
 private:
-  static telemetry::CounterPtr CreateCounter(lane_type lane, char const *name,
+  static telemetry::CounterPtr CreateCounter(LaneType lane, char const *name,
                                              char const *description)
   {
     return telemetry::Registry::Instance().CreateCounter(name, description,
                                                          {{"lane", std::to_string(lane)}});
   }
 
-  static telemetry::HistogramPtr CreateHistogram(lane_type lane, char const *name,
+  static telemetry::HistogramPtr CreateHistogram(LaneType lane, char const *name,
                                                  char const *description)
   {
     return telemetry::Registry::Instance().CreateHistogram(
@@ -270,22 +275,15 @@ private:
     return success;
   }
 
-  NewRevertibleDocumentStore::Keys KeyDump()
-  {
-    auto const keys = doc_store_->KeyDump();
-    key_dump_count_->increment();
-    return keys;
-  }
-
   void Reset()
   {
     doc_store_->Reset();
     reset_count_->increment();
   }
 
-  void SetLaneLog2(lane_type const &count)
+  void SetLaneLog2(LaneType const &count)
   {
-    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
+    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3u) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
 
   NewRevertibleDocumentStore *doc_store_;
@@ -307,7 +305,6 @@ private:
   telemetry::CounterPtr   revert_count_;
   telemetry::CounterPtr   current_hash_count_;
   telemetry::CounterPtr   hash_exists_count_;
-  telemetry::CounterPtr   key_dump_count_;
   telemetry::CounterPtr   reset_count_;
   telemetry::CounterPtr   lock_count_;
   telemetry::CounterPtr   unlock_count_;

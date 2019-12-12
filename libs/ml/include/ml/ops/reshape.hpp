@@ -21,6 +21,7 @@
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -32,13 +33,13 @@ class Reshape : public fetch::ml::ops::Ops<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpReshapeSaveableParams<T>;
   using MyType        = Reshape<TensorType>;
 
   explicit Reshape(std::vector<SizeType> new_shape)
-    : new_shape_(new_shape)
+    : new_shape_(std::move(new_shape))
   {}
 
   explicit Reshape(SPType const &sp)

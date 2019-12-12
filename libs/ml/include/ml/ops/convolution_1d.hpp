@@ -34,7 +34,7 @@ class Convolution1D : public Ops<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using DataType      = typename TensorType::Type;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
@@ -87,27 +87,26 @@ public:
 
 private:
   void FillVerticalStride(TensorType const &input, TensorType &vertical_stride,
-                          SizeType const output_channels, SizeType const input_channels,
-                          SizeType const kernel_height);
+                          SizeType output_channels, SizeType input_channels,
+                          SizeType kernel_height);
 
   void ReverseFillVerticalStride(TensorType &input, TensorType const &vertical_stride,
-                                 SizeType const output_channels, SizeType const input_channels,
-                                 SizeType const kernel_height);
+                                 SizeType output_channels, SizeType input_channels,
+                                 SizeType kernel_height);
 
   void FillHorizontalStride(TensorType const &input, TensorType &horizontal_stride,
-                            SizeType const output_height, SizeType const input_channels,
-                            SizeType const kernel_height, SizeType const batch_size);
+                            SizeType output_height, SizeType input_channels, SizeType kernel_height,
+                            SizeType batch_size);
 
   void ReverseFillHorizontalStride(TensorType &input, TensorType const &horizontal_stride,
-                                   SizeType const output_height, SizeType const input_channels,
-                                   SizeType const kernel_height, SizeType const batch_size);
+                                   SizeType output_height, SizeType input_channels,
+                                   SizeType kernel_height, SizeType batch_size);
 
-  void FillOutput(TensorType const &gemm_output, TensorType &output, SizeType const output_channels,
-                  SizeType const output_height, SizeType const batch_size);
+  void FillOutput(TensorType const &gemm_output, TensorType &output, SizeType output_channels,
+                  SizeType output_height, SizeType batch_size);
 
   void ReverseFillOutput(TensorType &gemm_output, TensorType const &output,
-                         SizeType const output_channels, SizeType const output_height,
-                         SizeType const batch_size);
+                         SizeType output_channels, SizeType output_height, SizeType batch_size);
 
   SizeType stride_size_;
 };

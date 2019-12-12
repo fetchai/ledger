@@ -67,7 +67,7 @@ private:
   {
     uint16_t magic   = platform::LITTLE_ENDIAN_MAGIC;
     uint64_t objects = 0;
-    D        extra;
+    D        extra{};
 
     bool Write(std::fstream &stream) const
     {
@@ -75,7 +75,7 @@ private:
       {
         return false;
       }
-      stream.seekg(0, stream.beg);
+      stream.seekg(0, std::fstream::beg);
       stream.write(reinterpret_cast<char const *>(&magic), sizeof(magic));
       stream.write(reinterpret_cast<char const *>(&objects), sizeof(objects));
       stream.write(reinterpret_cast<char const *>(&extra), sizeof(extra));
@@ -88,7 +88,7 @@ private:
       {
         return false;
       }
-      stream.seekg(0, stream.beg);
+      stream.seekg(0, std::fstream::beg);
       stream.read(reinterpret_cast<char *>(&magic), sizeof(magic));
       stream.read(reinterpret_cast<char *>(&objects), sizeof(objects));
       stream.read(reinterpret_cast<char *>(&extra), sizeof(extra));
@@ -102,9 +102,9 @@ private:
   };
 
 public:
-  using header_extra_type  = D;
-  using type               = T;
-  using event_handler_type = std::function<void()>;
+  using HeaderExtraType  = D;
+  using type             = T;
+  using EventHandlerType = std::function<void()>;
 
   void ClearEventHandlers()
   {
@@ -112,12 +112,12 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f)
+  void OnFileLoaded(EventHandlerType const &f)
   {
     on_file_loaded_ = f;
   }
 
-  void OnBeforeFlush(event_handler_type const &f)
+  void OnBeforeFlush(EventHandlerType const &f)
   {
     on_before_flush_ = f;
   }
@@ -186,11 +186,11 @@ public:
     }
 
     // Get length of file
-    file_handle_.seekg(0, file_handle_.end);
+    file_handle_.seekg(0, std::fstream::end);
     int64_t length = file_handle_.tellg();
 
     // Read the beginning of the file into our header
-    file_handle_.seekg(0, file_handle_.beg);
+    file_handle_.seekg(0, std::fstream::beg);
     header_.Read(file_handle_);
 
     int64_t capacity = (length - int64_t(header_.size())) / int64_t(sizeof(type));
@@ -225,10 +225,10 @@ public:
    */
   void Get(std::size_t i, type &object) const
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     assert(i < size());
 
-    int64_t n = int64_t(i * sizeof(type) + header_.size());
+    auto n = int64_t(i * sizeof(type) + header_.size());
 
     file_handle_.seekg(n);
     file_handle_.read(reinterpret_cast<char *>(&object), sizeof(type));
@@ -243,11 +243,11 @@ public:
    */
   void Set(std::size_t i, type const &object)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     assert(i < size());
-    int64_t start = int64_t(i * sizeof(type) + header_.size());
+    auto start = int64_t(i * sizeof(type) + header_.size());
 
-    file_handle_.seekg(start, file_handle_.beg);
+    file_handle_.seekg(start, std::fstream::beg);
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
   }
 
@@ -281,11 +281,11 @@ public:
    */
   bool LazySetBulk(std::size_t i, std::size_t elements, type const *objects)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
-    int64_t start = int64_t((i * sizeof(type)) + header_.size());
+    auto start = int64_t((i * sizeof(type)) + header_.size());
 
-    file_handle_.seekg(start, file_handle_.beg);
+    file_handle_.seekg(start, std::fstream::beg);
     file_handle_.write(reinterpret_cast<char const *>(objects),
                        std::streamsize(sizeof(type)) * std::streamsize(elements));
 
@@ -309,9 +309,9 @@ public:
    */
   void GetBulk(std::size_t i, std::size_t elements, type *objects)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
-    int64_t start = int64_t((i * sizeof(type)) + header_.size());
+    auto start = int64_t((i * sizeof(type)) + header_.size());
 
     // Figure out how many elements are valid to get, only get those
     if (i >= header_.objects)
@@ -324,20 +324,20 @@ public:
     // i is valid location, elements are 1 or more at this point
     elements = std::min(elements, std::size_t(header_.objects - i));
 
-    file_handle_.seekg(start, file_handle_.beg);
+    file_handle_.seekg(start, std::fstream::beg);
     file_handle_.read(reinterpret_cast<char *>(objects),
                       std::streamsize(sizeof(type)) * std::streamsize(elements));
   }
 
-  void SetExtraHeader(header_extra_type const &he)
+  void SetExtraHeader(HeaderExtraType const &he)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
     header_.extra = he;
     StoreHeader();
   }
 
-  header_extra_type const &header_extra() const
+  HeaderExtraType const &header_extra() const
   {
     return header_.extra;
   }
@@ -378,9 +378,9 @@ public:
   {
     assert(header_.objects > 0);
 
-    int64_t n = int64_t((header_.objects - 1) * sizeof(type) + header_.size());
+    auto n = int64_t((header_.objects - 1) * sizeof(type) + header_.size());
 
-    file_handle_.seekg(n, file_handle_.beg);
+    file_handle_.seekg(n, std::fstream::beg);
     type object;
     file_handle_.read(reinterpret_cast<char *>(&object), sizeof(type));
 
@@ -401,10 +401,10 @@ public:
       return;
     }
     type a, b;
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
-    int64_t n1 = int64_t(i * sizeof(type) + header_.size());
-    int64_t n2 = int64_t(j * sizeof(type) + header_.size());
+    auto n1 = int64_t(i * sizeof(type) + header_.size());
+    auto n2 = int64_t(j * sizeof(type) + header_.size());
 
     file_handle_.seekg(n1);
     file_handle_.read(reinterpret_cast<char *>(&a), sizeof(type));
@@ -432,7 +432,7 @@ public:
    */
   void Clear()
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     std::fstream fin(filename_, std::ios::out | std::ios::binary);
     header_ = Header();
 
@@ -474,9 +474,9 @@ public:
   uint64_t LazyPush(type const &object)
   {
     uint64_t ret = header_.objects;
-    int64_t  n   = int64_t(ret * sizeof(type) + header_.size());
+    auto     n   = int64_t(ret * sizeof(type) + header_.size());
 
-    file_handle_.seekg(n, file_handle_.beg);
+    file_handle_.seekg(n, std::fstream::beg);
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
     ++header_.objects;
 
@@ -489,8 +489,8 @@ public:
   }
 
 private:
-  event_handler_type   on_file_loaded_;
-  event_handler_type   on_before_flush_;
+  EventHandlerType     on_file_loaded_;
+  EventHandlerType     on_before_flush_;
   mutable std::fstream file_handle_;
   std::string          filename_ = "";
   Header               header_;
@@ -504,7 +504,7 @@ private:
    */
   void StoreHeader()
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
     if (!header_.Write(file_handle_))
     {

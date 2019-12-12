@@ -55,7 +55,7 @@ public:
     return sig.Verify(public_key_, data);
   }
 
-  Identity identity() override
+  Identity identity() const override
   {
     return identity_;
   }
@@ -63,6 +63,11 @@ public:
   explicit operator bool() const
   {
     return static_cast<bool>(identity_);
+  }
+
+  PublicKey const &public_key() const
+  {
+    return public_key_;
   }
 
 private:
@@ -100,17 +105,22 @@ public:
 
   Identity identity() const final
   {
-    return Identity(PrivateKey::ecdsa_curve_type::sn, public_key());
+    return Identity(PrivateKey::EcdsaCurveType::sn, public_key());
   }
 
   ConstByteArray public_key() const
   {
-    return private_key_.Apply([](PrivateKey const &key) { return key.publicKey().keyAsBin(); });
+    return private_key_.Apply([](PrivateKey const &key) { return key.PublicKey().KeyAsBin(); });
   }
 
-  ConstByteArray private_key()
+  ConstByteArray private_key() const
   {
     return private_key_.Apply([](PrivateKey const &key) { return key.KeyAsBin(); });
+  }
+
+  PrivateKey::EcKeyPtr private_key_ec_key() const
+  {
+    return private_key_.Apply([](PrivateKey const &key) { return key.key(); });
   }
 
 private:

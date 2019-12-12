@@ -32,36 +32,48 @@ namespace fetch {
 namespace vm {
 
 Parser::Parser()
-  : template_names_{"Matrix", "Array", "Map", "State", "ShardedState"}
+  : template_names_{"Array", "Map", "State", "ShardedState"}
 {}
 
-BlockNodePtr Parser::Parse(std::string const &filename, std::string const &source,
-                           std::vector<std::string> &errors)
+void Parser::AddTemplateName(std::string name)
 {
-  Tokenise(source);
+  template_names_.insert(std::move(name));
+}
 
-  index_ = -1;
-  token_ = nullptr;
+BlockNodePtr Parser::Parse(SourceFiles const &files, std::vector<std::string> &errors)
+{
   errors_.clear();
   blocks_.clear();
-  groups_.clear();
-  operators_.clear();
-  rpn_.clear();
-  infix_stack_.clear();
 
-  BlockNodePtr root      = CreateBlockNode(NodeKind::Root, "", 0);
-  BlockNodePtr file_node = CreateBlockNode(NodeKind::File, filename, 1);
-  root->block_children.push_back(file_node);
-  ParseBlock(*file_node);
-  bool const ok = errors_.size() == 0;
+  BlockNodePtr root = CreateBlockNode(NodeKind::Root, "", 0);
+  blocks_.push_back({root, true});
+
+  for (auto const &file : files)
+  {
+    filename_ = file.filename;
+    Tokenise(file.source);
+    index_ = -1;
+    token_ = nullptr;
+    groups_.clear();
+    operators_.clear();
+    rpn_.clear();
+    infix_stack_.clear();
+    BlockNodePtr file_node = CreateBlockNode(NodeKind::File, filename_, 1);
+    blocks_.push_back({file_node, true});
+    root->block_children.push_back(file_node);
+    ParseBlock(file_node);
+  }
+
+  bool const ok = errors_.empty();
   errors        = std::move(errors_);
 
+  filename_.clear();
   tokens_.clear();
-  blocks_.clear();
   groups_.clear();
   operators_.clear();
   rpn_.clear();
   infix_stack_.clear();
+  blocks_.clear();
 
   return ok ? root : BlockNodePtr{};
 }
@@ -76,18 +88,36 @@ void Parser::Tokenise(std::string const &source)
   yy_switch_to_buffer(bp, scanner);
   // There is always at least one token: the last is EndOfInput
   Token token;
+  int   value;
   do
   {
-    yylex(&token, scanner);
+    value = yylex(&token, scanner);
     tokens_.push_back(token);
-  } while (token.kind != Token::Kind::EndOfInput);
+  } while (value != 0);
+  if (token.kind != Token::Kind::EndOfInput)
+  {
+    token.kind   = Token::Kind::EndOfInput;
+    token.offset = location.offset;
+    token.line   = location.line;
+    token.length = 0;
+    token.text   = "";
+    tokens_.push_back(token);
+  }
   yy_delete_buffer(bp, scanner);
   yylex_destroy(scanner);
 }
 
-bool Parser::ParseBlock(BlockNode &node)
+bool Parser::IsCodeBlock(NodeKind block_kind) const
 {
-  blocks_.push_back(node.node_kind);
+  return ((block_kind == NodeKind::MemberFunctionDefinition) ||
+          (block_kind == NodeKind::FreeFunctionDefinition) ||
+          (block_kind == NodeKind::WhileStatement) || (block_kind == NodeKind::ForStatement) ||
+          (block_kind == NodeKind::If) || (block_kind == NodeKind::ElseIf) ||
+          (block_kind == NodeKind::Else));
+}
+
+bool Parser::ParseBlock(BlockNodePtr const &block_node)
+{
   do
   {
     bool    quit  = false;
@@ -101,15 +131,48 @@ bool Parser::ParseBlock(BlockNode &node)
       child = ParsePersistentStatement();
       break;
     }
+    case Token::Kind::Contract:
+    {
+      child = ParseContract();
+      break;
+    }
+    case Token::Kind::EndContract:
+    {
+      if (block_node->node_kind == NodeKind::ContractDefinition)
+      {
+        quit  = true;
+        state = true;
+        break;
+      }
+      AddError("no matching 'contract'");
+      break;
+    }
+    case Token::Kind::Struct:
+    {
+      child = ParseStructDefinition();
+      break;
+    }
+    case Token::Kind::EndStruct:
+    {
+      if (block_node->node_kind == NodeKind::StructDefinition)
+      {
+        quit  = true;
+        state = true;
+        break;
+      }
+      AddError("no matching 'struct'");
+      break;
+    }
     case Token::Kind::AnnotationIdentifier:
     case Token::Kind::Function:
     {
-      child = ParseFunctionDefinition();
+      child = ParseFunction();
       break;
     }
     case Token::Kind::EndFunction:
     {
-      if (node.node_kind == NodeKind::FunctionDefinitionStatement)
+      if ((block_node->node_kind == NodeKind::MemberFunctionDefinition) ||
+          (block_node->node_kind == NodeKind::FreeFunctionDefinition))
       {
         quit  = true;
         state = true;
@@ -125,7 +188,7 @@ bool Parser::ParseBlock(BlockNode &node)
     }
     case Token::Kind::EndWhile:
     {
-      if (node.node_kind == NodeKind::WhileStatement)
+      if (block_node->node_kind == NodeKind::WhileStatement)
       {
         quit  = true;
         state = true;
@@ -141,7 +204,7 @@ bool Parser::ParseBlock(BlockNode &node)
     }
     case Token::Kind::EndFor:
     {
-      if (node.node_kind == NodeKind::ForStatement)
+      if (block_node->node_kind == NodeKind::ForStatement)
       {
         quit  = true;
         state = true;
@@ -158,19 +221,33 @@ bool Parser::ParseBlock(BlockNode &node)
     case Token::Kind::ElseIf:
     case Token::Kind::Else:
     {
-      if ((node.node_kind == NodeKind::If) || (node.node_kind == NodeKind::ElseIf))
+      if ((block_node->node_kind == NodeKind::If) || (block_node->node_kind == NodeKind::ElseIf))
       {
         quit  = true;
         state = true;
         break;
       }
       AddError("no matching 'if' or 'elseif'");
+      // Skip the block with error reporting switched off
+      bool         is_elseif      = token_->kind == Token::Kind::ElseIf;
+      NodeKind     temp_node_kind = is_elseif ? NodeKind::ElseIf : NodeKind::Else;
+      BlockNodePtr temp_node      = CreateBlockNode(temp_node_kind, token_->text, token_->line);
+      blocks_.push_back({temp_node, false});
+      if (is_elseif)
+      {
+        ExpressionNodePtr expression_node = ParseConditionalExpression();
+        if (!expression_node)
+        {
+          GoToNextStatement();
+        }
+      }
+      ParseBlock(temp_node);
       break;
     }
     case Token::Kind::EndIf:
     {
-      if ((node.node_kind == NodeKind::If) || (node.node_kind == NodeKind::ElseIf) ||
-          (node.node_kind == NodeKind::Else))
+      if ((block_node->node_kind == NodeKind::If) || (block_node->node_kind == NodeKind::ElseIf) ||
+          (block_node->node_kind == NodeKind::Else))
       {
         quit  = true;
         state = true;
@@ -186,7 +263,7 @@ bool Parser::ParseBlock(BlockNode &node)
     }
     case Token::Kind::Var:
     {
-      child = ParseVarStatement();
+      child = ParseVar();
       break;
     }
     case Token::Kind::Return:
@@ -207,7 +284,7 @@ bool Parser::ParseBlock(BlockNode &node)
     case Token::Kind::EndOfInput:
     {
       quit = true;
-      if (node.node_kind == NodeKind::File)
+      if (block_node->node_kind == NodeKind::File)
       {
         state = true;
       }
@@ -228,8 +305,8 @@ bool Parser::ParseBlock(BlockNode &node)
     if (quit)
     {
       // Store information on the block terminator
-      node.block_terminator_text = token_->text;
-      node.block_terminator_line = token_->line;
+      block_node->block_terminator_text = token_->text;
+      block_node->block_terminator_line = token_->line;
       blocks_.pop_back();
       return state;
     }
@@ -241,20 +318,19 @@ bool Parser::ParseBlock(BlockNode &node)
       GoToNextStatement();
       continue;
     }
-    node.block_children.push_back(std::move(child));
+    block_node->block_children.push_back(std::move(child));
   } while (true);
 }
 
 NodePtr Parser::ParsePersistentStatement()
 {
-  NodePtr persistent_statement_node =
+  Block const    block      = blocks_.back();
+  NodeKind const block_kind = block.node->node_kind;
+  NodePtr        persistent_statement_node =
       CreateBasicNode(NodeKind::PersistentStatement, token_->text, token_->line);
-  NodeKind const block_kind = blocks_.back();
   if (block_kind != NodeKind::File)
   {
     AddError("persistent statement only permitted at topmost scope");
-    // Move one token on so GoToNextStatement() can work properly
-    Next();
     return nullptr;
   }
   Next();
@@ -283,7 +359,7 @@ NodePtr Parser::ParsePersistentStatement()
     return nullptr;
   }
   ExpressionNodePtr type_node = ParseType();
-  if (type_node == nullptr)
+  if (!type_node)
   {
     return nullptr;
   }
@@ -299,142 +375,287 @@ NodePtr Parser::ParsePersistentStatement()
   return persistent_statement_node;
 }
 
-BlockNodePtr Parser::ParseFunctionDefinition()
+NodePtr Parser::ParseContract()
+{
+  Block const    block      = blocks_.back();
+  NodeKind const block_kind = block.node->node_kind;
+  NodePtr        child;
+  if (IsCodeBlock(block_kind))
+  {
+    child = ParseContractStatement();
+  }
+  else
+  {
+    child = ParseContractDefinition();
+  }
+  return child;
+}
+
+NodePtr Parser::ParseFunction()
+{
+  Block const    block      = blocks_.back();
+  NodeKind const block_kind = block.node->node_kind;
+  NodePtr        child;
+  if (block_kind == NodeKind::ContractDefinition)
+  {
+    child = ParseContractFunction();
+  }
+  else if (block_kind == NodeKind::StructDefinition)
+  {
+    child = ParseMemberFunctionDefinition();
+  }
+  else
+  {
+    child = ParseFreeFunctionDefinition();
+  }
+  return child;
+}
+
+BlockNodePtr Parser::ParseContractDefinition()
+{
+  Block const    block      = blocks_.back();
+  NodeKind const block_kind = block.node->node_kind;
+  BlockNodePtr   contract_definition_node =
+      CreateBlockNode(NodeKind::ContractDefinition, token_->text, token_->line);
+  blocks_.push_back({contract_definition_node, block.error_reporting_enabled});
+  if (block_kind != NodeKind::File)
+  {
+    AddError("contract definition only permitted at topmost scope");
+    blocks_.back().error_reporting_enabled = false;
+  }
+  Next();
+  if (token_->kind == Token::Kind::Identifier)
+  {
+    ExpressionNodePtr contract_name_node =
+        CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+    contract_definition_node->children.push_back(std::move(contract_name_node));
+  }
+  else
+  {
+    AddError("expected identifier");
+  }
+  bool parsed = ParseBlock(contract_definition_node);
+  return parsed ? contract_definition_node : nullptr;
+}
+
+NodePtr Parser::ParseContractFunction()
 {
   NodePtr annotations_node;
   if (token_->kind == Token::Kind::AnnotationIdentifier)
   {
     annotations_node = ParseAnnotations();
-    if (annotations_node)
+    if (!annotations_node)
     {
-      if (token_->kind != Token::Kind::Function)
-      {
-        AddError("");
-        annotations_node = nullptr;
-      }
+      SkipAnnotations();
+      return nullptr;
     }
-    if (annotations_node == nullptr)
+    if (token_->kind != Token::Kind::Function)
     {
-      while ((token_->kind != Token::Kind::EndOfInput) && (token_->kind != Token::Kind::Function))
-      {
-        Next();
-      }
-      if (token_->kind == Token::Kind::EndOfInput)
-      {
-        return nullptr;
-      }
+      AddError("unexpected annotation(s)");
+      Undo();
+      return nullptr;
+    }
+  }
+  NodePtr contract_function_node =
+      CreateBasicNode(NodeKind::ContractFunction, token_->text, token_->line);
+  // NOTE: the annotations node is legitimately null if no annotations are supplied
+  contract_function_node->children.push_back(annotations_node);
+  if (!ParsePrototype(contract_function_node))
+  {
+    return nullptr;
+  }
+  Next();
+  if (token_->kind != Token::Kind::SemiColon)
+  {
+    AddError("expected ';'");
+    return nullptr;
+  }
+  return contract_function_node;
+}
+
+BlockNodePtr Parser::ParseStructDefinition()
+{
+  Block const    block      = blocks_.back();
+  NodeKind const block_kind = block.node->node_kind;
+  BlockNodePtr   struct_definition_node =
+      CreateBlockNode(NodeKind::StructDefinition, token_->text, token_->line);
+  blocks_.push_back({struct_definition_node, block.error_reporting_enabled});
+  if (block_kind != NodeKind::File)
+  {
+    AddError("struct definition only permitted at topmost scope");
+    blocks_.back().error_reporting_enabled = false;
+  }
+  Next();
+  if (token_->kind == Token::Kind::Identifier)
+  {
+    ExpressionNodePtr struct_name_node =
+        CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+    struct_definition_node->children.push_back(std::move(struct_name_node));
+  }
+  else
+  {
+    AddError("expected identifier");
+  }
+  bool parsed = ParseBlock(struct_definition_node);
+  return parsed ? struct_definition_node : nullptr;
+}
+
+BlockNodePtr Parser::ParseMemberFunctionDefinition()
+{
+  Block const block = blocks_.back();
+  if (token_->kind == Token::Kind::AnnotationIdentifier)
+  {
+    AddError("unexpected annotation(s)");
+    SkipAnnotations();
+    return nullptr;
+  }
+  BlockNodePtr function_definition_node =
+      CreateBlockNode(NodeKind::MemberFunctionDefinition, token_->text, token_->line);
+  blocks_.push_back({function_definition_node, block.error_reporting_enabled});
+  // NOTE: the annotations node is legitimately null because there are no annotations
+  function_definition_node->children.push_back(nullptr);
+  if (!ParsePrototype(function_definition_node))
+  {
+    GoToNextStatement();
+  }
+  bool parsed = ParseBlock(function_definition_node);
+  return parsed ? function_definition_node : nullptr;
+}
+
+BlockNodePtr Parser::ParseFreeFunctionDefinition()
+{
+  Block const    block        = blocks_.back();
+  NodeKind const block_kind   = block.node->node_kind;
+  bool const     is_top_level = (block_kind == NodeKind::File);
+  NodePtr        annotations_node;
+  if (token_->kind == Token::Kind::AnnotationIdentifier)
+  {
+    if (!is_top_level)
+    {
+      AddError("unexpected annotation(s)");
+      SkipAnnotations();
+      return nullptr;
+    }
+    annotations_node = ParseAnnotations();
+    if (!annotations_node)
+    {
+      SkipAnnotations();
+      return nullptr;
+    }
+    if (token_->kind != Token::Kind::Function)
+    {
+      AddError("unexpected annotation(s)");
+      Undo();
+      return nullptr;
     }
   }
   BlockNodePtr function_definition_node =
-      CreateBlockNode(NodeKind::FunctionDefinitionStatement, token_->text, token_->line);
+      CreateBlockNode(NodeKind::FreeFunctionDefinition, token_->text, token_->line);
+  blocks_.push_back({function_definition_node, block.error_reporting_enabled});
+  if (!is_top_level)
+  {
+    AddError("function definition only permitted at topmost scope");
+    blocks_.back().error_reporting_enabled = false;
+  }
   // NOTE: the annotations node is legitimately null if no annotations are supplied
   function_definition_node->children.push_back(annotations_node);
-  bool ok = false;
-  do
+  if (!ParsePrototype(function_definition_node))
   {
-    NodeKind const block_kind = blocks_.back();
-    if (block_kind != NodeKind::File)
+    GoToNextStatement();
+  }
+  bool parsed = ParseBlock(function_definition_node);
+  return parsed ? function_definition_node : nullptr;
+}
+
+bool Parser::ParsePrototype(NodePtr const &prototype_node)
+{
+  Next();
+  if (token_->kind != Token::Kind::Identifier)
+  {
+    AddError("expected identifier");
+    return false;
+  }
+  ExpressionNodePtr function_name_node =
+      CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+  prototype_node->children.push_back(function_name_node);
+  Next();
+  if (token_->kind != Token::Kind::LeftParenthesis)
+  {
+    AddError("expected '('");
+    return false;
+  }
+  Next();
+  if (token_->kind != Token::Kind::RightParenthesis)
+  {
+    bool inner_ok = false;
+    int  count    = 0;
+    do
     {
-      AddError("local function definitions are not permitted");
-      break;
-    }
-    Next();
-    if (token_->kind != Token::Kind::Identifier)
-    {
-      AddError("expected function name");
-      break;
-    }
-    ExpressionNodePtr identifier_node =
-        CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
-    function_definition_node->children.push_back(std::move(identifier_node));
-    Next();
-    if (token_->kind != Token::Kind::LeftParenthesis)
-    {
-      AddError("expected '('");
-      break;
-    }
-    Next();
-    if (token_->kind != Token::Kind::RightParenthesis)
-    {
-      bool inner_ok = false;
-      int  count    = 0;
-      do
+      if (token_->kind != Token::Kind::Identifier)
       {
-        if (token_->kind != Token::Kind::Identifier)
+        if (count != 0)
         {
-          if (count)
-          {
-            AddError("expected parameter name");
-          }
-          else
-          {
-            AddError("expected parameter name or ')'");
-          }
-          break;
+          AddError("expected identifier");
         }
-        ExpressionNodePtr parameter_node =
-            CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
-        function_definition_node->children.push_back(std::move(parameter_node));
-        Next();
-        if (token_->kind != Token::Kind::Colon)
+        else
         {
-          AddError("expected ':'");
-          break;
+          AddError("expected identifier or ')'");
         }
-        ExpressionNodePtr type_node = ParseType();
-        if (type_node == nullptr)
-        {
-          break;
-        }
-        function_definition_node->children.push_back(std::move(type_node));
-        Next();
-        if (token_->kind == Token::Kind::RightParenthesis)
-        {
-          inner_ok = true;
-          break;
-        }
-        if (token_->kind != Token::Kind::Comma)
-        {
-          AddError("expected ',' or ')'");
-          break;
-        }
-        Next();
-        ++count;
-      } while (true);
-      if (!inner_ok)
+        break;
+      }
+      ExpressionNodePtr parameter_node =
+          CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+      prototype_node->children.push_back(parameter_node);
+      Next();
+      if (token_->kind != Token::Kind::Colon)
+      {
+        AddError("expected ':'");
+        break;
+      }
+      ExpressionNodePtr parameter_type_node = ParseType();
+      if (parameter_type_node == nullptr)
       {
         break;
       }
-    }
-    // Scan for optional return type
-    ExpressionNodePtr return_type_node;
-    Next();
-    if (token_->kind == Token::Kind::Colon)
-    {
-      return_type_node = ParseType();
-      if (return_type_node == nullptr)
+      prototype_node->children.push_back(parameter_type_node);
+      Next();
+      if (token_->kind == Token::Kind::RightParenthesis)
       {
+        inner_ok = true;
         break;
       }
-    }
-    else
+      if (token_->kind != Token::Kind::Comma)
+      {
+        AddError("expected ',' or ')'");
+        break;
+      }
+      Next();
+      ++count;
+    } while (true);
+    if (!inner_ok)
     {
-      Undo();
+      return false;
     }
-    // NOTE: the return type node is legitimately null if no return type ia supplied
-    function_definition_node->children.push_back(return_type_node);
-    ok = true;
-  } while (false);
-  if (!ok)
-  {
-    SkipFunctionDefinition();
-    return nullptr;
   }
-  if (!ParseBlock(*function_definition_node))
+  // Scan for optional return type
+  ExpressionNodePtr return_type_node;
+  Next();
+  if (token_->kind == Token::Kind::Colon)
   {
-    return nullptr;
+    return_type_node = ParseType();
+    if (return_type_node == nullptr)
+    {
+      return false;
+    }
   }
-  return function_definition_node;
+  else
+  {
+    Undo();
+  }
+  // NOTE: the return type node is legitimately null if no return type is supplied
+  prototype_node->children.push_back(return_type_node);
+
+  return true;
 }
 
 NodePtr Parser::ParseAnnotations()
@@ -443,7 +664,7 @@ NodePtr Parser::ParseAnnotations()
   do
   {
     NodePtr annotation_node = ParseAnnotation();
-    if (annotation_node == nullptr)
+    if (!annotation_node)
     {
       return nullptr;
     }
@@ -582,47 +803,217 @@ ExpressionNodePtr Parser::ParseAnnotationLiteral()
   return node;
 }
 
+void Parser::SkipAnnotations()
+{
+  bool first = true;
+  while ((token_->kind != Token::Kind::EndOfInput) && (token_->kind != Token::Kind::SemiColon))
+  {
+    if (IsStatementKeyword(token_->kind))
+    {
+      if (!first)
+      {
+        Undo();
+        return;
+      }
+    }
+    Next();
+    first = false;
+  }
+}
+
 BlockNodePtr Parser::ParseWhileStatement()
 {
-  NodeKind const block_kind = blocks_.back();
-  if (block_kind == NodeKind::File)
-  {
-    AddError("while loop not permitted at topmost scope");
-    // Move one token on so GoToNextStatement() can work properly
-    Next();
-    return nullptr;
-  }
-  BlockNodePtr while_statement_node =
+  Block const    block      = blocks_.back();
+  NodeKind const block_kind = block.node->node_kind;
+  BlockNodePtr   while_statement_node =
       CreateBlockNode(NodeKind::WhileStatement, token_->text, token_->line);
+  blocks_.push_back({while_statement_node, block.error_reporting_enabled});
+  if (!IsCodeBlock(block_kind))
+  {
+    AddError("while loop not permitted outside of a function");
+    blocks_.back().error_reporting_enabled = false;
+  }
   ExpressionNodePtr expression = ParseConditionalExpression();
-  if (expression == nullptr)
+  if (expression)
   {
-    return nullptr;
+    while_statement_node->children.push_back(std::move(expression));
   }
-  while_statement_node->children.push_back(std::move(expression));
-  if (!ParseBlock(*while_statement_node))
+  else
   {
-    return nullptr;
+    GoToNextStatement();
   }
-  return while_statement_node;
+  bool parsed = ParseBlock(while_statement_node);
+  return parsed ? while_statement_node : nullptr;
 }
 
 BlockNodePtr Parser::ParseForStatement()
 {
-  NodeKind const block_kind = blocks_.back();
-  if (block_kind == NodeKind::File)
+  Block const    block      = blocks_.back();
+  NodeKind const block_kind = block.node->node_kind;
+  BlockNodePtr   for_statement_node =
+      CreateBlockNode(NodeKind::ForStatement, token_->text, token_->line);
+  blocks_.push_back({for_statement_node, block.error_reporting_enabled});
+  if (!IsCodeBlock(block_kind))
   {
-    AddError("for loop not permitted at topmost scope");
-    // Move one token on so GoToNextStatement() can work properly
+    AddError("for loop not permitted outside of a function");
+    blocks_.back().error_reporting_enabled = false;
+  }
+  bool ok = false;
+  do
+  {
     Next();
+    if (token_->kind != Token::Kind::LeftParenthesis)
+    {
+      AddError("expected '('");
+      break;
+    }
+    Next();
+    if (token_->kind != Token::Kind::Identifier)
+    {
+      AddError("expected identifier");
+      break;
+    }
+    ExpressionNodePtr identifier_node =
+        CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+    for_statement_node->children.push_back(std::move(identifier_node));
+    Next();
+    if (token_->kind != Token::Kind::In)
+    {
+      AddError("expected 'in'");
+      break;
+    }
+    ExpressionNodePtr part1 = ParseExpression();
+    if (part1 == nullptr)
+    {
+      break;
+    }
+    for_statement_node->children.push_back(std::move(part1));
+    Next();
+    if (token_->kind != Token::Kind::Colon)
+    {
+      AddError("expected ':'");
+      break;
+    }
+    ExpressionNodePtr part2 = ParseExpression();
+    if (part2 == nullptr)
+    {
+      break;
+    }
+    for_statement_node->children.push_back(std::move(part2));
+    Next();
+    if (token_->kind == Token::Kind::Colon)
+    {
+      ExpressionNodePtr part3 = ParseExpression();
+      if (part3 == nullptr)
+      {
+        break;
+      }
+      for_statement_node->children.push_back(std::move(part3));
+      Next();
+    }
+    if (token_->kind != Token::Kind::RightParenthesis)
+    {
+      AddError("expected ')'");
+      break;
+    }
+    ok = true;
+  } while (false);
+  if (!ok)
+  {
+    GoToNextStatement();
+  }
+  bool parsed = ParseBlock(for_statement_node);
+  return parsed ? for_statement_node : nullptr;
+}
+
+NodePtr Parser::ParseIfStatement()
+{
+  Block const    block      = blocks_.back();
+  NodeKind const block_kind = block.node->node_kind;
+  NodePtr if_statement_node = CreateBasicNode(NodeKind::IfStatement, token_->text, token_->line);
+  bool    if_statement_error_reporting_enabled = block.error_reporting_enabled;
+  if (!IsCodeBlock(block_kind))
+  {
+    AddError("if statement not permitted outside of a function");
+    if_statement_error_reporting_enabled = false;
+  }
+  bool ok = false;
+  do
+  {
+    if (token_->kind == Token::Kind::If)
+    {
+      BlockNodePtr if_node = CreateBlockNode(NodeKind::If, token_->text, token_->line);
+      blocks_.push_back({if_node, if_statement_error_reporting_enabled});
+      ExpressionNodePtr expression_node = ParseConditionalExpression();
+      if (expression_node)
+      {
+        if_node->children.push_back(std::move(expression_node));
+      }
+      else
+      {
+        GoToNextStatement();
+      }
+      if (!ParseBlock(if_node))
+      {
+        break;
+      }
+      if_statement_node->children.push_back(std::move(if_node));
+      continue;
+    }
+    if (token_->kind == Token::Kind::ElseIf)
+    {
+      BlockNodePtr elseif_node = CreateBlockNode(NodeKind::ElseIf, token_->text, token_->line);
+      blocks_.push_back({elseif_node, if_statement_error_reporting_enabled});
+      ExpressionNodePtr expression_node = ParseConditionalExpression();
+      if (expression_node)
+      {
+        elseif_node->children.push_back(std::move(expression_node));
+      }
+      else
+      {
+        GoToNextStatement();
+      }
+      if (!ParseBlock(elseif_node))
+      {
+        break;
+      }
+      if_statement_node->children.push_back(std::move(elseif_node));
+      continue;
+    }
+    if (token_->kind == Token::Kind::Else)
+    {
+      BlockNodePtr else_node = CreateBlockNode(NodeKind::Else, token_->text, token_->line);
+      blocks_.push_back({else_node, if_statement_error_reporting_enabled});
+      if (!ParseBlock(else_node))
+      {
+        break;
+      }
+      if_statement_node->children.push_back(std::move(else_node));
+      continue;
+    }
+    ok = true;
+    break;
+  } while (true);
+  return ok ? if_statement_node : nullptr;
+}
+
+NodePtr Parser::ParseContractStatement()
+{
+  NodePtr contract_statement_node =
+      CreateBasicNode(NodeKind::ContractStatement, token_->text, token_->line);
+  Next();
+  if (token_->kind != Token::Kind::Identifier)
+  {
+    AddError("expected identifier");
     return nullptr;
   }
-  BlockNodePtr for_statement_node =
-      CreateBlockNode(NodeKind::ForStatement, token_->text, token_->line);
+  ExpressionNodePtr contract_variable_node =
+      CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+  contract_statement_node->children.push_back(contract_variable_node);
   Next();
-  if (token_->kind != Token::Kind::LeftParenthesis)
+  if (token_->kind != Token::Kind::Assign)
   {
-    AddError("expected '('");
+    AddError("expected '='");
     return nullptr;
   }
   Next();
@@ -631,126 +1022,46 @@ BlockNodePtr Parser::ParseForStatement()
     AddError("expected identifier");
     return nullptr;
   }
-  ExpressionNodePtr identifier_node =
+  ExpressionNodePtr contract_type_node =
       CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
-  for_statement_node->children.push_back(std::move(identifier_node));
+  contract_statement_node->children.push_back(contract_type_node);
   Next();
-  if (token_->kind != Token::Kind::In)
+  if (token_->kind != Token::Kind::LeftParenthesis)
   {
-    AddError("expected 'in'");
+    AddError("expected '('");
     return nullptr;
   }
-  ExpressionNodePtr part1 = ParseExpression();
-  if (part1 == nullptr)
+  ExpressionNodePtr initialiser_node = ParseExpression();
+  if (!initialiser_node)
   {
     return nullptr;
   }
-  for_statement_node->children.push_back(std::move(part1));
+  contract_statement_node->children.push_back(initialiser_node);
   Next();
-  if (token_->kind != Token::Kind::Colon)
-  {
-    AddError("expected ':'");
-    return nullptr;
-  }
-  ExpressionNodePtr part2 = ParseExpression();
-  if (part2 == nullptr)
-  {
-    return nullptr;
-  }
-  for_statement_node->children.push_back(std::move(part2));
-  Next();
-  if (token_->kind == Token::Kind::Colon)
-  {
-    ExpressionNodePtr part3 = ParseExpression();
-    if (part3 == nullptr)
-    {
-      return nullptr;
-    }
-    for_statement_node->children.push_back(std::move(part3));
-    Next();
-  }
   if (token_->kind != Token::Kind::RightParenthesis)
   {
     AddError("expected ')'");
     return nullptr;
   }
-  if (!ParseBlock(*for_statement_node))
+  Next();
+  if (token_->kind != Token::Kind::SemiColon)
   {
+    AddError("expected ';'");
     return nullptr;
   }
-  return for_statement_node;
-}
-
-NodePtr Parser::ParseIfStatement()
-{
-  NodeKind const block_kind = blocks_.back();
-  if (block_kind == NodeKind::File)
-  {
-    AddError("if statement not permitted at topmost scope");
-    // Move one token on so GoToNextStatement() can work properly
-    Next();
-    return nullptr;
-  }
-  NodePtr if_statement_node = CreateBasicNode(NodeKind::IfStatement, token_->text, token_->line);
-  do
-  {
-    if (token_->kind == Token::Kind::If)
-    {
-      BlockNodePtr      if_node         = CreateBlockNode(NodeKind::If, token_->text, token_->line);
-      ExpressionNodePtr expression_node = ParseConditionalExpression();
-      if (expression_node == nullptr)
-      {
-        return nullptr;
-      }
-      if_node->children.push_back(std::move(expression_node));
-      if (!ParseBlock(*if_node))
-      {
-        return nullptr;
-      }
-      if_statement_node->children.push_back(std::move(if_node));
-      continue;
-    }
-    else if (token_->kind == Token::Kind::ElseIf)
-    {
-      BlockNodePtr      elseif_node = CreateBlockNode(NodeKind::ElseIf, token_->text, token_->line);
-      ExpressionNodePtr expression_node = ParseConditionalExpression();
-      if (expression_node == nullptr)
-      {
-        return nullptr;
-      }
-      elseif_node->children.push_back(std::move(expression_node));
-      if (!ParseBlock(*elseif_node))
-      {
-        return nullptr;
-      }
-      if_statement_node->children.push_back(std::move(elseif_node));
-      continue;
-    }
-    else if (token_->kind == Token::Kind::Else)
-    {
-      BlockNodePtr else_node = CreateBlockNode(NodeKind::Else, token_->text, token_->line);
-      if (!ParseBlock(*else_node))
-      {
-        return nullptr;
-      }
-      if_statement_node->children.push_back(std::move(else_node));
-      continue;
-    }
-    return if_statement_node;
-  } while (true);
+  return contract_statement_node;
 }
 
 NodePtr Parser::ParseUseStatement()
 {
-  NodeKind const block_kind = blocks_.back();
-  if (block_kind == NodeKind::File)
+  Block const    block       = blocks_.back();
+  NodeKind const block_kind  = block.node->node_kind;
+  NodePtr use_statement_node = CreateBasicNode(NodeKind::UseStatement, token_->text, token_->line);
+  if (!IsCodeBlock(block_kind))
   {
-    AddError("use statement not permitted at topmost scope");
-    // Move one token on so GoToNextStatement() can work properly
-    Next();
+    AddError("use statement not permitted outside of a function");
     return nullptr;
   }
-  NodePtr use_statement_node = CreateBasicNode(NodeKind::UseStatement, token_->text, token_->line);
   Next();
   if (token_->kind != Token::Kind::Identifier)
   {
@@ -821,42 +1132,84 @@ NodePtr Parser::ParseUseStatement()
     use_statement_node->children.push_back(alias_name_node);
     return use_statement_node;
   }
-  else
+  if ((block_kind != NodeKind::MemberFunctionDefinition) &&
+      (block_kind != NodeKind::FreeFunctionDefinition))
   {
-    if (block_kind != NodeKind::FunctionDefinitionStatement)
-    {
-      AddError("use-any statement only permitted at function scope");
-      // Move one token on so GoToNextStatement() can work properly
-      Next();
-      return nullptr;
-    }
-    use_statement_node->node_kind = NodeKind::UseAnyStatement;
-    Next();
-    if (token_->kind != Token::Kind::SemiColon)
-    {
-      AddError("expected ';'");
-      return nullptr;
-    }
-    return use_statement_node;
-  }
-}
-
-NodePtr Parser::ParseVarStatement()
-{
-  NodeKind const block_kind = blocks_.back();
-  if (block_kind == NodeKind::File)
-  {
-    AddError("variable declaration not permitted at topmost scope");
-    // Move one token on so GoToNextStatement() can work properly
-    Next();
+    AddError("use-any statement only permitted at function scope");
     return nullptr;
   }
+  use_statement_node->node_kind = NodeKind::UseAnyStatement;
+  Next();
+  if (token_->kind != Token::Kind::SemiColon)
+  {
+    AddError("expected ';'");
+    return nullptr;
+  }
+  return use_statement_node;
+}
+
+NodePtr Parser::ParseVar()
+{
+  Block const    block      = blocks_.back();
+  NodeKind const block_kind = block.node->node_kind;
+  NodePtr        child;
+  if (IsCodeBlock(block_kind))
+  {
+    child = ParseLocalVarStatement();
+  }
+  else if (block_kind == NodeKind::StructDefinition)
+  {
+    child = ParseMemberVarStatement();
+  }
+  else
+  {
+    AddError("variable declaration not permitted at this scope");
+  }
+  return child;
+}
+
+NodePtr Parser::ParseMemberVarStatement()
+{
   NodePtr var_statement_node =
-      CreateBasicNode(NodeKind::VarDeclarationStatement, token_->text, token_->line);
+      CreateBasicNode(NodeKind::MemberVarDeclarationStatement, token_->text, token_->line);
   Next();
   if (token_->kind != Token::Kind::Identifier)
   {
-    AddError("expected variable name");
+    AddError("expected identifier");
+    return nullptr;
+  }
+  ExpressionNodePtr identifier_node =
+      CreateExpressionNode(NodeKind::Identifier, token_->text, token_->line);
+  var_statement_node->children.push_back(std::move(identifier_node));
+  Next();
+  if (token_->kind != Token::Kind::Colon)
+  {
+    AddError("expected ':'");
+    return nullptr;
+  }
+  ExpressionNodePtr type_node = ParseType();
+  if (type_node == nullptr)
+  {
+    return nullptr;
+  }
+  var_statement_node->children.push_back(std::move(type_node));
+  Next();
+  if (token_->kind != Token::Kind::SemiColon)
+  {
+    AddError("expected ';'");
+    return nullptr;
+  }
+  return var_statement_node;
+}
+
+NodePtr Parser::ParseLocalVarStatement()
+{
+  NodePtr var_statement_node =
+      CreateBasicNode(NodeKind::LocalVarDeclarationStatement, token_->text, token_->line);
+  Next();
+  if (token_->kind != Token::Kind::Identifier)
+  {
+    AddError("expected identifier");
     return nullptr;
   }
   ExpressionNodePtr identifier_node =
@@ -910,27 +1263,26 @@ NodePtr Parser::ParseVarStatement()
   }
   if (!type)
   {
-    var_statement_node->node_kind = NodeKind::VarDeclarationTypelessAssignmentStatement;
+    var_statement_node->node_kind = NodeKind::LocalVarDeclarationTypelessAssignmentStatement;
   }
   else if (assign)
   {
-    var_statement_node->node_kind = NodeKind::VarDeclarationTypedAssignmentStatement;
+    var_statement_node->node_kind = NodeKind::LocalVarDeclarationTypedAssignmentStatement;
   }
   return var_statement_node;
 }
 
 NodePtr Parser::ParseReturnStatement()
 {
-  NodeKind const block_kind = blocks_.back();
-  if (block_kind == NodeKind::File)
+  Block const    block      = blocks_.back();
+  NodeKind const block_kind = block.node->node_kind;
+  NodePtr        return_statement_node =
+      CreateBasicNode(NodeKind::ReturnStatement, token_->text, token_->line);
+  if (!IsCodeBlock(block_kind))
   {
-    AddError("return statement not permitted at topmost scope");
-    // Move one token on so GoToNextStatement() can work properly
-    Next();
+    AddError("return statement not permitted outside of a function");
     return nullptr;
   }
-  NodePtr return_statement_node =
-      CreateBasicNode(NodeKind::ReturnStatement, token_->text, token_->line);
   Next();
   if (token_->kind == Token::Kind::SemiColon)
   {
@@ -959,16 +1311,15 @@ NodePtr Parser::ParseReturnStatement()
 
 NodePtr Parser::ParseBreakStatement()
 {
-  NodeKind const block_kind = blocks_.back();
-  if (block_kind == NodeKind::File)
+  Block const    block      = blocks_.back();
+  NodeKind const block_kind = block.node->node_kind;
+  NodePtr        break_statement_node =
+      CreateBasicNode(NodeKind::BreakStatement, token_->text, token_->line);
+  if (!IsCodeBlock(block_kind))
   {
-    AddError("break statement not permitted at topmost scope");
-    // Move one token on so GoToNextStatement() can work properly
-    Next();
+    AddError("break statement not permitted outside of a function");
     return nullptr;
   }
-  NodePtr break_statement_node =
-      CreateBasicNode(NodeKind::BreakStatement, token_->text, token_->line);
   Next();
   if (token_->kind != Token::Kind::SemiColon)
   {
@@ -980,16 +1331,15 @@ NodePtr Parser::ParseBreakStatement()
 
 NodePtr Parser::ParseContinueStatement()
 {
-  NodeKind const block_kind = blocks_.back();
-  if (block_kind == NodeKind::File)
+  Block const    block      = blocks_.back();
+  NodeKind const block_kind = block.node->node_kind;
+  NodePtr        continue_statement_node =
+      CreateBasicNode(NodeKind::ContinueStatement, token_->text, token_->line);
+  if (!IsCodeBlock(block_kind))
   {
-    AddError("continue statement not permitted at topmost scope");
-    // Move one token on so GoToNextStatement() can work properly
-    Next();
+    AddError("continue statement not permitted outside of a function");
     return nullptr;
   }
-  NodePtr continue_statement_node =
-      CreateBasicNode(NodeKind::ContinueStatement, token_->text, token_->line);
   Next();
   if (token_->kind != Token::Kind::SemiColon)
   {
@@ -1001,18 +1351,23 @@ NodePtr Parser::ParseContinueStatement()
 
 ExpressionNodePtr Parser::ParseExpressionStatement()
 {
-  NodeKind const block_kind = blocks_.back();
-  if (block_kind == NodeKind::File)
+  Block const    block      = blocks_.back();
+  NodeKind const block_kind = block.node->node_kind;
+  if (!IsCodeBlock(block_kind))
   {
     // Get the first token of the expression
     Next();
-    if (token_->kind != Token::Kind::Unknown)
+    if (token_->kind == Token::Kind::Unknown)
     {
-      AddError("expression statement not permitted at topmost scope");
+      AddError("unrecognised token");
+    }
+    else if (token_->kind == Token::Kind::UnterminatedComment)
+    {
+      AddError("unterminated comment");
     }
     else
     {
-      AddError("unrecognised token");
+      AddError("expression statement not permitted at topmost scope");
     }
     return nullptr;
   }
@@ -1075,30 +1430,35 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
   return nullptr;
 }
 
-void Parser::GoToNextStatement()
+bool Parser::IsStatementKeyword(Token::Kind kind) const
 {
-  while ((token_->kind != Token::Kind::EndOfInput) && (token_->kind != Token::Kind::SemiColon))
-  {
-    if ((token_->kind == Token::Kind::Persistent) ||
-        (token_->kind == Token::Kind::AnnotationIdentifier) ||
-        (token_->kind == Token::Kind::Function) || (token_->kind == Token::Kind::While) ||
-        (token_->kind == Token::Kind::For) || (token_->kind == Token::Kind::If) ||
-        (token_->kind == Token::Kind::Use) || (token_->kind == Token::Kind::Var) ||
-        (token_->kind == Token::Kind::Return) || (token_->kind == Token::Kind::Break) ||
-        (token_->kind == Token::Kind::Continue))
-    {
-      Undo();
-      return;
-    }
-    Next();
-  }
+  return (kind == Token::Kind::Persistent) || (kind == Token::Kind::Contract) ||
+         (kind == Token::Kind::EndContract) || (kind == Token::Kind::Struct) ||
+         (kind == Token::Kind::EndStruct) || (kind == Token::Kind::Function) ||
+         (kind == Token::Kind::EndFunction) || (kind == Token::Kind::While) ||
+         (kind == Token::Kind::EndWhile) || (kind == Token::Kind::For) ||
+         (kind == Token::Kind::EndFor) || (kind == Token::Kind::If) ||
+         (kind == Token::Kind::ElseIf) || (kind == Token::Kind::Else) ||
+         (kind == Token::Kind::EndIf) || (kind == Token::Kind::Use) || (kind == Token::Kind::Var) ||
+         (kind == Token::Kind::Return) || (kind == Token::Kind::Break) ||
+         (kind == Token::Kind::Continue);
 }
 
-void Parser::SkipFunctionDefinition()
+void Parser::GoToNextStatement()
 {
-  while ((token_->kind != Token::Kind::EndOfInput) && (token_->kind != Token::Kind::EndFunction))
+  bool first = true;
+  while ((token_->kind != Token::Kind::EndOfInput) && (token_->kind != Token::Kind::SemiColon))
   {
+    if (IsStatementKeyword(token_->kind) || (token_->kind == Token::Kind::AnnotationIdentifier))
+    {
+      if (!first)
+      {
+        Undo();
+        return;
+      }
+    }
     Next();
+    first = false;
   }
 }
 
@@ -1113,7 +1473,7 @@ ExpressionNodePtr Parser::ParseType()
   Next();
   if (token_->kind != Token::Kind::Identifier)
   {
-    AddError("expected type name");
+    AddError("expected identifier");
     return nullptr;
   }
   std::string       name = token_->text;
@@ -1238,6 +1598,10 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       parses = HandleLiteral(NodeKind::Fixed64);
       break;
 
+    case Token::Kind::Fixed128:
+      parses = HandleLiteral(NodeKind::Fixed128);
+      break;
+
     case Token::Kind::String:
       parses = HandleLiteral(NodeKind::String);
       break;
@@ -1321,8 +1685,8 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       break;
 
     case Token::Kind::LeftParenthesis:
-      parses = HandleOpener(NodeKind::ParenthesisGroup, NodeKind::Invoke,
-                            Token::Kind::RightParenthesis, ")");
+      parses =
+          HandleOpener(NodeKind::Parenthesis, NodeKind::Invoke, Token::Kind::RightParenthesis, ")");
       break;
 
     case Token::Kind::LeftSquareBracket:
@@ -1352,13 +1716,17 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     default:
       if (state_ == State::PreOperand)
       {
-        if (token_->kind != Token::Kind::Unknown)
+        if (token_->kind == Token::Kind::Unknown)
         {
-          AddError("expected expression");
+          AddError("unrecognised token");
+        }
+        else if (token_->kind == Token::Kind::UnterminatedComment)
+        {
+          AddError("unterminated comment");
         }
         else
         {
-          AddError("unrecognised token");
+          AddError("expected expression");
         }
         return nullptr;
       }
@@ -1371,7 +1739,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       return nullptr;
     }
   } while (!found_expression_terminator_);
-  if (groups_.size())
+  if (!groups_.empty())
   {
     Expr const &groupop = operators_[groups_.back()];
     AddError("expected '" + groupop.closer_token_text + "'");
@@ -1379,7 +1747,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
   }
   // Roll back so token_ is pointing at the last token of the expression
   Undo();
-  while (operators_.size())
+  while (!operators_.empty())
   {
     Expr &topop = operators_.back();
     rpn_.push_back(std::move(topop));
@@ -1387,10 +1755,9 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
   }
   // rpn_ holds the Reverse Polish Notation (aka postfix) expression
   // Here we convert the RPN to an infix expression tree
-  for (std::size_t i = 0; i < rpn_.size(); ++i)
+  for (auto &expr : rpn_)
   {
-    Expr &expr = rpn_[i];
-    if ((expr.node->node_kind == NodeKind::ParenthesisGroup) ||
+    if ((expr.node->node_kind == NodeKind::Parenthesis) ||
         (expr.node->node_kind == NodeKind::UnaryPlus))
     {
       // Just ignore these no-ops
@@ -1398,7 +1765,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     if (expr.is_operator)
     {
-      std::size_t const arity = std::size_t(expr.op_info.arity);
+      auto const        arity = std::size_t(expr.op_info.arity);
       std::size_t const size  = infix_stack_.size();
       for (std::size_t j = size - arity; j < size; ++j)
       {
@@ -1457,7 +1824,7 @@ bool Parser::ParseExpressionIdentifier(std::string &name)
     Next();
     if (token_->kind != Token::Kind::Identifier)
     {
-      AddError("expected type name");
+      AddError("expected identifier");
       return false;
     }
     std::string subtypename;
@@ -1636,7 +2003,7 @@ bool Parser::HandleCloser(bool is_conditional_expression)
     AddError("expected '" + groupop.closer_token_text + "'");
     return false;
   }
-  while (operators_.size())
+  while (!operators_.empty())
   {
     Expr &topop = operators_.back();
     if (topop.node->node_kind != groupop.node->node_kind)
@@ -1658,14 +2025,14 @@ bool Parser::HandleCloser(bool is_conditional_expression)
     else
     {
       // Empty group
-      if ((groupop.node->node_kind == NodeKind::ParenthesisGroup) ||
+      if ((groupop.node->node_kind == NodeKind::Parenthesis) ||
           (groupop.node->node_kind == NodeKind::Index))
       {
         AddError("expected expression");
         return false;
       }
     }
-    if ((groupop.node->node_kind == NodeKind::ParenthesisGroup) && (groups_.size() == 1) &&
+    if ((groupop.node->node_kind == NodeKind::Parenthesis) && (groups_.size() == 1) &&
         (is_conditional_expression))
     {
       // We've found the final closing bracket of a conditional expression
@@ -1695,13 +2062,13 @@ bool Parser::HandleComma()
     return true;
   }
   Expr const groupop = operators_[groups_.back()];
-  if (groupop.node->node_kind == NodeKind::ParenthesisGroup)
+  if (groupop.node->node_kind == NodeKind::Parenthesis)
   {
     // Commas are not allowed inside a parenthesis group
     AddError("");
     return false;
   }
-  while (operators_.size())
+  while (!operators_.empty())
   {
     Expr &topop = operators_.back();
     if (topop.node->node_kind == groupop.node->node_kind)
@@ -1720,13 +2087,13 @@ void Parser::HandleOp(NodeKind kind, OpInfo const &op_info)
 {
   NodeKind group_kind;
   bool     check_if_group_opener = false;
-  if (groups_.size())
+  if (!groups_.empty())
   {
     Expr const &groupop   = operators_[groups_.back()];
     group_kind            = groupop.node->node_kind;
     check_if_group_opener = true;
   }
-  while (operators_.size())
+  while (!operators_.empty())
   {
     Expr &topop = operators_.back();
     if ((check_if_group_opener) && (topop.node->node_kind == group_kind))
@@ -1790,8 +2157,13 @@ void Parser::AddOperand(NodeKind kind)
 
 void Parser::AddError(std::string const &message)
 {
+  Block const block = blocks_.back();
+  if (!block.error_reporting_enabled)
+  {
+    return;
+  }
   std::ostringstream stream;
-  stream << "line " << token_->line << ": ";
+  stream << filename_ << ": line " << token_->line << ": ";
   if (token_->kind != Token::Kind::EndOfInput)
   {
     stream << "error at '" << token_->text << "'";
@@ -1800,7 +2172,7 @@ void Parser::AddError(std::string const &message)
   {
     stream << "reached end-of-input";
   }
-  if (message.length())
+  if (!message.empty())
   {
     stream << ", " << message;
   }

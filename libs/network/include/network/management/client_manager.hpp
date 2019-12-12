@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/tcp/abstract_server.hpp"
 
@@ -37,19 +37,18 @@ namespace network {
 class ClientManager
 {
 public:
-  using connection_type        = typename AbstractConnection::shared_type;
-  using connection_handle_type = typename AbstractConnection::connection_handle_type;
+  using ConnectionType       = typename AbstractConnection::SharedType;
+  using ConnectionHandleType = typename AbstractConnection::ConnectionHandleType;
 
   static constexpr char const *LOGGING_NAME = "ClientManager";
 
-  ClientManager(AbstractNetworkServer &server)
+  explicit ClientManager(AbstractNetworkServer &server)
     : server_(server)
-    , clients_mutex_{}
   {}
 
-  connection_handle_type Join(connection_type client)
+  ConnectionHandleType Join(ConnectionType const &client)
   {
-    connection_handle_type handle = client->handle();
+    ConnectionHandleType handle = client->handle();
     FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is joining");
 
     FETCH_LOCK(clients_mutex_);
@@ -58,7 +57,7 @@ public:
   }
 
   // TODO(issue 28): may be risky if handle type is made small
-  void Leave(connection_handle_type handle)
+  void Leave(ConnectionHandleType handle)
   {
     FETCH_LOCK(clients_mutex_);
 
@@ -70,7 +69,7 @@ public:
     }
   }
 
-  bool Send(connection_handle_type client, message_type const &msg)
+  bool Send(ConnectionHandleType client, MessageType const &msg)
   {
     bool ret = true;
     clients_mutex_.lock();
@@ -93,7 +92,7 @@ public:
     return ret;
   }
 
-  void Broadcast(message_type const &msg)
+  void Broadcast(MessageType const &msg)
   {
     clients_mutex_.lock();
     for (auto &client : clients_)
@@ -106,7 +105,7 @@ public:
     clients_mutex_.unlock();
   }
 
-  void PushRequest(connection_handle_type client, message_type const &msg)
+  void PushRequest(ConnectionHandleType client, MessageType const &msg)
   {
     try
     {
@@ -119,7 +118,7 @@ public:
     }
   }
 
-  std::string GetAddress(connection_handle_type client)
+  std::string GetAddress(ConnectionHandleType client)
   {
     FETCH_LOCK(clients_mutex_);
     if (clients_.find(client) != clients_.end())
@@ -130,9 +129,9 @@ public:
   }
 
 private:
-  AbstractNetworkServer &                           server_;
-  std::map<connection_handle_type, connection_type> clients_;
-  Mutex                                             clients_mutex_;
+  AbstractNetworkServer &                        server_;
+  std::map<ConnectionHandleType, ConnectionType> clients_;
+  Mutex                                          clients_mutex_;
 };
 }  // namespace network
 }  // namespace fetch

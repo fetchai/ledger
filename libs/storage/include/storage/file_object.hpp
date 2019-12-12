@@ -78,7 +78,7 @@ struct FileBlockType
   };
 
   // Data
-  uint8_t data[CAPACITY];
+  uint8_t data[CAPACITY]{};
 };
 
 /**
@@ -100,16 +100,16 @@ template <typename S = VersionedRandomAccessStack<FileBlockType<>>>
 class FileObject
 {
 public:
-  using stack_type  = S;
-  using block_type  = typename stack_type::type;
-  using hasher_type = crypto::SHA256;
+  using StackType  = S;
+  using BlockType  = typename StackType::type;
+  using HasherType = crypto::SHA256;
 
   static constexpr char const *LOGGING_NAME = "FileObject";
 
   FileObject(FileObject const &other) = delete;
   FileObject operator=(FileObject const &other) = delete;
-  FileObject(FileObject &&other)                = default;
-  FileObject &operator=(FileObject &&other) = default;
+  FileObject(FileObject &&other)                = default;  // NOLINT
+  FileObject &operator=(FileObject &&other) = default;      // NOLINT
 
   FileObject();
   virtual ~FileObject();
@@ -151,7 +151,7 @@ public:
 
   byte_array::ConstByteArray Hash();
 
-  void UpdateHash(hasher_type &hasher);
+  void UpdateHash(HasherType &hasher);
 
   bool SeekFile(std::size_t position);
 
@@ -163,8 +163,8 @@ public:
 
   bool VerifyConsistency(std::vector<uint64_t> const &ids);
 
-  stack_type *stack();
-  stack_type &underlying_stack();
+  StackType *stack();
+  StackType &underlying_stack();
 
   void UpdateVariables()
   {
@@ -173,7 +173,7 @@ public:
   }
 
 private:
-  stack_type stack_;
+  StackType stack_;
 
   std::vector<std::vector<std::tuple<uint64_t, uint64_t, uint64_t>>> linked_lists;
 
@@ -186,7 +186,7 @@ private:
   uint64_t length_            = 0;  // length in bytes of file.
                                     // can be found from Get(id) right - any point in keeping?
 
-  // TODO(private 1067): block_type -> BlockType etc.
+  // TODO(private 1067): BlockType -> BlockType etc.
   // TODO(private 1067): possibly some performance benefits by caching blocks like the free block
   // here
   static constexpr uint64_t free_block_index_ = 0;  // Location of the meta 'free block'
@@ -207,20 +207,18 @@ private:
 
   void ReadWriteHelper(uint8_t const *bytes, uint64_t num, Action action);
 
-  void Get(uint64_t index, block_type &block);
+  void Get(uint64_t index, BlockType &block);
 
-  void Set(uint64_t index, block_type const &block);
+  void Set(uint64_t index, BlockType const &block);
 };
 
 template <typename S>
 FileObject<S>::FileObject() = default;
 
+// TODO(private 1067): consistency in storage : don't flush in destructors, except the highest
+// level storage code.
 template <typename S>
-FileObject<S>::~FileObject()
-{
-  // TODO(private 1067): consistency in storage : don't flush in destructors, except the highest
-  // level storage code.
-}
+FileObject<S>::~FileObject() = default;
 
 template <typename S>
 void FileObject<S>::Flush(bool lazy)
@@ -231,10 +229,10 @@ void FileObject<S>::Flush(bool lazy)
 template <typename S>
 void FileObject<S>::Seek(uint64_t index)
 {
-  byte_index_global_    = index;
-  byte_index_           = index % block_type::CAPACITY;
-  uint64_t   desired_bn = index / block_type::CAPACITY;
-  block_type block;
+  byte_index_global_   = index;
+  byte_index_          = index % BlockType::CAPACITY;
+  uint64_t  desired_bn = index / BlockType::CAPACITY;
+  BlockType block;
 
   // Optionally start seeking from the first block if that's faster
   if (desired_bn < block_number_ && block_number_ - desired_bn < desired_bn)
@@ -245,20 +243,22 @@ void FileObject<S>::Seek(uint64_t index)
   // need to find index of this block on stack
   while (block_number_ != desired_bn)
   {
-    if (block_number_ == block_type::UNDEFINED)
+    if (block_number_ == BlockType::UNDEFINED)
     {
       throw StorageException("Attempt to seek to an invalid block");
     }
 
-    Get(block_number_, block);
+    Get(block_index_, block);
 
     if (desired_bn < block_number_)
     {
-      block_number_ = block.previous;
+      block_index_ = block.previous;
+      block_number_--;
     }
     else
     {
-      block_number_ = block.next;
+      block_index_ = block.next;
+      block_number_++;
     }
   }
 }
@@ -275,7 +275,7 @@ void FileObject<S>::Resize(uint64_t size)
 {
   // Reset variables which might otherwise point to invalid locations
   Seek(0);
-  block_type block;
+  BlockType block;
 
   // Update block 0 with new size
   {
@@ -287,7 +287,7 @@ void FileObject<S>::Resize(uint64_t size)
   }
 
   // Traverse the blocks until the target blocks criteria is fulfilled.
-  uint64_t target_blocks = platform::DivideCeil<uint64_t>(size, block_type::CAPACITY);
+  auto target_blocks = platform::DivideCeil<uint64_t>(size, BlockType::CAPACITY);
 
   // corner case when size is 0 - we need at least one block per file
   target_blocks = target_blocks == 0 ? 1 : target_blocks;
@@ -303,7 +303,7 @@ void FileObject<S>::Resize(uint64_t size)
     block_index              = block.next;
 
     // if we reach the end of the LL, append as many blocks as we need
-    if (block.next == block_type::UNDEFINED && block_number != target_blocks)
+    if (block.next == BlockType::UNDEFINED && block_number != target_blocks)
     {
       block.next = GetFreeBlocks(block_index_tmp, target_blocks - block_number);
       Set(block_index_tmp, block);
@@ -324,7 +324,7 @@ void FileObject<S>::Resize(uint64_t size)
 
       // Update last block to terminate correctly
       Get(block_index_tmp, block);
-      block.next = block_type::UNDEFINED;
+      block.next = BlockType::UNDEFINED;
       Set(block_index_tmp, block);
       break;
     }
@@ -356,13 +356,12 @@ void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t num, Action a
 
   uint64_t bytes_left_to_write = num;
   uint64_t bytes_to_write_in_block =
-      std::min(block_type::CAPACITY - byte_index_, bytes_left_to_write);
-  block_type block_being_written;
-  uint64_t   block_index_being_written = block_index_;
-  uint64_t   byte_index                = byte_index_;
-  uint64_t   bytes_offset              = 0;
+      std::min(BlockType::CAPACITY - byte_index_, bytes_left_to_write);
+  BlockType block_being_written;
+  uint64_t  block_index_being_written = block_index_;
+  uint64_t  bytes_offset              = 0;
 
-  assert(bytes_to_write_in_block <= block_type::CAPACITY);
+  assert(bytes_to_write_in_block <= BlockType::CAPACITY);
 
   while (bytes_left_to_write > 0)
   {
@@ -374,22 +373,23 @@ void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t num, Action a
     switch (action)
     {
     case Action::READ:
-      memcpy((uint8_t *)(bytes + bytes_offset), block_being_written.data + byte_index,
+      // NOLINTNEXTLINE
+      memcpy((uint8_t *)(bytes + bytes_offset), block_being_written.data + byte_index_,
              bytes_to_write_in_block);
       break;
     case Action::WRITE:
-      memcpy(block_being_written.data + byte_index, bytes + bytes_offset, bytes_to_write_in_block);
+      memcpy(block_being_written.data + byte_index_, bytes + bytes_offset, bytes_to_write_in_block);
       break;
     }
 
     // Write block back
-    byte_index = 0;
+    byte_index_ = 0;
     Set(block_index_being_written, block_being_written);
     block_index_being_written = block_being_written.next;
 
     bytes_offset += bytes_to_write_in_block;
     bytes_left_to_write -= bytes_to_write_in_block;
-    bytes_to_write_in_block = std::min(block_type::CAPACITY - byte_index_, bytes_left_to_write);
+    bytes_to_write_in_block = std::min(BlockType::CAPACITY - byte_index_, bytes_left_to_write);
   }
 }
 
@@ -428,7 +428,7 @@ uint64_t FileObject<S>::FileObjectSize() const
 template <typename S>
 byte_array::ConstByteArray FileObject<S>::Hash()
 {
-  hasher_type hasher;
+  HasherType hasher;
   hasher.Reset();
   UpdateHash(hasher);
 
@@ -436,7 +436,7 @@ byte_array::ConstByteArray FileObject<S>::Hash()
 }
 
 template <typename S>
-void FileObject<S>::UpdateHash(hasher_type &hasher)
+void FileObject<S>::UpdateHash(HasherType &hasher)
 {
   Seek(0);
   byte_array::ByteArray arr;
@@ -463,7 +463,7 @@ bool FileObject<S>::SeekFile(std::size_t position)
   byte_index_global_ = 0;
 
   // Need to retrieve the block to determine length
-  block_type block;
+  BlockType block;
   Get(id_, block);
 
   length_ = block.file_object_size;
@@ -474,23 +474,27 @@ bool FileObject<S>::SeekFile(std::size_t position)
 template <typename S>
 void FileObject<S>::CreateNewFile(uint64_t size)
 {
-  block_number_          = 0;
-  byte_index_            = 0;
-  byte_index_global_     = 0;
-  length_                = size;
-  uint64_t target_blocks = platform::DivideCeil<uint64_t>(size, block_type::CAPACITY);
+  block_number_      = 0;
+  byte_index_        = 0;
+  byte_index_global_ = 0;
+  length_            = size;
+  auto target_blocks = platform::DivideCeil<uint64_t>(size, BlockType::CAPACITY);
 
   // corner case when size is 0 - we need at least one block per file
   target_blocks = target_blocks == 0 ? 1 : target_blocks;
 
   block_index_ = id_ = GetFreeBlocks(1, target_blocks);
 
-  block_type block;
+  BlockType block;
   Get(id_, block);
   block.file_object_size = size;
   Set(id_, block);
 }
 
+/**
+ * Get the current file object as a document. Note, you almost
+ * certainly want to seek to 0 if you have not done so before
+ */
 template <typename S>
 Document FileObject<S>::AsDocument()
 {
@@ -537,7 +541,7 @@ S &FileObject<S>::underlying_stack()
 template <typename S>
 uint64_t FileObject<S>::FreeBlocks()
 {
-  block_type free_block;
+  BlockType free_block;
   Get(free_block_index_, free_block);
 
   return free_block.free_blocks;
@@ -545,12 +549,12 @@ uint64_t FileObject<S>::FreeBlocks()
 
 /**
  * Initialise by looking for the block that's the beginning of our free blocks linked list. If
- * the stack is empty this means we set our own.
+ * the stack is empty this means we set our own. Note: this is only immediately after file loading.
  */
 template <typename S>
 void FileObject<S>::Initalise()
 {
-  block_type free_block;
+  BlockType free_block;
   free_block.free_blocks = 0;
   free_block.next        = 0;
   free_block.previous    = 0;
@@ -585,21 +589,21 @@ uint64_t FileObject<S>::GetFreeBlocks(uint64_t min_index, uint64_t num)
       throw StorageException("Attempt to allocate 0 free blocks is invalid");
     }
 
-    block_type block;
-    uint64_t   first_block_index = stack_.size();
+    BlockType block;
+    uint64_t  first_block_index = stack_.size();
 
     for (uint64_t i = 0; i < num; ++i)
     {
-      block.previous = (i == 0) ? block_type::UNDEFINED : first_block_index + i - 1;
-      block.next     = (i == num - 1) ? block_type::UNDEFINED : first_block_index + i + 1;
+      block.previous = (i == 0) ? BlockType::UNDEFINED : first_block_index + i - 1;
+      block.next     = (i == num - 1) ? BlockType::UNDEFINED : first_block_index + i + 1;
       stack_.Push(block);
     }
 
     return first_block_index;
   };
 
-  block_type free_block;
-  block_type block;
+  BlockType free_block;
+  BlockType block;
   Get(free_block_index_, free_block);
 
   // Only allow free blocks to be taken from the free LL in the scenario that there are enough
@@ -639,7 +643,7 @@ uint64_t FileObject<S>::GetFreeBlocks(uint64_t min_index, uint64_t num)
 
       // For debugging - terminate this block
       {
-        block.previous = block_type::UNDEFINED;
+        block.previous = BlockType::UNDEFINED;
         Set(index, block);
       }
 
@@ -656,7 +660,7 @@ uint64_t FileObject<S>::GetFreeBlocks(uint64_t min_index, uint64_t num)
 
       // Last block in the free LL needs to terminate as it's now a file object
       Get(old_ll_end, block);
-      block.next = block_type::UNDEFINED;
+      block.next = BlockType::UNDEFINED;
       Set(old_ll_end, block);
 
       return index;
@@ -684,9 +688,9 @@ void FileObject<S>::FreeBlocksInList(uint64_t remove_index)
   // Maintain two 'pointers' to the first free block and the next. Advance these two pointers,
   // considering remove_index for insertion between them at each step. If we reach the end of
   // the LL, append all of the remove blocks to the free LL.
-  block_type remove_block;
-  block_type free_block;
-  block_type free_block_next;
+  BlockType remove_block;
+  BlockType free_block;
+  BlockType free_block_next;
 
   Get(free_block_index_, free_block);
 
@@ -696,7 +700,7 @@ void FileObject<S>::FreeBlocksInList(uint64_t remove_index)
 
   bool insert_mode = true;
 
-  while (remove_index != block_type::UNDEFINED)
+  while (remove_index != BlockType::UNDEFINED)
   {
     Get(free_block_index, free_block);
     Get(free_block_next_index, free_block_next);
@@ -717,7 +721,7 @@ void FileObject<S>::FreeBlocksInList(uint64_t remove_index)
         uint64_t next_remove_index = remove_block.next;
 
         // Zero the removed block
-        remove_block = block_type{};
+        remove_block = BlockType{};
 
         // Adjust remove block references
         remove_block.previous = free_block_index;
@@ -759,7 +763,7 @@ void FileObject<S>::FreeBlocksInList(uint64_t remove_index)
 
       uint64_t next_remove_index = remove_block.next;
 
-      remove_block          = block_type{};
+      remove_block          = BlockType{};
       remove_block.previous = free_block_index;
       remove_block.next     = free_block_index_;  // note here member variable
       Set(remove_index, remove_block);
@@ -786,7 +790,7 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
 {
   if (stack_.size() == 0)
   {
-    if (ids.size() != 0)
+    if (!ids.empty())
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Stack size is 0 but attempting to verify with ids");
       return false;
@@ -797,8 +801,8 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
 
   std::vector<uint64_t> fake_stack(stack_.size(), std::numeric_limits<uint64_t>::max());
 
-  block_type block;
-  uint64_t   index = free_block_index_;
+  BlockType block;
+  uint64_t  index = free_block_index_;
 
   // Verify our linked lists. Tuple = (index, prev, next)
   std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> linked_list;
@@ -814,7 +818,7 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
       uint64_t next_in_ll = std::get<0>(ll[(i + 1) % ll.size()]);
       uint64_t prev_in_ll = std::get<0>(ll[(i + ll.size() - 1) % ll.size()]);
 
-      if (indx == block_type::UNDEFINED)
+      if (indx == BlockType::UNDEFINED)
       {
         return false;
       }
@@ -840,8 +844,8 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
 
       if (!circular)
       {
-        next_in_ll = (i == ll.size() - 1) ? block_type::UNDEFINED : next_in_ll;
-        prev_in_ll = (i == 0) ? block_type::UNDEFINED : prev_in_ll;
+        next_in_ll = (i == ll.size() - 1) ? BlockType::UNDEFINED : next_in_ll;
+        prev_in_ll = (i == 0) ? BlockType::UNDEFINED : prev_in_ll;
       }
 
       if (prev != prev_in_ll || next != next_in_ll)
@@ -897,7 +901,7 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
     Get(index, block);
 
     uint64_t file_bytes      = block.file_object_size;
-    uint64_t expected_blocks = platform::DivideCeil<uint64_t>(file_bytes, block_type::CAPACITY);
+    auto     expected_blocks = platform::DivideCeil<uint64_t>(file_bytes, BlockType::CAPACITY);
     expected_blocks          = expected_blocks == 0 ? 1 : expected_blocks;
 
     for (uint64_t i = 0; i < expected_blocks; ++i)
@@ -932,9 +936,9 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
 }
 
 template <typename S>
-void FileObject<S>::Get(uint64_t index, block_type &block)
+void FileObject<S>::Get(uint64_t index, BlockType &block)
 {
-  if (index == block_type::UNDEFINED)
+  if (index == BlockType::UNDEFINED)
   {
     throw StorageException("Attempt to Get invalid location");
   }
@@ -943,9 +947,9 @@ void FileObject<S>::Get(uint64_t index, block_type &block)
 }
 
 template <typename S>
-void FileObject<S>::Set(uint64_t index, block_type const &block)
+void FileObject<S>::Set(uint64_t index, BlockType const &block)
 {
-  if (index == block_type::UNDEFINED)
+  if (index == BlockType::UNDEFINED)
   {
     throw StorageException("Attempt to Set invalid location");
   }

@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
+#include "chain/transaction_serializer.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
@@ -26,8 +28,7 @@
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/address.hpp"
-#include "ledger/chain/transaction_serializer.hpp"
+#include "ledger/dag/dag_hash.hpp"
 
 #include <cstdint>
 #include <limits>
@@ -39,12 +40,14 @@ namespace ledger {
 struct DAGNode
 {
   using ConstByteArray = byte_array::ConstByteArray;
-  using Digest         = ConstByteArray;
   using Signature      = ConstByteArray;
-  using DigestList     = std::vector<Digest>;
+  using DAGHashList    = std::vector<DAGHash>;
   using HasherType     = crypto::SHA256;
 
-  DAGNode()                   = default;
+  DAGNode()
+  {
+    hash.type = DAGHash::Type ::NODE;
+  }
   DAGNode(DAGNode const &rhs) = default;
   DAGNode(DAGNode &&rhs)      = default;
   DAGNode &operator=(DAGNode const &rhs) = default;
@@ -63,14 +66,14 @@ struct DAGNode
   /// Serialisable state-variables
   /// @{
   uint64_t         type{INVALID_NODE};  ///< type of the DAG node
-  DigestList       previous;            ///< previous nodes.
+  DAGHashList      previous;            ///< previous nodes.
   ConstByteArray   contents;            ///< payload to be deserialised.
-  Digest           contract_digest;     ///< The contract which this node is associated with.
+  chain::Address   contract_address;    ///< The address of the associated contract
   crypto::Identity identity;            ///< identity of the creator
 
   /// Serialisable entries to verify state
   /// @{
-  Digest    hash;       ///< DAG hash.
+  DAGHash   hash;       ///< DAG hash.
   Signature signature;  ///< creators signature
   /// }
 
@@ -78,18 +81,18 @@ struct DAGNode
   uint64_t oldest_epoch_referenced = std::numeric_limits<uint64_t>::max();
   uint64_t weight                  = 0;
 
-  bool SetContents(Transaction const &tx)
+  bool SetContents(chain::Transaction const &tx)
   {
-    ledger::TransactionSerializer ser{};
+    chain::TransactionSerializer ser{};
     ser.Serialize(tx);
     contents = ser.data();
 
     return true;
   }
 
-  bool GetContents(Transaction &tx)
+  bool GetContents(chain::Transaction &tx)
   {
-    ledger::TransactionSerializer ser{contents};
+    chain::TransactionSerializer ser{contents};
     ser.Deserialize(tx);
 
     return true;
@@ -102,13 +105,14 @@ struct DAGNode
   {
     serializers::MsgPackSerializer buf;
 
-    buf << type << previous << contents << contract_digest << identity << hash << signature
+    buf << type << previous << contents << contract_address << identity << hash << signature
         << oldest_epoch_referenced << weight;
 
     HasherType hasher;
     hasher.Reset();
     hasher.Update(buf.data());
-    this->hash = hasher.Final();
+    this->hash.type = DAGHash::Type::NODE;
+    this->hash.hash = hasher.Final();
   }
 
   bool Verify() const
@@ -118,7 +122,7 @@ struct DAGNode
       return false;
     }
 
-    return crypto::Verifier::Verify(identity, hash, signature);
+    return crypto::Verifier::Verify(identity, hash.hash, signature);
   }
 
   bool operator>(DAGNode const &rhs) const
@@ -169,7 +173,7 @@ public:
   static uint8_t const TYPE                    = 1;
   static uint8_t const PREVIOUS                = 2;
   static uint8_t const CONTENTS                = 3;
-  static uint8_t const CONTRACT_DIGEST         = 4;
+  static uint8_t const CONTRACT_ADDRESS        = 4;
   static uint8_t const IDENTITY                = 5;
   static uint8_t const HASH                    = 6;
   static uint8_t const SIGNATURE               = 7;
@@ -183,7 +187,7 @@ public:
     map.Append(TYPE, node.type);
     map.Append(PREVIOUS, node.previous);
     map.Append(CONTENTS, node.contents);
-    map.Append(CONTRACT_DIGEST, node.contract_digest);
+    map.Append(CONTRACT_ADDRESS, node.contract_address);
     map.Append(IDENTITY, node.identity);
     map.Append(HASH, node.hash);
     map.Append(SIGNATURE, node.signature);
@@ -197,7 +201,7 @@ public:
     map.ExpectKeyGetValue(TYPE, node.type);
     map.ExpectKeyGetValue(PREVIOUS, node.previous);
     map.ExpectKeyGetValue(CONTENTS, node.contents);
-    map.ExpectKeyGetValue(CONTRACT_DIGEST, node.contract_digest);
+    map.ExpectKeyGetValue(CONTRACT_ADDRESS, node.contract_address);
     map.ExpectKeyGetValue(IDENTITY, node.identity);
     map.ExpectKeyGetValue(HASH, node.hash);
     map.ExpectKeyGetValue(SIGNATURE, node.signature);

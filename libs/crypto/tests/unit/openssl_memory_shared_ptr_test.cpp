@@ -174,7 +174,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_copy_construct)
   {
     //* Production code
     ossl_shared_ptr__for_Testing<> x(&testValue);
-    ossl_shared_ptr__for_Testing<> y(x);
+    ossl_shared_ptr__for_Testing<> y(x);  // NOLINT
   }
 }
 

@@ -39,9 +39,9 @@ public:
   // Construction / Destruction
   ElementPool() = default;
   explicit ElementPool(std::size_t size);
-  ElementPool(ElementPool const &) = delete;
-  ElementPool(ElementPool &&)      = default;
-  ~ElementPool()                   = default;
+  ElementPool(ElementPool const &)     = delete;
+  ElementPool(ElementPool &&) noexcept = default;
+  ~ElementPool()                       = default;
 
   T *  Allocate();
   void Release(T *element);
@@ -49,7 +49,7 @@ public:
 
   // Operators
   ElementPool &operator=(ElementPool const &) = delete;
-  ElementPool &operator=(ElementPool &&) = default;
+  ElementPool &operator=(ElementPool &&) noexcept = default;
 
 private:
   static constexpr std::size_t DEFAULT_ALLOCATE_BATCH = 10;
@@ -99,7 +99,7 @@ T *ElementPool<T>::Allocate()
     throw std::runtime_error("Unable to allocate element");
   }
 
-  // lookup the next element and update the internal data structures
+  // look up the next element and update the internal data structures
   T *element = free_.back();
   free_.pop_back();
   in_use_.emplace(element);
@@ -120,11 +120,9 @@ void ElementPool<T>::Release(T *element)
   {
     throw std::runtime_error("Element is not part of this pool");
   }
-  else
-  {
-    in_use_.erase(element);
-    free_.push_back(element);
-  }
+
+  in_use_.erase(element);
+  free_.push_back(element);
 }
 
 /**

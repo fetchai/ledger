@@ -17,13 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "fake_storage_unit.hpp"
+#include "ledger/storage_unit/fake_storage_unit.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 
 using fetch::storage::ResourceAddress;
+using fetch::ledger::FakeStorageUnit;
 
 using FakeStorageUnitPtr = std::unique_ptr<FakeStorageUnit>;
 
@@ -33,11 +34,6 @@ protected:
   void SetUp() override
   {
     storage_ = std::make_unique<FakeStorageUnit>();
-  }
-
-  void TearDown() override
-  {
-    storage_.reset();
   }
 
   void CheckValueIsPresent(char const *key, char const *value)

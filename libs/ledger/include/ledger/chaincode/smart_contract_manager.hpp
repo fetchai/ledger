@@ -17,22 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "ledger/chaincode/contract.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
-class Identifier;
 class Address;
+
+}  // namespace chain
+namespace ledger {
 
 class SmartContractManager : public Contract
 {
 public:
   static constexpr char const *NAME = "fetch.contract";
 
-  static storage::ResourceAddress CreateAddressForContract(Identifier const &contract_id);
-  static storage::ResourceAddress CreateAddressForSynergeticContract(Digest const &digest);
+  using ConstByteArray = byte_array::ConstByteArray;
+
+  static storage::ResourceAddress CreateAddressForContract(chain::Address const &contract_id);
 
   SmartContractManager();
   ~SmartContractManager() override = default;
@@ -40,7 +43,7 @@ public:
 private:
   /// @name Transaction Handlers
   /// @{
-  Result OnCreate(Transaction const &tx, BlockIndex);
+  Result OnCreate(chain::Transaction const &tx);
   /// @}
 };
 

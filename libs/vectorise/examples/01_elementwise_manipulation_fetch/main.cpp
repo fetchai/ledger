@@ -30,10 +30,10 @@ using vector_type = typename array_type::VectorRegisterType;
 
 void RelativeDifference(array_type const &A, array_type const &B, array_type &C)
 {
-  vector_type cst(0.5);
-  C.in_parallel().Apply([cst](vector_type const &a, vector_type const &b,
-                              vector_type &c) { c = cst * (a - b) / (a + b); },
-                        A, B);
+  type cst{0.5};
+  C.in_parallel().Apply(
+      [cst](auto const &a, auto const &b, auto &c) { c = decltype(a)(cst) * (a - b) / (a + b); }, A,
+      B);
 }
 
 int main(int argc, char const **argv)
@@ -52,7 +52,7 @@ int main(int argc, char const **argv)
   for (std::size_t i = 0; i < N; ++i)
   {
     A[i] = type(i);
-    B[i] = 2 * type(i);
+    B[i] = type(i) * 2;
   }
 
   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();

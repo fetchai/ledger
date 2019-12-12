@@ -19,13 +19,13 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
-#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/http_connection_manager.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
+#include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 
 #include <deque>
@@ -38,36 +38,28 @@ class HTTPConnection : public AbstractHTTPConnection,
                        public std::enable_shared_from_this<HTTPConnection>
 {
 public:
-  using response_queue_type = std::deque<HTTPResponse>;
-  using connection_type     = typename AbstractHTTPConnection::shared_type;
-  using handle_type         = HTTPConnectionManager::handle_type;
-  using shared_request_type = std::shared_ptr<HTTPRequest>;
-  using buffer_ptr_type     = std::shared_ptr<asio::streambuf>;
+  using ResponseQueueType = std::deque<HTTPResponse>;
+  using ConnectionType    = typename AbstractHTTPConnection::SharedType;
+  using HandleType        = HTTPConnectionManager::HandleType;
+  using SharedRequestType = std::shared_ptr<HTTPRequest>;
+  using BufferPointerType = std::shared_ptr<asio::streambuf>;
 
   static constexpr char const *LOGGING_NAME = "HTTPConnection";
 
   HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
     : socket_(std::move(socket))
     , manager_(manager)
-    , write_mutex_{}
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP connection from ",
                     socket_.remote_endpoint().address().to_string());
   }
 
-  ~HTTPConnection()
-  {
-    manager_.Leave(handle_);
-  }
+  ~HTTPConnection() override = default;
 
   void Start()
   {
     is_open_ = true;
-    handle_  = manager_.Join(shared_from_this());
-    if (is_open_)
-    {
-      ReadHeader();
-    }
+    ReadHeader();
   }
 
   void Send(HTTPResponse const &response) override
@@ -96,11 +88,11 @@ public:
   }
 
 public:
-  void ReadHeader(buffer_ptr_type buffer_ptr = nullptr)
+  void ReadHeader(BufferPointerType buffer_ptr = nullptr)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Ready to ready HTTP header");
 
-    shared_request_type request = std::make_shared<HTTPRequest>();
+    SharedRequestType request = std::make_shared<HTTPRequest>();
     if (!buffer_ptr)
     {
       buffer_ptr = std::make_shared<asio::streambuf>(std::numeric_limits<std::size_t>::max());
@@ -117,17 +109,15 @@ public:
         this->HandleError(ec, request);
         return;
       }
-      else
+
+      // only parse the header if there is data to be parsed
+      if (len != 0u)
       {
-        // only parse the header if there is data to be parsed
-        if (len)
+        if (request->ParseHeader(*buffer_ptr, len))
         {
-          if (request->ParseHeader(*buffer_ptr, len))
+          if (is_open_)
           {
-            if (is_open_)
-            {
-              ReadBody(buffer_ptr, request);
-            }
+            ReadBody(buffer_ptr, request);
           }
         }
       }
@@ -136,7 +126,7 @@ public:
     asio::async_read_until(socket_, *buffer_ptr, "\r\n\r\n", cb);
   }
 
-  void ReadBody(buffer_ptr_type buffer_ptr, shared_request_type request)
+  void ReadBody(BufferPointerType const &buffer_ptr, SharedRequestType const &request)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP body");
     // Check if we got all the body
@@ -170,12 +160,10 @@ public:
         this->HandleError(ec, request);
         return;
       }
-      else
+
+      if (is_open_)
       {
-        if (is_open_)
-        {
-          ReadBody(buffer_ptr, request);
-        }
+        ReadBody(buffer_ptr, request);
       }
     };
 
@@ -183,7 +171,7 @@ public:
                      asio::transfer_exactly(request->content_length() - buffer_ptr->size()), cb);
   }
 
-  void HandleError(std::error_code const &ec, shared_request_type /*req*/)
+  void HandleError(std::error_code const &ec, SharedRequestType const & /*req*/)
   {
     std::stringstream ss;
     ss << ec << ":" << ec.message();
@@ -194,7 +182,7 @@ public:
 
   void Write()
   {
-    buffer_ptr_type buffer_ptr =
+    BufferPointerType buffer_ptr =
         std::make_shared<asio::streambuf>(std::numeric_limits<std::size_t>::max());
     {
       FETCH_LOCK(write_mutex_);
@@ -227,20 +215,33 @@ public:
     asio::async_write(socket_, *buffer_ptr, cb);
   }
 
+  void CloseConnnection() override
+  {
+    std::error_code dummy;
+    socket_.shutdown(asio::ip::tcp::socket::shutdown_both, dummy);
+    socket_.close(dummy);
+  }
+
   void Close()
   {
     is_open_ = false;
+    CloseConnnection();
     manager_.Leave(handle_);
+  }
+
+  void SetHandle(HandleType handle)
+  {
+    handle_ = handle;
   }
 
 private:
   asio::ip::tcp::tcp::socket socket_;
   HTTPConnectionManager &    manager_;
-  response_queue_type        write_queue_;
+  ResponseQueueType          write_queue_;
   Mutex                      write_mutex_;
 
-  handle_type handle_;
-  bool        is_open_ = false;
+  HandleType handle_{};
+  bool       is_open_ = false;
 };
 }  // namespace http
 }  // namespace fetch

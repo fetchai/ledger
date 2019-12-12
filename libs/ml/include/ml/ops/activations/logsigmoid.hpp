@@ -37,7 +37,7 @@ class LogSigmoid : public fetch::ml::ops::Ops<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpLogSigmoidSaveableParams<T>;
   using MyType        = LogSigmoid<TensorType>;
@@ -77,7 +77,7 @@ public:
     // ensures numerical stability
     for (auto &val : output)
     {
-      fetch::math::Min(val, epsilon_, val);
+      val = fetch::vectorise::Min(val, epsilon_);
     }
   }
 

@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/json/document.hpp"
 #include "http/json_response.hpp"
 #include "http/middleware/deny_all.hpp"
 #include "http/middleware/token_auth.hpp"
 #include "http/server.hpp"
 #include "http/validators.hpp"
+#include "json/document.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -47,13 +47,7 @@ struct ExampleModule : HTTPModule
 
     Get("/pages/(id=\\d+)", "Get a specific page",
         {{"id", "The page id.", validators::StringValue()}},
-        [](fetch::http::HTTPRequest req) {
-          if (req.authentication_level() < 900)
-          {
-            return false;
-          }
-          return true;
-        },
+        [](fetch::http::HTTPRequest req) { return req.authentication_level() >= 900; },
         [](fetch::http::ViewParameters const & /*params*/,
            fetch::http::HTTPRequest const & /*request*/) {
           return fetch::http::CreateJsonResponse(R"({"error": "It's all good!"})",

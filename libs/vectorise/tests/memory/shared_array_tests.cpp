@@ -28,8 +28,8 @@ namespace {
 
 using namespace fetch::memory;
 
-using data_type  = uint64_t;
-using array_type = SharedArray<data_type>;
+using DataType   = uint64_t;
+using array_type = SharedArray<DataType>;
 
 class TestClass : public ::testing::TestWithParam<int>
 {

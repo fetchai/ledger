@@ -20,8 +20,8 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/commandline/parameter_parser.hpp"
-#include "core/json/document.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "json/document.hpp"
 #include "variant/variant.hpp"
 #include "version/cli_header.hpp"
 #include "version/fetch_version.hpp"
@@ -145,14 +145,14 @@ std::string ReadFileContents(std::string const &path)
 // data
 Parameters params;
 
-int32_t Argc(VM *, TypeId)
+int32_t Argc(VM * /*vm*/, TypeId /*type_id*/)
 {
   return static_cast<int32_t>(params.script().size());
 }
 
-Ptr<String> Argv(VM *vm, TypeId, int32_t index)
+Ptr<String> Argv(VM *vm, TypeId /*type_id*/, int32_t index)
 {
-  return new String{vm, params.script().at(static_cast<std::size_t>(index))};
+  return Ptr<String>{new String{vm, params.script().at(static_cast<std::size_t>(index))}};
 }
 
 // placeholder class
@@ -293,20 +293,37 @@ int main(int argc, char **argv)
   params.Parse(argc, argv);
 
   // ensure the program has the correct number of args
-  if (2u != params.program().arg_size())
+  std::size_t num_args = params.program().arg_size();
+  if (2u > num_args)
   {
-    std::cerr << "Usage: " << argv[0] << " [options] <filename> -- [script args]..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [options] [filename]... -- [script args]..."
+              << std::endl;
     return 1;
   }
 
   // print the header
   fetch::version::DisplayCLIHeader("etch");
 
-  // load the contents of the script file
-  auto const source = ReadFileContents(params.program().GetArg(1));
+  // load the contents of the script files
+  fetch::vm::SourceFiles files;
+  for (std::size_t i = 1; i < num_args; ++i)
+  {
+    std::string filename = params.program().GetArg(i);
+    auto const  source   = ReadFileContents(filename);
+    files.push_back(fetch::vm::SourceFile(filename, source));
+  }
 
   auto executable = std::make_unique<Executable>();
-  auto module     = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
+
+  std::shared_ptr<Module> module;
+  if (params.program().GetParam("experimental", false))
+  {
+    module = VMFactory::GetModule(VMFactory::USE_ALL);
+  }
+  else
+  {
+    module = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
+  }
 
   // additional module bindings
   module->CreateClassType<System>("System")
@@ -314,7 +331,7 @@ int main(int argc, char **argv)
       .CreateStaticMemberFunction("Argv", &Argv);
 
   // attempt to compile the program
-  auto errors = VMFactory::Compile(module, source, *executable);
+  auto errors = VMFactory::Compile(module, files, *executable);
 
   // detect compilation errors
   if (!errors.empty())

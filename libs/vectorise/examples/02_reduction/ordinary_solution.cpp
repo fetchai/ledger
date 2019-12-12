@@ -30,9 +30,9 @@ type Reduction(array_type const &A)
 {
   type ret = 0;
 
-  for (std::size_t i = 0; i < A.size(); ++i)
+  for (float i : A)
   {
-    ret += A[i];
+    ret += i;
   }
 
   return ret;

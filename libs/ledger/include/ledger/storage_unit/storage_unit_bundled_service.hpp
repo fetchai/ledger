@@ -20,11 +20,9 @@
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "network/muddle/muddle_endpoint.hpp"
-#include "network/p2pservice/p2p_service_defs.hpp"
+#include "muddle/muddle_endpoint.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store.hpp"
-#include "storage/object_store_protocol.hpp"
 
 #include <cstddef>
 #include <memory>
@@ -36,8 +34,6 @@ namespace ledger {
 class StorageUnitBundledService
 {
 public:
-  using ServiceType = network::ServiceType;
-
   // Construction / Destruction
   StorageUnitBundledService()                                  = default;
   StorageUnitBundledService(StorageUnitBundledService const &) = delete;
@@ -51,7 +47,7 @@ public:
   using NetworkManager = network::NetworkManager;
   using Mode           = LaneService::Mode;
 
-  void Setup(NetworkManager const &mgr, ShardConfigs const &configs, bool sign_packets,
+  void Setup(NetworkManager const &mgr, ShardConfigs const &configs,
              Mode mode = Mode::LOAD_DATABASE)
   {
     // create all the lane pointers
@@ -59,7 +55,7 @@ public:
 
     for (std::size_t i = 0; i < configs.size(); ++i)
     {
-      lanes_[i] = std::make_shared<LaneService>(mgr, configs[i], sign_packets, mode);
+      lanes_[i] = std::make_shared<LaneService>(mgr, configs[i], mode);
     }
   }
 

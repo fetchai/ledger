@@ -16,24 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "bert_utilities.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/ops/embeddings.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/slice.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/utilities/bert_utilities.hpp"
 
 #include <iostream>
 #include <string>
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
+using namespace fetch::ml::utilities;
 
 using DataType   = float;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = typename TensorType::SizeType;
 using SizeVector = typename TensorType::SizeVector;
 
 using GraphType     = typename fetch::ml::Graph<TensorType>;
@@ -44,9 +43,8 @@ using RegType         = fetch::ml::RegularisationType;
 using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
 using ActivationType  = fetch::ml::details::ActivationType;
 
-std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(SizeType          size,
-                                                                    BERTConfig const &config,
-                                                                    SizeType          seed = 1337);
+std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(
+    SizeType size, BERTConfig<TensorType> const &config, SizeType seed = 1337);
 
 int main()
 {
@@ -59,9 +57,9 @@ int main()
   SizeType test_size  = 100;
   SizeType batch_size = 16;
   SizeType epochs     = 2;
-  DataType lr         = static_cast<DataType>(1e-3);
+  auto     lr         = static_cast<DataType>(1e-3);
 
-  BERTConfig config;
+  BERTConfig<TensorType> config;
   config.n_encoder_layers  = 2u;
   config.max_seq_len       = 20u;
   config.model_dims        = 12u;
@@ -69,9 +67,9 @@ int main()
   config.ff_dims           = 12u;
   config.vocab_size        = 4u;
   config.segment_size      = 1u;
-  config.dropout_keep_prob = static_cast<DataType>(0.9);
+  config.dropout_keep_prob = fetch::math::Type<DataType>("0.9");
 
-  BERTInterface interface(config);
+  BERTInterface<TensorType> interface(config);
 
   // create custom bert model
   GraphType g;
@@ -113,9 +111,8 @@ int main()
   return 0;
 }
 
-std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(SizeType          size,
-                                                                    BERTConfig const &config,
-                                                                    SizeType          seed)
+std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(
+    SizeType size, BERTConfig<TensorType> const &config, SizeType seed)
 {
   // create a toy cls dataset that generated balanced training data for the aforementioned
   // classification task
@@ -130,7 +127,7 @@ std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(SizeType    
     tokens_data.Set(0, i, static_cast<DataType>(0));
     if (i % 2 == 0)
     {  // get one constant token in the library other then 0 (the cls token)
-      DataType token = static_cast<DataType>(1 + lfg() % (config.vocab_size - 1));
+      auto token = static_cast<DataType>(1 + lfg() % (config.vocab_size - 1));
       for (SizeType entry = 1; entry < config.max_seq_len; entry++)
       {
         tokens_data.Set(entry, i, token);
@@ -142,7 +139,7 @@ std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(SizeType    
       for (SizeType entry = 1; entry < config.max_seq_len; entry++)
       {
         // get a random different token for each position of the tokens_data
-        DataType token = static_cast<DataType>(1 + lfg() % (config.vocab_size - 1));
+        auto token = static_cast<DataType>(1 + lfg() % (config.vocab_size - 1));
         tokens_data.Set(entry, i, token);
       }
       labels.Set(1u, i, static_cast<DataType>(1));  // label 0 1

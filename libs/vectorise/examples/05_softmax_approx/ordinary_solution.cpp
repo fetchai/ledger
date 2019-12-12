@@ -32,7 +32,7 @@ void SoftMax(array_type const &A, array_type &B)
 
   for (std::size_t i = 0; i < A.size(); ++i)
   {
-    type e = type(std::exp(A[i]));
+    auto e = type(std::exp(A[i]));
     B[i]   = e;
     sum += e;
   }

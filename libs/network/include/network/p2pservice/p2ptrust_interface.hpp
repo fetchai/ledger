@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "network/muddle/muddle.hpp"
 #include "variant/variant.hpp"
 
 #include <list>
@@ -52,21 +51,21 @@ public:
   {
     IDENTITY    address;
     std::string name;
-    double      trust;
-    bool        has_transacted;
-    bool        active;
+    double      trust{};
+    bool        has_transacted{};
+    bool        active{};
   };
   using PeerTrusts = std::vector<PeerTrust>;
 
-  using IdentitySet    = typename std::unordered_set<IDENTITY>;
+  using IdentitySet    = std::unordered_set<IDENTITY>;
   using ConstByteArray = byte_array::ConstByteArray;
 
-  P2PTrustInterface(const P2PTrustInterface &rhs) = delete;
+  P2PTrustInterface(P2PTrustInterface const &rhs) = delete;
   P2PTrustInterface(P2PTrustInterface &&rhs)      = delete;
-  P2PTrustInterface &operator=(const P2PTrustInterface &rhs) = delete;
+  P2PTrustInterface &operator=(P2PTrustInterface const &rhs) = delete;
   P2PTrustInterface &operator=(P2PTrustInterface &&rhs)             = delete;
-  bool               operator==(const P2PTrustInterface &rhs) const = delete;
-  bool               operator<(const P2PTrustInterface &rhs) const  = delete;
+  bool               operator==(P2PTrustInterface const &rhs) const = delete;
+  bool               operator<(P2PTrustInterface const &rhs) const  = delete;
 
   P2PTrustInterface()          = default;
   virtual ~P2PTrustInterface() = default;

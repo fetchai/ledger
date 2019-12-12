@@ -16,18 +16,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/json/document.hpp"
-#include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "json/document.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/token_contract.hpp"
+#include "ledger/fees/storage_fee.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
+#include "logging/logging.hpp"
 #include "vectorise/uint/uint.hpp"
+#include "vm/address.hpp"
 #include "vm/array.hpp"
 #include "vm/compiler.hpp"
+#include "vm/function_decorators.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/core/structured_data.hpp"
+#include "vm_modules/ledger/balance.hpp"
+#include "vm_modules/ledger/transfer_function.hpp"
 #include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/vm_factory.hpp"
 
@@ -39,6 +46,7 @@ namespace fetch {
 namespace ledger {
 namespace {
 
+using vm::FunctionDecoratorKind;
 using vm_modules::math::UInt256Wrapper;
 using vm_modules::VMFactory;
 using vm_modules::StructuredData;
@@ -53,16 +61,6 @@ using VmStructuredDataArray = vm::Ptr<vm::Array<VmStructuredData>>;
 
 constexpr char const *LOGGING_NAME = "SynergeticContract";
 
-enum class FunctionKind
-{
-  NONE,       ///< Normal (undecorated) function
-  WORK,       ///< A function that is called to do some work
-  OBJECTIVE,  ///< A function that is called to determine the quality of the work
-  PROBLEM,    ///< The problem function
-  CLEAR,      ///< The clear function
-  INVALID,    ///< The function has an invalid decorator
-};
-
 std::string ErrorsToLog(std::vector<std::string> const &errors)
 {
   // generate the complete error
@@ -73,43 +71,6 @@ std::string ErrorsToLog(std::vector<std::string> const &errors)
   }
 
   return oss.str();
-}
-
-FunctionKind DetermineKind(vm::Executable::Function const &fn)
-{
-  FunctionKind kind{FunctionKind::NONE};
-
-  // loop through all the function annotations
-  if (1u == fn.annotations.size())
-  {
-    // select the first annotation
-    auto const &annotation = fn.annotations.front();
-
-    if (annotation.name == "@work")
-    {
-      // only update the kind if one hasn't already been specified
-      kind = FunctionKind::WORK;
-    }
-    else if (annotation.name == "@objective")
-    {
-      kind = FunctionKind::OBJECTIVE;
-    }
-    else if (annotation.name == "@problem")
-    {
-      kind = FunctionKind::PROBLEM;
-    }
-    else if (annotation.name == "@clear")
-    {
-      kind = FunctionKind::CLEAR;
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Invalid decorator: ", annotation.name);
-      kind = FunctionKind::INVALID;
-    }
-  }
-
-  return kind;
 }
 
 VmStructuredData CreateProblemData(vm::VM *vm, ConstByteArray const &problem_data)
@@ -160,14 +121,14 @@ VmStructuredDataArray CreateProblemData(vm::VM *vm, ProblemData const &problem_d
   // move the constructed elements over to the array
   ret->elements = std::move(elements);
 
-  return {ret};
+  return VmStructuredDataArray{ret};
 }
 
 }  // namespace
 
 SynergeticContract::SynergeticContract(ConstByteArray const &source)
   : digest_{Hash<SHA256>(source)}
-  , module_{VMFactory::GetModule(VMFactory::USE_SYNERGETIC)}
+  , module_{VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
 {
   // ensure the source has size
   if (source.empty())
@@ -177,7 +138,8 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Synergetic contract source\n", source);
 
-  // additional modules
+  vm_modules::ledger::BindBalanceFunction(*module_, *this);
+  vm_modules::ledger::BindTransferFunction(*module_, *this);
 
   // create the compiler and IR
   compiler_   = std::make_shared<vm::Compiler>(module_.get());
@@ -186,7 +148,8 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
 
   // compile the source to IR
   std::vector<std::string> errors{};
-  if (!compiler_->Compile(static_cast<std::string>(source), "default", *ir_, errors))
+  fetch::vm::SourceFiles   files = {{"default.etch", static_cast<std::string>(source)}};
+  if (!compiler_->Compile(files, "default_ir", *ir_, errors))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to compile contract: ", ErrorsToLog(errors));
     throw std::runtime_error("Failed to compile synergetic contract");
@@ -194,7 +157,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
 
   // generate the executable
   auto vm = std::make_unique<vm::VM>(module_.get());
-  if (!vm->GenerateExecutable(*ir_, "another", *executable_, errors))
+  if (!vm->GenerateExecutable(*ir_, "default_exe", *executable_, errors))
   {
     FETCH_LOG_WARN(LOGGING_NAME,
                    "Failed to generate executable for contract: ", ErrorsToLog(errors));
@@ -210,28 +173,31 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
     std::string *function = nullptr;
     switch (kind)
     {
-    case FunctionKind::WORK:
+    case FunctionDecoratorKind::WORK:
       name     = "work";
       function = &work_function_;
       break;
-    case FunctionKind::OBJECTIVE:
+    case FunctionDecoratorKind::OBJECTIVE:
       name     = "objective";
       function = &objective_function_;
       break;
-    case FunctionKind::PROBLEM:
+    case FunctionDecoratorKind::PROBLEM:
       name     = "problem";
       function = &problem_function_;
       break;
-    case FunctionKind::CLEAR:
+    case FunctionDecoratorKind::CLEAR:
       name     = "clear";
       function = &clear_function_;
       break;
-    case FunctionKind::NONE:
-    case FunctionKind::INVALID:
+    case FunctionDecoratorKind::NONE:
+    case FunctionDecoratorKind::ON_INIT:
+    case FunctionDecoratorKind::ACTION:
+    case FunctionDecoratorKind::QUERY:
+    case FunctionDecoratorKind::INVALID:
       break;
     }
 
-    if (function)
+    if (function != nullptr)
     {
       // sanity check
       assert(name != nullptr);
@@ -254,6 +220,11 @@ Status SynergeticContract::DefineProblem(ProblemData const &problem_data)
   auto vm  = std::make_unique<vm::VM>(module_.get());
   problem_ = std::make_shared<vm::Variant>();
 
+  if (charge_limit_ > 0)
+  {
+    vm->SetChargeLimit(charge_limit_);
+  }
+
   // create the problem data
   auto problems = CreateProblemData(vm.get(), problem_data);
 
@@ -264,6 +235,8 @@ Status SynergeticContract::DefineProblem(ProblemData const &problem_data)
     FETCH_LOG_WARN(LOGGING_NAME, "Problem definition error: ", error);
     return Status::VM_EXECUTION_ERROR;
   }
+
+  charge_ += vm->GetChargeTotal();
 
   return Status::SUCCESS;
 }
@@ -285,6 +258,11 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
 
   auto vm = std::make_unique<vm::VM>(module_.get());
 
+  if (charge_limit_ > 0)
+  {
+    vm->SetChargeLimit(charge_limit_);
+  }
+
   // create the nonce object to be passed into the work function
   auto hashed_nonce = vm->CreateNewObject<UInt256Wrapper>(nonce);
 
@@ -294,6 +272,7 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
   if (!vm->Execute(*executable_, work_function_, error, *solution_, *problem_, hashed_nonce))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Work execution error: ", error);
+    charge_ += vm->GetChargeTotal();
     return Status::VM_EXECUTION_ERROR;
   }
 
@@ -303,13 +282,16 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
                    *solution_))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Objective evaluation execution error: ", error);
+    charge_ += vm->GetChargeTotal();
     return Status::VM_EXECUTION_ERROR;
   }
+
+  charge_ += vm->GetChargeTotal();
 
   // ensure the output of the objective function is "correct"
   if (vm::TypeIds::Int64 != objective_output.type_id)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect objective value from function");
+    FETCH_LOG_WARN(LOGGING_NAME, "Objective function must return Int64");
     return Status::VM_EXECUTION_ERROR;
   }
 
@@ -319,19 +301,24 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
   return Status::SUCCESS;
 }
 
-Status SynergeticContract::Complete(uint64_t block, BitVector const &shards)
+Status SynergeticContract::Complete(chain::Address const &address, BitVector const &shards,
+                                    CompletionValidator const &validator)
 {
-  if (!storage_)
+  if (storage_ == nullptr)
   {
     return Status::NO_STATE_ACCESS;
   }
 
   auto vm = std::make_unique<vm::VM>(module_.get());
 
+  if (charge_limit_ > 0)
+  {
+    vm->SetChargeLimit(charge_limit_);
+  }
+
   // setup the storage infrastructure
   CachedStorageAdapter storage_cache(*storage_);
-  StateSentinelAdapter state_sentinel{
-      storage_cache, Identifier{digest_.ToHex() + "." + std::to_string(block)}, shards};
+  StateSentinelAdapter state_sentinel{storage_cache, address.display(), shards};
 
   // attach the state to the VM
   vm->SetIOObserver(state_sentinel);
@@ -341,13 +328,35 @@ Status SynergeticContract::Complete(uint64_t block, BitVector const &shards)
   if (!vm->Execute(*executable_, clear_function_, error, output, *problem_, *solution_))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Solution execution failure: ", error);
+    charge_ += vm->GetChargeTotal();
     return Status::VM_EXECUTION_ERROR;
+  }
+
+  charge_ += vm->GetChargeTotal();
+
+  StorageFee storage_fee{state_sentinel};
+  charge_ += storage_fee.CalculateFee();
+
+  if (!validator())
+  {
+    storage_cache.Clear();
+    return Status::VALIDATION_ERROR;
   }
 
   // everything worked, flush the storage
   storage_cache.Flush();
 
   return Status::SUCCESS;
+}
+
+uint64_t SynergeticContract::CalculateFee() const
+{
+  return charge_;
+}
+
+void SynergeticContract::SetChargeLimit(uint64_t charge_limit)
+{
+  charge_limit_ = charge_limit;
 }
 
 bool SynergeticContract::HasProblem() const
@@ -415,6 +424,8 @@ void SynergeticContract::Detach()
   storage_ = nullptr;
   problem_.reset();
   solution_.reset();
+  charge_       = 0;
+  charge_limit_ = 0;
 }
 
 char const *ToString(SynergeticContract::Status status)
@@ -435,9 +446,22 @@ char const *ToString(SynergeticContract::Status status)
   case SynergeticContract::Status::GENERAL_ERROR:
     text = "General Error";
     break;
+  case SynergeticContract::Status::VALIDATION_ERROR:
+    text = "Failed to validate";
+    break;
   }
 
   return text;
+}
+
+void SynergeticContract::UpdateContractContext(ContractContext const &context)
+{
+  context_ = std::make_unique<ContractContext>(context);
+}
+
+ContractContext const &SynergeticContract::context() const
+{
+  return *context_;
 }
 
 }  // namespace ledger

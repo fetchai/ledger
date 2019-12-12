@@ -35,41 +35,37 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
   std::size_t i;
   std::size_t j;
   if ((c.height() == 0) ||
-      ((c.width() == 0) || (((alpha == static_cast<Type>(0.0)) || (a.height() == 0)) &&
-                            (beta == static_cast<Type>(1.0)))))
+      ((c.width() == 0) || (((alpha == Type{0}) || (a.height() == 0)) && (beta == Type{1}))))
   {
     return;
   }
 
-  if (alpha == static_cast<Type>(0.0))
+  if (alpha == Type{0})
   {
-    if (beta == static_cast<Type>(0.0))
+    if (beta == Type{0})
     {
       for (j = 0; j < c.width(); ++j)
       {
+        auto zero = Type{0};
 
-        VectorRegisterType fetch_vec_zero(static_cast<Type>(0.0));
-
-        auto                 ret_slice = c.data().slice(c.padded_height() * j, c.height());
-        memory::TrivialRange range(std::size_t(0), std::size_t(c.height()));
-        ret_slice.in_parallel().Apply(
-            range, [fetch_vec_zero](VectorRegisterType &vw_c_j) { vw_c_j = fetch_vec_zero; });
+        auto          ret_slice = c.data().slice(c.padded_height() * j, c.height());
+        memory::Range range(std::size_t(0), std::size_t(c.height()));
+        ret_slice.in_parallel().RangedApply(range, [zero](auto &&vw_c_j) {
+          vw_c_j = static_cast<std::remove_reference_t<decltype(vw_c_j)>>(zero);
+        });
       }
     }
     else
     {
       for (j = 0; j < c.width(); ++j)
       {
-
-        VectorRegisterType fetch_vec_beta(beta);
-
         auto ret_slice = c.data().slice(c.padded_height() * j, c.height());
         auto slice_c_j = c.data().slice(c.padded_height() * std::size_t(j), c.padded_height());
-        memory::TrivialRange range(std::size_t(0), std::size_t(c.height()));
-        ret_slice.in_parallel().Apply(
+        memory::Range range(std::size_t(0), std::size_t(c.height()));
+        ret_slice.in_parallel().RangedApplyMultiple(
             range,
-            [fetch_vec_beta](VectorRegisterType const &vr_c_j, VectorRegisterType &vw_c_j) {
-              vw_c_j = fetch_vec_beta * vr_c_j;
+            [beta](auto const &vr_c_j, auto &vw_c_j) {
+              vw_c_j = static_cast<std::remove_reference_t<decltype(vw_c_j)>>(beta) * vr_c_j;
             },
             slice_c_j);
       }
@@ -82,19 +78,14 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
   {
     for (i = 0; i < c.height(); ++i)
     {
-      Type temp;
-      temp = static_cast<Type>(0.0);
+      auto temp = Type{0};
 
       auto slice_a_i = a.data().slice(a.padded_height() * std::size_t(i), a.padded_height());
       auto slice_b_j = b.data().slice(b.padded_height() * std::size_t(j), b.padded_height());
-      memory::TrivialRange range(std::size_t(0), std::size_t(a.height()));
+      memory::Range range(std::size_t(0), std::size_t(a.height()));
       temp = slice_a_i.in_parallel().SumReduce(
-          range,
-          [](VectorRegisterType const &vr_a_i, VectorRegisterType const &vr_b_j) {
-            return vr_a_i * vr_b_j;
-          },
-          slice_b_j);
-      if (beta == static_cast<Type>(0.0))
+          range, [](auto const &vr_a_i, auto const &vr_b_j) { return vr_a_i * vr_b_j; }, slice_b_j);
+      if (beta == Type{0})
       {
         c(i, j) = alpha * temp;
       }
@@ -104,7 +95,6 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
       }
     }
   }
-  return;
 }
 
 template class Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
@@ -114,6 +104,14 @@ template class Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
 template class Blas<float, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * T(_A) * _B + _beta * _C),
                     platform::Parallelisation::VECTORISE>;
+
+template class Blas<
+    fetch::fixed_point::FixedPoint<16, 16>, Signature(_C <= _alpha, _A, _B, _beta, _C),
+    Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::VECTORISE>;
+
+template class Blas<
+    fetch::fixed_point::FixedPoint<32, 32>, Signature(_C <= _alpha, _A, _B, _beta, _C),
+    Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::VECTORISE>;
 
 }  // namespace linalg
 }  // namespace math

@@ -15,7 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-settings)
-target_link_libraries(fetch-settings PUBLIC fetch-core)
+target_link_libraries(fetch-settings PUBLIC fetch-core fetch-logging)
 
 # test targets
 add_test_target()

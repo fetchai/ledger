@@ -19,6 +19,11 @@
 
 #include "meta/type_traits.hpp"
 
+#if (__SIZEOF_INT128__ == 16)
+using int128_t  = __int128_t;
+using uint128_t = __uint128_t;
+#endif
+
 namespace fetch {
 namespace platform {
 
@@ -108,7 +113,7 @@ inline float ToBigEndian(float x)
   {
     float    value;
     uint32_t bytes;
-  } conversion;
+  } conversion{};
   static_assert(sizeof(float) == sizeof(uint32_t),
                 "float and uint32_t are required to be same size.");
   static_assert(sizeof(conversion) == sizeof(uint32_t), "");
@@ -124,7 +129,7 @@ inline float FromBigEndian(float x)
   {
     float    value;
     uint32_t bytes;
-  } conversion;
+  } conversion{};
   static_assert(sizeof(float) == sizeof(uint32_t),
                 "float and uint32_t are required to be same size.");
   static_assert(sizeof(conversion) == sizeof(uint32_t), "");
@@ -140,7 +145,7 @@ inline double ToBigEndian(double x)
   {
     double   value;
     uint64_t bytes;
-  } conversion;
+  } conversion{};
   static_assert(sizeof(double) == sizeof(uint64_t),
                 "double and uint64_t are required to be same size.");
   static_assert(sizeof(conversion) == sizeof(uint64_t), "");
@@ -156,7 +161,7 @@ inline double FromBigEndian(double x)
   {
     double   value;
     uint64_t bytes;
-  } conversion;
+  } conversion{};
   static_assert(sizeof(double) == sizeof(uint64_t),
                 "double and uint64_t are required to be same size.");
   static_assert(sizeof(conversion) == sizeof(uint64_t), "");
@@ -176,69 +181,6 @@ struct Parallelisation
   };
 };
 
-template <typename T>
-struct VectorRegisterSize
-{
-  enum
-  {
-#ifdef __AVX__
-    value = 256
-#elif defined __SSE__
-    value = 128
-#else
-    value = 32
-#endif
-  };
-};
-
-#define ADD_REGISTER_SIZE(type, size) \
-  template <>                         \
-  struct VectorRegisterSize<type>     \
-  {                                   \
-    enum                              \
-    {                                 \
-      value = (size)                  \
-    };                                \
-  }
-
-#ifdef __AVX2__
-
-ADD_REGISTER_SIZE(int, 256);
-
-#elif defined __AVX__
-
-ADD_REGISTER_SIZE(int, 128);
-ADD_REGISTER_SIZE(double, 256);
-ADD_REGISTER_SIZE(float, 256);
-
-#elif defined __SSE42__
-
-ADD_REGISTER_SIZE(int, 128);
-ADD_REGISTER_SIZE(double, 128);
-ADD_REGISTER_SIZE(float, 128);
-
-#elif defined __SSE3__
-
-ADD_REGISTER_SIZE(int, 128);
-ADD_REGISTER_SIZE(double, 128);
-ADD_REGISTER_SIZE(float, 128);
-
-#else
-
-ADD_REGISTER_SIZE(int, sizeof(int));
-
-#endif
-#undef ADD_REGISTER_SIZE
-
-constexpr bool has_avx()
-{
-#ifdef __AVX__
-  return true;
-#else
-  return false;
-#endif
-}
-
 constexpr bool has_avx2()
 {
 #ifdef __AVX2__
@@ -248,50 +190,7 @@ constexpr bool has_avx2()
 #endif
 }
 
-constexpr bool has_sse()
-{
-#ifdef __SSE__
-  return true;
-#else
-  return false;
-#endif
-}
-
-constexpr bool has_sse2()
-{
-#ifdef __SSE2__
-  return true;
-#else
-  return false;
-#endif
-}
-
-constexpr bool has_sse3()
-{
-#ifdef __SSE3__
-  return true;
-#else
-  return false;
-#endif
-}
-
-constexpr bool has_sse41()
-{
-#ifdef __SSE4_1__
-  return true;
-#else
-  return false;
-#endif
-}
-
-constexpr bool has_sse42()
-{
-#ifdef __SSE4_2__
-  return true;
-#else
-  return false;
-#endif
-}
+#define FETCH_ASM_LABEL(Label) __asm__("#" Label)
 
 // Allow the option of specifying our platform endianness
 #if defined(FETCH_PLATFORM_BIG_ENDIAN) || defined(FETCH_PLATFORM_LITTLE_ENDIAN)
@@ -339,6 +238,11 @@ inline uint64_t CountTrailingZeroes64(uint64_t x)
   return x == 0 ? 64 : static_cast<uint64_t>(__builtin_ctzll(x));
 }
 
+inline uint64_t CountSetBits(uint64_t x)
+{
+  return static_cast<uint64_t>(__builtin_popcountll(x));
+}
+
 /**
  * finds most significant set bit in type
  * @tparam T
@@ -359,11 +263,30 @@ constexpr int32_t HighestSetBit(T n_input)
          static_cast<int32_t>(CountLeadingZeroes64(n));
 }
 
+/**
+ * finds most significant set bit in type
+ * @tparam T
+ * @param n
+ * @return
+ */
+template <>
+constexpr int32_t HighestSetBit(int128_t n_input)
+{
+  auto const high = static_cast<uint64_t>(n_input >> 64);
+  auto const low  = static_cast<uint64_t>(n_input >> 64);
+
+  if (high == 0)
+  {
+    return HighestSetBit(low);
+  }
+  return HighestSetBit(high) + 64;
+}
+
 // Return the minimum number of bits required to represent x
 inline uint64_t Log2Ceil(uint64_t x)
 {
   uint64_t count = 0;
-  while (x >>= 1)
+  while (x >>= 1)  // NOLINT
   {
     count++;
   }
@@ -378,21 +301,21 @@ inline uint64_t Log2Ceil(uint64_t x)
 
 inline uint32_t ToLog2(uint32_t value)
 {
-  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3u;
   return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
                                static_cast<uint32_t>(__builtin_clz(value) + 1));
 }
 
 inline uint64_t ToLog2(uint64_t value)
 {
-  static constexpr uint64_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  static constexpr uint64_t VALUE_SIZE_IN_BITS = sizeof(value) << 3u;
   return VALUE_SIZE_IN_BITS - static_cast<uint64_t>(__builtin_clzll(value) + 1);
 }
 
 // https://graphics.stanford.edu/~seander/bithacks.html
 inline bool IsLog2(uint64_t value)
 {
-  return value && !(value & (value - 1));
+  return (value != 0u) && ((value & (value - 1)) == 0u);
 }
 
 template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>

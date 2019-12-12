@@ -35,7 +35,7 @@ class Elu : public fetch::ml::ops::Ops<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpEluSaveableParams<TensorType>;
   using MyType        = Elu<TensorType>;
@@ -82,8 +82,8 @@ public:
     assert(inputs.front()->shape() == error_signal.shape());
     TensorType ret{error_signal.shape()};
 
-    DataType zero{0};
-    DataType one{1};
+    DataType const zero = fetch::math::Type<DataType>("0");
+    DataType const one  = fetch::math::Type<DataType>("1");
 
     // gradient of elu function is a*e^x where x<0; and 1.0 where x>=0
     auto it  = inputs.front()->cbegin();

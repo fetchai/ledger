@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/counter_map.hpp"
 
@@ -24,7 +23,7 @@ namespace fetch {
 namespace telemetry {
 
 CounterMap::CounterMap(std::string name, std::string description, Labels const &labels)
-  : Measurement(std::move(name), std::move(description), std::move(labels))
+  : Measurement(std::move(name), std::move(description), labels)
 {}
 
 void CounterMap::Increment(Labels const &keys)
@@ -34,7 +33,7 @@ void CounterMap::Increment(Labels const &keys)
 
 void CounterMap::ToStream(OutputStream &stream) const
 {
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
 
   WriteHeader(stream, "counter");
   for (auto const &element : counters_)
@@ -45,7 +44,8 @@ void CounterMap::ToStream(OutputStream &stream) const
 
 CounterPtr CounterMap::LookupCounter(Labels const &keys)
 {
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
+
   auto it = counters_.find(keys);
   if (it == counters_.end())
   {
@@ -64,10 +64,8 @@ CounterPtr CounterMap::LookupCounter(Labels const &keys)
 
     return counter;
   }
-  else
-  {
-    return it->second;
-  }
+
+  return it->second;
 }
 
 }  // namespace telemetry

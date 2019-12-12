@@ -31,7 +31,7 @@ public:
   explicit TxQueryHttpInterface(StorageUnitInterface &storage_unit);
   TxQueryHttpInterface(TxQueryHttpInterface const &) = delete;
   TxQueryHttpInterface(TxQueryHttpInterface &&)      = delete;
-  ~TxQueryHttpInterface()                            = default;
+  ~TxQueryHttpInterface() override                   = default;
 
   // Operators
   TxQueryHttpInterface &operator=(TxQueryHttpInterface const &) = delete;

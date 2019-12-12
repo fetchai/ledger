@@ -17,11 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "meta/type_util.hpp"
 
 #include <cmath>
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <map>
 #include <memory>
 #include <sstream>
@@ -63,7 +66,9 @@ static constexpr TypeId Fixed64         = 16;
 static constexpr TypeId PrimitiveMaxId  = 16;
 static constexpr TypeId String          = 17;
 static constexpr TypeId Address         = 18;
-static constexpr TypeId NumReserved     = 19;
+static constexpr TypeId Fixed128        = 19;
+static constexpr TypeId UInt256         = 20;
+static constexpr TypeId NumReserved     = 21;
 }  // namespace TypeIds
 
 enum class NodeCategory : uint8_t
@@ -76,78 +81,85 @@ enum class NodeCategory : uint8_t
 
 enum class NodeKind : uint16_t
 {
-  Unknown                                   = 0,
-  Root                                      = 1,
-  File                                      = 2,
-  FunctionDefinitionStatement               = 3,
-  WhileStatement                            = 4,
-  ForStatement                              = 5,
-  If                                        = 6,
-  ElseIf                                    = 7,
-  Else                                      = 8,
-  Annotations                               = 9,
-  Annotation                                = 10,
-  AnnotationNameValuePair                   = 11,
-  IfStatement                               = 12,
-  VarDeclarationStatement                   = 13,
-  VarDeclarationTypedAssignmentStatement    = 14,
-  VarDeclarationTypelessAssignmentStatement = 15,
-  ReturnStatement                           = 16,
-  BreakStatement                            = 17,
-  ContinueStatement                         = 18,
-  Assign                                    = 19,
-  Identifier                                = 20,
-  Template                                  = 21,
-  Integer8                                  = 22,
-  UnsignedInteger8                          = 23,
-  Integer16                                 = 24,
-  UnsignedInteger16                         = 25,
-  Integer32                                 = 26,
-  UnsignedInteger32                         = 27,
-  Integer64                                 = 28,
-  UnsignedInteger64                         = 29,
-  Float32                                   = 30,
-  Float64                                   = 31,
-  Fixed32                                   = 32,
-  Fixed64                                   = 33,
-  String                                    = 34,
-  True                                      = 35,
-  False                                     = 36,
-  Null                                      = 37,
-  Equal                                     = 38,
-  NotEqual                                  = 39,
-  LessThan                                  = 40,
-  LessThanOrEqual                           = 41,
-  GreaterThan                               = 42,
-  GreaterThanOrEqual                        = 43,
-  And                                       = 44,
-  Or                                        = 45,
-  Not                                       = 46,
-  PrefixInc                                 = 47,
-  PrefixDec                                 = 48,
-  PostfixInc                                = 49,
-  PostfixDec                                = 50,
-  UnaryPlus                                 = 51,
-  Negate                                    = 52,
-  Index                                     = 53,
-  Dot                                       = 54,
-  Invoke                                    = 55,
-  ParenthesisGroup                          = 56,
-  Add                                       = 57,
-  InplaceAdd                                = 58,
-  Subtract                                  = 59,
-  InplaceSubtract                           = 60,
-  Multiply                                  = 61,
-  InplaceMultiply                           = 62,
-  Divide                                    = 63,
-  InplaceDivide                             = 64,
-  Modulo                                    = 65,
-  InplaceModulo                             = 66,
-  PersistentStatement                       = 67,
-  UseStatement                              = 68,
-  UseStatementKeyList                       = 69,
-  UseAnyStatement                           = 70,
-  InitialiserList                           = 71
+  Unknown                                        = 0,
+  Root                                           = 1,
+  File                                           = 2,
+  FreeFunctionDefinition                         = 3,
+  WhileStatement                                 = 4,
+  ForStatement                                   = 5,
+  If                                             = 6,
+  ElseIf                                         = 7,
+  Else                                           = 8,
+  Annotations                                    = 9,
+  Annotation                                     = 10,
+  AnnotationNameValuePair                        = 11,
+  IfStatement                                    = 12,
+  LocalVarDeclarationStatement                   = 13,
+  LocalVarDeclarationTypedAssignmentStatement    = 14,
+  LocalVarDeclarationTypelessAssignmentStatement = 15,
+  ReturnStatement                                = 16,
+  BreakStatement                                 = 17,
+  ContinueStatement                              = 18,
+  Assign                                         = 19,
+  Identifier                                     = 20,
+  Template                                       = 21,
+  Integer8                                       = 22,
+  UnsignedInteger8                               = 23,
+  Integer16                                      = 24,
+  UnsignedInteger16                              = 25,
+  Integer32                                      = 26,
+  UnsignedInteger32                              = 27,
+  Integer64                                      = 28,
+  UnsignedInteger64                              = 29,
+  Float32                                        = 30,
+  Float64                                        = 31,
+  Fixed32                                        = 32,
+  Fixed64                                        = 33,
+  String                                         = 34,
+  True                                           = 35,
+  False                                          = 36,
+  Null                                           = 37,
+  Equal                                          = 38,
+  NotEqual                                       = 39,
+  LessThan                                       = 40,
+  LessThanOrEqual                                = 41,
+  GreaterThan                                    = 42,
+  GreaterThanOrEqual                             = 43,
+  And                                            = 44,
+  Or                                             = 45,
+  Not                                            = 46,
+  PrefixInc                                      = 47,
+  PrefixDec                                      = 48,
+  PostfixInc                                     = 49,
+  PostfixDec                                     = 50,
+  UnaryPlus                                      = 51,
+  Negate                                         = 52,
+  Index                                          = 53,
+  Dot                                            = 54,
+  Invoke                                         = 55,
+  Parenthesis                                    = 56,
+  Add                                            = 57,
+  InplaceAdd                                     = 58,
+  Subtract                                       = 59,
+  InplaceSubtract                                = 60,
+  Multiply                                       = 61,
+  InplaceMultiply                                = 62,
+  Divide                                         = 63,
+  InplaceDivide                                  = 64,
+  Modulo                                         = 65,
+  InplaceModulo                                  = 66,
+  PersistentStatement                            = 67,
+  UseStatement                                   = 68,
+  UseStatementKeyList                            = 69,
+  UseAnyStatement                                = 70,
+  InitialiserList                                = 71,
+  ContractDefinition                             = 72,
+  ContractFunction                               = 73,
+  ContractStatement                              = 74,
+  Fixed128                                       = 75,
+  StructDefinition                               = 76,
+  MemberFunctionDefinition                       = 77,
+  MemberVarDeclarationStatement                  = 78
 };
 
 enum class ExpressionKind : uint8_t
@@ -162,14 +174,16 @@ enum class ExpressionKind : uint8_t
 
 enum class TypeKind : uint8_t
 {
-  Unknown                  = 0,
-  Primitive                = 1,
-  Meta                     = 2,
-  Group                    = 3,
-  Class                    = 4,
-  Template                 = 5,
-  Instantiation            = 6,
-  UserDefinedInstantiation = 7
+  Unknown                          = 0,
+  Primitive                        = 1,
+  Meta                             = 2,
+  Group                            = 3,
+  Class                            = 4,
+  Template                         = 5,
+  TemplateInstantiation            = 6,
+  UserDefinedTemplateInstantiation = 7,
+  UserDefinedContract              = 8,
+  UserDefinedStruct                = 9
 };
 
 enum class VariableKind : uint8_t
@@ -177,36 +191,42 @@ enum class VariableKind : uint8_t
   Unknown   = 0,
   Parameter = 1,
   For       = 2,
-  Var       = 3,
-  Use       = 4,
-  UseAny    = 5
+  Local     = 3,
+  Member    = 4,
+  Use       = 5,
+  UseAny    = 6
 };
 
 enum class FunctionKind : uint8_t
 {
-  Unknown                 = 0,
-  FreeFunction            = 1,
-  Constructor             = 2,
-  StaticMemberFunction    = 3,
-  MemberFunction          = 4,
-  UserDefinedFreeFunction = 5
+  Unknown                     = 0,
+  FreeFunction                = 1,
+  Constructor                 = 2,
+  StaticMemberFunction        = 3,
+  MemberFunction              = 4,
+  UserDefinedContractFunction = 5,
+  UserDefinedFreeFunction     = 6,
+  UserDefinedConstructor      = 7,
+  UserDefinedMemberFunction   = 8
 };
 
 struct TypeInfo
 {
   TypeInfo() = default;
-  TypeInfo(TypeKind type_kind__, std::string name__, TypeId template_type_id__,
-           TypeIdArray parameter_type_ids__)
-    : type_kind{type_kind__}
+  TypeInfo(TypeKind kind__, std::string name__, TypeId type_id__, TypeId template_type_id__,
+           TypeIdArray template_parameter_type_ids__)
+    : kind{kind__}
     , name{std::move(name__)}
+    , type_id{type_id__}
     , template_type_id{template_type_id__}
-    , parameter_type_ids{std::move(parameter_type_ids__)}
+    , template_parameter_type_ids{std::move(template_parameter_type_ids__)}
   {}
 
-  TypeKind    type_kind = TypeKind::Unknown;
+  TypeKind    kind{TypeKind::Unknown};
   std::string name;
-  TypeId      template_type_id = TypeIds::Unknown;
-  TypeIdArray parameter_type_ids;
+  TypeId      type_id{TypeIds::Unknown};
+  TypeId      template_type_id{TypeIds::Unknown};
+  TypeIdArray template_parameter_type_ids;
 };
 using TypeInfoArray = std::vector<TypeInfo>;
 using TypeInfoMap   = std::unordered_map<std::string, TypeId>;
@@ -216,35 +236,36 @@ template <typename T>
 class Ptr;
 class Object;
 
-using ChargeAmount = uint64_t;
+using ChargeAmount                                = uint64_t;
+static constexpr ChargeAmount COMPUTE_CHARGE_COST = 1u;
+static constexpr ChargeAmount MAXIMUM_CHARGE      = std::numeric_limits<ChargeAmount>::max();
 template <typename... Args>
 using ChargeEstimator = std::function<ChargeAmount(Args const &...)>;
 
 using Handler                   = std::function<void(VM *)>;
 using DefaultConstructorHandler = std::function<Ptr<Object>(VM *, TypeId)>;
+using CPPCopyConstructorHandler = std::function<Ptr<Object>(VM *, void const *)>;
 
 struct FunctionInfo
 {
-  FunctionInfo()
-    : function_kind{FunctionKind::Unknown}
-  {}
-
-  FunctionInfo(FunctionKind function_kind__, std::string unique_id__, Handler handler__,
-               ChargeAmount charge)
+  FunctionInfo() = default;
+  FunctionInfo(FunctionKind function_kind__, std::string unique_name__, Handler handler__,
+               ChargeAmount static_charge__)
     : function_kind{function_kind__}
-    , unique_id{std::move(unique_id__)}
+    , unique_name{std::move(unique_name__)}
     , handler{std::move(handler__)}
-    , static_charge{charge}
+    , static_charge{static_charge__}
   {}
 
-  FunctionKind function_kind;
-  std::string  unique_id;
+  FunctionKind function_kind{FunctionKind::Unknown};
+  std::string  unique_name;
   Handler      handler;
-  ChargeAmount static_charge;
+  ChargeAmount static_charge{};
 };
 using FunctionInfoArray = std::vector<FunctionInfo>;
 
 using DeserializeConstructorMap = std::unordered_map<TypeIndex, DefaultConstructorHandler>;
+using CPPCopyConstructorMap     = std::unordered_map<TypeIndex, CPPCopyConstructorHandler>;
 
 class RegisteredTypes
 {
@@ -267,7 +288,7 @@ public:
       return it->second;
     }
 
-    return TypeIndex(typeid(void ***));
+    return {typeid(void ***)};
   }
 
 private:
@@ -285,5 +306,47 @@ struct InitialiserListPlaceholder
 {
 };
 
+struct SourceFile
+{
+  SourceFile() = default;
+  SourceFile(std::string filename__, std::string source__)
+    : filename{std::move(filename__)}
+    , source{std::move(source__)}
+  {}
+  std::string filename;
+  std::string source;
+};
+using SourceFiles = std::vector<SourceFile>;
+
 }  // namespace vm
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<fetch::vm::SourceFile, D>
+{
+public:
+  using Type       = fetch::vm::SourceFile;
+  using DriverType = D;
+
+  static uint8_t const FILENAME = 1;
+  static uint8_t const SOURCE   = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &source_file)
+  {
+    auto map = map_constructor(2);
+    map.Append(FILENAME, source_file.filename);
+    map.Append(SOURCE, source_file.source);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &source_file)
+  {
+    map.ExpectKeyGetValue(FILENAME, source_file.filename);
+    map.ExpectKeyGetValue(SOURCE, source_file.source);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

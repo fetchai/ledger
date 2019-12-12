@@ -17,7 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/state_sentinel_adapter.hpp"
+#include "logging/logging.hpp"
 #include "storage/resource_mapper.hpp"
+
+#include <string>
 
 namespace fetch {
 namespace ledger {
@@ -32,7 +35,7 @@ constexpr char const *LOGGING_NAME = "StateSentinelAdapter";
  * @param storage The reference to the storage engine
  * @param scope The reference to the scope
  */
-StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier scope,
+StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, ConstByteArray scope,
                                            BitVector const &shards)
   : StateAdapter(storage, std::move(scope), Mode::READ_WRITE)
   , shards_{shards}
@@ -40,7 +43,7 @@ StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier
   auto const num_shards = static_cast<uint32_t>(shards_.size());
   for (uint32_t i = 0; i < num_shards; ++i)
   {
-    if (shards_.bit(i))
+    if (shards_.bit(i) != 0u)
     {
       storage_.Lock(i);
     }
@@ -52,7 +55,7 @@ StateSentinelAdapter::~StateSentinelAdapter()
   auto const num_shards = static_cast<uint32_t>(shards_.size());
   for (uint32_t i = 0; i < num_shards; ++i)
   {
-    if (shards_.bit(i))
+    if (shards_.bit(i) != 0u)
     {
       storage_.Unlock(i);
     }
@@ -71,7 +74,7 @@ StateSentinelAdapter::~StateSentinelAdapter()
 StateSentinelAdapter::Status StateSentinelAdapter::Read(std::string const &key, void *data,
                                                         uint64_t &size)
 {
-  if (!IsAllowedResource(WrapKeyWithScope(key)))
+  if (!IsAllowedResource(key))
   {
     return Status::PERMISSION_DENIED;
   }
@@ -102,9 +105,10 @@ StateSentinelAdapter::Status StateSentinelAdapter::Read(std::string const &key, 
 StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key, void const *data,
                                                          uint64_t size)
 {
-  if (!IsAllowedResource(WrapKeyWithScope(key)))
+  if (!IsAllowedResource(key))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to write to resource: ", WrapKeyWithScope(key));
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Unable to write to resource: ", CreateAddress(CurrentScope(), key).address());
     return Status::PERMISSION_DENIED;
   }
 
@@ -131,7 +135,7 @@ StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key,
  */
 StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key)
 {
-  if (!IsAllowedResource(WrapKeyWithScope(key)))
+  if (!IsAllowedResource(key))
   {
     return Status::PERMISSION_DENIED;
   }
@@ -151,7 +155,7 @@ StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key
 bool StateSentinelAdapter::IsAllowedResource(std::string const &key) const
 {
   // build the associated resources address
-  storage::ResourceAddress const address{key};
+  auto const address = CreateAddress(CurrentScope(), key);
 
   // determine which shard this resource is mapped to
   auto const mapped_shard = address.lane(shards_.log2_size());

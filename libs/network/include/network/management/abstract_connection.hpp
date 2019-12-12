@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 #include "network/management/abstract_connection_register.hpp"
 #include "network/message.hpp"
 
@@ -36,10 +36,10 @@ namespace network {
 class AbstractConnection : public std::enable_shared_from_this<AbstractConnection>
 {
 public:
-  using shared_type            = std::shared_ptr<AbstractConnection>;
-  using connection_handle_type = typename AbstractConnectionRegister::connection_handle_type;
-  using weak_ptr_type          = std::weak_ptr<AbstractConnection>;
-  using weak_register_type     = std::weak_ptr<AbstractConnectionRegister>;
+  using SharedType           = std::shared_ptr<AbstractConnection>;
+  using ConnectionHandleType = typename AbstractConnectionRegister::ConnectionHandleType;
+  using WeakPointerType      = std::weak_ptr<AbstractConnection>;
+  using WeakRegisterType     = std::weak_ptr<AbstractConnectionRegister>;
 
   static constexpr char const *LOGGING_NAME = "AbstractConnection";
 
@@ -50,215 +50,67 @@ public:
     TYPE_OUTGOING  = 2
   };
 
-  AbstractConnection()
-    : handle_(AbstractConnection::next_handle())
-  {}
+  // Construction / Destruction
+  AbstractConnection();
 
   // Interface
-  virtual ~AbstractConnection()
-  {
-    auto h = handle_.load();
+  virtual ~AbstractConnection();
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destruction in progress for handle ");
-    FETCH_LOG_VARIABLE(h);
+  virtual void     Send(MessageType const &) = 0;
+  virtual uint16_t Type() const              = 0;
+  virtual void     Close()                   = 0;
+  virtual bool     Closed() const            = 0;
+  virtual bool     is_alive() const          = 0;
 
-    {
-      FETCH_LOCK(callback_mutex_);
-      on_message_ = nullptr;
-    }
+  // Common to allx
+  std::string          Address() const;
+  uint16_t             port() const;
+  ConnectionHandleType handle() const noexcept;
+  void                 SetConnectionManager(WeakRegisterType const &reg);
 
-    auto ptr = connection_register_.lock();
-    if (ptr)
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "~AbstractConnection calling Leave");
-      ptr->Leave(handle_);
-    }
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destroyed for handle ", h);
-  }
+  WeakPointerType connection_pointer();
 
-  virtual void     Send(message_type const &) = 0;
-  virtual uint16_t Type() const               = 0;
-  virtual void     Close()                    = 0;
-  virtual bool     Closed() const             = 0;
-  virtual bool     is_alive() const           = 0;
+  void OnMessage(std::function<void(network::MessageType const &msg)> const &f);
 
-  // Common to all
-  std::string Address() const
-  {
-    FETCH_LOCK(address_mutex_);
-    return address_;
-  }
+  void OnConnectionSuccess(std::function<void()> const &fnc);
 
-  uint16_t port() const
-  {
-    return port_;
-  }
+  void OnConnectionFailed(std::function<void()> const &fnc);
+  void OnLeave(std::function<void()> const &fnc);
 
-  connection_handle_type handle() const noexcept
-  {
-    return handle_;
-  }
-  void SetConnectionManager(weak_register_type const &reg)
-  {
-    connection_register_ = reg;
-  }
-
-  weak_ptr_type connection_pointer()
-  {
-    return shared_from_this();
-  }
-
-  void OnMessage(std::function<void(network::message_type const &msg)> const &f)
-  {
-    FETCH_LOCK(callback_mutex_);
-    on_message_ = f;
-  }
-
-  void OnConnectionSuccess(std::function<void()> const &fnc)
-  {
-    FETCH_LOCK(callback_mutex_);
-    on_connection_success_ = fnc;
-  }
-
-  void OnConnectionFailed(std::function<void()> const &fnc)
-  {
-    FETCH_LOCK(callback_mutex_);
-    on_connection_failed_ = fnc;
-  }
-
-  void OnLeave(std::function<void()> const &fnc)
-  {
-    FETCH_LOCK(callback_mutex_);
-    on_leave_ = fnc;
-  }
-
-  void ClearClosures() noexcept
-  {
-    FETCH_LOCK(callback_mutex_);
-    on_connection_failed_  = nullptr;
-    on_connection_success_ = nullptr;
-    on_message_            = nullptr;
-  }
-
-  void ActivateSelfManage()
-  {
-    self_ = shared_from_this();
-  }
-
-  void DeactivateSelfManage()
-  {
-    self_.reset();
-  }
+  void ClearClosures() noexcept;
+  void ActivateSelfManage();
+  void DeactivateSelfManage();
 
 protected:
-  void SetAddress(std::string const &addr)
-  {
-    FETCH_LOCK(address_mutex_);
-    address_ = addr;
-  }
+  void SetAddress(std::string const &addr);
+  void SetPort(uint16_t p);
 
-  void SetPort(uint16_t p)
-  {
-    port_ = p;
-  }
-
-  void SignalLeave()
-  {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection terminated for handle ", handle_.load(),
-                    ", SignalLeave called.");
-    std::function<void()> cb;
-    {
-      FETCH_LOCK(callback_mutex_);
-      cb = on_leave_;
-    }
-
-    if (cb)
-    {
-      cb();
-    }
-    DeactivateSelfManage();
-    FETCH_LOG_DEBUG(LOGGING_NAME, "SignalLeave is done");
-  }
-
-  void SignalMessage(network::message_type const &msg)
-  {
-    std::function<void(network::message_type const &)> cb;
-    {
-      FETCH_LOCK(callback_mutex_);
-      cb = on_message_;
-    }
-    if (cb)
-    {
-      cb(msg);
-    }
-  }
-
-  void SignalConnectionFailed()
-  {
-    std::function<void()> cb;
-    {
-      FETCH_LOCK(callback_mutex_);
-      cb = on_leave_;
-    }
-    if (cb)
-    {
-      cb();
-    }
-
-    DeactivateSelfManage();
-  }
-
-  void SignalConnectionSuccess()
-  {
-    std::function<void()> cb;
-    {
-      FETCH_LOCK(callback_mutex_);
-      cb = on_connection_success_;
-    }
-
-    if (cb)
-    {
-      cb();
-    }
-
-    DeactivateSelfManage();
-  }
+  void SignalLeave();
+  void SignalMessage(network::MessageType const &msg);
+  void SignalConnectionFailed();
+  void SignalConnectionSuccess();
 
 private:
-  std::function<void(network::message_type const &msg)> on_message_;
-  std::function<void()>                                 on_connection_success_;
-  std::function<void()>                                 on_connection_failed_;
-  std::function<void()>                                 on_leave_;
+  std::function<void(network::MessageType const &msg)> on_message_;
+  std::function<void()>                                on_connection_success_;
+  std::function<void()>                                on_connection_failed_;
+  std::function<void()>                                on_leave_;
 
-  std::string           address_;
-  std::atomic<uint16_t> port_;
+  std::string           address_{};
+  std::atomic<uint16_t> port_{0};
 
   mutable Mutex address_mutex_;
 
-  static connection_handle_type next_handle()
-  {
-    connection_handle_type ret = 0;
+  static ConnectionHandleType next_handle();
 
-    {
-      FETCH_LOCK(global_handle_mutex_);
+  WeakRegisterType                        connection_register_;
+  std::atomic<ConnectionHandleType> const handle_;
 
-      while (ret == 0)
-      {
-        ret = global_handle_counter_++;
-      }
-    }
+  static ConnectionHandleType global_handle_counter_;
+  static Mutex                global_handle_mutex_;
+  mutable Mutex               callback_mutex_;
 
-    return ret;
-  }
-
-  weak_register_type                        connection_register_;
-  std::atomic<connection_handle_type> const handle_;
-
-  static connection_handle_type global_handle_counter_;
-  static Mutex                  global_handle_mutex_;
-  mutable Mutex                 callback_mutex_;
-
-  shared_type self_;
+  SharedType self_;
 
   friend class AbstractConnectionRegister;
 };

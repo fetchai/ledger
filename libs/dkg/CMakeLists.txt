@@ -19,7 +19,7 @@ target_link_libraries(fetch-dkg
                       PUBLIC fetch-core
                              fetch-crypto
                              fetch-network
-                             fetch-ledger)
-
-add_test_target()
-add_subdirectory(examples/)
+                             fetch-chain
+                             fetch-entropy
+                             fetch-muddle
+                             fetch-logging)

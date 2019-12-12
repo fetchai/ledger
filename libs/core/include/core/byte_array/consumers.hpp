@@ -23,6 +23,7 @@
 #include <cctype>
 
 #include <emmintrin.h>
+
 namespace fetch {
 namespace byte_array {
 namespace consumers {
@@ -75,7 +76,7 @@ int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
   }
   if (pos != oldpos)
   {
-    int ret = int(NUMBER_INT);
+    auto ret = int(NUMBER_INT);
 
     if ((pos < str.size()) && (str[pos] == '.'))
     {
@@ -141,19 +142,20 @@ int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos)
   alignas(16) uint8_t compare[16] = {'"', '"', '"', '"', '"', '"', '"', '"',
                                      '"', '"', '"', '"', '"', '"', '"', '"'};
 
-  __m128i  comp  = _mm_load_si128((__m128i *)compare);
-  __m128i  mptr  = _mm_loadu_si128((__m128i *)ptr);  // TODO(issue 37): Optimise to follow alignment
-  __m128i  mret  = _mm_cmpeq_epi8(comp, mptr);
-  uint16_t found = uint16_t(_mm_movemask_epi8(mret));
+  __m128i comp = _mm_load_si128(reinterpret_cast<__m128i *>(compare));
+  // TODO(issue 37): Optimise to follow alignment
+  __m128i mptr  = _mm_loadu_si128(reinterpret_cast<__m128i const *>(ptr));
+  __m128i mret  = _mm_cmpeq_epi8(comp, mptr);
+  auto    found = uint16_t(_mm_movemask_epi8(mret));
 
   while ((pos < str.size()) && (!found))
   {
     pos += 16;
     ptr += 16;
     // TODO(issue 37): Handle \"x
-    __m128i mptr = _mm_loadu_si128((__m128i *)ptr);
-    __m128i mret = _mm_cmpeq_epi8(comp, mptr);
-    found        = uint16_t(_mm_movemask_epi8(mret));
+    __m128i mptr_scoped = _mm_loadu_si128(reinterpret_cast<__m128i const *>(ptr));
+    __m128i mret_scoped = _mm_cmpeq_epi8(comp, mptr_scoped);
+    found               = uint16_t(_mm_movemask_epi8(mret_scoped));
   }
 
   pos += uint64_t(__builtin_ctz(found));

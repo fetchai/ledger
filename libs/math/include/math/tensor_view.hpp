@@ -39,15 +39,15 @@ public:
   using VectorRegisterType         = typename ContainerType::VectorRegisterType;
   using VectorRegisterIteratorType = typename ContainerType::VectorRegisterIteratorType;
 
-  enum
+  enum : uint32_t
   {
-    LOG_PADDING = 2,
+    LOG_PADDING = 5,
     PADDING     = static_cast<SizeType>(1) << LOG_PADDING
   };
 
   TensorView(ContainerType data, SizeType height, SizeType width, SizeType offset = 0)
-    : height_{std::move(height)}
-    , width_{std::move(width)}
+    : height_{height}
+    , width_{width}
     , padded_height_{PadValue(height_)}
     , data_{std::move(data), offset, padded_height_ * width_}
   {}

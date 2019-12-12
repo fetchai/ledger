@@ -16,12 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/constants.hpp"
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "crypto/identity.hpp"
+#include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 
@@ -32,8 +36,10 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-bool IsOperationValid(WalletRecord const &record, Transaction const &tx,
-                      ConstByteArray const &operation)
+using fetch::variant::Variant;
+
+bool IsOperationValid(WalletRecord const &record, chain::Transaction const &tx,
+                      Deed::Operation const &operation)
 {
   // perform validation checks
   if (record.deed)
@@ -61,16 +67,14 @@ bool IsOperationValid(WalletRecord const &record, Transaction const &tx,
   return true;
 }
 
-constexpr uint64_t MAX_TOKENS             = 0xFFFFFFFFFFFFFFFFull;
-constexpr uint64_t STAKE_WARM_UP_PERIOD   = 120;
-constexpr uint64_t STAKE_COOL_DOWN_PERIOD = 120;
+constexpr uint64_t MAX_TOKENS = 0xFFFFFFFFFFFFFFFFull;
 
 }  // namespace
 
 TokenContract::TokenContract()
 {
   // TODO(tfr): I think the function CreateWealth should be OnInit?
-  OnTransaction("deed", this, &TokenContract::Deed);
+  OnTransaction("deed", this, &TokenContract::UpdateDeed);
   OnTransaction("wealth", this, &TokenContract::CreateWealth);
   OnTransaction("transfer", this, &TokenContract::Transfer);
   OnTransaction("addStake", this, &TokenContract::AddStake);
@@ -81,18 +85,44 @@ TokenContract::TokenContract()
   OnQuery("cooldownStake", this, &TokenContract::CooldownStake);
 }
 
-uint64_t TokenContract::GetBalance(Address const &address)
+DeedPtr TokenContract::GetDeed(chain::Address const &address)
+{
+  DeedPtr deed{};
+
+  WalletRecord record{};
+  if (GetStateRecord(record, address))
+  {
+    deed = record.deed;
+  }
+
+  return deed;
+}
+
+void TokenContract::SetDeed(chain::Address const &address, DeedPtr const &deed)
+{
+  // create or lookup the wallet record
+  WalletRecord record{};
+  GetStateRecord(record, address);
+
+  // update the deed
+  record.deed = deed;
+
+  // write back the wallet record
+  SetStateRecord(record, address);
+}
+
+uint64_t TokenContract::GetBalance(chain::Address const &address)
 {
   WalletRecord record{};
-  GetStateRecord(record, address.display());
+  GetStateRecord(record, address);
 
   return record.balance;
 }
 
-bool TokenContract::AddTokens(Address const &address, uint64_t amount)
+bool TokenContract::AddTokens(chain::Address const &address, uint64_t amount)
 {
   WalletRecord record{};
-  GetStateRecord(record, address.display());
+  GetStateRecord(record, address);
 
   if (amount > (MAX_TOKENS - record.balance))
   {
@@ -101,15 +131,15 @@ bool TokenContract::AddTokens(Address const &address, uint64_t amount)
 
   record.balance += amount;
 
-  auto const status = SetStateRecord(record, address.display());
+  auto const status = SetStateRecord(record, address);
 
   return status == StateAdapter::Status::OK;
 }
 
-bool TokenContract::SubtractTokens(Address const &address, uint64_t amount)
+bool TokenContract::SubtractTokens(chain::Address const &address, uint64_t amount)
 {
   WalletRecord record{};
-  GetStateRecord(record, address.display());
+  GetStateRecord(record, address);
 
   if (amount > record.balance)
   {
@@ -118,16 +148,17 @@ bool TokenContract::SubtractTokens(Address const &address, uint64_t amount)
 
   record.balance -= amount;
 
-  auto const status = SetStateRecord(record, address.display());
+  auto const status = SetStateRecord(record, address);
 
   return status == StateAdapter::Status::OK;
 }
 
-bool TokenContract::TransferTokens(Transaction const &tx, Address const &to, uint64_t amount)
+bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address const &to,
+                                   uint64_t amount)
 {
   // look up the state record (to see if there is a deed associated with this address)
   WalletRecord from_record{};
-  if (!GetStateRecord(from_record, tx.from().display()))
+  if (!GetStateRecord(from_record, tx.from()))
   {
     return false;
   }
@@ -138,7 +169,7 @@ bool TokenContract::TransferTokens(Transaction const &tx, Address const &to, uin
     // There is current deed in effect.
 
     // Verify that current transaction possesses authority to perform the transfer
-    if (!from_record.deed->Verify(tx, TRANSFER_NAME))
+    if (!from_record.deed->Verify(tx, Deed::TRANSFER))
     {
       return false;
     }
@@ -158,7 +189,7 @@ bool TokenContract::TransferTokens(Transaction const &tx, Address const &to, uin
   return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
 }
 
-Contract::Result TokenContract::CreateWealth(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::CreateWealth(chain::Transaction const &tx)
 {
   // parse the payload as JSON
   Variant data;
@@ -190,7 +221,7 @@ Contract::Result TokenContract::CreateWealth(Transaction const &tx, BlockIndex)
  *
  * @return Status::OK if deed has been incorporated successfully.
  */
-Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::UpdateDeed(chain::Transaction const &tx)
 {
   Variant data;
   if (!ParseAsJson(tx, data))
@@ -200,7 +231,7 @@ Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex)
 
   // retrieve the record (if it exists)
   WalletRecord record{};
-  GetStateRecord(record, tx.from().display());
+  GetStateRecord(record, tx.from());
 
   if (record.deed)
   {
@@ -208,7 +239,7 @@ Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex)
 
     // Verify that current transaction has authority to AMEND the deed
     // currently in effect.
-    if (!record.deed->Verify(tx, AMEND_NAME))
+    if (!record.deed->Verify(tx, Deed::AMEND))
     {
       return {Status::FAILED};
     }
@@ -236,7 +267,7 @@ Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex)
     }
   }
 
-  auto const status = SetStateRecord(record, tx.from().display());
+  auto const status = SetStateRecord(record, tx.from());
   if (status != StateAdapter::Status::OK)
   {
     return {Status::FAILED};
@@ -245,28 +276,32 @@ Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex)
   return {Status::OK};
 }
 
-Contract::Result TokenContract::Transfer(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::Transfer(chain::Transaction const &tx)
 {
   FETCH_UNUSED(tx);
   return {Status::FAILED};
 }
 
-Contract::Result TokenContract::AddStake(Transaction const &tx, BlockIndex block)
+Contract::Result TokenContract::AddStake(chain::Transaction const &tx)
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Adding stake!");
+
   // parse the payload as JSON
   Variant data;
   if (ParseAsJson(tx, data))
   {
     // attempt to extract the amount field
-    uint64_t amount{0};
-    if (Extract(data, AMOUNT_NAME, amount))
+    uint64_t       amount{0};
+    ConstByteArray input;
+
+    if (Extract(data, AMOUNT_NAME, amount) && Extract(data, ADDRESS_NAME, input))
     {
       // look up the state record (to see if there is a deed associated with this address)
       WalletRecord record{};
-      if (GetStateRecord(record, tx.from().display()))
+      if (GetStateRecord(record, tx.from()))
       {
         // ensure the transaction has authority over this deed
-        if (IsOperationValid(record, tx, STAKE_NAME))
+        if (IsOperationValid(record, tx, Deed::STAKE))
         {
           // stake the amount
           if (record.balance >= amount)
@@ -274,17 +309,24 @@ Contract::Result TokenContract::AddStake(Transaction const &tx, BlockIndex block
             record.balance -= amount;
             record.stake += amount;
 
+            FETCH_LOG_INFO(LOGGING_NAME, "Stake updates are happening");
+
             // record the stake update event
             stake_updates_.emplace_back(
-                StakeUpdate{tx.from(), block + STAKE_WARM_UP_PERIOD, amount});
+                StakeUpdateEvent{context().block_index + chain::STAKE_WARM_UP_PERIOD,
+                                 crypto::Identity(input.FromBase64()), amount});
 
             // save the state
-            auto const status = SetStateRecord(record, tx.from().display());
+            auto const status = SetStateRecord(record, tx.from());
             if (status == StateAdapter::Status::OK)
             {
               return {Status::OK};
             }
           }
+        }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Attempted staking operation was invalid!");
         }
       }
     }
@@ -293,7 +335,7 @@ Contract::Result TokenContract::AddStake(Transaction const &tx, BlockIndex block
   return {Status::FAILED};
 }
 
-Contract::Result TokenContract::DeStake(Transaction const &tx, BlockIndex block)
+Contract::Result TokenContract::DeStake(chain::Transaction const &tx)
 {
   // parse the payload as JSON
   Variant data;
@@ -305,22 +347,22 @@ Contract::Result TokenContract::DeStake(Transaction const &tx, BlockIndex block)
     {
       // look up the state record (to see if there is a deed associated with this address)
       WalletRecord record{};
-      if (GetStateRecord(record, tx.from().display()))
+      if (GetStateRecord(record, tx.from()))
       {
         // ensure the transaction has authority over this deed
-        if (IsOperationValid(record, tx, STAKE_NAME))
+        if (IsOperationValid(record, tx, Deed::STAKE))
         {
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Destaking! : ", amount, " of ", record.stake);
+          FETCH_LOG_INFO(LOGGING_NAME, "Destaking! : ", amount, " of ", record.stake);
           // destake the amount
           if (record.stake >= amount)
           {
             record.stake -= amount;
 
-            // Put it in a cool down state
-            record.cooldown_stake[block + STAKE_COOL_DOWN_PERIOD] += amount;
+            // Put it in a cooldown state
+            record.cooldown_stake[context().block_index + chain::STAKE_COOL_DOWN_PERIOD] += amount;
 
             // save the state
-            auto const status = SetStateRecord(record, tx.from().display());
+            auto const status = SetStateRecord(record, tx.from());
             if (status == StateAdapter::Status::OK)
             {
               return {Status::OK};
@@ -334,19 +376,19 @@ Contract::Result TokenContract::DeStake(Transaction const &tx, BlockIndex block)
   return {Status::FAILED};
 }
 
-Contract::Result TokenContract::CollectStake(Transaction const &tx, BlockIndex block)
+Contract::Result TokenContract::CollectStake(chain::Transaction const &tx)
 {
   WalletRecord record{};
 
-  if (GetStateRecord(record, tx.from().display()))
+  if (GetStateRecord(record, tx.from()))
   {
     // ensure the transaction has authority over this deed
-    if (IsOperationValid(record, tx, STAKE_NAME))
+    if (IsOperationValid(record, tx, Deed::STAKE))
     {
       // Collect all cooled down stakes and put them back into the account
-      record.CollectStake(block);
+      record.CollectStake(context().block_index);
 
-      auto const status = SetStateRecord(record, tx.from().display());
+      auto const status = SetStateRecord(record, tx.from());
       if (status == StateAdapter::Status::OK)
       {
         return {Status::OK};
@@ -363,12 +405,12 @@ Contract::Status TokenContract::Balance(Query const &query, Query &response)
   if (Extract(query, ADDRESS_NAME, input))
   {
     // attempt to parse the input address
-    Address address{};
-    if (Address::Parse(input, address))
+    chain::Address address{};
+    if (chain::Address::Parse(input, address))
     {
-      // lookup the record
+      // look up the record
       WalletRecord record{};
-      GetStateRecord(record, address.display());
+      GetStateRecord(record, address);
 
       // formulate the response
       response            = Variant::Object();
@@ -391,12 +433,12 @@ Contract::Status TokenContract::Stake(Query const &query, Query &response)
   if (Extract(query, ADDRESS_NAME, input))
   {
     // attempt to parse the input address
-    Address address{};
-    if (Address::Parse(input, address))
+    chain::Address address{};
+    if (chain::Address::Parse(input, address))
     {
-      // lookup the record
+      // look up the record
       WalletRecord record{};
-      GetStateRecord(record, address.display());
+      GetStateRecord(record, address);
 
       // formulate the response
       response          = Variant::Object();
@@ -407,7 +449,7 @@ Contract::Status TokenContract::Stake(Query const &query, Query &response)
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to balance query");
+    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to stake query");
   }
 
   return Status::FAILED;
@@ -419,20 +461,20 @@ Contract::Status TokenContract::CooldownStake(Query const &query, Query &respons
   if (Extract(query, ADDRESS_NAME, input))
   {
     // attempt to parse the input address
-    Address address{};
-    if (Address::Parse(input, address))
+    chain::Address address{};
+    if (chain::Address::Parse(input, address))
     {
-      // lookup the record
+      // look up the record
       WalletRecord record{};
-      GetStateRecord(record, address.display());
+      GetStateRecord(record, address);
 
       // formulate the response
       response  = Variant::Object();
       auto keys = Variant::Object();
 
-      for (auto it = record.cooldown_stake.begin(); it != record.cooldown_stake.end(); ++it)
+      for (auto const &it : record.cooldown_stake)
       {
-        keys[std::to_string(it->first)] = it->second;
+        keys[std::to_string(it.first)] = it.second;
       }
 
       response["cooldownStake"] = keys;
@@ -446,6 +488,16 @@ Contract::Status TokenContract::CooldownStake(Query const &query, Query &respons
   }
 
   return Status::FAILED;
+}
+
+void TokenContract::ClearStakeUpdates()
+{
+  stake_updates_.clear();
+}
+
+void TokenContract::ExtractStakeUpdates(StakeUpdateEvents &updates)
+{
+  updates = std::move(stake_updates_);
 }
 
 }  // namespace ledger

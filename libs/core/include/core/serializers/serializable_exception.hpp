@@ -39,7 +39,7 @@ public:
   template <typename T>
   static void Serialize(T &map_constructor, Type const &s)
   {
-    error::error_type code = s.error_code();
+    error::ErrorType code = s.error_code();
 
     auto map = map_constructor(2);
     map.Append(KEY_CODE, code);
@@ -49,7 +49,7 @@ public:
   template <typename T>
   static void Deserialize(T &map, Type &s)
   {
-    error::error_type     code;
+    error::ErrorType      code;
     byte_array::ByteArray buffer;
 
     map.ExpectKeyGetValue(KEY_CODE, code);

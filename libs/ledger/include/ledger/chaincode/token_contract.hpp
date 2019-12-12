@@ -17,29 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
+#include "chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/consensus/stake_update_event.hpp"
 
 #include <cstdint>
 #include <vector>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 class Address;
 class Transaction;
 
+}  // namespace chain
+namespace ledger {
+
+class Deed;
+
 class TokenContract : public Contract
 {
 public:
-  struct StakeUpdate
-  {
-    Address  address;  ///< The address of the staker
-    uint64_t from;     ///< The block index from which the stake becomes active
-    uint64_t amount;   ///< The amount being staked
-  };
-
-  using StakeUpdates = std::vector<StakeUpdate>;
+  using DeedPtr = std::shared_ptr<Deed>;
 
   static constexpr char const *LOGGING_NAME = "TokenContract";
   static constexpr char const *NAME         = "fetch.token";
@@ -49,40 +48,32 @@ public:
   ~TokenContract() override = default;
 
   // library functions
-  uint64_t GetBalance(Address const &address);
-  bool     AddTokens(Address const &address, uint64_t amount);
-  bool     SubtractTokens(Address const &address, uint64_t amount);
-  bool     TransferTokens(Transaction const &tx, Address const &to, uint64_t amount);
+  DeedPtr  GetDeed(chain::Address const &address);
+  void     SetDeed(chain::Address const &address, DeedPtr const &deed);
+  uint64_t GetBalance(chain::Address const &address);
+  bool     AddTokens(chain::Address const &address, uint64_t amount);
+  bool     SubtractTokens(chain::Address const &address, uint64_t amount);
+  bool     TransferTokens(chain::Transaction const &tx, chain::Address const &to, uint64_t amount);
 
   // transaction handlers
-  Result CreateWealth(Transaction const &tx, BlockIndex);
-  Result Deed(Transaction const &tx, BlockIndex);
-  Result Transfer(Transaction const &tx, BlockIndex);
-  Result AddStake(Transaction const &tx, BlockIndex);
-  Result DeStake(Transaction const &tx, BlockIndex);
-  Result CollectStake(Transaction const &tx, BlockIndex);
+  Result CreateWealth(chain::Transaction const &tx);
+  Result UpdateDeed(chain::Transaction const &tx);
+  Result Transfer(chain::Transaction const &tx);
+  Result AddStake(chain::Transaction const &tx);
+  Result DeStake(chain::Transaction const &tx);
+  Result CollectStake(chain::Transaction const &tx);
 
   // queries
   Status Balance(Query const &query, Query &response);
   Status Stake(Query const &query, Query &response);
   Status CooldownStake(Query const &query, Query &response);
 
-  void         ClearStakeUpdates();
-  StakeUpdates stake_updates() const;
+  void ExtractStakeUpdates(StakeUpdateEvents &updates);
+  void ClearStakeUpdates();
 
 private:
-  StakeUpdates stake_updates_;
+  StakeUpdateEvents stake_updates_;
 };
-
-inline void TokenContract::ClearStakeUpdates()
-{
-  stake_updates_.clear();
-}
-
-inline TokenContract::StakeUpdates TokenContract::stake_updates() const
-{
-  return stake_updates_;
-}
 
 }  // namespace ledger
 }  // namespace fetch

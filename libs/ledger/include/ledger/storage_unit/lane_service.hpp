@@ -19,11 +19,12 @@
 
 #include "core/reactor.hpp"
 #include "ledger/shard_config.hpp"
+#include "ledger/storage_unit/transaction_storage_engine.hpp"
+#include "ledger/storage_unit/transaction_storage_protocol.hpp"
+
+#include "muddle/muddle_interface.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
-#include "network/muddle/muddle.hpp"
-#include "storage/object_store_protocol.hpp"
-#include "storage/transient_object_store.hpp"
 
 #include <memory>
 
@@ -47,25 +48,27 @@ class ObjectStoreProtocol;
 class RevertibleDocumentStoreProtocol;
 }  // namespace storage
 
+namespace chain {
+
+class Transaction;
+
+}  // namespace chain
+
 namespace ledger {
 
 class TxFinderProtocol;
 class TransactionStoreSyncProtocol;
 class TransactionStoreSyncService;
-class LaneIdentityProtocol;
 class LaneController;
 class LaneControllerProtocol;
-class LaneIdentity;
-class LaneIdentityProtocol;
-class Transaction;
 
 class LaneService
 {
 public:
   static constexpr char const *LOGGING_NAME = "LaneService";
 
-  using Muddle         = muddle::Muddle;
-  using CertificatePtr = Muddle::CertificatePtr;
+  using MuddlePtr      = muddle::MuddlePtr;
+  using CertificatePtr = muddle::ProverPtr;
   using NetworkManager = network::NetworkManager;
 
   enum class Mode
@@ -74,9 +77,8 @@ public:
     LOAD_DATABASE
   };
 
-  // TODO(issue 7): Make config JSON
   // Construction / Destruction
-  explicit LaneService(NetworkManager nm, ShardConfig config, bool sign_packets, Mode mode);
+  explicit LaneService(NetworkManager const &nm, ShardConfig config, Mode mode);
   LaneService(LaneService const &) = delete;
   LaneService(LaneService &&)      = delete;
   ~LaneService();
@@ -97,13 +99,10 @@ public:
 
 private:
   using Reactor                   = core::Reactor;
-  using MuddlePtr                 = std::shared_ptr<Muddle>;
   using Server                    = fetch::muddle::rpc::Server;
   using ServerPtr                 = std::shared_ptr<Server>;
   using StateDb                   = storage::NewRevertibleDocumentStore;
   using StateDbProto              = storage::RevertibleDocumentStoreProtocol;
-  using TxStore                   = storage::TransientObjectStore<Transaction>;
-  using TxStoreProto              = storage::ObjectStoreProtocol<Transaction>;
   using BackgroundedWork          = network::BackgroundedWork<TransactionStoreSyncService>;
   using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
@@ -111,15 +110,13 @@ private:
   using LaneControllerProtocolPtr = std::shared_ptr<LaneControllerProtocol>;
   using StateDbPtr                = std::shared_ptr<StateDb>;
   using StateDbProtoPtr           = std::shared_ptr<StateDbProto>;
-  using TxStorePtr                = std::shared_ptr<TxStore>;
-  using TxStoreProtoPtr           = std::shared_ptr<TxStoreProto>;
+  using TxStorePtr                = std::shared_ptr<TransactionStorageEngine>;
+  using TxStoreProtoPtr           = std::shared_ptr<TransactionStorageProtocol>;
   using TxSyncProtoPtr            = std::shared_ptr<TransactionStoreSyncProtocol>;
   using TxSyncServicePtr          = std::shared_ptr<TransactionStoreSyncService>;
-  using LaneIdentityPtr           = std::shared_ptr<LaneIdentity>;
-  using LaneIdentityProtocolPtr   = std::shared_ptr<LaneIdentityProtocol>;
   using TxFinderProtocolPtr       = std::unique_ptr<TxFinderProtocol>;
 
-  static constexpr unsigned int SYNC_PERIOD_MS = 500;
+  static constexpr uint32_t SYNC_PERIOD_MS = 500;
 
   TxStorePtr tx_store_;
 
@@ -139,12 +136,6 @@ private:
   /// @{
   ServerPtr internal_rpc_server_;
   MuddlePtr internal_muddle_;
-  /// @}
-
-  /// @name Lane Identity Service
-  /// @{
-  LaneIdentityPtr         lane_identity_;
-  LaneIdentityProtocolPtr lane_identity_protocol_;
   /// @}
 
   /// @name Lane Controller

@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/comparison.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 /**

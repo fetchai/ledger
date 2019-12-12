@@ -18,14 +18,14 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace network {
+namespace shards {
 
 class Manifest;
 
-}  // namespace network
+}  // namespace shards
 
 class Settings;
 
-bool BuildManifest(Settings const &settings, network::Manifest &manifest);
+bool BuildManifest(Settings const &settings, shards::Manifest &manifest);
 
 }  // namespace fetch

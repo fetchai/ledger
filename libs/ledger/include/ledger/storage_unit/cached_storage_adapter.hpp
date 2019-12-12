@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <string>
@@ -30,7 +31,7 @@ namespace ledger {
 /**
  * Designed for temporary caching of values to reduce hits to the underlying storage engine.
  *
- * Initially intended in conjuction with the smart contract engine
+ * Initially intended in conjunction with the smart contract engine
  */
 class CachedStorageAdapter : public StorageInterface
 {
@@ -44,12 +45,11 @@ public:
 
   /// @name State Interface
   /// @{
-  Document Get(ResourceAddress const &key) override;
+  Document Get(ResourceAddress const &key) const override;
   Document GetOrCreate(ResourceAddress const &key) override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
   bool     Lock(ShardIndex index) override;
   bool     Unlock(ShardIndex index) override;
-  Keys     KeyDump() const override;
   void     Reset() override;
   /// @}
 
@@ -69,7 +69,7 @@ private:
 
   /// @name Cache Helpers
   /// @{
-  void       AddCacheEntry(ResourceAddress const &address, StateValue const &value);
+  void       AddCacheEntry(ResourceAddress const &address, StateValue const &value) const;
   StateValue GetCacheEntry(ResourceAddress const &address) const;
   bool       HasCacheEntry(ResourceAddress const &address) const;
   /// @}
@@ -78,9 +78,7 @@ private:
 
   /// @name Cache Data
   /// @{
-  mutable Mutex lock_;
-  Cache         cache_{};                ///< The local cache
-  bool          flush_required_{false};  ///< Top level cache flush flag
+  mutable Protected<Cache> cache_{};  ///< The local cache
   /// @}
 };
 

@@ -17,6 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
+#include "ledger/chain/block.hpp"
+#include "ledger/consensus/consensus.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
+#include "storage/object_store.hpp"
+
 #include <string>
 
 namespace fetch {
@@ -24,44 +30,46 @@ namespace variant {
 class Variant;
 }
 
-namespace dkg {
-class DkgService;
-}
-
 namespace ledger {
 
-class StakeManager;
 class BlockCoordinator;
 class StorageUnitInterface;
 
 class GenesisFileCreator
 {
 public:
+  using ConsensusPtr   = std::shared_ptr<fetch::ledger::ConsensusInterface>;
+  using ByteArray      = byte_array::ByteArray;
+  using CertificatePtr = std::shared_ptr<crypto::Prover>;
+  using GenesisStore   = fetch::storage::ObjectStore<Block>;
+
   // Construction / Destruction
   GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit,
-                     StakeManager *stake_manager, dkg::DkgService *dkg);
+                     ConsensusPtr consensus, CertificatePtr certificate,
+                     std::string const &db_prefix);
   GenesisFileCreator(GenesisFileCreator const &) = delete;
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;
 
-  void CreateFile(std::string const &name);
-  void LoadFile(std::string const &name);
+  bool LoadFile(std::string const &name);
 
   // Operators
   GenesisFileCreator &operator=(GenesisFileCreator const &) = delete;
   GenesisFileCreator &operator=(GenesisFileCreator &&) = delete;
 
 private:
-  void DumpState(variant::Variant &object);
-  void DumpStake(variant::Variant &object);
-  void LoadState(variant::Variant const &object);
-  void LoadStake(variant::Variant const &object);
-  void LoadDKG(variant::Variant const &object);
+  bool LoadState(variant::Variant const &object);
+  bool LoadConsensus(variant::Variant const &object);
 
+  CertificatePtr        certificate_;
   BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;
-  StakeManager *        stake_manager_{nullptr};
-  dkg::DkgService *     dkg_{nullptr};
+  ConsensusPtr          consensus_;
+  uint64_t              start_time_ = 0;
+  GenesisStore          genesis_store_;
+  Block                 genesis_block_;
+  bool                  loaded_genesis_{false};
+  std::string           db_name_;
 };
 
 }  // namespace ledger

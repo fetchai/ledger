@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/common_types.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/digest.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/common_types.hpp"
-#include "ledger/chain/digest.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/upow/work.hpp"
 #include "vectorise/uint/uint.hpp"
@@ -33,14 +33,18 @@
 namespace fetch {
 namespace ledger {
 
-Work::Work(Digest digest, crypto::Identity miner)
-  : contract_digest_{std::move(digest)}
+Work::Work(BlockIndex block_index)
+  : block_index_{block_index}
+{}
+
+Work::Work(chain::Address address, crypto::Identity miner)
+  : contract_address_{std::move(address)}
   , miner_{std::move(miner)}
 {}
 
-Digest const &Work::contract_digest() const
+chain::Address const &Work::address() const
 {
-  return contract_digest_;
+  return contract_address_;
 }
 
 crypto::Identity const &Work::miner() const
@@ -58,9 +62,14 @@ WorkScore Work::score() const
   return score_;
 }
 
-void Work::UpdateDigest(Digest digest)
+Work::BlockIndex Work::block_index() const
 {
-  contract_digest_ = std::move(digest);
+  return block_index_;
+}
+
+void Work::UpdateAddress(chain::Address address)
+{
+  contract_address_ = std::move(address);
 }
 
 void Work::UpdateIdentity(crypto::Identity const &identity)
@@ -83,7 +92,6 @@ Work::UInt256 Work::CreateHashedNonce() const
   crypto::SHA256 hasher{};
   hasher.Reset();
 
-  hasher.Update(contract_digest_);
   hasher.Update(miner_.identifier());
   hasher.Update(nonce_.pointer(), nonce_.size());
 

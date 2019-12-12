@@ -27,8 +27,8 @@ template <typename T = double>
 class Spline
 {
 public:
-  using type       = T;
-  using float_type = double;
+  using type      = T;
+  using FloatType = double;
 
   template <typename F>
   void SetFunction(F &f, type from, type to, std::size_t n)
@@ -38,11 +38,11 @@ public:
     range_to_   = to;
     range_span_ = range_to_ - range_from_;
 
-    data_.resize(1 << n);
+    data_.resize(1u << n);
     std::size_t m   = size();
-    range_to_index_ = float_type(m - 1) / range_span_;
+    range_to_index_ = FloatType(m - 1) / range_span_;
 
-    type x = range_from_, delta = type(range_span_ / float_type(m - 1));
+    type x = range_from_, delta = type(range_span_ / FloatType(m - 1));
     for (std::size_t i = 0; i < m; ++i)
     {
       data_[i] = f(x);
@@ -52,9 +52,9 @@ public:
 
   type operator()(type x)
   {
-    float_type z = (x - range_from_) * range_to_index_;
-    uint32_t   i = uint32_t(z);
-    z -= float_type(i);
+    FloatType z = (x - range_from_) * range_to_index_;
+    auto      i = uint32_t(z);
+    z -= FloatType(i);
     return (data_[i + 1] - data_[i]) * z + data_[i];
   }
 
@@ -64,10 +64,10 @@ public:
   }
 
 private:
-  float_type              range_from_, range_to_, range_span_;
-  float_type              range_to_index_;
-  float_type              value_from_, value_to_, value_span_;
-  std::vector<float_type> data_;
+  FloatType              range_from_{}, range_to_{}, range_span_{};
+  FloatType              range_to_index_{};
+  FloatType              value_from_{}, value_to_{}, value_span_{};
+  std::vector<FloatType> data_;
 };
 }  // namespace spline
 }  // namespace math

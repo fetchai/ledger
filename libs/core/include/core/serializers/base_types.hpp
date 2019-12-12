@@ -21,9 +21,12 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/platform.hpp"
+#include "vectorise/uint/uint.hpp"
 
 #include <array>
+#include <deque>
 #include <map>
 #include <set>
 #include <string>
@@ -226,7 +229,7 @@ struct SignedIntegerSerializerImplementation
       {
         uint8_t code;
         int8_t  value;
-      } conversion;
+      } conversion{};
       conversion.code = code;
 
       if (conversion.value < -0x20 || conversion.value >= 0x80)
@@ -379,8 +382,8 @@ struct FloatSerializer<float, D>
   template <typename Interface>
   static void Serialize(Interface &interface, Type val)
   {
-    val            = platform::ToBigEndian(val);
-    uint8_t opcode = static_cast<uint8_t>(TypeCodes::FLOAT);
+    val         = platform::ToBigEndian(val);
+    auto opcode = static_cast<uint8_t>(TypeCodes::FLOAT);
     interface.Allocate(sizeof(opcode) + sizeof(val));
     interface.WriteBytes(&opcode, sizeof(opcode));
     interface.WriteBytes(reinterpret_cast<uint8_t const *>(&val), sizeof(val));
@@ -410,8 +413,8 @@ struct FloatSerializer<double, D>
   template <typename Interface>
   static void Serialize(Interface &interface, Type val)
   {
-    val            = platform::ToBigEndian(val);
-    uint8_t opcode = static_cast<uint8_t>(TypeCodes::DOUBLE);
+    val         = platform::ToBigEndian(val);
+    auto opcode = static_cast<uint8_t>(TypeCodes::DOUBLE);
     interface.Allocate(sizeof(opcode) + sizeof(val));
     interface.WriteBytes(&opcode, sizeof(opcode));
     interface.WriteBytes(reinterpret_cast<uint8_t const *>(&val), sizeof(val));
@@ -477,8 +480,8 @@ public:
     }
     else if (val.size() < (1 << 8))
     {
-      opcode       = static_cast<uint8_t>(CODE8);
-      uint8_t size = static_cast<uint8_t>(val.size());
+      opcode    = static_cast<uint8_t>(CODE8);
+      auto size = static_cast<uint8_t>(val.size());
 
       interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
       interface.WriteBytes(&opcode, sizeof(opcode));
@@ -486,9 +489,9 @@ public:
     }
     else if (val.size() < (1 << 16))
     {
-      opcode        = static_cast<uint8_t>(CODE16);
-      uint16_t size = static_cast<uint16_t>(val.size());
-      size          = platform::ToBigEndian(size);
+      opcode    = static_cast<uint8_t>(CODE16);
+      auto size = static_cast<uint16_t>(val.size());
+      size      = platform::ToBigEndian(size);
 
       interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
       interface.WriteBytes(&opcode, sizeof(opcode));
@@ -496,9 +499,9 @@ public:
     }
     else if (val.size() < (1ull << 32))
     {
-      opcode        = static_cast<uint8_t>(CODE32);
-      uint32_t size = static_cast<uint32_t>(val.size());
-      size          = platform::ToBigEndian(size);
+      opcode    = static_cast<uint8_t>(CODE32);
+      auto size = static_cast<uint32_t>(val.size());
+      size      = platform::ToBigEndian(size);
 
       interface.Allocate(sizeof(opcode) + sizeof(size) + val.size());
 
@@ -578,6 +581,36 @@ struct ArraySerializer<std::vector<V>, D>
 {
 public:
   using Type       = std::vector<V>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &input)
+  {
+    auto array = array_constructor(input.size());
+
+    for (auto &v : input)
+    {
+      array.Append(v);
+    }
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &output)
+  {
+    output.clear();
+    output.resize(array.size());
+    for (uint32_t i = 0; i < array.size(); ++i)
+    {
+      array.GetNextValue(output[i]);
+    }
+  }
+};
+
+template <typename V, typename D>
+struct ArraySerializer<std::deque<V>, D>
+{
+public:
+  using Type       = std::deque<V>;
   using DriverType = D;
 
   template <typename Constructor>
@@ -787,7 +820,89 @@ public:
   }
 };
 
-template <std::uint16_t I, std::uint16_t F, typename D>
+template <typename V, typename D>
+struct ArraySerializer<std::shared_ptr<V>, D>
+{
+public:
+  using Type       = std::shared_ptr<V>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &input)
+  {
+    if (input)
+    {
+      auto array = array_constructor(1);
+      array.Append(*input);
+    }
+    else
+    {
+      array_constructor(0);
+    }
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &output)
+  {
+    if (array.size() >= 2)
+    {
+      throw SerializableException(std::string("std::shared_ptr should have 0 or 1 elements"));
+    }
+
+    if (array.size() == 1)
+    {
+      output = std::make_shared<V>();
+      array.GetNextValue(*output);
+    }
+    else
+    {
+      output = Type{};
+    }
+  }
+};
+
+template <typename V, typename D>
+struct ArraySerializer<std::unique_ptr<V>, D>
+{
+public:
+  using Type       = std::unique_ptr<V>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &input)
+  {
+    if (input)
+    {
+      auto array = array_constructor(1);
+      array.Append(*input);
+    }
+    else
+    {
+      array_constructor(0);
+    }
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &output)
+  {
+    if (array.size() >= 2)
+    {
+      throw SerializableException(std::string("std::unique_ptr should have 0 or 1 elements"));
+    }
+
+    if (array.size() == 1)
+    {
+      output = std::make_shared<V>();
+      array.GetNextValue(*output);
+    }
+    else
+    {
+      output = Type{};
+    }
+  }
+};
+
+template <uint16_t I, uint16_t F, typename D>
 struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
 {
   using Type       = fixed_point::FixedPoint<I, F>;
@@ -805,6 +920,67 @@ struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
     typename fixed_point::FixedPoint<I, F>::Type data;
     interface >> data;
     n = fixed_point::FixedPoint<I, F>::FromBase(data);
+  }
+};
+
+template <typename D>
+struct ForwardSerializer<fixed_point::FixedPoint<64, 64>, D>
+{
+public:
+  using Type       = fixed_point::FixedPoint<64, 64>;
+  using DriverType = D;
+
+  template <typename Interface>
+  static void Serialize(Interface &interface, Type const &n)
+  {
+    interface << static_cast<uint64_t>(n.Data()) << (static_cast<uint64_t>(n.Data() >> 64));
+  }
+
+  template <typename Interface>
+  static void Deserialize(Interface &interface, Type &n)
+  {
+    union
+    {
+      __int128_t u128;
+      uint64_t   u64[2];
+    } data;
+    interface >> data.u64[0];
+    interface >> data.u64[1];
+    n = fixed_point::FixedPoint<64, 64>::FromBase(data.u128);
+  }
+};
+
+template <typename D, uint16_t S>
+struct ArraySerializer<vectorise::UInt<S>, D>
+{
+public:
+  using Type       = vectorise::UInt<S>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &u)
+  {
+    // TODO(issue 1425): Add WideType size to serialisation
+    auto array = array_constructor(u.elements());
+    for (std::size_t i = 0; i < u.elements(); i++)
+    {
+      array.Append(u.ElementAt(i));
+    }
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &u)
+  {
+    if (array.size() != u.elements())
+    {
+      throw std::runtime_error("Deserializing UInt<S> type has wrong number of elements: " +
+                               std::to_string(array.size()) + " instead of " +
+                               std::to_string(u.elements()));
+    }
+    for (std::size_t i = 0; i < u.elements(); i++)
+    {
+      array.GetNextValue(u.ElementAt(i));
+    }
   }
 };
 

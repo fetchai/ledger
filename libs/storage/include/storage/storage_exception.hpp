@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "storage/storage_exception.hpp"
 
 #include <exception>
@@ -29,8 +29,8 @@ namespace fetch {
 namespace storage {
 
 namespace error {
-using error_type            = uint64_t;
-error_type const TYPE_ERROR = 0;
+using ErrorType            = uint64_t;
+ErrorType const TYPE_ERROR = 0;
 }  // namespace error
 
 /**
@@ -44,52 +44,53 @@ public:
     , explanation_("unknown")
   {}
 
-  StorageException(char const *explanation)
+  explicit StorageException(char const *explanation)
     : error_code_(error::TYPE_ERROR)
     , explanation_(std::string(explanation))
   {}
 
-  StorageException(std::string explanation)
+  explicit StorageException(std::string explanation)
     : error_code_(error::TYPE_ERROR)
     , explanation_(std::move(explanation))
   {}
 
-  StorageException(byte_array::ConstByteArray const &explanation)
+  explicit StorageException(byte_array::ConstByteArray const &explanation)
     : error_code_(error::TYPE_ERROR)
     , explanation_(std::string(explanation))
   {}
 
-  StorageException(error::error_type error_code, std::string explanation)
+  StorageException(error::ErrorType error_code, std::string explanation)
     : error_code_(error_code)
     , explanation_(std::move(explanation))
   {}
 
-  StorageException(error::error_type error_code, byte_array::ConstByteArray const &explanation)
+  StorageException(error::ErrorType error_code, byte_array::ConstByteArray const &explanation)
     : error_code_(error_code)
     , explanation_(std::string(explanation))
   {}
 
-  virtual ~StorageException() = default;
+  StorageException(StorageException const &) = default;
+  StorageException &operator=(StorageException const &) = default;
+
+  StorageException(StorageException &&) noexcept = default;
+  StorageException &operator=(StorageException &&) noexcept = default;
+
+  ~StorageException() override = default;
 
   char const *what() const noexcept override
   {
     return explanation_.c_str();
   }
+
   uint64_t error_code() const
   {
     return error_code_;
   }
-  std::string explanation() const
-  {
-    return explanation_;
-  }
-
-  void StackTrace() const
-  {}
 
 private:
   uint64_t    error_code_;
   std::string explanation_;
 };
+
 }  // namespace storage
 }  // namespace fetch

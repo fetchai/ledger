@@ -17,17 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
+#include <limits>
+
 namespace fetch {
 namespace memory {
 
-class TrivialRange
+class Range
 {
 public:
   using SizeType = std::size_t;
 
-  TrivialRange(SizeType const &from, SizeType const &to)
+  explicit Range(SizeType const &from = 0,
+                 SizeType const &to   = std::numeric_limits<SizeType>::max(),
+                 SizeType const &step = 1)
     : from_(from)
     , to_(to)
+    , step_(step)
   {}
 
   SizeType const &from() const
@@ -38,9 +43,24 @@ public:
   {
     return to_;
   }
-  SizeType step() const
+  SizeType const &step() const
   {
-    return 1;
+    return step_;
+  }
+
+  bool is_trivial() const
+  {
+    return (step_ == 1);
+  }
+
+  bool is_undefined() const
+  {
+    return ((from_ == 0) && (to_ == SizeType(-1)));
+  }
+
+  Range SubRange(SizeType const &size) const
+  {
+    return Range(from_, std::min(size, to_));
   }
 
   template <std::size_t S>
@@ -77,49 +97,6 @@ public:
       ++G;
     }
     return G * S;
-  }
-
-private:
-  SizeType from_ = 0, to_ = 0;
-};
-
-class Range
-{
-public:
-  using SizeType = std::size_t;
-
-  Range(SizeType const &from = 0, SizeType const &to = SizeType(-1), SizeType const &step = 1)
-    : from_(from)
-    , to_(to)
-    , step_(step)
-  {}
-
-  SizeType const &from() const
-  {
-    return from_;
-  }
-  SizeType const &to() const
-  {
-    return to_;
-  }
-  SizeType const &step() const
-  {
-    return step_;
-  }
-
-  bool is_trivial() const
-  {
-    return (step_ == 1);
-  }
-
-  bool is_undefined() const
-  {
-    return ((from_ == 0) && (to_ == SizeType(-1)));
-  }
-
-  TrivialRange ToTrivialRange(SizeType const &size) const
-  {
-    return TrivialRange(from_, std::min(size, to_));
   }
 
 private:

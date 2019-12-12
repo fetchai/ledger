@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
@@ -36,7 +37,7 @@
 namespace fetch {
 namespace network {
 
-std::atomic<std::size_t> openSessions{0};
+static std::atomic<std::size_t> openSessions{0};
 
 class BasicLoopback : public std::enable_shared_from_this<BasicLoopback>
 {
@@ -61,7 +62,7 @@ public:
 private:
   asio::ip::tcp::tcp::socket socket_;
   std::size_t                lengthPerRead_ = 1024;
-  message_type               message_;
+  MessageType                message_;
 
   void Read() noexcept
   {

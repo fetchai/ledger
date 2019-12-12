@@ -17,19 +17,17 @@
 //------------------------------------------------------------------------------
 
 #include "math/metrics/mean_absolute_error.hpp"
-#include "math/normalize_array.hpp"
 #include "math/tensor.hpp"
+#include "math/utilities/ReadCSV.hpp"
 #include "ml/core/graph.hpp"
-#include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/utilities/graph_saver.hpp"
 #include "ml/utilities/min_max_scaler.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "ml/serializers/ml_types.hpp"
 
 #include <iostream>
 #include <memory>
@@ -50,9 +48,9 @@ using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType, Te
 
 struct TrainingParams
 {
-  SizeType epochs{5};
-  SizeType batch_size{1000};
-  bool     normalise = false;
+  SizeType epochs{3};
+  SizeType batch_size{128};
+  bool     normalise = true;
 };
 
 std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &output_name,
@@ -77,7 +75,8 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
 
   std::string layer_1 = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
       "Conv1D_1", {input_name}, conv1D_1_filters, conv1D_1_input_channels, conv1D_1_kernel_size,
-      conv1D_1_stride, fetch::ml::details::ActivationType::RELU);
+      conv1D_1_stride, fetch::ml::details::ActivationType::LEAKY_RELU);
+
   std::string layer_2 = g->AddNode<Dropout<TensorType>>("Dropout_1", {layer_1}, keep_prob_1);
 
   output_name = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
@@ -96,20 +95,17 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
 {
 
   std::cout << "loading train data...: " << std::endl;
-  auto train_data_tensor =
-      fetch::ml::dataloaders::ReadCSV<TensorType>(train_data_filename, 0, 0, true);
+  auto train_data_tensor = fetch::math::utilities::ReadCSV<TensorType>(train_data_filename, 0, 0);
 
   std::cout << "loading train labels...: " << std::endl;
   auto train_labels_tensor =
-      fetch::ml::dataloaders::ReadCSV<TensorType>(train_labels_filename, 0, 0, true);
+      fetch::math::utilities::ReadCSV<TensorType>(train_labels_filename, 0, 0);
 
   std::cout << "loading test data...: " << std::endl;
-  auto test_data_tensor =
-      fetch::ml::dataloaders::ReadCSV<TensorType>(test_data_filename, 0, 0, true);
+  auto test_data_tensor = fetch::math::utilities::ReadCSV<TensorType>(test_data_filename, 0, 0);
 
   std::cout << "loading test labels...: " << std::endl;
-  auto test_labels_tensor =
-      fetch::ml::dataloaders::ReadCSV<TensorType>(test_labels_filename, 0, 0, true);
+  auto test_labels_tensor = fetch::math::utilities::ReadCSV<TensorType>(test_labels_filename, 0, 0);
 
   train_data_tensor.Reshape({1, train_data_tensor.shape().at(0), train_data_tensor.shape().at(1)});
   train_labels_tensor.Reshape(
@@ -118,25 +114,6 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
   test_labels_tensor.Reshape(
       {1, test_labels_tensor.shape().at(0), test_labels_tensor.shape().at(1)});
   return {train_data_tensor, train_labels_tensor, test_data_tensor, test_labels_tensor};
-}
-
-void SaveGraphToFile(GraphType &g, std::string const file_name)
-{
-
-  // start serializing and writing to file
-  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
-  std::cout << "got saveable params" << std::endl;
-
-  fetch::serializers::LargeObjectSerializeHelper losh;
-
-  losh << gsp1;
-  std::cout << "finish serializing" << std::endl;
-
-  std::ofstream outFile(file_name, std::ios::out | std::ios::binary);
-  outFile.write(losh.buffer.data().char_pointer(), std::streamsize(losh.buffer.size()));
-  outFile.close();
-  std::cout << losh.buffer.size() << std::endl;
-  std::cout << "finish writing to file" << std::endl;
 }
 
 int main(int ac, char **av)
@@ -177,8 +154,9 @@ int main(int ac, char **av)
     scaler.Normalise(orig_test_label, test_label);
   }
 
-  DataLoaderType loader(train_label.shape(), {train_data.shape()});
-  loader.AddData(train_data, train_label);
+  DataLoaderType loader{};
+  loader.SetRandomMode(true);
+  loader.AddData({train_data}, train_label);
 
   std::cout << "Build model & optimiser... " << std::endl;
   std::string                input_name, output_name, label_name, error_name;
@@ -203,13 +181,14 @@ int main(int ac, char **av)
       scaler.DeNormalise(prediction, prediction);
     }
 
-    SaveGraphToFile(*g, "./bitcoin_price_prediction_graph" + std::to_string(i) + ".bin");
+    fetch::ml::utilities::SaveGraph<GraphType>(
+        *g, "./ethereum_price_prediction_graph" + std::to_string(i) + ".bin");
 
     auto result = fetch::math::MeanAbsoluteError(prediction, orig_test_label);
     std::cout << "mean absolute validation error: " << result << std::endl;
   }
 
-  SaveGraphToFile(*g, "./bitcoin_price_prediction_graph.bin");
+  fetch::ml::utilities::SaveGraph(*g, "./ethereum_price_prediction_graph.bin");
 
   return 0;
 }

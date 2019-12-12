@@ -29,13 +29,20 @@
 namespace fetch {
 namespace byte_array {
 
-ConstByteArray FromBase64(ConstByteArray const &str) noexcept
+ConstByteArray FromBase64(ConstByteArray const &str)
 {
   // After
   // https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
-  assert((str.size() % 4) == 0);
+
+  // Prevents potential attack vector so
+  // should be checked both in debug and release
+  if ((str.size() % 4) != 0)
+  {
+    return "";
+  }
+
   std::size_t pad = 0;
-  while ((pad < str.size()) && (str[str.size() - pad - 1] == details::base64pad))
+  while (pad < str.size() && (str[str.size() - pad - 1]) == details::base64pad)
   {
     ++pad;
   }
@@ -56,62 +63,54 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
       --i;
       break;
     }
-    else if (c == details::INVALID)
+    if (c == details::INVALID)
     {
-      return ConstByteArray();
+      throw std::runtime_error("Invalid base64 character");
     }
 
-    buf = buf << 6 | c;
+    buf = buf << 6u | c;
 
-    if ((i & 3) == 3)
+    if ((i & 3u) == 3u)
     {
-      ret[j++] = (buf >> 16) & 255;
-      ret[j++] = (buf >> 8) & 255;
-      ret[j++] = buf & 255;
-      buf      = 0;
+      ret[j++] = (buf >> 16u) & 255u;
+      ret[j++] = (buf >> 8u) & 255u;
+      ret[j++] = buf & 255u;
+      buf      = 0u;
     }
   }
 
-  switch (i & 3)
+  switch (i & 3u)
   {
   case 1:
-    ret[j++] = (buf >> 4) & 255;
+    ret[j++] = (buf >> 4u) & 255u;
     break;
   case 2:
-    ret[j++] = (buf >> 10) & 255;
-    ret[j++] = (buf >> 2) & 255;
+    ret[j++] = (buf >> 10u) & 255u;
+    ret[j++] = (buf >> 2u) & 255u;
     break;
   }
 
   return {std::move(ret)};
 }
 
-// TODO(issue 1262): Caller can't unambiguously detect whether the conversion failed or not
-ConstByteArray FromHex(ConstByteArray const &str) noexcept
+ConstByteArray FromHex(ConstByteArray const &str)
 {
-  char const *data = reinterpret_cast<char const *>(str.pointer());
+  auto const *data = reinterpret_cast<char const *>(str.pointer());
   ByteArray   ret;
-  ret.Resize(str.size() >> 1);
+  ret.Resize(str.size() >> 1u);
 
   std::size_t n = str.size();
   std::size_t j = 0;
-  try
-  {
 
-    for (std::size_t i = 0; i < n; i += 2)
-    {
-      auto next = static_cast<uint8_t>(details::DecodeHexChar(data[i]));
-      if (i + 1 < n)
-      {
-        next = uint8_t(next << 4u);
-        next = uint8_t(next | details::DecodeHexChar(data[i + 1]));
-      }
-      ret[j++] = next;
-    }
-  }
-  catch (std::runtime_error const &)
+  for (std::size_t i = 0; i < n; i += 2)
   {
-    return ConstByteArray();
+    auto next = static_cast<uint8_t>(details::DecodeHexChar(data[i]));
+    if (i + 1 < n)
+    {
+      next = uint8_t(next << 4u);
+      next = uint8_t(next | details::DecodeHexChar(data[i + 1]));
+    }
+    ret[j++] = next;
   }
 
   return {std::move(ret)};

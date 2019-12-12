@@ -16,39 +16,37 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/json_transaction.hpp"
+#include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/json/document.hpp"
-#include "core/logging.hpp"
-#include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "core/string/replace.hpp"
 #include "http/json_response.hpp"
-#include "ledger/chain/json_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "json/document.hpp"
+#include "ledger/chaincode/chain_code_factory.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 
 #include <ctime>
 #include <exception>
 #include <iomanip>
 #include <memory>
-#include <sstream>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 
 namespace fetch {
 namespace ledger {
 namespace {
 
-using fetch::variant::Variant;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
-using fetch::ledger::FromJsonTransaction;
+using fetch::chain::FromJsonTransaction;
+using fetch::variant::Variant;
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
 ConstByteArray const CONTRACT_NAME_SEPARATOR(".");
@@ -89,9 +87,9 @@ std::string GenerateTimestamp()
 bool CreateTxFromJson(Variant const &tx_obj, std::vector<ConstByteArray> &txs,
                       TransactionProcessor &processor)
 {
-  auto tx = std::make_shared<Transaction>();
+  auto tx = std::make_shared<chain::Transaction>();
 
-  if (FromJsonTransaction(tx_obj, *tx))
+  if (chain::FromJsonTransaction(tx_obj, *tx))
   {
     txs.emplace_back(tx->digest());
     processor.AddTransaction(std::move(tx));
@@ -105,9 +103,9 @@ bool CreateTxFromJson(Variant const &tx_obj, std::vector<ConstByteArray> &txs,
 bool CreateTxFromBuffer(ConstByteArray const &encoded_tx, std::vector<ConstByteArray> &txs,
                         TransactionProcessor &processor)
 {
-  auto tx = std::make_shared<Transaction>();
+  auto tx = std::make_shared<chain::Transaction>();
 
-  TransactionSerializer tx_serializer{encoded_tx};
+  chain::TransactionSerializer tx_serializer{encoded_tx};
   if (tx_serializer.Deserialize(*tx))
   {
     txs.emplace_back(tx->digest());
@@ -136,11 +134,11 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
   , access_log_{"access.log"}
 {
   // create all the contracts
-  auto const &contracts = contract_cache_.factory().GetChainCodeContracts();
+  auto const &contracts = GetChainCodeContracts();
   for (auto const &contract_name : contracts)
   {
     // create the contract
-    auto contract = contract_cache_.factory().Create(Identifier{contract_name}, storage_);
+    auto contract = CreateChainCode(contract_name);
 
     ByteArray contract_path{contract_name};
     contract_path.Replace(static_cast<char const &>(CONTRACT_NAME_SEPARATOR[0]),
@@ -189,13 +187,12 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
     }
   }
 
-  Post("/api/contract/(digest=[a-fA-F0-9]{64})/(identifier=[1-9A-HJ-NP-Za-km-z]{48,50})/(query=.+)",
+  Post("/api/contract/(identifier=[1-9A-HJ-NP-Za-km-z]{48,50})/(query=.+)",
        "Submits a query to a contract",
-       {{"digest", "The contract digest.", http::validators::StringValue()},
-        {"identifier", "The query identifier.", http::validators::StringValue()}},
+       {{"identifier", "The query identifier.", http::validators::StringValue()}},
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          // build the contract name
-         auto const contract_name = params["digest"] + "." + params["identifier"];
+         auto const contract_name = params["identifier"];
 
          // proxy the call to the query handler
          return OnQuery(contract_name, params["query"], request);
@@ -226,8 +223,6 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
                     " from: ", request.originating_address(), ':', request.originating_port());
     FETCH_LOG_DEBUG(LOGGING_NAME, request.body());
 
-    Identifier contract_id{contract_name};
-
     // record an entry in the access log
     RecordQuery(contract_name, query, request);
 
@@ -236,24 +231,30 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     doc.Parse(request.body());
     variant::Variant response;
     // dispatch the contract type
-    auto contract = contract_cache_.Lookup(contract_id, storage_);
+    auto contract = contract_cache_.Lookup(contract_name, storage_);
 
     // adapt the storage engine so that that get and sets are sandboxed for the contract
-    StateAdapter storage_adapter{storage_, contract_id};
+    StateAdapter storage_adapter{storage_, contract_name};
 
-    // attach, dispatch and detach
-    contract->Attach(storage_adapter);
-    auto const status = contract->DispatchQuery(query, doc.root(), response);
-    contract->Detach();
+    // Current block index does not apply to queries - set to 0
+    Contract::Status status;
+    {
+      chain::Address address;
+      if (contract_name != "fetch.token" && !chain::Address::Parse(contract_name, address))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse address: ", contract_name);
+      }
+      ContractContext context{&token_contract_, std::move(address), nullptr, &storage_adapter, 0};
+      ContractContextAttacher raii(*contract, context);
+      status = contract->DispatchQuery(query, doc.root(), response);
+    }
 
     if (Contract::Status::OK == status)
     {
       return http::CreateJsonResponse(response);
     }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Error running query. status = ", static_cast<int>(status));
-    }
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Error running query. status = ", static_cast<int>(status));
   }
   catch (std::exception const &ex)
   {
@@ -271,7 +272,7 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
  * @return The appropriate HTTPResponse to be returned to the client
  */
 http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const &request,
-                                                        ConstByteArray           expected_contract)
+                                                        ConstByteArray const &   expected_contract)
 {
   Variant json = Variant::Object();
 
@@ -327,6 +328,7 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
   }
   catch (std::exception const &ex)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception@OnTransaction: ", ex.what());
     json["error"] = Quoted(ex.what());
   }
 
@@ -431,7 +433,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitBulkTx(
  */
 void ContractHttpInterface::RecordTransaction(SubmitTxStatus const &   status,
                                               http::HTTPRequest const &request,
-                                              ConstByteArray           expected_contract)
+                                              ConstByteArray const &   expected_contract)
 {
   // form the variant
   Variant entry      = Variant::Object();
@@ -476,8 +478,7 @@ void ContractHttpInterface::RecordQuery(ConstByteArray const &   contract_name,
 
 void ContractHttpInterface::WriteToAccessLog(variant::Variant const &entry)
 {
-  FETCH_LOCK(access_log_lock_);
-  access_log_ << entry << '\n';
+  access_log_.ApplyVoid([&entry](auto &log) { log << entry << '\n'; });
 }
 
 }  // namespace ledger

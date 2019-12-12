@@ -28,8 +28,9 @@ namespace math {
 namespace linalg {
 
 template <typename S, uint64_t V>
-void Blas<S, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x), V>::operator()(
-    int const n, TensorView<Type> dx, int const incx, TensorView<Type> dy, int const incy) const
+void Blas<S, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x), V>::  // NOLINT
+     operator()(int const n, TensorView<Type> dx, int const incx, TensorView<Type> dy,
+           int const incy) const
 {
   Type dtemp;
   int  i;
@@ -92,8 +93,6 @@ void Blas<S, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x)
       iy     = iy + incy;
     }
   }
-
-  return;
 }
 
 template class Blas<double, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x),

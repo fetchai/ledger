@@ -22,24 +22,25 @@
 #include <memory>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
 class Address;
-class Block;
+
+}  // namespace chain
+namespace ledger {
 
 class StakeManagerInterface
 {
 public:
+  using BlockIndex = uint64_t;
+
   // Construction / Destruction
   StakeManagerInterface()          = default;
   virtual ~StakeManagerInterface() = default;
 
   /// @name Stake Manager Interface
   /// @{
-  virtual void        UpdateCurrentBlock(Block const &current)                                = 0;
-  virtual std::size_t GetBlockGenerationWeight(Block const &previous, Address const &address) = 0;
-  virtual bool        ShouldGenerateBlock(Block const &previous, Address const &address)      = 0;
-  virtual bool        ValidMinerForBlock(Block const &previous, Address const &address)       = 0;
+  virtual void UpdateCurrentBlock(BlockIndex block_index) = 0;
   /// @}
 
 private:

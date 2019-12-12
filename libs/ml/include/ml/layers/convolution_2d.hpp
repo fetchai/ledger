@@ -21,6 +21,7 @@
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/convolution_2d.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
 
 #include <functional>
@@ -38,7 +39,7 @@ class Convolution2D : public SubGraph<T>
 public:
   using TensorType    = T;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = fetch::math::SizeType;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
   using SPType        = LayerConvolution2DSaveableParams<TensorType>;
@@ -142,10 +143,10 @@ private:
                                                     init_mode);
   }
 
-  SizeType kernel_size_;
-  SizeType input_channels_;
-  SizeType output_channels_;
-  SizeType stride_size_;
+  SizeType kernel_size_{};
+  SizeType input_channels_{};
+  SizeType output_channels_{};
+  SizeType stride_size_{};
 };
 
 }  // namespace layers
