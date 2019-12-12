@@ -161,36 +161,6 @@ protected:
     return (Contract::Status::OK == status.status);
   }
 
-  //bool CreateWealth(Entity const &entity, uint64_t amount)
-  //{
-  //  EXPECT_CALL(*storage_, Get(_)).Times(1);
-  //  EXPECT_CALL(*storage_, Set(_, _)).Times(1);
-  //  EXPECT_CALL(*storage_, Lock(_)).Times(testing::AnyNumber());
-  //  EXPECT_CALL(*storage_, Unlock(_)).Times(testing::AnyNumber());
-  //  EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
-  //  EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
-
-  //  std::ostringstream oss;
-  //  oss << "{ "
-  //      << R"("amount": )" << amount << " }";
-
-  //  // build the transaction
-  //  auto tx = TransactionBuilder()
-  //                .From(entity.address)
-  //                .TargetChainCode("fetch.token", BitVector{})
-  //                .Action("wealth")
-  //                .Signer(certificate_->identity())
-  //                .Data(oss.str())
-  //                .Seal()
-  //                .Sign(*certificate_)
-  //                .Build();
-
-  //  // send the action to the contract
-  //  auto const status = SendAction(tx);
-
-  //  return (Contract::Status::OK == status.status);
-  //}
-
   bool Transfer(Address const &from, Address const &to,
                 std::initializer_list<Entity const *> const &keys_to_sign, uint64_t amount,
                 bool const set_call_expected = true)
