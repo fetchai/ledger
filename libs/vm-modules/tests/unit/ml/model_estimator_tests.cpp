@@ -1072,9 +1072,9 @@ TEST_F(VMModelEstimatorTests, estimator_state_consistency_after_serialization_de
 {
   fetch::serializers::MsgPackSerializer serializer;
 
-  std::vector<SizeType> sizes                 = {10, 10, 10};
-  std::vector<bool>     activations           = {true, true};
-  auto                  model_original        = VmSequentialModel(vm, sizes, activations, "mse", "adam");
+  std::vector<SizeType> sizes          = {10, 10, 10};
+  std::vector<bool>     activations    = {true, true};
+  auto                  model_original = VmSequentialModel(vm, sizes, activations, "mse", "adam");
   auto                  model_from_serializer = VmSequentialModel(vm);
 
   model_original->SerializeTo(serializer);
@@ -1130,26 +1130,27 @@ TEST_F(VMModelEstimatorTests, estimator_state_consistency_after_serialization_de
   EXPECT_EQ(charge_original, charge_from_serializer);
 
   //
-  auto original_serialized = model_original->SerializeToString();
+  auto original_serialized        = model_original->SerializeToString();
   auto from_serializer_serialized = model_from_serializer->SerializeToString();
   charge_original = DeserializeFromStringCharge(model_original, original_serialized);
-  charge_from_serializer = DeserializeFromStringCharge(model_from_serializer, from_serializer_serialized); 
+  charge_from_serializer =
+      DeserializeFromStringCharge(model_from_serializer, from_serializer_serialized);
   EXPECT_EQ(charge_original, charge_from_serializer);
 }
 
 TEST_F(VMModelEstimatorTests,
        estimator_state_consistency_after_serialization_deserialization_from_string)
 {
-  std::vector<SizeType> sizes                 = {10, 10, 10};
-  std::vector<bool>     activations           = {true, true};
-  auto                  model_original        = VmSequentialModel(vm, sizes, activations, "mse", "adam");
+  std::vector<SizeType> sizes          = {10, 10, 10};
+  std::vector<bool>     activations    = {true, true};
+  auto                  model_original = VmSequentialModel(vm, sizes, activations, "mse", "adam");
   auto                  model_from_serializer = VmSequentialModel(vm);
 
   auto serialized_model = model_original->SerializeToString();
   model_from_serializer->DeserializeFromString(serialized_model);
   ChargeAmount charge_original        = 0;
   ChargeAmount charge_from_serializer = 0;
-  
+
   //
   SizeType input_size  = 10;
   SizeType output_size = 100;
@@ -1184,7 +1185,7 @@ TEST_F(VMModelEstimatorTests,
   charge_original             = FitCharge(model_original, data, label, batch_size);
   charge_from_serializer      = FitCharge(model_from_serializer, data, label, batch_size);
   EXPECT_EQ(charge_original, charge_from_serializer);
-  
+
   //
   charge_original        = PredictCharge(model_original, data);
   charge_from_serializer = PredictCharge(model_from_serializer, data);
@@ -1196,10 +1197,11 @@ TEST_F(VMModelEstimatorTests,
   EXPECT_EQ(charge_original, charge_from_serializer);
 
   //
-  auto original_serialized = model_original->SerializeToString();
+  auto original_serialized        = model_original->SerializeToString();
   auto from_serializer_serialized = model_from_serializer->SerializeToString();
   charge_original = DeserializeFromStringCharge(model_original, original_serialized);
-  charge_from_serializer = DeserializeFromStringCharge(model_from_serializer, from_serializer_serialized);
+  charge_from_serializer =
+      DeserializeFromStringCharge(model_from_serializer, from_serializer_serialized);
   EXPECT_EQ(charge_original, charge_from_serializer);
 }
 }  // namespace

@@ -153,9 +153,9 @@ private:
 
   VMModel(VMModel const &other) = default;
   VMModel(VMModel &&other)      = default;
-  VMModel &operator           =(VMModel const &other) = default;
-  VMModel &operator    =(VMModel &&other) = default;
-  
+  VMModel &operator=(VMModel const &other) = default;
+  VMModel &operator=(VMModel &&other) = default;
+
   // First for input layer shape, second for output layer shape.
   static constexpr std::size_t min_total_layer_shapes = 2;
 
