@@ -241,6 +241,7 @@ TEST(FixedPointTest, FromString_16_16)
   // Get raw value
   fp32_t one("1fp32");
   fp32_t one2("1.0fp32");
+  fp32_t m_one("-1fp32");
   fp32_t zero_point_five("0.5fp32");
   fp32_t one_point_five("1.5fp32");
   fp32_t two_point_five("2.5fp64");
@@ -250,6 +251,7 @@ TEST(FixedPointTest, FromString_16_16)
   EXPECT_EQ(zero_point_five.Data(), 0x08000);
   EXPECT_EQ(one.Data(), 0x10000);
   EXPECT_EQ(one, one2);
+  EXPECT_EQ(one, fp32_t::Abs(m_one));
   EXPECT_EQ(one_point_five.Data(), 0x18000);
   EXPECT_EQ(two_point_five.Data(), 0x28000);
   EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
@@ -282,19 +284,19 @@ TEST(FixedPointTest, FromString_16_16)
 TEST(FixedPointTest, FromString_32_32)
 {
   // Get raw value
-  fp64_t one("1fp64_t");
+  fp64_t one("1fp64");
   fp32_t one2("1.0fp64");
+  fp64_t m_one("-1fp64");
   fp64_t zero_point_five("0.5fp64_t");
   fp64_t one_point_five("1.5fp64_t");
   fp64_t two_point_five("2.5fp64_t");
   fp64_t m_one_point_five("-1.5fp64_t");
-  fp64_t m_one_point_five_em10("-1.5e-5fp64_t");
-  fp64_t m_one_point_five_e10("-1.5e+5fp64_t");
   fp64_t m_one_point_five_flt(-1.5);
 
   EXPECT_EQ(zero_point_five.Data(), 0x080000000);
   EXPECT_EQ(one.Data(), 0x100000000);
   EXPECT_EQ(one, one2);
+  EXPECT_EQ(one, fp64_t::Abs(m_one));
   EXPECT_EQ(one_point_five.Data(), 0x180000000);
   EXPECT_EQ(two_point_five.Data(), 0x280000000);
   EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
@@ -329,6 +331,7 @@ TEST(FixedPointTest, FromString_64_64)
   // Get raw value
   fp128_t one("1fp128");
   fp128_t one2("1.0fp128");
+  fp128_t m_one("-1fp128");
   fp128_t zero_point_five("0.5fp128");
   fp128_t one_point_five("1.5fp128");
   fp128_t two_point_five("2.5fp128");
@@ -338,6 +341,7 @@ TEST(FixedPointTest, FromString_64_64)
   EXPECT_EQ(zero_point_five.Data(), static_cast<int128_t>(0x8000000000000000));
   EXPECT_EQ(one.Data(), static_cast<int128_t>(1) << 64);
   EXPECT_EQ(one, one2);
+  EXPECT_EQ(one, fp128_t::Abs(m_one));
   EXPECT_EQ(one_point_five.Data(), static_cast<int128_t>(0x18) << 60);
   EXPECT_EQ(two_point_five.Data(), static_cast<int128_t>(0x28) << 60);
   EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
