@@ -97,7 +97,8 @@ public:
     }
   }
 
-  ChargeAmount AddChargeEstimator(Ptr<Object> const &, Ptr<Object> const &) override
+  ChargeAmount AddChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                  Ptr<Object> const & /*rhso*/) override
   {
     return operator_charge;
   }
@@ -120,7 +121,7 @@ public:
     }
   }
 
-  ChargeAmount NegateChargeEstimator(Ptr<Object> const &) override
+  ChargeAmount NegateChargeEstimator(Ptr<Object> const & /*object*/) override
   {
     return operator_charge;
   }
@@ -133,7 +134,8 @@ public:
     return lhs->x == rhs->x && lhs->y == rhs->y;
   }
 
-  ChargeAmount IsEqualChargeEstimator(Ptr<Object> const &, Ptr<Object> const &) override
+  ChargeAmount IsEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                      Ptr<Object> const & /*rhso*/) override
   {
     return operator_charge;
   }
@@ -146,7 +148,8 @@ public:
     return lhs->x != rhs->x && lhs->y != rhs->y;
   }
 
-  ChargeAmount IsNotEqualChargeEstimator(Ptr<Object> const &, Ptr<Object> const &) override
+  ChargeAmount IsNotEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                         Ptr<Object> const & /*rhso*/) override
   {
     return operator_charge;
   }
@@ -180,7 +183,9 @@ auto expensive_member_estimator = [](Ptr<CustomType> const & /*this_*/, uint8_t 
                                      uint16_t y) -> ChargeAmount {
   return static_cast<ChargeAmount>(high_charge_limit + x * y);
 };
-auto max_charge_estimator = [](uint8_t, uint16_t) -> ChargeAmount { return max_charge_amount; };
+auto max_charge_estimator = [](uint8_t /*x*/, uint16_t /*y*/) -> ChargeAmount {
+  return max_charge_amount;
+};
 
 class VmChargeTests : public ::testing::Test
 {
