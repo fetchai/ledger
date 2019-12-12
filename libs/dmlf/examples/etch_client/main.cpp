@@ -41,18 +41,18 @@ using namespace std::chrono_literals;
 
 namespace {
 
-using fetch::network::NetworkManager;
-using fetch::muddle::rpc::Server;
-using fetch::muddle::MuddlePtr;
-using fetch::json::JSONDocument;
 using fetch::crypto::ECDSASigner;
+using fetch::json::JSONDocument;
+using fetch::muddle::MuddlePtr;
+using fetch::muddle::rpc::Server;
+using fetch::network::NetworkManager;
 // using fetch::crypto::ECDSAVerifier;
 // using fetch::crypto::Identity;
+using fetch::dmlf::BasicVmEngine;
+using fetch::dmlf::ExecutionResult;
+using fetch::dmlf::LocalExecutor;
 using fetch::dmlf::RemoteExecutionClient;
 using fetch::dmlf::RemoteExecutionProtocol;
-using fetch::dmlf::BasicVmEngine;
-using fetch::dmlf::LocalExecutor;
-using fetch::dmlf::ExecutionResult;
 
 using CertificatePtr             = std::shared_ptr<ECDSASigner>;
 using NetworkManagerPtr          = std::shared_ptr<NetworkManager>;
@@ -198,7 +198,7 @@ private:
     muddle_ = fetch::muddle::CreateMuddle(MUDD_NET_ID, cert_, *(this->netm_), MUDD_ADDR);
     client_ = std::make_unique<RemoteExecutionClient>(
         muddle_, std::make_shared<LocalExecutor>(std::make_shared<BasicVmEngine>()));
-    muddle_->SetPeerSelectionMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
+    muddle_->SetTrackerConfiguration(fetch::muddle::TrackerConfiguration::AllOn());
     muddle_->Start(uris, std::vector<unsigned short int>{});
 
     protocol_ = std::make_unique<RemoteExecutionProtocol>(*client_);

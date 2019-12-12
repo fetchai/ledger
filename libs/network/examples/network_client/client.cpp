@@ -36,7 +36,7 @@ public:
     : TCPClient(tmanager)  // NOLINT
   {
     Connect(host, port);
-    this->OnMessage([](MessageType const &value) { std::cout << value << std::endl; });
+    this->OnMessage([](MessageBuffer const &value) { std::cout << value << std::endl; });
     this->OnConnectionFailed([]() { std::cerr << "Connection failed" << std::endl; });
   }
 };
