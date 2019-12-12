@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/array.hpp"
+#include "vm/estimate_charge.hpp"
 #include "vm/fixed.hpp"
 #include "vm/vm.hpp"
 

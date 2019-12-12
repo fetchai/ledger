@@ -361,14 +361,16 @@ ChargeAmount VM::GetChargeTotal() const
 
 void VM::IncreaseChargeTotal(ChargeAmount const amount)
 {
+  ChargeAmount const adjusted_amount = amount == 0 ? 1u : amount;
+
   // if charge total would overflow, set it to max
-  if ((std::numeric_limits<ChargeAmount>::max() - charge_total_) < amount)
+  if ((std::numeric_limits<ChargeAmount>::max() - charge_total_) < adjusted_amount)
   {
     charge_total_ = std::numeric_limits<ChargeAmount>::max();
   }
   else
   {
-    charge_total_ += amount;
+    charge_total_ += adjusted_amount;
   }
 }
 
