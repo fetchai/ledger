@@ -1078,7 +1078,7 @@ void Tensor<T, C>::Assign(TensorSlice const &other)
  * Assign makes a deep copy of data from another tensor into this one
  * @tparam T Type
  * @tparam C Container
- * @param other Another Tensor to assign data from into thisA
+ * @param other Another Tensor to assign data from into this
  */
 template <typename T, typename C>
 void Tensor<T, C>::Assign(Tensor const &other)
