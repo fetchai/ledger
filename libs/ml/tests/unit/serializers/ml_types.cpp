@@ -150,7 +150,7 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   auto grads = g->GetGradients();
   for (auto &grad : grads)
   {
-    grad *= static_cast<DataType>(-0.1);
+    grad *= fetch::math::Type<DataType>("-0.1");
   }
   g->ApplyGradients(grads);
 
@@ -161,7 +161,7 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   auto grads2 = g2->GetGradients();
   for (auto &grad : grads2)
   {
-    grad *= static_cast<DataType>(-0.1);
+    grad *= fetch::math::Type<DataType>("-0.1");
   }
   g2->ApplyGradients(grads2);
 

@@ -80,6 +80,8 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
   cfg.network_mode          = GetNetworkMode(settings);
   cfg.features              = settings.experimental_features.value();
 
+  cfg.enable_agents  = settings.enable_agents.value();
+  cfg.messenger_port = settings.messenger_port.value();
   return cfg;
 }
 

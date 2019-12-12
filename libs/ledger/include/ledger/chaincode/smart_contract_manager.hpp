@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/digest.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "ledger/chaincode/contract.hpp"
 
 namespace fetch {
@@ -28,14 +28,14 @@ class Address;
 }  // namespace chain
 namespace ledger {
 
-class Identifier;
-
 class SmartContractManager : public Contract
 {
 public:
   static constexpr char const *NAME = "fetch.contract";
 
-  static storage::ResourceAddress CreateAddressForContract(Digest const &digest);
+  using ConstByteArray = byte_array::ConstByteArray;
+
+  static storage::ResourceAddress CreateAddressForContract(chain::Address const &contract_id);
 
   SmartContractManager();
   ~SmartContractManager() override = default;

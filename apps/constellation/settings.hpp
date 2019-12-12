@@ -109,6 +109,18 @@ public:
   settings::Setting<uint64_t> aeon_period;
   /// @}
 
+  /// @name Error handling
+  /// @{
+  settings::Setting<bool> graceful_failure;
+  settings::Setting<bool> fault_tolerant;
+  /// @}
+
+  /// @name Agent support functionality
+  /// @{
+  settings::Setting<bool>     enable_agents;
+  settings::Setting<uint16_t> messenger_port;
+  /// @}
+
   // Operators
   Settings &operator=(Settings const &) = delete;
   Settings &operator=(Settings &&) = delete;

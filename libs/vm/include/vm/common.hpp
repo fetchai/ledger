@@ -24,6 +24,7 @@
 #include <cmath>
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <map>
 #include <memory>
 #include <sstream>
@@ -235,7 +236,9 @@ template <typename T>
 class Ptr;
 class Object;
 
-using ChargeAmount = uint64_t;
+using ChargeAmount                                = uint64_t;
+static constexpr ChargeAmount COMPUTE_CHARGE_COST = 1u;
+static constexpr ChargeAmount MAXIMUM_CHARGE      = std::numeric_limits<ChargeAmount>::max();
 template <typename... Args>
 using ChargeEstimator = std::function<ChargeAmount(Args const &...)>;
 

@@ -168,7 +168,7 @@ TYPED_TEST(GraphTest, applying_regularisation_per_trainable)
   using RegType    = fetch::ml::regularisers::L1Regulariser<TensorType>;
 
   // Initialise values
-  auto regularisation_rate = static_cast<DataType>(0.1f);
+  auto regularisation_rate = fetch::math::Type<DataType>("0.1");
   auto regulariser         = std::make_shared<RegType>();
 
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
@@ -186,7 +186,7 @@ TYPED_TEST(GraphTest, applying_regularisation_per_trainable)
   auto node_ptr = g.GetNode(weights);
   auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
   TensorType grad = op_ptr->GetGradients();
-  grad.Fill(static_cast<DataType>(0.0));
+  grad.Fill(DataType{0});
   op_ptr->ApplyGradient(grad);
 
   // Evaluate weights
@@ -205,7 +205,7 @@ TYPED_TEST(GraphTest, applying_regularisation_all_trainables)
   using RegType    = fetch::ml::regularisers::L1Regulariser<TensorType>;
 
   // Initialise values
-  auto regularisation_rate = static_cast<DataType>(0.1f);
+  auto regularisation_rate = fetch::math::Type<DataType>("0.1");
   auto regulariser         = std::make_shared<RegType>();
 
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
@@ -223,7 +223,7 @@ TYPED_TEST(GraphTest, applying_regularisation_all_trainables)
   auto node_ptr = g.GetNode(weights);
   auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
   TensorType grad = op_ptr->GetGradients();
-  grad.Fill(static_cast<DataType>(0.0));
+  grad.Fill(DataType{0});
   op_ptr->ApplyGradient(grad);
 
   // Evaluate weights

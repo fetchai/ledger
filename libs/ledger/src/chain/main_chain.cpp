@@ -91,32 +91,14 @@ MainChain::MainChain(Mode mode)
 
 MainChain::~MainChain()
 {
-  using namespace fetch::serializers;
-
-  if (block_store_)
-  {
-    block_store_->Flush(false);
-  }
-
-  if (mode_ != Mode::IN_MEMORY_DB)
-  {
-    try
-    {
-      std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
-      LargeObjectSerializeHelper buffer{};
-      buffer << bloom_filter_;
-
-      out << buffer.data();
-    }
-    catch (std::exception const &e)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to save Bloom filter to file, reason: ", e.what());
-    }
-  }
+  // ensure the chain has been flushed to disk
+  FlushToDisk();
 }
 
 void MainChain::Reset()
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Resetting the main chain.");
+
   FETCH_LOCK(lock_);
 
   tips_.clear();
@@ -557,21 +539,21 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
 }
 
 /**
- * Walk the block history starting from the heaviest block
+ * Walk the block history downwards starting from the heaviest block.
  *
- * @param lowest_block_number The minimum allowed block_number to be returned
+ * @param limit The maximum amount of blocks returned
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Blocks MainChain::GetHeaviestChain(uint64_t lowest_block_number) const
+MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
   // Note: min needs a reference to something, so this is a workaround since UPPER_BOUND is a
   // constexpr
-  MilliTimer myTimer("MainChain::HeaviestChain");
+  MilliTimer myTimer("MainChain::HeaviestChain", 2000);
 
   FETCH_LOCK(lock_);
 
-  return GetChainPreceding(GetHeaviestBlockHash(), lowest_block_number);
+  return GetChainPreceding(GetHeaviestBlockHash(), limit);
 }
 
 MainChain::IntBlockPtr MainChain::GetLabeledSubchainStart() const
@@ -619,48 +601,40 @@ MainChain::IntBlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
  * Walk the block history collecting blocks until either genesis or the block limit is reached
  *
  * @param start The hash of the first block
- * @param lowest_block_number The minimum allowed block_number to be returned
+ * @param limit The maximum amount of blocks returned
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_block_number) const
+MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
-  MilliTimer myTimer("MainChain::ChainPreceding");
+  MilliTimer myTimer("MainChain::ChainPreceding", 2000);
 
   FETCH_LOCK(lock_);
 
   // asserting genesis block has a number of 0, and everything else is above
-  assert(GetBlock(chain::GENESIS_DIGEST));
-  assert(GetBlock(chain::GENESIS_DIGEST)->block_number == 0);
+  assert(GetBlock(chain::GetGenesisDigest()));
+  assert(GetBlock(chain::GetGenesisDigest())->block_number == 0);
 
   Blocks result;
-  bool   proceed = true;
+  bool   not_at_genesis = true;
 
   for (BlockHash current_hash = std::move(start);
        // exit once we have gathered enough blocks or reached genesis
-       proceed && result.size() < MainChain::UPPER_BOUND;)
+       not_at_genesis && result.size() < static_cast<Blocks::size_type>(limit);)
   {
     // look up the block
     auto block = GetBlock(current_hash);
     if (!block)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash));
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
+                      " in get chain preceding");
       throw std::runtime_error("Failed to look up block");
     }
     assert(block->block_number > 0 || block->IsGenesis());
 
-    if (block->block_number < lowest_block_number)
-    {
-      break;
-    }
-
     // walk the hash
-    proceed = block->block_number > lowest_block_number;
-
-    if (proceed)
-    {
-      current_hash = block->previous_hash;
-    }
+    not_at_genesis = !block->IsGenesis();
+    current_hash   = block->previous_hash;
 
     // update the results
     result.push_back(std::move(block));
@@ -680,7 +654,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t lowest_
  */
 MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
 {
-  MilliTimer myTimer("MainChain::TimeTravel");
+  MilliTimer myTimer("MainChain::TimeTravel", 750);
 
   // Moving forward in time, towards tip
   BlockHash next_hash;
@@ -692,17 +666,22 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
   if (current_hash.empty())
   {
     // start of the sync, from genesis
-    next_hash = chain::GENESIS_DIGEST;
+    next_hash = chain::GetGenesisDigest();
   }
   else
   {
+    // Note: this is inefficient
     if (!LookupBlock(current_hash, block, &next_hash))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
-                      " note, next hash: ", next_hash);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
+                      " during time travel. Note, next hash: ", next_hash);
+
       throw std::runtime_error("Failed to lookup block");
     }
   }
+
+  // We have the block we want to sync forward from. Check if it is on the heaviest chain.
+  bool const not_heaviest = !(block && (block->chain_label == heaviest_.ChainLabel()));
 
   bool not_done = true;
   for (current_hash = std::move(next_hash);
@@ -718,7 +697,8 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
       if (!block)
       {
         // there is no block such hashed neither in cache, nor in storage
-        FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash));
+        FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure during TT, for block: 0x",
+                        ToHex(current_hash));
         throw std::runtime_error("Failed to lookup block");
       }
       // The block is in cache yet LookupBlock() failed.
@@ -730,7 +710,8 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
     result.push_back(std::move(block));
   }
 
-  return {std::move(result), GetHeaviestBlockHash()};
+  return {std::move(result), GetHeaviestBlock()->hash, GetHeaviestBlock()->block_number,
+          not_heaviest};
 }
 
 /**
@@ -1115,7 +1096,7 @@ void MainChain::WriteToFile()
   // skip if the block store is not persistent
   if (block_store_ && (block->block_number >= chain::FINALITY_PERIOD))
   {
-    MilliTimer myTimer("MainChain::WriteToFile", 500);
+    MilliTimer myTimer("MainChain::WriteToFile", 750);
 
     // Add confirmed blocks to file, minus finality
 
@@ -1188,7 +1169,7 @@ void MainChain::WriteToFile()
     FlushBlock(block);
 
     // Force flush of the file object!
-    block_store_->Flush(false);
+    FlushToDisk();
 
     // as final step do some sanity checks
     TrimCache();
@@ -1407,7 +1388,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 {
   assert(!block->previous_hash.empty());
 
-  MilliTimer myTimer("MainChain::InsertBlock", 500);
+  MilliTimer myTimer("MainChain::InsertBlock", 750);
 
   FETCH_LOCK(lock_);
 
@@ -1761,8 +1742,8 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
 {
   auto genesis           = std::make_shared<Block>();
   genesis->previous_hash = chain::ZERO_HASH;
-  genesis->hash          = chain::GENESIS_DIGEST;
-  genesis->merkle_hash   = chain::GENESIS_MERKLE_ROOT;
+  genesis->hash          = chain::GetGenesisDigest();
+  genesis->merkle_hash   = chain::GetGenesisMerkleRoot();
   genesis->miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
   genesis->is_loose      = false;
 
@@ -1986,6 +1967,32 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   bloom_filter_false_positive_count_->add(false_positives);
 
   return duplicates;
+}
+
+void MainChain::FlushToDisk()
+{
+  using namespace fetch::serializers;
+
+  if (block_store_)
+  {
+    block_store_->Flush(false);
+  }
+
+  if (mode_ != Mode::IN_MEMORY_DB)
+  {
+    try
+    {
+      std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
+      LargeObjectSerializeHelper buffer{};
+      buffer << bloom_filter_;
+
+      out << buffer.data();
+    }
+    catch (std::exception const &e)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to save Bloom filter to file, reason: ", e.what());
+    }
+  }
 }
 
 }  // namespace ledger

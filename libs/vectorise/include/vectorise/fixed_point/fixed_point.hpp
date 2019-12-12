@@ -23,6 +23,7 @@
 #include "vectorise/uint/int.hpp"
 #include "vectorise/uint/uint.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -72,7 +73,7 @@ struct TypeFromSize<128>
   using UnsignedType                   = uint128_t;
   using SignedType                     = int128_t;
   using NextSize                       = TypeFromSize<256>;
-  static constexpr uint16_t  decimals  = 18;
+  static constexpr uint16_t  decimals  = 19;
   static constexpr ValueType tolerance = 0x100000000000;  // 0,00000095367431640625
   static constexpr ValueType max_exp =
       (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000;  // 43.6682723752765511
@@ -175,8 +176,9 @@ public:
   static constexpr std::uint16_t DECIMAL_DIGITS{BaseTypeInfo::decimals};
 
   static FixedPoint const TOLERANCE;
-  static FixedPoint const _0; /* 0 */
-  static FixedPoint const _1; /* 1 */
+  static FixedPoint const _0;    /* 0 */
+  static FixedPoint const _1;    /* 1 */
+  static FixedPoint const _half; /* 0.5 */
 
   static FixedPoint const CONST_SMALLEST_FRACTION;
   static FixedPoint const CONST_E;              /* e */
@@ -243,6 +245,7 @@ public:
   constexpr FixedPoint(Type const &integer, UnsignedType const &fraction);
   template <uint16_t N, uint16_t M>
   constexpr explicit FixedPoint(FixedPoint<N, M> const &o);
+  explicit FixedPoint(std::string const &s);
 
   ///////////////////
   /// conversions ///
@@ -674,6 +677,8 @@ FixedPoint<I, F> const FixedPoint<I, F>::_0{0}; /* 0 */
 template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::_1{1}; /* 1 */
 template <uint16_t I, uint16_t F>
+FixedPoint<I, F> const FixedPoint<I, F>::_half{0.5}; /* 0.5 */
+template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::TOLERANCE(
     0, FixedPoint<I, F>::BaseTypeInfo::tolerance); /* 0 */
 template <uint16_t I, uint16_t F>
@@ -706,13 +711,19 @@ inline std::ostream &operator<<(std::ostream &s, int128_t const &x)
   return s;
 }
 
+inline std::ostream &operator<<(std::ostream &s, uint128_t const &x)
+{
+  s << static_cast<uint64_t>(x >> 64) << "|" << static_cast<uint64_t>(x);
+  return s;
+}
+
 template <uint16_t I, uint16_t F>
 inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
 {
   std::ios_base::fmtflags f(s.flags());
   s << std::setfill('0');
   s << std::setw(I / 4);
-  s << std::setprecision(F / 4);
+  s << std::setprecision(FixedPoint<I, F>::DECIMAL_DIGITS);
   s << std::fixed;
   if (FixedPoint<I, F>::IsNaN(n))
   {
@@ -861,7 +872,18 @@ template <uint16_t I, uint16_t F>
 constexpr FixedPoint<I, F>::FixedPoint(typename FixedPoint<I, F>::Type const &        integer,
                                        typename FixedPoint<I, F>::UnsignedType const &fraction)
   : data_{(INTEGER_MASK & (Type(integer) << FRACTIONAL_BITS)) | Type(fraction & FRACTIONAL_MASK)}
-{}
+{
+  if (CheckOverflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+}
 
 template <>
 template <>
@@ -920,6 +942,119 @@ template <>
 constexpr FixedPoint<16, 16>::FixedPoint(FixedPoint<32, 32> const &o)
   : data_{static_cast<int32_t>(o.Data() >> 16)}
 {
+  if (CheckOverflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(data_)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+}
+
+template <uint16_t I, uint16_t F>
+FixedPoint<I, F>::FixedPoint(std::string const &s)
+  : data_{0}
+{
+  if (s.find('e') != std::string::npos || s.find('E') != std::string::npos)
+  {
+    throw std::runtime_error("FixedPoint string parsing does not support scientific notation!");
+  }
+  auto index  = s.find("fp");
+  auto s_copy = std::string(s, 0, index);
+
+  Type         integer_part{0};
+  UnsignedType fractional_part{0};
+  bool         is_negative{false};
+
+  std::string integer_match;
+  std::string fractional_match;
+  auto        decimal_pos = s_copy.find('.');
+  if (decimal_pos != std::string::npos)
+  {
+    integer_match    = std::string(s_copy, 0, decimal_pos);
+    fractional_match = std::string(s_copy, decimal_pos + 1, s_copy.length());
+
+    // Trim right zeroes in fractional part
+    fractional_match.erase(fractional_match.find_last_not_of('0') + 1, std::string::npos);
+
+    // Parse the fractional part and convert to FixedPoint.
+    // Ignore more than the supported decimal digits
+    if (fractional_match.length() > DECIMAL_DIGITS)
+    {
+      fractional_match.erase(DECIMAL_DIGITS, fractional_match.length() - DECIMAL_DIGITS);
+    }
+    UnsignedType power10{10};
+
+    // find last digit in the fraction and calculate the power of 10 to divide by
+    auto   last_digit = fractional_match.find_last_not_of('0');
+    size_t digit_pos;
+    if (last_digit != std::string::npos)
+    {
+      digit_pos = std::min(last_digit, fractional_match.size() - 1);
+      fractional_match.erase(digit_pos + 1, fractional_match.length() - digit_pos);
+    }
+    else
+    {
+      digit_pos = fractional_match.size();
+    }
+    for (size_t zeros = 0; zeros < digit_pos; zeros++)
+    {
+      power10 *= 10;
+    }
+    // read into the integer type and divide by largest possible power of 10 to get
+    // the needed fractional part in binary
+    fractional_part =
+        static_cast<UnsignedType>(std::strtoul(fractional_match.c_str(), nullptr, 10));
+
+    fractional_part = (fractional_part * ONE_MASK) / power10;
+  }
+  else
+  {
+    integer_match = s_copy;
+  }
+
+  // Trim left zeroes
+  integer_match.erase(0, std::min(integer_match.find_first_not_of('0'), integer_match.size() - 1));
+
+  // We definitely have an overflow, check the sign and set to MAX/MIN
+  if (integer_match.length() > DECIMAL_DIGITS)
+  {
+    if (integer_match[0] == '-')
+    {
+      fp_state |= STATE_OVERFLOW;
+      data_ = MIN;
+    }
+    else
+    {
+      fp_state |= STATE_OVERFLOW;
+      data_ = MAX;
+    }
+    return;
+  }
+
+  // Check the sign separetely, as -0 will be parsed as just 0 in strtoll() below.
+  if (integer_match[0] == '-')
+  {
+    is_negative = true;
+  }
+
+  // Read the (signed) integer
+  integer_part = static_cast<Type>(std::strtoll(integer_match.c_str(), nullptr, 10));
+  if (fractional_part != 0 && is_negative)
+  {
+    // If it's negative, we need to add one and complement the fractional part
+    --integer_part;
+    fractional_part = ~fractional_part + 1;
+  }
+
+  // Construct the data value from integer and fractional parts
+  data_ = (INTEGER_MASK & (Type(integer_part) << FRACTIONAL_BITS)) |
+          Type(fractional_part & FRACTIONAL_MASK);
+
+  // Finally check for overflow/underflow
   if (CheckOverflow(static_cast<NextType>(data_)))
   {
     fp_state |= STATE_OVERFLOW;
@@ -2174,7 +2309,11 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Abs(FixedPoint<I, F> const &x)
     return POSITIVE_INFINITY;
   }
 
-  return x * Sign(x);
+  if (Sign(x) > 0)
+  {
+    return x;
+  }
+  return -x;
 }
 
 /**
@@ -2225,11 +2364,11 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sign(FixedPoint<I, F> const &x)
  * @return the result of e^x
  */
 
-static constexpr FixedPoint<64, 64> Exp_P01(0, 0x8000000000000000);  //  1 / 2
-static constexpr FixedPoint<64, 64> Exp_P02(0, 0x1C71C71C71C71C71);  //  1 / 9
-static constexpr FixedPoint<64, 64> Exp_P03(0, 0x038E38E38E38E38E);  //  1 / 72
-static constexpr FixedPoint<64, 64> Exp_P04(0, 0x0041041041041041);  //  1 / 1008
-static constexpr FixedPoint<64, 64> Exp_P05(0, 0x00022ACD578022AC);  //  1 / 30240
+static const FixedPoint<64, 64> Exp_P01(0, 0x8000000000000000);  //  1 / 2
+static const FixedPoint<64, 64> Exp_P02(0, 0x1C71C71C71C71C71);  //  1 / 9
+static const FixedPoint<64, 64> Exp_P03(0, 0x038E38E38E38E38E);  //  1 / 72
+static const FixedPoint<64, 64> Exp_P04(0, 0x0041041041041041);  //  1 / 1008
+static const FixedPoint<64, 64> Exp_P05(0, 0x00022ACD578022AC);  //  1 / 30240
 
 template <uint16_t I, uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::Exp(FixedPoint<I, F> const &x)
@@ -2613,24 +2752,24 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
   }
-  if (x < _0)
+  if (y.Fraction() == 0)
   {
     FixedPoint x1{x};
-    if (y.Fraction() == 0)
-    {
-      if (y < _0)
-      {
-        x1 = _1 / x;
-      }
-      FixedPoint pow{x1};
-      FixedPoint t{Abs(y)};
-      while (--t)
-      {
-        pow *= x1;
-      }
-      return pow;
-    }
 
+    if (y < _0)
+    {
+      x1 = _1 / x;
+    }
+    FixedPoint pow{x1};
+    FixedPoint t{Abs(y)};
+    while (--t)
+    {
+      pow *= x1;
+    }
+    return pow;
+  }
+  if (x < _0)
+  {
     // Already checked the case for integer y
     fp_state |= STATE_NAN;
     return NaN;
