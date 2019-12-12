@@ -661,12 +661,15 @@ TEST_P(MainChainTests, CheckChainPreceding)
     ASSERT_EQ(preceding.size(), 3);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main3));
     EXPECT_TRUE(IsSameBlock(*preceding[1], *main2));
+    EXPECT_TRUE(IsSameBlock(*preceding[2], *main1));
   }
 
   {
     auto const preceding = chain_->GetChainPreceding(main2->hash, 3);
     ASSERT_EQ(preceding.size(), 3);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main2));
+    EXPECT_TRUE(IsSameBlock(*preceding[1], *main1));
+    EXPECT_TRUE(IsSameBlock(*preceding[2], *genesis));
   }
 
   {

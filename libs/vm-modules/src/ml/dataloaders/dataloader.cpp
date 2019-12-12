@@ -89,7 +89,7 @@ void VMDataLoader::Bind(Module &module, bool const enable_experimental)
   if (enable_experimental)
   {
     module.CreateClassType<VMDataLoader>("DataLoader")
-        .CreateConstructor(&VMDataLoader::Constructor)
+        .CreateConstructor(&VMDataLoader::Constructor, vm::MAXIMUM_CHARGE)
         .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> {
           return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id)};
         })

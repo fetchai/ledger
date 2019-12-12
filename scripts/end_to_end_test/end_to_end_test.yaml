@@ -284,3 +284,168 @@ steps:
   - fail: {"run_contract": {"contract_name": "contract001", "nodes": [0], "wait_for_blocks": 15}}
   - stop_nodes: {"nodes": [0], "remove_dbs": True}
 ...
+
+---
+test_description: >
+  Test simple state manipulation
+
+setup_conditions:
+  test_name: "simple_state_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.simple_state_test" }
+...
+
+---
+test_description: >
+  Single contract-to-contract call
+
+setup_conditions:
+  test_name: "c2c_single_call_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.c2c_single_call_test" }
+...
+
+---
+test_description: >
+  Single void contract-to-contract call with arguments
+
+setup_conditions:
+  test_name: "c2c_argument_passing_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.c2c_argument_passing_test" }
+...
+
+---
+test_description: >
+  Nested contract-to-contract call
+
+setup_conditions:
+  test_name: "c2c_nested_call_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.c2c_nested_call_test" }
+...
+
+---
+test_description: >
+  Contract-to-contract call which accesses the Context
+
+setup_conditions:
+  test_name: "c2c_with_context_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.c2c_with_context_test" }
+...
+
+---
+test_description: >
+  Contract-to-contract call which checks the contract's balance
+
+setup_conditions:
+  test_name: "c2c_balance"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.c2c_balance" }
+...
+
+---
+test_description: >
+  Contract-to-contract call which transfers funds
+
+setup_conditions:
+  test_name: "c2c_transfer"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.c2c_transfer" }
+...
+
+---
+test_description: >
+  Contract-to-contract self-call
+
+setup_conditions:
+  test_name: "c2c_self_call_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.c2c_self_call_test" }
+...
+
+---
+test_description: >
+  Contract-to-contract circular call
+
+setup_conditions:
+  test_name: "c2c_call_cycle_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.c2c_call_cycle_test" }
+...
+
+---
+test_description: >
+  Nested contract-to-contract call exceeding maximum depth
+
+setup_conditions:
+  test_name: "c2c_nested_call_depth_limit_test"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 600
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.c2c_nested_call_depth_limit_test" }
+...
+
+---
+test_description: >
+  Multiple contract-to-contract calls in one action
+
+setup_conditions:
+  test_name: "c2c_multiple_calls"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.c2c_multiple_calls" }
+...

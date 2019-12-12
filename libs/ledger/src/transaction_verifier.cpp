@@ -31,14 +31,15 @@
 #include <chrono>
 #include <string>
 
-static const std::chrono::milliseconds POP_TIMEOUT{300};
-
 namespace fetch {
 namespace ledger {
 
 namespace {
 
 using telemetry::Registry;
+
+constexpr char const *          LOGGING_NAME = "TxVerifier";
+const std::chrono::milliseconds POP_TIMEOUT{300};
 
 std::string CreateMetricName(std::string const &prefix, std::string const &name)
 {

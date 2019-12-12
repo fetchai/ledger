@@ -120,11 +120,11 @@ void FeeManager::Execute(TransactionDetails &tx, Result &result, BlockIndex cons
   telemetry::FunctionTimer const timer{*deduct_fees_duration_};
 
   // attach the token contract to the storage engine
-  StateSentinelAdapter storage_adapter{storage, Identifier{"fetch.token"}, tx.shard_mask};
+  StateSentinelAdapter storage_adapter{storage, "fetch.token", tx.shard_mask};
 
   auto const &from = tx.from;
 
-  ContractContext         context{&token_contract_, tx.contract_address, &storage_adapter, block};
+  ContractContext context{&token_contract_, tx.contract_address, nullptr, &storage_adapter, block};
   ContractContextAttacher raii(token_contract_, context);
   uint64_t const          balance = token_contract_.GetBalance(from);
 
@@ -160,9 +160,9 @@ void FeeManager::SettleFees(chain::Address const &miner, TokenAmount amount,
   shard.set(resource_address.lane(log2_num_lanes), 1);
 
   // attach the token contract to the storage engine
-  StateSentinelAdapter storage_adapter{storage, Identifier{"fetch.token"}, shard};
+  StateSentinelAdapter storage_adapter{storage, "fetch.token", shard};
 
-  ContractContext         context{&token_contract_, contract_address, &storage_adapter, block};
+  ContractContext context{&token_contract_, contract_address, nullptr, &storage_adapter, block};
   ContractContextAttacher raii(token_contract_, context);
   token_contract_.AddTokens(miner, amount);
 }

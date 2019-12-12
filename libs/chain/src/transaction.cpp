@@ -201,16 +201,6 @@ Transaction::ContractMode Transaction::contract_mode() const
 }
 
 /**
- * Get the contract digest for this smart contract transaction
- *
- * @return The contract digest
- */
-Address const &Transaction::contract_digest() const
-{
-  return contract_digest_;
-}
-
-/**
  * Get the contract address for this smart contract transaction
  *
  * @return The contract address
