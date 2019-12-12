@@ -65,9 +65,18 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
 {
   using Index = fetch::math::SizeType;
 
+  auto tensor_constructor_charge_estimate = [](Ptr<Array<SizeType>> const &shape) -> ChargeAmount {
+    ChargeAmount charge_value{1};
+    for (std::size_t k = 0; k < shape->elements.size(); ++k)
+    {
+      charge_value *= shape->elements[k];
+    }
+    return charge_value;
+  };
+
   auto interface =
       module.CreateClassType<VMTensor>("Tensor")
-          .CreateConstructor(&VMTensor::Constructor)
+          .CreateConstructor(&VMTensor::Constructor, tensor_constructor_charge_estimate)
           .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
             return Ptr<VMTensor>{new VMTensor(vm, type_id)};
           })
