@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dispatcher.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "router.hpp"
@@ -52,6 +51,11 @@ void MuddleRegister::OnConnectionLeft(ConnectionLeftCallback cb)
   left_callback_ = std::move(cb);
 }
 
+void MuddleRegister::OnConnectionEntered(ConnectionLeftCallback cb)
+{
+  FETCH_LOCK(lock_);
+  entered_callback_ = std::move(cb);
+}
 /**
  * Broadcast data to all active connections
  *
@@ -59,18 +63,35 @@ void MuddleRegister::OnConnectionLeft(ConnectionLeftCallback cb)
  */
 void MuddleRegister::Broadcast(ConstByteArray const &data) const
 {
-  FETCH_LOCK(lock_);
+  using ConnectionPtr  = std::shared_ptr<network::AbstractConnection>;
+  using ConnectionPtrs = std::vector<ConnectionPtr>;
 
-  // loop through all of our current connections
-  for (auto const &elem : handle_index_)
+  // Hold the connections until the lock has gone
+  // to avoid a deadlock if a connection dies while
+  // being accessed for the send.
+  ConnectionPtrs held_connections;
+
   {
-    // ensure the connection is valid
-    auto connection = elem.second->connection.lock();
-    if (connection)
+    FETCH_LOCK(lock_);
+    held_connections.reserve(handle_index_.size());
+
+    // loop through all of our current connections
+    for (auto const &elem : handle_index_)
     {
-      // schedule sending of the data
-      connection->Send(data);
+      // ensure the connection is valid
+      auto connection = elem.second->connection.lock();
+      if (connection)
+      {
+        // schedule sending of the data, once we hold a strong
+        // connection to the data
+        held_connections.emplace_back(std::move(connection));
+      }
     }
+  }
+
+  for (auto const &conn : held_connections)
+  {
+    conn->Send(data);
   }
 }
 
@@ -112,6 +133,24 @@ MuddleRegister::WeakConnectionPtr MuddleRegister::LookupConnection(Address const
   }
 
   return conn;
+}
+
+MuddleRegister::Connections MuddleRegister::LookupConnections(Address const &address) const
+{
+  Connections conns{};
+
+  {
+    FETCH_LOCK(lock_);
+
+    auto it = address_index_.find(address);
+    while ((it != address_index_.end()) && (it->first == address))
+    {
+      conns.emplace_back(it->second->connection);
+      ++it;
+    }
+  }
+
+  return conns;
 }
 
 bool MuddleRegister::IsEmpty() const
@@ -248,6 +287,18 @@ MuddleRegister::AddressIndex MuddleRegister::GetAddressIndex() const
   return address_index_;
 }
 
+Address MuddleRegister::GetAddress(ConnectionHandle handle) const
+{
+  FETCH_LOCK(lock_);
+  auto it = handle_index_.find(handle);
+  if (it == handle_index_.end())
+  {
+    return {};
+  }
+
+  return it->second->address;
+}
+
 /**
  * Callback triggered when a new connection is established
  *
@@ -255,11 +306,12 @@ MuddleRegister::AddressIndex MuddleRegister::GetAddressIndex() const
  */
 void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
 {
-  FETCH_LOCK(lock_);
+  std::unique_lock<std::mutex> lock(lock_);
 
   auto strong_conn = ptr.lock();
   if (!strong_conn)
   {
+    lock.unlock();
     FETCH_LOG_WARN(logging_name_, "Attempting to register lost connection!");
     return;
   }
@@ -270,6 +322,7 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
   // extra level of debug
   if (handle_index_.find(handle) != handle_index_.end())
   {
+    lock.unlock();
     FETCH_LOG_WARN(logging_name_, "Trying to update an existing connection ID");
     return;
   }
@@ -278,6 +331,15 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
 
   // add the connection to the map
   handle_index_.emplace(handle, std::make_shared<Entry>(ptr));
+
+  auto callback_copy = entered_callback_;
+  lock.unlock();
+
+  // signal the router
+  if (callback_copy)
+  {
+    callback_copy(handle);
+  }
 }
 
 /**

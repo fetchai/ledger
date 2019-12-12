@@ -142,7 +142,7 @@ void MuddleLearnerNetworkerImpl::Setup(std::string const &priv, unsigned short i
 
   auto update_store = std::make_shared<UpdateStore>();
 
-  mud->SetPeerSelectionMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
+  mud->SetTrackerConfiguration(muddle::TrackerConfiguration::AllOn());
   mud->Start(remotes, {port});
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 

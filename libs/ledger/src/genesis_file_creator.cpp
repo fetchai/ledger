@@ -56,6 +56,13 @@ using fetch::variant::Variant;
 constexpr char const *LOGGING_NAME = "GenesisFile";
 constexpr int         VERSION      = 3;
 
+enum class FileReadStatus
+{
+  SUCCESS,
+  FAILURE,
+  FILE_NOT_PRESENT
+};
+
 /**
  * Load a JSON from a given path
  *
@@ -63,16 +70,16 @@ constexpr int         VERSION      = 3;
  * @param file_path The path to be read
  * @return true if successful, otherwise false
  */
-bool LoadFromFile(JSONDocument &document, std::string const &file_path)
+FileReadStatus LoadFromFile(JSONDocument &document, std::string const &file_path)
 {
-  bool success{false};
+  FileReadStatus status{FileReadStatus::FAILURE};
 
   // attempt to read the contents of the file
   auto const buffer = core::ReadContentsOfFile(file_path.c_str());
 
   if (buffer.empty())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to load stakefile! : ", file_path);
+    status = FileReadStatus::FILE_NOT_PRESENT;
   }
   else
   {
@@ -80,7 +87,7 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
     {
       document.Parse(buffer);
 
-      success = true;
+      status = FileReadStatus::SUCCESS;
     }
     catch (std::exception const &ex)
     {
@@ -88,64 +95,66 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
     }
   }
 
-  return success;
+  return status;
 }
 
 }  // namespace
 
 using ConsensusPtr = std::shared_ptr<fetch::ledger::ConsensusInterface>;
 
-GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
-                                       StorageUnitInterface &storage_unit, ConsensusPtr consensus,
+GenesisFileCreator::GenesisFileCreator(StorageUnitInterface &storage_unit,
                                        CertificatePtr certificate, std::string const &db_prefix)
   : certificate_{std::move(certificate)}
-  , block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
-  , consensus_{std::move(consensus)}
-  , db_name_{db_prefix + "genesis_block"}
+  , db_name_{db_prefix + "_genesis_block"}
 {}
 
 /**
- * Load a 'state file' with a given name
+ * Load a 'genesis file file' with a given name
  *
  * @param name The path to the file to be loaded
  */
-bool GenesisFileCreator::LoadFile(std::string const &name)
+GenesisFileCreator::Result GenesisFileCreator::LoadFile(std::string const &  path,
+                                                        bool                 proof_of_stake,
+                                                        ConsensusParameters &params)
 {
-  bool success{false};
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Clearing state and installing genesis");
-
   // Perform a check as to whether we have installed genesis before
   {
     genesis_store_.Load(db_name_ + ".db", db_name_ + ".state.db");
 
     if (genesis_store_.Get(storage::ResourceAddress("HEAD"), genesis_block_))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Found previous genesis block! Recovering.");
-      FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block_.hash.ToHex());
+      FETCH_LOG_INFO(LOGGING_NAME, "Restored Genesis. Block 0x", genesis_block_.hash.ToHex(),
+                     " Merkle: 0x", genesis_block_.merkle_hash.ToHex());
 
-      chain::GENESIS_MERKLE_ROOT = genesis_block_.merkle_hash;
-      chain::GENESIS_DIGEST      = genesis_block_.hash;
+      chain::SetGenesisDigest(genesis_block_.hash);
+      chain::SetGenesisMerkleRoot(genesis_block_.merkle_hash);
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Found genesis save file from previous session!");
-      loaded_genesis_ = true;
-    }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Failed to find genesis save file from previous session");
-
-      // Failed - clear any state.
-      genesis_block_ = Block();
-
-      // Reset storage unit
-      storage_unit_.Reset();
+      return Result::LOADED_PREVIOUS_GENESIS;
     }
   }
 
+  // Failed - clear any state.
+  genesis_block_ = Block();
+
+  // Reset storage unit
+  storage_unit_.Reset();
+
   json::JSONDocument doc{};
-  if (LoadFromFile(doc, name))
+  auto const         status = LoadFromFile(doc, path);
+
+  bool success{false};
+  if ((!proof_of_stake) && (status == FileReadStatus::FILE_NOT_PRESENT))
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Building default genesis configuration");
+
+    // in the stand alone case it is fine to have an empty genesis file if that is required
+    success = LoadState(Variant::Array(0));
+  }
+  else if (status == FileReadStatus::SUCCESS)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis initial file: ", path);
+
     // check the version
     int        version{0};
     bool const is_correct_version =
@@ -156,16 +165,24 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
       success = true;
 
       // Note: consensus has to be loaded before the state since that generates the block
-      if (consensus_)
+      ConsensusParameters const *consensus_params{nullptr};
+      if (proof_of_stake)
       {
-        success &= LoadConsensus(doc["consensus"]);
+        if (!LoadConsensus(doc["consensus"], params))
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Failed to successfully load consensus configuration");
+          return Result::FAILURE;
+        }
+
+        // update the pointer the state will need to be updated
+        consensus_params = &params;
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "No stake manager provided when loading from stake file!");
+        FETCH_LOG_WARN(LOGGING_NAME, "No consensus information inside genesis file");
       }
 
-      success &= LoadState(doc["accounts"]);
+      success &= LoadState(doc["accounts"], consensus_params);
     }
     else
     {
@@ -174,14 +191,18 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
     }
   }
 
+  // if the process was successful then trigger the flushing of the genesis block to storage
   if (success)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Saving successful genesis block");
+    FETCH_LOG_INFO(LOGGING_NAME, "Saving genesis block");
+
     genesis_store_.Set(storage::ResourceAddress("HEAD"), genesis_block_);
     genesis_store_.Flush(false);
+
+    return Result::CREATED_NEW_GENESIS;
   }
 
-  return success;
+  return Result::FAILURE;
 }
 
 /**
@@ -189,14 +210,8 @@ bool GenesisFileCreator::LoadFile(std::string const &name)
  *
  * @param object The reference state to be restored
  */
-bool GenesisFileCreator::LoadState(Variant const &object)
+bool GenesisFileCreator::LoadState(Variant const &object, ConsensusParameters const *consensus)
 {
-  // Don't clobber the state if we have loaded the genesis file
-  if (loaded_genesis_)
-  {
-    return true;
-  }
-
   // Expecting an array of record entries
   if (!object.IsArray())
   {
@@ -252,12 +267,28 @@ bool GenesisFileCreator::LoadState(Variant const &object)
     }
   }
 
+  // if we have been configured for consensus then we need to also write the stake information to
+  // the state database
+  if (consensus != nullptr)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Generating initial stakers configuration");
+
+    // build the initial stake manager configuration
+    StakeManager stake_manager{};
+    stake_manager.Reset(*(consensus->snapshot), consensus->cabinet_size);
+    if (!stake_manager.Save(storage_unit_))
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, "Unable to save initial stake queue to DB");
+      return false;
+    }
+  }
+
   // Commit this state
   auto merkle_commit_hash = storage_unit_.Commit(0);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Committed genesis merkle hash: 0x", merkle_commit_hash.ToHex());
 
-  genesis_block_.timestamp    = start_time_;
+  genesis_block_.timestamp    = (consensus != nullptr) ? consensus->start_time : 0;
   genesis_block_.merkle_hash  = merkle_commit_hash;
   genesis_block_.block_number = 0;
   genesis_block_.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
@@ -265,79 +296,60 @@ bool GenesisFileCreator::LoadState(Variant const &object)
 
   FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block_.hash.ToHex());
 
-  chain::GENESIS_MERKLE_ROOT = merkle_commit_hash;
-  chain::GENESIS_DIGEST      = genesis_block_.hash;
+  chain::SetGenesisMerkleRoot(merkle_commit_hash);
+  chain::SetGenesisDigest(genesis_block_.hash);
 
-  block_coordinator_.Reset();
+  if (!storage_unit_.RevertToHash(merkle_commit_hash, 0))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed test to revert to merkle root!");
+  }
 
   return true;
 }
 
-bool GenesisFileCreator::LoadConsensus(Variant const &object)
+bool GenesisFileCreator::LoadConsensus(Variant const &object, ConsensusParameters &params)
 {
-  if (consensus_)
+  // attempt to parse all the basic consensus parameters
+  bool const parse_success = variant::Extract(object, "cabinetSize", params.cabinet_size) &&
+                             variant::Extract(object, "startTime", params.start_time);
+
+  if (!parse_success || !object.Has("stakers"))
   {
-    uint64_t parsed_value;
-
-    // Optionally overwrite default parameters
-    if (variant::Extract(object, "cabinetSize", parsed_value))
-    {
-      consensus_->SetMaxCabinetSize(static_cast<uint16_t>(parsed_value));
-    }
-
-    if (variant::Extract(object, "startTime", parsed_value))
-    {
-      start_time_ = parsed_value;
-      consensus_->SetDefaultStartTime(parsed_value);
-    }
-
-    if (!object.Has("stakers"))
-    {
-      return false;
-    }
-
-    // Don't clobber the state if we have loaded the genesis file
-    if (loaded_genesis_)
-    {
-      return true;
-    }
-
-    Variant const &stake_array = object["stakers"];
-    if (!stake_array.IsArray())
-    {
-      return false;
-    }
-
-    auto snapshot = std::make_shared<StakeSnapshot>();
-
-    // iterate over all of the Identity + stake amount mappings
-    for (std::size_t i = 0, end = stake_array.size(); i < end; ++i)
-    {
-      ConstByteArray identity_raw{};
-      uint64_t       amount{0};
-
-      if (variant::Extract(stake_array[i], "identity", identity_raw) &&
-          variant::Extract(stake_array[i], "amount", amount))
-      {
-
-        FETCH_LOG_INFO(LOGGING_NAME, "Found identity raw!, ", identity_raw);
-
-        auto identity = crypto::Identity(FromBase64(identity_raw));
-        auto address  = chain::Address(identity);
-
-        FETCH_LOG_INFO(LOGGING_NAME,
-                       "Restoring stake. Identity: ", identity.identifier().ToBase64(),
-                       " (address): ", address.address().ToBase64(), " amount: ", amount);
-
-        snapshot->UpdateStake(identity, amount);
-      }
-    }
-
-    consensus_->Reset(*snapshot, storage_unit_);
+    return false;
   }
-  else
+
+  Variant const &stake_array = object["stakers"];
+  if (!stake_array.IsArray())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "No consensus object!");
+    return false;
+  }
+
+  params.snapshot = std::make_shared<StakeSnapshot>();
+
+  // iterate over all of the Identity + stake amount mappings
+  for (std::size_t i = 0, end = stake_array.size(); i < end; ++i)
+  {
+    ConstByteArray identity_raw{};
+    uint64_t       amount{0};
+
+    if (variant::Extract(stake_array[i], "identity", identity_raw) &&
+        variant::Extract(stake_array[i], "amount", amount))
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Found identity raw!, ", identity_raw);
+
+      auto identity = crypto::Identity(FromBase64(identity_raw));
+      auto address  = chain::Address(identity);
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Restoring stake. Identity: ", identity.identifier().ToBase64(),
+                     " (address): ", address.address().ToBase64(), " amount: ", amount);
+
+      params.snapshot->UpdateStake(identity, amount);
+    }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to parse stake entry from genesis file");
+      return false;
+    }
   }
 
   return true;
