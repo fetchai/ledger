@@ -86,7 +86,7 @@ public:
 
   fp128_t AsFP128() noexcept
   {
-    uint64_t fp128_u_max_ = static_cast<uint64_t>(fp128_t::FP_MAX);
+    auto fp128_u_max_ = static_cast<uint64_t>(fp128_t::FP_MAX);
 
     auto fp_val = static_cast<fp128_t>(this->operator()() % fp128_u_max_);
     return fp_val / fp128_t::FP_MAX;
@@ -94,7 +94,7 @@ public:
 
   fp64_t AsFP64() noexcept
   {
-    uint64_t fp64_u_max_ = static_cast<uint64_t>(fp64_t::FP_MAX);
+    auto fp64_u_max_ = static_cast<uint64_t>(fp64_t::FP_MAX);
 
     auto fp_val = static_cast<fp64_t>(this->operator()() % fp64_u_max_);
     return fp_val / fp64_t::FP_MAX;
