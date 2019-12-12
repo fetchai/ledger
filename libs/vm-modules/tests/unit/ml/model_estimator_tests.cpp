@@ -1204,4 +1204,5 @@ TEST_F(VMModelEstimatorTests,
       DeserializeFromStringCharge(model_from_serializer, from_serializer_serialized);
   EXPECT_EQ(charge_original, charge_from_serializer);
 }
+
 }  // namespace
