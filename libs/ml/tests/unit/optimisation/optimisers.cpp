@@ -252,11 +252,11 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_serialisation)
   b >> *optimiser_2;
 
   // Do 2 optimiser steps
-  loss            = optimiser.Run({data}, gt);
-  DataType loss_2 = optimiser_2->Run({data}, gt);
+  loss                  = optimiser.Run({data}, gt);
+  DataType const loss_2 = optimiser_2->Run({data}, gt);
 
   // Test loss
-  EXPECT_EQ(static_cast<DataType>(loss), static_cast<DataType>(loss_2));
+  EXPECT_EQ(loss, loss_2);
 }
 
 //////////////////////
