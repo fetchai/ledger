@@ -331,16 +331,14 @@ bool VM::Execute(std::string &error, Variant &output)
   // We've got a runtime error
 
   // Reset all variables
-  for (int i = 0; i < STACK_SIZE; ++i)
+  for (auto &variable : stack_)
   {
-    Variant &variable = stack_[i];
     variable.Reset();
   }
 
   // Reset all frames
-  for (int i = 0; i < FRAME_STACK_SIZE; ++i)
+  for (auto &frame : frame_stack_)
   {
-    Frame &frame = frame_stack_[i];
     frame.self.Reset();
   }
 
