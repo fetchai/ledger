@@ -697,10 +697,18 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
 {
   Tensor            ret;
-  SizeType          n = 1;
+  SizeType          n = 0;
   std::vector<Type> elems;
   elems.reserve(1024);
-  bool failed = false;
+  bool failed         = false;
+  bool prev_backslash = false;
+  enum
+  {
+    UNSET,
+    COLON,
+    NEWLINE
+  } new_row_marker         = UNSET;
+  bool reached_actual_data = false;
 
   // Text parsing loop
   for (SizeType i = 0; i < c.size();)
@@ -709,18 +717,60 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     switch (c[i])
     {
     case ';':
-      if (i < c.size() - 1)
+      if (reached_actual_data)
       {
-        ++n;
+        if (new_row_marker == UNSET)
+        {
+          new_row_marker = COLON;
+        }
+        if (new_row_marker == COLON)
+        {
+          if ((i < c.size() - 1))
+          {
+            reached_actual_data = false;
+          }
+        }
       }
       ++i;
       break;
-    case '+':
+    case '\r':
+    case '\n':
+      if (reached_actual_data)
+      {
+        if (new_row_marker == UNSET)
+        {
+          new_row_marker = NEWLINE;
+        }
+        if (new_row_marker == NEWLINE)
+        {
+          if ((i < c.size() - 1))
+          {
+            reached_actual_data = false;
+          }
+        }
+      }
+      ++i;
+      break;
+    case '\\':
+      prev_backslash = true;
+      ++i;
+      break;
+    case 'r':
+    case 'n':
+      if (prev_backslash)
+      {
+        prev_backslash = false;
+        if (i < c.size() - 2)
+        {
+          ++n;
+        }
+        ++i;
+      }
+      break;
     case ',':
     case ' ':
-    case '\n':
     case '\t':
-    case '\r':
+      prev_backslash = false;
       ++i;
       break;
     default:
@@ -731,12 +781,20 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       else
       {
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
-        auto        float_val = std::atof(cur_elem.c_str());
+        auto        float_val = math::Type<T>(cur_elem);
         elems.emplace_back(Type(float_val));
+        prev_backslash = false;
+        if (!reached_actual_data)
+        {
+          // Where we actually start counting rows
+          ++n;
+          reached_actual_data = true;
+        }
       }
       break;
     }
   }
+
   SizeType m = elems.size() / n;
 
   if ((m * n) != elems.size())
@@ -1611,7 +1669,10 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Transpose() const
 {
   // TODO (private 867) -
-  assert(shape_.size() == 2);
+  if (shape_.size() != 2)
+  {
+    throw exceptions::WrongShape("Can not transpose a tensor which is not 2-dimensional!");
+  }
   SizeVector new_axes{1, 0};
 
   Tensor ret({shape().at(1), shape().at(0)});

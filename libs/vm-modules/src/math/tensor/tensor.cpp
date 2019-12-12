@@ -71,6 +71,7 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
           .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
             return Ptr<VMTensor>{new VMTensor(vm, type_id)};
           })
+          .CreateMemberFunction("copy", &VMTensor::Copy, UseEstimator(&TensorEstimator::Copy))
           .CreateMemberFunction("at", &VMTensor::At<Index>, UseEstimator(&TensorEstimator::AtOne))
           .CreateMemberFunction("at", &VMTensor::At<Index, Index>,
                                 UseEstimator(&TensorEstimator::AtTwo))
@@ -87,6 +88,8 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
           .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>,
                                 UseEstimator(&TensorEstimator::SetAtFour))
           .CreateMemberFunction("size", &VMTensor::size, UseEstimator(&TensorEstimator::size))
+          .CreateMemberFunction("shape", &VMTensor::VMShape,
+                                UseEstimator(&TensorEstimator::VMShape))
           .CreateMemberFunction("fill", &VMTensor::Fill, UseEstimator(&TensorEstimator::Fill))
           .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
                                 UseEstimator(&TensorEstimator::FillRandom))
@@ -97,6 +100,11 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
           .CreateMemberFunction("squeeze", &VMTensor::Squeeze,
                                 UseEstimator(&TensorEstimator::Squeeze))
           .CreateMemberFunction("sum", &VMTensor::Sum, UseEstimator(&TensorEstimator::Sum))
+          .CreateMemberFunction("argMax", &VMTensor::ArgMax, UseEstimator(&TensorEstimator::ArgMax))
+          .CreateMemberFunction("argMax", &VMTensor::ArgMaxNoIndices,
+                                UseEstimator(&TensorEstimator::ArgMaxNoIndices))
+          .CreateMemberFunction("dot", &VMTensor::Dot, UseEstimator(&TensorEstimator::Dot))
+
           // TODO(ML-340) - rework operator bindings when it becomes possible to add estimators to
           // operators
           .CreateMemberFunction("negate", &VMTensor::NegateOperator,
@@ -153,6 +161,19 @@ SizeType VMTensor::size() const
   return tensor_.size();
 }
 
+vm::Ptr<vm::Array<SizeType>> VMTensor::VMShape() const
+{
+  auto array = this->vm_->CreateNewObject<Array<SizeType>>(
+      this->vm_->GetTypeId<SizeType>(), static_cast<int32_t>(tensor_.shape().size()));
+
+  for (std::size_t i = 0; i < tensor_.shape().size(); ++i)
+  {
+    array->elements.at(i) = static_cast<SizeType>(tensor_.shape().at(i));
+  }
+
+  return array;
+}
+
 ////////////////////////////////////
 /// ACCESSING AND SETTING VALUES ///
 ////////////////////////////////////
@@ -160,7 +181,7 @@ SizeType VMTensor::size() const
 template <typename... Indices>
 VMTensor::DataType VMTensor::At(Indices... indices) const
 {
-  VMTensor::DataType result(0.0);
+  VMTensor::DataType result{0};
   try
   {
     result = tensor_.At(indices...);
@@ -185,9 +206,11 @@ void VMTensor::SetAt(Args... args)
   }
 }
 
-void VMTensor::Copy(ArrayType const &other)
+vm::Ptr<VMTensor> VMTensor::Copy()
 {
-  tensor_.Copy(other);
+  Ptr<VMTensor> ret = Ptr<VMTensor>{new VMTensor(this->vm_, this->type_id_, shape())};
+  (ret->GetTensor()).Copy(GetTensor());
+  return ret;
 }
 
 void VMTensor::Fill(DataType const &value)
@@ -200,7 +223,7 @@ void VMTensor::FillRandom()
   tensor_.FillUniformRandom();
 }
 
-Ptr<VMTensor> VMTensor::Squeeze()
+Ptr<VMTensor> VMTensor::Squeeze() const
 {
   auto squeezed_tensor = tensor_.Copy();
   try
@@ -209,12 +232,12 @@ Ptr<VMTensor> VMTensor::Squeeze()
   }
   catch (std::exception const &e)
   {
-    RuntimeError("Squeeze failed: " + std::string(e.what()));
+    vm_->RuntimeError("Squeeze failed: " + std::string(e.what()));
   }
   return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, squeezed_tensor));
 }
 
-Ptr<VMTensor> VMTensor::Unsqueeze()
+Ptr<VMTensor> VMTensor::Unsqueeze() const
 {
   auto unsqueezed_tensor = tensor_.Copy();
   unsqueezed_tensor.Unsqueeze();
@@ -223,12 +246,40 @@ Ptr<VMTensor> VMTensor::Unsqueeze()
 
 bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
 {
+  if (new_shape->elements.empty())
+  {
+    RuntimeError("Can not reshape a Tensor : new shape is empty!");
+    return false;
+  }
+  std::size_t total_new_elements = 1;
+  for (SizeType axis_size : new_shape->elements)
+  {
+    if (axis_size == 0)
+    {
+      RuntimeError("Can not reshape a Tensor : axis of size 0 found in new shape!");
+      return false;
+    }
+    total_new_elements *= axis_size;
+  }
+  if (total_new_elements != tensor_.size())
+  {
+    RuntimeError("Can not reshape a Tensor : total elements count in the new shape (" +
+                 std::to_string(total_new_elements) +
+                 ") mismatch. Expected : " + std::to_string(tensor_.size()));
+    return false;
+  }
   return tensor_.Reshape(new_shape->elements);
 }
 
-void VMTensor::Transpose()
+Ptr<VMTensor> VMTensor::Transpose() const
 {
-  tensor_.Transpose();
+  if (tensor_.shape().size() != RECTANGULAR_SHAPE_SIZE)
+  {
+    vm_->RuntimeError("Can not transpose a Tensor which is not 2-dimensional!");
+    return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, tensor_.Copy()));
+  }
+  auto transposed = tensor_.Transpose();
+  return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, transposed));
 }
 
 /////////////////////////
@@ -386,6 +437,25 @@ DataType VMTensor::Max()
 DataType VMTensor::Sum()
 {
   return fetch::math::Sum(tensor_);
+}
+
+vm::Ptr<VMTensor> VMTensor::ArgMaxNoIndices()
+{
+  return ArgMax();
+}
+
+vm::Ptr<VMTensor> VMTensor::ArgMax(SizeType const &indices)
+{
+  auto          ret_tensor = fetch::math::ArgMax(GetTensor(), indices);
+  Ptr<VMTensor> ret        = Ptr<VMTensor>{new VMTensor(this->vm_, this->type_id_, ret_tensor)};
+  return ret;
+}
+
+vm::Ptr<VMTensor> VMTensor::Dot(vm::Ptr<VMTensor> const &other)
+{
+  auto          ret_tensor = fetch::math::Dot(GetTensor(), other->GetTensor());
+  Ptr<VMTensor> ret        = Ptr<VMTensor>{new VMTensor(this->vm_, this->type_id_, ret_tensor)};
+  return ret;
 }
 
 //////////////////////////////
