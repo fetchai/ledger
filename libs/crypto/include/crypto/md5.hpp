@@ -26,10 +26,10 @@ namespace crypto {
 class MD5 : public HasherInterface
 {
 public:
-  using HasherInterface::Update;
   using HasherInterface::Final;
+  using HasherInterface::Update;
 
-  static constexpr std::size_t size_in_bytes = 16u;
+  static constexpr std::size_t SIZE_IN_BYTES = 16u;
 
   MD5()            = default;
   ~MD5() override  = default;
