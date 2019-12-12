@@ -217,7 +217,7 @@ TEST_F(FixedPointTest, multidigit_integral_fixed_point64)
   EXPECT_TRUE(toolkit.Run());
 }
 
-TEST_F(FixedPointTest, DISABLED_multidigit_integral_fixed_point128)
+TEST_F(FixedPointTest, multidigit_integral_fixed_point128)
 {
   char const *TEXT = R"(
     function main()
@@ -225,11 +225,11 @@ TEST_F(FixedPointTest, DISABLED_multidigit_integral_fixed_point128)
       var val128_2 = toFixed128(123);
       assert(val128_1 == val128_2);
       var val128_3 = 123.456fp128;
-      var val128_4 = toFixed128(123.456);
+      var val128_4 = toFixed128(123.456fp32);
       var val32_1 = 123.456fp32;
       var val64_1 = 123.456fp64;
-      assert(abs(val128_3 - toFixed128(val32_1)) < toFixed128(0.0003));
-      assert(abs(val128_3 - toFixed128(val64_1)) < toFixed128(0.00000012));
+      assert(abs(val128_3 - toFixed128(val32_1)) < toFixed128(0.0003fp32));
+      assert(abs(val128_3 - toFixed128(val64_1)) < toFixed128(0.00000012fp64));
     endfunction
   )";
 
