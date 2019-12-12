@@ -105,12 +105,12 @@ setup_conditions:
   test_name: "basic_node_recovery"
   number_of_nodes: 1
   mining_nodes: [0]
-  max_test_time: 60
+  max_test_time: 70
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [0] }
   - verify_txs: { "name": "batch1", "nodes": [0] }
-  - sleep: 20
+  - sleep: 40
   - restart_nodes: { "nodes": [0] }
   - verify_txs: { "name": "batch1", "nodes": [0], "expect_mined": true }
 ...
