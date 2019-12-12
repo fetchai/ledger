@@ -752,7 +752,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
         break;
       }
       prev_backslash = false;
-      [[fallthrough]];  // explicit fallthrough to the next case
+      [[gnu::fallthrough]];  // explicit fallthrough to the next case
     case '\r':
     case '\n':
       if (reached_actual_data)
