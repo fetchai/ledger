@@ -22,7 +22,6 @@
 #include "vm/common.hpp"
 #include "vm/fixed.hpp"
 #include "vm/map.hpp"
-#include "vm/matrix.hpp"
 #include "vm/module.hpp"
 #include "vm/sharded_state.hpp"
 #include "vm/state.hpp"
