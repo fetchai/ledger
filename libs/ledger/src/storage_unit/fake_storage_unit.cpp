@@ -194,13 +194,11 @@ bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t index)
     {
       throw std::runtime_error("Synchronisation issue between map and stack");
     }
-    else
-    {
-      // perform the reverting options
-      current_hash_ = hash;
-      state_        = std::make_shared<State>(*state_history_[hash]);
-      success       = true;
-    }
+
+    // perform the reverting options
+    current_hash_ = hash;
+    state_        = std::make_shared<State>(*state_history_[hash]);
+    success       = true;
   }
 
   return success;

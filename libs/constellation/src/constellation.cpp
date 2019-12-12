@@ -57,7 +57,6 @@
 #include <thread>
 #include <utility>
 
-using fetch::byte_array::ToBase64;
 using fetch::chain::Address;
 using fetch::ledger::Executor;
 using fetch::ledger::GenesisFileCreator;
@@ -351,7 +350,7 @@ Constellation::MessengerAPIPtr CreateMessengerAPI(Config const &cfg, muddle::Mud
  * @param interface_address The current interface address TODO(EJF): This should be more integrated
  * @param db_prefix The database file(s) prefix
  */
-Constellation::Constellation(CertificatePtr const &certificate, Config config)
+Constellation::Constellation(CertificatePtr certificate, Config config)
   : active_{true}
   , cfg_{std::move(config)}
   , p2p_port_(LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::CORE))
@@ -362,7 +361,7 @@ Constellation::Constellation(CertificatePtr const &certificate, Config config)
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
-  , external_identity_{certificate}
+  , external_identity_{std::move(certificate)}
   , tx_status_cache_(TxStatusCache::factory())
   , uptime_{telemetry::Registry::Instance().CreateCounter(
         "ledger_uptime_ticks_total",
@@ -909,13 +908,11 @@ bool Constellation::GenesisSanityChecks(GenesisFileCreator::Result genesis_statu
           "Recovered to initial genesis state but this is mismatched against the current chain");
       return false;
     }
-    else if (!is_genesis_correct)
-    {
-      FETCH_LOG_CRITICAL(LOGGING_NAME,
-                         "Internal error, genesis block in chain does not match system genesis "
-                         "digest and/or merkle digest");
-      return false;
-    }
+
+    FETCH_LOG_CRITICAL(LOGGING_NAME,
+                       "Internal error, genesis block in chain does not match system genesis "
+                       "digest and/or merkle digest");
+    return false;
   }
 
   return true;

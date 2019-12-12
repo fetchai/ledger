@@ -68,7 +68,7 @@ public:
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;
 
-  Result LoadFile(std::string const &path, bool proof_of_stake, ConsensusParameters &consensus);
+  Result LoadFile(std::string const &path, bool proof_of_stake, ConsensusParameters &params);
 
   // Operators
   GenesisFileCreator &operator=(GenesisFileCreator const &) = delete;
@@ -76,7 +76,7 @@ public:
 
 private:
   bool LoadState(variant::Variant const &object, ConsensusParameters const *consensus = nullptr);
-  static bool LoadConsensus(variant::Variant const &object, ConsensusParameters &consensus);
+  static bool LoadConsensus(variant::Variant const &object, ConsensusParameters &params);
 
   CertificatePtr        certificate_;
   StorageUnitInterface &storage_unit_;

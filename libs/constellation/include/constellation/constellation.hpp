@@ -123,7 +123,7 @@ public:
     }
   };
 
-  Constellation(CertificatePtr const &certificate, Config config);
+  Constellation(CertificatePtr certificate, Config config);
   ~Constellation() override = default;
 
   bool Run(UriSet const &initial_peers, core::WeakRunnable const &bootstrap_monitor);
