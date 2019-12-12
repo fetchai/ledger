@@ -22,6 +22,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
+#include <map>
 
 namespace fetch {
 namespace vm {
@@ -43,60 +45,25 @@ protected:
 };
 
 template <typename T, typename = void>
-struct H;
+struct MapComparator;
 
-template <>
-struct H<fixed_point::fp32_t, void>
+template <typename T>
+struct MapComparator<T, std::enable_if_t<IsPrimitive<T>::value>>
 {
-  std::size_t operator()(TemplateParameter1 const &key) const
+  constexpr bool operator()(fetch::vm::TemplateParameter1 const &lhs,
+                            fetch::vm::TemplateParameter1 const &rhs) const
   {
-    return std::hash<int32_t>()(key.primitive.Get<int32_t>());
-  }
-};
-
-template <>
-struct H<fixed_point::fp64_t, void>
-{
-  std::size_t operator()(TemplateParameter1 const &key) const
-  {
-    return std::hash<int64_t>()(key.primitive.Get<int64_t>());
+    return lhs.primitive.Get<T>() < rhs.primitive.Get<T>();
   }
 };
 
 template <typename T>
-struct H<T, std::enable_if_t<IsPrimitive<T>::value>>
+struct MapComparator<T, std::enable_if_t<IsPtr<T>::value>>
 {
-  std::size_t operator()(TemplateParameter1 const &key) const
+  constexpr bool operator()(fetch::vm::TemplateParameter1 const &lhs,
+                            fetch::vm::TemplateParameter1 const &rhs) const
   {
-    return std::hash<T>()(key.primitive.Get<T>());
-  }
-};
-
-template <typename T>
-struct H<T, std::enable_if_t<IsPtr<T>::value>>
-{
-  std::size_t operator()(TemplateParameter1 const &key) const
-  {
-    return key.object->GetHashCode();
-  }
-};
-
-template <typename T, typename = void>
-struct E;
-template <typename T>
-struct E<T, std::enable_if_t<IsPrimitive<T>::value>>
-{
-  bool operator()(TemplateParameter1 const &lhs, TemplateParameter1 const &rhs) const
-  {
-    return math::IsEqual(lhs.primitive.Get<T>(), rhs.primitive.Get<T>());
-  }
-};
-template <typename T>
-struct E<T, std::enable_if_t<IsPtr<T>::value>>
-{
-  bool operator()(TemplateParameter1 const &lhs, TemplateParameter1 const &rhs) const
-  {
-    return lhs.object->IsEqual(lhs.object, rhs.object);
+    return lhs.object->IsLessThan(lhs.object, rhs.object);
   }
 };
 
@@ -232,7 +199,7 @@ struct Map : public IMap
     return true;
   }
 
-  std::unordered_map<TemplateParameter1, TemplateParameter2, H<Key>, E<Key>> map;
+  std::map<TemplateParameter1, TemplateParameter2, MapComparator<Key>> map;
 
 private:
   template <typename U, typename TemplateParameterType>
