@@ -1073,7 +1073,8 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     next_block_->UpdateDigest();
     next_block_->miner_signature = certificate_->Sign(next_block_->hash);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: 0x", next_block_->hash.ToHex(), " #", next_block_->block_number, " Merkle: 0x", next_block_->merkle_hash.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: 0x", next_block_->hash.ToHex(), " #",
+                   next_block_->block_number, " Merkle: 0x", next_block_->merkle_hash.ToHex());
 
     // this step is needed because the execution manager is actually unaware of the actual last
     // block that is executed because the merkle hash was not known at this point.

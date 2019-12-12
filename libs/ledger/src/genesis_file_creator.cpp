@@ -23,7 +23,6 @@
 #include "crypto/hash.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/consensus/stake_manager.hpp"
 #include "json/document.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
@@ -125,7 +124,8 @@ GenesisFileCreator::Result GenesisFileCreator::LoadFile(std::string const &  pat
 
     if (genesis_store_.Get(storage::ResourceAddress("HEAD"), genesis_block_))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Restored Genesis. Block 0x", genesis_block_.hash.ToHex(), " Merkle: 0x", genesis_block_.merkle_hash.ToHex());
+      FETCH_LOG_INFO(LOGGING_NAME, "Restored Genesis. Block 0x", genesis_block_.hash.ToHex(),
+                     " Merkle: 0x", genesis_block_.merkle_hash.ToHex());
 
       chain::SetGenesisDigest(genesis_block_.hash);
       chain::SetGenesisMerkleRoot(genesis_block_.merkle_hash);
@@ -141,7 +141,7 @@ GenesisFileCreator::Result GenesisFileCreator::LoadFile(std::string const &  pat
   storage_unit_.Reset();
 
   json::JSONDocument doc{};
-  auto const status = LoadFromFile(doc, path);
+  auto const         status = LoadFromFile(doc, path);
 
   bool success{false};
   if ((!proof_of_stake) && (status == FileReadStatus::FILE_NOT_PRESENT))
@@ -330,8 +330,7 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object, ConsensusParameter
       auto identity = crypto::Identity(FromBase64(identity_raw));
       auto address  = chain::Address(identity);
 
-      FETCH_LOG_INFO(LOGGING_NAME,
-                     "Restoring stake. Identity: ", identity.identifier().ToBase64(),
+      FETCH_LOG_INFO(LOGGING_NAME, "Restoring stake. Identity: ", identity.identifier().ToBase64(),
                      " (address): ", address.address().ToBase64(), " amount: ", amount);
 
       params.snapshot->UpdateStake(identity, amount);

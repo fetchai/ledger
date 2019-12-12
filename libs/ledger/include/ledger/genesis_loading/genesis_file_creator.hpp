@@ -62,7 +62,8 @@ public:
   };
 
   // Construction / Destruction
-  GenesisFileCreator(StorageUnitInterface &storage_unit, CertificatePtr certificate, std::string const &db_prefix);
+  GenesisFileCreator(StorageUnitInterface &storage_unit, CertificatePtr certificate,
+                     std::string const &db_prefix);
   GenesisFileCreator(GenesisFileCreator const &) = delete;
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;

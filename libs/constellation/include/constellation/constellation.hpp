@@ -38,7 +38,6 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "messenger/messenger_api.hpp"
 #include "messenger/messenger_http_interface.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -134,45 +133,45 @@ protected:
   void OnBlock(ledger::Block const &block) override;
 
 private:
-  using MuddlePtr              = muddle::MuddlePtr;
-  using NetworkManager         = network::NetworkManager;
-  using BlockPackingAlgorithm  = ledger::BasicMiner;
-  using BlockPackingAlgorithmPtr  = std::unique_ptr<ledger::BasicMiner>;
-  using BlockCoordinator       = ledger::BlockCoordinator;
-  using BlockCoordinatorPtr    = std::unique_ptr<ledger::BlockCoordinator>;
-  using MainChainPtr           = std::unique_ptr<ledger::MainChain>;
-  using MainChainRpcService    = ledger::MainChainRpcService;
-  using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
-  using LaneServices           = ledger::StorageUnitBundledService;
-  using StorageUnitClient      = ledger::StorageUnitClient;
-  using LaneIndex              = uint32_t;
-  using StorageUnitClientPtr   = std::shared_ptr<StorageUnitClient>;
-  using Flag                   = std::atomic<bool>;
-  using ExecutionManager       = ledger::ExecutionManager;
-  using ExecutionManagerPtr    = std::shared_ptr<ExecutionManager>;
-  using LaneRemoteControl      = ledger::LaneRemoteControl;
-  using LaneRemoteControlPtr   = std::unique_ptr<LaneRemoteControl>;
-  using HttpServer             = http::HTTPServer;
-  using HttpServerPtr          = std::unique_ptr<HttpServer>;
-  using HttpModule             = http::HTTPModule;
-  using HttpModulePtr          = std::shared_ptr<HttpModule>;
-  using HttpModules            = std::vector<HttpModulePtr>;
-  using TransactionProcessor   = ledger::TransactionProcessor;
-  using TransactionProcessorPtr   = std::unique_ptr<ledger::TransactionProcessor>;
-  using TrustSystem            = p2p::P2PTrustBayRank<muddle::Address>;
-  using DAGPtr                 = std::shared_ptr<ledger::DAGInterface>;
-  using DAGServicePtr          = std::shared_ptr<ledger::DAGService>;
-  using SynergeticMinerPtr     = std::unique_ptr<ledger::SynergeticMinerInterface>;
-  using NaiveSynergeticMiner   = ledger::NaiveSynergeticMiner;
-  using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
-  using BeaconServicePtr       = std::shared_ptr<fetch::beacon::BeaconService>;
-  using BeaconSetupServicePtr  = std::shared_ptr<fetch::beacon::BeaconSetupService>;
-  using EntropyPtr             = std::unique_ptr<ledger::EntropyGeneratorInterface>;
-  using ShardManagementService = shards::ShardManagementService;
-  using ShardMgmtServicePtr    = std::shared_ptr<ShardManagementService>;
-  using ShardConfigs           = ledger::ShardConfigs;
-  using TxStatusCache          = ledger::TransactionStatusCache;
-  using TxStatusCachePtr       = std::shared_ptr<TxStatusCache>;
+  using MuddlePtr                = muddle::MuddlePtr;
+  using NetworkManager           = network::NetworkManager;
+  using BlockPackingAlgorithm    = ledger::BasicMiner;
+  using BlockPackingAlgorithmPtr = std::unique_ptr<ledger::BasicMiner>;
+  using BlockCoordinator         = ledger::BlockCoordinator;
+  using BlockCoordinatorPtr      = std::unique_ptr<ledger::BlockCoordinator>;
+  using MainChainPtr             = std::unique_ptr<ledger::MainChain>;
+  using MainChainRpcService      = ledger::MainChainRpcService;
+  using MainChainRpcServicePtr   = std::shared_ptr<MainChainRpcService>;
+  using LaneServices             = ledger::StorageUnitBundledService;
+  using StorageUnitClient        = ledger::StorageUnitClient;
+  using LaneIndex                = uint32_t;
+  using StorageUnitClientPtr     = std::shared_ptr<StorageUnitClient>;
+  using Flag                     = std::atomic<bool>;
+  using ExecutionManager         = ledger::ExecutionManager;
+  using ExecutionManagerPtr      = std::shared_ptr<ExecutionManager>;
+  using LaneRemoteControl        = ledger::LaneRemoteControl;
+  using LaneRemoteControlPtr     = std::unique_ptr<LaneRemoteControl>;
+  using HttpServer               = http::HTTPServer;
+  using HttpServerPtr            = std::unique_ptr<HttpServer>;
+  using HttpModule               = http::HTTPModule;
+  using HttpModulePtr            = std::shared_ptr<HttpModule>;
+  using HttpModules              = std::vector<HttpModulePtr>;
+  using TransactionProcessor     = ledger::TransactionProcessor;
+  using TransactionProcessorPtr  = std::unique_ptr<ledger::TransactionProcessor>;
+  using TrustSystem              = p2p::P2PTrustBayRank<muddle::Address>;
+  using DAGPtr                   = std::shared_ptr<ledger::DAGInterface>;
+  using DAGServicePtr            = std::shared_ptr<ledger::DAGService>;
+  using SynergeticMinerPtr       = std::unique_ptr<ledger::SynergeticMinerInterface>;
+  using NaiveSynergeticMiner     = ledger::NaiveSynergeticMiner;
+  using StakeManagerPtr          = std::shared_ptr<ledger::StakeManager>;
+  using BeaconServicePtr         = std::shared_ptr<fetch::beacon::BeaconService>;
+  using BeaconSetupServicePtr    = std::shared_ptr<fetch::beacon::BeaconSetupService>;
+  using EntropyPtr               = std::unique_ptr<ledger::EntropyGeneratorInterface>;
+  using ShardManagementService   = shards::ShardManagementService;
+  using ShardMgmtServicePtr      = std::shared_ptr<ShardManagementService>;
+  using ShardConfigs             = ledger::ShardConfigs;
+  using TxStatusCache            = ledger::TransactionStatusCache;
+  using TxStatusCachePtr         = std::shared_ptr<TxStatusCache>;
 
   using OpenAPIHttpModulePtr     = std::shared_ptr<OpenAPIHttpModule>;
   using HealthCheckHttpModulePtr = std::shared_ptr<HealthCheckHttpModule>;
@@ -182,7 +181,8 @@ private:
   bool OnStartup();
   bool OnBringUpLaneServices();
   bool OnRestorePreviousData(ledger::GenesisFileCreator::ConsensusParameters &params);
-  bool OnBringUpExternalNetwork(ledger::GenesisFileCreator::ConsensusParameters &params, UriSet const &initial_peers);
+  bool OnBringUpExternalNetwork(ledger::GenesisFileCreator::ConsensusParameters &params,
+                                UriSet const &                                   initial_peers);
   bool OnRunning(core::WeakRunnable const &bootstrap_monitor);
   void OnTearDownExternalNetwork();
   void OnTearDownLaneServices();
@@ -251,8 +251,8 @@ private:
 
   /// @name Top Level Services
   /// @{
-  MainChainRpcServicePtr main_chain_service_;  ///< Service for block transmission over the network
-  TransactionProcessorPtr   tx_processor_;        ///< The transaction entrypoint
+  MainChainRpcServicePtr  main_chain_service_;  ///< Service for block transmission over the network
+  TransactionProcessorPtr tx_processor_;        ///< The transaction entrypoint
   /// @}
 
   /// @name Agent support

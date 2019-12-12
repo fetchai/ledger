@@ -84,7 +84,6 @@ constexpr std::size_t NUM_SLICES     = 1;
 class BlockCoordinatorTests : public ::testing::Test
 {
 protected:
-
   static void SetUpTestCase()
   {
     fetch::crypto::mcl::details::MCLInitialiser();

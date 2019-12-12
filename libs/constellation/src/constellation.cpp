@@ -94,13 +94,12 @@ char const *      GENESIS_FILENAME = "genesis_file.json";
 class Defer
 {
 public:
-  using Callback = void(Constellation::*)();
+  using Callback = void (Constellation::*)();
 
   explicit Defer(Constellation *instance, Callback callback)
     : instance_{instance}
     , callback_{callback}
-  {
-  }
+  {}
 
   ~Defer()
   {
@@ -507,7 +506,8 @@ bool Constellation::OnRestorePreviousData(ledger::GenesisFileCreator::ConsensusP
   return true;
 }
 
-bool Constellation::OnBringUpExternalNetwork(ledger::GenesisFileCreator::ConsensusParameters &params, UriSet const &initial_peers)
+bool Constellation::OnBringUpExternalNetwork(
+    ledger::GenesisFileCreator::ConsensusParameters &params, UriSet const &initial_peers)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "OnBringUpExternalNetwork()");
 
@@ -519,9 +519,10 @@ bool Constellation::OnBringUpExternalNetwork(ledger::GenesisFileCreator::Consens
 
   // setup the consensus infrastructure
   beacon_network_ = CreateBeaconNetwork(cfg_, external_identity_, network_manager_);
-  beacon_setup_ = CreateBeaconSetupService(cfg_, *beacon_network_, *shard_management_, external_identity_);
+  beacon_setup_ =
+      CreateBeaconSetupService(cfg_, *beacon_network_, *shard_management_, external_identity_);
   beacon_ = CreateBeaconService(cfg_, *beacon_network_, external_identity_, beacon_setup_);
-  stake_ = CreateStakeManager(cfg_);
+  stake_  = CreateStakeManager(cfg_);
 
   consensus_ = CreateConsensus(cfg_, stake_, beacon_setup_, beacon_, *chain_, *storage_,
                                external_identity_->identity());
@@ -553,7 +554,8 @@ bool Constellation::OnBringUpExternalNetwork(ledger::GenesisFileCreator::Consens
       std::make_unique<ledger::SynergeticExecutionManager>(
           dag_, 1u, [this]() { return std::make_shared<ledger::SynergeticExecutor>(*storage_); }));
 
-  tx_processor_ = std::make_unique<ledger::TransactionProcessor>(dag_, *storage_, *block_packer_, tx_status_cache_, cfg_.processor_threads);
+  tx_processor_ = std::make_unique<ledger::TransactionProcessor>(
+      dag_, *storage_, *block_packer_, tx_status_cache_, cfg_.processor_threads);
 
   agent_network_ = CreateMessengerNetwork(cfg_, external_identity_, network_manager_);
 
@@ -562,8 +564,8 @@ bool Constellation::OnBringUpExternalNetwork(ledger::GenesisFileCreator::Consens
   messenger_api_ = CreateMessengerAPI(cfg_, agent_network_, mailbox_);
 
   http_open_api_module_ = std::make_shared<OpenAPIHttpModule>();
-  health_check_module_ = std::make_shared<HealthCheckHttpModule>(*chain_, *block_coordinator_);
-  http_modules_ = {
+  health_check_module_  = std::make_shared<HealthCheckHttpModule>(*chain_, *block_coordinator_);
+  http_modules_         = {
       http_open_api_module_,
       health_check_module_,
       std::make_shared<p2p::P2PHttpInterface>(
@@ -579,8 +581,10 @@ bool Constellation::OnBringUpExternalNetwork(ledger::GenesisFileCreator::Consens
   http_ = std::make_unique<HttpServer>(http_network_manager_);
 
   // print the start up log banner
-  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x", cfg_.num_executors);
-  FETCH_LOG_INFO(LOGGING_NAME,                 "              :: ", Address::FromMuddleAddress(muddle_->GetAddress()).display());
+  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",
+                 cfg_.num_executors);
+  FETCH_LOG_INFO(LOGGING_NAME,
+                 "              :: ", Address::FromMuddleAddress(muddle_->GetAddress()).display());
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", muddle_->GetAddress().ToBase64());
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
@@ -653,10 +657,8 @@ bool Constellation::OnBringUpExternalNetwork(ledger::GenesisFileCreator::Consens
   // beacon network
   if (beacon_network_)
   {
-    uint16_t const beacon_bind_port =
-                       LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::DKG);
-    uint16_t const beacon_ext_port =
-                       LookupRemotePort(cfg_.manifest, ServiceIdentifier::Type::DKG);
+    uint16_t const beacon_bind_port = LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::DKG);
+    uint16_t const beacon_ext_port  = LookupRemotePort(cfg_.manifest, ServiceIdentifier::Type::DKG);
 
     muddle::MuddleInterface::PortMapping const beacon_port_mapping{
         {beacon_bind_port, beacon_ext_port}};
@@ -668,9 +670,9 @@ bool Constellation::OnBringUpExternalNetwork(ledger::GenesisFileCreator::Consens
   if (agent_network_)
   {
     uint16_t const agents_bind_port =
-                       LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::AGENTS);
+        LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::AGENTS);
     uint16_t const agents_ext_port =
-                       LookupRemotePort(cfg_.manifest, ServiceIdentifier::Type::AGENTS);
+        LookupRemotePort(cfg_.manifest, ServiceIdentifier::Type::AGENTS);
 
     muddle::MuddleInterface::PortMapping const agents_port_mapping{
         {agents_bind_port, agents_ext_port}};
@@ -887,7 +889,9 @@ bool Constellation::GenesisSanityChecks(GenesisFileCreator::Result genesis_statu
       // validate the hash and merkle hash
       if (!is_genesis_correct)
       {
-        FETCH_LOG_CRITICAL(LOGGING_NAME, "Heaviest block recovered as start up was marked as genesis but did not match genesis state");
+        FETCH_LOG_CRITICAL(LOGGING_NAME,
+                           "Heaviest block recovered as start up was marked as genesis but did not "
+                           "match genesis state");
         return false;
       }
 
@@ -900,12 +904,16 @@ bool Constellation::GenesisSanityChecks(GenesisFileCreator::Result genesis_statu
   {
     if (!heaviest_block->IsGenesis())
     {
-      FETCH_LOG_CRITICAL(LOGGING_NAME, "Recovered to initial genesis state but this is mismatched against the current chain");
+      FETCH_LOG_CRITICAL(
+          LOGGING_NAME,
+          "Recovered to initial genesis state but this is mismatched against the current chain");
       return false;
     }
     else if (!is_genesis_correct)
     {
-      FETCH_LOG_CRITICAL(LOGGING_NAME, "Internal error, genesis block in chain does not match system genesis digest and/or merkle digest");
+      FETCH_LOG_CRITICAL(LOGGING_NAME,
+                         "Internal error, genesis block in chain does not match system genesis "
+                         "digest and/or merkle digest");
       return false;
     }
   }

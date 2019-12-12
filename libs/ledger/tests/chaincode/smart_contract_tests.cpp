@@ -60,7 +60,6 @@ using Query              = SmartContract::Query;
 class SmartContractTests : public ContractTest
 {
 protected:
-
   static void SetUpTestCase()
   {
     fetch::chain::InitialiseTestConstants();

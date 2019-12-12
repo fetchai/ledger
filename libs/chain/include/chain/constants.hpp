@@ -28,9 +28,9 @@ constexpr uint64_t FINALITY_PERIOD = 10;
 
 Digest GetGenesisDigest();
 Digest GetGenesisMerkleRoot();
-void SetGenesisDigest(Digest const &digest);
-void SetGenesisMerkleRoot(Digest const &digest);
-void InitialiseTestConstants();
+void   SetGenesisDigest(Digest const &digest);
+void   SetGenesisMerkleRoot(Digest const &digest);
+void   InitialiseTestConstants();
 
 // consensus related
 extern uint64_t STAKE_WARM_UP_PERIOD;
