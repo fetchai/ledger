@@ -213,10 +213,16 @@ public:
   /// element accessors ///
   /////////////////////////
 
-  constexpr uint8_t   operator[](std::size_t n) const;
-  constexpr uint8_t & operator[](std::size_t n);
-  constexpr WideType  ElementAt(std::size_t n) const;
-  constexpr WideType &ElementAt(std::size_t n);
+  constexpr uint8_t  operator[](std::size_t n) const;
+  constexpr uint8_t &operator[](std::size_t n);
+  constexpr WideType ElementAt(std::size_t n) const
+  {
+    return wide_[n];
+  }
+  constexpr WideType &ElementAt(std::size_t n)
+  {
+    return wide_[n];
+  }
 
   constexpr uint64_t TrimmedSize() const;
   constexpr uint64_t TrimmedWideSize() const;
@@ -1023,18 +1029,6 @@ template <uint16_t S>
 constexpr uint8_t &UInt<S>::operator[](std::size_t n)
 {
   return base()[n];
-}
-
-template <uint16_t S>
-constexpr typename UInt<S>::WideType UInt<S>::ElementAt(std::size_t n) const
-{
-  return wide_[n];
-}
-
-template <uint16_t S>
-constexpr typename UInt<S>::WideType &UInt<S>::ElementAt(std::size_t n)
-{
-  return wide_[n];
 }
 
 template <uint16_t S>

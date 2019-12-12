@@ -684,16 +684,6 @@ function doUInt64(arr : Array<Array<UInt64>>) : Array<Array<UInt64>>
 endfunction
 
 
-function doFloat32(arr : Array<Array<Float32>>) : Array<Array<Float32>>
-  arr[0][0] = arr[1][1];
-  return arr;
-endfunction
-function doFloat64(arr : Array<Array<Float64>>) : Array<Array<Float64>>
-  arr[0][0] = arr[1][1];
-  return arr;
-endfunction
-
-
 function doFixed32(arr : Array<Array<Fixed32>>) : Array<Array<Fixed32>>
   arr[0][0] = arr[1][1];
   return arr;
@@ -1473,56 +1463,12 @@ TEST(BasicVmEngineDmlfTests, Add64)
   EXPECT_EQ(result.output().As<int>(), std::numeric_limits<int>::max());
 }
 
-TEST(BasicVmEngineDmlfTests, DISABLED_AddFloat)
-{
-  double          a = 4.5;
-  float           b = 3.5;
-  ExecutionResult result =
-      RunStatelessTest(AddFloat, "add", Params{LedgerVariant(a), LedgerVariant(b)});
-  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_NEAR(result.output().As<float>(), 8.0, 0.001);
-}
-TEST(BasicVmEngineDmlfTests, DISABLED_AddFloat32)
-{
-  float           a = 4.6f;
-  float           b = 3.5f;
-  ExecutionResult result =
-      RunStatelessTest(AddFloat32, "add", Params{LedgerVariant(a), LedgerVariant(b)});
-  EXPECT_NEAR(result.output().As<float>(), 8.1, 0.001);
-}
-
-TEST(BasicVmEngineDmlfTests, DISABLED_AddFloatComplex)
-{
-  double          a = 4.5;
-  float           b = 3.3f;
-  ExecutionResult result =
-      RunStatelessTest(AddFloatComplex, "add", Params{LedgerVariant(a), LedgerVariant(b)});
-  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_NEAR(result.output().As<double>(), 7.8, 0.001);
-}
-
 TEST(BasicVmEngineDmlfTests, AddFixed)
 {
   ExecutionResult result = RunStatelessTest(
       AddFixed, "add", Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<fp64_t>(), 10.0);
-}
-
-TEST(BasicVmEngineDmlfTests, DISABLED_TrueIntToFloatCompare)
-{
-  ExecutionResult result =
-      RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(5), LedgerVariant(6.5)});
-  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_EQ(result.output().As<int>(), 1);
-}
-
-TEST(BasicVmEngineDmlfTests, DISABLED_FalseIntToFloatCompare)
-{
-  ExecutionResult result =
-      RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(5), LedgerVariant(4.5)});
-  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_EQ(result.output().As<int>(), 0);
 }
 
 TEST(BasicVmEngineDmlfTests, TrueBoolCompare)
@@ -1543,15 +1489,6 @@ TEST(DISABLED_BasicVmEngineDmlfTests, BadParamsTrueIntToFloatCompare)
 {
   ExecutionResult result =
       RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(6.5), LedgerVariant(5)});
-  EXPECT_FALSE(result.succeeded());
-  EXPECT_EQ(result.error().stage(), Stage::ENGINE);
-  EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
-}
-
-TEST(BasicVmEngineDmlfTests, DISABLED_WrongNumberOfParamsTrueIntToFloatCompare)
-{
-  ExecutionResult result =
-      RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(6.5)});
   EXPECT_FALSE(result.succeeded());
   EXPECT_EQ(result.error().stage(), Stage::ENGINE);
   EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
@@ -1619,76 +1556,6 @@ TEST(BasicVmEngineDmlfTests, AddMatrixEqualCode)
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
 
   result = engine.Run("add2", "state", "doAdd", Params{});
-  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_EQ(result.output().As<int>(), 6);
-
-  result = engine.Run("add", "state", "doAdd", Params{});
-  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_EQ(result.output().As<int>(), 6);
-}
-
-TEST(BasicVmEngineDmlfTests, DISABLED_AddMatrixAltCode)
-{
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddMatrix}});
-  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
-  createdProgram = engine.CreateExecutable("add2", {{"etch", AddMatrixAltCode}});
-  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
-
-  ExecutionResult createdState = engine.CreateState("state");
-  ASSERT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
-
-  ExecutionResult result = engine.Run("add", "state", "init", Params{});
-  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-
-  result = engine.Run("add2", "state", "doAdd", Params{});
-  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_EQ(result.output().As<int>(), 6);
-
-  result = engine.Run("add", "state", "doAdd", Params{});
-  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_EQ(result.output().As<int>(), 6);
-}
-
-TEST(BasicVmEngineDmlfTests, DISABLED_AddNMatrixAltCode)
-{
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram = engine.CreateExecutable("add", {{"etch", AddNMatrix}});
-  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
-  createdProgram = engine.CreateExecutable("add2", {{"etch", AddNMatrixAltCode}});
-  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
-
-  ExecutionResult createdState = engine.CreateState("state");
-  ASSERT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
-
-  ExecutionResult result = engine.Run("add", "state", "init", Params{});
-  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-
-  result = engine.Run("add2", "state", "doAdd", Params{});
-  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_EQ(result.output().As<int>(), 6);
-
-  result = engine.Run("add", "state", "doAdd", Params{});
-  ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_EQ(result.output().As<int>(), 6);
-}
-
-TEST(BasicVmEngineDmlfTests, DISABLED_AddNonPersistentMatrix)
-{
-  BasicVmEngine engine;
-
-  ExecutionResult createdProgram =
-      engine.CreateExecutable("add", {{"etch", AddNonPersistentMatrix}});
-  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
-  createdProgram = engine.CreateExecutable("add2", {{"etch", AddNonPersistentMatrix2}});
-  ASSERT_TRUE(createdProgram.succeeded()) << createdProgram.error().message() << '\n';
-
-  ExecutionResult createdState = engine.CreateState("state");
-  ASSERT_TRUE(createdState.succeeded()) << createdState.error().message() << '\n';
-
-  ExecutionResult result = engine.Run("add2", "state", "doAdd", Params{});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<int>(), 6);
 
@@ -1857,9 +1724,6 @@ TEST(BasicVmEngineDmlfTests, DISABLED_ArrayArrayOpTests)
   RunArrayTest("doInt64", std::vector<int64_t>{1, 2, 3, 4});
   RunArrayTest("doUInt64", std::vector<uint64_t>{1, 2, 3, 4});
 
-  // RunArrayTest("doFloat32", std::vector<float>{1.0f,2.0f,3.0f,4.0f});
-  RunArrayTest("doFloat64", std::vector<double>{1.0, 2.0, 3.0, 4.0});
-
   RunArrayTest("doFixed32",
                std::vector<fp32_t>{fp32_t{1.2}, fp32_t{2.4}, fp32_t{3.7}, fp32_t{4.8}});
   RunArrayTest("doFixed64",
@@ -1871,8 +1735,6 @@ TEST(BasicVmEngineDmlfTests, DISABLED_ArrayArrayOpTests)
 
 TEST(DISABLED_BasicVmEngineDmlfTests, DisabledArrayArrayOpTests)
 {
-  RunArrayTest("doFloat32", std::vector<float>{1.0f, 2.0f, 3.0f, 4.0f});
-
   RunArrayTest("doBool", std::vector<bool>{true, true, false, false});
   EXPECT_EQ(1, 1);
 }
