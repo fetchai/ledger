@@ -56,7 +56,7 @@ using ThresholdsPtr  = std::shared_ptr<Deed::OperationTresholds>;
 class TokenContractTests : public ContractTest
 {
 protected:
-  void SetUpTestCase()
+  static void SetUpTestCase()
   {
     fetch::chain::InitialiseTestConstants();
   }
