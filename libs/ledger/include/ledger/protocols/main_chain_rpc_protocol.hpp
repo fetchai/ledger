@@ -48,7 +48,6 @@ public:
     Expose(TIME_TRAVEL, this, &MainChainProtocol::TimeTravel);
   }
 
-private:
   Blocks GetHeaviestChain(uint64_t maxsize)
   {
     return Copy(chain_.GetHeaviestChain(maxsize));
@@ -85,6 +84,7 @@ private:
       return {Blocks(), Digest(), block_number, false};
     }
   }
+private:
 
   static Blocks Copy(MainChain::Blocks const &blocks)
   {

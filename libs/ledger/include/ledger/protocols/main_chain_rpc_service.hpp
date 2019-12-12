@@ -137,8 +137,7 @@ private:
 
   /// @name Utilities
   /// @{
-  static constexpr char const *ToString(State state) noexcept;
-  Address                      GetRandomTrustedPeer() const;
+  Address GetRandomTrustedPeer() const;
 
   void HandleChainResponse(Address const &address, BlockList blocks);
   template <class Begin, class End>
@@ -200,19 +199,19 @@ private:
   /// @}
 };
 
-constexpr char const *MainChainRpcService::ToString(State state) noexcept
+constexpr char const *ToString(MainChainRpcService::State state) noexcept
 {
   switch (state)
   {
-  case State::REQUEST_HEAVIEST_CHAIN:
+  case MainChainRpcService::State::REQUEST_HEAVIEST_CHAIN:
     return "Requesting Heaviest Chain";
-  case State::WAIT_FOR_HEAVIEST_CHAIN:
+  case MainChainRpcService::State::WAIT_FOR_HEAVIEST_CHAIN:
     return "Waiting for Heaviest Chain";
-  case State::SYNCHRONISING:
+  case MainChainRpcService::State::SYNCHRONISING:
     return "Synchronising";
-  case State::WAITING_FOR_RESPONSE:
+  case MainChainRpcService::State::WAITING_FOR_RESPONSE:
     return "Waiting for Sync Response";
-  case State::SYNCHRONISED:
+  case MainChainRpcService::State::SYNCHRONISED:
     return "Synchronised";
   }
 
