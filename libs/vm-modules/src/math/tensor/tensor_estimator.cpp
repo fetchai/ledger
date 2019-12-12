@@ -194,13 +194,26 @@ ChargeAmount TensorEstimator::Sum()
          COMPUTE_CHARGE_COST;
 }
 
-ChargeAmount TensorEstimator::ArgMax(SizeType const & /*indices*/)
+ChargeAmount TensorEstimator::ArgMax(SizeType const &indices)
 {
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(DEFAULT_PADDED_SIZE_COEF * padded_size +
-                                   DEFAULT_SIZE_COEF * size + DEFAULT_CONST_COEF) *
+  if (indices == 0)
+  {
+    return static_cast<ChargeAmount>(ARGMAX_FIRST_PADDED_SIZE_COEF * padded_size +
+                                     ARGMAX_FIRST_SIZE_COEF * size + ARGMAX_FIRST_CONST_COEF) *
+           COMPUTE_CHARGE_COST;
+  }
+  if (indices == tensor_.shape().size() - 1)
+  {
+    return static_cast<ChargeAmount>(ARGMAX_LAST_PADDED_SIZE_COEF * padded_size +
+                                     ARGMAX_LAST_SIZE_COEF * size + ARGMAX_LAST_CONST_COEF) *
+           COMPUTE_CHARGE_COST;
+  }
+
+  return static_cast<ChargeAmount>(ARGMAX_MID_PADDED_SIZE_COEF * padded_size +
+                                   ARGMAX_MID_SIZE_COEF * size + ARGMAX_MID_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -209,8 +222,8 @@ ChargeAmount TensorEstimator::ArgMaxNoIndices()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(DEFAULT_PADDED_SIZE_COEF * padded_size +
-                                   DEFAULT_SIZE_COEF * size + DEFAULT_CONST_COEF) *
+  return static_cast<ChargeAmount>(ARGMAX_FIRST_PADDED_SIZE_COEF * padded_size +
+                                   ARGMAX_FIRST_SIZE_COEF * size + ARGMAX_FIRST_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -420,8 +433,8 @@ fixed_point::fp64_t const TensorEstimator::MAX_SIZE_COEF        = fixed_point::f
 fixed_point::fp64_t const TensorEstimator::MAX_CONST_COEF       = fixed_point::fp64_t("5");
 
 // SUM
-fixed_point::fp64_t const TensorEstimator::SUM_PADDED_SIZE_COEF = fixed_point::fp64_t("0.00023451");
-fixed_point::fp64_t const TensorEstimator::SUM_SIZE_COEF        = fixed_point::fp64_t("0.00107809");
+fixed_point::fp64_t const TensorEstimator::SUM_PADDED_SIZE_COEF = fixed_point::fp64_t("0.0005");
+fixed_point::fp64_t const TensorEstimator::SUM_SIZE_COEF        = fixed_point::fp64_t("0.007");
 fixed_point::fp64_t const TensorEstimator::SUM_CONST_COEF       = fixed_point::fp64_t("5");
 
 // RESHAPE
@@ -450,86 +463,96 @@ fixed_point::fp64_t const TensorEstimator::DOT_CUBIC_COEF =
 fixed_point::fp64_t const TensorEstimator::DOT_CONST_COEF = fixed_point::fp64_t("5");
 
 // Negate
-fixed_point::fp64_t const TensorEstimator::NEGATE_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.00023451");
-fixed_point::fp64_t const TensorEstimator::NEGATE_SIZE_COEF  = fixed_point::fp64_t("0.00107809");
-fixed_point::fp64_t const TensorEstimator::NEGATE_CONST_COEF = fixed_point::fp64_t("5");
+fixed_point::fp64_t const TensorEstimator::NEGATE_PADDED_SIZE_COEF = fixed_point::fp64_t("0.0042");
+fixed_point::fp64_t const TensorEstimator::NEGATE_SIZE_COEF        = fixed_point::fp64_t("0.009");
+fixed_point::fp64_t const TensorEstimator::NEGATE_CONST_COEF       = fixed_point::fp64_t("5");
 
 // IsEqual
 fixed_point::fp64_t const TensorEstimator::IS_EQUAL_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.00023451");
-fixed_point::fp64_t const TensorEstimator::IS_EQUAL_SIZE_COEF  = fixed_point::fp64_t("0.00107809");
+    fixed_point::fp64_t("0.0042");
+fixed_point::fp64_t const TensorEstimator::IS_EQUAL_SIZE_COEF  = fixed_point::fp64_t("0.009");
 fixed_point::fp64_t const TensorEstimator::IS_EQUAL_CONST_COEF = fixed_point::fp64_t("5");
 
 // IsNotEqual
 fixed_point::fp64_t const TensorEstimator::IS_NOT_EQUAL_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.00023451");
-fixed_point::fp64_t const TensorEstimator::IS_NOT_EQUAL_SIZE_COEF =
-    fixed_point::fp64_t("0.00107809");
+    fixed_point::fp64_t("0.0042");
+fixed_point::fp64_t const TensorEstimator::IS_NOT_EQUAL_SIZE_COEF  = fixed_point::fp64_t("0.009");
 fixed_point::fp64_t const TensorEstimator::IS_NOT_EQUAL_CONST_COEF = fixed_point::fp64_t("5");
 
 // Add
-fixed_point::fp64_t const TensorEstimator::ADD_PADDED_SIZE_COEF = fixed_point::fp64_t("0.00023451");
-fixed_point::fp64_t const TensorEstimator::ADD_SIZE_COEF        = fixed_point::fp64_t("0.00107809");
+fixed_point::fp64_t const TensorEstimator::ADD_PADDED_SIZE_COEF = fixed_point::fp64_t("0.0042");
+fixed_point::fp64_t const TensorEstimator::ADD_SIZE_COEF        = fixed_point::fp64_t("0.009");
 fixed_point::fp64_t const TensorEstimator::ADD_CONST_COEF       = fixed_point::fp64_t("5");
 
 // InplaceAdd
 fixed_point::fp64_t const TensorEstimator::INPLACE_ADD_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.00023451");
-fixed_point::fp64_t const TensorEstimator::INPLACE_ADD_SIZE_COEF =
-    fixed_point::fp64_t("0.00107809");
+    fixed_point::fp64_t("0.0042");
+fixed_point::fp64_t const TensorEstimator::INPLACE_ADD_SIZE_COEF  = fixed_point::fp64_t("0.009");
 fixed_point::fp64_t const TensorEstimator::INPLACE_ADD_CONST_COEF = fixed_point::fp64_t("5");
 
 // Subtract
 fixed_point::fp64_t const TensorEstimator::SUBTRACT_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.00023451");
-fixed_point::fp64_t const TensorEstimator::SUBTRACT_SIZE_COEF  = fixed_point::fp64_t("0.00107809");
+    fixed_point::fp64_t("0.0042");
+fixed_point::fp64_t const TensorEstimator::SUBTRACT_SIZE_COEF  = fixed_point::fp64_t("0.009");
 fixed_point::fp64_t const TensorEstimator::SUBTRACT_CONST_COEF = fixed_point::fp64_t("5");
 
 // InplaceSubtract
 fixed_point::fp64_t const TensorEstimator::INPLACE_SUBTRACT_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.00023451");
+    fixed_point::fp64_t("0.0042");
 fixed_point::fp64_t const TensorEstimator::INPLACE_SUBTRACT_SIZE_COEF =
-    fixed_point::fp64_t("0.00107809");
+    fixed_point::fp64_t("0.009");
 fixed_point::fp64_t const TensorEstimator::INPLACE_SUBTRACT_CONST_COEF = fixed_point::fp64_t("5");
 
 // Multiply
 fixed_point::fp64_t const TensorEstimator::MULTIPLY_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.00023451");
-fixed_point::fp64_t const TensorEstimator::MULTIPLY_SIZE_COEF  = fixed_point::fp64_t("0.00107809");
+    fixed_point::fp64_t("0.0042");
+fixed_point::fp64_t const TensorEstimator::MULTIPLY_SIZE_COEF  = fixed_point::fp64_t("0.009");
 fixed_point::fp64_t const TensorEstimator::MULTIPLY_CONST_COEF = fixed_point::fp64_t("5");
 
 // InplaceMultiply
 fixed_point::fp64_t const TensorEstimator::INPLACE_MULTIPLY_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.00023451");
+    fixed_point::fp64_t("0.0042");
 fixed_point::fp64_t const TensorEstimator::INPLACE_MULTIPLY_SIZE_COEF =
-    fixed_point::fp64_t("0.00107809");
+    fixed_point::fp64_t("0.009");
 fixed_point::fp64_t const TensorEstimator::INPLACE_MULTIPLY_CONST_COEF = fixed_point::fp64_t("5");
 
 // Divide
-fixed_point::fp64_t const TensorEstimator::DIVIDE_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.00023451");
-fixed_point::fp64_t const TensorEstimator::DIVIDE_SIZE_COEF  = fixed_point::fp64_t("0.00107809");
-fixed_point::fp64_t const TensorEstimator::DIVIDE_CONST_COEF = fixed_point::fp64_t("5");
+fixed_point::fp64_t const TensorEstimator::DIVIDE_PADDED_SIZE_COEF = fixed_point::fp64_t("0.0042");
+fixed_point::fp64_t const TensorEstimator::DIVIDE_SIZE_COEF        = fixed_point::fp64_t("0.009");
+fixed_point::fp64_t const TensorEstimator::DIVIDE_CONST_COEF       = fixed_point::fp64_t("5");
 
 // InplaceDivide
 fixed_point::fp64_t const TensorEstimator::INPLACE_DIVIDE_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.00023451");
-fixed_point::fp64_t const TensorEstimator::INPLACE_DIVIDE_SIZE_COEF =
-    fixed_point::fp64_t("0.00107809");
+    fixed_point::fp64_t("0.0042");
+fixed_point::fp64_t const TensorEstimator::INPLACE_DIVIDE_SIZE_COEF  = fixed_point::fp64_t("0.009");
 fixed_point::fp64_t const TensorEstimator::INPLACE_DIVIDE_CONST_COEF = fixed_point::fp64_t("5");
 
 // Copy
 fixed_point::fp64_t const TensorEstimator::COPY_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.00023451");
-fixed_point::fp64_t const TensorEstimator::COPY_SIZE_COEF  = fixed_point::fp64_t("0.00107809");
-fixed_point::fp64_t const TensorEstimator::COPY_CONST_COEF = fixed_point::fp64_t("5");
+    fixed_point::fp64_t("0.0058611875");
+fixed_point::fp64_t const TensorEstimator::COPY_SIZE_COEF  = fixed_point::fp64_t("0.008");
+fixed_point::fp64_t const TensorEstimator::COPY_CONST_COEF = fixed_point::fp64_t("50");
+
+// ArgMax
+fixed_point::fp64_t const TensorEstimator::ARGMAX_FIRST_PADDED_SIZE_COEF =
+    fixed_point::fp64_t("0.001");
+fixed_point::fp64_t const TensorEstimator::ARGMAX_FIRST_SIZE_COEF  = fixed_point::fp64_t("0.11");
+fixed_point::fp64_t const TensorEstimator::ARGMAX_FIRST_CONST_COEF = fixed_point::fp64_t("50");
+
+fixed_point::fp64_t const TensorEstimator::ARGMAX_MID_PADDED_SIZE_COEF =
+    fixed_point::fp64_t("0.0032");
+fixed_point::fp64_t const TensorEstimator::ARGMAX_MID_SIZE_COEF  = fixed_point::fp64_t("0.0452");
+fixed_point::fp64_t const TensorEstimator::ARGMAX_MID_CONST_COEF = fixed_point::fp64_t("50");
+
+fixed_point::fp64_t const TensorEstimator::ARGMAX_LAST_PADDED_SIZE_COEF =
+    fixed_point::fp64_t("0.0001");
+fixed_point::fp64_t const TensorEstimator::ARGMAX_LAST_SIZE_COEF  = fixed_point::fp64_t("0.0562");
+fixed_point::fp64_t const TensorEstimator::ARGMAX_LAST_CONST_COEF = fixed_point::fp64_t("50");
 
 // DEFAULT
-fixed_point::fp64_t const TensorEstimator::DEFAULT_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.00023451");
-fixed_point::fp64_t const TensorEstimator::DEFAULT_SIZE_COEF  = fixed_point::fp64_t("0.00107809");
-fixed_point::fp64_t const TensorEstimator::DEFAULT_CONST_COEF = fixed_point::fp64_t("5");
+fixed_point::fp64_t const TensorEstimator::DEFAULT_PADDED_SIZE_COEF = fixed_point::fp64_t("0.0042");
+fixed_point::fp64_t const TensorEstimator::DEFAULT_SIZE_COEF        = fixed_point::fp64_t("0.009");
+fixed_point::fp64_t const TensorEstimator::DEFAULT_CONST_COEF       = fixed_point::fp64_t("5");
 
 }  // namespace math
 }  // namespace vm_modules

@@ -246,6 +246,19 @@ public:
   static const fixed_point::fp64_t COPY_SIZE_COEF;
   static const fixed_point::fp64_t COPY_CONST_COEF;
 
+  // ArgMax
+  static const fixed_point::fp64_t ARGMAX_FIRST_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_FIRST_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_FIRST_CONST_COEF;
+
+  static const fixed_point::fp64_t ARGMAX_MID_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_MID_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_MID_CONST_COEF;
+
+  static const fixed_point::fp64_t ARGMAX_LAST_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_LAST_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_LAST_CONST_COEF;
+
   // Default
   static const fixed_point::fp64_t DEFAULT_PADDED_SIZE_COEF;
   static const fixed_point::fp64_t DEFAULT_SIZE_COEF;

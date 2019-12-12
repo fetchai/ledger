@@ -1156,7 +1156,9 @@ void BM_ArgMax(::benchmark::State &state)
   state.counters["SizeAtIndex"] = static_cast<double>(config.shape.at(config.index));
 
   std::vector<SizeType> ret_shape = config.shape;
-  ret_shape.erase(ret_shape.begin() + int(config.index));
+
+  ret_shape.at(config.index) = 1;
+  // ret_shape.erase(ret_shape.begin() + int(config.index));
 
   state.counters["RetPaddedSize"] =
       static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(ret_shape));
@@ -1230,12 +1232,20 @@ BENCHMARK(BM_ArgMax)->Args({6, 7, 2, 2, 2, 2, 2, 2, 100000})->Unit(::benchmark::
 BENCHMARK(BM_ArgMax)->Args({0, 3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMax)->Args({1, 3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMax)->Args({2, 3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_ArgMax)->Args({3, 3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK(BM_ArgMax)->Args({0, 4, 100, 100, 100, 100})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMax)->Args({1, 4, 100, 100, 100, 100})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMax)->Args({2, 4, 100, 100, 100, 100})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMax)->Args({3, 4, 100, 100, 100, 100})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_ArgMax)->Args({0, 8, 10, 10, 10, 10, 10, 10, 10, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ArgMax)->Args({1, 8, 10, 10, 10, 10, 10, 10, 10, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ArgMax)->Args({2, 8, 10, 10, 10, 10, 10, 10, 10, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ArgMax)->Args({3, 8, 10, 10, 10, 10, 10, 10, 10, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ArgMax)->Args({4, 8, 10, 10, 10, 10, 10, 10, 10, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ArgMax)->Args({5, 8, 10, 10, 10, 10, 10, 10, 10, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ArgMax)->Args({6, 8, 10, 10, 10, 10, 10, 10, 10, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ArgMax)->Args({7, 8, 10, 10, 10, 10, 10, 10, 10, 10})->Unit(::benchmark::kMicrosecond);
 
 void BM_ArgMaxNoIndices(::benchmark::State &state)
 {
@@ -1254,7 +1264,9 @@ void BM_ArgMaxNoIndices(::benchmark::State &state)
   state.counters["SizeAtIndex"] = static_cast<double>(config.shape.at(0));
 
   std::vector<SizeType> ret_shape = config.shape;
-  ret_shape.erase(ret_shape.begin() + int(0));
+
+  ret_shape.at(0) = 1;
+  //  ret_shape.erase(ret_shape.begin() + int(0));
 
   state.counters["RetPaddedSize"] =
       static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(ret_shape));
