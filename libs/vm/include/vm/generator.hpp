@@ -455,8 +455,6 @@ private:
   void     HandleUnsignedInteger32(IRExpressionNodePtr const &node);
   void     HandleInteger64(IRExpressionNodePtr const &node);
   void     HandleUnsignedInteger64(IRExpressionNodePtr const &node);
-  void     HandleFloat32(IRExpressionNodePtr const &node);
-  void     HandleFloat64(IRExpressionNodePtr const &node);
   void     HandleFixed32(IRExpressionNodePtr const &node);
   void     HandleFixed64(IRExpressionNodePtr const &node);
   void     HandleFixed128(IRExpressionNodePtr const &node);

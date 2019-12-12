@@ -1186,16 +1186,6 @@ private:
       Op::Apply(lhsv, lhsv.primitive.ui64, rhsv.primitive.ui64);
       break;
     }
-    case TypeIds::Float32:
-    {
-      Op::Apply(lhsv, lhsv.primitive.f32, rhsv.primitive.f32);
-      break;
-    }
-    case TypeIds::Float64:
-    {
-      Op::Apply(lhsv, lhsv.primitive.f64, rhsv.primitive.f64);
-      break;
-    }
     case TypeIds::Fixed32:
     {
       fixed_point::fp32_t lhsv_fp32 = fixed_point::fp32_t::FromBase(lhsv.primitive.i32);
@@ -1314,16 +1304,6 @@ private:
       Op::Apply(this, lhsv.primitive.ui64, rhsv.primitive.ui64);
       break;
     }
-    case TypeIds::Float32:
-    {
-      Op::Apply(this, lhsv.primitive.f32, rhsv.primitive.f32);
-      break;
-    }
-    case TypeIds::Float64:
-    {
-      Op::Apply(this, lhsv.primitive.f64, rhsv.primitive.f64);
-      break;
-    }
     case TypeIds::Fixed32:
     {
       auto *              lhsv_fp32 = reinterpret_cast<fixed_point::fp32_t *>(&lhsv);
@@ -1440,16 +1420,6 @@ private:
     case TypeIds::UInt64:
     {
       Op::Apply(this, *static_cast<uint64_t *>(lhs), rhsv.primitive.ui64);
-      break;
-    }
-    case TypeIds::Float32:
-    {
-      Op::Apply(this, *static_cast<float *>(lhs), rhsv.primitive.f32);
-      break;
-    }
-    case TypeIds::Float64:
-    {
-      Op::Apply(this, *static_cast<double *>(lhs), rhsv.primitive.f64);
       break;
     }
     case TypeIds::Fixed32:

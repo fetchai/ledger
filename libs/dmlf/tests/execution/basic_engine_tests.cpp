@@ -1473,7 +1473,7 @@ TEST(BasicVmEngineDmlfTests, Add64)
   EXPECT_EQ(result.output().As<int>(), std::numeric_limits<int>::max());
 }
 
-TEST(BasicVmEngineDmlfTests, AddFloat)
+TEST(BasicVmEngineDmlfTests, DISABLED_AddFloat)
 {
   double          a = 4.5;
   float           b = 3.5;
@@ -1482,7 +1482,7 @@ TEST(BasicVmEngineDmlfTests, AddFloat)
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_NEAR(result.output().As<float>(), 8.0, 0.001);
 }
-TEST(BasicVmEngineDmlfTests, AddFloat32)
+TEST(BasicVmEngineDmlfTests, DISABLED_AddFloat32)
 {
   float           a = 4.6f;
   float           b = 3.5f;
@@ -1491,7 +1491,7 @@ TEST(BasicVmEngineDmlfTests, AddFloat32)
   EXPECT_NEAR(result.output().As<float>(), 8.1, 0.001);
 }
 
-TEST(BasicVmEngineDmlfTests, AddFloatComplex)
+TEST(BasicVmEngineDmlfTests, DISABLED_AddFloatComplex)
 {
   double          a = 4.5;
   float           b = 3.3f;
@@ -1509,7 +1509,7 @@ TEST(BasicVmEngineDmlfTests, AddFixed)
   EXPECT_EQ(result.output().As<fp64_t>(), 10.0);
 }
 
-TEST(BasicVmEngineDmlfTests, TrueIntToFloatCompare)
+TEST(BasicVmEngineDmlfTests, DISABLED_TrueIntToFloatCompare)
 {
   ExecutionResult result =
       RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(5), LedgerVariant(6.5)});
@@ -1517,7 +1517,7 @@ TEST(BasicVmEngineDmlfTests, TrueIntToFloatCompare)
   EXPECT_EQ(result.output().As<int>(), 1);
 }
 
-TEST(BasicVmEngineDmlfTests, FalseIntToFloatCompare)
+TEST(BasicVmEngineDmlfTests, DISABLED_FalseIntToFloatCompare)
 {
   ExecutionResult result =
       RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(5), LedgerVariant(4.5)});
@@ -1548,7 +1548,7 @@ TEST(DISABLED_BasicVmEngineDmlfTests, BadParamsTrueIntToFloatCompare)
   EXPECT_EQ(result.error().code(), Code::RUNTIME_ERROR);
 }
 
-TEST(BasicVmEngineDmlfTests, WrongNumberOfParamsTrueIntToFloatCompare)
+TEST(BasicVmEngineDmlfTests, DISABLED_WrongNumberOfParamsTrueIntToFloatCompare)
 {
   ExecutionResult result =
       RunStatelessTest(IntToFloatCompare, "compare", Params{LedgerVariant(6.5)});
@@ -1627,7 +1627,7 @@ TEST(BasicVmEngineDmlfTests, AddMatrixEqualCode)
   EXPECT_EQ(result.output().As<int>(), 6);
 }
 
-TEST(BasicVmEngineDmlfTests, AddMatrixAltCode)
+TEST(BasicVmEngineDmlfTests, DISABLED_AddMatrixAltCode)
 {
   BasicVmEngine engine;
 
@@ -1651,7 +1651,7 @@ TEST(BasicVmEngineDmlfTests, AddMatrixAltCode)
   EXPECT_EQ(result.output().As<int>(), 6);
 }
 
-TEST(BasicVmEngineDmlfTests, AddNMatrixAltCode)
+TEST(BasicVmEngineDmlfTests, DISABLED_AddNMatrixAltCode)
 {
   BasicVmEngine engine;
 
@@ -1675,7 +1675,7 @@ TEST(BasicVmEngineDmlfTests, AddNMatrixAltCode)
   EXPECT_EQ(result.output().As<int>(), 6);
 }
 
-TEST(BasicVmEngineDmlfTests, AddNonPersistentMatrix)
+TEST(BasicVmEngineDmlfTests, DISABLED_AddNonPersistentMatrix)
 {
   BasicVmEngine engine;
 
@@ -1846,7 +1846,7 @@ void RunArrayTest(std::string const &entrypoint, std::vector<fp32_t> const &vals
               static_cast<double>(fp32_t::TOLERANCE));
 }
 
-TEST(BasicVmEngineDmlfTests, ArrayArrayOpTests)
+TEST(BasicVmEngineDmlfTests, DISABLED_ArrayArrayOpTests)
 {
   RunArrayTest("doInt8", std::vector<int8_t>{1, 2, 3, 4});
   RunArrayTest("doUInt8", std::vector<uint8_t>{1, 2, 3, 4});

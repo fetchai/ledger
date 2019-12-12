@@ -45,7 +45,7 @@ public:
 
 /// GETTER AND SETTER TESTS ///
 
-TEST_F(MathTensorTests, tensor_1_dim_fixed64_fill)
+TEST_F(MathTensorTests, DISABLED_tensor_1_dim_fixed64_fill)
 {
   static char const *FILL_1_DIM_SRC = R"(
             function main()
@@ -60,7 +60,7 @@ TEST_F(MathTensorTests, tensor_1_dim_fixed64_fill)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MathTensorTests, tensor_2_dim_fixed64_fill)
+TEST_F(MathTensorTests, DISABLED_tensor_2_dim_fixed64_fill)
 {
   static char const *FILL_2_DIM_SRC = R"(
             function main()
@@ -77,7 +77,7 @@ TEST_F(MathTensorTests, tensor_2_dim_fixed64_fill)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MathTensorTests, tensor_3_dim_fixed64_fill)
+TEST_F(MathTensorTests, DISABLED_tensor_3_dim_fixed64_fill)
 {
   static char const *FILL_3_DIM_SRC = R"(
             function main()
@@ -95,7 +95,7 @@ TEST_F(MathTensorTests, tensor_3_dim_fixed64_fill)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MathTensorTests, tensor_4_dim_fixed64_fill)
+TEST_F(MathTensorTests, DISABLED_tensor_4_dim_fixed64_fill)
 {
   static char const *FILL_4_DIM_SRC = R"(
             function main()
