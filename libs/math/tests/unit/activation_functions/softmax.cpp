@@ -67,8 +67,8 @@ TYPED_TEST(SoftmaxTest, multi_dimension_test)
   TypeParam gt_axis0 = TypeParam::FromString("0.5, 0.119202922; 0.5, 0.880797078");
   gt_axis0.Reshape({2, 2, 1});
   TypeParam gt_axis1 = TypeParam::FromString(
-      "0.26893615722656250000, 0.73104858398437500000; 0.04740905761718750000, "
-      "0.95257568359375000000");
+      "0.26894142137, 0.73105857863001;"
+      "0.047425873177567, 0.95257412682243");
   gt_axis1.Reshape({2, 2, 1});
 
   TypeParam test_axis0({2, 2, 1}), test_axis1({2, 2, 1});
@@ -77,7 +77,8 @@ TYPED_TEST(SoftmaxTest, multi_dimension_test)
 
   // test correct values
   EXPECT_TRUE(test_axis0.AllClose(gt_axis0, fetch::math::function_tolerance<DataType>()));
-  EXPECT_TRUE(test_axis1.AllClose(gt_axis1, fetch::math::function_tolerance<DataType>()));
+  EXPECT_TRUE(
+      test_axis1.AllClose(gt_axis1, DataType{2} * fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(SoftmaxTest, exact_values_test)
