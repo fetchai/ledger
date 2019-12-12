@@ -101,7 +101,7 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
 
       EXPECT_TRUE(model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, inputs, outputs,
                                                           vm_ptr_activation_type) ==
-                  static_cast<ChargeAmount>(val) + 2);
+                  static_cast<ChargeAmount>(val) + 1);
     }
   }
 }
