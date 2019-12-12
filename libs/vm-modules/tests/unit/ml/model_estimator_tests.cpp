@@ -16,28 +16,162 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gmock/gmock.h"
+#include "vm/compiler.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
-#include "vm_test_toolkit.hpp"
+#include "vm_modules/vm_factory.hpp"
+
+#include "core/serializers/main_serializer.hpp"
+
+#include "gmock/gmock.h"
 
 namespace {
 
 using SizeType         = fetch::math::SizeType;
 using DataType         = fetch::vm_modules::math::DataType;
-using VmPtr            = fetch::vm::Ptr<fetch::vm::String>;
+using VmStringPtr      = fetch::vm::Ptr<fetch::vm::String>;
 using VmModel          = fetch::vm_modules::ml::model::VMModel;
+using VmModelPtr       = fetch::vm::Ptr<VmModel>;
 using VmModelEstimator = fetch::vm_modules::ml::model::ModelEstimator;
 using DataType         = fetch::vm_modules::ml::model::ModelEstimator::DataType;
+using ChargeAmount     = fetch::vm::ChargeAmount;
+using VmTensorPtr      = fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>;
+using VMPtr            = std::shared_ptr<fetch::vm::VM>;
+
+////////////////////////
+// VM objects helpers //
+////////////////////////
+
+fetch::vm::Ptr<fetch::vm::String> VmString(VMPtr &vm, std::string const &str)
+{
+  return fetch::vm::Ptr<fetch::vm::String>{new fetch::vm::String{vm.get(), str}};
+}
+
+fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> VmTensor(
+    VMPtr &vm, std::vector<fetch::math::SizeType> const &shape)
+{
+  return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(shape);
+}
+
+fetch::vm::Ptr<fetch::vm_modules::ml::model::VMModel> VmSequentialModel(VMPtr &vm)
+{
+  auto model_category = VmString(vm, "sequential");
+  auto model          = vm->CreateNewObject<fetch::vm_modules::ml::model::VMModel>(model_category);
+  return model;
+}
+
+fetch::vm::Ptr<fetch::vm_modules::ml::model::VMModel> VmSequentialModel(
+    VMPtr &vm, std::vector<SizeType> &sizes, std::vector<bool> &activations)
+{
+  if (sizes.size() != (activations.size() + 1))
+  {
+    throw std::runtime_error{"Wrong configuration for multilayer VMModel"};
+  }
+
+  auto model           = VmSequentialModel(vm);
+  auto size            = activations.size();
+  auto layer_type      = VmString(vm, "dense");
+  auto activation_type = VmString(vm, "relu");
+
+  for (std::size_t i{0}; i < size; ++i)
+  {
+    auto input_size  = sizes[i];
+    auto output_size = sizes[i + 1];
+
+    if (activations[i])
+    {
+      model->Estimator().LayerAddDenseActivation(layer_type, input_size, output_size,
+                                                 activation_type);
+      model->LayerAddDenseActivation(layer_type, input_size, output_size, activation_type);
+    }
+    else
+    {
+      model->Estimator().LayerAddDense(layer_type, input_size, output_size);
+      model->LayerAddDense(layer_type, input_size, output_size);
+    }
+  }
+
+  return model;
+}
+
+fetch::vm::Ptr<fetch::vm_modules::ml::model::VMModel> VmSequentialModel(
+    VMPtr &vm, std::vector<SizeType> &sizes, std::vector<bool> &activations,
+    std::string const &loss, std::string const &optimiser)
+{
+  auto model = VmSequentialModel(vm, sizes, activations);
+
+  // compile model
+  auto vm_loss      = VmString(vm, loss);
+  auto vm_optimiser = VmString(vm, optimiser);
+  model->Estimator().CompileSequential(vm_loss, vm_optimiser);
+  model->CompileSequential(vm_loss, vm_optimiser);
+
+  return model;
+}
+
+/////////////
+// Fixture //
+/////////////
 
 class VMModelEstimatorTests : public ::testing::Test
 {
 public:
-  std::stringstream stdout;
-  VmTestToolkit     toolkit{&stdout};
+  VMPtr vm;
+
+  void SetUp() override
+  {
+    // setup the VM
+    using VMFactory = fetch::vm_modules::VMFactory;
+    auto module     = VMFactory::GetModule(fetch::vm_modules::VMFactory::USE_ALL);
+    vm              = std::make_shared<fetch::vm::VM>(module.get());
+  }
+
+  ChargeAmount LayerAddDenseCharge(VmModelPtr &model, VmStringPtr const &layer_type,
+                                   SizeType input_size, SizeType output_size)
+  {
+    return model->Estimator().LayerAddDense(layer_type, input_size, output_size);
+  }
+
+  ChargeAmount LayerAddDenseActivationCharge(VmModelPtr &model, VmStringPtr const &layer_type,
+                                             SizeType input_size, SizeType output_size,
+                                             VmStringPtr const &activation)
+  {
+    return model->Estimator().LayerAddDenseActivation(layer_type, input_size, output_size,
+                                                      activation);
+  }
+
+  ChargeAmount CompileSequentialCharge(VmModelPtr &model, VmStringPtr const &loss,
+                                       VmStringPtr const &optimiser)
+  {
+    return model->Estimator().CompileSequential(loss, optimiser);
+  }
+
+  ChargeAmount FitCharge(VmModelPtr &model, VmTensorPtr const &data, VmTensorPtr const &label,
+                         SizeType batch_size)
+  {
+    return model->Estimator().Fit(data, label, batch_size);
+  }
+
+  ChargeAmount PredictCharge(VmModelPtr &model, VmTensorPtr const &data)
+  {
+    return model->Estimator().Predict(data);
+  }
+
+  ChargeAmount SerializeToStringCharge(VmModelPtr &model)
+  {
+    return model->Estimator().SerializeToString();
+  }
+
+  ChargeAmount DeserializeFromStringCharge(VmModelPtr &model, VmStringPtr const &model_serialized)
+  {
+    return model->Estimator().DeserializeFromString(model_serialized);
+  }
 };
 
-// sanity check that estimator behaves as intended
+/////////////////////////////////////////////////////
+// sanity check that estimator behaves as intended //
+/////////////////////////////////////////////////////
+
 TEST_F(VMModelEstimatorTests, add_dense_layer_test)
 {
   std::string model_type = "sequential";
@@ -50,9 +184,9 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
   SizeType max_output_size = 1000;
   SizeType output_step     = 10;
 
-  VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
+  VmStringPtr       vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
   fetch::vm::TypeId type_id = 0;
-  VmModel           model(&toolkit.vm(), type_id, model_type);
+  VmModel           model(vm.get(), type_id, model_type);
   VmModelEstimator  model_estimator(model);
 
   for (SizeType inputs = min_input_size; inputs < max_input_size; inputs += input_step)
@@ -70,7 +204,6 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
   }
 }
 
-// sanity check that estimator behaves as intended
 TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
 {
   std::string model_type      = "sequential";
@@ -84,10 +217,10 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
   SizeType max_output_size = 1000;
   SizeType output_step     = 10;
 
-  VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
-  VmPtr             vm_ptr_activation_type{new fetch::vm::String(&toolkit.vm(), activation_type)};
+  VmStringPtr       vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
+  VmStringPtr       vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
   fetch::vm::TypeId type_id = 0;
-  VmModel           model(&toolkit.vm(), type_id, model_type);
+  VmModel           model(vm.get(), type_id, model_type);
   VmModelEstimator  model_estimator(model);
 
   for (SizeType inputs = min_input_size; inputs < max_input_size; inputs += input_step)
@@ -106,7 +239,6 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
   }
 }
 
-// sanity check that estimator behaves as intended
 TEST_F(VMModelEstimatorTests, add_conv_layer_test)
 {
   std::string model_type = "sequential";
@@ -128,9 +260,9 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_test)
   SizeType max_stride_size = 100;
   SizeType stride_step     = 10;
 
-  VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
+  VmStringPtr       vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
   fetch::vm::TypeId type_id = 0;
-  VmModel           model(&toolkit.vm(), type_id, model_type);
+  VmModel           model(vm.get(), type_id, model_type);
   VmModelEstimator  model_estimator(model);
 
   for (SizeType output_channels = min_output_size; output_channels < max_output_size;
@@ -155,7 +287,6 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_test)
   }
 }
 
-// sanity check that estimator behaves as intended
 TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
 {
   std::string model_type      = "sequential";
@@ -178,10 +309,10 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
   SizeType max_stride_size = 100;
   SizeType stride_step     = 10;
 
-  VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
-  VmPtr             vm_ptr_activation_type{new fetch::vm::String(&toolkit.vm(), activation_type)};
+  VmStringPtr       vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
+  VmStringPtr       vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
   fetch::vm::TypeId type_id = 0;
-  VmModel           model(&toolkit.vm(), type_id, model_type);
+  VmModel           model(vm.get(), type_id, model_type);
   VmModelEstimator  model_estimator(model);
 
   for (SizeType output_channels = min_output_size; output_channels < max_output_size;
@@ -207,7 +338,6 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
   }
 }
 
-// sanity check that estimator behaves as intended
 TEST_F(VMModelEstimatorTests, compile_sequential_test)
 {
   std::string model_type = "sequential";
@@ -224,15 +354,15 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
 
   fetch::vm::TypeId type_id = 0;
 
-  VmPtr vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
-  VmPtr vm_ptr_loss_type{new fetch::vm::String(&toolkit.vm(), loss_type)};
-  VmPtr vm_ptr_opt_type{new fetch::vm::String(&toolkit.vm(), opt_type)};
+  VmStringPtr vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
+  VmStringPtr vm_ptr_loss_type{new fetch::vm::String(vm.get(), loss_type)};
+  VmStringPtr vm_ptr_opt_type{new fetch::vm::String(vm.get(), opt_type)};
 
   for (SizeType inputs = min_input_size; inputs < max_input_size; inputs += input_step)
   {
     for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
     {
-      VmModel          model(&toolkit.vm(), type_id, model_type);
+      VmModel          model(vm.get(), type_id, model_type);
       VmModelEstimator model_estimator(model);
 
       // add some layers
@@ -262,7 +392,6 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
   }
 }
 
-// sanity check that estimator behaves as intended
 TEST_F(VMModelEstimatorTests, compile_simple_test)
 {
   std::string model_type = "regressor";
@@ -274,13 +403,13 @@ TEST_F(VMModelEstimatorTests, compile_simple_test)
 
   fetch::vm::TypeId type_id = 0;
 
-  VmPtr vm_ptr_opt_type{new fetch::vm::String(&toolkit.vm(), opt_type)};
+  VmStringPtr vm_ptr_opt_type{new fetch::vm::String(vm.get(), opt_type)};
 
   for (SizeType layers = min_layer_size; layers < max_layer_size; layers += layer_step)
   {
 
     fetch::vm::Ptr<fetch::vm::Array<SizeType>> vm_ptr_layers{};
-    VmModel                                    model(&toolkit.vm(), type_id, model_type);
+    VmModel                                    model(vm.get(), type_id, model_type);
     VmModelEstimator                           model_estimator(model);
 
     EXPECT_TRUE(model_estimator.CompileSimple(vm_ptr_opt_type, vm_ptr_layers) ==
@@ -288,7 +417,6 @@ TEST_F(VMModelEstimatorTests, compile_simple_test)
   }
 }
 
-// sanity check that estimator behaves as intended
 TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 {
   std::string model_type      = "sequential";
@@ -313,10 +441,10 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
   SizeType batch_size_step = 23;
 
   fetch::vm::TypeId type_id = 0;
-  VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
-  VmPtr             vm_ptr_loss_type{new fetch::vm::String(&toolkit.vm(), loss_type)};
-  VmPtr             vm_ptr_opt_type{new fetch::vm::String(&toolkit.vm(), opt_type)};
-  VmPtr             vm_ptr_activation_type{new fetch::vm::String(&toolkit.vm(), activation_type)};
+  VmStringPtr       vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
+  VmStringPtr       vm_ptr_loss_type{new fetch::vm::String(vm.get(), loss_type)};
+  VmStringPtr       vm_ptr_opt_type{new fetch::vm::String(vm.get(), opt_type)};
+  VmStringPtr       vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
 
   for (SizeType data_size_1 = min_data_size_1; data_size_1 < max_data_size_1;
        data_size_1 += data_size_1_step)
@@ -335,11 +463,11 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
           std::vector<uint64_t>                             data_shape{{data_size_1, n_data}};
           std::vector<uint64_t>                             label_shape{{label_size_1, n_data}};
           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_data{
-              new fetch::vm_modules::math::VMTensor(&toolkit.vm(), type_id, data_shape)};
+              new fetch::vm_modules::math::VMTensor(vm.get(), type_id, data_shape)};
           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_labels{
-              new fetch::vm_modules::math::VMTensor(&toolkit.vm(), type_id, label_shape)};
+              new fetch::vm_modules::math::VMTensor(vm.get(), type_id, label_shape)};
 
-          VmModel          model(&toolkit.vm(), type_id, model_type);
+          VmModel          model(vm.get(), type_id, model_type);
           VmModelEstimator model_estimator(model);
 
           model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
@@ -445,23 +573,21 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
   SizeType batch_size_step = 23;
 
   fetch::vm::TypeId type_id = 0;
-  VmPtr             vm_ptr_layer_type{new fetch::vm::String(&toolkit.vm(), layer_type)};
-  VmPtr             vm_ptr_loss_type{new fetch::vm::String(&toolkit.vm(), loss_type)};
-  VmPtr             vm_ptr_opt_type{new fetch::vm::String(&toolkit.vm(), opt_type)};
-  VmPtr             vm_ptr_activation_type{new fetch::vm::String(&toolkit.vm(), activation_type)};
+  VmStringPtr       vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
+  VmStringPtr       vm_ptr_loss_type{new fetch::vm::String(vm.get(), loss_type)};
+  VmStringPtr       vm_ptr_opt_type{new fetch::vm::String(vm.get(), opt_type)};
+  VmStringPtr       vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
 
   std::vector<std::string> mets      = {"categorical accuracy", "mse", "cel", "scel"};
   SizeType                 n_metrics = mets.size();
 
-  toolkit.Compile("");  // necessary to populate the registered types for GetTypeID
-
   Ptr<Array<Ptr<String>>> metrics = Ptr<Array<Ptr<String>>>(
-      new Array<Ptr<String>>(&toolkit.vm(), toolkit.vm().GetTypeId<fetch::vm::IArray>(),
-                             toolkit.vm().GetTypeId<String>(), static_cast<int32_t>(n_metrics)));
+      new Array<Ptr<String>>(vm.get(), vm->GetTypeId<fetch::vm::IArray>(), vm->GetTypeId<String>(),
+                             static_cast<int32_t>(n_metrics)));
 
   for (SizeType i{0}; i < n_metrics; i++)
   {
-    metrics->elements.at(i) = VmPtr(new fetch::vm::String(&toolkit.vm(), mets.at(i)));
+    metrics->elements.at(i) = VmStringPtr(new fetch::vm::String(vm.get(), mets.at(i)));
   }
 
   for (SizeType data_size_1 = min_data_size_1; data_size_1 < max_data_size_1;
@@ -478,11 +604,11 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
           std::vector<uint64_t>                             data_shape{{data_size_1, n_data}};
           std::vector<uint64_t>                             label_shape{{label_size_1, n_data}};
           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_data{
-              new fetch::vm_modules::math::VMTensor(&toolkit.vm(), type_id, data_shape)};
+              new fetch::vm_modules::math::VMTensor(vm.get(), type_id, data_shape)};
           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_labels{
-              new fetch::vm_modules::math::VMTensor(&toolkit.vm(), type_id, label_shape)};
+              new fetch::vm_modules::math::VMTensor(vm.get(), type_id, label_shape)};
 
-          VmModel          model(&toolkit.vm(), type_id, model_type);
+          VmModel          model(vm.get(), type_id, model_type);
           VmModelEstimator model_estimator(model);
 
           model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
@@ -544,4 +670,399 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
     }
   }
 }
+
+///////////////////////////////////////
+// Operations estimators consistency //
+///////////////////////////////////////
+
+TEST_F(VMModelEstimatorTests, layeradd_charge_charge_correlate_with_input_size)
+{
+  SizeType output_size = 10;
+  auto     layer_type  = VmString(vm, "dense");
+
+  auto     model_small      = VmSequentialModel(vm);
+  SizeType input_size_small = 10;
+  auto charge_small = LayerAddDenseCharge(model_small, layer_type, input_size_small, output_size);
+
+  auto     model_big      = VmSequentialModel(vm);
+  SizeType input_size_big = 100;
+  auto     charge_big     = LayerAddDenseCharge(model_big, layer_type, input_size_big, output_size);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, layeradd_charge_correlate_with_output_size)
+{
+  SizeType input_size = 10;
+  auto     layer_type = VmString(vm, "dense");
+
+  auto     model_small       = VmSequentialModel(vm);
+  SizeType output_size_small = 10;
+  auto charge_small = LayerAddDenseCharge(model_small, layer_type, input_size, output_size_small);
+
+  auto     model_big       = VmSequentialModel(vm);
+  SizeType output_size_big = 100;
+  auto     charge_big = LayerAddDenseCharge(model_big, layer_type, input_size, output_size_big);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, layeradd_charge_correlate_with_input_size_output_size)
+{
+  auto layer_type = VmString(vm, "dense");
+
+  auto     model_small       = VmSequentialModel(vm);
+  SizeType input_size_small  = 10;
+  SizeType output_size_small = 10;
+  auto     charge_small =
+      LayerAddDenseCharge(model_small, layer_type, input_size_small, output_size_small);
+
+  auto     model_big       = VmSequentialModel(vm);
+  SizeType input_size_big  = 100;
+  SizeType output_size_big = 100;
+  auto     charge_big = LayerAddDenseCharge(model_big, layer_type, input_size_big, output_size_big);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, layeraddactivation_charge_correlate_with_input_size)
+{
+  SizeType output_size     = 10;
+  auto     layer_type      = VmString(vm, "dense");
+  auto     activation_type = VmString(vm, "relu");
+
+  auto     model_small      = VmSequentialModel(vm);
+  SizeType input_size_small = 10;
+  auto     charge_small = LayerAddDenseActivationCharge(model_small, layer_type, input_size_small,
+                                                    output_size, activation_type);
+
+  auto     model_big      = VmSequentialModel(vm);
+  SizeType input_size_big = 100;
+  auto     charge_big     = LayerAddDenseActivationCharge(model_big, layer_type, input_size_big,
+                                                  output_size, activation_type);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, layeraddactivation_charge_correlate_with_output_size)
+{
+  SizeType input_size      = 10;
+  auto     layer_type      = VmString(vm, "dense");
+  auto     activation_type = VmString(vm, "relu");
+
+  auto     model_small       = VmSequentialModel(vm);
+  SizeType output_size_small = 10;
+  auto     charge_small      = LayerAddDenseActivationCharge(model_small, layer_type, input_size,
+                                                    output_size_small, activation_type);
+
+  auto     model_big       = VmSequentialModel(vm);
+  SizeType output_size_big = 100;
+  auto     charge_big      = LayerAddDenseActivationCharge(model_big, layer_type, input_size,
+                                                  output_size_big, activation_type);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, layeraddactivation_charge_correlate_with_input_size_output_size)
+{
+  auto layer_type      = VmString(vm, "dense");
+  auto activation_type = VmString(vm, "relu");
+
+  auto     model_small       = VmSequentialModel(vm);
+  SizeType input_size_small  = 10;
+  SizeType output_size_small = 10;
+  auto     charge_small = LayerAddDenseActivationCharge(model_small, layer_type, input_size_small,
+                                                    output_size_small, activation_type);
+
+  auto     model_big       = VmSequentialModel(vm);
+  SizeType input_size_big  = 100;
+  SizeType output_size_big = 100;
+  auto     charge_big      = LayerAddDenseActivationCharge(model_big, layer_type, input_size_big,
+                                                  output_size_big, activation_type);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, compilesequential_charge_correlate_with_number_of_layers)
+{
+  auto loss      = VmString(vm, "mse");
+  auto optimiser = VmString(vm, "adam");
+
+  std::vector<SizeType> sizes_small       = {10, 100};
+  std::vector<bool>     activations_small = {true};
+  auto                  model_small       = VmSequentialModel(vm, sizes_small, activations_small);
+  auto                  charge_small      = CompileSequentialCharge(model_small, loss, optimiser);
+
+  std::vector<SizeType> sizes_big       = {10, 100, 10};
+  std::vector<bool>     activations_big = {true, true};
+  auto                  model_big       = VmSequentialModel(vm, sizes_big, activations_big);
+  auto                  charge_big      = CompileSequentialCharge(model_big, loss, optimiser);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, compilesequential_charge_correlate_with_size_of_layers)
+{
+  auto              loss        = VmString(vm, "mse");
+  auto              optimiser   = VmString(vm, "adam");
+  std::vector<bool> activations = {true, true};
+
+  std::vector<SizeType> sizes_small  = {10, 10, 10};
+  auto                  model_small  = VmSequentialModel(vm, sizes_small, activations);
+  auto                  charge_small = CompileSequentialCharge(model_small, loss, optimiser);
+
+  std::vector<SizeType> sizes_big  = {10, 10, 100};
+  auto                  model_big  = VmSequentialModel(vm, sizes_big, activations);
+  auto                  charge_big = CompileSequentialCharge(model_big, loss, optimiser);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, fit_charge_correlate_with_number_of_layers)
+{
+  auto     loss       = std::string("mse");
+  auto     optimiser  = std::string("adam");
+  SizeType datapoints = 128;
+  SizeType batch_size = 32;
+
+  std::vector<SizeType> sizes_small       = {10, 10};
+  std::vector<bool>     activations_small = {true};
+  auto model_small = VmSequentialModel(vm, sizes_small, activations_small, loss, optimiser);
+  std::vector<SizeType> data_shape_small{sizes_small[0], datapoints};
+  std::vector<SizeType> label_shape_small{sizes_small[sizes_small.size() - 1], datapoints};
+  auto                  data_small   = VmTensor(vm, data_shape_small);
+  auto                  label_small  = VmTensor(vm, label_shape_small);
+  auto                  charge_small = FitCharge(model_small, data_small, label_small, batch_size);
+
+  std::vector<SizeType> sizes_big       = {10, 10, 10};
+  std::vector<bool>     activations_big = {true, true};
+  auto model_big = VmSequentialModel(vm, sizes_big, activations_big, loss, optimiser);
+  std::vector<SizeType> data_shape_big{sizes_big[0], datapoints};
+  std::vector<SizeType> label_shape_big{sizes_big[sizes_big.size() - 1], datapoints};
+  auto                  data_big   = VmTensor(vm, data_shape_big);
+  auto                  label_big  = VmTensor(vm, label_shape_big);
+  auto                  charge_big = FitCharge(model_big, data_big, label_big, batch_size);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, fit_charge_correlate_with_size_of_layers)
+{
+  auto              loss        = std::string("mse");
+  auto              optimiser   = std::string("adam");
+  SizeType          datapoints  = 128;
+  SizeType          batch_size  = 32;
+  std::vector<bool> activations = {true, true};
+
+  std::vector<SizeType> sizes_small = {10, 10, 10};
+  auto model_small = VmSequentialModel(vm, sizes_small, activations, loss, optimiser);
+  std::vector<SizeType> data_shape_small{sizes_small[0], datapoints};
+  std::vector<SizeType> label_shape_small{sizes_small[sizes_small.size() - 1], datapoints};
+  auto                  data_small   = VmTensor(vm, data_shape_small);
+  auto                  label_small  = VmTensor(vm, label_shape_small);
+  auto                  charge_small = FitCharge(model_small, data_small, label_small, batch_size);
+
+  std::vector<SizeType> sizes_big = {10, 10, 100};
+  auto                  model_big = VmSequentialModel(vm, sizes_big, activations, loss, optimiser);
+  std::vector<SizeType> data_shape_big{sizes_big[0], datapoints};
+  std::vector<SizeType> label_shape_big{sizes_big[sizes_big.size() - 1], datapoints};
+  auto                  data_big   = VmTensor(vm, data_shape_big);
+  auto                  label_big  = VmTensor(vm, label_shape_big);
+  auto                  charge_big = FitCharge(model_big, data_big, label_big, batch_size);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, fit_charge_correlate_with_number_of_datapoints)
+{
+  auto                  loss        = std::string("mse");
+  auto                  optimiser   = std::string("adam");
+  std::vector<bool>     activations = {true, true};
+  std::vector<SizeType> sizes       = {10, 100, 10};
+  auto                  model       = VmSequentialModel(vm, sizes, activations, loss, optimiser);
+  SizeType              batch_size  = 32;
+
+  SizeType              datapoints_small = 32;
+  std::vector<SizeType> data_shape_small{sizes[0], datapoints_small};
+  std::vector<SizeType> label_shape_small{sizes[sizes.size() - 1], datapoints_small};
+  auto                  data_small   = VmTensor(vm, data_shape_small);
+  auto                  label_small  = VmTensor(vm, label_shape_small);
+  auto                  charge_small = FitCharge(model, data_small, label_small, batch_size);
+
+  SizeType              datapoints_big = 128;
+  std::vector<SizeType> data_shape_big{sizes[0], datapoints_big};
+  std::vector<SizeType> label_shape_big{sizes[sizes.size() - 1], datapoints_big};
+  auto                  data_big   = VmTensor(vm, data_shape_big);
+  auto                  label_big  = VmTensor(vm, label_shape_big);
+  auto                  charge_big = FitCharge(model, data_big, label_big, batch_size);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, fit_charge_correlate_negatively_with_batchsize)
+{
+  auto                  loss        = std::string("mse");
+  auto                  optimiser   = std::string("adam");
+  std::vector<bool>     activations = {true, true};
+  std::vector<SizeType> sizes       = {10, 100, 10};
+  auto                  model       = VmSequentialModel(vm, sizes, activations, loss, optimiser);
+  SizeType              datapoints  = 128;
+  std::vector<SizeType> data_shape{sizes[0], datapoints};
+  std::vector<SizeType> label_shape{sizes[sizes.size() - 1], datapoints};
+  auto                  data  = VmTensor(vm, data_shape);
+  auto                  label = VmTensor(vm, label_shape);
+
+  SizeType batch_size_big = 64;
+  auto     charge_small   = FitCharge(model, data, label, batch_size_big);
+
+  SizeType batch_size_small = 32;
+  auto     charge_big       = FitCharge(model, data, label, batch_size_small);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, predict_charge_correlate_with_number_of_layers)
+{
+  auto     loss       = std::string("mse");
+  auto     optimiser  = std::string("adam");
+  SizeType datapoints = 128;
+
+  std::vector<SizeType> sizes_small       = {10, 10};
+  std::vector<bool>     activations_small = {true};
+  auto model_small = VmSequentialModel(vm, sizes_small, activations_small, loss, optimiser);
+  std::vector<SizeType> data_shape_small{sizes_small[0], datapoints};
+  auto                  data_small   = VmTensor(vm, data_shape_small);
+  auto                  charge_small = PredictCharge(model_small, data_small);
+
+  std::vector<SizeType> sizes_big       = {10, 10, 10};
+  std::vector<bool>     activations_big = {true, true};
+  auto model_big = VmSequentialModel(vm, sizes_big, activations_big, loss, optimiser);
+  std::vector<SizeType> data_shape_big{sizes_big[0], datapoints};
+  auto                  data_big   = VmTensor(vm, data_shape_big);
+  auto                  charge_big = PredictCharge(model_big, data_big);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, predict_charge_correlate_with_size_of_layers)
+{
+  auto              loss        = std::string("mse");
+  auto              optimiser   = std::string("adam");
+  SizeType          datapoints  = 128;
+  std::vector<bool> activations = {true, true};
+
+  std::vector<SizeType> sizes_small = {10, 10, 10};
+  auto model_small = VmSequentialModel(vm, sizes_small, activations, loss, optimiser);
+  std::vector<SizeType> data_shape_small{sizes_small[0], datapoints};
+  auto                  data_small   = VmTensor(vm, data_shape_small);
+  auto                  charge_small = PredictCharge(model_small, data_small);
+
+  std::vector<SizeType> sizes_big = {10, 100, 10};
+  auto                  model_big = VmSequentialModel(vm, sizes_big, activations, loss, optimiser);
+  std::vector<SizeType> data_shape_big{sizes_big[0], datapoints};
+  auto                  data_big   = VmTensor(vm, data_shape_big);
+  auto                  charge_big = PredictCharge(model_big, data_big);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, predict_charge_correlate_with_number_of_datapoints)
+{
+  auto                  loss        = std::string("mse");
+  auto                  optimiser   = std::string("adam");
+  std::vector<bool>     activations = {true, true};
+  std::vector<SizeType> sizes       = {10, 100, 10};
+  auto                  model       = VmSequentialModel(vm, sizes, activations, loss, optimiser);
+
+  SizeType              datapoints_small = 32;
+  std::vector<SizeType> data_shape_small{sizes[0], datapoints_small};
+  auto                  data_small   = VmTensor(vm, data_shape_small);
+  auto                  charge_small = PredictCharge(model, data_small);
+
+  SizeType              datapoints_big = 128;
+  std::vector<SizeType> data_shape_big{sizes[0], datapoints_big};
+  auto                  data_big   = VmTensor(vm, data_shape_big);
+  auto                  charge_big = PredictCharge(model, data_big);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, serializetostring_charge_correlate_with_number_of_layers)
+{
+  auto loss      = std::string("mse");
+  auto optimiser = std::string("adam");
+
+  std::vector<SizeType> sizes_small       = {10, 10};
+  std::vector<bool>     activations_small = {true};
+  auto model_small  = VmSequentialModel(vm, sizes_small, activations_small, loss, optimiser);
+  auto charge_small = SerializeToStringCharge(model_small);
+
+  std::vector<SizeType> sizes_big       = {10, 10, 10};
+  std::vector<bool>     activations_big = {true, true};
+  auto model_big  = VmSequentialModel(vm, sizes_big, activations_big, loss, optimiser);
+  auto charge_big = SerializeToStringCharge(model_big);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, serializetostring_charge_correlate_with_size_of_layers)
+{
+  auto              loss        = std::string("mse");
+  auto              optimiser   = std::string("adam");
+  std::vector<bool> activations = {true, true};
+
+  std::vector<SizeType> sizes_small = {10, 10, 10};
+  auto model_small  = VmSequentialModel(vm, sizes_small, activations, loss, optimiser);
+  auto charge_small = SerializeToStringCharge(model_small);
+
+  std::vector<SizeType> sizes_big  = {10, 100, 10};
+  auto                  model_big  = VmSequentialModel(vm, sizes_big, activations, loss, optimiser);
+  auto                  charge_big = SerializeToStringCharge(model_big);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, deserializefromstring_charge_correlate_with_number_of_layers)
+{
+  auto loss      = std::string("mse");
+  auto optimiser = std::string("adam");
+
+  std::vector<SizeType> sizes_small       = {10, 10};
+  std::vector<bool>     activations_small = {true};
+  auto model_small = VmSequentialModel(vm, sizes_small, activations_small, loss, optimiser);
+  auto model_small_serialized = model_small->SerializeToString();
+  auto model_small_new        = VmSequentialModel(vm);
+  auto charge_small = DeserializeFromStringCharge(model_small_new, model_small_serialized);
+
+  std::vector<SizeType> sizes_big       = {10, 10, 10};
+  std::vector<bool>     activations_big = {true, true};
+  auto model_big            = VmSequentialModel(vm, sizes_big, activations_big, loss, optimiser);
+  auto model_big_serialized = model_big->SerializeToString();
+  auto model_big_new        = VmSequentialModel(vm);
+  auto charge_big           = DeserializeFromStringCharge(model_big_new, model_big_serialized);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
+TEST_F(VMModelEstimatorTests, deserializefromstring_charge_correlate_with_size_of_layers)
+{
+  auto              loss        = std::string("mse");
+  auto              optimiser   = std::string("adam");
+  std::vector<bool> activations = {true, true};
+
+  std::vector<SizeType> sizes_small = {10, 10, 10};
+  auto model_small            = VmSequentialModel(vm, sizes_small, activations, loss, optimiser);
+  auto model_small_serialized = model_small->SerializeToString();
+  auto model_small_new        = VmSequentialModel(vm);
+  auto charge_small = DeserializeFromStringCharge(model_small_new, model_small_serialized);
+
+  std::vector<SizeType> sizes_big = {10, 100, 10};
+  auto                  model_big = VmSequentialModel(vm, sizes_big, activations, loss, optimiser);
+  auto                  model_big_serialized = model_big->SerializeToString();
+  auto                  model_big_new        = VmSequentialModel(vm);
+  auto charge_big = DeserializeFromStringCharge(model_big_new, model_big_serialized);
+
+  EXPECT_LT(charge_small, charge_big);
+}
+
 }  // namespace

@@ -65,8 +65,7 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
 {
   SizeType padded_size{0};
 
-  // must be a dense layer
-  FETCH_UNUSED(layer);
+  FETCH_UNUSED(layer);  // must be a dense layer
 
   state_.forward_pass_cost =
       state_.forward_pass_cost + static_cast<DataType>(inputs) * FORWARD_DENSE_INPUT_COEF;
