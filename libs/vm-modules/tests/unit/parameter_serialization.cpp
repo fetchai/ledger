@@ -95,101 +95,108 @@ void CreateVMAndRunScript(std::string script, ExecutionTask const &task)
 TEST(ParameterSerialization, NativeCPPTypes)
 {
   auto script = R"(
- function myFunction(arr: Array< Array< UInt64 > >, msg: String, i: Int64, mymap : Map< String,
- Map< Int64, Int64 > >)
-  assert(arr.count() == 3);
-  assert(arr[0].count() == 4);
-  assert(arr[1].count() == 2);
-  assert(arr[2].count() == 3);
+    function myFunction(
+      arr: Array<Array<UInt64>>,
+      msg: String,
+      i: Int64,
+      mymap : Map<String, Map<Int64, Int64>>)
 
-  assert(arr[0][0] == 9u64);
-  assert(arr[0][1] == 2u64);
-  assert(arr[0][2] == 3u64);
-  assert(arr[0][3] == 4u64);
+      assert(arr.count() == 3);
+      assert(arr[0].count() == 4);
+      assert(arr[1].count() == 2);
+      assert(arr[2].count() == 3);
 
-  assert(arr[1][0] == 2u64);
-  assert(arr[1][1] == 3u64);
+      assert(arr[0][0] == 9u64);
+      assert(arr[0][1] == 2u64);
+      assert(arr[0][2] == 3u64);
+      assert(arr[0][3] == 4u64);
 
-  assert(arr[2][0] == 2u64);
-  assert(arr[2][1] == 3u64);
-  assert(arr[2][2] == 4u64);
+      assert(arr[1][0] == 2u64);
+      assert(arr[1][1] == 3u64);
 
-  assert(msg == "Hello world");
+      assert(arr[2][0] == 2u64);
+      assert(arr[2][1] == 3u64);
+      assert(arr[2][2] == 4u64);
 
-  assert(i == 9183i64);
+      assert(msg == "Hello world");
 
-  assert(mymap.count() == 2);
+      assert(i == 9183i64);
 
-  var hello = mymap["hello"];
-  assert(hello.count() == 2);
-  assert(hello[2i64] == 3i64);
-  assert(hello[4i64] == 6i64);
+      assert(mymap.count() == 2);
 
-  var world = mymap["world"];
-  assert(world.count() == 3);
-  assert(world[3i64] == 33i64);
-  assert(world[6i64] == 66i64);
-  assert(world[9i64] == 99i64);
+      var hello = mymap["hello"];
+      assert(hello.count() == 2);
+      assert(hello[2i64] == 3i64);
+      assert(hello[4i64] == 6i64);
 
- endfunction
+      var world = mymap["world"];
+      assert(world.count() == 3);
+      assert(world[3i64] == 33i64);
+      assert(world[6i64] == 66i64);
+      assert(world[9i64] == 99i64);
+
+    endfunction
   )";
 
-  {  // Testing native types
-    // Creating execution task
-    ExecutionTask task;
-    task.function = "myFunction";
+  // Testing native types
+  // Creating execution task
+  ExecutionTask task;
+  task.function = "myFunction";
 
-    // Creating function arguments
-    MsgPackSerializer serializer;
+  // Creating function arguments
+  MsgPackSerializer serializer;
 
-    // Arg1 Array< Array< Float64 > >
-    std::vector<std::vector<uint64_t>> arr{{9, 2, 3, 4}, {2, 3}, {2, 3, 4}};
-    serializer << arr << static_cast<std::string>("Hello world") << static_cast<int64_t>(9183);
+  // Arg1 Array< Array< Float64 > >
+  std::vector<std::vector<uint64_t>> arr{{9, 2, 3, 4}, {2, 3}, {2, 3, 4}};
+  serializer << arr << static_cast<std::string>("Hello world") << static_cast<int64_t>(9183);
 
-    std::map<std::string, std::map<int64_t, int64_t>> mymap{{"hello", {{2, 3}, {4, 6}}},
-                                                            {"world", {{9, 99}, {6, 66}, {3, 33}}}};
+  std::map<std::string, std::map<int64_t, int64_t>> mymap{{"hello", {{2, 3}, {4, 6}}},
+                                                          {"world", {{9, 99}, {6, 66}, {3, 33}}}};
 
-    serializer << mymap;
+  serializer << mymap;
 
-    // Storing args
-    task.parameters = serializer.data();
+  // Storing args
+  task.parameters = serializer.data();
 
-    // Testing
-    CreateVMAndRunScript(script, task);
-  }
+  // Testing
+  CreateVMAndRunScript(script, task);
 }
 
 TEST(ParameterSerialization, VariantTypes)
 {
   auto script = R"(
- function myFunction(arr: Array< Array< UInt64 > >, msg: String, i: Int64, mymap : Map< String,
- Int64 >)
-  assert(arr.count() == 3);
-  assert(arr[0].count() == 4);
-  assert(arr[1].count() == 2);
-  assert(arr[2].count() == 3);
+    function myFunction(
+      arr: Array<Array<UInt64>>,
+      msg: String,
+      i: Int64,
+      mymap : Map<String, Int64>)
 
-  assert(arr[0][0] == 9u64);
-  assert(arr[0][1] == 2u64);
-  assert(arr[0][2] == 3u64);
-  assert(arr[0][3] == 4u64);
+      assert(arr.count() == 3);
+      assert(arr[0].count() == 4);
+      assert(arr[1].count() == 2);
+      assert(arr[2].count() == 3);
 
-  assert(arr[1][0] == 2u64);
-  assert(arr[1][1] == 3u64);
+      assert(arr[0][0] == 9u64);
+      assert(arr[0][1] == 2u64);
+      assert(arr[0][2] == 3u64);
+      assert(arr[0][3] == 4u64);
 
-  assert(arr[2][0] == 2u64);
-  assert(arr[2][1] == 3u64);
-  assert(arr[2][2] == 4u64);
+      assert(arr[1][0] == 2u64);
+      assert(arr[1][1] == 3u64);
 
-  assert(msg == "Hello world");
+      assert(arr[2][0] == 2u64);
+      assert(arr[2][1] == 3u64);
+      assert(arr[2][2] == 4u64);
 
-  assert(i == 9183i64);
+      assert(msg == "Hello world");
 
-  assert(mymap.count() == 2);
-  assert(mymap["hello"]== 2i64);
-  assert(mymap["world"]== 29i64);
+      assert(i == 9183i64);
 
- endfunction
+      assert(mymap.count() == 2);
+      assert(mymap["hello"]== 2i64);
+      assert(mymap["world"]== 29i64);
+
+    endfunction
   )";
 
   // Creating execution task
