@@ -470,13 +470,6 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
           state_machine_->Delay(std::chrono::seconds{8});
           next_state = GetInitialState(mode_);
         }
-        else
-        {
-          FETCH_LOG_WARN(LOGGING_NAME,
-                         "Received empty block response when forward syncing the chain!");
-          state_machine_->Delay(std::chrono::seconds{8});
-          next_state = GetInitialState(mode_);
-        }
       }
       else
       {
@@ -617,28 +610,6 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised()
   }
 
   return next_state;
-}
-
-void MainChainRpcService::Start()
-{
-  // set the main chain rpc sync to accept gossip blocks
-  block_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
-                                                Packet::Payload const &payload,
-                                                Address                transmitter) {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
-
-    BlockSerializer serialiser(payload);
-
-    // deserialize the block
-    Block block;
-    serialiser >> block;
-
-    // recalculate the block hash
-    block.UpdateDigest();
-
-    // dispatch the event
-    OnNewBlock(from, block, transmitter);
-  });
 }
 
 }  // namespace ledger

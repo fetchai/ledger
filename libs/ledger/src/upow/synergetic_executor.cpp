@@ -118,9 +118,9 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       contract->UpdateContractContext(ctx);
 
       // TODO(LDGR-622): charge limit
-      FeeManager::TransactionDetails tx_details{
-          solution->address(), solution->address(), shard_mask, solution->address().display(),
-          CHARGE_RATE,         CHARGE_LIMIT};
+      FeeManager::TransactionDetails tx_details{solution->address(), solution->address(),
+                                                shard_mask,          solution->address().display(),
+                                                CHARGE_RATE,         CHARGE_LIMIT};
 
       ContractExecutionResult result;
 

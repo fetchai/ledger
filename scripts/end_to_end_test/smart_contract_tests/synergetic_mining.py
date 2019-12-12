@@ -109,7 +109,6 @@ def run(options, benefactor):
     api = LedgerApi(options['host'], options['port'])
 
     # create funds so that we have the funds to be able to create contracts on the network
-    # TODO(HUT): fix this.
     print('Create funds...')
     api.sync(api.tokens.transfer(benefactor, entity1, 100000000, 1000))
 
