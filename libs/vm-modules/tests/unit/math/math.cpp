@@ -64,164 +64,164 @@ TEST_F(MathTests, abs_test)
 
 TEST_F(MathTests, exp32_test)
 {
- static char const *TEXT = R"(
+  static char const *TEXT = R"(
    function main() : Fixed32
      return exp(3.5fp32);
    endfunction
  )";
 
- ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Compile(TEXT));
 
- Variant res;
- ASSERT_TRUE(toolkit.Run(&res));
- auto const result = res.Get<fetch::fixed_point::fp32_t>();
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<fetch::fixed_point::fp32_t>();
 
- fetch::fixed_point::fp32_t gt{"3.5"};
- fetch::math::Exp(gt, gt);
+  fetch::fixed_point::fp32_t gt{"3.5"};
+  fetch::math::Exp(gt, gt);
 
- ASSERT_EQ(result, gt);
+  ASSERT_EQ(result, gt);
 }
 
 TEST_F(MathTests, exp64_test)
 {
- static char const *TEXT = R"(
+  static char const *TEXT = R"(
    function main() : Fixed64
      return exp(3.5fp64);
    endfunction
  )";
 
- ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Compile(TEXT));
 
- Variant res;
- ASSERT_TRUE(toolkit.Run(&res));
- auto const result = res.Get<fetch::fixed_point::fp64_t>();
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<fetch::fixed_point::fp64_t>();
 
- fetch::fixed_point::fp64_t gt{"3.5"};
- fetch::math::Exp(gt, gt);
+  fetch::fixed_point::fp64_t gt{"3.5"};
+  fetch::math::Exp(gt, gt);
 
- ASSERT_EQ(result, gt);
+  ASSERT_EQ(result, gt);
 }
 
 TEST_F(MathTests, log32_test)
 {
- static char const *TEXT = R"(
+  static char const *TEXT = R"(
    function main() : Fixed32
      return log(3.5fp32);
    endfunction
  )";
 
- ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Compile(TEXT));
 
- Variant res;
- ASSERT_TRUE(toolkit.Run(&res));
- auto const result = res.Get<fetch::fixed_point::fp32_t>();
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<fetch::fixed_point::fp32_t>();
 
- fetch::fixed_point::fp32_t gt{"3.5"};
- fetch::math::Log(gt, gt);
+  fetch::fixed_point::fp32_t gt{"3.5"};
+  fetch::math::Log(gt, gt);
 
- ASSERT_EQ(result, gt);
+  ASSERT_EQ(result, gt);
 }
 
 TEST_F(MathTests, log64_test)
 {
- static char const *TEXT = R"(
+  static char const *TEXT = R"(
    function main() : Fixed64
      return log(3.5fp64);
    endfunction
  )";
 
- ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Compile(TEXT));
 
- Variant res;
- ASSERT_TRUE(toolkit.Run(&res));
- auto const result = res.Get<fetch::fixed_point::fp64_t>();
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<fetch::fixed_point::fp64_t>();
 
- fetch::fixed_point::fp64_t gt{"3.5"};
- fetch::math::Log(gt, gt);
+  fetch::fixed_point::fp64_t gt{"3.5"};
+  fetch::math::Log(gt, gt);
 
- ASSERT_EQ(result, gt);
+  ASSERT_EQ(result, gt);
 }
 
 TEST_F(MathTests, pow32_test)
 {
- static char const *TEXT = R"(
+  static char const *TEXT = R"(
    function main() : Fixed32
      return pow(3.5fp32, 2.0fp32);
    endfunction
  )";
 
- ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Compile(TEXT));
 
- Variant res;
- ASSERT_TRUE(toolkit.Run(&res));
- auto const result = res.Get<fetch::fixed_point::fp32_t>();
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<fetch::fixed_point::fp32_t>();
 
- fetch::fixed_point::fp32_t gt{"3.5"};
- fetch::fixed_point::fp32_t p{"2.0"};
- fetch::math::Pow(gt, p, gt);
+  fetch::fixed_point::fp32_t gt{"3.5"};
+  fetch::fixed_point::fp32_t p{"2.0"};
+  fetch::math::Pow(gt, p, gt);
 
- ASSERT_EQ(result, gt);
+  ASSERT_EQ(result, gt);
 }
 
 TEST_F(MathTests, pow64_test)
 {
- static char const *TEXT = R"(
+  static char const *TEXT = R"(
    function main() : Fixed64
      return pow(3.5fp64, 2.0fp64);
    endfunction
  )";
 
- ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Compile(TEXT));
 
- Variant res;
- ASSERT_TRUE(toolkit.Run(&res));
- auto const result = res.Get<fetch::fixed_point::fp64_t>();
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<fetch::fixed_point::fp64_t>();
 
- fetch::fixed_point::fp64_t gt{"3.5"};
- fetch::fixed_point::fp64_t p{"2.0"};
- fetch::math::Pow(gt, p, gt);
+  fetch::fixed_point::fp64_t gt{"3.5"};
+  fetch::fixed_point::fp64_t p{"2.0"};
+  fetch::math::Pow(gt, p, gt);
 
- ASSERT_EQ(result, gt);
+  ASSERT_EQ(result, gt);
 }
 
 TEST_F(MathTests, sqrt32_test)
 {
- static char const *TEXT = R"(
+  static char const *TEXT = R"(
    function main() : Fixed32
      return sqrt(3.5fp32);
    endfunction
  )";
 
- ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Compile(TEXT));
 
- Variant res;
- ASSERT_TRUE(toolkit.Run(&res));
- auto const result = res.Get<fetch::fixed_point::fp32_t>();
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<fetch::fixed_point::fp32_t>();
 
- fetch::fixed_point::fp32_t gt{"3.5"};
- fetch::math::Sqrt(gt, gt);
+  fetch::fixed_point::fp32_t gt{"3.5"};
+  fetch::math::Sqrt(gt, gt);
 
- ASSERT_EQ(result, gt);
+  ASSERT_EQ(result, gt);
 }
 
 TEST_F(MathTests, sqrt64_test)
 {
- static char const *TEXT = R"(
+  static char const *TEXT = R"(
    function main() : Fixed64
      return sqrt(3.5fp64);
    endfunction
  )";
 
- ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Compile(TEXT));
 
- Variant res;
- ASSERT_TRUE(toolkit.Run(&res));
- auto const result = res.Get<fetch::fixed_point::fp64_t>();
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const result = res.Get<fetch::fixed_point::fp64_t>();
 
- fetch::fixed_point::fp64_t gt{"3.5"};
- fetch::math::Sqrt(gt, gt);
+  fetch::fixed_point::fp64_t gt{"3.5"};
+  fetch::math::Sqrt(gt, gt);
 
- ASSERT_EQ(result, gt);
+  ASSERT_EQ(result, gt);
 }
 
 }  // namespace

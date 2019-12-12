@@ -45,22 +45,23 @@ public:
 
 /// GETTER AND SETTER TESTS ///
 
-TEST_F(MathTensorTests, DISABLED_tensor_1_dim_fixed64_fill)
+TEST_F(MathTensorTests, tensor_1_dim_fixed64_fill)
 {
   static char const *FILL_1_DIM_SRC = R"(
             function main()
               var tensor_shape = Array<UInt64>(1);
               tensor_shape[0] = 10u64;
               var d = Tensor(tensor_shape);
-              d.fill(toFixed64(123456.0));
-              assert(d.at(1u64) == toFixed64(123456.0));
+              assert(d.at(1u64) != 123456.123456fp64);
+              d.fill(123456.123456fp64);
+              assert(d.at(1u64) == 123456.123456fp64);
             endfunction
           )";
   ASSERT_TRUE(toolkit.Compile(FILL_1_DIM_SRC));
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MathTensorTests, DISABLED_tensor_2_dim_fixed64_fill)
+TEST_F(MathTensorTests, tensor_2_dim_fixed64_fill)
 {
   static char const *FILL_2_DIM_SRC = R"(
             function main()
@@ -68,8 +69,9 @@ TEST_F(MathTensorTests, DISABLED_tensor_2_dim_fixed64_fill)
               tensor_shape[0] = 10u64;
               tensor_shape[1] = 10u64;
               var d = Tensor(tensor_shape);
-              d.fill(toFixed64(123456.0));
-              assert(d.at(1u64,1u64) == toFixed64(123456.0));
+              assert(d.at(1u64,1u64) != 123456.123456fp64);
+              d.fill(123456.123456fp64);
+              assert(d.at(1u64,1u64) == 123456.123456fp64);
             endfunction
           )";
 
@@ -77,7 +79,7 @@ TEST_F(MathTensorTests, DISABLED_tensor_2_dim_fixed64_fill)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MathTensorTests, DISABLED_tensor_3_dim_fixed64_fill)
+TEST_F(MathTensorTests, tensor_3_dim_fixed64_fill)
 {
   static char const *FILL_3_DIM_SRC = R"(
             function main()
@@ -86,8 +88,9 @@ TEST_F(MathTensorTests, DISABLED_tensor_3_dim_fixed64_fill)
               tensor_shape[1] = 10u64;
               tensor_shape[2] = 10u64;
               var d = Tensor(tensor_shape);
-              d.fill(toFixed64(123456.0));
-              assert(d.at(1u64,1u64,1u64) == toFixed64(123456.0));
+              assert(d.at(1u64,1u64,1u64) != 123456.123456fp64);
+              d.fill(123456.123456fp64);
+              assert(d.at(1u64,1u64,1u64) == 123456.123456fp64);
             endfunction
           )";
 
@@ -95,7 +98,7 @@ TEST_F(MathTensorTests, DISABLED_tensor_3_dim_fixed64_fill)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(MathTensorTests, DISABLED_tensor_4_dim_fixed64_fill)
+TEST_F(MathTensorTests, tensor_4_dim_fixed64_fill)
 {
   static char const *FILL_4_DIM_SRC = R"(
             function main()
@@ -105,8 +108,9 @@ TEST_F(MathTensorTests, DISABLED_tensor_4_dim_fixed64_fill)
               tensor_shape[2] = 10u64;
               tensor_shape[3] = 10u64;
               var d = Tensor(tensor_shape);
-              d.fill(toFixed64(123456.0));
-              assert(d.at(1u64,1u64,1u64,1u64) == toFixed64(123456.0));
+              assert(d.at(1u64,1u64,1u64,1u64) != 123456.123456fp64);
+              d.fill(123456.123456fp64);
+              assert(d.at(1u64,1u64,1u64,1u64) == 123456.123456fp64);
             endfunction
           )";
   ASSERT_TRUE(toolkit.Compile(FILL_4_DIM_SRC));
