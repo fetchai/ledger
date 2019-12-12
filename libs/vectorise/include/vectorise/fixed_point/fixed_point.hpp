@@ -727,11 +727,11 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   }
   else if (FixedPoint<I, F>::IsPosInfinity(n))
   {
-    s << "+∞";
+    s << "+inf";
   }
   else if (FixedPoint<I, F>::IsNegInfinity(n))
   {
-    s << "-∞";
+    s << "-inf";
   }
   else
   {
