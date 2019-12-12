@@ -64,7 +64,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
 
 template <typename TypeParam>
 bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type tolerance,
-             typename TypeParam::Type lr             = static_cast<typename TypeParam::Type>(0.5),
+             typename TypeParam::Type lr = fetch::math::Type<typename TypeParam::Type>("0.5"),
              fetch::math::SizeType    training_steps = 100)
 {
   using DataType  = typename TypeParam::Type;
@@ -74,7 +74,7 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
   model_config.learning_rate_param.starting_learning_rate = lr;
-  model_config.learning_rate_param.exponential_decay_rate = DataType{0.99f};
+  model_config.learning_rate_param.exponential_decay_rate = fetch::math::Type<DataType>("0.99");
 
   // set up data
   TypeParam train_data, train_labels;
@@ -120,35 +120,39 @@ TYPED_TEST(DNNClassifierModelTest, adagrad_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD,
-                                                     DataType{1e-2f}, DataType{0.03f}, 400));
+                                                     fetch::math::Type<DataType>("0.01"),
+                                                     fetch::math::Type<DataType>("0.03"), 400));
 }
 
 TYPED_TEST(DNNClassifierModelTest, adam_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM,
-                                                     DataType{1e-5f}, DataType{0.1f}));
+                                                     fetch::math::Type<DataType>("0.00001"),
+                                                     fetch::math::Type<DataType>("0.1")));
 }
 
 TYPED_TEST(DNNClassifierModelTest, momentum_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(
-      classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM, DataType{1e-5f}));
+  ASSERT_TRUE(classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM,
+                                                     fetch::math::Type<DataType>("0.00001")));
 }
 
 TYPED_TEST(DNNClassifierModelTest, rmsprop_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
-                                                     DataType{1e-4f}, DataType{0.002f}, 400));
+                                                     fetch::math::Type<DataType>("0.0001"),
+                                                     fetch::math::Type<DataType>("0.002"), 400));
 }
 
 TYPED_TEST(DNNClassifierModelTest, sgd_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, DataType{1e-2f},
-                                                     DataType{0.7f}, 400));
+  ASSERT_TRUE(classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::SGD,
+                                                     fetch::math::Type<DataType>("0.01"),
+                                                     fetch::math::Type<DataType>("0.7"), 400));
 }
 
 TYPED_TEST(DNNClassifierModelTest, sgd_dnnclasifier_serialisation)
@@ -158,14 +162,14 @@ TYPED_TEST(DNNClassifierModelTest, sgd_dnnclasifier_serialisation)
 
   fetch::math::SizeType    n_training_steps = 10;
   auto                     tolerance        = DataType{0};
-  auto                     learning_rate    = DataType{0.06f};
+  auto                     learning_rate    = fetch::math::Type<DataType>("0.06");
   fetch::ml::OptimiserType optimiser_type   = fetch::ml::OptimiserType::SGD;
 
   fetch::ml::model::ModelConfig<DataType> model_config;
   model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
   model_config.learning_rate_param.starting_learning_rate = learning_rate;
-  model_config.learning_rate_param.exponential_decay_rate = DataType{0.99f};
+  model_config.learning_rate_param.exponential_decay_rate = fetch::math::Type<DataType>("0.99");
 
   // set up data
   TypeParam train_data, train_labels, test_datum, test_label;

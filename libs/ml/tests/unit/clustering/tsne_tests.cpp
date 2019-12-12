@@ -43,9 +43,9 @@ TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
   using TensorType = TypeParam;
 
   SizeType RANDOM_SEED{123456};
-  DataType LEARNING_RATE = fetch::math::Type<DataType>("500");  // (seems very high!)
+  DataType LEARNING_RATE = DataType{500};  // (seems very high!)
   SizeType MAX_ITERATIONS{1};
-  DataType PERPLEXITY = fetch::math::Type<DataType>("20");
+  DataType PERPLEXITY = DataType{20};
   SizeType N_DATA_SIZE{n_data_size};
   SizeType N_INPUT_FEATURE_SIZE{3};
   SizeType N_OUTPUT_FEATURE_SIZE{n_output_feature_size};

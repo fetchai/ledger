@@ -71,7 +71,7 @@ void PlusOneTest()
   using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
 
-  auto alpha       = DataType(0.005);
+  auto alpha       = fetch::math::Type<DataType>("0.005");
   auto input_size  = SizeType(1);
   auto output_size = SizeType(1);
   auto n_batches   = SizeType(300);
@@ -178,7 +178,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
   TypeParam n_classes{1};
   n_classes.At(0) = DataType(4);
 
-  auto alpha       = DataType(0.01);
+  auto alpha       = fetch::math::Type<DataType>("0.01");
   auto input_size  = SizeType(n_classes.At(0));
   auto output_size = SizeType(n_classes.At(0));
   auto n_batches   = SizeType(300);
@@ -289,7 +289,7 @@ void CategoricalXorTest(bool add_softmax = false)
   TypeParam n_classes{1};
   n_classes.At(0) = DataType(2);
 
-  auto alpha       = DataType(0.01);
+  auto alpha       = fetch::math::Type<DataType>("0.01");
   auto input_size  = SizeType(n_classes.At(0));
   auto output_size = SizeType(n_classes.At(0));
   auto n_batches   = SizeType(300);
