@@ -35,11 +35,11 @@ template <typename ArrayType>
 ArrayType RandomArrayNegative(std::size_t n)
 {
   using DataType = typename ArrayType::Type;
-  static fetch::random::Random gen;
-  ArrayType                    a1(n);
+  ;
+  ArrayType a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
-    a1.At(i) = DataType{gen.generator.AsFP64()} - DataType{1};
+    a1.At(i) = DataType{random::Random::generator.AsFP64()} - DataType{1};
   }
   return a1;
 }
@@ -48,11 +48,11 @@ template <typename ArrayType>
 ArrayType RandomArrayPositive(std::size_t n)
 {
   using DataType = typename ArrayType::Type;
-  static fetch::random::Random gen;
-  ArrayType                    a1(n);
+  ;
+  ArrayType a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
-    a1.At(i) = DataType{gen.generator.AsFP64()};
+    a1.At(i) = DataType{random::Random::generator.AsFP64()};
   }
   return a1;
 }

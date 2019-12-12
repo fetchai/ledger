@@ -36,12 +36,10 @@ void RandomAssign(TensorType &tensor)
 {
   using Type = typename TensorType::Type;
 
-  static fetch::random::Random gen;
-
   auto it = tensor.begin();
   while (it.is_valid())
   {
-    *it = static_cast<Type>(gen.generator.AsFP64());
+    *it = static_cast<Type>(random::Random::generator.AsFP64());
     ++it;
   }
 }
