@@ -1093,36 +1093,34 @@ inline std::ostream &operator<<(std::ostream &s, UInt<S> const &x)
   return s;
 }
 
-//???
-// inline double ToDouble(UInt<256> const &x)
-//{
-//  if (x.TrimmedWideSize() < 2)
-//  {
-//    return static_cast<double>(x.ElementAt(0));
-//  }
-//  const size_t ELEMENTS_PER_WIDE = x.WIDE_ELEMENT_SIZE / x.ELEMENT_SIZE;
-//  uint64_t     magnitude         = x.ELEMENTS * x.ELEMENT_SIZE - x.msb() - 1;
-//
-//  const size_t most_significant_byte_idx = magnitude / x.ELEMENT_SIZE;
-//  const size_t least_eligible_byte_idx   = most_significant_byte_idx - (ELEMENTS_PER_WIDE - 1);
-//
-//  uint64_t mantisse = 0;
-//  for (size_t i = 0; i < ELEMENTS_PER_WIDE; ++i)
-//  {
-//    const uint64_t element  = x[i + least_eligible_byte_idx];
-//    const uint64_t addendum = uint64_t(element) << (i * x.ELEMENT_SIZE);
-//    mantisse += addendum;
-//  }
-//  const auto exponent = static_cast<double>(least_eligible_byte_idx * x.ELEMENT_SIZE);
-//
-//  return static_cast<double>(mantisse) * pow(2, exponent);
-//}
+inline double ToDouble(UInt<256> const &x)
+{
+  if (x.TrimmedWideSize() < 2)
+  {
+    return static_cast<double>(x.ElementAt(0));
+  }
+  const size_t ELEMENTS_PER_WIDE = x.WIDE_ELEMENT_SIZE / x.ELEMENT_SIZE;
+  uint64_t     magnitude         = x.ELEMENTS * x.ELEMENT_SIZE - x.msb() - 1;
 
-//???
-// inline double Log(UInt<256> const &x)
-//{
-//  return std::log(ToDouble(x));
-//}
+  const size_t most_significant_byte_idx = magnitude / x.ELEMENT_SIZE;
+  const size_t least_eligible_byte_idx   = most_significant_byte_idx - (ELEMENTS_PER_WIDE - 1);
+
+  uint64_t mantisse = 0;
+  for (size_t i = 0; i < ELEMENTS_PER_WIDE; ++i)
+  {
+    const uint64_t element  = x[i + least_eligible_byte_idx];
+    const uint64_t addendum = uint64_t(element) << (i * x.ELEMENT_SIZE);
+    mantisse += addendum;
+  }
+  const auto exponent = static_cast<double>(least_eligible_byte_idx * x.ELEMENT_SIZE);
+
+  return static_cast<double>(mantisse) * pow(2, exponent);
+}
+
+inline double Log(UInt<256> const &x)
+{
+  return std::log(ToDouble(x));
+}
 
 }  // namespace vectorise
 }  // namespace fetch

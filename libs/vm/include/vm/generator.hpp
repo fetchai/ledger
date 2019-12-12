@@ -35,9 +35,8 @@ enum class AnnotationLiteralType : uint8_t
   Unknown    = 0,
   Boolean    = 1,
   Integer    = 2,
-  Real       = 3,
-  String     = 4,
-  Identifier = 5
+  String     = 3,
+  Identifier = 4
 };
 
 struct AnnotationLiteral
@@ -51,11 +50,6 @@ struct AnnotationLiteral
   {
     type    = AnnotationLiteralType::Integer;
     integer = i;
-  }
-  void SetReal(double r)
-  {
-    type = AnnotationLiteralType::Real;
-    real = r;
   }
   void SetString(std::string const &s)
   {
@@ -72,7 +66,6 @@ struct AnnotationLiteral
   {
     bool    boolean;
     int64_t integer;
-    double  real;
   };
   std::string str;
 };
