@@ -82,9 +82,6 @@ void UInt256Wrapper::Bind(Module &module)
       .EnableOperator(Operator::InplaceDivide)
       .EnableOperator(Operator::GreaterThan)
       .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
-      //???
-      //      .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
-      //      .CreateMemberFunction("toFloat64", &UInt256Wrapper::ToFloat64)
       .CreateMemberFunction("toInt32", &UInt256Wrapper::ToInt32)
       .CreateMemberFunction("size", &UInt256Wrapper::size);
 
