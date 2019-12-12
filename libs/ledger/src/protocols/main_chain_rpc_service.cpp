@@ -34,6 +34,7 @@
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
+#include "ledger/protocols/main_chain_rpc_client_interface.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -74,7 +75,8 @@ constexpr State GetInitialState(Mode mode) noexcept
 
 }  // namespace
 
-MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain,
+MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
+                                         MainChainRpcClientInterface &rpc_client, MainChain &chain,
                                          TrustSystem &trust, Mode mode, ConsensusPtr consensus)
   : muddle::rpc::Server(endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , mode_(mode)
@@ -84,7 +86,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   , consensus_(std::move(consensus))
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
-  , rpc_client_("R:MChain", endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
+  , rpc_client_(rpc_client)
   , state_machine_{std::make_shared<StateMachine>("MainChain", GetInitialState(mode),
                                                   [](State state) { return ToString(state); })}
   , recv_block_count_{telemetry::Registry::Instance().CreateCounter(
@@ -369,8 +371,7 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
     }
 
     current_request_ =
-        rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
-                                        MainChainProtocol::TIME_TRAVEL, block_resolving_->hash);
+        rpc_client_.TimeTravel(current_peer_address_, block_resolving_->hash).GetInnerPromise();
 
     FETCH_LOG_INFO(LOGGING_NAME, "Attempting to resolve: ", block_resolving_->block_number,
                    " aka 0x", block_resolving_->hash.ToHex(), " Note: gen is: 0x",
@@ -512,9 +513,10 @@ MainChainRpcService::State MainChainRpcService::OnSynchronising()
                    " for block 0x", current_missing_block_.ToHex());
 
     // make the RPC call to the block source with a request for the chain
-    current_request_ = rpc_client_.CallSpecificAddress(
-        current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::COMMON_SUB_CHAIN,
-        current_missing_block_, chain_.GetHeaviestBlockHash(), MAX_SUB_CHAIN_SIZE);
+    current_request_ = rpc_client_
+                           .GetCommonSubChain(current_peer_address_, current_missing_block_,
+                                              chain_.GetHeaviestBlockHash(), MAX_SUB_CHAIN_SIZE)
+                           .GetInnerPromise();
 
     next_state = State::WAITING_FOR_RESPONSE;
   }

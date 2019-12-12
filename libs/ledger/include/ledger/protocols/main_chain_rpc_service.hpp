@@ -42,6 +42,7 @@ namespace ledger {
 
 class BlockCoordinator;
 class MainChain;
+class MainChainRpcClientInterface;
 class MainChainSyncWorker;
 
 /**
@@ -71,7 +72,7 @@ public:
   using Block           = ledger::Block;
   using BlockHash       = Digest;
   using Promise         = service::Promise;
-  using RpcClient       = muddle::rpc::Client;
+  using RpcClient       = MainChainRpcClientInterface;
   using TrustSystem     = p2p::P2PTrustInterface<Address>;
   using FutureTimepoint = core::FutureTimepoint;
   using ConsensusPtr    = std::shared_ptr<ConsensusInterface>;
@@ -87,8 +88,8 @@ public:
   };
 
   // Construction / Destruction
-  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust, Mode mode,
-                      ConsensusPtr consensus);
+  MainChainRpcService(MuddleEndpoint &endpoint, MainChainRpcClientInterface &rpc_client,
+                      MainChain &chain, TrustSystem &trust, Mode mode, ConsensusPtr consensus);
   MainChainRpcService(MainChainRpcService const &) = delete;
   MainChainRpcService(MainChainRpcService &&)      = delete;
   ~MainChainRpcService() override                  = default;
@@ -175,7 +176,7 @@ private:
 
   /// @name State Machine Data
   /// @{
-  RpcClient             rpc_client_;
+  RpcClient             &rpc_client_;
   StateMachinePtr       state_machine_;
   Address               current_peer_address_;
   BlockHash             current_missing_block_;
