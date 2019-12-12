@@ -153,14 +153,14 @@ BENCHMARK(BM_Construct)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::
 BENCHMARK(BM_Construct)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Construct)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Construct)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Construct)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Construct)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Construct)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Construct)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Construct)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Construct)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Construct)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Construct)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Construct)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Construct)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
@@ -183,7 +183,6 @@ BENCHMARK(BM_Construct)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecon
 BENCHMARK(BM_Construct)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Construct)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
@@ -255,14 +254,14 @@ BENCHMARK(BM_Fill)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicr
 BENCHMARK(BM_Fill)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fill)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fill)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fill)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fill)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fill)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Fill)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
@@ -285,7 +284,6 @@ BENCHMARK(BM_Fill)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Fill)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
@@ -354,14 +352,14 @@ BENCHMARK(BM_FillRandom)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark:
 BENCHMARK(BM_FillRandom)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_FillRandom)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_FillRandom)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_FillRandom)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_FillRandom)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_FillRandom)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_FillRandom)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_FillRandom)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_FillRandom)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_FillRandom)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_FillRandom)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_FillRandom)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_FillRandom)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_FillRandom)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_FillRandom)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_FillRandom)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_FillRandom)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_FillRandom)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
@@ -384,7 +382,6 @@ BENCHMARK(BM_FillRandom)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicroseco
 BENCHMARK(BM_FillRandom)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_FillRandom)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_FillRandom)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_FillRandom)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_FillRandom)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_FillRandom)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_FillRandom)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
@@ -888,14 +885,14 @@ BENCHMARK(BM_Min)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicro
 BENCHMARK(BM_Min)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Min)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Min)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Min)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Min)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Min)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Min)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Min)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Min)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Min)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Min)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Min)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Min)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Min)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Min)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Min)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Min)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Min)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
@@ -918,7 +915,6 @@ BENCHMARK(BM_Min)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Min)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Min)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Min)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Min)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Min)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Min)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Min)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
@@ -987,14 +983,14 @@ BENCHMARK(BM_Max)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicro
 BENCHMARK(BM_Max)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Max)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Max)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Max)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Max)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Max)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Max)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Max)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Max)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Max)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Max)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Max)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Max)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Max)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Max)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Max)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Max)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Max)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
@@ -1017,7 +1013,6 @@ BENCHMARK(BM_Max)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Max)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Max)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Max)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Max)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Max)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Max)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Max)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
@@ -1086,14 +1081,14 @@ BENCHMARK(BM_Sum)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicro
 BENCHMARK(BM_Sum)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Sum)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_Sum)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Sum)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Sum)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Sum)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Sum)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Sum)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Sum)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Sum)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Sum)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Sum)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Sum)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Sum)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Sum)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Sum)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Sum)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Sum)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
@@ -1116,7 +1111,6 @@ BENCHMARK(BM_Sum)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Sum)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Sum)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Sum)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Sum)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Sum)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Sum)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Sum)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
@@ -1305,14 +1299,14 @@ BENCHMARK(BM_ArgMaxNoIndices)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::bench
 BENCHMARK(BM_ArgMaxNoIndices)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMaxNoIndices)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
@@ -1337,7 +1331,6 @@ BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicr
 BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMaxNoIndices)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMaxNoIndices)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMaxNoIndices)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
@@ -1437,7 +1430,7 @@ BENCHMARK(BM_Dot)->Args({1000, 10, 10})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Dot)->Args({100, 100, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Dot)->Args({10, 10, 1000})->Unit(::benchmark::kMicrosecond);
 
-void BM_IsEqualOperator(::benchmark::State &state)
+void BM_IsEqual(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
@@ -1456,90 +1449,88 @@ void BM_IsEqualOperator(::benchmark::State &state)
   auto data   = CreateTensor(vm, config.shape);
   auto data_2 = CreateTensor(vm, config.shape);
 
-  state.counters["charge"] = static_cast<double>(data->Estimator().EqualOperator(data_2));
+  state.counters["charge"] =
+      static_cast<double>(data->Estimator().IsEqualChargeEstimator(data, data_2));
 
   for (auto _ : state)
   {
-    data->IsEqualOperator(data_2);
+    data->IsEqual(data, data_2);
   }
 }
 
-BENCHMARK(BM_IsEqualOperator)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsEqualOperator)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsEqualOperator)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsEqualOperator)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsEqualOperator)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsEqualOperator)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsEqualOperator)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsEqualOperator)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsEqualOperator)
-    ->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsEqualOperator)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsEqual)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 
-void BM_IsNotEqualOperator(::benchmark::State &state)
+void BM_IsNotEqual(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
@@ -1558,104 +1549,88 @@ void BM_IsNotEqualOperator(::benchmark::State &state)
   auto data   = CreateTensor(vm, config.shape);
   auto data_2 = CreateTensor(vm, config.shape);
 
-  state.counters["charge"] = static_cast<double>(data->Estimator().NotEqualOperator(data_2));
+  state.counters["charge"] =
+      static_cast<double>(data->Estimator().IsNotEqualChargeEstimator(data, data_2));
 
   for (auto _ : state)
   {
-    data->IsNotEqualOperator(data_2);
+    data->IsNotEqual(data, data_2);
   }
 }
 
-BENCHMARK(BM_IsNotEqualOperator)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsNotEqualOperator)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsNotEqualOperator)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsNotEqualOperator)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsNotEqualOperator)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsNotEqualOperator)
-    ->Args({7, 100000, 1, 1, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)
-    ->Args({7, 1, 100000, 1, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)
-    ->Args({7, 1, 1, 100000, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)
-    ->Args({7, 1, 1, 1, 100000, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)
-    ->Args({7, 1, 1, 1, 1, 100000, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)
-    ->Args({7, 1, 1, 1, 1, 1, 100000, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)
-    ->Args({7, 1, 1, 1, 1, 1, 1, 100000})
-    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsNotEqualOperator)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_IsNotEqualOperator)
-    ->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_IsNotEqualOperator)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_IsNotEqual)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 
-void BM_NegateOperator(::benchmark::State &state)
+void BM_Negate(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
@@ -1673,90 +1648,88 @@ void BM_NegateOperator(::benchmark::State &state)
 
   auto data = CreateTensor(vm, config.shape);
 
-  state.counters["charge"] = static_cast<double>(data->Estimator().NegateOperator());
+  Ptr<Object> operand      = data;
+  state.counters["charge"] = static_cast<double>(data->Estimator().NegateChargeEstimator(operand));
 
   for (auto _ : state)
   {
-    data->NegateOperator();
+    data->Negate(operand);
   }
 }
 
-BENCHMARK(BM_NegateOperator)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_NegateOperator)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_NegateOperator)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_NegateOperator)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_NegateOperator)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_NegateOperator)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_NegateOperator)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_NegateOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_NegateOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_NegateOperator)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_NegateOperator)
-    ->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_NegateOperator)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Negate)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 
-void BM_AddOperator(::benchmark::State &state)
+void BM_Add(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
@@ -1775,90 +1748,91 @@ void BM_AddOperator(::benchmark::State &state)
   auto data   = CreateTensor(vm, config.shape);
   auto data_2 = CreateTensor(vm, config.shape);
 
-  state.counters["charge"] = static_cast<double>(data->Estimator().AddOperator(data_2));
+  Ptr<Object> operand_1 = data;
+  Ptr<Object> operand_2 = data_2;
+
+  state.counters["charge"] =
+      static_cast<double>(data->Estimator().AddChargeEstimator(operand_1, operand_2));
 
   for (auto _ : state)
   {
-    data->AddOperator(data_2);
+    data->Add(operand_1, operand_2);
   }
 }
 
-BENCHMARK(BM_AddOperator)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_AddOperator)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_AddOperator)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_AddOperator)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_AddOperator)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_AddOperator)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_AddOperator)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_AddOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_AddOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_AddOperator)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_AddOperator)
-    ->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddOperator)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Add)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 
-void BM_SubtractOperator(::benchmark::State &state)
+void BM_Multiply(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
@@ -1877,104 +1851,91 @@ void BM_SubtractOperator(::benchmark::State &state)
   auto data   = CreateTensor(vm, config.shape);
   auto data_2 = CreateTensor(vm, config.shape);
 
-  state.counters["charge"] = static_cast<double>(data->Estimator().SubtractOperator(data_2));
+  Ptr<Object> operand_1 = data;
+  Ptr<Object> operand_2 = data_2;
+
+  state.counters["charge"] =
+      static_cast<double>(data->Estimator().MultiplyChargeEstimator(operand_1, operand_2));
 
   for (auto _ : state)
   {
-    data->SubtractOperator(data_2);
+    data->Multiply(operand_1, operand_2);
   }
 }
 
-BENCHMARK(BM_SubtractOperator)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_SubtractOperator)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_SubtractOperator)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_SubtractOperator)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_SubtractOperator)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_SubtractOperator)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_SubtractOperator)
-    ->Args({7, 100000, 1, 1, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)
-    ->Args({7, 1, 100000, 1, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)
-    ->Args({7, 1, 1, 100000, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)
-    ->Args({7, 1, 1, 1, 100000, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)
-    ->Args({7, 1, 1, 1, 1, 100000, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)
-    ->Args({7, 1, 1, 1, 1, 1, 100000, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)
-    ->Args({7, 1, 1, 1, 1, 1, 1, 100000})
-    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_SubtractOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_SubtractOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_SubtractOperator)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_SubtractOperator)
-    ->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_SubtractOperator)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Multiply)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 
-void BM_MultiplyOperator(::benchmark::State &state)
+void BM_Divide(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
@@ -1993,204 +1954,89 @@ void BM_MultiplyOperator(::benchmark::State &state)
   auto data   = CreateTensor(vm, config.shape);
   auto data_2 = CreateTensor(vm, config.shape);
 
-  state.counters["charge"] = static_cast<double>(data->Estimator().MultiplyOperator(data_2));
+  Ptr<Object> operand_1 = data;
+  Ptr<Object> operand_2 = data_2;
+
+  state.counters["charge"] =
+      static_cast<double>(data->Estimator().DivideChargeEstimator(operand_1, operand_2));
 
   for (auto _ : state)
   {
-    data->MultiplyOperator(data_2);
+    data->Divide(operand_1, operand_2);
   }
 }
 
-BENCHMARK(BM_MultiplyOperator)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_MultiplyOperator)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_MultiplyOperator)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_MultiplyOperator)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_MultiplyOperator)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_MultiplyOperator)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_MultiplyOperator)
-    ->Args({7, 100000, 1, 1, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)
-    ->Args({7, 1, 100000, 1, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)
-    ->Args({7, 1, 1, 100000, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)
-    ->Args({7, 1, 1, 1, 100000, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)
-    ->Args({7, 1, 1, 1, 1, 100000, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)
-    ->Args({7, 1, 1, 1, 1, 1, 100000, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)
-    ->Args({7, 1, 1, 1, 1, 1, 1, 100000})
-    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_MultiplyOperator)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_MultiplyOperator)
-    ->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_MultiplyOperator)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-
-void BM_DivideOperator(::benchmark::State &state)
-{
-  using VMPtr = std::shared_ptr<VM>;
-
-  // Get args form state
-  BM_Tensor_config config{state};
-
-  state.counters["PaddedSize"] =
-      static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
-
-  state.counters["Size"] =
-      static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape));
-
-  VMPtr vm;
-  SetUp(vm);
-
-  auto data   = CreateTensor(vm, config.shape);
-  auto data_2 = CreateTensor(vm, config.shape);
-
-  state.counters["charge"] = static_cast<double>(data->Estimator().DivideOperator(data_2));
-
-  for (auto _ : state)
-  {
-    data->DivideOperator(data_2);
-  }
-}
-
-BENCHMARK(BM_DivideOperator)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(BM_DivideOperator)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(BM_DivideOperator)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(BM_DivideOperator)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(BM_DivideOperator)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(BM_DivideOperator)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(BM_DivideOperator)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(BM_DivideOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(BM_DivideOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(BM_DivideOperator)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-
-BENCHMARK(BM_DivideOperator)
-    ->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})
-    ->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_DivideOperator)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Divide)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 
 void BM_InplaceAdd(::benchmark::State &state)
 {
@@ -2211,12 +2057,14 @@ void BM_InplaceAdd(::benchmark::State &state)
   auto data   = CreateTensor(vm, config.shape);
   auto data_2 = CreateTensor(vm, config.shape);
 
-  state.counters["charge"] = static_cast<double>(data->Estimator().Sum());
+  Ptr<Object> operand_1 = data;
+  Ptr<Object> operand_2 = data_2;
+
+  state.counters["charge"] =
+      static_cast<double>(data->Estimator().InplaceAddChargeEstimator(operand_1, operand_2));
 
   for (auto _ : state)
   {
-    Ptr<Object> operand_1 = data;
-    Ptr<Object> operand_2 = data_2;
     data->InplaceAdd(operand_1, operand_2);
   }
 }
@@ -2256,14 +2104,14 @@ BENCHMARK(BM_InplaceAdd)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark:
 BENCHMARK(BM_InplaceAdd)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceAdd)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_InplaceAdd)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceAdd)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceAdd)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceAdd)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_InplaceAdd)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_InplaceAdd)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_InplaceAdd)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_InplaceAdd)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_InplaceAdd)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceAdd)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceAdd)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceAdd)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceAdd)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceAdd)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceAdd)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceAdd)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
@@ -2286,7 +2134,6 @@ BENCHMARK(BM_InplaceAdd)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicroseco
 BENCHMARK(BM_InplaceAdd)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceAdd)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceAdd)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_InplaceAdd)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceAdd)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceAdd)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceAdd)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
@@ -2313,12 +2160,14 @@ void BM_InplaceSubtract(::benchmark::State &state)
   auto data   = CreateTensor(vm, config.shape);
   auto data_2 = CreateTensor(vm, config.shape);
 
-  state.counters["charge"] = static_cast<double>(data->Estimator().Sum());
+  Ptr<Object> operand_1 = data;
+  Ptr<Object> operand_2 = data_2;
+
+  state.counters["charge"] =
+      static_cast<double>(data->Estimator().InplaceSubtractChargeEstimator(operand_1, operand_2));
 
   for (auto _ : state)
   {
-    Ptr<Object> operand_1 = data;
-    Ptr<Object> operand_2 = data_2;
     data->InplaceSubtract(operand_1, operand_2);
   }
 }
@@ -2358,14 +2207,14 @@ BENCHMARK(BM_InplaceSubtract)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::bench
 BENCHMARK(BM_InplaceSubtract)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceSubtract)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
 
-BENCHMARK(BM_InplaceSubtract)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceSubtract)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceSubtract)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceSubtract)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_InplaceSubtract)->Args({3, 1000000, 1, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_InplaceSubtract)->Args({3, 1000000, 1000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_InplaceSubtract)->Args({3, 1000, 1, 1000000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_InplaceSubtract)->Args({3, 1000, 1000000, 1})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_InplaceSubtract)->Args({3, 1000000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceSubtract)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceSubtract)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceSubtract)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceSubtract)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceSubtract)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceSubtract)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceSubtract)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
 
@@ -2390,13 +2239,222 @@ BENCHMARK(BM_InplaceSubtract)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicr
 BENCHMARK(BM_InplaceSubtract)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceSubtract)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceSubtract)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_InplaceSubtract)->Args({3, 1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceSubtract)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceSubtract)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceSubtract)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceSubtract)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceSubtract)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_InplaceSubtract)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+
+void BM_InplaceMultiply(::benchmark::State &state)
+{
+  using VMPtr = std::shared_ptr<VM>;
+
+  // Get args form state
+  BM_Tensor_config config{state};
+
+  state.counters["PaddedSize"] =
+      static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
+
+  state.counters["Size"] =
+      static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape));
+
+  VMPtr vm;
+  SetUp(vm);
+
+  auto data   = CreateTensor(vm, config.shape);
+  auto data_2 = CreateTensor(vm, config.shape);
+
+  Ptr<Object> operand_1 = data;
+  Ptr<Object> operand_2 = data_2;
+
+  state.counters["charge"] =
+      static_cast<double>(data->Estimator().InplaceMultiplyChargeEstimator(operand_1, operand_2));
+
+  for (auto _ : state)
+  {
+    data->InplaceMultiply(operand_1, operand_2);
+  }
+}
+
+BENCHMARK(BM_InplaceMultiply)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceMultiply)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceMultiply)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceMultiply)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceMultiply)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceMultiply)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceMultiply)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceMultiply)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceMultiply)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceMultiply)
+    ->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceMultiply)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+
+void BM_InplaceDivide(::benchmark::State &state)
+{
+  using VMPtr = std::shared_ptr<VM>;
+
+  // Get args form state
+  BM_Tensor_config config{state};
+
+  state.counters["PaddedSize"] =
+      static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
+
+  state.counters["Size"] =
+      static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape));
+
+  VMPtr vm;
+  SetUp(vm);
+
+  auto data   = CreateTensor(vm, config.shape);
+  auto data_2 = CreateTensor(vm, config.shape);
+
+  Ptr<Object> operand_1 = data;
+  Ptr<Object> operand_2 = data_2;
+
+  state.counters["charge"] =
+      static_cast<double>(data->Estimator().InplaceDivideChargeEstimator(operand_1, operand_2));
+
+  for (auto _ : state)
+  {
+    data->InplaceDivide(operand_1, operand_2);
+  }
+}
+
+BENCHMARK(BM_InplaceDivide)->Args({1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceDivide)->Args({2, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({2, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceDivide)->Args({3, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceDivide)->Args({4, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({4, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({4, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({4, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceDivide)->Args({5, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({5, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({5, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({5, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({5, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceDivide)->Args({6, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({6, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({6, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({6, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({6, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({6, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceDivide)->Args({7, 100000, 1, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({7, 1, 100000, 1, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({7, 1, 1, 100000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({7, 1, 1, 1, 100000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({7, 1, 1, 1, 1, 100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({7, 1, 1, 1, 1, 1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({7, 1, 1, 1, 1, 1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceDivide)->Args({3, 300, 300, 300})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1, 10000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1, 1000, 10000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 100000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 100000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1000, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1000, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceDivide)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceDivide)->Args({4, 1, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({4, 1000, 1, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({4, 1000, 1, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({4, 1000, 1000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({4, 1, 1000, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({4, 1, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_InplaceDivide)
+    ->Args({10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})
+    ->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({2, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({2, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({3, 1000, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({5, 1000000, 1, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_InplaceDivide)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 
 }  // namespace tensor
 }  // namespace ml
