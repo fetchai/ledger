@@ -109,26 +109,22 @@ Variant DeedToVariant(DeedPtr const &deed)
     return v_deed;
   }
 
-  auto v_signees{Variant::Object()};
-  for (auto const &signee : deed->signees())
+  if (!deed->signees().empty())
   {
-    v_signees[signee.first.display()] = signee.second;
+    auto &v_signees = v_deed[SIGNEES_NAME] = Variant::Object();
+    for (auto const &signee : deed->signees())
+    {
+      v_signees[signee.first.display()] = signee.second;
+    }
   }
 
-  auto v_thresholds{Variant::Object()};
-  for (auto const &threshold : deed->operation_thresholds())
+  if (!deed->operation_thresholds().empty())
   {
-    v_thresholds[threshold.first] = threshold.second;
-  }
-
-  if (v_signees.size() > 0)
-  {
-    v_deed[SIGNEES_NAME] = std::move(v_signees);
-  }
-
-  if (v_thresholds.size() > 0)
-  {
-    v_deed[THRESHOLDS_NAME] = std::move(v_thresholds);
+    auto &v_thresholds = v_deed[THRESHOLDS_NAME] = Variant::Object();
+    for (auto const &threshold : deed->operation_thresholds())
+    {
+      v_thresholds[threshold.first] = threshold.second;
+    }
   }
 
   return v_deed;
