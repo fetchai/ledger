@@ -303,10 +303,6 @@ void Model<TensorType>::Predict(TensorType &input, TensorType &output)
   {
     throw ml::exceptions::InvalidMode("must compile model before predicting");
   }
-  if (!DataLoaderIsSet())
-  {
-    throw ml::exceptions::InvalidMode("must set data before predicting");
-  }
 
   this->graph_ptr_->SetInput(input_, input);
   output = this->graph_ptr_->Evaluate(output_);
