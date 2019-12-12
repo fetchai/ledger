@@ -135,7 +135,7 @@ def call_transfer_action_and_verify_balances(api, master_contract, source_contra
 
 def run(options, benefactor):
     api = LedgerApi(options['host'], options['port'])
-    entity1, contract1, contract2, master_contract = setup(api)
+    entity1, contract1, contract2, master_contract = setup(api, benefactor)
 
     transfer_and_verify_balances(api, entity1, contract1.address, 2345)
     call_transfer_action_and_verify_balances(
