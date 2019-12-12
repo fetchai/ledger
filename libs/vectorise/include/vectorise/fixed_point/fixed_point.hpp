@@ -3548,6 +3548,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ACosH(FixedPoint<I, F> const &x)
  * Special cases
  * * x is NaN    -> atanh(x) = NaN
  * * x is +/-inf -> atanh(x) = NaN
+ * * x is 1.0    -> atanh(x) = Inf
  * Calculated using the definition formula:
  *
  *            1        1 + x
@@ -3573,6 +3574,11 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATanH(FixedPoint<I, F> const &x)
   {
     fp_state |= STATE_NAN;
     return NaN;
+  }
+  if (Abs(x) == _1)
+  {
+    fp_state |= STATE_INFINITY;
+    return POSITIVE_INFINITY;
   }
 
   // ATanH(x) is defined in the (-1, 1) range
