@@ -175,6 +175,20 @@ TYPED_TEST(TensorConstructorTest, string_construction_invalid_formatting)
   	8 9 10 11.11111
   	)"),
                fetch::math::exceptions::WrongShape);
+
+  ASSERT_THROW(fetch::math::Tensor<TypeParam>::FromString(R"(
+  	1 3 4 4.1;
+  	5 6 7;
+  	8 9 10 11.11111;
+  	)"),
+               fetch::math::exceptions::WrongShape);
+
+  ASSERT_THROW(fetch::math::Tensor<TypeParam>::FromString(R"(
+  	1 3 4 4.1
+  	5 6 7
+  	8 9 10 11.11111
+  	)"),
+               fetch::math::exceptions::WrongShape);
 }
 
 }  // namespace test
