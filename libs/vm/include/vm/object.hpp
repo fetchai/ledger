@@ -195,9 +195,6 @@ protected:
     return ref_count_;
   }
 
-  Variant &Push();
-  Variant &Pop();
-  Variant &Top();
   void     RuntimeError(std::string const &message);
   TypeInfo GetTypeInfo(TypeId type_id);
   bool     GetNonNegativeInteger(Variant const &v, std::size_t &index);
