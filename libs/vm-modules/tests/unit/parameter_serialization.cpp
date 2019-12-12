@@ -146,7 +146,7 @@ TEST(ParameterSerialization, NativeCPPTypes)
   // Creating function arguments
   MsgPackSerializer serializer;
 
-  // Arg1 Array< Array< Float64 > >
+  // Arg1 Array< Array< UInt64 > >
   std::vector<std::vector<uint64_t>> arr{{9, 2, 3, 4}, {2, 3}, {2, 3, 4}};
   serializer << arr << static_cast<std::string>("Hello world") << static_cast<int64_t>(9183);
 
@@ -206,7 +206,7 @@ TEST(ParameterSerialization, VariantTypes)
   // Creating function arguments
   MsgPackSerializer serializer;
 
-  // Arg1 Array< Array< Float64 > >
+  // Arg1 Array< Array< UInt64 > >
   variant::Variant arr = variant::Variant::Array(3);
   arr[0]               = variant::Variant::Array(4);
   arr[1]               = variant::Variant::Array(2);
