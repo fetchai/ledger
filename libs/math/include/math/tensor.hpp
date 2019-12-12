@@ -786,6 +786,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       ++i;
       break;
     case ',':
+    case '+':
     case ' ':
     case '\t':
       prev_backslash = false;
