@@ -82,8 +82,6 @@ void UInt256Wrapper::Bind(Module &module)
       .EnableOperator(Operator::InplaceDivide)
       .EnableOperator(Operator::GreaterThan)
       .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
-      .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
-      .CreateMemberFunction("toFloat64", &UInt256Wrapper::ToFloat64)
       .CreateMemberFunction("toInt32", &UInt256Wrapper::ToInt32)
       .CreateMemberFunction("copy", &UInt256Wrapper::Copy)
       .CreateMemberFunction("size", &UInt256Wrapper::size);
@@ -245,7 +243,7 @@ bool UInt256Wrapper::FromJSON(JSONVariant const &variant)
   {
     value = FromHex(variant["value"].As<byte_array::ConstByteArray>());
   }
-  catch (std::exception const &e)
+  catch (std::exception const &)
   {
     vm_->RuntimeError("Field 'value' must be a hex-encoded string.");
     return false;
