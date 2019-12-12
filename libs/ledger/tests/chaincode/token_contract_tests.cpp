@@ -161,35 +161,35 @@ protected:
     return (Contract::Status::OK == status.status);
   }
 
-  bool CreateWealth(Entity const &entity, uint64_t amount)
-  {
-    EXPECT_CALL(*storage_, Get(_)).Times(1);
-    EXPECT_CALL(*storage_, Set(_, _)).Times(1);
-    EXPECT_CALL(*storage_, Lock(_)).Times(testing::AnyNumber());
-    EXPECT_CALL(*storage_, Unlock(_)).Times(testing::AnyNumber());
-    EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
-    EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
+  //bool CreateWealth(Entity const &entity, uint64_t amount)
+  //{
+  //  EXPECT_CALL(*storage_, Get(_)).Times(1);
+  //  EXPECT_CALL(*storage_, Set(_, _)).Times(1);
+  //  EXPECT_CALL(*storage_, Lock(_)).Times(testing::AnyNumber());
+  //  EXPECT_CALL(*storage_, Unlock(_)).Times(testing::AnyNumber());
+  //  EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
+  //  EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 
-    std::ostringstream oss;
-    oss << "{ "
-        << R"("amount": )" << amount << " }";
+  //  std::ostringstream oss;
+  //  oss << "{ "
+  //      << R"("amount": )" << amount << " }";
 
-    // build the transaction
-    auto tx = TransactionBuilder()
-                  .From(entity.address)
-                  .TargetChainCode("fetch.token", BitVector{})
-                  .Action("wealth")
-                  .Signer(certificate_->identity())
-                  .Data(oss.str())
-                  .Seal()
-                  .Sign(*certificate_)
-                  .Build();
+  //  // build the transaction
+  //  auto tx = TransactionBuilder()
+  //                .From(entity.address)
+  //                .TargetChainCode("fetch.token", BitVector{})
+  //                .Action("wealth")
+  //                .Signer(certificate_->identity())
+  //                .Data(oss.str())
+  //                .Seal()
+  //                .Sign(*certificate_)
+  //                .Build();
 
-    // send the action to the contract
-    auto const status = SendAction(tx);
+  //  // send the action to the contract
+  //  auto const status = SendAction(tx);
 
-    return (Contract::Status::OK == status.status);
-  }
+  //  return (Contract::Status::OK == status.status);
+  //}
 
   bool Transfer(Address const &from, Address const &to,
                 std::initializer_list<Entity const *> const &keys_to_sign, uint64_t amount,
@@ -253,19 +253,6 @@ protected:
   }
 };
 
-TEST_F(TokenContractTests, CheckWealthCreation)
-{
-  Entity entity;
-
-  // create wealth for this address
-  EXPECT_TRUE(CreateWealth(entity, 1000));
-
-  // generate the transaction contents
-  uint64_t balance = std::numeric_limits<uint64_t>::max();
-  EXPECT_TRUE(GetBalance(entity.address, balance));
-  EXPECT_EQ(balance, 1000);
-}
-
 TEST_F(TokenContractTests, CheckInitialBalance)
 {
   Entity entity;
@@ -281,7 +268,7 @@ TEST_F(TokenContractTests, DISABLED_CheckTransferWithoutPreexistingDeed)
   Entities entities(2);
 
   // create wealth for the first address
-  EXPECT_TRUE(CreateWealth(entities[0], 1000));
+  //EXPECT_TRUE(CreateWealth(entities[0], 1000));
 
   // transfer from wealth
   EXPECT_TRUE(Transfer(entities[0].address, entities[1].address, {&entities[0]}, 400));
@@ -362,7 +349,7 @@ TEST_F(TokenContractTests, DISABLED_CheckDeedDeletion)
   Entities entities(4);
 
   // 1st PRE-CONDITION: Create WEALTH
-  ASSERT_TRUE(CreateWealth(entities[0], origina_wealth));
+  //ASSERT_TRUE(CreateWealth(entities[0], origina_wealth));
 
   // 2nd PRE-CONDITION: Create DEED
   SigneesPtr signees{std::make_shared<Deed::Signees>()};
@@ -462,7 +449,7 @@ TEST_F(TokenContractTests, DISABLED_CheckTransferIsAuthorisedByPreexistingDeed)
   uint64_t const starting_balance{1000};
 
   // 1st PRE-CONDITION: Create wealth
-  ASSERT_TRUE(CreateWealth(entities[0], starting_balance));
+  //ASSERT_TRUE(CreateWealth(entities[0], starting_balance));
   uint64_t balance = std::numeric_limits<uint64_t>::max();
   ASSERT_TRUE(GetBalance(entities[0].address, balance));
   ASSERT_EQ(starting_balance, balance);
