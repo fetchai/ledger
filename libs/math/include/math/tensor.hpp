@@ -705,7 +705,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
   enum
   {
     UNSET,
-    COLON,
+    SEMICOLON,
     NEWLINE
   } new_row_marker                = UNSET;
   bool        reached_actual_data = false;
@@ -723,11 +723,11 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       {
         if (new_row_marker == UNSET)
         {
-          new_row_marker = COLON;
+          new_row_marker = SEMICOLON;
           // The size of the first row is the size of the vector so far
           first_row_size = elems.size();
         }
-        if (new_row_marker == COLON)
+        if (new_row_marker == SEMICOLON)
         {
           if ((i < c.size() - 1))
           {
