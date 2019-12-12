@@ -164,7 +164,7 @@ vm::Ptr<vm::Array<SizeType>> VMTensor::VMShape() const
 template <typename... Indices>
 VMTensor::DataType VMTensor::At(Indices... indices) const
 {
-  VMTensor::DataType result(0.0);
+  VMTensor::DataType result{0};
   try
   {
     result = tensor_.At(indices...);
