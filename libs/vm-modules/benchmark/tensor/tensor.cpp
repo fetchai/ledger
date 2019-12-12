@@ -104,6 +104,9 @@ void BM_Construct(::benchmark::State &state)
   state.counters["Size"] =
       static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape));
 
+  // Not implemented yet
+  state.counters["charge"] = static_cast<double>(999.9);
+
   for (auto _ : state)
   {
     state.PauseTiming();
@@ -1341,6 +1344,98 @@ BENCHMARK(BM_ArgMaxNoIndices)->Args({5, 1, 1000000, 1, 1, 1})->Unit(::benchmark:
 BENCHMARK(BM_ArgMaxNoIndices)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMaxNoIndices)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_ArgMaxNoIndices)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+
+struct BM_Dot_config
+{
+  using SizeType = fetch::math::SizeType;
+
+  explicit BM_Dot_config(::benchmark::State const &state)
+  {
+    x = static_cast<SizeType>(state.range(0));
+    y = static_cast<SizeType>(state.range(1));
+    c = static_cast<SizeType>(state.range(2));
+  }
+
+  SizeType x;  // A.shape(0)
+  SizeType y;  // B.shape(1)
+  SizeType c;  // A.shape(1) and B.shape(0)
+};
+
+void BM_Dot(::benchmark::State &state)
+{
+  using VMPtr = std::shared_ptr<VM>;
+
+  // Get args form state
+  BM_Dot_config config{state};
+
+  state.counters["PaddedSizeA"] =
+      static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape({config.x, config.c}));
+
+  state.counters["SizeA"] =
+      static_cast<double>(fetch::math::Tensor<float>::SizeFromShape({config.x, config.c}));
+
+  state.counters["PaddedSizeB"] =
+      static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape({config.c, config.y}));
+
+  state.counters["SizeB"] =
+      static_cast<double>(fetch::math::Tensor<float>::SizeFromShape({config.c, config.y}));
+
+  VMPtr vm;
+  SetUp(vm);
+
+  auto data_a = CreateTensor(vm, {config.x, config.c});
+  auto data_b = CreateTensor(vm, {config.c, config.y});
+
+  state.counters["charge"] = static_cast<double>(data_a->Estimator().Dot(data_b));
+
+  for (auto _ : state)
+  {
+    data_a->Dot(data_b);
+  }
+}
+
+BENCHMARK(BM_Dot)->Args({1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({10, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({100, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({10000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({100000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({10000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({100000000, 1, 1})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Dot)->Args({1, 10, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1, 100, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1, 1000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1, 10000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1, 100000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1, 10000000, 1})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Dot)->Args({1, 1, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1, 1, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1, 1, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1, 1, 10000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1, 1, 100000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1, 1, 10000000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Dot)->Args({10, 10, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({100, 100, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1000, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(BM_Dot)->Args({10, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({100, 1000, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1000, 10, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1000, 100, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1000, 1000, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1000, 1000, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({100, 1000, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({10, 1000, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1000, 100, 100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({1000, 10, 10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({100, 100, 1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Dot)->Args({10, 10, 1000})->Unit(::benchmark::kMicrosecond);
 
 }  // namespace tensor
 }  // namespace ml

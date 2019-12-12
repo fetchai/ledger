@@ -185,6 +185,14 @@ public:
   static const fixed_point::fp64_t TO_STRING_SIZE_COEF;
   static const fixed_point::fp64_t TO_STRING_CONST_COEF;
 
+  // DOT
+  static const fixed_point::fp64_t DOT_X_COEF;
+  static const fixed_point::fp64_t DOT_Y_COEF;
+  static const fixed_point::fp64_t DOT_C_COEF;
+  static const fixed_point::fp64_t DOT_CUBIC_COEF;
+  static const fixed_point::fp64_t DOT_CONST_COEF;
+
+  // Default
   static const fixed_point::fp64_t DEFAULT_PADDED_SIZE_COEF;
   static const fixed_point::fp64_t DEFAULT_SIZE_COEF;
   static const fixed_point::fp64_t DEFAULT_CONST_COEF;

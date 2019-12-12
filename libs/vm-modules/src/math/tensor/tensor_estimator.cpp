@@ -214,13 +214,14 @@ ChargeAmount TensorEstimator::ArgMaxNoIndices()
          COMPUTE_CHARGE_COST;
 }
 
-ChargeAmount TensorEstimator::Dot(vm::Ptr<VMTensor> const & /*other*/)
+ChargeAmount TensorEstimator::Dot(vm::Ptr<VMTensor> const &other)
 {
-  SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
-  SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
+  SizeType x = tensor_.shape().at(0);
+  SizeType y = other->GetTensor().shape().at(1);
+  SizeType c = tensor_.shape().at(1);
 
-  return static_cast<ChargeAmount>(DEFAULT_PADDED_SIZE_COEF * padded_size +
-                                   DEFAULT_SIZE_COEF * size + DEFAULT_CONST_COEF) *
+  return static_cast<ChargeAmount>(DOT_X_COEF * x + DOT_Y_COEF * y + DOT_C_COEF * c +
+                                   DOT_CUBIC_COEF * x * y * c + DOT_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -495,6 +496,14 @@ fixed_point::fp64_t const TensorEstimator::TO_STRING_PADDED_SIZE_COEF =
     fixed_point::fp64_t("0.00023451");
 fixed_point::fp64_t const TensorEstimator::TO_STRING_SIZE_COEF  = fixed_point::fp64_t("0.00107809");
 fixed_point::fp64_t const TensorEstimator::TO_STRING_CONST_COEF = fixed_point::fp64_t("5");
+
+// DOT
+fixed_point::fp64_t const TensorEstimator::DOT_X_COEF = fixed_point::fp64_t("0.003225806451613");
+fixed_point::fp64_t const TensorEstimator::DOT_Y_COEF = fixed_point::fp64_t("0.125");
+fixed_point::fp64_t const TensorEstimator::DOT_C_COEF = fixed_point::fp64_t("0.020408163265306");
+fixed_point::fp64_t const TensorEstimator::DOT_CUBIC_COEF =
+    fixed_point::fp64_t("0.006711409395973");
+fixed_point::fp64_t const TensorEstimator::DOT_CONST_COEF = fixed_point::fp64_t("5");
 
 // DEFAULT
 fixed_point::fp64_t const TensorEstimator::DEFAULT_PADDED_SIZE_COEF =
