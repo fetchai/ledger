@@ -263,6 +263,7 @@ TEST_F(TokenContractTests, CheckInitialBalance)
   EXPECT_EQ(balance, 0);
 }
 
+
 TEST_F(TokenContractTests, DISABLED_CheckTransferWithoutPreexistingDeed)
 {
   Entities entities(2);
