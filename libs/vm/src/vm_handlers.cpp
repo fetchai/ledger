@@ -820,9 +820,9 @@ void VM::Handler__ContractVariableDeclareAssign()
   }
   std::string identity = Ptr<String>(sv.object)->string();
   // Clone the identity string
-  sv.object            = Ptr<String>(new String(this, identity));
-  Variant &variable    = GetLocalVariable(instruction_->index);
-  variable             = std::move(sv);
+  sv.object         = Ptr<String>(new String(this, identity));
+  Variant &variable = GetLocalVariable(instruction_->index);
+  variable          = std::move(sv);
   live_object_stack_.emplace_back(frame_sp_, instruction_->index, instruction_->data);
 }
 
@@ -1041,10 +1041,10 @@ void VM::Handler__InvokeUserDefinedConstructor()
     return;
   }
 
-  function_            = constructor;
-  bsp_                 = sp_ - function_->num_parameters + 1;  // first parameter
-  pc_                  = 0;
-  self_                = std::move(selfv);
+  function_ = constructor;
+  bsp_      = sp_ - function_->num_parameters + 1;  // first parameter
+  pc_       = 0;
+  self_     = std::move(selfv);
 
   int const num_locals = function_->num_variables - function_->num_parameters;
   sp_ += num_locals;
@@ -1069,7 +1069,7 @@ void VM::Handler__InvokeUserDefinedMemberFunction()
   function_ = &(user_defined_type.functions[instruction_->index]);
   bsp_      = sp_ - function_->num_parameters + 1;  // first parameter
   pc_       = 0;
-  self_     = std::move(stack_[bsp_ - 1]); // the invoker
+  self_     = std::move(stack_[bsp_ - 1]);  // the invoker
 
   if (self_.object)
   {
