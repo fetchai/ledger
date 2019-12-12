@@ -781,7 +781,7 @@ TEST_F(MathTensorTests, tensor_min_test)
   fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
   DataType const result = vm_tensor.Min();
-  DataType const expected{-99.1};
+  DataType const expected{"-99.1"};
 
   EXPECT_EQ(result, expected);
 }
