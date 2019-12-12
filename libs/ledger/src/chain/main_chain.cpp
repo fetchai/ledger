@@ -612,8 +612,8 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
   FETCH_LOCK(lock_);
 
   // asserting genesis block has a number of 0, and everything else is above
-  assert(GetBlock(chain::GENESIS_DIGEST));
-  assert(GetBlock(chain::GENESIS_DIGEST)->block_number == 0);
+  assert(GetBlock(chain::GetGenesisDigest()));
+  assert(GetBlock(chain::GetGenesisDigest())->block_number == 0);
 
   Blocks result;
   bool   not_at_genesis = true;
@@ -666,7 +666,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
   if (current_hash.empty())
   {
     // start of the sync, from genesis
-    next_hash = chain::GENESIS_DIGEST;
+    next_hash = chain::GetGenesisDigest();
   }
   else
   {
@@ -1742,8 +1742,8 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
 {
   auto genesis           = std::make_shared<Block>();
   genesis->previous_hash = chain::ZERO_HASH;
-  genesis->hash          = chain::GENESIS_DIGEST;
-  genesis->merkle_hash   = chain::GENESIS_MERKLE_ROOT;
+  genesis->hash          = chain::GetGenesisDigest();
+  genesis->merkle_hash   = chain::GetGenesisMerkleRoot();
   genesis->miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
   genesis->is_loose      = false;
 

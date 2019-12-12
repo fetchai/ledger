@@ -118,7 +118,7 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
 // return the last committed hash (should correspond to the state hash before you began execution)
 byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 {
-  ConstByteArray last_commit_hash = chain::GENESIS_MERKLE_ROOT;
+  ConstByteArray last_commit_hash = chain::GetGenesisMerkleRoot();
 
   {
     FETCH_LOCK(merkle_mutex_);
@@ -140,7 +140,7 @@ byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 {
   // determine if the unit requests the genesis block
-  bool const genesis_state = hash == chain::GENESIS_MERKLE_ROOT;
+  bool const genesis_state = hash == chain::GetGenesisMerkleRoot();
 
   FETCH_LOCK(merkle_mutex_);
 
@@ -170,7 +170,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Index given for merkle hash didn't match merkle stack! root: 0x",
                     tree.root().ToHex(), " expected: 0x", hash.ToHex(), " Note: index: ", index,
-                    " genesis merk: 0x", chain::GENESIS_MERKLE_ROOT.ToHex());
+                    " genesis merk: 0x", chain::GetGenesisMerkleRoot().ToHex());
     return false;
   }
 
@@ -313,7 +313,7 @@ bool StorageUnitClient::HashExists(Hash const &hash, uint64_t index)
 {
   bool success{false};
 
-  if (hash == chain::GENESIS_MERKLE_ROOT)
+  if (hash == chain::GetGenesisMerkleRoot())
   {
     success = true;
   }

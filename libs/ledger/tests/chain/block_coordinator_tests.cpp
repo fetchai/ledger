@@ -84,9 +84,14 @@ constexpr std::size_t NUM_SLICES     = 1;
 class BlockCoordinatorTests : public ::testing::Test
 {
 protected:
-  void SetUp() override
+  static void SetUpTestCase()
   {
     fetch::crypto::mcl::details::MCLInitialiser();
+    fetch::chain::InitialiseTestConstants();
+  }
+
+  void SetUp() override
+  {
     block_generator_.Reset();
 
     // generate a public/private key pair

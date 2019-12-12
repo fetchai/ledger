@@ -35,44 +35,54 @@ namespace ledger {
 
 class BlockCoordinator;
 class StorageUnitInterface;
+class StakeSnapshot;
 
 class GenesisFileCreator
 {
 public:
-  using ConsensusPtr   = std::shared_ptr<fetch::ledger::ConsensusInterface>;
-  using ByteArray      = byte_array::ByteArray;
-  using CertificatePtr = std::shared_ptr<crypto::Prover>;
-  using GenesisStore   = fetch::storage::ObjectStore<Block>;
-  using MainChain      = ledger::MainChain;
+  using ConsensusPtr     = std::shared_ptr<fetch::ledger::ConsensusInterface>;
+  using ByteArray        = byte_array::ByteArray;
+  using CertificatePtr   = std::shared_ptr<crypto::Prover>;
+  using GenesisStore     = fetch::storage::ObjectStore<Block>;
+  using MainChain        = ledger::MainChain;
+  using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
+
+  enum class Result
+  {
+    FAILURE = 0,
+    LOADED_PREVIOUS_GENESIS,
+    CREATED_NEW_GENESIS
+  };
+
+  struct ConsensusParameters
+  {
+    uint16_t         cabinet_size{0};
+    uint64_t         start_time{0};
+    StakeSnapshotPtr snapshot{};
+  };
 
   // Construction / Destruction
-  GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit,
-                     ConsensusPtr consensus, CertificatePtr certificate,
-                     std::string const &db_prefix, MainChain &chain);
+  GenesisFileCreator(StorageUnitInterface &storage_unit, CertificatePtr certificate,
+                     std::string const &db_prefix);
   GenesisFileCreator(GenesisFileCreator const &) = delete;
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;
 
-  bool LoadFile(std::string const &name);
+  Result LoadFile(std::string const &path, bool proof_of_stake, ConsensusParameters &params);
 
   // Operators
   GenesisFileCreator &operator=(GenesisFileCreator const &) = delete;
   GenesisFileCreator &operator=(GenesisFileCreator &&) = delete;
 
 private:
-  bool LoadState(variant::Variant const &object);
-  bool LoadConsensus(variant::Variant const &object);
+  bool LoadState(variant::Variant const &object, ConsensusParameters const *consensus = nullptr);
+  static bool LoadConsensus(variant::Variant const &object, ConsensusParameters &params);
 
   CertificatePtr        certificate_;
-  BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;
-  ConsensusPtr          consensus_;
-  uint64_t              start_time_ = 0;
   GenesisStore          genesis_store_;
   Block                 genesis_block_;
-  bool                  loaded_genesis_{false};
   std::string           db_name_;
-  MainChain &           chain_;
 };
 
 }  // namespace ledger

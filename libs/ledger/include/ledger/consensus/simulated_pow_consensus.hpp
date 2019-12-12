@@ -53,6 +53,7 @@ public:
   void SetBlockInterval(uint64_t block_interval_ms) override;
   void SetAeonPeriod(uint16_t aeon_period) override;
   void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
+  void Reset(StakeSnapshot const &snapshot) override;
   void SetDefaultStartTime(uint64_t default_start_time) override;
 
   // Operators
