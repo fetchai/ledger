@@ -958,8 +958,8 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F>::FixedPoint(std::string const &s)
   : data_{0}
 {
-  bool contains_alpha = std::find_if(s.begin(), s.end(),
-                   [](char c) { return !std::isalpha(c); }) != s.end();
+  bool contains_alpha =
+      std::find_if(s.begin(), s.end(), [](char c) { return !std::isalpha(c); }) != s.end();
   if (contains_alpha)
   {
     throw std::runtime_error("FixedPoint parsing from string does not allow alpha characters!");
