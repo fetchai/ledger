@@ -176,8 +176,9 @@ public:
   static constexpr std::uint16_t DECIMAL_DIGITS{BaseTypeInfo::decimals};
 
   static FixedPoint const TOLERANCE;
-  static FixedPoint const _0; /* 0 */
-  static FixedPoint const _1; /* 1 */
+  static FixedPoint const _0;    /* 0 */
+  static FixedPoint const _1;    /* 1 */
+  static FixedPoint const _half; /* 0.5 */
 
   static FixedPoint const CONST_SMALLEST_FRACTION;
   static FixedPoint const CONST_E;              /* e */
@@ -676,6 +677,8 @@ FixedPoint<I, F> const FixedPoint<I, F>::_0{0}; /* 0 */
 template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::_1{1}; /* 1 */
 template <uint16_t I, uint16_t F>
+FixedPoint<I, F> const FixedPoint<I, F>::_half{0.5}; /* 0.5 */
+template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::TOLERANCE(
     0, FixedPoint<I, F>::BaseTypeInfo::tolerance); /* 0 */
 template <uint16_t I, uint16_t F>
@@ -955,11 +958,16 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F>::FixedPoint(std::string const &s)
   : data_{0}
 {
+  if (s.find('e') != std::string::npos || s.find('E') != std::string::npos)
+  {
+    throw std::runtime_error("FixedPoint string parsing does not support scientific notation!");
+  }
   auto index  = s.find("fp");
   auto s_copy = std::string(s, 0, index);
 
   Type         integer_part{0};
   UnsignedType fractional_part{0};
+  bool         is_negative{false};
 
   std::string integer_match;
   std::string fractional_match;
@@ -985,7 +993,8 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
     size_t digit_pos;
     if (last_digit != std::string::npos)
     {
-      digit_pos = std::min(fractional_match.find_last_not_of('0'), fractional_match.size() - 1);
+      digit_pos = std::min(last_digit, fractional_match.size() - 1);
+      fractional_match.erase(digit_pos + 1, fractional_match.length() - digit_pos);
     }
     else
     {
@@ -1013,7 +1022,6 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
   // We definitely have an overflow, check the sign and set to MAX/MIN
   if (integer_match.length() > DECIMAL_DIGITS)
   {
-
     if (integer_match[0] == '-')
     {
       fp_state |= STATE_OVERFLOW;
@@ -1027,12 +1035,19 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
     return;
   }
 
+  // Check the sign separetely, as -0 will be parsed as just 0 in strtoll() below.
+  if (integer_match[0] == '-')
+  {
+    is_negative = true;
+  }
+
   // Read the (signed) integer
   integer_part = static_cast<Type>(std::strtoll(integer_match.c_str(), nullptr, 10));
-  if (integer_part < 0)
+  if (fractional_part != 0 && is_negative)
   {
-    // If it's negative, we need to subtract one
+    // If it's negative, we need to add one and complement the fractional part
     --integer_part;
+    fractional_part = ~fractional_part + 1;
   }
 
   // Construct the data value from integer and fractional parts
@@ -2294,7 +2309,11 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Abs(FixedPoint<I, F> const &x)
     return POSITIVE_INFINITY;
   }
 
-  return x * Sign(x);
+  if (Sign(x) > 0)
+  {
+    return x;
+  }
+  return -x;
 }
 
 /**

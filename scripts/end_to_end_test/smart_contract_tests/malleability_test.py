@@ -22,7 +22,7 @@ from fetchai.ledger.api import LedgerApi, submit_json_transaction
 from fetchai.ledger.crypto import Entity
 
 
-def run(options, benefactor):
+def run(options):
     ENDPOINT = 'fetch/token/transfer'
     HOST = options['host']
     PORT = options['port']
@@ -38,7 +38,7 @@ def run(options, benefactor):
     id1 = Entity.from_hex(id1PrivateKey)
     id2 = Entity.from_hex(id2PrivateKey)
 
-    # Load 1000 tokens to id1
+    # Load 100000 tokens to id1
     api.sync(api.tokens.transfer(benefactor, id1, 100000, 1000))
 
     # signed transaction that transfers 2500 FET from id1 to id2. Signed with (r,s) Fees are 1000

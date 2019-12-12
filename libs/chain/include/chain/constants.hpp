@@ -26,15 +26,21 @@ namespace chain {
 
 constexpr uint64_t FINALITY_PERIOD = 10;
 
+Digest GetGenesisDigest();
+Digest GetGenesisMerkleRoot();
+void   SetGenesisDigest(Digest const &digest);
+void   SetGenesisMerkleRoot(Digest const &digest);
+void   InitialiseTestConstants();
+
 // consensus related
 extern uint64_t STAKE_WARM_UP_PERIOD;
 extern uint64_t STAKE_COOL_DOWN_PERIOD;
 
-extern Digest GENESIS_DIGEST;
-extern Digest GENESIS_MERKLE_ROOT;
+extern Digest const GENESIS_DIGEST_DEFAULT;
+extern Digest const GENESIS_MERKLE_ROOT_DEFAULT;
 
 static constexpr std::size_t HASH_SIZE = 32;
-extern const Digest          ZERO_HASH;
+extern Digest const          ZERO_HASH;
 
 }  // namespace chain
 }  // namespace fetch

@@ -63,6 +63,8 @@ public:
 
   TensorType::SizeType size() const;
 
+  vm::Ptr<vm::Array<TensorType::SizeType>> VMShape() const;
+
   ////////////////////////////////////
   /// ACCESSING AND SETTING VALUES ///
   ////////////////////////////////////
@@ -73,7 +75,7 @@ public:
   template <typename... Args>
   void SetAt(Args... args);
 
-  void Copy(TensorType const &other);
+  vm::Ptr<VMTensor> Copy();
 
   void Fill(DataType const &value);
 
@@ -83,13 +85,13 @@ public:
   /// RESHAPING ///
   /////////////////
 
-  fetch::vm::Ptr<VMTensor> Squeeze();
+  fetch::vm::Ptr<VMTensor> Squeeze() const;
 
-  fetch::vm::Ptr<VMTensor> Unsqueeze();
+  fetch::vm::Ptr<VMTensor> Unsqueeze() const;
 
   bool Reshape(fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &new_shape);
 
-  void Transpose();
+  fetch::vm::Ptr<VMTensor> Transpose() const;
 
   ////////////////////////
   /// BASIC COMPARISON ///
@@ -151,6 +153,12 @@ public:
 
   DataType Sum();
 
+  vm::Ptr<VMTensor> ArgMax(SizeType const &indices = SizeType{0});
+
+  vm::Ptr<VMTensor> ArgMaxNoIndices();
+
+  vm::Ptr<VMTensor> Dot(vm::Ptr<VMTensor> const &other);
+
   //////////////////////////////
   /// PRINTING AND EXPORTING ///
   //////////////////////////////
@@ -168,6 +176,8 @@ public:
   bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
 
   TensorEstimator &Estimator();
+
+  static const std::size_t RECTANGULAR_SHAPE_SIZE = 2;
 
 private:
   TensorType      tensor_;

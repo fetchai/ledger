@@ -9,6 +9,7 @@ add_subdirectory(etch)
 add_subdirectory(muddle-node)
 add_subdirectory(muddle-probe)
 add_subdirectory(chain-tool)
+add_subdirectory(muddle-test-network)
 add_subdirectory(storage-tools)
 
 if (NOT APPLE)

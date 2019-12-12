@@ -25,17 +25,18 @@
 #include <memory>
 #include <thread>
 
+using fetch::muddle::NetworkId;
 using fetch::muddle::PeerConnectionList;
 using fetch::network::Peer;
 using fetch::network::Uri;
-using fetch::muddle::NetworkId;
 
 namespace fetch {
 namespace muddle {
 
 struct DevNull : public network::AbstractConnection
 {
-  void Send(network::MessageType const & /*type*/) override
+  void Send(network::MessageBuffer const & /*type*/, Callback const & /*success*/,
+            Callback const & /*fail*/) override
   {}
 
   uint16_t Type() const override
