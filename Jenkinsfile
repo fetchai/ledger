@@ -213,16 +213,16 @@ def run_builds_in_parallel()
     }
   }
 
-  for (config in (run_full_build() ? Configuration.values() : [Configuration.RELEASE]))
-  {
-    for (platform in LINUX_PLATFORMS_AUX)
-    {
-      stages["${platform.label} ${config.label}"] = create_docker_build(
-        platform,
-        config,
-        run_full_build() ? full_run : fast_run)
-    }
-  }
+//   for (config in (run_full_build() ? Configuration.values() : [Configuration.RELEASE]))
+//   {
+//     for (platform in LINUX_PLATFORMS_AUX)
+//     {
+//       stages["${platform.label} ${config.label}"] = create_docker_build(
+//         platform,
+//         config,
+//         run_full_build() ? full_run : fast_run)
+//     }
+//   }
 
   if (run_full_build())
   {

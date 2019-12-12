@@ -35,7 +35,7 @@ public:
     : TCPServer(p, tmanager)
   {}
 
-  void PushRequest(ConnectionHandleType /*client*/, MessageType const &msg) override
+  void PushRequest(ConnectionHandleType /*client*/, MessageBuffer const &msg) override
   {
     std::cout << "Message: " << msg << std::endl;
   }
