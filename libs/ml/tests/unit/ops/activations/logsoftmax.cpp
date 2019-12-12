@@ -93,8 +93,8 @@ TYPED_TEST(LogSoftmaxTest, backward_test)
   TensorType data  = TensorType::FromString("1; -2; 3; -4; 5; -6; 7; -8");
   TensorType error = TensorType::FromString("0; 0; 0; 1; 1; 1; 0; 0");
   TensorType gt    = TensorType::FromString(
-      "-6.4312e-03; -3.2019e-04; -4.7521e-02;  9.9996e-01;  6.4887e-01; 9.9999e-01; -2.59454; "
-      "-7.9368e-07");
+      "-0.0064312; -0.00032019; -0.047521;  0.99996;  0.64887; 0.99999; -2.59454; "
+      "-0.00000079368");
 
   fetch::ml::ops::LogSoftmax<TensorType> op{0};
   std::vector<TensorType>                prediction =
