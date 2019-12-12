@@ -19,7 +19,7 @@
 
 #include "ml/core/graph.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 
 namespace fetch {
@@ -89,7 +89,7 @@ public:
 
   fetch::vm::Ptr<VMStateDict> StateDict();
 
-  static void Bind(fetch::vm::Module &module);
+  static void Bind(fetch::vm::Module &module, bool enable_experimental);
 
   GraphType &GetGraph();
 

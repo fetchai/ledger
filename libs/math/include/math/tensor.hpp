@@ -459,14 +459,26 @@ private:
   template <SizeType N, typename FirstIndex, typename... Indices>
   SizeType UnrollComputeColIndex(FirstIndex &&index, Indices &&... indices) const
   {
-    return static_cast<SizeType>(index) * stride_[N] +
+    if (shape_.at(N) <= SizeType(index))
+    {
+      throw exceptions::WrongIndices(
+          "Tensor::At : index " + std::to_string(SizeType(index)) + " is out of bounds of axis " +
+          std::to_string(N) + " (max possible index is " + std::to_string(shape_.at(N) - 1) + ").");
+    }
+    return static_cast<SizeType>(index) * stride_.at(N) +
            UnrollComputeColIndex<N + 1>(std::forward<Indices>(indices)...);
   }
 
   template <SizeType N, typename FirstIndex>
   SizeType UnrollComputeColIndex(FirstIndex &&index) const
   {
-    return static_cast<SizeType>(index) * stride_[N];
+    if (shape_.at(N) <= SizeType(index))
+    {
+      throw exceptions::WrongIndices(
+          "Tensor::At : index " + std::to_string(SizeType(index)) + " is out of bounds of axis " +
+          std::to_string(N) + " (max possible index is " + std::to_string(shape_.at(N) - 1) + ").");
+    }
+    return static_cast<SizeType>(index) * stride_.at(N);
   }
 
   void UpdateStrides()
@@ -685,10 +697,18 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
 {
   Tensor            ret;
-  SizeType          n = 1;
+  SizeType          n = 0;
   std::vector<Type> elems;
   elems.reserve(1024);
-  bool failed = false;
+  bool failed         = false;
+  bool prev_backslash = false;
+  enum
+  {
+    UNSET,
+    COLON,
+    NEWLINE
+  } new_row_marker         = UNSET;
+  bool reached_actual_data = false;
 
   // Text parsing loop
   for (SizeType i = 0; i < c.size();)
@@ -697,18 +717,60 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     switch (c[i])
     {
     case ';':
-      if (i < c.size() - 1)
+      if (reached_actual_data)
       {
-        ++n;
+        if (new_row_marker == UNSET)
+        {
+          new_row_marker = COLON;
+        }
+        if (new_row_marker == COLON)
+        {
+          if ((i < c.size() - 1))
+          {
+            reached_actual_data = false;
+          }
+        }
       }
       ++i;
       break;
-    case '+':
+    case '\r':
+    case '\n':
+      if (reached_actual_data)
+      {
+        if (new_row_marker == UNSET)
+        {
+          new_row_marker = NEWLINE;
+        }
+        if (new_row_marker == NEWLINE)
+        {
+          if ((i < c.size() - 1))
+          {
+            reached_actual_data = false;
+          }
+        }
+      }
+      ++i;
+      break;
+    case '\\':
+      prev_backslash = true;
+      ++i;
+      break;
+    case 'r':
+    case 'n':
+      if (prev_backslash)
+      {
+        prev_backslash = false;
+        if (i < c.size() - 2)
+        {
+          ++n;
+        }
+        ++i;
+      }
+      break;
     case ',':
     case ' ':
-    case '\n':
     case '\t':
-    case '\r':
+      prev_backslash = false;
       ++i;
       break;
     default:
@@ -719,12 +781,20 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       else
       {
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
-        auto        float_val = std::atof(cur_elem.c_str());
+        auto        float_val = math::Type<T>(cur_elem);
         elems.emplace_back(Type(float_val));
+        prev_backslash = false;
+        if (!reached_actual_data)
+        {
+          // Where we actually start counting rows
+          ++n;
+          reached_actual_data = true;
+        }
       }
       break;
     }
   }
+
   SizeType m = elems.size() / n;
 
   if ((m * n) != elems.size())
@@ -1063,7 +1133,12 @@ template <typename T, typename C>
 template <typename... Indices>
 typename Tensor<T, C>::Type &Tensor<T, C>::At(Indices... indices)
 {
-  assert(sizeof...(indices) == stride_.size());
+  if (sizeof...(indices) != stride_.size())
+  {
+    throw exceptions::WrongIndices(
+        "Wrong arguments quantity (" + std::to_string(sizeof...(indices)) +
+        ") given to Tensor::At, expected: " + std::to_string(stride_.size()));
+  }
   return this->data()[UnrollComputeColIndex<0>(std::forward<Indices>(indices)...)];
 }
 
@@ -1079,7 +1154,12 @@ template <typename T, typename C>
 template <typename... Indices>
 typename Tensor<T, C>::Type Tensor<T, C>::At(Indices... indices) const
 {
-  assert(sizeof...(indices) == stride_.size());
+  if (sizeof...(indices) != stride_.size())
+  {
+    throw exceptions::WrongIndices(
+        "Wrong arguments quantity (" + std::to_string(sizeof...(indices)) +
+        ") given to Tensor::At, expected: " + std::to_string(stride_.size()));
+  }
   SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...);
   return this->data()[N];
 }
@@ -1295,10 +1375,12 @@ template <typename T, typename C>
 template <typename... Args>
 void Tensor<T, C>::Set(Args... args)
 {
-  assert(sizeof...(args) == stride_.size() + 1);  // Plus one as last arg is value
+  // Plus one as last arg is value
   if (sizeof...(args) != (stride_.size() + 1))
   {
-    throw exceptions::WrongIndices("too many or not enough indices given to Tensor::Set");
+    throw exceptions::WrongIndices(
+        "Wrong arguments quantity (" + std::to_string(sizeof...(args)) +
+        ") given to Tensor::Set, expected: " + std::to_string(stride_.size() + 1));
   }
 
   uint64_t index = TensorSetter<0, Args...>::IndexOf(stride_, shape_, std::forward<Args>(args)...);
@@ -1587,7 +1669,10 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Transpose() const
 {
   // TODO (private 867) -
-  assert(shape_.size() == 2);
+  if (shape_.size() != 2)
+  {
+    throw exceptions::WrongShape("Can not transpose a tensor which is not 2-dimensional!");
+  }
   SizeVector new_axes{1, 0};
 
   Tensor ret({shape().at(1), shape().at(0)});
@@ -1731,7 +1816,13 @@ template <typename S>
 fetch::meta::IfIsUnsignedInteger<S, void> Tensor<T, C>::Set(std::vector<S> const &indices,
                                                             Type const &          val)
 {
-  assert(indices.size() == shape_.size());
+  if (indices.size() != shape_.size())
+  {
+    throw exceptions::WrongIndices(
+        "Wrong indices quantity (" + std::to_string(indices.size()) +
+        ") given to Tensor::Set, expected: " + std::to_string(shape_.size()));
+  }
+
   this->operator[](ComputeColIndex(indices)) = val;
 }
 
@@ -2719,7 +2810,13 @@ struct Tensor<T, C>::TensorSetter
   static SizeType IndexOf(SizeVector const &stride, SizeVector const &shape, TSType const &index,
                           Args &&... args)
   {
-    assert(SizeType(index) < shape[N]);
+    if (SizeType(index) >= shape[N])
+    {
+      throw exceptions::WrongIndices("Tensor::IndexOf : index " + std::to_string(SizeType(index)) +
+                                     " is out of bounds of axis " + std::to_string(N) +
+                                     " (max possible index is " + std::to_string(shape[N] - 1) +
+                                     ").");
+    }
     return stride[N] * SizeType(index) +
            TensorSetter<N + 1, Args...>::IndexOf(stride, shape, std::forward<Args>(args)...);
   }

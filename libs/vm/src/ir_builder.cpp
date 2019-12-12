@@ -64,7 +64,7 @@ IRNodePtr IRBuilder::BuildNode(NodePtr const &node)
       expression_node->node_kind, expression_node->text, expression_node->line,
       BuildChildren(expression_node->children), expression_node->expression_kind,
       BuildType(expression_node->type), BuildVariable(expression_node->variable),
-      expression_node->function_invoker_is_instance, BuildFunction(expression_node->function));
+      BuildFunction(expression_node->function), BuildType(expression_node->owner));
   return ir_expression_node;
 }
 
@@ -89,15 +89,16 @@ IRTypePtr IRBuilder::BuildType(TypePtr const &type)
   {
     return ir_type;
   }
-  IRTypePtr      template_type;
-  IRTypePtrArray template_parameter_types;
+  // Create and add to map BEFORE dependencies
+  ir_type = CreateIRType(type->type_kind, type->name);
+  type_map_.AddPair(type, ir_type);
+  // Dependencies...
   if (type->IsInstantiation())
   {
-    template_type            = BuildType(type->template_type);
-    template_parameter_types = BuildTypes(type->types);
+    ir_type->template_type            = BuildType(type->template_type);
+    ir_type->template_parameter_types = BuildTypes(type->types);
   }
-  ir_type = CreateIRType(type->type_kind, type->name, template_type, template_parameter_types);
-  type_map_.AddPair(type, ir_type);
+  // Add to list AFTER dependencies
   ir_->AddType(ir_type);
   return ir_type;
 }
@@ -113,10 +114,12 @@ IRVariablePtr IRBuilder::BuildVariable(VariablePtr const &variable)
   {
     return ir_variable;
   }
-  IRTypePtr ir_type = BuildType(variable->type);
-  ir_variable =
-      CreateIRVariable(variable->variable_kind, variable->name, ir_type, variable->referenced);
+  // Create and add to map BEFORE dependencies
+  ir_variable = CreateIRVariable(variable->variable_kind, variable->name, variable->referenced);
   variable_map_.AddPair(variable, ir_variable);
+  // Dependencies...
+  ir_variable->type = BuildType(variable->type);
+  // Add to list AFTER dependencies
   ir_->AddVariable(ir_variable);
   return ir_variable;
 }
@@ -132,12 +135,14 @@ IRFunctionPtr IRBuilder::BuildFunction(FunctionPtr const &function)
   {
     return ir_function;
   }
-  IRTypePtrArray     ir_parameter_types     = BuildTypes(function->parameter_types);
-  IRVariablePtrArray ir_parameter_variables = BuildVariables(function->parameter_variables);
-  IRTypePtr          ir_return_type         = BuildType(function->return_type);
-  ir_function = CreateIRFunction(function->function_kind, function->name, function->unique_name,
-                                 ir_parameter_types, ir_parameter_variables, ir_return_type);
+  // Create and add to map BEFORE dependencies
+  ir_function = CreateIRFunction(function->function_kind, function->name, function->unique_name);
   function_map_.AddPair(function, ir_function);
+  // Dependencies...
+  ir_function->parameter_types     = BuildTypes(function->parameter_types);
+  ir_function->parameter_variables = BuildVariables(function->parameter_variables);
+  ir_function->return_type         = BuildType(function->return_type);
+  // Add to list AFTER dependencies
   ir_->AddFunction(ir_function);
   return ir_function;
 }
@@ -149,6 +154,17 @@ IRTypePtrArray IRBuilder::BuildTypes(TypePtrArray const &types)
   for (auto const &type : types)
   {
     array.push_back(BuildType(type));
+  }
+  return array;
+}
+
+IRFunctionPtrArray IRBuilder::BuildFunctions(FunctionPtrArray const &functions)
+{
+  IRFunctionPtrArray array;
+  array.reserve(functions.size());
+  for (auto const &function : functions)
+  {
+    array.push_back(BuildFunction(function));
   }
   return array;
 }

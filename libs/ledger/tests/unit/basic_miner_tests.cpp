@@ -21,7 +21,6 @@
 #include "chain/transaction_layout.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/miner/basic_miner.hpp"
-#include "ledger/resource_mapper.hpp"
 #include "meta/log2.hpp"
 #include "tx_generator.hpp"
 #include "vectorise/platform.hpp"

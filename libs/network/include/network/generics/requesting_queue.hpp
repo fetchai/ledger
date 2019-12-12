@@ -208,11 +208,23 @@ typename RequestingQueueOf<K, R, P, H>::Counters RequestingQueueOf<K, R, P, H>::
       ++iter;
       break;
     case PromiseState::SUCCESS:
-      completed_.emplace_back(SuccessfulResult{key, promise.Get()});
-      ++num_completed_;
+    {
+      R value{};
+      if (promise.GetResult(value))
+      {
+        completed_.emplace_back(SuccessfulResult{key, value});
+        ++num_completed_;
+      }
+      else
+      {
+        failed_.emplace_back(FailedResult{key, promise});
+        ++num_failed_;
+      }
+
       --num_pending_;
       iter = requests_.erase(iter);
       break;
+    }
     case PromiseState::FAILED:
     case PromiseState::TIMEDOUT:
       failed_.emplace_back(FailedResult{key, promise});

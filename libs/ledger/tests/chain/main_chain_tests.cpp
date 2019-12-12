@@ -23,6 +23,7 @@
 #include "core/containers/set_difference.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/time_travelogue.hpp"
 #include "ledger/testing/block_generator.hpp"
 
 #include "gtest/gtest.h"
@@ -630,7 +631,7 @@ TEST_P(MainChainTests, AdditionOfBlocksWithABreak)
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->hash);
 }
 
-TEST_P(MainChainTests, CheckChainPreceeding)
+TEST_P(MainChainTests, CheckChainPreceding)
 {
   auto genesis = generator_->Generate();
   auto main1   = generator_->Generate(genesis);
@@ -648,24 +649,27 @@ TEST_P(MainChainTests, CheckChainPreceeding)
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), main4->hash);
 
   {
-    auto const preceding = chain_->GetChainPreceding(main4->hash, 2);
-    ASSERT_EQ(preceding.size(), 2);
+    auto const preceding = chain_->GetChainPreceding(main4->hash, 3);
+    ASSERT_EQ(preceding.size(), 3);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main4));
     EXPECT_TRUE(IsSameBlock(*preceding[1], *main3));
+    EXPECT_TRUE(IsSameBlock(*preceding[2], *main2));
   }
 
   {
-    auto const preceding = chain_->GetChainPreceding(main3->hash, 2);
-    ASSERT_EQ(preceding.size(), 2);
+    auto const preceding = chain_->GetChainPreceding(main3->hash, 3);
+    ASSERT_EQ(preceding.size(), 3);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main3));
     EXPECT_TRUE(IsSameBlock(*preceding[1], *main2));
+    EXPECT_TRUE(IsSameBlock(*preceding[2], *main1));
   }
 
   {
-    auto const preceding = chain_->GetChainPreceding(main2->hash, 2);
-    ASSERT_EQ(preceding.size(), 2);
+    auto const preceding = chain_->GetChainPreceding(main2->hash, 3);
+    ASSERT_EQ(preceding.size(), 3);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main2));
     EXPECT_TRUE(IsSameBlock(*preceding[1], *main1));
+    EXPECT_TRUE(IsSameBlock(*preceding[2], *genesis));
   }
 
   {
@@ -676,10 +680,11 @@ TEST_P(MainChainTests, CheckChainPreceeding)
   }
 
   {
-    auto const heaviest = chain_->GetHeaviestChain(2);
-    ASSERT_EQ(heaviest.size(), 2);
+    auto const heaviest = chain_->GetHeaviestChain(3);
+    ASSERT_EQ(heaviest.size(), 3);
     EXPECT_TRUE(IsSameBlock(*heaviest[0], *main4));
     EXPECT_TRUE(IsSameBlock(*heaviest[1], *main3));
+    EXPECT_TRUE(IsSameBlock(*heaviest[2], *main2));
   }
 }
 
@@ -864,6 +869,60 @@ TEST_P(MainChainTests, CheckResolvedLooseWeight)
   ASSERT_EQ(chain_->GetBlock(main3->hash)->total_weight, main3->total_weight);
   ASSERT_EQ(chain_->GetBlock(main4->hash)->total_weight, main4->total_weight);
   ASSERT_EQ(chain_->GetBlock(main5->hash)->total_weight, main5->total_weight);
+}
+
+#define ToHex() ToHex().SubArray(0, 8)
+
+TEST_P(MainChainTests, CheckHeaviestChain)
+{
+  auto genesis     = generator_->Generate();
+  auto main_branch = Generate(generator_, genesis, 10);
+
+  for (auto const &block : main_branch)
+  {
+    ASSERT_EQ(ToString(chain_->AddBlock(*block)), ToString(BlockStatus::ADDED));
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), block->hash);
+    ASSERT_EQ(chain_->GetBlock(block->hash)->chain_label, 1);
+  }
+  auto        logue = chain_->TimeTravel(Digest{});
+  auto const &blogs = logue.blocks;
+  ASSERT_EQ(blogs.size(), main_branch.size() + 1);
+  ASSERT_EQ(blogs.front()->hash, genesis->hash);
+  for (size_t i{}; i < main_branch.size(); ++i)
+  {
+    ASSERT_EQ(blogs[i + 1]->hash, main_branch[i]->hash);
+    ASSERT_EQ(blogs[i + 1]->chain_label, 1);
+  }
+
+  auto side_branch = Generate(generator_, main_branch[5], 10);
+  for (std::size_t i{}; i < 3; ++i)
+  {
+    ASSERT_EQ(ToString(chain_->AddBlock(*side_branch[i])), ToString(BlockStatus::ADDED));
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), main_branch.back()->hash);
+    ASSERT_EQ(chain_->GetHeaviestBlock()->chain_label, 1);
+  }
+  ASSERT_EQ(ToString(chain_->AddBlock(*side_branch[3])), ToString(BlockStatus::ADDED));
+  for (std::size_t i = 4; i < side_branch.size(); ++i)
+  {
+    ASSERT_EQ(ToString(chain_->AddBlock(*side_branch[i])), ToString(BlockStatus::ADDED));
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), side_branch[i]->hash);
+    ASSERT_EQ(chain_->GetBlock(side_branch[i]->hash)->chain_label, 2);
+  }
+
+  logue = chain_->TimeTravel(Digest{});
+  ASSERT_EQ(blogs.size(), side_branch.size() + 7);
+  ASSERT_EQ(blogs.front()->hash, genesis->hash);
+  std::size_t i = 1;
+
+  for (; i < 7; ++i)
+  {
+    ASSERT_EQ(blogs[i]->hash, main_branch[i - 1]->hash);
+  }
+  for (; i < blogs.size(); ++i)
+  {
+    ASSERT_EQ(blogs[i]->hash, side_branch[i - 7]->hash);
+    ASSERT_EQ(blogs[i]->chain_label, 2);
+  }
 }
 
 INSTANTIATE_TEST_CASE_P(ParamBased, MainChainTests,

@@ -30,7 +30,7 @@
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/system.hpp"
 #include "vm_modules/math/read_csv.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/ml.hpp"
 
 #include <cstddef>
@@ -182,7 +182,8 @@ int RunEtchScript(std::string const &filename, std::shared_ptr<fetch::vm::Module
   std::ifstream file(filename, std::ios::binary);
   if (file.fail())
   {
-    throw std::runtime_error("Cannot open file " + std::string(filename));
+    std::cout << "Cannot open file " << filename << std::endl;
+    return -1;
   }
   std::ostringstream ss;
   ss << file.rdbuf();
@@ -208,7 +209,16 @@ int RunEtchScript(std::string const &filename, std::shared_ptr<fetch::vm::Module
 
   // attach observer so that writing to state works
   JsonStateMap observer{};
-  observer.LoadFromFile("myfile.json");
+  try
+  {
+    observer.LoadFromFile("myfile.json");
+  }
+  catch (std::exception &e)
+  {
+    std::cout << "Can not load JSON file :" << e.what() << std::endl;
+    return -1;
+  }
+
   vm->SetIOObserver(observer);
 
   // attach std::cout for printing
@@ -269,7 +279,7 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::System::Bind(*module);
 
-  fetch::vm_modules::ml::BindML(*module);
+  fetch::vm_modules::ml::BindML(*module, true);
 
   fetch::vm_modules::CreatePrint(*module);
 
