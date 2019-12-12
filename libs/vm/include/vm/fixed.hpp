@@ -42,6 +42,8 @@ struct Fixed128 : public Object
 
   Fixed128(vm::VM *vm, vm::TypeId type_id, byte_array::ByteArray const &data);
 
+  Ptr<Fixed128> Copy() const;
+
   bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   bool IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   bool IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;

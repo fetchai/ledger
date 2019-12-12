@@ -85,8 +85,8 @@ void UInt256Wrapper::Bind(Module &module)
       .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
       .CreateMemberFunction("toFloat64", &UInt256Wrapper::ToFloat64)
       .CreateMemberFunction("toInt32", &UInt256Wrapper::ToInt32)
-      .CreateMemberFunction("size", &UInt256Wrapper::size)
-      .CreateMemberFunction("copy", &UInt256Wrapper::Copy);
+      .CreateMemberFunction("copy", &UInt256Wrapper::Copy)
+      .CreateMemberFunction("size", &UInt256Wrapper::size);
 
   module.CreateFreeFunction("toString", &UInt256Wrapper::ToString);
   module.CreateFreeFunction("toUInt64", &UInt256Wrapper::ToPrimitive<uint64_t>);

@@ -41,6 +41,11 @@ Fixed128::Fixed128(vm::VM *vm, vm::TypeId /*type_id*/, byte_array::ByteArray con
   , data_{*reinterpret_cast<int128_t const *>(data.pointer())}
 {}
 
+Ptr<Fixed128> Fixed128::Copy() const
+{
+  return Ptr<Fixed128>{new Fixed128{this->vm_, this->data_}};
+}
+
 bool Fixed128::IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
   Ptr<Fixed128> lhs = lhso;
