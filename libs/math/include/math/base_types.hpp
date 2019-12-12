@@ -220,7 +220,7 @@ static constexpr meta::IfIsUnsignedInteger<T, T> Type(std::string const &val)
   {
     throw std::runtime_error("cannot initialise uint with negative value");
   }
-  T x = static_cast<T>(std::stoull(val));
+  auto x = static_cast<T>(std::stoull(val));
   return x;
 }
 
