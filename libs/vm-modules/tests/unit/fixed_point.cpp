@@ -269,7 +269,7 @@ TEST_F(FixedPointTest, fixed_point128_deep_copy)
 
         a += 1.0fp128;
 
-        assert(a > b, "deep copy failed!");
+        assert(a > b, "b is corrupted by increasing a!");
       endfunction
     )";
   EXPECT_TRUE(toolkit.Compile(SOURCE));
