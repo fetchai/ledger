@@ -958,8 +958,11 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F>::FixedPoint(std::string const &s)
   : data_{0}
 {
+  auto index  = s.find("fp");
+  auto s_copy = std::string(s, 0, index);
+
   bool contains_alpha =
-      std::find_if(s.begin(), s.end(), [](char c) { return !std::isalpha(c); }) != s.end();
+      std::find_if(s_copy.begin(), s_copy.end(), [](char c) { return !std::isalpha(c); }) != s_copy.end();
   if (contains_alpha)
   {
     throw std::runtime_error("FixedPoint parsing from string does not allow alpha characters!");
@@ -971,11 +974,11 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
 
   std::string integer_match;
   std::string fractional_match;
-  auto        decimal_pos = s.find('.');
+  auto        decimal_pos = s_copy.find('.');
   if (decimal_pos != std::string::npos)
   {
-    integer_match    = std::string(s, 0, decimal_pos);
-    fractional_match = std::string(s, decimal_pos + 1, s.length());
+    integer_match    = std::string(s_copy, 0, decimal_pos);
+    fractional_match = std::string(s_copy, decimal_pos + 1, s_copy.length());
 
     // Trim right zeroes in fractional part
     fractional_match.erase(fractional_match.find_last_not_of('0') + 1, std::string::npos);
@@ -1013,7 +1016,7 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
   }
   else
   {
-    integer_match = s;
+    integer_match = s_copy;
   }
 
   // Trim left zeroes
