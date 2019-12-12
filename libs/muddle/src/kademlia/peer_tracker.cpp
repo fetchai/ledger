@@ -787,6 +787,7 @@ void PeerTracker::Periodically()
   auto config     = tracker_configuration();
   auto my_address = own_address();
 
+  /*
   ++counter;
   if ((static_cast<int32_t>(counter) % 30) == 0)
   {
@@ -795,6 +796,7 @@ void PeerTracker::Periodically()
     ss << config.ToString() << std::endl;
     std::cout << ss.str() << std::endl;
   }
+  */
 
   // Clearing arrays used to track actions on connections
   {
