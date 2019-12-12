@@ -104,7 +104,7 @@ void BM_Construct(::benchmark::State &state)
   state.counters["Size"] =
       static_cast<double>(fetch::math::Tensor<float>::SizeFromShape(config.shape));
 
-  // Not implemented yet
+  // Hidden as lambda tensor_constructor_charge_estimate
   state.counters["charge"] = static_cast<double>(999.9);
 
   for (auto _ : state)

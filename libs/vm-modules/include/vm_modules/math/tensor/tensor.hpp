@@ -195,6 +195,10 @@ public:
 private:
   TensorType      tensor_;
   TensorEstimator estimator_;
+
+  // Tensor construction constants for estimate
+  static const fixed_point::fp64_t CONSTRUCTION_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t CONSTRUCTION_CONST_COEF;
 };
 
 }  // namespace math
