@@ -586,10 +586,10 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, DivisionNonIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to + half max
-    a = TypeParam((fetch::random::Random::generator.AsFP64() * double(max_val)) -
-                  (double(max_val) / 2.0));
-    b = TypeParam((fetch::random::Random::generator.AsFP64() * double(max_val)) -
-                  (double(max_val) / 2.0));
+    a = fetch::math::Type<TypeParam>(std::to_string(
+        (fetch::random::Random::generator.AsDouble() * double(max_val)) - (double(max_val) / 2.0)));
+    b = fetch::math::Type<TypeParam>(std::to_string(
+        (fetch::random::Random::generator.AsDouble() * double(max_val)) - (double(max_val) / 2.0)));
 
     fetch::math::Divide(a, b, ret);
     EXPECT_EQ(ret, a / b);
