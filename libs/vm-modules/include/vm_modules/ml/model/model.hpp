@@ -76,6 +76,11 @@ public:
   using ModelEstimator      = fetch::vm_modules::ml::model::ModelEstimator;
   using SequentialModelPtr  = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
 
+  VMModel(VMModel const &other) = delete;
+  VMModel(VMModel &&other)      = delete;
+  VMModel &operator=(VMModel const &other) = default;  // TODO(): Needed for DeserializeFrom
+  VMModel &operator=(VMModel &&other) = delete;
+
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
@@ -150,11 +155,6 @@ private:
   ModelCategory      model_category_ = ModelCategory::NONE;
   ModelEstimator     estimator_;
   bool               compiled_ = false;
-
-  VMModel(VMModel const &other) = default;
-  VMModel(VMModel &&other)      = default;
-  VMModel &operator=(VMModel const &other) = default;
-  VMModel &operator=(VMModel &&other) = default;
 
   // First for input layer shape, second for output layer shape.
   static constexpr std::size_t min_total_layer_shapes = 2;
