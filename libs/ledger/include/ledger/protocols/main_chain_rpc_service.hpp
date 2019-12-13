@@ -190,17 +190,11 @@ private:
   State OnWaitForBlocks();
   State OnCompleteSyncWithPeer();
 
-  //
-  //  State OnWaitForHeaviestChain();
-  //  State OnWaitingForResponse();
-
   bool ValidBlock(Block const &block, char const *action) const;
-
   /// @}
 
   /// @name System Components
   /// @{
-  //  Mode const      mode_;
   MuddleEndpoint &endpoint_;
   MainChain &     chain_;
   TrustSystem &   trust_;
