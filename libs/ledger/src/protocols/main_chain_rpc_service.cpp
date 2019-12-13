@@ -32,6 +32,7 @@
 #include "muddle/packet.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
@@ -83,21 +84,27 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
   , recv_block_invalid_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_recv_block_invalid_total",
         " The total number of invalid blocks received from the network")}
-  , state_request_heaviest_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_state_request_heaviest_total",
-        "The number of times in the requested heaviest state")}
-  , state_wait_heaviest_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_state_wait_heaviest_total",
-        "The number of times in the wait heaviest state")}
   , state_synchronising_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_state_synchronising_total",
-        "The number of times in the synchronisiing state")}
-  , state_wait_response_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_state_wait_response_total",
-        "The number of times in the wait response state")}
+      "ledger_mainchain_service_state_synchronising_total",
+      "The number of times in the synchronisiing state")}
   , state_synchronised_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_state_synchronised_total",
-        "The number of times in the sychronised state")}
+      "ledger_mainchain_service_state_synchronised_total",
+      "The number of times in the sychronised state")}
+  , state_start_sync_with_peer_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_state_rstart_sync_with_peer_total",
+        "The number of times in the start sync with peer state")}
+  , state_request_next_blocks_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_state_request_next_blocks_total",
+        "The number of times in the request next blocks state")}
+  , state_wait_for_next_blocks_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_state_wait_for_next_blocks_total",
+        "The number of times in the wait for next blocks state")}
+  , state_complete_sync_with_peer_{telemetry::Registry::Instance().CreateCounter(
+      "ledger_mainchain_service_state_complete_sync_with_peer_total",
+      "The number of times in the complete sync with peer state")}
+  , state_current_{telemetry::Registry::Instance().CreateGauge<uint32_t>(
+      "ledger_mainchain_service_state_complete_sync_with_peer_total",
+      "The number of times in the complete sync with peer state")}
   , new_block_duration_{telemetry::Registry::Instance().CreateHistogram(
         {1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 1e1, 1e2, 1e3},
         "ledger_mainchain_service_new_block_duration", "The duration of the new block handler")}
@@ -120,7 +127,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
   state_machine_->OnStateChange([](State current, State previous) {
     FETCH_UNUSED(current);
     FETCH_UNUSED(previous);
-    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
 
   // clear the restart timer
@@ -314,6 +321,9 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
 
 State MainChainRpcService::OnSynchronising()
 {
+  state_synchronising_->increment();
+  state_current_->set(static_cast<uint32_t>(State::SYNCHRONISING));
+
   State next_state = State::SYNCHRONISED;
 
   // sync peer selection
@@ -331,8 +341,10 @@ State MainChainRpcService::OnSynchronised(State current, State previous)
 {
   FETCH_UNUSED(current);
 
-  State next_state{State::SYNCHRONISED};
   state_synchronised_->increment();
+  state_current_->set(static_cast<uint32_t>(State::SYNCHRONISED));
+
+  State next_state{State::SYNCHRONISED};
 
   // Assume if the chain is quite old that there are peers who have a heavier chain we haven't
   // heard about
@@ -363,6 +375,9 @@ State MainChainRpcService::OnSynchronised(State current, State previous)
 
 State MainChainRpcService::OnStartSyncWithPeer()
 {
+  state_start_sync_with_peer_->increment();
+  state_current_->set(static_cast<uint32_t>(State::START_SYNC_WITH_PEER));
+
   // we always start a sync from the block 1 behind our heaviest block (except in the case of
   // genesis)
   block_resolving_ = chain_.GetHeaviestBlock();
@@ -383,6 +398,9 @@ State MainChainRpcService::OnStartSyncWithPeer()
 
 State MainChainRpcService::OnRequestNextSetOfBlocks()
 {
+  state_request_next_blocks_->increment();
+  state_current_->set(static_cast<uint32_t>(State::REQUEST_NEXT_BLOCKS));
+
   // in some error cases we might be requested to request the next blocks of a null pointer. In this
   // case we simply conclude our transactions with this peer
   if (!(block_resolving_ && !current_peer_address_.empty()))
@@ -399,7 +417,8 @@ State MainChainRpcService::OnRequestNextSetOfBlocks()
 
 State MainChainRpcService::OnWaitForBlocks()
 {
-  state_wait_heaviest_->increment();
+  state_wait_for_next_blocks_->increment();
+  state_current_->set(static_cast<uint32_t>(State::WAIT_FOR_NEXT_BLOCKS));
 
   // this should not happen as it would be a logical error, however, if it does simply restart the
   // sync process
@@ -492,6 +511,9 @@ State MainChainRpcService::OnWaitForBlocks()
 
 State MainChainRpcService::OnCompleteSyncWithPeer()
 {
+  state_complete_sync_with_peer_->increment();
+  state_current_->set(static_cast<uint32_t>(State::COMPLETE_SYNC_WITH_PEER));
+
   current_peer_address_ = {};
   current_request_      = {};
   block_resolving_      = {};
