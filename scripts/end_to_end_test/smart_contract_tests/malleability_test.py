@@ -22,7 +22,7 @@ from fetchai.ledger.api import LedgerApi, submit_json_transaction
 from fetchai.ledger.crypto import Entity
 
 
-def run(options):
+def run(options, benefactor):
     ENDPOINT = 'fetch/token/transfer'
     HOST = options['host']
     PORT = options['port']
@@ -39,7 +39,7 @@ def run(options):
     id2 = Entity.from_hex(id2PrivateKey)
 
     # Load 100000 tokens to id1
-    api.sync(api.tokens.wealth(id1, 100000))
+    api.sync(api.tokens.transfer(benefactor, id1, 100000, 1000))
 
     # signed transaction that transfers 2500 FET from id1 to id2. Signed with (r,s) Fees are 1000
     orig_tx = 'a1640000c5ab20e3ab845cb4a1d2c3e4c3b08f5ff42a6ff2a71d7697ba8f32c415b77c7f8d850b3ef025b189a2d9bb4a515a84c3673db6d3ef25385d2c8d1e34b06e2de1c109c46501c103e8565596cd793442c5040bafbc61a08524372f495d9dee08adbc39824e980506947091395cece16636ddc094b9d409d5b34ef0bbd9c99c5caf21fc373802472cf96a8a280f84e833f99240f1c72a58927153d6fdc19f178f69c5b02db29f33541e2b946c78a54ce693c7c81082f22531b85a1707cf290f73fddd2df88681084b0cc7aff38e977215ae5899'
