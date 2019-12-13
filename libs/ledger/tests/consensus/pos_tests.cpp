@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/constants.hpp"
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
@@ -30,7 +31,7 @@
  * These tests are designed to check that high level consensus checks are being enforced.
  * It does not aim to check:
  * - Anything that requires execution (TXs are there, lanes, slices, merkle hash)
- * - Entropy is correct
+ * - Entropy is correct (notice entropy signature verification is turned off)
  * - Notarisations are correct
  *
  */
@@ -113,18 +114,16 @@ protected:
       ret->block_entropy.confirmations[ConstByteArray("test")];
       assert(!ret->block_entropy.confirmations.empty());
     }
-    else
-    {
-      // This relies on generating blocks in order
-      ret->previous_hash = chain_.GetHeaviestBlock()->hash;
-    }
+
+    // This relies on generating blocks in order
+    ret->previous_hash = chain_.GetHeaviestBlock()->hash;
 
     for (auto const &i : qual_)
     {
       ret->block_entropy.qualified.insert(i.identifier());
     }
 
-    ret->weight = consensus_->GetBlockGenerationWeight(*ret, chain::Address{mining_identity_});
+    ret->weight = consensus_->GetBlockGenerationWeight(*ret, cabinet_[miner_index]);
 
     ret->UpdateDigest();
     ret->miner_signature = cabinet_priv_keys_[miner_index]->Sign(ret->hash);
@@ -134,21 +133,29 @@ protected:
     return ret;
   }
 
+  // Initialise these before the test
   fetch::crypto::mcl::details::MCLInitialiser init_before_others_{};
-  ConsensusPtr                                consensus_;
-  Signers                                     cabinet_priv_keys_;
-  Members                                     cabinet_;  // The identities that are in the cabinet
-  Members                                     qual_;     // The identities that are in qual
-  StakeManagerPtr                             stake_;
-  BeaconSetupServicePtr                       beacon_setup_;
-  BeaconServicePtr                            beacon_;
-  MainChain                                   chain_;
-  StorageInterface                            storage_;
-  Identity                                    mining_identity_;
-  uint64_t const                              aeon_period_{10};
-  uint64_t const                              max_cabinet_size_{10};
-  uint64_t const                              block_interval_ms_{5000};
-  NotarisationPtr                             notarisation_;
+
+  // Run this before any of the tests.
+  const int speedup_ = []() {
+    fetch::chain::InitialiseTestConstants();
+    return 0;
+  }();
+
+  ConsensusPtr          consensus_;
+  Signers               cabinet_priv_keys_;
+  Members               cabinet_;  // The identities that are in the cabinet
+  Members               qual_;     // The identities that are in qual
+  StakeManagerPtr       stake_;
+  BeaconSetupServicePtr beacon_setup_;
+  BeaconServicePtr      beacon_;
+  MainChain             chain_;
+  StorageInterface      storage_;
+  Identity              mining_identity_;
+  uint64_t const        aeon_period_{10};
+  uint64_t const        max_cabinet_size_{10};
+  uint64_t const        block_interval_ms_{5000};
+  NotarisationPtr       notarisation_;
 };
 
 TEST_F(ConsensusTests, test_valid_block)
@@ -211,9 +218,9 @@ TEST_F(ConsensusTests, test_stolen_weight)
   BlockPtr block                = ValidNthBlock(1);
   BlockPtr block_by_other_miner = ValidNthBlock(1, 1);
 
-  block->weight   = block_by_other_miner->weight;
+  block->weight = block_by_other_miner->weight;
   block->UpdateDigest();
-  ret->miner_signature = cabinet_priv_keys_[0]->Sign(block->hash);
+  block->miner_signature = cabinet_priv_keys_[0]->Sign(block->hash);
 
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
 }

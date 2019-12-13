@@ -80,7 +80,7 @@ public:
   Consensus &operator=(Consensus const &) = delete;
   Consensus &operator=(Consensus &&) = delete;
 
-  uint64_t GetBlockGenerationWeight(Block const &previous, Identity const &identity);
+  uint64_t GetBlockGenerationWeight(Block const &previous, Identity const &identity) const;
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
@@ -117,11 +117,11 @@ private:
 
   CabinetPtr GetCabinet(Block const &previous) const;
 
-  bool       ValidBlockTiming(Block const &previous, Block const &proposed) const;
-  bool       ShouldTriggerNewCabinet(Block const &block);
-  bool       EnoughQualSigned(BlockEntropy const &block_entropy) const;
-  uint32_t   GetThreshold(Block const &block) const;
-  void       AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
+  bool     ValidBlockTiming(Block const &previous, Block const &proposed) const;
+  bool     ShouldTriggerNewCabinet(Block const &block);
+  bool     EnoughQualSigned(BlockEntropy const &block_entropy) const;
+  uint32_t GetThreshold(Block const &block) const;
+  void     AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
 };
 
 }  // namespace ledger

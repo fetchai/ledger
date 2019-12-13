@@ -59,6 +59,7 @@
 namespace {
 
 constexpr char const *LOGGING_NAME = "Consensus";
+const std::size_t     DIGEST_LENGTH_BYTES{32};
 
 using Consensus       = fetch::ledger::Consensus;
 using NextBlockPtr    = Consensus::NextBlockPtr;
@@ -219,7 +220,7 @@ bool Consensus::VerifyNotarisation(Block const &block) const
   return true;
 }
 
-uint64_t Consensus::GetBlockGenerationWeight(Block const &current, Identity const &identity)
+uint64_t Consensus::GetBlockGenerationWeight(Block const &current, Identity const &identity) const
 {
   auto beginning_of_aeon = GetBeginningOfAeon(current, chain_);
 
