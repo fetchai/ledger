@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/constants.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/macros.hpp"
 #include "crypto/sha256.hpp"
@@ -170,7 +171,13 @@ bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t index)
 {
   FETCH_LOCK(lock_);
 
-  FETCH_UNUSED(index);
+  if ((hash == fetch::chain::ZERO_HASH) && (index == 0))
+  {
+    // perform the reverting options
+    current_hash_ = hash;
+    state_        = std::make_shared<State>();
+    return true;
+  }
 
   bool success{false};
 
@@ -207,8 +214,14 @@ FakeStorageUnit::Hash FakeStorageUnit::Commit(uint64_t index)
   return EmulateCommit(commit_hash, index);
 }
 
-bool FakeStorageUnit::HashExists(Hash const &hash, uint64_t /*index*/)
+bool FakeStorageUnit::HashExists(Hash const &hash, uint64_t index)
 {
+  if ((hash == chain::ZERO_HASH) && (index == 0))
+  {
+    return true;
+  }
+
+  FETCH_UNUSED(index);
   FETCH_LOCK(lock_);
 
   auto const it  = std::find(state_history_stack_.begin(), state_history_stack_.end(), hash);

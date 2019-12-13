@@ -97,12 +97,11 @@ Router::PacketPtr FormatDirect(Packet::Address const &from, NetworkId const &net
 }  // namespace
 
 DirectMessageService::DirectMessageService(Address address, Router &router, MuddleRegister &reg,
-                                           PeerConnectionList &peers)
+                                           PeerConnectionList & /*peers*/)
   : address_{std::move(address)}
   , name_{GenerateLoggingName(BASE_NAME, router.network_id())}
   , router_{router}
   , register_{reg}
-  , peers_{peers}
 {
   router_.SetDirectHandler(
       [this](Handle handle, PacketPtr packet) { OnDirectMessage(handle, packet); });
@@ -118,15 +117,6 @@ void DirectMessageService::InitiateConnection(Handle handle)
 
   // send the message to the connection
   SendMessageToConnection(handle, msg);
-}
-
-void DirectMessageService::RequestDisconnect(Handle handle)
-{
-  RoutingMessage response{};
-  response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
-
-  // this should be conditional on the connection orientation
-  SendMessageToConnection(handle, response);
 }
 
 void DirectMessageService::SignalConnectionLeft(Handle handle)
@@ -161,8 +151,6 @@ void DirectMessageService::OnDirectMessage(Handle handle, PacketPtr const &packe
 
   // inform the register about the address update for the connection (always applicable if not
   // always used for routing)
-  register_.UpdateAddress(handle, packet->GetSender());
-
   if (SERVICE_MUDDLE == packet->GetService())
   {
     if (CHANNEL_ROUTING == packet->GetChannel())
@@ -199,10 +187,6 @@ void DirectMessageService::OnRoutingMessage(Handle handle, PacketPtr const &pack
     OnRoutingRequest(handle, packet, msg);
     break;
   case RoutingMessage::Type::ROUTING_ACCEPTED:
-    OnRoutingAccepted(handle, packet, msg);
-    break;
-  case RoutingMessage::Type::DISCONNECT_REQUEST:
-    OnRoutingDisconnectRequest(handle, packet, msg);
     break;
   default:
     break;
@@ -243,29 +227,10 @@ void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
     // send the message to the connection
     SendMessageToConnection(handle, response);
   }
-  else if (UpdateStatus::DUPLICATE == status)
-  {
-    // format the message
-    RoutingMessage response{};
-    response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
-
-    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (duplicate) (conn: ", handle,
-                   ")");
-
-    // send the message to the connection
-    SendMessageToConnection(handle, response);
-  }
   else if (UpdateStatus::REPLACED == status)
   {
     // format the message
     RoutingMessage response{};
-    response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
-
-    FETCH_LOG_INFO(logging_name_, "Requesting connection disconnect (replaced) (conn: ", handle,
-                   ")");
-
-    // send the message to the connection
-    SendMessageToConnection(previous_handle, response);
 
     // send the connection request
     response.type = RoutingMessage::Type::ROUTING_REQUEST;
@@ -305,9 +270,6 @@ void DirectMessageService::OnRoutingRequest(Handle handle, PacketPtr const &pack
 
     // set the accepted flag for the main response
     response.type = RoutingMessage::Type::ROUTING_ACCEPTED;
-
-    // update the router to send messages to this route
-    router_.AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true, false);
   }
   else
   {
@@ -316,58 +278,6 @@ void DirectMessageService::OnRoutingRequest(Handle handle, PacketPtr const &pack
 
   // send back the response
   SendMessageToConnection(handle, response, true);
-}
-
-void DirectMessageService::OnRoutingAccepted(Handle handle, PacketPtr const &packet,
-                                             RoutingMessage const &msg)
-{
-  FETCH_UNUSED(msg);
-  FETCH_LOG_TRACE(logging_name_, "OnRoutingAccepted (conn: ", handle, ")");
-
-  auto const status =
-      router_.AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true, false);
-
-  switch (status)
-  {
-  case Router::UpdateStatus::NO_CHANGE:
-  case Router::UpdateStatus::UPDATED:
-    FETCH_LOG_INFO(logging_name_, "New routable connection (conn: ", handle, ")");
-    break;
-
-  case Router::UpdateStatus::DUPLICATE_DIRECT:
-    FETCH_LOG_INFO(logging_name_, "Duplicate routing link (conn: ", handle, ")");
-    break;
-  }
-}
-
-void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr const &packet,
-                                                      RoutingMessage const &msg)
-{
-  FETCH_UNUSED(msg);
-  FETCH_UNUSED(packet);
-  FETCH_LOG_TRACE(logging_name_, "OnRoutingDisconnectRequest (conn: ", handle, ")");
-
-  auto const conn        = register_.LookupConnection(handle).lock();
-  bool const is_outgoing = conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING;
-
-  // if this is not an outgoing connection then we need to signal that the other side disconnects
-  // from the client
-  if (is_outgoing)
-  {
-    // remove this persistent peer connection
-    peers_.RemovePersistentPeer(handle);
-    peers_.RemoveConnection(handle);  // TODO(EJF): There should not be this duplication
-
-    FETCH_LOG_INFO(logging_name_, "Removing the connection (conn: ", handle, ")");
-  }
-  else
-  {
-    RoutingMessage response{};
-    response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
-
-    // this should be conditional on the connection orientation
-    SendMessageToConnection(handle, response);
-  }
 }
 
 char const *DirectMessageService::ToString(UpdateStatus status)
