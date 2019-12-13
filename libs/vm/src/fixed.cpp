@@ -17,11 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "vm/fixed.hpp"
+#include "vm/opcode_charges.hpp"
 
 #include <algorithm>
-#include <cstddef>
-#include <cstdint>
-#include <string>
 
 namespace fetch {
 namespace vm {
@@ -202,90 +200,90 @@ void Fixed128::Negate(Ptr<Object> &object)
 ChargeAmount Fixed128::IsEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
                                               Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::IsNotEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
                                                  Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::IsLessThanChargeEstimator(Ptr<Object> const & /*lhso*/,
                                                  Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::IsLessThanOrEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
                                                         Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::IsGreaterThanChargeEstimator(Ptr<Object> const & /*lhso*/,
                                                     Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::IsGreaterThanOrEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
                                                            Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::AddChargeEstimator(Ptr<Object> const & /*lhso*/,
                                           Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::InplaceAddChargeEstimator(Ptr<Object> const & /*lhso*/,
                                                  Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::SubtractChargeEstimator(Ptr<Object> const & /*lhso*/,
                                                Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::InplaceSubtractChargeEstimator(Ptr<Object> const & /*lhso*/,
                                                       Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::MultiplyChargeEstimator(Ptr<Object> const & /*lhso*/,
                                                Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::InplaceMultiplyChargeEstimator(Ptr<Object> const & /*lhso*/,
                                                       Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::DivideChargeEstimator(Ptr<Object> const & /*lhso*/,
                                              Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::InplaceDivideChargeEstimator(Ptr<Object> const & /*lhso*/,
                                                     Ptr<Object> const & /*rhso*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 ChargeAmount Fixed128::NegateChargeEstimator(Ptr<Object> const & /*object*/)
 {
-  return 1;
+  return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
 bool Fixed128::SerializeTo(MsgPackSerializer &buffer)

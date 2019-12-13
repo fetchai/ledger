@@ -178,37 +178,37 @@ public:
   ChargeAmount IsEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
                                       Ptr<Object> const & /*rhso*/) override
   {
-    return 1;
+    return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
   }
 
   ChargeAmount IsNotEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
                                          Ptr<Object> const & /*rhso*/) override
   {
-    return 1;
+    return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
   }
 
   ChargeAmount IsLessThanChargeEstimator(Ptr<Object> const & /*lhso*/,
                                          Ptr<Object> const & /*rhso*/) override
   {
-    return 1;
+    return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
   }
 
   ChargeAmount IsLessThanOrEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
                                                 Ptr<Object> const & /*rhso*/) override
   {
-    return 1;
+    return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
   }
 
   ChargeAmount IsGreaterThanChargeEstimator(Ptr<Object> const & /*lhso*/,
                                             Ptr<Object> const & /*rhso*/) override
   {
-    return 1;
+    return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
   }
 
   ChargeAmount IsGreaterThanOrEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
                                                    Ptr<Object> const & /*rhso*/) override
   {
-    return 1;
+    return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
   }
 
   bool ToJSON(vm::JSONVariant &variant) override
