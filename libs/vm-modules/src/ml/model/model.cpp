@@ -26,9 +26,7 @@
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/loss_functions/types.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
-#include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/use_estimator.hpp"
 
 using namespace fetch::vm;
@@ -40,6 +38,7 @@ namespace model {
 
 using fetch::math::SizeType;
 using fetch::ml::ops::LossType;
+using fetch::ml::ops::MetricType;
 using fetch::ml::OptimiserType;
 using fetch::ml::details::ActivationType;
 using VMPtrString = Ptr<String>;
@@ -78,6 +77,13 @@ std::map<std::string, uint8_t> const VMModel::model_categories_{
     {"sequential", static_cast<uint8_t>(ModelCategory::SEQUENTIAL)},
     {"regressor", static_cast<uint8_t>(ModelCategory::REGRESSOR)},
     {"classifier", static_cast<uint8_t>(ModelCategory::CLASSIFIER)},
+};
+
+std::map<std::string, MetricType> const VMModel::metrics_{
+    {"categorical accuracy", MetricType::CATEGORICAL_ACCURACY},
+    {"cel", MetricType::CROSS_ENTROPY},
+    {"mse", MetricType ::MEAN_SQUARE_ERROR},
+    {"scel", MetricType ::SOFTMAX_CROSS_ENTROPY},
 };
 
 VMModel::VMModel(VM *vm, TypeId type_id)
@@ -129,8 +135,37 @@ Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
  * @param loss a valid loss function ["mse", ...]
  * @param optimiser a valid optimiser name ["adam", "sgd" ...]
  */
-void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
-                                fetch::vm::Ptr<fetch::vm::String> const &optimiser)
+void VMModel::CompileSequential(Ptr<String> const &loss, Ptr<String> const &optimiser)
+{
+  std::vector<MetricType> mets;
+  CompileSequentialImplementation(loss, optimiser, mets);
+}
+
+/**
+ * @brief VMModel::CompileSequentialWithMetrics
+ * @param loss a valid loss function ["mse", ...]
+ * @param optimiser a valid optimiser name ["adam", "sgd" ...]
+ * @param metrics an array of valid metric names ["categorical accuracy", "mse" ...]
+ */
+void VMModel::CompileSequentialWithMetrics(Ptr<String> const &loss, Ptr<String> const &optimiser,
+                                           Ptr<vm::Array<Ptr<String>>> const &metrics)
+{
+  // Make vector<MetricType> from vm::Array
+  std::size_t const       n_metrics = metrics->elements.size();
+  std::vector<MetricType> mets;
+  mets.reserve(n_metrics);
+
+  for (std::size_t i = 0; i < n_metrics; ++i)
+  {
+    Ptr<String> ptr_string = metrics->elements.at(i);
+    MetricType  mt         = ParseName(ptr_string->string(), metrics_, "metric");
+    mets.emplace_back(mt);
+  }
+  CompileSequentialImplementation(loss, optimiser, mets);
+}
+
+void VMModel::CompileSequentialImplementation(Ptr<String> const &loss, Ptr<String> const &optimiser,
+                                              std::vector<MetricType> const &metrics)
 {
   try
   {
@@ -144,7 +179,7 @@ void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
     }
     PrepareDataloader();
     compiled_ = false;
-    model_->Compile(optimiser_type, loss_type);
+    model_->Compile(optimiser_type, loss_type, metrics);
   }
   catch (std::exception const &e)
   {
@@ -236,9 +271,20 @@ void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels
   model_->Train();
 }
 
-typename VMModel::DataType VMModel::Evaluate()
+vm::Ptr<Array<math::DataType>> VMModel::Evaluate()
 {
-  return (model_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TRAIN)).at(0);
+  auto     ml_scores = model_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+  SizeType n_scores  = ml_scores.size();
+
+  vm::Ptr<Array<math::DataType>> scores = this->vm_->CreateNewObject<Array<math::DataType>>(
+      this->vm_->GetTypeId<math::DataType>(), static_cast<int32_t>(n_scores));
+
+  for (SizeType i{0}; i < n_scores; i++)
+  {
+    scores->elements.at(i) = ml_scores.at(i);
+  }
+
+  return scores;
 }
 
 vm::Ptr<VMModel::VMTensor> VMModel::Predict(vm::Ptr<VMTensor> const &data)
@@ -250,9 +296,12 @@ vm::Ptr<VMModel::VMTensor> VMModel::Predict(vm::Ptr<VMTensor> const &data)
 
 void VMModel::Bind(Module &module, bool const experimental_enabled)
 {
+  // model construction always requires initialising some strings, ptrs etc. but is very cheap
+  static const ChargeAmount FIXED_CONSTRUCTION_CHARGE{100};
+
   auto interface =
       module.CreateClassType<VMModel>("Model")
-          .CreateConstructor(&VMModel::Constructor)
+          .CreateConstructor(&VMModel::Constructor, FIXED_CONSTRUCTION_CHARGE)
           .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMModel> {
             return Ptr<VMModel>{new VMModel(vm, type_id)};
           })
@@ -262,6 +311,8 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                                 UseEstimator(&ModelEstimator::LayerAddDenseActivation))
           .CreateMemberFunction("compile", &VMModel::CompileSequential,
                                 UseEstimator(&ModelEstimator::CompileSequential))
+          .CreateMemberFunction("compile", &VMModel::CompileSequentialWithMetrics,
+                                UseEstimator(&ModelEstimator::CompileSequentialWithMetrics))
           .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
           .CreateMemberFunction("evaluate", &VMModel::Evaluate,
                                 UseEstimator(&ModelEstimator::Evaluate))

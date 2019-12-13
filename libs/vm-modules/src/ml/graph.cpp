@@ -58,8 +58,7 @@ void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
 Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
 {
   MathTensorType    t   = graph_.Evaluate(name->string(), false);
-  Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
-  (*ret).Copy(t);
+  Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t);
   return ret;
 }
 

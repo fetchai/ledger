@@ -32,6 +32,7 @@
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "ledger/miner/basic_miner.hpp"
 #include "ledger/protocols/dag_service.hpp"
+#include "ledger/protocols/main_chain_rpc_client.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
@@ -103,7 +104,6 @@ public:
     uint32_t     peers_update_cycle_ms{0};
     bool         disable_signing{false};
     bool         sign_broadcasts{false};
-    bool         load_genesis_file{false};
     bool         kademlia_routing{true};
     std::string  genesis_file_location{""};
     bool         proof_of_stake{false};
@@ -123,55 +123,76 @@ public:
     }
   };
 
-  Constellation(CertificatePtr const &certificate, Config config);
+  Constellation(CertificatePtr certificate, Config config);
   ~Constellation() override = default;
 
-  bool Run(UriSet const &initial_peers, core::WeakRunnable bootstrap_monitor);
+  bool Run(UriSet const &initial_peers, core::WeakRunnable const &bootstrap_monitor);
   void SignalStop();
-
-  void DumpOpenAPI(std::ostream &stream);
 
 protected:
   void OnBlock(ledger::Block const &block) override;
 
 private:
-  using MuddlePtr              = muddle::MuddlePtr;
-  using NetworkManager         = network::NetworkManager;
-  using BlockPackingAlgorithm  = ledger::BasicMiner;
-  using BlockCoordinator       = ledger::BlockCoordinator;
-  using MainChain              = ledger::MainChain;
-  using MainChainRpcService    = ledger::MainChainRpcService;
-  using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
-  using LaneServices           = ledger::StorageUnitBundledService;
-  using StorageUnitClient      = ledger::StorageUnitClient;
-  using LaneIndex              = uint32_t;
-  using StorageUnitClientPtr   = std::shared_ptr<StorageUnitClient>;
-  using Flag                   = std::atomic<bool>;
-  using ExecutionManager       = ledger::ExecutionManager;
-  using ExecutionManagerPtr    = std::shared_ptr<ExecutionManager>;
-  using LaneRemoteControl      = ledger::LaneRemoteControl;
-  using HttpServer             = http::HTTPServer;
-  using HttpModule             = http::HTTPModule;
-  using HttpModulePtr          = std::shared_ptr<HttpModule>;
-  using HttpModules            = std::vector<HttpModulePtr>;
-  using TransactionProcessor   = ledger::TransactionProcessor;
-  using TrustSystem            = p2p::P2PTrustBayRank<muddle::Address>;
-  using DAGPtr                 = std::shared_ptr<ledger::DAGInterface>;
-  using DAGServicePtr          = std::shared_ptr<ledger::DAGService>;
-  using SynergeticMinerPtr     = std::unique_ptr<ledger::SynergeticMinerInterface>;
-  using NaiveSynergeticMiner   = ledger::NaiveSynergeticMiner;
-  using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
-  using BeaconServicePtr       = std::shared_ptr<fetch::beacon::BeaconService>;
-  using BeaconSetupServicePtr  = std::shared_ptr<fetch::beacon::BeaconSetupService>;
-  using EntropyPtr             = std::unique_ptr<ledger::EntropyGeneratorInterface>;
-  using ShardManagementService = shards::ShardManagementService;
-  using ShardMgmtServicePtr    = std::shared_ptr<ShardManagementService>;
-  using ShardConfigs           = ledger::ShardConfigs;
-  using TxStatusCache          = ledger::TransactionStatusCache;
-  using TxStatusCachePtr       = std::shared_ptr<TxStatusCache>;
+  using MuddlePtr                = muddle::MuddlePtr;
+  using NetworkManager           = network::NetworkManager;
+  using BlockPackingAlgorithm    = ledger::BasicMiner;
+  using BlockPackingAlgorithmPtr = std::unique_ptr<ledger::BasicMiner>;
+  using BlockCoordinator         = ledger::BlockCoordinator;
+  using BlockCoordinatorPtr      = std::unique_ptr<ledger::BlockCoordinator>;
+  using MainChainPtr             = std::unique_ptr<ledger::MainChain>;
+  using MainChainRpcService      = ledger::MainChainRpcService;
+  using MainChainRpcServicePtr   = std::shared_ptr<MainChainRpcService>;
+  using MainChainRpcClientPtr    = std::shared_ptr<ledger::MainChainRpcClient>;
+  using LaneServices             = ledger::StorageUnitBundledService;
+  using StorageUnitClient        = ledger::StorageUnitClient;
+  using LaneIndex                = uint32_t;
+  using StorageUnitClientPtr     = std::shared_ptr<StorageUnitClient>;
+  using Flag                     = std::atomic<bool>;
+  using ExecutionManager         = ledger::ExecutionManager;
+  using ExecutionManagerPtr      = std::shared_ptr<ExecutionManager>;
+  using LaneRemoteControl        = ledger::LaneRemoteControl;
+  using LaneRemoteControlPtr     = std::unique_ptr<LaneRemoteControl>;
+  using HttpServer               = http::HTTPServer;
+  using HttpServerPtr            = std::unique_ptr<HttpServer>;
+  using HttpModule               = http::HTTPModule;
+  using HttpModulePtr            = std::shared_ptr<HttpModule>;
+  using HttpModules              = std::vector<HttpModulePtr>;
+  using TransactionProcessor     = ledger::TransactionProcessor;
+  using TransactionProcessorPtr  = std::unique_ptr<ledger::TransactionProcessor>;
+  using TrustSystem              = p2p::P2PTrustBayRank<muddle::Address>;
+  using DAGPtr                   = std::shared_ptr<ledger::DAGInterface>;
+  using DAGServicePtr            = std::shared_ptr<ledger::DAGService>;
+  using SynergeticMinerPtr       = std::unique_ptr<ledger::SynergeticMinerInterface>;
+  using NaiveSynergeticMiner     = ledger::NaiveSynergeticMiner;
+  using StakeManagerPtr          = std::shared_ptr<ledger::StakeManager>;
+  using BeaconServicePtr         = std::shared_ptr<fetch::beacon::BeaconService>;
+  using BeaconSetupServicePtr    = std::shared_ptr<fetch::beacon::BeaconSetupService>;
+  using EntropyPtr               = std::unique_ptr<ledger::EntropyGeneratorInterface>;
+  using ShardManagementService   = shards::ShardManagementService;
+  using ShardMgmtServicePtr      = std::shared_ptr<ShardManagementService>;
+  using ShardConfigs             = ledger::ShardConfigs;
+  using TxStatusCache            = ledger::TransactionStatusCache;
+  using TxStatusCachePtr         = std::shared_ptr<TxStatusCache>;
 
   using OpenAPIHttpModulePtr     = std::shared_ptr<OpenAPIHttpModule>;
   using HealthCheckHttpModulePtr = std::shared_ptr<HealthCheckHttpModule>;
+
+  /// @name Application Lifecycle
+  /// @{
+  bool OnStartup();
+  bool OnBringUpLaneServices();
+  bool OnRestorePreviousData(ledger::GenesisFileCreator::ConsensusParameters &params);
+  bool OnBringUpExternalNetwork(ledger::GenesisFileCreator::ConsensusParameters &params,
+                                UriSet const &                                   initial_peers);
+  bool OnRunning(core::WeakRunnable const &bootstrap_monitor);
+  void OnTearDownExternalNetwork();
+  void OnTearDownLaneServices();
+  void OnCleanup();
+
+  bool StartInternalMuddle();
+  bool GenesisSanityChecks(ledger::GenesisFileCreator::Result genesis_status);
+  bool CheckStateIntegrity();
+  /// @}
 
   /// @name Configuration
   /// @{
@@ -200,7 +221,7 @@ private:
   TxStatusCachePtr     tx_status_cache_;  ///< Cache of transaction status
   LaneServices         lane_services_;    ///< The lane services
   StorageUnitClientPtr storage_;          ///< The storage client to the lane services
-  LaneRemoteControl    lane_control_;     ///< The lane control client for the lane services
+  LaneRemoteControlPtr lane_control_;     ///< The lane control client for the lane services
   ShardMgmtServicePtr  shard_management_;
 
   DAGPtr             dag_;
@@ -224,15 +245,16 @@ private:
 
   /// @name Blockchain and Mining
   /// @[
-  MainChain             chain_;              ///< The main block chain component
-  BlockPackingAlgorithm block_packer_;       ///< The block packing / mining algorithm
-  BlockCoordinator      block_coordinator_;  ///< The block execution coordinator
+  MainChainPtr             chain_;              ///< The main block chain component
+  BlockPackingAlgorithmPtr block_packer_;       ///< The block packing / mining algorithm
+  BlockCoordinatorPtr      block_coordinator_;  ///< The block execution coordinator
   /// @}
 
   /// @name Top Level Services
   /// @{
-  MainChainRpcServicePtr main_chain_service_;  ///< Service for block transmission over the network
-  TransactionProcessor   tx_processor_;        ///< The transaction entrypoint
+  MainChainRpcClientPtr   main_chain_rpc_client_;
+  MainChainRpcServicePtr  main_chain_service_;  ///< Service for block transmission over the network
+  TransactionProcessorPtr tx_processor_;        ///< The transaction entrypoint
   /// @}
 
   /// @name Agent support
@@ -246,7 +268,7 @@ private:
   /// @{
   OpenAPIHttpModulePtr     http_open_api_module_;
   HealthCheckHttpModulePtr health_check_module_;
-  HttpServer               http_;          ///< The HTTP server
+  HttpServerPtr            http_;          ///< The HTTP server
   HttpModules              http_modules_;  ///< The set of modules currently configured
   /// @}
 

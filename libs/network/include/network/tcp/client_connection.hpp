@@ -375,6 +375,11 @@ private:
       else
       {
         // TODO(issue 16): this strand should be unnecessary
+        if (message.success)
+        {
+          message.success();
+        }
+
         auto strandLock = strand_.lock();
         if (strandLock)
         {

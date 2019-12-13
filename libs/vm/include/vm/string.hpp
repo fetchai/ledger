@@ -81,6 +81,17 @@ struct String : public Object
   bool        IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   void        Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
 
+  ChargeAmount IsEqualChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount IsNotEqualChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount IsLessThanChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount IsLessThanOrEqualChargeEstimator(Ptr<Object> const &lhso,
+                                                Ptr<Object> const &rhso) override;
+  ChargeAmount IsGreaterThanChargeEstimator(Ptr<Object> const &lhso,
+                                            Ptr<Object> const &rhso) override;
+  ChargeAmount IsGreaterThanOrEqualChargeEstimator(Ptr<Object> const &lhso,
+                                                   Ptr<Object> const &rhso) override;
+  ChargeAmount AddChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+
   bool SerializeTo(MsgPackSerializer &buffer) override;
   bool DeserializeFrom(MsgPackSerializer &buffer) override;
 

@@ -22,18 +22,11 @@
 #include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
-#include "ledger/identifier.hpp"
 #include "ledger/transaction_validator.hpp"
 
 namespace fetch {
 namespace ledger {
 namespace {
-
-bool IsCreateWealth(chain::Transaction const &tx)
-{
-  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
-         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
-}
 
 }  // namespace
 
@@ -61,18 +54,12 @@ ContractExecutionStatus TransactionValidator::operator()(chain::Transaction cons
     return ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK;
   }
 
-  // SHORT TERM EXEMPTION - While no state file exists (and the wealth endpoint is still present)
-  // this and only this contract is exempt from the pre-validation checks
-  if (IsCreateWealth(tx))
-  {
-    return ContractExecutionStatus::SUCCESS;
-  }
-
   // attach the token contract to the storage engine
-  StateAdapter storage_adapter{storage_, Identifier{"fetch.token"}};
+  StateAdapter storage_adapter{storage_, "fetch.token"};
 
   {
-    ContractContext ctx{&token_contract_, tx.contract_address(), &storage_adapter, block_index};
+    ContractContext         ctx{&token_contract_, tx.contract_address(), nullptr, &storage_adapter,
+                        block_index};
     ContractContextAttacher attacher{token_contract_, ctx};
 
     // CHECK: Ensure there is permission from the originating address to perform the transaction

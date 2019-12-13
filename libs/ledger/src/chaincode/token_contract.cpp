@@ -73,9 +73,7 @@ constexpr uint64_t MAX_TOKENS = 0xFFFFFFFFFFFFFFFFull;
 
 TokenContract::TokenContract()
 {
-  // TODO(tfr): I think the function CreateWealth should be OnInit?
   OnTransaction("deed", this, &TokenContract::UpdateDeed);
-  OnTransaction("wealth", this, &TokenContract::CreateWealth);
   OnTransaction("transfer", this, &TokenContract::Transfer);
   OnTransaction("addStake", this, &TokenContract::AddStake);
   OnTransaction("deStake", this, &TokenContract::DeStake);
@@ -90,7 +88,7 @@ DeedPtr TokenContract::GetDeed(chain::Address const &address)
   DeedPtr deed{};
 
   WalletRecord record{};
-  if (GetStateRecord(record, address.display()))
+  if (GetStateRecord(record, address))
   {
     deed = record.deed;
   }
@@ -102,19 +100,19 @@ void TokenContract::SetDeed(chain::Address const &address, DeedPtr const &deed)
 {
   // create or lookup the wallet record
   WalletRecord record{};
-  GetStateRecord(record, address.display());
+  GetStateRecord(record, address);
 
   // update the deed
   record.deed = deed;
 
   // write back the wallet record
-  SetStateRecord(record, address.display());
+  SetStateRecord(record, address);
 }
 
 uint64_t TokenContract::GetBalance(chain::Address const &address)
 {
   WalletRecord record{};
-  GetStateRecord(record, address.display());
+  GetStateRecord(record, address);
 
   return record.balance;
 }
@@ -122,7 +120,7 @@ uint64_t TokenContract::GetBalance(chain::Address const &address)
 bool TokenContract::AddTokens(chain::Address const &address, uint64_t amount)
 {
   WalletRecord record{};
-  GetStateRecord(record, address.display());
+  GetStateRecord(record, address);
 
   if (amount > (MAX_TOKENS - record.balance))
   {
@@ -131,7 +129,7 @@ bool TokenContract::AddTokens(chain::Address const &address, uint64_t amount)
 
   record.balance += amount;
 
-  auto const status = SetStateRecord(record, address.display());
+  auto const status = SetStateRecord(record, address);
 
   return status == StateAdapter::Status::OK;
 }
@@ -139,7 +137,7 @@ bool TokenContract::AddTokens(chain::Address const &address, uint64_t amount)
 bool TokenContract::SubtractTokens(chain::Address const &address, uint64_t amount)
 {
   WalletRecord record{};
-  GetStateRecord(record, address.display());
+  GetStateRecord(record, address);
 
   if (amount > record.balance)
   {
@@ -148,7 +146,7 @@ bool TokenContract::SubtractTokens(chain::Address const &address, uint64_t amoun
 
   record.balance -= amount;
 
-  auto const status = SetStateRecord(record, address.display());
+  auto const status = SetStateRecord(record, address);
 
   return status == StateAdapter::Status::OK;
 }
@@ -158,7 +156,7 @@ bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address 
 {
   // look up the state record (to see if there is a deed associated with this address)
   WalletRecord from_record{};
-  if (!GetStateRecord(from_record, tx.from().display()))
+  if (!GetStateRecord(from_record, tx.from()))
   {
     return false;
   }
@@ -189,27 +187,6 @@ bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address 
   return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
 }
 
-Contract::Result TokenContract::CreateWealth(chain::Transaction const &tx)
-{
-  // parse the payload as JSON
-  Variant data;
-  if (ParseAsJson(tx, data))
-  {
-    // attempt to extract the amount field
-    uint64_t amount{0};
-    if (Extract(data, AMOUNT_NAME, amount))
-    {
-      // mint new tokens
-      if (AddTokens(tx.from(), amount))
-      {
-        return {Contract::Status::OK};
-      }
-    }
-  }
-
-  return {Contract::Status::FAILED};
-}
-
 /**
  * Handles transaction related to DEED operation (create, amend, delete).
  *
@@ -231,7 +208,7 @@ Contract::Result TokenContract::UpdateDeed(chain::Transaction const &tx)
 
   // retrieve the record (if it exists)
   WalletRecord record{};
-  GetStateRecord(record, tx.from().display());
+  GetStateRecord(record, tx.from());
 
   if (record.deed)
   {
@@ -267,7 +244,7 @@ Contract::Result TokenContract::UpdateDeed(chain::Transaction const &tx)
     }
   }
 
-  auto const status = SetStateRecord(record, tx.from().display());
+  auto const status = SetStateRecord(record, tx.from());
   if (status != StateAdapter::Status::OK)
   {
     return {Status::FAILED};
@@ -298,7 +275,7 @@ Contract::Result TokenContract::AddStake(chain::Transaction const &tx)
     {
       // look up the state record (to see if there is a deed associated with this address)
       WalletRecord record{};
-      if (GetStateRecord(record, tx.from().display()))
+      if (GetStateRecord(record, tx.from()))
       {
         // ensure the transaction has authority over this deed
         if (IsOperationValid(record, tx, Deed::STAKE))
@@ -317,7 +294,7 @@ Contract::Result TokenContract::AddStake(chain::Transaction const &tx)
                                  crypto::Identity(input.FromBase64()), amount});
 
             // save the state
-            auto const status = SetStateRecord(record, tx.from().display());
+            auto const status = SetStateRecord(record, tx.from());
             if (status == StateAdapter::Status::OK)
             {
               return {Status::OK};
@@ -347,7 +324,7 @@ Contract::Result TokenContract::DeStake(chain::Transaction const &tx)
     {
       // look up the state record (to see if there is a deed associated with this address)
       WalletRecord record{};
-      if (GetStateRecord(record, tx.from().display()))
+      if (GetStateRecord(record, tx.from()))
       {
         // ensure the transaction has authority over this deed
         if (IsOperationValid(record, tx, Deed::STAKE))
@@ -362,7 +339,7 @@ Contract::Result TokenContract::DeStake(chain::Transaction const &tx)
             record.cooldown_stake[context().block_index + chain::STAKE_COOL_DOWN_PERIOD] += amount;
 
             // save the state
-            auto const status = SetStateRecord(record, tx.from().display());
+            auto const status = SetStateRecord(record, tx.from());
             if (status == StateAdapter::Status::OK)
             {
               return {Status::OK};
@@ -380,7 +357,7 @@ Contract::Result TokenContract::CollectStake(chain::Transaction const &tx)
 {
   WalletRecord record{};
 
-  if (GetStateRecord(record, tx.from().display()))
+  if (GetStateRecord(record, tx.from()))
   {
     // ensure the transaction has authority over this deed
     if (IsOperationValid(record, tx, Deed::STAKE))
@@ -388,7 +365,7 @@ Contract::Result TokenContract::CollectStake(chain::Transaction const &tx)
       // Collect all cooled down stakes and put them back into the account
       record.CollectStake(context().block_index);
 
-      auto const status = SetStateRecord(record, tx.from().display());
+      auto const status = SetStateRecord(record, tx.from());
       if (status == StateAdapter::Status::OK)
       {
         return {Status::OK};
@@ -410,7 +387,7 @@ Contract::Status TokenContract::Balance(Query const &query, Query &response)
     {
       // look up the record
       WalletRecord record{};
-      GetStateRecord(record, address.display());
+      GetStateRecord(record, address);
 
       // formulate the response
       response            = Variant::Object();
@@ -438,7 +415,7 @@ Contract::Status TokenContract::Stake(Query const &query, Query &response)
     {
       // look up the record
       WalletRecord record{};
-      GetStateRecord(record, address.display());
+      GetStateRecord(record, address);
 
       // formulate the response
       response          = Variant::Object();
@@ -466,7 +443,7 @@ Contract::Status TokenContract::CooldownStake(Query const &query, Query &respons
     {
       // look up the record
       WalletRecord record{};
-      GetStateRecord(record, address.display());
+      GetStateRecord(record, address);
 
       // formulate the response
       response  = Variant::Object();

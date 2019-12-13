@@ -17,16 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
+#include "ledger/protocols/main_chain_rpc_client_interface.hpp"
+#include "muddle/create_muddle_fake.hpp"
 
-namespace fetch {
-namespace byte_array {
-class ConstByteArray;
-}
-namespace ledger {
+#include "gmock/gmock.h"
 
-uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
-                           byte_array::ConstByteArray const &contract, uint32_t log2_num_lanes);
+class MockMainChainRpcClient : public fetch::ledger::MainChainRpcClientInterface
+{
+public:
+  using Digest = fetch::Digest;
 
-}  // namespace ledger
-}  // namespace fetch
+  MOCK_METHOD2(GetHeaviestChain, BlocksPromise(MuddleAddress, uint64_t));
+  MOCK_METHOD4(GetCommonSubChain, BlocksPromise(MuddleAddress, Digest, Digest, uint64_t));
+  MOCK_METHOD2(TimeTravel, TraveloguePromise(MuddleAddress, Digest));
+};

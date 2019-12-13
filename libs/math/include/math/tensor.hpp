@@ -459,14 +459,26 @@ private:
   template <SizeType N, typename FirstIndex, typename... Indices>
   SizeType UnrollComputeColIndex(FirstIndex &&index, Indices &&... indices) const
   {
-    return static_cast<SizeType>(index) * stride_[N] +
+    if (shape_.at(N) <= SizeType(index))
+    {
+      throw exceptions::WrongIndices(
+          "Tensor::At : index " + std::to_string(SizeType(index)) + " is out of bounds of axis " +
+          std::to_string(N) + " (max possible index is " + std::to_string(shape_.at(N) - 1) + ").");
+    }
+    return static_cast<SizeType>(index) * stride_.at(N) +
            UnrollComputeColIndex<N + 1>(std::forward<Indices>(indices)...);
   }
 
   template <SizeType N, typename FirstIndex>
   SizeType UnrollComputeColIndex(FirstIndex &&index) const
   {
-    return static_cast<SizeType>(index) * stride_[N];
+    if (shape_.at(N) <= SizeType(index))
+    {
+      throw exceptions::WrongIndices(
+          "Tensor::At : index " + std::to_string(SizeType(index)) + " is out of bounds of axis " +
+          std::to_string(N) + " (max possible index is " + std::to_string(shape_.at(N) - 1) + ").");
+    }
+    return static_cast<SizeType>(index) * stride_.at(N);
   }
 
   void UpdateStrides()
@@ -685,10 +697,20 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
 {
   Tensor            ret;
-  SizeType          n = 1;
+  SizeType          n = 0;
   std::vector<Type> elems;
   elems.reserve(1024);
-  bool failed = false;
+  bool failed         = false;
+  bool prev_backslash = false;
+  enum
+  {
+    UNSET,
+    SEMICOLON,
+    NEWLINE
+  } new_row_marker                = UNSET;
+  bool        reached_actual_data = false;
+  std::size_t first_row_size      = 0;
+  std::size_t current_row_size    = 0;
 
   // Text parsing loop
   for (SizeType i = 0; i < c.size();)
@@ -697,18 +719,77 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     switch (c[i])
     {
     case ';':
-      if (i < c.size() - 1)
+      if (reached_actual_data)
       {
-        ++n;
+        if (new_row_marker == UNSET)
+        {
+          new_row_marker = SEMICOLON;
+          // The size of the first row is the size of the vector so far
+          first_row_size = elems.size();
+        }
+        if (new_row_marker == SEMICOLON)
+        {
+          if ((i < c.size() - 1))
+          {
+            reached_actual_data = false;
+            if (current_row_size != first_row_size)
+            {
+              // size is not a multiple of first_row_size
+              std::stringstream s;
+              s << "Invalid shape: row " << n << " has " << current_row_size
+                << " elements, should have " << first_row_size;
+              throw exceptions::WrongShape(s.str());
+            }
+          }
+        }
       }
       ++i;
       break;
-    case '+':
+    case 'r':
+    case 'n':
+      if (!prev_backslash)
+      {
+        break;
+      }
+      prev_backslash = false;
+      FETCH_FALLTHROUGH;  // explicit fallthrough to the next case
+    case '\r':
+    case '\n':
+      if (reached_actual_data)
+      {
+        if (new_row_marker == UNSET)
+        {
+          new_row_marker = NEWLINE;
+          // The size of the first row is the size of the vector so far
+          first_row_size = elems.size();
+        }
+        if (new_row_marker == NEWLINE)
+        {
+          if ((i < c.size() - 1))
+          {
+            reached_actual_data = false;
+            if (current_row_size != first_row_size)
+            {
+              // size is not a multiple of first_row_size
+              std::stringstream s;
+              s << "Invalid shape: row " << n << " has " << current_row_size
+                << " elements, should have " << first_row_size;
+              throw exceptions::WrongShape(s.str());
+            }
+          }
+        }
+      }
+      ++i;
+      break;
+    case '\\':
+      prev_backslash = true;
+      ++i;
+      break;
     case ',':
     case ' ':
-    case '\n':
+    case '+':
     case '\t':
-    case '\r':
+      prev_backslash = false;
       ++i;
       break;
     default:
@@ -719,12 +800,31 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       else
       {
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
-        auto        float_val = std::atof(cur_elem.c_str());
+        auto        float_val = math::Type<T>(cur_elem);
         elems.emplace_back(Type(float_val));
+        prev_backslash = false;
+        if (!reached_actual_data)
+        {
+          // Where we actually start counting rows
+          ++n;
+          reached_actual_data = true;
+          current_row_size    = 0;
+        }
+        current_row_size++;
       }
       break;
     }
   }
+  // Check last line parsed also
+  if ((first_row_size > 0) && (current_row_size != first_row_size))
+  {
+    // size is not a multiple of first_row_size
+    std::stringstream s;
+    s << "Invalid shape: row " << n << " has " << current_row_size << " elements, should have "
+      << first_row_size;
+    throw exceptions::WrongShape(s.str());
+  }
+
   SizeType m = elems.size() / n;
 
   if ((m * n) != elems.size())
@@ -1599,7 +1699,10 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Transpose() const
 {
   // TODO (private 867) -
-  assert(shape_.size() == 2);
+  if (shape_.size() != 2)
+  {
+    throw exceptions::WrongShape("Can not transpose a tensor which is not 2-dimensional!");
+  }
   SizeVector new_axes{1, 0};
 
   Tensor ret({shape().at(1), shape().at(0)});
@@ -2741,7 +2844,8 @@ struct Tensor<T, C>::TensorSetter
     {
       throw exceptions::WrongIndices("Tensor::IndexOf : index " + std::to_string(SizeType(index)) +
                                      " is out of bounds of axis " + std::to_string(N) +
-                                     " (max possible index " + std::to_string(shape[N] - 1) + ").");
+                                     " (max possible index is " + std::to_string(shape[N] - 1) +
+                                     ").");
     }
     return stride[N] * SizeType(index) +
            TensorSetter<N + 1, Args...>::IndexOf(stride, shape, std::forward<Args>(args)...);

@@ -133,7 +133,7 @@ public:
   void Finish(Cabinet const &qual, MuddleAddress const &node_id);
 
   uint32_t                                       NumComplaintsReceived(Cabinet const &qual) const;
-  QualComplaints                                 ComplaintsReceived(Cabinet const &qual) const;
+  QualComplaints                                 ComplaintsReceived() const;
   std::size_t                                    ComplaintsSize() const;
   bool                                           FindComplaint(MuddleAddress const &id) const;
   std::set<QualComplaintsManager::MuddleAddress> Complaints() const;

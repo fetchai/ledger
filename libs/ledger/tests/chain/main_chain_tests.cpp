@@ -104,11 +104,16 @@ std::string Hashes(std::vector<BlockPtr> const &v)
 
 class MainChainTests : public ::testing::TestWithParam<MainChain::Mode>
 {
+public:
+  static void SetUpTestCase()
+  {
+    fetch::crypto::mcl::details::MCLInitialiser();
+    fetch::chain::InitialiseTestConstants();
+  }
+
 protected:
   void SetUp() override
   {
-    fetch::crypto::mcl::details::MCLInitialiser();
-
     static constexpr std::size_t NUM_LANES  = 1;
     static constexpr std::size_t NUM_SLICES = 2;
 
@@ -661,12 +666,15 @@ TEST_P(MainChainTests, CheckChainPreceding)
     ASSERT_EQ(preceding.size(), 3);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main3));
     EXPECT_TRUE(IsSameBlock(*preceding[1], *main2));
+    EXPECT_TRUE(IsSameBlock(*preceding[2], *main1));
   }
 
   {
     auto const preceding = chain_->GetChainPreceding(main2->hash, 3);
     ASSERT_EQ(preceding.size(), 3);
     EXPECT_TRUE(IsSameBlock(*preceding[0], *main2));
+    EXPECT_TRUE(IsSameBlock(*preceding[1], *main1));
+    EXPECT_TRUE(IsSameBlock(*preceding[2], *genesis));
   }
 
   {
