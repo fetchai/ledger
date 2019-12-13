@@ -91,9 +91,8 @@ public:
   settings::Setting<uint32_t> num_executors;
   /// @}
 
-  /// @name State File
+  /// @name Genesis File
   /// @{
-  settings::Setting<bool>        load_genesis_file;
   settings::Setting<std::string> genesis_file_location;
   /// @}
 
@@ -108,6 +107,18 @@ public:
   settings::Setting<uint64_t> max_cabinet_size;
   settings::Setting<uint64_t> stake_delay_period;
   settings::Setting<uint64_t> aeon_period;
+  /// @}
+
+  /// @name Error handling
+  /// @{
+  settings::Setting<bool> graceful_failure;
+  settings::Setting<bool> fault_tolerant;
+  /// @}
+
+  /// @name Agent support functionality
+  /// @{
+  settings::Setting<bool>     enable_agents;
+  settings::Setting<uint16_t> messenger_port;
   /// @}
 
   // Operators

@@ -26,30 +26,28 @@ namespace detail {
 
 struct FNVConfigInvalid
 {
-  static constexpr std::size_t size_in_bytes = 0;
+  static constexpr std::size_t SIZE_IN_BYTES = 0;
 };
 
-template <typename NumberTypeParam, std::size_t SIZE_IN_BYTES = sizeof(NumberTypeParam),
+template <typename NumberTypeParam, std::size_t SIB = sizeof(NumberTypeParam),
           typename FROM = FNVConfigInvalid>
 struct FNVConfig
 {
-  static_assert(std::is_integral<NumberTypeParam>::value &&
-                    sizeof(NumberTypeParam) >= SIZE_IN_BYTES,
+  static_assert(std::is_integral<NumberTypeParam>::value && sizeof(NumberTypeParam) >= SIB,
                 "Provided SIZE_IN_BYTES parameter value must be smaller or equal to `sizeof(...)` "
                 "of provided integral type NumberType type parameter.");
 
-  static_assert(std::is_same<FNVConfigInvalid, FROM>::value || FROM::size_in_bytes == SIZE_IN_BYTES,
-                "");
+  static_assert(std::is_same<FNVConfigInvalid, FROM>::value || FROM::SIZE_IN_BYTES == SIB, "");
 
   using NumberType                           = NumberTypeParam;
   using FromType                             = FROM;
-  static constexpr std::size_t size_in_bytes = SIZE_IN_BYTES;
+  static constexpr std::size_t SIZE_IN_BYTES = SIB;
   static NumberType const      prime;
   static NumberType const      offset;
 };
 
 template <typename NumberType, std::size_t SIZE_IN_BYTES, typename FROM>
-constexpr std::size_t FNVConfig<NumberType, SIZE_IN_BYTES, FROM>::size_in_bytes;
+constexpr std::size_t FNVConfig<NumberType, SIZE_IN_BYTES, FROM>::SIZE_IN_BYTES;
 
 template <>
 FNVConfig<uint32_t>::NumberType const FNVConfig<uint32_t>::prime;
@@ -78,7 +76,7 @@ enum class eFnvAlgorithm : uint8_t
 
 using FNVConfig_size_t =
     FNVConfig<std::size_t, sizeof(std::size_t),
-              std::conditional<sizeof(std::size_t) == FNVConfig<uint64_t>::size_in_bytes,
+              std::conditional<sizeof(std::size_t) == FNVConfig<uint64_t>::SIZE_IN_BYTES,
                                FNVConfig<uint64_t>, FNVConfig<uint32_t>>::type>;
 
 template <typename FNV_CONFIG = FNVConfig_size_t, eFnvAlgorithm ALGORITHM = eFnvAlgorithm::fnv1a>

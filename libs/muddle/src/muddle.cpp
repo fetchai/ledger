@@ -21,12 +21,12 @@
 #include "muddle_register.hpp"
 #include "muddle_registry.hpp"
 #include "muddle_server.hpp"
-#include "peer_selector.hpp"
 
 #include "core/containers/set_intersection.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
+#include "kademlia/peer_tracker.hpp"
 #include "logging/logging.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
@@ -45,7 +45,7 @@ namespace muddle {
 
 static auto const        CLEANUP_INTERVAL           = std::chrono::seconds{10};
 static std::size_t const MAINTENANCE_INTERVAL_MS    = 2500;
-static std::size_t const PEER_SELECTION_INTERVAL_MS = 500;
+static std::size_t const PEER_SELECTION_INTERVAL_MS = 2500;
 
 /**
  * Constructs the muddle node instances
@@ -59,23 +59,25 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , external_address_(std::move(external_address))
   , node_address_(certificate_->identity().identifier())
   , network_manager_(nm)
-  , dispatcher_(network_id, certificate_->identity().identifier())
   , register_(std::make_shared<MuddleRegister>(network_id))
-  , router_(network_id, node_address_, *register_, dispatcher_, *certificate_)
+  , router_(network_id, node_address_, *register_, *certificate_)
   , clients_(network_id)
   , network_id_(network_id)
   , reactor_{"muddle"}
   , maintenance_periodic_(std::make_shared<core::PeriodicFunctor>(
         std::chrono::milliseconds{MAINTENANCE_INTERVAL_MS}, this, &Muddle::RunPeriodicMaintenance))
   , direct_message_service_(node_address_, router_, *register_, clients_)
-  , peer_selector_(std::make_shared<PeerSelector>(
-        network_id, std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_, *register_,
-        clients_, router_))
+  , peer_tracker_(PeerTracker::New(std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_,
+                                   *register_, clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
 {
+  // Default configuration is to do no tracking at all
+  peer_tracker_->SetConfiguration(TrackerConfiguration::DefaultConfiguration());
+  router_.SetTracker(peer_tracker_);
+
   // handle the left issues
   register_->OnConnectionLeft([this](Handle handle) {
-    router_.ConnectionDropped(handle);
+    peer_tracker_->RemoveConnectionHandle(handle);
     direct_message_service_.SignalConnectionLeft(handle);
   });
 
@@ -93,7 +95,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   rpc_server_.Add(RPC_MUDDLE_DISCOVERY, &discovery_service_);
 
   reactor_.Attach(maintenance_periodic_);
-  reactor_.Attach(peer_selector_);
+  reactor_.Attach(peer_tracker_);
 }
 
 Muddle::~Muddle()
@@ -130,6 +132,11 @@ bool Muddle::Start(Peers const &peers, Ports const &ports)
   return Start(uris, ports);
 }
 
+void Muddle::SetPeerTableFile(std::string const &filename)
+{
+  peer_tracker_->SetCacheFile(filename);
+}
+
 /**
  * Start the muddle instance connecting to the initial set of peers and listing on the specified
  * set of ports
@@ -140,19 +147,33 @@ bool Muddle::Start(Peers const &peers, Ports const &ports)
  */
 bool Muddle::Start(Uris const &peers, Ports const &ports)
 {
+  stopping_ = false;
+
+  // Setting ports prior to starting as a fallback mechanism
+  // for giving details of peer
+  peer_tracker_->UpdateExternalPorts(ports);
+  peer_tracker_->Start();
+
+  // Starting the router
   router_.Start();
+
+  // create all the muddle servers
+  // note that we want to start the servers first and then
+  // the clients, as incoming connections will be requested
+  // for uris
+  for (uint16_t port : ports)
+  {
+    CreateTcpServer(port);
+  }
+
+  // Updating external addresses to make this peer discoverable
+  UpdateExternalAddresses();
 
   // make the initial connections to the remote hosts
   for (auto const &peer : peers)
   {
     // mark this peer as a persistent one
     clients_.AddPersistentPeer(peer);
-  }
-
-  // create all the muddle servers
-  for (uint16_t port : ports)
-  {
-    CreateTcpServer(port);
   }
 
   // schedule the maintenance (which shall force the connection of the peers)
@@ -205,6 +226,9 @@ bool Muddle::Start(Ports const &ports)
  */
 void Muddle::Stop()
 {
+  stopping_ = true;
+  peer_tracker_->Stop();
+
   // stop all the periodic actions
   reactor_.Stop();
   router_.Stop();
@@ -332,24 +356,10 @@ bool Muddle::IsDirectlyConnected(Address const &address) const
   return current_direct_peers.find(address) != current_direct_peers.end();
 }
 
-/**
- * Query the current peer selection mode for this muddle
- *
- * @return The current mode
- */
-PeerSelectionMode Muddle::GetPeerSelectionMode() const
+bool Muddle::IsConnectingOrConnected(Address const &address) const
 {
-  return peer_selector_->GetMode();
-}
-
-/**
- * Update the current peer selection mode for this muddle
- * @param mode
- */
-void Muddle::SetPeerSelectionMode(PeerSelectionMode mode)
-{
-  router_.SetKademliaRouting(PeerSelectionMode::KADEMLIA == mode);
-  peer_selector_->SetMode(mode);
+  auto const desired = peer_tracker_->GetDesiredPeers();
+  return desired.find(address) != desired.end();
 }
 
 /**
@@ -359,7 +369,7 @@ void Muddle::SetPeerSelectionMode(PeerSelectionMode mode)
  */
 Muddle::Addresses Muddle::GetRequestedPeers() const
 {
-  return peer_selector_->GetDesiredPeers();
+  return peer_tracker_->GetDesiredPeers();
 }
 
 /**
@@ -367,11 +377,11 @@ Muddle::Addresses Muddle::GetRequestedPeers() const
  *
  * @param address The requested address to connect to
  */
-void Muddle::ConnectTo(Address const &address)
+void Muddle::ConnectTo(Address const &address, Duration const &expire)
 {
   if (node_address_ != address)
   {
-    peer_selector_->AddDesiredPeer(address);
+    peer_tracker_->AddDesiredPeer(address, expire);
   }
 }
 
@@ -380,21 +390,39 @@ void Muddle::ConnectTo(Address const &address)
  *
  * @param addresses The set of addresses
  */
-void Muddle::ConnectTo(Addresses const &addresses)
+void Muddle::ConnectTo(Addresses const &addresses, Duration const &expire)
 {
   for (auto const &address : addresses)
   {
-    ConnectTo(address);
+    ConnectTo(address, expire);
   }
 }
 
-void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint)
+/**
+ * Request the muddle to make a persistent connection to a URI.
+ *
+ * @param uri The uri to connect to
+ */
+void Muddle::ConnectTo(network::Uri const &uri, Duration const &expire)
 {
-  if (node_address_ != address)
+  clients_.AddPersistentPeer(uri);
+  peer_tracker_->AddDesiredPeer(uri, expire);
+}
+
+void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint, Duration const &expire)
+{
+  if (address.empty())
+  {
+    FETCH_LOG_WARN(logging_name_,
+                   "Address is empty, use ConnectTo(uri) to connect directly to uri.",
+                   uri_hint.ToString());
+    ConnectTo(uri_hint, expire);
+  }
+  else if (node_address_ != address)
   {
     if (uri_hint.IsTcpPeer())
     {
-      peer_selector_->AddDesiredPeer(address, uri_hint.GetTcpPeer());
+      peer_tracker_->AddDesiredPeer(address, uri_hint.GetTcpPeer(), expire);
     }
     else
     {
@@ -403,11 +431,11 @@ void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint)
   }
 }
 
-void Muddle::ConnectTo(AddressHints const &address_hints)
+void Muddle::ConnectTo(AddressHints const &address_hints, Duration const &expire)
 {
   for (auto const &element : address_hints)
   {
-    ConnectTo(element.first, element.second);
+    ConnectTo(element.first, element.second, expire);
   }
 }
 
@@ -418,7 +446,7 @@ void Muddle::ConnectTo(AddressHints const &address_hints)
  */
 void Muddle::DisconnectFrom(Address const &address)
 {
-  peer_selector_->RemoveDesiredPeer(address);
+  peer_tracker_->RemoveDesiredPeer(address);
 }
 
 /**
@@ -444,6 +472,7 @@ void Muddle::SetConfidence(Address const &address, Confidence confidence)
 {
   FETCH_UNUSED(address);
   FETCH_UNUSED(confidence);
+  // TODO(tfr): implementation missing.
 }
 
 /**
@@ -460,6 +489,11 @@ void Muddle::SetConfidence(Addresses const &addresses, Confidence confidence)
   }
 }
 
+void Muddle::SetTrackerConfiguration(TrackerConfiguration const &config)
+{
+  peer_tracker_->SetConfiguration(config);
+}
+
 /**
  * Update a map of address to confidence level
  *
@@ -471,11 +505,6 @@ void Muddle::SetConfidence(ConfidenceMap const &map)
   {
     SetConfidence(element.first, element.second);
   }
-}
-
-Dispatcher const &Muddle::dispatcher() const
-{
-  return dispatcher_;
 }
 
 Router const &Muddle::router() const
@@ -498,9 +527,9 @@ DirectMessageService const &Muddle::direct_message_service() const
   return direct_message_service_;
 }
 
-PeerSelector const &Muddle::peer_selector() const
+PeerTracker const &Muddle::peer_tracker() const
 {
-  return *peer_selector_;
+  return *peer_tracker_;
 }
 
 Muddle::ServerList const &Muddle::servers() const
@@ -508,41 +537,71 @@ Muddle::ServerList const &Muddle::servers() const
   return servers_;
 }
 
+void Muddle::UpdateExternalAddresses()
+{
+  PeerTracker::NetworkUris external_uris{};
+  DiscoveryService::Peers  external_addresses{};
+  for (uint16_t port : GetListeningPorts())
+  {
+    // ignore pending ports
+    if (port == 0)
+    {
+      continue;
+    }
+
+    // determine if the port needs to be mapped to an external range
+    auto const it = port_mapping_.find(port);
+    if (it != port_mapping_.end())
+    {
+      port = it->second;
+    }
+
+    network::Peer peer{external_address_, port};
+
+    Uri uri;
+    uri.Parse(peer.ToUri());
+
+    external_uris.emplace_back(uri);
+
+    external_addresses.emplace_back(std::move(peer));
+    FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
+  }
+
+  discovery_service_.UpdatePeers(external_addresses);
+  peer_tracker_->UpdateExternalUris(external_uris);
+}
+
 /**
  * Called periodically internally in order to co-ordinate network connections and clean up
  */
 void Muddle::RunPeriodicMaintenance()
 {
-  FETCH_LOG_TRACE(logging_name_, "Running periodic maintenance");
+  // If we are stopping the muddle, we do not want to connect to new nodes
+  // and otherwise do periodic maintenance.
+  if (stopping_)
+  {
+    return;
+  }
 
+  FETCH_LOG_TRACE(logging_name_, "Running periodic maintenance");
   try
   {
+    UpdateExternalAddresses();
+
     // update discovery information
-    DiscoveryService::Peers external_addresses{};
-    for (uint16_t port : GetListeningPorts())
-    {
-      // ignore pending ports
-      if (port == 0)
-      {
-        continue;
-      }
-
-      // determine if the port needs to be mapped to an external range
-      auto const it = port_mapping_.find(port);
-      if (it != port_mapping_.end())
-      {
-        port = it->second;
-      }
-
-      external_addresses.emplace_back(network::Peer(external_address_, port));
-      FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
-    }
-    discovery_service_.UpdatePeers(external_addresses);
-    peer_selector_->UpdatePeers(external_addresses);
+    std::unordered_set<Uri> just_connected_to;
 
     // connect to all the required peers
     for (Uri const &peer : clients_.GetPeersToConnectTo())
     {
+      // skipping uris we just connected to
+      if (just_connected_to.find(peer) != just_connected_to.end())
+      {
+        FETCH_LOG_WARN(logging_name_, "Already connected. Skipping ", peer.uri());
+        continue;
+      }
+
+      // connecting according to scheme
       switch (peer.scheme())
       {
       case Uri::Scheme::Tcp:
@@ -552,15 +611,14 @@ void Muddle::RunPeriodicMaintenance()
         FETCH_LOG_ERROR(logging_name_, "Unable to create client connection to ", peer.uri());
         break;
       }
+
+      just_connected_to.emplace(peer);
     }
 
     // run periodic cleanup
     Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
     if (time_since_last_cleanup >= CLEANUP_INTERVAL)
     {
-      // clean up and pending message handlers and also trigger the timeout logic
-      dispatcher_.Cleanup();
-
       // clean up echo caches and other temporary stored objects
       router_.Cleanup();
 
@@ -629,19 +687,37 @@ void Muddle::CreateTcpClient(Uri const &peer)
   clients_.AddConnection(peer, strong_conn);
 
   // debug handlers
-  strong_conn->OnConnectionSuccess([this, peer]() { clients_.OnConnectionEstablished(peer); });
+  std::weak_ptr<PeerTracker> wptr = peer_tracker_;
+  strong_conn->OnConnectionSuccess([this, peer, wptr]() {
+    auto ptr = wptr.lock();
+    if (ptr)
+    {
+      peer_tracker_->ReportSuccessfulConnectAttempt(peer);
+    }
+    clients_.OnConnectionEstablished(peer);
+  });
 
-  strong_conn->OnConnectionFailed([this, peer]() {
-    FETCH_LOG_INFO(logging_name_, "Connection to ", peer.ToString(), " failed");
+  strong_conn->OnConnectionFailed([this, peer, wptr]() {
+    auto ptr = wptr.lock();
+    if (ptr)
+    {
+      ptr->ReportFailedConnectAttempt(peer);
+    }
+
     clients_.RemoveConnection(peer);
   });
 
-  strong_conn->OnLeave([this, peer]() {
-    FETCH_LOG_INFO(logging_name_, "Connection to ", peer.ToString(), " left");
+  strong_conn->OnLeave([this, peer, wptr]() {
+    auto ptr = wptr.lock();
+    if (ptr)
+    {
+      ptr->ReportLeaving(peer);
+    }
+
     clients_.RemoveConnection(peer);
   });
 
-  strong_conn->OnMessage([this, peer, conn_handle](network::MessageType const &msg) {
+  strong_conn->OnMessage([this, peer, conn_handle](network::MessageBuffer const &msg) {
     try
     {
       auto packet = std::make_shared<Packet>();

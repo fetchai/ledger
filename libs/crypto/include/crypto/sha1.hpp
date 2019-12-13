@@ -26,10 +26,10 @@ namespace crypto {
 class SHA1 : public HasherInterface
 {
 public:
-  using HasherInterface::Update;
   using HasherInterface::Final;
+  using HasherInterface::Update;
 
-  static constexpr std::size_t size_in_bytes = 20u;
+  static constexpr std::size_t SIZE_IN_BYTES = 20u;
 
   SHA1()             = default;
   ~SHA1() override   = default;

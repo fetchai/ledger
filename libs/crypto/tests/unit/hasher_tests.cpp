@@ -53,19 +53,19 @@ std::size_t hash_size(Hasher hash_type)
   switch (hash_type)
   {
   case Hasher::MD5:
-    hash_size = crypto::MD5::size_in_bytes;
+    hash_size = crypto::MD5::SIZE_IN_BYTES;
     break;
   case Hasher::SHA2_256:
-    hash_size = crypto::SHA256::size_in_bytes;
+    hash_size = crypto::SHA256::SIZE_IN_BYTES;
     break;
   case Hasher::SHA2_512:
-    hash_size = crypto::SHA512::size_in_bytes;
+    hash_size = crypto::SHA512::SIZE_IN_BYTES;
     break;
   case Hasher::SHA1:
-    hash_size = crypto::SHA1::size_in_bytes;
+    hash_size = crypto::SHA1::SIZE_IN_BYTES;
     break;
   case Hasher::FNV:
-    hash_size = crypto::FNV::size_in_bytes;
+    hash_size = crypto::FNV::SIZE_IN_BYTES;
     break;
   }
 

@@ -596,10 +596,8 @@ public:
 };
 
 std::vector<std::string> const numeric_literal_value_templates = {
-    "0{}i32",      "12{}u32",    "0.0{}",      "0.00{}",       "0.000{}",   "12.0{}",
-    "0.01{}",      "0.00123{}",  "0.0{}f",     "0.00{}f",      "0.000{}f",  "12.0{}f",
-    "0.01{}f",     "0.00123{}f", "0{}fp32",    "12{}fp32",     "0.0{}fp32", "0.00{}fp32",
-    "0.000{}fp32", "12.0{}fp32", "0.01{}fp32", "0.00123{}fp32"};
+    "0{}i32",   "12{}u32",   "0fp32",    "12fp32",   "0.0fp32",
+    "0.00fp32", "0.000fp32", "12.0fp32", "0.01fp32", "0.00123fp32"};
 
 TEST_P(CoreEtchValidNumericLiteralsTests, valid_numeric_literals)
 {
@@ -673,16 +671,76 @@ TEST_P(CoreEtchInvalidNumericLiteralsTests, invalid_numeric_literals)
 }
 
 std::vector<std::string> const invalid_numeric_literal_values = {
-    "i32",     "0u31",     "00",      "00u32",    "01",        "01u32",  "001",     "001u32",
-    "00.0",    "00.01",    ".0",      ".01",      ".1",        "0.",     "00.",     "12.",
-    "00.0u32", "00.01u32", ".0u32",   ".01u32",   ".1u32",     "0.u32",  "00.u32",  "12.u32",
-    "00fp64",  "01fp64",   "001fp64", "00.0fp64", "00.01fp64", ".0fp64", ".01fp64", ".1fp64",
-    "0.fp64",  "00.fp64",  "12.fp64", "0f",       "12f",       "00f",    "01f",     "001f",
-    "00.0f",   "00.01f",   ".0f",     ".01f",     ".1f",       "0.f",    "00.f",    "12.f",
-    "1e",      "1e+",      "1e-",     "1e1.1",    "1e+1.1",    "1e-1.1", "1E",      "1E+",
-    "1E-",     "1E1.1",    "1E+1.1",  "1E-1.1"};
+    "i32",     "0u31",      "00",      "00u32",    "01",        "01u32",   "001",     "001u32",
+    "00.0",    "00.01",     ".0",      ".01",      ".1",        "0.",      "00.",     "12.",
+    "00.0u32", "00.01u32",  ".0u32",   ".01u32",   ".1u32",     "0.u32",   "00.u32",  "12.u32",
+    "00fp64",  "01fp64",    "001fp64", "00.0fp64", "00.01fp64", ".0fp64",  ".01fp64", ".1fp64",
+    "0.fp64",  "00.fp64",   "12.fp64", "0f",       "12f",       "00f",     "01f",     "001f",
+    "00.0f",   "00.01f",    ".0f",     ".01f",     ".1f",       "0.f",     "00.f",    "12.f",
+    "1e",      "1e+",       "1e-",     "1e1.1",    "1e+1.1",    "1e-1.1",  "1E",      "1E+",
+    "1E-",     "1E1.1",     "1E+1.1",  "1E-1.1",   "0.0{}",     "0.00{}",  "0.000{}", "12.0{}",
+    "0.01{}",  "0.00123{}", "0.0{}f",  "0.00{}f",  "0.000{}f",  "12.0{}f", "0.01{}f", "0.00123{}f"};
 
 INSTANTIATE_TEST_CASE_P(InvalidNumericLiterals, CoreEtchInvalidNumericLiteralsTests,
                         ValuesIn(invalid_numeric_literal_values), );
+
+class CoreEtchInvalidFixedpointLiteralsTests : public TestWithParam<std::string>
+{
+public:
+  std::stringstream stdout;
+  VmTestToolkit     toolkit{&stdout};
+};
+
+std::vector<std::string> const invalid_fixedpoint_literal_value_templates = {
+    "0{}fp32",     "12{}fp32",   "0.0{}fp32",  "0.00{}fp32",
+    "0.000{}fp32", "12.0{}fp32", "0.01{}fp32", "0.00123{}fp32"};
+
+TEST_P(CoreEtchInvalidFixedpointLiteralsTests, invalid_fixedpoint_literals)
+{
+  std::string const TEXT = std::string(R"(
+    function main()
+      var x = )") + GetParam() +
+                           R"(;
+    endfunction
+  )";
+
+  ASSERT_FALSE(toolkit.Compile(TEXT));
+}
+
+std::vector<std::string> render_fp(std::string const &x)
+{
+  auto values = invalid_fixedpoint_literal_value_templates;
+  for (auto &value : values)
+  {
+    fetch::string::Replace(value, "{}", x);
+  }
+  return values;
+}
+
+INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroImplicitPlus,
+                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E0")), );
+INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroExplicitPlus,
+                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E+0")), );
+INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroExplicitMinus,
+                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E-0")), );
+INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroImplicitPlus,
+                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e0")), );
+INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroExplicitPlus,
+                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e+0")), );
+INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroExplicitMinus,
+                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e-0")), );
+
+INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroImplicitPlus,
+                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E12")), );
+INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroExplicitPlus,
+                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E+12")), );
+INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroExplicitMinus,
+                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E-12")), );
+INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroImplicitPlus,
+                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e12")), );
+INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroExplicitPlus,
+                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e+12")), );
+INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroExplicitMinus,
+                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e-12")), );
 
 }  // namespace

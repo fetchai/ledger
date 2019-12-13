@@ -64,9 +64,6 @@ public:
 
   void Broadcast(uint16_t service, uint16_t channel, Payload const &payload) override;
 
-  Response Exchange(Address const & /*address*/, uint16_t /*service*/, uint16_t /*channel*/,
-                    Payload const & /*request*/) override;
-
   SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) override;
 
   SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) override;

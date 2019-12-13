@@ -53,8 +53,6 @@ IfIsPtrFixed128<T, Ptr<T>> ExpPtr(VM *vm, Ptr<T> const &a)
 
 void BindExp(Module &module)
 {
-  module.CreateFreeFunction("exp", &Exp<float_t>);
-  module.CreateFreeFunction("exp", &Exp<double_t>);
   module.CreateFreeFunction("exp", &Exp<fixed_point::fp32_t>);
   module.CreateFreeFunction("exp", &Exp<fixed_point::fp64_t>);
   module.CreateFreeFunction("exp", &ExpPtr<Fixed128>);

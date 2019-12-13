@@ -172,8 +172,8 @@ public:
   /// @{
   BlockPtr   GetHeaviestBlock() const;
   BlockHash  GetHeaviestBlockHash() const;
-  Blocks     GetHeaviestChain(uint64_t lowest_block_number = 0) const;
-  Blocks     GetChainPreceding(BlockHash start, uint64_t lowest_block_number = 0) const;
+  Blocks     GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
+  Blocks     GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
   Travelogue TimeTravel(BlockHash current_hash) const;
   bool       GetPathToCommonAncestor(
             Blocks &blocks, BlockHash tip_hash, BlockHash node_hash, uint64_t limit = UPPER_BOUND,
@@ -324,6 +324,7 @@ public:
   telemetry::CounterPtr            bloom_filter_query_count_;
   telemetry::CounterPtr            bloom_filter_positive_count_;
   telemetry::CounterPtr            bloom_filter_false_positive_count_;
+  telemetry::CounterPtr            block_loads_from_disk_;
 };
 
 }  // namespace ledger
