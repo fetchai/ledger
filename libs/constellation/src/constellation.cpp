@@ -596,6 +596,7 @@ bool Constellation::OnBringUpExternalNetwork(
 
     beacon_conf.max_kademlia_connections  = 0;
     beacon_conf.max_longrange_connections = 0;
+    beacon_network_->SetTrackerConfiguration(beacon_conf);
     beacon_network_->SetPeerTableFile(cfg_.beacon_peer_cache);
   }
 

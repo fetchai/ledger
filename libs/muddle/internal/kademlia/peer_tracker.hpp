@@ -77,7 +77,7 @@ public:
   using Handle                 = network::AbstractConnection::ConnectionHandleType;
   using AddressToHandles       = std::unordered_map<Address, std::unordered_set<Handle>>;
 
-  std::atomic<int32_t> counter{0};  // TODO: Should go, just for debugging
+  std::atomic<int32_t> counter{0};  // TODO(tfr): Should go, just for debugging
 
   struct UnresolvedConnection
   {
