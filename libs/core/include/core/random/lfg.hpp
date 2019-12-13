@@ -86,23 +86,22 @@ public:
 
   fp128_t AsFP128() noexcept
   {
-    auto fp128_u_max_ = static_cast<uint64_t>(fp128_t::FP_MAX);
-
-    auto fp_val = static_cast<fp128_t>(this->operator()() % fp128_u_max_);
-    return fp_val / fp128_t::FP_MAX;
+    auto fp_val = fp128_t::FromBase(this->operator()() % fp128_t::MAX);
+    fp_val /= fp128_t::FP_MAX;
+    return fp128_t::Abs(fp_val);
   }
 
   fp64_t AsFP64() noexcept
   {
-    auto fp64_u_max_ = static_cast<uint64_t>(fp64_t::FP_MAX);
-
-    auto fp_val = static_cast<fp64_t>(this->operator()() % fp64_u_max_);
-    return fp_val / fp64_t::FP_MAX;
+    auto fp_val = fp64_t::FromBase(this->operator()() % fp64_t::MAX);
+    fp_val /= fp64_t::FP_MAX;
+    return fp64_t::Abs(fp_val);
   }
 
   fp32_t AsFP32() noexcept
   {
-    auto fp_val = fp32_t::FromBase(this->operator()() % fp64_t::MAX);  // yes, fp64_t::MAX
+    // Bigger fp64_t::MAX range is there to include decimal part
+    auto fp_val = fp32_t::FromBase(this->operator()() % fp64_t::MAX);
     fp_val /= fp32_t::FP_MAX;
     return fp32_t::Abs(fp_val);
   }
