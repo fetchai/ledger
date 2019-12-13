@@ -73,7 +73,7 @@ TYPED_TEST(SoftmaxTest, multi_dimension_test)
   fetch::math::Softmax(test_array, test_axis1, static_cast<typename TypeParam::SizeType>(1));
 
   // test correct values
-  EXPECT_TRUE(
+  ASSERT_TRUE(
       test_axis0.AllClose(gt_axis0, fetch::math::function_tolerance<typename TypeParam::Type>()) ||
       test_axis0.AllClose(gt_axis0, math::function_tolerance<typename TypeParam::Type>()));
   ASSERT_TRUE(
