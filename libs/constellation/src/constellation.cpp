@@ -363,60 +363,6 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , external_identity_{std::move(certificate)}
   , tx_status_cache_(TxStatusCache::factory())
-<<<<<<< HEAD
-  , storage_(std::make_shared<StorageUnitClient>(internal_muddle_->GetEndpoint(), shard_cfgs_,
-                                                 cfg_.log2_num_lanes))
-  , lane_control_(internal_muddle_->GetEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
-  , shard_management_(std::make_shared<ShardManagementService>(cfg_.manifest, lane_control_,
-                                                               *muddle_, cfg_.log2_num_lanes))
-  , dag_{GenerateDAG(cfg_, "dag_db_", true, certificate)}
-  , beacon_network_{CreateBeaconNetwork(cfg_, certificate, network_manager_)}
-  , beacon_setup_{CreateBeaconSetupService(cfg_, *beacon_network_, *shard_management_, certificate)}
-  , beacon_{CreateBeaconService(cfg_, *beacon_network_, certificate, beacon_setup_)}
-  , stake_{CreateStakeManager(cfg_)}
-  , consensus_{CreateConsensus(cfg_, stake_, beacon_setup_, beacon_, chain_, *storage_,
-                               certificate->identity())}
-  , execution_manager_{std::make_shared<ExecutionManager>(
-        cfg_.num_executors, cfg_.log2_num_lanes, storage_,
-        [this] { return std::make_shared<Executor>(storage_); }, tx_status_cache_)}
-  , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
-  , block_packer_{cfg_.log2_num_lanes}
-  , block_coordinator_{chain_,
-                       dag_,
-                       *execution_manager_,
-                       *storage_,
-                       block_packer_,
-                       *this,
-                       certificate,
-                       cfg_.log2_num_lanes,
-                       cfg_.num_slices,
-                       consensus_,
-                       std::make_unique<ledger::SynergeticExecutionManager>(
-                           dag_, 1u,
-                           [this]() {
-                             return std::make_shared<ledger::SynergeticExecutor>(*storage_);
-                           })}
-  , main_chain_service_{std::make_shared<MainChainRpcService>(
-        muddle_->GetEndpoint(), chain_, trust_, cfg_.network_mode, consensus_)}
-  , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
-  , http_open_api_module_{std::make_shared<OpenAPIHttpModule>()}
-  , http_{http_network_manager_, true}
-  , http_modules_{http_open_api_module_,
-                  std::make_shared<p2p::P2PHttpInterface>(
-                      cfg_.log2_num_lanes, chain_, block_packer_,
-                      p2p::P2PHttpInterface::WeakStateMachines{
-                          main_chain_service_->GetWeakStateMachine(),
-                          block_coordinator_.GetWeakStateMachine()}),
-                  std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
-                  std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
-                  std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
-                  std::make_shared<LoggingHttpModule>(),
-                  std::make_shared<TelemetryHttpModule>(),
-                  std::make_shared<MuddleStatusModule>(),
-                  std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_,
-                                                          block_coordinator_)}
-=======
->>>>>>> master
   , uptime_{telemetry::Registry::Instance().CreateCounter(
         "ledger_uptime_ticks_total",
         "The number of intervals that ledger instance has been alive for")}
@@ -632,6 +578,8 @@ bool Constellation::OnBringUpExternalNetwork(
       std::make_shared<MuddleStatusModule>()};
 
   http_ = std::make_unique<HttpServer>(http_network_manager_);
+  // Display "/"
+  http_->AddDefaultRootModule();
 
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",

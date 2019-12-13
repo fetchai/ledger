@@ -66,14 +66,9 @@ public:
 
   static constexpr char const *LOGGING_NAME = "HTTPServer";
 
-  explicit HTTPServer(NetworkManager const &network_manager, bool add_default_root_module = false)
+  explicit HTTPServer(NetworkManager const &network_manager)
     : networkManager_(network_manager)
-  {
-    if (add_default_root_module)
-    {
-      AddDefaultRootModule();
-    }
-  }
+  {}
 
   HTTPServer(HTTPServer &&)      = delete;
   HTTPServer(HTTPServer const &) = delete;

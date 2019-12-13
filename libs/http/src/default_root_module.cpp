@@ -19,6 +19,8 @@
 #include "http/default_root_module.hpp"
 #include "http/tagged_tree.hpp"
 
+#include <map>
+
 namespace fetch {
 namespace http {
 
@@ -29,7 +31,9 @@ HTTPModule DefaultRootModule(MountedViews const &views)
            [&views](ViewParameters && /*view_parameters*/, HTTPRequest && /*http_request*/) {
              static const HtmlTree header("h4", "The following paths can be queried here");
 
-             std::map<byte_array::ConstByteArray, HtmlTree> known_paths;
+             // Sort urls by path/method
+             using SortKey = std::pair<byte_array::ConstByteArray, Method>;
+             std::map<SortKey, HtmlTree> known_paths;
              for (auto const &view : views)
              {
                auto path = view.route.path();
@@ -58,7 +62,7 @@ HTTPModule DefaultRootModule(MountedViews const &views)
                  row.push_back(HtmlTree("td", HtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;") +
                                                   ToString(view.method)));
                }
-               known_paths.emplace(std::move(path), std::move(row));
+               known_paths.emplace(SortKey{std::move(path), view.method}, std::move(row));
              }
 
              HtmlTree body;

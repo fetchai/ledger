@@ -50,9 +50,6 @@ struct Unused
 
 #define FETCH_PTR_GUARDED_BY(x) FETCH_THREAD_ANNOTATION_ATTRIBUTE__(pt_guarded_by(x))
 
-<<<<<<< HEAD
-}  // namespace fetch
-=======
 // [[fallthrough]] is not supported in C++14
 #if (__cplusplus >= 201703L)
 #define FETCH_FALLTHROUGH [[fallthrough]]
@@ -63,4 +60,5 @@ struct Unused
 #define FETCH_FALLTHROUGH [[gnu::fallthrough]]
 #endif
 #endif
->>>>>>> master
+
+}  // namespace fetch
