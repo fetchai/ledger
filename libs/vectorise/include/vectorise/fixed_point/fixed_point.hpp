@@ -721,24 +721,24 @@ template <uint16_t I, uint16_t F>
 inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
 {
   std::ios_base::fmtflags f(s.flags());
-  s << std::setfill('0');
-  s << std::setw(I / 4);
-  s << std::setprecision(FixedPoint<I, F>::DECIMAL_DIGITS);
-  s << std::fixed;
   if (FixedPoint<I, F>::IsNaN(n))
   {
     s << "NaN";
   }
   else if (FixedPoint<I, F>::IsPosInfinity(n))
   {
-    s << "+∞";
+    s << "+inf";
   }
   else if (FixedPoint<I, F>::IsNegInfinity(n))
   {
-    s << "-∞";
+    s << "-inf";
   }
   else
   {
+    s << std::setfill('0');
+    s << std::setw(I / 4);
+    s << std::setprecision(FixedPoint<I, F>::DECIMAL_DIGITS);
+    s << std::fixed;
     s << double(n);
   }
 #ifdef FETCH_FIXEDPOINT_DEBUG_HEX
@@ -3551,6 +3551,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ACosH(FixedPoint<I, F> const &x)
  * Special cases
  * * x is NaN    -> atanh(x) = NaN
  * * x is +/-inf -> atanh(x) = NaN
+ * * x is 1.0    -> atanh(x) = Inf
  * Calculated using the definition formula:
  *
  *            1        1 + x
@@ -3576,6 +3577,11 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATanH(FixedPoint<I, F> const &x)
   {
     fp_state |= STATE_NAN;
     return NaN;
+  }
+  if (Abs(x) == _1)
+  {
+    fp_state |= STATE_INFINITY;
+    return POSITIVE_INFINITY;
   }
 
   // ATanH(x) is defined in the (-1, 1) range

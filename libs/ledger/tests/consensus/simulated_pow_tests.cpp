@@ -34,6 +34,7 @@ using fetch::crypto::ECDSASigner;
 // a block (fails until block interval has passed since last block)
 TEST(ledger_simulated_pow_gtest, test_block_emission)
 {
+  fetch::chain::InitialiseTestConstants();
   fetch::crypto::mcl::details::MCLInitialiser();
   MainChain dummy(MainChain::Mode::IN_MEMORY_DB);
 
@@ -73,6 +74,7 @@ TEST(ledger_simulated_pow_gtest, test_block_emission)
 
 TEST(ledger_simulated_pow_gtest, test_disable_functionality)
 {
+  fetch::chain::InitialiseTestConstants();
   fetch::crypto::mcl::details::MCLInitialiser();
   MainChain dummy(MainChain::Mode::IN_MEMORY_DB);
 
