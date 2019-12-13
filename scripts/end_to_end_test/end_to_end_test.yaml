@@ -449,3 +449,33 @@ steps:
   - sleep: 5
   - run_python_test: { "script": ".smart_contract_tests.c2c_multiple_calls" }
 ...
+
+---
+test_description: >
+  Query to undeployed contract fails gracefully
+
+setup_conditions:
+  test_name: "query_nonexistent_contract"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.query_nonexistent_contract" }
+...
+
+---
+test_description: >
+  Action to undeployed contract fails gracefully
+
+setup_conditions:
+  test_name: "action_nonexistent_contract"
+  number_of_nodes: 1
+  mining_nodes: [0]
+  max_test_time: 60
+
+steps:
+  - sleep: 5
+  - run_python_test: { "script": ".smart_contract_tests.action_nonexistent_contract" }
+...
