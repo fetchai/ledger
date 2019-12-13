@@ -52,8 +52,6 @@ fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> SqrtPtr(VM *vm, T const &a)
 
 void BindSqrt(Module &module)
 {
-  module.CreateFreeFunction("sqrt", &Sqrt<float_t>);
-  module.CreateFreeFunction("sqrt", &Sqrt<double_t>);
   module.CreateFreeFunction("sqrt", &Sqrt<fixed_point::fp32_t>);
   module.CreateFreeFunction("sqrt", &Sqrt<fixed_point::fp64_t>);
   module.CreateFreeFunction("sqrt", &SqrtPtr<Ptr<Fixed128>>);

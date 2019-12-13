@@ -97,42 +97,36 @@ public:
 
   /// OPERATORS ///
 
-  ChargeAmount EqualOperator(vm::Ptr<VMTensor> const &other);
+  ChargeAmount NegateChargeEstimator(vm::Ptr<vm::Object> const & /*object*/);
 
-  ChargeAmount NotEqualOperator(vm::Ptr<VMTensor> const &other);
+  ChargeAmount IsEqualChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                      vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount NegateOperator();
+  ChargeAmount IsNotEqualChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                         vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount AddOperator(vm::Ptr<VMTensor> const & /*other*/);
+  ChargeAmount AddChargeEstimator(vm::Ptr<vm::Object> const &lhso, vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount SubtractOperator(vm::Ptr<VMTensor> const & /*other*/);
+  ChargeAmount SubtractChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                       vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount MultiplyOperator(vm::Ptr<VMTensor> const & /*other*/);
+  ChargeAmount InplaceAddChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                         vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount DivideOperator(vm::Ptr<VMTensor> const & /*other*/);
+  ChargeAmount InplaceSubtractChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                              vm::Ptr<vm::Object> const &rhso);
 
-  // TODO (ML-340) - replace member functions with operators when operators can take estimators
-  ChargeAmount Negate();
+  ChargeAmount MultiplyChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                       vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount Equal();
+  ChargeAmount DivideChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                     vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount NotEqual();
+  ChargeAmount InplaceMultiplyChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                              vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount Add();
-
-  ChargeAmount Subtract();
-
-  ChargeAmount InplaceAdd();
-
-  ChargeAmount InplaceSubtract();
-
-  ChargeAmount Multiply();
-
-  ChargeAmount Divide();
-
-  ChargeAmount InplaceMultiply();
-
-  ChargeAmount InplaceDivide();
+  ChargeAmount InplaceDivideChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                            vm::Ptr<vm::Object> const &rhso);
 
   /// END OF OPERATORS ///
 

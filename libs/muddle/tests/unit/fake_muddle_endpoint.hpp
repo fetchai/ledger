@@ -46,15 +46,14 @@ public:
   Address const &GetAddress() const override;
   void           Send(Address const &address, uint16_t service, uint16_t channel,
                       Payload const &message) override;
-  void     Send(Address const &address, uint16_t service, uint16_t channel, Payload const &message,
-                Options options) override;
-  void     Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
-                Payload const &payload) override;
-  void     Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
-                Payload const &payload, Options options) override;
-  void     Broadcast(uint16_t service, uint16_t channel, Payload const &payload) override;
-  Response Exchange(Address const &address, uint16_t service, uint16_t channel,
-                    Payload const &request) override;
+  void Send(Address const &address, uint16_t service, uint16_t channel, Payload const &message,
+            Options options) override;
+  void Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
+            Payload const &payload) override;
+  void Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
+            Payload const &payload, Options options) override;
+  void Broadcast(uint16_t service, uint16_t channel, Payload const &payload) override;
+
   SubscriptionPtr  Subscribe(uint16_t service, uint16_t channel) override;
   SubscriptionPtr  Subscribe(Address const &address, uint16_t service, uint16_t channel) override;
   NetworkId const &network_id() const override;
