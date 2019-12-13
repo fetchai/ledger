@@ -29,8 +29,9 @@ namespace ledger {
 class MainChainProtocol : public service::Protocol
 {
 public:
-  using Travelogue = TimeTravelogue<Block>;
-  using Blocks     = Travelogue::Blocks;
+  using Travelogue                          = TimeTravelogue<Block>;
+  using Blocks                              = Travelogue::Blocks;
+  static constexpr char const *LOGGING_NAME = "MainChainProtocol";
 
   enum
   {
@@ -67,8 +68,22 @@ private:
 
   Travelogue TimeTravel(Digest start)
   {
-    auto ret_val = chain_.TimeTravel(std::move(start));
-    return {Copy(ret_val.blocks), ret_val.heaviest_hash};
+    try
+    {
+      auto ret_val = chain_.TimeTravel(std::move(start));
+      return {Copy(ret_val.blocks), ret_val.heaviest_hash, ret_val.block_number,
+              ret_val.not_on_heaviest};
+    }
+    catch (std::exception const &ex)
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME,
+                      "Failed to respond to time travel request for block hash: ", start.ToHex(),
+                      ". Error : ", ex.what());
+
+      uint64_t const block_number = chain_.GetHeaviestBlock()->block_number;
+
+      return {Blocks(), Digest(), block_number, false};
+    }
   }
 
   static Blocks Copy(MainChain::Blocks const &blocks)
