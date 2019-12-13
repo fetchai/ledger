@@ -26,6 +26,15 @@
 
 #include "gtest/gtest.h"
 
+/**
+ * These tests are designed to check that high level consensus checks are being enforced.
+ * It does not aim to check:
+ * - Anything that requires execution (TXs are there, lanes, slices, merkle hash)
+ * - Entropy is correct
+ * - Notarisations are correct
+ *
+ */
+
 using namespace fetch;
 
 using fetch::ledger::MainChain;
@@ -86,19 +95,19 @@ protected:
 
   // return a valid first block after genesis (entropy not
   // populated fully)
-  BlockPtr ValidNthBlock(uint64_t desired_block_number)
+  BlockPtr ValidNthBlock(uint64_t desired_block_number, uint64_t miner_index = 0)
   {
     BlockPtr ret     = std::make_shared<Block>();
     BlockPtr genesis = MainChain::CreateGenesisBlock();
 
     ret->block_number               = desired_block_number;
     ret->block_entropy.block_number = ret->block_number;
-    ret->block_entropy.block_number = ret->block_number;
     ret->previous_hash              = genesis->hash;
-    ret->miner_id                   = mining_identity_;
+    ret->miner_id                   = cabinet_[miner_index];
     ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
-    // Need to 'trick' the entropy as appearing as an aeon beginning
+    // Need to 'trick' the entropy as appearing as an aeon beginning to avoid
+    // having to create it
     if (desired_block_number == 1)
     {
       ret->block_entropy.confirmations[ConstByteArray("test")];
@@ -118,7 +127,7 @@ protected:
     ret->weight = consensus_->GetBlockGenerationWeight(*ret, chain::Address{mining_identity_});
 
     ret->UpdateDigest();
-    ret->miner_signature = cabinet_priv_keys_[0]->Sign(ret->hash);
+    ret->miner_signature = cabinet_priv_keys_[miner_index]->Sign(ret->hash);
 
     chain_.AddBlock(*ret);
 
@@ -173,14 +182,6 @@ TEST_F(ConsensusTests, test_hash_empty)
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
 }
 
-TEST_F(ConsensusTests, test_wrong_miner_identity)
-{
-  BlockPtr block  = ValidNthBlock(1);
-  block->miner_id = qual_[1];
-
-  ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
-}
-
 TEST_F(ConsensusTests, test_not_an_aeon)
 {
   BlockPtr block = ValidNthBlock(1);
@@ -189,7 +190,7 @@ TEST_F(ConsensusTests, test_not_an_aeon)
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
 }
 
-TEST_F(ConsensusTests, DISABLED_test_zero_weight)
+TEST_F(ConsensusTests, test_zero_weight)
 {
   BlockPtr block = ValidNthBlock(1);
   block->weight  = 0;
@@ -197,10 +198,22 @@ TEST_F(ConsensusTests, DISABLED_test_zero_weight)
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
 }
 
-TEST_F(ConsensusTests, DISABLED_test_wrong_weight)
+TEST_F(ConsensusTests, test_wrong_weight)
 {
   BlockPtr block = ValidNthBlock(1);
   block->weight++;
+
+  ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
+}
+
+TEST_F(ConsensusTests, test_stolen_weight)
+{
+  BlockPtr block                = ValidNthBlock(1);
+  BlockPtr block_by_other_miner = ValidNthBlock(1, 1);
+
+  block->weight   = block_by_other_miner->weight;
+  block->UpdateDigest();
+  ret->miner_signature = cabinet_priv_keys_[0]->Sign(block->hash);
 
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
 }

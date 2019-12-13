@@ -618,7 +618,7 @@ Status Consensus::ValidBlock(Block const &current) const
     return Status::NO;
   }
 
-  if (current.weight != GetBlockGenerationWeight(current, current.miner))
+  if (current.weight != GetBlockGenerationWeight(current, current.miner_id))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Block with incorrect weight found");
     return Status::NO;
