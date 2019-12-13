@@ -288,18 +288,6 @@ BasicVmEngine::Error BasicVmEngine::PrepInput(vm::ParameterPack &result, Params 
         serializer >> param.primitive.i64;
         break;
       }
-      case fetch::vm::TypeIds::Float32:
-      {
-        double temp;
-        serializer >> temp;
-        param.primitive.f32 = static_cast<float>(temp);
-        break;
-      }
-      case fetch::vm::TypeIds::Float64:
-      {
-        serializer >> param.primitive.f64;
-        break;
-      }
       case fetch::vm::TypeIds::Fixed32:
       {
         serializer >> param.primitive.i32;
@@ -435,16 +423,6 @@ ExecutionResult BasicVmEngine::PrepOutput(VM &vm, Executable *exec, VmVariant co
     case fetch::vm::TypeIds::Int64:
     {
       output = vmVariant.Get<int64_t>();
-      break;
-    }
-    case fetch::vm::TypeIds::Float32:
-    {
-      output = static_cast<double>(vmVariant.Get<float>());
-      break;
-    }
-    case fetch::vm::TypeIds::Float64:
-    {
-      output = vmVariant.Get<double>();
       break;
     }
     case fetch::vm::TypeIds::Fixed32:

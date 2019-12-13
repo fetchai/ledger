@@ -65,13 +65,7 @@ public:
   static fetch::vm::Ptr<UInt256Wrapper> ConstructorFromBytes(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<ByteArrayWrapper> const &ba);
 
-  double ToFloat64() const;
-
   int32_t ToInt32() const;
-
-  double LogValue() const;
-
-  bool LessThan(fetch::vm::Ptr<UInt256Wrapper> const &other) const;
 
   void Increase();
 
@@ -103,6 +97,31 @@ public:
   bool IsLessThan(fetch::vm::Ptr<Object> const &lhso, fetch::vm::Ptr<Object> const &rhso) override;
   bool IsGreaterThan(fetch::vm::Ptr<Object> const &lhso,
                      fetch::vm::Ptr<Object> const &rhso) override;
+
+  vm::ChargeAmount AddChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                      fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount InplaceAddChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                             fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount SubtractChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                           fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount InplaceSubtractChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                  fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount MultiplyChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                           fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount InplaceMultiplyChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                  fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount DivideChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                         fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount InplaceDivideChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                          fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsNotEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                             fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsLessThanChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                             fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsGreaterThanChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                fetch::vm::Ptr<Object> const &rhso) override;
 
 private:
   UInt256 number_;

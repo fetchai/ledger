@@ -396,12 +396,6 @@ void Generator::SetAnnotationLiteral(IRNodePtr const &node, AnnotationLiteral &l
     literal.SetInteger(i);
     break;
   }
-  case NodeKind::Float64:
-  {
-    double r = std::atof(text.c_str());
-    literal.SetReal(r);
-    break;
-  }
   case NodeKind::String:
   {
     std::string s = text.substr(1, text.size() - 2);
@@ -1317,16 +1311,6 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
     HandleUnsignedInteger64(node);
     break;
   }
-  case NodeKind::Float32:
-  {
-    HandleFloat32(node);
-    break;
-  }
-  case NodeKind::Float64:
-  {
-    HandleFloat64(node);
-    break;
-  }
   case NodeKind::Fixed32:
   {
     HandleFixed32(node);
@@ -1524,24 +1508,6 @@ void Generator::HandleUnsignedInteger64(IRExpressionNodePtr const &node)
   auto value        = static_cast<uint64_t>(std::strtoull(node->text.c_str(), nullptr, 10));
   instruction.index = AddConstant(Variant(value, TypeIds::UInt64));
   uint16_t pc       = function_->AddInstruction(instruction);
-  AddLineNumber(node->line, pc);
-}
-
-void Generator::HandleFloat32(IRExpressionNodePtr const &node)
-{
-  Executable::Instruction instruction(Opcodes::PushConstant);
-  auto                    value = float(std::atof(node->text.c_str()));
-  instruction.index             = AddConstant(Variant(value, TypeIds::Float32));
-  uint16_t pc                   = function_->AddInstruction(instruction);
-  AddLineNumber(node->line, pc);
-}
-
-void Generator::HandleFloat64(IRExpressionNodePtr const &node)
-{
-  Executable::Instruction instruction(Opcodes::PushConstant);
-  double                  value = std::atof(node->text.c_str());
-  instruction.index             = AddConstant(Variant(value, TypeIds::Float64));
-  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
@@ -2291,14 +2257,6 @@ bool Generator::ConstantComparator::operator()(Variant const &lhs, Variant const
   case TypeIds::UInt64:
   {
     return lhs.primitive.ui64 < rhs.primitive.ui64;
-  }
-  case TypeIds::Float32:
-  {
-    return lhs.primitive.f32 < rhs.primitive.f32;
-  }
-  case TypeIds::Float64:
-  {
-    return lhs.primitive.f64 < rhs.primitive.f64;
   }
   case TypeIds::Fixed32:
   {

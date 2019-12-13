@@ -40,12 +40,17 @@ bool EstimateCharge(VM *vm, ChargeEstimator<Args...> &&e, ArgsTuple const &args)
     // compute the estimate for this function invocation
     auto const charge_estimate = meta::Apply(std::move(e), args);
 
+    assert(charge_estimate > 0 && "Estimators must not return a charge of zero");
+
     vm->IncreaseChargeTotal(charge_estimate);
 
-    if (vm->GetChargeTotal() > vm->GetChargeLimit())
+    if (vm->HasError())
     {
-      vm->RuntimeError("Charge limit exceeded");
+      return false;
+    }
 
+    if (vm->ChargeLimitExceeded())
+    {
       return false;
     }
   }
