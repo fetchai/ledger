@@ -248,14 +248,14 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_transpose_test)
   for (SizeType cur_dim_size = MinDimSize(); cur_dim_size < MaxDimSize(); cur_dim_size += DimStep())
   {
     std::vector<SizeType> const tensor_shape(n_dims, cur_dim_size);
-    std::vector<SizeType> const new_shape(cur_dim_size, n_dims);
+    std::vector<SizeType> const new_shape(n_dims, cur_dim_size);
 
     MathTensor        tensor{tensor_shape};
     VmTensor          vm_tensor(&toolkit.vm(), fetch::vm::TypeIds::Unknown, tensor);
     VmTensorEstimator tensor_estimator(vm_tensor);
 
     SizeType padded_from_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_shape);
-    SizeType padded_to_size   = fetch::math::Tensor<DataType>::SizeFromShape(new_shape);
+    SizeType padded_to_size   = fetch::math::Tensor<DataType>::PaddedSizeFromShape(new_shape);
 
     ChargeAmount expected_charge{0};
     if (tensor_shape == new_shape)
