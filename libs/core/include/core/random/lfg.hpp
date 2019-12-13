@@ -86,9 +86,7 @@ public:
 
   fp128_t AsFP128() noexcept
   {
-    auto fp_val = fp128_t::FromBase(this->operator()() % fp128_t::MAX);
-    fp_val /= fp128_t::FP_MAX;
-    return fp128_t::Abs(fp_val);
+    return static_cast<fp128_t>(AsFP64());
   }
 
   fp64_t AsFP64() noexcept
