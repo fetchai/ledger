@@ -165,10 +165,11 @@ TEST_F(ConsensusTests, test_valid_block)
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::YES);
 }
 
-TEST_F(ConsensusTests, test_loose_block)
+TEST_F(ConsensusTests, test_invalid_block_number)
 {
   BlockPtr block = ValidNthBlock(1);
   block->block_number++;
+  block->block_entropy.block_number++;
 
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
 }

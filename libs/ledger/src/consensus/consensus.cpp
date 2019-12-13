@@ -50,10 +50,11 @@
  * a competing fork, for efficiency reasons.
  *
  * There are a number of thresholds/system limits:
- * - max cabinet size        , the maximum allowed cabinet taken from stakers
- * - qual threshold          , qual must be no less than 2/3rds of the cabinet
- * - signing threshold       , (1/2)+1 of the cabinet
- * - confirmation threshold  , set to signing threshold
+ * - max cabinet size             : the maximum allowed cabinet taken from stakers
+ * - qual threshold               : qual must be no less than 2/3rds of the cabinet
+ * - signing threshold            : (1/2)+1 of the cabinet
+ * - confirmation threshold       : set to signing threshold
+ * - qual signatures of new aeon  : all
  */
 
 namespace {
@@ -278,8 +279,6 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
     return false;
   }
 
-  // TODO(HUT): check block has been signed correctly
-
   // Time slot protocol: within the block period, only the heaviest weighted miner may produce a
   // block, outside this interval, any miner may produce a block.
   uint64_t last_block_timestamp_ms     = previous.timestamp * 1000;
@@ -494,9 +493,6 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   cabinet_creator_->Abort(current_block_.block_number);
 }
 
-// TODO(HUT): put block number confirmation/check here (?)
-// TODO(HUT): check you're a member of qual
-// TODO(HUT): turn this off when syncing(?)
 NextBlockPtr Consensus::GenerateNextBlock()
 {
   NextBlockPtr ret;
@@ -588,6 +584,12 @@ bool ValidNotarisationKeys(Consensus::BlockEntropy::Cabinet const &             
  * by enough qualified stakers.
  */
 bool Consensus::EnoughQualSigned(BlockEntropy const &block_entropy) const
+
+asdfasdf 
+adsf
+asdf
+fd
+
 {
   FETCH_UNUSED(block_entropy);
   // TODO(HUT): Here, the following checks will be performed (awaits Ed's changes):
@@ -633,6 +635,12 @@ Status Consensus::ValidBlock(Block const &current) const
     return Status::NO;
   }
 
+  if(!(current.block_number == block_preceeding->block_number + 1))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Found block with incorrect block number.");
+    return Status::NO;
+  }
+
   if (!BlockSignedByQualMember(current))
   {
     FETCH_LOG_WARN(LOGGING_NAME,
@@ -655,10 +663,15 @@ Status Consensus::ValidBlock(Block const &current) const
       return Status::NO;
     }
 
-    // Check that the members of qual have all signed correctly
-    if (!EnoughQualSigned(block_entropy))
+    // The cabinet that could have gone into qual
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Received a block with a bad aeon starting point!");
+      auto cabinet = stake_->BuildCabinet(block_preceeding, max_cabinet_size_);
+
+      // Check that the members of qual have all signed correctly
+      if (!EnoughQualSigned(cabinet, block_entropy))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Received a block with a bad aeon starting point!");
+      }
     }
 
     // Check that the members of qual meet threshold requirements
