@@ -17,15 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
+#include "ledger/protocols/main_chain_rpc_client_interface.hpp"
+#include "muddle/create_muddle_fake.hpp"
 
-#include <mutex>
+#include "gmock/gmock.h"
 
-namespace fetch {
+class MockMainChainRpcClient : public fetch::ledger::MainChainRpcClientInterface
+{
+public:
+  using Digest = fetch::Digest;
 
-using Mutex = std::mutex;
-
-#define FETCH_LOCK(lockable) \
-  std::lock_guard<decltype(lockable)> FETCH_JOIN(mutex_locked_on_line, __LINE__)(lockable)
-
-}  // namespace fetch
+  MOCK_METHOD2(GetHeaviestChain, BlocksPromise(MuddleAddress, uint64_t));
+  MOCK_METHOD4(GetCommonSubChain, BlocksPromise(MuddleAddress, Digest, Digest, uint64_t));
+  MOCK_METHOD2(TimeTravel, TraveloguePromise(MuddleAddress, Digest));
+};

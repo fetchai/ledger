@@ -94,7 +94,7 @@ TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_ski
     }
     while (std::getline(ss, field_value, delimiter))
     {
-      weights(col, row) = static_cast<DataType>(stod(field_value));
+      weights(col, row) = fetch::math::Type<DataType>(field_value);
       ++col;
     }
     ++row;

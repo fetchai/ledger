@@ -17,15 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
+#include "http/method.hpp"
+#include "http/module.hpp"
+#include "http/route.hpp"
 
-#include <mutex>
+#include <vector>
 
 namespace fetch {
+namespace http {
 
-using Mutex = std::mutex;
+struct MountedView
+{
+  using ViewType      = HTTPModule::ViewType;
+  using Authenticator = HTTPModule::Authenticator;
 
-#define FETCH_LOCK(lockable) \
-  std::lock_guard<decltype(lockable)> FETCH_JOIN(mutex_locked_on_line, __LINE__)(lockable)
+  byte_array::ConstByteArray description;
+  Method                     method;
+  Route                      route;
+  HTTPModule::ViewType       view;
+  HTTPModule::Authenticator  authenticator;
+};
 
+using MountedViews = std::vector<MountedView>;
+
+HTTPModule DefaultRootModule(MountedViews const &views);
+
+}  // namespace http
 }  // namespace fetch
