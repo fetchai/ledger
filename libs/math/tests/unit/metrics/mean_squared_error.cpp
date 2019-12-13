@@ -37,23 +37,23 @@ TYPED_TEST(MeanSquareErrorTest, perfect_match_test)
   TypeParam test_array = TypeParam{8};
   TypeParam gt_array   = TypeParam{8};
 
-  test_array[0] = DataType(1);
-  test_array[1] = DataType(-2);
-  test_array[2] = DataType(3);
-  test_array[3] = DataType(-4);
-  test_array[4] = DataType(5);
-  test_array[5] = DataType(-6);
-  test_array[6] = DataType(7);
-  test_array[7] = DataType(-8);
+  test_array[0] = fetch::math::Type<DataType>("1");
+  test_array[1] = fetch::math::Type<DataType>("-2");
+  test_array[2] = fetch::math::Type<DataType>("3");
+  test_array[3] = fetch::math::Type<DataType>("-4");
+  test_array[4] = fetch::math::Type<DataType>("5");
+  test_array[5] = fetch::math::Type<DataType>("-6");
+  test_array[6] = fetch::math::Type<DataType>("7");
+  test_array[7] = fetch::math::Type<DataType>("-8");
 
-  gt_array[0] = DataType(1);
-  gt_array[1] = DataType(-2);
-  gt_array[2] = DataType(3);
-  gt_array[3] = DataType(-4);
-  gt_array[4] = DataType(5);
-  gt_array[5] = DataType(-6);
-  gt_array[6] = DataType(7);
-  gt_array[7] = DataType(-8);
+  gt_array[0] = fetch::math::Type<DataType>("1");
+  gt_array[1] = fetch::math::Type<DataType>("-2");
+  gt_array[2] = fetch::math::Type<DataType>("3");
+  gt_array[3] = fetch::math::Type<DataType>("-4");
+  gt_array[4] = fetch::math::Type<DataType>("5");
+  gt_array[5] = fetch::math::Type<DataType>("-6");
+  gt_array[6] = fetch::math::Type<DataType>("7");
+  gt_array[7] = fetch::math::Type<DataType>("-8");
 
   // initialise to non-zero just to avoid correct value at initialisation
   DataType score(100);
@@ -70,23 +70,23 @@ TYPED_TEST(MeanSquareErrorTest, value_test)
   TypeParam test_array = TypeParam{8};
   TypeParam gt_array   = TypeParam{8};
 
-  test_array[0] = DataType(1.1);
-  test_array[1] = DataType(-2.2);
-  test_array[2] = DataType(3.3);
-  test_array[3] = DataType(-4.4);
-  test_array[4] = DataType(5.5);
-  test_array[5] = DataType(-6.6);
-  test_array[6] = DataType(7.7);
-  test_array[7] = DataType(-8.8);
+  test_array[0] = fetch::math::Type<DataType>("1.1");
+  test_array[1] = fetch::math::Type<DataType>("-2.2");
+  test_array[2] = fetch::math::Type<DataType>("3.3");
+  test_array[3] = fetch::math::Type<DataType>("-4.4");
+  test_array[4] = fetch::math::Type<DataType>("5.5");
+  test_array[5] = fetch::math::Type<DataType>("-6.6");
+  test_array[6] = fetch::math::Type<DataType>("7.7");
+  test_array[7] = fetch::math::Type<DataType>("-8.8");
 
-  gt_array[0] = DataType(1.1);
-  gt_array[1] = DataType(2.2);
-  gt_array[2] = DataType(7.7);
-  gt_array[3] = DataType(6.6);
-  gt_array[4] = DataType(0.0);
-  gt_array[5] = DataType(-6.6);
-  gt_array[6] = DataType(7.7);
-  gt_array[7] = DataType(-9.9);
+  gt_array[0] = fetch::math::Type<DataType>("1.1");
+  gt_array[1] = fetch::math::Type<DataType>("2.2");
+  gt_array[2] = fetch::math::Type<DataType>("7.7");
+  gt_array[3] = fetch::math::Type<DataType>("6.6");
+  gt_array[4] = fetch::math::Type<DataType>("0.0");
+  gt_array[5] = fetch::math::Type<DataType>("-6.6");
+  gt_array[6] = fetch::math::Type<DataType>("7.7");
+  gt_array[7] = fetch::math::Type<DataType>("-9.9");
 
   // initialise to non-zero just to avoid correct value at initialisation
   DataType score(0);

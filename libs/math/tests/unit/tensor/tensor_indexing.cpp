@@ -116,8 +116,8 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
     }
   }
 
-  std::vector<double> gt({0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14,
-                          15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29});
+  std::vector<int> gt({0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14,
+                       15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29});
 
   uint64_t counter = 0;
   for (uint64_t i(0); i < 2; i++)
@@ -126,7 +126,7 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
     {
       for (uint64_t k(0); k < 5; k++)
       {
-        ASSERT_EQ(static_cast<TypeParam>(gt[counter]), t.At(i, j, k));
+        ASSERT_EQ(TypeParam(gt[counter]), t.At(i, j, k));
         ++counter;
       }
     }
