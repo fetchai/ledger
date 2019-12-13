@@ -148,10 +148,10 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_min_test)
       SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_shape);
 
       ChargeAmount const expected_charge =
-          static_cast<ChargeAmount>(VmTensorEstimator::MIN_PADDED_SIZE_COEF * padded_size +
-                                    VmTensorEstimator::MIN_SIZE_COEF * size +
-                                    VmTensorEstimator::MIN_CONST_COEF) *
-          fetch::vm::COMPUTE_CHARGE_COST;
+          1 + static_cast<ChargeAmount>(VmTensorEstimator::MIN_PADDED_SIZE_COEF * padded_size +
+                                        VmTensorEstimator::MIN_SIZE_COEF * size +
+                                        VmTensorEstimator::MIN_CONST_COEF) *
+                  fetch::vm::COMPUTE_CHARGE_COST;
 
       EXPECT_EQ(tensor_estimator.Min(), expected_charge);
     }
@@ -190,10 +190,10 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_max_test)
       SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_shape);
 
       ChargeAmount const expected_charge =
-          static_cast<ChargeAmount>(VmTensorEstimator::MAX_PADDED_SIZE_COEF * padded_size +
-                                    VmTensorEstimator::MAX_SIZE_COEF * size +
-                                    VmTensorEstimator::MAX_CONST_COEF) *
-          fetch::vm::COMPUTE_CHARGE_COST;
+          1 + static_cast<ChargeAmount>(VmTensorEstimator::MAX_PADDED_SIZE_COEF * padded_size +
+                                        VmTensorEstimator::MAX_SIZE_COEF * size +
+                                        VmTensorEstimator::MAX_CONST_COEF) *
+                  fetch::vm::COMPUTE_CHARGE_COST;
 
       EXPECT_EQ(tensor_estimator.Max(), expected_charge);
     }
@@ -232,10 +232,10 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_sum_test)
       SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_shape);
 
       ChargeAmount const expected_charge =
-          static_cast<ChargeAmount>(VmTensorEstimator::SUM_PADDED_SIZE_COEF * padded_size +
-                                    VmTensorEstimator::SUM_SIZE_COEF * size +
-                                    VmTensorEstimator::SUM_CONST_COEF) *
-          fetch::vm::COMPUTE_CHARGE_COST;
+          1 + static_cast<ChargeAmount>(VmTensorEstimator::SUM_PADDED_SIZE_COEF * padded_size +
+                                        VmTensorEstimator::SUM_SIZE_COEF * size +
+                                        VmTensorEstimator::SUM_CONST_COEF) *
+                  fetch::vm::COMPUTE_CHARGE_COST;
 
       EXPECT_EQ(tensor_estimator.Sum(), expected_charge);
     }
@@ -288,7 +288,7 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_valid_reshape_test)
 
     ShapeTo const      new_shape_raw = shapes.second;
     ChargeAmount const expected_charge =
-        GetReferenceReshapeEstimation(initial_shape, new_shape_raw);
+        1 + GetReferenceReshapeEstimation(initial_shape, new_shape_raw);
 
     Array<SizeType>    shape_array      = GetShapeArray(new_shape_raw);
     Ptr<IArray>        new_shape_ptr    = Ptr<IArray>::PtrFromThis(&shape_array);
