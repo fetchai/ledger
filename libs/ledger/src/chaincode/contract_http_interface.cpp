@@ -233,6 +233,17 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     // dispatch the contract type
     auto contract = contract_cache_.Lookup(contract_name, storage_);
 
+    if (!contract)
+    {
+      response           = Variant::Object();
+      response["status"] = "failed";
+      response["msg"]    = "Unable to look up contract: " + static_cast<std::string>(contract_name);
+      response["console"] = "";
+      response["result"]  = variant::Variant::Null();
+
+      return http::CreateJsonResponse(response, http::Status::CLIENT_ERROR_NOT_FOUND);
+    }
+
     // adapt the storage engine so that that get and sets are sandboxed for the contract
     StateAdapter storage_adapter{storage_, contract_name};
 
