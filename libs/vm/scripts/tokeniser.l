@@ -47,7 +47,6 @@ INT             0|[1-9][0-9]*
 EXP             [Ee][+-]?{INT}
 INTEGER_LITERAL {INT}{EXP}?
 FP_LITERAL      {INT}\.[0-9]+
-REAL_LITERAL    {INT}\.[0-9]+{EXP}?
 IDENT           [_a-zA-Z][_a-zA-Z0-9]*
 
 %%
@@ -139,14 +138,6 @@ IDENT           [_a-zA-Z][_a-zA-Z0-9]*
 
 {INTEGER_LITERAL}u64 {
     return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger64, yytext, yyleng, yyextra);
-}
-
-{REAL_LITERAL}f {
-    return Set(yylval, fetch::vm::Token::Kind::Float32, yytext, yyleng, yyextra);
-}
-
-{REAL_LITERAL} {
-    return Set(yylval, fetch::vm::Token::Kind::Float64, yytext, yyleng, yyextra);
 }
 
 {FP_LITERAL}fp32 |

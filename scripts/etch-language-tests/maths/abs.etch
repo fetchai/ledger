@@ -12,10 +12,6 @@ function main()
     assert(abs(8000000u32) == 8000000u32);
     assert(abs(9000000000u64) == 9000000000u64);
 
-    // floating point
-    assert(abs(-3.0f) == 3.0f);
-    assert(abs(-3.0) == 3.0);
-
     // fixed point
     assert(abs(-3.0fp32) == 3.0fp32);
     assert(abs(-3.0fp64) == 3.0fp64);
