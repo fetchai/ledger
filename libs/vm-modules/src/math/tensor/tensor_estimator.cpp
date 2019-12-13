@@ -59,9 +59,17 @@ ChargeAmount TensorEstimator::Copy()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(COPY_PADDED_SIZE_COEF * padded_size + COPY_SIZE_COEF * size +
-                                   COPY_CONST_COEF) *
-         COMPUTE_CHARGE_COST;
+  auto ret = static_cast<ChargeAmount>(COPY_PADDED_SIZE_COEF * padded_size + COPY_SIZE_COEF * size +
+                                       COPY_CONST_COEF) *
+             COMPUTE_CHARGE_COST;
+
+  // Ensure that estimate will never be 0
+  if (ret < std::numeric_limits<uint64_t>::max())
+  {
+    ret += 1;
+  }
+
+  return ret;
 }
 
 ChargeAmount TensorEstimator::AtOne(TensorType::SizeType /*idx1*/)
@@ -113,8 +121,8 @@ ChargeAmount TensorEstimator::Fill(DataType const & /*value*/)
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(FILL_PADDED_SIZE_COEF * padded_size + FILL_SIZE_COEF * size +
-                                   FILL_CONST_COEF) *
+  return ToChargeAmount(FILL_PADDED_SIZE_COEF * padded_size + FILL_SIZE_COEF * size +
+                        FILL_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -123,8 +131,8 @@ ChargeAmount TensorEstimator::FillRandom()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(FILL_RANDOM_PADDED_SIZE_COEF * padded_size +
-                                   FILL_RANDOM_SIZE_COEF * size + FILL_RANDOM_CONST_COEF) *
+  return ToChargeAmount(FILL_RANDOM_PADDED_SIZE_COEF * padded_size + FILL_RANDOM_SIZE_COEF * size +
+                        FILL_RANDOM_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -133,8 +141,8 @@ ChargeAmount TensorEstimator::Min()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(MIN_PADDED_SIZE_COEF * padded_size + MIN_SIZE_COEF * size +
-                                   MIN_CONST_COEF) *
+  return ToChargeAmount(MIN_PADDED_SIZE_COEF * padded_size + MIN_SIZE_COEF * size +
+                        MIN_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -143,8 +151,8 @@ ChargeAmount TensorEstimator::Max()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(MAX_PADDED_SIZE_COEF * padded_size + MAX_SIZE_COEF * size +
-                                   MAX_CONST_COEF) *
+  return ToChargeAmount(MAX_PADDED_SIZE_COEF * padded_size + MAX_SIZE_COEF * size +
+                        MAX_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -189,8 +197,8 @@ ChargeAmount TensorEstimator::Sum()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(SUM_PADDED_SIZE_COEF * padded_size + SUM_SIZE_COEF * size +
-                                   SUM_CONST_COEF) *
+  return ToChargeAmount(SUM_PADDED_SIZE_COEF * padded_size + SUM_SIZE_COEF * size +
+                        SUM_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -201,14 +209,14 @@ ChargeAmount TensorEstimator::ArgMax(SizeType const &indices)
 
   if (indices == 0)
   {
-    return static_cast<ChargeAmount>(ARGMAX_FIRST_PADDED_SIZE_COEF * padded_size +
-                                     ARGMAX_FIRST_SIZE_COEF * size + ARGMAX_FIRST_CONST_COEF) *
+    return ToChargeAmount(ARGMAX_FIRST_PADDED_SIZE_COEF * padded_size +
+                          ARGMAX_FIRST_SIZE_COEF * size + ARGMAX_FIRST_CONST_COEF) *
            COMPUTE_CHARGE_COST;
   }
   if (indices == tensor_.shape().size() - 1)
   {
-    return static_cast<ChargeAmount>(ARGMAX_LAST_PADDED_SIZE_COEF * padded_size +
-                                     ARGMAX_LAST_SIZE_COEF * size + ARGMAX_LAST_CONST_COEF) *
+    return ToChargeAmount(ARGMAX_LAST_PADDED_SIZE_COEF * padded_size +
+                          ARGMAX_LAST_SIZE_COEF * size + ARGMAX_LAST_CONST_COEF) *
            COMPUTE_CHARGE_COST;
   }
 
@@ -222,8 +230,8 @@ ChargeAmount TensorEstimator::ArgMaxNoIndices()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(ARGMAX_FIRST_PADDED_SIZE_COEF * padded_size +
-                                   ARGMAX_FIRST_SIZE_COEF * size + ARGMAX_FIRST_CONST_COEF) *
+  return ToChargeAmount(ARGMAX_FIRST_PADDED_SIZE_COEF * padded_size +
+                        ARGMAX_FIRST_SIZE_COEF * size + ARGMAX_FIRST_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -233,8 +241,8 @@ ChargeAmount TensorEstimator::Dot(vm::Ptr<VMTensor> const &other)
   SizeType y = other->GetTensor().shape().at(1);
   SizeType c = tensor_.shape().at(1);
 
-  return static_cast<ChargeAmount>(DOT_X_COEF * x + DOT_Y_COEF * y + DOT_C_COEF * c +
-                                   DOT_CUBIC_COEF * x * y * c + DOT_CONST_COEF) *
+  return ToChargeAmount(DOT_X_COEF * x + DOT_Y_COEF * y + DOT_C_COEF * c +
+                        DOT_CUBIC_COEF * x * y * c + DOT_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -249,9 +257,8 @@ ChargeAmount TensorEstimator::GetReshapeCost(SizeVector const &new_shape)
   SizeType padded_size_from = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType padded_size_to   = fetch::math::Tensor<DataType>::PaddedSizeFromShape(new_shape);
 
-  return static_cast<ChargeAmount>(RESHAPE_PADDED_SIZE_FROM_COEF * padded_size_from +
-                                   RESHAPE_PADDED_SIZE_TO_COEF * padded_size_to +
-                                   RESHAPE_CONST_COEF) *
+  return ToChargeAmount(RESHAPE_PADDED_SIZE_FROM_COEF * padded_size_from +
+                        RESHAPE_PADDED_SIZE_TO_COEF * padded_size_to + RESHAPE_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -262,8 +269,8 @@ ChargeAmount TensorEstimator::NegateChargeEstimator(vm::Ptr<Object> const & /*ob
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(NEGATE_PADDED_SIZE_COEF * padded_size + NEGATE_SIZE_COEF * size +
-                                   NEGATE_CONST_COEF) *
+  return ToChargeAmount(NEGATE_PADDED_SIZE_COEF * padded_size + NEGATE_SIZE_COEF * size +
+                        NEGATE_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -272,8 +279,9 @@ ChargeAmount TensorEstimator::IsEqualChargeEstimator(vm::Ptr<Object> const & /*l
 {
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
-  return static_cast<ChargeAmount>(IS_EQUAL_PADDED_SIZE_COEF * padded_size +
-                                   IS_EQUAL_SIZE_COEF * size + IS_EQUAL_CONST_COEF) *
+
+  return ToChargeAmount(IS_EQUAL_PADDED_SIZE_COEF * padded_size + IS_EQUAL_SIZE_COEF * size +
+                        IS_EQUAL_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -282,8 +290,9 @@ ChargeAmount TensorEstimator::IsNotEqualChargeEstimator(vm::Ptr<Object> const & 
 {
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
-  return static_cast<ChargeAmount>(IS_NOT_EQUAL_PADDED_SIZE_COEF * padded_size +
-                                   IS_NOT_EQUAL_SIZE_COEF * size + IS_NOT_EQUAL_CONST_COEF) *
+
+  return ToChargeAmount(IS_NOT_EQUAL_PADDED_SIZE_COEF * padded_size +
+                        IS_NOT_EQUAL_SIZE_COEF * size + IS_NOT_EQUAL_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -292,8 +301,9 @@ ChargeAmount TensorEstimator::AddChargeEstimator(vm::Ptr<vm::Object> const & /*l
 {
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
-  return static_cast<ChargeAmount>(ADD_PADDED_SIZE_COEF * padded_size + ADD_SIZE_COEF * size +
-                                   ADD_CONST_COEF) *
+
+  return ToChargeAmount(ADD_PADDED_SIZE_COEF * padded_size + ADD_SIZE_COEF * size +
+                        ADD_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -302,8 +312,9 @@ ChargeAmount TensorEstimator::SubtractChargeEstimator(vm::Ptr<vm::Object> const 
 {
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
-  return static_cast<ChargeAmount>(SUBTRACT_PADDED_SIZE_COEF * padded_size +
-                                   SUBTRACT_SIZE_COEF * size + SUBTRACT_CONST_COEF) *
+
+  return ToChargeAmount(SUBTRACT_PADDED_SIZE_COEF * padded_size + SUBTRACT_SIZE_COEF * size +
+                        SUBTRACT_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -312,8 +323,9 @@ ChargeAmount TensorEstimator::InplaceAddChargeEstimator(vm::Ptr<vm::Object> cons
 {
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
-  return static_cast<ChargeAmount>(INPLACE_ADD_PADDED_SIZE_COEF * padded_size +
-                                   INPLACE_ADD_SIZE_COEF * size + INPLACE_ADD_CONST_COEF) *
+
+  return ToChargeAmount(INPLACE_ADD_PADDED_SIZE_COEF * padded_size + INPLACE_ADD_SIZE_COEF * size +
+                        INPLACE_ADD_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -322,9 +334,9 @@ ChargeAmount TensorEstimator::InplaceSubtractChargeEstimator(vm::Ptr<vm::Object>
 {
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
-  return static_cast<ChargeAmount>(INPLACE_SUBTRACT_PADDED_SIZE_COEF * padded_size +
-                                   INPLACE_SUBTRACT_SIZE_COEF * size +
-                                   INPLACE_SUBTRACT_CONST_COEF) *
+
+  return ToChargeAmount(INPLACE_SUBTRACT_PADDED_SIZE_COEF * padded_size +
+                        INPLACE_SUBTRACT_SIZE_COEF * size + INPLACE_SUBTRACT_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -333,8 +345,9 @@ ChargeAmount TensorEstimator::MultiplyChargeEstimator(vm::Ptr<vm::Object> const 
 {
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
-  return static_cast<ChargeAmount>(MULTIPLY_PADDED_SIZE_COEF * padded_size +
-                                   MULTIPLY_SIZE_COEF * size + MULTIPLY_CONST_COEF) *
+
+  return ToChargeAmount(MULTIPLY_PADDED_SIZE_COEF * padded_size + MULTIPLY_SIZE_COEF * size +
+                        MULTIPLY_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -343,8 +356,9 @@ ChargeAmount TensorEstimator::DivideChargeEstimator(vm::Ptr<vm::Object> const & 
 {
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
-  return static_cast<ChargeAmount>(DIVIDE_PADDED_SIZE_COEF * padded_size + DIVIDE_SIZE_COEF * size +
-                                   DIVIDE_CONST_COEF) *
+
+  return ToChargeAmount(DIVIDE_PADDED_SIZE_COEF * padded_size + DIVIDE_SIZE_COEF * size +
+                        DIVIDE_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -353,9 +367,9 @@ ChargeAmount TensorEstimator::InplaceMultiplyChargeEstimator(vm::Ptr<vm::Object>
 {
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
-  return static_cast<ChargeAmount>(INPLACE_MULTIPLY_PADDED_SIZE_COEF * padded_size +
-                                   INPLACE_MULTIPLY_SIZE_COEF * size +
-                                   INPLACE_MULTIPLY_CONST_COEF) *
+
+  return ToChargeAmount(INPLACE_MULTIPLY_PADDED_SIZE_COEF * padded_size +
+                        INPLACE_MULTIPLY_SIZE_COEF * size + INPLACE_MULTIPLY_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -364,8 +378,9 @@ ChargeAmount TensorEstimator::InplaceDivideChargeEstimator(vm::Ptr<vm::Object> c
 {
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
-  return static_cast<ChargeAmount>(INPLACE_DIVIDE_PADDED_SIZE_COEF * padded_size +
-                                   INPLACE_DIVIDE_SIZE_COEF * size + INPLACE_DIVIDE_CONST_COEF) *
+
+  return ToChargeAmount(INPLACE_DIVIDE_PADDED_SIZE_COEF * padded_size +
+                        INPLACE_DIVIDE_SIZE_COEF * size + INPLACE_DIVIDE_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -390,8 +405,7 @@ ChargeAmount TensorEstimator::Unsqueeze()
 
 ChargeAmount TensorEstimator::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
 {
-  return static_cast<ChargeAmount>(FROM_STRING_SIZE_COEF * string->Length() +
-                                   FROM_STRING_CONST_COEF) *
+  return ToChargeAmount(FROM_STRING_SIZE_COEF * string->Length() + FROM_STRING_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -400,8 +414,8 @@ ChargeAmount TensorEstimator::ToString()
   SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_.shape());
   SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_.shape());
 
-  return static_cast<ChargeAmount>(TO_STRING_PADDED_SIZE_COEF * padded_size +
-                                   TO_STRING_SIZE_COEF * size + TO_STRING_CONST_COEF) *
+  return ToChargeAmount(TO_STRING_PADDED_SIZE_COEF * padded_size + TO_STRING_SIZE_COEF * size +
+                        TO_STRING_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -409,6 +423,17 @@ ChargeAmount TensorEstimator::MaximumCharge(std::string const &log_msg)
 {
   FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::MAXIMUM_CHARGE : " + log_msg);
   return vm::MAXIMUM_CHARGE;
+}
+
+ChargeAmount TensorEstimator::ToChargeAmount(fixed_point::fp64_t const &val)
+{
+  auto ret = static_cast<ChargeAmount>(val);
+  // Ensure that estimate will never be 0
+  if (ret < std::numeric_limits<uint64_t>::max())
+  {
+    ret += 1;
+  }
+  return ret;
 }
 
 // Fill
