@@ -100,7 +100,7 @@ public:
       auto it     = drop_values_.begin();
       while (it.is_valid())
       {
-        if (static_cast<DataType>(rng_.AsDouble()) <= probability_)
+        if (rng_.AsFP<DataType>() <= probability_)
         {
           *it     = static_cast<DataType>(1) / probability_;
           *out_it = (*it) * (*in_it);

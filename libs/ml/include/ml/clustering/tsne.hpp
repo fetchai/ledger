@@ -411,7 +411,7 @@ private:
   DataType GetRandom(DataType /*mean*/, DataType /*standard_deviation*/)
   {
     // TODO(issue 752): use normal distribution random instead
-    return DataType(rng_.AsDouble());
+    return rng_.AsFP<DataType>();
   }
 
   /**

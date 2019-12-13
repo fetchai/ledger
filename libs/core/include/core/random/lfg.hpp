@@ -20,6 +20,8 @@
 #include "lcg.hpp"
 
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/type_traits.hpp"
+
 #include <cstdint>
 #include <limits>
 #include <vector>
@@ -79,29 +81,41 @@ public:
     return buffer_[++index_];
   }
 
-  double AsDouble() noexcept
+  /**
+   * @tparam DataType
+   * @return integer uniformly distributed random value 0 or 1
+   */
+  template <typename DataType>
+  meta::IfIsInteger<DataType, DataType> AsFP() noexcept
   {
-    return double(this->operator()()) * inv_double_max_;
+    return static_cast<DataType>(this->operator()() % 2);
   }
 
-  fp128_t AsFP128() noexcept
+  /**
+   * @tparam DataType
+   * @return float or double uniformly distributed random value between 0.0 and 1.0
+   */
+  template <typename DataType>
+  meta::IfIsFloat<DataType, DataType> AsFP() noexcept
   {
-    return static_cast<fp128_t>(AsFP64());
+    return static_cast<DataType>(static_cast<double>(this->operator()()) * inv_double_max_);
   }
 
-  fp64_t AsFP64() noexcept
+  /**
+   * @tparam DataType
+   * @return FixedPoint uniformly distributed random value between 0.0 and 1.0
+   */
+  template <typename DataType>
+  fetch::math::meta::IfIsFixedPoint<DataType, DataType> AsFP() noexcept
   {
     auto fp_val = fp64_t::FromBase(this->operator()() % fp64_t::MAX);
     fp_val /= fp64_t::FP_MAX;
-    return fp64_t::Abs(fp_val);
+    return static_cast<DataType>(fp64_t::Abs(fp_val));
   }
 
-  fp32_t AsFP32() noexcept
+  double AsDouble() noexcept
   {
-    // Bigger fp64_t::MAX range is there to include decimal part
-    auto fp_val = fp32_t::FromBase(this->operator()() % fp64_t::MAX);
-    fp_val /= fp32_t::FP_MAX;
-    return fp32_t::Abs(fp_val);
+    return AsFP<double>();
   }
 
   static constexpr RandomType min() noexcept

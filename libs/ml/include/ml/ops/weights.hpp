@@ -283,7 +283,7 @@ private:
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg.AsFP64();  // random value in range 0 <-> 1
+      auto ran_val = lfg.AsFP<fetch::fixed_point::fp64_t>();  // random value in range 0 <-> 1
       ran_val      = ran_val - HALF;
       ran_val      = ran_val * 2;  // random value in range -1 <-> +1
       ran_val      = ran_val * static_cast<fetch::fixed_point::fp64_t>(
@@ -305,7 +305,7 @@ private:
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg.AsFP64();  // random value in range 0 <-> 1
+      auto ran_val = lfg.AsFP<fetch::fixed_point::fp64_t>();  // random value in range 0 <-> 1
       ran_val      = ran_val - HALF;
       ran_val      = ran_val * 2;  // random value in range -1 <-> +1
       ran_val      = ran_val * static_cast<fetch::fixed_point::fp64_t>(
