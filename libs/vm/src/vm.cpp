@@ -303,7 +303,6 @@ bool VM::Execute(std::string &error, Variant &output)
     {
       RuntimeError("stack overflow");
     }
-
   }
   catch (std::exception const &e)
   {
