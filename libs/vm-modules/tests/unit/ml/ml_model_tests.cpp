@@ -562,40 +562,6 @@ TEST_F(VMModelTests, dense_sequential_model_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(VMModelTests, flatten_sequential_model_test)
-{
-  static char const *sequential_model_src = R"(
-    function main()
-
-      // set up data and labels
-      var data_shape = Array<UInt64>(2);
-      data_shape[0] = 10u64;
-      data_shape[1] = 1000u64;
-      var label_shape = Array<UInt64>(2);
-      label_shape[0] = 1u64;
-      label_shape[1] = 1000u64;
-      var data = Tensor(data_shape);
-      var label = Tensor(label_shape);
-
-      // set up a model
-      var model = Model("sequential");
-      model.add("dense", 10u64, 10u64, "relu");
-      model.add("dense", 10u64, 10u64, "relu");
-      model.add("flatten");
-      model.compile("mse", "adam");
-
-      // train the model
-      model.fit(data, label, 32u64);
-
-      // make a prediction
-      var loss = model.evaluate();
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(sequential_model_src));
-  ASSERT_TRUE(toolkit.Run());
-}
-
 TEST_F(VMModelTests, DISABLED_conv1d_sequential_model_test)
 {
   static char const *sequential_model_src = R"(
@@ -885,6 +851,21 @@ TEST_F(VMModelTests, model_with_accuracy_metric)
   auto const metrics = res.Get<Ptr<Array<fetch::vm_modules::math::DataType>>>();
   EXPECT_GE(metrics->elements.at(1), 0);
   EXPECT_LE(metrics->elements.at(1), 1);
+}
+
+
+TEST_F(VMModelTests, model_sequential_flatten)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.add("flatten");
+          model.compile("scel", "adam", {"categorical accuracy"});
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run());
 }
 
 }  // namespace
