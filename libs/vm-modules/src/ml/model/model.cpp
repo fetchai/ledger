@@ -627,7 +627,6 @@ void VMModel::LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::Str
   }
 }
 
-
 void VMModel::LayerAddFlatten(const fetch::vm::Ptr<String> &layer)
 {
   try
@@ -637,7 +636,7 @@ void VMModel::LayerAddFlatten(const fetch::vm::Ptr<String> &layer)
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
     if (layer_type == SupportedLayerType::FLATTEN)
     {
-        me->Add<fetch::ml::ops::Flatten<TensorType>>();
+      me->Add<fetch::ml::ops::Flatten<TensorType>>();
     }
     compiled_ = false;
   }
