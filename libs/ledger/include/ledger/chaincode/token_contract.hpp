@@ -56,7 +56,6 @@ public:
   bool     TransferTokens(chain::Transaction const &tx, chain::Address const &to, uint64_t amount);
 
   // transaction handlers
-  Result CreateWealth(chain::Transaction const &tx);
   Result UpdateDeed(chain::Transaction const &tx);
   Result Transfer(chain::Transaction const &tx);
   Result AddStake(chain::Transaction const &tx);
