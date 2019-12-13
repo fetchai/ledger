@@ -73,7 +73,6 @@ Settings::Settings()
   , num_processor_threads {*this, "processor-threads",       NUM_SYSTEM_THREADS,           "The number of processor threads"}
   , num_verifier_threads  {*this, "verifier-threads",        NUM_SYSTEM_THREADS,           "The number of verifier threads"}
   , num_executors         {*this, "executors",               DEFAULT_NUM_EXECUTORS,        "The number of transaction executors"}
-  , load_genesis_file     {*this, "load-genesis-file",       false,                        "Specify the contents of the genesis block"}
   , genesis_file_location {*this, "genesis-file-location",   "",                           "Path to the genesis file (usually genesis_file.json)"}
   , experimental_features {*this, "experimental",            {},                           "The comma separated set of experimental features to enable"}
   , proof_of_stake        {*this, "pos",                     false,                        "Enable Proof of Stake consensus"}
