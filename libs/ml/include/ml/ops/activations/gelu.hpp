@@ -90,8 +90,13 @@ public:
     TensorType        intermediate1({input.shape()}), intermediate2({input.shape()}),
         intermediate3({input.shape()});
 
-    DataType one{1}, two{2}, neg_two{-2}, three{3}, half{fetch::math::Type<DataType>("0.5")},
-        a{fetch::math::Type<DataType>("0.797885")}, b{fetch::math::Type<DataType>("0.035677")};
+    DataType one{1};
+    DataType two{2};
+    DataType neg_two{-2};
+    DataType three{3};
+    DataType half = fetch::math::Type<DataType>("0.5");
+    DataType a    = fetch::math::Type<DataType>("0.797885");
+    DataType b    = fetch::math::Type<DataType>("0.035677");
 
     // get ax + bx^3
     fetch::math::Multiply(input, a, intermediate1);
