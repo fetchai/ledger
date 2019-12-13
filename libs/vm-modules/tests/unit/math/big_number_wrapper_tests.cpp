@@ -206,25 +206,45 @@ TEST_F(UInt256Tests, uint256_comparisons)
   EXPECT_TRUE(toolkit.Run());
 }
 
-TEST_F(UInt256Tests, uint256_assignment)
+TEST_F(UInt256Tests, uint256_shallow_copy)
 {
-  static constexpr char const *TEXT = R"(
-    function main()
-      var a = UInt256(42u64);
-      var b = UInt256(0u64);
+  static constexpr char const *SOURCE = R"(
+      function main()
+        var a = UInt256(42u64);
+        var b = UInt256(0u64);
 
-      a = b;
-      assert(a == b, "a == b failed!");
+        a = b;
+        assert(a == b, "shallow copy failed!");
 
-      a = SHA256().final();
-      // e.g. a == e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+        a.increase();
 
-      assert(a != b, "a != b failed!");
+        assert(a == b, "shallow copy failed!");
+      endfunction
+    )";
 
-    endfunction
-  )";
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  EXPECT_TRUE(toolkit.Run());
+}
 
-  ASSERT_TRUE(toolkit.Compile(TEXT));
+TEST_F(UInt256Tests, uint256_deep_copy)
+{
+  static constexpr char const *SOURCE = R"(
+      function main()
+        var a = UInt256(42u64);
+        var b = UInt256(0u64);
+
+        a = b.copy();
+        assert(a == b, "deep copy failed!");
+
+        b.increase();
+        assert(a < b, "a is corrupted by increasing b!");
+
+        a.increase();
+        assert(a == b, "b is corrupted by increasing a!");
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
   EXPECT_TRUE(toolkit.Run());
 }
 

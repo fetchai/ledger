@@ -42,9 +42,9 @@ TYPED_TEST(GeluTest, exact_value_test)
 
   TypeParam output = fetch::math::Gelu(input);
   std::cout << "output.ToString(): " << output.ToString() << std::endl;
-  ASSERT_TRUE(
-      output.AllClose(gt, fetch::math::function_tolerance<DataType>(),
-                      static_cast<DataType>(2.8) * fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(output.AllClose(
+      gt, fetch::math::function_tolerance<DataType>(),
+      fetch::math::Type<DataType>("2.8") * fetch::math::function_tolerance<DataType>()));
 }
 
 }  // namespace test
