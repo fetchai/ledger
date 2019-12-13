@@ -801,7 +801,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       else
       {
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
-        elems.emplace_back(fetch::math::Type<Type>(cur_elem.c_str()));
+        elems.emplace_back(fetch::math::Type<Type>(cur_elem));
         prev_backslash = false;
         if (!reached_actual_data)
         {
