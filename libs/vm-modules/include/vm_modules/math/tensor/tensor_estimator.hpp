@@ -166,8 +166,8 @@ public:
   static const fixed_point::fp64_t SUM_CONST_COEF;
 
   // RESHAPE
-  static const fixed_point::fp64_t RESHAPE_PADDED_SIZE_COEF;
-  static const fixed_point::fp64_t RESHAPE_SIZE_COEF;
+  static const fixed_point::fp64_t RESHAPE_PADDED_SIZE_FROM_COEF;
+  static const fixed_point::fp64_t RESHAPE_PADDED_SIZE_TO_COEF;
   static const fixed_point::fp64_t RESHAPE_CONST_COEF;
 
   // FROM_STRING
@@ -179,6 +179,87 @@ public:
   static const fixed_point::fp64_t TO_STRING_SIZE_COEF;
   static const fixed_point::fp64_t TO_STRING_CONST_COEF;
 
+  // DOT
+  static const fixed_point::fp64_t DOT_X_COEF;
+  static const fixed_point::fp64_t DOT_Y_COEF;
+  static const fixed_point::fp64_t DOT_C_COEF;
+  static const fixed_point::fp64_t DOT_CUBIC_COEF;
+  static const fixed_point::fp64_t DOT_CONST_COEF;
+
+  // Negate
+  static const fixed_point::fp64_t NEGATE_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t NEGATE_SIZE_COEF;
+  static const fixed_point::fp64_t NEGATE_CONST_COEF;
+
+  // IsEqual
+  static const fixed_point::fp64_t IS_EQUAL_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t IS_EQUAL_SIZE_COEF;
+  static const fixed_point::fp64_t IS_EQUAL_CONST_COEF;
+
+  // IsNotEqual
+  static const fixed_point::fp64_t IS_NOT_EQUAL_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t IS_NOT_EQUAL_SIZE_COEF;
+  static const fixed_point::fp64_t IS_NOT_EQUAL_CONST_COEF;
+
+  // Add
+  static const fixed_point::fp64_t ADD_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t ADD_SIZE_COEF;
+  static const fixed_point::fp64_t ADD_CONST_COEF;
+
+  // InplaceAdd
+  static const fixed_point::fp64_t INPLACE_ADD_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_ADD_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_ADD_CONST_COEF;
+
+  // Subtract
+  static const fixed_point::fp64_t SUBTRACT_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t SUBTRACT_SIZE_COEF;
+  static const fixed_point::fp64_t SUBTRACT_CONST_COEF;
+
+  // InplaceSubtract
+  static const fixed_point::fp64_t INPLACE_SUBTRACT_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_SUBTRACT_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_SUBTRACT_CONST_COEF;
+
+  // Multiply
+  static const fixed_point::fp64_t MULTIPLY_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t MULTIPLY_SIZE_COEF;
+  static const fixed_point::fp64_t MULTIPLY_CONST_COEF;
+
+  // InplaceMultiply
+  static const fixed_point::fp64_t INPLACE_MULTIPLY_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_MULTIPLY_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_MULTIPLY_CONST_COEF;
+
+  // Divide
+  static const fixed_point::fp64_t DIVIDE_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t DIVIDE_SIZE_COEF;
+  static const fixed_point::fp64_t DIVIDE_CONST_COEF;
+
+  // InplaceDivide
+  static const fixed_point::fp64_t INPLACE_DIVIDE_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_DIVIDE_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_DIVIDE_CONST_COEF;
+
+  // Copy
+  static const fixed_point::fp64_t COPY_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t COPY_SIZE_COEF;
+  static const fixed_point::fp64_t COPY_CONST_COEF;
+
+  // ArgMax
+  static const fixed_point::fp64_t ARGMAX_FIRST_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_FIRST_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_FIRST_CONST_COEF;
+
+  static const fixed_point::fp64_t ARGMAX_MID_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_MID_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_MID_CONST_COEF;
+
+  static const fixed_point::fp64_t ARGMAX_LAST_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_LAST_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_LAST_CONST_COEF;
+
+  // Default
   static const fixed_point::fp64_t DEFAULT_PADDED_SIZE_COEF;
   static const fixed_point::fp64_t DEFAULT_SIZE_COEF;
   static const fixed_point::fp64_t DEFAULT_CONST_COEF;
