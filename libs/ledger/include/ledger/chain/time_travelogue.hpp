@@ -64,10 +64,10 @@ struct MapSerializer<ledger::TimeTravelogue<B>, D>
   using Type       = ledger::TimeTravelogue<B>;
   using DriverType = D;
 
-  static constexpr uint8_t BLOCKS          = 1;
-  static constexpr uint8_t HEAVIEST_HASH   = 2;
-  static constexpr uint8_t BLOCK_NUMBER    = 3;
-  static constexpr uint8_t STATUS          = 4;
+  static constexpr uint8_t BLOCKS        = 1;
+  static constexpr uint8_t HEAVIEST_HASH = 2;
+  static constexpr uint8_t BLOCK_NUMBER  = 3;
+  static constexpr uint8_t STATUS        = 4;
 
   template <class Constructor>
   static void Serialize(Constructor &map_constructor, Type const &travelogue)

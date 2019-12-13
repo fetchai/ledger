@@ -75,7 +75,6 @@ public:
   }
 
 private:
-
   static Blocks Copy(MainChain::Blocks const &blocks)
   {
     Blocks output{};

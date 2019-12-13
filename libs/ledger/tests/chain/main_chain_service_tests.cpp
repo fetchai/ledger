@@ -27,8 +27,8 @@
 #include "mock_main_chain_rpc_client.hpp"
 #include "mock_muddle_endpoint.hpp"
 #include "mock_trust_system.hpp"
-#include "muddle/network_id.hpp"
 #include "moment/clocks.hpp"
+#include "muddle/network_id.hpp"
 
 using ::testing::_;
 using ::testing::NiceMock;
@@ -103,10 +103,7 @@ protected:
   NiceMock<MockConsensus>          consensus_;
   NiceMock<MockTrustSystem>        trust_;
   MainChain                        chain_;
-  MainChainRpcService              rpc_service_{endpoint_,
-                                   rpc_client_,
-                                   chain_,
-                                   trust_,
+  MainChainRpcService              rpc_service_{endpoint_, rpc_client_, chain_, trust_,
                                    CreateNonOwning(consensus_)};
 };
 
@@ -375,7 +372,7 @@ TEST_F(MainChainServiceTests, CheckHandlingOfEmptyLog)
 TEST_F(MainChainServiceTests, CheckHandlingOfUnserialisablePayload)
 {
   auto promise = fetch::service::MakePromise();
-  promise->Fulfill(fetch::byte_array::ConstByteArray{}); // empty buffer will cause de-ser errors
+  promise->Fulfill(fetch::byte_array::ConstByteArray{});  // empty buffer will cause de-ser errors
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
 
@@ -442,9 +439,9 @@ TEST_F(MainChainServiceTests, CheckPeriodicResync)
 
 TEST_F(MainChainServiceTests, CheckLooseBlocksTrigger)
 {
-  auto gen  = block_generator_();
-  auto b1   = block_generator_(gen);
-  auto b2   = block_generator_(b1);
+  auto gen = block_generator_();
+  auto b1  = block_generator_(gen);
+  auto b2  = block_generator_(b1);
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{}));
 
@@ -452,7 +449,7 @@ TEST_F(MainChainServiceTests, CheckLooseBlocksTrigger)
   Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   // simulate the blocks being ahead of consensus prompting a resync
-  EXPECT_CALL(consensus_,ValidBlock(*b2)).WillRepeatedly(Return(ConsensusInterface::Status::NO));
+  EXPECT_CALL(consensus_, ValidBlock(*b2)).WillRepeatedly(Return(ConsensusInterface::Status::NO));
 
   // simulate the arrival of gossiped blocks
   rpc_service_.OnNewBlock(other1_, *b2, other1_);
@@ -480,7 +477,8 @@ TEST_F(MainChainServiceTests, CheckWhenGenesisAppearsToBeInvalid)
   log.status = fetch::ledger::TravelogueStatus::NOT_FOUND;
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest())).WillOnce(Return(CreatePromise(log)));
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+      .WillOnce(Return(CreatePromise(log)));
 
   Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
   Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);

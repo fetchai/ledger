@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "gmock/gmock.h"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/consensus/consensus_interface.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 
 class MockConsensus : public fetch::ledger::ConsensusInterface
 {

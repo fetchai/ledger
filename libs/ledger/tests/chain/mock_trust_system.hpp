@@ -31,7 +31,8 @@ public:
   using ConstByteArray = fetch::byte_array::ConstByteArray;
 
   MOCK_METHOD3(AddFeedback, void(MuddleAddress const &, TrustSubject, TrustQuality));
-  MOCK_METHOD4(AddFeedback, void(MuddleAddress const &, ConstByteArray const &, TrustSubject, TrustQuality));
+  MOCK_METHOD4(AddFeedback,
+               void(MuddleAddress const &, ConstByteArray const &, TrustSubject, TrustQuality));
 
   MOCK_CONST_METHOD1(GetBestPeers, IdentitySet(std::size_t));
   MOCK_CONST_METHOD0(GetPeersAndTrusts, PeerTrusts());
@@ -41,5 +42,4 @@ public:
   MOCK_CONST_METHOD1(IsPeerTrusted, bool(MuddleAddress const &));
   MOCK_CONST_METHOD1(IsPeerKnown, bool(MuddleAddress const &));
   MOCK_CONST_METHOD0(Debug, void());
-
 };

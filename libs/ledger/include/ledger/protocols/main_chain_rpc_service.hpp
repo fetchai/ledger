@@ -190,18 +190,17 @@ private:
   State OnWaitForBlocks();
   State OnCompleteSyncWithPeer();
 
-//
-//  State OnWaitForHeaviestChain();
-//  State OnWaitingForResponse();
+  //
+  //  State OnWaitForHeaviestChain();
+  //  State OnWaitingForResponse();
 
   bool ValidBlock(Block const &block, char const *action) const;
 
   /// @}
 
-
   /// @name System Components
   /// @{
-//  Mode const      mode_;
+  //  Mode const      mode_;
   MuddleEndpoint &endpoint_;
   MainChain &     chain_;
   TrustSystem &   trust_;
@@ -220,14 +219,14 @@ private:
 
   /// @name State Machine Data
   /// @{
-  RpcClient             &rpc_client_;
-  StateMachinePtr       state_machine_;
+  RpcClient &     rpc_client_;
+  StateMachinePtr state_machine_;
 
-  Address               current_peer_address_;
-  Promise               current_request_;
-  BlockPtr              block_resolving_;
-  DeadlineTimer         resync_interval_{"MC_RPC:main"};
-  std::size_t           consecutive_failures_{0};
+  Address       current_peer_address_;
+  Promise       current_request_;
+  BlockPtr      block_resolving_;
+  DeadlineTimer resync_interval_{"MC_RPC:main"};
+  std::size_t   consecutive_failures_{0};
 
   BlockHash             current_missing_block_;
   std::atomic<uint16_t> loose_blocks_seen_{0};

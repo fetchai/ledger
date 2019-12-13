@@ -27,6 +27,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/consensus/consensus_interface.hpp"
+#include "ledger/protocols/main_chain_rpc_client_interface.hpp"
 #include "logging/logging.hpp"
 #include "muddle/packet.hpp"
 #include "network/generics/milli_timer.hpp"
@@ -34,7 +35,6 @@
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
-#include "ledger/protocols/main_chain_rpc_client_interface.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -180,7 +180,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   if (!ValidBlock(block, "new block"))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Gossiped block did not prove valid. Loose blocks seen: ", loose_blocks_seen_);
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Gossiped block did not prove valid. Loose blocks seen: ", loose_blocks_seen_);
     ++loose_blocks_seen_;
     return;
   }
