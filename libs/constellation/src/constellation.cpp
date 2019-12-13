@@ -690,7 +690,7 @@ bool Constellation::OnBringUpExternalNetwork(
   // requests
   main_chain_rpc_client_ = std::make_shared<ledger::MainChainRpcClient>(muddle_->GetEndpoint());
   main_chain_service_ = std::make_shared<MainChainRpcService>(
-      muddle_->GetEndpoint(), *main_chain_rpc_client_, *chain_, trust_, cfg_.network_mode, consensus_);
+      muddle_->GetEndpoint(), *main_chain_rpc_client_, *chain_, trust_, consensus_);
 
   // the health check module needs the latest chain service
   health_check_module_->UpdateChainService(*main_chain_service_);

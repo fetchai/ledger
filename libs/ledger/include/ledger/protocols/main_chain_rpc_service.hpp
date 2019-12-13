@@ -50,6 +50,45 @@ class MainChainSyncWorker;
  * around and nodes will attempt to determine the heaviest chain of their peers and specifically
  * request them. Peers are guarded by the main chain limiting request sizes.
  *
+ *                                       ┌───────────────────┐
+ *                                       │                   │
+ *                            ┌───────── │   Synchronising   │────────┐
+ *                            │          │                   │        │
+ *                            │          └───────────────────┘        │
+ *                            │                    ▲                  │
+ *                            ▼                    │                  ▼
+ *                  ┌───────────────────┐          │        ┌───────────────────┐
+ *                  │  Start Sync with  │          │        │                   │
+ *                  │       Peer        │          ├────────│   Synchronised    │
+ *                  │                   │          │        │                   │
+ *                  └───────────────────┘          │        └───────────────────┘
+ *                            │                    │
+ *                            │                    │
+ *                            ▼                    │
+ *                  ┌───────────────────┐          │
+ *                  │                   │          │
+ *           ┌─────▶│Request Next Blocks│          │
+ *           │      │                   │          │
+ *           │      └───────────────────┘          │
+ *           │                │                    │
+ *           │                │                    │
+ *           │                ▼                    │
+ *           │      ┌───────────────────┐          │
+ *           │      │   Wait for Next   │          │
+ *           └──────│      Blocks       │          │
+ *                  │                   │          │
+ *                  └───────────────────┘          │
+ *                            │                    │
+ *                            │                    │
+ *                            ▼                    │
+ *                  ┌───────────────────┐          │
+ *                  │Complete Sync with │          │
+ *                  │       Peer        │          │
+ *                  │                   │          │
+ *                  └───────────────────┘          │
+ *                            │                    │
+ *                            │                    │
+ *                            └────────────────────┘
  */
 class MainChainRpcService : public muddle::rpc::Server,
                             public std::enable_shared_from_this<MainChainRpcService>
@@ -57,11 +96,12 @@ class MainChainRpcService : public muddle::rpc::Server,
 public:
   enum class State
   {
-    REQUEST_HEAVIEST_CHAIN,
-    WAIT_FOR_HEAVIEST_CHAIN,
     SYNCHRONISING,
-    WAITING_FOR_RESPONSE,
     SYNCHRONISED,
+    START_SYNC_WITH_PEER,
+    REQUEST_NEXT_BLOCKS,
+    WAIT_FOR_NEXT_BLOCKS,
+    COMPLETE_SYNC_WITH_PEER,
   };
 
   using MuddleEndpoint  = muddle::MuddleEndpoint;
@@ -78,7 +118,7 @@ public:
   using ConsensusPtr    = std::shared_ptr<ConsensusInterface>;
 
   static constexpr char const *LOGGING_NAME            = "MainChainRpc";
-  static constexpr uint64_t    PERIODIC_RESYNC_SECONDS = 60;
+  static constexpr uint64_t    PERIODIC_RESYNC_SECONDS = 20;
 
   enum class Mode
   {
@@ -89,7 +129,7 @@ public:
 
   // Construction / Destruction
   MainChainRpcService(MuddleEndpoint &endpoint, MainChainRpcClientInterface &rpc_client,
-                      MainChain &chain, TrustSystem &trust, Mode mode, ConsensusPtr consensus);
+                      MainChain &chain, TrustSystem &trust, ConsensusPtr consensus);
   MainChainRpcService(MainChainRpcService const &) = delete;
   MainChainRpcService(MainChainRpcService &&)      = delete;
   ~MainChainRpcService() override                  = default;
@@ -116,6 +156,11 @@ public:
     return State::SYNCHRONISED == state_machine_->state();
   }
 
+  /// @name Subscription Handlers
+  /// @{
+  void OnNewBlock(Address const &from, Block &block, Address const &transmitter);
+  /// @}
+
   // Operators
   MainChainRpcService &operator=(MainChainRpcService const &) = delete;
   MainChainRpcService &operator=(MainChainRpcService &&) = delete;
@@ -126,14 +171,6 @@ private:
   using StateMachinePtr = std::shared_ptr<StateMachine>;
   using BlockPtr        = MainChain::BlockPtr;
   using DeadlineTimer   = fetch::moment::DeadlineTimer;
-
-  BlockPtr      block_resolving_;
-  DeadlineTimer timer_to_proceed_{"MC_RPC:main"};
-
-  /// @name Subscription Handlers
-  /// @{
-  void OnNewBlock(Address const &from, Block &block, Address const &transmitter);
-  /// @}
 
   /// @name Utilities
   /// @{
@@ -146,16 +183,25 @@ private:
 
   /// @name State Machine Handlers
   /// @{
-  State OnRequestHeaviestChain();
-  State OnWaitForHeaviestChain();
   State OnSynchronising();
-  State OnWaitingForResponse();
-  State OnSynchronised();
+  State OnSynchronised(State current, State previous);
+  State OnStartSyncWithPeer();
+  State OnRequestNextSetOfBlocks();
+  State OnWaitForBlocks();
+  State OnCompleteSyncWithPeer();
+
+//
+//  State OnWaitForHeaviestChain();
+//  State OnWaitingForResponse();
+
+  bool ValidBlock(Block const &block, char const *action) const;
+
   /// @}
+
 
   /// @name System Components
   /// @{
-  Mode const      mode_;
+//  Mode const      mode_;
   MuddleEndpoint &endpoint_;
   MainChain &     chain_;
   TrustSystem &   trust_;
@@ -164,7 +210,6 @@ private:
   /// @name Block Validation
   /// @{
   ConsensusPtr consensus_;
-  bool         ValidBlock(Block const &block, char const *action) const;
   /// @}
 
   /// @name RPC Server
@@ -177,9 +222,14 @@ private:
   /// @{
   RpcClient             &rpc_client_;
   StateMachinePtr       state_machine_;
+
   Address               current_peer_address_;
-  BlockHash             current_missing_block_;
   Promise               current_request_;
+  BlockPtr              block_resolving_;
+  DeadlineTimer         resync_interval_{"MC_RPC:main"};
+  std::size_t           consecutive_failures_{0};
+
+  BlockHash             current_missing_block_;
   std::atomic<uint16_t> loose_blocks_seen_{0};
   /// @}
 
@@ -203,16 +253,18 @@ constexpr char const *ToString(MainChainRpcService::State state) noexcept
 {
   switch (state)
   {
-  case MainChainRpcService::State::REQUEST_HEAVIEST_CHAIN:
-    return "Requesting Heaviest Chain";
-  case MainChainRpcService::State::WAIT_FOR_HEAVIEST_CHAIN:
-    return "Waiting for Heaviest Chain";
   case MainChainRpcService::State::SYNCHRONISING:
     return "Synchronising";
-  case MainChainRpcService::State::WAITING_FOR_RESPONSE:
-    return "Waiting for Sync Response";
   case MainChainRpcService::State::SYNCHRONISED:
     return "Synchronised";
+  case MainChainRpcService::State::START_SYNC_WITH_PEER:
+    return "Starting Sync with Peer";
+  case MainChainRpcService::State::REQUEST_NEXT_BLOCKS:
+    return "Requesting Blocks";
+  case MainChainRpcService::State::WAIT_FOR_NEXT_BLOCKS:
+    return "Waiting for Blocks";
+  case MainChainRpcService::State::COMPLETE_SYNC_WITH_PEER:
+    return "Completed Sync with Peer";
   }
 
   return "unknown";

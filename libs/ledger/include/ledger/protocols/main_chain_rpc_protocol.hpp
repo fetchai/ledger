@@ -62,28 +62,18 @@ public:
     {
       return Blocks{};
     }
+
     return Copy(blocks);
   }
 
   Travelogue TimeTravel(Digest start)
   {
-    try
-    {
-      auto ret_val = chain_.TimeTravel(std::move(start));
-      return {Copy(ret_val.blocks), ret_val.heaviest_hash, ret_val.block_number,
-              ret_val.not_on_heaviest};
-    }
-    catch (std::exception const &ex)
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME,
-                      "Failed to respond to time travel request for block hash: ", start.ToHex(),
-                      ". Error : ", ex.what());
+    auto const ret_val = chain_.TimeTravel(std::move(start));
 
-      uint64_t const block_number = chain_.GetHeaviestBlock()->block_number;
-
-      return {Blocks(), Digest(), block_number, false};
-    }
+    // make a copy (because you need to convert from BlockPtr and Blocks)!
+    return {ret_val.heaviest_hash, ret_val.block_number, ret_val.status, Copy(ret_val.blocks)};
   }
+
 private:
 
   static Blocks Copy(MainChain::Blocks const &blocks)
