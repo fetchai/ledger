@@ -296,9 +296,12 @@ vm::Ptr<VMModel::VMTensor> VMModel::Predict(vm::Ptr<VMTensor> const &data)
 
 void VMModel::Bind(Module &module, bool const experimental_enabled)
 {
+  // model construction always requires initialising some strings, ptrs etc. but is very cheap
+  static const ChargeAmount FIXED_CONSTRUCTION_CHARGE{100};
+
   auto interface =
       module.CreateClassType<VMModel>("Model")
-          .CreateConstructor(&VMModel::Constructor)
+          .CreateConstructor(&VMModel::Constructor, FIXED_CONSTRUCTION_CHARGE)
           .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMModel> {
             return Ptr<VMModel>{new VMModel(vm, type_id)};
           })

@@ -51,13 +51,13 @@ endfunction
 """
 
 
-def run(options):
+def run(options, benefactor):
     entity1 = Entity()
 
     # create the APIs
     api = LedgerApi(options['host'], options['port'])
 
-    api.sync(api.tokens.wealth(entity1, 1000000))
+    api.sync(api.tokens.transfer(benefactor, entity1, 1000000, 1000))
 
     contracts = []
     for i in range(5):

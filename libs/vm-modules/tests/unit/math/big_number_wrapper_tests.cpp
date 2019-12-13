@@ -206,25 +206,45 @@ TEST_F(UInt256Tests, uint256_comparisons)
   EXPECT_TRUE(toolkit.Run());
 }
 
-TEST_F(UInt256Tests, uint256_assignment)
+TEST_F(UInt256Tests, uint256_shallow_copy)
 {
-  static constexpr char const *TEXT = R"(
-    function main()
-      var a = UInt256(42u64);
-      var b = UInt256(0u64);
+  static constexpr char const *SOURCE = R"(
+      function main()
+        var a = UInt256(42u64);
+        var b = UInt256(0u64);
 
-      a = b;
-      assert(a == b, "a == b failed!");
+        a = b;
+        assert(a == b, "shallow copy failed!");
 
-      a = SHA256().final();
-      // e.g. a == e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+        a.increase();
 
-      assert(a != b, "a != b failed!");
+        assert(a == b, "shallow copy failed!");
+      endfunction
+    )";
 
-    endfunction
-  )";
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  EXPECT_TRUE(toolkit.Run());
+}
 
-  ASSERT_TRUE(toolkit.Compile(TEXT));
+TEST_F(UInt256Tests, uint256_deep_copy)
+{
+  static constexpr char const *SOURCE = R"(
+      function main()
+        var a = UInt256(42u64);
+        var b = UInt256(0u64);
+
+        a = b.copy();
+        assert(a == b, "deep copy failed!");
+
+        b.increase();
+        assert(a < b, "a is corrupted by increasing b!");
+
+        a.increase();
+        assert(a == b, "b is corrupted by increasing a!");
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
   EXPECT_TRUE(toolkit.Run());
 }
 
@@ -411,53 +431,12 @@ TEST_F(UInt256Tests, uint256_size)
   EXPECT_TRUE(SIZE_IN_BYTES == size);
 }
 
-TEST_F(UInt256Tests, uint256_logValue)
-{
-  static constexpr double LOGARITHM_TOLERANCE  = 5e-4;
-  static constexpr double CONVERSION_TOLERANCE = 0.1;
-
-  for (const auto &input : TO_DOUBLE_INPUTS)
-  {
-    using namespace std;
-    UInt256Wrapper n1(dummy_vm_ptr, dummy_typeid, input.first);
-
-    const auto as_double  = n1.ToFloat64();
-    const auto result     = n1.LogValue();
-    const auto exp_double = input.second;
-    const auto expected   = std::log(exp_double);
-
-    EXPECT_NEAR(as_double, exp_double, exp_double * CONVERSION_TOLERANCE);
-    EXPECT_NEAR(result, expected, expected * LOGARITHM_TOLERANCE);
-  }
-
-  static constexpr char const *TEXT = R"(
-          function main() : Float64
-            var number : UInt256 = UInt256(18446744073709551615u64);
-            var logY : Float64 = number.logValue();
-            return logY;
-          endfunction
-        )";
-
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-  auto const result = res.Get<double>();
-
-  double const expected = std::log(18446744073709551615ull);
-
-  EXPECT_NEAR(result, expected, expected * LOGARITHM_TOLERANCE);
-}
-
 TEST_F(UInt256Tests, uint256_type_casts)
 {
   static constexpr char const *TEXT = R"(
       function main()
           var test : UInt256 = UInt256(9000000000000000000u64);
           var correct : UInt64 = 9000000000000000000u64;
-
-          var test_float64 = test.toFloat64();
-          var correct_float64 = toFloat64(correct);
-          assert(test_float64 == correct_float64, "toFloat64(...) failed");
 
           var test_int32 = toInt32(test);
           var correct_int32 = toInt32(correct);

@@ -96,9 +96,6 @@ void BindAbs(Module &module)
   module.CreateFreeFunction("abs", &IntegerAbs<uint32_t>);
   module.CreateFreeFunction("abs", &IntegerAbs<uint64_t>);
 
-  module.CreateFreeFunction("abs", &Abs<float_t>);
-  module.CreateFreeFunction("abs", &Abs<double_t>);
-
   module.CreateFreeFunction("abs", &Abs<fixed_point::fp32_t>);
   module.CreateFreeFunction("abs", &Abs<fixed_point::fp64_t>);
   module.CreateFreeFunction("abs", &AbsPtr<Fixed128>);

@@ -198,7 +198,7 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
       val += VmModelEstimator::ADD_DENSE_CONST_COEF;
 
       EXPECT_TRUE(model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs) ==
-                  static_cast<ChargeAmount>(val));
+                  static_cast<ChargeAmount>(val) + 1);
     }
   }
 }
@@ -233,7 +233,7 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
 
       EXPECT_TRUE(model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, inputs, outputs,
                                                           vm_ptr_activation_type) ==
-                  static_cast<ChargeAmount>(val));
+                  static_cast<ChargeAmount>(val) + 1);
     }
   }
 }
@@ -386,7 +386,7 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
       val += VmModelEstimator::COMPILE_CONST_COEF;
 
       EXPECT_TRUE(model_estimator.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type) ==
-                  static_cast<ChargeAmount>(val));
+                  static_cast<ChargeAmount>(val) + 1);
     }
   }
 }
@@ -525,7 +525,7 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
           val = val * fetch::vm::COMPUTE_CHARGE_COST;
 
           EXPECT_TRUE(model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size) ==
-                      static_cast<SizeType>(val));
+                      static_cast<SizeType>(val) + 1);
 
           DataType predict_val{0};
 
@@ -537,7 +537,7 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
           predict_val = predict_val * fetch::vm::COMPUTE_CHARGE_COST;
 
           EXPECT_TRUE(model_estimator.Predict(vm_ptr_tensor_data) ==
-                      static_cast<SizeType>(predict_val));
+                      static_cast<SizeType>(predict_val) + 1);
         }
       }
     }
@@ -663,7 +663,7 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
 
           // Calling Fit is needed to set the data
           model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size);
-          EXPECT_EQ(model_estimator.Evaluate(), static_cast<ChargeAmount>(val));
+          EXPECT_EQ(model_estimator.Evaluate(), static_cast<ChargeAmount>(val) + 1);
         }
       }
     }
