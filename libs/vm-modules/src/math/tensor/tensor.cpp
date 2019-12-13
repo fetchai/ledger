@@ -281,7 +281,7 @@ ChargeAmount VMTensor::IsEqualChargeEstimator(vm::Ptr<Object> const &lhso,
                                               vm::Ptr<Object> const &rhso)
 {
   return estimator_.IsEqualChargeEstimator(lhso, rhso);
-};
+}
 
 bool VMTensor::IsNotEqual(vm::Ptr<Object> const &lhso, vm::Ptr<Object> const &rhso)
 {
