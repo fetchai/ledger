@@ -43,6 +43,11 @@ void ErrorTracker::RaiseRuntimeError(ConstByteArray message, Token token)
   errors_.emplace_back(filename_, source_, message, token, ErrorMessage::Type::RUNTIME_ERROR);
 }
 
+void ErrorTracker::Append(ConstByteArray message, Token token)
+{
+  errors_.emplace_back(filename_, source_, message, token, ErrorMessage::Type::APPEND);
+}
+
 void ErrorTracker::RaiseInternalError(ConstByteArray message, Token token)
 {
   errors_.emplace_back(filename_, source_, message, token, ErrorMessage::Type::INTERNAL_ERROR);

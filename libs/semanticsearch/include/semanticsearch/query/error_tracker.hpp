@@ -45,6 +45,8 @@ public:
   void Print();
   void RaiseSyntaxError(ConstByteArray message, Token token);
   void RaiseRuntimeError(ConstByteArray message, Token token);
+  void Append(ConstByteArray message, Token token);
+
   void RaiseInternalError(ConstByteArray message, Token token);
   void SetSource(ConstByteArray source, ConstByteArray filename);
   void ClearErrors();

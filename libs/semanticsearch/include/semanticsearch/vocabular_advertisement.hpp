@@ -35,8 +35,8 @@ public:
   using AgentId             = uint64_t;
   using AgentIdSet          = std::shared_ptr<std::set<AgentId>>;
 
-  explicit VocabularyAdvertisement(VocabularySchemaPtr vocabulary_schema)
-    : vocabulary_schema_(std::move(vocabulary_schema))
+  explicit VocabularyAdvertisement(VocabularySchemaPtr const &vocabulary_schema)
+    : vocabulary_schema_(vocabulary_schema)
     , index_{static_cast<std::size_t>(vocabulary_schema->rank())}
   {}
 

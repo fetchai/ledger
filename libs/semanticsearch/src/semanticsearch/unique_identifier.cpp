@@ -4,8 +4,7 @@
 namespace fetch {
 namespace semanticsearch {
 
-UniqueIdentifier::UniqueIdentifierPtr UniqueIdentifier::Parse(std::string     str_uid,
-                                                              ScopeManagerPtr scope_manager)
+UniqueIdentifierPtr UniqueIdentifier::Parse(std::string str_uid, ScopeManagerPtr scope_manager)
 {
   if (scope_manager->HasUniqueID(str_uid))
   {
@@ -20,7 +19,7 @@ UniqueIdentifier::UniqueIdentifierPtr UniqueIdentifier::Parse(std::string     st
   }
 
   // Extracting type
-  auto type = uid.substr(type_pos + 1, str_uid.size() - type_pos - 1);
+  auto type = str_uid.substr(type_pos + 1, str_uid.size() - type_pos - 1);
   Kind kind;
   if (type == "schema")
   {
@@ -60,8 +59,9 @@ UniqueIdentifier::UniqueIdentifierPtr UniqueIdentifier::Parse(std::string     st
   auto x = str_uid.substr(lastpos, str_uid.size() - lastpos);
   taxonomy.emplace_back(x);
 
-  auto ptr = std::make_shared<UniqueIdentifier>(std::move(str_uid), kind, std::move(taxonomy));
-  scope_manager->RegisterUID(ptr);
+  auto ptr =
+      UniqueIdentifierPtr(new UniqueIdentifier(std::move(str_uid), kind, std::move(taxonomy)));
+  scope_manager->RegisterUniqueID(ptr);
 
   return ptr;
 }
@@ -91,7 +91,7 @@ bool UniqueIdentifier::operator>(UniqueIdentifier const &other) const
   return uid_ > other.uid_;
 }
 
-Kind UniqueIdentifier::kind() const
+UniqueIdentifier::Kind UniqueIdentifier::kind() const
 {
   return kind_;
 }

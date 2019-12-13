@@ -64,6 +64,7 @@ QueryCompiler::QueryCompiler(ErrorTracker &error_tracker)
 
 Query QueryCompiler::operator()(ByteArray doc, ConstByteArray const &filename)
 {
+  // Preparing
   document_ = std::move(doc);
   statements_.clear();
   position_   = 0;
@@ -71,8 +72,10 @@ Query QueryCompiler::operator()(ByteArray doc, ConstByteArray const &filename)
   line_       = 0;
   error_tracker_.SetSource(document_, filename);
 
+  // Tokenizing
   Tokenise();
 
+  // Assembling
   Query ret;
   ret.source   = document_;
   ret.filename = filename;

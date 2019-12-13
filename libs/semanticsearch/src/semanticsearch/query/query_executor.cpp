@@ -286,11 +286,14 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
       return;
     }
 
-    if (!model->Validate(last))
+    std::string error;
+    if (!model->Validate(last, error))
     {
+      // Reporting error
       error_tracker_.RaiseRuntimeError("Instance does not match model requirements.",
                                        stmt[stmt.size() - 1].token);
-      // TODO(private issue AEA-138): List what is wrong
+
+      error_tracker_.Append(error, stmt[stmt.size() - 1].token);
       return;
     }
 

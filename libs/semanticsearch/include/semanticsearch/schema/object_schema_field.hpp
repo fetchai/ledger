@@ -77,11 +77,11 @@ public:
     return ret;
   }
 
-  bool Validate(Vocabulary const &v) override
+  bool Validate(Vocabulary const &v, std::string &error) override
   {
-
     if (std::type_index(typeid(Type)) != v->type())
     {
+      error = "Type mismatch.";
       return false;
     }
 
@@ -89,6 +89,7 @@ public:
 
     if (array_.size() != data.size())
     {
+      error = "Size mismatch.";  // TODO: Could be more informative
       return false;
     }
 
@@ -99,10 +100,11 @@ public:
     {
       if (it1->first != it2->first)
       {
+        error = "Type mismatch of key.";
         return false;
       }
 
-      if (!it1->second->Validate(it2->second))
+      if (!it1->second->Validate(it2->second, error))
       {
         return false;
       }

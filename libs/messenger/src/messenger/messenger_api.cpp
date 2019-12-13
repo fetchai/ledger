@@ -59,7 +59,16 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
           return ret;
         });
 
-        cdr.SetValidator<Int>([from, to](Int x) { return (from <= x) && (x <= to); });
+        cdr.SetValidator<Int>([from, to](Int x, std::string &error) {
+          bool ret = (from <= x) && (x <= to);
+          if (!ret)
+          {
+            error = "Value not within bouds.";
+            return false;
+          }
+
+          return true;
+        });
 
         auto instance = TypedSchemaField<Int>::New();
         instance->SetSemanticReducer(cdr);
@@ -80,7 +89,16 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
           return ret;
         });
 
-        cdr.SetValidator<Float>([from, to](Float x) { return (from <= x) && (x <= to); });
+        cdr.SetValidator<Float>([from, to](Float x, std::string &error) {
+          bool ret = (from <= x) && (x <= to);
+          if (!ret)
+          {
+            error = "Value not within bouds.";
+            return false;
+          }
+
+          return true;
+        });
 
         auto instance = TypedSchemaField<Float>::New();
         instance->SetSemanticReducer(cdr);

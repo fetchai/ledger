@@ -36,14 +36,16 @@ TEST(SemanticSearchIndex, SemanticReducer)
     return ret;
   });
 
-  reducer.SetValidator<double>(
-      [from, to](double const &val) { return (from <= val) && (val <= to); });
+  reducer.SetValidator<double>([from, to](double const &val, std::string & /*error*/) {
+    return (from <= val) && (val <= to);
+  });
 
-  EXPECT_FALSE(reducer.Validate<double>(92.));
-  EXPECT_FALSE(reducer.Validate<double>(-192.));
-  EXPECT_TRUE(reducer.Validate<double>(3.));
-  EXPECT_TRUE(reducer.Validate<double>(90.));
-  EXPECT_TRUE(reducer.Validate<double>(-90.));
+  std::string error;
+  EXPECT_FALSE(reducer.Validate<double>(92., error));
+  EXPECT_FALSE(reducer.Validate<double>(-192., error));
+  EXPECT_TRUE(reducer.Validate<double>(3., error));
+  EXPECT_TRUE(reducer.Validate<double>(90., error));
+  EXPECT_TRUE(reducer.Validate<double>(-90., error));
 
   EXPECT_EQ(reducer.Reduce<double>(-90.), std::vector<uint64_t>({0}));
   // Note that due to rounding errors, we don't hit the exact limit

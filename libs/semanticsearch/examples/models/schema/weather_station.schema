@@ -1,5 +1,5 @@
 model IntPair {
-  key1: IntegerRange(8, 20,4),
+  key1: BoundedInteger(8, 20),
   key2: Int
 };
 
@@ -13,6 +13,8 @@ var y : IntPair = {
     key1: 9,
     key2: 4
 };
+
+/*
 
 var x : Advanced = {
   arr: y,
@@ -29,3 +31,4 @@ store x;
 store x;
 // reduce y = x;
 
+*/

@@ -5,7 +5,7 @@ namespace semanticsearch {
 
 ScopeManagerPtr ScopeManager::New(ScopeManagerPtr const &parent)
 {
-  return std::make_shared<ScopeManager>(parent);
+  return ScopeManagerPtr(new ScopeManager(parent));
 }
 
 ScopeManager::ScopeManager(ScopeManagerPtr const &parent)

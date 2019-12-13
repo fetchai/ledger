@@ -46,7 +46,7 @@ public:
   /// Traversal and validation
   /// @{
   SemanticPosition Reduce(VocabularyInstancePtr const &v) override;
-  bool             Validate(VocabularyInstancePtr const &v) override;
+  bool             Validate(VocabularyInstancePtr const &v, std::string &error) override;
   bool             IsSame(ModelInterface const &optr) const override;
   bool             VisitFields(FieldVisitor callback, VocabularyInstancePtr obj,
                                std::string name = "") override;
@@ -92,14 +92,15 @@ SemanticPosition TypedSchemaField<T>::Reduce(VocabularyInstancePtr const &v)
 }
 
 template <typename T>
-bool TypedSchemaField<T>::Validate(VocabularyInstancePtr const &v)
+bool TypedSchemaField<T>::Validate(VocabularyInstancePtr const &v, std::string &error)
 {
   if (type_ != v->type())
   {
+    error = "Type mismatch.";
     return false;
   }
 
-  return constrained_data_reducer_.Validate(v->data_);
+  return constrained_data_reducer_.Validate(v->data_, error);
 }
 
 template <typename T>

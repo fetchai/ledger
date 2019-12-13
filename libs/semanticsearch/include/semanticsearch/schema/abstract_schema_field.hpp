@@ -46,8 +46,8 @@ public:
 
   /// Used for reduction and validation
   /// @{
-  virtual SemanticPosition Reduce(VocabularyInstancePtr const &v)   = 0;
-  virtual bool             Validate(VocabularyInstancePtr const &v) = 0;
+  virtual SemanticPosition Reduce(VocabularyInstancePtr const &v)                       = 0;
+  virtual bool             Validate(VocabularyInstancePtr const &v, std::string &error) = 0;
   /// @}
 
   virtual bool VisitFields(FieldVisitor callback, VocabularyInstancePtr instance,

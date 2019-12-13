@@ -73,7 +73,7 @@ void AdvertisementRegister::OnAddModel(std::string const &name, VocabularySchema
 bool AdvertisementRegister::CreateModelInternal(std::string const &        name,
                                                 VocabularySchemaPtr const &object)
 {
-
+  assert(object != nullptr);
   SharedModel model          = std::make_shared<VocabularyAdvertisement>(object);
   model_advertisement_[name] = model;
 

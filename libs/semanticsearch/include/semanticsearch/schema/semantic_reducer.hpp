@@ -33,7 +33,7 @@ public:
   template <typename T>
   using Reducer = std::function<SemanticPosition(T const &)>;
   template <typename T>
-  using Validator = std::function<bool(T const &)>;
+  using Validator = std::function<bool(T const &, std::string &error)>;
 
   /// Constructors
   /// @{
@@ -62,7 +62,7 @@ public:
   /// Used for execution
   /// @{
   template <typename T>
-  bool Validate(T const &data) const;
+  bool Validate(T const &data, std::string &error) const;
   template <typename T>
   SemanticPosition Reduce(T const &data) const;
   /// @}
@@ -73,11 +73,11 @@ public:
   /// @}
 private:
   using InternalReducer   = std::function<SemanticPosition(void const *)>;
-  using InternalValidator = std::function<bool(void const *)>;
+  using InternalValidator = std::function<bool(void const *, std::string &)>;
 
   /// Internals for execution
   /// @{
-  bool             Validate(void const *data) const;
+  bool             Validate(void const *data, std::string &error) const;
   SemanticPosition Reduce(void const *data) const;
   /// @}
 
@@ -91,9 +91,9 @@ private:
 };
 
 template <typename T>
-bool SemanticReducer::Validate(T const &data) const
+bool SemanticReducer::Validate(T const &data, std::string &error) const
 {
-  return Validate(reinterpret_cast<void const *>(&data));
+  return Validate(reinterpret_cast<void const *>(&data), error);
 }
 
 template <typename T>
@@ -120,8 +120,8 @@ void SemanticReducer::SetReducer(int32_t rank, Reducer<T> reducer)
 template <typename T>
 void SemanticReducer::SetValidator(Validator<T> validator)
 {
-  constraints_validation_ = [validator](void const *data) {
-    return validator(*reinterpret_cast<T const *>(data));
+  constraints_validation_ = [validator](void const *data, std::string &error) {
+    return validator(*reinterpret_cast<T const *>(data), error);
   };
 }
 }  // namespace semanticsearch

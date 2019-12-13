@@ -34,7 +34,7 @@ public:
   ScopeManagerPtr NewScope();
   /// @}
 private:
-  ScopeManager(ScopeManagerPtr const &parent);
+  explicit ScopeManager(ScopeManagerPtr const &parent);
 
   /// ID registration
   /// @{

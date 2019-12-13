@@ -27,11 +27,11 @@ SemanticReducer::SemanticReducer(std::string const &uid)
   : unique_identifier_{uid}
 {}
 
-bool SemanticReducer::Validate(void const *data) const
+bool SemanticReducer::Validate(void const *data, std::string &error) const
 {
   if (constraints_validation_)
   {
-    return constraints_validation_(data);
+    return constraints_validation_(data, error);
   }
 
   return true;

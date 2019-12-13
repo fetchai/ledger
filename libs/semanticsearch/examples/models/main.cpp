@@ -88,7 +88,17 @@ int main(int argc, char **argv)
           return ret;
         });
 
-        cdr.SetValidator<Int>([from, to](Int x) { return (from <= x) && (x <= to); });
+        cdr.SetValidator<Int>([from, to](Int x, std::string &error) {
+          bool ret = (from <= x) && (x <= to);
+          if (!ret)
+          {
+            std::stringstream ss{""};
+            ss << "Value not withing bouds: " << from << " <= " << x << " <= " << to;
+            error = ss.str();
+            return false;
+          }
+          return true;
+        });
 
         auto instance = TypedSchemaField<Int>::New();
         instance->SetSemanticReducer(cdr);
@@ -109,7 +119,19 @@ int main(int argc, char **argv)
           return ret;
         });
 
-        cdr.SetValidator<Float>([from, to](Float x) { return (from <= x) && (x <= to); });
+        cdr.SetValidator<Float>([from, to](Float x, std::string &error) {
+          bool ret = (from <= x) && (x <= to);
+          if (!ret)
+          {
+            std::stringstream ss{""};
+            ss << "Value not withing bouds: " << from << " <= " << x << " <= " << to;
+            error = ss.str();
+
+            return false;
+          }
+
+          return true;
+        });
 
         auto instance = TypedSchemaField<Float>::New();
         instance->SetSemanticReducer(cdr);
