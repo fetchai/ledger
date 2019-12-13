@@ -40,6 +40,7 @@ public:
   using BlockIndex     = uint64_t;
   using Counter        = uint64_t;
 
+  constexpr static uint64_t   MAXIMUM_TX_CHARGE          = 10000000000;  // 1 FET
   constexpr static BlockIndex MAXIMUM_TX_VALIDITY_PERIOD = 40000;
   constexpr static BlockIndex DEFAULT_TX_VALIDITY_PERIOD = 1000;
 
