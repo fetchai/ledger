@@ -22,6 +22,7 @@
 #include "vm/generator.hpp"
 #include "vm/object.hpp"
 #include "vm/opcodes.hpp"
+#include "vm/opcode_charges.hpp"
 #include "vm/string.hpp"
 #include "vm/user_defined_object.hpp"
 #include "vm/variant.hpp"
