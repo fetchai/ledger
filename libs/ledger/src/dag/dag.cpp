@@ -185,7 +185,6 @@ void DAG::AddTransaction(chain::Transaction const &tx, DAGTypes type)
 
   new_node->type = DAGNode::DATA;
   new_node->SetContents(tx);
-  new_node->contract_digest  = tx.contract_digest().address();
   new_node->contract_address = tx.contract_address();
   new_node->contents         = tx.data();
 
@@ -210,7 +209,6 @@ void DAG::AddWork(Work const &solution)
   buffer << solution;
 
   new_node->type             = DAGNode::WORK;
-  new_node->contract_digest  = solution.contract_digest();
   new_node->contract_address = solution.address();
   new_node->identity         = solution.miner();
   new_node->contents         = buffer.data();
@@ -450,7 +448,6 @@ bool DAG::GetWork(DAGHash const &hash, Work &work)
       buffer >> work;
 
       // add fields normally not serialised
-      work.UpdateDigest(node.contract_digest);
       work.UpdateAddress(node.contract_address);
       work.UpdateIdentity(node.identity);
 

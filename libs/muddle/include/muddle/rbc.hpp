@@ -150,7 +150,7 @@ protected:
 
   /// Message communication - not thread safe.
   /// @{
-  void         Send(RBCMessage const &msg, MuddleAddress const &address);
+  virtual void Send(RBCMessage const &msg, MuddleAddress const &address);
   virtual void InternalBroadcast(RBCMessage const &msg);
   void         Deliver(SerialisedMessage const &msg, uint32_t sender_index);
 

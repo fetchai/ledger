@@ -89,7 +89,7 @@ public:
     : TCPClient(nmanager)
   {
     Connect(host_name, port_number);
-    this->OnMessage([](MessageType const &) { clientReceivedCount++; });
+    this->OnMessage([](MessageBuffer const &) { clientReceivedCount++; });
   }
 
   ~Client()
@@ -106,7 +106,7 @@ public:
     : TCPClient(nmanager)
   {
     Connect(host_name, port_number);
-    this->OnMessage([](MessageType const &) {
+    this->OnMessage([](MessageBuffer const &) {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
       clientReceivedCount++;
     });
@@ -118,8 +118,8 @@ public:
   }
 };
 
-std::vector<MessageType> globalMessages{};
-std::mutex               mutex_;
+std::vector<MessageBuffer> globalMessages{};
+std::mutex                 mutex_;
 
 // Client saves messages
 class VerifyClient : public TCPClient
@@ -130,7 +130,7 @@ public:
     : TCPClient(nmanager)
   {
     Connect(host_name, port_number);
-    this->OnMessage([](MessageType const &value) {
+    this->OnMessage([](MessageBuffer const &value) {
       {
         FETCH_LOCK(mutex_);
         globalMessages.push_back(value);
@@ -146,14 +146,14 @@ public:
 };
 
 // Create random data for testing
-std::vector<MessageType> CreateTestData(std::size_t index)
+std::vector<MessageBuffer> CreateTestData(std::size_t index)
 {
   std::size_t messagesToSend = MID_CYCLES;
   globalMessages.clear();
   globalMessages.reserve(messagesToSend);
   bool smallPackets = true;
 
-  std::vector<MessageType> sendData;
+  std::vector<MessageBuffer> sendData;
 
   if (index >= 5)
   {
@@ -168,7 +168,7 @@ std::vector<MessageType> CreateTestData(std::size_t index)
       packetSize = 100;
     }
 
-    MessageType arr;
+    MessageBuffer arr;
     arr.Resize(packetSize);
     for (std::size_t z = 0; z < arr.size(); z++)
     {
@@ -510,7 +510,7 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order)
     }
 
     // Precreate data, this handles clearing global counter etc.
-    std::vector<MessageType> sendData = CreateTestData(i);
+    std::vector<MessageBuffer> sendData = CreateTestData(i);
 
     std::size_t expectCount = clientReceivedCount;
 
@@ -561,7 +561,7 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order_multi
     }
 
     // Precreate data, this handles clearing global counter etc.
-    std::vector<MessageType> sendData = CreateTestData(index);
+    std::vector<MessageBuffer> sendData = CreateTestData(index);
 
     for (auto const &i : clients)
     {
@@ -637,12 +637,12 @@ TEST(tcp_client_stress_gtest, DISABLED_killing_during_transmission)
     }
 
     // Precreate data
-    std::vector<MessageType> sendData;
+    std::vector<MessageBuffer> sendData;
 
     for (uint8_t k = 0; k < 8; k++)
     {
-      std::size_t packetSize = 1000;
-      MessageType arr;
+      std::size_t   packetSize = 1000;
+      MessageBuffer arr;
       arr.Resize(packetSize);
       for (std::size_t z = 0; z < arr.size(); z++)
       {

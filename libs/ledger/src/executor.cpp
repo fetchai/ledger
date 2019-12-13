@@ -41,48 +41,11 @@
 static constexpr char const *LOGGING_NAME    = "Executor";
 static constexpr uint64_t    TRANSFER_CHARGE = 1;
 
-using fetch::byte_array::ConstByteArray;
 using fetch::telemetry::Histogram;
 using fetch::telemetry::Registry;
 
 namespace fetch {
 namespace ledger {
-namespace {
-
-bool GenerateContractName(chain::Transaction const &tx, Identifier &identifier)
-{
-  // Step 1 - Translate the tx into a common name
-  using ContractMode = chain::Transaction::ContractMode;
-
-  ConstByteArray contract_name{};
-  switch (tx.contract_mode())
-  {
-  case ContractMode::NOT_PRESENT:
-    break;
-  case ContractMode::PRESENT:
-    contract_name = tx.contract_digest().address().ToHex() + "." + tx.contract_address().display();
-    break;
-  case ContractMode::CHAIN_CODE:
-    contract_name = tx.chain_code();
-    break;
-  case ContractMode::SYNERGETIC:
-    // synergetic contracts are not supported through normal pipeline
-    break;
-  }
-
-  // if there is a contract present simply parse the name
-  if (!contract_name.empty())
-  {
-    if (!identifier.Parse(std::move(contract_name)))
-    {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-}  // namespace
 
 /**
  * Construct a Executor given a storage unit
@@ -258,20 +221,27 @@ bool Executor::ValidationChecks(Result &result)
 
 bool Executor::ExecuteTransactionContract(Result &result)
 {
+  using ContractMode = chain::Transaction::ContractMode;
   telemetry::FunctionTimer const timer{*contract_execution_duration_};
 
   bool success{false};
 
   try
   {
-    Identifier contract_id{};
-
-    // generate the contract name (identifier)
-    if (!GenerateContractName(*current_tx_, contract_id))
+    ConstByteArray contract_id{};
+    switch (current_tx_->contract_mode())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate the contract name");
-      result.status = Status::CONTRACT_NAME_PARSE_FAILURE;
-      return false;
+    case ContractMode::PRESENT:
+      contract_id = current_tx_->contract_address().display();
+      break;
+    case ContractMode::CHAIN_CODE:
+      contract_id = current_tx_->chain_code();
+      break;
+    case ContractMode::NOT_PRESENT:
+      break;
+    case ContractMode::SYNERGETIC:
+      // synergetic contracts are not supported through normal pipeline
+      break;
     }
 
     // when there is no contract signalled in the transaction the identifier will be empty. This is
@@ -286,13 +256,13 @@ bool Executor::ExecuteTransactionContract(Result &result)
     StateSentinelAdapter storage_adapter{*storage_cache_, contract_id, allowed_shards_};
 
     // look up or create the instance of the contract as is needed
-    bool const is_token_contract = (contract_id.full_name() == "fetch.token");
+    bool const is_token_contract = (contract_id == "fetch.token");
 
     Contract *contract = is_token_contract ? &token_contract_
                                            : chain_code_cache_.Lookup(contract_id, *storage_).get();
     if (!static_cast<bool>(contract))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract_id.full_name());
+      FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract_id);
       result.status = Status::CONTRACT_LOOKUP_FAILURE;
       return false;
     }
@@ -302,8 +272,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
     Contract::Result contract_status;
     {
-      ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
-                              block_};
+      ContractContext context{&token_contract_, current_tx_->contract_address(), storage_.get(),
+                              &storage_adapter, block_};
       ContractContextAttacher raii(*contract, context);
       contract_status = contract->DispatchTransaction(*current_tx_);
     }
@@ -334,6 +304,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     if (success)
     {
       // simple linear scale fee
+
       StorageFee storage_fee{storage_adapter};
 
       FeeManager::TransactionDetails tx_details{*current_tx_, allowed_shards_};
@@ -370,11 +341,10 @@ bool Executor::ProcessTransfers(Result &result)
   if (!current_tx_->transfers().empty())
   {
     // attach the token contract to the storage engine
-    StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"},
-                                         allowed_shards_};
+    StateSentinelAdapter storage_adapter{*storage_cache_, "fetch.token", allowed_shards_};
 
-    ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
-                            block_};
+    ContractContext         context{&token_contract_, current_tx_->contract_address(), nullptr,
+                            &storage_adapter, block_};
     ContractContextAttacher raii(token_contract_, context);
 
     // only process transfers if the previous steps have been successful

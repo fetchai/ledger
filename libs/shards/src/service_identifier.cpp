@@ -41,6 +41,9 @@ char const *ToString(ServiceIdentifier::Type type)
   case ServiceIdentifier::Type::DKG:
     text = "Dkg";
     break;
+  case ServiceIdentifier::Type::AGENTS:
+    text = "Agents";
+    break;
   case ServiceIdentifier::Type::LANE:
     text = "Lane";
     break;

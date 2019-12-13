@@ -44,8 +44,8 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
   int  ky;
   int  lenx;
   int  leny;
-  if ((int(a.height()) == 0) || ((int(a.width()) == 0) || ((alpha == static_cast<Type>(0.0)) &&
-                                                           (beta == static_cast<Type>(1.0)))))
+  if ((int(a.height()) == 0) ||
+      ((int(a.width()) == 0) || ((alpha == Type{0}) && (beta == Type{1}))))
   {
     return;
   }
@@ -70,13 +70,13 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
     ky = 1 + (-(-1 + leny) * incy);
   }
 
-  if (beta != static_cast<Type>(1.0))
+  if (beta != Type{1})
   {
     if (incy == 1)
     {
-      if (beta == static_cast<Type>(0.0))
+      if (beta == Type{0})
       {
-        Type zero{0.0};
+        auto zero = Type{0};
 
         auto          ret_slice = y.data().slice(0, y.padded_size());
         memory::Range range(std::size_t(0), std::size_t(leny));
@@ -100,11 +100,11 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
     else
     {
       iy = -1 + ky;
-      if (beta == static_cast<Type>(0.0))
+      if (beta == Type{0})
       {
         for (i = 0; i < leny; ++i)
         {
-          y[iy] = static_cast<Type>(0.0);
+          y[iy] = Type{0};
           iy    = iy + incy;
         }
       }
@@ -119,7 +119,7 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
     }
   }
 
-  if (alpha == static_cast<Type>(0.0))
+  if (alpha == Type{0})
   {
     return;
   }

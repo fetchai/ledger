@@ -29,6 +29,8 @@ namespace ledger {
 class MainChainProtocol : public service::Protocol
 {
 public:
+  static constexpr char const *LOGGING_NAME = "MainChainProtocol";
+
   using Travelogue = TimeTravelogue;
   using Blocks     = Travelogue::Blocks;
 
@@ -48,12 +50,12 @@ public:
   }
 
 private:
-  Blocks GetHeaviestChain(uint64_t maxsize)
+  Blocks GetHeaviestChain(uint64_t maxsize) const
   {
     return chain_.GetHeaviestChain(maxsize);
   }
 
-  Blocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit)
+  Blocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit) const
   {
     MainChain::Blocks blocks;
 
@@ -65,9 +67,22 @@ private:
     return blocks;
   }
 
-  Travelogue TimeTravel(Digest start)
+  Travelogue TimeTravel(Digest start) const
   {
-    return chain_.TimeTravel(std::move(start));
+    try
+    {
+      return chain_.TimeTravel(std::move(start));
+    }
+    catch (std::exception const &ex)
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME,
+                      "Failed to respond to time travel request for block hash: ", start.ToHex(),
+                      ". Error : ", ex.what());
+
+      uint64_t const block_number = chain_.GetHeaviestBlock()->block_number;
+
+      return {Blocks(), Digest(), block_number, false};
+    }
   }
 
   MainChain &chain_;

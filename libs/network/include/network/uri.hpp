@@ -70,6 +70,10 @@ public:
   /// @{
   bool IsTcpPeer() const;
   bool IsMuddleAddress() const;
+  bool IsValid() const
+  {
+    return IsTcpPeer() || IsMuddleAddress();
+  }
 
   Peer const &          GetTcpPeer() const;
   ConstByteArray const &GetMuddleAddress() const;

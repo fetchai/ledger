@@ -36,6 +36,8 @@ struct TimeTravelogue
 
   Blocks    blocks;
   BlockHash heaviest_hash;
+  uint64_t  block_number;
+  bool      not_on_heaviest;
 };
 
 }  // namespace ledger

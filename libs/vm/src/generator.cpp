@@ -396,12 +396,6 @@ void Generator::SetAnnotationLiteral(IRNodePtr const &node, AnnotationLiteral &l
     literal.SetInteger(i);
     break;
   }
-  case NodeKind::Float64:
-  {
-    double r = std::atof(text.c_str());
-    literal.SetReal(r);
-    break;
-  }
   case NodeKind::String:
   {
     std::string s = text.substr(1, text.size() - 2);
@@ -1317,16 +1311,6 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
     HandleUnsignedInteger64(node);
     break;
   }
-  case NodeKind::Float32:
-  {
-    HandleFloat32(node);
-    break;
-  }
-  case NodeKind::Float64:
-  {
-    HandleFloat64(node);
-    break;
-  }
   case NodeKind::Fixed32:
   {
     HandleFixed32(node);
@@ -1527,28 +1511,10 @@ void Generator::HandleUnsignedInteger64(IRExpressionNodePtr const &node)
   AddLineNumber(node->line, pc);
 }
 
-void Generator::HandleFloat32(IRExpressionNodePtr const &node)
-{
-  Executable::Instruction instruction(Opcodes::PushConstant);
-  auto                    value = float(std::atof(node->text.c_str()));
-  instruction.index             = AddConstant(Variant(value, TypeIds::Float32));
-  uint16_t pc                   = function_->AddInstruction(instruction);
-  AddLineNumber(node->line, pc);
-}
-
-void Generator::HandleFloat64(IRExpressionNodePtr const &node)
-{
-  Executable::Instruction instruction(Opcodes::PushConstant);
-  double                  value = std::atof(node->text.c_str());
-  instruction.index             = AddConstant(Variant(value, TypeIds::Float64));
-  uint16_t pc                   = function_->AddInstruction(instruction);
-  AddLineNumber(node->line, pc);
-}
-
 void Generator::HandleFixed32(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  fixed_point::fp32_t     value = fixed_point::fp32_t(std::atof(node->text.c_str()));
+  fixed_point::fp32_t     value = fixed_point::fp32_t(node->text);
   instruction.index             = AddConstant(Variant(value, TypeIds::Fixed32));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1557,7 +1523,7 @@ void Generator::HandleFixed32(IRExpressionNodePtr const &node)
 void Generator::HandleFixed64(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  fixed_point::fp64_t     value = fixed_point::fp64_t(std::atof(node->text.c_str()));
+  fixed_point::fp64_t     value = fixed_point::fp64_t(node->text);
   instruction.index             = AddConstant(Variant(value, TypeIds::Fixed64));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1566,7 +1532,7 @@ void Generator::HandleFixed64(IRExpressionNodePtr const &node)
 void Generator::HandleFixed128(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushLargeConstant);
-  fixed_point::fp128_t    value = fixed_point::fp128_t(std::atof(node->text.c_str()));
+  fixed_point::fp128_t    value = fixed_point::fp128_t(node->text);
   instruction.index             = AddLargeConstant(Executable::LargeConstant(value));
   uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -2291,14 +2257,6 @@ bool Generator::ConstantComparator::operator()(Variant const &lhs, Variant const
   case TypeIds::UInt64:
   {
     return lhs.primitive.ui64 < rhs.primitive.ui64;
-  }
-  case TypeIds::Float32:
-  {
-    return lhs.primitive.f32 < rhs.primitive.f32;
-  }
-  case TypeIds::Float64:
-  {
-    return lhs.primitive.f64 < rhs.primitive.f64;
   }
   case TypeIds::Fixed32:
   {

@@ -105,7 +105,7 @@ TEST_F(MLTests, DISABLED_dataloader_commodity_invalid_serialisation)
   )";
 
   ASSERT_TRUE(toolkit.Compile(SOURCE));
-  EXPECT_THROW(toolkit.Run(), std::exception);
+  EXPECT_FALSE(toolkit.Run());
 }
 
 TEST_F(MLTests, DISABLED_dataloader_tensor_serialisation_test)
@@ -449,7 +449,7 @@ TEST_F(MLTests, DISABLED_optimiser_adagrad_serialisation_failed)
      endfunction
    )";
   ASSERT_TRUE(toolkit.Compile(SOURCE));
-  EXPECT_THROW(toolkit.Run(), std::exception);
+  EXPECT_FALSE(toolkit.Run());
 }
 
 TEST_F(MLTests, DISABLED_optimiser_sgd_serialisation)
