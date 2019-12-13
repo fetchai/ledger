@@ -85,11 +85,11 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
         "ledger_mainchain_service_recv_block_invalid_total",
         " The total number of invalid blocks received from the network")}
   , state_synchronising_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_mainchain_service_state_synchronising_total",
-      "The number of times in the synchronisiing state")}
+        "ledger_mainchain_service_state_synchronising_total",
+        "The number of times in the synchronisiing state")}
   , state_synchronised_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_mainchain_service_state_synchronised_total",
-      "The number of times in the sychronised state")}
+        "ledger_mainchain_service_state_synchronised_total",
+        "The number of times in the sychronised state")}
   , state_start_sync_with_peer_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_state_rstart_sync_with_peer_total",
         "The number of times in the start sync with peer state")}
@@ -100,11 +100,11 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
         "ledger_mainchain_service_state_wait_for_next_blocks_total",
         "The number of times in the wait for next blocks state")}
   , state_complete_sync_with_peer_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_mainchain_service_state_complete_sync_with_peer_total",
-      "The number of times in the complete sync with peer state")}
+        "ledger_mainchain_service_state_complete_sync_with_peer_total",
+        "The number of times in the complete sync with peer state")}
   , state_current_{telemetry::Registry::Instance().CreateGauge<uint32_t>(
-      "ledger_mainchain_service_state_complete_sync_with_peer_total",
-      "The number of times in the complete sync with peer state")}
+        "ledger_mainchain_service_state_complete_sync_with_peer_total",
+        "The number of times in the complete sync with peer state")}
   , new_block_duration_{telemetry::Registry::Instance().CreateHistogram(
         {1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 1e1, 1e2, 1e3},
         "ledger_mainchain_service_new_block_duration", "The duration of the new block handler")}
