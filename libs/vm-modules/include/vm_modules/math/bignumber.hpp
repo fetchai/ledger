@@ -65,13 +65,7 @@ public:
   static fetch::vm::Ptr<UInt256Wrapper> ConstructorFromBytes(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<ByteArrayWrapper> const &ba);
 
-  double ToFloat64() const;
-
   int32_t ToInt32() const;
-
-  double LogValue() const;
-
-  bool LessThan(fetch::vm::Ptr<UInt256Wrapper> const &other) const;
 
   void Increase();
 

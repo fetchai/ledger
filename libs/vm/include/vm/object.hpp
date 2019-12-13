@@ -45,7 +45,7 @@ struct Fixed128;
 template <typename T>
 using IsPrimitive =
     type_util::IsAnyOf<T, void, bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t,
-                       int64_t, uint64_t, float, double, fixed_point::fp32_t, fixed_point::fp64_t>;
+                       int64_t, uint64_t, fixed_point::fp32_t, fixed_point::fp64_t>;
 
 template <typename T, typename R = void>
 using IfIsPrimitive = std::enable_if_t<IsPrimitive<std::decay_t<T>>::value, R>;
@@ -232,9 +232,6 @@ protected:
     return ref_count_;
   }
 
-  Variant &Push();
-  Variant &Pop();
-  Variant &Top();
   void     RuntimeError(std::string const &message);
   TypeInfo GetTypeInfo(TypeId type_id);
   bool     GetNonNegativeInteger(Variant const &v, std::size_t &index);
@@ -495,12 +492,6 @@ auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
 
   case TypeIds::UInt64:
     return Functor<uint64_t>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Float32:
-    return Functor<float>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Float64:
-    return Functor<double>{}(std::forward<Args>(args)...);
 
   case TypeIds::Fixed32:
     return Functor<fixed_point::fp32_t>{}(std::forward<Args>(args)...);
