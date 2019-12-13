@@ -70,8 +70,6 @@ void BindRand(Module &module)
   module.CreateFreeFunction("rand", &Rand<uint16_t>);
   module.CreateFreeFunction("rand", &Rand<uint32_t>);
   module.CreateFreeFunction("rand", &Rand<uint64_t>);
-  module.CreateFreeFunction("rand", &Rand<float_t>);
-  module.CreateFreeFunction("rand", &Rand<double_t>);
 }
 
 }  // namespace math
