@@ -36,7 +36,6 @@ ArrayType RandomArrayNegative(std::size_t n)
 {
   using DataType = typename ArrayType::Type;
 
-  ;
   ArrayType a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
@@ -49,7 +48,7 @@ template <typename ArrayType>
 ArrayType RandomArrayPositive(std::size_t n)
 {
   using DataType = typename ArrayType::Type;
-  ;
+
   ArrayType a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
