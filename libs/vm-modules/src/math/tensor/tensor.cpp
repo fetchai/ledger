@@ -462,7 +462,9 @@ void VMTensor::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
 {
   try
   {
-    tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->string()));
+    auto input_tensor = fetch::math::Tensor<DataType>::FromString(string->string());
+    tensor_.Reshape(input_tensor.shape());
+    tensor_.Assign(input_tensor);
   }
   catch (std::exception const &e)
   {
