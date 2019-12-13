@@ -27,9 +27,6 @@ namespace {
 
 using namespace fetch::vm;
 
-constexpr char const *EXPECTED_ERROR_MSG =
-    "Runtime Error: runtime error: line 3: Charge limit exceeded\n";
-
 class VMMLEstimatorTests : public ::testing::Test
 {
 public:
@@ -51,7 +48,6 @@ TEST_F(VMMLEstimatorTests, vmgraph_constructor_have_infinite_charge)
 
   EXPECT_TRUE(toolkit.Compile(TEXT));
   EXPECT_FALSE(toolkit.Run());
-  EXPECT_EQ(stdout.str(), EXPECTED_ERROR_MSG);
 }
 
 TEST_F(VMMLEstimatorTests, vmdataloader_constructor_have_infinite_charge)
@@ -64,7 +60,6 @@ TEST_F(VMMLEstimatorTests, vmdataloader_constructor_have_infinite_charge)
 
   EXPECT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
   EXPECT_FALSE(toolkit.Run());
-  EXPECT_EQ(stdout.str(), EXPECTED_ERROR_MSG);
 }
 
 TEST_F(VMMLEstimatorTests, vmdtrainingpair_constructor_have_infinite_charge)
@@ -77,7 +72,6 @@ TEST_F(VMMLEstimatorTests, vmdtrainingpair_constructor_have_infinite_charge)
 
   EXPECT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
   EXPECT_FALSE(toolkit.Run());
-  EXPECT_EQ(stdout.str(), EXPECTED_ERROR_MSG);
 }
 
 TEST_F(VMMLEstimatorTests, vmdstatedict_constructor_have_infinite_charge)
@@ -90,7 +84,6 @@ TEST_F(VMMLEstimatorTests, vmdstatedict_constructor_have_infinite_charge)
 
   EXPECT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
   EXPECT_FALSE(toolkit.Run());
-  EXPECT_EQ(stdout.str(), EXPECTED_ERROR_MSG);
 }
 
 TEST_F(VMMLEstimatorTests, vmscaler_constructor_have_infinite_charge)
@@ -103,7 +96,6 @@ TEST_F(VMMLEstimatorTests, vmscaler_constructor_have_infinite_charge)
 
   EXPECT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
   EXPECT_FALSE(toolkit.Run());
-  EXPECT_EQ(stdout.str(), EXPECTED_ERROR_MSG);
 }
 
 TEST_F(VMMLEstimatorTests, vmoptimiser_constructor_have_infinite_charge)
@@ -116,7 +108,6 @@ TEST_F(VMMLEstimatorTests, vmoptimiser_constructor_have_infinite_charge)
 
   EXPECT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
   EXPECT_FALSE(toolkit.Run());
-  EXPECT_EQ(stdout.str(), EXPECTED_ERROR_MSG);
 }
 
 TEST_F(VMMLEstimatorTests, load_mnist_images_have_infinite_charge)
@@ -129,7 +120,6 @@ TEST_F(VMMLEstimatorTests, load_mnist_images_have_infinite_charge)
 
   EXPECT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
   EXPECT_FALSE(toolkit.Run());
-  EXPECT_EQ(stdout.str(), EXPECTED_ERROR_MSG);
 }
 
 TEST_F(VMMLEstimatorTests, load_mnist_labels_have_infinite_charge)
@@ -142,7 +132,6 @@ TEST_F(VMMLEstimatorTests, load_mnist_labels_have_infinite_charge)
 
   EXPECT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
   EXPECT_FALSE(toolkit.Run());
-  EXPECT_EQ(stdout.str(), EXPECTED_ERROR_MSG);
 }
 
 }  // namespace

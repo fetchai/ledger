@@ -225,16 +225,6 @@ TEST_F(SmartContractTests, CheckQueryReturnTypes)
     endfunction
 
     @query
-    function get_float() : Float32
-      return 1.0f;
-    endfunction
-
-    @query
-    function get_double() : Float64
-      return 2.0;
-    endfunction
-
-    @query
     function get_string() : String
       return "Why hello there";
     endfunction
@@ -249,8 +239,6 @@ TEST_F(SmartContractTests, CheckQueryReturnTypes)
   VerifyQuery("get_uint32", uint32_t{15});
   VerifyQuery("get_int64", int64_t{16});
   VerifyQuery("get_uint64", uint64_t{17});
-  VerifyQuery("get_float", float{1.0});
-  VerifyQuery("get_double", double{2.0});
   VerifyQuery("get_string", ConstByteArray{"Why hello there"});
 }
 

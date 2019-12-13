@@ -247,11 +247,6 @@ void CreatePrint(Module &module)
   module.CreateFreeFunction("print", &PrintNumber<int64_t>);
   module.CreateFreeFunction("printLn", &PrintNumber<int64_t, true>);
 
-  module.CreateFreeFunction("print", &PrintNumber<float>);
-  module.CreateFreeFunction("printLn", &PrintNumber<float, true>);
-  module.CreateFreeFunction("print", &PrintNumber<double>);
-  module.CreateFreeFunction("printLn", &PrintNumber<double, true>);
-
   module.CreateFreeFunction("print", &PrintNumber<fixed_point::fp32_t>);
   module.CreateFreeFunction("print", &PrintNumber<fixed_point::fp64_t>);
   module.CreateFreeFunction("print", &PrintLargeNumber<Ptr<Fixed128>>);
@@ -281,11 +276,6 @@ void CreatePrint(Module &module)
   module.CreateFreeFunction("printLn", &PrintArray<uint64_t, true>);
   module.CreateFreeFunction("print", &PrintArray<int64_t>);
   module.CreateFreeFunction("printLn", &PrintArray<int64_t, true>);
-
-  module.CreateFreeFunction("print", &PrintArray<float>);
-  module.CreateFreeFunction("printLn", &PrintArray<float, true>);
-  module.CreateFreeFunction("print", &PrintArray<double>);
-  module.CreateFreeFunction("printLn", &PrintArray<double, true>);
 
   module.CreateFreeFunction("print", &PrintArray<fixed_point::fp32_t>);
   module.CreateFreeFunction("print", &PrintArray<fixed_point::fp64_t>);

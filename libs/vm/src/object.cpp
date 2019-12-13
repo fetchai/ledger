@@ -25,21 +25,6 @@
 namespace fetch {
 namespace vm {
 
-Variant &Object::Push()
-{
-  return vm_->Push();
-}
-
-Variant &Object::Pop()
-{
-  return vm_->Pop();
-}
-
-Variant &Object::Top()
-{
-  return vm_->Top();
-}
-
 void Object::RuntimeError(std::string const &message)
 {
   vm_->RuntimeError(message);
@@ -115,143 +100,331 @@ std::size_t Object::GetHashCode()
 
 bool Object::IsEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
   return false;
 }
 
 bool Object::IsNotEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
   return false;
 }
 
 bool Object::IsLessThan(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
   return false;
 }
 
 bool Object::IsLessThanOrEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
   return false;
 }
 
 bool Object::IsGreaterThan(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
   return false;
 }
 
 bool Object::IsGreaterThanOrEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
   return false;
 }
 
 void Object::Negate(Ptr<Object> & /* object */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::Add(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::LeftAdd(Variant & /* lhsv */, Variant & /* objectv */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::RightAdd(Variant & /* objectv */, Variant & /* rhsv */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::InplaceAdd(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::InplaceRightAdd(Ptr<Object> const & /* lhso */, Variant const & /* rhsv */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::Subtract(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::LeftSubtract(Variant & /* lhsv */, Variant & /* objectv */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::RightSubtract(Variant & /* objectv */, Variant & /* rhsv */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::InplaceSubtract(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::InplaceRightSubtract(Ptr<Object> const & /* lhso */, Variant const & /* rhsv */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::Multiply(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::LeftMultiply(Variant & /* lhsv */, Variant & /* objectv */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::RightMultiply(Variant & /* objectv */, Variant & /* rhsv */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::InplaceMultiply(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::InplaceRightMultiply(Ptr<Object> const & /* lhso */, Variant const & /* rhsv */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::Divide(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::LeftDivide(Variant & /* lhsv */, Variant & /* objectv */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::RightDivide(Variant & /* objectv */, Variant & /* rhsv */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::InplaceDivide(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
 }
 
 void Object::InplaceRightDivide(Ptr<Object> const & /* lhso*/, Variant const & /* rhsv */)
 {
-  RuntimeError(std::string(__func__) + "operator not implemented");
+  RuntimeError(std::string(__func__) + ": operator not implemented");
+}
+
+ChargeAmount Object::IsEqualChargeEstimator(Ptr<Object> const & /* lhso */,
+                                            Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::IsNotEqualChargeEstimator(Ptr<Object> const & /* lhso */,
+                                               Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::IsLessThanChargeEstimator(Ptr<Object> const & /* lhso */,
+                                               Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::IsLessThanOrEqualChargeEstimator(Ptr<Object> const & /* lhso */,
+                                                      Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::IsGreaterThanChargeEstimator(Ptr<Object> const & /* lhso */,
+                                                  Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::IsGreaterThanOrEqualChargeEstimator(Ptr<Object> const & /* lhso */,
+                                                         Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::NegateChargeEstimator(Ptr<Object> const & /* object */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::AddChargeEstimator(Ptr<Object> const & /* lhso */,
+                                        Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::LeftAddChargeEstimator(Variant const & /* lhsv */,
+                                            Variant const & /* objectv */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::RightAddChargeEstimator(Variant const & /* objectv */,
+                                             Variant const & /* rhsv */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::InplaceAddChargeEstimator(Ptr<Object> const & /* lhso */,
+                                               Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::InplaceRightAddChargeEstimator(Ptr<Object> const & /* lhso */,
+                                                    Variant const & /* rhsv */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::SubtractChargeEstimator(Ptr<Object> const & /* lhso */,
+                                             Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::LeftSubtractChargeEstimator(Variant const & /* lhsv */,
+                                                 Variant const & /* objectv */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::RightSubtractChargeEstimator(Variant const & /* objectv */,
+                                                  Variant const & /* rhsv */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::InplaceSubtractChargeEstimator(Ptr<Object> const & /* lhso */,
+                                                    Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::InplaceRightSubtractChargeEstimator(Ptr<Object> const & /* lhso */,
+                                                         Variant const & /* rhsv */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::MultiplyChargeEstimator(Ptr<Object> const & /* lhso */,
+                                             Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::LeftMultiplyChargeEstimator(Variant const & /* lhsv */,
+                                                 Variant const & /* objectv */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::RightMultiplyChargeEstimator(Variant const & /* objectv */,
+                                                  Variant const & /* rhsv */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::InplaceMultiplyChargeEstimator(Ptr<Object> const & /* lhso */,
+                                                    Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::InplaceRightMultiplyChargeEstimator(Ptr<Object> const & /* lhso */,
+                                                         Variant const & /* rhsv */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::DivideChargeEstimator(Ptr<Object> const & /* lhso */,
+                                           Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::LeftDivideChargeEstimator(Variant const & /* lhsv */,
+                                               Variant const & /* objectv */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::RightDivideChargeEstimator(Variant const & /* objectv */,
+                                                Variant const & /* rhsv */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::InplaceDivideChargeEstimator(Ptr<Object> const & /* lhso */,
+                                                  Ptr<Object> const & /* rhso */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
+}
+
+ChargeAmount Object::InplaceRightDivideChargeEstimator(Ptr<Object> const & /* lhso*/,
+                                                       Variant const & /* rhsv */)
+{
+  RuntimeError(std::string(__func__) + ": estimator not implemented");
+  return 1;
 }
 
 bool Object::SerializeTo(MsgPackSerializer & /*buffer*/)
