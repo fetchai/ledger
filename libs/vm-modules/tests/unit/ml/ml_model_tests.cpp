@@ -82,10 +82,10 @@ TEST_F(VMModelTests, serialisation_model)
         // set up data and labels
         var data_shape = Array<UInt64>(2);
         data_shape[0] = 10u64;
-        data_shape[1] = 1000u64;
+        data_shape[1] = 250u64;
         var label_shape = Array<UInt64>(2);
         label_shape[0] = 1u64;
-        label_shape[1] = 1000u64;
+        label_shape[1] = 250u64;
         var data = Tensor(data_shape);
         var label = Tensor(label_shape);
 
@@ -186,10 +186,10 @@ TEST_F(VMModelTests, model_string_serialisation_test)
         // set up data and labels
         var data_shape = Array<UInt64>(2);
         data_shape[0] = 10u64;
-        data_shape[1] = 1000u64;
+        data_shape[1] = 250u64;
         var label_shape = Array<UInt64>(2);
         label_shape[0] = 1u64;
-        label_shape[1] = 1000u64;
+        label_shape[1] = 250u64;
         var data = Tensor(data_shape);
         var label = Tensor(label_shape);
 
@@ -531,10 +531,10 @@ TEST_F(VMModelTests, dense_sequential_model_test)
       // set up data and labels
       var data_shape = Array<UInt64>(2);
       data_shape[0] = 10u64;
-      data_shape[1] = 1000u64;
+      data_shape[1] = 250u64;
       var label_shape = Array<UInt64>(2);
       label_shape[0] = 1u64;
-      label_shape[1] = 1000u64;
+      label_shape[1] = 250u64;
       var data = Tensor(data_shape);
       var label = Tensor(label_shape);
 
@@ -705,10 +705,10 @@ TEST_F(VMModelTests, DISABLED_classifier_model_test)
       // set up data and labels
       var data_shape = Array<UInt64>(2);
       data_shape[0] = 10u64;
-      data_shape[1] = 1000u64;
+      data_shape[1] = 250u64;
       var label_shape = Array<UInt64>(2);
       label_shape[0] = 10u64;
-      label_shape[1] = 1000u64;
+      label_shape[1] = 250u64;
       var data = Tensor(data_shape);
       var label = Tensor(label_shape);
 
@@ -741,10 +741,10 @@ TEST_F(VMModelTests, DISABLED_regressor_model_test)
       // set up data and labels
       var data_shape = Array<UInt64>(2);
       data_shape[0] = 10u64;
-      data_shape[1] = 1000u64;
+      data_shape[1] = 250u64;
       var label_shape = Array<UInt64>(2);
       label_shape[0] = 1u64;
-      label_shape[1] = 1000u64;
+      label_shape[1] = 250u64;
       var data = Tensor(data_shape);
       var label = Tensor(label_shape);
 
@@ -776,10 +776,10 @@ TEST_F(VMModelTests, model_with_metric)
           // set up data and labels
           var data_shape = Array<UInt64>(2);
           data_shape[0] = 10u64;
-          data_shape[1] = 1000u64;
+          data_shape[1] = 250u64;
           var label_shape = Array<UInt64>(2);
           label_shape[0] = 1u64;
-          label_shape[1] = 1000u64;
+          label_shape[1] = 250u64;
           var data = Tensor(data_shape);
           var label = Tensor(label_shape);
 
@@ -800,10 +800,8 @@ TEST_F(VMModelTests, model_with_metric)
       )";
 
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
-  std::cout.setstate(std::ios_base::failbit);
   Variant res;
   EXPECT_TRUE(toolkit.Run(&res));
-  std::cout.clear();
 
   auto const metrics = res.Get<Ptr<Array<fetch::vm_modules::math::DataType>>>();
   EXPECT_EQ(metrics->elements.at(0), metrics->elements.at(1));
@@ -816,10 +814,10 @@ TEST_F(VMModelTests, model_with_accuracy_metric)
           // set up data and labels
           var data_shape = Array<UInt64>(2);
           data_shape[0] = 10u64;
-          data_shape[1] = 1000u64;
+          data_shape[1] = 250u64;
           var label_shape = Array<UInt64>(2);
           label_shape[0] = 7u64;
-          label_shape[1] = 1000u64;
+          label_shape[1] = 250u64;
           var data = Tensor(data_shape);
           var label = Tensor(label_shape);
 
