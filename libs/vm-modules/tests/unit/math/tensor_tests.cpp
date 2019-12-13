@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/standard_functions/abs.hpp"
+#include "vm/array.hpp"
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
@@ -33,6 +34,7 @@ namespace {
 using ::testing::Between;
 
 using DataType = fetch::vm_modules::math::DataType;
+using SizeType = fetch::vm_modules::math::SizeType;
 
 class MathTensorTests : public ::testing::Test
 {
@@ -50,8 +52,9 @@ TEST_F(MathTensorTests, tensor_1_dim_fixed64_fill)
               var tensor_shape = Array<UInt64>(1);
               tensor_shape[0] = 10u64;
               var d = Tensor(tensor_shape);
-              d.fill(toFixed64(123456.0));
-              assert(d.at(1u64) == toFixed64(123456.0));
+              assert(d.at(1u64) != 123456.123456fp64);
+              d.fill(123456.123456fp64);
+              assert(d.at(1u64) == 123456.123456fp64);
             endfunction
           )";
   ASSERT_TRUE(toolkit.Compile(FILL_1_DIM_SRC));
@@ -66,8 +69,9 @@ TEST_F(MathTensorTests, tensor_2_dim_fixed64_fill)
               tensor_shape[0] = 10u64;
               tensor_shape[1] = 10u64;
               var d = Tensor(tensor_shape);
-              d.fill(toFixed64(123456.0));
-              assert(d.at(1u64,1u64) == toFixed64(123456.0));
+              assert(d.at(1u64,1u64) != 123456.123456fp64);
+              d.fill(123456.123456fp64);
+              assert(d.at(1u64,1u64) == 123456.123456fp64);
             endfunction
           )";
 
@@ -84,8 +88,9 @@ TEST_F(MathTensorTests, tensor_3_dim_fixed64_fill)
               tensor_shape[1] = 10u64;
               tensor_shape[2] = 10u64;
               var d = Tensor(tensor_shape);
-              d.fill(toFixed64(123456.0));
-              assert(d.at(1u64,1u64,1u64) == toFixed64(123456.0));
+              assert(d.at(1u64,1u64,1u64) != 123456.123456fp64);
+              d.fill(123456.123456fp64);
+              assert(d.at(1u64,1u64,1u64) == 123456.123456fp64);
             endfunction
           )";
 
@@ -103,8 +108,9 @@ TEST_F(MathTensorTests, tensor_4_dim_fixed64_fill)
               tensor_shape[2] = 10u64;
               tensor_shape[3] = 10u64;
               var d = Tensor(tensor_shape);
-              d.fill(toFixed64(123456.0));
-              assert(d.at(1u64,1u64,1u64,1u64) == toFixed64(123456.0));
+              assert(d.at(1u64,1u64,1u64,1u64) != 123456.123456fp64);
+              d.fill(123456.123456fp64);
+              assert(d.at(1u64,1u64,1u64,1u64) == 123456.123456fp64);
             endfunction
           )";
   ASSERT_TRUE(toolkit.Compile(FILL_4_DIM_SRC));
@@ -204,7 +210,7 @@ TEST_F(MathTensorTests, tensor_set_and_at_one_test)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({2});
-  gt.Fill(static_cast<DataType>(2.0));
+  gt.Fill(fetch::math::Type<DataType>("2.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
@@ -236,7 +242,7 @@ TEST_F(MathTensorTests, tensor_set_and_at_two_test)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({2, 2});
-  gt.Fill(static_cast<DataType>(2.0));
+  gt.Fill(fetch::math::Type<DataType>("2.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
@@ -273,7 +279,7 @@ TEST_F(MathTensorTests, tensor_set_and_at_three_test)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({2, 2, 2});
-  gt.Fill(static_cast<DataType>(2.0));
+  gt.Fill(fetch::math::Type<DataType>("2.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
@@ -319,7 +325,7 @@ TEST_F(MathTensorTests, tensor_set_and_at_four_test)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({2, 2, 2, 2});
-  gt.Fill(static_cast<DataType>(2.0));
+  gt.Fill(fetch::math::Type<DataType>("2.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
@@ -350,7 +356,70 @@ TEST_F(MathTensorTests, tensor_set_from_string)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({4, 1, 1});
-  gt.Fill(static_cast<DataType>(1.0));
+  gt.Fill(fetch::math::Type<DataType>("1.0"));
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+}
+
+TEST_F(MathTensorTests, tensor_shape_from_tensor)
+{
+  static char const *tensor_from_string_src = R"(
+    function main() : Array<UInt64>
+      var tensor_shape = Array<UInt64>(3);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 3u64;
+      tensor_shape[2] = 4u64;
+      var x = Tensor(tensor_shape);
+
+      var shape = x.shape();
+
+      return shape;
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto tensor_shape{res.Get<Ptr<IArray>>()};
+
+  std::vector<SizeType>       ret;
+  std::vector<SizeType> const gt({2, 3, 4});
+
+  while (tensor_shape->Count() > 0)
+  {
+    ret.emplace_back(tensor_shape->PopFrontOne().Get<uint64_t>());
+  }
+
+  EXPECT_EQ(gt, ret);
+}
+
+TEST_F(MathTensorTests, tensor_copy_from_tensor)
+{
+  static char const *tensor_from_string_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(1);
+      tensor_shape[0] = 4u64;
+
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(2.0fp64);
+      y = x.copy();
+      x.setAt(0u64, 1.0fp64);
+
+      return y;
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({4});
+  gt.Fill(static_cast<DataType>(2.0));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
@@ -359,8 +428,6 @@ TEST_F(MathTensorTests, tensor_set_from_string)
 
 TEST_F(MathTensorTests, tensor_equal_etch_test)
 {
-
-  // TODO (ML-340) - replace member function test with operator test
   static char const *tensor_equal_true_src = R"(
     function main() : Bool
       var tensor_shape = Array<UInt64>(2);
@@ -370,24 +437,10 @@ TEST_F(MathTensorTests, tensor_equal_etch_test)
       var y = Tensor(tensor_shape);
       x.fill(7.0fp64);
       y.fill(7.0fp64);
-      var result : Bool = x.isEqual(y);
+      var result : Bool = (x == y);
       return result;
     endfunction
   )";
-
-  //  static char const *tensor_equal_true_src = R"(
-  //    function main() : Bool
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(7.0fp64);
-  //      var result : Bool = (x == y);
-  //      return result;
-  //    endfunction
-  //  )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_equal_true_src));
   Variant res;
@@ -395,8 +448,6 @@ TEST_F(MathTensorTests, tensor_equal_etch_test)
 
   auto const result = res.Get<bool>();
   EXPECT_TRUE(result == true);
-
-  // TODO (ML-340) - replace member function test with operator test
   // test again for when not equal
   static char const *tensor_equal_false_src = R"(
     function main() : Bool
@@ -408,26 +459,10 @@ TEST_F(MathTensorTests, tensor_equal_etch_test)
       x.fill(7.0fp64);
       y.fill(7.0fp64);
       y.setAt(0u64, 0u64, 1.0fp64);
-      var result : Bool = x.isEqual(y);
+      var result : Bool = (x == y);
       return result;
     endfunction
   )";
-
-  //  // test again for when not equal
-  //  static char const *tensor_equal_false_src = R"(
-  //    function main() : Bool
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(7.0fp64);
-  //      y.setAt(0u64, 0u64, 1.0fp64);
-  //      var result : Bool = (x == y);
-  //      return result;
-  //    endfunction
-  //  )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_equal_false_src));
   ASSERT_TRUE(toolkit.Run(&res));
@@ -439,34 +474,19 @@ TEST_F(MathTensorTests, tensor_equal_etch_test)
 TEST_F(MathTensorTests, tensor_not_equal_etch_test)
 {
 
-  // TODO (ML-340) - replace member function test with operator test
-
   static char const *tensor_not_equal_true_src = R"(
-    function main() : Bool
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      var result : Bool = x.isNotEqual(y);
-      return result;
-    endfunction
-  )";
-  //  static char const *tensor_not_equal_true_src = R"(
-  //    function main() : Bool
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(7.0fp64);
-  //      var result : Bool = (x != y);
-  //      return result;
-  //    endfunction
-  //  )";
+      function main() : Bool
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 3u64;
+        tensor_shape[1] = 3u64;
+        var x = Tensor(tensor_shape);
+        var y = Tensor(tensor_shape);
+        x.fill(7.0fp64);
+        y.fill(7.0fp64);
+        var result : Bool = (x != y);
+        return result;
+      endfunction
+    )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_not_equal_true_src));
   Variant res;
@@ -475,39 +495,21 @@ TEST_F(MathTensorTests, tensor_not_equal_etch_test)
   auto const result = res.Get<bool>();
   EXPECT_TRUE(result == false);
 
-  // TODO (ML-340) - replace member function test with operator test
-
   // test again for when not equal
   static char const *tensor_not_equal_false_src = R"(
-    function main() : Bool
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      y.setAt(0u64, 0u64, 1.0fp64);
-      var result : Bool = x.isNotEqual(y);
-      return result;
-    endfunction
-  )";
-
-  //  // test again for when not equal
-  //  static char const *tensor_not_equal_false_src = R"(
-  //    function main() : Bool
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(7.0fp64);
-  //      y.setAt(0u64, 0u64, 1.0fp64);
-  //      var result : Bool = (x != y);
-  //      return result;
-  //    endfunction
-  //  )";
+      function main() : Bool
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 3u64;
+        tensor_shape[1] = 3u64;
+        var x = Tensor(tensor_shape);
+        var y = Tensor(tensor_shape);
+        x.fill(7.0fp64);
+        y.fill(7.0fp64);
+        y.setAt(0u64, 0u64, 1.0fp64);
+        var result : Bool = (x != y);
+        return result;
+      endfunction
+    )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_not_equal_false_src));
   ASSERT_TRUE(toolkit.Run(&res));
@@ -519,33 +521,19 @@ TEST_F(MathTensorTests, tensor_not_equal_etch_test)
 TEST_F(MathTensorTests, tensor_add_test)
 {
 
-  // TODO (ML-340) - replace member function test with operator test
   static char const *tensor_add_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      var result = x.add(y);
-      return result;
-    endfunction
-  )";
-  //  static char const *tensor_add_src = R"(
-  //    function main() : Tensor
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(7.0fp64);
-  //      var result = x + y;
-  //      return result;
-  //    endfunction
-  //  )";
+      function main() : Tensor
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 3u64;
+        tensor_shape[1] = 3u64;
+        var x = Tensor(tensor_shape);
+        var y = Tensor(tensor_shape);
+        x.fill(7.0fp64);
+        y.fill(7.0fp64);
+        var result = x + y;
+        return result;
+      endfunction
+    )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_add_src));
   Variant res;
@@ -554,14 +542,14 @@ TEST_F(MathTensorTests, tensor_add_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(14.0));
+  gt.Fill(fetch::math::Type<DataType>("14.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
 
 TEST_F(MathTensorTests, tensor_subtract_test)
 {
-  // TODO (ML-340) - replace member function test with operator test
+
   static char const *tensor_add_src = R"(
     function main() : Tensor
       var tensor_shape = Array<UInt64>(2);
@@ -571,23 +559,10 @@ TEST_F(MathTensorTests, tensor_subtract_test)
       var y = Tensor(tensor_shape);
       x.fill(7.0fp64);
       y.fill(9.0fp64);
-      var result = x.subtract(y);
+      var result = x - y;
       return result;
     endfunction
   )";
-  //  static char const *tensor_add_src = R"(
-  //    function main() : Tensor
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(9.0fp64);
-  //      var result = x - y;
-  //      return result;
-  //    endfunction
-  //  )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_add_src));
   Variant res;
@@ -596,40 +571,27 @@ TEST_F(MathTensorTests, tensor_subtract_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(-2.0));
+  gt.Fill(fetch::math::Type<DataType>("-2.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
 
 TEST_F(MathTensorTests, tensor_multiply_test)
 {
-  // TODO (ML-340) - replace member function test with operator test
+
   static char const *tensor_mul_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(7.0fp64);
-      var result = x.multiply(y);
-      return result;
-    endfunction
-  )";
-  //  static char const *tensor_mul_src = R"(
-  //    function main() : Tensor
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(7.0fp64);
-  //      var result = x * y;
-  //      return result;
-  //    endfunction
-  //  )";
+      function main() : Tensor
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 3u64;
+        tensor_shape[1] = 3u64;
+        var x = Tensor(tensor_shape);
+        var y = Tensor(tensor_shape);
+        x.fill(7.0fp64);
+        y.fill(7.0fp64);
+        var result = x * y;
+        return result;
+      endfunction
+    )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_mul_src));
   Variant res;
@@ -638,40 +600,27 @@ TEST_F(MathTensorTests, tensor_multiply_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(49.0));
+  gt.Fill(fetch::math::Type<DataType>("49.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
 
 TEST_F(MathTensorTests, tensor_divide_test)
 {
-  // TODO (ML-340) - replace member function test with operator test
+
   static char const *tensor_div_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      var y = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      y.fill(14.0fp64);
-      var result = x.divide(y);
-      return result;
-    endfunction
-  )";
-  //  static char const *tensor_div_src = R"(
-  //    function main() : Tensor
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      var y = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      y.fill(14.0fp64);
-  //      var result = x / y;
-  //      return result;
-  //    endfunction
-  //  )";
+      function main() : Tensor
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 3u64;
+        tensor_shape[1] = 3u64;
+        var x = Tensor(tensor_shape);
+        var y = Tensor(tensor_shape);
+        x.fill(7.0fp64);
+        y.fill(14.0fp64);
+        var result = x / y;
+        return result;
+      endfunction
+    )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_div_src));
   Variant res;
@@ -680,14 +629,12 @@ TEST_F(MathTensorTests, tensor_divide_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(0.5));
+  gt.Fill(fetch::math::Type<DataType>("0.5"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
 
-// TODO (ML-340) - enable test when operators can take estimators and inplace operator can be bound
-// to tensor
-TEST_F(MathTensorTests, DISABLED_tensor_inplace_multiply_test)
+TEST_F(MathTensorTests, tensor_inplace_multiply_test)
 {
   static char const *tensor_inplace_mul_src = R"(
     function main() : Tensor
@@ -710,14 +657,12 @@ TEST_F(MathTensorTests, DISABLED_tensor_inplace_multiply_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(49.0));
+  gt.Fill(fetch::math::Type<DataType>("49.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
 
-// TODO (ML-340) - enable test when operators can take estimators and inplace operator can be bound
-// to tensor
-TEST_F(MathTensorTests, DISABLED_tensor_inplace_divide_test)
+TEST_F(MathTensorTests, tensor_inplace_divide_test)
 {
   static char const *tensor_inplace_div_src = R"(
     function main() : Tensor
@@ -740,14 +685,12 @@ TEST_F(MathTensorTests, DISABLED_tensor_inplace_divide_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(0.5));
+  gt.Fill(fetch::math::Type<DataType>("0.5"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
 
-// TODO (ML-340) - enable test when operators can take estimators and inplace operator can be bound
-// to tensor
-TEST_F(MathTensorTests, DISABLED_tensor_inplace_add_test)
+TEST_F(MathTensorTests, tensor_inplace_add_test)
 {
   static char const *tensor_add_src = R"(
     function main() : Tensor
@@ -770,14 +713,12 @@ TEST_F(MathTensorTests, DISABLED_tensor_inplace_add_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(14.0));
+  gt.Fill(fetch::math::Type<DataType>("14.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
 
-// TODO (ML-340) - enable test when operators can take estimators and inplace operator can be bound
-// to tensor
-TEST_F(MathTensorTests, DISABLED_tensor_inplace_subtract_test)
+TEST_F(MathTensorTests, tensor_inplace_subtract_test)
 {
   static char const *tensor_add_src = R"(
     function main() : Tensor
@@ -800,36 +741,25 @@ TEST_F(MathTensorTests, DISABLED_tensor_inplace_subtract_test)
   auto const                    tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto                          tensor     = tensor_ptr->GetTensor();
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(-2.0));
+  gt.Fill(fetch::math::Type<DataType>("-2.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
 
 TEST_F(MathTensorTests, tensor_negate_etch_test)
 {
-  // TODO (ML-340) - replace member function test with operator test
+
   static char const *tensor_negate_src = R"(
-    function main() : Tensor
-      var tensor_shape = Array<UInt64>(2);
-      tensor_shape[0] = 3u64;
-      tensor_shape[1] = 3u64;
-      var x = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-      x = x.negate();
-      return x;
-    endfunction
-  )";
-  //  static char const *tensor_negate_src = R"(
-  //    function main() : Tensor
-  //      var tensor_shape = Array<UInt64>(2);
-  //      tensor_shape[0] = 3u64;
-  //      tensor_shape[1] = 3u64;
-  //      var x = Tensor(tensor_shape);
-  //      x.fill(7.0fp64);
-  //      x = -x;
-  //      return x;
-  //    endfunction
-  //  )";
+      function main() : Tensor
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 3u64;
+        tensor_shape[1] = 3u64;
+        var x = Tensor(tensor_shape);
+        x.fill(7.0fp64);
+        x = -x;
+        return x;
+      endfunction
+    )";
 
   std::string const state_name{"tensor"};
 
@@ -839,10 +769,9 @@ TEST_F(MathTensorTests, tensor_negate_etch_test)
 
   auto const tensor_ptr = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto       tensor     = tensor_ptr->GetTensor();
-  std::cout << "tensor: " << tensor.ToString() << std::endl;
 
   fetch::math::Tensor<DataType> gt({3, 3});
-  gt.Fill(DataType(-7.0));
+  gt.Fill(fetch::math::Type<DataType>("-7.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor));
 }
@@ -855,10 +784,10 @@ TEST_F(MathTensorTests, tensor_min_test)
       "0.5, 7.1, 9.1; 6.2, 7.1, 4.; -99.1, 14328.1, 10.0;");
   fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
-  DataType result = vm_tensor.Min();
-  DataType gt{-99.1};
+  DataType const result = vm_tensor.Min();
+  DataType const expected{"-99.1"};
 
-  EXPECT_TRUE(result == gt);
+  EXPECT_EQ(result, expected);
 }
 
 TEST_F(MathTensorTests, tensor_min_etch_test)
@@ -877,16 +806,14 @@ TEST_F(MathTensorTests, tensor_min_etch_test)
     endfunction
   )";
 
-  std::string const state_name{"tensor"};
-
   ASSERT_TRUE(toolkit.Compile(tensor_min_src));
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const min_val = res.Get<DataType>();
-  DataType   gt{-7.0};
+  auto const     min_val = res.Get<DataType>();
+  DataType const expected{-7.0};
 
-  EXPECT_TRUE(gt == min_val);
+  EXPECT_EQ(expected, min_val);
 }
 
 TEST_F(MathTensorTests, tensor_max_test)
@@ -895,10 +822,10 @@ TEST_F(MathTensorTests, tensor_max_test)
       "0.5, 7.1, 9.1; 6.2, 7.1, 4.; -99.1, 14328.1, 10.0;");
   fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
-  DataType result = vm_tensor.Max();
-  DataType gt{14328.1};
+  DataType const result = vm_tensor.Max();
+  DataType const expected{14328.1};
 
-  EXPECT_TRUE(result == gt);
+  EXPECT_EQ(result, expected);
 }
 
 TEST_F(MathTensorTests, tensor_max_etch_test)
@@ -917,19 +844,14 @@ TEST_F(MathTensorTests, tensor_max_etch_test)
     endfunction
   )";
 
-  std::string const state_name{"tensor"};
-
   ASSERT_TRUE(toolkit.Compile(tensor_max_src));
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const max_val = res.Get<DataType>();
-  DataType   gt{23.1};
+  auto const     max_val = res.Get<DataType>();
+  DataType const expected{23.1};
 
-  std::cout << "gt: " << gt << std::endl;
-  std::cout << "max_val: " << max_val << std::endl;
-
-  EXPECT_TRUE(gt == max_val);
+  EXPECT_EQ(expected, max_val);
 }
 
 TEST_F(MathTensorTests, tensor_sum_test)
@@ -938,10 +860,10 @@ TEST_F(MathTensorTests, tensor_sum_test)
       "0.5, 7.1, 9.1; 6.2, 7.1, 4.; -99.1, 14328.1, 10.0;");
   fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
-  DataType result = vm_tensor.Sum();
-  DataType gt{14273.0};
+  DataType const result = vm_tensor.Sum();
+  DataType const expected{"14273.0"};
 
-  EXPECT_TRUE(fetch::math::Abs(gt - result) < DataType::TOLERANCE);
+  EXPECT_LE(fetch::math::Abs(expected - result), DataType::TOLERANCE);
 }
 
 TEST_F(MathTensorTests, tensor_sum_etch_test)
@@ -960,16 +882,260 @@ TEST_F(MathTensorTests, tensor_sum_etch_test)
     endfunction
   )";
 
-  std::string const state_name{"tensor"};
-
   ASSERT_TRUE(toolkit.Compile(tensor_sum_src));
   Variant res;
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const sum_val = res.Get<DataType>();
-  DataType   gt{65.1};
+  auto const     sum_val = res.Get<DataType>();
+  DataType const expected{"65.1"};
 
-  EXPECT_TRUE(fetch::math::Abs(gt - sum_val) < DataType::TOLERANCE);
+  EXPECT_LE(fetch::math::Abs(expected - sum_val), DataType::TOLERANCE);
+}
+
+TEST_F(MathTensorTests, tensor_transpose_test)
+{
+  fetch::math::Tensor<DataType> tensor =
+      fetch::math::Tensor<DataType>::FromString("1.1, 2.2, 3.3; 4.4, 5.5, 6.6;");
+  ASSERT_TRUE(tensor.shape().size() == 2);
+
+  fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
+
+  auto const transposed = vm_tensor.Transpose()->GetTensor();
+
+  DataType const result = transposed.At<fetch::math::SizeType, fetch::math::SizeType>(1, 0);
+  DataType const expected{2.2};
+
+  EXPECT_EQ(tensor.shape().at(0), transposed.shape().at(1));
+  EXPECT_EQ(tensor.shape().at(1), transposed.shape().at(0));
+
+  EXPECT_EQ(expected, result);
+}
+
+TEST_F(MathTensorTests, tensor_invalid_shape_transpose_test)
+{
+  fetch::math::Tensor<DataType> tensor;
+  tensor.Reshape({4, 4, 4});
+  fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
+
+  EXPECT_THROW(vm_tensor.GetTensor().Transpose(), std::exception);
+}
+
+TEST_F(MathTensorTests, tensor_transpose_etch_test)
+{
+  static char const *SOURCE = R"(
+    function main() : Fixed64
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 10u64;
+      tensor_shape[1] = 2u64;
+      var x = Tensor(tensor_shape);
+      x.fill(42.0fp64);
+      x.setAt(0u64, 1u64, -1.0fp64);
+      var transposed = x.transpose();
+      var ret = transposed.at(0u64, 1u64);
+      return ret;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const     result = res.Get<DataType>();
+  DataType const expected{"42.0"};
+
+  EXPECT_EQ(expected, result);
+}
+
+TEST_F(MathTensorTests, tensor_invalid_shape_transpose_etch_test)
+{
+  static char const *SOURCE = R"(
+    function main()
+      var tensor_shape = Array<UInt64>(3);
+      tensor_shape[0] = 10u64;
+      tensor_shape[1] = 2u64;
+      tensor_shape[2] = 2u64;
+      var x = Tensor(tensor_shape);
+      var transposed = x.transpose();
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_reshape_to_invalid_shape_etch_test)
+{
+  static char const *SRC = R"(
+      function main()
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 2u64;
+        tensor_shape[1] = 2u64;
+
+        var x = Tensor(tensor_shape);
+
+        var new_shape = Array<UInt64>(2);
+        new_shape[0] = 0u64;
+        new_shape[1] = 2u64;
+
+        x.reshape(new_shape);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_reshape_to_incompatible_shape_etch_test)
+{
+  static char const *SRC = R"(
+    function main()
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 2u64;
+
+      var x = Tensor(tensor_shape);
+
+      var new_shape = Array<UInt64>(2);
+      new_shape[0] = 3u64;
+      new_shape[1] = 2u64;
+
+      x.reshape(new_shape);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_reshape_to_compatible_shape_test)
+{
+  using namespace fetch::vm;
+
+  fetch::math::Tensor<DataType> const tensor =
+      fetch::math::Tensor<DataType>::FromString("1.1, 2.2, 3.3; 4.4, 5.5, 6.6;");
+
+  // Index transposition table from [6,1] to [2,3]
+  static std::map<SizeType, std::pair<SizeType, SizeType>> const TRANSPOSED_INDEXES = {
+      {0, {0, 0}}, {1, {1, 0}}, {2, {0, 1}}, {3, {1, 1}}, {4, {0, 2}}, {5, {1, 2}},
+  };
+
+  // Initial shape of the Tensor is [2, 3]
+  fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
+
+  Array<SizeType> e_shape(&toolkit.vm(), TypeIds::Unknown, TypeIds::Int32, int32_t(0));
+  static std::vector<SizeType> const COMPATIBLE_SHAPE_RAW = {6, 1};
+  for (SizeType dim_size : COMPATIBLE_SHAPE_RAW)
+  {
+    e_shape.Append(TemplateParameter1(dim_size, TypeIds::Int32));
+  }
+  auto const new_equal_shape = Ptr<IArray>::PtrFromThis(&e_shape);
+
+  // Reshaping to an compatible shape should return TRUE;
+  EXPECT_TRUE(vm_tensor.Reshape(new_equal_shape));
+
+  fetch::math::Tensor<DataType> const reshaped = vm_tensor.GetTensor();
+
+  // Assert the new shape is correct
+  for (std::size_t i = 0; i < COMPATIBLE_SHAPE_RAW.size(); ++i)
+  {
+    EXPECT_EQ(reshaped.shape().at(i), COMPATIBLE_SHAPE_RAW.at(i));
+  }
+
+  // Assert all new elements are equal to initial ones and element indexes are transposed properly.
+  for (SizeType i = 0; i < COMPATIBLE_SHAPE_RAW.at(0); ++i)
+  {
+    DataType const result = reshaped.At<fetch::math::SizeType, fetch::math::SizeType>(i, 0);
+
+    std::pair<SizeType, SizeType> const index = TRANSPOSED_INDEXES.at(i);
+
+    DataType const expected =
+        tensor.At<fetch::math::SizeType, fetch::math::SizeType>(index.first, index.second);
+
+    EXPECT_EQ(expected, result);
+  }
+}
+
+TEST_F(MathTensorTests, tensor_argmax_test)
+{
+  static char const *tensor_argmax_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 2u64;
+
+      var x = Tensor(tensor_shape);
+      x.setAt(0u64, 0u64, 1.0fp64);
+      x.setAt(0u64, 1u64, 2.0fp64);
+      x.setAt(1u64, 0u64, 4.0fp64);
+      x.setAt(1u64, 1u64, 3.0fp64);
+
+
+      var ret_shape = Array<UInt64>(2);
+      ret_shape[0] = 3u64;
+      ret_shape[1] = 2u64;
+      var ret = Tensor(ret_shape);
+
+      var res1 = x.argMax();
+      var res2 = x.argMax(0u64);
+      var res3 = x.argMax(1u64);
+
+      ret.setAt(0u64, 0u64, res1.at(0u64));
+      ret.setAt(0u64, 1u64, res1.at(1u64));
+      ret.setAt(1u64, 0u64, res2.at(0u64));
+      ret.setAt(1u64, 1u64, res2.at(1u64));
+      ret.setAt(2u64, 0u64, res3.at(0u64));
+      ret.setAt(2u64, 1u64, res3.at(1u64));
+
+      return ret;
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_argmax_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({3, 2});
+  gt.Set(SizeType(0), SizeType(0), DataType{1.0});
+  gt.Set(SizeType(0), SizeType(1), DataType{1.0});
+  gt.Set(SizeType(1), SizeType(0), DataType{1.0});
+  gt.Set(SizeType(1), SizeType(1), DataType{1.0});
+  gt.Set(SizeType(2), SizeType(0), DataType{1.0});
+  gt.Set(SizeType(2), SizeType(1), DataType{0.0});
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+}
+
+TEST_F(MathTensorTests, tensor_dot_test)
+{
+  static char const *tensor_dot_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 2u64;
+
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(1.0fp64);
+      y.fill(1.0fp64);
+
+      var ret = x.dot(y);
+
+      return ret;
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_dot_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({2, 2});
+  gt.Fill(static_cast<DataType>(2.0));
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
 TEST_F(MathTensorTests, tensor_squeeze_test)
@@ -1081,7 +1247,36 @@ TEST_F(MathTensorTests, tensor_state_test)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({2, 10});
-  gt.Fill(static_cast<DataType>(7.0));
+  gt.Fill(fetch::math::Type<DataType>("7.0"));
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+}
+
+TEST_F(MathTensorTests, tensor_reshape_from_string)
+{
+  static char const *SOURCE = R"(
+      function main() : Tensor
+        var tensor_shape = Array<UInt64>(3);
+        tensor_shape[0] = 4u64;
+        tensor_shape[1] = 1u64;
+        tensor_shape[2] = 1u64;
+
+        var x = Tensor(tensor_shape);
+        x.fill(2.0fp64);
+
+        var str_vals = "1.0, 1.0";
+        x.fromString(str_vals);
+        return x;
+      endfunction
+    )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({2});
+  gt.Fill(fetch::math::Type<DataType>("1.0"));
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }

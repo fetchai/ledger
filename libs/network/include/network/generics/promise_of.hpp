@@ -41,8 +41,9 @@ public:
   // Construction / Destruction
   PromiseOf() = default;
   explicit PromiseOf(Promise promise);
-  PromiseOf(PromiseOf const &rhs) = default;
-  ~PromiseOf() override           = default;
+  PromiseOf(PromiseOf const &rhs)  = default;
+  PromiseOf(PromiseOf &&) noexcept = default;
+  ~PromiseOf() override            = default;
 
   // Promise Accessors
   bool Wait(bool throw_exception = true) const;

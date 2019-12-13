@@ -48,11 +48,11 @@
 
 namespace {
 
-using fetch::vm_modules::VMFactory;
-using fetch::json::JSONDocument;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
 using fetch::byte_array::ToHex;
+using fetch::json::JSONDocument;
+using fetch::vm_modules::VMFactory;
 
 using namespace fetch::vm;
 

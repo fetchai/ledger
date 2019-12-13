@@ -174,7 +174,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
     state().PushContext(contract_address.display());
 
     {
-      ContractContext         ctx{context().token_contract, tx.contract_address(), &state(),
+      ContractContext ctx{context().token_contract, tx.contract_address(), nullptr, &state(),
                           context().block_index};
       ContractContextAttacher raii(smart_contract, ctx);
       init_status = smart_contract.DispatchInitialise(tx.from(), tx);

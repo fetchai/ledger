@@ -175,6 +175,42 @@ public:
     return lhs->address_ >= rhs->address_;
   }
 
+  ChargeAmount IsEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                      Ptr<Object> const & /*rhso*/) override
+  {
+    return 1;
+  }
+
+  ChargeAmount IsNotEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                         Ptr<Object> const & /*rhso*/) override
+  {
+    return 1;
+  }
+
+  ChargeAmount IsLessThanChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                         Ptr<Object> const & /*rhso*/) override
+  {
+    return 1;
+  }
+
+  ChargeAmount IsLessThanOrEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                Ptr<Object> const & /*rhso*/) override
+  {
+    return 1;
+  }
+
+  ChargeAmount IsGreaterThanChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                            Ptr<Object> const & /*rhso*/) override
+  {
+    return 1;
+  }
+
+  ChargeAmount IsGreaterThanOrEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                   Ptr<Object> const & /*rhso*/) override
+  {
+    return 1;
+  }
+
   bool ToJSON(vm::JSONVariant &variant) override
   {
     variant = address_.display();

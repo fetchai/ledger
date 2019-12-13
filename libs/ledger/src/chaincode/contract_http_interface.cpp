@@ -244,7 +244,7 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse address: ", contract_name);
       }
-      ContractContext         context{&token_contract_, std::move(address), &storage_adapter, 0};
+      ContractContext context{&token_contract_, std::move(address), nullptr, &storage_adapter, 0};
       ContractContextAttacher raii(*contract, context);
       status = contract->DispatchQuery(query, doc.root(), response);
     }

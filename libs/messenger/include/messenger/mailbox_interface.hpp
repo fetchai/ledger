@@ -34,6 +34,8 @@ public:
   using Address          = muddle::Address;
   using DeliveryFunction = std::function<void(Message const &msg)>;
 
+  virtual ~MailboxInterface() = default;
+
   virtual void        SetDeliveryFunction(DeliveryFunction const &attempt_delivery) = 0;
   virtual void        SendMessage(Message message)                                  = 0;
   virtual MessageList GetMessages(Address messenger)                                = 0;

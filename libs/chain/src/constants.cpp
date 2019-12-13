@@ -17,21 +17,101 @@
 //------------------------------------------------------------------------------
 
 #include "chain/constants.hpp"
+
 #include "core/byte_array/decoders.hpp"
 #include "core/digest.hpp"
+#include "core/synchronisation/protected.hpp"
 
 namespace fetch {
 namespace chain {
+namespace {
 
 using byte_array::FromBase64;
+
+struct GenesisState
+{
+  Digest digest{};
+  Digest merkle_root{};
+};
+
+Protected<GenesisState> genesis_state{};
+
+}  // namespace
+
+Digest GetGenesisDigest()
+{
+  Digest digest = genesis_state.Apply([](GenesisState const &state) { return state.digest; });
+
+  if (digest.empty())
+  {
+    throw std::logic_error("Genesis has not been initialised");
+  }
+
+  return digest;
+}
+
+Digest GetGenesisMerkleRoot()
+{
+  Digest merkle_root =
+      genesis_state.Apply([](GenesisState const &state) { return state.merkle_root; });
+
+  if (merkle_root.empty())
+  {
+    throw std::logic_error("Genesis has not been initialised");
+  }
+
+  return merkle_root;
+}
+
+void SetGenesisDigest(Digest const &digest)
+{
+  bool const updated = genesis_state.Apply([&digest](GenesisState &state) {
+    if (state.digest.empty())
+    {
+      state.digest = digest;
+      return true;
+    }
+    return false;
+  });
+
+  if (!updated)
+  {
+    throw std::logic_error("Genesis has already been initialised");
+  }
+}
+
+void SetGenesisMerkleRoot(Digest const &digest)
+{
+  bool const updated = genesis_state.Apply([&digest](GenesisState &state) {
+    if (state.merkle_root.empty())
+    {
+      state.merkle_root = digest;
+      return true;
+    }
+    return false;
+  });
+
+  if (!updated)
+  {
+    throw std::logic_error("Genesis has already been initialised");
+  }
+}
+
+void InitialiseTestConstants()
+{
+  genesis_state.ApplyVoid([](GenesisState &state) {
+    state.merkle_root = GENESIS_MERKLE_ROOT_DEFAULT;
+    state.digest      = GENESIS_DIGEST_DEFAULT;
+  });
+}
 
 uint64_t STAKE_WARM_UP_PERIOD   = 100;
 uint64_t STAKE_COOL_DOWN_PERIOD = 100;
 
-Digest GENESIS_DIGEST      = FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
-Digest GENESIS_MERKLE_ROOT = FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
-
-const Digest ZERO_HASH = Digest(HASH_SIZE);
+Digest const GENESIS_DIGEST_DEFAULT = FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
+Digest const GENESIS_MERKLE_ROOT_DEFAULT =
+    FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+Digest const ZERO_HASH = Digest(HASH_SIZE);
 
 }  // namespace chain
 }  // namespace fetch
