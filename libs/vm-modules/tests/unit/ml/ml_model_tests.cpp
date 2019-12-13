@@ -853,7 +853,7 @@ TEST_F(VMModelTests, model_with_accuracy_metric)
   EXPECT_LE(metrics->elements.at(1), 1);
 }
 
-TEST_F(VMModelTests, model_sequential_flatten)
+TEST_F(VMModelTests, DISABLED_model_sequential_flatten)
 {
   static char const *SRC_METRIC = R"(
         function main()
