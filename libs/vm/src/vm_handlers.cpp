@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/array.hpp"
+#include "vm/estimate_charge.hpp"
 #include "vm/fixed.hpp"
 #include "vm/vm.hpp"
 
@@ -630,7 +631,13 @@ void VM::Handler__ObjectNegate()
   Variant &top = Top();
   if (top.object)
   {
-    top.object->Negate(top.object);
+    if (EstimateCharge(this, ChargeEstimator<>([top]() -> ChargeAmount {
+                         return top.object->NegateChargeEstimator(top.object);
+                       }),
+                       std::tuple<>{}))
+    {
+      top.object->Negate(top.object);
+    }
     return;
   }
   RuntimeError("null reference");
