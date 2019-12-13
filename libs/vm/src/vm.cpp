@@ -287,20 +287,10 @@ bool VM::Execute(std::string &error, Variant &output)
           break;
         }
 
-        // update the charge total (or set to max if it would overflow)
-        if ((std::numeric_limits<ChargeAmount>::max() - charge_total_) < current_op_->static_charge)
-        {
-          charge_total_ = std::numeric_limits<ChargeAmount>::max();
-        }
-        else
-        {
-          charge_total_ += current_op_->static_charge;
-        }
+        IncreaseChargeTotal(current_op_->static_charge);
 
-        // check for charge limit being reached
-        if ((charge_limit_ != 0u) && (charge_total_ >= charge_limit_))
+        if (ChargeLimitExceeded())
         {
-          RuntimeError("Charge limit exceeded");
           break;
         }
 

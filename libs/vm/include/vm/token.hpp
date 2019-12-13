@@ -37,8 +37,6 @@ struct Token
     UnsignedInteger32,
     Integer64,
     UnsignedInteger64,
-    Float32,
-    Float64,
     Fixed32,
     Fixed64,
     Fixed128,

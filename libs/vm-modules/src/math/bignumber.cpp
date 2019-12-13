@@ -82,8 +82,6 @@ void UInt256Wrapper::Bind(Module &module)
       .EnableOperator(Operator::InplaceDivide)
       .EnableOperator(Operator::GreaterThan)
       .CreateMemberFunction("increase", &UInt256Wrapper::Increase)
-      .CreateMemberFunction("logValue", &UInt256Wrapper::LogValue)
-      .CreateMemberFunction("toFloat64", &UInt256Wrapper::ToFloat64)
       .CreateMemberFunction("toInt32", &UInt256Wrapper::ToInt32)
       .CreateMemberFunction("size", &UInt256Wrapper::size);
 
@@ -141,24 +139,9 @@ Ptr<UInt256Wrapper> UInt256Wrapper::Constructor(VM *vm, TypeId type_id, uint64_t
   return {};
 }
 
-double UInt256Wrapper::ToFloat64() const
-{
-  return ToDouble(number_);
-}
-
 int32_t UInt256Wrapper::ToInt32() const
 {
   return static_cast<int32_t>(number_[0]);
-}
-
-double UInt256Wrapper::LogValue() const
-{
-  return Log(number_);
-}
-
-bool UInt256Wrapper::LessThan(Ptr<UInt256Wrapper> const &other) const
-{
-  return number_ < other->number_;
 }
 
 void UInt256Wrapper::Increase()
