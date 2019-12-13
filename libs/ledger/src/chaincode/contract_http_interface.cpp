@@ -91,6 +91,11 @@ bool CreateTxFromJson(Variant const &tx_obj, std::vector<ConstByteArray> &txs,
 
   if (chain::FromJsonTransaction(tx_obj, *tx))
   {
+    if (tx->charge_limit() > chain::Transaction::MAXIMUM_TX_CHARGE_LIMIT)
+    {
+      return false;
+    }
+
     txs.emplace_back(tx->digest());
     processor.AddTransaction(std::move(tx));
 
@@ -108,6 +113,11 @@ bool CreateTxFromBuffer(ConstByteArray const &encoded_tx, std::vector<ConstByteA
   chain::TransactionSerializer tx_serializer{encoded_tx};
   if (tx_serializer.Deserialize(*tx))
   {
+    if (tx->charge_limit() > chain::Transaction::MAXIMUM_TX_CHARGE_LIMIT)
+    {
+      return false;
+    }
+
     txs.emplace_back(tx->digest());
     processor.AddTransaction(std::move(tx));
 
