@@ -65,9 +65,17 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
 {
   using Index = fetch::math::SizeType;
 
+  auto tensor_constructor_charge_estimate = [](Ptr<Array<SizeType>> const &shape) -> ChargeAmount {
+    SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(shape->elements);
+
+    return static_cast<ChargeAmount>(CONSTRUCTION_PADDED_SIZE_COEF * padded_size +
+                                     CONSTRUCTION_CONST_COEF) *
+           COMPUTE_CHARGE_COST;
+  };
+
   auto interface =
       module.CreateClassType<VMTensor>("Tensor")
-          .CreateConstructor(&VMTensor::Constructor)
+          .CreateConstructor(&VMTensor::Constructor, tensor_constructor_charge_estimate)
           .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
             return Ptr<VMTensor>{new VMTensor(vm, type_id)};
           })
@@ -512,6 +520,9 @@ TensorEstimator &VMTensor::Estimator()
 {
   return estimator_;
 }
+
+fixed_point::fp64_t const VMTensor::CONSTRUCTION_PADDED_SIZE_COEF = fixed_point::fp64_t("0.0028");
+fixed_point::fp64_t const VMTensor::CONSTRUCTION_CONST_COEF       = fixed_point::fp64_t("22");
 
 }  // namespace math
 }  // namespace vm_modules
