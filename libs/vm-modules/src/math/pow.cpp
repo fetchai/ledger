@@ -54,8 +54,6 @@ IfIsPtrFixed128<T, Ptr<T>> PowPtr(VM *vm, Ptr<T> const &a, Ptr<T> const &b)
 
 void BindPow(Module &module)
 {
-  module.CreateFreeFunction("pow", &Pow<float_t>);
-  module.CreateFreeFunction("pow", &Pow<double_t>);
   module.CreateFreeFunction("pow", &Pow<fixed_point::fp32_t>);
   module.CreateFreeFunction("pow", &Pow<fixed_point::fp64_t>);
   module.CreateFreeFunction("exp", &PowPtr<Fixed128>);

@@ -49,7 +49,7 @@ public:
     TransactionDetails(chain::Transaction &tx, BitVector const &shards);
     TransactionDetails(chain::Address const &from_addr, chain::Address const &contract_addr,
                        BitVector const &shards, Digest const &tx_digest, TokenAmount const &rate,
-                       TokenAmount const &limit, bool is_wealth);
+                       TokenAmount const &limit);
 
     chain::Address const &from;
     chain::Address const &contract_address;
@@ -57,7 +57,6 @@ public:
     Digest const &        digest;
     TokenAmount const     charge_rate{1};
     TokenAmount const     charge_limit{0};
-    bool const            is_create_wealth{false};
   };
 
   // Construction / Destruction

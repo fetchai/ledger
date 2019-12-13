@@ -119,6 +119,38 @@ void InterruptHandler(int /*signal*/)
 }
 
 /**
+ * The makes sure that segmentation faults become catchable.
+ * This serves as a means to make the VM resiliant to malformed modules.
+ */
+namespace {
+std::atomic<bool> shutdown_on_critical_failure{false};
+}
+
+void ThrowException(int signal)
+{
+  FETCH_LOG_ERROR(LOGGING_NAME, "Encountered segmentation fault or floating point exception.");
+  ERROR_BACKTRACE;
+
+  if (shutdown_on_critical_failure && (gConstellationInstance != nullptr))
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Shutting down and restarting.");
+
+    // Gracefully shutting down
+    gConstellationInstance.load()->SignalStop();
+  }
+
+  // Throwing an exception that can be caught by the
+  // system to allow it to run until shutdown
+  switch (signal)
+  {
+  case SIGSEGV:
+    throw std::runtime_error("Segmentation fault.");
+  case SIGFPE:
+    throw std::runtime_error("Floating point exception.");
+  }
+}
+
+/**
  * Determine is a version flag has been present on the command line
  *
  * @param argc The number of args
@@ -237,6 +269,9 @@ int main(int argc, char **argv)
       // attempt to build the configuration for constellation
       fetch::constellation::Constellation::Config cfg = BuildConstellationConfig(settings);
 
+      // setting policy for critical signals
+      shutdown_on_critical_failure = settings.graceful_failure.value();
+
       // create the bootrap monitor (if configued to do so)
       auto initial_peers = ToUriSet(settings.peers.value());
       auto bootstrap     = CreateBootstrap(settings, cfg, p2p_key, initial_peers);
@@ -256,6 +291,13 @@ int main(int argc, char **argv)
       // register the signal handlers
       std::signal(SIGINT, InterruptHandler);
       std::signal(SIGTERM, InterruptHandler);
+
+      // Making the system resillient to segmentation faults
+      if (settings.fault_tolerant.value())
+      {
+        std::signal(SIGSEGV, ThrowException);
+        std::signal(SIGFPE, ThrowException);
+      }
 
       // run the application
       try
@@ -278,6 +320,8 @@ int main(int argc, char **argv)
     FETCH_LOG_INFO(LOGGING_NAME, "Fatal Error: ", ex.what());
     std::cerr << "Fatal Error: " << ex.what() << std::endl;
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, " - ");
 
   return exit_code;
 }

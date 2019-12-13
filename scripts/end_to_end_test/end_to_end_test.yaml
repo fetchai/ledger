@@ -56,13 +56,13 @@ setup_conditions:
   number_of_nodes: 2
   node_connections: [[0, 1]]
   mining_nodes: [0]
-  max_test_time: 60
+  max_test_time: 300
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
   - verify_txs: { "name": "batch1", "nodes": [0, 1] }
   - add_node: { "index": 2, "node_connections": [[2, 1]] }
-  - sleep: 5
+  - sleep: 10
   - verify_txs: { "name": "batch1", "nodes": [2] }
 ...
 
@@ -105,11 +105,12 @@ setup_conditions:
   test_name: "basic_node_recovery"
   number_of_nodes: 1
   mining_nodes: [0]
-  max_test_time: 60
+  max_test_time: 70
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [0] }
   - verify_txs: { "name": "batch1", "nodes": [0] }
+  - sleep: 40
   - restart_nodes: { "nodes": [0] }
   - verify_txs: { "name": "batch1", "nodes": [0], "expect_mined": true }
 ...
@@ -243,7 +244,7 @@ steps:
 
 ---
 test_description: >
-  Test synergetic contract fees
+  DISABLED - Test synergetic contract fees
 
 setup_conditions:
   test_name: "synergetic_fee_test"
@@ -252,8 +253,8 @@ setup_conditions:
   max_test_time: 600
 
 steps:
-  - wait_network_ready: {"sleep": 5}
-  - create_wealth: {"amount": 100000000000000, "nodes": [0]}
+  - wait_network_ready: {"sleep": 2}
+  - create_wealth: {"amount": 100000, "nodes": [0]}
   - create_synergetic_contract: {"name": "contract001", "fee_limit": 10000, "nodes": [0], "transfer_amount": 1000}
   - wait_for_blocks: {"nodes": [0], "num": 5}
   - query_balance: {"nodes": [0], "save_as": "balance1"}
@@ -266,7 +267,7 @@ steps:
 
 ---
 test_description: >
-  Test synergetic contract fees in case of no funds
+  DISABLED - Test synergetic contract fees in case of no funds
 
 setup_conditions:
   test_name: "synergetic_fee_test"
@@ -275,8 +276,8 @@ setup_conditions:
   max_test_time: 600
 
 steps:
-  - wait_network_ready: {"sleep": 5}
-  - create_wealth: {"amount": 100000000000000, "nodes": [0]}
+  - wait_network_ready: {"sleep": 10}
+  - create_wealth: {"amount": 1000000, "nodes": [0]}
   - create_synergetic_contract: {"name": "contract001", "fee_limit": 10000, "nodes": [0], "transfer_amount": 0}
   - wait_for_blocks: {"nodes": [0], "num": 5}
   - query_balance: {"nodes": [0], "save_as": "balance1"}

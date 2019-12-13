@@ -705,10 +705,12 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
   enum
   {
     UNSET,
-    COLON,
+    SEMICOLON,
     NEWLINE
-  } new_row_marker         = UNSET;
-  bool reached_actual_data = false;
+  } new_row_marker                = UNSET;
+  bool        reached_actual_data = false;
+  std::size_t first_row_size      = 0;
+  std::size_t current_row_size    = 0;
 
   // Text parsing loop
   for (SizeType i = 0; i < c.size();)
@@ -721,18 +723,36 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       {
         if (new_row_marker == UNSET)
         {
-          new_row_marker = COLON;
+          new_row_marker = SEMICOLON;
+          // The size of the first row is the size of the vector so far
+          first_row_size = elems.size();
         }
-        if (new_row_marker == COLON)
+        if (new_row_marker == SEMICOLON)
         {
           if ((i < c.size() - 1))
           {
             reached_actual_data = false;
+            if (current_row_size != first_row_size)
+            {
+              // size is not a multiple of first_row_size
+              std::stringstream s;
+              s << "Invalid shape: row " << n << " has " << current_row_size
+                << " elements, should have " << first_row_size;
+              throw exceptions::WrongShape(s.str());
+            }
           }
         }
       }
       ++i;
       break;
+    case 'r':
+    case 'n':
+      if (!prev_backslash)
+      {
+        break;
+      }
+      prev_backslash = false;
+      FETCH_FALLTHROUGH;  // explicit fallthrough to the next case
     case '\r':
     case '\n':
       if (reached_actual_data)
@@ -740,12 +760,22 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
         if (new_row_marker == UNSET)
         {
           new_row_marker = NEWLINE;
+          // The size of the first row is the size of the vector so far
+          first_row_size = elems.size();
         }
         if (new_row_marker == NEWLINE)
         {
           if ((i < c.size() - 1))
           {
             reached_actual_data = false;
+            if (current_row_size != first_row_size)
+            {
+              // size is not a multiple of first_row_size
+              std::stringstream s;
+              s << "Invalid shape: row " << n << " has " << current_row_size
+                << " elements, should have " << first_row_size;
+              throw exceptions::WrongShape(s.str());
+            }
           }
         }
       }
@@ -755,20 +785,9 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       prev_backslash = true;
       ++i;
       break;
-    case 'r':
-    case 'n':
-      if (prev_backslash)
-      {
-        prev_backslash = false;
-        if (i < c.size() - 2)
-        {
-          ++n;
-        }
-        ++i;
-      }
-      break;
     case ',':
     case ' ':
+    case '+':
     case '\t':
       prev_backslash = false;
       ++i;
@@ -789,10 +808,21 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
           // Where we actually start counting rows
           ++n;
           reached_actual_data = true;
+          current_row_size    = 0;
         }
+        current_row_size++;
       }
       break;
     }
+  }
+  // Check last line parsed also
+  if ((first_row_size > 0) && (current_row_size != first_row_size))
+  {
+    // size is not a multiple of first_row_size
+    std::stringstream s;
+    s << "Invalid shape: row " << n << " has " << current_row_size << " elements, should have "
+      << first_row_size;
+    throw exceptions::WrongShape(s.str());
   }
 
   SizeType m = elems.size() / n;

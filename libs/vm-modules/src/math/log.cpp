@@ -85,20 +85,14 @@ IfIsPtrFixed128<T, Ptr<T>> Log10Ptr(VM *vm, Ptr<T> const &a)
 
 void BindLog(Module &module)
 {
-  module.CreateFreeFunction("log", &Log<float_t>);
-  module.CreateFreeFunction("log", &Log<double_t>);
   module.CreateFreeFunction("log", &Log<fixed_point::fp32_t>);
   module.CreateFreeFunction("log", &Log<fixed_point::fp64_t>);
   module.CreateFreeFunction("log", &LogPtr<Fixed128>);
 
-  module.CreateFreeFunction("log2", &Log2<float_t>);
-  module.CreateFreeFunction("log2", &Log2<double_t>);
   module.CreateFreeFunction("log2", &Log2<fixed_point::fp32_t>);
   module.CreateFreeFunction("log2", &Log2<fixed_point::fp64_t>);
   module.CreateFreeFunction("log2", &Log2Ptr<Fixed128>);
 
-  module.CreateFreeFunction("log10", &Log10<float_t>);
-  module.CreateFreeFunction("log10", &Log10<double_t>);
   module.CreateFreeFunction("log10", &Log10<fixed_point::fp32_t>);
   module.CreateFreeFunction("log10", &Log10<fixed_point::fp64_t>);
   module.CreateFreeFunction("log10", &Log10Ptr<Fixed128>);
