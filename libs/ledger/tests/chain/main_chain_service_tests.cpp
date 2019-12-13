@@ -30,14 +30,11 @@
 #include "moment/clocks.hpp"
 #include "muddle/network_id.hpp"
 
-using ::testing::_;
 using ::testing::NiceMock;
 using ::testing::Return;
-using ::testing::ReturnRef;
 using fetch::ledger::MainChainRpcService;
 using fetch::ledger::MainChain;
 using fetch::crypto::ECDSASigner;
-using fetch::chain::Address;
 using fetch::muddle::NetworkId;
 using fetch::ledger::testing::BlockGenerator;
 using fetch::ledger::BlockStatus;

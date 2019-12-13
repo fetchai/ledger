@@ -74,7 +74,7 @@ struct MapSerializer<ledger::TimeTravelogue<B>, D>
   {
     auto map = map_constructor(4);
 
-    uint8_t const status_code = static_cast<uint8_t>(travelogue.status);
+    auto const status_code = static_cast<uint8_t>(travelogue.status);
 
     map.Append(BLOCKS, travelogue.blocks);
     map.Append(HEAVIEST_HASH, travelogue.heaviest_hash);
