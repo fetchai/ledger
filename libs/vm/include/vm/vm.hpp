@@ -44,6 +44,9 @@
 namespace fetch {
 namespace vm {
 
+template <typename ArgsTuple, typename... Args>
+bool EstimateCharge(VM *vm, ChargeEstimator<Args...> &&e, ArgsTuple const &args);
+
 template <typename T, typename = void>
 struct Getter;
 
@@ -584,6 +587,7 @@ public:
   ChargeAmount GetChargeTotal() const;
   void         IncreaseChargeTotal(ChargeAmount amount);
   ChargeAmount GetChargeLimit() const;
+  bool         ChargeLimitExceeded();
   void         SetChargeLimit(ChargeAmount limit);
 
   void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_static_charges);
@@ -763,26 +767,38 @@ private:
     }
   };
 
-  bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const
+  bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
   {
     if (lhso)
     {
       if (rhso)
       {
-        return lhso->IsEqual(lhso, rhso);
+        if (EstimateCharge(this, ChargeEstimator<>([lhso, rhso]() -> ChargeAmount {
+                             return lhso->IsEqualChargeEstimator(lhso, rhso);
+                           }),
+                           std::tuple<>{}))
+        {
+          return lhso->IsEqual(lhso, rhso);
+        }
       }
       return false;
     }
     return (rhso == nullptr);
   }
 
-  bool IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const
+  bool IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
   {
     if (lhso)
     {
       if (rhso)
       {
-        return lhso->IsNotEqual(lhso, rhso);
+        if (EstimateCharge(this, ChargeEstimator<>([lhso, rhso]() -> ChargeAmount {
+                             return lhso->IsNotEqualChargeEstimator(lhso, rhso);
+                           }),
+                           std::tuple<>{}))
+        {
+          return lhso->IsNotEqual(lhso, rhso);
+        }
       }
       return true;
     }
@@ -804,6 +820,11 @@ private:
     {
       lhsv.Assign(lhsv.object->IsLessThan(lhsv.object, rhsv.object), TypeIds::Bool);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->IsLessThanChargeEstimator(lhsv.object, rhsv.object);
+    }
   };
 
   struct PrimitiveLessThanOrEqual
@@ -820,6 +841,11 @@ private:
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
       lhsv.Assign(lhsv.object->IsLessThanOrEqual(lhsv.object, rhsv.object), TypeIds::Bool);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->IsLessThanOrEqualChargeEstimator(lhsv.object, rhsv.object);
     }
   };
 
@@ -838,6 +864,11 @@ private:
     {
       lhsv.Assign(lhsv.object->IsGreaterThan(lhsv.object, rhsv.object), TypeIds::Bool);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->IsGreaterThanChargeEstimator(lhsv.object, rhsv.object);
+    }
   };
 
   struct PrimitiveGreaterThanOrEqual
@@ -854,6 +885,11 @@ private:
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
       lhsv.Assign(lhsv.object->IsGreaterThanOrEqual(lhsv.object, rhsv.object), TypeIds::Bool);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->IsGreaterThanOrEqualChargeEstimator(lhsv.object, rhsv.object);
     }
   };
 
@@ -935,6 +971,11 @@ private:
     {
       lhso->Add(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->AddChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectLeftAdd
@@ -942,6 +983,11 @@ private:
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
       rhsv.object->LeftAdd(lhsv, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return rhsv.object->LeftAddChargeEstimator(lhsv, rhsv);
     }
   };
 
@@ -951,6 +997,11 @@ private:
     {
       lhsv.object->RightAdd(lhsv, rhsv);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->RightAddChargeEstimator(lhsv, rhsv);
+    }
   };
 
   struct ObjectInplaceAdd
@@ -959,6 +1010,11 @@ private:
     {
       lhso->InplaceAdd(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->InplaceAddChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectInplaceRightAdd
@@ -966,6 +1022,11 @@ private:
     static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
       lhso->InplaceRightAdd(lhso, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Variant const &rhsv)
+    {
+      return lhso->InplaceRightAddChargeEstimator(lhso, rhsv);
     }
   };
 
@@ -984,6 +1045,11 @@ private:
     {
       lhso->Subtract(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->SubtractChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectLeftSubtract
@@ -991,6 +1057,11 @@ private:
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
       rhsv.object->LeftSubtract(lhsv, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return rhsv.object->LeftSubtractChargeEstimator(lhsv, rhsv);
     }
   };
 
@@ -1000,6 +1071,11 @@ private:
     {
       lhsv.object->RightSubtract(lhsv, rhsv);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->RightSubtractChargeEstimator(lhsv, rhsv);
+    }
   };
 
   struct ObjectInplaceSubtract
@@ -1008,6 +1084,11 @@ private:
     {
       lhso->InplaceSubtract(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->InplaceSubtractChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectInplaceRightSubtract
@@ -1015,6 +1096,11 @@ private:
     static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
       lhso->InplaceRightSubtract(lhso, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Variant const &rhsv)
+    {
+      return lhso->InplaceRightSubtractChargeEstimator(lhso, rhsv);
     }
   };
 
@@ -1033,6 +1119,11 @@ private:
     {
       lhso->Multiply(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->MultiplyChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectLeftMultiply
@@ -1040,6 +1131,11 @@ private:
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
       rhsv.object->LeftMultiply(lhsv, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return rhsv.object->LeftMultiplyChargeEstimator(lhsv, rhsv);
     }
   };
 
@@ -1049,6 +1145,11 @@ private:
     {
       lhsv.object->RightMultiply(lhsv, rhsv);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->RightMultiplyChargeEstimator(lhsv, rhsv);
+    }
   };
 
   struct ObjectInplaceMultiply
@@ -1057,6 +1158,11 @@ private:
     {
       lhso->InplaceMultiply(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->InplaceMultiplyChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectInplaceRightMultiply
@@ -1064,6 +1170,11 @@ private:
     static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
       lhso->InplaceRightMultiply(lhso, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Variant const &rhsv)
+    {
+      return lhso->InplaceRightMultiplyChargeEstimator(lhso, rhsv);
     }
   };
 
@@ -1087,6 +1198,11 @@ private:
     {
       lhso->Divide(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->DivideChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectLeftDivide
@@ -1094,6 +1210,11 @@ private:
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
       rhsv.object->LeftDivide(lhsv, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return rhsv.object->LeftDivideChargeEstimator(lhsv, rhsv);
     }
   };
 
@@ -1103,6 +1224,11 @@ private:
     {
       lhsv.object->RightDivide(lhsv, rhsv);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->RightDivideChargeEstimator(lhsv, rhsv);
+    }
   };
 
   struct ObjectInplaceDivide
@@ -1111,6 +1237,11 @@ private:
     {
       lhso->InplaceDivide(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->InplaceDivideChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectInplaceRightDivide
@@ -1118,6 +1249,11 @@ private:
     static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
       lhso->InplaceRightDivide(lhso, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Variant const &rhsv)
+    {
+      return lhso->InplaceRightDivideChargeEstimator(lhso, rhsv);
     }
   };
 
@@ -1458,8 +1594,14 @@ private:
     Variant &lhsv = Top();
     if (lhsv.object && rhsv.object)
     {
-      Op::Apply(lhsv, rhsv);
-      rhsv.Reset();
+      if (EstimateCharge(this, ChargeEstimator<>([lhsv, rhsv]() -> ChargeAmount {
+                           return Op::ApplyChargeEstimator(lhsv, rhsv);
+                         }),
+                         std::tuple<>{}))
+      {
+        Op::Apply(lhsv, rhsv);
+        rhsv.Reset();
+      }
       return;
     }
     RuntimeError("null reference");
@@ -1511,8 +1653,14 @@ private:
     Variant &lhsv = Top();
     if (lhsv.object && rhsv.object)
     {
-      Op::Apply(lhsv.object, rhsv.object);
-      rhsv.Reset();
+      if (EstimateCharge(this, ChargeEstimator<>([lhsv, rhsv]() -> ChargeAmount {
+                           return Op::ApplyChargeEstimator(lhsv.object, rhsv.object);
+                         }),
+                         std::tuple<>{}))
+      {
+        Op::Apply(lhsv.object, rhsv.object);
+        rhsv.Reset();
+      }
       return;
     }
     RuntimeError("null reference");
@@ -1530,8 +1678,14 @@ private:
         RuntimeError("null reference");
         return;
       }
-      Op::Apply(lhsv, rhsv);
-      rhsv.Reset();
+      if (EstimateCharge(this, ChargeEstimator<>([lhsv, rhsv]() -> ChargeAmount {
+                           return Op::ApplyChargeEstimator(lhsv, rhsv);
+                         }),
+                         std::tuple<>{}))
+      {
+        Op::Apply(lhsv, rhsv);
+        rhsv.Reset();
+      }
       return;
     }
     RuntimeError("null reference");
@@ -1549,8 +1703,14 @@ private:
         RuntimeError("null reference");
         return;
       }
-      Op::Apply(lhsv, rhsv);
-      rhsv.Reset();
+      if (EstimateCharge(this, ChargeEstimator<>([lhsv, rhsv]() -> ChargeAmount {
+                           return Op::ApplyChargeEstimator(lhsv, rhsv);
+                         }),
+                         std::tuple<>{}))
+      {
+        Op::Apply(lhsv, rhsv);
+        rhsv.Reset();
+      }
       return;
     }
     RuntimeError("null reference");
@@ -1578,8 +1738,14 @@ private:
     Variant &rhsv = Pop();
     if (lhso && rhsv.object)
     {
-      Op::Apply(lhso, rhsv.object);
-      rhsv.Reset();
+      if (EstimateCharge(this, ChargeEstimator<>([lhso, rhsv]() -> ChargeAmount {
+                           return Op::ApplyChargeEstimator(lhso, rhsv.object);
+                         }),
+                         std::tuple<>{}))
+      {
+        Op::Apply(lhso, rhsv.object);
+        rhsv.Reset();
+      }
       return;
     }
     RuntimeError("null reference");
@@ -1596,8 +1762,14 @@ private:
         RuntimeError("null reference");
         return;
       }
-      Op::Apply(lhso, rhsv);
-      rhsv.Reset();
+      if (EstimateCharge(this, ChargeEstimator<>([lhso, rhsv]() -> ChargeAmount {
+                           return Op::ApplyChargeEstimator(lhso, rhsv);
+                         }),
+                         std::tuple<>{}))
+      {
+        Op::Apply(lhso, rhsv);
+        rhsv.Reset();
+      }
       return;
     }
     RuntimeError("null reference");
