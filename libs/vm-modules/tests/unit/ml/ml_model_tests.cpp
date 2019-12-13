@@ -800,9 +800,10 @@ TEST_F(VMModelTests, model_with_metric)
       )";
 
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
-
+  std::cout.setstate(std::ios_base::failbit);
   Variant res;
   EXPECT_TRUE(toolkit.Run(&res));
+  std::cout.clear();
 
   auto const metrics = res.Get<Ptr<Array<fetch::vm_modules::math::DataType>>>();
   EXPECT_EQ(metrics->elements.at(0), metrics->elements.at(1));
