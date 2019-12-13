@@ -69,6 +69,8 @@ public:
 
   void Increase();
 
+  vm::Ptr<UInt256Wrapper> Copy() const;
+
   fetch::math::SizeType size() const;
 
   fetch::vectorise::UInt<256> const &number() const;
