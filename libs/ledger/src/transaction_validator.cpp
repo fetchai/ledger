@@ -104,6 +104,11 @@ ContractExecutionStatus TransactionValidator::operator()(chain::Transaction cons
       return ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE;
     }
 
+    if (tx.charge_limit() > chain::Transaction::MAXIMUM_TX_CHARGE_LIMIT)
+    {
+      return ContractExecutionStatus::TX_CHARGE_LIMIT_TOO_HIGH;
+    }
+
     // CHECK: Ensure that the originator has funds available to make both all the transfers in the
     //        contract as well as the maximum fees
     uint64_t const balance    = token_contract_.GetBalance(tx.from());
