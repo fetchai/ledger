@@ -36,12 +36,10 @@ void RandomAssign(TensorType &tensor)
 {
   using Type = typename TensorType::Type;
 
-  static fetch::random::LinearCongruentialGenerator gen;
-
   auto it = tensor.begin();
   while (it.is_valid())
   {
-    *it = static_cast<Type>(gen.AsDouble());
+    *it = static_cast<Type>(random::Random::generator.AsFP64());
     ++it;
   }
 }
@@ -76,26 +74,26 @@ TYPED_TEST(StandardFunctionTests, clamp_array_1D_test)
 
   ArrayType A = ArrayType({6});
 
-  A(0) = DataType(-10);
-  A(1) = static_cast<DataType>(0);
-  A(2) = static_cast<DataType>(1);
-  A(3) = DataType(2);
-  A(4) = DataType(3);
-  A(5) = DataType(10);
+  A(0) = DataType{-10};
+  A(1) = DataType{0};
+  A(2) = DataType{1};
+  A(3) = DataType{2};
+  A(4) = DataType{3};
+  A(5) = DataType{10};
 
   // Expected results
   ArrayType A_clamp_expected = ArrayType({6});
-  A_clamp_expected(0)        = DataType(2);
-  A_clamp_expected(1)        = DataType(2);
-  A_clamp_expected(2)        = DataType(2);
-  A_clamp_expected(3)        = DataType(2);
-  A_clamp_expected(4)        = DataType(3);
-  A_clamp_expected(5)        = DataType(3);
+  A_clamp_expected(0)        = DataType{2};
+  A_clamp_expected(1)        = DataType{2};
+  A_clamp_expected(2)        = DataType{2};
+  A_clamp_expected(3)        = DataType{2};
+  A_clamp_expected(4)        = DataType{3};
+  A_clamp_expected(5)        = DataType{3};
 
   // Compare results with expected results
-  Clamp(DataType(2), DataType(3), A);
+  Clamp(DataType{2}, DataType{3}, A);
 
-  ASSERT_TRUE(A.AllClose(A_clamp_expected, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_EQ(A, A_clamp_expected);
 }
 
 TYPED_TEST(StandardFunctionTests, clamp_array_2D_test)
@@ -105,26 +103,26 @@ TYPED_TEST(StandardFunctionTests, clamp_array_2D_test)
 
   ArrayType A = ArrayType({2, 3});
 
-  A(0, 0) = DataType(-10);
-  A(0, 1) = static_cast<DataType>(0);
-  A(0, 2) = static_cast<DataType>(1);
-  A(1, 0) = DataType(2);
-  A(1, 1) = DataType(3);
-  A(1, 2) = DataType(10);
+  A(0, 0) = DataType{-10};
+  A(0, 1) = DataType{0};
+  A(0, 2) = DataType{1};
+  A(1, 0) = DataType{2};
+  A(1, 1) = DataType{3};
+  A(1, 2) = DataType{10};
 
   // Expected results
   ArrayType A_clamp_expected = ArrayType({2, 3});
-  A_clamp_expected(0, 0)     = DataType(2);
-  A_clamp_expected(0, 1)     = DataType(2);
-  A_clamp_expected(0, 2)     = DataType(2);
-  A_clamp_expected(1, 0)     = DataType(2);
-  A_clamp_expected(1, 1)     = DataType(3);
-  A_clamp_expected(1, 2)     = DataType(3);
+  A_clamp_expected(0, 0)     = DataType{2};
+  A_clamp_expected(0, 1)     = DataType{2};
+  A_clamp_expected(0, 2)     = DataType{2};
+  A_clamp_expected(1, 0)     = DataType{2};
+  A_clamp_expected(1, 1)     = DataType{3};
+  A_clamp_expected(1, 2)     = DataType{3};
 
   // Compare results with expected results
-  Clamp(DataType(2), DataType(3), A);
+  Clamp(DataType{2}, DataType{3}, A);
 
-  ASSERT_TRUE(A.AllClose(A_clamp_expected, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_EQ(A, A_clamp_expected);
 }
 
 }  // namespace test

@@ -54,6 +54,15 @@ template <typename DataType, typename ReturnType>
 using IfIsMathNonFixedPointArray =
     IfIsNotFixedPoint<typename DataType::Type, IfIsMathArray<DataType, ReturnType>>;
 
+template <typename DataType, typename ReturnType>
+using IfIsUnsignedInteger =
+    fetch::meta::EnableIf<fetch::meta::IsUnsignedInteger<DataType> && !IsFloat<DataType>,
+                          ReturnType>;
+
+template <typename DataType, typename ReturnType>
+using IfIsSignedInteger =
+    fetch::meta::EnableIf<fetch::meta::IsSignedInteger<DataType> && !IsFloat<DataType>, ReturnType>;
+
 }  // namespace meta
 }  // namespace math
 }  // namespace fetch
