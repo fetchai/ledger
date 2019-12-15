@@ -53,7 +53,7 @@ public:
   HTTPModule() = default;
 
   HTTPModule(HTTPModule const &rhs) = delete;
-  HTTPModule(HTTPModule &&rhs)      = delete;
+  HTTPModule(HTTPModule &&rhs)      = default;
   HTTPModule &operator=(HTTPModule const &rhs) = delete;
   HTTPModule &operator=(HTTPModule &&rhs) = delete;
   virtual ~HTTPModule()                   = default;
