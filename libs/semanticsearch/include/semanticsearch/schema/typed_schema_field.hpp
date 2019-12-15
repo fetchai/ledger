@@ -88,7 +88,8 @@ SemanticPosition TypedSchemaField<T>::Reduce(VocabularyInstancePtr const &v)
     throw std::runtime_error("Reducer does not match schema type.");
   }
 
-  return constrained_data_reducer_.Reduce(v->data_);
+  auto &val = *reinterpret_cast<T const *>(v->data_);
+  return constrained_data_reducer_.Reduce(val);
 }
 
 template <typename T>
@@ -99,8 +100,8 @@ bool TypedSchemaField<T>::Validate(VocabularyInstancePtr const &v, std::string &
     error = "Type mismatch.";
     return false;
   }
-
-  return constrained_data_reducer_.Validate(v->data_, error);
+  auto &val = *reinterpret_cast<T const *>(v->data_);
+  return constrained_data_reducer_.Validate(val, error);
 }
 
 template <typename T>

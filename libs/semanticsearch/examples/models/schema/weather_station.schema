@@ -1,34 +1,8 @@
 model IntPair {
-  key1: BoundedInteger(8, 20),
-  key2: Int
+  key1: BoundedInteger(8, 20)
 };
 
-model Advanced {
-  arr: IntPair,
-  i: Int
-};
-
-// Let's make an instance
 var y : IntPair = {
-    key1: 9,
-    key2: 4
+    key1: 9
 };
 
-/*
-
-var x : Advanced = {
-  arr: y,
-  i: 7
-};
-
-var z : IntPair = {
-    key1: 1,
-    key2: 8  
-};
-
-// advertise x for 0xF12;
-store x;
-store x;
-// reduce y = x;
-
-*/

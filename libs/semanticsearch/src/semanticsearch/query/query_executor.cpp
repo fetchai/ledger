@@ -243,6 +243,7 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
       QueryVariant ele =
           NewQueryVariant(Int(atol(std::string(x.token).c_str())), TYPE_INTEGER, x.token);
       stack.push_back(ele);
+
       break;
     }
     case Type::STRING:

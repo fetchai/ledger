@@ -21,6 +21,7 @@
 #include "semanticsearch/schema/vocabulary_instance.hpp"
 
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <vector>
 
