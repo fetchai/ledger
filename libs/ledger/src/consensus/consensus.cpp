@@ -71,19 +71,10 @@ using fetch::ledger::Block;
 
 using DRNG = fetch::random::LinearCongruentialGenerator;
 
-std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
-{
-  if (decrement >= value)
-  {
-    return 0;
-  }
-
-  return value - decrement;
-}
-
 template <typename T>
 T DeterministicShuffle(T &container, uint64_t entropy)
 {
+  std::sort(container.begin(), container.end());
   DRNG rng(entropy);
   std::shuffle(container.begin(), container.end(), rng);
   return container;
@@ -108,6 +99,20 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
   , notarisation_{std::move(notarisation)}
 {
   assert(stake_);
+}
+
+Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet const &cabinet,
+                                              uint64_t                                entropy)
+{
+  Consensus::WeightedQual ret;
+  ret.reserve(cabinet.size());
+
+  for (auto const &i : cabinet)
+  {
+    ret.emplace_back(i);
+  }
+
+  return DeterministicShuffle(ret, entropy);
 }
 
 // TODO(HUT): probably this is not required any more.
@@ -160,7 +165,7 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
 
   // Walk back the chain until we see a block specifying an aeon beginning (corner
   // case for true genesis)
-  while (!ret.block_entropy.IsAeonBeginning() && current.block_number != 0)
+  while (!ret.block_entropy.IsAeonBeginning() && ret.block_number != 0)
   {
     auto prior = GetBlockPriorTo(ret, chain);
 
@@ -214,40 +219,26 @@ bool Consensus::VerifyNotarisation(Block const &block) const
   return true;
 }
 
-uint64_t Consensus::GetBlockGenerationWeight(Block const &previous, chain::Address const &address)
+uint64_t Consensus::GetBlockGenerationWeight(Block const &current, Identity const &identity)
 {
-  auto beginning_of_aeon = GetBeginningOfAeon(previous, chain_);
-  auto cabinet           = beginning_of_aeon.block_entropy.qualified;
+  auto beginning_of_aeon = GetBeginningOfAeon(current, chain_);
 
-  std::size_t weight{cabinet.size()};
+  auto qualified_cabinet_weighted = QualWeightedByEntropy(beginning_of_aeon.block_entropy.qualified,
+                                                          current.block_entropy.EntropyAsU64());
 
-  // TODO(EJF): Depending on the cabinet sizes this would need to be improved
-  for (auto const &member : cabinet)
+  if (std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity) ==
+      qualified_cabinet_weighted.end())
   {
-    if (address == chain::Address::FromMuddleAddress(member))
-    {
-      break;
-    }
-
-    weight = SafeDecrement(weight, 1);
+    // Note: weight being non zero indicates not in cabinet
+    return 0;
   }
 
-  // Note: weight must always be non zero (indicates failure/not in cabinet)
-  return weight;
-}
+  uint64_t const dist = static_cast<uint64_t>(std::distance(
+      qualified_cabinet_weighted.begin(),
+      std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity)));
 
-Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet const &cabinet,
-                                              uint64_t                                entropy)
-{
-  Consensus::WeightedQual ret;
-  ret.reserve(cabinet.size());
-
-  for (auto const &i : cabinet)
-  {
-    ret.emplace_back(i);
-  }
-
-  return DeterministicShuffle(ret, entropy);
+  // Top rank, miner 0 should get the highest weight of qual size
+  return static_cast<uint64_t>(qualified_cabinet_weighted.size() - dist);
 }
 
 /**
@@ -270,7 +261,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
 
   BlockEntropy::Cabinet qualified_cabinet = beginning_of_aeon.block_entropy.qualified;
   auto                  qualified_cabinet_weighted =
-      QualWeightedByEntropy(qualified_cabinet, previous.block_entropy.EntropyAsU64());
+      QualWeightedByEntropy(qualified_cabinet, proposed.block_entropy.EntropyAsU64());
 
   if (qualified_cabinet.find(identity.identifier()) == qualified_cabinet.end())
   {
@@ -318,6 +309,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   // the block period
   if (proposed_block_timestamp_ms < previous_block_window_ends)
   {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Cannot produce within block interval.");
     return false;
   }
 
@@ -334,7 +326,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   {
     if (identity == mining_identity_)
     {
-      FETCH_LOG_DEBUG(
+      FETCH_LOG_INFO(
           LOGGING_NAME, "Minting block. Time now: ", time_now_ms,
           " Timestamp: ", block_interval_ms_, " proposed: ", proposed_block_timestamp_ms,
           " Prev window ends: ", previous_block_window_ends,
@@ -530,7 +522,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->miner         = mining_address_;
   ret->miner_id      = mining_identity_;
   ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-  ret->weight    = GetBlockGenerationWeight(*ret, mining_address_);
+  ret->weight    = GetBlockGenerationWeight(*ret, mining_identity_);
 
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
@@ -695,12 +687,7 @@ Status Consensus::ValidBlock(Block const &current) const
 
 void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)
 {
-  cabinet_history_[0] = stake_->Reset(snapshot, max_cabinet_size_);
-
-  if (cabinet_history_.find(0) == cabinet_history_.end())
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "No cabinet history found for block when resetting.");
-  }
+  Reset(snapshot);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Resetting stake aggregate...");
 
@@ -714,6 +701,18 @@ void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Resetting stake aggregate...FAILED");
+  }
+}
+
+void Consensus::Reset(StakeSnapshot const &snapshot)
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Consensus::Reset");
+
+  cabinet_history_[0] = stake_->Reset(snapshot, max_cabinet_size_);
+
+  if (cabinet_history_.find(0) == cabinet_history_.end())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "No cabinet history found for block when resetting.");
   }
 }
 

@@ -250,8 +250,6 @@ private:
   TypePtr        uint32_type_;
   TypePtr        int64_type_;
   TypePtr        uint64_type_;
-  TypePtr        float32_type_;
-  TypePtr        float64_type_;
   TypePtr        fixed32_type_;
   TypePtr        fixed64_type_;
   TypePtr        fixed128_type_;
@@ -262,7 +260,6 @@ private:
   TypePtr        any_type_;
   TypePtr        any_primitive_type_;
   TypePtr        any_integer_type_;
-  TypePtr        any_floating_point_type_;
   TypePtr        array_type_;
   TypePtr        map_type_;
   TypePtr        sharded_state_type_;

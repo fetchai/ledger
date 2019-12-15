@@ -752,12 +752,6 @@ ExpressionNodePtr Parser::ParseAnnotationLiteral()
     number = true;
     break;
   }
-  case Token::Kind::Float64:
-  {
-    kind   = NodeKind::Float64;
-    number = true;
-    break;
-  }
   case Token::Kind::True:
   {
     kind = NodeKind::True;
@@ -1580,14 +1574,6 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
 
     case Token::Kind::UnsignedInteger64:
       parses = HandleLiteral(NodeKind::UnsignedInteger64);
-      break;
-
-    case Token::Kind::Float32:
-      parses = HandleLiteral(NodeKind::Float32);
-      break;
-
-    case Token::Kind::Float64:
-      parses = HandleLiteral(NodeKind::Float64);
       break;
 
     case Token::Kind::Fixed32:

@@ -59,8 +59,6 @@ public:
   uint32_t ui32  = 16;
   int64_t  i64   = -32;
   uint64_t ui64  = 32;
-  float    ft32  = 64.321684f;
-  double   ft64  = -128.64321684;
   fp32_t   fp32  = fetch::fixed_point::fp32_t::FromBase(i32);
   fp64_t   fp64  = fetch::fixed_point::fp64_t::FromBase(i64);
   fp128_t  fp128 = fetch::fixed_point::fp128_t::FromBase(i64);
@@ -147,20 +145,6 @@ TEST_F(VariantSerialization, ui64_variant)
   primitive.Set(ui64);
   SerializeAs(UInt64);
   ASSERT_EQ(variant_out.Get<uint64_t>(), ui64);
-}
-
-TEST_F(VariantSerialization, ft32_variant)
-{
-  primitive.Set(ft32);
-  SerializeAs(Float32);
-  ASSERT_EQ(variant_out.Get<float>(), ft32);
-}
-
-TEST_F(VariantSerialization, ft64_variant)
-{
-  primitive.Set(ft64);
-  SerializeAs(Float64);
-  ASSERT_EQ(variant_out.Get<double>(), ft64);
 }
 
 TEST_F(VariantSerialization, fp32_variant)

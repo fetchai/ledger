@@ -237,7 +237,10 @@ bool Executor::ExecuteTransactionContract(Result &result)
     case ContractMode::CHAIN_CODE:
       contract_id = current_tx_->chain_code();
       break;
-    default:
+    case ContractMode::NOT_PRESENT:
+      break;
+    case ContractMode::SYNERGETIC:
+      // synergetic contracts are not supported through normal pipeline
       break;
     }
 
@@ -269,8 +272,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
     Contract::Result contract_status;
     {
-      ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
-                              block_};
+      ContractContext context{&token_contract_, current_tx_->contract_address(), storage_.get(),
+                              &storage_adapter, block_};
       ContractContextAttacher raii(*contract, context);
       contract_status = contract->DispatchTransaction(*current_tx_);
     }
@@ -301,6 +304,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     if (success)
     {
       // simple linear scale fee
+
       StorageFee storage_fee{storage_adapter};
 
       FeeManager::TransactionDetails tx_details{*current_tx_, allowed_shards_};
@@ -339,8 +343,8 @@ bool Executor::ProcessTransfers(Result &result)
     // attach the token contract to the storage engine
     StateSentinelAdapter storage_adapter{*storage_cache_, "fetch.token", allowed_shards_};
 
-    ContractContext context{&token_contract_, current_tx_->contract_address(), &storage_adapter,
-                            block_};
+    ContractContext         context{&token_contract_, current_tx_->contract_address(), nullptr,
+                            &storage_adapter, block_};
     ContractContextAttacher raii(token_contract_, context);
 
     // only process transfers if the previous steps have been successful

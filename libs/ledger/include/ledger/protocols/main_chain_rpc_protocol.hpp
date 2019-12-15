@@ -29,8 +29,9 @@ namespace ledger {
 class MainChainProtocol : public service::Protocol
 {
 public:
-  using Travelogue = TimeTravelogue<Block>;
-  using Blocks     = Travelogue::Blocks;
+  using Travelogue                          = TimeTravelogue<Block>;
+  using Blocks                              = Travelogue::Blocks;
+  static constexpr char const *LOGGING_NAME = "MainChainProtocol";
 
   enum
   {
@@ -47,7 +48,6 @@ public:
     Expose(TIME_TRAVEL, this, &MainChainProtocol::TimeTravel);
   }
 
-private:
   Blocks GetHeaviestChain(uint64_t maxsize)
   {
     return Copy(chain_.GetHeaviestChain(maxsize));
@@ -62,15 +62,19 @@ private:
     {
       return Blocks{};
     }
+
     return Copy(blocks);
   }
 
   Travelogue TimeTravel(Digest start)
   {
-    auto ret_val = chain_.TimeTravel(std::move(start));
-    return {Copy(ret_val.blocks), ret_val.heaviest_hash};
+    auto const ret_val = chain_.TimeTravel(std::move(start));
+
+    // make a copy (because you need to convert from BlockPtr and Blocks)!
+    return {ret_val.heaviest_hash, ret_val.block_number, ret_val.status, Copy(ret_val.blocks)};
   }
 
+private:
   static Blocks Copy(MainChain::Blocks const &blocks)
   {
     Blocks output{};

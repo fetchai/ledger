@@ -305,6 +305,47 @@ void String::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
   }
 }
 
+ChargeAmount String::IsEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                            Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount String::IsNotEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                               Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount String::IsLessThanChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                               Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount String::IsLessThanOrEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                      Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount String::IsGreaterThanChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                  Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount String::IsGreaterThanOrEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                         Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount String::AddChargeEstimator(Ptr<Object> const & /*lhso*/, Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
 bool String::SerializeTo(MsgPackSerializer &buffer)
 {
   buffer << utf8_str_.string();

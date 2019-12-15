@@ -104,11 +104,16 @@ std::string Hashes(std::vector<BlockPtr> const &v)
 
 class MainChainTests : public ::testing::TestWithParam<MainChain::Mode>
 {
+public:
+  static void SetUpTestCase()
+  {
+    fetch::crypto::mcl::details::MCLInitialiser();
+    fetch::chain::InitialiseTestConstants();
+  }
+
 protected:
   void SetUp() override
   {
-    fetch::crypto::mcl::details::MCLInitialiser();
-
     static constexpr std::size_t NUM_LANES  = 1;
     static constexpr std::size_t NUM_SLICES = 2;
 

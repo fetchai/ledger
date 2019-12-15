@@ -370,7 +370,7 @@ TEST_F(VMModelTests, model_init_with_wrong_name)
       endfunction
     )";
   ASSERT_TRUE(toolkit.Compile(SRC_WRONG_NAME));
-  EXPECT_THROW(toolkit.Run(), std::runtime_error);
+  EXPECT_FALSE(toolkit.Run());
 }
 
 TEST_F(VMModelTests, model_add_invalid_layer_type)
@@ -613,11 +613,11 @@ TEST_F(VMModelTests, DISABLED_conv1d_sequential_model_test)
   auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
   fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1});
-  gt(0, 0) = static_cast<DataType>(+7.29641703);
-  gt(1, 0) = static_cast<DataType>(+5.42749771);
-  gt(2, 0) = static_cast<DataType>(+1.89785659);
-  gt(3, 0) = static_cast<DataType>(-0.52079467);
-  gt(4, 0) = static_cast<DataType>(+0.57897364);
+  gt(0, 0) = fetch::math::Type<DataType>("+7.29641703");
+  gt(1, 0) = fetch::math::Type<DataType>("+5.42749771");
+  gt(2, 0) = fetch::math::Type<DataType>("+1.89785659");
+  gt(3, 0) = fetch::math::Type<DataType>("-0.52079467");
+  gt(4, 0) = fetch::math::Type<DataType>("+0.57897364");
 
   ASSERT_TRUE((prediction->GetTensor())
                   .AllClose(gt, fetch::math::function_tolerance<DataType>(),
@@ -686,11 +686,11 @@ TEST_F(VMModelTests, DISABLED_conv2d_sequential_model_test)
   auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
   fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1, 1});
-  gt.Set(0, 0, 0, static_cast<DataType>(+2.96216551));
-  gt.Set(1, 0, 0, static_cast<DataType>(+10.21055092));
-  gt.Set(2, 0, 0, static_cast<DataType>(-2.11563497));
-  gt.Set(3, 0, 0, static_cast<DataType>(+1.88992180));
-  gt.Set(4, 0, 0, static_cast<DataType>(+14.14585049));
+  gt.Set(0, 0, 0, fetch::math::Type<DataType>("+2.96216551"));
+  gt.Set(1, 0, 0, fetch::math::Type<DataType>("+10.21055092"));
+  gt.Set(2, 0, 0, fetch::math::Type<DataType>("-2.11563497"));
+  gt.Set(3, 0, 0, fetch::math::Type<DataType>("+1.88992180"));
+  gt.Set(4, 0, 0, fetch::math::Type<DataType>("+14.14585049"));
 
   ASSERT_TRUE((prediction->GetTensor())
                   .AllClose(gt, fetch::math::function_tolerance<DataType>(),
@@ -768,4 +768,84 @@ TEST_F(VMModelTests, DISABLED_regressor_model_test)
   ASSERT_TRUE(toolkit.Compile(regressor_model_src));
   ASSERT_TRUE(toolkit.Run());
 }
+
+TEST_F(VMModelTests, model_with_metric)
+{
+  static char const *SRC_METRIC = R"(
+        function main() : Array<Fixed64>
+          // set up data and labels
+          var data_shape = Array<UInt64>(2);
+          data_shape[0] = 10u64;
+          data_shape[1] = 1000u64;
+          var label_shape = Array<UInt64>(2);
+          label_shape[0] = 1u64;
+          label_shape[1] = 1000u64;
+          var data = Tensor(data_shape);
+          var label = Tensor(label_shape);
+
+          // set up model
+          var model = Model("sequential");
+          model.add("dense", 10u64, 10u64, "relu");
+          model.add("dense", 10u64, 10u64, "relu");
+          model.add("dense", 10u64, 1u64);
+          model.compile("mse", "adam", {"mse"});
+
+          // train the model
+          model.fit(data, label, 32u64);
+
+          // evaluate
+          var mets = model.evaluate();
+          return mets;
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+
+  Variant res;
+  EXPECT_TRUE(toolkit.Run(&res));
+
+  auto const metrics = res.Get<Ptr<Array<fetch::vm_modules::math::DataType>>>();
+  EXPECT_EQ(metrics->elements.at(0), metrics->elements.at(1));
+}
+
+TEST_F(VMModelTests, model_with_accuracy_metric)
+{
+  static char const *SRC_METRIC = R"(
+        function main() : Array<Fixed64>
+          // set up data and labels
+          var data_shape = Array<UInt64>(2);
+          data_shape[0] = 10u64;
+          data_shape[1] = 1000u64;
+          var label_shape = Array<UInt64>(2);
+          label_shape[0] = 7u64;
+          label_shape[1] = 1000u64;
+          var data = Tensor(data_shape);
+          var label = Tensor(label_shape);
+
+          // set up model
+          var model = Model("sequential");
+          model.add("dense", 10u64, 10u64, "relu");
+          model.add("dense", 10u64, 10u64, "relu");
+          model.add("dense", 10u64, 7u64);
+          model.compile("scel", "adam", {"categorical accuracy"});
+
+          // train the model
+          model.fit(data, label, 32u64);
+
+          // evaluate
+          var mets = model.evaluate();
+          return mets;
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const metrics = res.Get<Ptr<Array<fetch::vm_modules::math::DataType>>>();
+  EXPECT_GE(metrics->elements.at(1), 0);
+  EXPECT_LE(metrics->elements.at(1), 1);
+}
+
 }  // namespace

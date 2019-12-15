@@ -213,5 +213,34 @@ static constexpr meta::IfIsFixedPoint<T, bool> is_inf(T const &val)
   return (T::IsNegInfinity(val) || T::IsPosInfinity(val) || state_division_by_zero<T>());
 }
 
+template <typename T>
+static constexpr meta::IfIsUnsignedInteger<T, T> Type(std::string const &val)
+{
+  if (std::stoll(val) < 0)
+  {
+    throw std::runtime_error("cannot initialise uint with negative value");
+  }
+  auto x = static_cast<T>(std::stoull(val));
+  return x;
+}
+
+template <typename T>
+static constexpr meta::IfIsSignedInteger<T, T> Type(std::string const &val)
+{
+  return T(std::stoll(val));
+}
+
+template <typename T>
+static constexpr meta::IfIsFloat<T, T> Type(std::string const &val)
+{
+  return T(std::stod(val));
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, T> Type(std::string const &val)
+{
+  return T(val);
+}
+
 }  // namespace math
 }  // namespace fetch
