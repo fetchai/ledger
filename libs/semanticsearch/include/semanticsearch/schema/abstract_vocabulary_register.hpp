@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/object_schema_field.hpp"
+#include "semanticsearch/schema/fields/object_schema_field.hpp"
 
 #include <memory>
 #include <unordered_map>

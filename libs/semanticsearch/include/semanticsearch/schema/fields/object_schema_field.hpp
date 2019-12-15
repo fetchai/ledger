@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/index/base_types.hpp"
-#include "semanticsearch/schema/abstract_schema_field.hpp"
+#include "semanticsearch/schema/fields/abstract_schema_field.hpp"
 #include "semanticsearch/schema/vocabulary_instance.hpp"
 
 #include <functional>

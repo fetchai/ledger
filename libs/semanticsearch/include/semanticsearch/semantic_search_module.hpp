@@ -24,8 +24,8 @@
 #include "semanticsearch/module/model_interface_builder.hpp"
 #include "semanticsearch/module/vector_to_arguments.hpp"
 #include "semanticsearch/query/abstract_query_variant.hpp"
+#include "semanticsearch/schema/fields/typed_schema_field.hpp"
 #include "semanticsearch/schema/semantic_reducer.hpp"
-#include "semanticsearch/schema/typed_schema_field.hpp"
 
 #include <typeindex>
 #include <unordered_map>

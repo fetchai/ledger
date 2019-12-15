@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/abstract_schema_field.hpp"
-#include "semanticsearch/schema/object_schema_field.hpp"
+#include "semanticsearch/schema/fields/abstract_schema_field.hpp"
+#include "semanticsearch/schema/fields/object_schema_field.hpp"
 
 #include <memory>
 

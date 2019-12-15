@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/index/in_memory_db_index.hpp"
-#include "semanticsearch/schema/object_schema_field.hpp"
+#include "semanticsearch/schema/fields/object_schema_field.hpp"
 #include "semanticsearch/schema/vocabulary_instance.hpp"
 
 #include <string>
