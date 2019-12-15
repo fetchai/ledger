@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "http/abstract_server.hpp"
 #include "http/connection.hpp"
+#include "http/default_root_module.hpp"
 #include "http/http_connection_manager.hpp"
 #include "http/method.hpp"
 #include "http/mime_types.hpp"
@@ -28,13 +29,16 @@
 #include "http/response.hpp"
 #include "http/route.hpp"
 #include "http/status.hpp"
+#include "http/tagged_tree.hpp"
 #include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <deque>
 #include <functional>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <new>
@@ -56,24 +60,18 @@ public:
   using ConnectionManager = HTTPConnectionManager;
 
   using RequestMiddleware  = std::function<void(HTTPRequest &)>;
-  using ViewType           = typename HTTPModule::ViewType;
-  using Authenticator      = typename HTTPModule::Authenticator;
+  using ViewType           = MountedView::ViewType;
+  using Authenticator      = MountedView::Authenticator;
   using ResponseMiddleware = std::function<void(HTTPResponse &, HTTPRequest const &)>;
 
   static constexpr char const *LOGGING_NAME = "HTTPServer";
 
-  struct MountedView
-  {
-    byte_array::ConstByteArray description;
-    Method                     method;
-    Route                      route;
-    ViewType                   view;
-    Authenticator              authenticator;
-  };
-
   explicit HTTPServer(NetworkManager const &network_manager)
     : networkManager_(network_manager)
   {}
+
+  HTTPServer(HTTPServer &&)      = delete;
+  HTTPServer(HTTPServer const &) = delete;
 
   virtual ~HTTPServer()
   {
@@ -301,18 +299,18 @@ public:
   {
     for (auto const &view : module.views())
     {
-      this->AddView(view.description, view.method, view.route, view.parameters, view.view,
-                    view.authenticator);
+      AddView(view.description, view.method, view.route, view.parameters, view.view,
+              view.authenticator);
     }
   }
 
-  std::vector<MountedView> views()
+  MountedViews views()
   {
     FETCH_LOCK(eval_mutex_);
-    return views_;
+    return views_unsafe();
   }
 
-  std::vector<MountedView> views_unsafe()
+  MountedViews views_unsafe()
   {
     return views_;
   }
@@ -331,11 +329,16 @@ public:
     });
   }
 
+  void AddDefaultRootModule()
+  {
+    AddModule(DefaultRootModule(views_));
+  }
+
 private:
   Mutex eval_mutex_;
 
   std::vector<RequestMiddleware>  pre_view_middleware_;
-  std::vector<MountedView>        views_;
+  MountedViews                    views_;
   std::vector<ResponseMiddleware> post_view_middleware_;
 
   NetworkManager                   networkManager_;

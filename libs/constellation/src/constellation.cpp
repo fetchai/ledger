@@ -578,6 +578,8 @@ bool Constellation::OnBringUpExternalNetwork(
       std::make_shared<MuddleStatusModule>()};
 
   http_ = std::make_unique<HttpServer>(http_network_manager_);
+  // Display "/"
+  http_->AddDefaultRootModule();
 
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",

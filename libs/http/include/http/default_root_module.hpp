@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,36 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/statistics/entropy.hpp"
-#include "test_types.hpp"
+#include "http/method.hpp"
+#include "http/module.hpp"
+#include "http/route.hpp"
+
+#include <vector>
 
 namespace fetch {
-namespace math {
-namespace test {
-template <typename T>
-class EntropyTest : public ::testing::Test
+namespace http {
+
+struct MountedView
 {
+  using ViewType      = HTTPModule::ViewType;
+  using Authenticator = HTTPModule::Authenticator;
+
+  byte_array::ConstByteArray description;
+  Method                     method;
+  Route                      route;
+  HTTPModule::ViewType       view;
+  HTTPModule::Authenticator  authenticator;
 };
 
-TYPED_TEST_CASE(EntropyTest, TensorFloatingTypes);
+using MountedViews = std::vector<MountedView>;
 
-TYPED_TEST(EntropyTest, entropy)
-{
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
+HTTPModule DefaultRootModule(MountedViews const &views);
 
-  ArrayType A(4);
-
-  A.Set(SizeType{0}, fetch::math::Type<DataType>("0.1"));
-  A.Set(SizeType{1}, fetch::math::Type<DataType>("0.2"));
-  A.Set(SizeType{2}, fetch::math::Type<DataType>("0.3"));
-  A.Set(SizeType{3}, fetch::math::Type<DataType>("0.4"));
-
-  EXPECT_NEAR(double(statistics::Entropy(A)), 1.84643934467102,
-              double(fetch::math::function_tolerance<DataType>()));
-}
-
-}  // namespace test
-}  // namespace math
+}  // namespace http
 }  // namespace fetch
