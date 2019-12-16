@@ -27,7 +27,7 @@
 
 TEST(DebugMutex, SimpleProblem)
 {
-  fetch::Mutexregister::ThrowOnDeadlock();
+  fetch::MutexRegister::ThrowOnDeadlock();
   {
     fetch::DebugMutex                  mutex;
     std::lock_guard<fetch::DebugMutex> guard1(mutex);
@@ -46,7 +46,7 @@ TEST(DebugMutex, SimpleProblem)
 
 TEST(DebugMutex, MultiThreadDeadlock)
 {
-  fetch::Mutexregister::ThrowOnDeadlock();
+  fetch::MutexRegister::ThrowOnDeadlock();
   fetch::DebugMutex m[5];
   auto              f = [&m](int32_t n) {
     std::lock_guard<fetch::DebugMutex> guard1(m[n]);
@@ -81,7 +81,7 @@ TEST(DebugMutex, MultiThreadDeadlock)
 
 TEST(DebugMutex, DISABLED_MultiThreadDeadlock2)
 {
-  fetch::Mutexregister::AbortOnDeadlock();
+  fetch::MutexRegister::AbortOnDeadlock();
   fetch::DebugMutex m[5];
   auto              f = [&m](int32_t n) {
     FETCH_LOCK(m[n]);

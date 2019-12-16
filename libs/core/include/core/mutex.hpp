@@ -35,7 +35,7 @@ struct LockLocation
   int32_t     line{};
 };
 
-class Mutexregister
+class MutexRegister
 {
 public:
   void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread,
@@ -169,7 +169,7 @@ using Mutex = DebugMutex;
 #define FETCH_JOIN_IMPL(x, y) x##y
 #define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
 
-#ifndef NDEBUG
+#ifdef FETCH_USE_DEBUG_MUTEX
 #define FETCH_LOCK(lockable)                                                       \
   fetch::DebugLockGuard<typename std::decay<decltype(lockable)>::type> FETCH_JOIN( \
       mutex_locked_on_line, __LINE__)(lockable, __FILE__, __LINE__)
