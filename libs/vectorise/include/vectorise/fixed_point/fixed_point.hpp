@@ -72,11 +72,11 @@ struct TypeFromSize<128>
   using ValueType                      = int128_t;
   using UnsignedType                   = uint128_t;
   using SignedType                     = int128_t;
-  using BaseSignedType               = int64_t;
+  using BaseSignedType                 = int64_t;
   using BaseUnsignedType               = uint64_t;
   using NextSize                       = TypeFromSize<256>;
   static constexpr uint16_t  decimals  = 19;
-  static constexpr uint64_t  power10   = 1000000000000000000ull;
+  static constexpr uint64_t  power10   = 10000000000000000000ull;
   static constexpr ValueType tolerance = 0x100000000000;  // 0,00000095367431640625
   static constexpr ValueType max_exp =
       (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000;  // 43.6682723752765511
@@ -94,8 +94,8 @@ struct TypeFromSize<64>
   using ValueType                         = int64_t;
   using UnsignedType                      = uint64_t;
   using SignedType                        = int64_t;
-  using BaseSignedType               = int32_t;
-  using BaseUnsignedType               = uint32_t;
+  using BaseSignedType                    = int32_t;
+  using BaseUnsignedType                  = uint32_t;
   using NextSize                          = TypeFromSize<128>;
   static constexpr uint16_t     decimals  = 9;
   static constexpr uint32_t     power10   = 1000000000;
@@ -113,8 +113,8 @@ struct TypeFromSize<32>
   using ValueType                         = int32_t;
   using UnsignedType                      = uint32_t;
   using SignedType                        = int32_t;
-  using BaseSignedType               = int16_t;
-  using BaseUnsignedType               = uint16_t;
+  using BaseSignedType                    = int16_t;
+  using BaseUnsignedType                  = uint16_t;
   using NextSize                          = TypeFromSize<64>;
   static constexpr uint16_t     decimals  = 4;
   static constexpr uint16_t     power10   = 10000;
@@ -133,7 +133,7 @@ struct TypeFromSize<16>
   using UnsignedType                 = uint16_t;
   using SignedType                   = int16_t;
   using BaseSignedType               = int8_t;
-  using BaseUnsignedType               = uint8_t;
+  using BaseUnsignedType             = uint8_t;
   using NextSize                     = TypeFromSize<32>;
 };
 
@@ -165,13 +165,12 @@ public:
     TOTAL_BITS      = I + F
   };
 
-  using BaseTypeInfo = TypeFromSize<TOTAL_BITS>;
-  using Type         = typename BaseTypeInfo::ValueType;
-  using NextType     = typename BaseTypeInfo::NextSize::ValueType;
-  using UnsignedType = typename BaseTypeInfo::UnsignedType;
-  using BaseSignedType     = typename BaseTypeInfo::BaseSignedType;
-  using BaseUnsignedType     = typename BaseTypeInfo::BaseUnsignedType;
-
+  using BaseTypeInfo     = TypeFromSize<TOTAL_BITS>;
+  using Type             = typename BaseTypeInfo::ValueType;
+  using NextType         = typename BaseTypeInfo::NextSize::ValueType;
+  using UnsignedType     = typename BaseTypeInfo::UnsignedType;
+  using BaseSignedType   = typename BaseTypeInfo::BaseSignedType;
+  using BaseUnsignedType = typename BaseTypeInfo::BaseUnsignedType;
 
   static constexpr Type FRACTIONAL_MASK = Type((Type(1ull) << FRACTIONAL_BITS) - 1);
   static constexpr Type INTEGER_MASK    = Type(~FRACTIONAL_MASK);
@@ -181,13 +180,13 @@ public:
   /// Constants/Limits ///
   ////////////////////////
 
-  static constexpr Type          SMALLEST_FRACTION{1};
-  static constexpr Type          LARGEST_FRACTION{FRACTIONAL_MASK};
-  static constexpr Type          MAX_INT{((Type(FRACTIONAL_MASK >> 1) - 1) << FRACTIONAL_BITS)};
-  static constexpr Type          MIN_INT{-MAX_INT};
-  static constexpr Type          MAX{MAX_INT | LARGEST_FRACTION};
-  static constexpr Type          MIN{MIN_INT - LARGEST_FRACTION};
-  static constexpr std::uint16_t DECIMAL_DIGITS{BaseTypeInfo::decimals};
+  static constexpr Type             SMALLEST_FRACTION{1};
+  static constexpr Type             LARGEST_FRACTION{FRACTIONAL_MASK};
+  static constexpr Type             MAX_INT{((Type(FRACTIONAL_MASK >> 1) - 1) << FRACTIONAL_BITS)};
+  static constexpr Type             MIN_INT{-MAX_INT};
+  static constexpr Type             MAX{MAX_INT | LARGEST_FRACTION};
+  static constexpr Type             MIN{MIN_INT - LARGEST_FRACTION};
+  static constexpr std::uint16_t    DECIMAL_DIGITS{BaseTypeInfo::decimals};
   static constexpr BaseUnsignedType POWER10{BaseTypeInfo::power10};
 
   static FixedPoint const TOLERANCE;
@@ -267,7 +266,7 @@ public:
   ///////////////////
 
   constexpr Type              Integer() const;
-  constexpr Type              Fraction() const;
+  constexpr UnsignedType      Fraction() const;
   static constexpr FixedPoint Floor(FixedPoint const &o);
   static constexpr FixedPoint Round(FixedPoint const &o);
   static constexpr FixedPoint FromBase(Type n);
@@ -750,20 +749,27 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   }
   else
   {
-    s << std::noshowpos;    
+    s << std::noshowpos;
 
-    auto power10 = FixedPoint<I, F>::POWER10;
+    auto power10  = FixedPoint<I, F>::POWER10;
     auto one_mask = FixedPoint<I, F>::ONE_MASK;
 
-    typename FixedPoint<I, F>::NextType fraction_large = static_cast<typename FixedPoint<I, F>::NextType>(n.Fraction());
+    typename FixedPoint<I, F>::BaseUnsignedType fraction =
+        static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(n.Fraction());
+    typename FixedPoint<I, F>::BaseSignedType integer =
+        static_cast<typename FixedPoint<I, F>::BaseSignedType>(n.Integer());
     if (n < FixedPoint<I, F>::_0)
     {
-      fraction_large = ~fraction_large;
+      integer++;
+      fraction = static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(~fraction);
+      ++fraction;
     }
+    typename FixedPoint<I, F>::NextType fraction_large =
+        static_cast<typename FixedPoint<I, F>::NextType>(fraction);
     fraction_large *= static_cast<typename FixedPoint<I, F>::NextType>(power10);
     fraction_large /= static_cast<typename FixedPoint<I, F>::NextType>(one_mask);
-    typename FixedPoint<I, F>::BaseSignedType integer = static_cast<typename FixedPoint<I, F>::BaseSignedType>(n.Integer());
-    typename FixedPoint<I, F>::BaseUnsignedType fraction = static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(fraction_large);
+
+    fraction = static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(fraction_large);
     s << integer << '.';
     s << std::setw(FixedPoint<I, F>::DECIMAL_DIGITS);
     s << std::setfill('0');
@@ -1123,7 +1129,7 @@ constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::Integer() const
  * @return the fraction part of the FixedPoint object
  */
 template <uint16_t I, uint16_t F>
-constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::Fraction() const
+constexpr typename FixedPoint<I, F>::UnsignedType FixedPoint<I, F>::Fraction() const
 {
   if (IsNaN(*this))
   {
