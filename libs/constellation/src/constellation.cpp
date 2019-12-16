@@ -532,7 +532,6 @@ bool Constellation::OnBringUpExternalNetwork(
                                external_identity_->identity());
 
   consensus_->SetWhitelist(params.whitelist);
-  consensus_->UpdateCurrentBlock(params.whitelist);
 
   // TODO(HUT): delete.
   if (cfg_.proof_of_stake)
