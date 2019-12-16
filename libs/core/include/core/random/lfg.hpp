@@ -21,6 +21,8 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/type_traits.hpp"
+
 #include <cstdint>
 #include <limits>
 #include <vector>
@@ -80,32 +82,41 @@ public:
     return buffer_[++index_];
   }
 
+  /**
+   * @tparam DataType
+   * @return integer uniformly distributed random value 0 or 1
+   */
+  template <typename DataType>
+  meta::IfIsInteger<DataType, DataType> AsType() noexcept
+  {
+    return static_cast<DataType>(this->operator()() % 2);
+  }
+
+  /**
+   * @tparam DataType
+   * @return float or double uniformly distributed random value between 0.0 and 1.0
+   */
+  template <typename DataType>
+  meta::IfIsFloat<DataType, DataType> AsType() noexcept
+  {
+    return static_cast<DataType>(static_cast<double>(this->operator()()) * inv_double_max_);
+  }
+
+  /**
+   * @tparam DataType
+   * @return FixedPoint uniformly distributed random value between 0.0 and 1.0
+   */
+  template <typename DataType>
+  fetch::math::meta::IfIsFixedPoint<DataType, DataType> AsType() noexcept
+  {
+    auto fp_val = fp64_t::FromBase(this->operator()() % fp64_t::MAX);
+    fp_val /= fp64_t::FP_MAX;
+    return static_cast<DataType>(fp64_t::Abs(fp_val));
+  }
+
   double AsDouble() noexcept
   {
-    return double(this->operator()()) * inv_double_max_;
-  }
-
-  fp128_t AsFP128() noexcept
-  {
-    auto fp128_u_max_ = static_cast<uint64_t>(fp128_t::FP_MAX);
-
-    auto fp_val = static_cast<fp128_t>(this->operator()() % fp128_u_max_);
-    return fp_val / fp128_t::FP_MAX;
-  }
-
-  fp64_t AsFP64() noexcept
-  {
-    auto fp64_u_max_ = static_cast<uint64_t>(fp64_t::FP_MAX);
-
-    auto fp_val = static_cast<fp64_t>(this->operator()() % fp64_u_max_);
-    return fp_val / fp64_t::FP_MAX;
-  }
-
-  fp32_t AsFP32() noexcept
-  {
-    auto fp_val = fp32_t::FromBase(this->operator()() % fp64_t::MAX);  // yes, fp64_t::MAX
-    fp_val /= fp32_t::FP_MAX;
-    return fp32_t::Abs(fp_val);
+    return AsType<double>();
   }
 
   static constexpr RandomType min() noexcept
