@@ -961,12 +961,15 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F>::FixedPoint(std::string const &s)
   : data_{0}
 {
-  if (s.find('e') != std::string::npos || s.find('E') != std::string::npos)
-  {
-    throw std::runtime_error("FixedPoint string parsing does not support scientific notation!");
-  }
   auto index  = s.find("fp");
   auto s_copy = std::string(s, 0, index);
+
+  bool contains_alpha = std::find_if(s_copy.begin(), s_copy.end(),
+                                     [](char c) { return std::isalpha(c); }) != s_copy.end();
+  if (contains_alpha)
+  {
+    throw std::runtime_error("FixedPoint parsing from string does not allow alpha characters!");
+  }
 
   Type         integer_part{0};
   UnsignedType fractional_part{0};
