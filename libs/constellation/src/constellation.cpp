@@ -488,6 +488,12 @@ bool Constellation::OnRestorePreviousData(ledger::GenesisFileCreator::ConsensusP
   // create the chain
   chain_ = std::make_unique<MainChain>(ledger::MainChain::Mode::LOAD_PERSISTENT_DB);
 
+  // necessary when doing state validity checks
+  execution_manager_ = std::make_shared<ExecutionManager>(
+      cfg_.num_executors, cfg_.log2_num_lanes, storage_,
+      [this] { return std::make_shared<Executor>(storage_); }, tx_status_cache_);
+
+
   if (!GenesisSanityChecks(genesis_status))
   {
     return false;
@@ -543,10 +549,6 @@ bool Constellation::OnBringUpExternalNetwork(
       FETCH_LOG_INFO(LOGGING_NAME, "No snapshot to reset consensus with");
     }
   }
-
-  execution_manager_ = std::make_shared<ExecutionManager>(
-      cfg_.num_executors, cfg_.log2_num_lanes, storage_,
-      [this] { return std::make_shared<Executor>(storage_); }, tx_status_cache_);
 
   block_packer_ = std::make_unique<BlockPackingAlgorithm>(cfg_.log2_num_lanes);
 
@@ -974,7 +976,6 @@ bool Constellation::CheckStateIntegrity()
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Reverted storage unit.");
-
     FETCH_LOG_INFO(LOGGING_NAME, "Reverting DAG to: ", current_block->block_number);
 
     // Need to revert the DAG too
@@ -983,8 +984,6 @@ bool Constellation::CheckStateIntegrity()
       FETCH_LOG_WARN(LOGGING_NAME, "Reverting the DAG failed!");
       return false;
     }
-
-    FETCH_LOG_INFO(LOGGING_NAME, "thing thing thing");
 
     // we need to update the execution manager state and also our locally cached state about the
     // 'last' block that has been executed
