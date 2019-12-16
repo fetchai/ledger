@@ -243,7 +243,8 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
         (g_not_shared_weights_before[i] + g_not_shared_weights_before[i + 2]);
 
     EXPECT_TRUE(shared_gradient.AllClose(
-        not_shared_gradient, static_cast<DataType>(0),
+        not_shared_gradient,
+        static_cast<DataType>(10) * fetch::math::function_tolerance<DataType>(),
         static_cast<DataType>(10) * fetch::math::function_tolerance<DataType>()));
   }
 }
