@@ -476,4 +476,40 @@ TEST_F(TransactionValidatorTests, CheckPermissionDeniedWithDeedNoExecutePermissi
   EXPECT_EQ(ContractExecutionStatus::TX_PERMISSION_DENIED, validator_(*tx, 50));
 }
 
+TEST_F(TransactionValidatorTests, CheckBorderlineChargeLimit)
+{
+  auto tx = TransactionBuilder{}
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(10000000000)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
+  AddFunds(20000000000);
+
+  EXPECT_EQ(ContractExecutionStatus::SUCCESS, validator_(*tx, 50));
+}
+
+TEST_F(TransactionValidatorTests, CheckExcessiveChargeLimit)
+{
+  auto tx = TransactionBuilder{}
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(10000000001)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
+  AddFunds(20000000000);
+
+  EXPECT_EQ(ContractExecutionStatus::TX_CHARGE_LIMIT_TOO_HIGH, validator_(*tx, 50));
+}
+
 }  // namespace
