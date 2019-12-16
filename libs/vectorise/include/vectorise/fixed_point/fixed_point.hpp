@@ -739,7 +739,10 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
     s << std::setw(I / 4);
     s << std::setprecision(FixedPoint<I, F>::DECIMAL_DIGITS);
     s << std::fixed;
+
+    // This needs rework to avoid double conversion
     s << double(n);
+
   }
 #ifdef FETCH_FIXEDPOINT_DEBUG_HEX
   // Only output the hex value in DEBUG mode
