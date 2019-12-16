@@ -2,9 +2,11 @@ import os
 import sys
 import subprocess
 import argparse
+import traceback
 import matplotlib.pyplot as plt
 import pandas as pd
 import csv
+import yaml
 
 
 def remove_sysinfo(csv_file):
@@ -86,17 +88,49 @@ def run_benchmark(bench_binary, bench_name, output_dir):
     plot_time_charge_corr(csvfile, pngfile)
     compute_time_charge_corr(csvfile, statsfile)
 
+# from ledger
+
 
 def verify_file(filename):
     if not os.path.isfile(filename):
         print("Couldn't find expected file: {}".format(filename))
         sys.exit(1)
 
+# from ledger
+
 
 def verify_dir(dirname):
     if not os.path.isdir(dirname):
         print("Couldn't find expected directory: {}".format(dirname))
         sys.exit(1)
+
+# from ledger
+
+
+def yaml_extract(test, key, expected=True, expect_type=None, default=None):
+    """
+    Convenience function to remove an item from a YAML string, specifying the type you expect to find
+    """
+    if key in test:
+        result = test[key]
+
+        if expect_type is not None and not isinstance(result, expect_type):
+            output(
+                "Failed to get expected type from YAML! Key: {} YAML: {}".format(
+                    key, test))
+            output("Note: expected type: {} got: {}".format(
+                expect_type, type(result)))
+            sys.exit(1)
+
+        return result
+    else:
+        if expected:
+            output(
+                "Failed to find key in YAML! \nKey: {} \nYAML: {}".format(
+                    key, test))
+            sys.exit(1)
+        else:
+            return default
 
 
 def parse_command_line():
@@ -105,6 +139,8 @@ def parse_command_line():
 
     parser.add_argument('build_dir', type=str,
                         help='Location of ledger build directory')
+    parser.add_argument('yaml_file', type=str,
+                        help='Location of yaml file with list of benchmarks')
     parser.add_argument('output_dir', type=str,
                         help='Output directory for VM execution Charge/Time statistics')
 
@@ -116,28 +152,33 @@ def main():
 
     # cli args
     build_dir = os.path.abspath(args.build_dir)
+    yaml_file = os.path.abspath(args.yaml_file)
     output_dir = os.path.abspath(args.output_dir)
 
-    # benchmark config
-    bench_binary = os.path.join(
-        build_dir, './libs/vm-modules/benchmark/benchmark_vm_modules_model')
-
-    verify_file(bench_binary)
+    verify_dir(build_dir)
+    verify_file(yaml_file)
     verify_dir(output_dir)
 
-    benchmark_functions = [
-        'BM_AddLayer',
-        'BM_Predict',
-        'BM_Compile',
-        'BM_Fit',
-        'BM_SerializeToString',
-        'BM_DeserializeFromString',
+    # Read YAML file
+    with open(yaml_file, 'r') as stream:
+        try:
+            all_yaml = yaml.safe_load_all(stream)
+            for bench in all_yaml:
+                # Get bench binary path
+                path = yaml_extract(bench, 'bench_binary')
+                bench_binary = os.path.join(build_dir, path)
+                verify_file(bench_binary)
 
-        ''  # all
-    ]
+                # Get benchmarks for this binary
+                bench_list = yaml_extract(bench, 'bench_functions')
 
-    for benchname in benchmark_functions:
-        run_benchmark(bench_binary, benchname, output_dir)
+                # Run benchmarks
+                for benchname in bench_list:
+                    run_benchmark(bench_binary, benchname, output_dir)
+        except Exception as e:
+            print('Failed to parse yaml or to run benchmark! Error: "{}"'.format(e))
+            traceback.print_exc()
+            sys.exit(1)
 
 
 if __name__ == '__main__':

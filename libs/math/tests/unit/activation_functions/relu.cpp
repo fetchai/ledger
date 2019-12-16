@@ -39,7 +39,7 @@ ArrayType RandomArrayNegative(std::size_t n)
   ArrayType a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
-    a1.At(i) = random::Random::generator.AsType<DataType>() - DataType{1};
+    a1.At(i) = -random::Random::generator.AsType<DataType>() - DataType{1};
   }
   return a1;
 }

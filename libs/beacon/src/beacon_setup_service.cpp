@@ -337,7 +337,7 @@ uint32_t BeaconSetupService::QualSize()
 {
   // Set to 2/3n for now
   auto proposed_qual_size =
-      static_cast<uint32_t>(beacon_->aeon.members.size() - beacon_->aeon.members.size() / 3);
+      static_cast<uint32_t>(beacon_->aeon.members.size() - (beacon_->aeon.members.size() / 3));
   if (proposed_qual_size <= beacon_->manager.polynomial_degree())
   {
     FETCH_LOG_WARN(LOGGING_NAME, NodeString(),
@@ -751,10 +751,11 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
   if (state_machine_->previous_state() != State::DRY_RUN_SIGNING)
   {
     // Start to create the block entropy for this attempt
-    beacon_->block_entropy                  = BlockEntropy{};
-    beacon_->block_entropy.qualified        = beacon_->manager.qual();
-    beacon_->block_entropy.group_public_key = beacon_->manager.group_public_key();
-    beacon_->block_entropy.block_number     = beacon_->aeon.round_start;
+    auto &entropy            = beacon_->block_entropy;
+    entropy                  = BlockEntropy{};
+    entropy.qualified        = beacon_->manager.qual();
+    entropy.group_public_key = beacon_->manager.group_public_key();
+    entropy.block_number     = beacon_->aeon.round_start;
     // If notarising then also populate entropy with notarisation keys
     if (notarisation_callback_function_)
     {
@@ -762,20 +763,20 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
       {
         assert(notarisation_key_msgs_.find(member) != notarisation_key_msgs_.end());
         auto notarisation_msg = notarisation_key_msgs_.at(member);
-        beacon_->block_entropy.aeon_notarisation_keys.insert(
+        entropy.aeon_notarisation_keys.insert(
             {member, std::make_pair(notarisation_msg.PublicKey(), notarisation_msg.Signature())});
       }
     }
-    beacon_->block_entropy.HashSelf();
+    entropy.HashSelf();
 
-    assert(!beacon_->block_entropy.digest.empty());
+    assert(!entropy.digest.empty());
 
     // Add own signature to the structure
-    auto own_signature = certificate_->Sign(beacon_->block_entropy.digest);
-    FETCH_LOG_DEBUG(LOGGING_NAME, NodeString(), " signs digest ",
-                    beacon_->block_entropy.digest.ToHex());
-    beacon_->block_entropy.confirmations.insert(
-        {certificate_->identity().identifier(), own_signature});
+    auto own_signature = certificate_->Sign(entropy.digest);
+
+    FETCH_LOG_DEBUG(LOGGING_NAME, NodeString(), " signs digest ", entropy.digest.ToHex());
+    entropy.confirmations.insert(
+        {entropy.ToQualIndex(certificate_->identity().identifier()), own_signature});
 
     SendBroadcast(DKGEnvelope{FinalStateMessage{own_signature}});
   }
@@ -800,8 +801,10 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
       if (crypto::Verifier::Verify(Identity(address_and_sig.first), beacon_->block_entropy.digest,
                                    address_and_sig.second))
       {
-        beacon_->block_entropy.confirmations.insert(
-            {address_and_sig.first, address_and_sig.second});
+        auto &entropy = beacon_->block_entropy;
+
+        entropy.confirmations.insert(
+            {entropy.ToQualIndex(address_and_sig.first), address_and_sig.second});
       }
       else
       {
