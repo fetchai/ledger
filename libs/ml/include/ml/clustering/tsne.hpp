@@ -126,12 +126,12 @@ public:
         {
           if ((gradient.At(i, j) > 0.0) != (i_y.At(i, j) > 0.0))
           {
-            gains(i, j) = gains.At(i, j) + DataType(0.2);
+            gains(i, j) = gains.At(i, j) + fetch::math::Type<DataType>("0.2");
           }
 
           if ((gradient.At(i, j) > 0.0) == (i_y.At(i, j) > 0.0))
           {
-            gains(i, j) = gains.At(i, j) * DataType(0.8);
+            gains(i, j) = gains.At(i, j) * fetch::math::Type<DataType>("0.8");
           }
         }
       }

@@ -77,6 +77,7 @@
 #include "ml/ops/metrics/categorical_accuracy.hpp"
 
 // layers
+#include "gtest/gtest.h"
 #include "ml/layers/PRelu.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/convolution_2d.hpp"
@@ -86,8 +87,6 @@
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/layers/self_attention_encoder.hpp"
 #include "ml/layers/skip_gram.hpp"
-
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {
@@ -199,9 +198,10 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   std::string weights     = AddOp<ops::Weights<TensorType>>(g, {});
 
   // activations
-  std::string dropout    = AddOp<ops::Dropout<TensorType>>(g, {input_1}, DataType(0.9));
-  std::string elu        = AddOp<ops::Elu<TensorType>>(g, {input_1}, DataType(0.9));
-  std::string gelu       = AddOp<ops::Gelu<TensorType>>(g, {input_1});
+  std::string dropout =
+      AddOp<ops::Dropout<TensorType>>(g, {input_1}, fetch::math::Type<DataType>("0.9"));
+  std::string elu  = AddOp<ops::Elu<TensorType>>(g, {input_1}, fetch::math::Type<DataType>("0.9"));
+  std::string gelu = AddOp<ops::Gelu<TensorType>>(g, {input_1});
   std::string leakyrelu  = AddOp<ops::LeakyRelu<TensorType>>(g, {input_1});
   std::string logsigmoid = AddOp<ops::LogSigmoid<TensorType>>(g, {input_1});
   std::string logsoftmax = AddOp<ops::LogSoftmax<TensorType>>(g, {input_1});

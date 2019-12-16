@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "ml/layers/multihead_attention.hpp"
+
+#include "gtest/gtest.h"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "test_types.hpp"
@@ -70,8 +71,8 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
 {
   using SizeType = fetch::math::SizeType;
   using DataType = typename TypeParam::Type;
-  fetch::ml::layers::MultiheadAttention<TypeParam> m_att(static_cast<SizeType>(4),
-                                                         static_cast<SizeType>(12), DataType(0.9));
+  fetch::ml::layers::MultiheadAttention<TypeParam> m_att(
+      static_cast<SizeType>(4), static_cast<SizeType>(12), fetch::math::Type<DataType>("0.9"));
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({12, 20, 5}));
 
   TypeParam mask_data = TypeParam({20, 20, 5});

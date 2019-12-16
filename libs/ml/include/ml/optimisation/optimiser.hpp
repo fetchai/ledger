@@ -50,7 +50,7 @@ public:
   Optimiser() = default;
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
             std::string label_node_name, std::string output_node_name,
-            DataType const &learning_rate = DataType(0.001));
+            DataType const &learning_rate = fetch::math::Type<DataType>("0.001"));
 
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
             std::string label_node_name, std::string output_node_name,
