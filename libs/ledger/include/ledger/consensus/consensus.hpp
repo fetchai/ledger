@@ -119,7 +119,7 @@ private:
 
   bool     ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool     ShouldTriggerNewCabinet(Block const &block);
-  bool     EnoughQualSigned(BlockEntropy const &block_entropy) const;
+  bool     EnoughQualSigned(Block const &previous, Block const &current) const;
   uint32_t GetThreshold(Block const &block) const;
   void     AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
 };

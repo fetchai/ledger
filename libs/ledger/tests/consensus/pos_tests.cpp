@@ -64,6 +64,7 @@ protected:
   using BlockPtr              = std::shared_ptr<Block>;
   using StakeSnapshot         = fetch::ledger::StakeSnapshot;
   using ConstByteArray        = byte_array::ConstByteArray;
+  using Digest                = Block::Hash;
 
   void SetUp() override
   {
@@ -95,7 +96,7 @@ protected:
   }
 
   // return a valid first block after genesis (entropy not
-  // populated fully)
+  // populated fully) - note the prev hash here will be incorrect past 1.
   BlockPtr ValidNthBlock(uint64_t desired_block_number, uint64_t miner_index = 0)
   {
     BlockPtr ret     = std::make_shared<Block>();
@@ -105,14 +106,32 @@ protected:
     ret->block_entropy.block_number = ret->block_number;
     ret->previous_hash              = genesis->hash;
     ret->miner_id                   = cabinet_[miner_index];
-    ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
+    ret->timestamp =
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) - 1;
 
-    // Need to 'trick' the entropy as appearing as an aeon beginning to avoid
-    // having to create it
+    // Even though the entropy signature is not checked for this test, the thresholds etc. ARE
+    // tested and need to be set appropriately
     if (desired_block_number == 1)
     {
-      ret->block_entropy.confirmations[ConstByteArray("test")];
+      for (auto const &qual : qual_)
+      {
+        ret->block_entropy.qualified.insert(qual.identifier());
+      }
+
+      ret->block_entropy.HashSelf();
+
+      for (auto const &key : cabinet_priv_keys_)
+      {
+        ret->block_entropy
+            .confirmations[ret->block_entropy.ToQualIndex(key->identity().identifier())] =
+            key->Sign(ret->block_entropy.digest);
+      }
+
       assert(!ret->block_entropy.confirmations.empty());
+    }
+    else
+    {
+      ret->previous_hash = last_hash_used;
     }
 
     // This relies on generating blocks in order
@@ -128,6 +147,7 @@ protected:
     ret->UpdateDigest();
     ret->miner_signature = cabinet_priv_keys_[miner_index]->Sign(ret->hash);
 
+    last_hash_used = ret->hash;
     chain_.AddBlock(*ret);
 
     return ret;
@@ -149,6 +169,7 @@ protected:
   StakeManagerPtr       stake_;
   BeaconSetupServicePtr beacon_setup_;
   BeaconServicePtr      beacon_;
+  Digest                last_hash_used;
   MainChain             chain_;
   StorageInterface      storage_;
   Identity              mining_identity_;
@@ -249,21 +270,9 @@ TEST_F(ConsensusTests, test_not_member_of_qual)
   BlockPtr block = ValidNthBlock(1);
 
   auto     signer          = std::make_shared<ECDSASigner>();
-  Identity random_identity = Identity{signer->identity().identifier()};
+  Identity random_identity = signer->identity();
 
   block->miner_id = random_identity;
-  block->UpdateDigest();
-
-  ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
-}
-
-TEST_F(ConsensusTests, test_mismatched_digest)
-{
-  BlockPtr block = ValidNthBlock(1);
-
-  block->block_entropy.confirmations[ConstByteArray("a")];
-  block->block_entropy.confirmations[ConstByteArray("b")];
-
   block->UpdateDigest();
 
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
@@ -274,6 +283,107 @@ TEST_F(ConsensusTests, test_mismatched_cabinet_size)
   BlockPtr block = ValidNthBlock(1);
 
   consensus_->SetMaxCabinetSize(1);
+
+  ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
+}
+
+TEST_F(ConsensusTests, test_qual_too_small)
+{
+  BlockPtr block = ValidNthBlock(1);
+
+  auto &entropy            = block->block_entropy;
+  auto  confirmations_copy = entropy.confirmations;
+
+  entropy.confirmations.clear();
+  entropy.confirmations.insert(*confirmations_copy.begin());
+  entropy.HashSelf();
+
+  ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
+}
+
+TEST_F(ConsensusTests, test_unknown_qual_signed)
+{
+  BlockPtr block = ValidNthBlock(1);
+
+  auto  signer  = std::make_shared<ECDSASigner>();
+  auto &entropy = block->block_entropy;
+
+  entropy.confirmations.erase(entropy.confirmations.begin());
+  entropy.confirmations[entropy.ToQualIndex(signer->identity().identifier())] =
+      signer->Sign(entropy.digest);
+
+  ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
+}
+
+TEST_F(ConsensusTests, test_timestamp_ahead_in_time)
+{
+  BlockPtr block = ValidNthBlock(1);
+
+  block->timestamp = block->timestamp + 10000;
+
+  ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
+}
+
+TEST_F(ConsensusTests, non_qual_miner)
+{
+  BlockPtr block = ValidNthBlock(1);
+
+  auto signer     = std::make_shared<ECDSASigner>();
+  block->miner_id = signer->identity();
+  block->weight   = 0;
+
+  block->UpdateDigest();
+  block->miner_signature = signer->Sign(block->hash);
+
+  ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
+}
+
+TEST_F(ConsensusTests, non_cabinet_qual)
+{
+  auto signer   = std::make_shared<ECDSASigner>();
+  auto snapshot = std::make_shared<StakeSnapshot>();
+
+  snapshot->UpdateStake(signer->identity(), 1);
+
+  // All but the first
+  for (std::size_t i = 1; i < cabinet_.size(); ++i)
+  {
+    snapshot->UpdateStake(cabinet_[i], 1);
+  }
+  consensus_->Reset(*snapshot, storage_);
+
+  BlockPtr block = ValidNthBlock(1);
+
+  ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
+}
+
+TEST_F(ConsensusTests, incorrect_confirmation_sig)
+{
+  BlockPtr block                        = ValidNthBlock(1);
+  block->block_entropy.confirmations[0] = block->block_entropy.confirmations[1];
+
+  ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
+}
+
+TEST_F(ConsensusTests, loose_blocks_invalid)
+{
+  BlockPtr block = ValidNthBlock(2);
+
+  block->previous_hash = block->hash;
+  block->UpdateDigest();
+  block->miner_signature = cabinet_priv_keys_[0]->Sign(block->hash);
+
+  ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
+}
+
+TEST_F(ConsensusTests, not_aeon_beginning)
+{
+  BlockPtr block = ValidNthBlock(1);
+
+  block->block_entropy.confirmations.clear();
+
+  block->UpdateDigest();
+  block->miner_signature = cabinet_priv_keys_[0]->Sign(block->hash);
 
   ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
 }

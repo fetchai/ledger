@@ -580,23 +580,68 @@ bool ValidNotarisationKeys(Consensus::BlockEntropy::Cabinet const &             
 }
 
 /**
- * Given a block entropy, determine whether it has been signed off on
- * by enough qualified stakers.
+ * Given the beginning of a new aeon, determine whether it has been signed off on
+ * by enough stakers.
  */
-bool Consensus::EnoughQualSigned(BlockEntropy const &block_entropy) const
-
-asdfasdf 
-adsf
-asdf
-fd
-
+bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) const
 {
-  FETCH_UNUSED(block_entropy);
-  // TODO(HUT): Here, the following checks will be performed (awaits Ed's changes):
-  // - Given the appropriate cabinet,
-  // - Are members of qual in this cabinet
-  // - Does qual meet threshold requirements: Are there enough members of qual, total
-  // - Have enough qual signed the block
+  // Construct the full cabinet from the previous block
+  auto cabinet = stake_->BuildCabinet(previous, max_cabinet_size_);
+
+  if (cabinet->empty())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "Found empty cabinet when verifying block. Something bad has happened.");
+    return false;
+  }
+
+  // 2/3rds of cabinet in qual minimum
+  auto const proposed_qual_size = static_cast<uint32_t>(cabinet->size() - (cabinet->size() / 3));
+
+  auto const &entropy       = current.block_entropy;
+  auto const &qualified     = entropy.qualified;
+  auto const &confirmations = entropy.confirmations;
+
+  if (qualified.size() < proposed_qual_size || qualified.size() > cabinet->size())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Found a block entropy that has the wrong size of qualified set: ",
+                   qualified.size());
+    return false;
+  }
+
+  // Check qual has fully signed the block
+  for (auto const &it : qualified)
+  {
+    // Is qual in cabinet
+    if (std::find(cabinet->begin(), cabinet->end(), Identity(it)) == cabinet->end())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Found an unknown identity in the block entropy qualified set: ",
+                     it.ToBase64());
+      return false;
+    }
+
+    // Has qual created a confirmation
+    try
+    {
+      // This could throw
+      auto const &sig = confirmations.at(entropy.ToQualIndex(it));
+
+      if (!crypto::Verifier::Verify(Identity(it), entropy.digest, sig))
+      {
+        FETCH_LOG_WARN(
+            LOGGING_NAME,
+            "Found a bad signature in the block entropy confirmations. By: ", it.ToBase64(),
+            " sig: ", sig.ToBase64(), " hash: ", entropy.digest.ToBase64());
+        return false;
+      }
+    }
+    catch (...)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Threw when attempting to validate entropy confirmations");
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -610,6 +655,14 @@ Status Consensus::ValidBlock(Block const &current) const
     return Status::YES;
   }
 
+  auto const block_preceeding = GetBlockPriorTo(current, chain_);
+
+  // This will happen if the block is loose
+  if (!block_preceeding)
+  {
+    return Status::NO;
+  }
+
   if (current.hash.size() != DIGEST_LENGTH_BYTES ||
       current.previous_hash.size() != DIGEST_LENGTH_BYTES)
   {
@@ -621,41 +674,20 @@ Status Consensus::ValidBlock(Block const &current) const
     return Status::NO;
   }
 
-  if (current.weight != GetBlockGenerationWeight(current, current.miner_id))
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Block with incorrect weight found");
-    return Status::NO;
-  }
-
-  auto const block_preceeding = GetBlockPriorTo(current, chain_);
-
-  // This will happen if the block is loose
-  if (!block_preceeding)
-  {
-    return Status::NO;
-  }
-
-  if(!(current.block_number == block_preceeding->block_number + 1))
+  if (!(current.block_number == block_preceeding->block_number + 1))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Found block with incorrect block number.");
-    return Status::NO;
-  }
-
-  if (!BlockSignedByQualMember(current))
-  {
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "Saw block not signed by a member of qual! Block: ", current.block_number);
     return Status::NO;
   }
 
   BlockEntropy::Cabinet        qualified_cabinet;
   BlockEntropy::GroupPublicKey group_pub_key;
 
+  auto const &block_entropy = current.block_entropy;
+
   // If this block would be the start of a new aeon, need to check the stakers for the prev. block
   if (ShouldTriggerAeon(block_preceeding->block_number, aeon_period_))
   {
-    auto const &block_entropy = current.block_entropy;
-
     if (!block_entropy.IsAeonBeginning())
     {
       FETCH_LOG_WARN(LOGGING_NAME,
@@ -663,15 +695,11 @@ Status Consensus::ValidBlock(Block const &current) const
       return Status::NO;
     }
 
-    // The cabinet that could have gone into qual
+    // Check that the members of qual are from the cabinet have all signed correctly
+    if (!EnoughQualSigned(*block_preceeding, current))
     {
-      auto cabinet = stake_->BuildCabinet(block_preceeding, max_cabinet_size_);
-
-      // Check that the members of qual have all signed correctly
-      if (!EnoughQualSigned(cabinet, block_entropy))
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Received a block with a bad aeon starting point!");
-      }
+      FETCH_LOG_WARN(LOGGING_NAME, "Received a block with a bad aeon starting point!");
+      return Status::NO;
     }
 
     // Check that the members of qual meet threshold requirements
@@ -696,6 +724,28 @@ Status Consensus::ValidBlock(Block const &current) const
     auto beginning_of_aeon = GetBeginningOfAeon(current, chain_);
     qualified_cabinet      = beginning_of_aeon.block_entropy.qualified;
     group_pub_key          = beginning_of_aeon.block_entropy.group_public_key;
+
+    auto const &beg_block_entropy = beginning_of_aeon.block_entropy;
+
+    if (beg_block_entropy.qualified != block_entropy.qualified)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Saw a block entropy with mismatched qualified field. Size: ",
+                     block_entropy.qualified.size());
+      return Status::NO;
+    }
+  }
+
+  if (current.weight != GetBlockGenerationWeight(current, current.miner_id))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Block with incorrect weight found");
+    return Status::NO;
+  }
+
+  if (!BlockSignedByQualMember(current))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Saw block not signed by a member of qual! Block: ", current.block_number);
+    return Status::NO;
   }
 
   if (beacon_ &&
