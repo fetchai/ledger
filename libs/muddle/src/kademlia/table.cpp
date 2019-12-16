@@ -343,7 +343,7 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
     FETCH_LOCK(peer_info_mutex_);
     PeerInfoPtr peerinfo;
 
-    auto &log_bucket = by_logarithm_[log_id];
+    auto &log_bucket     = by_logarithm_[log_id];
     auto &hamming_bucket = by_hamming_[hamming_id];
 
     auto it = known_peers_.find(address);
