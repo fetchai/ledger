@@ -128,10 +128,11 @@ def main():
     benchmark_functions = [
         'BM_AddLayer',
         'BM_Predict',
+        'BM_Compile',
         'BM_Fit',
         'BM_SerializeToString',
         'BM_DeserializeFromString',
-        'BM_Compile',
+
         ''  # all
     ]
 
