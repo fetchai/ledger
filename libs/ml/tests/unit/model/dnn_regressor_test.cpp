@@ -73,7 +73,7 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
   model_config.learning_rate_param.starting_learning_rate = lr;
-  model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
+  model_config.learning_rate_param.exponential_decay_rate = fetch::math::Type<DataType>("0.99");
 
   // set up data
   TypeParam train_data, train_labels;
@@ -106,7 +106,7 @@ TYPED_TEST(DNNRegressorModelTest, adagrad_dnnregressor)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(regressor_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD,
-                                                    DataType{1e-4f}, DataType{0.03f}, 400));
+                                                    DataType{1e-4f}, DataType{0.04f}, 400));
 }
 
 TYPED_TEST(DNNRegressorModelTest, adam_dnnregressor)
@@ -151,7 +151,7 @@ TYPED_TEST(DNNRegressorModelTest, sgd_dnnregressor_serialisation)
   model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
   model_config.learning_rate_param.starting_learning_rate = learning_rate;
-  model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
+  model_config.learning_rate_param.exponential_decay_rate = fetch::math::Type<DataType>("0.99");
 
   // set up data
   TypeParam train_data, train_labels;

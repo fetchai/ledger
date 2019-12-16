@@ -26,10 +26,10 @@ namespace crypto {
 class SHA512 : public HasherInterface
 {
 public:
-  using HasherInterface::Update;
   using HasherInterface::Final;
+  using HasherInterface::Update;
 
-  static constexpr std::size_t size_in_bytes = 64u;
+  static constexpr std::size_t SIZE_IN_BYTES = 64u;
 
   SHA512()               = default;
   ~SHA512() override     = default;

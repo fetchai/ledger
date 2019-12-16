@@ -92,8 +92,8 @@ private:
   TransactionStore             transaction_store_{};
   StatePtr                     state_{std::make_shared<State>()};
   StateHistory                 state_history_{};
-  StateHashStack               state_history_stack_{fetch::chain::GENESIS_MERKLE_ROOT};
-  Hash                         current_hash_{fetch::chain::GENESIS_MERKLE_ROOT};
+  StateHashStack               state_history_stack_{fetch::chain::GetGenesisDigest()};
+  Hash                         current_hash_{fetch::chain::GetGenesisMerkleRoot()};
 };
 
 }  // namespace ledger

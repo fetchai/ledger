@@ -36,10 +36,10 @@ class FnvHasherInternals;
 class FNV : public HasherInterface
 {
 public:
-  using HasherInterface::Update;
   using HasherInterface::Final;
+  using HasherInterface::Update;
 
-  static constexpr std::size_t size_in_bytes = 8u;
+  static constexpr std::size_t SIZE_IN_BYTES = 8u;
 
   FNV();
   ~FNV() override  = default;
