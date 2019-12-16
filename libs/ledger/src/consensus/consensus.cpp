@@ -592,7 +592,7 @@ bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) co
   if (cabinet->empty())
   {
     FETCH_LOG_ERROR(LOGGING_NAME,
-                    "Found empty cabinet when verifying block. Something bad has happened.");
+                    "Found empty cabinet when verifying block. Something bad has happened. Whitelist size: ", whitelist_.size());
     return false;
   }
 

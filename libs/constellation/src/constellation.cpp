@@ -532,6 +532,7 @@ bool Constellation::OnBringUpExternalNetwork(
                                external_identity_->identity());
 
   consensus_->SetWhitelist(params.whitelist);
+  consensus_->UpdateCurrentBlock(params.whitelist);
 
   // TODO(HUT): delete.
   if (cfg_.proof_of_stake)
@@ -545,9 +546,11 @@ bool Constellation::OnBringUpExternalNetwork(
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "No snapshot to reset consensus with");
+      FETCH_LOG_INFO(LOGGING_NAME, "No snapshot to reset consensus with.");
     }
   }
+
+  consensus_->UpdateCurrentBlock(*chain_->CreateGenesisBlock());
 
   block_packer_ = std::make_unique<BlockPackingAlgorithm>(cfg_.log2_num_lanes);
 
