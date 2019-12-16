@@ -394,10 +394,13 @@ bool ModelEstimator::State::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
   buffer << forward_pass_cost;
   buffer << backward_pass_cost;
+  buffer << metrics_cost;
   buffer << weights_size_sum;
+  buffer << weights_padded_size_sum;
   buffer << optimiser_step_impact;
   buffer << last_layer_size;
   buffer << ops_count;
+  buffer << subset_size;
 
   return true;
 }
@@ -406,10 +409,13 @@ bool ModelEstimator::State::DeserializeFrom(serializers::MsgPackSerializer &buff
 {
   buffer >> forward_pass_cost;
   buffer >> backward_pass_cost;
+  buffer >> metrics_cost;
   buffer >> weights_size_sum;
+  buffer >> weights_padded_size_sum;
   buffer >> optimiser_step_impact;
   buffer >> last_layer_size;
   buffer >> ops_count;
+  buffer >> subset_size;
 
   return true;
 }
