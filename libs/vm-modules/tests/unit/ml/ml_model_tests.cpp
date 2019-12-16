@@ -847,4 +847,48 @@ TEST_F(VMModelTests, model_with_accuracy_metric)
   EXPECT_LE(metrics->elements.at(1), 1);
 }
 
+TEST_F(VMModelTests, model_fit_and_refit)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          // set up data and labels
+          var data_shape = Array<UInt64>(2);
+          data_shape[0] = 10u64;
+          data_shape[1] = 250u64;
+          var label_shape = Array<UInt64>(2);
+          label_shape[0] = 7u64;
+          label_shape[1] = 250u64;
+          var data = Tensor(data_shape);
+          var label = Tensor(label_shape);
+
+          // set up model
+          var model = Model("sequential");
+          model.add("dense", 10u64, 10u64, "relu");
+          model.add("dense", 10u64, 7u64);
+          model.compile("scel", "adam");
+
+          // train the model
+          model.fit(data, label, 32u64);
+
+          // new data and labels
+          var data_shape2 = Array<UInt64>(2);
+          data_shape2[0] = 10u64;
+          data_shape2[1] = 123u64;
+          var label_shape2 = Array<UInt64>(2);
+          label_shape2[0] = 7u64;
+          label_shape2[1] = 123u64;
+          var data2 = Tensor(data_shape2);
+          var label2 = Tensor(label_shape2);
+
+          // train the model again
+          model.fit(data2, label2, 16u64);
+
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+
+  ASSERT_TRUE(toolkit.Run());
+}
+
 }  // namespace
