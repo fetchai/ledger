@@ -81,8 +81,8 @@ int main()
   std::string classification_output =
       g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
           "ClassificationOutput", {cls_token_output}, config.model_dims, 2u,
-          ActivationType::SOFTMAX, RegType::NONE, DataType{0}, WeightsInitType::XAVIER_GLOROT,
-          false);
+          ActivationType::SOFTMAX, RegType::NONE, static_cast<DataType>(0),
+          WeightsInitType::XAVIER_GLOROT, false);
   // Set up error signal
   std::string label = g.template AddNode<PlaceHolder<TensorType>>("Label", {});
   std::string error =
@@ -124,7 +124,7 @@ std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(
   for (SizeType i = 0; i < size; i++)
   {
     // 0 is used as cls token in this dataset
-    tokens_data.Set(0, i, DataType{0});
+    tokens_data.Set(0, i, static_cast<DataType>(0));
     if (i % 2 == 0)
     {  // get one constant token in the library other then 0 (the cls token)
       auto token = static_cast<DataType>(1 + lfg() % (config.vocab_size - 1));
@@ -132,7 +132,7 @@ std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(
       {
         tokens_data.Set(entry, i, token);
       }
-      labels.Set(0u, i, DataType{1});  // label 1 0
+      labels.Set(0u, i, static_cast<DataType>(1));  // label 1 0
     }
     else
     {  // interval tokens_data
@@ -142,7 +142,7 @@ std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(
         auto token = static_cast<DataType>(1 + lfg() % (config.vocab_size - 1));
         tokens_data.Set(entry, i, token);
       }
-      labels.Set(1u, i, DataType{1});  // label 0 1
+      labels.Set(1u, i, static_cast<DataType>(1));  // label 0 1
     }
   }
 
@@ -154,7 +154,7 @@ std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(
   final_data.emplace_back(position_data);
   TensorType mask_data({config.max_seq_len, 1, size});
   final_data.emplace_back(tokens_data);
-  mask_data.Fill(DataType{1});
+  mask_data.Fill(static_cast<DataType>(1));
   final_data.emplace_back(mask_data);
 
   return std::make_pair(final_data, labels);
