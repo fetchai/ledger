@@ -209,6 +209,8 @@ private:
   void CopyStateFrom(ModelEstimator const &src);
 
   static ChargeAmount MaximumCharge(std::string const &log_msg = "");
+
+  static ChargeAmount ToChargeAmount(fixed_point::fp64_t const &val);
 };
 
 }  // namespace model

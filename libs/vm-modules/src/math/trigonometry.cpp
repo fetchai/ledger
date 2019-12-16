@@ -282,34 +282,6 @@ IfIsPtrFixed128<T, Ptr<T>> ATanHPtr(VM *vm, Ptr<T> const &a)
 
 void BindTrigonometry(Module &module)
 {
-  module.CreateFreeFunction("sin", &Sin<float_t>);
-  module.CreateFreeFunction("cos", &Cos<float_t>);
-  module.CreateFreeFunction("tan", &Tan<float_t>);
-  module.CreateFreeFunction("asin", &ASin<float_t>);
-  module.CreateFreeFunction("acos", &ACos<float_t>);
-  module.CreateFreeFunction("atan", &ATan<float_t>);
-  module.CreateFreeFunction("atan2", &ATan2<float_t>);
-  module.CreateFreeFunction("sinh", &SinH<float_t>);
-  module.CreateFreeFunction("cosh", &CosH<float_t>);
-  module.CreateFreeFunction("tanh", &TanH<float_t>);
-  module.CreateFreeFunction("asinh", &ASinH<float_t>);
-  module.CreateFreeFunction("acosh", &ACosH<float_t>);
-  module.CreateFreeFunction("atanh", &ATanH<float_t>);
-
-  module.CreateFreeFunction("sin", &Sin<double_t>);
-  module.CreateFreeFunction("cos", &Cos<double_t>);
-  module.CreateFreeFunction("tan", &Tan<double_t>);
-  module.CreateFreeFunction("asin", &ASin<double_t>);
-  module.CreateFreeFunction("acos", &ACos<double_t>);
-  module.CreateFreeFunction("atan", &ATan<double_t>);
-  module.CreateFreeFunction("atan2", &ATan2<double_t>);
-  module.CreateFreeFunction("sinh", &SinH<double_t>);
-  module.CreateFreeFunction("cosh", &CosH<double_t>);
-  module.CreateFreeFunction("tanh", &TanH<double_t>);
-  module.CreateFreeFunction("asinh", &ASinH<double_t>);
-  module.CreateFreeFunction("acosh", &ACosH<double_t>);
-  module.CreateFreeFunction("atanh", &ATanH<double_t>);
-
   module.CreateFreeFunction("sin", &Sin<fixed_point::fp32_t>);
   module.CreateFreeFunction("cos", &Cos<fixed_point::fp32_t>);
   module.CreateFreeFunction("tan", &Tan<fixed_point::fp32_t>);

@@ -60,6 +60,7 @@ public:
   virtual void SetAeonPeriod(uint16_t aeon_period)                             = 0;
   virtual void SetDefaultStartTime(uint64_t default_start_time_ms)             = 0;
   virtual void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) = 0;
+  virtual void Reset(StakeSnapshot const &snapshot)                            = 0;
 };
 
 }  // namespace ledger

@@ -45,7 +45,7 @@ Client::Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uin
   subscription_->SetMessageHandler(this, &Client::OnMessage);
 }
 
-bool Client::DeliverRequest(muddle::Address const &address, network::MessageType const &data)
+bool Client::DeliverRequest(muddle::Address const &address, network::MessageBuffer const &data)
 {
   FETCH_LOG_TRACE(LOGGING_NAME, "Client::DeliverRequest to: ", address.ToBase64(), " mdl ",
                   &endpoint_, " msg: 0x", data.ToHex());

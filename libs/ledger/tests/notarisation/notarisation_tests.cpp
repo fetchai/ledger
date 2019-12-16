@@ -120,6 +120,7 @@ struct NotarisationNode
 
 TEST(notarisation, notarise_blocks)
 {
+  fetch::chain::InitialiseTestConstants();
   fetch::crypto::mcl::details::MCLInitialiser();
 
   uint32_t num_nodes    = 6;

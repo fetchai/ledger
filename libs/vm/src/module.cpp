@@ -87,16 +87,6 @@ To Cast(Variant const &from)
     to = static_cast<To>(from.primitive.ui64);
     break;
   }
-  case TypeIds::Float32:
-  {
-    to = static_cast<To>(from.primitive.f32);
-    break;
-  }
-  case TypeIds::Float64:
-  {
-    to = static_cast<To>(from.primitive.f64);
-    break;
-  }
   case TypeIds::Fixed32:
   {
     to = static_cast<To>(fixed_point::fp32_t::FromBase(from.primitive.i32));
@@ -156,16 +146,6 @@ int64_t toInt64(VM * /* vm */, AnyPrimitive const &from)
 uint64_t toUInt64(VM * /* vm */, AnyPrimitive const &from)
 {
   return Cast<uint64_t>(from);
-}
-
-float toFloat32(VM * /* vm */, AnyPrimitive const &from)
-{
-  return Cast<float>(from);
-}
-
-double toFloat64(VM * /* vm */, AnyPrimitive const &from)
-{
-  return Cast<double>(from);
 }
 
 fixed_point::fp32_t toFixed32(VM * /* vm */, AnyPrimitive const &from)
@@ -228,16 +208,6 @@ Ptr<Fixed128> toFixed128(VM *vm, AnyPrimitive const &from)
     fixed = static_cast<fixed_point::fp128_t>(from.primitive.ui64);
     break;
   }
-  case TypeIds::Float32:
-  {
-    fixed = static_cast<fixed_point::fp128_t>(from.primitive.f32);
-    break;
-  }
-  case TypeIds::Float64:
-  {
-    fixed = static_cast<fixed_point::fp128_t>(from.primitive.f64);
-    break;
-  }
   case TypeIds::Fixed32:
   {
     fixed = static_cast<fixed_point::fp128_t>(fixed_point::fp32_t::FromBase(from.primitive.i32));
@@ -272,8 +242,6 @@ Module::Module()
   CreateFreeFunction("toUInt32", &toUInt32);
   CreateFreeFunction("toInt64", &toInt64);
   CreateFreeFunction("toUInt64", &toUInt64);
-  CreateFreeFunction("toFloat32", &toFloat32);
-  CreateFreeFunction("toFloat64", &toFloat64);
   CreateFreeFunction("toFixed32", &toFixed32);
   CreateFreeFunction("toFixed64", &toFixed64);
   CreateFreeFunction("toFixed128", &toFixed128);
@@ -301,27 +269,31 @@ Module::Module()
       .CreateInstantiationType<Array<uint32_t>>()
       .CreateInstantiationType<Array<int64_t>>()
       .CreateInstantiationType<Array<uint64_t>>()
-      .CreateInstantiationType<Array<float>>()
-      .CreateInstantiationType<Array<double>>()
-      .CreateCPPCopyConstructor<std::vector<double>>(
-          [](VM *vm, TypeId, std::vector<double> const &arr) -> Ptr<IArray> {
-            auto ret = Ptr<Array<double>>(
-                new Array<double>(vm, vm->GetTypeId<Array<double>>(), vm->GetTypeId<double>(), 0));
+      .CreateInstantiationType<Array<fixed_point::fp32_t>>()
+      .CreateInstantiationType<Array<fixed_point::fp64_t>>()
+      .CreateCPPCopyConstructor<std::vector<fixed_point::fp64_t>>(
+          [](VM *vm, TypeId, std::vector<fixed_point::fp64_t> const &arr) -> Ptr<IArray> {
+            auto ret = Ptr<Array<fixed_point::fp64_t>>(
+                new Array<fixed_point::fp64_t>(vm, vm->GetTypeId<Array<fixed_point::fp64_t>>(),
+                                               vm->GetTypeId<fixed_point::fp64_t>(), 0));
             ret->elements = arr;
             return ret;
           })
-      .CreateCPPCopyConstructor<std::vector<std::vector<double>>>(
-          [](VM *vm, TypeId, std::vector<std::vector<double>> const &arr) -> Ptr<IArray> {
-            auto outerid = vm->GetTypeId<Array<Ptr<Array<double>>>>();
-            auto innerid = vm->GetTypeId<Array<double>>();
-            std::cout << "ID: " << vm->GetTypeId<Array<Ptr<Array<double>>>>() << std::endl;
-            auto ret = Ptr<Array<Ptr<Array<double>>>>(
-                new Array<Ptr<Array<double>>>(vm, outerid, innerid, 0));
+      .CreateCPPCopyConstructor<std::vector<std::vector<fixed_point::fp64_t>>>(
+          [](VM *                                                 vm, TypeId,
+             std::vector<std::vector<fixed_point::fp64_t>> const &arr) -> Ptr<IArray> {
+            auto outerid = vm->GetTypeId<Array<Ptr<Array<fixed_point::fp64_t>>>>();
+            auto innerid = vm->GetTypeId<Array<fixed_point::fp64_t>>();
+            std::cout << "ID: " << vm->GetTypeId<Array<Ptr<Array<fixed_point::fp64_t>>>>()
+                      << std::endl;
+            auto ret = Ptr<Array<Ptr<Array<fixed_point::fp64_t>>>>(
+                new Array<Ptr<Array<fixed_point::fp64_t>>>(vm, outerid, innerid, 0));
 
             for (auto &element : arr)
             {
-              auto a = Ptr<Array<double>>(new Array<double>(vm, vm->GetTypeId<Array<double>>(),
-                                                            vm->GetTypeId<double>(), 0));
+              auto a = Ptr<Array<fixed_point::fp64_t>>(
+                  new Array<fixed_point::fp64_t>(vm, vm->GetTypeId<Array<fixed_point::fp64_t>>(),
+                                                 vm->GetTypeId<fixed_point::fp64_t>(), 0));
 
               a->elements = element;
               ret->elements.emplace_back(a);
@@ -329,19 +301,10 @@ Module::Module()
 
             return ret;
           })
-      .CreateInstantiationType<Array<fixed_point::fp32_t>>()
-      .CreateInstantiationType<Array<fixed_point::fp64_t>>()
       .CreateInstantiationType<Array<Ptr<Fixed128>>>()
       .CreateInstantiationType<Array<Ptr<String>>>()
       .CreateInstantiationType<Array<Ptr<Address>>>();
-  /*
-              std::cout << " " << vm->GetTypeId<Array<Ptr<Object>>>()
-                        << " " << vm->GetTypeId<Array<Ptr<IArray>>>()
-                        << " " << vm->GetTypeId<IArray>()
-                        << " " << vm->GetTypeId<Array<Ptr<Array<double>>>>() << " "
-                        << vm->GetTypeId<Array<double>>() << std::endl;
 
-  */
   GetClassInterface<String>()
       .CreateSerializeDefaultConstructor(
           [](VM *vm, TypeId) -> Ptr<String> { return Ptr<String>{new String(vm, "")}; })
@@ -390,15 +353,11 @@ Module::Module()
       .CreateMemberFunction("set", &IShardedState::SetFromString)
       .CreateMemberFunction("set", &IShardedState::SetFromAddress);
 
-  GetClassInterface<Fixed128>().CreateSerializeDefaultConstructor(
-      [](VM *vm, TypeId) -> Ptr<Fixed128> {
+  GetClassInterface<Fixed128>()
+      .CreateSerializeDefaultConstructor([](VM *vm, TypeId) -> Ptr<Fixed128> {
         return Ptr<Fixed128>{new Fixed128(vm, fixed_point::fp128_t::_0)};
-      });
-
-  // GetClassInterface<UInt256Wrapper>().CreateSerializeDefaultConstructor(
-  //     [](VM *vm, TypeId) -> Ptr<UInt256Wrapper> {
-  //       return Ptr<UInt256Wrapper>{new UInt256Wrapper(vm, 0)};
-  //     });
+      })
+      .CreateMemberFunction("copy", &Fixed128::Copy);
 }
 
 }  // namespace vm

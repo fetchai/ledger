@@ -2089,6 +2089,11 @@ TYPED_TEST(NanInfinityTest, trig_function_nan_inf_tests)
   EXPECT_TRUE(TypeParam::IsNaN(TypeParam::ATanH(TypeParam::_0 / TypeParam::_0)));
   EXPECT_TRUE(TypeParam::IsStateNaN());
 
+  // ATanH(1.0)
+  TypeParam::StateClear();
+  EXPECT_TRUE(TypeParam::IsInfinity(TypeParam::ATanH(TypeParam::_1)));
+  EXPECT_TRUE(TypeParam::IsStateInfinity());
+
   // SinH/CosH/TanH(+/-∞)
   TypeParam::StateClear();
   EXPECT_TRUE(TypeParam::IsNegInfinity(TypeParam::ASinH(m_inf)));
