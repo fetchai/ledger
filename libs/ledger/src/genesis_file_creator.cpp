@@ -225,14 +225,24 @@ bool GenesisFileCreator::LoadState(Variant const &object, ConsensusParameters co
     uint64_t       balance{0};
     uint64_t       stake{0};
 
-    if (variant::Extract(object[i], "key", key) &&
-        variant::Extract(object[i], "balance", balance) &&
-        variant::Extract(object[i], "stake", stake))
+    auto const &obj{object[i]};
+
+    if (variant::Extract(obj, "key", key) && variant::Extract(obj, "balance", balance) &&
+        variant::Extract(obj, "stake", stake))
     {
       ledger::WalletRecord record;
 
       record.balance = balance;
       record.stake   = stake;
+
+      Variant v_deed;
+      if (obj.Has("deed"))
+      {
+        if (!record.CreateDeed(obj["deed"]))
+        {
+          return false;
+        }
+      }
 
       ResourceAddress key_raw(ResourceID(FromBase64(key)));
 
