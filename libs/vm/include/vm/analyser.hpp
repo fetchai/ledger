@@ -240,7 +240,7 @@ private:
     return list;
   }
 
-  struct FatalErrorException
+  struct FatalErrorException : public std::exception
   {
     FatalErrorException(std::string filename__, uint16_t line__, std::string message__)
       : filename{std::move(filename__)}
