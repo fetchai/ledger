@@ -17,7 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#define FETCH_UNUSED(x) (void)(x)
+namespace fetch {
+
+#define FETCH_JOIN_IMPL(x, y) x##y
+#define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
+
+#define FETCH_UNUSED(name) (void)(name)
+
+#define FETCH_UNUSED_IN_NAMESPACE(name)                                                     \
+  inline auto FETCH_JOIN(name, _FinallyUsed_AndHopefullyThisNameWillNotClashWithAnything)() \
+  {                                                                                         \
+    return name;                                                                            \
+  }
 
 template <typename>
 struct Unused
@@ -49,3 +60,5 @@ struct Unused
 #define FETCH_FALLTHROUGH [[gnu::fallthrough]]
 #endif
 #endif
+
+}  // namespace fetch

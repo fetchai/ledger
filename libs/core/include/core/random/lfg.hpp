@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "lcg.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/fixed_point/type_traits.hpp"
