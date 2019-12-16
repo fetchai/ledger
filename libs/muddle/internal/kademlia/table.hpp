@@ -159,6 +159,11 @@ private:
                                   bool scan_left = true, bool scan_right = true);
   std::string const logging_name_;
 
+  // The mutex locking order should be in the order in which
+  // they are listed below, with core_mutex_ being the first
+  // and desired_mutex_ being the last
+
+  // Core variables
   /// @{
   mutable Mutex         core_mutex_;
   Address               own_address_;
@@ -250,8 +255,8 @@ public:
       item.ReportExistence(p, p.last_reporter);
     }
 
-    FETCH_LOCK(item.desired_mutex_);
     FETCH_LOCK(item.peer_info_mutex_);
+    FETCH_LOCK(item.desired_mutex_);
     map.ExpectKeyGetValue(CONNECTION_EXPIRY, item.desired_connection_expiry_);
     map.ExpectKeyGetValue(DESIRED_EXPIRY, item.desired_uri_expiry_);
     map.ExpectKeyGetValue(DESIRED_PEERS, item.desired_peers_);

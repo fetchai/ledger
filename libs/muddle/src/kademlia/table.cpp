@@ -293,8 +293,6 @@ void KademliaTable::ReportLeaving(Uri const &uri)
 void KademliaTable::ReportLiveliness(Address const &address, Address const &reporter,
                                      PeerInfo const &info)
 {
-  FETCH_LOCK(peer_info_mutex_);
-
   // We never register our own address
   if (address == own_address())
   {
@@ -309,61 +307,71 @@ void KademliaTable::ReportLiveliness(Address const &address, Address const &repo
   assert(log_id <= KADEMLIA_MAX_ID_BITS);
 
   // Fetching the log bucket and finding the peer if it exists in it
-  auto &log_bucket = by_logarithm_[log_id];
-  auto  log_it     = log_bucket.peers.begin();
-  for (; log_it != log_bucket.peers.end(); ++log_it)
   {
-    if (address == (*log_it)->address)
+    FETCH_LOCK(peer_info_mutex_);
+
+    auto &log_bucket = by_logarithm_[log_id];
+    auto  log_it     = log_bucket.peers.begin();
+    for (; log_it != log_bucket.peers.end(); ++log_it)
     {
-      log_bucket.peers.erase(log_it);
-      break;
+      if (address == (*log_it)->address)
+      {
+        log_bucket.peers.erase(log_it);
+        break;
+      }
     }
   }
 
   // Fetching the hamming bucket and finding the peer if it exists in it
-  auto &hamming_bucket = by_hamming_[hamming_id];
-  auto  hamming_it     = hamming_bucket.peers.begin();
-  for (; hamming_it != hamming_bucket.peers.end(); ++hamming_it)
   {
-    if (address == (*hamming_it)->address)
+    FETCH_LOCK(peer_info_mutex_);
+    auto &hamming_bucket = by_hamming_[hamming_id];
+    auto  hamming_it     = hamming_bucket.peers.begin();
+    for (; hamming_it != hamming_bucket.peers.end(); ++hamming_it)
     {
-      hamming_bucket.peers.erase(hamming_it);
-      break;
+      if (address == (*hamming_it)->address)
+      {
+        hamming_bucket.peers.erase(hamming_it);
+        break;
+      }
     }
   }
 
   // Peer is already known but not in any
   // log_bucket.
-  PeerInfoPtr peerinfo;
-  auto        it = known_peers_.find(address);
-  if (it != known_peers_.end())
   {
-    peerinfo = it->second;
+    FETCH_LOCK(peer_info_mutex_);
+    PeerInfoPtr peerinfo;
+    auto        it = known_peers_.find(address);
+    if (it != known_peers_.end())
+    {
+      peerinfo = it->second;
+    }
+    else
+    {
+      // Discovered a new peer.
+      peerinfo                   = std::make_shared<PeerInfo>(info);
+      peerinfo->kademlia_address = other;
+      peerinfo->distance         = dist;
+      peerinfo->address          = address.Copy();
+
+      // Ensures that peer information persists over time
+      // even if the peer disappears from the log_bucket.
+      known_peers_[address]      = peerinfo;
+      known_uris_[peerinfo->uri] = peerinfo;
+    }
+
+    // Updating activity information
+    // TODO(tfr): This last part is wrong
+    peerinfo->last_reporter = reporter;
+    peerinfo->verified      = true;
+    peerinfo->message_count += 1;
+    // TODO(tfr): peerinfo.last_activity
+
+    // Updating buckets
+    log_bucket.peers.insert(peerinfo);
+    hamming_bucket.peers.insert(peerinfo);
   }
-  else
-  {
-    // Discovered a new peer.
-    peerinfo                   = std::make_shared<PeerInfo>(info);
-    peerinfo->kademlia_address = other;
-    peerinfo->distance         = dist;
-    peerinfo->address          = address.Copy();
-
-    // Ensures that peer information persists over time
-    // even if the peer disappears from the log_bucket.
-    known_peers_[address]      = peerinfo;
-    known_uris_[peerinfo->uri] = peerinfo;
-  }
-
-  // Updating activity information
-  // TODO(tfr): This last part is wrong
-  peerinfo->last_reporter = reporter;
-  peerinfo->verified      = true;
-  peerinfo->message_count += 1;
-  // TODO(tfr): peerinfo.last_activity
-
-  // Updating buckets
-  log_bucket.peers.insert(peerinfo);
-  hamming_bucket.peers.insert(peerinfo);
 
   // Updating own bucket
   {
