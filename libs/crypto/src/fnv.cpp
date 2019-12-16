@@ -62,8 +62,8 @@ void FNV::Final(uint8_t *const hash)
 
 std::size_t FNV::HashSizeInBytes() const
 {
-  auto const size = internal::FnvHasherInternals::ImplType::size_in_bytes;
-  static_assert(size == size_in_bytes, "Size mismatch");
+  auto const size = internal::FnvHasherInternals::ImplType::SIZE_IN_BYTES;
+  static_assert(size == SIZE_IN_BYTES, "Size mismatch");
   return size;
 }
 

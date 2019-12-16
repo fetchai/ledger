@@ -32,7 +32,12 @@ namespace ledger {
 bool Block::operator==(Block const &rhs) const
 {
   // Invalid to compare blocks with no block hash
-  return (!this->hash.empty()) && (this->hash == rhs.hash);
+  return !hash.empty() && hash == rhs.hash;
+}
+
+bool Block::operator!=(Block const &rhs) const
+{
+  return !operator==(rhs);
 }
 
 /**
@@ -60,7 +65,7 @@ void Block::UpdateDigest()
   if (IsGenesis())
   {
     // genesis block's hash should be already set to a proper value and needs not to be updated
-    assert(hash == chain::GENESIS_DIGEST);
+    assert(hash == chain::GetGenesisDigest());
     return;
   }
 

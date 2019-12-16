@@ -104,7 +104,7 @@ std::shared_ptr<Module> VMFactory::GetModule(uint64_t enabled)
   // math modules
   if ((MOD_MATH & enabled) != 0u)
   {
-    math::BindMath(*module);
+    math::BindMath(*module, static_cast<bool>(enabled & MOD_EXPERIMENTAL_ML));
   }
 
   // bitwise operation modules
@@ -117,7 +117,7 @@ std::shared_ptr<Module> VMFactory::GetModule(uint64_t enabled)
   // ml modules
   if ((MOD_ML & enabled) != 0u)
   {
-    ml::BindML(*module);
+    ml::BindML(*module, static_cast<bool>(enabled & MOD_EXPERIMENTAL_ML));
   }
 
   // ledger modules

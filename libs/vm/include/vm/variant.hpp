@@ -35,8 +35,6 @@ union Primitive
   uint32_t ui32;
   int64_t  i64;
   uint64_t ui64;
-  float    f32;
-  double   f64;
 
   template <typename T>
   auto Get() const noexcept;
@@ -84,16 +82,6 @@ union Primitive
   void Set(uint64_t value) noexcept
   {
     ui64 = value;
-  }
-
-  void Set(float value) noexcept
-  {
-    f32 = value;
-  }
-
-  void Set(double value) noexcept
-  {
-    f64 = value;
   }
 
   void Set(fixed_point::fp32_t const &value) noexcept
@@ -159,18 +147,6 @@ template <>
 inline auto Primitive::Get<uint64_t>() const noexcept
 {
   return ui64;
-}
-
-template <>
-inline auto Primitive::Get<float>() const noexcept
-{
-  return f32;
-}
-
-template <>
-inline auto Primitive::Get<double>() const noexcept
-{
-  return f64;
 }
 
 template <>
@@ -520,11 +496,6 @@ struct AnyPrimitive : Variant
 };
 
 struct AnyInteger : Variant
-{
-  using Variant::Variant;
-};
-
-struct AnyFloatingPoint : Variant
 {
   using Variant::Variant;
 };

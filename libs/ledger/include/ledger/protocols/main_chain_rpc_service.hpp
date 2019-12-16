@@ -22,7 +22,9 @@
 #include "core/random/lcg.hpp"
 #include "core/state_machine.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
+#include "moment/deadline_timer.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "muddle/subscription.hpp"
@@ -32,6 +34,7 @@
 #include "network/p2pservice/p2ptrust_interface.hpp"
 #include "telemetry/telemetry.hpp"
 
+#include <limits>
 #include <memory>
 
 namespace fetch {
@@ -39,6 +42,7 @@ namespace ledger {
 
 class BlockCoordinator;
 class MainChain;
+class MainChainRpcClientInterface;
 class MainChainSyncWorker;
 
 /**
@@ -46,6 +50,45 @@ class MainChainSyncWorker;
  * around and nodes will attempt to determine the heaviest chain of their peers and specifically
  * request them. Peers are guarded by the main chain limiting request sizes.
  *
+ *                                       ┌───────────────────┐
+ *                                       │                   │
+ *                            ┌───────── │   Synchronising   │────────┐
+ *                            │          │                   │        │
+ *                            │          └───────────────────┘        │
+ *                            │                    ▲                  │
+ *                            ▼                    │                  ▼
+ *                  ┌───────────────────┐          │        ┌───────────────────┐
+ *                  │  Start Sync with  │          │        │                   │
+ *                  │       Peer        │          ├────────│   Synchronised    │
+ *                  │                   │          │        │                   │
+ *                  └───────────────────┘          │        └───────────────────┘
+ *                            │                    │
+ *                            │                    │
+ *                            ▼                    │
+ *                  ┌───────────────────┐          │
+ *                  │                   │          │
+ *           ┌─────▶│Request Next Blocks│          │
+ *           │      │                   │          │
+ *           │      └───────────────────┘          │
+ *           │                │                    │
+ *           │                │                    │
+ *           │                ▼                    │
+ *           │      ┌───────────────────┐          │
+ *           │      │   Wait for Next   │          │
+ *           └──────│      Blocks       │          │
+ *                  │                   │          │
+ *                  └───────────────────┘          │
+ *                            │                    │
+ *                            │                    │
+ *                            ▼                    │
+ *                  ┌───────────────────┐          │
+ *                  │Complete Sync with │          │
+ *                  │       Peer        │          │
+ *                  │                   │          │
+ *                  └───────────────────┘          │
+ *                            │                    │
+ *                            │                    │
+ *                            └────────────────────┘
  */
 class MainChainRpcService : public muddle::rpc::Server,
                             public std::enable_shared_from_this<MainChainRpcService>
@@ -53,11 +96,12 @@ class MainChainRpcService : public muddle::rpc::Server,
 public:
   enum class State
   {
-    REQUEST_HEAVIEST_CHAIN,
-    WAIT_FOR_HEAVIEST_CHAIN,
     SYNCHRONISING,
-    WAITING_FOR_RESPONSE,
     SYNCHRONISED,
+    START_SYNC_WITH_PEER,
+    REQUEST_NEXT_BLOCKS,
+    WAIT_FOR_NEXT_BLOCKS,
+    COMPLETE_SYNC_WITH_PEER,
   };
 
   using MuddleEndpoint  = muddle::MuddleEndpoint;
@@ -68,11 +112,13 @@ public:
   using Block           = ledger::Block;
   using BlockHash       = Digest;
   using Promise         = service::Promise;
-  using RpcClient       = muddle::rpc::Client;
+  using RpcClient       = MainChainRpcClientInterface;
   using TrustSystem     = p2p::P2PTrustInterface<Address>;
   using FutureTimepoint = core::FutureTimepoint;
+  using ConsensusPtr    = std::shared_ptr<ConsensusInterface>;
 
-  static constexpr char const *LOGGING_NAME = "MainChainRpc";
+  static constexpr char const *LOGGING_NAME            = "MainChainRpc";
+  static constexpr uint64_t    PERIODIC_RESYNC_SECONDS = 20;
 
   enum class Mode
   {
@@ -82,7 +128,8 @@ public:
   };
 
   // Construction / Destruction
-  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust, Mode mode);
+  MainChainRpcService(MuddleEndpoint &endpoint, MainChainRpcClientInterface &rpc_client,
+                      MainChain &chain, TrustSystem &trust, ConsensusPtr consensus);
   MainChainRpcService(MainChainRpcService const &) = delete;
   MainChainRpcService(MainChainRpcService &&)      = delete;
   ~MainChainRpcService() override                  = default;
@@ -109,6 +156,11 @@ public:
     return State::SYNCHRONISED == state_machine_->state();
   }
 
+  /// @name Subscription Handlers
+  /// @{
+  void OnNewBlock(Address const &from, Block &block, Address const &transmitter);
+  /// @}
+
   // Operators
   MainChainRpcService &operator=(MainChainRpcService const &) = delete;
   MainChainRpcService &operator=(MainChainRpcService &&) = delete;
@@ -117,34 +169,40 @@ private:
   using BlockList       = fetch::ledger::MainChainProtocol::Blocks;
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
-
-  /// @name Subscription Handlers
-  /// @{
-  void OnNewBlock(Address const &from, Block &block, Address const &transmitter);
-  /// @}
+  using BlockPtr        = MainChain::BlockPtr;
+  using DeadlineTimer   = fetch::moment::DeadlineTimer;
 
   /// @name Utilities
   /// @{
-  static constexpr char const *ToString(State state) noexcept;
-  Address                      GetRandomTrustedPeer() const;
-  void                         HandleChainResponse(Address const &address, BlockList block_list);
+  Address GetRandomTrustedPeer() const;
+
+  void HandleChainResponse(Address const &address, BlockList blocks);
+  template <class Begin, class End>
+  void HandleChainResponse(Address const &address, Begin begin, End end);
   /// @}
 
   /// @name State Machine Handlers
   /// @{
-  State OnRequestHeaviestChain();
-  State OnWaitForHeaviestChain();
   State OnSynchronising();
-  State OnWaitingForResponse();
   State OnSynchronised(State current, State previous);
+  State OnStartSyncWithPeer();
+  State OnRequestNextSetOfBlocks();
+  State OnWaitForBlocks();
+  State OnCompleteSyncWithPeer();
+
+  bool ValidBlock(Block const &block, char const *action) const;
   /// @}
 
   /// @name System Components
   /// @{
-  Mode const      mode_;
   MuddleEndpoint &endpoint_;
   MainChain &     chain_;
   TrustSystem &   trust_;
+  /// @}
+
+  /// @name Block Validation
+  /// @{
+  ConsensusPtr consensus_;
   /// @}
 
   /// @name RPC Server
@@ -155,42 +213,53 @@ private:
 
   /// @name State Machine Data
   /// @{
-  RpcClient       rpc_client_;
+  RpcClient &     rpc_client_;
   StateMachinePtr state_machine_;
-  Address         current_peer_address_;
-  BlockHash       current_missing_block_;
-  Promise         current_request_;
+
+  Address       current_peer_address_;
+  Promise       current_request_;
+  BlockPtr      block_resolving_;
+  DeadlineTimer resync_interval_{"MC_RPC:main"};
+  std::size_t   consecutive_failures_{0};
+
+  BlockHash             current_missing_block_;
+  std::atomic<uint16_t> loose_blocks_seen_{0};
   /// @}
 
   /// @name Telemetry
   /// @{
-  telemetry::CounterPtr recv_block_count_;
-  telemetry::CounterPtr recv_block_valid_count_;
-  telemetry::CounterPtr recv_block_loose_count_;
-  telemetry::CounterPtr recv_block_duplicate_count_;
-  telemetry::CounterPtr recv_block_invalid_count_;
-  telemetry::CounterPtr state_request_heaviest_;
-  telemetry::CounterPtr state_wait_heaviest_;
-  telemetry::CounterPtr state_synchronising_;
-  telemetry::CounterPtr state_wait_response_;
-  telemetry::CounterPtr state_synchronised_;
+  telemetry::CounterPtr         recv_block_count_;
+  telemetry::CounterPtr         recv_block_valid_count_;
+  telemetry::CounterPtr         recv_block_loose_count_;
+  telemetry::CounterPtr         recv_block_duplicate_count_;
+  telemetry::CounterPtr         recv_block_invalid_count_;
+  telemetry::CounterPtr         state_synchronising_;
+  telemetry::CounterPtr         state_synchronised_;
+  telemetry::CounterPtr         state_start_sync_with_peer_;
+  telemetry::CounterPtr         state_request_next_blocks_;
+  telemetry::CounterPtr         state_wait_for_next_blocks_;
+  telemetry::CounterPtr         state_complete_sync_with_peer_;
+  telemetry::GaugePtr<uint32_t> state_current_;
+  telemetry::HistogramPtr       new_block_duration_;
   /// @}
 };
 
-constexpr char const *MainChainRpcService::ToString(State state) noexcept
+constexpr char const *ToString(MainChainRpcService::State state) noexcept
 {
   switch (state)
   {
-  case State::REQUEST_HEAVIEST_CHAIN:
-    return "Requesting Heaviest Chain";
-  case State::WAIT_FOR_HEAVIEST_CHAIN:
-    return "Waiting for Heaviest Chain";
-  case State::SYNCHRONISING:
+  case MainChainRpcService::State::SYNCHRONISING:
     return "Synchronising";
-  case State::WAITING_FOR_RESPONSE:
-    return "Waiting for Sync Response";
-  case State::SYNCHRONISED:
+  case MainChainRpcService::State::SYNCHRONISED:
     return "Synchronised";
+  case MainChainRpcService::State::START_SYNC_WITH_PEER:
+    return "Starting Sync with Peer";
+  case MainChainRpcService::State::REQUEST_NEXT_BLOCKS:
+    return "Requesting Blocks";
+  case MainChainRpcService::State::WAIT_FOR_NEXT_BLOCKS:
+    return "Waiting for Blocks";
+  case MainChainRpcService::State::COMPLETE_SYNC_WITH_PEER:
+    return "Completed Sync with Peer";
   }
 
   return "unknown";

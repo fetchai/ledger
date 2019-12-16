@@ -143,46 +143,6 @@ TEST(big_number_gtest, subtraction_tests)
   EXPECT_EQ(n3.ElementAt(3), 0);
 }
 
-TEST(big_number_gtest, log_tests)
-{
-  for (const auto argument :
-       {uint64_t(1), uint64_t(64), uint64_t(65536), uint64_t(std::numeric_limits<uint64_t>::max())})
-  {
-    UInt<256> n256(argument);
-
-    const auto result   = Log(n256);
-    const auto expected = std::log(argument);
-
-    EXPECT_NEAR(result, expected, std::numeric_limits<double>::epsilon());
-  }
-}
-
-TEST(big_number_gtest, to_double_tests)
-{
-  EXPECT_NEAR(ToDouble(UInt<256>(uint64_t(0))), 0., std::numeric_limits<double>::epsilon());
-
-  static constexpr double MAX_UINT256_VALUE = 1.15792089237316e+77;
-  for (auto seed : {1., 10., 100., 1000., 10000.})
-  {
-    UInt<256> number(static_cast<uint64_t>(seed));
-
-    for (size_t i = 0; i < number.ELEMENTS; ++i)
-    {
-      const double result   = ToDouble(number);
-      const double expected = seed * pow(2, i * number.ELEMENT_SIZE);
-      if (expected < MAX_UINT256_VALUE)
-      {
-        EXPECT_NEAR(result, expected, std::numeric_limits<double>::epsilon());
-      }
-      else
-      {
-        EXPECT_NE(result, expected);
-      }
-      number <<= number.ELEMENT_SIZE;
-    }
-  }
-}
-
 template <typename LongUInt>
 void TestTrimmedWideSize()
 {
@@ -400,12 +360,12 @@ TEST(big_number_gtest, test_construction_from_byte_array_fails_if_too_long)
   constexpr std::size_t bits{256};
 
   // Verify that construction pass is size is <= bits/8
-  UInt<bits> shall_pass{ConstByteArray(bits / 8), Endian::LITTLE};
+  UInt<bits> shall_pass{ConstByteArray(bits / 8), platform::Endian::LITTLE};
 
   bool exception_thrown = false;
   try
   {
-    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1), Endian::LITTLE};
+    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1), platform::Endian::LITTLE};
   }
   catch (std::exception const &ex)
   {
@@ -562,7 +522,7 @@ TEST(big_number_gtest, test_issue_1383_division_oper)
 
   x /= 2ull;
   EXPECT_EQ(UInt72{UInt72::max} >>= 1, x);
-  EXPECT_EQ(UInt72(UInt72_WideType_Max, 0x7Full), x);
+  EXPECT_EQ(UInt72(UInt72_WideType_Max, UInt72::WideType{0x7Full}), x);
 }
 
 TEST(big_number_gtest, test_issue_1383_overflow_with_plus)

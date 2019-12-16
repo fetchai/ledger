@@ -371,7 +371,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   try
   {
     // Attempt to resolve the promise and add it
-    if (!sig_share_promise_->IsSuccessful() || !sig_share_promise_->As<SignatureInformation>(ret))
+    if (!sig_share_promise_->IsSuccessful() || !sig_share_promise_->GetResult(ret))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve RPC promise from ",
                      qual_promise_identity_.identifier().ToBase64(),

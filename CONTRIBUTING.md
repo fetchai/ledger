@@ -14,17 +14,17 @@ Before creating a bug report, please check [this list](https://github.com/fetcha
 
 ## Code contributions
 
-### Branching model
-
-We favour forking instead of creating multiple branches in the upstream repository. `master` is the default branch.
-
-For more details about our branching model, please read our development workflow (coming soon).
-
 ### Style guidelines
 
 When developing new code or modifying existing one, please follow our [C++ style guidelines](docs/cplusplus-style-guide.md). They describe file structuring, resource handling, etc. Some basic instructions about formatting are also included, but please refer to the [ClangFormat file](.clang-format) for the most detailed specification.
 
 Adherence to these guidelines will be automatically checked by the CI system, but in order to speed up the build process, we recommend you run these checks locally during development with the command `./scripts/apply_style.py -d`.
+
+### Development workflow
+
+We favour forking instead of creating multiple branches in the upstream repository, where `master` is the default branch. For more details about branching and merging, please read our [branching model documentation](docs/branching-model.md).
+
+If you are going to tag a version in preparation for release, please read our [release strategy](docs/release-strategy.md) draft.
 
 ### Copyright and licensing header
 

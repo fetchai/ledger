@@ -40,6 +40,10 @@ public:
   using BlockIndex     = uint64_t;
   using Counter        = uint64_t;
 
+  constexpr static uint64_t   MAXIMUM_TX_CHARGE_LIMIT    = 10000000000;
+  constexpr static BlockIndex MAXIMUM_TX_VALIDITY_PERIOD = 40000;
+  constexpr static BlockIndex DEFAULT_TX_VALIDITY_PERIOD = 1000;
+
   /**
    * Represents a single target and token about. The transaction format allows any number of
    * transfers to be made in the course of a single transaction. This structure outlines one of them
@@ -120,7 +124,6 @@ public:
   /// @name Contract Accessors
   /// @{
   ContractMode          contract_mode() const;
-  Address const &       contract_digest() const;
   Address const &       contract_address() const;
   ConstByteArray const &chain_code() const;
   ConstByteArray const &action() const;
@@ -150,7 +153,6 @@ private:
   TokenAmount    charge_rate_{0};                            ///< The charge rate for the TX
   TokenAmount    charge_limit_{0};                           ///< The maximum charge to be used
   ContractMode   contract_mode_{ContractMode::NOT_PRESENT};  ///< The payload being contained
-  Address        contract_digest_{};                         ///< The digest of the smart contract
   Address        contract_address_{};                        ///< The address of the smart contract
   ConstByteArray chain_code_{};                              ///< The name of the chain code
   BitVector      shard_mask_{};                              ///< Shard mask of addition depends

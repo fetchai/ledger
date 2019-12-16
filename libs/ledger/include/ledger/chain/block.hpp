@@ -55,12 +55,13 @@ public:
   Block() = default;
 
   bool operator==(Block const &rhs) const;
+  bool operator!=(Block const &rhs) const;
 
   // Block core information
   Digest         hash;               ///< The hash of the block
   Digest         previous_hash;      ///< The hash of the previous block
   Digest         merkle_hash;        ///< The merkle state hash across all shards
-  uint64_t       block_number{0};    ///< The height of the block from genesis
+  Block::Index   block_number{0};    ///< The height of the block from genesis
   chain::Address miner;              ///< The identity of the generated miner
   Identity       miner_id;           ///< The identity of the generated miner
   uint32_t       log2_num_lanes{0};  ///< The log2(number of lanes)
@@ -75,8 +76,10 @@ public:
 
   /// @name Metadata for block management (not serialized)
   /// @{
-  Weight total_weight = 1;
-  bool   is_loose     = false;
+  Weight   total_weight = 1;
+  bool     is_loose     = false;
+  uint64_t chain_label{0};  ///< The label of a heaviest chain this block once belonged to
+                            ///< A more detailed explanation in MainChain::HeaviestTip.
   /// @}
 
   // Helper functions
@@ -88,6 +91,7 @@ public:
 private:
   SystemClock clock_ = moment::GetClock("block:body", moment::ClockType::SYSTEM);
 };
+
 }  // namespace ledger
 
 namespace serializers {

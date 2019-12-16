@@ -137,13 +137,6 @@ void FakeMuddleEndpoint::Broadcast(uint16_t service, uint16_t channel, Payload c
   FakeNetwork::BroadcastPacket(packet);
 }
 
-Response FakeMuddleEndpoint::Exchange(Address const & /*address*/, uint16_t /*service*/,
-                                      uint16_t /*channel*/, Payload const & /*request*/)
-{
-  throw std::runtime_error("Exchange functionality not implemented");
-  return {};
-}
-
 SubscriptionPtr FakeMuddleEndpoint::Subscribe(uint16_t service, uint16_t channel)
 {
   return registrar_.Register(service, channel);

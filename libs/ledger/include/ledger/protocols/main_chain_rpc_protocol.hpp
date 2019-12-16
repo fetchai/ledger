@@ -20,6 +20,7 @@
 #include "core/serializers/base_types.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/time_travelogue.hpp"
 #include "network/service/protocol.hpp"
 
 namespace fetch {
@@ -28,7 +29,9 @@ namespace ledger {
 class MainChainProtocol : public service::Protocol
 {
 public:
-  using Blocks = std::vector<Block>;
+  using Travelogue                          = TimeTravelogue<Block>;
+  using Blocks                              = Travelogue::Blocks;
+  static constexpr char const *LOGGING_NAME = "MainChainProtocol";
 
   enum
   {
@@ -45,7 +48,6 @@ public:
     Expose(TIME_TRAVEL, this, &MainChainProtocol::TimeTravel);
   }
 
-private:
   Blocks GetHeaviestChain(uint64_t maxsize)
   {
     return Copy(chain_.GetHeaviestChain(maxsize));
@@ -60,14 +62,19 @@ private:
     {
       return Blocks{};
     }
+
     return Copy(blocks);
   }
 
-  Blocks TimeTravel(Digest start, int64_t limit)
+  Travelogue TimeTravel(Digest start)
   {
-    return Copy(chain_.TimeTravel(std::move(start), limit));
+    auto const ret_val = chain_.TimeTravel(std::move(start));
+
+    // make a copy (because you need to convert from BlockPtr and Blocks)!
+    return {ret_val.heaviest_hash, ret_val.block_number, ret_val.status, Copy(ret_val.blocks)};
   }
 
+private:
   static Blocks Copy(MainChain::Blocks const &blocks)
   {
     Blocks output{};
@@ -75,7 +82,7 @@ private:
 
     for (auto const &block : blocks)
     {
-      output.emplace_back(*block);
+      output.push_back(*block);
     }
 
     return output;

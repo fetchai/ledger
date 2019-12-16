@@ -115,6 +115,8 @@ public:
   std::weak_ptr<core::Runnable> GetRunnable() override;
 
 private:
+  static constexpr char const *LOGGING_NAME = "PunishmentChannel";
+
   /**
    * Determine whether the current question has been answered by all peers.
    * If not, continue to try to resolve answers

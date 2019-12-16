@@ -147,13 +147,6 @@ enum class eModifStatus : uint8_t
   undefined,
 };
 
-enum class eExisted : uint8_t
-{
-  yes,
-  no,
-  undefined,
-};
-
 template <typename T>
 class State : public IState
 {
@@ -202,18 +195,12 @@ public:
 
   bool Existed() override
   {
-    if (eExisted::undefined == existed_ && vm_->HasIoObserver())
+    if (vm_->HasIoObserver())
     {
-      // mark the variable as existed if we get a positive result back
-      existed_ = eExisted::no;
-
-      if (Status::OK == vm_->GetIOObserver().Exists(name_))
-      {
-        existed_ = eExisted::yes;
-      }
+      return Status::OK == vm_->GetIOObserver().Exists(name_);
     }
 
-    return existed_ == eExisted::yes;
+    return false;
   }
 
 private:
@@ -285,7 +272,6 @@ private:
   std::string  name_;
   TypeId       template_param_type_id_;
   Value        value_;
-  eExisted     existed_{eExisted::undefined};
   eModifStatus mod_status_{eModifStatus::undefined};
 };
 

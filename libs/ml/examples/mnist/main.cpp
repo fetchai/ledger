@@ -32,9 +32,8 @@
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType   = float;
+using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = fetch::math::SizeType;
 
 using GraphType      = typename fetch::ml::Graph<TensorType>;
 using OptimiserType  = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
@@ -42,10 +41,10 @@ using DataLoaderType = typename fetch::ml::dataloaders::TensorDataLoader<TensorT
 
 int main(int ac, char **av)
 {
-  DataType learning_rate{0.01f};
-  SizeType subset_size{100};
-  SizeType epochs{10};
-  SizeType batch_size{10};
+  DataType              learning_rate = fetch::math::Type<DataType>("0.01");
+  fetch::math::SizeType subset_size{100};
+  fetch::math::SizeType epochs{10};
+  fetch::math::SizeType batch_size{10};
 
   if (ac < 3)
   {
@@ -84,7 +83,7 @@ int main(int ac, char **av)
 
   // Training loop
   DataType loss;
-  for (SizeType i{0}; i < epochs; i++)
+  for (fetch::math::SizeType i{0}; i < epochs; i++)
   {
     loss = optimiser.Run(data_loader, batch_size, subset_size);
     std::cout << "Loss: " << loss << std::endl;

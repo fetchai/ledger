@@ -27,7 +27,6 @@
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chaincode/token_contract.hpp"
-#include "ledger/resource_mapper.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "logging/logging.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"

@@ -23,7 +23,7 @@ model.fit(data, label, batch_size);
 
 // evaluate performance
 var loss = model.evaluate();
-print(loss);
+print(loss[0u64]);
 
 // make predictions on all test data
 var predictions = model.predict(test_data);

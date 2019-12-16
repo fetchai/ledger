@@ -88,8 +88,8 @@ void OneHot(ArrayType &ret, ArrayType const &indices, typename ArrayType::SizeTy
  */
 template <typename ArrayType>
 ArrayType OneHot(ArrayType const &indices, typename ArrayType::SizeType depth, SizeType axis = 0,
-                 typename ArrayType::Type on_value  = typename ArrayType::Type{1.0},
-                 typename ArrayType::Type off_value = typename ArrayType::Type{0.0})
+                 typename ArrayType::Type on_value  = typename ArrayType::Type{1},
+                 typename ArrayType::Type off_value = typename ArrayType::Type{0})
 {
   assert(axis <= indices.shape().size());
 

@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "bloom_filter/bloom_filter.hpp"
+#include "chain/constants.hpp"
 #include "chain/transaction.hpp"
 #include "chain/transaction_layout.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/miner/basic_miner.hpp"
-#include "ledger/resource_mapper.hpp"
 #include "meta/log2.hpp"
 #include "tx_generator.hpp"
 #include "vectorise/platform.hpp"
@@ -44,6 +44,12 @@ using fetch::DigestMap;
 
 class BasicMinerTests : public ::testing::TestWithParam<std::size_t>
 {
+public:
+  static void SetUpTestCase()
+  {
+    fetch::chain::InitialiseTestConstants();
+  }
+
 protected:
   static constexpr uint32_t    NUM_LANES      = 16;
   static constexpr std::size_t NUM_SLICES     = 16;
@@ -109,7 +115,7 @@ TEST_P(BasicMinerTests, SimpleExample)
   PopulateWithTransactions(num_tx);
 
   Block     block;
-  MainChain dummy{false, MainChain::Mode::IN_MEMORY_DB};
+  MainChain dummy{MainChain::Mode::IN_MEMORY_DB};
 
   block.previous_hash = dummy.GetHeaviestBlockHash();
 
@@ -140,7 +146,7 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
 
   auto const layout = PopulateWithTransactions(num_tx, 1);
 
-  MainChain chain{false, MainChain::Mode::IN_MEMORY_DB};
+  MainChain chain{MainChain::Mode::IN_MEMORY_DB};
 
   DigestSet transactions_already_seen{};
   DigestSet transactions_within_block{};

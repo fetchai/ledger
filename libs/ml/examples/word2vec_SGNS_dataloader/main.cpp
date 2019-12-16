@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "file_loader.hpp"
-#include "math/clustering/knn.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
@@ -32,15 +30,13 @@
 #include <iostream>
 #include <string>
 #include <utility>
-#include <vector>
 
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
-using namespace fetch::ml::examples;
 
-using DataType   = float;
+using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = fetch::math::SizeType;
 
@@ -72,10 +68,10 @@ struct TrainingParams
   // (https://www.aclweb.org/anthology/Q15-1016) which has state-of-the-art scores for word
   // embedding and uses the wikipedia dataset (documents_utf8_filtered_20pageviews.csv)
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
-  SizeType negative_sample_size = 5;      // number of negative sample per word-context pair
-  SizeType window_size          = 2;      // window size for context sampling
-  DataType freq_thresh          = 1e-3f;  // frequency threshold for subsampling
-  SizeType min_count            = 100;    // infrequent word removal threshold
+  SizeType negative_sample_size = 5;  // number of negative sample per word-context pair
+  SizeType window_size          = 2;  // window size for context sampling
+  DataType freq_thresh{1e-3f};        // frequency threshold for subsampling
+  SizeType min_count = 100;           // infrequent word removal threshold
 
   SizeType batch_size            = 10000;  // training data batch size
   SizeType embedding_size        = 500;    // dimension of embedding vec
@@ -84,8 +80,8 @@ struct TrainingParams
   SizeType graph_saves_per_epoch = 10;
 
   // these are the learning rates we have for each sample
-  DataType starting_learning_rate_per_sample = 0.0025f;
-  DataType ending_learning_rate_per_sample   = 0.0001f;
+  DataType starting_learning_rate_per_sample = fetch::math::Type<DataType>("0.0025f");
+  DataType ending_learning_rate_per_sample   = fetch::math::Type<DataType>("0.0001f");
   // this is the true learning rate set for the graph training
   DataType starting_learning_rate;
   DataType ending_learning_rate;
@@ -133,6 +129,9 @@ int main(int argc, char **argv)
   // set up dataloader
   /// DATA LOADING ///
   data_loader.BuildVocabAndData({utilities::ReadFile(train_file)}, tp.min_count);
+  std::string vocab_file = "/tmp/vocab.txt";
+  std::cout << "Saving vocab to vocab_file: " << vocab_file << std::endl;
+  data_loader.SaveVocab(vocab_file);
 
   /////////////////////////////////////////
   /// SET UP PROPER TRAINING PARAMETERS ///
@@ -194,8 +193,8 @@ int main(int argc, char **argv)
     // Test trained embeddings
     if (i % tp.test_frequency == 0)
     {
-      fetch::ml::utilities::TestEmbeddings(*g, skipgram_layer, data_loader, tp.word0, tp.word1,
-                                           tp.word2, tp.word3, tp.k, analogies_test_file);
+      fetch::ml::utilities::TestEmbeddings(*g, skipgram_layer, *(data_loader.GetVocab()), tp.word0,
+                                           tp.word1, tp.word2, tp.word3, tp.k, analogies_test_file);
     }
 
     fetch::ml::utilities::SaveGraph(*g, save_file + std::to_string(i));

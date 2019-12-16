@@ -56,7 +56,8 @@ std::string GeneratePrefix(std::string const &storage_path, uint32_t lane)
 }  // namespace
 
 LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode)
-  : tx_store_(std::make_shared<TxStore>(meta::Log2(config.num_lanes)))
+  : tx_store_(
+        std::make_shared<TransactionStorageEngine>(meta::Log2(config.num_lanes), config.lane_id))
   , reactor_("LaneServiceReactor")
   , cfg_{std::move(config)}
 {
@@ -71,7 +72,7 @@ LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode
   internal_rpc_server_ =
       std::make_shared<Server>(internal_muddle_->GetEndpoint(), SERVICE_LANE_CTRL, CHANNEL_RPC);
 
-  reactor_.Attach(tx_store_->GetWeakRunnable());
+  tx_store_->AttachToReactor(reactor_);
 
   std::string const prefix = GeneratePrefix(cfg_.storage_path, cfg_.lane_id);
   switch (mode)
@@ -84,7 +85,7 @@ LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode
     break;
   }
 
-  tx_store_protocol_ = std::make_shared<TxStoreProto>(tx_store_.get(), cfg_.lane_id);
+  tx_store_protocol_ = std::make_shared<TransactionStorageProtocol>(*tx_store_, cfg_.lane_id);
   internal_rpc_server_->Add(RPC_TX_STORE, tx_store_protocol_.get());
 
   // Controller
@@ -95,7 +96,7 @@ LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode
   tx_finder_protocol_ = std::make_unique<TxFinderProtocol>();
   internal_rpc_server_->Add(RPC_MISSING_TX_FINDER, tx_finder_protocol_.get());
 
-  tx_sync_protocol_ = std::make_shared<TransactionStoreSyncProtocol>(tx_store_.get(), cfg_.lane_id);
+  tx_sync_protocol_ = std::make_shared<TransactionStoreSyncProtocol>(*tx_store_, cfg_.lane_id);
 
   // prepare the sync config
   TransactionStoreSyncService::Config sync_cfg{};
@@ -106,10 +107,11 @@ LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode
   sync_cfg.fetch_object_wait_duration = cfg_.sync_service_fetch_period;
 
   tx_sync_service_ = std::make_shared<TransactionStoreSyncService>(
-      sync_cfg, external_muddle_->GetEndpoint(), tx_store_, tx_finder_protocol_.get(),
+      sync_cfg, external_muddle_->GetEndpoint(), *tx_store_, tx_finder_protocol_.get(),
       [this]() { tx_sync_protocol_->TrimCache(); });
 
-  tx_store_->SetCallback([this](chain::Transaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
+  tx_store_->SetNewTransactionHandler(
+      [this](chain::Transaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
 
   // TX Sync protocol
   external_rpc_server_->Add(RPC_TX_STORE_SYNC, tx_sync_protocol_.get());
@@ -139,12 +141,12 @@ LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode
 
 LaneService::~LaneService() = default;
 
-void LaneService::Start()
+void LaneService::StartInternal()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", cfg_.lane_id,
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting External Lane ", cfg_.lane_id,
                  " Service on tcp://0.0.0.0:", cfg_.external_port,
                  " ID: ", ToBase64(cfg_.external_identity->identity().identifier()));
-  FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", cfg_.lane_id,
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting Internal Lane ", cfg_.lane_id,
                  " Service on tcp://127.0.0.1:", cfg_.internal_port,
                  " ID: ", ToBase64(cfg_.internal_identity->identity().identifier()));
 
@@ -160,17 +162,44 @@ void LaneService::Start()
   workthread_->ChangeWaitTime(std::chrono::milliseconds{unsigned{SYNC_PERIOD_MS}});
 }
 
-void LaneService::Stop()
+void LaneService::StartExternal()
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting External Lane ", cfg_.lane_id,
+                 " Service on tcp://0.0.0.0:", cfg_.external_port,
+                 " ID: ", ToBase64(cfg_.external_identity->identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting Internal Lane ", cfg_.lane_id,
+                 " Service on tcp://127.0.0.1:", cfg_.internal_port,
+                 " ID: ", ToBase64(cfg_.internal_identity->identity().identifier()));
+
+  external_muddle_->Start({cfg_.external_port});
+  internal_muddle_->Start({cfg_.internal_port});
+
+  tx_sync_service_->Start();
+
+  // TX Sync service - attach to reactor once #892 is merged
+  workthread_ =
+      std::make_shared<BackgroundedWorkThread>(&bg_work_, "BW:LS-" + std::to_string(cfg_.lane_id),
+                                               [this]() { tx_sync_service_->Execute(); });
+  workthread_->ChangeWaitTime(std::chrono::milliseconds{unsigned{SYNC_PERIOD_MS}});
+}
+
+void LaneService::StopExternal()
+{
+  workthread_ = nullptr;
+  if (external_muddle_)
+  {
+    external_muddle_->Stop();
+  }
+  tx_sync_service_.reset();
+}
+
+void LaneService::StopInternal()
 {
   reactor_.Stop();
-  workthread_ = nullptr;
-  external_muddle_->Stop();
   internal_muddle_->Stop();
-  tx_sync_service_.reset();
   state_db_protocol_.reset();
   state_db_.reset();
   tx_store_protocol_.reset();
-  tx_store_.reset();
   tx_sync_protocol_.reset();
   controller_protocol_.reset();
   controller_.reset();

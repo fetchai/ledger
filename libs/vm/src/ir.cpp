@@ -113,7 +113,7 @@ IRNodePtr IR::CloneNode(IRNodePtr const &node)
       expression_node->node_kind, expression_node->text, expression_node->line,
       CloneChildren(expression_node->children), expression_node->expression_kind,
       CloneType(expression_node->type), CloneVariable(expression_node->variable),
-      expression_node->function_invoker_is_instance, CloneFunction(expression_node->function));
+      CloneFunction(expression_node->function), CloneType(expression_node->owner));
   return clone_expression_node;
 }
 
@@ -138,16 +138,13 @@ IRTypePtr IR::CloneType(IRTypePtr const &type)
   {
     return clone_type;
   }
-  IRTypePtr      clone_template_type;
-  IRTypePtrArray clone_template_parameter_types;
-  if (type->IsInstantiation())
-  {
-    clone_template_type            = CloneType(type->template_type);
-    clone_template_parameter_types = CloneTypes(type->template_parameter_types);
-  }
-  clone_type = CreateIRType(type->type_kind, type->name, clone_template_type,
-                            clone_template_parameter_types);
+  // Create and add to map BEFORE dependencies
+  clone_type = CreateIRType(type->type_kind, type->name);
   type_map_.AddPair(type, clone_type);
+  // Dependencies...
+  clone_type->template_type            = CloneType(type->template_type);
+  clone_type->template_parameter_types = CloneTypes(type->template_parameter_types);
+  // Add to list AFTER dependencies
   AddType(clone_type);
   return clone_type;
 }
@@ -163,10 +160,12 @@ IRVariablePtr IR::CloneVariable(IRVariablePtr const &variable)
   {
     return clone_variable;
   }
-  IRTypePtr clone_type = CloneType(variable->type);
-  clone_variable =
-      CreateIRVariable(variable->variable_kind, variable->name, clone_type, variable->referenced);
+  // Create and add to map BEFORE dependencies
+  clone_variable = CreateIRVariable(variable->variable_kind, variable->name, variable->referenced);
   variable_map_.AddPair(variable, clone_variable);
+  // Dependencies...
+  clone_variable->type = CloneType(variable->type);
+  // Add to list AFTER dependencies
   AddVariable(clone_variable);
   return clone_variable;
 }
@@ -182,13 +181,14 @@ IRFunctionPtr IR::CloneFunction(IRFunctionPtr const &function)
   {
     return clone_function;
   }
-  IRTypePtrArray     clone_parameter_types     = CloneTypes(function->parameter_types);
-  IRVariablePtrArray clone_parameter_variables = CloneVariables(function->parameter_variables);
-  IRTypePtr          clone_return_type         = CloneType(function->return_type);
-  clone_function =
-      CreateIRFunction(function->function_kind, function->name, function->unique_name,
-                       clone_parameter_types, clone_parameter_variables, clone_return_type);
+  // Create and add to map BEFORE dependencies
+  clone_function = CreateIRFunction(function->function_kind, function->name, function->unique_name);
   function_map_.AddPair(function, clone_function);
+  // Dependencies...
+  clone_function->parameter_types     = CloneTypes(function->parameter_types);
+  clone_function->parameter_variables = CloneVariables(function->parameter_variables);
+  clone_function->return_type         = CloneType(function->return_type);
+  // Add to list AFTER dependencies
   AddFunction(clone_function);
   return clone_function;
 }
@@ -199,6 +199,16 @@ IRTypePtrArray IR::CloneTypes(IRTypePtrArray const &types)
   for (auto const &type : types)
   {
     array.push_back(CloneType(type));
+  }
+  return array;
+}
+
+IRFunctionPtrArray IR::CloneFunctions(IRFunctionPtrArray const &functions)
+{
+  IRFunctionPtrArray array;
+  for (auto const &function : functions)
+  {
+    array.push_back(CloneFunction(function));
   }
   return array;
 }

@@ -136,7 +136,7 @@ public:
     }
 
     host_ = std::make_shared<RemoteExecutionHost>(mud_, exec);
-    mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
+    mud_->SetTrackerConfiguration(muddle::TrackerConfiguration::AllOn());
     mud_->Start({server_port});
 
     proto_  = std::make_shared<RemoteExecutionProtocol>(*host_);
@@ -162,7 +162,7 @@ public:
     netm_->Start();
     mud_    = muddle::CreateMuddle("Test", ident, *(this->netm_), "127.0.0.1");
     client_ = std::make_shared<RemoteExecutionClient>(mud_, exec);
-    mud_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
+    mud_->SetTrackerConfiguration(muddle::TrackerConfiguration::AllOn());
     std::string server = "tcp://127.0.0.1:";
     server += std::to_string(server_port);
 
@@ -223,7 +223,9 @@ TEST_F(MuddleLearnerNetworkerTests, canAdd)
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   p3.Wait();
-  auto res = p3.Get();
+
+  ExecutionResult res{};
+  ASSERT_TRUE(p3.GetResult(res));
 
   EXPECT_EQ(res.succeeded(), true);
 
@@ -256,7 +258,9 @@ TEST_F(MuddleLearnerNetworkerTests, badFunctionName)
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   p3.Wait();
-  auto res = p3.Get();
+
+  ExecutionResult res{};
+  ASSERT_TRUE(p3.GetResult(res));
 
   EXPECT_EQ(res.succeeded(), false);
   EXPECT_EQ(res.error().code(), ExecutionErrorMessage::Code::RUNTIME_ERROR);

@@ -20,8 +20,9 @@
 #include "ml/model/model.hpp"
 #include "vm/array.hpp"
 #include "vm/object.hpp"
-#include "vm_modules/math/tensor.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
+#include "vm_modules/ml/model/model_estimator.hpp"
 
 namespace fetch {
 
@@ -59,6 +60,8 @@ enum class SupportedLayerType : uint8_t
 
 class VMModel : public fetch::vm::Object
 {
+  friend class fetch::vm_modules::ml::model::ModelEstimator;
+
 public:
   using DataType            = fetch::vm_modules::math::DataType;
   using TensorType          = fetch::math::Tensor<DataType>;
@@ -70,7 +73,13 @@ public:
   using TensorDataloader    = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
   using TensorDataloaderPtr = std::shared_ptr<TensorDataloader>;
   using VMTensor            = fetch::vm_modules::math::VMTensor;
+  using ModelEstimator      = fetch::vm_modules::ml::model::ModelEstimator;
   using SequentialModelPtr  = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
+
+  VMModel(VMModel const &other) = delete;
+  VMModel(VMModel &&other)      = delete;
+  VMModel &operator=(VMModel const &other) = default;  // TODO(): Needed for DeserializeFrom
+  VMModel &operator=(VMModel &&other) = delete;
 
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
@@ -83,11 +92,17 @@ public:
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm::String> const &model_category);
 
-  template <typename... LayerArgs>
-  void AddLayer(fetch::vm::Ptr<fetch::vm::String> const &layer, LayerArgs... args);
-
   void CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                          fetch::vm::Ptr<fetch::vm::String> const &optimiser);
+
+  void CompileSequentialWithMetrics(
+      fetch::vm::Ptr<fetch::vm::String> const &                    loss,
+      fetch::vm::Ptr<fetch::vm::String> const &                    optimiser,
+      fetch::vm::Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics);
+
+  void CompileSequentialImplementation(fetch::vm::Ptr<fetch::vm::String> const &      loss,
+                                       fetch::vm::Ptr<fetch::vm::String> const &      optimiser,
+                                       std::vector<fetch::ml::ops::MetricType> const &metrics);
 
   void CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
                      fetch::vm::Ptr<vm::Array<math::SizeType>> const &layer_shapes);
@@ -95,11 +110,11 @@ public:
   void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
            ::fetch::math::SizeType const &batch_size);
 
-  DataType Evaluate();
+  vm::Ptr<vm::Array<math::DataType>> Evaluate();
 
   vm::Ptr<VMTensor> Predict(vm::Ptr<VMTensor> const &data);
 
-  static void Bind(fetch::vm::Module &module);
+  static void Bind(fetch::vm::Module &module, bool experimental_enabled);
 
   void SetModel(ModelPtrType const &instance);
 
@@ -112,11 +127,34 @@ public:
   fetch::vm::Ptr<VMModel> DeserializeFromString(
       fetch::vm::Ptr<fetch::vm::String> const &model_string);
 
+  ModelEstimator &Estimator();
+
+  void LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+                     math::SizeType const &hidden_nodes);
+  void LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                               math::SizeType const &inputs, math::SizeType const &hidden_nodes,
+                               fetch::vm::Ptr<fetch::vm::String> const &activation);
+
+  // Experimental Layers
+  void LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                    math::SizeType const &output_channels, math::SizeType const &input_channels,
+                    math::SizeType const &kernel_size, math::SizeType const &stride_size);
+  void LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                              math::SizeType const &                   output_channels,
+                              math::SizeType const &                   input_channels,
+                              math::SizeType const &kernel_size, math::SizeType const &stride_size,
+                              fetch::vm::Ptr<fetch::vm::String> const &activation);
+  void LayerAddDenseActivationExperimental(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                           math::SizeType const &                   inputs,
+                                           math::SizeType const &                   hidden_nodes,
+                                           fetch::vm::Ptr<fetch::vm::String> const &activation);
+
 private:
   ModelPtrType       model_;
   ModelConfigPtrType model_config_;
   ModelCategory      model_category_ = ModelCategory::NONE;
-  bool               compiled_       = false;
+  ModelEstimator     estimator_;
+  bool               compiled_ = false;
 
   // First for input layer shape, second for output layer shape.
   static constexpr std::size_t min_total_layer_shapes = 2;
@@ -124,6 +162,7 @@ private:
   static const std::map<std::string, SupportedLayerType>                 layer_types_;
   static const std::map<std::string, fetch::ml::details::ActivationType> activations_;
   static const std::map<std::string, fetch::ml::ops::LossType>           losses_;
+  static const std::map<std::string, fetch::ml::ops::MetricType>         metrics_;
   static const std::map<std::string, fetch::ml::OptimiserType>           optimisers_;
   static const std::map<std::string, uint8_t>                            model_categories_;
 
@@ -131,25 +170,17 @@ private:
 
   void PrepareDataloader();
 
-  void AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &inputs,
-                            math::SizeType const &hidden_nodes);
-  void AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &inputs,
-                            math::SizeType const &                   hidden_nodes,
-                            fetch::vm::Ptr<fetch::vm::String> const &activation);
-  void AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &inputs,
-                            math::SizeType const &             hidden_nodes,
-                            fetch::ml::details::ActivationType activation);
-  void AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &output_channels,
-                            math::SizeType const &input_channels, math::SizeType const &kernel_size,
-                            math::SizeType const &stride_size);
-  void AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &output_channels,
-                            math::SizeType const &input_channels, math::SizeType const &kernel_size,
-                            math::SizeType const &                   stride_size,
-                            fetch::vm::Ptr<fetch::vm::String> const &activation);
-  void AddLayerSpecificImpl(SupportedLayerType layer, math::SizeType const &output_channels,
-                            math::SizeType const &input_channels, math::SizeType const &kernel_size,
-                            math::SizeType const &             stride_size,
-                            fetch::ml::details::ActivationType activation);
+  void LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                             math::SizeType const &                   inputs,
+                                             math::SizeType const &                   hidden_nodes,
+                                             fetch::ml::details::ActivationType       activation);
+
+  void LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                            math::SizeType const &             output_channels,
+                                            math::SizeType const &             input_channels,
+                                            math::SizeType const &             kernel_size,
+                                            math::SizeType const &             stride_size,
+                                            fetch::ml::details::ActivationType activation);
 
   inline void AssertLayerTypeMatches(SupportedLayerType                layer,
                                      std::vector<SupportedLayerType> &&valids) const;
@@ -160,6 +191,24 @@ private:
 
   inline SequentialModelPtr GetMeAsSequentialIfPossible();
 };
+
+/**
+ * Converts between user specified string and output type (e.g. activation, layer etc.)
+ * invokes VM runtime error if parsing failed.
+ * @param name user specified string to convert
+ * @param dict dictionary of existing entities
+ * @param errmsg preferred display name of expected type, that was not parsed
+ */
+template <typename T>
+inline T VMModel::ParseName(std::string const &name, std::map<std::string, T> const &dict,
+                            std::string const &errmsg) const
+{
+  if (dict.find(name) == dict.end())
+  {
+    throw std::runtime_error("Unknown " + errmsg + " name : " + name);
+  }
+  return dict.at(name);
+}
 
 }  // namespace model
 }  // namespace ml

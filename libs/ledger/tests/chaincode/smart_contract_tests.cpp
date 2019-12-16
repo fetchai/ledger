@@ -60,6 +60,11 @@ using Query              = SmartContract::Query;
 class SmartContractTests : public ContractTest
 {
 protected:
+  static void SetUpTestCase()
+  {
+    fetch::chain::InitialiseTestConstants();
+  }
+
   void CreateContract(std::string const &source)
   {
     // generate the smart contract instance for this contract
@@ -67,8 +72,7 @@ protected:
     contract_         = contract;
     contract_address_ = std::make_unique<Address>(contract->contract_digest());
     // populate the contract name too
-    contract_name_ = std::make_shared<Identifier>(contract_address_->address().ToHex() + "." +
-                                                  owner_address_->display());
+    contract_name_ = std::make_shared<ConstByteArray>(owner_address_->display());
 
     ASSERT_TRUE(static_cast<bool>(contract_));
     ASSERT_TRUE(static_cast<bool>(contract_name_));
@@ -120,7 +124,7 @@ TEST_F(SmartContractTests, CheckSimpleContract)
   EXPECT_TRUE(IsIn(query_handlers, "value"));
 
   // define our what we expect the values to be in our storage requests
-  auto const expected_key      = contract_name_->full_name() + ".state.value";
+  auto const expected_key      = *contract_name_ + ".state.value";
   auto const expected_resource = ResourceAddress{expected_key};
   auto const expected_value    = RawBytes<int32_t>(11);
 
@@ -221,16 +225,6 @@ TEST_F(SmartContractTests, CheckQueryReturnTypes)
     endfunction
 
     @query
-    function get_float() : Float32
-      return 1.0f;
-    endfunction
-
-    @query
-    function get_double() : Float64
-      return 2.0;
-    endfunction
-
-    @query
     function get_string() : String
       return "Why hello there";
     endfunction
@@ -245,8 +239,6 @@ TEST_F(SmartContractTests, CheckQueryReturnTypes)
   VerifyQuery("get_uint32", uint32_t{15});
   VerifyQuery("get_int64", int64_t{16});
   VerifyQuery("get_uint64", uint64_t{17});
-  VerifyQuery("get_float", float{1.0});
-  VerifyQuery("get_double", double{2.0});
   VerifyQuery("get_string", ConstByteArray{"Why hello there"});
 }
 
@@ -287,7 +279,7 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
   EXPECT_TRUE(IsIn(query_handlers, "offset"));
 
   // define our what we expect the values to be in our storage requests
-  auto const expected_key      = contract_name_->full_name() + ".state.value";
+  auto const expected_key      = *contract_name_ + ".state.value";
   auto const expected_resource = ResourceAddress{expected_key};
   auto const expected_value    = RawBytes<int32_t>(30);
 
@@ -363,8 +355,8 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
   fetch::crypto::ECDSASigner target{};
   fetch::chain::Address      target_address{target.identity()};
 
-  auto const owner_key  = contract_name_->full_name() + ".state." + owner_address_->display();
-  auto const target_key = contract_name_->full_name() + ".state." + target_address.display();
+  auto const owner_key  = *contract_name_ + ".state." + owner_address_->display();
+  auto const target_key = *contract_name_ + ".state." + target_address.display();
 
   auto const owner_resource   = ResourceAddress{owner_key};
   auto const target_resource  = ResourceAddress{target_key};
@@ -466,8 +458,8 @@ TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
   ASSERT_EQ(2, query_handlers.size());
 
   // define expected values
-  auto const       expected_key1      = contract_name_->full_name() + ".state.value.foo";
-  auto const       expected_key2      = contract_name_->full_name() + ".state.value.bar";
+  auto const       expected_key1      = *contract_name_ + ".state.value.foo";
+  auto const       expected_key2      = *contract_name_ + ".state.value.bar";
   auto const       expected_resource1 = ResourceAddress{expected_key1};
   auto const       expected_resource2 = ResourceAddress{expected_key2};
   auto const       expected_value1    = RawBytes<int32_t>(20);
@@ -544,8 +536,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
   Address address_as_name{Identity{address_raw}};
 
   // define expected values
-  auto const expected_key1 =
-      contract_name_->full_name() + ".state." + address_as_name.display() + ".foo";
+  auto const       expected_key1 = *contract_name_ + ".state." + address_as_name.display() + ".foo";
   auto const       expected_resource1 = ResourceAddress{expected_key1};
   auto const       expected_value1    = RawBytes<int32_t>(20);
   fetch::BitVector mask{1ull << 4u};
@@ -725,7 +716,7 @@ TEST_F(SmartContractTests, CheckContextInAction)
 
   auto tx{TransactionBuilder()
               .From(Address{certificate_->identity()})
-              .TargetSmartContract(*contract_address_, *owner_address_, shards_)
+              .TargetSmartContract(*contract_address_, shards_)
               .Action("test_transaction")
               .Transfer(transfer0.to, transfer0.amount)
               .Transfer(transfer1.to, transfer1.amount)

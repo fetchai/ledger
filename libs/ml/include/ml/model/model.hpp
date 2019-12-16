@@ -32,6 +32,17 @@
 #include <utility>
 
 namespace fetch {
+
+namespace vm_modules {
+namespace ml {
+namespace model {
+class ModelEstimator;
+}
+}  // namespace ml
+}  // namespace vm_modules
+}  // namespace fetch
+
+namespace fetch {
 namespace dmlf {
 namespace collective_learning {
 template <class TensorType>
@@ -96,8 +107,11 @@ public:
   std::string OutputName();
   std::string ErrorName();
 
+  bool DataLoaderIsSet();
+
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
+  friend class fetch::vm_modules::ml::model::ModelEstimator;
 
 protected:
   ModelConfig<DataType> model_config_;
@@ -264,6 +278,10 @@ void Model<TensorType>::Test(DataType &test_loss)
   {
     throw ml::exceptions::InvalidMode("must compile model before testing");
   }
+  if (!DataLoaderIsSet())
+  {
+    throw ml::exceptions::InvalidMode("must set data before testing");
+  }
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TEST);
 
@@ -297,6 +315,10 @@ typename Model<TensorType>::DataVectorType Model<TensorType>::Evaluate(
   if (!compiled_)
   {
     throw ml::exceptions::InvalidMode("must compile model before evaluating");
+  }
+  if (!DataLoaderIsSet())
+  {
+    throw ml::exceptions::InvalidMode("must set data before evaluating");
   }
 
   dataloader_ptr_->SetMode(dl_mode);
@@ -417,6 +439,10 @@ void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
   {
     throw ml::exceptions::InvalidMode("must compile model before training");
   }
+  if (!DataLoaderIsSet())
+  {
+    throw ml::exceptions::InvalidMode("must set data before training");
+  }
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
 
@@ -478,6 +504,15 @@ void Model<TensorType>::TrainImplementation(DataType &loss, SizeType n_rounds)
   loss = loss_;
 }
 
+template <typename TensorType>
+bool Model<TensorType>::DataLoaderIsSet()
+{
+  if (!dataloader_ptr_)
+  {
+    return false;
+  }
+  return dataloader_ptr_->Size() != 0;
+}
 }  // namespace model
 }  // namespace ml
 

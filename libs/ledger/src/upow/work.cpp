@@ -33,16 +33,14 @@
 namespace fetch {
 namespace ledger {
 
-Work::Work(Digest digest, chain::Address address, crypto::Identity miner)
-  : contract_digest_{std::move(digest)}
-  , contract_address_{std::move(address)}
-  , miner_{std::move(miner)}
+Work::Work(BlockIndex block_index)
+  : block_index_{block_index}
 {}
 
-Digest const &Work::contract_digest() const
-{
-  return contract_digest_;
-}
+Work::Work(chain::Address address, crypto::Identity miner)
+  : contract_address_{std::move(address)}
+  , miner_{std::move(miner)}
+{}
 
 chain::Address const &Work::address() const
 {
@@ -64,9 +62,9 @@ WorkScore Work::score() const
   return score_;
 }
 
-void Work::UpdateDigest(Digest digest)
+Work::BlockIndex Work::block_index() const
 {
-  contract_digest_ = std::move(digest);
+  return block_index_;
 }
 
 void Work::UpdateAddress(chain::Address address)
@@ -94,7 +92,6 @@ Work::UInt256 Work::CreateHashedNonce() const
   crypto::SHA256 hasher{};
   hasher.Reset();
 
-  hasher.Update(contract_digest_);
   hasher.Update(miner_.identifier());
   hasher.Update(nonce_.pointer(), nonce_.size());
 
@@ -102,10 +99,7 @@ Work::UInt256 Work::CreateHashedNonce() const
   hasher.Reset();
   hasher.Update(digest1);
 
-  // Forcing little endian representation of the hash (even if it is actually
-  // represented in big endian encoding) in order to keep compatibility with
-  // proofs recorded in previously generated blocks.
-  return UInt256{hasher.Final(), memory::Endian::BIG};
+  return UInt256{hasher.Final(), platform::Endian::BIG};
 }
 
 }  // namespace ledger

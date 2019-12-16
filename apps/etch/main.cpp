@@ -48,11 +48,11 @@
 
 namespace {
 
-using fetch::vm_modules::VMFactory;
-using fetch::json::JSONDocument;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
 using fetch::byte_array::ToHex;
+using fetch::json::JSONDocument;
+using fetch::vm_modules::VMFactory;
 
 using namespace fetch::vm;
 
@@ -314,7 +314,16 @@ int main(int argc, char **argv)
   }
 
   auto executable = std::make_unique<Executable>();
-  auto module     = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
+
+  std::shared_ptr<Module> module;
+  if (params.program().GetParam("experimental", false))
+  {
+    module = VMFactory::GetModule(VMFactory::USE_ALL);
+  }
+  else
+  {
+    module = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
+  }
 
   // additional module bindings
   module->CreateClassType<System>("System")

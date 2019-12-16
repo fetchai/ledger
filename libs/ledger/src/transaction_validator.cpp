@@ -22,18 +22,11 @@
 #include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
-#include "ledger/identifier.hpp"
 #include "ledger/transaction_validator.hpp"
 
 namespace fetch {
 namespace ledger {
 namespace {
-
-bool IsCreateWealth(chain::Transaction const &tx)
-{
-  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
-         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
-}
 
 }  // namespace
 
@@ -52,7 +45,7 @@ TransactionValidator::TransactionValidator(StorageInterface &storage, TokenContr
  * @return SUCCESS if successful, otherwise a corresponding error code
  */
 ContractExecutionStatus TransactionValidator::operator()(chain::Transaction const &tx,
-                                                         uint64_t                  block_index)
+                                                         uint64_t block_index) const
 {
   // CHECK: Determine if the transaction is valid for the given block
   auto const tx_validity = tx.GetValidity(block_index);
@@ -61,18 +54,12 @@ ContractExecutionStatus TransactionValidator::operator()(chain::Transaction cons
     return ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK;
   }
 
-  // SHORT TERM EXEMPTION - While no state file exists (and the wealth endpoint is still present)
-  // this and only this contract is exempt from the pre-validation checks
-  if (IsCreateWealth(tx))
-  {
-    return ContractExecutionStatus::SUCCESS;
-  }
-
   // attach the token contract to the storage engine
-  StateAdapter storage_adapter{storage_, Identifier{"fetch.token"}};
+  StateAdapter storage_adapter{storage_, "fetch.token"};
 
   {
-    ContractContext ctx{&token_contract_, tx.contract_address(), &storage_adapter, block_index};
+    ContractContext         ctx{&token_contract_, tx.contract_address(), nullptr, &storage_adapter,
+                        block_index};
     ContractContextAttacher attacher{token_contract_, ctx};
 
     // CHECK: Ensure there is permission from the originating address to perform the transaction
@@ -115,6 +102,11 @@ ContractExecutionStatus TransactionValidator::operator()(chain::Transaction cons
     if ((tx.charge_limit() < min_charge) || (tx.charge_rate() == 0))
     {
       return ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE;
+    }
+
+    if (tx.charge_limit() > chain::Transaction::MAXIMUM_TX_CHARGE_LIMIT)
+    {
+      return ContractExecutionStatus::TX_CHARGE_LIMIT_TOO_HIGH;
     }
 
     // CHECK: Ensure that the originator has funds available to make both all the transfers in the

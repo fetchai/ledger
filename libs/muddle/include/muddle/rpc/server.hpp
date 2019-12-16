@@ -54,7 +54,7 @@ public:
   Server &operator=(Server &&) = delete;
 
 protected:
-  bool DeliverResponse(ConstByteArray const &address, network::MessageType const &data) override;
+  bool DeliverResponse(ConstByteArray const &address, network::MessageBuffer const &data) override;
 
 private:
   void OnMessage(Packet const &packet, Address const &last_hop);

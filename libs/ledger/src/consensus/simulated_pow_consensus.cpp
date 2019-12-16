@@ -39,9 +39,11 @@ using SimulatedPowConsensus = fetch::ledger::SimulatedPowConsensus;
 using NextBlockPtr          = SimulatedPowConsensus::NextBlockPtr;
 using Status                = SimulatedPowConsensus::Status;
 
-SimulatedPowConsensus::SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms)
+SimulatedPowConsensus::SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms,
+                                             MainChain const &chain)
   : mining_identity_{std::move(mining_identity)}
   , block_interval_ms_{block_interval_ms}
+  , chain_{chain}
 {}
 
 uint64_t GetPoissonSample(uint64_t range, double mean_of_distribution)
@@ -143,8 +145,15 @@ NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()
   return ret;
 }
 
-Status SimulatedPowConsensus::ValidBlock(Block const & /*current*/) const
+Status SimulatedPowConsensus::ValidBlock(Block const &current) const
 {
+  // Loose blocks can not be valid, and the chain must be there.
+  if (!chain_.GetBlock(current.previous_hash))
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Attempted to validate loose block. Discarding.");
+    return Status::NO;
+  }
+
   return Status::YES;
 }
 
@@ -166,6 +175,9 @@ void SimulatedPowConsensus::SetAeonPeriod(uint16_t /*aeon_period*/)
 
 void SimulatedPowConsensus::Reset(StakeSnapshot const & /*snapshot*/,
                                   StorageInterface & /*storage*/)
+{}
+
+void SimulatedPowConsensus::Reset(StakeSnapshot const & /*snapshot*/)
 {}
 
 void SimulatedPowConsensus::SetDefaultStartTime(uint64_t /*default_start_time*/)

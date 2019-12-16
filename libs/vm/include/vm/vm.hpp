@@ -23,6 +23,7 @@
 #include "vm/object.hpp"
 #include "vm/opcodes.hpp"
 #include "vm/string.hpp"
+#include "vm/user_defined_object.hpp"
 #include "vm/variant.hpp"
 
 #include <cassert>
@@ -42,6 +43,9 @@
 
 namespace fetch {
 namespace vm {
+
+template <typename ArgsTuple, typename... Args>
+bool EstimateCharge(VM *vm, ChargeEstimator<Args...> &&e, ArgsTuple const &args);
 
 template <typename T, typename = void>
 struct Getter;
@@ -123,8 +127,10 @@ class ParameterPack
 {
 public:
   // Construction / Destruction
-  explicit ParameterPack(RegisteredTypes const &registered_types, VM *vm = nullptr)
+  explicit ParameterPack(RegisteredTypes const &registered_types, VariantArray params = {},
+                         VM *vm = nullptr)
     : registered_types_{registered_types}
+    , params_{std::move(params)}
     , vm_{vm}
   {}
 
@@ -228,13 +234,13 @@ private:
   }
 
   RegisteredTypes const &registered_types_;
-  VariantArray           params_{};
-  VM *                   vm_;
+  VariantArray           params_;
+  VM *const              vm_;
 };
 
 using ContractInvocationHandler = std::function<bool(
     VM * /* vm */, std::string const & /* identity */, Executable::Contract const & /* contract */,
-    Executable::Function const & /* function */, VariantArray const & /* parameters */,
+    Executable::Function const & /* function */, VariantArray /* parameters */,
     std::string & /* error */, Variant & /* output */)>;
 
 class VM
@@ -445,12 +451,15 @@ public:
     output_buffer_ << line << '\n';
   }
 
-  // These two are public for the benefit of the static Constructor() functions in
-  // each of the Object-derived classes
   void RuntimeError(std::string const &message);
   bool HasError() const
   {
     return !error_.empty();
+  }
+
+  Executable::UserDefinedType const &GetUserDefinedType(uint16_t type_id) const
+  {
+    return executable_->GetUserDefinedType(type_id);
   }
 
   void LoadExecutable(Executable const *executable)
@@ -578,24 +587,25 @@ public:
   ChargeAmount GetChargeTotal() const;
   void         IncreaseChargeTotal(ChargeAmount amount);
   ChargeAmount GetChargeLimit() const;
+  bool         ChargeLimitExceeded();
   void         SetChargeLimit(ChargeAmount limit);
 
   void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_static_charges);
 
 private:
   static const int FRAME_STACK_SIZE = 50;
-  static const int STACK_SIZE       = 5000;
-  static const int MAX_LIVE_OBJECTS = 200;
-  static const int MAX_RANGE_LOOPS  = 50;
+  static const int STACK_SIZE       = 1024;
+  static const int MAX_RANGE_LOOPS  = 16;
 
   using OpcodeInfoArray = std::vector<OpcodeInfo>;
   using OpcodeMap       = std::unordered_map<std::string, uint16_t>;
 
   struct Frame
   {
-    Executable::Function const *function;
-    int                         bsp;
-    uint16_t                    pc;
+    Executable::Function const *function{};
+    int                         bsp{};
+    uint16_t                    pc{};
+    Variant                     self;
   };
 
   struct ForRangeLoop
@@ -608,9 +618,14 @@ private:
 
   struct LiveObjectInfo
   {
-    int      frame_sp;
-    uint16_t variable_index;
-    uint16_t scope_number;
+    LiveObjectInfo(int frame_sp__, uint16_t variable_index__, uint16_t scope_number__)
+      : frame_sp(frame_sp__)
+      , variable_index(variable_index__)
+      , scope_number(scope_number__)
+    {}
+    int      frame_sp{};
+    uint16_t variable_index{};
+    uint16_t scope_number{};
   };
 
   template <typename T>
@@ -642,9 +657,9 @@ private:
   int                            sp_{};
   ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS]{};
   int                            range_loop_sp_{};
-  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS]{};
-  int                            live_object_sp_{};
+  std::vector<LiveObjectInfo>    live_object_stack_;
   uint16_t                       pc_{};
+  Variant                        self_;
   uint16_t                       instruction_pc_{};
   Executable::Instruction const *instruction_{};
   bool                           stop_{};
@@ -694,9 +709,29 @@ private:
     return Opcodes::Unknown;
   }
 
-  Variant &Push()
+  bool PushFrame()
   {
-    return stack_[++sp_];
+    if (++frame_sp_ < FRAME_STACK_SIZE)
+    {
+      Frame &frame   = frame_stack_[frame_sp_];
+      frame.function = function_;
+      frame.bsp      = bsp_;
+      frame.pc       = pc_;
+      frame.self     = self_;
+      return true;
+    }
+    --frame_sp_;
+    RuntimeError("frame stack overflow");
+    return false;
+  }
+
+  void PopFrame()
+  {
+    Frame &frame = frame_stack_[frame_sp_--];
+    function_    = frame.function;
+    bsp_         = frame.bsp;
+    pc_          = frame.pc;
+    self_        = std::move(frame.self);
   }
 
   Variant &Pop()
@@ -709,7 +744,7 @@ private:
     return stack_[sp_];
   }
 
-  Variant &GetVariable(uint16_t variable_index)
+  Variant &GetLocalVariable(uint16_t variable_index)
   {
     return stack_[bsp_ + variable_index];
   }
@@ -732,26 +767,38 @@ private:
     }
   };
 
-  bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const
+  bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
   {
     if (lhso)
     {
       if (rhso)
       {
-        return lhso->IsEqual(lhso, rhso);
+        if (EstimateCharge(this, ChargeEstimator<>([lhso, rhso]() -> ChargeAmount {
+                             return lhso->IsEqualChargeEstimator(lhso, rhso);
+                           }),
+                           std::tuple<>{}))
+        {
+          return lhso->IsEqual(lhso, rhso);
+        }
       }
       return false;
     }
     return (rhso == nullptr);
   }
 
-  bool IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const
+  bool IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
   {
     if (lhso)
     {
       if (rhso)
       {
-        return lhso->IsNotEqual(lhso, rhso);
+        if (EstimateCharge(this, ChargeEstimator<>([lhso, rhso]() -> ChargeAmount {
+                             return lhso->IsNotEqualChargeEstimator(lhso, rhso);
+                           }),
+                           std::tuple<>{}))
+        {
+          return lhso->IsNotEqual(lhso, rhso);
+        }
       }
       return true;
     }
@@ -773,6 +820,11 @@ private:
     {
       lhsv.Assign(lhsv.object->IsLessThan(lhsv.object, rhsv.object), TypeIds::Bool);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->IsLessThanChargeEstimator(lhsv.object, rhsv.object);
+    }
   };
 
   struct PrimitiveLessThanOrEqual
@@ -789,6 +841,11 @@ private:
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
       lhsv.Assign(lhsv.object->IsLessThanOrEqual(lhsv.object, rhsv.object), TypeIds::Bool);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->IsLessThanOrEqualChargeEstimator(lhsv.object, rhsv.object);
     }
   };
 
@@ -807,6 +864,11 @@ private:
     {
       lhsv.Assign(lhsv.object->IsGreaterThan(lhsv.object, rhsv.object), TypeIds::Bool);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->IsGreaterThanChargeEstimator(lhsv.object, rhsv.object);
+    }
   };
 
   struct PrimitiveGreaterThanOrEqual
@@ -823,6 +885,11 @@ private:
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
       lhsv.Assign(lhsv.object->IsGreaterThanOrEqual(lhsv.object, rhsv.object), TypeIds::Bool);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->IsGreaterThanOrEqualChargeEstimator(lhsv.object, rhsv.object);
     }
   };
 
@@ -904,6 +971,11 @@ private:
     {
       lhso->Add(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->AddChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectLeftAdd
@@ -911,6 +983,11 @@ private:
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
       rhsv.object->LeftAdd(lhsv, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return rhsv.object->LeftAddChargeEstimator(lhsv, rhsv);
     }
   };
 
@@ -920,6 +997,11 @@ private:
     {
       lhsv.object->RightAdd(lhsv, rhsv);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->RightAddChargeEstimator(lhsv, rhsv);
+    }
   };
 
   struct ObjectInplaceAdd
@@ -928,6 +1010,11 @@ private:
     {
       lhso->InplaceAdd(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->InplaceAddChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectInplaceRightAdd
@@ -935,6 +1022,11 @@ private:
     static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
       lhso->InplaceRightAdd(lhso, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Variant const &rhsv)
+    {
+      return lhso->InplaceRightAddChargeEstimator(lhso, rhsv);
     }
   };
 
@@ -953,6 +1045,11 @@ private:
     {
       lhso->Subtract(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->SubtractChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectLeftSubtract
@@ -960,6 +1057,11 @@ private:
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
       rhsv.object->LeftSubtract(lhsv, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return rhsv.object->LeftSubtractChargeEstimator(lhsv, rhsv);
     }
   };
 
@@ -969,6 +1071,11 @@ private:
     {
       lhsv.object->RightSubtract(lhsv, rhsv);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->RightSubtractChargeEstimator(lhsv, rhsv);
+    }
   };
 
   struct ObjectInplaceSubtract
@@ -977,6 +1084,11 @@ private:
     {
       lhso->InplaceSubtract(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->InplaceSubtractChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectInplaceRightSubtract
@@ -984,6 +1096,11 @@ private:
     static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
       lhso->InplaceRightSubtract(lhso, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Variant const &rhsv)
+    {
+      return lhso->InplaceRightSubtractChargeEstimator(lhso, rhsv);
     }
   };
 
@@ -1002,6 +1119,11 @@ private:
     {
       lhso->Multiply(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->MultiplyChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectLeftMultiply
@@ -1009,6 +1131,11 @@ private:
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
       rhsv.object->LeftMultiply(lhsv, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return rhsv.object->LeftMultiplyChargeEstimator(lhsv, rhsv);
     }
   };
 
@@ -1018,6 +1145,11 @@ private:
     {
       lhsv.object->RightMultiply(lhsv, rhsv);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->RightMultiplyChargeEstimator(lhsv, rhsv);
+    }
   };
 
   struct ObjectInplaceMultiply
@@ -1026,6 +1158,11 @@ private:
     {
       lhso->InplaceMultiply(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->InplaceMultiplyChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectInplaceRightMultiply
@@ -1033,6 +1170,11 @@ private:
     static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
       lhso->InplaceRightMultiply(lhso, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Variant const &rhsv)
+    {
+      return lhso->InplaceRightMultiplyChargeEstimator(lhso, rhsv);
     }
   };
 
@@ -1056,6 +1198,11 @@ private:
     {
       lhso->Divide(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->DivideChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectLeftDivide
@@ -1063,6 +1210,11 @@ private:
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
       rhsv.object->LeftDivide(lhsv, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return rhsv.object->LeftDivideChargeEstimator(lhsv, rhsv);
     }
   };
 
@@ -1072,6 +1224,11 @@ private:
     {
       lhsv.object->RightDivide(lhsv, rhsv);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Variant const &lhsv, Variant const &rhsv)
+    {
+      return lhsv.object->RightDivideChargeEstimator(lhsv, rhsv);
+    }
   };
 
   struct ObjectInplaceDivide
@@ -1080,6 +1237,11 @@ private:
     {
       lhso->InplaceDivide(lhso, rhso);
     }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+    {
+      return lhso->InplaceDivideChargeEstimator(lhso, rhso);
+    }
   };
 
   struct ObjectInplaceRightDivide
@@ -1087,6 +1249,11 @@ private:
     static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
       lhso->InplaceRightDivide(lhso, rhsv);
+    }
+
+    static ChargeAmount ApplyChargeEstimator(Ptr<Object> const &lhso, Variant const &rhsv)
+    {
+      return lhso->InplaceRightDivideChargeEstimator(lhso, rhsv);
     }
   };
 
@@ -1152,16 +1319,6 @@ private:
     case TypeIds::UInt64:
     {
       Op::Apply(lhsv, lhsv.primitive.ui64, rhsv.primitive.ui64);
-      break;
-    }
-    case TypeIds::Float32:
-    {
-      Op::Apply(lhsv, lhsv.primitive.f32, rhsv.primitive.f32);
-      break;
-    }
-    case TypeIds::Float64:
-    {
-      Op::Apply(lhsv, lhsv.primitive.f64, rhsv.primitive.f64);
       break;
     }
     case TypeIds::Fixed32:
@@ -1282,16 +1439,6 @@ private:
       Op::Apply(this, lhsv.primitive.ui64, rhsv.primitive.ui64);
       break;
     }
-    case TypeIds::Float32:
-    {
-      Op::Apply(this, lhsv.primitive.f32, rhsv.primitive.f32);
-      break;
-    }
-    case TypeIds::Float64:
-    {
-      Op::Apply(this, lhsv.primitive.f64, rhsv.primitive.f64);
-      break;
-    }
     case TypeIds::Fixed32:
     {
       auto *              lhsv_fp32 = reinterpret_cast<fixed_point::fp32_t *>(&lhsv);
@@ -1410,16 +1557,6 @@ private:
       Op::Apply(this, *static_cast<uint64_t *>(lhs), rhsv.primitive.ui64);
       break;
     }
-    case TypeIds::Float32:
-    {
-      Op::Apply(this, *static_cast<float *>(lhs), rhsv.primitive.f32);
-      break;
-    }
-    case TypeIds::Float64:
-    {
-      Op::Apply(this, *static_cast<double *>(lhs), rhsv.primitive.f64);
-      break;
-    }
     case TypeIds::Fixed32:
     {
       auto *              lhs_fp32  = reinterpret_cast<fixed_point::fp32_t *>(lhs);
@@ -1457,8 +1594,14 @@ private:
     Variant &lhsv = Top();
     if (lhsv.object && rhsv.object)
     {
-      Op::Apply(lhsv, rhsv);
-      rhsv.Reset();
+      if (EstimateCharge(this, ChargeEstimator<>([lhsv, rhsv]() -> ChargeAmount {
+                           return Op::ApplyChargeEstimator(lhsv, rhsv);
+                         }),
+                         std::tuple<>{}))
+      {
+        Op::Apply(lhsv, rhsv);
+        rhsv.Reset();
+      }
       return;
     }
     RuntimeError("null reference");
@@ -1467,15 +1610,21 @@ private:
   template <typename Op>
   void DoPrefixPostfixOp(TypeId type_id, void *lhs)
   {
-    Variant &rhsv = Push();
-    ExecuteIntegralInplaceOp<Op>(type_id, lhs, rhsv);
-    rhsv.type_id = instruction_->type_id;
+    if (++sp_ < STACK_SIZE)
+    {
+      Variant &rhsv = Top();
+      ExecuteIntegralInplaceOp<Op>(type_id, lhs, rhsv);
+      rhsv.type_id = instruction_->type_id;
+      return;
+    }
+    --sp_;
+    RuntimeError("stack overflow");
   }
 
   template <typename Op>
-  void DoVariablePrefixPostfixOp()
+  void DoLocalVariablePrefixPostfixOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoPrefixPostfixOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
@@ -1504,8 +1653,14 @@ private:
     Variant &lhsv = Top();
     if (lhsv.object && rhsv.object)
     {
-      Op::Apply(lhsv.object, rhsv.object);
-      rhsv.Reset();
+      if (EstimateCharge(this, ChargeEstimator<>([lhsv, rhsv]() -> ChargeAmount {
+                           return Op::ApplyChargeEstimator(lhsv.object, rhsv.object);
+                         }),
+                         std::tuple<>{}))
+      {
+        Op::Apply(lhsv.object, rhsv.object);
+        rhsv.Reset();
+      }
       return;
     }
     RuntimeError("null reference");
@@ -1523,8 +1678,14 @@ private:
         RuntimeError("null reference");
         return;
       }
-      Op::Apply(lhsv, rhsv);
-      rhsv.Reset();
+      if (EstimateCharge(this, ChargeEstimator<>([lhsv, rhsv]() -> ChargeAmount {
+                           return Op::ApplyChargeEstimator(lhsv, rhsv);
+                         }),
+                         std::tuple<>{}))
+      {
+        Op::Apply(lhsv, rhsv);
+        rhsv.Reset();
+      }
       return;
     }
     RuntimeError("null reference");
@@ -1542,8 +1703,14 @@ private:
         RuntimeError("null reference");
         return;
       }
-      Op::Apply(lhsv, rhsv);
-      rhsv.Reset();
+      if (EstimateCharge(this, ChargeEstimator<>([lhsv, rhsv]() -> ChargeAmount {
+                           return Op::ApplyChargeEstimator(lhsv, rhsv);
+                         }),
+                         std::tuple<>{}))
+      {
+        Op::Apply(lhsv, rhsv);
+        rhsv.Reset();
+      }
       return;
     }
     RuntimeError("null reference");
@@ -1571,8 +1738,14 @@ private:
     Variant &rhsv = Pop();
     if (lhso && rhsv.object)
     {
-      Op::Apply(lhso, rhsv.object);
-      rhsv.Reset();
+      if (EstimateCharge(this, ChargeEstimator<>([lhso, rhsv]() -> ChargeAmount {
+                           return Op::ApplyChargeEstimator(lhso, rhsv.object);
+                         }),
+                         std::tuple<>{}))
+      {
+        Op::Apply(lhso, rhsv.object);
+        rhsv.Reset();
+      }
       return;
     }
     RuntimeError("null reference");
@@ -1589,54 +1762,134 @@ private:
         RuntimeError("null reference");
         return;
       }
-      Op::Apply(lhso, rhsv);
-      rhsv.Reset();
+      if (EstimateCharge(this, ChargeEstimator<>([lhso, rhsv]() -> ChargeAmount {
+                           return Op::ApplyChargeEstimator(lhso, rhsv);
+                         }),
+                         std::tuple<>{}))
+      {
+        Op::Apply(lhso, rhsv);
+        rhsv.Reset();
+      }
       return;
     }
     RuntimeError("null reference");
   }
 
   template <typename Op>
-  void DoVariableIntegralInplaceOp()
+  void DoLocalVariableIntegralInplaceOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoIntegralInplaceOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
   template <typename Op>
-  void DoVariableNumericInplaceOp()
+  void DoLocalVariableNumericInplaceOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoNumericInplaceOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
   template <typename Op>
-  void DoVariableObjectInplaceOp()
+  void DoLocalVariableObjectInplaceOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoObjectInplaceOp<Op>(variable.object);
   }
 
   template <typename Op>
-  void DoVariableObjectInplaceRightOp()
+  void DoLocalVariableObjectInplaceRightOp()
   {
-    Variant &variable = GetVariable(instruction_->index);
+    Variant &variable = GetLocalVariable(instruction_->index);
     DoObjectInplaceRightOp<Op>(variable.object);
+  }
+
+  template <typename Op>
+  void DoMemberVariablePrefixPostfixOp()
+  {
+    Variant                objectv             = std::move(Pop());
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoPrefixPostfixOp<Op>(instruction_->type_id, &variable.primitive);
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoMemberVariableIntegralInplaceOp()
+  {
+    Variant                objectv             = std::move(stack_[sp_ - 1]);
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoIntegralInplaceOp<Op>(instruction_->type_id, &variable.primitive);
+      --sp_;
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoMemberVariableNumericInplaceOp()
+  {
+    Variant                objectv             = std::move(stack_[sp_ - 1]);
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoNumericInplaceOp<Op>(instruction_->type_id, &variable.primitive);
+      --sp_;
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoMemberVariableObjectInplaceOp()
+  {
+    Variant                objectv             = std::move(stack_[sp_ - 1]);
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoObjectInplaceOp<Op>(variable.object);
+      --sp_;
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoMemberVariableObjectInplaceRightOp()
+  {
+    Variant                objectv             = std::move(stack_[sp_ - 1]);
+    Ptr<UserDefinedObject> user_defined_object = std::move(objectv.object);
+    if (user_defined_object)
+    {
+      Variant &variable = user_defined_object->GetVariable(instruction_->index);
+      DoObjectInplaceRightOp<Op>(variable.object);
+      --sp_;
+      return;
+    }
+    RuntimeError("null reference");
   }
 
   //
   // Opcode handler prototypes
   //
 
-  void Handler__VariableDeclare();
-  void Handler__VariableDeclareAssign();
+  void Handler__LocalVariableDeclare();
+  void Handler__LocalVariableDeclareAssign();
   void Handler__PushNull();
   void Handler__PushFalse();
   void Handler__PushTrue();
   void Handler__PushString();
   void Handler__PushConstant();
-  void Handler__PushVariable();
-  void Handler__PopToVariable();
+  void Handler__PushLocalVariable();
+  void Handler__PopToLocalVariable();
   void Handler__Inc();
   void Handler__Dec();
   void Handler__Duplicate();
@@ -1653,10 +1906,10 @@ private:
   void Handler__ForRangeIterate();
   void Handler__ForRangeTerminate();
   void Handler__InvokeUserDefinedFreeFunction();
-  void Handler__VariablePrefixInc();
-  void Handler__VariablePrefixDec();
-  void Handler__VariablePostfixInc();
-  void Handler__VariablePostfixDec();
+  void Handler__LocalVariablePrefixInc();
+  void Handler__LocalVariablePrefixDec();
+  void Handler__LocalVariablePostfixInc();
+  void Handler__LocalVariablePostfixDec();
   void Handler__JumpIfFalseOrPop();
   void Handler__JumpIfTrueOrPop();
   void Handler__Not();
@@ -1678,36 +1931,58 @@ private:
   void Handler__ObjectAdd();
   void Handler__ObjectLeftAdd();
   void Handler__ObjectRightAdd();
-  void Handler__VariablePrimitiveInplaceAdd();
-  void Handler__VariableObjectInplaceAdd();
-  void Handler__VariableObjectInplaceRightAdd();
+  void Handler__LocalVariablePrimitiveInplaceAdd();
+  void Handler__LocalVariableObjectInplaceAdd();
+  void Handler__LocalVariableObjectInplaceRightAdd();
   void Handler__PrimitiveSubtract();
   void Handler__ObjectSubtract();
   void Handler__ObjectLeftSubtract();
   void Handler__ObjectRightSubtract();
-  void Handler__VariablePrimitiveInplaceSubtract();
-  void Handler__VariableObjectInplaceSubtract();
-  void Handler__VariableObjectInplaceRightSubtract();
+  void Handler__LocalVariablePrimitiveInplaceSubtract();
+  void Handler__LocalVariableObjectInplaceSubtract();
+  void Handler__LocalVariableObjectInplaceRightSubtract();
   void Handler__PrimitiveMultiply();
   void Handler__ObjectMultiply();
   void Handler__ObjectLeftMultiply();
   void Handler__ObjectRightMultiply();
-  void Handler__VariablePrimitiveInplaceMultiply();
-  void Handler__VariableObjectInplaceMultiply();
-  void Handler__VariableObjectInplaceRightMultiply();
+  void Handler__LocalVariablePrimitiveInplaceMultiply();
+  void Handler__LocalVariableObjectInplaceMultiply();
+  void Handler__LocalVariableObjectInplaceRightMultiply();
   void Handler__PrimitiveDivide();
   void Handler__ObjectDivide();
   void Handler__ObjectLeftDivide();
   void Handler__ObjectRightDivide();
-  void Handler__VariablePrimitiveInplaceDivide();
-  void Handler__VariableObjectInplaceDivide();
-  void Handler__VariableObjectInplaceRightDivide();
+  void Handler__LocalVariablePrimitiveInplaceDivide();
+  void Handler__LocalVariableObjectInplaceDivide();
+  void Handler__LocalVariableObjectInplaceRightDivide();
   void Handler__PrimitiveModulo();
-  void Handler__VariablePrimitiveInplaceModulo();
+  void Handler__LocalVariablePrimitiveInplaceModulo();
   void Handler__InitialiseArray();
   void Handler__ContractVariableDeclareAssign();
   void Handler__InvokeContractFunction();
   void Handler__PushLargeConstant();
+  void Handler__PushMemberVariable();
+  void Handler__PopToMemberVariable();
+  void Handler__MemberVariablePrefixInc();
+  void Handler__MemberVariablePrefixDec();
+  void Handler__MemberVariablePostfixInc();
+  void Handler__MemberVariablePostfixDec();
+  void Handler__MemberVariablePrimitiveInplaceAdd();
+  void Handler__MemberVariableObjectInplaceAdd();
+  void Handler__MemberVariableObjectInplaceRightAdd();
+  void Handler__MemberVariablePrimitiveInplaceSubtract();
+  void Handler__MemberVariableObjectInplaceSubtract();
+  void Handler__MemberVariableObjectInplaceRightSubtract();
+  void Handler__MemberVariablePrimitiveInplaceMultiply();
+  void Handler__MemberVariableObjectInplaceMultiply();
+  void Handler__MemberVariableObjectInplaceRightMultiply();
+  void Handler__MemberVariablePrimitiveInplaceDivide();
+  void Handler__MemberVariableObjectInplaceDivide();
+  void Handler__MemberVariableObjectInplaceRightDivide();
+  void Handler__MemberVariablePrimitiveInplaceModulo();
+  void Handler__PushSelf();
+  void Handler__InvokeUserDefinedConstructor();
+  void Handler__InvokeUserDefinedMemberFunction();
 
   friend class Object;
   friend class Module;

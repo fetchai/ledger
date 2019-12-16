@@ -426,15 +426,6 @@ Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
     return Ptr<IArray>{
         new Array<uint64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
-  case TypeIds::Float32:
-  {
-    return Ptr<IArray>{new Array<float>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
-  }
-  case TypeIds::Float64:
-  {
-    return Ptr<IArray>{
-        new Array<double>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
-  }
   case TypeIds::Fixed32:
   {
     return Ptr<IArray>{

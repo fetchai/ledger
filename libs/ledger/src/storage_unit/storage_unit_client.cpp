@@ -22,6 +22,7 @@
 #include "chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/storage_unit/transaction_finder_protocol.hpp"
+#include "ledger/storage_unit/transaction_storage_protocol.hpp"
 
 #include <cstddef>
 #include <iterator>
@@ -34,7 +35,6 @@
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
 using fetch::service::Promise;
-using fetch::byte_array::ToBase64;
 
 namespace fetch {
 namespace ledger {
@@ -59,8 +59,6 @@ constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
 constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
 
 }  // namespace
-
-using TxStoreProtocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
 
 StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const &shards,
                                      uint32_t log2_num_lanes)
@@ -96,9 +94,16 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
   std::size_t index = 0;
   for (auto &p : promises)
   {
-    tree[index] = p->As<byte_array::ByteArray>();
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Merkle Hash ", index, ": 0x", tree[index].ToHex());
+    byte_array::ByteArray digest{};
+    if (p->GetResult(digest))
+    {
+      tree[index] = digest;
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate merkle hash no leaf: ", index);
+      return {};
+    }
 
     ++index;
   }
@@ -113,7 +118,7 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
 // return the last committed hash (should correspond to the state hash before you began execution)
 byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 {
-  ConstByteArray last_commit_hash = chain::GENESIS_MERKLE_ROOT;
+  ConstByteArray last_commit_hash = chain::GetGenesisMerkleRoot();
 
   {
     FETCH_LOCK(merkle_mutex_);
@@ -135,7 +140,7 @@ byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 {
   // determine if the unit requests the genesis block
-  bool const genesis_state = hash == chain::GENESIS_MERKLE_ROOT;
+  bool const genesis_state = hash == chain::GetGenesisMerkleRoot();
 
   FETCH_LOCK(merkle_mutex_);
 
@@ -144,43 +149,32 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 
   if (genesis_state && (index == 0))  // this is truly the genesis block
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis.");
-
-    // fill the tree with empty leaf nodes
-    for (std::size_t i = 0; i < num_lanes(); ++i)
-    {
-      tree[i] = chain::GENESIS_MERKLE_ROOT;
-    }
-
-    permanent_state_merkle_stack_.New(MERKLE_FILENAME_DOC,
-                                      MERKLE_FILENAME_INDEX);  // clear the stack
-    permanent_state_merkle_stack_.Push(tree);
+    FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis!");
   }
-  else
+
+  uint64_t const merkle_stack_size = permanent_state_merkle_stack_.size();
+
+  if (index >= merkle_stack_size)
   {
-    uint64_t const merkle_stack_size = permanent_state_merkle_stack_.size();
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Unsuccessful attempt to revert to hash ahead in the stack! Stack size: ",
+                   merkle_stack_size, " revert index: ", index);
+    return false;
+  }
 
-    if (index >= merkle_stack_size)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Unsuccessful attempt to revert to hash ahead in the stack! Stack size: ",
-                     merkle_stack_size, " revert index: ", index);
-      return false;
-    }
+  bool success = permanent_state_merkle_stack_.Get(index, tree);
+  assert(success);
+  FETCH_UNUSED(success);
 
-    bool success = permanent_state_merkle_stack_.Get(index, tree);
-    assert(success);
-    FETCH_UNUSED(success);
+  if (tree.root() != hash)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Index given for merkle hash didn't match merkle stack! root: 0x",
+                    tree.root().ToHex(), " expected: 0x", hash.ToHex(), " Note: index: ", index,
+                    " genesis merk: 0x", chain::GetGenesisMerkleRoot().ToHex());
+    return false;
+  }
 
-    if (tree.root() != hash)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Index given for merkle hash didn't match merkle stack! root: ",
-                      tree.root().ToBase64(), " expected: ", hash.ToBase64());
-      return false;
-    }
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Successfully found merkle at: ", index);
-  }  // End set merkle stack
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Successfully found merkle at: ", index);
 
   // Note: we shouldn't be touching the lanes at this point from other threads
   std::vector<service::Promise> promises;
@@ -207,7 +201,8 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   bool all_success{true};
   for (auto &p : promises)
   {
-    if (!p->As<bool>())
+    bool item_success{false};
+    if (!(p->GetResult(item_success) && item_success))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert shard ", lane_index, " to 0x",
                      tree[lane_index].ToHex());
@@ -228,6 +223,11 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 
     // since the state has now been restored we can update the current merkle reference
     current_merkle_ = tree;
+  }
+
+  if (!all_success)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert to hash! Index: ", index);
   }
 
   return all_success;
@@ -256,7 +256,17 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index
   std::size_t index = 0;
   for (auto &p : promises)
   {
-    tree[index] = p->As<byte_array::ByteArray>();
+    byte_array::ByteArray digest{};
+
+    if (p->GetResult(digest))
+    {
+      tree[index] = digest;
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate (commit) merkle hash, no leaf: ", index);
+      return {};
+    }
 
     ++index;
   }
@@ -289,8 +299,8 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index
       }
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Committing merkle hash at index: ", commit_index,
-                    " to stack: 0x", tree.root().ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Committing merkle hash at index: ", commit_index, " to stack: 0x",
+                   tree.root().ToHex());
 
     permanent_state_merkle_stack_.Push(tree);
     permanent_state_merkle_stack_.Flush(false);
@@ -303,7 +313,7 @@ bool StorageUnitClient::HashExists(Hash const &hash, uint64_t index)
 {
   bool success{false};
 
-  if (hash == chain::GENESIS_MERKLE_ROOT)
+  if (hash == chain::GetGenesisMerkleRoot())
   {
     success = true;
   }
@@ -354,11 +364,11 @@ void StorageUnitClient::AddTransaction(chain::Transaction const &tx)
 
   try
   {
-    ResourceID resource{tx.digest()};
+    ResourceID const resource{tx.digest()};
 
     // make the RPC request
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
-                                                    TxStoreProtocol::SET, resource, tx);
+                                                    TransactionStorageProtocol::ADD, tx);
 
     // wait the for the response
     promise->Wait();
@@ -379,29 +389,24 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
   // Assume that the lanes are roughly balanced in terms of new TXs
   for (auto const &lane_address : addresses_)
   {
-    auto promise =
-        rpc_client_->CallSpecificAddress(lane_address, RPC_TX_STORE, TxStoreProtocol::GET_RECENT,
-                                         uint32_t(max_to_poll / addresses_.size()));
+    auto promise = rpc_client_->CallSpecificAddress(lane_address, RPC_TX_STORE,
+                                                    TransactionStorageProtocol::GET_RECENT,
+                                                    uint32_t(max_to_poll / addresses_.size()));
     promises.push_back(promise);
   }
 
   for (auto const &promise : promises)
   {
-    try
-    {
-      auto txs = promise->As<TxLayouts>();
+    TxLayouts txs{};
 
+    if (promise->GetResult(txs))
+    {
       layouts.insert(layouts.end(), std::make_move_iterator(txs.begin()),
                      std::make_move_iterator(txs.end()));
     }
-    catch (std::exception const &e)
+    else
     {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Failed to resolve GET on TX store! Promise timed out: ", e.what());
-    }
-    catch (...)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET on TX store! Unknown error.");
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET on TX store!");
     }
   }
 
@@ -411,24 +416,17 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
 bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
                                        chain::Transaction &              tx)
 {
-  bool success{false};
+  ResourceID resource{digest};
 
-  try
+  // make the request to the RPC server
+  auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
+                                                  TransactionStorageProtocol::GET, resource);
+
+  // wait for the response to be delivered
+  bool const success = promise->GetResult(tx);
+  if (!success)
   {
-    ResourceID resource{digest};
-
-    // make the request to the RPC server
-    auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
-                                                    TxStoreProtocol::GET, resource);
-
-    // wait for the response to be delivered
-    tx = promise->As<chain::Transaction>();
-
-    success = true;
-  }
-  catch (std::exception const &e)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to get transaction, because: ", e.what());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction 0x", digest.ToHex());
   }
 
   return success;
@@ -436,38 +434,27 @@ bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
 
 bool StorageUnitClient::HasTransaction(ConstByteArray const &digest)
 {
+  ResourceID resource{digest};
+
+  // make the request to the RPC server
+  auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
+                                                  TransactionStorageProtocol::HAS, resource);
+
+  // wait for the response to be delivered
   bool present{false};
 
-  try
-  {
-    ResourceID resource{digest};
-
-    // make the request to the RPC server
-    auto promise = rpc_client_->CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
-                                                    TxStoreProtocol::HAS, resource);
-
-    // wait for the response to be delivered
-    present = promise->As<bool>();
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "TX: ", ToBase64(digest), " Present: ", present);
-  }
-  catch (std::exception const &e)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to check transaction existence, because: ", e.what(),
-                   " tx: ", ToBase64(digest));
-  }
-
-  return present;
+  return promise->GetResult(present) && present;
 }
 
-void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
+void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &digest_set)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "IssueCallForMissingTxs: ", tx_set.size(), " Tx digests");
-  std::map<Address, std::unordered_set<ResourceID>> lanes_of_interest;
-  for (auto const &hash : tx_set)
+  FETCH_LOG_WARN(LOGGING_NAME, "IssueCallForMissingTxs: ", digest_set.size(), " Tx digests");
+
+  std::map<Address, DigestSet> lanes_of_interest;
+  for (auto const &digest : digest_set)
   {
-    ResourceID resource{hash};
-    lanes_of_interest[LookupAddress(resource)].insert(std::move(resource));
+    ResourceID const resource{digest};
+    lanes_of_interest[LookupAddress(resource)].insert(digest);
   }
 
   for (auto const &lane_resources : lanes_of_interest)
@@ -481,21 +468,16 @@ void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
 
 StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const &key)
 {
+  // make the request to the RPC client
+  auto promise = rpc_client_->CallSpecificAddress(LookupAddress(key), RPC_STATE,
+                                                  RevertibleDocumentStoreProtocol::GET_OR_CREATE,
+                                                  key.as_resource_id());
+
+  // wait for the document to be returned
   Document doc;
-
-  try
+  if (!promise->GetResult(doc))
   {
-    // make the request to the RPC client
-    auto promise = rpc_client_->CallSpecificAddress(LookupAddress(key), RPC_STATE,
-                                                    RevertibleDocumentStoreProtocol::GET_OR_CREATE,
-                                                    key.as_resource_id());
-
-    // wait for the document to be returned
-    doc = promise->As<Document>();
-  }
-  catch (std::exception const &e)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to get or create document, because: ", e.what());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to get or create document");
     doc.failed = true;
   }
 
@@ -504,21 +486,16 @@ StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const
 
 StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key) const
 {
+  // make the request to the RPC server
+  auto promise = rpc_client_->CallSpecificAddress(
+      LookupAddress(key), RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET,
+      key.as_resource_id());
+
+  // wait for the document response
   Document doc;
-
-  try
+  if (!promise->GetResult(doc))
   {
-    // make the request to the RPC server
-    auto promise = rpc_client_->CallSpecificAddress(
-        LookupAddress(key), RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET,
-        key.as_resource_id());
-
-    // wait for the document response
-    doc = promise->As<Document>();
-  }
-  catch (std::exception const &e)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to get document, because: ", e.what());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to get document");
 
     // signal the failure
     doc.failed = true;
@@ -556,7 +533,7 @@ bool StorageUnitClient::Lock(ShardIndex index)
                                                     RevertibleDocumentStoreProtocol::LOCK);
 
     // wait for the promise
-    success = promise->As<bool>();
+    success = promise->GetResult(success) && success;
   }
   catch (std::exception const &e)
   {
@@ -577,7 +554,7 @@ bool StorageUnitClient::Unlock(ShardIndex index)
                                                     RevertibleDocumentStoreProtocol::UNLOCK);
 
     // wait for the result
-    success = promise->As<bool>();
+    success = promise->GetResult(success) && success;
   }
   catch (std::exception const &e)
   {

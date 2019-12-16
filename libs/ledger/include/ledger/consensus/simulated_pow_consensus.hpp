@@ -19,6 +19,7 @@
 
 #include "crypto/identity.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 
@@ -28,11 +29,13 @@ namespace ledger {
 class SimulatedPowConsensus final : public ConsensusInterface
 {
 public:
-  using Identity = crypto::Identity;
-  using Block    = ledger::Block;
+  using Identity  = crypto::Identity;
+  using Block     = ledger::Block;
+  using MainChain = ledger::MainChain;
 
   // Construction / Destruction
-  SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms);
+  SimulatedPowConsensus(Identity mining_identity, uint64_t block_interval_ms,
+                        MainChain const &chain);
 
   SimulatedPowConsensus(SimulatedPowConsensus const &) = delete;
   SimulatedPowConsensus(SimulatedPowConsensus &&)      = delete;
@@ -50,6 +53,7 @@ public:
   void SetBlockInterval(uint64_t block_interval_ms) override;
   void SetAeonPeriod(uint16_t aeon_period) override;
   void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
+  void Reset(StakeSnapshot const &snapshot) override;
   void SetDefaultStartTime(uint64_t default_start_time) override;
 
   // Operators
@@ -67,6 +71,7 @@ private:
   Block             current_block_;
   uint64_t          block_interval_ms_{std::numeric_limits<uint64_t>::max()};
   std::atomic<bool> forcibly_generate_next_{false};
+  MainChain const & chain_;
 };
 
 }  // namespace ledger

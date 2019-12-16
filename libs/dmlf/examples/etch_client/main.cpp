@@ -41,18 +41,18 @@ using namespace std::chrono_literals;
 
 namespace {
 
-using fetch::network::NetworkManager;
-using fetch::muddle::rpc::Server;
-using fetch::muddle::MuddlePtr;
-using fetch::json::JSONDocument;
 using fetch::crypto::ECDSASigner;
+using fetch::json::JSONDocument;
+using fetch::muddle::MuddlePtr;
+using fetch::muddle::rpc::Server;
+using fetch::network::NetworkManager;
 // using fetch::crypto::ECDSAVerifier;
 // using fetch::crypto::Identity;
+using fetch::dmlf::BasicVmEngine;
+using fetch::dmlf::ExecutionResult;
+using fetch::dmlf::LocalExecutor;
 using fetch::dmlf::RemoteExecutionClient;
 using fetch::dmlf::RemoteExecutionProtocol;
-using fetch::dmlf::BasicVmEngine;
-using fetch::dmlf::LocalExecutor;
-using fetch::dmlf::ExecutionResult;
 
 using CertificatePtr             = std::shared_ptr<ECDSASigner>;
 using NetworkManagerPtr          = std::shared_ptr<NetworkManager>;
@@ -80,8 +80,13 @@ std::vector<ExecutionResult> WaitAll(std::vector<PromiseOfResult> const &promise
   results.reserve(promises.size());
   for (auto &promise : promises)
   {
-    results.push_back(promise.Get());
+    results.emplace_back(ExecutionResult{});
+    if (!promise.GetResult(results.back()))
+    {
+      results.pop_back();
+    }
   }
+
   return results;
 }
 
@@ -193,7 +198,7 @@ private:
     muddle_ = fetch::muddle::CreateMuddle(MUDD_NET_ID, cert_, *(this->netm_), MUDD_ADDR);
     client_ = std::make_unique<RemoteExecutionClient>(
         muddle_, std::make_shared<LocalExecutor>(std::make_shared<BasicVmEngine>()));
-    muddle_->SetPeerSelectionMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
+    muddle_->SetTrackerConfiguration(fetch::muddle::TrackerConfiguration::AllOn());
     muddle_->Start(uris, std::vector<unsigned short int>{});
 
     protocol_ = std::make_unique<RemoteExecutionProtocol>(*client_);
@@ -229,16 +234,24 @@ private:
 
     FETCH_LOG_INFO(LOGGING_NAME, "Creating executable ", call_id, " on node ", node);
     auto create_exec_prom = client_->CreateExecutable(node, call_id, {{"source.etch", etch}});
-    if (!create_exec_prom.Get().succeeded())
+
     {
-      return create_exec_prom;
+      ExecutionResult result{};
+      if (!(create_exec_prom.GetResult(result) && result.succeeded()))
+      {
+        return create_exec_prom;
+      }
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Creating state ", call_id, " on node ", node);
     auto create_state_prom = register_state_(node, call_id);
-    if (!create_state_prom.Get().succeeded())
+
     {
-      return create_state_prom;
+      ExecutionResult result{};
+      if (!(create_state_prom.GetResult(result) && result.succeeded()))
+      {
+        return create_state_prom;
+      }
     }
 
     auto execute_prom = client_->Run(node, call_id, call_id, "main", {});

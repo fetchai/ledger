@@ -53,7 +53,7 @@ Ptr<UInt256Wrapper> ConstructorFromBytesBigEndian(VM *vm, TypeId type_id,
   try
   {
     return Ptr<UInt256Wrapper>{
-        new UInt256Wrapper(vm, type_id, ba->byte_array(), memory::Endian::BIG)};
+        new UInt256Wrapper(vm, type_id, ba->byte_array(), platform::Endian::BIG)};
   }
   catch (std::exception const &e)
   {
@@ -85,15 +85,14 @@ void UInt256Wrapper::Bind(Module &module)
       .EnableOperator(Operator::Divide)
       .EnableOperator(Operator::InplaceMultiply)
       .EnableOperator(Operator::InplaceDivide)
+      .CreateMemberFunction("copy", &UInt256Wrapper::Copy)
       .CreateMemberFunction("size", &UInt256Wrapper::size);
 
   module.CreateFreeFunction("toString", &ToString);
   module.CreateFreeFunction("toBuffer", [](VM *vm, Ptr<UInt256Wrapper> const &x) {
     return vm->CreateNewObject<ByteArrayWrapper>(
-        x->number().As<byte_array::ByteArray>(memory::Endian::BIG, true));
+        x->number().As<byte_array::ByteArray>(platform::Endian::BIG, true));
   });
-  module.CreateFreeFunction(
-      "toFloat64", [](VM * /*vm*/, Ptr<UInt256Wrapper> const &x) { return ToDouble(x->number()); });
   module.CreateFreeFunction("toUInt64", &ToInteger<uint64_t>);
   module.CreateFreeFunction("toInt64", &ToInteger<int64_t>);
   module.CreateFreeFunction("toUInt32", &ToInteger<uint32_t>);
@@ -110,7 +109,7 @@ UInt256Wrapper::UInt256Wrapper(VM *vm, UInt256 data)
 {}
 
 UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, byte_array::ConstByteArray const &data,
-                               memory::Endian endianess_of_input_data)
+                               platform::Endian endianess_of_input_data)
   : Object(vm, type_id)
   , number_(data, endianess_of_input_data)
 {}
@@ -131,6 +130,11 @@ Ptr<UInt256Wrapper> UInt256Wrapper::Constructor(VM *vm, TypeId type_id, uint64_t
     vm->RuntimeError(e.what());
   }
   return {};
+}
+
+vm::Ptr<UInt256Wrapper> UInt256Wrapper::Copy() const
+{
+  return Ptr<UInt256Wrapper>{new UInt256Wrapper(this->vm_, UInt256{number_})};
 }
 
 fetch::math::SizeType UInt256Wrapper::size() const
@@ -206,7 +210,7 @@ bool UInt256Wrapper::FromJSON(JSONVariant const &variant)
   {
     value = FromHex(variant["value"].As<byte_array::ConstByteArray>());
   }
-  catch (std::exception const &e)
+  catch (std::exception const &)
   {
     vm_->RuntimeError("Field 'value' must be a hex-encoded string.");
     return false;
@@ -377,6 +381,90 @@ bool UInt256Wrapper::IsGreaterThanOrEqual(fetch::vm::Ptr<Object> const &lhso,
   Ptr<UInt256Wrapper> lhs = lhso;
   Ptr<UInt256Wrapper> rhs = rhso;
   return rhs->number_ <= lhs->number_;
+}
+
+vm::ChargeAmount UInt256Wrapper::AddChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                    fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount UInt256Wrapper::InplaceAddChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                           fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount UInt256Wrapper::SubtractChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                         fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount UInt256Wrapper::InplaceSubtractChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount UInt256Wrapper::MultiplyChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                         fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount UInt256Wrapper::InplaceMultiplyChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount UInt256Wrapper::DivideChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                       fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount UInt256Wrapper::InplaceDivideChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount UInt256Wrapper::IsEqualChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                        fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount UInt256Wrapper::IsNotEqualChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                           fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount UInt256Wrapper::IsLessThanChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                           fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount UInt256Wrapper::IsLessThanOrEqualChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount UInt256Wrapper::IsGreaterThanChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount UInt256Wrapper::IsGreaterThanOrEqualChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
 }
 
 }  // namespace math

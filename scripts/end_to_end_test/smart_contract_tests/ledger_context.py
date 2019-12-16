@@ -66,24 +66,28 @@ endfunction
 """
 
 
-def run(options):
+def run(options, benefactor):
     entity1 = Entity()
 
     # build the ledger API
     api = LedgerApi(options['host'], options['port'])
 
-    # create wealth so that we have the funds to be able to create contracts on the network
-    api.sync(api.tokens.wealth(entity1, 100000))
+    # create funds so that we have the funds to be able to create contracts on the network
+    api.sync(api.tokens.transfer(benefactor, entity1, 100000, 1000))
 
     contract = Contract(CONTRACT_TEXT, entity1)
 
     # deploy the contract to the network
     status = api.sync(api.contracts.create(entity1, contract, 2000))[0]
 
-    block_number = status.exit_code
+    api.sync(api.tokens.transfer(entity1, contract.address, 10000, 500))
 
+    block_number = status.exit_code
+    v = contract.query(api, 'get_init_block_number_state')
     assert block_number > 0
-    assert block_number == contract.query(api, 'get_init_block_number_state')
+    assert block_number == v, \
+        'Returned block number by the contract ({}) is not what expected ({})'.format(
+            v, block_number)
 
     api.sync(contract.action(api, 'set_block_number_state', 400, [entity1]))
 
