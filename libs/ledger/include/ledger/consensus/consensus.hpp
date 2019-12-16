@@ -73,6 +73,7 @@ public:
   void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
   void Reset(StakeSnapshot const &snapshot) override;
   void SetDefaultStartTime(uint64_t default_start_time) override;
+  void SetWhitelist(Minerwhitelist const &whitelist) override;
 
   StakeManagerPtr stake();
 
@@ -97,6 +98,7 @@ private:
   MainChain const &     chain_;
   Identity              mining_identity_;
   chain::Address        mining_address_;
+  Minerwhitelist        whitelist_;
 
   // Global variables relating to consensus
   uint64_t aeon_period_      = 0;
@@ -122,6 +124,7 @@ private:
   bool     EnoughQualSigned(Block const &previous, Block const &current) const;
   uint32_t GetThreshold(Block const &block) const;
   void     AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
+  CabinetPtr FilterCabinet(CabinetPtr const &cabinet) const;
 };
 
 }  // namespace ledger

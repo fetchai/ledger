@@ -429,7 +429,8 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   if (ShouldTriggerNewCabinet(current_block_))
   {
     // attempt to build the cabinet from
-    auto cabinet = stake_->BuildCabinet(current_block_, max_cabinet_size_);
+    auto cabinet = FilterCabinet(stake_->BuildCabinet(current_block_, max_cabinet_size_));
+
     if (!cabinet)
     {
       FETCH_LOG_ERROR(LOGGING_NAME,
@@ -586,7 +587,7 @@ bool ValidNotarisationKeys(Consensus::BlockEntropy::Cabinet const &             
 bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) const
 {
   // Construct the full cabinet from the previous block
-  auto cabinet = stake_->BuildCabinet(previous, max_cabinet_size_);
+  auto cabinet = FilterCabinet(stake_->BuildCabinet(previous, max_cabinet_size_));
 
   if (cabinet->empty())
   {
@@ -833,4 +834,38 @@ void Consensus::AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cab
 {
   cabinet_history_[block_number] = cabinet;
   TrimToSize(cabinet_history_, HISTORY_LENGTH);
+}
+
+void Consensus::SetWhitelist(Minerwhitelist const &whitelist)
+{
+  for(auto const &miner : whitelist)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Adding to whitelist: ", miner.ToBase64());
+  }
+  whitelist_ = whitelist;
+}
+
+Consensus::CabinetPtr Consensus::FilterCabinet(CabinetPtr const &cabinet) const
+{
+  Cabinet build;
+  Consensus::CabinetPtr ret;
+
+  if(whitelist_.empty())
+  {
+    build = *cabinet;
+  }
+  else
+  {
+    for(auto const &cabinet_member : *cabinet)
+    {
+      if(whitelist_.find(cabinet_member.identifier()) != whitelist_.end())
+      {
+        build.push_back(cabinet_member);
+      }
+    }
+  }
+
+  ret = std::make_shared<Cabinet>(build);
+
+  return ret;
 }
