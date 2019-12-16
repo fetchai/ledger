@@ -240,13 +240,21 @@ TEST(FixedPointTest, FromString_16_16)
 {
   // Get raw value
   fp32_t one("1fp32");
+  std::cout << "one: " << one << std::endl;
   fp32_t one2("1.0fp32");
+  std::cout << "one2: " << one2 << std::endl;
   fp32_t m_one("-1fp32");
+  std::cout << "m_one: " << m_one << std::endl;
   fp32_t zero_point_five("0.5fp32");
+  std::cout << "zero_point_five: " << zero_point_five << std::endl;
   fp32_t one_point_five("1.5fp32");
+  std::cout << "one_point_five: " << one_point_five << std::endl;
   fp32_t two_point_five("2.5fp64");
+  std::cout << "two_point_five: " << two_point_five << std::endl;
   fp32_t m_one_point_five("-1.5fp");
+  std::cout << "m_one_point_five: " << m_one_point_five << std::endl;
   fp32_t m_one_point_five_flt(-1.5);
+  std::cout << "m_one_point_five_flt: " << m_one_point_five_flt << std::endl;
 
   EXPECT_EQ(zero_point_five.Data(), 0x08000);
   EXPECT_EQ(one.Data(), 0x10000);
@@ -265,9 +273,11 @@ TEST(FixedPointTest, FromString_16_16)
 
   fp32_t::StateClear();
   fp32_t large1("1442695040888963407359924681001892137");
+  std::cout << "large1: " << large1 << std::endl;
   EXPECT_TRUE(fp32_t::IsStateOverflow());
   fp32_t::StateClear();
   fp32_t large2("-1442695040888963407359924681001892137");
+  std::cout << "large2: " << large2 << std::endl;
   EXPECT_TRUE(fp32_t::IsStateOverflow());
   EXPECT_EQ(large1, fp32_t::FP_MAX);
   EXPECT_EQ(large2, fp32_t::FP_MIN);
@@ -287,13 +297,21 @@ TEST(FixedPointTest, FromString_32_32)
 {
   // Get raw value
   fp64_t one("1fp64");
+  std::cout << "one: " << one << std::endl;
   fp32_t one2("1.0fp64");
+  std::cout << "one2: " << one2 << std::endl;
   fp64_t m_one("-1fp64");
+  std::cout << "m_one: " << m_one << std::endl;
   fp64_t zero_point_five("0.5fp64_t");
+  std::cout << "zero_point_five: " << zero_point_five << std::endl;
   fp64_t one_point_five("1.5fp64_t");
+  std::cout << "one_point_five: " << one_point_five << std::endl;
   fp64_t two_point_five("2.5fp64_t");
+  std::cout << "two_point_five: " << two_point_five << std::endl;
   fp64_t m_one_point_five("-1.5fp64_t");
+  std::cout << "m_one_point_five: " << m_one_point_five << std::endl;
   fp64_t m_one_point_five_flt(-1.5);
+  std::cout << "m_one_point_five_flt: " << m_one_point_five_flt << std::endl;
 
   EXPECT_EQ(zero_point_five.Data(), 0x080000000);
   EXPECT_EQ(one.Data(), 0x100000000);
@@ -349,7 +367,9 @@ TEST(FixedPointTest, FromString_64_64)
   EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
 
   fp128_t e1("2.718281828459045235360287471352662498");
+  std::cout << "e1: " << e1 << std::endl;
   fp128_t e2(2.718281828459045235360287471352662498);
+  std::cout << "e2: " << e2 << std::endl;
   EXPECT_TRUE(e1.Near(e2));
   EXPECT_NE(e1, e2);
 
@@ -370,6 +390,46 @@ TEST(FixedPointTest, FromString_64_64)
   std::cout << e5 << std::endl;
   EXPECT_EQ(e5, fp128_t("1.00000000001"));
   std::cout << fp128_t("1.00000000001") << std::endl;
+}
+
+template <typename T>
+void ToStringTest(std::string const& string)
+{
+  T val(string);
+  std::stringstream ss;
+  ss << val;
+  T result_val(ss.str());
+  EXPECT_EQ(result_val, val);
+}
+
+TEST(FixedPointTest, ToString_64_64)
+{
+  std::string str_val = "1fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "1.0fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "-1fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "0.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "1.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "2.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "-1.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "2.718281828459045235360287471352662498";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "1442695040888963407359924681001892137";
+  ToStringTest<fp128_t>(str_val);
 }
 
 TEST(FixedPointTest, Constants_16_16)
