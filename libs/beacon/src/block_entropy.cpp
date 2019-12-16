@@ -59,3 +59,9 @@ bool BlockEntropy::IsAeonBeginning() const
 {
   return !confirmations.empty();
 }
+
+uint16_t BlockEntropy::ToQualIndex(MuddleAddress const &member) const
+{
+  return static_cast<uint16_t>(
+      std::distance(qualified.begin(), std::find(qualified.begin(), qualified.end(), member)));
+}
