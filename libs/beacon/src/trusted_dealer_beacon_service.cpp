@@ -92,7 +92,7 @@ void TrustedDealerSetupService::StartNewCabinet(
   beacon->block_entropy.block_number     = round_start;
   for (auto const &mem : members)
   {
-    beacon->block_entropy.confirmations.insert({mem, {}});
+    beacon->block_entropy.confirmations.insert({beacon->block_entropy.ToQualIndex(mem), {}});
   }
   beacon->block_entropy.HashSelf();
 
