@@ -92,7 +92,6 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
   , beacon_{std::move(beacon)}
   , chain_{chain}
   , mining_identity_{std::move(mining_identity)}
-  , mining_address_{chain::Address(mining_identity_)}
   , aeon_period_{aeon_period}
   , max_cabinet_size_{max_cabinet_size}
   , block_interval_ms_{block_interval_ms}
@@ -519,7 +518,6 @@ NextBlockPtr Consensus::GenerateNextBlock()
   // is well formed
   ret->previous_hash = current_block_.hash;
   ret->block_number  = block_number;
-  ret->miner         = mining_address_;
   ret->miner_id      = mining_identity_;
   ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
   ret->weight    = GetBlockGenerationWeight(*ret, mining_identity_);

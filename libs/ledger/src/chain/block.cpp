@@ -86,7 +86,7 @@ void Block::UpdateDigest()
 
   // Generate hash stream
   serializers::MsgPackSerializer buf;
-  buf << previous_hash << merkle_hash << block_number << miner << log2_num_lanes << timestamp
+  buf << previous_hash << merkle_hash << block_number << log2_num_lanes << timestamp
       << tx_merkle_tree.root();
 
   // Generate the hash

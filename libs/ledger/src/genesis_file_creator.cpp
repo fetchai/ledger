@@ -281,7 +281,6 @@ bool GenesisFileCreator::LoadState(Variant const &object, ConsensusParameters co
   genesis_block_.timestamp    = (consensus != nullptr) ? consensus->start_time : 0;
   genesis_block_.merkle_hash  = merkle_commit_hash;
   genesis_block_.block_number = 0;
-  genesis_block_.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
   genesis_block_.UpdateDigest();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block_.hash.ToHex());
