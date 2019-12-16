@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
+#include "semanticsearch/schema/vocabulary_instance.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -31,10 +32,12 @@ namespace semanticsearch {
 class AbstractQueryVariant
 {
 public:
-  using Token = fetch::byte_array::Token;
+  using Token                 = fetch::byte_array::Token;
+  using VocabularyInstancePtr = VocabularyInstance::VocabularyInstancePtr;
 
-  virtual ~AbstractQueryVariant()  = default;
-  virtual void const *data() const = 0;
+  virtual ~AbstractQueryVariant()             = default;
+  virtual void const *          data() const  = 0;
+  virtual VocabularyInstancePtr NewInstance() = 0;
 
   void            SetType(int type);
   int             type() const;
@@ -71,6 +74,7 @@ AbstractQueryVariant::operator T() const
 {
   if (std::type_index(typeid(T)) != type_index_)
   {
+
     throw std::runtime_error("Type mismatch in QueryVariant.");
   }
   return *reinterpret_cast<T *>(data());
@@ -88,6 +92,7 @@ T const &AbstractQueryVariant::As() const
   if (std::type_index(typeid(T)) != type_index_)
   {
     auto t = std::type_index(typeid(T));
+    abort();
     throw std::runtime_error("Type mismatch in QueryVariant: stored " +
                              std::string(type_index_.name()) + " vs. requested " +
                              std::string(t.name()));
@@ -111,6 +116,11 @@ public:
   void const *data() const override
   {
     return reinterpret_cast<void const *>(&value_);
+  }
+
+  VocabularyInstancePtr NewInstance() override
+  {
+    return VocabularyInstance::New<T>(value_);
   }
 
 private:

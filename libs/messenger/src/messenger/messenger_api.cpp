@@ -40,7 +40,6 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
   // TODO(private issue AEA-126): Move somewhere else
   using Int        = int;
   using Float      = double;
-  using String     = std::string;
   using ModelField = QueryExecutor::ModelField;
 
   semantic_search_module_->RegisterFunction<ModelField, Int, Int>(

@@ -42,6 +42,15 @@ int main(int argc, char **argv)
     exit(-1);
   }
 
+  auto adv = std::make_shared<AdvertisementRegister>();
+
+  using Int        = int;
+  using Float      = double;
+  using String     = std::string;
+  using ModelField = QueryExecutor::ModelField;
+
+  auto semantic_search_module = SemanticSearchModule::New(adv);
+
   std::string   filename = argv[1];
   std::ifstream t(filename);
   if (!t)
@@ -54,7 +63,7 @@ int main(int argc, char **argv)
 
   // Creating a query
   ErrorTracker  error_tracker;
-  QueryCompiler compiler(error_tracker);
+  QueryCompiler compiler(error_tracker, semantic_search_module);
   auto          query = compiler(source, filename);
   if (error_tracker)
   {
@@ -64,18 +73,11 @@ int main(int argc, char **argv)
   }
 
   // Executing the query
-  auto adv = std::make_shared<AdvertisementRegister>();
 
-  using Int        = int;
-  using Float      = double;
-  using String     = std::string;
-  using ModelField = QueryExecutor::ModelField;
-
-  auto semantic_search_module = SemanticSearchModule::New(adv);
   semantic_search_module->RegisterPrimitiveType<Int>("Int");
   semantic_search_module->RegisterPrimitiveType<Float>("Float");
   semantic_search_module->RegisterPrimitiveType<String>("String");
-  semantic_search_module->RegisterPrimitiveType<ModelField>("ModelField", true);
+  semantic_search_module->RegisterPrimitiveType<ModelField>("ModelField");
   semantic_search_module->RegisterFunction<ModelField, Int, Int>(
       "BoundedInteger", [](Int from, Int to) -> ModelField {
         auto            span = static_cast<uint64_t>(to - from);

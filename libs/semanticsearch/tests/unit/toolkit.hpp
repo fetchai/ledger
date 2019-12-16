@@ -14,9 +14,9 @@ struct SemanticSearchToolkit
   using QueryExecutor            = fetch::semanticsearch::QueryExecutor;
 
   SemanticSearchToolkit()
-    : compiler{error_tracker}
-    , advertisement{std::make_shared<AdvertisementRegister>()}
+    : advertisement{std::make_shared<AdvertisementRegister>()}
     , semantic_search_module{SemanticSearchModule::New(advertisement)}
+    , compiler{error_tracker, semantic_search_module}
   {
     using Int              = int64_t;
     using Float            = double;
@@ -141,7 +141,7 @@ struct SemanticSearchToolkit
   }
 
   ErrorTracker             error_tracker;
-  QueryCompiler            compiler;
   AdvertisementRegisterPtr advertisement;
   SemanticSearchModulePtr  semantic_search_module;
+  QueryCompiler            compiler;
 };

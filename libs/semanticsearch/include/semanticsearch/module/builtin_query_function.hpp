@@ -59,8 +59,10 @@ public:
   }
 
   bool ValidateSignature(std::type_index const &ret, std::vector<std::type_index> const &args);
-  QueryVariant    operator()(std::vector<void const *> &args);
-  std::type_index return_type() const;
+  QueryVariant operator()(std::vector<void const *> &args);
+
+  std::vector<std::type_index> arguments() const;
+  std::type_index              return_type() const;
 
 private:
   explicit BuiltinQueryFunction(std::type_index return_type)

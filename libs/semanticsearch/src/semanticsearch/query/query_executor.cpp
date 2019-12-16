@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/query/query_executor.hpp"
+#include "semanticsearch/semantic_constants.hpp"
 
 #include <cassert>
 
@@ -57,13 +58,13 @@ void QueryExecutor::Execute(Query const &query, Agent agent)
   {
     switch (stmt[0].properties)
     {
-    case QueryInstruction::PROP_CTX_MODEL:
+    case Properties::PROP_CTX_MODEL:
       ExecuteDefine(stmt);
       break;
-    case QueryInstruction::PROP_CTX_SET:
+    case Properties::PROP_CTX_SET:
       ExecuteSet(stmt);
       break;
-    case QueryInstruction::PROP_CTX_ADVERTISE:
+    case Properties::PROP_CTX_ADVERTISE:
       ExecuteStore(stmt);
       break;
     default:
@@ -87,9 +88,7 @@ QueryExecutor::Vocabulary QueryExecutor::GetInstance(std::string const &name)
 
 void QueryExecutor::ExecuteStore(CompiledStatement const &stmt)
 {
-  using Type = QueryInstruction::Type;
-
-  if (stmt[1].type != Type::IDENTIFIER)
+  if (stmt[1].type != Constants::IDENTIFIER)
   {
     error_tracker_.RaiseSyntaxError("Expected variable name.", stmt[1].token);
     return;
@@ -142,7 +141,6 @@ void QueryExecutor::ExecuteStore(CompiledStatement const &stmt)
 
 void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
 {
-  using Type    = QueryInstruction::Type;
   std::size_t i = 3;
 
   if (stmt.size() < i)
@@ -151,13 +149,13 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
     return;
   }
 
-  if (stmt[1].type != Type::IDENTIFIER)
+  if (stmt[1].type != Constants::IDENTIFIER)
   {
     error_tracker_.RaiseSyntaxError("Expected variable name.", stmt[1].token);
     return;
   }
 
-  if (stmt[2].type != Type::IDENTIFIER)
+  if (stmt[2].type != Constants::IDENTIFIER)
   {
     error_tracker_.RaiseSyntaxError("Expected variable type.", stmt[2].token);
     return;
@@ -169,27 +167,26 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
   int                       scope_depth = 0;
 
   QueryVariant object_name =
-      NewQueryVariant(static_cast<std::string>(stmt[1].token), TYPE_KEY, stmt[1].token);
+      NewQueryVariant(static_cast<std::string>(stmt[1].token), Constants::TYPE_KEY, stmt[1].token);
   stack.push_back(object_name);
 
   QueryVariant model_name =
-      NewQueryVariant(static_cast<std::string>(stmt[2].token), TYPE_KEY, stmt[2].token);
+      NewQueryVariant(static_cast<std::string>(stmt[2].token), Constants::TYPE_KEY, stmt[2].token);
   stack.push_back(model_name);
 
   while (i < stmt.size())
   {
     auto x = stmt[i];
-
     switch (x.type)
     {
-    case Type::PUSH_SCOPE:
+    case Constants::PUSH_SCOPE:
     {
       ++scope_depth;
       auto obj = VocabularyInstance::New<PropertyMap>({});
       scope_objects.push_back(obj);
       break;
     }
-    case Type::POP_SCOPE:
+    case Constants::POP_SCOPE:
       --scope_depth;
       // TODO(private issue AEA-131): Check enough
       last = scope_objects.back();
@@ -197,89 +194,101 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
 
       {
         QueryVariant s =
-            NewQueryVariant(last, TYPE_INSTANCE,
+            NewQueryVariant(last, Constants::TYPE_INSTANCE,
                             x.token);  // TODO(private issue AEA-132): Nested shared_ptr
         stack.push_back(s);
       }
 
       break;
 
-    case Type::ATTRIBUTE:
+    case Constants::ATTRIBUTE:
 
     {
+
       auto value = stack.back();
       stack.pop_back();
       auto key = stack.back();
       stack.pop_back();
+
       auto object = scope_objects.back();
       assert(object != nullptr);
 
       // TODO(private issue AEA-133): Assert types
       //  model.Field(static_cast<std::string>(key.value), value.model);
+
       std::string name = static_cast<std::string>(key->As<Token>());
-      switch (value->type())
+      if (value->type() == Constants::LITERAL)
       {
-      case TYPE_INTEGER:
-        object->Insert(name, VocabularyInstance::New<Int>(value->As<Int>()));
-        break;
-      case TYPE_FLOAT:
-        object->Insert(name, VocabularyInstance::New<Float>(value->As<Float>()));
-        break;
-      case TYPE_STRING:
-        object->Insert(name, VocabularyInstance::New<String>(value->As<String>()));
-        break;
-      case TYPE_INSTANCE:
+        object->Insert(name, value->NewInstance());
+      }
+      else if (value->type() == Constants::TYPE_INSTANCE)
+      {
         object->Insert(name, value->As<Vocabulary>());
-        break;
-        // TODO(private issue AEA-134): Create type code index
-      default:
-        break;
+      }
+      else
+      {
+        std::cerr << "TODO: Yet another error: " << value->type() << " " << value->token()
+                  << std::endl;
       }
     }
 
     break;
 
-    case Type::SEPARATOR:
+    case Constants::SEPARATOR:
       // TODO(private issue AEA-135): Validate
       break;
 
-    case Type::IDENTIFIER:
+    case Constants::IDENTIFIER:
     {
       auto         obj = context_.Get(static_cast<std::string>(
           x.token));  // TODO(rivate issue AEA-136): Update context to store query variant
-      QueryVariant ele = NewQueryVariant(obj, TYPE_INSTANCE, x.token);
+      QueryVariant ele = NewQueryVariant(obj, Constants::TYPE_INSTANCE, x.token);
 
       stack.push_back(ele);
       break;
     }
-    case Type::FLOAT:
-    {
-      QueryVariant ele = NewQueryVariant(Float(x.token.AsFloat()), TYPE_FLOAT, x.token);
-      stack.push_back(ele);
-      break;
-    }
-    case Type::INTEGER:
-    {
-      QueryVariant ele =
-          NewQueryVariant(Int(atol(std::string(x.token).c_str())), TYPE_INTEGER, x.token);
-      stack.push_back(ele);
 
-      break;
-    }
-    case Type::STRING:
+    case Constants::OBJECT_KEY:
     {
-      std::string  str = static_cast<std::string>(x.token.SubArray(1, x.token.size() - 2));
-      QueryVariant ele = NewQueryVariant(str, TYPE_STRING, x.token);
+      QueryVariant ele = NewQueryVariant(x.token, Constants::TYPE_KEY, x.token);
       stack.push_back(ele);
       break;
     }
-    case Type::OBJECT_KEY:
+    case Constants::LITERAL:
     {
-      QueryVariant ele = NewQueryVariant(x.token, TYPE_KEY, x.token);
-      stack.push_back(ele);
+      auto const &user_types = semantic_search_module_->type_information();
+      bool        found      = false;
+      for (auto const &type : user_types)
+      {
+        if (type.code == x.token.type())
+        {
+          if (!type.allocator)
+          {
+            std::cerr << "TODO: able to parse but not allocate " << x.token;
+            return;
+          }
+
+          auto element = type.allocator(x.token);
+          stack.push_back(element);
+
+          found = true;
+          break;
+        }
+      }
+      if (!found)
+      {
+        std::cout << "'" << x.token << "'  - TODO 2 IMPLEMENT " << x.type
+                  << std::endl;  // TODO(private issue AEA-140): Handle this case
+      }
       break;
     }
+    case Constants::VAR_TYPE:
+      // TODO: Check correctness
+      break;
     default:
+      // TODO: Deal with equality
+      //      std::cout << "'" << x.token << "'  - TODO IMPLEMENT " << x.type
+      //                << std::endl;  // TODO(private issue AEA-140): Handle this case
       break;
     }
 
@@ -327,7 +336,7 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
         stmt[stmt.size() - 1].token);
     return;
   }
-}
+}  // namespace semanticsearch
 
 void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
 {
@@ -338,20 +347,18 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
   ModelInterfaceBuilder              last;
   int                                scope_depth = 0;
 
-  using Type = QueryInstruction::Type;
-
   while (i < stmt.size())
   {
     auto x = stmt[i];
 
     switch (x.type)
     {
-    case Type::PUSH_SCOPE:
+    case Constants::PUSH_SCOPE:
       ++scope_depth;
       scope_models.push_back(semantic_search_module_->NewProxy());
       break;
 
-    case Type::POP_SCOPE:
+    case Constants::POP_SCOPE:
 
       --scope_depth;
       // TODO(private issue AEA-131): Check enough
@@ -359,13 +366,13 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
       scope_models.pop_back();
 
       {
-        QueryVariant s = NewQueryVariant(last.vocabulary_schema(), TYPE_MODEL, x.token);
+        QueryVariant s = NewQueryVariant(last.vocabulary_schema(), Constants::TYPE_MODEL, x.token);
         stack_.push_back(s);
       }
 
       break;
 
-    case Type::ATTRIBUTE:
+    case Constants::ATTRIBUTE:
     {
       QueryVariant value = stack_.back();
       stack_.pop_back();
@@ -404,14 +411,14 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
 
     break;
 
-    case Type::SEPARATOR:
+    case Constants::SEPARATOR:
       // TODO(private issue AEA-135): Validate
       break;
 
-    case Type::IDENTIFIER:
+    case Constants::IDENTIFIER:
       if (scope_depth == 0)
       {
-        QueryVariant ele = NewQueryVariant(x.token, TYPE_KEY, x.token);
+        QueryVariant ele = NewQueryVariant(x.token, Constants::TYPE_KEY, x.token);
         stack_.push_back(ele);
       }
       else
@@ -424,45 +431,25 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
           return;
         }
 
-        QueryVariant ele =
-            NewQueryVariant(semantic_search_module_->GetField(field_name), TYPE_MODEL, x.token);
+        QueryVariant ele = NewQueryVariant(semantic_search_module_->GetField(field_name),
+                                           Constants::TYPE_MODEL, x.token);
         stack_.push_back(ele);
       }
 
       break;
-    case Type::FLOAT:
+    case Constants::OBJECT_KEY:
     {
-      QueryVariant ele = NewQueryVariant(x.token.AsFloat(), TYPE_FLOAT, x.token);
+      QueryVariant ele = NewQueryVariant(x.token, Constants::TYPE_KEY, x.token);
       stack_.push_back(ele);
       break;
     }
-    case Type::INTEGER:
+    case Constants::FUNCTION:
     {
-      QueryVariant ele =
-          NewQueryVariant(Int(atol(std::string(x.token).c_str())), TYPE_INTEGER, x.token);
+      QueryVariant ele = NewQueryVariant(x.token, Constants::TYPE_FUNCTION_NAME, x.token);
       stack_.push_back(ele);
       break;
     }
-    case Type::STRING:
-    {
-      std::string  str = static_cast<std::string>(x.token.SubArray(1, x.token.size() - 2));
-      QueryVariant ele = NewQueryVariant(str, TYPE_STRING, x.token);
-      stack_.push_back(ele);
-      break;
-    }
-    case Type::OBJECT_KEY:
-    {
-      QueryVariant ele = NewQueryVariant(x.token, TYPE_KEY, x.token);
-      stack_.push_back(ele);
-      break;
-    }
-    case Type::FUNCTION:
-    {
-      QueryVariant ele = NewQueryVariant(x.token, TYPE_FUNCTION_NAME, x.token);
-      stack_.push_back(ele);
-      break;
-    }
-    case Type::EXECUTE_CALL:
+    case Constants::EXECUTE_CALL:
     {
       if (stack_.empty())
       {
@@ -475,7 +462,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
 
       // Function arguments
       uint64_t n = stack_.size() - 1;
-      while ((n != 0) && (stack_[n]->type() != TYPE_FUNCTION_NAME))
+      while ((n != 0) && (stack_[n]->type() != Constants::TYPE_FUNCTION_NAME))
       {
         auto arg = stack_[n];
         args.push_back(arg->data());
@@ -535,9 +522,35 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
       break;
     }
     default:
-      std::cout << "'" << x.token << "'  - TODO IMPLEMENT "
-                << std::endl;  // TODO(private issue AEA-140): Handle this case
+    {  // Scanning user types
+      auto const &user_types = semantic_search_module_->type_information();
+      bool        found      = false;
+      for (auto const &type : user_types)
+      {
+        if (type.code == x.token.type())
+        {
+          if (!type.allocator)
+          {
+            std::cerr << "TODO: able to parse but not allocate " << x.token;
+            return;
+          }
+
+          auto element = type.allocator(x.token);
+          stack_.push_back(element);
+
+          found = true;
+          break;
+        }
+      }
+
+      if (!found)
+      {
+        // TODO: Implement missing
+        //        std::cout << "'" << x.token << "'  - TODO IMPLEMENT "
+        //                  << std::endl;  // TODO(private issue AEA-140): Handle this case
+      }
       break;
+    }
     }
 
     ++i;

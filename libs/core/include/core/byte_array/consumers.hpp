@@ -195,7 +195,7 @@ int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
 }
 
 template <int STRING>
-int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos, char quoteChar)
+int StringConsumerWithQuote(byte_array::ConstByteArray const &str, uint64_t &pos, char quoteChar)
 {
   if (str[pos] != quoteChar)
   {

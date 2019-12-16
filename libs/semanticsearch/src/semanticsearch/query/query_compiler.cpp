@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/query/query_compiler.hpp"
+#include "semanticsearch/semantic_search_module.hpp"
 
 #include <cassert>
 
@@ -60,8 +61,10 @@ enum
   FIND
 };
 
-QueryCompiler::QueryCompiler(ErrorTracker &error_tracker)
+QueryCompiler::QueryCompiler(ErrorTracker &                                error_tracker,
+                             QueryCompiler::SemanticSearchModulePtr const &module)
   : error_tracker_(error_tracker)
+  , module_{module}
 {}
 
 Query QueryCompiler::operator()(ByteArray doc, ConstByteArray const &filename)
@@ -94,7 +97,6 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
 {
   std::vector<QueryInstruction> main_stack;
   std::vector<QueryInstruction> op_stack;
-  using Type = QueryInstruction::Type;
 
   bool last_was_identifer       = false;
   bool next_last_was_identifier = false;
@@ -109,28 +111,28 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
     switch (token.type())
     {
     case OP_ADD:
-      next.type       = Type::ADD;
-      next.properties = QueryInstruction::PROP_IS_OPERATOR;
+      next.type       = Constants::ADD;
+      next.properties = Properties::PROP_IS_OPERATOR;
       break;
     case OP_SUB:
-      next.type       = Type::SUB;
-      next.properties = QueryInstruction::PROP_IS_OPERATOR;
+      next.type       = Constants::SUB;
+      next.properties = Properties::PROP_IS_OPERATOR;
       break;
     case OP_ASSIGN:
-      next.type       = Type::ASSIGN;
-      next.properties = QueryInstruction::PROP_IS_OPERATOR;
+      next.type       = Constants::ASSIGN;
+      next.properties = Properties::PROP_IS_OPERATOR;
       break;
     case OP_MULTIPLY:
-      next.type       = Type::MULTIPLY;
-      next.properties = QueryInstruction::PROP_IS_OPERATOR;
+      next.type       = Constants::MULTIPLY;
+      next.properties = Properties::PROP_IS_OPERATOR;
       break;
     case OP_EQUAL:
-      next.type       = Type::EQUAL;
-      next.properties = QueryInstruction::PROP_IS_OPERATOR;
+      next.type       = Constants::EQUAL;
+      next.properties = Properties::PROP_IS_OPERATOR;
       break;
     case OP_SUBSCOPE:
-      next.type       = Type::SUBSCOPE;
-      next.properties = QueryInstruction::PROP_IS_OPERATOR;
+      next.type       = Constants::SUBSCOPE;
+      next.properties = Properties::PROP_IS_OPERATOR;
       break;
     case OP_ATTRIBUTE:
       if (main_stack.empty())
@@ -140,7 +142,7 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
         return {};
       }
 
-      if (main_stack.back().type != Type::IDENTIFIER)
+      if (main_stack.back().type != Constants::IDENTIFIER)
       {
         error_tracker_.RaiseSyntaxError(
             "Expected identifier before attribute indicator, but found different token.", token);
@@ -148,85 +150,84 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
       }
 
       // TODO(tfr): Chek that back is identifier or throw
-      main_stack.back().type = Type::OBJECT_KEY;
-      next.type              = Type::ATTRIBUTE;
-      next.properties        = QueryInstruction::PROP_IS_OPERATOR;
+      main_stack.back().type = Constants::OBJECT_KEY;
+      next.type              = Constants::ATTRIBUTE;
+      next.properties        = Properties::PROP_IS_OPERATOR;
       break;
     case OP_VAR_DEFINITION:
-      next.type       = Type::VAR_TYPE;
-      next.properties = QueryInstruction::PROP_IS_OPERATOR;
+      next.type       = Constants::VAR_TYPE;
+      next.properties = Properties::PROP_IS_OPERATOR;
       break;
     case OP_SEPARATOR:
-      next.type       = Type::SEPARATOR;
-      next.properties = QueryInstruction::PROP_IS_OPERATOR;
+      next.type       = Constants::SEPARATOR;
+      next.properties = Properties::PROP_IS_OPERATOR;
       break;
     case SCOPE_OPEN:
-      next.type       = Type::PUSH_SCOPE;
-      next.properties = QueryInstruction::PROP_IS_GROUP | QueryInstruction::PROP_IS_GROUP_OPEN;
+      next.type       = Constants::PUSH_SCOPE;
+      next.properties = Properties::PROP_IS_GROUP | Properties::PROP_IS_GROUP_OPEN;
       main_stack.push_back(next);
       break;
     case SCOPE_CLOSE:
-      next.type       = Type::POP_SCOPE;
-      next.properties = QueryInstruction::PROP_IS_GROUP;
+      next.type       = Constants::POP_SCOPE;
+      next.properties = Properties::PROP_IS_GROUP;
       break;
     case PARANTHESIS_OPEN:
-      next.type       = Type::INTERNAL_OPEN_GROUP;
-      next.properties = QueryInstruction::PROP_IS_GROUP | QueryInstruction::PROP_IS_GROUP_OPEN;
+      next.type       = Constants::INTERNAL_OPEN_GROUP;
+      next.properties = Properties::PROP_IS_GROUP | Properties::PROP_IS_GROUP_OPEN;
 
       if (last_was_identifer)
       {
-        next.properties |= QueryInstruction::PROP_IS_CALL;
-        main_stack.back().type = Type::FUNCTION;
+        next.properties |= Properties::PROP_IS_CALL;
+        main_stack.back().type = Constants::FUNCTION;
       }
       break;
     case PARANTHESIS_CLOSE:
-      next.type       = Type::INTERNAL_CLOSE_GROUP;
-      next.properties = QueryInstruction::PROP_IS_GROUP;
+      next.type       = Constants::INTERNAL_CLOSE_GROUP;
+      next.properties = Properties::PROP_IS_GROUP;
       break;
-    case STRING:
-      next.type     = Type::STRING;
-      next.consumes = 0;
-      break;
-    case INTEGER:
-      next.type     = Type::INTEGER;
-      next.consumes = 0;
-      break;
-    case FLOAT:
-      next.type     = Type::FLOAT;
-      next.consumes = 0;
-      break;
+
     case IDENTIFIER:
-      next.type                = Type::IDENTIFIER;
+      next.type                = Constants::IDENTIFIER;
       next_last_was_identifier = true;
       next.consumes            = 0;
       break;
     case KEYWORD:
-      next.type     = Type::SET_CONTEXT;
+      next.type     = Constants::SET_CONTEXT;
       next.consumes = 0;
-
+      // TODO: Use mapping held in module
       if (token == "model")
       {
-        next.properties = QueryInstruction::PROP_CTX_MODEL;
+        next.properties = Properties::PROP_CTX_MODEL;
       }
       else if (token == "advertise")
       {
-        next.properties = QueryInstruction::PROP_CTX_ADVERTISE;
+        next.properties = Properties::PROP_CTX_ADVERTISE;
       }
       else if (token == "let")
       {
-        next.properties = QueryInstruction::PROP_CTX_SET;
+        next.properties = Properties::PROP_CTX_SET;
       }
       else if (token == "find")
       {
-        next.properties = QueryInstruction::PROP_CTX_FIND;
+        next.properties = Properties::PROP_CTX_FIND;
       }
+      break;
+
+    default:
+      if (token.type() < Constants::USER_DEFINED_START)
+      {
+        std::cerr << "TODO: Emit error" << std::endl;
+        break;
+      }
+      next.type     = Constants::LITERAL;
+      next.consumes = 0;
       break;
     }
 
-    if ((next.properties & QueryInstruction::PROP_IS_OPERATOR) != 0)
+    if ((next.properties & Properties::PROP_IS_OPERATOR) != 0)
     {
       while ((!op_stack.empty()) && (next.type > op_stack.back().type) &&
-             static_cast<bool>(op_stack.back().properties & QueryInstruction::PROP_IS_OPERATOR))
+             static_cast<bool>(op_stack.back().properties & Properties::PROP_IS_OPERATOR))
       {
         auto back = op_stack.back();
         op_stack.pop_back();
@@ -235,16 +236,16 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
 
       op_stack.push_back(next);
     }
-    else if ((next.properties & QueryInstruction::PROP_IS_GROUP) != 0)
+    else if ((next.properties & Properties::PROP_IS_GROUP) != 0)
     {
-      if ((next.properties & QueryInstruction::PROP_IS_GROUP_OPEN) != 0)
+      if ((next.properties & Properties::PROP_IS_GROUP_OPEN) != 0)
       {
         op_stack.push_back(next);
       }
       else
       {
         while ((!op_stack.empty()) &&
-               ((op_stack.back().properties & QueryInstruction::PROP_IS_GROUP) == 0))
+               ((op_stack.back().properties & Properties::PROP_IS_GROUP) == 0))
         {
           auto back = op_stack.back();
           op_stack.pop_back();
@@ -252,12 +253,12 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
         }
 
         auto b = op_stack.back();
-        if ((b.properties & QueryInstruction::PROP_IS_CALL) != 0)
+        if ((b.properties & Properties::PROP_IS_CALL) != 0)
         {
-          next.type = Type::EXECUTE_CALL;
+          next.type = Constants::EXECUTE_CALL;
           main_stack.push_back(next);
         }
-        else if (b.type == Type::PUSH_SCOPE)
+        else if (b.type == Constants::PUSH_SCOPE)
         {
           main_stack.push_back(next);
         }
@@ -423,36 +424,36 @@ void QueryCompiler::Tokenise()
       continue;
     }
 
-    // Matching strings
-    uint64_t end  = position_;
-    int      type = byte_array::consumers::StringConsumer<STRING>(document_, end);
-    if (type != -1)
+    // Searching for user defined types.
+    auto const &type_info = module_->type_information();
+    found                 = false;
+    uint64_t end          = position_;
+    for (auto const &type : type_info)
     {
-      tok = static_cast<Token>(document_.SubArray(position_, end - position_));
-      tok.SetLine(line_);
-      tok.SetChar(char_index_);
-      tok.SetType(STRING);
-      stmt.tokens.push_back(tok);
-      SkipChars(end - position_);
+      if (type.consumer)
+      {
+        int ret = type.consumer(document_, end);
+        if (ret != -1)
+        {
+          tok = static_cast<Token>(document_.SubArray(position_, end - position_));
+          tok.SetLine(line_);
+          tok.SetChar(char_index_);
+          tok.SetType(type.code);
+          stmt.tokens.push_back(tok);
+          SkipChars(end - position_);
+          found = true;
+          break;
+        }
+      }
+    }
+
+    if (found)
+    {
       continue;
     }
 
-    // Matchin numbers
-    end  = position_;
-    type = byte_array::consumers::NumberConsumer<INTEGER, FLOAT>(document_, end);
-    if (type != -1)
-    {
-      tok = static_cast<Token>(document_.SubArray(position_, end - position_));
-      tok.SetLine(line_);
-      tok.SetChar(char_index_);
-      tok.SetType(type);
-      stmt.tokens.push_back(tok);
-      SkipChars(end - position_);
-      continue;
-    }
-
-    end  = position_;
-    type = byte_array::consumers::Token<IDENTIFIER>(document_, end);
+    // Finding identifiers
+    int type = byte_array::consumers::Token<IDENTIFIER>(document_, end);
     if (type != -1)
     {
       tok = static_cast<Token>(document_.SubArray(position_, end - position_));
@@ -469,7 +470,7 @@ void QueryCompiler::Tokenise()
     {
       std::cout << "Unrecognised symbol: '" << document_[position_] << "'" << std::endl;
       std::cout << "Position: " << line_ << ":" << char_index_ << std::endl;
-      exit(-1);
+      exit(-1);  // TODO: Throw
     }
   }
 }

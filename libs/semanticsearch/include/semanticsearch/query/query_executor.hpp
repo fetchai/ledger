@@ -46,19 +46,6 @@ public:
 private:
   using PropertyMap = std::map<std::string, std::shared_ptr<VocabularyInstance>>;
 
-  enum
-  {
-    TYPE_NONE  = 0,
-    TYPE_MODEL = 10,
-    TYPE_INSTANCE,
-    TYPE_KEY,
-    TYPE_STRING,
-    TYPE_INTEGER,
-    TYPE_FLOAT,
-
-    TYPE_FUNCTION_NAME
-  };
-
   // TODO(private issue AEA-128): combine these three into a single execute statement.
   void ExecuteStore(CompiledStatement const &stmt);
   void ExecuteSet(CompiledStatement const &stmt);

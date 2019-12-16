@@ -26,7 +26,10 @@
 #include "semanticsearch/query/abstract_query_variant.hpp"
 #include "semanticsearch/schema/fields/typed_schema_field.hpp"
 #include "semanticsearch/schema/semantic_reducer.hpp"
+#include "semanticsearch/semantic_constants.hpp"
 
+#include <functional>
+#include <string>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
@@ -41,7 +44,29 @@ class SemanticSearchModule
 public:
   using SharedSemanticSearchModule  = std::shared_ptr<SemanticSearchModule>;
   using SharedAdvertisementRegister = std::shared_ptr<AdvertisementRegister>;
-  using ConstByteArray              = fetch::byte_array::ConstByteArray;
+  using ConstByteArray              = byte_array::ConstByteArray;
+  using Token                       = byte_array::Token;
+
+  using ConsumerFunction = std::function<int(byte_array::ConstByteArray const &str, uint64_t &pos)>;
+  using AllocatorFunction = std::function<QueryVariant(Token const &data)>;
+
+  struct TypeDetails
+  {
+    TypeDetails(std::type_index const &t, std::string const &n, ConsumerFunction const &c,
+                AllocatorFunction const &a, int32_t d)
+      : type{t}
+      , name{n}
+      , consumer{c}
+      , allocator{a}
+      , code{d}
+    {}
+
+    std::type_index   type;
+    std::string       name;
+    ConsumerFunction  consumer;
+    AllocatorFunction allocator;
+    int32_t           code;
+  };
 
   static SharedSemanticSearchModule New(SharedAdvertisementRegister advertisement_register)
   {
@@ -49,9 +74,15 @@ public:
         SharedSemanticSearchModule(new SemanticSearchModule(std::move(advertisement_register)));
 
     // Registering primitive types
-    ret->RegisterPrimitiveType<int64_t>("Integer");
+    ret->RegisterPrimitiveType<int64_t>("Integer", byte_array::consumers::NumberConsumer<0, 1>,
+                                        [](Token const &token) -> QueryVariant {
+                                          return NewQueryVariant<int64_t>(
+                                              static_cast<int64_t>(token.AsInt()),
+                                              Constants::LITERAL, token);
+                                        });
+
     ret->RegisterPrimitiveType<uint64_t>("UnsignedInteger");
-    ret->RegisterPrimitiveType<std::string>("String");
+    ret->RegisterPrimitiveType<std::string>("String", byte_array::consumers::StringConsumer<0>);
     ret->RegisterPrimitiveType<ModelField>("ModelField");
 
     return ret;
@@ -67,8 +98,9 @@ public:
 
   template <typename T>
   void RegisterPrimitiveType(
-      std::string const &name,
-      bool               hidden = true)  // TODO: Add over loaded type that sets reducer uid
+      std::string const &name, ConsumerFunction const &consumer = nullptr,
+      AllocatorFunction const &allocator = nullptr,
+      bool                     hidden = true)  // TODO: Add over loaded type that sets reducer uid
   {
     SemanticReducer cdr = SemanticReducer{name + "DefaultReducer"};
 
@@ -78,6 +110,9 @@ public:
       instance->SetSemanticReducer(std::move(cdr));
       types_[name] = instance;
     }
+
+    type_information_.emplace_back(std::type_index(typeid(T)), name, consumer, allocator,
+                                   ++next_type_code_);
     std::type_index idx = std::type_index(typeid(T));
     idx_to_name_[idx]   = name;
   }
@@ -199,12 +234,21 @@ public:
     return agent_directory_.UnregisterAgent(pk);
   }
 
+  std::vector<TypeDetails> const &type_information() const
+  {
+    return type_information_;
+  }
+
 private:
   explicit SemanticSearchModule(SharedAdvertisementRegister advertisement_register)
     : advertisement_register_(std::move(advertisement_register))
   {}
 
+  std::vector<TypeDetails> type_information_;
+  int32_t                  next_type_code_{Constants::USER_DEFINED_START};
+
   std::unordered_map<std::type_index, std::string>                idx_to_name_;
+  std::unordered_map<std::type_index, uint64_t>                   idx_to_code_;
   std::unordered_map<std::string, BuiltinQueryFunction::Function> functions_;
   std::unordered_map<std::string, ModelField>                     types_;
   SharedAdvertisementRegister                                     advertisement_register_;

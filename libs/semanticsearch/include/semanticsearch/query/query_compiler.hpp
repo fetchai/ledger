@@ -25,19 +25,23 @@
 #include "semanticsearch/query/error_tracker.hpp"
 #include "semanticsearch/query/query.hpp"
 
+#include <memory>
 #include <vector>
 
 namespace fetch {
 namespace semanticsearch {
 
+class SemanticSearchModule;
+
 class QueryCompiler
 {
 public:
-  using ConstByteArray = fetch::byte_array::ConstByteArray;
-  using ByteArray      = fetch::byte_array::ByteArray;
-  using Token          = fetch::byte_array::Token;
+  using ConstByteArray          = fetch::byte_array::ConstByteArray;
+  using ByteArray               = fetch::byte_array::ByteArray;
+  using Token                   = fetch::byte_array::Token;
+  using SemanticSearchModulePtr = std::shared_ptr<SemanticSearchModule>;
 
-  explicit QueryCompiler(ErrorTracker &error_tracker);
+  explicit QueryCompiler(ErrorTracker &error_tracker, SemanticSearchModulePtr const &module);
   Query operator()(ByteArray doc, ConstByteArray const &filename = "(internal)");
 
 private:
@@ -58,11 +62,13 @@ private:
 
   void SkipUntil(uint8_t byte);
 
-  ErrorTracker &error_tracker_;
-  ByteArray     document_;
-  uint64_t      position_{0};
-  uint64_t      char_index_{0};
-  int           line_{0};
+  ErrorTracker &          error_tracker_;
+  SemanticSearchModulePtr module_;
+
+  ByteArray document_;
+  uint64_t  position_{0};
+  uint64_t  char_index_{0};
+  int       line_{0};
 
   std::vector<Statement> statements_;
 
