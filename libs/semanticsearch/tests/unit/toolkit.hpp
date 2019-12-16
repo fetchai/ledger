@@ -17,76 +17,7 @@ struct SemanticSearchToolkit
     : advertisement{std::make_shared<AdvertisementRegister>()}
     , semantic_search_module{SemanticSearchModule::New(advertisement)}
     , compiler{error_tracker, semantic_search_module}
-  {
-    using Int              = int64_t;
-    using Float            = double;
-    using ModelField       = fetch::semanticsearch::QueryExecutor::ModelField;
-    using SemanticReducer  = fetch::semanticsearch::SemanticReducer;
-    using SemanticPosition = fetch::semanticsearch::SemanticPosition;
-
-    semantic_search_module->RegisterFunction<ModelField, Int, Int>(
-        "BoundedInteger", [](Int from, Int to) -> ModelField {
-          auto            span = static_cast<uint64_t>(to - from);
-          SemanticReducer cdr{"BoundedIntegerReducer"};
-          cdr.SetReducer<Int>(1, [span, from](Int x) {
-            SemanticPosition ret;
-            uint64_t         multiplier = uint64_t(-1) / span;
-            ret.push_back(static_cast<uint64_t>(x + from) * multiplier);
-
-            return ret;
-          });
-
-          cdr.SetValidator<Int>([from, to](Int x, std::string &error) {
-            bool ret = (from <= x) && (x <= to);
-            if (!ret)
-            {
-              std::stringstream ss{""};
-              ss << "Value not withing bouds: " << from << " <= " << x << " <= " << to;
-              error = ss.str();
-              return false;
-            }
-            return true;
-          });
-
-          auto instance = fetch::semanticsearch::TypedSchemaField<Int>::New();
-          instance->SetSemanticReducer(cdr);
-
-          return instance;
-        });
-
-    semantic_search_module->RegisterFunction<ModelField, Float, Float>(
-        "BoundedFloat", [](Float from, Float to) -> ModelField {
-          auto            span = static_cast<Float>(to - from);
-          SemanticReducer cdr{"BoundedFloatReducer"};
-          cdr.SetReducer<Float>(1, [span, from](Float x) {
-            SemanticPosition ret;
-
-            Float multiplier = static_cast<Float>(uint64_t(-1)) / span;
-            ret.push_back(static_cast<uint64_t>((x + from) * multiplier));
-
-            return ret;
-          });
-
-          cdr.SetValidator<Float>([from, to](Float x, std::string &error) {
-            bool ret = (from <= x) && (x <= to);
-            if (!ret)
-            {
-              std::stringstream ss{""};
-              ss << "Value not withing bouds: " << from << " <= " << x << " <= " << to;
-              error = ss.str();
-
-              return false;
-            }
-
-            return true;
-          });
-
-          auto instance = fetch::semanticsearch::TypedSchemaField<Float>::New();
-          instance->SetSemanticReducer(cdr);
-
-          return instance;
-        });
-  }
+  {}
 
   Query Compile(std::string const &source, std::string const &filename)
   {

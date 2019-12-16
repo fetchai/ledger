@@ -21,6 +21,7 @@
 #include "semanticsearch/query/execution_context.hpp"
 #include "semanticsearch/schema/vocabulary_instance.hpp"
 #include "semanticsearch/semantic_search_module.hpp"
+#include "semanticsearch/vocabular_advertisement.hpp"
 
 namespace fetch {
 namespace semanticsearch {
@@ -34,22 +35,20 @@ public:
   using Vocabulary          = std::shared_ptr<VocabularyInstance>;
   using SharedAbstractVocabularyRegister =
       AbstractVocabularyRegister::SharedAbstractVocabularyRegister;
-
-  using Int    = int;  // TODO(private issue AEA-126): Get rid of these
-  using Float  = double;
-  using String = std::string;
+  using AgentIdSet = VocabularyAdvertisement::AgentIdSet;
 
   QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &error_tracker);
-  void       Execute(Query const &query, Agent agent);
+  AgentIdSet Execute(Query const &query, Agent agent);
   Vocabulary GetInstance(std::string const &name);
 
 private:
   using PropertyMap = std::map<std::string, std::shared_ptr<VocabularyInstance>>;
 
   // TODO(private issue AEA-128): combine these three into a single execute statement.
-  void ExecuteStore(CompiledStatement const &stmt);
-  void ExecuteSet(CompiledStatement const &stmt);
-  void ExecuteDefine(CompiledStatement const &stmt);
+  AgentIdSet ExecuteStore(CompiledStatement const &stmt);
+  AgentIdSet ExecuteFind(CompiledStatement const &stmt);
+  AgentIdSet ExecuteSet(CompiledStatement const &stmt);
+  AgentIdSet ExecuteDefine(CompiledStatement const &stmt);
 
   template <typename T>
   bool TypeMismatch(QueryVariant const &var, Token token)

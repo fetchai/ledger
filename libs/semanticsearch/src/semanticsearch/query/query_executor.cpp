@@ -29,7 +29,7 @@ QueryExecutor::QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &
   , semantic_search_module_{std::move(instance)}
 {}
 
-void QueryExecutor::Execute(Query const &query, Agent agent)
+QueryExecutor::AgentIdSet QueryExecutor::Execute(Query const &query, Agent agent)
 {
   agent_ = std::move(agent);
 
@@ -41,7 +41,7 @@ void QueryExecutor::Execute(Query const &query, Agent agent)
     zero.SetLine(0);
     zero.SetChar(0);
     error_tracker_.RaiseRuntimeError("Agent not found. Did you remember to register it?", zero);
-    return;
+    return nullptr;
   }
 
   // Preparing error tracker
@@ -50,34 +50,40 @@ void QueryExecutor::Execute(Query const &query, Agent agent)
   // Stopping if there is nothing to execute
   if (query.statements.empty())
   {
-    return;
+    return nullptr;
   }
 
   // Executing each statement in program
+  AgentIdSet ret{nullptr};
   for (auto const &stmt : query.statements)
   {
+
     switch (stmt[0].properties)
     {
     case Properties::PROP_CTX_MODEL:
-      ExecuteDefine(stmt);
+      ret = ExecuteDefine(stmt);
       break;
     case Properties::PROP_CTX_SET:
-      ExecuteSet(stmt);
+      ret = ExecuteSet(stmt);
       break;
     case Properties::PROP_CTX_ADVERTISE:
-      ExecuteStore(stmt);
+      ret = ExecuteStore(stmt);
+      break;
+    case Properties::PROP_CTX_FIND:
+      ret = ExecuteFind(stmt);
       break;
     default:
       error_tracker_.RaiseRuntimeError("Unknown statement type.", stmt[0].token);
-      return;
+      return nullptr;
     }
 
     // Breaking at first encountered error.
     if (error_tracker_.HasErrors())
     {
-      break;
+      return nullptr;
     }
   }
+  return ret;
 }
 
 QueryExecutor::Vocabulary QueryExecutor::GetInstance(std::string const &name)
@@ -86,12 +92,12 @@ QueryExecutor::Vocabulary QueryExecutor::GetInstance(std::string const &name)
   return context_.Get(name);
 }
 
-void QueryExecutor::ExecuteStore(CompiledStatement const &stmt)
+QueryExecutor::AgentIdSet QueryExecutor::ExecuteStore(CompiledStatement const &stmt)
 {
   if (stmt[1].type != Constants::IDENTIFIER)
   {
     error_tracker_.RaiseSyntaxError("Expected variable name.", stmt[1].token);
-    return;
+    return nullptr;
   }
 
   auto name = static_cast<std::string>(stmt[1].token);
@@ -99,7 +105,7 @@ void QueryExecutor::ExecuteStore(CompiledStatement const &stmt)
   if (!context_.Has(name))
   {
     error_tracker_.RaiseSyntaxError("Vairable not defined", stmt[1].token);
-    return;
+    return nullptr;
   }
 
   auto obj        = context_.Get(name);
@@ -108,14 +114,14 @@ void QueryExecutor::ExecuteStore(CompiledStatement const &stmt)
   if (!semantic_search_module_->HasModel(model_name))
   {
     error_tracker_.RaiseSyntaxError("Could not find model '" + model_name + "'", stmt[1].token);
-    return;
+    return nullptr;
   }
 
   auto model = semantic_search_module_->GetModel(model_name);
   if (model == nullptr)
   {
     error_tracker_.RaiseInternalError("Model '" + model_name + "' is null.", stmt[1].token);
-    return;
+    return nullptr;
   }
 
   model->VisitFields(
@@ -137,28 +143,71 @@ void QueryExecutor::ExecuteStore(CompiledStatement const &stmt)
         agent_->RegisterVocabularyLocation(mname, position);
       },
       obj);
+
+  return nullptr;
 }
 
-void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
+QueryExecutor::AgentIdSet QueryExecutor::ExecuteFind(CompiledStatement const &stmt)
+{
+  if (stmt[1].type != Constants::IDENTIFIER)
+  {
+    error_tracker_.RaiseSyntaxError("Expected variable name.", stmt[1].token);
+    return nullptr;
+  }
+
+  auto name = static_cast<std::string>(stmt[1].token);
+
+  if (!context_.Has(name))
+  {
+    error_tracker_.RaiseSyntaxError("Vairable not defined", stmt[1].token);
+    return nullptr;
+  }
+
+  auto obj        = context_.Get(name);
+  auto model_name = context_.GetModelName(name);
+
+  if (!semantic_search_module_->HasModel(model_name))
+  {
+    error_tracker_.RaiseSyntaxError("Could not find model '" + model_name + "'", stmt[1].token);
+    return nullptr;
+  }
+
+  auto model = semantic_search_module_->GetModel(model_name);
+  if (model == nullptr)
+  {
+    error_tracker_.RaiseInternalError("Model '" + model_name + "' is null.", stmt[1].token);
+    return nullptr;
+  }
+
+  assert(semantic_search_module_->advertisement_register() != nullptr);
+  assert(agent_ != nullptr);
+  auto position = model->Reduce(obj);
+  auto results =
+      semantic_search_module_->advertisement_register()->FindAgents(model_name, position, 2);
+
+  return results;
+}
+
+QueryExecutor::AgentIdSet QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
 {
   std::size_t i = 3;
 
   if (stmt.size() < i)
   {
     error_tracker_.RaiseSyntaxError("Set statment has incorrect syntax.", stmt[0].token);
-    return;
+    return nullptr;
   }
 
   if (stmt[1].type != Constants::IDENTIFIER)
   {
     error_tracker_.RaiseSyntaxError("Expected variable name.", stmt[1].token);
-    return;
+    return nullptr;
   }
 
   if (stmt[2].type != Constants::IDENTIFIER)
   {
     error_tracker_.RaiseSyntaxError("Expected variable type.", stmt[2].token);
-    return;
+    return nullptr;
   }
 
   std::vector<QueryVariant> stack;
@@ -265,7 +314,7 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
           if (!type.allocator)
           {
             std::cerr << "TODO: able to parse but not allocate " << x.token;
-            return;
+            return nullptr;
           }
 
           auto element = type.allocator(x.token);
@@ -313,7 +362,7 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
     {
       error_tracker_.RaiseRuntimeError("Could not find model '" + name_of_model + "'.",
                                        stmt[stmt.size() - 1].token);
-      return;
+      return nullptr;
     }
 
     std::string error;
@@ -324,7 +373,7 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
                                        stmt[stmt.size() - 1].token);
 
       error_tracker_.Append(error, stmt[stmt.size() - 1].token);
-      return;
+      return nullptr;
     }
 
     context_.Set(key->As<std::string>(), last, name_of_model);
@@ -334,11 +383,13 @@ void QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
     error_tracker_.RaiseRuntimeError(
         "No object instance was created, only declared. This is not supported yet.",
         stmt[stmt.size() - 1].token);
-    return;
+    return nullptr;
   }
-}  // namespace semanticsearch
 
-void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
+  return nullptr;
+}
+
+QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
 {
   std::size_t i = 1;
 
@@ -384,12 +435,12 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
       // Asserting types
       if (TypeMismatch<ModelField>(value, x.token))
       {
-        return;
+        return nullptr;
       }
 
       if (TypeMismatch<Token>(key, x.token))
       {
-        return;
+        return nullptr;
       }
 
       // Sanity check
@@ -428,7 +479,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
         {
           error_tracker_.RaiseRuntimeError(
               "Could not find field: " + static_cast<std::string>(x.token), x.token);
-          return;
+          return nullptr;
         }
 
         QueryVariant ele = NewQueryVariant(semantic_search_module_->GetField(field_name),
@@ -478,7 +529,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
       // Calling
       if (TypeMismatch<Token>(stack_[n], stack_[n]->token()))
       {
-        return;
+        return nullptr;
       }
       auto function_name = static_cast<std::string>(stack_[n]->As<Token>());
 
@@ -486,7 +537,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
       {
         error_tracker_.RaiseRuntimeError("Function '" + function_name + "' does not exist.",
                                          stack_[n]->token());
-        return;
+        return nullptr;
       }
 
       auto &          function = (*semantic_search_module_)[function_name];
@@ -496,7 +547,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
       {
         error_tracker_.RaiseRuntimeError(
             "Call to '" + function_name + "' does not match signature.", stack_[n]->token());
-        return;
+        return nullptr;
       }
 
       QueryVariant ret;
@@ -507,7 +558,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
       catch (std::exception const &e)
       {
         error_tracker_.RaiseRuntimeError(e.what(), stack_[n]->token());
-        return;
+        return nullptr;
       }
 
       // Clearing stack
@@ -532,7 +583,7 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
           if (!type.allocator)
           {
             std::cerr << "TODO: able to parse but not allocate " << x.token;
-            return;
+            return nullptr;
           }
 
           auto element = type.allocator(x.token);
@@ -572,6 +623,8 @@ void QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
     // TODO(private issue AEA-140): Handle this case
     std::cout << "NOT READY: " << last.vocabulary_schema() << std::endl;
   }
+
+  return nullptr;
 }
 
 }  // namespace semanticsearch

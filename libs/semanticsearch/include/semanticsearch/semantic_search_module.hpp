@@ -74,6 +74,7 @@ public:
         SharedSemanticSearchModule(new SemanticSearchModule(std::move(advertisement_register)));
 
     // Registering primitive types
+    ret->RegisterPrimitiveType<ModelField>("ModelField");
     ret->RegisterPrimitiveType<int64_t>("Integer", byte_array::consumers::NumberConsumer<0, 1>,
                                         [](Token const &token) -> QueryVariant {
                                           return NewQueryVariant<int64_t>(
@@ -82,8 +83,46 @@ public:
                                         });
 
     ret->RegisterPrimitiveType<uint64_t>("UnsignedInteger");
-    ret->RegisterPrimitiveType<std::string>("String", byte_array::consumers::StringConsumer<0>);
-    ret->RegisterPrimitiveType<ModelField>("ModelField");
+    ret->RegisterPrimitiveType<std::string>(
+        "String", byte_array::consumers::StringConsumer<0>, [](Token const &token) -> QueryVariant {
+          //   TODO: Throw is size does not fit
+          return NewQueryVariant<std::string>(
+              static_cast<std::string>(token.SubArray(1, token.size() - 2)), Constants::LITERAL,
+              token);
+        });
+
+    // Registering reduced types
+    ret->RegisterFunction<ModelField, int64_t, int64_t>(
+        "BoundedInteger", [](int64_t from, int64_t to) -> ModelField {
+          auto            span = static_cast<uint64_t>(to - from);
+          SemanticReducer cdr{"BoundedIntegerReducer[" + std::to_string(from) + "-" +
+                              std::to_string(to) + "]"};
+
+          cdr.SetReducer<int64_t>(1, [span, from](int64_t x) {
+            SemanticPosition ret;
+            uint64_t         multiplier = uint64_t(-1) / span;
+            ret.push_back(static_cast<uint64_t>(x + from) * multiplier);
+
+            return ret;
+          });
+
+          cdr.SetValidator<int64_t>([from, to](int64_t x, std::string &error) {
+            bool ret = (from <= x) && (x <= to);
+            if (!ret)
+            {
+              error = "Value not within bouds: " + std::to_string(from) +
+                      " <=" + std::to_string(x) + "<=" + std::to_string(to);
+              return false;
+            }
+
+            return true;
+          });
+
+          auto field = TypedSchemaField<int64_t>::New();
+          field->SetSemanticReducer(cdr);
+
+          return field;
+        });
 
     return ret;
   }

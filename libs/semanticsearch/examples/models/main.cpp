@@ -44,11 +44,6 @@ int main(int argc, char **argv)
 
   auto adv = std::make_shared<AdvertisementRegister>();
 
-  using Int        = int;
-  using Float      = double;
-  using String     = std::string;
-  using ModelField = QueryExecutor::ModelField;
-
   auto semantic_search_module = SemanticSearchModule::New(adv);
 
   std::string   filename = argv[1];
@@ -73,74 +68,6 @@ int main(int argc, char **argv)
   }
 
   // Executing the query
-
-  semantic_search_module->RegisterPrimitiveType<Int>("Int");
-  semantic_search_module->RegisterPrimitiveType<Float>("Float");
-  semantic_search_module->RegisterPrimitiveType<String>("String");
-  semantic_search_module->RegisterPrimitiveType<ModelField>("ModelField");
-  semantic_search_module->RegisterFunction<ModelField, Int, Int>(
-      "BoundedInteger", [](Int from, Int to) -> ModelField {
-        auto            span = static_cast<uint64_t>(to - from);
-        SemanticReducer cdr{"BoundedIntegerReducer"};
-        cdr.SetReducer<Int>(1, [span, from](Int x) {
-          SemanticPosition ret;
-          uint64_t         multiplier = uint64_t(-1) / span;
-          ret.push_back(static_cast<uint64_t>(x + from) * multiplier);
-
-          return ret;
-        });
-
-        cdr.SetValidator<Int>([from, to](Int x, std::string &error) {
-          bool ret = (from <= x) && (x <= to);
-          if (!ret)
-          {
-            std::stringstream ss{""};
-            ss << "Value not withing bouds: " << from << " <= " << x << " <= " << to;
-            error = ss.str();
-            return false;
-          }
-          return true;
-        });
-
-        auto instance = TypedSchemaField<Int>::New();
-        instance->SetSemanticReducer(cdr);
-
-        return instance;
-      });
-
-  semantic_search_module->RegisterFunction<ModelField, Float, Float>(
-      "BoundedFloat", [](Float from, Float to) -> ModelField {
-        auto            span = static_cast<Float>(to - from);
-        SemanticReducer cdr{"BoundedFloatReducer"};
-        cdr.SetReducer<Float>(1, [span, from](Float x) {
-          SemanticPosition ret;
-
-          Float multiplier = static_cast<Float>(uint64_t(-1)) / span;
-          ret.push_back(static_cast<uint64_t>((x + from) * multiplier));
-
-          return ret;
-        });
-
-        cdr.SetValidator<Float>([from, to](Float x, std::string &error) {
-          bool ret = (from <= x) && (x <= to);
-          if (!ret)
-          {
-            std::stringstream ss{""};
-            ss << "Value not withing bouds: " << from << " <= " << x << " <= " << to;
-            error = ss.str();
-
-            return false;
-          }
-
-          return true;
-        });
-
-        auto instance = TypedSchemaField<Float>::New();
-        instance->SetSemanticReducer(cdr);
-
-        return instance;
-      });
-
   semantic_search_module->RegisterAgent("agent1");
   semantic_search_module->RegisterAgent("agent2");
   semantic_search_module->RegisterAgent("agent3");
