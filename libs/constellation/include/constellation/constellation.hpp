@@ -32,6 +32,7 @@
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "ledger/miner/basic_miner.hpp"
 #include "ledger/protocols/dag_service.hpp"
+#include "ledger/protocols/main_chain_rpc_client.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
@@ -141,6 +142,7 @@ private:
   using MainChainPtr             = std::unique_ptr<ledger::MainChain>;
   using MainChainRpcService      = ledger::MainChainRpcService;
   using MainChainRpcServicePtr   = std::shared_ptr<MainChainRpcService>;
+  using MainChainRpcClientPtr    = std::shared_ptr<ledger::MainChainRpcClient>;
   using LaneServices             = ledger::StorageUnitBundledService;
   using StorageUnitClient        = ledger::StorageUnitClient;
   using LaneIndex                = uint32_t;
@@ -250,6 +252,7 @@ private:
 
   /// @name Top Level Services
   /// @{
+  MainChainRpcClientPtr   main_chain_rpc_client_;
   MainChainRpcServicePtr  main_chain_service_;  ///< Service for block transmission over the network
   TransactionProcessorPtr tx_processor_;        ///< The transaction entrypoint
   /// @}
