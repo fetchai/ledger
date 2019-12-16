@@ -22,8 +22,8 @@ namespace vm {
 
 namespace OpcodeCharges {
 
-static const ChargeAmount DEFAULT_OBJECT_CHARGE = 1000;
-static const ChargeAmount DEFAULT_STATIC_CHARGE = 100;
+static const ChargeAmount DEFAULT_OBJECT_CHARGE = 1;
+static const ChargeAmount DEFAULT_STATIC_CHARGE = 1;
 
 static const ChargeAmount CHARGE_LOCAL_VARIABLE_DECLARE                    = 9;
 static const ChargeAmount CHARGE_LOCAL_VARIABLE_DECLARE_ASSIGN             = 1;
