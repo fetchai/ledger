@@ -190,7 +190,7 @@ private:
       input_matrix_ = input_matrix.Transpose();
     }
 
-    DataType perplexity_tolerance{1e-5f};
+    DataType perplexity_tolerance = fetch::math::Type<DataType>("0.00001");
     SizeType max_tries{50};
 
     // Initialise high dimensional values

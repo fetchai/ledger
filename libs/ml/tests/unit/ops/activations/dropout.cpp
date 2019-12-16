@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/activations/dropout.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
 #include "math/base_types.hpp"
-#include "ml/ops/activations/dropout.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 
@@ -74,7 +75,7 @@ TYPED_TEST(DropoutTest, forward_test)
 
   math::SizeType tensorsize = 1000;
   TensorType     data       = TensorType::UniformRandom(tensorsize);
-  DataType       prob{0.5};
+  DataType       prob       = fetch::math::Type<DataType>("0.5");
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
@@ -142,7 +143,7 @@ TYPED_TEST(DropoutTest, backward_test)
   math::SizeType tensorsize = 1000;
   TensorType     data       = TensorType::UniformRandom(tensorsize);
   TensorType     error      = TensorType::UniformRandom(tensorsize);
-  DataType       prob{0.5};
+  DataType       prob       = fetch::math::Type<DataType>("0.5");
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
@@ -213,9 +214,9 @@ TYPED_TEST(DropoutTest, saveparams_test)
   using SPType        = typename fetch::ml::ops::Dropout<TensorType>::SPType;
   using OpType        = fetch::ml::ops::Dropout<TensorType>;
 
-  math::SizeType                tensorsize = 1000;
-  TensorType                    data       = TensorType::UniformRandom(tensorsize);
-  DataType                      prob{0.5};
+  math::SizeType                tensorsize  = 1000;
+  TensorType                    data        = TensorType::UniformRandom(tensorsize);
+  DataType                      prob        = fetch::math::Type<DataType>("0.5");
   typename TensorType::SizeType random_seed = 12345;
 
   OpType op(prob, random_seed);
