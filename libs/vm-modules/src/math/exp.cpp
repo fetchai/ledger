@@ -51,11 +51,12 @@ IfIsPtrFixed128<T, Ptr<T>> ExpPtr(VM *vm, Ptr<T> const &a)
 
 }  // namespace
 
-void BindExp(Module &module)
+void BindExp(Module &module, bool const /*enable_experimental*/)
 {
-  module.CreateFreeFunction("exp", &Exp<fixed_point::fp32_t>);
-  module.CreateFreeFunction("exp", &Exp<fixed_point::fp64_t>);
-  module.CreateFreeFunction("exp", &ExpPtr<Fixed128>);
+  // charge estimates based on benchmarking in math/benchmark
+  module.CreateFreeFunction("exp", &Exp<fixed_point::fp32_t>, ChargeAmount{4});
+  module.CreateFreeFunction("exp", &Exp<fixed_point::fp64_t>, ChargeAmount{6});
+  module.CreateFreeFunction("exp", &ExpPtr<Fixed128>, ChargeAmount{10});
 }
 
 }  // namespace math

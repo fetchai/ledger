@@ -280,49 +280,49 @@ IfIsPtrFixed128<T, Ptr<T>> ATanHPtr(VM *vm, Ptr<T> const &a)
 
 }  // namespace
 
-void BindTrigonometry(Module &module)
+void BindTrigonometry(Module &module, bool const /*enable_experimental*/)
 {
-  module.CreateFreeFunction("sin", &Sin<fixed_point::fp32_t>);
-  module.CreateFreeFunction("cos", &Cos<fixed_point::fp32_t>);
-  module.CreateFreeFunction("tan", &Tan<fixed_point::fp32_t>);
-  module.CreateFreeFunction("asin", &ASin<fixed_point::fp32_t>);
-  module.CreateFreeFunction("acos", &ACos<fixed_point::fp32_t>);
-  module.CreateFreeFunction("atan", &ATan<fixed_point::fp32_t>);
-  module.CreateFreeFunction("atan2", &ATan2<fixed_point::fp32_t>);
-  module.CreateFreeFunction("sinh", &SinH<fixed_point::fp32_t>);
-  module.CreateFreeFunction("cosh", &CosH<fixed_point::fp32_t>);
-  module.CreateFreeFunction("tanh", &TanH<fixed_point::fp32_t>);
-  module.CreateFreeFunction("asinh", &ASinH<fixed_point::fp32_t>);
-  module.CreateFreeFunction("acosh", &ACosH<fixed_point::fp32_t>);
-  module.CreateFreeFunction("atanh", &ATanH<fixed_point::fp32_t>);
+  module.CreateFreeFunction("sin", &Sin<fixed_point::fp32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("cos", &Cos<fixed_point::fp32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("tan", &Tan<fixed_point::fp32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("asin", &ASin<fixed_point::fp32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("acos", &ACos<fixed_point::fp32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("atan", &ATan<fixed_point::fp32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("atan2", &ATan2<fixed_point::fp32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("sinh", &SinH<fixed_point::fp32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("cosh", &CosH<fixed_point::fp32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("tanh", &TanH<fixed_point::fp32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("asinh", &ASinH<fixed_point::fp32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("acosh", &ACosH<fixed_point::fp32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("atanh", &ATanH<fixed_point::fp32_t>, ChargeAmount{1});
 
-  module.CreateFreeFunction("sin", &Sin<fixed_point::fp64_t>);
-  module.CreateFreeFunction("cos", &Cos<fixed_point::fp64_t>);
-  module.CreateFreeFunction("tan", &Tan<fixed_point::fp64_t>);
-  module.CreateFreeFunction("asin", &ASin<fixed_point::fp64_t>);
-  module.CreateFreeFunction("acos", &ACos<fixed_point::fp64_t>);
-  module.CreateFreeFunction("atan", &ATan<fixed_point::fp64_t>);
-  module.CreateFreeFunction("atan2", &ATan2<fixed_point::fp64_t>);
-  module.CreateFreeFunction("sinh", &SinH<fixed_point::fp64_t>);
-  module.CreateFreeFunction("cosh", &CosH<fixed_point::fp64_t>);
-  module.CreateFreeFunction("tanh", &TanH<fixed_point::fp64_t>);
-  module.CreateFreeFunction("asinh", &ASinH<fixed_point::fp64_t>);
-  module.CreateFreeFunction("acosh", &ACosH<fixed_point::fp64_t>);
-  module.CreateFreeFunction("atanh", &ATanH<fixed_point::fp64_t>);
+  module.CreateFreeFunction("sin", &Sin<fixed_point::fp64_t>, ChargeAmount{2});
+  module.CreateFreeFunction("cos", &Cos<fixed_point::fp64_t>, ChargeAmount{2});
+  module.CreateFreeFunction("tan", &Tan<fixed_point::fp64_t>, ChargeAmount{2});
+  module.CreateFreeFunction("asin", &ASin<fixed_point::fp64_t>, ChargeAmount{2});
+  module.CreateFreeFunction("acos", &ACos<fixed_point::fp64_t>, ChargeAmount{2});
+  module.CreateFreeFunction("atan", &ATan<fixed_point::fp64_t>, ChargeAmount{2});
+  module.CreateFreeFunction("atan2", &ATan2<fixed_point::fp64_t>, ChargeAmount{2});
+  module.CreateFreeFunction("sinh", &SinH<fixed_point::fp64_t>, ChargeAmount{2});
+  module.CreateFreeFunction("cosh", &CosH<fixed_point::fp64_t>, ChargeAmount{2});
+  module.CreateFreeFunction("tanh", &TanH<fixed_point::fp64_t>, ChargeAmount{2});
+  module.CreateFreeFunction("asinh", &ASinH<fixed_point::fp64_t>, ChargeAmount{2});
+  module.CreateFreeFunction("acosh", &ACosH<fixed_point::fp64_t>, ChargeAmount{2});
+  module.CreateFreeFunction("atanh", &ATanH<fixed_point::fp64_t>, ChargeAmount{2});
 
-  module.CreateFreeFunction("sin", &SinPtr<Fixed128>);
-  module.CreateFreeFunction("cos", &CosPtr<Fixed128>);
-  module.CreateFreeFunction("tan", &TanPtr<Fixed128>);
-  module.CreateFreeFunction("asin", &ASinPtr<Fixed128>);
-  module.CreateFreeFunction("acos", &ACosPtr<Fixed128>);
-  module.CreateFreeFunction("atan", &ATanPtr<Fixed128>);
-  module.CreateFreeFunction("atan2", &ATan2Ptr<Fixed128>);
-  module.CreateFreeFunction("sinh", &SinHPtr<Fixed128>);
-  module.CreateFreeFunction("cosh", &CosHPtr<Fixed128>);
-  module.CreateFreeFunction("tanh", &TanHPtr<Fixed128>);
-  module.CreateFreeFunction("asinh", &ASinHPtr<Fixed128>);
-  module.CreateFreeFunction("acosh", &ACosHPtr<Fixed128>);
-  module.CreateFreeFunction("atanh", &ATanHPtr<Fixed128>);
+  module.CreateFreeFunction("sin", &SinPtr<Fixed128>, ChargeAmount{5});
+  module.CreateFreeFunction("cos", &CosPtr<Fixed128>, ChargeAmount{5});
+  module.CreateFreeFunction("tan", &TanPtr<Fixed128>, ChargeAmount{5});
+  module.CreateFreeFunction("asin", &ASinPtr<Fixed128>, ChargeAmount{5});
+  module.CreateFreeFunction("acos", &ACosPtr<Fixed128>, ChargeAmount{5});
+  module.CreateFreeFunction("atan", &ATanPtr<Fixed128>, ChargeAmount{5});
+  module.CreateFreeFunction("atan2", &ATan2Ptr<Fixed128>, ChargeAmount{5});
+  module.CreateFreeFunction("sinh", &SinHPtr<Fixed128>, ChargeAmount{5});
+  module.CreateFreeFunction("cosh", &CosHPtr<Fixed128>, ChargeAmount{5});
+  module.CreateFreeFunction("tanh", &TanHPtr<Fixed128>, ChargeAmount{5});
+  module.CreateFreeFunction("asinh", &ASinHPtr<Fixed128>, ChargeAmount{5});
+  module.CreateFreeFunction("acosh", &ACosHPtr<Fixed128>, ChargeAmount{5});
+  module.CreateFreeFunction("atanh", &ATanHPtr<Fixed128>, ChargeAmount{5});
 }
 
 }  // namespace math

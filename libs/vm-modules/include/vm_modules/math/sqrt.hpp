@@ -28,10 +28,7 @@ class Module;
 namespace vm_modules {
 namespace math {
 
-void BindSqrt(fetch::vm::Module &module);
-
-vm::ChargeAmount SqrtChargeEstimator(vm::Ptr<Object> const &lhso,
-                                     vm::Ptr<Object> const &rhso) override;
+void BindSqrt(fetch::vm::Module &module, bool const enable_experimental);
 
 }  // namespace math
 }  // namespace vm_modules

@@ -24,6 +24,7 @@
 #include <cmath>
 #include <cstddef>
 
+namespace {
 // This is to avoid ambiguity in instantation
 double dsin(double x)
 {
@@ -157,3 +158,5 @@ static void BM_exponent(benchmark::State &state)
   }
 }
 BENCHMARK(BM_exponent)->Apply(DegreeArguments);
+
+}  // namespace

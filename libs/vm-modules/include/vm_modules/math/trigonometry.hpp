@@ -28,47 +28,7 @@ class Module;
 namespace vm_modules {
 namespace math {
 
-void BindTrigonometry(fetch::vm::Module &module);
-
-vm::ChargeAmount SinChargeEstimator(vm::Ptr<Object> const &lhso,
-                                    vm::Ptr<Object> const &rhso) override;
-
-vm::ChargeAmount CosChargeEstimator(vm::Ptr<Object> const &lhso,
-                                    vm::Ptr<Object> const &rhso) override;
-
-vm::ChargeAmount TanChargeEstimator(vm::Ptr<Object> const &lhso,
-                                    vm::Ptr<Object> const &rhso) override;
-
-vm::ChargeAmount ASinChargeEstimator(vm::Ptr<Object> const &lhso,
-                                    vm::Ptr<Object> const &rhso) override;
-
-vm::ChargeAmount ACosChargeEstimator(vm::Ptr<Object> const &lhso,
-                                    vm::Ptr<Object> const &rhso) override;
-
-vm::ChargeAmount ATanChargeEstimator(vm::Ptr<Object> const &lhso,
-                                    vm::Ptr<Object> const &rhso) override;
-
-vm::ChargeAmount ATan2ChargeEstimator(vm::Ptr<Object> const &lhso,
-                                    vm::Ptr<Object> const &rhso) override;
-
-vm::ChargeAmount SinHChargeEstimator(vm::Ptr<Object> const &lhso,
-                                    vm::Ptr<Object> const &rhso) override;
-
-vm::ChargeAmount CosHChargeEstimator(vm::Ptr<Object> const &lhso,
-                                    vm::Ptr<Object> const &rhso) override;
-
-vm::ChargeAmount TanHChargeEstimator(vm::Ptr<Object> const &lhso,
-                                    vm::Ptr<Object> const &rhso) override;
-
-vm::ChargeAmount ASinHChargeEstimator(vm::Ptr<Object> const &lhso,
-                                    vm::Ptr<Object> const &rhso) override;
-
-vm::ChargeAmount ACosHChargeEstimator(vm::Ptr<Object> const &lhso,
-                                    vm::Ptr<Object> const &rhso) override;
-
-vm::ChargeAmount ATanHChargeEstimator(vm::Ptr<Object> const &lhso,
-                                    vm::Ptr<Object> const &rhso) override;
-
+void BindTrigonometry(fetch::vm::Module &module, bool const enable_experimental);
 
 }  // namespace math
 }  // namespace vm_modules
