@@ -161,7 +161,7 @@ ChargeAmount ModelEstimator::LayerAddConvActivation(
 ChargeAmount ModelEstimator::LayerAddFlatten(Ptr<fetch::vm::String> const &layer)
 {
   FETCH_UNUSED(layer);
-  return MaximumCharge("Not yet implement");
+  return MaximumCharge("Not yet implemented");
 }
 
 ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
