@@ -999,7 +999,7 @@ TEST_F(VMModelTests, model_sequential_evaluate_without_fit)
     )";
 
   ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
-  EXPECT_THROW(toolkit.Run(), std::exception);
+  ASSERT_FALSE(toolkit.Run());
 }
 
 TEST_F(VMModelTests, model_sequential_fit_bad_data)
@@ -1024,7 +1024,7 @@ TEST_F(VMModelTests, model_sequential_fit_bad_data)
     )";
 
   ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
-  EXPECT_THROW(toolkit.Run(), std::exception);
+  ASSERT_FALSE(toolkit.Run());
 }
 
 }  // namespace
