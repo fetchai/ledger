@@ -17,9 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "oef-base/threading/Waitable.hpp"
-
 #include <atomic>
 
 namespace fetch {
@@ -70,7 +68,7 @@ public:
   void set(const T &value)
   {
     {
-      FETCH_LOCK(value_mutex_);
+      std::lock_guard<std::mutex> lg(value_mutex_);
       value_ = value;
     }
     this->wake();
@@ -78,7 +76,7 @@ public:
 
   T get()
   {
-    FETCH_LOCK(value_mutex_);
+    std::lock_guard<std::mutex> lg(value_mutex_);
     return value_;
   }
 

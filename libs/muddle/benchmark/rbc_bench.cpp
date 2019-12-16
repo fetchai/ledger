@@ -108,13 +108,13 @@ struct AbstractRBCNode
 
   uint64_t MessagesReceived()
   {
-    FETCH_LOCK(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     return answers.size();
   }
 
   void Clear()
   {
-    FETCH_LOCK(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     answers.clear();
   }
 
@@ -142,7 +142,7 @@ struct RBCNode : public AbstractRBCNode
     : AbstractRBCNode(port_number, index)
     , rbc{muddle->GetEndpoint(), muddle_certificate->identity().identifier(),
           [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
-            FETCH_LOCK(mutex);
+            std::lock_guard<std::mutex> lock(mutex);
             answers[from] = payload;
           },
           nullptr}
@@ -184,7 +184,7 @@ struct PBCNode : public AbstractRBCNode
     , punishment_broadcast_channel{
           muddle->GetEndpoint(), muddle_certificate->identity().identifier(),
           [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
-            FETCH_LOCK(mutex);
+            std::lock_guard<std::mutex> lock(mutex);
             answers[from] = payload;
           },
           muddle_certificate, 0}

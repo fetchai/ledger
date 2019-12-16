@@ -47,14 +47,15 @@ class NetworkId;
 class MuddleRegister : public network::AbstractConnectionRegister
 {
 public:
-  using ConnectionHandle       = ConnectionHandleType;
-  using WeakConnectionPtr      = std::weak_ptr<network::AbstractConnection>;
-  using ConnectionMap          = std::unordered_map<ConnectionHandle, WeakConnectionPtr>;
-  using ConnectionMapCallback  = std::function<void(ConnectionMap const &)>;
-  using ConstByteArray         = byte_array::ConstByteArray;
-  using Handle                 = ConnectionHandleType;
-  using ConnectionLeftCallback = std::function<void(Handle)>;
-  using Connections            = std::vector<WeakConnectionPtr>;
+  using ConnectionHandle          = ConnectionHandleType;
+  using WeakConnectionPtr         = std::weak_ptr<network::AbstractConnection>;
+  using ConnectionMap             = std::unordered_map<ConnectionHandle, WeakConnectionPtr>;
+  using ConnectionMapCallback     = std::function<void(ConnectionMap const &)>;
+  using ConstByteArray            = byte_array::ConstByteArray;
+  using Handle                    = ConnectionHandleType;
+  using ConnectionLeftCallback    = std::function<void(Handle)>;
+  using ConnectionEnteredCallback = std::function<void(Handle)>;
+  using Connections               = std::vector<WeakConnectionPtr>;
   enum class UpdateStatus
   {
     HANDLE_NOT_FOUND,
@@ -88,6 +89,7 @@ public:
   MuddleRegister &operator=(MuddleRegister &&) = delete;
 
   void              OnConnectionLeft(ConnectionLeftCallback cb);
+  void              OnConnectionEntered(ConnectionLeftCallback cb);
   void              Broadcast(ConstByteArray const &data) const;
   WeakConnectionPtr LookupConnection(ConnectionHandle handle) const;
   WeakConnectionPtr LookupConnection(Address const &address) const;
@@ -118,10 +120,11 @@ private:
   std::string const name_;
   char const *const logging_name_{name_.c_str()};
 
-  mutable Mutex          lock_;
-  ConnectionLeftCallback left_callback_;
-  HandleIndex            handle_index_;
-  AddressIndex           address_index_;
+  mutable Mutex             lock_;
+  ConnectionLeftCallback    left_callback_;
+  ConnectionEnteredCallback entered_callback_;
+  HandleIndex               handle_index_;
+  AddressIndex              address_index_;
 };
 
 }  // namespace muddle
