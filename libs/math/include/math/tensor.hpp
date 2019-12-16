@@ -329,8 +329,9 @@ public:
   /// COMPARISON OPERATORS ///
   ////////////////////////////
 
-  bool AllClose(Tensor const &o, Type const &relative_tolerance = Type(1e-5),
-                Type const &absolute_tolerance = Type(1e-8)) const;
+  bool AllClose(Tensor const &o,
+                Type const &  relative_tolerance = fetch::math::Type<Type>("0.00001"),
+                Type const &  absolute_tolerance = fetch::math::Type<Type>("0.00000001")) const;
   bool operator==(Tensor const &other) const;
   bool operator!=(Tensor const &other) const;
 
@@ -697,10 +698,20 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
 {
   Tensor            ret;
-  SizeType          n = 1;
+  SizeType          n = 0;
   std::vector<Type> elems;
   elems.reserve(1024);
-  bool failed = false;
+  bool failed         = false;
+  bool prev_backslash = false;
+  enum
+  {
+    UNSET,
+    SEMICOLON,
+    NEWLINE
+  } new_row_marker                = UNSET;
+  bool        reached_actual_data = false;
+  std::size_t first_row_size      = 0;
+  std::size_t current_row_size    = 0;
 
   // Text parsing loop
   for (SizeType i = 0; i < c.size();)
@@ -709,18 +720,77 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     switch (c[i])
     {
     case ';':
-      if (i < c.size() - 1)
+      if (reached_actual_data)
       {
-        ++n;
+        if (new_row_marker == UNSET)
+        {
+          new_row_marker = SEMICOLON;
+          // The size of the first row is the size of the vector so far
+          first_row_size = elems.size();
+        }
+        if (new_row_marker == SEMICOLON)
+        {
+          if ((i < c.size() - 1))
+          {
+            reached_actual_data = false;
+            if (current_row_size != first_row_size)
+            {
+              // size is not a multiple of first_row_size
+              std::stringstream s;
+              s << "Invalid shape: row " << n << " has " << current_row_size
+                << " elements, should have " << first_row_size;
+              throw exceptions::WrongShape(s.str());
+            }
+          }
+        }
       }
       ++i;
       break;
-    case '+':
+    case 'r':
+    case 'n':
+      if (!prev_backslash)
+      {
+        break;
+      }
+      prev_backslash = false;
+      FETCH_FALLTHROUGH;  // explicit fallthrough to the next case
+    case '\r':
+    case '\n':
+      if (reached_actual_data)
+      {
+        if (new_row_marker == UNSET)
+        {
+          new_row_marker = NEWLINE;
+          // The size of the first row is the size of the vector so far
+          first_row_size = elems.size();
+        }
+        if (new_row_marker == NEWLINE)
+        {
+          if ((i < c.size() - 1))
+          {
+            reached_actual_data = false;
+            if (current_row_size != first_row_size)
+            {
+              // size is not a multiple of first_row_size
+              std::stringstream s;
+              s << "Invalid shape: row " << n << " has " << current_row_size
+                << " elements, should have " << first_row_size;
+              throw exceptions::WrongShape(s.str());
+            }
+          }
+        }
+      }
+      ++i;
+      break;
+    case '\\':
+      prev_backslash = true;
+      ++i;
+      break;
     case ',':
     case ' ':
-    case '\n':
+    case '+':
     case '\t':
-    case '\r':
+      prev_backslash = false;
       ++i;
       break;
     default:
@@ -731,12 +801,30 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       else
       {
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
-        auto        float_val = std::atof(cur_elem.c_str());
-        elems.emplace_back(Type(float_val));
+        elems.emplace_back(fetch::math::Type<Type>(cur_elem));
+        prev_backslash = false;
+        if (!reached_actual_data)
+        {
+          // Where we actually start counting rows
+          ++n;
+          reached_actual_data = true;
+          current_row_size    = 0;
+        }
+        current_row_size++;
       }
       break;
     }
   }
+  // Check last line parsed also
+  if ((first_row_size > 0) && (current_row_size != first_row_size))
+  {
+    // size is not a multiple of first_row_size
+    std::stringstream s;
+    s << "Invalid shape: row " << n << " has " << current_row_size << " elements, should have "
+      << first_row_size;
+    throw exceptions::WrongShape(s.str());
+  }
+
   SizeType m = elems.size() / n;
 
   if ((m * n) != elems.size())
@@ -1382,7 +1470,7 @@ void Tensor<T, C>::SetAllOne()
   auto it = this->begin();
   while (it.is_valid())
   {
-    *it = Type(1);
+    *it = Type{1};
     ++it;
   }
 }
@@ -1488,7 +1576,7 @@ Tensor<T, C> &Tensor<T, C>::FillUniformRandom()
 {
   for (SizeType i = 0; i < this->size(); ++i)
   {
-    this->operator[](i) = Type(random::Random::generator.AsDouble());
+    this->operator[](i) = Type(random::Random::generator.AsFP64());
   }
   return *this;
 }
@@ -1576,7 +1664,7 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::SizeFromShape(SizeVector const &sh
   {
     return SizeType{0};
   }
-  return std::accumulate(std::begin(shape), std::end(shape), SizeType(1), std::multiplies<>());
+  return std::accumulate(std::begin(shape), std::end(shape), SizeType{1}, std::multiplies<>());
 }
 
 template <typename T, typename C>
@@ -1587,7 +1675,7 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::PaddedSizeFromShape(SizeVector con
     return SizeType{0};
   }
   return PadValue(shape[0]) *
-         std::accumulate(std::begin(shape) + 1, std::end(shape), SizeType(1), std::multiplies<>());
+         std::accumulate(std::begin(shape) + 1, std::end(shape), SizeType{1}, std::multiplies<>());
 }
 
 /**

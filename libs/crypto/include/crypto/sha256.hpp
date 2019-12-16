@@ -26,10 +26,10 @@ namespace crypto {
 class SHA256 : public HasherInterface
 {
 public:
-  using HasherInterface::Update;
   using HasherInterface::Final;
+  using HasherInterface::Update;
 
-  static constexpr std::size_t size_in_bytes = 32u;
+  static constexpr std::size_t SIZE_IN_BYTES = 32u;
 
   SHA256()               = default;
   ~SHA256() override     = default;

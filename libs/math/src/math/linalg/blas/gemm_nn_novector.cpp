@@ -36,21 +36,20 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
   std::size_t i;
   std::size_t j;
   if ((c.height() == 0) ||
-      ((c.width() == 0) || (((alpha == static_cast<Type>(0.0)) || (a.width() == 0)) &&
-                            (beta == static_cast<Type>(1.0)))))
+      ((c.width() == 0) || (((alpha == Type{0}) || (a.width() == 0)) && (beta == Type{1}))))
   {
     return;
   }
 
-  if (alpha == static_cast<Type>(0.0))
+  if (alpha == Type{0})
   {
-    if (beta == static_cast<Type>(0.0))
+    if (beta == Type{0})
     {
       for (j = 0; j < c.width(); ++j)
       {
         for (i = 0; i < c.height(); ++i)
         {
-          c(i, j) = static_cast<Type>(0.0);
+          c(i, j) = Type{0};
         }
       }
     }
@@ -71,14 +70,14 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
   for (j = 0; j < c.width(); ++j)
   {
     std::size_t l;
-    if (beta == static_cast<Type>(0.0))
+    if (beta == Type{0})
     {
       for (i = 0; i < c.height(); ++i)
       {
-        c(i, j) = static_cast<Type>(0.0);
+        c(i, j) = Type{0};
       }
     }
-    else if (beta != static_cast<Type>(1.0))
+    else if (beta != Type{1})
     {
       for (i = 0; i < c.height(); ++i)
       {

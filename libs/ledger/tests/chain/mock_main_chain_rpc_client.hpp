@@ -17,23 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle/address.hpp"
+#include "ledger/protocols/main_chain_rpc_client_interface.hpp"
+#include "muddle/create_muddle_fake.hpp"
 
-#include <array>
-#include <cstdint>
+#include "gmock/gmock.h"
 
-namespace fetch {
-namespace muddle {
-
-uint64_t CalculateDistance(Address const &from, Address const &to);
-uint64_t CalculateDistance(void const *from, void const *to, std::size_t length);
-
-template <std::size_t LENGTH>
-uint64_t CalculateDistance(std::array<uint8_t, LENGTH> const &from,
-                           std::array<uint8_t, LENGTH> const &to)
+class MockMainChainRpcClient : public fetch::ledger::MainChainRpcClientInterface
 {
-  return CalculateDistance(from.data(), to.data(), LENGTH);
-}
+public:
+  using Digest = fetch::Digest;
 
-}  // namespace muddle
-}  // namespace fetch
+  MOCK_METHOD2(GetHeaviestChain, BlocksPromise(MuddleAddress, uint64_t));
+  MOCK_METHOD4(GetCommonSubChain, BlocksPromise(MuddleAddress, Digest, Digest, uint64_t));
+  MOCK_METHOD2(TimeTravel, TraveloguePromise(MuddleAddress, Digest));
+};
