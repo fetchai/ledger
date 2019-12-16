@@ -41,9 +41,9 @@ struct StackGetter
 template <typename T>
 struct StackSetter
 {
-  static void Set(VM *vm, int sp_offset, T &&result, TypeId type_id)
+  static void Set(VM *vm, int result_sp, T &&result, TypeId type_id)
   {
-    Variant &v = vm->stack_[vm->sp_ - sp_offset];
+    Variant &v = vm->stack_[result_sp];
     v.Assign(std::forward<T>(result), type_id);
   }
 };

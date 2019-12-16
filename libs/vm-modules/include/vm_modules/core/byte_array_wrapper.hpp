@@ -58,6 +58,19 @@ public:
   bool IsGreaterThanOrEqual(fetch::vm::Ptr<Object> const &lhso,
                             fetch::vm::Ptr<Object> const &rhso) override;
 
+  vm::ChargeAmount IsEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                          fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsNotEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                             fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsLessThanChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                             fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsGreaterThanChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsLessThanOrEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                    fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsGreaterThanOrEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                       fetch::vm::Ptr<Object> const &rhso) override;
+
   byte_array::ConstByteArray const &byte_array() const;
 
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;

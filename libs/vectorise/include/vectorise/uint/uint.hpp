@@ -220,8 +220,10 @@ public:
   {
     return wide_[n];
   }
-
-  constexpr WideType &ElementAt(std::size_t n);
+  constexpr WideType &ElementAt(std::size_t n)
+  {
+    return wide_[n];
+  }
 
   constexpr uint64_t TrimmedWideSize() const;
   constexpr uint64_t TrimmedSize() const;
@@ -1100,12 +1102,6 @@ constexpr uint8_t &UInt<S>::operator[](std::size_t n)
 }
 
 template <uint16_t S>
-constexpr typename UInt<S>::WideType &UInt<S>::ElementAt(std::size_t n)
-{
-  return wide_[n];
-}
-
-template <uint16_t S>
 constexpr uint64_t UInt<S>::TrimmedWideSize() const
 {
   uint64_t ret = WIDE_ELEMENTS;
@@ -1213,32 +1209,6 @@ std::ostream &operator<<(std::ostream &s, UInt<S> const &x)
 {
   s << std::string(x);
   return s;
-}
-
-template <typename T>
-constexpr meta::EnableIf<std::is_same<meta::Decay<T>, UInt<256>>::value, double> ToDouble(T &&x)
-{
-  auto const msw_size{x.TrimmedWideSize()};
-  if (0 == msw_size)
-  {
-    return 0;
-  }
-
-  const auto     msw_index{msw_size - 1};
-  const uint64_t most_significant_word = x.ElementAt(msw_index);
-  auto           retval = pow(2, static_cast<double>(msw_index * x.WIDE_ELEMENT_SIZE)) *
-                static_cast<double>(most_significant_word);
-
-  if (msw_index > 0 and most_significant_word < (1ull << 49))
-  {
-    auto const     next_idx{msw_index - 1};
-    uint64_t const word2 = x.ElementAt(next_idx);
-    auto           v2 =
-        pow(2, static_cast<double>(next_idx * x.WIDE_ELEMENT_SIZE)) * static_cast<double>(word2);
-    retval += v2;
-  }
-
-  return retval;
 }
 
 }  // namespace vectorise

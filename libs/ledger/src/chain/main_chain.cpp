@@ -650,7 +650,6 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  *
  * @param current_hash The hash of the first block's parent
  * @return The array of blocks, plus the current heaviest hash
- * @throws std::runtime_error if a block lookup fails
  */
 MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
 {
@@ -661,6 +660,9 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
   Blocks    result;
 
   FETCH_LOCK(lock_);
+
+  // cache the heaviest block
+  auto const heaviest = GetHeaviestBlock();
 
   IntBlockPtr block;
   if (current_hash.empty())
@@ -676,12 +678,12 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
       FETCH_LOG_DEBUG(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
                       " during time travel. Note, next hash: ", next_hash);
 
-      throw std::runtime_error("Failed to lookup block");
+      return {heaviest->hash, heaviest->block_number};
     }
   }
 
   // We have the block we want to sync forward from. Check if it is on the heaviest chain.
-  bool const not_heaviest = !(block && (block->chain_label == heaviest_.ChainLabel()));
+  bool const on_heaviest_branch = (block && (block->chain_label == heaviest_.ChainLabel()));
 
   bool not_done = true;
   for (current_hash = std::move(next_hash);
@@ -699,7 +701,8 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
         // there is no block such hashed neither in cache, nor in storage
         FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure during TT, for block: 0x",
                         ToHex(current_hash));
-        throw std::runtime_error("Failed to lookup block");
+
+        return {heaviest->hash, heaviest->block_number};
       }
       // The block is in cache yet LookupBlock() failed.
       // This indicates that forward reference is ambiguous, so we stop the loop here.
@@ -710,8 +713,11 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
     result.push_back(std::move(block));
   }
 
-  return {std::move(result), GetHeaviestBlock()->hash, GetHeaviestBlock()->block_number,
-          not_heaviest};
+  // define the status of the branch
+  auto const status =
+      (on_heaviest_branch) ? TravelogueStatus::HEAVIEST_BRANCH : TravelogueStatus::SIDE_BRANCH;
+
+  return {heaviest->hash, heaviest->block_number, status, std::move(result)};
 }
 
 /**

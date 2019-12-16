@@ -213,6 +213,42 @@ bool ByteArrayWrapper::IsGreaterThanOrEqual(fetch::vm::Ptr<Object> const &lhso,
   return l.byte_array_ >= r.byte_array_;
 }
 
+vm::ChargeAmount ByteArrayWrapper::IsEqualChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                                          fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount ByteArrayWrapper::IsNotEqualChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount ByteArrayWrapper::IsLessThanChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount ByteArrayWrapper::IsLessThanOrEqualChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount ByteArrayWrapper::IsGreaterThanChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+vm::ChargeAmount ByteArrayWrapper::IsGreaterThanOrEqualChargeEstimator(
+    fetch::vm::Ptr<Object> const & /*lhso*/, fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
 ConstByteArray const &ByteArrayWrapper::byte_array() const
 {
   return byte_array_;

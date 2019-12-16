@@ -81,6 +81,7 @@ constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_
     case ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK:
     case ContractExecutionStatus::TX_PERMISSION_DENIED:
     case ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE:
+    case ContractExecutionStatus::TX_CHARGE_LIMIT_TOO_HIGH:
     case ContractExecutionStatus::NOT_RUN:
     case ContractExecutionStatus::INTERNAL_ERROR:
     case ContractExecutionStatus::INEXPLICABLE_FAILURE:

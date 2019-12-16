@@ -136,14 +136,20 @@ void TransactionValidatorTests::SetDeed(Deed const &deed)
   token_contract_.SetDeed(signer_address_, std::make_shared<Deed>(deed));
 }
 
+// TODO(HUT): fix these.
 TEST_F(TransactionValidatorTests, CheckWealthWhileValid)
 {
+  uint64_t funds_for_test = 10000;
+  AddFunds(funds_for_test);
+
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("fetch.token", BitVector{})
-                .Action("wealth")
+                .Action("foo-bar-baz")
                 .ValidUntil(100)
                 .Signer(signer_.identity())
+                .ChargeRate(1)
+                .ChargeLimit(funds_for_test)
                 .Seal()
                 .Sign(signer_)
                 .Build();
@@ -468,6 +474,42 @@ TEST_F(TransactionValidatorTests, CheckPermissionDeniedWithDeedNoExecutePermissi
                 .Build();
 
   EXPECT_EQ(ContractExecutionStatus::TX_PERMISSION_DENIED, validator_(*tx, 50));
+}
+
+TEST_F(TransactionValidatorTests, CheckBorderlineChargeLimit)
+{
+  auto tx = TransactionBuilder{}
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(10000000000)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
+  AddFunds(20000000000);
+
+  EXPECT_EQ(ContractExecutionStatus::SUCCESS, validator_(*tx, 50));
+}
+
+TEST_F(TransactionValidatorTests, CheckExcessiveChargeLimit)
+{
+  auto tx = TransactionBuilder{}
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(10000000001)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
+  AddFunds(20000000000);
+
+  EXPECT_EQ(ContractExecutionStatus::TX_CHARGE_LIMIT_TOO_HIGH, validator_(*tx, 50));
 }
 
 }  // namespace
