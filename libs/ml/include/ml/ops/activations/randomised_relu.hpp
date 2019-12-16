@@ -156,7 +156,7 @@ public:
 private:
   void UpdateRandomValue()
   {
-    random_value_ = lower_bound_ + rng_.AsFP<DataType>() * (upper_bound_ - lower_bound_);
+    random_value_ = lower_bound_ + rng_.AsType<DataType>() * (upper_bound_ - lower_bound_);
   }
 
   DataType random_value_;

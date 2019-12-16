@@ -86,7 +86,7 @@ public:
    * @return integer uniformly distributed random value 0 or 1
    */
   template <typename DataType>
-  meta::IfIsInteger<DataType, DataType> AsFP() noexcept
+  meta::IfIsInteger<DataType, DataType> AsType() noexcept
   {
     return static_cast<DataType>(this->operator()() % 2);
   }
@@ -96,7 +96,7 @@ public:
    * @return float or double uniformly distributed random value between 0.0 and 1.0
    */
   template <typename DataType>
-  meta::IfIsFloat<DataType, DataType> AsFP() noexcept
+  meta::IfIsFloat<DataType, DataType> AsType() noexcept
   {
     return static_cast<DataType>(static_cast<double>(this->operator()()) * inv_double_max_);
   }
@@ -106,7 +106,7 @@ public:
    * @return FixedPoint uniformly distributed random value between 0.0 and 1.0
    */
   template <typename DataType>
-  fetch::math::meta::IfIsFixedPoint<DataType, DataType> AsFP() noexcept
+  fetch::math::meta::IfIsFixedPoint<DataType, DataType> AsType() noexcept
   {
     auto fp_val = fp64_t::FromBase(this->operator()() % fp64_t::MAX);
     fp_val /= fp64_t::FP_MAX;
@@ -115,7 +115,7 @@ public:
 
   double AsDouble() noexcept
   {
-    return AsFP<double>();
+    return AsType<double>();
   }
 
   static constexpr RandomType min() noexcept

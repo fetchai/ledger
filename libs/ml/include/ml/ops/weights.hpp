@@ -283,11 +283,10 @@ private:
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg.AsFP<fetch::fixed_point::fp64_t>();  // random value in range 0 <-> 1
+      auto ran_val = lfg.AsType<DataType>();  // random value in range 0 <-> 1
       ran_val      = ran_val - HALF;
-      ran_val      = ran_val * 2;  // random value in range -1 <-> +1
-      ran_val      = ran_val * static_cast<fetch::fixed_point::fp64_t>(
-                              normalising_factor);  // random value in range -sigma <-> +sigma
+      ran_val      = ran_val * 2;                   // random value in range -1 <-> +1
+      ran_val      = ran_val * normalising_factor;  // random value in range -sigma <-> +sigma
 
       *it = static_cast<DataType>(ran_val);
       ++it;
@@ -305,18 +304,17 @@ private:
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg.AsFP<fetch::fixed_point::fp64_t>();  // random value in range 0 <-> 1
+      auto ran_val = lfg.AsType<DataType>();  // random value in range 0 <-> 1
       ran_val      = ran_val - HALF;
-      ran_val      = ran_val * 2;  // random value in range -1 <-> +1
-      ran_val      = ran_val * static_cast<fetch::fixed_point::fp64_t>(
-                              normalising_factor);  // random value in range -sigma <-> +sigma
+      ran_val      = ran_val * 2;                    // random value in range -1 <-> +1
+      ran_val      = ran_val * normalising_factor;  // random value in range -sigma <-> +sigma
 
       *it = static_cast<DataType>(ran_val);
       ++it;
     }
   }
 
-  static const fetch::fixed_point::fp64_t HALF;
+  static const DataType HALF;
 };
 
 }  // namespace ops
@@ -328,8 +326,7 @@ struct OpWeightsSaveableParams : public OpVariableSaveableParams<TensorType>
 };
 
 template <class T>
-const fetch::fixed_point::fp64_t ops::Weights<T>::HALF =
-    static_cast<fetch::fixed_point::fp64_t>("0.5");
+const typename T::Type ops::Weights<T>::HALF = fetch::math::Type<DataType>("0.5");
 
 }  // namespace ml
 }  // namespace fetch
