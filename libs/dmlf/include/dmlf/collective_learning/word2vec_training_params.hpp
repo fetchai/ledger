@@ -52,14 +52,15 @@ struct Word2VecTrainingParams : public ClientParams<DataType>
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
   SizeType negative_sample_size = 5;  // number of negative sample per word-context pair
   SizeType window_size          = 5;  // window size for context sampling
-  DataType freq_thresh          = DataType{0.001f};  // frequency threshold for subsampling
-  SizeType min_count            = 5;                 // infrequent word removal threshold
+  DataType freq_thresh =
+      fetch::math::Type<DataType>("0.001");  // frequency threshold for subsampling
+  SizeType min_count = 5;                    // infrequent word removal threshold
 
   SizeType embedding_size = 100;  // dimension of embedding vec
   SizeType test_frequency = 50;   // After how many batches we want to test our embeddings
-  DataType starting_learning_rate_per_sample =
-      DataType{0.0025f};  // these are the learning rates we have for each sample
-  DataType    ending_learning_rate_per_sample = DataType{0.0001f};
+  DataType starting_learning_rate_per_sample = fetch::math::Type<DataType>(
+      "0.0025");  // these are the learning rates we have for each sample
+  DataType    ending_learning_rate_per_sample = fetch::math::Type<DataType>("0.0001");
   DataType    starting_learning_rate;  // this is the true learning rate set for the graph training
   DataType    ending_learning_rate;
   std::string vocab_file;

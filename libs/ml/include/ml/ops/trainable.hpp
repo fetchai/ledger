@@ -59,7 +59,7 @@ public:
   virtual void ApplySparseGradient(TensorType const &grad, SizeSet &update_rows)           = 0;
   virtual void ApplyRegularisation()                                                       = 0;
 
-  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0})
+  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0})
   {
     regulariser_         = regulariser;
     regularisation_rate_ = regularisation_rate;
