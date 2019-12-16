@@ -72,7 +72,7 @@ TYPED_TEST(DropoutTest, forward_test)
   using TensorType    = TypeParam;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
-  math::SizeType tensorsize = 1000;
+  math::SizeType tensorsize = 10000;
   TensorType     data       = TensorType::UniformRandom(tensorsize);
   auto           prob       = fetch::math::Type<DataType>("0.5");
 
@@ -139,7 +139,7 @@ TYPED_TEST(DropoutTest, backward_test)
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
 
-  math::SizeType tensorsize = 1000;
+  math::SizeType tensorsize = 10000;
   TensorType     data       = TensorType::UniformRandom(tensorsize);
   TensorType     error      = TensorType::UniformRandom(tensorsize);
   auto           prob       = fetch::math::Type<DataType>("0.5");

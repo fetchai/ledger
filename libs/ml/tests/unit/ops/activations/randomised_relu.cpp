@@ -40,8 +40,9 @@ TYPED_TEST(RandomisedReluTest, forward_test)
   using TensorType = TypeParam;
 
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  TensorType gt =
-      TensorType::FromString("1, -0.09168547, 3, -0.18337093, 5, -0.27505640, 7, -0.36674187");
+  TensorType gt   = TensorType::FromString(
+      "1, -0.1508424060836268399, 3, -0.3016848121672536798, 5, -0.4525272182508804919, 7, "
+      "-0.6033696243345073595");
 
   fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
@@ -52,7 +53,9 @@ TYPED_TEST(RandomisedReluTest, forward_test)
                                   math::function_tolerance<DataType>()));
 
   // Test after generating new random alpha value
-  gt = TensorType::FromString("1, -0.15504484, 3, -0.31008968, 5, -0.46513452, 7, -0.62017936");
+  gt = TensorType::FromString(
+      "1, -0.1549365367708011032, 3, -0.3098730735416022064, 5, -0.4648096103124032541, 7, "
+      "-0.6197461470832044128;");
 
   prediction = TensorType(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
@@ -77,24 +80,13 @@ TYPED_TEST(RandomisedReluTest, forward_3d_tensor_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = fetch::math::SizeType;
 
-  TensorType          data({2, 2, 2});
-  TensorType          gt({2, 2, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<double> gt_input({1, -0.09168547, 3, -0.18337093, 5, -0.27505640, 7, -0.36674187});
-
-  for (SizeType i{0}; i < 2; ++i)
-  {
-    for (SizeType j{0}; j < 2; ++j)
-    {
-      for (SizeType k{0}; k < 2; ++k)
-      {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gt_input[i + 2 * (j + 2 * k)]));
-      }
-    }
-  }
+  TensorType data = TensorType::FromString("1, 3, 5, 7; -2, -4, -6, -8;");
+  data.Reshape({2, 2, 2});
+  TensorType gt = TensorType::FromString(
+      "1, 3, 5, 7; -0.1508424060836268399, -0.3016848121672536798, -0.4525272182508804919, "
+      "-0.6033696243345073595;");
+  gt.Reshape({2, 2, 2});
 
   fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
@@ -112,7 +104,7 @@ TYPED_TEST(RandomisedReluTest, backward_test)
 
   TensorType data  = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   TensorType error = TensorType::FromString("0, 0, 0, 0, 1, 1, 0, 0");
-  TensorType gt    = TensorType::FromString("0, 0, 0, 0, 1, 0.07889955, 0, 0");
+  TensorType gt    = TensorType::FromString("0, 0, 0, 0, 1, 0.0754097138742607365, 0, 0;");
   fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
   std::vector<TensorType>                    prediction =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
@@ -126,7 +118,7 @@ TYPED_TEST(RandomisedReluTest, backward_test)
   TensorType output(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, output);
 
-  gt         = TensorType::FromString("0, 0, 0, 0, 1, 0.07752242, 0, 0");
+  gt         = TensorType::FromString("0, 0, 0, 0, 1, 0.0774682683854005516, 0, 0;");
   prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
@@ -148,27 +140,13 @@ TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = fetch::math::SizeType;
 
-  TensorType          data({2, 2, 2});
-  TensorType          error({2, 2, 2});
-  TensorType          gt({2, 2, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
-  std::vector<double> gt_input({0, 0, 0, 0, 1, 0.07889955, 0, 0});
-
-  for (SizeType i{0}; i < 2; ++i)
-  {
-    for (SizeType j{0}; j < 2; ++j)
-    {
-      for (SizeType k{0}; k < 2; ++k)
-      {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        error.Set(i, j, k, static_cast<DataType>(errorInput[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gt_input[i + 2 * (j + 2 * k)]));
-      }
-    }
-  }
+  TensorType data = TensorType::FromString("1, 3, 5, 7;-2, -4, -6, -8;");
+  data.Reshape({2, 2, 2});
+  TensorType error = TensorType::FromString("0, 0, 1, 0;0, 0, 1, 0;");
+  error.Reshape({2, 2, 2});
+  TensorType gt = TensorType::FromString("0, 0, 1, 0;0, 0, 0.0754097138742607365, 0;");
+  gt.Reshape({2, 2, 2});
 
   fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
   std::vector<TensorType>                    prediction =
@@ -188,8 +166,6 @@ TYPED_TEST(RandomisedReluTest, saveparams_test)
   using OpType        = typename fetch::ml::ops::RandomisedRelu<TensorType>;
 
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  TensorType gt =
-      TensorType::FromString("1, -0.062793536, 3, -0.12558707, 5, -0.1883806, 7, -0.2511741");
 
   fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
   TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
@@ -231,29 +207,13 @@ TYPED_TEST(RandomisedReluTest, saveparams_backward_3d_tensor_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = fetch::math::SizeType;
   using OpType     = typename fetch::ml::ops::RandomisedRelu<TensorType>;
   using SPType     = typename OpType::SPType;
 
-  TensorType          data({2, 2, 2});
-  TensorType          error({2, 2, 2});
-  TensorType          gt({2, 2, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
-  std::vector<double> gt_input({0, 0, 0, 0, 1, 0.079588953, 0, 0});
-
-  for (SizeType i{0}; i < 2; ++i)
-  {
-    for (SizeType j{0}; j < 2; ++j)
-    {
-      for (SizeType k{0}; k < 2; ++k)
-      {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        error.Set(i, j, k, static_cast<DataType>(errorInput[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gt_input[i + 2 * (j + 2 * k)]));
-      }
-    }
-  }
+  TensorType data = TensorType::FromString("1, 3, 5, 7;-2, -4, -6, -8;");
+  data.Reshape({2, 2, 2});
+  TensorType error = TensorType::FromString("0, 0, 1, 0;0, 0, 1, 0;");
+  error.Reshape({2, 2, 2});
 
   fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
 
