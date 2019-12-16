@@ -310,19 +310,19 @@ void BindTrigonometry(Module &module, bool const /*enable_experimental*/)
   module.CreateFreeFunction("acosh", &ACosH<fixed_point::fp64_t>, ChargeAmount{2});
   module.CreateFreeFunction("atanh", &ATanH<fixed_point::fp64_t>, ChargeAmount{2});
 
-  module.CreateFreeFunction("sin", &SinPtr<Fixed128>, ChargeAmount{5});
-  module.CreateFreeFunction("cos", &CosPtr<Fixed128>, ChargeAmount{5});
-  module.CreateFreeFunction("tan", &TanPtr<Fixed128>, ChargeAmount{5});
-  module.CreateFreeFunction("asin", &ASinPtr<Fixed128>, ChargeAmount{5});
-  module.CreateFreeFunction("acos", &ACosPtr<Fixed128>, ChargeAmount{5});
-  module.CreateFreeFunction("atan", &ATanPtr<Fixed128>, ChargeAmount{5});
-  module.CreateFreeFunction("atan2", &ATan2Ptr<Fixed128>, ChargeAmount{5});
-  module.CreateFreeFunction("sinh", &SinHPtr<Fixed128>, ChargeAmount{5});
-  module.CreateFreeFunction("cosh", &CosHPtr<Fixed128>, ChargeAmount{5});
-  module.CreateFreeFunction("tanh", &TanHPtr<Fixed128>, ChargeAmount{5});
-  module.CreateFreeFunction("asinh", &ASinHPtr<Fixed128>, ChargeAmount{5});
-  module.CreateFreeFunction("acosh", &ACosHPtr<Fixed128>, ChargeAmount{5});
-  module.CreateFreeFunction("atanh", &ATanHPtr<Fixed128>, ChargeAmount{5});
+  module.CreateFreeFunction("sin", &SinPtr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("cos", &CosPtr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("tan", &TanPtr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("asin", &ASinPtr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("acos", &ACosPtr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("atan", &ATanPtr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("atan2", &ATan2Ptr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("sinh", &SinHPtr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("cosh", &CosHPtr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("tanh", &TanHPtr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("asinh", &ASinHPtr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("acosh", &ACosHPtr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("atanh", &ATanHPtr<Fixed128>, ChargeAmount{8});
 }
 
 }  // namespace math

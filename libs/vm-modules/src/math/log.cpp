@@ -86,17 +86,17 @@ IfIsPtrFixed128<T, Ptr<T>> Log10Ptr(VM *vm, Ptr<T> const &a)
 void BindLog(Module &module, bool const /*enable_experimental*/)
 {
   // charge estimates based on benchmarking in math/benchmark
-  module.CreateFreeFunction("log", &Log<fixed_point::fp32_t>, ChargeAmount{4});
-  module.CreateFreeFunction("log", &Log<fixed_point::fp64_t>, ChargeAmount{6});
-  module.CreateFreeFunction("log", &LogPtr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("log", &Log<fixed_point::fp32_t>, ChargeAmount{6});
+  module.CreateFreeFunction("log", &Log<fixed_point::fp64_t>, ChargeAmount{8});
+  module.CreateFreeFunction("log", &LogPtr<Fixed128>, ChargeAmount{12});
 
-  module.CreateFreeFunction("log2", &Log2<fixed_point::fp32_t>, ChargeAmount{4});
-  module.CreateFreeFunction("log2", &Log2<fixed_point::fp64_t>, ChargeAmount{6});
-  module.CreateFreeFunction("log2", &Log2Ptr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("log2", &Log2<fixed_point::fp32_t>, ChargeAmount{6});
+  module.CreateFreeFunction("log2", &Log2<fixed_point::fp64_t>, ChargeAmount{8});
+  module.CreateFreeFunction("log2", &Log2Ptr<Fixed128>, ChargeAmount{12});
 
-  module.CreateFreeFunction("log10", &Log10<fixed_point::fp32_t>, ChargeAmount{4});
-  module.CreateFreeFunction("log10", &Log10<fixed_point::fp64_t>, ChargeAmount{6});
-  module.CreateFreeFunction("log10", &Log10Ptr<Fixed128>, ChargeAmount{8});
+  module.CreateFreeFunction("log10", &Log10<fixed_point::fp32_t>, ChargeAmount{6});
+  module.CreateFreeFunction("log10", &Log10<fixed_point::fp64_t>, ChargeAmount{8});
+  module.CreateFreeFunction("log10", &Log10Ptr<Fixed128>, ChargeAmount{12});
 }
 
 }  // namespace math

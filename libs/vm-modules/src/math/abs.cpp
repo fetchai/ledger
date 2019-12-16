@@ -96,9 +96,9 @@ void BindAbs(Module &module, bool const /*enable_experimental*/)
   module.CreateFreeFunction("abs", &IntegerAbs<uint32_t>, ChargeAmount{1});
   module.CreateFreeFunction("abs", &IntegerAbs<uint64_t>, ChargeAmount{1});
 
-  module.CreateFreeFunction("abs", &Abs<fixed_point::fp32_t>, ChargeAmount{4});
-  module.CreateFreeFunction("abs", &Abs<fixed_point::fp64_t>, ChargeAmount{6});
-  module.CreateFreeFunction("abs", &AbsPtr<Fixed128>, ChargeAmount{10});
+  module.CreateFreeFunction("abs", &Abs<fixed_point::fp32_t>, ChargeAmount{6});
+  module.CreateFreeFunction("abs", &Abs<fixed_point::fp64_t>, ChargeAmount{8});
+  module.CreateFreeFunction("abs", &AbsPtr<Fixed128>, ChargeAmount{12});
 }
 
 }  // namespace math
