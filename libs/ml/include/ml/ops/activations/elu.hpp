@@ -82,8 +82,8 @@ public:
     assert(inputs.front()->shape() == error_signal.shape());
     TensorType ret{error_signal.shape()};
 
-    DataType const zero = DataType{0};
-    DataType const one  = DataType{1};
+    auto const zero = DataType{0};
+    auto const one  = DataType{1};
 
     // gradient of elu function is a*e^x where x<0; and 1.0 where x>=0
     auto it  = inputs.front()->cbegin();
