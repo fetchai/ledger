@@ -247,6 +247,10 @@ private:
       , line{line__}
       , message{std::move(message__)}
     {}
+    const char *what() const noexcept override
+    {
+      return message.c_str();
+    }
     std::string filename;
     uint16_t    line{};
     std::string message;
