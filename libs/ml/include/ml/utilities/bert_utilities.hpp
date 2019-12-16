@@ -55,7 +55,7 @@ struct BERTConfig
   SizeType ff_dims           = 3072u;
   SizeType vocab_size        = 30522u;
   SizeType segment_size      = 2u;
-  DataType epsilon           = fetch::math::Type<DataType>("0.0000000000001");
+  DataType epsilon           = fetch::math::Type<DataType>("0.000000000001");
   DataType dropout_keep_prob = fetch::math::Type<DataType>("0.9");
 };
 
