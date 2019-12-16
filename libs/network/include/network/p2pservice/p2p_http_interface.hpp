@@ -155,7 +155,7 @@ private:
       block["hash"]         = "0x" + b->hash.ToHex();
       block["previousHash"] = "0x" + b->previous_hash.ToHex();
       block["merkleHash"]   = "0x" + b->merkle_hash.ToHex();
-      block["miner"]        = b->miner_id.identifier().ToBase64();
+      block["miner"]        = chain::Address(b->miner_id).display();
       block["blockNumber"]  = b->block_number;
       block["timestamp"]    = b->timestamp;
       block["entropy"]      = b->block_entropy.EntropyAsU64();
