@@ -403,15 +403,15 @@ void TCPClientImplementation::WriteNext(SharedSelfType const &selfLock)
     }
     else
     {
-      if (message.success)
-      {
-        message.success();
-      }
 
       // TODO(issue 16): this strand should be unnecessary
       auto strandLock = strand_.lock();
       if (strandLock)
       {
+        if (message.success)
+        {
+          message.success();
+        }
         WriteNext(selfLock);
       }
     }
