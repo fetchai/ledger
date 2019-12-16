@@ -49,6 +49,15 @@ bool IsAbsWithinRange(DataType a, DataType b, DataType lower_bound, DataType upp
          (fetch::math::Abs(a) <= fetch::math::Abs(b * upper_bound));
 }
 
+/**
+ * Function for forward pass tests
+ * Checks if RandomRelu is applied for negative values only
+ * @tparam TypeParam
+ * @param data
+ * @param prediction
+ * @param lower_bound
+ * @param upper_bound
+ */
 template <typename TypeParam>
 void CheckForwardValues(TypeParam &data, TypeParam &prediction,
                         typename TypeParam::Type lower_bound, typename TypeParam::Type upper_bound)
@@ -210,10 +219,8 @@ TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
 
   TensorType          data({2, 2, 2});
   TensorType          error({2, 2, 2});
-  TensorType          gt({2, 2, 2});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
-  std::vector<double> gt_input({0, 0, 0, 0, 1, 0.07889955, 0, 0});
 
   for (SizeType i{0}; i < 2; ++i)
   {
@@ -223,7 +230,6 @@ TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
       {
         data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
         error.Set(i, j, k, static_cast<DataType>(errorInput[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gt_input[i + 2 * (j + 2 * k)]));
       }
     }
   }
@@ -232,9 +238,15 @@ TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
   std::vector<TensorType>                    prediction =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
-  // test correct values
-  EXPECT_TRUE(prediction[0].AllClose(gt, math::function_tolerance<DataType>(),
-                                     math::function_tolerance<DataType>()));
+  // test if values are within ranges
+  EXPECT_TRUE(prediction[0].At(0, 0, 0) == DataType{0});
+  EXPECT_TRUE(prediction[0].At(0, 0, 1) == DataType{1});
+  EXPECT_TRUE(prediction[0].At(0, 1, 0) == DataType{0});
+  EXPECT_TRUE(prediction[0].At(0, 1, 1) == DataType{0});
+  EXPECT_TRUE(prediction[0].At(1, 0, 0) == DataType{0});
+  EXPECT_TRUE(prediction[0].At(1, 0, 1) >= lower_bound && prediction[0].At(1, 0, 1) <= upper_bound);
+  EXPECT_TRUE(prediction[0].At(1, 1, 0) == DataType{0});
+  EXPECT_TRUE(prediction[0].At(1, 1, 1) == DataType{0});
 }
 
 TYPED_TEST(RandomisedReluTest, saveparams_test)
