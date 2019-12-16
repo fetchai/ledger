@@ -84,21 +84,21 @@ meta::IfIsUnsignedInteger<T, T> IntegerAbs(VM * /*vm*/, T const &value)
 
 }  // namespace
 
-void BindAbs(Module &module)
+void BindAbs(Module &module, bool const /*enable_experimental*/)
 {
-  module.CreateFreeFunction("abs", &IntegerAbs<int8_t>);
-  module.CreateFreeFunction("abs", &IntegerAbs<int16_t>);
-  module.CreateFreeFunction("abs", &IntegerAbs<int32_t>);
-  module.CreateFreeFunction("abs", &IntegerAbs<int64_t>);
+  module.CreateFreeFunction("abs", &IntegerAbs<int8_t>, ChargeAmount{1});
+  module.CreateFreeFunction("abs", &IntegerAbs<int16_t>, ChargeAmount{1});
+  module.CreateFreeFunction("abs", &IntegerAbs<int32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("abs", &IntegerAbs<int64_t>, ChargeAmount{1});
 
-  module.CreateFreeFunction("abs", &IntegerAbs<uint8_t>);
-  module.CreateFreeFunction("abs", &IntegerAbs<uint16_t>);
-  module.CreateFreeFunction("abs", &IntegerAbs<uint32_t>);
-  module.CreateFreeFunction("abs", &IntegerAbs<uint64_t>);
+  module.CreateFreeFunction("abs", &IntegerAbs<uint8_t>, ChargeAmount{1});
+  module.CreateFreeFunction("abs", &IntegerAbs<uint16_t>, ChargeAmount{1});
+  module.CreateFreeFunction("abs", &IntegerAbs<uint32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("abs", &IntegerAbs<uint64_t>, ChargeAmount{1});
 
-  module.CreateFreeFunction("abs", &Abs<fixed_point::fp32_t>);
-  module.CreateFreeFunction("abs", &Abs<fixed_point::fp64_t>);
-  module.CreateFreeFunction("abs", &AbsPtr<Fixed128>);
+  module.CreateFreeFunction("abs", &Abs<fixed_point::fp32_t>, ChargeAmount{6});
+  module.CreateFreeFunction("abs", &Abs<fixed_point::fp64_t>, ChargeAmount{8});
+  module.CreateFreeFunction("abs", &AbsPtr<Fixed128>, ChargeAmount{12});
 }
 
 }  // namespace math
