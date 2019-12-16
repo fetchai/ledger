@@ -980,7 +980,7 @@ TEST_F(VMModelTests, model_sequential_predict_bad_data)
     )";
 
   ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
-  EXPECT_DEATH(toolkit.Run(), "1000");
+  EXPECT_DEATH(toolkit.Run(), "0");
 }
 
 TEST_F(VMModelTests, model_sequential_evaluate_without_fit)
