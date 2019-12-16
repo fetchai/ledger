@@ -65,6 +65,12 @@ using TensorFloatIntAndUIntTypes =
                      fetch::math::Tensor<fetch::fixed_point::fp64_t>,
                      fetch::math::Tensor<fetch::fixed_point::fp128_t>>;
 
+using HighPrecisionTensorFixedPointTypes =
+    ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
+
+using HighPrecisionTensorNoFixedPointFloatingTypes =
+    ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+
 }  // namespace test
 }  // namespace math
 }  // namespace fetch

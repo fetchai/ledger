@@ -396,7 +396,7 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
   }
 
   // Make sure everyone is connected to everyone else
-  uint32_t kk = 0;
+  uint32_t kk = 0, tt = 0;
   while (kk != cabinet_size)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -409,6 +409,11 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
       }
 
       ++kk;
+    }
+    ++tt;
+    if (tt > 200)
+    {
+      throw std::runtime_error("Time to setup exceeded.");
     }
   }
 
