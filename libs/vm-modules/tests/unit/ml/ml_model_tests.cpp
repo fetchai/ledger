@@ -1001,10 +1001,10 @@ TEST_F(VMModelTests, model_sequential_no_layers_with_metrics)
           // set up data and labels
           var data_shape = Array<UInt64>(2);
           data_shape[0] = 10u64;
-          data_shape[1] = 1000u64;
+          data_shape[1] = 250u64;
           var label_shape = Array<UInt64>(2);
           label_shape[0] = 7u64;
-          label_shape[1] = 1000u64;
+          label_shape[1] = 250u64;
           var data = Tensor(data_shape);
           var label = Tensor(label_shape);
 
@@ -1077,10 +1077,10 @@ TEST_F(VMModelTests, model_sequential_predict_before_fit)
         // set up data and labels
         var data_shape = Array<UInt64>(2);
         data_shape[0] = 10u64;
-        data_shape[1] = 1000u64;
+        data_shape[1] = 250u64;
         var label_shape = Array<UInt64>(2);
         label_shape[0] = 7u64;
-        label_shape[1] = 1000u64;
+        label_shape[1] = 250u64;
         var data = Tensor(data_shape);
         var label = Tensor(label_shape);
 

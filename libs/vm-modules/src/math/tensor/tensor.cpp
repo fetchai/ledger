@@ -63,6 +63,7 @@ Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>>
     if (axis_size == 0)
     {
       vm->RuntimeError("Can not create a Tensor : axis of size 0 found in new shape!");
+      return Ptr<VMTensor>{new VMTensor(vm, type_id)};
     }
   }
   return Ptr<VMTensor>{new VMTensor(vm, type_id, shape->elements)};
