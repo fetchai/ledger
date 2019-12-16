@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/max_pool_2d.hpp"
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
+#include "ml/ops/max_pool_2d.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
