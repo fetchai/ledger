@@ -43,10 +43,6 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
   using String     = std::string;
   using ModelField = QueryExecutor::ModelField;
 
-  semantic_search_module_->RegisterType<Int>("Int");
-  semantic_search_module_->RegisterType<Float>("Float");
-  semantic_search_module_->RegisterType<String>("String");
-  semantic_search_module_->RegisterType<ModelField>("ModelField", true);
   semantic_search_module_->RegisterFunction<ModelField, Int, Int>(
       "BoundedInteger", [](Int from, Int to) -> ModelField {
         auto            span = static_cast<uint64_t>(to - from);

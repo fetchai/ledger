@@ -45,7 +45,16 @@ public:
 
   static SharedSemanticSearchModule New(SharedAdvertisementRegister advertisement_register)
   {
-    return SharedSemanticSearchModule(new SemanticSearchModule(std::move(advertisement_register)));
+    auto ret =
+        SharedSemanticSearchModule(new SemanticSearchModule(std::move(advertisement_register)));
+
+    // Registering primitive types
+    ret->RegisterPrimitiveType<int64_t>("Integer");
+    ret->RegisterPrimitiveType<uint64_t>("UnsignedInteger");
+    ret->RegisterPrimitiveType<std::string>("String");
+    ret->RegisterPrimitiveType<ModelField>("ModelField");
+
+    return ret;
   }
 
   using ModelField          = std::shared_ptr<AbstractSchemaField>;
@@ -57,10 +66,12 @@ public:
   using Reducer = std::function<SemanticPosition(T const &)>;
 
   template <typename T>
-  void RegisterType(std::string const &name, bool hidden = false,
-                    SemanticReducer cdr = SemanticReducer{
-                        "unknown"})  // TODO: Add over loaded type that sets reducer uid
+  void RegisterPrimitiveType(
+      std::string const &name,
+      bool               hidden = true)  // TODO: Add over loaded type that sets reducer uid
   {
+    SemanticReducer cdr = SemanticReducer{name + "DefaultReducer"};
+
     if (!hidden)
     {
       auto instance = TypedSchemaField<T>::New();

@@ -37,7 +37,7 @@ public:
 
   ErrorTracker() = default;
 
-  explicit operator bool()
+  explicit operator bool() const
   {
     return !errors_.empty();
   }

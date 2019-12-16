@@ -81,7 +81,7 @@ struct QueryInstruction
   {
     PROP_NO_PROP = 0ull,
     PROP_CTX_MODEL,
-    PROP_CTX_STORE,
+    PROP_CTX_ADVERTISE,
     PROP_CTX_SET,
     PROP_CTX_FIND,
 

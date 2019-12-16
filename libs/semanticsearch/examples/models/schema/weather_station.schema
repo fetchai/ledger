@@ -1,8 +1,11 @@
 model IntPair {
-  key1: BoundedInteger(8, 20)
+  key1: BoundedInteger(8, 20),
+  key2: BoundedInteger(20, 40)  
 };
 
-var y : IntPair = {
-    key1: 9
+let y : IntPair = {
+    key1: 9,
+    key2: 20
 };
 
+advertise y;

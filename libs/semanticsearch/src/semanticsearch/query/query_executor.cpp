@@ -31,12 +31,28 @@ QueryExecutor::QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &
 void QueryExecutor::Execute(Query const &query, Agent agent)
 {
   agent_ = std::move(agent);
+
+  // Checking that the agent acutally exists
+  if (agent_ == nullptr)
+  {
+    // Setting error occurance to very beginning of file
+    Token zero;
+    zero.SetLine(0);
+    zero.SetChar(0);
+    error_tracker_.RaiseRuntimeError("Agent not found. Did you remember to register it?", zero);
+    return;
+  }
+
+  // Preparing error tracker
   error_tracker_.SetSource(query.source, query.filename);
+
+  // Stopping if there is nothing to execute
   if (query.statements.empty())
   {
     return;
   }
 
+  // Executing each statement in program
   for (auto const &stmt : query.statements)
   {
     switch (stmt[0].properties)
@@ -47,7 +63,7 @@ void QueryExecutor::Execute(Query const &query, Agent agent)
     case QueryInstruction::PROP_CTX_SET:
       ExecuteSet(stmt);
       break;
-    case QueryInstruction::PROP_CTX_STORE:
+    case QueryInstruction::PROP_CTX_ADVERTISE:
       ExecuteStore(stmt);
       break;
     default:
@@ -55,6 +71,7 @@ void QueryExecutor::Execute(Query const &query, Agent agent)
       return;
     }
 
+    // Breaking at first encountered error.
     if (error_tracker_.HasErrors())
     {
       break;
@@ -111,7 +128,10 @@ void QueryExecutor::ExecuteStore(CompiledStatement const &stmt)
           return;
         }
         SemanticPosition position = model->Reduce(obj);
+
+        assert(semantic_search_module_ != nullptr);
         assert(semantic_search_module_->advertisement_register() != nullptr);
+        assert(agent_ != nullptr);
 
         semantic_search_module_->advertisement_register()->AdvertiseAgent(agent_->id, mname,
                                                                           position);

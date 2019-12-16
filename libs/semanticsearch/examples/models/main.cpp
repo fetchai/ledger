@@ -72,10 +72,10 @@ int main(int argc, char **argv)
   using ModelField = QueryExecutor::ModelField;
 
   auto semantic_search_module = SemanticSearchModule::New(adv);
-  semantic_search_module->RegisterType<Int>("Int");
-  semantic_search_module->RegisterType<Float>("Float");
-  semantic_search_module->RegisterType<String>("String");
-  semantic_search_module->RegisterType<ModelField>("ModelField", true);
+  semantic_search_module->RegisterPrimitiveType<Int>("Int");
+  semantic_search_module->RegisterPrimitiveType<Float>("Float");
+  semantic_search_module->RegisterPrimitiveType<String>("String");
+  semantic_search_module->RegisterPrimitiveType<ModelField>("ModelField", true);
   semantic_search_module->RegisterFunction<ModelField, Int, Int>(
       "BoundedInteger", [](Int from, Int to) -> ModelField {
         auto            span = static_cast<uint64_t>(to - from);

@@ -48,7 +48,9 @@ enum
   IDENTIFIER,
 
   // And finally syntax
-  KEYWORD = 500
+  KEYWORD = 500,
+
+  USER_DEFINED = 1000
 };
 
 enum
@@ -206,11 +208,11 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
       {
         next.properties = QueryInstruction::PROP_CTX_MODEL;
       }
-      else if (token == "store")
+      else if (token == "advertise")
       {
-        next.properties = QueryInstruction::PROP_CTX_STORE;
+        next.properties = QueryInstruction::PROP_CTX_ADVERTISE;
       }
-      else if (token == "var")
+      else if (token == "let")
       {
         next.properties = QueryInstruction::PROP_CTX_SET;
       }
