@@ -866,4 +866,46 @@ TEST_F(VMModelTests, DISABLED_model_sequential_flatten)
   ASSERT_TRUE(toolkit.Run());
 }
 
+TEST_F(VMModelTests, DISABLED_model_sequential_flatten_tensor_data)
+{
+  static char const *SRC_METRIC = R"(
+        function main() : Tensor
+          var tensor_shape = Array<UInt64>(2);
+          tensor_shape[0] = 3u64;
+          tensor_shape[1] = 3u64;
+
+          var x = Tensor(tensor_shape);
+          var str_vals = "0.5, 7.1, 9.1; 6.2, 7.1, 4.; -99.1, 14328.1, 10.0;";
+          x.fromString(str_vals);
+          var data = x.unsqueeze();
+
+          var model = Model("sequential");
+          model.add("flatten");
+          model.compile("scel", "adam", {"categorical accuracy"});
+          var prediction = model.predict(data);
+          print(prediction.toString());
+
+          return prediction;
+        endfunction
+      )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(&res));
+  ASSERT_EQ(stdout.str(),
+            "+0.500000000;"
+            "+6.200000000;"
+            "-99.100000000;"
+            "+7.100000000;"
+            "+7.100000000;"
+            "+14328.100000000;"
+            "+9.100000000;"
+            "+4.000000000;"
+            "+10.000000000;");
+  auto const tensor            = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const constructed_shape = tensor->shape();
+  fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({9, 1});
+  EXPECT_TRUE(constructed_shape == expected.shape());
+}
+
 }  // namespace
