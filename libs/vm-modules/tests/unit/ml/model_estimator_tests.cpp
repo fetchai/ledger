@@ -245,11 +245,11 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_test)
   std::string layer_type = "convolution1D";
 
   SizeType min_input_size = 0;
-  SizeType max_input_size = 1000;
+  SizeType max_input_size = 500;
   SizeType input_step     = 10;
 
   SizeType min_output_size = 0;
-  SizeType max_output_size = 1000;
+  SizeType max_output_size = 500;
   SizeType output_step     = 10;
 
   SizeType min_kernel_size = 0;
@@ -294,11 +294,11 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
   std::string activation_type = "relu";
 
   SizeType min_input_size = 0;
-  SizeType max_input_size = 1000;
+  SizeType max_input_size = 500;
   SizeType input_step     = 10;
 
   SizeType min_output_size = 0;
-  SizeType max_output_size = 1000;
+  SizeType max_output_size = 500;
   SizeType output_step     = 10;
 
   SizeType min_kernel_size = 0;
@@ -426,15 +426,15 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
   std::string activation_type = "relu";
 
   SizeType min_data_size_1  = 10;
-  SizeType max_data_size_1  = 100;
+  SizeType max_data_size_1  = 80;
   SizeType data_size_1_step = 19;
 
   SizeType min_data_points  = 10;
-  SizeType max_data_points  = 100;
+  SizeType max_data_points  = 80;
   SizeType data_points_step = 13;
 
   SizeType min_label_size_1  = 1;
-  SizeType max_label_size_1  = 100;
+  SizeType max_label_size_1  = 80;
   SizeType label_size_1_step = 17;
 
   SizeType min_batch_size  = 1;
@@ -558,15 +558,15 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
   std::string activation_type = "relu";
 
   SizeType min_data_size_1  = 10;
-  SizeType max_data_size_1  = 100;
+  SizeType max_data_size_1  = 80;
   SizeType data_size_1_step = 19;
 
   SizeType min_data_points  = 10;
-  SizeType max_data_points  = 100;
+  SizeType max_data_points  = 80;
   SizeType data_points_step = 13;
 
   SizeType min_label_size_1  = 1;
-  SizeType max_label_size_1  = 100;
+  SizeType max_label_size_1  = 80;
   SizeType label_size_1_step = 17;
 
   SizeType min_batch_size  = 1;
