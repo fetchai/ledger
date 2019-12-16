@@ -26,7 +26,7 @@ class Module;
 namespace vm_modules {
 namespace math {
 
-void BindRand(fetch::vm::Module &module, bool const enable_experimental);
+void BindRand(fetch::vm::Module &module, bool enable_experimental);
 
 }  // namespace math
 }  // namespace vm_modules

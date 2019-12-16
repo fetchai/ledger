@@ -27,7 +27,7 @@ template <int pow_val, typename Type>
 static void BM_Pow(benchmark::State &state)
 {
   Type x      = fetch::math::Type<Type>("1");
-  Type pow    = Type{pow_val};
+  auto pow    = Type{pow_val};
   Type result = fetch::math::Type<Type>("1");
   for (auto _ : state)
   {

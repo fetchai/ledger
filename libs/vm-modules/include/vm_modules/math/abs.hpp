@@ -28,7 +28,7 @@ class Module;
 namespace vm_modules {
 namespace math {
 
-void BindAbs(fetch::vm::Module &module, bool const enable_experimental);
+void BindAbs(fetch::vm::Module &module, bool enable_experimental);
 
 }  // namespace math
 }  // namespace vm_modules
