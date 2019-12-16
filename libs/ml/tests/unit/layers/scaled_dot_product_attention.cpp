@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/layers/scaled_dot_product_attention.hpp"
+
 #include "gtest/gtest.h"
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/loss_functions.hpp"
