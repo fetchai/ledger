@@ -84,6 +84,12 @@ meta::IfIsUnsignedInteger<T, T> IntegerAbs(VM * /*vm*/, T const &value)
 
 }  // namespace
 
+vm::ChargeAmount AbsChargeEstimator(fetch::vm::Ptr<Object> const & /*lhso*/,
+                                    fetch::vm::Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
 void BindAbs(Module &module)
 {
   module.CreateFreeFunction("abs", &IntegerAbs<int8_t>);

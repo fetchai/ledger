@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/object.hpp"
+
 namespace fetch {
 
 namespace vm {
@@ -27,6 +29,9 @@ namespace vm_modules {
 namespace math {
 
 void BindLog(fetch::vm::Module &module);
+
+vm::ChargeAmount LogChargeEstimator(vm::Ptr<Object> const &lhso,
+                                    vm::Ptr<Object> const &rhso) override;
 
 }  // namespace math
 }  // namespace vm_modules

@@ -28,6 +28,9 @@ namespace math {
 
 void BindExp(fetch::vm::Module &module);
 
+ChargeAmount ExpChargeEstimator(vm::Ptr<Object> const &lhso,
+                                vm::Ptr<Object> const &rhso) override;
+
 }  // namespace math
 }  // namespace vm_modules
 }  // namespace fetch

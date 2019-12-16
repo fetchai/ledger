@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/object.hpp"
+
 namespace fetch {
 
 namespace vm {
@@ -27,6 +29,9 @@ namespace vm_modules {
 namespace math {
 
 void BindSqrt(fetch::vm::Module &module);
+
+vm::ChargeAmount SqrtChargeEstimator(vm::Ptr<Object> const &lhso,
+                                     vm::Ptr<Object> const &rhso) override;
 
 }  // namespace math
 }  // namespace vm_modules
