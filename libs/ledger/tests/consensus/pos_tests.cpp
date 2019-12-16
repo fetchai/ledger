@@ -39,7 +39,6 @@
 using namespace fetch;
 
 using fetch::ledger::MainChain;
-using fetch::moment::DeadlineTimer;
 using fetch::ledger::Block;
 using fetch::crypto::ECDSASigner;
 
