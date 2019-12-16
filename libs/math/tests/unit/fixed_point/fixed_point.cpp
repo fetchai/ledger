@@ -258,6 +258,8 @@ TEST(FixedPointTest, FromString_16_16)
 
   fp32_t e1("2.718281828459045235360287471352662498");
   fp32_t e2(2.718281828459045235360287471352662498);
+  std::cout << "e1 = " << e1 << std::endl;
+  std::cout << "e2 = " << e2 << std::endl;
   EXPECT_TRUE(e1.Near(e2));
   EXPECT_NE(e1, e2);
 
