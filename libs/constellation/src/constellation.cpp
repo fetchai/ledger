@@ -975,12 +975,16 @@ bool Constellation::CheckStateIntegrity()
 
     FETCH_LOG_INFO(LOGGING_NAME, "Reverted storage unit.");
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Reverting DAG to: ", current_block->block_number);
+
     // Need to revert the DAG too
     if (dag_ && !dag_->RevertToEpoch(current_block->block_number))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Reverting the DAG failed!");
       return false;
     }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "thing thing thing");
 
     // we need to update the execution manager state and also our locally cached state about the
     // 'last' block that has been executed
