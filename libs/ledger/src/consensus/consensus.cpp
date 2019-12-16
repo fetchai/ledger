@@ -838,27 +838,27 @@ void Consensus::AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cab
 
 void Consensus::SetWhitelist(Minerwhitelist const &whitelist)
 {
-  for(auto const &miner : whitelist)
+  for (auto const &miner : whitelist)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Adding to whitelist: ", miner.ToBase64());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Adding to whitelist: ", miner.ToBase64());
   }
   whitelist_ = whitelist;
 }
 
 Consensus::CabinetPtr Consensus::FilterCabinet(CabinetPtr const &cabinet) const
 {
-  Cabinet build;
+  Cabinet               build;
   Consensus::CabinetPtr ret;
 
-  if(whitelist_.empty())
+  if (whitelist_.empty())
   {
     build = *cabinet;
   }
   else
   {
-    for(auto const &cabinet_member : *cabinet)
+    for (auto const &cabinet_member : *cabinet)
     {
-      if(whitelist_.find(cabinet_member.identifier()) != whitelist_.end())
+      if (whitelist_.find(cabinet_member.identifier()) != whitelist_.end())
       {
         build.push_back(cabinet_member);
       }

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/stake_snapshot.hpp"
 #include "beacon/block_entropy.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 #include <memory>
 #include <unordered_map>
 

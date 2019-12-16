@@ -493,7 +493,6 @@ bool Constellation::OnRestorePreviousData(ledger::GenesisFileCreator::ConsensusP
       cfg_.num_executors, cfg_.log2_num_lanes, storage_,
       [this] { return std::make_shared<Executor>(storage_); }, tx_status_cache_);
 
-
   if (!GenesisSanityChecks(genesis_status))
   {
     return false;
@@ -953,7 +952,8 @@ bool Constellation::CheckStateIntegrity()
   }
 
   // Walk back down the chain until we find a state we could revert to
-  while (current_block && !storage_->HashExists(current_block->merkle_hash, current_block->block_number))
+  while (current_block &&
+         !storage_->HashExists(current_block->merkle_hash, current_block->block_number))
   {
     current_block = chain_->GetBlock(current_block->previous_hash);
   }
@@ -964,10 +964,12 @@ bool Constellation::CheckStateIntegrity()
     return false;
   }
 
-  if (current_block && storage_->HashExists(current_block->merkle_hash, current_block->block_number))
+  if (current_block &&
+      storage_->HashExists(current_block->merkle_hash, current_block->block_number))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Found a block to revert to! Block: ", current_block->block_number,
-                   " hex: 0x", current_block->hash.ToHex(), " merkle hash: 0x", current_block->merkle_hash.ToHex());
+                   " hex: 0x", current_block->hash.ToHex(), " merkle hash: 0x",
+                   current_block->merkle_hash.ToHex());
 
     if (!storage_->RevertToHash(current_block->merkle_hash, current_block->block_number))
     {
