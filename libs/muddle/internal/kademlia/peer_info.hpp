@@ -24,7 +24,6 @@
 
 #include <chrono>
 #include <deque>
-#include <mutex>
 #include <vector>
 
 namespace fetch {

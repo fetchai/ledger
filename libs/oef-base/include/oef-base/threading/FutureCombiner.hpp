@@ -49,7 +49,7 @@ public:
 
     std::size_t future_idx = 0;
     {
-      FETCH_LOCK(mutex_);
+      std::lock_guard<std::mutex> lock(mutex_);
 
       future_idx = futures_.size();
       futures_.push_back(future);
@@ -95,7 +95,7 @@ public:
 
   void SetResultMerger(ResultMerger futureCombiner)
   {
-    FETCH_LOCK(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     future_combiner_ = std::move(futureCombiner);
   }
 

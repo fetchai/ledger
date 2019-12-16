@@ -383,10 +383,6 @@ private:
         auto strandLock = strand_.lock();
         if (strandLock)
         {
-          if (message.success)
-          {
-            message.success();
-          }
           WriteNext(selfLock);
         }
       }

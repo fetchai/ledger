@@ -110,7 +110,7 @@ private:
 
   KademliaTable &table_;
 
-  Mutex       uri_mutex_;
+  std::mutex  uri_mutex_;
   NetworkUris uris_;
   Ports       ports_;
 };

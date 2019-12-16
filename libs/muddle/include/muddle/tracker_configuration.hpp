@@ -19,8 +19,6 @@
 
 #include "network/service/promise.hpp"
 
-#include <sstream>
-
 namespace fetch {
 namespace muddle {
 
@@ -86,22 +84,6 @@ struct TrackerConfiguration
     return conf;
   }
 
-  std::string ToString()
-  {
-    std::stringstream ss{""};
-    ss << "allow_desired_connections: " << allow_desired_connections << std::endl;
-    ss << "register_connections: " << register_connections << std::endl;
-    ss << "pull_peers: " << pull_peers << std::endl;
-    ss << "connect_to_nearest: " << connect_to_nearest << std::endl;
-    ss << "disconnect_duplicates: " << disconnect_duplicates << std::endl;
-    ss << "trim_peer_list: " << trim_peer_list << std::endl;
-    ss << "long_range_connectivity: " << long_range_connectivity << std::endl;
-    ss << "disconnect_from_self: " << disconnect_from_self << std::endl;
-    ss << "allow_connection_expiry: " << allow_connection_expiry << std::endl;
-
-    return ss.str();
-  }
-
   /// Operations
   /// @{
   bool allow_desired_connections{true};
@@ -115,8 +97,8 @@ struct TrackerConfiguration
   bool allow_connection_expiry{true};
   /// @}
 
-  uint64_t max_kademlia_connections{3};
-  uint64_t max_longrange_connections{2};
+  uint64_t max_kademlia_connections{6};
+  uint64_t max_longrange_connections{5};
   uint64_t max_desired_connections{255};
   int64_t  max_discovery_tasks{3};
 
