@@ -402,6 +402,64 @@ void ToStringTest(std::string const& string)
   EXPECT_EQ(result_val, val);
 }
 
+TEST(FixedPointTest, ToString_16_16)
+{
+  std::string str_val = "1fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "1.0fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "-1fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "0.5fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "1.5fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "2.5fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "-1.5fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "2.718281828459045235360287471352662498";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "1442695040888963407359924681001892137";
+  ToStringTest<fp32_t>(str_val);
+}
+TEST(FixedPointTest, ToString_32_32)
+{
+  std::string str_val = "1fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "1.0fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "-1fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "0.5fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "1.5fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "2.5fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "-1.5fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "2.718281828459045235360287471352662498";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "1442695040888963407359924681001892137";
+  ToStringTest<fp64_t>(str_val);
+}
 TEST(FixedPointTest, ToString_64_64)
 {
   std::string str_val = "1fp128";
