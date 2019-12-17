@@ -178,7 +178,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     {
       solution_stack_.emplace_back(std::move(item.second));
     }
-    current_miner_ = current.miner;
+    current_miner_ = chain::Address(current.miner_id);
   }
 
   return SUCCESS;

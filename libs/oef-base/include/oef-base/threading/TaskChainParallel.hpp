@@ -23,7 +23,6 @@
 #include <utility>
 
 #include "ExitState.hpp"
-#include "core/mutex.hpp"
 #include "logging/logging.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 
@@ -86,7 +85,7 @@ public:
   {
     auto id = this->GetTaskId();
     {
-      FETCH_LOCK(result_mutex_);
+      std::lock_guard<std::mutex> lock(result_mutex_);
       if ((results_.size() + errored_tasks_) == num_of_tasks_)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Task(", id, ") done!");

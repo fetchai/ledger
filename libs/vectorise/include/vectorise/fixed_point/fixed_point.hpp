@@ -754,22 +754,20 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
     auto power10  = FixedPoint<I, F>::POWER10;
     auto one_mask = FixedPoint<I, F>::ONE_MASK;
 
-    typename FixedPoint<I, F>::BaseUnsignedType fraction =
-        static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(n.Fraction());
-    typename FixedPoint<I, F>::BaseSignedType integer =
-        static_cast<typename FixedPoint<I, F>::BaseSignedType>(n.Integer());
-    if (n < FixedPoint<I, F>::_0)
+    auto fraction = static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(n.Fraction());
+    auto integer  = static_cast<typename FixedPoint<I, F>::BaseSignedType>(n.Integer());
+    if (n < FixedPoint<I, F>::_0 && fraction != 0)
     {
       ++integer;
       fraction = static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(~fraction);
       ++fraction;
     }
-    typename FixedPoint<I, F>::NextType fraction_large =
-        static_cast<typename FixedPoint<I, F>::NextType>(fraction);
-    fraction_large *= static_cast<typename FixedPoint<I, F>::NextType>(power10);
-    fraction_large /= static_cast<typename FixedPoint<I, F>::NextType>(one_mask);
+    auto fraction_large = static_cast<typename FixedPoint<I, F>::Type>(fraction);
+    fraction_large *= static_cast<typename FixedPoint<I, F>::Type>(power10);
+    fraction_large /= static_cast<typename FixedPoint<I, F>::Type>(one_mask);
 
     fraction = static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(fraction_large);
+
     s << integer << '.';
     s << std::setw(FixedPoint<I, F>::DECIMAL_DIGITS);
     s << std::setfill('0');

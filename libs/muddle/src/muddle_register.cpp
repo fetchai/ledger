@@ -51,6 +51,11 @@ void MuddleRegister::OnConnectionLeft(ConnectionLeftCallback cb)
   left_callback_ = std::move(cb);
 }
 
+void MuddleRegister::OnConnectionEntered(ConnectionLeftCallback cb)
+{
+  FETCH_LOCK(lock_);
+  entered_callback_ = std::move(cb);
+}
 /**
  * Broadcast data to all active connections
  *
@@ -301,11 +306,12 @@ Address MuddleRegister::GetAddress(ConnectionHandle handle) const
  */
 void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
 {
-  FETCH_LOCK(lock_);
+  std::unique_lock<std::mutex> lock(lock_);
 
   auto strong_conn = ptr.lock();
   if (!strong_conn)
   {
+    lock.unlock();
     FETCH_LOG_WARN(logging_name_, "Attempting to register lost connection!");
     return;
   }
@@ -316,6 +322,7 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
   // extra level of debug
   if (handle_index_.find(handle) != handle_index_.end())
   {
+    lock.unlock();
     FETCH_LOG_WARN(logging_name_, "Trying to update an existing connection ID");
     return;
   }
@@ -324,6 +331,15 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
 
   // add the connection to the map
   handle_index_.emplace(handle, std::make_shared<Entry>(ptr));
+
+  auto callback_copy = entered_callback_;
+  lock.unlock();
+
+  // signal the router
+  if (callback_copy)
+  {
+    callback_copy(handle);
+  }
 }
 
 /**
@@ -333,39 +349,37 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
  */
 void MuddleRegister::Leave(ConnectionHandle handle)
 {
-  ConnectionLeftCallback callback_copy;
+  std::unique_lock<std::mutex> lock(lock_);
+
+  FETCH_LOG_TRACE(logging_name_, "### Connection ", handle, " ended");
+
+  auto it = handle_index_.find(handle);
+  if (it != handle_index_.end())
   {
-    FETCH_LOCK(lock_);
-
-    FETCH_LOG_TRACE(logging_name_, "### Connection ", handle, " ended");
-
-    auto it = handle_index_.find(handle);
-    if (it != handle_index_.end())
+    std::size_t removal_count{0};
+    for (;;)
     {
-      std::size_t removal_count{0};
-      for (;;)
+      // attempt to find a corresponding index in the addres map
+      auto addr_it = std::find_if(address_index_.begin(), address_index_.end(),
+                                  [&](AddressIndex::value_type const &entry) {
+                                    return (!entry.second) || (entry.second->handle == handle);
+                                  });
+
+      if (addr_it == address_index_.end())
       {
-        // attempt to find a corresponding index in the addres map
-        auto addr_it = std::find_if(address_index_.begin(), address_index_.end(),
-                                    [&](AddressIndex::value_type const &entry) {
-                                      return (!entry.second) || (entry.second->handle == handle);
-                                    });
-
-        if (addr_it == address_index_.end())
-        {
-          break;
-        }
-
-        // remove the entry
-        address_index_.erase(addr_it);
-        ++removal_count;
+        break;
       }
 
-      handle_index_.erase(it);
+      // remove the entry
+      address_index_.erase(addr_it);
+      ++removal_count;
     }
 
-    callback_copy = left_callback_;
+    handle_index_.erase(it);
   }
+
+  auto callback_copy = left_callback_;
+  lock.unlock();
 
   // signal the router
   if (callback_copy)

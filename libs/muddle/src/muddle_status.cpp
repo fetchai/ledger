@@ -118,6 +118,7 @@ void BuildPeerTracker(PeerTracker const &peer_tracker, variant::Variant &output)
   BuildConnectionPriorities(peer_tracker, output["connectionPriority"]);
   BuildPeerSet(peer_tracker.keep_connections(), output["keepConnections"]);
   BuildPeerSet(peer_tracker.longrange_connections(), output["longrangeConnections"]);
+  BuildPeerSet(peer_tracker.no_uri(), output["noUri"]);
   BuildPeerSet(peer_tracker.incoming(), output["incoming"]);
   BuildPeerSet(peer_tracker.outgoing(), output["outgoing"]);
   BuildPeerSet(peer_tracker.all_peers(), output["allPeers"]);
