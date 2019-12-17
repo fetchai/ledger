@@ -45,7 +45,7 @@ public:
   explicit Dropout(DataType const probability, SizeType const &random_seed = 25102015)
     : probability_(probability)
   {
-    if (probability >= DataType{0} && probability <= DataType{1})
+    if (probability < DataType{0} || probability > DataType{1})
     {
       std::stringstream ss;
       ss << probability;
