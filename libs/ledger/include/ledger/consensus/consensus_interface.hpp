@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/block_entropy.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include <memory>
 #include <unordered_map>
@@ -30,8 +31,9 @@ class StorageInterface;
 class ConsensusInterface
 {
 public:
-  using NextBlockPtr  = std::unique_ptr<Block>;
-  using StakeSnapshot = ledger::StakeSnapshot;
+  using NextBlockPtr   = std::unique_ptr<Block>;
+  using StakeSnapshot  = ledger::StakeSnapshot;
+  using Minerwhitelist = beacon::BlockEntropy::Cabinet;
 
   enum class Status
   {
@@ -61,6 +63,7 @@ public:
   virtual void SetDefaultStartTime(uint64_t default_start_time_ms)             = 0;
   virtual void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) = 0;
   virtual void Reset(StakeSnapshot const &snapshot)                            = 0;
+  virtual void SetWhitelist(Minerwhitelist const &whitelist)                   = 0;
 };
 
 }  // namespace ledger
