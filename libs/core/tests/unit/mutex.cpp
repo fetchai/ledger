@@ -116,4 +116,4 @@ TEST(DebugMutex, DISABLED_MultiThreadDeadlock2)
   threads.clear();
 }
 
-#endif // FETCH_DEBUG_MUTEX
+#endif  // FETCH_DEBUG_MUTEX

@@ -172,14 +172,13 @@ using Mutex = DebugMutex;
   fetch::DebugLockGuard<typename std::decay<decltype(lockable)>::type> FETCH_JOIN( \
       mutex_locked_on_line, __LINE__)(lockable, __FILE__, __LINE__)
 
-#else // !FETCH_DEBUG_MUTEX
+#else  // !FETCH_DEBUG_MUTEX
 
 using Mutex = std::mutex;
 
 #define FETCH_LOCK(lockable) \
   std::lock_guard<decltype(lockable)> FETCH_JOIN(mutex_locked_on_line, __LINE__)(lockable)
 
-#endif // FETCH_DEBUG_MUTEX
-
+#endif  // FETCH_DEBUG_MUTEX
 
 }  // namespace fetch

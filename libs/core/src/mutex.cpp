@@ -155,6 +155,6 @@ std::string MutexRegister::CreateTrace(DebugMutex *first_mutex, std::thread::id 
   return "Magically escaped an infinite loop";
 }
 
-#endif // FETCH_DEBUG_MUTEX
+#endif  // FETCH_DEBUG_MUTEX
 
 }  // namespace fetch
