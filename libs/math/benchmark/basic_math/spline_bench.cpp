@@ -24,6 +24,7 @@
 #include <cmath>
 #include <cstddef>
 
+namespace {
 // This is to avoid ambiguity in instantation
 double dsin(double x)
 {
@@ -42,7 +43,7 @@ double dexp(double x)
   return exp(x);
 }
 
-static void DegreeArguments(benchmark::internal::Benchmark *b)
+void DegreeArguments(benchmark::internal::Benchmark *b)
 {
   for (int i = 0; i <= 720; i = i + 180)
   {
@@ -66,7 +67,7 @@ BENCHMARK_TEMPLATE(BM_sin_spline, 8)->Apply(DegreeArguments);
 BENCHMARK_TEMPLATE(BM_sin_spline, 16)->RangeMultiplier(10)->Range(1, 100);
 BENCHMARK_TEMPLATE(BM_sin_spline, 20)->RangeMultiplier(10)->Range(1, 100);
 
-static void BM_sin(benchmark::State &state)
+void BM_sin(benchmark::State &state)
 {
   auto   x = static_cast<double>(state.range(0));
   double result;
@@ -93,7 +94,7 @@ BENCHMARK_TEMPLATE(BM_cos_spline, 8)->Apply(DegreeArguments);
 BENCHMARK_TEMPLATE(BM_cos_spline, 16)->Apply(DegreeArguments);
 BENCHMARK_TEMPLATE(BM_cos_spline, 20)->RangeMultiplier(10)->Range(1, 100);
 
-static void BM_cos(benchmark::State &state)
+void BM_cos(benchmark::State &state)
 {
   auto   x = static_cast<double>(state.range(0));
   double result;
@@ -120,7 +121,7 @@ BENCHMARK_TEMPLATE(BM_tan_spline, 8)->Apply(DegreeArguments);
 BENCHMARK_TEMPLATE(BM_tan_spline, 16)->Apply(DegreeArguments);
 BENCHMARK_TEMPLATE(BM_tan_spline, 20)->RangeMultiplier(10)->Range(1, 100);
 
-static void BM_tan(benchmark::State &state)
+void BM_tan(benchmark::State &state)
 {
   auto   x = static_cast<double>(state.range(0));
   double result;
@@ -147,7 +148,7 @@ BENCHMARK_TEMPLATE(BM_exp_spline, 8)->Apply(DegreeArguments);
 BENCHMARK_TEMPLATE(BM_exp_spline, 16)->Apply(DegreeArguments);
 BENCHMARK_TEMPLATE(BM_exp_spline, 20)->RangeMultiplier(10)->Range(1, 100);
 
-static void BM_exponent(benchmark::State &state)
+void BM_exponent(benchmark::State &state)
 {
   auto   x = static_cast<double>(state.range(0));
   double result;
@@ -157,3 +158,5 @@ static void BM_exponent(benchmark::State &state)
   }
 }
 BENCHMARK(BM_exponent)->Apply(DegreeArguments);
+
+}  // namespace
