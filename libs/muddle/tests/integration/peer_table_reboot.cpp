@@ -26,7 +26,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(RoutingTests, PeerTestReboot)
+TEST(DISABLED_RoutingTests, PeerTestReboot)
 {
   auto        config = fetch::muddle::TrackerConfiguration::AllOn();
   std::size_t N      = 10;

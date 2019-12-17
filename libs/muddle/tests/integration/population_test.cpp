@@ -24,7 +24,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(RoutingTests, PopulationTest)
+TEST(DISABLED_RoutingTests, PopulationTest)
 {
   // Creating network
   std::size_t N       = 10;
