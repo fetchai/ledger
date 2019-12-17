@@ -124,7 +124,6 @@ private:
   bool       EnoughQualSigned(Block const &previous, Block const &current) const;
   uint32_t   GetThreshold(Block const &block) const;
   void       AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
-  CabinetPtr FilterCabinet(CabinetPtr const &cabinet) const;
 };
 
 }  // namespace ledger

@@ -532,29 +532,20 @@ bool Constellation::OnBringUpExternalNetwork(
                                external_identity_->identity());
 
   consensus_->SetWhitelist(params.whitelist);
+  consensus_->SetDefaultStartTime(params.start_time);
+  consensus_->SetMaxCabinetSize(params.cabinet_size);
 
-  // TODO(HUT): delete.
-  if (cfg_.proof_of_stake)
+  if (params.snapshot)
   {
-    consensus_->SetDefaultStartTime(params.start_time);
-    consensus_->SetMaxCabinetSize(params.cabinet_size);
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Set max cabinet size to: ", params.cabinet_size);
-
-    if (params.snapshot)
-    {
-      consensus_->Reset(*params.snapshot);
-    }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "No snapshot to reset consensus with.");
-    }
+    consensus_->Reset(*params.snapshot);
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "No snapshot to reset consensus with.");
   }
 
-  if(recovery_block_)
-  {
-    consensus_->UpdateCurrentBlock(*recovery_block_);
-  }
+  // Update with genesis to trigger loading any saved state
+  consensus_->UpdateCurrentBlock(*chain_->CreateGenesisBlock());
 
   block_packer_ = std::make_unique<BlockPackingAlgorithm>(cfg_.log2_num_lanes);
 
@@ -997,8 +988,6 @@ bool Constellation::CheckStateIntegrity()
     // we need to update the execution manager state and also our locally cached state about the
     // 'last' block that has been executed
     execution_manager_->SetLastProcessedBlock(current_block->hash);
-
-    recovery_block_ = current_block;
   }
   else
   {

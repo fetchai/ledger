@@ -60,31 +60,29 @@ void StakeManager::UpdateCurrentBlock(BlockIndex block_index)
   TrimToSize(stake_history_, HISTORY_LENGTH);
 }
 
-StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current, uint64_t cabinet_size)
+StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current, uint64_t cabinet_size, ConsensusInterface::Minerwhitelist const &whitelist)
 {
   CabinetPtr cabinet{};
 
   auto snapshot = LookupStakeSnapshot(current.block_number);
   if (snapshot)
   {
-    cabinet = snapshot->BuildCabinet(current.block_entropy.EntropyAsU64(), cabinet_size);
+    cabinet = snapshot->BuildCabinet(current.block_entropy.EntropyAsU64(), cabinet_size, whitelist);
   }
 
   return cabinet;
 }
 
 StakeManager::CabinetPtr StakeManager::BuildCabinet(uint64_t block_number, uint64_t entropy,
-                                                    uint64_t cabinet_size) const
+                                                    uint64_t cabinet_size, ConsensusInterface::Minerwhitelist const &whitelist) const
 {
   auto snapshot = LookupStakeSnapshot(block_number);
-  return snapshot->BuildCabinet(entropy, cabinet_size);
+  return snapshot->BuildCabinet(entropy, cabinet_size, whitelist);
 }
 
 bool StakeManager::Save(StorageInterface &storage)
 {
   bool success{false};
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Saving stake man to storage. ", current_block_index_, " size: ", current_->size());
 
   try
   {
@@ -118,8 +116,6 @@ bool StakeManager::Load(StorageInterface &storage)
     }
 
     success = true;
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Loading stake man from storage. ", current_block_index_, " size: ", current_->size());
   }
   catch (std::exception const &ex)
   {
@@ -160,7 +156,6 @@ StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex bloc
   // 9/10 time during normal operation the current stake snapshot will be used
   if (block >= current_block_index_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "ret current: ", current_->size());
     return current_;
   }
 
@@ -172,8 +167,6 @@ StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex bloc
     FETCH_LOG_WARN(LOGGING_NAME, "Update to look up stake snapshot for block ", block);
     return {};
   }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "hist: ", stake_history_.size());
 
   // we are not interested in the upper bound, but the preceding historical element i.e.
   // the previous block change
