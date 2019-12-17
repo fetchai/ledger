@@ -332,7 +332,7 @@ public:
   }
 
 private:
-  std::mutex eval_mutex_;
+  Mutex eval_mutex_;
 
   std::vector<RequestMiddleware>  pre_view_middleware_;
   std::vector<MountedView>        views_;
