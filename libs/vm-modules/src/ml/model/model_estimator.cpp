@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm_modules/ml/model/model_estimator.hpp"
+
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm_modules/ml/model/model.hpp"
-#include "vm_modules/ml/model/model_estimator.hpp"
 
 #include <stdexcept>
 
@@ -31,7 +32,8 @@ namespace vm_modules {
 namespace ml {
 namespace model {
 
-static constexpr char const *LOGGING_NAME = "VMModelEstimator";
+static constexpr char const *LOGGING_NAME            = "VMModelEstimator";
+static constexpr char const *NOT_IMPLEMENTED_MESSAGE = " is not yet implemented.";
 
 using SizeType = fetch::math::SizeType;
 
@@ -144,7 +146,7 @@ ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType con
   FETCH_UNUSED(input_channels);
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
-  return MaximumCharge("Not yet implemented");
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
 ChargeAmount ModelEstimator::LayerAddConvActivation(
@@ -157,13 +159,21 @@ ChargeAmount ModelEstimator::LayerAddConvActivation(
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
   FETCH_UNUSED(activation);
-  return MaximumCharge("Not yet implemented");
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
 ChargeAmount ModelEstimator::LayerAddFlatten(Ptr<fetch::vm::String> const &layer)
 {
   FETCH_UNUSED(layer);
-  return MaximumCharge("Not yet implemented");
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+ChargeAmount ModelEstimator::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
+                                             const math::DataType &        probability)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(probability);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
 ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
@@ -254,7 +264,8 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
 
   if (!success)
   {
-    return MaximumCharge("Not yet implemented");
+    return MaximumCharge("Either " + loss->string() + " or " + optimiser->string() +
+                         NOT_IMPLEMENTED_MESSAGE);
   }
 
   return ToChargeAmount(optimiser_construction_impact + COMPILE_CONST_COEF) * COMPUTE_CHARGE_COST;
@@ -288,7 +299,7 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
     }
     else
     {
-      return MaximumCharge("Not yet implemented");
+      return MaximumCharge(optimiser->string() + NOT_IMPLEMENTED_MESSAGE);
     }
   }
 
@@ -298,10 +309,9 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
 ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,
                                            Ptr<Array<SizeType>> const &in_layers)
 {
-
   FETCH_UNUSED(optimiser);
   FETCH_UNUSED(in_layers);
-  return MaximumCharge("Not yet implemented");
+  return MaximumCharge(optimiser->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
 ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTensor> const &labels,
@@ -395,7 +405,7 @@ void ModelEstimator::CopyStateFrom(ModelEstimator const &src)
 ChargeAmount ModelEstimator::MaximumCharge(std::string const &log_msg)
 {
   FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::MAXIMUM_CHARGE : " + log_msg);
-  return vm::MAXIMUM_CHARGE;
+  return 1;  // FIXME!!!!!!!!!!!!!!!!!!!!!! vm::MAXIMUM_CHARGE;
 }
 
 bool ModelEstimator::State::SerializeTo(serializers::MsgPackSerializer &buffer)
