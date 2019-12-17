@@ -72,8 +72,8 @@ TYPED_TEST(LayerNormTest, forward_test_3d)
       "3, 6, 4, 13");
 
   data.Reshape({3, 2, 2});
-  auto s1 = data.View(0).Copy().ToString();
-  auto s2 = data.View(1).Copy().ToString();
+  auto s1 = data.View(0).ToString();
+  auto s2 = data.View(1).ToString();
 
   TensorType gt = TensorType::FromString(
       "-1.22474487, -0.98058068, 0, -0.79006571;"
@@ -168,8 +168,8 @@ TYPED_TEST(LayerNormTest, saveparams_test)
       "3, 6, 4, 13");
 
   data.Reshape({3, 2, 2});
-  auto s1 = data.View(0).Copy().ToString();
-  auto s2 = data.View(1).Copy().ToString();
+  auto s1 = data.View(0).ToString();
+  auto s2 = data.View(1).ToString();
 
   TensorType gt = TensorType::FromString(
       "-1.22474487, -0.98058068, 0, -0.79006571;"

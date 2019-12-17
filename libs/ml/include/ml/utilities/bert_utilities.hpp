@@ -510,8 +510,7 @@ TensorType RunPseudoForwardPass(std::vector<std::string> input_nodes, std::strin
       std::cout << " | " << output.shape(i);
     }
     // show the first token representation of the first batch of the specified output layer's output
-    std::cout << "\nfirst token: \n"
-              << output.View(0).Copy().View(0).Copy().ToString() << std::endl;
+    std::cout << "\nfirst token: \n" << output.View(0).Copy().View(0).ToString() << std::endl;
   }
   return output;
 }
