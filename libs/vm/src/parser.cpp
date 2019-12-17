@@ -50,7 +50,16 @@ BlockNodePtr Parser::Parse(SourceFiles const &files, std::vector<std::string> &e
 
   for (auto const &file : files)
   {
-    filename_ = file.filename;
+    filename_                         = file.filename;
+    static const std::size_t MAX_SIZE = 128 * 1024;
+    std::size_t              size     = file.source.size();
+    if (size > MAX_SIZE)
+    {
+      std::ostringstream stream;
+      stream << filename_ << ": source exceeds maximum size";
+      errors_.push_back(stream.str());
+      break;
+    }
     Tokenise(file.source);
     index_ = -1;
     token_ = nullptr;
@@ -99,7 +108,6 @@ void Parser::Tokenise(std::string const &source)
     token.kind   = Token::Kind::EndOfInput;
     token.offset = location.offset;
     token.line   = location.line;
-    token.length = 0;
     token.text   = "";
     tokens_.push_back(token);
   }
@@ -290,7 +298,7 @@ bool Parser::ParseBlock(BlockNodePtr const &block_node)
       }
       else
       {
-        AddError("expected statement or block terminator");
+        AddError("expected " + block_node->text + " block terminator");
         state = false;
       }
       break;
@@ -1355,9 +1363,11 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
     {
       AddError("unrecognised token");
     }
-    else if (token_->kind == Token::Kind::UnterminatedComment)
+    else if ((token_->kind == Token::Kind::UnterminatedString) ||
+             (token_->kind == Token::Kind::UnterminatedComment) ||
+             (token_->kind == Token::Kind::MaxLinesReached))
     {
-      AddError("unterminated comment");
+      AddError("");
     }
     else
     {
@@ -1706,9 +1716,11 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
         {
           AddError("unrecognised token");
         }
-        else if (token_->kind == Token::Kind::UnterminatedComment)
+        else if ((token_->kind == Token::Kind::UnterminatedString) ||
+                 (token_->kind == Token::Kind::UnterminatedComment) ||
+                 (token_->kind == Token::Kind::MaxLinesReached))
         {
-          AddError("unterminated comment");
+          AddError("");
         }
         else
         {
@@ -2150,13 +2162,25 @@ void Parser::AddError(std::string const &message)
   }
   std::ostringstream stream;
   stream << filename_ << ": line " << token_->line << ": ";
-  if (token_->kind != Token::Kind::EndOfInput)
+  if (token_->kind == Token::Kind::EndOfInput)
   {
-    stream << "error at '" << token_->text << "'";
+    stream << "error: reached end-of-input";
+  }
+  else if (token_->kind == Token::Kind::UnterminatedString)
+  {
+    stream << "error: unterminated string";
+  }
+  else if (token_->kind == Token::Kind::UnterminatedComment)
+  {
+    stream << "error: unterminated comment";
+  }
+  else if (token_->kind == Token::Kind::MaxLinesReached)
+  {
+    stream << "error: reached maximum number of lines";
   }
   else
   {
-    stream << "reached end-of-input";
+    stream << "error at '" << token_->text << "'";
   }
   if (!message.empty())
   {
