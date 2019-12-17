@@ -995,6 +995,11 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
   auto index  = s.find("fp");
   auto s_copy = std::string(s, 0, index);
 
+#ifdef FETCH_FIXEDPOINT_DEBUG_HEX
+  index  = s_copy.find("(0x");
+  s_copy = std::string(s_copy, 0, index);
+#endif
+
   bool contains_alpha = std::find_if(s_copy.begin(), s_copy.end(),
                                      [](char c) { return std::isalpha(c); }) != s_copy.end();
   if (contains_alpha)
