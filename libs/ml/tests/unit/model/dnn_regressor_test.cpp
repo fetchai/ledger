@@ -107,7 +107,7 @@ TYPED_TEST(DNNRegressorModelTest, adagrad_dnnregressor)
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(regressor_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD,
                                                     fetch::math::Type<DataType>("0.0001"),
-                                                    fetch::math::Type<DataType>("0.04"), 400));
+                                                    fetch::math::Type<DataType>("0.05"), 400));
 }
 
 TYPED_TEST(DNNRegressorModelTest, adam_dnnregressor)
@@ -131,7 +131,7 @@ TYPED_TEST(DNNRegressorModelTest, rmsprop_dnnregressor)
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(regressor_details::RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
                                                     fetch::math::Type<DataType>("0.01"),
-                                                    fetch::math::Type<DataType>("0.02"), 400));
+                                                    fetch::math::Type<DataType>("0.03"), 400));
 }
 
 TYPED_TEST(DNNRegressorModelTest, sgd_dnnregressor)
