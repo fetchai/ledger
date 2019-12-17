@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-#include "math/trigonometry.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "vm_test_toolkit.hpp"
 
 #include "gmock/gmock.h"
+#include "math/base_types.hpp"
+#include "math/trigonometry.hpp"
+#include "vm_test_toolkit.hpp"
 
 #include <sstream>
 #include <string>
@@ -108,7 +108,7 @@ TEST_F(FixedPointTest, divide_fixed_point)
       print(a);
     endfunction
   )";
-  auto        gt   = static_cast<double>(fp32_t(1.5));
+  auto        gt   = static_cast<double>(fp32_t("1.5"));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 

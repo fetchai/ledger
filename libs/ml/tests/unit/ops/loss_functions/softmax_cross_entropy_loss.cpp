@@ -16,11 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
-#include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
+
 #include <memory>
 
 namespace fetch {
@@ -78,14 +80,14 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
   data2.At(3, 2) = DataType(1);
   data2.At(0, 3) = DataType(1);
 
-  std::vector<double> vals{0.1,  0.8,  0.05, 0.05, 0.2, 0.5, 0.2, 0.1,
-                           0.05, 0.05, 0.8,  0.1,  0.5, 0.1, 0.1, 0.3};
-  SizeType            idx_count = 0;
+  std::vector<std::string> vals{"0.1",  "0.8",  "0.05", "0.05", "0.2", "0.5", "0.2", "0.1",
+                                "0.05", "0.05", "0.8",  "0.1",  "0.5", "0.1", "0.1", "0.3"};
+  SizeType                 idx_count = 0;
   for (SizeType i = 0; i < n_data_points; ++i)
   {
     for (SizeType j = 0; j < n_classes; ++j)
     {
-      data1.Set(j, i, DataType(vals[idx_count]));
+      data1.Set(j, i, fetch::math::Type<DataType>(vals[idx_count]));
       ++idx_count;
     }
   }
@@ -113,15 +115,15 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
   TypeParam gt(std::vector<SizeType>{n_classes, n_data_points});
 
   // set gt data
-  std::vector<double> gt_data{0.10650698, -0.89349302, 0.78698604};
+  std::vector<std::string> gt_data{"0.10650698", "-0.89349302", "0.78698604"};
 
   for (SizeType i = 0; i < gt.size(); ++i)
   {
-    gt.Set(i, SizeType{0}, DataType(gt_data[i]));
+    gt.Set(i, SizeType{0}, fetch::math::Type<DataType>(gt_data[i]));
   }
 
-  std::vector<double> unscaled_vals{-1.0, -1.0, 1.0};
-  std::vector<double> targets{0.0, 1.0, 0.0};
+  std::vector<int> unscaled_vals{-1, -1, 1};
+  std::vector<int> targets{0, 1, 0};
 
   for (SizeType i = 0; i < n_data_points * n_classes; ++i)
   {
@@ -155,36 +157,36 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
 
   /// python script computing these values can be found at
   /// scripts/python_ml_lib/cross_entropy_test.py
-  gt.Fill(static_cast<DataType>(0));
-  std::vector<double> gt_vals{
-      0.20340865850448608398, 0.30961471796035766602, 0.19348828494548797607,
-      0.19348828494548797607, 0.23503439128398895264, 0.31726324558258056641,
-      0.13503438234329223633, 0.21266791224479675293, 0.19348828494548797607,
-      0.19348828494548797607, 0.40961471199989318848, 0.1034086570143699646,
-      0.2165187150239944458,  0.21216882765293121338, 0.21216882765293121338,
-      0.25914362072944641113};
+  gt.Fill(DataType{0});
+  std::vector<std::string> gt_vals{
+      "0.20340865850448608398", "0.30961471796035766602", "0.19348828494548797607",
+      "0.19348828494548797607", "0.23503439128398895264", "0.31726324558258056641",
+      "0.13503438234329223633", "0.21266791224479675293", "0.19348828494548797607",
+      "0.19348828494548797607", "0.40961471199989318848", "0.10340865701436996460",
+      "0.21651871502399444580", "0.21216882765293121338", "0.21216882765293121338",
+      "0.25914362072944641113"};
 
   SizeType idx_count = 0;
   for (SizeType i = 0; i < n_classes; ++i)
   {
     for (SizeType j = 0; j < n_data_points; ++j)
     {
-      gt.Set(j, i, DataType(gt_vals[idx_count]));
+      gt.Set(j, i, fetch::math::Type<DataType>(gt_vals[idx_count]));
       ++idx_count;
     }
   }
 
-  std::vector<double> vals{0.1,  0.8,  0.05, 0.05, 0.2, 0.5, 0.2, 0.1,
-                           0.05, 0.05, 0.8,  0.1,  0.5, 0.1, 0.1, 0.3};
-  std::vector<double> err{0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0,
-                          0.0, 0.0, 0.0, 0.1, 0.1, 0.0, 0.0, 0.0};
+  std::vector<std::string> vals{"0.1",  " 0.8", " 0.05", "0.05", "0.2",  "0.5", "0.2", "0.1",
+                                "0.05", "0.05", "0.8",   " 0.1", " 0.5", "0.1", "0.1", "0.3"};
+  std::vector<std::string> err{"0.0", "0.1", "0.0", "0.0", "0.0", "0.0", "0.1", "0.0",
+                               "0.0", "0.0", "0.0", "0.1", "0.1", "0.0", "0.0", "0.0"};
   idx_count = 0;
   for (SizeType i = 0; i < n_classes; ++i)
   {
     for (SizeType j = 0; j < n_data_points; ++j)
     {
-      data1.Set(j, i, DataType(vals[idx_count]));
-      data2.Set(j, i, DataType(err[idx_count]));
+      data1.Set(j, i, fetch::math::Type<DataType>(vals[idx_count]));
+      data2.Set(j, i, fetch::math::Type<DataType>(err[idx_count]));
       ++idx_count;
     }
   }
@@ -221,14 +223,14 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_test)
   data2.At(2, 3) = DataType(1);
   data2.At(3, 0) = DataType(1);
 
-  std::vector<double> vals{0.1,  0.8,  0.05, 0.05, 0.2, 0.5, 0.2, 0.1,
-                           0.05, 0.05, 0.8,  0.1,  0.5, 0.1, 0.1, 0.3};
-  SizeType            idx_count = 0;
+  std::vector<std::string> vals{"0.1",  " 0.8", " 0.05", "0.05", "0.2",  "0.5", "0.2", "0.1",
+                                "0.05", "0.05", "0.8",   " 0.1", " 0.5", "0.1", "0.1", "0.3"};
+  SizeType                 idx_count = 0;
   for (SizeType i = 0; i < n_data_points; ++i)
   {
     for (SizeType j = 0; j < n_classes; ++j)
     {
-      data1.Set(i, j, DataType(vals[idx_count]));
+      data1.Set(i, j, fetch::math::Type<DataType>(vals[idx_count]));
       ++idx_count;
     }
   }
@@ -284,36 +286,36 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_backward_test)
 
   /// python script computing these values can be found at
   /// scripts/python_ml_lib/cross_entropy_test.py
-  gt.Fill(static_cast<DataType>(0));
-  std::vector<double> gt_vals{
-      0.20340865850448608398, 0.30961471796035766602, 0.19348828494548797607,
-      0.19348828494548797607, 0.23503439128398895264, 0.31726324558258056641,
-      0.13503438234329223633, 0.21266791224479675293, 0.19348828494548797607,
-      0.19348828494548797607, 0.40961471199989318848, 0.1034086570143699646,
-      0.2165187150239944458,  0.21216882765293121338, 0.21216882765293121338,
-      0.25914362072944641113};
+  gt.Fill(DataType{0});
+  std::vector<std::string> gt_vals{
+      "0.20340865850448608398", "0.30961471796035766602", "0.19348828494548797607",
+      "0.19348828494548797607", "0.23503439128398895264", "0.31726324558258056641",
+      "0.13503438234329223633", "0.21266791224479675293", "0.19348828494548797607",
+      "0.19348828494548797607", "0.40961471199989318848", "0.10340865701436996460",
+      "0.21651871502399444580", "0.21216882765293121338", "0.21216882765293121338",
+      "0.25914362072944641113"};
 
   SizeType idx_count = 0;
   for (SizeType i = 0; i < n_classes; ++i)
   {
     for (SizeType j = 0; j < n_data_points; ++j)
     {
-      gt.Set(j, i, DataType(gt_vals[idx_count]));
+      gt.Set(j, i, fetch::math::Type<DataType>(gt_vals[idx_count]));
       ++idx_count;
     }
   }
 
-  std::vector<double> vals{0.1,  0.8,  0.05, 0.05, 0.2, 0.5, 0.2, 0.1,
-                           0.05, 0.05, 0.8,  0.1,  0.5, 0.1, 0.1, 0.3};
-  std::vector<double> err{0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0,
-                          0.0, 0.0, 0.0, 0.1, 0.1, 0.0, 0.0, 0.0};
+  std::vector<std::string> vals{"0.1",  " 0.8", " 0.05", "0.05", "0.2",  "0.5", "0.2", "0.1",
+                                "0.05", "0.05", "0.8",   " 0.1", " 0.5", "0.1", "0.1", "0.3"};
+  std::vector<std::string> err{"0.0", "0.1", "0.0", "0.0", "0.0", "0.0", "0.1", "0.0",
+                               "0.0", "0.0", "0.0", "0.1", "0.1", "0.0", "0.0", "0.0"};
   idx_count = 0;
   for (SizeType i = 0; i < n_classes; ++i)
   {
     for (SizeType j = 0; j < n_data_points; ++j)
     {
-      data1.Set(j, i, DataType(vals[idx_count]));
-      data2.Set(j, i, DataType(err[idx_count]));
+      data1.Set(j, i, fetch::math::Type<DataType>(vals[idx_count]));
+      data2.Set(j, i, fetch::math::Type<DataType>(err[idx_count]));
       ++idx_count;
     }
   }

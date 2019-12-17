@@ -42,7 +42,7 @@ void SoftMax(array_type const &A, array_type &B)
       },
       A);
 
-  auto scale(type(1.0 / sum));
+  auto scale(type(1.0f / sum));
   B.in_parallel().Apply([scale](auto const &a, auto &b) { b = a * decltype(a)(scale); }, B);
 }
 

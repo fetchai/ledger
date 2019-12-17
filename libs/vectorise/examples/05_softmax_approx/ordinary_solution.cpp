@@ -37,7 +37,7 @@ void SoftMax(array_type const &A, array_type &B)
     sum += e;
   }
 
-  sum = type(1. / sum);
+  sum = type(1.f / sum);
   for (std::size_t i = 0; i < A.size(); ++i)
   {
     B[i] *= sum;
