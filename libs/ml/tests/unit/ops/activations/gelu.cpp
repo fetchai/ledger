@@ -16,12 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/activations/gelu.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
-#include "ml/ops/activations/gelu.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <vector>
 
 namespace fetch {
@@ -53,7 +55,7 @@ TYPED_TEST(GeluTest, forward_test_3d)
   // test correct values
   ASSERT_TRUE(prediction.AllClose(
       gt, fetch::math::function_tolerance<DataType>(),
-      static_cast<DataType>(2.8) * fetch::math::function_tolerance<DataType>()));
+      fetch::math::Type<DataType>("2.8") * fetch::math::function_tolerance<DataType>()));
 
   // gelu can overflow for some fixed point types for these data
   fetch::math::state_clear<DataType>();

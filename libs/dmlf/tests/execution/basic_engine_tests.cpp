@@ -16,27 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-
-#include "dmlf/execution/basic_vm_engine.hpp"
-
-#include "dmlf/execution/execution_error_message.hpp"
-#include "variant/variant.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
-#include <limits>
-#include <vector>
-
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/commandline/parameter_parser.hpp"
+#include "dmlf/execution/basic_vm_engine.hpp"
+#include "dmlf/execution/execution_error_message.hpp"
+#include "gtest/gtest.h"
+#include "variant/variant.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
 #include "vm/string.hpp"
 #include "vm/variant.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
+
+#include <limits>
+#include <vector>
 
 namespace {
 
@@ -1245,7 +1242,7 @@ TEST(BasicVmEngineDmlfTests, Add64)
 TEST(BasicVmEngineDmlfTests, AddFixed)
 {
   ExecutionResult result = RunStatelessTest(
-      AddFixed, "add", Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))});
+      AddFixed, "add", Params{LedgerVariant(fp64_t{"4.5"}), LedgerVariant(fp64_t{"5.5"})});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<fp64_t>(), 10.0);
 }
@@ -1495,9 +1492,9 @@ TEST(BasicVmEngineDmlfTests, ArrayArrayOpTests)
   RunArrayTest("doUInt64", std::vector<uint64_t>{1, 2, 3, 4});
 
   RunArrayTest("doFixed32",
-               std::vector<fp32_t>{fp32_t{1.2}, fp32_t{2.4}, fp32_t{3.7}, fp32_t{4.8}});
+               std::vector<fp32_t>{fp32_t{"1.2"}, fp32_t{"2.4"}, fp32_t{"3.7"}, fp32_t{"4.8"}});
   RunArrayTest("doFixed64",
-               std::vector<fp64_t>{fp64_t{1.3}, fp64_t{2.2}, fp64_t{3.5}, fp64_t{4.7}});
+               std::vector<fp64_t>{fp64_t{"1.3"}, fp64_t{"2.2"}, fp64_t{"3.5"}, fp64_t{"4.7"}});
 
   // RunArrayTest("doBool", std::vector<bool>{true,true,false,false});
   RunArrayTest("doString", std::vector<std::string>{"a", "b", "c", "d"});
