@@ -56,6 +56,7 @@ function main()
   printLn(mymap[a]);
 
   var pi : Fixed64 = 3.1415fp64;
+  printLn("pi = " + toString(pi));
   printLn("exp(" + toString(d) + ") = " + toString(exp(d)));
   printLn("sin(" + toString(pi) + ") = " + toString(sin(pi)));
 

@@ -62,14 +62,17 @@ fetch::meta::IfIsFloat<T, T> Rand(VM *vm, T const &a = T{.0}, T const &b = T{1.0
 
 }  // namespace
 
-void BindRand(Module &module)
+void BindRand(Module &module, bool const enable_experimental)
 {
-  module.CreateFreeFunction("rand", &Rand<int16_t>);
-  module.CreateFreeFunction("rand", &Rand<int32_t>);
-  module.CreateFreeFunction("rand", &Rand<int64_t>);
-  module.CreateFreeFunction("rand", &Rand<uint16_t>);
-  module.CreateFreeFunction("rand", &Rand<uint32_t>);
-  module.CreateFreeFunction("rand", &Rand<uint64_t>);
+  if (enable_experimental)
+  {
+    module.CreateFreeFunction("rand", &Rand<int16_t>, ChargeAmount{1});
+    module.CreateFreeFunction("rand", &Rand<int32_t>, ChargeAmount{1});
+    module.CreateFreeFunction("rand", &Rand<int64_t>, ChargeAmount{1});
+    module.CreateFreeFunction("rand", &Rand<uint16_t>, ChargeAmount{1});
+    module.CreateFreeFunction("rand", &Rand<uint32_t>, ChargeAmount{1});
+    module.CreateFreeFunction("rand", &Rand<uint64_t>, ChargeAmount{1});
+  }
 }
 
 }  // namespace math
