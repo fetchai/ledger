@@ -233,8 +233,8 @@ bool UInt256Wrapper::FromJSON(JSONVariant const &variant)
 
 void UInt256Wrapper::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   if (lhs->IsTemporary())
   {
     lhs->number_ += rhs->number_;
@@ -253,8 +253,8 @@ void UInt256Wrapper::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
 
 void UInt256Wrapper::Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   if (lhs->IsTemporary())
   {
     lhs->number_ -= rhs->number_;
@@ -267,22 +267,22 @@ void UInt256Wrapper::Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso)
 
 void UInt256Wrapper::InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   lhs->number_ += rhs->number_;
 }
 
 void UInt256Wrapper::InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   lhs->number_ -= rhs->number_;
 }
 
 void UInt256Wrapper::Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   if (lhs->IsTemporary())
   {
     lhs->number_ *= rhs->number_;
@@ -300,15 +300,15 @@ void UInt256Wrapper::Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso)
 
 void UInt256Wrapper::InplaceMultiply(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   lhs->number_ *= rhs->number_;
 }
 
 void UInt256Wrapper::Divide(Ptr<Object> &lhso, Ptr<Object> &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   if (rhs->number_ == UInt256::_0)
   {
     vm_->RuntimeError("UInt256Wrapper::Divide runtime error : division by zero.");
@@ -326,8 +326,8 @@ void UInt256Wrapper::Divide(Ptr<Object> &lhso, Ptr<Object> &rhso)
 
 void UInt256Wrapper::InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   try
   {
     lhs->number_ /= rhs->number_;
@@ -341,45 +341,45 @@ void UInt256Wrapper::InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &r
 
 bool UInt256Wrapper::IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   return lhs->number_ == rhs->number_;
 }
 
 bool UInt256Wrapper::IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   return lhs->number_ != rhs->number_;
 }
 
 bool UInt256Wrapper::IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   return lhs->number_ < rhs->number_;
 }
 
 bool UInt256Wrapper::IsLessThanOrEqual(fetch::vm::Ptr<Object> const &lhso,
                                        fetch::vm::Ptr<Object> const &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   return lhs->number_ <= rhs->number_;
 }
 
 bool UInt256Wrapper::IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   return rhs->number_ < lhs->number_;
 }
 
 bool UInt256Wrapper::IsGreaterThanOrEqual(fetch::vm::Ptr<Object> const &lhso,
                                           fetch::vm::Ptr<Object> const &rhso)
 {
-  Ptr<UInt256Wrapper> lhs = lhso;
-  Ptr<UInt256Wrapper> rhs = rhso;
+  auto &lhs = static_cast<Ptr<UInt256Wrapper> const &>(lhso);
+  auto &rhs = static_cast<Ptr<UInt256Wrapper> const &>(rhso);
   return rhs->number_ <= lhs->number_;
 }
 
