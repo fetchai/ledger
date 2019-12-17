@@ -424,10 +424,10 @@ TEST(FixedPointTest, ToString_32_32)
   str_val = "-1.5fp64";
   ToStringTest<fp64_t>(str_val);
 
-  str_val = "2.7182818284590452352";
+  str_val = "2.7182818";
   ToStringTest<fp64_t>(str_val);
 
-  str_val = "-2.7182818284590452352";
+  str_val = "-2.7182818";
   ToStringTest<fp32_t>(str_val);
 
   str_val = "1442695040888963407359924681001892137";
