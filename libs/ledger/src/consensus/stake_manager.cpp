@@ -160,7 +160,7 @@ StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex bloc
   // 9/10 time during normal operation the current stake snapshot will be used
   if (block >= current_block_index_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "ret current: ", current_.size());
+    FETCH_LOG_INFO(LOGGING_NAME, "ret current: ", current_->size());
     return current_;
   }
 
@@ -173,7 +173,7 @@ StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex bloc
     return {};
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "hist: ", stake_history_->size());
+  FETCH_LOG_INFO(LOGGING_NAME, "hist: ", stake_history_.size());
 
   // we are not interested in the upper bound, but the preceding historical element i.e.
   // the previous block change
