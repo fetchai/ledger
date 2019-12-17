@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/details/network_manager_implementation.hpp"
 #include "core/set_thread_name.hpp"
+#include "network/details/network_manager_implementation.hpp"
 #include "network/fetch_asio.hpp"
 
 #include <chrono>
