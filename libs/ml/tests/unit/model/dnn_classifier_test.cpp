@@ -144,7 +144,7 @@ TYPED_TEST(DNNClassifierModelTest, rmsprop_dnnclasifier)
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(classifier_details::RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
                                                      fetch::math::Type<DataType>("0.0001"),
-                                                     fetch::math::Type<DataType>("0.002"), 400));
+                                                     fetch::math::Type<DataType>("0.004"), 400));
 }
 
 TYPED_TEST(DNNClassifierModelTest, sgd_dnnclasifier)

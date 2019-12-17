@@ -179,20 +179,24 @@ TYPED_TEST(RandomisedReluTest, backward_test)
                                         math::function_tolerance<DataType>()));
 
   // test if values are within ranges
-  EXPECT_TRUE(prediction2[0].At(0, 0) == DataType{0});
-  EXPECT_TRUE(prediction2[0].At(0, 1) == DataType{0});
-  EXPECT_TRUE(prediction2[0].At(0, 2) == DataType{0});
-  EXPECT_TRUE(prediction2[0].At(0, 3) == DataType{0});
-  EXPECT_TRUE(prediction2[0].At(0, 4) == DataType{1});
-  EXPECT_TRUE(prediction2[0].At(0, 5) >= lower_bound && prediction2[0].At(0, 5) <= upper_bound);
-  EXPECT_TRUE(prediction2[0].At(0, 6) == DataType{0});
-  EXPECT_TRUE(prediction2[0].At(0, 7) == DataType{0});
+  EXPECT_TRUE(prediction_2[0].At(0, 0) == DataType{0});
+  EXPECT_TRUE(prediction_2[0].At(0, 1) == DataType{0});
+  EXPECT_TRUE(prediction_2[0].At(0, 2) == DataType{0});
+  EXPECT_TRUE(prediction_2[0].At(0, 3) == DataType{0});
+  EXPECT_TRUE(prediction_2[0].At(0, 4) == DataType{1});
+  EXPECT_TRUE(prediction_2[0].At(0, 5) >= lower_bound && prediction_2[0].At(0, 5) <= upper_bound);
+  EXPECT_TRUE(prediction_2[0].At(0, 6) == DataType{0});
+  EXPECT_TRUE(prediction_2[0].At(0, 7) == DataType{0});
 
   // Test with is_training set to false
   op.SetTraining(false);
 
   TensorType gt = TensorType::FromString("0, 0, 0, 0, 1, 0.055, 0, 0");
   prediction    = op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // test correct values
+  EXPECT_TRUE(prediction[0].AllClose(gt, math::function_tolerance<DataType>(),
+                                     math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
