@@ -173,7 +173,7 @@ StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex bloc
     return {};
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "hist: ", stake_history_.size());
+  FETCH_LOG_INFO(LOGGING_NAME, "hist: ", stake_history_->size());
 
   // we are not interested in the upper bound, but the preceding historical element i.e.
   // the previous block change
