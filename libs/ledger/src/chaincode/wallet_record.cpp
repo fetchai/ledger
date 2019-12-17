@@ -20,6 +20,7 @@
 #include "variant/variant.hpp"
 
 using fetch::byte_array::ConstByteArray;
+using fetch::variant::Variant;
 
 namespace fetch {
 namespace ledger {
@@ -30,8 +31,7 @@ namespace {
  *
  * @details The deserialised `deed` data-member can be nullptr (non-initialised
  * `std::smart_ptr<Deed>`) in the case when the objective is to REMOVE the deed
- * (Tx JSON data contain only `address` element, but `signees` and `thresholds`
- * are **NOT** present).
+ * (Tx data contain empty JSON (`signees` and `thresholds` are **NOT** present).
  *
  * @param data Variant type object deserialised from Tx JSON data, which is
  * expected to contain the deed definition. This variant object will be used
@@ -39,21 +39,29 @@ namespace {
  *
  * @return true if deserialisation passed successfully, false otherwise.
  */
-bool DeedFromVariant(variant::Variant const &variant_deed, DeedPtr &deed)
+bool DeedFromVariant(Variant const &variant_deed, DeedPtr &deed)
 {
+  // Provided variant is required to be either of Object type or Null to clearly
+  // indicate the intention.
+  if (!variant_deed.IsObject() && !variant_deed.IsNull())
+  {
+    return false;
+  }
+
   auto const num_of_items_in_deed = variant_deed.size();
-  if (num_of_items_in_deed == 1 && variant_deed.Has(ADDRESS_NAME))
+  if (num_of_items_in_deed == 0)
   {
     // This indicates request to REMOVE the deed (only `address` field has been
     // provided).
     deed.reset();
     return true;
   }
-  if (num_of_items_in_deed != 3)
+
+  if (num_of_items_in_deed != 2)
   {
     // This is INVALID attempt to AMEND the deed. Input deed variant is structurally
-    // unsound for amend operation because it does NOT contain exactly 3 expected
-    // elements (`address`, `signees` and `thresholds`).
+    // unsound for amend operation because it does NOT contain exactly 2 expected
+    // elements (`signees` and `thresholds`).
     return false;
   }
 
@@ -64,11 +72,11 @@ bool DeedFromVariant(variant::Variant const &variant_deed, DeedPtr &deed)
   }
 
   Deed::OperationTresholds thresholds;
-  v_thresholds.IterateObject([&thresholds](byte_array::ConstByteArray const &operation,
-                                           variant::Variant const &          v_threshold) -> bool {
-    thresholds[operation] = v_threshold.As<Deed::Weight>();
-    return true;
-  });
+  v_thresholds.IterateObject(
+      [&thresholds](ConstByteArray const &operation, Variant const &v_threshold) -> bool {
+        thresholds[operation] = v_threshold.As<Deed::Weight>();
+        return true;
+      });
 
   auto const v_signees{variant_deed[SIGNEES_NAME]};
   if (!v_signees.IsObject())
@@ -77,19 +85,49 @@ bool DeedFromVariant(variant::Variant const &variant_deed, DeedPtr &deed)
   }
 
   Deed::Signees signees;
-  v_signees.IterateObject([&signees](byte_array::ConstByteArray const &display_address,
-                                     variant::Variant const &          v_weight) -> bool {
-    chain::Address address{};
-    if (chain::Address::Parse(display_address, address))
-    {
-      signees[address] = v_weight.As<Deed::Weight>();
-    }
+  v_signees.IterateObject(
+      [&signees](ConstByteArray const &display_address, Variant const &v_weight) -> bool {
+        chain::Address address{};
+        if (chain::Address::Parse(display_address, address))
+        {
+          signees[address] = v_weight.As<Deed::Weight>();
+        }
 
-    return true;
-  });
+        return true;
+      });
 
   deed = std::make_shared<Deed>(std::move(signees), std::move(thresholds));
   return true;
+}
+
+Variant DeedToVariant(DeedPtr const &deed)
+{
+  auto v_deed{Variant::Object()};
+
+  if (!deed)
+  {
+    return v_deed;
+  }
+
+  if (!deed->signees().empty())
+  {
+    auto &v_signees = v_deed[SIGNEES_NAME] = Variant::Object();
+    for (auto const &signee : deed->signees())
+    {
+      v_signees[signee.first.display()] = signee.second;
+    }
+  }
+
+  if (!deed->operation_thresholds().empty())
+  {
+    auto &v_thresholds = v_deed[THRESHOLDS_NAME] = Variant::Object();
+    for (auto const &threshold : deed->operation_thresholds())
+    {
+      v_thresholds[threshold.first] = threshold.second;
+    }
+  }
+
+  return v_deed;
 }
 
 }  // namespace
@@ -107,8 +145,7 @@ extern ConstByteArray const SIGNEES_NAME{"signees"};
  *
  * @details The deserialised `deed` data-member can be nullptr (non-initialised
  * `std::smart_ptr<Deed>`) in the case when the objective is to REMOVE the deed
- * (Tx JSON data contain only `address` element, but `signees` and `thresholds`
- * are **NOT** present).
+ * (when Tx data contains empty JSON dictionary).
  *
  * @param data Variant type object deserialised from Tx JSON data, which is
  * expected to contain the deed definition. This variant object will be used
@@ -116,7 +153,7 @@ extern ConstByteArray const SIGNEES_NAME{"signees"};
  *
  * @return true if deserialisation passed successfully, false otherwise.
  */
-bool WalletRecord::CreateDeed(variant::Variant const &data)
+bool WalletRecord::CreateDeed(Variant const &data)
 {
   if (!DeedFromVariant(data, deed))
   {
@@ -137,6 +174,11 @@ bool WalletRecord::CreateDeed(variant::Variant const &data)
 
   deed.reset();
   return false;
+}
+
+variant::Variant WalletRecord::ExtractDeed() const
+{
+  return DeedToVariant(deed);
 }
 
 void WalletRecord::CollectStake(uint64_t block_index)
