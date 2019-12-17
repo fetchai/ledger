@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/set_thread_name.hpp"
 #include "network/details/network_manager_implementation.hpp"
+#include "core/set_thread_name.hpp"
 #include "network/fetch_asio.hpp"
 
 #include <chrono>
@@ -38,13 +38,19 @@ void NetworkManagerImplementation::Start()
   {
     owning_thread_ = std::this_thread::get_id();
     shared_work_   = std::make_shared<asio::io_service::work>(*io_service_);
+    std::weak_ptr<NetworkManagerImplementation> wptr = shared_from_this();
 
     for (std::size_t i = 0; i < number_of_threads_; ++i)
     {
-      auto thread = std::make_shared<std::thread>([this, i]() {
-        SetThreadName(name_, i);
 
-        this->Work();
+      auto thread = std::make_shared<std::thread>([this, i, wptr]() {
+        auto ptr = wptr.lock();
+        if (ptr)
+        {
+          SetThreadName(name_, i);
+
+          this->Work();
+        }
       });
       threads_.push_back(thread);
     }

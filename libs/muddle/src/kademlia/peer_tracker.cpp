@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/time/to_seconds.hpp"
 #include "kademlia/peer_tracker.hpp"
+#include "core/time/to_seconds.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -381,9 +381,12 @@ void PeerTracker::DisconnectFromPeers()
   // Disconnecting from the remaining  nodes
   for (auto const &address : connecting_to)
   {
-    if (keep_connections_.find(address) != keep_connections_.end())
     {
-      continue;
+      FETCH_LOCK(direct_mutex_);
+      if (keep_connections_.find(address) != keep_connections_.end())
+      {
+        continue;
+      }
     }
 
     auto connections = register_.LookupConnections(address);
@@ -451,6 +454,13 @@ void PeerTracker::PullPeerKnowledge()
 
     {
       FETCH_LOCK(pull_mutex_);
+      // The queue might be emptied if the peer tracker is stopped
+      if (peer_pull_queue_.empty())
+      {
+        return;
+      }
+
+      // Getting next address
       address = peer_pull_queue_.front();
       peer_pull_queue_.pop_front();
 
@@ -459,7 +469,7 @@ void PeerTracker::PullPeerKnowledge()
         continue;
       }
 
-      search_for = peer_pull_map_[address].Copy();
+      search_for = peer_pull_map_[address];
     }
 
     // Increasing the tracker id.
@@ -500,6 +510,9 @@ void PeerTracker::SchedulePull(Address const &address)
 
 void PeerTracker::SchedulePull(Address const &address, Address const &search_for)
 {
+  // Note copy needed to preserve mutex ordering
+  auto address_copy = own_address();
+
   FETCH_LOCK(pull_mutex_);
   // Checking whether it is already scheduled
   if (peer_pull_map_.find(address) != peer_pull_map_.end())
@@ -508,7 +521,7 @@ void PeerTracker::SchedulePull(Address const &address, Address const &search_for
   }
 
   // Pulling from self is not allowed
-  if (address == own_address())
+  if (address == address_copy)
   {
     return;
   }
@@ -576,7 +589,7 @@ void PeerTracker::OnResolvedPull(uint64_t pull_id, Address const &peer, Address 
   if (promise->state() == service::PromiseState::SUCCESS)
   {
     // Reporting that peer is still responding
-    peer_table_.ReportLiveliness(peer, own_address_);
+    peer_table_.ReportLiveliness(peer, own_address());
 
     // extract the set of addresses from which the prospective node is contactable
     std::deque<PeerInfo> peer_info_list;
@@ -961,6 +974,7 @@ PeerTracker::PeerTracker(PeerTracker::Duration const &interval, core::Reactor &r
   , peer_tracker_protocol_{peer_table_}
 
 {
+  FETCH_LOG_WARN(logging_name_.c_str(), "Creating tracker");
   rpc_server_.Add(RPC_MUDDLE_KADEMLIA, &peer_tracker_protocol_);
 }
 

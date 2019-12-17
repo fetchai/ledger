@@ -1,3 +1,4 @@
+
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -26,6 +27,7 @@
 
 TEST(RoutingTests, PopulationTest)
 {
+
   // Creating network
   std::size_t N       = 10;
   auto        config  = fetch::muddle::TrackerConfiguration::AllOn();
