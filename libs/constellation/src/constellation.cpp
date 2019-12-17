@@ -539,6 +539,8 @@ bool Constellation::OnBringUpExternalNetwork(
     consensus_->SetDefaultStartTime(params.start_time);
     consensus_->SetMaxCabinetSize(params.cabinet_size);
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Set max cabinet size to: ", params.cabinet_size);
+
     if (params.snapshot)
     {
       consensus_->Reset(*params.snapshot);
