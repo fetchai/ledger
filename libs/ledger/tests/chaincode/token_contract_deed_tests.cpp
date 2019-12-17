@@ -141,6 +141,36 @@ TEST_F(TokenContractDeedTests, is_sane_basic)
   EXPECT_FALSE((Deed{signees, thresholds}.IsSane()));
 }
 
+TEST_F(TokenContractDeedTests, comparison)
+{
+  Deed::Signees signees;
+  signees[ADDRESSES[0]] = 1;
+  signees[ADDRESSES[1]] = 2;
+  signees[ADDRESSES[2]] = 3;
+
+  Deed::OperationTresholds thresholds;
+  thresholds["0"] = 1;
+  thresholds["1"] = 6;
+
+  Deed d{signees, thresholds};
+  Deed d_copy{signees, thresholds};
+  ASSERT_NE(&d, &d_copy);
+  EXPECT_EQ(d, d_copy);
+
+  Deed::Signees signees_modif;
+  signees_modif[ADDRESSES[0]] = 1;
+  signees_modif[ADDRESSES[1]] = 2;
+  signees_modif[ADDRESSES[2]] = 4;
+
+  Deed::OperationTresholds thresholds_modif;
+  thresholds_modif["0"] = 1;
+  thresholds_modif["1"] = 7;
+
+  EXPECT_NE(d, (Deed{signees_modif, thresholds}));
+  EXPECT_NE(d, (Deed{signees, thresholds_modif}));
+  EXPECT_NE(d, (Deed{signees_modif, thresholds_modif}));
+}
+
 TEST_F(TokenContractDeedTests, is_sane_fails_when_empty_thresholds)
 {
   Deed::Signees signees;

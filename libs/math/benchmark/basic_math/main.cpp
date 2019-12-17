@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,19 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/object.hpp"
+#include "benchmark/benchmark.h"
 
-namespace fetch {
-
-namespace vm {
-class Module;
-}
-
-namespace vm_modules {
-namespace math {
-
-void BindSqrt(fetch::vm::Module &module, bool enable_experimental);
-
-}  // namespace math
-}  // namespace vm_modules
-}  // namespace fetch
+BENCHMARK_MAIN();

@@ -97,7 +97,6 @@ private:
   BeaconServicePtr      beacon_;
   MainChain const &     chain_;
   Identity              mining_identity_;
-  chain::Address        mining_address_;
   Minerwhitelist        whitelist_;
 
   // Global variables relating to consensus
