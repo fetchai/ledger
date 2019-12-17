@@ -130,6 +130,9 @@ GenesisFileCreator::Result GenesisFileCreator::LoadFile(std::string const &  pat
       chain::SetGenesisDigest(genesis_block_.hash);
       chain::SetGenesisMerkleRoot(genesis_block_.merkle_hash);
 
+      params.whitelist    = genesis_block_.block_entropy.qualified;
+      params.cabinet_size = static_cast<uint16_t>(params.whitelist.size());
+
       return Result::LOADED_PREVIOUS_GENESIS;
     }
   }
@@ -342,6 +345,9 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object, ConsensusParameter
       FETCH_LOG_INFO(LOGGING_NAME, "Restoring stake. Identity: ", identity.identifier().ToBase64(),
                      " (address): ", address.address().ToBase64(), " amount: ", amount);
 
+      // The initial set of miners is stored in the genesis block
+      genesis_block_.block_entropy.qualified.insert(identity.identifier());
+
       params.snapshot->UpdateStake(identity, amount);
     }
     else
@@ -350,6 +356,8 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object, ConsensusParameter
       return false;
     }
   }
+
+  params.whitelist = genesis_block_.block_entropy.qualified;
 
   return true;
 }
