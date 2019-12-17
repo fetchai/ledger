@@ -330,12 +330,9 @@ void Router::Start()
  */
 void Router::Stop()
 {
+  FETCH_LOCK(delivery_attempts_lock_);
   stopping_ = true;
-
-  {
-    FETCH_LOCK(delivery_attempts_lock_);
-    delivery_attempts_.clear();
-  }
+  delivery_attempts_.clear();
 
   dispatch_thread_pool_->Stop();
 }
@@ -593,18 +590,9 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet, bool exter
   assert(static_cast<bool>(packet));
 
   // Callbacks to deal with package redelivery
-  std::weak_ptr<Packet> wpacket = packet;
-  auto                  success = [this, wpacket]() {
-    auto packet = wpacket.lock();
-    if (packet)
-    {
-      ClearDeliveryAttempt(packet);
-    }
-  };
-
-  auto fail = [this, wpacket, external, reschedule_on_fail]() {
-    auto packet = wpacket.lock();
-    if (packet && reschedule_on_fail)
+  auto success = [this, packet]() { ClearDeliveryAttempt(packet); };
+  auto fail    = [this, packet, external, reschedule_on_fail]() {
+    if (reschedule_on_fail)
     {
       SchedulePacketForRedelivery(packet, external);
     }
@@ -810,19 +798,12 @@ void Router::SchedulePacketForRedelivery(PacketPtr const &packet, bool external)
   // Retrying at a later point
   FETCH_LOG_DEBUG(logging_name_, "Retrying packet delivery: ", packet->GetTarget().ToBase64());
 
-  if (!stopping_)
-  {
-    dispatch_thread_pool_->Post(
-        [this, packet, external]() {
-          if (stopping_)
-          {
-            return;
-          }
-          // We delibrately set external to false to not update TTL and echo filter again
-          RoutePacket(packet, external);
-        },
-        config_.retry_delay_ms);
-  }
+  dispatch_thread_pool_->Post(
+      [this, packet, external]() {
+        // We delibrately set external to false to not update TTL and echo filter again
+        RoutePacket(packet, external);
+      },
+      config_.retry_delay_ms);
 }
 
 /**
@@ -837,36 +818,27 @@ void Router::DispatchDirect(Handle handle, PacketPtr const &packet)
   FETCH_LOG_TRACE(logging_name_, "==> Direct message sent to router");
   dispatch_enqueued_total_->increment();
 
-  if (!stopping_)
-  {
-    dispatch_thread_pool_->Post([this, packet, handle]() {
-      if (stopping_)
-      {
-        return;
-      }
+  dispatch_thread_pool_->Post([this, packet, handle]() {
+    // Updating the association between handle and address
+    if (register_.UpdateAddress(handle, packet->GetSender()) ==
+        MuddleRegister::UpdateStatus::NEW_ADDRESS)
+    {
+      dispatch_thread_pool_->Post(
+          [this, packet, handle]() { tracker_->DownloadPeerDetails(handle, packet->GetSender()); });
+    }
 
-      // Updating the association between handle and address
-      if (register_.UpdateAddress(handle, packet->GetSender()) ==
-          MuddleRegister::UpdateStatus::NEW_ADDRESS)
-      {
-        dispatch_thread_pool_->Post([this, packet, handle]() {
-          tracker_->DownloadPeerDetails(handle, packet->GetSender());
-        });
-      }
+    // dispatch to the direct message handler if needed
+    if (direct_message_handler_)
+    {
+      direct_message_handler_(handle, packet);
+    }
+    else
+    {
+      dispatch_failure_total_->increment();
+    }
 
-      // dispatch to the direct message handler if needed
-      if (direct_message_handler_)
-      {
-        direct_message_handler_(handle, packet);
-      }
-      else
-      {
-        dispatch_failure_total_->increment();
-      }
-
-      dispatch_complete_total_->increment();
-    });
-  }
+    dispatch_complete_total_->increment();
+  });
 }
 
 /**

@@ -111,7 +111,7 @@ public:
   }
 
 private:
-  Mutex lock_;
+  std::mutex lock_;
 };
 
 /**

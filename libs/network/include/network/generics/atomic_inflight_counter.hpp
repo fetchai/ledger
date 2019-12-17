@@ -86,7 +86,7 @@ public:
 
 private:
   using CondVar = std::condition_variable;
-  using Lock    = std::unique_lock<std::mutex>;
+  using Lock    = std::unique_lock<Mutex>;
 
   struct Counter
   {

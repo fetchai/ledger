@@ -215,7 +215,7 @@ protected:
   telemetry::CounterPtr         beacon_dkg_duplicate_creates_total_;
 
   // Members below protected by mutex
-  Mutex                        mutex_;
+  std::mutex                   mutex_;
   CallbackFunction             callback_function_;
   NotarisationCallbackFunction notarisation_callback_function_;
 

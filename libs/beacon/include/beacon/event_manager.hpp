@@ -83,7 +83,7 @@ private:
   EventManager() = default;
 
   std::unordered_map<std::type_index, std::deque<void *>> events_;
-  Mutex                                                   mutex_;
+  std::mutex                                              mutex_;
 };
 
 }  // namespace beacon
