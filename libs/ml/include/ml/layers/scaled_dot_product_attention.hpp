@@ -87,11 +87,10 @@ public:
     std::string scaled_kq_matmul = this->template AddNode<fetch::ml::ops::Divide<TensorType>>(
         name + "_Scaled_Key_Query_MatMul", {kq_matmul, sqrt_dk_ph});
 
-    // masking: make sure u mask along the feature dimension, if the mask is to be broadcasted
+    // masking: make sure you mask along the feature dimension if the mask is to be broadcasted
     std::string masked_scaled_kq_matmul =
         this->template AddNode<fetch::ml::ops::MaskFill<TensorType>>(
-            name + "_Masking", {mask, scaled_kq_matmul},
-            fetch::math::Type<DataType>("-0.000000001"));
+            name + "_Masking", {mask, scaled_kq_matmul}, DataType{-1000000000});
 
     // softmax
     std::string attention_weight = this->template AddNode<fetch::ml::ops::Softmax<TensorType>>(

@@ -198,10 +198,9 @@ TYPED_TEST(ScaledDotProductAttention,
   g.SetInput(mask, mask_data);
 
   TypeParam gt = TypeParam::FromString(
-      "+1.848551915, +1.994484604, +1.323288694, +2.134702830, +1.607807817, "
-      "+3.647750064;+1.149618159, +1.005503525, +1.237182403, -0.486945271, -0.412639564, "
-      "-0.700323727;+3.696272045, +3.988963812, +2.446791525, -0.017351415, +0.246096091, "
-      "-0.773875033;");
+      "1.8496745531,  1.9944926680,  1.5288354812,  0.1000000000, 0.1000000000,  0.1000000000; "
+      "1.1503254469,  1.0055073320,  1.4711645188, -0.2000000000, -0.2000000000, -0.2000000000; "
+      "3.6993491062,  3.9889853359,  3.0576709623,  1.0000000000, 1.0000000000,  1.0000000000");
   gt.Reshape({3, 3, 2});
   TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
   EXPECT_TRUE(prediction.AllClose(gt, DataType{5} * fetch::math::function_tolerance<DataType>()));
@@ -235,22 +234,19 @@ TYPED_TEST(ScaledDotProductAttention,
   error_signal.Reshape({3, 3, 2});
 
   TypeParam gt_query_grad = TypeParam::FromString(
-      "+0.152600437, +0.009570797, +0.000000000, +0.115972510, +0.000000000, "
-      "+0.000000000;-0.144108355, -0.009443841, +0.000000000, -0.231945021, +0.000000000, "
-      "+0.000000000;+0.305200873, +0.019141594, +0.000000000, +1.159725106, +0.000000000, "
-      "+0.000000000;");
+      "0.1474872519,  0.0094864446,  0.0000000000,  0.0000000000, 0.0000000000,  0.0000000000; "
+      "-0.1474872519, -0.0094864446,  0.0000000000,  0.0000000000, 0.0000000000,  0.0000000000; "
+      "0.2949745039,  0.0189728892,  0.0000000000,  0.0000000000,0.0000000000,  0.0000000000");
   gt_query_grad.Reshape({3, 3, 2});
   TypeParam gt_key_grad = TypeParam::FromString(
-      "-0.165911368, +0.168826699, +0.000000000, +0.115972510, +0.000000000, "
-      "+0.000000000;-0.303364257, +0.309067964, +0.000000000, -0.231945021, +0.000000000, "
-      "+0.000000000;-0.331822736, +0.337653399, +0.000000000, +1.159725106, +0.000000000, "
-      "+0.000000000;");
+      "-0.1664601411,  0.1664601411,  0.0000000000,  0.0000000000,0.0000000000,  0.0000000000; "
+      "-0.3044609485,  0.3044609485,  0.0000000000,  0.0000000000, 0.0000000000,  0.0000000000; "
+      "-0.3329202822,  0.3329202822,  0.0000000000,  0.0000000000, 0.0000000000,  0.0000000000");
   gt_key_grad.Reshape({3, 3, 2});
   TypeParam gt_value_grad = TypeParam::FromString(
-      "+0.155707710, +1.843455109, +0.000837180, -0.717421988, -0.391289006, "
-      "-0.391289006;+0.166722314, +3.832429713, +0.000847971, +1.913125302, +1.043437349, "
-      "+1.043437349;+0.163968663, +3.335186062, +0.000845273, +0.000000000, +0.000000000, "
-      "+0.000000000;");
+      "0.1558327790,  1.8441672210,  0.0000000000, -1.5000000000, 0.0000000000,  0.0000000000; "
+      "0.1668474430,  3.8331525570,  0.0000000000,  4.0000000000, 0.0000000000,  0.0000000000; "
+      "0.1640937770,  3.3359062230,  0.0000000000,  0.0000000000, 0.0000000000,  0.0000000000");
   gt_value_grad.Reshape({3, 3, 2});
   TypeParam gt_mask_grad({3, 3, 2});
 
@@ -268,8 +264,9 @@ TYPED_TEST(ScaledDotProductAttention,
        std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(mask_data)},
       error_signal);
 
-  EXPECT_TRUE(backprop_error[0].AllClose(
-      gt_query_grad, DataType{0}, DataType{10} * fetch::math::function_tolerance<DataType>()));
+  EXPECT_TRUE(
+      backprop_error[0].AllClose(gt_query_grad, fetch::math::function_tolerance<DataType>(),
+                                 DataType{10} * fetch::math::function_tolerance<DataType>()));
   EXPECT_TRUE(
       backprop_error[1].AllClose(gt_key_grad, fetch::math::function_tolerance<DataType>(),
                                  DataType{10} * fetch::math::function_tolerance<DataType>()));
@@ -298,7 +295,7 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   query_data.Fill(fetch::math::Type<DataType>("0.1"));
   key_data.Fill(fetch::math::Type<DataType>("0.1"));
   value_data.Fill(fetch::math::Type<DataType>("0.1"));
-  mask_data.Fill(DataType{1});
+  mask_data.Fill(fetch::math::Type<DataType>("1"));
 
   // create labels
   TypeParam labels({12, 25, 4});
