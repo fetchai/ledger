@@ -37,19 +37,19 @@ namespace math {
 void BindMath(Module &module, bool const enable_experimental)
 {
   // bind math functions
-  BindAbs(module);
-  BindExp(module);
-  BindLog(module);
-  BindPow(module);
-  BindRand(module);
-  BindSqrt(module);
-  BindTrigonometry(module);
+  BindAbs(module, enable_experimental);
+  BindExp(module, enable_experimental);
+  BindLog(module, enable_experimental);
+  BindPow(module, enable_experimental);
+  BindRand(module, enable_experimental);
+  BindSqrt(module, enable_experimental);
+  BindTrigonometry(module, enable_experimental);
 
   // bind math classes
   VMTensor::Bind(module, enable_experimental);
 
   // ReadCSV depends on VMTensor so must be bound after it
-  BindReadCSV(module);
+  BindReadCSV(module, enable_experimental);
 }
 
 }  // namespace math

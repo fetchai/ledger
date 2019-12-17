@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "oef-search/dap_manager/DapManager.hpp"
 #include "oef-search/dap_manager/DapStore.hpp"
 #include "oef-search/dap_manager/visitors/PopulateActionsVisitorDescentPass.hpp"

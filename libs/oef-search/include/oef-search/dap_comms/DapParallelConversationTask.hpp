@@ -22,6 +22,7 @@
 #include <queue>
 #include <utility>
 
+#include "core/mutex.hpp"
 #include "logging/logging.hpp"
 #include "oef-base/threading/TaskChainParallel.hpp"
 
