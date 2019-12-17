@@ -157,8 +157,8 @@ private:
   mutable Callback callback_failure_;
   mutable Callback callback_completion_;
 
-  mutable Mutex     notify_lock_;
-  mutable Condition notify_;
+  mutable std::mutex notify_lock_;
+  mutable Condition  notify_;
 };
 
 class PromiseBuilder
