@@ -444,8 +444,8 @@ fixed_point::fp64_t const TensorEstimator::FILL_CONST_COEF = fixed_point::fp64_t
 
 // FillRandom
 fixed_point::fp64_t const TensorEstimator::FILL_RANDOM_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.00009");
-fixed_point::fp64_t const TensorEstimator::FILL_RANDOM_SIZE_COEF  = fixed_point::fp64_t("0.017");
+    fixed_point::fp64_t("0.0001");
+fixed_point::fp64_t const TensorEstimator::FILL_RANDOM_SIZE_COEF  = fixed_point::fp64_t("0.049");
 fixed_point::fp64_t const TensorEstimator::FILL_RANDOM_CONST_COEF = fixed_point::fp64_t("5");
 
 // Min

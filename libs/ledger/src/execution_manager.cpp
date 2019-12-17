@@ -177,7 +177,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
   // update the last block hash
   state_.ApplyVoid([&block](Summary &summary) {
     summary.last_block_hash   = block.hash;
-    summary.last_block_miner  = block.miner;
+    summary.last_block_miner  = chain::Address(block.miner_id);
     summary.last_block_number = block.block_number;
     summary.state             = State::ACTIVE;
   });

@@ -58,17 +58,16 @@ public:
   bool operator!=(Block const &rhs) const;
 
   // Block core information
-  Digest         previous_hash;      ///< The hash of the previous block
-  Digest         merkle_hash;        ///< The merkle state hash across all shards
-  Block::Index   block_number{0};    ///< The height of the block from genesis
-  chain::Address miner;              ///< The identity of the generated miner
-  Identity       miner_id;           ///< The identity of the generated miner
-  uint32_t       log2_num_lanes{0};  ///< The log2(number of lanes)
-  Slices         slices;             ///< The slice lists
-  DAGEpoch       dag_epoch;          ///< DAG epoch containing information on new dag_nodes
-  uint64_t       timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
-  BlockEntropy   block_entropy;      ///< Entropy that determines miner priority for the next block
-  Weight         weight = 1;         ///< Block weight
+  Digest       previous_hash;      ///< The hash of the previous block
+  Digest       merkle_hash;        ///< The merkle state hash across all shards
+  Block::Index block_number{0};    ///< The height of the block from genesis
+  Identity     miner_id;           ///< The identity of the generated miner
+  uint32_t     log2_num_lanes{0};  ///< The log2(number of lanes)
+  Slices       slices;             ///< The slice lists
+  DAGEpoch     dag_epoch;          ///< DAG epoch containing information on new dag_nodes
+  uint64_t     timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
+  BlockEntropy block_entropy;      ///< Entropy that determines miner priority for the next block
+  Weight       weight = 1;         ///< Block weight
 
   // Hash of the above
   Digest hash;
@@ -118,7 +117,6 @@ public:
   static uint8_t const DAG_EPOCH       = 11;
   static uint8_t const TIMESTAMP       = 12;
   static uint8_t const ENTROPY         = 13;
-  static uint8_t const MINER           = 14;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &block)
@@ -137,7 +135,6 @@ public:
     map.Append(DAG_EPOCH, block.dag_epoch);
     map.Append(TIMESTAMP, block.timestamp);
     map.Append(ENTROPY, block.block_entropy);
-    map.Append(MINER, block.miner);
   }
 
   template <typename MapDeserializer>
@@ -156,7 +153,6 @@ public:
     map.ExpectKeyGetValue(DAG_EPOCH, block.dag_epoch);
     map.ExpectKeyGetValue(TIMESTAMP, block.timestamp);
     map.ExpectKeyGetValue(ENTROPY, block.block_entropy);
-    map.ExpectKeyGetValue(MINER, block.miner);
   }
 };
 
