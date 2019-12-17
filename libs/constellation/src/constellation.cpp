@@ -488,6 +488,11 @@ bool Constellation::OnRestorePreviousData(ledger::GenesisFileCreator::ConsensusP
   // create the chain
   chain_ = std::make_unique<MainChain>(ledger::MainChain::Mode::LOAD_PERSISTENT_DB);
 
+  // necessary when doing state validity checks
+  execution_manager_ = std::make_shared<ExecutionManager>(
+      cfg_.num_executors, cfg_.log2_num_lanes, storage_,
+      [this] { return std::make_shared<Executor>(storage_); }, tx_status_cache_);
+
   if (!GenesisSanityChecks(genesis_status))
   {
     return false;
@@ -526,24 +531,21 @@ bool Constellation::OnBringUpExternalNetwork(
   consensus_ = CreateConsensus(cfg_, stake_, beacon_setup_, beacon_, *chain_, *storage_,
                                external_identity_->identity());
 
-  if (cfg_.proof_of_stake)
-  {
-    consensus_->SetDefaultStartTime(params.start_time);
-    consensus_->SetMaxCabinetSize(params.cabinet_size);
+  consensus_->SetWhitelist(params.whitelist);
+  consensus_->SetDefaultStartTime(params.start_time);
+  consensus_->SetMaxCabinetSize(params.cabinet_size);
 
-    if (params.snapshot)
-    {
-      consensus_->Reset(*params.snapshot);
-    }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "No snapshot to reset consensus with");
-    }
+  if (params.snapshot)
+  {
+    consensus_->Reset(*params.snapshot);
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "No snapshot to reset consensus with.");
   }
 
-  execution_manager_ = std::make_shared<ExecutionManager>(
-      cfg_.num_executors, cfg_.log2_num_lanes, storage_,
-      [this] { return std::make_shared<Executor>(storage_); }, tx_status_cache_);
+  // Update with genesis to trigger loading any saved state
+  consensus_->UpdateCurrentBlock(*chain_->CreateGenesisBlock());
 
   block_packer_ = std::make_unique<BlockPackingAlgorithm>(cfg_.log2_num_lanes);
 
@@ -933,39 +935,69 @@ bool Constellation::GenesisSanityChecks(GenesisFileCreator::Result genesis_statu
   return true;
 }
 
+// Check the integrity of the state database and setup some classes as if they just
+// finished executing a block
 bool Constellation::CheckStateIntegrity()
 {
   // lookup the heaviest block and perform some sanity checks
-  auto current_block = chain_->GetHeaviestBlock();
-
+  auto current_block     = chain_->GetHeaviestBlock();
   auto current_state     = storage_->CurrentHash();
   auto last_commit_state = storage_->LastCommitHash();
 
-  // on start up the last commit hash might not be initialised correctly.
-  if (last_commit_state.empty() && (current_block->merkle_hash == current_state))
+  FETCH_LOG_INFO(LOGGING_NAME, "Performing State Integrity Check:");
+  FETCH_LOG_INFO(LOGGING_NAME, " - Current: 0x", current_state.ToHex());
+  FETCH_LOG_INFO(LOGGING_NAME, " - Last Commit: 0x", last_commit_state.ToHex());
+  FETCH_LOG_INFO(LOGGING_NAME, " - Merkle State: 0x", current_block->merkle_hash.ToHex());
+
+  if (current_block->IsGenesis())
   {
-    if (!storage_->HashExists(current_block->merkle_hash, current_block->block_number))
-    {
-      return false;
-    }
+    FETCH_LOG_INFO(LOGGING_NAME, "The main chain's heaviest is genesis. Nothing to do.");
+    return true;
+  }
+
+  // Walk back down the chain until we find a state we could revert to
+  while (current_block &&
+         !storage_->HashExists(current_block->merkle_hash, current_block->block_number))
+  {
+    current_block = chain_->GetBlock(current_block->previous_hash);
+  }
+
+  if (!current_block)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to walk back the chain when verifying initial state!");
+    return false;
+  }
+
+  if (current_block &&
+      storage_->HashExists(current_block->merkle_hash, current_block->block_number))
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Found a block to revert to! Block: ", current_block->block_number,
+                   " hex: 0x", current_block->hash.ToHex(), " merkle hash: 0x",
+                   current_block->merkle_hash.ToHex());
 
     if (!storage_->RevertToHash(current_block->merkle_hash, current_block->block_number))
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "The revert operation failed!");
       return false;
     }
 
-    // update state from the change
-    current_state     = storage_->CurrentHash();
-    last_commit_state = storage_->LastCommitHash();
-  }
+    FETCH_LOG_INFO(LOGGING_NAME, "Reverted storage unit.");
+    FETCH_LOG_INFO(LOGGING_NAME, "Reverting DAG to: ", current_block->block_number);
 
-  // simple detection of inconsistent state
-  if ((current_state != last_commit_state) || (last_commit_state != current_block->merkle_hash))
+    // Need to revert the DAG too
+    if (dag_ && !dag_->RevertToEpoch(current_block->block_number))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Reverting the DAG failed!");
+      return false;
+    }
+
+    // we need to update the execution manager state and also our locally cached state about the
+    // 'last' block that has been executed
+    execution_manager_->SetLastProcessedBlock(current_block->hash);
+  }
+  else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed State Integrity Check:");
-    FETCH_LOG_WARN(LOGGING_NAME, " - Current: 0x", current_state.ToHex());
-    FETCH_LOG_WARN(LOGGING_NAME, " - Last Commit: 0x", last_commit_state.ToHex());
-    FETCH_LOG_WARN(LOGGING_NAME, " - Merkle State: 0x", current_block->merkle_hash.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Didn't find any prior merkle state to revert to.");
     return false;
   }
 
