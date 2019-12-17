@@ -755,7 +755,7 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
     auto one_mask = FixedPoint<I, F>::ONE_MASK;
 
     auto fraction = static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(n.Fraction());
-    auto integer = static_cast<typename FixedPoint<I, F>::BaseSignedType>(n.Integer());
+    auto integer  = static_cast<typename FixedPoint<I, F>::BaseSignedType>(n.Integer());
     if (n < FixedPoint<I, F>::_0 && fraction != 0)
     {
       ++integer;
