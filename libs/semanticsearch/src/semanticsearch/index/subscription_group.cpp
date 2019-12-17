@@ -29,7 +29,7 @@ SubscriptionGroup::SubscriptionGroup(SemanticCoordinateType d, SemanticPosition 
   auto cs = CalculateWidthFromDepth(depth);
   for (auto const &p : position)
   {
-    indices.push_back(p / cs);
+    indices.PushBack(p / cs);
   }
 }
 

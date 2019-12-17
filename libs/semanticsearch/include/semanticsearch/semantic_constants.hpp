@@ -30,15 +30,13 @@ struct Constants
     MORE_THAN_EQUAL,
 
     SUBSCOPE,
-    VAR_TYPE,
     ASSIGN,
+    VAR_TYPE,
     ATTRIBUTE,
     SEPARATOR,
 
     OBJECT_KEY,
     ADVERTISE_EXPIRY,
-    SEARCH_DIRECTION,
-    SEARCH_GRANULARITY,
 
     // Literals
     LITERAL,
@@ -48,14 +46,23 @@ struct Constants
     INTERNAL_OPEN_GROUP,
     INTERNAL_CLOSE_GROUP,
 
+    STORE,
+    STORE_POSITION,
+
+    ADVERTISE,
+
+    SEARCH_DIRECTION,
+    SEARCH_GRANULARITY,
+    SEARCH,
+
+    USER_DEFINED_START = 300,
+
     //
-    TYPE_NONE  = 500,
-    TYPE_MODEL = 510,
+    TYPE_NONE = 1ull << 21,
+    TYPE_MODEL,
     TYPE_INSTANCE,
     TYPE_KEY,
     TYPE_FUNCTION_NAME,
-
-    USER_DEFINED_START = 1ul << 20,
 
   };
 };

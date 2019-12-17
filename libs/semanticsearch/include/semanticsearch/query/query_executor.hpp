@@ -44,6 +44,7 @@ public:
 private:
   using PropertyMap = std::map<std::string, std::shared_ptr<VocabularyInstance>>;
 
+  AgentIdSet NewExecute(CompiledStatement const &stmt);
   AgentIdSet ExecuteStore(CompiledStatement const &stmt);
   AgentIdSet ExecuteFind(CompiledStatement const &stmt);
   AgentIdSet ExecuteSet(CompiledStatement const &stmt);
@@ -64,7 +65,7 @@ private:
   }
 
   ErrorTracker &             error_tracker_;
-  std::vector<QueryVariant>  stack_;
+  std::vector<QueryVariant>  definition_stack_;
   ExecutionContext           context_;
   SharedSemanticSearchModule semantic_search_module_;
   Agent                      agent_{nullptr};

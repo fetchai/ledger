@@ -63,9 +63,7 @@ QueryExecutor::AgentIdSet QueryExecutor::Execute(Query const &query, Agent agent
     case Properties::PROP_CTX_MODEL:
       ret = ExecuteDefine(stmt);
       break;
-    case Properties::PROP_CTX_SET:
-      ret = ExecuteSet(stmt);
-      break;
+
     case Properties::PROP_CTX_ADVERTISE:
       ret = ExecuteStore(stmt);
       break;
@@ -73,8 +71,10 @@ QueryExecutor::AgentIdSet QueryExecutor::Execute(Query const &query, Agent agent
       ret = ExecuteFind(stmt);
       break;
     default:
-      error_tracker_.RaiseRuntimeError("Unknown statement type.", stmt[0].token);
-      return nullptr;
+      ret = NewExecute(stmt);
+      //      error_tracker_.RaiseRuntimeError("Unknown statement type.", stmt[0].token);
+      //      return nullptr;
+      break;
     }
 
     // Breaking at first encountered error.
@@ -86,10 +86,411 @@ QueryExecutor::AgentIdSet QueryExecutor::Execute(Query const &query, Agent agent
   return ret;
 }
 
+QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stmt)
+{
+  AgentIdSet result;
+
+  std::size_t i = 0;
+
+  std::vector<QueryVariant> stack;
+  std::vector<Vocabulary>   scope_objects;
+
+  Vocabulary last;  
+  int        scope_depth = 0;
+
+  while (i < stmt.size())
+  {
+    auto x = stmt[i];
+
+    switch (x.type)
+    {
+    case Constants::PUSH_SCOPE:
+    {
+      ++scope_depth;
+
+      // Creating new property map to hold the contents
+      auto obj = VocabularyInstance::New<PropertyMap>({});
+      scope_objects.push_back(obj);
+      break;
+    }
+    case Constants::POP_SCOPE:
+      if (scope_objects.empty())
+      {
+        error_tracker_.RaiseInternalError("Cannot pop off empty stack for object creation.",
+                                          x.token);
+        return nullptr;
+      }
+
+      --scope_depth;
+
+      last = scope_objects.back();
+      scope_objects.pop_back();
+
+      {
+        // TODO(private issue AEA-132): Nested shared_ptr - consider copying ?
+        QueryVariant s = NewQueryVariant(last, Constants::TYPE_INSTANCE, x.token);
+        stack.push_back(s);
+      }
+
+      break;
+
+    case Constants::ATTRIBUTE:
+    {
+      auto value = stack.back();
+      stack.pop_back();
+      auto key = stack.back();
+      stack.pop_back();
+
+      auto object = scope_objects.back();
+
+      // Sanity check on object
+      if (object == nullptr)
+      {
+        error_tracker_.RaiseInternalError("Latest scope object is null.", x.token);
+        return nullptr;
+      }
+
+      // Sanity check on key
+      if ((key->type() != Constants::TYPE_KEY) || (!key->IsType<Token>()))
+      {
+        error_tracker_.RaiseRuntimeError("Expected an key identifier.", key->token());
+        return nullptr;
+      }
+
+      // Creating an entry
+      std::string name = static_cast<std::string>(key->As<Token>());
+      if (value->type() == Constants::LITERAL)
+      {
+        object->Insert(name, value->NewInstance());
+      }
+      else if (value->type() == Constants::TYPE_INSTANCE)
+      {
+        object->Insert(name, value->As<Vocabulary>());
+      }
+      else
+      {
+        error_tracker_.RaiseRuntimeError("Expected instance or literal.", value->token());
+        return nullptr;
+      }
+    }
+
+    break;
+
+    case Constants::SEPARATOR:
+      // TODO(private issue AEA-135): Validate
+      break;
+
+    case Constants::IDENTIFIER:
+    {
+      auto name = static_cast<std::string>(x.token);
+
+      QueryVariant ele;
+      if (context_.Has(name))
+      {
+        ele = context_.Get(name);
+      }
+      else if (semantic_search_module_->HasModel(name))
+      {
+        auto model = semantic_search_module_->GetModel(name);
+        ele        = NewQueryVariant(model, Constants::TYPE_MODEL, x.token);
+      }
+      else
+      {
+        ele = NewQueryVariant(name, Constants::TYPE_KEY, x.token);
+      }
+
+      stack.push_back(ele);
+      break;
+    }
+
+    case Constants::OBJECT_KEY:
+    {
+      QueryVariant ele = NewQueryVariant(x.token, Constants::TYPE_KEY, x.token);
+      stack.push_back(ele);
+      break;
+    }
+    case Constants::LITERAL:
+    {
+      auto const &user_types = semantic_search_module_->type_information();
+      bool        found      = false;
+      for (auto const &type : user_types)
+      {
+        if (type.code == x.token.type())
+        {
+          if (!type.allocator)
+          {
+            error_tracker_.RaiseInternalError("Literal is missing allocator.", x.token);
+            return nullptr;
+          }
+
+          // Adding the literal to the stack
+          auto element = type.allocator(x.token);
+          stack.push_back(element);
+
+          found = true;
+          break;
+        }
+      }
+
+      if (!found)
+      {
+        error_tracker_.RaiseInternalError("Unable to find literal in custom defined types.",
+                                          x.token);
+        return nullptr;
+      }
+      break;
+    }
+    case Constants::VAR_TYPE:  // Colon use to define model.
+    {
+      auto model_obj = stack.back();
+      stack.pop_back();
+
+      // We leave the instance on the stack so it can be stored
+      auto &instance_obj = stack.back();
+
+      if (model_obj->type() != Constants::TYPE_MODEL)
+      {
+        error_tracker_.RaiseRuntimeError("Expected model.", model_obj->token());
+        return nullptr;
+      }
+
+      if (!model_obj->IsType<VocabularySchemaPtr>())
+      {
+        error_tracker_.RaiseRuntimeError("Expected model to be schema.", model_obj->token());
+        return nullptr;
+      }
+
+      if (!instance_obj->IsType<Vocabulary>())
+      {
+        error_tracker_.RaiseRuntimeError("Expected right hand side to be an instance.",
+                                         instance_obj->token());
+        return nullptr;
+      }
+
+      auto instance = instance_obj->As<Vocabulary>();
+      auto model    = model_obj->As<VocabularySchemaPtr>();
+
+      std::string error;
+      if (!model->Validate(instance, error))
+      {
+        // Reporting error
+        error_tracker_.RaiseRuntimeError("Instance does not match model requirements.", x.token);
+        error_tracker_.Append(error, x.token);
+        return nullptr;
+      }
+
+      assert(model->model_name() != "");
+      instance->SetModelName(model->model_name());
+      break;
+    }
+    case Constants::ASSIGN:
+    {
+      auto instance = stack.back();
+      stack.pop_back();
+      auto model = stack.back();
+      stack.pop_back();
+      auto name = stack.back();
+      stack.pop_back();
+
+      // Reversing the order to prepare for storage
+      stack.push_back(name);
+      stack.push_back(instance);
+      stack.push_back(model);
+
+      break;
+    }
+    case Constants::STORE_POSITION:
+    {
+      auto instance_obj = stack.back();
+      stack.pop_back();
+      auto name = stack.back();
+      stack.pop_back();
+
+      auto instance = instance_obj->As<Vocabulary>();
+      auto model = semantic_search_module_->GetModel(instance->model_name());
+      if(model == nullptr)
+      {
+        error_tracker_.RaiseSyntaxError("Could not find model '" + instance->model_name() + "'",
+                                        x.token);
+        return nullptr;                
+      }
+      auto position = model->Reduce(instance);
+      auto executor_position = NewQueryVariant(position, Constants::TYPE_INSTANCE, instance_obj->token());
+      context_.Set(name->As<std::string>(), executor_position, instance->model_name());
+      break;
+    }    
+    case Constants::STORE:
+    {
+      auto instance_obj = stack.back();
+      stack.pop_back();
+      auto name = stack.back();
+      stack.pop_back();
+
+      auto instance = instance_obj->As<Vocabulary>();
+
+      context_.Set(name->As<std::string>(), instance_obj, instance->model_name());
+      break;
+    }
+    case Constants::ADVERTISE:
+    {
+      auto variant = stack.back();
+      stack.pop_back();
+
+      if(!variant->IsType< Vocabulary >())
+      {
+        auto tok = x.token;
+        if( i > 0)
+        {
+          tok = stmt[i-1].token;
+        }
+
+        error_tracker_.RaiseSyntaxError("Expected Vocabulary.", tok);
+        return nullptr;        
+      }
+
+      auto instance = variant->As<Vocabulary>();
+      auto model_name = instance->model_name();
+
+      if (!semantic_search_module_->HasModel(model_name))
+      {
+        error_tracker_.RaiseSyntaxError("Could not find model '" + model_name + "'", variant->token());
+        return nullptr;
+      }
+
+      auto model = semantic_search_module_->GetModel(model_name);
+      if (model == nullptr)
+      {
+        error_tracker_.RaiseInternalError("Model '" + model_name + "' is null.", variant->token());
+        return nullptr;
+      }
+
+      model->VisitFields(
+          [this, variant](std::string, std::string mname, Vocabulary obj) {
+            auto model = semantic_search_module_->GetModel(mname);
+            if (model == nullptr)
+            {
+              error_tracker_.RaiseSyntaxError("Could not find model '" + mname + "'", variant->token());
+              return;
+            }
+            SemanticPosition position = model->Reduce(obj);
+
+            assert(semantic_search_module_ != nullptr);
+            assert(semantic_search_module_->advertisement_register() != nullptr);
+            assert(agent_ != nullptr);
+
+            semantic_search_module_->advertisement_register()->AdvertiseAgent(agent_->id, mname,
+                                                                              position);
+            agent_->RegisterVocabularyLocation(mname, position);
+          },
+          instance);
+
+      break;
+    }
+    case Constants::SEARCH:
+    {
+      if(stack.empty())
+      {
+        error_tracker_.RaiseInternalError("Not enough elements on stack to search.",
+                                          x.token);
+        return nullptr;        
+      }
+
+      auto variant = stack.back();
+      stack.pop_back();
+
+      if(!variant->IsType< Vocabulary >())
+      {
+        auto tok = x.token;
+        if( i > 0)
+        {
+          tok = stmt[i-1].token;
+        }
+
+        error_tracker_.RaiseSyntaxError("Expected Vocabulary.", tok);
+        return nullptr;        
+      }
+
+      auto instance = variant->As<Vocabulary>();
+
+      if (!semantic_search_module_->HasModel(instance->model_name()))
+      {
+        error_tracker_.RaiseSyntaxError("Could not find model '" + instance->model_name() + "'",
+                                        x.token);
+        return nullptr;
+      }
+
+      auto model = semantic_search_module_->GetModel(instance->model_name());
+      if (model == nullptr)
+      {
+        error_tracker_.RaiseInternalError("Model '" + instance->model_name() + "' is null.",
+                                          x.token);
+        return nullptr;
+      }
+
+      // TODO: Add support for granularity
+      // TODO: Add support for line segment
+      auto position = model->Reduce(instance);
+      result = semantic_search_module_->advertisement_register()->FindAgents(instance->model_name(),
+                                                                             position, 2);
+      std::cout << "Searching ... " << instance->model_name() << std::endl;
+      if (result)
+      {
+        std::cout << "Found agents: " << result->size() << " "
+                  << " searching " << instance->model_name() << std::endl;
+      }
+      break;
+    }
+    case Constants::MULTIPLY:
+      break;
+    case Constants::ADD:
+      break;    
+    case Constants::SUB:
+    {
+      std::cout << "Subtracting" << std::endl;
+      if(stack.size() < 2)
+      {
+        error_tracker_.RaiseInternalError("Not enough elements on stack to subtract.",
+                                          x.token);
+        return nullptr;        
+      }
+      auto lhs = stack.back();
+      stack.pop_back();
+
+      if(!lhs->IsType<SemanticPosition>())
+      {
+        error_tracker_.RaiseRuntimeError("Left-hand side must be semantic position.",
+                                          x.token);
+        return nullptr;        
+      }
+
+      auto rhs = stack.back();
+      stack.pop_back();
+
+      if(!rhs->IsType<SemanticPosition>())
+      {
+        error_tracker_.RaiseRuntimeError("Right-hand side must be semantic position.",
+                                          x.token);
+        return nullptr;        
+      }
+
+      break;    
+    }
+    default:
+      error_tracker_.RaiseInternalError("Unhandled operator.", x.token);
+      break;
+    }
+
+    ++i;
+  }
+
+  return result;
+}
+
 QueryExecutor::Vocabulary QueryExecutor::GetInstance(std::string const &name)
 {
   assert(context_.Has(name));
-  return context_.Get(name);
+  auto var = context_.Get(name);
+  return var->As<Vocabulary>();
 }
 
 QueryExecutor::AgentIdSet QueryExecutor::ExecuteStore(CompiledStatement const &stmt)
@@ -124,6 +525,9 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteStore(CompiledStatement const &s
     return nullptr;
   }
 
+  // TODO: Check instance type
+  auto instance = obj->As<Vocabulary>();
+
   model->VisitFields(
       [this, stmt](std::string, std::string mname, Vocabulary obj) {
         auto model = semantic_search_module_->GetModel(mname);
@@ -142,7 +546,7 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteStore(CompiledStatement const &s
                                                                           position);
         agent_->RegisterVocabularyLocation(mname, position);
       },
-      obj);
+      instance);
 
   return nullptr;
 }
@@ -199,7 +603,6 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteSet(CompiledStatement const &stm
 
       if (scope_objects.empty())
       {
-        // TODO(private issue AEA-131): Check enough
       }
       last = scope_objects.back();
       scope_objects.pop_back();
@@ -245,15 +648,12 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteSet(CompiledStatement const &stm
     break;
 
     case Constants::SEPARATOR:
-
       // TODO(private issue AEA-135): Validate
       break;
 
     case Constants::IDENTIFIER:
     {
-      auto         obj = context_.Get(static_cast<std::string>(
-          x.token));  // TODO(rivate issue AEA-136): Update context to store query variant
-      QueryVariant ele = NewQueryVariant(obj, Constants::TYPE_INSTANCE, x.token);
+      auto ele = context_.Get(static_cast<std::string>(x.token));  
 
       stack.push_back(ele);
       break;
@@ -339,7 +739,7 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteSet(CompiledStatement const &stm
       return nullptr;
     }
 
-    context_.Set(key->As<std::string>(), last, name_of_model);
+//    context_.Set(key->As<std::string>(), last, name_of_model);
   }
   else
   {
@@ -356,7 +756,7 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
 {
   std::size_t i = 1;
 
-  stack_.clear();
+  definition_stack_.clear();
   std::vector<ModelInterfaceBuilder> scope_models;
   ModelInterfaceBuilder              last;
   int                                scope_depth = 0;
@@ -381,17 +781,17 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
 
       {
         QueryVariant s = NewQueryVariant(last.vocabulary_schema(), Constants::TYPE_MODEL, x.token);
-        stack_.push_back(s);
+        definition_stack_.push_back(s);
       }
 
       break;
 
     case Constants::ATTRIBUTE:
     {
-      QueryVariant value = stack_.back();
-      stack_.pop_back();
-      QueryVariant key = stack_.back();
-      stack_.pop_back();
+      QueryVariant value = definition_stack_.back();
+      definition_stack_.pop_back();
+      QueryVariant key = definition_stack_.back();
+      definition_stack_.pop_back();
 
       auto model = scope_models.back();
 
@@ -435,7 +835,7 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
       if (scope_depth == 0)
       {
         QueryVariant ele = NewQueryVariant(x.token, Constants::TYPE_KEY, x.token);
-        stack_.push_back(ele);
+        definition_stack_.push_back(ele);
       }
       else
       {
@@ -449,25 +849,25 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
 
         QueryVariant ele = NewQueryVariant(semantic_search_module_->GetField(field_name),
                                            Constants::TYPE_MODEL, x.token);
-        stack_.push_back(ele);
+        definition_stack_.push_back(ele);
       }
 
       break;
     case Constants::OBJECT_KEY:
     {
       QueryVariant ele = NewQueryVariant(x.token, Constants::TYPE_KEY, x.token);
-      stack_.push_back(ele);
+      definition_stack_.push_back(ele);
       break;
     }
     case Constants::FUNCTION:
     {
       QueryVariant ele = NewQueryVariant(x.token, Constants::TYPE_FUNCTION_NAME, x.token);
-      stack_.push_back(ele);
+      definition_stack_.push_back(ele);
       break;
     }
     case Constants::EXECUTE_CALL:
     {
-      if (stack_.empty())
+      if (definition_stack_.empty())
       {
         error_tracker_.RaiseInternalError("Stack is empty", x.token);
         return nullptr;
@@ -477,10 +877,10 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
       std::vector<std::type_index> arg_signature;
 
       // Function arguments
-      uint64_t n = stack_.size() - 1;
-      while ((n != 0) && (stack_[n]->type() != Constants::TYPE_FUNCTION_NAME))
+      uint64_t n = definition_stack_.size() - 1;
+      while ((n != 0) && (definition_stack_[n]->type() != Constants::TYPE_FUNCTION_NAME))
       {
-        auto arg = stack_[n];
+        auto arg = definition_stack_[n];
         args.push_back(arg->data());
         arg_signature.push_back(arg->type_index());
 
@@ -492,16 +892,16 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
       std::reverse(arg_signature.begin(), arg_signature.end());
 
       // Calling
-      if (TypeMismatch<Token>(stack_[n], stack_[n]->token()))
+      if (TypeMismatch<Token>(definition_stack_[n], definition_stack_[n]->token()))
       {
         return nullptr;
       }
-      auto function_name = static_cast<std::string>(stack_[n]->As<Token>());
+      auto function_name = static_cast<std::string>(definition_stack_[n]->As<Token>());
 
       if (!semantic_search_module_->HasFunction(function_name))
       {
         error_tracker_.RaiseRuntimeError("Function '" + function_name + "' does not exist.",
-                                         stack_[n]->token());
+                                         definition_stack_[n]->token());
         return nullptr;
       }
 
@@ -511,7 +911,8 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
       if (!function.ValidateSignature(ret_type, arg_signature))
       {
         error_tracker_.RaiseRuntimeError(
-            "Call to '" + function_name + "' does not match signature.", stack_[n]->token());
+            "Call to '" + function_name + "' does not match signature.",
+            definition_stack_[n]->token());
         return nullptr;
       }
 
@@ -522,19 +923,19 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
       }
       catch (std::exception const &e)
       {
-        error_tracker_.RaiseRuntimeError(e.what(), stack_[n]->token());
+        error_tracker_.RaiseRuntimeError(e.what(), definition_stack_[n]->token());
         return nullptr;
       }
 
       // Clearing stack
       for (std::size_t j = 0; j < args.size(); ++j)
       {
-        stack_.pop_back();
+        definition_stack_.pop_back();
       }
-      stack_.pop_back();  // Function name
+      definition_stack_.pop_back();  // Function name
 
       // Pushing result
-      stack_.push_back(ret);
+      definition_stack_.push_back(ret);
       break;
     }
     default:
@@ -552,7 +953,7 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
           }
 
           auto element = type.allocator(x.token);
-          stack_.push_back(element);
+          definition_stack_.push_back(element);
 
           found = true;
           break;
@@ -574,10 +975,10 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
 
   if (bool(last))
   {
-    auto value = stack_.back();
-    stack_.pop_back();
-    auto key = stack_.back();
-    stack_.pop_back();
+    auto value = definition_stack_.back();
+    definition_stack_.pop_back();
+    auto key = definition_stack_.back();
+    definition_stack_.pop_back();
 
     // TODO(private issue AEA-137): add some sanity checks here
     auto token = key->As<Token>();
@@ -612,7 +1013,7 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteFind(CompiledStatement const &st
 
   if (!context_.Has(name))
   {
-    error_tracker_.RaiseSyntaxError("Vairable not defined", stmt[1].token);
+    error_tracker_.RaiseSyntaxError("Variable not defined", stmt[1].token);
     return nullptr;
   }
 
@@ -632,9 +1033,12 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteFind(CompiledStatement const &st
     return nullptr;
   }
 
+  // TODO: Check
+  auto instance = obj->As<Vocabulary>();
+
   assert(semantic_search_module_->advertisement_register() != nullptr);
   assert(agent_ != nullptr);
-  auto position = model->Reduce(obj);
+  auto position = model->Reduce(instance);
   auto results =
       semantic_search_module_->advertisement_register()->FindAgents(model_name, position, 2);
 

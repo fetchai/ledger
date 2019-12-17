@@ -17,11 +17,31 @@ let x : WeatherStation = {
   temperature: 9
 };
 
-advertise x until 200132;
+advertise x; // until 2020;
 
 let y :  Position = {
+    latitude: 0,
+    longitude: 1
+};
+
+let g :  Position = {
     latitude: 9,
     longitude: 20
 };
 
-find y direction x granularity 7;
+pos q : WeatherStation = {
+  position : g, 
+  temperature: 2
+};
+
+pos p : Position = {
+  latitude: 9,
+  longitude: 1
+};
+
+find p - q;
+
+// advertise x until 200132;
+// find 0.5 * (y + g);
+//find a* y + b * c direction x granularity 7;
+//find a* y + b * c  granularity 7 direction x;

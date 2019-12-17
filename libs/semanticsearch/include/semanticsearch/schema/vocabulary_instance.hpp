@@ -53,11 +53,20 @@ public:
   void                   Insert(std::string const &name, VocabularyInstancePtr const &value);
   VocabularyInstancePtr &operator[](std::string const &name);
   void                   Walk(PropertyVisitor const &callback, std::string const &name = "");
+  void                   SetModelName(std::string const &name)
+  {
+    model_name_ = name;
+  }
+
   /// @}
 
   /// Properteis
   /// @{
   std::type_index type() const;
+  std::string     model_name() const
+  {
+    return model_name_;
+  }
   /// @}
 private:
   /// Private constructor
@@ -69,6 +78,7 @@ private:
   /// @{
   std::type_index             type_;
   void *                      data_{nullptr};
+  std::string                 model_name_;
   std::function<void(void *)> destructor_{nullptr};
   /// @}
 

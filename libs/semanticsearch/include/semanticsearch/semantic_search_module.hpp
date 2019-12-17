@@ -108,7 +108,7 @@ public:
           cdr.SetReducer<int64_t>(1, [span, from](int64_t x) {
             SemanticPosition ret;
             uint64_t         multiplier = uint64_t(-1) / span;
-            ret.push_back(static_cast<uint64_t>(x + from) * multiplier);
+            ret.PushBack(static_cast<uint64_t>(x + from) * multiplier);
 
             return ret;
           });
@@ -313,19 +313,24 @@ private:
   std::unordered_map<std::string, BuiltinQueryFunction::Function> functions_;
   std::unordered_map<std::string, ModelField>                     types_;
 
-  KeywordRelation keyword_relation_{
-      {"find", {"granularity", "direction"}}, {"advertise", {"until"}}, {"model", {}}, {"let", {}}};
-  KeywordProperties keyword_properties_ = {{"model", Properties::PROP_CTX_MODEL},
-                                           {"advertise", Properties::PROP_CTX_ADVERTISE},
-                                           {"let", Properties::PROP_CTX_SET},
-                                           {"find", Properties::PROP_CTX_FIND},
-                                           {"until", Properties::PROP_IS_OPERATOR}};
+  KeywordRelation keyword_relation_{{"find", {"granularity", "direction"}},
+                                    {"advertise", {"until"}},
+                                    {"model", {}},
+                                    {"let", {}},
+                                    {"pos", {}}};
+
+  KeywordProperties keyword_properties_ = {
+      {"model", Properties::PROP_CTX_MODEL},         {"advertise", Properties::PROP_IS_OPERATOR},
+      {"let", Properties::PROP_IS_OPERATOR},         {"pos", Properties::PROP_IS_OPERATOR},
+      {"find", Properties::PROP_IS_OPERATOR},        {"until", Properties::PROP_IS_OPERATOR},
+      {"granularity", Properties::PROP_IS_OPERATOR}, {"direction", Properties::PROP_IS_OPERATOR}};
 
   KeywordTypes keyword_type_ = {{"model", Constants::SET_CONTEXT},
-                                {"advertise", Constants::SET_CONTEXT},
-                                {"let", Constants::SET_CONTEXT},
-                                {"find", Constants::SET_CONTEXT},
+                                {"advertise", Constants::ADVERTISE},
+                                {"let", Constants::STORE},
+                                {"pos", Constants::STORE_POSITION},
                                 {"until", Constants::ADVERTISE_EXPIRY},
+                                {"find", Constants::SEARCH},
                                 {"direction", Constants::SEARCH_DIRECTION},
                                 {"granularity", Constants::SEARCH_GRANULARITY}};
 

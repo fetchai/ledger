@@ -72,8 +72,10 @@ private:
 
   std::vector<Statement> statements_;
 
-  std::vector<ConstByteArray> keywords_ = {
-      "model", "find", "let", "advertise", "near", "within radius", "direction", "until", "alias"};
+  // TODO: Move to module
+  std::vector<ConstByteArray> keywords_ = {"model",     "find", "let",         "pos",
+                                           "advertise", "near", "granularity", "direction",
+                                           "until",     "alias"};
 };
 
 }  // namespace semanticsearch

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "semanticsearch/query/abstract_query_variant.hpp"
 #include "semanticsearch/query/query.hpp"
 #include "semanticsearch/schema/vocabulary_instance.hpp"
 
@@ -26,15 +27,15 @@ namespace semanticsearch {
 class ExecutionContext
 {
 public:
-  using ConstByteArray        = fetch::byte_array::ConstByteArray;
-  using VocabularyInstancePtr = std::shared_ptr<VocabularyInstance>;
+  using ConstByteArray          = fetch::byte_array::ConstByteArray;
+  using AbstractQueryVariantPtr = std::shared_ptr<AbstractQueryVariant>;
 
-  VocabularyInstancePtr Get(std::string const &name)
+  AbstractQueryVariantPtr Get(std::string const &name)
   {
     return context_[name];
   }
 
-  void Set(std::string const &name, VocabularyInstancePtr object, std::string type)
+  void Set(std::string const &name, AbstractQueryVariantPtr object, std::string type)
   {
     models_[name]  = std::move(type);
     context_[name] = std::move(object);
@@ -51,8 +52,8 @@ public:
   }
 
 private:
-  std::map<std::string, VocabularyInstancePtr> context_;
-  std::map<std::string, std::string>           models_;
+  std::map<std::string, AbstractQueryVariantPtr> context_;
+  std::map<std::string, std::string>             models_;
 };
 
 }  // namespace semanticsearch

@@ -332,6 +332,13 @@ void QueryCompiler::Tokenise()
     {
       if (Match(k))
       {
+        // Preventing matching on partial word
+        if ((position_ + k.size() < document_.size()) && (document_[position_ + k.size()] != ' '))
+        {
+          continue;
+        }
+
+        // Storing token
         tok = static_cast<Token>(k);
         tok.SetLine(line_);
         tok.SetChar(char_index_);
@@ -374,6 +381,37 @@ void QueryCompiler::Tokenise()
           return;
         }
       }
+      continue;
+    }
+
+    // Searching for user defined types.
+    // We do this before operators to ensure that signed
+    // literals are captured correctly
+    auto const &type_info = module_->type_information();
+    found                 = false;
+    uint64_t end          = position_;
+
+    for (auto const &type : type_info)
+    {
+      if (type.consumer)
+      {
+        int ret = type.consumer(document_, end);
+        if (ret != -1)
+        {
+          tok = static_cast<Token>(document_.SubArray(position_, end - position_));
+          tok.SetLine(line_);
+          tok.SetChar(char_index_);
+          tok.SetType(type.code);
+          stmt.tokens.push_back(tok);
+          SkipChars(end - position_);
+          found = true;
+          break;
+        }
+      }
+    }
+
+    if (found)
+    {
       continue;
     }
 
@@ -461,6 +499,13 @@ void QueryCompiler::Tokenise()
       found = true;
       break;
 
+    case '-':
+      tok.SetType(OP_SUB);
+      stmt.tokens.push_back(tok);
+      SkipChar();
+      found = true;
+      break;
+
     case '+':
       tok.SetType(OP_ADD);
       stmt.tokens.push_back(tok);
@@ -535,35 +580,6 @@ void QueryCompiler::Tokenise()
       continue;
     }
 
-    // Searching for user defined types.
-    auto const &type_info = module_->type_information();
-    found                 = false;
-    uint64_t end          = position_;
-
-    for (auto const &type : type_info)
-    {
-      if (type.consumer)
-      {
-        int ret = type.consumer(document_, end);
-        if (ret != -1)
-        {
-          tok = static_cast<Token>(document_.SubArray(position_, end - position_));
-          tok.SetLine(line_);
-          tok.SetChar(char_index_);
-          tok.SetType(type.code);
-          stmt.tokens.push_back(tok);
-          SkipChars(end - position_);
-          found = true;
-          break;
-        }
-      }
-    }
-
-    if (found)
-    {
-      continue;
-    }
-
     // Finding identifiers
     int type = byte_array::consumers::Token<IDENTIFIER>(document_, end);
     if (type != -1)
@@ -580,7 +596,10 @@ void QueryCompiler::Tokenise()
     // Error unrecognised symbol
     if (position_ < document_.size())
     {
-      error_tracker_.RaiseSyntaxError("Unrecognised symbol.", stmt.tokens.back());
+      tok = static_cast<Token>(document_.SubArray(position_, 1));
+      tok.SetLine(line_);
+      tok.SetChar(char_index_);
+      error_tracker_.RaiseSyntaxError("Unrecognised symbol.", tok);
       return;
     }
   }

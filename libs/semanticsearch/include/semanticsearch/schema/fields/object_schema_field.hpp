@@ -69,7 +69,7 @@ public:
       auto entries = it1->second->Reduce(it2->second);
       for (auto &e : entries)
       {
-        ret.push_back(e);
+        ret.PushBack(e);
       }
       ++it1, ++it2;
     }
