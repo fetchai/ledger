@@ -36,6 +36,9 @@ struct Constants
     SEPARATOR,
 
     OBJECT_KEY,
+    ADVERTISE_EXPIRY,
+    SEARCH_DIRECTION,
+    SEARCH_GRANULARITY,
 
     // Literals
     LITERAL,

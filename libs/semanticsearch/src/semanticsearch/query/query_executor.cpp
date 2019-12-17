@@ -147,47 +147,6 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteStore(CompiledStatement const &s
   return nullptr;
 }
 
-QueryExecutor::AgentIdSet QueryExecutor::ExecuteFind(CompiledStatement const &stmt)
-{
-  if (stmt[1].type != Constants::IDENTIFIER)
-  {
-    error_tracker_.RaiseSyntaxError("Expected variable name.", stmt[1].token);
-    return nullptr;
-  }
-
-  auto name = static_cast<std::string>(stmt[1].token);
-
-  if (!context_.Has(name))
-  {
-    error_tracker_.RaiseSyntaxError("Vairable not defined", stmt[1].token);
-    return nullptr;
-  }
-
-  auto obj        = context_.Get(name);
-  auto model_name = context_.GetModelName(name);
-
-  if (!semantic_search_module_->HasModel(model_name))
-  {
-    error_tracker_.RaiseSyntaxError("Could not find model '" + model_name + "'", stmt[1].token);
-    return nullptr;
-  }
-
-  auto model = semantic_search_module_->GetModel(model_name);
-  if (model == nullptr)
-  {
-    error_tracker_.RaiseInternalError("Model '" + model_name + "' is null.", stmt[1].token);
-    return nullptr;
-  }
-
-  assert(semantic_search_module_->advertisement_register() != nullptr);
-  assert(agent_ != nullptr);
-  auto position = model->Reduce(obj);
-  auto results =
-      semantic_search_module_->advertisement_register()->FindAgents(model_name, position, 2);
-
-  return results;
-}
-
 QueryExecutor::AgentIdSet QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
 {
   std::size_t i = 3;
@@ -241,7 +200,6 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteSet(CompiledStatement const &stm
       if (scope_objects.empty())
       {
         // TODO(private issue AEA-131): Check enough
-        abort();
       }
       last = scope_objects.back();
       scope_objects.pop_back();
@@ -287,6 +245,7 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteSet(CompiledStatement const &stm
     break;
 
     case Constants::SEPARATOR:
+
       // TODO(private issue AEA-135): Validate
       break;
 
@@ -336,11 +295,12 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteSet(CompiledStatement const &stm
     }
     case Constants::VAR_TYPE:
       // TODO: Check correctness
+      std::cout << "TODO - deal with this case" << std::endl;
       break;
     default:
       // TODO: Deal with equality
-      //      std::cout << "'" << x.token << "'  - TODO IMPLEMENT " << x.type
-      //                << std::endl;  // TODO(private issue AEA-140): Handle this case
+      std::cout << "'" << x.token << "'  - TODO IMPLEMENT " << x.type
+                << std::endl;  // TODO(private issue AEA-140): Handle this case
       break;
     }
 
@@ -602,8 +562,8 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
       if (!found)
       {
         // TODO: Implement missing
-        //        std::cout << "'" << x.token << "'  - TODO IMPLEMENT "
-        //                  << std::endl;  // TODO(private issue AEA-140): Handle this case
+        std::cout << "'" << x.token << "'  - TODO IMPLEMENT 33"
+                  << std::endl;  // TODO(private issue AEA-140): Handle this case
       }
       break;
     }
@@ -638,6 +598,47 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
   }
 
   return nullptr;
+}
+
+QueryExecutor::AgentIdSet QueryExecutor::ExecuteFind(CompiledStatement const &stmt)
+{
+  if (stmt[1].type != Constants::IDENTIFIER)
+  {
+    error_tracker_.RaiseSyntaxError("Expected variable name.", stmt[1].token);
+    return nullptr;
+  }
+
+  auto name = static_cast<std::string>(stmt[1].token);
+
+  if (!context_.Has(name))
+  {
+    error_tracker_.RaiseSyntaxError("Vairable not defined", stmt[1].token);
+    return nullptr;
+  }
+
+  auto obj        = context_.Get(name);
+  auto model_name = context_.GetModelName(name);
+
+  if (!semantic_search_module_->HasModel(model_name))
+  {
+    error_tracker_.RaiseSyntaxError("Could not find model '" + model_name + "'", stmt[1].token);
+    return nullptr;
+  }
+
+  auto model = semantic_search_module_->GetModel(model_name);
+  if (model == nullptr)
+  {
+    error_tracker_.RaiseInternalError("Model '" + model_name + "' is null.", stmt[1].token);
+    return nullptr;
+  }
+
+  assert(semantic_search_module_->advertisement_register() != nullptr);
+  assert(agent_ != nullptr);
+  auto position = model->Reduce(obj);
+  auto results =
+      semantic_search_module_->advertisement_register()->FindAgents(model_name, position, 2);
+
+  return results;
 }
 
 }  // namespace semanticsearch

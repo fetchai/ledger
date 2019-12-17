@@ -17,11 +17,11 @@ let x : WeatherStation = {
   temperature: 9
 };
 
-advertise x;
+advertise x until 200132;
 
 let y :  Position = {
     latitude: 9,
     longitude: 20
 };
 
-find y;
+find y direction x granularity 7;

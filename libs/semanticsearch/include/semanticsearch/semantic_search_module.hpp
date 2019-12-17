@@ -32,6 +32,7 @@
 #include <string>
 #include <typeindex>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace fetch {
@@ -46,6 +47,9 @@ public:
   using SharedAdvertisementRegister = std::shared_ptr<AdvertisementRegister>;
   using ConstByteArray              = byte_array::ConstByteArray;
   using Token                       = byte_array::Token;
+  using KeywordRelation   = std::unordered_map<std::string, std::unordered_set<std::string>>;
+  using KeywordProperties = std::unordered_map<std::string, uint64_t>;
+  using KeywordTypes      = std::unordered_map<std::string, int32_t>;
 
   using ConsumerFunction = std::function<int(byte_array::ConstByteArray const &str, uint64_t &pos)>;
   using AllocatorFunction = std::function<QueryVariant(Token const &data)>;
@@ -281,6 +285,21 @@ public:
     return type_information_;
   }
 
+  KeywordRelation const &keyword_relation() const
+  {
+    return keyword_relation_;
+  }
+
+  KeywordProperties const &keyword_properties() const
+  {
+    return keyword_properties_;
+  }
+
+  KeywordTypes const &keyword_type() const
+  {
+    return keyword_type_;
+  }
+
 private:
   explicit SemanticSearchModule(SharedAdvertisementRegister advertisement_register)
     : advertisement_register_(std::move(advertisement_register))
@@ -293,8 +312,25 @@ private:
   std::unordered_map<std::type_index, uint64_t>                   idx_to_code_;
   std::unordered_map<std::string, BuiltinQueryFunction::Function> functions_;
   std::unordered_map<std::string, ModelField>                     types_;
-  SharedAdvertisementRegister                                     advertisement_register_;
-  AgentDirectory                                                  agent_directory_;
+
+  KeywordRelation keyword_relation_{
+      {"find", {"granularity", "direction"}}, {"advertise", {"until"}}, {"model", {}}, {"let", {}}};
+  KeywordProperties keyword_properties_ = {{"model", Properties::PROP_CTX_MODEL},
+                                           {"advertise", Properties::PROP_CTX_ADVERTISE},
+                                           {"let", Properties::PROP_CTX_SET},
+                                           {"find", Properties::PROP_CTX_FIND},
+                                           {"until", Properties::PROP_IS_OPERATOR}};
+
+  KeywordTypes keyword_type_ = {{"model", Constants::SET_CONTEXT},
+                                {"advertise", Constants::SET_CONTEXT},
+                                {"let", Constants::SET_CONTEXT},
+                                {"find", Constants::SET_CONTEXT},
+                                {"until", Constants::ADVERTISE_EXPIRY},
+                                {"direction", Constants::SEARCH_DIRECTION},
+                                {"granularity", Constants::SEARCH_GRANULARITY}};
+
+  SharedAdvertisementRegister advertisement_register_;
+  AgentDirectory              agent_directory_;
 };
 
 using SharedSemanticSearchModule = SemanticSearchModule::SharedSemanticSearchModule;

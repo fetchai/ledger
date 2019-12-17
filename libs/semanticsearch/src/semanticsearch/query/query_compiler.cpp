@@ -20,6 +20,8 @@
 #include "semanticsearch/semantic_search_module.hpp"
 
 #include <cassert>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace fetch {
 namespace semanticsearch {
@@ -151,7 +153,6 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
         return {};
       }
 
-      // TODO(tfr): Chek that back is identifier or throw
       main_stack.back().type = Constants::OBJECT_KEY;
       next.type              = Constants::ATTRIBUTE;
       next.properties        = Properties::PROP_IS_OPERATOR;
@@ -194,28 +195,28 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
       next.consumes            = 0;
       break;
     case KEYWORD:
-      next.type     = Constants::SET_CONTEXT;
+    {
+      auto name = static_cast<std::string>(token);
+
+      auto const &types = module_->keyword_type();
+      auto        it1   = types.find(name);
+      if (it1 == types.end())
+      {
+        error_tracker_.RaiseInternalError("Could not find operator code for token.", token);
+        return {};
+      }
+      next.type     = it1->second;
       next.consumes = 0;
 
-      // TODO: Use mapping held in module
-      if (token == "model")
+      auto const &properties = module_->keyword_properties();
+      auto        it2        = properties.find(name);
+
+      if (it2 != properties.end())
       {
-        next.properties = Properties::PROP_CTX_MODEL;
-      }
-      else if (token == "advertise")
-      {
-        next.properties = Properties::PROP_CTX_ADVERTISE;
-      }
-      else if (token == "let")
-      {
-        next.properties = Properties::PROP_CTX_SET;
-      }
-      else if (token == "find")
-      {
-        next.properties = Properties::PROP_CTX_FIND;
+        next.properties = it2->second;
       }
       break;
-
+    }
     default:
       if (token.type() < Constants::USER_DEFINED_START)
       {
@@ -292,7 +293,8 @@ void QueryCompiler::Tokenise()
 {
   Statement stmt;
   //    std::vector< Token > tokens;
-  int scope_depth = 0;
+  int scope_depth       = 0;
+  int paranthesis_count = 0;
   while (position_ < document_.size())
   {
     SkipWhitespaces();
@@ -344,10 +346,33 @@ void QueryCompiler::Tokenise()
 
     if (found)
     {
-      if (stmt.tokens.size() != 1)
+      auto const &sub_keywords = module_->keyword_relation();
+
+      auto it = sub_keywords.find(static_cast<std::string>(stmt.tokens.back()));
+
+      if (it != sub_keywords.end())
       {
-        error_tracker_.RaiseSyntaxError("Expected ; before keyword.", tok);
-        return;
+        if (stmt.tokens.size() != 1)
+        {
+          error_tracker_.RaiseSyntaxError("Expected ; before keyword.", tok);
+          return;
+        }
+      }
+      else
+      {
+        it = sub_keywords.find(static_cast<std::string>(stmt.tokens.front()));
+        if (it == sub_keywords.end())
+        {
+          error_tracker_.RaiseSyntaxError("Expected primary keyword.", stmt.tokens.front());
+          return;
+        }
+
+        auto it2 = it->second.find(static_cast<std::string>(stmt.tokens.back()));
+        if (it2 == it->second.end())
+        {
+          error_tracker_.RaiseSyntaxError("Expected secondary keyword.", stmt.tokens.back());
+          return;
+        }
       }
       continue;
     }
@@ -406,7 +431,7 @@ void QueryCompiler::Tokenise()
       --scope_depth;
       if (scope_depth < 0)
       {
-        error_tracker_.RaiseSyntaxError("Unexpected object or instance closing symbol.", tok);
+        error_tracker_.RaiseSyntaxError("Unexpected closing of object or instance.", tok);
         return;
       }
       tok.SetType(SCOPE_CLOSE);
@@ -416,6 +441,7 @@ void QueryCompiler::Tokenise()
       break;
 
     case '(':
+      ++paranthesis_count;
       tok.SetType(PARANTHESIS_OPEN);
       stmt.tokens.push_back(tok);
       SkipChar();
@@ -423,6 +449,12 @@ void QueryCompiler::Tokenise()
       break;
 
     case ')':
+      --paranthesis_count;
+      if (paranthesis_count < 0)
+      {
+        error_tracker_.RaiseSyntaxError("Unexpected closing paranthesis ')'.", tok);
+        return;
+      }
       tok.SetType(PARANTHESIS_CLOSE);
       stmt.tokens.push_back(tok);
       SkipChar();
@@ -462,10 +494,23 @@ void QueryCompiler::Tokenise()
         break;
       }
     case ';':
+      if (scope_depth != 0)
+      {
+        error_tracker_.RaiseSyntaxError("Unbalanced braces.", tok);
+        return;
+      }
+
+      if (paranthesis_count != 0)
+      {
+        error_tracker_.RaiseSyntaxError("Unbalanced braces.", tok);
+        return;
+      }
+
       statements_.push_back(stmt);
       stmt = Statement();
       SkipChar();
       found = true;
+
       break;
     }
 
@@ -540,24 +585,32 @@ void QueryCompiler::Tokenise()
     }
   }
 
+  Token tok;
+  if (!stmt.tokens.empty())
+  {
+    tok = stmt.tokens.back();
+  }
+  else if (!statements_.empty())
+  {
+    tok = statements_.back().tokens.back();
+  }
+
+  if (paranthesis_count > 0)
+  {
+
+    error_tracker_.RaiseSyntaxError("Missing ')' to close expression.", stmt.tokens.back());
+    return;
+  }
+
   if (scope_depth > 0)
   {
-    Token tok;
-    if (!stmt.tokens.empty())
-    {
-      tok = stmt.tokens.back();
-    }
-    else if (!statements_.empty())
-    {
-      tok = statements_.back().tokens.back();
-    }
     error_tracker_.RaiseSyntaxError("Missing '}' to close object or instance.", stmt.tokens.back());
     return;
   }
 
   if (stmt.tokens.size() != 0)
   {
-    error_tracker_.RaiseSyntaxError("Expected ; before EOF.", stmt.tokens.back());
+    error_tracker_.RaiseSyntaxError("Expected ; before EOF.", tok);
     return;
   }
 }  // namespace semanticsearch

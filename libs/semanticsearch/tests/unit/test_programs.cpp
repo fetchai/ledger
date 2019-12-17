@@ -109,17 +109,6 @@ advertise y;)",
   EXPECT_TRUE(toolkit.HasErrors());
 }
 
-TEST(SemanticSearchIndex, BadBehaviour)
-{
-  SemanticSearchToolkit toolkit;
-
-  toolkit.RegisterAgent("agent_pk");
-
-  auto query = toolkit.Compile(R"(BoundedInteger;)", "test.search");
-  EXPECT_TRUE(toolkit.HasErrors());
-  toolkit.PrintErrors();
-}
-
 TEST(SemanticSearchIndex, BadSyntax)
 {
   SemanticSearchToolkit toolkit;
@@ -166,6 +155,18 @@ TEST(SemanticSearchIndex, BadSyntax)
 };
  )",
                           "test.search");
+  EXPECT_TRUE(toolkit.HasErrors());
+  toolkit.PrintErrors();
+
+  query = toolkit.Compile(R"(BoundedInteger(;)", "test.search");
+  EXPECT_TRUE(toolkit.HasErrors());
+  toolkit.PrintErrors();
+
+  query = toolkit.Compile(R"(BoundedInteger);)", "test.search");
+  EXPECT_TRUE(toolkit.HasErrors());
+  toolkit.PrintErrors();
+
+  query = toolkit.Compile(R"(BoundedInteger())", "test.search");
   EXPECT_TRUE(toolkit.HasErrors());
   toolkit.PrintErrors();
 }
