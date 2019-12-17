@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/model/dnn_classifier.hpp"
+
 #include "gtest/gtest.h"
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/model/dnn_classifier.hpp"
 #include "ml/model/model.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
@@ -64,7 +65,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
 
 template <typename TypeParam>
 bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type tolerance,
-             typename TypeParam::Type lr             = static_cast<typename TypeParam::Type>(0.5),
+             typename TypeParam::Type lr = fetch::math::Type<typename TypeParam::Type>("0.5"),
              fetch::math::SizeType    training_steps = 100)
 {
   using DataType  = typename TypeParam::Type;
