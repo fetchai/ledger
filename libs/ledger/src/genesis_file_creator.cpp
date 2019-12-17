@@ -53,8 +53,10 @@ using fetch::storage::ResourceAddress;
 using fetch::storage::ResourceID;
 using fetch::variant::Variant;
 
-constexpr char const *LOGGING_NAME = "GenesisFile";
-constexpr int         VERSION      = 3;
+constexpr uint64_t    TOTAL_SUPPLY   = 11529975750000000000ull;
+constexpr uint64_t    FET_MULTIPLIER = 10000000000ull;
+constexpr char const *LOGGING_NAME   = "GenesisFile";
+constexpr int         VERSION        = 4;
 
 enum class FileReadStatus
 {
@@ -219,19 +221,42 @@ bool GenesisFileCreator::LoadState(Variant const &object, ConsensusParameters co
   }
 
   // iterate over all of the Identity + stake amount mappings
+  uint64_t remaining_supply{TOTAL_SUPPLY};
   for (std::size_t i = 0, end = object.size(); i < end; ++i)
   {
-    ConstByteArray key{};
+    chain::Address address{};
+    ConstByteArray address_raw{};
     uint64_t       balance{0};
     uint64_t       stake{0};
 
     auto const &obj{object[i]};
 
-    if (variant::Extract(obj, "key", key) && variant::Extract(obj, "balance", balance) &&
-        variant::Extract(obj, "stake", stake))
+    if (variant::Extract(obj, "address", address_raw) &&
+        variant::Extract(obj, "balance", balance) && variant::Extract(obj, "stake", stake) &&
+        chain::Address::Parse(address_raw, address))
     {
       ledger::WalletRecord record;
 
+      // adjust record values to be correct FET integer ranges
+      balance *= FET_MULTIPLIER;
+      stake *= FET_MULTIPLIER;
+
+      // check the remaining supply
+      if (balance > remaining_supply)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Invalid genesis configuration");
+        return false;
+      }
+      remaining_supply -= balance;
+
+      if (stake > remaining_supply)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Invalid genesis configuration");
+        return false;
+      }
+      remaining_supply -= stake;
+
+      // populate the record
       record.balance = balance;
       record.stake   = stake;
 
@@ -244,27 +269,29 @@ bool GenesisFileCreator::LoadState(Variant const &object, ConsensusParameters co
         }
       }
 
-      ResourceAddress key_raw(ResourceID(FromBase64(key)));
-
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Initial state entry: ", key, " balance: ", balance,
-                      " stake: ", stake);
+      ResourceAddress const wallet_key{"fetch.token.state." + address.display()};
 
       {
         // serialize the record to the buffer
-        serializers::MsgPackSerializer buffer;
+        serializers::LargeObjectSerializeHelper buffer;
         buffer << record;
 
-        // look up reference to the underlying buffer
-        auto const &data = buffer.data();
-
         // store the buffer
-        storage_unit_.Set(key_raw, data);
+        storage_unit_.Set(wallet_key, buffer.data());
       }
     }
     else
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to extract section from genesis file");
       return false;
     }
+  }
+
+  // ensure all token supply is taken
+  if (remaining_supply > 0)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Remaining token supply still available");
+    return false;
   }
 
   // if we have been configured for consensus then we need to also write the stake information to
