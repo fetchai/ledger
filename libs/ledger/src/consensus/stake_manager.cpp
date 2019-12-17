@@ -84,6 +84,8 @@ bool StakeManager::Save(StorageInterface &storage)
 {
   bool success{false};
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Saving stake man to storage. ", current_block_index_, " size: ", current_->size());
+
   try
   {
     serializers::LargeObjectSerializeHelper serializer{};
@@ -116,6 +118,8 @@ bool StakeManager::Load(StorageInterface &storage)
     }
 
     success = true;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Loading stake man from storage. ", current_block_index_, " size: ", current_->size());
   }
   catch (std::exception const &ex)
   {
