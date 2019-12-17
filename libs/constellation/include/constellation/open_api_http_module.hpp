@@ -38,7 +38,7 @@ private:
   using ConstByteArray = byte_array::ConstByteArray;
 
   http::HTTPServer *server_{nullptr};
-  std::mutex        server_lock_;
+  Mutex             server_lock_;
 };
 
 }  // namespace constellation
