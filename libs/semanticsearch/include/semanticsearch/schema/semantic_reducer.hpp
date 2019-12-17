@@ -70,7 +70,11 @@ public:
 
   /// Properties
   /// @{
-  int32_t rank() const;
+  int32_t     rank() const;
+  std::string uid() const
+  {
+    return unique_identifier_;
+  }
   /// @}
 private:
   using InternalReducer   = std::function<SemanticPosition(void const *)>;

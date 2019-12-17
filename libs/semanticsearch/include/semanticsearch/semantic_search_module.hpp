@@ -75,21 +75,24 @@ public:
 
     // Registering primitive types
     ret->RegisterPrimitiveType<ModelField>("ModelField");
-    ret->RegisterPrimitiveType<int64_t>("Integer", byte_array::consumers::NumberConsumer<0, 1>,
-                                        [](Token const &token) -> QueryVariant {
-                                          return NewQueryVariant<int64_t>(
-                                              static_cast<int64_t>(token.AsInt()),
-                                              Constants::LITERAL, token);
-                                        });
+    ret->RegisterPrimitiveType<int64_t>(
+        "Integer", byte_array::consumers::NumberConsumer<0, 1>,
+        [](Token const &token) -> QueryVariant {
+          return NewQueryVariant<int64_t>(static_cast<int64_t>(token.AsInt()), Constants::LITERAL,
+                                          token);
+        },
+        true);
 
     ret->RegisterPrimitiveType<uint64_t>("UnsignedInteger");
     ret->RegisterPrimitiveType<std::string>(
-        "String", byte_array::consumers::StringConsumer<0>, [](Token const &token) -> QueryVariant {
+        "String", byte_array::consumers::StringConsumer<0>,
+        [](Token const &token) -> QueryVariant {
           //   TODO: Throw is size does not fit
           return NewQueryVariant<std::string>(
               static_cast<std::string>(token.SubArray(1, token.size() - 2)), Constants::LITERAL,
               token);
-        });
+        },
+        false);
 
     // Registering reduced types
     ret->RegisterFunction<ModelField, int64_t, int64_t>(

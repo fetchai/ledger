@@ -237,7 +237,12 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteSet(CompiledStatement const &stm
     }
     case Constants::POP_SCOPE:
       --scope_depth;
-      // TODO(private issue AEA-131): Check enough
+
+      if (scope_objects.empty())
+      {
+        // TODO(private issue AEA-131): Check enough
+        abort();
+      }
       last = scope_objects.back();
       scope_objects.pop_back();
 
@@ -251,9 +256,7 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteSet(CompiledStatement const &stm
       break;
 
     case Constants::ATTRIBUTE:
-
     {
-
       auto value = stack.back();
       stack.pop_back();
       auto key = stack.back();
@@ -435,11 +438,13 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
       // Asserting types
       if (TypeMismatch<ModelField>(value, x.token))
       {
+        error_tracker_.RaiseInternalError("Model field value type mismatch", x.token);
         return nullptr;
       }
 
       if (TypeMismatch<Token>(key, x.token))
       {
+        error_tracker_.RaiseInternalError("Model field key type mismatch", x.token);
         return nullptr;
       }
 
@@ -504,8 +509,8 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
     {
       if (stack_.empty())
       {
-        std::cerr << "INTERNAL ERROR!" << std::endl;  // TODO(private issue AEA-139): Handle this
-        exit(-1);
+        error_tracker_.RaiseInternalError("Stack is empty", x.token);
+        return nullptr;
       }
 
       std::vector<void const *>    args;
@@ -615,8 +620,16 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
     stack_.pop_back();
 
     // TODO(private issue AEA-137): add some sanity checks here
-    semantic_search_module_->AddModel(static_cast<std::string>(key->As<Token>()),
-                                      last.vocabulary_schema());
+    auto token = key->As<Token>();
+    auto name  = static_cast<std::string>(token);
+    try
+    {
+      semantic_search_module_->AddModel(name, last.vocabulary_schema());
+    }
+    catch (std::runtime_error const &e)
+    {
+      error_tracker_.RaiseRuntimeError(e.what(), token);
+    }
   }
   else
   {

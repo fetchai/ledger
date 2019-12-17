@@ -27,27 +27,6 @@ TEST(SemanticSearchIndex, TestPrograms)
 
   toolkit.RegisterAgent("agent_pk");
 
-  /*
-    auto query = toolkit.Compile(R"(model IntPair {
-    key1: Integer,
-    key2: Integer
-  };
-
-  let y : IntPair = {
-      key1: 9,
-      key2: 20
-  };
-
-  advertise y;)",
-                                 "test.search");
-    EXPECT_FALSE(toolkit.HasErrors());
-    toolkit.Execute(query, "agent_pk");
-    EXPECT_FALSE(toolkit.HasErrors());
-    if (toolkit.HasErrors())
-    {
-      toolkit.PrintErrors();
-    }
-  */
   auto query = toolkit.Compile(R"(model IntPair {
   key1: BoundedInteger(8, 20),
   key2: BoundedInteger(20, 40)  
@@ -83,8 +62,110 @@ advertise y;)",
   EXPECT_FALSE(toolkit.HasErrors());
   toolkit.Execute(query, "agent_pk");
   EXPECT_TRUE(toolkit.HasErrors());
+}
+
+TEST(SemanticSearchIndex, MismatchingModelInSameContex)
+{
+  SemanticSearchToolkit toolkit;
+
+  toolkit.RegisterAgent("agent_pk");
+
+  auto query = toolkit.Compile(R"(model IntPair {
+  key1: BoundedInteger(8, 20),
+  key2: BoundedInteger(20, 40)  
+};
+
+let y : IntPair = {
+    key1: 9,
+    key2: 20
+};
+
+advertise y;)",
+                               "test.search");
+  EXPECT_FALSE(toolkit.HasErrors());
+  toolkit.Execute(query, "agent_pk");
+  EXPECT_FALSE(toolkit.HasErrors());
   if (toolkit.HasErrors())
   {
     toolkit.PrintErrors();
   }
+
+  query = toolkit.Compile(R"(model IntPair {
+  key1: BoundedInteger(8, 20),
+  key2: BoundedInteger(20, 40),
+}; )",
+                          "test.search");
+  EXPECT_FALSE(toolkit.HasErrors());
+  toolkit.Execute(query, "agent_pk");
+  EXPECT_FALSE(toolkit.HasErrors());
+
+  query = toolkit.Compile(R"(model IntPair {
+  key1: BoundedInteger(8, 19),
+  key2: BoundedInteger(9, 20),
+};)",
+                          "test.search");
+  EXPECT_FALSE(toolkit.HasErrors());
+  toolkit.Execute(query, "agent_pk");
+  EXPECT_TRUE(toolkit.HasErrors());
+}
+
+TEST(SemanticSearchIndex, BadBehaviour)
+{
+  SemanticSearchToolkit toolkit;
+
+  toolkit.RegisterAgent("agent_pk");
+
+  auto query = toolkit.Compile(R"(BoundedInteger;)", "test.search");
+  EXPECT_TRUE(toolkit.HasErrors());
+  toolkit.PrintErrors();
+}
+
+TEST(SemanticSearchIndex, BadSyntax)
+{
+  SemanticSearchToolkit toolkit;
+
+  toolkit.RegisterAgent("agent_pk");
+  auto query = toolkit.Compile(R"(find model { };)", "test.search");
+  EXPECT_TRUE(toolkit.HasErrors());
+  toolkit.PrintErrors();
+
+  query = toolkit.Compile(R"(model IntPair {
+  key1: BoundedInteger(8, 20),,
+  key2: BoundedInteger(20, 40)  
+}; )",
+                          "test.search");
+  EXPECT_TRUE(toolkit.HasErrors());
+  toolkit.PrintErrors();
+
+  query = toolkit.Compile(R"(model IntPair {
+  key1: BoundedInteger(8, 20),
+  key2: BoundedInteger(20, 40)  
+} )",
+                          "test.search");
+  EXPECT_TRUE(toolkit.HasErrors());
+  toolkit.PrintErrors();
+  query = toolkit.Compile(R"(model IntPair {
+  key1: BoundedInteger(8, 20),
+  key2: BoundedInteger(20, 40)  
+ )",
+                          "test.search");
+  EXPECT_TRUE(toolkit.HasErrors());
+  toolkit.PrintErrors();
+  query = toolkit.Compile(R"(model IntPair {
+  key1: BoundedInteger(8, 20),
+  key2: BoundedInteger(20, 40)  
+}
+}
+ )",
+                          "test.search");
+  EXPECT_TRUE(toolkit.HasErrors());
+  toolkit.PrintErrors();
+  query = toolkit.Compile(R"(model IntPair {
+  key1: BoundedInteger(8, 20)
+  key2: BoundedInteger(20, 40)  
+};
+ )",
+                          "test.search");
+  EXPECT_TRUE(toolkit.HasErrors());
+  toolkit.PrintErrors();
 }

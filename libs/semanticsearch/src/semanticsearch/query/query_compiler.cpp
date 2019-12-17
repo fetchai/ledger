@@ -26,15 +26,18 @@ namespace semanticsearch {
 
 enum
 {
-  OP_ADD = 0,
+
+  OP_START = 0,
+  OP_ADD,
   OP_SUB,
   OP_ASSIGN,
   OP_MULTIPLY,
   OP_EQUAL,
-  OP_SUBSCOPE,
+  OP_SUBSCOPE,  // TODO: should be  part of identifier
   OP_ATTRIBUTE,
   OP_VAR_DEFINITION,
   OP_SEPARATOR,
+  OP_END,
 
   // Then groups
   SCOPE_OPEN = 200,
@@ -43,7 +46,7 @@ enum
   PARANTHESIS_CLOSE,
 
   // Types
-  STRING = 400,
+  STRING = 400,  // TODO: remove
   INTEGER,
   FLOAT,
   IDENTIFIER,
@@ -52,13 +55,6 @@ enum
   KEYWORD = 500,
 
   USER_DEFINED = 1000
-};
-
-enum
-{
-  MODEL,
-  INSERT,
-  FIND
 };
 
 QueryCompiler::QueryCompiler(ErrorTracker &                                error_tracker,
@@ -79,9 +75,14 @@ Query QueryCompiler::operator()(ByteArray doc, ConstByteArray const &filename)
 
   // Tokenizing
   Tokenise();
+  Query ret;
+
+  if (error_tracker_.HasErrors())
+  {
+    return ret;
+  }
 
   // Assembling
-  Query ret;
   ret.source   = document_;
   ret.filename = filename;
   for (auto &s : statements_)
@@ -98,8 +99,9 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
   std::vector<QueryInstruction> main_stack;
   std::vector<QueryInstruction> op_stack;
 
-  bool last_was_identifer       = false;
-  bool next_last_was_identifier = false;
+  bool    last_was_identifer       = false;
+  bool    next_last_was_identifier = false;
+  int32_t loop_counter             = 0;
   for (auto &token : stmt.tokens)
   {
     QueryInstruction next;
@@ -194,6 +196,7 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
     case KEYWORD:
       next.type     = Constants::SET_CONTEXT;
       next.consumes = 0;
+
       // TODO: Use mapping held in module
       if (token == "model")
       {
@@ -224,6 +227,7 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
       break;
     }
 
+    // Creating the stack expression for logical operators
     if ((next.properties & Properties::PROP_IS_OPERATOR) != 0)
     {
       while ((!op_stack.empty()) && (next.type > op_stack.back().type) &&
@@ -269,6 +273,8 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
     {
       main_stack.push_back(next);
     }
+
+    ++loop_counter;
   }
 
   // Emtpying the operator stack.
@@ -318,12 +324,13 @@ void QueryCompiler::Tokenise()
     }
 
     // Keywords
-    bool found = false;
+    bool  found = false;
+    Token tok;
     for (auto const &k : keywords_)
     {
       if (Match(k))
       {
-        Token tok = static_cast<Token>(k);
+        tok = static_cast<Token>(k);
         tok.SetLine(line_);
         tok.SetChar(char_index_);
         tok.SetType(KEYWORD);
@@ -337,13 +344,26 @@ void QueryCompiler::Tokenise()
 
     if (found)
     {
+      if (stmt.tokens.size() != 1)
+      {
+        error_tracker_.RaiseSyntaxError("Expected ; before keyword.", tok);
+        return;
+      }
       continue;
     }
 
     // Matching operators
-    Token tok = static_cast<Token>(document_.SubArray(position_, 1));
+    tok = static_cast<Token>(document_.SubArray(position_, 1));
     tok.SetLine(line_);
     tok.SetChar(char_index_);
+
+    bool  last_is_op = false;
+    Token last_token = tok;
+    if (!stmt.tokens.empty())
+    {
+      last_token = stmt.tokens.back();
+      last_is_op = (OP_START < last_token.type()) && (last_token.type() < OP_END);
+    }
 
     switch (document_[position_])
     {
@@ -351,12 +371,15 @@ void QueryCompiler::Tokenise()
       tok.SetType(OP_SEPARATOR);
       stmt.tokens.push_back(tok);
       SkipChar();
-      continue;
+      found = true;
+      break;
     case '.':
       tok.SetType(OP_SUBSCOPE);
       stmt.tokens.push_back(tok);
       SkipChar();
-      continue;
+      found = true;
+      break;
+
     case ':':
       if (scope_depth == 0)
       {
@@ -368,39 +391,58 @@ void QueryCompiler::Tokenise()
       }
       stmt.tokens.push_back(tok);
       SkipChar();
-      continue;
+      found = true;
+      break;
+
     case '{':
       ++scope_depth;
       tok.SetType(SCOPE_OPEN);
       stmt.tokens.push_back(tok);
       SkipChar();
-      continue;
+      found = true;
+      break;
+
     case '}':
       --scope_depth;
+      if (scope_depth < 0)
+      {
+        error_tracker_.RaiseSyntaxError("Unexpected object or instance closing symbol.", tok);
+        return;
+      }
       tok.SetType(SCOPE_CLOSE);
       stmt.tokens.push_back(tok);
       SkipChar();
-      continue;
+      found = true;
+      break;
+
     case '(':
       tok.SetType(PARANTHESIS_OPEN);
       stmt.tokens.push_back(tok);
       SkipChar();
-      continue;
+      found = true;
+      break;
+
     case ')':
       tok.SetType(PARANTHESIS_CLOSE);
       stmt.tokens.push_back(tok);
       SkipChar();
-      continue;
+      found = true;
+      break;
+
     case '+':
       tok.SetType(OP_ADD);
       stmt.tokens.push_back(tok);
       SkipChar();
-      continue;
+      found = true;
+      break;
+
     case '*':
       tok.SetType(OP_MULTIPLY);
       stmt.tokens.push_back(tok);
       SkipChar();
-      continue;
+      found = true;
+      break;
+
     case '=':
       if (document_[position_ + 1] == '=')
       {
@@ -408,19 +450,43 @@ void QueryCompiler::Tokenise()
         tok.SetType(OP_EQUAL);
         stmt.tokens.push_back(tok);
         SkipChars(2);
-        continue;
+        found = true;
+        break;
       }
       else
       {
         tok.SetType(OP_ASSIGN);
         stmt.tokens.push_back(tok);
         SkipChar();
-        continue;
+        found = true;
+        break;
       }
     case ';':
       statements_.push_back(stmt);
       stmt = Statement();
       SkipChar();
+      found = true;
+      break;
+    }
+
+    // Checking for multiple operators after each other
+    if (found)
+    {
+      auto this_is_op = true;  // Default is semicolon
+      if (!stmt.tokens.empty())
+      {
+        auto type  = stmt.tokens.back().type();
+        this_is_op = (OP_START < type) && (type < OP_END);
+      }
+
+      // In case of two consequtive operators
+      if (last_is_op && this_is_op)
+      {
+        error_tracker_.RaiseSyntaxError("Unexpected operator.", last_token);
+        return;
+      }
+
+      // Otherwise it is all good.
       continue;
     }
 
@@ -428,6 +494,7 @@ void QueryCompiler::Tokenise()
     auto const &type_info = module_->type_information();
     found                 = false;
     uint64_t end          = position_;
+
     for (auto const &type : type_info)
     {
       if (type.consumer)
@@ -468,12 +535,32 @@ void QueryCompiler::Tokenise()
     // Error unrecognised symbol
     if (position_ < document_.size())
     {
-      std::cout << "Unrecognised symbol: '" << document_[position_] << "'" << std::endl;
-      std::cout << "Position: " << line_ << ":" << char_index_ << std::endl;
-      exit(-1);  // TODO: Throw
+      error_tracker_.RaiseSyntaxError("Unrecognised symbol.", stmt.tokens.back());
+      return;
     }
   }
-}
+
+  if (scope_depth > 0)
+  {
+    Token tok;
+    if (!stmt.tokens.empty())
+    {
+      tok = stmt.tokens.back();
+    }
+    else if (!statements_.empty())
+    {
+      tok = statements_.back().tokens.back();
+    }
+    error_tracker_.RaiseSyntaxError("Missing '}' to close object or instance.", stmt.tokens.back());
+    return;
+  }
+
+  if (stmt.tokens.size() != 0)
+  {
+    error_tracker_.RaiseSyntaxError("Expected ; before EOF.", stmt.tokens.back());
+    return;
+  }
+}  // namespace semanticsearch
 
 bool QueryCompiler::Match(ConstByteArray const &token) const
 {

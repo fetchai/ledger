@@ -58,7 +58,12 @@ public:
   /// @{
   virtual int             rank() const = 0;
   virtual std::type_index type() const = 0;
-  std::string             model_name() const
+  virtual std::string     cdr_uid() const
+  {
+    return "";
+  }
+
+  std::string model_name() const
   {
     return model_name_;
   }

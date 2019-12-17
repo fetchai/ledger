@@ -56,6 +56,7 @@ public:
   /// @{
   int              rank() const override;
   std::type_index  type() const override;
+  std::string      cdr_uid() const override;
   SemanticReducer &constrained_data_reducer();
   /// @}
 
@@ -117,10 +118,15 @@ std::type_index TypedSchemaField<T>::type() const
 }
 
 template <typename T>
+std::string TypedSchemaField<T>::cdr_uid() const
+{
+  return constrained_data_reducer_.uid();
+}
+
+template <typename T>
 bool TypedSchemaField<T>::IsSame(ModelInterface const &optr) const
 {
-  return (type() == optr->type());
-  // TODO(private issue AEA-130): Check reducers and validators - they are currently ignored.
+  return (type() == optr->type()) && (cdr_uid() == optr->cdr_uid());
 }
 
 template <typename T>

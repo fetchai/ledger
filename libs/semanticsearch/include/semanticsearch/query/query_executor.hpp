@@ -44,7 +44,6 @@ public:
 private:
   using PropertyMap = std::map<std::string, std::shared_ptr<VocabularyInstance>>;
 
-  // TODO(private issue AEA-128): combine these three into a single execute statement.
   AgentIdSet ExecuteStore(CompiledStatement const &stmt);
   AgentIdSet ExecuteFind(CompiledStatement const &stmt);
   AgentIdSet ExecuteSet(CompiledStatement const &stmt);
