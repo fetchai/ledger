@@ -53,7 +53,7 @@ TEST(RoutingTests, RemovingDuplicateConnections)
   EXPECT_EQ(total_in, N * (N - 1) / 2);
 }
 
-TEST(RoutingTests, NoRemoval)
+TEST(DISABLED_RoutingTests, NoRemoval)
 {
   // Creating network
   std::size_t N                = 10;

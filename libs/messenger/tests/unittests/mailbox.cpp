@@ -195,7 +195,7 @@ TEST(MessengerMailboxTest, DirectComms)
   server->network_manager.Stop();
 }
 
-TEST(MessengerMailboxTest, MessagesRouting)
+TEST(DISABLED_MessengerMailboxTest, MessagesRouting)
 {
 #define NETWORK_LENGTH 10
   std::vector<std::shared_ptr<Server>> servers;
