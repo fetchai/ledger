@@ -192,9 +192,13 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
   {
     for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
     {
-      DataType val = (VmModelEstimator::ADD_DENSE_INPUT_COEF * inputs);
-      val += VmModelEstimator::ADD_DENSE_OUTPUT_COEF * outputs;
-      val += VmModelEstimator::ADD_DENSE_QUAD_COEF * inputs * outputs;
+      SizeType padded_size_sum =
+          fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
+      padded_size_sum += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
+      SizeType size_sum = inputs * outputs + outputs;
+
+      DataType val = (VmModelEstimator::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF * padded_size_sum);
+      val += VmModelEstimator::ADD_DENSE_WEIGHTS_SIZE_COEF * size_sum;
       val += VmModelEstimator::ADD_DENSE_CONST_COEF;
 
       EXPECT_TRUE(model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs) ==
@@ -226,9 +230,14 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
   {
     for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
     {
-      DataType val = (VmModelEstimator::ADD_DENSE_INPUT_COEF * inputs);
-      val += VmModelEstimator::ADD_DENSE_OUTPUT_COEF * outputs;
-      val += VmModelEstimator::ADD_DENSE_QUAD_COEF * inputs * outputs;
+
+      SizeType padded_size_sum =
+          fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
+      padded_size_sum += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
+      SizeType size_sum = inputs * outputs + outputs;
+
+      DataType val = (VmModelEstimator::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF * padded_size_sum);
+      val += VmModelEstimator::ADD_DENSE_WEIGHTS_SIZE_COEF * size_sum;
       val += VmModelEstimator::ADD_DENSE_CONST_COEF;
 
       EXPECT_TRUE(model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, inputs, outputs,
