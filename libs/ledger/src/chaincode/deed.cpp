@@ -248,5 +248,25 @@ Deed::MandatorityMatrix Deed::InferMandatoryWeights() const
   return mandatory;
 }
 
+Deed::Signees const &Deed::signees() const
+{
+  return signees_;
+}
+
+Deed::OperationTresholds const &Deed::operation_thresholds() const
+{
+  return operation_thresholds_;
+}
+
+bool Deed::operator==(Deed const &right) const
+{
+  return signees_ == right.signees_ && operation_thresholds_ == right.operation_thresholds_;
+}
+
+bool Deed::operator!=(Deed const &right) const
+{
+  return !(*this == right);
+}
+
 }  // namespace ledger
 }  // namespace fetch
