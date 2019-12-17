@@ -60,24 +60,27 @@ void StakeManager::UpdateCurrentBlock(BlockIndex block_index)
   TrimToSize(stake_history_, HISTORY_LENGTH);
 }
 
-StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current, uint64_t cabinet_size)
+StakeManager::CabinetPtr StakeManager::BuildCabinet(
+    Block const &current, uint64_t cabinet_size,
+    ConsensusInterface::Minerwhitelist const &whitelist)
 {
   CabinetPtr cabinet{};
 
   auto snapshot = LookupStakeSnapshot(current.block_number);
   if (snapshot)
   {
-    cabinet = snapshot->BuildCabinet(current.block_entropy.EntropyAsU64(), cabinet_size);
+    cabinet = snapshot->BuildCabinet(current.block_entropy.EntropyAsU64(), cabinet_size, whitelist);
   }
 
   return cabinet;
 }
 
-StakeManager::CabinetPtr StakeManager::BuildCabinet(uint64_t block_number, uint64_t entropy,
-                                                    uint64_t cabinet_size) const
+StakeManager::CabinetPtr StakeManager::BuildCabinet(
+    uint64_t block_number, uint64_t entropy, uint64_t cabinet_size,
+    ConsensusInterface::Minerwhitelist const &whitelist) const
 {
   auto snapshot = LookupStakeSnapshot(block_number);
-  return snapshot->BuildCabinet(entropy, cabinet_size);
+  return snapshot->BuildCabinet(entropy, cabinet_size, whitelist);
 }
 
 bool StakeManager::Save(StorageInterface &storage)
