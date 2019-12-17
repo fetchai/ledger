@@ -94,6 +94,17 @@ private:
   static std::string const GET_INDEXED_VALUE;
   static std::string const SET_INDEXED_VALUE;
 
+  static const uint16_t MAX_NESTED_BLOCKS             = 256;
+  static const uint16_t MAX_STATE_DEFINITIONS         = 256;
+  static const uint16_t MAX_CONTRACT_DEFINITIONS      = 64;
+  static const uint16_t MAX_FUNCTIONS_PER_CONTRACT    = 256;
+  static const uint16_t MAX_USER_DEFINED_TYPES        = 256;
+  static const uint16_t MAX_FREE_FUNCTIONS            = 256;
+  static const uint16_t MAX_MEMBER_FUNCTIONS_PER_TYPE = 256;
+  static const uint16_t MAX_MEMBER_VARIABLES_PER_TYPE = 256;
+  static const uint16_t MAX_PARAMETERS_PER_FUNCTION   = 16;
+  static const uint16_t MAX_LOCALS_PER_FUNCTION       = 256;
+
   using OperatorMap = std::unordered_map<NodeKind, Operator>;
 
   struct TypeMap
@@ -229,6 +240,22 @@ private:
     return list;
   }
 
+  struct FatalErrorException : public std::exception
+  {
+    FatalErrorException(std::string filename__, uint16_t line__, std::string message__)
+      : filename{std::move(filename__)}
+      , line{line__}
+      , message{std::move(message__)}
+    {}
+    const char *what() const noexcept override
+    {
+      return message.c_str();
+    }
+    std::string filename;
+    uint16_t    line{};
+    std::string message;
+  };
+
   OperatorMap       operator_map_;
   TypeMap           type_map_;
   StringSet         type_set_;
@@ -274,12 +301,17 @@ private:
   FunctionPtr       sharded_state_constructor_;
   NameToTypePtrMap  state_definitions_;
   NameToTypePtrMap  contract_definitions_;
+  uint16_t          num_state_definitions_{};
+  uint16_t          num_contract_definitions_{};
+  uint16_t          num_free_functions_{};
+  uint16_t          num_user_defined_types_{};
   FunctionPtr       function_;
   NodePtr           use_any_node_;
   FileErrorsArray   file_errors_array_;
 
   void AddError(uint16_t line, std::string const &message);
   void AddError(std::string const &filename, uint16_t line, std::string const &message);
+  void CheckLocals(uint16_t line);
 
   void BuildBlock(BlockNodePtr const &block_node);
   void BuildContractDefinition(BlockNodePtr const &contract_definition_node);

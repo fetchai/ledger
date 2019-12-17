@@ -53,8 +53,9 @@ struct WalletRecord
   CooldownStake cooldown_stake;
   DeedPtr       deed;
 
-  bool CreateDeed(variant::Variant const &data);
-  void CollectStake(uint64_t block_index);
+  bool             CreateDeed(variant::Variant const &data);
+  variant::Variant ExtractDeed() const;
+  void             CollectStake(uint64_t block_index);
 };
 
 }  // namespace ledger
