@@ -70,13 +70,16 @@ TEST(RoutingTests, PeerTestReboot)
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1400));
 
+    std::cout << "==============================================================" << std::endl;
+    std::cout << "===========================STOPPING===========================" << std::endl;
+    std::cout << "==============================================================" << std::endl;
     network->Stop();
   }
 
   std::cout << "==============================================================" << std::endl;
   std::cout << "==========================REBOOTING===========================" << std::endl;
   std::cout << "==============================================================" << std::endl;
-  network->Reboot(config);
+  network->Start(config);
 
   {
     // Restarting
