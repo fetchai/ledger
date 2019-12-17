@@ -66,7 +66,7 @@ int main(int argc, char **argv)
   fetch::vm_modules::ml::BindML(*module, true);
 
   fetch::vm_modules::CreatePrint(*module);
-  fetch::vm_modules::math::BindReadCSV(*module);
+  fetch::vm_modules::math::BindReadCSV(*module, true);
 
   // Setting compiler up
   auto                     compiler = std::make_unique<fetch::vm::Compiler>(module.get());

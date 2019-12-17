@@ -26,7 +26,7 @@ class Module;
 namespace vm_modules {
 namespace math {
 
-void BindReadCSV(fetch::vm::Module &module);
+void BindReadCSV(fetch::vm::Module &module, bool enable_experimental);
 
 }  // namespace math
 }  // namespace vm_modules

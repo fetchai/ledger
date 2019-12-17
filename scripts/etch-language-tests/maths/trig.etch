@@ -5,13 +5,13 @@ function main()
     assert(toString(sin(x)) == "0.841470986");
 
     x = 0.5fp64;
-    assert(toString(sin(x)) == "0.479425539");
+    assert(toString(sin(x)) == "0.479425538");
 
     x = 0.0fp64;
     assert(toString(sin(x)) == "0.000000000");
 
     x = 1.0fp64;
-    assert(toString(cos(x)) == "0.540302306");
+    assert(toString(cos(x)) == "0.540302305");
 
     x = 0.5fp64;
     assert(toString(cos(x)) == "0.877582562");
@@ -31,10 +31,10 @@ function main()
 
     // ArcSin, ArcCos, & ArcTan
     x = 1.0fp64;
-    assert(toString(asin(x)) == "1.570796327");
+    assert(toString(asin(x)) == "1.570796326");
 
     x = 0.5fp64;
-    assert(toString(asin(x)) == "0.523598776");
+    assert(toString(asin(x)) == "0.523598775");
 
     x = 0.0fp64;
     assert(toString(asin(x)) == "0.000000000");
@@ -46,13 +46,13 @@ function main()
     assert(toString(acos(x)) == "1.047197551");
 
     x = 0.0fp64;
-    assert(toString(acos(x)) == "1.570796327");
+    assert(toString(acos(x)) == "1.570796326");
 
     x = 1.0fp64;
-    assert(toString(atan(x)) == "0.785398135");
+    assert(toString(atan(x)) == "0.785398134");
 
     x = 0.5fp64;
-    assert(toString(atan(x)) == "0.463647609");
+    assert(toString(atan(x)) == "0.463647608");
 
     x = 0.0fp64;
     assert(toString(atan(x)) == "0.000000000");
@@ -60,19 +60,19 @@ function main()
 
     // Hyperbolic Sin, Cos, & Tan
     x = 1.0fp64;
-    assert(toString(sinh(x)) == "1.175201194");
+    assert(toString(sinh(x)) == "1.175201193");
 
     x = 0.5fp64;
-    assert(toString(sinh(x)) == "0.521095305");
+    assert(toString(sinh(x)) == "0.521095304");
 
     x = 0.0fp64;
     assert(toString(sinh(x)) == "0.000000000");
 
     x = 1.0fp64;
-    assert(toString(cosh(x)) == "1.543080635");
+    assert(toString(cosh(x)) == "1.543080634");
 
     x = 0.5fp64;
-    assert(toString(cosh(x)) == "1.127625965");
+    assert(toString(cosh(x)) == "1.127625964");
 
     x = 0.0fp64;
     assert(toString(cosh(x)) == "1.000000000");
@@ -81,7 +81,7 @@ function main()
     assert(toString(tanh(x)) == "0.761594156");
 
     x = 0.5fp64;
-    assert(toString(tanh(x)) == "0.462117157");
+    assert(toString(tanh(x)) == "0.462117156");
 
     x = 0.0fp64;
     assert(toString(tanh(x)) == "0.000000000");
@@ -89,7 +89,7 @@ function main()
 
     // Hyperbolic ArcSin, ArcCos, & ArcTan
     x = 1.0fp64;
-    assert(toString(asinh(x)) == "0.881373588");
+    assert(toString(asinh(x)) == "0.881373587");
 
     x = 0.5fp64;
     assert(toString(asinh(x)) == "0.481211825");
