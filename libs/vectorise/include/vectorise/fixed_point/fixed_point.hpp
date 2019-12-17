@@ -770,6 +770,7 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
     fraction_large /= static_cast<typename FixedPoint<I, F>::Type>(one_mask);
 
     fraction = static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(fraction_large);
+
     s << integer << '.';
     s << std::setw(FixedPoint<I, F>::DECIMAL_DIGITS);
     s << std::setfill('0');

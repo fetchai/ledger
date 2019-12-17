@@ -366,7 +366,7 @@ void ToStringTest(std::string const &string)
   std::stringstream ss;
   ss << val;
   T result_val(ss.str());
-  EXPECT_EQ(result_val, val);
+  EXPECT_TRUE(fetch::math::Abs(result_val - val) < fetch::math::function_tolerance<T>());
 }
 
 TEST(FixedPointTest, ToString_16_16)
@@ -392,7 +392,10 @@ TEST(FixedPointTest, ToString_16_16)
   str_val = "-1.5fp32";
   ToStringTest<fp32_t>(str_val);
 
-  str_val = "2.718281828459045235360287471352662498";
+  str_val = "2.7182818284590452352";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "-2.7182818284590452352";
   ToStringTest<fp32_t>(str_val);
 
   str_val = "1442695040888963407359924681001892137";
@@ -421,8 +424,11 @@ TEST(FixedPointTest, ToString_32_32)
   str_val = "-1.5fp64";
   ToStringTest<fp64_t>(str_val);
 
-  str_val = "2.718281828459045235360287471352662498";
+  str_val = "2.7182818284590452352";
   ToStringTest<fp64_t>(str_val);
+
+  str_val = "-2.7182818284590452352";
+  ToStringTest<fp32_t>(str_val);
 
   str_val = "1442695040888963407359924681001892137";
   ToStringTest<fp64_t>(str_val);
@@ -450,8 +456,11 @@ TEST(FixedPointTest, ToString_64_64)
   str_val = "-1.5fp128";
   ToStringTest<fp128_t>(str_val);
 
-  str_val = "2.718281828459045235360287471352662498";
+  str_val = "2.718281";
   ToStringTest<fp128_t>(str_val);
+
+  str_val = "-2.718281";
+  ToStringTest<fp32_t>(str_val);
 
   str_val = "1442695040888963407359924681001892137";
   ToStringTest<fp128_t>(str_val);
