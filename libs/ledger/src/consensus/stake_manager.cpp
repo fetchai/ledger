@@ -60,7 +60,9 @@ void StakeManager::UpdateCurrentBlock(BlockIndex block_index)
   TrimToSize(stake_history_, HISTORY_LENGTH);
 }
 
-StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current, uint64_t cabinet_size, ConsensusInterface::Minerwhitelist const &whitelist)
+StakeManager::CabinetPtr StakeManager::BuildCabinet(
+    Block const &current, uint64_t cabinet_size,
+    ConsensusInterface::Minerwhitelist const &whitelist)
 {
   CabinetPtr cabinet{};
 
@@ -73,8 +75,9 @@ StakeManager::CabinetPtr StakeManager::BuildCabinet(Block const &current, uint64
   return cabinet;
 }
 
-StakeManager::CabinetPtr StakeManager::BuildCabinet(uint64_t block_number, uint64_t entropy,
-                                                    uint64_t cabinet_size, ConsensusInterface::Minerwhitelist const &whitelist) const
+StakeManager::CabinetPtr StakeManager::BuildCabinet(
+    uint64_t block_number, uint64_t entropy, uint64_t cabinet_size,
+    ConsensusInterface::Minerwhitelist const &whitelist) const
 {
   auto snapshot = LookupStakeSnapshot(block_number);
   return snapshot->BuildCabinet(entropy, cabinet_size, whitelist);

@@ -38,7 +38,9 @@ using DRNG        = random::LinearCongruentialGenerator;
  * @param count The size of the selection
  * @return The selection of identities
  */
-StakeSnapshot::CabinetPtr StakeSnapshot::BuildCabinet(uint64_t entropy, std::size_t count, std::set<byte_array::ConstByteArray> const &whitelist) const
+StakeSnapshot::CabinetPtr StakeSnapshot::BuildCabinet(
+    uint64_t entropy, std::size_t count,
+    std::set<byte_array::ConstByteArray> const &whitelist) const
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Building cabinet from pool of: ", stake_index_.size());
 
@@ -47,13 +49,14 @@ StakeSnapshot::CabinetPtr StakeSnapshot::BuildCabinet(uint64_t entropy, std::siz
   auto stake_index = stake_index_;  // Since build cabinet is const
 
   // Pre filter against the whitelist if necessary
-  if(!whitelist.empty())
+  if (!whitelist.empty())
   {
     for (auto it = stake_index.begin(); it != stake_index.end();)
     {
-      if(whitelist.find((*it)->identity.identifier()) == whitelist.end())
+      if (whitelist.find((*it)->identity.identifier()) == whitelist.end())
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Removing staker since not in whitelist: ", (*it)->identity.identifier().ToBase64());
+        FETCH_LOG_WARN(LOGGING_NAME, "Removing staker since not in whitelist: ",
+                       (*it)->identity.identifier().ToBase64());
         it = stake_index.erase(it);
       }
       else

@@ -130,7 +130,7 @@ GenesisFileCreator::Result GenesisFileCreator::LoadFile(std::string const &  pat
       chain::SetGenesisDigest(genesis_block_.hash);
       chain::SetGenesisMerkleRoot(genesis_block_.merkle_hash);
 
-      params.whitelist        = genesis_block_.block_entropy.qualified;
+      params.whitelist    = genesis_block_.block_entropy.qualified;
       params.cabinet_size = static_cast<uint16_t>(params.whitelist.size());
 
       return Result::LOADED_PREVIOUS_GENESIS;

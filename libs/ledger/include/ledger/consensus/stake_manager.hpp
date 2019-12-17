@@ -20,10 +20,10 @@
 #include "chain/address.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
-#include "ledger/consensus/consensus_interface.hpp"
 
 #include <vector>
 
@@ -72,8 +72,10 @@ public:
   /// @}
 
   /// @name Committee Generation
-  CabinetPtr BuildCabinet(Block const &current, uint64_t cabinet_size, ConsensusInterface::Minerwhitelist const &whitelist = {});
-  CabinetPtr BuildCabinet(uint64_t block_number, uint64_t entropy, uint64_t cabinet_size, ConsensusInterface::Minerwhitelist const &whitelist = {}) const;
+  CabinetPtr BuildCabinet(Block const &current, uint64_t cabinet_size,
+                          ConsensusInterface::Minerwhitelist const &whitelist = {});
+  CabinetPtr BuildCabinet(uint64_t block_number, uint64_t entropy, uint64_t cabinet_size,
+                          ConsensusInterface::Minerwhitelist const &whitelist = {}) const;
   /// @}
 
   /// @name Persistence

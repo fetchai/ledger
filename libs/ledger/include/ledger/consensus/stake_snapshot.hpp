@@ -55,7 +55,8 @@ public:
   StakeSnapshot(StakeSnapshot &&)      = default;
   ~StakeSnapshot()                     = default;
 
-  CabinetPtr BuildCabinet(uint64_t entropy, std::size_t count, std::set<byte_array::ConstByteArray> const &whitelist = {}) const;
+  CabinetPtr BuildCabinet(uint64_t entropy, std::size_t count,
+                          std::set<byte_array::ConstByteArray> const &whitelist = {}) const;
 
   /// @name Stake Updates
   /// @{
