@@ -283,7 +283,7 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::CreatePrint(*module);
 
-  fetch::vm_modules::math::BindReadCSV(*module);
+  fetch::vm_modules::math::BindReadCSV(*module, true);
 
   RunEtchScript(etch_saver, module);
   RunEtchScript(etch_loader, module);
