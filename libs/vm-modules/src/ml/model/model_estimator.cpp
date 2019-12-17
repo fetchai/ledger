@@ -63,6 +63,7 @@ ModelEstimator &ModelEstimator::operator=(ModelEstimator &&other) noexcept
 ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType const &inputs,
                                            SizeType const &hidden_nodes)
 {
+  SizeType size{0};
   SizeType padded_size{0};
 
   FETCH_UNUSED(layer);  // must be a dense layer
@@ -82,7 +83,8 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
       state_.backward_pass_cost +
       static_cast<DataType>(inputs * hidden_nodes) * BACKWARD_DENSE_QUAD_COEF;
 
-  state_.weights_size_sum += inputs * hidden_nodes + hidden_nodes;
+  size = inputs * hidden_nodes + hidden_nodes;
+  state_.weights_size_sum += size;
 
   // DataType of Tensor is not important for caluclating padded size
   padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, inputs});
@@ -92,8 +94,8 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
   state_.last_layer_size = hidden_nodes;
   state_.ops_count += 3;
 
-  return ToChargeAmount(ADD_DENSE_INPUT_COEF * inputs + ADD_DENSE_OUTPUT_COEF * hidden_nodes +
-                        ADD_DENSE_QUAD_COEF * inputs * hidden_nodes + ADD_DENSE_CONST_COEF) *
+  return ToChargeAmount(ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF * padded_size +
+                        ADD_DENSE_WEIGHTS_SIZE_COEF * size + ADD_DENSE_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -452,16 +454,13 @@ ChargeAmount ModelEstimator::ToChargeAmount(fixed_point::fp64_t const &val)
 }
 
 // AddLayer
-fixed_point::fp64_t const ModelEstimator::ADD_DENSE_INPUT_COEF =
-    fixed_point::fp64_t("0.111111111111111");
-fixed_point::fp64_t const ModelEstimator::ADD_DENSE_OUTPUT_COEF =
-    fixed_point::fp64_t("0.043478260869565");
-fixed_point::fp64_t const ModelEstimator::ADD_DENSE_QUAD_COEF =
-    fixed_point::fp64_t("0.013513513513514");
-fixed_point::fp64_t const ModelEstimator::ADD_DENSE_CONST_COEF = fixed_point::fp64_t("52");
+fixed_point::fp64_t const ModelEstimator::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF =
+    fixed_point::fp64_t("0.002");
+fixed_point::fp64_t const ModelEstimator::ADD_DENSE_WEIGHTS_SIZE_COEF =
+    fixed_point::fp64_t("0.057");
+fixed_point::fp64_t const ModelEstimator::ADD_DENSE_CONST_COEF = fixed_point::fp64_t("60");
 
 // Compile
-
 fixed_point::fp64_t const ModelEstimator::ADAM_PADDED_WEIGHTS_SIZE_COEF =
     fixed_point::fp64_t("0.014285714285714");
 fixed_point::fp64_t const ModelEstimator::ADAM_WEIGHTS_SIZE_COEF =
