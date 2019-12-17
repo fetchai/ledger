@@ -107,7 +107,7 @@ TEST(RoutingTests, DISABLED_DesiredTableAfterReboot)
   std::cout << "==============================================================" << std::endl;
   std::cout << "==========================REBOOTING===========================" << std::endl;
   std::cout << "==============================================================" << std::endl;
-  network->Reboot(config);
+  network->Start(config);
 
   {
     // Restarting
