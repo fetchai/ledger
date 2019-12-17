@@ -150,7 +150,7 @@ void Executor::SettleFees(chain::Address const &miner, BlockIndex block, TokenAm
 
   FETCH_LOG_TRACE(LOGGING_NAME, "Aggregating stake updates...");
 
-  //if (!stake_updates.empty())
+  if (!stake_updates.empty())
   {
     StakeManager stake_manager{};
     if (stake_manager.Load(*storage_))
