@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/threading/Future.hpp"
@@ -36,7 +35,6 @@
 #include "visitors/FindGeoLocationVisitor.hpp"
 #include "visitors/PopulateActionsVisitorDescentPass.hpp"
 #include "visitors/PopulateFieldInformationVisitor.hpp"
-
 #include <atomic>
 #include <memory>
 #include <mutex>

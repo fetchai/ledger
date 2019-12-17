@@ -57,6 +57,7 @@ TEST(Kademlia, TableRecovery)
   {
     KademliaTable table{FakeAddress(N + 1), fetch::muddle::NetworkId("TEST")};
     table.SetCacheFile("test.peer_table");
+
     for (uint64_t i = 0; i < N; ++i)
     {
       auto info = GeneratePeerInfo(i);
@@ -73,6 +74,7 @@ TEST(Kademlia, TableRecovery)
 
     table.SetCacheFile("test.peer_table");
     table.Load();
+
     EXPECT_EQ(table.size(), N);
 
     // TODO(tfr): Test contents
