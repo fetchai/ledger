@@ -45,6 +45,9 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
     typename TypeParam::SizeType embedding_dimensions, typename TypeParam::SizeType n_datapoints,
     std::string &input_name, std::string &label_name, std::string &error_name)
 {
+  using SizeType = fetch::math::SizeType;
+  using DataType = typename TypeParam::Type;
+
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g(std::make_shared<fetch::ml::Graph<TypeParam>>());
 
   input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
@@ -55,6 +58,20 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
   label_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
   error_name = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "Error", {output_name, label_name});
+
+  // Fill weights with non-random values
+  auto weights_refs = g->GetWeightsReferences();
+  for (auto &weight : weights_refs)
+  {
+    SizeType i  = 0;
+    auto     it = weight.begin();
+    while (it.is_valid())
+    {
+      *it = static_cast<DataType>(i % 2) - fetch::math::Type<DataType>("0.5");
+      i++;
+      ++it;
+    }
+  }
 
   return g;
 }
@@ -131,16 +148,16 @@ TYPED_TEST(SparseOptimisersTest, lazy_adam_optimiser_training_2D)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(7, 0)), 0.09068207279779017,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(7, 0)), 0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) * 2 *
                   static_cast<double>(gt_1.size()));
-  EXPECT_NEAR(static_cast<double>(weights[0].At(3, 4)), 0.12688748072832823,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(3, 4)), 0.49001598358154297,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) * 2 *
                   static_cast<double>(gt_1.size()));
-  EXPECT_NEAR(static_cast<double>(weights[0].At(8, 32)), 0.056237722048535943,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(8, 32)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) * 2 *
                   static_cast<double>(gt_1.size()));
-  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), -0.12158122821711004,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), -0.49001598358154297,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) * 2 *
                   static_cast<double>(gt_1.size()));
 
@@ -188,16 +205,16 @@ TYPED_TEST(SparseOptimisersTest, adam_optimiser_training_2D)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(7, 0)), 0.09068207279779017,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(7, 0)), 0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) * 2 *
                   static_cast<double>(gt_1.size()));
-  EXPECT_NEAR(static_cast<double>(weights[0].At(3, 4)), 0.12090119766071439,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(3, 4)), 0.48399609327316284,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) * 2 *
                   static_cast<double>(gt_1.size()));
-  EXPECT_NEAR(static_cast<double>(weights[0].At(8, 32)), 0.056237722048535943,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(8, 32)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) * 2 *
                   static_cast<double>(gt_1.size()));
-  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), -0.11559513979591429,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(0, 9)), -0.48399609327316284,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) * 2 *
                   static_cast<double>(gt_1.size()));
 

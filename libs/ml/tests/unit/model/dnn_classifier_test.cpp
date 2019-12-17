@@ -55,7 +55,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
   data_loader_ptr->AddData({data}, gt);
 
   // run model in training mode
-  auto model = ModelType(model_config, {3, 50, 50, 3});
+  auto model = ModelType(model_config, {3, 30, 30, 3});
   model.SetDataloader(std::move(data_loader_ptr));
   model.Compile(optimiser_type, ops::LossType::NONE, {ops::MetricType::CATEGORICAL_ACCURACY});
 

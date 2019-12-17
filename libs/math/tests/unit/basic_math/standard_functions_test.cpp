@@ -39,7 +39,7 @@ void RandomAssign(TensorType &tensor)
   auto it = tensor.begin();
   while (it.is_valid())
   {
-    *it = static_cast<Type>(random::Random::generator.AsFP64());
+    *it = random::Random::generator.AsType<Type>();
     ++it;
   }
 }

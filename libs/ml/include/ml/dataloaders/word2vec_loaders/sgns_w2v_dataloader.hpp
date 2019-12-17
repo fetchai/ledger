@@ -378,7 +378,7 @@ void GraphW2VLoader<TensorType>::BufferNextSamples()
     auto word_freq =
         static_cast<DataType>(word_id_counts_[data_.at(current_sentence_).at(current_word_)]) /
         static_cast<DataType>(size_);
-    auto random_var = static_cast<DataType>(this->rand.AsFP64());  // random variable between 0-1
+    auto random_var = this->rand.template AsType<DataType>();  // random variable between 0-1
     if (random_var < DataType{1} - fetch::math::Sqrt(freq_thresh_ / word_freq))
     {  // subsample for a cumulative prob of 1 - sqrt(thresh/freq) // N.B. if word_freq <
        // freq_thresh, then subsampling would not happen

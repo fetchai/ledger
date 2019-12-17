@@ -113,7 +113,7 @@ TYPED_TEST(SequentialModelTest, adagrad_sequential)
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD,
                                                      fetch::math::Type<DataType>("0.0001"),
-                                                     fetch::math::Type<DataType>("0.04"), 400));
+                                                     fetch::math::Type<DataType>("0.05"), 400));
 }
 
 TYPED_TEST(SequentialModelTest, adam_sequential)
