@@ -25,6 +25,8 @@
 #include <thread>
 #include <vector>
 
+#ifdef FETCH_DEBUG_MUTEX
+
 TEST(DebugMutex, SimpleProblem)
 {
   fetch::MutexRegister::ThrowOnDeadlock();
@@ -113,3 +115,5 @@ TEST(DebugMutex, DISABLED_MultiThreadDeadlock2)
   threads[3].join();
   threads.clear();
 }
+
+#endif // FETCH_DEBUG_MUTEX

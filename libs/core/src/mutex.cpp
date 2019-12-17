@@ -22,6 +22,9 @@
 #include <sstream>
 
 namespace fetch {
+
+#ifdef FETCH_DEBUG_MUTEX
+
 namespace {
 MutexRegister mutex_register;
 }
@@ -151,4 +154,7 @@ std::string MutexRegister::CreateTrace(DebugMutex *first_mutex, std::thread::id 
 
   return "Magically escaped an infinite loop";
 }
+
+#endif // FETCH_DEBUG_MUTEX
+
 }  // namespace fetch

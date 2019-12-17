@@ -27,6 +27,12 @@
 #include <vector>
 
 namespace fetch {
+
+#define FETCH_JOIN_IMPL(x, y) x##y
+#define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
+
+#ifdef FETCH_DEBUG_MUTEX
+
 class DebugMutex;
 
 struct LockLocation
@@ -160,23 +166,20 @@ private:
   DebugMutex &lockable_;
 };
 
-//#ifndef NDEBUG
 using Mutex = DebugMutex;
-//#else
-// using Mutex = std::mutex;
-//#endif
 
-#define FETCH_JOIN_IMPL(x, y) x##y
-#define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
-
-#ifdef FETCH_USE_DEBUG_MUTEX
 #define FETCH_LOCK(lockable)                                                       \
   fetch::DebugLockGuard<typename std::decay<decltype(lockable)>::type> FETCH_JOIN( \
       mutex_locked_on_line, __LINE__)(lockable, __FILE__, __LINE__)
-#else
+
+#else // !FETCH_DEBUG_MUTEX
+
+using Mutex = std::mutex;
 
 #define FETCH_LOCK(lockable) \
   std::lock_guard<decltype(lockable)> FETCH_JOIN(mutex_locked_on_line, __LINE__)(lockable)
-#endif
+
+#endif // FETCH_DEBUG_MUTEX
+
 
 }  // namespace fetch
