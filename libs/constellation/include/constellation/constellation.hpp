@@ -276,6 +276,8 @@ private:
   /// @{
   telemetry::CounterPtr uptime_;
   /// @}
+  //
+  MainChain::BlockPtr recovery_block_;
 };
 
 }  // namespace constellation

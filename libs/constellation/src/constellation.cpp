@@ -549,7 +549,10 @@ bool Constellation::OnBringUpExternalNetwork(
     }
   }
 
-  consensus_->UpdateCurrentBlock(*chain_->CreateGenesisBlock());
+  if(recovery_block_)
+  {
+    consensus_->UpdateCurrentBlock(*recovery_block_);
+  }
 
   block_packer_ = std::make_unique<BlockPackingAlgorithm>(cfg_.log2_num_lanes);
 
@@ -992,6 +995,8 @@ bool Constellation::CheckStateIntegrity()
     // we need to update the execution manager state and also our locally cached state about the
     // 'last' block that has been executed
     execution_manager_->SetLastProcessedBlock(current_block->hash);
+
+    recovery_block_ = current_block;
   }
   else
   {
