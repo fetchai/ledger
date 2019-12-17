@@ -188,6 +188,8 @@ struct Type : public Symbol
   Operators      ops;
   Operators      left_ops;
   Operators      right_ops;
+  uint16_t       num_functions{};
+  uint16_t       num_variables{};
   TypeId         id{TypeIds::Unknown};
 };
 
@@ -259,6 +261,7 @@ struct Function
   TypePtrArray     parameter_types;
   VariablePtrArray parameter_variables;
   TypePtr          return_type;
+  uint16_t         num_locals{};
 };
 using FunctionPtr      = std::shared_ptr<Function>;
 using FunctionPtrArray = std::vector<FunctionPtr>;

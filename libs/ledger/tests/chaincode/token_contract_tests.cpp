@@ -28,6 +28,7 @@
 
 #include "gmock/gmock.h"
 
+#include <ledger/chaincode/wallet_record.hpp>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -76,12 +77,10 @@ protected:
     contract_name_ = std::make_shared<ConstByteArray>(std::string{TokenContract::NAME});
   }
 
-  static ConstByteArray CreateTxDeedData(Address const &address, SigneesPtr const &signees,
-                                         ThresholdsPtr const & thresholds,
+  static ConstByteArray CreateTxDeedData(SigneesPtr const &signees, ThresholdsPtr const &thresholds,
                                          uint64_t const *const balance = nullptr)
   {
     Variant v_data{Variant::Object()};
-    v_data["address"] = address.display();
 
     if (balance != nullptr)
     {
@@ -140,7 +139,7 @@ protected:
     builder.From(address);
     builder.TargetChainCode("fetch.token", BitVector{});
     builder.Action("deed");
-    builder.Data(CreateTxDeedData(address, signees, thresholds, balance));
+    builder.Data(CreateTxDeedData(signees, thresholds, balance));
 
     // add the signers references
     for (auto const *entity : keys_to_sign)
@@ -221,6 +220,23 @@ protected:
 
     return success;
   }
+
+  bool QueryDeed(Address const &address, Query &deed)
+  {
+    EXPECT_CALL(*storage_, Get(_)).Times(1);
+    EXPECT_CALL(*storage_, GetOrCreate(_)).Times(0);
+    EXPECT_CALL(*storage_, Set(_, _)).Times(0);
+    EXPECT_CALL(*storage_, Lock(_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*storage_, Unlock(_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
+    EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
+
+    // formulate the query
+    Query query      = Variant::Object();
+    query["address"] = address.display();
+
+    return Contract::Status::OK == SendQuery("deed", query, deed);
+  }
 };
 
 TEST_F(TokenContractTests, CheckInitialBalance)
@@ -250,6 +266,34 @@ TEST_F(TokenContractTests, DISABLED_CheckTransferWithoutPreexistingDeed)
 
   EXPECT_TRUE(GetBalance(entities[1].address, balance));
   EXPECT_EQ(balance, 400);
+}
+
+TEST_F(TokenContractTests, QueryDeed)
+{
+  Entities entities(4);
+
+  // PRE-CONDITION: Create DEED
+  SigneesPtr signees{std::make_shared<Deed::Signees>()};
+  (*signees)[entities[0].address] = 2;
+  (*signees)[entities[1].address] = 5;
+  (*signees)[entities[2].address] = 5;
+
+  ThresholdsPtr thresholds{std::make_shared<Deed::OperationTresholds>()};
+  (*thresholds)["transfer"] = 7;
+  (*thresholds)["amend"]    = 12;
+
+  ASSERT_TRUE(SendDeedTx(entities[0].address, {&entities[0]}, signees, thresholds));
+
+  Deed const expected_deed{*signees, *thresholds};
+
+  // TEST OBJECTIVE: Query Deed
+  Query v_deed;
+  EXPECT_TRUE(QueryDeed(entities[0].address, v_deed));
+
+  WalletRecord wr;
+  wr.CreateDeed(v_deed);
+
+  EXPECT_EQ(expected_deed, *wr.deed);
 }
 
 TEST_F(TokenContractTests, CheckDeedCreation)
@@ -312,18 +356,11 @@ TEST_F(TokenContractTests, CheckDeedAmend)
                          signees_modif, thresholds_modif));
 }
 
-// TODO(HUT): this is disabled - by whom and why?
-TEST_F(TokenContractTests, DISABLED_CheckDeedDeletion)
+TEST_F(TokenContractTests, CheckDeedDeletion)
 {
-  uint64_t const origina_wealth  = 1000;
-  uint64_t const transfer_amount = 400;
-
   Entities entities(4);
 
-  // 1st PRE-CONDITION: Create WEALTH
-  // ASSERT_TRUE(CreateWealth(entities[0], origina_wealth));
-
-  // 2nd PRE-CONDITION: Create DEED
+  // PRE-CONDITION: Create DEED
   SigneesPtr signees{std::make_shared<Deed::Signees>()};
   (*signees)[entities[0].address] = 2;
   (*signees)[entities[1].address] = 5;
@@ -335,42 +372,22 @@ TEST_F(TokenContractTests, DISABLED_CheckDeedDeletion)
 
   ASSERT_TRUE(SendDeedTx(entities[0].address, {&entities[0]}, signees, thresholds));
 
-  // PROVING that DEED is in EFFECT by executing 2 TRANSFERS - first transfer
-  // shall fail nad 2nd transfer shall pass:
-  // EXPECTED to **FAIL** - transfer is intentionally configured as deed would
-  // NOT be in effect (= providing only single signature for FROM address what
-  // would be sufficient **IF** deed would NOT be in effect):
+  // PROVING that DEED is in EFFECT by executing deed amend with insufficient
+  // voting power EXPECTING it to **FAIL**. The transaction is intentionally
+  // configured the way as deed would NOT be in effect (= providing only **SINGLE**
+  // signature for FROM address what would be sufficient **IF** deed would NOT
+  // be in effect):
   ASSERT_FALSE(
-      Transfer(entities[0].address, entities[1].address, {&entities[0]}, transfer_amount, false));
-  uint64_t balance = std::numeric_limits<uint64_t>::max();
-  ASSERT_TRUE(GetBalance(entities[0].address, balance));
-  ASSERT_EQ(origina_wealth, balance);
-  // EXPECTED to **PASS**: 2nd transfer cofigured to conform with deed and so it
-  // shall pass:
-  ASSERT_TRUE(
-      Transfer(entities[0].address, entities[1].address, {&entities[0], &entities[1]}, 400));
-  balance = std::numeric_limits<uint64_t>::max();
-  ASSERT_TRUE(GetBalance(entities[0].address, balance));
-  ASSERT_EQ(origina_wealth - transfer_amount, balance);
+      SendDeedTx(entities[0].address, {&entities[0]}, SigneesPtr{}, ThresholdsPtr{}, false));
 
   // TESTS OBJECTIVE: Deletion of the DEED
   // EXPECTED TO **PASS**
   EXPECT_TRUE(SendDeedTx(entities[0].address, {&entities[0], &entities[1], &entities[2]},
                          SigneesPtr{}, ThresholdsPtr{}));
 
-  // PROVING THAT DEED HAS BEEN DELETED:
-  // EXPECTED to **FAIL** - Proving that transfer int not possible to perform
-  // without at least one signature, e.g. if we would have for some reason the
-  // "empty" deed in effect (= deed would be on record but would contain empty
-  // container of signees):
-  EXPECT_FALSE(Transfer(entities[0].address, entities[1].address, {}, transfer_amount, false));
-  // EXPECTED to **PASS** - Transfer is intentionally configured as deed would
-  // NOT be in effect (= providing only single signature for FROM address what
-  // shall be sufficient to modify the balance if deed has been deleted):
-  EXPECT_TRUE(Transfer(entities[0].address, entities[1].address, {&entities[0]}, transfer_amount));
-  balance = std::numeric_limits<uint64_t>::max();
-  EXPECT_TRUE(GetBalance(entities[0].address, balance));
-  EXPECT_EQ(origina_wealth - transfer_amount - transfer_amount, balance);
+  // PROVING THAT DEED HAS BEEN DELETED: providing only **SINGLE** signature for FROM
+  // address what sall be sufficient **IF** the original deed is no more in effect:
+  EXPECT_TRUE(SendDeedTx(entities[0].address, {&entities[0]}, signees, thresholds));
 }
 
 TEST_F(TokenContractTests, CheckDeedAmendDoesNotAffectBalance)

@@ -110,9 +110,8 @@ public:
   DataType GetForwardCost();
 
   // AddLayer
-  static const fixed_point::fp64_t ADD_DENSE_INPUT_COEF;
-  static const fixed_point::fp64_t ADD_DENSE_OUTPUT_COEF;
-  static const fixed_point::fp64_t ADD_DENSE_QUAD_COEF;
+  static const fixed_point::fp64_t ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF;
+  static const fixed_point::fp64_t ADD_DENSE_WEIGHTS_SIZE_COEF;
   static const fixed_point::fp64_t ADD_DENSE_CONST_COEF;
 
   // Compile
