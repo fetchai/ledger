@@ -243,7 +243,7 @@ void UInt256Wrapper::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
   if (rhs->IsTemporary())
   {
     rhs->number_ += lhs->number_;
-    lhso = std::move(rhs);
+    lhso = rhs;
     return;
   }
 
@@ -291,7 +291,7 @@ void UInt256Wrapper::Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso)
   if (rhs->IsTemporary())
   {
     rhs->number_ *= lhs->number_;
-    lhso = std::move(rhs);
+    lhso = rhs;
     return;
   }
   Ptr<UInt256Wrapper> n(new UInt256Wrapper(vm_, lhs->number_ * rhs->number_));
