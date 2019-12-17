@@ -45,7 +45,7 @@ RandomArray(std::size_t n, fetch::fixed_point::FixedPoint<I, F> adj)
   fetch::fixed_point::FixedPoint<I, F> rn{0};
   for (std::size_t i = 0; i < n; ++i)
   {
-    rn       = fetch::fixed_point::FixedPoint<I, F>(random::Random::generator.AsFP64());
+    rn       = random::Random::generator.AsType<fetch::fixed_point::FixedPoint<I, F>>();
     a1.At(i) = rn + adj;
   }
   return a1;
@@ -59,12 +59,12 @@ fetch::meta::IfIsInteger<T, Tensor<T, fetch::memory::SharedArray<T>>> RandomArra
   Tensor<T, fetch::memory::SharedArray<T>> a1(n);
 
   // because random numbers are between 0 and 1 which doesn't work for integers
-  double scale = 1000;
+  T scale{1000};
 
   T rn{0};
   for (std::size_t i = 0; i < n; ++i)
   {
-    rn       = T(random::Random::generator.AsFP64() * scale);
+    rn       = random::Random::generator.AsType<T>() * scale;
     a1.At(i) = rn + adj;
   }
   return a1;
@@ -80,7 +80,7 @@ fetch::meta::IfIsFloat<T, Tensor<T, fetch::memory::SharedArray<T>>> RandomArray(
   T rn{0};
   for (std::size_t i = 0; i < n; ++i)
   {
-    rn       = T(random::Random::generator.AsFP64());
+    rn       = random::Random::generator.AsType<T>();
     a1.At(i) = rn + adj;
   }
   return a1;

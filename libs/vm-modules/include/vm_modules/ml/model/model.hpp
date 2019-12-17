@@ -77,6 +77,11 @@ public:
   using ModelEstimator      = fetch::vm_modules::ml::model::ModelEstimator;
   using SequentialModelPtr  = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
 
+  VMModel(VMModel const &other) = delete;
+  VMModel(VMModel &&other)      = delete;
+  VMModel &operator=(VMModel const &other) = default;  // TODO(): Needed for DeserializeFrom
+  VMModel &operator=(VMModel &&other) = delete;
+
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
