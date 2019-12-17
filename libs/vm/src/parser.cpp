@@ -155,6 +155,8 @@ bool Parser::ParseBlock(BlockNodePtr const &block_node)
       AddError("no matching 'contract'");
       break;
     }
+    /*
+    // Disable structs for the moment
     case Token::Kind::Struct:
     {
       child = ParseStructDefinition();
@@ -171,6 +173,7 @@ bool Parser::ParseBlock(BlockNodePtr const &block_node)
       AddError("no matching 'struct'");
       break;
     }
+    */
     case Token::Kind::AnnotationIdentifier:
     case Token::Kind::Function:
     {
@@ -1437,8 +1440,8 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
 bool Parser::IsStatementKeyword(Token::Kind kind) const
 {
   return (kind == Token::Kind::Persistent) || (kind == Token::Kind::Contract) ||
-         (kind == Token::Kind::EndContract) || (kind == Token::Kind::Struct) ||
-         (kind == Token::Kind::EndStruct) || (kind == Token::Kind::Function) ||
+         (kind == Token::Kind::EndContract) || /* (kind == Token::Kind::Struct) || */
+         /* (kind == Token::Kind::EndStruct) || */ (kind == Token::Kind::Function) ||
          (kind == Token::Kind::EndFunction) || (kind == Token::Kind::While) ||
          (kind == Token::Kind::EndWhile) || (kind == Token::Kind::For) ||
          (kind == Token::Kind::EndFor) || (kind == Token::Kind::If) ||
