@@ -1172,7 +1172,8 @@ public:
   VmTestToolkit     toolkit{&stdout};
 };
 
-TEST_F(EtchMemberFunctionDefinitionAnnotationTests, unannotated_member_functions_are_permitted)
+TEST_F(EtchMemberFunctionDefinitionAnnotationTests,
+       DISABLED_unannotated_member_functions_are_permitted)
 {
   static char const *TEXT = R"(
     struct Clazz
@@ -1185,7 +1186,8 @@ TEST_F(EtchMemberFunctionDefinitionAnnotationTests, unannotated_member_functions
   ASSERT_TRUE(toolkit.Compile(TEXT));
 }
 
-TEST_F(EtchMemberFunctionDefinitionAnnotationTests, annotated_member_functions_are_forbidden)
+TEST_F(EtchMemberFunctionDefinitionAnnotationTests,
+       DISABLED_annotated_member_functions_are_forbidden)
 {
   static char const *TEXT1 = R"(
     struct Clazz
@@ -1227,7 +1229,7 @@ TEST_F(EtchMemberFunctionDefinitionAnnotationTests, annotated_member_functions_a
   ASSERT_FALSE(toolkit.Compile(TEXT4));
 }
 
-TEST_F(EtchMemberFunctionDefinitionAnnotationTests, unannotated_constructors_are_permitted)
+TEST_F(EtchMemberFunctionDefinitionAnnotationTests, DISABLED_unannotated_constructors_are_permitted)
 {
   static char const *TEXT = R"(
     struct Clazz
@@ -1239,7 +1241,7 @@ TEST_F(EtchMemberFunctionDefinitionAnnotationTests, unannotated_constructors_are
   ASSERT_TRUE(toolkit.Compile(TEXT));
 }
 
-TEST_F(EtchMemberFunctionDefinitionAnnotationTests, annotated_constructors_are_forbidden)
+TEST_F(EtchMemberFunctionDefinitionAnnotationTests, DISABLED_annotated_constructors_are_forbidden)
 {
   static char const *TEXT1 = R"(
     struct Clazz
