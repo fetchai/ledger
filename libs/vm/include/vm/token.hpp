@@ -27,8 +27,8 @@ struct Token
 {
   enum class Kind : uint16_t
   {
-    EndOfInput = 0,
-    Unknown,
+    Unknown = 0,
+    EndOfInput,
     Integer8,
     UnsignedInteger8,
     Integer16,
@@ -41,8 +41,9 @@ struct Token
     Fixed64,
     Fixed128,
     String,
-    BadString,
+    UnterminatedString,
     UnterminatedComment,
+    MaxLinesReached,
     True,
     False,
     Null,
@@ -106,7 +107,6 @@ struct Token
   Kind        kind;
   uint32_t    offset{};
   uint16_t    line{};
-  uint16_t    length{};
   std::string text;
 };
 

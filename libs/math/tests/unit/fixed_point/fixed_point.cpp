@@ -271,14 +271,10 @@ TEST(FixedPointTest, FromString_16_16)
   EXPECT_EQ(large2, fp32_t::FP_MIN);
 
   fp32_t e4("000000000000001.00010000000000000000000000000000000000000000000");
-  std::cout << e4 << std::endl;
   EXPECT_EQ(e4, fp32_t("1.0001"));
-  std::cout << fp32_t("1.0001") << std::endl;
 
   fp32_t e5("000000000000001.010000000000000000000000000000000000000000000");
-  std::cout << e5 << std::endl;
   EXPECT_EQ(e5, fp32_t("1.01"));
-  std::cout << fp32_t("1.01") << std::endl;
 }
 
 TEST(FixedPointTest, FromString_32_32)
@@ -316,14 +312,10 @@ TEST(FixedPointTest, FromString_32_32)
   EXPECT_EQ(large2, fp64_t::FP_MIN);
 
   fp64_t e4("000000000000001.0000000010000000000000000000000000000000000000000000");
-  std::cout << e4 << std::endl;
   EXPECT_EQ(e4, fp64_t("1.000000001"));
-  std::cout << fp64_t("1.000000001") << std::endl;
 
   fp64_t e5("000000000000001.00000010000000000000000000000000000000000000000000");
-  std::cout << e5 << std::endl;
   EXPECT_EQ(e5, fp64_t("1.0000001"));
-  std::cout << fp64_t("1.0000001") << std::endl;
 }
 
 TEST(FixedPointTest, FromString_64_64)
@@ -361,13 +353,117 @@ TEST(FixedPointTest, FromString_64_64)
   EXPECT_EQ(large2, fp128_t::FP_MIN);
 
   fp128_t e4("000000000000001.000000000000000010000000000000000000000000000000000000000000");
-  std::cout << e4 << std::endl;
   EXPECT_EQ(e4, fp128_t("1.00000000000000001"));
 
   fp128_t e5("000000000000001.000000000010000000000000000000000000000000000000000000");
-  std::cout << e5 << std::endl;
   EXPECT_EQ(e5, fp128_t("1.00000000001"));
-  std::cout << fp128_t("1.00000000001") << std::endl;
+}
+
+template <typename T>
+void ToStringTest(std::string const &string)
+{
+  T                 val(string);
+  std::stringstream ss;
+  ss << val;
+  T result_val(ss.str());
+  EXPECT_TRUE(fetch::math::Abs(val - result_val) < fetch::math::function_tolerance<T>());
+}
+
+TEST(FixedPointTest, ToString_16_16)
+{
+  std::string str_val = "1fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "1.0fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "-1fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "0.5fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "1.5fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "2.5fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "-1.5fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "2.7182818284590452352";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "-2.7182818284590452352";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "144269504088896340.735992";
+  ToStringTest<fp32_t>(str_val);
+}
+TEST(FixedPointTest, ToString_32_32)
+{
+  std::string str_val = "1fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "1.0fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "-1fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "0.5fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "1.5fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "2.5fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "-1.5fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "2.7182818";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "-2.7182818";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "144269504088896340.735992";
+  ToStringTest<fp64_t>(str_val);
+}
+TEST(FixedPointTest, ToString_64_64)
+{
+  std::string str_val = "1fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "1.0fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "-1fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "0.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "1.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "2.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "-1.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "2.718281";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "-2.718281";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "144269504088896340.735992";
+  ToStringTest<fp128_t>(str_val);
 }
 
 TEST(FixedPointTest, Constants_16_16)

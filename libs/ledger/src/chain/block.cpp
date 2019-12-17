@@ -90,11 +90,10 @@ void Block::UpdateDigest()
   // clang-format off
   buf << previous_hash;
   buf << merkle_hash;
+  buf << tx_merkle_tree.root();
   buf << block_number;
-  buf << miner;
   buf << miner_id;
   buf << log2_num_lanes;
-  buf << tx_merkle_tree.root();
   buf << dag_epoch;
   buf << timestamp;
   buf << block_entropy;

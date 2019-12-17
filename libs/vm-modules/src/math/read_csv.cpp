@@ -43,9 +43,12 @@ fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ReadCSV(
 
 }  // namespace
 
-void BindReadCSV(fetch::vm::Module &module)
+void BindReadCSV(fetch::vm::Module &module, bool const enable_experimental)
 {
-  module.CreateFreeFunction("readCSV", &ReadCSV);
+  if (enable_experimental)
+  {
+    module.CreateFreeFunction("readCSV", &ReadCSV);
+  }
 }
 
 }  // namespace math
