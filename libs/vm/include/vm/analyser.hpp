@@ -94,16 +94,17 @@ private:
   static std::string const GET_INDEXED_VALUE;
   static std::string const SET_INDEXED_VALUE;
 
-  static const uint16_t MAX_NESTED_BLOCKS             = 256;
-  static const uint16_t MAX_STATE_DEFINITIONS         = 256;
-  static const uint16_t MAX_CONTRACT_DEFINITIONS      = 64;
-  static const uint16_t MAX_FUNCTIONS_PER_CONTRACT    = 256;
-  static const uint16_t MAX_USER_DEFINED_TYPES        = 256;
-  static const uint16_t MAX_FREE_FUNCTIONS            = 256;
-  static const uint16_t MAX_MEMBER_FUNCTIONS_PER_TYPE = 256;
-  static const uint16_t MAX_MEMBER_VARIABLES_PER_TYPE = 256;
-  static const uint16_t MAX_PARAMETERS_PER_FUNCTION   = 16;
-  static const uint16_t MAX_LOCALS_PER_FUNCTION       = 256;
+  static const uint16_t MAX_NESTED_BLOCKS                    = 256;
+  static const uint16_t MAX_STATE_DEFINITIONS                = 256;
+  static const uint16_t MAX_CONTRACT_DEFINITIONS             = 64;
+  static const uint16_t MAX_FUNCTIONS_PER_CONTRACT           = 256;
+  static const uint16_t MAX_USER_DEFINED_TYPES               = 256;
+  static const uint16_t MAX_USER_DEFINED_INSTANTIATION_TYPES = 256;
+  static const uint16_t MAX_FREE_FUNCTIONS                   = 256;
+  static const uint16_t MAX_MEMBER_FUNCTIONS_PER_TYPE        = 256;
+  static const uint16_t MAX_MEMBER_VARIABLES_PER_TYPE        = 256;
+  static const uint16_t MAX_PARAMETERS_PER_FUNCTION          = 16;
+  static const uint16_t MAX_LOCALS_PER_FUNCTION              = 256;
 
   using OperatorMap = std::unordered_map<NodeKind, Operator>;
 
@@ -305,6 +306,7 @@ private:
   uint16_t          num_contract_definitions_{};
   uint16_t          num_free_functions_{};
   uint16_t          num_user_defined_types_{};
+  uint16_t          num_user_defined_instantiation_types_{};
   FunctionPtr       function_;
   NodePtr           use_any_node_;
   FileErrorsArray   file_errors_array_;
