@@ -58,7 +58,6 @@ public:
   bool operator!=(Block const &rhs) const;
 
   // Block core information
-  Digest         hash;               ///< The hash of the block
   Digest         previous_hash;      ///< The hash of the previous block
   Digest         merkle_hash;        ///< The merkle state hash across all shards
   Block::Index   block_number{0};    ///< The height of the block from genesis
@@ -71,10 +70,13 @@ public:
   BlockEntropy   block_entropy;      ///< Entropy that determines miner priority for the next block
   Weight         weight = 1;         ///< Block weight
 
-  // The qual miner must sign the block
+  // Hash of the above
+  Digest hash;
+
+  // The qual miner must sign the block hash
   Digest miner_signature;
 
-  /// @name Metadata for block management (not serialized)
+  /// @name Metadata for block management (not hashed/serialized)
   /// @{
   Weight   total_weight = 1;
   bool     is_loose     = false;
