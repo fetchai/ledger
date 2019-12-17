@@ -511,7 +511,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
 
   next_block_->previous_hash  = current_block_->hash;
   next_block_->block_number   = current_block_->block_number + 1;
-  next_block_->miner          = mining_address_;
   next_block_->log2_num_lanes = log2_num_lanes_;
 
   FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->block_number,
