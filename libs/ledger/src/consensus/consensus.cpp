@@ -368,6 +368,7 @@ bool Consensus::ShouldTriggerNewCabinet(Block const &block)
 
 void Consensus::UpdateCurrentBlock(Block const &current)
 {
+  FETCH_LOCK(mutex_);
   bool const one_ahead = current.block_number == current_block_.block_number + 1;
 
   if (current.block_number > current_block_.block_number && !one_ahead)
@@ -495,6 +496,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
 NextBlockPtr Consensus::GenerateNextBlock()
 {
+  FETCH_LOCK(mutex_);
   NextBlockPtr ret;
 
   // Number of block we want to generate
@@ -655,6 +657,7 @@ bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) co
 
 Status Consensus::ValidBlock(Block const &current) const
 {
+  FETCH_LOCK(mutex_);
   Status ret = Status::YES;
 
   // TODO(HUT): more thorough checks for genesis needed
