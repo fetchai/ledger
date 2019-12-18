@@ -72,7 +72,7 @@ struct SubscriptionGroup
   {
     auto ret = SemanticCoordinateType::FP_MAX;
     ret >>= depth;
-    return ret;
+    return static_cast<SemanticCoordinateType>(ret.Integer());
   }
 
   SemanticPosition       indices;

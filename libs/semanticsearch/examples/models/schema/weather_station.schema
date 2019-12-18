@@ -35,8 +35,8 @@ pos q : WeatherStation = {
 };
 
 pos p : Position = {
-  latitude: 9,
-  longitude: 0
+  latitude: 0,
+  longitude: 1
 };
 
 find p; // * 9; // * 0.01;

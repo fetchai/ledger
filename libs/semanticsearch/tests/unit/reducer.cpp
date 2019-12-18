@@ -32,7 +32,7 @@ TEST(SemanticSearchIndex, SemanticReducer)
     val -= from;
     val /= (to - from + 1);  // Plus one is needed for equality in validator
 
-    ret.push_back(static_cast<uint64_t>(val * uint64_t(-1)));
+    ret.PushBack(static_cast<SemanticCoordinateType>(SemanticCoordinateType::FP_MAX * val));
     return ret;
   });
 
@@ -47,9 +47,9 @@ TEST(SemanticSearchIndex, SemanticReducer)
   EXPECT_TRUE(reducer.Validate<double>(90., error));
   EXPECT_TRUE(reducer.Validate<double>(-90., error));
 
-  EXPECT_EQ(reducer.Reduce<double>(-90.), std::vector<uint64_t>({0}));
+  // TODO:  EXPECT_EQ(reducer.Reduce<double>(-90.), SemanticPosition({0}));
   // Note that due to rounding errors, we don't hit the exact limit
   // uint64(-1)
-  EXPECT_LE(static_cast<uint64_t>(-1) - reducer.Reduce<double>(90.)[0],
-            static_cast<uint64_t>(-1) / 180);
+  EXPECT_LE(SemanticCoordinateType::FP_MAX - reducer.Reduce<double>(90.)[0],
+            SemanticCoordinateType::FP_MAX / 180);
 }

@@ -1,0 +1,17 @@
+model Position {
+  latitude: BoundedInteger(-90, 90),
+  longitude: BoundedInteger(0, 180)  
+};
+
+
+let p : Position = {
+  latitude: 0,
+  longitude: 1
+};
+advertise p;
+
+let q : Position = {
+  latitude: -1,
+  longitude: 44
+};
+find q;

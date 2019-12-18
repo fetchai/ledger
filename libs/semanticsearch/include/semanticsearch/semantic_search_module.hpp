@@ -114,14 +114,14 @@ public:
     // Registering reduced types
     ret->RegisterFunction<ModelField, int64_t, int64_t>(
         "BoundedInteger", [](int64_t from, int64_t to) -> ModelField {
-          auto            span = static_cast<uint64_t>(to - from);
+          auto            span = static_cast<SemanticCoordinateType>(to - from);
           SemanticReducer cdr{"BoundedIntegerReducer[" + std::to_string(from) + "-" +
                               std::to_string(to) + "]"};
 
           cdr.SetReducer<int64_t>(1, [span, from](int64_t x) {
             SemanticPosition       ret;
-            SemanticCoordinateType multiplier = SemanticCoordinateType::FP_MAX / span;
-            ret.PushBack(static_cast<SemanticCoordinateType>(x + from) * multiplier);
+            SemanticCoordinateType multiplier = (SemanticCoordinateType::FP_MAX / span);
+            ret.PushBack(static_cast<SemanticCoordinateType>(x - from) * multiplier);
 
             return ret;
           });

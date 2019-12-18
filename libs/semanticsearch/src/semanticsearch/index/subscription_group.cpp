@@ -27,6 +27,7 @@ SubscriptionGroup::SubscriptionGroup(DepthParameterType d, SemanticPosition posi
   : depth(d)
 {
   auto cs = CalculateWidthFromDepth(depth);
+
   for (auto const &p : position)
   {
     indices.PushBack(p / cs);
@@ -46,7 +47,7 @@ bool SubscriptionGroup::operator<(SubscriptionGroup const &other) const
   }
 
   std::size_t i = 0;
-  while ((i != indices.size()) && (indices[i] == other.indices[i]))
+  while ((i != indices.size()) && (indices[i].Integer() == other.indices[i].Integer()))
   {
     ++i;
   }

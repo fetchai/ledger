@@ -19,6 +19,7 @@
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 
+#include <initializer_list>
 #include <memory>
 #include <set>
 #include <string>
@@ -30,7 +31,7 @@ namespace semanticsearch {
 using DBIndexType = uint64_t;  ///< Database index type. Essentially pointer to record.
 using SemanticCoordinateType =
     fixed_point::FixedPoint<32, 32>;  ///< Base coordinate type semantic position.
-                                      ///  Always internal 0 -> 2 ^ 32
+                                      ///  Always internal 0 -> 2 ^ 31
 using DepthParameterType = int32_t;
 
 class SemanticPosition
@@ -39,6 +40,16 @@ public:
   using Container      = std::vector<SemanticCoordinateType>;
   using iterator       = Container::iterator;
   using const_iterator = Container::const_iterator;
+
+  SemanticPosition()                              = default;
+  SemanticPosition(SemanticPosition const &other) = default;
+  SemanticPosition(SemanticPosition &&other)      = default;
+  SemanticPosition &operator=(SemanticPosition const &other) = default;
+  SemanticPosition &operator=(SemanticPosition &&other) = default;
+
+  SemanticPosition(std::initializer_list<SemanticCoordinateType> coordinates)
+    : data_{std::move(coordinates)}
+  {}
 
   iterator begin()
   {
