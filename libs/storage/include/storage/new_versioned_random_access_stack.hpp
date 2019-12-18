@@ -355,7 +355,7 @@ public:
   {
     type old_data;
     stack_.Get(i, old_data);
-    if (old_data != object)
+    if (0 == memcmp(&object, &old_data, sizeof(type)))
     {
       history_.Push(HistorySet{i, old_data}, HistorySet::value);
       stack_.Set(i, object);
