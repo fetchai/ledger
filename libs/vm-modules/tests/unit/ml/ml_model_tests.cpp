@@ -424,6 +424,11 @@ TEST_F(VMModelTests, model_uncompilable_add_layer__dense_invalid_params)
   TestAddingUncompilableLayer(R"(model.add("dense", 10fp32, 10u64, "relu");)");
 }
 
+TEST_F(VMModelTests, model_uncompilable_add_layer__flatten_invalid_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("flatten", 10fp32);)");
+}
+
 TEST_F(VMModelTests, model_uncompilable_add_layer__conv_invalid_params)
 {
   TestAddingUncompilableLayer(R"(model.add("conv1d", 0u64, 10fp32, 10u64, 10u64, "relu");)");
@@ -845,6 +850,153 @@ TEST_F(VMModelTests, model_with_accuracy_metric)
   auto const metrics = res.Get<Ptr<Array<fetch::vm_modules::math::DataType>>>();
   EXPECT_GE(metrics->elements.at(1), 0);
   EXPECT_LE(metrics->elements.at(1), 1);
+}
+
+TEST_F(VMModelTests, DISABLED_model_sequential_flatten)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.add("flatten");
+          model.compile("scel", "adam", {"categorical accuracy"});
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, DISABLED_model_sequential_flatten_tensor_data)
+{
+  static char const *SRC_METRIC = R"(
+        function main() : Tensor
+          var x = Tensor(Array<UInt64>(1));
+          var str_vals = "0.5, 7.1, 9.1; 6.2, 7.1, 4.; -99.1, 14328.1, 10.0;";
+          x.fromString(str_vals);
+          var data = x.unsqueeze();
+
+          var model = Model("sequential");
+          model.add("flatten");
+          model.compile("scel", "adam", {"categorical accuracy"});
+          var prediction = model.predict(data);
+          print(prediction.toString());
+
+          return prediction;
+        endfunction
+      )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(&res));
+  // we expect data columns to be sequentially concatenated
+  ASSERT_EQ(stdout.str(),
+            "0.500000000;"
+            "6.199999999;"
+            "-99.099999999;"
+            "7.099999999;"
+            "7.099999999;"
+            "14328.099999999;"
+            "9.099999999;"
+            "4.000000000;"
+            "10.000000000;");
+  auto const tensor            = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const constructed_shape = tensor->shape();
+  fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({9, 1});
+  EXPECT_TRUE(constructed_shape == expected.shape());
+}
+
+TEST_F(VMModelTests, DISABLED_model_sequential_flatten_2d_in_2d_out)
+{
+  static char const *SRC_METRIC = R"(
+              function main() : Tensor
+                var x = Tensor(Array<UInt64>(1));
+                var str_vals = "0.5, 7.1, 9.1; 6.2, 7.1, 4.;";
+                x.fromString(str_vals);
+
+                var model = Model("sequential");
+                model.add("flatten");
+                model.compile("scel", "adam");
+                var prediction = model.predict(x);
+                print(prediction.toString());
+
+                return prediction;
+              endfunction
+      )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(&res));
+  ASSERT_EQ(stdout.str(),
+            "0.500000000, 7.099999999, 9.099999999;"
+            "6.199999999, 7.099999999, 4.000000000;");
+  auto const tensor            = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const constructed_shape = tensor->shape();
+  fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({2, 3});
+  EXPECT_TRUE(constructed_shape == expected.shape());
+}
+
+TEST_F(VMModelTests, DISABLED_model_sequential_flatten_4d_in_2d_out)
+{
+  static char const *SRC_METRIC = R"(
+              function main() : Tensor
+                var x = Tensor(Array<UInt64>(1));
+                var str_vals = "0.5, 7.1, 9.1; 6.2, 7.1, 4.;";
+                x.fromString(str_vals);
+                x = x.unsqueeze();
+                x = x.unsqueeze();
+
+                var model = Model("sequential");
+                model.add("flatten");
+                model.compile("scel", "adam");
+                var prediction = model.predict(x);
+                print(prediction.toString());
+
+                return prediction;
+              endfunction
+      )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(&res));
+  ASSERT_EQ(stdout.str(),
+            "0.500000000;"
+            "6.199999999;"
+            "7.099999999;"
+            "7.099999999;"
+            "9.099999999;"
+            "4.000000000;");
+  auto const tensor            = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const constructed_shape = tensor->shape();
+  fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({6, 1});
+  EXPECT_TRUE(constructed_shape == expected.shape());
+}
+
+TEST_F(VMModelTests, DISABLED_model_sequential_flatten_1d_in_2d_out)
+{
+  static char const *SRC_METRIC = R"(
+              function main() : Tensor
+                var shape = Array<UInt64>(1);
+                shape[0] = 1u64;
+                var x = Tensor(shape);
+
+                var model = Model("sequential");
+                model.add("flatten");
+                model.compile("scel", "adam");
+                var prediction = model.predict(x);
+                print(prediction.toString());
+
+                return prediction;
+              endfunction
+      )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(&res));
+  ASSERT_EQ(stdout.str(), "0.000000000;");
+  auto const tensor            = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const constructed_shape = tensor->shape();
+  fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({1, 1});
+  EXPECT_TRUE(constructed_shape == expected.shape());
 }
 
 }  // namespace
