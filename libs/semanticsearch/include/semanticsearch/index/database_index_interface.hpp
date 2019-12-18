@@ -29,7 +29,7 @@ public:
   /// Methods to manage the database
   /// @{
   virtual void          AddRelation(DBIndexType const &index, SemanticPosition const &position) = 0;
-  virtual DBIndexSetPtr Find(SemanticCoordinateType depth, SemanticPosition position) const     = 0;
+  virtual DBIndexSetPtr Find(DepthParameterType depth, SemanticPosition position) const         = 0;
   /// @}
 
   /// Properties

@@ -115,7 +115,7 @@ public:
    * @param depth The depth level at which we search.
    * @param position The position for which we need to find a group.
    */  
-  DBIndexSetPtr Find(SemanticCoordinateType depth, SemanticPosition position) const override;
+  DBIndexSetPtr Find(DepthParameterType depth, SemanticPosition position) const override;
   /// @}
 
   /// Properties
@@ -124,8 +124,8 @@ public:
   /// @}
 private:
   GroupToIndicesMap      group_content_{};        ///< Mapping of group to set of indices.
-  SemanticCoordinateType param_depth_start_ = 0;  ///< Smallest depth searchable.
-  SemanticCoordinateType param_depth_end_   = 20; ///< Largest depth searchable.
+  DepthParameterType param_depth_start_ = 0;  ///< Smallest depth searchable.
+  DepthParameterType param_depth_end_   = 20; ///< Largest depth searchable.
   std::size_t            rank_{0};                ///< The rank of elements contained in the db.
 };
 

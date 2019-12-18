@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <memory>
 #include <set>
 #include <string>
@@ -25,9 +27,11 @@
 namespace fetch {
 namespace semanticsearch {
 
-using DBIndexType            = uint64_t;  ///< Database index type. Essentially pointer to record.
-using SemanticCoordinateType = uint64_t;  ///< Base coordinate type semantic position.
-                                          ///  Always internal 0 -> 1
+using DBIndexType = uint64_t;  ///< Database index type. Essentially pointer to record.
+using SemanticCoordinateType =
+    fixed_point::FixedPoint<32, 32>;  ///< Base coordinate type semantic position.
+                                      ///  Always internal 0 -> 2 ^ 32
+using DepthParameterType = int32_t;
 
 class SemanticPosition
 {

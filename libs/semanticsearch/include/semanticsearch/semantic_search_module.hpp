@@ -53,23 +53,27 @@ public:
 
   using ConsumerFunction = std::function<int(byte_array::ConstByteArray const &str, uint64_t &pos)>;
   using AllocatorFunction = std::function<QueryVariant(Token const &data)>;
+  using SemanticConverterFunction =
+      std::function<SemanticCoordinateType(QueryVariant const &value)>;
 
   struct TypeDetails
   {
     TypeDetails(std::type_index const &t, std::string const &n, ConsumerFunction const &c,
-                AllocatorFunction const &a, int32_t d)
+                AllocatorFunction const &a, SemanticConverterFunction const &sc, int32_t d)
       : type{t}
       , name{n}
       , consumer{c}
       , allocator{a}
+      , semantic_converter{sc}
       , code{d}
     {}
 
-    std::type_index   type;
-    std::string       name;
-    ConsumerFunction  consumer;
-    AllocatorFunction allocator;
-    int32_t           code;
+    std::type_index           type;
+    std::string               name;
+    ConsumerFunction          consumer;
+    AllocatorFunction         allocator;
+    SemanticConverterFunction semantic_converter;
+    int32_t                   code;
   };
 
   static SharedSemanticSearchModule New(SharedAdvertisementRegister advertisement_register)
@@ -79,11 +83,20 @@ public:
 
     // Registering primitive types
     ret->RegisterPrimitiveType<ModelField>("ModelField");
+
     ret->RegisterPrimitiveType<int64_t>(
         "Integer", byte_array::consumers::NumberConsumer<0, 1>,
         [](Token const &token) -> QueryVariant {
           return NewQueryVariant<int64_t>(static_cast<int64_t>(token.AsInt()), Constants::LITERAL,
                                           token);
+        },
+        [](QueryVariant const &value) -> SemanticCoordinateType {
+          if (value->IsType<int64_t>())
+          {
+            throw std::runtime_error(
+                "Semantic conversion failed: Incorrect type passed to converter.");
+          }
+          return static_cast<SemanticCoordinateType>(value->As<int64_t>());
         },
         true);
 
@@ -96,7 +109,7 @@ public:
               static_cast<std::string>(token.SubArray(1, token.size() - 2)), Constants::LITERAL,
               token);
         },
-        false);
+        nullptr, false);
 
     // Registering reduced types
     ret->RegisterFunction<ModelField, int64_t, int64_t>(
@@ -106,9 +119,9 @@ public:
                               std::to_string(to) + "]"};
 
           cdr.SetReducer<int64_t>(1, [span, from](int64_t x) {
-            SemanticPosition ret;
-            uint64_t         multiplier = uint64_t(-1) / span;
-            ret.PushBack(static_cast<uint64_t>(x + from) * multiplier);
+            SemanticPosition       ret;
+            SemanticCoordinateType multiplier = SemanticCoordinateType::FP_MAX / span;
+            ret.PushBack(static_cast<SemanticCoordinateType>(x + from) * multiplier);
 
             return ret;
           });
@@ -143,10 +156,10 @@ public:
   using Reducer = std::function<SemanticPosition(T const &)>;
 
   template <typename T>
-  void RegisterPrimitiveType(
-      std::string const &name, ConsumerFunction const &consumer = nullptr,
-      AllocatorFunction const &allocator = nullptr,
-      bool                     hidden = true)  // TODO: Add over loaded type that sets reducer uid
+  void RegisterPrimitiveType(std::string const &name, ConsumerFunction const &consumer = nullptr,
+                             AllocatorFunction const &        allocator          = nullptr,
+                             SemanticConverterFunction const &semantic_converter = nullptr,
+                             bool                             hidden             = true)
   {
     SemanticReducer cdr = SemanticReducer{name + "DefaultReducer"};
 
@@ -157,8 +170,11 @@ public:
       types_[name] = instance;
     }
 
+    assert(type_information_.size() ==
+           static_cast<std::size_t>(next_type_code_ - Constants::USER_DEFINED_START));
     type_information_.emplace_back(std::type_index(typeid(T)), name, consumer, allocator,
-                                   ++next_type_code_);
+                                   semantic_converter, next_type_code_++);
+
     std::type_index idx = std::type_index(typeid(T));
     idx_to_name_[idx]   = name;
   }
@@ -283,6 +299,18 @@ public:
   std::vector<TypeDetails> const &type_information() const
   {
     return type_information_;
+  }
+
+  TypeDetails const &GetTypeDetails(int32_t const &code)
+  {
+    auto n = static_cast<std::size_t>(code - Constants::USER_DEFINED_START);
+
+    if (n >= type_information_.size())
+    {
+      throw std::runtime_error("Tried to fetch non-existent type code.");
+    }
+
+    return type_information_[n];
   }
 
   KeywordRelation const &keyword_relation() const

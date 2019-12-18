@@ -40,9 +40,9 @@ public:
   SharedModel GetAdvertisementModel(std::string const &name);
   void       AdvertiseAgent(AgentId aid, std::string const &name, SemanticPosition const &position);
   AgentIdSet FindAgents(std::string const &name, SemanticPosition const &position,
-                        SemanticCoordinateType depth);
+                        DepthParameterType depth);
   AgentIdSet FindAgents(std::string const &name, Vocabulary const &object,
-                        SemanticCoordinateType depth);
+                        DepthParameterType depth);
 
   void OnAddModel(std::string const &name, VocabularySchemaPtr const &object) override;
 

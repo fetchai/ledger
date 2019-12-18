@@ -23,7 +23,7 @@
 namespace fetch {
 namespace semanticsearch {
 
-SubscriptionGroup::SubscriptionGroup(SemanticCoordinateType d, SemanticPosition position)
+SubscriptionGroup::SubscriptionGroup(DepthParameterType d, SemanticPosition position)
   : depth(d)
 {
   auto cs = CalculateWidthFromDepth(depth);

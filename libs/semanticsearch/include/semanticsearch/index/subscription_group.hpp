@@ -61,20 +61,22 @@ namespace semanticsearch {
 struct SubscriptionGroup
 {
   SubscriptionGroup() = default;
-  SubscriptionGroup(SemanticCoordinateType d, SemanticPosition position);
+  SubscriptionGroup(DepthParameterType d, SemanticPosition position);
 
   /*
    * @brief computes the size of group number g
    *
    * The larger the group number, the smaller the size.
    */
-  static constexpr SemanticCoordinateType CalculateWidthFromDepth(SemanticCoordinateType depth)
+  static constexpr SemanticCoordinateType CalculateWidthFromDepth(DepthParameterType depth)
   {
-    return SemanticCoordinateType(-1) >> depth;
+    auto ret = SemanticCoordinateType::FP_MAX;
+    ret >>= depth;
+    return ret;
   }
 
   SemanticPosition       indices;
-  SemanticCoordinateType depth;  ///< Parameter that determines the depth of the subscription
+  DepthParameterType depth;  ///< Parameter that determines the depth of the subscription
 
   bool operator<(SubscriptionGroup const &other) const;
   bool operator==(SubscriptionGroup const &other) const;

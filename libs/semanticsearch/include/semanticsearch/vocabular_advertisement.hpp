@@ -45,7 +45,7 @@ public:
     index_.AddRelation(aid, std::move(position));
   }
 
-  AgentIdSet FindAgents(SemanticPosition position, SemanticCoordinateType depth)
+  AgentIdSet FindAgents(SemanticPosition position, DepthParameterType depth)
   {
     return index_.Find(depth, std::move(position));
   }

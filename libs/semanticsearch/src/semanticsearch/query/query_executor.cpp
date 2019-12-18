@@ -316,7 +316,11 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
                                           x.token);
           return nullptr;
         }
+
+        // Creating position
         auto position = model->Reduce(instance);
+        position.SetModelName(instance->model_name());
+
         auto executor_position =
             NewQueryVariant(position, Constants::TYPE_INSTANCE, instance_obj->token());
         context_.Set(name->As<std::string>(), executor_position, instance->model_name());
@@ -403,7 +407,46 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
         auto variant = stack.back();
         stack.pop_back();
 
-        if (!variant->IsType<Vocabulary>())
+        SemanticPosition position;
+        bool             found{false};
+        std::string      model_name{""};
+
+        // Checking if it is a model instance
+        if (variant->IsType<Vocabulary>())
+        {
+          auto instance = variant->As<Vocabulary>();
+
+          if (!semantic_search_module_->HasModel(instance->model_name()))
+          {
+            error_tracker_.RaiseSyntaxError("Could not find model '" + instance->model_name() + "'",
+                                            x.token);
+            return nullptr;
+          }
+
+          auto model = semantic_search_module_->GetModel(instance->model_name());
+          if (model == nullptr)
+          {
+            error_tracker_.RaiseInternalError("Model '" + instance->model_name() + "' is null.",
+                                              x.token);
+            return nullptr;
+          }
+
+          // Populating parameters
+          model_name = instance->model_name();
+          position   = model->Reduce(instance);
+          found      = true;
+        }
+
+        // Checking if it is a model instance
+        if (variant->IsType<SemanticPosition>())
+        {
+          position   = variant->As<SemanticPosition>();
+          model_name = position.model_name();
+          found      = true;
+        }
+
+        // Raising error if stack parameters are wrong
+        if (!found)
         {
           auto tok = x.token;
           if (i > 0)
@@ -411,61 +454,96 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
             tok = stmt[i - 1].token;
           }
 
-          error_tracker_.RaiseSyntaxError("Expected Vocabulary.", tok);
-          return nullptr;
-        }
-
-        auto instance = variant->As<Vocabulary>();
-
-        if (!semantic_search_module_->HasModel(instance->model_name()))
-        {
-          error_tracker_.RaiseSyntaxError("Could not find model '" + instance->model_name() + "'",
-                                          x.token);
-          return nullptr;
-        }
-
-        auto model = semantic_search_module_->GetModel(instance->model_name());
-        if (model == nullptr)
-        {
-          error_tracker_.RaiseInternalError("Model '" + instance->model_name() + "' is null.",
-                                            x.token);
+          error_tracker_.RaiseSyntaxError("Expected model instance or position.", tok);
           return nullptr;
         }
 
         // TODO: Add support for granularity
         // TODO: Add support for line segment
-        auto position = model->Reduce(instance);
-        result        = semantic_search_module_->advertisement_register()->FindAgents(
-            instance->model_name(), position, 2);
-        std::cout << "Searching ... " << instance->model_name() << std::endl;
+
+        // Searching
+        result =
+            semantic_search_module_->advertisement_register()->FindAgents(model_name, position, 2);
+        std::cout << "Searching ... " << model_name << std::endl;
         if (result)
         {
           std::cout << "Found agents: " << result->size() << " "
-                    << " searching " << instance->model_name() << std::endl;
+                    << " searching " << model_name << std::endl;
         }
         break;
       }
       case Constants::MULTIPLY:
-        break;
-      case Constants::ADD:
-        break;
-      case Constants::SUB:
       {
-        std::cout << "Subtracting" << std::endl;
         if (stack.size() < 2)
         {
           error_tracker_.RaiseInternalError("Not enough elements on stack to subtract.", x.token);
           return nullptr;
         }
-        auto lhs = stack.back();
+        int  rhs_type = 0;
+        auto rhs      = stack.back();
         stack.pop_back();
 
-        if (!lhs->IsType<SemanticPosition>())
+        if (rhs->IsType<SemanticPosition>())
         {
-          error_tracker_.RaiseRuntimeError("Left-hand side must be semantic position.", x.token);
+          rhs_type = 1;
+        }
+
+        if (rhs->type() == Constants::LITERAL)
+        {
+          rhs_type          = 2;
+          auto type_code    = rhs->token().type();
+          auto type_details = semantic_search_module_->GetTypeDetails(type_code);
+          std::cout << "Type code: " << type_code << std::endl;
+          if (!type_details.semantic_converter)
+          {
+            error_tracker_.RaiseRuntimeError(
+                "No known conversion from literal into semantic space.", rhs->token());
+            return nullptr;
+          }
+        }
+
+        if (rhs_type == 0)
+        {
+          error_tracker_.RaiseRuntimeError("Right-hand side must be semantic position or literal.",
+                                           x.token);
           return nullptr;
         }
 
+        int  lhs_type = 0;
+        auto lhs      = stack.back();
+        stack.pop_back();
+
+        if (lhs->IsType<SemanticPosition>())
+        {
+          lhs_type = 1;
+        }
+
+        if (lhs->type() == Constants::LITERAL)
+        {
+          lhs_type = 2;
+        }
+
+        if (lhs_type == 0)
+        {
+          error_tracker_.RaiseRuntimeError("Right-hand side must be semantic position or literal.",
+                                           x.token);
+          return nullptr;
+        }
+
+        //        object->Insert(name, value->NewInstance());
+
+        break;
+      }
+
+      case Constants::ADD:
+      case Constants::SUB:
+      {
+        // Sanity checking
+        if (stack.size() < 2)
+        {
+          error_tracker_.RaiseInternalError("Not enough elements on stack to subtract.", x.token);
+          return nullptr;
+        }
         auto rhs = stack.back();
         stack.pop_back();
 
@@ -475,9 +553,30 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
           return nullptr;
         }
 
-        auto a   = lhs->As<SemanticPosition>();
-        auto b   = rhs->As<SemanticPosition>();
-        auto c   = a - b;
+        auto lhs = stack.back();
+        stack.pop_back();
+
+        if (!lhs->IsType<SemanticPosition>())
+        {
+          error_tracker_.RaiseRuntimeError("Left-hand side must be semantic position.", x.token);
+          return nullptr;
+        }
+
+        auto a = lhs->As<SemanticPosition>();
+        auto b = rhs->As<SemanticPosition>();
+
+        // Logic
+        SemanticPosition c;
+        switch (x.type)
+        {
+        case Constants::SUB:
+          c = a - b;
+          break;
+        case Constants::ADD:
+          c = a + b;
+          break;
+        }
+
         auto ret = NewQueryVariant(c, Constants::TYPE_INSTANCE, x.token);
         stack.push_back(ret);
         break;
@@ -497,7 +596,7 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
   }
 
   return result;
-}
+}  // namespace semanticsearch
 
 QueryExecutor::Vocabulary QueryExecutor::GetInstance(std::string const &name)
 {

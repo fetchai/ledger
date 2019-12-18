@@ -36,7 +36,7 @@ void InMemoryDBIndex::AddRelation(DBIndexType const &index, SemanticPosition con
   }
 
   // Next we create subscriptions at a number of desired depths.
-  for (SemanticCoordinateType s = param_depth_start_; s < param_depth_end_; ++s)
+  for (DepthParameterType s = param_depth_start_; s < param_depth_end_; ++s)
   {
     SubscriptionGroup idx{s, position};
     auto              it = group_content_.find(idx);
@@ -54,7 +54,7 @@ void InMemoryDBIndex::AddRelation(DBIndexType const &index, SemanticPosition con
   }
 }
 
-DBIndexSetPtr InMemoryDBIndex::Find(SemanticCoordinateType depth, SemanticPosition position) const
+DBIndexSetPtr InMemoryDBIndex::Find(DepthParameterType depth, SemanticPosition position) const
 {
   // Again, only operations with same rank as index is allowed.
   if (position.size() != rank_)
