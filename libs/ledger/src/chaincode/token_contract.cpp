@@ -79,7 +79,7 @@ TokenContract::TokenContract()
   OnTransaction("deStake", this, &TokenContract::DeStake);
   OnTransaction("collectStake", this, &TokenContract::CollectStake);
   OnQuery("balance", this, &TokenContract::Balance);
-  OnQuery("deed", this, &TokenContract::QueryDeed);
+  OnQuery("queryDeed", this, &TokenContract::QueryDeed);
   OnQuery("stake", this, &TokenContract::Stake);
   OnQuery("cooldownStake", this, &TokenContract::CooldownStake);
 }
