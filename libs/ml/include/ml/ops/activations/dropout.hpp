@@ -43,9 +43,9 @@ public:
   using MyType        = Dropout<TensorType>;
 
   explicit Dropout(DataType const probability, SizeType const &random_seed = 25102015)
-    : probability_(probability)
+    : probability_of_keeping_(probability)
   {
-    if (probability < DataType{0} || probability > DataType{1})
+    if (probability < zero_ || probability > one_)
     {
       std::stringstream ss;
       ss << probability;
@@ -53,13 +53,13 @@ public:
                                " is out of allowed range [0..1]");
     }
     rng_.Seed(random_seed);
-    drop_values_ = TensorType{0};
+    scaling_coefs_ = TensorType{0};
   }
 
   explicit Dropout(SPType const &sp)
     : Ops<T>(sp)
   {
-    probability_ = sp.probability;
+    probability_of_keeping_ = sp.probability;
     rng_.Seed(sp.random_seed);
     rng_.SetBuffer(sp.buffer);
     rng_.SetIndex(sp.index);
@@ -70,7 +70,7 @@ public:
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     SPType sp{};
-    sp.probability = probability_;
+    sp.probability = probability_of_keeping_;
     sp.random_seed = rng_.Seed();
     sp.buffer      = rng_.GetBuffer();
     sp.index       = rng_.GetIndex();
@@ -80,46 +80,67 @@ public:
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
       std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
   {
-    assert(me.get() == this);
+    if (me.get() != this)
+    {
+      throw std::runtime_error("Dropout::MakeSharedCopy fatal error: invalid argument.");
+    }
 
     return me;
   }
 
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
-    assert(inputs.size() == 1);
-    assert(output.shape() == this->ComputeOutputShape(inputs));
+    if (inputs.size() != 1)
+    {
+      throw fetch::math::exceptions::WrongShape(
+          "Can not do a forward pass through Dropout layer: wrong inputs provided.");
+    }
 
-    if (!this->is_training_)
+    if (output.shape() != this->ComputeOutputShape(inputs))
+    {
+      throw fetch::math::exceptions::WrongShape(
+          "Can not do a forward pass through Dropout layer: output shape mismatch.");
+    }
+
+    if (!this->is_training_ || probability_of_keeping_ == one_)
     {
       output.Copy((*inputs.front()));
+      return;
     }
-    else
-    {
-      if (drop_values_.shape() != output.shape())
-      {
-        drop_values_ = TensorType(output.shape());
-      }
 
-      auto out_it = output.begin();
-      auto in_it  = inputs.front()->cbegin();
-      auto it     = drop_values_.begin();
-      while (it.is_valid())
+    if (probability_of_keeping_ == zero_)
+    {
+      output.Fill(zero_);
+      scaling_coefs_.Fill(zero_);
+      return;
+    }
+
+    if (scaling_coefs_.shape() != output.shape())
+    {
+      scaling_coefs_ = TensorType(output.shape());
+    }
+
+    DataType const scale = one_ / probability_of_keeping_;
+
+    auto output_it       = output.begin();
+    auto input_it        = inputs.front()->cbegin();
+    auto scaling_coef_it = scaling_coefs_.begin();
+    while (scaling_coef_it.is_valid())
+    {
+      DataType const random_probability = rng_.AsType<DataType>();
+      if (random_probability <= probability_of_keeping_)
       {
-        if (rng_.AsType<DataType>() <= probability_)
-        {
-          *it     = DataType{1} / probability_;
-          *out_it = (*it) * (*in_it);
-        }
-        else
-        {
-          *it     = DataType{0};
-          *out_it = DataType{0};
-        }
-        ++it;
-        ++in_it;
-        ++out_it;
+        *scaling_coef_it = scale;
+        *output_it       = scale * (*input_it);
       }
+      else
+      {
+        *scaling_coef_it = zero_;
+        *output_it       = zero_;
+      }
+      ++scaling_coef_it;
+      ++input_it;
+      ++output_it;
     }
   }
 
@@ -127,17 +148,35 @@ public:
                                    TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
-    assert(inputs.size() == 1);
-    assert(error_signal.shape() == inputs.front()->shape());
-    assert(drop_values_.shape() == inputs.front()->shape());
-    assert(this->is_training_);
+    if (!this->is_training_)
+    {
+      throw std::runtime_error(
+          "Attempt to do a backward pass in Dropout layer while not in training mode!");
+    }
+    if (inputs.size() != 1)
+    {
+      throw fetch::math::exceptions::WrongShape(
+          "Can not do a backward pass through Dropout layer: wrong inputs provided.");
+    }
+    if (error_signal.shape() != inputs.front()->shape())
+    {
+      throw fetch::math::exceptions::WrongShape(
+          "Can not do a backward pass through Dropout layer: error signal shape mismatch inputs "
+          "shape.");
+    }
+    if (scaling_coefs_.shape() != inputs.front()->shape())
+    {
+      throw fetch::math::exceptions::WrongShape(
+          "Can not do a backward pass through Dropout layer: dropout scaling coeffitients shape "
+          "mismatch inputs shape.");
+    }
 
     TensorType return_signal{error_signal.shape()};
 
     // gradient of dropout is 1.0/keep_prob for enabled neurons and 0.0 for disabled
     // multiply by error_signal (chain rule)
 
-    fetch::math::Multiply(error_signal, drop_values_, return_signal);
+    fetch::math::Multiply(error_signal, scaling_coefs_, return_signal);
 
     return {return_signal};
   }
@@ -154,9 +193,12 @@ public:
   static constexpr char const *DESCRIPTOR = "Dropout";
 
 private:
-  TensorType drop_values_;
-  DataType   probability_;
+  TensorType scaling_coefs_;
+  DataType   probability_of_keeping_{1};
   RNG        rng_;
+
+  DataType const zero_{0};
+  DataType const one_{1};
 };
 
 }  // namespace ops
