@@ -658,6 +658,7 @@ bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) co
 
 Status Consensus::ValidBlock(Block const &current) const
 {
+  FETCH_LOCK(mutex_);
   Status ret = Status::YES;
 
   // TODO(HUT): more thorough checks for genesis needed
