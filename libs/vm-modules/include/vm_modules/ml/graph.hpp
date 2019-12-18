@@ -31,8 +31,6 @@ class Module;
 namespace vm_modules {
 namespace ml {
 
-class VMStateDict;
-
 class VMGraph : public fetch::vm::Object
 {
 public:
@@ -84,10 +82,6 @@ public:
 
   void AddExp(fetch::vm::Ptr<fetch::vm::String> const &name,
               fetch::vm::Ptr<fetch::vm::String> const &input_name);
-
-  void LoadStateDict(fetch::vm::Ptr<VMStateDict> const &sd);
-
-  fetch::vm::Ptr<VMStateDict> StateDict();
 
   static void Bind(fetch::vm::Module &module, bool enable_experimental);
 
