@@ -61,7 +61,7 @@ TEST(RoutingTests, DISABLED_DesiredTableAfterReboot)
         desired_peers.push_back(n->address);
       }
 
-      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
+      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache.db");
       ++idx;
     }
     network->nodes[0]->muddle->ConnectTo(desired_peers.back());
@@ -114,7 +114,7 @@ TEST(RoutingTests, DISABLED_DesiredTableAfterReboot)
     uint64_t idx = 0;
     for (auto &n : network->nodes)
     {
-      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
+      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache.db");
       ++idx;
     }
 
