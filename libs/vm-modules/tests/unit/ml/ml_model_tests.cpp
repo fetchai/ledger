@@ -587,7 +587,7 @@ TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_too_few_layer_shapes
 }
 
 // Disableduntil AddDropout estimator implementation
-TEST_F(VMModelTests, model_dropout_comparison)
+TEST_F(VMModelTests, DISABLED_model_dropout_comparison)
 {
   static char const *SOURCE = R"(
     function main()
