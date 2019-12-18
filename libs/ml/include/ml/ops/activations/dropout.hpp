@@ -87,7 +87,6 @@ public:
 
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
-    // TODO: replace assert with std::runtime error.
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
