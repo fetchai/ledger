@@ -258,8 +258,8 @@ TEST_F(MLTests, DISABLED_dataloader_serialisation_test)
   auto label1 = initial_training_pair->label()->GetTensor();
   auto label2 = training_pair->label()->GetTensor();
 
-  EXPECT_TRUE(data1.AllClose(data2, static_cast<DataType>(0), static_cast<DataType>(0)));
-  EXPECT_TRUE(label1.AllClose(label2, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(data1.AllClose(data2, DataType{0}, DataType{0}));
+  EXPECT_TRUE(label1.AllClose(label2, DataType{0}, DataType{0}));
 }
 
 TEST_F(MLTests, DISABLED_graph_serialisation_test)

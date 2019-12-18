@@ -91,7 +91,7 @@ public:
                 SizeType const &final_momentum_steps, SizeType const &p_later_correction_iteration)
   {
     // Initialise variables
-    output_symmetric_affinities_.Fill(static_cast<DataType>(0));
+    output_symmetric_affinities_.Fill(DataType{0});
     DataType const min_gain = fetch::math::Type<DataType>("0.01");
     DataType       momentum = initial_momentum;
     assert(output_matrix_.shape().size() == 2);
@@ -101,7 +101,7 @@ public:
 
     // Initialise gains with value 1.0
     TensorType gains(output_matrix_.shape());
-    gains.Fill(static_cast<DataType>(1));
+    gains.Fill(DataType{1});
 
     // Start optimisation
     for (SizeType iter{0}; iter < max_iters; iter++)
@@ -126,12 +126,12 @@ public:
         {
           if ((gradient.At(i, j) > 0.0) != (i_y.At(i, j) > 0.0))
           {
-            gains(i, j) = gains.At(i, j) + DataType(0.2);
+            gains(i, j) = gains.At(i, j) + fetch::math::Type<DataType>("0.2");
           }
 
           if ((gradient.At(i, j) > 0.0) == (i_y.At(i, j) > 0.0))
           {
-            gains(i, j) = gains.At(i, j) * DataType(0.8);
+            gains(i, j) = gains.At(i, j) * fetch::math::Type<DataType>("0.8");
           }
         }
       }
@@ -227,7 +227,7 @@ private:
   {
     for (auto &val : output_matrix)
     {
-      val = GetRandom(static_cast<DataType>(0), static_cast<DataType>(1));
+      val = GetRandom(DataType{0}, DataType{1});
     }
   }
 
@@ -244,7 +244,7 @@ private:
   {
     // p = -exp(d * beta)
     p = fetch::math::Exp(fetch::math::Multiply(DataType(-1), fetch::math::Multiply(d, beta)));
-    p.Set(0, k, static_cast<DataType>(0));
+    p.Set(0, k, DataType{0});
 
     DataType sum_p = fetch::math::Sum(p);
 
@@ -286,7 +286,7 @@ private:
     // beta = 1/(2*sigma^2)
     // Prefill beta array with 1.0
     TensorType beta(input_data_size);
-    beta.Fill(static_cast<DataType>(1));
+    beta.Fill(DataType{1});
 
     // Calculate entropy value from perplexity
     // DataType target_entropy = std::log(target_perplexity);
@@ -308,7 +308,7 @@ private:
       TensorType this_P(input_data_size);
 
       DataType current_entropy;
-      d.Set(i, i, static_cast<DataType>(0));
+      d.Set(i, i, DataType{0});
       Hbeta(d.Slice(i).Copy(), this_P, current_entropy, beta.At(i), i);
 
       // Evaluate whether the perplexity is within tolerance
@@ -355,7 +355,7 @@ private:
       {
         if (i == j)
         {
-          pairwise_affinities.Set(i, j, static_cast<DataType>(0));
+          pairwise_affinities.Set(i, j, DataType{0});
           continue;
         }
         pairwise_affinities.Set(i, j, this_P.At(0, j));
@@ -386,13 +386,12 @@ private:
 
     // num = 1 / (1 + (num+sum_y).T+sum_y)
     TensorType val((num + sum_y).Transpose());
-    num = fetch::math::Divide(static_cast<DataType>(1),
-                              fetch::math::Add(static_cast<DataType>(1), (val + sum_y)));
+    num = fetch::math::Divide(DataType{1}, fetch::math::Add(DataType{1}, (val + sum_y)));
 
     // num[range(n), range(n)] = 0.
     for (SizeType i{0}; i < num.shape().at(0); i++)
     {
-      num.Set(i, i, static_cast<DataType>(0));
+      num.Set(i, i, DataType{0});
     }
 
     // Q = num / sum(num)

@@ -118,9 +118,9 @@ public:
 
       while (input1_it.is_valid())
       {
-        if (*input1_it >= static_cast<DataType>(0))
+        if (*input1_it >= DataType{0})
         {
-          *rs1_it = static_cast<DataType>(1) * (*error_it);
+          *rs1_it = DataType{1} * (*error_it);
         }
         else
         {

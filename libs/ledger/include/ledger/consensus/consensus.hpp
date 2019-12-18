@@ -73,6 +73,7 @@ public:
   void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
   void Reset(StakeSnapshot const &snapshot) override;
   void SetDefaultStartTime(uint64_t default_start_time) override;
+  void SetWhitelist(Minerwhitelist const &whitelist) override;
 
   StakeManagerPtr stake();
 
@@ -96,6 +97,7 @@ private:
   BeaconServicePtr      beacon_;
   MainChain const &     chain_;
   Identity              mining_identity_;
+  Minerwhitelist        whitelist_;
 
   // Global variables relating to consensus
   uint64_t aeon_period_      = 0;

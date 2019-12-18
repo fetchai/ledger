@@ -41,7 +41,7 @@ public:
   SGDOptimiser() = default;
   SGDOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
                std::string const &label_node_name, std::string const &output_node_name,
-               DataType const &learning_rate = static_cast<DataType>(0.001f));
+               DataType const &learning_rate = fetch::math::Type<DataType>("0.001"));
 
   SGDOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
                std::string const &label_node_name, std::string const &output_node_name,

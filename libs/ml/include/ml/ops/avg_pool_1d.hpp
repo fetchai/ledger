@@ -99,7 +99,7 @@ public:
         iter = i * stride_size_;
         for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
         {
-          sum = static_cast<DataType>(0);
+          sum = DataType{0};
 
           // Get sum of value on kernel_size_ window
           for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
