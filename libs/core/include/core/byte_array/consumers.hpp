@@ -267,6 +267,35 @@ int Token(byte_array::ConstByteArray const &str, uint64_t &pos)
   return TOKEN;
 }
 
+template <int TOKEN>
+int TokensWithDot(byte_array::ConstByteArray const &str, uint64_t &pos)
+{
+  uint8_t c = str[pos];
+
+  if (!(std::isalpha(c)))
+  {
+    return -1;
+  }
+  ++pos;
+
+  if (pos >= str.size())
+  {
+    return TOKEN;
+  }
+
+  c = str[pos];
+  while (std::isalnum(c)||(c=='.'))
+  {
+    ++pos;
+    if (pos >= str.size())
+    {
+      break;
+    }
+    c = str[pos];
+  }
+  return TOKEN;
+}
+
 template <int CATCH_ALL>
 int AnyChar(byte_array::ConstByteArray const & /*str*/, uint64_t &pos)
 {

@@ -134,10 +134,6 @@ std::vector<QueryInstruction> QueryCompiler::AssembleStatement(Statement const &
       next.type       = Constants::EQUAL;
       next.properties = Properties::PROP_IS_OPERATOR;
       break;
-    case OP_SUBSCOPE:
-      next.type       = Constants::SUBSCOPE;
-      next.properties = Properties::PROP_IS_OPERATOR;
-      break;
     case OP_ATTRIBUTE:
       if (main_stack.empty())
       {
@@ -436,12 +432,6 @@ void QueryCompiler::Tokenise()
       SkipChar();
       found = true;
       break;
-    case '.':
-      tok.SetType(OP_SUBSCOPE);
-      stmt.tokens.push_back(tok);
-      SkipChar();
-      found = true;
-      break;
 
     case ':':
       if (scope_depth == 0)
@@ -581,7 +571,7 @@ void QueryCompiler::Tokenise()
     }
 
     // Finding identifiers
-    int type = byte_array::consumers::Token<IDENTIFIER>(document_, end);
+    int type = byte_array::consumers::TokensWithDot<IDENTIFIER>(document_, end);
     if (type != -1)
     {
       tok = static_cast<Token>(document_.SubArray(position_, end - position_));

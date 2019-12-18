@@ -51,6 +51,12 @@ public:
     return models_[name];
   }
 
+  void Clear()
+  {
+    context_.clear();
+    models_.clear();
+  }
+
 private:
   std::map<std::string, AbstractQueryVariantPtr> context_;
   std::map<std::string, std::string>             models_;

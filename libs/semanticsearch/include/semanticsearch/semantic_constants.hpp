@@ -29,7 +29,6 @@ struct Constants
     MORE_THAN,
     MORE_THAN_EQUAL,
 
-    SUBSCOPE,
     ASSIGN,
     VAR_TYPE,
     ATTRIBUTE,

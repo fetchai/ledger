@@ -44,6 +44,10 @@ QueryExecutor::AgentIdSet QueryExecutor::Execute(Query const &query, Agent agent
     return nullptr;
   }
 
+  // Clearing state
+  context_.Clear();
+  error_tracker_.ClearErrors();
+
   // Preparing error tracker
   error_tracker_.SetSource(query.source, query.filename);
 

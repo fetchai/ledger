@@ -39,7 +39,7 @@ pos p : Position = {
   longitude: 1
 };
 
-find p; // * 9; // * 0.01;
+find q; // * 9; // * 0.01;
 
 // advertise x until 200132;
 // find 0.5 * (y + g);
