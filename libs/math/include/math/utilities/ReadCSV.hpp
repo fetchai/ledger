@@ -94,15 +94,16 @@ TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_ski
     }
     while (std::getline(ss, field_value, delimiter))
     {
-      if (!unsafe_parsing)
+      if (unsafe_parsing)
       {
-        weights(col, row) = fetch::math::Type<DataType>(field_value);
+        // Constructing a fixed point from a double is not guaranteed to give the same results on
+        // different architectures and so is unsafe. But the fixed point string parsing does not
+        // support scientific notation.
+        weights(col, row) = DataType{std::stod(field_value)};
       }
       else
       {
-        // Constructing a fixed point from a double is not guaranteed to give the same results on
-        // different architectures and so is unsafe
-        weights(col, row) = DataType{std::stod(field_value)};
+        weights(col, row) = fetch::math::Type<DataType>(field_value);
       }
       ++col;
     }

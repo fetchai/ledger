@@ -301,8 +301,13 @@ int main(int argc, char **argv)
       if (name.find("dense") != std::string::npos)
       {
         // if it is a dense layer there will be weights and bias files
+        std::string node_weights_dir = weights_dir;
+        node_weights_dir.append("/").append(name);
+
+        std::cout << "Reading weights from: " << node_weights_dir << std::endl;
+
         std::vector<std::string> dir_list =
-            fetch::ml::examples::GetAllTextFiles(weights_dir + "/" + name, "");
+            fetch::ml::examples::GetAllTextFiles(node_weights_dir, "");
         std::vector<std::string> actual_dirs;
         for (auto const &dir : dir_list)
         {
@@ -313,7 +318,7 @@ int main(int argc, char **argv)
         }
         assert(actual_dirs.size() == 1);
 
-        std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
+        node_weights_dir.append("/").append(actual_dirs[0]);
 
         // the weights array for the node has number of columns = number of features
         TensorType weights = fetch::math::utilities::ReadCSV<TensorType>(

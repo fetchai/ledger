@@ -37,7 +37,7 @@ if (System.Argc() != 4)
   return;
 endif
 
-// LOAD & TRANSPOSE THE DATA
+// LOAD THE DATA
 var train_data = readCSV(System.Argv(2));
 var train_labels = readCSV(System.Argv(3));
 
