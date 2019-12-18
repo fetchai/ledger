@@ -34,6 +34,7 @@
 #include "peer_list.hpp"
 #include "promise_runnable.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -53,14 +54,15 @@ public:
   using Timepoint      = ClockInterface::Timestamp;
   using Duration       = ClockInterface::Duration;
 
-  using Address           = Packet::Address;
-  using Peers             = std::deque<PeerInfo>;
-  using PeerTrackerPtr    = std::shared_ptr<PeerTracker>;
-  using PeerList          = std::unordered_set<Address>;
-  using PendingResolution = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
-  using PendingPromised   = std::unordered_map<uint64_t, std::shared_ptr<PromiseTask>>;
-  using ConnectionHandle  = network::AbstractConnection::ConnectionHandleType;
-  using ConstByteArray    = byte_array::ConstByteArray;
+  using Address            = Packet::Address;
+  using Peers              = std::deque<PeerInfo>;
+  using PeerTrackerPtr     = std::shared_ptr<PeerTracker>;
+  using WeakPeerTrackerPtr = std::weak_ptr<PeerTracker>;
+  using PeerList           = std::unordered_set<Address>;
+  using PendingResolution  = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
+  using PendingPromised    = std::unordered_map<uint64_t, std::shared_ptr<PromiseTask>>;
+  using ConnectionHandle   = network::AbstractConnection::ConnectionHandleType;
+  using ConstByteArray     = byte_array::ConstByteArray;
 
   using Ports                  = PeerTrackerProtocol::Ports;
   using ConnectionPriorityMap  = std::unordered_map<Address, AddressPriority>;
@@ -74,8 +76,6 @@ public:
   using NetworkUris            = std::vector<Uri>;
   using Handle                 = network::AbstractConnection::ConnectionHandleType;
   using AddressToHandles       = std::unordered_map<Address, std::unordered_set<Handle>>;
-
-  int counter{0};
 
   struct UnresolvedConnection
   {
@@ -96,6 +96,10 @@ public:
   static PeerTrackerPtr New(Duration const &interval, core::Reactor &reactor,
                             MuddleRegister const &reg, PeerConnectionList &connections,
                             MuddleEndpoint &endpoint);
+  PeerTracker(PeerTracker const &other) = delete;
+  PeerTracker(PeerTracker &&other)      = delete;
+  PeerTracker operator=(PeerTracker const &other) = delete;
+  PeerTracker operator=(PeerTracker &&other) = delete;
   ~PeerTracker() override;
 
   /// Tracker interface
@@ -157,6 +161,16 @@ public:
     FETCH_LOCK(direct_mutex_);
     return directly_connected_peers_;
   }
+  TrackerConfiguration tracker_configuration()
+  {
+    FETCH_LOCK(core_mutex_);
+    return tracker_configuration_;
+  }
+  Address own_address()
+  {
+    FETCH_LOCK(core_mutex_);
+    return own_address_;
+  }
   /// @}
 
 protected:
@@ -208,14 +222,15 @@ private:
 
   /// Thread-safety
   /// @{
-  mutable std::mutex mutex_;
-  mutable std::mutex direct_mutex_;  ///< Use to protect directly connected
-                                     /// peers to avoid causing a deadlock
+
+  ///< Use to protect directly connected
+  /// peers to avoid causing a deadlock
 
   /// @}
 
   /// Core components for maintaining connectivity.
   /// @{
+  mutable Mutex         core_mutex_;
   std::string const     logging_name_;
   std::atomic<bool>     stopping_{false};
   core::Reactor &       reactor_;
@@ -225,25 +240,33 @@ private:
   KademliaTable         peer_table_;
   Address               own_address_;
   BlackList             blacklist_;
+  TrackerConfiguration  tracker_configuration_;
+  WeakPeerTrackerPtr    weak_self_;
   /// @}
 
   /// Peer tracker protocol
   /// @{
-  rpc::Client          rpc_client_;
-  rpc::Server          rpc_server_;
-  PeerTrackerProtocol  peer_tracker_protocol_;
-  TrackerConfiguration tracker_configuration_;
-  AddressSet           keep_connections_{};
-  AddressSet           directly_connected_peers_{};
+  rpc::Client         rpc_client_;
+  rpc::Server         rpc_server_;
+  PeerTrackerProtocol peer_tracker_protocol_;
+  /// @}
+
+  /// Direct connections
+  /// @{
+  mutable Mutex direct_mutex_;
+  AddressSet    keep_connections_{};
+  AddressSet    directly_connected_peers_{};
   /// @}
 
   /// Handling new comers
   /// @{
+  mutable Mutex     uri_mutex_;
   PendingResolution uri_resolution_tasks_;
   /// @}
 
   /// Managing connections to Kademlia subtrees
   /// @{
+  mutable Mutex          kademlia_mutex_;
   ConnectionPriorityMap  kademlia_connection_priority_;
   ConnectionPriorityList kademlia_prioritized_peers_;
   AddressSet             kademlia_connections_;
@@ -251,6 +274,7 @@ private:
 
   /// Managing connections accross subtrees.
   /// @{
+  mutable Mutex          longrange_mutex_;
   ConnectionPriorityMap  longrange_connection_priority_;
   ConnectionPriorityList longrange_prioritized_peers_;
   AddressSet             longrange_connections_;
@@ -258,11 +282,12 @@ private:
 
   /// Management variables for network discovery
   /// @{
+  mutable Mutex                          pull_mutex_;
   std::deque<Address>                    peer_pull_queue_;
   AddressMap                             peer_pull_map_;
   PendingPromised                        pull_promises_;
   std::unordered_map<Address, Timepoint> last_pull_from_peer_;
-  uint64_t                               pull_next_id_{0};
+  std::atomic<uint64_t>                  pull_next_id_{0};
   /// @}
 
   /// Logging sets

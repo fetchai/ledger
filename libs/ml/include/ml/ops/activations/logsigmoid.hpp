@@ -89,8 +89,8 @@ public:
     TensorType return_signal{error_signal.shape()};
 
     // gradient of log-sigmoid function is 1/(e^x + 1))
-    fetch::math::Add(fetch::math::Exp((*inputs.front())), static_cast<DataType>(1), return_signal);
-    fetch::math::Divide(static_cast<DataType>(1), return_signal, return_signal);
+    fetch::math::Add(fetch::math::Exp((*inputs.front())), DataType{1}, return_signal);
+    fetch::math::Divide(DataType{1}, return_signal, return_signal);
 
     // multiply by error_signal (chain rule)
     fetch::math::Multiply(error_signal, return_signal, return_signal);
@@ -111,7 +111,7 @@ public:
 
 private:
   // maximum possible output value of the log-sigmoid should not be zero, but actually epsilon
-  DataType epsilon_ = DataType(1e-12);
+  DataType epsilon_ = fetch::math::numeric_min<DataType>();
 };
 
 }  // namespace ops

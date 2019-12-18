@@ -419,7 +419,7 @@ TEST_F(MathTensorTests, tensor_copy_from_tensor)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({4});
-  gt.Fill(static_cast<DataType>(2.0));
+  gt.Fill(DataType{2});
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
@@ -1133,7 +1133,7 @@ TEST_F(MathTensorTests, tensor_dot_test)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({2, 2});
-  gt.Fill(static_cast<DataType>(2.0));
+  gt.Fill(DataType{2});
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
