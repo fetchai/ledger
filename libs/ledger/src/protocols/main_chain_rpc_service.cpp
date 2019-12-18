@@ -187,8 +187,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   if (!ValidBlock(block, "new block"))
   {
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "Gossiped block did not prove valid. Loose blocks seen: ", loose_blocks_seen_);
+    FETCH_LOG_WARN(LOGGING_NAME, "Gossiped block #", block.block_number, " 0x", block.hash.ToHex(),
+                   " did not prove valid. (Loose blocks seen: ", loose_blocks_seen_, ")");
     ++loose_blocks_seen_;
     return;
   }
