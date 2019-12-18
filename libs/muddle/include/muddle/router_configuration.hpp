@@ -33,7 +33,7 @@ struct RouterConfiguration
   uint64_t max_delivery_attempts{3};
   Duration temporary_connection_length{
       std::chrono::seconds(4)};  ///< Time should be slightly longer than the retry period
-  uint32_t retry_delay_ms{20};
+  uint32_t retry_delay_ms{2000};
 };
 
 }  // namespace muddle
