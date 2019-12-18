@@ -355,7 +355,7 @@ public:
   {
     type old_data;
     stack_.Get(i, old_data);
-    if (0 == memcmp(&object, &old_data, sizeof(type)))
+    if (0 != memcmp(&object, &old_data, sizeof(type)))
     {
       history_.Push(HistorySet{i, old_data}, HistorySet::value);
       stack_.Set(i, object);
@@ -492,7 +492,6 @@ public:
         RevertSet();
         break;
       case HistoryHeader::value:
-        FETCH_LOG_INFO(LOGGING_NAME, "F");
         RevertHeader();
         break;
       default:
