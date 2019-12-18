@@ -424,6 +424,11 @@ TEST_F(VMModelTests, model_uncompilable_add_layer__dense_invalid_params)
   TestAddingUncompilableLayer(R"(model.add("dense", 10fp32, 10u64, "relu");)");
 }
 
+TEST_F(VMModelTests, model_uncompilable_add_layer__flatten_invalid_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("flatten", 10fp32);)");
+}
+
 TEST_F(VMModelTests, model_uncompilable_add_layer__conv_invalid_params)
 {
   TestAddingUncompilableLayer(R"(model.add("conv1d", 0u64, 10fp32, 10u64, 10u64, "relu");)");
