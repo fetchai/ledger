@@ -113,10 +113,10 @@ public:
 
   /// @name Result Access
   /// @{
-  bool Wait(bool throw_exception = true) const;
+  bool Wait(bool throw_exception = true, uint64_t extend_wait_by = 0) const;
 
   template <typename T>
-  bool GetResult(T &ret) const;
+  bool GetResult(T &ret, uint64_t extend_wait_by = 0) const;
   /// @}
 
   // Operators
@@ -212,13 +212,13 @@ private:
 };
 
 template <typename T>
-bool details::PromiseImplementation::GetResult(T &ret) const
+bool details::PromiseImplementation::GetResult(T &ret, uint64_t extend_wait_by) const
 {
   bool success{false};
 
   try
   {
-    if (Wait())
+    if (Wait(true, extend_wait_by))
     {
       SerializerType ser(value_);
       ser >> ret;
