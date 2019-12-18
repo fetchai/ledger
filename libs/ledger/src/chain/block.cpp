@@ -92,7 +92,7 @@ void Block::UpdateDigest()
   FETCH_LOG_INFO("BLOCK", "TxMerkle: ", tx_merkle_tree.root().ToHex());
   FETCH_LOG_INFO("BLOCK", "MinerId: ", miner_id.identifier().ToHex());
   FETCH_LOG_INFO("BLOCK", "Log2Lanes: ", log2_num_lanes);
-  FETCH_LOG_INFO("BLOCK", "DagEpoch: ", dag_epoch);
+//  FETCH_LOG_INFO("BLOCK", "DagEpoch: ", dag_epoch);
   FETCH_LOG_INFO("BLOCK", "Timestamp: ", timestamp);
   FETCH_LOG_INFO("BLOCK", "Weight: ", weight);
 
