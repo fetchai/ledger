@@ -80,8 +80,12 @@ TEST(RoutingTests, PopulationTest)
     all_addresses2.emplace(n->address);
   }
 
-  EXPECT_EQ(all_addresses1.size(), N);
-  EXPECT_EQ(all_addresses1, all_addresses2);
+  EXPECT_GE(all_addresses1.size(), N);
+  for (auto &adr : all_addresses2)
+  {
+    EXPECT_NE(all_addresses1.find(adr), all_addresses1.end());
+  }
+
   network->Stop();
   network->Shutdown();
 }
