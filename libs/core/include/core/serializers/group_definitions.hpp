@@ -79,7 +79,11 @@ struct TypeCodes
     MAP_CODE16     = 0xde,
     MAP_CODE32     = 0xdf,
 
-    FIXED_MASK1     = 0xF0,
+      PAIR_CODE_FIXED = 0x70,
+      PAIR_CODE16     = 0xb0,
+      PAIR_CODE32     = 0xb1,
+
+      FIXED_MASK1     = 0xF0,
     FIXED_MASK2     = 0xE0,
     FIXED_VAL_MASK  = 0x0F,
     FIXED_VAL_MASK2 = 0x1F,
@@ -198,6 +202,9 @@ struct ArraySerializer;
 
 template <typename T, typename D>
 struct MapSerializer;
+
+    template <typename T, typename D>
+    struct PairSerializer;
 
 template <typename T, typename D>
 struct ExtensionSerializer;

@@ -290,6 +290,7 @@ private:
   TypePtr        any_integer_type_;
   TypePtr        array_type_;
   TypePtr        map_type_;
+    TypePtr        pair_type_;
   TypePtr        sharded_state_type_;
   TypePtr        state_type_;
   TypePtr        initialiser_list_type_;
