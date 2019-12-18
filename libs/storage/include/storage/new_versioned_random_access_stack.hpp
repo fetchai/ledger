@@ -355,8 +355,11 @@ public:
   {
     type old_data;
     stack_.Get(i, old_data);
-    history_.Push(HistorySet{i, old_data}, HistorySet::value);
-    stack_.Set(i, object);
+    if (old_data != object)
+    {
+      history_.Push(HistorySet{i, old_data}, HistorySet::value);
+      stack_.Set(i, object);
+    }
   }
 
   uint64_t Push(type const &object)
@@ -460,10 +463,15 @@ public:
   {
     bool bookmark_found = false;
 
+    int counter = 0;
+
     while (!bookmark_found)
     {
+      // FETCH_LOG_INFO(LOGGING_NAME, "popping...");
+
       if (history_.empty())
       {
+        FETCH_LOG_INFO(LOGGING_NAME, "BAD STUFF");
         throw StorageException(
             "Attempt to revert to key failed, leaving stack in undefined state.");
       }
@@ -474,24 +482,36 @@ public:
       switch (t)
       {
       case HistoryBookmark::value:
+        FETCH_LOG_INFO(LOGGING_NAME, "A");
         bookmark_found = RevertBookmark(key);
         break;
       case HistorySwap::value:
+        FETCH_LOG_INFO(LOGGING_NAME, "B");
         RevertSwap();
         break;
       case HistoryPop::value:
+        FETCH_LOG_INFO(LOGGING_NAME, "C");
         RevertPop();
         break;
       case HistoryPush::value:
+        FETCH_LOG_INFO(LOGGING_NAME, "D");
         RevertPush();
         break;
       case HistorySet::value:
+        counter++;
+        if (counter % 100 == 0)
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "counter: ", counter);
+        }
+        // FETCH_LOG_INFO(LOGGING_NAME, "E");
         RevertSet();
         break;
       case HistoryHeader::value:
+        FETCH_LOG_INFO(LOGGING_NAME, "F");
         RevertHeader();
         break;
       default:
+        FETCH_LOG_INFO(LOGGING_NAME, "bad stuff2");
         throw StorageException("Undefined type found when reverting in versioned history");
       }
     }
