@@ -21,7 +21,7 @@
 #include "math/tensor.hpp"
 #include "math/utilities/ReadCSV.hpp"
 #include "ml/core/graph.hpp"
-#include "ml/dataloaders/commodity_dataloader.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
@@ -29,12 +29,11 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 
 #include <iostream>
-#include <sstream>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
-using DataType      = fetch::fixed_point::FixedPoint<32, 32>;
+//using DataType      = fetch::fixed_point::FixedPoint<32, 32>;
+using DataType      = double;
 using TensorType    = fetch::math::Tensor<DataType>;
 using GraphType     = fetch::ml::Graph<TensorType>;
 using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
@@ -227,7 +226,7 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
 {
   DataType                                                            loss{0};
   DataType                                                            loss_counter{0};
-  fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
+  fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> loader;
 
   auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file, 1, 1, true);
   auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file, 1, 1, true);
@@ -295,8 +294,9 @@ int main(int argc, char **argv)
   {
     /// LOAD WEIGHTS INTO GRAPH ///
     std::string weights_dir = input_dir + "/output/" + dataname + "/model_weights";
-    auto        sd          = g_ptr->StateDict();
+    std::vector<TensorType> weightsrefs = g_ptr->GetWeightsReferences();
 
+    auto w_itr = weightsrefs.begin();
     for (auto const &name : node_names)
     {
       if (name.find("dense") != std::string::npos)
@@ -315,35 +315,31 @@ int main(int argc, char **argv)
         assert(actual_dirs.size() == 1);
 
         std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
-        std::cout << "node_weights_dir: " << node_weights_dir << std::endl;
 
         // the weights array for the node has number of columns = number of features
         TensorType weights =
             fetch::math::utilities::ReadCSV<TensorType>(node_weights_dir + "/kernel:0.csv", 0, 0, true);
-//        weights = weights.Transpose();
         TensorType bias =
             fetch::math::utilities::ReadCSV<TensorType>(node_weights_dir + "/bias:0.csv", 0, 0, true);
         bias = bias.Transpose();
 
         assert(bias.shape().at(0) == weights.shape().at(0));
 
-        auto weights_tensor = sd.dict_.at("FullyConnected_Weights").weights_;
-        auto bias_tensor    = sd.dict_.at("FullyConnected_Bias").weights_;
-
-        *weights_tensor     = weights;
-        *bias_tensor        = bias;
+        assert(w_itr->shape() == bias.shape());
+        *w_itr = bias;
+        w_itr++;
+        assert(w_itr->shape() == weights.shape());
+        *w_itr = weights;
+        w_itr++;
         output_feature_size = weights.shape()[0];  // stores shape of last dense layer
       }
     }
-
-    // load state dict into graph (i.e. load pretrained weights)
-    g_ptr->LoadStateDict(sd);
 
     /// LOAD DATA ///
 
     std::string test_x_file = filename_root + "x_test.csv";
     std::string test_y_file = filename_root + "y_pred_test.csv";
-    fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
+    fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> loader;
     auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file, 1, 1, true);
     auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file, 1, 1, true);
     loader.AddData({data}, label);
@@ -365,7 +361,10 @@ int main(int argc, char **argv)
       j++;
     }
 
-    if (output.AllClose(test_y, fetch::math::Type<DataType>("0.00001")))
+    std::cout << "output.ToString(): " << output.ToString() << std::endl;
+    std::cout << "test_y.ToString(): " << test_y.ToString() << std::endl;
+    if (output.AllClose(test_y, DataType{0},
+        fetch::math::Type<DataType>("0.00001")))
     {
       std::cout << "Graph output is the same as the test output - success!" << std::endl;
     }
@@ -384,7 +383,7 @@ int main(int argc, char **argv)
     OptimiserType optimiser(g_ptr, {node_names.front()}, node_names.at(1), node_names.back(),
                             LEARNING_RATE);
 
-    fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
+    fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> loader;
 
     // three training rounds
     for (SizeType j = 0; j < 3; j++)

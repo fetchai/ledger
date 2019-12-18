@@ -27,12 +27,12 @@ var file_bias1    = System.Argv(1) +  "/output/keras_aluminium_px_last_us/model_
 var file_weights2 = System.Argv(1) +  "/output/keras_aluminium_px_last_us/model_weights/output_dense/output_dense_12/kernel:0.csv";
 var file_bias2    = System.Argv(1) +  "/output/keras_aluminium_px_last_us/model_weights/output_dense/output_dense_12/bias:0.csv";
 
-var weights0 = read_csv(file_weights0, true);
-var bias0    = read_csv(file_bias0, false);
-var weights1 = read_csv(file_weights1, true);
-var bias1    = read_csv(file_bias1, false);
-var weights2 = read_csv(file_weights2, true);
-var bias2    = read_csv(file_bias2, false);
+var weights0 = readCSV(file_weights0);
+var bias0    = readCSV(file_bias0);
+var weights1 = readCSV(file_weights1);
+var bias1    = readCSV(file_bias1);
+var weights2 = readCSV(file_weights2);
+var bias2    = readCSV(file_bias2);
 
 
 // load weights into graph

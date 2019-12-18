@@ -47,7 +47,6 @@ public:
   {
     NONE,
     TENSOR,
-    COMMODITY
   };
 
   VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
@@ -60,15 +59,6 @@ public:
   static void Bind(fetch::vm::Module &module, bool enable_experimental);
 
   /**
-   * Add data to a dataloader by passing the filenames
-   * @param mode
-   * @param xfilename
-   * @param yfilename
-   */
-  void AddDataByFiles(fetch::vm::Ptr<fetch::vm::String> const &xfilename,
-                      fetch::vm::Ptr<fetch::vm::String> const &yfilename);
-
-  /**
    * Add data to a data loader by passing in the data and labels
    * @param mode
    * @param data
@@ -78,14 +68,6 @@ public:
       fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>> const
           &                                                    data,
       fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
-
-  /**
-   * Add data to commodity data loader
-   * @param xfilename
-   * @param yfilename
-   */
-  void AddCommodityData(fetch::vm::Ptr<fetch::vm::String> const &xfilename,
-                        fetch::vm::Ptr<fetch::vm::String> const &yfilename);
 
   /**
    * Add data to tensor data loader
@@ -151,10 +133,6 @@ struct MapSerializer<fetch::vm_modules::ml::VMDataLoader, D>
 
       switch (sp.mode_)
       {
-      case vm_modules::ml::VMDataLoader::DataLoaderMode::COMMODITY:
-      {
-        throw std::runtime_error("commodity dataloader serialization not yet implemented");
-      }
       case vm_modules::ml::VMDataLoader::DataLoaderMode::TENSOR:
       {
         auto tdl_ptr = std::static_pointer_cast<fetch::ml::dataloaders::TensorDataLoader<
@@ -179,20 +157,16 @@ struct MapSerializer<fetch::vm_modules::ml::VMDataLoader, D>
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
-    uint8_t mode;
+    uint8_t mode{};
     map.ExpectKeyGetValue(MODE, mode);
     sp.mode_ = static_cast<vm_modules::ml::VMDataLoader::DataLoaderMode>(mode);
 
-    bool has_loader;
+    bool has_loader{};
     map.ExpectKeyGetValue(HAS_LOADER, has_loader);
     if (has_loader)
     {
       switch (sp.mode_)
       {
-      case vm_modules::ml::VMDataLoader::DataLoaderMode::COMMODITY:
-      {
-        throw std::runtime_error("commodity dataloader deserialization not yet implemented");
-      }
       case vm_modules::ml::VMDataLoader::DataLoaderMode::TENSOR:
       {
         auto tdl_ptr = std::make_shared<fetch::ml::dataloaders::TensorDataLoader<
