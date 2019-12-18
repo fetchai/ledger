@@ -587,26 +587,51 @@ TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_too_few_layer_shapes
 }
 
 // Disableduntil AddDropout estimator implementation
-TEST_F(VMModelTests, DISABLED_model_dropout_percentage_test)
+TEST_F(VMModelTests, model_dropout_comparison)
 {
   static char const *SOURCE = R"(
-      function main() : Tensor
-         var model = Model("sequential");
-         model.add("dropout", <<TOKEN>>);
-         model.compile("mse", "adam");
+    function main()
+        var dropouted_model = Model("sequential");
+        dropouted_model.add("dropout", 0.1fp64);
+        dropouted_model.compile("mse", "adam");
 
-         var input = Tensor(Array<UInt64>(1));
+        var reference_model = Model("sequential");
+        // Dropout with probability 0 acts as a simple connection
+        // between input layers and output layer; this workaround is needed
+        // because a sequential model with direct connection of inputs to
+        // outputs can not be compiled.
+        reference_model.add("dropout", 0.0fp64);
+        reference_model.compile("mse", "adam");
 
-         input.fromString("10.0, 10.0, 10.0; 10.0, 10.0, 10.0; 10.0, 10.0, 10.0;");
-         input.unsqueeze();
+        var shape = Array<UInt64>(3);
+        shape[0] = 25u64;
+        shape[1] = 25u64;
+        shape[2] = 1u64;
+        var x = Tensor(shape);
 
-         var prediction = model.predict(input);
-         return prediction;
-      endfunction
+        x.fillRandom();
+
+        var y = x.copy();
+        y += y;
+
+        var old_ref_loss = 0.0fp64;
+        for (i in 0:5)
+            dropouted_model.fit(x, y, 10u64);
+            reference_model.fit(x, y, 10u64);
+            var new_loss = dropouted_model.evaluate();
+            var new_ref_loss = reference_model.evaluate();
+
+            if (old_ref_loss == 0.0fp64)
+              old_ref_loss = new_ref_loss[0];
+            endif
+            assert(new_ref_loss[0] == old_ref_loss, "Model corrupts input data!");
+            assert(new_loss[0] != new_ref_loss[0], "Dropout did not change a layer output during training!");
+        endfor
+
+    endfunction
     )";
 
-  std::string const zero_dropout = std::regex_replace(SOURCE, std::regex("<<TOKEN>>"), "0fp64");
-  ASSERT_TRUE(toolkit.Compile(zero_dropout));
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
   EXPECT_TRUE(toolkit.Run());
 }
 
