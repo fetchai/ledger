@@ -87,15 +87,6 @@ void Block::UpdateDigest()
   // Generate hash stream
   serializers::MsgPackSerializer buf;
 
-  FETCH_LOG_INFO("BLOCK", "Prev: ", previous_hash.ToHex());
-  FETCH_LOG_INFO("BLOCK", "Merkle: ", merkle_hash.ToHex());
-  FETCH_LOG_INFO("BLOCK", "TxMerkle: ", tx_merkle_tree.root().ToHex());
-  FETCH_LOG_INFO("BLOCK", "MinerId: ", miner_id.identifier().ToHex());
-  FETCH_LOG_INFO("BLOCK", "Log2Lanes: ", log2_num_lanes);
-  FETCH_LOG_INFO("BLOCK", "DagEpoch: ", dag_epoch);
-  FETCH_LOG_INFO("BLOCK", "Timestamp: ", timestamp);
-  FETCH_LOG_INFO("BLOCK", "Weight: ", weight);
-
   // clang-format off
   buf << previous_hash;
   buf << merkle_hash;
@@ -108,8 +99,6 @@ void Block::UpdateDigest()
   buf << block_entropy;
   buf << weight;
   // clang-format on
-
-  FETCH_LOG_INFO("BLOCK", "HASHER: ", buf.data().ToHex());
 
   // Generate the hash
   crypto::SHA256 hash_builder;
