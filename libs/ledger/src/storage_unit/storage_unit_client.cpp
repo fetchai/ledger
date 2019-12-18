@@ -506,6 +506,8 @@ StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key) c
 
 void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Set: ", key.address(), " Value: ", value.ToHex());
+
   try
   {
     // make the request to the RPC server
