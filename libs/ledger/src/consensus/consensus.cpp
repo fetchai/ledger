@@ -185,6 +185,7 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
 
 bool Consensus::VerifyNotarisation(Block const &block) const
 {
+  FETCH_LOCK(mutex_);
   // Genesis is not notarised so the body of blocks with block number 1 do
   // not contain a notarisation
   if (notarisation_ && block.block_number > 1)
@@ -368,6 +369,7 @@ bool Consensus::ShouldTriggerNewCabinet(Block const &block)
 
 void Consensus::UpdateCurrentBlock(Block const &current)
 {
+  FETCH_LOCK(mutex_);
   bool const one_ahead = current.block_number == current_block_.block_number + 1;
 
   if (current.block_number > current_block_.block_number && !one_ahead)
@@ -495,6 +497,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
 NextBlockPtr Consensus::GenerateNextBlock()
 {
+  FETCH_LOCK(mutex_);
   NextBlockPtr ret;
 
   // Number of block we want to generate
@@ -613,7 +616,6 @@ bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) co
   }
 
   // Check qual has fully signed the block
-  uint32_t total_confirmations{0};
   for (auto const &it : qualified)
   {
     // Is qual in cabinet
@@ -625,10 +627,10 @@ bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) co
     }
 
     // Has qual created a confirmation
-    auto const confirmation_it = confirmations.find(entropy.ToQualIndex(it));
-    if (confirmation_it != confirmations.end())
+    try
     {
-      auto const &sig = confirmation_it->second;
+      // This could throw
+      auto const &sig = confirmations.at(entropy.ToQualIndex(it));
 
       if (!crypto::Verifier::Verify(Identity(it), entropy.digest, sig))
       {
@@ -638,16 +640,12 @@ bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) co
             " sig: ", sig.ToBase64(), " hash: ", entropy.digest.ToBase64());
         return false;
       }
-
-      ++total_confirmations;
     }
-  }
-
-  if (total_confirmations < proposed_qual_size)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Validation Failed: Not enough valid confirmations. Expected: ",
-                   proposed_qual_size, " Recv: ", total_confirmations);
-    return false;
+    catch (...)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Threw when attempting to validate entropy confirmations");
+      return false;
+    }
   }
 
   return true;
@@ -655,6 +653,7 @@ bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) co
 
 Status Consensus::ValidBlock(Block const &current) const
 {
+  FETCH_LOCK(mutex_);
   Status ret = Status::YES;
 
   // TODO(HUT): more thorough checks for genesis needed
