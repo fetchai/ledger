@@ -148,7 +148,7 @@ private:
   SizeType              axis_;
   std::vector<SizeType> axes_;
   DataType              epsilon_           = fetch::math::numeric_min<DataType>();
-  DataType              one_minus_epsilon_ = static_cast<DataType>(1) - epsilon_;
+  DataType              one_minus_epsilon_ = DataType{1} - epsilon_;
 };
 
 }  // namespace ops

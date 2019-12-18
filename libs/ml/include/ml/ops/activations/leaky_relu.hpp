@@ -40,7 +40,7 @@ public:
   using SPType        = OpLeakyReluSaveableParams<TensorType>;
   using MyType        = LeakyRelu<TensorType>;
 
-  explicit LeakyRelu(DataType a = DataType(0.01))
+  explicit LeakyRelu(DataType a = fetch::math::Type<DataType>("0.01"))
     : a_(a)
   {}
 

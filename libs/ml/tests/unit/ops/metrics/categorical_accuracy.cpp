@@ -162,11 +162,11 @@ TYPED_TEST(CategoricalAccuracyTest, saveparams_test)
     {
       if (gt_data[i] == j)
       {
-        data2.Set(j, i, DataType(1));
+        data2.Set(j, i, DataType{1});
       }
       else
       {
-        data2.Set(j, i, DataType(0));
+        data2.Set(j, i, DataType{0});
       }
     }
   }
