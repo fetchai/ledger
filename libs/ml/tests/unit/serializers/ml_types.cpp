@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/serializers/ml_types.hpp"
+
 #include "core/serializers/main_serializer.hpp"
 #include "gtest/gtest.h"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "test_types.hpp"
 
@@ -84,7 +85,7 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   using GraphType  = typename fetch::ml::Graph<TensorType>;
 
   fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::L1;
-  DataType                      reg_rate    = fetch::math::Type<DataType>("0.01");
+  auto                          reg_rate    = fetch::math::Type<DataType>("0.01");
 
   // Prepare graph with fairly random architecture
   auto g = std::make_shared<GraphType>();

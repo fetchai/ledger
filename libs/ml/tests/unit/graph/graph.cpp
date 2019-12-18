@@ -16,8 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
+
+#include "gtest/gtest.h"
+#include "math/tensor.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
@@ -26,8 +28,6 @@
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
 #include "test_types.hpp"
-
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {

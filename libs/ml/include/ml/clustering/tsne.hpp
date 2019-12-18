@@ -62,7 +62,7 @@ public:
   template <typename DataType>
   static constexpr math::meta::IfIsNonFixedPointArithmetic<DataType, DataType> tsne_tolerance()
   {
-    return DataType(1e-12);
+    return fetch::math::Type<DataType>("0.00000000001");
   }
 
   TSNE(TensorType const &input_matrix, TensorType const &output_matrix, DataType const &perplexity)
@@ -159,7 +159,7 @@ public:
       // Later P-values correction
       if (iter == p_later_correction_iteration)
       {
-        input_symmetric_affinities_ = fetch::math::Divide(input_symmetric_affinities_, DataType(4));
+        input_symmetric_affinities_ = fetch::math::Divide(input_symmetric_affinities_, DataType{4});
       }
     }
   }
@@ -190,7 +190,7 @@ private:
       input_matrix_ = input_matrix.Transpose();
     }
 
-    DataType perplexity_tolerance = fetch::math::Type<DataType>("0.00001");
+    auto     perplexity_tolerance = fetch::math::Type<DataType>("0.00001");
     SizeType max_tries{50};
 
     // Initialise high dimensional values
@@ -209,7 +209,7 @@ private:
     input_symmetric_affinities_ = fetch::math::Divide(
         input_symmetric_affinities_, fetch::math::Sum(input_symmetric_affinities_));
     // Early exaggeration
-    input_symmetric_affinities_ = fetch::math::Multiply(input_symmetric_affinities_, DataType(4));
+    input_symmetric_affinities_ = fetch::math::Multiply(input_symmetric_affinities_, DataType{4});
 
     // Limit minimum value to 1e-12
     LimitMin(input_symmetric_affinities_, tsne_tolerance<DataType>());
@@ -279,7 +279,7 @@ private:
 
     // d= ((-2 * dot(X, X.T))+sum_x).T+sum_x
     TensorType d =
-        fetch::math::Multiply(DataType(-2), fetch::math::DotTranspose(input_matrix, input_matrix));
+        fetch::math::Multiply(DataType{-2}, fetch::math::DotTranspose(input_matrix, input_matrix));
 
     d = (d + sum_x).Transpose() + sum_x;
 
@@ -324,11 +324,11 @@ private:
           beta_min = beta.At(i);
           if (beta_max == inf || beta_max == neg_inf)
           {
-            beta.Set(i, beta.At(i) * DataType(2));
+            beta.Set(i, beta.At(i) * DataType{2});
           }
           else
           {
-            beta.Set(i, (beta.At(i) + beta_max) / DataType(2));
+            beta.Set(i, (beta.At(i) + beta_max) / DataType{2});
           }
         }
         else
@@ -336,11 +336,11 @@ private:
           beta_max = beta.At(i);
           if (beta_min == inf || beta_min == neg_inf)
           {
-            beta.Set(i, beta.At(i) / DataType(2));
+            beta.Set(i, beta.At(i) / DataType{2});
           }
           else
           {
-            beta.Set(i, (beta.At(i) + beta_min) / DataType(2));
+            beta.Set(i, (beta.At(i) + beta_min) / DataType{2});
           }
         }
 
@@ -381,7 +381,7 @@ private:
     TensorType sum_y = fetch::math::ReduceSum(fetch::math::Square(output_matrix), 1);
 
     // num = -2. * dot(Y, Y.T)
-    num = fetch::math::Multiply(DataType(-2),
+    num = fetch::math::Multiply(DataType{-2},
                                 fetch::math::DotTranspose(output_matrix, output_matrix));
 
     // num = 1 / (1 + (num+sum_y).T+sum_y)

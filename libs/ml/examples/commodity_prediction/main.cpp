@@ -34,7 +34,7 @@
 #include <string>
 #include <vector>
 
-using DataType      = double;
+using DataType      = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType    = fetch::math::Tensor<DataType>;
 using GraphType     = fetch::ml::Graph<TensorType>;
 using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
@@ -110,7 +110,7 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   SizeType                 input_layer_size;
   SizeType                 previous_layer_size;
   std::string              layer_activation;
-  DataType                 dropout_prob = 1.0;
+  DataType                 dropout_prob{1};
   std::vector<std::string> node_names({});
   LayerType                layer_type;
 
@@ -153,14 +153,16 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
     case LayerType::SOFTMAX:
     {
       previous_layer_name =
-          g->AddNode<fetch::ml::ops::Softmax<TensorType>>(layer_name, {previous_layer_name});
+          g->AddNode<fetch::ml::ops::Softmax<TensorType>>("", {previous_layer_name});
       break;
     }
     case LayerType::DROPOUT:
     {
-      ss >> dropout_prob >> delimiter;
+      std::string dp;
+      std::getline(ss, dp, delimiter);
+      dropout_prob = fetch::math::Type<DataType>(dp);
       previous_layer_name =
-          g->AddNode<Dropout<TensorType>>(layer_name, {previous_layer_name}, dropout_prob);
+          g->AddNode<Dropout<TensorType>>("", {previous_layer_name}, dropout_prob);
       break;
     }
     case LayerType::DENSE:
@@ -223,8 +225,8 @@ int ArgPos(char const *str, int argc, char **argv)
 DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &test_x_file,
                   std::string const &test_y_file, std::vector<std::string> node_names)
 {
-  DataType                                                            loss         = 0;
-  DataType                                                            loss_counter = 0;
+  DataType                                                            loss{0};
+  DataType                                                            loss_counter{0};
   fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
 
   auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file);
@@ -366,7 +368,7 @@ int main(int argc, char **argv)
       j++;
     }
 
-    if (output.AllClose(test_y, 0.00001f))
+    if (output.AllClose(test_y, fetch::math::Type<DataType>("0.00001")))
     {
       std::cout << "Graph output is the same as the test output - success!" << std::endl;
     }
@@ -462,11 +464,11 @@ int main(int argc, char **argv)
     label.Transpose();
     loader.AddData({data}, label);
 
-    DataType    distance         = 0;
-    DataType    distance_counter = 0;
+    DataType    distance{0};
+    DataType    distance_counter{0};
     std::string our_y_output = filename_root + "y_pred_test_fetch_" + std::to_string(EPOCHS) + "_" +
                                std::to_string(static_cast<int>(use_random)) + "_" +
-                               std::to_string(LEARNING_RATE) + ".csv";
+                               std::to_string(static_cast<double>(LEARNING_RATE)) + ".csv";
 
     bool          first = true;
     std::ofstream file(our_y_output);
