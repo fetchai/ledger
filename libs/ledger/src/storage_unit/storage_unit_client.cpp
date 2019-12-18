@@ -147,6 +147,9 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   // Set merkle stack to this hash, get the tree
   MerkleTree tree{num_lanes()};
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Reverting to hash: ", hash.ToBase64(),
+                 "Note, genesis merkle hash: ", chain::GetGenesisMerkleRoot().ToBase64());
+
   if (genesis_state && (index == 0))  // this is truly the genesis block
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis!");
@@ -186,7 +189,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   {
     assert(!hash.empty());
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "reverting tree leaf: 0x", lane_merkle_hash.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "reverting tree leaf: 0x", lane_merkle_hash.ToHex());
 
     // make the call to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
@@ -202,7 +205,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   for (auto &p : promises)
   {
     bool item_success{false};
-    if (!(p->GetResult(item_success) && item_success))
+    if (!(p->GetResult(item_success, 180) && item_success))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert shard ", lane_index, " to 0x",
                      tree[lane_index].ToHex());
