@@ -71,7 +71,7 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
   case NUMBER_INT:
   {
     std::string const str{document.SubArray(token.first, token.second)};
-
+    errno   = 0;
     variant = std::strtoll(str.c_str(), nullptr, 10);
     if (errno == ERANGE)
     {
@@ -87,7 +87,7 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
   case NUMBER_FLOAT:
   {
     std::string const str{document.SubArray(token.first, token.second)};
-
+    errno = 0;
     // convert the value
     auto const converted_value = static_cast<double>(std::strtold(str.c_str(), nullptr));
 
