@@ -49,8 +49,8 @@ int main(int ac, char **av)
   ModelConfig<DataType> model_config;
   model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
-  model_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.001);
-  model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
+  model_config.learning_rate_param.starting_learning_rate = fetch::math::Type<DataType>("0.001");
+  model_config.learning_rate_param.exponential_decay_rate = fetch::math::Type<DataType>("0.99");
   model_config.batch_size                                 = 64;  // minibatch training size
   model_config.subset_size         = 1000;  // train on 1000 samples then run tests/save graph
   model_config.early_stopping      = true;  // stop early if no improvement
