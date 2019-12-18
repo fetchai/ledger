@@ -665,7 +665,20 @@ void VMModel::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
         ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
     AssertLayerTypeMatches(layer_type, {SupportedLayerType::DROPOUT});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
-    me->Add<fetch::ml::ops::Dropout<TensorType>>(probability);
+
+    // ops::Dropout takes a keep-probability, while Keras-style argument is a drop-probability,
+    // so it is reversed here.
+    if (probability < DataType{0} || probability > DataType{1})
+    {
+      std::stringstream ss;
+      ss << IMPOSSIBLE_ADD_MESSAGE << "dropout probability " << probability
+         << " is out of allowed range [0..1]";
+      vm_->RuntimeError(ss.str());
+      return;
+    }
+    DataType const keep_probability = DataType{1} - probability;
+
+    me->Add<fetch::ml::ops::Dropout<TensorType>>(keep_probability);
     compiled_ = false;
   }
   catch (std::exception const &e)

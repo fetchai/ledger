@@ -570,6 +570,7 @@ TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_wrong_optimizer)
   std::cout << "Testing non-Adam optimizer for a Simple model" << std::endl;
   EXPECT_FALSE(toolkit.Run());
 }
+
 TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_too_few_layer_shapes)
 {
   static char const *SIMPLE_1_HIDDEN_SRC = R"(
@@ -583,6 +584,30 @@ TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_too_few_layer_shapes
   ASSERT_TRUE(toolkit.Compile(SIMPLE_1_HIDDEN_SRC));
   std::cout << "Testing insufficient hidden layers quantity for a Simple model" << std::endl;
   EXPECT_FALSE(toolkit.Run());
+}
+
+// Disableduntil AddDropout estimator implementation
+TEST_F(VMModelTests, DISABLED_model_dropout_percentage_test)
+{
+  static char const *SOURCE = R"(
+      function main() : Tensor
+         var model = Model("sequential");
+         model.add("dropout", <<TOKEN>>);
+         model.compile("mse", "adam");
+
+         var input = Tensor(Array<UInt64>(1));
+
+         input.fromString("10.0, 10.0, 10.0; 10.0, 10.0, 10.0; 10.0, 10.0, 10.0;");
+         input.unsqueeze();
+
+         var prediction = model.predict(input);
+         return prediction;
+      endfunction
+    )";
+
+  std::string const zero_dropout = std::regex_replace(SOURCE, std::regex("<<TOKEN>>"), "0fp64");
+  ASSERT_TRUE(toolkit.Compile(zero_dropout));
+  EXPECT_TRUE(toolkit.Run());
 }
 
 TEST_F(VMModelTests, model_compilation_sequential_from_layer_shapes)
