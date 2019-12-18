@@ -45,7 +45,7 @@ TYPED_TEST(ScalerTest, min_max_2d_test)
   data.FillUniformRandom();
 
   // multiplication to push data outside of 0-1 range
-  data *= static_cast<DataType>(1000);
+  data *= DataType{1000};
 
   TypeParam norm_data(tensor_shape);
   TypeParam de_norm_data(tensor_shape);
@@ -62,8 +62,8 @@ TYPED_TEST(ScalerTest, min_max_2d_test)
   EXPECT_TRUE(data.AllClose(de_norm_data, fetch::math::function_tolerance<DataType>(),
                             fetch::math::function_tolerance<DataType>()));
 
-  EXPECT_TRUE(fetch::math::Max(norm_data) <= static_cast<DataType>(1));
-  EXPECT_TRUE(fetch::math::Min(norm_data) >= static_cast<DataType>(0));
+  EXPECT_TRUE(fetch::math::Max(norm_data) <= DataType{1});
+  EXPECT_TRUE(fetch::math::Min(norm_data) >= DataType{0});
 }
 
 TYPED_TEST(ScalerTest, min_max_3d_test)
@@ -91,8 +91,8 @@ TYPED_TEST(ScalerTest, min_max_3d_test)
   EXPECT_TRUE(data.AllClose(de_norm_data, fetch::math::function_tolerance<DataType>(),
                             fetch::math::function_tolerance<DataType>()));
 
-  EXPECT_TRUE(fetch::math::Max(norm_data) <= static_cast<DataType>(1));
-  EXPECT_TRUE(fetch::math::Min(norm_data) >= static_cast<DataType>(0));
+  EXPECT_TRUE(fetch::math::Max(norm_data) <= DataType{1});
+  EXPECT_TRUE(fetch::math::Min(norm_data) >= DataType{0});
 }
 
 }  // namespace test

@@ -96,6 +96,10 @@ public:
   static PeerTrackerPtr New(Duration const &interval, core::Reactor &reactor,
                             MuddleRegister const &reg, PeerConnectionList &connections,
                             MuddleEndpoint &endpoint);
+  PeerTracker(PeerTracker const &other) = delete;
+  PeerTracker(PeerTracker &&other)      = delete;
+  PeerTracker operator=(PeerTracker const &other) = delete;
+  PeerTracker operator=(PeerTracker &&other) = delete;
   ~PeerTracker() override;
 
   /// Tracker interface

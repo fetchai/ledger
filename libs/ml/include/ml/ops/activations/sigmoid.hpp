@@ -72,7 +72,7 @@ public:
     fetch::math::Sigmoid(*(inputs.front()), output);
 
     // ensures numerical stability
-    fetch::math::Clamp(epsilon_, static_cast<DataType>(1) - epsilon_, output);
+    fetch::math::Clamp(epsilon_, DataType{1} - epsilon_, output);
   }
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
@@ -85,7 +85,7 @@ public:
 
     // gradient of sigmoid function is s(x)(1 - s(x))
     Forward(inputs, t);
-    fetch::math::Subtract(static_cast<DataType>(1), t, return_signal);
+    fetch::math::Subtract(DataType{1}, t, return_signal);
     fetch::math::Multiply(t, return_signal, return_signal);
 
     // multiply by error_signal (chain rule)
@@ -108,7 +108,7 @@ public:
 private:
   // minimum possible output value of the sigmoid should not be zero, but actually epsilon
   // likewise maximum output should be 1 - epsilon
-  DataType epsilon_ = DataType(1e-7);
+  DataType epsilon_ = fetch::math::numeric_min<DataType>();
 };
 
 }  // namespace ops
