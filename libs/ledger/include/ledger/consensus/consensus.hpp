@@ -118,11 +118,12 @@ private:
 
   CabinetPtr GetCabinet(Block const &previous) const;
 
-  bool     ValidBlockTiming(Block const &previous, Block const &proposed) const;
-  bool     ShouldTriggerNewCabinet(Block const &block);
-  bool     EnoughQualSigned(Block const &previous, Block const &current) const;
-  uint32_t GetThreshold(Block const &block) const;
-  void     AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
+  mutable std::mutex mutex_;
+  bool               ValidBlockTiming(Block const &previous, Block const &proposed) const;
+  bool               ShouldTriggerNewCabinet(Block const &block);
+  bool               EnoughQualSigned(Block const &previous, Block const &current) const;
+  uint32_t           GetThreshold(Block const &block) const;
+  void               AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
 };
 
 }  // namespace ledger
