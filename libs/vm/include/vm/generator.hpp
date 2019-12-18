@@ -379,6 +379,23 @@ private:
   using LargeConstantsMap = std::map<Executable::LargeConstant, uint16_t, LargeConstantComparator>;
   using LineToPcMap       = std::map<uint16_t, uint16_t>;
 
+  struct FatalException : public std::exception
+  {
+    explicit FatalException(std::string message__)
+      : message{std::move(message__)}
+    {}
+    const char *what() const noexcept override
+    {
+      return message.c_str();
+    }
+    std::string message;
+  };
+
+  static const uint16_t MAX_INSTRUCTIONS     = 0xFFFF;
+  static const uint16_t MAX_CONSTANTS        = 2048;
+  static const uint16_t MAX_STRING_CONSTANTS = 2048;
+  static const uint16_t MAX_LARGE_CONSTANTS  = 2048;
+
   VM *                     vm_{};
   uint16_t                 num_system_types_{};
   Executable               executable_;
@@ -387,11 +404,13 @@ private:
   StringsMap               strings_map_;
   ConstantsMap             constants_map_;
   LargeConstantsMap        large_constants_map_;
+  std::string              filename_;
   Executable::Function *   function_{};
   LineToPcMap              line_to_pc_map_;
   std::vector<std::string> errors_;
 
   void          Initialise(VM *vm, uint16_t num_system_types);
+  uint16_t      AddInstruction(Executable::Instruction const &instruction, uint16_t line);
   void          AddLineNumber(uint16_t line, uint16_t pc);
   void          ResolveTypes(IR const &ir);
   void          ResolveFunctions(IR const &ir);
