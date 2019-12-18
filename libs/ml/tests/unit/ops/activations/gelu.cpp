@@ -126,8 +126,7 @@ TYPED_TEST(GeluTest, saveparams_test)
   new_op.Forward(VecTensorType({std::make_shared<const TensorType>(data)}), new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 
   // gelu can overflow for some fixed point types for these data
   fetch::math::state_clear<DataType>();
