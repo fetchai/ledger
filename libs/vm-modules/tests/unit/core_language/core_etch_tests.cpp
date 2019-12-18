@@ -537,7 +537,7 @@ TEST_F(CoreEtchTests, duplicate_contracts_fail_compilation_gracefully)
   ASSERT_FALSE(toolkit.Compile(TEXT));
 }
 
-TEST_F(CoreEtchTests, duplicate_structs_fail_compilation_gracefully)
+TEST_F(CoreEtchTests, DISABLED_duplicate_structs_fail_compilation_gracefully)
 {
   static char const *TEXT = R"(
     struct Clazz
@@ -556,7 +556,7 @@ TEST_F(CoreEtchTests, duplicate_structs_fail_compilation_gracefully)
   ASSERT_FALSE(toolkit.Compile(TEXT));
 }
 
-TEST_F(CoreEtchTests, duplicate_member_functions_fail_compilation_gracefully)
+TEST_F(CoreEtchTests, DISABLED_duplicate_member_functions_fail_compilation_gracefully)
 {
   static char const *TEXT = R"(
     struct Clazz
@@ -573,7 +573,7 @@ TEST_F(CoreEtchTests, duplicate_member_functions_fail_compilation_gracefully)
   ASSERT_FALSE(toolkit.Compile(TEXT));
 }
 
-TEST_F(CoreEtchTests, duplicate_constructors_fail_compilation_gracefully)
+TEST_F(CoreEtchTests, DISABLED_duplicate_constructors_fail_compilation_gracefully)
 {
   static char const *TEXT = R"(
     struct Clazz
