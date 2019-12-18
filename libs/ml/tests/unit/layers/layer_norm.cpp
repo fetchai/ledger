@@ -252,7 +252,7 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   auto grads = layer.GetGradients();
   for (auto &grad : grads)
   {
-    grad *= static_cast<DataType>(-0.1);
+    grad *= fetch::math::Type<DataType>("-0.1");
   }
   layer.ApplyGradients(grads);
 
@@ -263,7 +263,7 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   auto grads2 = layer2.GetGradients();
   for (auto &grad : grads2)
   {
-    grad *= static_cast<DataType>(-0.1);
+    grad *= fetch::math::Type<DataType>("-0.1");
   }
   layer2.ApplyGradients(grads2);
 

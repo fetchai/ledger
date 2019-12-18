@@ -32,8 +32,7 @@
 #include <string>
 #include <vector>
 
-// using DataType      = fetch::fixed_point::FixedPoint<32, 32>;
-using DataType      = double;
+using DataType      = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType    = fetch::math::Tensor<DataType>;
 using GraphType     = fetch::ml::Graph<TensorType>;
 using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
@@ -361,9 +360,7 @@ int main(int argc, char **argv)
       j++;
     }
 
-    std::cout << "output.ToString(): " << output.ToString() << std::endl;
-    std::cout << "test_y.ToString(): " << test_y.ToString() << std::endl;
-    if (output.AllClose(test_y, DataType{0}, fetch::math::Type<DataType>("0.00001")))
+    if (output.AllClose(test_y, fetch::math::Type<DataType>("0.00001")))
     {
       std::cout << "Graph output is the same as the test output - success!" << std::endl;
     }
