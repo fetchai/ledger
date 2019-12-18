@@ -613,6 +613,7 @@ bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) co
   }
 
   // Check qual has fully signed the block
+  uint32_t total_confirmations{0};
   for (auto const &it : qualified)
   {
     // Is qual in cabinet
@@ -624,10 +625,10 @@ bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) co
     }
 
     // Has qual created a confirmation
-    try
+    auto const confirmation_it = confirmations.find(entropy.ToQualIndex(it));
+    if (confirmation_it != confirmations.end())
     {
-      // This could throw
-      auto const &sig = confirmations.at(entropy.ToQualIndex(it));
+      auto const &sig = confirmation_it->second;
 
       if (!crypto::Verifier::Verify(Identity(it), entropy.digest, sig))
       {
@@ -637,12 +638,16 @@ bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) co
             " sig: ", sig.ToBase64(), " hash: ", entropy.digest.ToBase64());
         return false;
       }
+
+      ++total_confirmations;
     }
-    catch (...)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Threw when attempting to validate entropy confirmations");
-      return false;
-    }
+  }
+
+  if (total_confirmations < proposed_qual_size)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Validation Failed: Not enough valid confirmations. Expected: ",
+                   proposed_qual_size, " Recv: ", total_confirmations);
+    return false;
   }
 
   return true;
