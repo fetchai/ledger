@@ -39,7 +39,7 @@ namespace utilities {
  */
 template <typename TensorType>
 TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_skip = 0,
-                   math::SizeType rows_to_skip = 0)
+                   math::SizeType rows_to_skip = 0, bool unsafe_parsing = false)
 {
   using DataType = typename TensorType::Type;
   std::ifstream file(filename);
@@ -94,7 +94,14 @@ TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_ski
     }
     while (std::getline(ss, field_value, delimiter))
     {
-      weights(col, row) = fetch::math::Type<DataType>(field_value);
+      if (!unsafe_parsing)
+      {
+        weights(col, row) = fetch::math::Type<DataType>(field_value);
+      } else {
+        // Constructing a fixed point from a double is not guaranteed to give the same results on
+        // different architectures and so is unsafe
+        weights(col, row) = DataType{std::stod(field_value)};
+      }
       ++col;
     }
     ++row;
