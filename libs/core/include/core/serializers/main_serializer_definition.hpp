@@ -54,9 +54,9 @@ public:
     /// Pair Helpers
     /// @{
     using PairConstructor = interfaces::ContainerConstructorInterface<
-    MsgPackSerializer, interfaces::MapInterface<MsgPackSerializer>, TypeCodes::MAP_CODE_FIXED,
-    TypeCodes::MAP_CODE16, TypeCodes::MAP_CODE32>;
-    using PairDeserializer = interfaces::MapDeserializer<MsgPackSerializer>;
+    MsgPackSerializer, interfaces::PairInterface<MsgPackSerializer>, TypeCodes::PAIR_CODE_FIXED,
+    TypeCodes::PAIR_CODE16, TypeCodes::PAIR_CODE32>;
+    using PairDeserializer = interfaces::PairDeserializer<MsgPackSerializer>;
     /// @}
 
     MsgPackSerializer()                         = default;

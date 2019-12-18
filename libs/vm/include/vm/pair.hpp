@@ -33,8 +33,13 @@ public:
   IPair()           = delete;
   ~IPair() override = default;
   static Ptr<IPair>           Constructor(VM *vm, TypeId type_id);
-  virtual TemplateParameter1 *First()                    = 0;
-  virtual TemplateParameter2 *Second()                    = 0;
+  virtual TemplateParameter1 First()                    = 0;
+  virtual TemplateParameter2 Second()                    = 0;
+
+    template <typename Key, template <typename, typename> class Container>
+    static Ptr<IPair> inner(TypeId value_type_id, VM *vm, TypeId type_id);
+
+    static inline Ptr<IPair> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id);
 
 protected:
   IPair(VM *vm, TypeId type_id)
@@ -50,28 +55,31 @@ struct Pair : public IPair
   {}
   ~Pair() override = default;
 
-  TemplateParameter1 *First()
+  TemplateParameter1 First() override
   {
       TemplateParameter1 &value = pair.first;
-      return &value;
+      return value;
   }
 
-    TemplateParameter2 *Second()
+    TemplateParameter2 Second() override
     {
       TemplateParameter2 &value = pair.second;
-      return &value;
+      return value;
     }
 
   bool SerializeTo(MsgPackSerializer &buffer) override
   {
     auto constructor = buffer.NewPairConstructor();
+    auto pair_ser     = constructor(0);
 
-      auto f1 = [&pair, this](MsgPackSerializer &serializer) {
-        return SerializeElement<Key>(serializer, pair.first);
+    auto const &v = pair;
+
+    auto f1 = [&v, this](MsgPackSerializer &serializer) {
+        return SerializeElement<Key>(serializer, v.first);
       };
 
-      auto f2 = [&pair, this](MsgPackSerializer &serializer) {
-        return SerializeElement<Value>(serializer, pair.second);
+      auto f2 = [&v, this](MsgPackSerializer &serializer) {
+        return SerializeElement<Value>(serializer, v.second);
       };
 
       if (!pair_ser.AppendUsingFunction(f1, f2))
@@ -100,12 +108,13 @@ struct Pair : public IPair
         return DeserializeElement<Value>(value_type_id, serializer, value);
       };
 
-      if (!map_ser.GetNextKeyPairUsingFunction(f1, f2))
+      if (!pair_ser.GetNextKeyPairUsingFunction(f1, f2))
       {
         return false;
       }
 
-      map.insert({key, value});
+      pair.first=key;
+      pair.second=value;
 
     return true;
   }
@@ -163,7 +172,7 @@ private:
 };
 
 template <typename Key, template <typename, typename> class Container = Pair>
-Ptr<IPair> inner(TypeId value_type_id, VM *vm, TypeId type_id)
+Ptr<IPair> IPair::inner(TypeId value_type_id, VM *vm, TypeId type_id)
 {
   switch (value_type_id)
   {
@@ -218,57 +227,57 @@ Ptr<IPair> inner(TypeId value_type_id, VM *vm, TypeId type_id)
   }  // switch
 }
 
-inline Ptr<IPair> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id)
+inline Ptr<IPair> IPair::outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id)
 {
   switch (key_type_id)
   {
   case TypeIds::Bool:
   {
-    return inner<uint8_t>(value_type_id, vm, type_id);
+    return inner<uint8_t,Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::Int8:
   {
-    return inner<int8_t>(value_type_id, vm, type_id);
+    return inner<int8_t,Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt8:
   {
-    return inner<uint8_t>(value_type_id, vm, type_id);
+    return inner<uint8_t,Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::Int16:
   {
-    return inner<int16_t>(value_type_id, vm, type_id);
+    return inner<int16_t,Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt16:
   {
-    return inner<uint16_t>(value_type_id, vm, type_id);
+    return inner<uint16_t,Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::Int32:
   {
-    return inner<int32_t>(value_type_id, vm, type_id);
+    return inner<int32_t,Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt32:
   {
-    return inner<uint32_t>(value_type_id, vm, type_id);
+    return inner<uint32_t,Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::Int64:
   {
-    return inner<int64_t>(value_type_id, vm, type_id);
+    return inner<int64_t,Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt64:
   {
-    return inner<uint64_t>(value_type_id, vm, type_id);
+    return inner<uint64_t,Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::Fixed32:
   {
-    return inner<fixed_point::fp32_t>(value_type_id, vm, type_id);
+    return inner<fixed_point::fp32_t,Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::Fixed64:
   {
-    return inner<fixed_point::fp64_t>(value_type_id, vm, type_id);
+    return inner<fixed_point::fp64_t,Pair>(value_type_id, vm, type_id);
   }
   default:
   {
-    return inner<Ptr<Object>>(value_type_id, vm, type_id);
+    return inner<Ptr<Object>,Pair>(value_type_id, vm, type_id);
   }
   }  // switch
 }
