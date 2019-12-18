@@ -109,6 +109,7 @@ private:
   Block  previous_block_;
   Block  beginning_of_aeon_;
   Digest last_triggered_cabinet_;
+  mutable Mutex mutex_;
 
   uint64_t       default_start_time_ = 0;
   CabinetHistory cabinet_history_{};  ///< Cache of historical cabinets
@@ -118,7 +119,6 @@ private:
 
   CabinetPtr GetCabinet(Block const &previous) const;
 
-  mutable std::mutex mutex_;
   bool               ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool               ShouldTriggerNewCabinet(Block const &block);
   bool               EnoughQualSigned(Block const &previous, Block const &current) const;
