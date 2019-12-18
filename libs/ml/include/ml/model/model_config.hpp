@@ -31,7 +31,7 @@ struct ModelConfig
   bool     early_stopping = false;
   bool     test           = false;
   SizeType patience       = 10;
-  DataType min_delta      = DataType(0.0);
+  DataType min_delta      = DataType{0};
 
   fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param;
 
@@ -46,8 +46,8 @@ struct ModelConfig
   {
     learning_rate_param.mode =
         fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
-    learning_rate_param.starting_learning_rate = DataType(0.001);
-    learning_rate_param.exponential_decay_rate = DataType(0.99);
+    learning_rate_param.starting_learning_rate = fetch::math::Type<DataType>("0.001");
+    learning_rate_param.exponential_decay_rate = fetch::math::Type<DataType>("0.99");
   };
 };
 
