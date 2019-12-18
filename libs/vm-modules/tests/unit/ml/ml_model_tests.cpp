@@ -852,7 +852,7 @@ TEST_F(VMModelTests, model_with_accuracy_metric)
   EXPECT_LE(metrics->elements.at(1), 1);
 }
 
-TEST_F(VMModelTests, model_sequential_flatten)
+TEST_F(VMModelTests, DISABLED_model_sequential_flatten)
 {
   static char const *SRC_METRIC = R"(
         function main()
@@ -866,7 +866,7 @@ TEST_F(VMModelTests, model_sequential_flatten)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(VMModelTests, model_sequential_flatten_tensor_data)
+TEST_F(VMModelTests, DISABLED_model_sequential_flatten_tensor_data)
 {
   static char const *SRC_METRIC = R"(
         function main() : Tensor
@@ -905,7 +905,7 @@ TEST_F(VMModelTests, model_sequential_flatten_tensor_data)
   EXPECT_TRUE(constructed_shape == expected.shape());
 }
 
-TEST_F(VMModelTests, model_sequential_flatten_2d_in_2d_out)
+TEST_F(VMModelTests, DISABLED_model_sequential_flatten_2d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(
               function main() : Tensor
@@ -935,7 +935,7 @@ TEST_F(VMModelTests, model_sequential_flatten_2d_in_2d_out)
   EXPECT_TRUE(constructed_shape == expected.shape());
 }
 
-TEST_F(VMModelTests, model_sequential_flatten_4d_in_2d_out)
+TEST_F(VMModelTests, DISABLED_model_sequential_flatten_4d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(
               function main() : Tensor
@@ -971,7 +971,7 @@ TEST_F(VMModelTests, model_sequential_flatten_4d_in_2d_out)
   EXPECT_TRUE(constructed_shape == expected.shape());
 }
 
-TEST_F(VMModelTests, model_sequential_flatten_1d_in_2d_out)
+TEST_F(VMModelTests, DISABLED_model_sequential_flatten_1d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(
               function main() : Tensor
