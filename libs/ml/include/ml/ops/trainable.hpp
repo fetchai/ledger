@@ -81,7 +81,7 @@ public:
 
 protected:
   RegPtrType regulariser_;
-  DataType   regularisation_rate_ = static_cast<DataType>(0);
+  DataType   regularisation_rate_ = DataType{0};
   bool       value_frozen_        = false;
 };
 
