@@ -424,6 +424,11 @@ TEST_F(VMModelTests, model_add_dropout)
   TestValidLayerAdding(R"(model.add("dropout", 0.256fp64);)");
 }
 
+TEST_F(VMModelTests, model_add_flatten)
+{
+  TestValidLayerAdding(R"(model.add("flatten");)");
+}
+
 TEST_F(VMModelTests, model_add_invalid_layer_type)
 {
   TestInvalidLayerAdding(R"(model.add("INVALID_LAYER_TYPE", 1u64, 1u64);)");
