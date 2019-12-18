@@ -50,7 +50,7 @@ public:
   Optimiser() = default;
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
             std::string label_node_name, std::string output_node_name,
-            DataType const &learning_rate = DataType(0.001));
+            DataType const &learning_rate = fetch::math::Type<DataType>("0.001"));
 
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
             std::string label_node_name, std::string output_node_name,
@@ -266,7 +266,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
 
     loss_sum_ += loss_;
     k++;
-    loss_ = static_cast<DataType>(0);
+    loss_ = DataType{0};
     PrintStats(batch_size, n_data);
 
     UpdateLearningRate();
@@ -433,8 +433,8 @@ void Optimiser<T>::UpdateLearningRate()
   case LearningRateParam<DataType>::LearningRateDecay::LINEAR:
   {
     learning_rate_ = learning_rate_param_.starting_learning_rate *
-                     (static_cast<DataType>(1) - learning_rate_param_.linear_decay_rate *
-                                                     static_cast<DataType>(cumulative_step_));
+                     (DataType{1} - learning_rate_param_.linear_decay_rate *
+                                        static_cast<DataType>(cumulative_step_));
     if (learning_rate_ < learning_rate_param_.ending_learning_rate)
     {
       learning_rate_ = learning_rate_param_.ending_learning_rate;

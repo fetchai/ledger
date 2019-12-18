@@ -57,20 +57,20 @@ public:
   LazyAdamOptimiser(std::shared_ptr<Graph<T>>       graph,
                     std::vector<std::string> const &input_node_names,
                     std::string const &label_node_name, std::string const &output_node_name,
-                    DataType const &learning_rate      = math::Type<DataType>("0.001"),
-                    DataType const &beta1              = math::Type<DataType>("0.9"),
-                    DataType const &beta2              = math::Type<DataType>("0.999"),
+                    DataType const &learning_rate      = fetch::math::Type<DataType>("0.001"),
+                    DataType const &beta1              = fetch::math::Type<DataType>("0.9"),
+                    DataType const &beta2              = fetch::math::Type<DataType>("0.999"),
                     SizeType        sparsity_threshold = 2,
-                    DataType const &epsilon            = math::Type<DataType>("0.0001"));
+                    DataType const &epsilon            = fetch::math::Type<DataType>("0.0001"));
 
   LazyAdamOptimiser(std::shared_ptr<Graph<T>>       graph,
                     std::vector<std::string> const &input_node_names,
                     std::string const &label_node_name, std::string const &output_node_name,
                     fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
-                    DataType const &beta1              = math::Type<DataType>("0.9"),
-                    DataType const &beta2              = math::Type<DataType>("0.999"),
+                    DataType const &beta1              = fetch::math::Type<DataType>("0.9"),
+                    DataType const &beta2              = fetch::math::Type<DataType>("0.999"),
                     SizeType        sparsity_threshold = 2,
-                    DataType const &epsilon            = math::Type<DataType>("0.0001"));
+                    DataType const &epsilon            = fetch::math::Type<DataType>("0.0001"));
 
   ~LazyAdamOptimiser() override = default;
 
@@ -142,9 +142,9 @@ void LazyAdamOptimiser<T>::ApplyLogic(SizeType batch_size, TensorType &gradient_
 {
 
   // cache[i] = (beta1_t_ * cache[i]) + ((1.0 - beta1_t_) * (input_gradients[i]/batch_size));
-  fetch::math::Multiply(
-      refs_tensor, (static_cast<DataType>(1) - this->beta1_t_) / static_cast<DataType>(batch_size),
-      gradient_tensor);
+  fetch::math::Multiply(refs_tensor,
+                        (DataType{1} - this->beta1_t_) / static_cast<DataType>(batch_size),
+                        gradient_tensor);
   fetch::math::Multiply(cache_tensor, this->beta1_t_, cache_tensor);
   fetch::math::Add(cache_tensor, gradient_tensor, cache_tensor);
 
@@ -155,12 +155,12 @@ void LazyAdamOptimiser<T>::ApplyLogic(SizeType batch_size, TensorType &gradient_
   // ((input_gradients[i]/batch_size)^2));
   fetch::math::Divide(refs_tensor, static_cast<DataType>(batch_size), v_tensor);
   fetch::math::Square(v_tensor, v_tensor);
-  fetch::math::Multiply(v_tensor, (static_cast<DataType>(1) - this->beta2_t_), v_tensor);
+  fetch::math::Multiply(v_tensor, (DataType{1} - this->beta2_t_), v_tensor);
   fetch::math::Multiply(momentum_tensor, this->beta2_t_, momentum_tensor);
   fetch::math::Add(momentum_tensor, v_tensor, momentum_tensor);
 
   // vt   = momentum[i] / (1.0 - beta2_t_);
-  fetch::math::Divide(momentum_tensor, (static_cast<DataType>(1) - this->beta2_t_), v_tensor);
+  fetch::math::Divide(momentum_tensor, (DataType{1} - this->beta2_t_), v_tensor);
 
   // output_gradients[i] = -this->learning_rate_ * mt / (sqrt(vt) + epsilon_);
   fetch::math::Sqrt(v_tensor, gradient_tensor);

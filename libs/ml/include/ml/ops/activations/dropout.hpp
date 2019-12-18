@@ -102,13 +102,13 @@ public:
       {
         if (rng_.AsType<DataType>() <= probability_)
         {
-          *it     = static_cast<DataType>(1) / probability_;
+          *it     = DataType{1} / probability_;
           *out_it = (*it) * (*in_it);
         }
         else
         {
-          *it     = static_cast<DataType>(0);
-          *out_it = static_cast<DataType>(0);
+          *it     = DataType{0};
+          *out_it = DataType{0};
         }
         ++it;
         ++in_it;
