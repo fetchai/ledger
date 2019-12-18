@@ -429,13 +429,13 @@ void GraphW2VLoader<TensorType>::BufferNextSamples()
     output_words_buffer_.At(counter) = data_.at(current_sentence_).at(current_word_ - i - 1);
     output_words_.At(counter) =
         static_cast<DataType>(data_.at(current_sentence_).at(current_word_ - i - 1));
-    labels_.At(counter) = static_cast<DataType>(1);
+    labels_.At(counter) = DataType{1};
     counter++;
 
     output_words_buffer_.At(counter) = data_.at(current_sentence_).at(current_word_ + i + 1);
     output_words_.At(counter) =
         static_cast<DataType>(data_.at(current_sentence_).at(current_word_ + i + 1));
-    labels_.At(counter) = static_cast<DataType>(1);
+    labels_.At(counter) = DataType{1};
     counter++;
   }
 

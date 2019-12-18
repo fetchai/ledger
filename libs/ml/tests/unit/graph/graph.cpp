@@ -257,7 +257,7 @@ TYPED_TEST(GraphTest, variable_freezing_per_trainable)
 
   // Apply gradient
   TensorType grad = op_ptr->GetGradients();
-  grad.Fill(fetch::math::Type<DataType>("2.0"));
+  grad.Fill(DataType{2});
   op_ptr->ApplyGradient(grad);
 
   // Evaluate weights
@@ -301,7 +301,7 @@ TYPED_TEST(GraphTest, variable_freezing_all_trainables)
   auto node_ptr = g.GetNode(weights);
   auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
   TensorType grad = op_ptr->GetGradients();
-  grad.Fill(fetch::math::Type<DataType>("2.0"));
+  grad.Fill(DataType{2});
   op_ptr->ApplyGradient(grad);
 
   // Evaluate weights
@@ -369,7 +369,7 @@ TYPED_TEST(GraphTest, variable_freezing_subgraph)
   auto gradient_vector = g.GetGradients();
   for (auto grad : gradient_vector)
   {
-    grad.Fill(fetch::math::Type<DataType>("2.0"));
+    grad.Fill(DataType{2});
   }
   g.ApplyGradients(gradient_vector);
 
@@ -391,7 +391,7 @@ TYPED_TEST(GraphTest, variable_freezing_subgraph)
   auto gradient_vector_2 = g.GetGradients();
   for (auto grad : gradient_vector_2)
   {
-    grad.Fill(fetch::math::Type<DataType>("2.0"));
+    grad.Fill(DataType{2});
   }
   g.ApplyGradients(gradient_vector);
 
@@ -448,7 +448,7 @@ TYPED_TEST(GraphTest, variable_freezing_shared_layer)
   auto gradient_vector = g.GetGradients();
   for (auto grad : gradient_vector)
   {
-    grad.Fill(fetch::math::Type<DataType>("2.0"));
+    grad.Fill(DataType{2});
   }
   g.ApplyGradients(gradient_vector);
 
@@ -470,7 +470,7 @@ TYPED_TEST(GraphTest, variable_freezing_shared_layer)
   auto gradient_vector_2 = g.GetGradients();
   for (auto grad : gradient_vector_2)
   {
-    grad.Fill(fetch::math::Type<DataType>("2.0"));
+    grad.Fill(DataType{2});
   }
   g.ApplyGradients(gradient_vector);
 

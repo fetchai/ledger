@@ -93,9 +93,9 @@ public:
 
     while (it1.is_valid())
     {
-      if (*it1 <= static_cast<DataType>(0))
+      if (*it1 <= DataType{0})
       {
-        *it2 = static_cast<DataType>(0);
+        *it2 = DataType{0};
       }
       else
       {

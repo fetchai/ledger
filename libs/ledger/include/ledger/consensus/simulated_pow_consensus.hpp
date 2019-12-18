@@ -55,6 +55,7 @@ public:
   void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
   void Reset(StakeSnapshot const &snapshot) override;
   void SetDefaultStartTime(uint64_t default_start_time) override;
+  void SetWhitelist(Minerwhitelist const &whitelist) override;
 
   // Operators
   SimulatedPowConsensus &operator=(SimulatedPowConsensus const &) = delete;
