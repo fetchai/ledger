@@ -97,7 +97,9 @@ TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_ski
       if (!unsafe_parsing)
       {
         weights(col, row) = fetch::math::Type<DataType>(field_value);
-      } else {
+      }
+      else
+      {
         // Constructing a fixed point from a double is not guaranteed to give the same results on
         // different architectures and so is unsafe
         weights(col, row) = DataType{std::stod(field_value)};

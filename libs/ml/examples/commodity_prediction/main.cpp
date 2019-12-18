@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 
-//using DataType      = fetch::fixed_point::FixedPoint<32, 32>;
+// using DataType      = fetch::fixed_point::FixedPoint<32, 32>;
 using DataType      = double;
 using TensorType    = fetch::math::Tensor<DataType>;
 using GraphType     = fetch::ml::Graph<TensorType>;
@@ -224,11 +224,11 @@ int ArgPos(char const *str, int argc, char **argv)
 DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &test_x_file,
                   std::string const &test_y_file, std::vector<std::string> node_names)
 {
-  DataType                                                            loss{0};
-  DataType                                                            loss_counter{0};
+  DataType                                                         loss{0};
+  DataType                                                         loss_counter{0};
   fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> loader;
 
-  auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file, 1, 1, true);
+  auto data  = fetch::math::utilities::ReadCSV<TensorType>(test_x_file, 1, 1, true);
   auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file, 1, 1, true);
   loader.AddData({data}, label);
 
@@ -293,7 +293,7 @@ int main(int argc, char **argv)
   if (testing)
   {
     /// LOAD WEIGHTS INTO GRAPH ///
-    std::string weights_dir = input_dir + "/output/" + dataname + "/model_weights";
+    std::string             weights_dir = input_dir + "/output/" + dataname + "/model_weights";
     std::vector<TensorType> weightsrefs = g_ptr->GetWeightsReferences();
 
     auto w_itr = weightsrefs.begin();
@@ -317,10 +317,10 @@ int main(int argc, char **argv)
         std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
 
         // the weights array for the node has number of columns = number of features
-        TensorType weights =
-            fetch::math::utilities::ReadCSV<TensorType>(node_weights_dir + "/kernel:0.csv", 0, 0, true);
-        TensorType bias =
-            fetch::math::utilities::ReadCSV<TensorType>(node_weights_dir + "/bias:0.csv", 0, 0, true);
+        TensorType weights = fetch::math::utilities::ReadCSV<TensorType>(
+            node_weights_dir + "/kernel:0.csv", 0, 0, true);
+        TensorType bias = fetch::math::utilities::ReadCSV<TensorType>(
+            node_weights_dir + "/bias:0.csv", 0, 0, true);
         bias = bias.Transpose();
 
         assert(bias.shape().at(0) == weights.shape().at(0));
@@ -340,7 +340,7 @@ int main(int argc, char **argv)
     std::string test_x_file = filename_root + "x_test.csv";
     std::string test_y_file = filename_root + "y_pred_test.csv";
     fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> loader;
-    auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file, 1, 1, true);
+    auto data  = fetch::math::utilities::ReadCSV<TensorType>(test_x_file, 1, 1, true);
     auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file, 1, 1, true);
     loader.AddData({data}, label);
 
@@ -363,8 +363,7 @@ int main(int argc, char **argv)
 
     std::cout << "output.ToString(): " << output.ToString() << std::endl;
     std::cout << "test_y.ToString(): " << test_y.ToString() << std::endl;
-    if (output.AllClose(test_y, DataType{0},
-        fetch::math::Type<DataType>("0.00001")))
+    if (output.AllClose(test_y, DataType{0}, fetch::math::Type<DataType>("0.00001")))
     {
       std::cout << "Graph output is the same as the test output - success!" << std::endl;
     }
@@ -407,7 +406,7 @@ int main(int argc, char **argv)
       std::string valid_y_file = filename_root + std::to_string(j) + "_y_val.csv";
 
       loader.Reset();
-      auto data = fetch::math::utilities::ReadCSV<TensorType>(train_x_file, 1, 1, true);
+      auto data  = fetch::math::utilities::ReadCSV<TensorType>(train_x_file, 1, 1, true);
       auto label = fetch::math::utilities::ReadCSV<TensorType>(train_y_file, 1, 1, true);
       loader.AddData({data}, label);
 
@@ -452,7 +451,7 @@ int main(int argc, char **argv)
     std::string test_y_file = filename_root + "y_pred_test.csv";
 
     loader.Reset();
-    auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file, 1, 1, true);
+    auto data  = fetch::math::utilities::ReadCSV<TensorType>(test_x_file, 1, 1, true);
     auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file, 1, 1, true);
     loader.AddData({data}, label);
 
