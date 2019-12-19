@@ -21,6 +21,8 @@
 #include "core/runnable.hpp"
 #include "core/state_machine_interface.hpp"
 #include "core/synchronisation/protected.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -111,15 +113,23 @@ private:
   using CallbackMap          = std::unordered_map<State, Callback>;
   using ProtectedCallbackMap = Protected<CallbackMap>;
 
+  static std::string ToLowerCase(std::string data)
+  {
+    std::transform(data.begin(), data.end(), data.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    return data;
+  }
+
   void Reset();
 
-  std::string const            name_;
-  StateMapper                  mapper_;
-  ProtectedCallbackMap         callbacks_{};
-  std::atomic<State>           current_state_;
-  std::atomic<State>           previous_state_{current_state_.load()};
-  Timepoint                    next_execution_{};
-  ProtectedStateChangeCallback state_change_callback_{};
+  std::string const             name_;
+  StateMapper                   mapper_;
+  ProtectedCallbackMap          callbacks_{};
+  std::atomic<State>            current_state_;
+  std::atomic<State>            previous_state_{current_state_.load()};
+  Timepoint                     next_execution_{};
+  ProtectedStateChangeCallback  state_change_callback_{};
+  telemetry::GaugePtr<uint64_t> state_gauge_;
 };
 
 /**
@@ -135,6 +145,8 @@ StateMachine<S>::StateMachine(std::string name, S initial, StateMapper mapper)
   : name_{std::move(name)}
   , mapper_{std::move(mapper)}
   , current_state_{initial}
+  , state_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        ToLowerCase(name) + "_state_gauge", "Generic state machine state as integer")}
 {}
 
 /**
@@ -317,7 +329,8 @@ void StateMachine<S>::Execute()
 
       // perform the state updates
       previous_state_ = current_state_.load();
-      current_state_  = next_state;
+      state_gauge_->set(static_cast<uint64_t>(next_state));
+      current_state_ = next_state;
 
       // detect a state change
       if (current_state_ != previous_state_)
