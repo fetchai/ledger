@@ -18,8 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/runnable.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <functional>
 
 namespace fetch {
@@ -34,8 +38,8 @@ public:
 
   // Construction / Destruction
   template <typename R, typename P>
-  explicit PeriodicRunnable(std::chrono::duration<R, P> const &period);
-  explicit PeriodicRunnable(Duration const &period);
+  explicit PeriodicRunnable(std::string const &name, std::chrono::duration<R, P> const &period);
+  explicit PeriodicRunnable(std::string const &name, Duration const &period);
   PeriodicRunnable(PeriodicRunnable const &) = delete;
   PeriodicRunnable(PeriodicRunnable &&)      = delete;
   ~PeriodicRunnable() override               = default;
@@ -57,13 +61,15 @@ public:
   PeriodicRunnable &operator=(PeriodicRunnable &&) = delete;
 
 private:
-  Timepoint last_executed_;
-  Duration  interval_{};
+  Timepoint                     last_executed_;
+  Duration                      interval_{};
+  telemetry::GaugePtr<uint64_t> state_gauge_;
 };
 
 template <typename R, typename P>
-PeriodicRunnable::PeriodicRunnable(std::chrono::duration<R, P> const &period)
-  : PeriodicRunnable(std::chrono::duration_cast<Duration>(period))
+PeriodicRunnable::PeriodicRunnable(std::string const &                name,
+                                   std::chrono::duration<R, P> const &period)
+  : PeriodicRunnable(name, std::chrono::duration_cast<Duration>(period))
 {}
 
 }  // namespace core
