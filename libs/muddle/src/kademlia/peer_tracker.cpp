@@ -47,11 +47,13 @@ PeerTracker::PeerTrackerPtr PeerTracker::New(PeerTracker::Duration const &interv
   return ret;
 }
 
+/*
 PeerTracker::~PeerTracker()
 {
   // Do not call Stop(); as this can cause deadlocks due to
   // shared pointers
 }
+*/
 
 void PeerTracker::Blacklist(Address const &target)
 {
