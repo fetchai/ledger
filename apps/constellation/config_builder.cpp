@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/filesystem/read_file_contents.hpp"
 #include "config_builder.hpp"
+#include "core/filesystem/read_file_contents.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "manifest_builder.hpp"
 #include "settings.hpp"
@@ -36,12 +36,8 @@ struct GenesisDescriptor
   char const *contents;
 };
 
-GenesisDescriptor const HARD_CODED_CONFIGS[] = {
-    {
-      "mainnet",
-      10000u,
-      250000u,
-      R"(
+GenesisDescriptor const HARD_CODED_CONFIGS[] = {{"mainnet", 10000u, 250000u,
+                                                 R"(
 {
   "version": 4,
   "accounts": [
@@ -254,11 +250,9 @@ GenesisDescriptor const HARD_CODED_CONFIGS[] = {
     ]
   }
 }
-)"
-    }
-};
+)"}};
 
-} // namespace
+}  // namespace
 
 /**
  * Determine the network mode based on the settings configuration
@@ -317,7 +311,7 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
 
   // load the genesis file if it exists
   std::string const &genesis_file_path = settings.genesis_file_location.value();
-  cfg.genesis_file_contents = core::ReadContentsOfFile(genesis_file_path.c_str());
+  cfg.genesis_file_contents            = core::ReadContentsOfFile(genesis_file_path.c_str());
 
   // evaluate our hard coded genesis files
   auto const &network_name = settings.network_name.value();

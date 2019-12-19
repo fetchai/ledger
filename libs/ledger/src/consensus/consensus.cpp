@@ -79,7 +79,7 @@ T DeterministicShuffle(T &container, uint64_t entropy)
   static const std::size_t NUM_ITERATIONS = 1000;
 
   std::sort(container.begin(), container.end());
-  DRNG rng(entropy);
+  DRNG              rng(entropy);
   std::size_t const num_items = container.size();
   for (std::size_t i = 0; i < NUM_ITERATIONS; ++i)
   {
@@ -300,7 +300,8 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   if (proposed_block_timestamp_ms > time_now_ms)
   {
     FETCH_LOG_WARN(LOGGING_NAME,
-                   "Found block that appears to be minted ahead in time. This is invalid. Delta: ", proposed_block_timestamp_ms - time_now_ms);
+                   "Found block that appears to be minted ahead in time. This is invalid. Delta: ",
+                   proposed_block_timestamp_ms - time_now_ms);
     return false;
   }
 
@@ -308,7 +309,8 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   {
     FETCH_LOG_WARN(
         LOGGING_NAME,
-        "Found block that indicates it was minted before the previous. This is invalid. Delta: ", last_block_timestamp_ms - proposed_block_timestamp_ms);
+        "Found block that indicates it was minted before the previous. This is invalid. Delta: ",
+        last_block_timestamp_ms - proposed_block_timestamp_ms);
     return false;
   }
 

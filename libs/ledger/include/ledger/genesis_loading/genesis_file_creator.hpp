@@ -70,7 +70,8 @@ public:
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;
 
-  Result LoadContents(ConstByteArray const &contents, bool proof_of_stake, ConsensusParameters &params);
+  Result LoadContents(ConstByteArray const &contents, bool proof_of_stake,
+                      ConsensusParameters &params);
 
   // Operators
   GenesisFileCreator &operator=(GenesisFileCreator const &) = delete;

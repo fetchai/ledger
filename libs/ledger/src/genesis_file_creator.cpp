@@ -113,8 +113,9 @@ GenesisFileCreator::GenesisFileCreator(StorageUnitInterface &storage_unit,
  *
  * @param name The path to the file to be loaded
  */
-GenesisFileCreator::Result GenesisFileCreator::LoadContents(
-    ConstByteArray const &contents, bool proof_of_stake, ConsensusParameters &params)
+GenesisFileCreator::Result GenesisFileCreator::LoadContents(ConstByteArray const &contents,
+                                                            bool                  proof_of_stake,
+                                                            ConsensusParameters & params)
 {
   // Perform a check as to whether we have installed genesis before
   {
