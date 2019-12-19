@@ -435,6 +435,18 @@ TEST_F(VMModelTests, DISABLED_model_add_flatten)
   TestValidLayerAdding(R"(model.add("flatten");)");
 }
 
+// Disabled until implementation of AddActivation estimator
+TEST_F(VMModelTests, DISABLED_model_add_activation)
+{
+  TestValidLayerAdding(R"(model.add("activation", "relu");)");
+  TestValidLayerAdding(R"(model.add("activation", "leaky_relu");)");
+  TestValidLayerAdding(R"(model.add("activation", "gelu");)");
+  TestValidLayerAdding(R"(model.add("activation", "sigmoid");)");
+  TestValidLayerAdding(R"(model.add("activation", "log_sigmoid");)");
+  TestValidLayerAdding(R"(model.add("activation", "softmax");)");
+  TestValidLayerAdding(R"(model.add("activation", "log_softmax");)");
+}
+
 TEST_F(VMModelTests, model_add_invalid_layer_type)
 {
   TestInvalidLayerAdding(R"(model.add("INVALID_LAYER_TYPE", 1u64, 1u64);)");
@@ -458,6 +470,11 @@ TEST_F(VMModelTests, model_add_conv_invalid_params_noact)
 TEST_F(VMModelTests, model_add_conv_invalid_params_relu)
 {
   TestInvalidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_add_activation_invalid_params)
+{
+  TestInvalidLayerAdding(R"(model.add("activation", "UNKNOWN_ACTIVATION");)");
 }
 
 TEST_F(VMModelTests, model_add_layers_invalid_activation_dense)
@@ -504,6 +521,11 @@ TEST_F(VMModelTests, model_uncompilable_add_layer__conv_invalid_params)
 TEST_F(VMModelTests, model_uncompilable_add_layer__dropout_invalid_params)
 {
   TestAddingUncompilableLayer(R"(model.add("dropout", 0u64);)");
+}
+
+TEST_F(VMModelTests, model_uncompilable_add_layer__activation_invalid_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("activation", 0u64);)");
 }
 
 TEST_F(VMModelTests, model_add_layer_to_non_sequential)
