@@ -391,7 +391,7 @@ void Optimiser<T>::PrintStats(SizeType batch_size, SizeType subset_size)
   if (subset_size == fetch::math::numeric_max<math::SizeType>())
   {
     stat_string_ =
-        std::to_string(step_) + " (??%) -- " +
+        "step " + std::to_string(step_) + " (??%) -- " +
         "learning rate: " + std::to_string(static_cast<double>(learning_rate_)) + " -- " +
         std::to_string(static_cast<double>(step_) / static_cast<double>(time_span_.count())) +
         " samples / sec ";
@@ -399,7 +399,7 @@ void Optimiser<T>::PrintStats(SizeType batch_size, SizeType subset_size)
   else
   {
     stat_string_ =
-        std::to_string(step_) + " / " + std::to_string(subset_size) + " (" +
+        "step " + std::to_string(step_) + " / " + std::to_string(subset_size) + " (" +
         std::to_string(static_cast<SizeType>(100.0 * static_cast<double>(step_) /
                                              static_cast<double>(subset_size))) +
         "%) -- " + "learning rate: " + std::to_string(static_cast<double>(learning_rate_)) +
