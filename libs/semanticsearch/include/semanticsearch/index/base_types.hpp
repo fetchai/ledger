@@ -139,6 +139,18 @@ public:
     return ret;
   }
 
+  SemanticPosition operator*(SemanticCoordinateType const &scalar) const
+  {
+    SemanticPosition ret;
+
+    for (uint64_t idx = 0; idx < size(); ++idx)
+    {
+      ret.PushBack(data_[idx] * scalar);
+    }
+
+    return ret;
+  }
+
   void SetModelName(std::string model)
   {
     model_name_ = model;
@@ -153,6 +165,18 @@ private:
   Container   data_;
   std::string model_name_{""};
 };
+
+inline SemanticPosition operator*(SemanticCoordinateType const &scalar, SemanticPosition const &vec)
+{
+  SemanticPosition ret;
+
+  for (uint64_t idx = 0; idx < vec.size(); ++idx)
+  {
+    ret.PushBack(vec[idx] * scalar);
+  }
+
+  return ret;
+}
 
 using DBIndexSet    = std::set<DBIndexType>;  ///< Set of indices used to return search results.
 using DBIndexSetPtr = std::shared_ptr<DBIndexSet>;

@@ -48,4 +48,4 @@ find q granularity 3;
 find q granularity 4;
 find q granularity 5;
 find q granularity 6;
-find q - q granularity 6;
+find (0.5 * 5.0)*(q - q) granularity 6;

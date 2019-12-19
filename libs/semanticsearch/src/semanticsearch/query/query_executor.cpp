@@ -604,7 +604,7 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
           rhs_type = 1;
         }
 
-        if (rhs->type() == Constants::LITERAL)
+        if (rhs->IsType<SemanticCoordinateType>())
         {
           rhs_type          = 2;
           auto type_code    = rhs->token().type();  // TODO: Move to function -- replicated 1
@@ -631,12 +631,12 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
 
         if (lhs->IsType<SemanticPosition>())
         {
-          lhs_type = 1;
+          lhs_type = 4;
         }
 
-        if (lhs->type() == Constants::LITERAL)
+        if (lhs->IsType<SemanticCoordinateType>())
         {
-          lhs_type = 2;
+          lhs_type = 8;
         }
 
         if (lhs_type == 0)
@@ -646,7 +646,44 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
           return nullptr;
         }
 
-        //        object->Insert(name, value->NewInstance());
+        switch (lhs_type + rhs_type)
+        {
+        case 5:
+        {
+          error_tracker_.RaiseRuntimeError("Cannot multiply vector with vector.", x.token);
+          return nullptr;
+        }
+        case 6:  // vector - scalar
+        {
+          assert(rhs->IsType<SemanticCoordinateType>());
+          auto scalar = rhs->As<SemanticCoordinateType>();
+          auto vec    = lhs->As<SemanticPosition>();
+          auto c      = scalar * vec;
+          c.SetModelName(vec.model_name());
+          stack.push_back(NewQueryVariant(c, Constants::TYPE_INSTANCE, x.token));
+          break;
+        }
+        case 9:  // scalar - vector
+        {
+          assert(lhs->IsType<SemanticCoordinateType>());
+          auto scalar = lhs->As<SemanticCoordinateType>();
+          auto vec    = rhs->As<SemanticPosition>();
+          auto c      = scalar * vec;
+          c.SetModelName(vec.model_name());
+          stack.push_back(NewQueryVariant(c, Constants::TYPE_INSTANCE, x.token));
+          break;
+        }
+        case 10:  // scalar - scalar
+        {
+          assert(rhs->IsType<SemanticCoordinateType>());
+          assert(lhs->IsType<SemanticCoordinateType>());
+          auto s1 = rhs->As<SemanticCoordinateType>();
+          auto s2 = lhs->As<SemanticCoordinateType>();
+          auto c  = s1 * s2;
+          stack.push_back(NewQueryVariant(c, Constants::TYPE_INSTANCE, x.token));
+          break;
+        }
+        }
 
         break;
       }
