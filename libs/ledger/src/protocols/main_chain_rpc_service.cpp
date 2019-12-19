@@ -364,7 +364,7 @@ State MainChainRpcService::OnSynchronised(State current, State previous)
   }
   else if (resync_interval_.HasExpired())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Kicking forward sync periodically");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Kicking forward sync periodically");
 
     next_state = State::SYNCHRONISING;
   }
@@ -388,9 +388,9 @@ State MainChainRpcService::OnStartSyncWithPeer()
 
   if (block_resolving_ && !current_peer_address_.empty())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Resolving: #", block_resolving_->block_number, " 0x",
-                   block_resolving_->hash.ToHex(), " from: muddle://",
-                   current_peer_address_.ToBase64());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Resolving: #", block_resolving_->block_number, " 0x",
+                    block_resolving_->hash.ToHex(), " from: muddle://",
+                    current_peer_address_.ToBase64());
   }
 
   return State::REQUEST_NEXT_BLOCKS;

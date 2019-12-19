@@ -331,7 +331,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   {
     if (identity == mining_identity_)
     {
-      FETCH_LOG_INFO(
+      FETCH_LOG_DEBUG(
           LOGGING_NAME, "Minting block. Time now: ", time_now_ms,
           " Timestamp: ", block_interval_ms_, " proposed: ", proposed_block_timestamp_ms,
           " Prev window ends: ", previous_block_window_ends,

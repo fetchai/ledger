@@ -212,8 +212,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
     FETCH_UNUSED(this);
     if (periodic_print_.Poll())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
-                     " (previous: ", ToString(previous), ")");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
+                      " (previous: ", ToString(previous), ")");
     }
   });
 
@@ -533,8 +533,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   next_block_->block_number   = current_block_->block_number + 1;
   next_block_->log2_num_lanes = log2_num_lanes_;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->block_number,
-                 " beacon: ", next_block_->block_entropy.EntropyAsU64());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Minting new block! Number: ", next_block_->block_number,
+                  " beacon: ", next_block_->block_entropy.EntropyAsU64());
 
   start_block_packing_ = Clock::now();
 
@@ -1072,8 +1072,8 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     next_block_->UpdateDigest();
     next_block_->miner_signature = certificate_->Sign(next_block_->hash);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: 0x", next_block_->hash.ToHex(), " #",
-                   next_block_->block_number, " Merkle: 0x", next_block_->merkle_hash.ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: 0x", next_block_->hash.ToHex(), " #",
+                    next_block_->block_number, " Merkle: 0x", next_block_->merkle_hash.ToHex());
 
     // this step is needed because the execution manager is actually unaware of the actual last
     // block that is executed because the merkle hash was not known at this point.
@@ -1087,7 +1087,9 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
       executed_block_count_->increment();
 
       FETCH_LOG_INFO(LOGGING_NAME, "Broadcasting new block: 0x", next_block_->hash.ToHex(),
+                     " merkle: ", next_block_->merkle_hash.ToHex(),
                      " txs: ", next_block_->GetTransactionCount(),
+                     " entropy: ", next_block_->block_entropy.EntropyAsU64(),
                      " number: ", next_block_->block_number);
 
       // signal the last block that has been executed

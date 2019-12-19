@@ -424,8 +424,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   {
     if (!result.promised.empty())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": Got ", result.promised.size(),
-                     " objects!");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": Got ", result.promised.size(),
+                      " objects!");
     }
 
     for (auto &tx : result.promised)
