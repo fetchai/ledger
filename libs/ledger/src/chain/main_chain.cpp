@@ -1275,7 +1275,7 @@ void MainChain::TrimCache()
   uint64_t const time_now =
       GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
-  for (auto it = dirty_map_.begin(); it != dirty_map_.end(); ++it)
+  for (auto it = dirty_map_.begin(); it != dirty_map_.end();)
   {
     if (time_now > it->second)
     {
