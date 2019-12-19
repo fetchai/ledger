@@ -19,6 +19,7 @@
 
 #include "semanticsearch/schema/fields/abstract_schema_field.hpp"
 #include "semanticsearch/schema/fields/object_schema_field.hpp"
+#include "semanticsearch/schema/model_identifier.hpp"
 
 #include <memory>
 
@@ -37,7 +38,7 @@ public:
                                  SemanticSearchModule *factory = nullptr);
 
   explicit               operator bool() const;
-  ModelInterfaceBuilder &Field(std::string const &name, std::string const &type);
+  ModelInterfaceBuilder &Field(std::string const &name, ModelIdentifier const &type);
   ModelInterfaceBuilder &Field(std::string const &name, ModelInterfaceBuilder proxy);
   ModelInterfaceBuilder &Field(std::string const &name, ModelField const &model);
 

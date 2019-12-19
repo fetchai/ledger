@@ -37,7 +37,7 @@ void AbstractVocabularyRegister::AddModel(ModelIdentifier const &    name,
                              "' already exists, but definition mismatch.");
   }
 
-  object->SetModelName(name);
+  object->SetModelName(name.model_name);
   models_[name] = object;
   OnAddModel(name, object);
 }

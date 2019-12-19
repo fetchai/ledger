@@ -245,7 +245,7 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
         }
         break;
       }
-      case Constants::VAR_TYPE:  // Colon use to define model.
+      case Constants::VAR_TYPE:
       {
         auto model_obj = stack.back();
         stack.pop_back();
@@ -255,7 +255,10 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
 
         if (model_obj->type() != Constants::TYPE_MODEL)
         {
-          error_tracker_.RaiseRuntimeError("Expected model.", model_obj->token());
+          std::stringstream ss{""};
+          ss << "Expected model, but " << model_obj->token() << " is not a model in "
+             << scope_.address << "@" << scope_.version << ".";
+          error_tracker_.RaiseRuntimeError(ss.str(), model_obj->token());
           return nullptr;
         }
 
@@ -477,7 +480,6 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
 
         SemanticPosition position;
         bool             found{false};
-        std::string      model_name{""};
         ModelIdentifier  model_identifier;
         model_identifier.scope = scope_;
 
@@ -503,17 +505,17 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
           }
 
           // Populating parameters
-          model_name = instance->model_name();
-          position   = model->Reduce(instance);
-          found      = true;
+          model_identifier.model_name = instance->model_name();
+          position                    = model->Reduce(instance);
+          found                       = true;
         }
 
         // Checking if it is a model instance
         if (variant->IsType<SemanticPosition>())
         {
-          position   = variant->As<SemanticPosition>();
-          model_name = position.model_name();
-          found      = true;
+          position                    = variant->As<SemanticPosition>();
+          model_identifier.model_name = position.model_name();
+          found                       = true;
         }
 
         // Raising error if stack parameters are wrong
@@ -544,7 +546,7 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
         if (result)
         {
           std::cout << "Found agents: " << result->size() << " "
-                    << " searching " << model_name << std::endl;
+                    << " searching " << model_identifier.model_name << std::endl;
         }
         else
         {
@@ -679,8 +681,18 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
         auto a = lhs->As<SemanticPosition>();
         auto b = rhs->As<SemanticPosition>();
 
+        if (a.model_name() != b.model_name())
+        {
+          error_tracker_.RaiseRuntimeError(
+              "Cannot manipulate two vectors derived from different models even if rank is the "
+              "same.",
+              x.token);
+          return nullptr;
+        }
+
         // Logic
         SemanticPosition c;
+
         switch (x.type)
         {
         case Constants::SUB:
@@ -690,6 +702,8 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
           c = a + b;
           break;
         }
+
+        c.SetModelName(a.model_name());
 
         auto ret = NewQueryVariant(c, Constants::TYPE_INSTANCE, x.token);
         stack.push_back(ret);
@@ -806,15 +820,19 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
       }
       else
       {
-        auto field_name = static_cast<std::string>(x.token);
-        if (!semantic_search_module_->HasField(field_name))
+
+        ModelIdentifier model_identifier;
+        model_identifier.scope      = scope_;
+        model_identifier.model_name = static_cast<std::string>(x.token);
+
+        if (!semantic_search_module_->HasField(model_identifier))
         {
           error_tracker_.RaiseRuntimeError(
               "Could not find field: " + static_cast<std::string>(x.token), x.token);
           return nullptr;
         }
 
-        QueryVariant ele = NewQueryVariant(semantic_search_module_->GetField(field_name),
+        QueryVariant ele = NewQueryVariant(semantic_search_module_->GetField(model_identifier),
                                            Constants::TYPE_MODEL, x.token);
         definition_stack_.push_back(ele);
       }

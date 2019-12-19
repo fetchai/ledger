@@ -58,7 +58,7 @@ public:
 
   struct TypeDetails
   {
-    TypeDetails(std::type_index const &t, std::string const &n, ConsumerFunction const &c,
+    TypeDetails(std::type_index const &t, ModelIdentifier const &n, ConsumerFunction const &c,
                 AllocatorFunction const &a, SemanticConverterFunction const &sc, int32_t d)
       : type{t}
       , name{n}
@@ -69,7 +69,7 @@ public:
     {}
 
     std::type_index           type;
-    std::string               name;
+    ModelIdentifier           name;
     ConsumerFunction          consumer;
     AllocatorFunction         allocator;
     SemanticConverterFunction semantic_converter;
@@ -273,7 +273,7 @@ public:
   }
 
   template <typename R, typename... Args>
-  void RegisterFunction(ModelIdentifier const &name, std::function<R(Args...)> function)
+  void RegisterFunction(std::string const &name, std::function<R(Args...)> function)
   {
     auto sig         = BuiltinQueryFunction::New<R, Args...>(function);
     functions_[name] = std::move(sig);

@@ -100,7 +100,7 @@ public:
     {
       if (it1->first != it2->first)
       {
-        error = "Type mismatch of key.";
+        error = "Type mismatch of key: " + it1->first + " vs  " + it2->first;
         return false;
       }
 

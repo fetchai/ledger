@@ -36,8 +36,8 @@ ModelInterfaceBuilder::operator bool() const
   return model_ != nullptr;
 }
 
-ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &name,
-                                                    std::string const &type)
+ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &    name,
+                                                    ModelIdentifier const &type)
 {
   assert(factory_);
   auto field_model = factory_->GetField(type);

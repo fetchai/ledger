@@ -13,7 +13,7 @@ struct ModelIdentifier
   ScopeIdentifier scope{};
   std::string     model_name{""};
 
-  operator std::string() const;
+  explicit operator std::string() const;
 
   bool operator<(ModelIdentifier const &other) const
   {

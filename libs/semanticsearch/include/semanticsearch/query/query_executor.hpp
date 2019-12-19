@@ -82,7 +82,9 @@ private:
     {
       auto type_a = semantic_search_module_->GetName<T>();
       auto type_b = semantic_search_module_->GetName(var->type_index());
-      error_tracker_.RaiseInternalError("Expected " + type_a + ", but found other type " + type_b,
+      error_tracker_.RaiseInternalError("Expected " + static_cast<std::string>(type_a) +
+                                            ", but found other type " +
+                                            static_cast<std::string>(type_b),
                                         std::move(token));
       return true;
     }

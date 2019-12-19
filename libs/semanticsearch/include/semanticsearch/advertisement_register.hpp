@@ -36,20 +36,20 @@ public:
 
   AdvertisementRegister() = default;
 
-  bool        CreateModel(std::string const &name, VocabularySchemaPtr const &object);
-  SharedModel GetAdvertisementModel(std::string const &name);
-  void       AdvertiseAgent(AgentId aid, std::string const &name, SemanticPosition const &position);
-  AgentIdSet FindAgents(std::string const &name, SemanticPosition const &position,
+  bool        CreateModel(ModelIdentifier const &name, VocabularySchemaPtr const &object);
+  SharedModel GetAdvertisementModel(ModelIdentifier const &name);
+  void AdvertiseAgent(AgentId aid, ModelIdentifier const &name, SemanticPosition const &position);
+  AgentIdSet FindAgents(ModelIdentifier const &name, SemanticPosition const &position,
                         DepthParameterType depth);
-  AgentIdSet FindAgents(std::string const &name, Vocabulary const &object,
+  AgentIdSet FindAgents(ModelIdentifier const &name, Vocabulary const &object,
                         DepthParameterType depth);
 
-  void OnAddModel(std::string const &name, VocabularySchemaPtr const &object) override;
+  void OnAddModel(ModelIdentifier const &name, VocabularySchemaPtr const &object) override;
 
 private:
-  bool CreateModelInternal(std::string const &name, VocabularySchemaPtr const &object);
+  bool CreateModelInternal(ModelIdentifier const &name, VocabularySchemaPtr const &object);
 
-  std::map<std::string, SharedModel> model_advertisement_;
+  std::map<ModelIdentifier, SharedModel> model_advertisement_;
 };
 
 }  // namespace semanticsearch
