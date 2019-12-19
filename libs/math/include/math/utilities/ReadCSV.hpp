@@ -94,6 +94,10 @@ TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_ski
     }
     while (std::getline(ss, field_value, delimiter))
     {
+      if (field_value.empty())
+      {
+        throw std::runtime_error("Empty field in ReadCSV");
+      }
       if (unsafe_parsing)
       {
         // Constructing a fixed point from a double is not guaranteed to give the same results on

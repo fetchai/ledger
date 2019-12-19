@@ -37,18 +37,18 @@ var bias2    = readCSV(file_bias2);
 
 // load weights into graph
 var sd = graph.stateDict();
-sd.setWeights("hidden_dense_1" + "_FullyConnected_Weights", weights0);
-sd.setWeights("hidden_dense_1" + "_FullyConnected_Bias", bias0);
-sd.setWeights("hidden_dense_2" + "_FullyConnected_Weights", weights1);
-sd.setWeights("hidden_dense_2" + "_FullyConnected_Bias", bias1);
-sd.setWeights("output_dense" + "_FullyConnected_Weights", weights2);
-sd.setWeights("output_dense" + "_FullyConnected_Bias", bias2);
 
-graph.loadStateDict(sd);  // todo: currently unnecessary because sd is a reference to graph's state dict.
+// todo: currently broken
+//sd.setWeights("hidden_dense_1" + "_FullyConnected_Weights", weights0);
+//sd.setWeights("hidden_dense_1" + "_FullyConnected_Bias", bias0);
+//sd.setWeights("hidden_dense_2" + "_FullyConnected_Weights", weights1);
+//sd.setWeights("hidden_dense_2" + "_FullyConnected_Bias", bias1);
+//sd.setWeights("output_dense" + "_FullyConnected_Weights", weights2);
+//sd.setWeights("output_dense" + "_FullyConnected_Bias", bias2);
+
 endfunction
 
 function main()
-// Currently saves state dict - eventually this will load and save to State the whole graph
 
 if (System.Argc() < 2)
   printLn("Usage: VM SCRIPT_FILE PATH/TO/model_files/");
@@ -59,10 +59,8 @@ var graph = Graph();
 build_graph(graph);
 read_weights(graph);
 
-
-var sd = graph.stateDict();
-var state = State<StateDict>("foo");
-state.set(sd);
-printLn("Saved sd to state");
+var state = State<Graph>("foo");
+state.set(graph);
+printLn("Saved graph to state");
 
 endfunction

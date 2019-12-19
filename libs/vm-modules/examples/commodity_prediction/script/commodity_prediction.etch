@@ -22,13 +22,6 @@ graph.addMeanSquareErrorLoss("Error", "softmax_3", "label");
 
 endfunction
 
-function read_weights(graph: Graph)
-// read in weights
-var state = State<StateDict>("foo");
-var new_sd = state.get();
-printLn("Loaded sd from state");
-graph.loadStateDict(new_sd);
-endfunction
 
 function main()
 
@@ -44,14 +37,12 @@ var train_labels = readCSV(System.Argv(3));
 var loader = DataLoader("tensor");
 loader.addData({train_data}, train_labels);
 
-var graph = Graph();
-build_graph(graph);
-
 var testing = true;
 
 if (testing)
-    read_weights(graph);
-    printLn("Weights read");
+    var state = State<Graph>("foo");
+    var graph = state.get();
+    printLn("Loaded graph from state");
     var pred_string = "";
     while(!loader.isDone())
         var input_data = loader.getNext();
@@ -62,6 +53,8 @@ if (testing)
     print(pred_string);
     printLn("Finished successfully");
 else
+    var graph = Graph();
+    build_graph(graph);
     // Set up the optimiser
     var optimiser = Optimiser("adam", graph, loader, {"num_input"}, "softmax_3", "error");
 
