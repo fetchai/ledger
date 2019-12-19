@@ -1211,7 +1211,8 @@ void MainChain::TrimCache()
 
       if (trim_threshold >= block->block_number)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Removing loose block: 0x", block->hash.ToHex());
+        FETCH_LOG_INFO(LOGGING_NAME, "Removing stale block: 0x", block->hash.ToHex(),
+                       " number: ", block->block_number);
 
         // remove the entry from the tips map
         tips_.erase(block->hash);
