@@ -666,6 +666,11 @@ private:
       , axis_{axis}
     {}
 
+    std::string ToString() const
+    {
+      return Copy().ToString();
+    }
+
     Tensor                 Copy() const;
     ConstSliceType         Slice(SizeType i, SizeType axis) const;
     void                   ModifyRange(SizeType i, SizeType axis);
