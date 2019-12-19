@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
-#include "test_types.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -39,10 +39,10 @@ TEST(FixedPointTest, Conversion_16_16)
 {
   // Get raw value
   fp32_t one(1);
-  fp32_t zero_point_five("0.5");
-  fp32_t one_point_five("1.5");
-  fp32_t two_point_five("2.5");
-  fp32_t m_one_point_five("-1.5");
+  fp32_t zero_point_five(0.5);
+  fp32_t one_point_five(1.5);
+  fp32_t two_point_five(2.5);
+  fp32_t m_one_point_five(-1.5);
 
   EXPECT_EQ(zero_point_five.Data(), 0x08000);
   EXPECT_EQ(one.Data(), 0x10000);
@@ -57,9 +57,9 @@ TEST(FixedPointTest, Conversion_16_16)
 
   // Extreme cases:
   // smallest possible double representable to a FixedPoint
-  fp32_t infinitesimal("0.00002");
+  fp32_t infinitesimal(0.00002);
   // Largest fractional closest to one, representable to a FixedPoint
-  fp32_t almost_one("0.99999");
+  fp32_t almost_one(0.99999);
   // Largest fractional closest to one, representable to a FixedPoint
   fp32_t largest_int(std::numeric_limits<int16_t>::max() - 1);
 
@@ -105,10 +105,10 @@ TEST(FixedPointTest, Conversion_32_32)
 {
   // Get raw value
   fp64_t one(1);
-  fp64_t zero_point_five("0.5");
-  fp64_t one_point_five("1.5");
-  fp64_t two_point_five("2.5");
-  fp64_t m_one_point_five("-1.5");
+  fp64_t zero_point_five(0.5);
+  fp64_t one_point_five(1.5);
+  fp64_t two_point_five(2.5);
+  fp64_t m_one_point_five(-1.5);
 
   EXPECT_EQ(zero_point_five.Data(), 0x080000000);
   EXPECT_EQ(one.Data(), 0x100000000);
@@ -123,9 +123,9 @@ TEST(FixedPointTest, Conversion_32_32)
 
   // Extreme cases:
   // smallest possible double representable to a FixedPoint
-  fp64_t infinitesimal("0.0000000004");
+  fp64_t infinitesimal(0.0000000004);
   // Largest fractional closest to one, representable to a FixedPoint
-  fp64_t almost_one("0.9999999998");
+  fp64_t almost_one(0.9999999998);
   // Largest fractional closest to one, representable to a FixedPoint
   fp64_t largest_int(std::numeric_limits<int32_t>::max() - 1);
 
@@ -167,10 +167,10 @@ TEST(FixedPointTest, Conversion_64_64)
 {
   // Get raw value
   fp128_t one(1);
-  fp128_t zero_point_five("0.5");
-  fp128_t one_point_five("1.5");
-  fp128_t two_point_five("2.5");
-  fp128_t m_one_point_five("-1.5");
+  fp128_t zero_point_five(0.5);
+  fp128_t one_point_five(1.5);
+  fp128_t two_point_five(2.5);
+  fp128_t m_one_point_five(-1.5);
 
   EXPECT_EQ(zero_point_five.Data(), static_cast<int128_t>(0x8000000000000000));
   EXPECT_EQ(one.Data(), static_cast<int128_t>(1) << 64);
@@ -185,9 +185,9 @@ TEST(FixedPointTest, Conversion_64_64)
 
   // Extreme cases:
   // smallest possible double representable to a FixedPoint
-  fp128_t infinitesimal("0.00000000000000000009");
+  fp128_t infinitesimal(0.00000000000000000009);
   // Largest double fractional closest to one, representable to a FixedPoint
-  fp128_t almost_one("0.999999999999999944");
+  fp128_t almost_one(0.999999999999999944);
   // Largest fractional closest to one, representable to a FixedPoint
   fp128_t largest_int(std::numeric_limits<int64_t>::max() - 1, 0UL);  // NOLINT
 
@@ -847,9 +847,9 @@ TYPED_TEST(ComparisonTest, Comparison)
   EXPECT_TRUE(one <= one);
   EXPECT_TRUE(two <= two);
 
-  TypeParam zero_point_five("0.5");
-  TypeParam one_point_five("1.5");
-  TypeParam two_point_five("2.5");
+  TypeParam zero_point_five(0.5);
+  TypeParam one_point_five(1.5);
+  TypeParam two_point_five(2.5);
 
   EXPECT_TRUE(zero_point_five < one);
   EXPECT_TRUE(zero_point_five < two);
@@ -1019,7 +1019,7 @@ TYPED_TEST(TranscendentalTest, Exp)
   TypeParam one(1);
   TypeParam two(2);
   TypeParam ten(10);
-  TypeParam small("0.0001");
+  TypeParam small(0.0001);
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
   TypeParam negative{-0.40028143};
   TypeParam e1    = TypeParam::Exp(one);
@@ -1220,7 +1220,7 @@ TYPED_TEST(TranscendentalTest, Logarithm)
   TypeParam one_point_five(1.5);
   TypeParam ten(10);
   TypeParam huge(TypeParam::FP_MAX / 2);
-  TypeParam small("0.001");
+  TypeParam small(0.001);
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
   TypeParam e1 = TypeParam::Log2(one);
   TypeParam e2 = TypeParam::Log2(one_point_five);
@@ -1271,7 +1271,7 @@ TYPED_TEST(TranscendentalTest, Sqrt)
   TypeParam four(4);
   TypeParam ten(10);
   TypeParam huge(10000);
-  TypeParam small("0.0001");
+  TypeParam small(0.0001);
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
   TypeParam e1 = TypeParam::Sqrt(one);
   TypeParam e2 = TypeParam::Sqrt(one_point_five);
@@ -1343,7 +1343,7 @@ TYPED_TEST(TrigonometryTest, Sin)
   TypeParam one(1);
   TypeParam one_point_five(1.5);
   TypeParam huge(2000);
-  TypeParam small("0.0001");
+  TypeParam small(0.0001);
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
   TypeParam e1  = TypeParam::Sin(one);
   TypeParam e2  = TypeParam::Sin(one_point_five);
@@ -1430,7 +1430,7 @@ TYPED_TEST(TrigonometryTest, Cos)
   TypeParam one(1);
   TypeParam one_point_five(1.5);
   TypeParam huge(2000);
-  TypeParam small("0.0001");
+  TypeParam small(0.0001);
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
   TypeParam e1  = TypeParam::Cos(one);
   TypeParam e2  = TypeParam::Cos(one_point_five);
@@ -1516,7 +1516,7 @@ TYPED_TEST(TrigonometryTest, Tan)
   TypeParam one(1);
   TypeParam one_point_five(1.5);
   TypeParam huge(2000);
-  TypeParam small("0.0001");
+  TypeParam small(0.0001);
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
   TypeParam e1  = TypeParam::Tan(one);
   TypeParam e2  = TypeParam::Tan(one_point_five);
