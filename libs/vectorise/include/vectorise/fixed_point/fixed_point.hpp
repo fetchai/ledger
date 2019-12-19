@@ -1612,7 +1612,7 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::operator++(int) &
 {
   FixedPoint<I, F> result{*this};
-  ++result;
+  ++(*this);
   return result;
 }
 
@@ -1624,7 +1624,7 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::operator--(int) &
 {
   FixedPoint<I, F> result{*this};
-  --result;
+  --(*this);
   return result;
 }
 

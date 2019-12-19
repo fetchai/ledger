@@ -711,8 +711,17 @@ TYPED_TEST(BasicArithmeticTest, Addition)
   // The same for negative
   EXPECT_EQ(-almost_one - infinitesimal, m_one);
 
+
   // Test associativity with primitives
   EXPECT_EQ(two + 1.0, 2.0 + one);
+
+  // Test post/pre increment operators
+  TypeParam temp1 = one++;
+  TypeParam temp2 = ++two;
+  EXPECT_EQ(temp1, TypeParam{1});
+  EXPECT_EQ(one, TypeParam{2});
+  EXPECT_EQ(temp2, TypeParam{3});
+  EXPECT_EQ(two, TypeParam{3});
 }
 
 TYPED_TEST(BasicArithmeticTest, Subtraction)
@@ -748,6 +757,14 @@ TYPED_TEST(BasicArithmeticTest, Subtraction)
 
   // Test associativity with primitives
   EXPECT_EQ(two - 1.0, 2.0 - one);
+
+  // Test post/pre decrement operators
+  TypeParam temp1 = one--;
+  TypeParam temp2 = --two;
+  EXPECT_EQ(temp1, TypeParam{1});
+  EXPECT_EQ(one, TypeParam{0});
+  EXPECT_EQ(temp2, TypeParam{1});
+  EXPECT_EQ(two, TypeParam{1});
 }
 
 TYPED_TEST(BasicArithmeticTest, Multiplication)
