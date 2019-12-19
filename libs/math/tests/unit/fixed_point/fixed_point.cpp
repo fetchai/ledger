@@ -711,7 +711,6 @@ TYPED_TEST(BasicArithmeticTest, Addition)
   // The same for negative
   EXPECT_EQ(-almost_one - infinitesimal, m_one);
 
-
   // Test associativity with primitives
   EXPECT_EQ(two + 1.0, 2.0 + one);
 
