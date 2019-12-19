@@ -48,6 +48,8 @@ struct Constants
     UNTIL,
     GRANULARITY,
     VERSION,
+    MAX_DEPTH,
+    LIMIT,
 
     USING,
     SPECIFICATION,

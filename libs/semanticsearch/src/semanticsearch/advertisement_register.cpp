@@ -49,16 +49,16 @@ void AdvertisementRegister::AdvertiseAgent(AgentId aid, ModelIdentifier const &n
   ad_model->SubscribeAgent(aid, position);
 }
 
-AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(
+AdvertisementRegister::AgentIdSetPtr AdvertisementRegister::FindAgents(
     ModelIdentifier const &name, SemanticPosition const &position, DepthParameterType depth)
 {
   auto ad_model = GetAdvertisementModel(name);
   return ad_model->FindAgents(position, depth);
 }
 
-AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(ModelIdentifier const &name,
-                                                                    Vocabulary const &     object,
-                                                                    DepthParameterType     depth)
+AdvertisementRegister::AgentIdSetPtr AdvertisementRegister::FindAgents(ModelIdentifier const &name,
+                                                                       Vocabulary const & object,
+                                                                       DepthParameterType depth)
 {
   auto ad_model = GetAdvertisementModel(name);
   auto position = ad_model->vocabulary_schema()->Reduce(object);

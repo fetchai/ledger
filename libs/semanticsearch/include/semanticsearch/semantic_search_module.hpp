@@ -362,7 +362,7 @@ private:
 
   KeywordRelation keyword_relation_{{"specification", {"version"}},
                                     {"using", {"version"}},
-                                    {"find", {"granularity"}},
+                                    {"find_agents", {"granularity", "limit", "max_depth"}},
                                     {"advertise", {"until_block"}},
                                     {"model", {}},
                                     {"instance", {}},
@@ -375,9 +375,11 @@ private:
                                            {"advertise", Properties::PROP_IS_OPERATOR},
                                            {"instance", Properties::PROP_IS_OPERATOR},
                                            {"vector", Properties::PROP_IS_OPERATOR},
-                                           {"find", Properties::PROP_IS_OPERATOR},
+                                           {"find_agents", Properties::PROP_IS_OPERATOR},
                                            {"until_block", Properties::PROP_IS_OPERATOR},
-                                           {"granularity", Properties::PROP_IS_OPERATOR}};
+                                           {"granularity", Properties::PROP_IS_OPERATOR},
+                                           {"max_depth", Properties::PROP_IS_OPERATOR},
+                                           {"limit", Properties::PROP_IS_OPERATOR}};
 
   KeywordTypes keyword_type_ = {{"specification", Constants::SPECIFICATION},
                                 {"using", Constants::USING},
@@ -386,9 +388,11 @@ private:
                                 {"advertise", Constants::ADVERTISE},
                                 {"instance", Constants::STORE},
                                 {"vector", Constants::STORE_POSITION},
-                                {"find", Constants::SEARCH},
+                                {"find_agents", Constants::SEARCH},
                                 {"until_block", Constants::UNTIL},
-                                {"granularity", Constants::GRANULARITY}};
+                                {"granularity", Constants::GRANULARITY},
+                                {"max_depth", Constants::MAX_DEPTH},
+                                {"limit", Constants::LIMIT}};
 
   SharedAdvertisementRegister advertisement_register_;
   AgentDirectory              agent_directory_;

@@ -30,7 +30,7 @@ QueryExecutor::QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &
   , semantic_search_module_{std::move(instance)}
 {}
 
-QueryExecutor::AgentIdSet QueryExecutor::Execute(Query const &query, Agent agent)
+QueryExecutor::AgentIdSetPtr QueryExecutor::Execute(Query const &query, Agent agent)
 {
   agent_ = std::move(agent);
   mode_  = Mode::INSTANTIATION;
@@ -60,7 +60,7 @@ QueryExecutor::AgentIdSet QueryExecutor::Execute(Query const &query, Agent agent
   }
 
   // Executing each statement in program
-  AgentIdSet ret{nullptr};
+  AgentIdSetPtr ret{nullptr};
   for (auto const &stmt : query.statements)
   {
 
@@ -71,8 +71,6 @@ QueryExecutor::AgentIdSet QueryExecutor::Execute(Query const &query, Agent agent
       break;
     default:
       ret = NewExecute(stmt);
-      //      error_tracker_.RaiseRuntimeError("Unknown statement type.", stmt[0].token);
-      //      return nullptr;
       break;
     }
 
@@ -85,10 +83,10 @@ QueryExecutor::AgentIdSet QueryExecutor::Execute(Query const &query, Agent agent
   return ret;
 }
 
-QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stmt)
+QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &stmt)
 {
   locals_numbers_.clear();
-  AgentIdSet result;
+  AgentIdSetPtr result;
 
   std::size_t i = 0;
 
@@ -349,6 +347,10 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
         context_.Set(name->As<std::string>(), instance_obj, instance->model_name());
         break;
       }
+      case Constants::MAX_DEPTH:
+        // Fall-through is deliberate.
+      case Constants::LIMIT:
+        // Fall-through is deliberate.
       case Constants::VERSION:
         // Fall-through is deliberate.
       case Constants::GRANULARITY:
@@ -359,24 +361,13 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
         stack.pop_back();
         // auto &variant = stack.back();
 
-        if (value_obj->type() != Constants::LITERAL)
+        if (!value_obj->IsType<SemanticCoordinateType>())
         {
           error_tracker_.RaiseRuntimeError("Expected literal.", value_obj->token());
           return nullptr;
         }
 
-        // Converting to literal
-        auto type_code    = value_obj->token().type();  // TODO: Move to function -- replicated 1
-        auto type_details = semantic_search_module_->GetTypeDetails(type_code);
-
-        if (!type_details.semantic_converter)
-        {
-          error_tracker_.RaiseRuntimeError("No known conversion from literal into semantic space.",
-                                           value_obj->token());
-          return nullptr;
-        }
-
-        auto value = type_details.semantic_converter(value_obj);
+        auto value = value_obj->As<SemanticCoordinateType>();
 
         switch (x.type)
         {
@@ -388,6 +379,12 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
           break;
         case Constants::VERSION:
           locals_numbers_[LOCAL_VERSION] = value;
+          break;
+        case Constants::MAX_DEPTH:
+          locals_numbers_[LOCAL_MAX_DEPTH] = value;
+          break;
+        case Constants::LIMIT:
+          locals_numbers_[LOCAL_LIMIT] = value;
           break;
         };
 
@@ -531,27 +528,35 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
           return nullptr;
         }
 
-        auto granularity = GetLocal(LOCAL_GRANULARITY, default_granularity_).Integer();
-        //        auto limit       = GetLocal(LOCAL_LIMIT, default_granularity_).Integer();
-        //        auto max_depth   = GetLocal(LOCAL_MAX_DEPTH, default_max_depth_).Integer();
+        auto granularity =
+            static_cast<int32_t>(GetLocal(LOCAL_GRANULARITY, default_granularity_).Integer());
+        auto limit = static_cast<std::size_t>(GetLocal(LOCAL_LIMIT, default_limit_).Integer());
+        auto max_depth =
+            static_cast<int32_t>(GetLocal(LOCAL_MAX_DEPTH, default_max_depth_).Integer());
+        int32_t last_depth = granularity - std::min(max_depth, granularity);
+        --last_depth;
 
-        // Searching
-        // TODO: Finish this section
-
-        std::cout << "Searching ... " << model_identifier << std::endl;
-
-        result = semantic_search_module_->advertisement_register()->FindAgents(
-            model_identifier, position, static_cast<int32_t>(granularity));
-
-        if (result)
+        AgentIdSet results;
+        for (int32_t g = granularity; g != last_depth; --g)
         {
-          std::cout << "Found agents: " << result->size() << " "
-                    << " searching " << model_identifier.model_name << std::endl;
+          auto agents = semantic_search_module_->advertisement_register()->FindAgents(
+              model_identifier, position, g);
+
+          // TODO(tfr): Migrate to a scheme where agents are added based on distance
+          if (agents)
+          {
+            std::size_t end = std::min(agents->size(), limit);
+            auto        it  = agents->begin();
+            for (std::size_t n = 0; n < end; ++n)
+            {
+              results.insert(*it);
+              ++it;
+            }
+          }
         }
-        else
-        {
-          std::cout << "Nothing found" << std::endl;
-        }
+
+        std::cout << "Found agents: " << results.size() << " "
+                  << " searching " << model_identifier.model_name << std::endl;
         break;
       }
       case Constants::USING:
@@ -776,7 +781,7 @@ QueryExecutor::Vocabulary QueryExecutor::GetInstance(std::string const &name)
   return var->As<Vocabulary>();
 }
 
-QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
+QueryExecutor::AgentIdSetPtr QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
 {
   std::size_t i = 1;
 

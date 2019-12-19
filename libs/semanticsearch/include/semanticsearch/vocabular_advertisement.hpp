@@ -33,7 +33,8 @@ public:
   using Index               = uint64_t;
   using VocabularySchemaPtr = std::shared_ptr<ObjectSchemaField>;
   using AgentId             = uint64_t;
-  using AgentIdSet          = std::shared_ptr<std::set<AgentId>>;
+  using AgentIdSet          = std::set<AgentId>;
+  using AgentIdSetPtr       = std::shared_ptr<AgentIdSet>;
 
   explicit VocabularyAdvertisement(VocabularySchemaPtr const &vocabulary_schema)
     : vocabulary_schema_(vocabulary_schema)
@@ -45,7 +46,7 @@ public:
     index_.AddRelation(aid, std::move(position));
   }
 
-  AgentIdSet FindAgents(SemanticPosition position, DepthParameterType depth)
+  AgentIdSetPtr FindAgents(SemanticPosition position, DepthParameterType depth)
   {
     return index_.Find(depth, std::move(position));
   }

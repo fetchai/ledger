@@ -30,19 +30,19 @@ public:
   using SharedModel = std::shared_ptr<VocabularyAdvertisement>;
   using SharedAbstractVocabularyRegister =
       AbstractVocabularyRegister::SharedAbstractVocabularyRegister;
-  using Index      = VocabularyAdvertisement::Index;
-  using AgentId    = VocabularyAdvertisement::AgentId;
-  using AgentIdSet = VocabularyAdvertisement::AgentIdSet;
+  using Index         = VocabularyAdvertisement::Index;
+  using AgentId       = VocabularyAdvertisement::AgentId;
+  using AgentIdSetPtr = VocabularyAdvertisement::AgentIdSetPtr;
 
   AdvertisementRegister() = default;
 
   bool        CreateModel(ModelIdentifier const &name, VocabularySchemaPtr const &object);
   SharedModel GetAdvertisementModel(ModelIdentifier const &name);
   void AdvertiseAgent(AgentId aid, ModelIdentifier const &name, SemanticPosition const &position);
-  AgentIdSet FindAgents(ModelIdentifier const &name, SemanticPosition const &position,
-                        DepthParameterType depth);
-  AgentIdSet FindAgents(ModelIdentifier const &name, Vocabulary const &object,
-                        DepthParameterType depth);
+  AgentIdSetPtr FindAgents(ModelIdentifier const &name, SemanticPosition const &position,
+                           DepthParameterType depth);
+  AgentIdSetPtr FindAgents(ModelIdentifier const &name, Vocabulary const &object,
+                           DepthParameterType depth);
 
   void OnAddModel(ModelIdentifier const &name, VocabularySchemaPtr const &object) override;
 

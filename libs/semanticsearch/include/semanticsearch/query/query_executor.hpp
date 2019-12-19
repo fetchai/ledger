@@ -36,12 +36,13 @@ public:
   using Vocabulary          = std::shared_ptr<VocabularyInstance>;
   using SharedAbstractVocabularyRegister =
       AbstractVocabularyRegister::SharedAbstractVocabularyRegister;
-  using AgentIdSet   = VocabularyAdvertisement::AgentIdSet;
-  using LocalNumbers = std::unordered_map<uint64_t, SemanticCoordinateType>;
+  using AgentIdSet    = VocabularyAdvertisement::AgentIdSet;
+  using AgentIdSetPtr = VocabularyAdvertisement::AgentIdSetPtr;
+  using LocalNumbers  = std::unordered_map<uint64_t, SemanticCoordinateType>;
 
   QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &error_tracker);
-  AgentIdSet Execute(Query const &query, Agent agent);
-  Vocabulary GetInstance(std::string const &name);
+  AgentIdSetPtr Execute(Query const &query, Agent agent);
+  Vocabulary    GetInstance(std::string const &name);
 
 private:
   using PropertyMap = std::map<std::string, std::shared_ptr<VocabularyInstance>>;
@@ -72,8 +73,8 @@ private:
     return it->second;
   }
 
-  AgentIdSet NewExecute(CompiledStatement const &stmt);
-  AgentIdSet ExecuteDefine(CompiledStatement const &stmt);
+  AgentIdSetPtr NewExecute(CompiledStatement const &stmt);
+  AgentIdSetPtr ExecuteDefine(CompiledStatement const &stmt);
 
   template <typename T>
   bool TypeMismatch(QueryVariant const &var, Token token)
@@ -102,8 +103,9 @@ private:
 
   uint64_t current_block_time_{0};  //< TODO: create a periodic maintainance to update this
   SemanticCoordinateType default_advertisement_length_{100};
-  SemanticCoordinateType default_max_depth_{1};
-  SemanticCoordinateType default_granularity_{12};  //< TODO: Should be max
+  SemanticCoordinateType default_limit_{10};
+  SemanticCoordinateType default_max_depth_{20};
+  SemanticCoordinateType default_granularity_{20};
 
   Agent agent_{nullptr};
 };
