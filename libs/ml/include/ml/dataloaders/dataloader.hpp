@@ -72,8 +72,8 @@ public:
   virtual LoaderType LoaderCode() = 0;
 
 protected:
-  virtual void              UpdateCursor() = 0;
-  std::shared_ptr<SizeType> current_cursor_;
+  virtual void              UpdateCursor()  = 0;
+  std::shared_ptr<SizeType> current_cursor_ = std::make_shared<SizeType>(0);
   SizeType                  current_min_{};
   SizeType                  current_max_{};
   SizeType                  current_size_{};
