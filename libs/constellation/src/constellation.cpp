@@ -504,7 +504,7 @@ bool Constellation::OnRestorePreviousData(ledger::GenesisFileCreator::ConsensusP
   dag_ = GenerateDAG(cfg_, "dag_db_", true, external_identity_);
 
   // create the chain
-  chain_ = std::make_unique<MainChain>(ledger::MainChain::Mode::LOAD_PERSISTENT_DB);
+  chain_ = std::make_unique<MainChain>(ledger::MainChain::Mode::LOAD_PERSISTENT_DB, true);
 
   // necessary when doing state validity checks
   execution_manager_ = std::make_shared<ExecutionManager>(

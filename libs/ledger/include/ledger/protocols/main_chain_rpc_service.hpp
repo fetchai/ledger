@@ -233,6 +233,7 @@ private:
   telemetry::CounterPtr         recv_block_loose_count_;
   telemetry::CounterPtr         recv_block_duplicate_count_;
   telemetry::CounterPtr         recv_block_invalid_count_;
+  telemetry::CounterPtr         recv_block_dirty_count_;
   telemetry::CounterPtr         state_synchronising_;
   telemetry::CounterPtr         state_synchronised_;
   telemetry::CounterPtr         state_start_sync_with_peer_;

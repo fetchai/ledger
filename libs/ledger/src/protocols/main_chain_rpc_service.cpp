@@ -84,6 +84,9 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
   , recv_block_invalid_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_recv_block_invalid_total",
         " The total number of invalid blocks received from the network")}
+  , recv_block_dirty_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_recv_block_dirty_total",
+        " The total number of dirty blocks received from the network")}
   , state_synchronising_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_state_synchronising_total",
         "The number of times in the synchronisiing state")}
@@ -216,6 +219,10 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
     status_text = "Invalid";
     recv_block_invalid_count_->increment();
     break;
+  case BlockStatus::DIRTY:
+    status_text = "Dirty";
+    recv_block_invalid_count_->increment();
+    break;
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "New Block: 0x", block.hash.ToHex(), " (from peer: ", ToBase64(from),
@@ -258,6 +265,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
   std::size_t loose{0};
   std::size_t duplicate{0};
   std::size_t invalid{0};
+  std::size_t dirty{0};
 
   for (auto it = begin; it != end; ++it)
   {
@@ -303,19 +311,25 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
                       " from: muddle://", ToBase64(address));
       ++invalid;
       break;
+    case BlockStatus::DIRTY:
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced dirty block: 0x", it->hash.ToHex(), " from: muddle://",
+                      ToBase64(address));
+      ++dirty;
+      break;
     }
   }
 
   if (invalid != 0u)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Synced Summary: Invalid: ", invalid, " Added: ", added,
-                   " Loose: ", loose, " Duplicate: ", duplicate, " from: muddle://",
-                   ToBase64(address));
+                   " Loose: ", loose, " Duplicate: ", duplicate, " Dirty: ", dirty,
+                   " from: muddle://", ToBase64(address));
   }
   else
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synced Summary: Added: ", added, " Loose: ", loose,
-                   " Duplicate: ", duplicate, " from: muddle://", ToBase64(address));
+                   " Duplicate: ", duplicate, " Dirty: ", dirty, " from: muddle://",
+                   ToBase64(address));
   }
 }
 
