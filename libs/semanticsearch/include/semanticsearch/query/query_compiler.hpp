@@ -70,12 +70,8 @@ private:
   uint64_t  char_index_{0};
   int       line_{0};
 
-  std::vector<Statement> statements_;
-
-  // TODO: Move to module
-  std::vector<ConstByteArray> keywords_ = {"model",     "find", "let",         "pos",
-                                           "advertise", "near", "granularity", "direction",
-                                           "until",     "alias"};
+  std::vector<Statement>      statements_;
+  std::vector<ConstByteArray> keywords_{};
 };
 
 }  // namespace semanticsearch

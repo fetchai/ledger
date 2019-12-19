@@ -35,7 +35,6 @@ struct Constants
     SEPARATOR,
 
     OBJECT_KEY,
-    ADVERTISE_EXPIRY,
 
     // Literals
     LITERAL,
@@ -45,13 +44,18 @@ struct Constants
     INTERNAL_OPEN_GROUP,
     INTERNAL_CLOSE_GROUP,
 
+    // Header
+    UNTIL,
+    GRANULARITY,
+    VERSION,
+
+    USING,
+    SPECIFICATION,
+
     STORE,
     STORE_POSITION,
 
     ADVERTISE,
-
-    SEARCH_DIRECTION,
-    SEARCH_GRANULARITY,
     SEARCH,
 
     USER_DEFINED_START = 300,

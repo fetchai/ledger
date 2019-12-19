@@ -35,7 +35,6 @@ enum
   OP_ASSIGN,
   OP_MULTIPLY,
   OP_EQUAL,
-  OP_SUBSCOPE,  // TODO: should be  part of identifier
   OP_ATTRIBUTE,
   OP_VAR_DEFINITION,
   OP_SEPARATOR,
@@ -47,14 +46,9 @@ enum
   PARANTHESIS_OPEN,
   PARANTHESIS_CLOSE,
 
-  // Types
-  STRING = 400,  // TODO: remove
-  INTEGER,
-  FLOAT,
-  IDENTIFIER,
-
-  // And finally syntax
-  KEYWORD = 500,
+  // Keywords and identifiers
+  IDENTIFIER = 400,
+  KEYWORD    = 500,
 
   USER_DEFINED = 1000
 };
@@ -63,7 +57,12 @@ QueryCompiler::QueryCompiler(ErrorTracker &                                error
                              QueryCompiler::SemanticSearchModulePtr const &module)
   : error_tracker_(error_tracker)
   , module_{module}
-{}
+{
+  for (auto const &x : module_->keyword_properties())
+  {
+    keywords_.push_back(x.first);
+  }
+}
 
 Query QueryCompiler::operator()(ByteArray doc, ConstByteArray const &filename)
 {

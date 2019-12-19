@@ -19,6 +19,7 @@
 
 #include "semanticsearch/query/error_tracker.hpp"
 #include "semanticsearch/query/execution_context.hpp"
+#include "semanticsearch/schema/scope_identifier.hpp"
 #include "semanticsearch/schema/vocabulary_instance.hpp"
 #include "semanticsearch/semantic_search_module.hpp"
 #include "semanticsearch/vocabular_advertisement.hpp"
@@ -35,7 +36,8 @@ public:
   using Vocabulary          = std::shared_ptr<VocabularyInstance>;
   using SharedAbstractVocabularyRegister =
       AbstractVocabularyRegister::SharedAbstractVocabularyRegister;
-  using AgentIdSet = VocabularyAdvertisement::AgentIdSet;
+  using AgentIdSet   = VocabularyAdvertisement::AgentIdSet;
+  using LocalNumbers = std::unordered_map<uint64_t, SemanticCoordinateType>;
 
   QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &error_tracker);
   AgentIdSet Execute(Query const &query, Agent agent);
@@ -43,11 +45,34 @@ public:
 
 private:
   using PropertyMap = std::map<std::string, std::shared_ptr<VocabularyInstance>>;
+  enum
+  {
+    LOCAL_GRANULARITY,
+    LOCAL_BLOCK_EXPIRY,
+    LOCAL_VERSION,
+    LOCAL_MAX_DEPTH,
+    LOCAL_LIMIT
+  };
+
+  enum Mode
+  {
+    SPECIFICATION,
+    INSTANTIATION
+  };
+
+  SemanticCoordinateType GetLocal(
+      uint64_t name, SemanticCoordinateType const &default_value = SemanticCoordinateType{0}) const
+  {
+    auto it = locals_numbers_.find(name);
+    if (it == locals_numbers_.end())
+    {
+      return default_value;
+    }
+
+    return it->second;
+  }
 
   AgentIdSet NewExecute(CompiledStatement const &stmt);
-  AgentIdSet ExecuteStore(CompiledStatement const &stmt);
-  AgentIdSet ExecuteFind(CompiledStatement const &stmt);
-  AgentIdSet ExecuteSet(CompiledStatement const &stmt);
   AgentIdSet ExecuteDefine(CompiledStatement const &stmt);
 
   template <typename T>
@@ -68,7 +93,17 @@ private:
   std::vector<QueryVariant>  definition_stack_;
   ExecutionContext           context_;
   SharedSemanticSearchModule semantic_search_module_;
-  Agent                      agent_{nullptr};
+
+  LocalNumbers    locals_numbers_;
+  Mode            mode_{INSTANTIATION};
+  ScopeIdentifier scope_;
+
+  uint64_t current_block_time_{0};  //< TODO: create a periodic maintainance to update this
+  SemanticCoordinateType default_advertisement_length_{100};
+  SemanticCoordinateType default_max_depth_{1};
+  SemanticCoordinateType default_granularity_{12};  //< TODO: Should be max
+
+  Agent agent_{nullptr};
 };
 
 }  // namespace semanticsearch

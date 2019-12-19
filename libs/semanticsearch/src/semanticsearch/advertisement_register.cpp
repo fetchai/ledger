@@ -23,7 +23,8 @@
 namespace fetch {
 namespace semanticsearch {
 
-bool AdvertisementRegister::CreateModel(std::string const &name, VocabularySchemaPtr const &object)
+bool AdvertisementRegister::CreateModel(ModelIdentifier const &    name,
+                                        VocabularySchemaPtr const &object)
 {
   if (HasModel(name))
   {
@@ -34,13 +35,13 @@ bool AdvertisementRegister::CreateModel(std::string const &name, VocabularySchem
 }
 
 AdvertisementRegister::SharedModel AdvertisementRegister::GetAdvertisementModel(
-    std::string const &name)
+    ModelIdentifier const &name)
 {
   assert(model_advertisement_.find(name) != model_advertisement_.end());
   return model_advertisement_[name];
 }
 
-void AdvertisementRegister::AdvertiseAgent(AgentId aid, std::string const &name,
+void AdvertisementRegister::AdvertiseAgent(AgentId aid, ModelIdentifier const &name,
                                            SemanticPosition const &position)
 {
   assert(HasModel(name));
@@ -49,15 +50,15 @@ void AdvertisementRegister::AdvertiseAgent(AgentId aid, std::string const &name,
 }
 
 AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(
-    std::string const &name, SemanticPosition const &position, DepthParameterType depth)
+    ModelIdentifier const &name, SemanticPosition const &position, DepthParameterType depth)
 {
   auto ad_model = GetAdvertisementModel(name);
   return ad_model->FindAgents(position, depth);
 }
 
-AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(std::string const &name,
-                                                                    Vocabulary const & object,
-                                                                    DepthParameterType depth)
+AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(ModelIdentifier const &name,
+                                                                    Vocabulary const &     object,
+                                                                    DepthParameterType     depth)
 {
   auto ad_model = GetAdvertisementModel(name);
   auto position = ad_model->vocabulary_schema()->Reduce(object);
@@ -65,12 +66,13 @@ AdvertisementRegister::AgentIdSet AdvertisementRegister::FindAgents(std::string 
   return ad_model->FindAgents(position, depth);
 }
 
-void AdvertisementRegister::OnAddModel(std::string const &name, VocabularySchemaPtr const &object)
+void AdvertisementRegister::OnAddModel(ModelIdentifier const &    name,
+                                       VocabularySchemaPtr const &object)
 {
   CreateModelInternal(name, object);
 }
 
-bool AdvertisementRegister::CreateModelInternal(std::string const &        name,
+bool AdvertisementRegister::CreateModelInternal(ModelIdentifier const &    name,
                                                 VocabularySchemaPtr const &object)
 {
   assert(object != nullptr);

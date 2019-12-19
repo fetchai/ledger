@@ -1,15 +1,20 @@
+specification ai.fetch.weatherstation version 2.1;
+
 model Position {
-  latitude: BoundedInteger(-90, 90),
-  longitude: BoundedInteger(0, 180)  
+  latitude: Number(-90, 90),
+  longitude: Number(0, 180)  
 };
 
 model WeatherStation
 {
   position: Position,
-  temperature: BoundedInteger(-180, 300)
+  temperature: Number(-180, 300)
 };
 
-let x : WeatherStation = {
+
+using ai.fetch.weatherstation version 2.1;
+
+instance x : WeatherStation = {
   position: {
     latitude: 0,
     longitude: 1
@@ -17,31 +22,29 @@ let x : WeatherStation = {
   temperature: 9
 };
 
-advertise x; // until 2020;
+advertise x until_block 2020;
 
-let y :  Position = {
+instance y :  Position = {
     latitude: 0,
     longitude: 1
 };
 
-let g :  Position = {
+instance g :  Position = {
     latitude: 0,
     longitude: 20
 };
 
-pos q : WeatherStation = {
+vector q : WeatherStation = {
   position : g, 
   temperature: 2
 };
 
-pos p : Position = {
+vector p : Position = {
   latitude: 0,
   longitude: 1
 };
 
-find q; // * 9; // * 0.01;
-
-// advertise x until 200132;
-// find 0.5 * (y + g);
-//find a* y + b * c direction x granularity 7;
-//find a* y + b * c  granularity 7 direction x;
+find q granularity 3;
+find q granularity 4;
+find q granularity 5;
+find q granularity 6;

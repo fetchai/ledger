@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/query/query_executor.hpp"
+#include "semanticsearch/schema/model_identifier.hpp"
 #include "semanticsearch/semantic_constants.hpp"
 
 #include <cassert>
@@ -32,6 +33,7 @@ QueryExecutor::QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &
 QueryExecutor::AgentIdSet QueryExecutor::Execute(Query const &query, Agent agent)
 {
   agent_ = std::move(agent);
+  mode_  = Mode::INSTANTIATION;
 
   // Checking that the agent acutally exists
   if (agent_ == nullptr)
@@ -67,13 +69,6 @@ QueryExecutor::AgentIdSet QueryExecutor::Execute(Query const &query, Agent agent
     case Properties::PROP_CTX_MODEL:
       ret = ExecuteDefine(stmt);
       break;
-
-    case Properties::PROP_CTX_ADVERTISE:
-      ret = ExecuteStore(stmt);
-      break;
-    case Properties::PROP_CTX_FIND:
-      ret = ExecuteFind(stmt);
-      break;
     default:
       ret = NewExecute(stmt);
       //      error_tracker_.RaiseRuntimeError("Unknown statement type.", stmt[0].token);
@@ -92,6 +87,7 @@ QueryExecutor::AgentIdSet QueryExecutor::Execute(Query const &query, Agent agent
 
 QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stmt)
 {
+  locals_numbers_.clear();
   AgentIdSet result;
 
   std::size_t i = 0;
@@ -190,14 +186,17 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
       {
         auto name = static_cast<std::string>(x.token);
 
-        QueryVariant ele;
+        QueryVariant    ele;
+        ModelIdentifier model_identifier;
+        model_identifier.scope      = scope_;
+        model_identifier.model_name = name;
         if (context_.Has(name))
         {
           ele = context_.Get(name);
         }
-        else if (semantic_search_module_->HasModel(name))
+        else if (semantic_search_module_->HasModel(model_identifier))
         {
-          auto model = semantic_search_module_->GetModel(name);
+          auto model = semantic_search_module_->GetModel(model_identifier);
           ele        = NewQueryVariant(model, Constants::TYPE_MODEL, x.token);
         }
         else
@@ -293,6 +292,7 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
       {
         auto instance = stack.back();
         stack.pop_back();
+        // TODO: Make support for optional model - i.e. fetch it if it is not there
         auto model = stack.back();
         stack.pop_back();
         auto name = stack.back();
@@ -312,8 +312,12 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
         auto name = stack.back();
         stack.pop_back();
 
-        auto instance = instance_obj->As<Vocabulary>();
-        auto model    = semantic_search_module_->GetModel(instance->model_name());
+        auto            instance = instance_obj->As<Vocabulary>();
+        ModelIdentifier model_identifier;
+        model_identifier.scope      = scope_;
+        model_identifier.model_name = instance->model_name();
+
+        auto model = semantic_search_module_->GetModel(model_identifier);
         if (model == nullptr)
         {
           error_tracker_.RaiseSyntaxError("Could not find model '" + instance->model_name() + "'",
@@ -342,6 +346,50 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
         context_.Set(name->As<std::string>(), instance_obj, instance->model_name());
         break;
       }
+      case Constants::VERSION:
+        // Fall-through is deliberate.
+      case Constants::GRANULARITY:
+        // Fall-through is deliberate.
+      case Constants::UNTIL:
+      {
+        auto value_obj = stack.back();
+        stack.pop_back();
+        // auto &variant = stack.back();
+
+        if (value_obj->type() != Constants::LITERAL)
+        {
+          error_tracker_.RaiseRuntimeError("Expected literal.", value_obj->token());
+          return nullptr;
+        }
+
+        // Converting to literal
+        auto type_code    = value_obj->token().type();  // TODO: Move to function -- replicated 1
+        auto type_details = semantic_search_module_->GetTypeDetails(type_code);
+
+        if (!type_details.semantic_converter)
+        {
+          error_tracker_.RaiseRuntimeError("No known conversion from literal into semantic space.",
+                                           value_obj->token());
+          return nullptr;
+        }
+
+        auto value = type_details.semantic_converter(value_obj);
+
+        switch (x.type)
+        {
+        case Constants::GRANULARITY:
+          locals_numbers_[LOCAL_GRANULARITY] = value;
+          break;
+        case Constants::UNTIL:
+          locals_numbers_[LOCAL_BLOCK_EXPIRY] = value;
+          break;
+        case Constants::VERSION:
+          locals_numbers_[LOCAL_VERSION] = value;
+          break;
+        };
+
+        break;
+      }
       case Constants::ADVERTISE:
       {
         auto variant = stack.back();
@@ -355,21 +403,24 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
             tok = stmt[i - 1].token;
           }
 
-          error_tracker_.RaiseSyntaxError("Expected Vocabulary.", tok);
+          error_tracker_.RaiseRuntimeError("Expected Vocabulary.", tok);
           return nullptr;
         }
 
-        auto instance   = variant->As<Vocabulary>();
-        auto model_name = instance->model_name();
+        auto            instance   = variant->As<Vocabulary>();
+        auto            model_name = instance->model_name();
+        ModelIdentifier model_identifier;
+        model_identifier.scope      = scope_;
+        model_identifier.model_name = model_name;
 
-        if (!semantic_search_module_->HasModel(model_name))
+        if (!semantic_search_module_->HasModel(model_identifier))
         {
           error_tracker_.RaiseSyntaxError("Could not find model '" + model_name + "'",
                                           variant->token());
           return nullptr;
         }
 
-        auto model = semantic_search_module_->GetModel(model_name);
+        auto model = semantic_search_module_->GetModel(model_identifier);
         if (model == nullptr)
         {
           error_tracker_.RaiseInternalError("Model '" + model_name + "' is null.",
@@ -377,13 +428,25 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
           return nullptr;
         }
 
+        auto life_time =
+            GetLocal(LOCAL_BLOCK_EXPIRY, SemanticCoordinateType(current_block_time_ + 20))
+                .Integer();
+
+        std::cout << "Advertising " << model_identifier << " until " << life_time << std::endl;
+        // TODO: Use lifetime and model identifier
+
         model->VisitFields(
             [this, variant](std::string, std::string mname, Vocabulary obj) {
-              auto model = semantic_search_module_->GetModel(mname);
+              ModelIdentifier mi;
+              mi.scope      = scope_;
+              mi.model_name = mname;
+
+              auto model = semantic_search_module_->GetModel(mi);
               if (model == nullptr)
               {
-                error_tracker_.RaiseSyntaxError("Could not find model '" + mname + "'",
-                                                variant->token());
+                error_tracker_.RaiseSyntaxError(
+                    "Could not find model '" + static_cast<std::string>(mi) + "'",
+                    variant->token());
                 return;
               }
               SemanticPosition position = model->Reduce(obj);
@@ -392,9 +455,10 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
               assert(semantic_search_module_->advertisement_register() != nullptr);
               assert(agent_ != nullptr);
 
-              semantic_search_module_->advertisement_register()->AdvertiseAgent(agent_->id, mname,
+              semantic_search_module_->advertisement_register()->AdvertiseAgent(agent_->id, mi,
                                                                                 position);
-              agent_->RegisterVocabularyLocation(mname, position);
+              agent_->RegisterVocabularyLocation(mname,
+                                                 position);  // TODO: Update with model identifier
             },
             instance);
 
@@ -414,20 +478,23 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
         SemanticPosition position;
         bool             found{false};
         std::string      model_name{""};
+        ModelIdentifier  model_identifier;
+        model_identifier.scope = scope_;
 
         // Checking if it is a model instance
         if (variant->IsType<Vocabulary>())
         {
-          auto instance = variant->As<Vocabulary>();
+          auto instance               = variant->As<Vocabulary>();
+          model_identifier.model_name = instance->model_name();
 
-          if (!semantic_search_module_->HasModel(instance->model_name()))
+          if (!semantic_search_module_->HasModel(model_identifier))
           {
             error_tracker_.RaiseSyntaxError("Could not find model '" + instance->model_name() + "'",
                                             x.token);
             return nullptr;
           }
 
-          auto model = semantic_search_module_->GetModel(instance->model_name());
+          auto model = semantic_search_module_->GetModel(model_identifier);
           if (model == nullptr)
           {
             error_tracker_.RaiseInternalError("Model '" + instance->model_name() + "' is null.",
@@ -462,18 +529,61 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
           return nullptr;
         }
 
-        // TODO: Add support for granularity
-        // TODO: Add support for line segment
+        auto granularity = GetLocal(LOCAL_GRANULARITY, default_granularity_).Integer();
+        //        auto limit       = GetLocal(LOCAL_LIMIT, default_granularity_).Integer();
+        //        auto max_depth   = GetLocal(LOCAL_MAX_DEPTH, default_max_depth_).Integer();
 
         // Searching
-        result =
-            semantic_search_module_->advertisement_register()->FindAgents(model_name, position, 2);
-        std::cout << "Searching ... " << model_name << std::endl;
+        // TODO: Finish this section
+
+        std::cout << "Searching ... " << model_identifier << std::endl;
+
+        result = semantic_search_module_->advertisement_register()->FindAgents(
+            model_identifier, position, static_cast<int32_t>(granularity));
+
         if (result)
         {
           std::cout << "Found agents: " << result->size() << " "
                     << " searching " << model_name << std::endl;
         }
+        else
+        {
+          std::cout << "Nothing found" << std::endl;
+        }
+        break;
+      }
+      case Constants::USING:
+      {
+        if (stack.size() < 1)
+        {
+          error_tracker_.RaiseInternalError("Expected an identifier after using statement.",
+                                            x.token);
+          return nullptr;
+        }
+        auto identifier = stack.back();
+        stack.pop_back();
+
+        scope_.address = identifier->As<std::string>();
+        scope_.version = GetLocal(LOCAL_VERSION, SemanticCoordinateType(-1));
+        mode_          = Mode::INSTANTIATION;
+
+        break;
+      }
+      case Constants::SPECIFICATION:
+      {
+        if (stack.size() < 1)
+        {
+          error_tracker_.RaiseInternalError("Expected an identifier after specification statement.",
+                                            x.token);
+          return nullptr;
+        }
+        auto identifier = stack.back();
+        stack.pop_back();
+
+        scope_.address = identifier->As<std::string>();
+        scope_.version = GetLocal(LOCAL_VERSION, SemanticCoordinateType(-1));
+        mode_          = Mode::SPECIFICATION;
+
         break;
       }
       case Constants::MULTIPLY:
@@ -495,9 +605,9 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
         if (rhs->type() == Constants::LITERAL)
         {
           rhs_type          = 2;
-          auto type_code    = rhs->token().type();
+          auto type_code    = rhs->token().type();  // TODO: Move to function -- replicated 1
           auto type_details = semantic_search_module_->GetTypeDetails(type_code);
-          std::cout << "Type code: " << type_code << std::endl;
+
           if (!type_details.semantic_converter)
           {
             error_tracker_.RaiseRuntimeError(
@@ -607,265 +717,6 @@ QueryExecutor::Vocabulary QueryExecutor::GetInstance(std::string const &name)
   assert(context_.Has(name));
   auto var = context_.Get(name);
   return var->As<Vocabulary>();
-}
-
-QueryExecutor::AgentIdSet QueryExecutor::ExecuteStore(CompiledStatement const &stmt)
-{
-  if (stmt[1].type != Constants::IDENTIFIER)
-  {
-    error_tracker_.RaiseSyntaxError("Expected variable name.", stmt[1].token);
-    return nullptr;
-  }
-
-  auto name = static_cast<std::string>(stmt[1].token);
-
-  if (!context_.Has(name))
-  {
-    error_tracker_.RaiseSyntaxError("Vairable not defined", stmt[1].token);
-    return nullptr;
-  }
-
-  auto obj        = context_.Get(name);
-  auto model_name = context_.GetModelName(name);
-
-  if (!semantic_search_module_->HasModel(model_name))
-  {
-    error_tracker_.RaiseSyntaxError("Could not find model '" + model_name + "'", stmt[1].token);
-    return nullptr;
-  }
-
-  auto model = semantic_search_module_->GetModel(model_name);
-  if (model == nullptr)
-  {
-    error_tracker_.RaiseInternalError("Model '" + model_name + "' is null.", stmt[1].token);
-    return nullptr;
-  }
-
-  // TODO: Check instance type
-  auto instance = obj->As<Vocabulary>();
-
-  model->VisitFields(
-      [this, stmt](std::string, std::string mname, Vocabulary obj) {
-        auto model = semantic_search_module_->GetModel(mname);
-        if (model == nullptr)
-        {
-          error_tracker_.RaiseSyntaxError("Could not find model '" + mname + "'", stmt[1].token);
-          return;
-        }
-        SemanticPosition position = model->Reduce(obj);
-
-        assert(semantic_search_module_ != nullptr);
-        assert(semantic_search_module_->advertisement_register() != nullptr);
-        assert(agent_ != nullptr);
-
-        semantic_search_module_->advertisement_register()->AdvertiseAgent(agent_->id, mname,
-                                                                          position);
-        agent_->RegisterVocabularyLocation(mname, position);
-      },
-      instance);
-
-  return nullptr;
-}
-
-QueryExecutor::AgentIdSet QueryExecutor::ExecuteSet(CompiledStatement const &stmt)
-{
-  std::size_t i = 3;
-
-  if (stmt.size() < i)
-  {
-    error_tracker_.RaiseSyntaxError("Set statment has incorrect syntax.", stmt[0].token);
-    return nullptr;
-  }
-
-  if (stmt[1].type != Constants::IDENTIFIER)
-  {
-    error_tracker_.RaiseSyntaxError("Expected variable name.", stmt[1].token);
-    return nullptr;
-  }
-
-  if (stmt[2].type != Constants::IDENTIFIER)
-  {
-    error_tracker_.RaiseSyntaxError("Expected variable type.", stmt[2].token);
-    return nullptr;
-  }
-
-  std::vector<QueryVariant> stack;
-  std::vector<Vocabulary>   scope_objects;
-  Vocabulary                last;
-  int                       scope_depth = 0;
-
-  QueryVariant object_name =
-      NewQueryVariant(static_cast<std::string>(stmt[1].token), Constants::TYPE_KEY, stmt[1].token);
-  stack.push_back(object_name);
-
-  QueryVariant model_name =
-      NewQueryVariant(static_cast<std::string>(stmt[2].token), Constants::TYPE_KEY, stmt[2].token);
-  stack.push_back(model_name);
-
-  while (i < stmt.size())
-  {
-    auto x = stmt[i];
-    switch (x.type)
-    {
-    case Constants::PUSH_SCOPE:
-    {
-      ++scope_depth;
-      auto obj = VocabularyInstance::New<PropertyMap>({});
-      scope_objects.push_back(obj);
-      break;
-    }
-    case Constants::POP_SCOPE:
-      --scope_depth;
-
-      if (scope_objects.empty())
-      {
-      }
-      last = scope_objects.back();
-      scope_objects.pop_back();
-
-      {
-        QueryVariant s =
-            NewQueryVariant(last, Constants::TYPE_INSTANCE,
-                            x.token);  // TODO(private issue AEA-132): Nested shared_ptr
-        stack.push_back(s);
-      }
-
-      break;
-
-    case Constants::ATTRIBUTE:
-    {
-      auto value = stack.back();
-      stack.pop_back();
-      auto key = stack.back();
-      stack.pop_back();
-
-      auto object = scope_objects.back();
-      assert(object != nullptr);
-
-      // TODO(private issue AEA-133): Assert types
-      //  model.Field(static_cast<std::string>(key.value), value.model);
-
-      std::string name = static_cast<std::string>(key->As<Token>());
-      if (value->type() == Constants::LITERAL)
-      {
-        object->Insert(name, value->NewInstance());
-      }
-      else if (value->type() == Constants::TYPE_INSTANCE)
-      {
-        object->Insert(name, value->As<Vocabulary>());
-      }
-      else
-      {
-        std::cerr << "TODO: Yet another error: " << value->type() << " " << value->token()
-                  << std::endl;
-      }
-    }
-
-    break;
-
-    case Constants::SEPARATOR:
-      // TODO(private issue AEA-135): Validate
-      break;
-
-    case Constants::IDENTIFIER:
-    {
-      auto ele = context_.Get(static_cast<std::string>(x.token));
-
-      stack.push_back(ele);
-      break;
-    }
-
-    case Constants::OBJECT_KEY:
-    {
-      QueryVariant ele = NewQueryVariant(x.token, Constants::TYPE_KEY, x.token);
-      stack.push_back(ele);
-      break;
-    }
-    case Constants::LITERAL:
-    {
-      auto const &user_types = semantic_search_module_->type_information();
-      bool        found      = false;
-      for (auto const &type : user_types)
-      {
-        if (type.code == x.token.type())
-        {
-          if (!type.allocator)
-          {
-            std::cerr << "TODO: able to parse but not allocate " << x.token;
-            return nullptr;
-          }
-
-          auto element = type.allocator(x.token);
-          stack.push_back(element);
-
-          found = true;
-          break;
-        }
-      }
-      if (!found)
-      {
-        std::cout << "'" << x.token << "'  - TODO 2 IMPLEMENT " << x.type
-                  << std::endl;  // TODO(private issue AEA-140): Handle this case
-      }
-      break;
-    }
-    case Constants::VAR_TYPE:
-      // TODO: Check correctness
-      std::cout << "TODO - deal with this case" << std::endl;
-      break;
-    default:
-      // TODO: Deal with equality
-      std::cout << "'" << x.token << "'  - TODO IMPLEMENT " << x.type
-                << std::endl;  // TODO(private issue AEA-140): Handle this case
-      break;
-    }
-
-    ++i;
-  }
-
-  if (static_cast<bool>(last))
-  {
-
-    auto value = stack.back();
-    stack.pop_back();
-    auto model_var = stack.back();
-    stack.pop_back();
-    auto key = stack.back();
-    stack.pop_back();
-
-    // TODO(private issue AEA-137): add some sanity checks here
-
-    auto name_of_model = model_var->As<std::string>();
-    auto model         = semantic_search_module_->GetModel(name_of_model);
-    if (model == nullptr)
-    {
-      error_tracker_.RaiseRuntimeError("Could not find model '" + name_of_model + "'.",
-                                       stmt[stmt.size() - 1].token);
-      return nullptr;
-    }
-
-    std::string error;
-    if (!model->Validate(last, error))
-    {
-      // Reporting error
-      error_tracker_.RaiseRuntimeError("Instance does not match model requirements.",
-                                       stmt[stmt.size() - 1].token);
-
-      error_tracker_.Append(error, stmt[stmt.size() - 1].token);
-      return nullptr;
-    }
-
-    //    context_.Set(key->As<std::string>(), last, name_of_model);
-  }
-  else
-  {
-    error_tracker_.RaiseRuntimeError(
-        "No object instance was created, only declared. This is not supported yet.",
-        stmt[stmt.size() - 1].token);
-    return nullptr;
-  }
-
-  return nullptr;
 }
 
 QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)
@@ -1097,11 +948,14 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
     definition_stack_.pop_back();
 
     // TODO(private issue AEA-137): add some sanity checks here
-    auto token = key->As<Token>();
-    auto name  = static_cast<std::string>(token);
+    auto            token = key->As<Token>();
+    auto            name  = static_cast<std::string>(token);
+    ModelIdentifier model_identifier;
+    model_identifier.scope      = scope_;
+    model_identifier.model_name = name;
     try
     {
-      semantic_search_module_->AddModel(name, last.vocabulary_schema());
+      semantic_search_module_->AddModel(model_identifier, last.vocabulary_schema());
     }
     catch (std::runtime_error const &e)
     {
@@ -1115,50 +969,6 @@ QueryExecutor::AgentIdSet QueryExecutor::ExecuteDefine(CompiledStatement const &
   }
 
   return nullptr;
-}
-
-QueryExecutor::AgentIdSet QueryExecutor::ExecuteFind(CompiledStatement const &stmt)
-{
-  if (stmt[1].type != Constants::IDENTIFIER)
-  {
-    error_tracker_.RaiseSyntaxError("Expected variable name.", stmt[1].token);
-    return nullptr;
-  }
-
-  auto name = static_cast<std::string>(stmt[1].token);
-
-  if (!context_.Has(name))
-  {
-    error_tracker_.RaiseSyntaxError("Variable not defined", stmt[1].token);
-    return nullptr;
-  }
-
-  auto obj        = context_.Get(name);
-  auto model_name = context_.GetModelName(name);
-
-  if (!semantic_search_module_->HasModel(model_name))
-  {
-    error_tracker_.RaiseSyntaxError("Could not find model '" + model_name + "'", stmt[1].token);
-    return nullptr;
-  }
-
-  auto model = semantic_search_module_->GetModel(model_name);
-  if (model == nullptr)
-  {
-    error_tracker_.RaiseInternalError("Model '" + model_name + "' is null.", stmt[1].token);
-    return nullptr;
-  }
-
-  // TODO: Check
-  auto instance = obj->As<Vocabulary>();
-
-  assert(semantic_search_module_->advertisement_register() != nullptr);
-  assert(agent_ != nullptr);
-  auto position = model->Reduce(instance);
-  auto results =
-      semantic_search_module_->advertisement_register()->FindAgents(model_name, position, 2);
-
-  return results;
 }
 
 }  // namespace semanticsearch

@@ -67,6 +67,10 @@ public:
   {
     return model_name_;
   }
+  int32_t expiry_block() const
+  {
+    return expiry_block_;
+  }
   /// @}
 private:
   /// Private constructor
@@ -80,6 +84,7 @@ private:
   void *                      data_{nullptr};
   std::string                 model_name_;
   std::function<void(void *)> destructor_{nullptr};
+  int32_t                     expiry_block_{0};
   /// @}
 
   /// Friends

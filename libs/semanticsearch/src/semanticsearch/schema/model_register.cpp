@@ -23,7 +23,7 @@
 namespace fetch {
 namespace semanticsearch {
 
-void AbstractVocabularyRegister::AddModel(std::string const &        name,
+void AbstractVocabularyRegister::AddModel(ModelIdentifier const &    name,
                                           VocabularySchemaPtr const &object)
 {
   if (models_.find(name) != models_.end())
@@ -33,7 +33,8 @@ void AbstractVocabularyRegister::AddModel(std::string const &        name,
       return;
     }
 
-    throw std::runtime_error("Model '" + name + "' already exists, but definition mismatch.");
+    throw std::runtime_error("Model '" + static_cast<std::string>(name) +
+                             "' already exists, but definition mismatch.");
   }
 
   object->SetModelName(name);
@@ -42,7 +43,7 @@ void AbstractVocabularyRegister::AddModel(std::string const &        name,
 }
 
 AbstractVocabularyRegister::VocabularySchemaPtr AbstractVocabularyRegister::GetModel(
-    std::string const &name)
+    ModelIdentifier const &name)
 {
   if (models_.find(name) == models_.end())
   {
@@ -51,7 +52,7 @@ AbstractVocabularyRegister::VocabularySchemaPtr AbstractVocabularyRegister::GetM
   return models_[name];
 }
 
-bool AbstractVocabularyRegister::HasModel(std::string const &name)
+bool AbstractVocabularyRegister::HasModel(ModelIdentifier const &name)
 {
   return models_.find(name) != models_.end();
 }

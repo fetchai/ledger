@@ -76,35 +76,50 @@ public:
     int32_t                   code;
   };
 
+  static ModelIdentifier GenerateID(std::string const &name)
+  {
+
+    ModelIdentifier ret;
+    ret.scope.address = "ai.fetch";
+    ret.scope.version = SemanticCoordinateType(1);
+    ret.model_name    = name;
+
+    return ret;
+  }
+
   static SharedSemanticSearchModule New(SharedAdvertisementRegister advertisement_register)
   {
     auto ret =
         SharedSemanticSearchModule(new SemanticSearchModule(std::move(advertisement_register)));
 
     // Registering primitive types
-    ret->RegisterPrimitiveType<ModelField>("ModelField");
 
-    ret->RegisterPrimitiveType<int64_t>(
-        "Integer", byte_array::consumers::NumberConsumer<0, 1>,
+    ret->RegisterPrimitiveType<ModelField>(GenerateID("ModelField"));
+
+    ret->RegisterPrimitiveType<SemanticCoordinateType>(
+        GenerateID("NumberPrimitive"), byte_array::consumers::NumberConsumer<0, 1>,
         [](Token const &token) -> QueryVariant {
-          return NewQueryVariant<int64_t>(static_cast<int64_t>(token.AsInt()), Constants::LITERAL,
-                                          token);
+          return NewQueryVariant<SemanticCoordinateType>(
+              SemanticCoordinateType(static_cast<std::string>(token)), Constants::LITERAL, token);
         },
         [](QueryVariant const &value) -> SemanticCoordinateType {
-          if (value->IsType<int64_t>())
+          if (!value->IsType<SemanticCoordinateType>())
           {
             throw std::runtime_error(
                 "Semantic conversion failed: Incorrect type passed to converter.");
           }
-          return static_cast<SemanticCoordinateType>(value->As<int64_t>());
+          return static_cast<SemanticCoordinateType>(value->As<SemanticCoordinateType>());
         },
         true);
 
-    ret->RegisterPrimitiveType<uint64_t>("UnsignedInteger");
     ret->RegisterPrimitiveType<std::string>(
-        "String", byte_array::consumers::StringConsumer<0>,
+        GenerateID("StringPrimitive"), byte_array::consumers::StringConsumer<0>,
         [](Token const &token) -> QueryVariant {
-          //   TODO: Throw is size does not fit
+          if (token.size() < 2)
+          {
+            throw std::runtime_error("Incorrectly detected a string.");
+          }
+
           return NewQueryVariant<std::string>(
               static_cast<std::string>(token.SubArray(1, token.size() - 2)), Constants::LITERAL,
               token);
@@ -112,13 +127,17 @@ public:
         nullptr, false);
 
     // Registering reduced types
-    ret->RegisterFunction<ModelField, int64_t, int64_t>(
-        "BoundedInteger", [](int64_t from, int64_t to) -> ModelField {
-          auto            span = static_cast<SemanticCoordinateType>(to - from);
-          SemanticReducer cdr{"BoundedIntegerReducer[" + std::to_string(from) + "-" +
-                              std::to_string(to) + "]"};
+    ret->RegisterFunction<ModelField, SemanticCoordinateType, SemanticCoordinateType>(
+        "Number", [](SemanticCoordinateType from, SemanticCoordinateType to) -> ModelField {
+          auto span = static_cast<SemanticCoordinateType>(to - from);
+          // Creating an identifier for the reducer
+          std::stringstream identifier{""};
+          identifier << "Number[" << from << "-" << to << "]";
 
-          cdr.SetReducer<int64_t>(1, [span, from](int64_t x) {
+          // Creating the actually reducer
+          SemanticReducer cdr{identifier.str()};
+
+          cdr.SetReducer<SemanticCoordinateType>(1, [span, from](SemanticCoordinateType x) {
             SemanticPosition       ret;
             SemanticCoordinateType multiplier = (SemanticCoordinateType::FP_MAX / span);
             ret.PushBack(static_cast<SemanticCoordinateType>(x - from) * multiplier);
@@ -126,19 +145,22 @@ public:
             return ret;
           });
 
-          cdr.SetValidator<int64_t>([from, to](int64_t x, std::string &error) {
-            bool ret = (from <= x) && (x <= to);
-            if (!ret)
-            {
-              error = "Value not within bouds: " + std::to_string(from) +
-                      " <=" + std::to_string(x) + "<=" + std::to_string(to);
-              return false;
-            }
+          // And the validator
+          cdr.SetValidator<SemanticCoordinateType>(
+              [from, to](SemanticCoordinateType x, std::string &error) {
+                bool ret = (from <= x) && (x <= to);
+                if (!ret)
+                {
+                  std::stringstream ss{""};
+                  ss << "Value not within bounds: " << from << " <= " << x << " <= " << to;
+                  error = ss.str();
+                  return false;
+                }
 
-            return true;
-          });
+                return true;
+              });
 
-          auto field = TypedSchemaField<int64_t>::New();
+          auto field = TypedSchemaField<SemanticCoordinateType>::New();
           field->SetSemanticReducer(cdr);
 
           return field;
@@ -156,12 +178,13 @@ public:
   using Reducer = std::function<SemanticPosition(T const &)>;
 
   template <typename T>
-  void RegisterPrimitiveType(std::string const &name, ConsumerFunction const &consumer = nullptr,
+  void RegisterPrimitiveType(ModelIdentifier const &          name,
+                             ConsumerFunction const &         consumer           = nullptr,
                              AllocatorFunction const &        allocator          = nullptr,
                              SemanticConverterFunction const &semantic_converter = nullptr,
                              bool                             hidden             = true)
   {
-    SemanticReducer cdr = SemanticReducer{name + "DefaultReducer"};
+    SemanticReducer cdr = SemanticReducer{static_cast<std::string>(name) + "DefaultReducer"};
 
     if (!hidden)
     {
@@ -184,7 +207,7 @@ public:
     return agent_directory_.GetAgent(pk);
   }
 
-  ModelInterfaceBuilder NewModel(std::string const &name)
+  ModelInterfaceBuilder NewModel(ModelIdentifier const &name)
   {
     auto model = ObjectSchemaField::New();
     advertisement_register_->AddModel(name, model);
@@ -192,14 +215,14 @@ public:
     return ModelInterfaceBuilder{model, this};
   }
 
-  ModelInterfaceBuilder NewModel(std::string const &name, ModelInterfaceBuilder const &proxy)
+  ModelInterfaceBuilder NewModel(ModelIdentifier const &name, ModelInterfaceBuilder const &proxy)
   {
     advertisement_register_->AddModel(name, proxy.vocabulary_schema());
     types_[name] = proxy.vocabulary_schema();
     return proxy;
   }
 
-  void AddModel(std::string const &name, VocabularySchemaPtr const &object)
+  void AddModel(ModelIdentifier const &name, VocabularySchemaPtr const &object)
   {
     advertisement_register_->AddModel(name, object);
     types_[name] = object;
@@ -211,50 +234,46 @@ public:
     return ModelInterfaceBuilder{model, this};
   }
 
-  bool HasModel(std::string const &name)
+  bool HasModel(ModelIdentifier const &name)
   {
     return advertisement_register_->HasModel(name);
   }
 
-  bool HasField(std::string const &name)
+  bool HasField(ModelIdentifier const &name)
   {
     return types_.find(name) != types_.end();
   }
 
-  ModelField GetField(std::string const &name)
+  ModelField GetField(ModelIdentifier const &name)
   {
     return types_[name];
   }
 
-  VocabularySchemaPtr GetModel(std::string const &name)
+  VocabularySchemaPtr GetModel(ModelIdentifier const &name)
   {
     return advertisement_register_->GetModel(name);
   }
 
   template <typename T>
-  std::string GetName()
+  ModelIdentifier GetName()
   {
-
-    std::type_index idx = std::type_index(typeid(T));
-    if (idx_to_name_.find(idx) == idx_to_name_.end())
-    {
-      return idx.name();
-    }
-    return idx_to_name_[idx];
+    return GetName(std::type_index(typeid(T)));
   }
 
-  std::string GetName(std::type_index idx)
+  ModelIdentifier GetName(std::type_index idx)
   {
 
     if (idx_to_name_.find(idx) == idx_to_name_.end())
     {
-      return idx.name();
+      ModelIdentifier ret;
+      ret.model_name = idx.name();
+      return ret;
     }
     return idx_to_name_[idx];
   }
 
   template <typename R, typename... Args>
-  void RegisterFunction(std::string const &name, std::function<R(Args...)> function)
+  void RegisterFunction(ModelIdentifier const &name, std::function<R(Args...)> function)
   {
     auto sig         = BuiltinQueryFunction::New<R, Args...>(function);
     functions_[name] = std::move(sig);
@@ -336,31 +355,40 @@ private:
   std::vector<TypeDetails> type_information_;
   int32_t                  next_type_code_{Constants::USER_DEFINED_START};
 
-  std::unordered_map<std::type_index, std::string>                idx_to_name_;
+  std::unordered_map<std::type_index, ModelIdentifier>            idx_to_name_;
   std::unordered_map<std::type_index, uint64_t>                   idx_to_code_;
   std::unordered_map<std::string, BuiltinQueryFunction::Function> functions_;
-  std::unordered_map<std::string, ModelField>                     types_;
+  std::map<ModelIdentifier, ModelField>                           types_;
 
-  KeywordRelation keyword_relation_{{"find", {"granularity", "direction"}},
-                                    {"advertise", {"until"}},
+  KeywordRelation keyword_relation_{{"specification", {"version"}},
+                                    {"using", {"version"}},
+                                    {"find", {"granularity"}},
+                                    {"advertise", {"until_block"}},
                                     {"model", {}},
-                                    {"let", {}},
-                                    {"pos", {}}};
+                                    {"instance", {}},
+                                    {"vector", {}}};
 
-  KeywordProperties keyword_properties_ = {
-      {"model", Properties::PROP_CTX_MODEL},         {"advertise", Properties::PROP_IS_OPERATOR},
-      {"let", Properties::PROP_IS_OPERATOR},         {"pos", Properties::PROP_IS_OPERATOR},
-      {"find", Properties::PROP_IS_OPERATOR},        {"until", Properties::PROP_IS_OPERATOR},
-      {"granularity", Properties::PROP_IS_OPERATOR}, {"direction", Properties::PROP_IS_OPERATOR}};
+  KeywordProperties keyword_properties_ = {{"specification", Properties::PROP_IS_OPERATOR},
+                                           {"version", Properties::PROP_IS_OPERATOR},
+                                           {"using", Properties::PROP_IS_OPERATOR},
+                                           {"model", Properties::PROP_CTX_MODEL},
+                                           {"advertise", Properties::PROP_IS_OPERATOR},
+                                           {"instance", Properties::PROP_IS_OPERATOR},
+                                           {"vector", Properties::PROP_IS_OPERATOR},
+                                           {"find", Properties::PROP_IS_OPERATOR},
+                                           {"until_block", Properties::PROP_IS_OPERATOR},
+                                           {"granularity", Properties::PROP_IS_OPERATOR}};
 
-  KeywordTypes keyword_type_ = {{"model", Constants::SET_CONTEXT},
+  KeywordTypes keyword_type_ = {{"specification", Constants::SPECIFICATION},
+                                {"using", Constants::USING},
+                                {"version", Constants::VERSION},
+                                {"model", Constants::SET_CONTEXT},
                                 {"advertise", Constants::ADVERTISE},
-                                {"let", Constants::STORE},
-                                {"pos", Constants::STORE_POSITION},
-                                {"until", Constants::ADVERTISE_EXPIRY},
+                                {"instance", Constants::STORE},
+                                {"vector", Constants::STORE_POSITION},
                                 {"find", Constants::SEARCH},
-                                {"direction", Constants::SEARCH_DIRECTION},
-                                {"granularity", Constants::SEARCH_GRANULARITY}};
+                                {"until_block", Constants::UNTIL},
+                                {"granularity", Constants::GRANULARITY}};
 
   SharedAdvertisementRegister advertisement_register_;
   AgentDirectory              agent_directory_;

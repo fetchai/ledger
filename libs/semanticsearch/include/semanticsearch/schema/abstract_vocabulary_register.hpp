@@ -18,9 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/schema/fields/object_schema_field.hpp"
+#include "semanticsearch/schema/model_identifier.hpp"
 
+#include <map>
 #include <memory>
-#include <unordered_map>
 
 namespace fetch {
 namespace semanticsearch {
@@ -39,17 +40,17 @@ public:
 
   /// Register methods
   /// @{
-  void                AddModel(std::string const &name, VocabularySchemaPtr const &object);
-  VocabularySchemaPtr GetModel(std::string const &name);
-  bool                HasModel(std::string const &name);
+  void                AddModel(ModelIdentifier const &name, VocabularySchemaPtr const &object);
+  VocabularySchemaPtr GetModel(ModelIdentifier const &name);
+  bool                HasModel(ModelIdentifier const &name);
   /// @}
 
   /// Virtual event handlers
   /// @{
-  virtual void OnAddModel(std::string const &name, VocabularySchemaPtr const &object) = 0;
+  virtual void OnAddModel(ModelIdentifier const &name, VocabularySchemaPtr const &object) = 0;
   /// @}
 private:
-  std::unordered_map<std::string, VocabularySchemaPtr> models_;
+  std::map<ModelIdentifier, VocabularySchemaPtr> models_;
 };
 
 }  // namespace semanticsearch
