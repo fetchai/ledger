@@ -38,7 +38,7 @@ ConstByteArray FromBase64(ConstByteArray const &str)
   // should be checked both in debug and release
   if ((str.size() % 4) != 0)
   {
-    return "";
+    return {};
   }
 
   std::size_t pad = 0;

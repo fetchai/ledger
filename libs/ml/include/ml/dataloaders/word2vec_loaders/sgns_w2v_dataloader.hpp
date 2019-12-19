@@ -387,7 +387,7 @@ void GraphW2VLoader<TensorType>::BufferNextSamples()
       auto prev_sentence = current_sentence_;
       // move to the next word
       current_word_++;
-      // check if the word is window size away form either end of the sentence
+      // check if the word is window size away from either end of the sentence
       if (current_word_ >=
           data_.at(current_sentence_).size() -
               window_size_)  // the current word end when a full context window can be allowed
