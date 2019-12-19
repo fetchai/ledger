@@ -32,130 +32,132 @@ struct GenesisDescriptor
 {
   char const *name;
   uint32_t    block_interval;
+  uint32_t    aeon_period;
   char const *contents;
 };
 
 GenesisDescriptor const HARD_CODED_CONFIGS[] = {
     {
-      "devnet",
+      "mainnet",
       10000u,
+      250000u,
       R"(
 {
   "version": 4,
   "accounts": [
     {
-      "address": "GTKrC7wEKrDj1FxnnTLd63ZkJH8RQfYr3xoMZ4ZKxxeXNKxsN",
+      "address": "SqwmbGN7inUZcpxjTQsfEUfidqLVU1mbEGrEbUTgAJCysDMCD",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "2QGXWiceRkfdj4yE3ZfGdGWjxA6BH5MzLJSfFXySCMv9zPqjgJ",
+      "address": "2shd257H4btog6Z7QmeFZwenJAAwVbmMvU7urSY2t2UTR9dkmD",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "NfHwkaKV6zgaSZxKvbJCyZSSe2ngAFpAgyzDh57wzvwckNZcn",
+      "address": "Zaipc1ZgGBfx2s6CnepBEvEhMDaJFyrM5hwgoysewcmQN5Ufr",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "Qc7zpcPFnfyHWcss3UEZeUFP7q3zWY896zj5Wf7fyLzm9Rmmh",
+      "address": "VMXxCKYih8ztThM46MzR4DCfL7DerAHZoxc5AmSQG6RRmYmgj",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "2g3B1fRWwvquAHyogsks3RDYGJu2yv1s1Vz4C2KB9Qn7nYQWDm",
+      "address": "WL5uJJ8yUsMQDVA26PUpiUkTp5qp82EkYc4eeQV5C1SXTGqzs",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "2Vq1DEU2wx2ZFNygb1raadhPPSNoRKJiSD416484Ec6FD3rVvD",
+      "address": "sniKsgcUg5eZtoq6oYkuJ7jUjtAgQGiipBuYCiKBXUuffHAq",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "dQjjeenuVGYscdEpBF5Vt3BjHoMYG2hfhFEWtD3V2xyRkwmex",
+      "address": "2LyKggHp2bXpTKA3DWK9oG1UAGQbsFjrwCewJtokFUZY57fb9o",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "2jYuQTecWL3SHErFLt6wHZNo5t8qzA48M4WWvxNKQjy36o5ire",
+      "address": "2UUJ5zkULeAqn3DbBbNBxFTPJwSypHzNMSSjEJ9uUTpTsReZWn",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "t7vjy7fXxF2fY3p1Qswn5cKpiA9K83kYqSXcosaLJshyQWc6T",
+      "address": "2fUQqAVhnnorVKyUGqoaNzWTrJ52v1ucgLqMZ6DrbKCokt4Brz",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "JU2w5KxC2BP5SDVuLgwsw1hWkVJpCo7PyhkVKpxuziiMPissh",
+      "address": "7QyVhwFjBr5ZvwLpjWqQwNPVctxbZAQapmjje76rg4YwHsz9Y",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "QPdfqy8StxiHSXaZsUzu9CgpkbT4joHiZ1pnD3LeuAVfVqgQ4",
+      "address": "2rfuEKVMBymyHmMKsV3nGf2ANUSPYMmmiNZjmiEkmbCFSzFsKj",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "mKeuQnFXfr3w91gRdnhKfnr4xvrgYhwxe4YpZJYkAaBBs5E7H",
+      "address": "2spWFozeZ3hA2h2iCMCrqoUkLUtEjr6he4TbtgXJRu6T8uxArA",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "2etpvK5eErEGRPFFAUUbwNg4fX2pZN6jedqUc8PPosjfnQ5AWx",
+      "address": "hjUcYW1xLgPPPe6Acn5CdA4yDfpDtJyW1q3NHzEtTcm5enFcp",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "2YSa8bY9ZJCvigRH5DCoTUZQRtKdbKxGddk6EUrrQwRce3mmjp",
+      "address": "2M3qJ88JG6A7G5RNpF69Ahen7bSbtq6ymiKcxy8j9APkqoYyM4",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "2KyyxRZ2kLeUPRdV9TUTEFwgJ54NzEuu1ykDtxpfT7yKcEdNMX",
+      "address": "2BPa4uCe2EtgG2sijn2f4dz1osdiUJkABQ3y6ei8mvhvLWmX6x",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "2NnMckcwiH9DCXJF2Ep9sEPksKMuL1QeXyqobk6ugMDr77jnvb",
+      "address": "2ovimbsyC9inpjHtvYpgFzW7BPbc5HR2rXTcQB7Cb2drZ6pqmi",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "2DGc5GBUcYm5ZnHwBPLj7kQYeQdMi6zJic6jYQ1PxsqXmwbV97",
+      "address": "2w1LLPswyszQmbGS8xo3r1NG5RX5x1SSysQkK7Sm91KXJ1RY5z",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "MuGfogMPh16VkRmUaqjhVSUb3LdyfXxrr5nPf7R5cjK8DwmsR",
+      "address": "NCBpicdAVKHSHFJppP8hL9fYi2yxkAgpAVYeeS52tjJjLWUp8",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "PTc3AWZbQ8MXgKruF8RX4KrkaE2B4nYqu8eGi3Z6mh5E9kGCQ",
+      "address": "pUaakK9GrzecbDTEy2EPcoVgfH4yhVoLXtmjpy63ptXYbXvtU",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "2viTxiS8pga298QYijRsVPyW7R73zdJ8KvP4B4DjTj8zTngnhJ",
+      "address": "2KP7BjerxYJTtKtAsyUi2xzDyVTtz8Ynn7E2ANxjBqNv4oHZ3j",
       "balance": 0,
       "stake": 1000
     },
     {
-      "address": "GKcXpBbuoq3s4HqZfk4DrAzwuEJbh93Z8XCPG4p1P8EM8BdEt",
+      "address": "MN2DbQwYSErjjFz6b6Yqa3nRmH25oR45mP4Lnsb3q1VbtQK1b",
       "stake": 0,
       "deed": {
         "thresholds": {
-          "transfer": 1,
-          "amend": 1
+          "transfer": 3,
+          "amend": 3
         },
         "signees": {
-          "iUX84r9dQk4aAGah9zcW5yeiFrjN7qWsoCWTm4CxUv2QNBkG7": 1,
-          "2hgzvj6ZP6KmrBYETGEPiu1UhwJx7wUMEu5rACRdcLsQvPYAjb": 1,
-          "RX3MEGyhzDtK1C9vDkm2QUfuGv7aGj4kwJVDZsSWyopM3RnQ1": 1,
-          "aCa3tCAa47bEVT1g451FATE93thNJdKT2Nn43iofDiciMKocN": 1
+          "2a2hCnoXwUwJ8pVxQcrYjLs5d6qUuR7s8QvtwLP6V8eQuZMmBd": 1,
+          "2SNYiwVw47bL63t8jAgEHMGSdWRz9CMbEM77kegXjfhPCfwumQ": 1,
+          "28TTPbCF5ASxqQoTGoLGDHSGqQiuhdkE5VzgXtUFUdT7tkdcRb": 1,
+          "2gKDxrHAwh11kyTnwdCLLsUmR5hkFg6viKtsYLtR79quL3RUwK": 1
         }
       },
       "balance": 1152977575
@@ -167,86 +169,86 @@ GenesisDescriptor const HARD_CODED_CONFIGS[] = {
     "cabinetSize": 20,
     "entropyRunahead": 2,
     "minimumStake": 1000,
-    "startTime": 1576690831,
+    "startTime": 1576724400,
     "stakers": [
       {
-        "identity": "6rZ4xbThM80BjuvnpvZrF6ErBmttvWHdE1XXegWTHPxOydlg1H/jngtzbd+mVQoZe4wQvsFOOxdOfSNprZvFDQ==",
+        "identity": "yLMOAb4dp8wU5QDUUTSoVn239es5BR9lmGFWzekKGAeLB0IXzVjlBRz2sDNIZPSSCxcE87MbIwH8ceHHyZUODg==",
         "amount": 10000000000000
       },
       {
-        "identity": "cFtHB8ntVVdWjZkz0iLOL/VLfygl99Y66kW6rfuUCl+5mGxbG1dbNZsVmPQi0Bu53wtgLO+GVrvuBb0N4s2ocw==",
+        "identity": "fmmfgXo00jjFRzL3ncRGNTOdhsuiF+8c+VDeb6uPBBaxui+7XD7rz0Dxg8beXa4XC/gMuXYP3yS35s3Jlqpqrg==",
         "amount": 10000000000000
       },
       {
-        "identity": "YgrOaePAqlMBdwu4QZifTNL0rHmqgvf5OffSvGCv8FPbvF5JaHHpAB2pyyOm9NpNMmcO7+IAJL3VL5EmOgMs4w==",
+        "identity": "NirytLVjNS5kS6Tjju9fvM8gio7WkdiIq+KTcgQO3QIebJT9BoMDKLbTtyZc1e6xai3bKRqcg9i+baIY8/ugzA==",
         "amount": 10000000000000
       },
       {
-        "identity": "QeAH8ow1aKhf8Uz5lECJfPcTy3qUF+JAdoaH0GOyNGcw8AbzK+LYUIbeyS+sbRB2cCVL5N7Pgg08foAlZMC8uw==",
+        "identity": "OUU+BmxMAlYkel5lUpW9/4ZL704txwImYL4LcY+vlq5ybWNe9qOC+G5N+dmTNJLf77XX5nvywNkVnu1Z8NJ6mw==",
         "amount": 10000000000000
       },
       {
-        "identity": "tx8WsDCjjKx0b+CMQzkYBZuzaty+N7aCYCAhRg3uOgQOLeLsxET4uBjVWrhS/AbKXaRrL8yzIoJoQsGVgzADDA==",
+        "identity": "kWhtt0I2OPxclFZ43yaFZhA1/9ZV7v4sf+umNnlFqrWnqtY9ZB3Z9xfQFEw67iCj5uNYVi7RMa+JYQLX0ShtRw==",
         "amount": 10000000000000
       },
       {
-        "identity": "/Zu5bDxNHLiRx4q7G05bi5bpX6dPpin2EEwYUHbZZyJz5M/2gSVwYfM8bOPVkOiMzq4yLeoC8SbwMtQPxvjUQw==",
+        "identity": "2dXm1b4pmtNWLcBhGj8QZEN0IcwVhh6c3RHEMQX4ohvLIoK/WhbCtS3pRa6WlbmW3KLxHfyeUuyFttKAGyElkw==",
         "amount": 10000000000000
       },
       {
-        "identity": "yC7TQX3RD1bOnjTwtM43Rlv8GrqKtm1OPzVs/LeJko/JkiZfXQQ9H2LCu8PaWkqLdQ4oWlW7tDanA+oAeWz6eg==",
+        "identity": "0IPTQA8Fjo2l9l836K4oGPYurg94hof8BF/gHpXf8h07MU2CAB05zRAmrYA5WgIPHaliA7eDT5Wkb9G1Q/MVBg==",
         "amount": 10000000000000
       },
       {
-        "identity": "U/knDC8P4g/CY9m+mUzKLRKz19Mw5IFS011ykdMYUbZtEJyYXGlRw3ynh2HBESROur3ejJeKSFtA0IDtamV5QQ==",
+        "identity": "eATZQVp972zHe5kZvspHZaEJXg2NrAGmyKgpyP39ywZnKd2FFKXOcHPp9WP+RXGq8+IdS3G0e3Y+GpW/iV7/FA==",
         "amount": 10000000000000
       },
       {
-        "identity": "YSVxskt3qDiXkl9pOxYzs6QpdvM28NwmohirDUXU+SJdihGCsZiP+JxbCuCFzgk/S2A/LoLqjnckvsuoXUMe0A==",
+        "identity": "ahWOYGVuZ9pyXjcFWuuJdVFsnQuBS7Yn3Ob5C5F4lsw4Xkih31zvEF8MMFsB5wSQM6q7zsVLBPDzahBh7HFsLw==",
         "amount": 10000000000000
       },
       {
-        "identity": "5OK09P1zJ0m8IMIbGKvx2yb6K54MgJ0Ht1XNJoce1KPvLe32M6jMhE4DXqoNd/WgFPQEe6Ob4R2Tj7D+nmEJew==",
+        "identity": "QlYZK78tdkWJsg/h36rGgZUj3gEQNudXTz/kY5l4v9Jpil33jmmWlZoHxt8OnIIIhyakpIIHeeD+qygQ4N6Aug==",
         "amount": 10000000000000
       },
       {
-        "identity": "a9I3TjOv0UEjjSuz/UVBBJd1mSjXgcIQA4H1rKFrs26ifdQ2EMIchNH1uRPg61KIm+qcPUtt9sI9vusQ9mpm4A==",
+        "identity": "kh3Fdek6YUH7X64ZCQTxIRVG4Z2Cy1S+xsJGzEOW2T+QkIkJ6ozG8uUlxaWJY7zDjoUMfnnhmqqy1dJ3flMaIg==",
         "amount": 10000000000000
       },
       {
-        "identity": "oUSCgkfXVTM9bjonx1i842YPOCUvgy26Mbh1eWxVhpgNErkNndtAClIkRu6e3zzjbsYZ/in7NBByH0OczaV8Og==",
+        "identity": "egTYQbmUQoc5nkfy90VsKDQlZv4pc3zixlbTU9AI+8VYIQprf1AvSOD6eT1h8q1dtQ7ZLIXLDBw80SYrI5rhKw==",
         "amount": 10000000000000
       },
       {
-        "identity": "tqNqZWrjEhg/dEgfBSt/h20MNbKqiXKtSwbNJC6cXj/UIwndmkyOVhgPB0xtbOmlqXSb00dGX1tFYmhoTcKRYQ==",
+        "identity": "dHrTHRF4hXcZ6FgWWawtj+U3JdaAUgRtvylBhhQm5hJ8Ip3LRJQ9t+nTNBa9U7KGFjcWNr14X2UHcIgT76uNYg==",
         "amount": 10000000000000
       },
       {
-        "identity": "6og/i8y6rPigf5P23OaR9LYy+xSy93hoqWzJwZI4iQapodbGIDAqTjb2+YS1bgq68vHXIvwNr3IBNFKMIJeDiA==",
+        "identity": "Coqg91yna8D7y9tr156tFNeNfk3pLM7v7KrhHA38YNF9vQCHjiZdB38uELr+gxV3m4i3ch7ndGJRieD9VQplcQ==",
         "amount": 10000000000000
       },
       {
-        "identity": "sPcVCKmxsD3rNftkpHlnVKd0Mry2VJgfHVFYVZ5mGpLvIKjtXKqGJW/SEHii9Y+WG+o31PLlc6KNr5mOYtsW+A==",
+        "identity": "Kh49Z4OC+L9a/ShFRxyi3LV1Td62YiSRc7acXjfB2n/nAPC9w7+DMAlR/teARr7gG63tPtsxezI6H8HMh/Cdxw==",
         "amount": 10000000000000
       },
       {
-        "identity": "wO2ZoMxatnpsVrVgGYDVmuUr0bh4HF6Hl2+BZqCpczvuRUr0z3NiJ4rOz5UCv2VI/jCK5ejcaYuTDHuv9bR0Fw==",
+        "identity": "F3n930Sy+EjzCJKLchYJkUB44vHijMRzBFlL+I0lDw1wTfgBtVKFhMMDMmct+YBXVCTVKxCl8es12EaHXxKT9Q==",
         "amount": 10000000000000
       },
       {
-        "identity": "+Pruo5f3aEC8mZX+C7EZSrUAUzdUxM/shyYiMv1TY1z+q/S9/MQ+rWc8dswtAly02zDbKsVh1bl02y4+nP5hqg==",
+        "identity": "6OGrUjhAveOiP847JRw07qYEfurMaKm4/AkvAEFPWN6hSHciTJO8sst6qN2TZJjdyvoN6Le5wqv4SIn11uqNHQ==",
         "amount": 10000000000000
       },
       {
-        "identity": "OMt3hyj/4EmVLEmBTaJK50BXDTbx3/5oPYF31qP+H3/476E3Xr01TfWi3d3MjsXZb+FXk3EG9m47uWTT2Sg1Mg==",
+        "identity": "+L42C/t/8Z8UPZJGr2F5syrHBMTMba5HL/46M9vKl5mbVTWicMmGOu6+ujOcrqLcaKKId8+U6g9vhmbJSabAZg==",
         "amount": 10000000000000
       },
       {
-        "identity": "VdX3sBmQO7isllkKRei6ucjRrU/AK+i2JraUSlFXOccH2BXhDRVxpDcRb3EQoNvCq3S7RJkXfrbW/S36tx2/Ag==",
+        "identity": "GClYZdeQ3lkzBh8+MmdqfqaTSvUjNQNdtiab32I4o1XW8uolV2asfM3+GrJFU1LADMn8T0fAmv9flmiRWp5Sug==",
         "amount": 10000000000000
       },
       {
-        "identity": "Q1dvsfdtCAkAnQiCB/vlrwjlKGBYuS9sis7WDl7I171HUNDf8Nww/uIadNby2fG7sVAROZpt4ROY0L8ty2p4eQ==",
+        "identity": "6Hna0chegzhjrTIk1I0PekSQSEJwahzhhm/OraX0Wumf4LiCSgoT97+QD9f3hGZfM++RPaQT/dc1oR2TnLe2cg==",
         "amount": 10000000000000
       }
     ]
@@ -329,6 +331,7 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
 
         cfg.genesis_file_contents = genesis.contents;
         cfg.block_interval_ms     = genesis.block_interval;
+        cfg.aeon_period           = genesis.aeon_period;
         cfg.proof_of_stake        = true;
         break;
       }
