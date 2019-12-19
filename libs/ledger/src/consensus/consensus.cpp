@@ -76,9 +76,19 @@ using DRNG = fetch::random::LinearCongruentialGenerator;
 template <typename T>
 T DeterministicShuffle(T &container, uint64_t entropy)
 {
+  static const std::size_t NUM_ITERATIONS = 1000;
+
   std::sort(container.begin(), container.end());
   DRNG rng(entropy);
-  std::shuffle(container.begin(), container.end(), rng);
+  std::size_t const num_items = container.size();
+  for (std::size_t i = 0; i < NUM_ITERATIONS; ++i)
+  {
+    std::size_t const left_index  = rng() % num_items;
+    std::size_t const right_index = rng() % num_items;
+
+    std::swap(container[left_index], container[right_index]);
+  }
+
   return container;
 }
 
