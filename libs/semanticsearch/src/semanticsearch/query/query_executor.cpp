@@ -588,6 +588,8 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
 
         break;
       }
+      case Constants::ADD:
+      case Constants::SUB:
       case Constants::MULTIPLY:
       {
         if (stack.size() < 2)
@@ -606,21 +608,12 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
 
         if (rhs->IsType<SemanticCoordinateType>())
         {
-          rhs_type          = 2;
-          auto type_code    = rhs->token().type();  // TODO: Move to function -- replicated 1
-          auto type_details = semantic_search_module_->GetTypeDetails(type_code);
-
-          if (!type_details.semantic_converter)
-          {
-            error_tracker_.RaiseRuntimeError(
-                "No known conversion from literal into semantic space.", rhs->token());
-            return nullptr;
-          }
+          rhs_type = 2;
         }
 
         if (rhs_type == 0)
         {
-          error_tracker_.RaiseRuntimeError("Right-hand side must be semantic position or literal.",
+          error_tracker_.RaiseRuntimeError("Right-hand side must be semantic position or scalar.",
                                            x.token);
           return nullptr;
         }
@@ -641,26 +634,71 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
 
         if (lhs_type == 0)
         {
-          error_tracker_.RaiseRuntimeError("Right-hand side must be semantic position or literal.",
+          error_tracker_.RaiseRuntimeError("Right-hand side must be semantic position or scalar.",
                                            x.token);
           return nullptr;
         }
 
         switch (lhs_type + rhs_type)
         {
-        case 5:
+        case 5:  // vector - vector
         {
-          error_tracker_.RaiseRuntimeError("Cannot multiply vector with vector.", x.token);
-          return nullptr;
+          auto a = rhs->As<SemanticPosition>();
+          auto b = lhs->As<SemanticPosition>();
+
+          if (a.model_name() != b.model_name())
+          {
+            error_tracker_.RaiseRuntimeError(
+                "Cannot manipulate two vectors derived from different models even if rank is the "
+                "same.",
+                x.token);
+            return nullptr;
+          }
+
+          switch (x.type)
+          {
+          case Constants::SUB:
+          {
+            auto c = a - b;
+            c.SetModelName(a.model_name());
+            stack.push_back(NewQueryVariant(c, Constants::TYPE_INSTANCE, x.token));
+            break;
+          }
+          case Constants::ADD:
+          {
+            auto c = a + b;
+            c.SetModelName(a.model_name());
+            stack.push_back(NewQueryVariant(c, Constants::TYPE_INSTANCE, x.token));
+            break;
+          }
+          case Constants::MULTIPLY:
+            error_tracker_.RaiseRuntimeError("Cannot multiply vector with vector.", x.token);
+            return nullptr;
+          }
+          break;
         }
         case 6:  // vector - scalar
         {
           assert(rhs->IsType<SemanticCoordinateType>());
           auto scalar = rhs->As<SemanticCoordinateType>();
           auto vec    = lhs->As<SemanticPosition>();
-          auto c      = scalar * vec;
-          c.SetModelName(vec.model_name());
-          stack.push_back(NewQueryVariant(c, Constants::TYPE_INSTANCE, x.token));
+
+          switch (x.type)
+          {
+          case Constants::SUB:
+          case Constants::ADD:
+            error_tracker_.RaiseRuntimeError("Cannot add or subtract vectors with scalars.",
+                                             x.token);
+            return nullptr;
+          case Constants::MULTIPLY:
+          {
+            auto c = scalar * vec;
+            c.SetModelName(vec.model_name());
+            stack.push_back(NewQueryVariant(c, Constants::TYPE_INSTANCE, x.token));
+            break;
+          }
+          }
+
           break;
         }
         case 9:  // scalar - vector
@@ -668,18 +706,44 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
           assert(lhs->IsType<SemanticCoordinateType>());
           auto scalar = lhs->As<SemanticCoordinateType>();
           auto vec    = rhs->As<SemanticPosition>();
-          auto c      = scalar * vec;
-          c.SetModelName(vec.model_name());
-          stack.push_back(NewQueryVariant(c, Constants::TYPE_INSTANCE, x.token));
+
+          switch (x.type)
+          {
+          case Constants::SUB:
+          case Constants::ADD:
+            error_tracker_.RaiseRuntimeError("Cannot add or subtract vectors with scalars.",
+                                             x.token);
+            return nullptr;
+          case Constants::MULTIPLY:
+          {
+            auto c = scalar * vec;
+            c.SetModelName(vec.model_name());
+            stack.push_back(NewQueryVariant(c, Constants::TYPE_INSTANCE, x.token));
+            break;
+          }
+          }
+
           break;
         }
         case 10:  // scalar - scalar
         {
           assert(rhs->IsType<SemanticCoordinateType>());
           assert(lhs->IsType<SemanticCoordinateType>());
-          auto s1 = rhs->As<SemanticCoordinateType>();
-          auto s2 = lhs->As<SemanticCoordinateType>();
-          auto c  = s1 * s2;
+          auto                   s1 = rhs->As<SemanticCoordinateType>();
+          auto                   s2 = lhs->As<SemanticCoordinateType>();
+          SemanticCoordinateType c;
+          switch (x.type)
+          {
+          case Constants::SUB:
+            c = s1 - s2;
+            break;
+          case Constants::ADD:
+            c = s1 + s2;
+            break;
+          case Constants::MULTIPLY:
+            c = s1 * s2;
+            break;
+          }
           stack.push_back(NewQueryVariant(c, Constants::TYPE_INSTANCE, x.token));
           break;
         }
@@ -688,64 +752,6 @@ QueryExecutor::AgentIdSet QueryExecutor::NewExecute(CompiledStatement const &stm
         break;
       }
 
-      case Constants::ADD:
-      case Constants::SUB:
-      {
-        // Sanity checking
-        if (stack.size() < 2)
-        {
-          error_tracker_.RaiseInternalError("Not enough elements on stack to subtract.", x.token);
-          return nullptr;
-        }
-        auto rhs = stack.back();
-        stack.pop_back();
-
-        if (!rhs->IsType<SemanticPosition>())
-        {
-          error_tracker_.RaiseRuntimeError("Right-hand side must be semantic position.", x.token);
-          return nullptr;
-        }
-
-        auto lhs = stack.back();
-        stack.pop_back();
-
-        if (!lhs->IsType<SemanticPosition>())
-        {
-          error_tracker_.RaiseRuntimeError("Left-hand side must be semantic position.", x.token);
-          return nullptr;
-        }
-
-        auto a = lhs->As<SemanticPosition>();
-        auto b = rhs->As<SemanticPosition>();
-
-        if (a.model_name() != b.model_name())
-        {
-          error_tracker_.RaiseRuntimeError(
-              "Cannot manipulate two vectors derived from different models even if rank is the "
-              "same.",
-              x.token);
-          return nullptr;
-        }
-
-        // Logic
-        SemanticPosition c;
-
-        switch (x.type)
-        {
-        case Constants::SUB:
-          c = a - b;
-          break;
-        case Constants::ADD:
-          c = a + b;
-          break;
-        }
-
-        c.SetModelName(a.model_name());
-
-        auto ret = NewQueryVariant(c, Constants::TYPE_INSTANCE, x.token);
-        stack.push_back(ret);
-        break;
-      }
       default:
         error_tracker_.RaiseInternalError("Unhandled operator.", x.token);
         break;
