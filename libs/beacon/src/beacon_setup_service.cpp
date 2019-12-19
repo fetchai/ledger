@@ -859,7 +859,7 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
 
   uint64_t const first_block = beacon_->aeon.round_start;
 
-  if(first_block == last_created_entropy_for_)
+  if (first_block == last_created_entropy_for_)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Created two conflicting aeons!");
     beacon_dkg_duplicate_creates_total_->increment();

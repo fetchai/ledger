@@ -498,11 +498,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
 
   // Telemetry
   {
-    if(current_block_ && !current_block_.IsGenesis())
+    if (current_block_ && !current_block_.IsGenesis())
     {
       BlockPtr previous = chain_.GetBlock(current_block_->previous_hash);
 
-      if(previous)
+      if (previous)
       {
         last_block_interval_s_->set(current_block_->timestamp - previous->timestamp);
       }

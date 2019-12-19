@@ -101,10 +101,10 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
   , subtree_failure_total_{telemetry::Registry::Instance().CreateCounter(
         "ledger_tx_store_sync_service_subtree_failure_total",
         "The total number of subtree request failures observed")}
-  , current_tss_state_{
-        telemetry::Registry::Instance().CreateGauge<uint64_t>("current_tss_state", "The state in the state machine of the tx store")}
-  , current_tss_peers_{
-        telemetry::Registry::Instance().CreateGauge<uint64_t>("current_tss_peers", "The number of peers the sync can use")}
+  , current_tss_state_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "current_tss_state", "The state in the state machine of the tx store")}
+  , current_tss_peers_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "current_tss_peers", "The number of peers the sync can use")}
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &TransactionStoreSyncService::OnInitial);
   state_machine_->RegisterHandler(State::QUERY_OBJECT_COUNTS, this,
@@ -394,7 +394,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
           connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_SPECIFIC_OBJECTS,
           digests));
 
-      for(auto const &digest : digests)
+      for (auto const &digest : digests)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Requested missing TX: ", digest.ToBase64());
       }
