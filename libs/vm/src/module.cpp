@@ -22,8 +22,8 @@
 #include "vm/common.hpp"
 #include "vm/fixed.hpp"
 #include "vm/map.hpp"
-#include "vm/pair.hpp"
 #include "vm/module.hpp"
+#include "vm/pair.hpp"
 #include "vm/sharded_state.hpp"
 #include "vm/state.hpp"
 #include "vm/string.hpp"
@@ -327,9 +327,11 @@ Module::Module()
       .EnableIndexOperator(&IMap::GetIndexedValue, &IMap::SetIndexedValue);
 
   GetClassInterface<IPair>()
-          .CreateConstructor(&IPair::Constructor)
-          .CreateMemberFunction("first", &IPair::First)
-          .CreateMemberFunction("second", &IPair::Second);
+      .CreateConstructor(&IPair::Constructor)
+      .CreateMemberFunction("first", &IPair::GetFirst)
+      .CreateMemberFunction("second", &IPair::GetSecond)
+      .CreateMemberFunction("first", &IPair::SetFirst)
+      .CreateMemberFunction("second", &IPair::SetSecond);
 
   GetClassInterface<Address>()
       .CreateSerializeDefaultConstructor(&Address::Constructor)

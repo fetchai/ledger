@@ -188,6 +188,7 @@ void Analyser::Initialise()
                      array_type_);
   CreateTemplateType("Map", TypeIndex(typeid(IMap)), {any_type_, any_type_}, TypeIds::Unknown,
                      map_type_);
+
   CreateTemplateType("Pair", TypeIndex(typeid(IPair)), {any_type_, any_type_}, TypeIds::Unknown,
                      pair_type_);
 

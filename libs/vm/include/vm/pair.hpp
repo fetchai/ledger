@@ -32,14 +32,16 @@ class IPair : public Object
 public:
   IPair()           = delete;
   ~IPair() override = default;
-  static Ptr<IPair>           Constructor(VM *vm, TypeId type_id);
-  virtual TemplateParameter1 First()                    = 0;
-  virtual TemplateParameter2 Second()                    = 0;
+  static Ptr<IPair>          Constructor(VM *vm, TypeId type_id);
+  virtual TemplateParameter1 GetFirst()                                  = 0;
+  virtual TemplateParameter2 GetSecond()                                 = 0;
+  virtual void               SetFirst(TemplateParameter1 const &first)   = 0;
+  virtual void               SetSecond(TemplateParameter2 const &second) = 0;
 
-    template <typename Key, template <typename, typename> class Container>
-    static Ptr<IPair> inner(TypeId value_type_id, VM *vm, TypeId type_id);
+  template <typename Key, template <typename, typename> class Container>
+  static Ptr<IPair> inner(TypeId value_type_id, VM *vm, TypeId type_id);
 
-    static inline Ptr<IPair> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id);
+  static inline Ptr<IPair> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id);
 
 protected:
   IPair(VM *vm, TypeId type_id)
@@ -55,37 +57,47 @@ struct Pair : public IPair
   {}
   ~Pair() override = default;
 
-  TemplateParameter1 First() override
+  TemplateParameter1 GetFirst() override
   {
-      TemplateParameter1 &value = pair.first;
-      return value;
+    TemplateParameter1 &value = pair.first;
+    return value;
   }
 
-    TemplateParameter2 Second() override
-    {
-      TemplateParameter2 &value = pair.second;
-      return value;
-    }
+  TemplateParameter2 GetSecond() override
+  {
+    TemplateParameter2 &value = pair.second;
+    return value;
+  }
+
+  void SetFirst(TemplateParameter1 const &first) override
+  {
+    pair.first = first;
+  }
+
+  void SetSecond(TemplateParameter2 const &second) override
+  {
+    pair.second = second;
+  }
 
   bool SerializeTo(MsgPackSerializer &buffer) override
   {
     auto constructor = buffer.NewPairConstructor();
-    auto pair_ser     = constructor(0);
+    auto pair_ser    = constructor(1);
 
     auto const &v = pair;
 
     auto f1 = [&v, this](MsgPackSerializer &serializer) {
-        return SerializeElement<Key>(serializer, v.first);
-      };
+      return SerializeElement<Key>(serializer, v.first);
+    };
 
-      auto f2 = [&v, this](MsgPackSerializer &serializer) {
-        return SerializeElement<Value>(serializer, v.second);
-      };
+    auto f2 = [&v, this](MsgPackSerializer &serializer) {
+      return SerializeElement<Value>(serializer, v.second);
+    };
 
-      if (!pair_ser.AppendUsingFunction(f1, f2))
-      {
-        return false;
-      }
+    if (!pair_ser.AppendUsingFunction(f1, f2))
+    {
+      return false;
+    }
 
     return true;
   }
@@ -96,25 +108,25 @@ struct Pair : public IPair
     TypeId const    key_type_id   = type_info.template_parameter_type_ids[0];
     TypeId const    value_type_id = type_info.template_parameter_type_ids[1];
 
-    auto pair_ser = buffer.NewPairDeserializer();
-      TemplateParameter1 key;
-      TemplateParameter2 value;
+    auto               pair_ser = buffer.NewPairDeserializer();
+    TemplateParameter1 key;
+    TemplateParameter2 value;
 
-      auto f1 = [key_type_id, &key, this](MsgPackSerializer &serializer) {
-        return DeserializeElement<Key>(key_type_id, serializer, key);
-      };
+    auto f1 = [key_type_id, &key, this](MsgPackSerializer &serializer) {
+      return DeserializeElement<Key>(key_type_id, serializer, key);
+    };
 
-      auto f2 = [value_type_id, &value, this](MsgPackSerializer &serializer) {
-        return DeserializeElement<Value>(value_type_id, serializer, value);
-      };
+    auto f2 = [value_type_id, &value, this](MsgPackSerializer &serializer) {
+      return DeserializeElement<Value>(value_type_id, serializer, value);
+    };
 
-      if (!pair_ser.GetNextKeyPairUsingFunction(f1, f2))
-      {
-        return false;
-      }
+    if (!pair_ser.GetNextKeyPairUsingFunction(f1, f2))
+    {
+      return false;
+    }
 
-      pair.first=key;
-      pair.second=value;
+    pair.first  = key;
+    pair.second = value;
 
     return true;
   }
@@ -233,51 +245,51 @@ inline Ptr<IPair> IPair::outer(TypeId key_type_id, TypeId value_type_id, VM *vm,
   {
   case TypeIds::Bool:
   {
-    return inner<uint8_t,Pair>(value_type_id, vm, type_id);
+    return inner<uint8_t, Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::Int8:
   {
-    return inner<int8_t,Pair>(value_type_id, vm, type_id);
+    return inner<int8_t, Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt8:
   {
-    return inner<uint8_t,Pair>(value_type_id, vm, type_id);
+    return inner<uint8_t, Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::Int16:
   {
-    return inner<int16_t,Pair>(value_type_id, vm, type_id);
+    return inner<int16_t, Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt16:
   {
-    return inner<uint16_t,Pair>(value_type_id, vm, type_id);
+    return inner<uint16_t, Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::Int32:
   {
-    return inner<int32_t,Pair>(value_type_id, vm, type_id);
+    return inner<int32_t, Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt32:
   {
-    return inner<uint32_t,Pair>(value_type_id, vm, type_id);
+    return inner<uint32_t, Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::Int64:
   {
-    return inner<int64_t,Pair>(value_type_id, vm, type_id);
+    return inner<int64_t, Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt64:
   {
-    return inner<uint64_t,Pair>(value_type_id, vm, type_id);
+    return inner<uint64_t, Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::Fixed32:
   {
-    return inner<fixed_point::fp32_t,Pair>(value_type_id, vm, type_id);
+    return inner<fixed_point::fp32_t, Pair>(value_type_id, vm, type_id);
   }
   case TypeIds::Fixed64:
   {
-    return inner<fixed_point::fp64_t,Pair>(value_type_id, vm, type_id);
+    return inner<fixed_point::fp64_t, Pair>(value_type_id, vm, type_id);
   }
   default:
   {
-    return inner<Ptr<Object>,Pair>(value_type_id, vm, type_id);
+    return inner<Ptr<Object>, Pair>(value_type_id, vm, type_id);
   }
   }  // switch
 }

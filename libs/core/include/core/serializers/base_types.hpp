@@ -792,29 +792,28 @@ public:
   }
 };
 
-    template <typename K, typename V, typename D>
-    struct PairSerializer<std::pair<K, V>, D>
-    {
-    public:
-        using Type       = std::map<K, V>;
-        using DriverType = D;
+template <typename K, typename V, typename D>
+struct PairSerializer<std::pair<K, V>, D>
+{
+public:
+  using Type       = std::map<K, V>;
+  using DriverType = D;
 
-        template <typename Constructor>
-        static void Serialize(Constructor &pair_constructor, Type const &input)
-        {
-          auto pair = pair_constructor();
-           pair.first=input.first;
-          pair.second=input.second;
+  template <typename Constructor>
+  static void Serialize(Constructor &pair_constructor, Type const &input)
+  {
+    auto pair   = pair_constructor();
+    pair.first  = input.first;
+    pair.second = input.second;
+  }
 
-        }
-
-        template <typename PairDeserializer>
-        static void Deserialize(PairDeserializer &pair, Type &output)
-        {
-         output.first=pair.first;
-          output.second=pair.second;
-       }
-    };
+  template <typename PairDeserializer>
+  static void Deserialize(PairDeserializer &pair, Type &output)
+  {
+    output.first  = pair.first;
+    output.second = pair.second;
+  }
+};
 
 template <typename K, typename V, typename D>
 struct ArraySerializer<std::pair<K, V>, D>

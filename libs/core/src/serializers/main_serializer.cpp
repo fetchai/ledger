@@ -96,15 +96,15 @@ MsgPackSerializer::MapDeserializer MsgPackSerializer::NewMapDeserializer()
   return MapDeserializer(*this);
 }
 
-    MsgPackSerializer::PairConstructor MsgPackSerializer::NewPairConstructor()
-    {
-      return PairConstructor(*this);
-    }
+MsgPackSerializer::PairConstructor MsgPackSerializer::NewPairConstructor()
+{
+  return PairConstructor(*this);
+}
 
-    MsgPackSerializer::PairDeserializer MsgPackSerializer::NewPairDeserializer()
-    {
-      return PairDeserializer(*this);
-    }
+MsgPackSerializer::PairDeserializer MsgPackSerializer::NewPairDeserializer()
+{
+  return PairDeserializer(*this);
+}
 
 void MsgPackSerializer::Reserve(uint64_t const &size, ResizeParadigm const &resize_paradigm,
                                 bool const zero_reserved_space)

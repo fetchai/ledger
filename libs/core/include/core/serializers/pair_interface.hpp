@@ -29,10 +29,10 @@ template <typename Driver>
 class PairInterface
 {
 public:
-    PairInterface(Driver &serializer, uint64_t size)
+  PairInterface(Driver &serializer, uint64_t size)
     : serializer_{serializer}
-            , size_{size}
-    {}
+    , size_{size}
+  {}
 
   template <typename V>
   void Append(char const *key, V const &val)

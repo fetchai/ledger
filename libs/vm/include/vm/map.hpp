@@ -37,10 +37,10 @@ public:
   virtual TemplateParameter2 GetIndexedValue(TemplateParameter1 const &key)                    = 0;
   virtual void SetIndexedValue(TemplateParameter1 const &key, TemplateParameter2 const &value) = 0;
 
-    template <typename Key, template <typename, typename> class Container>
-    static Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id);
+  template <typename Key, template <typename, typename> class Container>
+  static Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id);
 
-    static inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id);
+  static inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id);
 
 protected:
   IMap(VM *vm, TypeId type_id)
@@ -317,51 +317,51 @@ inline Ptr<IMap> IMap::outer(TypeId key_type_id, TypeId value_type_id, VM *vm, T
   {
   case TypeIds::Bool:
   {
-    return inner<uint8_t,Map>(value_type_id, vm, type_id);
+    return inner<uint8_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::Int8:
   {
-    return inner<int8_t,Map>(value_type_id, vm, type_id);
+    return inner<int8_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt8:
   {
-    return inner<uint8_t,Map>(value_type_id, vm, type_id);
+    return inner<uint8_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::Int16:
   {
-    return inner<int16_t,Map>(value_type_id, vm, type_id);
+    return inner<int16_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt16:
   {
-    return inner<uint16_t,Map>(value_type_id, vm, type_id);
+    return inner<uint16_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::Int32:
   {
-    return inner<int32_t,Map>(value_type_id, vm, type_id);
+    return inner<int32_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt32:
   {
-    return inner<uint32_t,Map>(value_type_id, vm, type_id);
+    return inner<uint32_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::Int64:
   {
-    return inner<int64_t,Map>(value_type_id, vm, type_id);
+    return inner<int64_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt64:
   {
-    return inner<uint64_t,Map>(value_type_id, vm, type_id);
+    return inner<uint64_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::Fixed32:
   {
-    return inner<fixed_point::fp32_t,Map>(value_type_id, vm, type_id);
+    return inner<fixed_point::fp32_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::Fixed64:
   {
-    return inner<fixed_point::fp64_t,Map>(value_type_id, vm, type_id);
+    return inner<fixed_point::fp64_t, Map>(value_type_id, vm, type_id);
   }
   default:
   {
-    return inner<Ptr<Object>,Map>(value_type_id, vm, type_id);
+    return inner<Ptr<Object>, Map>(value_type_id, vm, type_id);
   }
   }  // switch
 }
