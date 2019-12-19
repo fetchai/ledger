@@ -26,6 +26,7 @@
 
 TEST(RoutingTests, PopulationTest)
 {
+
   // Creating network
   std::size_t N       = 10;
   auto        config  = fetch::muddle::TrackerConfiguration::AllOn();
@@ -57,7 +58,6 @@ TEST(RoutingTests, PopulationTest)
   uint64_t                                   q = 0;
   for (auto &n : network->nodes)
   {
-
     // Waiting up to 40 seconds for the connections to come around
     while ((n->muddle->GetNumDirectlyConnectedPeers() < config.max_kademlia_connections) &&
            (q < 100))
@@ -65,18 +65,27 @@ TEST(RoutingTests, PopulationTest)
       std::this_thread::sleep_for(std::chrono::milliseconds(400));
       ++q;
     }
+    EXPECT_GE(n->muddle->GetNumDirectlyConnectedPeers(), config.max_kademlia_connections);
+  }
 
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+
+  // Checkiong that all peers are in the network
+  for (auto &n : network->nodes)
+  {
     for (auto const &adr : n->muddle->GetDirectlyConnectedPeers())
     {
       all_addresses1.emplace(adr);
     }
     all_addresses2.emplace(n->address);
-
-    EXPECT_GE(n->muddle->GetNumDirectlyConnectedPeers(), config.max_kademlia_connections);
   }
 
-  EXPECT_EQ(all_addresses1.size(), N);
-  EXPECT_EQ(all_addresses1, all_addresses2);
+  EXPECT_GE(all_addresses1.size(), N);
+  for (auto &adr : all_addresses2)
+  {
+    EXPECT_NE(all_addresses1.find(adr), all_addresses1.end());
+  }
+
   network->Stop();
   network->Shutdown();
 }

@@ -116,9 +116,8 @@ TYPED_TEST(LayerNormTest, backward_test_2d)
   auto backward_errors = op.Backward({std::make_shared<TensorType>(data)}, error_signal).at(0);
 
   // test correct values
-  ASSERT_TRUE(backward_errors.AllClose(
-      gt, fetch::math::function_tolerance<DataType>(),
-      static_cast<DataType>(15) * fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(backward_errors.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                       DataType{15} * fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LayerNormTest, backward_test_3d)
@@ -150,9 +149,8 @@ TYPED_TEST(LayerNormTest, backward_test_3d)
   auto backward_errors = op.Backward({std::make_shared<TensorType>(data)}, error_signal).at(0);
 
   // test correct values
-  ASSERT_TRUE(backward_errors.AllClose(
-      gt, fetch::math::function_tolerance<DataType>(),
-      static_cast<DataType>(15) * fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(backward_errors.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                       DataType{15} * fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LayerNormTest, saveparams_test)

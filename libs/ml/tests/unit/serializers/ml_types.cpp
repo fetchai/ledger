@@ -84,7 +84,7 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   using GraphType  = typename fetch::ml::Graph<TensorType>;
 
   fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::L1;
-  DataType                      reg_rate{0.01f};
+  auto                          reg_rate    = fetch::math::Type<DataType>("0.01");
 
   // Prepare graph with fairly random architecture
   auto g = std::make_shared<GraphType>();

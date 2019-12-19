@@ -147,13 +147,13 @@ TYPED_TEST(GraphTest, multi_nodes_have_same_name)
   std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
   std::string fc_1  = g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
       "FC1", {input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-      fetch::ml::RegularisationType::NONE, static_cast<DataType>(0));
+      fetch::ml::RegularisationType::NONE, DataType{0});
   std::string fc_2 = g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
       "FC1", {fc_1}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-      fetch::ml::RegularisationType::NONE, static_cast<DataType>(0));
+      fetch::ml::RegularisationType::NONE, DataType{0});
   std::string fc_3 = g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
       "FC1", {fc_2}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-      fetch::ml::RegularisationType::NONE, static_cast<DataType>(0));
+      fetch::ml::RegularisationType::NONE, DataType{0});
 
   // check the naming is correct
   ASSERT_EQ(fc_1, "FC1");
@@ -257,7 +257,7 @@ TYPED_TEST(GraphTest, variable_freezing_per_trainable)
 
   // Apply gradient
   TensorType grad = op_ptr->GetGradients();
-  grad.Fill(static_cast<DataType>(2.0));
+  grad.Fill(DataType{2});
   op_ptr->ApplyGradient(grad);
 
   // Evaluate weights
@@ -301,7 +301,7 @@ TYPED_TEST(GraphTest, variable_freezing_all_trainables)
   auto node_ptr = g.GetNode(weights);
   auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
   TensorType grad = op_ptr->GetGradients();
-  grad.Fill(static_cast<DataType>(2.0));
+  grad.Fill(DataType{2});
   op_ptr->ApplyGradient(grad);
 
   // Evaluate weights
@@ -369,25 +369,19 @@ TYPED_TEST(GraphTest, variable_freezing_subgraph)
   auto gradient_vector = g.GetGradients();
   for (auto grad : gradient_vector)
   {
-    grad.Fill(static_cast<DataType>(2.0));
+    grad.Fill(DataType{2});
   }
   g.ApplyGradients(gradient_vector);
 
   // Get weights after applying gradient
   auto weights_2 = g.GetWeights();
 
-  ASSERT_TRUE(weights_1.at(0).AllClose(weights_2.at(0), static_cast<DataType>(0),
-                                       static_cast<DataType>(0)));
-  ASSERT_TRUE(weights_1.at(1).AllClose(weights_2.at(1), static_cast<DataType>(0),
-                                       static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_1.at(2).AllClose(weights_2.at(2), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_1.at(3).AllClose(weights_2.at(3), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
-  ASSERT_TRUE(weights_1.at(4).AllClose(weights_2.at(4), static_cast<DataType>(0),
-                                       static_cast<DataType>(0)));
-  ASSERT_TRUE(weights_1.at(5).AllClose(weights_2.at(5), static_cast<DataType>(0),
-                                       static_cast<DataType>(0)));
+  ASSERT_TRUE(weights_1.at(0).AllClose(weights_2.at(0), DataType{0}, DataType{0}));
+  ASSERT_TRUE(weights_1.at(1).AllClose(weights_2.at(1), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_1.at(2).AllClose(weights_2.at(2), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_1.at(3).AllClose(weights_2.at(3), DataType{0}, DataType{0}));
+  ASSERT_TRUE(weights_1.at(4).AllClose(weights_2.at(4), DataType{0}, DataType{0}));
+  ASSERT_TRUE(weights_1.at(5).AllClose(weights_2.at(5), DataType{0}, DataType{0}));
 
   // Un-freeze variables
   g.SetFrozenState(layer_1, false);
@@ -397,24 +391,18 @@ TYPED_TEST(GraphTest, variable_freezing_subgraph)
   auto gradient_vector_2 = g.GetGradients();
   for (auto grad : gradient_vector_2)
   {
-    grad.Fill(static_cast<DataType>(2.0));
+    grad.Fill(DataType{2});
   }
   g.ApplyGradients(gradient_vector);
 
   auto weights_3 = g.GetWeights();
 
-  ASSERT_FALSE(weights_2.at(0).AllClose(weights_3.at(0), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_2.at(1).AllClose(weights_3.at(1), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_2.at(2).AllClose(weights_3.at(2), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_2.at(3).AllClose(weights_3.at(3), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_2.at(4).AllClose(weights_3.at(4), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_2.at(5).AllClose(weights_3.at(5), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_2.at(0).AllClose(weights_3.at(0), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_2.at(1).AllClose(weights_3.at(1), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_2.at(2).AllClose(weights_3.at(2), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_2.at(3).AllClose(weights_3.at(3), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_2.at(4).AllClose(weights_3.at(4), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_2.at(5).AllClose(weights_3.at(5), DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(GraphTest, variable_freezing_shared_layer)
@@ -460,7 +448,7 @@ TYPED_TEST(GraphTest, variable_freezing_shared_layer)
   auto gradient_vector = g.GetGradients();
   for (auto grad : gradient_vector)
   {
-    grad.Fill(static_cast<DataType>(2.0));
+    grad.Fill(DataType{2});
   }
   g.ApplyGradients(gradient_vector);
 
@@ -468,18 +456,12 @@ TYPED_TEST(GraphTest, variable_freezing_shared_layer)
   auto weights_2 = g.GetWeights();
 
   // Test if layer1 and copy of layer1 is frozen
-  ASSERT_TRUE(weights_1.at(0).AllClose(weights_2.at(0), static_cast<DataType>(0),
-                                       static_cast<DataType>(0)));
-  ASSERT_TRUE(weights_1.at(1).AllClose(weights_2.at(1), static_cast<DataType>(0),
-                                       static_cast<DataType>(0)));
-  ASSERT_TRUE(weights_1.at(2).AllClose(weights_2.at(2), static_cast<DataType>(0),
-                                       static_cast<DataType>(0)));
-  ASSERT_TRUE(weights_1.at(3).AllClose(weights_2.at(3), static_cast<DataType>(0),
-                                       static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_1.at(4).AllClose(weights_2.at(4), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_1.at(5).AllClose(weights_2.at(5), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
+  ASSERT_TRUE(weights_1.at(0).AllClose(weights_2.at(0), DataType{0}, DataType{0}));
+  ASSERT_TRUE(weights_1.at(1).AllClose(weights_2.at(1), DataType{0}, DataType{0}));
+  ASSERT_TRUE(weights_1.at(2).AllClose(weights_2.at(2), DataType{0}, DataType{0}));
+  ASSERT_TRUE(weights_1.at(3).AllClose(weights_2.at(3), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_1.at(4).AllClose(weights_2.at(4), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_1.at(5).AllClose(weights_2.at(5), DataType{0}, DataType{0}));
 
   // Un-freeze variables
   g.SetFrozenState(layer_1, false);
@@ -488,25 +470,19 @@ TYPED_TEST(GraphTest, variable_freezing_shared_layer)
   auto gradient_vector_2 = g.GetGradients();
   for (auto grad : gradient_vector_2)
   {
-    grad.Fill(static_cast<DataType>(2.0));
+    grad.Fill(DataType{2});
   }
   g.ApplyGradients(gradient_vector);
 
   auto weights_3 = g.GetWeights();
 
   // Test if everything is unfrozen
-  ASSERT_FALSE(weights_2.at(0).AllClose(weights_3.at(0), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_2.at(1).AllClose(weights_3.at(1), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_2.at(2).AllClose(weights_3.at(2), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_2.at(3).AllClose(weights_3.at(3), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_2.at(4).AllClose(weights_3.at(4), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
-  ASSERT_FALSE(weights_2.at(5).AllClose(weights_3.at(5), static_cast<DataType>(0),
-                                        static_cast<DataType>(0)));
+  ASSERT_FALSE(weights_2.at(0).AllClose(weights_3.at(0), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_2.at(1).AllClose(weights_3.at(1), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_2.at(2).AllClose(weights_3.at(2), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_2.at(3).AllClose(weights_3.at(3), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_2.at(4).AllClose(weights_3.at(4), DataType{0}, DataType{0}));
+  ASSERT_FALSE(weights_2.at(5).AllClose(weights_3.at(5), DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(GraphTest,
