@@ -187,10 +187,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   if (!ValidBlock(block, "new block"))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "New Block: #", block.block_number, " 0x", block.hash.ToHex(),
-                   " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(),
-                   " status: Invalid! loose: ", loose_blocks_seen_, ")");
-
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Gossiped block did not prove valid. Loose blocks seen: ", loose_blocks_seen_);
     ++loose_blocks_seen_;
     return;
   }
@@ -220,8 +218,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
     break;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "New Block: #", block.block_number, " 0x", block.hash.ToHex(),
-                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(),
+  FETCH_LOG_INFO(LOGGING_NAME, "New Block: 0x", block.hash.ToHex(), " (from peer: ", ToBase64(from),
+                 " num txs: ", block.GetTransactionCount(), " num: ", block.block_number,
                  " status: ", status_text, ")");
 }
 
@@ -366,7 +364,7 @@ State MainChainRpcService::OnSynchronised(State current, State previous)
   }
   else if (resync_interval_.HasExpired())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Kicking forward sync periodically");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Kicking forward sync periodically");
 
     next_state = State::SYNCHRONISING;
   }
@@ -390,9 +388,9 @@ State MainChainRpcService::OnStartSyncWithPeer()
 
   if (block_resolving_ && !current_peer_address_.empty())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Resolving: #", block_resolving_->block_number, " 0x",
-                   block_resolving_->hash.ToHex(), " from: muddle://",
-                   current_peer_address_.ToBase64());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Resolving: #", block_resolving_->block_number, " 0x",
+                    block_resolving_->hash.ToHex(), " from: muddle://",
+                    current_peer_address_.ToBase64());
   }
 
   return State::REQUEST_NEXT_BLOCKS;

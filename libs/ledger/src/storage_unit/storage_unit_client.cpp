@@ -406,7 +406,8 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET on TX store!");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Failed to resolve GET_RECENT on TX store! The network timed out.");
     }
   }
 

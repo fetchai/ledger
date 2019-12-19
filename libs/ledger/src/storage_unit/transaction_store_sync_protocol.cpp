@@ -207,6 +207,19 @@ TSSP::TxArray TransactionStoreSyncProtocol::PullSpecificObjects(DigestSet const 
     }
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Received request for specific TXs. Size: ", digests.size());
+
+  if (ret.size() != digests.size())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Failed to provide enough in response! Size: ", ret.size(),
+                   " TXs: ");
+
+    for (auto const &tx_resp : ret)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, tx_resp.digest().ToBase64());
+    }
+  }
+
   return ret;
 }
 
