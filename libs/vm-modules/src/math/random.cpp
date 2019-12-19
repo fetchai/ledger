@@ -103,7 +103,7 @@ IfIsPtrFixed128<T, Ptr<T>> Rand(VM *vm, Ptr<T> const &a, Ptr<T> const &b)
 
 }  // namespace
 
-void BindRand(Module &module, bool const /*enable_experimental*/)
+void BindRand(Module &module, bool const enable_experimental)
 {
   if (enable_experimental)
   {
