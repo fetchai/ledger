@@ -42,7 +42,7 @@ constexpr char const *LOGGING_NAME = "ShardMgmt";
 
 ShardManagementService::ShardManagementService(Manifest manifest, ShardManagementInterface &shards,
                                                MuddleInterface &muddle, uint32_t log2_num_lanes)
-  : core::PeriodicRunnable(1s)
+  : core::PeriodicRunnable("ShardManagement", 1s)
   , shards_{shards}
   , muddle_{muddle}
   , manifest_{std::move(manifest)}
