@@ -47,10 +47,13 @@ PeerTracker::PeerTrackerPtr PeerTracker::New(PeerTracker::Duration const &interv
   return ret;
 }
 
+/*
 PeerTracker::~PeerTracker()
 {
-  Stop();
+  // Do not call Stop(); as this can cause deadlocks due to
+  // shared pointers
 }
+*/
 
 void PeerTracker::Blacklist(Address const &target)
 {
@@ -324,7 +327,7 @@ void PeerTracker::DisconnectDuplicates()
   {
     if (incoming.find(adr) != incoming.end())
     {
-      if (own_address_ < adr)
+      if (own_address() < adr)
       {
         auto connections = register_.LookupConnections(adr);
         for (auto &conn_ptr : connections)
@@ -350,7 +353,7 @@ void PeerTracker::DisconnectDuplicates()
 void PeerTracker::DisconnectFromSelf()
 {
   // Disconnecting from self
-  auto connections = register_.LookupConnections(own_address_);
+  auto connections = register_.LookupConnections(own_address());
   for (auto &conn_ptr : connections)
   {
     auto conn = conn_ptr.lock();
@@ -930,15 +933,19 @@ void PeerTracker::Periodically()
 
   // Finally, we create a list of accessible peers
   {
-    FETCH_LOCK(direct_mutex_);
-    directly_connected_peers_.clear();
+    AddressSet new_directly_connected;
+    {
+      FETCH_LOCK(direct_mutex_);
+      directly_connected_peers_.clear();
+    }
+
     auto const currently_outgoing = register_.GetOutgoingAddressSet();
     for (auto &p : currently_outgoing)
     {
       auto connection = register_.LookupConnection(p).lock();
       if (connection)
       {
-        directly_connected_peers_.insert(p);
+        new_directly_connected.insert(p);
       }
     }
 
@@ -949,8 +956,13 @@ void PeerTracker::Periodically()
       auto connection = register_.LookupConnection(p).lock();
       if (connection)
       {
-        directly_connected_peers_.insert(p);
+        new_directly_connected.insert(p);
       }
+    }
+
+    {
+      FETCH_LOCK(direct_mutex_);
+      std::swap(directly_connected_peers_, new_directly_connected);
     }
   }
 

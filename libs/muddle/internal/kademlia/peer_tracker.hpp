@@ -100,7 +100,7 @@ public:
   PeerTracker(PeerTracker &&other)      = delete;
   PeerTracker operator=(PeerTracker const &other) = delete;
   PeerTracker operator=(PeerTracker &&other) = delete;
-  ~PeerTracker() override;
+  ~PeerTracker() override                    = default;
 
   /// Tracker interface
   /// @{

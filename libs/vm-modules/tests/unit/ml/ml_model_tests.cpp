@@ -39,11 +39,27 @@ std::string const ADD_INVALID_LAYER_TEST_SOURCE = R"(
     endfunction
   )";
 
+std::string const ADD_VALID_LAYER_TEST_SOURCE = R"(
+    function main()
+      var model = Model("sequential");
+      <<TOKEN>>
+      model.compile("scel", "adam");
+    endfunction
+  )";
+
 class VMModelTests : public ::testing::Test
 {
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
+
+  void TestValidLayerAdding(std::string const &test_case_source)
+  {
+    std::string const src =
+        std::regex_replace(ADD_VALID_LAYER_TEST_SOURCE, std::regex("<<TOKEN>>"), test_case_source);
+    ASSERT_TRUE(toolkit.Compile(src));
+    ASSERT_TRUE(toolkit.Run());
+  }
 
   void TestInvalidLayerAdding(std::string const &test_case_source)
   {
@@ -373,6 +389,52 @@ TEST_F(VMModelTests, model_init_with_wrong_name)
   EXPECT_FALSE(toolkit.Run());
 }
 
+TEST_F(VMModelTests, model_add_dense_noact)
+{
+  TestValidLayerAdding(R"(model.add("dense", 10u64, 10u64);)");
+}
+
+TEST_F(VMModelTests, model_add_dense_relu)
+{
+  TestValidLayerAdding(R"(model.add("dense", 10u64, 10u64, "relu");)");
+}
+
+// Disabled until implementation of AddLayerConv estimator
+TEST_F(VMModelTests, DISABLED_model_add_conv1d_noact)
+{
+  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64);)");
+}
+
+// Disabled until implementation of AddLayerConv estimator
+TEST_F(VMModelTests, DISABLED_model_add_conv1d_relu)
+{
+  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)");
+}
+
+// Disabled until implementation of AddLayerConv estimator
+TEST_F(VMModelTests, DISABLED_model_add_conv2d_noact)
+{
+  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64);)");
+}
+
+// Disabled until implementation of AddLayerConv estimator
+TEST_F(VMModelTests, DISABLED_model_add_conv2d_relu)
+{
+  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)");
+}
+
+// Disabled until implementation of AddDropout estimator
+TEST_F(VMModelTests, DISABLED_model_add_dropout)
+{
+  TestValidLayerAdding(R"(model.add("dropout", 0.256fp64);)");
+}
+
+// Disabled until implementation of AddFlatten estimator
+TEST_F(VMModelTests, DISABLED_model_add_flatten)
+{
+  TestValidLayerAdding(R"(model.add("flatten");)");
+}
+
 TEST_F(VMModelTests, model_add_invalid_layer_type)
 {
   TestInvalidLayerAdding(R"(model.add("INVALID_LAYER_TYPE", 1u64, 1u64);)");
@@ -401,6 +463,11 @@ TEST_F(VMModelTests, model_add_conv_invalid_params_relu)
 TEST_F(VMModelTests, model_add_layers_invalid_activation_dense)
 {
   TestInvalidLayerAdding(R"(model.add("dense", 10u64, 10u64, "INVALID_ACTIVATION_DENSE");)");
+}
+
+TEST_F(VMModelTests, model_add_dropout_invalid_params)
+{
+  TestInvalidLayerAdding(R"(model.add("dropout", 10fp64);)");
 }
 
 TEST_F(VMModelTests, model_add_layers_invalid_activation_conv)
@@ -432,6 +499,11 @@ TEST_F(VMModelTests, model_uncompilable_add_layer__flatten_invalid_params)
 TEST_F(VMModelTests, model_uncompilable_add_layer__conv_invalid_params)
 {
   TestAddingUncompilableLayer(R"(model.add("conv1d", 0u64, 10fp32, 10u64, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_uncompilable_add_layer__dropout_invalid_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("dropout", 0u64);)");
 }
 
 TEST_F(VMModelTests, model_add_layer_to_non_sequential)
@@ -498,6 +570,7 @@ TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_wrong_optimizer)
   std::cout << "Testing non-Adam optimizer for a Simple model" << std::endl;
   EXPECT_FALSE(toolkit.Run());
 }
+
 TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_too_few_layer_shapes)
 {
   static char const *SIMPLE_1_HIDDEN_SRC = R"(
@@ -511,6 +584,55 @@ TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_too_few_layer_shapes
   ASSERT_TRUE(toolkit.Compile(SIMPLE_1_HIDDEN_SRC));
   std::cout << "Testing insufficient hidden layers quantity for a Simple model" << std::endl;
   EXPECT_FALSE(toolkit.Run());
+}
+
+// Disableduntil AddDropout estimator implementation
+TEST_F(VMModelTests, DISABLED_model_dropout_comparison)
+{
+  static char const *SOURCE = R"(
+    function main()
+        var dropouted_model = Model("sequential");
+        dropouted_model.add("dropout", 0.1fp64);
+        dropouted_model.compile("mse", "adam");
+
+        var reference_model = Model("sequential");
+        // Dropout with probability 0 acts as a simple connection
+        // between input layers and output layer; this workaround is needed
+        // because a sequential model with direct connection of inputs to
+        // outputs can not be compiled.
+        reference_model.add("dropout", 0.0fp64);
+        reference_model.compile("mse", "adam");
+
+        var shape = Array<UInt64>(3);
+        shape[0] = 25u64;
+        shape[1] = 25u64;
+        shape[2] = 1u64;
+        var x = Tensor(shape);
+
+        x.fillRandom();
+
+        var y = x.copy();
+        y += y;
+
+        var old_ref_loss = 0.0fp64;
+        for (i in 0:5)
+            dropouted_model.fit(x, y, 10u64);
+            reference_model.fit(x, y, 10u64);
+            var new_loss = dropouted_model.evaluate();
+            var new_ref_loss = reference_model.evaluate();
+
+            if (old_ref_loss == 0.0fp64)
+              old_ref_loss = new_ref_loss[0];
+            endif
+            assert(new_ref_loss[0] == old_ref_loss, "Model corrupts input data!");
+            assert(new_loss[0] != new_ref_loss[0], "Dropout did not change a layer output during training!");
+        endfor
+
+    endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  EXPECT_TRUE(toolkit.Run());
 }
 
 TEST_F(VMModelTests, model_compilation_sequential_from_layer_shapes)
