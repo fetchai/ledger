@@ -136,7 +136,7 @@ protected:
   SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
 
-  mutable std::mutex                  mutex_;
+  mutable Mutex                       mutex_;
   CertificatePtr                      certificate_;
   bool                                load_and_reload_on_crash_{false};
   std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
