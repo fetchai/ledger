@@ -79,7 +79,7 @@ T DeterministicShuffle(T &container, uint64_t entropy)
   static const std::size_t NUM_ITERATIONS = 1000;
 
   std::sort(container.begin(), container.end());
-  DRNG rng(entropy);
+  DRNG              rng(entropy);
   std::size_t const num_items = container.size();
   for (std::size_t i = 0; i < NUM_ITERATIONS; ++i)
   {
