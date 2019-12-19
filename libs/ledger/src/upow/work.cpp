@@ -99,7 +99,7 @@ Work::UInt256 Work::CreateHashedNonce() const
   hasher.Reset();
   hasher.Update(digest1);
 
-  return UInt256{hasher.Final()};
+  return UInt256{hasher.Final(), platform::Endian::BIG};
 }
 
 }  // namespace ledger
