@@ -50,7 +50,7 @@ namespace {
 constexpr char const *BLOOM_FILTER_STORE = "chain.bloom.db";
 }
 
-const uint64_t DIRTY_TIMEOUT{60};
+const uint64_t DIRTY_TIMEOUT{600};
 
 /**
  * Constructs the main chain
