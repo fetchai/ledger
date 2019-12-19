@@ -74,8 +74,8 @@ fetch::math::meta::IfIsNotFixedPoint128<T, T> Rand(VM *vm, T const &a = T{.0}, T
   std::random_device rd;
   std::mt19937_64    mt(rd());
 
-  double a_dbl = static_cast<double>(a);
-  double b_dbl = static_cast<double>(b);
+  auto a_dbl = static_cast<double>(a);
+  auto b_dbl = static_cast<double>(b);
   return static_cast<T>(std::uniform_real_distribution<double>{a_dbl, b_dbl}(mt));
 }
 
@@ -94,9 +94,9 @@ IfIsPtrFixed128<T, Ptr<T>> Rand(VM *vm, Ptr<T> const &a, Ptr<T> const &b)
   std::random_device rd;
   std::mt19937_64    mt(rd());
 
-  double a_dbl = static_cast<double>(a->data_);
-  double b_dbl = static_cast<double>(b->data_);
-  auto   x =
+  auto a_dbl = static_cast<double>(a->data_);
+  auto b_dbl = static_cast<double>(b->data_);
+  auto x =
       static_cast<fixed_point::fp128_t>(std::uniform_real_distribution<double>{a_dbl, b_dbl}(mt));
   return Ptr<Fixed128>(new Fixed128(vm, x));
 }
