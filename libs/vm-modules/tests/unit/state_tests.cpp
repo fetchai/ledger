@@ -278,8 +278,8 @@ TEST_F(StateTests, test_serialisation_of_complex_type)
 }
 
 template <typename T>
-std::enable_if_t<!IsPtr<T>::value> ArrayFromVariant(Variant const &array, int32_t expected_size,
-                                                    Ptr<Array<T>> &out)
+std::enable_if_t<!IsPtr<T>> ArrayFromVariant(Variant const &array, int32_t expected_size,
+                                             Ptr<Array<T>> &out)
 {
   out = array.Get<Ptr<Array<T>>>();
   ASSERT_TRUE(out);
@@ -287,7 +287,7 @@ std::enable_if_t<!IsPtr<T>::value> ArrayFromVariant(Variant const &array, int32_
 }
 
 template <typename T>
-std::enable_if_t<IsPtr<T>::value && std::is_same<IArray, std::decay_t<GetManagedType<T>>>::value>
+std::enable_if_t<IsPtr<T> && std::is_same<IArray, std::decay_t<GetManagedType<T>>>::value>
 ArrayFromVariant(Variant const &array, int32_t expected_size, Ptr<Array<T>> &out)
 {
   out = array.Get<Ptr<Array<T>>>();

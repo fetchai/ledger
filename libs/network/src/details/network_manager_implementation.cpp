@@ -45,7 +45,7 @@ void NetworkManagerImplementation::Start()
 
       auto thread = std::make_shared<std::thread>([this, i, wptr]() {
         auto ptr = wptr.lock();
-        if (ptr)
+        if (ptr && running_)
         {
           SetThreadName(name_, i);
 

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/object.hpp"
+#include "vm/string.hpp"
 
 namespace fetch {
 
@@ -37,12 +38,40 @@ public:
 
   ByteArrayWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray bytearray);
 
-  static fetch::vm::Ptr<ByteArrayWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                      int32_t n);
+  static fetch::vm::Ptr<ByteArrayWrapper> Constructor(vm::VM *vm, vm::TypeId type_id, int32_t n);
 
   fetch::vm::Ptr<ByteArrayWrapper> Copy();
+  fetch::vm::Ptr<vm::String>       ToBase64();
+  bool                             FromBase64(fetch::vm::Ptr<vm::String> const &value_b64);
+  fetch::vm::Ptr<vm::String>       ToHex();
+  bool                             FromHex(fetch::vm::Ptr<vm::String> const &value_hex);
+  fetch::vm::Ptr<vm::String>       ToBase58();
+  bool                             FromBase58(fetch::vm::Ptr<vm::String> const &value_b58);
 
-  byte_array::ByteArray byte_array() const;
+  bool IsEqual(fetch::vm::Ptr<Object> const &lhso, fetch::vm::Ptr<Object> const &rhso) override;
+  bool IsNotEqual(fetch::vm::Ptr<Object> const &lhso, fetch::vm::Ptr<Object> const &rhso) override;
+  bool IsLessThan(fetch::vm::Ptr<Object> const &lhso, fetch::vm::Ptr<Object> const &rhso) override;
+  bool IsGreaterThan(fetch::vm::Ptr<Object> const &lhso,
+                     fetch::vm::Ptr<Object> const &rhso) override;
+  bool IsLessThanOrEqual(fetch::vm::Ptr<Object> const &lhso,
+                         fetch::vm::Ptr<Object> const &rhso) override;
+  bool IsGreaterThanOrEqual(fetch::vm::Ptr<Object> const &lhso,
+                            fetch::vm::Ptr<Object> const &rhso) override;
+
+  vm::ChargeAmount IsEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                          fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsNotEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                             fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsLessThanChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                             fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsGreaterThanChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsLessThanOrEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                    fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsGreaterThanOrEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                       fetch::vm::Ptr<Object> const &rhso) override;
+
+  byte_array::ConstByteArray const &byte_array() const;
 
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 

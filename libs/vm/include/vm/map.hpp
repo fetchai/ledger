@@ -52,7 +52,7 @@ template <typename T, typename = void>
 struct MapComparator;
 
 template <typename T>
-struct MapComparator<T, std::enable_if_t<IsPrimitive<T>::value>>
+struct MapComparator<T, IfIsPrimitive<T>>
 {
   constexpr bool operator()(fetch::vm::TemplateParameter1 const &lhs,
                             fetch::vm::TemplateParameter1 const &rhs) const
@@ -62,7 +62,7 @@ struct MapComparator<T, std::enable_if_t<IsPrimitive<T>::value>>
 };
 
 template <typename T>
-struct MapComparator<T, std::enable_if_t<IsPtr<T>::value>>
+struct MapComparator<T, IfIsPtr<T>>
 {
   constexpr bool operator()(fetch::vm::TemplateParameter1 const &lhs,
                             fetch::vm::TemplateParameter1 const &rhs) const
@@ -97,13 +97,13 @@ struct Map : public IMap
   }
 
   template <typename U>
-  std::enable_if_t<IsPrimitive<U>::value, TemplateParameter2 *> Get(TemplateParameter1 const &key)
+  IfIsPrimitive<U, TemplateParameter2 *> Get(TemplateParameter1 const &key)
   {
     return Find(key);
   }
 
   template <typename U>
-  std::enable_if_t<IsPtr<U>::value, TemplateParameter2 *> Get(TemplateParameter1 const &key)
+  IfIsPtr<U, TemplateParameter2 *> Get(TemplateParameter1 const &key)
   {
     if (key.object)
     {
@@ -125,15 +125,13 @@ struct Map : public IMap
   }
 
   template <typename U>
-  std::enable_if_t<IsPrimitive<U>::value, void> Store(TemplateParameter1 const &key,
-                                                      TemplateParameter2 const &value)
+  IfIsPrimitive<U> Store(TemplateParameter1 const &key, TemplateParameter2 const &value)
   {
     map[key] = value;
   }
 
   template <typename U>
-  std::enable_if_t<IsPtr<U>::value, void> Store(TemplateParameter1 const &key,
-                                                TemplateParameter2 const &value)
+  IfIsPtr<U> Store(TemplateParameter1 const &key, TemplateParameter2 const &value)
   {
     if (key.object)
     {
@@ -207,8 +205,7 @@ struct Map : public IMap
 
 private:
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPtr<U>::value, bool> SerializeElement(MsgPackSerializer &          buffer,
-                                                           TemplateParameterType const &v)
+  IfIsPtr<U, bool> SerializeElement(MsgPackSerializer &buffer, TemplateParameterType const &v)
   {
     if (v.object == nullptr)
     {
@@ -220,17 +217,15 @@ private:
   }
 
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPrimitive<U>::value, bool> SerializeElement(MsgPackSerializer &buffer,
-                                                                 TemplateParameterType const &v)
+  IfIsPrimitive<U, bool> SerializeElement(MsgPackSerializer &buffer, TemplateParameterType const &v)
   {
     buffer << v.template Get<U>();
     return true;
   }
 
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPtr<U>::value, bool> DeserializeElement(TypeId                 type_id,
-                                                             MsgPackSerializer &    buffer,
-                                                             TemplateParameterType &v)
+  IfIsPtr<U, bool> DeserializeElement(TypeId type_id, MsgPackSerializer &buffer,
+                                      TemplateParameterType &v)
   {
     if (!vm_->IsDefaultSerializeConstructable(type_id))
     {
@@ -244,9 +239,9 @@ private:
   }
 
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPrimitive<U>::value, bool> DeserializeElement(TypeId                 type_id,
-                                                                   MsgPackSerializer &    buffer,
-                                                                   TemplateParameterType &v)
+  IfIsPrimitive<U, bool> DeserializeElement(TypeId type_id,
+
+                                            MsgPackSerializer &buffer, TemplateParameterType &v)
   {
     U data;
     buffer >> data;

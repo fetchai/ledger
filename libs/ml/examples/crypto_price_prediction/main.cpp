@@ -63,7 +63,7 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
   SizeType conv1D_1_kernel_size    = 32;
   SizeType conv1D_1_stride         = 2;
 
-  typename TensorType::Type keep_prob_1{0.5};
+  auto keep_prob_1 = fetch::math::Type<DataType>("0.5");
 
   SizeType conv1D_2_filters        = 1;
   SizeType conv1D_2_input_channels = conv1D_1_filters;
