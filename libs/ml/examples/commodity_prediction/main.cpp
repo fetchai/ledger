@@ -239,7 +239,7 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
 
     auto loss_tensor = g_ptr->Evaluate(node_names.back(), false);
     loss += *(loss_tensor.begin());
-    loss_counter++;
+    ++loss_counter;
   }
 
   return loss / loss_counter;
@@ -330,10 +330,10 @@ int main(int argc, char **argv)
         assert(bias.shape().at(0) == weights.shape().at(0));
 
         assert(w_itr->shape() == bias.shape());
-        *w_itr = bias;
+        w_itr->Assign(bias);
         w_itr++;
         assert(w_itr->shape() == weights.shape());
-        *w_itr = weights;
+        w_itr->Assign(weights);
         w_itr++;
         output_feature_size = weights.shape()[0];  // stores shape of last dense layer
       }
@@ -365,6 +365,8 @@ int main(int argc, char **argv)
       j++;
     }
 
+    std::cout << "test_y.ToString(): " << test_y.ToString() << std::endl;
+    std::cout << "output.ToString(): " << output.ToString() << std::endl;
     if (output.AllClose(test_y, fetch::math::Type<DataType>("0.00001")))
     {
       std::cout << "Graph output is the same as the test output - success!" << std::endl;
@@ -407,9 +409,10 @@ int main(int argc, char **argv)
       std::string valid_x_file = filename_root + std::to_string(j) + "_x_val.csv";
       std::string valid_y_file = filename_root + std::to_string(j) + "_y_val.csv";
 
-      loader.Reset();
       auto data  = fetch::math::utilities::ReadCSV<TensorType>(train_x_file, 1, 1, true);
       auto label = fetch::math::utilities::ReadCSV<TensorType>(train_y_file, 1, 1, true);
+
+      loader.Reset();
       loader.AddData({data}, label);
 
       // Training loop
@@ -491,7 +494,7 @@ int main(int argc, char **argv)
 
       auto cos = fetch::math::correlation::Cosine(slice_output, input.first);
       distance += cos;
-      distance_counter++;
+      ++distance_counter;
     }
     file.close();
 
