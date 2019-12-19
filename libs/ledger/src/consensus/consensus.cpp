@@ -300,7 +300,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   if (proposed_block_timestamp_ms > time_now_ms)
   {
     FETCH_LOG_WARN(LOGGING_NAME,
-                   "Found block that appears to be minted ahead in time. This is invalid.");
+                   "Found block that appears to be minted ahead in time. This is invalid. Delta: ", proposed_block_timestamp_ms - time_now_ms);
     return false;
   }
 
@@ -308,7 +308,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   {
     FETCH_LOG_WARN(
         LOGGING_NAME,
-        "Found block that indicates it was minted before the previous. This is invalid.");
+        "Found block that indicates it was minted before the previous. This is invalid. Delta: ", last_block_timestamp_ms - proposed_block_timestamp_ms);
     return false;
   }
 
