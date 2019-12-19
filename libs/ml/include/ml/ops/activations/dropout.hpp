@@ -53,13 +53,13 @@ public:
                                " is out of allowed range [0..1]");
     }
     rng_.Seed(random_seed);
-    scaling_coefs_ = TensorType{0};
+    scaling_coefficients_ = TensorType{0};
   }
 
   explicit Dropout(SPType const &sp)
     : Ops<T>(sp)
+    , probability_of_keeping_(sp.probability)
   {
-    probability_of_keeping_ = sp.probability;
     rng_.Seed(sp.random_seed);
     rng_.SetBuffer(sp.buffer);
     rng_.SetIndex(sp.index);
@@ -111,20 +111,20 @@ public:
     if (probability_of_keeping_ == zero_)
     {
       output.Fill(zero_);
-      scaling_coefs_.Fill(zero_);
+      scaling_coefficients_.Fill(zero_);
       return;
     }
 
-    if (scaling_coefs_.shape() != output.shape())
+    if (scaling_coefficients_.shape() != output.shape())
     {
-      scaling_coefs_ = TensorType(output.shape());
+      scaling_coefficients_ = TensorType(output.shape());
     }
 
     DataType const scale = one_ / probability_of_keeping_;
 
     auto output_it       = output.begin();
     auto input_it        = inputs.front()->cbegin();
-    auto scaling_coef_it = scaling_coefs_.begin();
+    auto scaling_coef_it = scaling_coefficients_.begin();
     while (scaling_coef_it.is_valid())
     {
       DataType const random_probability = rng_.AsType<DataType>();
@@ -164,10 +164,10 @@ public:
           "Can not do a backward pass through Dropout layer: error signal shape mismatch inputs "
           "shape.");
     }
-    if (scaling_coefs_.shape() != inputs.front()->shape())
+    if (scaling_coefficients_.shape() != inputs.front()->shape())
     {
       throw fetch::math::exceptions::WrongShape(
-          "Can not do a backward pass through Dropout layer: dropout scaling coeffitients shape "
+          "Can not do a backward pass through Dropout layer: dropout scaling coefficients shape "
           "mismatch inputs shape.");
     }
 
@@ -176,7 +176,7 @@ public:
     // gradient of dropout is 1.0/keep_prob for enabled neurons and 0.0 for disabled
     // multiply by error_signal (chain rule)
 
-    fetch::math::Multiply(error_signal, scaling_coefs_, return_signal);
+    fetch::math::Multiply(error_signal, scaling_coefficients_, return_signal);
 
     return {return_signal};
   }
@@ -193,7 +193,7 @@ public:
   static constexpr char const *DESCRIPTOR = "Dropout";
 
 private:
-  TensorType scaling_coefs_;
+  TensorType scaling_coefficients_;
   DataType   probability_of_keeping_{1};
   RNG        rng_;
 
