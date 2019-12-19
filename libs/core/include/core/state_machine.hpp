@@ -146,7 +146,7 @@ StateMachine<S>::StateMachine(std::string name, S initial, StateMapper mapper)
   , mapper_{std::move(mapper)}
   , current_state_{initial}
   , state_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
-        ToLowerCase(name) + "_state_gauge", "Generic state machine state as integer")}
+        ToLowerCase(name_) + "_state_gauge", "Generic state machine state as integer")}
 {}
 
 /**
