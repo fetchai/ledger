@@ -61,6 +61,7 @@ public:
   void         Assign(Tensor<T, C> const &other);
   Tensor<T, C> Copy() const;
   Tensor<T, C> Copy(SizeVector const &tensor_shape) const;
+  std::string  ToString() const;
 
   /////////////////
   /// OPERATORS ///
@@ -324,6 +325,12 @@ template <typename T, typename C>
 typename TensorView<T, C>::ContainerType &TensorView<T, C>::data()
 {
   return data_;
+}
+
+template <typename T, typename C>
+std::string TensorView<T, C>::ToString() const
+{
+  return Copy().ToString();
 }
 
 }  // namespace math
