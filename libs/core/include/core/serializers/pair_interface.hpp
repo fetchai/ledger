@@ -34,14 +34,8 @@ public:
     , size_{size}
   {}
 
-  template <typename V>
-  void Append(char const *key, V const &val)
-  {
-    Append(static_cast<std::string>(key), val);
-  }
-
-  template <typename K, typename V>
-  void Append(K key, V const &val)
+  template <typename F, typename S>
+  void Append(F const first, S const &second)
   {
     ++pos_;
     if (pos_ > size_)
@@ -49,12 +43,12 @@ public:
       throw SerializableException(
           std::string("exceeded number of allocated elements in map serialization"));
     }
-    serializer_ << key;
-    serializer_ << val;
+    serializer_ << first;
+    serializer_ << second;
   }
 
-  bool AppendUsingFunction(std::function<bool(Driver &)> key_serialize,
-                           std::function<bool(Driver &)> value_serialize)
+  bool AppendUsingFunction(std::function<bool(Driver &)> first_serialize,
+                           std::function<bool(Driver &)> second_serialize)
   {
     ++pos_;
     if (pos_ > size_)
@@ -63,12 +57,12 @@ public:
           std::string("exceeded number of allocated elements in array serialization"));
     }
 
-    if (!key_serialize(serializer_))
+    if (!first_serialize(serializer_))
     {
       return false;
     }
 
-    return value_serialize(serializer_);
+    return second_serialize(serializer_);
   }
 
   Driver &serializer()
@@ -122,8 +116,8 @@ public:
     size_ = static_cast<uint64_t>(size);
   }
 
-  template <typename K, typename V>
-  void GetNextKeyPair(K &key, V &value)
+  template <typename F, typename S>
+  void GetPair(F &first, S &second)
   {
     if (state_ != State::KEY_VALUE_NEXT)
     {
@@ -136,11 +130,11 @@ public:
       throw SerializableException(
           std::string("tried to deserialise more fields in map than there exists."));
     }
-    serializer_ >> key >> value;
+    serializer_ >> first >> second;
   }
 
-  bool GetNextKeyPairUsingFunction(std::function<bool(Driver &)> key_deserialize,
-                                   std::function<bool(Driver &)> value_deserialize)
+  bool GetPairUsingFunction(std::function<bool(Driver &)> first_deserialize,
+                            std::function<bool(Driver &)> second_deserialize)
   {
     if (state_ != State::KEY_VALUE_NEXT)
     {
@@ -154,62 +148,12 @@ public:
           std::string("tried to deserialise more fields in map than there exists."));
     }
 
-    if (!key_deserialize(serializer_))
+    if (!first_deserialize(serializer_))
     {
       return false;
     }
 
-    return value_deserialize(serializer_);
-  }
-
-  template <typename V>
-  bool ExpectKeyGetValue(uint8_t key, V &value)
-  {
-    if (state_ != State::KEY_VALUE_NEXT)
-    {
-      throw SerializableException(std::string("Next entry is not a key-value pair."));
-    }
-
-    ++pos_;
-    if (pos_ > size_)
-    {
-      throw SerializableException(
-          std::string("tried to deserialise more fields in map than there exists."));
-    }
-    uint8_t k;
-    serializer_ >> k;
-    if (k != key)
-    {
-      throw SerializableException(
-          std::string("Key mismatch while deserialising map: " + std::to_string(pos_ - 1) + " / " +
-                      std::to_string(size_)) +
-          ", " + std::to_string(k) + " != " + std::to_string(key));
-    }
-    serializer_ >> value;
-    return true;
-  }
-
-  template <typename K, typename V>
-  bool ExpectKeyGetValue(K const &key, V &value)
-  {
-    if (state_ != State::KEY_VALUE_NEXT)
-    {
-      throw SerializableException(std::string("Next entry is not a key-value pair."));
-    }
-    ++pos_;
-    if (pos_ > size_)
-    {
-      throw SerializableException(
-          std::string("tried to deserialise more fields in map than there exists."));
-    }
-    K k;
-    serializer_ >> k;
-    if (k != key)
-    {
-      throw SerializableException(std::string("Key mismatch while deserialising map."));
-    }
-    serializer_ >> value;
-    return true;
+    return second_deserialize(serializer_);
   }
 
   uint64_t size() const
@@ -217,8 +161,8 @@ public:
     return size_;
   }
 
-  template <typename K>
-  void GetKey(K &key)
+  template <typename F>
+  void GetFirst(F &first)
   {
     if (state_ != State::KEY_VALUE_NEXT)
     {
@@ -230,19 +174,19 @@ public:
       throw SerializableException(
           std::string("tried to deserialise more fields in map than there exists."));
     }
-    serializer_ >> key;
+    serializer_ >> first;
     state_ = State::VALUE_NEXT;
   }
 
-  template <typename V>
-  void GetValue(V &value)
+  template <typename S>
+  void GetSecond(S &second)
   {
     if (state_ != State::VALUE_NEXT)
     {
       throw SerializableException(std::string("Next entry is not a value in map."));
     }
 
-    serializer_ >> value;
+    serializer_ >> second;
     state_ = State::KEY_VALUE_NEXT;
   }
 
