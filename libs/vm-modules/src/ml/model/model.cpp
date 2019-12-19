@@ -730,7 +730,6 @@ void VMModel::LayerAddActivation(const fetch::vm::Ptr<String> &layer,
                         activation_name->string());
       return;
     }
-    compiled_ = false;
   }
   catch (std::exception const &e)
   {
