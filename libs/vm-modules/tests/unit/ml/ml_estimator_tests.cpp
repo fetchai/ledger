@@ -66,8 +66,6 @@ TEST_F(VMMLEstimatorTests, vmdtrainingpair_constructor_have_infinite_charge)
   static constexpr char const *TEXT = R"(
     function main()
       var training_pair = Pair<Tensor,Array<Tensor>>();
-      training_pair.first(Tensor(Array<UInt64>(1));
-      training_pair.second(Array<Tensor>(1));
     endfunction
   )";
 
