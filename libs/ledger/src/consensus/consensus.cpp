@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "beacon/block_entropy.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/consensus/consensus.hpp"
