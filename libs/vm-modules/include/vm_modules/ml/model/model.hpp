@@ -56,7 +56,8 @@ enum class SupportedLayerType : uint8_t
   DENSE,
   CONV1D,
   CONV2D,
-  FLATTEN
+  FLATTEN,
+  DROPOUT
 };
 
 class VMModel : public fetch::vm::Object
@@ -150,6 +151,9 @@ public:
                                            math::SizeType const &                   hidden_nodes,
                                            fetch::vm::Ptr<fetch::vm::String> const &activation);
   void LayerAddFlatten(fetch::vm::Ptr<fetch::vm::String> const &layer);
+
+  void LayerAddDropout(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                       math::DataType const &                   probability);
 
 private:
   ModelPtrType       model_;
