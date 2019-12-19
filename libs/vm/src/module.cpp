@@ -327,11 +327,11 @@ Module::Module()
       .EnableIndexOperator(&IMap::GetIndexedValue, &IMap::SetIndexedValue);
 
   GetClassInterface<IPair>()
-      .CreateConstructor(&IPair::Constructor, vm::MAXIMUM_CHARGE)
-      .CreateMemberFunction("first", &IPair::GetFirst, vm::MAXIMUM_CHARGE)
-      .CreateMemberFunction("second", &IPair::GetSecond, vm::MAXIMUM_CHARGE)
-      .CreateMemberFunction("first", &IPair::SetFirst, vm::MAXIMUM_CHARGE)
-      .CreateMemberFunction("second", &IPair::SetSecond, vm::MAXIMUM_CHARGE);
+      .CreateConstructor(&IPair::Constructor)
+      .CreateMemberFunction("first", &IPair::GetFirst)
+      .CreateMemberFunction("second", &IPair::GetSecond)
+      .CreateMemberFunction("first", &IPair::SetFirst)
+      .CreateMemberFunction("second", &IPair::SetSecond);
 
   GetClassInterface<Address>()
       .CreateSerializeDefaultConstructor(&Address::Constructor)

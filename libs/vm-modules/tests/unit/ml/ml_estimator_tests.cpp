@@ -61,18 +61,6 @@ TEST_F(VMMLEstimatorTests, vmdataloader_constructor_have_infinite_charge)
   EXPECT_FALSE(toolkit.Run());
 }
 
-TEST_F(VMMLEstimatorTests, vmdtrainingpair_constructor_have_infinite_charge)
-{
-  static constexpr char const *TEXT = R"(
-    function main()
-      var training_pair = Pair<Tensor,Array<Tensor>>();
-    endfunction
-  )";
-
-  EXPECT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
-  EXPECT_FALSE(toolkit.Run());
-}
-
 TEST_F(VMMLEstimatorTests, vmdstatedict_constructor_have_infinite_charge)
 {
   static constexpr char const *TEXT = R"(

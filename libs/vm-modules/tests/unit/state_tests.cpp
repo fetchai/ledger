@@ -114,13 +114,45 @@ TEST_F(StateTests, MapDeserializeTest)
   EXPECT_TRUE(static_cast<bool>(map));
 }
 
-TEST_F(StateTests, PairDeserializeTest)
+TEST_F(StateTests, PairDeserializeBothTest)
 {
   static char const *ser_src = R"(
     function main()
       var data = Pair<String, String>();
       data.first("First");
       data.second("Second");
+      var state = State<Pair<String, String>>("pair");
+      state.set(data);
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Write("pair", _, _));
+
+  ASSERT_TRUE(toolkit.Compile(ser_src));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *deser_src = R"(
+    function main() : Pair<String, String>
+      var state = State<Pair<String, String>>("pair");
+      return state.get(Pair<String, String>());
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Exists("pair"));
+  EXPECT_CALL(toolkit.observer(), Read("pair", _, _));
+
+  ASSERT_TRUE(toolkit.Compile(deser_src));
+  Variant ret;
+  ASSERT_TRUE(toolkit.Run(&ret));
+  auto const pair{ret.Get<Ptr<IPair>>()};
+  EXPECT_TRUE(static_cast<bool>(pair));
+}
+
+TEST_F(StateTests, PairDeserializeNoneTest)
+{
+  static char const *ser_src = R"(
+    function main()
+      var data = Pair<String, String>();
       var state = State<Pair<String, String>>("pair");
       state.set(data);
     endfunction

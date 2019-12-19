@@ -56,6 +56,7 @@ struct Pair : public IPair
   Pair(VM *vm, TypeId type_id)
     : IPair(vm, type_id)
   {}
+
   ~Pair() override = default;
 
   TemplateParameter1 GetFirst() override
@@ -83,7 +84,26 @@ struct Pair : public IPair
   bool SerializeTo(MsgPackSerializer &buffer) override
   {
     auto constructor = buffer.NewPairConstructor();
-    auto pair_ser    = constructor(1);
+
+    uint64_t val = 0;
+    if (pair.first.object != nullptr)
+    {
+      val = 1;
+    }
+
+    if (pair.second.object != nullptr)
+    {
+      if (val == 1)
+      {
+        val = 2;
+      }
+      else
+      {
+        val = 3;
+      }
+    }
+
+    auto pair_ser = constructor(val);
 
     auto const &v = pair;
 
@@ -95,9 +115,14 @@ struct Pair : public IPair
       return SerializeElement<SecondType>(serializer, v.second);
     };
 
-    if (!pair_ser.AppendUsingFunction(f1, f2))
+    if (val == 1 || val == 3)
     {
-      return false;
+      pair_ser.AppendFirst(f1);
+    }
+
+    if (val == 2 || val == 3)
+    {
+      pair_ser.AppendSecond(f2);
     }
 
     return true;
@@ -121,13 +146,17 @@ struct Pair : public IPair
       return DeserializeElement<SecondType>(second_type_id, serializer, second);
     };
 
-    if (!pair_ser.GetPairUsingFunction(f1, f2))
+    if (pair_ser.size() == 1 || pair_ser.size() == 3)
     {
-      return false;
+      pair_ser.GetFirstUsingFunction(f1);
+      pair.first = first;
     }
 
-    pair.first  = first;
-    pair.second = second;
+    if (pair_ser.size() == 2 || pair_ser.size() == 3)
+    {
+      pair_ser.GetSecondUsingFunction(f2);
+      pair.second = second;
+    }
 
     return true;
   }
