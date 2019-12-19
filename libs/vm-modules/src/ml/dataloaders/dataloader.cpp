@@ -25,8 +25,8 @@
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "vm/array.hpp"
 #include "vm/module.hpp"
+#include "vm/pair.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
-#include "vm_modules/ml/training_pair.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -168,12 +168,25 @@ void VMDataLoader::AddTensorData(
 }
 
 // TODO(issue 1692): Simplify Array<Tensor> construction
-Ptr<VMTrainingPair> VMDataLoader::GetNext()
+vm::Ptr<vm::Pair<vm::Ptr<math::VMTensor>,
+                 vm::Ptr<fetch::vm::Array<vm::Ptr<fetch::vm_modules::math::VMTensor>>>>>
+VMDataLoader::GetNext()
 {
+  // Get pair from loader
   std::pair<fetch::math::Tensor<DataType>, std::vector<fetch::math::Tensor<DataType>>> next =
       loader_->GetNext();
 
-  auto first  = this->vm_->CreateNewObject<math::VMTensor>(next.first);
+  // Create VMPair
+  auto dataHolder = this->vm_->CreateNewObject<
+      vm::Pair<vm::Ptr<math::VMTensor>,
+               vm::Ptr<fetch::vm::Array<vm::Ptr<fetch::vm_modules::math::VMTensor>>>>>();
+
+  // Create and set VMPair.first
+  auto               first = this->vm_->CreateNewObject<math::VMTensor>(next.first);
+  TemplateParameter1 t_first(first, first->GetTypeId());
+  dataHolder->SetFirst(t_first);
+
+  // Create and set VMPair.second
   auto second = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(0));
 
   auto second_vector =
@@ -194,7 +207,8 @@ Ptr<VMTrainingPair> VMDataLoader::GetNext()
     second_vector->SetIndexedValue(index, element);
   }
 
-  auto dataHolder = this->vm_->CreateNewObject<VMTrainingPair>(first, second_vector);
+  TemplateParameter2 t_second(second_vector, second_vector->GetTypeId());
+  dataHolder->SetSecond(t_second);
 
   return dataHolder;
 }

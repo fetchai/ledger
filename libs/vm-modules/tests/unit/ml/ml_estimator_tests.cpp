@@ -20,7 +20,6 @@
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
-#include "vm_modules/ml/training_pair.hpp"
 #include "vm_test_toolkit.hpp"
 
 namespace {
@@ -66,7 +65,9 @@ TEST_F(VMMLEstimatorTests, vmdtrainingpair_constructor_have_infinite_charge)
 {
   static constexpr char const *TEXT = R"(
     function main()
-      var training_pair = TrainingPair(Tensor(Array<UInt64>(1)), Array<Tensor>(1));
+      var training_pair = Pair<Tensor,Array<Tensor>>();
+      training_pair.first(Tensor(Array<UInt64>(1));
+      training_pair.second(Array<Tensor>(1));
     endfunction
   )";
 
