@@ -372,6 +372,8 @@ private:
   telemetry::GaugePtr<uint64_t> block_hash_;
   telemetry::GaugePtr<uint64_t> total_time_to_create_block_;
   telemetry::GaugePtr<uint64_t> current_block_weight_;
+  telemetry::GaugePtr<uint64_t> last_block_interval_s_;
+  telemetry::GaugePtr<uint64_t> current_block_coord_state_;
   /// @}
 };
 
