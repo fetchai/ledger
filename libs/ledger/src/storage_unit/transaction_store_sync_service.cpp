@@ -394,9 +394,9 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
           connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_SPECIFIC_OBJECTS,
           digests));
 
-      for (auto const &digest : digests)
+      for (auto const &digest_to_print : digests)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Requested missing TX: ", digest.ToBase64());
+        FETCH_LOG_INFO(LOGGING_NAME, "Requested missing TX: ", digest_to_print.ToBase64());
       }
 
       pending_objects_.Add(connection, p2);
