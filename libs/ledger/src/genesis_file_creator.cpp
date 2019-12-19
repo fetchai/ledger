@@ -72,14 +72,11 @@ enum class FileReadStatus
  * @param file_path The path to be read
  * @return true if successful, otherwise false
  */
-FileReadStatus LoadFromFile(JSONDocument &document, std::string const &file_path)
+FileReadStatus ParseDocument(JSONDocument &document, ConstByteArray const &contents)
 {
   FileReadStatus status{FileReadStatus::FAILURE};
 
-  // attempt to read the contents of the file
-  auto const buffer = core::ReadContentsOfFile(file_path.c_str());
-
-  if (buffer.empty())
+  if (contents.empty())
   {
     status = FileReadStatus::FILE_NOT_PRESENT;
   }
@@ -87,7 +84,7 @@ FileReadStatus LoadFromFile(JSONDocument &document, std::string const &file_path
   {
     try
     {
-      document.Parse(buffer);
+      document.Parse(contents);
 
       status = FileReadStatus::SUCCESS;
     }
@@ -116,9 +113,9 @@ GenesisFileCreator::GenesisFileCreator(StorageUnitInterface &storage_unit,
  *
  * @param name The path to the file to be loaded
  */
-GenesisFileCreator::Result GenesisFileCreator::LoadFile(std::string const &  path,
-                                                        bool                 proof_of_stake,
-                                                        ConsensusParameters &params)
+GenesisFileCreator::Result GenesisFileCreator::LoadContents(ConstByteArray const &contents,
+                                                            bool                  proof_of_stake,
+                                                            ConsensusParameters & params)
 {
   // Perform a check as to whether we have installed genesis before
   {
@@ -146,7 +143,8 @@ GenesisFileCreator::Result GenesisFileCreator::LoadFile(std::string const &  pat
   storage_unit_.Reset();
 
   json::JSONDocument doc{};
-  auto const         status = LoadFromFile(doc, path);
+
+  auto const status = ParseDocument(doc, contents);
 
   bool success{false};
   if ((!proof_of_stake) && (status == FileReadStatus::FILE_NOT_PRESENT))
@@ -158,8 +156,6 @@ GenesisFileCreator::Result GenesisFileCreator::LoadFile(std::string const &  pat
   }
   else if (status == FileReadStatus::SUCCESS)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis initial file: ", path);
-
     // check the version
     int        version{0};
     bool const is_correct_version =

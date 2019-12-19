@@ -741,7 +741,7 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &input)
   {
-    std::map<K,V> const ordered_map{input.begin(), input.end()};
+    std::map<K, V> const ordered_map{input.begin(), input.end()};
 
     auto map = map_constructor(input.size());
     for (auto &v : ordered_map)

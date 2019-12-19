@@ -40,7 +40,7 @@ TEST(RoutingTests, DISABLED_DesiredTableAfterReboot)
     for (uint64_t idx = 0; idx < N; ++idx)
     {
       fetch::muddle::KademliaTable table(FakeAddress(10), fetch::muddle::NetworkId("TEST"));
-      table.SetCacheFile("peer_table" + std::to_string(idx) + ".cache", false);
+      table.SetCacheFile("peer_table" + std::to_string(idx) + ".cache.db", false);
       table.Dump();
     }
   }

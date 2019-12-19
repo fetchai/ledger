@@ -105,10 +105,10 @@ private:
   double   threshold_        = 0.51;
 
   // Consensus' view on the heaviest block etc.
-  Block  current_block_;
-  Block  previous_block_;
-  Block  beginning_of_aeon_;
-  Digest last_triggered_cabinet_;
+  Block         current_block_;
+  Block         previous_block_;
+  Block         beginning_of_aeon_;
+  Digest        last_triggered_cabinet_;
   mutable Mutex mutex_;
 
   uint64_t       default_start_time_ = 0;
@@ -119,11 +119,11 @@ private:
 
   CabinetPtr GetCabinet(Block const &previous) const;
 
-  bool               ValidBlockTiming(Block const &previous, Block const &proposed) const;
-  bool               ShouldTriggerNewCabinet(Block const &block);
-  bool               EnoughQualSigned(Block const &previous, Block const &current) const;
-  uint32_t           GetThreshold(Block const &block) const;
-  void               AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
+  bool     ValidBlockTiming(Block const &previous, Block const &proposed) const;
+  bool     ShouldTriggerNewCabinet(Block const &block);
+  bool     EnoughQualSigned(Block const &previous, Block const &current) const;
+  uint32_t GetThreshold(Block const &block) const;
+  void     AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
 };
 
 }  // namespace ledger

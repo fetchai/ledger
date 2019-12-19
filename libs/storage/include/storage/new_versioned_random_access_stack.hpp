@@ -360,7 +360,6 @@ public:
       history_.Push(HistorySet{i, old_data}, HistorySet::value);
       stack_.Set(i, object);
     }
-
   }
 
   uint64_t Push(type const &object)
