@@ -28,7 +28,7 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
   : messenger_endpoint_{messenger_muddle->GetEndpoint()}
   , messenger_protocol_{this}
   , mailbox_{mailbox}
-  , advertisement_register_{std::make_shared<ModelAdvertisementRegister>()}
+  , advertisement_register_{std::make_shared<AdvertisementRegister>()}
   , semantic_search_module_{SemanticSearchModule::New(advertisement_register_)}
 {
   rpc_server_ = std::make_shared<Server>(messenger_endpoint_, SERVICE_MESSENGER, CHANNEL_RPC);
