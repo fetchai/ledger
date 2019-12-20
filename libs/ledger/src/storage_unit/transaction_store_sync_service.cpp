@@ -372,7 +372,11 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
     {
       auto p1 = PromiseOfTxList(client_->CallSpecificAddress(
           connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_OBJECTS));
-      pending_objects_.Add(connection, p1);
+      if (!pending_objects_.Add(connection, p1))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to add promise of transactions to queue");
+      }
+
       FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": Periodically requesting recent TXs");
     }
 
@@ -384,7 +388,11 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
       auto p2 = PromiseOfTxList(client_->CallSpecificAddress(
           connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_SPECIFIC_OBJECTS,
           digests));
-      pending_objects_.Add(connection, p2);
+      if (!pending_objects_.Add(connection, p2))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Failed to add promise of transactions to queue - call specific");
+      }
     }
   }
 
