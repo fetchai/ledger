@@ -175,10 +175,12 @@ TEST_F(UInt256Tests, uint256_raw_comparisons)
   EXPECT_TRUE(zero.IsNotEqual(lesser, greater));
   EXPECT_TRUE(zero.IsGreaterThan(greater, lesser));
   EXPECT_TRUE(zero.IsLessThan(lesser, greater));
+  EXPECT_TRUE(zero.IsLessThanOrEqual(lesser, greater));
 
   EXPECT_FALSE(zero.IsEqual(lesser, greater));
   EXPECT_FALSE(zero.IsGreaterThan(lesser, greater));
   EXPECT_FALSE(zero.IsGreaterThan(lesser, lesser));
+  EXPECT_FALSE(zero.IsGreaterThanOrEqual(lesser, lesser));
   EXPECT_FALSE(zero.IsLessThan(lesser, lesser));
   EXPECT_FALSE(zero.IsLessThan(greater, lesser));
 }
@@ -212,6 +214,8 @@ TEST_F(UInt256Tests, uint256_comparisons)
 
       assert(smaller < bigger, "1<2 is false!");
       assert((smaller > bigger) == false, "1>2 is true!");
+      assert(smaller <= bigger, "1<=2 is false!");
+      assert((smaller >= bigger) == false, "1>=2 is true!");
       assert(smaller != bigger, "1!=2 is false!");
       assert((smaller == bigger) == false, "1==2 is true!");
     endfunction
@@ -475,7 +479,6 @@ TEST_F(UInt256Tests, uint256_type_casts)
   EXPECT_TRUE(toolkit.Run());
 }
 
-// Disabled until UInt256 constructor from bytearray fix/rework.
 TEST_F(UInt256Tests, uint256_to_string)
 {
   static constexpr char const *TEXT = R"(
