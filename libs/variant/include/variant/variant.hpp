@@ -153,7 +153,7 @@ public:
   template <typename T>
   math::meta::IfIsFixedPoint<T, Variant &> operator=(T const &value);  // NOLINT
   template <typename T>
-  meta::IfIsAByteArray<T, Variant &> operator=(T const &value);  // NOLINT
+  meta::IfIsAByteArray<meta::Decay<T>, Variant &> operator=(T &&value);  // NOLINT
   template <typename T>
   meta::IfIsStdString<T, Variant &> operator=(T const &value);  // NOLINT
   Variant &                         operator=(char const *value);
@@ -520,10 +520,10 @@ math::meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)  // 
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsAByteArray<T, Variant &> Variant::operator=(T const &value)  // NOLINT
+meta::IfIsAByteArray<meta::Decay<T>, Variant &> Variant::operator=(T &&value)  // NOLINT
 {
   type_   = Type::STRING;
-  string_ = value;
+  string_ = std::forward<T>(value);
 
   return *this;
 }

@@ -64,7 +64,8 @@ int main(int argc, char **argv)
 
     // These don't!
     SizeType negative_sample_size = 5;  // number of negative sample per word-context pair
-    DataType freq_thresh{1e-3f};        // frequency threshold for subsampling
+    DataType freq_thresh =
+        fetch::math::Type<DataType>("0.001");  // frequency threshold for subsampling
 
     GraphW2VLoader<TensorType> data_loader(window_size, negative_sample_size, freq_thresh,
                                            max_word_count);

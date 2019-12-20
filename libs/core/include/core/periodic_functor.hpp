@@ -34,8 +34,9 @@ public:
 
   // Construction / Destruction
   template <typename Class>
-  PeriodicFunctor(Duration const &interval, Class *instance, void (Class::*member_function)());
-  PeriodicFunctor(Duration const &interval, Callback callback);
+  PeriodicFunctor(std::string const &name, Duration const &interval, Class *instance,
+                  void (Class::*member_function)());
+  PeriodicFunctor(std::string const &name, Duration const &interval, Callback callback);
   PeriodicFunctor(PeriodicFunctor const &) = delete;
   PeriodicFunctor(PeriodicFunctor &&)      = delete;
   ~PeriodicFunctor() override              = default;
@@ -51,9 +52,10 @@ private:
 };
 
 template <typename Class>
-PeriodicFunctor::PeriodicFunctor(Duration const &interval, Class *instance,
+PeriodicFunctor::PeriodicFunctor(std::string const &name, Duration const &interval, Class *instance,
                                  void (Class::*member_function)())
-  : PeriodicFunctor(interval, [instance, member_function]() { (instance->*member_function)(); })
+  : PeriodicFunctor(name, interval,
+                    [instance, member_function]() { (instance->*member_function)(); })
 {}
 
 }  // namespace core

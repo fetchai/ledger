@@ -39,11 +39,27 @@ std::string const ADD_INVALID_LAYER_TEST_SOURCE = R"(
     endfunction
   )";
 
+std::string const ADD_VALID_LAYER_TEST_SOURCE = R"(
+    function main()
+      var model = Model("sequential");
+      <<TOKEN>>
+      model.compile("scel", "adam");
+    endfunction
+  )";
+
 class VMModelTests : public ::testing::Test
 {
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
+
+  void TestValidLayerAdding(std::string const &test_case_source)
+  {
+    std::string const src =
+        std::regex_replace(ADD_VALID_LAYER_TEST_SOURCE, std::regex("<<TOKEN>>"), test_case_source);
+    ASSERT_TRUE(toolkit.Compile(src));
+    ASSERT_TRUE(toolkit.Run());
+  }
 
   void TestInvalidLayerAdding(std::string const &test_case_source)
   {
@@ -373,6 +389,52 @@ TEST_F(VMModelTests, model_init_with_wrong_name)
   EXPECT_FALSE(toolkit.Run());
 }
 
+TEST_F(VMModelTests, model_add_dense_noact)
+{
+  TestValidLayerAdding(R"(model.add("dense", 10u64, 10u64);)");
+}
+
+TEST_F(VMModelTests, model_add_dense_relu)
+{
+  TestValidLayerAdding(R"(model.add("dense", 10u64, 10u64, "relu");)");
+}
+
+// Disabled until implementation of AddLayerConv estimator
+TEST_F(VMModelTests, DISABLED_model_add_conv1d_noact)
+{
+  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64);)");
+}
+
+// Disabled until implementation of AddLayerConv estimator
+TEST_F(VMModelTests, DISABLED_model_add_conv1d_relu)
+{
+  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)");
+}
+
+// Disabled until implementation of AddLayerConv estimator
+TEST_F(VMModelTests, DISABLED_model_add_conv2d_noact)
+{
+  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64);)");
+}
+
+// Disabled until implementation of AddLayerConv estimator
+TEST_F(VMModelTests, DISABLED_model_add_conv2d_relu)
+{
+  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)");
+}
+
+// Disabled until implementation of AddDropout estimator
+TEST_F(VMModelTests, DISABLED_model_add_dropout)
+{
+  TestValidLayerAdding(R"(model.add("dropout", 0.256fp64);)");
+}
+
+// Disabled until implementation of AddFlatten estimator
+TEST_F(VMModelTests, DISABLED_model_add_flatten)
+{
+  TestValidLayerAdding(R"(model.add("flatten");)");
+}
+
 TEST_F(VMModelTests, model_add_invalid_layer_type)
 {
   TestInvalidLayerAdding(R"(model.add("INVALID_LAYER_TYPE", 1u64, 1u64);)");
@@ -401,6 +463,11 @@ TEST_F(VMModelTests, model_add_conv_invalid_params_relu)
 TEST_F(VMModelTests, model_add_layers_invalid_activation_dense)
 {
   TestInvalidLayerAdding(R"(model.add("dense", 10u64, 10u64, "INVALID_ACTIVATION_DENSE");)");
+}
+
+TEST_F(VMModelTests, model_add_dropout_invalid_params)
+{
+  TestInvalidLayerAdding(R"(model.add("dropout", 10fp64);)");
 }
 
 TEST_F(VMModelTests, model_add_layers_invalid_activation_conv)
@@ -432,6 +499,11 @@ TEST_F(VMModelTests, model_uncompilable_add_layer__flatten_invalid_params)
 TEST_F(VMModelTests, model_uncompilable_add_layer__conv_invalid_params)
 {
   TestAddingUncompilableLayer(R"(model.add("conv1d", 0u64, 10fp32, 10u64, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_uncompilable_add_layer__dropout_invalid_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("dropout", 0u64);)");
 }
 
 TEST_F(VMModelTests, model_add_layer_to_non_sequential)
@@ -498,6 +570,7 @@ TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_wrong_optimizer)
   std::cout << "Testing non-Adam optimizer for a Simple model" << std::endl;
   EXPECT_FALSE(toolkit.Run());
 }
+
 TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_too_few_layer_shapes)
 {
   static char const *SIMPLE_1_HIDDEN_SRC = R"(
@@ -511,6 +584,55 @@ TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_too_few_layer_shapes
   ASSERT_TRUE(toolkit.Compile(SIMPLE_1_HIDDEN_SRC));
   std::cout << "Testing insufficient hidden layers quantity for a Simple model" << std::endl;
   EXPECT_FALSE(toolkit.Run());
+}
+
+// Disableduntil AddDropout estimator implementation
+TEST_F(VMModelTests, DISABLED_model_dropout_comparison)
+{
+  static char const *SOURCE = R"(
+    function main()
+        var dropouted_model = Model("sequential");
+        dropouted_model.add("dropout", 0.1fp64);
+        dropouted_model.compile("mse", "adam");
+
+        var reference_model = Model("sequential");
+        // Dropout with probability 0 acts as a simple connection
+        // between input layers and output layer; this workaround is needed
+        // because a sequential model with direct connection of inputs to
+        // outputs can not be compiled.
+        reference_model.add("dropout", 0.0fp64);
+        reference_model.compile("mse", "adam");
+
+        var shape = Array<UInt64>(3);
+        shape[0] = 25u64;
+        shape[1] = 25u64;
+        shape[2] = 1u64;
+        var x = Tensor(shape);
+
+        x.fillRandom();
+
+        var y = x.copy();
+        y += y;
+
+        var old_ref_loss = 0.0fp64;
+        for (i in 0:5)
+            dropouted_model.fit(x, y, 10u64);
+            reference_model.fit(x, y, 10u64);
+            var new_loss = dropouted_model.evaluate();
+            var new_ref_loss = reference_model.evaluate();
+
+            if (old_ref_loss == 0.0fp64)
+              old_ref_loss = new_ref_loss[0];
+            endif
+            assert(new_ref_loss[0] == old_ref_loss, "Model corrupts input data!");
+            assert(new_loss[0] != new_ref_loss[0], "Dropout did not change a layer output during training!");
+        endfor
+
+    endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  EXPECT_TRUE(toolkit.Run());
 }
 
 TEST_F(VMModelTests, model_compilation_sequential_from_layer_shapes)
@@ -997,6 +1119,230 @@ TEST_F(VMModelTests, DISABLED_model_sequential_flatten_1d_in_2d_out)
   auto const constructed_shape = tensor->shape();
   fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({1, 1});
   EXPECT_TRUE(constructed_shape == expected.shape());
+}
+
+TEST_F(VMModelTests, model_sequential_no_layers_with_metrics)
+{
+  static char const *SRC_METRIC = R"(
+        function main() : Array<Fixed64>
+          // set up data and labels
+          var data_shape = Array<UInt64>(2);
+          data_shape[0] = 10u64;
+          data_shape[1] = 250u64;
+          var label_shape = Array<UInt64>(2);
+          label_shape[0] = 7u64;
+          label_shape[1] = 250u64;
+          var data = Tensor(data_shape);
+          var label = Tensor(label_shape);
+
+          // set up model
+          var model = Model("sequential");
+          model.compile("scel", "adam", {"categorical accuracy"});
+
+          // train the model
+          model.fit(data, label, 32u64);
+
+          // evaluate
+          var mets = model.evaluate();
+          return mets;
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_sequential_no_layers)
+{
+  static char const *SEQUENTIAL_SRC = R"(
+        function main()
+          var model = Model("sequential");
+          model.compile("mse", "adam");
+        endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_sequential_multiple_compile)
+{
+  static char const *SEQUENTIAL_SRC = R"(
+        function main()
+          var model = Model("sequential");
+          model.add("dense", 10u64, 10u64, "relu");
+          model.compile("mse", "adam");
+          model.compile("scel", "adam");
+          model.compile("mse", "adam");
+        endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_sequential_add_after_compile)
+{
+  static char const *SEQUENTIAL_SRC = R"(
+      function main()
+         var model = Model("sequential");
+         model.add("dense", 10u64, 10u64, "relu");
+         model.compile("mse", "adam");
+         model.add("dense", 10u64, 1u64, "relu");
+         model.compile("mse", "adam");
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
+  EXPECT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_sequential_predict_before_fit)
+{
+  static char const *SEQUENTIAL_SRC = R"(
+      function main() : Array<Fixed64>
+        // set up data and labels
+        var data_shape = Array<UInt64>(2);
+        data_shape[0] = 10u64;
+        data_shape[1] = 250u64;
+        var label_shape = Array<UInt64>(2);
+        label_shape[0] = 7u64;
+        label_shape[1] = 250u64;
+        var data = Tensor(data_shape);
+        var label = Tensor(label_shape);
+
+        // set up model
+        var model = Model("sequential");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 7u64);
+        model.compile("scel", "adam", {"categorical accuracy"});
+
+        var prediction = model.predict(data);
+
+        // train the model
+        model.fit(data, label, 32u64);
+
+        // evaluate performance
+        var mets = model.evaluate();
+
+        return mets;
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_sequential_predict_bad_data)
+{
+  static char const *SEQUENTIAL_SRC = R"(
+      function main()
+        // set up malformed data tensor with shape 0,0
+        var data_shape = Array<UInt64>(2);
+        var data = Tensor(data_shape);
+
+        // set up model
+        var model = Model("sequential");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 7u64);
+        model.compile("mse", "adam", {"categorical accuracy"});
+
+        var prediction = model.predict(data);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_sequential_evaluate_without_fit)
+{
+  static char const *SEQUENTIAL_SRC = R"(
+      function main()
+        // set up model
+        var model = Model("sequential");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 7u64);
+        model.compile("mse", "adam", {"categorical accuracy"});
+
+        var prediction = model.evaluate();
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_sequential_fit_bad_data)
+{
+  static char const *SEQUENTIAL_SRC = R"(
+      function main()
+        // set up data and labels
+        var data_shape = Array<UInt64>(2);
+        var label_shape = Array<UInt64>(2);
+        var data = Tensor(data_shape);
+        var label = Tensor(label_shape);
+
+        // set up model
+        var model = Model("sequential");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 10u64, "relu");
+        model.add("dense", 10u64, 7u64);
+        model.compile("scel", "adam", {"categorical accuracy"});
+
+        model.fit(data, label, 32u64);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SEQUENTIAL_SRC));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_fit_and_refit)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          // set up data and labels
+          var data_shape = Array<UInt64>(2);
+          data_shape[0] = 10u64;
+          data_shape[1] = 250u64;
+          var label_shape = Array<UInt64>(2);
+          label_shape[0] = 7u64;
+          label_shape[1] = 250u64;
+          var data = Tensor(data_shape);
+          var label = Tensor(label_shape);
+
+          // set up model
+          var model = Model("sequential");
+          model.add("dense", 10u64, 10u64, "relu");
+          model.add("dense", 10u64, 7u64);
+          model.compile("scel", "adam");
+
+          // train the model
+          model.fit(data, label, 32u64);
+
+          // new data and labels
+          var data_shape2 = Array<UInt64>(2);
+          data_shape2[0] = 10u64;
+          data_shape2[1] = 123u64;
+          var label_shape2 = Array<UInt64>(2);
+          label_shape2[0] = 7u64;
+          label_shape2[1] = 123u64;
+          var data2 = Tensor(data_shape2);
+          var label2 = Tensor(label_shape2);
+
+          // train the model again
+          model.fit(data2, label2, 16u64);
+
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+
+  ASSERT_TRUE(toolkit.Run());
 }
 
 }  // namespace

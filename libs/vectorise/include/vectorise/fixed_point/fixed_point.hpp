@@ -333,9 +333,9 @@ public:
   FixedPoint const      operator++(int) &;
   FixedPoint const      operator--(int) &;
 
-  //////////////////////////////
-  /// math and bit operators ///
-  //////////////////////////////
+  /////////////////////////////////////////////////
+  /// math operators against FixedPoint objects ///
+  /////////////////////////////////////////////////
 
   constexpr FixedPoint  operator+(FixedPoint const &n) const;
   constexpr FixedPoint  operator-(FixedPoint const &n) const;
@@ -344,6 +344,8 @@ public:
   constexpr FixedPoint  operator&(FixedPoint const &n) const;
   constexpr FixedPoint  operator|(FixedPoint const &n) const;
   constexpr FixedPoint  operator^(FixedPoint const &n) const;
+  constexpr FixedPoint  operator>>(FixedPoint const &n) const;
+  constexpr FixedPoint  operator<<(FixedPoint const &n) const;
   constexpr FixedPoint &operator+=(FixedPoint const &n);
   constexpr FixedPoint &operator-=(FixedPoint const &n);
   constexpr FixedPoint &operator*=(FixedPoint const &n);
@@ -353,6 +355,11 @@ public:
   constexpr FixedPoint &operator^=(FixedPoint const &n);
   constexpr FixedPoint &operator>>=(FixedPoint const &n);
   constexpr FixedPoint &operator<<=(FixedPoint const &n);
+
+  /////////////////////////////////////////
+  /// math operators against primitives ///
+  /////////////////////////////////////////
+
   template <typename T>
   constexpr FixedPoint operator+(T const &n) const;
   template <typename T>
@@ -381,6 +388,8 @@ public:
   constexpr FixedPoint &operator*=(T const &n) const;
   template <typename T>
   constexpr FixedPoint &operator/=(T const &n) const;
+  constexpr FixedPoint  operator>>(int n) const;
+  constexpr FixedPoint  operator<<(int n) const;
   constexpr FixedPoint &operator<<=(int n);
   constexpr FixedPoint &operator>>=(int n);
 
@@ -1603,7 +1612,7 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::operator++(int) &
 {
   FixedPoint<I, F> result{*this};
-  ++result;
+  ++(*this);
   return result;
 }
 
@@ -1615,7 +1624,7 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::operator--(int) &
 {
   FixedPoint<I, F> result{*this};
-  --result;
+  --(*this);
   return result;
 }
 
@@ -1711,6 +1720,34 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator^(FixedPoint<I, F> const &n
 {
   FixedPoint t{*this};
   t ^= n;
+  return t;
+}
+
+/**
+ * Bitwise Shift right operator, does bitwise shift right of self as many bits as the integer part
+ * of the given FixedPoint object
+ * @param the given FixedPoint object to shift right
+ * @return the result of bitwise shift right operation of self
+ */
+template <uint16_t I, uint16_t F>
+constexpr FixedPoint<I, F> FixedPoint<I, F>::operator>>(FixedPoint<I, F> const &n) const
+{
+  FixedPoint t{*this};
+  t >>= n;
+  return t;
+}
+
+/**
+ * Bitwise Shift left operator, does bitwise shift left of self as many bits as the integer part of
+ * the given FixedPoint object
+ * @param the given FixedPoint object to shift left
+ * @return the bitwise shift left operation of self
+ */
+template <uint16_t I, uint16_t F>
+constexpr FixedPoint<I, F> FixedPoint<I, F>::operator<<(FixedPoint<I, F> const &n) const
+{
+  FixedPoint t{*this};
+  t <<= n;
   return t;
 }
 
@@ -2142,7 +2179,35 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator^(T const &n) const
 }
 
 /**
- * Shift right assignment operator, shift self object right as many bits as Integer() part of the
+ * Shift right assignment operator, shift self object right n bits
+ * given object
+ * @param the given object
+ * @return the result of the shift right operation
+ */
+template <uint16_t I, uint16_t F>
+constexpr FixedPoint<I, F> FixedPoint<I, F>::operator>>(int n) const
+{
+  FixedPoint t{*this};
+  t >>= n;
+  return t;
+}
+
+/**
+ * Shift left assignment operator, shift self object left n bits
+ * given object
+ * @param the given object
+ * @return the result of the shift left operation
+ */
+template <uint16_t I, uint16_t F>
+constexpr FixedPoint<I, F> FixedPoint<I, F>::operator<<(int n) const
+{
+  FixedPoint t{*this};
+  t <<= n;
+  return t;
+}
+
+/**
+ * Shift right assignment operator, shift self object right n bits
  * given object
  * @param the given object
  * @return the result of the shift right operation
@@ -2155,7 +2220,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator>>=(int n)
 }
 
 /**
- * Shift left assignment operator, shift self object left as many bits as Integer() part of the
+ * Shift left assignment operator, shift self object left n bits
  * given object
  * @param the given object
  * @return the result of the shift left operation
@@ -2165,6 +2230,52 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator<<=(int n)
 {
   data_ <<= n;
   return *this;
+}
+
+/////////////////////////////////////////////////////
+/// associative math operators against primitives ///
+/////////////////////////////////////////////////////
+
+template <uint16_t I, uint16_t F, typename T>
+inline FixedPoint<I, F> operator+(T const &a, FixedPoint<I, F> const &n)
+{
+  return n + a;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+FixedPoint<I, F> operator-(T const &a, FixedPoint<I, F> const &n)
+{
+  return FixedPoint<I, F>(a) - n;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+FixedPoint<I, F> operator*(T const &a, FixedPoint<I, F> const &n)
+{
+  return n * a;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+FixedPoint<I, F> operator/(T const &a, FixedPoint<I, F> const &n)
+{
+  return FixedPoint<I, F>(a) / n;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+FixedPoint<I, F> operator&(T const &a, FixedPoint<I, F> const &n)
+{
+  return n & a;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+FixedPoint<I, F> operator|(T const &a, FixedPoint<I, F> const &n)
+{
+  return n | a;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+FixedPoint<I, F> operator^(T const &a, FixedPoint<I, F> const &n)
+{
+  return n ^ a;
 }
 
 ///////////////////////////
