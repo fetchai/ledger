@@ -29,14 +29,14 @@ namespace semanticsearch {
 class VocabularyAdvertisement
 {
 public:
-  using Vocabulary          = std::shared_ptr<VocabularyInstance>;
-  using Index               = uint64_t;
-  using VocabularySchemaPtr = std::shared_ptr<ObjectSchemaField>;
-  using AgentId             = uint64_t;
-  using AgentIdSet          = std::set<AgentId>;
-  using AgentIdSetPtr       = std::shared_ptr<AgentIdSet>;
+  using Vocabulary           = std::shared_ptr<VocabularyInstance>;
+  using Index                = uint64_t;
+  using ObjectSchemaFieldPtr = std::shared_ptr<ObjectSchemaField>;
+  using AgentId              = uint64_t;
+  using AgentIdSet           = std::set<AgentId>;
+  using AgentIdSetPtr        = std::shared_ptr<AgentIdSet>;
 
-  explicit VocabularyAdvertisement(VocabularySchemaPtr const &vocabulary_schema)
+  explicit VocabularyAdvertisement(ObjectSchemaFieldPtr const &vocabulary_schema)
     : vocabulary_schema_(vocabulary_schema)
     , index_{static_cast<std::size_t>(vocabulary_schema->rank())}
   {}
@@ -51,14 +51,14 @@ public:
     return index_.Find(depth, std::move(position));
   }
 
-  VocabularySchemaPtr const &vocabulary_schema() const
+  ObjectSchemaFieldPtr const &vocabulary_schema() const
   {
     return vocabulary_schema_;
   }
 
 private:
-  VocabularySchemaPtr vocabulary_schema_;
-  InMemoryDBIndex     index_;
+  ObjectSchemaFieldPtr vocabulary_schema_;
+  InMemoryDBIndex      index_;
 };
 
 }  // namespace semanticsearch

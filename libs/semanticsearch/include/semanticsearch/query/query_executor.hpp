@@ -30,7 +30,7 @@ namespace semanticsearch {
 class QueryExecutor
 {
 public:
-  using VocabularySchemaPtr      = SemanticSearchModule::VocabularySchemaPtr;
+  using ObjectSchemaFieldPtr     = SemanticSearchModule::ObjectSchemaFieldPtr;
   using SchemaField              = SemanticSearchModule::SchemaField;
   using Token                    = fetch::byte_array::Token;
   using Vocabulary               = std::shared_ptr<VocabularyInstance>;

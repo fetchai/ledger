@@ -35,7 +35,7 @@ public:
 
   ModelAdvertisementRegister() = default;
 
-  bool        CreateModel(ModelIdentifier const &name, VocabularySchemaPtr const &object);
+  bool        CreateModel(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object);
   SharedModel GetAdvertisementModel(ModelIdentifier const &name);
   void AdvertiseAgent(AgentId aid, ModelIdentifier const &name, SemanticPosition const &position);
   AgentIdSetPtr FindAgents(ModelIdentifier const &name, SemanticPosition const &position,
@@ -43,10 +43,10 @@ public:
   AgentIdSetPtr FindAgents(ModelIdentifier const &name, Vocabulary const &object,
                            DepthParameterType depth);
 
-  void OnAddModel(ModelIdentifier const &name, VocabularySchemaPtr const &object) override;
+  void OnAddModel(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object) override;
 
 private:
-  bool CreateModelInternal(ModelIdentifier const &name, VocabularySchemaPtr const &object);
+  bool CreateModelInternal(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object);
 
   std::map<ModelIdentifier, SharedModel> model_advertisement_;
 };

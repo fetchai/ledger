@@ -169,10 +169,10 @@ public:
     return ret;
   }
 
-  using SchemaField         = std::shared_ptr<AbstractSchemaField>;
-  using VocabularySchemaPtr = std::shared_ptr<ObjectSchemaField>;
-  using Allocator           = std::function<void()>;
-  using AgentId             = AgentDirectory::AgentId;
+  using SchemaField          = std::shared_ptr<AbstractSchemaField>;
+  using ObjectSchemaFieldPtr = std::shared_ptr<ObjectSchemaField>;
+  using Allocator            = std::function<void()>;
+  using AgentId              = AgentDirectory::AgentId;
 
   template <typename T>
   using Reducer = std::function<SemanticPosition(T const &)>;
@@ -222,7 +222,7 @@ public:
     return proxy;
   }
 
-  void AddModel(ModelIdentifier const &name, VocabularySchemaPtr const &object)
+  void AddModel(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object)
   {
     advertisement_register_->AddModel(name, object);
     types_[name] = object;
@@ -249,7 +249,7 @@ public:
     return types_[name];
   }
 
-  VocabularySchemaPtr GetModel(ModelIdentifier const &name)
+  ObjectSchemaFieldPtr GetModel(ModelIdentifier const &name)
   {
     return advertisement_register_->GetModel(name);
   }

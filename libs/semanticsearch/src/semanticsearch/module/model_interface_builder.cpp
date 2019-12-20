@@ -25,7 +25,7 @@
 namespace fetch {
 namespace semanticsearch {
 
-SchemaBuilderInterface::SchemaBuilderInterface(VocabularySchemaPtr   model,
+SchemaBuilderInterface::SchemaBuilderInterface(ObjectSchemaFieldPtr  model,
                                                SemanticSearchModule *factory)
   : model_{std::move(model)}
   , factory_(factory)

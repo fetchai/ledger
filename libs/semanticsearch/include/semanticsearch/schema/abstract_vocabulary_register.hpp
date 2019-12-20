@@ -29,7 +29,7 @@ namespace semanticsearch {
 class AbstractModelRegister
 {
 public:
-  using VocabularySchemaPtr      = std::shared_ptr<ObjectSchemaField>;
+  using ObjectSchemaFieldPtr     = std::shared_ptr<ObjectSchemaField>;
   using AbstractModelRegisterPtr = std::shared_ptr<AbstractModelRegister>;
 
   /// Constructors and destructors
@@ -40,17 +40,17 @@ public:
 
   /// Register methods
   /// @{
-  void                AddModel(ModelIdentifier const &name, VocabularySchemaPtr const &object);
-  VocabularySchemaPtr GetModel(ModelIdentifier const &name);
-  bool                HasModel(ModelIdentifier const &name);
+  void                 AddModel(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object);
+  ObjectSchemaFieldPtr GetModel(ModelIdentifier const &name);
+  bool                 HasModel(ModelIdentifier const &name);
   /// @}
 
   /// Virtual event handlers
   /// @{
-  virtual void OnAddModel(ModelIdentifier const &name, VocabularySchemaPtr const &object) = 0;
+  virtual void OnAddModel(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object) = 0;
   /// @}
 private:
-  std::map<ModelIdentifier, VocabularySchemaPtr> models_;
+  std::map<ModelIdentifier, ObjectSchemaFieldPtr> models_;
 };
 
 }  // namespace semanticsearch

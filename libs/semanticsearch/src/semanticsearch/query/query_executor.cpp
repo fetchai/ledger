@@ -260,7 +260,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
           return nullptr;
         }
 
-        if (!model_obj->IsType<VocabularySchemaPtr>())
+        if (!model_obj->IsType<ObjectSchemaFieldPtr>())
         {
           error_tracker_.RaiseRuntimeError("Expected model to be schema.", model_obj->token());
           return nullptr;
@@ -274,7 +274,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
         }
 
         auto instance = instance_obj->As<Vocabulary>();
-        auto model    = model_obj->As<VocabularySchemaPtr>();
+        auto model    = model_obj->As<ObjectSchemaFieldPtr>();
 
         std::string error;
         if (!model->Validate(instance, error))
