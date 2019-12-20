@@ -85,25 +85,30 @@ struct Pair : public IPair
   {
     auto constructor = buffer.NewPairConstructor();
 
-    uint64_t val = 0;
+    // 0 = no element, 1 = first only, 2 = second only, 3 = both
+    uint64_t size{0};
+
+    // If first is available size is 1
     if (pair.first.object != nullptr)
     {
-      val = 1;
+      size = 1;
     }
 
     if (pair.second.object != nullptr)
     {
-      if (val == 1)
+      // If first was available size is be 3
+      if (size == 1)
       {
-        val = 3;
+        size = 3;
       }
+      // If only second is available size is 2
       else
       {
-        val = 2;
+        size = 2;
       }
     }
 
-    auto pair_ser = constructor(val);
+    auto pair_ser = constructor(size);
 
     auto const &v = pair;
 
@@ -115,14 +120,22 @@ struct Pair : public IPair
       return SerializeElement<SecondType>(serializer, v.second);
     };
 
-    if (val == 1 || val == 3)
+    // Append first if first or both are available
+    if (size == 1 || size == 3)
     {
-      pair_ser.AppendFirst(f1);
+      if (!pair_ser.AppendFirst(f1))
+      {
+        return false;
+      }
     }
 
-    if (val == 2 || val == 3)
+    // Append second if second or both are available
+    if (size == 2 || size == 3)
     {
-      pair_ser.AppendSecond(f2);
+      if (!pair_ser.AppendSecond(f2))
+      {
+        return false;
+      }
     }
 
     return true;
@@ -146,15 +159,26 @@ struct Pair : public IPair
       return DeserializeElement<SecondType>(second_type_id, serializer, second);
     };
 
+    if (pair_ser.size() > 3)
+    {
+      RuntimeError("Deserialised pair has wrong size");
+    }
+
     if (pair_ser.size() == 1 || pair_ser.size() == 3)
     {
-      pair_ser.GetFirstUsingFunction(f1);
+      if (!pair_ser.GetFirstUsingFunction(f1))
+      {
+        return false;
+      }
       pair.first = first;
     }
 
     if (pair_ser.size() == 2 || pair_ser.size() == 3)
     {
-      pair_ser.GetSecondUsingFunction(f2);
+      if (!pair_ser.GetSecondUsingFunction(f2))
+      {
+        return false;
+      }
       pair.second = second;
     }
 

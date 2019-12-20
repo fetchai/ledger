@@ -34,13 +34,6 @@ public:
     , size_{size}
   {}
 
-  template <typename F, typename S>
-  void Append(F const first, S const &second)
-  {
-    serializer_ << first;
-    serializer_ << second;
-  }
-
   bool AppendFirst(std::function<bool(Driver &)> first_serialize)
   {
     return first_serialize(serializer_);
@@ -57,7 +50,8 @@ public:
   }
 
 private:
-  Driver & serializer_;
+  Driver &serializer_;
+  // 0 = no element, 1 = first only, 2 = second only, 3 = both
   uint64_t size_{0};
 };
 
@@ -100,12 +94,6 @@ public:
     }
   }
 
-  template <typename F, typename S>
-  void GetPair(F &first, S &second)
-  {
-    serializer_ >> first >> second;
-  }
-
   bool GetFirstUsingFunction(std::function<bool(Driver &)> first_deserialize)
   {
     return first_deserialize(serializer_);
@@ -121,34 +109,14 @@ public:
     return size_;
   }
 
-  template <typename F>
-  void GetFirst(F &first)
-  {
-    if (first.object == nullptr)
-    {
-      throw SerializableException(std::string("First not initialised in pair"));
-    }
-    serializer_ >> first;
-  }
-
-  template <typename S>
-  void GetSecond(S &second)
-  {
-    if (second.object == nullptr)
-    {
-      throw SerializableException(std::string("Second not initialised in pair."));
-    }
-
-    serializer_ >> second;
-  }
-
   Driver &serializer()
   {
     return serializer_;
   }
 
 private:
-  Driver & serializer_;
+  Driver &serializer_;
+  // 0 = no element, 1 = first only, 2 = second only, 3 = both
   uint64_t size_{0};
 };
 
