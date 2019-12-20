@@ -61,13 +61,5 @@ SchemaBuilderInterface &SchemaBuilderInterface::Field(std::string const &name,
   return *this;
 }
 
-SchemaBuilderInterface SchemaBuilderInterface::ModelInstancePtr(std::string const &name)
-{
-  auto new_model = ObjectSchemaField::New();
-  model_->Insert(name, new_model);
-
-  return SchemaBuilderInterface(new_model, factory_);
-}
-
 }  // namespace semanticsearch
 }  // namespace fetch

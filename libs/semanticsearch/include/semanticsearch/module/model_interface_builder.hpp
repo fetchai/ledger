@@ -42,8 +42,6 @@ public:
   SchemaBuilderInterface &Field(std::string const &name, SchemaBuilderInterface proxy);
   SchemaBuilderInterface &Field(std::string const &name, SchemaField const &model);
 
-  SchemaBuilderInterface ModelInstancePtr(std::string const &name);
-
   ObjectSchemaFieldPtr const &schema() const
   {
     return model_;
