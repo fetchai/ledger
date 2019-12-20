@@ -973,7 +973,7 @@ void PeerTracker::Periodically()
 PeerTracker::PeerTracker(PeerTracker::Duration const &interval, core::Reactor &reactor,
                          MuddleRegister const &reg, PeerConnectionList &connections,
                          MuddleEndpoint &endpoint)
-  : core::PeriodicRunnable(interval)
+  : core::PeriodicRunnable("PeerTracker", interval)
   , logging_name_{GenerateLoggingName(endpoint.network_id())}
   , reactor_{reactor}
   , register_{reg}

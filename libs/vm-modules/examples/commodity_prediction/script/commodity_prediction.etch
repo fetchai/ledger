@@ -22,13 +22,6 @@ graph.addMeanSquareErrorLoss("Error", "softmax_3", "label");
 
 endfunction
 
-function read_weights(graph: Graph)
-// read in weights
-var state = State<StateDict>("foo");
-var new_sd = state.get();
-printLn("Loaded sd from state");
-graph.loadStateDict(new_sd);
-endfunction
 
 function main()
 
@@ -37,36 +30,40 @@ if (System.Argc() != 4)
   return;
 endif
 
-var loader = DataLoader();
-loader.addData("commodity", System.Argv(2), System.Argv(3));
+// LOAD THE DATA
+var train_data = readCSV(System.Argv(2));
+var train_labels = readCSV(System.Argv(3));
 
-var graph = Graph();
-build_graph(graph);
+var loader = DataLoader("tensor");
+loader.addData({train_data}, train_labels);
 
 var testing = true;
 
 if (testing)
-    read_weights(graph);
-    printLn("Weights read");
+    var state = State<Graph>("foo");
+    var graph = state.get();
+    printLn("Loaded graph from state");
     var pred_string = "";
     while(!loader.isDone())
         var input_data = loader.getNext();
-        graph.setInput("num_input", input_data.data());
+        graph.setInput("num_input", input_data.data()[0]);
         var pred = graph.evaluate("softmax_3");
         pred_string = pred.toString();
     endwhile
     print(pred_string);
     printLn("Finished successfully");
 else
+    var graph = Graph();
+    build_graph(graph);
     // Set up the optimiser
-    var optimiser = Optimiser("adam", graph, {"num_input"}, "softmax_3", "error");
+    var optimiser = Optimiser("adam", graph, loader, {"num_input"}, "softmax_3", "error");
 
     // Begin the training loop
     var training_iterations = 10;
     var batch_size = 64u64;
     var subset_size = (100u64 * 64u64);
     for(i in 0:training_iterations)
-        var loss = optimiser.run(loader, batch_size, subset_size);
+        var loss = optimiser.run(batch_size, subset_size);
         print("Current Loss: ");
         printLn(loss);
     endfor
