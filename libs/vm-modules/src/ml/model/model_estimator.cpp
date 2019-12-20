@@ -21,6 +21,7 @@
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm_modules/ml/model/model.hpp"
+#include "vm_modules/ml/model/model_estimator.hpp"
 
 #include <stdexcept>
 
@@ -146,7 +147,7 @@ ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType con
   FETCH_UNUSED(input_channels);
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
-  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+  return EXPERIMENTAL;
 }
 
 ChargeAmount ModelEstimator::LayerAddConvActivation(
@@ -165,7 +166,7 @@ ChargeAmount ModelEstimator::LayerAddConvActivation(
 ChargeAmount ModelEstimator::LayerAddFlatten(Ptr<fetch::vm::String> const &layer)
 {
   FETCH_UNUSED(layer);
-  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+  return return EXPERIMENTAL;
 }
 
 ChargeAmount ModelEstimator::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
@@ -309,6 +310,7 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
 ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,
                                            Ptr<Array<SizeType>> const &in_layers)
 {
+
   FETCH_UNUSED(optimiser);
   FETCH_UNUSED(in_layers);
   return MaximumCharge(optimiser->string() + NOT_IMPLEMENTED_MESSAGE);
@@ -468,6 +470,10 @@ ChargeAmount ModelEstimator::ToChargeAmount(fixed_point::fp64_t const &val)
   }
   return ret;
 }
+
+// Experimental charge
+const unsigned long DIVIDER                      = 10;
+const unsigned long ModelEstimator::EXPERIMENTAL = vm::MAXIMUM_CHARGE / DIVIDER;
 
 // AddLayer
 fixed_point::fp64_t const ModelEstimator::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF =

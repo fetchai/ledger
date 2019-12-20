@@ -116,6 +116,7 @@ public:
   static const fixed_point::fp64_t ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF;
   static const fixed_point::fp64_t ADD_DENSE_WEIGHTS_SIZE_COEF;
   static const fixed_point::fp64_t ADD_DENSE_CONST_COEF;
+  static const unsigned long       EXPERIMENTAL;
 
   // Compile
   static const fixed_point::fp64_t ADAM_PADDED_WEIGHTS_SIZE_COEF;
