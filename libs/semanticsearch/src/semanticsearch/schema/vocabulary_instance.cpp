@@ -56,7 +56,8 @@ ModelInstance::ModelInstancePtr &ModelInstance::operator[](std::string const &na
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {
-    throw std::runtime_error("ModelInstance index operator error: Vocabulary does not have keys");
+    throw std::runtime_error(
+        "ModelInstance index operator error: ModelInstancePtr does not have keys");
   }
 
   PropertyMap &map = *reinterpret_cast<PropertyMap *>(data_);
@@ -68,7 +69,8 @@ void ModelInstance::Insert(std::string const &name, ModelInstance::ModelInstance
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {
-    throw std::runtime_error("ModelInstance index operator error: Vocabulary does not have keys");
+    throw std::runtime_error(
+        "ModelInstance index operator error: ModelInstancePtr does not have keys");
   }
 
   PropertyMap &map = *reinterpret_cast<PropertyMap *>(data_);

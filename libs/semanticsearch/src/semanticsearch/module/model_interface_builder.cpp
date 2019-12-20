@@ -61,7 +61,7 @@ SchemaBuilderInterface &SchemaBuilderInterface::Field(std::string const &name,
   return *this;
 }
 
-SchemaBuilderInterface SchemaBuilderInterface::Vocabulary(std::string const &name)
+SchemaBuilderInterface SchemaBuilderInterface::ModelInstancePtr(std::string const &name)
 {
   auto new_model = ObjectSchemaField::New();
   model_->Insert(name, new_model);

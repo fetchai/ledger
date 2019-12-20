@@ -26,12 +26,12 @@ namespace semanticsearch {
 class ModelAdvertisementRegister : public AbstractModelRegister
 {
 public:
-  using Vocabulary                    = std::shared_ptr<ModelInstance>;
-  using ModelInstanceAdvertisementPtr = std::shared_ptr<VocabularyAdvertisement>;
+  using ModelInstancePtr              = std::shared_ptr<ModelInstance>;
+  using ModelInstanceAdvertisementPtr = std::shared_ptr<ModelInstanceAdvertisement>;
   using AbstractModelRegisterPtr      = AbstractModelRegister::AbstractModelRegisterPtr;
-  using Index                         = VocabularyAdvertisement::Index;
-  using AgentId                       = VocabularyAdvertisement::AgentId;
-  using AgentIdSetPtr                 = VocabularyAdvertisement::AgentIdSetPtr;
+  using Index                         = ModelInstanceAdvertisement::Index;
+  using AgentId                       = ModelInstanceAdvertisement::AgentId;
+  using AgentIdSetPtr                 = ModelInstanceAdvertisement::AgentIdSetPtr;
 
   ModelAdvertisementRegister() = default;
 
@@ -40,7 +40,7 @@ public:
   void AdvertiseAgent(AgentId aid, ModelIdentifier const &name, SemanticPosition const &position);
   AgentIdSetPtr FindAgents(ModelIdentifier const &name, SemanticPosition const &position,
                            DepthParameterType depth);
-  AgentIdSetPtr FindAgents(ModelIdentifier const &name, Vocabulary const &object,
+  AgentIdSetPtr FindAgents(ModelIdentifier const &name, ModelInstancePtr const &object,
                            DepthParameterType depth);
 
   void OnAddModel(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object) override;

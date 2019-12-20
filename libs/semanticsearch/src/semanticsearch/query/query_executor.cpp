@@ -90,11 +90,11 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
 
   std::size_t i = 0;
 
-  std::vector<QueryVariant> stack;
-  std::vector<Vocabulary>   scope_objects;
+  std::vector<QueryVariant>     stack;
+  std::vector<ModelInstancePtr> scope_objects;
 
-  Vocabulary last;
-  int        scope_depth = 0;
+  ModelInstancePtr last;
+  int              scope_depth = 0;
 
   try
   {
@@ -165,7 +165,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
         }
         else if (value->type() == Constants::TYPE_INSTANCE)
         {
-          object->Insert(name, value->As<Vocabulary>());
+          object->Insert(name, value->As<ModelInstancePtr>());
         }
         else
         {
@@ -266,14 +266,14 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
           return nullptr;
         }
 
-        if (!instance_obj->IsType<Vocabulary>())
+        if (!instance_obj->IsType<ModelInstancePtr>())
         {
           error_tracker_.RaiseRuntimeError("Expected right hand side to be an instance.",
                                            instance_obj->token());
           return nullptr;
         }
 
-        auto instance = instance_obj->As<Vocabulary>();
+        auto instance = instance_obj->As<ModelInstancePtr>();
         auto model    = model_obj->As<ObjectSchemaFieldPtr>();
 
         std::string error;
@@ -313,7 +313,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
         auto name = stack.back();
         stack.pop_back();
 
-        auto            instance = instance_obj->As<Vocabulary>();
+        auto            instance = instance_obj->As<ModelInstancePtr>();
         ModelIdentifier model_identifier;
         model_identifier.scope      = scope_;
         model_identifier.model_name = instance->model_name();
@@ -342,7 +342,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
         auto name = stack.back();
         stack.pop_back();
 
-        auto instance = instance_obj->As<Vocabulary>();
+        auto instance = instance_obj->As<ModelInstancePtr>();
 
         context_.Set(name->As<std::string>(), instance_obj, instance->model_name());
         break;
@@ -395,7 +395,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
         auto variant = stack.back();
         stack.pop_back();
 
-        if (!variant->IsType<Vocabulary>())
+        if (!variant->IsType<ModelInstancePtr>())
         {
           auto tok = x.token;
           if (i > 0)
@@ -403,11 +403,11 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
             tok = stmt[i - 1].token;
           }
 
-          error_tracker_.RaiseRuntimeError("Expected Vocabulary.", tok);
+          error_tracker_.RaiseRuntimeError("Expected ModelInstancePtr.", tok);
           return nullptr;
         }
 
-        auto            instance   = variant->As<Vocabulary>();
+        auto            instance   = variant->As<ModelInstancePtr>();
         auto            model_name = instance->model_name();
         ModelIdentifier model_identifier;
         model_identifier.scope      = scope_;
@@ -436,7 +436,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
         // TODO: Use lifetime and model identifier
 
         model->VisitFields(
-            [this, variant](std::string, std::string mname, Vocabulary obj) {
+            [this, variant](std::string, std::string mname, ModelInstancePtr obj) {
               ModelIdentifier mi;
               mi.scope      = scope_;
               mi.model_name = mname;
@@ -457,8 +457,9 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
 
               semantic_search_module_->advertisement_register()->AdvertiseAgent(agent_->id, mi,
                                                                                 position);
-              agent_->RegisterVocabularyLocation(mname,
-                                                 position);  // TODO: Update with model identifier
+              agent_->RegisterModelInstanceLocation(
+                  mname,
+                  position);  // TODO: Update with model identifier
             },
             instance);
 
@@ -481,9 +482,9 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
         model_identifier.scope = scope_;
 
         // Checking if it is a model instance
-        if (variant->IsType<Vocabulary>())
+        if (variant->IsType<ModelInstancePtr>())
         {
-          auto instance               = variant->As<Vocabulary>();
+          auto instance               = variant->As<ModelInstancePtr>();
           model_identifier.model_name = instance->model_name();
 
           if (!semantic_search_module_->HasModel(model_identifier))
@@ -774,11 +775,11 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
   return result;
 }  // namespace semanticsearch
 
-QueryExecutor::Vocabulary QueryExecutor::GetInstance(std::string const &name)
+QueryExecutor::ModelInstancePtr QueryExecutor::GetInstance(std::string const &name)
 {
   assert(context_.Has(name));
   auto var = context_.Get(name);
-  return var->As<Vocabulary>();
+  return var->As<ModelInstancePtr>();
 }
 
 QueryExecutor::AgentIdSetPtr QueryExecutor::ExecuteDefine(CompiledStatement const &stmt)

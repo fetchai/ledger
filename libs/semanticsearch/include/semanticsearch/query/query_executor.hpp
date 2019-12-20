@@ -33,15 +33,15 @@ public:
   using ObjectSchemaFieldPtr     = SemanticSearchModule::ObjectSchemaFieldPtr;
   using SchemaField              = SemanticSearchModule::SchemaField;
   using Token                    = fetch::byte_array::Token;
-  using Vocabulary               = std::shared_ptr<ModelInstance>;
+  using ModelInstancePtr         = std::shared_ptr<ModelInstance>;
   using AbstractModelRegisterPtr = AbstractModelRegister::AbstractModelRegisterPtr;
-  using AgentIdSet               = VocabularyAdvertisement::AgentIdSet;
-  using AgentIdSetPtr            = VocabularyAdvertisement::AgentIdSetPtr;
+  using AgentIdSet               = ModelInstanceAdvertisement::AgentIdSet;
+  using AgentIdSetPtr            = ModelInstanceAdvertisement::AgentIdSetPtr;
   using LocalNumbers             = std::unordered_map<uint64_t, SemanticCoordinateType>;
 
   QueryExecutor(SemanticSearchModulePtr instance, ErrorTracker &error_tracker);
-  AgentIdSetPtr Execute(Query const &query, Agent agent);
-  Vocabulary    GetInstance(std::string const &name);
+  AgentIdSetPtr    Execute(Query const &query, Agent agent);
+  ModelInstancePtr GetInstance(std::string const &name);
 
 private:
   using PropertyMap = std::map<std::string, std::shared_ptr<ModelInstance>>;

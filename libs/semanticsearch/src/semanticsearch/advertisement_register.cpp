@@ -57,7 +57,7 @@ ModelAdvertisementRegister::AgentIdSetPtr ModelAdvertisementRegister::FindAgents
 }
 
 ModelAdvertisementRegister::AgentIdSetPtr ModelAdvertisementRegister::FindAgents(
-    ModelIdentifier const &name, Vocabulary const &object, DepthParameterType depth)
+    ModelIdentifier const &name, ModelInstancePtr const &object, DepthParameterType depth)
 {
   auto ad_model = GetAdvertisementModel(name);
   auto position = ad_model->schema()->Reduce(object);
@@ -75,7 +75,7 @@ bool ModelAdvertisementRegister::CreateModelInternal(ModelIdentifier const &    
                                                      ObjectSchemaFieldPtr const &object)
 {
   assert(object != nullptr);
-  ModelInstanceAdvertisementPtr model = std::make_shared<VocabularyAdvertisement>(object);
+  ModelInstanceAdvertisementPtr model = std::make_shared<ModelInstanceAdvertisement>(object);
   model_advertisement_[name]          = model;
 
   return true;

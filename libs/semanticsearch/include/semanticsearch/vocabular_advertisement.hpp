@@ -26,17 +26,17 @@
 namespace fetch {
 namespace semanticsearch {
 
-class VocabularyAdvertisement
+class ModelInstanceAdvertisement
 {
 public:
-  using Vocabulary           = std::shared_ptr<ModelInstance>;
+  using ModelInstancePtr     = std::shared_ptr<ModelInstance>;
   using Index                = uint64_t;
   using ObjectSchemaFieldPtr = std::shared_ptr<ObjectSchemaField>;
   using AgentId              = uint64_t;
   using AgentIdSet           = std::set<AgentId>;
   using AgentIdSetPtr        = std::shared_ptr<AgentIdSet>;
 
-  explicit VocabularyAdvertisement(ObjectSchemaFieldPtr const &schema)
+  explicit ModelInstanceAdvertisement(ObjectSchemaFieldPtr const &schema)
     : schema_(schema)
     , index_{static_cast<std::size_t>(schema->rank())}
   {}

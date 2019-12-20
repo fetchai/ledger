@@ -30,13 +30,13 @@ namespace semanticsearch {
 class ObjectSchemaField : public AbstractSchemaField
 {
 public:
-  using Vocabulary = std::shared_ptr<ModelInstance>;
-  using Type       = std::map<std::string, Vocabulary>;
+  using ModelInstancePtr = std::shared_ptr<ModelInstance>;
+  using Type             = std::map<std::string, ModelInstancePtr>;
 
   using ModelInterface = std::shared_ptr<AbstractSchemaField>;
   using FieldModel     = std::shared_ptr<ObjectSchemaField>;
   using ModelMap       = std::map<std::string, ModelInterface>;
-  using FieldVisitor   = std::function<void(std::string, std::string, Vocabulary)>;
+  using FieldVisitor   = std::function<void(std::string, std::string, ModelInstancePtr)>;
   ObjectSchemaField(ObjectSchemaField const &) = delete;
   ObjectSchemaField &operator=(ObjectSchemaField const &) = delete;
 
@@ -47,7 +47,7 @@ public:
     return ret;
   }
 
-  SemanticPosition Reduce(Vocabulary const &v) override
+  SemanticPosition Reduce(ModelInstancePtr const &v) override
   {
     SemanticPosition ret{};
     if (std::type_index(typeid(Type)) != v->type())
@@ -77,7 +77,7 @@ public:
     return ret;
   }
 
-  bool Validate(Vocabulary const &v, std::string &error) override
+  bool Validate(ModelInstancePtr const &v, std::string &error) override
   {
     if (std::type_index(typeid(Type)) != v->type())
     {
@@ -119,7 +119,7 @@ public:
     return rank_;
   }
 
-  bool VisitFields(FieldVisitor callback, Vocabulary obj, std::string name = "") override
+  bool VisitFields(FieldVisitor callback, ModelInstancePtr obj, std::string name = "") override
   {
 
     if (type() != obj->type())

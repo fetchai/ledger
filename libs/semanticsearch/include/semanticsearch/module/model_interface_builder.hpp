@@ -42,7 +42,7 @@ public:
   SchemaBuilderInterface &Field(std::string const &name, SchemaBuilderInterface proxy);
   SchemaBuilderInterface &Field(std::string const &name, SchemaField const &model);
 
-  SchemaBuilderInterface Vocabulary(std::string const &name);
+  SchemaBuilderInterface ModelInstancePtr(std::string const &name);
 
   ObjectSchemaFieldPtr const &schema() const
   {
