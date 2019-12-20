@@ -479,8 +479,7 @@ TEST_F(VMModelTests, DISABLED_model_add_flatten)
   TestValidLayerAdding(R"(model.add("flatten");)");
 }
 
-// Disabled until implementation of AddActivation estimator
-TEST_F(VMModelTests, DISABLED_model_add_activation)
+TEST_F(VMModelTests, model_add_activation)
 {
   TestValidLayerAdding(R"(model.add("activation", "relu");)");
   TestValidLayerAdding(R"(model.add("activation", "leaky_relu");)");
@@ -1159,8 +1158,7 @@ TEST_F(VMModelTests, DISABLED_model_sequential_flatten_4d_in_2d_out)
   EXPECT_TRUE(constructed_shape == expected.shape());
 }
 
-// Disabled until implementation of AddActivation estimator
-TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_relu)
+TEST_F(VMModelTests, model_sequential_activation_layer_relu)
 {
   std::string const input = "-1000.0, -10.0, -1.0, -0.1, -0.0001; 0.0, 0.0001, 0.1, 1.0, 1000.0;";
   std::string const activation = "relu";
@@ -1169,8 +1167,7 @@ TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_relu)
   TestActivation(input, activation, result);
 }
 
-// Disabled until implementation of AddActivation estimator
-TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_leaky_relu)
+TEST_F(VMModelTests, model_sequential_activation_layer_leaky_relu)
 {
   std::string const input = "-1000.0, -10.0, -1.0, -0.1, -0.0001; 0.0, 0.0001, 0.1, 1.0, 1000.0;";
   std::string const activation = "leaky_relu";
@@ -1180,8 +1177,7 @@ TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_leaky_relu)
   TestActivation(input, activation, result);
 }
 
-// Disabled until implementation of AddActivation estimator
-TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_sigmoid)
+TEST_F(VMModelTests, model_sequential_activation_layer_sigmoid)
 {
   std::string const input = "-1000.0, -10.0, -1.0, -0.1, -0.0001; 0.0, 0.0001, 0.1, 1.0, 1000.0;";
   std::string const activation = "sigmoid";
@@ -1191,8 +1187,7 @@ TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_sigmoid)
   TestActivation(input, activation, result);
 }
 
-// Disabled until implementation of AddActivation estimator
-TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_log_sigmoid)
+TEST_F(VMModelTests, model_sequential_activation_layer_log_sigmoid)
 {
   std::string const input      = "1000.0, 10.0, 1.0, 0.1, 0.0001; 0.0, 0.0001, 0.1, 1.0, 1000.0;";
   std::string const activation = "log_sigmoid";
@@ -1202,8 +1197,7 @@ TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_log_sigmoid)
   TestActivation(input, activation, result);
 }
 
-// Disabled until implementation of AddActivation estimator
-TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_softmax)
+TEST_F(VMModelTests, model_sequential_activation_layer_softmax)
 {
   std::string const input = "-1000.0, -10.0, -1.0, -0.1, -0.0001; 0.0, 0.0001, 0.1, 1.0, 1000.0;";
   std::string const activation = "softmax";
@@ -1213,8 +1207,7 @@ TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_softmax)
   TestActivation(input, activation, result);
 }
 
-// Disabled until implementation of AddActivation estimator
-TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_log_softmax)
+TEST_F(VMModelTests, model_sequential_activation_layer_log_softmax)
 {
   std::string const input      = "11.0, 12.0, 13.0, 14.0, 15.0; 16.0, 17.0, 18.0, 19.0, 10.0";
   std::string const activation = "log_softmax";
@@ -1224,8 +1217,7 @@ TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_log_softmax)
   TestActivation(input, activation, result);
 }
 
-// Disabled until implementation of AddActivation estimator
-TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_gelu)
+TEST_F(VMModelTests, model_sequential_activation_layer_gelu)
 {
   std::string const input      = "0.0, 1.0, 2.0, 3.0, 4.0; 0.0, -1.0, -2.0, -3.0, -4.0;";
   std::string const activation = "gelu";

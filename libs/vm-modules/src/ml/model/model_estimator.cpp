@@ -179,10 +179,11 @@ ChargeAmount ModelEstimator::LayerAddDropout(const fetch::vm::Ptr<String> &layer
 ChargeAmount ModelEstimator::LayerAddActivation(const fetch::vm::Ptr<String> &layer,
                                                 const fetch::vm::Ptr<String> &activation)
 {
-  FETCH_UNUSED(layer || activation);
-  state_.forward_pass_cost += EXPERIMENTAL_LARGE_CHARGE;
-  state_.backward_pass_cost += EXPERIMENTAL_LARGE_CHARGE;
-  return EXPERIMENTAL_LARGE_CHARGE;
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(activation);
+  state_.forward_pass_cost += fixed_point::fp64_t{EXPERIMENTAL_LARGE_COST};
+  state_.backward_pass_cost += fixed_point::fp64_t{EXPERIMENTAL_LARGE_COST};
+  return EXPERIMENTAL_HUGE_CHARGE;
 }
 
 ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,

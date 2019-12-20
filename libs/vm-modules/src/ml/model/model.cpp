@@ -327,19 +327,20 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
   {
     module.GetClassInterface<VMModel>()
         .CreateMemberFunction("add", &VMModel::LayerAddConv,
-                              UseEstimator(&ModelEstimator::LayerAddConv))
+                              UseEstimator(&VMModel::ModelEstimator::LayerAddConv))
         .CreateMemberFunction("add", &VMModel::LayerAddConvActivation,
-                              UseEstimator(&ModelEstimator::LayerAddConvActivation))
+                              UseEstimator(&VMModel::ModelEstimator::LayerAddConvActivation))
         .CreateMemberFunction("add", &VMModel::LayerAddFlatten,
-                              UseEstimator(&ModelEstimator::LayerAddFlatten))
+                              UseEstimator(&VMModel::ModelEstimator::LayerAddFlatten))
         .CreateMemberFunction("add", &VMModel::LayerAddDropout,
-                              UseEstimator(&ModelEstimator::LayerAddDropout))
+                              UseEstimator(&VMModel::ModelEstimator::LayerAddDropout))
         .CreateMemberFunction("add", &VMModel::LayerAddActivation,
-                              UseEstimator(&ModelEstimator::LayerAddActivation))
+                              UseEstimator(&VMModel::ModelEstimator::LayerAddActivation))
         .CreateMemberFunction("compile", &VMModel::CompileSimple,
-                              UseEstimator(&ModelEstimator::CompileSimple))
-        .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
-                              UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental));
+                              UseEstimator(&VMModel::ModelEstimator::CompileSimple))
+        .CreateMemberFunction(
+            "addExperimental", &VMModel::LayerAddDenseActivationExperimental,
+            UseEstimator(&VMModel::ModelEstimator::LayerAddDenseActivationExperimental));
   }
 }
 
