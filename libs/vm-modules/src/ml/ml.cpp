@@ -23,7 +23,6 @@
 #include "vm_modules/ml/ml.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/optimisation/optimiser.hpp"
-#include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/ml/utilities/mnist_utilities.hpp"
 #include "vm_modules/ml/utilities/scaler.hpp"
 
@@ -39,7 +38,6 @@ void BindML(Module &module, bool const enable_experimental)
   math::VMTensor::Bind(module, enable_experimental);
 
   // ml fundamentals
-  VMStateDict::Bind(module, enable_experimental);
   VMGraph::Bind(module, enable_experimental);
 
   // dataloader
