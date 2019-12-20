@@ -29,8 +29,8 @@ namespace semanticsearch {
 class AbstractVocabularyRegister
 {
 public:
-  using VocabularySchemaPtr              = std::shared_ptr<ObjectSchemaField>;
-  using SharedAbstractVocabularyRegister = std::shared_ptr<AbstractVocabularyRegister>;
+  using VocabularySchemaPtr           = std::shared_ptr<ObjectSchemaField>;
+  using AbstractVocabularyRegisterPtr = std::shared_ptr<AbstractVocabularyRegister>;
 
   /// Constructors and destructors
   /// @{

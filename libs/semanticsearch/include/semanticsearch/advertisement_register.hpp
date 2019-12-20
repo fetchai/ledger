@@ -26,13 +26,12 @@ namespace semanticsearch {
 class AdvertisementRegister : public AbstractVocabularyRegister
 {
 public:
-  using Vocabulary  = std::shared_ptr<VocabularyInstance>;
-  using SharedModel = std::shared_ptr<VocabularyAdvertisement>;
-  using SharedAbstractVocabularyRegister =
-      AbstractVocabularyRegister::SharedAbstractVocabularyRegister;
-  using Index         = VocabularyAdvertisement::Index;
-  using AgentId       = VocabularyAdvertisement::AgentId;
-  using AgentIdSetPtr = VocabularyAdvertisement::AgentIdSetPtr;
+  using Vocabulary                    = std::shared_ptr<VocabularyInstance>;
+  using SharedModel                   = std::shared_ptr<VocabularyAdvertisement>;
+  using AbstractVocabularyRegisterPtr = AbstractVocabularyRegister::AbstractVocabularyRegisterPtr;
+  using Index                         = VocabularyAdvertisement::Index;
+  using AgentId                       = VocabularyAdvertisement::AgentId;
+  using AgentIdSetPtr                 = VocabularyAdvertisement::AgentIdSetPtr;
 
   AdvertisementRegister() = default;
 

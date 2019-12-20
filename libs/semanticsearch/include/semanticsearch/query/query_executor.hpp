@@ -30,15 +30,14 @@ namespace semanticsearch {
 class QueryExecutor
 {
 public:
-  using VocabularySchemaPtr = SemanticSearchModule::VocabularySchemaPtr;
-  using ModelField          = SemanticSearchModule::ModelField;
-  using Token               = fetch::byte_array::Token;
-  using Vocabulary          = std::shared_ptr<VocabularyInstance>;
-  using SharedAbstractVocabularyRegister =
-      AbstractVocabularyRegister::SharedAbstractVocabularyRegister;
-  using AgentIdSet    = VocabularyAdvertisement::AgentIdSet;
-  using AgentIdSetPtr = VocabularyAdvertisement::AgentIdSetPtr;
-  using LocalNumbers  = std::unordered_map<uint64_t, SemanticCoordinateType>;
+  using VocabularySchemaPtr           = SemanticSearchModule::VocabularySchemaPtr;
+  using ModelField                    = SemanticSearchModule::ModelField;
+  using Token                         = fetch::byte_array::Token;
+  using Vocabulary                    = std::shared_ptr<VocabularyInstance>;
+  using AbstractVocabularyRegisterPtr = AbstractVocabularyRegister::AbstractVocabularyRegisterPtr;
+  using AgentIdSet                    = VocabularyAdvertisement::AgentIdSet;
+  using AgentIdSetPtr                 = VocabularyAdvertisement::AgentIdSetPtr;
+  using LocalNumbers                  = std::unordered_map<uint64_t, SemanticCoordinateType>;
 
   QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &error_tracker);
   AgentIdSetPtr Execute(Query const &query, Agent agent);
