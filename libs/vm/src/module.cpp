@@ -23,6 +23,7 @@
 #include "vm/fixed.hpp"
 #include "vm/map.hpp"
 #include "vm/module.hpp"
+#include "vm/pair.hpp"
 #include "vm/sharded_state.hpp"
 #include "vm/state.hpp"
 #include "vm/string.hpp"
@@ -324,6 +325,13 @@ Module::Module()
       .CreateConstructor(&IMap::Constructor)
       .CreateMemberFunction("count", &IMap::Count)
       .EnableIndexOperator(&IMap::GetIndexedValue, &IMap::SetIndexedValue);
+
+  GetClassInterface<IPair>()
+      .CreateConstructor(&IPair::Constructor)
+      .CreateMemberFunction("first", &IPair::GetFirst)
+      .CreateMemberFunction("second", &IPair::GetSecond)
+      .CreateMemberFunction("first", &IPair::SetFirst)
+      .CreateMemberFunction("second", &IPair::SetSecond);
 
   GetClassInterface<Address>()
       .CreateSerializeDefaultConstructor(&Address::Constructor)

@@ -720,6 +720,9 @@ TYPED_TEST(BasicArithmeticTest, Addition)
   // The same for negative
   EXPECT_EQ(-almost_one - infinitesimal, m_one);
 
+  // Test associativity with primitives
+  EXPECT_EQ(two + 1.0, 2.0 + one);
+
   // Test post/pre increment operators
   TypeParam temp1 = one++;
   TypeParam temp2 = ++two;
@@ -760,6 +763,9 @@ TYPED_TEST(BasicArithmeticTest, Subtraction)
 
   EXPECT_EQ(almost_three - almost_two, one);
 
+  // Test associativity with primitives
+  EXPECT_EQ(two - 1.0, 2.0 - one);
+
   // Test post/pre decrement operators
   TypeParam temp1 = one--;
   TypeParam temp2 = --two;
@@ -771,7 +777,6 @@ TYPED_TEST(BasicArithmeticTest, Subtraction)
 
 TYPED_TEST(BasicArithmeticTest, Multiplication)
 {
-  // Positive
   TypeParam zero(0);
   TypeParam one(1);
   TypeParam two(2);
@@ -802,6 +807,9 @@ TYPED_TEST(BasicArithmeticTest, Multiplication)
   EXPECT_EQ(almost_one * almost_one, almost_one - infinitesimal);
   EXPECT_EQ(almost_one * infinitesimal, zero);
   EXPECT_EQ(huge * infinitesimal, small);
+
+  // Test associativity with primitives
+  EXPECT_EQ(two * 3.0, three * 2.0);
 }
 
 TYPED_TEST(BasicArithmeticTest, Division)
@@ -810,6 +818,7 @@ TYPED_TEST(BasicArithmeticTest, Division)
   TypeParam zero(0);
   TypeParam one(1);
   TypeParam two(2);
+  TypeParam three(3);
 
   EXPECT_EQ(static_cast<int>(two / one), 2);
   EXPECT_EQ(static_cast<float>(two / one), 2.0f);
@@ -835,6 +844,42 @@ TYPED_TEST(BasicArithmeticTest, Division)
   TypeParam::StateClear();
   EXPECT_TRUE(TypeParam::IsNaN(zero / zero));
   EXPECT_TRUE(TypeParam::IsStateNaN());
+
+  // Test associativity with primitives
+  EXPECT_EQ(three / 2.0, 3.0 / two);
+}
+
+template <typename T>
+class BitOperationsTest : public ::testing::Test
+{
+};
+TYPED_TEST_CASE(BitOperationsTest, FixedPointTypes);
+TYPED_TEST(BitOperationsTest, ShiftLeft)
+{
+  // Positive
+  TypeParam one{1};
+  TypeParam two{2};
+  TypeParam x{1.6519711627625};
+  TypeParam m_one{-1};
+
+  EXPECT_EQ(two * two, two << one);
+  EXPECT_EQ(x * 2, x << 1);
+  EXPECT_EQ(x * 2, x << x);  // Only uses the integer part
+  EXPECT_EQ(m_one * two, m_one << 1);
+}
+
+TYPED_TEST(BitOperationsTest, ShiftRight)
+{
+  // Positive
+  TypeParam one{1};
+  TypeParam two{2};
+  TypeParam x{1.6519711627625};
+  TypeParam m_one{-1};
+
+  EXPECT_EQ(two / two, two >> one);
+  EXPECT_EQ(x / 2, x >> 1);
+  EXPECT_EQ(x / 2, x >> x);  // Only uses the integer part
+  EXPECT_EQ(m_one / two, m_one >> 1);
 }
 
 template <typename T>
