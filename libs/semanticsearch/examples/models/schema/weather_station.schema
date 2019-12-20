@@ -37,12 +37,12 @@ instance g :  Position = {
 };
 
 vector q : WeatherStation = {
-  position : g, 
+  position : g,
   temperature: 2
 };
 
 vector z : WeatherStation = {
-  position : g, 
+  position : g,
   temperature: 2.001
 };
 
@@ -51,7 +51,7 @@ vector p : Position = {
   longitude: 1
 };
 
-find_agents q;
+find_agents g;
 find_agents (0.5 * 5.0)*(q - z) granularity 20 max_depth 2 limit 10;
 find_agents (0.5 * 5.0)*(q - z) max_depth 2 limit 10;
 find_agents (0.5 * 5.0)*(q - z) granularity 12 max_depth 5 limit 0;

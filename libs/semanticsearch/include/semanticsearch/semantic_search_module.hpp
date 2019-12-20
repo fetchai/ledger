@@ -363,7 +363,7 @@ private:
   KeywordRelation keyword_relation_{{"specification", {"version"}},
                                     {"using", {"version"}},
                                     {"find_agents", {"granularity", "limit", "max_depth"}},
-                                    {"advertise", {"until_block"}},
+                                    {"advertise", {"for"}},
                                     {"model", {}},
                                     {"instance", {}},
                                     {"vector", {}}};
@@ -376,7 +376,7 @@ private:
                                            {"instance", Properties::PROP_IS_OPERATOR},
                                            {"vector", Properties::PROP_IS_OPERATOR},
                                            {"find_agents", Properties::PROP_IS_OPERATOR},
-                                           {"until_block", Properties::PROP_IS_OPERATOR},
+                                           {"for", Properties::PROP_IS_OPERATOR},
                                            {"granularity", Properties::PROP_IS_OPERATOR},
                                            {"max_depth", Properties::PROP_IS_OPERATOR},
                                            {"limit", Properties::PROP_IS_OPERATOR}};
@@ -389,7 +389,7 @@ private:
                                 {"instance", Constants::STORE},
                                 {"vector", Constants::STORE_POSITION},
                                 {"find_agents", Constants::SEARCH},
-                                {"until_block", Constants::UNTIL},
+                                {"for", Constants::UNTIL},
                                 {"granularity", Constants::GRANULARITY},
                                 {"max_depth", Constants::MAX_DEPTH},
                                 {"limit", Constants::LIMIT}};
