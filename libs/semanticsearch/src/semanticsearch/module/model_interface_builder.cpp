@@ -25,19 +25,19 @@
 namespace fetch {
 namespace semanticsearch {
 
-ModelInterfaceBuilder::ModelInterfaceBuilder(VocabularySchemaPtr   model,
-                                             SemanticSearchModule *factory)
+SchemaBuilderInterface::SchemaBuilderInterface(VocabularySchemaPtr   model,
+                                               SemanticSearchModule *factory)
   : model_{std::move(model)}
   , factory_(factory)
 {}
 
-ModelInterfaceBuilder::operator bool() const
+SchemaBuilderInterface::operator bool() const
 {
   return model_ != nullptr;
 }
 
-ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &    name,
-                                                    ModelIdentifier const &type)
+SchemaBuilderInterface &SchemaBuilderInterface::Field(std::string const &    name,
+                                                      ModelIdentifier const &type)
 {
   assert(factory_);
   auto field_model = factory_->GetField(type);
@@ -45,28 +45,28 @@ ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &    name,
   return *this;
 }
 
-ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &   name,
-                                                    ModelInterfaceBuilder proxy)
+SchemaBuilderInterface &SchemaBuilderInterface::Field(std::string const &    name,
+                                                      SchemaBuilderInterface proxy)
 {
   assert(proxy.model_ != nullptr);
   model_->Insert(name, proxy.model_);
   return *this;
 }
 
-ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &name,
-                                                    ModelField const & model)
+SchemaBuilderInterface &SchemaBuilderInterface::Field(std::string const &name,
+                                                      ModelField const & model)
 {
   assert(model != nullptr);
   model_->Insert(name, model);
   return *this;
 }
 
-ModelInterfaceBuilder ModelInterfaceBuilder::Vocabulary(std::string const &name)
+SchemaBuilderInterface SchemaBuilderInterface::Vocabulary(std::string const &name)
 {
   auto new_model = ObjectSchemaField::New();
   model_->Insert(name, new_model);
 
-  return ModelInterfaceBuilder(new_model, factory_);
+  return SchemaBuilderInterface(new_model, factory_);
 }
 
 }  // namespace semanticsearch

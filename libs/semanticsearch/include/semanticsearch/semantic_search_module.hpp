@@ -43,10 +43,10 @@ namespace semanticsearch {
 class SemanticSearchModule
 {
 public:
-  using SharedSemanticSearchModule  = std::shared_ptr<SemanticSearchModule>;
-  using SharedAdvertisementRegister = std::shared_ptr<AdvertisementRegister>;
-  using ConstByteArray              = byte_array::ConstByteArray;
-  using Token                       = byte_array::Token;
+  using SharedSemanticSearchModule       = std::shared_ptr<SemanticSearchModule>;
+  using SharedModelAdvertisementRegister = std::shared_ptr<ModelAdvertisementRegister>;
+  using ConstByteArray                   = byte_array::ConstByteArray;
+  using Token                            = byte_array::Token;
   using KeywordRelation   = std::unordered_map<std::string, std::unordered_set<std::string>>;
   using KeywordProperties = std::unordered_map<std::string, uint64_t>;
   using KeywordTypes      = std::unordered_map<std::string, int32_t>;
@@ -87,7 +87,7 @@ public:
     return ret;
   }
 
-  static SharedSemanticSearchModule New(SharedAdvertisementRegister advertisement_register)
+  static SharedSemanticSearchModule New(SharedModelAdvertisementRegister advertisement_register)
   {
     auto ret =
         SharedSemanticSearchModule(new SemanticSearchModule(std::move(advertisement_register)));
@@ -207,15 +207,15 @@ public:
     return agent_directory_.GetAgent(pk);
   }
 
-  ModelInterfaceBuilder NewModel(ModelIdentifier const &name)
+  SchemaBuilderInterface NewModel(ModelIdentifier const &name)
   {
     auto model = ObjectSchemaField::New();
     advertisement_register_->AddModel(name, model);
     types_[name] = model;
-    return ModelInterfaceBuilder{model, this};
+    return SchemaBuilderInterface{model, this};
   }
 
-  ModelInterfaceBuilder NewModel(ModelIdentifier const &name, ModelInterfaceBuilder const &proxy)
+  SchemaBuilderInterface NewModel(ModelIdentifier const &name, SchemaBuilderInterface const &proxy)
   {
     advertisement_register_->AddModel(name, proxy.vocabulary_schema());
     types_[name] = proxy.vocabulary_schema();
@@ -228,10 +228,10 @@ public:
     types_[name] = object;
   }
 
-  ModelInterfaceBuilder NewProxy()
+  SchemaBuilderInterface NewProxy()
   {
     auto model = ObjectSchemaField::New();
-    return ModelInterfaceBuilder{model, this};
+    return SchemaBuilderInterface{model, this};
   }
 
   bool HasModel(ModelIdentifier const &name)
@@ -300,7 +300,7 @@ public:
     return functions_.find(name) != functions_.end();
   }
 
-  SharedAdvertisementRegister advertisement_register() const
+  SharedModelAdvertisementRegister advertisement_register() const
   {
     return advertisement_register_;
   }
@@ -348,7 +348,7 @@ public:
   }
 
 private:
-  explicit SemanticSearchModule(SharedAdvertisementRegister advertisement_register)
+  explicit SemanticSearchModule(SharedModelAdvertisementRegister advertisement_register)
     : advertisement_register_(std::move(advertisement_register))
   {}
 
@@ -394,8 +394,8 @@ private:
                                 {"max_depth", Constants::MAX_DEPTH},
                                 {"limit", Constants::LIMIT}};
 
-  SharedAdvertisementRegister advertisement_register_;
-  AgentDirectory              agent_directory_;
+  SharedModelAdvertisementRegister advertisement_register_;
+  AgentDirectory                   agent_directory_;
 };
 
 using SharedSemanticSearchModule = SemanticSearchModule::SharedSemanticSearchModule;

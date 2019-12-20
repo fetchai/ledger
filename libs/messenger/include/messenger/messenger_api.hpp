@@ -50,13 +50,13 @@ public:
   using Endpoint        = muddle::MuddleEndpoint;
   using MuddleInterface = muddle::MuddleInterface;
 
-  using AdvertisementRegister    = semanticsearch::AdvertisementRegister;
-  using SemanticSearchModule     = semanticsearch::SemanticSearchModule;
-  using AdvertisementRegisterPtr = std::shared_ptr<AdvertisementRegister>;
-  using SemanticSearchModulePtr  = std::shared_ptr<semanticsearch::SemanticSearchModule>;
-  using QueryExecutor            = semanticsearch::QueryExecutor;
-  using SemanticReducer          = semanticsearch::SemanticReducer;
-  using SemanticPosition         = semanticsearch::SemanticPosition;
+  using ModelAdvertisementRegister    = semanticsearch::ModelAdvertisementRegister;
+  using SemanticSearchModule          = semanticsearch::SemanticSearchModule;
+  using ModelAdvertisementRegisterPtr = std::shared_ptr<ModelAdvertisementRegister>;
+  using SemanticSearchModulePtr       = std::shared_ptr<semanticsearch::SemanticSearchModule>;
+  using QueryExecutor                 = semanticsearch::QueryExecutor;
+  using SemanticReducer               = semanticsearch::SemanticReducer;
+  using SemanticPosition              = semanticsearch::SemanticPosition;
 
   template <typename T>
   using TypedSchemaField = semanticsearch::TypedSchemaField<T>;
@@ -117,8 +117,8 @@ private:
 
   /// Advertisement and search
   /// @{
-  AdvertisementRegisterPtr advertisement_register_{nullptr};
-  SemanticSearchModulePtr  semantic_search_module_{nullptr};
+  ModelAdvertisementRegisterPtr advertisement_register_{nullptr};
+  SemanticSearchModulePtr       semantic_search_module_{nullptr};
   /// @}
 };
 

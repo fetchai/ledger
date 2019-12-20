@@ -3,18 +3,18 @@
 
 struct SemanticSearchToolkit
 {
-  using SemanticSearchModule     = fetch::semanticsearch::SemanticSearchModule;
-  using AdvertisementRegister    = fetch::semanticsearch::AdvertisementRegister;
-  using AdvertisementRegisterPtr = std::shared_ptr<AdvertisementRegister>;
-  using SemanticSearchModulePtr  = SemanticSearchModule::SharedSemanticSearchModule;
-  using Query                    = fetch::semanticsearch::Query;
-  using ConstByteArray           = fetch::byte_array::ConstByteArray;
-  using ErrorTracker             = fetch::semanticsearch::ErrorTracker;
-  using QueryCompiler            = fetch::semanticsearch::QueryCompiler;
-  using QueryExecutor            = fetch::semanticsearch::QueryExecutor;
+  using SemanticSearchModule          = fetch::semanticsearch::SemanticSearchModule;
+  using ModelAdvertisementRegister    = fetch::semanticsearch::ModelAdvertisementRegister;
+  using ModelAdvertisementRegisterPtr = std::shared_ptr<ModelAdvertisementRegister>;
+  using SemanticSearchModulePtr       = SemanticSearchModule::SharedSemanticSearchModule;
+  using Query                         = fetch::semanticsearch::Query;
+  using ConstByteArray                = fetch::byte_array::ConstByteArray;
+  using ErrorTracker                  = fetch::semanticsearch::ErrorTracker;
+  using QueryCompiler                 = fetch::semanticsearch::QueryCompiler;
+  using QueryExecutor                 = fetch::semanticsearch::QueryExecutor;
 
   SemanticSearchToolkit()
-    : advertisement{std::make_shared<AdvertisementRegister>()}
+    : advertisement{std::make_shared<ModelAdvertisementRegister>()}
     , semantic_search_module{SemanticSearchModule::New(advertisement)}
     , compiler{error_tracker, semantic_search_module}
   {}
@@ -71,8 +71,8 @@ struct SemanticSearchToolkit
     // TODO: Implemnent
   }
 
-  ErrorTracker             error_tracker;
-  AdvertisementRegisterPtr advertisement;
-  SemanticSearchModulePtr  semantic_search_module;
-  QueryCompiler            compiler;
+  ErrorTracker                  error_tracker;
+  ModelAdvertisementRegisterPtr advertisement;
+  SemanticSearchModulePtr       semantic_search_module;
+  QueryCompiler                 compiler;
 };

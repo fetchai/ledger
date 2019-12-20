@@ -26,16 +26,16 @@
 namespace fetch {
 namespace semanticsearch {
 
-class AbstractVocabularyRegister
+class AbstractModelRegister
 {
 public:
-  using VocabularySchemaPtr           = std::shared_ptr<ObjectSchemaField>;
-  using AbstractVocabularyRegisterPtr = std::shared_ptr<AbstractVocabularyRegister>;
+  using VocabularySchemaPtr      = std::shared_ptr<ObjectSchemaField>;
+  using AbstractModelRegisterPtr = std::shared_ptr<AbstractModelRegister>;
 
   /// Constructors and destructors
   /// @{
-  AbstractVocabularyRegister()          = default;
-  virtual ~AbstractVocabularyRegister() = default;
+  AbstractModelRegister()          = default;
+  virtual ~AbstractModelRegister() = default;
   /// @}
 
   /// Register methods

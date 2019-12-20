@@ -786,9 +786,9 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::ExecuteDefine(CompiledStatement cons
   std::size_t i = 1;
 
   definition_stack_.clear();
-  std::vector<ModelInterfaceBuilder> scope_models;
-  ModelInterfaceBuilder              last;
-  int                                scope_depth = 0;
+  std::vector<SchemaBuilderInterface> scope_models;
+  SchemaBuilderInterface              last;
+  int                                 scope_depth = 0;
 
   while (i < stmt.size())
   {
