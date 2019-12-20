@@ -95,11 +95,11 @@ struct Pair : public IPair
     {
       if (val == 1)
       {
-        val = 2;
+        val = 3;
       }
       else
       {
-        val = 3;
+        val = 2;
       }
     }
 
