@@ -21,6 +21,7 @@
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
+#include "vm/pair.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/tensor/tensor_estimator.hpp"
 #include "vm_modules/math/type.hpp"
@@ -148,6 +149,10 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
 
   // Add support for Array of Tensors
   module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<VMTensor>>>();
+
+  // Add support for training pair
+  module.GetClassInterface<IPair>()
+      .CreateInstantiationType<Pair<Ptr<VMTensor>, Ptr<Array<Ptr<VMTensor>>>>>();
 }
 
 SizeVector VMTensor::shape() const
