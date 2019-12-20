@@ -41,6 +41,12 @@ namespace ml {
 using MathTensorType = fetch::math::Tensor<VMDataLoader::DataType>;
 using VMTensorType   = fetch::vm_modules::math::VMTensor;
 
+using VMTensorPtrType       = vm::Ptr<VMTensorType>;
+using VMTensorArrayType     = fetch::vm::Array<VMTensorPtrType>;
+using VMTensorArrayPtrType  = vm::Ptr<VMTensorArrayType>;
+using VMTrainingPairType    = vm::Pair<VMTensorPtrType, VMTensorArrayPtrType>;
+using VMTrainingPairPtrType = vm::Ptr<VMTrainingPairType>;
+
 using CommodityLoaderType =
     fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<VMDataLoader::DataType>,
                                                 fetch::math::Tensor<VMDataLoader::DataType>>;
@@ -168,30 +174,27 @@ void VMDataLoader::AddTensorData(
 }
 
 // TODO(issue 1692): Simplify Array<Tensor> construction
-vm::Ptr<vm::Pair<vm::Ptr<math::VMTensor>,
-                 vm::Ptr<fetch::vm::Array<vm::Ptr<fetch::vm_modules::math::VMTensor>>>>>
-VMDataLoader::GetNext()
+VMTrainingPairPtrType VMDataLoader::GetNext()
 {
+
   // Get pair from loader
-  std::pair<fetch::math::Tensor<DataType>, std::vector<fetch::math::Tensor<DataType>>> next =
-      loader_->GetNext();
+  auto next = loader_->GetNext();
 
   // Create VMPair
-  auto dataHolder = this->vm_->CreateNewObject<
-      vm::Pair<vm::Ptr<math::VMTensor>,
-               vm::Ptr<fetch::vm::Array<vm::Ptr<fetch::vm_modules::math::VMTensor>>>>>();
+  auto dataHolder = this->vm_->CreateNewObject<VMTrainingPairType>();
 
   // Create and set VMPair.first
-  auto               first = this->vm_->CreateNewObject<math::VMTensor>(next.first);
+  auto first = this->vm_->CreateNewObject<VMTensorType>(next.first);
+  // Convert VMTensor to TemplateParameter1
   TemplateParameter1 t_first(first, first->GetTypeId());
   dataHolder->SetFirst(t_first);
 
   // Create and set VMPair.second
-  auto second = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(0));
+  auto second = this->vm_->CreateNewObject<VMTensorType>(next.second.at(0));
 
-  auto second_vector =
-      this->vm_->CreateNewObject<fetch::vm::Array<Ptr<fetch::vm_modules::math::VMTensor>>>(
-          second->GetTypeId(), static_cast<int32_t>(next.second.size()));
+  // Add all elements to VMArray<VMTensor>
+  auto second_vector = this->vm_->CreateNewObject<VMTensorArrayType>(
+      second->GetTypeId(), static_cast<int32_t>(next.second.size()));
 
   TemplateParameter1 first_element(second, second->GetTypeId());
 
@@ -207,6 +210,7 @@ VMDataLoader::GetNext()
     second_vector->SetIndexedValue(index, element);
   }
 
+  // Convert VMArray<VMTensor> to TemplateParameter2
   TemplateParameter2 t_second(second_vector, second_vector->GetTypeId());
   dataHolder->SetSecond(t_second);
 
