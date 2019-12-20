@@ -66,7 +66,7 @@ const std::chrono::seconds      STATE_NOTIFY_INTERVAL{20};
 const std::chrono::seconds      NOTIFY_INTERVAL{5};
 const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{5};
 const std::size_t               MIN_BLOCK_SYNC_SLIPPAGE_FOR_WAITLESS_SYNC_OF_MISSING_TXS{30};
-const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
+const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{120};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 
 }  // namespace
@@ -177,6 +177,10 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
         "total_time_to_create_block", "Total time required to create a block")}
   , current_block_weight_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "current_block_weight", "Weight of current block")}
+  , last_block_interval_s_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "last_block_interval_s", "Measured block interval")}
+  , current_block_coord_state_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "current_block_coord_state", "Current block coord state")}
 {
   // configure the state machine
   // clang-format off
@@ -206,10 +210,12 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
 
   state_machine_->OnStateChange([this](State current, State previous) {
     FETCH_UNUSED(this);
+    FETCH_UNUSED(current);
+    FETCH_UNUSED(previous);
     if (periodic_print_.Poll())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
-                     " (previous: ", ToString(previous), ")");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
+                      " (previous: ", ToString(previous), ")");
     }
   });
 
@@ -221,6 +227,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
 // it up as if the shutdown didn't happen
 BlockCoordinator::State BlockCoordinator::OnReloadState()
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   reload_state_count_->increment();
 
   // By default we need to populate this.
@@ -287,6 +294,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
 
 BlockCoordinator::State BlockCoordinator::OnSynchronising()
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   synchronising_state_count_->increment();
 
   // ensure that we have a current block that we are executing
@@ -479,6 +487,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
 BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State previous)
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   synchronised_state_count_->increment();
   FETCH_UNUSED(current);
 
@@ -487,6 +496,19 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     FETCH_LOG_INFO(LOGGING_NAME, "Chain Sync complete on 0x", current_block_->hash.ToHex(),
                    " (block: ", current_block_->block_number, " prev: 0x",
                    current_block_->previous_hash.ToHex(), ")");
+  }
+
+  // Telemetry
+  {
+    if (current_block_ && !current_block_->IsGenesis())
+    {
+      BlockPtr previous_block = chain_.GetBlock(current_block_->previous_hash);
+
+      if (previous_block)
+      {
+        last_block_interval_s_->set(current_block_->timestamp - previous_block->timestamp);
+      }
+    }
   }
 
   // ensure the periodic print is not trigger once we have synced
@@ -513,8 +535,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   next_block_->block_number   = current_block_->block_number + 1;
   next_block_->log2_num_lanes = log2_num_lanes_;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->block_number,
-                 " beacon: ", next_block_->block_entropy.EntropyAsU64());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Minting new block! Number: ", next_block_->block_number,
+                  " beacon: ", next_block_->block_entropy.EntropyAsU64());
 
   start_block_packing_ = Clock::now();
 
@@ -533,6 +555,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
 
 BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   pre_valid_state_count_->increment();
 
   bool const is_genesis = current_block_->IsGenesis();
@@ -606,6 +629,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
 BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   syn_exec_state_count_->count();
 
   bool const is_genesis = current_block_->IsGenesis();
@@ -644,6 +668,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 
 BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, State previous)
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   wait_tx_state_count_->increment();
 
   if (previous == current)
@@ -789,6 +814,7 @@ BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
 
 BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   wait_exec_state_count_->increment();
 
   State next_state{State::WAIT_FOR_EXECUTION};
@@ -824,6 +850,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 
 BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   post_valid_state_count_->increment();
 
   // Check: Ensure the merkle hash is correct for this block
@@ -914,6 +941,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 
 BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   pack_block_state_count_->increment();
 
   State next_state{State::RESET};
@@ -936,6 +964,7 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 
 BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   new_syn_state_count_->increment();
 
   if (synergetic_exec_mgr_ && dag_)
@@ -966,6 +995,7 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 
 BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   new_exec_state_count_->increment();
 
   State next_state{State::RESET};
@@ -983,6 +1013,7 @@ BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
 
 BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   new_wait_exec_state_count_->increment();
 
   State next_state{State::WAIT_FOR_NEW_BLOCK_EXECUTION};
@@ -1034,6 +1065,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
 
 BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   transmit_state_count_->increment();
 
   try
@@ -1042,8 +1074,8 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     next_block_->UpdateDigest();
     next_block_->miner_signature = certificate_->Sign(next_block_->hash);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: 0x", next_block_->hash.ToHex(), " #",
-                   next_block_->block_number, " Merkle: 0x", next_block_->merkle_hash.ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: 0x", next_block_->hash.ToHex(), " #",
+                    next_block_->block_number, " Merkle: 0x", next_block_->merkle_hash.ToHex());
 
     // this step is needed because the execution manager is actually unaware of the actual last
     // block that is executed because the merkle hash was not known at this point.
@@ -1057,7 +1089,9 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
       executed_block_count_->increment();
 
       FETCH_LOG_INFO(LOGGING_NAME, "Broadcasting new block: 0x", next_block_->hash.ToHex(),
+                     " merkle: ", next_block_->merkle_hash.ToHex(),
                      " txs: ", next_block_->GetTransactionCount(),
+                     " entropy: ", next_block_->block_entropy.EntropyAsU64(),
                      " number: ", next_block_->block_number);
 
       // signal the last block that has been executed
@@ -1082,6 +1116,7 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
 BlockCoordinator::State BlockCoordinator::OnReset()
 {
+  current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   Block const *block = nullptr;
 
   if (next_block_)

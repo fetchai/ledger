@@ -30,6 +30,9 @@
 
 #include "ledger/consensus/stake_manager.hpp"
 
+#include "telemetry/gauge.hpp"
+#include "telemetry/telemetry.hpp"
+
 #include <cmath>
 #include <unordered_map>
 
@@ -105,17 +108,17 @@ private:
   double   threshold_        = 0.51;
 
   // Consensus' view on the heaviest block etc.
-  Block         current_block_;
-  Block         previous_block_;
-  Block         beginning_of_aeon_;
-  Digest        last_triggered_cabinet_;
-  mutable Mutex mutex_;
+  Block  current_block_;
+  Block  previous_block_;
+  Block  beginning_of_aeon_;
+  Digest last_triggered_cabinet_;
 
   uint64_t       default_start_time_ = 0;
   CabinetHistory cabinet_history_{};  ///< Cache of historical cabinets
   uint64_t       block_interval_ms_{std::numeric_limits<uint64_t>::max()};
 
   NotarisationPtr notarisation_;
+  mutable Mutex   mutex_;
 
   CabinetPtr GetCabinet(Block const &previous) const;
 
@@ -124,6 +127,10 @@ private:
   bool     EnoughQualSigned(Block const &previous, Block const &current) const;
   uint32_t GetThreshold(Block const &block) const;
   void     AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
+
+  telemetry::GaugePtr<uint64_t> consensus_last_validate_block_failure_;
+  telemetry::CounterPtr         consensus_validate_block_failures_total_;
+  telemetry::CounterPtr         consensus_non_heaviest_blocks_total_;
 };
 
 }  // namespace ledger
