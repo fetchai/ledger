@@ -400,7 +400,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   }
 
   // Now collected
-  beacon_verify_time_->Add(details::ToSeconds(Clock::now() - started_request_for_sigs_));
+  beacon_verify_time_->Add(telemetry::details::ToSeconds(Clock::now() - started_request_for_sigs_));
 
   MilliTimer const timer{"Verify collective threshold signature", 100};
   telemetry::FunctionTimer const timer1{*beacon_verify_time_};
