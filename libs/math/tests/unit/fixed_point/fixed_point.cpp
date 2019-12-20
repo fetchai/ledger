@@ -710,6 +710,14 @@ TYPED_TEST(BasicArithmeticTest, Addition)
   EXPECT_EQ(almost_one + infinitesimal, one);
   // The same for negative
   EXPECT_EQ(-almost_one - infinitesimal, m_one);
+
+  // Test post/pre increment operators
+  TypeParam temp1 = one++;
+  TypeParam temp2 = ++two;
+  EXPECT_EQ(temp1, TypeParam{1});
+  EXPECT_EQ(one, TypeParam{2});
+  EXPECT_EQ(temp2, TypeParam{3});
+  EXPECT_EQ(two, TypeParam{3});
 }
 
 TYPED_TEST(BasicArithmeticTest, Subtraction)
@@ -742,6 +750,14 @@ TYPED_TEST(BasicArithmeticTest, Subtraction)
   TypeParam almost_two(1, TypeParam::LARGEST_FRACTION);
 
   EXPECT_EQ(almost_three - almost_two, one);
+
+  // Test post/pre decrement operators
+  TypeParam temp1 = one--;
+  TypeParam temp2 = --two;
+  EXPECT_EQ(temp1, TypeParam{1});
+  EXPECT_EQ(one, TypeParam{0});
+  EXPECT_EQ(temp2, TypeParam{1});
+  EXPECT_EQ(two, TypeParam{1});
 }
 
 TYPED_TEST(BasicArithmeticTest, Multiplication)
