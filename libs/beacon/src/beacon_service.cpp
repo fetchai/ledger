@@ -449,7 +449,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
                     " signatures. Round: ", index);
   }  // Mutex unlocks here since verification can take some time
 
-  MilliTimer const timer{"Verify threshold signature", 100};
+  MilliTimer const timer2{"Verify threshold signature", 100};
 
   // TODO(HUT): possibility for infinite loop here I suspect.
   if (active_exe_unit_->manager.can_verify() && active_exe_unit_->manager.Verify())
