@@ -44,9 +44,9 @@ using fetch::ml::details::ActivationType;
 using VMPtrString = Ptr<String>;
 
 std::map<std::string, SupportedLayerType> const VMModel::layer_types_{
-    {"dense", SupportedLayerType::DENSE},
-    {"conv1d", SupportedLayerType::CONV1D},
-    {"conv2d", SupportedLayerType::CONV2D},
+    {"dense", SupportedLayerType::DENSE},     {"conv1d", SupportedLayerType::CONV1D},
+    {"conv2d", SupportedLayerType::CONV2D},   {"flatten", SupportedLayerType::FLATTEN},
+    {"dropout", SupportedLayerType::DROPOUT},
 };
 
 std::map<std::string, ActivationType> const VMModel::activations_{
@@ -85,6 +85,9 @@ std::map<std::string, MetricType> const VMModel::metrics_{
     {"mse", MetricType ::MEAN_SQUARE_ERROR},
     {"scel", MetricType ::SOFTMAX_CROSS_ENTROPY},
 };
+
+static constexpr char const *IMPOSSIBLE_ADD_MESSAGE = "Impossible to add layer : ";
+static constexpr char const *LAYER_TYPE_MESSAGE     = "layer type";
 
 VMModel::VMModel(VM *vm, TypeId type_id)
   : Object(vm, type_id)
@@ -129,7 +132,6 @@ Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
 {
   return Ptr<VMModel>{new VMModel(vm, type_id, model_category)};
 }
-
 /**
  * @brief VMModel::CompileSequential
  * @param loss a valid loss function ["mse", ...]
@@ -299,38 +301,43 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
   // model construction always requires initialising some strings, ptrs etc. but is very cheap
   static const ChargeAmount FIXED_CONSTRUCTION_CHARGE{100};
 
-  auto interface =
-      module.CreateClassType<VMModel>("Model")
-          .CreateConstructor(&VMModel::Constructor, FIXED_CONSTRUCTION_CHARGE)
-          .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMModel> {
-            return Ptr<VMModel>{new VMModel(vm, type_id)};
-          })
-          .CreateMemberFunction("add", &VMModel::LayerAddDense,
-                                UseEstimator(&ModelEstimator::LayerAddDense))
-          .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation,
-                                UseEstimator(&ModelEstimator::LayerAddDenseActivation))
-          .CreateMemberFunction("compile", &VMModel::CompileSequential,
-                                UseEstimator(&ModelEstimator::CompileSequential))
-          .CreateMemberFunction("compile", &VMModel::CompileSequentialWithMetrics,
-                                UseEstimator(&ModelEstimator::CompileSequentialWithMetrics))
-          .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
-          .CreateMemberFunction("evaluate", &VMModel::Evaluate,
-                                UseEstimator(&ModelEstimator::Evaluate))
-          .CreateMemberFunction("predict", &VMModel::Predict,
-                                UseEstimator(&ModelEstimator::Predict))
-          .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
-                                UseEstimator(&ModelEstimator::SerializeToString))
-          .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
-                                UseEstimator(&ModelEstimator::DeserializeFromString));
+  module.CreateClassType<VMModel>("Model")
+      .CreateConstructor(&VMModel::Constructor, FIXED_CONSTRUCTION_CHARGE)
+      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMModel> {
+        return Ptr<VMModel>{new VMModel(vm, type_id)};
+      })
+      .CreateMemberFunction("add", &VMModel::LayerAddDense,
+                            UseEstimator(&ModelEstimator::LayerAddDense))
+      .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation,
+                            UseEstimator(&ModelEstimator::LayerAddDenseActivation))
+      .CreateMemberFunction("compile", &VMModel::CompileSequential,
+                            UseEstimator(&ModelEstimator::CompileSequential))
+      .CreateMemberFunction("compile", &VMModel::CompileSequentialWithMetrics,
+                            UseEstimator(&ModelEstimator::CompileSequentialWithMetrics))
+      .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
+      .CreateMemberFunction("evaluate", &VMModel::Evaluate, UseEstimator(&ModelEstimator::Evaluate))
+      .CreateMemberFunction("predict", &VMModel::Predict, UseEstimator(&ModelEstimator::Predict))
+      .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
+                            UseEstimator(&ModelEstimator::SerializeToString))
+      .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
+                            UseEstimator(&ModelEstimator::DeserializeFromString));
 
   // experimental features are bound only if the VMFactory given the flag to do so
   if (experimental_enabled)
   {
-    interface.CreateMemberFunction("add", &VMModel::LayerAddConv, UseEstimator(&ModelEstimator::LayerAddConv))
-                            .CreateMemberFunction("add", &VMModel::LayerAddConvActivation, UseEstimator(&ModelEstimator::LayerAddConvActivation))
-                            .CreateMemberFunction("compile", &VMModel::CompileSimple, UseEstimator(&ModelEstimator::CompileSimple))
-                            .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
-                                UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental));
+    module.GetClassInterface<VMModel>()
+        .CreateMemberFunction("add", &VMModel::LayerAddConv,
+                              UseEstimator(&ModelEstimator::LayerAddConv))
+        .CreateMemberFunction("add", &VMModel::LayerAddConvActivation,
+                              UseEstimator(&ModelEstimator::LayerAddConvActivation))
+        .CreateMemberFunction("add", &VMModel::LayerAddFlatten,
+                              UseEstimator(&ModelEstimator::LayerAddFlatten))
+        .CreateMemberFunction("add", &VMModel::LayerAddDropout,
+                              UseEstimator(&ModelEstimator::LayerAddDropout))
+        .CreateMemberFunction("compile", &VMModel::CompileSimple,
+                              UseEstimator(&ModelEstimator::CompileSimple))
+        .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
+                              UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental));
   }
 }
 
@@ -443,6 +450,9 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   // assign compiled status
   vm_model.compiled_ = compiled;
 
+  // assign estimator
+  vm_model.estimator_ = estimator_;
+
   // point this object pointer at the deserialised model
   *this = vm_model;
 
@@ -554,7 +564,8 @@ void VMModel::LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::St
 {
   try
   {
-    SupportedLayerType const layer_type = ParseName(layer->string(), layer_types_, "layer type");
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
     AssertLayerTypeMatches(layer_type, {SupportedLayerType::DENSE});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
     me->Add<fetch::ml::layers::FullyConnected<TensorType>>(inputs, hidden_nodes, activation);
@@ -562,7 +573,7 @@ void VMModel::LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::St
   }
   catch (std::exception const &e)
   {
-    vm_->RuntimeError("Impossible to add layer : " + std::string(e.what()));
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
     return;
   }
 }
@@ -604,7 +615,8 @@ void VMModel::LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::Str
 {
   try
   {
-    SupportedLayerType const layer_type = ParseName(layer->string(), layer_types_, "layer type");
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
     AssertLayerTypeMatches(layer_type, {SupportedLayerType::CONV1D, SupportedLayerType::CONV2D});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
     if (layer_type == SupportedLayerType::CONV1D)
@@ -621,7 +633,57 @@ void VMModel::LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::Str
   }
   catch (std::exception const &e)
   {
-    vm_->RuntimeError("Impossible to add layer : " + std::string(e.what()));
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
+    return;
+  }
+}
+
+void VMModel::LayerAddFlatten(const fetch::vm::Ptr<String> &layer)
+{
+  try
+  {
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::FLATTEN});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+    me->Add<fetch::ml::ops::Flatten<TensorType>>();
+    compiled_ = false;
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
+    return;
+  }
+}
+
+void VMModel::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
+                              const math::DataType &        probability)
+{
+  try
+  {
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::DROPOUT});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+
+    // ops::Dropout takes a keep-probability, while Keras-style argument is a drop-probability,
+    // so it is reversed here.
+    if (probability < DataType{0} || probability > DataType{1})
+    {
+      std::stringstream ss;
+      ss << IMPOSSIBLE_ADD_MESSAGE << "dropout probability " << probability
+         << " is out of allowed range [0..1]";
+      vm_->RuntimeError(ss.str());
+      return;
+    }
+    DataType const keep_probability = DataType{1} - probability;
+
+    me->Add<fetch::ml::ops::Dropout<TensorType>>(keep_probability);
+    compiled_ = false;
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
     return;
   }
 }

@@ -206,6 +206,7 @@ int RunEtchScript(std::string const &filename, std::shared_ptr<fetch::vm::Module
 
   /// set up VM
   auto vm = std::make_shared<fetch::vm::VM>(module.get());
+  vm->SetChargeLimit(fetch::vm::ChargeAmount(0));
 
   // attach observer so that writing to state works
   JsonStateMap observer{};
@@ -283,7 +284,7 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::CreatePrint(*module);
 
-  fetch::vm_modules::math::BindReadCSV(*module);
+  fetch::vm_modules::math::BindReadCSV(*module, true);
 
   RunEtchScript(etch_saver, module);
   RunEtchScript(etch_loader, module);

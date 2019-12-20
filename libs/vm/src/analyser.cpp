@@ -335,35 +335,48 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   assert(state_constructor_ && sharded_state_constructor_);
   state_definitions_.Clear();
   contract_definitions_.Clear();
-  function_     = nullptr;
-  use_any_node_ = nullptr;
+  num_state_definitions_                = 0;
+  num_contract_definitions_             = 0;
+  num_free_functions_                   = 0;
+  num_user_defined_types_               = 0;
+  num_user_defined_instantiation_types_ = 0;
+  function_                             = nullptr;
+  use_any_node_                         = nullptr;
   file_errors_array_.clear();
 
   root_->symbols = CreateSymbolTable();
 
-  BuildBlock(root_);
-  PreAnnotateBlock(root_);
-
-  EnforceLedgerRestrictions(root_);
-
-  if (!file_errors_array_.empty())
+  try
   {
-    errors = GetErrorList();
-    root_  = nullptr;
-    blocks_.clear();
-    loops_.clear();
-    state_constructor_         = nullptr;
-    sharded_state_constructor_ = nullptr;
-    state_definitions_.Clear();
-    contract_definitions_.Clear();
-    function_     = nullptr;
-    use_any_node_ = nullptr;
-    file_errors_array_.clear();
-
-    return false;
+    BuildBlock(root_);
+    PreAnnotateBlock(root_);
+    EnforceLedgerRestrictions(root_);
+    if (!file_errors_array_.empty())
+    {
+      errors = GetErrorList();
+      root_  = nullptr;
+      blocks_.clear();
+      loops_.clear();
+      state_constructor_         = nullptr;
+      sharded_state_constructor_ = nullptr;
+      state_definitions_.Clear();
+      contract_definitions_.Clear();
+      num_state_definitions_                = 0;
+      num_contract_definitions_             = 0;
+      num_free_functions_                   = 0;
+      num_user_defined_types_               = 0;
+      num_user_defined_instantiation_types_ = 0;
+      function_                             = nullptr;
+      use_any_node_                         = nullptr;
+      file_errors_array_.clear();
+      return false;
+    }
+    AnnotateBlock(root_);
   }
-
-  AnnotateBlock(root_);
+  catch (FatalErrorException const &e)
+  {
+    AddError(e.filename, e.line, e.message);
+  }
 
   root_ = nullptr;
   blocks_.clear();
@@ -372,8 +385,13 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   sharded_state_constructor_ = nullptr;
   state_definitions_.Clear();
   contract_definitions_.Clear();
-  function_     = nullptr;
-  use_any_node_ = nullptr;
+  num_state_definitions_                = 0;
+  num_contract_definitions_             = 0;
+  num_free_functions_                   = 0;
+  num_user_defined_types_               = 0;
+  num_user_defined_instantiation_types_ = 0;
+  function_                             = nullptr;
+  use_any_node_                         = nullptr;
 
   if (!file_errors_array_.empty())
   {
@@ -820,8 +838,21 @@ void Analyser::AddError(std::string const &filename, uint16_t line, std::string 
   file_errors_array_.push_back(std::move(file_errors));
 }
 
+void Analyser::CheckLocals(uint16_t line)
+{
+  if (function_->num_locals++ >= MAX_LOCALS_PER_FUNCTION)
+  {
+    throw FatalErrorException(filename_, line, "maximum number of local variables exceeded");
+  }
+}
+
 void Analyser::BuildBlock(BlockNodePtr const &block_node)
 {
+  if (blocks_.size() >= MAX_NESTED_BLOCKS)
+  {
+    throw FatalErrorException(filename_, block_node->line,
+                              "maximum number of nested blocks exceeded");
+  }
   blocks_.push_back(block_node);
   for (NodePtr const &child : block_node->block_children)
   {
@@ -887,6 +918,11 @@ void Analyser::BuildContractDefinition(BlockNodePtr const &contract_definition_n
   ExpressionNodePtr contract_name_node =
       ConvertToExpressionNodePtr(contract_definition_node->children[0]);
   std::string const &contract_name = contract_name_node->text;
+  if (num_contract_definitions_++ >= MAX_CONTRACT_DEFINITIONS)
+  {
+    throw FatalErrorException(filename_, contract_name_node->line,
+                              "maximum number of contract definitions exceeded");
+  }
   // check symbols_ as well here?
   if (contract_definitions_.Find(contract_name) || root_->symbols->Find(contract_name))
   {
@@ -906,6 +942,11 @@ void Analyser::BuildStructDefinition(BlockNodePtr const &struct_definition_node)
   ExpressionNodePtr struct_name_node =
       ConvertToExpressionNodePtr(struct_definition_node->children[0]);
   std::string const &struct_name = struct_name_node->text;
+  if (num_user_defined_types_++ >= MAX_USER_DEFINED_TYPES)
+  {
+    throw FatalErrorException(filename_, struct_name_node->line,
+                              "maximum number of user defined types exceeded");
+  }
   // check symbols_ as well here?
   if (contract_definitions_.Find(struct_name) || root_->symbols->Find(struct_name))
   {
@@ -925,6 +966,11 @@ void Analyser::BuildFreeFunctionDefinition(BlockNodePtr const &function_definiti
   ExpressionNodePtr function_name_node =
       ConvertToExpressionNodePtr(function_definition_node->children[1]);
   std::string const &function_name = function_name_node->text;
+  if (num_free_functions_++ >= MAX_FREE_FUNCTIONS)
+  {
+    throw FatalErrorException(filename_, function_name_node->line,
+                              "maximum number of functions exceeded");
+  }
   if (contract_definitions_.Find(function_name))
   {
     AddError(function_name_node->line, "symbol '" + function_name + "' is already defined");
@@ -1017,6 +1063,11 @@ void Analyser::PreAnnotatePersistentStatement(NodePtr const &persistent_statemen
       ConvertToExpressionNodePtr(persistent_statement_node->children[1]);
   ExpressionNodePtr  type_node = ConvertToExpressionNodePtr(persistent_statement_node->children[2]);
   std::string const &state_name = state_name_node->text;
+  if (num_state_definitions_++ >= MAX_STATE_DEFINITIONS)
+  {
+    throw FatalErrorException(filename_, state_name_node->line,
+                              "maximum number of state definitions exceeded");
+  }
   if (state_name == "any")
   {
     AddError(state_name_node->line, "invalid state name");
@@ -1053,6 +1104,11 @@ void Analyser::PreAnnotatePersistentStatement(NodePtr const &persistent_statemen
   else
   {
     // The instantiation doesn't already exist, so create it now
+    if (num_user_defined_instantiation_types_++ >= MAX_USER_DEFINED_INSTANTIATION_TYPES)
+    {
+      throw FatalErrorException(filename_, state_name_node->line,
+                                "maximum number of user defined instantiation types exceeded");
+    }
     instantation_type = InternalCreateTemplateInstantiationType(
         TypeKind::UserDefinedTemplateInstantiation, template_type, {managed_type});
     root_->symbols->Add(instantation_type);
@@ -1086,8 +1142,13 @@ void Analyser::PreAnnotateContractFunction(BlockNodePtr const &contract_definiti
   }
   ExpressionNodePtr  function_name_node = ConvertToExpressionNodePtr(function_node->children[1]);
   std::string const &function_name      = function_name_node->text;
-  FunctionGroupPtr   function_group;
-  SymbolPtr          symbol = contract_definition_node->symbols->Find(function_name);
+  if (contract_type->num_functions++ >= MAX_FUNCTIONS_PER_CONTRACT)
+  {
+    throw FatalErrorException(filename_, function_name_node->line,
+                              "maximum number of contract functions exceeded");
+  }
+  FunctionGroupPtr function_group;
+  SymbolPtr        symbol = contract_definition_node->symbols->Find(function_name);
   if (symbol)
   {
     if (!symbol->IsFunctionGroup())
@@ -1174,7 +1235,12 @@ void Analyser::PreAnnotateMemberFunctionDefinition(BlockNodePtr const &struct_de
   }
   ExpressionNodePtr function_name_node =
       ConvertToExpressionNodePtr(function_definition_node->children[1]);
-  std::string      function_name = function_name_node->text;
+  std::string function_name = function_name_node->text;
+  if (struct_type->num_functions++ >= MAX_MEMBER_FUNCTIONS_PER_TYPE)
+  {
+    throw FatalErrorException(filename_, function_name_node->line,
+                              "maximum number of member functions exceeded");
+  }
   FunctionGroupPtr function_group;
   std::string      symbol_name;
   bool             is_constructor = function_name == struct_type->name;
@@ -1261,7 +1327,12 @@ void Analyser::PreAnnotateMemberVarDeclarationStatement(BlockNodePtr const &stru
   ExpressionNodePtr variable_name_node =
       ConvertToExpressionNodePtr(var_statement_node->children[0]);
   std::string const &variable_name = variable_name_node->text;
-  SymbolPtr          symbol        = struct_definition_node->symbols->Find(variable_name);
+  if (struct_type->num_variables++ >= MAX_MEMBER_VARIABLES_PER_TYPE)
+  {
+    throw FatalErrorException(filename_, variable_name_node->line,
+                              "maximum number of member variables exceeded");
+  }
+  SymbolPtr symbol = struct_definition_node->symbols->Find(variable_name);
   if (symbol)
   {
     AddError(variable_name_node->line, "symbol '" + variable_name + "' is already defined");
@@ -1355,6 +1426,11 @@ bool Analyser::PreAnnotatePrototype(NodePtr const &         prototype_node,
       AddError(parameter_type_node->line, "unknown type '" + parameter_type_node->text + "'");
       ok = false;
       continue;
+    }
+    if (parameter_nodes.size() == MAX_PARAMETERS_PER_FUNCTION)
+    {
+      AddError(parameter_node->line, "maximum number of function parameters exceeded");
+      return false;
     }
     parameter_type_node->type = parameter_type;
     VariablePtr parameter_variable =
@@ -1603,6 +1679,7 @@ void Analyser::AnnotateForStatement(BlockNodePtr const &for_statement_node)
 {
   ExpressionNodePtr  name_node = ConvertToExpressionNodePtr(for_statement_node->children[0]);
   std::string const &name      = name_node->text;
+  CheckLocals(name_node->line);
   // Note: variable is created with no type to mark as initially unresolved
   VariablePtr variable = CreateVariable(VariableKind::For, name, nullptr, nullptr);
   for_statement_node->symbols->Add(variable);
@@ -1710,6 +1787,7 @@ void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node,
     AddError(variable_name_node->line, "symbol '" + variable_name + "' is already defined");
     return;
   }
+  CheckLocals(variable_name_node->line);
   VariablePtr variable = CreateVariable(VariableKind::Use, variable_name, type, nullptr);
   parent_block_node->symbols->Add(variable);
   FunctionPtr constructor = (type->template_type == sharded_state_type_)
@@ -1738,6 +1816,7 @@ void Analyser::AnnotateUseAnyStatement(BlockNodePtr const &parent_block_node,
       AddError(use_any_statement_node->line, "symbol '" + name + "' is already defined");
       return;
     }
+    CheckLocals(use_any_statement_node->line);
     VariablePtr variable = CreateVariable(VariableKind::UseAny, name, type, nullptr);
     parent_block_node->symbols->Add(variable);
   }
@@ -1777,6 +1856,7 @@ void Analyser::AnnotateContractStatement(BlockNodePtr const &parent_block_node,
     AddError(initialiser_node->line, "contract initialiser must be String type");
     return;
   }
+  CheckLocals(contract_variable_node->line);
   VariablePtr variable =
       CreateVariable(VariableKind::Local, contract_variable_name, contract_type, nullptr);
   parent_block_node->symbols->Add(variable);
@@ -1795,7 +1875,7 @@ void Analyser::AnnotateLocalVarStatement(BlockNodePtr const &parent_block_node,
     AddError(name_node->line, "symbol '" + name + "' is already defined");
     return;
   }
-
+  CheckLocals(name_node->line);
   // Note: variable is created with no type to mark as initially unresolved
   VariablePtr variable = CreateVariable(VariableKind::Local, name, nullptr, nullptr);
   parent_block_node->symbols->Add(variable);
@@ -3098,6 +3178,11 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
       // Need to check here that parameter_type does in fact support any operator(s)
       // required by the template_type's i'th type parameter...
       template_parameter_types.push_back(std::move(parameter_type));
+    }
+    if (num_user_defined_instantiation_types_++ >= MAX_USER_DEFINED_INSTANTIATION_TYPES)
+    {
+      throw FatalErrorException(filename_, identifier_node->line,
+                                "maximum number of user defined instantiation types exceeded");
     }
     TypePtr type = InternalCreateTemplateInstantiationType(
         TypeKind::UserDefinedTemplateInstantiation, template_type, template_parameter_types);

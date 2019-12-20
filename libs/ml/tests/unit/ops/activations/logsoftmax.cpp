@@ -49,9 +49,8 @@ TYPED_TEST(LogSoftmaxTest, forward_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(
-      prediction.AllClose(gt, static_cast<DataType>(1000) * math::function_tolerance<DataType>(),
-                          static_cast<DataType>(1000) * math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction.AllClose(gt, DataType{1000} * math::function_tolerance<DataType>(),
+                                  DataType{1000} * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
@@ -80,9 +79,8 @@ TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(
-      prediction.AllClose(gt, static_cast<DataType>(1000) * math::function_tolerance<DataType>(),
-                          static_cast<DataType>(1000) * math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction.AllClose(gt, DataType{1000} * math::function_tolerance<DataType>(),
+                                  DataType{1000} * math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(LogSoftmaxTest, backward_test)

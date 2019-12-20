@@ -666,6 +666,11 @@ private:
       , axis_{axis}
     {}
 
+    std::string ToString() const
+    {
+      return Copy().ToString();
+    }
+
     Tensor                 Copy() const;
     ConstSliceType         Slice(SizeType i, SizeType axis) const;
     void                   ModifyRange(SizeType i, SizeType axis);
@@ -1576,7 +1581,7 @@ Tensor<T, C> &Tensor<T, C>::FillUniformRandom()
 {
   for (SizeType i = 0; i < this->size(); ++i)
   {
-    this->operator[](i) = Type(random::Random::generator.AsFP64());
+    this->operator[](i) = random::Random::generator.AsType<Type>();
   }
   return *this;
 }

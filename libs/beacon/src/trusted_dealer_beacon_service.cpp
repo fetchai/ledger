@@ -61,9 +61,9 @@ void TrustedDealerSetupService::StartNewCabinet(
     threshold = rbc_threshold;
   }
 
-  std::lock_guard<std::mutex> lock(mutex_);
-  SharedAeonExecutionUnit     beacon = std::make_shared<AeonExecutionUnit>();
-  beacon->block_entropy              = BlockEntropy{};
+  FETCH_LOCK(mutex_);
+  SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
+  beacon->block_entropy          = BlockEntropy{};
 
   if (notarisation_keys.first && !notarisation_keys.second.empty() &&
       notarisation_callback_function_)
@@ -92,7 +92,7 @@ void TrustedDealerSetupService::StartNewCabinet(
   beacon->block_entropy.block_number     = round_start;
   for (auto const &mem : members)
   {
-    beacon->block_entropy.confirmations.insert({mem, {}});
+    beacon->block_entropy.confirmations.insert({beacon->block_entropy.ToQualIndex(mem), {}});
   }
   beacon->block_entropy.HashSelf();
 

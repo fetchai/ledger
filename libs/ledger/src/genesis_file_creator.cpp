@@ -130,6 +130,9 @@ GenesisFileCreator::Result GenesisFileCreator::LoadFile(std::string const &  pat
       chain::SetGenesisDigest(genesis_block_.hash);
       chain::SetGenesisMerkleRoot(genesis_block_.merkle_hash);
 
+      params.whitelist    = genesis_block_.block_entropy.qualified;
+      params.cabinet_size = static_cast<uint16_t>(params.whitelist.size());
+
       return Result::LOADED_PREVIOUS_GENESIS;
     }
   }
@@ -225,14 +228,24 @@ bool GenesisFileCreator::LoadState(Variant const &object, ConsensusParameters co
     uint64_t       balance{0};
     uint64_t       stake{0};
 
-    if (variant::Extract(object[i], "key", key) &&
-        variant::Extract(object[i], "balance", balance) &&
-        variant::Extract(object[i], "stake", stake))
+    auto const &obj{object[i]};
+
+    if (variant::Extract(obj, "key", key) && variant::Extract(obj, "balance", balance) &&
+        variant::Extract(obj, "stake", stake))
     {
       ledger::WalletRecord record;
 
       record.balance = balance;
       record.stake   = stake;
+
+      Variant v_deed;
+      if (obj.Has("deed"))
+      {
+        if (!record.CreateDeed(obj["deed"]))
+        {
+          return false;
+        }
+      }
 
       ResourceAddress key_raw(ResourceID(FromBase64(key)));
 
@@ -281,7 +294,6 @@ bool GenesisFileCreator::LoadState(Variant const &object, ConsensusParameters co
   genesis_block_.timestamp    = (consensus != nullptr) ? consensus->start_time : 0;
   genesis_block_.merkle_hash  = merkle_commit_hash;
   genesis_block_.block_number = 0;
-  genesis_block_.miner        = chain::Address(crypto::Hash<crypto::SHA256>(""));
   genesis_block_.UpdateDigest();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Created genesis block hash: 0x", genesis_block_.hash.ToHex());
@@ -333,6 +345,9 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object, ConsensusParameter
       FETCH_LOG_INFO(LOGGING_NAME, "Restoring stake. Identity: ", identity.identifier().ToBase64(),
                      " (address): ", address.address().ToBase64(), " amount: ", amount);
 
+      // The initial set of miners is stored in the genesis block
+      genesis_block_.block_entropy.qualified.insert(identity.identifier());
+
       params.snapshot->UpdateStake(identity, amount);
     }
     else
@@ -341,6 +356,8 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object, ConsensusParameter
       return false;
     }
   }
+
+  params.whitelist = genesis_block_.block_entropy.qualified;
 
   return true;
 }

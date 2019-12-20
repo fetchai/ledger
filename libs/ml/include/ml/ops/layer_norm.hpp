@@ -104,7 +104,7 @@ public:
     // normalize input
     fetch::math::Sqrt(cached_inv_sqrt_var_, cached_inv_sqrt_var_);
     fetch::math::Divide(cached_output_, cached_inv_sqrt_var_, cached_output_);
-    fetch::math::Divide(static_cast<DataType>(1), cached_inv_sqrt_var_, cached_inv_sqrt_var_);
+    fetch::math::Divide(DataType{1}, cached_inv_sqrt_var_, cached_inv_sqrt_var_);
 
     output = cached_output_;
   }

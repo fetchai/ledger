@@ -52,11 +52,11 @@ IfIsPtrFixed128<T, Ptr<T>> PowPtr(VM *vm, Ptr<T> const &a, Ptr<T> const &b)
 
 }  // namespace
 
-void BindPow(Module &module)
+void BindPow(Module &module, bool const /*enable_experimental*/)
 {
-  module.CreateFreeFunction("pow", &Pow<fixed_point::fp32_t>);
-  module.CreateFreeFunction("pow", &Pow<fixed_point::fp64_t>);
-  module.CreateFreeFunction("exp", &PowPtr<Fixed128>);
+  module.CreateFreeFunction("pow", &Pow<fixed_point::fp32_t>, ChargeAmount{6});
+  module.CreateFreeFunction("pow", &Pow<fixed_point::fp64_t>, ChargeAmount{8});
+  module.CreateFreeFunction("pow", &PowPtr<Fixed128>, ChargeAmount{12});
 }
 
 }  // namespace math

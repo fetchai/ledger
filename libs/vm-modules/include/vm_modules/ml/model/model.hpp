@@ -55,7 +55,9 @@ enum class SupportedLayerType : uint8_t
 {
   DENSE,
   CONV1D,
-  CONV2D
+  CONV2D,
+  FLATTEN,
+  DROPOUT
 };
 
 class VMModel : public fetch::vm::Object
@@ -75,6 +77,11 @@ public:
   using VMTensor            = fetch::vm_modules::math::VMTensor;
   using ModelEstimator      = fetch::vm_modules::ml::model::ModelEstimator;
   using SequentialModelPtr  = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
+
+  VMModel(VMModel const &other) = delete;
+  VMModel(VMModel &&other)      = delete;
+  VMModel &operator=(VMModel const &other) = default;  // TODO(): Needed for DeserializeFrom
+  VMModel &operator=(VMModel &&other) = delete;
 
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
@@ -143,6 +150,10 @@ public:
                                            math::SizeType const &                   inputs,
                                            math::SizeType const &                   hidden_nodes,
                                            fetch::vm::Ptr<fetch::vm::String> const &activation);
+  void LayerAddFlatten(fetch::vm::Ptr<fetch::vm::String> const &layer);
+
+  void LayerAddDropout(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                       math::DataType const &                   probability);
 
 private:
   ModelPtrType       model_;

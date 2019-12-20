@@ -271,14 +271,10 @@ TEST(FixedPointTest, FromString_16_16)
   EXPECT_EQ(large2, fp32_t::FP_MIN);
 
   fp32_t e4("000000000000001.00010000000000000000000000000000000000000000000");
-  std::cout << e4 << std::endl;
   EXPECT_EQ(e4, fp32_t("1.0001"));
-  std::cout << fp32_t("1.0001") << std::endl;
 
   fp32_t e5("000000000000001.010000000000000000000000000000000000000000000");
-  std::cout << e5 << std::endl;
   EXPECT_EQ(e5, fp32_t("1.01"));
-  std::cout << fp32_t("1.01") << std::endl;
 }
 
 TEST(FixedPointTest, FromString_32_32)
@@ -316,14 +312,10 @@ TEST(FixedPointTest, FromString_32_32)
   EXPECT_EQ(large2, fp64_t::FP_MIN);
 
   fp64_t e4("000000000000001.0000000010000000000000000000000000000000000000000000");
-  std::cout << e4 << std::endl;
   EXPECT_EQ(e4, fp64_t("1.000000001"));
-  std::cout << fp64_t("1.000000001") << std::endl;
 
   fp64_t e5("000000000000001.00000010000000000000000000000000000000000000000000");
-  std::cout << e5 << std::endl;
   EXPECT_EQ(e5, fp64_t("1.0000001"));
-  std::cout << fp64_t("1.0000001") << std::endl;
 }
 
 TEST(FixedPointTest, FromString_64_64)
@@ -361,13 +353,117 @@ TEST(FixedPointTest, FromString_64_64)
   EXPECT_EQ(large2, fp128_t::FP_MIN);
 
   fp128_t e4("000000000000001.000000000000000010000000000000000000000000000000000000000000");
-  std::cout << e4 << std::endl;
   EXPECT_EQ(e4, fp128_t("1.00000000000000001"));
 
   fp128_t e5("000000000000001.000000000010000000000000000000000000000000000000000000");
-  std::cout << e5 << std::endl;
   EXPECT_EQ(e5, fp128_t("1.00000000001"));
-  std::cout << fp128_t("1.00000000001") << std::endl;
+}
+
+template <typename T>
+void ToStringTest(std::string const &string)
+{
+  T                 val(string);
+  std::stringstream ss;
+  ss << val;
+  T result_val(ss.str());
+  EXPECT_TRUE(fetch::math::Abs(val - result_val) < fetch::math::function_tolerance<T>());
+}
+
+TEST(FixedPointTest, ToString_16_16)
+{
+  std::string str_val = "1fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "1.0fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "-1fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "0.5fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "1.5fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "2.5fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "-1.5fp32";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "2.7182818284590452352";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "-2.7182818284590452352";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "144269504088896340.735992";
+  ToStringTest<fp32_t>(str_val);
+}
+TEST(FixedPointTest, ToString_32_32)
+{
+  std::string str_val = "1fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "1.0fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "-1fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "0.5fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "1.5fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "2.5fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "-1.5fp64";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "2.7182818";
+  ToStringTest<fp64_t>(str_val);
+
+  str_val = "-2.7182818";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "144269504088896340.735992";
+  ToStringTest<fp64_t>(str_val);
+}
+TEST(FixedPointTest, ToString_64_64)
+{
+  std::string str_val = "1fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "1.0fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "-1fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "0.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "1.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "2.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "-1.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "2.718281";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "-2.718281";
+  ToStringTest<fp32_t>(str_val);
+
+  str_val = "144269504088896340.735992";
+  ToStringTest<fp128_t>(str_val);
 }
 
 TEST(FixedPointTest, Constants_16_16)
@@ -614,6 +710,17 @@ TYPED_TEST(BasicArithmeticTest, Addition)
   EXPECT_EQ(almost_one + infinitesimal, one);
   // The same for negative
   EXPECT_EQ(-almost_one - infinitesimal, m_one);
+
+  // Test associativity with primitives
+  EXPECT_EQ(two + 1.0, 2.0 + one);
+
+  // Test post/pre increment operators
+  TypeParam temp1 = one++;
+  TypeParam temp2 = ++two;
+  EXPECT_EQ(temp1, TypeParam{1});
+  EXPECT_EQ(one, TypeParam{2});
+  EXPECT_EQ(temp2, TypeParam{3});
+  EXPECT_EQ(two, TypeParam{3});
 }
 
 TYPED_TEST(BasicArithmeticTest, Subtraction)
@@ -646,11 +753,21 @@ TYPED_TEST(BasicArithmeticTest, Subtraction)
   TypeParam almost_two(1, TypeParam::LARGEST_FRACTION);
 
   EXPECT_EQ(almost_three - almost_two, one);
+
+  // Test associativity with primitives
+  EXPECT_EQ(two - 1.0, 2.0 - one);
+
+  // Test post/pre decrement operators
+  TypeParam temp1 = one--;
+  TypeParam temp2 = --two;
+  EXPECT_EQ(temp1, TypeParam{1});
+  EXPECT_EQ(one, TypeParam{0});
+  EXPECT_EQ(temp2, TypeParam{1});
+  EXPECT_EQ(two, TypeParam{1});
 }
 
 TYPED_TEST(BasicArithmeticTest, Multiplication)
 {
-  // Positive
   TypeParam zero(0);
   TypeParam one(1);
   TypeParam two(2);
@@ -681,6 +798,9 @@ TYPED_TEST(BasicArithmeticTest, Multiplication)
   EXPECT_EQ(almost_one * almost_one, almost_one - infinitesimal);
   EXPECT_EQ(almost_one * infinitesimal, zero);
   EXPECT_EQ(huge * infinitesimal, small);
+
+  // Test associativity with primitives
+  EXPECT_EQ(two * 3.0, three * 2.0);
 }
 
 TYPED_TEST(BasicArithmeticTest, Division)
@@ -689,6 +809,7 @@ TYPED_TEST(BasicArithmeticTest, Division)
   TypeParam zero(0);
   TypeParam one(1);
   TypeParam two(2);
+  TypeParam three(3);
 
   EXPECT_EQ(static_cast<int>(two / one), 2);
   EXPECT_EQ(static_cast<float>(two / one), 2.0f);
@@ -714,6 +835,42 @@ TYPED_TEST(BasicArithmeticTest, Division)
   TypeParam::StateClear();
   EXPECT_TRUE(TypeParam::IsNaN(zero / zero));
   EXPECT_TRUE(TypeParam::IsStateNaN());
+
+  // Test associativity with primitives
+  EXPECT_EQ(three / 2.0, 3.0 / two);
+}
+
+template <typename T>
+class BitOperationsTest : public ::testing::Test
+{
+};
+TYPED_TEST_CASE(BitOperationsTest, FixedPointTypes);
+TYPED_TEST(BitOperationsTest, ShiftLeft)
+{
+  // Positive
+  TypeParam one{1};
+  TypeParam two{2};
+  TypeParam x{1.6519711627625};
+  TypeParam m_one{-1};
+
+  EXPECT_EQ(two * two, two << one);
+  EXPECT_EQ(x * 2, x << 1);
+  EXPECT_EQ(x * 2, x << x);  // Only uses the integer part
+  EXPECT_EQ(m_one * two, m_one << 1);
+}
+
+TYPED_TEST(BitOperationsTest, ShiftRight)
+{
+  // Positive
+  TypeParam one{1};
+  TypeParam two{2};
+  TypeParam x{1.6519711627625};
+  TypeParam m_one{-1};
+
+  EXPECT_EQ(two / two, two >> one);
+  EXPECT_EQ(x / 2, x >> 1);
+  EXPECT_EQ(x / 2, x >> x);  // Only uses the integer part
+  EXPECT_EQ(m_one / two, m_one >> 1);
 }
 
 template <typename T>

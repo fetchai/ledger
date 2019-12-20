@@ -38,4 +38,5 @@ public:
 
   MOCK_METHOD2(Reset, void(StakeSnapshot const &, StorageInterface &));
   MOCK_METHOD1(Reset, void(StakeSnapshot const &));
+  MOCK_METHOD1(SetWhitelist, void(Minerwhitelist const &));
 };

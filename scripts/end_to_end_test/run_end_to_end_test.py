@@ -194,10 +194,10 @@ def run_python_test(parameters, test_instance):
         os.path.abspath(os.path.dirname(__file__)), "../"))
     test_script = importlib.import_module(
         parameters['script'], 'end_to_end_test')
-    test_script.run({
-        'host': host,
-        'port': port
-    }, test_instance._benefactor_address)
+
+    options = {'host': host, 'port': port}
+    options.update(parameters)
+    test_script.run(options, test_instance._benefactor_address)
 
 
 def run_dmlf_etch_client(parameters, test_instance):

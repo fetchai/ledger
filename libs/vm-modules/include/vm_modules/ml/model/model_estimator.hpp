@@ -76,6 +76,11 @@ public:
       fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
       math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation);
 
+  ChargeAmount LayerAddFlatten(fetch::vm::Ptr<fetch::vm::String> const &layer);
+
+  ChargeAmount LayerAddDropout(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                               math::DataType const &                   probability);
+
   ChargeAmount CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                  fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
@@ -108,9 +113,8 @@ public:
   DataType GetForwardCost();
 
   // AddLayer
-  static const fixed_point::fp64_t ADD_DENSE_INPUT_COEF;
-  static const fixed_point::fp64_t ADD_DENSE_OUTPUT_COEF;
-  static const fixed_point::fp64_t ADD_DENSE_QUAD_COEF;
+  static const fixed_point::fp64_t ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF;
+  static const fixed_point::fp64_t ADD_DENSE_WEIGHTS_SIZE_COEF;
   static const fixed_point::fp64_t ADD_DENSE_CONST_COEF;
 
   // Compile
