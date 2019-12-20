@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/meta/math_type_traits.hpp"
+#include "vectorise/fixed_point/type_traits.hpp"
+#include "vm/fixed.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/math/random.hpp"
 
@@ -60,6 +62,45 @@ fetch::meta::IfIsFloat<T, T> Rand(VM *vm, T const &a = T{.0}, T const &b = T{1.0
   return std::uniform_real_distribution<T>{a, b}(mt);
 }
 
+template <typename T>
+fetch::math::meta::IfIsNotFixedPoint128<T, T> Rand(VM *vm, T const &a = T{.0}, T const &b = T{1.0})
+{
+  if (a >= b)
+  {
+    vm->RuntimeError("Invalid argument: rand(a, b) must satisfy a < b");
+    return T{.0};
+  }
+
+  std::random_device rd;
+  std::mt19937_64    mt(rd());
+
+  auto a_dbl = static_cast<double>(a);
+  auto b_dbl = static_cast<double>(b);
+  return static_cast<T>(std::uniform_real_distribution<double>{a_dbl, b_dbl}(mt));
+}
+
+// We cannot use default values for parameters a & b, as they would have to be of the form:
+// a = Ptr<T>(new vm::Fixed128(vm, fixed_point::fp128_t::_0))
+// however vm variable is not accessible in this context.
+template <typename T>
+IfIsPtrFixed128<T, Ptr<T>> Rand(VM *vm, Ptr<T> const &a, Ptr<T> const &b)
+{
+  if (a->data_ >= b->data_)
+  {
+    vm->RuntimeError("Invalid argument: rand(a, b) must satisfy a < b");
+    return Ptr<Fixed128>(new Fixed128(vm, fixed_point::fp128_t{0}));
+  }
+
+  std::random_device rd;
+  std::mt19937_64    mt(rd());
+
+  auto a_dbl = static_cast<double>(a->data_);
+  auto b_dbl = static_cast<double>(b->data_);
+  auto x =
+      static_cast<fixed_point::fp128_t>(std::uniform_real_distribution<double>{a_dbl, b_dbl}(mt));
+  return Ptr<Fixed128>(new Fixed128(vm, x));
+}
+
 }  // namespace
 
 void BindRand(Module &module, bool const enable_experimental)
@@ -72,6 +113,9 @@ void BindRand(Module &module, bool const enable_experimental)
     module.CreateFreeFunction("rand", &Rand<uint16_t>, ChargeAmount{1});
     module.CreateFreeFunction("rand", &Rand<uint32_t>, ChargeAmount{1});
     module.CreateFreeFunction("rand", &Rand<uint64_t>, ChargeAmount{1});
+    module.CreateFreeFunction("rand", &Rand<fixed_point::fp32_t>, ChargeAmount{4});
+    module.CreateFreeFunction("rand", &Rand<fixed_point::fp64_t>, ChargeAmount{6});
+    module.CreateFreeFunction("rand", &Rand<vm::Fixed128>, ChargeAmount{12});
   }
 }
 
