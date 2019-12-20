@@ -33,7 +33,7 @@ namespace ledger {
 namespace {
 
 // TODO(issue 7): Make cache configurable
-constexpr uint32_t MAX_CACHE_LIFETIME_MS = 30 * 60 * 1000;
+constexpr uint32_t MAX_CACHE_LIFETIME_MS = 60 * 1000;
 
 using fetch::byte_array::ConstByteArray;
 
@@ -204,19 +204,6 @@ TSSP::TxArray TransactionStoreSyncProtocol::PullSpecificObjects(DigestSet const 
     if (store_.Get(digest, tx))
     {
       ret.push_back(tx);
-    }
-  }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Received request for specific TXs. Size: ", digests.size());
-
-  if (ret.size() != digests.size())
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Failed to provide enough in response! Size: ", ret.size(),
-                   " TXs: ");
-
-    for (auto const &tx_resp : ret)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, tx_resp.digest().ToBase64());
     }
   }
 

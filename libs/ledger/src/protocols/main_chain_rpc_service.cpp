@@ -190,8 +190,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   if (!ValidBlock(block, "new block"))
   {
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "Gossiped block did not prove valid. Loose blocks seen: ", loose_blocks_seen_);
+
     ++loose_blocks_seen_;
     return;
   }
@@ -225,8 +224,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
     break;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "New Block: 0x", block.hash.ToHex(), " (from peer: ", ToBase64(from),
-                 " num txs: ", block.GetTransactionCount(), " num: ", block.block_number,
+  FETCH_LOG_INFO(LOGGING_NAME, "New Block: #", block.block_number, " 0x", block.hash.ToHex(),
+                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(),
                  " status: ", status_text, ")");
 }
 
