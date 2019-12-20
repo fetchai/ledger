@@ -44,7 +44,7 @@ public:
 
   SchemaBuilderInterface Vocabulary(std::string const &name);
 
-  ObjectSchemaFieldPtr const &vocabulary_schema() const
+  ObjectSchemaFieldPtr const &schema() const
   {
     return model_;
   }

@@ -217,8 +217,8 @@ public:
 
   SchemaBuilderInterface NewModel(ModelIdentifier const &name, SchemaBuilderInterface const &proxy)
   {
-    advertisement_register_->AddModel(name, proxy.vocabulary_schema());
-    types_[name] = proxy.vocabulary_schema();
+    advertisement_register_->AddModel(name, proxy.schema());
+    types_[name] = proxy.schema();
     return proxy;
   }
 

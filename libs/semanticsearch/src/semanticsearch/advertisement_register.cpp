@@ -60,7 +60,7 @@ ModelAdvertisementRegister::AgentIdSetPtr ModelAdvertisementRegister::FindAgents
     ModelIdentifier const &name, Vocabulary const &object, DepthParameterType depth)
 {
   auto ad_model = GetAdvertisementModel(name);
-  auto position = ad_model->vocabulary_schema()->Reduce(object);
+  auto position = ad_model->schema()->Reduce(object);
 
   return ad_model->FindAgents(position, depth);
 }

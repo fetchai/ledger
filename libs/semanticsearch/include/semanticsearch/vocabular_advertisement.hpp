@@ -36,9 +36,9 @@ public:
   using AgentIdSet           = std::set<AgentId>;
   using AgentIdSetPtr        = std::shared_ptr<AgentIdSet>;
 
-  explicit VocabularyAdvertisement(ObjectSchemaFieldPtr const &vocabulary_schema)
-    : vocabulary_schema_(vocabulary_schema)
-    , index_{static_cast<std::size_t>(vocabulary_schema->rank())}
+  explicit VocabularyAdvertisement(ObjectSchemaFieldPtr const &schema)
+    : schema_(schema)
+    , index_{static_cast<std::size_t>(schema->rank())}
   {}
 
   void SubscribeAgent(AgentId aid, SemanticPosition position)
@@ -51,13 +51,13 @@ public:
     return index_.Find(depth, std::move(position));
   }
 
-  ObjectSchemaFieldPtr const &vocabulary_schema() const
+  ObjectSchemaFieldPtr const &schema() const
   {
-    return vocabulary_schema_;
+    return schema_;
   }
 
 private:
-  ObjectSchemaFieldPtr vocabulary_schema_;
+  ObjectSchemaFieldPtr schema_;
   InMemoryDBIndex      index_;
 };
 

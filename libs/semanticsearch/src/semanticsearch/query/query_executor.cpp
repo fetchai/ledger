@@ -809,7 +809,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::ExecuteDefine(CompiledStatement cons
       scope_models.pop_back();
 
       {
-        QueryVariant s = NewQueryVariant(last.vocabulary_schema(), Constants::TYPE_MODEL, x.token);
+        QueryVariant s = NewQueryVariant(last.schema(), Constants::TYPE_MODEL, x.token);
         definition_stack_.push_back(s);
       }
 
@@ -844,7 +844,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::ExecuteDefine(CompiledStatement cons
         break;
       }
 
-      if (model.vocabulary_schema() == nullptr)
+      if (model.schema() == nullptr)
       {
         error_tracker_.RaiseInternalError("Model is null.", x.token);
         break;
@@ -1021,7 +1021,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::ExecuteDefine(CompiledStatement cons
     model_identifier.model_name = name;
     try
     {
-      semantic_search_module_->AddModel(model_identifier, last.vocabulary_schema());
+      semantic_search_module_->AddModel(model_identifier, last.schema());
     }
     catch (std::runtime_error const &e)
     {
@@ -1031,7 +1031,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::ExecuteDefine(CompiledStatement cons
   else
   {
     // TODO(private issue AEA-140): Handle this case
-    std::cout << "NOT READY: " << last.vocabulary_schema() << std::endl;
+    std::cout << "NOT READY: " << last.schema() << std::endl;
   }
 
   return nullptr;
