@@ -708,6 +708,7 @@ bool Constellation::OnBringUpExternalNetwork(
 
   // reactor important to run the block/chain state machine
   reactor_.Start();
+  reactor_dkg_.Start();
 
   /// BLOCK EXECUTION & MINING
   execution_manager_->Start();
