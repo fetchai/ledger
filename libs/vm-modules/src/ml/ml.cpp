@@ -23,7 +23,6 @@
 #include "vm_modules/ml/ml.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/optimisation/optimiser.hpp"
-#include "vm_modules/ml/training_pair.hpp"
 #include "vm_modules/ml/utilities/mnist_utilities.hpp"
 #include "vm_modules/ml/utilities/scaler.hpp"
 
@@ -40,7 +39,6 @@ void BindML(Module &module, bool const enable_experimental)
 
   // ml fundamentals
   VMGraph::Bind(module, enable_experimental);
-  VMTrainingPair::Bind(module, enable_experimental);
 
   // dataloader
   VMDataLoader::Bind(module, enable_experimental);
