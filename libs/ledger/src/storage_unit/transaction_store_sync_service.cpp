@@ -351,8 +351,14 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
 
   // Early exit: If it is not time to request the recent transaction and there are no explicit
   // requests for transactions then we should simply hold in this state
-  bool const is_time_to_pull{fetch_object_wait_timeout_.IsDue()};
-  if (digests.empty() && !is_time_to_pull)
+
+  bool const need_to_request_specific = !digests.empty();
+
+  // Note: ONLY make one rpc call here to a client since there is a bug
+  // when doing multiple adds to the pending_objects_ with the same connection
+  bool const is_time_to_pull = fetch_object_wait_timeout_.IsDue() && !need_to_request_specific;
+
+  if (!need_to_request_specific && !is_time_to_pull)
   {
     state_machine_->Delay(10ms);
     return State::QUERY_OBJECTS;
@@ -366,11 +372,15 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
     {
       auto p1 = PromiseOfTxList(client_->CallSpecificAddress(
           connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_OBJECTS));
-      pending_objects_.Add(connection, p1);
+      if (!pending_objects_.Add(connection, p1))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to add promise of transactions to queue");
+      }
+
       FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": Periodically requesting recent TXs");
     }
 
-    if (!digests.empty())
+    if (need_to_request_specific)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": Explicitly requesting ",
                      digests.size(), " TXs");
@@ -378,7 +388,11 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
       auto p2 = PromiseOfTxList(client_->CallSpecificAddress(
           connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_SPECIFIC_OBJECTS,
           digests));
-      pending_objects_.Add(connection, p2);
+      if (!pending_objects_.Add(connection, p2))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Failed to add promise of transactions to queue - call specific");
+      }
     }
   }
 
