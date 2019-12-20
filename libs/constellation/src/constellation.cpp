@@ -805,6 +805,7 @@ void Constellation::OnTearDownExternalNetwork()
   }
 
   reactor_.Stop();
+  reactor_dkg_.Stop();
 
   if (agent_network_)
   {
