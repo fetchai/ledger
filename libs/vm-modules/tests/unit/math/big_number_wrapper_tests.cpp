@@ -176,11 +176,11 @@ TEST_F(UInt256Tests, uint256_raw_comparisons)
   EXPECT_TRUE(zero.IsGreaterThan(greater, lesser));
   EXPECT_TRUE(zero.IsLessThan(lesser, greater));
   EXPECT_TRUE(zero.IsLessThanOrEqual(lesser, greater));
+  EXPECT_TRUE(zero.IsGreaterThanOrEqual(lesser, lesser));
 
   EXPECT_FALSE(zero.IsEqual(lesser, greater));
   EXPECT_FALSE(zero.IsGreaterThan(lesser, greater));
   EXPECT_FALSE(zero.IsGreaterThan(lesser, lesser));
-  EXPECT_FALSE(zero.IsGreaterThanOrEqual(lesser, lesser));
   EXPECT_FALSE(zero.IsLessThan(lesser, lesser));
   EXPECT_FALSE(zero.IsLessThan(greater, lesser));
 }
