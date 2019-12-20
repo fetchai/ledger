@@ -33,7 +33,7 @@ public:
   using ObjectSchemaFieldPtr     = SemanticSearchModule::ObjectSchemaFieldPtr;
   using SchemaField              = SemanticSearchModule::SchemaField;
   using Token                    = fetch::byte_array::Token;
-  using Vocabulary               = std::shared_ptr<VocabularyInstance>;
+  using Vocabulary               = std::shared_ptr<ModelInstance>;
   using AbstractModelRegisterPtr = AbstractModelRegister::AbstractModelRegisterPtr;
   using AgentIdSet               = VocabularyAdvertisement::AgentIdSet;
   using AgentIdSetPtr            = VocabularyAdvertisement::AgentIdSetPtr;
@@ -44,7 +44,7 @@ public:
   Vocabulary    GetInstance(std::string const &name);
 
 private:
-  using PropertyMap = std::map<std::string, std::shared_ptr<VocabularyInstance>>;
+  using PropertyMap = std::map<std::string, std::shared_ptr<ModelInstance>>;
   enum
   {
     LOCAL_GRANULARITY,

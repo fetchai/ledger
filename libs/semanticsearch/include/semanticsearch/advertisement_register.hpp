@@ -26,7 +26,7 @@ namespace semanticsearch {
 class ModelAdvertisementRegister : public AbstractModelRegister
 {
 public:
-  using Vocabulary               = std::shared_ptr<VocabularyInstance>;
+  using Vocabulary               = std::shared_ptr<ModelInstance>;
   using SharedModel              = std::shared_ptr<VocabularyAdvertisement>;
   using AbstractModelRegisterPtr = AbstractModelRegister::AbstractModelRegisterPtr;
   using Index                    = VocabularyAdvertisement::Index;

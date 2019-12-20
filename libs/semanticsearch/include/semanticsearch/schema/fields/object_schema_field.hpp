@@ -30,7 +30,7 @@ namespace semanticsearch {
 class ObjectSchemaField : public AbstractSchemaField
 {
 public:
-  using Vocabulary = std::shared_ptr<VocabularyInstance>;
+  using Vocabulary = std::shared_ptr<ModelInstance>;
   using Type       = std::map<std::string, Vocabulary>;
 
   using ModelInterface = std::shared_ptr<AbstractSchemaField>;

@@ -30,9 +30,9 @@ namespace semanticsearch {
 class AbstractSchemaField
 {
 public:
-  using VocabularyInstancePtr = std::shared_ptr<VocabularyInstance>;
-  using ModelInterface        = std::shared_ptr<AbstractSchemaField>;
-  using FieldVisitor = std::function<void(std::string, std::string, VocabularyInstancePtr)>;
+  using ModelInstancePtr = std::shared_ptr<ModelInstance>;
+  using ModelInterface   = std::shared_ptr<AbstractSchemaField>;
+  using FieldVisitor     = std::function<void(std::string, std::string, ModelInstancePtr)>;
 
   virtual ~AbstractSchemaField() = default;
 
@@ -46,11 +46,11 @@ public:
 
   /// Used for reduction and validation
   /// @{
-  virtual SemanticPosition Reduce(VocabularyInstancePtr const &v)                       = 0;
-  virtual bool             Validate(VocabularyInstancePtr const &v, std::string &error) = 0;
+  virtual SemanticPosition Reduce(ModelInstancePtr const &v)                       = 0;
+  virtual bool             Validate(ModelInstancePtr const &v, std::string &error) = 0;
   /// @}
 
-  virtual bool VisitFields(FieldVisitor callback, VocabularyInstancePtr instance,
+  virtual bool VisitFields(FieldVisitor callback, ModelInstancePtr instance,
                            std::string name = "")   = 0;
   virtual bool IsSame(ModelInterface const &) const = 0;
 

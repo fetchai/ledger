@@ -29,7 +29,7 @@ namespace semanticsearch {
 class VocabularyAdvertisement
 {
 public:
-  using Vocabulary           = std::shared_ptr<VocabularyInstance>;
+  using Vocabulary           = std::shared_ptr<ModelInstance>;
   using Index                = uint64_t;
   using ObjectSchemaFieldPtr = std::shared_ptr<ObjectSchemaField>;
   using AgentId              = uint64_t;

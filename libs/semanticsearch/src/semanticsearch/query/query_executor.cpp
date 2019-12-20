@@ -109,7 +109,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
         ++scope_depth;
 
         // Creating new property map to hold the contents
-        auto obj = VocabularyInstance::New<PropertyMap>({});
+        auto obj = ModelInstance::New<PropertyMap>({});
         scope_objects.push_back(obj);
         break;
       }

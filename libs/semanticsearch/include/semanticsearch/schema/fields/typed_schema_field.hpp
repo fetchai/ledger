@@ -31,8 +31,8 @@ class TypedSchemaField : public AbstractSchemaField
 public:
   using Type         = T;
   using FieldModel   = std::shared_ptr<TypedSchemaField>;
-  using Variant      = std::shared_ptr<VocabularyInstance>;
-  using FieldVisitor = std::function<void(std::string, std::string, VocabularyInstancePtr)>;
+  using Variant      = std::shared_ptr<ModelInstance>;
+  using FieldVisitor = std::function<void(std::string, std::string, ModelInstancePtr)>;
 
   /// Constructors and destructors
   /// @{
@@ -45,11 +45,10 @@ public:
 
   /// Traversal and validation
   /// @{
-  SemanticPosition Reduce(VocabularyInstancePtr const &v) override;
-  bool             Validate(VocabularyInstancePtr const &v, std::string &error) override;
+  SemanticPosition Reduce(ModelInstancePtr const &v) override;
+  bool             Validate(ModelInstancePtr const &v, std::string &error) override;
   bool             IsSame(ModelInterface const &optr) const override;
-  bool             VisitFields(FieldVisitor callback, VocabularyInstancePtr obj,
-                               std::string name = "") override;
+  bool VisitFields(FieldVisitor callback, ModelInstancePtr obj, std::string name = "") override;
   /// @}
 
   /// Properties
@@ -82,7 +81,7 @@ typename TypedSchemaField<T>::FieldModel TypedSchemaField<T>::New()
 }
 
 template <typename T>
-SemanticPosition TypedSchemaField<T>::Reduce(VocabularyInstancePtr const &v)
+SemanticPosition TypedSchemaField<T>::Reduce(ModelInstancePtr const &v)
 {
   if (std::type_index(typeid(T)) != type_)
   {
@@ -94,7 +93,7 @@ SemanticPosition TypedSchemaField<T>::Reduce(VocabularyInstancePtr const &v)
 }
 
 template <typename T>
-bool TypedSchemaField<T>::Validate(VocabularyInstancePtr const &v, std::string &error)
+bool TypedSchemaField<T>::Validate(ModelInstancePtr const &v, std::string &error)
 {
   if (type_ != v->type())
   {
@@ -130,7 +129,7 @@ bool TypedSchemaField<T>::IsSame(ModelInterface const &optr) const
 }
 
 template <typename T>
-bool TypedSchemaField<T>::VisitFields(FieldVisitor /*callback*/, VocabularyInstancePtr /*obj*/,
+bool TypedSchemaField<T>::VisitFields(FieldVisitor /*callback*/, ModelInstancePtr /*obj*/,
                                       std::string /*name*/)
 {
   // A typed field does not have any sub fields, hence we just

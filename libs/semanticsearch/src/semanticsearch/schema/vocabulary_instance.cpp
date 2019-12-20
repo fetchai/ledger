@@ -23,12 +23,12 @@
 namespace fetch {
 namespace semanticsearch {
 
-VocabularyInstance::VocabularyInstance(std::type_index type, void *data)
+ModelInstance::ModelInstance(std::type_index type, void *data)
   : type_(type)
   , data_(data)
 {}
 
-VocabularyInstance::~VocabularyInstance()
+ModelInstance::~ModelInstance()
 {
   // Invoking detructor
   if ((destructor_ != nullptr) && (data_ != nullptr))
@@ -37,8 +37,7 @@ VocabularyInstance::~VocabularyInstance()
   }
 }
 
-void VocabularyInstance::Walk(VocabularyInstance::PropertyVisitor const &callback,
-                              std::string const &                        name)
+void ModelInstance::Walk(ModelInstance::PropertyVisitor const &callback, std::string const &name)
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {
@@ -53,12 +52,11 @@ void VocabularyInstance::Walk(VocabularyInstance::PropertyVisitor const &callbac
   }
 }
 
-VocabularyInstance::VocabularyInstancePtr &VocabularyInstance::operator[](std::string const &name)
+ModelInstance::ModelInstancePtr &ModelInstance::operator[](std::string const &name)
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {
-    throw std::runtime_error(
-        "VocabularyInstance index operator error: Vocabulary does not have keys");
+    throw std::runtime_error("ModelInstance index operator error: Vocabulary does not have keys");
   }
 
   PropertyMap &map = *reinterpret_cast<PropertyMap *>(data_);
@@ -66,20 +64,18 @@ VocabularyInstance::VocabularyInstancePtr &VocabularyInstance::operator[](std::s
   return map[name];
 }
 
-void VocabularyInstance::Insert(std::string const &                              name,
-                                VocabularyInstance::VocabularyInstancePtr const &value)
+void ModelInstance::Insert(std::string const &name, ModelInstance::ModelInstancePtr const &value)
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {
-    throw std::runtime_error(
-        "VocabularyInstance index operator error: Vocabulary does not have keys");
+    throw std::runtime_error("ModelInstance index operator error: Vocabulary does not have keys");
   }
 
   PropertyMap &map = *reinterpret_cast<PropertyMap *>(data_);
   map[name]        = value;
 }
 
-std::type_index VocabularyInstance::type() const
+std::type_index ModelInstance::type() const
 {
   return type_;
 }

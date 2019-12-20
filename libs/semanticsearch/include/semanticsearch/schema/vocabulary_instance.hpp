@@ -26,34 +26,34 @@
 namespace fetch {
 namespace semanticsearch {
 
-class VocabularyInstance : public std::enable_shared_from_this<VocabularyInstance>
+class ModelInstance : public std::enable_shared_from_this<ModelInstance>
 {
 public:
-  using VocabularyInstancePtr = std::shared_ptr<VocabularyInstance>;
-  using PropertyMap           = std::map<std::string, std::shared_ptr<VocabularyInstance>>;
-  using PropertyVisitor       = std::function<void(std::string, VocabularyInstancePtr)>;
+  using ModelInstancePtr = std::shared_ptr<ModelInstance>;
+  using PropertyMap      = std::map<std::string, std::shared_ptr<ModelInstance>>;
+  using PropertyVisitor  = std::function<void(std::string, ModelInstancePtr)>;
 
   /// Static pointer constructor
   /// @{
   template <typename T>
-  static VocabularyInstancePtr New(T data);
+  static ModelInstancePtr New(T data);
   /// @}
 
   /// Only constructible by self
   /// @{
-  VocabularyInstance()                                = delete;
-  VocabularyInstance(VocabularyInstance const &other) = delete;
-  VocabularyInstance &operator=(VocabularyInstance const &other) = delete;
+  ModelInstance()                           = delete;
+  ModelInstance(ModelInstance const &other) = delete;
+  ModelInstance &operator=(ModelInstance const &other) = delete;
   /// @}
 
-  ~VocabularyInstance();
+  ~ModelInstance();
 
   /// Object manipulation
   /// @{
-  void                   Insert(std::string const &name, VocabularyInstancePtr const &value);
-  VocabularyInstancePtr &operator[](std::string const &name);
-  void                   Walk(PropertyVisitor const &callback, std::string const &name = "");
-  void                   SetModelName(std::string const &name)
+  void              Insert(std::string const &name, ModelInstancePtr const &value);
+  ModelInstancePtr &operator[](std::string const &name);
+  void              Walk(PropertyVisitor const &callback, std::string const &name = "");
+  void              SetModelName(std::string const &name)
   {
     model_name_ = name;
   }
@@ -75,7 +75,7 @@ public:
 private:
   /// Private constructor
   /// @{
-  VocabularyInstance(std::type_index type, void *data);
+  ModelInstance(std::type_index type, void *data);
   /// @}
 
   /// Data members
@@ -96,14 +96,14 @@ private:
 };
 
 template <typename T>
-VocabularyInstance::VocabularyInstancePtr VocabularyInstance::New(T data)
+ModelInstance::ModelInstancePtr ModelInstance::New(T data)
 {
-  VocabularyInstancePtr ret;
-  ret.reset(new VocabularyInstance(std::type_index(typeid(T)), new T(data)));
+  ModelInstancePtr ret;
+  ret.reset(new ModelInstance(std::type_index(typeid(T)), new T(data)));
 
   // Creating a destructor for the obejct of type T
   // since it is type erased and we don't know the type
-  // when VocabularyInstance is destructed.
+  // when ModelInstance is destructed.
   ret->destructor_ = [](void *data) {
     T *d = static_cast<T *>(data);
     delete d;

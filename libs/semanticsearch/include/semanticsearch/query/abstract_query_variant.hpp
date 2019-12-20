@@ -32,12 +32,12 @@ namespace semanticsearch {
 class AbstractQueryVariant
 {
 public:
-  using Token                 = fetch::byte_array::Token;
-  using VocabularyInstancePtr = VocabularyInstance::VocabularyInstancePtr;
+  using Token            = fetch::byte_array::Token;
+  using ModelInstancePtr = ModelInstance::ModelInstancePtr;
 
-  virtual ~AbstractQueryVariant()             = default;
-  virtual void const *          data() const  = 0;
-  virtual VocabularyInstancePtr NewInstance() = 0;
+  virtual ~AbstractQueryVariant()        = default;
+  virtual void const *     data() const  = 0;
+  virtual ModelInstancePtr NewInstance() = 0;
 
   void            SetType(int type);
   int             type() const;
@@ -118,9 +118,9 @@ public:
     return reinterpret_cast<void const *>(&value_);
   }
 
-  VocabularyInstancePtr NewInstance() override
+  ModelInstancePtr NewInstance() override
   {
-    return VocabularyInstance::New<T>(value_);
+    return ModelInstance::New<T>(value_);
   }
 
 private:
