@@ -218,6 +218,8 @@ private:
   static ChargeAmount MaximumCharge(std::string const &log_msg = "");
 
   static ChargeAmount ToChargeAmount(fixed_point::fp64_t const &val);
+
+  static ChargeAmount constexpr EXPERIMENTAL_LARGE_CHARGE = vm::MAXIMUM_CHARGE / 100;
 };
 
 }  // namespace model

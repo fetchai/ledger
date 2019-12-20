@@ -1224,6 +1224,17 @@ TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_log_softmax)
   TestActivation(input, activation, result);
 }
 
+// Disabled until implementation of AddActivation estimator
+TEST_F(VMModelTests, DISABLED_model_sequential_activation_layer_gelu)
+{
+  std::string const input      = "0.0, 1.0, 2.0, 3.0, 4.0; 0.0, -1.0, -2.0, -3.0, -4.0;";
+  std::string const activation = "gelu";
+  std::string const result =
+      "0.000000000, 0.841191998, 1.954597482, 2.996362537, 3.999929750;0.000000000, -0.158808001, "
+      "-0.045402517, -0.003637462, -0.000070249;";
+  TestActivation(input, activation, result);
+}
+
 TEST_F(VMModelTests, DISABLED_model_sequential_flatten_1d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(

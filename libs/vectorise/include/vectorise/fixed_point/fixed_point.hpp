@@ -767,6 +767,10 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
     auto integer  = static_cast<typename FixedPoint<I, F>::BaseSignedType>(n.Integer());
     if (n < FixedPoint<I, F>::_0 && fraction != 0)
     {
+      if (integer == 0)
+      {
+        s << '-';
+      }
       ++integer;
       fraction = static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(~fraction);
       ++fraction;
