@@ -118,7 +118,7 @@ private:
   uint64_t       block_interval_ms_{std::numeric_limits<uint64_t>::max()};
 
   NotarisationPtr notarisation_;
-  mutable Mutex mutex_;
+  mutable Mutex   mutex_;
 
   CabinetPtr GetCabinet(Block const &previous) const;
 
