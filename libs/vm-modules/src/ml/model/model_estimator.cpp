@@ -160,13 +160,13 @@ ChargeAmount ModelEstimator::LayerAddConvActivation(
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
   FETCH_UNUSED(activation);
-  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+  return EXPERIMENTAL;
 }
 
 ChargeAmount ModelEstimator::LayerAddFlatten(Ptr<fetch::vm::String> const &layer)
 {
   FETCH_UNUSED(layer);
-  return return EXPERIMENTAL;
+  return EXPERIMENTAL;
 }
 
 ChargeAmount ModelEstimator::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
@@ -174,7 +174,7 @@ ChargeAmount ModelEstimator::LayerAddDropout(const fetch::vm::Ptr<String> &layer
 {
   FETCH_UNUSED(layer);
   FETCH_UNUSED(probability);
-  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+  return EXPERIMENTAL;
 }
 
 ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,

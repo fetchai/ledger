@@ -400,37 +400,37 @@ TEST_F(VMModelTests, model_add_dense_relu)
 }
 
 // Disabled until implementation of AddLayerConv estimator
-TEST_F(VMModelTests, DISABLED_model_add_conv1d_noact)
+TEST_F(VMModelTests, model_add_conv1d_noact)
 {
   TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64);)");
 }
 
 // Disabled until implementation of AddLayerConv estimator
-TEST_F(VMModelTests, DISABLED_model_add_conv1d_relu)
+TEST_F(VMModelTests, model_add_conv1d_relu)
 {
   TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)");
 }
 
 // Disabled until implementation of AddLayerConv estimator
-TEST_F(VMModelTests, DISABLED_model_add_conv2d_noact)
+TEST_F(VMModelTests, model_add_conv2d_noact)
 {
   TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64);)");
 }
 
 // Disabled until implementation of AddLayerConv estimator
-TEST_F(VMModelTests, DISABLED_model_add_conv2d_relu)
+TEST_F(VMModelTests, model_add_conv2d_relu)
 {
   TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)");
 }
 
 // Disabled until implementation of AddDropout estimator
-TEST_F(VMModelTests, DISABLED_model_add_dropout)
+TEST_F(VMModelTests, model_add_dropout)
 {
   TestValidLayerAdding(R"(model.add("dropout", 0.256fp64);)");
 }
 
 // Disabled until implementation of AddFlatten estimator
-TEST_F(VMModelTests, DISABLED_model_add_flatten)
+TEST_F(VMModelTests, model_add_flatten)
 {
   TestValidLayerAdding(R"(model.add("flatten");)");
 }
@@ -587,7 +587,7 @@ TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_too_few_layer_shapes
 }
 
 // Disableduntil AddDropout estimator implementation
-TEST_F(VMModelTests, DISABLED_model_dropout_comparison)
+TEST_F(VMModelTests, model_dropout_comparison)
 {
   static char const *SOURCE = R"(
     function main()
