@@ -32,7 +32,7 @@ namespace fetch {
 namespace vm {
 
 Parser::Parser()
-  : template_names_{"Array", "Map", "State", "ShardedState"}
+  : template_names_{"Array", "Map", "State", "ShardedState", "Pair"}
 {}
 
 void Parser::AddTemplateName(std::string name)

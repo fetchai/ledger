@@ -101,6 +101,9 @@ constexpr bool IsNotFixedPoint128 = !IsFixedPoint128<T> && IsFixedPoint<T>;
 template <typename DataType, typename ReturnType = void>
 using IfIsFixedPoint128 = fetch::meta::EnableIf<IsFixedPoint128<DataType>, ReturnType>;
 
+template <typename DataType, typename ReturnType = void>
+using IfIsNotFixedPoint128 = fetch::meta::EnableIf<IsNotFixedPoint128<DataType>, ReturnType>;
+
 }  // namespace meta
 }  // namespace math
 }  // namespace fetch
