@@ -29,7 +29,7 @@ TEST(SemanticSearchIndex, TestPrograms)
 
   auto query = toolkit.Compile(R"(model IntPair {
   key1: BoundedInteger(8, 20),
-  key2: BoundedInteger(20, 40)  
+  key2: BoundedInteger(20, 40)
 };
 
 let y : IntPair = {
@@ -49,7 +49,7 @@ advertise y;)",
 
   query = toolkit.Compile(R"(model IntPair {
   key1: BoundedInteger(8, 20),
-  key2: BoundedInteger(20, 40)  
+  key2: BoundedInteger(20, 40)
 };
 
 let y : IntPair = {
@@ -72,7 +72,7 @@ TEST(SemanticSearchIndex, MismatchingModelInSameContex)
 
   auto query = toolkit.Compile(R"(model IntPair {
   key1: BoundedInteger(8, 20),
-  key2: BoundedInteger(20, 40)  
+  key2: BoundedInteger(20, 40)
 };
 
 let y : IntPair = {
@@ -120,7 +120,7 @@ TEST(SemanticSearchIndex, BadSyntax)
 
   query = toolkit.Compile(R"(model IntPair {
   key1: BoundedInteger(8, 20),,
-  key2: BoundedInteger(20, 40)  
+  key2: BoundedInteger(20, 40)
 }; )",
                           "test.search");
   EXPECT_TRUE(toolkit.HasErrors());
@@ -128,21 +128,21 @@ TEST(SemanticSearchIndex, BadSyntax)
 
   query = toolkit.Compile(R"(model IntPair {
   key1: BoundedInteger(8, 20),
-  key2: BoundedInteger(20, 40)  
+  key2: BoundedInteger(20, 40)
 } )",
                           "test.search");
   EXPECT_TRUE(toolkit.HasErrors());
   toolkit.PrintErrors();
   query = toolkit.Compile(R"(model IntPair {
   key1: BoundedInteger(8, 20),
-  key2: BoundedInteger(20, 40)  
+  key2: BoundedInteger(20, 40)
  )",
                           "test.search");
   EXPECT_TRUE(toolkit.HasErrors());
   toolkit.PrintErrors();
   query = toolkit.Compile(R"(model IntPair {
   key1: BoundedInteger(8, 20),
-  key2: BoundedInteger(20, 40)  
+  key2: BoundedInteger(20, 40)
 }
 }
  )",
@@ -151,7 +151,7 @@ TEST(SemanticSearchIndex, BadSyntax)
   toolkit.PrintErrors();
   query = toolkit.Compile(R"(model IntPair {
   key1: BoundedInteger(8, 20)
-  key2: BoundedInteger(20, 40)  
+  key2: BoundedInteger(20, 40)
 };
  )",
                           "test.search");

@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     exit(-1);
   }
 
-  auto adv = std::make_shared<ModelAdvertisementRegister>();
+  auto adv = std::make_shared<AdvertisementRegister>();
 
   auto semantic_search_module = SemanticSearchModule::New(adv);
 

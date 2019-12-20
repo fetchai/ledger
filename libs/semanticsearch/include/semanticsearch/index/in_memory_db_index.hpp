@@ -108,25 +108,25 @@ public:
   /* @brief Adds a relation between an index and a sematic position.
    * @param index Database index containing the record for the subscription.
    * @param position Position in semantic space.
-   */  
-  void          AddRelation(DBIndexType const &index, SemanticPosition const &position)  override;
+   */
+  void AddRelation(DBIndexType const &index, SemanticPosition const &position) override;
 
   /* @brief Finds a set of indices near a given position.
    * @param depth The depth level at which we search.
    * @param position The position for which we need to find a group.
-   */  
+   */
   DBIndexSetPtr Find(DepthParameterType depth, SemanticPosition position) const override;
   /// @}
 
   /// Properties
   /// @{
-  std::size_t   rank() const override;
+  std::size_t rank() const override;
   /// @}
 private:
-  GroupToIndicesMap      group_content_{};        ///< Mapping of group to set of indices.
-  DepthParameterType param_depth_start_ = 0;  ///< Smallest depth searchable.
-  DepthParameterType param_depth_end_   = 20; ///< Largest depth searchable.
-  std::size_t            rank_{0};                ///< The rank of elements contained in the db.
+  GroupToIndicesMap  group_content_{};         ///< Mapping of group to set of indices.
+  DepthParameterType param_depth_start_ = 0;   ///< Smallest depth searchable.
+  DepthParameterType param_depth_end_   = 20;  ///< Largest depth searchable.
+  std::size_t        rank_{0};                 ///< The rank of elements contained in the db.
 };
 
 }  // namespace semanticsearch

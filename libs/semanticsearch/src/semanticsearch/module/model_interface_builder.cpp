@@ -36,8 +36,8 @@ SchemaBuilderInterface::operator bool() const
   return model_ != nullptr;
 }
 
-SchemaBuilderInterface &SchemaBuilderInterface::Field(std::string const &    name,
-                                                      ModelIdentifier const &type)
+SchemaBuilderInterface &SchemaBuilderInterface::Field(std::string const &     name,
+                                                      SchemaIdentifier const &type)
 {
   assert(factory_);
   auto field_model = factory_->GetField(type);

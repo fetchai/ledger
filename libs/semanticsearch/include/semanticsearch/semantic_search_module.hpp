@@ -43,13 +43,13 @@ namespace semanticsearch {
 class SemanticSearchModule
 {
 public:
-  using SemanticSearchModulePtr       = std::shared_ptr<SemanticSearchModule>;
-  using ModelAdvertisementRegisterPtr = std::shared_ptr<ModelAdvertisementRegister>;
-  using ConstByteArray                = byte_array::ConstByteArray;
-  using Token                         = byte_array::Token;
-  using KeywordRelation   = std::unordered_map<std::string, std::unordered_set<std::string>>;
-  using KeywordProperties = std::unordered_map<std::string, uint64_t>;
-  using KeywordTypes      = std::unordered_map<std::string, int32_t>;
+  using SemanticSearchModulePtr  = std::shared_ptr<SemanticSearchModule>;
+  using AdvertisementRegisterPtr = std::shared_ptr<AdvertisementRegister>;
+  using ConstByteArray           = byte_array::ConstByteArray;
+  using Token                    = byte_array::Token;
+  using KeywordRelation          = std::unordered_map<std::string, std::unordered_set<std::string>>;
+  using KeywordProperties        = std::unordered_map<std::string, uint64_t>;
+  using KeywordTypes             = std::unordered_map<std::string, int32_t>;
 
   using ConsumerFunction = std::function<int(byte_array::ConstByteArray const &str, uint64_t &pos)>;
   using AllocatorFunction = std::function<QueryVariant(Token const &data)>;
@@ -58,7 +58,7 @@ public:
 
   struct TypeDetails
   {
-    TypeDetails(std::type_index const &t, ModelIdentifier const &n, ConsumerFunction const &c,
+    TypeDetails(std::type_index const &t, SchemaIdentifier const &n, ConsumerFunction const &c,
                 AllocatorFunction const &a, SemanticConverterFunction const &sc, int32_t d)
       : type{t}
       , name{n}
@@ -69,17 +69,17 @@ public:
     {}
 
     std::type_index           type;
-    ModelIdentifier           name;
+    SchemaIdentifier          name;
     ConsumerFunction          consumer;
     AllocatorFunction         allocator;
     SemanticConverterFunction semantic_converter;
     int32_t                   code;
   };
 
-  static ModelIdentifier GenerateID(std::string const &name)
+  static SchemaIdentifier GenerateID(std::string const &name)
   {
 
-    ModelIdentifier ret;
+    SchemaIdentifier ret;
     ret.scope.address = "ai.fetch";
     ret.scope.version = SemanticCoordinateType(1);
     ret.model_name    = name;
@@ -87,7 +87,7 @@ public:
     return ret;
   }
 
-  static SemanticSearchModulePtr New(ModelAdvertisementRegisterPtr advertisement_register)
+  static SemanticSearchModulePtr New(AdvertisementRegisterPtr advertisement_register)
   {
     auto ret = SemanticSearchModulePtr(new SemanticSearchModule(std::move(advertisement_register)));
 
@@ -177,7 +177,7 @@ public:
   using Reducer = std::function<SemanticPosition(T const &)>;
 
   template <typename T>
-  void RegisterPrimitiveType(ModelIdentifier const &          name,
+  void RegisterPrimitiveType(SchemaIdentifier const &         name,
                              ConsumerFunction const &         consumer           = nullptr,
                              AllocatorFunction const &        allocator          = nullptr,
                              SemanticConverterFunction const &semantic_converter = nullptr,
@@ -206,7 +206,7 @@ public:
     return agent_directory_.GetAgent(pk);
   }
 
-  SchemaBuilderInterface NewModel(ModelIdentifier const &name)
+  SchemaBuilderInterface NewModel(SchemaIdentifier const &name)
   {
     auto model = ObjectSchemaField::New();
     advertisement_register_->AddModel(name, model);
@@ -214,14 +214,14 @@ public:
     return SchemaBuilderInterface{model, this};
   }
 
-  SchemaBuilderInterface NewModel(ModelIdentifier const &name, SchemaBuilderInterface const &proxy)
+  SchemaBuilderInterface NewModel(SchemaIdentifier const &name, SchemaBuilderInterface const &proxy)
   {
     advertisement_register_->AddModel(name, proxy.schema());
     types_[name] = proxy.schema();
     return proxy;
   }
 
-  void AddModel(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object)
+  void AddModel(SchemaIdentifier const &name, ObjectSchemaFieldPtr const &object)
   {
     advertisement_register_->AddModel(name, object);
     types_[name] = object;
@@ -233,38 +233,38 @@ public:
     return SchemaBuilderInterface{model, this};
   }
 
-  bool HasModel(ModelIdentifier const &name)
+  bool HasModel(SchemaIdentifier const &name)
   {
     return advertisement_register_->HasModel(name);
   }
 
-  bool HasField(ModelIdentifier const &name)
+  bool HasField(SchemaIdentifier const &name)
   {
     return types_.find(name) != types_.end();
   }
 
-  SchemaField GetField(ModelIdentifier const &name)
+  SchemaField GetField(SchemaIdentifier const &name)
   {
     return types_[name];
   }
 
-  ObjectSchemaFieldPtr GetModel(ModelIdentifier const &name)
+  ObjectSchemaFieldPtr GetModel(SchemaIdentifier const &name)
   {
     return advertisement_register_->GetModel(name);
   }
 
   template <typename T>
-  ModelIdentifier GetName()
+  SchemaIdentifier GetName()
   {
     return GetName(std::type_index(typeid(T)));
   }
 
-  ModelIdentifier GetName(std::type_index idx)
+  SchemaIdentifier GetName(std::type_index idx)
   {
 
     if (idx_to_name_.find(idx) == idx_to_name_.end())
     {
-      ModelIdentifier ret;
+      SchemaIdentifier ret;
       ret.model_name = idx.name();
       return ret;
     }
@@ -299,7 +299,7 @@ public:
     return functions_.find(name) != functions_.end();
   }
 
-  ModelAdvertisementRegisterPtr advertisement_register() const
+  AdvertisementRegisterPtr advertisement_register() const
   {
     return advertisement_register_;
   }
@@ -347,17 +347,17 @@ public:
   }
 
 private:
-  explicit SemanticSearchModule(ModelAdvertisementRegisterPtr advertisement_register)
+  explicit SemanticSearchModule(AdvertisementRegisterPtr advertisement_register)
     : advertisement_register_(std::move(advertisement_register))
   {}
 
   std::vector<TypeDetails> type_information_;
   int32_t                  next_type_code_{Constants::USER_DEFINED_START};
 
-  std::unordered_map<std::type_index, ModelIdentifier>            idx_to_name_;
+  std::unordered_map<std::type_index, SchemaIdentifier>           idx_to_name_;
   std::unordered_map<std::type_index, uint64_t>                   idx_to_code_;
   std::unordered_map<std::string, BuiltinQueryFunction::Function> functions_;
-  std::map<ModelIdentifier, SchemaField>                          types_;
+  std::map<SchemaIdentifier, SchemaField>                         types_;
 
   KeywordRelation keyword_relation_{{"specification", {"version"}},
                                     {"using", {"version"}},
@@ -393,8 +393,8 @@ private:
                                 {"max_depth", Constants::MAX_DEPTH},
                                 {"limit", Constants::LIMIT}};
 
-  ModelAdvertisementRegisterPtr advertisement_register_;
-  AgentDirectory                agent_directory_;
+  AdvertisementRegisterPtr advertisement_register_;
+  AgentDirectory           agent_directory_;
 };
 
 using SemanticSearchModulePtr = SemanticSearchModule::SemanticSearchModulePtr;

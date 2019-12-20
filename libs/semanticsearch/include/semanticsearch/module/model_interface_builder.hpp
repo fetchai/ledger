@@ -38,7 +38,7 @@ public:
                                   SemanticSearchModule *factory = nullptr);
 
   explicit                operator bool() const;
-  SchemaBuilderInterface &Field(std::string const &name, ModelIdentifier const &type);
+  SchemaBuilderInterface &Field(std::string const &name, SchemaIdentifier const &type);
   SchemaBuilderInterface &Field(std::string const &name, SchemaBuilderInterface proxy);
   SchemaBuilderInterface &Field(std::string const &name, SchemaField const &model);
 

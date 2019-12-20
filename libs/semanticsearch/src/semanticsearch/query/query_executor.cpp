@@ -184,8 +184,8 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
       {
         auto name = static_cast<std::string>(x.token);
 
-        QueryVariant    ele;
-        ModelIdentifier model_identifier;
+        QueryVariant     ele;
+        SchemaIdentifier model_identifier;
         model_identifier.scope      = scope_;
         model_identifier.model_name = name;
         if (context_.Has(name))
@@ -313,8 +313,8 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
         auto name = stack.back();
         stack.pop_back();
 
-        auto            instance = instance_obj->As<ModelInstancePtr>();
-        ModelIdentifier model_identifier;
+        auto             instance = instance_obj->As<ModelInstancePtr>();
+        SchemaIdentifier model_identifier;
         model_identifier.scope      = scope_;
         model_identifier.model_name = instance->model_name();
 
@@ -407,9 +407,9 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
           return nullptr;
         }
 
-        auto            instance   = variant->As<ModelInstancePtr>();
-        auto            model_name = instance->model_name();
-        ModelIdentifier model_identifier;
+        auto             instance   = variant->As<ModelInstancePtr>();
+        auto             model_name = instance->model_name();
+        SchemaIdentifier model_identifier;
         model_identifier.scope      = scope_;
         model_identifier.model_name = model_name;
 
@@ -437,7 +437,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
 
         model->VisitFields(
             [this, variant](std::string, std::string mname, ModelInstancePtr obj) {
-              ModelIdentifier mi;
+              SchemaIdentifier mi;
               mi.scope      = scope_;
               mi.model_name = mname;
 
@@ -478,7 +478,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::NewExecute(CompiledStatement const &
 
         SemanticPosition position;
         bool             found{false};
-        ModelIdentifier  model_identifier;
+        SchemaIdentifier model_identifier;
         model_identifier.scope = scope_;
 
         // Checking if it is a model instance
@@ -870,7 +870,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::ExecuteDefine(CompiledStatement cons
       else
       {
 
-        ModelIdentifier model_identifier;
+        SchemaIdentifier model_identifier;
         model_identifier.scope      = scope_;
         model_identifier.model_name = static_cast<std::string>(x.token);
 
@@ -1015,9 +1015,9 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::ExecuteDefine(CompiledStatement cons
     definition_stack_.pop_back();
 
     // TODO(private issue AEA-137): add some sanity checks here
-    auto            token = key->As<Token>();
-    auto            name  = static_cast<std::string>(token);
-    ModelIdentifier model_identifier;
+    auto             token = key->As<Token>();
+    auto             name  = static_cast<std::string>(token);
+    SchemaIdentifier model_identifier;
     model_identifier.scope      = scope_;
     model_identifier.model_name = name;
     try

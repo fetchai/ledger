@@ -23,8 +23,8 @@
 namespace fetch {
 namespace semanticsearch {
 
-bool ModelAdvertisementRegister::CreateModel(ModelIdentifier const &     name,
-                                             ObjectSchemaFieldPtr const &object)
+bool AdvertisementRegister::CreateModel(SchemaIdentifier const &    name,
+                                        ObjectSchemaFieldPtr const &object)
 {
   if (HasModel(name))
   {
@@ -34,30 +34,30 @@ bool ModelAdvertisementRegister::CreateModel(ModelIdentifier const &     name,
   return CreateModelInternal(name, object);
 }
 
-ModelAdvertisementRegister::ModelInstanceAdvertisementPtr
-ModelAdvertisementRegister::GetAdvertisementModel(ModelIdentifier const &name)
+AdvertisementRegister::ModelInstanceAdvertisementPtr AdvertisementRegister::GetAdvertisementModel(
+    SchemaIdentifier const &name)
 {
   assert(model_advertisement_.find(name) != model_advertisement_.end());
   return model_advertisement_[name];
 }
 
-void ModelAdvertisementRegister::AdvertiseAgent(AgentId aid, ModelIdentifier const &name,
-                                                SemanticPosition const &position)
+void AdvertisementRegister::AdvertiseAgent(AgentId aid, SchemaIdentifier const &name,
+                                           SemanticPosition const &position)
 {
   assert(HasModel(name));
   auto ad_model = GetAdvertisementModel(name);
   ad_model->SubscribeAgent(aid, position);
 }
 
-ModelAdvertisementRegister::AgentIdSetPtr ModelAdvertisementRegister::FindAgents(
-    ModelIdentifier const &name, SemanticPosition const &position, DepthParameterType depth)
+AdvertisementRegister::AgentIdSetPtr AdvertisementRegister::FindAgents(
+    SchemaIdentifier const &name, SemanticPosition const &position, DepthParameterType depth)
 {
   auto ad_model = GetAdvertisementModel(name);
   return ad_model->FindAgents(position, depth);
 }
 
-ModelAdvertisementRegister::AgentIdSetPtr ModelAdvertisementRegister::FindAgents(
-    ModelIdentifier const &name, ModelInstancePtr const &object, DepthParameterType depth)
+AdvertisementRegister::AgentIdSetPtr AdvertisementRegister::FindAgents(
+    SchemaIdentifier const &name, ModelInstancePtr const &object, DepthParameterType depth)
 {
   auto ad_model = GetAdvertisementModel(name);
   auto position = ad_model->schema()->Reduce(object);
@@ -65,14 +65,14 @@ ModelAdvertisementRegister::AgentIdSetPtr ModelAdvertisementRegister::FindAgents
   return ad_model->FindAgents(position, depth);
 }
 
-void ModelAdvertisementRegister::OnAddModel(ModelIdentifier const &     name,
-                                            ObjectSchemaFieldPtr const &object)
+void AdvertisementRegister::OnAddModel(SchemaIdentifier const &    name,
+                                       ObjectSchemaFieldPtr const &object)
 {
   CreateModelInternal(name, object);
 }
 
-bool ModelAdvertisementRegister::CreateModelInternal(ModelIdentifier const &     name,
-                                                     ObjectSchemaFieldPtr const &object)
+bool AdvertisementRegister::CreateModelInternal(SchemaIdentifier const &    name,
+                                                ObjectSchemaFieldPtr const &object)
 {
   assert(object != nullptr);
   ModelInstanceAdvertisementPtr model = std::make_shared<ModelInstanceAdvertisement>(object);

@@ -23,7 +23,7 @@
 namespace fetch {
 namespace semanticsearch {
 
-class ModelAdvertisementRegister : public AbstractModelRegister
+class AdvertisementRegister : public AbstractModelRegister
 {
 public:
   using ModelInstancePtr              = std::shared_ptr<ModelInstance>;
@@ -33,22 +33,22 @@ public:
   using AgentId                       = ModelInstanceAdvertisement::AgentId;
   using AgentIdSetPtr                 = ModelInstanceAdvertisement::AgentIdSetPtr;
 
-  ModelAdvertisementRegister() = default;
+  AdvertisementRegister() = default;
 
-  bool CreateModel(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object);
-  ModelInstanceAdvertisementPtr GetAdvertisementModel(ModelIdentifier const &name);
-  void AdvertiseAgent(AgentId aid, ModelIdentifier const &name, SemanticPosition const &position);
-  AgentIdSetPtr FindAgents(ModelIdentifier const &name, SemanticPosition const &position,
+  bool CreateModel(SchemaIdentifier const &name, ObjectSchemaFieldPtr const &object);
+  ModelInstanceAdvertisementPtr GetAdvertisementModel(SchemaIdentifier const &name);
+  void AdvertiseAgent(AgentId aid, SchemaIdentifier const &name, SemanticPosition const &position);
+  AgentIdSetPtr FindAgents(SchemaIdentifier const &name, SemanticPosition const &position,
                            DepthParameterType depth);
-  AgentIdSetPtr FindAgents(ModelIdentifier const &name, ModelInstancePtr const &object,
+  AgentIdSetPtr FindAgents(SchemaIdentifier const &name, ModelInstancePtr const &object,
                            DepthParameterType depth);
 
-  void OnAddModel(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object) override;
+  void OnAddModel(SchemaIdentifier const &name, ObjectSchemaFieldPtr const &object) override;
 
 private:
-  bool CreateModelInternal(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object);
+  bool CreateModelInternal(SchemaIdentifier const &name, ObjectSchemaFieldPtr const &object);
 
-  std::map<ModelIdentifier, ModelInstanceAdvertisementPtr> model_advertisement_;
+  std::map<SchemaIdentifier, ModelInstanceAdvertisementPtr> model_advertisement_;
 };
 
 }  // namespace semanticsearch

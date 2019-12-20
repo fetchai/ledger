@@ -284,7 +284,7 @@ int TokensWithDot(byte_array::ConstByteArray const &str, uint64_t &pos)
   }
 
   c = str[pos];
-  while (std::isalnum(c)||(c=='.'))
+  while (std::isalnum(c) || (c == '.'))
   {
     ++pos;
     if (pos >= str.size())

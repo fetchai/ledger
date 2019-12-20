@@ -16,6 +16,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
 #include "semanticsearch/index/base_types.hpp"
 
 namespace fetch {

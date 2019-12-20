@@ -75,7 +75,7 @@ struct SubscriptionGroup
     return static_cast<SemanticCoordinateType>(ret.Integer());
   }
 
-  SemanticPosition       indices;
+  SemanticPosition   indices;
   DepthParameterType depth;  ///< Parameter that determines the depth of the subscription
 
   bool operator<(SubscriptionGroup const &other) const;

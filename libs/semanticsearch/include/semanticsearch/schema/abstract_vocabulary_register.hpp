@@ -40,17 +40,17 @@ public:
 
   /// Register methods
   /// @{
-  void                 AddModel(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object);
-  ObjectSchemaFieldPtr GetModel(ModelIdentifier const &name);
-  bool                 HasModel(ModelIdentifier const &name);
+  void                 AddModel(SchemaIdentifier const &name, ObjectSchemaFieldPtr const &object);
+  ObjectSchemaFieldPtr GetModel(SchemaIdentifier const &name);
+  bool                 HasModel(SchemaIdentifier const &name);
   /// @}
 
   /// Virtual event handlers
   /// @{
-  virtual void OnAddModel(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object) = 0;
+  virtual void OnAddModel(SchemaIdentifier const &name, ObjectSchemaFieldPtr const &object) = 0;
   /// @}
 private:
-  std::map<ModelIdentifier, ObjectSchemaFieldPtr> models_;
+  std::map<SchemaIdentifier, ObjectSchemaFieldPtr> models_;
 };
 
 }  // namespace semanticsearch

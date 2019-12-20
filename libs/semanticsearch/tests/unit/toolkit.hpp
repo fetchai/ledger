@@ -1,20 +1,39 @@
+#pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "semanticsearch/query/query_compiler.hpp"
 #include "semanticsearch/query/query_executor.hpp"
 
 struct SemanticSearchToolkit
 {
-  using SemanticSearchModule          = fetch::semanticsearch::SemanticSearchModule;
-  using ModelAdvertisementRegister    = fetch::semanticsearch::ModelAdvertisementRegister;
-  using ModelAdvertisementRegisterPtr = std::shared_ptr<ModelAdvertisementRegister>;
-  using SemanticSearchModulePtr       = SemanticSearchModule::SemanticSearchModulePtr;
-  using Query                         = fetch::semanticsearch::Query;
-  using ConstByteArray                = fetch::byte_array::ConstByteArray;
-  using ErrorTracker                  = fetch::semanticsearch::ErrorTracker;
-  using QueryCompiler                 = fetch::semanticsearch::QueryCompiler;
-  using QueryExecutor                 = fetch::semanticsearch::QueryExecutor;
+  using SemanticSearchModule     = fetch::semanticsearch::SemanticSearchModule;
+  using AdvertisementRegister    = fetch::semanticsearch::AdvertisementRegister;
+  using AdvertisementRegisterPtr = std::shared_ptr<AdvertisementRegister>;
+  using SemanticSearchModulePtr  = SemanticSearchModule::SemanticSearchModulePtr;
+  using Query                    = fetch::semanticsearch::Query;
+  using ConstByteArray           = fetch::byte_array::ConstByteArray;
+  using ErrorTracker             = fetch::semanticsearch::ErrorTracker;
+  using QueryCompiler            = fetch::semanticsearch::QueryCompiler;
+  using QueryExecutor            = fetch::semanticsearch::QueryExecutor;
 
   SemanticSearchToolkit()
-    : advertisement{std::make_shared<ModelAdvertisementRegister>()}
+    : advertisement{std::make_shared<AdvertisementRegister>()}
     , semantic_search_module{SemanticSearchModule::New(advertisement)}
     , compiler{error_tracker, semantic_search_module}
   {}
@@ -71,8 +90,8 @@ struct SemanticSearchToolkit
     // TODO: Implemnent
   }
 
-  ErrorTracker                  error_tracker;
-  ModelAdvertisementRegisterPtr advertisement;
-  SemanticSearchModulePtr       semantic_search_module;
-  QueryCompiler                 compiler;
+  ErrorTracker             error_tracker;
+  AdvertisementRegisterPtr advertisement;
+  SemanticSearchModulePtr  semantic_search_module;
+  QueryCompiler            compiler;
 };
