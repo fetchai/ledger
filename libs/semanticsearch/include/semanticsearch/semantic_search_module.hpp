@@ -94,7 +94,7 @@ public:
 
     // Registering primitive types
 
-    ret->RegisterPrimitiveType<ModelField>(GenerateID("ModelField"));
+    ret->RegisterPrimitiveType<SchemaField>(GenerateID("SchemaField"));
 
     ret->RegisterPrimitiveType<SemanticCoordinateType>(
         GenerateID("NumberPrimitive"), byte_array::consumers::NumberConsumer<0, 1>,
@@ -127,8 +127,8 @@ public:
         nullptr, false);
 
     // Registering reduced types
-    ret->RegisterFunction<ModelField, SemanticCoordinateType, SemanticCoordinateType>(
-        "Number", [](SemanticCoordinateType from, SemanticCoordinateType to) -> ModelField {
+    ret->RegisterFunction<SchemaField, SemanticCoordinateType, SemanticCoordinateType>(
+        "Number", [](SemanticCoordinateType from, SemanticCoordinateType to) -> SchemaField {
           auto span = static_cast<SemanticCoordinateType>(to - from);
           // Creating an identifier for the reducer
           std::stringstream identifier{""};
@@ -169,7 +169,7 @@ public:
     return ret;
   }
 
-  using ModelField          = std::shared_ptr<AbstractSchemaField>;
+  using SchemaField         = std::shared_ptr<AbstractSchemaField>;
   using VocabularySchemaPtr = std::shared_ptr<ObjectSchemaField>;
   using Allocator           = std::function<void()>;
   using AgentId             = AgentDirectory::AgentId;
@@ -244,7 +244,7 @@ public:
     return types_.find(name) != types_.end();
   }
 
-  ModelField GetField(ModelIdentifier const &name)
+  SchemaField GetField(ModelIdentifier const &name)
   {
     return types_[name];
   }
@@ -358,7 +358,7 @@ private:
   std::unordered_map<std::type_index, ModelIdentifier>            idx_to_name_;
   std::unordered_map<std::type_index, uint64_t>                   idx_to_code_;
   std::unordered_map<std::string, BuiltinQueryFunction::Function> functions_;
-  std::map<ModelIdentifier, ModelField>                           types_;
+  std::map<ModelIdentifier, SchemaField>                          types_;
 
   KeywordRelation keyword_relation_{{"specification", {"version"}},
                                     {"using", {"version"}},

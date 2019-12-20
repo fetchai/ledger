@@ -38,12 +38,12 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
   mailbox_.SetDeliveryFunction([this](Message const &message) { AttemptDirectDelivery(message); });
 
   // TODO(private issue AEA-126): Move somewhere else
-  using Int        = int;
-  using Float      = double;
-  using ModelField = QueryExecutor::ModelField;
+  using Int         = int;
+  using Float       = double;
+  using SchemaField = QueryExecutor::SchemaField;
 
-  semantic_search_module_->RegisterFunction<ModelField, Int, Int>(
-      "BoundedInteger", [](Int from, Int to) -> ModelField {
+  semantic_search_module_->RegisterFunction<SchemaField, Int, Int>(
+      "BoundedInteger", [](Int from, Int to) -> SchemaField {
         auto            span = static_cast<uint64_t>(to - from);
         SemanticReducer cdr{"BoundedIntegerReducer"};
         cdr.SetReducer<Int>(1, [span, from](Int x) {
@@ -71,8 +71,8 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
         return instance;
       });
 
-  semantic_search_module_->RegisterFunction<ModelField, Float, Float>(
-      "BoundedFloat", [](Float from, Float to) -> ModelField {
+  semantic_search_module_->RegisterFunction<SchemaField, Float, Float>(
+      "BoundedFloat", [](Float from, Float to) -> SchemaField {
         auto            span = static_cast<Float>(to - from);
         SemanticReducer cdr{"BoundedFloatReducer"};
         cdr.SetReducer<Float>(1, [span, from](Float x) {

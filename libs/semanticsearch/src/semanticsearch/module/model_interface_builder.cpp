@@ -54,7 +54,7 @@ SchemaBuilderInterface &SchemaBuilderInterface::Field(std::string const &    nam
 }
 
 SchemaBuilderInterface &SchemaBuilderInterface::Field(std::string const &name,
-                                                      ModelField const & model)
+                                                      SchemaField const &model)
 {
   assert(model != nullptr);
   model_->Insert(name, model);

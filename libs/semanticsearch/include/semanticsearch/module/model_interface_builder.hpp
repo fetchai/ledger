@@ -31,7 +31,7 @@ class SemanticSearchModule;
 class SchemaBuilderInterface
 {
 public:
-  using ModelField          = std::shared_ptr<AbstractSchemaField>;
+  using SchemaField         = std::shared_ptr<AbstractSchemaField>;
   using VocabularySchemaPtr = std::shared_ptr<ObjectSchemaField>;
 
   explicit SchemaBuilderInterface(VocabularySchemaPtr   model   = nullptr,
@@ -40,7 +40,7 @@ public:
   explicit                operator bool() const;
   SchemaBuilderInterface &Field(std::string const &name, ModelIdentifier const &type);
   SchemaBuilderInterface &Field(std::string const &name, SchemaBuilderInterface proxy);
-  SchemaBuilderInterface &Field(std::string const &name, ModelField const &model);
+  SchemaBuilderInterface &Field(std::string const &name, SchemaField const &model);
 
   SchemaBuilderInterface Vocabulary(std::string const &name);
 

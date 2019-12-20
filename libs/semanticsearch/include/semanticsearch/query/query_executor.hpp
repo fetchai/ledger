@@ -31,7 +31,7 @@ class QueryExecutor
 {
 public:
   using VocabularySchemaPtr      = SemanticSearchModule::VocabularySchemaPtr;
-  using ModelField               = SemanticSearchModule::ModelField;
+  using SchemaField              = SemanticSearchModule::SchemaField;
   using Token                    = fetch::byte_array::Token;
   using Vocabulary               = std::shared_ptr<VocabularyInstance>;
   using AbstractModelRegisterPtr = AbstractModelRegister::AbstractModelRegisterPtr;

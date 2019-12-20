@@ -825,7 +825,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::ExecuteDefine(CompiledStatement cons
       auto model = scope_models.back();
 
       // Asserting types
-      if (TypeMismatch<ModelField>(value, x.token))
+      if (TypeMismatch<SchemaField>(value, x.token))
       {
         error_tracker_.RaiseInternalError("Model field value type mismatch", x.token);
         return nullptr;
@@ -838,7 +838,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::ExecuteDefine(CompiledStatement cons
       }
 
       // Sanity check
-      if (value->As<ModelField>() == nullptr)
+      if (value->As<SchemaField>() == nullptr)
       {
         error_tracker_.RaiseInternalError("Attribute value is null.", x.token);
         break;
@@ -851,7 +851,7 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::ExecuteDefine(CompiledStatement cons
       }
 
       // Doing operation
-      model.Field(static_cast<std::string>(key->As<Token>()), value->As<ModelField>());
+      model.Field(static_cast<std::string>(key->As<Token>()), value->As<SchemaField>());
     }
 
     break;
