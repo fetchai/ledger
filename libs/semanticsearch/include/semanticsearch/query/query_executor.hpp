@@ -39,7 +39,7 @@ public:
   using AgentIdSetPtr            = VocabularyAdvertisement::AgentIdSetPtr;
   using LocalNumbers             = std::unordered_map<uint64_t, SemanticCoordinateType>;
 
-  QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &error_tracker);
+  QueryExecutor(SemanticSearchModulePtr instance, ErrorTracker &error_tracker);
   AgentIdSetPtr Execute(Query const &query, Agent agent);
   Vocabulary    GetInstance(std::string const &name);
 
@@ -91,10 +91,10 @@ private:
     return false;
   }
 
-  ErrorTracker &             error_tracker_;
-  std::vector<QueryVariant>  definition_stack_;
-  ExecutionContext           context_;
-  SharedSemanticSearchModule semantic_search_module_;
+  ErrorTracker &            error_tracker_;
+  std::vector<QueryVariant> definition_stack_;
+  ExecutionContext          context_;
+  SemanticSearchModulePtr   semantic_search_module_;
 
   LocalNumbers    locals_numbers_;
   Mode            mode_{INSTANTIATION};

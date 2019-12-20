@@ -6,7 +6,7 @@ struct SemanticSearchToolkit
   using SemanticSearchModule          = fetch::semanticsearch::SemanticSearchModule;
   using ModelAdvertisementRegister    = fetch::semanticsearch::ModelAdvertisementRegister;
   using ModelAdvertisementRegisterPtr = std::shared_ptr<ModelAdvertisementRegister>;
-  using SemanticSearchModulePtr       = SemanticSearchModule::SharedSemanticSearchModule;
+  using SemanticSearchModulePtr       = SemanticSearchModule::SemanticSearchModulePtr;
   using Query                         = fetch::semanticsearch::Query;
   using ConstByteArray                = fetch::byte_array::ConstByteArray;
   using ErrorTracker                  = fetch::semanticsearch::ErrorTracker;

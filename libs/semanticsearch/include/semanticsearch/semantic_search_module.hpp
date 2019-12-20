@@ -43,10 +43,10 @@ namespace semanticsearch {
 class SemanticSearchModule
 {
 public:
-  using SharedSemanticSearchModule       = std::shared_ptr<SemanticSearchModule>;
-  using SharedModelAdvertisementRegister = std::shared_ptr<ModelAdvertisementRegister>;
-  using ConstByteArray                   = byte_array::ConstByteArray;
-  using Token                            = byte_array::Token;
+  using SemanticSearchModulePtr       = std::shared_ptr<SemanticSearchModule>;
+  using ModelAdvertisementRegisterPtr = std::shared_ptr<ModelAdvertisementRegister>;
+  using ConstByteArray                = byte_array::ConstByteArray;
+  using Token                         = byte_array::Token;
   using KeywordRelation   = std::unordered_map<std::string, std::unordered_set<std::string>>;
   using KeywordProperties = std::unordered_map<std::string, uint64_t>;
   using KeywordTypes      = std::unordered_map<std::string, int32_t>;
@@ -87,10 +87,9 @@ public:
     return ret;
   }
 
-  static SharedSemanticSearchModule New(SharedModelAdvertisementRegister advertisement_register)
+  static SemanticSearchModulePtr New(ModelAdvertisementRegisterPtr advertisement_register)
   {
-    auto ret =
-        SharedSemanticSearchModule(new SemanticSearchModule(std::move(advertisement_register)));
+    auto ret = SemanticSearchModulePtr(new SemanticSearchModule(std::move(advertisement_register)));
 
     // Registering primitive types
 
@@ -300,7 +299,7 @@ public:
     return functions_.find(name) != functions_.end();
   }
 
-  SharedModelAdvertisementRegister advertisement_register() const
+  ModelAdvertisementRegisterPtr advertisement_register() const
   {
     return advertisement_register_;
   }
@@ -348,7 +347,7 @@ public:
   }
 
 private:
-  explicit SemanticSearchModule(SharedModelAdvertisementRegister advertisement_register)
+  explicit SemanticSearchModule(ModelAdvertisementRegisterPtr advertisement_register)
     : advertisement_register_(std::move(advertisement_register))
   {}
 
@@ -394,11 +393,11 @@ private:
                                 {"max_depth", Constants::MAX_DEPTH},
                                 {"limit", Constants::LIMIT}};
 
-  SharedModelAdvertisementRegister advertisement_register_;
-  AgentDirectory                   agent_directory_;
+  ModelAdvertisementRegisterPtr advertisement_register_;
+  AgentDirectory                agent_directory_;
 };
 
-using SharedSemanticSearchModule = SemanticSearchModule::SharedSemanticSearchModule;
+using SemanticSearchModulePtr = SemanticSearchModule::SemanticSearchModulePtr;
 
 }  // namespace semanticsearch
 }  // namespace fetch

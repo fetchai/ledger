@@ -26,17 +26,17 @@ namespace semanticsearch {
 class ModelAdvertisementRegister : public AbstractModelRegister
 {
 public:
-  using Vocabulary               = std::shared_ptr<ModelInstance>;
-  using SharedModel              = std::shared_ptr<VocabularyAdvertisement>;
-  using AbstractModelRegisterPtr = AbstractModelRegister::AbstractModelRegisterPtr;
-  using Index                    = VocabularyAdvertisement::Index;
-  using AgentId                  = VocabularyAdvertisement::AgentId;
-  using AgentIdSetPtr            = VocabularyAdvertisement::AgentIdSetPtr;
+  using Vocabulary                    = std::shared_ptr<ModelInstance>;
+  using ModelInstanceAdvertisementPtr = std::shared_ptr<VocabularyAdvertisement>;
+  using AbstractModelRegisterPtr      = AbstractModelRegister::AbstractModelRegisterPtr;
+  using Index                         = VocabularyAdvertisement::Index;
+  using AgentId                       = VocabularyAdvertisement::AgentId;
+  using AgentIdSetPtr                 = VocabularyAdvertisement::AgentIdSetPtr;
 
   ModelAdvertisementRegister() = default;
 
-  bool        CreateModel(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object);
-  SharedModel GetAdvertisementModel(ModelIdentifier const &name);
+  bool CreateModel(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object);
+  ModelInstanceAdvertisementPtr GetAdvertisementModel(ModelIdentifier const &name);
   void AdvertiseAgent(AgentId aid, ModelIdentifier const &name, SemanticPosition const &position);
   AgentIdSetPtr FindAgents(ModelIdentifier const &name, SemanticPosition const &position,
                            DepthParameterType depth);
@@ -48,7 +48,7 @@ public:
 private:
   bool CreateModelInternal(ModelIdentifier const &name, ObjectSchemaFieldPtr const &object);
 
-  std::map<ModelIdentifier, SharedModel> model_advertisement_;
+  std::map<ModelIdentifier, ModelInstanceAdvertisementPtr> model_advertisement_;
 };
 
 }  // namespace semanticsearch

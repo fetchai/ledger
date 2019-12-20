@@ -25,7 +25,7 @@
 namespace fetch {
 namespace semanticsearch {
 
-QueryExecutor::QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &error_tracker)
+QueryExecutor::QueryExecutor(SemanticSearchModulePtr instance, ErrorTracker &error_tracker)
   : error_tracker_(error_tracker)
   , semantic_search_module_{std::move(instance)}
 {}

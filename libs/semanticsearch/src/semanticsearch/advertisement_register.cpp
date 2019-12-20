@@ -34,8 +34,8 @@ bool ModelAdvertisementRegister::CreateModel(ModelIdentifier const &     name,
   return CreateModelInternal(name, object);
 }
 
-ModelAdvertisementRegister::SharedModel ModelAdvertisementRegister::GetAdvertisementModel(
-    ModelIdentifier const &name)
+ModelAdvertisementRegister::ModelInstanceAdvertisementPtr
+ModelAdvertisementRegister::GetAdvertisementModel(ModelIdentifier const &name)
 {
   assert(model_advertisement_.find(name) != model_advertisement_.end());
   return model_advertisement_[name];
@@ -75,8 +75,8 @@ bool ModelAdvertisementRegister::CreateModelInternal(ModelIdentifier const &    
                                                      ObjectSchemaFieldPtr const &object)
 {
   assert(object != nullptr);
-  SharedModel model          = std::make_shared<VocabularyAdvertisement>(object);
-  model_advertisement_[name] = model;
+  ModelInstanceAdvertisementPtr model = std::make_shared<VocabularyAdvertisement>(object);
+  model_advertisement_[name]          = model;
 
   return true;
 }
