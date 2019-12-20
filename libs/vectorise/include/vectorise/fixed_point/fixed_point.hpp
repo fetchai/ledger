@@ -770,6 +770,10 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
       ++integer;
       fraction = static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(~fraction);
       ++fraction;
+      if (integer == 0)
+      {
+        s << '-';
+      }
     }
     auto fraction_large = static_cast<typename FixedPoint<I, F>::Type>(fraction);
     fraction_large *= static_cast<typename FixedPoint<I, F>::Type>(power10);

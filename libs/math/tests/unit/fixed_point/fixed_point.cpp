@@ -383,6 +383,9 @@ TEST(FixedPointTest, ToString_16_16)
   str_val = "0.5fp32";
   ToStringTest<fp32_t>(str_val);
 
+  str_val = "-0.1fp32";
+  ToStringTest<fp32_t>(str_val);
+
   str_val = "1.5fp32";
   ToStringTest<fp32_t>(str_val);
 
@@ -415,6 +418,9 @@ TEST(FixedPointTest, ToString_32_32)
   str_val = "0.5fp64";
   ToStringTest<fp64_t>(str_val);
 
+  str_val = "-0.1fp64";
+  ToStringTest<fp64_t>(str_val);
+
   str_val = "1.5fp64";
   ToStringTest<fp64_t>(str_val);
 
@@ -445,6 +451,9 @@ TEST(FixedPointTest, ToString_64_64)
   ToStringTest<fp128_t>(str_val);
 
   str_val = "0.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "-0.1fp128";
   ToStringTest<fp128_t>(str_val);
 
   str_val = "1.5fp128";
