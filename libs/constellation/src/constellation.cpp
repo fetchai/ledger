@@ -379,6 +379,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , lane_port_start_(LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::LANE, 0))
   , shard_cfgs_{GenerateShardsConfig(cfg_, lane_port_start_)}
   , reactor_{"Reactor"}
+  , reactor_dkg_{"ReactorDKG"}
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
@@ -652,8 +653,8 @@ bool Constellation::OnBringUpExternalNetwork(
   // Attach beacon runnables
   if (beacon_)
   {
-    reactor_.Attach(beacon_setup_->GetWeakRunnables());
-    reactor_.Attach(beacon_->GetWeakRunnable());
+    reactor_dkg_.Attach(beacon_setup_->GetWeakRunnables());
+    reactor_dkg_.Attach(beacon_->GetWeakRunnable());
   }
 
   // attach the services to the reactor
@@ -707,6 +708,7 @@ bool Constellation::OnBringUpExternalNetwork(
 
   // reactor important to run the block/chain state machine
   reactor_.Start();
+  reactor_dkg_.Start();
 
   /// BLOCK EXECUTION & MINING
   execution_manager_->Start();
@@ -803,6 +805,7 @@ void Constellation::OnTearDownExternalNetwork()
   }
 
   reactor_.Stop();
+  reactor_dkg_.Stop();
 
   if (agent_network_)
   {
