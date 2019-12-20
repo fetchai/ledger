@@ -204,7 +204,7 @@ private:
   using Clock     = std::chrono::high_resolution_clock;
   using Timepoint = Clock::time_point;
 
-  Timepoint  started_request_for_sigs_;
+  Timepoint started_request_for_sigs_;
 
   telemetry::CounterPtr         beacon_entropy_generated_total_;
   telemetry::CounterPtr         beacon_entropy_future_signature_seen_total_;

@@ -400,9 +400,10 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   }
 
   // Now collected
-  beacon_collect_time_->Add(telemetry::details::ToSeconds(Clock::now() - started_request_for_sigs_));
+  beacon_collect_time_->Add(
+      telemetry::details::ToSeconds(Clock::now() - started_request_for_sigs_));
 
-  MilliTimer const timer{"Verify collective threshold signature", 100};
+  MilliTimer const               timer{"Verify collective threshold signature", 100};
   telemetry::FunctionTimer const timer1{*beacon_verify_time_};
 
   // Note: don't lock until the promise has resolved (above)! Otherwise the system can deadlock
