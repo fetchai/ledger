@@ -207,6 +207,7 @@ private:
   /// @name Network Orchestration
   /// @{
   core::Reactor  reactor_;
+  core::Reactor  reactor_dkg_;
   NetworkManager network_manager_;       ///< Top level network coordinator
   NetworkManager http_network_manager_;  ///< A separate net. coordinator for the http service(s)
   MuddlePtr      muddle_;                ///< The muddle networking service
