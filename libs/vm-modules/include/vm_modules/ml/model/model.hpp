@@ -57,7 +57,8 @@ enum class SupportedLayerType : uint8_t
   CONV1D,
   CONV2D,
   FLATTEN,
-  DROPOUT
+  DROPOUT,
+  ACTIVATION
 };
 
 class VMModel : public fetch::vm::Object
@@ -154,6 +155,9 @@ public:
 
   void LayerAddDropout(fetch::vm::Ptr<fetch::vm::String> const &layer,
                        math::DataType const &                   probability);
+
+  void LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                          fetch::vm::Ptr<fetch::vm::String> const &activation_name);
 
 private:
   ModelPtrType       model_;
