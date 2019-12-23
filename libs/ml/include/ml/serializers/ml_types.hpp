@@ -2401,7 +2401,7 @@ struct MapSerializer<ml::OpReshapeSaveableParams<TensorType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(3);
+    auto map = map_constructor(5);
 
     // serialize parent class first
     auto ops_pointer = static_cast<ml::OpsSaveableParams const *>(&sp);
@@ -2410,7 +2410,7 @@ struct MapSerializer<ml::OpReshapeSaveableParams<TensorType>, D>
     map.Append(OP_CODE, sp.op_type);
     map.Append(NEW_SHAPE, sp.new_shape);
     map.Append(OLD_SHAPE, sp.old_shape);
-    map.Append(NEW_SIZE, sp.new_shape);
+    map.Append(NEW_SIZE, sp.new_size);
   }
 
   template <typename MapDeserializer>
@@ -2421,7 +2421,7 @@ struct MapSerializer<ml::OpReshapeSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(NEW_SHAPE, sp.new_shape);
     map.ExpectKeyGetValue(OLD_SHAPE, sp.old_shape);
-    map.ExpectKeyGetValue(NEW_SIZE, sp.new_shape);
+    map.ExpectKeyGetValue(NEW_SIZE, sp.new_size);
   }
 };
 

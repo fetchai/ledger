@@ -108,22 +108,9 @@ public:
   }
 
   // Output shape
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const & /*inputs*/) const override
   {
-    std::vector<SizeType> output_size;
-    for (SizeType i{0}; i < new_shape_.size(); i++)
-    {
-      if (new_shape_.at(i) < inputs.front()->shape().size())
-      {
-        output_size.push_back(inputs.front()->shape().at(new_shape_.at(i)));
-      }
-      else
-      {
-        output_size.push_back(1);
-      }
-    }
-
-    return output_size;
+    return new_shape_;
   }
 
   static constexpr OpType OpCode()
