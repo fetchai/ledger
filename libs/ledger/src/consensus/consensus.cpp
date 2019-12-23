@@ -185,8 +185,14 @@ BlockPtr GetBlockPriorTo(Block const &current, MainChain const &chain)
 Block Consensus::GetBeginningOfAeon(Block const &current, MainChain const &chain) const
 {
   MilliTimer const timer{"GetBeginningOfAeon ", 1000};
-  Block            ret          = current;
-  uint64_t const   nearest_aeon = ((current.block_number / aeon_period_) * aeon_period_) + 1;
+  Block    ret          = current;
+  uint64_t nearest_aeon = ((current.block_number / aeon_period_) * aeon_period_) + 1;
+
+  if(nearest_aeon >= current.block_number)
+  {
+    nearest_aeon -= aeon_period_;
+    FETCH_LOG_INFO(LOGGING_NAME, "Finding nearest aeon: ", nearest_aeon, " with current: ", current.block_number);
+  }
 
   // Attempt to lookup from cache to avoid chain walk
   if (aeon_beginning_cache_.find(nearest_aeon) != aeon_beginning_cache_.end())
