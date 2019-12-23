@@ -182,14 +182,14 @@ BlockPtr GetBlockPriorTo(Block const &current, MainChain const &chain)
   return chain.GetBlock(current.previous_hash);
 }
 
-Block Consensus::GetBeginningOfAeon(Block const &current, MainChain const &chain)
+Block Consensus::GetBeginningOfAeon(Block const &current, MainChain const &chain) const
 {
   MilliTimer const timer{"GetBeginningOfAeon ", 1000};
   Block            ret          = current;
   uint64_t const   nearest_aeon = (current.block_number / aeon_period_) * aeon_period_;
 
   // Attempt to lookup from cache to avoid chain walk
-  if (aeon_beginning_cache_.find(nearest) != aeon_beginning_cache_.end())
+  if (aeon_beginning_cache_.find(nearest_aeon) != aeon_beginning_cache_.end())
   {
     return aeon_beginning_cache_.at(nearest_aeon);
   }
