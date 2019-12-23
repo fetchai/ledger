@@ -444,7 +444,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     if (!prior)
     {
       FETCH_LOG_ERROR(LOGGING_NAME,
-                      "Failed to find the beginning of the aeon when updating the block!");
+                      "Failed to find the beginning of the aeon when updating the block! Aeon period: ", aeon_period_);
       throw std::runtime_error("Failed to update block!");
     }
 
@@ -529,7 +529,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
       FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG with timestamp: ", last_block_time,
                      " current: ", current_time,
-                     " diff: ", int64_t(current_time) - int64_t(last_block_time));
+                     " diff: ", int64_t(current_time) - int64_t(last_block_time), " aeon period: ", aeon_period_);
 
       uint64_t block_interval = 1;
 
