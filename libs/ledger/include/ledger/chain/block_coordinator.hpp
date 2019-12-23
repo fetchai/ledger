@@ -366,6 +366,7 @@ private:
   telemetry::CounterPtr         request_tx_count_;
   telemetry::CounterPtr         unable_to_find_tx_count_;
   telemetry::CounterPtr         blocks_minted_;
+  telemetry::CounterPtr         consensus_update_failure_total_;
   telemetry::HistogramPtr       tx_sync_times_;
   telemetry::GaugePtr<uint64_t> current_block_num_;
   telemetry::GaugePtr<uint64_t> next_block_num_;
