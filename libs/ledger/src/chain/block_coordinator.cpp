@@ -533,12 +533,16 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus with error: ", ex.what());
     consensus_update_failure_total_->increment();
+
+    return State::RESET;
   }
   catch (...)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unknown error when updating consensus!");
     consensus_update_failure_total_->increment();
     next_block_ = nullptr;
+
+    return State::RESET;
   }
 
   if (!next_block_)
