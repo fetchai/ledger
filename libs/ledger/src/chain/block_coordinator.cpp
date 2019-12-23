@@ -162,6 +162,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
         "The total number of times a block was invalidated because transactions were not found")}
   , blocks_minted_{telemetry::Registry::Instance().CreateCounter("blocks_minted_total",
                                                                  "Blocks minted")}
+  , consensus_update_failure_total_{telemetry::Registry::Instance().CreateCounter(
+        "consensus_update_failure_total", "Failures to update consensus")}
   , tx_sync_times_{telemetry::Registry::Instance().CreateHistogram(
         {0.001, 0.01, 0.1, 1, 10, 100}, "ledger_block_coordinator_tx_sync_times",
         "The histogram of the time it takes to sync transactions")}
@@ -520,10 +522,24 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     return State::RESET;
   }
 
-  consensus_->UpdateCurrentBlock(*current_block_);
+  try
+  {
+    consensus_->UpdateCurrentBlock(*current_block_);
 
-  // Failure will set this to a nullptr
-  next_block_ = consensus_->GenerateNextBlock();
+    // Failure will set this to a nullptr
+    next_block_ = consensus_->GenerateNextBlock();
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus with error: ", ex.what());
+    consensus_update_failure_total_->increment();
+  }
+  catch (...)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unknown error when updating consensus!");
+    consensus_update_failure_total_->increment();
+    next_block_ = nullptr;
+  }
 
   if (!next_block_)
   {
@@ -562,9 +578,18 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
   if (!is_genesis)
   {
-    BlockPtr previous = chain_.GetBlock(current_block_->previous_hash);
+    BlockPtr                   previous = chain_.GetBlock(current_block_->previous_hash);
+    ConsensusInterface::Status result   = ConsensusInterface::Status::NO;
 
-    auto result = consensus_->ValidBlock(*current_block_);
+    try
+    {
+      result = consensus_->ValidBlock(*current_block_);
+    }
+    catch (...)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unknown error when validating block!");
+      consensus_update_failure_total_->increment();
+    }
 
     if (!(result == ConsensusInterface::Status::YES))
     {
@@ -577,7 +602,20 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       return State::RESET;
     }
 
-    consensus_->UpdateCurrentBlock(*previous);
+    try
+    {
+      consensus_->UpdateCurrentBlock(*previous);
+    }
+    catch (std::exception const &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus with error: ", ex.what());
+      consensus_update_failure_total_->increment();
+    }
+    catch (...)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unknown error when updating consensus!");
+      consensus_update_failure_total_->increment();
+    }
 
     // Check: Ensure the number of lanes is correct
     if (num_lanes_ != (1u << current_block_->log2_num_lanes))
@@ -933,7 +971,21 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     executed_block_count_->increment();
     executed_tx_count_->add(current_block_->GetTransactionCount());
 
-    consensus_->UpdateCurrentBlock(*current_block_);
+    try
+    {
+      consensus_->UpdateCurrentBlock(*current_block_);
+    }
+    catch (std::exception const &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Failed to update consensus with valid block, with error: ", ex.what());
+      consensus_update_failure_total_->increment();
+    }
+    catch (...)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unknown error when updating consensus!");
+      consensus_update_failure_total_->increment();
+    }
   }
 
   return State::RESET;
@@ -1142,10 +1194,26 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
   if (block != nullptr && !block->hash.empty())
   {
-    block_hash_->set(*reinterpret_cast<uint64_t const *>(block->hash.pointer()));
+    if ((block->block_number % 100) == 0)
+    {
+      block_hash_->set(*reinterpret_cast<uint64_t const *>(block->hash.pointer()));
+    }
   }
 
-  consensus_->UpdateCurrentBlock(*block);
+  try
+  {
+    consensus_->UpdateCurrentBlock(*block);
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus with error: ", ex.what());
+    consensus_update_failure_total_->increment();
+  }
+  catch (...)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unknown error when updating consensus!");
+    consensus_update_failure_total_->increment();
+  }
 
   current_block_.reset();
   next_block_.reset();
