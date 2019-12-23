@@ -55,7 +55,7 @@ BENCHMARK_TEMPLATE(BM_DropoutForward, double, 256)->Unit(benchmark::kMicrosecond
 BENCHMARK_TEMPLATE(BM_DropoutForward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DropoutForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DropoutForward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_DropoutForward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_DropoutForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_DropoutBackward(benchmark::State &state)
@@ -86,7 +86,7 @@ BENCHMARK_TEMPLATE(BM_DropoutBackward, double, 256)->Unit(benchmark::kMicrosecon
 BENCHMARK_TEMPLATE(BM_DropoutBackward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DropoutBackward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_DropoutBackward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_DropoutBackward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_DropoutBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_EluForward(benchmark::State &state)
@@ -112,7 +112,7 @@ BENCHMARK_TEMPLATE(BM_EluForward, double, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_EluForward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_EluForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_EluForward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_EluForward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_EluForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_EluBackward(benchmark::State &state)
@@ -143,7 +143,7 @@ BENCHMARK_TEMPLATE(BM_EluBackward, double, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_EluBackward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_EluBackward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_EluBackward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_EluBackward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_EluBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_LeakyReluForward(benchmark::State &state)
@@ -167,7 +167,7 @@ BENCHMARK_TEMPLATE(BM_LeakyReluForward, double, 256)->Unit(benchmark::kMicroseco
 BENCHMARK_TEMPLATE(BM_LeakyReluForward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LeakyReluForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LeakyReluForward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_LeakyReluForward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_LeakyReluForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_LeakyReluBackward(benchmark::State &state)
@@ -197,7 +197,7 @@ BENCHMARK_TEMPLATE(BM_LeakyReluBackward, double, 256)->Unit(benchmark::kMicrosec
 BENCHMARK_TEMPLATE(BM_LeakyReluBackward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LeakyReluBackward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LeakyReluBackward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_LeakyReluBackward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_LeakyReluBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_LogSigmoidForward(benchmark::State &state)
@@ -221,7 +221,7 @@ BENCHMARK_TEMPLATE(BM_LogSigmoidForward, double, 256)->Unit(benchmark::kMicrosec
 BENCHMARK_TEMPLATE(BM_LogSigmoidForward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LogSigmoidForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LogSigmoidForward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_LogSigmoidForward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_LogSigmoidForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_LogSigmoidBackward(benchmark::State &state)
@@ -251,7 +251,7 @@ BENCHMARK_TEMPLATE(BM_LogSigmoidBackward, double, 256)->Unit(benchmark::kMicrose
 BENCHMARK_TEMPLATE(BM_LogSigmoidBackward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LogSigmoidBackward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LogSigmoidBackward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_LogSigmoidBackward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_LogSigmoidBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_LogSoftmaxForward(benchmark::State &state)
@@ -275,7 +275,7 @@ BENCHMARK_TEMPLATE(BM_LogSoftmaxForward, double, 256)->Unit(benchmark::kMicrosec
 BENCHMARK_TEMPLATE(BM_LogSoftmaxForward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LogSoftmaxForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LogSoftmaxForward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_LogSoftmaxForward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_LogSoftmaxForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_LogSoftmaxBackward(benchmark::State &state)
@@ -305,7 +305,7 @@ BENCHMARK_TEMPLATE(BM_LogSoftmaxBackward, double, 256)->Unit(benchmark::kMicrose
 BENCHMARK_TEMPLATE(BM_LogSoftmaxBackward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LogSoftmaxBackward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LogSoftmaxBackward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_LogSoftmaxBackward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_LogSoftmaxBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_RandomisedReluForward(benchmark::State &state)
@@ -332,7 +332,7 @@ BENCHMARK_TEMPLATE(BM_RandomisedReluForward, double, 256)->Unit(benchmark::kMicr
 BENCHMARK_TEMPLATE(BM_RandomisedReluForward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_RandomisedReluForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_RandomisedReluForward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_RandomisedReluForward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_RandomisedReluForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_RandomisedReluBackward(benchmark::State &state)
@@ -364,7 +364,7 @@ BENCHMARK_TEMPLATE(BM_RandomisedReluBackward, double, 256)->Unit(benchmark::kMic
 BENCHMARK_TEMPLATE(BM_RandomisedReluBackward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_RandomisedReluBackward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_RandomisedReluBackward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_RandomisedReluBackward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_RandomisedReluBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_ReluForward(benchmark::State &state)
@@ -388,7 +388,7 @@ BENCHMARK_TEMPLATE(BM_ReluForward, double, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ReluForward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ReluForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ReluForward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_ReluForward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ReluForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_ReluBackward(benchmark::State &state)
@@ -418,7 +418,7 @@ BENCHMARK_TEMPLATE(BM_ReluBackward, double, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ReluBackward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ReluBackward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_ReluBackward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_ReluBackward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ReluBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_SigmoidForward(benchmark::State &state)
@@ -442,7 +442,7 @@ BENCHMARK_TEMPLATE(BM_SigmoidForward, double, 256)->Unit(benchmark::kMicrosecond
 BENCHMARK_TEMPLATE(BM_SigmoidForward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SigmoidForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SigmoidForward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_SigmoidForward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_SigmoidForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_SigmoidBackward(benchmark::State &state)
@@ -472,7 +472,7 @@ BENCHMARK_TEMPLATE(BM_SigmoidBackward, double, 256)->Unit(benchmark::kMicrosecon
 BENCHMARK_TEMPLATE(BM_SigmoidBackward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SigmoidBackward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SigmoidBackward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_SigmoidBackward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_SigmoidBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_SoftmaxForward(benchmark::State &state)
@@ -496,7 +496,7 @@ BENCHMARK_TEMPLATE(BM_SoftmaxForward, double, 256)->Unit(benchmark::kMicrosecond
 BENCHMARK_TEMPLATE(BM_SoftmaxForward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SoftmaxForward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SoftmaxForward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_SoftmaxForward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_SoftmaxForward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 template <class T, int N>
 void BM_SoftmaxBackward(benchmark::State &state)
@@ -526,6 +526,6 @@ BENCHMARK_TEMPLATE(BM_SoftmaxBackward, double, 256)->Unit(benchmark::kMicrosecon
 BENCHMARK_TEMPLATE(BM_SoftmaxBackward, double, 512)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SoftmaxBackward, double, 1024)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_SoftmaxBackward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_SoftmaxBackward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_SoftmaxBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_MAIN();
