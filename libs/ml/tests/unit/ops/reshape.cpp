@@ -206,7 +206,7 @@ TYPED_TEST(ReshapeTest, saveparams_backward_test)
   error.Reshape({8, 1, 1});
 
   // call reshape and store result in 'error'
-  fetch::ml::ops::Reshape<TypeParam> op({8, 1, 1});
+  fetch::ml::ops::Reshape<TypeParam>             op({8, 1, 1});
   std::vector<std::shared_ptr<const TensorType>> data_vec({std::make_shared<TensorType>(data)});
   op.Forward(data_vec, error);
 
@@ -253,14 +253,14 @@ TYPED_TEST(ReshapeTest, Reshape_graph_serialization_test)
   using SPType     = fetch::ml::GraphSaveableParams<TensorType>;
 
   std::vector<SizeType> final_shape({8, 1, 1, 1});
-  
+
   TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
   data.Reshape({2, 2, 2});
 
   fetch::ml::Graph<TensorType> g;
 
-  std::string input_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input",
-  {}); std::string output_name =
+  std::string input_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string output_name =
       g.template AddNode<fetch::ml::ops::Reshape<TensorType>>("Output", {input_name}, final_shape);
 
   g.SetInput(input_name, data);
