@@ -65,18 +65,28 @@ std::string const ACTIVATION_LAYER_TEST_SOURCE = R"(
      endfunction
 )";
 
+static constexpr bool IGNORE_CHARGE_ESTIMATION = true;
+
 class VMModelTests : public ::testing::Test
 {
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
 
-  void TestValidLayerAdding(std::string const &test_case_source)
+  void TestValidLayerAdding(std::string const &test_case_source,
+                            bool               ignore_charge_estimation = false)
   {
     std::string const src =
         std::regex_replace(ADD_VALID_LAYER_TEST_SOURCE, std::regex("<<TOKEN>>"), test_case_source);
     ASSERT_TRUE(toolkit.Compile(src));
-    ASSERT_TRUE(toolkit.Run());
+    if (ignore_charge_estimation)
+    {
+      ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+    }
+    else
+    {
+      ASSERT_TRUE(toolkit.Run());
+    }
   }
 
   void TestInvalidLayerAdding(std::string const &test_case_source)
@@ -466,27 +476,25 @@ TEST_F(VMModelTests, DISABLED_model_add_conv2d_relu)
   TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)");
 }
 
-// Disabled until implementation of AddDropout estimator
-TEST_F(VMModelTests, DISABLED_model_add_dropout)
+TEST_F(VMModelTests, model_add_dropout)
 {
-  TestValidLayerAdding(R"(model.add("dropout", 0.256fp64);)");
+  TestValidLayerAdding(R"(model.add("dropout", 0.256fp64);)", IGNORE_CHARGE_ESTIMATION);
 }
 
-// Disabled until implementation of AddFlatten estimator
-TEST_F(VMModelTests, DISABLED_model_add_flatten)
+TEST_F(VMModelTests, model_add_flatten)
 {
-  TestValidLayerAdding(R"(model.add("flatten");)");
+  TestValidLayerAdding(R"(model.add("flatten");)", IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_activation)
 {
-  TestValidLayerAdding(R"(model.add("activation", "relu");)");
-  TestValidLayerAdding(R"(model.add("activation", "leaky_relu");)");
-  TestValidLayerAdding(R"(model.add("activation", "gelu");)");
-  TestValidLayerAdding(R"(model.add("activation", "sigmoid");)");
-  TestValidLayerAdding(R"(model.add("activation", "log_sigmoid");)");
-  TestValidLayerAdding(R"(model.add("activation", "softmax");)");
-  TestValidLayerAdding(R"(model.add("activation", "log_softmax");)");
+  TestValidLayerAdding(R"(model.add("activation", "relu");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("activation", "leaky_relu");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("activation", "gelu");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("activation", "sigmoid");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("activation", "log_sigmoid");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("activation", "softmax");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("activation", "log_softmax");)", IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_invalid_layer_type)
