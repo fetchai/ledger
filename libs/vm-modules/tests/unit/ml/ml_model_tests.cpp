@@ -65,7 +65,7 @@ std::string const ACTIVATION_LAYER_TEST_SOURCE = R"(
      endfunction
 )";
 
-static constexpr bool IGNORE_CHARGE_ESTIMATION = true;
+constexpr bool IGNORE_CHARGE_ESTIMATION = true;
 
 class VMModelTests : public ::testing::Test
 {
