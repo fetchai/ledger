@@ -40,12 +40,15 @@ public:
 
   explicit Reshape(std::vector<SizeType> new_shape)
     : new_shape_(std::move(new_shape))
-  {}
+  {
+    new_shape_product_ = fetch::math::Product(new_shape_);
+  }
 
   explicit Reshape(SPType const &sp)
     : Ops<T>(sp)
   {
     new_shape_ = sp.new_shape;
+    new_shape_product_ = sp.new_shape_product;
   }
 
   ~Reshape() override = default;
@@ -54,6 +57,7 @@ public:
   {
     SPType sp{};
     sp.new_shape = new_shape_;
+    sp.new_shape_product = new_shape_product_;
     return std::make_shared<SPType>(sp);
   }
 
@@ -71,9 +75,22 @@ public:
   {
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
-    assert(inputs.front()->size() == output.size());
 
-    output.Assign((*inputs.front()));
+    // if the shape is exactly the same just copy the data
+    if ((*inputs.front()).shape() == new_shape_)
+    {
+      output.Assign((*inputs.front()));
+    }
+    // check the reshape sizes match!
+    else if((*inputs.front()).size() != new_shape_product_)
+    {
+      throw fetch::math::exceptions::WrongShape("new shape has different size from current tensor size");
+    }
+    else
+    {
+      output.Reshape(new_shape_);
+      output.Assign((*inputs.front()));
+    }
   }
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
@@ -112,6 +129,7 @@ public:
 
 private:
   std::vector<SizeType> new_shape_;
+  SizeType new_shape_product_{0};
 };
 
 }  // namespace ops
