@@ -219,7 +219,7 @@ private:
 
   static ChargeAmount ToChargeAmount(fixed_point::fp64_t const &val);
 
-  static ChargeAmount constexpr EXPERIMENTAL_LARGE_COST  = std::numeric_limits<uint32_t>::max();
+  static ChargeAmount constexpr EXPERIMENTAL_LARGE_COST  = std::numeric_limits<int32_t>::max();
   static ChargeAmount constexpr EXPERIMENTAL_HUGE_CHARGE = vm::MAXIMUM_CHARGE / 64;
 };
 
