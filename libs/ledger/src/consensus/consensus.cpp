@@ -190,7 +190,7 @@ Block Consensus::GetBeginningOfAeon(Block const &current, MainChain const &chain
 
   if((current.block_number % aeon_period_) == 0)
   {
-    nearest_aeon = (current.block_number - aeon_period_) + 1
+    nearest_aeon = (current.block_number - aeon_period_) + 1;
     FETCH_LOG_INFO(LOGGING_NAME, "Finding nearest aeon: ", nearest_aeon, " with current: ", current.block_number);
   }
 
