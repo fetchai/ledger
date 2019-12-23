@@ -102,6 +102,12 @@ public:
                                    TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
+
+    if (old_shape_.size() == 0)
+    {
+      throw std::runtime_error("cannot backprop without first calling forward on reshape op");
+    }
+
     TensorType ret(old_shape_);
     ret.Assign(error_signal);
     return {ret};

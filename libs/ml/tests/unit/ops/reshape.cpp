@@ -203,9 +203,15 @@ TYPED_TEST(ReshapeTest, saveparams_backward_test)
   TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
   data.Reshape({2, 2, 2});
   TensorType error = TensorType::FromString("1, -2, -1, 2");
-  error.Reshape({2, 1, 2});
-  fetch::ml::ops::Reshape<TypeParam> op({2, 1, 2});
-  std::vector<TensorType>            error_signal =
+  error.Reshape({8, 1, 1});
+
+  // call reshape and store result in 'error'
+  fetch::ml::ops::Reshape<TypeParam> op({8, 1, 1});
+  std::vector<std::shared_ptr<const TensorType>> data_vec({std::make_shared<TensorType>(data)});
+  op.Forward(data_vec, error);
+
+  // backprop with incoming error signal matching output data
+  std::vector<TensorType> error_signal =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // extract saveparams
@@ -239,47 +245,49 @@ TYPED_TEST(ReshapeTest, saveparams_backward_test)
       fetch::math::function_tolerance<typename TypeParam::Type>()));
   fetch::math::state_clear<DataType>();
 }
-//
-// TYPED_TEST(ReshapeTest, Reshape_graph_serialization_test)
-//{
-//  using TensorType = TypeParam;
-//  using DataType   = typename TypeParam::Type;
-//  using SPType     = fetch::ml::GraphSaveableParams<TensorType>;
-//
-//  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
-//  data.Reshape({2, 2, 2});
-//
-//  fetch::ml::Graph<TensorType> g;
-//
-//  std::string input_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input",
-//  {}); std::string output_name =
-//      g.template AddNode<fetch::ml::ops::Reshape<TensorType>>("Output", {input_name}, 1);
-//
-//  g.SetInput(input_name, data);
-//  TypeParam output = g.Evaluate("Output");
-//
-//  // extract saveparams
-//  SPType gsp = g.GetGraphSaveableParams();
-//
-//  fetch::serializers::MsgPackSerializer b;
-//  b << gsp;
-//
-//  // deserialize
-//  b.seek(0);
-//  SPType dsp2;
-//  b >> dsp2;
-//
-//  // rebuild graph
-//  auto new_graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
-//  fetch::ml::utilities::BuildGraph(gsp, new_graph_ptr);
-//
-//  new_graph_ptr->SetInput(input_name, data);
-//  TypeParam output2 = new_graph_ptr->Evaluate("Output");
-//
-//  // Test correct values
-//  ASSERT_EQ(output.shape(), output2.shape());
-//  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
-//                              fetch::math::function_tolerance<DataType>()));
-//}
+
+TYPED_TEST(ReshapeTest, Reshape_graph_serialization_test)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using SPType     = fetch::ml::GraphSaveableParams<TensorType>;
+
+  std::vector<SizeType> final_shape({8, 1, 1, 1});
+  
+  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
+  data.Reshape({2, 2, 2});
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string input_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input",
+  {}); std::string output_name =
+      g.template AddNode<fetch::ml::ops::Reshape<TensorType>>("Output", {input_name}, final_shape);
+
+  g.SetInput(input_name, data);
+  TypeParam output = g.Evaluate("Output");
+
+  // extract saveparams
+  SPType gsp = g.GetGraphSaveableParams();
+
+  fetch::serializers::MsgPackSerializer b;
+  b << gsp;
+
+  // deserialize
+  b.seek(0);
+  SPType dsp2;
+  b >> dsp2;
+
+  // rebuild graph
+  auto new_graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
+  fetch::ml::utilities::BuildGraph(gsp, new_graph_ptr);
+
+  new_graph_ptr->SetInput(input_name, data);
+  TypeParam output2 = new_graph_ptr->Evaluate("Output");
+
+  // Test correct values
+  ASSERT_EQ(output.shape(), output2.shape());
+  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
+}
 
 }  // namespace
