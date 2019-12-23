@@ -206,6 +206,7 @@ int RunEtchScript(std::string const &filename, std::shared_ptr<fetch::vm::Module
 
   /// set up VM
   auto vm = std::make_shared<fetch::vm::VM>(module.get());
+  vm->SetChargeLimit(fetch::vm::ChargeAmount(0));
 
   // attach observer so that writing to state works
   JsonStateMap observer{};
