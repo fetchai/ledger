@@ -20,10 +20,13 @@
 #include "core/mutex.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/consensus/consensus.hpp"
+#include "network/generics/milli_timer.hpp"
 
 #include <ctime>
 #include <random>
 #include <utility>
+
+using fetch::generics::MilliTimer;
 
 /**
  * Consensus enforcement class.
@@ -136,6 +139,7 @@ Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet c
 // TODO(HUT): probably this is not required any more.
 Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous) const
 {
+  MilliTimer const timer{"GetCabinet ", 1000};
   // Calculate the last relevant snapshot
   uint64_t const last_snapshot = previous.block_number - (previous.block_number % aeon_period_);
 
@@ -174,12 +178,23 @@ uint32_t Consensus::GetThreshold(Block const &block) const
 
 BlockPtr GetBlockPriorTo(Block const &current, MainChain const &chain)
 {
+  MilliTimer const timer{"GetBlockPriorTo ", 1000};
   return chain.GetBlock(current.previous_hash);
 }
 
-Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
+Block Consensus::GetBeginningOfAeon(Block const &current, MainChain const &chain)
 {
-  Block ret = current;
+  MilliTimer const timer{"GetBeginningOfAeon ", 1000};
+  Block            ret          = current;
+  uint64_t const   nearest_aeon = (current.block_number / aeon_period) * aeon_period;
+
+  // Attempt to lookup from cache to avoid chain walk
+  if (aeon_beginning_cache_.find(nearest) != aeon_beginning_cache_.end())
+  {
+    return aeon_beginning_cache_.at(nearest_aeon);
+  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Failed to lookup nearest aeon: ", nearest_aeon, ", looking up.");
 
   // Walk back the chain until we see a block specifying an aeon beginning (corner
   // case for true genesis)
@@ -197,11 +212,24 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
     ret = *prior;
   }
 
+  if (ret.block_number == nearest_aeon)
+  {
+    // Put in cache if we did do the chain walk
+    aeon_beginning_cache_[ret.block_number] = ret;
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Mismatch found when finding nearest aeon. expected: ", nearest_aeon,
+                   " got: ", ret.block_number);
+  }
+
   return ret;
 }
 
 bool Consensus::VerifyNotarisation(Block const &block) const
 {
+  MilliTimer const timer{"VerifyNotarisation ", 1000};
   // Genesis is not notarised so the body of blocks with block number 1 do
   // not contain a notarisation
   if (notarisation_ && block.block_number > 1)
@@ -239,7 +267,8 @@ bool Consensus::VerifyNotarisation(Block const &block) const
 
 uint64_t Consensus::GetBlockGenerationWeight(Block const &current, Identity const &identity) const
 {
-  auto beginning_of_aeon = GetBeginningOfAeon(current, chain_);
+  MilliTimer const timer{"GetBlockGenerationWeight ", 1000};
+  auto             beginning_of_aeon = GetBeginningOfAeon(current, chain_);
 
   auto qualified_cabinet_weighted = QualWeightedByEntropy(beginning_of_aeon.block_entropy.qualified,
                                                           current.block_entropy.EntropyAsU64());
@@ -269,6 +298,7 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &current, Identity cons
  */
 bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) const
 {
+  MilliTimer const timer{"ValidBlockTiming ", 1000};
   FETCH_LOG_TRACE(LOGGING_NAME, "Should generate block? Prev: ", previous.block_number);
 
   Identity const &identity = proposed.miner_id;
@@ -374,7 +404,8 @@ bool ShouldTriggerAeon(uint64_t block_number, uint64_t aeon_period)
  */
 bool Consensus::ShouldTriggerNewCabinet(Block const &block)
 {
-  bool const trigger_point = ShouldTriggerAeon(block.block_number, aeon_period_);
+  MilliTimer const timer{"ShouldTriggerNewCabinet ", 1000};
+  bool const       trigger_point = ShouldTriggerAeon(block.block_number, aeon_period_);
 
   if (last_triggered_cabinet_ != block.hash && trigger_point)
   {
@@ -387,6 +418,7 @@ bool Consensus::ShouldTriggerNewCabinet(Block const &block)
 
 void Consensus::UpdateCurrentBlock(Block const &current)
 {
+  MilliTimer const timer{"UpdateCurrentBlock ", 1000};
   FETCH_LOCK(mutex_);
   bool const one_ahead = current.block_number == current_block_.block_number + 1;
 
@@ -515,6 +547,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
 NextBlockPtr Consensus::GenerateNextBlock()
 {
+  MilliTimer const timer{"GenerateNextBlock ", 1000};
   FETCH_LOCK(mutex_);
   NextBlockPtr ret;
 
@@ -610,6 +643,7 @@ bool ValidNotarisationKeys(Consensus::BlockEntropy::Cabinet const &             
  */
 bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) const
 {
+  MilliTimer const timer{"EnoughQualSigned ", 1000};
   // Construct the full cabinet from the previous block
   auto cabinet = stake_->BuildCabinet(previous, max_cabinet_size_, whitelist_);
 
@@ -681,6 +715,7 @@ bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) co
 
 Status Consensus::ValidBlock(Block const &current) const
 {
+  MilliTimer const timer{"ValidBlock ", 1000};
   FETCH_LOCK(mutex_);
   Status ret = Status::YES;
 

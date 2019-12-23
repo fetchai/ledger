@@ -89,10 +89,11 @@ public:
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
 
-  using Cabinet        = StakeManager::Cabinet;
-  using CabinetPtr     = std::shared_ptr<Cabinet const>;
-  using BlockIndex     = uint64_t;
-  using CabinetHistory = std::map<BlockIndex, CabinetPtr>;
+  using Cabinet            = StakeManager::Cabinet;
+  using CabinetPtr         = std::shared_ptr<Cabinet const>;
+  using BlockIndex         = uint64_t;
+  using CabinetHistory     = std::map<BlockIndex, CabinetPtr>;
+  using AeonBeginningCache = std::map<BlockIndex, Block>;
 
   StorageInterface &    storage_;
   StakeManagerPtr       stake_;
@@ -116,6 +117,9 @@ private:
   uint64_t       default_start_time_ = 0;
   CabinetHistory cabinet_history_{};  ///< Cache of historical cabinets
   uint64_t       block_interval_ms_{std::numeric_limits<uint64_t>::max()};
+
+  Block              GetBeginningOfAeon(Block const &current, MainChain const &chain);
+  AeonBeginningCache aeon_beginning_cache_;
 
   NotarisationPtr notarisation_;
   mutable Mutex   mutex_;
