@@ -181,9 +181,7 @@ ChargeAmount ModelEstimator::LayerAddActivation(const fetch::vm::Ptr<String> &la
 {
   FETCH_UNUSED(layer);
   FETCH_UNUSED(activation);
-  state_.forward_pass_cost += fixed_point::fp64_t{EXPERIMENTAL_LARGE_COST};
-  state_.backward_pass_cost += fixed_point::fp64_t{EXPERIMENTAL_LARGE_COST};
-  return EXPERIMENTAL_HUGE_CHARGE;
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
 ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,

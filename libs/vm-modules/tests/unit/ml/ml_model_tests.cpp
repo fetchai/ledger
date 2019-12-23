@@ -106,7 +106,7 @@ public:
     src = std::regex_replace(src, std::regex("<<INPUT>>"), input);
     ASSERT_TRUE(toolkit.Compile(src));
     Variant res;
-    ASSERT_TRUE(toolkit.Run(&res));
+    ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
 
     auto const gt =
         fetch::math::Tensor<fetch::vm_modules::math::DataType>::FromString(expected.c_str());
