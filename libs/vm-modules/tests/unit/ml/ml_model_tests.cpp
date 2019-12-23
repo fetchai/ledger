@@ -453,27 +453,31 @@ TEST_F(VMModelTests, model_add_dense_relu)
 }
 
 // Disabled until implementation of AddLayerConv estimator
-TEST_F(VMModelTests, DISABLED_model_add_conv1d_noact)
+TEST_F(VMModelTests, model_add_conv1d_noact)
 {
-  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64);)");
+  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64);)",
+                       IGNORE_CHARGE_ESTIMATION);
 }
 
 // Disabled until implementation of AddLayerConv estimator
-TEST_F(VMModelTests, DISABLED_model_add_conv1d_relu)
+TEST_F(VMModelTests, model_add_conv1d_relu)
 {
-  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)");
+  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)",
+                       IGNORE_CHARGE_ESTIMATION);
 }
 
 // Disabled until implementation of AddLayerConv estimator
-TEST_F(VMModelTests, DISABLED_model_add_conv2d_noact)
+TEST_F(VMModelTests, model_add_conv2d_noact)
 {
-  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64);)");
+  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64);)",
+                       IGNORE_CHARGE_ESTIMATION);
 }
 
 // Disabled until implementation of AddLayerConv estimator
-TEST_F(VMModelTests, DISABLED_model_add_conv2d_relu)
+TEST_F(VMModelTests, model_add_conv2d_relu)
 {
-  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)");
+  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)",
+                       IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_dropout)
@@ -659,7 +663,7 @@ TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_too_few_layer_shapes
 }
 
 // Disableduntil AddDropout estimator implementation
-TEST_F(VMModelTests, DISABLED_model_dropout_comparison)
+TEST_F(VMModelTests, model_dropout_comparison)
 {
   static char const *SOURCE = R"(
     function main()
@@ -704,7 +708,7 @@ TEST_F(VMModelTests, DISABLED_model_dropout_comparison)
     )";
 
   ASSERT_TRUE(toolkit.Compile(SOURCE));
-  EXPECT_TRUE(toolkit.Run());
+  EXPECT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
 
 TEST_F(VMModelTests, model_compilation_sequential_from_layer_shapes)
@@ -756,7 +760,7 @@ TEST_F(VMModelTests, dense_sequential_model_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(VMModelTests, DISABLED_conv1d_sequential_model_test)
+TEST_F(VMModelTests, conv1d_sequential_model_test)
 {
   static char const *sequential_model_src = R"(
     function main() : Tensor
@@ -808,7 +812,7 @@ TEST_F(VMModelTests, DISABLED_conv1d_sequential_model_test)
 
   Variant res;
   ASSERT_TRUE(toolkit.Compile(sequential_model_src));
-  ASSERT_TRUE(toolkit.Run(&res));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
   auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
   fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1});
@@ -823,7 +827,7 @@ TEST_F(VMModelTests, DISABLED_conv1d_sequential_model_test)
                             fetch::math::function_tolerance<DataType>()));
 }
 
-TEST_F(VMModelTests, DISABLED_conv2d_sequential_model_test)
+TEST_F(VMModelTests, conv2d_sequential_model_test)
 {
   static char const *sequential_model_src = R"(
     function main() : Tensor
@@ -881,7 +885,7 @@ TEST_F(VMModelTests, DISABLED_conv2d_sequential_model_test)
 
   Variant res;
   ASSERT_TRUE(toolkit.Compile(sequential_model_src));
-  ASSERT_TRUE(toolkit.Run(&res));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
   auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
   fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1});
@@ -1046,7 +1050,7 @@ TEST_F(VMModelTests, model_with_accuracy_metric)
   EXPECT_LE(metrics->elements.at(1), 1);
 }
 
-TEST_F(VMModelTests, DISABLED_model_sequential_flatten)
+TEST_F(VMModelTests, model_sequential_flatten)
 {
   static char const *SRC_METRIC = R"(
         function main()
@@ -1057,14 +1061,16 @@ TEST_F(VMModelTests, DISABLED_model_sequential_flatten)
       )";
 
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
-  ASSERT_TRUE(toolkit.Run());
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
 
-TEST_F(VMModelTests, DISABLED_model_sequential_flatten_tensor_data)
+TEST_F(VMModelTests, model_sequential_flatten_tensor_data)
 {
   static char const *SRC_METRIC = R"(
         function main() : Tensor
-          var x = Tensor(Array<UInt64>(1));
+            var shape = Array<UInt64>(1);
+            shape[0] = 1u64;
+            var x = Tensor(shape);
           var str_vals = "0.5, 7.1, 9.1; 6.2, 7.1, 4.; -99.1, 14328.1, 10.0;";
           x.fromString(str_vals);
           var data = x.unsqueeze();
@@ -1081,7 +1087,7 @@ TEST_F(VMModelTests, DISABLED_model_sequential_flatten_tensor_data)
 
   Variant res;
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
-  ASSERT_TRUE(toolkit.Run(&res));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
   // we expect data columns to be sequentially concatenated
   ASSERT_EQ(stdout.str(),
             "0.500000000;"
@@ -1099,11 +1105,13 @@ TEST_F(VMModelTests, DISABLED_model_sequential_flatten_tensor_data)
   EXPECT_TRUE(constructed_shape == expected.shape());
 }
 
-TEST_F(VMModelTests, DISABLED_model_sequential_flatten_2d_in_2d_out)
+TEST_F(VMModelTests, model_sequential_flatten_2d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(
               function main() : Tensor
-                var x = Tensor(Array<UInt64>(1));
+                 var shape = Array<UInt64>(1);
+                 shape[0] = 1u64;
+                 var x = Tensor(shape);
                 var str_vals = "0.5, 7.1, 9.1; 6.2, 7.1, 4.;";
                 x.fromString(str_vals);
 
@@ -1119,7 +1127,7 @@ TEST_F(VMModelTests, DISABLED_model_sequential_flatten_2d_in_2d_out)
 
   Variant res;
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
-  ASSERT_TRUE(toolkit.Run(&res));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
   ASSERT_EQ(stdout.str(),
             "0.500000000, 7.099999999, 9.099999999;"
             "6.199999999, 7.099999999, 4.000000000;");
@@ -1129,11 +1137,13 @@ TEST_F(VMModelTests, DISABLED_model_sequential_flatten_2d_in_2d_out)
   EXPECT_TRUE(constructed_shape == expected.shape());
 }
 
-TEST_F(VMModelTests, DISABLED_model_sequential_flatten_4d_in_2d_out)
+TEST_F(VMModelTests, model_sequential_flatten_4d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(
               function main() : Tensor
-                var x = Tensor(Array<UInt64>(1));
+                var shape = Array<UInt64>(1);
+                shape[0] = 1u64;
+                var x = Tensor(shape);
                 var str_vals = "0.5, 7.1, 9.1; 6.2, 7.1, 4.;";
                 x.fromString(str_vals);
                 x = x.unsqueeze();
@@ -1151,7 +1161,7 @@ TEST_F(VMModelTests, DISABLED_model_sequential_flatten_4d_in_2d_out)
 
   Variant res;
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
-  ASSERT_TRUE(toolkit.Run(&res));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
   ASSERT_EQ(stdout.str(),
             "0.500000000;"
             "6.199999999;"
@@ -1234,7 +1244,7 @@ TEST_F(VMModelTests, model_sequential_activation_layer_gelu)
   TestActivation(input, activation, result);
 }
 
-TEST_F(VMModelTests, DISABLED_model_sequential_flatten_1d_in_2d_out)
+TEST_F(VMModelTests, model_sequential_flatten_1d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(
               function main() : Tensor
@@ -1254,7 +1264,7 @@ TEST_F(VMModelTests, DISABLED_model_sequential_flatten_1d_in_2d_out)
 
   Variant res;
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
-  ASSERT_TRUE(toolkit.Run(&res));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
   ASSERT_EQ(stdout.str(), "0.000000000;");
   auto const tensor            = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto const constructed_shape = tensor->shape();
