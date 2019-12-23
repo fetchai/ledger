@@ -428,7 +428,8 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   if (ShouldTriggerNewCabinet(current_block_))
   {
     // attempt to build the cabinet from
-    auto cabinet = stake_->BuildCabinet(current_block_, max_cabinet_size_);
+    auto cabinet = stake_->BuildCabinet(current_block_, max_cabinet_size_, whitelist_);
+
     if (!cabinet)
     {
       FETCH_LOG_ERROR(LOGGING_NAME,
@@ -584,12 +585,16 @@ bool ValidNotarisationKeys(Consensus::BlockEntropy::Cabinet const &             
 bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) const
 {
   // Construct the full cabinet from the previous block
-  auto cabinet = stake_->BuildCabinet(previous, max_cabinet_size_);
+  auto cabinet = stake_->BuildCabinet(previous, max_cabinet_size_, whitelist_);
 
   if (cabinet->empty())
   {
-    FETCH_LOG_ERROR(LOGGING_NAME,
-                    "Found empty cabinet when verifying block. Something bad has happened.");
+    FETCH_LOG_ERROR(
+        LOGGING_NAME,
+        "Found empty cabinet when verifying block. Something bad has happened. Whitelist size: ",
+        whitelist_.size(),
+        " prefilter size: ", stake_->BuildCabinet(previous, max_cabinet_size_)->size(),
+        " cab: ", max_cabinet_size_);
     return false;
   }
 
@@ -831,4 +836,14 @@ void Consensus::AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cab
 {
   cabinet_history_[block_number] = cabinet;
   TrimToSize(cabinet_history_, HISTORY_LENGTH);
+}
+
+void Consensus::SetWhitelist(Minerwhitelist const &whitelist)
+{
+  for (auto const &miner : whitelist)
+  {
+    FETCH_UNUSED(miner);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Adding to whitelist: ", miner.ToBase64());
+  }
+  whitelist_ = whitelist;
 }

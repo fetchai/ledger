@@ -21,6 +21,7 @@
 #include "vm/array.hpp"
 #include "vm/fixed.hpp"
 #include "vm/map.hpp"
+#include "vm/pair.hpp"
 #include "vm/sharded_state.hpp"
 #include "vm/state.hpp"
 #include "vm/string.hpp"
@@ -187,6 +188,10 @@ void Analyser::Initialise()
                      array_type_);
   CreateTemplateType("Map", TypeIndex(typeid(IMap)), {any_type_, any_type_}, TypeIds::Unknown,
                      map_type_);
+
+  CreateTemplateType("Pair", TypeIndex(typeid(IPair)), {any_type_, any_type_}, TypeIds::Unknown,
+                     pair_type_);
+
   CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown,
                      state_type_);
   CreateTemplateType("ShardedState", TypeIndex(typeid(IShardedState)), {any_type_},
@@ -335,12 +340,13 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   assert(state_constructor_ && sharded_state_constructor_);
   state_definitions_.Clear();
   contract_definitions_.Clear();
-  num_state_definitions_    = 0;
-  num_contract_definitions_ = 0;
-  num_free_functions_       = 0;
-  num_user_defined_types_   = 0;
-  function_                 = nullptr;
-  use_any_node_             = nullptr;
+  num_state_definitions_                = 0;
+  num_contract_definitions_             = 0;
+  num_free_functions_                   = 0;
+  num_user_defined_types_               = 0;
+  num_user_defined_instantiation_types_ = 0;
+  function_                             = nullptr;
+  use_any_node_                         = nullptr;
   file_errors_array_.clear();
 
   root_->symbols = CreateSymbolTable();
@@ -360,12 +366,13 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
       sharded_state_constructor_ = nullptr;
       state_definitions_.Clear();
       contract_definitions_.Clear();
-      num_state_definitions_    = 0;
-      num_contract_definitions_ = 0;
-      num_free_functions_       = 0;
-      num_user_defined_types_   = 0;
-      function_                 = nullptr;
-      use_any_node_             = nullptr;
+      num_state_definitions_                = 0;
+      num_contract_definitions_             = 0;
+      num_free_functions_                   = 0;
+      num_user_defined_types_               = 0;
+      num_user_defined_instantiation_types_ = 0;
+      function_                             = nullptr;
+      use_any_node_                         = nullptr;
       file_errors_array_.clear();
       return false;
     }
@@ -383,12 +390,13 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   sharded_state_constructor_ = nullptr;
   state_definitions_.Clear();
   contract_definitions_.Clear();
-  num_state_definitions_    = 0;
-  num_contract_definitions_ = 0;
-  num_free_functions_       = 0;
-  num_user_defined_types_   = 0;
-  function_                 = nullptr;
-  use_any_node_             = nullptr;
+  num_state_definitions_                = 0;
+  num_contract_definitions_             = 0;
+  num_free_functions_                   = 0;
+  num_user_defined_types_               = 0;
+  num_user_defined_instantiation_types_ = 0;
+  function_                             = nullptr;
+  use_any_node_                         = nullptr;
 
   if (!file_errors_array_.empty())
   {
@@ -1101,6 +1109,11 @@ void Analyser::PreAnnotatePersistentStatement(NodePtr const &persistent_statemen
   else
   {
     // The instantiation doesn't already exist, so create it now
+    if (num_user_defined_instantiation_types_++ >= MAX_USER_DEFINED_INSTANTIATION_TYPES)
+    {
+      throw FatalErrorException(filename_, state_name_node->line,
+                                "maximum number of user defined instantiation types exceeded");
+    }
     instantation_type = InternalCreateTemplateInstantiationType(
         TypeKind::UserDefinedTemplateInstantiation, template_type, {managed_type});
     root_->symbols->Add(instantation_type);
@@ -3170,6 +3183,11 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
       // Need to check here that parameter_type does in fact support any operator(s)
       // required by the template_type's i'th type parameter...
       template_parameter_types.push_back(std::move(parameter_type));
+    }
+    if (num_user_defined_instantiation_types_++ >= MAX_USER_DEFINED_INSTANTIATION_TYPES)
+    {
+      throw FatalErrorException(filename_, identifier_node->line,
+                                "maximum number of user defined instantiation types exceeded");
     }
     TypePtr type = InternalCreateTemplateInstantiationType(
         TypeKind::UserDefinedTemplateInstantiation, template_type, template_parameter_types);

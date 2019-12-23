@@ -21,6 +21,7 @@
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
+#include "vm/pair.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/tensor/tensor_estimator.hpp"
 #include "vm_modules/math/type.hpp"
@@ -58,6 +59,14 @@ VMTensor::VMTensor(VM *vm, TypeId type_id)
 
 Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> const &shape)
 {
+  for (SizeType axis_size : shape->elements)
+  {
+    if (axis_size == 0)
+    {
+      vm->RuntimeError("Can not create a Tensor : axis of size 0 found in new shape!");
+      return Ptr<VMTensor>{new VMTensor(vm, type_id)};
+    }
+  }
   return Ptr<VMTensor>{new VMTensor(vm, type_id, shape->elements)};
 }
 
@@ -140,6 +149,10 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
 
   // Add support for Array of Tensors
   module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<VMTensor>>>();
+
+  // Add support for training pair
+  module.GetClassInterface<IPair>()
+      .CreateInstantiationType<Pair<Ptr<VMTensor>, Ptr<Array<Ptr<VMTensor>>>>>();
 }
 
 SizeVector VMTensor::shape() const

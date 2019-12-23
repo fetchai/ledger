@@ -126,25 +126,12 @@ TYPED_TEST(RandomisedReluTest, forward_3d_tensor_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = fetch::math::SizeType;
 
   DataType lower_bound = fetch::math::Type<DataType>("0.03");
   DataType upper_bound = fetch::math::Type<DataType>("0.08");
 
-  TensorType          data({2, 2, 2});
-  TensorType          gt({2, 2, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
-
-  for (SizeType i{0}; i < 2; ++i)
-  {
-    for (SizeType j{0}; j < 2; ++j)
-    {
-      for (SizeType k{0}; k < 2; ++k)
-      {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-      }
-    }
-  }
+  TensorType data = TensorType::FromString("1, 3, 5, 7; -2, -4, -6, -8;");
+  data.Reshape({2, 2, 2});
 
   fetch::ml::ops::RandomisedRelu<TensorType> op(lower_bound, upper_bound, 12345);
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
@@ -192,47 +179,38 @@ TYPED_TEST(RandomisedReluTest, backward_test)
                                         math::function_tolerance<DataType>()));
 
   // test if values are within ranges
-  EXPECT_TRUE(prediction[0].At(0, 0) == DataType{0});
-  EXPECT_TRUE(prediction[0].At(0, 1) == DataType{0});
-  EXPECT_TRUE(prediction[0].At(0, 2) == DataType{0});
-  EXPECT_TRUE(prediction[0].At(0, 3) == DataType{0});
-  EXPECT_TRUE(prediction[0].At(0, 4) == DataType{1});
-  EXPECT_TRUE(prediction[0].At(0, 5) >= lower_bound && prediction[0].At(0, 5) <= upper_bound);
-  EXPECT_TRUE(prediction[0].At(0, 6) == DataType{0});
-  EXPECT_TRUE(prediction[0].At(0, 7) == DataType{0});
+  EXPECT_TRUE(prediction_2[0].At(0, 0) == DataType{0});
+  EXPECT_TRUE(prediction_2[0].At(0, 1) == DataType{0});
+  EXPECT_TRUE(prediction_2[0].At(0, 2) == DataType{0});
+  EXPECT_TRUE(prediction_2[0].At(0, 3) == DataType{0});
+  EXPECT_TRUE(prediction_2[0].At(0, 4) == DataType{1});
+  EXPECT_TRUE(prediction_2[0].At(0, 5) >= lower_bound && prediction_2[0].At(0, 5) <= upper_bound);
+  EXPECT_TRUE(prediction_2[0].At(0, 6) == DataType{0});
+  EXPECT_TRUE(prediction_2[0].At(0, 7) == DataType{0});
 
   // Test with is_training set to false
   op.SetTraining(false);
 
   TensorType gt = TensorType::FromString("0, 0, 0, 0, 1, 0.055, 0, 0");
   prediction    = op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // test correct values
+  EXPECT_TRUE(prediction[0].AllClose(gt, math::function_tolerance<DataType>(),
+                                     math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = fetch::math::SizeType;
 
   DataType lower_bound = fetch::math::Type<DataType>("0.03");
   DataType upper_bound = fetch::math::Type<DataType>("0.08");
 
-  TensorType          data({2, 2, 2});
-  TensorType          error({2, 2, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
-
-  for (SizeType i{0}; i < 2; ++i)
-  {
-    for (SizeType j{0}; j < 2; ++j)
-    {
-      for (SizeType k{0}; k < 2; ++k)
-      {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        error.Set(i, j, k, static_cast<DataType>(errorInput[i + 2 * (j + 2 * k)]));
-      }
-    }
-  }
+  TensorType data = TensorType::FromString("1, 3, 5, 7;-2, -4, -6, -8;");
+  data.Reshape({2, 2, 2});
+  TensorType error = TensorType::FromString("0, 0, 1, 0;0, 0, 1, 0;");
+  error.Reshape({2, 2, 2});
 
   fetch::ml::ops::RandomisedRelu<TensorType> op(lower_bound, upper_bound, 12345);
   std::vector<TensorType>                    prediction =
@@ -302,29 +280,16 @@ TYPED_TEST(RandomisedReluTest, saveparams_backward_3d_tensor_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using SizeType   = fetch::math::SizeType;
   using OpType     = typename fetch::ml::ops::RandomisedRelu<TensorType>;
   using SPType     = typename OpType::SPType;
 
   DataType lower_bound = fetch::math::Type<DataType>("0.03");
   DataType upper_bound = fetch::math::Type<DataType>("0.08");
 
-  TensorType          data({2, 2, 2});
-  TensorType          error({2, 2, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
-
-  for (SizeType i{0}; i < 2; ++i)
-  {
-    for (SizeType j{0}; j < 2; ++j)
-    {
-      for (SizeType k{0}; k < 2; ++k)
-      {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        error.Set(i, j, k, static_cast<DataType>(errorInput[i + 2 * (j + 2 * k)]));
-      }
-    }
-  }
+  TensorType data = TensorType::FromString("1, 3, 5, 7;-2, -4, -6, -8;");
+  data.Reshape({2, 2, 2});
+  TensorType error = TensorType::FromString("0, 0, 1, 0;0, 0, 1, 0;");
+  error.Reshape({2, 2, 2});
 
   fetch::ml::ops::RandomisedRelu<TensorType> op(lower_bound, upper_bound, 12345);
 

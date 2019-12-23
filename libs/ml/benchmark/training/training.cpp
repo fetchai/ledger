@@ -42,7 +42,7 @@ void BM_Setup_And_Train(benchmark::State &state)
   SizeType output_size = O;
   SizeType n_epochs    = E;
 
-  auto learning_rate = DataType{0.1f};
+  auto learning_rate = fetch::math::Type<DataType>("0.1");
 
   // Prepare data and labels
   TensorType data({input_size, batch_size});

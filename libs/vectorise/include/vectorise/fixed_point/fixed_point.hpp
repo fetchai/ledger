@@ -72,8 +72,11 @@ struct TypeFromSize<128>
   using ValueType                      = int128_t;
   using UnsignedType                   = uint128_t;
   using SignedType                     = int128_t;
+  using BaseSignedType                 = int64_t;
+  using BaseUnsignedType               = uint64_t;
   using NextSize                       = TypeFromSize<256>;
   static constexpr uint16_t  decimals  = 19;
+  static constexpr uint64_t  power10   = 10000000000000000000ull;
   static constexpr ValueType tolerance = 0x100000000000;  // 0,00000095367431640625
   static constexpr ValueType max_exp =
       (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000;  // 43.6682723752765511
@@ -91,8 +94,11 @@ struct TypeFromSize<64>
   using ValueType                         = int64_t;
   using UnsignedType                      = uint64_t;
   using SignedType                        = int64_t;
+  using BaseSignedType                    = int32_t;
+  using BaseUnsignedType                  = uint32_t;
   using NextSize                          = TypeFromSize<128>;
   static constexpr uint16_t     decimals  = 9;
+  static constexpr uint32_t     power10   = 1000000000;
   static constexpr ValueType    tolerance = 0x200;                 // 0.00000012
   static constexpr ValueType    max_exp   = 0x000000157cd0e6e8LL;  // 21.48756259
   static constexpr UnsignedType min_exp   = 0xffffffea832f1918LL;  // -21.48756259
@@ -107,8 +113,11 @@ struct TypeFromSize<32>
   using ValueType                         = int32_t;
   using UnsignedType                      = uint32_t;
   using SignedType                        = int32_t;
+  using BaseSignedType                    = int16_t;
+  using BaseUnsignedType                  = uint16_t;
   using NextSize                          = TypeFromSize<64>;
   static constexpr uint16_t     decimals  = 4;
+  static constexpr uint16_t     power10   = 10000;
   static constexpr ValueType    tolerance = 0x15;         // 0.0003
   static constexpr ValueType    max_exp   = 0x000a65adL;  //  10.3971
   static constexpr UnsignedType min_exp   = 0xfff59a53L;  // -10.3972
@@ -123,6 +132,8 @@ struct TypeFromSize<16>
   using ValueType                    = int16_t;
   using UnsignedType                 = uint16_t;
   using SignedType                   = int16_t;
+  using BaseSignedType               = int8_t;
+  using BaseUnsignedType             = uint8_t;
   using NextSize                     = TypeFromSize<32>;
 };
 
@@ -154,10 +165,12 @@ public:
     TOTAL_BITS      = I + F
   };
 
-  using BaseTypeInfo = TypeFromSize<TOTAL_BITS>;
-  using Type         = typename BaseTypeInfo::ValueType;
-  using NextType     = typename BaseTypeInfo::NextSize::ValueType;
-  using UnsignedType = typename BaseTypeInfo::UnsignedType;
+  using BaseTypeInfo     = TypeFromSize<TOTAL_BITS>;
+  using Type             = typename BaseTypeInfo::ValueType;
+  using NextType         = typename BaseTypeInfo::NextSize::ValueType;
+  using UnsignedType     = typename BaseTypeInfo::UnsignedType;
+  using BaseSignedType   = typename BaseTypeInfo::BaseSignedType;
+  using BaseUnsignedType = typename BaseTypeInfo::BaseUnsignedType;
 
   static constexpr Type FRACTIONAL_MASK = Type((Type(1ull) << FRACTIONAL_BITS) - 1);
   static constexpr Type INTEGER_MASK    = Type(~FRACTIONAL_MASK);
@@ -167,13 +180,14 @@ public:
   /// Constants/Limits ///
   ////////////////////////
 
-  static constexpr Type          SMALLEST_FRACTION{1};
-  static constexpr Type          LARGEST_FRACTION{FRACTIONAL_MASK};
-  static constexpr Type          MAX_INT{((Type(FRACTIONAL_MASK >> 1) - 1) << FRACTIONAL_BITS)};
-  static constexpr Type          MIN_INT{-MAX_INT};
-  static constexpr Type          MAX{MAX_INT | LARGEST_FRACTION};
-  static constexpr Type          MIN{MIN_INT - LARGEST_FRACTION};
-  static constexpr std::uint16_t DECIMAL_DIGITS{BaseTypeInfo::decimals};
+  static constexpr Type             SMALLEST_FRACTION{1};
+  static constexpr Type             LARGEST_FRACTION{FRACTIONAL_MASK};
+  static constexpr Type             MAX_INT{((Type(FRACTIONAL_MASK >> 1) - 1) << FRACTIONAL_BITS)};
+  static constexpr Type             MIN_INT{-MAX_INT};
+  static constexpr Type             MAX{MAX_INT | LARGEST_FRACTION};
+  static constexpr Type             MIN{MIN_INT - LARGEST_FRACTION};
+  static constexpr std::uint16_t    DECIMAL_DIGITS{BaseTypeInfo::decimals};
+  static constexpr BaseUnsignedType POWER10{BaseTypeInfo::power10};
 
   static FixedPoint const TOLERANCE;
   static FixedPoint const _0;    /* 0 */
@@ -252,7 +266,7 @@ public:
   ///////////////////
 
   constexpr Type              Integer() const;
-  constexpr Type              Fraction() const;
+  constexpr UnsignedType      Fraction() const;
   static constexpr FixedPoint Floor(FixedPoint const &o);
   static constexpr FixedPoint Round(FixedPoint const &o);
   static constexpr FixedPoint FromBase(Type n);
@@ -319,9 +333,9 @@ public:
   FixedPoint const      operator++(int) &;
   FixedPoint const      operator--(int) &;
 
-  //////////////////////////////
-  /// math and bit operators ///
-  //////////////////////////////
+  /////////////////////////////////////////////////
+  /// math operators against FixedPoint objects ///
+  /////////////////////////////////////////////////
 
   constexpr FixedPoint  operator+(FixedPoint const &n) const;
   constexpr FixedPoint  operator-(FixedPoint const &n) const;
@@ -330,6 +344,8 @@ public:
   constexpr FixedPoint  operator&(FixedPoint const &n) const;
   constexpr FixedPoint  operator|(FixedPoint const &n) const;
   constexpr FixedPoint  operator^(FixedPoint const &n) const;
+  constexpr FixedPoint  operator>>(FixedPoint const &n) const;
+  constexpr FixedPoint  operator<<(FixedPoint const &n) const;
   constexpr FixedPoint &operator+=(FixedPoint const &n);
   constexpr FixedPoint &operator-=(FixedPoint const &n);
   constexpr FixedPoint &operator*=(FixedPoint const &n);
@@ -339,6 +355,11 @@ public:
   constexpr FixedPoint &operator^=(FixedPoint const &n);
   constexpr FixedPoint &operator>>=(FixedPoint const &n);
   constexpr FixedPoint &operator<<=(FixedPoint const &n);
+
+  /////////////////////////////////////////
+  /// math operators against primitives ///
+  /////////////////////////////////////////
+
   template <typename T>
   constexpr FixedPoint operator+(T const &n) const;
   template <typename T>
@@ -367,6 +388,8 @@ public:
   constexpr FixedPoint &operator*=(T const &n) const;
   template <typename T>
   constexpr FixedPoint &operator/=(T const &n) const;
+  constexpr FixedPoint  operator>>(int n) const;
+  constexpr FixedPoint  operator<<(int n) const;
   constexpr FixedPoint &operator<<=(int n);
   constexpr FixedPoint &operator>>=(int n);
 
@@ -735,16 +758,40 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   }
   else
   {
+    s << std::noshowpos;
+
+    auto power10  = FixedPoint<I, F>::POWER10;
+    auto one_mask = FixedPoint<I, F>::ONE_MASK;
+
+    auto fraction = static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(n.Fraction());
+    auto integer  = static_cast<typename FixedPoint<I, F>::BaseSignedType>(n.Integer());
+    if (n < FixedPoint<I, F>::_0 && fraction != 0)
+    {
+      ++integer;
+      fraction = static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(~fraction);
+      ++fraction;
+      if (integer == 0)
+      {
+        s << '-';
+      }
+    }
+    auto fraction_large = static_cast<typename FixedPoint<I, F>::Type>(fraction);
+    fraction_large *= static_cast<typename FixedPoint<I, F>::Type>(power10);
+    fraction_large /= static_cast<typename FixedPoint<I, F>::Type>(one_mask);
+
+    fraction = static_cast<typename FixedPoint<I, F>::BaseUnsignedType>(fraction_large);
+
+    s << integer << '.';
+    s << std::setw(FixedPoint<I, F>::DECIMAL_DIGITS);
     s << std::setfill('0');
-    s << std::setw(I / 4);
-    s << std::setprecision(FixedPoint<I, F>::DECIMAL_DIGITS);
     s << std::fixed;
-    s << double(n);
+    s << fraction;
   }
 #ifdef FETCH_FIXEDPOINT_DEBUG_HEX
   // Only output the hex value in DEBUG mode
   s << " (0x" << std::hex << static_cast<typename FixedPoint<I, F>::Type>(n.Data()) << ")";
 #endif
+
   s.flags(f);
   return s;
 }
@@ -961,6 +1008,11 @@ FixedPoint<I, F>::FixedPoint(std::string const &s)
   auto index  = s.find("fp");
   auto s_copy = std::string(s, 0, index);
 
+#ifdef FETCH_FIXEDPOINT_DEBUG_HEX
+  index  = s_copy.find("(0x");
+  s_copy = std::string(s_copy, 0, index);
+#endif
+
   bool contains_alpha = std::find_if(s_copy.begin(), s_copy.end(),
                                      [](char c) { return std::isalpha(c); }) != s_copy.end();
   if (contains_alpha)
@@ -1093,7 +1145,7 @@ constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::Integer() const
  * @return the fraction part of the FixedPoint object
  */
 template <uint16_t I, uint16_t F>
-constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::Fraction() const
+constexpr typename FixedPoint<I, F>::UnsignedType FixedPoint<I, F>::Fraction() const
 {
   if (IsNaN(*this))
   {
@@ -1564,7 +1616,7 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::operator++(int) &
 {
   FixedPoint<I, F> result{*this};
-  ++result;
+  ++(*this);
   return result;
 }
 
@@ -1576,7 +1628,7 @@ template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::operator--(int) &
 {
   FixedPoint<I, F> result{*this};
-  --result;
+  --(*this);
   return result;
 }
 
@@ -1672,6 +1724,34 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator^(FixedPoint<I, F> const &n
 {
   FixedPoint t{*this};
   t ^= n;
+  return t;
+}
+
+/**
+ * Bitwise Shift right operator, does bitwise shift right of self as many bits as the integer part
+ * of the given FixedPoint object
+ * @param the given FixedPoint object to shift right
+ * @return the result of bitwise shift right operation of self
+ */
+template <uint16_t I, uint16_t F>
+constexpr FixedPoint<I, F> FixedPoint<I, F>::operator>>(FixedPoint<I, F> const &n) const
+{
+  FixedPoint t{*this};
+  t >>= n;
+  return t;
+}
+
+/**
+ * Bitwise Shift left operator, does bitwise shift left of self as many bits as the integer part of
+ * the given FixedPoint object
+ * @param the given FixedPoint object to shift left
+ * @return the bitwise shift left operation of self
+ */
+template <uint16_t I, uint16_t F>
+constexpr FixedPoint<I, F> FixedPoint<I, F>::operator<<(FixedPoint<I, F> const &n) const
+{
+  FixedPoint t{*this};
+  t <<= n;
   return t;
 }
 
@@ -2103,7 +2183,35 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator^(T const &n) const
 }
 
 /**
- * Shift right assignment operator, shift self object right as many bits as Integer() part of the
+ * Shift right assignment operator, shift self object right n bits
+ * given object
+ * @param the given object
+ * @return the result of the shift right operation
+ */
+template <uint16_t I, uint16_t F>
+constexpr FixedPoint<I, F> FixedPoint<I, F>::operator>>(int n) const
+{
+  FixedPoint t{*this};
+  t >>= n;
+  return t;
+}
+
+/**
+ * Shift left assignment operator, shift self object left n bits
+ * given object
+ * @param the given object
+ * @return the result of the shift left operation
+ */
+template <uint16_t I, uint16_t F>
+constexpr FixedPoint<I, F> FixedPoint<I, F>::operator<<(int n) const
+{
+  FixedPoint t{*this};
+  t <<= n;
+  return t;
+}
+
+/**
+ * Shift right assignment operator, shift self object right n bits
  * given object
  * @param the given object
  * @return the result of the shift right operation
@@ -2116,7 +2224,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator>>=(int n)
 }
 
 /**
- * Shift left assignment operator, shift self object left as many bits as Integer() part of the
+ * Shift left assignment operator, shift self object left n bits
  * given object
  * @param the given object
  * @return the result of the shift left operation
@@ -2126,6 +2234,52 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator<<=(int n)
 {
   data_ <<= n;
   return *this;
+}
+
+/////////////////////////////////////////////////////
+/// associative math operators against primitives ///
+/////////////////////////////////////////////////////
+
+template <uint16_t I, uint16_t F, typename T>
+inline FixedPoint<I, F> operator+(T const &a, FixedPoint<I, F> const &n)
+{
+  return n + a;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+FixedPoint<I, F> operator-(T const &a, FixedPoint<I, F> const &n)
+{
+  return FixedPoint<I, F>(a) - n;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+FixedPoint<I, F> operator*(T const &a, FixedPoint<I, F> const &n)
+{
+  return n * a;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+FixedPoint<I, F> operator/(T const &a, FixedPoint<I, F> const &n)
+{
+  return FixedPoint<I, F>(a) / n;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+FixedPoint<I, F> operator&(T const &a, FixedPoint<I, F> const &n)
+{
+  return n & a;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+FixedPoint<I, F> operator|(T const &a, FixedPoint<I, F> const &n)
+{
+  return n | a;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+FixedPoint<I, F> operator^(T const &a, FixedPoint<I, F> const &n)
+{
+  return n ^ a;
 }
 
 ///////////////////////////

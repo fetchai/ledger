@@ -48,7 +48,7 @@ TYPED_TEST(ScaledDotProductAttention, input_output_dimension_check)  // Use the 
   std::string mask  = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Mask", {});
   g.template AddNode<fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(
       "ScaledDotProductAttention", {query, key, value, mask}, static_cast<SizeType>(4),
-      DataType(0.1));
+      fetch::math::Type<DataType>("0.1"));
   TypeParam query_data = TypeParam({4, 7, 2});
   query_data.Fill(fetch::math::Type<DataType>("0.1"));
   TypeParam key_data = TypeParam({4, 5, 2});
@@ -56,7 +56,7 @@ TYPED_TEST(ScaledDotProductAttention, input_output_dimension_check)  // Use the 
   TypeParam value_data = TypeParam({3, 5, 2});
   value_data.Fill(fetch::math::Type<DataType>("0.3"));
   TypeParam mask_data = TypeParam({1, 7, 2});
-  mask_data.Fill(fetch::math::Type<DataType>("1"));
+  mask_data.Fill(DataType{1});
   g.SetInput(query, query_data);
   g.SetInput(key, key_data);
   g.SetInput(value, value_data);
@@ -82,7 +82,7 @@ TYPED_TEST(ScaledDotProductAttention,
   std::string mask  = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Mask", {});
   g.template AddNode<fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(
       "ScaledDotProductAttention", {query, key, value, mask}, static_cast<SizeType>(3),
-      DataType(0.1));
+      fetch::math::Type<DataType>("0.1"));
   TypeParam query_data = TypeParam::FromString("1, 2, 0.5, 0.1; 2, 1, 0.3, -0.2;2, 4, 0, 1");
   query_data.Reshape({3, 2, 2});
 
@@ -101,7 +101,7 @@ TYPED_TEST(ScaledDotProductAttention,
   gt.Reshape({3, 2, 2});
   TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
 
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{5} * fetch::math::function_tolerance<DataType>()));
+  EXPECT_TRUE(prediction.AllClose(gt, DataType{5} * fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(ScaledDotProductAttention,
@@ -111,7 +111,7 @@ TYPED_TEST(ScaledDotProductAttention,
   using SizeType = fetch::math::SizeType;
 
   fetch::ml::layers::ScaledDotProductAttention<TypeParam> att(static_cast<SizeType>(3),
-                                                              DataType(1));
+                                                              DataType{1});
 
   TypeParam query_data = TypeParam::FromString("1, 2, 0.5, 0.1; 2, 1, 0.3, -0.2;2, 4, 0, 1");
   query_data.Reshape({3, 2, 2});
@@ -151,16 +151,16 @@ TYPED_TEST(ScaledDotProductAttention,
        std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(mask_data)},
       error_signal);
 
-  ASSERT_TRUE(
+  EXPECT_TRUE(
       backprop_error[0].AllClose(gt_query_grad, fetch::math::function_tolerance<DataType>(),
                                  DataType{10} * fetch::math::function_tolerance<DataType>()));
-  ASSERT_TRUE(
+  EXPECT_TRUE(
       backprop_error[1].AllClose(gt_key_grad, fetch::math::function_tolerance<DataType>(),
                                  DataType{10} * fetch::math::function_tolerance<DataType>()));
-  ASSERT_TRUE(
+  EXPECT_TRUE(
       backprop_error[2].AllClose(gt_value_grad, fetch::math::function_tolerance<DataType>(),
                                  DataType{10} * fetch::math::function_tolerance<DataType>()));
-  ASSERT_TRUE(backprop_error[3].AllClose(gt_mask_grad));
+  EXPECT_TRUE(backprop_error[3].AllClose(gt_mask_grad));
 }
 
 TYPED_TEST(ScaledDotProductAttention,
@@ -177,7 +177,7 @@ TYPED_TEST(ScaledDotProductAttention,
   std::string mask  = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Mask", {});
   g.template AddNode<fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(
       "ScaledDotProductAttention", {query, key, value, mask}, static_cast<SizeType>(3),
-      DataType(0.1));
+      fetch::math::Type<DataType>("0.1"));
   TypeParam query_data =
       TypeParam::FromString("1, 2, 0.5, 0.1, 5, 3; 2, 1, 0.3, -0.2, -2, 0.5; 2, 4, 0, 1, 1.1, -3");
   query_data.Reshape({3, 3, 2});
@@ -203,8 +203,7 @@ TYPED_TEST(ScaledDotProductAttention,
       "3.6993491062,  3.9889853359,  3.0576709623,  1.0000000000, 1.0000000000,  1.0000000000");
   gt.Reshape({3, 3, 2});
   TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
-  std::cout << "pred: " << prediction.View(0).Copy().ToString() << std::endl;
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{5} * fetch::math::function_tolerance<DataType>()));
+  EXPECT_TRUE(prediction.AllClose(gt, DataType{5} * fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(ScaledDotProductAttention,
@@ -214,7 +213,7 @@ TYPED_TEST(ScaledDotProductAttention,
   using SizeType = fetch::math::SizeType;
 
   fetch::ml::layers::ScaledDotProductAttention<TypeParam> att(static_cast<SizeType>(3),
-                                                              DataType(1));
+                                                              DataType{1});
 
   TypeParam query_data =
       TypeParam::FromString("1, 2, 0.5, 0.1, 5, 3; 2, 1, 0.3, -0.2, -2, 0.5; 2, 4, 0, 1, 1.1, -3");
@@ -265,16 +264,16 @@ TYPED_TEST(ScaledDotProductAttention,
        std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(mask_data)},
       error_signal);
 
-  ASSERT_TRUE(
+  EXPECT_TRUE(
       backprop_error[0].AllClose(gt_query_grad, fetch::math::function_tolerance<DataType>(),
                                  DataType{10} * fetch::math::function_tolerance<DataType>()));
-  ASSERT_TRUE(
+  EXPECT_TRUE(
       backprop_error[1].AllClose(gt_key_grad, fetch::math::function_tolerance<DataType>(),
                                  DataType{10} * fetch::math::function_tolerance<DataType>()));
-  ASSERT_TRUE(
+  EXPECT_TRUE(
       backprop_error[2].AllClose(gt_value_grad, fetch::math::function_tolerance<DataType>(),
                                  DataType{10} * fetch::math::function_tolerance<DataType>()));
-  ASSERT_TRUE(backprop_error[3].AllClose(gt_mask_grad));
+  EXPECT_TRUE(backprop_error[3].AllClose(gt_mask_grad));
 }
 
 TYPED_TEST(ScaledDotProductAttention, saveparams_test)
@@ -345,7 +344,7 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
 
   TypeParam prediction2 = layer2.Evaluate(output_name, true);
 
-  ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
+  EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
 
   // train g

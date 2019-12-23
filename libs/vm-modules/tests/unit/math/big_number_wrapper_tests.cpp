@@ -23,12 +23,14 @@
 #include "vm_modules/math/type.hpp"
 #include "vm_test_toolkit.hpp"
 
-using namespace fetch::vm;
-
 namespace {
 
+using namespace fetch;
+using namespace fetch::vm;
 using fetch::byte_array::ByteArray;
 using fetch::vm_modules::math::UInt256Wrapper;
+
+constexpr platform::Endian ENDIANESS_OF_TEST_DATA{platform::Endian::LITTLE};
 
 const ByteArray raw_32xFF{
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -131,9 +133,22 @@ public:
   static constexpr std::size_t    SIZE_IN_BITS  = 256;
   static constexpr std::size_t    SIZE_IN_BYTES = SIZE_IN_BITS / 8;
 
-  UInt256Wrapper zero{dummy_vm_ptr, dummy_typeid, 0};
+  void TearDown() override
+  {
+    if (Test::HasFailure())
+    {
+      std::cout << stdout.str() << std::endl;
+    }
+  }
+
+  UInt256Wrapper zero{
+      dummy_vm_ptr,
+      dummy_typeid,
+      0,
+  };
+  UInt256Wrapper _1{dummy_vm_ptr, UInt256Wrapper::UInt256::_1};
   UInt256Wrapper uint64max{dummy_vm_ptr, dummy_typeid, std::numeric_limits<uint64_t>::max()};
-  UInt256Wrapper maximum{dummy_vm_ptr, dummy_typeid, raw_32xFF};
+  UInt256Wrapper maximum{dummy_vm_ptr, dummy_typeid, raw_32xFF, ENDIANESS_OF_TEST_DATA};
 
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
@@ -141,13 +156,13 @@ public:
 
 TEST_F(UInt256Tests, uint256_raw_construction)
 {
-  UInt256Wrapper fromStdUint64(dummy_vm_ptr, dummy_typeid, uint64_t(42));
+  UInt256Wrapper fromStdUint64{dummy_vm_ptr, dummy_typeid, uint64_t(42)};
   ASSERT_TRUE(SIZE_IN_BYTES == fromStdUint64.size());
 
-  UInt256Wrapper fromByteArray(dummy_vm_ptr, dummy_typeid, raw_32xFF);
+  UInt256Wrapper fromByteArray{dummy_vm_ptr, dummy_typeid, raw_32xFF, ENDIANESS_OF_TEST_DATA};
   ASSERT_TRUE(SIZE_IN_BYTES == fromByteArray.size());
 
-  UInt256Wrapper fromAnotherUInt256(dummy_vm_ptr, zero.number() + zero.number());
+  UInt256Wrapper fromAnotherUInt256{dummy_vm_ptr, dummy_typeid, zero.number()};
   ASSERT_TRUE(SIZE_IN_BYTES == fromAnotherUInt256.size());
 }
 
@@ -160,6 +175,8 @@ TEST_F(UInt256Tests, uint256_raw_comparisons)
   EXPECT_TRUE(zero.IsNotEqual(lesser, greater));
   EXPECT_TRUE(zero.IsGreaterThan(greater, lesser));
   EXPECT_TRUE(zero.IsLessThan(lesser, greater));
+  EXPECT_TRUE(zero.IsLessThanOrEqual(lesser, greater));
+  EXPECT_TRUE(zero.IsGreaterThanOrEqual(lesser, lesser));
 
   EXPECT_FALSE(zero.IsEqual(lesser, greater));
   EXPECT_FALSE(zero.IsGreaterThan(lesser, greater));
@@ -173,14 +190,14 @@ TEST_F(UInt256Tests, uint256_raw_increase)
   // Increase is tested via digit carriage while incrementing.
   UInt256Wrapper carriage_inside(uint64max);
 
-  carriage_inside.Increase();
+  carriage_inside.InplaceAdd(Ptr<Object>::PtrFromThis(&carriage_inside),
+                             Ptr<Object>::PtrFromThis(&_1));
 
   EXPECT_EQ(carriage_inside.number().ElementAt(0), uint64_t(0));
   EXPECT_EQ(carriage_inside.number().ElementAt(1), uint64_t(1));
 
   UInt256Wrapper overcarriage(maximum);
-
-  overcarriage.Increase();
+  overcarriage.InplaceAdd(Ptr<Object>::PtrFromThis(&overcarriage), Ptr<Object>::PtrFromThis(&_1));
 
   ASSERT_TRUE(
       zero.IsEqual(Ptr<Object>::PtrFromThis(&zero), Ptr<Object>::PtrFromThis(&overcarriage)));
@@ -193,10 +210,12 @@ TEST_F(UInt256Tests, uint256_comparisons)
       var uint64_max = 18446744073709551615u64;
       var smaller = UInt256(uint64_max);
       var bigger = UInt256(uint64_max);
-      bigger.increase();
+      bigger += UInt256(1u64);
 
       assert(smaller < bigger, "1<2 is false!");
       assert((smaller > bigger) == false, "1>2 is true!");
+      assert(smaller <= bigger, "1<=2 is false!");
+      assert((smaller >= bigger) == false, "1>=2 is true!");
       assert(smaller != bigger, "1!=2 is false!");
       assert((smaller == bigger) == false, "1==2 is true!");
     endfunction
@@ -216,7 +235,7 @@ TEST_F(UInt256Tests, uint256_shallow_copy)
         a = b;
         assert(a == b, "shallow copy failed!");
 
-        a.increase();
+        a += UInt256(1u64);
 
         assert(a == b, "shallow copy failed!");
       endfunction
@@ -232,14 +251,15 @@ TEST_F(UInt256Tests, uint256_deep_copy)
       function main()
         var a = UInt256(42u64);
         var b = UInt256(0u64);
+        var _1 = UInt256(1u64);
 
         a = b.copy();
         assert(a == b, "deep copy failed!");
 
-        b.increase();
+        b += _1;
         assert(a < b, "a is corrupted by increasing b!");
 
-        a.increase();
+        a += _1;
         assert(a == b, "b is corrupted by increasing a!");
       endfunction
     )";
@@ -645,24 +665,23 @@ TEST_F(UInt256Tests, uint256_type_casts)
   EXPECT_TRUE(toolkit.Run());
 }
 
-// Disabled until UInt256 constructor from bytearray fix/rework.
-TEST_F(UInt256Tests, DISABLED_uint256_to_string)
+TEST_F(UInt256Tests, uint256_to_string)
 {
   static constexpr char const *TEXT = R"(
       function main()
           var test : UInt256 = UInt256(9000000000000000000u64);
           var test_str : String = toString(test);
           var expected_str_in_big_endian_enc : String =
-                "0000000000000000000000000000000000000000000000007ce66c50e2840000";
+          "0000000000000000000000000000000000000000000000007ce66c50e2840000";
           assert(test_str == expected_str_in_big_endian_enc, "toString(...) failed");
       endfunction
     )";
+
   ASSERT_TRUE(toolkit.Compile(TEXT));
   EXPECT_TRUE(toolkit.Run());
 }
 
-// Disabled until UInt256 constructor from bytearray fix/rework.
-TEST_F(UInt256Tests, DISABLED_uint256_sha256_assignment)
+TEST_F(UInt256Tests, uint256_sha256_assignment)
 {
   // This test uses a SHA256 hash from empty string
   // 0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
@@ -674,16 +693,22 @@ TEST_F(UInt256Tests, DISABLED_uint256_sha256_assignment)
   // 0x141cfc9842c4b0e3, which indicated that either SHA256().final() serialization,
   // or UInt256 constructor-from-bytearray is incorrect.
   static constexpr char const *TEXT = R"(
-        function main() : Bool
-            var test : UInt256 = SHA256().final();
-            var asU64 = toUint64(test);
-            return asU64 == 11859553537011923029u64;
+        function main()
+            var sha256hasher = SHA256();
+
+            sha256hasher.update("Hello World!");
+            var acquired_digest: UInt256 = sha256hasher.final();
+
+            var expected_digest_BigEndian = Buffer(0);
+            expected_digest_BigEndian.fromHex("7F83B1657FF1FC53B92DC18148A1D65DFC2D4B1FA3D677284ADDD200126D9069");
+
+            var acquired_digest_buffer = toBuffer(acquired_digest);
+
+            assert(acquired_digest_buffer == expected_digest_BigEndian, "Resulting digest '0x" + acquired_digest_buffer.toHex() + "' does not match expected digest '0x" + expected_digest_BigEndian.toHex() + "'");
         endfunction
       )";
+
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-  auto const result_is_ok = res.Get<bool>();
-  EXPECT_TRUE(result_is_ok);
+  EXPECT_TRUE(toolkit.Run());
 }
 }  // namespace
