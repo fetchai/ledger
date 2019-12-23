@@ -41,14 +41,15 @@ public:
   explicit Reshape(std::vector<SizeType> new_shape)
     : new_shape_(std::move(new_shape))
   {
-    new_shape_product_ = fetch::math::Product(new_shape_);
+    new_size_ = fetch::math::Product(new_shape_);
   }
 
   explicit Reshape(SPType const &sp)
     : Ops<T>(sp)
   {
     new_shape_ = sp.new_shape;
-    new_shape_product_ = sp.new_shape_product;
+    old_shape_ = sp.old_shape;
+    new_size_  = sp.new_size;
   }
 
   ~Reshape() override = default;
@@ -57,7 +58,8 @@ public:
   {
     SPType sp{};
     sp.new_shape = new_shape_;
-    sp.new_shape_product = new_shape_product_;
+    sp.old_shape = old_shape_;
+    sp.new_size  = new_size_;
     return std::make_shared<SPType>(sp);
   }
 
@@ -76,15 +78,18 @@ public:
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
 
+    old_shape_ = (*inputs.front()).shape();
+
     // if the shape is exactly the same just copy the data
-    if ((*inputs.front()).shape() == new_shape_)
+    if (old_shape_ == new_shape_)
     {
       output.Assign((*inputs.front()));
     }
     // check the reshape sizes match!
-    else if((*inputs.front()).size() != new_shape_product_)
+    else if ((*inputs.front()).size() != new_size_)
     {
-      throw fetch::math::exceptions::WrongShape("new shape has different size from current tensor size");
+      throw fetch::math::exceptions::WrongShape(
+          "new shape has different size from current tensor size");
     }
     else
     {
@@ -97,7 +102,7 @@ public:
                                    TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
-    TensorType ret(inputs.front()->shape());
+    TensorType ret(old_shape_);
     ret.Assign(error_signal);
     return {ret};
   }
@@ -129,7 +134,8 @@ public:
 
 private:
   std::vector<SizeType> new_shape_;
-  SizeType new_shape_product_{0};
+  std::vector<SizeType> old_shape_;
+  SizeType              new_size_{0};
 };
 
 }  // namespace ops
