@@ -48,7 +48,6 @@ public:
     : Ops<T>(sp)
   {
     new_shape_ = sp.new_shape;
-    old_shape_ = sp.old_shape;
     new_size_  = sp.new_size;
   }
 
@@ -58,7 +57,6 @@ public:
   {
     SPType sp{};
     sp.new_shape = new_shape_;
-    sp.old_shape = old_shape_;
     sp.new_size  = new_size_;
     return std::make_shared<SPType>(sp);
   }
@@ -78,10 +76,8 @@ public:
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
 
-    old_shape_ = (*inputs.front()).shape();
-
     // if the shape is exactly the same just copy the data
-    if (old_shape_ == new_shape_)
+    if ((*inputs.front()).shape() == new_shape_)
     {
       output.Assign((*inputs.front()));
     }
@@ -103,12 +99,7 @@ public:
   {
     assert(inputs.size() == 1);
 
-    if (old_shape_.size() == 0)
-    {
-      throw std::runtime_error("cannot backprop without first calling forward on reshape op");
-    }
-
-    TensorType ret(old_shape_);
+    TensorType ret(inputs.at(0).shape());
     ret.Assign(error_signal);
     return {ret};
   }
@@ -127,7 +118,6 @@ public:
 
 private:
   std::vector<SizeType> new_shape_;
-  std::vector<SizeType> old_shape_;
   SizeType              new_size_{0};
 };
 
