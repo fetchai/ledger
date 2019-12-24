@@ -40,16 +40,14 @@ public:
 
   explicit Reshape(std::vector<SizeType> new_shape)
     : new_shape_(std::move(new_shape))
-  {
-    new_size_ = fetch::math::Product(new_shape_);
-  }
+    , new_size_(fetch::math::Product(new_shape_))
+  {}
 
   explicit Reshape(SPType const &sp)
     : Ops<T>(sp)
-  {
-    new_shape_ = sp.new_shape;
-    new_size_  = sp.new_size;
-  }
+    , new_shape_(sp.new_shape)
+    , new_size_(sp.new_size)
+  {}
 
   ~Reshape() override = default;
 

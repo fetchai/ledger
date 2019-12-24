@@ -83,14 +83,7 @@ void ReshapeTestBackward(std::vector<SizeType> const &initial_shape,
   TensorType gt_error(initial_shape);
 
   data.FillUniformRandom();
-  auto gt_error_it = gt_error.begin();
-  auto data_it     = data.begin();
-  for (std::size_t j = 0; j < gt_error.size(); ++j)
-  {
-    *gt_error_it = *data_it;
-    ++gt_error_it;
-    ++data_it;
-  }
+  gt_error = data.Copy();
 
   // call reshape and store result in 'error'
   fetch::ml::ops::Reshape<TensorType>            op(final_shape);
@@ -246,7 +239,7 @@ TYPED_TEST(ReshapeTest, saveparams_backward_test)
   fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(ReshapeTest, Reshape_graph_serialization_test)
+TYPED_TEST(ReshapeTest, Reshape_graph_serialisation_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
