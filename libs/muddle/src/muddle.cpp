@@ -65,7 +65,8 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , network_id_(network_id)
   , reactor_{"muddle"}
   , maintenance_periodic_(std::make_shared<core::PeriodicFunctor>(
-        std::chrono::milliseconds{MAINTENANCE_INTERVAL_MS}, this, &Muddle::RunPeriodicMaintenance))
+        "Muddle", std::chrono::milliseconds{MAINTENANCE_INTERVAL_MS}, this,
+        &Muddle::RunPeriodicMaintenance))
   , direct_message_service_(node_address_, router_, *register_, clients_)
   , peer_tracker_(PeerTracker::New(std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_,
                                    *register_, clients_, router_))
@@ -717,25 +718,30 @@ void Muddle::CreateTcpClient(Uri const &peer)
     clients_.RemoveConnection(peer);
   });
 
-  strong_conn->OnMessage([this, peer, conn_handle](network::MessageBuffer const &msg) {
-    try
+  std::weak_ptr<Muddle> weak_self = shared_from_this();
+  strong_conn->OnMessage([this, peer, conn_handle, weak_self](network::MessageBuffer const &msg) {
+    auto ptr = weak_self.lock();
+    if (ptr)
     {
-      auto packet = std::make_shared<Packet>();
+      try
+      {
+        auto packet = std::make_shared<Packet>();
 
-      if (Packet::FromBuffer(*packet, msg.pointer(), msg.size()))
-      {
-        // dispatch the message to router
-        router_.Route(conn_handle, packet);
+        if (Packet::FromBuffer(*packet, msg.pointer(), msg.size()))
+        {
+          // dispatch the message to router
+          router_.Route(conn_handle, packet);
+        }
+        else
+        {
+          FETCH_LOG_WARN(logging_name_, "Failed to read packet from buffer");
+        }
       }
-      else
+      catch (std::exception const &ex)
       {
-        FETCH_LOG_WARN(logging_name_, "Failed to read packet from buffer");
+        FETCH_LOG_ERROR(logging_name_, "Error processing packet from ", peer.ToString(),
+                        " error: ", ex.what());
       }
-    }
-    catch (std::exception const &ex)
-    {
-      FETCH_LOG_ERROR(logging_name_, "Error processing packet from ", peer.ToString(),
-                      " error: ", ex.what());
     }
   });
 

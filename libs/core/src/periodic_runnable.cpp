@@ -17,13 +17,27 @@
 //------------------------------------------------------------------------------
 
 #include "core/periodic_runnable.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
+
+namespace {
+inline std::string ToLowerCase(std::string data)
+{
+  std::transform(data.begin(), data.end(), data.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return data;
+}
+}  // namespace
 
 namespace fetch {
 namespace core {
 
-PeriodicRunnable::PeriodicRunnable(Duration const &period)
+PeriodicRunnable::PeriodicRunnable(std::string const &name, Duration const &period)
   : last_executed_{Clock::now()}
   , interval_{period}
+  , state_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        ToLowerCase(name) + "_periodic_runnable_gauge",
+        "Generic periodic runnable state as integer")}
 {}
 
 bool PeriodicRunnable::IsReadyToExecute() const
@@ -34,7 +48,9 @@ bool PeriodicRunnable::IsReadyToExecute() const
 void PeriodicRunnable::Execute()
 {
   // call the periodic function
+  state_gauge_->set(static_cast<uint64_t>(1));
   Periodically();
+  state_gauge_->set(static_cast<uint64_t>(0));
 
   last_executed_ = Clock::now();
 }

@@ -51,6 +51,14 @@ public:
   using MapDeserializer = interfaces::MapDeserializer<MsgPackSerializer>;
   /// @}
 
+  /// Pair Helpers
+  /// @{
+  using PairConstructor = interfaces::ContainerConstructorInterface<
+      MsgPackSerializer, interfaces::PairInterface<MsgPackSerializer>, TypeCodes::PAIR_CODE_FIXED,
+      TypeCodes::PAIR_CODE16, TypeCodes::PAIR_CODE32>;
+  using PairDeserializer = interfaces::PairDeserializer<MsgPackSerializer>;
+  /// @}
+
   MsgPackSerializer()                         = default;
   MsgPackSerializer(MsgPackSerializer &&from) = default;
   MsgPackSerializer &operator=(MsgPackSerializer &&from) = default;
@@ -162,6 +170,9 @@ public:
 
   MapConstructor  NewMapConstructor();
   MapDeserializer NewMapDeserializer();
+
+  PairConstructor  NewPairConstructor();
+  PairDeserializer NewPairDeserializer();
 
   template <typename T>
   typename MapSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);

@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/object.hpp"
+
 namespace fetch {
 
 namespace vm {
@@ -26,7 +28,7 @@ class Module;
 namespace vm_modules {
 namespace math {
 
-void BindLog(fetch::vm::Module &module);
+void BindLog(fetch::vm::Module &module, bool enable_experimental);
 
 }  // namespace math
 }  // namespace vm_modules

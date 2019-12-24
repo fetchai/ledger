@@ -54,6 +54,7 @@ public:
   void Reset();
 
   fetch::vm::Ptr<math::UInt256Wrapper> Final();
+  fetch::vm::Ptr<ByteArrayWrapper>     FinalAsByteArray();
 
   SHA256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 

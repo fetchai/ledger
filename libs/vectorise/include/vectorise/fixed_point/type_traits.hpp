@@ -34,6 +34,12 @@ template <typename DataType>
 constexpr bool IsFixedPoint = std::is_base_of<fixed_point::BaseFixedpointType, DataType>::value;
 
 template <typename DataType>
+constexpr bool IsInteger = fetch::meta::IsInteger<DataType>;
+
+template <typename DataType>
+constexpr bool IsFloat = fetch::meta::IsFloat<DataType>;
+
+template <typename DataType>
 constexpr bool IsNotFixedPoint = !IsFixedPoint<DataType>;
 
 template <typename DataType>
@@ -52,6 +58,12 @@ constexpr bool                            IsNonFixedPointSignedArithmetic =
 template <typename DataType>
 constexpr bool IsNonFixedPointUnsignedArithmetic =
     std::is_arithmetic<DataType>::value && !(std::is_signed<DataType>::value);
+
+template <typename DataType, typename ReturnType = void>
+using IfIsFloat = fetch::meta::EnableIf<IsFloat<DataType>, ReturnType>;
+
+template <typename DataType, typename ReturnType = void>
+using IfIsInteger = fetch::meta::EnableIf<IsInteger<DataType>, ReturnType>;
 
 template <typename DataType, typename ReturnType = void>
 using IfIsFixedPoint = fetch::meta::EnableIf<IsFixedPoint<DataType>, ReturnType>;
@@ -88,6 +100,9 @@ constexpr bool IsNotFixedPoint128 = !IsFixedPoint128<T> && IsFixedPoint<T>;
 
 template <typename DataType, typename ReturnType = void>
 using IfIsFixedPoint128 = fetch::meta::EnableIf<IsFixedPoint128<DataType>, ReturnType>;
+
+template <typename DataType, typename ReturnType = void>
+using IfIsNotFixedPoint128 = fetch::meta::EnableIf<IsNotFixedPoint128<DataType>, ReturnType>;
 
 }  // namespace meta
 }  // namespace math

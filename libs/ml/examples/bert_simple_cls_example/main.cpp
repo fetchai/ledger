@@ -53,11 +53,11 @@ int main()
   // 0.
   std::cout << "FETCH bert Toy CLS Demo" << std::endl;
 
-  SizeType train_size = 1000;
-  SizeType test_size  = 100;
-  SizeType batch_size = 16;
-  SizeType epochs     = 2;
-  auto     lr         = static_cast<DataType>(1e-3);
+  SizeType   train_size = 1000;
+  SizeType   test_size  = 100;
+  SizeType   batch_size = 16;
+  SizeType   epochs     = 2;
+  auto const lr         = fetch::math::Type<DataType>("0.001");
 
   BERTConfig<TensorType> config;
   config.n_encoder_layers  = 2u;

@@ -1770,7 +1770,6 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
   genesis->previous_hash = chain::ZERO_HASH;
   genesis->hash          = chain::GetGenesisDigest();
   genesis->merkle_hash   = chain::GetGenesisMerkleRoot();
-  genesis->miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
   genesis->is_loose      = false;
 
   return genesis;

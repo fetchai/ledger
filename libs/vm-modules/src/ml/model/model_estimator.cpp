@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm_modules/ml/model/model_estimator.hpp"
+
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm_modules/ml/model/model.hpp"
-#include "vm_modules/ml/model/model_estimator.hpp"
 
 #include <stdexcept>
 
@@ -31,7 +32,8 @@ namespace vm_modules {
 namespace ml {
 namespace model {
 
-static constexpr char const *LOGGING_NAME = "VMModelEstimator";
+static constexpr char const *LOGGING_NAME            = "VMModelEstimator";
+static constexpr char const *NOT_IMPLEMENTED_MESSAGE = " is not yet implemented.";
 
 using SizeType = fetch::math::SizeType;
 
@@ -63,6 +65,7 @@ ModelEstimator &ModelEstimator::operator=(ModelEstimator &&other) noexcept
 ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType const &inputs,
                                            SizeType const &hidden_nodes)
 {
+  SizeType size{0};
   SizeType padded_size{0};
 
   FETCH_UNUSED(layer);  // must be a dense layer
@@ -82,7 +85,8 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
       state_.backward_pass_cost +
       static_cast<DataType>(inputs * hidden_nodes) * BACKWARD_DENSE_QUAD_COEF;
 
-  state_.weights_size_sum += inputs * hidden_nodes + hidden_nodes;
+  size = inputs * hidden_nodes + hidden_nodes;
+  state_.weights_size_sum += size;
 
   // DataType of Tensor is not important for caluclating padded size
   padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, inputs});
@@ -92,8 +96,8 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
   state_.last_layer_size = hidden_nodes;
   state_.ops_count += 3;
 
-  return ToChargeAmount(ADD_DENSE_INPUT_COEF * inputs + ADD_DENSE_OUTPUT_COEF * hidden_nodes +
-                        ADD_DENSE_QUAD_COEF * inputs * hidden_nodes + ADD_DENSE_CONST_COEF) *
+  return ToChargeAmount(ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF * padded_size +
+                        ADD_DENSE_WEIGHTS_SIZE_COEF * size + ADD_DENSE_CONST_COEF) *
          COMPUTE_CHARGE_COST;
 }
 
@@ -142,7 +146,7 @@ ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType con
   FETCH_UNUSED(input_channels);
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
-  return MaximumCharge("Not yet implemented");
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
 ChargeAmount ModelEstimator::LayerAddConvActivation(
@@ -155,7 +159,29 @@ ChargeAmount ModelEstimator::LayerAddConvActivation(
   FETCH_UNUSED(kernel_size);
   FETCH_UNUSED(stride_size);
   FETCH_UNUSED(activation);
-  return MaximumCharge("Not yet implemented");
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+ChargeAmount ModelEstimator::LayerAddFlatten(Ptr<fetch::vm::String> const &layer)
+{
+  FETCH_UNUSED(layer);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+ChargeAmount ModelEstimator::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
+                                             const math::DataType &        probability)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(probability);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+ChargeAmount ModelEstimator::LayerAddActivation(const fetch::vm::Ptr<String> &layer,
+                                                const fetch::vm::Ptr<String> &activation)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(activation);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
 ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
@@ -246,7 +272,8 @@ ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
 
   if (!success)
   {
-    return MaximumCharge("Not yet implemented");
+    return MaximumCharge("Either " + loss->string() + " or " + optimiser->string() +
+                         NOT_IMPLEMENTED_MESSAGE);
   }
 
   return ToChargeAmount(optimiser_construction_impact + COMPILE_CONST_COEF) * COMPUTE_CHARGE_COST;
@@ -280,7 +307,7 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
     }
     else
     {
-      return MaximumCharge("Not yet implemented");
+      return MaximumCharge(optimiser->string() + NOT_IMPLEMENTED_MESSAGE);
     }
   }
 
@@ -290,10 +317,9 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
 ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,
                                            Ptr<Array<SizeType>> const &in_layers)
 {
-
   FETCH_UNUSED(optimiser);
   FETCH_UNUSED(in_layers);
-  return MaximumCharge("Not yet implemented");
+  return MaximumCharge(optimiser->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
 ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTensor> const &labels,
@@ -394,10 +420,13 @@ bool ModelEstimator::State::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
   buffer << forward_pass_cost;
   buffer << backward_pass_cost;
+  buffer << metrics_cost;
   buffer << weights_size_sum;
+  buffer << weights_padded_size_sum;
   buffer << optimiser_step_impact;
   buffer << last_layer_size;
   buffer << ops_count;
+  buffer << subset_size;
 
   return true;
 }
@@ -406,10 +435,13 @@ bool ModelEstimator::State::DeserializeFrom(serializers::MsgPackSerializer &buff
 {
   buffer >> forward_pass_cost;
   buffer >> backward_pass_cost;
+  buffer >> metrics_cost;
   buffer >> weights_size_sum;
+  buffer >> weights_padded_size_sum;
   buffer >> optimiser_step_impact;
   buffer >> last_layer_size;
   buffer >> ops_count;
+  buffer >> subset_size;
 
   return true;
 }
@@ -446,16 +478,13 @@ ChargeAmount ModelEstimator::ToChargeAmount(fixed_point::fp64_t const &val)
 }
 
 // AddLayer
-fixed_point::fp64_t const ModelEstimator::ADD_DENSE_INPUT_COEF =
-    fixed_point::fp64_t("0.111111111111111");
-fixed_point::fp64_t const ModelEstimator::ADD_DENSE_OUTPUT_COEF =
-    fixed_point::fp64_t("0.043478260869565");
-fixed_point::fp64_t const ModelEstimator::ADD_DENSE_QUAD_COEF =
-    fixed_point::fp64_t("0.013513513513514");
-fixed_point::fp64_t const ModelEstimator::ADD_DENSE_CONST_COEF = fixed_point::fp64_t("52");
+fixed_point::fp64_t const ModelEstimator::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF =
+    fixed_point::fp64_t("0.002");
+fixed_point::fp64_t const ModelEstimator::ADD_DENSE_WEIGHTS_SIZE_COEF =
+    fixed_point::fp64_t("0.057");
+fixed_point::fp64_t const ModelEstimator::ADD_DENSE_CONST_COEF = fixed_point::fp64_t("60");
 
 // Compile
-
 fixed_point::fp64_t const ModelEstimator::ADAM_PADDED_WEIGHTS_SIZE_COEF =
     fixed_point::fp64_t("0.014285714285714");
 fixed_point::fp64_t const ModelEstimator::ADAM_WEIGHTS_SIZE_COEF =

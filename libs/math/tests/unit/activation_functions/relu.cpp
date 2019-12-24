@@ -34,11 +34,12 @@ TYPED_TEST_CASE(ReluTest, TensorIntAndFloatingTypes);
 template <typename ArrayType>
 ArrayType RandomArrayNegative(std::size_t n)
 {
-  static fetch::random::LinearCongruentialGenerator gen;
-  ArrayType                                         a1(n);
+  using DataType = typename ArrayType::Type;
+  ;
+  ArrayType a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
-    a1.At(i) = typename ArrayType::Type(gen.AsDouble()) - typename ArrayType::Type(1.0);
+    a1.At(i) = -random::Random::generator.AsType<DataType>() - DataType{1};
   }
   return a1;
 }
@@ -46,18 +47,19 @@ ArrayType RandomArrayNegative(std::size_t n)
 template <typename ArrayType>
 ArrayType RandomArrayPositive(std::size_t n)
 {
-  static fetch::random::LinearCongruentialGenerator gen;
-  ArrayType                                         a1(n);
+  using DataType = typename ArrayType::Type;
+  ;
+  ArrayType a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
-    a1.At(i) = typename ArrayType::Type(gen.AsDouble());
+    a1.At(i) = random::Random::generator.AsType<DataType>();
   }
   return a1;
 }
 
 TYPED_TEST(ReluTest, negative_response)
 {
-
+  using DataType         = typename TypeParam::Type;
   std::size_t n          = 1000;
   TypeParam   test_array = RandomArrayNegative<TypeParam>(n);
   TypeParam   test_array_2{n};
@@ -65,7 +67,7 @@ TYPED_TEST(ReluTest, negative_response)
   // sanity check that all values less than 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_LT(test_array[i], typename TypeParam::Type(0));
+    ASSERT_LT(test_array[i], DataType{0});
   }
 
   //
@@ -74,12 +76,13 @@ TYPED_TEST(ReluTest, negative_response)
   // check that all values 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_EQ(test_array_2[i], typename TypeParam::Type(0));
+    ASSERT_EQ(test_array_2[i], DataType{0});
   }
 }
 
 TYPED_TEST(ReluTest, positive_response)
 {
+  using DataType = typename TypeParam::Type;
 
   std::size_t n          = 1000;
   TypeParam   test_array = RandomArrayPositive<TypeParam>(n);
@@ -88,7 +91,7 @@ TYPED_TEST(ReluTest, positive_response)
   // sanity check that all values gte 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_GE(test_array[i], typename TypeParam::Type(0));
+    ASSERT_GE(test_array[i], DataType{0});
   }
 
   fetch::math::Relu(test_array, test_array_2);

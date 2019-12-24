@@ -112,9 +112,9 @@ public:
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name,
                     std::map<std::string, NodePtrType> &trainable_lookup);
 
-  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0});
+  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0});
   bool SetRegularisation(std::string const &node_name, RegPtrType regulariser,
-                         DataType regularisation_rate = DataType{0.0});
+                         DataType regularisation_rate = DataType{0});
 
   void SetFrozenState(bool frozen_state);
   bool SetFrozenState(std::string const &node_name, bool frozen_state);

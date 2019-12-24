@@ -81,12 +81,12 @@ public:
 
   SizeType MaxDimSize()
   {
-    return SizeType(20);
+    return SizeType(26);
   }
 
-  SizeType DimStep()
+  SizeType DimSizeStep()
   {
-    return SizeType(7);
+    return SizeType(5);
   }
 
   SizeType MinDims()
@@ -96,7 +96,7 @@ public:
 
   SizeType MaxDims()
   {
-    return SizeType(8);
+    return SizeType(6);
   }
 
   SizeType DimsStep()
@@ -123,7 +123,7 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_min_test)
 
   SizeType min_dim_size = MinDimSize();
   SizeType max_dim_size = MaxDimSize();
-  SizeType dim_step     = DimStep();
+  SizeType dim_step     = DimSizeStep();
 
   SizeType min_dims  = MinDims();
   SizeType max_dims  = MaxDims();
@@ -165,7 +165,7 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_max_test)
 
   SizeType min_dim_size = MinDimSize();
   SizeType max_dim_size = MaxDimSize();
-  SizeType dim_step     = DimStep();
+  SizeType dim_step     = DimSizeStep();
 
   SizeType min_dims  = MinDims();
   SizeType max_dims  = MaxDims();
@@ -207,7 +207,7 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_sum_test)
 
   SizeType min_dim_size = MinDimSize();
   SizeType max_dim_size = MaxDimSize();
-  SizeType dim_step     = DimStep();
+  SizeType dim_step     = DimSizeStep();
 
   SizeType min_dims  = MinDims();
   SizeType max_dims  = MaxDims();
@@ -245,7 +245,8 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_sum_test)
 TEST_F(MathTensorEstimatorTests, tensor_estimator_transpose_test)
 {
   SizeType const n_dims = 2;
-  for (SizeType cur_dim_size = MinDimSize(); cur_dim_size < MaxDimSize(); cur_dim_size += DimStep())
+  for (SizeType cur_dim_size = MinDimSize(); cur_dim_size < MaxDimSize();
+       cur_dim_size += DimSizeStep())
   {
     std::vector<SizeType> const tensor_shape(n_dims, cur_dim_size);
     std::vector<SizeType> const new_shape(n_dims, cur_dim_size);

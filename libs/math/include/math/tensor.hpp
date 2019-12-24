@@ -329,8 +329,9 @@ public:
   /// COMPARISON OPERATORS ///
   ////////////////////////////
 
-  bool AllClose(Tensor const &o, Type const &relative_tolerance = Type(1e-5),
-                Type const &absolute_tolerance = Type(1e-8)) const;
+  bool AllClose(Tensor const &o,
+                Type const &  relative_tolerance = fetch::math::Type<Type>("0.00001"),
+                Type const &  absolute_tolerance = fetch::math::Type<Type>("0.00000001")) const;
   bool operator==(Tensor const &other) const;
   bool operator!=(Tensor const &other) const;
 
@@ -665,6 +666,11 @@ private:
       , axis_{axis}
     {}
 
+    std::string ToString() const
+    {
+      return Copy().ToString();
+    }
+
     Tensor                 Copy() const;
     ConstSliceType         Slice(SizeType i, SizeType axis) const;
     void                   ModifyRange(SizeType i, SizeType axis);
@@ -800,8 +806,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       else
       {
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
-        auto        float_val = math::Type<T>(cur_elem);
-        elems.emplace_back(Type(float_val));
+        elems.emplace_back(fetch::math::Type<Type>(cur_elem));
         prev_backslash = false;
         if (!reached_actual_data)
         {
@@ -1470,7 +1475,7 @@ void Tensor<T, C>::SetAllOne()
   auto it = this->begin();
   while (it.is_valid())
   {
-    *it = Type(1);
+    *it = Type{1};
     ++it;
   }
 }
@@ -1576,7 +1581,7 @@ Tensor<T, C> &Tensor<T, C>::FillUniformRandom()
 {
   for (SizeType i = 0; i < this->size(); ++i)
   {
-    this->operator[](i) = Type(random::Random::generator.AsDouble());
+    this->operator[](i) = random::Random::generator.AsType<Type>();
   }
   return *this;
 }
@@ -1664,7 +1669,7 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::SizeFromShape(SizeVector const &sh
   {
     return SizeType{0};
   }
-  return std::accumulate(std::begin(shape), std::end(shape), SizeType(1), std::multiplies<>());
+  return std::accumulate(std::begin(shape), std::end(shape), SizeType{1}, std::multiplies<>());
 }
 
 template <typename T, typename C>
@@ -1675,7 +1680,7 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::PaddedSizeFromShape(SizeVector con
     return SizeType{0};
   }
   return PadValue(shape[0]) *
-         std::accumulate(std::begin(shape) + 1, std::end(shape), SizeType(1), std::multiplies<>());
+         std::accumulate(std::begin(shape) + 1, std::end(shape), SizeType{1}, std::multiplies<>());
 }
 
 /**

@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/compiler.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/vm_factory.hpp"
@@ -193,9 +192,13 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
   {
     for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
     {
-      DataType val = (VmModelEstimator::ADD_DENSE_INPUT_COEF * inputs);
-      val += VmModelEstimator::ADD_DENSE_OUTPUT_COEF * outputs;
-      val += VmModelEstimator::ADD_DENSE_QUAD_COEF * inputs * outputs;
+      SizeType padded_size_sum =
+          fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
+      padded_size_sum += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
+      SizeType size_sum = inputs * outputs + outputs;
+
+      DataType val = (VmModelEstimator::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF * padded_size_sum);
+      val += VmModelEstimator::ADD_DENSE_WEIGHTS_SIZE_COEF * size_sum;
       val += VmModelEstimator::ADD_DENSE_CONST_COEF;
 
       EXPECT_TRUE(model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs) ==
@@ -227,9 +230,14 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
   {
     for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
     {
-      DataType val = (VmModelEstimator::ADD_DENSE_INPUT_COEF * inputs);
-      val += VmModelEstimator::ADD_DENSE_OUTPUT_COEF * outputs;
-      val += VmModelEstimator::ADD_DENSE_QUAD_COEF * inputs * outputs;
+
+      SizeType padded_size_sum =
+          fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
+      padded_size_sum += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
+      SizeType size_sum = inputs * outputs + outputs;
+
+      DataType val = (VmModelEstimator::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF * padded_size_sum);
+      val += VmModelEstimator::ADD_DENSE_WEIGHTS_SIZE_COEF * size_sum;
       val += VmModelEstimator::ADD_DENSE_CONST_COEF;
 
       EXPECT_TRUE(model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, inputs, outputs,
@@ -245,11 +253,11 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_test)
   std::string layer_type = "convolution1D";
 
   SizeType min_input_size = 0;
-  SizeType max_input_size = 1000;
+  SizeType max_input_size = 500;
   SizeType input_step     = 10;
 
   SizeType min_output_size = 0;
-  SizeType max_output_size = 1000;
+  SizeType max_output_size = 500;
   SizeType output_step     = 10;
 
   SizeType min_kernel_size = 0;
@@ -294,11 +302,11 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
   std::string activation_type = "relu";
 
   SizeType min_input_size = 0;
-  SizeType max_input_size = 1000;
+  SizeType max_input_size = 500;
   SizeType input_step     = 10;
 
   SizeType min_output_size = 0;
-  SizeType max_output_size = 1000;
+  SizeType max_output_size = 500;
   SizeType output_step     = 10;
 
   SizeType min_kernel_size = 0;
@@ -426,15 +434,15 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
   std::string activation_type = "relu";
 
   SizeType min_data_size_1  = 10;
-  SizeType max_data_size_1  = 100;
+  SizeType max_data_size_1  = 80;
   SizeType data_size_1_step = 19;
 
   SizeType min_data_points  = 10;
-  SizeType max_data_points  = 100;
+  SizeType max_data_points  = 80;
   SizeType data_points_step = 13;
 
   SizeType min_label_size_1  = 1;
-  SizeType max_label_size_1  = 100;
+  SizeType max_label_size_1  = 80;
   SizeType label_size_1_step = 17;
 
   SizeType min_batch_size  = 1;
@@ -558,15 +566,15 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
   std::string activation_type = "relu";
 
   SizeType min_data_size_1  = 10;
-  SizeType max_data_size_1  = 100;
+  SizeType max_data_size_1  = 80;
   SizeType data_size_1_step = 19;
 
   SizeType min_data_points  = 10;
-  SizeType max_data_points  = 100;
+  SizeType max_data_points  = 80;
   SizeType data_points_step = 13;
 
   SizeType min_label_size_1  = 1;
-  SizeType max_label_size_1  = 100;
+  SizeType max_label_size_1  = 80;
   SizeType label_size_1_step = 17;
 
   SizeType min_batch_size  = 1;
@@ -671,9 +679,9 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
   }
 }
 
-///////////////////////////////////////
-// Operations estimators consistency //
-///////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+// Operations estimators consistency relative to their args and object state //
+///////////////////////////////////////////////////////////////////////////////
 
 TEST_F(VMModelEstimatorTests, layeradd_charge_charge_correlate_with_input_size)
 {
@@ -1063,6 +1071,147 @@ TEST_F(VMModelEstimatorTests, deserializefromstring_charge_correlate_with_size_o
   auto charge_big = DeserializeFromStringCharge(model_big_new, model_big_serialized);
 
   EXPECT_LT(charge_small, charge_big);
+}
+
+//////////////////////////////////////////////////
+// Estimator state consistency with its VMModel //
+//////////////////////////////////////////////////
+
+TEST_F(VMModelEstimatorTests, estimator_state_consistency_after_serialization_deserialization)
+{
+  fetch::serializers::MsgPackSerializer serializer;
+
+  std::vector<SizeType> sizes          = {10, 10, 10};
+  std::vector<bool>     activations    = {true, true};
+  auto                  model_original = VmSequentialModel(vm, sizes, activations, "mse", "adam");
+  auto                  model_from_serializer = VmSequentialModel(vm);
+
+  model_original->SerializeTo(serializer);
+  serializer.seek(0);
+  model_from_serializer->DeserializeFrom(serializer);
+
+  ChargeAmount charge_original        = 0;
+  ChargeAmount charge_from_serializer = 0;
+
+  //
+  SizeType input_size  = 10;
+  SizeType output_size = 100;
+  auto     layer_type  = VmString(vm, "dense");
+  charge_original      = LayerAddDenseCharge(model_original, layer_type, input_size, output_size);
+  charge_from_serializer =
+      LayerAddDenseCharge(model_from_serializer, layer_type, input_size, output_size);
+  EXPECT_EQ(charge_original, charge_from_serializer);
+
+  //
+  auto activation_type   = VmString(vm, "relu");
+  charge_original        = LayerAddDenseActivationCharge(model_original, layer_type, input_size,
+                                                  output_size, activation_type);
+  charge_from_serializer = LayerAddDenseActivationCharge(model_from_serializer, layer_type,
+                                                         input_size, output_size, activation_type);
+  EXPECT_EQ(charge_original, charge_from_serializer);
+
+  //
+  auto loss              = VmString(vm, "mse");
+  auto optimiser         = VmString(vm, "adam");
+  charge_original        = CompileSequentialCharge(model_original, loss, optimiser);
+  charge_from_serializer = CompileSequentialCharge(model_from_serializer, loss, optimiser);
+  EXPECT_EQ(charge_original, charge_from_serializer);
+
+  //
+  SizeType              batch_size = 64;
+  SizeType              datapoints = 128;
+  std::vector<SizeType> data_shape{sizes[0], datapoints};
+  std::vector<SizeType> label_shape{sizes[sizes.size() - 1], datapoints};
+  auto                  data  = VmTensor(vm, data_shape);
+  auto                  label = VmTensor(vm, label_shape);
+  charge_original             = FitCharge(model_original, data, label, batch_size);
+  charge_from_serializer      = FitCharge(model_from_serializer, data, label, batch_size);
+  EXPECT_EQ(charge_original, charge_from_serializer);
+
+  //
+  charge_original        = PredictCharge(model_original, data);
+  charge_from_serializer = PredictCharge(model_from_serializer, data);
+  EXPECT_EQ(charge_original, charge_from_serializer);
+
+  //
+  charge_original        = SerializeToStringCharge(model_original);
+  charge_from_serializer = SerializeToStringCharge(model_from_serializer);
+  EXPECT_EQ(charge_original, charge_from_serializer);
+
+  //
+  auto original_serialized        = model_original->SerializeToString();
+  auto from_serializer_serialized = model_from_serializer->SerializeToString();
+  charge_original = DeserializeFromStringCharge(model_original, original_serialized);
+  charge_from_serializer =
+      DeserializeFromStringCharge(model_from_serializer, from_serializer_serialized);
+  EXPECT_EQ(charge_original, charge_from_serializer);
+}
+
+TEST_F(VMModelEstimatorTests,
+       estimator_state_consistency_after_serialization_deserialization_from_string)
+{
+  std::vector<SizeType> sizes          = {10, 10, 10};
+  std::vector<bool>     activations    = {true, true};
+  auto                  model_original = VmSequentialModel(vm, sizes, activations, "mse", "adam");
+  auto                  model_from_serializer = VmSequentialModel(vm);
+
+  auto serialized_model = model_original->SerializeToString();
+  model_from_serializer->DeserializeFromString(serialized_model);
+  ChargeAmount charge_original        = 0;
+  ChargeAmount charge_from_serializer = 0;
+
+  //
+  SizeType input_size  = 10;
+  SizeType output_size = 100;
+  auto     layer_type  = VmString(vm, "dense");
+  charge_original      = LayerAddDenseCharge(model_original, layer_type, input_size, output_size);
+  charge_from_serializer =
+      LayerAddDenseCharge(model_from_serializer, layer_type, input_size, output_size);
+  EXPECT_EQ(charge_original, charge_from_serializer);
+
+  //
+  auto activation_type   = VmString(vm, "relu");
+  charge_original        = LayerAddDenseActivationCharge(model_original, layer_type, input_size,
+                                                  output_size, activation_type);
+  charge_from_serializer = LayerAddDenseActivationCharge(model_from_serializer, layer_type,
+                                                         input_size, output_size, activation_type);
+  EXPECT_EQ(charge_original, charge_from_serializer);
+
+  //
+  auto loss              = VmString(vm, "mse");
+  auto optimiser         = VmString(vm, "adam");
+  charge_original        = CompileSequentialCharge(model_original, loss, optimiser);
+  charge_from_serializer = CompileSequentialCharge(model_from_serializer, loss, optimiser);
+  EXPECT_EQ(charge_original, charge_from_serializer);
+
+  //
+  SizeType              batch_size = 64;
+  SizeType              datapoints = 128;
+  std::vector<SizeType> data_shape{sizes[0], datapoints};
+  std::vector<SizeType> label_shape{sizes[sizes.size() - 1], datapoints};
+  auto                  data  = VmTensor(vm, data_shape);
+  auto                  label = VmTensor(vm, label_shape);
+  charge_original             = FitCharge(model_original, data, label, batch_size);
+  charge_from_serializer      = FitCharge(model_from_serializer, data, label, batch_size);
+  EXPECT_EQ(charge_original, charge_from_serializer);
+
+  //
+  charge_original        = PredictCharge(model_original, data);
+  charge_from_serializer = PredictCharge(model_from_serializer, data);
+  EXPECT_EQ(charge_original, charge_from_serializer);
+
+  //
+  charge_original        = SerializeToStringCharge(model_original);
+  charge_from_serializer = SerializeToStringCharge(model_from_serializer);
+  EXPECT_EQ(charge_original, charge_from_serializer);
+
+  //
+  auto original_serialized        = model_original->SerializeToString();
+  auto from_serializer_serialized = model_from_serializer->SerializeToString();
+  charge_original = DeserializeFromStringCharge(model_original, original_serialized);
+  charge_from_serializer =
+      DeserializeFromStringCharge(model_from_serializer, from_serializer_serialized);
+  EXPECT_EQ(charge_original, charge_from_serializer);
 }
 
 }  // namespace
