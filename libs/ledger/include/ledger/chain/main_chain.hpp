@@ -60,8 +60,7 @@ namespace ledger {
  */
 struct Tip
 {
-  using BlockHash = Block::Hash;
-  using Weight    = Block::Weight;
+  using Weight = Block::Weight;
 
   BlockHash hash{fetch::chain::ZERO_HASH};
   Weight    total_weight{0};
@@ -120,19 +119,17 @@ constexpr char const *ToString(BlockStatus status)
 
 struct BlockDbRecord;
 
-template <class B>
 struct TimeTravelogue;
 
 class MainChain
 {
+  using IntBlockPtr = std::shared_ptr<Block>;
+
 public:
-  using BlockPtr             = std::shared_ptr<Block const>;
-  using Blocks               = std::vector<BlockPtr>;
-  using BlockHash            = Block::Hash;
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
   using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
-  using Travelogue           = TimeTravelogue<BlockPtr>;
+  using Travelogue           = TimeTravelogue;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
   static constexpr uint64_t    UPPER_BOUND  = 5000ull;
@@ -163,7 +160,8 @@ public:
 
   /// @name Block Management
   /// @{
-  BlockStatus AddBlock(Block const &blk);
+  BlockStatus AddBlock(Block block);
+  BlockStatus AddBlock(BlockPtr block);
   BlockPtr    GetBlock(BlockHash const &hash) const;
   bool        RemoveBlock(BlockHash const &hash);
   /// @}
@@ -172,11 +170,11 @@ public:
   /// @{
   BlockPtr   GetHeaviestBlock() const;
   BlockHash  GetHeaviestBlockHash() const;
-  Blocks     GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
-  Blocks     GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
+  IntBlocks  GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
+  IntBlocks  GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
   Travelogue TimeTravel(BlockHash current_hash) const;
   bool       GetPathToCommonAncestor(
-            Blocks &blocks, BlockHash tip_hash, BlockHash node_hash, uint64_t limit = UPPER_BOUND,
+            IntBlocks &blocks, BlockHash tip_hash, BlockHash node_hash, uint64_t limit = UPPER_BOUND,
             BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
   /// @}
 
@@ -203,8 +201,12 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
+  static IntBlockPtr CreateGenesisBlock();
+
+  BlockStatus AddBlock(IntBlockPtr block);
+
+private:
   using DbRecord      = BlockDbRecord;
-  using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
   using References    = std::unordered_multimap<BlockHash, BlockHash>;
   using TipsMap       = std::unordered_map<BlockHash, Tip>;
@@ -294,8 +296,6 @@ public:
   IntBlockPtr HeaviestChainBlockAbove(uint64_t limit) const;
   IntBlockPtr GetLabeledSubchainStart() const;
   /// @}
-
-  static IntBlockPtr CreateGenesisBlock();
 
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);

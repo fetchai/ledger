@@ -21,6 +21,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/pointer.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block_db_record.hpp"
@@ -133,11 +134,31 @@ void MainChain::Reset()
  * @param block The block that will be added to the chain.
  * @return The status enumeration signalling the operation result
  */
-BlockStatus MainChain::AddBlock(Block const &blk)
+BlockStatus MainChain::AddBlock(Block block)
 {
   // create a copy of the block
-  auto block = std::make_shared<Block>(blk);
+  return AddBlock(std::make_shared<Block>(std::move(block)));
+}
 
+/**
+ * Adds a block to the chain
+ *
+ * @param block The block that will be added to the chain.
+ * @return The status enumeration signalling the operation result
+ */
+BlockStatus MainChain::AddBlock(BlockPtr block)
+{
+  return AddBlock(ConstPointerCast<Block>(std::move(block)));
+}
+
+/**
+ * Adds a block to the chain
+ *
+ * @param block The block that will be added to the chain.
+ * @return The status enumeration signalling the operation result
+ */
+BlockStatus MainChain::AddBlock(IntBlockPtr block)
+{
   // At this point we assume that the weight has been correctly set by the miner
   block->total_weight = 1;
 
@@ -404,7 +425,7 @@ void MainChain::AddBlockToBloomFilter(Block const &block) const
  *
  * @return The reference to the heaviest block
  */
-MainChain::BlockPtr MainChain::GetHeaviestBlock() const
+BlockPtr MainChain::GetHeaviestBlock() const
 {
   FETCH_LOCK(lock_);
   auto block_ptr = GetBlock(heaviest_.Hash());
@@ -545,7 +566,7 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
+IntBlocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
   // Note: min needs a reference to something, so this is a workaround since UPPER_BOUND is a
   // constexpr
@@ -605,7 +626,7 @@ MainChain::IntBlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
+IntBlocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
   MilliTimer myTimer("MainChain::ChainPreceding", 2000);
 
@@ -615,15 +636,15 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
   assert(GetBlock(chain::GetGenesisDigest()));
   assert(GetBlock(chain::GetGenesisDigest())->block_number == 0);
 
-  Blocks result;
-  bool   not_at_genesis = true;
+  IntBlocks result;
+  bool      not_at_genesis = true;
 
   for (BlockHash current_hash = std::move(start);
        // exit once we have gathered enough blocks or reached genesis
-       not_at_genesis && result.size() < static_cast<Blocks::size_type>(limit);)
+       not_at_genesis && result.size() < static_cast<IntBlocks::size_type>(limit);)
   {
     // look up the block
-    auto block = GetBlock(current_hash);
+    auto block = LookupBlock(current_hash);
     if (!block)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
@@ -657,7 +678,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
 
   // Moving forward in time, towards tip
   BlockHash next_hash;
-  Blocks    result;
+  IntBlocks result;
 
   FETCH_LOCK(lock_);
 
@@ -715,7 +736,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
 
   // define the status of the branch
   auto const status =
-      (on_heaviest_branch) ? TravelogueStatus::HEAVIEST_BRANCH : TravelogueStatus::SIDE_BRANCH;
+      on_heaviest_branch ? TravelogueStatus::HEAVIEST_BRANCH : TravelogueStatus::SIDE_BRANCH;
 
   return {heaviest->hash, heaviest->block_number, status, std::move(result)};
 }
@@ -736,7 +757,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
  *
  * @return true if successful, otherwise false
  */
-bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, BlockHash node_hash,
+bool MainChain::GetPathToCommonAncestor(IntBlocks &blocks, BlockHash tip_hash, BlockHash node_hash,
                                         uint64_t limit, BehaviourWhenLimit behaviour) const
 {
   limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
@@ -749,13 +770,12 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, Bloc
   // clear the output structure
   blocks.clear();
 
-  BlockPtr left{};
-  BlockPtr right{};
+  IntBlockPtr left, right;
 
   BlockHash left_hash  = std::move(tip_hash);
   BlockHash right_hash = std::move(node_hash);
 
-  std::deque<BlockPtr> res;
+  std::deque<IntBlockPtr> res;
 
   // The algorithm implemented here is effectively a coordinated parallel walk about from the two
   // input tips until the a common ancestor is located.
@@ -764,7 +784,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, Bloc
     // load up the left side
     if (!left || left->hash != left_hash)
     {
-      left = GetBlock(left_hash);
+      left = LookupBlock(left_hash);
       if (!left)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up block (left): 0x", ToHex(left_hash));
@@ -802,7 +822,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, Bloc
     // load up the right side
     if (!right || right->hash != right_hash)
     {
-      right = GetBlock(right_hash);
+      right = LookupBlock(right_hash);
       if (!right)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up block (right): 0x", ToHex(right_hash));
@@ -848,7 +868,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, Bloc
  * @param hash The hash being queried
  * @return The a valid shared pointer to the block if found, otherwise an empty pointer
  */
-MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash) const
+BlockPtr MainChain::GetBlock(BlockHash const &hash) const
 {
   if (hash.empty())
   {
@@ -1761,7 +1781,7 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
  *
  * @return The heaviest chain hash
  */
-MainChain::BlockHash MainChain::GetHeaviestBlockHash() const
+BlockHash MainChain::GetHeaviestBlockHash() const
 {
   FETCH_LOCK(lock_);
   return heaviest_.Hash();
@@ -1803,7 +1823,7 @@ bool Tip::operator==(Block const &right) const
   return operator==(Tip(right));
 }
 
-MainChain::BlockHash const &MainChain::HeaviestTip::Hash() const
+BlockHash const &MainChain::HeaviestTip::Hash() const
 {
   return hash;
 }
@@ -1866,7 +1886,7 @@ bool MainChain::HeaviestTip::Update(Block &block)
   return false;
 }
 
-MainChain::BlockHash MainChain::GetHeadHash()
+BlockHash MainChain::GetHeadHash()
 {
   byte_array::ByteArray buffer;
 
@@ -1933,40 +1953,31 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     bloom_filter_query_count_->increment();
   }
 
-  auto search_chain_for_duplicates =
-      [this, block](DigestSet const &transaction_digests) mutable -> DigestSet {
-    DigestSet duplicates{};
+  DigestSet duplicates{};
+  if (!potential_duplicates.empty())
+  {
     for (;;)
     {
-      // Traversing the chain fully is costly: break out early if we know the transactions are all
-      // duplicated (or both sets are empty)
-      if (transaction_digests.size() == duplicates.size())
-      {
-        break;
-      }
-
       for (auto const &slice : block->slices)
       {
         for (auto const &tx : slice)
         {
-          if (transaction_digests.find(tx.digest()) != transaction_digests.end())
+          if (potential_duplicates.count(tx.digest()) > 0)
           {
             duplicates.insert(tx.digest());
           }
         }
       }
 
-      // exit the loop once we can no longer find the block
-      if (!LookupBlock(block->previous_hash, block))
+      // Exit the loop once all known transactions are duplicates.
+      if (potential_duplicates.size() == duplicates.size()
+          // or we can no longer find the block
+          || !LookupBlock(block->previous_hash, block))
       {
         break;
       }
     }
-
-    return duplicates;
-  };
-
-  DigestSet const duplicates = search_chain_for_duplicates(potential_duplicates);
+  }
 
   auto const false_positives = potential_duplicates.size() - duplicates.size();
 

@@ -18,6 +18,7 @@
 
 #include "beacon/block_entropy.hpp"
 #include "core/random/lcg.hpp"
+#include "ledger/chain/block.hpp"
 #include "ledger/consensus/consensus.hpp"
 
 #include <ctime>
@@ -60,14 +61,14 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "Consensus";
 
-using Consensus       = fetch::ledger::Consensus;
+using fetch::ledger::Consensus;
 using NextBlockPtr    = Consensus::NextBlockPtr;
 using Status          = Consensus::Status;
 using StakeManagerPtr = Consensus::StakeManagerPtr;
-using BlockPtr        = Consensus::BlockPtr;
 
 using fetch::ledger::MainChain;
 using fetch::ledger::Block;
+using fetch::ledger::BlockPtr;
 
 using DRNG = fetch::random::LinearCongruentialGenerator;
 

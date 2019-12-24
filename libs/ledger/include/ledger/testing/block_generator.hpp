@@ -38,9 +38,9 @@ public:
 
   void Reset();
 
-  BlockPtr Generate(BlockPtrConst const &from = BlockPtr{}, uint64_t weight = 1u);
+  BlockPtr Generate(BlockPtrConst const &from = {}, uint64_t weight = 1u);
 
-  BlockPtr operator()(BlockPtrConst const &from = BlockPtr{}, uint64_t weight = 1u);
+  BlockPtr operator()(BlockPtrConst const &from = {}, uint64_t weight = 1u);
 
 private:
   uint64_t    block_count_{0};

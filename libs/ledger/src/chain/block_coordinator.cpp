@@ -34,6 +34,7 @@
 #include "ledger/transaction_status_cache.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
+#include "meta/value_util.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/histogram.hpp"
@@ -795,7 +796,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
   return State::WAIT_FOR_TRANSACTIONS;
 }
 
-void BlockCoordinator::RemoveBlock(MainChain::BlockHash const &hash)
+void BlockCoordinator::RemoveBlock(BlockHash const &hash)
 {
   chain_.RemoveBlock(hash);
   blocks_to_common_ancestor_.clear();
@@ -1138,7 +1139,8 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
   if (block != nullptr && !block->hash.empty())
   {
-    block_hash_->set(*reinterpret_cast<uint64_t const *>(block->hash.pointer()));
+    block_hash_->set(
+        *reinterpret_cast<uint64_t const *>(value_util::AsConst(block->hash).pointer()));
   }
 
   consensus_->UpdateCurrentBlock(*block);

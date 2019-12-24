@@ -34,13 +34,14 @@
 namespace {
 
 using fetch::ledger::MainChain;
+using fetch::ledger::BlockHash;
+using fetch::ledger::BlockPtr;
 using fetch::ledger::BlockStatus;
+using fetch::ledger::IntBlocks;
 using fetch::ledger::testing::BlockGenerator;
 
 using MainChainPtr    = std::unique_ptr<MainChain>;
-using BlockPtr        = MainChain::BlockPtr;
 using MutableBlockPtr = BlockGenerator::BlockPtr;
-using Blocks          = std::vector<MutableBlockPtr>;
 
 class MainChainSubTreeTests : public ::testing::Test
 {
@@ -60,12 +61,12 @@ protected:
   MainChainPtr   chain_;
 
 public:
-  MainChain::Blocks GetAncestorInLimit(MainChain::BehaviourWhenLimit behaviour,
-                                       MainChain::BlockPtr const &b1, MainChain::BlockPtr const &b3)
+  IntBlocks GetAncestorInLimit(MainChain::BehaviourWhenLimit behaviour, BlockPtr const &b1,
+                               BlockPtr const &b3)
   {
     constexpr uint64_t subchain_length_limit = 2;
 
-    MainChain::Blocks blocks;
+    IntBlocks blocks;
     EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b3->hash, b1->hash, subchain_length_limit,
                                                 behaviour));
     EXPECT_EQ(subchain_length_limit, blocks.size());
@@ -74,9 +75,9 @@ public:
   }
 };
 
-Blocks Extract(Blocks const &input, std::initializer_list<std::size_t> const &indexes)
+IntBlocks Extract(IntBlocks const &input, std::initializer_list<std::size_t> const &indexes)
 {
-  Blocks output;
+  IntBlocks output;
   output.reserve(indexes.size());
 
   for (auto const &index : indexes)
@@ -87,7 +88,7 @@ Blocks Extract(Blocks const &input, std::initializer_list<std::size_t> const &in
   return output;
 }
 
-bool AreEqual(MainChain::Blocks const &actual, Blocks const &expected)
+bool AreEqual(IntBlocks const &actual, IntBlocks const &expected)
 {
   return std::equal(actual.begin(), actual.end(), expected.begin(), expected.end(),
                     [](auto const &a, auto const &b) { return a->hash == b->hash; });
@@ -150,12 +151,12 @@ TEST_F(MainChainSubTreeTests, CheckCommonSubTree)
   auto b3      = block_generator_(b2);
 
   // add the blocks to the main chain
-  for (auto const &block : Blocks{b1, b2, b3})
+  for (auto const &block : {b1, b2, b3})
   {
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
   }
 
-  MainChain::Blocks blocks;
+  IntBlocks blocks;
   EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b3->hash, b1->hash));
   ASSERT_EQ(3, blocks.size());
   EXPECT_EQ(b3->hash, blocks[0]->hash);
@@ -181,12 +182,12 @@ TEST_F(MainChainSubTreeTests, CheckCommonSubTree2)
   auto b3      = block_generator_(b2);
 
   // add the blocks to the main chain
-  for (auto const &block : Blocks{b1, b2, b3})
+  for (auto const &block : {b1, b2, b3})
   {
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
   }
 
-  MainChain::Blocks blocks;
+  IntBlocks blocks;
   EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b1->hash, b3->hash));
 
   ASSERT_EQ(2, blocks.size());
@@ -215,7 +216,7 @@ TEST_F(MainChainSubTreeTests, CheckLooseBlocks)
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*b1));
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*b3));
 
-  MainChain::Blocks blocks;
+  IntBlocks blocks;
   EXPECT_FALSE(chain_->GetPathToCommonAncestor(blocks, b3->hash, b1->hash));
 
   // missing block turns up
@@ -264,24 +265,15 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
   //                                                        └─▶│B16 │
   //                                                           └────┘
   //
-  Blocks chain(17);
-  chain[0]  = block_generator_();
-  chain[1]  = block_generator_(chain[0]);
-  chain[2]  = block_generator_(chain[1]);
-  chain[3]  = block_generator_(chain[2]);
-  chain[4]  = block_generator_(chain[2]);
-  chain[5]  = block_generator_(chain[3]);
-  chain[6]  = block_generator_(chain[3]);
-  chain[7]  = block_generator_(chain[4]);
-  chain[8]  = block_generator_(chain[4]);
-  chain[9]  = block_generator_(chain[5]);
-  chain[10] = block_generator_(chain[5]);
-  chain[11] = block_generator_(chain[6]);
-  chain[12] = block_generator_(chain[6]);
-  chain[13] = block_generator_(chain[7]);
-  chain[14] = block_generator_(chain[7]);
-  chain[15] = block_generator_(chain[8]);
-  chain[16] = block_generator_(chain[8]);
+  IntBlocks chain(17);
+  chain[0] = block_generator_();
+  chain[1] = block_generator_(chain[0]);
+  chain[2] = block_generator_(chain[1]);
+  for (std::size_t source = 2, dest = 3; dest < chain.size(); ++source)
+  {
+    chain[dest++] = block_generator_(chain[source]);
+    chain[dest++] = block_generator_(chain[source]);
+  }
 
   // add all the blocks to the chain
   for (std::size_t i = 1; i < chain.size(); ++i)
@@ -291,7 +283,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
 
   // B13 vs. B12
   {
-    MainChain::Blocks blocks;
+    IntBlocks blocks;
     EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, chain[13]->hash, chain[12]->hash));
 
     // compare against expected results
@@ -300,7 +292,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
 
   // B16 vs. B15
   {
-    MainChain::Blocks blocks;
+    IntBlocks blocks;
     EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, chain[16]->hash, chain[15]->hash));
 
     // compare against expected results
@@ -309,7 +301,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
 
   // B16 vs. B14
   {
-    MainChain::Blocks blocks;
+    IntBlocks blocks;
     EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, chain[16]->hash, chain[14]->hash));
 
     // compare against expected results
@@ -318,7 +310,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
 
   // B16 vs. B2
   {
-    MainChain::Blocks blocks;
+    IntBlocks blocks;
     EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, chain[16]->hash, chain[2]->hash));
 
     // compare against expected results
@@ -327,7 +319,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
 
   // B1 vs. B16
   {
-    MainChain::Blocks blocks;
+    IntBlocks blocks;
     EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, chain[1]->hash, chain[16]->hash));
 
     // compare against expected results
@@ -336,7 +328,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
 
   // B4 vs. B11
   {
-    MainChain::Blocks blocks;
+    IntBlocks blocks;
     EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, chain[4]->hash, chain[11]->hash));
 
     // compare against expected results
@@ -363,7 +355,7 @@ TEST_F(MainChainSubTreeTests,
   auto b3      = block_generator_(b2);
 
   // add the blocks to the main chain
-  for (auto const &block : Blocks{b1, b2, b3})
+  for (auto const &block : {b1, b2, b3})
   {
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
   }
@@ -393,7 +385,7 @@ TEST_F(MainChainSubTreeTests,
   auto b3      = block_generator_(b2);
 
   // add the blocks to the main chain
-  for (auto const &block : Blocks{b1, b2, b3})
+  for (auto const &block : {b1, b2, b3})
   {
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
   }
