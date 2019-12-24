@@ -46,18 +46,47 @@ std::string const ADD_VALID_LAYER_TEST_SOURCE = R"(
     endfunction
   )";
 
+std::string const ACTIVATION_LAYER_TEST_SOURCE = R"(
+     function main() : Tensor
+         var model = Model("sequential");
+         model.add("activation", "<<ACTIVATION>>");
+         model.compile("mse", "sgd");
+
+         var shape = Array<UInt64>(2);
+         shape[0] = 1u64;
+         shape[1] = 1u64;
+         var x = Tensor(shape);
+
+         x.fromString("<<INPUT>>");
+
+         var activated = model.predict(x);
+
+         return activated;
+     endfunction
+)";
+
+constexpr bool IGNORE_CHARGE_ESTIMATION = true;
+
 class VMModelTests : public ::testing::Test
 {
 public:
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
 
-  void TestValidLayerAdding(std::string const &test_case_source)
+  void TestValidLayerAdding(std::string const &test_case_source,
+                            bool               ignore_charge_estimation = false)
   {
     std::string const src =
         std::regex_replace(ADD_VALID_LAYER_TEST_SOURCE, std::regex("<<TOKEN>>"), test_case_source);
     ASSERT_TRUE(toolkit.Compile(src));
-    ASSERT_TRUE(toolkit.Run());
+    if (ignore_charge_estimation)
+    {
+      ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+    }
+    else
+    {
+      ASSERT_TRUE(toolkit.Run());
+    }
   }
 
   void TestInvalidLayerAdding(std::string const &test_case_source)
@@ -77,6 +106,31 @@ public:
     // Wrong number of arguments in layer adding parameters or calling uncompatible ".compile()"
     // method for a model must end in model compilation error and safe stop.
     ASSERT_FALSE(toolkit.Compile(src));
+  }
+
+  void TestActivation(std::string const &input, std::string const &activation,
+                      std::string const &expected)
+  {
+    std::string src =
+        std::regex_replace(ACTIVATION_LAYER_TEST_SOURCE, std::regex("<<ACTIVATION>>"), activation);
+    src = std::regex_replace(src, std::regex("<<INPUT>>"), input);
+    ASSERT_TRUE(toolkit.Compile(src));
+    Variant res;
+    ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
+
+    auto const gt =
+        fetch::math::Tensor<fetch::vm_modules::math::DataType>::FromString(expected.c_str());
+
+    auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+
+    bool const passed = (prediction->GetTensor()).AllClose(gt);
+    if (!passed)
+    {
+      std::cout << "Expected: " << gt.ToString() << std::endl;
+      std::cout << " Result : " << prediction->ToString()->string() << std::endl;
+    }
+
+    EXPECT_TRUE(passed);
   }
 };  // namespace
 
@@ -422,28 +476,25 @@ TEST_F(VMModelTests, DISABLED_model_add_conv2d_relu)
   TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)");
 }
 
-// Disabled until implementation of AddDropout estimator
-TEST_F(VMModelTests, DISABLED_model_add_dropout)
+TEST_F(VMModelTests, model_add_dropout)
 {
-  TestValidLayerAdding(R"(model.add("dropout", 0.256fp64);)");
+  TestValidLayerAdding(R"(model.add("dropout", 0.256fp64);)", IGNORE_CHARGE_ESTIMATION);
 }
 
-// Disabled until implementation of AddFlatten estimator
-TEST_F(VMModelTests, DISABLED_model_add_flatten)
+TEST_F(VMModelTests, model_add_flatten)
 {
-  TestValidLayerAdding(R"(model.add("flatten");)");
+  TestValidLayerAdding(R"(model.add("flatten");)", IGNORE_CHARGE_ESTIMATION);
 }
 
-// Disabled until implementation of AddActivation estimator
-TEST_F(VMModelTests, DISABLED_model_add_activation)
+TEST_F(VMModelTests, model_add_activation)
 {
-  TestValidLayerAdding(R"(model.add("activation", "relu");)");
-  TestValidLayerAdding(R"(model.add("activation", "leaky_relu");)");
-  TestValidLayerAdding(R"(model.add("activation", "gelu");)");
-  TestValidLayerAdding(R"(model.add("activation", "sigmoid");)");
-  TestValidLayerAdding(R"(model.add("activation", "log_sigmoid");)");
-  TestValidLayerAdding(R"(model.add("activation", "softmax");)");
-  TestValidLayerAdding(R"(model.add("activation", "log_softmax");)");
+  TestValidLayerAdding(R"(model.add("activation", "relu");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("activation", "leaky_relu");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("activation", "gelu");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("activation", "sigmoid");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("activation", "log_sigmoid");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("activation", "softmax");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("activation", "log_softmax");)", IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_invalid_layer_type)
@@ -761,12 +812,12 @@ TEST_F(VMModelTests, DISABLED_conv1d_sequential_model_test)
   auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
   fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1});
-  gt(0, 0) = fetch::math::Type<DataType>("+7.29641703");
-  gt(1, 0) = fetch::math::Type<DataType>("+5.42749771");
-  gt(2, 0) = fetch::math::Type<DataType>("+1.89785659");
-  gt(3, 0) = fetch::math::Type<DataType>("-0.52079467");
-  gt(4, 0) = fetch::math::Type<DataType>("+0.57897364");
-
+  gt(0, 0) = fetch::math::Type<DataType>("+4.592834088");
+  gt(1, 0) = fetch::math::Type<DataType>("-1.145004561");
+  gt(2, 0) = fetch::math::Type<DataType>("+1.795713195");
+  gt(3, 0) = fetch::math::Type<DataType>("+2.958410677");
+  gt(4, 0) = fetch::math::Type<DataType>("+3.157947287");
+  // the actual model output is {5, 1, 1}
   ASSERT_TRUE((prediction->GetTensor())
                   .AllClose(gt, fetch::math::function_tolerance<DataType>(),
                             fetch::math::function_tolerance<DataType>()));
@@ -833,13 +884,13 @@ TEST_F(VMModelTests, DISABLED_conv2d_sequential_model_test)
   ASSERT_TRUE(toolkit.Run(&res));
   auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
-  fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1, 1});
-  gt.Set(0, 0, 0, fetch::math::Type<DataType>("+2.96216551"));
-  gt.Set(1, 0, 0, fetch::math::Type<DataType>("+10.21055092"));
-  gt.Set(2, 0, 0, fetch::math::Type<DataType>("-2.11563497"));
-  gt.Set(3, 0, 0, fetch::math::Type<DataType>("+1.88992180"));
-  gt.Set(4, 0, 0, fetch::math::Type<DataType>("+14.14585049"));
-
+  fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1});
+  gt(0, 0) = fetch::math::Type<DataType>("+3.924331061");
+  gt(1, 0) = fetch::math::Type<DataType>("+6.421101891");
+  gt(2, 0) = fetch::math::Type<DataType>("-0.231269899");
+  gt(3, 0) = fetch::math::Type<DataType>("+7.779843630");
+  gt(4, 0) = fetch::math::Type<DataType>("+10.291701029");
+  // the actual model output is {5, 1, 1, 1}
   ASSERT_TRUE((prediction->GetTensor())
                   .AllClose(gt, fetch::math::function_tolerance<DataType>(),
                             fetch::math::function_tolerance<DataType>()));
@@ -1112,6 +1163,75 @@ TEST_F(VMModelTests, DISABLED_model_sequential_flatten_4d_in_2d_out)
   auto const constructed_shape = tensor->shape();
   fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({6, 1});
   EXPECT_TRUE(constructed_shape == expected.shape());
+}
+
+TEST_F(VMModelTests, model_sequential_activation_layer_relu)
+{
+  std::string const input = "-1000.0, -10.0, -1.0, -0.1, -0.0001; 0.0, 0.0001, 0.1, 1.0, 1000.0;";
+  std::string const activation = "relu";
+  std::string const result     = "0.0,   0.0,  0.0,  0.0,     0.0; 0.0, 0.0001, 0.1, 1.0, 1000.0;";
+
+  TestActivation(input, activation, result);
+}
+
+TEST_F(VMModelTests, model_sequential_activation_layer_leaky_relu)
+{
+  std::string const input = "-1000.0, -10.0, -1.0, -0.1, -0.0001; 0.0, 0.0001, 0.1, 1.0, 1000.0;";
+  std::string const activation = "leaky_relu";
+  std::string const result =
+      "-9.999999776, -0.099999997, -0.009999999, -0.001000000, -0.000001000; 0.000000000, "
+      "0.000099999, 0.099999999, 1.000000000, 1000.000000000";
+  TestActivation(input, activation, result);
+}
+
+TEST_F(VMModelTests, model_sequential_activation_layer_sigmoid)
+{
+  std::string const input = "-1000.0, -10.0, -1.0, -0.1, -0.0001; 0.0, 0.0001, 0.1, 1.0, 1000.0;";
+  std::string const activation = "sigmoid";
+  std::string const result =
+      "0.0, 0.000045398, 0.268941422, 0.475020813, 0.499975; 0.5, 0.500025, "
+      "0.524979188, 0.731058579, 0.999999999";
+  TestActivation(input, activation, result);
+}
+
+TEST_F(VMModelTests, model_sequential_activation_layer_log_sigmoid)
+{
+  std::string const input      = "1000.0, 10.0, 1.0, 0.1, 0.0001; 0.0, 0.0001, 0.1, 1.0, 1000.0;";
+  std::string const activation = "log_sigmoid";
+  std::string const result =
+      "0.000000000, -0.000045421, -0.313261687, -0.644396660, -0.693097181;-0.693147203, "
+      "-0.693097181, -0.644396660, -0.313261687, 0.000000000;";
+  TestActivation(input, activation, result);
+}
+
+TEST_F(VMModelTests, model_sequential_activation_layer_softmax)
+{
+  std::string const input = "-1000.0, -10.0, -1.0, -0.1, -0.0001; 0.0, 0.0001, 0.1, 1.0, 1000.0;";
+  std::string const activation = "softmax";
+  std::string const result =
+      "0.000000000, 0.000045393, 0.249739894, 0.249739894, 0.000000000;0.999999999, 0.999954606, "
+      "0.750260105, 0.750260105, 0.999999999;";
+  TestActivation(input, activation, result);
+}
+
+TEST_F(VMModelTests, model_sequential_activation_layer_log_softmax)
+{
+  std::string const input      = "11.0, 12.0, 13.0, 14.0, 15.0; 16.0, 17.0, 18.0, 19.0, 10.0";
+  std::string const activation = "log_softmax";
+  std::string const result =
+      "-4.451914411, -3.451914400, -2.451914397, -1.451914403, -0.451914395; -3.440269167, "
+      "-2.440269163, -1.440269170, -0.440269160, -9.440271756;";
+  TestActivation(input, activation, result);
+}
+
+TEST_F(VMModelTests, model_sequential_activation_layer_gelu)
+{
+  std::string const input      = "0.0, 1.0, 2.0, 3.0, 4.0; 0.0, -1.0, -2.0, -3.0, -4.0;";
+  std::string const activation = "gelu";
+  std::string const result =
+      "0.000000000, 0.841191998, 1.954597482, 2.996362537, 3.999929750;0.000000000, -0.158808001, "
+      "-0.045402517, -0.003637462, -0.000070249;";
+  TestActivation(input, activation, result);
 }
 
 TEST_F(VMModelTests, DISABLED_model_sequential_flatten_1d_in_2d_out)
