@@ -49,10 +49,34 @@ void BM_CategoricalAccuracy(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, int, 2, 2)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, int, 10, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, int, 100, 100)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, int, 1000, 1000)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, int, 2000, 2000)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, float, 2, 2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, float, 10, 10)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, float, 100, 100)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, float, 1000, 1000)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, float, 2000, 2000)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, double, 2, 2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, double, 10, 10)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, double, 100, 100)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, double, 1000, 1000)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, double, 2000, 2000)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<16, 16>, 2, 2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<16, 16>, 10, 10)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<16, 16>, 100, 100)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<16, 16>, 1000, 1000)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<16, 16>, 2000, 2000)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<32, 32>, 2, 2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<32, 32>, 10, 10)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<32, 32>, 100, 100)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<32, 32>, 1000, 1000)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<32, 32>, 2000, 2000)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<64, 64>, 2, 2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<64, 64>, 10, 10)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<64, 64>, 100, 100)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<64, 64>, 1000, 1000)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_CategoricalAccuracy, fetch::fixed_point::FixedPoint<64, 64>, 2000, 2000)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();
