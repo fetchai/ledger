@@ -155,26 +155,31 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
   {
     switch (loss_type)
     {
-    case (ops::LossType::CROSS_ENTROPY): {
+    case (ops::LossType::CROSS_ENTROPY):
+    {
       error_ = graph_ptr_->template AddNode<ops::CrossEntropyLoss<TensorType>>("Error",
                                                                                {output_, label_});
       break;
     }
-    case (ops::LossType::MEAN_SQUARE_ERROR): {
+    case (ops::LossType::MEAN_SQUARE_ERROR):
+    {
       error_ = graph_ptr_->template AddNode<ops::MeanSquareErrorLoss<TensorType>>(
           "Error", {output_, label_});
       break;
     }
-    case (ops::LossType::SOFTMAX_CROSS_ENTROPY): {
+    case (ops::LossType::SOFTMAX_CROSS_ENTROPY):
+    {
       error_ = graph_ptr_->template AddNode<ops::SoftmaxCrossEntropyLoss<TensorType>>(
           "Error", {output_, label_});
       break;
     }
-    case (ops::LossType::NONE): {
+    case (ops::LossType::NONE):
+    {
       throw ml::exceptions::InvalidMode(
           "must set loss function on model compile for this model type");
     }
-    default: {
+    default:
+    {
       throw ml::exceptions::InvalidMode("unrecognised loss type in model compilation");
     }
     }
@@ -194,27 +199,32 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
   {
     switch (met)
     {
-    case (ops::MetricType::CATEGORICAL_ACCURACY): {
+    case (ops::MetricType::CATEGORICAL_ACCURACY):
+    {
       metrics_.emplace_back(graph_ptr_->template AddNode<ops::CategoricalAccuracy<TensorType>>(
           "", {output_, label_}));
       break;
     }
-    case ops::MetricType::CROSS_ENTROPY: {
+    case ops::MetricType::CROSS_ENTROPY:
+    {
       metrics_.emplace_back(
           graph_ptr_->template AddNode<ops::CrossEntropyLoss<TensorType>>("", {output_, label_}));
       break;
     }
-    case ops::MetricType::MEAN_SQUARE_ERROR: {
+    case ops::MetricType::MEAN_SQUARE_ERROR:
+    {
       metrics_.emplace_back(graph_ptr_->template AddNode<ops::MeanSquareErrorLoss<TensorType>>(
           "", {output_, label_}));
       break;
     }
-    case ops::MetricType::SOFTMAX_CROSS_ENTROPY: {
+    case ops::MetricType::SOFTMAX_CROSS_ENTROPY:
+    {
       metrics_.emplace_back(graph_ptr_->template AddNode<ops::SoftmaxCrossEntropyLoss<TensorType>>(
           "", {output_, label_}));
       break;
     }
-    default: {
+    default:
+    {
       throw ml::exceptions::InvalidMode("unrecognised metric type in model compilation");
     }
     }
@@ -549,7 +559,8 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
 
     switch (sp.dataloader_ptr_->LoaderCode())
     {
-    case ml::LoaderType::TENSOR: {
+    case ml::LoaderType::TENSOR:
+    {
       auto *loader_ptr =
           static_cast<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> *>(
               sp.dataloader_ptr_.get());
@@ -560,12 +571,14 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     case ml::LoaderType::SGNS:
     case ml::LoaderType::W2V:
     case ml::LoaderType::COMMODITY:
-    case ml::LoaderType::C2V: {
+    case ml::LoaderType::C2V:
+    {
       throw ml::exceptions::NotImplemented(
           "Serialization for current dataloader type not implemented yet.");
     }
 
-    default: {
+    default:
+    {
       throw ml::exceptions::InvalidMode("Unknown dataloader type.");
     }
     }
@@ -578,13 +591,15 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
 
     switch (sp.optimiser_ptr_->OptimiserCode())
     {
-    case ml::OptimiserType::SGD: {
+    case ml::OptimiserType::SGD:
+    {
       auto *optimiser_ptr =
           static_cast<fetch::ml::optimisers::SGDOptimiser<TensorType> *>(sp.optimiser_ptr_.get());
       map.Append(OPTIMISER_PTR, *optimiser_ptr);
       break;
     }
-    case ml::OptimiserType::ADAM: {
+    case ml::OptimiserType::ADAM:
+    {
       auto *optimiser_ptr =
           static_cast<fetch::ml::optimisers::AdamOptimiser<TensorType> *>(sp.optimiser_ptr_.get());
       map.Append(OPTIMISER_PTR, *optimiser_ptr);
@@ -592,12 +607,14 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     }
     case ml::OptimiserType::ADAGRAD:
     case ml::OptimiserType::MOMENTUM:
-    case ml::OptimiserType::RMSPROP: {
+    case ml::OptimiserType::RMSPROP:
+    {
       throw ml::exceptions::NotImplemented(
           "serialization for current optimiser type not implemented yet.");
     }
 
-    default: {
+    default:
+    {
       throw ml::exceptions::InvalidMode("Unknown optimiser type.");
     }
     }
@@ -611,7 +628,8 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
 
     switch (static_cast<ml::LoaderType>(loader_type))
     {
-    case ml::LoaderType::TENSOR: {
+    case ml::LoaderType::TENSOR:
+    {
       auto loader_ptr = new ml::dataloaders::TensorDataLoader<TensorType, TensorType>();
       map.ExpectKeyGetValue(DATALOADER_PTR, *loader_ptr);
       sp.dataloader_ptr_.reset(loader_ptr);
@@ -620,12 +638,14 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     case ml::LoaderType::SGNS:
     case ml::LoaderType::W2V:
     case ml::LoaderType::COMMODITY:
-    case ml::LoaderType::C2V: {
+    case ml::LoaderType::C2V:
+    {
       throw ml::exceptions::NotImplemented(
           "serialization for current dataloader type not implemented yet.");
     }
 
-    default: {
+    default:
+    {
       throw ml::exceptions::InvalidMode("Unknown dataloader type.");
     }
     }
@@ -639,7 +659,8 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
 
     switch (static_cast<ml::OptimiserType>(optimiser_type))
     {
-    case ml::OptimiserType::SGD: {
+    case ml::OptimiserType::SGD:
+    {
       auto optimiser_ptr = new ml::optimisers::SGDOptimiser<TensorType>();
       map.ExpectKeyGetValue(OPTIMISER_PTR, *optimiser_ptr);
       sp.optimiser_ptr_.reset(optimiser_ptr);
@@ -647,7 +668,8 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
       sp.optimiser_ptr_->Init();
       break;
     }
-    case ml::OptimiserType::ADAM: {
+    case ml::OptimiserType::ADAM:
+    {
       auto optimiser_ptr = new ml::optimisers::AdamOptimiser<TensorType>();
       map.ExpectKeyGetValue(OPTIMISER_PTR, *optimiser_ptr);
       sp.optimiser_ptr_.reset(optimiser_ptr);
@@ -657,12 +679,14 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     }
     case ml::OptimiserType::ADAGRAD:
     case ml::OptimiserType::MOMENTUM:
-    case ml::OptimiserType::RMSPROP: {
+    case ml::OptimiserType::RMSPROP:
+    {
       throw ml::exceptions::NotImplemented(
           "serialization for current optimiser type not implemented yet.");
     }
 
-    default: {
+    default:
+    {
       throw ml::exceptions::InvalidMode("Unknown optimiser type.");
     }
     }
