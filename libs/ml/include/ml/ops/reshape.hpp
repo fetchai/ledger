@@ -41,7 +41,9 @@ public:
   explicit Reshape(std::vector<SizeType> new_shape)
     : new_shape_(std::move(new_shape))
     , new_size_(fetch::math::Product(new_shape_))
-  {}
+  {
+    assert(new_shape_.size() > 1);
+  }
 
   explicit Reshape(SPType const &sp)
     : Ops<T>(sp)
@@ -64,15 +66,23 @@ public:
   {
     FETCH_UNUSED(me);
     assert(me.get() == this);
-
     auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
-
     return copyshare;
   }
+
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
+
+    // if batch sizes don't agree - update specified new_shape
+    SizeType input_batch_size = inputs.at(0)->shape(inputs.at(0)->shape().size() - 1);
+    SizeType new_batch_size   = new_shape_.at(new_shape_.size() - 1);
+    if (input_batch_size != new_batch_size)
+    {
+      new_shape_.at(new_shape_.size() - 1) = input_batch_size;
+      new_size_                            = fetch::math::Product(new_shape_);
+    }
 
     // if the shape is exactly the same just copy the data
     if ((*inputs.front()).shape() == new_shape_)
@@ -103,9 +113,19 @@ public:
   }
 
   // Output shape
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const & /*inputs*/) const override
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return new_shape_;
+    assert(inputs.size() == 1);
+    assert(inputs.at(0)->shape().size() > 1);
+
+    // output shape prespecified (except batch dimension)
+    std::vector<SizeType> output_shape = new_shape_;
+
+    // overwrite the batch dimension
+    output_shape.at(output_shape.size() - 1) =
+        inputs.at(0)->shape().at(inputs.at(0)->shape().size() - 1);
+
+    return output_shape;
   }
 
   static constexpr OpType OpCode()

@@ -104,43 +104,46 @@ void ReshapeTestBackward(std::vector<SizeType> const &initial_shape,
 
 TYPED_TEST(ReshapeTest, forward_tests)
 {
-  ReshapeTestForward<TypeParam>({3, 2}, {6, 1});
-  ReshapeTestForward<TypeParam>({6, 1}, {3, 2});
-  ReshapeTestForward<TypeParam>({6, 1}, {6, 1});
-  ReshapeTestForward<TypeParam>({6, 1}, {6, 1, 1});
-  ReshapeTestForward<TypeParam>({3, 2}, {6, 1, 1, 1});
+  ReshapeTestForward<TypeParam>({3, 2, 1}, {6, 1, 1});
+  ReshapeTestForward<TypeParam>({6, 1, 2}, {3, 2, 2});
+  ReshapeTestForward<TypeParam>({6, 1, 3}, {6, 1, 3});
+  ReshapeTestForward<TypeParam>({6, 1, 4}, {6, 1, 1, 4});
+  ReshapeTestForward<TypeParam>({3, 2, 5}, {6, 1, 1, 1, 5});
 
-  ReshapeTestForward<TypeParam>({3, 2}, {6, 1});
-  ReshapeTestForward<TypeParam>({6, 1, 1}, {6, 1});
-  ReshapeTestForward<TypeParam>({6, 1, 1, 1}, {3, 2});
+  ReshapeTestForward<TypeParam>({3, 2, 1}, {6, 1, 1});
+  ReshapeTestForward<TypeParam>({6, 1, 1, 2}, {6, 1, 2});
+  ReshapeTestForward<TypeParam>({6, 1, 1, 1, 3}, {3, 2, 3});
 
-  ReshapeTestForward<TypeParam>({7, 6, 5, 4, 3, 2, 1}, {7, 6, 5, 4, 3, 2});
-  ReshapeTestForward<TypeParam>({1, 2, 3, 4, 5, 6, 7}, {7, 6, 5, 4, 3, 2, 1});
-  ReshapeTestForward<TypeParam>({1, 2, 3, 4, 5, 6, 7}, {5040, 1, 1, 1, 1});
+  ReshapeTestForward<TypeParam>({7, 6, 5, 4, 3, 2, 1, 1}, {7, 6, 5, 4, 3, 2, 1});
+  ReshapeTestForward<TypeParam>({1, 2, 3, 4, 5, 6, 7, 2}, {7, 6, 5, 4, 3, 2, 1, 2});
+  ReshapeTestForward<TypeParam>({1, 2, 3, 4, 5, 6, 7, 3}, {5040, 1, 1, 1, 1, 3});
 }
 
 TYPED_TEST(ReshapeTest, forward_wrong_tests)
 {
   ReshapeTestForwardWrong<TypeParam>({3, 4}, {6, 1});
-  ReshapeTestForwardWrong<TypeParam>({6, 1, 2}, {6, 1});
-  ReshapeTestForwardWrong<TypeParam>({7, 6, 5, 4, 3, 2, 1}, {7, 6, 5});
+  ReshapeTestForwardWrong<TypeParam>({6, 2, 1}, {6, 1});
+  ReshapeTestForwardWrong<TypeParam>({7, 6, 5, 4, 3, 2, 1}, {7, 6, 5, 1});
+  ReshapeTestForwardWrong<TypeParam>({3, 4, 1}, {6, 1, 1});
+  ReshapeTestForwardWrong<TypeParam>({6, 1, 2, 1}, {6, 1, 1});
+  ReshapeTestForwardWrong<TypeParam>({7, 6, 5, 4, 3, 2, 1, 1}, {7, 6, 5, 1});
 }
 
 TYPED_TEST(ReshapeTest, backward_tests)
 {
-  ReshapeTestBackward<TypeParam>({3, 2}, {6, 1});
-  ReshapeTestBackward<TypeParam>({6, 1}, {3, 2});
-  ReshapeTestBackward<TypeParam>({6, 1}, {6, 1});
-  ReshapeTestBackward<TypeParam>({6, 1}, {6, 1, 1});
-  ReshapeTestBackward<TypeParam>({3, 2}, {6, 1, 1, 1});
+  ReshapeTestBackward<TypeParam>({3, 2, 5}, {6, 1, 5});
+  ReshapeTestBackward<TypeParam>({6, 1, 6}, {3, 2, 6});
+  ReshapeTestBackward<TypeParam>({6, 1, 7}, {6, 1, 7});
+  ReshapeTestBackward<TypeParam>({6, 1, 8}, {6, 1, 1, 8});
+  ReshapeTestBackward<TypeParam>({3, 2, 9}, {6, 1, 1, 1, 9});
 
-  ReshapeTestBackward<TypeParam>({3, 2}, {6, 1});
-  ReshapeTestBackward<TypeParam>({6, 1, 1}, {6, 1});
-  ReshapeTestBackward<TypeParam>({6, 1, 1, 1}, {3, 2});
+  ReshapeTestBackward<TypeParam>({3, 2, 2}, {6, 1, 2});
+  ReshapeTestBackward<TypeParam>({6, 1, 1, 3}, {6, 1, 3});
+  ReshapeTestBackward<TypeParam>({6, 1, 1, 1, 4}, {3, 2, 4});
 
-  ReshapeTestBackward<TypeParam>({7, 6, 5, 4, 3, 2, 1}, {7, 6, 5, 4, 3, 2});
-  ReshapeTestBackward<TypeParam>({1, 2, 3, 4, 5, 6, 7}, {7, 6, 5, 4, 3, 2, 1});
-  ReshapeTestBackward<TypeParam>({1, 2, 3, 4, 5, 6, 7}, {5040, 1, 1, 1, 1});
+  ReshapeTestBackward<TypeParam>({7, 6, 5, 4, 3, 2, 1, 7}, {7, 6, 5, 4, 3, 2, 7});
+  ReshapeTestBackward<TypeParam>({1, 2, 3, 4, 5, 6, 7, 3}, {7, 6, 5, 4, 3, 2, 1, 3});
+  ReshapeTestBackward<TypeParam>({1, 2, 3, 4, 5, 6, 7, 1}, {5040, 1, 1, 1, 1, 1});
 }
 
 TYPED_TEST(ReshapeTest, saveparams_test)
@@ -152,7 +155,7 @@ TYPED_TEST(ReshapeTest, saveparams_test)
 
   // construct tensor & reshape op
   TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
-  data.Reshape({2, 2, 2});
+  data.Reshape({2, 2, 2, 1});
   fetch::ml::ops::Reshape<TensorType> op({8, 1, 1, 1});
 
   // forward pass
@@ -194,7 +197,7 @@ TYPED_TEST(ReshapeTest, saveparams_backward_test)
   using SPType     = typename OpType::SPType;
 
   TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
-  data.Reshape({2, 2, 2});
+  data.Reshape({2, 2, 2, 1});
   TensorType error = TensorType::FromString("1, -2, -1, 2");
   error.Reshape({8, 1, 1});
 
@@ -248,7 +251,7 @@ TYPED_TEST(ReshapeTest, Reshape_graph_serialisation_test)
   std::vector<SizeType> final_shape({8, 1, 1, 1});
 
   TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
-  data.Reshape({2, 2, 2});
+  data.Reshape({2, 2, 2, 1});
 
   fetch::ml::Graph<TensorType> g;
 
