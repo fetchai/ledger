@@ -383,6 +383,9 @@ TEST(FixedPointTest, ToString_16_16)
   str_val = "0.5fp32";
   ToStringTest<fp32_t>(str_val);
 
+  str_val = "-0.1fp32";
+  ToStringTest<fp32_t>(str_val);
+
   str_val = "1.5fp32";
   ToStringTest<fp32_t>(str_val);
 
@@ -415,6 +418,9 @@ TEST(FixedPointTest, ToString_32_32)
   str_val = "0.5fp64";
   ToStringTest<fp64_t>(str_val);
 
+  str_val = "-0.1fp64";
+  ToStringTest<fp64_t>(str_val);
+
   str_val = "1.5fp64";
   ToStringTest<fp64_t>(str_val);
 
@@ -445,6 +451,9 @@ TEST(FixedPointTest, ToString_64_64)
   ToStringTest<fp128_t>(str_val);
 
   str_val = "0.5fp128";
+  ToStringTest<fp128_t>(str_val);
+
+  str_val = "-0.1fp128";
   ToStringTest<fp128_t>(str_val);
 
   str_val = "1.5fp128";
@@ -710,6 +719,17 @@ TYPED_TEST(BasicArithmeticTest, Addition)
   EXPECT_EQ(almost_one + infinitesimal, one);
   // The same for negative
   EXPECT_EQ(-almost_one - infinitesimal, m_one);
+
+  // Test associativity with primitives
+  EXPECT_EQ(two + 1.0, 2.0 + one);
+
+  // Test post/pre increment operators
+  TypeParam temp1 = one++;
+  TypeParam temp2 = ++two;
+  EXPECT_EQ(temp1, TypeParam{1});
+  EXPECT_EQ(one, TypeParam{2});
+  EXPECT_EQ(temp2, TypeParam{3});
+  EXPECT_EQ(two, TypeParam{3});
 }
 
 TYPED_TEST(BasicArithmeticTest, Subtraction)
@@ -742,11 +762,21 @@ TYPED_TEST(BasicArithmeticTest, Subtraction)
   TypeParam almost_two(1, TypeParam::LARGEST_FRACTION);
 
   EXPECT_EQ(almost_three - almost_two, one);
+
+  // Test associativity with primitives
+  EXPECT_EQ(two - 1.0, 2.0 - one);
+
+  // Test post/pre decrement operators
+  TypeParam temp1 = one--;
+  TypeParam temp2 = --two;
+  EXPECT_EQ(temp1, TypeParam{1});
+  EXPECT_EQ(one, TypeParam{0});
+  EXPECT_EQ(temp2, TypeParam{1});
+  EXPECT_EQ(two, TypeParam{1});
 }
 
 TYPED_TEST(BasicArithmeticTest, Multiplication)
 {
-  // Positive
   TypeParam zero(0);
   TypeParam one(1);
   TypeParam two(2);
@@ -777,6 +807,9 @@ TYPED_TEST(BasicArithmeticTest, Multiplication)
   EXPECT_EQ(almost_one * almost_one, almost_one - infinitesimal);
   EXPECT_EQ(almost_one * infinitesimal, zero);
   EXPECT_EQ(huge * infinitesimal, small);
+
+  // Test associativity with primitives
+  EXPECT_EQ(two * 3.0, three * 2.0);
 }
 
 TYPED_TEST(BasicArithmeticTest, Division)
@@ -785,6 +818,7 @@ TYPED_TEST(BasicArithmeticTest, Division)
   TypeParam zero(0);
   TypeParam one(1);
   TypeParam two(2);
+  TypeParam three(3);
 
   EXPECT_EQ(static_cast<int>(two / one), 2);
   EXPECT_EQ(static_cast<float>(two / one), 2.0f);
@@ -810,6 +844,42 @@ TYPED_TEST(BasicArithmeticTest, Division)
   TypeParam::StateClear();
   EXPECT_TRUE(TypeParam::IsNaN(zero / zero));
   EXPECT_TRUE(TypeParam::IsStateNaN());
+
+  // Test associativity with primitives
+  EXPECT_EQ(three / 2.0, 3.0 / two);
+}
+
+template <typename T>
+class BitOperationsTest : public ::testing::Test
+{
+};
+TYPED_TEST_CASE(BitOperationsTest, FixedPointTypes);
+TYPED_TEST(BitOperationsTest, ShiftLeft)
+{
+  // Positive
+  TypeParam one{1};
+  TypeParam two{2};
+  TypeParam x{1.6519711627625};
+  TypeParam m_one{-1};
+
+  EXPECT_EQ(two * two, two << one);
+  EXPECT_EQ(x * 2, x << 1);
+  EXPECT_EQ(x * 2, x << x);  // Only uses the integer part
+  EXPECT_EQ(m_one * two, m_one << 1);
+}
+
+TYPED_TEST(BitOperationsTest, ShiftRight)
+{
+  // Positive
+  TypeParam one{1};
+  TypeParam two{2};
+  TypeParam x{1.6519711627625};
+  TypeParam m_one{-1};
+
+  EXPECT_EQ(two / two, two >> one);
+  EXPECT_EQ(x / 2, x >> 1);
+  EXPECT_EQ(x / 2, x >> x);  // Only uses the integer part
+  EXPECT_EQ(m_one / two, m_one >> 1);
 }
 
 template <typename T>

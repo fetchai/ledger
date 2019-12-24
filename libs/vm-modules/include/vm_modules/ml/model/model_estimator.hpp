@@ -78,6 +78,12 @@ public:
 
   ChargeAmount LayerAddFlatten(fetch::vm::Ptr<fetch::vm::String> const &layer);
 
+  ChargeAmount LayerAddDropout(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                               math::DataType const &                   probability);
+
+  ChargeAmount LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                  fetch::vm::Ptr<fetch::vm::String> const &activation);
+
   ChargeAmount CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                  fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 

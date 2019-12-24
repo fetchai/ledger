@@ -74,8 +74,8 @@ int main(int ac, char **av)
   SizeType MAX_ITERATIONS               = 100;
   DataType PERPLEXITY                   = 20;
   SizeType N_OUTPUT_FEATURE_SIZE        = 2;
-  DataType INITIAL_MOMENTUM             = 0.5;
-  DataType FINAL_MOMENTUM               = 0.8;
+  DataType INITIAL_MOMENTUM             = fetch::math::Type<DataType>("0.5");
+  DataType FINAL_MOMENTUM               = fetch::math::Type<DataType>("0.8");
   SizeType FINAL_MOMENTUM_STEPS         = 20;
   SizeType P_LATER_CORRECTION_ITERATION = 10;
 

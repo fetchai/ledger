@@ -20,13 +20,11 @@
 
 #include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
-#include "math/utilities/ReadCSV.hpp"
-#include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "vm/array.hpp"
 #include "vm/module.hpp"
+#include "vm/pair.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
-#include "vm_modules/ml/training_pair.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -38,12 +36,14 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-using MathTensorType = fetch::math::Tensor<VMDataLoader::DataType>;
-using VMTensorType   = fetch::vm_modules::math::VMTensor;
+using MathTensorType        = fetch::math::Tensor<VMDataLoader::DataType>;
+using VMTensorType          = fetch::vm_modules::math::VMTensor;
+using VMTensorPtrType       = vm::Ptr<VMTensorType>;
+using VMTensorArrayType     = fetch::vm::Array<VMTensorPtrType>;
+using VMTensorArrayPtrType  = vm::Ptr<VMTensorArrayType>;
+using VMTrainingPairType    = vm::Pair<VMTensorPtrType, VMTensorArrayPtrType>;
+using VMTrainingPairPtrType = vm::Ptr<VMTrainingPairType>;
 
-using CommodityLoaderType =
-    fetch::ml::dataloaders::CommodityDataLoader<fetch::math::Tensor<VMDataLoader::DataType>,
-                                                fetch::math::Tensor<VMDataLoader::DataType>>;
 using TensorLoaderType =
     fetch::ml::dataloaders::TensorDataLoader<fetch::math::Tensor<VMDataLoader::DataType>,
                                              fetch::math::Tensor<VMDataLoader::DataType>>;
@@ -59,11 +59,6 @@ VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, Ptr<String> const &mode)
   {
     mode_   = DataLoaderMode::TENSOR;
     loader_ = std::make_shared<TensorLoaderType>();
-  }
-  else if (mode->string() == "commodity")
-  {
-    mode_   = DataLoaderMode::COMMODITY;
-    loader_ = std::make_shared<CommodityLoaderType>();
   }
   else
   {
@@ -93,27 +88,9 @@ void VMDataLoader::Bind(Module &module, bool const enable_experimental)
         .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> {
           return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id)};
         })
-        .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles, vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("addData", &VMDataLoader::AddDataByData, vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("getNext", &VMDataLoader::GetNext, vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("isDone", &VMDataLoader::IsDone, vm::MAXIMUM_CHARGE);
-  }
-}
-
-void VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
-{
-  switch (mode_)
-  {
-  case DataLoaderMode::COMMODITY:
-  {
-    AddCommodityData(xfilename, yfilename);
-    break;
-  }
-  default:
-  {
-    RuntimeError("current dataloader mode does not support AddDataByFiles");
-    return;
-  }
   }
 }
 
@@ -136,21 +113,6 @@ void VMDataLoader::AddDataByData(
   }
 }
 
-void VMDataLoader::AddCommodityData(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
-{
-  try
-  {
-    auto data  = fetch::math::utilities::ReadCSV<MathTensorType>(xfilename->string());
-    auto label = fetch::math::utilities::ReadCSV<MathTensorType>(yfilename->string());
-
-    std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData({data}, label);
-  }
-  catch (std::exception const &e)
-  {
-    RuntimeError(e.what());
-  }
-}
-
 void VMDataLoader::AddTensorData(
     fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<VMTensorType>>> const &data,
     Ptr<VMTensorType> const &                                             labels)
@@ -168,17 +130,27 @@ void VMDataLoader::AddTensorData(
 }
 
 // TODO(issue 1692): Simplify Array<Tensor> construction
-Ptr<VMTrainingPair> VMDataLoader::GetNext()
+VMTrainingPairPtrType VMDataLoader::GetNext()
 {
-  std::pair<fetch::math::Tensor<DataType>, std::vector<fetch::math::Tensor<DataType>>> next =
-      loader_->GetNext();
 
-  auto first  = this->vm_->CreateNewObject<math::VMTensor>(next.first);
-  auto second = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(0));
+  // Get pair from loader
+  auto next = loader_->GetNext();
 
-  auto second_vector =
-      this->vm_->CreateNewObject<fetch::vm::Array<Ptr<fetch::vm_modules::math::VMTensor>>>(
-          second->GetTypeId(), static_cast<int32_t>(next.second.size()));
+  // Create VMPair
+  auto dataHolder = this->vm_->CreateNewObject<VMTrainingPairType>();
+
+  // Create and set VMPair.first
+  auto first = this->vm_->CreateNewObject<VMTensorType>(next.first);
+  // Convert VMTensor to TemplateParameter1
+  TemplateParameter1 t_first(first, first->GetTypeId());
+  dataHolder->SetFirst(t_first);
+
+  // Create and set VMPair.second
+  auto second = this->vm_->CreateNewObject<VMTensorType>(next.second.at(0));
+
+  // Add all elements to VMArray<VMTensor>
+  auto second_vector = this->vm_->CreateNewObject<VMTensorArrayType>(
+      second->GetTypeId(), static_cast<int32_t>(next.second.size()));
 
   TemplateParameter1 first_element(second, second->GetTypeId());
 
@@ -194,7 +166,9 @@ Ptr<VMTrainingPair> VMDataLoader::GetNext()
     second_vector->SetIndexedValue(index, element);
   }
 
-  auto dataHolder = this->vm_->CreateNewObject<VMTrainingPair>(first, second_vector);
+  // Convert VMArray<VMTensor> to TemplateParameter2
+  TemplateParameter2 t_second(second_vector, second_vector->GetTypeId());
+  dataHolder->SetSecond(t_second);
 
   return dataHolder;
 }
