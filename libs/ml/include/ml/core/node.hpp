@@ -141,6 +141,11 @@ public:
     return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }
 
+  virtual uint64_t ForwardPassChargeCost()
+  {
+    return 100;
+  }
+
 private:
   std::vector<NodeWeakPtrType> input_nodes_;
   std::vector<NodeWeakPtrType> outputs_;

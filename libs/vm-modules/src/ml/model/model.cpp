@@ -300,6 +300,7 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
 {
   // model construction always requires initialising some strings, ptrs etc. but is very cheap
   static const ChargeAmount FIXED_CONSTRUCTION_CHARGE{100};
+  // using VMObjectType = VMModel;
 
   module.CreateClassType<VMModel>("Model")
       .CreateConstructor(&VMModel::Constructor, FIXED_CONSTRUCTION_CHARGE)
@@ -316,7 +317,8 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                             UseEstimator(&ModelEstimator::CompileSequentialWithMetrics))
       .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
       .CreateMemberFunction("evaluate", &VMModel::Evaluate, UseEstimator(&ModelEstimator::Evaluate))
-      .CreateMemberFunction("predict", &VMModel::Predict, UseEstimator(&ModelEstimator::Predict))
+      .CreateMemberFunction("predict", &VMModel::Predict,
+                            UseEstimator(&ModelEstimator::EstimatePredict))
       .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
                             UseEstimator(&ModelEstimator::SerializeToString))
       .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
@@ -736,6 +738,13 @@ void VMModel::LayerAddActivation(const fetch::vm::Ptr<String> &layer,
     vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
     return;
   }
+}
+
+ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> & /*data*/)
+{
+  std::cout << GetTypeName() << "  " << __PRETTY_FUNCTION__ << " : "
+            << model_->ForwardPassChargeCost() << std::endl;
+  return model_->ForwardPassChargeCost();
 }
 
 /**

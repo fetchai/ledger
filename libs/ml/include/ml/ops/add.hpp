@@ -104,6 +104,13 @@ public:
     return OpType::OP_ADD;
   }
 
+  //  using ChargeAmount = uint64_t;
+  //  ChargeAmount ForwardPassChargeCost() override
+  //  {
+  //    std::cout << __PRETTY_FUNCTION__ << std::endl;
+  //    return 999;
+  //  }
+
   static constexpr char const *DESCRIPTOR = "Add";
 
 private:

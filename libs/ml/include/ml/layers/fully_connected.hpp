@@ -194,6 +194,14 @@ public:
     return fetch::ml::OpType::LAYER_FULLY_CONNECTED;
   }
 
+  using ChargeAmount = uint64_t;
+  ChargeAmount ForwardPassChargeCost() override
+  {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    static constexpr uint64_t my_dummy_op_charge = 10;
+    return out_size_ * in_size_ * my_dummy_op_charge;
+  }
+
   static constexpr char const *DESCRIPTOR = "FullyConnected";
 
 private:

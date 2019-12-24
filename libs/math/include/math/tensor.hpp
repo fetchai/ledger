@@ -117,6 +117,7 @@ public:
 
   explicit Tensor(ContainerType &container_data)
   {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
     Reshape(container_data.shape());
     data_ = container_data;
   }
@@ -702,6 +703,8 @@ private:
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
 {
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+
   Tensor            ret;
   SizeType          n = 0;
   std::vector<Type> elems;

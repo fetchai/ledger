@@ -377,6 +377,11 @@ ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
   return ToChargeAmount(estimate) * COMPUTE_CHARGE_COST;
 }
 
+ModelEstimator::ChargeAmount ModelEstimator::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
+{
+  return model_.EstimatePredict(data);
+}
+
 ChargeAmount ModelEstimator::SerializeToString()
 {
   DataType estimate{"0"};

@@ -73,6 +73,12 @@ public:
     return is_training_;
   }
 
+  using ChargeAmount = uint64_t;
+  ChargeAmount ForwardPassChargeCost()
+  {
+    return 0;
+  }
+
 protected:
   bool is_training_ = true;
 };
