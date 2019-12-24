@@ -237,10 +237,8 @@ std::shared_ptr<TensorType> Node<TensorType>::Evaluate(bool is_training)
     {
       throw std::runtime_error("NaN encountered in Node::Evaluate");
     }
-    if (math::state_overflow<DataType>())
-    {
-      throw std::runtime_error("Overflow encountered in Node::Evaluate");
-    }
+
+    assert(!math::state_overflow<DataType>());
   }
 
   return std::make_shared<TensorType>(cached_output_);
@@ -300,10 +298,8 @@ typename Node<TensorType>::NodeErrorMapType Node<TensorType>::BackPropagate(
   {
     throw std::runtime_error("NaN encountered in Node::BackPropagate");
   }
-  if (math::state_overflow<DataType>())
-  {
-    throw std::runtime_error("Overflow encountered in Node::BackPropagate");
-  }
+
+  assert(!math::state_overflow<DataType>());
   return ret;
 }
 /**
