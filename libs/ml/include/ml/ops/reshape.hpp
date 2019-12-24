@@ -99,7 +99,7 @@ public:
   {
     assert(inputs.size() == 1);
 
-    TensorType ret(inputs.at(0).shape());
+    TensorType ret(inputs.at(0)->shape());
     ret.Assign(error_signal);
     return {ret};
   }
