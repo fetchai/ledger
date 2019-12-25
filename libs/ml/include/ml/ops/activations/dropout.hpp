@@ -166,7 +166,10 @@ public:
         total_ouputs *= dimension;
       }
     }
-    return total_ouputs * DROPOUT_CHARGE;
+    auto const cost = total_ouputs * DROPOUT_CHARGE;
+    std::cout << " " << DESCRIPTOR << " cost calculated : " << cost << std::endl;
+
+    return cost;
   }
 
 private:

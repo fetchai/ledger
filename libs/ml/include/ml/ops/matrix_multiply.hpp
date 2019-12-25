@@ -104,6 +104,26 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";
 
+  virtual typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
+      typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
+  {
+    // TODO(VH): charge calculation to be clarified.
+    static constexpr uint64_t MATMUL_CHARGE = 3;
+    uint64_t                  total_ouputs  = 1;
+    for (auto const &shape : input_shapes)
+    {
+      for (auto const &dimension : shape)
+      {
+        total_ouputs *= dimension;
+      }
+    }
+    total_ouputs *= total_ouputs;  // square because of MatrixMultiplying
+    auto const cost = total_ouputs * MATMUL_CHARGE;
+    std::cout << " " << DESCRIPTOR << " cost calculated : " << cost << std::endl;
+
+    return cost;
+  }
+
 private:
   // caching tensors and shapes
   TensorType error_signal_1_;

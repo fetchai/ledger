@@ -122,7 +122,10 @@ public:
         total_ouputs *= dimension;
       }
     }
-    return total_ouputs * FLATTEN_CHARGE;
+    auto const cost = total_ouputs * FLATTEN_CHARGE;
+    std::cout << " " << DESCRIPTOR << " cost calculated : " << cost << std::endl;
+
+    return cost;
   }
 
 private:

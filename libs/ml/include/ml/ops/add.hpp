@@ -117,7 +117,10 @@ public:
         total_ouputs *= dimension;
       }
     }
-    return total_ouputs * ADD_CHARGE;
+    auto const cost = total_ouputs * ADD_CHARGE;
+    std::cout << " " << DESCRIPTOR << " cost calculated : " << cost << std::endl;
+
+    return cost;
   }
 
   static constexpr char const *DESCRIPTOR = "Add";

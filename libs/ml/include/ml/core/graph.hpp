@@ -167,7 +167,7 @@ public:
                                         "] is not in graph");
     }
     ChargeAmount cost = nodes_.at(node_name)->ForwardPassChargeCost();
-    std::cout << __FUNCTION__ << "Calculated cost of a (sub) Graph : " << cost << std::endl;
+    std::cout << " Calculated cost of a Graph : " << cost << std::endl;
     return cost;
   }
 

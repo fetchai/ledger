@@ -266,6 +266,18 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Weights";
 
+  virtual typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
+      typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
+  {
+    // TODO(VH): charge calculation to be clarified.
+    FETCH_UNUSED(input_shapes);
+    static constexpr uint64_t WEIGHTS_CHARGE = 6;
+    auto const                cost           = WEIGHTS_CHARGE;
+    std::cout << " " << DESCRIPTOR << " cost calculated : " << cost << std::endl;
+
+    return cost;
+  }
+
 private:
   /**
    * xavier weights initialisation assuming guassian generator

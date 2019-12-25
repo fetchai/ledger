@@ -148,7 +148,7 @@ public:
     // TODO(VH): call OpForwardCost() of the Op - we need to know Data shape to do this.
     if (input_nodes_.empty())
     {
-      std::cout << __FUNCTION__ << " default cost returned!" << std::endl;
+      std::cout << " default cost returned!" << std::endl;
       return my_default_cost;
     }
     uint64_t total_cost = my_default_cost;
