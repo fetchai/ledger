@@ -158,14 +158,17 @@ public:
   void ResetGradients();
 
   using ChargeAmount = uint64_t;
-  virtual ChargeAmount ForwardPassChargeCost()
+  virtual ChargeAmount ForwardPassChargeCost(std::string const &node_name)
   {
     // std::cout << __PRETTY_FUNCTION__ << std::endl;
-    ChargeAmount cost = 0;
-    for (std::pair<std::string, NodePtrType> const &node : nodes_)
+    // TODO: ask the last Node for estimation, and let it recursively re-ask others
+    //    auto ret     = (*(nodes_.at(node_name)->Evaluate(is_training)));
+    if (nodes_.find(node_name) == nodes_.end())
     {
-      cost += node.second->ForwardPassChargeCost();
+      throw ml::exceptions::InvalidMode("Cannot estimate charge cost: node [" + node_name +
+                                        "] is not in graph");
     }
+    ChargeAmount cost = nodes_.at(node_name)->ForwardPassChargeCost();
     return cost;
   }
 

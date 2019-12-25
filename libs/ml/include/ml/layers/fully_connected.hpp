@@ -195,7 +195,7 @@ public:
   }
 
   using ChargeAmount = uint64_t;
-  ChargeAmount ForwardPassChargeCost() override
+  ChargeAmount ForwardPassChargeCost(std::string const & /*node_name*/) override
   {
     std::cout << __PRETTY_FUNCTION__ << std::endl;
     static constexpr uint64_t my_dummy_op_charge = 10;

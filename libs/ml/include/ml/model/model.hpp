@@ -116,7 +116,7 @@ public:
   using ChargeAmount = uint64_t;
   ChargeAmount ForwardPassChargeCost()
   {
-    return graph_ptr_->ForwardPassChargeCost();
+    return graph_ptr_->ForwardPassChargeCost(output_);
   }
 
 protected:

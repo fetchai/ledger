@@ -1496,8 +1496,4 @@ TEST_F(VMModelTests, model_fit_and_refit)
   ASSERT_TRUE(toolkit.Run());
 }
 
-TEST_F(VMModelTests, model_fit_and_refit)
-{
-  static char const *SRC_METRIC = R"(
-
 }  // namespace

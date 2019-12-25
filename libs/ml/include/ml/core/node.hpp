@@ -143,7 +143,25 @@ public:
 
   virtual uint64_t ForwardPassChargeCost()
   {
-    return 100;
+    // TODO: make me recursive!
+    static constexpr uint64_t my_cost = 100;  // TODO: Calculate me!
+    if (input_nodes_.empty())
+    {
+      return my_cost;
+    }
+    uint64_t total_cost = my_cost;
+    for (auto const &i : input_nodes_)
+    {
+      if (auto input_node_ptr = i.lock())
+      {
+        total_cost += input_node_ptr->ForwardPassChargeCost();
+      }
+      else
+      {
+        throw std::runtime_error("Unable to lock weak pointer.");
+      }
+    }
+    return total_cost;
   }
 
 private:
