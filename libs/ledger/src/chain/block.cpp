@@ -60,7 +60,7 @@ std::size_t Block::GetTransactionCount() const
 /**
  * Populate the block hash field based on the contents of the current block
  */
-void Block::UpdateDigest() const
+void Block::UpdateDigest()
 {
   if (IsGenesis())
   {

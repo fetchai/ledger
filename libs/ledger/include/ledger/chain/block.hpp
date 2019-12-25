@@ -85,7 +85,7 @@ public:
 
   // Helper functions
   std::size_t GetTransactionCount() const;
-  void        UpdateDigest() const;
+  void        UpdateDigest();
   void        UpdateTimestamp();
   bool        IsGenesis() const;
 

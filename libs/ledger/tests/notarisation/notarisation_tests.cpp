@@ -23,6 +23,7 @@
 #include "crypto/mcl_dkg.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/consensus/consensus.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/protocols/notarisation_service.hpp"
 #include "ledger/storage_unit/fake_storage_unit.hpp"
@@ -52,7 +53,7 @@ struct DummyManifestCache : public fetch::shards::ManifestCacheInterface
 
 using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
-using BlockPtr       = Consensus::NextBlockPtr;
+using NextBlockPtr   = Consensus::NextBlockPtr;
 using Muddle         = muddle::MuddlePtr;
 using ConstByteArray = byte_array::ConstByteArray;
 using MuddleAddress  = ConstByteArray;
@@ -229,8 +230,8 @@ TEST(notarisation, notarise_blocks)
   // Generate blocks and notarise for 2 aeons
   for (uint16_t block_number = 1; block_number < aeon_period * 2 + 1; block_number++)
   {
-    std::vector<BlockPtr> blocks_this_round;
-    uint32_t              count = 0;
+    std::vector<NextBlockPtr> blocks_this_round;
+    uint32_t                  count = 0;
     while (count == 0)
     {
       for (auto &node : nodes)
