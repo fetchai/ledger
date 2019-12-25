@@ -113,7 +113,7 @@ public:
   friend struct serializers::MapSerializer;
   friend class fetch::vm_modules::ml::model::ModelEstimator;
 
-  using ChargeAmount = uint64_t;
+  using ChargeAmount = uint64_t;  // TODO(VH): Move me to an external declaration header.
   ChargeAmount ForwardPassChargeCost()
   {
     return graph_ptr_->ForwardPassChargeCost(output_);

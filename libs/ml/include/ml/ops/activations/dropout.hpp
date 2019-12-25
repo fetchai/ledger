@@ -153,6 +153,22 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Dropout";
 
+  virtual typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
+      typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
+  {
+    // TODO(VH): charge calculation to be clarified.
+    static constexpr uint64_t DROPOUT_CHARGE = 5;
+    uint64_t                  total_ouputs   = 1;
+    for (auto const &shape : input_shapes)
+    {
+      for (auto const &dimension : shape)
+      {
+        total_ouputs *= dimension;
+      }
+    }
+    return total_ouputs * DROPOUT_CHARGE;
+  }
+
 private:
   TensorType drop_values_;
   DataType   probability_;

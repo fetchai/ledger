@@ -194,17 +194,26 @@ public:
     return fetch::ml::OpType::LAYER_FULLY_CONNECTED;
   }
 
-  using ChargeAmount = uint64_t;
-  ChargeAmount ForwardPassChargeCost(std::string const & /*node_name*/) override
+  typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
+      typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
   {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
-    static constexpr uint64_t my_dummy_op_charge = 10;
-    return out_size_ * in_size_ * my_dummy_op_charge;
+    FETCH_UNUSED(input_shapes);  // because Dense layer knows all shapes already.
+    using ChargeAmount = typename fetch::ml::ops::Ops<T>::ChargeAmount;
+    std::cout << __FUNCTION__ << std::endl;
+
+    ChargeAmount total_cost = 0;
+    for (std::pair<std::string, typename Graph<T>::NodePtrType> const &node : nodes_)
+    {
+      total_cost += node.second->GetOp()->OpForwardCost({{out_size_, in_size_}});
+    }
+
+    return total_cost;
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
 
 private:
+  using Graph<T>::nodes_;
   SizeType in_size_          = fetch::math::numeric_max<SizeType>();
   SizeType out_size_         = fetch::math::numeric_max<SizeType>();
   bool     time_distributed_ = false;

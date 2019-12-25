@@ -104,12 +104,21 @@ public:
     return OpType::OP_ADD;
   }
 
-  //  using ChargeAmount = uint64_t;
-  //  ChargeAmount ForwardPassChargeCost() override
-  //  {
-  //    std::cout << __PRETTY_FUNCTION__ << std::endl;
-  //    return 999;
-  //  }
+  virtual typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
+      typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
+  {
+    // TODO(VH): charge calculation to be clarified.
+    static constexpr uint64_t ADD_CHARGE   = 1;
+    uint64_t                  total_ouputs = 1;
+    for (auto const &shape : input_shapes)
+    {
+      for (auto const &dimension : shape)
+      {
+        total_ouputs *= dimension;
+      }
+    }
+    return total_ouputs * ADD_CHARGE;
+  }
 
   static constexpr char const *DESCRIPTOR = "Add";
 

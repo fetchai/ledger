@@ -742,9 +742,9 @@ void VMModel::LayerAddActivation(const fetch::vm::Ptr<String> &layer,
 
 ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> & /*data*/)
 {
-  std::cout << GetTypeName() << "  " << __PRETTY_FUNCTION__ << " : "
-            << model_->ForwardPassChargeCost() << std::endl;
-  return model_->ForwardPassChargeCost();
+  ChargeAmount const cost = model_->ForwardPassChargeCost();
+  std::cout << GetTypeName() << "  " << __PRETTY_FUNCTION__ << " : " << cost << std::endl;
+  return cost;
 }
 
 /**

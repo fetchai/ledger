@@ -40,6 +40,8 @@ public:
   using SizeType      = fetch::math::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
+  using VecShapesType = std::vector<std::vector<uint64_t>>;
+  using ChargeAmount  = uint64_t;  // TODO(VH): Move me to an external declaration header.
 
   virtual ~Ops() = default;
 
@@ -73,10 +75,11 @@ public:
     return is_training_;
   }
 
-  using ChargeAmount = uint64_t;
-  ChargeAmount ForwardPassChargeCost()
+  virtual ChargeAmount OpForwardCost(VecShapesType const &input_shapes)
   {
-    return 0;
+    FETCH_UNUSED(input_shapes);
+    std::cout << __FUNCTION__ << " not-implemented cost calc called!" << std::endl;
+    return 0;  // TODO(VH): make me a pure virtual.
   }
 
 protected:

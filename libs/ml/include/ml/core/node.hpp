@@ -144,17 +144,23 @@ public:
   virtual uint64_t ForwardPassChargeCost()
   {
     // TODO: make me recursive!
-    static constexpr uint64_t my_cost = 100;  // TODO: Calculate me!
+    static constexpr uint64_t my_default_cost = 100;  // TODO: Calculate me!
+    // TODO(VH): call OpForwardCost() of the Op - we need to know Data shape to do this.
     if (input_nodes_.empty())
     {
-      return my_cost;
+      std::cout << __FUNCTION__ << " default cost returned!" << std::endl;
+      return my_default_cost;
     }
-    uint64_t total_cost = my_cost;
+    uint64_t total_cost = my_default_cost;
     for (auto const &i : input_nodes_)
     {
       if (auto input_node_ptr = i.lock())
       {
-        total_cost += input_node_ptr->ForwardPassChargeCost();
+        auto const input_node_forward_cost = input_node_ptr->ForwardPassChargeCost();
+        // TODO(VH): this input shape is bullshit, need to be calculated.
+        auto const my_cost_of_input = op_ptr_->OpForwardCost({{1, 1}});
+
+        total_cost = total_cost + input_node_forward_cost + my_cost_of_input;
       }
       else
       {

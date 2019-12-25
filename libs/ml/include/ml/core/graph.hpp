@@ -157,18 +157,17 @@ public:
 
   void ResetGradients();
 
-  using ChargeAmount = uint64_t;
+  using ChargeAmount = typename fetch::ml::ops::Ops<T>::ChargeAmount;
   virtual ChargeAmount ForwardPassChargeCost(std::string const &node_name)
   {
-    // std::cout << __PRETTY_FUNCTION__ << std::endl;
     // TODO: ask the last Node for estimation, and let it recursively re-ask others
-    //    auto ret     = (*(nodes_.at(node_name)->Evaluate(is_training)));
     if (nodes_.find(node_name) == nodes_.end())
     {
       throw ml::exceptions::InvalidMode("Cannot estimate charge cost: node [" + node_name +
                                         "] is not in graph");
     }
     ChargeAmount cost = nodes_.at(node_name)->ForwardPassChargeCost();
+    std::cout << __FUNCTION__ << "Calculated cost of a (sub) Graph : " << cost << std::endl;
     return cost;
   }
 
