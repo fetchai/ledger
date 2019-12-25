@@ -78,7 +78,8 @@ public:
   virtual ChargeAmount OpForwardCost(VecShapesType const &input_shapes)
   {
     FETCH_UNUSED(input_shapes);
-    std::cout << " not-implemented cost calc called! returned 0." << std::endl;
+    std::cout << __PRETTY_FUNCTION__ << std::endl
+              << "   ^^ not-implemented cost calc called! returned 0." << std::endl;
     return 0;  // TODO(VH): make me a pure virtual.
   }
 

@@ -271,7 +271,7 @@ public:
   {
     // TODO(VH): charge calculation to be clarified.
     FETCH_UNUSED(input_shapes);
-    static constexpr uint64_t WEIGHTS_CHARGE = 6;
+    static constexpr uint64_t WEIGHTS_CHARGE = 0;
     auto const                cost           = WEIGHTS_CHARGE;
     std::cout << " " << DESCRIPTOR << " cost calculated : " << cost << std::endl;
 

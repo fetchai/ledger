@@ -90,6 +90,18 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";
+
+  virtual typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
+      typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
+  {
+    // TODO(VH): charge calculation to be clarified.
+    FETCH_UNUSED(input_shapes);
+    static constexpr uint64_t PLACEHOLDER_CHARGE = 0;
+    auto const                cost               = PLACEHOLDER_CHARGE;
+    std::cout << " " << DESCRIPTOR << " cost calculated : " << cost << std::endl;
+
+    return cost;
+  }
 };
 
 }  // namespace ops

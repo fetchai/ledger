@@ -119,6 +119,25 @@ public:
     return OpType::OP_RELU;
   }
   static constexpr char const *DESCRIPTOR = "Relu";
+
+  virtual typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
+      typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
+  {
+    // TODO(VH): charge calculation to be clarified.
+    static constexpr uint64_t RELU_CHARGE  = 1;
+    uint64_t                  total_ouputs = 1;
+    for (auto const &shape : input_shapes)
+    {
+      for (auto const &dimension : shape)
+      {
+        total_ouputs *= dimension;
+      }
+    }
+    auto const cost = total_ouputs * RELU_CHARGE;
+    std::cout << " " << DESCRIPTOR << " cost calculated : " << cost << std::endl;
+
+    return cost;
+  }
 };
 
 }  // namespace ops
