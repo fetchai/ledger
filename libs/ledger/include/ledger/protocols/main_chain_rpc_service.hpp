@@ -174,7 +174,7 @@ private:
   /// @{
   Address GetRandomTrustedPeer() const;
 
-  void HandleChainResponse(Address const &address, IntBlocks blocks);
+  void HandleChainResponse(Address const &address, MutableBlocks blocks);
   template <class Begin, class End>
   void HandleChainResponse(Address const &address, Begin begin, End end);
   /// @}

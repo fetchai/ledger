@@ -304,8 +304,8 @@ private:
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
   BlockSinkInterface &       block_sink_;         ///< Ref to the output sink interface
   PeriodicAction             periodic_print_;
-  IntBlocks blocks_to_common_ancestor_;  ///< Partial vector of blocks from main chain HEAD
-                                         ///< to block coord. last executed block.
+  MutableBlocks blocks_to_common_ancestor_;  ///< Partial vector of blocks from main chain HEAD
+                                             ///< to block coord. last executed block.
   /// @}
 
   /// @name Status

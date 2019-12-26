@@ -123,7 +123,7 @@ struct TimeTravelogue;
 
 class MainChain
 {
-  using IntBlockPtr = std::shared_ptr<Block>;
+  using MutableBlockPtr = std::shared_ptr<Block>;
 
 public:
   using BlockHashes          = std::vector<BlockHash>;
@@ -168,14 +168,14 @@ public:
 
   /// @name Chain Queries
   /// @{
-  BlockPtr   GetHeaviestBlock() const;
-  BlockHash  GetHeaviestBlockHash() const;
-  IntBlocks  GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
-  IntBlocks  GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
-  Travelogue TimeTravel(BlockHash current_hash) const;
-  bool       GetPathToCommonAncestor(
-            IntBlocks &blocks, BlockHash tip_hash, BlockHash node_hash, uint64_t limit = UPPER_BOUND,
-            BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
+  BlockPtr      GetHeaviestBlock() const;
+  BlockHash     GetHeaviestBlockHash() const;
+  MutableBlocks GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
+  MutableBlocks GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
+  Travelogue    TimeTravel(BlockHash current_hash) const;
+  bool          GetPathToCommonAncestor(
+               MutableBlocks &blocks, BlockHash tip_hash, BlockHash node_hash, uint64_t limit = UPPER_BOUND,
+               BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
   /// @}
 
   /// @name Tips
@@ -201,13 +201,13 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
-  static IntBlockPtr CreateGenesisBlock();
+  static MutableBlockPtr CreateGenesisBlock();
 
-  BlockStatus AddBlock(IntBlockPtr block);
+  BlockStatus AddBlock(MutableBlockPtr block);
 
 private:
   using DbRecord      = BlockDbRecord;
-  using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
+  using BlockMap      = std::unordered_map<BlockHash, MutableBlockPtr>;
   using References    = std::unordered_multimap<BlockHash, BlockHash>;
   using TipsMap       = std::unordered_map<BlockHash, Tip>;
   using BlockHashList = std::list<BlockHash>;
@@ -254,26 +254,27 @@ private:
   void RecoverFromFile(Mode mode);
   void WriteToFile();
   void TrimCache();
-  void FlushBlock(IntBlockPtr const &block);
+  void FlushBlock(MutableBlockPtr const &block);
   /// @}
 
   /// @name Loose Blocks
   /// @{
-  void CompleteLooseBlocks(IntBlockPtr const &block);
-  void RecordLooseBlock(IntBlockPtr const &block);
+  void CompleteLooseBlocks(MutableBlockPtr const &block);
+  void RecordLooseBlock(MutableBlockPtr const &block);
   /// @}
 
   /// @name Block Lookup
   /// @{
-  BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
-  bool LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash = nullptr) const;
-  IntBlockPtr LookupBlock(BlockHash const &hash) const;
-  bool        LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const;
-  bool        LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
-                                     BlockHash *next_hash = nullptr) const;
-  bool        IsBlockInCache(BlockHash const &hash) const;
-  void        AddBlockToCache(IntBlockPtr const &block) const;
-  void        AddBlockToBloomFilter(Block const &block) const;
+  BlockStatus     InsertBlock(MutableBlockPtr const &block, bool evaluate_loose_blocks = true);
+  bool            LookupBlock(BlockHash const &hash, MutableBlockPtr &block,
+                              BlockHash *next_hash = nullptr) const;
+  MutableBlockPtr LookupBlock(BlockHash const &hash) const;
+  bool            LookupBlockFromCache(BlockHash const &hash, MutableBlockPtr &block) const;
+  bool            LookupBlockFromStorage(BlockHash const &hash, MutableBlockPtr &block,
+                                         BlockHash *next_hash = nullptr) const;
+  bool            IsBlockInCache(BlockHash const &hash) const;
+  void            AddBlockToCache(MutableBlockPtr const &block) const;
+  void            AddBlockToBloomFilter(Block const &block) const;
   void CacheReference(BlockHash const &hash, BlockHash const &next_hash, bool unique = false) const;
   void ForgetReference(BlockHash const &hash, BlockHash const &next_hash = {}) const;
   bool LookupReference(BlockHash const &hash, BlockHash &next_hash) const;
@@ -281,20 +282,20 @@ private:
 
   /// @name Low-level storage interface
   /// @{
-  void                CacheBlock(IntBlockPtr const &block) const;
+  void                CacheBlock(MutableBlockPtr const &block) const;
   BlockMap::size_type UncacheBlock(BlockHash const &hash) const;
-  void                KeepBlock(IntBlockPtr const &block) const;
+  void                KeepBlock(MutableBlockPtr const &block) const;
   bool LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_hash = nullptr) const;
   /// @}
 
   /// @name Tip Management
   /// @{
-  bool        AddTip(IntBlockPtr const &block);
-  bool        UpdateTips(IntBlockPtr const &block);
-  bool        DetermineHeaviestTip();
-  bool        UpdateHeaviestTip(IntBlockPtr const &block);
-  IntBlockPtr HeaviestChainBlockAbove(uint64_t limit) const;
-  IntBlockPtr GetLabeledSubchainStart() const;
+  bool            AddTip(MutableBlockPtr const &block);
+  bool            UpdateTips(MutableBlockPtr const &block);
+  bool            DetermineHeaviestTip();
+  bool            UpdateHeaviestTip(MutableBlockPtr const &block);
+  MutableBlockPtr HeaviestChainBlockAbove(uint64_t limit) const;
+  MutableBlockPtr GetLabeledSubchainStart() const;
   /// @}
 
   BlockHash GetHeadHash();
@@ -317,7 +318,7 @@ private:
   HeaviestTip        heaviest_;      ///< Heaviest block/tip
   LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
   ///< The earliest block known of current heaveiest chain.
-  mutable IntBlockPtr labeled_subchain_start_;
+  mutable MutableBlockPtr labeled_subchain_start_;
 
   mutable ProgressiveBloomFilter   bloom_filter_;
   telemetry::GaugePtr<std::size_t> bloom_filter_queried_bit_count_;
