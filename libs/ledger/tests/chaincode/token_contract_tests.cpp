@@ -214,7 +214,11 @@ protected:
     Query response;
     if (Contract::Status::OK == SendQuery("balance", query, response))
     {
-      balance = response["balance"].As<uint64_t>();
+      auto const balance_str = response["balance"].As<std::string>();
+      std::istringstream oss{balance_str};
+
+      oss >> balance;
+
       success = true;
     }
 
@@ -235,7 +239,7 @@ protected:
     Query query      = Variant::Object();
     query["address"] = address.display();
 
-    return Contract::Status::OK == SendQuery("deed", query, deed);
+    return Contract::Status::OK == SendQuery("queryDeed", query, deed);
   }
 };
 
