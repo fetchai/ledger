@@ -832,7 +832,7 @@ TEST_F(VMModelTests, conv2d_sequential_model_test)
   static char const *sequential_model_src = R"(
     function main() : Tensor
 
-      // conv1d parameters
+      // conv2d parameters
       var input_channels  = 3u64;
       var output_channels = 5u64;
       var input_height    = 3u64;

@@ -1,0 +1,39 @@
+function main()
+    // conv2d parameters
+    var input_channels  = 3u64;
+    var output_channels = 5u64;
+    var input_height    = 9u64;
+    var input_width     = 9u64;
+    var kernel_size     = 3u64;
+    var output_height   = 1u64;
+    var output_width    = 1u64;
+    var stride_size     = 1u64;
+
+     var model = Model("sequential");
+//     model.add("conv2d", output_channels, input_channels, kernel_size, stride_size);
+     //model.add("flatten");
+     model.add("dense", input_channels*input_height*input_width,  output_channels*input_height*input_width);
+     model.add("dense", output_channels*input_height*input_width, 31u64, "relu");
+     model.add("dropout", 1.0fp64);
+     model.add("activation", "sigmoid");
+     model.add("dense", 31u64, 10u64, "relu");
+     model.add("dropout", 1.0fp64);
+     model.add("activation", "relu");
+     model.add("activation", "sigmoid");
+     model.add("activation", "relu");
+     model.add("dropout", 1.0fp64);
+     model.compile("mse", "sgd");
+
+     var shape = Array<UInt64>(4);
+     shape[0] = input_channels;
+     shape[1] = input_height;
+     shape[2] = input_width;
+     shape[3] = 1u64;
+     var x = Tensor(shape);
+
+     //x.fromString("-1000.0, -10.0, -1.0, -0.1, -0.0001; 0.0, 0.0001, 0.1, 1.0, 1000.0;");
+
+     var activated = model.predict(x);
+
+     //printLn(activated.toString());
+ endfunction

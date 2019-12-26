@@ -214,7 +214,7 @@ public:
   {
     FETCH_UNUSED(input_shapes);  // because Dense layer knows all shapes already.
     using ChargeAmount = typename fetch::ml::ops::Ops<T>::ChargeAmount;
-    std::cout << std::endl << " Calculating Dense cost : ";
+    std::cout << std::endl << " Calculating " << DESCRIPTOR << " cost : ";
     ops::Ops<T>::PrintMyOutputShape();
     std::cout << " ... " << std::endl;
 
@@ -227,7 +227,7 @@ public:
       total_cost += node.second->GetOp()->OpForwardCost({{out_size_, in_size_}});
     }
 
-    std::cout << " Dense cost calculated : " << total_cost << std::endl << std::endl;
+    std::cout << " Cost calculated : " << total_cost << std::endl << std::endl;
     return total_cost;
   }
 

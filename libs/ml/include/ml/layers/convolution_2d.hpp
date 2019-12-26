@@ -129,12 +129,36 @@ public:
         .ComputeOutputShape({inputs.at(0), std::make_shared<TensorType>(weights_data)});
   }
 
+  std::vector<SizeType> DefaultOutputShape() override
+  {
+    // TODO(VH): This produce wrong output shape description.
+    std::vector<SizeType> a{{output_channels_}, {1}};
+    SubGraph<T>::default_output_shape_ = a;
+    return SubGraph<T>::default_output_shape_;
+  }
+
   static constexpr OpType OpCode()
   {
     return OpType::LAYER_CONVOLUTION_2D;
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution2DLayer";
+
+  typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
+      typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
+  {
+    FETCH_UNUSED(input_shapes);  // because Dense layer knows all shapes already.
+    using ChargeAmount = typename fetch::ml::ops::Ops<T>::ChargeAmount;
+    std::cout << std::endl << " Calculating " << DESCRIPTOR << " cost : ";
+    ops::Ops<T>::PrintMyOutputShape();
+    std::cout << " ... " << std::endl;
+
+    // TODO(VH): calculate me
+    ChargeAmount total_cost = 99914;
+
+    std::cout << " Cost calculated : " << total_cost << std::endl << std::endl;
+    return total_cost;
+  }
 
 private:
   void Initialise(TensorType &weights, WeightsInit init_mode)
