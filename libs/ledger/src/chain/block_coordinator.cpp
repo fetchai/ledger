@@ -34,6 +34,7 @@
 #include "ledger/transaction_status_cache.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
+#include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/histogram.hpp"
@@ -45,6 +46,8 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+
+using fetch::generics::MilliTimer;
 
 namespace fetch {
 namespace ledger {
@@ -229,6 +232,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
 // it up as if the shutdown didn't happen
 BlockCoordinator::State BlockCoordinator::OnReloadState()
 {
+  MilliTimer const timer{"OnReload ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   reload_state_count_->increment();
 
@@ -296,6 +300,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
 
 BlockCoordinator::State BlockCoordinator::OnSynchronising()
 {
+  MilliTimer const timer{"OnSynchronising ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   synchronising_state_count_->increment();
 
@@ -489,6 +494,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
 BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State previous)
 {
+  MilliTimer const timer{"OnSynchronised ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   synchronised_state_count_->increment();
   FETCH_UNUSED(current);
@@ -575,6 +581,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
 
 BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 {
+  MilliTimer const timer{"OnPreExecBlockValidation ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   pre_valid_state_count_->increment();
 
@@ -671,6 +678,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
 BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 {
+  MilliTimer const timer{"OnSynergeticExecution ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   syn_exec_state_count_->count();
 
@@ -710,6 +718,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 
 BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, State previous)
 {
+  MilliTimer const timer{"OnWaitForTransactions ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   wait_tx_state_count_->increment();
 
@@ -839,6 +848,7 @@ void BlockCoordinator::RemoveBlock(MainChain::BlockHash const &hash)
 
 BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
 {
+  MilliTimer const timer{"OnScheduleBlockExecution ", 1000};
   sch_block_state_count_->increment();
 
   State next_state{State::RESET};
@@ -856,6 +866,7 @@ BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
 
 BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 {
+  MilliTimer const timer{"OnWaitForExecution ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   wait_exec_state_count_->increment();
 
@@ -892,6 +903,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 
 BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 {
+  MilliTimer const timer{"OnPostExecBlockValidation ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   post_valid_state_count_->increment();
 
@@ -997,6 +1009,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 
 BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 {
+  MilliTimer const timer{"OnPackNewBlock ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   pack_block_state_count_->increment();
 
@@ -1020,6 +1033,7 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 
 BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 {
+  MilliTimer const timer{"OnNewSynergeticExecution ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   new_syn_state_count_->increment();
 
@@ -1051,6 +1065,7 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 
 BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
 {
+  MilliTimer const timer{"OnExecuteNewBlock ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   new_exec_state_count_->increment();
 
@@ -1069,6 +1084,7 @@ BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
 
 BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
 {
+  MilliTimer const timer{"OnWaitForNewBlockExecution ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   new_wait_exec_state_count_->increment();
 
@@ -1121,6 +1137,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
 
 BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 {
+  MilliTimer const timer{"OnTransmitBlock ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   transmit_state_count_->increment();
 
@@ -1172,6 +1189,7 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
 BlockCoordinator::State BlockCoordinator::OnReset()
 {
+  MilliTimer const timer{"OnReset ", 1000};
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   Block const *block = nullptr;
 
