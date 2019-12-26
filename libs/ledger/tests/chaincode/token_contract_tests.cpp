@@ -235,7 +235,7 @@ protected:
     Query query      = Variant::Object();
     query["address"] = address.display();
 
-    return Contract::Status::OK == SendQuery("deed", query, deed);
+    return Contract::Status::OK == SendQuery("queryDeed", query, deed);
   }
 };
 
