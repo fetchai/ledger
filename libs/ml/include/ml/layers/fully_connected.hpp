@@ -82,6 +82,7 @@ public:
     // start to set up the structure
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
+    nodes_.at(input)->SetDefaultOutputShape({in_size_, 1});
 
     // for non time distributed layer, flatten the input
     std::string flat_input = input;
@@ -89,19 +90,26 @@ public:
     {
       flat_input =
           this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input});
+      nodes_.at(flat_input)->SetDefaultOutputShape({out_size_, 1});
     }
 
     std::string weights =
         this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
+    nodes_.at(weights)->SetDefaultOutputShape({out_size_, in_size_});
     std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
         name + "_MatrixMultiply", {weights, flat_input});
+    nodes_.at(weights_matmul)->SetDefaultOutputShape({out_size_, 1});
     std::string bias =
         this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Bias", {});
+    nodes_.at(bias)->SetDefaultOutputShape({out_size_, 1});
+
     std::string output = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
         name + "_Add", {weights_matmul, bias});
+    nodes_.at(output)->SetDefaultOutputShape({out_size_, 1});
 
     output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
                                                       output);
+    nodes_.at(output)->SetDefaultOutputShape({out_size_, 1});
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
@@ -206,17 +214,16 @@ public:
   {
     FETCH_UNUSED(input_shapes);  // because Dense layer knows all shapes already.
     using ChargeAmount = typename fetch::ml::ops::Ops<T>::ChargeAmount;
-    std::cout << std::endl << " Calculating Dense cost : shape ";
-    for (auto const &dim : DefaultOutputShape())
-    {
-      std::cout << dim << "x";
-    }
+    std::cout << std::endl << " Calculating Dense cost : ";
+    ops::Ops<T>::PrintMyOutputShape();
     std::cout << " ... " << std::endl;
 
+    // TODO(VH): stop on Placeholder, and calculate correct input shape for each
+    // layer (assume Flatten, MatMul, Add, Activation are worth calculating)
     ChargeAmount total_cost = 0;
     for (std::pair<std::string, typename Graph<T>::NodePtrType> const &node : nodes_)
     {
-      std::cout << "    ";
+      std::cout << "    " << node.second->GetNodeName() << " ";
       total_cost += node.second->GetOp()->OpForwardCost({{out_size_, in_size_}});
     }
 

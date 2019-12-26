@@ -123,17 +123,15 @@ public:
       }
     }
     auto const cost = total_ouputs * FLATTEN_CHARGE;
-    std::cout << " " << DESCRIPTOR << " of shape ";
-    for (auto const &dim : ops::Ops<T>::DefaultOutputShape())
-    {
-      std::cout << dim << "x";
-    }
-    std::cout << " cost calculated : " << cost << std::endl;
+    std::cout << " " << DESCRIPTOR;
+    PrintMyOutputShape();
+    std::cout << " forward pass cost  : " << cost << std::endl;
     return cost;
   }
 
 private:
   std::vector<SizeType> input_shape_;
+  using ops::Ops<T>::PrintMyOutputShape;
 };
 
 }  // namespace ops

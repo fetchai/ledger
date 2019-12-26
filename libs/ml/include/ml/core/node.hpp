@@ -163,7 +163,7 @@ public:
         auto const input_node_forward_cost = input_node_ptr->ForwardPassChargeCost();
         total_cost += input_node_forward_cost;
         // TODO(VH): check if the calculations are valid.
-        auto const in_shape = input_node_ptr->OutputShape();
+        auto const in_shape = input_node_ptr->DefaultOutputShape();
         if (!in_shape.empty())
         {
           input_shapes.emplace_back(in_shape);
@@ -180,19 +180,21 @@ public:
     return total_cost;
   }
 
-  ShapeType OutputShape()
+  void SetDefaultOutputShape(ShapeType const &new_shape)
   {
-    if (!output_shape_.empty())
-    {
-      return output_shape_;
-    }
+    default_output_shape_ = new_shape;
+    op_ptr_->SetDefaultOutputShape(new_shape);
+  }
 
-    // Some Ops have their shape known at Graph compilation time
-    ShapeType candidate = op_ptr_->DefaultOutputShape();
-    if (!candidate.empty())
+  ShapeType DefaultOutputShape()
+  {
+    if (!default_output_shape_.empty())
     {
-      output_shape_ = candidate;
-      return output_shape_;
+      if (op_ptr_->DefaultOutputShape().empty())
+      {
+        op_ptr_->SetDefaultOutputShape(default_output_shape_);
+      }
+      return default_output_shape_;
     }
 
     // resursively call to next op/node;
@@ -201,7 +203,7 @@ public:
       // impossible to calculate output shape throw error.
       std::cout << " Shape deduction reached a Graph leaf : " << this->name_
                 << std::endl;  // REMOVEME!
-      return output_shape_;
+      return default_output_shape_;
     }
 
     std::vector<ShapeType> input_shapes;
@@ -210,7 +212,7 @@ public:
       if (auto node_ptr = i.lock())
       {
         // Deeper recursive call!
-        auto const in_shape = node_ptr->OutputShape();
+        auto const in_shape = node_ptr->DefaultOutputShape();
         if (!in_shape.empty())
         {
           input_shapes.emplace_back(in_shape);
@@ -221,13 +223,24 @@ public:
         throw std::runtime_error("Unable to lock weak pointer.");
       }
     }
-    output_shape_ = op_ptr_->ComputeDefaultOutputShape(input_shapes);
-    if (output_shape_.empty())
+
+    // Some Ops have their shape known at Graph compilation time
+    ShapeType candidate = op_ptr_->DefaultOutputShape();
+    if (!candidate.empty())
+    {
+      default_output_shape_ = candidate;
+    }
+    else if (!input_shapes.empty())
+    {
+      default_output_shape_ = op_ptr_->ComputeDefaultOutputShape(input_shapes);
+    }
+
+    if (default_output_shape_.empty())
     {
       // throw an error: invalid calcs from a previous layer.
       std::cout << " Error: returned empty shape from ComputeOutputShape of my Ops!" << std::endl;
     }
-    return output_shape_;
+    return default_output_shape_;
   }
 
 private:
@@ -238,7 +251,7 @@ private:
   TensorType        cached_output_;
   CachedOutputState cached_output_status_;
   OpType            operation_type_;
-  ShapeType         output_shape_{};
+  ShapeType         default_output_shape_{};
 
   std::shared_ptr<ops::Ops<TensorType>> op_ptr_;
 };

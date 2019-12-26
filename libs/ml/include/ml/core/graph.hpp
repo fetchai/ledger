@@ -323,12 +323,14 @@ void Graph<TensorType>::Compile()
   case GraphState::COMPILED:
   case GraphState::EVALUATED:
   case GraphState::BACKWARD:
-  case GraphState::UPDATED: {
+  case GraphState::UPDATED:
+  {
     // graph already compiled. do nothing
     break;
   }
   case GraphState::INVALID:
-  case GraphState::NOT_COMPILED: {
+  case GraphState::NOT_COMPILED:
+  {
     bool valid = true;
 
     ResetCompile();
@@ -355,7 +357,8 @@ void Graph<TensorType>::Compile()
     }
     break;
   }
-  default: {
+  default:
+  {
     throw ml::exceptions::InvalidMode("cannot evaluate graph - unrecognised graph state");
   }
   }
@@ -419,9 +422,8 @@ TensorType Graph<TensorType>::ForwardPropagate(std::string const &node_name, boo
 template <typename TensorType>
 void Graph<TensorType>::RecursivelyLinkShapes(const std::string &node_name)
 {
-  NodePtrType node = nodes_.at(node_name);
-  return;
-  auto const result = node->OutputShape();
+  NodePtrType node   = nodes_.at(node_name);
+  auto const  result = node->DefaultOutputShape();
   if (result.empty())
   {
     // throw error, something went bad.
@@ -452,13 +454,15 @@ TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name
   switch (graph_state_)
   {
   case GraphState::INVALID:
-  case GraphState::NOT_COMPILED: {
+  case GraphState::NOT_COMPILED:
+  {
     throw ml::exceptions::InvalidMode("cannot compile and evaluate graph");
   }
   case GraphState::COMPILED:
   case GraphState::EVALUATED:
   case GraphState::BACKWARD:
-  case GraphState::UPDATED: {
+  case GraphState::UPDATED:
+  {
     graph_state_ = GraphState::EVALUATED;
     auto ret     = (*(nodes_.at(node_name)->Evaluate(is_training)));
     if (evaluate_mode)
@@ -467,7 +471,8 @@ TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name
     }
     return ret;
   }
-  default: {
+  default:
+  {
     throw ml::exceptions::InvalidMode("cannot evaluate graph - unrecognised graph state");
   }
   }
@@ -491,21 +496,25 @@ void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType c
     switch (graph_state_)
     {
     case GraphState::INVALID:
-    case GraphState::NOT_COMPILED: {
+    case GraphState::NOT_COMPILED:
+    {
       throw ml::exceptions::InvalidMode("Cannot backpropagate: graph not compiled or invalid");
     }
-    case GraphState::COMPILED: {
+    case GraphState::COMPILED:
+    {
       throw ml::exceptions::InvalidMode(
           "Cannot backpropagate: forward pass not completed on graph");
     }
     case GraphState::EVALUATED:
     case GraphState::BACKWARD:
-    case GraphState::UPDATED: {
+    case GraphState::UPDATED:
+    {
       nodes_[node_name]->BackPropagate(error_signal);
       graph_state_ = GraphState::BACKWARD;
       break;
     }
-    default: {
+    default:
+    {
       throw ml::exceptions::InvalidMode("cannot backpropagate: unrecognised graph state");
     }
     }
@@ -618,11 +627,13 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
   case GraphState::INVALID:
   case GraphState::NOT_COMPILED:
   case GraphState::COMPILED:
-  case GraphState::EVALUATED: {
+  case GraphState::EVALUATED:
+  {
     throw ml::exceptions::InvalidMode(
         "cannot apply gradients: backpropagate not previously called on graph");
   }
-  case GraphState::BACKWARD: {
+  case GraphState::BACKWARD:
+  {
     auto grad_it = grad.begin();
     ApplyGradients(grad_it);
 
@@ -635,11 +646,13 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
 
     return;
   }
-  case GraphState::UPDATED: {
+  case GraphState::UPDATED:
+  {
     // no gradients to apply - nothing to do
     return;
   }
-  default: {
+  default:
+  {
     throw ml::exceptions::InvalidMode("cannot apply gradients: unrecognised graph state");
   }
   }
@@ -662,11 +675,13 @@ void Graph<TensorType>::ApplySparseGradients(std::vector<TensorType> &grad,
   case GraphState::INVALID:
   case GraphState::NOT_COMPILED:
   case GraphState::COMPILED:
-  case GraphState::EVALUATED: {
+  case GraphState::EVALUATED:
+  {
     throw ml::exceptions::InvalidMode(
         "cannot apply gradients: backpropagate not previously called on graph");
   }
-  case GraphState::BACKWARD: {
+  case GraphState::BACKWARD:
+  {
     auto grad_it = grad.begin();
     auto rows_it = update_rows.begin();
     ApplySparseGradients(grad_it, rows_it);
@@ -680,11 +695,13 @@ void Graph<TensorType>::ApplySparseGradients(std::vector<TensorType> &grad,
 
     return;
   }
-  case GraphState::UPDATED: {
+  case GraphState::UPDATED:
+  {
     // no gradients to apply - nothing to do
     return;
   }
-  default: {
+  default:
+  {
     throw ml::exceptions::InvalidMode("cannot apply gradients: unrecognised graph state");
   }
   }
@@ -750,18 +767,21 @@ void Graph<TensorType>::SetGraphSaveableParams(GraphSaveableParams<TensorType> c
   {
   case GraphState::INVALID:
   case GraphState::NOT_COMPILED:
-  case GraphState::COMPILED: {
+  case GraphState::COMPILED:
+  {
     // valid graph states, nothing to do
     return;
   }
   case GraphState::EVALUATED:
   case GraphState::BACKWARD:
-  case GraphState::UPDATED: {
+  case GraphState::UPDATED:
+  {
     // we revert state back to compile to prevent immediate backpropagation after deserialisation
     graph_state_ = GraphState::COMPILED;
     return;
   }
-  default: {
+  default:
+  {
     throw ml::exceptions::InvalidMode("cannot setGraphSaveableParams: graph state not recognised");
   }
   }

@@ -740,11 +740,14 @@ void VMModel::LayerAddActivation(const fetch::vm::Ptr<String> &layer,
   }
 }
 
-ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> & /*data*/)
+ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
 {
-  ChargeAmount const cost = model_->ForwardPassChargeCost();
-  std::cout << GetTypeName() << "  " << __PRETTY_FUNCTION__ << " : " << cost << std::endl;
-  return cost;
+  ChargeAmount const cost       = model_->ForwardPassChargeCost();
+  auto const         batch_size = data->shape().back();
+  auto const         batch_cost = batch_size * cost;
+  std::cout << GetTypeName() << " forward pass estimated batch cost is " << batch_size << " * "
+            << cost << " = " << batch_cost << std::endl;
+  return batch_cost;
 }
 
 /**

@@ -119,12 +119,9 @@ public:
     }
     total_ouputs *= total_ouputs;  // square because of MatrixMultiplying
     auto const cost = total_ouputs * MATMUL_CHARGE;
-    std::cout << " " << DESCRIPTOR << " of shape ";
-    for (auto const &dim : ops::Ops<T>::DefaultOutputShape())
-    {
-      std::cout << dim << "x";
-    }
-    std::cout << " cost calculated : " << cost << std::endl;
+    std::cout << " " << DESCRIPTOR;
+    ops::Ops<T>::PrintMyOutputShape();
+    std::cout << " forward pass cost  : " << cost << std::endl;
     return cost;
   }
 

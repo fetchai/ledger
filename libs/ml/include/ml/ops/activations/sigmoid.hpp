@@ -105,6 +105,27 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Sigmoid";
 
+  virtual typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
+      typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
+  {
+    // TODO(VH): charge calculation to be clarified.
+    static constexpr uint64_t SIGMOID_CHARGE = 2;
+    uint64_t                  total_ouputs   = 1;
+    for (auto const &shape : input_shapes)
+    {
+      for (auto const &dimension : shape)
+      {
+        total_ouputs *= dimension;
+      }
+    }
+    auto const cost = total_ouputs * SIGMOID_CHARGE;
+    std::cout << " " << DESCRIPTOR;
+    ops::Ops<T>::PrintMyOutputShape();
+    std::cout << " forward pass cost  : " << cost << std::endl;
+
+    return cost;
+  }
+
 private:
   // minimum possible output value of the sigmoid should not be zero, but actually epsilon
   // likewise maximum output should be 1 - epsilon

@@ -59,7 +59,6 @@ public:
     VecTensorType dummies;
     for (auto &shape : tensor_shapes)
     {
-      shape.push_back(1);  // Default batch size is 1.
       dummies.push_back(std::make_shared<TensorType>(shape));
     }
     default_output_shape_ = ComputeOutputShape(dummies);
@@ -95,6 +94,11 @@ public:
     return 0;  // TODO(VH): make me a pure virtual.
   }
 
+  void SetDefaultOutputShape(std::vector<SizeType> const &new_shape)
+  {
+    default_output_shape_ = new_shape;
+  }
+
   virtual std::vector<SizeType> DefaultOutputShape()
   {
     return default_output_shape_;
@@ -104,6 +108,23 @@ protected:
   bool is_training_ = true;
 
   std::vector<SizeType> default_output_shape_{};
+
+  void PrintMyOutputShape()
+  {
+    std::vector<SizeType> const out_shape = this->DefaultOutputShape();
+    std::cout << " (out shape ";
+    if (out_shape.empty())
+    {
+      std::cout << "?? )";
+      return;
+    }
+    std::cout << "{";
+    for (auto const &dim : out_shape)
+    {
+      std::cout << " " << dim;
+    }
+    std::cout << " })";
+  }
 };
 
 }  // namespace ops
