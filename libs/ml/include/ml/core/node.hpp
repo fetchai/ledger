@@ -197,7 +197,7 @@ public:
       return default_output_shape_;
     }
 
-    // resursively call to next op/node;
+    // recursively call to next op/node;
     if (input_nodes_.empty())
     {
       // impossible to calculate output shape throw error.
