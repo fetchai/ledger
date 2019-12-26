@@ -214,7 +214,7 @@ protected:
     Query response;
     if (Contract::Status::OK == SendQuery("balance", query, response))
     {
-      auto const balance_str = response["balance"].As<std::string>();
+      auto const         balance_str = response["balance"].As<std::string>();
       std::istringstream oss{balance_str};
 
       oss >> balance;
