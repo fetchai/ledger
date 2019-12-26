@@ -123,8 +123,12 @@ public:
       }
     }
     auto const cost = total_ouputs * FLATTEN_CHARGE;
-    std::cout << " " << DESCRIPTOR << " cost calculated : " << cost << std::endl;
-
+    std::cout << " " << DESCRIPTOR << " of shape ";
+    for (auto const &dim : ops::Ops<T>::DefaultOutputShape())
+    {
+      std::cout << dim << "x";
+    }
+    std::cout << " cost calculated : " << cost << std::endl;
     return cost;
   }
 

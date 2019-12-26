@@ -40,7 +40,7 @@ public:
   using SizeType      = fetch::math::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
-  using VecShapesType = std::vector<std::vector<uint64_t>>;
+  using VecShapesType = std::vector<std::vector<SizeType>>;
   using ChargeAmount  = uint64_t;  // TODO(VH): Move me to an external declaration header.
 
   virtual ~Ops() = default;
@@ -53,6 +53,18 @@ public:
    * in ASSERT. On Forward you can use output.shape() and on Backward there is error_signal.shape()
    */
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;
+  std::vector<SizeType>         ComputeDefaultOutputShape(VecShapesType const &input_shapes)
+  {
+    VecShapesType tensor_shapes = input_shapes;
+    VecTensorType dummies;
+    for (auto &shape : tensor_shapes)
+    {
+      shape.push_back(1);  // Default batch size is 1.
+      dummies.push_back(std::make_shared<TensorType>(shape));
+    }
+    default_output_shape_ = ComputeOutputShape(dummies);
+    return default_output_shape_;
+  }
 
   virtual std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() = 0;
 
@@ -83,8 +95,15 @@ public:
     return 0;  // TODO(VH): make me a pure virtual.
   }
 
+  virtual std::vector<SizeType> DefaultOutputShape()
+  {
+    return default_output_shape_;
+  }
+
 protected:
   bool is_training_ = true;
+
+  std::vector<SizeType> default_output_shape_{};
 };
 
 }  // namespace ops

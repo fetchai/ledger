@@ -1496,4 +1496,35 @@ TEST_F(VMModelTests, model_fit_and_refit)
   ASSERT_TRUE(toolkit.Run());
 }
 
+TEST_F(VMModelTests, model_estemate)
+{
+  static char const *SRC_METRIC = R"(
+      function main()
+           var model = Model("sequential");
+           model.add("dense", 10u64, 5u64);
+           model.add("dropout", 1.0fp64);
+           model.add("dense", 5u64, 50u64);
+           model.add("dropout", 1.0fp64);
+           model.add("flatten");
+           model.add("dense", 50u64, 10u64, "relu");
+           model.compile("mse", "sgd");
+
+           var shape = Array<UInt64>(2);
+           shape[0] = 10u64;
+           shape[1] = 1u64;
+           var x = Tensor(shape);
+
+           //x.fromString("-1000.0, -10.0, -1.0, -0.1, -0.0001; 0.0, 0.0001, 0.1, 1.0, 1000.0;");
+
+           var activated = model.predict(x);
+
+           //printLn(activated.toString());
+       endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+
+  ASSERT_TRUE(toolkit.Run());
+}
+
 }  // namespace

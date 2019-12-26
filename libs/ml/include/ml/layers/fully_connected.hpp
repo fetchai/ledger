@@ -189,6 +189,13 @@ public:
             inputs.front()->shape(inputs.front()->shape().size() - 1)};
   }
 
+  std::vector<SizeType> DefaultOutputShape() override
+  {
+    std::vector<SizeType> a{{out_size_}, {1}};
+    SubGraph<T>::default_output_shape_ = a;
+    return SubGraph<T>::default_output_shape_;
+  }
+
   static constexpr OpType OpCode()
   {
     return fetch::ml::OpType::LAYER_FULLY_CONNECTED;
@@ -199,7 +206,12 @@ public:
   {
     FETCH_UNUSED(input_shapes);  // because Dense layer knows all shapes already.
     using ChargeAmount = typename fetch::ml::ops::Ops<T>::ChargeAmount;
-    std::cout << std::endl << " Calculating Dense const... " << std::endl;
+    std::cout << std::endl << " Calculating Dense cost : shape ";
+    for (auto const &dim : DefaultOutputShape())
+    {
+      std::cout << dim << "x";
+    }
+    std::cout << " ... " << std::endl;
 
     ChargeAmount total_cost = 0;
     for (std::pair<std::string, typename Graph<T>::NodePtrType> const &node : nodes_)

@@ -52,6 +52,8 @@ public:
   using VecTensorType    = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType           = fetch::ml::NodeSaveableParams<TensorType>;
   using NodeErrorMapType = std::unordered_map<Node<TensorType> *, std::vector<TensorType>>;
+  using ShapeType =
+      std::vector<uint64_t>;  // Becomes known on a Linking phase. TODO: move somewhere.
 
   ///////////////////////////////////
   /// CONSRTUCTORS / DESCTRUCTORS ///
@@ -152,23 +154,81 @@ public:
                 << std::endl;
       return my_default_cost;
     }
-    uint64_t total_cost = my_default_cost;
+    uint64_t                           total_cost = my_default_cost;
+    std::vector<std::vector<uint64_t>> input_shapes;
     for (auto const &i : input_nodes_)
     {
       if (auto input_node_ptr = i.lock())
       {
         auto const input_node_forward_cost = input_node_ptr->ForwardPassChargeCost();
-        // TODO(VH): this input shape is bullshit, need to be calculated.
-        auto const my_cost_of_input = op_ptr_->OpForwardCost({{1, 1}});
-
-        total_cost = total_cost + input_node_forward_cost + my_cost_of_input;
+        total_cost += input_node_forward_cost;
+        // TODO(VH): check if the calculations are valid.
+        auto const in_shape = input_node_ptr->OutputShape();
+        if (!in_shape.empty())
+        {
+          input_shapes.emplace_back(in_shape);
+        }
       }
       else
       {
         throw std::runtime_error("Unable to lock weak pointer.");
       }
     }
+    auto const my_cost_of_input = op_ptr_->OpForwardCost(input_shapes);
+    total_cost += my_cost_of_input;
+
     return total_cost;
+  }
+
+  ShapeType OutputShape()
+  {
+    if (!output_shape_.empty())
+    {
+      return output_shape_;
+    }
+
+    // Some Ops have their shape known at Graph compilation time
+    ShapeType candidate = op_ptr_->DefaultOutputShape();
+    if (!candidate.empty())
+    {
+      output_shape_ = candidate;
+      return output_shape_;
+    }
+
+    // resursively call to next op/node;
+    if (input_nodes_.empty())
+    {
+      // impossible to calculate output shape throw error.
+      std::cout << "Shape deduction reached a Graph leaf " << this->name_
+                << std::endl;  // REMOVEME!
+      return output_shape_;
+    }
+
+    std::vector<ShapeType> input_shapes;
+    for (auto const &i : input_nodes_)
+    {
+      if (auto node_ptr = i.lock())
+      {
+        // Deeper recursive call!
+        auto const in_shape = node_ptr->OutputShape();
+        if (!in_shape.empty())
+        {
+          input_shapes.emplace_back(in_shape);
+        }
+      }
+      else
+      {
+        throw std::runtime_error("Unable to lock weak pointer.");
+      }
+      output_shape_ = op_ptr_->ComputeDefaultOutputShape(input_shapes);
+      if (output_shape_.empty())
+      {
+        // throw an error: invalid calcs from a previous layer.
+        std::cout << " Error: returned empty shape from ComputeOutputShape of my Ops!" << std::endl;
+      }
+    }
+
+    return output_shape_;
   }
 
 private:
@@ -179,6 +239,7 @@ private:
   TensorType        cached_output_;
   CachedOutputState cached_output_status_;
   OpType            operation_type_;
+  ShapeType         output_shape_{};
 
   std::shared_ptr<ops::Ops<TensorType>> op_ptr_;
 };

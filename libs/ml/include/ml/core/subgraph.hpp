@@ -59,6 +59,7 @@ public:
 protected:
   void InsertSharedCopy(std::shared_ptr<fetch::ml::ops::Ops<TensorType>> output_ptr);
   SubGraph() = default;
+  using ops::Ops<T>::default_output_shape_;
 
 private:
   std::vector<std::string> input_node_names_;
