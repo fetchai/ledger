@@ -185,13 +185,14 @@ BlockPtr GetBlockPriorTo(Block const &current, MainChain const &chain)
 Block Consensus::GetBeginningOfAeon(Block const &current, MainChain const &chain) const
 {
   MilliTimer const timer{"GetBeginningOfAeon ", 1000};
-  Block    ret          = current;
-  uint64_t nearest_aeon = ((current.block_number / aeon_period_) * aeon_period_) + 1;
+  Block            ret          = current;
+  uint64_t         nearest_aeon = ((current.block_number / aeon_period_) * aeon_period_) + 1;
 
-  if((current.block_number % aeon_period_) == 0)
+  if ((current.block_number % aeon_period_) == 0)
   {
     nearest_aeon = (current.block_number - aeon_period_) + 1;
-    FETCH_LOG_INFO(LOGGING_NAME, "Finding nearest aeon: ", nearest_aeon, " with current: ", current.block_number);
+    FETCH_LOG_INFO(LOGGING_NAME, "Finding nearest aeon: ", nearest_aeon,
+                   " with current: ", current.block_number);
   }
 
   // Attempt to lookup from cache to avoid chain walk
@@ -449,8 +450,10 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
     if (!prior)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME,
-                      "Failed to find the beginning of the aeon when updating the block! Aeon period: ", aeon_period_);
+      FETCH_LOG_ERROR(
+          LOGGING_NAME,
+          "Failed to find the beginning of the aeon when updating the block! Aeon period: ",
+          aeon_period_);
       throw std::runtime_error("Failed to update block!");
     }
 
@@ -535,7 +538,8 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
       FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG with timestamp: ", last_block_time,
                      " current: ", current_time,
-                     " diff: ", int64_t(current_time) - int64_t(last_block_time), " aeon period: ", aeon_period_);
+                     " diff: ", int64_t(current_time) - int64_t(last_block_time),
+                     " aeon period: ", aeon_period_);
 
       uint64_t block_interval = 1;
 

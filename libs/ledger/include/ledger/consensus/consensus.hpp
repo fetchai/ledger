@@ -118,7 +118,7 @@ private:
   CabinetHistory cabinet_history_{};  ///< Cache of historical cabinets
   uint64_t       block_interval_ms_{std::numeric_limits<uint64_t>::max()};
 
-  Block              GetBeginningOfAeon(Block const &current, MainChain const &chain) const;
+  Block                      GetBeginningOfAeon(Block const &current, MainChain const &chain) const;
   mutable AeonBeginningCache aeon_beginning_cache_;
 
   NotarisationPtr notarisation_;
