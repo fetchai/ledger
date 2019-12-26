@@ -157,7 +157,7 @@ public:
       typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
   {
     // TODO(VH): charge calculation to be clarified.
-    static constexpr uint64_t DROPOUT_CHARGE = 5;
+    static constexpr uint64_t DROPOUT_CHARGE = 1;
     uint64_t                  total_ouputs   = 1;
     for (auto const &shape : input_shapes)
     {

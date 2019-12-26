@@ -167,7 +167,8 @@ public:
                                         "] is not in graph");
     }
     ChargeAmount cost = nodes_.at(node_name)->ForwardPassChargeCost();
-    std::cout << " Calculated cost of a Graph : " << cost << std::endl;
+    std::cout << std::endl
+              << " Calculated total cost of a Graph forward pass: " << cost << std::endl;
     return cost;
   }
 
@@ -418,8 +419,9 @@ TensorType Graph<TensorType>::ForwardPropagate(std::string const &node_name, boo
 template <typename TensorType>
 void Graph<TensorType>::RecursivelyLinkShapes(const std::string &node_name)
 {
-  NodePtrType node   = nodes_.at(node_name);
-  auto const  result = node->OutputShape();
+  NodePtrType node = nodes_.at(node_name);
+  return;
+  auto const result = node->OutputShape();
   if (result.empty())
   {
     // throw error, something went bad.

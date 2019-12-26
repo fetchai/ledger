@@ -199,7 +199,7 @@ public:
     if (input_nodes_.empty())
     {
       // impossible to calculate output shape throw error.
-      std::cout << "Shape deduction reached a Graph leaf " << this->name_
+      std::cout << " Shape deduction reached a Graph leaf : " << this->name_
                 << std::endl;  // REMOVEME!
       return output_shape_;
     }
@@ -220,14 +220,13 @@ public:
       {
         throw std::runtime_error("Unable to lock weak pointer.");
       }
-      output_shape_ = op_ptr_->ComputeDefaultOutputShape(input_shapes);
-      if (output_shape_.empty())
-      {
-        // throw an error: invalid calcs from a previous layer.
-        std::cout << " Error: returned empty shape from ComputeOutputShape of my Ops!" << std::endl;
-      }
     }
-
+    output_shape_ = op_ptr_->ComputeDefaultOutputShape(input_shapes);
+    if (output_shape_.empty())
+    {
+      // throw an error: invalid calcs from a previous layer.
+      std::cout << " Error: returned empty shape from ComputeOutputShape of my Ops!" << std::endl;
+    }
     return output_shape_;
   }
 
