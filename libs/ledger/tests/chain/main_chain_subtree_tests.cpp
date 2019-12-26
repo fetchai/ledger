@@ -75,7 +75,7 @@ public:
   }
 };
 
-MutableBlocks Extract(MutableBlocks const &input, std::initializer_list<std::size_t> const &indexes)
+MutableBlocks Extract(MutableBlocks const &input, std::initializer_list<std::size_t> indexes)
 {
   MutableBlocks output;
   output.reserve(indexes.size());
