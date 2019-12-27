@@ -162,7 +162,7 @@ TSSP::TxArray TransactionStoreSyncProtocol::PullObjects(service::CallContext con
     }
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": PullObjects: Sending back ", ret.size(), " TXs");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", lane_, ": PullObjects: Sending back ", ret.size(), " TXs");
 
   return ret;
 }

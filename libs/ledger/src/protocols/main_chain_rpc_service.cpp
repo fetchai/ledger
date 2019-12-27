@@ -462,7 +462,7 @@ State MainChainRpcService::OnWaitForBlocks()
 
   // we have now reached the heaviest tip
   auto const &latest_block = log.blocks.back();
-  assert(!latest_block->hash.IsEmpty());  // should be set by HandleChainResponse()
+  assert(!latest_block->hash.empty());  // should be set by HandleChainResponse()
 
   // check to see if we have either reached the heaviest tip or we are starting to advance past the
   // heaviest block number of the peer (presumably we are chasing an side branch)

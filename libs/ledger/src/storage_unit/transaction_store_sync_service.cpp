@@ -455,7 +455,7 @@ void TransactionStoreSyncService::OnTransaction(TransactionPtr const &tx)
   if (!store_.Has(tx->digest()))
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Sync TX: ", tx->digest().ToBase64(), " (",
-                    tx->contract_digest().display(), ')');
+                    tx->contract_address().display(), ')');
 
     store_.Add(*tx, true);
     stored_transactions_->increment();

@@ -135,7 +135,7 @@ void NaiveSynergeticMiner::Mine()
     std::ostringstream oss;
     for (auto const &element : problem_spaces)
     {
-      oss << "\n -> 0x" << element.first.contract_address.display();
+      oss << "\n -> 0x" << element.first.address().ToHex();
     }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Available synergetic contracts to be mined", oss.str());
