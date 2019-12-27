@@ -252,7 +252,10 @@ private:
   TensorType        cached_output_;
   CachedOutputState cached_output_status_;
   OpType            operation_type_;
-  Shape             default_output_shape_{};
+
+  // TODO(VH): only Ops should have computed Shapes, and the Node
+  // must only ask its Op for output shape. "InformationExpert" violation.
+  Shape default_output_shape_{};
 
   std::shared_ptr<ops::Ops<TensorType>> op_ptr_;
 };

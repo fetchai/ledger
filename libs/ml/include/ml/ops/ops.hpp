@@ -108,24 +108,25 @@ public:
 protected:
   bool is_training_ = true;
 
-  std::vector<SizeType> default_output_shape_{};
+  ShapeVector default_input_shapes_{};  // TODO(VH): impl. filling it on compilation.
+  Shape       default_output_shape_{};
 
   std::string OutputShapeAsString()
   {
     std::vector<SizeType> const out_shape = this->DefaultOutputShape();
     std::stringstream           ss;
-    ss << " (out shape ";
+    ss << " (out ";
     if (out_shape.empty())
     {
-      ss << "?? )";
+      ss << "[??] )";
       return ss.str();
     }
-    ss << "{";
+    ss << "[";
     for (auto const &dim : out_shape)
     {
       ss << " " << dim;
     }
-    ss << " })";
+    ss << " ])";
     return ss.str();
   }
 
