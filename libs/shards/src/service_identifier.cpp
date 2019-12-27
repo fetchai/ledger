@@ -81,10 +81,8 @@ bool ServiceIdentifier::operator<(ServiceIdentifier const &other) const
   {
     return instance_ < other.instance_;
   }
-  else
-  {
-    return type_ < other.type_;
-  }
+
+  return type_ < other.type_;
 }
 
 }  // namespace shards

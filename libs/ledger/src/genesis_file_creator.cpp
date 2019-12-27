@@ -50,7 +50,6 @@ namespace {
 using fetch::byte_array::ConstByteArray;
 using fetch::json::JSONDocument;
 using fetch::storage::ResourceAddress;
-using fetch::storage::ResourceID;
 using fetch::variant::Variant;
 
 constexpr uint64_t    TOTAL_SUPPLY   = 11529975750000000000ull;

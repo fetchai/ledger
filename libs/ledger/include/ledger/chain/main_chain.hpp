@@ -158,7 +158,7 @@ public:
   };
 
   // Construction / Destruction
-  MainChain(Mode mode = Mode::IN_MEMORY_DB, bool dirty_block_functionality = false);
+  explicit MainChain(Mode mode = Mode::IN_MEMORY_DB, bool dirty_block_functionality = false);
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();
