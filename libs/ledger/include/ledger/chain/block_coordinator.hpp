@@ -366,12 +366,15 @@ private:
   telemetry::CounterPtr         request_tx_count_;
   telemetry::CounterPtr         unable_to_find_tx_count_;
   telemetry::CounterPtr         blocks_minted_;
+  telemetry::CounterPtr         consensus_update_failure_total_;
   telemetry::HistogramPtr       tx_sync_times_;
   telemetry::GaugePtr<uint64_t> current_block_num_;
   telemetry::GaugePtr<uint64_t> next_block_num_;
   telemetry::GaugePtr<uint64_t> block_hash_;
   telemetry::GaugePtr<uint64_t> total_time_to_create_block_;
   telemetry::GaugePtr<uint64_t> current_block_weight_;
+  telemetry::GaugePtr<uint64_t> last_block_interval_s_;
+  telemetry::GaugePtr<uint64_t> current_block_coord_state_;
   /// @}
 };
 
