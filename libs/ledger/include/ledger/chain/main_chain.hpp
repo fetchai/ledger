@@ -203,7 +203,7 @@ public:
 
   static MutableBlockPtr CreateGenesisBlock();
 
-  BlockStatus AddBlock(MutableBlockPtr block);
+  BlockStatus AddBlock(MutableBlockPtr const &block);
 
 private:
   using DbRecord      = BlockDbRecord;

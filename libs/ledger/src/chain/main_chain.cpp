@@ -157,7 +157,7 @@ BlockStatus MainChain::AddBlock(BlockPtr block)
  * @param block The block that will be added to the chain.
  * @return The status enumeration signalling the operation result
  */
-BlockStatus MainChain::AddBlock(MutableBlockPtr block)
+BlockStatus MainChain::AddBlock(MutableBlockPtr const &block)
 {
   // At this point we assume that the weight has been correctly set by the miner
   block->total_weight = 1;
