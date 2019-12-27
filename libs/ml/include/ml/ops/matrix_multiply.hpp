@@ -104,16 +104,17 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";
 
-  virtual fetch::vm::ChargeAmount OpForwardCost(
+  fetch::vm::ChargeAmount OpForwardCost(
       typename fetch::ml::ops::Ops<T>::ShapeVector const &input_shapes) override
   {
+    using namespace fetch::ml::ops;
     // TODO(VH): charge calculation to be clarified.
-    static constexpr fetch::vm::ChargeAmount MATMUL_CHARGE = 1;
-    SizeType const input_elements = fetch::ml::ops::Ops<T>::TotalElementsIn(input_shapes);
+    SizeType const input_elements = Ops<T>::TotalElementsIn(input_shapes);
     // TODO(VH): MatMul operations count calculation to be clarified.
     SizeType const total_ouputs = input_elements * input_elements;
-    auto const     cost         = total_ouputs * MATMUL_CHARGE;
-    FETCH_LOG_INFO(DESCRIPTOR, "    " + ops::Ops<T>::PrintMyOutputShape() +
+    auto const     cost         = (charge_cost::MULTIPLICATION_PER_ELEMENT * input_elements) +
+                      (charge_cost::ADDITION_PER_ELEMENT * total_ouputs);
+    FETCH_LOG_INFO(DESCRIPTOR, "    " + Ops<T>::PrintMyOutputShape() +
                                    " forward pass cost  : " + std::to_string(cost));
     return cost;
   }

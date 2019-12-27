@@ -91,13 +91,12 @@ public:
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";
 
-  virtual fetch::vm::ChargeAmount OpForwardCost(
+  fetch::vm::ChargeAmount OpForwardCost(
       typename fetch::ml::ops::Ops<T>::ShapeVector const &input_shapes) override
   {
     // TODO(VH): charge calculation to be clarified.
     FETCH_UNUSED(input_shapes);
-    static constexpr fetch::vm::ChargeAmount PLACEHOLDER_CHARGE = 0;
-    auto const                               cost               = PLACEHOLDER_CHARGE;
+    auto const cost = fetch::ml::ops::charge_cost::PLACEHOLDER_READING_PER_ELEMENT;
     FETCH_LOG_INFO(DESCRIPTOR, "    " + ops::Ops<T>::PrintMyOutputShape() +
                                    " forward pass cost  : " + std::to_string(cost));
     return cost;

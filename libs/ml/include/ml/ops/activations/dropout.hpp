@@ -153,13 +153,13 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Dropout";
 
-  virtual fetch::vm::ChargeAmount OpForwardCost(
+  fetch::vm::ChargeAmount OpForwardCost(
       typename fetch::ml::ops::Ops<T>::ShapeVector const &input_shapes) override
   {
     // TODO(VH): charge calculation to be clarified.
-    static constexpr fetch::vm::ChargeAmount DROPOUT_CHARGE = 1;
+
     SizeType const total_ouputs = fetch::ml::ops::Ops<T>::TotalElementsIn(input_shapes);
-    auto const     cost         = total_ouputs * DROPOUT_CHARGE;
+    auto const     cost         = fetch::ml::ops::charge_cost::DROPOUT_PER_ELEMENT * total_ouputs;
     FETCH_LOG_INFO(DESCRIPTOR, "    " + ops::Ops<T>::PrintMyOutputShape() +
                                    " forward pass cost  : " + std::to_string(cost));
     return cost;

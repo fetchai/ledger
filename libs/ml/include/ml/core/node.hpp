@@ -207,7 +207,7 @@ public:
       return default_output_shape_;
     }
 
-    std::vector<Shape> input_shapes;
+    ShapeVector input_shapes;
     for (auto const &i : input_nodes_)
     {
       if (auto node_ptr = i.lock())

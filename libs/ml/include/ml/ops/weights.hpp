@@ -266,18 +266,17 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Weights";
 
-  virtual fetch::vm::ChargeAmount OpForwardCost(
+  fetch::vm::ChargeAmount OpForwardCost(
       typename fetch::ml::ops::Ops<T>::ShapeVector const &input_shapes) override
   {
     // TODO(VH): charge calculation to be clarified.
     FETCH_UNUSED(input_shapes);
-    static constexpr fetch::vm::ChargeAmount WEIGHTS_CHARGE = 0;
-    std::size_t                              trainables     = 1;
+    std::size_t trainables = 1;
     for (auto const &t : DataHolder<T>::data_->shape())
     {
       trainables *= t;
     }
-    auto const cost = WEIGHTS_CHARGE;
+    auto const cost = fetch::ml::ops::charge_cost::WEIGHTS_READING_PER_ELEMENT;
     FETCH_LOG_INFO(DESCRIPTOR, "    " + ops::Ops<T>::PrintMyOutputShape() +
                                    ", forward pass cost  : " + std::to_string(cost));
     FETCH_LOG_INFO(DESCRIPTOR, +"       (trainable params: " + std::to_string(trainables) + ")");
@@ -293,7 +292,7 @@ private:
   static void XavierInitialisation(TensorType &array, DataType normalising_factor,
                                    SizeType seed = 123456789)
   {
-    // TODO (665) this is a uniform distribution; in principle we should be using a guassian
+    // TODO (665) this is a uniform distribution; in principle we should be using a gaussian
     // distribution instead we use a unifrom from -std dev -> + std dev
     fetch::random::LaggedFibonacciGenerator<> lfg(seed);
 

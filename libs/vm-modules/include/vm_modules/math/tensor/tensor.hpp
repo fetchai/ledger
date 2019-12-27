@@ -48,7 +48,7 @@ public:
   using TensorType   = typename fetch::math::Tensor<DataType>;
   using ChargeAmount = fetch::vm::ChargeAmount;
 
-  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<uint64_t> const &shape);
+  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::math::SizeVector const &shape);
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, TensorType tensor);
 
