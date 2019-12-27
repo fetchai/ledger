@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/tensor.hpp"
+#include "meta/vm_types.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
 #include <functional>
@@ -41,7 +42,6 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
   using VecShapesType = std::vector<std::vector<SizeType>>;
-  using ChargeAmount  = uint64_t;  // TODO(VH): Move me to an external declaration header.
 
   virtual ~Ops() = default;
 
@@ -86,7 +86,7 @@ public:
     return is_training_;
   }
 
-  virtual ChargeAmount OpForwardCost(VecShapesType const &input_shapes)
+  virtual fetch::vm::ChargeAmount OpForwardCost(VecShapesType const &input_shapes)
   {
     FETCH_UNUSED(input_shapes);
     FETCH_LOG_WARN("Ops", " not-implemented OpForwardCost() called! returned 0.");
@@ -125,6 +125,23 @@ protected:
     }
     ss << " })";
     return ss.str();
+  }
+
+  SizeType TotalElementsIn(VecShapesType const &input_shapes)
+  {
+    if (input_shapes.empty())
+    {
+      return 0;
+    }
+    SizeType total_elements = 1;
+    for (auto const &shape : input_shapes)
+    {
+      for (auto const &dimension : shape)
+      {
+        total_elements *= dimension;
+      }
+    }
+    return total_elements;
   }
 };
 

@@ -109,20 +109,13 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Flatten";
 
-  virtual typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
+  virtual fetch::vm::ChargeAmount OpForwardCost(
       typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
   {
     // TODO(VH): charge calculation to be clarified.
-    static constexpr uint64_t FLATTEN_CHARGE = 1;
-    uint64_t                  total_ouputs   = 1;
-    for (auto const &shape : input_shapes)
-    {
-      for (auto const &dimension : shape)
-      {
-        total_ouputs *= dimension;
-      }
-    }
-    auto const cost = total_ouputs * FLATTEN_CHARGE;
+    static constexpr fetch::vm::ChargeAmount FLATTEN_CHARGE = 1;
+    SizeType const total_ouputs = fetch::ml::ops::Ops<T>::TotalElementsIn(input_shapes);
+    auto const     cost         = total_ouputs * FLATTEN_CHARGE;
     FETCH_LOG_INFO(DESCRIPTOR, "    " + ops::Ops<T>::PrintMyOutputShape() +
                                    " forward pass cost  : " + std::to_string(cost));
     return cost;

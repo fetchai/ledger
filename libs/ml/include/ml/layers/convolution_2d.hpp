@@ -144,7 +144,7 @@ public:
 
   static constexpr char const *DESCRIPTOR = "Convolution2DLayer";
 
-  typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
+  fetch::vm::ChargeAmount OpForwardCost(
       typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
   {
     FETCH_UNUSED(input_shapes);
@@ -154,7 +154,7 @@ public:
                    "Calculating forward pass cost: " + ops::Ops<T>::PrintMyOutputShape());
 
     // TODO(VH): calculate charge, remove hardcode.
-    typename fetch::ml::ops::Ops<T>::ChargeAmount total_cost = 99914;
+    fetch::vm::ChargeAmount total_cost = 99914;
 
     FETCH_LOG_INFO(DESCRIPTOR, "  Cost calculated : " + std::to_string(total_cost) + "\n");
     return total_cost;

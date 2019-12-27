@@ -266,13 +266,13 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Weights";
 
-  virtual typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
+  virtual fetch::vm::ChargeAmount OpForwardCost(
       typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
   {
     // TODO(VH): charge calculation to be clarified.
     FETCH_UNUSED(input_shapes);
-    static constexpr uint64_t WEIGHTS_CHARGE = 0;
-    std::size_t               trainables     = 1;
+    static constexpr fetch::vm::ChargeAmount WEIGHTS_CHARGE = 0;
+    std::size_t                              trainables     = 1;
     for (auto const &t : DataHolder<T>::data_->shape())
     {
       trainables *= t;
@@ -344,7 +344,7 @@ struct OpWeightsSaveableParams : public OpVariableSaveableParams<TensorType>
 };
 
 template <class T>
-const typename T::Type ops::Weights<T>::HALF = DataType{0.5};
+const typename T::Type ops::Weights<T>::HALF = fetch::math::Type<DataType>("0.5");
 
 }  // namespace ml
 }  // namespace fetch

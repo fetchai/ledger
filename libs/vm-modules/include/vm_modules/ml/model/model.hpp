@@ -160,7 +160,6 @@ public:
                           fetch::vm::Ptr<fetch::vm::String> const &activation_name);
 
   fetch::vm::ChargeAmount EstimatePredict(vm::Ptr<vm_modules::math::VMTensor> const &data);
-  // fetch::vm::ChargeAmount Predict(vm::Ptr<vm_modules::math::VMTensor> const &data);
 
 private:
   ModelPtrType       model_;

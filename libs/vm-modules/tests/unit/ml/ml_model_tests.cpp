@@ -832,7 +832,7 @@ TEST_F(VMModelTests, conv2d_sequential_model_test)
   static char const *sequential_model_src = R"(
     function main() : Tensor
 
-      // conv2d parameters
+      // conv1d parameters
       var input_channels  = 3u64;
       var output_channels = 5u64;
       var input_height    = 3u64;
@@ -1489,37 +1489,6 @@ TEST_F(VMModelTests, model_fit_and_refit)
           model.fit(data2, label2, 16u64);
 
         endfunction
-      )";
-
-  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
-
-  ASSERT_TRUE(toolkit.Run());
-}
-
-TEST_F(VMModelTests, model_estemate)
-{
-  static char const *SRC_METRIC = R"(
-      function main()
-           var model = Model("sequential");
-           model.add("dense", 10u64, 5u64);
-           model.add("dropout", 1.0fp64);
-           model.add("dense", 5u64, 50u64);
-           model.add("dropout", 1.0fp64);
-           model.add("flatten");
-           model.add("dense", 50u64, 10u64, "relu");
-           model.compile("mse", "sgd");
-
-           var shape = Array<UInt64>(2);
-           shape[0] = 10u64;
-           shape[1] = 1u64;
-           var x = Tensor(shape);
-
-           //x.fromString("-1000.0, -10.0, -1.0, -0.1, -0.0001; 0.0, 0.0001, 0.1, 1.0, 1000.0;");
-
-           var activated = model.predict(x);
-
-           //printLn(activated.toString());
-       endfunction
       )";
 
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));

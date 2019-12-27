@@ -209,7 +209,7 @@ public:
     return fetch::ml::OpType::LAYER_FULLY_CONNECTED;
   }
 
-  typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
+  fetch::vm::ChargeAmount OpForwardCost(
       typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
   {
     FETCH_UNUSED(input_shapes);
@@ -221,7 +221,7 @@ public:
 
     // TODO(VH): stop on Placeholder, and calculate correct input shape for each
     // layer (assume Flatten, MatMul, Add, Activation are worth calculating)
-    typename fetch::ml::ops::Ops<T>::ChargeAmount total_cost = 0;
+    fetch::vm::ChargeAmount total_cost = 0;
     for (std::pair<std::string, typename Graph<T>::NodePtrType> const &node : nodes_)
     {
       total_cost += node.second->GetOp()->OpForwardCost({{out_size_, in_size_}});

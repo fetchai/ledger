@@ -300,7 +300,6 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
 {
   // model construction always requires initialising some strings, ptrs etc. but is very cheap
   static const ChargeAmount FIXED_CONSTRUCTION_CHARGE{100};
-  // using VMObjectType = VMModel;
 
   module.CreateClassType<VMModel>("Model")
       .CreateConstructor(&VMModel::Constructor, FIXED_CONSTRUCTION_CHARGE)

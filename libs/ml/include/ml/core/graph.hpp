@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/vm_types.hpp"
 #include "ml/core/node.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/weights.hpp"
@@ -157,8 +158,7 @@ public:
 
   void ResetGradients();
 
-  virtual typename fetch::ml::ops::Ops<T>::ChargeAmount ForwardPassChargeCost(
-      std::string const &node_name)
+  virtual typename fetch::vm::ChargeAmount ForwardPassChargeCost(std::string const &node_name)
   {
     // TODO: ask the last Node for estimation, and let it recursively re-ask others
     if (nodes_.find(node_name) == nodes_.end())
@@ -166,8 +166,7 @@ public:
       throw ml::exceptions::InvalidMode("Cannot estimate charge cost: node [" + node_name +
                                         "] is not in graph");
     }
-    typename fetch::ml::ops::Ops<T>::ChargeAmount cost =
-        nodes_.at(node_name)->ForwardPassChargeCost();
+    fetch::vm::ChargeAmount const cost = nodes_.at(node_name)->ForwardPassChargeCost();
     FETCH_LOG_INFO(DESCRIPTOR,
                    "Calculated total cost of a Graph forward pass: " + std::to_string(cost));
     return cost;
