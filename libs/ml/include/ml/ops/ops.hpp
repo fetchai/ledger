@@ -110,7 +110,7 @@ protected:
 
   std::vector<SizeType> default_output_shape_{};
 
-  std::string PrintMyOutputShape()
+  std::string OutputShapeAsString()
   {
     std::vector<SizeType> const out_shape = this->DefaultOutputShape();
     std::stringstream           ss;
@@ -129,7 +129,7 @@ protected:
     return ss.str();
   }
 
-  SizeType TotalElementsIn(ShapeVector const &shapes)
+  static SizeType TotalElementsIn(ShapeVector const &shapes)
   {
     if (shapes.empty())
     {

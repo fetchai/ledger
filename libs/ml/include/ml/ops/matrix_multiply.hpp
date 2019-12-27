@@ -114,7 +114,7 @@ public:
     SizeType const total_ouputs = input_elements * input_elements;
     auto const     cost         = (charge_cost::MULTIPLICATION_PER_ELEMENT * input_elements) +
                       (charge_cost::ADDITION_PER_ELEMENT * total_ouputs);
-    FETCH_LOG_INFO(DESCRIPTOR, "    " + Ops<T>::PrintMyOutputShape() +
+    FETCH_LOG_INFO(DESCRIPTOR, "    " + Ops<T>::OutputShapeAsString() +
                                    " forward pass cost  : " + std::to_string(cost));
     return cost;
   }

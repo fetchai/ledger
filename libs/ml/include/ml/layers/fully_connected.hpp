@@ -82,34 +82,34 @@ public:
     // start to set up the structure
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
-    nodes_.at(input)->SetDefaultOutputShape({in_size_, 1});
-
     // for non time distributed layer, flatten the input
     std::string flat_input = input;
     if (!time_distributed_)
     {
       flat_input =
           this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input});
-      nodes_.at(flat_input)->SetDefaultOutputShape({out_size_, 1});
+      Graph<T>::nodes_.at(flat_input)->SetDefaultOutputShape({out_size_, 1});
     }
 
     std::string weights =
         this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
-    nodes_.at(weights)->SetDefaultOutputShape({out_size_, in_size_});
     std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
         name + "_MatrixMultiply", {weights, flat_input});
-    nodes_.at(weights_matmul)->SetDefaultOutputShape({out_size_, 1});
     std::string bias =
         this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Bias", {});
-    nodes_.at(bias)->SetDefaultOutputShape({out_size_, 1});
 
-    std::string output = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
+    std::string add = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
         name + "_Add", {weights_matmul, bias});
-    nodes_.at(output)->SetDefaultOutputShape({out_size_, 1});
 
-    output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
-                                                      output);
-    nodes_.at(output)->SetDefaultOutputShape({out_size_, 1});
+    std::string output =
+        fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation", add);
+
+    this->nodes_.at(input)->SetDefaultOutputShape({in_size_, 1});
+    this->nodes_.at(weights)->SetDefaultOutputShape({out_size_, in_size_});
+    this->nodes_.at(weights_matmul)->SetDefaultOutputShape({out_size_, 1});
+    this->nodes_.at(bias)->SetDefaultOutputShape({out_size_, 1});
+    this->nodes_.at(add)->SetDefaultOutputShape({out_size_, 1});
+    this->nodes_.at(output)->SetDefaultOutputShape({out_size_, 1});
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
@@ -216,13 +216,12 @@ public:
     // Input shape is ignored because Dense layer knows all shapes already,
     // however it's a good idea to check if given shape matches to prevent crash.
 
-    FETCH_LOG_INFO(DESCRIPTOR,
-                   "Calculating forward pass cost: " + ops::Ops<T>::PrintMyOutputShape());
+    FETCH_LOG_INFO(DESCRIPTOR, "Calculating forward pass cost: " + this->OutputShapeAsString());
 
     // TODO(VH): stop on Placeholder, and calculate correct input shape for each
     // layer (assume Flatten, MatMul, Add, Activation are worth calculating)
     fetch::vm::ChargeAmount total_cost = 0;
-    for (std::pair<std::string, typename Graph<T>::NodePtrType> const &node : nodes_)
+    for (std::pair<std::string, typename Graph<T>::NodePtrType> const &node : this->nodes_)
     {
       total_cost += node.second->GetOp()->OpForwardCost({{out_size_, in_size_}});
     }
@@ -234,7 +233,6 @@ public:
   static constexpr char const *DESCRIPTOR = "FullyConnected";
 
 private:
-  using Graph<T>::nodes_;
   SizeType in_size_          = fetch::math::numeric_max<SizeType>();
   SizeType out_size_         = fetch::math::numeric_max<SizeType>();
   bool     time_distributed_ = false;

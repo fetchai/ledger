@@ -150,8 +150,7 @@ public:
     FETCH_UNUSED(input_shapes);
     // TODO(VH): Input shape should not be ignored, temporary dummy.
 
-    FETCH_LOG_INFO(DESCRIPTOR,
-                   "Calculating forward pass cost: " + ops::Ops<T>::PrintMyOutputShape());
+    FETCH_LOG_INFO(DESCRIPTOR, "Calculating forward pass cost: " + this->OutputShapeAsString());
 
     // TODO(VH): calculate charge, remove hardcode.
     fetch::vm::ChargeAmount total_cost = 99914;

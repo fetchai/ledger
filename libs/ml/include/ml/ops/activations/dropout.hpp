@@ -158,9 +158,9 @@ public:
   {
     // TODO(VH): charge calculation to be clarified.
 
-    SizeType const total_ouputs = fetch::ml::ops::Ops<T>::TotalElementsIn(input_shapes);
+    SizeType const total_ouputs = this->TotalElementsIn(input_shapes);
     auto const     cost         = fetch::ml::ops::charge_cost::DROPOUT_PER_ELEMENT * total_ouputs;
-    FETCH_LOG_INFO(DESCRIPTOR, "    " + ops::Ops<T>::PrintMyOutputShape() +
+    FETCH_LOG_INFO(DESCRIPTOR, "    " + this->OutputShapeAsString() +
                                    " forward pass cost  : " + std::to_string(cost));
     return cost;
   }
