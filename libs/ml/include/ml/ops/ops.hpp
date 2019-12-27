@@ -41,7 +41,8 @@ public:
   using SizeType      = fetch::math::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
-  using VecShapesType = std::vector<std::vector<SizeType>>;
+  using Shape         = fetch::math::SizeVector;
+  using ShapeVector   = std::vector<Shape>;
 
   virtual ~Ops() = default;
 
@@ -53,9 +54,9 @@ public:
    * in ASSERT. On Forward you can use output.shape() and on Backward there is error_signal.shape()
    */
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;
-  std::vector<SizeType>         ComputeDefaultOutputShape(VecShapesType const &input_shapes)
+  std::vector<SizeType>         ComputeDefaultOutputShape(ShapeVector const &input_shapes)
   {
-    VecShapesType tensor_shapes = input_shapes;
+    ShapeVector   tensor_shapes = input_shapes;
     VecTensorType dummies;
     for (auto &shape : tensor_shapes)
     {
@@ -86,7 +87,7 @@ public:
     return is_training_;
   }
 
-  virtual fetch::vm::ChargeAmount OpForwardCost(VecShapesType const &input_shapes)
+  virtual fetch::vm::ChargeAmount OpForwardCost(ShapeVector const &input_shapes)
   {
     FETCH_UNUSED(input_shapes);
     FETCH_LOG_WARN("Ops", " not-implemented OpForwardCost() called! returned 0.");
@@ -127,17 +128,18 @@ protected:
     return ss.str();
   }
 
-  SizeType TotalElementsIn(VecShapesType const &input_shapes)
+  SizeType TotalElementsIn(ShapeVector const &shapes)
   {
-    if (input_shapes.empty())
+    if (shapes.empty())
     {
       return 0;
     }
     SizeType total_elements = 1;
-    for (auto const &shape : input_shapes)
+    for (auto const &shape : shapes)
     {
       for (auto const &dimension : shape)
       {
+        // TODO(VH): handle a bad case with a dim of size 0.
         total_elements *= dimension;
       }
     }

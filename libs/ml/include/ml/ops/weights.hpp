@@ -267,7 +267,7 @@ public:
   static constexpr char const *DESCRIPTOR = "Weights";
 
   virtual fetch::vm::ChargeAmount OpForwardCost(
-      typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
+      typename fetch::ml::ops::Ops<T>::ShapeVector const &input_shapes) override
   {
     // TODO(VH): charge calculation to be clarified.
     FETCH_UNUSED(input_shapes);

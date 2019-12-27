@@ -468,8 +468,8 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
           SizeType weights_size_sum = data_size_1 * label_size_1 + label_size_1;
 
-          std::vector<uint64_t>                             data_shape{{data_size_1, n_data}};
-          std::vector<uint64_t>                             label_shape{{label_size_1, n_data}};
+          fetch::math::SizeVector                           data_shape{{data_size_1, n_data}};
+          fetch::math::SizeVector                           label_shape{{label_size_1, n_data}};
           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_data{
               new fetch::vm_modules::math::VMTensor(vm.get(), type_id, data_shape)};
           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_labels{
@@ -609,8 +609,8 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
         for (SizeType batch_size = min_batch_size; batch_size < n_data;
              batch_size += batch_size_step)
         {
-          std::vector<uint64_t>                             data_shape{{data_size_1, n_data}};
-          std::vector<uint64_t>                             label_shape{{label_size_1, n_data}};
+          fetch::math::SizeVector                           data_shape{{data_size_1, n_data}};
+          fetch::math::SizeVector                           label_shape{{label_size_1, n_data}};
           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_data{
               new fetch::vm_modules::math::VMTensor(vm.get(), type_id, data_shape)};
           fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> vm_ptr_tensor_labels{

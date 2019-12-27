@@ -110,7 +110,7 @@ public:
   static constexpr char const *DESCRIPTOR = "Flatten";
 
   virtual fetch::vm::ChargeAmount OpForwardCost(
-      typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
+      typename fetch::ml::ops::Ops<T>::ShapeVector const &input_shapes) override
   {
     // TODO(VH): charge calculation to be clarified.
     static constexpr fetch::vm::ChargeAmount FLATTEN_CHARGE = 1;

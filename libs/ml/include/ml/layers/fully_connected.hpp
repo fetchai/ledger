@@ -210,7 +210,7 @@ public:
   }
 
   fetch::vm::ChargeAmount OpForwardCost(
-      typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
+      typename fetch::ml::ops::Ops<T>::ShapeVector const &input_shapes) override
   {
     FETCH_UNUSED(input_shapes);
     // Input shape is ignored because Dense layer knows all shapes already,
