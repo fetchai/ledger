@@ -89,8 +89,7 @@ public:
   virtual ChargeAmount OpForwardCost(VecShapesType const &input_shapes)
   {
     FETCH_UNUSED(input_shapes);
-    std::cout << __PRETTY_FUNCTION__ << std::endl
-              << "   ^^ not-implemented cost calc called! returned 0." << std::endl;
+    FETCH_LOG_WARN("Ops", " not-implemented OpForwardCost() called! returned 0.");
     return 0;  // TODO(VH): make me a pure virtual.
   }
 
@@ -109,21 +108,23 @@ protected:
 
   std::vector<SizeType> default_output_shape_{};
 
-  void PrintMyOutputShape()
+  std::string PrintMyOutputShape()
   {
     std::vector<SizeType> const out_shape = this->DefaultOutputShape();
-    std::cout << " (out shape ";
+    std::stringstream           ss;
+    ss << " (out shape ";
     if (out_shape.empty())
     {
-      std::cout << "?? )";
-      return;
+      ss << "?? )";
+      return ss.str();
     }
-    std::cout << "{";
+    ss << "{";
     for (auto const &dim : out_shape)
     {
-      std::cout << " " << dim;
+      ss << " " << dim;
     }
-    std::cout << " })";
+    ss << " })";
+    return ss.str();
   }
 };
 

@@ -212,22 +212,22 @@ public:
   typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
       typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
   {
-    FETCH_UNUSED(input_shapes);  // because Dense layer knows all shapes already.
-    using ChargeAmount = typename fetch::ml::ops::Ops<T>::ChargeAmount;
-    std::cout << std::endl << " Calculating " << DESCRIPTOR << " cost : ";
-    ops::Ops<T>::PrintMyOutputShape();
-    std::cout << " ... " << std::endl;
+    FETCH_UNUSED(input_shapes);
+    // Input shape is ignored because Dense layer knows all shapes already,
+    // however it's a good idea to check if given shape matches to prevent crash.
+
+    FETCH_LOG_INFO(DESCRIPTOR,
+                   "Calculating forward pass cost: " + ops::Ops<T>::PrintMyOutputShape());
 
     // TODO(VH): stop on Placeholder, and calculate correct input shape for each
     // layer (assume Flatten, MatMul, Add, Activation are worth calculating)
-    ChargeAmount total_cost = 0;
+    typename fetch::ml::ops::Ops<T>::ChargeAmount total_cost = 0;
     for (std::pair<std::string, typename Graph<T>::NodePtrType> const &node : nodes_)
     {
-      std::cout << "    " << node.second->GetNodeName() << " ";
       total_cost += node.second->GetOp()->OpForwardCost({{out_size_, in_size_}});
     }
 
-    std::cout << " Cost calculated : " << total_cost << std::endl << std::endl;
+    FETCH_LOG_INFO(DESCRIPTOR, "  Cost calculated : " + std::to_string(total_cost) + "\n");
     return total_cost;
   }
 

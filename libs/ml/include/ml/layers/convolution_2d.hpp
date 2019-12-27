@@ -147,16 +147,16 @@ public:
   typename fetch::ml::ops::Ops<T>::ChargeAmount OpForwardCost(
       typename fetch::ml::ops::Ops<T>::VecShapesType const &input_shapes) override
   {
-    FETCH_UNUSED(input_shapes);  // because Dense layer knows all shapes already.
-    using ChargeAmount = typename fetch::ml::ops::Ops<T>::ChargeAmount;
-    std::cout << std::endl << " Calculating " << DESCRIPTOR << " cost : ";
-    ops::Ops<T>::PrintMyOutputShape();
-    std::cout << " ... " << std::endl;
+    FETCH_UNUSED(input_shapes);
+    // TODO(VH): Input shape should not be ignored, temporary dummy.
 
-    // TODO(VH): calculate me
-    ChargeAmount total_cost = 99914;
+    FETCH_LOG_INFO(DESCRIPTOR,
+                   "Calculating forward pass cost: " + ops::Ops<T>::PrintMyOutputShape());
 
-    std::cout << " Cost calculated : " << total_cost << std::endl << std::endl;
+    // TODO(VH): calculate charge, remove hardcode.
+    typename fetch::ml::ops::Ops<T>::ChargeAmount total_cost = 99914;
+
+    FETCH_LOG_INFO(DESCRIPTOR, "  Cost calculated : " + std::to_string(total_cost) + "\n");
     return total_cost;
   }
 

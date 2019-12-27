@@ -98,9 +98,8 @@ public:
     FETCH_UNUSED(input_shapes);
     static constexpr uint64_t PLACEHOLDER_CHARGE = 0;
     auto const                cost               = PLACEHOLDER_CHARGE;
-    std::cout << " " << DESCRIPTOR;
-    ops::Ops<T>::PrintMyOutputShape();
-    std::cout << " forward pass cost  : " << cost << std::endl;
+    FETCH_LOG_INFO(DESCRIPTOR, "    " + ops::Ops<T>::PrintMyOutputShape() +
+                                   " forward pass cost  : " + std::to_string(cost));
     return cost;
   }
 };

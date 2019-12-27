@@ -145,13 +145,12 @@ public:
 
   virtual uint64_t ForwardPassChargeCost()
   {
-    // TODO: make me recursive!
-    static constexpr uint64_t my_default_cost = 100;  // TODO: Calculate me!
+    static constexpr uint64_t my_default_cost = 100;  // TODO(VH): Calculate/measure me
     // TODO(VH): call OpForwardCost() of the Op - we need to know Data shape to do this.
     if (input_nodes_.empty())
     {
-      std::cout << " Input node reached: default cost " << my_default_cost << " added."
-                << std::endl;
+      FETCH_LOG_INFO("Node", " Input node reached: default cost " +
+                                 std::to_string(my_default_cost) + " added.");
       return my_default_cost;
     }
     uint64_t                           total_cost = my_default_cost;
@@ -188,6 +187,7 @@ public:
 
   ShapeType DefaultOutputShape()
   {
+    // Returned cached shape result if available; also set underlying Op shape.
     if (!default_output_shape_.empty())
     {
       if (op_ptr_->DefaultOutputShape().empty())
@@ -197,12 +197,11 @@ public:
       return default_output_shape_;
     }
 
-    // recursively call to next op/node;
     if (input_nodes_.empty())
     {
-      // impossible to calculate output shape throw error.
-      std::cout << " Shape deduction reached a Graph leaf : " << this->name_
-                << std::endl;  // REMOVEME!
+      // This is a leaf node and its shape can not be deduced from input one.
+      // TODO(VH): we need to treat leaf nodes somehow.
+      FETCH_LOG_INFO("Node", "Shape deduction reached a Graph leaf : " + this->name_);
       return default_output_shape_;
     }
 
@@ -238,7 +237,7 @@ public:
     if (default_output_shape_.empty())
     {
       // throw an error: invalid calcs from a previous layer.
-      std::cout << " Error: returned empty shape from ComputeOutputShape of my Ops!" << std::endl;
+      FETCH_LOG_INFO("Node", "Error: shape deduction failed for node " + name_);
     }
     return default_output_shape_;
   }

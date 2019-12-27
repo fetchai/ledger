@@ -745,8 +745,9 @@ ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
   ChargeAmount const cost       = model_->ForwardPassChargeCost();
   auto const         batch_size = data->shape().back();
   auto const         batch_cost = batch_size * cost;
-  std::cout << GetTypeName() << " forward pass estimated batch cost is " << batch_size << " * "
-            << cost << " = " << batch_cost << std::endl;
+  FETCH_LOG_INFO(GetTypeName().c_str(),
+                 " forward pass estimated batch cost is " + std::to_string(batch_size) + " * " +
+                     std::to_string(cost) + " = " + std::to_string(batch_cost));
   return batch_cost;
 }
 

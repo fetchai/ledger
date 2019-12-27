@@ -119,9 +119,8 @@ public:
     }
     total_ouputs *= total_ouputs;  // square because of MatrixMultiplying
     auto const cost = total_ouputs * MATMUL_CHARGE;
-    std::cout << " " << DESCRIPTOR;
-    ops::Ops<T>::PrintMyOutputShape();
-    std::cout << " forward pass cost  : " << cost << std::endl;
+    FETCH_LOG_INFO(DESCRIPTOR, "    " + ops::Ops<T>::PrintMyOutputShape() +
+                                   " forward pass cost  : " + std::to_string(cost));
     return cost;
   }
 
