@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/divide.hpp"
 #include "ml/ops/exp.hpp"

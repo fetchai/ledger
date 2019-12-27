@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/regularisers/reg_types.hpp"
 #include "ml/regularisers/regulariser.hpp"

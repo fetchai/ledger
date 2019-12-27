@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,40 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-/* The class defined in this file implements the equivalent of
- * following Python code:
- *
- * import numpy as np
- * import copy
- *
- * def gemm_nn_novector(alpha, A, B, beta, C):
- *   C = alpha * np.dot(A, B) + beta * C
- *
- *   return C
- *
- * Authors:
- */
-
-#include "math/linalg/blas/base.hpp"
-#include "math/linalg/prototype.hpp"
-#include "math/tensor/tensor_view.hpp"
+#include "math/tensor/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace fetch {
 namespace math {
-namespace linalg {
 
-template <typename S>
-class Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
-           Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
-{
-public:
-  using Type               = S;
-  using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
+template class Tensor<float>;
+//template class Tensor<double>;
+//template class Tensor<fixed_point::fp32_t>;
+//template class Tensor<fixed_point::fp64_t>;
+//template class Tensor<fixed_point::fp128_t>;
 
-  void operator()(Type alpha, TensorView<Type> a, TensorView<Type> b, Type beta,
-                  TensorView<Type> c) const;
-};
+//template <typename T, typename C>
+//SizeType Tensor<T, C>::size() const
+//{
+//  return size_;
+//}
 
-}  // namespace linalg
 }  // namespace math
 }  // namespace fetch

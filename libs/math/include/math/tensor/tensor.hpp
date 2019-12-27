@@ -31,10 +31,10 @@
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/fmod.hpp"
 #include "math/standard_functions/remainder.hpp"
-#include "math/tensor_broadcast.hpp"
-#include "math/tensor_iterator.hpp"
-#include "math/tensor_slice_iterator.hpp"
-#include "math/tensor_view.hpp"
+#include "math/tensor/tensor_broadcast.hpp"
+#include "math/tensor/tensor_iterator.hpp"
+#include "math/tensor/tensor_slice_iterator.hpp"
+#include "math/tensor/tensor_view.hpp"
 #include "vectorise/memory/array.hpp"
 
 #include <cassert>
@@ -115,11 +115,11 @@ public:
     Resize({0});
   }
 
-  explicit Tensor(ContainerType &container_data)
-  {
-    Reshape(container_data.shape());
-    data_ = container_data;
-  }
+//  explicit Tensor(ContainerType &container_data)
+//  {
+//    Reshape(container_data.shape());
+//    data_ = container_data;
+//  }
 
   static Tensor FromString(byte_array::ConstByteArray const &c);
   explicit Tensor(SizeType const &n);
@@ -1304,7 +1304,7 @@ template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::operator=(ConstSliceType const &slice)
 {
   auto it1 = begin();
-  auto it2 = slice.begin();
+  auto it2 = slice.cbegin();
   assert(it1.size() == it2.size());
   while (it1.is_valid())
   {
@@ -1315,28 +1315,28 @@ Tensor<T, C> &Tensor<T, C>::operator=(ConstSliceType const &slice)
   return *this;
 }
 
-/**
- * Assignment operator uses iterators to assign every value in the
- * slice of a Tensor into this tensor
- * @tparam T
- * @tparam C
- * @param slice
- * @return
- */
-template <typename T, typename C>
-Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
-{
-  auto it1 = begin();
-  auto it2 = slice.begin();
-  assert(it1.size() == it2.size());
-  while (it1.is_valid())
-  {
-    *it1 = *it2;
-    ++it1;
-    ++it2;
-  }
-  return *this;
-}
+///**
+// * Assignment operator uses iterators to assign every value in the
+// * slice of a Tensor into this tensor
+// * @tparam T
+// * @tparam C
+// * @param slice
+// * @return
+// */
+//template <typename T, typename C>
+//Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
+//{
+//  auto it1 = begin();
+//  auto it2 = slice.begin();
+//  assert(it1.size() == it2.size());
+//  while (it1.is_valid())
+//  {
+//    *it1 = *it2;
+//    ++it1;
+//    ++it2;
+//  }
+//  return *this;
+//}
 
 /**
  * Resizes and reshapes tensor according to newly specified shape
@@ -1424,18 +1424,18 @@ void Tensor<T, C>::Set(Args... args)
   data_[index] = std::move(value);
 }
 
-/**
- * Fills entire tensor with value
- * @param value
- * @param range
- */
-template <typename T, typename C>
-void Tensor<T, C>::Fill(Type const &value, memory::Range const &range)
-{
-  VectorRegisterType val(value);
-
-  this->data().in_parallel().Apply(range, [val](VectorRegisterType &z) { z = val; });
-}
+///**
+// * Fills entire tensor with value
+// * @param value
+// * @param range
+// */
+//template <typename T, typename C>
+//void Tensor<T, C>::Fill(Type const &value, memory::Range const &range)
+//{
+//  VectorRegisterType val(value);
+//
+//  this->data().in_parallel().Apply(range, [val](VectorRegisterType &z) { z = val; });
+//}
 
 /**
  * Fill entire Tensor with value
@@ -2117,23 +2117,23 @@ typename Tensor<T, C>::Type Tensor<T, C>::Sum() const
   return ret;
 }
 
-/**
- * Calculate the Exponentials of tensor x and stores in this
- */
-template <typename T, typename C>
-void Tensor<T, C>::Exp(Tensor const &x)
-{
-  Exp(x, *this);
-}
+///**
+// * Calculate the Exponentials of tensor x and stores in this
+// */
+//template <typename T, typename C>
+//void Tensor<T, C>::Exp(Tensor const &x)
+//{
+//  Exp(x, *this);
+//}
 
-/**
- * Calculate the ApproxSoftMax of X and store in this
- */
-template <typename T, typename C>
-void Tensor<T, C>::ApproxSoftMax(Tensor const &x)
-{
-  ApproxSoftMax(x, *this);
-}
+///**
+// * Calculate the ApproxSoftMax of X and store in this
+// */
+//template <typename T, typename C>
+//void Tensor<T, C>::ApproxSoftMax(Tensor const &x)
+//{
+//  ApproxSoftMax(x, *this);
+//}
 
 /**
  * Calculates the L2Norm of the tensor (Sqrt(Sum(Square(this)))
@@ -2168,30 +2168,30 @@ typename Tensor<T, C>::Type Tensor<T, C>::PeakToPeak() const
   return fetch::math::PeakToPeak(*this);
 }
 
-/**
- * Divide this array by another shapeless array and store the floating point remainder in this
- * array
- * @param x
- */
-template <typename T, typename C>
-void Tensor<T, C>::Fmod(Tensor const &x)
-{
-  Resize({x.size()});
-  // TODO(?): Should use iterators
-  fetch::math::Fmod(data_, x.data(), data_);
-}
-
-/**
- * Divide this array by another shapeless array and store the remainder in this array with
- * quotient rounded to int
- * @param x
- */
-template <typename T, typename C>
-void Tensor<T, C>::Remainder(Tensor const &x)
-{
-  Resize({x.size()});
-  fetch::math::Remainder(data_, x.data(), data_);
-}
+///**
+// * Divide this array by another shapeless array and store the floating point remainder in this
+// * array
+// * @param x
+// */
+//template <typename T, typename C>
+//void Tensor<T, C>::Fmod(Tensor const &x)
+//{
+//  Resize({x.size()});
+//  // TODO(?): Should use iterators
+//  fetch::math::Fmod(data_, x.data(), data_);
+//}
+//
+///**
+// * Divide this array by another shapeless array and store the remainder in this array with
+// * quotient rounded to int
+// * @param x
+// */
+//template <typename T, typename C>
+//void Tensor<T, C>::Remainder(Tensor const &x)
+//{
+//  Resize({x.size()});
+//  fetch::math::Remainder(data_, x.data(), data_);
+//}
 
 /**
  * Apply softmax to this array

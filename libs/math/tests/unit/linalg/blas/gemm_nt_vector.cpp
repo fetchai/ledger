@@ -19,7 +19,7 @@
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemm_nt_vector.hpp"
 #include "math/linalg/prototype.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 
 #include "gtest/gtest.h"
 
