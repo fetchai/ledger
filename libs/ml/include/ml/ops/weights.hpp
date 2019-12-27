@@ -119,47 +119,55 @@ public:
   {
     switch (mode)
     {
-    case WeightsInitialisation::ZEROS: {
+    case WeightsInitialisation::ZEROS:
+    {
       array.Fill(static_cast<DataType>(0));
       break;
     }
-    case WeightsInitialisation::ONES: {
+    case WeightsInitialisation::ONES:
+    {
       array.Fill(static_cast<DataType>(1));
       break;
     }
-    case WeightsInitialisation::XAVIER_GLOROT: {
+    case WeightsInitialisation::XAVIER_GLOROT:
+    {
       XavierInitialisation(
           array,
           fetch::math::Sqrt(static_cast<DataType>(2) / static_cast<DataType>(in_size + out_size)),
           seed);
       break;
     }
-    case WeightsInitialisation::XAVIER_FAN_IN: {
+    case WeightsInitialisation::XAVIER_FAN_IN:
+    {
       XavierInitialisation(
           array, fetch::math::Sqrt(static_cast<DataType>(1) / static_cast<DataType>(in_size)),
           seed);
       break;
     }
-    case WeightsInitialisation::XAVIER_FAN_OUT: {
+    case WeightsInitialisation::XAVIER_FAN_OUT:
+    {
       XavierInitialisation(
           array, fetch::math::Sqrt(static_cast<DataType>(1) / static_cast<DataType>(out_size)),
           seed);
       break;
     }
-    case WeightsInitialisation::XAVIER_GLOROT_UNIFORM: {
+    case WeightsInitialisation::XAVIER_GLOROT_UNIFORM:
+    {
       XavierInitialisationUniform(
           array,
           fetch::math::Sqrt(static_cast<DataType>(6) / static_cast<DataType>(in_size + out_size)),
           seed);
       break;
     }
-    case WeightsInitialisation::XAVIER_FAN_IN_UNIFORM: {
+    case WeightsInitialisation::XAVIER_FAN_IN_UNIFORM:
+    {
       XavierInitialisationUniform(
           array, fetch::math::Sqrt(static_cast<DataType>(3) / static_cast<DataType>(in_size)),
           seed);
       break;
     }
-    case WeightsInitialisation::XAVIER_FAN_OUT_UNIFORM: {
+    case WeightsInitialisation::XAVIER_FAN_OUT_UNIFORM:
+    {
       XavierInitialisationUniform(
           array, fetch::math::Sqrt(static_cast<DataType>(3) / static_cast<DataType>(out_size)),
           seed);
@@ -182,15 +190,18 @@ public:
   {
     switch (mode)
     {
-    case WeightsInitialisation::ONES: {
+    case WeightsInitialisation::ONES:
+    {
       array.Fill(static_cast<DataType>(1));
       break;
     }
-    case WeightsInitialisation::ZEROS: {
+    case WeightsInitialisation::ZEROS:
+    {
       array.Fill(static_cast<DataType>(0));
       break;
     }
-    case WeightsInitialisation::XAVIER_GLOROT: {
+    case WeightsInitialisation::XAVIER_GLOROT:
+    {
       XavierInitialisation(
           array, fetch::math::Sqrt(static_cast<DataType>(2) / static_cast<DataType>(data_size)),
           seed);
@@ -268,8 +279,8 @@ public:
     }
     auto const cost = WEIGHTS_CHARGE;
     FETCH_LOG_INFO(DESCRIPTOR, "    " + ops::Ops<T>::PrintMyOutputShape() +
-                                   +", trainable params: " + std::to_string(trainables) +
                                    ", forward pass cost  : " + std::to_string(cost));
+    FETCH_LOG_INFO(DESCRIPTOR, +"       (trainable params: " + std::to_string(trainables) + ")");
     return cost;
   }
 
