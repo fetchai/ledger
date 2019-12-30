@@ -78,7 +78,7 @@ if (FETCH_DEBUG_SANITIZER)
 endif (FETCH_DEBUG_SANITIZER)
 
 if (FETCH_PROFILE_BUILD_TIME)
-  set (time_profiler "${FETCH_ROOT_DIR}/scripts/build-profile-gen.py --")
+  set(time_profiler "${FETCH_ROOT_DIR}/scripts/build-profile-gen.py --")
 
   set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${time_profiler}")
   set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${time_profiler}")

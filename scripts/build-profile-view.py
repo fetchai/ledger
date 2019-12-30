@@ -13,10 +13,14 @@ def parse_commandline():
     parser_summary.set_defaults(handler=run_summary)
 
     parser_files = subparsers.add_parser('files')
-    parser_files.add_argument('--gt', type=float, help='Filter the set to files greater than a specified duration')
-    parser_files.add_argument('--lt', type=float, help='Filter the set to files less than a specified duration')
-    parser_files.add_argument('-L', '--library', help='The specified library to filter on')
-    parser_files.add_argument('--count', action='store_true', help='Count my class instance')
+    parser_files.add_argument(
+        '--gt', type=float, help='Filter the set to files greater than a specified duration')
+    parser_files.add_argument(
+        '--lt', type=float, help='Filter the set to files less than a specified duration')
+    parser_files.add_argument(
+        '-L', '--library', help='The specified library to filter on')
+    parser_files.add_argument(
+        '--count', action='store_true', help='Count my class instance')
     parser_files.set_defaults(handler=run_files)
 
     return parser, parser.parse_args()
@@ -32,7 +36,8 @@ def load_summary():
 
 def run_summary(args):
     df = load_summary()
-    summ = df.groupby(['class_type', 'class_instance'])['duration'].sum().reset_index().sort_values('duration')
+    summ = df.groupby(['class_type', 'class_instance'])[
+        'duration'].sum().reset_index().sort_values('duration')
 
     print(summ[['class_instance', 'duration']].to_string(index=False))
 
@@ -65,13 +70,12 @@ def main():
         print('Please run in the same folder as the build summary')
         sys.exit(1)
 
-
     try:
         if hasattr(args, 'handler'):
             args.handler(args)
             exit_code = 0
         else:
-            parser.print_usage()    
+            parser.print_usage()
     except:
         pass
 

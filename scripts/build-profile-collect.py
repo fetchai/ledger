@@ -6,10 +6,13 @@ import json
 
 from pprint import pprint
 
+
 def parse_commandline():
     parser = argparse.ArgumentParser()
-    parser.add_argument('build_folder', type=os.path.abspath, help='The build folder to scan')
-    parser.add_argument('-o', '--output-path', default='build-profile-summary.csv', help='Output path for CSV file')
+    parser.add_argument('build_folder', type=os.path.abspath,
+                        help='The build folder to scan')
+    parser.add_argument('-o', '--output-path',
+                        default='build-profile-summary.csv', help='Output path for CSV file')
     return parser.parse_args()
 
 
@@ -23,8 +26,10 @@ def main():
             with open(file_path, 'r') as profile_file:
                 profile = json.load(profile_file)
 
-                ouput_file_path = os.path.join(profile['workingDir'], profile['outputPath'])
-                ouput_file_path = os.path.relpath(ouput_file_path, args.build_folder)
+                ouput_file_path = os.path.join(
+                    profile['workingDir'], profile['outputPath'])
+                ouput_file_path = os.path.relpath(
+                    ouput_file_path, args.build_folder)
 
                 if profile['exitCode'] != 0:
                     print('Skipping: {} (process failed)')
@@ -45,9 +50,10 @@ def main():
                     class_type = 'library'
                     class_instance = output_path_tokens[1]
                 elif output_path_tokens[0] == 'lib' or output_path_tokens[0] == 'bin':
-                    continue # this is generally the openssl / MCL build art
+                    continue  # this is generally the openssl / MCL build art
 
-                profile_points.append((operation, class_type, class_instance, ouput_file_path, profile['duration']))
+                profile_points.append(
+                    (operation, class_type, class_instance, ouput_file_path, profile['duration']))
 
     with open(args.output_path, 'w') as output_file:
         headers = (
