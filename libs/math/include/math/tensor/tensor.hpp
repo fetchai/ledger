@@ -1337,7 +1337,7 @@ Tensor<T, C> Tensor<T, C>::FillArange(Type const &from, Type const &to)
   for (SizeType i = 0; i < N; ++i)
   {
     this->operator[](i) = Type(d);
-    d = static_cast<Type>(d + delta);
+    d                   = static_cast<Type>(d + delta);
   }
   return *this;
 }
