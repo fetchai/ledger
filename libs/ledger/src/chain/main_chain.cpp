@@ -146,7 +146,7 @@ BlockStatus MainChain::AddBlock(Block block)
  * @param block The block that will be added to the chain.
  * @return The status enumeration signalling the operation result
  */
-BlockStatus MainChain::AddBlock(BlockPtr block)
+BlockStatus MainChain::AddBlock(BlockPtr &&block)
 {
   return AddBlock(ConstPointerCast<Block>(std::move(block)));
 }

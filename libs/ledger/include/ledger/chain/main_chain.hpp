@@ -161,7 +161,7 @@ public:
   /// @name Block Management
   /// @{
   BlockStatus AddBlock(Block block);
-  BlockStatus AddBlock(BlockPtr block);
+  BlockStatus AddBlock(BlockPtr &&block);
   BlockPtr    GetBlock(BlockHash const &hash) const;
   bool        RemoveBlock(BlockHash const &hash);
   /// @}
