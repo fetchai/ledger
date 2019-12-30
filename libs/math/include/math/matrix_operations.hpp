@@ -29,7 +29,7 @@
 #include "math/linalg/blas/gemm_tn_vector.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include "math/tensor_reduce.hpp"
+#include "math/tensor/tensor_reduce.hpp"
 #include "vectorise/math/standard_functions.hpp"
 
 #include <cassert>

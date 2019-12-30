@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "math/top_k.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/ops.hpp"

@@ -47,7 +47,7 @@
 
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
-#include "math/tensor_view.hpp"
+#include "math/tensor/tensor_view.hpp"
 
 namespace fetch {
 namespace math {

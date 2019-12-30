@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "math/tensor_declaration.hpp"
-#include "math/tensor_slice_iterator.hpp"
+#include "math/tensor/tensor_declaration.hpp"
+#include "math/tensor/tensor_slice_iterator.hpp"
 
 #include <cassert>
 

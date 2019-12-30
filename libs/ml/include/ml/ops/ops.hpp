@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "meta/vm_types.hpp"
 #include "ml/ops/estimation/charge_constants.hpp"
 #include "ml/saveparams/saveable_params.hpp"
