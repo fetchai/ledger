@@ -19,7 +19,7 @@
 
 #include "math/exceptions/exceptions.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include "math/tensor_broadcast.hpp"
+#include "math/tensor/tensor_broadcast.hpp"
 
 #include <cassert>
 

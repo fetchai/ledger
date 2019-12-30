@@ -18,7 +18,7 @@
 
 #include "gtest/gtest.h"
 #include "math/matrix_operations.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include <string>

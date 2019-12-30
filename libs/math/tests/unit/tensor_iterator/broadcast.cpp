@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-#include "math/tensor_broadcast.hpp"
+#include "math/tensor/tensor.hpp"
+#include "math/tensor/tensor_broadcast.hpp"
 
 #include "gtest/gtest.h"
 

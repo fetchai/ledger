@@ -18,7 +18,7 @@
 
 #include "core/serializers/main_serializer.hpp"
 #include "gtest/gtest.h"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "test_types.hpp"
 
 namespace fetch {
