@@ -1337,7 +1337,7 @@ Tensor<T, C> Tensor<T, C>::FillArange(Type const &from, Type const &to)
   for (SizeType i = 0; i < N; ++i)
   {
     this->operator[](i) = Type(d);
-    d += static_cast<Type>(delta);
+    d = static_cast<Type>(d + delta);
   }
   return *this;
 }
@@ -1870,9 +1870,9 @@ template <typename T, typename C>
 typename Tensor<T, C>::Type Tensor<T, C>::Sum() const
 {
   Type ret{0};
-  for (auto const &v : *this)
+  for (Type const &v : *this)
   {
-    ret += v;
+    ret = static_cast<Type>(v + ret);
   }
   return ret;
 }
