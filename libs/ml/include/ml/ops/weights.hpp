@@ -260,6 +260,10 @@ public:
     return this->gradient_accumulation_->Copy();
   }
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
   static constexpr OpType OpCode()
   {
     return OpType::OP_WEIGHTS;

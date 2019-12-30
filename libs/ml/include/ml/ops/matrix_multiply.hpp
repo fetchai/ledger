@@ -98,6 +98,11 @@ public:
                                    TensorType const &   error_signal) override;
   std::vector<SizeType>   ComputeOutputShape(VecTensorType const &inputs) const override;
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+
   static constexpr OpType OpCode()
   {
     return OpType::OP_MATRIX_MULTIPLY;

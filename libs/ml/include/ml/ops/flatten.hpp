@@ -103,6 +103,10 @@ public:
     return {data_size, batch_size};
   }
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
   static constexpr OpType OpCode()
   {
     return OpType::OP_FLATTEN;

@@ -104,12 +104,16 @@ public:
     std::string output =
         fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation", add);
 
-    this->nodes_.at(input)->SetSliceOutputShape({in_size_, 1});
+    std::vector<SizeType> input_slice_shape = {in_size_, 1};
+    this->SetExpectedSliceInputShapes({input_slice_shape});
+    this->SetSliceOutputShape({out_size_, 1});
+
+    this->nodes_.at(input)->SetSliceOutputShape(input_slice_shape);
     this->nodes_.at(weights)->SetSliceOutputShape({out_size_, in_size_});
-    this->nodes_.at(weights_matmul)->SetSliceOutputShape({out_size_, 1});
-    this->nodes_.at(bias)->SetSliceOutputShape({out_size_, 1});
-    this->nodes_.at(add)->SetSliceOutputShape({out_size_, 1});
-    this->nodes_.at(output)->SetSliceOutputShape({out_size_, 1});
+    this->nodes_.at(weights_matmul)->SetSliceOutputShape(this->slice_output_shape_);
+    this->nodes_.at(bias)->SetSliceOutputShape(this->slice_output_shape_);
+    this->nodes_.at(add)->SetSliceOutputShape(this->slice_output_shape_);
+    this->nodes_.at(output)->SetSliceOutputShape(this->slice_output_shape_);
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
@@ -133,7 +137,6 @@ public:
     }
     this->SetInput(name + "_Bias", bias_data);
     this->Compile();
-    this->SetSliceOutputShape({out_size_, 1});
   }
 
   OpPtrType MakeSharedCopy(OpPtrType me) override

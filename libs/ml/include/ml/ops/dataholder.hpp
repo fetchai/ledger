@@ -108,6 +108,11 @@ public:
     return data_->shape();
   }
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+
   static constexpr OpType OpCode()
   {
     return OpType::OP_DATAHOLDER;

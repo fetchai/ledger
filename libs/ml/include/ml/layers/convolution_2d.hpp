@@ -133,7 +133,6 @@ public:
   {
     return this->OpCode();
   }
-
   static constexpr OpType OpCode()
   {
     return OpType::LAYER_CONVOLUTION_2D;

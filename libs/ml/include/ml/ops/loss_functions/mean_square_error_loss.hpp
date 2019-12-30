@@ -258,6 +258,10 @@ public:
     return {1, 1};
   }
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
   static constexpr OpType OpCode()
   {
     return OpType::LOSS_MEAN_SQUARE_ERROR;

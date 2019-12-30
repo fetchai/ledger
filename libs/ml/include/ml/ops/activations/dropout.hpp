@@ -147,6 +147,10 @@ public:
     return inputs.front()->shape();
   }
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
   static constexpr OpType OpCode()
   {
     return OpType::OP_DROPOUT;

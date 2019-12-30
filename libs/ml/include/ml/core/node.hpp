@@ -136,13 +136,13 @@ public:
    */
   OpType const &OpCode()
   {
+    using namespace fetch::ml::string_helpers;
     if (operation_type_ != op_ptr_->OperationType())
     {
       FETCH_LOG_ERROR(this->name_.c_str(),
-                      "Node operation type (" + std::to_string(static_cast<int>(operation_type_)) +
+                      "Node operation type (" + OperationNames.at(operation_type_) +
                           ") and underlying Ops operation code (" +
-                          std::to_string(static_cast<int>(op_ptr_->OperationType())) +
-                          ") mismatch!");
+                          OperationNames.at(op_ptr_->OperationType()) + ") mismatch!");
       operation_type_ = op_ptr_->OperationType();
     }
     return operation_type_;
@@ -160,9 +160,15 @@ public:
     // TODO(VH): call OpForwardCost() of the Op - we need to know Data shape to do this.
     if (input_nodes_.empty())
     {
+      auto const &expected_in_shapes = op_ptr_->ExpectedSliceInputShapes();
+      if (this->OpCode() == OpType::OP_PLACEHOLDER)
+      {
+        FETCH_LOG_INFO(name_.c_str(), "Input Placeholder layer cost added");
+        return op_ptr_->OpForwardCost(expected_in_shapes);
+      }
       // TODO(VH): handle Weight and other Ops without input.
-      FETCH_LOG_INFO("Node", " Input node reached: default cost " +
-                                 std::to_string(my_default_cost) + " added.");
+      FETCH_LOG_WARN(this->name_.c_str(), " Input non-placeholder node reached: default cost " +
+                                              std::to_string(my_default_cost) + " added.");
       return my_default_cost;
     }
     fetch::vm::ChargeAmount total_cost = my_default_cost;
@@ -229,14 +235,14 @@ public:
       slice_output_shape_ = candidate;
     }
 
-    // Do I have any inputs to ask them for shape?
-    if (input_nodes_.empty())
-    {
-      // This is a leaf node and its shape can not be deduced from input one.
-      // TODO(VH): we need to treat leaf nodes somehow.
-      FETCH_LOG_INFO("Node", "Shape deduction reached a Graph leaf : " + this->name_);
-      return slice_output_shape_;
-    }
+    //    // Do I have any inputs to ask them for shape?
+    //    if (input_nodes_.empty())
+    //    {
+    //      // This is a leaf node and its shape can not be deduced from input one.
+    //      // TODO(VH): we need to treat leaf nodes somehow.
+    //      FETCH_LOG_INFO("Node", "Shape deduction reached a Graph leaf : " + this->name_);
+    //      return slice_output_shape_;
+    //    }
 
     ShapeVector input_shapes;
     for (auto const &i : input_nodes_)
@@ -265,14 +271,14 @@ public:
         // TODO(VH): implement input shape matching validation.
       }
     }
-    else if (i_am_preshaped)
+    else
     {
-      // If I am a pre-shaped node, and my Input is a lone Placeholder, I can force its shape.
-      if (input_nodes_.size() != 1)
+      if (input_nodes_.size() != 1 || !i_am_preshaped)
       {
-        FETCH_LOG_INFO("Node", "Shape deduction reached a Graph leaf : " + this->name_);
+        FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached a Graph leaf : " + this->name_);
         return slice_output_shape_;
       }
+      // If I am a pre-shaped node, and my Input is a lone Placeholder, I can force its shape.
       std::shared_ptr<Node<TensorType>> input_node = input_nodes_.back().lock();
       if (!input_node)
       {
@@ -280,8 +286,8 @@ public:
       }
       if (input_node->OpCode() == OpType::OP_PLACEHOLDER)
       {
-        // TODO(VH): Input's out shape should be set to my _input_ shape, not output one.
-        input_node->SetSliceOutputShape(this->SliceOutputShape());
+        input_node->SetSliceOutputShape(op_ptr_->ExpectedSliceInputShapes().front());
+        FETCH_LOG_INFO(name_.c_str(), "Forced next layer shape to my expected input shape.");
       }
     }
 

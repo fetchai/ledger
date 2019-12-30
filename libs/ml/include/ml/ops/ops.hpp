@@ -105,19 +105,22 @@ public:
     expected_slice_input_shapes_ = new_shapes;
   }
 
-  virtual Shape SliceOutputShape() const
+  virtual Shape const &SliceOutputShape() const
   {
     return slice_output_shape_;
   }
 
-  virtual ShapeVector ExpectedSliceInputShapes() const
+  virtual ShapeVector const &ExpectedSliceInputShapes() const
   {
     return expected_slice_input_shapes_;
   }
 
-  virtual OpType OperationType() const
+  virtual OpType OperationType() const  // TODO(VH): make a pure virtual.
   {
-    return OpType::NONE;  // TODO(VH): make pure virtual.
+    // std::cout << __PRETTY_FUNCTION__ << std::endl;
+    // FETCH_LOG_WARN("Ops", "UNIMPLEMENTED Ops::OpCode() CALLED! Exception should be raised.");
+    std::cout << "UNIMPLEMENTED Ops::OpCode() CALLED! Exception should be raised." << std::endl;
+    return OpType::NONE;
   }
 
 protected:

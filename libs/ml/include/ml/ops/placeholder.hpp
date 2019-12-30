@@ -84,6 +84,11 @@ public:
     return copyshare;
   }
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+
   static constexpr OpType OpCode()
   {
     return OpType::OP_PLACEHOLDER;
