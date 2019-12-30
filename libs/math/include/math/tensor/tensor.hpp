@@ -2720,9 +2720,9 @@ bool Tensor<T, C>::AllClose(Tensor const &o, Type const &relative_tolerance,
     T abs_diff;
     fetch::math::Abs(e1, abs_e1);
     fetch::math::Abs(e2, abs_e2);
-    fetch::math::Abs(e1 - e2, abs_diff);
-    T tolerance = fetch::vectorise::Max(absolute_tolerance,
-                                        fetch::vectorise::Max(abs_e1, abs_e2) * relative_tolerance);
+    fetch::math::Abs(T(e1 - e2), abs_diff);
+    T tolerance = fetch::vectorise::Max(
+        absolute_tolerance, T(fetch::vectorise::Max(abs_e1, abs_e2) * relative_tolerance));
     if (abs_diff > tolerance)
     {
       return false;

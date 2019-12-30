@@ -71,10 +71,10 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::size() const
   return size_;
 }
 
-// template class Tensor<std::int16_t>;
+template class Tensor<std::int16_t>;
 template class Tensor<std::int32_t>;
 template class Tensor<std::int64_t>;
-// template class Tensor<std::uint16_t>;
+template class Tensor<std::uint16_t>;
 template class Tensor<std::uint32_t>;
 template class Tensor<std::uint64_t>;
 template class Tensor<float>;

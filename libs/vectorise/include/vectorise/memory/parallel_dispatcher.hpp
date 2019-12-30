@@ -122,7 +122,7 @@ public:
       {
         scalar_iter.Next(a);
         tmp = kernel(a);
-        ret = op(ret, tmp.data());
+        ret = static_cast<type>(op(ret, tmp.data()));
       }
     }
 
@@ -149,7 +149,7 @@ public:
       {
         scalar_iter.Next(a);
         tmp = kernel(a);
-        ret = op(ret, tmp.data());
+        ret = static_cast<type>(op(ret, tmp.data()));
       }
     }
 

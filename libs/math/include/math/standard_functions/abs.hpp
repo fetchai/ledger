@@ -42,7 +42,7 @@ meta::IfIsNonFixedPointUnsignedArithmetic<T, void> Abs(T const &n, T &ret)
 template <typename T>
 meta::IfIsNonFixedPointSignedArithmetic<T, void> Abs(T const &n, T &ret)
 {
-  ret = std::abs(n);
+  ret = static_cast<T>(std::abs(n));
 }
 
 template <typename T>
