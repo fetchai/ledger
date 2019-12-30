@@ -21,7 +21,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "json/document.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "variant/variant.hpp"
 #include "vm/io_observer_interface.hpp"

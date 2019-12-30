@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-#include "math/tensor_squeeze.hpp"
+#include "math/tensor/tensor.hpp"
+#include "math/tensor/tensor_squeeze.hpp"
 
 #include "gtest/gtest.h"
 

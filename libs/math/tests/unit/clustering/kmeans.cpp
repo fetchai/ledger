@@ -18,7 +18,7 @@
 
 #include "math/clustering/k_means.hpp"
 #include "math/combinatorics.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 
 #include "gtest/gtest.h"
 

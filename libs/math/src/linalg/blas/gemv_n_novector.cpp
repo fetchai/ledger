@@ -19,7 +19,7 @@
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemv_n.hpp"
 #include "math/linalg/prototype.hpp"
-#include "math/tensor_view.hpp"
+#include "math/tensor/tensor_view.hpp"
 
 namespace fetch {
 namespace math {
@@ -76,25 +76,17 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
     {
       if (beta == Type{0})
       {
-        auto zero = Type{0};
-
-        auto          ret_slice = y.data().slice(0, y.padded_size());
-        memory::Range range(std::size_t(0), std::size_t(leny));
-        ret_slice.in_parallel().RangedApply(range, [zero](auto &&vw_fv_y) {
-          vw_fv_y = static_cast<std::remove_reference_t<decltype(vw_fv_y)>>(zero);
-        });
+        for (i = 0; i < leny; ++i)
+        {
+          y[i] = Type{0};
+        }
       }
       else
       {
-        auto          ret_slice  = y.data().slice(0, y.padded_size());
-        auto          slice_fv_y = y.data().slice(0, y.padded_size());
-        memory::Range range(std::size_t(0), std::size_t(leny));
-        ret_slice.in_parallel().RangedApplyMultiple(
-            range,
-            [beta](auto const &vr_fv_y, auto &vw_fv_y) {
-              vw_fv_y = static_cast<std::remove_reference_t<decltype(vr_fv_y)>>(beta) * vr_fv_y;
-            },
-            slice_fv_y);
+        for (i = 0; i < leny; ++i)
+        {
+          y[i] = beta * y[i];
+        }
       }
     }
     else
@@ -130,18 +122,11 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
     for (j = 0; j < int(a.width()); ++j)
     {
       temp = alpha * x[jx];
+      for (i = 0; i < int(a.height()); ++i)
+      {
+        y[i] = y[i] + temp * a(i, j);
+      }
 
-      auto ret_slice  = y.data().slice(0, y.padded_size());
-      auto slice_fv_y = y.data().slice(0, y.padded_size());
-      auto slice_a_j  = a.data().slice(a.padded_height() * std::size_t(j), a.padded_height());
-      memory::Range range(std::size_t(0), std::size_t(int(a.height())));
-      ret_slice.in_parallel().RangedApplyMultiple(
-          range,
-          [temp](auto const &vr_fv_y, auto const &vr_a_j, auto &vw_fv_y) {
-            vw_fv_y =
-                vr_fv_y + static_cast<std::remove_reference_t<decltype(vw_fv_y)>>(temp) * vr_a_j;
-          },
-          slice_fv_y, slice_a_j);
       jx = jx + incx;
     }
   }
@@ -164,30 +149,35 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
 
 template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
                     Computes(_y <= _alpha * _A * _x + _beta * _y),
-                    platform::Parallelisation::VECTORISE>;
+                    platform::Parallelisation::NOT_PARALLEL>;
 template class Blas<float, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
                     Computes(_y <= _alpha * _A * _x + _beta * _y),
-                    platform::Parallelisation::VECTORISE>;
+                    platform::Parallelisation::NOT_PARALLEL>;
 template class Blas<
     fetch::fixed_point::FixedPoint<16, 16>, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::VECTORISE>;
+    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>;
 template class Blas<
     fetch::fixed_point::FixedPoint<32, 32>, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::VECTORISE>;
+    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>;
+template class Blas<
+    fetch::fixed_point::FixedPoint<64, 64>, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>;
 template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
                     Computes(_y <= _alpha * _A * _x + _beta * _y),
-                    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
+                    platform::Parallelisation::THREADING>;
 template class Blas<float, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
                     Computes(_y <= _alpha * _A * _x + _beta * _y),
-                    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
-template class Blas<fetch::fixed_point::FixedPoint<16, 16>,
-                    Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-                    Computes(_y <= _alpha * _A * _x + _beta * _y),
-                    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
-template class Blas<fetch::fixed_point::FixedPoint<32, 32>,
-                    Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-                    Computes(_y <= _alpha * _A * _x + _beta * _y),
-                    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
+                    platform::Parallelisation::THREADING>;
+template class Blas<
+    fetch::fixed_point::FixedPoint<16, 16>, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::THREADING>;
+template class Blas<
+    fetch::fixed_point::FixedPoint<32, 32>, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::THREADING>;
+template class Blas<
+    fetch::fixed_point::FixedPoint<64, 64>, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::THREADING>;
+
 }  // namespace linalg
 }  // namespace math
 }  // namespace fetch

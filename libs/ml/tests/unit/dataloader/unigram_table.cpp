@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
 
 #include "gtest/gtest.h"

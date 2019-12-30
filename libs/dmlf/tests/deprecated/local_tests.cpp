@@ -23,7 +23,7 @@
 #include "dmlf/deprecated/update_interface.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 
 #include "gtest/gtest.h"
 

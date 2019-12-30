@@ -23,7 +23,7 @@
 #include "dmlf/collective_learning/client_params.hpp"
 #include "dmlf/deprecated/update.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/model/sequential.hpp"
 #include "ml/utilities/sparse_tensor_utilities.hpp"
 #include "ml/utilities/utils.hpp"

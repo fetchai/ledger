@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/elu.hpp"
 #include "ml/ops/activations/leaky_relu.hpp"
