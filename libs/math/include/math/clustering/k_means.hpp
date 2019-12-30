@@ -21,7 +21,7 @@
 #include "core/vector.hpp"
 #include "math/distance/euclidean.hpp"
 #include "math/standard_functions/pow.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 
 #include <algorithm>
 #include <cassert>

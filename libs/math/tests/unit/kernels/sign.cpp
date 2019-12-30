@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/sign.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 
 #include "gtest/gtest.h"
 

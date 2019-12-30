@@ -19,7 +19,7 @@
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemm_nn_novector.hpp"
 #include "math/linalg/prototype.hpp"
-#include "math/tensor_view.hpp"
+#include "math/tensor/tensor_view.hpp"
 
 #include <cstddef>
 

@@ -21,7 +21,7 @@
 #include "math/activation_functions/relu.hpp"
 #include "math/activation_functions/sigmoid.hpp"
 #include "math/activation_functions/softmax.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 
 #include "benchmark/benchmark.h"
 

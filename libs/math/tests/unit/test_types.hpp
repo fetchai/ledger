@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "gtest/gtest.h"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 
 namespace fetch {
 namespace math {
