@@ -612,6 +612,7 @@ template <typename TensorType>
 struct OpReshapeSaveableParams : public OpsSaveableParams
 {
   std::vector<fetch::math::SizeType> new_shape;
+  fetch::math::SizeType              new_size;
   fetch::ml::OpType                  op_type = OpType::OP_RESHAPE;
 };
 
