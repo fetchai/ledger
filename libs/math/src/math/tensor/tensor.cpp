@@ -22,17 +22,66 @@
 namespace fetch {
 namespace math {
 
-template class Tensor<float>;
-//template class Tensor<double>;
-//template class Tensor<fixed_point::fp32_t>;
-//template class Tensor<fixed_point::fp64_t>;
-//template class Tensor<fixed_point::fp128_t>;
+////////////////////
+/// SHAPE & SIZE ///
+////////////////////
 
-//template <typename T, typename C>
-//SizeType Tensor<T, C>::size() const
-//{
-//  return size_;
-//}
+/**
+ * returns the tensor's current shape
+ * @return the stride of the tensor as a vector of size_type
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SizeVector const &Tensor<T, C>::stride() const
+{
+  return stride_;
+}
+
+/**
+ * returns the tensor's current shape
+ * @return  shape_ is the shape of the tensor as a vector of size_type
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SizeVector const &Tensor<T, C>::shape() const
+{
+  return shape_;
+}
+
+/**
+ * returns the size of a specified dimension
+ * @tparam T Type
+ * @tparam C Container
+ * @param n the dimension to query
+ * @return SizeType value indicating the size of a dimension of the Tensor
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SizeType const &Tensor<T, C>::shape(SizeType const &n) const
+{
+  return shape_[n];
+}
+
+/**
+ * returns the size of the tensor
+ * @tparam T Type
+ * @tparam C Container
+ * @return SizeType value indicating total size of Tensor
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SizeType Tensor<T, C>::size() const
+{
+  return size_;
+}
+
+// template class Tensor<std::int16_t>;
+template class Tensor<std::int32_t>;
+template class Tensor<std::int64_t>;
+// template class Tensor<std::uint16_t>;
+template class Tensor<std::uint32_t>;
+template class Tensor<std::uint64_t>;
+template class Tensor<float>;
+template class Tensor<double>;
+template class Tensor<fixed_point::fp32_t>;
+template class Tensor<fixed_point::fp64_t>;
+template class Tensor<fixed_point::fp128_t>;
 
 }  // namespace math
 }  // namespace fetch

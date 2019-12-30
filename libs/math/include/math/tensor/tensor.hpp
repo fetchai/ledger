@@ -115,11 +115,11 @@ public:
     Resize({0});
   }
 
-//  explicit Tensor(ContainerType &container_data)
-//  {
-//    Reshape(container_data.shape());
-//    data_ = container_data;
-//  }
+  //  explicit Tensor(ContainerType &container_data)
+  //  {
+  //    Reshape(container_data.shape());
+  //    data_ = container_data;
+  //  }
 
   static Tensor FromString(byte_array::ConstByteArray const &c);
   explicit Tensor(SizeType const &n);
@@ -1323,8 +1323,8 @@ Tensor<T, C> &Tensor<T, C>::operator=(ConstSliceType const &slice)
 // * @param slice
 // * @return
 // */
-//template <typename T, typename C>
-//Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
+// template <typename T, typename C>
+// Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
 //{
 //  auto it1 = begin();
 //  auto it2 = slice.begin();
@@ -1429,8 +1429,8 @@ void Tensor<T, C>::Set(Args... args)
 // * @param value
 // * @param range
 // */
-//template <typename T, typename C>
-//void Tensor<T, C>::Fill(Type const &value, memory::Range const &range)
+// template <typename T, typename C>
+// void Tensor<T, C>::Fill(Type const &value, memory::Range const &range)
 //{
 //  VectorRegisterType val(value);
 //
@@ -1793,54 +1793,6 @@ Tensor<T, C> &Tensor<T, C>::Unsqueeze()
 }
 
 /**
- */
-
-/**
- * returns the tensor's current shape
- * @return the stride of the tensor as a vector of size_type
- */
-template <typename T, typename C>
-typename Tensor<T, C>::SizeVector const &Tensor<T, C>::stride() const
-{
-  return stride_;
-}
-
-/**
- * returns the tensor's current shape
- * @return  shape_ is the shape of the tensor as a vector of size_type
- */
-template <typename T, typename C>
-typename Tensor<T, C>::SizeVector const &Tensor<T, C>::shape() const
-{
-  return shape_;
-}
-
-/**
- * returns the size of a specified dimension
- * @tparam T Type
- * @tparam C Container
- * @param n the dimension to query
- * @return SizeType value indicating the size of a dimension of the Tensor
- */
-template <typename T, typename C>
-typename Tensor<T, C>::SizeType const &Tensor<T, C>::shape(SizeType const &n) const
-{
-  return shape_[n];
-}
-
-/**
- * returns the size of the tensor
- * @tparam T Type
- * @tparam C Container
- * @return SizeType value indicating total size of Tensor
- */
-template <typename T, typename C>
-typename Tensor<T, C>::SizeType Tensor<T, C>::size() const
-{
-  return size_;
-}
-
-/**
  * Sets a single value in the array using an n-dimensional index
  * @param indices     index position in array
  * @param val         value to write
@@ -2120,8 +2072,8 @@ typename Tensor<T, C>::Type Tensor<T, C>::Sum() const
 ///**
 // * Calculate the Exponentials of tensor x and stores in this
 // */
-//template <typename T, typename C>
-//void Tensor<T, C>::Exp(Tensor const &x)
+// template <typename T, typename C>
+// void Tensor<T, C>::Exp(Tensor const &x)
 //{
 //  Exp(x, *this);
 //}
@@ -2129,8 +2081,8 @@ typename Tensor<T, C>::Type Tensor<T, C>::Sum() const
 ///**
 // * Calculate the ApproxSoftMax of X and store in this
 // */
-//template <typename T, typename C>
-//void Tensor<T, C>::ApproxSoftMax(Tensor const &x)
+// template <typename T, typename C>
+// void Tensor<T, C>::ApproxSoftMax(Tensor const &x)
 //{
 //  ApproxSoftMax(x, *this);
 //}
@@ -2173,8 +2125,8 @@ typename Tensor<T, C>::Type Tensor<T, C>::PeakToPeak() const
 // * array
 // * @param x
 // */
-//template <typename T, typename C>
-//void Tensor<T, C>::Fmod(Tensor const &x)
+// template <typename T, typename C>
+// void Tensor<T, C>::Fmod(Tensor const &x)
 //{
 //  Resize({x.size()});
 //  // TODO(?): Should use iterators
@@ -2186,8 +2138,8 @@ typename Tensor<T, C>::Type Tensor<T, C>::PeakToPeak() const
 // * quotient rounded to int
 // * @param x
 // */
-//template <typename T, typename C>
-//void Tensor<T, C>::Remainder(Tensor const &x)
+// template <typename T, typename C>
+// void Tensor<T, C>::Remainder(Tensor const &x)
 //{
 //  Resize({x.size()});
 //  fetch::math::Remainder(data_, x.data(), data_);
