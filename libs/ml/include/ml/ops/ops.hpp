@@ -55,7 +55,7 @@ public:
    * in ASSERT. On Forward you can use output.shape() and on Backward there is error_signal.shape()
    */
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;
-  std::vector<SizeType>         ComputeDefaultOutputShape(ShapeVector const &input_shapes)
+  std::vector<SizeType>         ComputeSliceOutputShape(ShapeVector const &input_shapes)
   {
     ShapeVector   tensor_shapes = input_shapes;
     VecTensorType dummies;
@@ -63,8 +63,8 @@ public:
     {
       dummies.push_back(std::make_shared<TensorType>(shape));
     }
-    default_output_shape_ = ComputeOutputShape(dummies);
-    return default_output_shape_;
+    slice_output_shape_ = ComputeOutputShape(dummies);
+    return slice_output_shape_;
   }
 
   virtual std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() = 0;
@@ -95,25 +95,40 @@ public:
     return 0;  // TODO(VH): make me a pure virtual.
   }
 
-  void SetDefaultOutputShape(std::vector<SizeType> const &new_shape)
+  void SetSliceOutputShape(Shape const &new_shape)
   {
-    default_output_shape_ = new_shape;
+    slice_output_shape_ = new_shape;
   }
 
-  virtual std::vector<SizeType> DefaultOutputShape()
+  void SetExpectedSliceInputShapes(ShapeVector const &new_shapes)
   {
-    return default_output_shape_;
+    expected_slice_input_shapes_ = new_shapes;
+  }
+
+  virtual Shape SliceOutputShape() const
+  {
+    return slice_output_shape_;
+  }
+
+  virtual ShapeVector ExpectedSliceInputShapes() const
+  {
+    return expected_slice_input_shapes_;
+  }
+
+  virtual OpType OperationType() const
+  {
+    return OpType::NONE;  // TODO(VH): make pure virtual.
   }
 
 protected:
   bool is_training_ = true;
 
-  ShapeVector default_input_shapes_{};  // TODO(VH): impl. filling it on compilation.
-  Shape       default_output_shape_{};
+  ShapeVector expected_slice_input_shapes_{};  // TODO(VH): impl. filling it on compilation.
+  Shape       slice_output_shape_{};
 
   std::string OutputShapeAsString()
   {
-    std::vector<SizeType> const out_shape = this->DefaultOutputShape();
+    std::vector<SizeType> const out_shape = this->SliceOutputShape();
     std::stringstream           ss;
     ss << " (out ";
     if (out_shape.empty())

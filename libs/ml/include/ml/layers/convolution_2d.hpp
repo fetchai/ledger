@@ -129,12 +129,9 @@ public:
         .ComputeOutputShape({inputs.at(0), std::make_shared<TensorType>(weights_data)});
   }
 
-  std::vector<SizeType> DefaultOutputShape() override
+  OpType OperationType() const override
   {
-    // TODO(VH): This produce wrong output shape description.
-    std::vector<SizeType> a{{output_channels_}, {1}};
-    SubGraph<T>::default_output_shape_ = a;
-    return SubGraph<T>::default_output_shape_;
+    return this->OpCode();
   }
 
   static constexpr OpType OpCode()

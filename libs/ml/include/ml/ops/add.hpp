@@ -99,6 +99,11 @@ public:
     return inputs.at(0)->shape();
   }
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+
   static constexpr OpType OpCode()
   {
     return OpType::OP_ADD;

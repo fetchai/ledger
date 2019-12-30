@@ -88,7 +88,7 @@ public:
     {
       flat_input =
           this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input});
-      Graph<T>::nodes_.at(flat_input)->SetDefaultOutputShape({out_size_, 1});
+      Graph<T>::nodes_.at(flat_input)->SetSliceOutputShape({out_size_, 1});
     }
 
     std::string weights =
@@ -104,12 +104,12 @@ public:
     std::string output =
         fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation", add);
 
-    this->nodes_.at(input)->SetDefaultOutputShape({in_size_, 1});
-    this->nodes_.at(weights)->SetDefaultOutputShape({out_size_, in_size_});
-    this->nodes_.at(weights_matmul)->SetDefaultOutputShape({out_size_, 1});
-    this->nodes_.at(bias)->SetDefaultOutputShape({out_size_, 1});
-    this->nodes_.at(add)->SetDefaultOutputShape({out_size_, 1});
-    this->nodes_.at(output)->SetDefaultOutputShape({out_size_, 1});
+    this->nodes_.at(input)->SetSliceOutputShape({in_size_, 1});
+    this->nodes_.at(weights)->SetSliceOutputShape({out_size_, in_size_});
+    this->nodes_.at(weights_matmul)->SetSliceOutputShape({out_size_, 1});
+    this->nodes_.at(bias)->SetSliceOutputShape({out_size_, 1});
+    this->nodes_.at(add)->SetSliceOutputShape({out_size_, 1});
+    this->nodes_.at(output)->SetSliceOutputShape({out_size_, 1});
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
@@ -133,6 +133,7 @@ public:
     }
     this->SetInput(name + "_Bias", bias_data);
     this->Compile();
+    this->SetSliceOutputShape({out_size_, 1});
   }
 
   OpPtrType MakeSharedCopy(OpPtrType me) override
@@ -197,11 +198,9 @@ public:
             inputs.front()->shape(inputs.front()->shape().size() - 1)};
   }
 
-  std::vector<SizeType> DefaultOutputShape() override
+  OpType OperationType() const override
   {
-    std::vector<SizeType> a{{out_size_}, {1}};
-    SubGraph<T>::default_output_shape_ = a;
-    return SubGraph<T>::default_output_shape_;
+    return this->OpCode();
   }
 
   static constexpr OpType OpCode()

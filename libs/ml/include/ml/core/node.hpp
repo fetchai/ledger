@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -86,7 +87,7 @@ public:
   Node(Node &old_node, std::string name, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
-    , operation_type_(old_node.get_op_type())
+    , operation_type_(old_node.OpCode())
     , op_ptr_(std::move(op_ptr))
   {
     cached_output_ = old_node.cached_output_.Copy();
@@ -133,8 +134,17 @@ public:
    * returns the stored operation type
    * @return
    */
-  OpType const &get_op_type()
+  OpType const &OpCode()
   {
+    if (operation_type_ != op_ptr_->OperationType())
+    {
+      FETCH_LOG_ERROR(this->name_.c_str(),
+                      "Node operation type (" + std::to_string(static_cast<int>(operation_type_)) +
+                          ") and underlying Ops operation code (" +
+                          std::to_string(static_cast<int>(op_ptr_->OperationType())) +
+                          ") mismatch!");
+      operation_type_ = op_ptr_->OperationType();
+    }
     return operation_type_;
   }
 
@@ -164,7 +174,7 @@ public:
         auto const input_node_forward_cost = input_node_ptr->ForwardPassChargeCost();
         total_cost += input_node_forward_cost;
         // TODO(VH): check if the calculations are valid.
-        auto const in_shape = input_node_ptr->DefaultOutputShape();
+        auto const in_shape = input_node_ptr->SliceOutputShape();
         if (!in_shape.empty())
         {
           input_shapes.emplace_back(in_shape);
@@ -181,67 +191,106 @@ public:
     return total_cost;
   }
 
-  void SetDefaultOutputShape(Shape const &new_shape)
+  void SetSliceOutputShape(Shape const &new_shape)
   {
-    default_output_shape_ = new_shape;
-    op_ptr_->SetDefaultOutputShape(new_shape);
+    slice_output_shape_ = new_shape;
+    op_ptr_->SetSliceOutputShape(new_shape);
   }
 
-  Shape DefaultOutputShape()
+  Shape SliceOutputShape()
   {
     // Returned cached shape result if available; also set underlying Op shape.
-    if (!default_output_shape_.empty())
+    if (!slice_output_shape_.empty())
     {
-      if (op_ptr_->DefaultOutputShape().empty())
+      if (op_ptr_->SliceOutputShape().empty())
       {
-        op_ptr_->SetDefaultOutputShape(default_output_shape_);
+        op_ptr_->SetSliceOutputShape(slice_output_shape_);
+        // TODO(VH): SetSliceInputShapes(...) ?
       }
-      return default_output_shape_;
+      return slice_output_shape_;
     }
 
+    // Is my Op pre-shaped?
+    bool const i_am_preshaped =
+        shaped_operations_.find(op_ptr_->OperationType()) != shaped_operations_.end();
+    if (i_am_preshaped)
+    {
+      // TODO(VH): then what?..
+      // Some Ops have their shape known at Graph compilation time
+      Shape const candidate = op_ptr_->SliceOutputShape();
+      if (candidate.empty())
+      {
+        // TODO(VH): throw error: shaped layer returned empty shape, linking failed!
+        FETCH_LOG_ERROR(
+            this->name_.c_str(),
+            "A pre-shaped Node's underlying Op returned empty shape, shape linking impossible!");
+        return slice_output_shape_;
+      }
+      slice_output_shape_ = candidate;
+    }
+
+    // Do I have any inputs to ask them for shape?
     if (input_nodes_.empty())
     {
       // This is a leaf node and its shape can not be deduced from input one.
       // TODO(VH): we need to treat leaf nodes somehow.
       FETCH_LOG_INFO("Node", "Shape deduction reached a Graph leaf : " + this->name_);
-      return default_output_shape_;
+      return slice_output_shape_;
     }
 
     ShapeVector input_shapes;
     for (auto const &i : input_nodes_)
     {
-      if (auto node_ptr = i.lock())
-      {
-        // Deeper recursive call!
-        auto const in_shape = node_ptr->DefaultOutputShape();
-        if (!in_shape.empty())
-        {
-          input_shapes.emplace_back(in_shape);
-        }
-      }
-      else
+      auto node_ptr = i.lock();
+      if (!node_ptr)
       {
         throw std::runtime_error("Unable to lock weak pointer.");
       }
+      // Deeper recursive call!
+      auto const in_shape = node_ptr->SliceOutputShape();
+      if (!in_shape.empty())
+      {
+        input_shapes.emplace_back(in_shape);
+      }
     }
 
-    // Some Ops have their shape known at Graph compilation time
-    Shape candidate = op_ptr_->DefaultOutputShape();
-    if (!candidate.empty())
+    if (!input_shapes.empty())
     {
-      default_output_shape_ = candidate;
+      if (slice_output_shape_.empty())
+      {
+        slice_output_shape_ = op_ptr_->ComputeSliceOutputShape(input_shapes);
+      }
+      else
+      {
+        // TODO(VH): implement input shape matching validation.
+      }
     }
-    else if (!input_shapes.empty())
+    else if (i_am_preshaped)
     {
-      default_output_shape_ = op_ptr_->ComputeDefaultOutputShape(input_shapes);
+      // If I am a pre-shaped node, and my Input is a lone Placeholder, I can force its shape.
+      if (input_nodes_.size() != 1)
+      {
+        FETCH_LOG_INFO("Node", "Shape deduction reached a Graph leaf : " + this->name_);
+        return slice_output_shape_;
+      }
+      std::shared_ptr<Node<TensorType>> input_node = input_nodes_.back().lock();
+      if (!input_node)
+      {
+        throw std::runtime_error("Unable to lock weak pointer.");
+      }
+      if (input_node->OpCode() == OpType::OP_PLACEHOLDER)
+      {
+        // TODO(VH): Input's out shape should be set to my _input_ shape, not output one.
+        input_node->SetSliceOutputShape(this->SliceOutputShape());
+      }
     }
 
-    if (default_output_shape_.empty())
+    if (slice_output_shape_.empty())
     {
       // throw an error: invalid calcs from a previous layer.
-      FETCH_LOG_INFO("Node", "Error: shape deduction failed for node " + name_);
+      FETCH_LOG_INFO(name_.c_str(), "Error: shape deduction failed.");
     }
-    return default_output_shape_;
+    return slice_output_shape_;
   }
 
 private:
@@ -251,15 +300,19 @@ private:
   std::string       name_;
   TensorType        cached_output_;
   CachedOutputState cached_output_status_;
-  OpType            operation_type_;
+  OpType operation_type_;  // TODO(VH): who synchronizes this code with underlying Ops OpCode?...
 
   // TODO(VH): only Ops should have computed Shapes, and the Node
   // must only ask its Op for output shape. "InformationExpert" violation.
-  Shape default_output_shape_{};
+  Shape slice_output_shape_{};
 
   std::shared_ptr<ops::Ops<TensorType>> op_ptr_;
+
+  static const std::set<OpType> shaped_operations_;
 };
 
+template <typename TensorType>
+const std::set<OpType> Node<TensorType>::shaped_operations_{OpType::LAYER_FULLY_CONNECTED};
 /**
  * Constructs and returns a NodeSaveableParams object allowing serialisation
  * @tparam T
