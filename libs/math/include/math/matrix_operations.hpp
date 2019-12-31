@@ -533,7 +533,7 @@ template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsAr
 meta::IfIsMathArray<ArrayType, void> Sum(ArrayType const &array1, T &ret)
 {
   using DataType = typename ArrayType::Type;
-  ret = typename ArrayType::Type(0);
+  ret            = typename ArrayType::Type(0);
   for (auto &val : array1)
   {
     ret = static_cast<DataType>(ret + val);
@@ -715,7 +715,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
 template <typename ArrayType>
 void PeakToPeak(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  using DataType = typename ArrayType::Type;
+  using DataType               = typename ArrayType::Type;
   ret                          = numeric_lowest<typename ArrayType::Type>();
   typename ArrayType::Type min = numeric_max<typename ArrayType::Type>();
   auto                     it  = array.cbegin();
