@@ -42,7 +42,7 @@ template <typename TensorType>
 double zero_fraction(TensorType const &t1)
 {
   using DataType = typename TensorType::Type;
-  double ret = 0;
+  double ret     = 0;
   for (auto const &i : t1)
   {
     if (i == DataType{0})

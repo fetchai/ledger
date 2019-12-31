@@ -27,7 +27,7 @@ template <typename ArrayType>
 meta::IfIsMathFixedPointArray<ArrayType, typename ArrayType::Type> L2Loss(ArrayType const &A)
 {
   using Type = typename ArrayType::Type;
-  auto tmp = Sum(Square(A));
+  auto tmp   = Sum(Square(A));
   tmp /= Type{2};
   return tmp;
 }

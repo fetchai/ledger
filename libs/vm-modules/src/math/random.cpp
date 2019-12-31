@@ -96,7 +96,8 @@ IfIsPtrFixed128<T, Ptr<T>> Rand(VM *vm, Ptr<T> const &a, Ptr<T> const &b)
 
   auto a_dbl = static_cast<double>(a->data_);
   auto b_dbl = static_cast<double>(b->data_);
-  auto x = fixed_point::fp128_t::FromFloat(std::uniform_real_distribution<double>{a_dbl, b_dbl}(mt));
+  auto x =
+      fixed_point::fp128_t::FromFloat(std::uniform_real_distribution<double>{a_dbl, b_dbl}(mt));
   return Ptr<Fixed128>(new Fixed128(vm, x));
 }
 

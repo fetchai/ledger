@@ -354,10 +354,9 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_backward_test)
       {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
 
   // test correct values
-  EXPECT_TRUE(
-      gradients.at(0).AllClose(new_gradients.at(0),
-                               fetch::math::function_tolerance<DataType>() * DataType{4},
-                               fetch::math::function_tolerance<DataType>() * DataType{4}));
+  EXPECT_TRUE(gradients.at(0).AllClose(new_gradients.at(0),
+                                       fetch::math::function_tolerance<DataType>() * DataType{4},
+                                       fetch::math::function_tolerance<DataType>() * DataType{4}));
 }
 
 }  // namespace test

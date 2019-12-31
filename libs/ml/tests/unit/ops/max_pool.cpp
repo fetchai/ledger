@@ -52,11 +52,13 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_3_2_2)
   {
     for (SizeType i{0}; i < 10; ++i)
     {
-      data(0, i, i_b) = fetch::math::AsType<DataType>(data_input[i]) + fetch::math::AsType<DataType>(i_b * 10);
+      data(0, i, i_b) =
+          fetch::math::AsType<DataType>(data_input[i]) + fetch::math::AsType<DataType>(i_b * 10);
     }
     for (SizeType i{0}; i < 4; ++i)
     {
-      gt(0, i, i_b) = fetch::math::AsType<DataType>(gt_input[i]) + fetch::math::AsType<DataType>(i_b * 10);
+      gt(0, i, i_b) =
+          fetch::math::AsType<DataType>(gt_input[i]) + fetch::math::AsType<DataType>(i_b * 10);
     }
   }
 
@@ -88,11 +90,13 @@ TYPED_TEST(MaxPoolTest, backward_test_1d)
   {
     for (SizeType i{0}; i < 10; ++i)
     {
-      data(0, i, i_b) = fetch::math::AsType<DataType>(data_input[i]) + fetch::math::AsType<DataType>(i_b);
+      data(0, i, i_b) =
+          fetch::math::AsType<DataType>(data_input[i]) + fetch::math::AsType<DataType>(i_b);
     }
     for (SizeType i{0}; i < 4; ++i)
     {
-      error(0, i, i_b) = fetch::math::AsType<DataType>(errorInput[i]) + fetch::math::AsType<DataType>(i_b);
+      error(0, i, i_b) =
+          fetch::math::AsType<DataType>(errorInput[i]) + fetch::math::AsType<DataType>(i_b);
     }
   }
 
@@ -199,8 +203,8 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_2_channels_4_1_2)
     {
       for (SizeType j{0}; j < 5; ++j)
       {
-        data(i, j, i_b) =
-            fetch::math::AsType<DataType>(data_input[i * 5 + j]) + fetch::math::AsType<DataType>(i_b * 10);
+        data(i, j, i_b) = fetch::math::AsType<DataType>(data_input[i * 5 + j]) +
+                          fetch::math::AsType<DataType>(i_b * 10);
       }
     }
 
@@ -208,8 +212,8 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_2_channels_4_1_2)
     {
       for (SizeType j{0}; j < 2; ++j)
       {
-        gt(i, j, i_b) =
-            fetch::math::AsType<DataType>(gt_input[i * 2 + j]) + fetch::math::AsType<DataType>(i_b * 10);
+        gt(i, j, i_b) = fetch::math::AsType<DataType>(gt_input[i * 2 + j]) +
+                        fetch::math::AsType<DataType>(i_b * 10);
       }
     }
   }
@@ -274,8 +278,8 @@ TYPED_TEST(MaxPoolTest, saveparams_test_1d)
     {
       for (SizeType j{0}; j < 5; ++j)
       {
-        data(i, j, i_b) =
-            fetch::math::AsType<DataType>(data_input[i * 5 + j]) + fetch::math::AsType<DataType>(i_b * 10);
+        data(i, j, i_b) = fetch::math::AsType<DataType>(data_input[i * 5 + j]) +
+                          fetch::math::AsType<DataType>(i_b * 10);
       }
     }
 
@@ -283,8 +287,8 @@ TYPED_TEST(MaxPoolTest, saveparams_test_1d)
     {
       for (SizeType j{0}; j < 2; ++j)
       {
-        gt(i, j, i_b) =
-            fetch::math::AsType<DataType>(gt_input[i * 2 + j]) + fetch::math::AsType<DataType>(i_b * 10);
+        gt(i, j, i_b) = fetch::math::AsType<DataType>(gt_input[i * 2 + j]) +
+                        fetch::math::AsType<DataType>(i_b * 10);
       }
     }
   }

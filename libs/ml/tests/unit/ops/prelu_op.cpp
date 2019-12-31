@@ -91,7 +91,8 @@ TYPED_TEST(PReluOpTest, backward_test)
       op.Backward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::AsType<DataType>(1e-5), fetch::math::AsType<DataType>(1e-5)));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::AsType<DataType>(1e-5),
+                                     fetch::math::AsType<DataType>(1e-5)));
 }
 
 TYPED_TEST(PReluOpTest, saveparams_test)

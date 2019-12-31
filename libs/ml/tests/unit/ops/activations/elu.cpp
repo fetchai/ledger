@@ -101,7 +101,8 @@ TYPED_TEST(EluTest, backward_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::AsType<DataType>(1e-5f), fetch::math::AsType<DataType>(1e-5f)));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::AsType<DataType>(1e-5f),
+                                     fetch::math::AsType<DataType>(1e-5f)));
 }
 
 TYPED_TEST(EluTest, backward_3d_tensor_test)
@@ -135,7 +136,8 @@ TYPED_TEST(EluTest, backward_3d_tensor_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::AsType<DataType>(1e-5f), fetch::math::AsType<DataType>(1e-5f)));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::AsType<DataType>(1e-5f),
+                                     fetch::math::AsType<DataType>(1e-5f)));
 }
 
 TYPED_TEST(EluTest, saveparams_test)

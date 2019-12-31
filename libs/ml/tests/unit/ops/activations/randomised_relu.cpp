@@ -89,7 +89,8 @@ TYPED_TEST(RandomisedReluTest, forward_test)
   DataType lower_bound = fetch::math::Type<DataType>("0.03");
   DataType upper_bound = fetch::math::Type<DataType>("0.08");
 
-  fetch::ml::ops::RandomisedRelu<TensorType> op(fetch::math::AsType<DataType>(0.03f), fetch::math::AsType<DataType>(0.08f), 12345);
+  fetch::ml::ops::RandomisedRelu<TensorType> op(fetch::math::AsType<DataType>(0.03f),
+                                                fetch::math::AsType<DataType>(0.08f), 12345);
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 

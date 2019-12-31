@@ -187,7 +187,8 @@ TYPED_TEST(CrossEntropyTest, binary_backward_test)
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal)
                   .at(0)
-                  .AllClose(gt, fetch::math::AsType<DataType>(1e-5f), fetch::math::AsType<DataType>(1e-5f)));
+                  .AllClose(gt, fetch::math::AsType<DataType>(1e-5f),
+                            fetch::math::AsType<DataType>(1e-5f)));
 }
 
 TYPED_TEST(CrossEntropyTest, onehot_backward_test)
@@ -218,7 +219,8 @@ TYPED_TEST(CrossEntropyTest, onehot_backward_test)
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal)
                   .at(0)
-                  .AllClose(gt, fetch::math::AsType<DataType>(1e-5f), fetch::math::AsType<DataType>(1e-5f)));
+                  .AllClose(gt, fetch::math::AsType<DataType>(1e-5f),
+                            fetch::math::AsType<DataType>(1e-5f)));
 }
 
 TYPED_TEST(CrossEntropyTest, saveparams_test)
@@ -360,10 +362,9 @@ TYPED_TEST(CrossEntropyTest, saveparams_one_dimensional_backward_test)
       {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
 
   // test correct values
-  EXPECT_TRUE(
-      gradients.at(0).AllClose(new_gradients.at(0),
-                               fetch::math::function_tolerance<DataType>() * DataType{4},
-                               fetch::math::function_tolerance<DataType>() * DataType{4}));
+  EXPECT_TRUE(gradients.at(0).AllClose(new_gradients.at(0),
+                                       fetch::math::function_tolerance<DataType>() * DataType{4},
+                                       fetch::math::function_tolerance<DataType>() * DataType{4}));
 }
 
 }  // namespace test

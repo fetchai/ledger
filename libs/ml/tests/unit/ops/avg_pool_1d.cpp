@@ -52,11 +52,13 @@ TYPED_TEST(AvgPool1DTest, forward_test_3_2_2)
   {
     for (SizeType i{0}; i < 10; ++i)
     {
-      data(0, i, i_b) = fetch::math::AsType<DataType>(data_input[i]) + fetch::math::AsType<DataType>(static_cast<double>(i_b * 10));
+      data(0, i, i_b) = fetch::math::AsType<DataType>(data_input[i]) +
+                        fetch::math::AsType<DataType>(static_cast<double>(i_b * 10));
     }
     for (SizeType i{0}; i < 4; ++i)
     {
-      gt(0, i, i_b) = fetch::math::AsType<DataType>(gt_input[i]) + fetch::math::AsType<DataType>(static_cast<double>(i_b * 10));
+      gt(0, i, i_b) = fetch::math::AsType<DataType>(gt_input[i]) +
+                      fetch::math::AsType<DataType>(static_cast<double>(i_b * 10));
     }
   }
 
@@ -230,8 +232,8 @@ TYPED_TEST(AvgPool1DTest, forward_test_2_channels_4_1_2)
     {
       for (SizeType j{0}; j < 5; ++j)
       {
-        data(i, j, i_b) =
-            fetch::math::AsType<DataType>(data_input[i * 5 + j]) + fetch::math::AsType<DataType>(static_cast<double>(i_b * 10));
+        data(i, j, i_b) = fetch::math::AsType<DataType>(data_input[i * 5 + j]) +
+                          fetch::math::AsType<DataType>(static_cast<double>(i_b * 10));
       }
     }
   }
@@ -305,8 +307,8 @@ TYPED_TEST(AvgPool1DTest, saveparams_test)
     {
       for (SizeType j{0}; j < 5; ++j)
       {
-        data(i, j, i_b) =
-            fetch::math::AsType<DataType>(data_input[i * 5 + j]) + fetch::math::AsType<DataType>(static_cast<double>(i_b * 10));
+        data(i, j, i_b) = fetch::math::AsType<DataType>(data_input[i * 5 + j]) +
+                          fetch::math::AsType<DataType>(static_cast<double>(i_b * 10));
       }
     }
   }

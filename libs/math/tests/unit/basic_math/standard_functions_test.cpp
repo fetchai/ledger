@@ -47,7 +47,7 @@ void RandomAssign(TensorType &tensor)
 TYPED_TEST(StandardFunctionTests, abs_test)
 {
   using ArrayType = TypeParam;
-  using Type = typename ArrayType::Type;
+  using Type      = typename ArrayType::Type;
 
   // randomly assign data to tensor
   ArrayType tensor = ArrayType({100});

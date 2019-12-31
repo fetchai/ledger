@@ -77,7 +77,8 @@ TYPED_TEST(MaxPool2DTest, forward_test_3_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::AsType<DataType>(1e-5f), fetch::math::AsType<DataType>(1e-5f)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::AsType<DataType>(1e-5f),
+                                  fetch::math::AsType<DataType>(1e-5f)));
 }
 
 TYPED_TEST(MaxPool2DTest, forward_2_channels_test_3_2)
@@ -127,7 +128,8 @@ TYPED_TEST(MaxPool2DTest, forward_2_channels_test_3_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::AsType<DataType>(1e-5f), fetch::math::AsType<DataType>(1e-5f)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::AsType<DataType>(1e-5f),
+                                  fetch::math::AsType<DataType>(1e-5f)));
 }
 
 TYPED_TEST(MaxPool2DTest, backward_test)
@@ -173,7 +175,8 @@ TYPED_TEST(MaxPool2DTest, backward_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::AsType<DataType>(1e-5f), fetch::math::AsType<DataType>(1e-5f)));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::AsType<DataType>(1e-5f),
+                                     fetch::math::AsType<DataType>(1e-5f)));
 }
 
 TYPED_TEST(MaxPool2DTest, backward_2_channels_test)

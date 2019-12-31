@@ -145,7 +145,8 @@ TEST(TypeConstructionTest, min_one_point_zero_construction)
   // fixed
   TestEquivalence<fetch::fixed_point::fp32_t>("-1.0", fetch::fixed_point::fp32_t::FromFloat(-1.0));
   TestEquivalence<fetch::fixed_point::fp64_t>("-1.0", fetch::fixed_point::fp64_t::FromFloat(-1.0));
-  TestEquivalence<fetch::fixed_point::fp128_t>("-1.0", fetch::fixed_point::fp128_t::FromFloat(-1.0));
+  TestEquivalence<fetch::fixed_point::fp128_t>("-1.0",
+                                               fetch::fixed_point::fp128_t::FromFloat(-1.0));
 }
 
 TEST(TypeConstructionTest, rounding_construction)

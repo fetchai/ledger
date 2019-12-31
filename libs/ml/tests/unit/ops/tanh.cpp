@@ -41,8 +41,8 @@ TYPED_TEST_CASE(TanHTest, math::test::TensorFloatingTypes);
 
 TYPED_TEST(TanHTest, forward_all_positive_test)
 {
-  using DataType      = typename TypeParam::Type;
-  uint8_t   n = 9;
+  using DataType = typename TypeParam::Type;
+  uint8_t   n    = 9;
   TypeParam data{n};
   TypeParam gt({n});
 
@@ -61,14 +61,14 @@ TYPED_TEST(TanHTest, forward_all_positive_test)
   TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
   op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
 
-  ASSERT_TRUE(
-      prediction.AllClose(gt, fetch::math::AsType<DataType>(1e-4), fetch::math::AsType<DataType>(1e-4)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::AsType<DataType>(1e-4),
+                                  fetch::math::AsType<DataType>(1e-4)));
 }
 
 TYPED_TEST(TanHTest, forward_all_negative_test)
 {
-  using DataType      = typename TypeParam::Type;
-  uint8_t   n = 9;
+  using DataType = typename TypeParam::Type;
+  uint8_t   n    = 9;
   TypeParam data{n};
   TypeParam gt{n};
 
@@ -87,13 +87,13 @@ TYPED_TEST(TanHTest, forward_all_negative_test)
   TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
   op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
 
-  ASSERT_TRUE(
-      prediction.AllClose(gt, fetch::math::AsType<DataType>(1e-4), fetch::math::AsType<DataType>(1e-4)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::AsType<DataType>(1e-4),
+                                  fetch::math::AsType<DataType>(1e-4)));
 }
 
 TYPED_TEST(TanHTest, backward_all_positive_test)
 {
-  using DataType      = typename TypeParam::Type;
+  using DataType        = typename TypeParam::Type;
   uint8_t             n = 8;
   TypeParam           data{n};
   TypeParam           error{n};
@@ -111,13 +111,13 @@ TYPED_TEST(TanHTest, backward_all_positive_test)
   std::vector<TypeParam> prediction = op.Backward({std::make_shared<const TypeParam>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(
-      prediction[0].AllClose(gt, fetch::math::AsType<DataType>(1e-4), fetch::math::AsType<DataType>(1e-4)));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::AsType<DataType>(1e-4),
+                                     fetch::math::AsType<DataType>(1e-4)));
 }
 
 TYPED_TEST(TanHTest, backward_all_negative_test)
 {
-  using DataType      = typename TypeParam::Type;
+  using DataType        = typename TypeParam::Type;
   uint8_t             n = 8;
   TypeParam           data{n};
   TypeParam           error{n};
@@ -136,8 +136,8 @@ TYPED_TEST(TanHTest, backward_all_negative_test)
   std::vector<TypeParam> prediction = op.Backward({std::make_shared<const TypeParam>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(
-      prediction[0].AllClose(gt, fetch::math::AsType<DataType>(1e-4), fetch::math::AsType<DataType>(1e-4)));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::AsType<DataType>(1e-4),
+                                     fetch::math::AsType<DataType>(1e-4)));
 }
 
 TYPED_TEST(TanHTest, saveparams_test)
@@ -188,7 +188,7 @@ TYPED_TEST(TanHTest, saveparams_test)
 TYPED_TEST(TanHTest, saveparams_backward_all_negative_test)
 {
   using TensorType = TypeParam;
-  using DataType      = typename TensorType::Type;
+  using DataType   = typename TensorType::Type;
   using OpType     = typename fetch::ml::ops::TanH<TensorType>;
   using SPType     = typename OpType::SPType;
 

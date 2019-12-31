@@ -271,7 +271,6 @@ public:
   template <typename T>
   static constexpr meta::IfIsFloat<T, FixedPoint> FromFloat(T n);
 
-
   /////////////////////////
   /// casting operators ///
   /////////////////////////
@@ -1151,7 +1150,6 @@ constexpr meta::IfIsFloat<T, FixedPoint<I, F>> FixedPoint<I, F>::FromFloat(T n)
   }
   return std::move(ret);
 }
-
 
 /////////////////////////
 /// casting operators ///
@@ -2706,8 +2704,8 @@ constexpr FixedPoint<32, 32> FixedPoint<32, 32>::SinApproxPi4(FixedPoint<32, 32>
   FixedPoint<32, 32> P05{551};
   FixedPoint<32, 32> Q02{5460};
   FixedPoint<32, 32> Q04{75};
-  FixedPoint<32, 32> P   = r * P01 - r3 * P03 + r5 * P05;
-  FixedPoint<32, 32> Q   = P01 + r2 * Q02 + r4 * Q04;
+  FixedPoint<32, 32> P = r * P01 - r3 * P03 + r5 * P05;
+  FixedPoint<32, 32> Q = P01 + r2 * Q02 + r4 * Q04;
   return P / Q;
 }
 
