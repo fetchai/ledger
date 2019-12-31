@@ -76,7 +76,7 @@ void BM_Setup_And_Train_Embeddings(::benchmark::State &state)
   auto embedding_dimensions = static_cast<SizeType>(state.range(1));
   auto n_datapoints         = static_cast<SizeType>(state.range(2));
   auto n_epochs             = static_cast<SizeType>(state.range(3));
-  auto learning_rate        = DataType{0.1f};
+  auto learning_rate        = fetch::math::AsType<DataType>(0.1f);
 
   // Prepare data and labels
   TensorType data({1, batch_size});

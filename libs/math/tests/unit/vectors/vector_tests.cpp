@@ -351,8 +351,8 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
        [&](size_t i) { C[i] = A[i] + B[i]; }, [&]() { vret = va + vb; }, false, false, false},
       {// Overflow state check
        [&](size_t i) {
-         A[i] = type::FP_MAX / 2 + i + 1;
-         B[i] = type::FP_MAX / 2;
+         A[i] = type::FP_MAX * type::_half + type{i + 1};
+         B[i] = type::FP_MAX * type::_half;
          C[i] = A[i] + B[i];
        },
        [&]() {
@@ -363,8 +363,8 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
        false, false, true},
       {// Underflow state check
        [&](size_t i) {
-         A[i] = -type::FP_MAX / 2 - i - 1;
-         B[i] = -type::FP_MAX / 2;
+         A[i] = -type::FP_MAX * type::_half - type{i - 1};
+         B[i] = -type::FP_MAX * type::_half;
          C[i] = A[i] + B[i];
        },
        [&]() {

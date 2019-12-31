@@ -52,11 +52,11 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_3_2_2)
   {
     for (SizeType i{0}; i < 10; ++i)
     {
-      data(0, i, i_b) = static_cast<DataType>(data_input[i]) + static_cast<DataType>(i_b * 10);
+      data(0, i, i_b) = fetch::math::AsType<DataType>(data_input[i]) + fetch::math::AsType<DataType>(i_b * 10);
     }
     for (SizeType i{0}; i < 4; ++i)
     {
-      gt(0, i, i_b) = static_cast<DataType>(gt_input[i]) + static_cast<DataType>(i_b * 10);
+      gt(0, i, i_b) = fetch::math::AsType<DataType>(gt_input[i]) + fetch::math::AsType<DataType>(i_b * 10);
     }
   }
 
@@ -88,18 +88,18 @@ TYPED_TEST(MaxPoolTest, backward_test_1d)
   {
     for (SizeType i{0}; i < 10; ++i)
     {
-      data(0, i, i_b) = static_cast<DataType>(data_input[i]) + static_cast<DataType>(i_b);
+      data(0, i, i_b) = fetch::math::AsType<DataType>(data_input[i]) + fetch::math::AsType<DataType>(i_b);
     }
     for (SizeType i{0}; i < 4; ++i)
     {
-      error(0, i, i_b) = static_cast<DataType>(errorInput[i]) + static_cast<DataType>(i_b);
+      error(0, i, i_b) = fetch::math::AsType<DataType>(errorInput[i]) + fetch::math::AsType<DataType>(i_b);
     }
   }
 
   for (SizeType i{0}; i < 10; ++i)
   {
-    gt(0, i, 0) = static_cast<DataType>(gt_input1[i]);
-    gt(0, i, 1) = static_cast<DataType>(gt_input2[i]);
+    gt(0, i, 0) = fetch::math::AsType<DataType>(gt_input1[i]);
+    gt(0, i, 1) = fetch::math::AsType<DataType>(gt_input2[i]);
   }
 
   fetch::ml::ops::MaxPool<TensorType> op(3, 2);
@@ -129,8 +129,8 @@ TYPED_TEST(MaxPoolTest, backward_test_1d_2_channels)
   {
     for (SizeType j{0}; j < 5; ++j)
     {
-      data(i, j, 0) = static_cast<DataType>(data_input[i * 5 + j]);
-      gt(i, j, 0)   = static_cast<DataType>(gt_input[i * 5 + j]);
+      data(i, j, 0) = fetch::math::AsType<DataType>(data_input[i * 5 + j]);
+      gt(i, j, 0)   = fetch::math::AsType<DataType>(gt_input[i * 5 + j]);
     }
   }
 
@@ -138,7 +138,7 @@ TYPED_TEST(MaxPoolTest, backward_test_1d_2_channels)
   {
     for (SizeType j{0}; j < 2; ++j)
     {
-      error(i, j, 0) = static_cast<DataType>(errorInput[i * 2 + j]);
+      error(i, j, 0) = fetch::math::AsType<DataType>(errorInput[i * 2 + j]);
     }
   }
 
@@ -164,12 +164,12 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_4_2)
   std::vector<double> gt_input({3, 5, 7, 9});
   for (SizeType i{0}; i < 10; ++i)
   {
-    data(0, i, 0) = static_cast<DataType>(data_input[i]);
+    data(0, i, 0) = fetch::math::AsType<DataType>(data_input[i]);
   }
 
   for (SizeType i{0}; i < 4; ++i)
   {
-    gt(0, i, 0) = static_cast<DataType>(gt_input[i]);
+    gt(0, i, 0) = fetch::math::AsType<DataType>(gt_input[i]);
   }
 
   fetch::ml::ops::MaxPool<TensorType> op(4, 2);
@@ -200,7 +200,7 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_2_channels_4_1_2)
       for (SizeType j{0}; j < 5; ++j)
       {
         data(i, j, i_b) =
-            static_cast<DataType>(data_input[i * 5 + j]) + static_cast<DataType>(i_b * 10);
+            fetch::math::AsType<DataType>(data_input[i * 5 + j]) + fetch::math::AsType<DataType>(i_b * 10);
       }
     }
 
@@ -209,7 +209,7 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_2_channels_4_1_2)
       for (SizeType j{0}; j < 2; ++j)
       {
         gt(i, j, i_b) =
-            static_cast<DataType>(gt_input[i * 2 + j]) + static_cast<DataType>(i_b * 10);
+            fetch::math::AsType<DataType>(gt_input[i * 2 + j]) + fetch::math::AsType<DataType>(i_b * 10);
       }
     }
   }
@@ -236,12 +236,12 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_2_4_2)
   std::vector<double> gt_input({1, 5, 9});
   for (SizeType i{0}; i < 10; ++i)
   {
-    data(0, i, 0) = static_cast<DataType>(data_input[i]);
+    data(0, i, 0) = fetch::math::AsType<DataType>(data_input[i]);
   }
 
   for (SizeType i{0}; i < 3; ++i)
   {
-    gt(0, i, 0) = static_cast<DataType>(gt_input[i]);
+    gt(0, i, 0) = fetch::math::AsType<DataType>(gt_input[i]);
   }
 
   fetch::ml::ops::MaxPool<TensorType> op(2, 4);
@@ -275,7 +275,7 @@ TYPED_TEST(MaxPoolTest, saveparams_test_1d)
       for (SizeType j{0}; j < 5; ++j)
       {
         data(i, j, i_b) =
-            static_cast<DataType>(data_input[i * 5 + j]) + static_cast<DataType>(i_b * 10);
+            fetch::math::AsType<DataType>(data_input[i * 5 + j]) + fetch::math::AsType<DataType>(i_b * 10);
       }
     }
 
@@ -284,7 +284,7 @@ TYPED_TEST(MaxPoolTest, saveparams_test_1d)
       for (SizeType j{0}; j < 2; ++j)
       {
         gt(i, j, i_b) =
-            static_cast<DataType>(gt_input[i * 2 + j]) + static_cast<DataType>(i_b * 10);
+            fetch::math::AsType<DataType>(gt_input[i * 2 + j]) + fetch::math::AsType<DataType>(i_b * 10);
       }
     }
   }
@@ -340,7 +340,7 @@ TYPED_TEST(MaxPoolTest, saveparams_backward_test_1d_2_channels)
   {
     for (SizeType j{0}; j < 5; ++j)
     {
-      data(i, j, 0) = static_cast<DataType>(data_input[i * 5 + j]);
+      data(i, j, 0) = fetch::math::AsType<DataType>(data_input[i * 5 + j]);
     }
   }
 
@@ -348,7 +348,7 @@ TYPED_TEST(MaxPoolTest, saveparams_backward_test_1d_2_channels)
   {
     for (SizeType j{0}; j < 2; ++j)
     {
-      error(i, j, 0) = static_cast<DataType>(errorInput[i * 2 + j]);
+      error(i, j, 0) = fetch::math::AsType<DataType>(errorInput[i * 2 + j]);
     }
   }
 
@@ -408,7 +408,7 @@ TYPED_TEST(MaxPoolTest, forward_test_2d_3_2)
   {
     for (SizeType j{0}; j < input_height; ++j)
     {
-      data(0, i, j, 0) = static_cast<DataType>(i * j);
+      data(0, i, j, 0) = fetch::math::AsType<DataType>(i * j);
     }
   }
 
@@ -416,7 +416,7 @@ TYPED_TEST(MaxPoolTest, forward_test_2d_3_2)
   {
     for (SizeType j{0}; j < output_height; ++j)
     {
-      gt(0, i, j, 0) = static_cast<DataType>(gt_input[i + j * output_width]);
+      gt(0, i, j, 0) = fetch::math::AsType<DataType>(gt_input[i + j * output_width]);
     }
   }
 
@@ -455,7 +455,7 @@ TYPED_TEST(MaxPoolTest, forward_2_channels_test_2d_3_2)
     {
       for (SizeType j{0}; j < input_height; ++j)
       {
-        data(c, i, j, 0) = static_cast<DataType>((c + 1) * i * j);
+        data(c, i, j, 0) = fetch::math::AsType<DataType>((c + 1) * i * j);
       }
     }
   }
@@ -466,7 +466,7 @@ TYPED_TEST(MaxPoolTest, forward_2_channels_test_2d_3_2)
     {
       for (SizeType j{0}; j < output_height; ++j)
       {
-        gt(c, i, j, 0) = static_cast<DataType>(
+        gt(c, i, j, 0) = fetch::math::AsType<DataType>(
             gt_input[c * output_width * output_height + (i + j * output_width)]);
       }
     }
@@ -552,7 +552,7 @@ TYPED_TEST(MaxPoolTest, backward_2_channels_test_2d)
     {
       for (SizeType j{0}; j < input_height; ++j)
       {
-        data(c, i, j, 0) = static_cast<DataType>((c + 1) * i * j);
+        data(c, i, j, 0) = fetch::math::AsType<DataType>((c + 1) * i * j);
         gt(c, i, j, 0)   = DataType{0};
       }
     }
@@ -564,7 +564,7 @@ TYPED_TEST(MaxPoolTest, backward_2_channels_test_2d)
     {
       for (SizeType j{0}; j < output_height; ++j)
       {
-        error(c, i, j, 0) = static_cast<DataType>((c + 1) * (1 + i + j));
+        error(c, i, j, 0) = fetch::math::AsType<DataType>((c + 1) * (1 + i + j));
       }
     }
   }
@@ -616,7 +616,7 @@ TYPED_TEST(MaxPoolTest, saveparams_test_2d)
     {
       for (SizeType j{0}; j < input_height; ++j)
       {
-        data(c, i, j, 0) = static_cast<DataType>((c + 1) * i * j);
+        data(c, i, j, 0) = fetch::math::AsType<DataType>((c + 1) * i * j);
       }
     }
   }
@@ -627,7 +627,7 @@ TYPED_TEST(MaxPoolTest, saveparams_test_2d)
     {
       for (SizeType j{0}; j < output_height; ++j)
       {
-        gt(c, i, j, 0) = static_cast<DataType>(
+        gt(c, i, j, 0) = fetch::math::AsType<DataType>(
             gt_input[c * output_width * output_height + (i + j * output_width)]);
       }
     }
@@ -691,7 +691,7 @@ TYPED_TEST(MaxPoolTest, saveparams_backward_2_channels_test_2d)
     {
       for (SizeType j{0}; j < input_height; ++j)
       {
-        data(c, i, j, 0) = static_cast<DataType>((c + 1) * i * j);
+        data(c, i, j, 0) = fetch::math::AsType<DataType>((c + 1) * i * j);
       }
     }
   }
@@ -702,7 +702,7 @@ TYPED_TEST(MaxPoolTest, saveparams_backward_2_channels_test_2d)
     {
       for (SizeType j{0}; j < output_height; ++j)
       {
-        error(c, i, j, 0) = static_cast<DataType>((c + 1) * (1 + i + j));
+        error(c, i, j, 0) = fetch::math::AsType<DataType>((c + 1) * (1 + i + j));
       }
     }
   }

@@ -181,7 +181,7 @@ TYPED_TEST(CategoricalAccuracyTest, saveparams_test)
   {
     for (math::SizeType j{0}; j < n_classes; ++j)
     {
-      data1.Set(j, i, DataType(logits[counter]));
+      data1.Set(j, i, fetch::math::AsType<DataType>(logits[counter]));
       ++counter;
     }
   }

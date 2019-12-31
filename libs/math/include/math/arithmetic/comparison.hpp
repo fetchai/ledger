@@ -58,7 +58,7 @@ inline bool IsZero(double const &x, double const &abs_tol = details::DEFAULT_ABS
 template <typename T>
 bool IsZero(T const &x)
 {
-  return x == 0;
+  return x == T{0};
 }
 
 inline bool IsNonZero(float const &x,
@@ -76,7 +76,7 @@ inline bool IsNonZero(double const &x,
 template <typename T>
 bool IsNonZero(T const &x)
 {
-  return x != 0;
+  return x != T{0};
 }
 
 inline bool IsEqual(float const &a, float const &b)

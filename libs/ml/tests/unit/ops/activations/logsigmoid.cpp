@@ -72,8 +72,8 @@ TYPED_TEST(LogSigmoidTest, forward_3d_tensor_test)
     {
       for (SizeType k{0}; k < 2; ++k)
       {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gtInput[i + 2 * (j + 2 * k)]));
+        data.Set(i, j, k, fetch::math::AsType<DataType>(data_input[i + 2 * (j + 2 * k)]));
+        gt.Set(i, j, k, fetch::math::AsType<DataType>(gtInput[i + 2 * (j + 2 * k)]));
       }
     }
   }
@@ -128,9 +128,9 @@ TYPED_TEST(LogSigmoidTest, backward_3d_tensor_test)
     {
       for (SizeType k{0}; k < 2; ++k)
       {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        error.Set(i, j, k, static_cast<DataType>(errorInput[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gtInput[i + 2 * (j + 2 * k)]));
+        data.Set(i, j, k, fetch::math::AsType<DataType>(data_input[i + 2 * (j + 2 * k)]));
+        error.Set(i, j, k, fetch::math::AsType<DataType>(errorInput[i + 2 * (j + 2 * k)]));
+        gt.Set(i, j, k, fetch::math::AsType<DataType>(gtInput[i + 2 * (j + 2 * k)]));
       }
     }
   }
@@ -211,9 +211,9 @@ TYPED_TEST(LogSigmoidTest, saveparams_backward_3d_tensor_test)
     {
       for (SizeType k{0}; k < 2; ++k)
       {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        error.Set(i, j, k, static_cast<DataType>(errorInput[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gtInput[i + 2 * (j + 2 * k)]));
+        data.Set(i, j, k, fetch::math::AsType<DataType>(data_input[i + 2 * (j + 2 * k)]));
+        error.Set(i, j, k, fetch::math::AsType<DataType>(errorInput[i + 2 * (j + 2 * k)]));
+        gt.Set(i, j, k, fetch::math::AsType<DataType>(gtInput[i + 2 * (j + 2 * k)]));
       }
     }
   }

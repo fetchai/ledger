@@ -119,9 +119,9 @@ TEST(TypeConstructionTest, one_point_zero_construction)
   TestEquivalence<double>("1.0", double(1.0));
 
   // fixed
-  TestEquivalence<fetch::fixed_point::fp32_t>("1.0", fetch::fixed_point::fp32_t(1.0));
-  TestEquivalence<fetch::fixed_point::fp64_t>("1.0", fetch::fixed_point::fp64_t(1.0));
-  TestEquivalence<fetch::fixed_point::fp128_t>("1.0", fetch::fixed_point::fp128_t(1.0));
+  TestEquivalence<fetch::fixed_point::fp32_t>("1.0", fetch::fixed_point::fp32_t::FromFloat(1.0));
+  TestEquivalence<fetch::fixed_point::fp64_t>("1.0", fetch::fixed_point::fp64_t::FromFloat(1.0));
+  TestEquivalence<fetch::fixed_point::fp128_t>("1.0", fetch::fixed_point::fp128_t::FromFloat(1.0));
 }
 
 TEST(TypeConstructionTest, min_one_point_zero_construction)
@@ -143,9 +143,9 @@ TEST(TypeConstructionTest, min_one_point_zero_construction)
   TestEquivalence<double>("-1.0", double(-1.0));
 
   // fixed
-  TestEquivalence<fetch::fixed_point::fp32_t>("-1.0", fetch::fixed_point::fp32_t(-1.0));
-  TestEquivalence<fetch::fixed_point::fp64_t>("-1.0", fetch::fixed_point::fp64_t(-1.0));
-  TestEquivalence<fetch::fixed_point::fp128_t>("-1.0", fetch::fixed_point::fp128_t(-1.0));
+  TestEquivalence<fetch::fixed_point::fp32_t>("-1.0", fetch::fixed_point::fp32_t::FromFloat(-1.0));
+  TestEquivalence<fetch::fixed_point::fp64_t>("-1.0", fetch::fixed_point::fp64_t::FromFloat(-1.0));
+  TestEquivalence<fetch::fixed_point::fp128_t>("-1.0", fetch::fixed_point::fp128_t::FromFloat(-1.0));
 }
 
 TEST(TypeConstructionTest, rounding_construction)
@@ -168,13 +168,13 @@ TEST(TypeConstructionTest, rounding_construction)
 
   // fixed
   TestNear<fetch::fixed_point::fp32_t>(
-      "-1.123456789", fetch::fixed_point::fp32_t(-1.123456789),
+      "-1.123456789", fetch::fixed_point::fp32_t::FromFloat(-1.123456789),
       fetch::math::function_tolerance<fetch::fixed_point::fp32_t>());
   TestNear<fetch::fixed_point::fp64_t>(
-      "-1.123456789", fetch::fixed_point::fp64_t(-1.123456789),
+      "-1.123456789", fetch::fixed_point::fp64_t::FromFloat(-1.123456789),
       fetch::math::function_tolerance<fetch::fixed_point::fp64_t>());
   TestNear<fetch::fixed_point::fp128_t>(
-      "-1.123456789", fetch::fixed_point::fp128_t(-1.123456789),
+      "-1.123456789", fetch::fixed_point::fp128_t::FromFloat(-1.123456789),
       fetch::math::function_tolerance<fetch::fixed_point::fp128_t>());
 }
 

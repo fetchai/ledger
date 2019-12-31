@@ -92,8 +92,8 @@ TYPED_TEST(MeanSquareErrorTest, one_by_eight_dimensional_backward_test)
       error_signal);
 
   EXPECT_TRUE(
-      gradients.at(0).AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
-                               fetch::math::function_tolerance<typename TypeParam::Type>()));
+      gradients.at(0).AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                               fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(MeanSquareErrorTest, two_dimensional_forward_test_with_weighting)
@@ -111,6 +111,7 @@ TYPED_TEST(MeanSquareErrorTest, two_dimensional_forward_test_with_weighting)
 
 TYPED_TEST(MeanSquareErrorTest, two_dimensional_backward_test_with_weighting)
 {
+  using DataType = typename TypeParam::Type;
   TypeParam data1        = TypeParam::FromString("1.1, -2.2, 3.3, -4.4; 5.5, -6.6, 7.7, -8.8");
   TypeParam data2        = TypeParam::FromString("1.1, 2.2, 7.7, 6.6; 0.0, -6.6, 7.7, -9.9");
   TypeParam error_signal = TypeParam::FromString("0.1, 0.2, 0.7, 0.6; 0.0, 0.6, 0.7, 0.9");
@@ -122,9 +123,9 @@ TYPED_TEST(MeanSquareErrorTest, two_dimensional_backward_test_with_weighting)
       {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
 
   EXPECT_TRUE(
-      gradients.at(0).AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>() * 4,
-                               fetch::math::function_tolerance<typename TypeParam::Type>()) *
-      4);
+      gradients.at(0).AllClose(gt,
+                               fetch::math::function_tolerance<DataType>() * DataType{4},
+                               fetch::math::function_tolerance<DataType>() * DataType{4}));
 }
 
 TYPED_TEST(MeanSquareErrorTest, saveparams_test)
@@ -178,6 +179,7 @@ TYPED_TEST(MeanSquareErrorTest, saveparams_two_dimensional_backward_test_with_we
 {
   using SPType = typename fetch::ml::ops::MeanSquareErrorLoss<TypeParam>::SPType;
   using OpType = typename fetch::ml::ops::MeanSquareErrorLoss<TypeParam>;
+  using DataType = typename TypeParam::Type;
 
   TypeParam data1        = TypeParam::FromString("1.1, -2.2, 3.3, -4.4; 5.5, -6.6, 7.7, -8.8");
   TypeParam data2        = TypeParam::FromString("1.1, 2.2, 7.7, 6.6; 0.0, -6.6, 7.7, -9.9");
@@ -220,9 +222,8 @@ TYPED_TEST(MeanSquareErrorTest, saveparams_two_dimensional_backward_test_with_we
   // test correct values
   EXPECT_TRUE(
       gradients.at(0).AllClose(new_gradients.at(0),
-                               fetch::math::function_tolerance<typename TypeParam::Type>() * 4,
-                               fetch::math::function_tolerance<typename TypeParam::Type>()) *
-      4);
+                               fetch::math::function_tolerance<DataType>() * DataType{4},
+                               fetch::math::function_tolerance<DataType>() * DataType{4}));
 }
 
 }  // namespace test

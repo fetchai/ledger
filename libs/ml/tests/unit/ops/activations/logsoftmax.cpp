@@ -69,8 +69,8 @@ TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
   {
     for (SizeType j{0}; j < 3; ++j)
     {
-      data.Set(i, j, 0, static_cast<DataType>(data_input[j + 3 * i]));
-      gt.Set(i, j, 0, static_cast<DataType>(gt_input[j + 3 * i]));
+      data.Set(i, j, 0, fetch::math::AsType<DataType>(data_input[j + 3 * i]));
+      gt.Set(i, j, 0, fetch::math::AsType<DataType>(gt_input[j + 3 * i]));
     }
   }
 
@@ -121,9 +121,9 @@ TYPED_TEST(LogSoftmaxTest, backward_3d_tensor_axis_0_test)
   {
     for (SizeType j{0}; j < 3; ++j)
     {
-      data.Set(i, j, 0, static_cast<DataType>(data_input[j + 3 * i]));
-      error.Set(i, j, 0, static_cast<DataType>(errorInput[j + 3 * i]));
-      gt.Set(i, j, 0, static_cast<DataType>(gt_input[j + 3 * i]));
+      data.Set(i, j, 0, fetch::math::AsType<DataType>(data_input[j + 3 * i]));
+      error.Set(i, j, 0, fetch::math::AsType<DataType>(errorInput[j + 3 * i]));
+      gt.Set(i, j, 0, fetch::math::AsType<DataType>(gt_input[j + 3 * i]));
     }
   }
   fetch::ml::ops::LogSoftmax<TensorType> op{1};
@@ -200,9 +200,9 @@ TYPED_TEST(LogSoftmaxTest, saveparams_backward_3d_tensor_axis_0_test)
   {
     for (SizeType j{0}; j < 3; ++j)
     {
-      data.Set(i, j, 0, static_cast<DataType>(data_input[j + 3 * i]));
-      error.Set(i, j, 0, static_cast<DataType>(errorInput[j + 3 * i]));
-      gt.Set(i, j, 0, static_cast<DataType>(gt_input[j + 3 * i]));
+      data.Set(i, j, 0, fetch::math::AsType<DataType>(data_input[j + 3 * i]));
+      error.Set(i, j, 0, fetch::math::AsType<DataType>(errorInput[j + 3 * i]));
+      gt.Set(i, j, 0, fetch::math::AsType<DataType>(gt_input[j + 3 * i]));
     }
   }
   fetch::ml::ops::LogSoftmax<TensorType> op{1};

@@ -347,42 +347,43 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_squeeze_test)
 
 TYPED_TEST(TensorIndexingTest, major_order_flip_test)
 {
+
   fetch::math::Tensor<TypeParam> t({3, 3});
-  t.FillArange(static_cast<TypeParam>(0), static_cast<TypeParam>(t.size()));
+  t.FillArange(TypeParam{0}, static_cast<TypeParam>(t.size()));
 
-  EXPECT_EQ(t[0], 0);
-  EXPECT_EQ(t[1], 1);
-  EXPECT_EQ(t[2], 2);
-  EXPECT_EQ(t[3], 3);
-  EXPECT_EQ(t[4], 4);
-  EXPECT_EQ(t[5], 5);
-  EXPECT_EQ(t[6], 6);
-  EXPECT_EQ(t[7], 7);
-  EXPECT_EQ(t[8], 8);
-
-  t.MajorOrderFlip();
-
-  EXPECT_EQ(t[0], 0);
-  EXPECT_EQ(t[1], 3);
-  EXPECT_EQ(t[2], 6);
-  EXPECT_EQ(t[3], 1);
-  EXPECT_EQ(t[4], 4);
-  EXPECT_EQ(t[5], 7);
-  EXPECT_EQ(t[6], 2);
-  EXPECT_EQ(t[7], 5);
-  EXPECT_EQ(t[8], 8);
+  EXPECT_EQ(t[0], TypeParam{0});
+  EXPECT_EQ(t[1], TypeParam{1});
+  EXPECT_EQ(t[2], TypeParam{2});
+  EXPECT_EQ(t[3], TypeParam{3});
+  EXPECT_EQ(t[4], TypeParam{4});
+  EXPECT_EQ(t[5], TypeParam{5});
+  EXPECT_EQ(t[6], TypeParam{6});
+  EXPECT_EQ(t[7], TypeParam{7});
+  EXPECT_EQ(t[8], TypeParam{8});
 
   t.MajorOrderFlip();
 
-  EXPECT_EQ(t[0], 0);
-  EXPECT_EQ(t[1], 1);
-  EXPECT_EQ(t[2], 2);
-  EXPECT_EQ(t[3], 3);
-  EXPECT_EQ(t[4], 4);
-  EXPECT_EQ(t[5], 5);
-  EXPECT_EQ(t[6], 6);
-  EXPECT_EQ(t[7], 7);
-  EXPECT_EQ(t[8], 8);
+  EXPECT_EQ(t[0], TypeParam{0});
+  EXPECT_EQ(t[1], TypeParam{3});
+  EXPECT_EQ(t[2], TypeParam{6});
+  EXPECT_EQ(t[3], TypeParam{1});
+  EXPECT_EQ(t[4], TypeParam{4});
+  EXPECT_EQ(t[5], TypeParam{7});
+  EXPECT_EQ(t[6], TypeParam{2});
+  EXPECT_EQ(t[7], TypeParam{5});
+  EXPECT_EQ(t[8], TypeParam{8});
+
+  t.MajorOrderFlip();
+
+  EXPECT_EQ(t[0], TypeParam{0});
+  EXPECT_EQ(t[1], TypeParam{1});
+  EXPECT_EQ(t[2], TypeParam{2});
+  EXPECT_EQ(t[3], TypeParam{3});
+  EXPECT_EQ(t[4], TypeParam{4});
+  EXPECT_EQ(t[5], TypeParam{5});
+  EXPECT_EQ(t[6], TypeParam{6});
+  EXPECT_EQ(t[7], TypeParam{7});
+  EXPECT_EQ(t[8], TypeParam{8});
 }
 
 }  // namespace test

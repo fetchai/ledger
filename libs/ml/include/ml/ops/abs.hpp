@@ -89,13 +89,14 @@ public:
     assert(error_signal.size() == inputs.at(0)->size());
 
     TensorType return_signal(inputs.at(0)->shape());
+    using DataType = typename TensorType::Type;
 
     auto a_it   = inputs.at(0)->cbegin();
     auto err_it = error_signal.cbegin();
     auto r_it   = return_signal.begin();
     while (a_it.is_valid())
     {
-      if (*a_it > 0)
+      if (*a_it > DataType{0})
       {
         *r_it = *err_it;
       }

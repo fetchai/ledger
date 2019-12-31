@@ -2734,8 +2734,8 @@ void Tensor<T, C>::Sort(memory::Range const &range)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Arange(T const &from, T const &to, T const &delta)
 {
-  assert(delta != 0);
-  assert(((from < to) && delta > 0) || ((from > to) && delta < 0));
+  assert(delta != T{0});
+  assert(((from < to) && delta > T{0}) || ((from > to) && delta < T{0}));
   Tensor ret;
   details::ArangeImplementation(from, to, delta, ret);
   return ret;

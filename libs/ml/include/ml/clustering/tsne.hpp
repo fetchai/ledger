@@ -124,12 +124,12 @@ public:
       {
         for (SizeType j{0}; j < output_matrix_.shape().at(1); j++)
         {
-          if ((gradient.At(i, j) > 0.0) != (i_y.At(i, j) > 0.0))
+          if ((gradient.At(i, j) > DataType{0}) != (i_y.At(i, j) > DataType{0}))
           {
             gains(i, j) = gains.At(i, j) + fetch::math::Type<DataType>("0.2");
           }
 
-          if ((gradient.At(i, j) > 0.0) == (i_y.At(i, j) > 0.0))
+          if ((gradient.At(i, j) > DataType{0}) == (i_y.At(i, j) > DataType{0}))
           {
             gains(i, j) = gains.At(i, j) * fetch::math::Type<DataType>("0.8");
           }
@@ -319,7 +319,7 @@ private:
       {
 
         // If not, increase or decrease precision
-        if (entropy_diff > 0)
+        if (entropy_diff > DataType{0})
         {
           beta_min = beta.At(i);
           if (beta_max == inf || beta_max == neg_inf)

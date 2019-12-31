@@ -66,7 +66,7 @@ void CheckForwardValues(TypeParam &data, TypeParam &prediction,
   auto pred_it = prediction.begin();
   while (data_it.is_valid())
   {
-    if (*data_it < 0)
+    if (*data_it < typename TypeParam::Type{0})
     {
       EXPECT_TRUE(IsAbsWithinRange(*pred_it, *data_it, lower_bound, upper_bound));
     }
@@ -89,7 +89,7 @@ TYPED_TEST(RandomisedReluTest, forward_test)
   DataType lower_bound = fetch::math::Type<DataType>("0.03");
   DataType upper_bound = fetch::math::Type<DataType>("0.08");
 
-  fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
+  fetch::ml::ops::RandomisedRelu<TensorType> op(fetch::math::AsType<DataType>(0.03f), fetch::math::AsType<DataType>(0.08f), 12345);
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 

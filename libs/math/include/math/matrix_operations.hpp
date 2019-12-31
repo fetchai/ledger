@@ -147,6 +147,8 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
                                                  ArrayType const &mask, ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
+
   assert(input_array.size() == mask.size());
   assert(ret.size() >= typename ArrayType::SizeType(Sum(mask)));
 
@@ -158,7 +160,7 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
   SizeType counter{0};
   while (rit.is_valid())
   {
-    assert((*it2 == 1) || (*it2 == 0));
+    assert((*it2 == DataType{1}) || (*it2 == DataType{0}));
     if (static_cast<uint64_t>(*it2))
     {
       *rit = *it1;

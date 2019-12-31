@@ -103,7 +103,7 @@ TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_ski
         // Constructing a fixed point from a double is not guaranteed to give the same results on
         // different architectures and so is unsafe. But the fixed point string parsing does not
         // support scientific notation.
-        weights(col, row) = DataType{std::stod(field_value)};
+        weights(col, row) = DataType::FromFloat(std::stod(field_value));
       }
       else
       {
