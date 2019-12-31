@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "meta/is_iterable.hpp"
 
 // TODO(1154): move to math library when implementing isiterable methods

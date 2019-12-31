@@ -27,7 +27,7 @@
 #include "math/normalize_array.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/log.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "meta/type_traits.hpp"
 #include "ml/ops/flatten.hpp"
 

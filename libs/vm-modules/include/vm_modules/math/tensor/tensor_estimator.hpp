@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "vm/common.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"

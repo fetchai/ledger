@@ -27,7 +27,7 @@
 #include "dmlf/collective_learning/utilities/typed_update_adaptor.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "network/management/network_manager.hpp"
 

@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "logging/logging.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"

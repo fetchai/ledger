@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/meta/math_type_traits.hpp"
-#include "math/tensor_declaration.hpp"
+#include "math/tensor/tensor_declaration.hpp"
 
 #include <cfenv>
 #include <cstdint>

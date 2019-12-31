@@ -19,7 +19,7 @@
 
 #include "core/random.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 
 #include <fstream>
 #include <string>

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/clustering/knn.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/layers/skip_gram.hpp"
 

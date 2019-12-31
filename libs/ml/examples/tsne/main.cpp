@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/clustering/tsne.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/utilities/mnist_utilities.hpp"
