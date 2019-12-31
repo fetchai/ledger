@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/standard_functions/pow.hpp"
 #include "math/standard_functions/sqrt.hpp"
 

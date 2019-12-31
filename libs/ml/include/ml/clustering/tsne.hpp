@@ -25,6 +25,7 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/metrics/kl_divergence.hpp"
 #include "math/normalize_array.hpp"
+#include "math/standard_functions/abs.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/log.hpp"
 #include "math/tensor/tensor.hpp"

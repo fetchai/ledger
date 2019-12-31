@@ -110,7 +110,7 @@ public:
     // 1D softmax with 1 batch dimension
     if (inputs.front()->shape().size() == 1)
     {
-      typename TensorType::Type sum = return_signal.Sum();
+      typename TensorType::Type sum = fetch::math::Sum(return_signal);
       fetch::math::Multiply(t, sum, t);
     }
     // N-D softmax

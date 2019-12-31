@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/matrix_operations.hpp"
 #include "math/tensor/tensor.hpp"
 #include "math/tensor/tensor_slice_iterator.hpp"
 

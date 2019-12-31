@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/standard_functions/exp.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
