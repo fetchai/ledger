@@ -362,13 +362,14 @@ template <typename ArrayType, typename T,
 meta::IfIsMathArray<ArrayType, void> Subtract(T const &scalar, ArrayType const &array,
                                               ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
   assert(array.size() == ret.size());
   assert(array.shape() == ret.shape());
   auto it1 = array.cbegin();
   auto rit = ret.begin();
   while (it1.is_valid())
   {
-    *rit = scalar - *it1;
+    *rit = static_cast<DataType>(scalar - *it1);
     ++it1;
     ++rit;
   }
@@ -560,12 +561,13 @@ template <typename ArrayType, typename T,
           typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array, ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
   assert(array.shape() == ret.shape());
   auto it  = array.begin();
   auto it2 = ret.begin();
   while (it.is_valid())
   {
-    *it2 = scalar / *it;
+    *it2 = static_cast<DataType>(scalar / *it);
     ++it2;
     ++it;
   }
