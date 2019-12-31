@@ -820,7 +820,6 @@ TYPED_TEST(BasicArithmeticTest, Division)
   TypeParam zero(0);
   TypeParam one(1);
   TypeParam two(2);
-  TypeParam three(3);
 
   EXPECT_EQ(static_cast<int>(two / one), 2);
   EXPECT_EQ(static_cast<float>(two / one), 2.0f);
