@@ -1174,7 +1174,7 @@ TYPED_TEST(TranscendentalTest, Pow_positive_x_gt_1)
   TypeParam e1        = TypeParam::Pow(a, two);
   TypeParam e2        = TypeParam::Pow(a, three);
   TypeParam e3        = TypeParam::Pow(two, b);
-  double    tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  auto      tolerance = static_cast<double>(TypeParam::TOLERANCE);
 
   EXPECT_NEAR(static_cast<double>(e1) / std::pow(1.6519711627625, 2), 1.0, tolerance);
   EXPECT_NEAR(static_cast<double>(e2) / std::pow(1.6519711627625, 3), 1.0, tolerance);
@@ -1255,7 +1255,7 @@ TYPED_TEST(TranscendentalTest, Pow_negative_x)
   TypeParam three{3};
   TypeParam e1        = TypeParam::Pow(a, two);
   TypeParam e2        = TypeParam::Pow(a, three);
-  double    tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  auto      tolerance = static_cast<double>(TypeParam::TOLERANCE);
 
   EXPECT_NEAR(static_cast<double>(e1) / std::pow(static_cast<double>(a), 2), 1.0, tolerance);
   EXPECT_NEAR(static_cast<double>(e2) / std::pow(static_cast<double>(a), 3), 1.0, tolerance);
@@ -1313,9 +1313,9 @@ TYPED_TEST(TranscendentalTest, Logarithm)
   double    r;
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale            = TypeParam::FromFloat(5.0);
-  margin           = TypeParam::FromFloat(0.0001);
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam::FromFloat(5.0);
+  margin         = TypeParam::FromFloat(0.0001);
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1384,8 +1384,8 @@ TYPED_TEST(TranscendentalTest, Sqrt)
   double    r;
   double    max_error = 0, avg_error = 0;
   TypeParam x, scale;
-  scale            = TypeParam::FromFloat(5.0);
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam::FromFloat(5.0);
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1475,9 +1475,9 @@ TYPED_TEST(TrigonometryTest, Sin)
   double    r;
   double    max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale            = TypeParam::CONST_PI * TypeParam::FromFloat(10.0);
-  margin           = TypeParam::TOLERANCE;
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam::CONST_PI * TypeParam::FromFloat(10.0);
+  margin         = TypeParam::TOLERANCE;
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1562,9 +1562,9 @@ TYPED_TEST(TrigonometryTest, Cos)
   double    r;
   double    max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale            = TypeParam::CONST_PI * TypeParam::FromFloat(10.0);
-  margin           = TypeParam::TOLERANCE;
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam::CONST_PI * TypeParam::FromFloat(10.0);
+  margin         = TypeParam::TOLERANCE;
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1644,9 +1644,9 @@ TYPED_TEST(TrigonometryTest, Tan)
   double    r;
   double    max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale            = TypeParam::CONST_PI_2;
-  margin           = TypeParam::FromFloat(0.1);
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam::CONST_PI_2;
+  margin         = TypeParam::FromFloat(0.1);
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1670,9 +1670,9 @@ TYPED_TEST(TrigonometryTest, ASin)
   double    r;
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale            = TypeParam::_1;
-  margin           = TypeParam::TOLERANCE * TypeParam{10};
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam::_1;
+  margin         = TypeParam::TOLERANCE * TypeParam{10};
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1693,9 +1693,9 @@ TYPED_TEST(TrigonometryTest, ACos)
   double    r;
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale            = TypeParam::_1;
-  margin           = TypeParam::TOLERANCE * TypeParam{10};
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam::_1;
+  margin         = TypeParam::TOLERANCE * TypeParam{10};
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1716,9 +1716,9 @@ TYPED_TEST(TrigonometryTest, ATan)
   double    r;
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale            = TypeParam{5};
-  margin           = TypeParam::_0;
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam{5};
+  margin         = TypeParam::_0;
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1739,9 +1739,9 @@ TYPED_TEST(TrigonometryTest, ATan2)
   double    r;
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, y, scale, margin;
-  scale            = TypeParam{2};
-  margin           = TypeParam::_0;
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam{2};
+  margin         = TypeParam::_0;
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1769,9 +1769,9 @@ TYPED_TEST(HyperbolicTest, SinH)
   double    r;
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale            = TypeParam{5};
-  margin           = TypeParam::_0;
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam{5};
+  margin         = TypeParam::_0;
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1792,9 +1792,9 @@ TYPED_TEST(HyperbolicTest, CosH)
   double    r;
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale            = TypeParam{5};
-  margin           = TypeParam::_0;
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam{5};
+  margin         = TypeParam::_0;
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1815,9 +1815,9 @@ TYPED_TEST(HyperbolicTest, TanH)
   double    r;
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale            = TypeParam{5};
-  margin           = TypeParam::_0;
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam{5};
+  margin         = TypeParam::_0;
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1838,9 +1838,9 @@ TYPED_TEST(HyperbolicTest, ASinH)
   double    r;
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale            = TypeParam{3};
-  margin           = TypeParam::_0;
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam{3};
+  margin         = TypeParam::_0;
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1861,9 +1861,9 @@ TYPED_TEST(HyperbolicTest, ACosH)
   double    r;
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, offset;
-  scale            = TypeParam{2};
-  offset           = TypeParam::_1;
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam{2};
+  offset         = TypeParam::_1;
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
@@ -1884,9 +1884,9 @@ TYPED_TEST(HyperbolicTest, ATanH)
   double    r;
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale            = TypeParam::_1;
-  margin           = TypeParam::FromFloat(0.001);
-  double tolerance = static_cast<double>(TypeParam::TOLERANCE);
+  scale          = TypeParam::_1;
+  margin         = TypeParam::FromFloat(0.001);
+  auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
