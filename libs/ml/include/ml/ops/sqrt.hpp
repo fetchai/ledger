@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/standard_functions/sqrt.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
