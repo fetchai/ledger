@@ -187,7 +187,7 @@ TEST(FixedPointTest, Conversion_64_64)
   // smallest possible double representable to a FixedPoint
   fp128_t infinitesimal{fp128_t::FromFloat(0.00000000000000000009)};
   // Largest double fractional closest to one, representable to a FixedPoint
-  fp128_t almost_one{fp128_t::FromFloat(0.999999999999999944)};
+  // fp128_t almost_one{fp128_t::FromFloat(0.999999999999999944)};
   // Largest fractional closest to one, representable to a FixedPoint
   fp128_t largest_int(std::numeric_limits<int64_t>::max() - 1, 0UL);  // NOLINT
 
