@@ -52,9 +52,10 @@ TYPED_TEST(AvgPool2DTest, forward_test_3_2)
 
   SizeType const batch_size = 2;
 
-  TensorType          data({1, input_width, input_height, batch_size});
-  TensorType          gt({1, output_width, output_height, batch_size});
-  std::vector<double> gt_input({1, 3, 5, 7, 3, 9, 15, 21});
+  TensorType data({1, input_width, input_height, batch_size});
+  TensorType gt({1, output_width, output_height, batch_size});
+  TensorType gt_input = TensorType::FromString("1, 3, 5, 7, 3, 9, 15, 21");
+
   for (SizeType i{0}; i < input_width; ++i)
   {
     for (SizeType j{0}; j < input_height; ++j)
@@ -67,7 +68,7 @@ TYPED_TEST(AvgPool2DTest, forward_test_3_2)
   {
     for (SizeType j{0}; j < output_height; ++j)
     {
-      gt(0, i, j, 0) = fetch::math::AsType<DataType>(gt_input[i + j * output_width]);
+      gt(0, i, j, 0) = gt_input[i + j * output_width];
     }
   }
 
@@ -96,9 +97,10 @@ TYPED_TEST(AvgPool2DTest, forward_2_channels_test_3_2)
 
   SizeType const batch_size = 2;
 
-  TensorType          data({channels_size, input_width, input_height, batch_size});
-  TensorType          gt({channels_size, output_width, output_height, batch_size});
-  std::vector<double> gt_input({1, 3, 5, 7, 3, 9, 15, 21, 2, 6, 10, 14, 6, 18, 30, 42});
+  TensorType data({channels_size, input_width, input_height, batch_size});
+  TensorType gt({channels_size, output_width, output_height, batch_size});
+  TensorType gt_input =
+      TensorType::FromString("1, 3, 5, 7, 3, 9, 15, 21, 2, 6, 10, 14, 6, 18, 30, 42");
 
   for (SizeType c{0}; c < channels_size; ++c)
   {
@@ -117,8 +119,7 @@ TYPED_TEST(AvgPool2DTest, forward_2_channels_test_3_2)
     {
       for (SizeType j{0}; j < output_height; ++j)
       {
-        gt(c, i, j, 0) = fetch::math::AsType<DataType>(
-            gt_input[c * output_width * output_height + (i + j * output_width)]);
+        gt(c, i, j, 0) = gt_input[c * output_width * output_height + (i + j * output_width)];
       }
     }
   }
@@ -320,9 +321,10 @@ TYPED_TEST(AvgPool2DTest, saveparams_test)
 
   SizeType const batch_size = 2;
 
-  TensorType          data({channels_size, input_width, input_height, batch_size});
-  TensorType          gt({channels_size, output_width, output_height, batch_size});
-  std::vector<double> gt_input({1, 3, 5, 7, 3, 9, 15, 21, 2, 6, 10, 14, 6, 18, 30, 42});
+  TensorType data({channels_size, input_width, input_height, batch_size});
+  TensorType gt({channels_size, output_width, output_height, batch_size});
+  TensorType gt_input =
+      TensorType::FromString("1, 3, 5, 7, 3, 9, 15, 21, 2, 6, 10, 14, 6, 18, 30, 42");
 
   for (SizeType c{0}; c < channels_size; ++c)
   {
@@ -341,8 +343,7 @@ TYPED_TEST(AvgPool2DTest, saveparams_test)
     {
       for (SizeType j{0}; j < output_height; ++j)
       {
-        gt(c, i, j, 0) = fetch::math::AsType<DataType>(
-            gt_input[c * output_width * output_height + (i + j * output_width)]);
+        gt(c, i, j, 0) = gt_input[c * output_width * output_height + (i + j * output_width)];
       }
     }
   }
@@ -377,8 +378,7 @@ TYPED_TEST(AvgPool2DTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(AvgPool2DTest, saveparams_backward_2_channels_test)
