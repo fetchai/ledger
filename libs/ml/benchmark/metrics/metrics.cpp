@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/ops/metrics/categorical_accuracy.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
