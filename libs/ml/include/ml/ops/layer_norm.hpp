@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/matrix_operations.hpp"
+#include "math/standard_functions/pow.hpp"
+#include "math/standard_functions/sqrt.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 

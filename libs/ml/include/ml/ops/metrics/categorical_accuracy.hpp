@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/exceptions/exceptions.hpp"
+#include "math/matrix_operations.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/ops.hpp"
 
@@ -45,13 +46,13 @@ public:
     : Ops<T>(sp)
     , weightings_(sp.weightings)
   {
-    weights_sum_ = weightings_.Sum();
+    weights_sum_ = fetch::math::Sum(weightings_);
   }
 
   explicit CategoricalAccuracy(TensorType weightings = TensorType())
     : weightings_(std::move(weightings))
   {
-    weights_sum_ = weightings_.Sum();
+    weights_sum_ = fetch::math::Sum(weightings_);
   }
 
   ~CategoricalAccuracy() override = default;
