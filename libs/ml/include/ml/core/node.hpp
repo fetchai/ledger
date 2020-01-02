@@ -200,6 +200,11 @@ public:
       }
     }
     auto const my_cost_of_input = op_ptr_->OpForwardCost(input_shapes);
+    if (std::numeric_limits<fetch::vm::ChargeAmount>::max() - total_cost <= my_cost_of_input)
+    {
+      FETCH_LOG_ERROR(this->name_.c_str(),
+                      "Charge amount overflow while calculating ForwardPassChargeCost!");
+    }
     total_cost += my_cost_of_input;
 
     return total_cost;
