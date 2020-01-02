@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@
 
 #include "file_loader.hpp"
 #include "math/distance/cosine.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "math/utilities/ReadCSV.hpp"
 #include "ml/core/graph.hpp"
-#include "ml/dataloaders/commodity_dataloader.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
@@ -29,8 +29,6 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 
 #include <iostream>
-#include <sstream>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -225,14 +223,12 @@ int ArgPos(char const *str, int argc, char **argv)
 DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &test_x_file,
                   std::string const &test_y_file, std::vector<std::string> node_names)
 {
-  DataType                                                            loss{0};
-  DataType                                                            loss_counter{0};
-  fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
+  DataType                                                         loss{0};
+  DataType                                                         loss_counter{0};
+  fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> loader;
 
-  auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file);
-  data.Transpose();
-  auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file);
-  label.Transpose();
+  auto data  = fetch::math::utilities::ReadCSV<TensorType>(test_x_file, 1, 1, true);
+  auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file, 1, 1, true);
   loader.AddData({data}, label);
 
   while (!loader.IsDone())
@@ -243,7 +239,7 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
 
     auto loss_tensor = g_ptr->Evaluate(node_names.back(), false);
     loss += *(loss_tensor.begin());
-    loss_counter++;
+    ++loss_counter;
   }
 
   return loss / loss_counter;
@@ -296,16 +292,22 @@ int main(int argc, char **argv)
   if (testing)
   {
     /// LOAD WEIGHTS INTO GRAPH ///
-    std::string weights_dir = input_dir + "/output/" + dataname + "/model_weights";
-    auto        sd          = g_ptr->StateDict();
+    std::string             weights_dir = input_dir + "/output/" + dataname + "/model_weights";
+    std::vector<TensorType> weightsrefs = g_ptr->GetWeightsReferences();
 
+    auto w_itr = weightsrefs.begin();
     for (auto const &name : node_names)
     {
       if (name.find("dense") != std::string::npos)
       {
         // if it is a dense layer there will be weights and bias files
+        std::string node_weights_dir = weights_dir;
+        node_weights_dir.append("/").append(name);
+
+        std::cout << "Reading weights from: " << node_weights_dir << std::endl;
+
         std::vector<std::string> dir_list =
-            fetch::ml::examples::GetAllTextFiles(weights_dir.append("/").append(name), "");
+            fetch::ml::examples::GetAllTextFiles(node_weights_dir, "");
         std::vector<std::string> actual_dirs;
         for (auto const &dir : dir_list)
         {
@@ -316,39 +318,34 @@ int main(int argc, char **argv)
         }
         assert(actual_dirs.size() == 1);
 
-        std::string node_weights_dir =
-            weights_dir.append("/").append(name).append("/").append(actual_dirs[0]);
+        node_weights_dir.append("/").append(actual_dirs[0]);
 
         // the weights array for the node has number of columns = number of features
-        TensorType weights =
-            fetch::math::utilities::ReadCSV<TensorType>(node_weights_dir + "/kernel:0.csv", 0, 0);
-        TensorType bias =
-            fetch::math::utilities::ReadCSV<TensorType>(node_weights_dir + "/bias:0.csv", 0, 0);
-        bias.Transpose();
+        TensorType weights = fetch::math::utilities::ReadCSV<TensorType>(
+            node_weights_dir + "/kernel:0.csv", 0, 0, true);
+        TensorType bias = fetch::math::utilities::ReadCSV<TensorType>(
+            node_weights_dir + "/bias:0.csv", 0, 0, true);
+        bias = bias.Transpose();
 
         assert(bias.shape().at(0) == weights.shape().at(0));
 
-        auto weights_tensor = sd.dict_.at(name + "_FullyConnected_Weights").weights_;
-        auto bias_tensor    = sd.dict_.at(name + "_FullyConnected_Bias").weights_;
-
-        *weights_tensor     = weights;
-        *bias_tensor        = bias;
+        assert(w_itr->shape() == bias.shape());
+        w_itr->Assign(bias);
+        w_itr++;
+        assert(w_itr->shape() == weights.shape());
+        w_itr->Assign(weights);
+        w_itr++;
         output_feature_size = weights.shape()[0];  // stores shape of last dense layer
       }
     }
-
-    // load state dict into graph (i.e. load pretrained weights)
-    g_ptr->LoadStateDict(sd);
 
     /// LOAD DATA ///
 
     std::string test_x_file = filename_root + "x_test.csv";
     std::string test_y_file = filename_root + "y_pred_test.csv";
-    fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
-    auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file);
-    data.Transpose();
-    auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file);
-    label.Transpose();
+    fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> loader;
+    auto data  = fetch::math::utilities::ReadCSV<TensorType>(test_x_file, 1, 1, true);
+    auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file, 1, 1, true);
     loader.AddData({data}, label);
 
     /// FORWARD PASS PREDICTIONS ///
@@ -368,6 +365,8 @@ int main(int argc, char **argv)
       j++;
     }
 
+    std::cout << "test_y.ToString(): " << test_y.ToString() << std::endl;
+    std::cout << "output.ToString(): " << output.ToString() << std::endl;
     if (output.AllClose(test_y, fetch::math::Type<DataType>("0.00001")))
     {
       std::cout << "Graph output is the same as the test output - success!" << std::endl;
@@ -387,7 +386,7 @@ int main(int argc, char **argv)
     OptimiserType optimiser(g_ptr, {node_names.front()}, node_names.at(1), node_names.back(),
                             LEARNING_RATE);
 
-    fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
+    fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> loader;
 
     // three training rounds
     for (SizeType j = 0; j < 3; j++)
@@ -410,11 +409,10 @@ int main(int argc, char **argv)
       std::string valid_x_file = filename_root + std::to_string(j) + "_x_val.csv";
       std::string valid_y_file = filename_root + std::to_string(j) + "_y_val.csv";
 
+      auto data  = fetch::math::utilities::ReadCSV<TensorType>(train_x_file, 1, 1, true);
+      auto label = fetch::math::utilities::ReadCSV<TensorType>(train_y_file, 1, 1, true);
+
       loader.Reset();
-      auto data = fetch::math::utilities::ReadCSV<TensorType>(train_x_file);
-      data.Transpose();
-      auto label = fetch::math::utilities::ReadCSV<TensorType>(train_y_file);
-      label.Transpose();
       loader.AddData({data}, label);
 
       // Training loop
@@ -458,10 +456,8 @@ int main(int argc, char **argv)
     std::string test_y_file = filename_root + "y_pred_test.csv";
 
     loader.Reset();
-    auto data = fetch::math::utilities::ReadCSV<TensorType>(test_x_file);
-    data.Transpose();
-    auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file);
-    label.Transpose();
+    auto data  = fetch::math::utilities::ReadCSV<TensorType>(test_x_file, 1, 1, true);
+    auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file, 1, 1, true);
     loader.AddData({data}, label);
 
     DataType    distance{0};
@@ -498,7 +494,7 @@ int main(int argc, char **argv)
 
       auto cos = fetch::math::correlation::Cosine(slice_output, input.first);
       distance += cos;
-      distance_counter++;
+      ++distance_counter;
     }
     file.close();
 

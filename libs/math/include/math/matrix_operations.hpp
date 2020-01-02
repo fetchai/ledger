@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 #include "math/linalg/blas/gemm_tn_vector.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include "math/tensor_reduce.hpp"
+#include "math/tensor/tensor_reduce.hpp"
 #include "vectorise/math/standard_functions.hpp"
 
 #include <cassert>

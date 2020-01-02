@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/activations/dropout.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
 #include "math/base_types.hpp"
-#include "ml/ops/activations/dropout.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 
@@ -142,7 +143,7 @@ TYPED_TEST(DropoutTest, backward_test)
   math::SizeType tensorsize = 10000;
   TensorType     data       = TensorType::UniformRandom(tensorsize);
   TensorType     error      = TensorType::UniformRandom(tensorsize);
-  auto           prob       = fetch::math::Type<DataType>("0.5");
+  auto const     prob       = fetch::math::Type<DataType>("0.5");
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
@@ -215,7 +216,7 @@ TYPED_TEST(DropoutTest, saveparams_test)
 
   math::SizeType                tensorsize  = 1000;
   TensorType                    data        = TensorType::UniformRandom(tensorsize);
-  auto                          prob        = fetch::math::Type<DataType>("0.5");
+  auto const                    prob        = fetch::math::Type<DataType>("0.5");
   typename TensorType::SizeType random_seed = 12345;
 
   OpType op(prob, random_seed);

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer.hpp"
 #include "ml/core/graph.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
@@ -30,8 +32,6 @@ class Module;
 
 namespace vm_modules {
 namespace ml {
-
-class VMStateDict;
 
 class VMGraph : public fetch::vm::Object
 {
@@ -84,10 +84,6 @@ public:
 
   void AddExp(fetch::vm::Ptr<fetch::vm::String> const &name,
               fetch::vm::Ptr<fetch::vm::String> const &input_name);
-
-  void LoadStateDict(fetch::vm::Ptr<VMStateDict> const &sd);
-
-  fetch::vm::Ptr<VMStateDict> StateDict();
 
   static void Bind(fetch::vm::Module &module, bool enable_experimental);
 

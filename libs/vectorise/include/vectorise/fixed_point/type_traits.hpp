@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -100,6 +100,9 @@ constexpr bool IsNotFixedPoint128 = !IsFixedPoint128<T> && IsFixedPoint<T>;
 
 template <typename DataType, typename ReturnType = void>
 using IfIsFixedPoint128 = fetch::meta::EnableIf<IsFixedPoint128<DataType>, ReturnType>;
+
+template <typename DataType, typename ReturnType = void>
+using IfIsNotFixedPoint128 = fetch::meta::EnableIf<IsNotFixedPoint128<DataType>, ReturnType>;
 
 }  // namespace meta
 }  // namespace math

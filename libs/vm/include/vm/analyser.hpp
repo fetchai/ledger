@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -290,6 +290,7 @@ private:
   TypePtr        any_integer_type_;
   TypePtr        array_type_;
   TypePtr        map_type_;
+  TypePtr        pair_type_;
   TypePtr        sharded_state_type_;
   TypePtr        state_type_;
   TypePtr        initialiser_list_type_;
