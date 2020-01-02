@@ -41,81 +41,16 @@ public:
   using MyType        = Abs<TensorType>;
 
   Abs() = default;
-
-  explicit Abs(SPType const &sp)
-    : Ops<T>(sp)
+  explicit Abs(SPType const &sp) : Ops<T>(sp)
   {}
-
   ~Abs() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    return std::make_shared<SPType>();
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
-  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
-
-    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
-
-    return copyshare;
-  }
-
-  /**
-   * elementwise absolute value
-   * @param inputs - one input for elementwise abs
-   * @return
-   */
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(inputs.size() == 1);
-    assert(inputs.at(0)->shape() == output.shape());
-    assert(output.shape() == this->ComputeOutputShape(inputs));
-
-    fetch::math::Abs((*inputs.at(0)), output);
-  }
-
-  /**
-   * elementwise absolute value gradient is:
-   * f'(input0)=sign(input0)*error_signal
-   */
-  std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    assert(inputs.size() == 1);
-    assert(error_signal.size() == inputs.at(0)->size());
-
-    TensorType return_signal(inputs.at(0)->shape());
-
-    auto a_it   = inputs.at(0)->cbegin();
-    auto err_it = error_signal.cbegin();
-    auto r_it   = return_signal.begin();
-    while (a_it.is_valid())
-    {
-      if (*a_it > 0)
-      {
-        *r_it = *err_it;
-      }
-      else
-      {
-        *r_it = -*err_it;
-      }
-
-      ++a_it;
-      ++err_it;
-      ++r_it;
-    }
-
-    return {return_signal};
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    return inputs.front()->shape();
-  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
+  std::vector<TensorType> Backward(VecTensorType const &inputs, TensorType const &   error_signal) override;
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
