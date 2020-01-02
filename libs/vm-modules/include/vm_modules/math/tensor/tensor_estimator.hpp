@@ -275,9 +275,6 @@ private:
   static ChargeAmount ToChargeAmount(fixed_point::fp64_t const &val);
 
   VMObjectType &tensor_;
-
-  DataType padded_size_;
-  DataType size_;
 };
 
 }  // namespace math
