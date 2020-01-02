@@ -113,8 +113,13 @@ public:
   friend struct serializers::MapSerializer;
   friend class fetch::vm_modules::ml::model::ModelEstimator;
 
-  using ChargeAmount = uint64_t;  // TODO(VH): Move me to an external declaration header.
-  ChargeAmount ForwardPassChargeCost()
+  /**
+   * @brief ForwardPassChargeCost computes estimation of a forward pass (inference) charge cost.
+   * The computations are performed for 1 data slice (e.g. a data with batch size == 1) so in order
+   * to get proper estimation for larger batches the result has to be multiplied by batch size.
+   * @return VM charge estimation
+   */
+  fetch::vm::ChargeAmount ForwardPassChargeCost()
   {
     return graph_ptr_->ForwardPassChargeCost(output_);
   }

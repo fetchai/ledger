@@ -162,10 +162,9 @@ public:
    * and ending in this node.
    */
   // TODO(VH): Naming does not suggest recursive nature of this method, renaming needed.
+  //           PrecedingNodesForwardCost or just PrecedingForwardCost?
   virtual fetch::vm::ChargeAmount ForwardPassChargeCost()
   {
-    static constexpr fetch::vm::ChargeAmount my_default_cost =
-        100;  // TODO(VH): Calculate/measure me, move me in a separate file.
     // TODO(VH): call OpForwardCost() of the Op - we need to know Data shape to do this.
     if (input_nodes_.empty())
     {
@@ -173,21 +172,21 @@ public:
       if (this->OpCode() == OpType::OP_PLACEHOLDER)
       {
         FETCH_LOG_INFO(name_.c_str(), "Input Placeholder layer cost added");
-        return op_ptr_->OpForwardCost(expected_in_shapes);
       }
-      // TODO(VH): handle Weight and other Ops without input.
-      FETCH_LOG_WARN(this->name_.c_str(), " Input non-placeholder node reached: default cost " +
-                                              std::to_string(my_default_cost) + " added.");
-      return my_default_cost;
+      else
+      {
+        FETCH_LOG_ERROR(name_.c_str(),
+                        "Can not estimate a forward pass cost of a non-placeholder leaf Node!");
+      }
+      return op_ptr_->OpForwardCost(expected_in_shapes);
     }
-    fetch::vm::ChargeAmount total_cost = my_default_cost;
+    fetch::vm::ChargeAmount total_cost = 0;
     ShapeVector             input_shapes;
     for (auto const &i : input_nodes_)
     {
       if (auto input_node_ptr = i.lock())
       {
-        auto const input_node_forward_cost = input_node_ptr->ForwardPassChargeCost();
-        total_cost += input_node_forward_cost;
+        total_cost += input_node_ptr->ForwardPassChargeCost();
         // TODO(VH): check if the calculations are valid.
         auto const in_shape = input_node_ptr->SliceOutputShape();
         if (!in_shape.empty())
@@ -321,12 +320,13 @@ private:
 
   std::shared_ptr<ops::Ops<TensorType>> op_ptr_;
 
-  /// A list of Ops that "knows" their output shape on construction, such as FullyConnected.
   static const std::set<OpType> shaped_operations_;
 };
 
+/// A list of Ops that "knows" their output shape on construction, such as FullyConnected.
 template <typename TensorType>
 const std::set<OpType> Node<TensorType>::shaped_operations_{OpType::LAYER_FULLY_CONNECTED};
+
 /**
  * Constructs and returns a NodeSaveableParams object allowing serialisation
  * @tparam T

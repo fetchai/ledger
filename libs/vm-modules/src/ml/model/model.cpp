@@ -739,6 +739,11 @@ void VMModel::LayerAddActivation(const fetch::vm::Ptr<String> &layer,
   }
 }
 
+/**
+ * @brief VMModel::EstimatePredict calculates a charge amount, required for a forward pass
+ * @param data
+ * @return charge estimation
+ */
 ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
 {
   ChargeAmount const cost       = model_->ForwardPassChargeCost();

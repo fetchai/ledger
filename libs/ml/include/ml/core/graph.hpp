@@ -158,9 +158,14 @@ public:
 
   void ResetGradients();
 
-  virtual typename fetch::vm::ChargeAmount ForwardPassChargeCost(std::string const &node_name)
+  /**
+   * @brief ForwardPassChargeCost calculates estimated charge cost of a forward pass
+   * throught the Graph, starting from Input and finishing in the given node.
+   * @param node_name a name of give node
+   * @return charge amount
+   */
+  virtual fetch::vm::ChargeAmount ForwardPassChargeCost(std::string const &node_name)
   {
-    // TODO: ask the last Node for estimation, and let it recursively re-ask others
     if (nodes_.find(node_name) == nodes_.end())
     {
       throw ml::exceptions::InvalidMode("Cannot estimate charge cost: node [" + node_name +
@@ -419,6 +424,12 @@ TensorType Graph<TensorType>::ForwardPropagate(std::string const &node_name, boo
   return ForwardImplementation(node_name, is_training, false);
 }
 
+/**
+ * Computes and/or deduces layer output shapes starting from the given node and recursively
+ * traversing the Graph up to leaf (input) nodes. Layer output shape computation/deduction
+ * results are cached in each Node.
+ * @param node_name
+ */
 template <typename TensorType>
 void Graph<TensorType>::RecursivelyLinkShapes(const std::string &node_name)
 {

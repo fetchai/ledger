@@ -96,6 +96,8 @@ public:
     return is_training_;
   }
 
+  /// Calculates charge amount that is necessary to perform this Op on the input data Tensor(s)
+  /// with given shape(s).
   virtual fetch::vm::ChargeAmount OpForwardCost(ShapeVector const &input_shapes)
   {
     FETCH_UNUSED(input_shapes);
@@ -123,11 +125,9 @@ public:
     return expected_slice_input_shapes_;
   }
 
+  /// OOP polymorphic wrapper around each Ops/Layer OpCode() static method.
   virtual OpType OperationType() const  // TODO(VH): make a pure virtual.
   {
-    // std::cout << __PRETTY_FUNCTION__ << std::endl;
-    // FETCH_LOG_WARN("Ops", "UNIMPLEMENTED Ops::OpCode() CALLED! Exception should be raised.");
-    std::cout << "UNIMPLEMENTED Ops::OpCode() CALLED! Exception should be raised." << std::endl;
     return OpType::NONE;
   }
 
