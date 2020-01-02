@@ -1205,6 +1205,49 @@ TEST_F(VMModelTests, model_sequential_reshape_3d_in_2d_out)
   EXPECT_TRUE(constructed_shape == expected.shape());
 }
 
+TEST_F(VMModelTests, model_sequential_reshape_2d_in_3d_out)
+{
+  static char const *SRC_METRIC = R"(
+          function main() : Tensor
+                          var shape = Array<UInt64>(1);
+                          shape[0] = 1u64;
+                          var x = Tensor(shape);
+                          var str_vals = "0.5; 7.1; 9.1; 6.2;";
+                          x.fromString(str_vals);
+
+                          var to_shape = Array<UInt64>(3);
+                          to_shape[0] = 2u64;
+                          to_shape[1] = 2u64;
+                          to_shape[2] = 1u64;
+
+                          var model = Model("sequential");
+                          model.add("reshape", to_shape);
+                          model.compile("scel", "adam");
+                          var prediction = model.predict(x);
+
+                          return prediction;
+          endfunction
+      )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
+  auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const constructed_shape = prediction->shape();
+
+  fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({2, 2});
+  gt(0, 0) = fetch::math::Type<DataType>("+0.5");
+  gt(1, 0) = fetch::math::Type<DataType>("+7.1");
+  gt(0, 1) = fetch::math::Type<DataType>("+9.1");
+  gt(1, 1) = fetch::math::Type<DataType>("+6.2");
+  // the actual model output is {5, 1, 1}
+  ASSERT_TRUE((prediction->GetTensor())
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+  fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({2, 2, 1});
+  EXPECT_TRUE(constructed_shape == expected.shape());
+}
+
 TEST_F(VMModelTests, model_sequential_flatten_4d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(
