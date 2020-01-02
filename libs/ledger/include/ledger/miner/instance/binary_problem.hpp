@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "memory/shared_array.hpp"
 
 #include <unordered_set>

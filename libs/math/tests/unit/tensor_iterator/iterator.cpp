@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-#include "math/tensor_slice_iterator.hpp"
+#include "math/tensor/tensor.hpp"
+#include "math/tensor/tensor_slice_iterator.hpp"
 
 #include "gtest/gtest.h"
 

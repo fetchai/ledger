@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/matrix_operations.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/ops.hpp"
 

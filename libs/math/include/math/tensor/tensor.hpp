@@ -31,10 +31,10 @@
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/fmod.hpp"
 #include "math/standard_functions/remainder.hpp"
-#include "math/tensor_broadcast.hpp"
-#include "math/tensor_iterator.hpp"
-#include "math/tensor_slice_iterator.hpp"
-#include "math/tensor_view.hpp"
+#include "math/tensor/tensor_broadcast.hpp"
+#include "math/tensor/tensor_iterator.hpp"
+#include "math/tensor/tensor_slice_iterator.hpp"
+#include "math/tensor/tensor_view.hpp"
 #include "vectorise/memory/array.hpp"
 
 #include <cassert>

@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"

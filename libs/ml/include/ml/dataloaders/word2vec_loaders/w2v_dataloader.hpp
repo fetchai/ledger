@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "meta/type_traits.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
