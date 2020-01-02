@@ -1244,10 +1244,8 @@ TEST(BasicVmEngineDmlfTests, Add64)
 
 TEST(BasicVmEngineDmlfTests, AddFixed)
 {
-  ExecutionResult result =
-      RunStatelessTest(AddFixed, "add",
-                       Params{LedgerVariant(fetch::math::AsType<fp64_t>(4.5)),
-                              LedgerVariant(fetch::math::AsType<fp32_t>(5.5))});
+  ExecutionResult result = RunStatelessTest(
+      AddFixed, "add", Params{LedgerVariant(fp64_t("4.5")), LedgerVariant(fp32_t("5.5"))});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
   EXPECT_EQ(result.output().As<fp64_t>(), static_cast<fp64_t>(10));
 }
