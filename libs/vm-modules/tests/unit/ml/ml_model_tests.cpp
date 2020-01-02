@@ -1165,7 +1165,7 @@ TEST_F(VMModelTests, model_sequential_flatten_2d_in_2d_out)
   EXPECT_TRUE(constructed_shape == expected.shape());
 }
 
-TEST_F(VMModelTests, model_sequential_reshape_2d_in_2d_out)
+TEST_F(VMModelTests, model_sequential_reshape_3d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(
               function main() : Tensor
