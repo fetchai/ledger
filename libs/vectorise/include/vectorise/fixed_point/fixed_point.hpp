@@ -446,6 +446,7 @@ private:
 
   template <typename T>
   static constexpr meta::IfIsFloat<T, FixedPoint> FromFloat(T n);
+  // Note: We need to disable the static analysis check here because of the friend declaration
   template <typename T, typename U>
   friend constexpr math::meta::IfIsFixedPoint<T, T> fetch::math::AsType(
       U val, meta::IfIsFloat<U> * /*unused*/); // NOLINT
