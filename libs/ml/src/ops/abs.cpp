@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,29 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "ml/ops/ops.hpp"
+#include "math/standard_functions/abs.hpp"
 #include "ml/ops/abs.hpp"
 #include "ml/saveparams/saveable_params.hpp"
-
-#include <cassert>
-#include <memory>
-#include <vector>
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
-
-
-template <typename T>
-std::shared_ptr<OpsSaveableParams> Abs<T>::GetOpSaveableParams() override
+template <typename TensorType>
+std::shared_ptr<OpsSaveableParams> Abs<TensorType>::GetOpSaveableParams()
 {
   return std::make_shared<SPType>();
 }
 
-template <typename T>
-std::shared_ptr<fetch::ml::ops::Ops<TensorType>> Abs<T>::MakeSharedCopy(std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+template <typename TensorType>
+std::shared_ptr<fetch::ml::ops::Ops<TensorType>> Abs<TensorType>::MakeSharedCopy(
+    std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me)
 {
   FETCH_UNUSED(me);
   assert(me.get() == this);
@@ -53,8 +47,8 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> Abs<T>::MakeSharedCopy(std::sha
  * @param inputs - one input for elementwise abs
  * @return
  */
-template <typename T>
-void Abs<T>::Forward(VecTensorType const &inputs, TensorType &output) override
+template <typename TensorType>
+void Abs<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
   assert(inputs.at(0)->shape() == output.shape());
@@ -63,13 +57,13 @@ void Abs<T>::Forward(VecTensorType const &inputs, TensorType &output) override
   fetch::math::Abs((*inputs.at(0)), output);
 }
 
-
 /**
  * elementwise absolute value gradient is:
  * f'(input0)=sign(input0)*error_signal
  */
-template <typename T>
-std::vector<TensorType> Abs<T>::Backward(VecTensorType const &inputs, TensorType const &error_signal) override
+template <typename TensorType>
+std::vector<TensorType> Abs<TensorType>::Backward(VecTensorType const &inputs,
+                                                  TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
   assert(error_signal.size() == inputs.at(0)->size());
@@ -98,17 +92,21 @@ std::vector<TensorType> Abs<T>::Backward(VecTensorType const &inputs, TensorType
   return {return_signal};
 }
 
-template <typename T>
-std::vector<SizeType> Abs<T>::ComputeOutputShape(VecTensorType const &inputs) const override
+template <typename TensorType>
+std::vector<math::SizeType> Abs<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
 {
   return inputs.front()->shape();
 }
 
-template class Abs<float>;
-template class Abs<double>;
-template class Abs<fixed_point::fp32_t>;
-template class Abs<fixed_point::fp64_t>;
-template class Abs<fixed_point::fp128_t>;
+///////////////////////////////
+/// EXPLICIT INSTANTIATIONS ///
+///////////////////////////////
+
+template class Abs<math::Tensor<float>>;
+template class Abs<math::Tensor<double>>;
+template class Abs<math::Tensor<fixed_point::fp32_t>>;
+template class Abs<math::Tensor<fixed_point::fp64_t>>;
+template class Abs<math::Tensor<fixed_point::fp128_t>>;
 
 }  // namespace ops
 }  // namespace ml

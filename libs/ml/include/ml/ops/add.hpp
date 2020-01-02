@@ -17,36 +17,40 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/matrix_operations.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/ops.hpp"
-#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
+#include <memory>
 #include <vector>
 
 namespace fetch {
 namespace ml {
+
+struct OpsSaveableParams;
+
+template <typename TensorType>
+struct OpAddSaveableParams;
+
 namespace ops {
 
 template <class T>
-class Add : public fetch::ml::ops::Ops<T>
+class Add : public Ops<T>
 {
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = fetch::math::SizeType;
+  using SizeType      = math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpAddSaveableParams<T>;
   using MyType        = Add<TensorType>;
 
   Add() = default;
-
   explicit Add(SPType const &sp)
     : Ops<T>(sp)
   {
     axes_ = sp.axes;
   }
-
   ~Add() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
@@ -110,44 +114,7 @@ public:
 private:
   std::vector<SizeType> axes_;
 
-  void UpdateAxes(VecTensorType const &inputs)
-  {
-    bool axes_changed = false;
-
-    // Check if axes were changed
-    SizeType cnt = 0;
-    for (SizeType i{0}; i < inputs.at(0)->shape().size(); i++)
-    {
-      if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
-      {
-        if (cnt >= axes_.size() || axes_.at(cnt) != i)
-        {
-          axes_changed = true;
-          break;
-        }
-        cnt++;
-      }
-    }
-
-    if (axes_.empty())
-    {
-      axes_changed = true;
-    }
-
-    // Update axes if necessary
-    if (axes_changed)
-    {
-      axes_.clear();
-      // Get axes
-      for (SizeType i{0}; i < inputs.at(0)->shape().size(); i++)
-      {
-        if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
-        {
-          axes_.emplace_back(i);
-        }
-      }
-    }
-  }
+  void UpdateAxes(VecTensorType const &inputs);
 };
 
 }  // namespace ops

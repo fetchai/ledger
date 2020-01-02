@@ -17,10 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/standard_functions/abs.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/ops.hpp"
-#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <memory>
@@ -28,6 +26,12 @@
 
 namespace fetch {
 namespace ml {
+
+struct OpsSaveableParams;
+
+template <typename TensorType>
+struct OpAbsSaveableParams;
+
 namespace ops {
 
 template <class T>
@@ -42,15 +46,19 @@ public:
   using MyType        = Abs<TensorType>;
 
   Abs() = default;
-  explicit Abs(SPType const &sp) : Ops<T>(sp)
+  explicit Abs(SPType const &sp)
+    : Ops<T>(sp)
   {}
   ~Abs() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
+
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
   void Forward(VecTensorType const &inputs, TensorType &output) override;
-  std::vector<TensorType> Backward(VecTensorType const &inputs, TensorType const &   error_signal) override;
+
+  std::vector<TensorType> Backward(VecTensorType const &inputs, TensorType const &error_signal) override;
+
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
