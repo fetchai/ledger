@@ -102,7 +102,8 @@ public:
     // TODO(VH): charge calculation to be clarified.
     FETCH_UNUSED(input_shapes);
     auto const cost = fetch::ml::ops::charge_cost::PLACEHOLDER_READING_PER_ELEMENT;
-    FETCH_LOG_INFO(DESCRIPTOR, "    " + this->OutputShapeAsString() +
+    FETCH_LOG_INFO(DESCRIPTOR, "    " + this->InputShapesAsString() + ", " +
+                                   this->OutputShapeAsString() +
                                    " forward pass cost  : " + std::to_string(cost));
     return cost;
   }

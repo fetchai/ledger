@@ -216,6 +216,16 @@ public:
     op_ptr_->SetSliceOutputShape(new_shape);
   }
 
+  void SetExpectedSliceInputShapes(ShapeVector const &new_shapes)
+  {
+    op_ptr_->SetExpectedSliceInputShapes(new_shapes);
+  }
+
+  ShapeVector const &ExpectedSliceInputShapes()
+  {
+    return op_ptr_->ExpectedSliceInputShapes();
+  }
+
   /**
    * @brief SliceOutputShape computes an output shape of the Node, if only 1 data slice (e.g.
    * with batch size == 1) is provided to the Graph input. If there is no cached output shape,

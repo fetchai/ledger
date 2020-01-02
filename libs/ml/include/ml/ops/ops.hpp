@@ -167,6 +167,30 @@ protected:
     return ss.str();
   }
 
+  std::string InputShapesAsString()
+  {
+    std::vector<std::vector<SizeType>> const in_shapes = this->ExpectedSliceInputShapes();
+    std::stringstream                        ss;
+    ss << " (in ";
+    if (in_shapes.empty())
+    {
+      ss << "[[??]] )";
+      return ss.str();
+    }
+    ss << "[";
+    for (auto const shape : in_shapes)
+    {
+      ss << "[";
+      for (auto const &dim : shape)
+      {
+        ss << " " << dim;
+      }
+      ss << " ]";
+    }
+    ss << "])";
+    return ss.str();
+  }
+
   static SizeType TotalElementsIn(ShapeVector const &shapes)
   {
     if (shapes.empty())

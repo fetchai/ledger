@@ -282,8 +282,9 @@ public:
       trainables *= t;
     }
     auto const cost = fetch::ml::ops::charge_cost::WEIGHTS_READING_PER_ELEMENT;
-    FETCH_LOG_INFO(DESCRIPTOR, "    " + this->OutputShapeAsString() +
-                                   ", forward pass cost  : " + std::to_string(cost));
+    FETCH_LOG_INFO(DESCRIPTOR, "    " + this->InputShapesAsString() + ", " +
+                                   this->OutputShapeAsString() +
+                                   " forward pass cost  : " + std::to_string(cost));
     FETCH_LOG_INFO(DESCRIPTOR, +"       (trainable params: " + std::to_string(trainables) + ")");
     return cost;
   }
