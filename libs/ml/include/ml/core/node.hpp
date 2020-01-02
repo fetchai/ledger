@@ -131,7 +131,8 @@ public:
   }
 
   /**
-   * returns the stored operation type
+   * returns the stored operation type and syncs it with operation type of
+   * underlying Ops.
    * @return
    */
   OpType const &OpCode()
@@ -153,6 +154,14 @@ public:
     return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }
 
+  /**
+   * @brief ForwardPassChargeCost calculates charge cost estimation of the current node.
+   * The cost includes also charge costs for every preceding Node in a linear (sequential)
+   * Graph up to input Node.
+   * @return charge cost estimation for all Forward passes through all Nodes starting from input
+   * and ending in this node.
+   */
+  // TODO(VH): Naming does not suggest recursive nature of this method, renaming needed.
   virtual fetch::vm::ChargeAmount ForwardPassChargeCost()
   {
     static constexpr fetch::vm::ChargeAmount my_default_cost =
@@ -203,6 +212,12 @@ public:
     op_ptr_->SetSliceOutputShape(new_shape);
   }
 
+  /**
+   * @brief SliceOutputShape computes an output shape of the Node, if only 1 data slice (e.g.
+   * with batch size == 1) is provided to the Graph input. If there is no cached output shape,
+   * the method is recursively called until either a cached shape or input Node is encountered.
+   * @return vector of SizeType.
+   */
   Shape SliceOutputShape()
   {
     // Returned cached shape result if available; also set underlying Op shape.
@@ -235,15 +250,6 @@ public:
       slice_output_shape_ = candidate;
     }
 
-    //    // Do I have any inputs to ask them for shape?
-    //    if (input_nodes_.empty())
-    //    {
-    //      // This is a leaf node and its shape can not be deduced from input one.
-    //      // TODO(VH): we need to treat leaf nodes somehow.
-    //      FETCH_LOG_INFO("Node", "Shape deduction reached a Graph leaf : " + this->name_);
-    //      return slice_output_shape_;
-    //    }
-
     ShapeVector input_shapes;
     for (auto const &i : input_nodes_)
     {
@@ -252,12 +258,13 @@ public:
       {
         throw std::runtime_error("Unable to lock weak pointer.");
       }
-      // Deeper recursive call!
+      // Deeper recursive call.
       auto const in_shape = node_ptr->SliceOutputShape();
       if (!in_shape.empty())
       {
         input_shapes.emplace_back(in_shape);
       }
+      // TODO(VH): else (if there _is_ an empty shape among inputs) what?
     }
 
     if (!input_shapes.empty())
@@ -314,6 +321,7 @@ private:
 
   std::shared_ptr<ops::Ops<TensorType>> op_ptr_;
 
+  /// A list of Ops that "knows" their output shape on construction, such as FullyConnected.
   static const std::set<OpType> shaped_operations_;
 };
 

@@ -55,7 +55,15 @@ public:
    * in ASSERT. On Forward you can use output.shape() and on Backward there is error_signal.shape()
    */
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;
-  std::vector<SizeType>         ComputeSliceOutputShape(ShapeVector const &input_shapes)
+
+  /**
+   * @brief ComputeSliceOutputShape is expensive function and should be used only for initialisation
+   * or in ASSERT. On Forward you can use output.shape() and on Backward there is
+   * error_signal.shape()
+   * @param input_shapes
+   * @return
+   */
+  std::vector<SizeType> ComputeSliceOutputShape(ShapeVector const &input_shapes)
   {
     ShapeVector   tensor_shapes = input_shapes;
     VecTensorType dummies;
