@@ -219,8 +219,8 @@ TYPED_TEST(Convolution1DTest, forward_3x3x2_5x3x3x2)
   ASSERT_EQ(output.shape(), gt.shape());
 
   // Test correct values
-  ASSERT_TRUE(output.AllClose(gt, fetch::math::AsType<DataType>(1e-5f),
-                              fetch::math::AsType<DataType>(1e-5f)));
+  ASSERT_TRUE(output.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution1DTest, backward_3x3x2_5x3x3x2)
@@ -290,10 +290,10 @@ TYPED_TEST(Convolution1DTest, backward_3x3x2_5x3x3x2)
   ASSERT_EQ(prediction.at(1).shape(), kernels.shape());
 
   // Test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt1, fetch::math::AsType<DataType>(1e-5f),
-                                     fetch::math::AsType<DataType>(1e-5f)));
-  ASSERT_TRUE(prediction[1].AllClose(gt2, fetch::math::AsType<DataType>(1e-5f),
-                                     fetch::math::AsType<DataType>(1e-5f)));
+  ASSERT_TRUE(prediction[0].AllClose(gt1, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[1].AllClose(gt2, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution1DTest, saveparams_test)

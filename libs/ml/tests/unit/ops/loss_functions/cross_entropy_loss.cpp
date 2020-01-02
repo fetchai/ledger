@@ -187,8 +187,8 @@ TYPED_TEST(CrossEntropyTest, binary_backward_test)
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal)
                   .at(0)
-                  .AllClose(gt, fetch::math::AsType<DataType>(1e-5f),
-                            fetch::math::AsType<DataType>(1e-5f)));
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(CrossEntropyTest, onehot_backward_test)
@@ -219,8 +219,8 @@ TYPED_TEST(CrossEntropyTest, onehot_backward_test)
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal)
                   .at(0)
-                  .AllClose(gt, fetch::math::AsType<DataType>(1e-5f),
-                            fetch::math::AsType<DataType>(1e-5f)));
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(CrossEntropyTest, saveparams_test)
