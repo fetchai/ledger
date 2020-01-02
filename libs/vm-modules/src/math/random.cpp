@@ -53,7 +53,7 @@ fetch::meta::IfIsFloat<T, T> Rand(VM *vm, T const &a = T{.0}, T const &b = T{1.0
   if (a >= b)
   {
     vm->RuntimeError("Invalid argument: rand(a, b) must satisfy a < b");
-    return fetch::math::AsType<T>(0.0);
+    return T{0};
   }
 
   std::random_device rd;
@@ -68,7 +68,7 @@ fetch::math::meta::IfIsNotFixedPoint128<T, T> Rand(VM *vm, T const &a = T{.0}, T
   if (a >= b)
   {
     vm->RuntimeError("Invalid argument: rand(a, b) must satisfy a < b");
-    return fetch::math::AsType<T>(0.0);
+    return T{0};
   }
 
   std::random_device rd;

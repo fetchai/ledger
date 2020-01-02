@@ -323,8 +323,7 @@ TYPED_TEST(MaxPoolTest, saveparams_test_1d)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(MaxPoolTest, saveparams_backward_test_1d_2_channels)
@@ -667,8 +666,7 @@ TYPED_TEST(MaxPoolTest, saveparams_test_2d)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(MaxPoolTest, saveparams_backward_2_channels_test_2d)

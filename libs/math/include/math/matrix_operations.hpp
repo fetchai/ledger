@@ -560,7 +560,7 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
 
   using DataType = typename ArrayType::Type;
-  ret.Fill(static_cast<DataType>(0));
+  ret.Fill(DataType{0});
 
   Reduce(axis, [](DataType const &x, DataType &y) { y = static_cast<DataType>(y + x); }, obj1, ret);
 }
@@ -594,7 +594,7 @@ void ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
 {
 
   using DataType = typename ArrayType::Type;
-  ret.Fill(static_cast<DataType>(0));
+  ret.Fill(DataType{0});
 
   Reduce(axes, [](DataType const &x, DataType &y) { y += x; }, obj1, ret);
 }

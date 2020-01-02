@@ -122,7 +122,7 @@ public:
     {
     case WeightsInitialisation::ZEROS:
     {
-      array.Fill(static_cast<DataType>(0));
+      array.Fill(DataType{0});
       break;
     }
     case WeightsInitialisation::ONES:
@@ -198,7 +198,7 @@ public:
     }
     case WeightsInitialisation::ZEROS:
     {
-      array.Fill(static_cast<DataType>(0));
+      array.Fill(DataType{0});
       break;
     }
     case WeightsInitialisation::XAVIER_GLOROT:
