@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -79,7 +79,8 @@ TYPED_TEST(ReluTest, forward_3d_tensor_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-5), static_cast<DataType>(1e-5)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.00001"),
+                                  fetch::math::Type<DataType>("0.00001")));
 }
 
 TYPED_TEST(ReluTest, forward_all_negative_integer_test)
@@ -159,7 +160,8 @@ TYPED_TEST(ReluTest, backward_3d_tensor_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, static_cast<DataType>(1e-5), static_cast<DataType>(1e-5)));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::Type<DataType>("0.00001"),
+                                     fetch::math::Type<DataType>("0.00001")));
 }
 
 TYPED_TEST(ReluTest, saveparams_test)

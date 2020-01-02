@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -45,20 +45,20 @@ TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
   TypeParam data2({n_classes, n_data_points});
 
   // these are not logits - a softmax will get called on this
-  data1.At(0, 0) = static_cast<DataType>(0);
-  data1.At(1, 0) = static_cast<DataType>(0);
-  data1.At(2, 0) = DataType(999999.);
+  data1.At(0, 0) = DataType{0};
+  data1.At(1, 0) = DataType{0};
+  data1.At(2, 0) = DataType{999999.};
 
   //
-  data2.At(0, 0) = DataType(0);
-  data2.At(1, 0) = DataType(0);
-  data2.At(2, 0) = DataType(1);
+  data2.At(0, 0) = DataType{0};
+  data2.At(1, 0) = DataType{0};
+  data2.At(2, 0) = DataType{1};
 
   fetch::ml::ops::SoftmaxCrossEntropyLoss<TypeParam> op;
   TypeParam                                          result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
-  EXPECT_EQ(result(0, 0), DataType(0));
+  EXPECT_EQ(result(0, 0), DataType{0});
 }
 
 TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
@@ -72,11 +72,11 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
   TypeParam data1(std::vector<SizeType>{n_classes, n_data_points});
 
   TypeParam data2(std::vector<SizeType>{n_classes, n_data_points});
-  data2.Fill(DataType(0));
-  data2.At(1, 0) = DataType(1);
-  data2.At(2, 1) = DataType(1);
-  data2.At(3, 2) = DataType(1);
-  data2.At(0, 3) = DataType(1);
+  data2.Fill(DataType{0});
+  data2.At(1, 0) = DataType{1};
+  data2.At(2, 1) = DataType{1};
+  data2.At(3, 2) = DataType{1};
+  data2.At(0, 3) = DataType{1};
 
   std::vector<double> vals{0.1,  0.8,  0.05, 0.05, 0.2, 0.5, 0.2, 0.1,
                            0.05, 0.05, 0.8,  0.1,  0.5, 0.1, 0.1, 0.3};
@@ -155,7 +155,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
 
   /// python script computing these values can be found at
   /// scripts/python_ml_lib/cross_entropy_test.py
-  gt.Fill(static_cast<DataType>(0));
+  gt.Fill(DataType{0});
   std::vector<double> gt_vals{
       0.20340865850448608398, 0.30961471796035766602, 0.19348828494548797607,
       0.19348828494548797607, 0.23503439128398895264, 0.31726324558258056641,
@@ -215,11 +215,11 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_test)
   TypeParam data1(std::vector<SizeType>{n_data_points, n_classes});
 
   TypeParam data2(std::vector<SizeType>{n_data_points, n_classes});
-  data2.Fill(DataType(0));
-  data2.At(0, 1) = DataType(1);
-  data2.At(1, 2) = DataType(1);
-  data2.At(2, 3) = DataType(1);
-  data2.At(3, 0) = DataType(1);
+  data2.Fill(DataType{0});
+  data2.At(0, 1) = DataType{1};
+  data2.At(1, 2) = DataType{1};
+  data2.At(2, 3) = DataType{1};
+  data2.At(3, 0) = DataType{1};
 
   std::vector<double> vals{0.1,  0.8,  0.05, 0.05, 0.2, 0.5, 0.2, 0.1,
                            0.05, 0.05, 0.8,  0.1,  0.5, 0.1, 0.1, 0.3};
@@ -284,7 +284,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_backward_test)
 
   /// python script computing these values can be found at
   /// scripts/python_ml_lib/cross_entropy_test.py
-  gt.Fill(static_cast<DataType>(0));
+  gt.Fill(DataType{0});
   std::vector<double> gt_vals{
       0.20340865850448608398, 0.30961471796035766602, 0.19348828494548797607,
       0.19348828494548797607, 0.23503439128398895264, 0.31726324558258056641,

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -55,7 +55,8 @@ public:
   StakeSnapshot(StakeSnapshot &&)      = default;
   ~StakeSnapshot()                     = default;
 
-  CabinetPtr BuildCabinet(uint64_t entropy, std::size_t count) const;
+  CabinetPtr BuildCabinet(uint64_t entropy, std::size_t count,
+                          std::set<byte_array::ConstByteArray> const &whitelist = {}) const;
 
   /// @name Stake Updates
   /// @{

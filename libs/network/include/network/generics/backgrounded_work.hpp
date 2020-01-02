@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -105,14 +105,14 @@ public:
 
   void Wait(int milliseconds)
   {
-    std::unique_lock<Mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     cv_.wait_for(lock, std::chrono::milliseconds(milliseconds));
   }
 
   template <typename Rep, typename Per>
   void Wait(std::chrono::duration<Rep, Per> const &timeout)
   {
-    std::unique_lock<Mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     cv_.wait_for(lock, timeout);
   }
 
@@ -269,7 +269,7 @@ public:
 
 private:
   WorkLoad                workload_;
-  mutable Mutex           mutex_;
+  mutable std::mutex      mutex_;
   std::condition_variable cv_;
 };
 

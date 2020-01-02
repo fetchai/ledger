@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -49,6 +49,14 @@ public:
       MsgPackSerializer, interfaces::MapInterface<MsgPackSerializer>, TypeCodes::MAP_CODE_FIXED,
       TypeCodes::MAP_CODE16, TypeCodes::MAP_CODE32>;
   using MapDeserializer = interfaces::MapDeserializer<MsgPackSerializer>;
+  /// @}
+
+  /// Pair Helpers
+  /// @{
+  using PairConstructor = interfaces::ContainerConstructorInterface<
+      MsgPackSerializer, interfaces::PairInterface<MsgPackSerializer>, TypeCodes::PAIR_CODE_FIXED,
+      TypeCodes::PAIR_CODE16, TypeCodes::PAIR_CODE32>;
+  using PairDeserializer = interfaces::PairDeserializer<MsgPackSerializer>;
   /// @}
 
   MsgPackSerializer()                         = default;
@@ -162,6 +170,9 @@ public:
 
   MapConstructor  NewMapConstructor();
   MapDeserializer NewMapDeserializer();
+
+  PairConstructor  NewPairConstructor();
+  PairDeserializer NewPairDeserializer();
 
   template <typename T>
   typename MapSerializer<T, MsgPackSerializer>::DriverType &operator<<(T const &val);

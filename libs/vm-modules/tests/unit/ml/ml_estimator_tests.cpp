@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
-#include "vm_modules/ml/training_pair.hpp"
 #include "vm_test_toolkit.hpp"
 
 namespace {
@@ -55,30 +54,6 @@ TEST_F(VMMLEstimatorTests, vmdataloader_constructor_have_infinite_charge)
   static constexpr char const *TEXT = R"(
     function main()
       var data_loader = DataLoader("tensor");
-    endfunction
-  )";
-
-  EXPECT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
-  EXPECT_FALSE(toolkit.Run());
-}
-
-TEST_F(VMMLEstimatorTests, vmdtrainingpair_constructor_have_infinite_charge)
-{
-  static constexpr char const *TEXT = R"(
-    function main()
-      var training_pair = TrainingPair(Tensor(Array<UInt64>(1)), Array<Tensor>(1));
-    endfunction
-  )";
-
-  EXPECT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
-  EXPECT_FALSE(toolkit.Run());
-}
-
-TEST_F(VMMLEstimatorTests, vmdstatedict_constructor_have_infinite_charge)
-{
-  static constexpr char const *TEXT = R"(
-    function main()
-      var state_dict = StateDict();
     endfunction
   )";
 

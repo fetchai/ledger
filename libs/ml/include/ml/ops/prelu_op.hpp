@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -118,9 +118,9 @@ public:
 
       while (input1_it.is_valid())
       {
-        if (*input1_it >= static_cast<DataType>(0))
+        if (*input1_it >= DataType{0})
         {
-          *rs1_it = static_cast<DataType>(1) * (*error_it);
+          *rs1_it = DataType{1} * (*error_it);
         }
         else
         {

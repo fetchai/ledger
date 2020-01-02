@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -78,6 +78,10 @@ struct TypeCodes
     MAP_CODE_FIXED = 0x80,
     MAP_CODE16     = 0xde,
     MAP_CODE32     = 0xdf,
+
+    PAIR_CODE_FIXED = 0x70,
+    PAIR_CODE16     = 0xb0,
+    PAIR_CODE32     = 0xb1,
 
     FIXED_MASK1     = 0xF0,
     FIXED_MASK2     = 0xE0,
@@ -198,6 +202,9 @@ struct ArraySerializer;
 
 template <typename T, typename D>
 struct MapSerializer;
+
+template <typename T, typename D>
+struct PairSerializer;
 
 template <typename T, typename D>
 struct ExtensionSerializer;

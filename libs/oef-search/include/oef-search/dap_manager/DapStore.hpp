@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "Leaf.hpp"
+#include "core/mutex.hpp"
 #include "oef-base/utils/Uri.hpp"
 #include "oef-messages/dap_interface.hpp"
+
 #include <functional>
 #include <google/protobuf/repeated_field.h>
 #include <regex>
@@ -42,7 +44,7 @@ public:
 
   void AddDap(const std::string &name)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     daps_.push_back(name);
   }
 

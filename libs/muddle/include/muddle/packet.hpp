@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/mutex.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/verifier.hpp"
@@ -132,8 +133,8 @@ public:
   uint32_t          GetNetworkId() const noexcept;
   RawAddress const &GetTargetRaw() const noexcept;
   RawAddress const &GetSenderRaw() const noexcept;
-  Address const &   GetTarget() const;
-  Address const &   GetSender() const;
+  Address           GetTarget() const;
+  Address           GetSender() const;
   Payload const &   GetPayload() const noexcept;
   Stamp const &     GetStamp() const noexcept;
   std::size_t       GetPacketSize() const;
@@ -165,6 +166,7 @@ private:
   Stamp         stamp_;     ///< Signature when stamped
 
   ///< Cached versions of the addresses
+  mutable Mutex   lock_;
   mutable Address target_;
   mutable Address sender_;
 
@@ -254,8 +256,10 @@ inline Packet::RawAddress const &Packet::GetSenderRaw() const noexcept
   return header_.sender;
 }
 
-inline Packet::Address const &Packet::GetTarget() const
+inline Packet::Address Packet::GetTarget() const
 {
+  FETCH_LOCK(lock_);
+
   if (target_.empty())
   {
     byte_array::ByteArray target;
@@ -268,8 +272,10 @@ inline Packet::Address const &Packet::GetTarget() const
   return target_;
 }
 
-inline Packet::Address const &Packet::GetSender() const
+inline Packet::Address Packet::GetSender() const
 {
+  FETCH_LOCK(lock_);
+
   if (sender_.empty())
   {
     byte_array::ByteArray sender;

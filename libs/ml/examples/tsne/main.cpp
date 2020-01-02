@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/clustering/tsne.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/utilities/mnist_utilities.hpp"
@@ -74,8 +74,8 @@ int main(int ac, char **av)
   SizeType MAX_ITERATIONS               = 100;
   DataType PERPLEXITY                   = 20;
   SizeType N_OUTPUT_FEATURE_SIZE        = 2;
-  DataType INITIAL_MOMENTUM             = 0.5;
-  DataType FINAL_MOMENTUM               = 0.8;
+  DataType INITIAL_MOMENTUM             = fetch::math::Type<DataType>("0.5");
+  DataType FINAL_MOMENTUM               = fetch::math::Type<DataType>("0.8");
   SizeType FINAL_MOMENTUM_STEPS         = 20;
   SizeType P_LATER_CORRECTION_ITERATION = 10;
 

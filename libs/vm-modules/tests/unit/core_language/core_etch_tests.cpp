@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -537,7 +537,7 @@ TEST_F(CoreEtchTests, duplicate_contracts_fail_compilation_gracefully)
   ASSERT_FALSE(toolkit.Compile(TEXT));
 }
 
-TEST_F(CoreEtchTests, duplicate_structs_fail_compilation_gracefully)
+TEST_F(CoreEtchTests, DISABLED_duplicate_structs_fail_compilation_gracefully)
 {
   static char const *TEXT = R"(
     struct Clazz
@@ -556,7 +556,7 @@ TEST_F(CoreEtchTests, duplicate_structs_fail_compilation_gracefully)
   ASSERT_FALSE(toolkit.Compile(TEXT));
 }
 
-TEST_F(CoreEtchTests, duplicate_member_functions_fail_compilation_gracefully)
+TEST_F(CoreEtchTests, DISABLED_duplicate_member_functions_fail_compilation_gracefully)
 {
   static char const *TEXT = R"(
     struct Clazz
@@ -573,7 +573,7 @@ TEST_F(CoreEtchTests, duplicate_member_functions_fail_compilation_gracefully)
   ASSERT_FALSE(toolkit.Compile(TEXT));
 }
 
-TEST_F(CoreEtchTests, duplicate_constructors_fail_compilation_gracefully)
+TEST_F(CoreEtchTests, DISABLED_duplicate_constructors_fail_compilation_gracefully)
 {
   static char const *TEXT = R"(
     struct Clazz

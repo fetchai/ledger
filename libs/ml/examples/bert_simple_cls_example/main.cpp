@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
@@ -53,11 +53,11 @@ int main()
   // 0.
   std::cout << "FETCH bert Toy CLS Demo" << std::endl;
 
-  SizeType train_size = 1000;
-  SizeType test_size  = 100;
-  SizeType batch_size = 16;
-  SizeType epochs     = 2;
-  auto     lr         = static_cast<DataType>(1e-3);
+  SizeType   train_size = 1000;
+  SizeType   test_size  = 100;
+  SizeType   batch_size = 16;
+  SizeType   epochs     = 2;
+  auto const lr         = fetch::math::Type<DataType>("0.001");
 
   BERTConfig<TensorType> config;
   config.n_encoder_layers  = 2u;

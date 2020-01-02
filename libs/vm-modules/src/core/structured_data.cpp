@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -48,17 +48,17 @@ using fetch::vm_modules::math::UInt256Wrapper;
 using fetch::vm::Fixed128;
 
 template <typename T>
-meta::EnableIf<vm::IsString<meta::Decay<T>>::value, Ptr<T>> FromByteArray(
-    VM *vm, Ptr<String> const & /*name*/, ConstByteArray const &array)
+meta::EnableIf<vm::IsString<meta::Decay<T>>, Ptr<T>> FromByteArray(VM *vm,
+                                                                   Ptr<String> const & /*name*/,
+                                                                   ConstByteArray const &array)
 {
   ConstByteArray value_array;
   return Ptr<T>{new T{vm, static_cast<std::string>(array)}};
 }
 
 template <typename T>
-meta::EnableIf<IsAddress<meta::Decay<T>>::value, Ptr<T>> FromByteArray(VM *                  vm,
-                                                                       Ptr<String> const &   name,
-                                                                       ConstByteArray const &array)
+meta::EnableIf<IsAddress<meta::Decay<T>>, Ptr<T>> FromByteArray(VM *vm, Ptr<String> const &name,
+                                                                ConstByteArray const &array)
 {
   try
   {
@@ -107,7 +107,7 @@ meta::EnableIf<std::is_same<UInt256Wrapper, T>::value, Ptr<T>> FromByteArray(
     return Ptr<T>{};
   }
 
-  return vm->CreateNewObject<UInt256Wrapper>(value_array);
+  return vm->CreateNewObject<UInt256Wrapper>(value_array, platform::Endian::BIG);
 }
 
 template <typename T>
@@ -143,7 +143,8 @@ ByteArray ToByteArray(ByteArrayWrapper const &byte_array)
 
 ByteArray ToByteArray(UInt256Wrapper const &big_number)
 {
-  return byte_array::ToBase64(big_number.number().pointer(), big_number.number().TrimmedSize());
+  auto const big_endian_byte_array{big_number.number().As<ByteArray>(platform::Endian::BIG)};
+  return big_endian_byte_array.ToBase64();
 }
 
 ByteArray ToByteArray(Fixed128 const &fixed_number)

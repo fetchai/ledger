@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "oef-base/threading/Waitable.hpp"
+
 #include <atomic>
 
 namespace fetch {
@@ -68,7 +70,7 @@ public:
   void set(const T &value)
   {
     {
-      std::lock_guard<std::mutex> lg(value_mutex_);
+      FETCH_LOCK(value_mutex_);
       value_ = value;
     }
     this->wake();
@@ -76,7 +78,7 @@ public:
 
   T get()
   {
-    std::lock_guard<std::mutex> lg(value_mutex_);
+    FETCH_LOCK(value_mutex_);
     return value_;
   }
 

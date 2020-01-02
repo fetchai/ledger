@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -90,10 +90,13 @@ public:
     TensorType        intermediate1({input.shape()}), intermediate2({input.shape()}),
         intermediate3({input.shape()});
 
-    DataType one{static_cast<DataType>(1)}, two{static_cast<DataType>(2)},
-        neg_two{static_cast<DataType>(-2)}, three{static_cast<DataType>(3)},
-        half{static_cast<DataType>(0.5)}, a{static_cast<DataType>(0.797885)},
-        b{static_cast<DataType>(0.035677)};
+    DataType const one{1};
+    DataType const two{2};
+    DataType const neg_two{-2};
+    DataType const three{3};
+    DataType const half = fetch::math::Type<DataType>("0.5");
+    DataType const a    = fetch::math::Type<DataType>("0.797885");
+    DataType const b    = fetch::math::Type<DataType>("0.035677");
 
     // get ax + bx^3
     fetch::math::Multiply(input, a, intermediate1);

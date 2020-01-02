@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public:
 
 private:
   using CondVar = std::condition_variable;
-  using Lock    = std::unique_lock<Mutex>;
+  using Lock    = std::unique_lock<std::mutex>;
 
   struct Counter
   {

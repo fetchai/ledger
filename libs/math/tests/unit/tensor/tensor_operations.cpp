@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,25 +17,90 @@
 //------------------------------------------------------------------------------
 
 #include "gtest/gtest.h"
-#include "math/tensor.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/tensor/tensor.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-namespace fetch {
-namespace math {
-namespace test {
+namespace {
+
+using SizeType = fetch::math::SizeType;
 
 template <typename T>
 class TensorOperationsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorOperationsTest, FloatIntAndUIntTypes);
+TYPED_TEST_CASE(TensorOperationsTest, fetch::math::test::FloatIntAndUIntTypes);
+
+template <typename TypeParam>
+void ReshapeTest(std::vector<SizeType> const &initial_shape,
+                 std::vector<SizeType> const &final_shape)
+{
+  fetch::math::Tensor<TypeParam> t1(initial_shape);
+  fetch::math::Tensor<TypeParam> t2(final_shape);
+  t1.Reshape(final_shape);
+  EXPECT_TRUE(t1.shape() == t2.shape());
+}
+
+TYPED_TEST(TensorOperationsTest, two_dim_reshape_test)
+{
+  ReshapeTest<TypeParam>({2, 3}, {6, 1});
+  ReshapeTest<TypeParam>({4, 4}, {2, 8});
+  ReshapeTest<TypeParam>({1, 2}, {2, 1});
+  ReshapeTest<TypeParam>({0, 0}, {0, 0});
+}
+
+TYPED_TEST(TensorOperationsTest, three_and_two_dim_reshape_test)
+{
+  ReshapeTest<TypeParam>({2, 3, 1}, {6, 1});
+  ReshapeTest<TypeParam>({2, 1, 3}, {6, 1});
+  ReshapeTest<TypeParam>({1, 2, 3}, {6, 1});
+  ReshapeTest<TypeParam>({3, 2, 1}, {1, 6});
+
+  ReshapeTest<TypeParam>({6, 1}, {2, 3, 1});
+  ReshapeTest<TypeParam>({6, 1}, {2, 1, 3});
+  ReshapeTest<TypeParam>({6, 1}, {1, 2, 3});
+  ReshapeTest<TypeParam>({1, 6}, {3, 2, 1});
+}
+
+TYPED_TEST(TensorOperationsTest, three_dim_reshape_test)
+{
+  ReshapeTest<TypeParam>({2, 3, 1}, {2, 1, 3});
+  ReshapeTest<TypeParam>({2, 1, 3}, {3, 2, 1});
+  ReshapeTest<TypeParam>({1, 2, 3}, {2, 1, 3});
+  ReshapeTest<TypeParam>({3, 2, 1}, {1, 2, 3});
+  ReshapeTest<TypeParam>({1, 2, 3}, {1, 2, 3});
+}
+
+TYPED_TEST(TensorOperationsTest, four_dim_to_two_dim_reshape_test)
+{
+  ReshapeTest<TypeParam>({2, 3, 1, 1}, {6, 1});
+  ReshapeTest<TypeParam>({2, 1, 3, 1}, {6, 1});
+  ReshapeTest<TypeParam>({2, 1, 1, 3}, {6, 1});
+  ReshapeTest<TypeParam>({2, 3, 4, 5}, {12, 10});
+
+  ReshapeTest<TypeParam>({6, 1}, {2, 3, 1, 1});
+  ReshapeTest<TypeParam>({6, 1}, {2, 1, 3, 1});
+  ReshapeTest<TypeParam>({6, 1}, {2, 1, 1, 3});
+  ReshapeTest<TypeParam>({12, 10}, {2, 3, 4, 5});
+}
+
+TYPED_TEST(TensorOperationsTest, four_and_three_dim_reshape_test)
+{
+  ReshapeTest<TypeParam>({2, 3, 1, 1}, {6, 1, 1});
+  ReshapeTest<TypeParam>({2, 1, 3, 1}, {6, 1, 1});
+  ReshapeTest<TypeParam>({2, 1, 1, 3}, {2, 1, 3});
+  ReshapeTest<TypeParam>({2, 3, 4, 5}, {12, 2, 5});
+
+  ReshapeTest<TypeParam>({6, 1, 1}, {2, 3, 1, 1});
+  ReshapeTest<TypeParam>({2, 1, 3}, {2, 1, 3, 1});
+  ReshapeTest<TypeParam>({1, 1, 6}, {2, 1, 1, 3});
+  ReshapeTest<TypeParam>({3, 4, 10}, {2, 3, 4, 5});
+}
 
 TYPED_TEST(TensorOperationsTest, inline_add_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({2, 4}));
   fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({2, 4}));
 
@@ -69,8 +134,6 @@ TYPED_TEST(TensorOperationsTest, inline_add_test)
 
 TYPED_TEST(TensorOperationsTest, inline_mul_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({2, 4}));
   fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({2, 4}));
 
@@ -102,8 +165,6 @@ TYPED_TEST(TensorOperationsTest, inline_mul_test)
 
 TYPED_TEST(TensorOperationsTest, sum_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({2, 4}));
   fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({2, 4}));
 
@@ -120,14 +181,12 @@ TYPED_TEST(TensorOperationsTest, sum_test)
     }
   }
 
-  EXPECT_EQ(t1.Sum(), TypeParam(-4));
-  EXPECT_EQ(t2.Sum(), TypeParam(-21));
+  EXPECT_EQ(fetch::math::Sum(t1), TypeParam(-4));
+  EXPECT_EQ(fetch::math::Sum(t2), TypeParam(-21));
 }
 
 TYPED_TEST(TensorOperationsTest, transpose_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5}));
   SizeType                       counter{0};
   for (SizeType i(0); i < 3; ++i)
@@ -154,8 +213,6 @@ TYPED_TEST(TensorOperationsTest, transpose_test)
 
 TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5}));
   SizeType                       counter{0};
   for (SizeType i(0); i < 3; ++i)
@@ -188,8 +245,6 @@ TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
 
 TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5}));
   SizeType                       count = 0;
   for (SizeType i{0}; i < 3; ++i)
@@ -213,8 +268,6 @@ TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 
 TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
   SizeType                       count = 0;
   for (SizeType i{0}; i < 2; ++i)
@@ -271,8 +324,6 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
   SizeType                       count = 0;
   for (SizeType i{0}; i < 2; ++i)
@@ -297,8 +348,6 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_separated_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
   SizeType                       count = 0;
   for (SizeType i{0}; i < 2; ++i)
@@ -345,8 +394,6 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_separated_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_const_slices_separated_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
   SizeType                       count = 0;
   for (SizeType i{0}; i < 2; ++i)
@@ -395,14 +442,11 @@ TYPED_TEST(TensorOperationsTest, multiple_const_slices_separated_test)
 
 TYPED_TEST(TensorOperationsTest, broadcastable_assignment_test)
 {
-
-  using ArrayType = fetch::math::Tensor<TypeParam>;
-  using SizeType  = fetch::math::SizeType;
-
-  ArrayType small_data = ArrayType::FromString("1, 2; 2, 1;2, 4");
+  using TensorType      = fetch::math::Tensor<TypeParam>;
+  TensorType small_data = TensorType::FromString("1, 2; 2, 1;2, 4");
   small_data.Reshape({3, 1, 2});
-  ArrayType big_data({3, 3, 2});
-  ArrayType slice_big_data({3, 3, 2});
+  TensorType big_data({3, 3, 2});
+  TensorType slice_big_data({3, 3, 2});
   for (SizeType i = 0; i < 3u; i++)
   {
     slice_big_data.Slice(i, 1).Assign(small_data);
@@ -413,8 +457,6 @@ TYPED_TEST(TensorOperationsTest, broadcastable_assignment_test)
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_assign_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
   fetch::math::Tensor<TypeParam> t2(std::vector<SizeType>({3, 2, 3}));
 
@@ -464,8 +506,6 @@ TYPED_TEST(TensorOperationsTest, multiple_slices_assign_test)
 
 TYPED_TEST(TensorOperationsTest, slices_same_tensor_test)
 {
-  using SizeType = fetch::math::SizeType;
-
   fetch::math::Tensor<TypeParam> t1(std::vector<SizeType>({3, 5, 2}));
 
   SizeType count = 0;
@@ -521,6 +561,4 @@ TYPED_TEST(TensorOperationsTest, slices_same_tensor_test)
 
 // TODO (private 867) - reimplement shuffle & test
 
-}  // namespace test
-}  // namespace math
-}  // namespace fetch
+}  // namespace

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -56,9 +56,10 @@ public:
 
   struct ConsensusParameters
   {
-    uint16_t         cabinet_size{0};
-    uint64_t         start_time{0};
-    StakeSnapshotPtr snapshot{};
+    uint16_t                      cabinet_size{0};
+    uint64_t                      start_time{0};
+    StakeSnapshotPtr              snapshot{};
+    beacon::BlockEntropy::Cabinet whitelist;
   };
 
   // Construction / Destruction
@@ -76,7 +77,7 @@ public:
 
 private:
   bool LoadState(variant::Variant const &object, ConsensusParameters const *consensus = nullptr);
-  static bool LoadConsensus(variant::Variant const &object, ConsensusParameters &params);
+  bool LoadConsensus(variant::Variant const &object, ConsensusParameters &params);
 
   CertificatePtr        certificate_;
   StorageUnitInterface &storage_unit_;

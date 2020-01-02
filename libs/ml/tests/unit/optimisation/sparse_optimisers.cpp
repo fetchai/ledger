@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ TYPED_TEST(SparseOptimisersTest, lazy_adam_optimiser_training_2D)
   // On LazyAdam only currently changes values are updated with momentum and moving square average
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.01f};
+  auto learning_rate = fetch::math::Type<DataType>("0.01");
 
   // Prepare model
   std::string                                  input_name;
@@ -176,7 +176,7 @@ TYPED_TEST(SparseOptimisersTest, adam_optimiser_training_2D)
   // On normal adam all values are updated with momentum and moving square average
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.01f};
+  auto learning_rate = fetch::math::Type<DataType>("0.01");
 
   // Prepare model
   std::string                                  input_name;

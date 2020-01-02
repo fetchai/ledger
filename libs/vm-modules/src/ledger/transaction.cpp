@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ void Transaction::Bind(vm::Module &module)
 Transaction::Transaction(vm::VM *vm, vm::TypeId type_id, fetch::chain::Transaction const &tx)
   : Object{vm, type_id}
   , tx_{std::make_shared<fetch::chain::Transaction>(tx)}
-  , digest_{vm->CreateNewObject<math::UInt256Wrapper>(tx.digest())}
+  , digest_{vm->CreateNewObject<math::UInt256Wrapper>(tx.digest(), platform::Endian::BIG)}
   , from_{CreateAddress(vm, tx.from(), tx.signatories())}
   , transfers_{CreateTransfers(vm, tx)}
   , contract_address_{CreateAddress(vm, tx.contract_address(), tx.signatories())}

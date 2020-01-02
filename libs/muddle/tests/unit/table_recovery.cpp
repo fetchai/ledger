@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -57,7 +57,6 @@ TEST(Kademlia, TableRecovery)
   {
     KademliaTable table{FakeAddress(N + 1), fetch::muddle::NetworkId("TEST")};
     table.SetCacheFile("test.peer_table");
-
     for (uint64_t i = 0; i < N; ++i)
     {
       auto info = GeneratePeerInfo(i);
@@ -74,7 +73,6 @@ TEST(Kademlia, TableRecovery)
 
     table.SetCacheFile("test.peer_table");
     table.Load();
-
     EXPECT_EQ(table.size(), N);
 
     // TODO(tfr): Test contents

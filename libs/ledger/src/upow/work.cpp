@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ Work::UInt256 Work::CreateHashedNonce() const
   hasher.Reset();
   hasher.Update(digest1);
 
-  return UInt256{hasher.Final()};
+  return UInt256{hasher.Final(), platform::Endian::BIG};
 }
 
 }  // namespace ledger

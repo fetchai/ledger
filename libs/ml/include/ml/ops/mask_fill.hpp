@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public:
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
     fetch::math::Multiply(*(inputs.at(0)), *(inputs.at(1)), output);
-    TensorType inv_mask = fetch::math::Subtract(static_cast<DataType>(1), *(inputs.at(0)));
+    TensorType inv_mask = fetch::math::Subtract(DataType{1}, *(inputs.at(0)));
     fetch::math::Multiply(inv_mask, fill_value_, inv_mask);
     fetch::math::Add(output, inv_mask, output);
   }

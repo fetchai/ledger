@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   using GraphType  = typename fetch::ml::Graph<TensorType>;
 
   fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::L1;
-  DataType                      reg_rate{0.01f};
+  auto                          reg_rate    = fetch::math::Type<DataType>("0.01");
 
   // Prepare graph with fairly random architecture
   auto g = std::make_shared<GraphType>();

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -73,6 +73,7 @@ public:
   void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
   void Reset(StakeSnapshot const &snapshot) override;
   void SetDefaultStartTime(uint64_t default_start_time) override;
+  void SetWhitelist(Minerwhitelist const &whitelist) override;
 
   StakeManagerPtr stake();
 
@@ -96,6 +97,7 @@ private:
   BeaconServicePtr      beacon_;
   MainChain const &     chain_;
   Identity              mining_identity_;
+  Minerwhitelist        whitelist_;
 
   // Global variables relating to consensus
   uint64_t aeon_period_      = 0;

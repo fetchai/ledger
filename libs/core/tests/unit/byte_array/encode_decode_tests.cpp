@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -79,4 +79,9 @@ TEST(core_encode_decode_gtest, some_simple_cases_for_base_64)
   EXPECT_EQ(FromBase64(ToBase64("ab")), "ab");
   EXPECT_EQ(FromBase64(ToBase64("abc")), "abc");
   EXPECT_EQ(FromBase64(ToBase64("abcd")), "abcd");
+}
+
+TEST(core_encode_decode_gtest, null_byte_array_to_base_64)
+{
+  EXPECT_EQ(FromBase64(ByteArray{}), "");
 }

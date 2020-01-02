@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -145,7 +145,14 @@ public:
 
   explicit operator std::string() const
   {
-    return {char_pointer(), length_};
+    // Avoiding undefined behaviour (C++ standard defines passing nullptr as
+    // input to `std::basic_string(char const*, ...)` as undefined behaviour):
+    if (pointer() != nullptr)
+    {
+      return {char_pointer(), length_};
+    }
+
+    return {};
   }
 
   constexpr ValueType const &operator[](std::size_t n) const noexcept

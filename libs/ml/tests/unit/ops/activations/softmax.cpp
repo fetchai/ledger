@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -78,7 +78,8 @@ TYPED_TEST(SoftmaxTest, forward_2d_tensor_axis_1_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-4), static_cast<DataType>(1e-4)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.0001"),
+                                  fetch::math::Type<DataType>("0.0001")));
 }
 
 TYPED_TEST(SoftmaxTest, backward_test)
@@ -162,7 +163,8 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_1_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-4), static_cast<DataType>(1e-4)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.0001"),
+                                  fetch::math::Type<DataType>("0.0001")));
 }
 
 TYPED_TEST(SoftmaxTest, backward_3d_tensor_axis_1_test)
@@ -235,7 +237,8 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_0_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-4), static_cast<DataType>(1e-4)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.0001"),
+                                  fetch::math::Type<DataType>("0.0001")));
 }
 
 TYPED_TEST(SoftmaxTest, backward_3d_tensor_axis_0_test)
@@ -308,7 +311,8 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axes_0_2_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-4), static_cast<DataType>(1e-4)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.0001"),
+                                  fetch::math::Type<DataType>("0.0001")));
 }
 
 TYPED_TEST(SoftmaxTest, backward_3d_tensor_axes_0_2_test)

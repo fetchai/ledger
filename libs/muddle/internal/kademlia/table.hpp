@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -79,14 +79,14 @@ public:
   Peers          FindPeerByHamming(Address const &address);
   Peers       FindPeerByHamming(Address const &address, uint64_t hamming_id, bool scan_left = true,
                                 bool scan_right = true);
-  PeerInfoPtr GetPeerDetails(Address const &address);
+  bool        HasPeerDetails(Address const &address);
+  PeerInfo    GetPeerDetails(Address const &address);
   bool        HasUri(Uri const &uri) const;
   bool        IsConnectedToUri(Uri const &uri) const;
   Address     GetAddressFromUri(Uri const &uri) const;
   std::size_t size() const;
   Uri         GetUri(Address const &address);
   std::size_t active_buckets() const;
-  uint64_t    first_non_empty_bucket() const;
   /// @}
 
   /// Reporting
@@ -105,6 +105,34 @@ public:
   void Load();
   void SetCacheFile(std::string const &filename, bool load = true);
   /// @}
+
+  Address own_address() const
+  {
+    FETCH_LOCK(core_mutex_);
+    return own_address_;
+  }
+
+  KademliaAddress own_kademlia_address() const
+  {
+    FETCH_LOCK(core_mutex_);
+    return own_kad_address_;
+  }
+  uint64_t first_non_empty_bucket() const
+  {
+    FETCH_LOCK(core_mutex_);
+    return first_non_empty_bucket_;
+  }
+  uint64_t kademlia_max_peers_per_bucket() const
+  {
+    FETCH_LOCK(core_mutex_);
+    return kademlia_max_peers_per_bucket_;
+  }
+  std::string filename() const
+  {
+    FETCH_LOCK(core_mutex_);
+    return filename_;
+  }
+
 protected:
   friend class PeerTracker;
 
@@ -129,31 +157,38 @@ private:
                          bool scan_right = true);
   Peers FindPeerByHammingInternal(KademliaAddress const &kam_address, uint64_t hamming_id,
                                   bool scan_left = true, bool scan_right = true);
-  mutable std::mutex mutex_;
-  std::string const  logging_name_;
-  Address            own_address_;
-  KademliaAddress    own_kad_address_;
-  Buckets            by_logarithm_;
-  Buckets            by_hamming_;
-  PeerMap            known_peers_;
-  UriToPeerMap       known_uris_;
+  std::string const logging_name_;
 
-  uint64_t first_non_empty_bucket_{KADEMLIA_MAX_ID_BITS};
-  uint64_t kademlia_max_peers_per_bucket_{20};
+  // The mutex locking order should be in the order in which
+  // they are listed below, with core_mutex_ being the first
+  // and desired_mutex_ being the last
+
+  // Core variables
+  /// @{
+  mutable Mutex         core_mutex_;
+  Address               own_address_;
+  KademliaAddress       own_kad_address_;
+  uint64_t              first_non_empty_bucket_{KADEMLIA_MAX_ID_BITS};
+  std::atomic<uint64_t> kademlia_max_peers_per_bucket_{20};
+  std::string           filename_{};
+  /// @}
+
+  /// @{
+  mutable Mutex peer_info_mutex_;
+  Buckets       by_logarithm_;
+  Buckets       by_hamming_;
+  PeerMap       known_peers_;
+  UriToPeerMap  known_uris_;
+  /// @}
 
   /// User defined connections
   /// @{
-  mutable std::mutex desired_mutex_;  ///< Use to protect desired peer variables
-                                      /// peers to avoid causing a deadlock
-  std::unordered_map<Address, Timepoint> connection_expiry_;
+  mutable Mutex desired_mutex_;  ///< Use to protect desired peer variables
+                                 /// peers to avoid causing a deadlock
+  std::unordered_map<Address, Timepoint> desired_connection_expiry_;
   std::unordered_map<Uri, Timepoint>     desired_uri_expiry_;
   AddressSet                             desired_peers_;
   std::unordered_set<Uri>                desired_uris_;
-  /// @}
-
-  /// Backup
-  /// @{
-  std::string filename_{};
   /// @}
 
   template <typename T, typename D>
@@ -184,6 +219,7 @@ public:
 
     // Convering the known peers into a vector and only store
     // those that has a valid URI.
+    FETCH_LOCK(item.peer_info_mutex_);
     std::vector<muddle::PeerInfo> peers;
     for (auto &p : item.known_peers_)
     {
@@ -196,8 +232,9 @@ public:
       }
     }
 
+    FETCH_LOCK(item.desired_mutex_);
     map.Append(KNOWN_PEERS, peers);
-    map.Append(CONNECTION_EXPIRY, item.connection_expiry_);
+    map.Append(CONNECTION_EXPIRY, item.desired_connection_expiry_);
     map.Append(DESIRED_EXPIRY, item.desired_uri_expiry_);
     map.Append(DESIRED_PEERS, item.desired_peers_);
     map.Append(DESIRED_URIS, item.desired_uris_);
@@ -218,7 +255,9 @@ public:
       item.ReportExistence(p, p.last_reporter);
     }
 
-    map.ExpectKeyGetValue(CONNECTION_EXPIRY, item.connection_expiry_);
+    FETCH_LOCK(item.peer_info_mutex_);
+    FETCH_LOCK(item.desired_mutex_);
+    map.ExpectKeyGetValue(CONNECTION_EXPIRY, item.desired_connection_expiry_);
     map.ExpectKeyGetValue(DESIRED_EXPIRY, item.desired_uri_expiry_);
     map.ExpectKeyGetValue(DESIRED_PEERS, item.desired_peers_);
     map.ExpectKeyGetValue(DESIRED_URIS, item.desired_uris_);

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "chain/address.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
@@ -71,8 +72,10 @@ public:
   /// @}
 
   /// @name Committee Generation
-  CabinetPtr BuildCabinet(Block const &current, uint64_t cabinet_size);
-  CabinetPtr BuildCabinet(uint64_t block_number, uint64_t entropy, uint64_t cabinet_size) const;
+  CabinetPtr BuildCabinet(Block const &current, uint64_t cabinet_size,
+                          ConsensusInterface::Minerwhitelist const &whitelist = {});
+  CabinetPtr BuildCabinet(uint64_t block_number, uint64_t entropy, uint64_t cabinet_size,
+                          ConsensusInterface::Minerwhitelist const &whitelist = {}) const;
   /// @}
 
   /// @name Persistence

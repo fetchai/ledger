@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -88,10 +88,10 @@ public:
 
     TensorType ret({inputs.at(0)->shape()});
 
-    auto           a_it = inputs.at(0)->cbegin();
-    auto           b_it = inputs.at(1)->cbegin();
-    auto           r_it = ret.begin();
-    DataType const one  = fetch::math::Type<DataType>("1");
+    auto       a_it = inputs.at(0)->cbegin();
+    auto       b_it = inputs.at(1)->cbegin();
+    auto       r_it = ret.begin();
+    auto const one  = DataType{1};
 
     while (a_it.is_valid())
     {

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 
 #include <list>
 #include <map>
@@ -36,6 +36,7 @@ template <class T>
 struct StateDict
 {
   using TensorType   = T;
+  using DataType     = typename TensorType ::Type;
   using ArrayPtrType = std::shared_ptr<TensorType>;
   using SizeType     = fetch::math::SizeType;
 
@@ -48,7 +49,7 @@ struct StateDict
              (dict_ != o.dict_));
   }
 
-  void InlineDivide(typename TensorType::Type n)
+  void InlineDivide(DataType n)
   {
     if (weights_)
     {
@@ -89,7 +90,7 @@ struct StateDict
     {
       ret.InlineAdd(sd, false);
     }
-    ret.InlineDivide(static_cast<typename TensorType::Type>(stateDictList.size()));
+    ret.InlineDivide(static_cast<DataType>(stateDictList.size()));
     return ret;
   }
 
@@ -98,15 +99,15 @@ struct StateDict
    * @param o -- The stateDict to merge into this
    * @param ratio -- this = this * ration + o * (1 - ratio)
    */
-  StateDict &Merge(StateDict const &o, float ratio = .5f)
+  StateDict &Merge(StateDict const &o, DataType ratio = fetch::math::Type<DataType>("0.5"))
   {
-    assert(ratio >= 0.0f && ratio <= 1.0f);
+    assert(ratio >= 0 && ratio <= 1);
     if (ratio > 0)
     {
       if (weights_)
       {
-        weights_->InlineMultiply(typename TensorType::Type(1.0f - ratio));
-        weights_->InlineAdd(o.weights_->Copy().InlineMultiply(typename TensorType::Type(ratio)));
+        weights_->InlineMultiply(DataType{1} - ratio);
+        weights_->InlineAdd(o.weights_->Copy().InlineMultiply(ratio));
       }
       for (auto &e : dict_)
       {

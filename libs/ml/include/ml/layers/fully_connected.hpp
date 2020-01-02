@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public:
   FullyConnected(SizeType in, SizeType out,
                  details::ActivationType       activation_type = details::ActivationType::NOTHING,
                  fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::NONE,
-                 DataType                      regularisation_rate = static_cast<DataType>(0),
+                 DataType                      regularisation_rate = DataType{0},
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, bool time_distributed = false)
     : in_size_(in)
     , out_size_(out)

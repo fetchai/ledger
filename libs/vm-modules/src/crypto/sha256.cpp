@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ void SHA256Wrapper::Bind(Module &module)
       .CreateMemberFunction("update", &SHA256Wrapper::UpdateString)
       .CreateMemberFunction("update", &SHA256Wrapper::UpdateBuffer)
       .CreateMemberFunction("final", &SHA256Wrapper::Final)
+      .CreateMemberFunction("finalAsBuffer", &SHA256Wrapper::FinalAsByteArray)
       .CreateMemberFunction("reset", &SHA256Wrapper::Reset);
 }
 
@@ -61,7 +62,12 @@ void SHA256Wrapper::Reset()
 
 Ptr<math::UInt256Wrapper> SHA256Wrapper::Final()
 {
-  return vm_->CreateNewObject<math::UInt256Wrapper>(hasher_.Final());
+  return vm_->CreateNewObject<math::UInt256Wrapper>(hasher_.Final(), platform::Endian::BIG);
+}
+
+Ptr<ByteArrayWrapper> SHA256Wrapper::FinalAsByteArray()
+{
+  return vm_->CreateNewObject<ByteArrayWrapper>(hasher_.Final());
 }
 
 SHA256Wrapper::SHA256Wrapper(VM *vm, TypeId type_id)

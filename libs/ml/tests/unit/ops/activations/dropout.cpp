@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/activations/dropout.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
 #include "math/base_types.hpp"
-#include "ml/ops/activations/dropout.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 
@@ -72,9 +73,9 @@ TYPED_TEST(DropoutTest, forward_test)
   using TensorType    = TypeParam;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
-  math::SizeType tensorsize = 1000;
+  math::SizeType tensorsize = 10000;
   TensorType     data       = TensorType::UniformRandom(tensorsize);
-  DataType       prob{0.5};
+  auto           prob       = fetch::math::Type<DataType>("0.5");
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
@@ -139,10 +140,10 @@ TYPED_TEST(DropoutTest, backward_test)
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
 
-  math::SizeType tensorsize = 1000;
+  math::SizeType tensorsize = 10000;
   TensorType     data       = TensorType::UniformRandom(tensorsize);
   TensorType     error      = TensorType::UniformRandom(tensorsize);
-  DataType       prob{0.5};
+  auto const     prob       = fetch::math::Type<DataType>("0.5");
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
@@ -213,9 +214,9 @@ TYPED_TEST(DropoutTest, saveparams_test)
   using SPType        = typename fetch::ml::ops::Dropout<TensorType>::SPType;
   using OpType        = fetch::ml::ops::Dropout<TensorType>;
 
-  math::SizeType                tensorsize = 1000;
-  TensorType                    data       = TensorType::UniformRandom(tensorsize);
-  DataType                      prob{0.5};
+  math::SizeType                tensorsize  = 1000;
+  TensorType                    data        = TensorType::UniformRandom(tensorsize);
+  auto const                    prob        = fetch::math::Type<DataType>("0.5");
   typename TensorType::SizeType random_seed = 12345;
 
   OpType op(prob, random_seed);
@@ -251,8 +252,7 @@ TYPED_TEST(DropoutTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(DropoutTest, saveparams_backward_3d_tensor_test)
