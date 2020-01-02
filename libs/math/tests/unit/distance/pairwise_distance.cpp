@@ -18,6 +18,7 @@
 
 #include "gtest/gtest.h"
 #include "math/distance/pairwise_distance.hpp"
+#include "math/matrix_operations.hpp"
 #include "test_types.hpp"
 
 namespace fetch {
@@ -41,7 +42,7 @@ TYPED_TEST(PairWiseDistanceTest, simple_test)
   distance::PairWiseDistance(data,
                              [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
                                TypeParam z = x - y;
-                               return z.Sum();
+                               return fetch::math::Sum(z);
                              },
                              R);
 
@@ -55,7 +56,7 @@ TYPED_TEST(PairWiseDistanceTest, simple_test)
   distance::PairWiseDistance(data,
                              [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
                                TypeParam z = x - y;
-                               return z.Sum();
+                               return fetch::math::Sum(z);
                              },
                              R);
 
@@ -69,7 +70,7 @@ TYPED_TEST(PairWiseDistanceTest, simple_test)
   distance::PairWiseDistance(data,
                              [](TypeParam x, TypeParam y) -> typename TypeParam::Type {
                                TypeParam z = x - y;
-                               return z.Sum();
+                               return fetch::math::Sum(z);
                              },
                              R);
 
