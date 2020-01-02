@@ -19,7 +19,6 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/dataholder.hpp"
-#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <memory>

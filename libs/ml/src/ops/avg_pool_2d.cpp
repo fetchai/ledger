@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/avg_pool_2d.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <memory>

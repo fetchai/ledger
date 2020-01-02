@@ -20,11 +20,8 @@
 #include "ml/ops/abs.hpp"
 #include "test_types.hpp"
 
-#include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "gtest/gtest.h"
-
 #include "core/serializers/main_serializer.hpp"
+#include "gtest/gtest.h"
 #include "ml/serializers/ml_types.hpp"
 #include <vector>
 

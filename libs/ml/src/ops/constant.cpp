@@ -18,6 +18,7 @@
 
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/constant.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {
 namespace ml {

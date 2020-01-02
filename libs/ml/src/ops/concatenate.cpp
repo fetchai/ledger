@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/concatenate.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <memory>
