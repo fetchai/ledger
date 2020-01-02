@@ -261,11 +261,5 @@ static constexpr meta::IfIsFloat<T, T> AsType(U val, meta::IfIsFloat<U> * /*unus
   return static_cast<T>(val);
 }
 
-template <typename T, typename U>
-static constexpr meta::IfIsFixedPoint<T, T> AsType(U val, meta::IfIsFloat<U> * /*unused*/ = nullptr)
-{
-  return T::FromFloat(val);
-}
-
 }  // namespace math
 }  // namespace fetch

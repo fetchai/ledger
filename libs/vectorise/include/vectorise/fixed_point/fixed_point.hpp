@@ -19,6 +19,7 @@
 
 #include "meta/tags.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/fixed_point/type_traits.hpp"
 #include "vectorise/platform.hpp"
 #include "vectorise/uint/int.hpp"
 #include "vectorise/uint/uint.hpp"
@@ -34,6 +35,15 @@
 #include <ostream>
 
 namespace fetch {
+
+namespace math {
+template <typename T, typename U>
+static constexpr meta::IfIsFixedPoint<T, T> AsType(U val, meta::IfIsFloat<U> * /*unused*/ = nullptr)
+{
+  return T::FromFloat(val);
+}
+}  // namespace math
+
 namespace fixed_point {
 
 template <uint16_t I, uint16_t F>
@@ -268,8 +278,6 @@ public:
   static constexpr FixedPoint Floor(FixedPoint const &o);
   static constexpr FixedPoint Round(FixedPoint const &o);
   static constexpr FixedPoint FromBase(Type n);
-  template <typename T>
-  static constexpr meta::IfIsFloat<T, FixedPoint> FromFloat(T n);
 
   /////////////////////////
   /// casting operators ///
@@ -435,6 +443,12 @@ private:
   constexpr FixedPoint(Type n, const NoScale & /*unused*/)
     : data_(n)
   {}
+
+  template <typename T>
+  static constexpr meta::IfIsFloat<T, FixedPoint> FromFloat(T n);
+  template <typename T, typename U>
+  friend constexpr math::meta::IfIsFixedPoint<T, T> fetch::math::AsType(
+      U val, meta::IfIsFloat<U> * /*unused*/);
 
   /**
    * helper function that checks no rounding error when casting

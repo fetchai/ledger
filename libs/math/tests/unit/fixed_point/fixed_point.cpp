@@ -39,10 +39,10 @@ TEST(FixedPointTest, Conversion_16_16)
 {
   // Get raw value
   fp32_t one(1);
-  fp32_t zero_point_five{fp32_t::FromFloat(0.5)};
-  fp32_t one_point_five{fp32_t::FromFloat(1.5)};
-  fp32_t two_point_five{fp32_t::FromFloat(2.5)};
-  fp32_t m_one_point_five{fp32_t::FromFloat(-1.5)};
+  fp32_t zero_point_five{fetch::math::AsType<fp32_t>(0.5)};
+  fp32_t one_point_five{fetch::math::AsType<fp32_t>(1.5)};
+  fp32_t two_point_five{fetch::math::AsType<fp32_t>(2.5)};
+  fp32_t m_one_point_five{fetch::math::AsType<fp32_t>(-1.5)};
 
   EXPECT_EQ(zero_point_five.Data(), 0x08000);
   EXPECT_EQ(one.Data(), 0x10000);
@@ -57,9 +57,9 @@ TEST(FixedPointTest, Conversion_16_16)
 
   // Extreme cases:
   // smallest possible double representable to a FixedPoint
-  fp32_t infinitesimal{fp32_t::FromFloat(0.00002)};
+  fp32_t infinitesimal{fetch::math::AsType<fp32_t>(0.00002)};
   // Largest fractional closest to one, representable to a FixedPoint
-  fp32_t almost_one{fp32_t::FromFloat(0.99999)};
+  fp32_t almost_one{fetch::math::AsType<fp32_t>(0.99999)};
   // Largest fractional closest to one, representable to a FixedPoint
   fp32_t largest_int(std::numeric_limits<int16_t>::max() - 1);
 
@@ -92,7 +92,7 @@ TEST(FixedPointTest, Conversion_16_16)
   EXPECT_EQ(fp32_t::DECIMAL_DIGITS, 4);
 
   double r     = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-  auto   x32   = fp32_t::FromFloat(r) * fp32_t::FP_MAX - fp32_t::FP_MAX;
+  auto   x32   = fetch::math::AsType<fp32_t>(r) * fp32_t::FP_MAX - fp32_t::FP_MAX;
   auto   x64   = static_cast<fp64_t>(x32);
   auto   x128  = static_cast<fp128_t>(x32);
   auto   x32_2 = static_cast<fp32_t>(x128);
@@ -105,10 +105,10 @@ TEST(FixedPointTest, Conversion_32_32)
 {
   // Get raw value
   fp64_t one(1);
-  fp64_t zero_point_five{fp64_t::FromFloat(0.5)};
-  fp64_t one_point_five{fp64_t::FromFloat(1.5)};
-  fp64_t two_point_five{fp64_t::FromFloat(2.5)};
-  fp64_t m_one_point_five{fp64_t::FromFloat(-1.5)};
+  fp64_t zero_point_five{fetch::math::AsType<fp64_t>(0.5)};
+  fp64_t one_point_five{fetch::math::AsType<fp64_t>(1.5)};
+  fp64_t two_point_five{fetch::math::AsType<fp64_t>(2.5)};
+  fp64_t m_one_point_five{fetch::math::AsType<fp64_t>(-1.5)};
 
   EXPECT_EQ(zero_point_five.Data(), 0x080000000);
   EXPECT_EQ(one.Data(), 0x100000000);
@@ -123,9 +123,9 @@ TEST(FixedPointTest, Conversion_32_32)
 
   // Extreme cases:
   // smallest possible double representable to a FixedPoint
-  fp64_t infinitesimal{fp64_t::FromFloat(0.0000000004)};
+  fp64_t infinitesimal{fetch::math::AsType<fp64_t>(0.0000000004)};
   // Largest fractional closest to one, representable to a FixedPoint
-  fp64_t almost_one{fp64_t::FromFloat(0.9999999998)};
+  fp64_t almost_one{fetch::math::AsType<fp64_t>(0.9999999998)};
   // Largest fractional closest to one, representable to a FixedPoint
   fp64_t largest_int(std::numeric_limits<int32_t>::max() - 1);
 
@@ -157,7 +157,7 @@ TEST(FixedPointTest, Conversion_32_32)
   EXPECT_EQ(fp64_t::DECIMAL_DIGITS, 9);
 
   double r     = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-  auto   x64   = fp64_t::FromFloat(r) * fp64_t::FP_MAX - fp64_t::FP_MAX;
+  auto   x64   = fetch::math::AsType<fp64_t>(r) * fp64_t::FP_MAX - fp64_t::FP_MAX;
   auto   x128  = static_cast<fp128_t>(x64);
   auto   x64_2 = static_cast<fp64_t>(x128);
   EXPECT_EQ(x64, x64_2);
@@ -167,10 +167,10 @@ TEST(FixedPointTest, Conversion_64_64)
 {
   // Get raw value
   fp128_t one(1);
-  fp128_t zero_point_five{fp128_t::FromFloat(0.5)};
-  fp128_t one_point_five{fp128_t::FromFloat(1.5)};
-  fp128_t two_point_five{fp128_t::FromFloat(2.5)};
-  fp128_t m_one_point_five{fp128_t::FromFloat(-1.5)};
+  fp128_t zero_point_five{fetch::math::AsType<fp128_t>(0.5)};
+  fp128_t one_point_five{fetch::math::AsType<fp128_t>(1.5)};
+  fp128_t two_point_five{fetch::math::AsType<fp128_t>(2.5)};
+  fp128_t m_one_point_five{fetch::math::AsType<fp128_t>(-1.5)};
 
   EXPECT_EQ(zero_point_five.Data(), static_cast<int128_t>(0x8000000000000000));
   EXPECT_EQ(one.Data(), static_cast<int128_t>(1) << 64);
@@ -185,9 +185,9 @@ TEST(FixedPointTest, Conversion_64_64)
 
   // Extreme cases:
   // smallest possible double representable to a FixedPoint
-  fp128_t infinitesimal{fp128_t::FromFloat(0.00000000000000000009)};
+  fp128_t infinitesimal{fetch::math::AsType<fp128_t>(0.00000000000000000009)};
   // Largest double fractional closest to one, representable to a FixedPoint
-  // fp128_t almost_one{fp128_t::FromFloat(0.999999999999999944)};
+  // fp128_t almost_one{fetch::math::AsType<fp128_t>(0.999999999999999944)};
   // Largest fractional closest to one, representable to a FixedPoint
   fp128_t largest_int(std::numeric_limits<int64_t>::max() - 1, 0UL);  // NOLINT
 
@@ -221,14 +221,14 @@ TEST(FixedPointTest, Conversion_64_64)
   EXPECT_EQ(fp128_t::DECIMAL_DIGITS, 19);
 
   double r    = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-  auto   x128 = fp128_t::FromFloat(r) * static_cast<fp128_t>(fp64_t::FP_MAX) -
+  auto   x128 = fetch::math::AsType<fp128_t>(r) * static_cast<fp128_t>(fp64_t::FP_MAX) -
               static_cast<fp128_t>(fp64_t::FP_MAX);
   auto x64    = static_cast<fp64_t>(x128);
   auto x128_2 = static_cast<fp128_t>(x64);
   EXPECT_NEAR(static_cast<double>(x128), static_cast<double>(x128_2),
               static_cast<double>(fp64_t::TOLERANCE));
 
-  x128 = fp128_t::FromFloat(r) * static_cast<fp128_t>(fp32_t::FP_MAX) -
+  x128 = fetch::math::AsType<fp128_t>(r) * static_cast<fp128_t>(fp32_t::FP_MAX) -
          static_cast<fp128_t>(fp32_t::FP_MAX);
   auto x32 = static_cast<fp32_t>(x128);
   x128_2   = static_cast<fp128_t>(x32);
@@ -246,7 +246,7 @@ TEST(FixedPointTest, FromString_16_16)
   fp32_t one_point_five("1.5fp32");
   fp32_t two_point_five("2.5fp64");
   fp32_t m_one_point_five("-1.5fp");
-  fp32_t m_one_point_five_flt{fp32_t::FromFloat(-1.5)};
+  fp32_t m_one_point_five_flt{fetch::math::AsType<fp32_t>(-1.5)};
 
   EXPECT_EQ(zero_point_five.Data(), 0x08000);
   EXPECT_EQ(one.Data(), 0x10000);
@@ -257,7 +257,7 @@ TEST(FixedPointTest, FromString_16_16)
   EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
 
   fp32_t e1("2.718281828459045235360287471352662498");
-  fp32_t e2{fp32_t::FromFloat(2.718281828459045235360287471352662498)};
+  fp32_t e2{fetch::math::AsType<fp32_t>(2.718281828459045235360287471352662498)};
   EXPECT_TRUE(e1.Near(e2));
   EXPECT_NE(e1, e2);
 
@@ -287,7 +287,7 @@ TEST(FixedPointTest, FromString_32_32)
   fp64_t one_point_five("1.5fp64_t");
   fp64_t two_point_five("2.5fp64_t");
   fp64_t m_one_point_five("-1.5fp64_t");
-  fp64_t m_one_point_five_flt{fp64_t::FromFloat(-1.5)};
+  fp64_t m_one_point_five_flt{fetch::math::AsType<fp64_t>(-1.5)};
 
   EXPECT_EQ(zero_point_five.Data(), 0x080000000);
   EXPECT_EQ(one.Data(), 0x100000000);
@@ -298,7 +298,7 @@ TEST(FixedPointTest, FromString_32_32)
   EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
 
   fp64_t e1("2.718281828459045235360287471352662498");
-  fp64_t e2{fp64_t::FromFloat(2.718281828459045235360287471352662498)};
+  fp64_t e2{fetch::math::AsType<fp64_t>(2.718281828459045235360287471352662498)};
   EXPECT_TRUE(e1.Near(e2));
   EXPECT_NE(e1, e2);
 
@@ -328,7 +328,7 @@ TEST(FixedPointTest, FromString_64_64)
   fp128_t one_point_five("1.5fp128");
   fp128_t two_point_five("2.5fp128");
   fp128_t m_one_point_five("-1.5fp128");
-  fp128_t m_one_point_five_flt{fp128_t::FromFloat(-1.5)};
+  fp128_t m_one_point_five_flt{fetch::math::AsType<fp128_t>(-1.5)};
 
   EXPECT_EQ(zero_point_five.Data(), static_cast<int128_t>(0x8000000000000000));
   EXPECT_EQ(one.Data(), static_cast<int128_t>(1) << 64);
@@ -339,7 +339,7 @@ TEST(FixedPointTest, FromString_64_64)
   EXPECT_EQ(m_one_point_five, m_one_point_five_flt);
 
   fp128_t e1("2.718281828459045235360287471352662498");
-  fp128_t e2{fp128_t::FromFloat(2.718281828459045235360287471352662498)};
+  fp128_t e2{fetch::math::AsType<fp128_t>(2.718281828459045235360287471352662498)};
   EXPECT_TRUE(e1.Near(e2));
   EXPECT_NE(e1, e2);
 
@@ -477,38 +477,48 @@ TEST(FixedPointTest, ToString_64_64)
 
 TEST(FixedPointTest, Constants_16_16)
 {
-  EXPECT_TRUE(fp32_t::CONST_E.Near(fp32_t::FromFloat(2.718281828459045235360287471352662498)));
-  EXPECT_TRUE(fp32_t::CONST_E == fp32_t(2, 0xB7E1));  // 2.718281828459045235360287471352662498
-  EXPECT_TRUE(fp32_t::CONST_LOG2E.Near(fp32_t::FromFloat(1.442695040888963407359924681001892137)));
-  EXPECT_TRUE(fp32_t::CONST_LOG2E == fp32_t(1, 0x7154));  // 1.442695040888963407359924681001892137
-  EXPECT_TRUE(fp32_t::CONST_LOG210.Near(fp32_t::FromFloat(3.32192809488736234787)));
-  EXPECT_TRUE(fp32_t::CONST_LOG210 == fp32_t(3, 0x5269));  // 3.32192809488736234787
-  EXPECT_TRUE(fp32_t::CONST_LOG10E.Near(fp32_t::FromFloat(0.434294481903251827651128918916605082)));
-  EXPECT_TRUE(fp32_t::CONST_LOG10E == fp32_t(0, 0x6F2D));  // 0.434294481903251827651128918916605082
-  EXPECT_TRUE(fp32_t::CONST_LN2.Near(fp32_t::FromFloat(0.693147180559945309417232121458176568)));
-  EXPECT_TRUE(fp32_t::CONST_LN2 == fp32_t(0, 0xB172));  // 0.693147180559945309417232121458176568
-  EXPECT_TRUE(fp32_t::CONST_LN10.Near(fp32_t::FromFloat(2.302585092994045684017991454684364208)));
-  EXPECT_TRUE(fp32_t::CONST_LN10 == fp32_t(2, 0x4D76));  // 2.302585092994045684017991454684364208
-  EXPECT_TRUE(fp32_t::CONST_PI.Near(fp32_t::FromFloat(3.141592653589793238462643383279502884)));
-  EXPECT_TRUE(fp32_t::CONST_PI == fp32_t(3, 0x243F));  // 3.141592653589793238462643383279502884
-  EXPECT_TRUE(fp32_t::CONST_PI_2.Near(fp32_t::FromFloat(1.570796326794896619231321691639751442)));
-  EXPECT_TRUE(fp32_t::CONST_PI_2 == fp32_t(1, 0x921F));  // 1.570796326794896619231321691639751442
-  EXPECT_TRUE(fp32_t::CONST_PI_4.Near(fp32_t::FromFloat(0.785398163397448309615660845819875721)));
-  EXPECT_TRUE(fp32_t::CONST_PI_4 == fp32_t(0, 0xC90F));  // 0.785398163397448309615660845819875721
-  EXPECT_TRUE(fp32_t::CONST_INV_PI.Near(fp32_t::FromFloat(0.318309886183790671537767526745028724)));
-  EXPECT_TRUE(fp32_t::CONST_INV_PI == fp32_t(0, 0x517C));  // 0.318309886183790671537767526745028724
   EXPECT_TRUE(
-      fp32_t::CONST_TWO_INV_PI.Near(fp32_t::FromFloat(0.636619772367581343075535053490057448)));
+      fp32_t::CONST_E.Near(fetch::math::AsType<fp32_t>(2.718281828459045235360287471352662498)));
+  EXPECT_TRUE(fp32_t::CONST_E == fp32_t(2, 0xB7E1));  // 2.718281828459045235360287471352662498
+  EXPECT_TRUE(fp32_t::CONST_LOG2E.Near(
+      fetch::math::AsType<fp32_t>(1.442695040888963407359924681001892137)));
+  EXPECT_TRUE(fp32_t::CONST_LOG2E == fp32_t(1, 0x7154));  // 1.442695040888963407359924681001892137
+  EXPECT_TRUE(fp32_t::CONST_LOG210.Near(fetch::math::AsType<fp32_t>(3.32192809488736234787)));
+  EXPECT_TRUE(fp32_t::CONST_LOG210 == fp32_t(3, 0x5269));  // 3.32192809488736234787
+  EXPECT_TRUE(fp32_t::CONST_LOG10E.Near(
+      fetch::math::AsType<fp32_t>(0.434294481903251827651128918916605082)));
+  EXPECT_TRUE(fp32_t::CONST_LOG10E == fp32_t(0, 0x6F2D));  // 0.434294481903251827651128918916605082
+  EXPECT_TRUE(
+      fp32_t::CONST_LN2.Near(fetch::math::AsType<fp32_t>(0.693147180559945309417232121458176568)));
+  EXPECT_TRUE(fp32_t::CONST_LN2 == fp32_t(0, 0xB172));  // 0.693147180559945309417232121458176568
+  EXPECT_TRUE(
+      fp32_t::CONST_LN10.Near(fetch::math::AsType<fp32_t>(2.302585092994045684017991454684364208)));
+  EXPECT_TRUE(fp32_t::CONST_LN10 == fp32_t(2, 0x4D76));  // 2.302585092994045684017991454684364208
+  EXPECT_TRUE(
+      fp32_t::CONST_PI.Near(fetch::math::AsType<fp32_t>(3.141592653589793238462643383279502884)));
+  EXPECT_TRUE(fp32_t::CONST_PI == fp32_t(3, 0x243F));  // 3.141592653589793238462643383279502884
+  EXPECT_TRUE(
+      fp32_t::CONST_PI_2.Near(fetch::math::AsType<fp32_t>(1.570796326794896619231321691639751442)));
+  EXPECT_TRUE(fp32_t::CONST_PI_2 == fp32_t(1, 0x921F));  // 1.570796326794896619231321691639751442
+  EXPECT_TRUE(
+      fp32_t::CONST_PI_4.Near(fetch::math::AsType<fp32_t>(0.785398163397448309615660845819875721)));
+  EXPECT_TRUE(fp32_t::CONST_PI_4 == fp32_t(0, 0xC90F));  // 0.785398163397448309615660845819875721
+  EXPECT_TRUE(fp32_t::CONST_INV_PI.Near(
+      fetch::math::AsType<fp32_t>(0.318309886183790671537767526745028724)));
+  EXPECT_TRUE(fp32_t::CONST_INV_PI == fp32_t(0, 0x517C));  // 0.318309886183790671537767526745028724
+  EXPECT_TRUE(fp32_t::CONST_TWO_INV_PI.Near(
+      fetch::math::AsType<fp32_t>(0.636619772367581343075535053490057448)));
   EXPECT_TRUE(fp32_t::CONST_TWO_INV_PI ==
               fp32_t(0, 0xA2F9));  // 0 .636619772367581343075535053490057448
-  EXPECT_TRUE(
-      fp32_t::CONST_TWO_INV_SQRTPI.Near(fp32_t::FromFloat(1.128379167095512573896158903121545172)));
+  EXPECT_TRUE(fp32_t::CONST_TWO_INV_SQRTPI.Near(
+      fetch::math::AsType<fp32_t>(1.128379167095512573896158903121545172)));
   EXPECT_TRUE(fp32_t::CONST_TWO_INV_SQRTPI ==
               fp32_t(1, 0x20DD));  // 1.128379167095512573896158903121545172
-  EXPECT_TRUE(fp32_t::CONST_SQRT2.Near(fp32_t::FromFloat(1.414213562373095048801688724209698079)));
+  EXPECT_TRUE(fp32_t::CONST_SQRT2.Near(
+      fetch::math::AsType<fp32_t>(1.414213562373095048801688724209698079)));
   EXPECT_TRUE(fp32_t::CONST_SQRT2 == fp32_t(1, 0x6A09));  // 1.414213562373095048801688724209698079
-  EXPECT_TRUE(
-      fp32_t::CONST_INV_SQRT2.Near(fp32_t::FromFloat(0.707106781186547524400844362104849039)));
+  EXPECT_TRUE(fp32_t::CONST_INV_SQRT2.Near(
+      fetch::math::AsType<fp32_t>(0.707106781186547524400844362104849039)));
   EXPECT_TRUE(fp32_t::CONST_INV_SQRT2 ==
               fp32_t(0, 0xB504));  // 0.707106781186547524400844362104849039
 
@@ -522,46 +532,56 @@ TEST(FixedPointTest, Constants_16_16)
 
 TEST(FixedPointTest, Constants_32_32)
 {
-  EXPECT_TRUE(fp64_t::CONST_E.Near(fp64_t::FromFloat(2.718281828459045235360287471352662498)));
+  EXPECT_TRUE(
+      fp64_t::CONST_E.Near(fetch::math::AsType<fp64_t>(2.718281828459045235360287471352662498)));
   EXPECT_TRUE(fp64_t::CONST_E == fp64_t(2, 0xB7E15162));  // 2.718281828459045235360287471352662498
-  EXPECT_TRUE(fp64_t::CONST_LOG2E.Near(fp64_t::FromFloat(1.442695040888963407359924681001892137)));
+  EXPECT_TRUE(fp64_t::CONST_LOG2E.Near(
+      fetch::math::AsType<fp64_t>(1.442695040888963407359924681001892137)));
   EXPECT_TRUE(fp64_t::CONST_LOG2E ==
               fp64_t(1, 0x71547652));  // 1.442695040888963407359924681001892137
-  EXPECT_TRUE(fp64_t::CONST_LOG210.Near(fp64_t::FromFloat(3.32192809488736234787)));
+  EXPECT_TRUE(fp64_t::CONST_LOG210.Near(fetch::math::AsType<fp64_t>(3.32192809488736234787)));
   EXPECT_TRUE(fp64_t::CONST_LOG210 == fp64_t(3, 0x5269E12F));  // 3.32192809488736234787
-  EXPECT_TRUE(fp64_t::CONST_LOG10E.Near(fp64_t::FromFloat(0.434294481903251827651128918916605082)));
+  EXPECT_TRUE(fp64_t::CONST_LOG10E.Near(
+      fetch::math::AsType<fp64_t>(0.434294481903251827651128918916605082)));
   EXPECT_TRUE(fp64_t::CONST_LOG10E ==
               fp64_t(0, 0x6F2DEC54));  // 0.434294481903251827651128918916605082
-  EXPECT_TRUE(fp64_t::CONST_LN2.Near(fp64_t::FromFloat(0.693147180559945309417232121458176568)));
+  EXPECT_TRUE(
+      fp64_t::CONST_LN2.Near(fetch::math::AsType<fp64_t>(0.693147180559945309417232121458176568)));
   EXPECT_TRUE(fp64_t::CONST_LN2 ==
               fp64_t(0, 0xB17217F7));  // 0.693147180559945309417232121458176568
-  EXPECT_TRUE(fp64_t::CONST_LN10.Near(fp64_t::FromFloat(2.302585092994045684017991454684364208)));
+  EXPECT_TRUE(
+      fp64_t::CONST_LN10.Near(fetch::math::AsType<fp64_t>(2.302585092994045684017991454684364208)));
   EXPECT_TRUE(fp64_t::CONST_LN10 ==
               fp64_t(2, 0x4D763776));  // 2.302585092994045684017991454684364208
-  EXPECT_TRUE(fp64_t::CONST_PI.Near(fp64_t::FromFloat(3.141592653589793238462643383279502884)));
+  EXPECT_TRUE(
+      fp64_t::CONST_PI.Near(fetch::math::AsType<fp64_t>(3.141592653589793238462643383279502884)));
   EXPECT_TRUE(fp64_t::CONST_PI == fp64_t(3, 0x243F6A88));  // 3.141592653589793238462643383279502884
-  EXPECT_TRUE(fp64_t::CONST_PI_2.Near(fp64_t::FromFloat(1.570796326794896619231321691639751442)));
+  EXPECT_TRUE(
+      fp64_t::CONST_PI_2.Near(fetch::math::AsType<fp64_t>(1.570796326794896619231321691639751442)));
   EXPECT_TRUE(fp64_t::CONST_PI_2 ==
               fp64_t(1, 0x921FB544));  // 1.570796326794896619231321691639751442
-  EXPECT_TRUE(fp64_t::CONST_PI_4.Near(fp64_t::FromFloat(0.785398163397448309615660845819875721)));
+  EXPECT_TRUE(
+      fp64_t::CONST_PI_4.Near(fetch::math::AsType<fp64_t>(0.785398163397448309615660845819875721)));
   EXPECT_TRUE(fp64_t::CONST_PI_4 ==
               fp64_t(0, 0xC90FDAA2));  // 0.785398163397448309615660845819875721
-  EXPECT_TRUE(fp64_t::CONST_INV_PI.Near(fp64_t::FromFloat(0.318309886183790671537767526745028724)));
+  EXPECT_TRUE(fp64_t::CONST_INV_PI.Near(
+      fetch::math::AsType<fp64_t>(0.318309886183790671537767526745028724)));
   EXPECT_TRUE(fp64_t::CONST_INV_PI ==
               fp64_t(0, 0x517CC1B7));  // 0.318309886183790671537767526745028724
-  EXPECT_TRUE(
-      fp64_t::CONST_TWO_INV_PI.Near(fp64_t::FromFloat(0.636619772367581343075535053490057448)));
+  EXPECT_TRUE(fp64_t::CONST_TWO_INV_PI.Near(
+      fetch::math::AsType<fp64_t>(0.636619772367581343075535053490057448)));
   EXPECT_TRUE(fp64_t::CONST_TWO_INV_PI ==
               fp64_t(0, 0xA2F9836E));  // 0 .636619772367581343075535053490057448
-  EXPECT_TRUE(
-      fp64_t::CONST_TWO_INV_SQRTPI.Near(fp64_t::FromFloat(1.128379167095512573896158903121545172)));
+  EXPECT_TRUE(fp64_t::CONST_TWO_INV_SQRTPI.Near(
+      fetch::math::AsType<fp64_t>(1.128379167095512573896158903121545172)));
   EXPECT_TRUE(fp64_t::CONST_TWO_INV_SQRTPI ==
               fp64_t(1, 0x20DD7504));  // 1.128379167095512573896158903121545172
-  EXPECT_TRUE(fp64_t::CONST_SQRT2.Near(fp64_t::FromFloat(1.414213562373095048801688724209698079)));
+  EXPECT_TRUE(fp64_t::CONST_SQRT2.Near(
+      fetch::math::AsType<fp64_t>(1.414213562373095048801688724209698079)));
   EXPECT_TRUE(fp64_t::CONST_SQRT2 ==
               fp64_t(1, 0x6A09E667));  // 1.414213562373095048801688724209698079
-  EXPECT_TRUE(
-      fp64_t::CONST_INV_SQRT2.Near(fp64_t::FromFloat(0.707106781186547524400844362104849039)));
+  EXPECT_TRUE(fp64_t::CONST_INV_SQRT2.Near(
+      fetch::math::AsType<fp64_t>(0.707106781186547524400844362104849039)));
   EXPECT_TRUE(fp64_t::CONST_INV_SQRT2 ==
               fp64_t(0, 0xB504F333));  // 0.707106781186547524400844362104849039
 
@@ -575,52 +595,58 @@ TEST(FixedPointTest, Constants_32_32)
 
 TEST(FixedPointTest, Constants_64_64)
 {
-  EXPECT_TRUE(fp128_t::CONST_E.Near(fp128_t::FromFloat(2.718281828459045235360287471352662498)));
+  EXPECT_TRUE(
+      fp128_t::CONST_E.Near(fetch::math::AsType<fp128_t>(2.718281828459045235360287471352662498)));
   EXPECT_TRUE(fp128_t::CONST_E ==
               fp128_t(2, 0xB7E151628AED2A6A));  // 2.718281828459045235360287471352662498
-  EXPECT_TRUE(
-      fp128_t::CONST_LOG2E.Near(fp128_t::FromFloat(1.442695040888963407359924681001892137)));
+  EXPECT_TRUE(fp128_t::CONST_LOG2E.Near(
+      fetch::math::AsType<fp128_t>(1.442695040888963407359924681001892137)));
   EXPECT_TRUE(fp128_t::CONST_LOG2E ==
               fp128_t(1, 0x71547652B82FE177));  // 1.442695040888963407359924681001892137
-  EXPECT_TRUE(fp128_t::CONST_LOG210.Near(fp128_t::FromFloat(3.32192809488736234787)));
+  EXPECT_TRUE(fp128_t::CONST_LOG210.Near(fetch::math::AsType<fp128_t>(3.32192809488736234787)));
   EXPECT_TRUE(fp128_t::CONST_LOG210 == fp128_t(3, 0x5269E12F346E2BF9));  // 3.32192809488736234787
-  EXPECT_TRUE(
-      fp128_t::CONST_LOG10E.Near(fp128_t::FromFloat(0.434294481903251827651128918916605082)));
+  EXPECT_TRUE(fp128_t::CONST_LOG10E.Near(
+      fetch::math::AsType<fp128_t>(0.434294481903251827651128918916605082)));
   EXPECT_TRUE(fp128_t::CONST_LOG10E ==
               fp128_t(0, 0x6F2DEC549B9438CA));  // 0.434294481903251827651128918916605082
-  EXPECT_TRUE(fp128_t::CONST_LN2.Near(fp128_t::FromFloat(0.693147180559945309417232121458176568)));
+  EXPECT_TRUE(fp128_t::CONST_LN2.Near(
+      fetch::math::AsType<fp128_t>(0.693147180559945309417232121458176568)));
   EXPECT_TRUE(fp128_t::CONST_LN2 ==
               fp128_t(0, 0xB17217F7D1CF79AB));  // 0.693147180559945309417232121458176568
-  EXPECT_TRUE(fp128_t::CONST_LN10.Near(fp128_t::FromFloat(2.302585092994045684017991454684364208)));
+  EXPECT_TRUE(fp128_t::CONST_LN10.Near(
+      fetch::math::AsType<fp128_t>(2.302585092994045684017991454684364208)));
   EXPECT_TRUE(fp128_t::CONST_LN10 ==
               fp128_t(2, 0x4D763776AAA2B05B));  // 2.302585092994045684017991454684364208
-  EXPECT_TRUE(fp128_t::CONST_PI.Near(fp128_t::FromFloat(3.141592653589793238462643383279502884)));
+  EXPECT_TRUE(
+      fp128_t::CONST_PI.Near(fetch::math::AsType<fp128_t>(3.141592653589793238462643383279502884)));
   EXPECT_TRUE(fp128_t::CONST_PI ==
               fp128_t(3, 0x243F6A8885A308D3));  // 3.141592653589793238462643383279502884
-  EXPECT_TRUE(fp128_t::CONST_PI_2.Near(fp128_t::FromFloat(1.570796326794896619231321691639751442)));
+  EXPECT_TRUE(fp128_t::CONST_PI_2.Near(
+      fetch::math::AsType<fp128_t>(1.570796326794896619231321691639751442)));
   EXPECT_TRUE(fp128_t::CONST_PI_2 ==
               fp128_t(1, 0x921FB54442D18469));  // 1.570796326794896619231321691639751442
-  EXPECT_TRUE(fp128_t::CONST_PI_4.Near(fp128_t::FromFloat(0.785398163397448309615660845819875721)));
+  EXPECT_TRUE(fp128_t::CONST_PI_4.Near(
+      fetch::math::AsType<fp128_t>(0.785398163397448309615660845819875721)));
   EXPECT_TRUE(fp128_t::CONST_PI_4 ==
               fp128_t(0, 0xC90FDAA22168C234));  // 0.785398163397448309615660845819875721
-  EXPECT_TRUE(
-      fp128_t::CONST_INV_PI.Near(fp128_t::FromFloat(0.318309886183790671537767526745028724)));
+  EXPECT_TRUE(fp128_t::CONST_INV_PI.Near(
+      fetch::math::AsType<fp128_t>(0.318309886183790671537767526745028724)));
   EXPECT_TRUE(fp128_t::CONST_INV_PI ==
               fp128_t(0, 0x517CC1B727220A94));  // 0.318309886183790671537767526745028724
-  EXPECT_TRUE(
-      fp128_t::CONST_TWO_INV_PI.Near(fp128_t::FromFloat(0.636619772367581343075535053490057448)));
+  EXPECT_TRUE(fp128_t::CONST_TWO_INV_PI.Near(
+      fetch::math::AsType<fp128_t>(0.636619772367581343075535053490057448)));
   EXPECT_TRUE(fp128_t::CONST_TWO_INV_PI ==
               fp128_t(0, 0xA2F9836E4E441529));  // 0 .636619772367581343075535053490057448
   EXPECT_TRUE(fp128_t::CONST_TWO_INV_SQRTPI.Near(
-      fp128_t::FromFloat(1.128379167095512573896158903121545172)));
+      fetch::math::AsType<fp128_t>(1.128379167095512573896158903121545172)));
   EXPECT_TRUE(fp128_t::CONST_TWO_INV_SQRTPI ==
               fp128_t(1, 0x20DD750429B6D11A));  // 1.128379167095512573896158903121545172
-  EXPECT_TRUE(
-      fp128_t::CONST_SQRT2.Near(fp128_t::FromFloat(1.414213562373095048801688724209698079)));
+  EXPECT_TRUE(fp128_t::CONST_SQRT2.Near(
+      fetch::math::AsType<fp128_t>(1.414213562373095048801688724209698079)));
   EXPECT_TRUE(fp128_t::CONST_SQRT2 ==
               fp128_t(1, 0x6A09E667F3BCC908));  // 1.414213562373095048801688724209698079
-  EXPECT_TRUE(
-      fp128_t::CONST_INV_SQRT2.Near(fp128_t::FromFloat(0.707106781186547524400844362104849039)));
+  EXPECT_TRUE(fp128_t::CONST_INV_SQRT2.Near(
+      fetch::math::AsType<fp128_t>(0.707106781186547524400844362104849039)));
   EXPECT_TRUE(fp128_t::CONST_INV_SQRT2 ==
               fp128_t(0, 0xB504F333F9DE6484));  // 0.707106781186547524400844362104849039
 
@@ -794,8 +820,8 @@ TYPED_TEST(BasicArithmeticTest, Multiplication)
   EXPECT_EQ(one * TypeParam{2}, TypeParam{2});
   EXPECT_EQ(m_one * zero, zero);
   EXPECT_EQ(m_one * one, m_one);
-  EXPECT_EQ(static_cast<float>(two * TypeParam::FromFloat(2.0f)), 4.0f);
-  EXPECT_EQ(static_cast<double>(three * TypeParam::FromFloat(2.0)), 6.0);
+  EXPECT_EQ(static_cast<float>(two * fetch::math::AsType<TypeParam>(2.0f)), 4.0f);
+  EXPECT_EQ(static_cast<double>(three * fetch::math::AsType<TypeParam>(2.0)), 6.0);
 
   EXPECT_EQ(static_cast<int>(one * two), 2);
   EXPECT_EQ(static_cast<double>(one * two), 2.0);
@@ -857,7 +883,7 @@ TYPED_TEST(BitOperationsTest, ShiftLeft)
   // Positive
   TypeParam one{1};
   TypeParam two{2};
-  TypeParam x{TypeParam::FromFloat(1.6519711627625)};
+  TypeParam x{fetch::math::AsType<TypeParam>(1.6519711627625)};
   TypeParam m_one{-1};
 
   EXPECT_EQ(two * two, two << one);
@@ -871,7 +897,7 @@ TYPED_TEST(BitOperationsTest, ShiftRight)
   // Positive
   TypeParam one{1};
   TypeParam two{2};
-  TypeParam x{TypeParam::FromFloat(1.6519711627625)};
+  TypeParam x{fetch::math::AsType<TypeParam>(1.6519711627625)};
   TypeParam m_one{-1};
 
   EXPECT_EQ(two / two, two >> one);
@@ -915,9 +941,9 @@ TYPED_TEST(ComparisonTest, Comparison)
   EXPECT_TRUE(one <= one);
   EXPECT_TRUE(two <= two);
 
-  TypeParam zero_point_five{TypeParam::FromFloat(0.5)};
-  TypeParam one_point_five{TypeParam::FromFloat(1.5)};
-  TypeParam two_point_five{TypeParam::FromFloat(2.5)};
+  TypeParam zero_point_five{fetch::math::AsType<TypeParam>(0.5)};
+  TypeParam one_point_five{fetch::math::AsType<TypeParam>(1.5)};
+  TypeParam two_point_five{fetch::math::AsType<TypeParam>(2.5)};
 
   EXPECT_TRUE(zero_point_five < one);
   EXPECT_TRUE(zero_point_five < two);
@@ -989,8 +1015,8 @@ TYPED_TEST(BasicTest, Abs)
 {
   TypeParam one(1);
   TypeParam m_one(-1);
-  TypeParam one_point_five{TypeParam::FromFloat(1.5)};
-  TypeParam m_one_point_five{TypeParam::FromFloat(-1.5)};
+  TypeParam one_point_five{fetch::math::AsType<TypeParam>(1.5)};
+  TypeParam m_one_point_five{fetch::math::AsType<TypeParam>(-1.5)};
   TypeParam ten(10);
   TypeParam m_ten(-10);
   TypeParam huge(TypeParam::FP_MAX * TypeParam::_half);
@@ -1015,11 +1041,11 @@ TYPED_TEST(BasicTest, Remainder)
 {
   TypeParam one(1);
   TypeParam m_one(-1);
-  TypeParam one_point_five{TypeParam::FromFloat(1.5)};
-  TypeParam m_one_point_five{TypeParam::FromFloat(-1.5)};
+  TypeParam one_point_five{fetch::math::AsType<TypeParam>(1.5)};
+  TypeParam m_one_point_five{fetch::math::AsType<TypeParam>(-1.5)};
   TypeParam ten(10);
   TypeParam m_ten(-10);
-  TypeParam x{TypeParam::FromFloat(1.6519711627625)};
+  TypeParam x{fetch::math::AsType<TypeParam>(1.6519711627625)};
   TypeParam huge(10000);
   huge >>= 2;
   TypeParam e1 = TypeParam::Remainder(ten, one);
@@ -1057,11 +1083,11 @@ TYPED_TEST(BasicTest, Fmod)
 {
   TypeParam one(1);
   TypeParam m_one(-1);
-  TypeParam one_point_five{TypeParam::FromFloat(1.5)};
-  TypeParam m_one_point_five{TypeParam::FromFloat(-1.5)};
+  TypeParam one_point_five{fetch::math::AsType<TypeParam>(1.5)};
+  TypeParam m_one_point_five{fetch::math::AsType<TypeParam>(-1.5)};
   TypeParam ten(10);
   TypeParam m_ten(-10);
-  TypeParam x{TypeParam::FromFloat(1.6519711627625)};
+  TypeParam x{fetch::math::AsType<TypeParam>(1.6519711627625)};
   TypeParam e1 = TypeParam::Fmod(ten, one);
   TypeParam e2 = TypeParam::Fmod(ten, m_one);
   TypeParam e3 = TypeParam::Fmod(ten, one_point_five);
@@ -1090,9 +1116,9 @@ TYPED_TEST(TranscendentalTest, Exp)
   TypeParam one(1);
   TypeParam two(2);
   TypeParam ten(10);
-  TypeParam small{TypeParam::FromFloat(0.0001)};
+  TypeParam small{fetch::math::AsType<TypeParam>(0.0001)};
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
-  TypeParam negative{TypeParam::FromFloat(-0.40028143)};
+  TypeParam negative{fetch::math::AsType<TypeParam>(-0.40028143)};
   TypeParam e1    = TypeParam::Exp(one);
   TypeParam e2    = TypeParam::Exp(two);
   TypeParam e3    = TypeParam::Exp(small);
@@ -1147,12 +1173,12 @@ TYPED_TEST(TranscendentalTest, Exp)
   double    r;
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale;
-  scale               = TypeParam::FromFloat(5.0);
+  scale               = fetch::math::AsType<TypeParam>(5.0);
   TypeParam tolerance = TypeParam::TOLERANCE;
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * (scale * TypeParam{2}) - scale;
+    x                = fetch::math::AsType<TypeParam>(r) * (scale * TypeParam{2}) - scale;
     TypeParam e      = TypeParam::Exp(x);
     double    e_real = std::exp(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1166,10 +1192,10 @@ TYPED_TEST(TranscendentalTest, Exp)
 
 TYPED_TEST(TranscendentalTest, Pow_positive_x_gt_1)
 {
-  TypeParam a{TypeParam::FromFloat(1.6519711627625)};
+  TypeParam a{fetch::math::AsType<TypeParam>(1.6519711627625)};
   TypeParam two{2};
   TypeParam three{3};
-  TypeParam b{TypeParam::FromFloat(1.8464393615723)};
+  TypeParam b{fetch::math::AsType<TypeParam>(1.8464393615723)};
   TypeParam e1        = TypeParam::Pow(a, two);
   TypeParam e2        = TypeParam::Pow(a, three);
   TypeParam e3        = TypeParam::Pow(two, b);
@@ -1192,11 +1218,11 @@ TYPED_TEST(TranscendentalTest, Pow_positive_x_gt_1)
   for (size_t i{0}; i < N; i++)
   {
     r      = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x      = TypeParam::FromFloat(r * scalex + margin);
+    x      = fetch::math::AsType<TypeParam>(r * scalex + margin);
     r      = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
     scaley = std::floor(std::log(static_cast<double>(TypeParam::FP_MAX)) /
                         std::log(static_cast<double>(x)));
-    y      = TypeParam::FromFloat(r * scaley);
+    y      = fetch::math::AsType<TypeParam>(r * scaley);
     TypeParam::StateClear();
     TypeParam e = TypeParam::Pow(x, y);
     if (TypeParam::IsStateOverflow())
@@ -1219,16 +1245,16 @@ TYPED_TEST(TranscendentalTest, Pow_positive_x_lt_1)
   double    r;
   double    delta, max_error = 0, avg_error = 0, scaley;
   TypeParam x, y, scalex, margin;
-  scalex = TypeParam::FromFloat(1.0);
-  margin = TypeParam::FromFloat(0.001);
+  scalex = fetch::math::AsType<TypeParam>(1.0);
+  margin = fetch::math::AsType<TypeParam>(0.001);
   for (size_t i{0}; i < N; i++)
   {
     r      = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x      = TypeParam::FromFloat(r) * (scalex) + margin;
+    x      = fetch::math::AsType<TypeParam>(r) * (scalex) + margin;
     r      = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
     scaley = std::floor(std::log(static_cast<double>(TypeParam::FP_MAX)) /
                         std::log(static_cast<double>(x)));
-    y      = TypeParam::FromFloat(r * scaley);
+    y      = fetch::math::AsType<TypeParam>(r * scaley);
     TypeParam::StateClear();
     TypeParam e = TypeParam::Pow(x, y);
     if (TypeParam::IsStateOverflow())
@@ -1249,7 +1275,7 @@ TYPED_TEST(TranscendentalTest, Pow_positive_x_lt_1)
 
 TYPED_TEST(TranscendentalTest, Pow_negative_x)
 {
-  TypeParam a{TypeParam::FromFloat(-1.6519711627625)};
+  TypeParam a{fetch::math::AsType<TypeParam>(-1.6519711627625)};
   TypeParam two{2};
   TypeParam three{3};
   TypeParam e1        = TypeParam::Pow(a, two);
@@ -1262,15 +1288,15 @@ TYPED_TEST(TranscendentalTest, Pow_negative_x)
   double    r;
   double    delta, max_error = 0, avg_error = 0, scaley;
   TypeParam x, y, scalex, margin;
-  scalex = TypeParam::FromFloat(10.0);
-  margin = TypeParam::FromFloat(0.0001);
+  scalex = fetch::math::AsType<TypeParam>(10.0);
+  margin = fetch::math::AsType<TypeParam>(0.0001);
   for (size_t i{0}; i < N; i++)
   {
     r      = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x      = TypeParam::FromFloat(r) * (scalex) + margin;
+    x      = fetch::math::AsType<TypeParam>(r) * (scalex) + margin;
     r      = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
     scaley = std::log(static_cast<double>(TypeParam::FP_MAX)) / std::log(static_cast<double>(x));
-    y      = TypeParam::Floor(TypeParam::FromFloat((r - 1) * scaley));
+    y      = TypeParam::Floor(fetch::math::AsType<TypeParam>((r - 1) * scaley));
     TypeParam e      = TypeParam::Pow(-x, y);
     double    e_real = std::pow(static_cast<double>(-x), static_cast<double>(y));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1284,10 +1310,10 @@ TYPED_TEST(TranscendentalTest, Pow_negative_x)
 TYPED_TEST(TranscendentalTest, Logarithm)
 {
   TypeParam one(1);
-  TypeParam one_point_five{TypeParam::FromFloat(1.5)};
+  TypeParam one_point_five{fetch::math::AsType<TypeParam>(1.5)};
   TypeParam ten(10);
   TypeParam huge(TypeParam::FP_MAX * TypeParam::_half);
-  TypeParam small{TypeParam::FromFloat(0.001)};
+  TypeParam small{fetch::math::AsType<TypeParam>(0.001)};
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
   TypeParam e1 = TypeParam::Log2(one);
   TypeParam e2 = TypeParam::Log2(one_point_five);
@@ -1312,13 +1338,13 @@ TYPED_TEST(TranscendentalTest, Logarithm)
   double    r;
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale          = TypeParam::FromFloat(5.0);
-  margin         = TypeParam::FromFloat(0.0001);
+  scale          = fetch::math::AsType<TypeParam>(5.0);
+  margin         = fetch::math::AsType<TypeParam>(0.0001);
   auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * scale + margin;
+    x                = fetch::math::AsType<TypeParam>(r) * scale + margin;
     TypeParam l      = TypeParam::Log2(x);
     double    l_real = std::log2(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(l) - l_real);
@@ -1333,12 +1359,12 @@ TYPED_TEST(TranscendentalTest, Logarithm)
 TYPED_TEST(TranscendentalTest, Sqrt)
 {
   TypeParam one(1);
-  TypeParam one_point_five{TypeParam::FromFloat(1.5)};
+  TypeParam one_point_five{fetch::math::AsType<TypeParam>(1.5)};
   TypeParam two(2);
   TypeParam four(4);
   TypeParam ten(10);
   TypeParam huge(10000);
-  TypeParam small{TypeParam::FromFloat(0.0001)};
+  TypeParam small{fetch::math::AsType<TypeParam>(0.0001)};
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
   TypeParam e1 = TypeParam::Sqrt(one);
   TypeParam e2 = TypeParam::Sqrt(one_point_five);
@@ -1383,12 +1409,12 @@ TYPED_TEST(TranscendentalTest, Sqrt)
   double    r;
   double    max_error = 0, avg_error = 0;
   TypeParam x, scale;
-  scale          = TypeParam::FromFloat(5.0);
+  scale          = fetch::math::AsType<TypeParam>(5.0);
   auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * scale;
+    x                = fetch::math::AsType<TypeParam>(r) * scale;
     TypeParam s      = TypeParam::Sqrt(x);
     double    s_real = std::sqrt(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(s) - s_real);
@@ -1408,9 +1434,9 @@ TYPED_TEST_CASE(TrigonometryTest, FixedPointTypes);
 TYPED_TEST(TrigonometryTest, Sin)
 {
   TypeParam one(1);
-  TypeParam one_point_five{TypeParam::FromFloat(1.5)};
+  TypeParam one_point_five{fetch::math::AsType<TypeParam>(1.5)};
   TypeParam huge(2000);
-  TypeParam small{TypeParam::FromFloat(0.0001)};
+  TypeParam small{fetch::math::AsType<TypeParam>(0.0001)};
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
   TypeParam e1  = TypeParam::Sin(one);
   TypeParam e2  = TypeParam::Sin(one_point_five);
@@ -1474,13 +1500,13 @@ TYPED_TEST(TrigonometryTest, Sin)
   double    r;
   double    max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale          = TypeParam::CONST_PI * TypeParam::FromFloat(10.0);
+  scale          = TypeParam::CONST_PI * fetch::math::AsType<TypeParam>(10.0);
   margin         = TypeParam::TOLERANCE;
   auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
-    r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * (scale * TypeParam{2} - margin) - (scale - margin);
+    r = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
+    x = fetch::math::AsType<TypeParam>(r) * (scale * TypeParam{2} - margin) - (scale - margin);
     TypeParam e      = TypeParam::Sin(x);
     double    e_real = std::sin(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1495,9 +1521,9 @@ TYPED_TEST(TrigonometryTest, Sin)
 TYPED_TEST(TrigonometryTest, Cos)
 {
   TypeParam one(1);
-  TypeParam one_point_five{TypeParam::FromFloat(1.5)};
+  TypeParam one_point_five{fetch::math::AsType<TypeParam>(1.5)};
   TypeParam huge(2000);
-  TypeParam small{TypeParam::FromFloat(0.0001)};
+  TypeParam small{fetch::math::AsType<TypeParam>(0.0001)};
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
   TypeParam e1  = TypeParam::Cos(one);
   TypeParam e2  = TypeParam::Cos(one_point_five);
@@ -1561,13 +1587,13 @@ TYPED_TEST(TrigonometryTest, Cos)
   double    r;
   double    max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
-  scale          = TypeParam::CONST_PI * TypeParam::FromFloat(10.0);
+  scale          = TypeParam::CONST_PI * fetch::math::AsType<TypeParam>(10.0);
   margin         = TypeParam::TOLERANCE;
   auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
-    r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * (scale * TypeParam{2} - margin) - (scale - margin);
+    r = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
+    x = fetch::math::AsType<TypeParam>(r) * (scale * TypeParam{2} - margin) - (scale - margin);
     TypeParam e      = TypeParam::Cos(x);
     double    e_real = std::cos(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1582,9 +1608,9 @@ TYPED_TEST(TrigonometryTest, Cos)
 TYPED_TEST(TrigonometryTest, Tan)
 {
   TypeParam one(1);
-  TypeParam one_point_five{TypeParam::FromFloat(1.5)};
+  TypeParam one_point_five{fetch::math::AsType<TypeParam>(1.5)};
   TypeParam huge(2000);
-  TypeParam small{TypeParam::FromFloat(0.0001)};
+  TypeParam small{fetch::math::AsType<TypeParam>(0.0001)};
   TypeParam tiny(0, TypeParam::SMALLEST_FRACTION);
   TypeParam e1  = TypeParam::Tan(one);
   TypeParam e2  = TypeParam::Tan(one_point_five);
@@ -1644,12 +1670,12 @@ TYPED_TEST(TrigonometryTest, Tan)
   double    max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
   scale          = TypeParam::CONST_PI_2;
-  margin         = TypeParam::FromFloat(0.1);
+  margin         = fetch::math::AsType<TypeParam>(0.1);
   auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
-    r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * (scale * TypeParam{2} - margin) - (scale - margin);
+    r = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
+    x = fetch::math::AsType<TypeParam>(r) * (scale * TypeParam{2} - margin) - (scale - margin);
     TypeParam e      = TypeParam::Tan(x);
     double    e_real = std::tan(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1675,7 +1701,7 @@ TYPED_TEST(TrigonometryTest, ASin)
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * (scale - margin) - (scale - margin);
+    x                = fetch::math::AsType<TypeParam>(r) * (scale - margin) - (scale - margin);
     TypeParam e      = TypeParam::ASin(x);
     double    e_real = std::asin(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1698,7 +1724,7 @@ TYPED_TEST(TrigonometryTest, ACos)
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * (scale - margin) - (scale - margin);
+    x                = fetch::math::AsType<TypeParam>(r) * (scale - margin) - (scale - margin);
     TypeParam e      = TypeParam::ACos(x);
     double    e_real = std::acos(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1721,7 +1747,7 @@ TYPED_TEST(TrigonometryTest, ATan)
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * (scale - margin) - (scale - margin);
+    x                = fetch::math::AsType<TypeParam>(r) * (scale - margin) - (scale - margin);
     TypeParam e      = TypeParam::ATan(x);
     double    e_real = std::atan(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1744,9 +1770,9 @@ TYPED_TEST(TrigonometryTest, ATan2)
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * (scale - margin) - (scale - margin);
+    x                = fetch::math::AsType<TypeParam>(r) * (scale - margin) - (scale - margin);
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    y                = TypeParam::FromFloat(r) * (scale - margin) - (scale - margin);
+    y                = fetch::math::AsType<TypeParam>(r) * (scale - margin) - (scale - margin);
     TypeParam e      = TypeParam::ATan2(y, x);
     double    e_real = std::atan2(static_cast<double>(y), static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1774,7 +1800,7 @@ TYPED_TEST(HyperbolicTest, SinH)
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * (scale - margin) - (scale - margin);
+    x                = fetch::math::AsType<TypeParam>(r) * (scale - margin) - (scale - margin);
     TypeParam e      = TypeParam::SinH(x);
     double    e_real = std::sinh(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1797,7 +1823,7 @@ TYPED_TEST(HyperbolicTest, CosH)
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * (scale - margin) - (scale - margin);
+    x                = fetch::math::AsType<TypeParam>(r) * (scale - margin) - (scale - margin);
     TypeParam e      = TypeParam::CosH(x);
     double    e_real = std::cosh(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1820,7 +1846,7 @@ TYPED_TEST(HyperbolicTest, TanH)
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * (scale - margin) - (scale - margin);
+    x                = fetch::math::AsType<TypeParam>(r) * (scale - margin) - (scale - margin);
     TypeParam e      = TypeParam::TanH(x);
     double    e_real = std::tanh(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1843,7 +1869,7 @@ TYPED_TEST(HyperbolicTest, ASinH)
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * (scale - margin) - (scale - margin);
+    x                = fetch::math::AsType<TypeParam>(r) * (scale - margin) - (scale - margin);
     TypeParam e      = TypeParam::ASinH(x);
     double    e_real = std::asinh(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1866,7 +1892,7 @@ TYPED_TEST(HyperbolicTest, ACosH)
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * scale + offset;
+    x                = fetch::math::AsType<TypeParam>(r) * scale + offset;
     TypeParam e      = TypeParam::ACosH(x);
     double    e_real = std::acosh(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -1884,12 +1910,12 @@ TYPED_TEST(HyperbolicTest, ATanH)
   double    delta, max_error = 0, avg_error = 0;
   TypeParam x, scale, margin;
   scale          = TypeParam::_1;
-  margin         = TypeParam::FromFloat(0.001);
+  margin         = fetch::math::AsType<TypeParam>(0.001);
   auto tolerance = static_cast<double>(TypeParam::TOLERANCE);
   for (size_t i{0}; i < N; i++)
   {
     r                = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
-    x                = TypeParam::FromFloat(r) * (scale - margin) - (scale - margin);
+    x                = fetch::math::AsType<TypeParam>(r) * (scale - margin) - (scale - margin);
     TypeParam e      = TypeParam::ATanH(x);
     double    e_real = std::atanh(static_cast<double>(x));
     delta            = std::abs(static_cast<double>(e) - e_real);
@@ -2093,7 +2119,7 @@ TYPED_TEST(NanInfinityTest, trans_function_nan_inf_tests)
   EXPECT_TRUE(TypeParam::IsStateInfinity());
 
   // x ^ (+∞) = +∞, |x| > 1
-  TypeParam x1{TypeParam::FromFloat(1.5)};
+  TypeParam x1{fetch::math::AsType<TypeParam>(1.5)};
   TypeParam::StateClear();
   EXPECT_TRUE(TypeParam::IsPosInfinity(TypeParam::Pow(x1, p_inf)));
   EXPECT_TRUE(TypeParam::IsStateInfinity());
@@ -2102,7 +2128,7 @@ TYPED_TEST(NanInfinityTest, trans_function_nan_inf_tests)
   EXPECT_EQ(TypeParam::Pow(x1, m_inf), TypeParam::_0);
 
   // x ^ (+∞) = 0, |x| < 1
-  TypeParam x2{TypeParam::FromFloat(0.5)};
+  TypeParam x2{fetch::math::AsType<TypeParam>(0.5)};
   EXPECT_EQ(TypeParam::Pow(x2, p_inf), TypeParam::_0);
 
   // x ^ (-∞) = 0, |x| < 1
