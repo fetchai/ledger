@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/standard_functions/abs.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
