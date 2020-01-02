@@ -50,8 +50,8 @@ TYPED_TEST(SoftmaxTest, forward_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
-                                  fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.00001"),
+                                  fetch::math::Type<DataType>("0.00001")));
 }
 
 TYPED_TEST(SoftmaxTest, forward_2d_tensor_axis_1_test)
@@ -99,8 +99,8 @@ TYPED_TEST(SoftmaxTest, backward_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),
-                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::Type<DataType>("0.00001"),
+                                     fetch::math::Type<DataType>("0.00001")));
 }
 
 TYPED_TEST(SoftmaxTest, backward_2d_tensor_axis_1_test)
@@ -205,8 +205,8 @@ TYPED_TEST(SoftmaxTest, backward_3d_tensor_axis_1_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),
-                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::Type<DataType>("0.00001"),
+                                     fetch::math::Type<DataType>("0.00001")));
 }
 
 TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_0_test)

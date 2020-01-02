@@ -50,8 +50,8 @@ TYPED_TEST(SigmoidTest, forward_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
-                                  fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.00001"),
+                                  fetch::math::Type<DataType>("0.00001")));
 }
 
 TYPED_TEST(SigmoidTest, forward_3d_tensor_test)
@@ -83,8 +83,8 @@ TYPED_TEST(SigmoidTest, forward_3d_tensor_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
-                                  fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.00001"),
+                                  fetch::math::Type<DataType>("0.00001")));
 }
 
 TYPED_TEST(SigmoidTest, backward_test)
