@@ -448,7 +448,7 @@ private:
   static constexpr meta::IfIsFloat<T, FixedPoint> FromFloat(T n);
   template <typename T, typename U>
   friend constexpr math::meta::IfIsFixedPoint<T, T> fetch::math::AsType(
-      U val, meta::IfIsFloat<U> * /*unused*/);
+      U val, meta::IfIsFloat<U> * /*unused*/); // NOLINT
 
   /**
    * helper function that checks no rounding error when casting
