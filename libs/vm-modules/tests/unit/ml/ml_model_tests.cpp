@@ -541,6 +541,11 @@ TEST_F(VMModelTests, model_add_dropout_invalid_params)
   TestInvalidLayerAdding(R"(model.add("dropout", 10fp64);)");
 }
 
+TEST_F(VMModelTests, model_add_reshape_invalid_params)
+{
+  TestInvalidLayerAdding(R"(model.add("reshape", 10fp64);)");
+}
+
 TEST_F(VMModelTests, model_add_layers_invalid_activation_conv)
 {
   TestInvalidLayerAdding(
@@ -575,6 +580,11 @@ TEST_F(VMModelTests, model_uncompilable_add_layer__conv_invalid_params)
 TEST_F(VMModelTests, model_uncompilable_add_layer__dropout_invalid_params)
 {
   TestAddingUncompilableLayer(R"(model.add("dropout", 0u64);)");
+}
+
+TEST_F(VMModelTests, model_uncompilable_add_layer__reshape_invalid_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("reshape", 1u64);)");
 }
 
 TEST_F(VMModelTests, model_uncompilable_add_layer__activation_invalid_params)
@@ -1064,6 +1074,24 @@ TEST_F(VMModelTests, model_sequential_flatten)
   ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
 
+TEST_F(VMModelTests, model_sequential_reshape)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var shape = Array<UInt64>(3);
+          shape[0] = 3u64;
+          shape[1] = 2u64;
+          shape[2] = 1u64;
+          var model = Model("sequential");
+          model.add("reshape", shape);
+          model.compile("scel", "adam", {"categorical accuracy"});
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
 TEST_F(VMModelTests, model_sequential_flatten_tensor_data)
 {
   static char const *SRC_METRIC = R"(
@@ -1134,6 +1162,46 @@ TEST_F(VMModelTests, model_sequential_flatten_2d_in_2d_out)
   auto const tensor            = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto const constructed_shape = tensor->shape();
   fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({2, 3});
+  EXPECT_TRUE(constructed_shape == expected.shape());
+}
+
+TEST_F(VMModelTests, model_sequential_reshape_2d_in_2d_out)
+{
+  static char const *SRC_METRIC = R"(
+              function main() : Tensor
+                var shape = Array<UInt64>(1);
+                shape[0] = 1u64;
+                var x = Tensor(shape);
+                var str_vals = "0.5, 7.1, 9.1; 6.2, 7.1, 4.;";
+                x.fromString(str_vals);
+                x = x.unsqueeze();
+                var to_shape = Array<UInt64>(2);
+                to_shape[0] = 6u64;
+                to_shape[1] = 1u64;
+
+                var model = Model("sequential");
+                model.add("reshape", to_shape);
+                model.compile("scel", "adam");
+                var prediction = model.predict(x);
+                print(prediction.toString());
+
+                return prediction;
+              endfunction
+      )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
+  ASSERT_EQ(stdout.str(),
+            "0.500000000;"
+            "6.199999999;"
+            "7.099999999;"
+            "7.099999999;"
+            "9.099999999;"
+            "4.000000000;");
+  auto const tensor            = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const constructed_shape = tensor->shape();
+  fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({6, 1});
   EXPECT_TRUE(constructed_shape == expected.shape());
 }
 
