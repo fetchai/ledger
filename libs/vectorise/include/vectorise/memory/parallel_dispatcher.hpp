@@ -122,7 +122,7 @@ public:
       {
         scalar_iter.Next(a);
         tmp = kernel(a);
-        ret = op(ret, tmp.data());
+        ret = static_cast<type>(op(ret, tmp.data()));
       }
     }
 
@@ -136,7 +136,7 @@ public:
         vc  = op(vc, tmp);
       }
 
-      ret += hkernel(vc);
+      ret = static_cast<type>(ret + hkernel(vc));
     }
 
     if (STU != ST)
@@ -149,7 +149,7 @@ public:
       {
         scalar_iter.Next(a);
         tmp = kernel(a);
-        ret = op(ret, tmp.data());
+        ret = static_cast<type>(op(ret, tmp.data()));
       }
     }
 
