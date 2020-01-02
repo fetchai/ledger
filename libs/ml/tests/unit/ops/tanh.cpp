@@ -62,8 +62,8 @@ TYPED_TEST(TanHTest, forward_all_positive_test)
   TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
   op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
 
-  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.0001"),
-                                  fetch::math::Type<DataType>("0.0001")));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>() * DataType{5},
+                                  fetch::math::function_tolerance<DataType>() * DataType{5}));
 }
 
 TYPED_TEST(TanHTest, forward_all_negative_test)
@@ -89,8 +89,8 @@ TYPED_TEST(TanHTest, forward_all_negative_test)
   TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
   op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
 
-  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.0001"),
-                                  fetch::math::Type<DataType>("0.0001")));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>() * DataType{5},
+                                  fetch::math::function_tolerance<DataType>() * DataType{5}));
 }
 
 TYPED_TEST(TanHTest, backward_all_positive_test)
@@ -102,7 +102,7 @@ TYPED_TEST(TanHTest, backward_all_positive_test)
   TypeParam  error{n};
   TypeParam  gt{n};
   TensorType data_input  = TensorType::FromString("0, 0.2, 0.4, 0.6, 0.8, 1.2, 1.4, 10");
-  TensorType error_input = TensorType::FromString("{0.2, 0.1, 0.3, 0.2, 0.5, 0.1, 0.0, 0.3");
+  TensorType error_input = TensorType::FromString("0.2, 0.1, 0.3, 0.2, 0.5, 0.1, 0.0, 0.3");
   TensorType gt_input =
       TensorType::FromString("0.2, 0.096104, 0.256692, 0.142316, 0.279528, 0.030502, 0.0, 0.0");
   for (uint64_t i(0); i < n; ++i)
@@ -115,8 +115,8 @@ TYPED_TEST(TanHTest, backward_all_positive_test)
   std::vector<TypeParam> prediction = op.Backward({std::make_shared<const TypeParam>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::Type<DataType>("0.0001"),
-                                     fetch::math::Type<DataType>("0.0001")));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>() * DataType{5},
+                                     fetch::math::function_tolerance<DataType>() * DataType{5}));
 }
 
 TYPED_TEST(TanHTest, backward_all_negative_test)
@@ -141,8 +141,8 @@ TYPED_TEST(TanHTest, backward_all_negative_test)
   std::vector<TypeParam> prediction = op.Backward({std::make_shared<const TypeParam>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::Type<DataType>("0.0001"),
-                                     fetch::math::Type<DataType>("0.0001")));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>() * DataType{5},
+                                     fetch::math::function_tolerance<DataType>() * DataType{5}));
 }
 
 TYPED_TEST(TanHTest, saveparams_test)
