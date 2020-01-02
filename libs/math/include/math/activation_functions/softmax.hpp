@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -50,8 +50,8 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
   auto sum = Type(0);
   while (it1.is_valid())
   {
-    *it2 = Exp(*it1 - array_max);
-    sum += *it2;
+    *it2 = static_cast<Type>(Exp(*it1 - array_max));
+    sum  = static_cast<Type>(sum + *it2);
     ++it2;
     ++it1;
   }
@@ -59,7 +59,7 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
   auto it3 = ret.begin();  // TODO (private 855): Fix implicitly deleted copy const. for iterator
   while (it3.is_valid())
   {
-    *it3 /= sum;
+    *it3 = static_cast<Type>(*it3 / sum);
     ++it3;
   }
 }
