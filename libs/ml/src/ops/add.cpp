@@ -24,6 +24,60 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
+template <typename TensorType>
+std::shared_ptr<OpsSaveableParams> Add<TensorType>::GetOpSaveableParams()
+{
+  auto ret  = std::make_shared<SPType>();
+  ret->axes = axes_;
+  return ret;
+}
+
+template <typename TensorType>
+std::shared_ptr<fetch::ml::ops::Ops<TensorType>> Add<TensorType>::MakeSharedCopy(
+    std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me)
+{
+  FETCH_UNUSED(me);
+  assert(me.get() == this);
+
+  auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+  return copyshare;
+}
+
+template <typename TensorType>
+void Add<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
+{
+  assert(inputs.size() == 2);
+  assert(output.shape() == this->ComputeOutputShape(inputs));
+  fetch::math::Add((*inputs.at(0)), (*inputs.at(1)), output);
+}
+
+template <typename TensorType>
+std::vector<TensorType> Add<TensorType>::Backward(VecTensorType const &inputs,
+                                                  TensorType const &   error_signal)
+{
+  assert(inputs.size() == 2);
+  assert(inputs.at(0)->shape().size() == inputs.at(1)->shape().size());
+  assert(inputs.at(0)->shape() == error_signal.shape());
+  assert(error_signal.shape() == ComputeOutputShape(inputs));
+
+  if (inputs.at(0)->shape() == inputs.at(1)->shape())
+  {
+    // Non-broadcast Add
+    return {error_signal, error_signal};
+  }
+
+  // Broadcast Add
+  UpdateAxes(inputs);
+  return {error_signal, fetch::math::ReduceSum(error_signal, axes_)};
+}
+
+template <typename TensorType>
+std::vector<math::SizeType> Add<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+{
+  return inputs.at(0)->shape();
+}
+
 /**
  * method for updating axes in case of broadcast Add
  * @tparam TensorType

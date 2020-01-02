@@ -39,7 +39,6 @@ class Add : public Ops<T>
 {
 public:
   using TensorType    = T;
-  using DataType      = typename TensorType::Type;
   using SizeType      = math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpAddSaveableParams<T>;
@@ -53,56 +52,19 @@ public:
   }
   ~Add() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    auto ret  = std::make_shared<SPType>();
-    ret->axes = axes_;
-    return ret;
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
-
-    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
-
-    return copyshare;
-  }
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
   // for inputs to the add layer, if broadcasting is required, make sure the first input is the one
   // with the complete shape
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(inputs.size() == 2);
-    assert(output.shape() == this->ComputeOutputShape(inputs));
-    fetch::math::Add((*inputs.at(0)), (*inputs.at(1)), output);
-  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    assert(inputs.size() == 2);
-    assert(inputs.at(0)->shape().size() == inputs.at(1)->shape().size());
-    assert(inputs.at(0)->shape() == error_signal.shape());
-    assert(error_signal.shape() == ComputeOutputShape(inputs));
+                                   TensorType const &   error_signal) override;
 
-    if (inputs.at(0)->shape() == inputs.at(1)->shape())
-    {
-      // Non-broadcast Add
-      return {error_signal, error_signal};
-    }
-
-    // Broadcast Add
-    UpdateAxes(inputs);
-    return {error_signal, fetch::math::ReduceSum(error_signal, axes_)};
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    return inputs.at(0)->shape();
-  }
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
