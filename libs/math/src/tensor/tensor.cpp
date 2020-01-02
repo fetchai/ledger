@@ -545,8 +545,8 @@ Tensor<T, C> Tensor<T, C>::FillArange(Type const &from, Type const &to)
   Tensor ret;
 
   SizeType N     = this->size();
-  Type     d     = static_cast<Type>(from);
-  Type     delta = static_cast<Type>(static_cast<Type>(to - from) / static_cast<Type>(N));
+  auto     d     = static_cast<Type>(from);
+  auto     delta = static_cast<Type>(static_cast<Type>(to - from) / static_cast<Type>(N));
   for (SizeType i = 0; i < N; ++i)
   {
     this->operator[](i) = Type(d);
@@ -1566,7 +1566,7 @@ template <typename T, typename C>
 SizeType Tensor<T, C>::Find(Type val) const
 {
   SizeType idx{0};
-  for (auto cur_val : *this)
+  for (auto const &cur_val : *this)
   {
     if (cur_val == val)
     {
