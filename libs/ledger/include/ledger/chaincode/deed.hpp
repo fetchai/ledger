@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -58,8 +58,14 @@ public:
 
   Deed(Signees signees, OperationTresholds thresholds);
 
-  Deed &operator=(Deed const &left) = default;
-  Deed &operator=(Deed &&left) = default;
+  Deed &operator=(Deed const &right) = default;
+  Deed &operator=(Deed &&right) = default;
+
+  bool operator==(Deed const &right) const;
+  bool operator!=(Deed const &right) const;
+
+  Signees const &           signees() const;
+  OperationTresholds const &operation_thresholds() const;
 
 private:
   Signees            signees_;

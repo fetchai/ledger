@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "vm/common.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
@@ -54,6 +54,10 @@ public:
 
   ChargeAmount size();
 
+  ChargeAmount VMShape();
+
+  ChargeAmount Copy();
+
   ChargeAmount AtOne(TensorType::SizeType idx1);
 
   ChargeAmount AtTwo(uint64_t idx1, uint64_t idx2);
@@ -85,44 +89,44 @@ public:
 
   ChargeAmount Sum();
 
+  ChargeAmount ArgMax(SizeType const &indices);
+
+  ChargeAmount ArgMaxNoIndices();
+
+  ChargeAmount Dot(vm::Ptr<VMTensor> const &other);
+
   /// OPERATORS ///
 
-  ChargeAmount EqualOperator(vm::Ptr<VMTensor> const &other);
+  ChargeAmount NegateChargeEstimator(vm::Ptr<vm::Object> const & /*object*/);
 
-  ChargeAmount NotEqualOperator(vm::Ptr<VMTensor> const &other);
+  ChargeAmount IsEqualChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                      vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount NegateOperator();
+  ChargeAmount IsNotEqualChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                         vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount AddOperator(vm::Ptr<VMTensor> const & /*other*/);
+  ChargeAmount AddChargeEstimator(vm::Ptr<vm::Object> const &lhso, vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount SubtractOperator(vm::Ptr<VMTensor> const & /*other*/);
+  ChargeAmount SubtractChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                       vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount MultiplyOperator(vm::Ptr<VMTensor> const & /*other*/);
+  ChargeAmount InplaceAddChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                         vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount DivideOperator(vm::Ptr<VMTensor> const & /*other*/);
+  ChargeAmount InplaceSubtractChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                              vm::Ptr<vm::Object> const &rhso);
 
-  // TODO (ML-340) - replace member functions with operators when operators can take estimators
-  ChargeAmount Negate();
+  ChargeAmount MultiplyChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                       vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount Equal();
+  ChargeAmount DivideChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                     vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount NotEqual();
+  ChargeAmount InplaceMultiplyChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                              vm::Ptr<vm::Object> const &rhso);
 
-  ChargeAmount Add();
-
-  ChargeAmount Subtract();
-
-  ChargeAmount InplaceAdd();
-
-  ChargeAmount InplaceSubtract();
-
-  ChargeAmount Multiply();
-
-  ChargeAmount Divide();
-
-  ChargeAmount InplaceMultiply();
-
-  ChargeAmount InplaceDivide();
+  ChargeAmount InplaceDivideChargeEstimator(vm::Ptr<vm::Object> const &lhso,
+                                            vm::Ptr<vm::Object> const &rhso);
 
   /// END OF OPERATORS ///
 
@@ -137,116 +141,128 @@ public:
   ChargeAmount ToString();
 
   // Fill
-  static constexpr DataType FILL_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType FILL_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType FILL_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t FILL_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t FILL_SIZE_COEF;
+  static const fixed_point::fp64_t FILL_CONST_COEF;
 
   // FillRandom
-  static constexpr DataType FILL_RANDOM_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType FILL_RANDOM_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType FILL_RANDOM_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t FILL_RANDOM_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t FILL_RANDOM_SIZE_COEF;
+  static const fixed_point::fp64_t FILL_RANDOM_CONST_COEF;
 
   // Min
-  static constexpr DataType MIN_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType MIN_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType MIN_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t MIN_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t MIN_SIZE_COEF;
+  static const fixed_point::fp64_t MIN_CONST_COEF;
 
   // MAX
-  static constexpr DataType MAX_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType MAX_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType MAX_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t MAX_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t MAX_SIZE_COEF;
+  static const fixed_point::fp64_t MAX_CONST_COEF;
 
   // SUM
-  static constexpr DataType SUM_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType SUM_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType SUM_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t SUM_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t SUM_SIZE_COEF;
+  static const fixed_point::fp64_t SUM_CONST_COEF;
 
   // RESHAPE
-  static constexpr DataType RESHAPE_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType RESHAPE_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType RESHAPE_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t RESHAPE_PADDED_SIZE_FROM_COEF;
+  static const fixed_point::fp64_t RESHAPE_PADDED_SIZE_TO_COEF;
+  static const fixed_point::fp64_t RESHAPE_CONST_COEF;
 
   // FROM_STRING
-  static constexpr DataType FROM_STRING_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType FROM_STRING_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t FROM_STRING_SIZE_COEF;
+  static const fixed_point::fp64_t FROM_STRING_CONST_COEF;
 
   // TO_STRING
-  static constexpr DataType TO_STRING_PADDED_SIZE_COEF()
-  {
-    return DataType(0.00023451);
-  };
-  static constexpr DataType TO_STRING_SIZE_COEF()
-  {
-    return DataType(0.00107809);
-  };
-  static constexpr DataType TO_STRING_CONST_COEF()
-  {
-    return DataType(5);
-  };
+  static const fixed_point::fp64_t TO_STRING_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t TO_STRING_SIZE_COEF;
+  static const fixed_point::fp64_t TO_STRING_CONST_COEF;
 
-  fixed_point::fp64_t const DEFAULT_PADDED_SIZE_COEF = fixed_point::fp64_t("0.00023451");
-  fixed_point::fp64_t const DEFAULT_SIZE_COEF        = fixed_point::fp64_t("0.00107809");
-  fixed_point::fp64_t const DEFAULT_CONST_COEF       = fixed_point::fp64_t("5");
+  // DOT
+  static const fixed_point::fp64_t DOT_X_COEF;
+  static const fixed_point::fp64_t DOT_Y_COEF;
+  static const fixed_point::fp64_t DOT_C_COEF;
+  static const fixed_point::fp64_t DOT_CUBIC_COEF;
+  static const fixed_point::fp64_t DOT_CONST_COEF;
+
+  // Negate
+  static const fixed_point::fp64_t NEGATE_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t NEGATE_SIZE_COEF;
+  static const fixed_point::fp64_t NEGATE_CONST_COEF;
+
+  // IsEqual
+  static const fixed_point::fp64_t IS_EQUAL_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t IS_EQUAL_SIZE_COEF;
+  static const fixed_point::fp64_t IS_EQUAL_CONST_COEF;
+
+  // IsNotEqual
+  static const fixed_point::fp64_t IS_NOT_EQUAL_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t IS_NOT_EQUAL_SIZE_COEF;
+  static const fixed_point::fp64_t IS_NOT_EQUAL_CONST_COEF;
+
+  // Add
+  static const fixed_point::fp64_t ADD_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t ADD_SIZE_COEF;
+  static const fixed_point::fp64_t ADD_CONST_COEF;
+
+  // InplaceAdd
+  static const fixed_point::fp64_t INPLACE_ADD_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_ADD_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_ADD_CONST_COEF;
+
+  // Subtract
+  static const fixed_point::fp64_t SUBTRACT_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t SUBTRACT_SIZE_COEF;
+  static const fixed_point::fp64_t SUBTRACT_CONST_COEF;
+
+  // InplaceSubtract
+  static const fixed_point::fp64_t INPLACE_SUBTRACT_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_SUBTRACT_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_SUBTRACT_CONST_COEF;
+
+  // Multiply
+  static const fixed_point::fp64_t MULTIPLY_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t MULTIPLY_SIZE_COEF;
+  static const fixed_point::fp64_t MULTIPLY_CONST_COEF;
+
+  // InplaceMultiply
+  static const fixed_point::fp64_t INPLACE_MULTIPLY_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_MULTIPLY_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_MULTIPLY_CONST_COEF;
+
+  // Divide
+  static const fixed_point::fp64_t DIVIDE_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t DIVIDE_SIZE_COEF;
+  static const fixed_point::fp64_t DIVIDE_CONST_COEF;
+
+  // InplaceDivide
+  static const fixed_point::fp64_t INPLACE_DIVIDE_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_DIVIDE_SIZE_COEF;
+  static const fixed_point::fp64_t INPLACE_DIVIDE_CONST_COEF;
+
+  // Copy
+  static const fixed_point::fp64_t COPY_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t COPY_SIZE_COEF;
+  static const fixed_point::fp64_t COPY_CONST_COEF;
+
+  // ArgMax
+  static const fixed_point::fp64_t ARGMAX_FIRST_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_FIRST_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_FIRST_CONST_COEF;
+
+  static const fixed_point::fp64_t ARGMAX_MID_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_MID_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_MID_CONST_COEF;
+
+  static const fixed_point::fp64_t ARGMAX_LAST_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_LAST_SIZE_COEF;
+  static const fixed_point::fp64_t ARGMAX_LAST_CONST_COEF;
+
+  // Default
+  static const fixed_point::fp64_t DEFAULT_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t DEFAULT_SIZE_COEF;
+  static const fixed_point::fp64_t DEFAULT_CONST_COEF;
 
   // Function call overhead for LOW_CHARGE functions
   static constexpr SizeType LOW_CHARGE_CONST_COEF = 5;
@@ -255,6 +271,8 @@ private:
   static ChargeAmount const LOW_CHARGE{LOW_CHARGE_CONST_COEF * fetch::vm::COMPUTE_CHARGE_COST};
 
   static ChargeAmount MaximumCharge(std::string const &log_msg = "");
+
+  static ChargeAmount ToChargeAmount(fixed_point::fp64_t const &val);
 
   VMObjectType &tensor_;
 };

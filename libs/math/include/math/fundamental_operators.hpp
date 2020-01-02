@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 #include "math/exceptions/exceptions.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include "math/tensor_broadcast.hpp"
+#include "math/tensor/tensor_broadcast.hpp"
 
 #include <cassert>
 
@@ -294,12 +294,13 @@ template <typename T, typename ArrayType,
           typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
   assert(array.shape() == ret.shape());
   auto it1 = array.cbegin();
   auto rit = ret.begin();
   while (it1.is_valid())
   {
-    *rit = (*it1) + scalar;
+    *rit = static_cast<DataType>((*it1) + scalar);
     ++it1;
     ++rit;
   }
@@ -317,6 +318,7 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                          ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
   if (array1.shape() == array2.shape())
   {
     assert(array1.shape() == ret.shape());
@@ -325,7 +327,7 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
     auto rit = ret.begin();
     while (it1.is_valid())
     {
-      *rit = (*it1) + (*it2);
+      *rit = static_cast<DataType>((*it1) + (*it2));
       ++it1;
       ++it2;
       ++rit;
@@ -334,7 +336,7 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
   else
   {
     if (!(Broadcast([](typename ArrayType::Type const &x, typename ArrayType::Type const &y,
-                       typename ArrayType::Type &z) { z = x + y; },
+                       typename ArrayType::Type &z) { z = static_cast<DataType>(x + y); },
                     array1, array2, ret)))
     {
       throw exceptions::WrongShape("arrays not broadcastable for InlineAdd!");
@@ -360,13 +362,14 @@ template <typename ArrayType, typename T,
 meta::IfIsMathArray<ArrayType, void> Subtract(T const &scalar, ArrayType const &array,
                                               ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
   assert(array.size() == ret.size());
   assert(array.shape() == ret.shape());
   auto it1 = array.cbegin();
   auto rit = ret.begin();
   while (it1.is_valid())
   {
-    *rit = scalar - *it1;
+    *rit = static_cast<DataType>(scalar - *it1);
     ++it1;
     ++rit;
   }
@@ -386,12 +389,13 @@ template <typename ArrayType, typename T,
 meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                               ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
   assert(array.size() == ret.size());
   auto it1 = array.cbegin();
   auto rit = ret.begin();
   while (it1.is_valid())
   {
-    *rit = *it1 - scalar;
+    *rit = static_cast<DataType>(*it1 - scalar);
     ++it1;
     ++rit;
   }
@@ -409,6 +413,7 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType const &array2,
                                               ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
   if (array1.shape() == array2.shape())
   {
     assert(array1.shape() == ret.shape());
@@ -417,7 +422,7 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType
     auto rit = ret.begin();
     while (it1.is_valid())
     {
-      *rit = (*it1) - (*it2);
+      *rit = static_cast<DataType>((*it1) - (*it2));
       ++it1;
       ++it2;
       ++rit;
@@ -426,7 +431,7 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType
   else
   {
     if (!(Broadcast([](typename ArrayType::Type const &x, typename ArrayType::Type const &y,
-                       typename ArrayType::Type &z) { z = x - y; },
+                       typename ArrayType::Type &z) { z = static_cast<DataType>(x - y); },
                     array1, array2, ret)))
     {
       throw exceptions::WrongShape("arrays not broadcastable for InlineAdd!");
@@ -438,6 +443,7 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1,
                                                            ArrayType const &obj2, ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
   if (obj1.shape() == obj2.shape())
   {
     auto it1 = obj1.cbegin();
@@ -445,7 +451,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1
     auto rit = ret.begin();
     while (it1.is_valid())
     {
-      *rit = (*it1) * (*it2);
+      *rit = static_cast<DataType>((*it1) * (*it2));
       ++it1;
       ++it2;
       ++rit;
@@ -456,7 +462,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1
     ArrayType a = obj1.Copy();
     ArrayType b = obj2.Copy();
     if (!(Broadcast([](typename ArrayType::Type const &x, typename ArrayType::Type const &y,
-                       typename ArrayType::Type &z) { z = x * y; },
+                       typename ArrayType::Type &z) { z = static_cast<DataType>(x * y); },
                     a, b, ret)))
     {
       throw exceptions::WrongShape("arrays not broadcastable for Multiply!");
@@ -469,12 +475,13 @@ template <typename ArrayType, typename T,
 meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
                                               ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
   assert(array.size() == ret.size());
   auto it1 = array.cbegin();
   auto it2 = ret.begin();
   while (it1.is_valid())
   {
-    *it2 = scalar * (*it1);
+    *it2 = static_cast<DataType>(scalar * (*it1));
     ++it1;
     ++it2;
   }
@@ -490,6 +497,7 @@ meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &array, T const &s
 template <typename ArrayType>
 void Divide(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
   if (array1.shape() == array2.shape())
   {
     assert(array1.shape() == ret.shape());
@@ -498,7 +506,7 @@ void Divide(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
     auto rit = ret.begin();
     while (it1.is_valid())
     {
-      *rit = (*it1) / (*it2);
+      *rit = static_cast<DataType>((*it1) / (*it2));
       ++it1;
       ++it2;
       ++rit;
@@ -507,7 +515,7 @@ void Divide(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
   else
   {
     if (!(Broadcast([](typename ArrayType::Type const &x, typename ArrayType::Type const &y,
-                       typename ArrayType::Type &z) { z = x / y; },
+                       typename ArrayType::Type &z) { z = static_cast<DataType>(x / y); },
                     array1, array2, ret)))
     {
       throw exceptions::WrongShape("arrays not broadcastable for Divide!");
@@ -528,12 +536,13 @@ template <typename ArrayType, typename T,
           typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
   assert(array.shape() == ret.shape());
   auto it1 = array.cbegin();
   auto rit = ret.begin();
   while (it1.is_valid())
   {
-    *rit = (*it1) / scalar;
+    *rit = static_cast<DataType>((*it1) / scalar);
     ++it1;
     ++rit;
   }
@@ -552,12 +561,13 @@ template <typename ArrayType, typename T,
           typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array, ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
   assert(array.shape() == ret.shape());
   auto it  = array.begin();
   auto it2 = ret.begin();
   while (it.is_valid())
   {
-    *it2 = scalar / *it;
+    *it2 = static_cast<DataType>(scalar / *it);
     ++it2;
     ++it;
   }

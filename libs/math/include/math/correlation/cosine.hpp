@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -31,10 +31,11 @@ namespace correlation {
 template <typename ArrayType>
 void Cosine(ArrayType const &a, ArrayType const &b, typename ArrayType::Type &r)
 {
+  using DataType = typename ArrayType::Type;
   assert(a.size() == b.size());
   // self products
-  typename ArrayType::Type a_r, b_r, denom_r;
-  ArrayType                dp_ret;
+  DataType  a_r, b_r, denom_r;
+  ArrayType dp_ret;
 
   // get inner product
   if ((b.shape()[0] == 1) && (a.shape()[0] == 1))
@@ -76,10 +77,8 @@ void Cosine(ArrayType const &a, ArrayType const &b, typename ArrayType::Type &r)
 
   fetch::math::Divide(r, denom_r, r);
 
-  assert(r <= static_cast<typename ArrayType::Type>(1.0f) +
-                  function_tolerance<typename ArrayType::Type>());
-  assert(r >= static_cast<typename ArrayType::Type>(-1.0f) -
-                  function_tolerance<typename ArrayType::Type>());
+  assert(r <= DataType{1} + function_tolerance<DataType>());
+  assert(r >= DataType{-1} - function_tolerance<DataType>());
 }
 
 template <typename ArrayType>

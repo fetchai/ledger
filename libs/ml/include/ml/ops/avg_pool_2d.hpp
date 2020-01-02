@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public:
 
           for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
           {
-            sum = static_cast<DataType>(0);
+            sum = DataType{0};
 
             // Sum all values on kernel_size_ x kernel_size_ window
             for (SizeType jw{0}; jw < kernel_size_; jw++)  // Iterate over kernel width

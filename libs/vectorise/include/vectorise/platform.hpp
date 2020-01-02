@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,6 +26,12 @@ using uint128_t = __uint128_t;
 
 namespace fetch {
 namespace platform {
+
+enum class Endian
+{
+  BIG,
+  LITTLE,
+};
 
 inline uint8_t ToBigEndian(uint8_t x)
 {

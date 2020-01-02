@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ void Executor_BasicBenchmark(benchmark::State &state)
 
     TokenContract tokens{};
 
-    fetch::ledger::ContractContext         context{&tokens, tx->contract_address(), &adapter, 0};
+    fetch::ledger::ContractContext context{&tokens, tx->contract_address(), nullptr, &adapter, 0};
     fetch::ledger::ContractContextAttacher raii(tokens, context);
     tokens.AddTokens(tx->from(), 500000);
   }

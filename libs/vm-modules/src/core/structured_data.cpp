@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -48,17 +48,17 @@ using fetch::vm_modules::math::UInt256Wrapper;
 using fetch::vm::Fixed128;
 
 template <typename T>
-meta::EnableIf<vm::IsString<meta::Decay<T>>::value, Ptr<T>> FromByteArray(
-    VM *vm, Ptr<String> const & /*name*/, ConstByteArray const &array)
+meta::EnableIf<vm::IsString<meta::Decay<T>>, Ptr<T>> FromByteArray(VM *vm,
+                                                                   Ptr<String> const & /*name*/,
+                                                                   ConstByteArray const &array)
 {
   ConstByteArray value_array;
   return Ptr<T>{new T{vm, static_cast<std::string>(array)}};
 }
 
 template <typename T>
-meta::EnableIf<IsAddress<meta::Decay<T>>::value, Ptr<T>> FromByteArray(VM *                  vm,
-                                                                       Ptr<String> const &   name,
-                                                                       ConstByteArray const &array)
+meta::EnableIf<IsAddress<meta::Decay<T>>, Ptr<T>> FromByteArray(VM *vm, Ptr<String> const &name,
+                                                                ConstByteArray const &array)
 {
   try
   {
@@ -107,7 +107,7 @@ meta::EnableIf<std::is_same<UInt256Wrapper, T>::value, Ptr<T>> FromByteArray(
     return Ptr<T>{};
   }
 
-  return vm->CreateNewObject<UInt256Wrapper>(value_array);
+  return vm->CreateNewObject<UInt256Wrapper>(value_array, platform::Endian::BIG);
 }
 
 template <typename T>
@@ -143,7 +143,8 @@ ByteArray ToByteArray(ByteArrayWrapper const &byte_array)
 
 ByteArray ToByteArray(UInt256Wrapper const &big_number)
 {
-  return byte_array::ToBase64(big_number.number().pointer(), big_number.number().TrimmedSize());
+  auto const big_endian_byte_array{big_number.number().As<ByteArray>(platform::Endian::BIG)};
+  return big_endian_byte_array.ToBase64();
 }
 
 ByteArray ToByteArray(Fixed128 const &fixed_number)
@@ -163,8 +164,6 @@ void StructuredData::Bind(Module &module)
       .CreateMemberFunction("getInt64", &StructuredData::GetPrimitive<int64_t>)
       .CreateMemberFunction("getUInt32", &StructuredData::GetPrimitive<uint32_t>)
       .CreateMemberFunction("getUInt64", &StructuredData::GetPrimitive<uint64_t>)
-      .CreateMemberFunction("getFloat32", &StructuredData::GetPrimitive<float>)
-      .CreateMemberFunction("getFloat64", &StructuredData::GetPrimitive<double>)
       .CreateMemberFunction("getFixed32", &StructuredData::GetPrimitive<fixed_point::fp32_t>)
       .CreateMemberFunction("getFixed64", &StructuredData::GetPrimitive<fixed_point::fp64_t>)
       .CreateMemberFunction("getString", &StructuredData::GetObject<String>)
@@ -176,8 +175,6 @@ void StructuredData::Bind(Module &module)
       .CreateMemberFunction("getArrayInt64", &StructuredData::GetArray<int64_t>)
       .CreateMemberFunction("getArrayUInt32", &StructuredData::GetArray<uint32_t>)
       .CreateMemberFunction("getArrayUInt64", &StructuredData::GetArray<uint64_t>)
-      .CreateMemberFunction("getArrayFloat32", &StructuredData::GetArray<float>)
-      .CreateMemberFunction("getArrayFloat64", &StructuredData::GetArray<double>)
       .CreateMemberFunction("getArrayFixed32", &StructuredData::GetArray<fixed_point::fp32_t>)
       .CreateMemberFunction("getArrayFixed64", &StructuredData::GetArray<fixed_point::fp64_t>)
       .CreateMemberFunction("getArrayFixed128", &StructuredData::GetObjectArray<Fixed128>)
@@ -189,8 +186,6 @@ void StructuredData::Bind(Module &module)
       .CreateMemberFunction("set", &StructuredData::SetArray<int64_t>)
       .CreateMemberFunction("set", &StructuredData::SetArray<uint32_t>)
       .CreateMemberFunction("set", &StructuredData::SetArray<uint64_t>)
-      .CreateMemberFunction("set", &StructuredData::SetArray<float>)
-      .CreateMemberFunction("set", &StructuredData::SetArray<double>)
       .CreateMemberFunction("set", &StructuredData::SetArray<fixed_point::fp32_t>)
       .CreateMemberFunction("set", &StructuredData::SetArray<fixed_point::fp64_t>)
       .CreateMemberFunction("set", &StructuredData::SetObjectArray<Fixed128>)
@@ -206,8 +201,6 @@ void StructuredData::Bind(Module &module)
       .CreateMemberFunction("set", &StructuredData::SetPrimitive<int64_t>)
       .CreateMemberFunction("set", &StructuredData::SetPrimitive<uint32_t>)
       .CreateMemberFunction("set", &StructuredData::SetPrimitive<uint64_t>)
-      .CreateMemberFunction("set", &StructuredData::SetPrimitive<float>)
-      .CreateMemberFunction("set", &StructuredData::SetPrimitive<double>)
       .CreateMemberFunction("set", &StructuredData::SetPrimitive<fixed_point::fp32_t>)
       .CreateMemberFunction("set", &StructuredData::SetPrimitive<fixed_point::fp64_t>);
 

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -51,13 +51,12 @@ IfIsPtrFixed128<T, Ptr<T>> ExpPtr(VM *vm, Ptr<T> const &a)
 
 }  // namespace
 
-void BindExp(Module &module)
+void BindExp(Module &module, bool const /*enable_experimental*/)
 {
-  module.CreateFreeFunction("exp", &Exp<float_t>);
-  module.CreateFreeFunction("exp", &Exp<double_t>);
-  module.CreateFreeFunction("exp", &Exp<fixed_point::fp32_t>);
-  module.CreateFreeFunction("exp", &Exp<fixed_point::fp64_t>);
-  module.CreateFreeFunction("exp", &ExpPtr<Fixed128>);
+  // charge estimates based on benchmarking in math/benchmark
+  module.CreateFreeFunction("exp", &Exp<fixed_point::fp32_t>, ChargeAmount{6});
+  module.CreateFreeFunction("exp", &Exp<fixed_point::fp64_t>, ChargeAmount{8});
+  module.CreateFreeFunction("exp", &ExpPtr<Fixed128>, ChargeAmount{12});
 }
 
 }  // namespace math

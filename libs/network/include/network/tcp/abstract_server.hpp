@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ public:
 
   /// @name Abstract Network Server Interface
   /// @{
-  virtual uint16_t GetListeningPort() const                                         = 0;
-  virtual void     PushRequest(ConnectionHandleType client, MessageType const &msg) = 0;
+  virtual uint16_t GetListeningPort() const                                           = 0;
+  virtual void     PushRequest(ConnectionHandleType client, MessageBuffer const &msg) = 0;
   /// @}
 };
 

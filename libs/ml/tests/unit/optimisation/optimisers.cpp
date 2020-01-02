@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
     std::string &input_name, std::string &label_name, std::string &error_name)
 {
   using SizeType = fetch::math::SizeType;
+  using DataType = typename TypeParam::Type;
 
   auto hidden_size = SizeType(10);
 
@@ -69,6 +70,20 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
   error_name = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "Error", {output_name, label_name});
 
+  // Fill weights with non-random values
+  auto weights_refs = g->GetWeightsReferences();
+  for (auto &weight : weights_refs)
+  {
+    SizeType i  = 0;
+    auto     it = weight.begin();
+    while (it.is_valid())
+    {
+      *it = static_cast<DataType>(i % 2) - fetch::math::Type<DataType>("0.5");
+      i++;
+      ++it;
+    }
+  }
+
   return g;
 }
 
@@ -78,16 +93,16 @@ void PrepareTestDataAndLabels1D(TypeParam &data, TypeParam &gt)
   using DataType = typename TypeParam::Type;
 
   data.Resize({1, 4});
-  data.Set(0, 0, static_cast<DataType>(1));
-  data.Set(0, 1, DataType(2));
-  data.Set(0, 2, DataType(3));
-  data.Set(0, 3, DataType(4));
+  data.Set(0, 0, DataType{1});
+  data.Set(0, 1, DataType{2});
+  data.Set(0, 2, DataType{3});
+  data.Set(0, 3, DataType{4});
 
   gt.Resize({1, 4});
-  gt.Set(0, 0, DataType(2));
-  gt.Set(0, 1, DataType(3));
-  gt.Set(0, 2, DataType(4));
-  gt.Set(0, 3, DataType(5));
+  gt.Set(0, 0, DataType{2});
+  gt.Set(0, 1, DataType{3});
+  gt.Set(0, 2, DataType{4});
+  gt.Set(0, 3, DataType{5});
 }
 
 template <typename TypeParam>
@@ -96,30 +111,30 @@ void PrepareTestDataAndLabels2D(TypeParam &data, TypeParam &gt)
   using DataType = typename TypeParam::Type;
 
   data.Resize({2, 2, 3});
-  data.Set(0, 0, 0, static_cast<DataType>(1));
-  data.Set(0, 1, 0, DataType(2));
-  data.Set(1, 0, 0, DataType(3));
-  data.Set(1, 1, 0, DataType(4));
+  data.Set(0, 0, 0, DataType{1});
+  data.Set(0, 1, 0, DataType{2});
+  data.Set(1, 0, 0, DataType{3});
+  data.Set(1, 1, 0, DataType{4});
 
-  data.Set(0, 0, 1, DataType(5));
-  data.Set(0, 1, 1, DataType(6));
-  data.Set(1, 0, 1, DataType(7));
-  data.Set(1, 1, 1, DataType(8));
+  data.Set(0, 0, 1, DataType{5});
+  data.Set(0, 1, 1, DataType{6});
+  data.Set(1, 0, 1, DataType{7});
+  data.Set(1, 1, 1, DataType{8});
 
-  data.Set(0, 0, 2, DataType(9));
-  data.Set(0, 1, 2, DataType(10));
-  data.Set(1, 0, 2, DataType(11));
-  data.Set(1, 1, 2, DataType(12));
+  data.Set(0, 0, 2, DataType{9});
+  data.Set(0, 1, 2, DataType{10});
+  data.Set(1, 0, 2, DataType{11});
+  data.Set(1, 1, 2, DataType{12});
 
   gt.Resize({2, 3});
-  gt.Set(0, 0, DataType(2));
-  gt.Set(1, 0, DataType(3));
+  gt.Set(0, 0, DataType{2});
+  gt.Set(1, 0, DataType{3});
 
-  gt.Set(0, 1, DataType(6));
-  gt.Set(1, 1, DataType(7));
+  gt.Set(0, 1, DataType{6});
+  gt.Set(1, 1, DataType{7});
 
-  gt.Set(0, 2, DataType(10));
-  gt.Set(1, 2, DataType(11));
+  gt.Set(0, 2, DataType{10});
+  gt.Set(1, 2, DataType{11});
 }
 
 /////////////////
@@ -130,7 +145,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.001f};
+  auto learning_rate = fetch::math::Type<DataType>("0.001");
 
   // Prepare model
   std::string                                  input_name;
@@ -157,16 +172,16 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.00059174111811444163,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.49981406331062317,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.37465476989746094,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.0018975307466462255,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), -0.50037205219268799,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.30353739857673645,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -175,7 +190,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
 {
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.0001f};
+  auto learning_rate = fetch::math::Type<DataType>("0.0001");
 
   // Prepare model
   std::string                                  input_name;
@@ -202,16 +217,16 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.49590006470680237,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.33262497186660767,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.00040797272231429815,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), -0.4949086904525756,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.3599897027015686,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -220,7 +235,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_serialisation)
 {
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.06f};
+  auto learning_rate = fetch::math::Type<DataType>("0.06");
 
   // Prepare model
   std::string                                  input_name;
@@ -252,11 +267,11 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_serialisation)
   b >> *optimiser_2;
 
   // Do 2 optimiser steps
-  loss            = optimiser.Run({data}, gt);
-  DataType loss_2 = optimiser_2->Run({data}, gt);
+  loss                  = optimiser.Run({data}, gt);
+  DataType const loss_2 = optimiser_2->Run({data}, gt);
 
   // Test loss
-  EXPECT_EQ(static_cast<DataType>(loss), static_cast<DataType>(loss_2));
+  EXPECT_EQ(loss, loss_2);
 }
 
 //////////////////////
@@ -267,7 +282,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.16f};
+  auto learning_rate = fetch::math::Type<DataType>("0.01");
 
   // Prepare model
   std::string                                  input_name;
@@ -294,16 +309,16 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.090210896972293675,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.4974354642577819,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.65327156457671065,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.28951357414687784,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), -0.5051419041438282,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.52928183723112876,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -312,7 +327,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
 {
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.001f};
+  auto learning_rate = fetch::math::Type<DataType>("0.001");
 
   // Prepare model
   std::string                                  input_name;
@@ -339,16 +354,16 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.45667722821235657,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.36166410636801072,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.0055758205512807472,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), -0.44319197535514832,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.3998452632639875,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -357,7 +372,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.04f};
+  auto learning_rate = fetch::math::Type<DataType>("0.04");
 
   // Prepare model
   std::string                                  input_name;
@@ -384,16 +399,16 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.065168781871604062,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.48548781871795654,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.43727626598809755,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.063317083714749728,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), -0.51326334476470947,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.36751842419922826,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -402,7 +417,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
 {
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.04f};
+  auto learning_rate = fetch::math::Type<DataType>("0.04");
 
   // Prepare model
   std::string                                  input_name;
@@ -429,16 +444,16 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.43544593453407288,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.3902450374003274,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.051480459546604504,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), -0.43374177813529968,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.40842423372627268,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -447,7 +462,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.01f};
+  auto learning_rate = fetch::math::Type<DataType>("0.01");
 
   // Prepare model
   std::string                                  input_name;
@@ -474,16 +489,16 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.052843646006995849,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.48267561197280884,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.4252042899869915,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.051698915451037164,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), -0.51657223701477051,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.35507014458490305,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -492,7 +507,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
 {
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.01f};
+  auto learning_rate = fetch::math::Type<DataType>("0.01");
 
   // Prepare model
   std::string                                  input_name;
@@ -519,16 +534,16 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.44768175482749939,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.38034263943110036,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.045177050585783071,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), -0.4466575682163238,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.40197003220162975,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -537,7 +552,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.01f};
+  auto learning_rate = fetch::math::Type<DataType>("0.01");
 
   // Prepare model
   std::string                                  input_name;
@@ -564,25 +579,25 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.021624941488699607,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.4793165922164917,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
-                  static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.3943416952903428,
+                  static_cast<double>(data.size()) * 5);
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
-                  static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.021612225474637425,
+                  static_cast<double>(data.size()) * 5);
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), -0.52073943614959717,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
-                  static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.32360038170687122,
+                  static_cast<double>(data.size()) * 5);
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
-                  static_cast<double>(data.size()));
+                  static_cast<double>(data.size()) * 5);
 }
 
 TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
 {
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.01f};
+  auto learning_rate = fetch::math::Type<DataType>("0.01");
 
   // Prepare model
   std::string                                  input_name;
@@ -609,16 +624,16 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.47838068008422852,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.35197555714182616,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.021518885957721133,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), -0.47836646437644958,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.37836752039704996,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
@@ -627,7 +642,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
 {
   using DataType = typename TypeParam::Type;
 
-  auto learning_rate = DataType{0.01f};
+  auto learning_rate = fetch::math::Type<DataType>("0.01");
 
   // Prepare model
   std::string                                  input_name;
@@ -655,16 +670,16 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
 
   // Test weights
   std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.021624941488699607,
+  EXPECT_NEAR(static_cast<double>(weights[0].At(9, 0)), 0.4793165922164917,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), 0.3943416952903428,
+  EXPECT_NEAR(static_cast<double>(weights[1].At(4, 0)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), 0.021612225474637425,
+  EXPECT_NEAR(static_cast<double>(weights[2].At(0, 0)), -0.52073943614959717,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
-  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), 0.32360038170687122,
+  EXPECT_NEAR(static_cast<double>(weights[3].At(0, 2)), -0.5,
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }

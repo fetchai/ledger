@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -71,13 +71,17 @@ public:
   void SetBlockInterval(uint64_t block_interval_ms) override;
   void SetAeonPeriod(uint16_t aeon_period) override;
   void Reset(StakeSnapshot const &snapshot, StorageInterface &storage) override;
+  void Reset(StakeSnapshot const &snapshot) override;
   void SetDefaultStartTime(uint64_t default_start_time) override;
+  void SetWhitelist(Minerwhitelist const &whitelist) override;
 
   StakeManagerPtr stake();
 
   // Operators
   Consensus &operator=(Consensus const &) = delete;
   Consensus &operator=(Consensus &&) = delete;
+
+  uint64_t GetBlockGenerationWeight(Block const &current, Identity const &identity) const;
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
@@ -93,7 +97,7 @@ private:
   BeaconServicePtr      beacon_;
   MainChain const &     chain_;
   Identity              mining_identity_;
-  chain::Address        mining_address_;
+  Minerwhitelist        whitelist_;
 
   // Global variables relating to consensus
   uint64_t aeon_period_      = 0;
@@ -113,12 +117,12 @@ private:
   NotarisationPtr notarisation_;
 
   CabinetPtr GetCabinet(Block const &previous) const;
-  uint64_t   GetBlockGenerationWeight(Block const &previous, chain::Address const &address);
-  bool       ValidBlockTiming(Block const &previous, Block const &proposed) const;
-  bool       ShouldTriggerNewCabinet(Block const &block);
-  bool       EnoughQualSigned(BlockEntropy const &block_entropy) const;
-  uint32_t   GetThreshold(Block const &block) const;
-  void       AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
+
+  bool     ValidBlockTiming(Block const &previous, Block const &proposed) const;
+  bool     ShouldTriggerNewCabinet(Block const &block);
+  bool     EnoughQualSigned(Block const &previous, Block const &current) const;
+  uint32_t GetThreshold(Block const &block) const;
+  void     AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
 };
 
 }  // namespace ledger

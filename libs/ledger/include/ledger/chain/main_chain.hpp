@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -324,6 +324,7 @@ public:
   telemetry::CounterPtr            bloom_filter_query_count_;
   telemetry::CounterPtr            bloom_filter_positive_count_;
   telemetry::CounterPtr            bloom_filter_false_positive_count_;
+  telemetry::CounterPtr            block_loads_from_disk_;
 };
 
 }  // namespace ledger

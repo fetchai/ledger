@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -52,13 +52,11 @@ IfIsPtrFixed128<T, Ptr<T>> PowPtr(VM *vm, Ptr<T> const &a, Ptr<T> const &b)
 
 }  // namespace
 
-void BindPow(Module &module)
+void BindPow(Module &module, bool const /*enable_experimental*/)
 {
-  module.CreateFreeFunction("pow", &Pow<float_t>);
-  module.CreateFreeFunction("pow", &Pow<double_t>);
-  module.CreateFreeFunction("pow", &Pow<fixed_point::fp32_t>);
-  module.CreateFreeFunction("pow", &Pow<fixed_point::fp64_t>);
-  module.CreateFreeFunction("exp", &PowPtr<Fixed128>);
+  module.CreateFreeFunction("pow", &Pow<fixed_point::fp32_t>, ChargeAmount{6});
+  module.CreateFreeFunction("pow", &Pow<fixed_point::fp64_t>, ChargeAmount{8});
+  module.CreateFreeFunction("pow", &PowPtr<Fixed128>, ChargeAmount{12});
 }
 
 }  // namespace math

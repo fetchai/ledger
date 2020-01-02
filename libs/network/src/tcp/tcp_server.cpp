@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ void TCPServer::Start()
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Listening for incoming connections on tcp://0.0.0.0:", port_);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Listening for incoming connections on tcp://0.0.0.0:", port_);
 }
 
 void TCPServer::Stop()
@@ -139,7 +139,7 @@ uint16_t TCPServer::GetListeningPort() const
   return port_;
 }
 
-void TCPServer::PushRequest(ConnectionHandleType client, MessageType const &msg)
+void TCPServer::PushRequest(ConnectionHandleType client, MessageBuffer const &msg)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Got request from ", client);
 
@@ -147,12 +147,12 @@ void TCPServer::PushRequest(ConnectionHandleType client, MessageType const &msg)
   requests_.push_back({client, msg});
 }
 
-void TCPServer::Broadcast(MessageType const &msg)
+void TCPServer::Broadcast(MessageBuffer const &msg)
 {
   manager_->Broadcast(msg);
 }
 
-bool TCPServer::Send(ConnectionHandleType const &client, MessageType const &msg)
+bool TCPServer::Send(ConnectionHandleType const &client, MessageBuffer const &msg)
 {
   return manager_->Send(client, msg);
 }

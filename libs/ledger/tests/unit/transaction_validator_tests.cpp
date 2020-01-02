@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -91,6 +91,11 @@ class TransactionValidatorTests : public ::testing::Test
 protected:
   using DeedPtr = std::shared_ptr<Deed>;
 
+  static void SetUpTestCase()
+  {
+    fetch::chain::InitialiseTestConstants();
+  }
+
   void AddFunds(uint64_t amount);
   void SetDeed(Deed const &deed);
 
@@ -109,7 +114,7 @@ void TransactionValidatorTests::AddFunds(uint64_t amount)
 
   // create storage infrastructure
   StateSentinelAdapter    storage_adapter{storage_, "fetch.token", shards};
-  ContractContext         ctx{nullptr, Address{}, &storage_adapter, 0};
+  ContractContext         ctx{nullptr, Address{}, nullptr, &storage_adapter, 0};
   ContractContextAttacher attacher{token_contract_, ctx};
 
   // add the tokens to the account
@@ -124,21 +129,27 @@ void TransactionValidatorTests::SetDeed(Deed const &deed)
 
   // create storage infrastructure
   StateSentinelAdapter    storage_adapter{storage_, "fetch.token", shards};
-  ContractContext         ctx{nullptr, Address{}, &storage_adapter, 0};
+  ContractContext         ctx{nullptr, Address{}, nullptr, &storage_adapter, 0};
   ContractContextAttacher attacher{token_contract_, ctx};
 
   // add the tokens to the account
   token_contract_.SetDeed(signer_address_, std::make_shared<Deed>(deed));
 }
 
+// TODO(HUT): fix these.
 TEST_F(TransactionValidatorTests, CheckWealthWhileValid)
 {
+  uint64_t funds_for_test = 10000;
+  AddFunds(funds_for_test);
+
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("fetch.token", BitVector{})
-                .Action("wealth")
+                .Action("foo-bar-baz")
                 .ValidUntil(100)
                 .Signer(signer_.identity())
+                .ChargeRate(1)
+                .ChargeLimit(funds_for_test)
                 .Seal()
                 .Sign(signer_)
                 .Build();
@@ -463,6 +474,42 @@ TEST_F(TransactionValidatorTests, CheckPermissionDeniedWithDeedNoExecutePermissi
                 .Build();
 
   EXPECT_EQ(ContractExecutionStatus::TX_PERMISSION_DENIED, validator_(*tx, 50));
+}
+
+TEST_F(TransactionValidatorTests, CheckBorderlineChargeLimit)
+{
+  auto tx = TransactionBuilder{}
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(10000000000)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
+  AddFunds(20000000000);
+
+  EXPECT_EQ(ContractExecutionStatus::SUCCESS, validator_(*tx, 50));
+}
+
+TEST_F(TransactionValidatorTests, CheckExcessiveChargeLimit)
+{
+  auto tx = TransactionBuilder{}
+                .From(signer_address_)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(10000000001)
+                .Signer(signer_.identity())
+                .Seal()
+                .Sign(signer_)
+                .Build();
+  AddFunds(20000000000);
+
+  EXPECT_EQ(ContractExecutionStatus::TX_CHARGE_LIMIT_TOO_HIGH, validator_(*tx, 50));
 }
 
 }  // namespace

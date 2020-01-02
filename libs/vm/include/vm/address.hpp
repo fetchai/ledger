@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -173,6 +173,42 @@ public:
     Ptr<Address> lhs = lhso;
     Ptr<Address> rhs = rhso;
     return lhs->address_ >= rhs->address_;
+  }
+
+  ChargeAmount IsEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                      Ptr<Object> const & /*rhso*/) override
+  {
+    return 1;
+  }
+
+  ChargeAmount IsNotEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                         Ptr<Object> const & /*rhso*/) override
+  {
+    return 1;
+  }
+
+  ChargeAmount IsLessThanChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                         Ptr<Object> const & /*rhso*/) override
+  {
+    return 1;
+  }
+
+  ChargeAmount IsLessThanOrEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                Ptr<Object> const & /*rhso*/) override
+  {
+    return 1;
+  }
+
+  ChargeAmount IsGreaterThanChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                            Ptr<Object> const & /*rhso*/) override
+  {
+    return 1;
+  }
+
+  ChargeAmount IsGreaterThanOrEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                   Ptr<Object> const & /*rhso*/) override
+  {
+    return 1;
   }
 
   bool ToJSON(vm::JSONVariant &variant) override

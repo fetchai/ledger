@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -225,15 +225,54 @@ TEST_F(FixedPointTest, multidigit_integral_fixed_point128)
       var val128_2 = toFixed128(123);
       assert(val128_1 == val128_2);
       var val128_3 = 123.456fp128;
-      var val128_4 = toFixed128(123.456);
+      var val128_4 = toFixed128(123.456fp32);
       var val32_1 = 123.456fp32;
       var val64_1 = 123.456fp64;
-      assert(abs(val128_3 - toFixed128(val32_1)) < toFixed128(0.0003));
-      assert(abs(val128_3 - toFixed128(val64_1)) < toFixed128(0.00000012));
+      assert(abs(val128_3 - toFixed128(val32_1)) < toFixed128(0.0003fp32));
+      assert(abs(val128_3 - toFixed128(val64_1)) < toFixed128(0.00000012fp64));
     endfunction
   )";
 
   EXPECT_TRUE(toolkit.Compile(TEXT));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(FixedPointTest, fixed_point128_shallow_copy)
+{
+  static constexpr char const *SOURCE = R"(
+      function main()
+        var a = 9876.54321000fp128;
+        var b = 9876.54321000fp128;
+
+        a = b;
+        assert(a == b, "shallow copy failed!");
+
+        a += 1.0fp128;
+
+        assert(a == b, "shallow copy failed!");
+      endfunction
+    )";
+
+  EXPECT_TRUE(toolkit.Compile(SOURCE));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(FixedPointTest, fixed_point128_deep_copy)
+{
+  static constexpr char const *SOURCE = R"(
+      function main()
+        var a = 9876.54321000fp128;
+        var b = 9876.54321000fp128;
+
+        a = b.copy();
+        assert(a == b, "deep copy failed!");
+
+        a += 1.0fp128;
+
+        assert(a > b, "b is corrupted by increasing a!");
+      endfunction
+    )";
+  EXPECT_TRUE(toolkit.Compile(SOURCE));
   EXPECT_TRUE(toolkit.Run());
 }
 

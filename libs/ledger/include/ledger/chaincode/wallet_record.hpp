@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -53,8 +53,9 @@ struct WalletRecord
   CooldownStake cooldown_stake;
   DeedPtr       deed;
 
-  bool CreateDeed(variant::Variant const &data);
-  void CollectStake(uint64_t block_index);
+  bool             CreateDeed(variant::Variant const &data);
+  variant::Variant ExtractDeed() const;
+  void             CollectStake(uint64_t block_index);
 };
 
 }  // namespace ledger

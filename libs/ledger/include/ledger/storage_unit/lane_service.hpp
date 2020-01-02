@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -84,8 +84,10 @@ public:
   ~LaneService();
 
   // Lane Control
-  void Start();
-  void Stop();
+  void StartInternal();
+  void StartExternal();
+  void StopExternal();
+  void StopInternal();
 
   bool SyncIsReady();
 

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public:
     assert(inputs.at(0)->size() == inputs.at(1)->size());
 
     // sanity check the softmax adds up to 1
-    assert(Sum(fetch::math::Softmax((*inputs.at(0)))) - (DataType(inputs.at(0)->shape().at(0))) <
+    assert(Sum(fetch::math::Softmax((*inputs.at(0)))) - (DataType(inputs.at(0)->shape().at(1))) <
            0.0001);
 
     // softmax forward & then CrossEntropy

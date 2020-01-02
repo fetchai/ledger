@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,6 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "lcg.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/type_traits.hpp"
 
 #include <cstdint>
 #include <limits>
@@ -31,6 +35,9 @@ class LaggedFibonacciGenerator
 {
 public:
   using RandomType = uint64_t;
+  using fp128_t    = fetch::fixed_point::fp128_t;
+  using fp64_t     = fetch::fixed_point::fp64_t;
+  using fp32_t     = fetch::fixed_point::fp32_t;
 
   // Note, breaking naming convention for STL compatibility
   using result_type = RandomType;
@@ -75,9 +82,41 @@ public:
     return buffer_[++index_];
   }
 
+  /**
+   * @tparam DataType
+   * @return integer uniformly distributed random value 0 or 1
+   */
+  template <typename DataType>
+  meta::IfIsInteger<DataType, DataType> AsType() noexcept
+  {
+    return static_cast<DataType>(this->operator()() % 2);
+  }
+
+  /**
+   * @tparam DataType
+   * @return float or double uniformly distributed random value between 0.0 and 1.0
+   */
+  template <typename DataType>
+  meta::IfIsFloat<DataType, DataType> AsType() noexcept
+  {
+    return static_cast<DataType>(static_cast<double>(this->operator()()) * inv_double_max_);
+  }
+
+  /**
+   * @tparam DataType
+   * @return FixedPoint uniformly distributed random value between 0.0 and 1.0
+   */
+  template <typename DataType>
+  fetch::math::meta::IfIsFixedPoint<DataType, DataType> AsType() noexcept
+  {
+    auto fp_val = fp64_t::FromBase(this->operator()() % fp64_t::MAX);
+    fp_val /= fp64_t::FP_MAX;
+    return static_cast<DataType>(fp64_t::Abs(fp_val));
+  }
+
   double AsDouble() noexcept
   {
-    return double(this->operator()()) * inv_double_max_;
+    return AsType<double>();
   }
 
   static constexpr RandomType min() noexcept
@@ -143,5 +182,6 @@ private:
   static constexpr double inv_double_max_ =
       1. / static_cast<double>(std::numeric_limits<RandomType>::max());
 };
+
 }  // namespace random
 }  // namespace fetch

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -80,6 +80,17 @@ struct String : public Object
   bool        IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   bool        IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   void        Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
+
+  ChargeAmount IsEqualChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount IsNotEqualChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount IsLessThanChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount IsLessThanOrEqualChargeEstimator(Ptr<Object> const &lhso,
+                                                Ptr<Object> const &rhso) override;
+  ChargeAmount IsGreaterThanChargeEstimator(Ptr<Object> const &lhso,
+                                            Ptr<Object> const &rhso) override;
+  ChargeAmount IsGreaterThanOrEqualChargeEstimator(Ptr<Object> const &lhso,
+                                                   Ptr<Object> const &rhso) override;
+  ChargeAmount AddChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
 
   bool SerializeTo(MsgPackSerializer &buffer) override;
   bool DeserializeFrom(MsgPackSerializer &buffer) override;

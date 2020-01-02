@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,10 +23,17 @@
 #include <cstddef>
 #include <cstdint>
 
+namespace {
+
+using namespace fetch;
+using namespace fetch::memory;
 using namespace fetch::vectorise;
 using namespace fetch::byte_array;
 
 using testing::HasSubstr;
+
+using UInt72 = UInt<72>;
+constexpr UInt72::WideType UInt72_WideType_Max{~UInt72::WideType{0}};
 
 TEST(big_number_gtest, elementary_left_shift)
 {
@@ -136,46 +143,6 @@ TEST(big_number_gtest, subtraction_tests)
   EXPECT_EQ(n3.ElementAt(3), 0);
 }
 
-TEST(big_number_gtest, log_tests)
-{
-  for (const auto argument :
-       {uint64_t(1), uint64_t(64), uint64_t(65536), uint64_t(std::numeric_limits<uint64_t>::max())})
-  {
-    UInt<256> n256(argument);
-
-    const auto result   = Log(n256);
-    const auto expected = std::log(argument);
-
-    EXPECT_NEAR(result, expected, std::numeric_limits<double>::epsilon());
-  }
-}
-
-TEST(big_number_gtest, to_double_tests)
-{
-  EXPECT_NEAR(ToDouble(UInt<256>(uint64_t(0))), 0., std::numeric_limits<double>::epsilon());
-
-  static constexpr double MAX_UINT256_VALUE = 1.15792089237316e+77;
-  for (auto seed : {1., 10., 100., 1000., 10000.})
-  {
-    UInt<256> number(static_cast<uint64_t>(seed));
-
-    for (size_t i = 0; i < number.ELEMENTS; ++i)
-    {
-      const double result   = ToDouble(number);
-      const double expected = seed * pow(2, i * number.ELEMENT_SIZE);
-      if (expected < MAX_UINT256_VALUE)
-      {
-        EXPECT_NEAR(result, expected, std::numeric_limits<double>::epsilon());
-      }
-      else
-      {
-        EXPECT_NE(result, expected);
-      }
-      number <<= number.ELEMENT_SIZE;
-    }
-  }
-}
-
 template <typename LongUInt>
 void TestTrimmedWideSize()
 {
@@ -222,6 +189,18 @@ TEST(big_number_gtest, multiplication_tests)
   EXPECT_EQ(n4.ElementAt(1), 0xfffffffeffffffff);
   EXPECT_EQ(n4.ElementAt(2), 0x00000000fffffffe);
   EXPECT_EQ(n4.ElementAt(3), 0);
+}
+
+TEST(big_number_gtest, uint256_multiplication_overflow_test)
+{
+  UInt<256> n{UInt<256>::max};
+  n.ElementAt(UInt<256>::WIDE_ELEMENTS - 1) = ~UInt<256>::WideType{0};
+  n *= 2ull;
+  EXPECT_EQ(n, UInt<256>::max - 1ull);
+  EXPECT_EQ(n.ElementAt(0), (~UInt<256>::WideType{0}) * 2);
+  EXPECT_EQ(n.ElementAt(1), ~UInt<256>::WideType{0});
+  EXPECT_EQ(n.ElementAt(2), ~UInt<256>::WideType{0});
+  EXPECT_EQ(n.ElementAt(3), ~UInt<256>::WideType{0});
 }
 
 TEST(big_number_gtest, division_tests)
@@ -272,13 +251,13 @@ TEST(big_number_gtest, msb_lsb_tests)
   n1.ElementAt(2) = 0xfffffffe00000001;
   n1.ElementAt(3) = 0x00000000fffffffe;
 
-  EXPECT_EQ(n1.msb(), 32);
+  EXPECT_EQ(n1.msb(), 223);
   EXPECT_EQ(n1.lsb(), 32);
   n1 <<= 17;
-  EXPECT_EQ(n1.msb(), 15);
-  EXPECT_EQ(n1.lsb(), 49);
+  EXPECT_EQ(n1.msb(), 223 + 17);
+  EXPECT_EQ(n1.lsb(), 32 + 17);
   n1 >>= 114;
-  EXPECT_EQ(n1.msb(), 129);
+  EXPECT_EQ(n1.msb(), 223 + 17 - 114);
   EXPECT_EQ(n1.lsb(), 31);
 }
 
@@ -381,12 +360,12 @@ TEST(big_number_gtest, test_construction_from_byte_array_fails_if_too_long)
   constexpr std::size_t bits{256};
 
   // Verify that construction pass is size is <= bits/8
-  UInt<bits> shall_pass{ConstByteArray(bits / 8)};
+  UInt<bits> shall_pass{ConstByteArray(bits / 8), platform::Endian::LITTLE};
 
   bool exception_thrown = false;
   try
   {
-    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1)};
+    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1), platform::Endian::LITTLE};
   }
   catch (std::exception const &ex)
   {
@@ -399,75 +378,161 @@ TEST(big_number_gtest, test_construction_from_byte_array_fails_if_too_long)
 
 TEST(big_number_gtest, test_bit_inverse)
 {
-  using UIntT = UInt<72>;
+  UInt72 const inv{~UInt72::_0};
+  EXPECT_EQ(UInt72::max, inv);
 
-  UIntT const inv{~UIntT::_0};
-  EXPECT_EQ(inv.ElementAt(0), 0xffffffffffffffff);
-  EXPECT_EQ(inv.ElementAt(1), 0xff);
-  EXPECT_EQ(UIntT::max, inv);
+  constexpr UInt72::WideType wide_element_0{0xF0F0F0F0F0F0F0F0ull};
+  constexpr UInt72::WideType wide_element_1{0xF0ull};
 
-  // UIntT val{};
-  // val.ElementAt(0) = 0xf0f0f0f0f0f0f0f0;
-  // val.ElementAt(1) = 0xf0;
-  UIntT val{UIntT::WideType{0xf0f0f0f0f0f0f0f0ull}, UIntT::WideType{0xf0ull}};
+  UInt72 const val{wide_element_0, wide_element_1};
+  UInt72 const expected_inv_val{~wide_element_0, UInt72::WideType{0x0Full}};
 
-  auto const inv2{~val};
-
-  ASSERT_EQ(inv2.ElementAt(0), 0x0f0f0f0f0f0f0f0f);
-  ASSERT_EQ(inv2.ElementAt(1), 0x0f);
+  EXPECT_EQ(expected_inv_val, ~val);
 }
 
 TEST(big_number_gtest, test_default_constructor)
 {
-  using UIntT = UInt<72>;
-
-  UIntT const def;
+  UInt72 const def;
   ASSERT_EQ(def.ElementAt(0), 0u);
   ASSERT_EQ(def.ElementAt(1), 0u);
 }
 
 TEST(big_number_gtest, test_zero)
 {
-  using UIntT = UInt<72>;
-
-  EXPECT_EQ(UIntT::_0.ElementAt(0), 0u);
-  EXPECT_EQ(UIntT::_0.ElementAt(1), 0u);
+  EXPECT_EQ(UInt72::_0.ElementAt(0), 0u);
+  EXPECT_EQ(UInt72::_0.ElementAt(1), 0u);
 }
 
-// TODO(issue 1383): Enable test when issue is resolved
-TEST(DISABLED_big_number_gtest, DISABLED_test_issue_1383_demo_with_bitshift_oper)
+TEST(big_number_gtest, test_issue_1383_overflow_zero_with_residual_bits)
 {
-  using UIntT = UInt<72>;
+  UInt72 x{UInt72::_0};
+  x.ElementAt(1) = ~UInt72::WideType{0xFFull};
 
-  UIntT n1{1u};
+  ASSERT_EQ(UInt72::_0, x);
+  EXPECT_EQ(UInt72::_0, x + x);
+}
 
-  // Scenario where bit-shift does *NOT* go over UIntT::UINT_SIZE boundary
+TEST(big_number_gtest, test_issue_1383_overflow_zero_one_with_residual_bits)
+{
+  UInt72 x0{UInt72::_0};
+  x0.ElementAt(1) = ~UInt72::WideType{0xFFull};
+  UInt72 x1{UInt72::_1};
+  x1.ElementAt(1) = ~UInt72::WideType{0xFFull};
+
+  ASSERT_EQ(UInt72::_0, x0);
+  ASSERT_EQ(UInt72::_1, x1);
+
+  EXPECT_EQ(UInt72::_1, x0 + x1);
+  EXPECT_EQ(UInt72::_0, x0 / x1);
+  EXPECT_EQ(UInt72::_1, UInt72::_1 / x1);
+  EXPECT_EQ(UInt72::_1, x1 / UInt72::_1);
+}
+
+TEST(big_number_gtest, test_issue_1383_overflow_division_2)
+{
+  UInt72 x2{2ull};
+  x2.ElementAt(1) = ~UInt72::WideType{0xFFull};
+  UInt72 x4{4ull};
+  x4.ElementAt(1) = ~UInt72::WideType{0xFFull};
+
+  ASSERT_EQ(UInt72{2ull}, x2);
+  ASSERT_EQ(UInt72{4ull}, x4);
+
+  EXPECT_EQ(UInt72{2ull}, x4 / x2);
+  EXPECT_EQ(UInt72{6ull}, x4 + x2);
+  EXPECT_EQ(UInt72{2ull}, x4 - x2);
+  // EXPECT_EQ(UInt72{0ull}, x4 % x2);
+}
+
+TEST(big_number_gtest, test_issue_1383_max)
+{
+  UInt72 max_WITH_residual_bits;
+  max_WITH_residual_bits.ElementAt(0) = UInt72_WideType_Max;
+  max_WITH_residual_bits.ElementAt(1) = UInt72_WideType_Max;
+
+  // Verify that elements have been set as expected:
+  ASSERT_EQ(~UInt72::WideType{0}, max_WITH_residual_bits.ElementAt(0));
+  ASSERT_EQ(~UInt72::WideType{0}, max_WITH_residual_bits.ElementAt(1));
+
+  // Verify that max value compares equal to the one with residual bits SET
+  EXPECT_EQ(max_WITH_residual_bits, UInt72{UInt72::max});
+
+  // Verify that max value compares equal to the one with residual bits *UN*set
+  UInt72 reference_NO_residual_bits;
+  reference_NO_residual_bits.ElementAt(0) = UInt72_WideType_Max;
+  reference_NO_residual_bits.ElementAt(1) = UInt72::WideType{0xFFull};
+  EXPECT_EQ(reference_NO_residual_bits, UInt72{UInt72::max});
+}
+
+TEST(big_number_gtest, test_issue_1383_test_max_shifted_right)
+{
+  UInt72 max_WITH_residual_bits;
+  max_WITH_residual_bits.ElementAt(0) = UInt72_WideType_Max;
+  max_WITH_residual_bits.ElementAt(1) = UInt72_WideType_Max;
+
+  UInt72 expected_max_shifted;
+  expected_max_shifted.ElementAt(0) = UInt72_WideType_Max;
+  expected_max_shifted.ElementAt(1) = UInt72::WideType{0x7Full};
+
+  EXPECT_EQ(expected_max_shifted, max_WITH_residual_bits >>= 1ull);
+}
+
+TEST(big_number_gtest, test_issue_1383_with_bitshift_oper)
+{
+  UInt72 n1{1u};
+
+  // Scenario where bit-shift does *NOT* go over UInt72::UINT_SIZE boundary
   ASSERT_EQ(n1, 1u);
-  n1 <<= UIntT::UINT_SIZE - 1;
-  n1 >>= UIntT::UINT_SIZE - 1;
+  n1 <<= UInt72::UINT_SIZE - 1;
+  n1 >>= UInt72::UINT_SIZE - 1;
   ASSERT_EQ(n1, 1u);
 
-  // Scenario where bit-shift *GOES* over UIntT::UINT_SIZE boundary
-  n1 <<= UIntT::UINT_SIZE;
-  n1 >>= UIntT::UINT_SIZE;
-
+  // Scenario where bit-shift *GOES* over UInt72::UINT_SIZE boundary
+  n1 <<= UInt72::UINT_SIZE;
+  n1 >>= UInt72::UINT_SIZE;
   EXPECT_EQ(n1, 0u);
 }
 
-// TODO(issue 1383): Enable test when issue is resolved
-TEST(DISABLED_big_number_gtest, DISABLED_test_issue_1383_demo_overflow_with_plus_minus_oper)
+TEST(big_number_gtest, test_issue_1383_overflow_with_bitshift_oper_2)
 {
-  using UIntT = UInt<72>;
-  UIntT n1{UIntT::max};
-  ASSERT_EQ(UIntT::max.ElementAt(0), ~UIntT::WideType{0});
-  ASSERT_EQ(UIntT::max.ElementAt(1), 0xff);
+  UInt72 x;
+  x.ElementAt(0) = UInt72_WideType_Max;
+  x.ElementAt(1) = UInt72_WideType_Max;
 
-  ASSERT_EQ(n1.ElementAt(0), ~UIntT::WideType{0});
-  ASSERT_EQ(n1.ElementAt(1),
-            ~UIntT::WideType{0} >>
-                (UIntT::WIDE_ELEMENT_SIZE - (UIntT::UINT_SIZE % UIntT::WIDE_ELEMENT_SIZE)));
-
-  n1 += 1u;
-  n1 -= 1u;
-  EXPECT_EQ(n1, 0u);
+  x >>= UInt72::UINT_SIZE - 1;
+  EXPECT_EQ(x, 1u);
 }
+
+TEST(big_number_gtest, test_issue_1383_overflow_with_plus_oper)
+{
+  UInt72 x{UInt72::max};
+
+  x += 1u;
+  ASSERT_EQ(x, 0u);
+
+  x >>= 1u;
+  EXPECT_EQ(x, 0u);
+}
+
+TEST(big_number_gtest, test_issue_1383_division_oper)
+{
+  UInt72 x;
+  x.ElementAt(0) = UInt72_WideType_Max;
+  x.ElementAt(1) = UInt72_WideType_Max;
+
+  x /= 2ull;
+  EXPECT_EQ(UInt72{UInt72::max} >>= 1, x);
+  EXPECT_EQ(UInt72(UInt72_WideType_Max, UInt72::WideType{0x7Full}), x);
+}
+
+TEST(big_number_gtest, test_issue_1383_overflow_with_plus)
+{
+  UInt72 x;
+  x.ElementAt(0) = UInt72_WideType_Max;
+  x.ElementAt(1) = UInt72_WideType_Max;
+
+  x += 10ull;
+  EXPECT_EQ(UInt72{9ull}, x);
+}
+
+}  // namespace

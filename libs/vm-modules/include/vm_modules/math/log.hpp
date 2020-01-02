@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/object.hpp"
+
 namespace fetch {
 
 namespace vm {
@@ -26,7 +28,7 @@ class Module;
 namespace vm_modules {
 namespace math {
 
-void BindLog(fetch::vm::Module &module);
+void BindLog(fetch::vm::Module &module, bool enable_experimental);
 
 }  // namespace math
 }  // namespace vm_modules

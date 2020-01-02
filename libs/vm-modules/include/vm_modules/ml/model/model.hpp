@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -55,7 +55,10 @@ enum class SupportedLayerType : uint8_t
 {
   DENSE,
   CONV1D,
-  CONV2D
+  CONV2D,
+  FLATTEN,
+  DROPOUT,
+  ACTIVATION
 };
 
 class VMModel : public fetch::vm::Object
@@ -76,6 +79,11 @@ public:
   using ModelEstimator      = fetch::vm_modules::ml::model::ModelEstimator;
   using SequentialModelPtr  = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
 
+  VMModel(VMModel const &other) = delete;
+  VMModel(VMModel &&other)      = delete;
+  VMModel &operator=(VMModel const &other) = default;  // TODO(): Needed for DeserializeFrom
+  VMModel &operator=(VMModel &&other) = delete;
+
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
@@ -90,13 +98,22 @@ public:
   void CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                          fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
+  void CompileSequentialWithMetrics(
+      fetch::vm::Ptr<fetch::vm::String> const &                    loss,
+      fetch::vm::Ptr<fetch::vm::String> const &                    optimiser,
+      fetch::vm::Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics);
+
+  void CompileSequentialImplementation(fetch::vm::Ptr<fetch::vm::String> const &      loss,
+                                       fetch::vm::Ptr<fetch::vm::String> const &      optimiser,
+                                       std::vector<fetch::ml::ops::MetricType> const &metrics);
+
   void CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
                      fetch::vm::Ptr<vm::Array<math::SizeType>> const &layer_shapes);
 
   void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
            ::fetch::math::SizeType const &batch_size);
 
-  DataType Evaluate();
+  vm::Ptr<vm::Array<math::DataType>> Evaluate();
 
   vm::Ptr<VMTensor> Predict(vm::Ptr<VMTensor> const &data);
 
@@ -134,6 +151,13 @@ public:
                                            math::SizeType const &                   inputs,
                                            math::SizeType const &                   hidden_nodes,
                                            fetch::vm::Ptr<fetch::vm::String> const &activation);
+  void LayerAddFlatten(fetch::vm::Ptr<fetch::vm::String> const &layer);
+
+  void LayerAddDropout(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                       math::DataType const &                   probability);
+
+  void LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                          fetch::vm::Ptr<fetch::vm::String> const &activation_name);
 
 private:
   ModelPtrType       model_;
@@ -148,6 +172,7 @@ private:
   static const std::map<std::string, SupportedLayerType>                 layer_types_;
   static const std::map<std::string, fetch::ml::details::ActivationType> activations_;
   static const std::map<std::string, fetch::ml::ops::LossType>           losses_;
+  static const std::map<std::string, fetch::ml::ops::MetricType>         metrics_;
   static const std::map<std::string, fetch::ml::OptimiserType>           optimisers_;
   static const std::map<std::string, uint8_t>                            model_categories_;
 

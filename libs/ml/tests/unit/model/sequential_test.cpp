@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/model/sequential.hpp"
+
 #include "gtest/gtest.h"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/model/sequential.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
@@ -70,7 +71,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
 
 template <typename TypeParam>
 bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type tolerance,
-             typename TypeParam::Type lr             = static_cast<typename TypeParam::Type>(0.5),
+             typename TypeParam::Type lr = fetch::math::Type<typename TypeParam::Type>("0.5"),
              fetch::math::SizeType    training_steps = 100)
 {
   using DataType  = typename TypeParam::Type;
@@ -80,7 +81,7 @@ bool RunTest(fetch::ml::OptimiserType optimiser_type, typename TypeParam::Type t
   model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
   model_config.learning_rate_param.starting_learning_rate = lr;
-  model_config.learning_rate_param.exponential_decay_rate = DataType{0.99f};
+  model_config.learning_rate_param.exponential_decay_rate = fetch::math::Type<DataType>("0.99");
 
   // set up data
   TypeParam train_data, train_labels;
@@ -112,35 +113,40 @@ TYPED_TEST(SequentialModelTest, adagrad_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAGRAD,
-                                                     DataType{1e-4f}, DataType{0.03f}, 400));
+                                                     fetch::math::Type<DataType>("0.0001"),
+                                                     fetch::math::Type<DataType>("0.05"), 400));
 }
 
 TYPED_TEST(SequentialModelTest, adam_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::ADAM,
-                                                     DataType{1e-3f}, DataType{0.01f}, 400));
+                                                     fetch::math::Type<DataType>("0.001"),
+                                                     fetch::math::Type<DataType>("0.01"), 400));
 }
 
 TYPED_TEST(SequentialModelTest, momentum_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::MOMENTUM,
-                                                     DataType{1e-4f}, DataType{0.5f}, 200));
+                                                     fetch::math::Type<DataType>("0.0001"),
+                                                     fetch::math::Type<DataType>("0.5"), 200));
 }
 
 TYPED_TEST(SequentialModelTest, rmsprop_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::RMSPROP,
-                                                     DataType{1e-2f}, DataType{0.006f}, 200));
+                                                     fetch::math::Type<DataType>("0.01"),
+                                                     fetch::math::Type<DataType>("0.006"), 200));
 }
 
 TYPED_TEST(SequentialModelTest, sgd_sequential)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::SGD, DataType{1e-4f},
-                                                     DataType{0.7f}, 400));
+  ASSERT_TRUE(sequential_details::RunTest<TypeParam>(fetch::ml::OptimiserType::SGD,
+                                                     fetch::math::Type<DataType>("0.0001"),
+                                                     fetch::math::Type<DataType>("0.7"), 400));
 }
 
 TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
@@ -149,7 +155,7 @@ TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
   using DataType                          = typename TypeParam::Type;
   fetch::ml::OptimiserType optimiser_type = fetch::ml::OptimiserType::SGD;
   auto                     tolerance      = DataType{0};
-  auto                     lr             = DataType{0.5f};
+  auto                     lr             = fetch::math::Type<DataType>("0.5");
 
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::Sequential<TypeParam>;
@@ -160,7 +166,7 @@ TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
   model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
   model_config.learning_rate_param.starting_learning_rate = lr;
-  model_config.learning_rate_param.exponential_decay_rate = DataType{0.99f};
+  model_config.learning_rate_param.exponential_decay_rate = fetch::math::Type<DataType>("0.99");
 
   // set up data
   TypeParam train_data, train_labels;
@@ -203,6 +209,33 @@ TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
   EXPECT_TRUE(pred1.AllClose(pred2, tolerance, tolerance));
 }
 
+TYPED_TEST(SequentialModelTest, sequential_predict_without_dataloader)
+{
+  using ModelType = fetch::ml::model::Sequential<TypeParam>;
+  using DataType  = typename TypeParam::Type;
+
+  fetch::ml::model::ModelConfig<DataType> model_config;
+  model_config.learning_rate_param.mode =
+      fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
+  model_config.learning_rate_param.starting_learning_rate = fetch::math::Type<DataType>("0.03");
+  model_config.learning_rate_param.exponential_decay_rate = fetch::math::Type<DataType>("0.99");
+
+  // set up data
+  TypeParam train_data, train_labels;
+  sequential_details::PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels);
+
+  // run model in training modeConfig
+  auto model = ModelType(model_config);
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
+      3, 7, fetch::ml::details::ActivationType::RELU);
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
+      7, 5, fetch::ml::details::ActivationType::RELU);
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(5, 1);
+
+  model.Compile(fetch::ml::OptimiserType::ADAM, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
+  // Predicting without setting a dataloader is fine
+  EXPECT_NO_FATAL_FAILURE(model.Predict(train_data, train_labels));
+}
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch

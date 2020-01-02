@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public:
     std::vector<SizeType> weight_shape(data_shape_.size() + 1, 1);
     weight_shape[axis_] = data_shape_[axis_];
     TensorType gamma_data(weight_shape), beta_data(weight_shape);
-    gamma_data.Fill(static_cast<DataType>(1));
+    gamma_data.Fill(DataType{1});
     this->SetInput(gamma, gamma_data);
     this->SetInput(beta, beta_data);
 

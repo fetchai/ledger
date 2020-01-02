@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -43,36 +43,39 @@ struct String;
 struct Fixed128;
 
 template <typename T>
-using IsPrimitive =
-    type_util::IsAnyOf<T, void, bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t,
-                       int64_t, uint64_t, float, double, fixed_point::fp32_t, fixed_point::fp64_t>;
+static constexpr bool IsPrimitive =
+    type_util::IsAnyOfV<T, void, bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t,
+                        int64_t, uint64_t, fixed_point::fp32_t, fixed_point::fp64_t>;
 
 template <typename T, typename R = void>
-using IfIsPrimitive = std::enable_if_t<IsPrimitive<std::decay_t<T>>::value, R>;
+using IfIsPrimitive = std::enable_if_t<IsPrimitive<std::decay_t<T>>, R>;
 
 template <typename T>
-using IsObject = std::is_base_of<Object, T>;
+static constexpr bool IsObject = std::is_base_of<Object, T>::value;
 
 template <typename T>
-struct IsPtr : std::false_type
+struct IsPtrImpl : std::false_type
 {
 };
 template <typename T>
-struct IsPtr<Ptr<T>> : std::true_type
+struct IsPtrImpl<Ptr<T>> : std::true_type
 {
 };
 
+template <typename T>
+static constexpr bool IsPtr = IsPtrImpl<T>::value;
+
 template <typename T, typename R = void>
-using IfIsPtr = std::enable_if_t<IsPtr<std::decay_t<T>>::value, R>;
+using IfIsPtr = std::enable_if_t<IsPtr<std::decay_t<T>>, R>;
 
 template <typename T>
-using IsVariant = std::is_base_of<Variant, T>;
+static constexpr bool IsVariant = std::is_base_of<Variant, T>::value;
 
 template <typename T>
-using IsAddress = std::is_base_of<Address, T>;
+static constexpr bool IsAddress = std::is_base_of<Address, T>::value;
 
 template <typename T>
-using IsString = std::is_base_of<String, std::decay_t<T>>;
+static constexpr bool IsString = std::is_base_of<String, std::decay_t<T>>::value;
 
 template <typename T>
 using IsFixed128 = std::is_base_of<Fixed128, std::decay_t<T>>;
@@ -80,12 +83,17 @@ using IsFixed128 = std::is_base_of<Fixed128, std::decay_t<T>>;
 template <typename T, typename R = void>
 using IfIsPtrFixed128 = std::enable_if_t<IsFixed128<T>::value, R>;
 
+// clang-format off
 template <typename T, typename R = void>
 using IfIsExternal = std::enable_if_t<
-    (!IsPtr<std::decay_t<T>>::value) && (!IsObject<std::decay_t<T>>::value) &&
-        (!IsVariant<std::decay_t<T>>::value) && (!IsPrimitive<std::decay_t<T>>::value) &&
-        (!IsString<std::decay_t<T>>::value) && (!IsAddress<std::decay_t<T>>::value),
+    !IsPtr<std::decay_t<T>> &&
+    !IsObject<std::decay_t<T>> &&
+    !IsVariant<std::decay_t<T>> &&
+    !IsPrimitive<std::decay_t<T>> &&
+    !IsString<std::decay_t<T>> &&
+    !IsAddress<std::decay_t<T>>,
     R>;
+// clang-format on
 
 template <typename T>
 using IsNonconstRef = std::is_same<T, std::decay_t<T> &>;
@@ -107,25 +115,24 @@ using GetManagedType = typename internal::GetManagedTypeImpl<T>::type;
 
 template <typename T>
 using IsPrimitiveParameter =
-    std::integral_constant<bool, !IsNonconstRef<T>::value && IsPrimitive<std::decay_t<T>>::value>;
+    std::integral_constant<bool, !IsNonconstRef<T>::value && IsPrimitive<std::decay_t<T>>>;
 
 template <typename T>
-using IsPtrParameter =
-    std::integral_constant<bool, IsConstRef<T>::value && IsPtr<std::decay_t<T>>::value>;
+using IsPtrParameter = std::integral_constant<bool, IsConstRef<T>::value && IsPtr<std::decay_t<T>>>;
 
 template <typename T>
 using IsVariantParameter =
-    std::integral_constant<bool, IsConstRef<T>::value && IsVariant<std::decay_t<T>>::value>;
+    std::integral_constant<bool, IsConstRef<T>::value && IsVariant<std::decay_t<T>>>;
 
 template <typename T, typename = void>
 struct GetStorageType;
 template <typename T>
-struct GetStorageType<T, std::enable_if_t<IsPrimitive<T>::value>>
+struct GetStorageType<T, std::enable_if_t<IsPrimitive<T>>>
 {
   using type = T;
 };
 template <typename T>
-struct GetStorageType<T, std::enable_if_t<IsPtr<T>::value>>
+struct GetStorageType<T, std::enable_if_t<IsPtr<T>>>
 {
   using type = Ptr<Object>;
 };
@@ -171,6 +178,43 @@ public:
   virtual void        InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
   virtual void        InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv);
 
+  virtual ChargeAmount IsEqualChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual ChargeAmount IsNotEqualChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual ChargeAmount IsLessThanChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual ChargeAmount IsLessThanOrEqualChargeEstimator(Ptr<Object> const &lhso,
+                                                        Ptr<Object> const &rhso);
+  virtual ChargeAmount IsGreaterThanChargeEstimator(Ptr<Object> const &lhso,
+                                                    Ptr<Object> const &rhso);
+  virtual ChargeAmount IsGreaterThanOrEqualChargeEstimator(Ptr<Object> const &lhso,
+                                                           Ptr<Object> const &rhso);
+  virtual ChargeAmount NegateChargeEstimator(Ptr<Object> const &object);
+  virtual ChargeAmount AddChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual ChargeAmount LeftAddChargeEstimator(Variant const &lhsv, Variant const &objectv);
+  virtual ChargeAmount RightAddChargeEstimator(Variant const &objectv, Variant const &rhsv);
+  virtual ChargeAmount InplaceAddChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual ChargeAmount InplaceRightAddChargeEstimator(Ptr<Object> const &lhso, Variant const &rhsv);
+  virtual ChargeAmount SubtractChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual ChargeAmount LeftSubtractChargeEstimator(Variant const &lhsv, Variant const &objectv);
+  virtual ChargeAmount RightSubtractChargeEstimator(Variant const &objectv, Variant const &rhsv);
+  virtual ChargeAmount InplaceSubtractChargeEstimator(Ptr<Object> const &lhso,
+                                                      Ptr<Object> const &rhso);
+  virtual ChargeAmount InplaceRightSubtractChargeEstimator(Ptr<Object> const &lhso,
+                                                           Variant const &    rhsv);
+  virtual ChargeAmount MultiplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual ChargeAmount LeftMultiplyChargeEstimator(Variant const &lhsv, Variant const &objectv);
+  virtual ChargeAmount RightMultiplyChargeEstimator(Variant const &objectv, Variant const &rhsv);
+  virtual ChargeAmount InplaceMultiplyChargeEstimator(Ptr<Object> const &lhso,
+                                                      Ptr<Object> const &rhso);
+  virtual ChargeAmount InplaceRightMultiplyChargeEstimator(Ptr<Object> const &lhso,
+                                                           Variant const &    rhsv);
+  virtual ChargeAmount DivideChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual ChargeAmount LeftDivideChargeEstimator(Variant const &lhsv, Variant const &objectv);
+  virtual ChargeAmount RightDivideChargeEstimator(Variant const &objectv, Variant const &rhsv);
+  virtual ChargeAmount InplaceDivideChargeEstimator(Ptr<Object> const &lhso,
+                                                    Ptr<Object> const &rhso);
+  virtual ChargeAmount InplaceRightDivideChargeEstimator(Ptr<Object> const &lhso,
+                                                         Variant const &    rhsv);
+
   virtual bool SerializeTo(MsgPackSerializer &buffer);
   virtual bool DeserializeFrom(MsgPackSerializer &buffer);
 
@@ -195,9 +239,6 @@ protected:
     return ref_count_;
   }
 
-  Variant &Push();
-  Variant &Pop();
-  Variant &Top();
   void     RuntimeError(std::string const &message);
   TypeInfo GetTypeInfo(TypeId type_id);
   bool     GetNonNegativeInteger(Variant const &v, std::size_t &index);
@@ -458,12 +499,6 @@ auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
 
   case TypeIds::UInt64:
     return Functor<uint64_t>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Float32:
-    return Functor<float>{}(std::forward<Args>(args)...);
-
-  case TypeIds::Float64:
-    return Functor<double>{}(std::forward<Args>(args)...);
 
   case TypeIds::Fixed32:
     return Functor<fixed_point::fp32_t>{}(std::forward<Args>(args)...);

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ TEST_F(FakeStorageUnitTests, BasicCheck)
   CheckValueIsPresent("key 1", "value 1");
 
   // create the commit
-  auto const state1 = storage_->Commit(0);
+  auto const state1 = storage_->Commit(1);
   ASSERT_EQ(storage_->LastCommitHash(), state1);
 
   storage_->Set(ResourceAddress{"key 2"}, "value 2");
@@ -72,7 +72,7 @@ TEST_F(FakeStorageUnitTests, BasicCheck)
   // Currently need to update/set hash manually
   storage_->UpdateHash();
 
-  auto const state2 = storage_->Commit(1);
+  auto const state2 = storage_->Commit(2);
   ASSERT_EQ(storage_->LastCommitHash(), state2);
 
   storage_->Set(ResourceAddress{"key 3"}, "value 3");
@@ -82,11 +82,11 @@ TEST_F(FakeStorageUnitTests, BasicCheck)
 
   storage_->UpdateHash();
 
-  auto const state3 = storage_->Commit(2);
+  auto const state3 = storage_->Commit(3);
   ASSERT_EQ(storage_->LastCommitHash(), state3);
 
   // revert back to state 1
-  ASSERT_TRUE(storage_->RevertToHash(state1, 0));
+  ASSERT_TRUE(storage_->RevertToHash(state1, 1));
   ASSERT_EQ(storage_->LastCommitHash(), state1);
   ASSERT_TRUE(storage_->HashExists(state1, 0));
   ASSERT_FALSE(storage_->HashExists(state2, 1));
@@ -104,6 +104,6 @@ TEST_F(FakeStorageUnitTests, BasicCheck)
 
   storage_->UpdateHash();
 
-  auto const state4 = storage_->Commit(3);
+  auto const state4 = storage_->Commit(4);
   ASSERT_EQ(storage_->LastCommitHash(), state4);
 }

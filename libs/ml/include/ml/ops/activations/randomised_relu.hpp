@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -156,8 +156,7 @@ public:
 private:
   void UpdateRandomValue()
   {
-    random_value_ =
-        lower_bound_ + static_cast<DataType>(rng_.AsDouble()) * (upper_bound_ - lower_bound_);
+    random_value_ = lower_bound_ + rng_.AsType<DataType>() * (upper_bound_ - lower_bound_);
   }
 
   DataType random_value_;

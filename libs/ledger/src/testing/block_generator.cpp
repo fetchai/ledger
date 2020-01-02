@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -56,9 +56,6 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uin
 
   if (from)
   {
-    ByteArray ident{};
-    ident.Resize(32);
-
     ByteArray merkle_root{};
     merkle_root.Resize(32);
 
@@ -84,7 +81,6 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uin
     block->previous_hash  = from->hash;
     block->merkle_hash    = merkle_root;
     block->block_number   = from->block_number + 1u;
-    block->miner          = chain::Address{ident};
     block->log2_num_lanes = log2_num_lanes_;
     block->slices.resize(num_slices_);
 
@@ -96,9 +92,8 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uin
   else
   {
     block->previous_hash = chain::ZERO_HASH;
-    block->hash          = chain::GENESIS_DIGEST;
-    block->merkle_hash   = chain::GENESIS_MERKLE_ROOT;
-    block->miner         = chain::Address{crypto::Hash<crypto::SHA256>("")};
+    block->hash          = chain::GetGenesisDigest();
+    block->merkle_hash   = chain::GetGenesisMerkleRoot();
     block->UpdateTimestamp();
   }
 

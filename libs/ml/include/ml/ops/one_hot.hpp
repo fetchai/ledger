@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ public:
    * @param on_value TRUE value
    * @param off_value FALSE value
    */
-  explicit OneHot(SizeType depth, SizeType axis = 0, DataType on_value = DataType{1.0},
-                  DataType off_value = DataType{0.0})
+  explicit OneHot(SizeType depth, SizeType axis = 0, DataType on_value = DataType{1},
+                  DataType off_value = DataType{0})
     : depth_(depth)
     , axis_(axis)
     , on_value_(on_value)
@@ -133,8 +133,8 @@ public:
 private:
   SizeType depth_;
   SizeType axis_;
-  DataType on_value_  = DataType{1.0};
-  DataType off_value_ = DataType{0.0};
+  DataType on_value_  = DataType{1};
+  DataType off_value_ = DataType{0};
 };
 
 }  // namespace ops

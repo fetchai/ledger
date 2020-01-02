@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 
 #include "benchmark/benchmark.h"
 
@@ -188,31 +188,6 @@ BENCHMARK_TEMPLATE(BM_TensorConcat, double, 128, 256, 256)->Unit(benchmark::kMil
 BENCHMARK_TEMPLATE(BM_TensorConcat, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_TensorConcat, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_TensorConcat, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
-
-template <class T, int C, int H, int W>
-void BM_TensorSum(benchmark::State &state)
-{
-  for (auto _ : state)
-  {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<uint64_t>{C, H, W});
-    state.ResumeTiming();
-
-    benchmark::DoNotOptimize(t.Sum());
-  }
-}
-
-BENCHMARK_TEMPLATE(BM_TensorSum, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_TensorSum, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_TensorSum, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_TensorSum, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_TensorSum, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_TensorSum, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_TensorSum, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_TensorSum, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_TensorSum, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
 template <class T, int C, int H, int W>
 void BM_TensorSlice(benchmark::State &state)

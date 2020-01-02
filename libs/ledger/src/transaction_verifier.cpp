@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -31,14 +31,15 @@
 #include <chrono>
 #include <string>
 
-static const std::chrono::milliseconds POP_TIMEOUT{300};
-
 namespace fetch {
 namespace ledger {
 
 namespace {
 
 using telemetry::Registry;
+
+constexpr char const *          LOGGING_NAME = "TxVerifier";
+const std::chrono::milliseconds POP_TIMEOUT{300};
 
 std::string CreateMetricName(std::string const &prefix, std::string const &name)
 {

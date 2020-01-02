@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -150,7 +150,7 @@ protected:
 
   /// Message communication - not thread safe.
   /// @{
-  void         Send(RBCMessage const &msg, MuddleAddress const &address);
+  virtual void Send(RBCMessage const &msg, MuddleAddress const &address);
   virtual void InternalBroadcast(RBCMessage const &msg);
   void         Deliver(SerialisedMessage const &msg, uint32_t sender_index);
 

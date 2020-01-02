@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public:
   using BlockIndex     = uint64_t;
   using Counter        = uint64_t;
 
+  constexpr static uint64_t   MAXIMUM_TX_CHARGE_LIMIT    = 10000000000;
   constexpr static BlockIndex MAXIMUM_TX_VALIDITY_PERIOD = 40000;
   constexpr static BlockIndex DEFAULT_TX_VALIDITY_PERIOD = 1000;
 

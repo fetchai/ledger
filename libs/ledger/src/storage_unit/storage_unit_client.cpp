@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
 // return the last committed hash (should correspond to the state hash before you began execution)
 byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 {
-  ConstByteArray last_commit_hash = chain::GENESIS_MERKLE_ROOT;
+  ConstByteArray last_commit_hash = chain::GetGenesisMerkleRoot();
 
   {
     FETCH_LOCK(merkle_mutex_);
@@ -140,7 +140,7 @@ byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 {
   // determine if the unit requests the genesis block
-  bool const genesis_state = hash == chain::GENESIS_MERKLE_ROOT;
+  bool const genesis_state = hash == chain::GetGenesisMerkleRoot();
 
   FETCH_LOCK(merkle_mutex_);
 
@@ -149,43 +149,32 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 
   if (genesis_state && (index == 0))  // this is truly the genesis block
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis.");
-
-    // fill the tree with empty leaf nodes
-    for (std::size_t i = 0; i < num_lanes(); ++i)
-    {
-      tree[i] = chain::GENESIS_MERKLE_ROOT;
-    }
-
-    permanent_state_merkle_stack_.New(MERKLE_FILENAME_DOC,
-                                      MERKLE_FILENAME_INDEX);  // clear the stack
-    permanent_state_merkle_stack_.Push(tree);
+    FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis!");
   }
-  else
+
+  uint64_t const merkle_stack_size = permanent_state_merkle_stack_.size();
+
+  if (index >= merkle_stack_size)
   {
-    uint64_t const merkle_stack_size = permanent_state_merkle_stack_.size();
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Unsuccessful attempt to revert to hash ahead in the stack! Stack size: ",
+                   merkle_stack_size, " revert index: ", index);
+    return false;
+  }
 
-    if (index >= merkle_stack_size)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Unsuccessful attempt to revert to hash ahead in the stack! Stack size: ",
-                     merkle_stack_size, " revert index: ", index);
-      return false;
-    }
+  bool success = permanent_state_merkle_stack_.Get(index, tree);
+  assert(success);
+  FETCH_UNUSED(success);
 
-    bool success = permanent_state_merkle_stack_.Get(index, tree);
-    assert(success);
-    FETCH_UNUSED(success);
+  if (tree.root() != hash)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Index given for merkle hash didn't match merkle stack! root: 0x",
+                    tree.root().ToHex(), " expected: 0x", hash.ToHex(), " Note: index: ", index,
+                    " genesis merk: 0x", chain::GetGenesisMerkleRoot().ToHex());
+    return false;
+  }
 
-    if (tree.root() != hash)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Index given for merkle hash didn't match merkle stack! root: ",
-                      tree.root().ToBase64(), " expected: ", hash.ToBase64());
-      return false;
-    }
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Successfully found merkle at: ", index);
-  }  // End set merkle stack
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Successfully found merkle at: ", index);
 
   // Note: we shouldn't be touching the lanes at this point from other threads
   std::vector<service::Promise> promises;
@@ -212,8 +201,8 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   bool all_success{true};
   for (auto &p : promises)
   {
-    bool success{false};
-    if (!(p->GetResult(success) && success))
+    bool item_success{false};
+    if (!(p->GetResult(item_success) && item_success))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert shard ", lane_index, " to 0x",
                      tree[lane_index].ToHex());
@@ -234,6 +223,11 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 
     // since the state has now been restored we can update the current merkle reference
     current_merkle_ = tree;
+  }
+
+  if (!all_success)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert to hash! Index: ", index);
   }
 
   return all_success;
@@ -305,8 +299,8 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index
       }
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Committing merkle hash at index: ", commit_index,
-                    " to stack: 0x", tree.root().ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Committing merkle hash at index: ", commit_index, " to stack: 0x",
+                   tree.root().ToHex());
 
     permanent_state_merkle_stack_.Push(tree);
     permanent_state_merkle_stack_.Flush(false);
@@ -319,7 +313,7 @@ bool StorageUnitClient::HashExists(Hash const &hash, uint64_t index)
 {
   bool success{false};
 
-  if (hash == chain::GENESIS_MERKLE_ROOT)
+  if (hash == chain::GetGenesisMerkleRoot())
   {
     success = true;
   }

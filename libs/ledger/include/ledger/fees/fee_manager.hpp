@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public:
     TransactionDetails(chain::Transaction &tx, BitVector const &shards);
     TransactionDetails(chain::Address const &from_addr, chain::Address const &contract_addr,
                        BitVector const &shards, Digest const &tx_digest, TokenAmount const &rate,
-                       TokenAmount const &limit, bool is_wealth);
+                       TokenAmount const &limit);
 
     chain::Address const &from;
     chain::Address const &contract_address;
@@ -57,7 +57,6 @@ public:
     Digest const &        digest;
     TokenAmount const     charge_rate{1};
     TokenAmount const     charge_limit{0};
-    bool const            is_create_wealth{false};
   };
 
   // Construction / Destruction

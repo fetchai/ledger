@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -139,6 +139,36 @@ TEST_F(TokenContractDeedTests, is_sane_basic)
 
   thresholds["2"] = 7;
   EXPECT_FALSE((Deed{signees, thresholds}.IsSane()));
+}
+
+TEST_F(TokenContractDeedTests, comparison)
+{
+  Deed::Signees signees;
+  signees[ADDRESSES[0]] = 1;
+  signees[ADDRESSES[1]] = 2;
+  signees[ADDRESSES[2]] = 3;
+
+  Deed::OperationTresholds thresholds;
+  thresholds["0"] = 1;
+  thresholds["1"] = 6;
+
+  Deed d{signees, thresholds};
+  Deed d_copy{signees, thresholds};
+  ASSERT_NE(&d, &d_copy);
+  EXPECT_EQ(d, d_copy);
+
+  Deed::Signees signees_modif;
+  signees_modif[ADDRESSES[0]] = 1;
+  signees_modif[ADDRESSES[1]] = 2;
+  signees_modif[ADDRESSES[2]] = 4;
+
+  Deed::OperationTresholds thresholds_modif;
+  thresholds_modif["0"] = 1;
+  thresholds_modif["1"] = 7;
+
+  EXPECT_NE(d, (Deed{signees_modif, thresholds}));
+  EXPECT_NE(d, (Deed{signees, thresholds_modif}));
+  EXPECT_NE(d, (Deed{signees_modif, thresholds_modif}));
 }
 
 TEST_F(TokenContractDeedTests, is_sane_fails_when_empty_thresholds)

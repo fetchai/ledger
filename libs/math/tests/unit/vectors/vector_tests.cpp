@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -132,19 +132,21 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
       sum[TypeParam::E_BLOCK_COUNT], diff[TypeParam::E_BLOCK_COUNT], prod[TypeParam::E_BLOCK_COUNT],
       div[TypeParam::E_BLOCK_COUNT];
 
-  type real_max{type(0)}, real_min{fetch::math::numeric_max<type>()};
+  type real_max{fetch::math::Type<type>("0")}, real_min{fetch::math::numeric_max<type>()};
   for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     // We don't want to check overflows right now, so we pick std::rand numbers, but well within the
     // type's limits
-    a[i]    = static_cast<type>((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
-                             static_cast<double>(fetch::math::numeric_max<type>()) / 2.0);
-    b[i]    = static_cast<type>((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
-                             static_cast<double>(fetch::math::numeric_max<type>()) / 2.0);
-    sum[i]  = a[i] + b[i];
-    diff[i] = a[i] - b[i];
-    prod[i] = a[i] * b[i];
-    div[i]  = a[i] / b[i];
+    a[i] = fetch::math::Type<type>(
+        std::to_string((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
+                       static_cast<double>(fetch::math::numeric_max<type>()) / 2.0));
+    b[i] = fetch::math::Type<type>(
+        std::to_string((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
+                       static_cast<double>(fetch::math::numeric_max<type>()) / 2.0));
+    sum[i]   = a[i] + b[i];
+    diff[i]  = a[i] - b[i];
+    prod[i]  = a[i] * b[i];
+    div[i]   = a[i] / b[i];
     real_max = fetch::vectorise::Max(a[i], real_max);
     real_max = fetch::vectorise::Max(b[i], real_max);
     real_min = fetch::vectorise::Min(a[i], real_min);
@@ -194,12 +196,13 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
 
   std::size_t            N = 20, offset = 2;
   alignas(32) array_type A(N), B(N), C(N), D(N), E(N);
-  type sum{0}, partial_sum{0}, max_a{type(0)}, min_a{type(N)}, partial_max{0}, partial_min{type(N)};
+  type sum{0}, partial_sum{0}, max_a{fetch::math::Type<type>("0")}, min_a{type(N)}, partial_max{0},
+      partial_min{type(N)};
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    A[i] = fetch::math::Sin(type(-0.1) * type(i));
-    B[i] = fetch::math::Sin(type(0.1) * type(i + 1));
+    A[i] = fetch::math::Sin(fetch::math::Type<type>("-0.1") * type(i));
+    B[i] = fetch::math::Sin(fetch::math::Type<type>("0.1") * type(i + 1));
     sum += A[i] + B[i];
     max_a = fetch::vectorise::Max(A[i], max_a);
     min_a = fetch::vectorise::Min(A[i], min_a);
@@ -246,7 +249,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
     EXPECT_EQ(C[i], A[i] + B[i]);
   }
 
-  type const           beta(4.0f);
+  type const           beta(4);
   fetch::memory::Range small_range(6, 15);
   C.in_parallel().RangedApplyMultiple(
       small_range,
@@ -307,8 +310,8 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
     PInf[i] = type::POSITIVE_INFINITY;
     NInf[i] = type::NEGATIVE_INFINITY;
     NaN[i]  = type::NaN;
-    A[i]    = fetch::math::Sin(type(-0.1) * type(i));
-    B[i]    = fetch::math::Sin(type(0.1) * type(i + 1));
+    A[i]    = fetch::math::Sin(fetch::math::Type<type>("-0.1") * type(i));
+    B[i]    = fetch::math::Sin(fetch::math::Type<type>("0.1") * type(i + 1));
     C[i]    = A[i] + B[i];
   }
   TypeParam vpos_inf{PInf};

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -36,12 +36,12 @@
 #include <memory>
 #include <thread>
 
-using std::this_thread::sleep_for;
-using std::chrono::seconds;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
 using fetch::muddle::NetworkId;
+using std::chrono::seconds;
+using std::this_thread::sleep_for;
 
 class MuddleStressTests : public ::testing::Test
 {
@@ -167,49 +167,6 @@ protected:
     }
   }
 
-  static void ClientServerExchange(MuddleEndpoint &endpoint, char const *target)
-  {
-    static constexpr std::size_t NUM_MESSAGES   = 200;
-    static constexpr std::size_t PAYLOAD_LENGTH = 4096;
-
-    std::atomic<std::size_t> num_messages{0};
-
-    auto subscription = endpoint.Subscribe(SERVICE, CHANNEL);
-    subscription->SetMessageHandler(
-        [&num_messages, &endpoint](Address const &from, uint16_t service, uint16_t channel,
-                                   uint16_t counter, Payload const &payload, Address const &) {
-          EXPECT_EQ(service, uint16_t{SERVICE});
-          EXPECT_EQ(channel, uint16_t{CHANNEL});
-          EXPECT_EQ(payload.size(), PAYLOAD_LENGTH);
-
-          // send the response
-          endpoint.Send(from, service, channel, counter, payload);
-
-          ++num_messages;
-        });
-
-    for (std::size_t loop = 0; loop < NUM_MESSAGES; ++loop)
-    {
-      // generate a big load of data
-      auto const           fill = static_cast<uint8_t>(loop);
-      ConstByteArray const data = GenerateData(PAYLOAD_LENGTH, fill);
-
-      // send the data
-      auto promise = endpoint.Exchange(FromBase64(target), SERVICE, CHANNEL, data);
-
-      ASSERT_TRUE(promise.Wait());
-
-      // check the length of the response
-      auto const response = promise.GetInnerPromise()->value();
-      EXPECT_EQ(response.size(), PAYLOAD_LENGTH);
-    }
-
-    while (num_messages < NUM_MESSAGES)
-    {
-      sleep_for(seconds{1});
-    }
-  }
-
   NetworkManagerPtr managerA_;
   MuddlePtr         networkA_;
 
@@ -221,17 +178,6 @@ TEST_F(MuddleStressTests, DISABLED_ContinuousBiDirectionalTraffic)
 {
   std::thread nodeA([this]() { ClientServer(networkA_->GetEndpoint(), NETWORK_B_PUBLIC_KEY); });
   std::thread nodeB([this]() { ClientServer(networkB_->GetEndpoint(), NETWORK_A_PUBLIC_KEY); });
-
-  nodeB.join();
-  nodeA.join();
-}
-
-TEST_F(MuddleStressTests, DISABLED_ContinuousBiDirectionalExchanges)
-{
-  std::thread nodeA(
-      [this]() { ClientServerExchange(networkA_->GetEndpoint(), NETWORK_B_PUBLIC_KEY); });
-  std::thread nodeB(
-      [this]() { ClientServerExchange(networkB_->GetEndpoint(), NETWORK_A_PUBLIC_KEY); });
 
   nodeB.join();
   nodeA.join();

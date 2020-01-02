@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -48,11 +48,11 @@
 
 namespace {
 
-using fetch::vm_modules::VMFactory;
-using fetch::json::JSONDocument;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
 using fetch::byte_array::ToHex;
+using fetch::json::JSONDocument;
+using fetch::vm_modules::VMFactory;
 
 using namespace fetch::vm;
 

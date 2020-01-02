@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "math/tensor_declaration.hpp"
+#include "math/tensor/tensor_declaration.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/fixed_point/type_traits.hpp"
 #include "vectorise/meta/math_type_traits.hpp"
@@ -53,6 +53,15 @@ using IfIsMathFixedPointArray =
 template <typename DataType, typename ReturnType>
 using IfIsMathNonFixedPointArray =
     IfIsNotFixedPoint<typename DataType::Type, IfIsMathArray<DataType, ReturnType>>;
+
+template <typename DataType, typename ReturnType>
+using IfIsUnsignedInteger =
+    fetch::meta::EnableIf<fetch::meta::IsUnsignedInteger<DataType> && !IsFloat<DataType>,
+                          ReturnType>;
+
+template <typename DataType, typename ReturnType>
+using IfIsSignedInteger =
+    fetch::meta::EnableIf<fetch::meta::IsSignedInteger<DataType> && !IsFloat<DataType>, ReturnType>;
 
 }  // namespace meta
 }  // namespace math

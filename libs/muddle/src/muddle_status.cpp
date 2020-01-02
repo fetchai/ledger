@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,20 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
+#include "kademlia/peer_tracker.hpp"
 #include "muddle.hpp"
 #include "muddle_register.hpp"
 #include "muddle_registry.hpp"
 #include "peer_list.hpp"
-#include "peer_selector.hpp"
 
+#include "core/string/trim.hpp"
 #include "muddle/muddle_status.hpp"
 #include "variant/variant.hpp"
+
+#include <chrono>
+#include <ctime>
 
 namespace fetch {
 namespace muddle {
 namespace {
-
-using byte_array::ConstByteArray;
 
 /**
  * For a given set of peer selector address, build the JSON representation
@@ -37,7 +39,7 @@ using byte_array::ConstByteArray;
  * @param address_set The input address set to convert
  * @param output The output variant structure
  */
-void BuildPeerSet(PeerSelector::Addresses const &address_set, variant::Variant &output)
+void BuildPeerSet(Muddle::Addresses const &address_set, variant::Variant &output)
 {
   output = variant::Variant::Array(address_set.size());
 
@@ -48,58 +50,78 @@ void BuildPeerSet(PeerSelector::Addresses const &address_set, variant::Variant &
   }
 }
 
-/**
- * Build the JSON representation of the PeerSelectors Peer Cache
- *
- * @param peer_selector The input peer selector
- * @param output The output variant object
- */
-void BuildPeerInfo(PeerSelector const &peer_selector, variant::Variant &output)
+void BuildConnectionPriorities(PeerTracker const &peer_tracker, variant::Variant &output)
 {
-  auto const peer_info = peer_selector.GetPeerCache();
-
-  output = variant::Variant::Array(peer_info.size());
-
-  std::size_t peer_idx{0};
-  for (auto const &entry : peer_info)
+  auto                         priorities_map = peer_tracker.connection_priority();
+  std::vector<AddressPriority> priorities;
+  priorities.reserve(priorities_map.size());
+  for (auto &p : priorities_map)
   {
-    auto &output_peer = output[peer_idx] = variant::Variant::Object();
+    priorities.emplace_back(p.second);
+  }
 
-    output_peer["targetAddress"]       = entry.first.ToBase64();
-    output_peer["currentIndex"]        = entry.second.peer_index;
-    output_peer["consecutiveFailures"] = entry.second.consecutive_failures;
+  output = variant::Variant::Array(priorities.size());
 
-    auto &address_list = output_peer["addresses"] =
-        variant::Variant::Array(entry.second.peer_data.size());
+  // Updating priorities
+  for (auto &p : priorities)
+  {
+    p.UpdatePriority();
+  }
 
-    std::size_t address_idx{0};
-    for (auto const &address_entry : entry.second.peer_data)
-    {
-      auto &addr_entry = address_list[address_idx] = variant::Variant::Object();
+  std::sort(priorities.begin(), priorities.end(), [](auto const &a, auto const &b) -> bool {
+    // Making highest priority appear first
+    return a.priority > b.priority;
+  });
 
-      addr_entry["peerAddress"] = address_entry.peer.ToString();
-      addr_entry["unreachable"] = address_entry.unreachable;
+  std::size_t       idx{0};
+  std::stringstream ss;
+  for (auto const &entry : priorities)
+  {
+    auto &output_peer = output[idx] = variant::Variant::Object();
+    output_peer["address"]          = entry.address.ToBase64();
+    output_peer["priority"]         = entry.priority;
+    output_peer["persistent"]       = entry.persistent;
+    output_peer["bucket"]           = entry.bucket;
+    output_peer["connection_value"] = entry.connection_value;
+    output_peer["is_connected"]     = entry.is_connected;
+    /*
+    // TODO(tfr): Figure out how to convert steady clock to system clock
+        std::time_t t1 = std::chrono::system_clock::to_time_t(entry.connected_since);
 
-      ++address_idx;
-    }
+        auto ts1 = static_cast<std::string>(std::ctime(&t1));
+        string::Trim(ts1);
+        output_peer["connected_since"] = ts1;
 
-    ++peer_idx;
+        std::time_t t2  = std::chrono::system_clock::to_time_t(entry.desired_expiry);
+        auto        ts2 = static_cast<std::string>(std::ctime(&t2));
+        string::Trim(ts2);
+
+        output_peer["desired_expiry"] = ts2;
+    */
+    ++idx;
   }
 }
 
 /**
- * Build the JSON representation of a PeerSelectors internal status
- *
+ * Build the JSON representation of a PeerTracker internal status
+ * // TODO
  * @param peer_selector The input peer selector
  * @param output The output variant object
  */
-void BuildPeerSelection(PeerSelector const &peer_selector, variant::Variant &output)
+void BuildPeerTracker(PeerTracker const &peer_tracker, variant::Variant &output)
 {
-  output = variant::Variant::Object();
+  output                        = variant::Variant::Object();
+  output["knownPeerCount"]      = peer_tracker.known_peer_count();
+  output["activeBucketCount"]   = peer_tracker.active_buckets();
+  output["firstNonEmptyBucket"] = peer_tracker.first_non_empty_bucket();
 
-  BuildPeerSet(peer_selector.GetDesiredPeers(), output["desiredPeers"]);
-  BuildPeerSet(peer_selector.GetKademliaPeers(), output["kademliaPeers"]);
-  BuildPeerInfo(peer_selector, output["peerInfo"]);
+  BuildConnectionPriorities(peer_tracker, output["connectionPriority"]);
+  BuildPeerSet(peer_tracker.keep_connections(), output["keepConnections"]);
+  BuildPeerSet(peer_tracker.longrange_connections(), output["longrangeConnections"]);
+  BuildPeerSet(peer_tracker.incoming(), output["incoming"]);
+  BuildPeerSet(peer_tracker.outgoing(), output["outgoing"]);
+  BuildPeerSet(peer_tracker.all_peers(), output["allPeers"]);
+  BuildPeerSet(peer_tracker.desired_peers(), output["desiredPeers"]);
 }
 
 /**
@@ -147,31 +169,6 @@ void BuildConnectionList(MuddleRegister const &reg, variant::Variant &output)
   }
 }
 
-void BuildRoutingTable(Router::RoutingTable const &routing_table, variant::Variant &output)
-{
-  output = variant::Variant::Object();
-
-  for (auto const &element : routing_table)
-  {
-    ConstByteArray const address{element.first.data(), element.first.size()};
-    auto const &         handles = element.second.handles;
-
-    auto &entry = output[address.ToBase64()] = variant::Variant::Object();
-
-    entry["direct"] = element.second.direct;
-
-    // create the array for all the handles
-    auto &handles_entry = entry["handle"] = variant::Variant::Array(handles.size());
-
-    // list out all the handles
-    std::size_t idx{0};
-    for (auto const &handle : handles)
-    {
-      handles_entry[idx++] = handle;
-    }
-  }
-}
-
 void BuildEchoCache(Router::EchoCache const &echo_cache, variant::Variant &output)
 {
   output = variant::Variant::Array(echo_cache.size());
@@ -207,9 +204,10 @@ void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output, bool exte
   }
 
   BuildConnectionList(muddle.connection_register(), output["connections"]);
+
   BuildPeerLists(muddle.connection_list(), output["peers"]);
-  BuildPeerSelection(muddle.peer_selector(), output["peerSelection"]);
-  BuildRoutingTable(muddle.router().routing_table(), output["routingTable"]);
+  // TODO(tfr): remove  BuildPeerSelection(muddle.peer_selector(), output["peerSelection"]);
+  BuildPeerTracker(muddle.peer_tracker(), output["peerTracker"]);
 
   if (extended)
   {
@@ -291,7 +289,6 @@ variant::Variant GetStatusSummary(std::string const &network)
 
     ++index;
   }
-
   return output;
 }
 

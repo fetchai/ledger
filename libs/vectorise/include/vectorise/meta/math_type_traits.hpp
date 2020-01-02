@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ struct BaseVectorRegisterType
 }  // namespace vectorise
 
 namespace math {
-
 namespace meta {
 
 ////////////////////////////////////
@@ -89,9 +88,6 @@ using IfIsNotVectorRegister = fetch::meta::EnableIf<IsNotVectorRegister<T>, R>;
 
 template <typename DataType, typename ReturnType>
 using IfIsNotImplemented = fetch::meta::IfIsNotImplemented<DataType, ReturnType>;
-
-template <typename DataType>
-using IfIsUnsignedInteger = fetch::meta::IfIsUnsignedInteger<DataType>;
 
 ////////////////////////////////////
 /// MATH LIKE SPECIALIZATIONS

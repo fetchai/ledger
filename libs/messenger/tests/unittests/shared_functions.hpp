@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -172,7 +172,7 @@ struct Server
     network_manager.Start();
     messenger_muddle->Start({static_cast<uint16_t>(1337 + port_offset)});
 
-    // mail_muddle->SetPeerSelectionMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
+    mail_muddle->SetTrackerConfiguration(fetch::muddle::TrackerConfiguration::AllOn());
     mail_muddle->Start({static_cast<uint16_t>(6500 + port_offset)});
 
     http.AddModule(http_module);

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -38,15 +38,15 @@ using namespace std::chrono_literals;
 
 namespace {
 
-using fetch::network::NetworkManager;
-using fetch::network::Uri;
-using fetch::muddle::rpc::Server;
-using fetch::muddle::MuddlePtr;
-using fetch::json::JSONDocument;
 using fetch::crypto::ECDSASigner;
+using fetch::dmlf::BasicVmEngine;
 using fetch::dmlf::RemoteExecutionHost;
 using fetch::dmlf::RemoteExecutionProtocol;
-using fetch::dmlf::BasicVmEngine;
+using fetch::json::JSONDocument;
+using fetch::muddle::MuddlePtr;
+using fetch::muddle::rpc::Server;
+using fetch::network::NetworkManager;
+using fetch::network::Uri;
 
 using CertificatePtr             = std::shared_ptr<ECDSASigner>;
 using NetworkManagerPtr          = std::shared_ptr<NetworkManager>;
@@ -118,7 +118,7 @@ public:
 
     muddle_ = fetch::muddle::CreateMuddle(MUDD_NET_ID, cert_, *(this->netm_), MUDD_ADDR);
     host_   = std::make_unique<RemoteExecutionHost>(muddle_, std::make_shared<BasicVmEngine>());
-    muddle_->SetPeerSelectionMode(fetch::muddle::PeerSelectionMode::KADEMLIA);
+    muddle_->SetTrackerConfiguration(fetch::muddle::TrackerConfiguration::AllOn());
     muddle_->Start({port_});
 
     protocol_ = std::make_unique<RemoteExecutionProtocol>(*host_);

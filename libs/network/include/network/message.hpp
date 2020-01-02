@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,10 +21,19 @@
 #include "core/byte_array/const_byte_array.hpp"
 
 #include <deque>
+#include <functional>
 
 namespace fetch {
 namespace network {
-using MessageType      = byte_array::ByteArray;
+using MessageBuffer = byte_array::ByteArray;
+struct MessageType
+{
+  using Callback = std::function<void()>;
+
+  MessageBuffer buffer;
+  Callback      success{nullptr};
+  Callback      failure{nullptr};
+};
 using MessageQueueType = std::deque<MessageType>;
 }  // namespace network
 }  // namespace fetch

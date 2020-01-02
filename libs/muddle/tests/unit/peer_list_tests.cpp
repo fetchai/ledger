@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,17 +25,18 @@
 #include <memory>
 #include <thread>
 
+using fetch::muddle::NetworkId;
 using fetch::muddle::PeerConnectionList;
 using fetch::network::Peer;
 using fetch::network::Uri;
-using fetch::muddle::NetworkId;
 
 namespace fetch {
 namespace muddle {
 
 struct DevNull : public network::AbstractConnection
 {
-  void Send(network::MessageType const & /*type*/) override
+  void Send(network::MessageBuffer const & /*type*/, Callback const & /*success*/,
+            Callback const & /*fail*/) override
   {}
 
   uint16_t Type() const override

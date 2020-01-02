@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,9 +26,7 @@
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/loss_functions/types.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
-#include "vm_modules/ml/state_dict.hpp"
 #include "vm_modules/use_estimator.hpp"
 
 using namespace fetch::vm;
@@ -40,14 +38,15 @@ namespace model {
 
 using fetch::math::SizeType;
 using fetch::ml::ops::LossType;
+using fetch::ml::ops::MetricType;
 using fetch::ml::OptimiserType;
 using fetch::ml::details::ActivationType;
 using VMPtrString = Ptr<String>;
 
 std::map<std::string, SupportedLayerType> const VMModel::layer_types_{
-    {"dense", SupportedLayerType::DENSE},
-    {"conv1d", SupportedLayerType::CONV1D},
-    {"conv2d", SupportedLayerType::CONV2D},
+    {"dense", SupportedLayerType::DENSE},     {"conv1d", SupportedLayerType::CONV1D},
+    {"conv2d", SupportedLayerType::CONV2D},   {"flatten", SupportedLayerType::FLATTEN},
+    {"dropout", SupportedLayerType::DROPOUT}, {"activation", SupportedLayerType::ACTIVATION},
 };
 
 std::map<std::string, ActivationType> const VMModel::activations_{
@@ -79,6 +78,16 @@ std::map<std::string, uint8_t> const VMModel::model_categories_{
     {"regressor", static_cast<uint8_t>(ModelCategory::REGRESSOR)},
     {"classifier", static_cast<uint8_t>(ModelCategory::CLASSIFIER)},
 };
+
+std::map<std::string, MetricType> const VMModel::metrics_{
+    {"categorical accuracy", MetricType::CATEGORICAL_ACCURACY},
+    {"cel", MetricType::CROSS_ENTROPY},
+    {"mse", MetricType ::MEAN_SQUARE_ERROR},
+    {"scel", MetricType ::SOFTMAX_CROSS_ENTROPY},
+};
+
+static constexpr char const *IMPOSSIBLE_ADD_MESSAGE = "Impossible to add layer : ";
+static constexpr char const *LAYER_TYPE_MESSAGE     = "layer type";
 
 VMModel::VMModel(VM *vm, TypeId type_id)
   : Object(vm, type_id)
@@ -123,14 +132,42 @@ Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
 {
   return Ptr<VMModel>{new VMModel(vm, type_id, model_category)};
 }
-
 /**
  * @brief VMModel::CompileSequential
  * @param loss a valid loss function ["mse", ...]
  * @param optimiser a valid optimiser name ["adam", "sgd" ...]
  */
-void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
-                                fetch::vm::Ptr<fetch::vm::String> const &optimiser)
+void VMModel::CompileSequential(Ptr<String> const &loss, Ptr<String> const &optimiser)
+{
+  std::vector<MetricType> mets;
+  CompileSequentialImplementation(loss, optimiser, mets);
+}
+
+/**
+ * @brief VMModel::CompileSequentialWithMetrics
+ * @param loss a valid loss function ["mse", ...]
+ * @param optimiser a valid optimiser name ["adam", "sgd" ...]
+ * @param metrics an array of valid metric names ["categorical accuracy", "mse" ...]
+ */
+void VMModel::CompileSequentialWithMetrics(Ptr<String> const &loss, Ptr<String> const &optimiser,
+                                           Ptr<vm::Array<Ptr<String>>> const &metrics)
+{
+  // Make vector<MetricType> from vm::Array
+  std::size_t const       n_metrics = metrics->elements.size();
+  std::vector<MetricType> mets;
+  mets.reserve(n_metrics);
+
+  for (std::size_t i = 0; i < n_metrics; ++i)
+  {
+    Ptr<String> ptr_string = metrics->elements.at(i);
+    MetricType  mt         = ParseName(ptr_string->string(), metrics_, "metric");
+    mets.emplace_back(mt);
+  }
+  CompileSequentialImplementation(loss, optimiser, mets);
+}
+
+void VMModel::CompileSequentialImplementation(Ptr<String> const &loss, Ptr<String> const &optimiser,
+                                              std::vector<MetricType> const &metrics)
 {
   try
   {
@@ -144,7 +181,7 @@ void VMModel::CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
     }
     PrepareDataloader();
     compiled_ = false;
-    model_->Compile(optimiser_type, loss_type);
+    model_->Compile(optimiser_type, loss_type, metrics);
   }
   catch (std::exception const &e)
   {
@@ -236,9 +273,20 @@ void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels
   model_->Train();
 }
 
-typename VMModel::DataType VMModel::Evaluate()
+vm::Ptr<Array<math::DataType>> VMModel::Evaluate()
 {
-  return (model_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TRAIN)).at(0);
+  auto     ml_scores = model_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+  SizeType n_scores  = ml_scores.size();
+
+  vm::Ptr<Array<math::DataType>> scores = this->vm_->CreateNewObject<Array<math::DataType>>(
+      this->vm_->GetTypeId<math::DataType>(), static_cast<int32_t>(n_scores));
+
+  for (SizeType i{0}; i < n_scores; i++)
+  {
+    scores->elements.at(i) = ml_scores.at(i);
+  }
+
+  return scores;
 }
 
 vm::Ptr<VMModel::VMTensor> VMModel::Predict(vm::Ptr<VMTensor> const &data)
@@ -250,36 +298,48 @@ vm::Ptr<VMModel::VMTensor> VMModel::Predict(vm::Ptr<VMTensor> const &data)
 
 void VMModel::Bind(Module &module, bool const experimental_enabled)
 {
-  auto interface =
-      module.CreateClassType<VMModel>("Model")
-          .CreateConstructor(&VMModel::Constructor)
-          .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMModel> {
-            return Ptr<VMModel>{new VMModel(vm, type_id)};
-          })
-          .CreateMemberFunction("add", &VMModel::LayerAddDense,
-                                UseEstimator(&ModelEstimator::LayerAddDense))
-          .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation,
-                                UseEstimator(&ModelEstimator::LayerAddDenseActivation))
-          .CreateMemberFunction("compile", &VMModel::CompileSequential,
-                                UseEstimator(&ModelEstimator::CompileSequential))
-          .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
-          .CreateMemberFunction("evaluate", &VMModel::Evaluate,
-                                UseEstimator(&ModelEstimator::Evaluate))
-          .CreateMemberFunction("predict", &VMModel::Predict,
-                                UseEstimator(&ModelEstimator::Predict))
-          .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
-                                UseEstimator(&ModelEstimator::SerializeToString))
-          .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
-                                UseEstimator(&ModelEstimator::DeserializeFromString));
+  // model construction always requires initialising some strings, ptrs etc. but is very cheap
+  static const ChargeAmount FIXED_CONSTRUCTION_CHARGE{100};
+
+  module.CreateClassType<VMModel>("Model")
+      .CreateConstructor(&VMModel::Constructor, FIXED_CONSTRUCTION_CHARGE)
+      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMModel> {
+        return Ptr<VMModel>{new VMModel(vm, type_id)};
+      })
+      .CreateMemberFunction("add", &VMModel::LayerAddDense,
+                            UseEstimator(&ModelEstimator::LayerAddDense))
+      .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation,
+                            UseEstimator(&ModelEstimator::LayerAddDenseActivation))
+      .CreateMemberFunction("compile", &VMModel::CompileSequential,
+                            UseEstimator(&ModelEstimator::CompileSequential))
+      .CreateMemberFunction("compile", &VMModel::CompileSequentialWithMetrics,
+                            UseEstimator(&ModelEstimator::CompileSequentialWithMetrics))
+      .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
+      .CreateMemberFunction("evaluate", &VMModel::Evaluate, UseEstimator(&ModelEstimator::Evaluate))
+      .CreateMemberFunction("predict", &VMModel::Predict, UseEstimator(&ModelEstimator::Predict))
+      .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
+                            UseEstimator(&ModelEstimator::SerializeToString))
+      .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
+                            UseEstimator(&ModelEstimator::DeserializeFromString));
 
   // experimental features are bound only if the VMFactory given the flag to do so
   if (experimental_enabled)
   {
-    interface.CreateMemberFunction("add", &VMModel::LayerAddConv, UseEstimator(&ModelEstimator::LayerAddConv))
-                            .CreateMemberFunction("add", &VMModel::LayerAddConvActivation, UseEstimator(&ModelEstimator::LayerAddConvActivation))
-                            .CreateMemberFunction("compile", &VMModel::CompileSimple, UseEstimator(&ModelEstimator::CompileSimple))
-                            .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
-                                UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental));
+    module.GetClassInterface<VMModel>()
+        .CreateMemberFunction("add", &VMModel::LayerAddConv,
+                              UseEstimator(&ModelEstimator::LayerAddConv))
+        .CreateMemberFunction("add", &VMModel::LayerAddConvActivation,
+                              UseEstimator(&ModelEstimator::LayerAddConvActivation))
+        .CreateMemberFunction("add", &VMModel::LayerAddFlatten,
+                              UseEstimator(&ModelEstimator::LayerAddFlatten))
+        .CreateMemberFunction("add", &VMModel::LayerAddDropout,
+                              UseEstimator(&ModelEstimator::LayerAddDropout))
+        .CreateMemberFunction("add", &VMModel::LayerAddActivation,
+                              UseEstimator(&ModelEstimator::LayerAddActivation))
+        .CreateMemberFunction("compile", &VMModel::CompileSimple,
+                              UseEstimator(&ModelEstimator::CompileSimple))
+        .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
+                              UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental));
   }
 }
 
@@ -392,6 +452,9 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   // assign compiled status
   vm_model.compiled_ = compiled;
 
+  // assign estimator
+  vm_model.estimator_ = estimator_;
+
   // point this object pointer at the deserialised model
   *this = vm_model;
 
@@ -503,7 +566,8 @@ void VMModel::LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::St
 {
   try
   {
-    SupportedLayerType const layer_type = ParseName(layer->string(), layer_types_, "layer type");
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
     AssertLayerTypeMatches(layer_type, {SupportedLayerType::DENSE});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
     me->Add<fetch::ml::layers::FullyConnected<TensorType>>(inputs, hidden_nodes, activation);
@@ -511,7 +575,7 @@ void VMModel::LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::St
   }
   catch (std::exception const &e)
   {
-    vm_->RuntimeError("Impossible to add layer : " + std::string(e.what()));
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
     return;
   }
 }
@@ -553,7 +617,8 @@ void VMModel::LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::Str
 {
   try
   {
-    SupportedLayerType const layer_type = ParseName(layer->string(), layer_types_, "layer type");
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
     AssertLayerTypeMatches(layer_type, {SupportedLayerType::CONV1D, SupportedLayerType::CONV2D});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
     if (layer_type == SupportedLayerType::CONV1D)
@@ -570,7 +635,105 @@ void VMModel::LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::Str
   }
   catch (std::exception const &e)
   {
-    vm_->RuntimeError("Impossible to add layer : " + std::string(e.what()));
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
+    return;
+  }
+}
+
+void VMModel::LayerAddFlatten(const fetch::vm::Ptr<String> &layer)
+{
+  try
+  {
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::FLATTEN});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+    me->Add<fetch::ml::ops::Flatten<TensorType>>();
+    compiled_ = false;
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
+    return;
+  }
+}
+
+void VMModel::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
+                              const math::DataType &        probability)
+{
+  try
+  {
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::DROPOUT});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+
+    // ops::Dropout takes a keep-probability, while Keras-style argument is a drop-probability,
+    // so it is reversed here.
+    if (probability < DataType{0} || probability > DataType{1})
+    {
+      std::stringstream ss;
+      ss << IMPOSSIBLE_ADD_MESSAGE << "dropout probability " << probability
+         << " is out of allowed range [0..1]";
+      vm_->RuntimeError(ss.str());
+      return;
+    }
+    DataType const keep_probability = DataType{1} - probability;
+
+    me->Add<fetch::ml::ops::Dropout<TensorType>>(keep_probability);
+    compiled_ = false;
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
+    return;
+  }
+}
+
+void VMModel::LayerAddActivation(const fetch::vm::Ptr<String> &layer,
+                                 const fetch::vm::Ptr<String> &activation_name)
+{
+  try
+  {
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::ACTIVATION});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+
+    ActivationType activation = ParseName(activation_name->string(), activations_, "activation");
+
+    switch (activation)
+    {
+    case ActivationType::RELU:
+      me->Add<fetch::ml::ops::Relu<TensorType>>();
+      break;
+    case ActivationType::GELU:
+      me->Add<fetch::ml::ops::Gelu<TensorType>>();
+      break;
+    case ActivationType::SIGMOID:
+      me->Add<fetch::ml::ops::Sigmoid<TensorType>>();
+      break;
+    case ActivationType::SOFTMAX:
+      me->Add<fetch::ml::ops::Softmax<TensorType>>();
+      break;
+    case ActivationType::LEAKY_RELU:
+      me->Add<fetch::ml::ops::LeakyRelu<TensorType>>();
+      break;
+    case ActivationType::LOG_SIGMOID:
+      me->Add<fetch::ml::ops::LogSigmoid<TensorType>>();
+      break;
+    case ActivationType::LOG_SOFTMAX:
+      me->Add<fetch::ml::ops::LogSoftmax<TensorType>>();
+      break;
+    default:
+      vm_->RuntimeError("Can not add Activation layer with activation type " +
+                        activation_name->string());
+      return;
+    }
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
     return;
   }
 }

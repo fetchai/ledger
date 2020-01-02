@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ ConstByteArray FromBase64(ConstByteArray const &str)
   // should be checked both in debug and release
   if ((str.size() % 4) != 0)
   {
-    return "";
+    return {};
   }
 
   std::size_t pad = 0;

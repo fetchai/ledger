@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,10 +23,12 @@ namespace fetch {
 namespace ledger {
 
 ContractContext::ContractContext(TokenContract *token_contract_param, chain::Address address,
+                                 StorageInterface const *                   storage_param,
                                  StateAdapter *                             state_adapter_param,
                                  chain::TransactionLayout::BlockIndex const block_index_param)
   : token_contract{token_contract_param}
   , contract_address{std::move(address)}
+  , storage{storage_param}
   , state_adapter{state_adapter_param}
   , block_index{block_index_param}
 {}

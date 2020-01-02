@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,9 +25,10 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/metrics/kl_divergence.hpp"
 #include "math/normalize_array.hpp"
+#include "math/standard_functions/abs.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/log.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "meta/type_traits.hpp"
 #include "ml/ops/flatten.hpp"
 
@@ -62,7 +63,7 @@ public:
   template <typename DataType>
   static constexpr math::meta::IfIsNonFixedPointArithmetic<DataType, DataType> tsne_tolerance()
   {
-    return DataType(1e-12);
+    return fetch::math::Type<DataType>("0.00000000001");
   }
 
   TSNE(TensorType const &input_matrix, TensorType const &output_matrix, DataType const &perplexity)
@@ -91,9 +92,9 @@ public:
                 SizeType const &final_momentum_steps, SizeType const &p_later_correction_iteration)
   {
     // Initialise variables
-    output_symmetric_affinities_.Fill(static_cast<DataType>(0));
-    DataType min_gain{0.01f};
-    DataType momentum = initial_momentum;
+    output_symmetric_affinities_.Fill(DataType{0});
+    DataType const min_gain = fetch::math::Type<DataType>("0.01");
+    DataType       momentum = initial_momentum;
     assert(output_matrix_.shape().size() == 2);
 
     // i_y is output_matrix value from last iteration
@@ -101,7 +102,7 @@ public:
 
     // Initialise gains with value 1.0
     TensorType gains(output_matrix_.shape());
-    gains.Fill(static_cast<DataType>(1));
+    gains.Fill(DataType{1});
 
     // Start optimisation
     for (SizeType iter{0}; iter < max_iters; iter++)
@@ -126,12 +127,12 @@ public:
         {
           if ((gradient.At(i, j) > 0.0) != (i_y.At(i, j) > 0.0))
           {
-            gains(i, j) = gains.At(i, j) + DataType(0.2);
+            gains(i, j) = gains.At(i, j) + fetch::math::Type<DataType>("0.2");
           }
 
           if ((gradient.At(i, j) > 0.0) == (i_y.At(i, j) > 0.0))
           {
-            gains(i, j) = gains.At(i, j) * DataType(0.8);
+            gains(i, j) = gains.At(i, j) * fetch::math::Type<DataType>("0.8");
           }
         }
       }
@@ -159,7 +160,7 @@ public:
       // Later P-values correction
       if (iter == p_later_correction_iteration)
       {
-        input_symmetric_affinities_ = fetch::math::Divide(input_symmetric_affinities_, DataType(4));
+        input_symmetric_affinities_ = fetch::math::Divide(input_symmetric_affinities_, DataType{4});
       }
     }
   }
@@ -190,7 +191,7 @@ private:
       input_matrix_ = input_matrix.Transpose();
     }
 
-    DataType perplexity_tolerance{1e-5f};
+    auto     perplexity_tolerance = fetch::math::Type<DataType>("0.00001");
     SizeType max_tries{50};
 
     // Initialise high dimensional values
@@ -209,7 +210,7 @@ private:
     input_symmetric_affinities_ = fetch::math::Divide(
         input_symmetric_affinities_, fetch::math::Sum(input_symmetric_affinities_));
     // Early exaggeration
-    input_symmetric_affinities_ = fetch::math::Multiply(input_symmetric_affinities_, DataType(4));
+    input_symmetric_affinities_ = fetch::math::Multiply(input_symmetric_affinities_, DataType{4});
 
     // Limit minimum value to 1e-12
     LimitMin(input_symmetric_affinities_, tsne_tolerance<DataType>());
@@ -227,7 +228,7 @@ private:
   {
     for (auto &val : output_matrix)
     {
-      val = GetRandom(static_cast<DataType>(0), static_cast<DataType>(1));
+      val = GetRandom(DataType{0}, DataType{1});
     }
   }
 
@@ -244,7 +245,7 @@ private:
   {
     // p = -exp(d * beta)
     p = fetch::math::Exp(fetch::math::Multiply(DataType(-1), fetch::math::Multiply(d, beta)));
-    p.Set(0, k, static_cast<DataType>(0));
+    p.Set(0, k, DataType{0});
 
     DataType sum_p = fetch::math::Sum(p);
 
@@ -279,14 +280,14 @@ private:
 
     // d= ((-2 * dot(X, X.T))+sum_x).T+sum_x
     TensorType d =
-        fetch::math::Multiply(DataType(-2), fetch::math::DotTranspose(input_matrix, input_matrix));
+        fetch::math::Multiply(DataType{-2}, fetch::math::DotTranspose(input_matrix, input_matrix));
 
     d = (d + sum_x).Transpose() + sum_x;
 
     // beta = 1/(2*sigma^2)
     // Prefill beta array with 1.0
     TensorType beta(input_data_size);
-    beta.Fill(static_cast<DataType>(1));
+    beta.Fill(DataType{1});
 
     // Calculate entropy value from perplexity
     // DataType target_entropy = std::log(target_perplexity);
@@ -308,7 +309,7 @@ private:
       TensorType this_P(input_data_size);
 
       DataType current_entropy;
-      d.Set(i, i, static_cast<DataType>(0));
+      d.Set(i, i, DataType{0});
       Hbeta(d.Slice(i).Copy(), this_P, current_entropy, beta.At(i), i);
 
       // Evaluate whether the perplexity is within tolerance
@@ -324,11 +325,11 @@ private:
           beta_min = beta.At(i);
           if (beta_max == inf || beta_max == neg_inf)
           {
-            beta.Set(i, beta.At(i) * DataType(2));
+            beta.Set(i, beta.At(i) * DataType{2});
           }
           else
           {
-            beta.Set(i, (beta.At(i) + beta_max) / DataType(2));
+            beta.Set(i, (beta.At(i) + beta_max) / DataType{2});
           }
         }
         else
@@ -336,11 +337,11 @@ private:
           beta_max = beta.At(i);
           if (beta_min == inf || beta_min == neg_inf)
           {
-            beta.Set(i, beta.At(i) / DataType(2));
+            beta.Set(i, beta.At(i) / DataType{2});
           }
           else
           {
-            beta.Set(i, (beta.At(i) + beta_min) / DataType(2));
+            beta.Set(i, (beta.At(i) + beta_min) / DataType{2});
           }
         }
 
@@ -355,7 +356,7 @@ private:
       {
         if (i == j)
         {
-          pairwise_affinities.Set(i, j, static_cast<DataType>(0));
+          pairwise_affinities.Set(i, j, DataType{0});
           continue;
         }
         pairwise_affinities.Set(i, j, this_P.At(0, j));
@@ -381,18 +382,17 @@ private:
     TensorType sum_y = fetch::math::ReduceSum(fetch::math::Square(output_matrix), 1);
 
     // num = -2. * dot(Y, Y.T)
-    num = fetch::math::Multiply(DataType(-2),
+    num = fetch::math::Multiply(DataType{-2},
                                 fetch::math::DotTranspose(output_matrix, output_matrix));
 
     // num = 1 / (1 + (num+sum_y).T+sum_y)
     TensorType val((num + sum_y).Transpose());
-    num = fetch::math::Divide(static_cast<DataType>(1),
-                              fetch::math::Add(static_cast<DataType>(1), (val + sum_y)));
+    num = fetch::math::Divide(DataType{1}, fetch::math::Add(DataType{1}, (val + sum_y)));
 
     // num[range(n), range(n)] = 0.
     for (SizeType i{0}; i < num.shape().at(0); i++)
     {
-      num.Set(i, i, static_cast<DataType>(0));
+      num.Set(i, i, DataType{0});
     }
 
     // Q = num / sum(num)
@@ -411,7 +411,7 @@ private:
   DataType GetRandom(DataType /*mean*/, DataType /*standard_deviation*/)
   {
     // TODO(issue 752): use normal distribution random instead
-    return DataType(rng_.AsDouble());
+    return rng_.AsType<DataType>();
   }
 
   /**

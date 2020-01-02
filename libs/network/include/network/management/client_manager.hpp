@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public:
     }
   }
 
-  bool Send(ConnectionHandleType client, MessageType const &msg)
+  bool Send(ConnectionHandleType client, MessageBuffer const &msg)
   {
     bool ret = true;
     clients_mutex_.lock();
@@ -92,7 +92,7 @@ public:
     return ret;
   }
 
-  void Broadcast(MessageType const &msg)
+  void Broadcast(MessageBuffer const &msg)
   {
     clients_mutex_.lock();
     for (auto &client : clients_)
@@ -105,7 +105,7 @@ public:
     clients_mutex_.unlock();
   }
 
-  void PushRequest(ConnectionHandleType client, MessageType const &msg)
+  void PushRequest(ConnectionHandleType client, MessageBuffer const &msg)
   {
     try
     {

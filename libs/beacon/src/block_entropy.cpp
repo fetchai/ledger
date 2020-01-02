@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -58,4 +58,10 @@ void BlockEntropy::HashSelf()
 bool BlockEntropy::IsAeonBeginning() const
 {
   return !confirmations.empty();
+}
+
+uint16_t BlockEntropy::ToQualIndex(MuddleAddress const &member) const
+{
+  return static_cast<uint16_t>(
+      std::distance(qualified.begin(), std::find(qualified.begin(), qualified.end(), member)));
 }

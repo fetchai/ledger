@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -162,11 +162,11 @@ TYPED_TEST(CategoricalAccuracyTest, saveparams_test)
     {
       if (gt_data[i] == j)
       {
-        data2.Set(j, i, DataType(1));
+        data2.Set(j, i, DataType{1});
       }
       else
       {
-        data2.Set(j, i, DataType(0));
+        data2.Set(j, i, DataType{0});
       }
     }
   }

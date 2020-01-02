@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ HashSource::Hashes raw_data(fetch::byte_array::ConstByteArray const &input)
 template <typename Hasher>
 HashSource::Hashes HashSourceFunction(fetch::byte_array::ConstByteArray const &input)
 {
-  HashSource::Hashes output((Hasher::size_in_bytes + sizeof(std::size_t) - 1) /
+  HashSource::Hashes output((Hasher::SIZE_IN_BYTES + sizeof(std::size_t) - 1) /
                             sizeof(std::size_t));
   crypto::Hash<Hasher>(input.pointer(), input.size(), reinterpret_cast<uint8_t *>(output.data()));
 

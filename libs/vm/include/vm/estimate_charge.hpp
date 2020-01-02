@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -40,12 +40,17 @@ bool EstimateCharge(VM *vm, ChargeEstimator<Args...> &&e, ArgsTuple const &args)
     // compute the estimate for this function invocation
     auto const charge_estimate = meta::Apply(std::move(e), args);
 
+    assert(charge_estimate > 0 && "Estimators must not return a charge of zero");
+
     vm->IncreaseChargeTotal(charge_estimate);
 
-    if (vm->GetChargeTotal() > vm->GetChargeLimit())
+    if (vm->HasError())
     {
-      vm->RuntimeError("Charge limit exceeded");
+      return false;
+    }
 
+    if (vm->ChargeLimitExceeded())
+    {
       return false;
     }
   }

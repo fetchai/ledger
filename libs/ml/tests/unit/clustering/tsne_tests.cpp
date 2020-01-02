@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/clustering/tsne.hpp"
 #include "test_types.hpp"
 
@@ -27,12 +27,17 @@ namespace ml {
 namespace test {
 
 template <typename T>
-class TsneTests : public ::testing::Test
+class TsneFloatTests : public ::testing::Test
+{
+};
+template <typename T>
+class TsneFixedPointTests : public ::testing::Test
 {
 };
 
 // we do not test for fp32 since that tends to overflow
-TYPED_TEST_CASE(TsneTests, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_CASE(TsneFloatTests, math::test::HighPrecisionTensorNoFixedPointFloatingTypes);
+TYPED_TEST_CASE(TsneFixedPointTests, math::test::HighPrecisionTensorFixedPointTypes);
 
 template <typename TypeParam>
 TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
@@ -43,14 +48,14 @@ TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
   using TensorType = TypeParam;
 
   SizeType RANDOM_SEED{123456};
-  DataType LEARNING_RATE{500};  // (seems very high!)
+  DataType LEARNING_RATE = fetch::math::Type<DataType>("500");  // (seems very high!)
   SizeType MAX_ITERATIONS{1};
-  DataType PERPLEXITY{20};
+  DataType PERPLEXITY = fetch::math::Type<DataType>("20");
   SizeType N_DATA_SIZE{n_data_size};
   SizeType N_INPUT_FEATURE_SIZE{3};
   SizeType N_OUTPUT_FEATURE_SIZE{n_output_feature_size};
-  DataType INITIAL_MOMENTUM{0.5f};
-  DataType FINAL_MOMENTUM{0.8f};
+  DataType INITIAL_MOMENTUM = fetch::math::Type<DataType>("0.5");
+  DataType FINAL_MOMENTUM   = fetch::math::Type<DataType>("0.8");
   SizeType FINAL_MOMENTUM_STEPS{20};
   SizeType P_LATER_CORRECTION_ITERATION{10};
 
@@ -89,7 +94,7 @@ TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
   return tsn.GetOutputMatrix();
 }
 
-TYPED_TEST(TsneTests, tsne_test_2d)
+TYPED_TEST(TsneFloatTests, tsne_test_2d)
 {
   using DataType = typename TypeParam::Type;
   math::SizeType n_data{100};
@@ -119,6 +124,39 @@ TYPED_TEST(TsneTests, tsne_test_2d)
   EXPECT_NEAR(double(output_matrix.At(0, 99)), 2.7302324351584537,
               50 * static_cast<double>(math::function_tolerance<DataType>()));
   EXPECT_NEAR(double(output_matrix.At(1, 99)), 0.48101261687371411,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(TsneFixedPointTests, tsne_test_2d)
+{
+  using DataType = typename TypeParam::Type;
+  math::SizeType n_data{100};
+  math::SizeType n_features{2};
+
+  TypeParam output_matrix = RunTest<TypeParam>(n_features, n_data);
+
+  ASSERT_EQ(output_matrix.shape().at(0), n_features);
+  ASSERT_EQ(output_matrix.shape().at(1), n_data);
+
+  // in general we set the tolerance to be function tolerance * number of operations.
+  // since tsne is a training procedure the number of operations is relatively large.
+  // here we use 50 as proxy instead of calculating the number of operations
+  // 50 is quite strict since there are 100 data points
+  EXPECT_NEAR(double(output_matrix.At(0, 0)), 1.920028132153675,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(1, 0)), 2.5480373881291598,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(0, 25)), 2.4161552721634507,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(1, 25)), 2.6394541021436453,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(0, 50)), 0.78585268370807171,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(1, 50)), 2.5319689763709903,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(0, 99)), 0.89536958793178201,
+              50 * static_cast<double>(math::function_tolerance<DataType>()));
+  EXPECT_NEAR(double(output_matrix.At(1, 99)), 3.3876196120399982,
               50 * static_cast<double>(math::function_tolerance<DataType>()));
 }
 

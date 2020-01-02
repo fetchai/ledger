@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -41,9 +41,9 @@ struct StackGetter
 template <typename T>
 struct StackSetter
 {
-  static void Set(VM *vm, int sp_offset, T &&result, TypeId type_id)
+  static void Set(VM *vm, int result_sp, T &&result, TypeId type_id)
   {
-    Variant &v = vm->stack_[vm->sp_ - sp_offset];
+    Variant &v = vm->stack_[result_sp];
     v.Assign(std::forward<T>(result), type_id);
   }
 };
@@ -51,7 +51,7 @@ struct StackSetter
 template <typename T, typename = void>
 struct TypeGetter;
 template <typename T>
-struct TypeGetter<T, std::enable_if_t<IsPrimitive<T>::value || IsVariant<T>::value>>
+struct TypeGetter<T, std::enable_if_t<IsPrimitive<T> || IsVariant<T>>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -59,7 +59,7 @@ struct TypeGetter<T, std::enable_if_t<IsPrimitive<T>::value || IsVariant<T>::val
   }
 };
 template <typename T>
-struct TypeGetter<T, std::enable_if_t<IsPtr<T>::value>>
+struct TypeGetter<T, std::enable_if_t<IsPtr<T>>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -69,7 +69,7 @@ struct TypeGetter<T, std::enable_if_t<IsPtr<T>::value>>
 };
 
 template <typename T>
-struct TypeGetter<T, std::enable_if_t<IsAddress<T>::value>>
+struct TypeGetter<T, std::enable_if_t<IsAddress<T>>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -156,17 +156,17 @@ using UnrollTupleParameterTypes = meta::UnpackTuple<Tuple, UnrollParameterTypes>
 template <typename T, typename = void>
 struct MakeParameterType;
 template <typename T>
-struct MakeParameterType<T, std::enable_if_t<fetch::vm::IsPrimitive<T>::value>>
+struct MakeParameterType<T, std::enable_if_t<fetch::vm::IsPrimitive<T>>>
 {
   using type = T;
 };
 template <typename T>
-struct MakeParameterType<T, std::enable_if_t<fetch::vm::IsVariant<T>::value>>
+struct MakeParameterType<T, std::enable_if_t<fetch::vm::IsVariant<T>>>
 {
   using type = T const &;
 };
 template <typename T>
-struct MakeParameterType<T, std::enable_if_t<fetch::vm::IsPtr<T>::value>>
+struct MakeParameterType<T, std::enable_if_t<fetch::vm::IsPtr<T>>>
 {
   using type = T const &;
 };

@@ -3,6 +3,9 @@
 %option header-file="../include/vm/tokeniser.hpp"
 %x COMMENT
 %x SINGLELINECOMMENT
+%x DOUBLEQUOTESTRING
+%x SINGLEQUOTESTRING
+
 
 %{
 
@@ -23,20 +26,39 @@
 #endif
 
 
-
-int Set(fetch::vm::Token *token, const fetch::vm::Token::Kind kind, char const *text,
-    uint16_t const length, fetch::vm::Location *location)
+int Set(fetch::vm::Token *token, fetch::vm::Token::Kind kind, char const *text,
+    uint16_t length, fetch::vm::Location *location)
 {
-    //printf("kind=%d text=[%s] length=%d line=%d offset=%d\n",
-      //  int(kind), text, length, location->line, location->offset);
     token->kind = kind;
     token->offset = location->offset;
     token->line = location->line;
-    token->length = length;
     token->text = text;
     location->offset += length;
     return 1;
 }
+
+void UpdateOffset(fetch::vm::Location *location, uint16_t length)
+{
+    location->offset += length;
+}
+
+bool UpdateLine(fetch::vm::Token *token, fetch::vm::Location *location)
+{
+    if (location->line != 0xFFFF)
+    {
+        ++location->line;
+        return true;
+    }
+    Set(token, fetch::vm::Token::Kind::MaxLinesReached, "", 0, location);
+    return false;
+}
+
+void UpdateText(fetch::vm::Token *token, char const *text, uint16_t length, fetch::vm::Location *location)
+{
+    token->text += text;
+    location->offset += length;
+}
+
 
 %}
 
@@ -47,41 +69,42 @@ INT             0|[1-9][0-9]*
 EXP             [Ee][+-]?{INT}
 INTEGER_LITERAL {INT}{EXP}?
 FP_LITERAL      {INT}\.[0-9]+
-REAL_LITERAL    {INT}\.[0-9]+{EXP}?
 IDENT           [_a-zA-Z][_a-zA-Z0-9]*
 
 %%
 
     /* whitespace */
 [ \t\r]+ {
-    yyextra->offset += yyleng;
+    UpdateOffset(yyextra, yyleng);
 }
 [\n] {
-    yyextra->offset += yyleng;
-    yyextra->line++;
+    if (!UpdateLine(yylval, yyextra))
+    {
+        return 0;
+    }
+    UpdateOffset(yyextra, yyleng);
 }
 
-    /* comments */
+    /* multi-line comments */
 "/*" {
-    yylval->offset = yyextra->offset;
-    yylval->line = yyextra->line;
-    yylval->length = yyleng;
-    yylval->text = yytext;
-    yyextra->offset += yyleng;
+    Set(yylval, fetch::vm::Token::Kind::Unknown, yytext, yyleng, yyextra);
     BEGIN(COMMENT);
 }
 <COMMENT>\n {
-    yyextra->offset += yyleng;
-    yyextra->line++;
+    if (!UpdateLine(yylval, yyextra))
+    {
+        return 0;
+    }
+    UpdateOffset(yyextra, yyleng);
 }
 <COMMENT>[^*\n]+ {
-    yyextra->offset += yyleng;
+    UpdateOffset(yyextra, yyleng);
 }
 <COMMENT>\**[^/\n] {
-    yyextra->offset += yyleng;
+    UpdateOffset(yyextra, yyleng);
 }
 <COMMENT>\**"*/" {
-    yyextra->offset += yyleng;
+    UpdateOffset(yyextra, yyleng);
     BEGIN(INITIAL);
 }
 <COMMENT><<EOF>> {
@@ -89,21 +112,25 @@ IDENT           [_a-zA-Z][_a-zA-Z0-9]*
     return 0;
 }
 
-  /* single line comments */
+    /* single-line comments */
 "//" {
-    yyextra->offset += yyleng;
+    UpdateOffset(yyextra, yyleng);
     BEGIN(SINGLELINECOMMENT);
 }
 <SINGLELINECOMMENT>[^\n]+ {
-    yyextra->offset += yyleng;
+    UpdateOffset(yyextra, yyleng);
 }
 <SINGLELINECOMMENT>\n {
-    yyextra->offset += yyleng;
-    yyextra->line++;
+    if (!UpdateLine(yylval, yyextra))
+    {
+        return 0;
+    }
+    UpdateOffset(yyextra, yyleng);
     BEGIN(INITIAL);
 }
 <SINGLELINECOMMENT><<EOF>> {
-    Set(yylval, fetch::vm::Token::Kind::EndOfInput, "", 0, yyextra); return 0;
+    Set(yylval, fetch::vm::Token::Kind::EndOfInput, "", 0, yyextra);
+    return 0;
 }
 
     /* numbers */
@@ -141,14 +168,6 @@ IDENT           [_a-zA-Z][_a-zA-Z0-9]*
     return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger64, yytext, yyleng, yyextra);
 }
 
-{REAL_LITERAL}f {
-    return Set(yylval, fetch::vm::Token::Kind::Float32, yytext, yyleng, yyextra);
-}
-
-{REAL_LITERAL} {
-    return Set(yylval, fetch::vm::Token::Kind::Float64, yytext, yyleng, yyextra);
-}
-
 {FP_LITERAL}fp32 |
 {INT}fp32 {
     return Set(yylval, fetch::vm::Token::Kind::Fixed32, yytext, yyleng, yyextra);
@@ -164,16 +183,73 @@ IDENT           [_a-zA-Z][_a-zA-Z0-9]*
     return Set(yylval, fetch::vm::Token::Kind::Fixed128, yytext, yyleng, yyextra);
 }
 
-    /* strings */
-\"{STR1}\" |
-\'{STR2}\' {
-    return Set(yylval, fetch::vm::Token::Kind::String, yytext, yyleng, yyextra);
+    /* double-quote strings */
+\" {
+    Set(yylval, fetch::vm::Token::Kind::String, yytext, yyleng, yyextra);
+    BEGIN(DOUBLEQUOTESTRING);
+}
+<DOUBLEQUOTESTRING>{STR1} {
+    UpdateText(yylval, yytext, yyleng, yyextra);
+}
+<DOUBLEQUOTESTRING>\n {
+    if (!UpdateLine(yylval, yyextra))
+    {
+        return 0;
+    }
+    UpdateOffset(yyextra, yyleng);
+    yylval->kind = fetch::vm::Token::Kind::UnterminatedString;
+    BEGIN(INITIAL);
+    return 1;
+}
+<DOUBLEQUOTESTRING>\\ {
+    // Need this rule to match <BACKSLASH><EOF> inside a string
+    UpdateText(yylval, yytext, yyleng, yyextra);
+    yylval->kind = fetch::vm::Token::Kind::UnterminatedString;
+    BEGIN(INITIAL);
+    return 1;
+}
+<DOUBLEQUOTESTRING><<EOF>> {
+    yylval->kind = fetch::vm::Token::Kind::UnterminatedString;
+    return 0;
+}
+<DOUBLEQUOTESTRING>\" {
+    UpdateText(yylval, yytext, yyleng, yyextra);
+    BEGIN(INITIAL);
+    return 1;
 }
 
-\"{STR1}\n |
-\'{STR2}\n {
-    Set(yylval, fetch::vm::Token::Kind::BadString, yytext, yyleng, yyextra);
-    yyextra->line++;
+    /* single-quote strings */
+\' {
+    Set(yylval, fetch::vm::Token::Kind::String, yytext, yyleng, yyextra);
+    BEGIN(SINGLEQUOTESTRING);
+}
+<SINGLEQUOTESTRING>{STR2} {
+    UpdateText(yylval, yytext, yyleng, yyextra);
+}
+<SINGLEQUOTESTRING>\n {
+    if (!UpdateLine(yylval, yyextra))
+    {
+        return 0;
+    }
+    UpdateOffset(yyextra, yyleng);
+    yylval->kind = fetch::vm::Token::Kind::UnterminatedString;
+    BEGIN(INITIAL);
+    return 1;
+}
+<SINGLEQUOTESTRING>\\ {
+    // Need this rule to match <BACKSLASH><EOF> inside a string
+    UpdateText(yylval, yytext, yyleng, yyextra);
+    yylval->kind = fetch::vm::Token::Kind::UnterminatedString;
+    BEGIN(INITIAL);
+    return 1;
+}
+<SINGLEQUOTESTRING><<EOF>> {
+    yylval->kind = fetch::vm::Token::Kind::UnterminatedString;
+    return 0;
+}
+<SINGLEQUOTESTRING>\' {
+    UpdateText(yylval, yytext, yyleng, yyextra);
+    BEGIN(INITIAL);
     return 1;
 }
 
@@ -203,7 +279,6 @@ IDENT           [_a-zA-Z][_a-zA-Z0-9]*
 "persistent"  {return Set(yylval, fetch::vm::Token::Kind::Persistent, yytext, yyleng, yyextra);}
 "use"         {return Set(yylval, fetch::vm::Token::Kind::Use, yytext, yyleng, yyextra);}
 "as"          {return Set(yylval, fetch::vm::Token::Kind::As, yytext, yyleng, yyextra);}
-
 
     /* identifiers */
 {IDENT} {
@@ -250,7 +325,8 @@ IDENT           [_a-zA-Z][_a-zA-Z0-9]*
 "--"  {return Set(yylval, fetch::vm::Token::Kind::Dec, yytext, yyleng, yyextra);}
 
 <<EOF>> {
-    Set(yylval, fetch::vm::Token::Kind::EndOfInput, "", 0, yyextra); return 0;
+    Set(yylval, fetch::vm::Token::Kind::EndOfInput, "", 0, yyextra);
+    return 0;
 }
 
     /* catch-all for unrecognised */

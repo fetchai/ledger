@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ namespace vm {
 
 namespace {
 
-template <typename T, typename = std::enable_if_t<IsPrimitive<T>::value>>
+template <typename T, typename = std::enable_if_t<IsPrimitive<T>>>
 bool ReadHelper(TypeId /*type_id*/, std::string const &name, T &val, VM *vm)
 {
   if (!vm->HasIoObserver())
@@ -37,7 +37,7 @@ bool ReadHelper(TypeId /*type_id*/, std::string const &name, T &val, VM *vm)
   return result == IoObserverInterface::Status::OK;
 }
 
-template <typename T, typename = std::enable_if_t<IsPrimitive<T>::value>>
+template <typename T, typename = std::enable_if_t<IsPrimitive<T>>>
 bool WriteHelper(std::string const &name, T const &val, VM *vm)
 {
   if (!vm->HasIoObserver())
@@ -147,13 +147,6 @@ enum class eModifStatus : uint8_t
   undefined,
 };
 
-enum class eExisted : uint8_t
-{
-  yes,
-  no,
-  undefined,
-};
-
 template <typename T>
 class State : public IState
 {
@@ -202,18 +195,12 @@ public:
 
   bool Existed() override
   {
-    if (eExisted::undefined == existed_ && vm_->HasIoObserver())
+    if (vm_->HasIoObserver())
     {
-      // mark the variable as existed if we get a positive result back
-      existed_ = eExisted::no;
-
-      if (Status::OK == vm_->GetIOObserver().Exists(name_))
-      {
-        existed_ = eExisted::yes;
-      }
+      return Status::OK == vm_->GetIOObserver().Exists(name_);
     }
 
-    return existed_ == eExisted::yes;
+    return false;
   }
 
 private:
@@ -247,7 +234,7 @@ private:
   }
 
   template <typename Y = T>
-  meta::EnableIf<IsPrimitive<Y>::value> SetValue(TemplateParameter1 const &value)
+  meta::EnableIf<IsPrimitive<Y>> SetValue(TemplateParameter1 const &value)
   {
     value_      = value.Get<Value>();
     mod_status_ = eModifStatus::modified;
@@ -256,7 +243,7 @@ private:
   }
 
   template <typename Y = T>
-  meta::EnableIf<IsPtr<Y>::value> SetValue(TemplateParameter1 const &value)
+  meta::EnableIf<IsPtr<Y>> SetValue(TemplateParameter1 const &value)
   {
     auto v{value.Get<Value>()};
     if (!v)
@@ -285,7 +272,6 @@ private:
   std::string  name_;
   TypeId       template_param_type_id_;
   Value        value_;
-  eExisted     existed_{eExisted::undefined};
   eModifStatus mod_status_{eModifStatus::undefined};
 };
 
@@ -298,8 +284,7 @@ Ptr<IState> Construct(VM *vm, TypeId type_id, Args &&... args)
 }
 
 template <typename T, typename R = void>
-constexpr bool IsMetatype =
-    !((!std::is_void<T>::value && IsPrimitive<T>::value) || IsPtr<T>::value);
+constexpr bool IsMetatype = !((!std::is_void<T>::value && IsPrimitive<T>) || IsPtr<T>);
 
 template <typename T, typename = void>
 struct StateFactory;

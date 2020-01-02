@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -73,14 +73,13 @@ constexpr uint64_t MAX_TOKENS = 0xFFFFFFFFFFFFFFFFull;
 
 TokenContract::TokenContract()
 {
-  // TODO(tfr): I think the function CreateWealth should be OnInit?
   OnTransaction("deed", this, &TokenContract::UpdateDeed);
-  OnTransaction("wealth", this, &TokenContract::CreateWealth);
   OnTransaction("transfer", this, &TokenContract::Transfer);
   OnTransaction("addStake", this, &TokenContract::AddStake);
   OnTransaction("deStake", this, &TokenContract::DeStake);
   OnTransaction("collectStake", this, &TokenContract::CollectStake);
   OnQuery("balance", this, &TokenContract::Balance);
+  OnQuery("deed", this, &TokenContract::QueryDeed);
   OnQuery("stake", this, &TokenContract::Stake);
   OnQuery("cooldownStake", this, &TokenContract::CooldownStake);
 }
@@ -187,27 +186,6 @@ bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address 
   }
 
   return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
-}
-
-Contract::Result TokenContract::CreateWealth(chain::Transaction const &tx)
-{
-  // parse the payload as JSON
-  Variant data;
-  if (ParseAsJson(tx, data))
-  {
-    // attempt to extract the amount field
-    uint64_t amount{0};
-    if (Extract(data, AMOUNT_NAME, amount))
-    {
-      // mint new tokens
-      if (AddTokens(tx.from(), amount))
-      {
-        return {Contract::Status::OK};
-      }
-    }
-  }
-
-  return {Contract::Status::FAILED};
 }
 
 /**
@@ -422,6 +400,32 @@ Contract::Status TokenContract::Balance(Query const &query, Query &response)
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to balance query");
+  }
+
+  return Status::FAILED;
+}
+
+Contract::Status TokenContract::QueryDeed(Query const &query, Query &response)
+{
+  ConstByteArray input;
+  if (Extract(query, ADDRESS_NAME, input))
+  {
+    // attempt to parse the input address
+    chain::Address address{};
+    if (chain::Address::Parse(input, address))
+    {
+      // look up the record
+      WalletRecord record{};
+      GetStateRecord(record, address);
+
+      // formulate the response
+      response = record.ExtractDeed();
+      return Status::OK;
+    }
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to deed query");
   }
 
   return Status::FAILED;

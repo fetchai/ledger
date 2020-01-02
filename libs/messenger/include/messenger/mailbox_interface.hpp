@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@ public:
   using MessageList      = std::deque<Message>;
   using Address          = muddle::Address;
   using DeliveryFunction = std::function<void(Message const &msg)>;
+
+  virtual ~MailboxInterface() = default;
 
   virtual void        SetDeliveryFunction(DeliveryFunction const &attempt_delivery) = 0;
   virtual void        SendMessage(Message message)                                  = 0;

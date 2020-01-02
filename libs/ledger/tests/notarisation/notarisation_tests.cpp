@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -120,6 +120,7 @@ struct NotarisationNode
 
 TEST(notarisation, notarise_blocks)
 {
+  fetch::chain::InitialiseTestConstants();
   fetch::crypto::mcl::details::MCLInitialiser();
 
   uint32_t num_nodes    = 6;

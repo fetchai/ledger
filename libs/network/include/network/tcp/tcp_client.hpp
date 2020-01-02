@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public:
     }
   }
 
-  void OnMessage(std::function<void(network::MessageType const &msg)> const &f)
+  void OnMessage(std::function<void(network::MessageBuffer const &msg)> const &f)
   {
     if (pointer_)
     {
@@ -104,7 +104,7 @@ public:
     return pointer_->Closed();
   }
 
-  void Send(MessageType const &msg) noexcept
+  void Send(MessageBuffer const &msg) noexcept
   {
     pointer_->Send(msg);
   }

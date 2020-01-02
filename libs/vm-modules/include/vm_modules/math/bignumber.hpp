@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -43,37 +43,22 @@ public:
   UInt256Wrapper()           = delete;
   ~UInt256Wrapper() override = default;
 
-  static fetch::vm::Ptr<fetch::vm::String> ToString(fetch::vm::VM *                       vm,
-                                                    fetch::vm::Ptr<UInt256Wrapper> const &n);
-
-  template <typename T>
-  static T ToPrimitive(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<UInt256Wrapper> const &a);
-
   static void Bind(fetch::vm::Module &module);
 
-  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, UInt256 data);
+  explicit UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, UInt256 data);
 
-  UInt256Wrapper(fetch::vm::VM *vm, UInt256 &&data);
+  explicit UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, uint64_t data);
 
-  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray const &data);
+  explicit UInt256Wrapper(fetch::vm::VM *vm, UInt256 data);
 
-  UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, uint64_t data);
+  explicit UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                          byte_array::ConstByteArray const &data,
+                          platform::Endian                  endianess_of_input_data);
 
   static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                     uint64_t val);
 
-  static fetch::vm::Ptr<UInt256Wrapper> ConstructorFromBytes(
-      fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<ByteArrayWrapper> const &ba);
-
-  double ToFloat64() const;
-
-  int32_t ToInt32() const;
-
-  double LogValue() const;
-
-  bool LessThan(fetch::vm::Ptr<UInt256Wrapper> const &other) const;
-
-  void Increase();
+  vm::Ptr<UInt256Wrapper> Copy() const;
 
   fetch::math::SizeType size() const;
 
@@ -103,6 +88,40 @@ public:
   bool IsLessThan(fetch::vm::Ptr<Object> const &lhso, fetch::vm::Ptr<Object> const &rhso) override;
   bool IsGreaterThan(fetch::vm::Ptr<Object> const &lhso,
                      fetch::vm::Ptr<Object> const &rhso) override;
+
+  bool IsLessThanOrEqual(fetch::vm::Ptr<Object> const &lhso,
+                         fetch::vm::Ptr<Object> const &rhso) override;
+
+  bool             IsGreaterThanOrEqual(fetch::vm::Ptr<Object> const &lhso,
+                                        fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount AddChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                      fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount InplaceAddChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                             fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount SubtractChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                           fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount InplaceSubtractChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                  fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount MultiplyChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                           fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount InplaceMultiplyChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                  fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount DivideChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                         fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount InplaceDivideChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                          fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsNotEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                             fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsLessThanChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                             fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsLessThanOrEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                    fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsGreaterThanChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                fetch::vm::Ptr<Object> const &rhso) override;
+  vm::ChargeAmount IsGreaterThanOrEqualChargeEstimator(fetch::vm::Ptr<Object> const &lhso,
+                                                       fetch::vm::Ptr<Object> const &rhso) override;
 
 private:
   UInt256 number_;

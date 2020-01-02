@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -92,8 +92,8 @@ private:
   TransactionStore             transaction_store_{};
   StatePtr                     state_{std::make_shared<State>()};
   StateHistory                 state_history_{};
-  StateHashStack               state_history_stack_{fetch::chain::GENESIS_MERKLE_ROOT};
-  Hash                         current_hash_{fetch::chain::GENESIS_MERKLE_ROOT};
+  StateHashStack               state_history_stack_{fetch::chain::GetGenesisDigest()};
+  Hash                         current_hash_{fetch::chain::GetGenesisMerkleRoot()};
 };
 
 }  // namespace ledger

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -182,7 +182,7 @@ int main(int argc, char **argv)
   char const *external_address = (external == nullptr) ? "127.0.0.1" : external;
 
   auto muddle = CreateMuddle("exmp", prover, nm, external_address);
-  muddle->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
+  muddle->SetTrackerConfiguration(TrackerConfiguration::AllOn());
 
   FETCH_LOG_INFO(LOGGING_NAME, "Muddle Node: ", muddle->GetAddress().ToBase64());
 

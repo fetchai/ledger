@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -84,9 +84,14 @@ constexpr std::size_t NUM_SLICES     = 1;
 class BlockCoordinatorTests : public ::testing::Test
 {
 protected:
-  void SetUp() override
+  static void SetUpTestCase()
   {
     fetch::crypto::mcl::details::MCLInitialiser();
+    fetch::chain::InitialiseTestConstants();
+  }
+
+  void SetUp() override
+  {
     block_generator_.Reset();
 
     // generate a public/private key pair
@@ -370,47 +375,25 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     InSequence s;
 
     // reloading state
-    EXPECT_CALL(*storage_unit_, RevertToHash(_, b3->block_number));
+    EXPECT_CALL(*storage_unit_, HashExists(b3->merkle_hash, b3->block_number));
+    EXPECT_CALL(*storage_unit_, HashExists(b2->merkle_hash, b2->block_number));
+    EXPECT_CALL(*storage_unit_, HashExists(b1->merkle_hash, b1->block_number));
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, genesis->block_number));
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, genesis->block_number));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->merkle_hash, genesis->block_number));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(genesis->hash));
 
     // syncing - Genesis
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, genesis->block_number));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->merkle_hash, genesis->block_number));
 
     // pre block validation
     // none
 
-    // schedule of the genesis block
-    EXPECT_CALL(*execution_manager_, Execute(IsBlock(genesis)));
-
-    // wait for the execution to complete
-    EXPECT_CALL(*execution_manager_, GetState());
-    EXPECT_CALL(*execution_manager_, GetState());
-
-    // post block validation
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*storage_unit_, Commit(0));
-
-    // syncing - B1
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(_, 0));
-    EXPECT_CALL(*storage_unit_, RevertToHash(_, 0));
-
-    // schedule of the next block
+    // execute - B!
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b1)));
 
     // wait for the execution to complete
@@ -515,14 +498,15 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
-  Tock(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
   Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->hash);
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b1->hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
   Tick(State::RESET, State::SYNCHRONISING);
@@ -533,20 +517,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
   Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
-
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b1->hash);
-
-  Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONISING);
-
-  // processing of B2 block
-  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
-  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
-  Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b2->hash);
 
@@ -559,7 +531,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
   Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b3->hash);
 
@@ -585,7 +558,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
   Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b4->hash);
 
@@ -611,7 +585,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
   Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b5->hash);
 

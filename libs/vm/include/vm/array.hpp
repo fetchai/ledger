@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -310,8 +310,8 @@ private:
   }
 
   template <typename G>
-  std::enable_if_t<IsPrimitive<G>::value, bool> ApplySerialize(MsgPackSerializer &   buffer,
-                                                               std::vector<G> const &data)
+  std::enable_if_t<IsPrimitive<G>, bool> ApplySerialize(MsgPackSerializer &   buffer,
+                                                        std::vector<G> const &data)
   {
     // Creating new array
     auto constructor  = buffer.NewArrayConstructor();
@@ -359,8 +359,8 @@ private:
   }
 
   template <typename G>
-  std::enable_if_t<IsPrimitive<G>::value, bool> ApplyDeserialize(MsgPackSerializer &buffer,
-                                                                 std::vector<G> &   data)
+  std::enable_if_t<IsPrimitive<G>, bool> ApplyDeserialize(MsgPackSerializer &buffer,
+                                                          std::vector<G> &   data)
   {
     auto array = buffer.NewArrayDeserializer();
 
@@ -425,15 +425,6 @@ Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
     return Ptr<IArray>{
         new Array<uint64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
-  }
-  case TypeIds::Float32:
-  {
-    return Ptr<IArray>{new Array<float>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
-  }
-  case TypeIds::Float64:
-  {
-    return Ptr<IArray>{
-        new Array<double>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Fixed32:
   {

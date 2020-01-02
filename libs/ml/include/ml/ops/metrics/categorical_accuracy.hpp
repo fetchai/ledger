@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/exceptions/exceptions.hpp"
+#include "math/matrix_operations.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/ops.hpp"
 
@@ -45,13 +46,13 @@ public:
     : Ops<T>(sp)
     , weightings_(sp.weightings)
   {
-    weights_sum_ = weightings_.Sum();
+    weights_sum_ = fetch::math::Sum(weightings_);
   }
 
   explicit CategoricalAccuracy(TensorType weightings = TensorType())
     : weightings_(std::move(weightings))
   {
-    weights_sum_ = weightings_.Sum();
+    weights_sum_ = fetch::math::Sum(weightings_);
   }
 
   ~CategoricalAccuracy() override = default;
@@ -82,7 +83,7 @@ public:
     assert(inputs.size() == 2);
     assert(inputs.at(0)->shape() == inputs.at(1)->shape());
 
-    DataType num_correct{0};
+    auto num_correct = DataType{0};
 
     TensorType test_results = fetch::math::ArgMax(*inputs.at(0));
     TensorType ground_truth = fetch::math::ArgMax(*inputs.at(1));

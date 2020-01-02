@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -92,16 +92,17 @@ TYPED_TEST(CrossEntropyTest, value_test)
   }
 
   // set softmax probabilities
-  std::vector<double> logits{0.1, 0.8, 0.05, 0.05, 0.2, 0.5, 0.2, 0.1, 0.05, 0.05, 0.8,
-                             0.1, 0.5, 0.1,  0.1,  0.3, 0.2, 0.3, 0.1, 0.4,  0.1,  0.7,
-                             0.1, 0.1, 0.7,  0.1,  0.1, 0.1, 0.1, 0.1, 0.5,  0.3};
+  TypeParam logits = TypeParam::FromString(
+      "0.1, 0.8, 0.05, 0.05, 0.2, 0.5, 0.2, 0.1, 0.05, 0.05, 0.8, \
+                             0.1, 0.5, 0.1,  0.1,  0.3, 0.2, 0.3, 0.1, 0.4,  0.1,  0.7, \
+                             0.1, 0.1, 0.7,  0.1,  0.1, 0.1, 0.1, 0.1, 0.5,  0.3");
 
   SizeType idx{0};
   for (SizeType i{0}; i < n_data; ++i)
   {
     for (SizeType j{0}; j < n_classes; ++j)
     {
-      test_array(j, i) = typename TypeParam::Type(logits.at(idx));
+      test_array(j, i) = logits.At(0, idx);
       idx++;
     }
   }

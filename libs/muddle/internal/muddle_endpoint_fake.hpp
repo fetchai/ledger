@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -63,9 +63,6 @@ public:
             Payload const &payload, Options options) override;
 
   void Broadcast(uint16_t service, uint16_t channel, Payload const &payload) override;
-
-  Response Exchange(Address const & /*address*/, uint16_t /*service*/, uint16_t /*channel*/,
-                    Payload const & /*request*/) override;
 
   SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) override;
 

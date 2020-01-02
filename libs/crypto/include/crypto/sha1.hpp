@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@ namespace crypto {
 class SHA1 : public HasherInterface
 {
 public:
-  using HasherInterface::Update;
   using HasherInterface::Final;
+  using HasherInterface::Update;
 
-  static constexpr std::size_t size_in_bytes = 20u;
+  static constexpr std::size_t SIZE_IN_BYTES = 20u;
 
   SHA1()             = default;
   ~SHA1() override   = default;

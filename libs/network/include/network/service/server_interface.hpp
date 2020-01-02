@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -37,7 +37,8 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ServiceServerInterface";
 
-  ServiceServerInterface()          = default;
+  ServiceServerInterface() = default;
+
   virtual ~ServiceServerInterface() = default;
 
   void Add(ProtocolHandlerType const &name,
@@ -60,9 +61,9 @@ public:
   }
 
 protected:
-  virtual bool DeliverResponse(ConstByteArray const &address, network::MessageType const &) = 0;
+  virtual bool DeliverResponse(ConstByteArray const &address, network::MessageBuffer const &) = 0;
 
-  bool PushProtocolRequest(ConstByteArray const &address, network::MessageType const &msg,
+  bool PushProtocolRequest(ConstByteArray const &address, network::MessageBuffer const &msg,
                            CallContext const &context = CallContext())
   {
     SerializerType            params(msg);

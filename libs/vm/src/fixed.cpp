@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -40,6 +40,11 @@ Fixed128::Fixed128(vm::VM *vm, vm::TypeId /*type_id*/, byte_array::ByteArray con
   : Object(vm, TypeIds::Fixed128)
   , data_{*reinterpret_cast<int128_t const *>(data.pointer())}
 {}
+
+Ptr<Fixed128> Fixed128::Copy() const
+{
+  return Ptr<Fixed128>{new Fixed128{this->vm_, this->data_}};
+}
 
 bool Fixed128::IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
@@ -192,6 +197,95 @@ void Fixed128::Negate(Ptr<Object> &object)
   Ptr<Fixed128> fixed = object;
   Ptr<Fixed128> n(new Fixed128(vm_, -fixed->data_));
   object = std::move(n);
+}
+
+ChargeAmount Fixed128::IsEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                              Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::IsNotEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                 Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::IsLessThanChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                 Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::IsLessThanOrEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                        Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::IsGreaterThanChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                    Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::IsGreaterThanOrEqualChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                           Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::AddChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                          Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::InplaceAddChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                 Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::SubtractChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                               Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::InplaceSubtractChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                      Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::MultiplyChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                               Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::InplaceMultiplyChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                      Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::DivideChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                             Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::InplaceDivideChargeEstimator(Ptr<Object> const & /*lhso*/,
+                                                    Ptr<Object> const & /*rhso*/)
+{
+  return 1;
+}
+
+ChargeAmount Fixed128::NegateChargeEstimator(Ptr<Object> const & /*object*/)
+{
+  return 1;
 }
 
 bool Fixed128::SerializeTo(MsgPackSerializer &buffer)

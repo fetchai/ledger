@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -246,6 +246,26 @@ Deed::MandatorityMatrix Deed::InferMandatoryWeights() const
     }
   }
   return mandatory;
+}
+
+Deed::Signees const &Deed::signees() const
+{
+  return signees_;
+}
+
+Deed::OperationTresholds const &Deed::operation_thresholds() const
+{
+  return operation_thresholds_;
+}
+
+bool Deed::operator==(Deed const &right) const
+{
+  return signees_ == right.signees_ && operation_thresholds_ == right.operation_thresholds_;
+}
+
+bool Deed::operator!=(Deed const &right) const
+{
+  return !(*this == right);
 }
 
 }  // namespace ledger

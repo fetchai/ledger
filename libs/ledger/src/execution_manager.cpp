@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -177,7 +177,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
   // update the last block hash
   state_.ApplyVoid([&block](Summary &summary) {
     summary.last_block_hash   = block.hash;
-    summary.last_block_miner  = block.miner;
+    summary.last_block_miner  = chain::Address(block.miner_id);
     summary.last_block_number = block.block_number;
     summary.state             = State::ACTIVE;
   });

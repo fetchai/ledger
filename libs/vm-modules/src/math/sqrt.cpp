@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -50,13 +50,11 @@ fetch::meta::EnableIfSame<T, Ptr<Fixed128>, T> SqrtPtr(VM *vm, T const &a)
 
 }  // namespace
 
-void BindSqrt(Module &module)
+void BindSqrt(Module &module, bool const /*enable_experimental*/)
 {
-  module.CreateFreeFunction("sqrt", &Sqrt<float_t>);
-  module.CreateFreeFunction("sqrt", &Sqrt<double_t>);
-  module.CreateFreeFunction("sqrt", &Sqrt<fixed_point::fp32_t>);
-  module.CreateFreeFunction("sqrt", &Sqrt<fixed_point::fp64_t>);
-  module.CreateFreeFunction("sqrt", &SqrtPtr<Ptr<Fixed128>>);
+  module.CreateFreeFunction("sqrt", &Sqrt<fixed_point::fp32_t>, ChargeAmount{1});
+  module.CreateFreeFunction("sqrt", &Sqrt<fixed_point::fp64_t>, ChargeAmount{2});
+  module.CreateFreeFunction("sqrt", &SqrtPtr<Ptr<Fixed128>>, ChargeAmount{4});
 }
 
 }  // namespace math

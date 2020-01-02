@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dispatcher.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "router.hpp"
@@ -59,18 +58,35 @@ void MuddleRegister::OnConnectionLeft(ConnectionLeftCallback cb)
  */
 void MuddleRegister::Broadcast(ConstByteArray const &data) const
 {
-  FETCH_LOCK(lock_);
+  using ConnectionPtr  = std::shared_ptr<network::AbstractConnection>;
+  using ConnectionPtrs = std::vector<ConnectionPtr>;
 
-  // loop through all of our current connections
-  for (auto const &elem : handle_index_)
+  // Hold the connections until the lock has gone
+  // to avoid a deadlock if a connection dies while
+  // being accessed for the send.
+  ConnectionPtrs held_connections;
+
   {
-    // ensure the connection is valid
-    auto connection = elem.second->connection.lock();
-    if (connection)
+    FETCH_LOCK(lock_);
+    held_connections.reserve(handle_index_.size());
+
+    // loop through all of our current connections
+    for (auto const &elem : handle_index_)
     {
-      // schedule sending of the data
-      connection->Send(data);
+      // ensure the connection is valid
+      auto connection = elem.second->connection.lock();
+      if (connection)
+      {
+        // schedule sending of the data, once we hold a strong
+        // connection to the data
+        held_connections.emplace_back(std::move(connection));
+      }
     }
+  }
+
+  for (auto const &conn : held_connections)
+  {
+    conn->Send(data);
   }
 }
 
@@ -112,6 +128,24 @@ MuddleRegister::WeakConnectionPtr MuddleRegister::LookupConnection(Address const
   }
 
   return conn;
+}
+
+MuddleRegister::Connections MuddleRegister::LookupConnections(Address const &address) const
+{
+  Connections conns{};
+
+  {
+    FETCH_LOCK(lock_);
+
+    auto it = address_index_.find(address);
+    while ((it != address_index_.end()) && (it->first == address))
+    {
+      conns.emplace_back(it->second->connection);
+      ++it;
+    }
+  }
+
+  return conns;
 }
 
 bool MuddleRegister::IsEmpty() const
@@ -248,6 +282,18 @@ MuddleRegister::AddressIndex MuddleRegister::GetAddressIndex() const
   return address_index_;
 }
 
+Address MuddleRegister::GetAddress(ConnectionHandle handle) const
+{
+  FETCH_LOCK(lock_);
+  auto it = handle_index_.find(handle);
+  if (it == handle_index_.end())
+  {
+    return {};
+  }
+
+  return it->second->address;
+}
+
 /**
  * Callback triggered when a new connection is established
  *
@@ -287,37 +333,39 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
  */
 void MuddleRegister::Leave(ConnectionHandle handle)
 {
-  std::unique_lock<std::mutex> lock(lock_);
-
-  FETCH_LOG_TRACE(logging_name_, "### Connection ", handle, " ended");
-
-  auto it = handle_index_.find(handle);
-  if (it != handle_index_.end())
+  ConnectionLeftCallback callback_copy;
   {
-    std::size_t removal_count{0};
-    for (;;)
-    {
-      // attempt to find a corresponding index in the addres map
-      auto addr_it = std::find_if(address_index_.begin(), address_index_.end(),
-                                  [&](AddressIndex::value_type const &entry) {
-                                    return (!entry.second) || (entry.second->handle == handle);
-                                  });
+    FETCH_LOCK(lock_);
 
-      if (addr_it == address_index_.end())
+    FETCH_LOG_TRACE(logging_name_, "### Connection ", handle, " ended");
+
+    auto it = handle_index_.find(handle);
+    if (it != handle_index_.end())
+    {
+      std::size_t removal_count{0};
+      for (;;)
       {
-        break;
+        // attempt to find a corresponding index in the addres map
+        auto addr_it = std::find_if(address_index_.begin(), address_index_.end(),
+                                    [&](AddressIndex::value_type const &entry) {
+                                      return (!entry.second) || (entry.second->handle == handle);
+                                    });
+
+        if (addr_it == address_index_.end())
+        {
+          break;
+        }
+
+        // remove the entry
+        address_index_.erase(addr_it);
+        ++removal_count;
       }
 
-      // remove the entry
-      address_index_.erase(addr_it);
-      ++removal_count;
+      handle_index_.erase(it);
     }
 
-    handle_index_.erase(it);
+    callback_copy = left_callback_;
   }
-
-  auto callback_copy = left_callback_;
-  lock.unlock();
 
   // signal the router
   if (callback_copy)

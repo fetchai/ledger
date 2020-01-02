@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -152,9 +152,14 @@ bool TCPClientImplementation::is_alive() const
   return !socket_.expired() && connected_;
 }
 
-void TCPClientImplementation::Send(MessageType const &omsg)
+void TCPClientImplementation::Send(MessageBuffer const &omsg, Callback const &success,
+                                   Callback const &fail)
 {
-  MessageType msg = omsg.Copy();
+  MessageType msg;
+  msg.buffer  = omsg.Copy();
+  msg.success = success;
+  msg.failure = fail;
+
   if (!connected_)
   {
     return;
@@ -356,7 +361,7 @@ void TCPClientImplementation::WriteNext(SharedSelfType const &selfLock)
     }
   }
 
-  MessageType buffer;
+  MessageType message;
   {
     FETCH_LOCK(queue_mutex_);
     if (write_queue_.empty())
@@ -365,19 +370,20 @@ void TCPClientImplementation::WriteNext(SharedSelfType const &selfLock)
       can_write_ = true;
       return;
     }
-    buffer = write_queue_.front();
+    message = write_queue_.front();
     write_queue_.pop_front();
   }
 
   byte_array::ByteArray header;
-  SetHeader(header, buffer.size());
+  SetHeader(header, message.buffer.size());
 
-  std::vector<asio::const_buffer> buffers{asio::buffer(header.pointer(), header.size()),
-                                          asio::buffer(buffer.pointer(), buffer.size())};
+  std::vector<asio::const_buffer> buffers{
+      asio::buffer(header.pointer(), header.size()),
+      asio::buffer(message.buffer.pointer(), message.buffer.size())};
 
   auto socket = socket_.lock();
 
-  auto cb = [this, selfLock, socket, buffer, header](std::error_code ec, std::size_t len) {
+  auto cb = [this, selfLock, socket, message, header](std::error_code ec, std::size_t len) {
     FETCH_UNUSED(len);
 
     {
@@ -389,13 +395,23 @@ void TCPClientImplementation::WriteNext(SharedSelfType const &selfLock)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Error writing to socket, closing.");
       SignalLeave();
+
+      if (message.failure)
+      {
+        message.failure();
+      }
     }
     else
     {
+
       // TODO(issue 16): this strand should be unnecessary
       auto strandLock = strand_.lock();
       if (strandLock)
       {
+        if (message.success)
+        {
+          message.success();
+        }
         WriteNext(selfLock);
       }
     }
@@ -416,6 +432,11 @@ void TCPClientImplementation::WriteNext(SharedSelfType const &selfLock)
     }
 
     SignalLeave();
+
+    if (message.failure)
+    {
+      message.failure();
+    }
   }
 }
 

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ private:
   EventManager() = default;
 
   std::unordered_map<std::type_index, std::deque<void *>> events_;
-  std::mutex                                              mutex_;
+  Mutex                                                   mutex_;
 };
 
 }  // namespace beacon

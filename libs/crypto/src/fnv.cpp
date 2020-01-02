@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -62,8 +62,8 @@ void FNV::Final(uint8_t *const hash)
 
 std::size_t FNV::HashSizeInBytes() const
 {
-  auto const size = internal::FnvHasherInternals::ImplType::size_in_bytes;
-  static_assert(size == size_in_bytes, "Size mismatch");
+  auto const size = internal::FnvHasherInternals::ImplType::SIZE_IN_BYTES;
+  static_assert(size == SIZE_IN_BYTES, "Size mismatch");
   return size;
 }
 

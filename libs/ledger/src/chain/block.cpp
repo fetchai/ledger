@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ void Block::UpdateDigest()
   if (IsGenesis())
   {
     // genesis block's hash should be already set to a proper value and needs not to be updated
-    assert(hash == chain::GENESIS_DIGEST);
+    assert(hash == chain::GetGenesisDigest());
     return;
   }
 
@@ -86,8 +86,19 @@ void Block::UpdateDigest()
 
   // Generate hash stream
   serializers::MsgPackSerializer buf;
-  buf << previous_hash << merkle_hash << block_number << miner << log2_num_lanes << timestamp
-      << tx_merkle_tree.root();
+
+  // clang-format off
+  buf << previous_hash;
+  buf << merkle_hash;
+  buf << tx_merkle_tree.root();
+  buf << block_number;
+  buf << miner_id;
+  buf << log2_num_lanes;
+  buf << dag_epoch;
+  buf << timestamp;
+  buf << block_entropy;
+  buf << weight;
+  // clang-format on
 
   // Generate the hash
   crypto::SHA256 hash_builder;

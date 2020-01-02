@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public:
   using ConstByteArray         = byte_array::ConstByteArray;
   using Handle                 = ConnectionHandleType;
   using ConnectionLeftCallback = std::function<void(Handle)>;
-
+  using Connections            = std::vector<WeakConnectionPtr>;
   enum class UpdateStatus
   {
     HANDLE_NOT_FOUND,
@@ -91,6 +91,7 @@ public:
   void              Broadcast(ConstByteArray const &data) const;
   WeakConnectionPtr LookupConnection(ConnectionHandle handle) const;
   WeakConnectionPtr LookupConnection(Address const &address) const;
+  Connections       LookupConnections(Address const &address) const;
 
   bool         IsEmpty() const;
   UpdateStatus UpdateAddress(ConnectionHandle handle, Address const &address);
@@ -104,6 +105,7 @@ public:
   // Raw Access
   HandleIndex  GetHandleIndex() const;
   AddressIndex GetAddressIndex() const;
+  Address      GetAddress(ConnectionHandle handle) const;
 
 protected:
   /// @name Connection Event Handlers

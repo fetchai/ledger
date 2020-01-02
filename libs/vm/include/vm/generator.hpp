@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -35,9 +35,8 @@ enum class AnnotationLiteralType : uint8_t
   Unknown    = 0,
   Boolean    = 1,
   Integer    = 2,
-  Real       = 3,
-  String     = 4,
-  Identifier = 5
+  String     = 3,
+  Identifier = 4
 };
 
 struct AnnotationLiteral
@@ -51,11 +50,6 @@ struct AnnotationLiteral
   {
     type    = AnnotationLiteralType::Integer;
     integer = i;
-  }
-  void SetReal(double r)
-  {
-    type = AnnotationLiteralType::Real;
-    real = r;
   }
   void SetString(std::string const &s)
   {
@@ -72,7 +66,6 @@ struct AnnotationLiteral
   {
     bool    boolean;
     int64_t integer;
-    double  real;
   };
   std::string str;
 };
@@ -386,6 +379,23 @@ private:
   using LargeConstantsMap = std::map<Executable::LargeConstant, uint16_t, LargeConstantComparator>;
   using LineToPcMap       = std::map<uint16_t, uint16_t>;
 
+  struct FatalException : public std::exception
+  {
+    explicit FatalException(std::string message__)
+      : message{std::move(message__)}
+    {}
+    const char *what() const noexcept override
+    {
+      return message.c_str();
+    }
+    std::string message;
+  };
+
+  static const uint16_t MAX_INSTRUCTIONS     = 0xFFFF;
+  static const uint16_t MAX_CONSTANTS        = 2048;
+  static const uint16_t MAX_STRING_CONSTANTS = 2048;
+  static const uint16_t MAX_LARGE_CONSTANTS  = 2048;
+
   VM *                     vm_{};
   uint16_t                 num_system_types_{};
   Executable               executable_;
@@ -394,11 +404,13 @@ private:
   StringsMap               strings_map_;
   ConstantsMap             constants_map_;
   LargeConstantsMap        large_constants_map_;
+  std::string              filename_;
   Executable::Function *   function_{};
   LineToPcMap              line_to_pc_map_;
   std::vector<std::string> errors_;
 
   void          Initialise(VM *vm, uint16_t num_system_types);
+  uint16_t      AddInstruction(Executable::Instruction const &instruction, uint16_t line);
   void          AddLineNumber(uint16_t line, uint16_t pc);
   void          ResolveTypes(IR const &ir);
   void          ResolveFunctions(IR const &ir);
@@ -455,8 +467,6 @@ private:
   void     HandleUnsignedInteger32(IRExpressionNodePtr const &node);
   void     HandleInteger64(IRExpressionNodePtr const &node);
   void     HandleUnsignedInteger64(IRExpressionNodePtr const &node);
-  void     HandleFloat32(IRExpressionNodePtr const &node);
-  void     HandleFloat64(IRExpressionNodePtr const &node);
   void     HandleFixed32(IRExpressionNodePtr const &node);
   void     HandleFixed64(IRExpressionNodePtr const &node);
   void     HandleFixed128(IRExpressionNodePtr const &node);

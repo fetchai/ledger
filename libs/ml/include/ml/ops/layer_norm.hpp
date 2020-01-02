@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/matrix_operations.hpp"
+#include "math/standard_functions/pow.hpp"
+#include "math/standard_functions/sqrt.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
@@ -104,7 +106,7 @@ public:
     // normalize input
     fetch::math::Sqrt(cached_inv_sqrt_var_, cached_inv_sqrt_var_);
     fetch::math::Divide(cached_output_, cached_inv_sqrt_var_, cached_output_);
-    fetch::math::Divide(static_cast<DataType>(1), cached_inv_sqrt_var_, cached_inv_sqrt_var_);
+    fetch::math::Divide(DataType{1}, cached_inv_sqrt_var_, cached_inv_sqrt_var_);
 
     output = cached_output_;
   }

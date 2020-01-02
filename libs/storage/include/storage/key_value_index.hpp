@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ template <std::size_t S = 256, std::size_t N = 32>
 struct KeyValuePair
 {
   using HashFunction = crypto::SHA256;
-  static_assert(N == HashFunction::size_in_bytes, "Hash size must match the hash function");
+  static_assert(N == HashFunction::SIZE_IN_BYTES, "Hash size must match the hash function");
 
   using KeyType   = Key<S>;
   using IndexType = uint64_t;

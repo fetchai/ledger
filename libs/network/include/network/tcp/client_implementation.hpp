@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -61,7 +61,8 @@ public:
 
   bool is_alive() const override;
 
-  void Send(MessageType const &omsg) override;
+  void Send(MessageBuffer const &omsg, Callback const &success = nullptr,
+            Callback const &fail = nullptr) override;
 
   uint16_t Type() const override;
 

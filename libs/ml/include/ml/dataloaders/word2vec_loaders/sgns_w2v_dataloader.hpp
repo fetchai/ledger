@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "math/tensor.hpp"
+#include "math/standard_functions/sqrt.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
 #include "ml/dataloaders/word2vec_loaders/vocab.hpp"
@@ -378,7 +379,7 @@ void GraphW2VLoader<TensorType>::BufferNextSamples()
     auto word_freq =
         static_cast<DataType>(word_id_counts_[data_.at(current_sentence_).at(current_word_)]) /
         static_cast<DataType>(size_);
-    auto random_var = static_cast<DataType>(this->rand.AsDouble());  // random variable between 0-1
+    auto random_var = this->rand.template AsType<DataType>();  // random variable between 0-1
     if (random_var < DataType{1} - fetch::math::Sqrt(freq_thresh_ / word_freq))
     {  // subsample for a cumulative prob of 1 - sqrt(thresh/freq) // N.B. if word_freq <
        // freq_thresh, then subsampling would not happen
@@ -387,7 +388,7 @@ void GraphW2VLoader<TensorType>::BufferNextSamples()
       auto prev_sentence = current_sentence_;
       // move to the next word
       current_word_++;
-      // check if the word is window size away form either end of the sentence
+      // check if the word is window size away from either end of the sentence
       if (current_word_ >=
           data_.at(current_sentence_).size() -
               window_size_)  // the current word end when a full context window can be allowed
@@ -429,13 +430,13 @@ void GraphW2VLoader<TensorType>::BufferNextSamples()
     output_words_buffer_.At(counter) = data_.at(current_sentence_).at(current_word_ - i - 1);
     output_words_.At(counter) =
         static_cast<DataType>(data_.at(current_sentence_).at(current_word_ - i - 1));
-    labels_.At(counter) = static_cast<DataType>(1);
+    labels_.At(counter) = DataType{1};
     counter++;
 
     output_words_buffer_.At(counter) = data_.at(current_sentence_).at(current_word_ + i + 1);
     output_words_.At(counter) =
         static_cast<DataType>(data_.at(current_sentence_).at(current_word_ + i + 1));
-    labels_.At(counter) = static_cast<DataType>(1);
+    labels_.At(counter) = DataType{1};
     counter++;
   }
 

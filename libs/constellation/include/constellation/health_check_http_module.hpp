@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
 #include "http/json_response.hpp"
 #include "http/module.hpp"
 
+#include <atomic>
+
 namespace fetch {
 namespace constellation {
 
@@ -30,10 +32,8 @@ public:
   using MainChain           = ledger::MainChain;
   using MainChainRpcService = ledger::MainChainRpcService;
 
-  HealthCheckHttpModule(MainChain const &chain, MainChainRpcService const &chain_service,
-                        BlockCoordinator const &block_coordinator)
+  HealthCheckHttpModule(MainChain const &chain, BlockCoordinator const &block_coordinator)
     : chain_{chain}
-    , chain_service_{chain_service}
     , block_coordinator_{block_coordinator}
   {
     Get("/api/health/alive", "Endpoint to check if the server is alive.",
@@ -43,8 +43,10 @@ public:
 
     Get("/api/health/ready", "Retrieves the current synchronisation status.",
         [this](http::ViewParameters const &, http::HTTPRequest const &) {
+          MainChainRpcService const *const chain_service = chain_service_.load();
+
           // determine the state of the machine system state machines
-          bool const chain_synced = chain_service_.IsSynced();
+          bool const chain_synced = (chain_service != nullptr) && chain_service->IsSynced();
           bool const chain_executed_finished =
               block_coordinator_.GetStateMachine().state() == BlockCoordinator::State::SYNCHRONISED;
           bool const chain_execution_complete =
@@ -66,10 +68,17 @@ public:
         });
   }
 
+  void UpdateChainService(MainChainRpcService const &chain_service)
+  {
+    chain_service_ = &chain_service;
+  }
+
 private:
-  MainChain const &          chain_;
-  MainChainRpcService const &chain_service_;
-  BlockCoordinator const &   block_coordinator_;
+  using MainChainRpcServicePtr = std::atomic<MainChainRpcService const *>;
+
+  MainChain const &       chain_;
+  MainChainRpcServicePtr  chain_service_{nullptr};
+  BlockCoordinator const &block_coordinator_;
 };
 
 }  // namespace constellation

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -37,12 +37,6 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "FeeManager";
 
-bool IsCreateWealth(chain::Transaction const &tx)
-{
-  return (tx.contract_mode() == chain::Transaction::ContractMode::CHAIN_CODE) &&
-         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
-}
-
 }  // namespace
 
 FeeManager::TransactionDetails::TransactionDetails(chain::Transaction &tx, BitVector const &shards)
@@ -52,21 +46,19 @@ FeeManager::TransactionDetails::TransactionDetails(chain::Transaction &tx, BitVe
   , digest{tx.digest()}
   , charge_rate{tx.charge_rate()}
   , charge_limit{tx.charge_limit()}
-  , is_create_wealth{IsCreateWealth(tx)}
 {}
 
 FeeManager::TransactionDetails::TransactionDetails(chain::Address const &from_addr,
                                                    chain::Address const &contract_addr,
                                                    BitVector const &shards, Digest const &tx_digest,
                                                    TokenAmount const &rate,
-                                                   TokenAmount const &limit, bool is_wealth)
+                                                   TokenAmount const &limit)
   : from{from_addr}
   , contract_address{contract_addr}
   , shard_mask{shards}
   , digest{tx_digest}
   , charge_rate{rate}
   , charge_limit{limit}
-  , is_create_wealth{is_wealth}
 {}
 
 FeeManager::FeeManager(TokenContract &token_contract, std::string const &histogram_name)
@@ -92,10 +84,7 @@ bool FeeManager::CalculateChargeAndValidate(TransactionDetails &             tx,
                   " (base: ", base_charge, " storage: ", storage_charge,
                   " compute: ", compute_charge, " shards: ", allowed_shards_.PopCount(), ")");
 
-  if (!tx.is_create_wealth)
-  {
-    result.charge += scaled_charge;
-  }
+  result.charge += scaled_charge;
 
   // determine if the chain code ran out of charge
   if (result.charge > tx.charge_limit)
@@ -124,7 +113,7 @@ void FeeManager::Execute(TransactionDetails &tx, Result &result, BlockIndex cons
 
   auto const &from = tx.from;
 
-  ContractContext         context{&token_contract_, tx.contract_address, &storage_adapter, block};
+  ContractContext context{&token_contract_, tx.contract_address, nullptr, &storage_adapter, block};
   ContractContextAttacher raii(token_contract_, context);
   uint64_t const          balance = token_contract_.GetBalance(from);
 
@@ -162,7 +151,7 @@ void FeeManager::SettleFees(chain::Address const &miner, TokenAmount amount,
   // attach the token contract to the storage engine
   StateSentinelAdapter storage_adapter{storage, "fetch.token", shard};
 
-  ContractContext         context{&token_contract_, contract_address, &storage_adapter, block};
+  ContractContext context{&token_contract_, contract_address, nullptr, &storage_adapter, block};
   ContractContextAttacher raii(token_contract_, context);
   token_contract_.AddTokens(miner, amount);
 }

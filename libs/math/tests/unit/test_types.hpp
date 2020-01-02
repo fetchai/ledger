@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "gtest/gtest.h"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 
 namespace fetch {
 namespace math {
@@ -64,6 +64,12 @@ using TensorFloatIntAndUIntTypes =
                      fetch::math::Tensor<fetch::fixed_point::fp32_t>,
                      fetch::math::Tensor<fetch::fixed_point::fp64_t>,
                      fetch::math::Tensor<fetch::fixed_point::fp128_t>>;
+
+using HighPrecisionTensorFixedPointTypes =
+    ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
+
+using HighPrecisionTensorNoFixedPointFloatingTypes =
+    ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 
 }  // namespace test
 }  // namespace math

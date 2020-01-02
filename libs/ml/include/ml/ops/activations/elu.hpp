@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -82,8 +82,8 @@ public:
     assert(inputs.front()->shape() == error_signal.shape());
     TensorType ret{error_signal.shape()};
 
-    DataType zero{0};
-    DataType one{1};
+    auto const zero = DataType{0};
+    auto const one  = DataType{1};
 
     // gradient of elu function is a*e^x where x<0; and 1.0 where x>=0
     auto it  = inputs.front()->cbegin();

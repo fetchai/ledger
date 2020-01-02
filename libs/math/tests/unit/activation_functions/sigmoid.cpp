@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -34,11 +34,12 @@ TYPED_TEST_CASE(SigmoidTest, TensorFloatingTypes);
 template <typename ArrayType>
 ArrayType RandomArrayNegative(std::size_t n)
 {
-  static fetch::random::LinearCongruentialGenerator gen;
-  ArrayType                                         a1(n);
+  using DataType = typename ArrayType::Type;
+
+  ArrayType a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
-    a1.At(i) = typename ArrayType::Type(gen.AsDouble()) - typename ArrayType::Type(1.0);
+    a1.At(i) = random::Random::generator.AsType<DataType>() - DataType{1};
   }
   return a1;
 }
@@ -46,17 +47,19 @@ ArrayType RandomArrayNegative(std::size_t n)
 template <typename ArrayType>
 ArrayType RandomArrayPositive(std::size_t n)
 {
-  static fetch::random::LinearCongruentialGenerator gen;
-  ArrayType                                         a1(n);
+  using DataType = typename ArrayType::Type;
+
+  ArrayType a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
-    a1.At(i) = typename ArrayType::Type(gen.AsDouble());
+    a1.At(i) = random::Random::generator.AsType<DataType>();
   }
   return a1;
 }
 
 TYPED_TEST(SigmoidTest, negative_response)
 {
+  using DataType = typename TypeParam::Type;
 
   std::size_t n          = 1000;
   TypeParam   test_array = RandomArrayNegative<TypeParam>(n);
@@ -65,7 +68,7 @@ TYPED_TEST(SigmoidTest, negative_response)
   // sanity check that all values less than 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_LE(test_array[i], typename TypeParam::Type(0));
+    ASSERT_LE(test_array[i], DataType{0});
   }
 
   //
@@ -74,12 +77,13 @@ TYPED_TEST(SigmoidTest, negative_response)
   // check that all values 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_LT(test_array_2[i], typename TypeParam::Type(0.5));
+    ASSERT_LT(test_array_2[i], fetch::math::Type<DataType>("0.5"));
   }
 }
 
 TYPED_TEST(SigmoidTest, positive_response)
 {
+  using DataType = typename TypeParam::Type;
 
   std::size_t n          = 1000;
   TypeParam   test_array = RandomArrayPositive<TypeParam>(n);
@@ -88,7 +92,7 @@ TYPED_TEST(SigmoidTest, positive_response)
   // sanity check that all values gte 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_GE(test_array[i], typename TypeParam::Type(0));
+    ASSERT_GE(test_array[i], DataType{0});
   }
 
   fetch::math::Sigmoid(test_array, test_array_2);
@@ -98,7 +102,7 @@ TYPED_TEST(SigmoidTest, positive_response)
   // check that all values unchanged
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_GE(test_array_2[i], typename TypeParam::Type(0.5));
+    ASSERT_GE(test_array_2[i], fetch::math::Type<DataType>("0.5"));
   }
 }
 
@@ -109,23 +113,23 @@ TYPED_TEST(SigmoidTest, exact_values)
   TypeParam   test_array{n};
   TypeParam   gt_array{n};
 
-  test_array[0] = typename TypeParam::Type(1);
-  test_array[1] = typename TypeParam::Type(-2);
-  test_array[2] = typename TypeParam::Type(3);
-  test_array[3] = typename TypeParam::Type(-4);
-  test_array[4] = typename TypeParam::Type(5);
-  test_array[5] = typename TypeParam::Type(-6);
-  test_array[6] = typename TypeParam::Type(7);
-  test_array[7] = typename TypeParam::Type(-8);
+  test_array[0] = DataType{1};
+  test_array[1] = DataType{-2};
+  test_array[2] = DataType{3};
+  test_array[3] = DataType{-4};
+  test_array[4] = DataType{5};
+  test_array[5] = DataType{-6};
+  test_array[6] = DataType{7};
+  test_array[7] = DataType{-8};
 
-  gt_array[0] = typename TypeParam::Type(0.73105858);
-  gt_array[1] = typename TypeParam::Type(0.11920292);
-  gt_array[2] = typename TypeParam::Type(0.95257413);
-  gt_array[3] = typename TypeParam::Type(0.01798620996);
-  gt_array[4] = typename TypeParam::Type(0.993307149);
-  gt_array[5] = typename TypeParam::Type(0.002472623156635);
-  gt_array[6] = typename TypeParam::Type(0.999088948806);
-  gt_array[7] = typename TypeParam::Type(0.000335350130466);
+  gt_array[0] = fetch::math::Type<DataType>("0.73105858");
+  gt_array[1] = fetch::math::Type<DataType>("0.11920292");
+  gt_array[2] = fetch::math::Type<DataType>("0.95257413");
+  gt_array[3] = fetch::math::Type<DataType>("0.01798620996");
+  gt_array[4] = fetch::math::Type<DataType>("0.993307149");
+  gt_array[5] = fetch::math::Type<DataType>("0.002472623156635");
+  gt_array[6] = fetch::math::Type<DataType>("0.999088948806");
+  gt_array[7] = fetch::math::Type<DataType>("0.000335350130466");
 
   fetch::math::Sigmoid(test_array, test_array);
   ASSERT_EQ(test_array.size(), gt_array.size());
@@ -144,23 +148,23 @@ TYPED_TEST(SigmoidTest, exact_values)
 TYPED_TEST(SigmoidTest, sigmoid_2x2)
 {
   using SizeType = fetch::math::SizeType;
+  using DataType = typename TypeParam::Type;
   TypeParam array1{{2, 2}};
 
-  array1.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(0.3));
-  array1.Set(SizeType{0}, SizeType{1}, typename TypeParam::Type(1.2));
-  array1.Set(SizeType{1}, SizeType{0}, typename TypeParam::Type(0.7));
-  array1.Set(SizeType{1}, SizeType{1}, typename TypeParam::Type(22));
+  array1.Set(SizeType{0}, SizeType{0}, fetch::math::Type<DataType>("0.3"));
+  array1.Set(SizeType{0}, SizeType{1}, fetch::math::Type<DataType>("1.2"));
+  array1.Set(SizeType{1}, SizeType{0}, fetch::math::Type<DataType>("0.7"));
+  array1.Set(SizeType{1}, SizeType{1}, DataType{22});
 
   TypeParam output = fetch::math::Sigmoid(array1);
 
   TypeParam numpy_output{{2, 2}};
 
-  numpy_output.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(0.57444252));
-  numpy_output.Set(SizeType{0}, SizeType{1}, typename TypeParam::Type(0.76852478));
-  numpy_output.Set(SizeType{1}, SizeType{0}, typename TypeParam::Type(0.66818777));
-  numpy_output.Set(SizeType{1}, SizeType{1}, typename TypeParam::Type(1));
-
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  numpy_output.Set(SizeType{0}, SizeType{0}, fetch::math::Type<DataType>("0.57444252"));
+  numpy_output.Set(SizeType{0}, SizeType{1}, fetch::math::Type<DataType>("0.76852478"));
+  numpy_output.Set(SizeType{1}, SizeType{0}, fetch::math::Type<DataType>("0.66818777"));
+  numpy_output.Set(SizeType{1}, SizeType{1}, DataType{1});
+  ASSERT_TRUE(output.AllClose(numpy_output, fetch::math::function_tolerance<DataType>()));
 }
 
 ///////////////////
@@ -170,19 +174,20 @@ TYPED_TEST(SigmoidTest, sigmoid_2x2)
 TYPED_TEST(SigmoidTest, sigmoid_11)
 {
   using SizeType = fetch::math::SizeType;
+  using DataType = typename TypeParam::Type;
 
   TypeParam input{1};
   TypeParam output{1};
   TypeParam numpy_output{1};
 
-  input.Set(SizeType{0}, typename TypeParam::Type(0.3));
-  numpy_output.Set(SizeType{0}, typename TypeParam::Type(0));
+  input.Set(SizeType{0}, fetch::math::Type<DataType>("0.3"));
+  numpy_output.Set(SizeType{0}, DataType{0});
 
   output = fetch::math::Sigmoid(input);
 
-  numpy_output[0] = typename TypeParam::Type(0.574442516811659);
+  numpy_output[0] = fetch::math::Type<DataType>("0.574442516811659");
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(output.AllClose(numpy_output, fetch::math::function_tolerance<DataType>()));
 }
 
 }  // namespace test

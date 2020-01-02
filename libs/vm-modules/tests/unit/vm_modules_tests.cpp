@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -37,24 +37,6 @@ TEST_F(VMTests, CheckCompileAndExecute)
   static char const *TEXT = R"(
     function main()
       printLn("Hello, world");
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
-}
-
-TEST_F(VMTests, CheckRandom)
-{
-  static char const *TEXT = R"(
-    function main()
-      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
-      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
-      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
-      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
-      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
-      printLn('rnd = ' + toString(rand(0.0f, 1000.0f)));
-      printLn('rnd = ' + toString(rand(0.0, 1000.0)));
     endfunction
   )";
 

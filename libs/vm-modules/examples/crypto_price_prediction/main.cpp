@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "math/utilities/ReadCSV.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
   fetch::vm_modules::ml::BindML(*module, true);
 
   fetch::vm_modules::CreatePrint(*module);
-  fetch::vm_modules::math::BindReadCSV(*module);
+  fetch::vm_modules::math::BindReadCSV(*module, true);
 
   module->CreateFreeFunction("remove_leading_dimension", &remove_leading_dimension);
 

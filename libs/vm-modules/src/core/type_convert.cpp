@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -85,8 +85,6 @@ void CreateToString(Module &module)
   module.CreateFreeFunction("toString", &ToString<uint32_t>);
   module.CreateFreeFunction("toString", &ToString<int64_t>);
   module.CreateFreeFunction("toString", &ToString<uint64_t>);
-  module.CreateFreeFunction("toString", &ToString<float_t>);
-  module.CreateFreeFunction("toString", &ToString<double_t>);
   module.CreateFreeFunction("toString", &ToString<bool>);
   module.CreateFreeFunction("toString", &ToString<fixed_point::fp32_t>);
   module.CreateFreeFunction("toString", &ToString<fixed_point::fp64_t>);
@@ -100,8 +98,6 @@ void CreateToBool(Module &module)
   module.CreateFreeFunction("toBool", &ToBool<uint32_t>);
   module.CreateFreeFunction("toBool", &ToBool<int64_t>);
   module.CreateFreeFunction("toBool", &ToBool<uint64_t>);
-  module.CreateFreeFunction("toBool", &ToBool<float_t>);
-  module.CreateFreeFunction("toBool", &ToBool<double_t>);
 }
 
 }  // namespace vm_modules

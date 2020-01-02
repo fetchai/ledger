@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -45,7 +45,13 @@ public:
   explicit Dropout(DataType const probability, SizeType const &random_seed = 25102015)
     : probability_(probability)
   {
-    assert(probability >= 0.0 && probability <= 1.0);
+    if (probability < DataType{0} || probability > DataType{1})
+    {
+      std::stringstream ss;
+      ss << probability;
+      throw std::runtime_error("Dropout probability " + ss.str() +
+                               " is out of allowed range [0..1]");
+    }
     rng_.Seed(random_seed);
     drop_values_ = TensorType{0};
   }
@@ -100,15 +106,15 @@ public:
       auto it     = drop_values_.begin();
       while (it.is_valid())
       {
-        if (static_cast<DataType>(rng_.AsDouble()) <= probability_)
+        if (rng_.AsType<DataType>() <= probability_)
         {
-          *it     = static_cast<DataType>(1) / probability_;
+          *it     = DataType{1} / probability_;
           *out_it = (*it) * (*in_it);
         }
         else
         {
-          *it     = static_cast<DataType>(0);
-          *out_it = static_cast<DataType>(0);
+          *it     = DataType{0};
+          *out_it = DataType{0};
         }
         ++it;
         ++in_it;

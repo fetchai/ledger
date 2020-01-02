@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ namespace fetch {
 namespace vm {
 
 Parser::Parser()
-  : template_names_{"Array", "Map", "State", "ShardedState"}
+  : template_names_{"Array", "Map", "State", "ShardedState", "Pair"}
 {}
 
 void Parser::AddTemplateName(std::string name)
@@ -50,7 +50,16 @@ BlockNodePtr Parser::Parse(SourceFiles const &files, std::vector<std::string> &e
 
   for (auto const &file : files)
   {
-    filename_ = file.filename;
+    filename_                         = file.filename;
+    static const std::size_t MAX_SIZE = 128 * 1024;
+    std::size_t              size     = file.source.size();
+    if (size > MAX_SIZE)
+    {
+      std::ostringstream stream;
+      stream << filename_ << ": source exceeds maximum size";
+      errors_.push_back(stream.str());
+      break;
+    }
     Tokenise(file.source);
     index_ = -1;
     token_ = nullptr;
@@ -99,7 +108,6 @@ void Parser::Tokenise(std::string const &source)
     token.kind   = Token::Kind::EndOfInput;
     token.offset = location.offset;
     token.line   = location.line;
-    token.length = 0;
     token.text   = "";
     tokens_.push_back(token);
   }
@@ -147,6 +155,8 @@ bool Parser::ParseBlock(BlockNodePtr const &block_node)
       AddError("no matching 'contract'");
       break;
     }
+    /*
+    // Disable structs for the moment
     case Token::Kind::Struct:
     {
       child = ParseStructDefinition();
@@ -163,6 +173,7 @@ bool Parser::ParseBlock(BlockNodePtr const &block_node)
       AddError("no matching 'struct'");
       break;
     }
+    */
     case Token::Kind::AnnotationIdentifier:
     case Token::Kind::Function:
     {
@@ -290,7 +301,7 @@ bool Parser::ParseBlock(BlockNodePtr const &block_node)
       }
       else
       {
-        AddError("expected statement or block terminator");
+        AddError("expected " + block_node->text + " block terminator");
         state = false;
       }
       break;
@@ -749,12 +760,6 @@ ExpressionNodePtr Parser::ParseAnnotationLiteral()
   case Token::Kind::Integer32:
   {
     kind   = NodeKind::Integer64;
-    number = true;
-    break;
-  }
-  case Token::Kind::Float64:
-  {
-    kind   = NodeKind::Float64;
     number = true;
     break;
   }
@@ -1361,9 +1366,11 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
     {
       AddError("unrecognised token");
     }
-    else if (token_->kind == Token::Kind::UnterminatedComment)
+    else if ((token_->kind == Token::Kind::UnterminatedString) ||
+             (token_->kind == Token::Kind::UnterminatedComment) ||
+             (token_->kind == Token::Kind::MaxLinesReached))
     {
-      AddError("unterminated comment");
+      AddError("");
     }
     else
     {
@@ -1433,8 +1440,8 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
 bool Parser::IsStatementKeyword(Token::Kind kind) const
 {
   return (kind == Token::Kind::Persistent) || (kind == Token::Kind::Contract) ||
-         (kind == Token::Kind::EndContract) || (kind == Token::Kind::Struct) ||
-         (kind == Token::Kind::EndStruct) || (kind == Token::Kind::Function) ||
+         (kind == Token::Kind::EndContract) || /* (kind == Token::Kind::Struct) || */
+         /* (kind == Token::Kind::EndStruct) || */ (kind == Token::Kind::Function) ||
          (kind == Token::Kind::EndFunction) || (kind == Token::Kind::While) ||
          (kind == Token::Kind::EndWhile) || (kind == Token::Kind::For) ||
          (kind == Token::Kind::EndFor) || (kind == Token::Kind::If) ||
@@ -1582,14 +1589,6 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       parses = HandleLiteral(NodeKind::UnsignedInteger64);
       break;
 
-    case Token::Kind::Float32:
-      parses = HandleLiteral(NodeKind::Float32);
-      break;
-
-    case Token::Kind::Float64:
-      parses = HandleLiteral(NodeKind::Float64);
-      break;
-
     case Token::Kind::Fixed32:
       parses = HandleLiteral(NodeKind::Fixed32);
       break;
@@ -1720,9 +1719,11 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
         {
           AddError("unrecognised token");
         }
-        else if (token_->kind == Token::Kind::UnterminatedComment)
+        else if ((token_->kind == Token::Kind::UnterminatedString) ||
+                 (token_->kind == Token::Kind::UnterminatedComment) ||
+                 (token_->kind == Token::Kind::MaxLinesReached))
         {
-          AddError("unterminated comment");
+          AddError("");
         }
         else
         {
@@ -2164,13 +2165,25 @@ void Parser::AddError(std::string const &message)
   }
   std::ostringstream stream;
   stream << filename_ << ": line " << token_->line << ": ";
-  if (token_->kind != Token::Kind::EndOfInput)
+  if (token_->kind == Token::Kind::EndOfInput)
   {
-    stream << "error at '" << token_->text << "'";
+    stream << "error: reached end-of-input";
+  }
+  else if (token_->kind == Token::Kind::UnterminatedString)
+  {
+    stream << "error: unterminated string";
+  }
+  else if (token_->kind == Token::Kind::UnterminatedComment)
+  {
+    stream << "error: unterminated comment";
+  }
+  else if (token_->kind == Token::Kind::MaxLinesReached)
+  {
+    stream << "error: reached maximum number of lines";
   }
   else
   {
-    stream << "reached end-of-input";
+    stream << "error at '" << token_->text << "'";
   }
   if (!message.empty())
   {

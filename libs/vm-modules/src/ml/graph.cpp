@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@
 #include "vm/module.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/state_dict.hpp"
 
 using namespace fetch::vm;
 
@@ -58,8 +57,7 @@ void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
 Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
 {
   MathTensorType    t   = graph_.Evaluate(name->string(), false);
-  Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
-  (*ret).Copy(t);
+  Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t);
   return ret;
 }
 
@@ -141,17 +139,6 @@ void VMGraph::AddExp(VMPtrString const &name, VMPtrString const &input_name)
   graph_.AddNode<fetch::ml::ops::Exp<MathTensorType>>(name->string(), {input_name->string()});
 }
 
-void VMGraph::LoadStateDict(Ptr<VMStateDict> const &sd)
-{
-  graph_.LoadStateDict(sd->state_dict_);
-}
-
-Ptr<VMStateDict> VMGraph::StateDict()
-{
-  Ptr<VMStateDict> ret = this->vm_->CreateNewObject<VMStateDict>(graph_.StateDict());
-  return ret;
-}
-
 void VMGraph::Bind(Module &module, bool const enable_experimental)
 {
   if (enable_experimental)
@@ -177,8 +164,6 @@ void VMGraph::Bind(Module &module, bool const enable_experimental)
                               vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("addTranspose", &VMGraph::AddTranspose, vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("addExp", &VMGraph::AddExp, vm::MAXIMUM_CHARGE)
-        .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict, vm::MAXIMUM_CHARGE)
-        .CreateMemberFunction("stateDict", &VMGraph::StateDict, vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("serializeToString", &VMGraph::SerializeToString, vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("deserializeFromString", &VMGraph::DeserializeFromString,
                               vm::MAXIMUM_CHARGE);

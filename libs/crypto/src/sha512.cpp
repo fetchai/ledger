@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ void SHA512::Final(uint8_t *const hash)
 std::size_t SHA512::HashSizeInBytes() const
 {
   auto const size = openssl_hasher_.HashSize();
-  assert(size == size_in_bytes);
+  assert(size == SIZE_IN_BYTES);
   return size;
 }
 

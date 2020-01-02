@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -155,7 +155,7 @@ private:
       block["hash"]         = "0x" + b->hash.ToHex();
       block["previousHash"] = "0x" + b->previous_hash.ToHex();
       block["merkleHash"]   = "0x" + b->merkle_hash.ToHex();
-      block["miner"]        = b->miner.display();
+      block["miner"]        = chain::Address(b->miner_id).display();
       block["blockNumber"]  = b->block_number;
       block["timestamp"]    = b->timestamp;
       block["entropy"]      = b->block_entropy.EntropyAsU64();

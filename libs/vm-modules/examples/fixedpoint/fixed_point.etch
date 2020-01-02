@@ -56,6 +56,7 @@ function main()
   printLn(mymap[a]);
 
   var pi : Fixed64 = 3.1415fp64;
+  printLn("pi = " + toString(pi));
   printLn("exp(" + toString(d) + ") = " + toString(exp(d)));
   printLn("sin(" + toString(pi) + ") = " + toString(sin(pi)));
 
@@ -94,4 +95,12 @@ function main()
   var t = Tensor(data_shape);
 
   printLn(t.toString());
+
+  var t1 : Fixed32 = rand(5.0fp32, 6fp32);
+  var t2 : Fixed64 = rand(12fp64, 16.5fp64);
+  var t3 : Fixed128 = rand(122fp128, 123fp128);
+
+  printLn(t1);
+  printLn(t2);
+  printLn(t3);
 endfunction

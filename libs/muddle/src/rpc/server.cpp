@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ Server::Server(MuddleEndpoint &endpoint, uint16_t service, uint16_t channel)
   subscription_->SetMessageHandler(this, &Server::OnMessage);
 }
 
-bool Server::DeliverResponse(ConstByteArray const &address, network::MessageType const &data)
+bool Server::DeliverResponse(ConstByteArray const &address, network::MessageBuffer const &data)
 {
   FETCH_LOG_TRACE(LOGGING_NAME, "Server::DeliverResponse to: ", address.ToBase64(), " mdl ",
                   &endpoint_, " msg: ", data.ToHex());

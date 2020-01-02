@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -35,8 +35,6 @@ union Primitive
   uint32_t ui32;
   int64_t  i64;
   uint64_t ui64;
-  float    f32;
-  double   f64;
 
   template <typename T>
   auto Get() const noexcept;
@@ -84,16 +82,6 @@ union Primitive
   void Set(uint64_t value) noexcept
   {
     ui64 = value;
-  }
-
-  void Set(float value) noexcept
-  {
-    f32 = value;
-  }
-
-  void Set(double value) noexcept
-  {
-    f64 = value;
   }
 
   void Set(fixed_point::fp32_t const &value) noexcept
@@ -162,18 +150,6 @@ inline auto Primitive::Get<uint64_t>() const noexcept
 }
 
 template <>
-inline auto Primitive::Get<float>() const noexcept
-{
-  return f32;
-}
-
-template <>
-inline auto Primitive::Get<double>() const noexcept
-{
-  return f64;
-}
-
-template <>
 inline auto Primitive::Get<fixed_point::fp32_t>() const noexcept
 {
   return fixed_point::fp32_t::FromBase(i32);
@@ -209,19 +185,19 @@ struct Variant
     Construct(std::move(other));
   }
 
-  template <typename T, std::enable_if_t<IsPrimitive<T>::value> * = nullptr>
+  template <typename T, std::enable_if_t<IsPrimitive<T>> * = nullptr>
   Variant(T other, TypeId other_type_id) noexcept
   {
     Construct(other, other_type_id);
   }
 
-  template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
+  template <typename T, typename std::enable_if_t<IsPtr<T>> * = nullptr>
   Variant(T const &other, TypeId other_type_id) noexcept
   {
     Construct(other, other_type_id);
   }
 
-  template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
+  template <typename T, typename std::enable_if_t<IsPtr<T>> * = nullptr>
   Variant(T &&other, TypeId other_type_id) noexcept
   {
     Construct(std::forward<T>(other), other_type_id);
@@ -265,21 +241,21 @@ struct Variant
   }
 
   template <typename T>
-  std::enable_if_t<IsPrimitive<T>::value> Construct(T other, TypeId other_type_id) noexcept
+  std::enable_if_t<IsPrimitive<T>> Construct(T other, TypeId other_type_id) noexcept
   {
     primitive.Set(other);
     type_id = other_type_id;
   }
 
   template <typename T>
-  std::enable_if_t<IsPtr<T>::value> Construct(T const &other, TypeId other_type_id) noexcept
+  std::enable_if_t<IsPtr<T>> Construct(T const &other, TypeId other_type_id) noexcept
   {
     new (&object) Ptr<Object>(other);
     type_id = other_type_id;
   }
 
   template <typename T>
-  std::enable_if_t<IsPtr<T>::value> Construct(T &&other, TypeId other_type_id) noexcept
+  std::enable_if_t<IsPtr<T>> Construct(T &&other, TypeId other_type_id) noexcept
   {
     new (&object) Ptr<Object>(std::forward<T>(other));
     type_id = other_type_id;
@@ -369,7 +345,7 @@ struct Variant
   }
 
   template <typename T>
-  std::enable_if_t<IsPrimitive<T>::value> Assign(T other, TypeId other_type_id) noexcept
+  std::enable_if_t<IsPrimitive<T>> Assign(T other, TypeId other_type_id) noexcept
   {
     if (!IsPrimitive())
     {
@@ -380,7 +356,7 @@ struct Variant
   }
 
   template <typename T>
-  std::enable_if_t<IsPtr<T>::value> Assign(T const &other, TypeId other_type_id) noexcept
+  std::enable_if_t<IsPtr<T>> Assign(T const &other, TypeId other_type_id) noexcept
   {
     if (IsPrimitive())
     {
@@ -394,7 +370,7 @@ struct Variant
   }
 
   template <typename T>
-  std::enable_if_t<IsPtr<T>::value> Assign(T &&other, TypeId other_type_id) noexcept
+  std::enable_if_t<IsPtr<T>> Assign(T &&other, TypeId other_type_id) noexcept
   {
     if (IsPrimitive())
     {
@@ -408,31 +384,31 @@ struct Variant
   }
 
   template <typename T>
-  std::enable_if_t<IsVariant<T>::value> Assign(T const &other, TypeId /* other_type_id */) noexcept
+  std::enable_if_t<IsVariant<T>> Assign(T const &other, TypeId /* other_type_id */) noexcept
   {
     operator=(other);
   }
 
   template <typename T>
-  std::enable_if_t<IsVariant<T>::value> Assign(T &&other, TypeId /* other_type_id */) noexcept
+  std::enable_if_t<IsVariant<T>> Assign(T &&other, TypeId /* other_type_id */) noexcept
   {
     operator=(std::forward<T>(other));
   }
 
   template <typename T>
-  std::enable_if_t<IsPrimitive<T>::value, T> Get() const noexcept
+  std::enable_if_t<IsPrimitive<T>, T> Get() const noexcept
   {
     return primitive.Get<T>();
   }
 
   template <typename T>
-  std::enable_if_t<IsPtr<T>::value, T> Get() const noexcept
+  std::enable_if_t<IsPtr<T>, T> Get() const noexcept
   {
     return object;
   }
 
   template <typename T>
-  std::enable_if_t<IsVariant<T>::value, T> Get() const noexcept
+  std::enable_if_t<IsVariant<T>, T> Get() const noexcept
   {
     T variant;
     variant.type_id = type_id;
@@ -448,21 +424,21 @@ struct Variant
   }
 
   template <typename T>
-  std::enable_if_t<IsPrimitive<T>::value, T> Move() noexcept
+  std::enable_if_t<IsPrimitive<T>, T> Move() noexcept
   {
     type_id = TypeIds::Unknown;
     return primitive.Get<T>();
   }
 
   template <typename T>
-  std::enable_if_t<IsPtr<T>::value, T> Move() noexcept
+  std::enable_if_t<IsPtr<T>, T> Move() noexcept
   {
     type_id = TypeIds::Unknown;
     return {std::move(object)};
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsVariant<T>::value, T> Move() noexcept
+  constexpr std::enable_if_t<IsVariant<T>, T> Move() noexcept
   {
     T variant;
     variant.type_id = type_id;
@@ -520,11 +496,6 @@ struct AnyPrimitive : Variant
 };
 
 struct AnyInteger : Variant
-{
-  using Variant::Variant;
-};
-
-struct AnyFloatingPoint : Variant
 {
   using Variant::Variant;
 };

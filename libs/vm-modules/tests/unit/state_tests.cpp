@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "vm/array.hpp"
 #include "vm/fixed.hpp"
 #include "vm/map.hpp"
+#include "vm/pair.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_test_toolkit.hpp"
 
@@ -113,16 +114,148 @@ TEST_F(StateTests, MapDeserializeTest)
   EXPECT_TRUE(static_cast<bool>(map));
 }
 
+TEST_F(StateTests, PairDeserializeBothTest)
+{
+  static char const *ser_src = R"(
+    function main()
+      var data = Pair<String, String>();
+      data.first("First");
+      data.second("Second");
+      var state = State<Pair<String, String>>("pair");
+      state.set(data);
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Write("pair", _, _));
+
+  ASSERT_TRUE(toolkit.Compile(ser_src));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *deser_src = R"(
+    function main() : Pair<String, String>
+      var state = State<Pair<String, String>>("pair");
+      return state.get(Pair<String, String>());
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Exists("pair"));
+  EXPECT_CALL(toolkit.observer(), Read("pair", _, _));
+
+  ASSERT_TRUE(toolkit.Compile(deser_src));
+  Variant ret;
+  ASSERT_TRUE(toolkit.Run(&ret));
+  auto const pair{ret.Get<Ptr<IPair>>()};
+  EXPECT_TRUE(static_cast<bool>(pair));
+}
+
+TEST_F(StateTests, PairDeserializeFirstOnlyTest)
+{
+  static char const *ser_src = R"(
+    function main()
+      var data = Pair<String, String>();
+      data.first("First");
+      var state = State<Pair<String, String>>("pair");
+      state.set(data);
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Write("pair", _, _));
+
+  ASSERT_TRUE(toolkit.Compile(ser_src));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *deser_src = R"(
+    function main() : Pair<String, String>
+      var state = State<Pair<String, String>>("pair");
+      return state.get(Pair<String, String>());
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Exists("pair"));
+  EXPECT_CALL(toolkit.observer(), Read("pair", _, _));
+
+  ASSERT_TRUE(toolkit.Compile(deser_src));
+  Variant ret;
+  ASSERT_TRUE(toolkit.Run(&ret));
+  auto const pair{ret.Get<Ptr<IPair>>()};
+  EXPECT_TRUE(static_cast<bool>(pair));
+}
+
+TEST_F(StateTests, PairDeserializeSecondOnlyTest)
+{
+  static char const *ser_src = R"(
+    function main()
+      var data = Pair<String, String>();
+      data.second("Second");
+      var state = State<Pair<String, String>>("pair");
+      state.set(data);
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Write("pair", _, _));
+
+  ASSERT_TRUE(toolkit.Compile(ser_src));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *deser_src = R"(
+    function main() : Pair<String, String>
+      var state = State<Pair<String, String>>("pair");
+      return state.get(Pair<String, String>());
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Exists("pair"));
+  EXPECT_CALL(toolkit.observer(), Read("pair", _, _));
+
+  ASSERT_TRUE(toolkit.Compile(deser_src));
+  Variant ret;
+  ASSERT_TRUE(toolkit.Run(&ret));
+  auto const pair{ret.Get<Ptr<IPair>>()};
+  EXPECT_TRUE(static_cast<bool>(pair));
+}
+
+TEST_F(StateTests, PairDeserializeNoneTest)
+{
+  static char const *ser_src = R"(
+    function main()
+      var data = Pair<String, String>();
+      var state = State<Pair<String, String>>("pair");
+      state.set(data);
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Write("pair", _, _));
+
+  ASSERT_TRUE(toolkit.Compile(ser_src));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *deser_src = R"(
+    function main() : Pair<String, String>
+      var state = State<Pair<String, String>>("pair");
+      return state.get(Pair<String, String>());
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Exists("pair"));
+  EXPECT_CALL(toolkit.observer(), Read("pair", _, _));
+
+  ASSERT_TRUE(toolkit.Compile(deser_src));
+  Variant ret;
+  ASSERT_TRUE(toolkit.Run(&ret));
+  auto const pair{ret.Get<Ptr<IPair>>()};
+  EXPECT_TRUE(static_cast<bool>(pair));
+}
+
 TEST_F(StateTests, ArrayDeserializeTest)
 {
   static char const *ser_src = R"(
     function main()
-      var data = Array<Float64>(3);
-      data[0] = 0.1;
-      data[1] = 2.3;
-      data[2] = 4.5;
+      var data = Array<UInt64>(3);
+      data[0] = 1u64;
+      data[1] = 23u64;
+      data[2] = 45u64;
 
-      State<Array<Float64>>("state").set(data);
+      State<Array<UInt64>>("state").set(data);
     endfunction
   )";
 
@@ -132,9 +265,9 @@ TEST_F(StateTests, ArrayDeserializeTest)
   ASSERT_TRUE(toolkit.Run());
 
   static char const *deser_src = R"(
-    function main() : Array<Float64>
-      var state = State<Array<Float64>>("state");
-      return state.get(Array<Float64>(0));
+    function main() : Array<UInt64>
+      var state = State<Array<UInt64>>("state");
+      return state.get(Array<UInt64>(0));
     endfunction
   )";
 
@@ -150,20 +283,20 @@ TEST_F(StateTests, ArrayDeserializeTest)
   auto array{res.Get<Ptr<IArray>>()};
   ASSERT_TRUE(static_cast<bool>(array));
   ASSERT_EQ(int32_t{3}, array->Count());
-  EXPECT_EQ(0.1, array->PopFrontOne().Get<double>());
-  EXPECT_EQ(2.3, array->PopFrontOne().Get<double>());
-  EXPECT_EQ(4.5, array->PopFrontOne().Get<double>());
+  EXPECT_EQ(1, array->PopFrontOne().Get<uint64_t>());
+  EXPECT_EQ(23, array->PopFrontOne().Get<uint64_t>());
+  EXPECT_EQ(45, array->PopFrontOne().Get<uint64_t>());
 }
 
 // Regression test for issue 1072: used to segfault prior to fix
 TEST_F(StateTests, querying_state_constructed_from_null_address_fails_gracefully)
 {
   static char const *TEXT = R"(
-    function main() : Float64
+    function main() : UInt64
       var nullAddress : Address;
-      var supply = State<Float64>(nullAddress);
-      supply.set(3.7);
-      return supply.get(0.0);
+      var supply = State<UInt64>(nullAddress);
+      supply.set(3u64);
+      return supply.get(0u64);
     endfunction
   )";
 
@@ -174,18 +307,16 @@ TEST_F(StateTests, querying_state_constructed_from_null_address_fails_gracefully
 TEST_F(StateTests, querying_state_constructed_from_null_string_fails_gracefully)
 {
   static char const *TEXT = R"(
-    function main() : Float64
+    function main() : UInt64
       var nullName : String;
-      var supply = State<Float64>(nullName);
-      supply.set(3.7);
-      return supply.get(0.0);
+      var supply = State<UInt64>(nullName);
+      supply.set(3u64);
+      return supply.get(0u64);
     endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
-
-  Variant output;
-  ASSERT_FALSE(toolkit.Run(&output));
+  ASSERT_FALSE(toolkit.Run());
 }
 
 TEST_F(StateTests, serialising_compound_object_with_null_values_does_not_segfault)
@@ -245,8 +376,8 @@ TEST_F(StateTests, test_serialisation_of_complex_type)
 }
 
 template <typename T>
-std::enable_if_t<!IsPtr<T>::value> ArrayFromVariant(Variant const &array, int32_t expected_size,
-                                                    Ptr<Array<T>> &out)
+std::enable_if_t<!IsPtr<T>> ArrayFromVariant(Variant const &array, int32_t expected_size,
+                                             Ptr<Array<T>> &out)
 {
   out = array.Get<Ptr<Array<T>>>();
   ASSERT_TRUE(out);
@@ -254,7 +385,7 @@ std::enable_if_t<!IsPtr<T>::value> ArrayFromVariant(Variant const &array, int32_
 }
 
 template <typename T>
-std::enable_if_t<IsPtr<T>::value && std::is_same<IArray, std::decay_t<GetManagedType<T>>>::value>
+std::enable_if_t<IsPtr<T> && std::is_same<IArray, std::decay_t<GetManagedType<T>>>::value>
 ArrayFromVariant(Variant const &array, int32_t expected_size, Ptr<Array<T>> &out)
 {
   out = array.Get<Ptr<Array<T>>>();

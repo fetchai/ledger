@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,12 +23,14 @@
 #include "vm_modules/math/type.hpp"
 #include "vm_test_toolkit.hpp"
 
-using namespace fetch::vm;
-
 namespace {
 
+using namespace fetch;
+using namespace fetch::vm;
 using fetch::byte_array::ByteArray;
 using fetch::vm_modules::math::UInt256Wrapper;
+
+constexpr platform::Endian ENDIANESS_OF_TEST_DATA{platform::Endian::LITTLE};
 
 const ByteArray raw_32xFF{
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -131,9 +133,22 @@ public:
   static constexpr std::size_t    SIZE_IN_BITS  = 256;
   static constexpr std::size_t    SIZE_IN_BYTES = SIZE_IN_BITS / 8;
 
-  UInt256Wrapper zero{dummy_vm_ptr, dummy_typeid, 0};
+  void TearDown() override
+  {
+    if (Test::HasFailure())
+    {
+      std::cout << stdout.str() << std::endl;
+    }
+  }
+
+  UInt256Wrapper zero{
+      dummy_vm_ptr,
+      dummy_typeid,
+      0,
+  };
+  UInt256Wrapper _1{dummy_vm_ptr, UInt256Wrapper::UInt256::_1};
   UInt256Wrapper uint64max{dummy_vm_ptr, dummy_typeid, std::numeric_limits<uint64_t>::max()};
-  UInt256Wrapper maximum{dummy_vm_ptr, dummy_typeid, raw_32xFF};
+  UInt256Wrapper maximum{dummy_vm_ptr, dummy_typeid, raw_32xFF, ENDIANESS_OF_TEST_DATA};
 
   std::stringstream stdout;
   VmTestToolkit     toolkit{&stdout};
@@ -141,13 +156,13 @@ public:
 
 TEST_F(UInt256Tests, uint256_raw_construction)
 {
-  UInt256Wrapper fromStdUint64(dummy_vm_ptr, dummy_typeid, uint64_t(42));
+  UInt256Wrapper fromStdUint64{dummy_vm_ptr, dummy_typeid, uint64_t(42)};
   ASSERT_TRUE(SIZE_IN_BYTES == fromStdUint64.size());
 
-  UInt256Wrapper fromByteArray(dummy_vm_ptr, dummy_typeid, raw_32xFF);
+  UInt256Wrapper fromByteArray{dummy_vm_ptr, dummy_typeid, raw_32xFF, ENDIANESS_OF_TEST_DATA};
   ASSERT_TRUE(SIZE_IN_BYTES == fromByteArray.size());
 
-  UInt256Wrapper fromAnotherUInt256(dummy_vm_ptr, zero.number() + zero.number());
+  UInt256Wrapper fromAnotherUInt256{dummy_vm_ptr, dummy_typeid, zero.number()};
   ASSERT_TRUE(SIZE_IN_BYTES == fromAnotherUInt256.size());
 }
 
@@ -160,6 +175,8 @@ TEST_F(UInt256Tests, uint256_raw_comparisons)
   EXPECT_TRUE(zero.IsNotEqual(lesser, greater));
   EXPECT_TRUE(zero.IsGreaterThan(greater, lesser));
   EXPECT_TRUE(zero.IsLessThan(lesser, greater));
+  EXPECT_TRUE(zero.IsLessThanOrEqual(lesser, greater));
+  EXPECT_TRUE(zero.IsGreaterThanOrEqual(lesser, lesser));
 
   EXPECT_FALSE(zero.IsEqual(lesser, greater));
   EXPECT_FALSE(zero.IsGreaterThan(lesser, greater));
@@ -173,14 +190,14 @@ TEST_F(UInt256Tests, uint256_raw_increase)
   // Increase is tested via digit carriage while incrementing.
   UInt256Wrapper carriage_inside(uint64max);
 
-  carriage_inside.Increase();
+  carriage_inside.InplaceAdd(Ptr<Object>::PtrFromThis(&carriage_inside),
+                             Ptr<Object>::PtrFromThis(&_1));
 
   EXPECT_EQ(carriage_inside.number().ElementAt(0), uint64_t(0));
   EXPECT_EQ(carriage_inside.number().ElementAt(1), uint64_t(1));
 
   UInt256Wrapper overcarriage(maximum);
-
-  overcarriage.Increase();
+  overcarriage.InplaceAdd(Ptr<Object>::PtrFromThis(&overcarriage), Ptr<Object>::PtrFromThis(&_1));
 
   ASSERT_TRUE(
       zero.IsEqual(Ptr<Object>::PtrFromThis(&zero), Ptr<Object>::PtrFromThis(&overcarriage)));
@@ -193,10 +210,12 @@ TEST_F(UInt256Tests, uint256_comparisons)
       var uint64_max = 18446744073709551615u64;
       var smaller = UInt256(uint64_max);
       var bigger = UInt256(uint64_max);
-      bigger.increase();
+      bigger += UInt256(1u64);
 
       assert(smaller < bigger, "1<2 is false!");
       assert((smaller > bigger) == false, "1>2 is true!");
+      assert(smaller <= bigger, "1<=2 is false!");
+      assert((smaller >= bigger) == false, "1>=2 is true!");
       assert(smaller != bigger, "1!=2 is false!");
       assert((smaller == bigger) == false, "1==2 is true!");
     endfunction
@@ -206,29 +225,93 @@ TEST_F(UInt256Tests, uint256_comparisons)
   EXPECT_TRUE(toolkit.Run());
 }
 
-TEST_F(UInt256Tests, uint256_assignment)
+TEST_F(UInt256Tests, uint256_shallow_copy)
 {
-  static constexpr char const *TEXT = R"(
-    function main()
-      var a = UInt256(42u64);
-      var b = UInt256(0u64);
+  static constexpr char const *SOURCE = R"(
+      function main()
+        var a = UInt256(42u64);
+        var b = UInt256(0u64);
 
-      a = b;
-      assert(a == b, "a == b failed!");
+        a = b;
+        assert(a == b, "shallow copy failed!");
 
-      a = SHA256().final();
-      // e.g. a == e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+        a += UInt256(1u64);
 
-      assert(a != b, "a != b failed!");
+        assert(a == b, "shallow copy failed!");
+      endfunction
+    )";
 
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
   EXPECT_TRUE(toolkit.Run());
 }
 
-TEST_F(UInt256Tests, uint256_addition_subtraction)
+TEST_F(UInt256Tests, uint256_deep_copy)
+{
+  static constexpr char const *SOURCE = R"(
+      function main()
+        var a = UInt256(42u64);
+        var b = UInt256(0u64);
+        var _1 = UInt256(1u64);
+
+        a = b.copy();
+        assert(a == b, "deep copy failed!");
+
+        b += _1;
+        assert(a < b, "a is corrupted by increasing b!");
+
+        a += _1;
+        assert(a == b, "b is corrupted by increasing a!");
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SOURCE));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_trivial_addition)
+{
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(18446744073709551615u64);
+        var b = UInt256(18446744073709551615u64);
+        assert(a == b, "Initial constants not equal!");
+
+        var zero = UInt256(0u64);
+        var result = a + zero;
+        assert(result == a, "a+0 != a");
+
+        result = a + b;
+        assert(result > a, "a+b <= a");
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_trivial_subtraction)
+{
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(18446744073709551615u64);
+        var b = UInt256(18446744073709551615u64);
+        assert(a == b, "Initial constants not equal!");
+
+        var zero = UInt256(0u64);
+        var result = a - zero;
+        assert(result == a, "a-0 != a");
+
+        result = a + b;
+        result = result - b;
+        assert(result == a, "a+b-b != a");
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_addition_and_subtraction_together)
 {
   static constexpr char const *SRC = R"(
       function main()
@@ -238,22 +321,7 @@ TEST_F(UInt256Tests, uint256_addition_subtraction)
 
         var zero = UInt256(0u64);
 
-        var result = a - zero;
-        assert(result == a, "a-0 != a");
-
-        result = a + zero;
-        assert(result == a, "a+0 != a");
-
-        result = a - a;
-        assert(result == zero, "a-a != 0");
-
-        result = a + b;
-        assert(result > a, "a+b < a");
-
-        result = result - b;
-        assert(result == a, "a+b-b != a");
-
-        result = b - a + a - b;
+        var result = b - a + a - b;
         assert(result == zero, "b - a + a - b != 0");
 
         assert(a + a == b + b, "a + a != b + b");
@@ -261,6 +329,51 @@ TEST_F(UInt256Tests, uint256_addition_subtraction)
 
         assert(a == b);
 
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_addition_exact_match_test)
+{
+  // exact match addition test based on result from following python script
+  // x = 18446744073709551
+  // y = 14543531527343513
+  // z = x + y
+  // print(z)
+
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(18446744073709551u64);
+        var b = UInt256(14543531527343513u64);
+        var c = UInt256(32990275601053064u64);
+        var result = UInt256(0u64);
+        result = a + b;
+        assert(result == c, "a+b != c");
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_subtraction_exact_match_test)
+{
+  // exact match subtraction test based on result from following python script
+  // x = 1844674407370955161
+  // y = 1564837591513245651
+  // z = x - y
+  // print(z)
+
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(18446744073709551615u64);
+        var b = UInt256(15648375915132456516u64);
+        var c = UInt256(2798368158577095099u64);
+        var result = a - b;
+        assert(result == c, "a+b != c");
       endfunction
     )";
 
@@ -279,7 +392,7 @@ TEST_F(UInt256Tests, uint256_inplace_addition_subtraction)
 
           var result = UInt256(0u64);
           result += a;
-          assert(result == b, "+= a failed!");
+          assert(result == a, "+= a failed!");
 
           result -= b;
           assert(result == zero, "-= b failed!");
@@ -298,7 +411,57 @@ TEST_F(UInt256Tests, uint256_inplace_addition_subtraction)
   EXPECT_TRUE(toolkit.Run());
 }
 
-TEST_F(UInt256Tests, uint256_multiplication_division)
+TEST_F(UInt256Tests, uint256_inplace_addition_exact_match_test)
+{
+  // exact match addition test based on result from following python script
+  // x = 123459188422188846
+  // y = 841215164823777945
+  // z = x + y
+  // print(z)
+
+  // exact match addition test based on result from python computation
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(123459188422188846u64);
+        var b = UInt256(841215164823777945u64);
+        var c = UInt256(964674353245966791u64);
+
+        a += b;
+        assert(a == c, "a += b != c");
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_inplace_subtraction_exact_match_test)
+{
+  // exact match subtraction test based on result from following python script
+  // x = 123459188422188846
+  // y = 41215164823777945
+  // z = x - y
+  // print(z)
+
+  // exact match addition test based on result from python computation
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(123459188422188846u64);
+        var b = UInt256(41215164823777945u64);
+        var c = UInt256(82244023598410901u64);
+
+        a -= b;
+        assert(a == c, "a -= b != c");
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_trivial_multiplication)
 {
   static constexpr char const *SRC = R"(
       function main()
@@ -313,7 +476,27 @@ TEST_F(UInt256Tests, uint256_multiplication_division)
          result = a * zero;
          assert(result == zero, "*0 result is not 0!");
 
-         result = (a * a) / (a * a);
+         assert(a * b * one == one * b * a, "Multiplication is not commutative!");
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_trivial_division)
+{
+  static constexpr char const *SRC = R"(
+      function main()
+         var a = UInt256(18446744073709551615u64);
+         var b = UInt256(9000000000000000000u64);
+
+         var two = UInt256(2u64);
+         var zero = UInt256(0u64);
+         var one  = UInt256(1u64);
+
+         var result = (a * a) / (a * a);
          assert(result == one, "a/a is not 1!");
 
          result = zero / a;
@@ -322,13 +505,56 @@ TEST_F(UInt256Tests, uint256_multiplication_division)
          result = a / one;
          assert(result == a, "/1 result is wrong!");
 
-         assert(a * b * one == one * b * a, "Multiplication is not commutative!");
-
          result = a * UInt256(3u64);
          result = result / a;
          assert(result == UInt256(3u64), "Division if wrong!");
 
          assert((a / ( a / two)) / two == one, "Division order is wrong!");
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_multiplication_exact_match_test)
+{
+  // exact match multiplication test based on result from following python script
+  // x = 146723186
+  // y = 134592642
+  // z = x + y
+  // print(z)
+
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(146723186u64);
+        var b = UInt256(134592642u64);
+        var c = UInt256(19747861246397412u64);
+        var result = UInt256(0u64);
+        result = a * b;
+        assert(result == c, "a+b != c");
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  EXPECT_TRUE(toolkit.Run());
+}
+
+TEST_F(UInt256Tests, uint256_division_exact_match_test)
+{
+  // exact match subtraction test based on result from following python script
+  // x = 18446744073709551615
+  // y = 145435315
+  // z = x / y
+  // print(z)
+
+  static constexpr char const *SRC = R"(
+      function main()
+        var a = UInt256(18446744073709551615u64);
+        var b = UInt256(145435315u64);
+        var c = UInt256(126838134697u64);
+        var result = a / b;
+        assert(result == c, "a+b != c");
       endfunction
     )";
 
@@ -411,53 +637,12 @@ TEST_F(UInt256Tests, uint256_size)
   EXPECT_TRUE(SIZE_IN_BYTES == size);
 }
 
-TEST_F(UInt256Tests, uint256_logValue)
-{
-  static constexpr double LOGARITHM_TOLERANCE  = 5e-4;
-  static constexpr double CONVERSION_TOLERANCE = 0.1;
-
-  for (const auto &input : TO_DOUBLE_INPUTS)
-  {
-    using namespace std;
-    UInt256Wrapper n1(dummy_vm_ptr, dummy_typeid, input.first);
-
-    const auto as_double  = n1.ToFloat64();
-    const auto result     = n1.LogValue();
-    const auto exp_double = input.second;
-    const auto expected   = std::log(exp_double);
-
-    EXPECT_NEAR(as_double, exp_double, exp_double * CONVERSION_TOLERANCE);
-    EXPECT_NEAR(result, expected, expected * LOGARITHM_TOLERANCE);
-  }
-
-  static constexpr char const *TEXT = R"(
-          function main() : Float64
-            var number : UInt256 = UInt256(18446744073709551615u64);
-            var logY : Float64 = number.logValue();
-            return logY;
-          endfunction
-        )";
-
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-  auto const result = res.Get<double>();
-
-  double const expected = std::log(18446744073709551615ull);
-
-  EXPECT_NEAR(result, expected, expected * LOGARITHM_TOLERANCE);
-}
-
 TEST_F(UInt256Tests, uint256_type_casts)
 {
   static constexpr char const *TEXT = R"(
       function main()
           var test : UInt256 = UInt256(9000000000000000000u64);
           var correct : UInt64 = 9000000000000000000u64;
-
-          var test_float64 = test.toFloat64();
-          var correct_float64 = toFloat64(correct);
-          assert(test_float64 == correct_float64, "toFloat64(...) failed");
 
           var test_int32 = toInt32(test);
           var correct_int32 = toInt32(correct);
@@ -480,24 +665,23 @@ TEST_F(UInt256Tests, uint256_type_casts)
   EXPECT_TRUE(toolkit.Run());
 }
 
-// Disabled until UInt256 constructor from bytearray fix/rework.
-TEST_F(UInt256Tests, DISABLED_uint256_to_string)
+TEST_F(UInt256Tests, uint256_to_string)
 {
   static constexpr char const *TEXT = R"(
       function main()
           var test : UInt256 = UInt256(9000000000000000000u64);
           var test_str : String = toString(test);
           var expected_str_in_big_endian_enc : String =
-                "0000000000000000000000000000000000000000000000007ce66c50e2840000";
+          "0000000000000000000000000000000000000000000000007ce66c50e2840000";
           assert(test_str == expected_str_in_big_endian_enc, "toString(...) failed");
       endfunction
     )";
+
   ASSERT_TRUE(toolkit.Compile(TEXT));
   EXPECT_TRUE(toolkit.Run());
 }
 
-// Disabled until UInt256 constructor from bytearray fix/rework.
-TEST_F(UInt256Tests, DISABLED_uint256_sha256_assignment)
+TEST_F(UInt256Tests, uint256_sha256_assignment)
 {
   // This test uses a SHA256 hash from empty string
   // 0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
@@ -509,16 +693,22 @@ TEST_F(UInt256Tests, DISABLED_uint256_sha256_assignment)
   // 0x141cfc9842c4b0e3, which indicated that either SHA256().final() serialization,
   // or UInt256 constructor-from-bytearray is incorrect.
   static constexpr char const *TEXT = R"(
-        function main() : Bool
-            var test : UInt256 = SHA256().final();
-            var asU64 = toUint64(test);
-            return asU64 == 11859553537011923029u64;
+        function main()
+            var sha256hasher = SHA256();
+
+            sha256hasher.update("Hello World!");
+            var acquired_digest: UInt256 = sha256hasher.final();
+
+            var expected_digest_BigEndian = Buffer(0);
+            expected_digest_BigEndian.fromHex("7F83B1657FF1FC53B92DC18148A1D65DFC2D4B1FA3D677284ADDD200126D9069");
+
+            var acquired_digest_buffer = toBuffer(acquired_digest);
+
+            assert(acquired_digest_buffer == expected_digest_BigEndian, "Resulting digest '0x" + acquired_digest_buffer.toHex() + "' does not match expected digest '0x" + expected_digest_BigEndian.toHex() + "'");
         endfunction
       )";
+
   ASSERT_TRUE(toolkit.Compile(TEXT));
-  Variant res;
-  ASSERT_TRUE(toolkit.Run(&res));
-  auto const result_is_ok = res.Get<bool>();
-  EXPECT_TRUE(result_is_ok);
+  EXPECT_TRUE(toolkit.Run());
 }
 }  // namespace

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_addres
 {
   StateAdapter storage_adapter{storage_, "fetch.token"};
 
-  ContractContext         context{&token_contract_, contract_address, &storage_adapter, 0};
+  ContractContext         context{&token_contract_, contract_address, nullptr, &storage_adapter, 0};
   ContractContextAttacher raii(token_contract_, context);
 
   uint64_t const balance = token_contract_.GetBalance(contract_address);

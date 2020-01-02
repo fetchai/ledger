@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -41,8 +41,11 @@ void Gelu(ArrayType const &t, ArrayType &ret)
   assert(t.size() == ret.size());
   using DataType = typename ArrayType::Type;
 
-  DataType one{1}, half{static_cast<DataType>(0.5)}, three{static_cast<DataType>(3)},
-      coeff1{static_cast<DataType>(0.797885)}, coeff2{static_cast<DataType>(0.035677)};
+  DataType  one{1};
+  DataType  half = Type<DataType>("0.5");
+  DataType  three{3};
+  DataType  coeff1 = Type<DataType>("0.797885");
+  DataType  coeff2 = Type<DataType>("0.035677");
   ArrayType intermediate(t.shape());
 
   Multiply(t, coeff1, intermediate);

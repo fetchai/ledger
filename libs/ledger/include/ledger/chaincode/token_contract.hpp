@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -56,7 +56,6 @@ public:
   bool     TransferTokens(chain::Transaction const &tx, chain::Address const &to, uint64_t amount);
 
   // transaction handlers
-  Result CreateWealth(chain::Transaction const &tx);
   Result UpdateDeed(chain::Transaction const &tx);
   Result Transfer(chain::Transaction const &tx);
   Result AddStake(chain::Transaction const &tx);
@@ -65,6 +64,7 @@ public:
 
   // queries
   Status Balance(Query const &query, Query &response);
+  Status QueryDeed(Query const &query, Query &response);
   Status Stake(Query const &query, Query &response);
   Status CooldownStake(Query const &query, Query &response);
 

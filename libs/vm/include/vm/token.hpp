@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ struct Token
 {
   enum class Kind : uint16_t
   {
-    EndOfInput = 0,
-    Unknown,
+    Unknown = 0,
+    EndOfInput,
     Integer8,
     UnsignedInteger8,
     Integer16,
@@ -37,14 +37,13 @@ struct Token
     UnsignedInteger32,
     Integer64,
     UnsignedInteger64,
-    Float32,
-    Float64,
     Fixed32,
     Fixed64,
     Fixed128,
     String,
-    BadString,
+    UnterminatedString,
     UnterminatedComment,
+    MaxLinesReached,
     True,
     False,
     Null,
@@ -108,7 +107,6 @@ struct Token
   Kind        kind;
   uint32_t    offset{};
   uint16_t    line{};
-  uint16_t    length{};
   std::string text;
 };
 

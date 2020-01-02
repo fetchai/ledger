@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/standard_functions/sqrt.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -87,7 +88,7 @@ public:
     TensorType ret_error_signal(inputs.at(0)->shape());
 
     fetch::math::Sqrt((*inputs.at(0)), ret_error_signal);
-    fetch::math::Divide(static_cast<DataType>(0.5), ret_error_signal, ret_error_signal);
+    fetch::math::Divide(fetch::math::Type<DataType>("0.5"), ret_error_signal, ret_error_signal);
     fetch::math::Multiply(error_signal, ret_error_signal, ret_error_signal);
 
     return {ret_error_signal};

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -63,10 +63,16 @@ public:
 
   static Route FromString(byte_array::ByteArray path)
   {
-    // TODO(issue 35): No support for continued paths  atm.
+    // TODO(issue 35): No support for continued paths atm.
     Route ret;
-    ret.path_     = "";
     ret.original_ = path;
+
+    if (path == "/")
+    {
+      ret.AddMatch(path);
+      ret.path_ = std::move(path);
+      return ret;
+    }
 
     std::size_t last = 0;
     std::size_t i    = 1;
@@ -76,7 +82,7 @@ public:
       {
         std::size_t count = 1;
         std::size_t j     = i + 1;
-        while ((j < path.size()) && (count != 0))
+        while (j < path.size() && count != 0)
         {
           count +=
               static_cast<std::size_t>(path[j] == '(') - static_cast<std::size_t>(path[j] == ')');

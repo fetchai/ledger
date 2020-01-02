@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ AbstractConnection::WeakPointerType AbstractConnection::connection_pointer()
   return shared_from_this();
 }
 
-void AbstractConnection::OnMessage(std::function<void(network::MessageType const &msg)> const &f)
+void AbstractConnection::OnMessage(std::function<void(network::MessageBuffer const &msg)> const &f)
 {
   FETCH_LOCK(callback_mutex_);
   on_message_ = f;
@@ -148,9 +148,9 @@ void AbstractConnection::SignalLeave()
   FETCH_LOG_DEBUG(LOGGING_NAME, "SignalLeave is done");
 }
 
-void AbstractConnection::SignalMessage(network::MessageType const &msg)
+void AbstractConnection::SignalMessage(network::MessageBuffer const &msg)
 {
-  std::function<void(network::MessageType const &)> cb;
+  std::function<void(network::MessageBuffer const &)> cb;
   {
     FETCH_LOCK(callback_mutex_);
     cb = on_message_;

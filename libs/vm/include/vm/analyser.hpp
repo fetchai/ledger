@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -93,6 +93,18 @@ private:
   static std::string const CONSTRUCTOR;
   static std::string const GET_INDEXED_VALUE;
   static std::string const SET_INDEXED_VALUE;
+
+  static const uint16_t MAX_NESTED_BLOCKS                    = 256;
+  static const uint16_t MAX_STATE_DEFINITIONS                = 256;
+  static const uint16_t MAX_CONTRACT_DEFINITIONS             = 64;
+  static const uint16_t MAX_FUNCTIONS_PER_CONTRACT           = 256;
+  static const uint16_t MAX_USER_DEFINED_TYPES               = 256;
+  static const uint16_t MAX_USER_DEFINED_INSTANTIATION_TYPES = 256;
+  static const uint16_t MAX_FREE_FUNCTIONS                   = 256;
+  static const uint16_t MAX_MEMBER_FUNCTIONS_PER_TYPE        = 256;
+  static const uint16_t MAX_MEMBER_VARIABLES_PER_TYPE        = 256;
+  static const uint16_t MAX_PARAMETERS_PER_FUNCTION          = 16;
+  static const uint16_t MAX_LOCALS_PER_FUNCTION              = 256;
 
   using OperatorMap = std::unordered_map<NodeKind, Operator>;
 
@@ -229,6 +241,22 @@ private:
     return list;
   }
 
+  struct FatalErrorException : public std::exception
+  {
+    FatalErrorException(std::string filename__, uint16_t line__, std::string message__)
+      : filename{std::move(filename__)}
+      , line{line__}
+      , message{std::move(message__)}
+    {}
+    const char *what() const noexcept override
+    {
+      return message.c_str();
+    }
+    std::string filename;
+    uint16_t    line{};
+    std::string message;
+  };
+
   OperatorMap       operator_map_;
   TypeMap           type_map_;
   StringSet         type_set_;
@@ -250,8 +278,6 @@ private:
   TypePtr        uint32_type_;
   TypePtr        int64_type_;
   TypePtr        uint64_type_;
-  TypePtr        float32_type_;
-  TypePtr        float64_type_;
   TypePtr        fixed32_type_;
   TypePtr        fixed64_type_;
   TypePtr        fixed128_type_;
@@ -262,9 +288,9 @@ private:
   TypePtr        any_type_;
   TypePtr        any_primitive_type_;
   TypePtr        any_integer_type_;
-  TypePtr        any_floating_point_type_;
   TypePtr        array_type_;
   TypePtr        map_type_;
+  TypePtr        pair_type_;
   TypePtr        sharded_state_type_;
   TypePtr        state_type_;
   TypePtr        initialiser_list_type_;
@@ -277,12 +303,18 @@ private:
   FunctionPtr       sharded_state_constructor_;
   NameToTypePtrMap  state_definitions_;
   NameToTypePtrMap  contract_definitions_;
+  uint16_t          num_state_definitions_{};
+  uint16_t          num_contract_definitions_{};
+  uint16_t          num_free_functions_{};
+  uint16_t          num_user_defined_types_{};
+  uint16_t          num_user_defined_instantiation_types_{};
   FunctionPtr       function_;
   NodePtr           use_any_node_;
   FileErrorsArray   file_errors_array_;
 
   void AddError(uint16_t line, std::string const &message);
   void AddError(std::string const &filename, uint16_t line, std::string const &message);
+  void CheckLocals(uint16_t line);
 
   void BuildBlock(BlockNodePtr const &block_node);
   void BuildContractDefinition(BlockNodePtr const &contract_definition_node);

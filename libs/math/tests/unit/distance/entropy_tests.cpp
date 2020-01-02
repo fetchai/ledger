@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -37,12 +37,13 @@ TYPED_TEST(EntropyTest, entropy)
 
   ArrayType A(4);
 
-  A.Set(SizeType{0}, DataType(0.1));
-  A.Set(SizeType{1}, DataType(0.2));
-  A.Set(SizeType{2}, DataType(0.3));
-  A.Set(SizeType{3}, DataType(0.4));
+  A.Set(SizeType{0}, fetch::math::Type<DataType>("0.1"));
+  A.Set(SizeType{1}, fetch::math::Type<DataType>("0.2"));
+  A.Set(SizeType{2}, fetch::math::Type<DataType>("0.3"));
+  A.Set(SizeType{3}, fetch::math::Type<DataType>("0.4"));
 
-  EXPECT_NEAR(double(statistics::Entropy(A)), 1.84643934467102, 1e-4);
+  EXPECT_NEAR(double(statistics::Entropy(A)), 1.84643934467102,
+              double(fetch::math::function_tolerance<DataType>()));
 }
 
 }  // namespace test

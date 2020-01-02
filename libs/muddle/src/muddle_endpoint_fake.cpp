@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -135,12 +135,6 @@ void FakeMuddleEndpoint::Broadcast(uint16_t service, uint16_t channel, Payload c
   Sign(packet);
 
   FakeNetwork::BroadcastPacket(packet);
-}
-
-Response FakeMuddleEndpoint::Exchange(Address const & /*address*/, uint16_t /*service*/,
-                                      uint16_t /*channel*/, Payload const & /*request*/)
-{
-  throw std::runtime_error("Exchange functionality not implemented");
 }
 
 SubscriptionPtr FakeMuddleEndpoint::Subscribe(uint16_t service, uint16_t channel)

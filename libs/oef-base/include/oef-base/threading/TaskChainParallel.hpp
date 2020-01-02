@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include <utility>
 
 #include "ExitState.hpp"
+#include "core/mutex.hpp"
 #include "logging/logging.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 
@@ -85,7 +86,7 @@ public:
   {
     auto id = this->GetTaskId();
     {
-      std::lock_guard<std::mutex> lock(result_mutex_);
+      FETCH_LOCK(result_mutex_);
       if ((results_.size() + errored_tasks_) == num_of_tasks_)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Task(", id, ") done!");

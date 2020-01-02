@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ struct BlockEntropy : public BlockEntropyInterface
   using GroupPublicKey        = byte_array::ConstByteArray;
   using MemberPublicKey       = byte_array::ConstByteArray;
   using MemberSignature       = byte_array::ConstByteArray;
-  using Confirmations         = std::map<MemberPublicKey, MemberSignature>;
+  using Confirmations         = std::map<uint16_t, MemberSignature>;
   using GroupSignature        = byte_array::ConstByteArray;
   using ECDSASignature        = byte_array::ConstByteArray;
   using NotarisationKey       = ledger::NotarisationManager::PublicKey;
@@ -54,8 +54,7 @@ struct BlockEntropy : public BlockEntropyInterface
 
   // The block this is relevant to
   uint64_t block_number = 0;
-  // The hash of the above (when new cabinet) note, this could be implicit. Is not
-  // serialized.
+  // The hash of the above (when new cabinet) note, this is populated on deser.
   Digest digest;
 
   // In the case of a new cabinet, personal signatures of the hash
@@ -75,6 +74,9 @@ struct BlockEntropy : public BlockEntropyInterface
   uint64_t EntropyAsU64() const override;
   void     HashSelf();
   bool     IsAeonBeginning() const;
+
+  // Helper function - convert to the index used in the confirmations
+  uint16_t ToQualIndex(MuddleAddress const &member) const;
 };
 
 }  // namespace beacon
@@ -123,6 +125,11 @@ public:
     map.ExpectKeyGetValue(NOTARISATION_KEYS, member.aeon_notarisation_keys);
     map.ExpectKeyGetValue(NOTARISATION, member.block_notarisation.first);
     map.ExpectKeyGetValue(NOTARISATION_MEMBERS, member.block_notarisation.second);
+
+    if (!member.confirmations.empty())
+    {
+      member.HashSelf();
+    }
   }
 };
 }  // namespace serializers

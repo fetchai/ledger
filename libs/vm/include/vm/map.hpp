@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <map>
 
 namespace fetch {
 namespace vm {
@@ -36,6 +37,11 @@ public:
   virtual TemplateParameter2 GetIndexedValue(TemplateParameter1 const &key)                    = 0;
   virtual void SetIndexedValue(TemplateParameter1 const &key, TemplateParameter2 const &value) = 0;
 
+  template <typename Key, template <typename, typename> class Container>
+  static Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id);
+
+  static inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id);
+
 protected:
   IMap(VM *vm, TypeId type_id)
     : Object(vm, type_id)
@@ -43,60 +49,25 @@ protected:
 };
 
 template <typename T, typename = void>
-struct H;
+struct MapComparator;
 
-template <>
-struct H<fixed_point::fp32_t, void>
+template <typename T>
+struct MapComparator<T, IfIsPrimitive<T>>
 {
-  std::size_t operator()(TemplateParameter1 const &key) const
+  constexpr bool operator()(fetch::vm::TemplateParameter1 const &lhs,
+                            fetch::vm::TemplateParameter1 const &rhs) const
   {
-    return std::hash<int32_t>()(key.primitive.Get<int32_t>());
-  }
-};
-
-template <>
-struct H<fixed_point::fp64_t, void>
-{
-  std::size_t operator()(TemplateParameter1 const &key) const
-  {
-    return std::hash<int64_t>()(key.primitive.Get<int64_t>());
+    return lhs.primitive.Get<T>() < rhs.primitive.Get<T>();
   }
 };
 
 template <typename T>
-struct H<T, std::enable_if_t<IsPrimitive<T>::value>>
+struct MapComparator<T, IfIsPtr<T>>
 {
-  std::size_t operator()(TemplateParameter1 const &key) const
+  constexpr bool operator()(fetch::vm::TemplateParameter1 const &lhs,
+                            fetch::vm::TemplateParameter1 const &rhs) const
   {
-    return std::hash<T>()(key.primitive.Get<T>());
-  }
-};
-
-template <typename T>
-struct H<T, std::enable_if_t<IsPtr<T>::value>>
-{
-  std::size_t operator()(TemplateParameter1 const &key) const
-  {
-    return key.object->GetHashCode();
-  }
-};
-
-template <typename T, typename = void>
-struct E;
-template <typename T>
-struct E<T, std::enable_if_t<IsPrimitive<T>::value>>
-{
-  bool operator()(TemplateParameter1 const &lhs, TemplateParameter1 const &rhs) const
-  {
-    return math::IsEqual(lhs.primitive.Get<T>(), rhs.primitive.Get<T>());
-  }
-};
-template <typename T>
-struct E<T, std::enable_if_t<IsPtr<T>::value>>
-{
-  bool operator()(TemplateParameter1 const &lhs, TemplateParameter1 const &rhs) const
-  {
-    return lhs.object->IsEqual(lhs.object, rhs.object);
+    return lhs.object->IsLessThan(lhs.object, rhs.object);
   }
 };
 
@@ -126,13 +97,13 @@ struct Map : public IMap
   }
 
   template <typename U>
-  std::enable_if_t<IsPrimitive<U>::value, TemplateParameter2 *> Get(TemplateParameter1 const &key)
+  IfIsPrimitive<U, TemplateParameter2 *> Get(TemplateParameter1 const &key)
   {
     return Find(key);
   }
 
   template <typename U>
-  std::enable_if_t<IsPtr<U>::value, TemplateParameter2 *> Get(TemplateParameter1 const &key)
+  IfIsPtr<U, TemplateParameter2 *> Get(TemplateParameter1 const &key)
   {
     if (key.object)
     {
@@ -154,15 +125,13 @@ struct Map : public IMap
   }
 
   template <typename U>
-  std::enable_if_t<IsPrimitive<U>::value, void> Store(TemplateParameter1 const &key,
-                                                      TemplateParameter2 const &value)
+  IfIsPrimitive<U> Store(TemplateParameter1 const &key, TemplateParameter2 const &value)
   {
     map[key] = value;
   }
 
   template <typename U>
-  std::enable_if_t<IsPtr<U>::value, void> Store(TemplateParameter1 const &key,
-                                                TemplateParameter2 const &value)
+  IfIsPtr<U> Store(TemplateParameter1 const &key, TemplateParameter2 const &value)
   {
     if (key.object)
     {
@@ -232,12 +201,11 @@ struct Map : public IMap
     return true;
   }
 
-  std::unordered_map<TemplateParameter1, TemplateParameter2, H<Key>, E<Key>> map;
+  std::map<TemplateParameter1, TemplateParameter2, MapComparator<Key>> map;
 
 private:
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPtr<U>::value, bool> SerializeElement(MsgPackSerializer &          buffer,
-                                                           TemplateParameterType const &v)
+  IfIsPtr<U, bool> SerializeElement(MsgPackSerializer &buffer, TemplateParameterType const &v)
   {
     if (v.object == nullptr)
     {
@@ -249,17 +217,15 @@ private:
   }
 
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPrimitive<U>::value, bool> SerializeElement(MsgPackSerializer &buffer,
-                                                                 TemplateParameterType const &v)
+  IfIsPrimitive<U, bool> SerializeElement(MsgPackSerializer &buffer, TemplateParameterType const &v)
   {
     buffer << v.template Get<U>();
     return true;
   }
 
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPtr<U>::value, bool> DeserializeElement(TypeId                 type_id,
-                                                             MsgPackSerializer &    buffer,
-                                                             TemplateParameterType &v)
+  IfIsPtr<U, bool> DeserializeElement(TypeId type_id, MsgPackSerializer &buffer,
+                                      TemplateParameterType &v)
   {
     if (!vm_->IsDefaultSerializeConstructable(type_id))
     {
@@ -273,9 +239,9 @@ private:
   }
 
   template <typename U, typename TemplateParameterType>
-  std::enable_if_t<IsPrimitive<U>::value, bool> DeserializeElement(TypeId                 type_id,
-                                                                   MsgPackSerializer &    buffer,
-                                                                   TemplateParameterType &v)
+  IfIsPrimitive<U, bool> DeserializeElement(TypeId type_id,
+
+                                            MsgPackSerializer &buffer, TemplateParameterType &v)
   {
     U data;
     buffer >> data;
@@ -285,7 +251,7 @@ private:
 };
 
 template <typename Key, template <typename, typename> class Container = Map>
-Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
+Ptr<IMap> IMap::inner(TypeId value_type_id, VM *vm, TypeId type_id)
 {
   switch (value_type_id)
   {
@@ -325,14 +291,6 @@ Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
   {
     return Ptr<IMap>(new Container<Key, uint64_t>(vm, type_id));
   }
-  case TypeIds::Float32:
-  {
-    return Ptr<IMap>(new Container<Key, float>(vm, type_id));
-  }
-  case TypeIds::Float64:
-  {
-    return Ptr<IMap>(new Container<Key, double>(vm, type_id));
-  }
   case TypeIds::Fixed32:
   {
     return Ptr<IMap>(new Container<Key, fixed_point::fp32_t>(vm, type_id));
@@ -348,65 +306,57 @@ Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
   }  // switch
 }
 
-inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id)
+inline Ptr<IMap> IMap::outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id)
 {
   switch (key_type_id)
   {
   case TypeIds::Bool:
   {
-    return inner<uint8_t>(value_type_id, vm, type_id);
+    return inner<uint8_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::Int8:
   {
-    return inner<int8_t>(value_type_id, vm, type_id);
+    return inner<int8_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt8:
   {
-    return inner<uint8_t>(value_type_id, vm, type_id);
+    return inner<uint8_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::Int16:
   {
-    return inner<int16_t>(value_type_id, vm, type_id);
+    return inner<int16_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt16:
   {
-    return inner<uint16_t>(value_type_id, vm, type_id);
+    return inner<uint16_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::Int32:
   {
-    return inner<int32_t>(value_type_id, vm, type_id);
+    return inner<int32_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt32:
   {
-    return inner<uint32_t>(value_type_id, vm, type_id);
+    return inner<uint32_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::Int64:
   {
-    return inner<int64_t>(value_type_id, vm, type_id);
+    return inner<int64_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::UInt64:
   {
-    return inner<uint64_t>(value_type_id, vm, type_id);
-  }
-  case TypeIds::Float32:
-  {
-    return inner<float>(value_type_id, vm, type_id);
-  }
-  case TypeIds::Float64:
-  {
-    return inner<double>(value_type_id, vm, type_id);
+    return inner<uint64_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::Fixed32:
   {
-    return inner<fixed_point::fp32_t>(value_type_id, vm, type_id);
+    return inner<fixed_point::fp32_t, Map>(value_type_id, vm, type_id);
   }
   case TypeIds::Fixed64:
   {
-    return inner<fixed_point::fp64_t>(value_type_id, vm, type_id);
+    return inner<fixed_point::fp64_t, Map>(value_type_id, vm, type_id);
   }
   default:
   {
-    return inner<Ptr<Object>>(value_type_id, vm, type_id);
+    return inner<Ptr<Object>, Map>(value_type_id, vm, type_id);
   }
   }  // switch
 }

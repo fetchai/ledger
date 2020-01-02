@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@
 
 #include "direct_message_service.hpp"
 #include "discovery_service.hpp"
-#include "dispatcher.hpp"
 #include "peer_list.hpp"
 #include "router.hpp"
 
@@ -33,6 +32,7 @@
 #include "muddle/network_id.hpp"
 #include "muddle/rpc/server.hpp"
 #include "network/details/thread_pool.hpp"
+
 #include "network/service/promise.hpp"
 #include "network/tcp/abstract_server.hpp"
 #include "network/uri.hpp"
@@ -54,7 +54,7 @@ namespace muddle {
 
 class MuddleRegister;
 class MuddleEndpoint;
-class PeerSelector;
+class PeerTracker;
 
 /**
  * The Top Level object for the muddle networking stack.
@@ -126,6 +126,10 @@ public:
   using Handle          = network::AbstractConnection::ConnectionHandleType;
   using Server          = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList      = std::vector<Server>;
+  using PeerTrackerPtr  = std::shared_ptr<PeerTracker>;
+  using Clock           = std::chrono::system_clock;
+  using Timepoint       = Clock::time_point;
+  using Duration        = Clock::duration;
 
   struct ConnectionData
   {
@@ -146,6 +150,7 @@ public:
 
   /// @name Muddle Setup
   /// @{
+  void            SetPeerTableFile(std::string const &filename) override;
   bool            Start(Peers const &peers, Ports const &ports) override;
   bool            Start(Uris const &peers, Ports const &ports) override;
   bool            Start(Uris const &peers, PortMapping const &port_mapping) override;
@@ -166,32 +171,35 @@ public:
 
   std::size_t GetNumDirectlyConnectedPeers() const override;
   bool        IsDirectlyConnected(Address const &address) const override;
+  bool        IsConnectingOrConnected(Address const &address) const override;
   /// @}
 
   /// @name Peer Control
   /// @{
-  PeerSelectionMode GetPeerSelectionMode() const override;
-  void              SetPeerSelectionMode(PeerSelectionMode mode) override;
-  Addresses         GetRequestedPeers() const override;
-  void              ConnectTo(Address const &address) override;
-  void              ConnectTo(Addresses const &addresses) override;
-  void              ConnectTo(Address const &address, network::Uri const &uri_hint) override;
-  void              ConnectTo(AddressHints const &address_hints) override;
-  void              DisconnectFrom(Address const &address) override;
-  void              DisconnectFrom(Addresses const &addresses) override;
-  void              SetConfidence(Address const &address, Confidence confidence) override;
-  void              SetConfidence(Addresses const &addresses, Confidence confidence) override;
-  void              SetConfidence(ConfidenceMap const &map) override;
+
+  Addresses GetRequestedPeers() const override;
+
+  void ConnectTo(Address const &address, Duration const &expire) override;
+  void ConnectTo(Addresses const &addresses, Duration const &expire) override;
+  void ConnectTo(network::Uri const &uri, Duration const &expire) override;
+  void ConnectTo(Address const &address, network::Uri const &uri_hint,
+                 Duration const &expire) override;
+  void ConnectTo(AddressHints const &address_hints, Duration const &expire) override;
+  void DisconnectFrom(Address const &address) override;
+  void DisconnectFrom(Addresses const &addresses) override;
+  void SetConfidence(Address const &address, Confidence confidence) override;
+  void SetConfidence(Addresses const &addresses, Confidence confidence) override;
+  void SetConfidence(ConfidenceMap const &map) override;
+  void SetTrackerConfiguration(TrackerConfiguration const &config) override;
   /// @}
 
   /// @name Internal Accessors
   /// @{
-  Dispatcher const &          dispatcher() const;
   Router const &              router() const;
   MuddleRegister const &      connection_register() const;
   PeerConnectionList const &  connection_list() const;
   DirectMessageService const &direct_message_service() const;
-  PeerSelector const &        peer_selector() const;
+  PeerTracker const &         peer_tracker() const;
   ServerList const &          servers() const;
   /// @}
 
@@ -200,16 +208,12 @@ public:
   Muddle &operator=(Muddle &&) = delete;
 
 private:
-  using Client          = std::shared_ptr<network::AbstractConnection>;
-  using ThreadPool      = network::ThreadPool;
-  using Register        = std::shared_ptr<MuddleRegister>;
-  using Clock           = std::chrono::system_clock;
-  using Timepoint       = Clock::time_point;
-  using Duration        = Clock::duration;
-  using PeerSelectorPtr = std::shared_ptr<PeerSelector>;
+  using Client     = std::shared_ptr<network::AbstractConnection>;
+  using ThreadPool = network::ThreadPool;
+  using Register   = std::shared_ptr<MuddleRegister>;
 
   void RunPeriodicMaintenance();
-
+  void UpdateExternalAddresses();
   void CreateTcpServer(uint16_t port);
   void CreateTcpClient(Uri const &peer);
 
@@ -219,10 +223,10 @@ private:
   std::string const    external_address_;
   Address const        node_address_;
   NetworkManager       network_manager_;  ///< The network manager
-  Dispatcher           dispatcher_;       ///< Waiting promise store
   Register             register_;         ///< The register for all the connection
   Router               router_;           ///< The packet router for the node
   PortMapping          port_mapping_;
+  std::atomic<bool>    stopping_{false};
 
   mutable Mutex servers_lock_;
   ServerList    servers_;  ///< The list of listening servers
@@ -235,7 +239,7 @@ private:
   core::Reactor        reactor_;
   core::RunnablePtr    maintenance_periodic_;
   DirectMessageService direct_message_service_;
-  PeerSelectorPtr      peer_selector_;
+  PeerTrackerPtr       peer_tracker_;
 
   // Services
   rpc::Server      rpc_server_;

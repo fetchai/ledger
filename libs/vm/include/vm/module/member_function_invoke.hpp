@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -36,10 +36,11 @@ struct VmMemberFunctionInvoker
   static void Invoke(VM *vm, Estimator &&estimator, Callable &&callable,
                      EtchArgsTuple &&etch_arguments)
   {
-    using OwningType  = typename meta::CallableTraits<Callable>::OwningType;
-    auto const offset = sp_offset + 1;
+    using OwningType     = typename meta::CallableTraits<Callable>::OwningType;
+    auto const offset    = sp_offset + 1;
+    auto const result_sp = vm->sp_ - offset;
 
-    Variant &       v       = vm->stack_[vm->sp_ - offset];
+    Variant &       v       = vm->stack_[result_sp];
     Ptr<OwningType> context = std::move(v.object);
     if (!context)
     {
@@ -53,8 +54,8 @@ struct VmMemberFunctionInvoker
       ReturnType result         = meta::Apply(std::forward<Callable>(callable), *context,
                                       std::forward<EtchArgsTuple>(etch_arguments));
       auto const return_type_id = vm->instruction_->type_id;
-      StackSetter<ReturnType>::Set(vm, offset, std::move(result), return_type_id);
-      vm->sp_ -= offset;
+      StackSetter<ReturnType>::Set(vm, result_sp, std::move(result), return_type_id);
+      vm->sp_ = result_sp;
     }
   }
 };

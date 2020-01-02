@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ TEST(MessengerMailboxTest, BasicHTTPRegisteringUnregistering)
   for (uint64_t i = 0; i < 10; ++i)
   {
     auto messenger = NewHTTPMessenger(8000);
-    messenger->Register();
+    EXPECT_TRUE(messenger->Register());
     messengers.push_back(messenger);
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(500));

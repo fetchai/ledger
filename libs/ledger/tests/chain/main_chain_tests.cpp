@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ using fetch::ledger::Block;
 using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
 using fetch::ledger::testing::BlockGenerator;
-using fetch::chain::Address;
 
 using Rng               = std::mt19937_64;
 using MainChainPtr      = std::unique_ptr<MainChain>;
@@ -52,8 +51,8 @@ static bool IsSameBlock(Block const &a, Block const &b)
 {
   return (a.hash == b.hash) && (a.previous_hash == b.previous_hash) &&
          (a.merkle_hash == b.merkle_hash) && (a.block_number == b.block_number) &&
-         (a.miner == b.miner) && (a.log2_num_lanes == b.log2_num_lanes) &&
-         (a.timestamp == b.timestamp) && (a.slices == b.slices);
+         (a.log2_num_lanes == b.log2_num_lanes) && (a.timestamp == b.timestamp) &&
+         (a.slices == b.slices);
 }
 
 template <typename Container, typename Value>
@@ -104,11 +103,16 @@ std::string Hashes(std::vector<BlockPtr> const &v)
 
 class MainChainTests : public ::testing::TestWithParam<MainChain::Mode>
 {
+public:
+  static void SetUpTestCase()
+  {
+    fetch::crypto::mcl::details::MCLInitialiser();
+    fetch::chain::InitialiseTestConstants();
+  }
+
 protected:
   void SetUp() override
   {
-    fetch::crypto::mcl::details::MCLInitialiser();
-
     static constexpr std::size_t NUM_LANES  = 1;
     static constexpr std::size_t NUM_SLICES = 2;
 
@@ -579,7 +583,6 @@ TEST_P(MainChainTests, AdditionOfBlocksOutOfOrder)
   // Try adding a non-sequential block (prev hash is itself)
   Block dummy;
   dummy.block_number = 2;
-  dummy.miner        = chain::Address{chain::Address::RawAddress{}};
   dummy.UpdateDigest();
   dummy.previous_hash = dummy.hash;
 

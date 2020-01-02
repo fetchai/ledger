@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -41,8 +41,9 @@ public:
   // Construction / Destruction
   PromiseOf() = default;
   explicit PromiseOf(Promise promise);
-  PromiseOf(PromiseOf const &rhs) = default;
-  ~PromiseOf() override           = default;
+  PromiseOf(PromiseOf const &rhs)  = default;
+  PromiseOf(PromiseOf &&) noexcept = default;
+  ~PromiseOf() override            = default;
 
   // Promise Accessors
   bool Wait(bool throw_exception = true) const;

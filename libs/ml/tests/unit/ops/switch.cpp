@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -175,12 +175,9 @@ TYPED_TEST(SwitchTest, back_test_broadcast_mask)
       error_signal);
 
   // test correct values
-  ASSERT_TRUE(
-      prediction.at(0).AllClose(gt_mask, static_cast<DataType>(0), static_cast<DataType>(0)));
-  ASSERT_TRUE(
-      prediction.at(1).AllClose(gt_then, static_cast<DataType>(0), static_cast<DataType>(0)));
-  ASSERT_TRUE(
-      prediction.at(2).AllClose(gt_else, static_cast<DataType>(0), static_cast<DataType>(0)));
+  ASSERT_TRUE(prediction.at(0).AllClose(gt_mask, DataType{0}, DataType{0}));
+  ASSERT_TRUE(prediction.at(1).AllClose(gt_then, DataType{0}, DataType{0}));
+  ASSERT_TRUE(prediction.at(2).AllClose(gt_else, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(SwitchTest, saveparams_back_test_broadcast_mask)

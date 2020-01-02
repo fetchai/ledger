@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/meta/math_type_traits.hpp"
-#include "math/tensor_declaration.hpp"
+#include "math/tensor/tensor_declaration.hpp"
 
 #include <cfenv>
 #include <cstdint>
@@ -211,6 +211,35 @@ template <typename T>
 static constexpr meta::IfIsFixedPoint<T, bool> is_inf(T const &val)
 {
   return (T::IsNegInfinity(val) || T::IsPosInfinity(val) || state_division_by_zero<T>());
+}
+
+template <typename T>
+static constexpr meta::IfIsUnsignedInteger<T, T> Type(std::string const &val)
+{
+  if (std::stoll(val) < 0)
+  {
+    throw std::runtime_error("cannot initialise uint with negative value");
+  }
+  auto x = static_cast<T>(std::stoull(val));
+  return x;
+}
+
+template <typename T>
+static constexpr meta::IfIsSignedInteger<T, T> Type(std::string const &val)
+{
+  return T(std::stoll(val));
+}
+
+template <typename T>
+static constexpr meta::IfIsFloat<T, T> Type(std::string const &val)
+{
+  return T(std::stod(val));
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, T> Type(std::string const &val)
+{
+  return T(val);
 }
 
 }  // namespace math

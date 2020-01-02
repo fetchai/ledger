@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -48,9 +48,9 @@ TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class 
       "SelfAttentionEncoder", {input, mask}, static_cast<SizeType>(4), static_cast<SizeType>(12),
       static_cast<SizeType>(24));
   TypeParam input_data = TypeParam({12, 25, 4});
-  input_data.Fill(static_cast<DataType>(0.01));
+  input_data.Fill(fetch::math::Type<DataType>("0.01"));
   TypeParam mask_data = TypeParam({25, 25, 4});
-  mask_data.Fill(static_cast<DataType>(1));
+  mask_data.Fill(DataType{1});
   g.SetInput(input, input_data);
   g.SetInput(mask, mask_data);
 
@@ -68,9 +68,9 @@ TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a
   fetch::ml::layers::SelfAttentionEncoder<TypeParam> encoder(
       static_cast<SizeType>(4), static_cast<SizeType>(12), static_cast<SizeType>(13));
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({12, 20, 5}));
-  input_data.Fill(static_cast<DataType>(0.1));
+  input_data.Fill(fetch::math::Type<DataType>("0.1"));
   TypeParam mask_data = TypeParam({20, 20, 5});
-  mask_data.Fill(static_cast<DataType>(1));
+  mask_data.Fill(DataType{1});
 
   TypeParam output(encoder.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
   encoder.Forward({std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(mask_data)},
@@ -115,7 +115,7 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
   input.FillUniformRandom();
 
   TypeParam mask_data = TypeParam({25, 25, 2});
-  mask_data.Fill(static_cast<DataType>(1));
+  mask_data.Fill(DataType{1});
 
   // create labels
   TypeParam labels({model_dim, 25, 2});

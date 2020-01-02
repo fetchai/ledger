@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -88,8 +88,8 @@ void OneHot(ArrayType &ret, ArrayType const &indices, typename ArrayType::SizeTy
  */
 template <typename ArrayType>
 ArrayType OneHot(ArrayType const &indices, typename ArrayType::SizeType depth, SizeType axis = 0,
-                 typename ArrayType::Type on_value  = typename ArrayType::Type{1.0},
-                 typename ArrayType::Type off_value = typename ArrayType::Type{0.0})
+                 typename ArrayType::Type on_value  = typename ArrayType::Type{1},
+                 typename ArrayType::Type off_value = typename ArrayType::Type{0})
 {
   assert(axis <= indices.shape().size());
 

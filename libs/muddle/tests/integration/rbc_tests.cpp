@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ private:
     return failures_flags_[static_cast<uint8_t>(f)];
   }
 
-  void SendBadAnswer(RBCMessage const &msg)
+  void SendBadAnswer(RBCMessage const &msg, MuddleAddress const &address)
   {
     std::string                           new_msg = "Goodbye";
     fetch::serializers::MsgPackSerializer serialiser;
@@ -128,7 +128,7 @@ private:
     new_rmsg_serializer.Reserve(new_rmsg_counter.size());
     new_rmsg_serializer << static_cast<RBCMessage>(new_rmsg);
 
-    endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, new_rmsg_serializer.data());
+    endpoint().Send(address, SERVICE_RBC, CHANNEL_RBC_BROADCAST, new_rmsg_serializer.data());
   }
 
   void SendUnrequestedAnswer(RBCMessage const &msg)
@@ -149,6 +149,29 @@ private:
     endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, new_rmsg_serializer.data());
   }
 
+  void Send(RBCMessage const &msg, MuddleAddress const &address) override
+  {
+    // Serialise the RBCEnvelope
+    RBCSerializerCounter msg_counter;
+    msg_counter << msg;
+
+    RBCSerializer msg_serializer;
+    msg_serializer.Reserve(msg_counter.size());
+    msg_serializer << msg;
+
+    if (Failure(Failures::BAD_ANSWER) && msg.type() == RBCMessageType::R_ANSWER)
+    {
+      SendBadAnswer(msg, address);
+      return;
+    }
+    if (Failure(Failures::NO_ANSWER) && msg.type() == RBCMessageType::R_ANSWER)
+    {
+      return;
+    }
+
+    endpoint().Send(address, SERVICE_RBC, CHANNEL_RBC_BROADCAST, msg_serializer.data());
+  }
+
   void InternalBroadcast(RBCMessage const &msg) override
   {
     // Serialise the RBCEnvelope
@@ -160,19 +183,13 @@ private:
     msg_serializer << msg;
 
     if ((Failure(Failures::NO_ECHO) && msg.type() == RBCMessageType::R_ECHO) ||
-        (Failure(Failures::NO_READY) && msg.type() == RBCMessageType::R_READY) ||
-        (Failure(Failures::NO_ANSWER) && msg.type() == RBCMessageType::R_ANSWER))
+        (Failure(Failures::NO_READY) && msg.type() == RBCMessageType::R_READY))
     {
       return;
     }
     if (Failure(Failures::DOUBLE_SEND))
     {
       endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, msg_serializer.data());
-    }
-    else if (Failure(Failures::BAD_ANSWER) && msg.type() == RBCMessageType::R_ANSWER)
-    {
-      SendBadAnswer(msg);
-      return;
     }
     else if (Failure(Failures::UNREQUESTED_ANSWER) && msg.type() == RBCMessageType::R_ECHO)
     {
@@ -379,7 +396,7 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
   }
 
   // Make sure everyone is connected to everyone else
-  uint32_t kk = 0;
+  uint32_t kk = 0, tt = 0;
   while (kk != cabinet_size)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -392,6 +409,11 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
       }
 
       ++kk;
+    }
+    ++tt;
+    if (tt > 200)
+    {
+      throw std::runtime_error("Time to setup exceeded.");
     }
   }
 
@@ -452,7 +474,7 @@ TEST(rbc, no_answer)
 TEST(rbc, too_many_no_answer)
 {
   // Three nodes withhold their answer messages which excludes the node from delivering the message
-  GenerateRbcTest(4, 3,
+  GenerateRbcTest(4, 2,
                   {{FaultyRbc::Failures::BAD_MESSAGE},
                    {FaultyRbc::Failures::NO_ANSWER},
                    {FaultyRbc::Failures::NO_ANSWER},

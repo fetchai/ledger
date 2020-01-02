@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@ namespace fetch {
 namespace ledger {
 
 template <typename ContractType>
-auto CreateSmartContract(chain::Address const &contract_address, StorageInterface &storage)
+auto CreateSmartContract(chain::Address const &contract_address, StorageInterface const &storage)
     -> std::unique_ptr<ContractType>
 {
-  auto       addr     = SmartContractManager::CreateAddressForContract(contract_address);
+  auto const addr     = SmartContractManager::CreateAddressForContract(contract_address);
   auto const resource = storage.Get(addr);
 
   if (!resource.failed)

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -40,10 +40,11 @@ enum class ContractExecutionStatus
 
   /// @name Block Invalidating Errors
   /// @{
-  TX_LOOKUP_FAILURE,       ///< Unable to lookup the transaction contents
-  TX_NOT_VALID_FOR_BLOCK,  ///< The transaction is in a block for which it is invalid
-  TX_PERMISSION_DENIED,    ///< Evaluate if the transaction has permission to make the transfer
-  TX_NOT_ENOUGH_CHARGE,    ///< Not enough charge available to make the required transfers
+  TX_LOOKUP_FAILURE,         ///< Unable to lookup the transaction contents
+  TX_NOT_VALID_FOR_BLOCK,    ///< The transaction is in a block for which it is invalid
+  TX_PERMISSION_DENIED,      ///< Evaluate if the transaction has permission to make the transfer
+  TX_NOT_ENOUGH_CHARGE,      ///< Not enough charge available to make the required transfers
+  TX_CHARGE_LIMIT_TOO_HIGH,  ///< The specified charge limit exceeds the allowed maximum
   /// @}
 
   /// @name General Errors
@@ -86,11 +87,13 @@ constexpr char const *ToString(ContractExecutionStatus status)
   case ContractExecutionStatus::TX_LOOKUP_FAILURE:
     return "Tx Lookup Failure";
   case ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK:
-    return "Tx not valid for current block";
+    return "Tx Not Valid For Current Block";
   case ContractExecutionStatus::TX_PERMISSION_DENIED:
     return "Permission Denied";
   case ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE:
-    return "Not enough charge";
+    return "Not Enough Charge";
+  case ContractExecutionStatus::TX_CHARGE_LIMIT_TOO_HIGH:
+    return "Charge Limit Too High";
   case ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS:
     return "Insufficient available funds";
   case ContractExecutionStatus::CONTRACT_NAME_PARSE_FAILURE:
@@ -102,7 +105,7 @@ constexpr char const *ToString(ContractExecutionStatus status)
   case ContractExecutionStatus::CONTRACT_EXECUTION_FAILURE:
     return "Contract Execution Failure";
   case ContractExecutionStatus::TRANSFER_FAILURE:
-    return "Unable to perform transfer";
+    return "Unable To Perform Transfer";
   case ContractExecutionStatus::INSUFFICIENT_CHARGE:
     return "Insufficient charge";
   case ContractExecutionStatus::NOT_RUN:
@@ -127,6 +130,7 @@ constexpr ExecutionStatusCategory Categorise(ContractExecutionStatus status)
   case ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK:
   case ContractExecutionStatus::TX_PERMISSION_DENIED:
   case ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE:
+  case ContractExecutionStatus::TX_CHARGE_LIMIT_TOO_HIGH:
     return ExecutionStatusCategory::BLOCK_INVALIDATING_ERROR;
 
   case ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS:

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ protected:
   SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
 
-  mutable std::mutex                  mutex_;
+  mutable Mutex                       mutex_;
   CertificatePtr                      certificate_;
   bool                                load_and_reload_on_crash_{false};
   std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;

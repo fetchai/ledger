@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -42,6 +42,8 @@ struct Fixed128 : public Object
 
   Fixed128(vm::VM *vm, vm::TypeId type_id, byte_array::ByteArray const &data);
 
+  Ptr<Fixed128> Copy() const;
+
   bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   bool IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   bool IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
@@ -58,6 +60,28 @@ struct Fixed128 : public Object
   void Divide(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
   void InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   void Negate(Ptr<Object> &object) override;
+
+  ChargeAmount IsEqualChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount IsNotEqualChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount IsLessThanChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount IsLessThanOrEqualChargeEstimator(Ptr<Object> const &lhso,
+                                                Ptr<Object> const &rhso) override;
+  ChargeAmount IsGreaterThanChargeEstimator(Ptr<Object> const &lhso,
+                                            Ptr<Object> const &rhso) override;
+  ChargeAmount IsGreaterThanOrEqualChargeEstimator(Ptr<Object> const &lhso,
+                                                   Ptr<Object> const &rhso) override;
+  ChargeAmount AddChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount InplaceAddChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount SubtractChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount InplaceSubtractChargeEstimator(Ptr<Object> const &lhso,
+                                              Ptr<Object> const &rhso) override;
+  ChargeAmount MultiplyChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount InplaceMultiplyChargeEstimator(Ptr<Object> const &lhso,
+                                              Ptr<Object> const &rhso) override;
+  ChargeAmount DivideChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  ChargeAmount InplaceDivideChargeEstimator(Ptr<Object> const &lhso,
+                                            Ptr<Object> const &rhso) override;
+  ChargeAmount NegateChargeEstimator(Ptr<Object> const &object) override;
 
   bool SerializeTo(MsgPackSerializer &buffer) override;
   bool DeserializeFrom(MsgPackSerializer &buffer) override;

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -114,7 +114,8 @@ public:
     ReadHeader(strong_strand);
   }
 
-  void Send(MessageType const &msg) override
+  void Send(MessageBuffer const &msg, Callback const &success = nullptr,
+            Callback const &fail = nullptr) override
   {
     if (shutting_down_)
     {
@@ -124,7 +125,8 @@ public:
 
     {
       FETCH_LOCK(queue_mutex_);
-      write_queue_.push_back(msg);
+      // write_queue_.emplace_back(msg);
+      write_queue_.push_back({msg, success, fail});
     }
 
     std::weak_ptr<AbstractConnection> self   = shared_from_this();
@@ -330,7 +332,7 @@ private:
       }
     }
 
-    MessageType buffer;
+    MessageType message;
     {
       FETCH_LOCK(queue_mutex_);
       if (write_queue_.empty())
@@ -339,19 +341,20 @@ private:
         can_write_ = true;
         return;
       }
-      buffer = write_queue_.front();
+      message = write_queue_.front();
       write_queue_.pop_front();
     }
 
     byte_array::ByteArray header;
-    SetHeader(header, buffer.size());
+    SetHeader(header, message.buffer.size());
 
-    std::vector<asio::const_buffer> buffers{asio::buffer(header.pointer(), header.size()),
-                                            asio::buffer(buffer.pointer(), buffer.size())};
+    std::vector<asio::const_buffer> buffers{
+        asio::buffer(header.pointer(), header.size()),
+        asio::buffer(message.buffer.pointer(), message.buffer.size())};
 
     auto socket = socket_.lock();
 
-    auto cb = [this, selfLock, socket, buffer, header](std::error_code ec, std::size_t len) {
+    auto cb = [this, selfLock, socket, message, header](std::error_code ec, std::size_t len) {
       FETCH_UNUSED(len);
 
       {
@@ -363,13 +366,27 @@ private:
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Error writing to socket, closing.");
         SignalLeave();
+
+        if (message.failure)
+        {
+          message.failure();
+        }
       }
       else
       {
         // TODO(issue 16): this strand should be unnecessary
+        if (message.success)
+        {
+          message.success();
+        }
+
         auto strandLock = strand_.lock();
         if (strandLock)
         {
+          if (message.success)
+          {
+            message.success();
+          }
           WriteNext(selfLock);
         }
       }
@@ -390,6 +407,10 @@ private:
       }
 
       SignalLeave();
+      if (message.failure)
+      {
+        message.failure();
+      }
     }
   }
 };

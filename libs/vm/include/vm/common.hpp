@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -59,16 +59,14 @@ static constexpr TypeId Int32           = 9;
 static constexpr TypeId UInt32          = 10;
 static constexpr TypeId Int64           = 11;
 static constexpr TypeId UInt64          = 12;
-static constexpr TypeId Float32         = 13;
-static constexpr TypeId Float64         = 14;
-static constexpr TypeId Fixed32         = 15;
-static constexpr TypeId Fixed64         = 16;
-static constexpr TypeId PrimitiveMaxId  = 16;
-static constexpr TypeId String          = 17;
-static constexpr TypeId Address         = 18;
-static constexpr TypeId Fixed128        = 19;
-static constexpr TypeId UInt256         = 20;
-static constexpr TypeId NumReserved     = 21;
+static constexpr TypeId Fixed32         = 13;
+static constexpr TypeId Fixed64         = 14;
+static constexpr TypeId PrimitiveMaxId  = 14;
+static constexpr TypeId String          = 15;
+static constexpr TypeId Address         = 16;
+static constexpr TypeId Fixed128        = 17;
+static constexpr TypeId UInt256         = 18;
+static constexpr TypeId NumReserved     = 19;
 }  // namespace TypeIds
 
 enum class NodeCategory : uint8_t
@@ -111,8 +109,6 @@ enum class NodeKind : uint16_t
   UnsignedInteger32                              = 27,
   Integer64                                      = 28,
   UnsignedInteger64                              = 29,
-  Float32                                        = 30,
-  Float64                                        = 31,
   Fixed32                                        = 32,
   Fixed64                                        = 33,
   String                                         = 34,

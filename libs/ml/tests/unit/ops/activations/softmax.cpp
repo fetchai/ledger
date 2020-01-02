@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -42,8 +42,8 @@ TYPED_TEST(SoftmaxTest, forward_test)
 
   TensorType data = TensorType::FromString("1; -2; 3; -4; 5; -6; 7; -8");
   TensorType gt   = TensorType::FromString(
-      "2.1437e-03; 1.0673e-04; 1.5840e-02; 1.4444e-05; 1.1704e-01; 1.9548e-06; 8.6485e-01; "
-      "2.6456e-07");
+      "0.0021437; 0.00010673; 0.01584; 0.000014444; 0.11704; 0.0000019548; 0.86485; "
+      "0.00000026456");
 
   fetch::ml::ops::Softmax<TensorType> op(0);
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
@@ -78,7 +78,8 @@ TYPED_TEST(SoftmaxTest, forward_2d_tensor_axis_1_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-4), static_cast<DataType>(1e-4)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.0001"),
+                                  fetch::math::Type<DataType>("0.0001")));
 }
 
 TYPED_TEST(SoftmaxTest, backward_test)
@@ -89,8 +90,8 @@ TYPED_TEST(SoftmaxTest, backward_test)
   TensorType data  = TensorType::FromString("1; -2; 3; -4; 5; -6; 7; -8");
   TensorType error = TensorType::FromString("0; 0; 0; 0; 1; 0; 0; 0");
   TensorType gt    = TensorType::FromString(
-      "-2.5091e-04; -1.2492e-05; -1.8540e-03; -1.6906e-06; 1.0335e-01; -2.2880e-07; -1.0123e-01; "
-      "-3.0965e-08");
+      "-0.00025091; -0.000012492; -0.001854; -0.0000016906; 0.10335; -0.0000002288; -0.10123; "
+      "-0.000000030965");
 
   fetch::ml::ops::Softmax<TensorType> op(0);
   std::vector<TensorType>             prediction =
@@ -162,7 +163,8 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_1_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-4), static_cast<DataType>(1e-4)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.0001"),
+                                  fetch::math::Type<DataType>("0.0001")));
 }
 
 TYPED_TEST(SoftmaxTest, backward_3d_tensor_axis_1_test)
@@ -235,7 +237,8 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_0_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-4), static_cast<DataType>(1e-4)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.0001"),
+                                  fetch::math::Type<DataType>("0.0001")));
 }
 
 TYPED_TEST(SoftmaxTest, backward_3d_tensor_axis_0_test)
@@ -308,7 +311,8 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axes_0_2_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-4), static_cast<DataType>(1e-4)));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.0001"),
+                                  fetch::math::Type<DataType>("0.0001")));
 }
 
 TYPED_TEST(SoftmaxTest, backward_3d_tensor_axes_0_2_test)
@@ -359,8 +363,8 @@ TYPED_TEST(SoftmaxTest, saveparams_test)
 
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   TensorType gt   = TensorType::FromString(
-      "2.1437e-03, 1.0673e-04, 1.5840e-02, 1.4444e-05, 1.1704e-01, 1.9548e-06, 8.6485e-01, "
-      "2.6456e-07");
+      "0.0021437, 0.00010673, 0.01584, 0.000014444, 0.11704, 0.0000019548, 0.86485, "
+      "0.00000026456");
 
   fetch::ml::ops::Softmax<TensorType> op(0);
   TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));

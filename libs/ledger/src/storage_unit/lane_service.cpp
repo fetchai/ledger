@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -141,12 +141,12 @@ LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode
 
 LaneService::~LaneService() = default;
 
-void LaneService::Start()
+void LaneService::StartInternal()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", cfg_.lane_id,
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting External Lane ", cfg_.lane_id,
                  " Service on tcp://0.0.0.0:", cfg_.external_port,
                  " ID: ", ToBase64(cfg_.external_identity->identity().identifier()));
-  FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", cfg_.lane_id,
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting Internal Lane ", cfg_.lane_id,
                  " Service on tcp://127.0.0.1:", cfg_.internal_port,
                  " ID: ", ToBase64(cfg_.internal_identity->identity().identifier()));
 
@@ -162,13 +162,41 @@ void LaneService::Start()
   workthread_->ChangeWaitTime(std::chrono::milliseconds{unsigned{SYNC_PERIOD_MS}});
 }
 
-void LaneService::Stop()
+void LaneService::StartExternal()
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting External Lane ", cfg_.lane_id,
+                 " Service on tcp://0.0.0.0:", cfg_.external_port,
+                 " ID: ", ToBase64(cfg_.external_identity->identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting Internal Lane ", cfg_.lane_id,
+                 " Service on tcp://127.0.0.1:", cfg_.internal_port,
+                 " ID: ", ToBase64(cfg_.internal_identity->identity().identifier()));
+
+  external_muddle_->Start({cfg_.external_port});
+  internal_muddle_->Start({cfg_.internal_port});
+
+  tx_sync_service_->Start();
+
+  // TX Sync service - attach to reactor once #892 is merged
+  workthread_ =
+      std::make_shared<BackgroundedWorkThread>(&bg_work_, "BW:LS-" + std::to_string(cfg_.lane_id),
+                                               [this]() { tx_sync_service_->Execute(); });
+  workthread_->ChangeWaitTime(std::chrono::milliseconds{unsigned{SYNC_PERIOD_MS}});
+}
+
+void LaneService::StopExternal()
+{
+  workthread_ = nullptr;
+  if (external_muddle_)
+  {
+    external_muddle_->Stop();
+  }
+  tx_sync_service_.reset();
+}
+
+void LaneService::StopInternal()
 {
   reactor_.Stop();
-  workthread_ = nullptr;
-  external_muddle_->Stop();
   internal_muddle_->Stop();
-  tx_sync_service_.reset();
   state_db_protocol_.reset();
   state_db_.reset();
   tx_store_protocol_.reset();

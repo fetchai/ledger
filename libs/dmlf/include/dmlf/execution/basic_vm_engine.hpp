@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@
 
 // Known Issues:
 // Functions accepting as parameters or returning
-//  Array or Arrays of Arrays... of Float32
-//  or
 //  Array or Arrays of Arrays... of Bool
 // Do not work due to serialization issues. See disabled tests for examples
 
