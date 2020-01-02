@@ -90,8 +90,8 @@ TYPED_TEST(RandomisedReluTest, forward_test)
   DataType lower_bound = fetch::math::Type<DataType>("0.03");
   DataType upper_bound = fetch::math::Type<DataType>("0.08");
 
-  fetch::ml::ops::RandomisedRelu<TensorType> op(fetch::math::AsType<DataType>(0.03f),
-                                                fetch::math::AsType<DataType>(0.08f), 12345);
+  fetch::ml::ops::RandomisedRelu<TensorType> op(fetch::math::Type<DataType>("0.03"),
+                                                fetch::math::Type<DataType>("0.08"), 12345);
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
@@ -274,8 +274,7 @@ TYPED_TEST(RandomisedReluTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(RandomisedReluTest, saveparams_backward_3d_tensor_test)
