@@ -106,6 +106,12 @@ public:
                                    " forward pass cost  : " + std::to_string(cost));
     return cost;
   }
+
+  void SetSliceOutputShape(typename Ops<T>::Shape const &new_shape) override
+  {
+    Ops<T>::SetSliceOutputShape(new_shape);
+    this->SetExpectedSliceInputShapes({new_shape});
+  }
 };
 
 }  // namespace ops

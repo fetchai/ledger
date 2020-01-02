@@ -71,7 +71,8 @@ public:
     {
       dummies.push_back(std::make_shared<TensorType>(shape));
     }
-    slice_output_shape_ = ComputeOutputShape(dummies);
+    SetSliceOutputShape(ComputeOutputShape(dummies));
+    SetExpectedSliceInputShapes(input_shapes);
     return slice_output_shape_;
   }
 
@@ -105,21 +106,29 @@ public:
     return 0;  // TODO(VH): make me a pure virtual.
   }
 
-  void SetSliceOutputShape(Shape const &new_shape)
+  virtual void SetSliceOutputShape(Shape const &new_shape)
   {
     slice_output_shape_ = new_shape;
   }
 
-  void SetExpectedSliceInputShapes(ShapeVector const &new_shapes)
+  virtual void SetExpectedSliceInputShapes(ShapeVector const &new_shapes)
   {
     expected_slice_input_shapes_ = new_shapes;
   }
 
+  /**
+   * @brief SliceOutputShape returns an output shape of the layer, if a singluar slice of an input
+   * data is given (e.g. batch size == 1)
+   */
   virtual Shape const &SliceOutputShape() const
   {
     return slice_output_shape_;
   }
 
+  /**
+   * @brief ExpectedSliceInputShapes returns a vector of shapes, that describes expected input
+   * slice shapes (e.g. when batch size of input data is 1)
+   */
   virtual ShapeVector const &ExpectedSliceInputShapes() const
   {
     return expected_slice_input_shapes_;
@@ -134,8 +143,10 @@ public:
 protected:
   bool is_training_ = true;
 
-  ShapeVector expected_slice_input_shapes_{};  // TODO(VH): impl. filling it on compilation.
+  // TODO(VH): impl. filling it on compilation.
+  ShapeVector expected_slice_input_shapes_{};
   Shape       slice_output_shape_{};
+  // TODO(VH): ^^ impl. serialisation of new fields.
 
   std::string OutputShapeAsString()
   {

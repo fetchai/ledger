@@ -105,8 +105,8 @@ public:
         fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation", add);
 
     std::vector<SizeType> input_slice_shape = {in_size_, 1};
-    this->SetExpectedSliceInputShapes({input_slice_shape});
-    this->SetSliceOutputShape({out_size_, 1});
+    this->expected_slice_input_shapes_      = {{input_slice_shape}};
+    this->slice_output_shape_               = {out_size_, 1};
 
     this->nodes_.at(input)->SetSliceOutputShape(input_slice_shape);
     this->nodes_.at(weights)->SetSliceOutputShape({out_size_, in_size_});
@@ -201,6 +201,18 @@ public:
             inputs.front()->shape(inputs.front()->shape().size() - 1)};
   }
 
+  void SetSliceOutputShape(typename SubGraph<T>::Shape const &new_shape) override
+  {
+    FETCH_UNUSED(new_shape);
+    FETCH_LOG_ERROR(DESCRIPTOR, "Setting slice output shape is not permitted!");
+  }
+
+  void SetExpectedSliceInputShapes(typename SubGraph<T>::ShapeVector const &new_shapes) override
+  {
+    FETCH_UNUSED(new_shapes);
+    FETCH_LOG_ERROR(DESCRIPTOR, "Setting expected slice input shapes is not permitted!");
+  }
+
   OpType OperationType() const override
   {
     return this->OpCode();
@@ -212,7 +224,7 @@ public:
   }
 
   fetch::vm::ChargeAmount OpForwardCost(
-      typename fetch::ml::ops::Ops<T>::ShapeVector const &input_shapes) override
+      typename SubGraph<T>::ShapeVector const &input_shapes) override
   {
     FETCH_UNUSED(input_shapes);
     // Input shape is ignored because Dense layer knows all shapes already,

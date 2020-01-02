@@ -118,6 +118,7 @@ public:
   {
     return this->OpCode();
   }
+
   static constexpr OpType OpCode()
   {
     return OpType::OP_RELU;
