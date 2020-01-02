@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -92,13 +92,14 @@ meta::IfIsArithmetic<Type, void> Square(Type const &x, Type &ret)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Square(ArrayType const &x, ArrayType &ret)
 {
+  using DataType = typename ArrayType::Type;
   assert(ret.shape() == x.shape());
   auto arr_it = x.cbegin();
   auto rit    = ret.begin();
 
   while (arr_it.is_valid())
   {
-    *rit = (*arr_it) * (*arr_it);
+    *rit = static_cast<DataType>((*arr_it) * (*arr_it));
     ++arr_it;
     ++rit;
   }

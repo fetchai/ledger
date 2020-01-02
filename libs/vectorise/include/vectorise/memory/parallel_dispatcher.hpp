@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ public:
       {
         scalar_iter.Next(a);
         tmp = kernel(a);
-        ret = op(ret, tmp.data());
+        ret = static_cast<type>(op(ret, tmp.data()));
       }
     }
 
@@ -136,7 +136,7 @@ public:
         vc  = op(vc, tmp);
       }
 
-      ret += hkernel(vc);
+      ret = static_cast<type>(ret + hkernel(vc));
     }
 
     if (STU != ST)
@@ -149,7 +149,7 @@ public:
       {
         scalar_iter.Next(a);
         tmp = kernel(a);
-        ret = op(ret, tmp.data());
+        ret = static_cast<type>(op(ret, tmp.data()));
       }
     }
 
