@@ -134,44 +134,50 @@ public:
     {
       XavierInitialisation(
           array,
-          fetch::math::Sqrt(static_cast<DataType>(2) / static_cast<DataType>(in_size + out_size)),
+          fetch::math::Sqrt(static_cast<DataType>(static_cast<DataType>(2) /
+                                                  static_cast<DataType>(in_size + out_size))),
           seed);
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_IN:
     {
-      XavierInitialisation(
-          array, fetch::math::Sqrt(static_cast<DataType>(1) / static_cast<DataType>(in_size)),
-          seed);
+      XavierInitialisation(array,
+                           fetch::math::Sqrt(static_cast<DataType>(static_cast<DataType>(1) /
+                                                                   static_cast<DataType>(in_size))),
+                           seed);
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_OUT:
     {
-      XavierInitialisation(
-          array, fetch::math::Sqrt(static_cast<DataType>(1) / static_cast<DataType>(out_size)),
-          seed);
+      XavierInitialisation(array,
+                           fetch::math::Sqrt(static_cast<DataType>(
+                               static_cast<DataType>(1) / static_cast<DataType>(out_size))),
+                           seed);
       break;
     }
     case WeightsInitialisation::XAVIER_GLOROT_UNIFORM:
     {
       XavierInitialisationUniform(
           array,
-          fetch::math::Sqrt(static_cast<DataType>(6) / static_cast<DataType>(in_size + out_size)),
+          fetch::math::Sqrt(static_cast<DataType>(static_cast<DataType>(6) /
+                                                  static_cast<DataType>(in_size + out_size))),
           seed);
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_IN_UNIFORM:
     {
-      XavierInitialisationUniform(
-          array, fetch::math::Sqrt(static_cast<DataType>(3) / static_cast<DataType>(in_size)),
-          seed);
+      XavierInitialisationUniform(array,
+                                  fetch::math::Sqrt(static_cast<DataType>(
+                                      static_cast<DataType>(3) / static_cast<DataType>(in_size))),
+                                  seed);
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_OUT_UNIFORM:
     {
-      XavierInitialisationUniform(
-          array, fetch::math::Sqrt(static_cast<DataType>(3) / static_cast<DataType>(out_size)),
-          seed);
+      XavierInitialisationUniform(array,
+                                  fetch::math::Sqrt(static_cast<DataType>(
+                                      static_cast<DataType>(3) / static_cast<DataType>(out_size))),
+                                  seed);
       break;
     }
     default:

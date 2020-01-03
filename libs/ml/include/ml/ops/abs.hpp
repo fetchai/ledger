@@ -47,9 +47,9 @@ public:
   using MyType        = Abs<TensorType>;
 
   Abs() = default;
-  explicit Abs(SPType const &sp)
-    : Ops<T>(sp)
-  {}
+
+  explicit Abs(SPType const &sp);
+
   ~Abs() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;

@@ -28,6 +28,19 @@ namespace ml {
 namespace ops {
 
 template <typename TensorType>
+AvgPool2D<TensorType>::AvgPool2D(SizeType const kernel_size, SizeType const stride_size)
+  : kernel_size_{kernel_size}
+  , stride_size_{stride_size}
+{}
+
+template <typename TensorType>
+AvgPool2D<TensorType>::AvgPool2D(SPType const &sp) : Ops<TensorType>(sp)
+{
+  kernel_size_ = sp.kernel_size;
+  stride_size_ = sp.stride_size;
+}
+
+template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> AvgPool2D<TensorType>::GetOpSaveableParams()
 {
   SPType sp{};

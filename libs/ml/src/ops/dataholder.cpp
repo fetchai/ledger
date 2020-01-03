@@ -51,7 +51,7 @@ void DataHolder<TensorType>::Forward(VecTensorType const &inputs, TensorType &ou
  */
 template <class TensorType>
 std::vector<TensorType> DataHolder<TensorType>::Backward(VecTensorType const &inputs,
-                                                            TensorType const &   error_signal)
+                                                         TensorType const &   error_signal)
 {
   FETCH_UNUSED(inputs);
   assert(inputs.empty());
@@ -76,7 +76,7 @@ bool DataHolder<TensorType>::SetData(TensorType const &data)
 }
 
 template <class TensorType>
-std::vector<typename TensorType::SizeType> DataHolder<TensorType>::ComputeOutputShape(
+std::vector<math::SizeType> DataHolder<TensorType>::ComputeOutputShape(
     VecTensorType const &inputs) const
 {
   FETCH_UNUSED(inputs);
