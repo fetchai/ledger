@@ -18,11 +18,19 @@
 //------------------------------------------------------------------------------
 
 #include "meta/type_traits.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <type_traits>
 
 namespace fetch {
+
+namespace fixed_point {
+struct BaseFixedpointType;
+template <uint16_t I, uint16_t F>
+class FixedPoint;
+using fp32_t  = FixedPoint<16, 16>;
+using fp64_t  = FixedPoint<32, 32>;
+using fp128_t = FixedPoint<64, 64>;
+}  // namespace fixed_point
 namespace math {
 namespace meta {
 

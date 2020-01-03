@@ -101,8 +101,8 @@ struct StateDict
    */
   StateDict &Merge(StateDict const &o, DataType ratio = fetch::math::Type<DataType>("0.5"))
   {
-    assert(ratio >= 0 && ratio <= 1);
-    if (ratio > 0)
+    assert(ratio >= DataType{0} && ratio <= DataType{1});
+    if (ratio > DataType{0})
     {
       if (weights_)
       {

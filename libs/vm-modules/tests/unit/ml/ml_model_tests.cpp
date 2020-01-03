@@ -1057,8 +1057,8 @@ TEST_F(VMModelTests, model_with_accuracy_metric)
   ASSERT_TRUE(toolkit.Run(&res));
 
   auto const metrics = res.Get<Ptr<Array<fetch::vm_modules::math::DataType>>>();
-  EXPECT_GE(metrics->elements.at(1), 0);
-  EXPECT_LE(metrics->elements.at(1), 1);
+  EXPECT_GE(metrics->elements.at(1), DataType{0});
+  EXPECT_LE(metrics->elements.at(1), DataType{1});
 }
 
 TEST_F(VMModelTests, model_sequential_flatten)
