@@ -308,6 +308,25 @@ public:
   constexpr bool operator>=(FixedPoint const &o) const;
   constexpr bool Near(FixedPoint const &o) const;
 
+  ///////////////////////////////////////////////////
+  /// comparison operators against integral types ///
+  ///////////////////////////////////////////////////
+
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> operator==(T const &o) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> operator!=(T const &o) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> operator<(T const &o) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> operator>(T const &o) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> operator<=(T const &o) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> operator>=(T const &o) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> Near(T const &o) const;
+
   ///////////////////////
   /// unary operators ///
   ///////////////////////
@@ -342,6 +361,39 @@ public:
   constexpr FixedPoint &operator^=(FixedPoint const &n);
   constexpr FixedPoint &operator>>=(FixedPoint const &n);
   constexpr FixedPoint &operator<<=(FixedPoint const &n);
+
+  /////////////////////////////////////////////
+  /// math operators against integral types ///
+  /////////////////////////////////////////////
+
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> operator+(T const &n) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> operator-(T const &n) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> operator*(T const &n) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> operator/(T const &n) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> operator&(T const &n) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> operator|(T const &n) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> operator^(T const &n) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator+=(T const &n) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator-=(T const &n) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator&=(T const &n) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator|=(T const &n) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator^=(T const &n) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator*=(T const &n) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator/=(T const &n) const;
 
   ///////////////////////
   /// shift operators ///
@@ -1363,6 +1415,94 @@ constexpr bool FixedPoint<I, F>::Near(FixedPoint const &o) const
   return (Abs(*this - o) < TOLERANCE);
 }
 
+///////////////////////////////////////////////////
+/// comparison operators against integral types ///
+///////////////////////////////////////////////////
+
+/**
+ * Equality comparison operator, note, NaN objects are never equal to each other
+ * @param the primitive object to compare to
+ * @return true if objects are equal, false otherwise
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::operator==(T const &o) const
+{
+  return (*this == FixedPoint(o));
+}
+
+/**
+ * Inequality comparison operator, note, NaN objects are never equal to each other
+ * @param the FixedPoint object to compare to
+ * @return true if objects are unequal, false otherwise
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::operator!=(T const &o) const
+{
+  return (*this != FixedPoint(o));
+}
+
+/**
+ * Less than comparison operator, note, NaN objects are never equal to each other
+ * @param the FixedPoint object to compare to
+ * @return true if object is less than o, false otherwise
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::operator<(T const &o) const
+{
+  return (*this < FixedPoint(o));
+}
+
+/**
+ * Greater than comparison operator, note, NaN objects are never equal to each other
+ * @param the FixedPoint object to compare to
+ * @return true if object is greater than o, false otherwise
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::operator>(T const &o) const
+{
+  return (*this > FixedPoint(o));
+}
+
+/**
+ * Less than or equal comparison operator, note, NaN objects are never equal to each other
+ * @param the FixedPoint object to compare to
+ * @return true if object is less than or equal to o, false otherwise
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::operator<=(T const &o) const
+{
+  return (*this <= FixedPoint(o));
+}
+
+/**
+ * Greater than or equal comparison operator, note, NaN objects are never equal to each other
+ * @param the FixedPoint object to compare to
+ * @return true if object is greater than o, false otherwise
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::operator>=(T const &o) const
+{
+  return (*this >= FixedPoint(o));
+}
+
+/**
+ * Check if two numbers are near according to abs(*this - o) < tolerance
+ * @param the FixedPoint object to compare to
+ * @return true if object is close to o, false otherwise
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::Near(T const &o) const
+{
+  return Near(FixedPoint{o});
+}
+
 ///////////////////////
 /// unary operators ///
 ///////////////////////
@@ -1950,6 +2090,94 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator<<=(FixedPoint<I, F> const
   return *this;
 }
 
+/////////////////////////////////////////////
+/// math operators against integral types ///
+/////////////////////////////////////////////
+
+/**
+ * Addition operator
+ * @param the primitive object to add to
+ * @return the sum of the two FixedPoint objects
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator+(T const &n) const
+{
+  return *this + FixedPoint(n);
+}
+
+/**
+ * Subtraction operator
+ * @param the primitive object to subtract from
+ * @return the difference of the two FixedPoint objects
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator-(T const &n) const
+{
+  return *this - FixedPoint(n);
+}
+
+/**
+ * Multiplication operator against primitive object
+ * @param the primitive number to multiply against
+ * @return the product of the two numbers
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator*(T const &n) const
+{
+  return *this * FixedPoint(n);
+}
+
+/**
+ * Division operator
+ * @param the primitive number to multiply against
+ * @return the division of the two FixedPoint objects
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator/(T const &n) const
+{
+  return *this / FixedPoint(n);
+}
+
+/**
+ * Bitwise AND assignment operator, does bitwise AND between the given FixedPoint object and self
+ * @param the given FixedPoint object to AND against
+ * @return the bitwise AND operation between the two FixedPoint objects
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator&(T const &n) const
+{
+  return *this & FixedPoint(n);
+}
+
+/**
+ * Bitwise OR assignment operator, does bitwise OR between the given FixedPoint object and self
+ * @param the given FixedPoint object to OR against
+ * @return the bitwise OR operation between the two FixedPoint objects
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator|(T const &n) const
+{
+  return *this | FixedPoint(n);
+}
+
+/**
+ * Bitwise XOR assignment operator, does bitwise XOR between the given FixedPoint object and self
+ * @param the given FixedPoint object to XOR against
+ * @return the bitwise XOR operation between the two FixedPoint objects
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator^(T const &n) const
+{
+  return *this ^ FixedPoint(n);
+}
+
 ///////////////////////
 /// shift operators ///
 ///////////////////////
@@ -2006,6 +2234,52 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator<<=(int n)
 {
   data_ <<= n;
   return *this;
+}
+
+/////////////////////////////////////////////////////
+/// associative math operators against primitives ///
+/////////////////////////////////////////////////////
+
+template <uint16_t I, uint16_t F, typename T>
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator+(T const &a, FixedPoint<I, F> const &n)
+{
+  return n + a;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator-(T const &a, FixedPoint<I, F> const &n)
+{
+  return FixedPoint<I, F>(a) - n;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator*(T const &a, FixedPoint<I, F> const &n)
+{
+  return n * a;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator/(T const &a, FixedPoint<I, F> const &n)
+{
+  return FixedPoint<I, F>(a) / n;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator&(T const &a, FixedPoint<I, F> const &n)
+{
+  return n & a;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator|(T const &a, FixedPoint<I, F> const &n)
+{
+  return n | a;
+}
+
+template <uint16_t I, uint16_t F, typename T>
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator^(T const &a, FixedPoint<I, F> const &n)
+{
+  return n ^ a;
 }
 
 ///////////////////////////
