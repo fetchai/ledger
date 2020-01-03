@@ -319,6 +319,7 @@ function (configure_vendor_targets)
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/utfcpp)
 
   # noisec
+  set(USE_SODIUM OFF CACHE BOOL "Use Libsodium for crypto" FORCE)
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/noisec)
 
 endfunction (configure_vendor_targets)
