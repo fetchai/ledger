@@ -503,7 +503,8 @@ TEST_F(VMModelTests, model_add_input)
                        var data_shape = Array<UInt64>(2);
                        data_shape[0] = 10u64;
                        data_shape[1] = 250u64;
-                       model.add("input", data_shape);)");
+                       model.addExperimental("input", data_shape);)",
+                       IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_invalid_layer_type)
