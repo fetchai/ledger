@@ -84,6 +84,7 @@ public:
   Uri &operator=(Uri &&) = default;
   bool operator==(Uri const &other) const;
   bool operator!=(Uri const &other) const;
+  bool operator<(Uri const &other) const;
 
   std::string ToString() const;
 
@@ -123,6 +124,11 @@ inline bool Uri::operator==(Uri const &other) const
 inline bool Uri::operator!=(Uri const &other) const
 {
   return !(*this == other);
+}
+
+inline bool Uri::operator<(Uri const &other) const
+{
+  return uri_ < other.uri_;
 }
 
 }  // namespace network
