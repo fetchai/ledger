@@ -81,7 +81,7 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
       state_.backward_pass_cost + inputs * hidden_nodes * BACKWARD_DENSE_QUAD_COEF;
 
   size = inputs * hidden_nodes + hidden_nodes;
-  state_.weights_size_sum += static_cast<SizeType>(size);
+  state_.weights_size_sum += size;
 
   // DataType of Tensor is not important for caluclating padded size
   padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, inputs});
