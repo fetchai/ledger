@@ -181,6 +181,14 @@ std::vector<math::SizeType> AvgPool2D<TensorType>::ComputeOutputShape(
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
+// template class AvgPool2D<math::Tensor<int8_t>>;
+// template class AvgPool2D<math::Tensor<int16_t>>;
+template class AvgPool2D<math::Tensor<int32_t>>;
+template class AvgPool2D<math::Tensor<int64_t>>;
+// template class AvgPool2D<math::Tensor<uint8_t>>;
+// template class AvgPool2D<math::Tensor<uint16_t>>;
+template class AvgPool2D<math::Tensor<uint32_t>>;
+template class AvgPool2D<math::Tensor<uint64_t>>;
 template class AvgPool2D<math::Tensor<float>>;
 template class AvgPool2D<math::Tensor<double>>;
 template class AvgPool2D<math::Tensor<fixed_point::fp32_t>>;

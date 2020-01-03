@@ -16,14 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
 #include "ml/ops/concatenate.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 
+#include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
-
+#include "ml/serializers/ml_types.hpp"
 #include <memory>
 #include <vector>
 

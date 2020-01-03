@@ -393,6 +393,14 @@ void Convolution1D<TensorType>::ReverseFillOutput(TensorType &gemm_output, Tenso
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
+// template class Convolution1D<math::Tensor<int8_t>>;
+// template class Convolution1D<math::Tensor<int16_t>>;
+template class Convolution1D<math::Tensor<int32_t>>;
+template class Convolution1D<math::Tensor<int64_t>>;
+// template class Convolution1D<math::Tensor<uint8_t>>;
+// template class Convolution1D<math::Tensor<uint16_t>>;
+template class Convolution1D<math::Tensor<uint32_t>>;
+template class Convolution1D<math::Tensor<uint64_t>>;
 template class Convolution1D<math::Tensor<float>>;
 template class Convolution1D<math::Tensor<double>>;
 template class Convolution1D<math::Tensor<fixed_point::fp32_t>>;

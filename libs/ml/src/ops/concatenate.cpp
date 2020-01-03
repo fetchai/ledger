@@ -100,6 +100,14 @@ std::vector<math::SizeType> Concatenate<TensorType>::ComputeOutputShape(
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
+// template class Concatenate<math::Tensor<int8_t>>;
+// template class Concatenate<math::Tensor<int16_t>>;
+template class Concatenate<math::Tensor<int32_t>>;
+template class Concatenate<math::Tensor<int64_t>>;
+// template class Concatenate<math::Tensor<uint8_t>>;
+// template class Concatenate<math::Tensor<uint16_t>>;
+template class Concatenate<math::Tensor<uint32_t>>;
+template class Concatenate<math::Tensor<uint64_t>>;
 template class Concatenate<math::Tensor<float>>;
 template class Concatenate<math::Tensor<double>>;
 template class Concatenate<math::Tensor<fixed_point::fp32_t>>;
