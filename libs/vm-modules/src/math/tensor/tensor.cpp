@@ -70,6 +70,11 @@ Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>>
   return Ptr<VMTensor>{new VMTensor(vm, type_id, shape->elements)};
 }
 
+Ptr<VMTensor> VMTensor::EmptyConstructor(VM *vm, TypeId type_id)
+{
+  return Ptr<VMTensor>{new VMTensor(vm, type_id)};
+}
+
 void VMTensor::Bind(Module &module, bool const enable_experimental)
 {
   using Index = fetch::math::SizeType;
@@ -85,6 +90,7 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
 
   auto interface =
       module.CreateClassType<VMTensor>("Tensor")
+          .CreateConstructor(&VMTensor::EmptyConstructor)
           .CreateConstructor(&VMTensor::Constructor, tensor_constructor_charge_estimate)
           .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
             return Ptr<VMTensor>{new VMTensor(vm, type_id)};
