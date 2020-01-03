@@ -177,6 +177,15 @@ ChargeAmount ModelEstimator::LayerAddActivation(const fetch::vm::Ptr<String> &la
   return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
+ChargeAmount ModelEstimator::LayerAddReshape(
+    Ptr<fetch::vm::String> const &                          layer,
+    fetch::vm::Ptr<fetch::vm::Array<math::SizeType>> const &shape)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(shape);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
 ChargeAmount ModelEstimator::CompileSequential(Ptr<String> const &loss,
                                                Ptr<String> const &optimiser)
 {
