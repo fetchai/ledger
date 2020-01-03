@@ -182,7 +182,7 @@ void VMModel::CompileSequentialImplementation(Ptr<String> const &loss, Ptr<Strin
     }
     PrepareDataloader();
     compiled_ = false;
-    model_->Compile(optimiser_type, loss_type, metrics);
+    me->Compile(optimiser_type, loss_type, metrics);
   }
   catch (std::exception const &e)
   {
@@ -751,16 +751,35 @@ void VMModel::LayerAddActivation(const fetch::vm::Ptr<String> &layer,
 void VMModel::LayerAddInput(const fetch::vm::Ptr<String> &                   layer,
                             const fetch::vm::Ptr<vm::Array<math::SizeType>> &shape)
 {
+  if (shape->elements.size() < 2)
+  {
+    vm_->RuntimeError(
+        "Invalid Input layer shape provided: at least 2 dimension needed; the trailing is batch "
+        "size.");
+    return;
+  }
+  for (auto const &element : shape->elements)
+  {
+    if (element == 0)
+    {
+      vm_->RuntimeError("Invalid Input layer shape provided: dimension with zero size found.");
+      return;
+    }
+  }
+
   try
   {
-    FETCH_UNUSED(shape);
-    // TODO(VH)(ML-437): implement shaped Placeholder.
-
     SupportedLayerType const layer_type =
         ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
     AssertLayerTypeMatches(layer_type, {SupportedLayerType::INPUT});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
-    me->Add<fetch::ml::ops::PlaceHolder<TensorType>>();
+    if (me->LayerCount() != 0)
+    {
+      vm_->RuntimeError(
+          "Can not add an Input layer to non-empty Model! Input layer must be first.");
+      return;
+    }
+    me->SetExpectedInputShape(shape->elements);
     compiled_ = false;
   }
   catch (std::exception const &e)

@@ -82,26 +82,59 @@ public:
     // start to set up the structure
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
-
+    node_names_.emplace_back(input);
     // for non time distributed layer, flatten the input
     std::string flat_input = input;
     if (!time_distributed_)
     {
       flat_input =
           this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input});
+      this->nodes_.at(flat_input)->SetSliceOutputShape({out_size_, 1});
+      this->nodes_.at(flat_input)->SetExpectedSliceInputShapes({{out_size_, 1}});
     }
 
     std::string weights =
         this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
+    node_names_.emplace_back(weights);
+
     std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
         name + "_MatrixMultiply", {weights, flat_input});
+    node_names_.emplace_back(weights_matmul);
+
     std::string bias =
         this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Bias", {});
-    std::string output = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
-        name + "_Add", {weights_matmul, bias});
+    node_names_.emplace_back(bias);
 
-    output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
-                                                      output);
+    std::string add = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
+        name + "_Add", {weights_matmul, bias});
+    node_names_.emplace_back(add);
+
+    std::string output =
+        fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation", add);
+    node_names_.emplace_back(output);
+
+    typename SubGraph<T>::Shape const input_slice_shape = {in_size_, 1};
+    this->expected_slice_input_shapes_                  = {{input_slice_shape}};
+    typename SubGraph<T>::Shape slice_output_shape      = {out_size_, 1};
+
+    this->nodes_.at(input)->SetExpectedSliceInputShapes({input_slice_shape});
+    this->nodes_.at(input)->SetSliceOutputShape(input_slice_shape);
+
+    this->nodes_.at(weights)->SetExpectedSliceInputShapes({{out_size_, in_size_}});
+    this->nodes_.at(weights)->SetSliceOutputShape({out_size_, in_size_});
+
+    this->nodes_.at(weights_matmul)
+        ->SetExpectedSliceInputShapes({{out_size_, in_size_}, input_slice_shape});
+    this->nodes_.at(weights_matmul)->SetSliceOutputShape(slice_output_shape);
+
+    this->nodes_.at(bias)->SetExpectedSliceInputShapes({slice_output_shape});
+    this->nodes_.at(bias)->SetSliceOutputShape(slice_output_shape);
+
+    this->nodes_.at(add)->SetExpectedSliceInputShapes({{slice_output_shape}, {slice_output_shape}});
+    this->nodes_.at(add)->SetSliceOutputShape(slice_output_shape);
+
+    this->nodes_.at(output)->SetExpectedSliceInputShapes({slice_output_shape});
+    this->nodes_.at(output)->SetSliceOutputShape(slice_output_shape);
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
@@ -123,8 +156,11 @@ public:
     {
       bias_data = TensorType(std::vector<SizeType>({out_size_, 1}));
     }
-    this->SetInput(name + "_Bias", bias_data);
+    this->SetInput(name + "_Bias", bias_data);  // TODO(VH): bias instead of name + "_Bias"
+    FETCH_LOG_INFO(GetName().c_str(), "--Compiling... ");
     this->Compile();
+    FETCH_LOG_INFO(GetName().c_str(), "--Compiled.");
+    this->SetSliceOutputShape({});  // necessary for further shape deduction
   }
 
   OpPtrType MakeSharedCopy(OpPtrType me) override
@@ -189,6 +225,11 @@ public:
             inputs.front()->shape(inputs.front()->shape().size() - 1)};
   }
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+
   static constexpr OpType OpCode()
   {
     return fetch::ml::OpType::LAYER_FULLY_CONNECTED;
@@ -215,6 +256,8 @@ private:
     }
     return name;
   }
+
+  std::vector<std::string> node_names_;  // A temporary dummy for neater console output
 };
 
 }  // namespace layers

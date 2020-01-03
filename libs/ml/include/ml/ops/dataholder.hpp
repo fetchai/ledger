@@ -92,6 +92,7 @@ public:
    */
   virtual bool SetData(TensorType const &data)
   {
+    // TODO(VH): check for pre-set Shape and throw if it does not match.
     bool shape_changed = true;
     if (data_)
     {

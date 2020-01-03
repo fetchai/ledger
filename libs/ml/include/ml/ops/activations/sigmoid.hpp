@@ -103,6 +103,10 @@ public:
   {
     return OpType::OP_SIGMOID;
   }
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
   static constexpr char const *DESCRIPTOR = "Sigmoid";
 
 private:

@@ -47,6 +47,8 @@ public:
 
   SizeType LayerCount() const;
 
+  void SetExpectedInputShape(std::vector<math::SizeType> const &shape);
+
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 
@@ -84,6 +86,15 @@ Sequential<TensorType>::Sequential(ModelConfig<DataType> model_config)
 {
   this->input_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Input", {});
   this->label_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Label", {});
+}
+
+template <typename TensorType>
+void Sequential<TensorType>::SetExpectedInputShape(std::vector<SizeType> const &shape)
+{
+  std::vector<SizeType> slice_shape(shape);
+  slice_shape.back() = 1;
+  this->graph_ptr_->GetNode(this->input_)->SetSliceOutputShape(slice_shape);
+  this->graph_ptr_->GetNode(this->input_)->SetExpectedSliceInputShapes({slice_shape});
 }
 
 template <typename TensorType>

@@ -262,6 +262,10 @@ public:
   {
     return OpType::LOSS_MEAN_SQUARE_ERROR;
   }
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
   static constexpr char const *DESCRIPTOR = "MeanSquareErrorLoss";
 
 private:

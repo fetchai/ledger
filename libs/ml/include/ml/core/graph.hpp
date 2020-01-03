@@ -165,6 +165,7 @@ protected:
   void       SetInputReference(std::string const &node_name, TensorType const &data);
   void       InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
   TensorType ForwardPropagate(std::string const &node_name, bool is_training = true);
+  void       RecursivelyLinkShapes(std::string const &node_name);
 
 private:
   GraphState graph_state_ = GraphState::NOT_COMPILED;
@@ -327,6 +328,8 @@ void Graph<TensorType>::Compile()
       LinkNodesInGraph(node_name, node_inputs);
     }
 
+    RecursivelyLinkShapes(connections_.back().first);
+
     // TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not
     // appear in middle of graph
     if (valid)
@@ -448,6 +451,27 @@ TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name
   {
     throw ml::exceptions::InvalidMode("Cannot evaluate: node [" + node_name + "] not in graph");
   }
+}
+
+/**
+ * Computes and/or deduces layer output shapes starting from the given node and recursively
+ * traversing the Graph up to leaf (input) nodes. Layer output shape computation/deduction
+ * results are cached in each Node.
+ * @param node_name
+ */
+template <typename TensorType>
+void Graph<TensorType>::RecursivelyLinkShapes(const std::string &node_name)
+{
+  FETCH_LOG_INFO(DESCRIPTOR, " Linking layer shapes ... ");
+  NodePtrType node   = nodes_.at(node_name);
+  auto const  result = node->SliceOutputShape();
+  if (result.empty())
+  {
+    // throw error, something went bad.
+    FETCH_LOG_INFO(DESCRIPTOR, " Shape linking failed! ");
+    return;
+  }
+  FETCH_LOG_INFO(DESCRIPTOR, " Shape linking completed.");
 }
 
 /**
