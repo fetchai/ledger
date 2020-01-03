@@ -176,7 +176,7 @@ def send_txs(parameters, test_instance):
             # create and send the transaction to the ledger, capturing the tx
             # hash
             tx = api.tokens.transfer(
-                test_instance._benefactor_address, identity, amount, BASE_TX_FEE)
+                test_instance._benefactor_entity, identity, amount, BASE_TX_FEE)
 
             tx_and_identity.append((tx, identity, amount))
 
@@ -197,7 +197,7 @@ def run_python_test(parameters, test_instance):
 
     options = {'host': host, 'port': port}
     options.update(parameters)
-    test_script.run(options, test_instance._benefactor_address)
+    test_script.run(options, test_instance._benefactor_entity)
 
 
 def run_dmlf_etch_client(parameters, test_instance):
@@ -316,7 +316,7 @@ def verify_txs(parameters, test_instance):
                     if failed_to_find > 5:
                         # Forces the resubmission of transfer TX to the chain (TX most likely was lost)
                         api.tokens.transfer(
-                            test_instance._benefactor_address, identity, balance, BASE_TX_FEE)
+                            test_instance._benefactor_entity, identity, balance, BASE_TX_FEE)
                         failed_to_find = 0
                 else:
                     # Non-zero balance at this point. Stop waiting.
@@ -441,7 +441,7 @@ def create_balance(parameters, test_instance):
         entity = Entity(get_nodes_private_key(test_instance, node_index))
 
         tx = api.tokens.transfer(
-            test_instance._benefactor_address, entity, amount, BASE_TX_FEE)
+            test_instance._benefactor_entity, entity, amount, BASE_TX_FEE)
 
         for i in range(10):
             output('Create balance of: ', amount)
