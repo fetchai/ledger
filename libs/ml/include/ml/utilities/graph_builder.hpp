@@ -34,6 +34,7 @@
 #include "ml/ops/abs.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/elu.hpp"
+#include "ml/ops/activations/gelu.hpp"
 #include "ml/ops/activations/leaky_relu.hpp"
 #include "ml/ops/activations/logsigmoid.hpp"
 #include "ml/ops/activations/logsoftmax.hpp"
