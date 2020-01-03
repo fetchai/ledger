@@ -102,12 +102,12 @@ std::vector<math::SizeType> Abs<TensorType>::ComputeOutputShape(VecTensorType co
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-// template class Abs<math::Tensor<int8_t>>;
-// template class Abs<math::Tensor<int16_t>>;
+template class Abs<math::Tensor<int8_t>>;
+template class Abs<math::Tensor<int16_t>>;
 template class Abs<math::Tensor<int32_t>>;
 template class Abs<math::Tensor<int64_t>>;
-// template class Abs<math::Tensor<uint8_t>>;
-// template class Abs<math::Tensor<uint16_t>>;
+template class Abs<math::Tensor<uint8_t>>;
+template class Abs<math::Tensor<uint16_t>>;
 template class Abs<math::Tensor<uint32_t>>;
 template class Abs<math::Tensor<uint64_t>>;
 template class Abs<math::Tensor<float>>;

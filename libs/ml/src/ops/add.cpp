@@ -127,12 +127,12 @@ void Add<TensorType>::UpdateAxes(VecTensorType const &inputs)
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-// template class Add<math::Tensor<int8_t>>;
-// template class Add<math::Tensor<int16_t>>;
+template class Add<math::Tensor<int8_t>>;
+template class Add<math::Tensor<int16_t>>;
 template class Add<math::Tensor<int32_t>>;
 template class Add<math::Tensor<int64_t>>;
-// template class Add<math::Tensor<uint8_t>>;
-// template class Add<math::Tensor<uint16_t>>;
+template class Add<math::Tensor<uint8_t>>;
+template class Add<math::Tensor<uint16_t>>;
 template class Add<math::Tensor<uint32_t>>;
 template class Add<math::Tensor<uint64_t>>;
 template class Add<math::Tensor<float>>;
