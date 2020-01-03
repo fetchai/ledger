@@ -17,7 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "math/matrix_operations.hpp"
+#include "math/standard_functions/pow.hpp"
+#include "math/standard_functions/sqrt.hpp"
 #include "ml/ops/layer_norm.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {
 namespace ml {

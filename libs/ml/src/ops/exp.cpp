@@ -17,9 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/standard_functions/exp.hpp"
-//#include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/exp.hpp"
-//#include "ml/saveparams/saveable_params.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {
 namespace ml {

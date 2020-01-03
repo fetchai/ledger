@@ -25,7 +25,8 @@ namespace ml {
 namespace ops {
 
 template <typename TensorType>
-Add<TensorType>::Add(SPType const &sp) : Ops<TensorType>(sp)
+Add<TensorType>::Add(SPType const &sp)
+  : Ops<TensorType>(sp)
 {
   axes_ = sp.axes;
 }

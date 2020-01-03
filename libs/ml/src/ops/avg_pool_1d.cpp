@@ -27,7 +27,6 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-
 template <typename TensorType>
 AvgPool1D<TensorType>::AvgPool1D(SizeType const kernel_size, SizeType const stride_size)
   : kernel_size_{kernel_size}
@@ -35,7 +34,8 @@ AvgPool1D<TensorType>::AvgPool1D(SizeType const kernel_size, SizeType const stri
 {}
 
 template <typename TensorType>
-AvgPool1D<TensorType>::AvgPool1D(SPType const &sp) : Ops<TensorType>(sp)
+AvgPool1D<TensorType>::AvgPool1D(SPType const &sp)
+  : Ops<TensorType>(sp)
 {
   kernel_size_ = sp.kernel_size;
   stride_size_ = sp.stride_size;

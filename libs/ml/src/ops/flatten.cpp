@@ -18,6 +18,7 @@
 
 #include "math/matrix_operations.hpp"
 #include "ml/ops/flatten.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {
 namespace ml {

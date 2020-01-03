@@ -24,6 +24,12 @@
 
 namespace fetch {
 namespace ml {
+
+struct OpsSaveableParams;
+
+template <typename TensorType>
+struct OpExpSaveableParams;
+
 namespace ops {
 
 template <class T>

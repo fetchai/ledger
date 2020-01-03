@@ -34,7 +34,8 @@ AvgPool2D<TensorType>::AvgPool2D(SizeType const kernel_size, SizeType const stri
 {}
 
 template <typename TensorType>
-AvgPool2D<TensorType>::AvgPool2D(SPType const &sp) : Ops<TensorType>(sp)
+AvgPool2D<TensorType>::AvgPool2D(SPType const &sp)
+  : Ops<TensorType>(sp)
 {
   kernel_size_ = sp.kernel_size;
   stride_size_ = sp.stride_size;

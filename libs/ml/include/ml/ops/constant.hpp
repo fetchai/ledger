@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "ml/ops/dataholder.hpp"
 
 #include <cassert>
