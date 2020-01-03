@@ -59,39 +59,7 @@ public:
 
   void Forward(VecTensorType const &inputs, TensorType &output) override;
 
-  std::vector<TensorType> Backward(VecTensorType const &inputs,
-<<<<<<< HEAD
-                                   TensorType const &   error_signal) override;
-=======
-                                   TensorType const &   error_signal) override
-  {
-    assert(inputs.size() == 1);
-    assert(error_signal.size() == inputs.at(0)->size());
-
-    TensorType return_signal(inputs.at(0)->shape());
-
-    auto a_it   = inputs.at(0)->cbegin();
-    auto err_it = error_signal.cbegin();
-    auto r_it   = return_signal.begin();
-    while (a_it.is_valid())
-    {
-      if (*a_it > DataType{0})
-      {
-        *r_it = *err_it;
-      }
-      else
-      {
-        *r_it = -*err_it;
-      }
-
-      ++a_it;
-      ++err_it;
-      ++r_it;
-    }
-
-    return {return_signal};
-  }
->>>>>>> 3b1072945fffa3b9a6903e21a0125e1061cace58
+  std::vector<TensorType> Backward(VecTensorType const &inputs, TensorType const &   error_signal) override;
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
