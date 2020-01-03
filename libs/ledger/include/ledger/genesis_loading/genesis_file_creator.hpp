@@ -42,6 +42,7 @@ class GenesisFileCreator
 public:
   using ConsensusPtr     = std::shared_ptr<fetch::ledger::ConsensusInterface>;
   using ByteArray        = byte_array::ByteArray;
+  using ConstByteArray   = byte_array::ConstByteArray;
   using CertificatePtr   = std::shared_ptr<crypto::Prover>;
   using GenesisStore     = fetch::storage::ObjectStore<Block>;
   using MainChain        = ledger::MainChain;
@@ -69,7 +70,8 @@ public:
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;
 
-  Result LoadFile(std::string const &path, bool proof_of_stake, ConsensusParameters &params);
+  Result LoadContents(ConstByteArray const &contents, bool proof_of_stake,
+                      ConsensusParameters &params);
 
   // Operators
   GenesisFileCreator &operator=(GenesisFileCreator const &) = delete;
