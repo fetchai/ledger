@@ -248,7 +248,6 @@ ChargeAmount TensorEstimator::Dot(vm::Ptr<VMTensor> const &other)
 
 ChargeAmount TensorEstimator::GetReshapeCost(SizeVector const &new_shape)
 {
-
   if (new_shape == tensor_.shape())
   {
     return LOW_CHARGE;

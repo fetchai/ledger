@@ -95,8 +95,8 @@ public:
 
     while (a_it.is_valid())
     {
-      assert(*b_it == 0 || *b_it == 1);
-      if (*b_it == 1)
+      assert(*b_it == DataType{0} || *b_it == DataType{1});
+      if (*b_it == DataType{1})
       {
         *r_it = -*b_it / *a_it;
       }
