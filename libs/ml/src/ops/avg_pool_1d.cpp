@@ -82,11 +82,11 @@ void AvgPool1D<TensorType>::Forward(VecTensorType const &inputs, TensorType &out
         // Get sum of value on kernel_size_ window
         for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
         {
-          sum += inputs.at(0)->At(c, iter + j, n_i);
+          sum = static_cast<DataType>(sum + inputs.at(0)->At(c, iter + j, n_i));
         }
 
         // Set average value for each [kernel_size_] window to output
-        *out_it = sum / cnt;
+        *out_it = static_cast<DataType>(sum / cnt);
         ++out_it;
       }
     }
@@ -131,7 +131,8 @@ std::vector<TensorType> AvgPool1D<TensorType>::Backward(VecTensorType const &inp
         // Add error signal divided by kernel size
         for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
         {
-          return_signal(c, iter + j, n_i) += *er_it / cnt;
+          return_signal(c, iter + j, n_i) = static_cast<DataType>(
+              return_signal(c, iter + j, n_i) + static_cast<DataType>(*er_it / cnt));
         }
 
         ++er_it;

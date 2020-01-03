@@ -90,12 +90,12 @@ void AvgPool2D<TensorType>::Forward(VecTensorType const &inputs, TensorType &out
           {
             for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
             {
-              sum += inputs.at(0)->At(c, iterw + jw, iterh + jh, n_i);
+              sum = static_cast<DataType>(sum + inputs.at(0)->At(c, iterw + jw, iterh + jh, n_i));
             }
           }
 
           // Set average value for each [kernel_size_ x kernel_size_] window to output
-          *oit = sum / cnt;
+          *oit = static_cast<DataType>(sum / cnt);
           ++oit;
         }
       }
@@ -145,7 +145,9 @@ std::vector<TensorType> AvgPool2D<TensorType>::Backward(VecTensorType const &inp
           {
             for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
             {
-              return_signal(c, iterw + jw, iterh + jh, n_i) += *erit / cnt;
+              return_signal(c, iterw + jw, iterh + jh, n_i) =
+                  static_cast<DataType>(return_signal(c, iterw + jw, iterh + jh, n_i) +
+                                        static_cast<DataType>(*erit / cnt));
             }
           }
 

@@ -77,11 +77,11 @@ std::vector<TensorType> Abs<TensorType>::Backward(VecTensorType const &inputs,
   {
     if (*a_it > 0)
     {
-      *r_it = *err_it;
+      *r_it = static_cast<DataType>(*err_it);
     }
     else
     {
-      *r_it = -*err_it;
+      *r_it = static_cast<DataType>(-*err_it);
     }
 
     ++a_it;
