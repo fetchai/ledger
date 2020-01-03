@@ -47,6 +47,7 @@ std::map<std::string, SupportedLayerType> const VMModel::layer_types_{
     {"dense", SupportedLayerType::DENSE},     {"conv1d", SupportedLayerType::CONV1D},
     {"conv2d", SupportedLayerType::CONV2D},   {"flatten", SupportedLayerType::FLATTEN},
     {"dropout", SupportedLayerType::DROPOUT}, {"activation", SupportedLayerType::ACTIVATION},
+    {"input", SupportedLayerType::INPUT},
 };
 
 std::map<std::string, ActivationType> const VMModel::activations_{
@@ -339,7 +340,9 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
         .CreateMemberFunction("compile", &VMModel::CompileSimple,
                               UseEstimator(&ModelEstimator::CompileSimple))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
-                              UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental));
+                              UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental))
+        .CreateMemberFunction("addExperimental", &VMModel::LayerAddInput,
+                              UseEstimator(&ModelEstimator::LayerAddInput));
   }
 }
 
@@ -492,9 +495,10 @@ void VMModel::AssertLayerTypeMatches(SupportedLayerType                layer,
                                      std::vector<SupportedLayerType> &&valids) const
 {
   static const std::map<SupportedLayerType, std::string> LAYER_NAMES_{
-      {SupportedLayerType::DENSE, "dense"},
-      {SupportedLayerType::CONV1D, "conv1d"},
-      {SupportedLayerType::CONV2D, "conv2d"},
+      {SupportedLayerType::DENSE, "dense"},     {SupportedLayerType::CONV1D, "conv1d"},
+      {SupportedLayerType::CONV2D, "conv2d"},   {SupportedLayerType::FLATTEN, "flatten"},
+      {SupportedLayerType::DROPOUT, "dropout"}, {SupportedLayerType::ACTIVATION, "activation"},
+      {SupportedLayerType::INPUT, "input"},
   };
   if (std::find(valids.begin(), valids.end(), layer) == valids.end())
   {
@@ -730,6 +734,34 @@ void VMModel::LayerAddActivation(const fetch::vm::Ptr<String> &layer,
                         activation_name->string());
       return;
     }
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
+    return;
+  }
+}
+
+/**
+ * @brief VMModel::LayerAddInput experimental InputLayer is a wrapper around ml Placeholder with a
+ * fixed shape.
+ * @param layer - "input" expected
+ * @param shape - input shape, min 2 dimensions, the trailing is batch size.
+ */
+void VMModel::LayerAddInput(const fetch::vm::Ptr<String> &                   layer,
+                            const fetch::vm::Ptr<vm::Array<math::SizeType>> &shape)
+{
+  try
+  {
+    FETCH_UNUSED(shape);
+    // TODO(VH)(ML-437): implement shaped Placeholder.
+
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::INPUT});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+    me->Add<fetch::ml::ops::PlaceHolder<TensorType>>();
+    compiled_ = false;
   }
   catch (std::exception const &e)
   {

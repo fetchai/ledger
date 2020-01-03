@@ -452,28 +452,24 @@ TEST_F(VMModelTests, model_add_dense_relu)
   TestValidLayerAdding(R"(model.add("dense", 10u64, 10u64, "relu");)");
 }
 
-// Disabled until implementation of AddLayerConv estimator
 TEST_F(VMModelTests, model_add_conv1d_noact)
 {
   TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64);)",
                        IGNORE_CHARGE_ESTIMATION);
 }
 
-// Disabled until implementation of AddLayerConv estimator
 TEST_F(VMModelTests, model_add_conv1d_relu)
 {
   TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)",
                        IGNORE_CHARGE_ESTIMATION);
 }
 
-// Disabled until implementation of AddLayerConv estimator
 TEST_F(VMModelTests, model_add_conv2d_noact)
 {
   TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64);)",
                        IGNORE_CHARGE_ESTIMATION);
 }
 
-// Disabled until implementation of AddLayerConv estimator
 TEST_F(VMModelTests, model_add_conv2d_relu)
 {
   TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)",
@@ -499,6 +495,15 @@ TEST_F(VMModelTests, model_add_activation)
   TestValidLayerAdding(R"(model.add("activation", "log_sigmoid");)", IGNORE_CHARGE_ESTIMATION);
   TestValidLayerAdding(R"(model.add("activation", "softmax");)", IGNORE_CHARGE_ESTIMATION);
   TestValidLayerAdding(R"(model.add("activation", "log_softmax");)", IGNORE_CHARGE_ESTIMATION);
+}
+
+TEST_F(VMModelTests, model_add_input)
+{
+  TestValidLayerAdding(R"(
+                       var data_shape = Array<UInt64>(2);
+                       data_shape[0] = 10u64;
+                       data_shape[1] = 250u64;
+                       model.add("input", data_shape);)");
 }
 
 TEST_F(VMModelTests, model_add_invalid_layer_type)
@@ -580,6 +585,11 @@ TEST_F(VMModelTests, model_uncompilable_add_layer__dropout_invalid_params)
 TEST_F(VMModelTests, model_uncompilable_add_layer__activation_invalid_params)
 {
   TestAddingUncompilableLayer(R"(model.add("activation", 0u64);)");
+}
+
+TEST_F(VMModelTests, model_uncompilable_add_layer__input_invalid_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("input", 0u64);)");
 }
 
 TEST_F(VMModelTests, model_add_layer_to_non_sequential)
