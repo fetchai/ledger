@@ -47,6 +47,7 @@ void RandomAssign(TensorType &tensor)
 TYPED_TEST(StandardFunctionTests, abs_test)
 {
   using ArrayType = TypeParam;
+  using Type      = typename ArrayType::Type;
 
   // randomly assign data to tensor
   ArrayType tensor = ArrayType({100});
@@ -57,9 +58,9 @@ TYPED_TEST(StandardFunctionTests, abs_test)
   auto      gt_it = gt.begin();
   while (gt_it.is_valid())
   {
-    if (*gt_it < 0)
+    if (*gt_it < Type{0})
     {
-      *gt_it = ((*gt_it) * (-1));
+      *gt_it = ((*gt_it) * Type{-1});
     }
     ++gt_it;
   }

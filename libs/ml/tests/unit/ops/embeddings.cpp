@@ -203,8 +203,7 @@ TYPED_TEST(EmbeddingsTest, saveparams_test)
   new_op.Forward({std::make_shared<TensorType const>(input)}, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(EmbeddingsTest, saveparams_backward)

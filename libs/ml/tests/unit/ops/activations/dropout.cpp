@@ -41,10 +41,11 @@ namespace {
 template <typename TensorType>
 double zero_fraction(TensorType const &t1)
 {
-  double ret = 0;
+  using DataType = typename TensorType::Type;
+  double ret     = 0;
   for (auto const &i : t1)
   {
-    if (i == 0)
+    if (i == DataType{0})
     {
       ret++;
     }

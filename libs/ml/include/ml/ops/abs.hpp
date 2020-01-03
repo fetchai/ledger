@@ -36,6 +36,7 @@ class Abs : public Ops<T>
 public:
   using TensorType    = T;
   using SizeType      = fetch::math::SizeType;
+  using DataType      = typename TensorType::Type;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpAbsSaveableParams<T>;
@@ -96,7 +97,7 @@ public:
     auto r_it   = return_signal.begin();
     while (a_it.is_valid())
     {
-      if (*a_it > 0)
+      if (*a_it > DataType{0})
       {
         *r_it = *err_it;
       }
