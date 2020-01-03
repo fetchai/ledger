@@ -142,6 +142,10 @@ public:
   {
     return OpType::OP_SOFTMAX;
   }
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
   static constexpr char const *DESCRIPTOR = "Softmax";
 
 private:

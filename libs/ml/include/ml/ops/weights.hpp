@@ -265,7 +265,15 @@ public:
   {
     return OpType::OP_WEIGHTS;
   }
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
   static constexpr char const *DESCRIPTOR = "Weights";
+  char const *                 Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 
 private:
   /**

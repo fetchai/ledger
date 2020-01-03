@@ -104,8 +104,15 @@ public:
   {
     return OpType::OP_ADD;
   }
-
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
   static constexpr char const *DESCRIPTOR = "Add";
+  char const *                 Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 
 private:
   std::vector<SizeType> axes_;

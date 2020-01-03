@@ -123,6 +123,10 @@ public:
     return this->OpCode();
   }
   static constexpr char const *DESCRIPTOR = "Relu";
+  char const *                 Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 };
 
 }  // namespace ops

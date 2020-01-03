@@ -156,6 +156,10 @@ public:
     return this->OpCode();
   }
   static constexpr char const *DESCRIPTOR = "Dropout";
+  char const *                 Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 
 private:
   TensorType drop_values_;

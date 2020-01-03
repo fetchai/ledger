@@ -157,9 +157,9 @@ public:
       bias_data = TensorType(std::vector<SizeType>({out_size_, 1}));
     }
     this->SetInput(name + "_Bias", bias_data);  // TODO(VH): bias instead of name + "_Bias"
-    FETCH_LOG_INFO(GetName().c_str(), "--Compiling... ");
+    // FETCH_LOG_INFO(GetName().c_str(), "--Compiling... ");
     this->Compile();
-    FETCH_LOG_INFO(GetName().c_str(), "--Compiled.");
+    // FETCH_LOG_INFO(GetName().c_str(), "--Compiled.");
     this->SetSliceOutputShape({});  // necessary for further shape deduction
   }
 

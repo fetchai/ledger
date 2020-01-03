@@ -267,6 +267,10 @@ public:
     return this->OpCode();
   }
   static constexpr char const *DESCRIPTOR = "MeanSquareErrorLoss";
+  char const *                 Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 
 private:
   TensorType weightings_;

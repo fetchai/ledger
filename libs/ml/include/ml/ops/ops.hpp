@@ -131,13 +131,13 @@ public:
     return OpType::NONE;
   }
 
-protected:
-  bool is_training_ = true;
-
-  // TODO(VH): impl. filling it on compilation.
-  ShapeVector expected_slice_input_shapes_{};
-  Shape       slice_output_shape_{};
-  // TODO(VH): ^^ impl. serialisation of new fields.
+  /// OOP polymorphic wrapper around each Ops/Layer DESCRIPTOR.
+  virtual char const *Descriptor() const  // TODO(VH): make a pure virtual.
+  {
+    std::cout << "Error: call to unexisting OperationType implementation! returned None."
+              << std::endl;
+    return "UNKNOWN";
+  }
 
   // TODO(VH): extract to a free function.
   std::string OutputShapeAsString()
@@ -183,6 +183,14 @@ protected:
     ss << "])";
     return ss.str();
   }
+
+protected:
+  bool is_training_ = true;
+
+  // TODO(VH): impl. filling it on compilation.
+  ShapeVector expected_slice_input_shapes_{};
+  Shape       slice_output_shape_{};
+  // TODO(VH): ^^ impl. serialisation of new fields.
 
   // TODO(VH): extract to a free function.
   static fetch::math::SizeType TotalElementsIn(std::vector<fetch::math::SizeVector> const &shapes)

@@ -108,6 +108,10 @@ public:
     return this->OpCode();
   }
   static constexpr char const *DESCRIPTOR = "Sigmoid";
+  char const *                 Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 
 private:
   // minimum possible output value of the sigmoid should not be zero, but actually epsilon

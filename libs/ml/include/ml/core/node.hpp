@@ -138,11 +138,10 @@ public:
   {
     if (operation_type_ != op_ptr_->OperationType())
     {
-      FETCH_LOG_ERROR(this->name_.c_str(),
-                      "Node operation type (" + std::to_string(static_cast<int>(operation_type_)) +
-                          ") and underlying Ops operation code (" +
-                          std::to_string(static_cast<int>(op_ptr_->OperationType())) +
-                          ") mismatch!");
+      FETCH_LOG_ERROR(this->name_.c_str(), "Node operation type (" +
+                                               std::to_string(static_cast<int>(operation_type_)) +
+                                               ") and underlying Ops operation code (" +
+                                               std::string(op_ptr_->Descriptor()) + ") mismatch!");
       operation_type_ = op_ptr_->OperationType();
     }
     return operation_type_;
@@ -183,31 +182,12 @@ public:
     {
       if (input_nodes_.empty() && OperationType() == OpType::OP_PLACEHOLDER)
       {
-        FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached a Graph leaf : " + this->name_);
+        FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached an input node : " + this->name_ +
+                                          " " + op_ptr_->OutputShapeAsString());
       }
 
       return candidate;
     }
-
-    //    // Is my Op pre-shaped?
-    //    bool const i_am_preshaped =
-    //        shaped_operations_.find(op_ptr_->OperationType()) != shaped_operations_.end();
-    //    if (i_am_preshaped)
-    //    {
-    //      // TODO(VH): then what?..
-    //      // Some Ops have their shape known at Graph compilation time
-    //      Shape const candidate = op_ptr_->SliceOutputShape();
-    //      if (candidate.empty())
-    //      {
-    //        // TODO(VH): throw error: shaped layer returned empty shape, linking failed!
-    //        FETCH_LOG_ERROR(
-    //            this->name_.c_str(),
-    //            "A pre-shaped Node's underlying Op returned empty shape, shape linking
-    //            impossible!");
-    //        return slice_output_shape_;
-    //      }
-    //      slice_output_shape_ = candidate;
-    //    }
 
     ShapeVector input_shapes;
     for (auto const &i : input_nodes_)
@@ -238,6 +218,8 @@ public:
     if (!input_shapes.empty())
     {
       op_ptr_->ComputeSliceOutputShape(input_shapes);
+      FETCH_LOG_INFO(name_.c_str(),
+                     op_ptr_->InputShapesAsString() + "->" + op_ptr_->OutputShapeAsString());
     }
     else
     {

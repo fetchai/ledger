@@ -84,19 +84,6 @@ public:
     return copyshare;
   }
 
-  /**
-   * DELETEME TEMPORARY DEBUG DUMMY
-   */
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    FETCH_UNUSED(inputs);
-    assert(inputs.empty());
-    assert(this->data_);
-    std::cout << "My shape is " << this->InputShapesAsString() << " -> "
-              << this->OutputShapeAsString() << std::endl;
-    output = *(this->data_);
-  }
-
   OpType OperationType() const override
   {
     return this->OpCode();
@@ -108,6 +95,10 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";
+  char const *                 Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 };
 
 }  // namespace ops

@@ -107,7 +107,15 @@ public:
   {
     return OpType::OP_FLATTEN;
   }
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
   static constexpr char const *DESCRIPTOR = "Flatten";
+  char const *                 Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 
 private:
   std::vector<SizeType> input_shape_;

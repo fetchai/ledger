@@ -462,7 +462,7 @@ TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name
 template <typename TensorType>
 void Graph<TensorType>::RecursivelyLinkShapes(const std::string &node_name)
 {
-  FETCH_LOG_INFO(DESCRIPTOR, " Linking layer shapes ... ");
+  // FETCH_LOG_INFO(DESCRIPTOR, " Linking layer shapes ... ");
   NodePtrType node   = nodes_.at(node_name);
   auto const  result = node->SliceOutputShape();
   if (result.empty())
@@ -471,7 +471,7 @@ void Graph<TensorType>::RecursivelyLinkShapes(const std::string &node_name)
     FETCH_LOG_INFO(DESCRIPTOR, " Shape linking failed! ");
     return;
   }
-  FETCH_LOG_INFO(DESCRIPTOR, " Shape linking completed.");
+  // FETCH_LOG_INFO(DESCRIPTOR, " Shape linking completed.");
 }
 
 /**
