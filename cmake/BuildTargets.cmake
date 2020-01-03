@@ -318,6 +318,9 @@ function (configure_vendor_targets)
   set(UTF8_SAMPLES OFF CACHE BOOL "Enable building samples for UTF8-CPP" FORCE)
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/utfcpp)
 
+  # noisec
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/noisec)
+
 endfunction (configure_vendor_targets)
 
 function (configure_library_targets)
