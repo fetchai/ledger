@@ -84,6 +84,9 @@ public:
   ChargeAmount LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                   fetch::vm::Ptr<fetch::vm::String> const &activation);
 
+  ChargeAmount LayerAddInput(fetch::vm::Ptr<fetch::vm::String> const &        layer,
+                             fetch::vm::Ptr<vm::Array<math::SizeType>> const &shape);
+
   ChargeAmount CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                  fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
