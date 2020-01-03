@@ -49,7 +49,8 @@ TYPED_TEST(SigmoidTest, forward_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.00001"),
+                                  fetch::math::Type<DataType>("0.00001")));
 }
 
 TYPED_TEST(SigmoidTest, forward_3d_tensor_test)
@@ -70,8 +71,8 @@ TYPED_TEST(SigmoidTest, forward_3d_tensor_test)
     {
       for (SizeType k{0}; k < 2; ++k)
       {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gt_input[i + 2 * (j + 2 * k)]));
+        data.Set(i, j, k, fetch::math::AsType<DataType>(data_input[i + 2 * (j + 2 * k)]));
+        gt.Set(i, j, k, fetch::math::AsType<DataType>(gt_input[i + 2 * (j + 2 * k)]));
       }
     }
   }
@@ -81,7 +82,8 @@ TYPED_TEST(SigmoidTest, forward_3d_tensor_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.00001"),
+                                  fetch::math::Type<DataType>("0.00001")));
 }
 
 TYPED_TEST(SigmoidTest, backward_test)
@@ -98,7 +100,8 @@ TYPED_TEST(SigmoidTest, backward_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(SigmoidTest, backward_3d_tensor_test)
@@ -120,9 +123,9 @@ TYPED_TEST(SigmoidTest, backward_3d_tensor_test)
     {
       for (SizeType k{0}; k < 2; ++k)
       {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        error.Set(i, j, k, static_cast<DataType>(errorInput[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gt_input[i + 2 * (j + 2 * k)]));
+        data.Set(i, j, k, fetch::math::AsType<DataType>(data_input[i + 2 * (j + 2 * k)]));
+        error.Set(i, j, k, fetch::math::AsType<DataType>(errorInput[i + 2 * (j + 2 * k)]));
+        gt.Set(i, j, k, fetch::math::AsType<DataType>(gt_input[i + 2 * (j + 2 * k)]));
       }
     }
   }
@@ -132,7 +135,8 @@ TYPED_TEST(SigmoidTest, backward_3d_tensor_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(SigmoidTest, saveparams_test)
@@ -177,8 +181,7 @@ TYPED_TEST(SigmoidTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(SigmoidTest, saveparams_backward_3d_tensor_test)
@@ -202,9 +205,9 @@ TYPED_TEST(SigmoidTest, saveparams_backward_3d_tensor_test)
     {
       for (SizeType k{0}; k < 2; ++k)
       {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        error.Set(i, j, k, static_cast<DataType>(errorInput[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gt_input[i + 2 * (j + 2 * k)]));
+        data.Set(i, j, k, fetch::math::AsType<DataType>(data_input[i + 2 * (j + 2 * k)]));
+        error.Set(i, j, k, fetch::math::AsType<DataType>(errorInput[i + 2 * (j + 2 * k)]));
+        gt.Set(i, j, k, fetch::math::AsType<DataType>(gt_input[i + 2 * (j + 2 * k)]));
       }
     }
   }

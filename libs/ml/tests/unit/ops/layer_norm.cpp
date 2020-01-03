@@ -202,8 +202,7 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   op.Forward({std::make_shared<TensorType>(data)}, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(LayerNormTest, saveparams_backward_test_3d)
