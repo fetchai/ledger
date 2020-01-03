@@ -240,7 +240,7 @@ fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> Client
   }
   if (!doc["learning_rate"].IsUndefined())
   {
-    client_params.learning_rate = static_cast<DataType>(doc["learning_rate"].As<float>());
+    client_params.learning_rate = doc["learning_rate"].As<DataType>();
   }
   if (!(doc["print_loss"].IsUndefined()))
   {
