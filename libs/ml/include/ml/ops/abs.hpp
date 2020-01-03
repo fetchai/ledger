@@ -59,7 +59,8 @@ public:
 
   void Forward(VecTensorType const &inputs, TensorType &output) override;
 
-  std::vector<TensorType> Backward(VecTensorType const &inputs, TensorType const &   error_signal) override;
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override;
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
