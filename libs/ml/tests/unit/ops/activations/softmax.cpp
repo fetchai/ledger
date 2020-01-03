@@ -49,7 +49,8 @@ TYPED_TEST(SoftmaxTest, forward_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::Type<DataType>("0.00001"),
+                                  fetch::math::Type<DataType>("0.00001")));
 }
 
 TYPED_TEST(SoftmaxTest, forward_2d_tensor_axis_1_test)
@@ -67,8 +68,8 @@ TYPED_TEST(SoftmaxTest, forward_2d_tensor_axis_1_test)
   {
     for (SizeType j{0}; j < 3; ++j)
     {
-      data.Set(i, j, 0, static_cast<DataType>(data_input[j + 3 * i]));
-      gt.Set(i, j, 0, static_cast<DataType>(gt_input[j + 3 * i]));
+      data.Set(i, j, 0, fetch::math::AsType<DataType>(data_input[j + 3 * i]));
+      gt.Set(i, j, 0, fetch::math::AsType<DataType>(gt_input[j + 3 * i]));
     }
   }
 
@@ -97,7 +98,8 @@ TYPED_TEST(SoftmaxTest, backward_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::Type<DataType>("0.00001"),
+                                     fetch::math::Type<DataType>("0.00001")));
 }
 
 TYPED_TEST(SoftmaxTest, backward_2d_tensor_axis_1_test)
@@ -116,9 +118,9 @@ TYPED_TEST(SoftmaxTest, backward_2d_tensor_axis_1_test)
   {
     for (SizeType j{0}; j < 3; ++j)
     {
-      data.Set(i, j, 0, static_cast<DataType>(data_input[j + 3 * i]));
-      error.Set(i, j, 0, static_cast<DataType>(errorInput[j + 3 * i]));
-      gt.Set(i, j, 0, static_cast<DataType>(gt_input[j + 3 * i]));
+      data.Set(i, j, 0, fetch::math::AsType<DataType>(data_input[j + 3 * i]));
+      error.Set(i, j, 0, fetch::math::AsType<DataType>(errorInput[j + 3 * i]));
+      gt.Set(i, j, 0, fetch::math::AsType<DataType>(gt_input[j + 3 * i]));
     }
   }
 
@@ -127,7 +129,8 @@ TYPED_TEST(SoftmaxTest, backward_2d_tensor_axis_1_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_1_test)
@@ -149,8 +152,8 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_1_test)
 
   while (it_d.is_valid())
   {
-    *it_d = static_cast<DataType>(data_input.at(cnt));
-    *it_g = static_cast<DataType>(gt_input.at(cnt));
+    *it_d = fetch::math::AsType<DataType>(data_input.at(cnt));
+    *it_g = fetch::math::AsType<DataType>(gt_input.at(cnt));
 
     cnt++;
     ++it_d;
@@ -186,9 +189,9 @@ TYPED_TEST(SoftmaxTest, backward_3d_tensor_axis_1_test)
 
   while (it_d.is_valid())
   {
-    *it_d = static_cast<DataType>(data_input.at(cnt));
-    *it_e = static_cast<DataType>(errorInput.at(cnt));
-    *it_g = static_cast<DataType>(gt_input.at(cnt));
+    *it_d = fetch::math::AsType<DataType>(data_input.at(cnt));
+    *it_e = fetch::math::AsType<DataType>(errorInput.at(cnt));
+    *it_g = fetch::math::AsType<DataType>(gt_input.at(cnt));
 
     cnt++;
     ++it_d;
@@ -201,7 +204,8 @@ TYPED_TEST(SoftmaxTest, backward_3d_tensor_axis_1_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::Type<DataType>("0.00001"),
+                                     fetch::math::Type<DataType>("0.00001")));
 }
 
 TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_0_test)
@@ -223,8 +227,8 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_0_test)
 
   while (it_d.is_valid())
   {
-    *it_d = static_cast<DataType>(data_input.at(cnt));
-    *it_g = static_cast<DataType>(gt_input.at(cnt));
+    *it_d = fetch::math::AsType<DataType>(data_input.at(cnt));
+    *it_g = fetch::math::AsType<DataType>(gt_input.at(cnt));
 
     cnt++;
     ++it_d;
@@ -260,9 +264,9 @@ TYPED_TEST(SoftmaxTest, backward_3d_tensor_axis_0_test)
 
   while (it_d.is_valid())
   {
-    *it_d = static_cast<DataType>(data_input.at(cnt));
-    *it_e = static_cast<DataType>(errorInput.at(cnt));
-    *it_g = static_cast<DataType>(gt_input.at(cnt));
+    *it_d = fetch::math::AsType<DataType>(data_input.at(cnt));
+    *it_e = fetch::math::AsType<DataType>(errorInput.at(cnt));
+    *it_g = fetch::math::AsType<DataType>(gt_input.at(cnt));
 
     cnt++;
     ++it_d;
@@ -275,7 +279,8 @@ TYPED_TEST(SoftmaxTest, backward_3d_tensor_axis_0_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(SoftmaxTest, forward_3d_tensor_axes_0_2_test)
@@ -297,8 +302,8 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axes_0_2_test)
 
   while (it_d.is_valid())
   {
-    *it_d = static_cast<DataType>(data_input.at(cnt));
-    *it_g = static_cast<DataType>(gt_input.at(cnt));
+    *it_d = fetch::math::AsType<DataType>(data_input.at(cnt));
+    *it_g = fetch::math::AsType<DataType>(gt_input.at(cnt));
 
     cnt++;
     ++it_d;
@@ -334,9 +339,9 @@ TYPED_TEST(SoftmaxTest, backward_3d_tensor_axes_0_2_test)
 
   while (it_d.is_valid())
   {
-    *it_d = static_cast<DataType>(data_input.at(cnt));
-    *it_e = static_cast<DataType>(errorInput.at(cnt));
-    *it_g = static_cast<DataType>(gt_input.at(cnt));
+    *it_d = fetch::math::AsType<DataType>(data_input.at(cnt));
+    *it_e = fetch::math::AsType<DataType>(errorInput.at(cnt));
+    *it_g = fetch::math::AsType<DataType>(gt_input.at(cnt));
 
     cnt++;
     ++it_d;
@@ -349,7 +354,8 @@ TYPED_TEST(SoftmaxTest, backward_3d_tensor_axes_0_2_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(SoftmaxTest, saveparams_test)
@@ -394,8 +400,7 @@ TYPED_TEST(SoftmaxTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(SoftmaxTest, saveparams_backward_3d_tensor_axes_0_2_test)
@@ -420,9 +425,9 @@ TYPED_TEST(SoftmaxTest, saveparams_backward_3d_tensor_axes_0_2_test)
 
   while (it_d.is_valid())
   {
-    *it_d = static_cast<DataType>(data_input.at(cnt));
-    *it_e = static_cast<DataType>(errorInput.at(cnt));
-    *it_g = static_cast<DataType>(gt_input.at(cnt));
+    *it_d = fetch::math::AsType<DataType>(data_input.at(cnt));
+    *it_e = fetch::math::AsType<DataType>(errorInput.at(cnt));
+    *it_g = fetch::math::AsType<DataType>(gt_input.at(cnt));
 
     cnt++;
     ++it_d;

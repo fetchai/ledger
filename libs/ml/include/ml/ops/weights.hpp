@@ -122,7 +122,7 @@ public:
     {
     case WeightsInitialisation::ZEROS:
     {
-      array.Fill(static_cast<DataType>(0));
+      array.Fill(DataType{0});
       break;
     }
     case WeightsInitialisation::ONES:
@@ -198,7 +198,7 @@ public:
     }
     case WeightsInitialisation::ZEROS:
     {
-      array.Fill(static_cast<DataType>(0));
+      array.Fill(DataType{0});
       break;
     }
     case WeightsInitialisation::XAVIER_GLOROT:
@@ -286,7 +286,7 @@ private:
     {
       auto ran_val = lfg.AsType<DataType>();  // random value in range 0 <-> 1
       ran_val      = ran_val - HALF;
-      ran_val      = ran_val * 2;                   // random value in range -1 <-> +1
+      ran_val      = ran_val * DataType{2};         // random value in range -1 <-> +1
       ran_val      = ran_val * normalising_factor;  // random value in range -sigma <-> +sigma
 
       *it = static_cast<DataType>(ran_val);
@@ -307,7 +307,7 @@ private:
     {
       auto ran_val = lfg.AsType<DataType>();  // random value in range 0 <-> 1
       ran_val      = ran_val - HALF;
-      ran_val      = ran_val * 2;                   // random value in range -1 <-> +1
+      ran_val      = ran_val * DataType{2};         // random value in range -1 <-> +1
       ran_val      = ran_val * normalising_factor;  // random value in range -sigma <-> +sigma
 
       *it = static_cast<DataType>(ran_val);

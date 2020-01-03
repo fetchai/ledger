@@ -93,8 +93,8 @@ int main(int ac, char **av)
   std::string classification_output =
       g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
           "ClassificationOutput", {cls_token_output}, config.model_dims, 2u,
-          ActivationType::SOFTMAX, RegType::NONE, static_cast<DataType>(0),
-          WeightsInitType::XAVIER_GLOROT, false);
+          ActivationType::SOFTMAX, RegType::NONE, DataType{0}, WeightsInitType::XAVIER_GLOROT,
+          false);
 
   // Set up error signal
   std::string label = g.template AddNode<PlaceHolder<TensorType>>("Label", {});

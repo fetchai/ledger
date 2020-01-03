@@ -54,7 +54,7 @@ public:
     auto it = weight.begin();
     while (it.is_valid())
     {
-      if (*it > 0)
+      if (*it > DataType{0})
       {
         *it -= regularisation_rate;
       }

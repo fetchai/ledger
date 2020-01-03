@@ -41,6 +41,7 @@ public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
   using SizeType      = fetch::math::SizeType;
+  using DataType      = typename TensorType::Type;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpAbsSaveableParams<T>;
