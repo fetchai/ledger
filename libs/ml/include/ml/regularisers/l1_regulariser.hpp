@@ -56,11 +56,11 @@ public:
     {
       if (*it > DataType{0})
       {
-        *it -= regularisation_rate;
+        *it = static_cast<DataType>(*it - regularisation_rate);
       }
       else
       {
-        *it += regularisation_rate;
+        *it = static_cast<DataType>(*it + regularisation_rate);
       }
       ++it;
     }

@@ -291,9 +291,10 @@ private:
     while (it.is_valid())
     {
       auto ran_val = lfg.AsType<DataType>();  // random value in range 0 <-> 1
-      ran_val      = ran_val - HALF;
-      ran_val      = ran_val * DataType{2};         // random value in range -1 <-> +1
-      ran_val      = ran_val * normalising_factor;  // random value in range -sigma <-> +sigma
+      ran_val      = static_cast<DataType>(ran_val - HALF);
+      ran_val = static_cast<DataType>(ran_val * DataType{2});  // random value in range -1 <-> +1
+      ran_val = static_cast<DataType>(
+          ran_val * normalising_factor);  // random value in range -sigma <-> +sigma
 
       *it = static_cast<DataType>(ran_val);
       ++it;
@@ -312,9 +313,10 @@ private:
     while (it.is_valid())
     {
       auto ran_val = lfg.AsType<DataType>();  // random value in range 0 <-> 1
-      ran_val      = ran_val - HALF;
-      ran_val      = ran_val * DataType{2};         // random value in range -1 <-> +1
-      ran_val      = ran_val * normalising_factor;  // random value in range -sigma <-> +sigma
+      ran_val      = static_cast<DataType>(ran_val - HALF);
+      ran_val = static_cast<DataType>(ran_val * DataType{2});  // random value in range -1 <-> +1
+      ran_val = static_cast<DataType>(
+          ran_val * normalising_factor);  // random value in range -sigma <-> +sigma
 
       *it = static_cast<DataType>(ran_val);
       ++it;

@@ -49,12 +49,12 @@ public:
    */
   void ApplyRegularisation(TensorType &weight, DataType regularisation_rate) override
   {
-    DataType coef = static_cast<DataType>(2) * regularisation_rate;
+    DataType coef = static_cast<DataType>(2 * regularisation_rate);
 
     auto it = weight.begin();
     while (it.is_valid())
     {
-      *it -= (*it) * coef;
+      *it = static_cast<DataType>(*it - ((*it) * coef));
       ++it;
     }
   }

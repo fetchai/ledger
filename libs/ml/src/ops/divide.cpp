@@ -85,8 +85,8 @@ std::vector<TensorType> Divide<TensorType>::Backward(VecTensorType const &inputs
   {  // array / array same shape
     while (a_it.is_valid())
     {
-      *r_1_it = (*err_it) / (*b_it);
-      *r_2_it = -((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+      *r_1_it = static_cast<DataType>((*err_it) / (*b_it));
+      *r_2_it = static_cast<DataType>(-((*err_it) * (*a_it)) / ((*b_it) * (*b_it)));
 
       ++a_it;
       ++b_it;
@@ -99,8 +99,8 @@ std::vector<TensorType> Divide<TensorType>::Backward(VecTensorType const &inputs
   {  // array / scalar
     while (a_it.is_valid())
     {
-      *r_1_it = (*err_it) / (*b_it);
-      *r_2_it += -((*err_it) * (*a_it)) / ((*b_it) * (*b_it));
+      *r_1_it = static_cast<DataType>((*err_it) / (*b_it));
+      *r_2_it += static_cast<DataType>(-((*err_it) * (*a_it)) / ((*b_it) * (*b_it)));
 
       ++a_it;
       ++err_it;

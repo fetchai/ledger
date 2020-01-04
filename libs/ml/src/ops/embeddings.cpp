@@ -109,7 +109,7 @@ std::vector<TensorType> Embeddings<TensorType>::Backward(VecTensorType const &in
         auto gradient_view_it = gradient_view.begin();
         while (error_view_it.is_valid())
         {
-          *gradient_view_it += *error_view_it;
+          *gradient_view_it = static_cast<DataType>(*gradient_view_it + *error_view_it);
           ++error_view_it;
           ++gradient_view_it;
         }
