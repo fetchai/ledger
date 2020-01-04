@@ -38,17 +38,9 @@ public:
   using SPType        = OpAvgPool2DSaveableParams<T>;
   using MyType        = AvgPool2D<TensorType>;
 
-  AvgPool2D(SizeType const kernel_size, SizeType const stride_size)
-    : kernel_size_{kernel_size}
-    , stride_size_{stride_size}
-  {}
+  AvgPool2D(SizeType kernel_size, SizeType stride_size);
 
-  explicit AvgPool2D(SPType const &sp)
-    : Ops<T>(sp)
-  {
-    kernel_size_ = sp.kernel_size;
-    stride_size_ = sp.stride_size;
-  }
+  explicit AvgPool2D(SPType const &sp);
 
   ~AvgPool2D() override = default;
 
