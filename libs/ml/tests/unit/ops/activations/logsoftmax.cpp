@@ -19,10 +19,9 @@
 #include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
 #include "math/base_types.hpp"
-#include "ml/ops/activation.hpp"
+#include "ml/ops/activations/logsoftmax.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include <memory>
 
 namespace fetch {

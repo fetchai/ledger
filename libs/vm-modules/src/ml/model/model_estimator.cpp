@@ -178,7 +178,16 @@ ChargeAmount ModelEstimator::LayerAddActivation(const fetch::vm::Ptr<String> &la
 }
 
 ModelEstimator::ChargeAmount ModelEstimator::LayerAddInput(
-    const fetch::vm::Ptr<String> &layer, const fetch::vm::Ptr<vm::Array<math::SizeType>> &shape)
+    fetch::vm::Ptr<String> const &layer, fetch::vm::Ptr<vm::Array<math::SizeType>> const &shape)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(shape);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+ChargeAmount ModelEstimator::LayerAddReshape(
+    Ptr<fetch::vm::String> const &                          layer,
+    fetch::vm::Ptr<fetch::vm::Array<math::SizeType>> const &shape)
 {
   FETCH_UNUSED(layer);
   FETCH_UNUSED(shape);

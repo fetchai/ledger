@@ -17,10 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/standard_functions/abs.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/ops.hpp"
-#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <memory>
@@ -28,6 +26,12 @@
 
 namespace fetch {
 namespace ml {
+
+struct OpsSaveableParams;
+
+template <typename TensorType>
+struct OpAbsSaveableParams;
+
 namespace ops {
 
 template <class T>
@@ -35,89 +39,30 @@ class Abs : public Ops<T>
 {
 public:
   using TensorType    = T;
-  using SizeType      = fetch::math::SizeType;
   using DataType      = typename TensorType::Type;
+  using SizeType      = fetch::math::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpAbsSaveableParams<T>;
   using MyType        = Abs<TensorType>;
 
   Abs() = default;
-
   explicit Abs(SPType const &sp)
     : Ops<T>(sp)
   {}
-
   ~Abs() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    return std::make_shared<SPType>();
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
-    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
-    return copyshare;
-  }
-
-  /**
-   * elementwise absolute value
-   * @param inputs - one input for elementwise abs
-   * @return
-   */
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(inputs.size() == 1);
-    assert(inputs.at(0)->shape() == output.shape());
-    assert(output.shape() == this->ComputeOutputShape(inputs));
-
-    fetch::math::Abs((*inputs.at(0)), output);
-  }
-
-  /**
-   * elementwise absolute value gradient is:
-   * f'(input0)=sign(input0)*error_signal
-   */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    assert(inputs.size() == 1);
-    assert(error_signal.size() == inputs.at(0)->size());
+                                   TensorType const &   error_signal) override;
 
-    TensorType return_signal(inputs.at(0)->shape());
-
-    auto a_it   = inputs.at(0)->cbegin();
-    auto err_it = error_signal.cbegin();
-    auto r_it   = return_signal.begin();
-    while (a_it.is_valid())
-    {
-      if (*a_it > DataType{0})
-      {
-        *r_it = *err_it;
-      }
-      else
-      {
-        *r_it = -*err_it;
-      }
-
-      ++a_it;
-      ++err_it;
-      ++r_it;
-    }
-
-    return {return_signal};
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    return inputs.front()->shape();
-  }
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {

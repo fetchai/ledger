@@ -83,6 +83,8 @@ public:
 
   ChargeAmount LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                   fetch::vm::Ptr<fetch::vm::String> const &activation);
+  ChargeAmount LayerAddReshape(fetch::vm::Ptr<fetch::vm::String> const &               layer,
+                               fetch::vm::Ptr<fetch::vm::Array<math::SizeType>> const &shape);
 
   ChargeAmount LayerAddInput(fetch::vm::Ptr<fetch::vm::String> const &        layer,
                              fetch::vm::Ptr<vm::Array<math::SizeType>> const &shape);
