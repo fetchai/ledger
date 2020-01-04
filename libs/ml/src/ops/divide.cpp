@@ -100,7 +100,7 @@ std::vector<TensorType> Divide<TensorType>::Backward(VecTensorType const &inputs
     while (a_it.is_valid())
     {
       *r_1_it = static_cast<DataType>((*err_it) / (*b_it));
-      *r_2_it += static_cast<DataType>(-((*err_it) * (*a_it)) / ((*b_it) * (*b_it)));
+      *r_2_it = static_cast<DataType>(*r_2_it + (-((*err_it) * (*a_it)) / ((*b_it) * (*b_it))));
 
       ++a_it;
       ++err_it;
