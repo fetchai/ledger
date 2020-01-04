@@ -18,11 +18,15 @@
 
 #include "math/standard_functions/abs.hpp"
 #include "ml/ops/abs.hpp"
-#include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {
 namespace ml {
 namespace ops {
+
+template <typename TensorType>
+Abs<TensorType>::Abs(SPType const &sp)
+  : Ops<TensorType>(sp)
+{}
 
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Abs<TensorType>::GetOpSaveableParams()

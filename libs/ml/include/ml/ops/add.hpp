@@ -45,11 +45,9 @@ public:
   using MyType        = Add<TensorType>;
 
   Add() = default;
-  explicit Add(SPType const &sp)
-    : Ops<T>(sp)
-  {
-    axes_ = sp.axes;
-  }
+
+  explicit Add(SPType const &sp);
+
   ~Add() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
