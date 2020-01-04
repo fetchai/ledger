@@ -39,7 +39,7 @@ public:
   using SPType        = OpAvgPool1DSaveableParams<T>;
   using MyType        = AvgPool1D<TensorType>;
 
-  AvgPool1D(SizeType const kernel_size, SizeType const stride_size);
+  AvgPool1D(SizeType kernel_size, SizeType stride_size);
 
   explicit AvgPool1D(SPType const &sp);
 
