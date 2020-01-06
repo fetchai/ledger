@@ -21,7 +21,6 @@
 #include "ml/ops/tanh.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
