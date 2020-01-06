@@ -1219,8 +1219,8 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   {
     if ((block->block_number % 100) == 0)
     {
-    block_hash_->set(
-        *reinterpret_cast<uint64_t const *>(value_util::AsConst(block->hash).pointer()));
+      block_hash_->set(
+          *reinterpret_cast<uint64_t const *>(value_util::AsConst(block->hash).pointer()));
     }
   }
 

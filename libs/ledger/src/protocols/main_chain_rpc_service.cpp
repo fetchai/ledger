@@ -292,16 +292,14 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
         LOGGING_NAME, "Synced Summary:", " Invalid: ", status_stats[BlockStatus::INVALID],
         " Added: ", status_stats[BlockStatus::ADDED], " Loose: ", status_stats[BlockStatus::LOOSE],
         " Duplicate: ", status_stats[BlockStatus::DUPLICATE],
-        " Dirty: ", status_stats[BlockStatus::DIRTY],
-	" from muddle://", ToBase64(address));
+        " Dirty: ", status_stats[BlockStatus::DIRTY], " from muddle://", ToBase64(address));
   }
   else
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synced Summary:", " Added: ", status_stats[BlockStatus::ADDED],
                    " Loose: ", status_stats[BlockStatus::LOOSE],
                    " Duplicate: ", status_stats[BlockStatus::DUPLICATE],
-		   " Dirty: ", status_stats[BlockStatus::DIRTY],
-		   " from muddle://",
+                   " Dirty: ", status_stats[BlockStatus::DIRTY], " from muddle://",
                    ToBase64(address));
   }
 }
