@@ -561,7 +561,6 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
  *
  * @param limit The maximum amount of blocks returned
  * @return The array of blocks
- * @throws std::runtime_error if a block lookup occurs
  */
 MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
@@ -624,7 +623,6 @@ MainChain::IntBlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
  * @param start The hash of the first block
  * @param limit The maximum amount of blocks returned
  * @return The array of blocks
- * @throws std::runtime_error if a block lookup occurs
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
