@@ -105,16 +105,10 @@ public:
     return OpType::OP_WEIGHTS;
   }
 
-  OpType OperationType() const override
-  {
-    return this->OpCode();
-  }
+  OpType OperationType() const override;
 
   static constexpr char const *DESCRIPTOR = "Weights";
-  char const *                 Descriptor() const override
-  {
-    return DESCRIPTOR;
-  }
+  char const *                 Descriptor() const override;
 
 private:
   static void XavierInitialisation(TensorType &array, DataType normalising_factor,

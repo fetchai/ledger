@@ -237,6 +237,15 @@ TensorType Weights<TensorType>::GetGradients() const
 }
 
 /**
+ * An OOP wrapper around static constexpr OpType member method.
+ */
+template <typename TensorType>
+OpType Weights<TensorType>::OperationType() const
+{
+  return this->OpCode();
+}
+
+/**
  * xavier weights initialisation assuming guassian generator
  * using a normal distribution with mean 0 and variance 2 / (input nodes + output nodes)
  * @param weights
@@ -285,6 +294,15 @@ void Weights<TensorType>::XavierInitialisationUniform(TensorType &array,
     *it = static_cast<DataType>(ran_val);
     ++it;
   }
+}
+
+/**
+ * An OOP wrapper around static constexpr OpType member field.
+ */
+template <typename TensorType>
+const char *ops::Weights<TensorType>::Descriptor() const
+{
+  return DESCRIPTOR;
 }
 
 template <class T>
