@@ -19,7 +19,7 @@
 #include "math/exceptions/exceptions.hpp"
 #include "math/matrix_operations.hpp"
 #include "ml/exceptions/exceptions.hpp"
-#include "ml/metrics/ops/categorical_accuracy.hpp"
+#include "ml/ops/metrics/categorical_accuracy.hpp"
 
 namespace fetch {
 namespace ml {
@@ -27,13 +27,14 @@ namespace ops {
 
 template <typename TensorType>
 CategoricalAccuracy<TensorType>::CategoricalAccuracy(SPType const &sp)
-  : Ops<T>(sp)
+  : Ops<TensorType>(sp)
   , weightings_(sp.weightings)
 {
   weights_sum_ = fetch::math::Sum(weightings_);
 }
 
-explicit CategoricalAccuracy(TensorType weightings)
+template <typename TensorType>
+CategoricalAccuracy<TensorType>::CategoricalAccuracy(TensorType weightings)
   : weightings_(std::move(weightings))
 {
   weights_sum_ = fetch::math::Sum(weightings_);
