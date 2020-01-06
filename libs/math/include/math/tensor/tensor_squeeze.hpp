@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "math/tensor_declaration.hpp"
-#include "math/tensor_slice_iterator.hpp"
+#include "math/tensor/tensor_declaration.hpp"
+#include "math/tensor/tensor_slice_iterator.hpp"
 
 #include <cassert>
 #include <unordered_set>

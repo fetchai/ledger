@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -202,7 +202,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   for (auto &p : promises)
   {
     bool item_success{false};
-    if (!(p->GetResult(item_success) && item_success))
+    if (!(p->GetResult(item_success, 180) && item_success))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert shard ", lane_index, " to 0x",
                      tree[lane_index].ToHex());
@@ -406,7 +406,7 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET on TX store!");
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve GET_RECENT on TX store!");
     }
   }
 

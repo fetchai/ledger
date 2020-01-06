@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
   // these are not logits - a softmax will get called on this
   data1.At(0, 0) = DataType{0};
   data1.At(1, 0) = DataType{0};
-  data1.At(2, 0) = DataType{999999.};
+  data1.At(2, 0) = DataType{999999};
 
   //
   data2.At(0, 0) = DataType{0};
@@ -85,7 +85,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
   {
     for (SizeType j = 0; j < n_classes; ++j)
     {
-      data1.Set(j, i, DataType(vals[idx_count]));
+      data1.Set(j, i, fetch::math::AsType<DataType>(vals[idx_count]));
       ++idx_count;
     }
   }
@@ -117,7 +117,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
 
   for (SizeType i = 0; i < gt.size(); ++i)
   {
-    gt.Set(i, SizeType{0}, DataType(gt_data[i]));
+    gt.Set(i, SizeType{0}, fetch::math::AsType<DataType>(gt_data[i]));
   }
 
   std::vector<double> unscaled_vals{-1.0, -1.0, 1.0};
@@ -125,8 +125,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
 
   for (SizeType i = 0; i < n_data_points * n_classes; ++i)
   {
-    data1.Set(i, SizeType{0}, DataType(unscaled_vals[i]));
-    data2.Set(i, SizeType{0}, DataType(targets[i]));
+    data1.Set(i, SizeType{0}, fetch::math::AsType<DataType>(unscaled_vals[i]));
+    data2.Set(i, SizeType{0}, fetch::math::AsType<DataType>(targets[i]));
   }
 
   TypeParam error_signal({1, 1});
@@ -169,7 +169,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
   {
     for (SizeType j = 0; j < n_data_points; ++j)
     {
-      gt.Set(j, i, DataType(gt_vals[idx_count]));
+      gt.Set(j, i, fetch::math::AsType<DataType>(gt_vals[idx_count]));
       ++idx_count;
     }
   }
@@ -183,8 +183,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
   {
     for (SizeType j = 0; j < n_data_points; ++j)
     {
-      data1.Set(j, i, DataType(vals[idx_count]));
-      data2.Set(j, i, DataType(err[idx_count]));
+      data1.Set(j, i, fetch::math::AsType<DataType>(vals[idx_count]));
+      data2.Set(j, i, fetch::math::AsType<DataType>(err[idx_count]));
       ++idx_count;
     }
   }
@@ -228,7 +228,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_test)
   {
     for (SizeType j = 0; j < n_classes; ++j)
     {
-      data1.Set(i, j, DataType(vals[idx_count]));
+      data1.Set(i, j, fetch::math::AsType<DataType>(vals[idx_count]));
       ++idx_count;
     }
   }
@@ -298,7 +298,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_backward_test)
   {
     for (SizeType j = 0; j < n_data_points; ++j)
     {
-      gt.Set(j, i, DataType(gt_vals[idx_count]));
+      gt.Set(j, i, fetch::math::AsType<DataType>(gt_vals[idx_count]));
       ++idx_count;
     }
   }
@@ -312,8 +312,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_backward_test)
   {
     for (SizeType j = 0; j < n_data_points; ++j)
     {
-      data1.Set(j, i, DataType(vals[idx_count]));
-      data2.Set(j, i, DataType(err[idx_count]));
+      data1.Set(j, i, fetch::math::AsType<DataType>(vals[idx_count]));
+      data2.Set(j, i, fetch::math::AsType<DataType>(err[idx_count]));
       ++idx_count;
     }
   }
@@ -354,11 +354,9 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_backward_test)
       {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
 
   // test correct values
-  EXPECT_TRUE(
-      gradients.at(0).AllClose(new_gradients.at(0),
-                               fetch::math::function_tolerance<typename TypeParam::Type>() * 4,
-                               fetch::math::function_tolerance<typename TypeParam::Type>()) *
-      4);
+  EXPECT_TRUE(gradients.at(0).AllClose(new_gradients.at(0),
+                                       fetch::math::function_tolerance<DataType>() * DataType{4},
+                                       fetch::math::function_tolerance<DataType>() * DataType{4}));
 }
 
 }  // namespace test

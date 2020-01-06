@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -677,9 +677,10 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &array_constructor, Type const &input)
   {
-    auto array = array_constructor(input.size());
+    std::set<V> const ordered_set{input.begin(), input.end()};
 
-    for (auto &v : input)
+    auto array = array_constructor(input.size());
+    for (auto &v : ordered_set)
     {
       array.Append(v);
     }
@@ -740,8 +741,10 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &input)
   {
+    std::map<K, V> const ordered_map{input.begin(), input.end()};
+
     auto map = map_constructor(input.size());
-    for (auto &v : input)
+    for (auto &v : ordered_map)
     {
       map.Append(v.first, v.second);
     }

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -50,11 +50,12 @@ namespace {
 using fetch::byte_array::ConstByteArray;
 using fetch::json::JSONDocument;
 using fetch::storage::ResourceAddress;
-using fetch::storage::ResourceID;
 using fetch::variant::Variant;
 
-constexpr char const *LOGGING_NAME = "GenesisFile";
-constexpr int         VERSION      = 3;
+constexpr uint64_t    TOTAL_SUPPLY   = 11529975750000000000ull;
+constexpr uint64_t    FET_MULTIPLIER = 10000000000ull;
+constexpr char const *LOGGING_NAME   = "GenesisFile";
+constexpr int         VERSION        = 4;
 
 enum class FileReadStatus
 {
@@ -70,14 +71,11 @@ enum class FileReadStatus
  * @param file_path The path to be read
  * @return true if successful, otherwise false
  */
-FileReadStatus LoadFromFile(JSONDocument &document, std::string const &file_path)
+FileReadStatus ParseDocument(JSONDocument &document, ConstByteArray const &contents)
 {
   FileReadStatus status{FileReadStatus::FAILURE};
 
-  // attempt to read the contents of the file
-  auto const buffer = core::ReadContentsOfFile(file_path.c_str());
-
-  if (buffer.empty())
+  if (contents.empty())
   {
     status = FileReadStatus::FILE_NOT_PRESENT;
   }
@@ -85,7 +83,7 @@ FileReadStatus LoadFromFile(JSONDocument &document, std::string const &file_path
   {
     try
     {
-      document.Parse(buffer);
+      document.Parse(contents);
 
       status = FileReadStatus::SUCCESS;
     }
@@ -114,9 +112,9 @@ GenesisFileCreator::GenesisFileCreator(StorageUnitInterface &storage_unit,
  *
  * @param name The path to the file to be loaded
  */
-GenesisFileCreator::Result GenesisFileCreator::LoadFile(std::string const &  path,
-                                                        bool                 proof_of_stake,
-                                                        ConsensusParameters &params)
+GenesisFileCreator::Result GenesisFileCreator::LoadContents(ConstByteArray const &contents,
+                                                            bool                  proof_of_stake,
+                                                            ConsensusParameters & params)
 {
   // Perform a check as to whether we have installed genesis before
   {
@@ -144,7 +142,8 @@ GenesisFileCreator::Result GenesisFileCreator::LoadFile(std::string const &  pat
   storage_unit_.Reset();
 
   json::JSONDocument doc{};
-  auto const         status = LoadFromFile(doc, path);
+
+  auto const status = ParseDocument(doc, contents);
 
   bool success{false};
   if ((!proof_of_stake) && (status == FileReadStatus::FILE_NOT_PRESENT))
@@ -156,8 +155,6 @@ GenesisFileCreator::Result GenesisFileCreator::LoadFile(std::string const &  pat
   }
   else if (status == FileReadStatus::SUCCESS)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis initial file: ", path);
-
     // check the version
     int        version{0};
     bool const is_correct_version =
@@ -222,19 +219,42 @@ bool GenesisFileCreator::LoadState(Variant const &object, ConsensusParameters co
   }
 
   // iterate over all of the Identity + stake amount mappings
+  uint64_t remaining_supply{TOTAL_SUPPLY};
   for (std::size_t i = 0, end = object.size(); i < end; ++i)
   {
-    ConstByteArray key{};
+    chain::Address address{};
+    ConstByteArray address_raw{};
     uint64_t       balance{0};
     uint64_t       stake{0};
 
     auto const &obj{object[i]};
 
-    if (variant::Extract(obj, "key", key) && variant::Extract(obj, "balance", balance) &&
-        variant::Extract(obj, "stake", stake))
+    if (variant::Extract(obj, "address", address_raw) &&
+        variant::Extract(obj, "balance", balance) && variant::Extract(obj, "stake", stake) &&
+        chain::Address::Parse(address_raw, address))
     {
       ledger::WalletRecord record;
 
+      // adjust record values to be correct FET integer ranges
+      balance *= FET_MULTIPLIER;
+      stake *= FET_MULTIPLIER;
+
+      // check the remaining supply
+      if (balance > remaining_supply)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Invalid genesis configuration");
+        return false;
+      }
+      remaining_supply -= balance;
+
+      if (stake > remaining_supply)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Invalid genesis configuration");
+        return false;
+      }
+      remaining_supply -= stake;
+
+      // populate the record
       record.balance = balance;
       record.stake   = stake;
 
@@ -247,27 +267,29 @@ bool GenesisFileCreator::LoadState(Variant const &object, ConsensusParameters co
         }
       }
 
-      ResourceAddress key_raw(ResourceID(FromBase64(key)));
-
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Initial state entry: ", key, " balance: ", balance,
-                      " stake: ", stake);
+      ResourceAddress const wallet_key{"fetch.token.state." + address.display()};
 
       {
         // serialize the record to the buffer
-        serializers::MsgPackSerializer buffer;
+        serializers::LargeObjectSerializeHelper buffer;
         buffer << record;
 
-        // look up reference to the underlying buffer
-        auto const &data = buffer.data();
-
         // store the buffer
-        storage_unit_.Set(key_raw, data);
+        storage_unit_.Set(wallet_key, buffer.data());
       }
     }
     else
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to extract section from genesis file");
       return false;
     }
+  }
+
+  // ensure all token supply is taken
+  if (remaining_supply > 0)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Remaining token supply still available");
+    return false;
   }
 
   // if we have been configured for consensus then we need to also write the stake information to

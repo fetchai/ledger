@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -170,11 +170,13 @@ private:
   std::atomic_bool is_ready_{false};
 
   // telemetry
-  telemetry::CounterPtr stored_transactions_;
-  telemetry::CounterPtr resolve_count_failures_;
-  telemetry::CounterPtr subtree_requests_total_;
-  telemetry::CounterPtr subtree_response_total_;
-  telemetry::CounterPtr subtree_failure_total_;
+  telemetry::CounterPtr         stored_transactions_;
+  telemetry::CounterPtr         resolve_count_failures_;
+  telemetry::CounterPtr         subtree_requests_total_;
+  telemetry::CounterPtr         subtree_response_total_;
+  telemetry::CounterPtr         subtree_failure_total_;
+  telemetry::GaugePtr<uint64_t> current_tss_state_;
+  telemetry::GaugePtr<uint64_t> current_tss_peers_;
 };
 
 }  // namespace ledger

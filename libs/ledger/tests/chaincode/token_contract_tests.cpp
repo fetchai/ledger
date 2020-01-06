@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -214,7 +214,11 @@ protected:
     Query response;
     if (Contract::Status::OK == SendQuery("balance", query, response))
     {
-      balance = response["balance"].As<uint64_t>();
+      auto const         balance_str = response["balance"].As<std::string>();
+      std::istringstream oss{balance_str};
+
+      oss >> balance;
+
       success = true;
     }
 
@@ -235,7 +239,7 @@ protected:
     Query query      = Variant::Object();
     query["address"] = address.display();
 
-    return Contract::Status::OK == SendQuery("deed", query, deed);
+    return Contract::Status::OK == SendQuery("queryDeed", query, deed);
   }
 };
 

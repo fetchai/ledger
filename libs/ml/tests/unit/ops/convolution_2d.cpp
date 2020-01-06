@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -72,8 +72,8 @@ TYPED_TEST(Convolution2DTest, forward_1x3x3x1_1x1x3x3x1)
   {
     for (SizeType j{0}; j < 3; ++j)
     {
-      input.At(0, i, j, 0)      = static_cast<DataType>((i * 3) + j);
-      weights.At(0, 0, i, j, 0) = static_cast<DataType>((i * 3) + j);
+      input.At(0, i, j, 0)      = fetch::math::AsType<DataType>((i * 3) + j);
+      weights.At(0, 0, i, j, 0) = fetch::math::AsType<DataType>((i * 3) + j);
     }
   }
   fetch::ml::ops::Convolution2D<TensorType> c;
@@ -101,8 +101,8 @@ TYPED_TEST(Convolution2DTest, forward_3x3x3x1_1x3x3x3x1)
     {
       for (SizeType k{0}; k < 3; ++k)
       {
-        input.At(i, j, k, 0)      = static_cast<DataType>(counter);
-        weights.At(0, i, j, k, 0) = static_cast<DataType>(counter);
+        input.At(i, j, k, 0)      = fetch::math::AsType<DataType>(counter);
+        weights.At(0, i, j, k, 0) = fetch::math::AsType<DataType>(counter);
         ++counter;
       }
     }
@@ -200,7 +200,7 @@ TYPED_TEST(Convolution2DTest, backward_3x3x3x2_5x3x3x3x2)
       {
         for (SizeType j_i{0}; j_i < input_width; ++j_i)
         {
-          input(i_ic, i_i, j_i, i_b) = static_cast<DataType>(i_i + 1);
+          input(i_ic, i_i, j_i, i_b) = fetch::math::AsType<DataType>(i_i + 1);
           gt1(i_ic, i_i, j_i, i_b)   = DataType{10};
         }
       }
@@ -217,7 +217,7 @@ TYPED_TEST(Convolution2DTest, backward_3x3x3x2_5x3x3x3x2)
         for (SizeType j_k{0}; j_k < kernel_width; ++j_k)
         {
           kernels(i_oc, i_ic, i_k, j_k, 0) = DataType{2};
-          gt2(i_oc, i_ic, i_k, j_k, 0)     = static_cast<DataType>((i_k + 1) * 2);
+          gt2(i_oc, i_ic, i_k, j_k, 0)     = fetch::math::AsType<DataType>((i_k + 1) * 2);
         }
       }
     }
@@ -247,8 +247,10 @@ TYPED_TEST(Convolution2DTest, backward_3x3x3x2_5x3x3x3x2)
   ASSERT_EQ(prediction.at(1).shape(), kernels.shape());
 
   // Test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt1, DataType{1e-5f}, DataType{1e-5f}));
-  ASSERT_TRUE(prediction[1].AllClose(gt2, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt1, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[1].AllClose(gt2, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution2DTest, saveparams_test)
@@ -309,8 +311,7 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(Convolution2DTest, saveparams_backward_3x3x3x2_5x3x3x3x2)

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
   auto n_examples = x.shape().at(1);
   auto n_dims     = x.shape().at(0);
 
-  auto ret = static_cast<DataType>(0);
+  auto ret = DataType{0};
 
   // if not a one-hot, must be binary logistic regression cost
   if (n_dims == 1)
@@ -59,15 +59,15 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
 
     while (x_it.is_valid())
     {
-      assert((*y_it == static_cast<DataType>(1)) || (*y_it == static_cast<DataType>(0)));
-      if (*y_it == static_cast<DataType>(1))
+      assert((*y_it == DataType{1}) || (*y_it == DataType{0}));
+      if (*y_it == DataType{1})
       {
         ret -= Log(*x_it);
       }
       else
       {
-        tmp = static_cast<DataType>(1) - *x_it;
-        if (tmp <= 0)
+        tmp = DataType{1} - *x_it;
+        if (tmp <= DataType{0})
         {
           throw exceptions::NegativeLog("cannot take log of negative values");
         }

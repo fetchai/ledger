@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 #include "beacon/event_manager.hpp"
 
 #include "ledger/consensus/stake_manager.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <cmath>
 #include <unordered_map>
@@ -86,10 +87,11 @@ public:
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
 
-  using Cabinet        = StakeManager::Cabinet;
-  using CabinetPtr     = std::shared_ptr<Cabinet const>;
-  using BlockIndex     = uint64_t;
-  using CabinetHistory = std::map<BlockIndex, CabinetPtr>;
+  using Cabinet            = StakeManager::Cabinet;
+  using CabinetPtr         = std::shared_ptr<Cabinet const>;
+  using BlockIndex         = uint64_t;
+  using CabinetHistory     = std::map<BlockIndex, CabinetPtr>;
+  using AeonBeginningCache = std::map<BlockIndex, Block>;
 
   StorageInterface &    storage_;
   StakeManagerPtr       stake_;
@@ -114,7 +116,11 @@ private:
   CabinetHistory cabinet_history_{};  ///< Cache of historical cabinets
   uint64_t       block_interval_ms_{std::numeric_limits<uint64_t>::max()};
 
+  Block                      GetBeginningOfAeon(Block const &current, MainChain const &chain) const;
+  mutable AeonBeginningCache aeon_beginning_cache_;
+
   NotarisationPtr notarisation_;
+  mutable Mutex   mutex_;
 
   CabinetPtr GetCabinet(Block const &previous) const;
 
@@ -123,6 +129,10 @@ private:
   bool     EnoughQualSigned(Block const &previous, Block const &current) const;
   uint32_t GetThreshold(Block const &block) const;
   void     AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
+
+  telemetry::GaugePtr<uint64_t> consensus_last_validate_block_failure_;
+  telemetry::CounterPtr         consensus_validate_block_failures_total_;
+  telemetry::CounterPtr         consensus_non_heaviest_blocks_total_;
 };
 
 }  // namespace ledger

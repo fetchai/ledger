@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,10 +19,9 @@
 #include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
 #include "math/base_types.hpp"
-#include "ml/ops/activation.hpp"
+#include "ml/ops/activations/logsoftmax.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include <memory>
 
 namespace fetch {
@@ -69,8 +68,8 @@ TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
   {
     for (SizeType j{0}; j < 3; ++j)
     {
-      data.Set(i, j, 0, static_cast<DataType>(data_input[j + 3 * i]));
-      gt.Set(i, j, 0, static_cast<DataType>(gt_input[j + 3 * i]));
+      data.Set(i, j, 0, fetch::math::AsType<DataType>(data_input[j + 3 * i]));
+      gt.Set(i, j, 0, fetch::math::AsType<DataType>(gt_input[j + 3 * i]));
     }
   }
 
@@ -121,9 +120,9 @@ TYPED_TEST(LogSoftmaxTest, backward_3d_tensor_axis_0_test)
   {
     for (SizeType j{0}; j < 3; ++j)
     {
-      data.Set(i, j, 0, static_cast<DataType>(data_input[j + 3 * i]));
-      error.Set(i, j, 0, static_cast<DataType>(errorInput[j + 3 * i]));
-      gt.Set(i, j, 0, static_cast<DataType>(gt_input[j + 3 * i]));
+      data.Set(i, j, 0, fetch::math::AsType<DataType>(data_input[j + 3 * i]));
+      error.Set(i, j, 0, fetch::math::AsType<DataType>(errorInput[j + 3 * i]));
+      gt.Set(i, j, 0, fetch::math::AsType<DataType>(gt_input[j + 3 * i]));
     }
   }
   fetch::ml::ops::LogSoftmax<TensorType> op{1};
@@ -177,8 +176,7 @@ TYPED_TEST(LogSoftmaxTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(LogSoftmaxTest, saveparams_backward_3d_tensor_axis_0_test)
@@ -200,9 +198,9 @@ TYPED_TEST(LogSoftmaxTest, saveparams_backward_3d_tensor_axis_0_test)
   {
     for (SizeType j{0}; j < 3; ++j)
     {
-      data.Set(i, j, 0, static_cast<DataType>(data_input[j + 3 * i]));
-      error.Set(i, j, 0, static_cast<DataType>(errorInput[j + 3 * i]));
-      gt.Set(i, j, 0, static_cast<DataType>(gt_input[j + 3 * i]));
+      data.Set(i, j, 0, fetch::math::AsType<DataType>(data_input[j + 3 * i]));
+      error.Set(i, j, 0, fetch::math::AsType<DataType>(errorInput[j + 3 * i]));
+      gt.Set(i, j, 0, fetch::math::AsType<DataType>(gt_input[j + 3 * i]));
     }
   }
   fetch::ml::ops::LogSoftmax<TensorType> op{1};

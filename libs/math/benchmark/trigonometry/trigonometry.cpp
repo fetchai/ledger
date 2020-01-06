@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "math/trigonometry.hpp"
 
 #include "core/random/lfg.hpp"
@@ -32,7 +33,7 @@ void BM_Sin(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    val = T(lfg.AsType<double>());
+    val = lfg.AsType<T>();
     state.ResumeTiming();
     benchmark::DoNotOptimize(fetch::math::Sin(val));
   }
@@ -53,7 +54,7 @@ void BM_Cos(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    val = T(lfg.AsType<double>());
+    val = lfg.AsType<T>();
     state.ResumeTiming();
     benchmark::DoNotOptimize(fetch::math::Cos(val));
   }
@@ -74,7 +75,7 @@ void BM_Tan(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    val = T(lfg.AsType<double>());
+    val = lfg.AsType<T>();
     state.ResumeTiming();
     benchmark::DoNotOptimize(fetch::math::Tan(val));
   }
@@ -95,7 +96,7 @@ void BM_ASin(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    val = T(lfg.AsType<double>());
+    val = lfg.AsType<T>();
     state.ResumeTiming();
     benchmark::DoNotOptimize(fetch::math::ASin(val));
   }
@@ -116,7 +117,7 @@ void BM_ACos(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    val = T(lfg.AsType<double>());
+    val = lfg.AsType<T>();
     state.ResumeTiming();
     benchmark::DoNotOptimize(fetch::math::ACos(val));
   }
@@ -137,7 +138,7 @@ void BM_ATan(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    val = T(lfg.AsType<double>());
+    val = lfg.AsType<T>();
     state.ResumeTiming();
     benchmark::DoNotOptimize(fetch::math::ATan(val));
   }
@@ -158,7 +159,7 @@ void BM_SinH(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    val = T(lfg.AsType<double>());
+    val = lfg.AsType<T>();
     state.ResumeTiming();
     benchmark::DoNotOptimize(fetch::math::SinH(val));
   }
@@ -179,7 +180,7 @@ void BM_CosH(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    val = T(lfg.AsType<double>());
+    val = lfg.AsType<T>();
     state.ResumeTiming();
     benchmark::DoNotOptimize(fetch::math::CosH(val));
   }
@@ -200,7 +201,7 @@ void BM_TanH(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    val = T(lfg.AsType<double>());
+    val = lfg.AsType<T>();
     state.ResumeTiming();
     benchmark::DoNotOptimize(fetch::math::TanH(val));
   }
@@ -221,7 +222,7 @@ void BM_ASinH(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    val = T(lfg.AsType<double>());
+    val = lfg.AsType<T>();
     state.ResumeTiming();
     benchmark::DoNotOptimize(fetch::math::ASinH(val));
   }
@@ -242,7 +243,7 @@ void BM_ACosH(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    val = T(lfg.AsType<double>());
+    val = lfg.AsType<T>();
     state.ResumeTiming();
     benchmark::DoNotOptimize(fetch::math::ACosH(val));
   }
@@ -263,7 +264,7 @@ void BM_ATanH(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    val = T(lfg.AsType<double>());
+    val = lfg.AsType<T>();
     state.ResumeTiming();
     benchmark::DoNotOptimize(fetch::math::ATanH(val));
   }

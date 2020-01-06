@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "logging/logging.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
@@ -76,7 +76,7 @@ void BM_Setup_And_Train_Embeddings(::benchmark::State &state)
   auto embedding_dimensions = static_cast<SizeType>(state.range(1));
   auto n_datapoints         = static_cast<SizeType>(state.range(2));
   auto n_epochs             = static_cast<SizeType>(state.range(3));
-  auto learning_rate        = DataType{0.1f};
+  auto learning_rate        = fetch::math::Type<DataType>("0.1");
 
   // Prepare data and labels
   TensorType data({1, batch_size});

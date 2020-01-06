@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -95,8 +95,8 @@ public:
 
     while (a_it.is_valid())
     {
-      assert(*b_it == 0 || *b_it == 1);
-      if (*b_it == 1)
+      assert(*b_it == DataType{0} || *b_it == DataType{1});
+      if (*b_it == DataType{1})
       {
         *r_it = -*b_it / *a_it;
       }

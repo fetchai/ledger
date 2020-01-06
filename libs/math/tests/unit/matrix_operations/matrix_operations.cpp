@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -232,10 +232,10 @@ TYPED_TEST(FreeFunctionsTest, Max_OneDimension)
 
   TypeParam array1{4};
 
-  array1(0) = 0.3f;
-  array1(1) = 1.2f;
-  array1(2) = 0.7f;
-  array1(3) = 22;
+  array1(0) = fetch::math::Type<DataType>("0.3");
+  array1(1) = fetch::math::Type<DataType>("1.2");
+  array1(2) = fetch::math::Type<DataType>("0.7");
+  array1(3) = fetch::math::Type<DataType>("22");
 
   DataType output;
   fetch::math::Max(array1, output);
@@ -454,15 +454,15 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_OneDimension)
 
   TypeParam output{1};
   fetch::math::ArgMax(array1, output);
-  EXPECT_EQ(output(0), 3);
+  EXPECT_EQ(output(0), DataType{3});
 
   array1(3) = 0;
   fetch::math::ArgMax(array1, output);
-  EXPECT_EQ(output(0), 1);
+  EXPECT_EQ(output(0), DataType{1});
 
   array1(1) = 0;
   fetch::math::ArgMax(array1, output);
-  EXPECT_EQ(output(0), 2);
+  EXPECT_EQ(output(0), DataType{2});
 }
 
 TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension)
@@ -484,10 +484,10 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension)
 
   TypeParam output{n_data};
   fetch::math::ArgMax(array1, output, 1);
-  EXPECT_EQ(output(0), 1);
-  EXPECT_EQ(output(1), 0);
-  EXPECT_EQ(output(2), 1);
-  EXPECT_EQ(output(3), 0);
+  EXPECT_EQ(output(0), DataType{1});
+  EXPECT_EQ(output(1), DataType{0});
+  EXPECT_EQ(output(2), DataType{1});
+  EXPECT_EQ(output(3), DataType{0});
 }
 
 TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension_off_axis)
@@ -509,8 +509,8 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension_off_axis)
 
   TypeParam output{n_features};
   fetch::math::ArgMax(array1, output, 0);
-  EXPECT_EQ(output(0), 3);
-  EXPECT_EQ(output(1), 2);
+  EXPECT_EQ(output(0), DataType{3});
+  EXPECT_EQ(output(1), DataType{2});
 }
 
 TYPED_TEST(FreeFunctionsTest, Sum_OneDimension)

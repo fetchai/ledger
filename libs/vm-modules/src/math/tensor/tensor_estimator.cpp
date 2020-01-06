@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
@@ -248,7 +248,6 @@ ChargeAmount TensorEstimator::Dot(vm::Ptr<VMTensor> const &other)
 
 ChargeAmount TensorEstimator::GetReshapeCost(SizeVector const &new_shape)
 {
-
   if (new_shape == tensor_.shape())
   {
     return LOW_CHARGE;

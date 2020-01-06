@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -33,10 +33,7 @@ namespace http {
  */
 HttpsClient::HttpsClient(std::string host, uint16_t port)
   : HttpClient{std::move(host), port}
-{
-  context_.set_default_verify_paths();
-  socket_.set_verify_mode(asio::ssl::verify_peer);
-}
+{}
 
 /**
  * Establish the connection to the remote server

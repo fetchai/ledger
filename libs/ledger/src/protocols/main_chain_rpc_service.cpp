@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -84,6 +84,9 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
   , recv_block_invalid_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_recv_block_invalid_total",
         " The total number of invalid blocks received from the network")}
+  , recv_block_dirty_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_recv_block_dirty_total",
+        " The total number of dirty blocks received from the network")}
   , state_synchronising_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_state_synchronising_total",
         "The number of times in the synchronisiing state")}
@@ -187,8 +190,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   if (!ValidBlock(block, "new block"))
   {
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "Gossiped block did not prove valid. Loose blocks seen: ", loose_blocks_seen_);
+
     ++loose_blocks_seen_;
     return;
   }
@@ -211,11 +213,15 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   case BlockStatus::INVALID:
     recv_block_invalid_count_->increment();
     break;
+  case BlockStatus::DIRTY:
+    status_text = "Dirty";
+    recv_block_invalid_count_->increment();
+    break;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "New Block: 0x", block.hash.ToHex(), " (from peer: ", ToBase64(from),
-                 " num txs: ", block.GetTransactionCount(), " num: ", block.block_number,
-                 " status: ", ToString(status), ")");
+  FETCH_LOG_INFO(LOGGING_NAME, "New Block: #", block.block_number, " 0x", block.hash.ToHex(),
+                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(),
+                 " status: ", status_text, ")");
 }
 
 MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
@@ -285,13 +291,17 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
     FETCH_LOG_WARN(
         LOGGING_NAME, "Synced Summary:", " Invalid: ", status_stats[BlockStatus::INVALID],
         " Added: ", status_stats[BlockStatus::ADDED], " Loose: ", status_stats[BlockStatus::LOOSE],
-        " Duplicate: ", status_stats[BlockStatus::DUPLICATE], " from muddle://", ToBase64(address));
+        " Duplicate: ", status_stats[BlockStatus::DUPLICATE],
+        " Dirty: ", status_stats[BlockStatus::DIRTY],
+	" from muddle://", ToBase64(address));
   }
   else
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synced Summary:", " Added: ", status_stats[BlockStatus::ADDED],
                    " Loose: ", status_stats[BlockStatus::LOOSE],
-                   " Duplicate: ", status_stats[BlockStatus::DUPLICATE], " from muddle://",
+                   " Duplicate: ", status_stats[BlockStatus::DUPLICATE],
+		   " Dirty: ", status_stats[BlockStatus::DIRTY],
+		   " from muddle://",
                    ToBase64(address));
   }
 }
@@ -341,7 +351,7 @@ State MainChainRpcService::OnSynchronised(State current, State previous)
   }
   else if (resync_interval_.HasExpired())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Kicking forward sync periodically");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Kicking forward sync periodically");
 
     next_state = State::SYNCHRONISING;
   }
@@ -365,9 +375,9 @@ State MainChainRpcService::OnStartSyncWithPeer()
 
   if (block_resolving_ && !current_peer_address_.empty())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Resolving: #", block_resolving_->block_number, " 0x",
-                   block_resolving_->hash.ToHex(), " from: muddle://",
-                   current_peer_address_.ToBase64());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Resolving: #", block_resolving_->block_number, " 0x",
+                    block_resolving_->hash.ToHex(), " from: muddle://",
+                    current_peer_address_.ToBase64());
   }
 
   return State::REQUEST_NEXT_BLOCKS;

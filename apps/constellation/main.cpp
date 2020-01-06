@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -261,13 +261,13 @@ int main(int argc, char **argv)
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Input Configuration:\n", settings);
-
       // create and load the main certificate for the bootstrapper
       auto p2p_key = fetch::crypto::GenerateP2PKey();
 
       // attempt to build the configuration for constellation
       fetch::constellation::Constellation::Config cfg = BuildConstellationConfig(settings);
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", settings, "-\n", cfg);
 
       // setting policy for critical signals
       shutdown_on_critical_failure = settings.graceful_failure.value();
