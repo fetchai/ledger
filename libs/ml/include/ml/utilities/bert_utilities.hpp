@@ -21,6 +21,7 @@
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "math/tensor/tensor.hpp"
+#include "math/metrics/cross_entropy.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/normalisation/layer_norm.hpp"
