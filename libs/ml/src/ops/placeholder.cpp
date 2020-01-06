@@ -24,7 +24,8 @@ namespace ml {
 namespace ops {
 
 template <typename TensorType>
-PlaceHolder<TensorType>::PlaceHolder(SPType const &sp) : DataHolder<TensorType>(sp)
+PlaceHolder<TensorType>::PlaceHolder(SPType const &sp)
+  : DataHolder<TensorType>(sp)
 {}
 
 template <typename TensorType>
