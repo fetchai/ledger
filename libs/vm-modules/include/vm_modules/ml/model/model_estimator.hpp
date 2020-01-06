@@ -57,6 +57,8 @@ public:
 
   ChargeAmount LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
                              math::SizeType const &inputs, math::SizeType const &hidden_nodes);
+  ChargeAmount LayerAddDenseAutoInputs(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                       math::SizeType const &                   hidden_nodes);
   ChargeAmount LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                        math::SizeType const &                   inputs,
                                        math::SizeType const &                   hidden_nodes,

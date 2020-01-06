@@ -343,7 +343,9 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
                               UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddInput,
-                              UseEstimator(&ModelEstimator::LayerAddInput));
+                              UseEstimator(&ModelEstimator::LayerAddInput))
+        .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseAutoInputs,
+                              UseEstimator(&ModelEstimator::LayerAddDenseAutoInputs));
   }
 }
 
@@ -521,6 +523,12 @@ void VMModel::LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
                             math::SizeType const &inputs, math::SizeType const &hidden_nodes)
 {
   LayerAddDenseActivationImplementation(layer, inputs, hidden_nodes, ActivationType::NOTHING);
+}
+
+void VMModel::LayerAddDenseAutoInputs(const fetch::vm::Ptr<String> &layer,
+                                      const math::SizeType &        hidden_nodes)
+{
+  LayerAddDenseActivationImplementation(layer, 0, hidden_nodes, ActivationType::NOTHING);
 }
 
 void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,

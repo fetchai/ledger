@@ -136,6 +136,8 @@ public:
 
   void LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
                      math::SizeType const &hidden_nodes);
+  void LayerAddDenseAutoInputs(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                               math::SizeType const &                   hidden_nodes);
   void LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                math::SizeType const &inputs, math::SizeType const &hidden_nodes,
                                fetch::vm::Ptr<fetch::vm::String> const &activation);

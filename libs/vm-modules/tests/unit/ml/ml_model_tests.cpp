@@ -1802,4 +1802,26 @@ TEST_F(VMModelTests, model_add_input_layer_as_second)
   ASSERT_FALSE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
 
+TEST_F(VMModelTests, model_add_experimental)
+{
+  static char const *SRC = R"(
+          function main()
+            var data_shape = Array<UInt64>(2);
+            data_shape[0] = 10u64;
+            data_shape[1] = 250u64;
+            var data = Tensor(data_shape);
+
+            var model = Model("sequential");
+
+            model.addExperimental("input", data_shape);
+            model.addExperimental("dense", 71u64);
+            model.compile("mse", "adam");
+            var prediction = model.predict(data);
+          endfunction
+        )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
 }  // namespace

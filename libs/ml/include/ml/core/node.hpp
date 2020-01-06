@@ -134,18 +134,7 @@ public:
    * underlying Ops.
    * @return
    */
-  OpType const &OperationType()
-  {
-    if (operation_type_ != op_ptr_->OperationType())
-    {
-      FETCH_LOG_ERROR(this->name_.c_str(), "Node operation type (" +
-                                               std::to_string(static_cast<int>(operation_type_)) +
-                                               ") and underlying Ops operation code (" +
-                                               std::string(op_ptr_->Descriptor()) + ") mismatch!");
-      operation_type_ = op_ptr_->OperationType();
-    }
-    return operation_type_;
-  }
+  OpType OperationType();
 
   bool HasValidCache()
   {
@@ -173,68 +162,7 @@ public:
    * the method is recursively called until either a cached shape or input Node is encountered.
    * @return vector of SizeType.
    */
-  Shape SliceOutputShape()
-  {
-    // Returned cached shape result if available;
-    Shape const candidate    = op_ptr_->SliceOutputShape();
-    bool const i_am_subgraph = OperationType() == OpType::LAYER_FULLY_CONNECTED;  // DEBUG! REMOVEME
-    if (!candidate.empty() && !i_am_subgraph)
-    {
-      if (input_nodes_.empty() && OperationType() == OpType::OP_PLACEHOLDER)
-      {
-        FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached an input node : " + this->name_ +
-                                          " " + op_ptr_->OutputShapeAsString());
-      }
-
-      return candidate;
-    }
-
-    ShapeVector input_shapes;
-    for (auto const &i : input_nodes_)
-    {
-      auto node_ptr = i.lock();
-      if (!node_ptr)
-      {
-        throw std::runtime_error("Unable to lock weak pointer.");
-      }
-      // Deeper recursive call.
-      auto const in_shape = node_ptr->SliceOutputShape();
-      if (!in_shape.empty())
-      {
-        input_shapes.emplace_back(in_shape);
-      }
-      else
-      {
-        // TODO(VH): else (if there _is_ an empty shape among inputs) what?
-        if (node_ptr->OperationType() != OpType::OP_PLACEHOLDER)
-        {
-          FETCH_LOG_INFO(name_.c_str(),
-                         "Got an empty shape as return from non-placeholder layer! : " +
-                             node_ptr->GetNodeName());
-        }
-      }
-    }
-
-    if (!input_shapes.empty())
-    {
-      op_ptr_->ComputeSliceOutputShape(input_shapes);
-      FETCH_LOG_INFO(name_.c_str(),
-                     op_ptr_->InputShapesAsString() + "->" + op_ptr_->OutputShapeAsString());
-    }
-    else
-    {
-      FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached a Graph leaf : " + this->name_);
-      return candidate;
-    }
-
-    Shape const ops_out_shape = op_ptr_->SliceOutputShape();
-    if (ops_out_shape.empty())
-    {
-      // throw an error: invalid calcs from a previous layer.
-      FETCH_LOG_INFO(name_.c_str(), "Error: shape deduction failed.");
-    }
-    return ops_out_shape;
-  }
+  Shape SliceOutputShape();
 
 private:
   std::vector<NodeWeakPtrType> input_nodes_;

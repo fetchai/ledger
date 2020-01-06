@@ -1063,7 +1063,9 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
 
   if (aview.width() != bview.height())
   {
-    throw fetch::math::exceptions::WrongShape("expected A width to equal B height.");
+    throw fetch::math::exceptions::WrongShape("expected A width (" + std::to_string(aview.width()) +
+                                              ") equal to B height (" +
+                                              std::to_string(bview.height()) + ").");
   }
 
   if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))

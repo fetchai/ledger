@@ -75,76 +75,84 @@ public:
     : in_size_(in)
     , out_size_(out)
     , time_distributed_(time_distributed)
+    , regulariser_(regulariser)
+    , regularisation_rate_(regularisation_rate)
+    , init_mode_(init_mode)
   {
     // get correct name for the layer
     std::string name = GetName();
 
     // start to set up the structure
-    std::string input =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
-    node_names_.emplace_back(input);
+    input_ = this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
     // for non time distributed layer, flatten the input
-    std::string flat_input = input;
+    flat_input_ = input_;
     if (!time_distributed_)
     {
-      flat_input =
-          this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input});
-      this->nodes_.at(flat_input)->SetSliceOutputShape({out_size_, 1});
-      this->nodes_.at(flat_input)->SetExpectedSliceInputShapes({{out_size_, 1}});
+      flat_input_ =
+          this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input_});
     }
 
-    std::string weights =
-        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
-    node_names_.emplace_back(weights);
+    weights_ = this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
 
-    std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
-        name + "_MatrixMultiply", {weights, flat_input});
-    node_names_.emplace_back(weights_matmul);
+    weights_matmul_ = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
+        name + "_MatrixMultiply", {weights_, flat_input_});
 
-    std::string bias =
-        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Bias", {});
-    node_names_.emplace_back(bias);
+    bias_ = this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Bias", {});
 
-    std::string add = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
-        name + "_Add", {weights_matmul, bias});
-    node_names_.emplace_back(add);
+    add_ = this->template AddNode<fetch::ml::ops::Add<TensorType>>(name + "_Add",
+                                                                   {weights_matmul_, bias_});
 
-    std::string output =
-        fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation", add);
-    node_names_.emplace_back(output);
+    output_ =
+        fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation", add_);
+
+    this->AddInputNode(input_);
+    this->SetOutputNode(output_);
+
+    // A workaround for triggering further shape deduction while Graph linking.
+    this->SetSliceOutputShape({});
+  }
+
+  void CompleteInitialisation() override
+  {
+    assert(!this->expected_slice_input_shapes_.empty());
+    assert(!this->slice_output_shape_.empty());
+    std::cout << DESCRIPTOR << "Completing init, inputs: " << in_size_ << ", outs: " << out_size_
+              << std::endl;
+
+    in_size_  = this->expected_slice_input_shapes_.at(0).front();
+    out_size_ = this->slice_output_shape_.front();
 
     typename SubGraph<T>::Shape const input_slice_shape = {in_size_, 1};
-    this->expected_slice_input_shapes_                  = {{input_slice_shape}};
-    typename SubGraph<T>::Shape slice_output_shape      = {out_size_, 1};
+    // this->expected_slice_input_shapes_                  = {{input_slice_shape}};
+    typename SubGraph<T>::Shape slice_output_shape = {out_size_, 1};
 
-    this->nodes_.at(input)->SetExpectedSliceInputShapes({input_slice_shape});
-    this->nodes_.at(input)->SetSliceOutputShape(input_slice_shape);
+    this->nodes_.at(input_)->SetExpectedSliceInputShapes(this->expected_slice_input_shapes_);
+    this->nodes_.at(input_)->SetSliceOutputShape(this->expected_slice_input_shapes_.front());
 
-    this->nodes_.at(weights)->SetExpectedSliceInputShapes({{out_size_, in_size_}});
-    this->nodes_.at(weights)->SetSliceOutputShape({out_size_, in_size_});
+    /*this->nodes_.at(flat_input_)->SetSliceOutputShape({out_size_, 1});
+    this->nodes_.at(flat_input_)->SetExpectedSliceInputShapes({{out_size_, 1}});*/
 
-    this->nodes_.at(weights_matmul)
-        ->SetExpectedSliceInputShapes({{out_size_, in_size_}, input_slice_shape});
-    this->nodes_.at(weights_matmul)->SetSliceOutputShape(slice_output_shape);
+    // this->nodes_.at(weights_)->SetExpectedSliceInputShapes({{out_size_, in_size_}});
+    this->nodes_.at(weights_)->SetSliceOutputShape({out_size_, in_size_});
 
-    this->nodes_.at(bias)->SetExpectedSliceInputShapes({slice_output_shape});
-    this->nodes_.at(bias)->SetSliceOutputShape(slice_output_shape);
+    /* this->nodes_.at(weights_matmul_)
+         ->SetExpectedSliceInputShapes({{out_size_, in_size_}, input_slice_shape});
+     this->nodes_.at(weights_matmul_)->SetSliceOutputShape(slice_output_shape);
+ */
+    //    this->nodes_.at(bias_)->SetExpectedSliceInputShapes({slice_output_shape});
+    this->nodes_.at(bias_)->SetSliceOutputShape(slice_output_shape);
 
-    this->nodes_.at(add)->SetExpectedSliceInputShapes({{slice_output_shape}, {slice_output_shape}});
-    this->nodes_.at(add)->SetSliceOutputShape(slice_output_shape);
+    /*  this->nodes_.at(add_)->SetExpectedSliceInputShapes(
+          {{slice_output_shape}, {slice_output_shape}});
+      this->nodes_.at(add_)->SetSliceOutputShape(slice_output_shape);
 
-    this->nodes_.at(output)->SetExpectedSliceInputShapes({slice_output_shape});
-    this->nodes_.at(output)->SetSliceOutputShape(slice_output_shape);
-
-    this->AddInputNode(input);
-    this->SetOutputNode(output);
-    this->SetRegularisation(fetch::ml::details::CreateRegulariser<T>(regulariser),
-                            regularisation_rate);
+      this->nodes_.at(output_)->SetExpectedSliceInputShapes({slice_output_shape});
+      this->nodes_.at(output_)->SetSliceOutputShape(slice_output_shape);*/
 
     // initialize weight with specified method
     TensorType weights_data(std::vector<SizeType>({out_size_, in_size_}));
-    this->Initialise(weights_data, init_mode);
-    this->SetInput(name + "_Weights", weights_data);
+    this->Initialise(weights_data, init_mode_);
+    this->SetInput(/*weights_*/ GetName() + "_Weights", weights_data);
 
     // initialize bias with right shape and set to all zero
     TensorType bias_data;
@@ -156,11 +164,12 @@ public:
     {
       bias_data = TensorType(std::vector<SizeType>({out_size_, 1}));
     }
-    this->SetInput(name + "_Bias", bias_data);  // TODO(VH): bias instead of name + "_Bias"
-    // FETCH_LOG_INFO(GetName().c_str(), "--Compiling... ");
+    this->SetInput(/*bias_*/ GetName() + "_Bias", bias_data);
+
+    this->SetRegularisation(fetch::ml::details::CreateRegulariser<T>(regulariser_),
+                            regularisation_rate_);
     this->Compile();
-    // FETCH_LOG_INFO(GetName().c_str(), "--Compiled.");
-    this->SetSliceOutputShape({});  // necessary for further shape deduction
+    std::cout << DESCRIPTOR << "Initing completed." << std::endl;
   }
 
   OpPtrType MakeSharedCopy(OpPtrType me) override
@@ -215,7 +224,7 @@ public:
       {
         total_in_size *= inputs.front()->shape(i);
       }
-      assert(total_in_size == this->in_size_);
+      // assert(total_in_size == this->in_size_); - disabled, not necessary if auto-deduced
       return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 1)};
     }
 
@@ -236,11 +245,26 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
+  char const *                 Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 
 private:
   SizeType in_size_          = fetch::math::numeric_max<SizeType>();
   SizeType out_size_         = fetch::math::numeric_max<SizeType>();
   bool     time_distributed_ = false;
+
+  std::string                   input_;
+  std::string                   flat_input_;
+  std::string                   weights_;
+  std::string                   weights_matmul_;
+  std::string                   bias_;
+  std::string                   add_;
+  std::string                   output_;
+  fetch::ml::RegularisationType regulariser_;
+  DataType                      regularisation_rate_;
+  WeightsInit                   init_mode_;
 
   void Initialise(TensorType &weights, WeightsInit init_mode)
   {
@@ -256,8 +280,6 @@ private:
     }
     return name;
   }
-
-  std::vector<std::string> node_names_;  // A temporary dummy for neater console output
 };
 
 }  // namespace layers

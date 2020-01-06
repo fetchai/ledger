@@ -102,7 +102,15 @@ public:
   {
     return OpType::OP_MATRIX_MULTIPLY;
   }
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";
+  char const *                 Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 
 private:
   // caching tensors and shapes

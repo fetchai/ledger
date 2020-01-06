@@ -94,6 +94,14 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
          COMPUTE_CHARGE_COST;
 }
 
+ModelEstimator::ChargeAmount ModelEstimator::LayerAddDenseAutoInputs(
+    const fetch::vm::Ptr<String> &layer, const math::SizeType &hidden_nodes)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(hidden_nodes);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
 ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> const &layer,
                                                      SizeType const &              inputs,
                                                      SizeType const &              hidden_nodes,
