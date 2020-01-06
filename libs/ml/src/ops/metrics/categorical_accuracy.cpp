@@ -101,7 +101,7 @@ void CategoricalAccuracy<TensorType>::Forward(VecTensorType const &inputs, Tenso
     {
       if (*it1 == *it2)
       {
-        num_correct += *w_it;
+        num_correct = static_cast<DataType>(num_correct + *w_it);
       }
       ++it1;
       ++it2;
