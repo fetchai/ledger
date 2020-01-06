@@ -589,7 +589,7 @@ meta::IfIsMathArray<ArrayType, void> Divide(T const &scalar, ArrayType const &ar
 template <typename S>
 meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
 {
-  ret = scalar1 + scalar2;
+  ret = static_cast<S>(scalar1 + scalar2);
 }
 
 template <typename S>
@@ -659,7 +659,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType
 template <typename S>
 meta::IfIsArithmetic<S, void> Subtract(S const &scalar1, S const &scalar2, S &ret)
 {
-  ret = scalar1 - scalar2;
+  ret = static_cast<S>(scalar1 - scalar2);
 }
 
 template <typename S>

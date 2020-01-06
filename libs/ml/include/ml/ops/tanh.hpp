@@ -17,11 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fundamental_operators.hpp"
-#include "math/matrix_operations.hpp"
-#include "math/trigonometry.hpp"
 #include "ml/ops/ops.hpp"
-#include "vectorise/math/max.hpp"
 
 #include <cassert>
 #include <vector>
@@ -43,69 +39,21 @@ public:
 
   TanH() = default;
 
-  explicit TanH(SPType const &sp)
-    : Ops<T>(sp)
-  {}
+  explicit TanH(SPType const &sp);
 
   ~TanH() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    SPType sp{};
-    return std::make_shared<SPType>(sp);
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
-    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
-
-    return copyshare;
-  }
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(inputs.size() == 1);
-    assert(output.shape() == this->ComputeOutputShape(inputs));
-    fetch::math::TanH(*(inputs.front()), output);
-    // ensures numerical stability
-    for (auto &val : output)
-    {
-      // Minimum value of tanh is restricted to -1+epsilon
-      val = fetch::vectorise::Max(val, fetch::math::Add(DataType(-1), epsilon_));
-      // Maximum value of tanh is restricted to 1-epsilon
-      val = fetch::vectorise::Min(val, fetch::math::Subtract(DataType{1}, epsilon_));
-    }
-  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    assert(inputs.size() == 1);
+                                   TensorType const &   error_signal) override;
 
-    assert(inputs.front()->shape() == error_signal.shape());
-
-    TensorType return_signal = error_signal.Copy();
-
-    TensorType t(this->ComputeOutputShape(inputs));
-    Forward(inputs, t);
-
-    // gradient of tanh: 1 - tanh(x)^2
-    fetch::math::Multiply(t, t, t);
-    fetch::math::Subtract(DataType{1}, t, t);
-
-    // apply chain rule
-    fetch::math::Multiply(error_signal, t, return_signal);
-
-    return {return_signal};
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    return inputs.front()->shape();
-  }
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
