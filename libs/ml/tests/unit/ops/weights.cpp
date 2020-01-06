@@ -20,6 +20,7 @@
 #include "math/base_types.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "ml/state_dict.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
