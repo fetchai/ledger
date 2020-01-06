@@ -108,51 +108,35 @@ public:
     this->AddInputNode(input_);
     this->SetOutputNode(output_);
 
-    // A workaround for triggering further shape deduction while Graph linking.
-    this->SetSliceOutputShape({});
+    //    // A workaround for triggering further shape deduction while Graph linking.
+    //    this->SetSliceOutputShape({});
   }
 
   void CompleteInitialisation() override
   {
     assert(!this->expected_slice_input_shapes_.empty());
     assert(!this->slice_output_shape_.empty());
-    std::cout << DESCRIPTOR << "Completing init, inputs: " << in_size_ << ", outs: " << out_size_
-              << std::endl;
-
-    in_size_  = this->expected_slice_input_shapes_.at(0).front();
-    out_size_ = this->slice_output_shape_.front();
-
-    typename SubGraph<T>::Shape const input_slice_shape = {in_size_, 1};
-    // this->expected_slice_input_shapes_                  = {{input_slice_shape}};
-    typename SubGraph<T>::Shape slice_output_shape = {out_size_, 1};
-
     this->nodes_.at(input_)->SetExpectedSliceInputShapes(this->expected_slice_input_shapes_);
     this->nodes_.at(input_)->SetSliceOutputShape(this->expected_slice_input_shapes_.front());
+    FETCH_LOG_INFO(DESCRIPTOR, "-- Compiling sub-graph ... --");
 
-    /*this->nodes_.at(flat_input_)->SetSliceOutputShape({out_size_, 1});
-    this->nodes_.at(flat_input_)->SetExpectedSliceInputShapes({{out_size_, 1}});*/
+    // When expected input shape is known, it is possible to compute flattened input
+    // shape of this fully connected layer
+    this->nodes_.at(flat_input_)
+        ->GetOp()
+        ->ComputeSliceOutputShape(this->expected_slice_input_shapes_);
+    in_size_  = this->nodes_.at(flat_input_)->SliceOutputShape().front();
+    out_size_ = this->slice_output_shape_.front();
 
-    // this->nodes_.at(weights_)->SetExpectedSliceInputShapes({{out_size_, in_size_}});
+    // At this point we know everything necessary to directly assign shapes to
+    // leaf nodes such as Weights and Bias
     this->nodes_.at(weights_)->SetSliceOutputShape({out_size_, in_size_});
-
-    /* this->nodes_.at(weights_matmul_)
-         ->SetExpectedSliceInputShapes({{out_size_, in_size_}, input_slice_shape});
-     this->nodes_.at(weights_matmul_)->SetSliceOutputShape(slice_output_shape);
- */
-    //    this->nodes_.at(bias_)->SetExpectedSliceInputShapes({slice_output_shape});
-    this->nodes_.at(bias_)->SetSliceOutputShape(slice_output_shape);
-
-    /*  this->nodes_.at(add_)->SetExpectedSliceInputShapes(
-          {{slice_output_shape}, {slice_output_shape}});
-      this->nodes_.at(add_)->SetSliceOutputShape(slice_output_shape);
-
-      this->nodes_.at(output_)->SetExpectedSliceInputShapes({slice_output_shape});
-      this->nodes_.at(output_)->SetSliceOutputShape(slice_output_shape);*/
+    this->nodes_.at(bias_)->SetSliceOutputShape(this->slice_output_shape_);
 
     // initialize weight with specified method
     TensorType weights_data(std::vector<SizeType>({out_size_, in_size_}));
     this->Initialise(weights_data, init_mode_);
-    this->SetInput(/*weights_*/ GetName() + "_Weights", weights_data);
+    this->SetInput(weights_, weights_data);
 
     // initialize bias with right shape and set to all zero
     TensorType bias_data;
@@ -164,12 +148,12 @@ public:
     {
       bias_data = TensorType(std::vector<SizeType>({out_size_, 1}));
     }
-    this->SetInput(/*bias_*/ GetName() + "_Bias", bias_data);
+    this->SetInput(bias_, bias_data);
 
     this->SetRegularisation(fetch::ml::details::CreateRegulariser<T>(regulariser_),
                             regularisation_rate_);
     this->Compile();
-    std::cout << DESCRIPTOR << "Initing completed." << std::endl;
+    FETCH_LOG_INFO(DESCRIPTOR, "-- Sub-graph compiled. --");
   }
 
   OpPtrType MakeSharedCopy(OpPtrType me) override
