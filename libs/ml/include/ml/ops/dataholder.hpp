@@ -78,6 +78,10 @@ public:
     return this->OpCode();
   }
   static constexpr char const *DESCRIPTOR = "DataHolder";
+  char const *                 Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 
 protected:
   TensorPtrType data_;

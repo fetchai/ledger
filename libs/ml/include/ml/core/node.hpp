@@ -129,11 +129,6 @@ public:
     return op_ptr_;
   }
 
-  /**
-   * returns the stored operation type and syncs it with operation type of
-   * underlying Ops.
-   * @return
-   */
   OpType OperationType();
 
   bool HasValidCache()
@@ -156,12 +151,6 @@ public:
     return op_ptr_->ExpectedSliceInputShapes();
   }
 
-  /**
-   * @brief SliceOutputShape computes an output shape of the Node, if only 1 data slice (e.g.
-   * with batch size == 1) is provided to the Graph input. If there is no cached output shape,
-   * the method is recursively called until either a cached shape or input Node is encountered.
-   * @return vector of SizeType.
-   */
   Shape SliceOutputShape();
 
 private:

@@ -107,9 +107,6 @@ public:
 
     this->AddInputNode(input_);
     this->SetOutputNode(output_);
-
-    //    // A workaround for triggering further shape deduction while Graph linking.
-    //    this->SetSliceOutputShape({});
   }
 
   void CompleteInitialisation() override

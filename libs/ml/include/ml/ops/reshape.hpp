@@ -43,7 +43,6 @@ public:
     , new_size_(fetch::math::Product(new_shape_))
   {
     assert(new_shape_.size() > 1);
-    this->slice_output_shape_ = new_shape;
   }
 
   explicit Reshape(SPType const &sp)

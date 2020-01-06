@@ -147,6 +147,10 @@ public:
     return this->OpCode();
   }
   static constexpr char const *DESCRIPTOR = "Softmax";
+  char const *                 Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 
 private:
   SizeType              axis_;

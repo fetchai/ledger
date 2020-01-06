@@ -23,6 +23,11 @@ namespace ml {
 
 using Shape = fetch::math::SizeVector;
 
+/**
+ * returns the stored operation type and syncs it with operation type of
+ * underlying Ops.
+ * @return
+ */
 template <typename TensorType>
 OpType Node<TensorType>::OperationType()
 {
@@ -37,6 +42,12 @@ OpType Node<TensorType>::OperationType()
   return operation_type_;
 }
 
+/**
+ * @brief SliceOutputShape computes an output shape of the Node, if only 1 data slice (e.g.
+ * with batch size == 1) is provided to the Graph input. If there is no cached output shape,
+ * the method is recursively called until either a cached shape or input Node is encountered.
+ * @return vector of SizeType.
+ */
 template <typename TensorType>
 Shape Node<TensorType>::SliceOutputShape()
 {
