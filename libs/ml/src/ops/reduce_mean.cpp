@@ -86,8 +86,8 @@ std::vector<TensorType> ReduceMean<TensorType>::Backward(VecTensorType const &in
 
   auto size = static_cast<DataType>(inputs.at(0)->shape().at(axis_));
 
-  Broadcast([size](DataType const &x, DataType &z) { z = x / size; }, error_signal,
-            ret_error_signal);
+  Broadcast([size](DataType const &x, DataType &z) { z = static_cast<DataType>(x / size); },
+            error_signal, ret_error_signal);
 
   return {ret_error_signal};
 }

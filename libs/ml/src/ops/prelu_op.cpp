@@ -18,7 +18,6 @@
 
 #include "math/activation_functions/leaky_relu.hpp"
 #include "math/fundamental_operators.hpp"
-#include "math/matrix_operations.hpp"
 #include "ml/ops/prelu_op.hpp"
 
 namespace fetch {
@@ -104,12 +103,12 @@ std::vector<TensorType> PReluOp<TensorType>::Backward(VecTensorType const &input
     {
       if (*input1_it >= DataType{0})
       {
-        *rs1_it = DataType{1} * (*error_it);
+        *rs1_it = *error_it;
       }
       else
       {
-        *rs1_it = (*input2_it) * (*error_it);
-        *rs2_it += (*input1_it) * (*error_it);
+        *rs1_it = static_cast<DataType>((*input2_it) * (*error_it));
+        *rs2_it = static_cast<DataType>(*rs2_it + ((*input1_it) * (*error_it)));
       }
       ++rs1_it;
       ++rs2_it;
