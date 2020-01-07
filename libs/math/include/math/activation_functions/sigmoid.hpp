@@ -36,28 +36,19 @@ void Sigmoid(ArrayType const &t, ArrayType &ret)
 
   auto array_it = t.cbegin();
   auto rit      = ret.begin();
-  Type zero{0};
-  Type one{1};
-  //  Type min_one{-1};
 
   while (array_it.is_valid())
   {
-    if (*array_it >= zero)
+    if (*array_it >= Type{0})
     {
-      //      e^x / (e^x + 1)
-      Exp(*rit, *rit);
+      // e^x / (e^x + 1): which is equivalent to: 1 / (1 + e^-x)
+      Exp(*array_it, *rit);
       Divide(*rit, static_cast<Type>(*rit + Type{1}), *rit);
-
-      //      1 / (1 + e^-x)
-      //      Multiply(min_one, *array_it, *rit);
-      //      Exp(*rit, *rit);
-      //      Add(*rit, one, *rit);
-      //      Divide(one, *rit, *rit);
     }
     else
     {
       Exp(*array_it, *rit);
-      Divide(*rit, static_cast<Type>(*rit + one), *rit);
+      Divide(*rit, static_cast<Type>(*rit + Type{1}), *rit);
     }
     ++array_it;
     ++rit;
