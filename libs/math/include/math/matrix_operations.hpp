@@ -274,14 +274,9 @@ T Product(std::vector<T> const &obj1)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  ret = numeric_lowest<typename ArrayType::Type>();
-  for (typename ArrayType::Type const &e : array)
-  {
-    if (e > ret)
-    {
-      ret = e;
-    }
-  }
+  ret = array.data().in_parallel().Reduce(
+      [](auto const &a, auto const &b) { return fetch::vectorise::Max(a, b); },
+      [](auto const &a) { return fetch::vectorise::Max(a); });
 }
 
 template <typename ArrayType>
@@ -394,14 +389,9 @@ T Max(std::vector<T> const &obj1)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  ret = numeric_max<typename ArrayType::Type>();
-  for (typename ArrayType::Type const &e : array)
-  {
-    if (e < ret)
-    {
-      ret = e;
-    }
-  }
+  ret = array.data().in_parallel().Reduce(
+    [](auto const &a, auto const &b) { return fetch::vectorise::Min(a, b); },
+    [](auto const &a) { return fetch::vectorise::Min(a); });
 }
 
 template <typename ArrayType>
