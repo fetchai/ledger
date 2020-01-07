@@ -21,7 +21,7 @@
 #include "math/matrix_operations.hpp"
 #include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/log.hpp"
-#include "ml/ops/activations/leaky_relu.hpp"
+#include "ml/ops/activations/logsigmoid.hpp"
 
 namespace fetch {
 namespace ml {
@@ -69,7 +69,7 @@ void LogSigmoid<TensorType>::Forward(VecTensorType const &inputs, TensorType &ou
 
 template <typename TensorType>
 std::vector<TensorType> LogSigmoid<TensorType>::Backward(VecTensorType const &inputs,
-                                                  TensorType const &   error_signal)
+                                                         TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
   assert(inputs.front()->shape() == error_signal.shape());
@@ -86,7 +86,8 @@ std::vector<TensorType> LogSigmoid<TensorType>::Backward(VecTensorType const &in
 }
 
 template <typename TensorType>
-std::vector<math::SizeType> LogSigmoid<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> LogSigmoid<TensorType>::ComputeOutputShape(
+    VecTensorType const &inputs) const
 {
   return inputs.front()->shape();
 }
