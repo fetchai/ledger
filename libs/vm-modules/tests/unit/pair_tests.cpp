@@ -145,8 +145,8 @@ TEST_F(PairTests, assign_uint64_int64_test)
     function main()
       var data = Pair<UInt64, Int64>();
 
-      data.first(1234567890u32);
-      data.second(-1234567890i32);
+      data.first(1234567890u64);
+      data.second(-1234567890i64);
 
       print(data.first());
       print(',');
