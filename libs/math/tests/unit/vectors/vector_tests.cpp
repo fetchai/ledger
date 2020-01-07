@@ -97,13 +97,13 @@ class VectorRegisterTest : public ::testing::Test
 #ifdef __AVX2__
 using MyTypes = ::testing::Types<
     fetch::vectorise::VectorRegister<float, 128>, fetch::vectorise::VectorRegister<float, 256>,
-    fetch::vectorise::VectorRegister<int32_t, 128>, fetch::vectorise::VectorRegister<int32_t, 256>,
-    fetch::vectorise::VectorRegister<int64_t, 128>, fetch::vectorise::VectorRegister<int64_t, 256>,
+    fetch::vectorise::VectorRegister<int32_t, 128>, fetch::vectorise::VectorRegister<int32_t, 256>,//,
+    // fetch::vectorise::VectorRegister<int64_t, 128>, fetch::vectorise::VectorRegister<int64_t, 256>,
     fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 128>,
-    fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>,
-    fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 128>,
-    fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>,
-    fetch::vectorise::VectorRegister<double, 128>, fetch::vectorise::VectorRegister<double, 256>>;
+    fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>>;//,
+    // fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 128>,
+    // fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>,
+    // fetch::vectorise::VectorRegister<double, 128>, fetch::vectorise::VectorRegister<double, 256>>;
 
 using MyFPTypes =
     ::testing::Types<fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 128>,
@@ -124,7 +124,67 @@ using MyFPTypes =
 #endif
 
 TYPED_TEST_CASE(VectorRegisterTest, MyTypes);
-TYPED_TEST(VectorRegisterTest, basic_tests)
+TYPED_TEST(VectorRegisterTest, rotate_tests)
+{
+  using type = typename TypeParam::type;
+
+  alignas(32) type a[TypeParam::E_BLOCK_COUNT], first;
+
+  for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    // We don't want to check overflows right now, so we pick std::rand numbers, but well within the
+    // type's limits
+    a[i] = fetch::math::Type<type>(
+        std::to_string((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
+                       static_cast<double>(fetch::math::numeric_max<type>()) / 2.0));
+  }
+  TypeParam va{a};
+
+  TypeParam rot0{rotate_elements_left<0>(va)};
+  EXPECT_TRUE(all_equal_to(rot0, va));
+  
+  TypeParam rot1{rotate_elements_left<1>(va)};
+  first = a[0];
+  for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT - 1; i++)
+  {
+    a[i] = a[i+1];
+  }
+  a[TypeParam::E_BLOCK_COUNT - 1] = first;
+  TypeParam vrot1{a};
+  EXPECT_TRUE(all_equal_to(rot1, vrot1));
+
+  TypeParam rot2{rotate_elements_left<2>(va)};
+  first = a[0];
+  for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT - 1; i++)
+  {
+    a[i] = a[i+1];
+  }
+  a[TypeParam::E_BLOCK_COUNT - 1] = first;
+  TypeParam vrot2{a};
+  EXPECT_TRUE(all_equal_to(rot2, vrot2));
+
+  TypeParam rot3{rotate_elements_left<3>(va)};
+  first = a[0];
+  for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT - 1; i++)
+  {
+    a[i] = a[i+1];
+  }
+  a[TypeParam::E_BLOCK_COUNT - 1] = first;
+  TypeParam vrot3{a};
+  EXPECT_TRUE(all_equal_to(rot3, vrot3));
+
+  TypeParam rot4{rotate_elements_left<4>(va)};
+  first = a[0];
+  for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT - 1; i++)
+  {
+    a[i] = a[i+1];
+  }
+  a[TypeParam::E_BLOCK_COUNT - 1] = first;
+  TypeParam vrot4{a};
+  EXPECT_TRUE(all_equal_to(rot4, vrot4));
+}
+
+TYPED_TEST(VectorRegisterTest, minmax_tests)
 {
   using type = typename TypeParam::type;
 
@@ -132,7 +192,7 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
       sum[TypeParam::E_BLOCK_COUNT], diff[TypeParam::E_BLOCK_COUNT], prod[TypeParam::E_BLOCK_COUNT],
       div[TypeParam::E_BLOCK_COUNT];
 
-  type real_max{fetch::math::Type<type>("0")}, real_min{fetch::math::numeric_max<type>()};
+  type real_max{0}, real_min{fetch::math::numeric_max<type>()};
   for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     // We don't want to check overflows right now, so we pick std::rand numbers, but well within the
