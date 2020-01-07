@@ -79,7 +79,6 @@ std::vector<TensorType> Gelu<TensorType>::Backward(VecTensorType const &inputs,
 
   DataType const one{1};
   DataType const two{2};
-  DataType const neg_two{-2};
   DataType const three{3};
   DataType const half = fetch::math::Type<DataType>("0.5");
   DataType const a    = fetch::math::Type<DataType>("0.797885");
@@ -96,7 +95,8 @@ std::vector<TensorType> Gelu<TensorType>::Backward(VecTensorType const &inputs,
 
   // get x * sech^2() term
   fetch::math::CosH(intermediate1, intermediate3);
-  fetch::math::Pow(intermediate3, neg_two, intermediate3);
+  fetch::math::Pow(intermediate3, two, intermediate3);
+  fetch::math::Divide(one, intermediate3, intermediate3);
   fetch::math::Multiply(input, intermediate3, intermediate3);
 
   // get a + 3bx^2 term

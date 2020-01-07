@@ -53,7 +53,7 @@ public:
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override;
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {

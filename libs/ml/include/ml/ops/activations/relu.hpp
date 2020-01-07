@@ -43,7 +43,7 @@ public:
 
   ~Relu() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
       std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
