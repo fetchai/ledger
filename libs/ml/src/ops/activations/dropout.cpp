@@ -27,14 +27,14 @@ namespace ml {
 namespace ops {
 
 template <typename TensorType>
-Dropout<TensorType>::Dropout(DataType const probability, SizeType const &random_seed) : probability_(probability)
+Dropout<TensorType>::Dropout(DataType const probability, SizeType const &random_seed)
+  : probability_(probability)
 {
   if (probability < DataType{0} || probability > DataType{1})
   {
     std::stringstream ss;
     ss << probability;
-    throw std::runtime_error("Dropout probability " + ss.str() +
-                             " is out of allowed range [0..1]");
+    throw std::runtime_error("Dropout probability " + ss.str() + " is out of allowed range [0..1]");
   }
   rng_.Seed(random_seed);
   drop_values_ = TensorType{0};
@@ -62,7 +62,8 @@ std::shared_ptr<OpsSaveableParams> Dropout<TensorType>::GetOpSaveableParams()
 }
 
 template <typename TensorType>
-std::shared_ptr<fetch::ml::ops::Ops<TensorType>> Dropout<TensorType>::MakeSharedCopy(std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me)
+std::shared_ptr<fetch::ml::ops::Ops<TensorType>> Dropout<TensorType>::MakeSharedCopy(
+    std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me)
 {
   assert(me.get() == this);
 
@@ -110,7 +111,7 @@ void Dropout<TensorType>::Forward(VecTensorType const &inputs, TensorType &outpu
 
 template <typename TensorType>
 std::vector<TensorType> Dropout<TensorType>::Backward(VecTensorType const &inputs,
-                                                  TensorType const& error_signal)
+                                                      TensorType const &   error_signal)
 {
   FETCH_UNUSED(inputs);
   assert(inputs.size() == 1);
@@ -129,7 +130,8 @@ std::vector<TensorType> Dropout<TensorType>::Backward(VecTensorType const &input
 }
 
 template <typename TensorType>
-std::vector<math::SizeType> Dropout<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> Dropout<TensorType>::ComputeOutputShape(
+    VecTensorType const &inputs) const
 {
   return inputs.front()->shape();
 }
