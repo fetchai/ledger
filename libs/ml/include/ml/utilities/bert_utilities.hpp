@@ -20,6 +20,7 @@
 #include "core/filesystem/read_file_contents.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "math/metrics/cross_entropy.hpp"
 #include "math/tensor/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
