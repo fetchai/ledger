@@ -56,7 +56,7 @@ void Sigmoid<TensorType>::Forward(VecTensorType const &inputs, TensorType &outpu
   fetch::math::Sigmoid(*(inputs.front()), output);
 
   // ensures numerical stability
-  fetch::math::Clamp(epsilon_, DataType{1} - epsilon_, output);
+  fetch::math::Clamp(epsilon_, static_cast<DataType>(DataType{1} - epsilon_), output);
 }
 
 template <typename TensorType>

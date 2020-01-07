@@ -30,7 +30,7 @@ RandomisedRelu<TensorType>::RandomisedRelu(DataType const lower_bound, DataType 
                                            SizeType const &random_seed)
   : lower_bound_(lower_bound)
   , upper_bound_(upper_bound)
-  , bounds_mean_((upper_bound_ + lower_bound_) / DataType(2))
+  , bounds_mean_(static_cast<DataType>((upper_bound_ + lower_bound_) / DataType(2)))
 {
   rng_.Seed(random_seed);
   UpdateRandomValue();
@@ -42,7 +42,7 @@ RandomisedRelu<TensorType>::RandomisedRelu(SPType const &sp)
 {
   lower_bound_ = sp.lower_bound;
   upper_bound_ = sp.upper_bound;
-  bounds_mean_ = ((upper_bound_ + lower_bound_) / DataType(2));
+  bounds_mean_ = static_cast<DataType>(((upper_bound_ + lower_bound_) / DataType(2)));
   rng_.Seed(sp.random_seed);
   rng_.SetBuffer(sp.buffer);
   rng_.SetIndex(sp.index);
