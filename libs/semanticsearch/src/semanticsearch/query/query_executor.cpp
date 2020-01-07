@@ -63,7 +63,6 @@ QueryExecutor::AgentIdSetPtr QueryExecutor::Execute(Query const &query, Agent ag
   AgentIdSetPtr ret{nullptr};
   for (auto const &stmt : query.statements)
   {
-
     switch (stmt[0].properties)
     {
     case Properties::PROP_CTX_MODEL:

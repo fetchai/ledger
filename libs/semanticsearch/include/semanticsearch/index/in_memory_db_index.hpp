@@ -20,6 +20,7 @@
 #include "semanticsearch/index/base_types.hpp"
 #include "semanticsearch/index/database_index_interface.hpp"
 #include "semanticsearch/index/subscription_group.hpp"
+#include "semanticsearch/semantic_constants.hpp"
 
 #include <map>
 
@@ -125,7 +126,7 @@ public:
 private:
   GroupToIndicesMap  group_content_{};         ///< Mapping of group to set of indices.
   DepthParameterType param_depth_start_ = 0;   ///< Smallest depth searchable.
-  DepthParameterType param_depth_end_   = 20;  ///< Largest depth searchable.
+  DepthParameterType param_depth_end_{MAXIMUM_DEPTH};  ///< Largest depth searchable.
   std::size_t        rank_{0};                 ///< The rank of elements contained in the db.
 };
 

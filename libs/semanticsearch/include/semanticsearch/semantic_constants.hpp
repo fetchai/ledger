@@ -106,5 +106,6 @@ struct Properties
   };
 };
 
+constexpr uint64_t const MAXIMUM_DEPTH = 20;
 }  // namespace semanticsearch
 }  // namespace fetch
