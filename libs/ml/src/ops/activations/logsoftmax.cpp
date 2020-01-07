@@ -58,7 +58,6 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> LogSoftmax<TensorType>::MakeSha
   return copyshare;
 }
 
-
 template <typename TensorType>
 void LogSoftmax<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
@@ -70,7 +69,7 @@ void LogSoftmax<TensorType>::Forward(VecTensorType const &inputs, TensorType &ou
 
 template <typename TensorType>
 std::vector<TensorType> LogSoftmax<TensorType>::Backward(VecTensorType const &inputs,
-                                                  TensorType const &   error_signal)
+                                                         TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
   assert(inputs.front()->shape() == error_signal.shape());
@@ -93,7 +92,8 @@ std::vector<TensorType> LogSoftmax<TensorType>::Backward(VecTensorType const &in
 }
 
 template <typename TensorType>
-std::vector<math::SizeType> LogSoftmax<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> LogSoftmax<TensorType>::ComputeOutputShape(
+    VecTensorType const &inputs) const
 {
   return inputs.front()->shape();
 }
