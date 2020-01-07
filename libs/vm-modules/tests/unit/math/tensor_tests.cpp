@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gmock/gmock.h"
 #include "math/standard_functions/abs.hpp"
 #include "vm/array.hpp"
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_test_toolkit.hpp"
-
-#include "gmock/gmock.h"
 
 #include <sstream>
 
@@ -811,7 +810,7 @@ TEST_F(MathTensorTests, tensor_min_etch_test)
   ASSERT_TRUE(toolkit.Run(&res));
 
   auto const     min_val = res.Get<DataType>();
-  DataType const expected{-7.0};
+  DataType const expected{"-7.0"};
 
   EXPECT_EQ(expected, min_val);
 }
@@ -823,7 +822,7 @@ TEST_F(MathTensorTests, tensor_max_test)
   fetch::vm_modules::math::VMTensor vm_tensor(&toolkit.vm(), 0, tensor);
 
   DataType const result = vm_tensor.Max();
-  DataType const expected{14328.1};
+  DataType const expected{"14328.1"};
 
   EXPECT_EQ(result, expected);
 }
@@ -849,7 +848,7 @@ TEST_F(MathTensorTests, tensor_max_etch_test)
   ASSERT_TRUE(toolkit.Run(&res));
 
   auto const     max_val = res.Get<DataType>();
-  DataType const expected{23.1};
+  DataType const expected{"23.1"};
 
   EXPECT_EQ(expected, max_val);
 }
@@ -903,7 +902,7 @@ TEST_F(MathTensorTests, tensor_transpose_test)
   auto const transposed = vm_tensor.Transpose()->GetTensor();
 
   DataType const result = transposed.At<fetch::math::SizeType, fetch::math::SizeType>(1, 0);
-  DataType const expected{2.2};
+  DataType const expected{"2.2"};
 
   EXPECT_EQ(tensor.shape().at(0), transposed.shape().at(1));
   EXPECT_EQ(tensor.shape().at(1), transposed.shape().at(0));
@@ -1097,12 +1096,12 @@ TEST_F(MathTensorTests, tensor_argmax_test)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({3, 2});
-  gt.Set(SizeType(0), SizeType(0), DataType{1.0});
-  gt.Set(SizeType(0), SizeType(1), DataType{1.0});
-  gt.Set(SizeType(1), SizeType(0), DataType{1.0});
-  gt.Set(SizeType(1), SizeType(1), DataType{1.0});
-  gt.Set(SizeType(2), SizeType(0), DataType{1.0});
-  gt.Set(SizeType(2), SizeType(1), DataType{0.0});
+  gt.Set(SizeType(0), SizeType(0), DataType{1});
+  gt.Set(SizeType(0), SizeType(1), DataType{1});
+  gt.Set(SizeType(1), SizeType(0), DataType{1});
+  gt.Set(SizeType(1), SizeType(1), DataType{1});
+  gt.Set(SizeType(2), SizeType(0), DataType{1});
+  gt.Set(SizeType(2), SizeType(1), DataType{0});
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }

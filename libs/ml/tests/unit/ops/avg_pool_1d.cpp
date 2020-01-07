@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -43,20 +43,26 @@ TYPED_TEST(AvgPool1DTest, forward_test_3_2_2)
   using TensorType = TypeParam;
   using SizeType   = fetch::math::SizeType;
 
-  TensorType          data({1, 10, 2});
-  TensorType          gt({1, 4, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
-  std::vector<double> gt_input({2.0f / 3.0f, 4.0f / 3.0f, 6.0f / 3.0f, 8.0f / 3.0f});
+  TensorType data({1, 10, 2});
+  TensorType gt({1, 4, 2});
+  TensorType data_input = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8, 9, -10");
+  TensorType gt_input({1, 4});
+
+  gt_input(0, 0) = DataType{2} / DataType{3};
+  gt_input(0, 1) = DataType{4} / DataType{3};
+  gt_input(0, 2) = DataType{6} / DataType{3};
+  gt_input(0, 3) = DataType{8} / DataType{3};
 
   for (SizeType i_b{0}; i_b < 2; i_b++)
   {
     for (SizeType i{0}; i < 10; ++i)
     {
-      data(0, i, i_b) = static_cast<DataType>(data_input[i]) + static_cast<DataType>(i_b * 10);
+      data(0, i, i_b) =
+          data_input[i] + fetch::math::AsType<DataType>(static_cast<double>(i_b * 10));
     }
     for (SizeType i{0}; i < 4; ++i)
     {
-      gt(0, i, i_b) = static_cast<DataType>(gt_input[i]) + static_cast<DataType>(i_b * 10);
+      gt(0, i, i_b) = gt_input[i] + fetch::math::AsType<DataType>(static_cast<double>(i_b * 10));
     }
   }
 
@@ -76,44 +82,44 @@ TYPED_TEST(AvgPool1DTest, backward_test)
   using TensorType = TypeParam;
   using SizeType   = fetch::math::SizeType;
 
-  TensorType          data({1, 10, 2});
-  TensorType          error({1, 4, 2});
-  TensorType          gt({1, 10, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 10, -6, 7, -8, 9, -10});
-  std::vector<double> errorInput({2, 3, 4, 5});
+  TensorType data({1, 10, 2});
+  TensorType error({1, 4, 2});
+  TensorType gt({1, 10, 2});
+  TensorType data_input  = TensorType::FromString("1, -2, 3, -4, 10, -6, 7, -8, 9, -10");
+  TensorType error_input = TensorType::FromString("2, 3, 4, 5");
 
   for (SizeType i_b{0}; i_b < 2; i_b++)
   {
     for (SizeType i{0}; i < 10; ++i)
     {
-      data(0, i, i_b) = static_cast<DataType>(data_input[i]) + static_cast<DataType>(i_b);
+      data(0, i, i_b) = data_input[i] + static_cast<DataType>(i_b);
     }
     for (SizeType i{0}; i < 4; ++i)
     {
-      error(0, i, i_b) = static_cast<DataType>(errorInput[i]) + static_cast<DataType>(i_b);
+      error(0, i, i_b) = error_input[i] + static_cast<DataType>(i_b);
     }
   }
 
-  gt(0, 0, 0) = DataType{2.0f / 3.0f};
-  gt(0, 0, 1) = DataType{1.0f};
-  gt(0, 1, 0) = DataType{2.0f / 3.0f};
-  gt(0, 1, 1) = DataType{1.0f};
-  gt(0, 2, 0) = DataType{5.0f / 3.0f};
-  gt(0, 2, 1) = DataType{7.0f / 3.0f};
-  gt(0, 3, 0) = DataType{1.0f};
-  gt(0, 3, 1) = DataType{4.0f / 3.0f};
-  gt(0, 4, 0) = DataType{7.0f / 3.0f};
-  gt(0, 4, 1) = DataType{3.0f};
-  gt(0, 5, 0) = DataType{4.0f / 3.0f};
-  gt(0, 5, 1) = DataType{5.0f / 3.0f};
-  gt(0, 6, 0) = DataType{3.0f};
-  gt(0, 6, 1) = DataType{11.0f / 3.0f};
-  gt(0, 7, 0) = DataType{5.0f / 3.0f};
-  gt(0, 7, 1) = DataType{2.0f};
-  gt(0, 8, 0) = DataType{5.0f / 3.0f};
-  gt(0, 8, 1) = DataType{2.0f};
-  gt(0, 9, 0) = DataType{0.0f};
-  gt(0, 9, 1) = DataType{0.0f};
+  gt(0, 0, 0) = DataType{2} / DataType{3};
+  gt(0, 0, 1) = DataType{1};
+  gt(0, 1, 0) = DataType{2} / DataType{3};
+  gt(0, 1, 1) = DataType{1};
+  gt(0, 2, 0) = DataType{5} / DataType{3};
+  gt(0, 2, 1) = DataType{7} / DataType{3};
+  gt(0, 3, 0) = DataType{1};
+  gt(0, 3, 1) = DataType{4} / DataType{3};
+  gt(0, 4, 0) = DataType{7} / DataType{3};
+  gt(0, 4, 1) = DataType{3};
+  gt(0, 5, 0) = DataType{4} / DataType{3};
+  gt(0, 5, 1) = DataType{5} / DataType{3};
+  gt(0, 6, 0) = DataType{3};
+  gt(0, 6, 1) = DataType{11} / DataType{3};
+  gt(0, 7, 0) = DataType{5} / DataType{3};
+  gt(0, 7, 1) = DataType{2};
+  gt(0, 8, 0) = DataType{5} / DataType{3};
+  gt(0, 8, 1) = DataType{2};
+  gt(0, 9, 0) = DataType{0};
+  gt(0, 9, 1) = DataType{0};
 
   fetch::ml::ops::AvgPool1D<TensorType> op(3, 2);
   std::vector<TensorType>               prediction =
@@ -131,17 +137,17 @@ TYPED_TEST(AvgPool1DTest, backward_test_2_channels)
   using TensorType = TypeParam;
   using SizeType   = fetch::math::SizeType;
 
-  TensorType          data({2, 5, 2});
-  TensorType          error({2, 2, 2});
-  TensorType          gt({2, 5, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 10, -6, 7, -8, 9, -10});
-  std::vector<double> errorInput({2, 3, 4, 5});
+  TensorType data({2, 5, 2});
+  TensorType error({2, 2, 2});
+  TensorType gt({2, 5, 2});
+  TensorType data_input  = TensorType::FromString("1, -2, 3, -4, 10, -6, 7, -8, 9, -10");
+  TensorType error_input = TensorType::FromString("2, 3, 4, 5");
 
   for (SizeType i{0}; i < 2; ++i)
   {
     for (SizeType j{0}; j < 5; ++j)
     {
-      data(i, j, 0) = static_cast<DataType>(data_input[i * 5 + j]);
+      data(i, j, 0) = data_input[i * 5 + j];
     }
   }
 
@@ -149,30 +155,30 @@ TYPED_TEST(AvgPool1DTest, backward_test_2_channels)
   {
     for (SizeType j{0}; j < 2; ++j)
     {
-      error(i, j, 0) = static_cast<DataType>(errorInput[i * 2 + j]);
+      error(i, j, 0) = error_input[i * 2 + j];
     }
   }
 
-  gt(0, 0, 0) = DataType{0.5f};
-  gt(0, 0, 1) = DataType{0.0f};
-  gt(0, 1, 0) = DataType{1.25f};
-  gt(0, 1, 1) = DataType{0.0f};
-  gt(0, 2, 0) = DataType{1.25f};
-  gt(0, 2, 1) = DataType{0.0f};
-  gt(0, 3, 0) = DataType{1.25f};
-  gt(0, 3, 1) = DataType{0.0f};
-  gt(0, 4, 0) = DataType{0.75f};
-  gt(0, 4, 1) = DataType{0.0f};
-  gt(1, 0, 0) = DataType{1.0f};
-  gt(1, 0, 1) = DataType{0.0f};
-  gt(1, 1, 0) = DataType{2.25f};
-  gt(1, 1, 1) = DataType{0.0f};
-  gt(1, 2, 0) = DataType{2.25f};
-  gt(1, 2, 1) = DataType{0.0f};
-  gt(1, 3, 0) = DataType{2.25f};
-  gt(1, 3, 1) = DataType{0.0f};
-  gt(1, 4, 0) = DataType{1.25f};
-  gt(1, 4, 1) = DataType{0.0f};
+  gt(0, 0, 0) = DataType{1} / DataType{2};
+  gt(0, 0, 1) = DataType{0};
+  gt(0, 1, 0) = DataType{5} / DataType{4};
+  gt(0, 1, 1) = DataType{0};
+  gt(0, 2, 0) = DataType{5} / DataType{4};
+  gt(0, 2, 1) = DataType{0};
+  gt(0, 3, 0) = DataType{5} / DataType{4};
+  gt(0, 3, 1) = DataType{0};
+  gt(0, 4, 0) = DataType{3} / DataType{4};
+  gt(0, 4, 1) = DataType{0};
+  gt(1, 0, 0) = DataType{1};
+  gt(1, 0, 1) = DataType{0};
+  gt(1, 1, 0) = DataType{9} / DataType{4};
+  gt(1, 1, 1) = DataType{0};
+  gt(1, 2, 0) = DataType{9} / DataType{4};
+  gt(1, 2, 1) = DataType{0};
+  gt(1, 3, 0) = DataType{9} / DataType{4};
+  gt(1, 3, 1) = DataType{0};
+  gt(1, 4, 0) = DataType{5} / DataType{4};
+  gt(1, 4, 1) = DataType{0};
 
   fetch::ml::ops::AvgPool1D<TensorType> op(4, 1);
   std::vector<TensorType>               prediction =
@@ -190,18 +196,18 @@ TYPED_TEST(AvgPool1DTest, forward_test_4_2)
   using TensorType = TypeParam;
   using SizeType   = fetch::math::SizeType;
 
-  TensorType          data({1, 10, 1});
-  TensorType          gt({1, 4, 1});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
-  std::vector<double> gt_input({-0.5f, -0.5f, -0.5f, -0.5f});
+  TensorType data({1, 10, 1});
+  TensorType gt({1, 4, 1});
+  TensorType data_input = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8, 9, -10");
+  TensorType gt_input   = TensorType::FromString("-0.5, -0.5, -0.5, -0.5");
   for (SizeType i{0}; i < 10; ++i)
   {
-    data(0, i, 0) = static_cast<DataType>(data_input[i]);
+    data(0, i, 0) = data_input[i];
   }
 
   for (SizeType i{0}; i < 4; ++i)
   {
-    gt(0, i, 0) = static_cast<DataType>(gt_input[i]);
+    gt(0, i, 0) = gt_input[i];
   }
 
   fetch::ml::ops::AvgPool1D<TensorType> op(4, 2);
@@ -210,8 +216,8 @@ TYPED_TEST(AvgPool1DTest, forward_test_4_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
-                                  fetch::math::function_tolerance<typename TypeParam::Type>()));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(AvgPool1DTest, forward_test_2_channels_4_1_2)
@@ -220,9 +226,9 @@ TYPED_TEST(AvgPool1DTest, forward_test_2_channels_4_1_2)
   using TensorType = TypeParam;
   using SizeType   = fetch::math::SizeType;
 
-  TensorType          data({2, 5, 2});
-  TensorType          gt({2, 2, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
+  TensorType data({2, 5, 2});
+  TensorType gt({2, 2, 2});
+  TensorType data_input = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8, 9, -10");
 
   for (SizeType i_b{0}; i_b < 2; i_b++)
   {
@@ -231,19 +237,19 @@ TYPED_TEST(AvgPool1DTest, forward_test_2_channels_4_1_2)
       for (SizeType j{0}; j < 5; ++j)
       {
         data(i, j, i_b) =
-            static_cast<DataType>(data_input[i * 5 + j]) + static_cast<DataType>(i_b * 10);
+            data_input[i * 5 + j] + fetch::math::AsType<DataType>(static_cast<double>(i_b * 10));
       }
     }
   }
 
-  gt(0, 0, 0) = DataType{-0.5f};
-  gt(0, 0, 1) = DataType{9.5f};
-  gt(0, 1, 0) = DataType{0.5f};
-  gt(0, 1, 1) = DataType{10.5f};
-  gt(1, 0, 0) = DataType{0.5f};
-  gt(1, 0, 1) = DataType{10.5f};
-  gt(1, 1, 0) = DataType{-0.5f};
-  gt(1, 1, 1) = DataType{9.5f};
+  gt(0, 0, 0) = DataType{-1} / DataType{2};
+  gt(0, 0, 1) = DataType{19} / DataType{2};
+  gt(0, 1, 0) = DataType{1} / DataType{2};
+  gt(0, 1, 1) = DataType{21} / DataType{2};
+  gt(1, 0, 0) = DataType{1} / DataType{2};
+  gt(1, 0, 1) = DataType{21} / DataType{2};
+  gt(1, 1, 0) = DataType{-1} / DataType{2};
+  gt(1, 1, 1) = DataType{19} / DataType{2};
 
   fetch::ml::ops::AvgPool1D<TensorType> op(4, 1);
 
@@ -251,8 +257,8 @@ TYPED_TEST(AvgPool1DTest, forward_test_2_channels_4_1_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
-                                  fetch::math::function_tolerance<typename TypeParam::Type>()));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(AvgPool1DTest, forward_test_2_4_2)
@@ -261,18 +267,18 @@ TYPED_TEST(AvgPool1DTest, forward_test_2_4_2)
   using TensorType = TypeParam;
   using SizeType   = fetch::math::SizeType;
 
-  TensorType          data({1, 10, 2});
-  TensorType          gt({1, 3, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
-  std::vector<double> gt_input({-0.5, -0.5, -0.5});
+  TensorType data({1, 10, 2});
+  TensorType gt({1, 3, 2});
+  TensorType data_input = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8, 9, -10");
+  TensorType gt_input   = TensorType::FromString("-0.5, -0.5, -0.5");
   for (SizeType i{0}; i < 10; ++i)
   {
-    data(0, i, 0) = static_cast<DataType>(data_input[i]);
+    data(0, i, 0) = data_input[i];
   }
 
   for (SizeType i{0}; i < 3; ++i)
   {
-    gt(0, i, 0) = static_cast<DataType>(gt_input[i]);
+    gt(0, i, 0) = gt_input[i];
   }
 
   fetch::ml::ops::AvgPool1D<TensorType> op(2, 4);
@@ -281,8 +287,8 @@ TYPED_TEST(AvgPool1DTest, forward_test_2_4_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<typename TypeParam::Type>(),
-                                  fetch::math::function_tolerance<typename TypeParam::Type>()));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(AvgPool1DTest, saveparams_test)
@@ -294,10 +300,10 @@ TYPED_TEST(AvgPool1DTest, saveparams_test)
   using OpType        = typename fetch::ml::ops::AvgPool1D<TensorType>;
   using SizeType      = fetch::math::SizeType;
 
-  TensorType          data({2, 5, 2});
-  TensorType          gt({2, 2, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
-  std::vector<double> gt_input({3, 5, 9, 9});
+  TensorType data({2, 5, 2});
+  TensorType gt({2, 2, 2});
+  TensorType data_input = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8, 9, -10");
+  TensorType gt_input   = TensorType::FromString("3, 5, 9, 9");
 
   for (SizeType i_b{0}; i_b < 2; i_b++)
   {
@@ -306,19 +312,19 @@ TYPED_TEST(AvgPool1DTest, saveparams_test)
       for (SizeType j{0}; j < 5; ++j)
       {
         data(i, j, i_b) =
-            static_cast<DataType>(data_input[i * 5 + j]) + static_cast<DataType>(i_b * 10);
+            data_input[i * 5 + j] + fetch::math::AsType<DataType>(static_cast<double>(i_b * 10));
       }
     }
   }
 
-  gt(0, 0, 0) = DataType{-0.5f};
-  gt(0, 0, 1) = DataType{9.5f};
-  gt(0, 1, 0) = DataType{0.5f};
-  gt(0, 1, 1) = DataType{10.5f};
-  gt(1, 0, 0) = DataType{0.5f};
-  gt(1, 0, 1) = DataType{10.5f};
-  gt(1, 1, 0) = DataType{-0.5f};
-  gt(1, 1, 1) = DataType{9.5f};
+  gt(0, 0, 0) = DataType{-1} / DataType{2};
+  gt(0, 0, 1) = DataType{19} / DataType{2};
+  gt(0, 1, 0) = DataType{1} / DataType{2};
+  gt(0, 1, 1) = DataType{21} / DataType{2};
+  gt(1, 0, 0) = DataType{1} / DataType{2};
+  gt(1, 0, 1) = DataType{21} / DataType{2};
+  gt(1, 1, 0) = DataType{-1} / DataType{2};
+  gt(1, 1, 1) = DataType{19} / DataType{2};
 
   OpType op(4, 1);
 
@@ -350,28 +356,26 @@ TYPED_TEST(AvgPool1DTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(AvgPool1DTest, saveparams_backward_test_2_channels)
 {
-  using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
   using SizeType   = fetch::math::SizeType;
   using OpType     = typename fetch::ml::ops::AvgPool1D<TensorType>;
   using SPType     = typename OpType::SPType;
 
-  TensorType          data({2, 5, 2});
-  TensorType          error({2, 2, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 10, -6, 7, -8, 9, -10});
-  std::vector<double> errorInput({2, 3, 4, 5});
+  TensorType data({2, 5, 2});
+  TensorType error({2, 2, 2});
+  TensorType data_input  = TensorType::FromString("1, -2, 3, -4, 10, -6, 7, -8, 9, -10");
+  TensorType error_input = TensorType::FromString("2, 3, 4, 5");
 
   for (SizeType i{0}; i < 2; ++i)
   {
     for (SizeType j{0}; j < 5; ++j)
     {
-      data(i, j, 0) = static_cast<DataType>(data_input[i * 5 + j]);
+      data(i, j, 0) = data_input[i * 5 + j];
     }
   }
 
@@ -379,7 +383,7 @@ TYPED_TEST(AvgPool1DTest, saveparams_backward_test_2_channels)
   {
     for (SizeType j{0}; j < 2; ++j)
     {
-      error(i, j, 0) = static_cast<DataType>(errorInput[i * 2 + j]);
+      error(i, j, 0) = error_input[i * 2 + j];
     }
   }
 

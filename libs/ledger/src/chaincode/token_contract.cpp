@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 #include "variant/variant_utils.hpp"
 
 #include <memory>
+#include <sstream>
 #include <unordered_map>
 
 namespace fetch {
@@ -37,6 +38,15 @@ namespace ledger {
 namespace {
 
 using fetch::variant::Variant;
+
+template <typename T>
+std::string ConvertToString(T const &value)
+{
+  std::ostringstream oss;
+  oss << value;
+
+  return oss.str();
+}
 
 bool IsOperationValid(WalletRecord const &record, chain::Transaction const &tx,
                       Deed::Operation const &operation)
@@ -79,7 +89,7 @@ TokenContract::TokenContract()
   OnTransaction("deStake", this, &TokenContract::DeStake);
   OnTransaction("collectStake", this, &TokenContract::CollectStake);
   OnQuery("balance", this, &TokenContract::Balance);
-  OnQuery("deed", this, &TokenContract::QueryDeed);
+  OnQuery("queryDeed", this, &TokenContract::QueryDeed);
   OnQuery("stake", this, &TokenContract::Stake);
   OnQuery("cooldownStake", this, &TokenContract::CooldownStake);
 }
@@ -392,7 +402,7 @@ Contract::Status TokenContract::Balance(Query const &query, Query &response)
 
       // formulate the response
       response            = Variant::Object();
-      response["balance"] = record.balance;
+      response["balance"] = ConvertToString(record.balance);
 
       return Status::OK;
     }
@@ -446,7 +456,7 @@ Contract::Status TokenContract::Stake(Query const &query, Query &response)
 
       // formulate the response
       response          = Variant::Object();
-      response["stake"] = record.stake;
+      response["stake"] = ConvertToString(record.stake);
 
       return Status::OK;
     }

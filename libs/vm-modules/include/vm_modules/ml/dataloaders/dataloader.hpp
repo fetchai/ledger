@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,10 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "vm/array.hpp"
 #include "vm/object.hpp"
+#include "vm/pair.hpp"
+#include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 
 #include <memory>
@@ -32,8 +35,6 @@ namespace math {
 class VMTensor;
 }
 namespace ml {
-
-class VMTrainingPair;
 
 class VMDataLoader : public fetch::vm::Object
 {
@@ -83,7 +84,9 @@ public:
    * Get the next training pair of data and labels from the dataloader
    * @return
    */
-  fetch::vm::Ptr<VMTrainingPair> GetNext();
+  vm::Ptr<vm::Pair<vm::Ptr<math::VMTensor>,
+                   vm::Ptr<fetch::vm::Array<vm::Ptr<fetch::vm_modules::math::VMTensor>>>>>
+  GetNext();
 
   bool IsDone();
 

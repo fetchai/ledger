@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -57,7 +57,9 @@ enum class SupportedLayerType : uint8_t
   CONV1D,
   CONV2D,
   FLATTEN,
-  DROPOUT
+  DROPOUT,
+  ACTIVATION,
+  RESHAPE
 };
 
 class VMModel : public fetch::vm::Object
@@ -154,6 +156,11 @@ public:
 
   void LayerAddDropout(fetch::vm::Ptr<fetch::vm::String> const &layer,
                        math::DataType const &                   probability);
+
+  void LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                          fetch::vm::Ptr<fetch::vm::String> const &activation_name);
+  void LayerAddReshape(fetch::vm::Ptr<fetch::vm::String> const &                     layer,
+                       fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &shape);
 
 private:
   ModelPtrType       model_;

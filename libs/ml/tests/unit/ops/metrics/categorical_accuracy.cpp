@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -181,7 +181,7 @@ TYPED_TEST(CategoricalAccuracyTest, saveparams_test)
   {
     for (math::SizeType j{0}; j < n_classes; ++j)
     {
-      data1.Set(j, i, DataType(logits[counter]));
+      data1.Set(j, i, fetch::math::AsType<DataType>(logits[counter]));
       ++counter;
     }
   }

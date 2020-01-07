@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/meta/math_type_traits.hpp"
-#include "math/tensor_declaration.hpp"
+#include "math/tensor/tensor_declaration.hpp"
 
 #include <cfenv>
 #include <cstdint>
@@ -240,6 +240,25 @@ template <typename T>
 static constexpr meta::IfIsFixedPoint<T, T> Type(std::string const &val)
 {
   return T(val);
+}
+
+template <typename T, typename U>
+static constexpr meta::IfIsFloat<T, T> AsType(U val, meta::IfIsInteger<U> * /*unused*/ = nullptr)
+{
+  return static_cast<T>(val);
+}
+
+template <typename T, typename U>
+static constexpr meta::IfIsFixedPoint<T, T> AsType(U val,
+                                                   meta::IfIsInteger<U> * /*unused*/ = nullptr)
+{
+  return static_cast<T>(val);
+}
+
+template <typename T, typename U>
+static constexpr meta::IfIsFloat<T, T> AsType(U val, meta::IfIsFloat<U> * /*unused*/ = nullptr)
+{
+  return static_cast<T>(val);
 }
 
 }  // namespace math

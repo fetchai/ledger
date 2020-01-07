@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
+#include "vm/pair.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/tensor/tensor_estimator.hpp"
 #include "vm_modules/math/type.hpp"
@@ -74,7 +75,8 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
   using Index = fetch::math::SizeType;
 
   auto tensor_constructor_charge_estimate = [](Ptr<Array<SizeType>> const &shape) -> ChargeAmount {
-    SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(shape->elements);
+    DataType padded_size =
+        static_cast<DataType>(fetch::math::Tensor<DataType>::PaddedSizeFromShape(shape->elements));
 
     return static_cast<ChargeAmount>(CONSTRUCTION_PADDED_SIZE_COEF * padded_size +
                                      CONSTRUCTION_CONST_COEF) *
@@ -148,6 +150,10 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
 
   // Add support for Array of Tensors
   module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<VMTensor>>>();
+
+  // Add support for training pair
+  module.GetClassInterface<IPair>()
+      .CreateInstantiationType<Pair<Ptr<VMTensor>, Ptr<Array<Ptr<VMTensor>>>>>();
 }
 
 SizeVector VMTensor::shape() const

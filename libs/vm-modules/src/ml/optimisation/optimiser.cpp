@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/optimisation/optimiser.hpp"
-#include "vm_modules/ml/training_pair.hpp"
 
 #include <cstdint>
 #include <memory>

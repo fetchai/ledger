@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -88,30 +88,30 @@ public:
 
   struct Config
   {
-    Manifest     manifest{};
-    uint32_t     log2_num_lanes{0};
-    uint32_t     num_slices{0};
-    uint32_t     num_executors{0};
-    std::string  db_prefix{};
-    uint32_t     processor_threads{0};
-    uint32_t     verification_threads{0};
-    uint32_t     max_peers{0};
-    uint32_t     transient_peers{0};
-    uint32_t     block_interval_ms{0};
-    uint64_t     max_cabinet_size{0};
-    uint64_t     stake_delay_period{0};
-    uint64_t     aeon_period{0};
-    uint32_t     peers_update_cycle_ms{0};
-    bool         disable_signing{false};
-    bool         sign_broadcasts{false};
-    bool         kademlia_routing{true};
-    std::string  genesis_file_location{""};
-    bool         proof_of_stake{false};
-    NetworkMode  network_mode{NetworkMode::PUBLIC_NETWORK};
-    FeatureFlags features{};
+    Manifest       manifest{};
+    uint32_t       log2_num_lanes{0};
+    uint32_t       num_slices{0};
+    uint32_t       num_executors{0};
+    std::string    db_prefix{};
+    uint32_t       processor_threads{0};
+    uint32_t       verification_threads{0};
+    uint32_t       max_peers{0};
+    uint32_t       transient_peers{0};
+    uint32_t       block_interval_ms{0};
+    uint64_t       max_cabinet_size{0};
+    uint64_t       stake_delay_period{0};
+    uint64_t       aeon_period{0};
+    uint32_t       peers_update_cycle_ms{0};
+    bool           disable_signing{false};
+    bool           sign_broadcasts{false};
+    bool           kademlia_routing{true};
+    ConstByteArray genesis_file_contents{};
+    bool           proof_of_stake{false};
+    NetworkMode    network_mode{NetworkMode::PUBLIC_NETWORK};
+    FeatureFlags   features{};
 
-    std::string ihub_peer_cache{"peer_table.ihub.cache"};
-    std::string beacon_peer_cache{"peer_table.dkgn.cache"};
+    std::string ihub_peer_cache{"peer_table.ihub.cache.db"};
+    std::string beacon_peer_cache{"peer_table.dkgn.cache.db"};
 
     bool     enable_agents{false};
     uint16_t messenger_port{0};
@@ -207,6 +207,7 @@ private:
   /// @name Network Orchestration
   /// @{
   core::Reactor  reactor_;
+  core::Reactor  reactor_dkg_;
   NetworkManager network_manager_;       ///< Top level network coordinator
   NetworkManager http_network_manager_;  ///< A separate net. coordinator for the http service(s)
   MuddlePtr      muddle_;                ///< The muddle networking service
@@ -277,6 +278,8 @@ private:
   telemetry::CounterPtr uptime_;
   /// @}
 };
+
+std::ostream &operator<<(std::ostream &stream, Constellation::Config const &config);
 
 }  // namespace constellation
 }  // namespace fetch

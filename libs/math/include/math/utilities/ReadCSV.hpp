@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 #include "core/random.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 
 #include <fstream>
 #include <string>
@@ -103,7 +103,7 @@ TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_ski
         // Constructing a fixed point from a double is not guaranteed to give the same results on
         // different architectures and so is unsafe. But the fixed point string parsing does not
         // support scientific notation.
-        weights(col, row) = DataType{std::stod(field_value)};
+        weights(col, row) = fetch::math::AsType<DataType>(std::stod(field_value));
       }
       else
       {

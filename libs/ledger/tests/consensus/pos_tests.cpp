@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -311,7 +311,9 @@ TEST_F(ConsensusTests, test_unknown_qual_signed)
   entropy.confirmations[entropy.ToQualIndex(signer->identity().identifier())] =
       signer->Sign(entropy.digest);
 
-  ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::NO);
+  // Since the update from the consensus up to N/3 failed confirmations are permitted. Since this
+  // test only adds one this is permitted
+  ASSERT_EQ(consensus_->ValidBlock(*block), ledger::ConsensusInterface::Status::YES);
 }
 
 TEST_F(ConsensusTests, test_timestamp_ahead_in_time)

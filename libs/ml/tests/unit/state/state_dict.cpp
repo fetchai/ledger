@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "gtest/gtest.h"
-#include "ml/ops/weights.hpp"
+#include "ml/state_dict.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
 namespace fetch {
 namespace ml {
 namespace test {
@@ -175,7 +176,7 @@ TYPED_TEST(StateDictTest, inline_add_non_strict_test)
   }
 }
 
-TYPED_TEST(StateDictTest, merge_list_test)
+TYPED_TEST(StateDictTest, merge_vector_test)
 {
   fetch::ml::StateDict<TypeParam> a;
   fetch::ml::StateDict<TypeParam> b;
@@ -192,12 +193,12 @@ TYPED_TEST(StateDictTest, merge_list_test)
   c.weights_->Fill(typename TypeParam::Type(6));
   d.weights_->Fill(typename TypeParam::Type(8));
 
-  std::list<fetch::ml::StateDict<TypeParam>> l;
-  l.push_back(a);
-  l.push_back(b);
-  l.push_back(c);
-  l.push_back(d);
-  fetch::ml::StateDict<TypeParam> res = fetch::ml::StateDict<TypeParam>::MergeList(l);
+  std::vector<fetch::ml::StateDict<TypeParam>> state_dicts;
+  state_dicts.push_back(a);
+  state_dicts.push_back(b);
+  state_dicts.push_back(c);
+  state_dicts.push_back(d);
+  fetch::ml::StateDict<TypeParam> res = fetch::ml::StateDict<TypeParam>::Merge(state_dicts);
 
   for (uint32_t i(0); i < 5; ++i)
   {
@@ -212,7 +213,7 @@ TYPED_TEST(StateDictTest, merge_list_test)
   }
 }
 
-TYPED_TEST(StateDictTest, nested_merge_list_test)
+TYPED_TEST(StateDictTest, nested_merge_vector_test)
 {
   fetch::ml::StateDict<TypeParam> a;
   fetch::ml::StateDict<TypeParam> b;
@@ -233,12 +234,12 @@ TYPED_TEST(StateDictTest, nested_merge_list_test)
   c.dict_["nest1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(6));
   d.dict_["nest1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(8));
 
-  std::list<fetch::ml::StateDict<TypeParam>> l;
-  l.push_back(a);
-  l.push_back(b);
-  l.push_back(c);
-  l.push_back(d);
-  fetch::ml::StateDict<TypeParam> res = fetch::ml::StateDict<TypeParam>::MergeList(l);
+  std::vector<fetch::ml::StateDict<TypeParam>> state_dicts;
+  state_dicts.push_back(a);
+  state_dicts.push_back(b);
+  state_dicts.push_back(c);
+  state_dicts.push_back(d);
+  fetch::ml::StateDict<TypeParam> res = fetch::ml::StateDict<TypeParam>::Merge(state_dicts);
 
   for (uint32_t i(0); i < 5; ++i)
   {

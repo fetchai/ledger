@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -46,8 +46,8 @@ using VMPtrString = Ptr<String>;
 std::map<std::string, SupportedLayerType> const VMModel::layer_types_{
     {"dense", SupportedLayerType::DENSE},     {"conv1d", SupportedLayerType::CONV1D},
     {"conv2d", SupportedLayerType::CONV2D},   {"flatten", SupportedLayerType::FLATTEN},
-    {"dropout", SupportedLayerType::DROPOUT},
-};
+    {"dropout", SupportedLayerType::DROPOUT}, {"activation", SupportedLayerType::ACTIVATION},
+    {"reshape", SupportedLayerType::RESHAPE}};
 
 std::map<std::string, ActivationType> const VMModel::activations_{
     {"nothing", ActivationType::NOTHING},
@@ -334,6 +334,10 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                               UseEstimator(&ModelEstimator::LayerAddFlatten))
         .CreateMemberFunction("add", &VMModel::LayerAddDropout,
                               UseEstimator(&ModelEstimator::LayerAddDropout))
+        .CreateMemberFunction("add", &VMModel::LayerAddActivation,
+                              UseEstimator(&ModelEstimator::LayerAddActivation))
+        .CreateMemberFunction("add", &VMModel::LayerAddReshape,
+                              UseEstimator(&ModelEstimator::LayerAddReshape))
         .CreateMemberFunction("compile", &VMModel::CompileSimple,
                               UseEstimator(&ModelEstimator::CompileSimple))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
@@ -679,6 +683,73 @@ void VMModel::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
     DataType const keep_probability = DataType{1} - probability;
 
     me->Add<fetch::ml::ops::Dropout<TensorType>>(keep_probability);
+    compiled_ = false;
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
+    return;
+  }
+}
+
+void VMModel::LayerAddActivation(const fetch::vm::Ptr<String> &layer,
+                                 const fetch::vm::Ptr<String> &activation_name)
+{
+  try
+  {
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::ACTIVATION});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+
+    ActivationType activation = ParseName(activation_name->string(), activations_, "activation");
+
+    switch (activation)
+    {
+    case ActivationType::RELU:
+      me->Add<fetch::ml::ops::Relu<TensorType>>();
+      break;
+    case ActivationType::GELU:
+      me->Add<fetch::ml::ops::Gelu<TensorType>>();
+      break;
+    case ActivationType::SIGMOID:
+      me->Add<fetch::ml::ops::Sigmoid<TensorType>>();
+      break;
+    case ActivationType::SOFTMAX:
+      me->Add<fetch::ml::ops::Softmax<TensorType>>();
+      break;
+    case ActivationType::LEAKY_RELU:
+      me->Add<fetch::ml::ops::LeakyRelu<TensorType>>();
+      break;
+    case ActivationType::LOG_SIGMOID:
+      me->Add<fetch::ml::ops::LogSigmoid<TensorType>>();
+      break;
+    case ActivationType::LOG_SOFTMAX:
+      me->Add<fetch::ml::ops::LogSoftmax<TensorType>>();
+      break;
+    default:
+      vm_->RuntimeError("Can not add Activation layer with activation type " +
+                        activation_name->string());
+      return;
+    }
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
+    return;
+  }
+}
+
+void VMModel::LayerAddReshape(const fetch::vm::Ptr<String> &                                layer,
+                              const fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> &shape)
+{
+  try
+  {
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::RESHAPE});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+    me->Add<fetch::ml::ops::Reshape<TensorType>>(shape->elements);
     compiled_ = false;
   }
   catch (std::exception const &e)

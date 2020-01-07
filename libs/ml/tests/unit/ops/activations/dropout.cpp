@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -40,10 +40,11 @@ namespace {
 template <typename TensorType>
 double zero_fraction(TensorType const &t1)
 {
-  double ret = 0;
+  using DataType = typename TensorType::Type;
+  double ret     = 0;
   for (auto const &i : t1)
   {
-    if (i == 0)
+    if (i == DataType{0})
     {
       ret++;
     }
@@ -142,7 +143,7 @@ TYPED_TEST(DropoutTest, backward_test)
   math::SizeType tensorsize = 10000;
   TensorType     data       = TensorType::UniformRandom(tensorsize);
   TensorType     error      = TensorType::UniformRandom(tensorsize);
-  auto           prob       = fetch::math::Type<DataType>("0.5");
+  auto const     prob       = fetch::math::Type<DataType>("0.5");
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
@@ -215,7 +216,7 @@ TYPED_TEST(DropoutTest, saveparams_test)
 
   math::SizeType                tensorsize  = 1000;
   TensorType                    data        = TensorType::UniformRandom(tensorsize);
-  auto                          prob        = fetch::math::Type<DataType>("0.5");
+  auto const                    prob        = fetch::math::Type<DataType>("0.5");
   typename TensorType::SizeType random_seed = 12345;
 
   OpType op(prob, random_seed);

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/regularisers/regulariser.hpp"
 
 namespace fetch {
@@ -49,12 +49,12 @@ public:
    */
   void ApplyRegularisation(TensorType &weight, DataType regularisation_rate) override
   {
-    DataType coef = static_cast<DataType>(2) * regularisation_rate;
+    auto coef = static_cast<DataType>(2 * regularisation_rate);
 
     auto it = weight.begin();
     while (it.is_valid())
     {
-      *it -= (*it) * coef;
+      *it = static_cast<DataType>(*it - ((*it) * coef));
       ++it;
     }
   }

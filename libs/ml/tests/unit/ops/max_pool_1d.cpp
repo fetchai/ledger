@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -52,11 +52,13 @@ TYPED_TEST(MaxPool1DTest, forward_test_3_2_2)
   {
     for (SizeType i{0}; i < 10; ++i)
     {
-      data(0, i, i_b) = static_cast<DataType>(data_input[i]) + static_cast<DataType>(i_b * 10);
+      data(0, i, i_b) =
+          fetch::math::AsType<DataType>(data_input[i]) + fetch::math::AsType<DataType>(i_b * 10);
     }
     for (SizeType i{0}; i < 4; ++i)
     {
-      gt(0, i, i_b) = static_cast<DataType>(gt_input[i]) + static_cast<DataType>(i_b * 10);
+      gt(0, i, i_b) =
+          fetch::math::AsType<DataType>(gt_input[i]) + fetch::math::AsType<DataType>(i_b * 10);
     }
   }
 
@@ -66,7 +68,8 @@ TYPED_TEST(MaxPool1DTest, forward_test_3_2_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(MaxPool1DTest, backward_test)
@@ -87,18 +90,20 @@ TYPED_TEST(MaxPool1DTest, backward_test)
   {
     for (SizeType i{0}; i < 10; ++i)
     {
-      data(0, i, i_b) = static_cast<DataType>(data_input[i]) + static_cast<DataType>(i_b);
+      data(0, i, i_b) =
+          fetch::math::AsType<DataType>(data_input[i]) + fetch::math::AsType<DataType>(i_b);
     }
     for (SizeType i{0}; i < 4; ++i)
     {
-      error(0, i, i_b) = static_cast<DataType>(errorInput[i]) + static_cast<DataType>(i_b);
+      error(0, i, i_b) =
+          fetch::math::AsType<DataType>(errorInput[i]) + fetch::math::AsType<DataType>(i_b);
     }
   }
 
   for (SizeType i{0}; i < 10; ++i)
   {
-    gt(0, i, 0) = static_cast<DataType>(gt_input1[i]);
-    gt(0, i, 1) = static_cast<DataType>(gt_input2[i]);
+    gt(0, i, 0) = fetch::math::AsType<DataType>(gt_input1[i]);
+    gt(0, i, 1) = fetch::math::AsType<DataType>(gt_input2[i]);
   }
 
   fetch::ml::ops::MaxPool1D<TensorType> op(3, 2);
@@ -106,7 +111,8 @@ TYPED_TEST(MaxPool1DTest, backward_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(MaxPool1DTest, backward_test_2_channels)
@@ -126,8 +132,8 @@ TYPED_TEST(MaxPool1DTest, backward_test_2_channels)
   {
     for (SizeType j{0}; j < 5; ++j)
     {
-      data(i, j, 0) = static_cast<DataType>(data_input[i * 5 + j]);
-      gt(i, j, 0)   = static_cast<DataType>(gt_input[i * 5 + j]);
+      data(i, j, 0) = fetch::math::AsType<DataType>(data_input[i * 5 + j]);
+      gt(i, j, 0)   = fetch::math::AsType<DataType>(gt_input[i * 5 + j]);
     }
   }
 
@@ -135,7 +141,7 @@ TYPED_TEST(MaxPool1DTest, backward_test_2_channels)
   {
     for (SizeType j{0}; j < 2; ++j)
     {
-      error(i, j, 0) = static_cast<DataType>(errorInput[i * 2 + j]);
+      error(i, j, 0) = fetch::math::AsType<DataType>(errorInput[i * 2 + j]);
     }
   }
 
@@ -144,7 +150,8 @@ TYPED_TEST(MaxPool1DTest, backward_test_2_channels)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(MaxPool1DTest, forward_test_4_2)
@@ -159,12 +166,12 @@ TYPED_TEST(MaxPool1DTest, forward_test_4_2)
   std::vector<double> gt_input({3, 5, 7, 9});
   for (SizeType i{0}; i < 10; ++i)
   {
-    data(0, i, 0) = static_cast<DataType>(data_input[i]);
+    data(0, i, 0) = fetch::math::AsType<DataType>(data_input[i]);
   }
 
   for (SizeType i{0}; i < 4; ++i)
   {
-    gt(0, i, 0) = static_cast<DataType>(gt_input[i]);
+    gt(0, i, 0) = fetch::math::AsType<DataType>(gt_input[i]);
   }
 
   fetch::ml::ops::MaxPool1D<TensorType> op(4, 2);
@@ -173,7 +180,8 @@ TYPED_TEST(MaxPool1DTest, forward_test_4_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(MaxPool1DTest, forward_test_2_channels_4_1_2)
@@ -193,8 +201,8 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_channels_4_1_2)
     {
       for (SizeType j{0}; j < 5; ++j)
       {
-        data(i, j, i_b) =
-            static_cast<DataType>(data_input[i * 5 + j]) + static_cast<DataType>(i_b * 10);
+        data(i, j, i_b) = fetch::math::AsType<DataType>(data_input[i * 5 + j]) +
+                          fetch::math::AsType<DataType>(i_b * 10);
       }
     }
 
@@ -202,8 +210,8 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_channels_4_1_2)
     {
       for (SizeType j{0}; j < 2; ++j)
       {
-        gt(i, j, i_b) =
-            static_cast<DataType>(gt_input[i * 2 + j]) + static_cast<DataType>(i_b * 10);
+        gt(i, j, i_b) = fetch::math::AsType<DataType>(gt_input[i * 2 + j]) +
+                        fetch::math::AsType<DataType>(i_b * 10);
       }
     }
   }
@@ -214,7 +222,8 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_channels_4_1_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(MaxPool1DTest, forward_test_2_4_2)
@@ -229,12 +238,12 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_4_2)
   std::vector<double> gt_input({1, 5, 9});
   for (SizeType i{0}; i < 10; ++i)
   {
-    data(0, i, 0) = static_cast<DataType>(data_input[i]);
+    data(0, i, 0) = fetch::math::AsType<DataType>(data_input[i]);
   }
 
   for (SizeType i{0}; i < 3; ++i)
   {
-    gt(0, i, 0) = static_cast<DataType>(gt_input[i]);
+    gt(0, i, 0) = fetch::math::AsType<DataType>(gt_input[i]);
   }
 
   fetch::ml::ops::MaxPool1D<TensorType> op(2, 4);
@@ -243,7 +252,8 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_4_2)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(MaxPool1DTest, saveparams_test)
@@ -266,8 +276,8 @@ TYPED_TEST(MaxPool1DTest, saveparams_test)
     {
       for (SizeType j{0}; j < 5; ++j)
       {
-        data(i, j, i_b) =
-            static_cast<DataType>(data_input[i * 5 + j]) + static_cast<DataType>(i_b * 10);
+        data(i, j, i_b) = fetch::math::AsType<DataType>(data_input[i * 5 + j]) +
+                          fetch::math::AsType<DataType>(i_b * 10);
       }
     }
 
@@ -275,8 +285,8 @@ TYPED_TEST(MaxPool1DTest, saveparams_test)
     {
       for (SizeType j{0}; j < 2; ++j)
       {
-        gt(i, j, i_b) =
-            static_cast<DataType>(gt_input[i * 2 + j]) + static_cast<DataType>(i_b * 10);
+        gt(i, j, i_b) = fetch::math::AsType<DataType>(gt_input[i * 2 + j]) +
+                        fetch::math::AsType<DataType>(i_b * 10);
       }
     }
   }
@@ -311,8 +321,7 @@ TYPED_TEST(MaxPool1DTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(MaxPool1DTest, saveparams_backward_test_2_channels)
@@ -332,7 +341,7 @@ TYPED_TEST(MaxPool1DTest, saveparams_backward_test_2_channels)
   {
     for (SizeType j{0}; j < 5; ++j)
     {
-      data(i, j, 0) = static_cast<DataType>(data_input[i * 5 + j]);
+      data(i, j, 0) = fetch::math::AsType<DataType>(data_input[i * 5 + j]);
     }
   }
 
@@ -340,7 +349,7 @@ TYPED_TEST(MaxPool1DTest, saveparams_backward_test_2_channels)
   {
     for (SizeType j{0}; j < 2; ++j)
     {
-      error(i, j, 0) = static_cast<DataType>(errorInput[i * 2 + j]);
+      error(i, j, 0) = fetch::math::AsType<DataType>(errorInput[i * 2 + j]);
     }
   }
 

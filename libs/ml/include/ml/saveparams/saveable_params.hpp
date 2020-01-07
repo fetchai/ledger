@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -612,6 +612,7 @@ template <typename TensorType>
 struct OpReshapeSaveableParams : public OpsSaveableParams
 {
   std::vector<fetch::math::SizeType> new_shape;
+  fetch::math::SizeType              new_size;
   fetch::ml::OpType                  op_type = OpType::OP_RESHAPE;
 };
 

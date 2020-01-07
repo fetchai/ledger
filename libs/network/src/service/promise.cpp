@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -146,9 +146,11 @@ void PromiseImplementation::Fail()
   UpdateState(State::FAILED);
 }
 
-bool PromiseImplementation::Wait(bool throw_exception) const
+bool PromiseImplementation::Wait(bool throw_exception, uint64_t extend_wait_by) const
 {
-  if (Clock::now() >= deadline_)
+  auto recalculated_deadline = deadline_ + std::chrono::seconds{extend_wait_by};
+
+  if (Clock::now() >= recalculated_deadline)
   {
     LogTimout(name_, id_);
     return false;
@@ -157,7 +159,7 @@ bool PromiseImplementation::Wait(bool throw_exception) const
   std::unique_lock<std::mutex> lock(notify_lock_);
   while (State::WAITING == state())
   {
-    if (std::cv_status::timeout == notify_.wait_until(lock, deadline_))
+    if (std::cv_status::timeout == notify_.wait_until(lock, recalculated_deadline))
     {
       LogTimout(name_, id_);
       return false;

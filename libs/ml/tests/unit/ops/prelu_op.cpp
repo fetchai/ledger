@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -60,8 +60,8 @@ TYPED_TEST(PReluOpTest, forward_test)
   op.Forward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, prediction);
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
-                                  math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(PReluOpTest, backward_test)
@@ -91,7 +91,8 @@ TYPED_TEST(PReluOpTest, backward_test)
       op.Backward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType(1e-5), DataType(1e-5)));
+  ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(PReluOpTest, saveparams_test)
@@ -144,8 +145,7 @@ TYPED_TEST(PReluOpTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(PReluOpTest, saveparams_backward_test)

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 #include "core/filesystem/read_file_contents.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/normalisation/layer_norm.hpp"
@@ -150,7 +150,7 @@ void EvaluateGraph(fetch::ml::Graph<TensorType> &g, std::vector<std::string> inp
     std::cout << "correct label | guessed label | sample loss" << std::endl;
   }
   DataType total_val_loss  = 0;
-  auto     correct_counter = static_cast<DataType>(0);
+  auto     correct_counter = DataType{0};
   for (SizeType b = 0; b < static_cast<SizeType>(output_data.shape(1)); b++)
   {
     for (SizeType i = 0; i < static_cast<SizeType>(4); i++)
@@ -549,7 +549,7 @@ std::vector<TensorType> PrepareTensorForBert(TensorType const &            data,
     for (SizeType i = 0; i < max_seq_len; i++)
     {
       // stop filling 1 to mask if current position is 0 for token
-      if (data.At(i, b) == static_cast<DataType>(0))
+      if (data.At(i, b) == DataType{0})
       {
         break;
       }

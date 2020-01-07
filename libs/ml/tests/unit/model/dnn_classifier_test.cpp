@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/model/dnn_classifier.hpp"
+
 #include "gtest/gtest.h"
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/model/dnn_classifier.hpp"
 #include "ml/model/model.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"

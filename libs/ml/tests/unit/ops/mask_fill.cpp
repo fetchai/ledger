@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -204,8 +204,7 @@ TYPED_TEST(MaskFillTest, saveparams_test)
       new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(MaskFillTest, saveparams_back_test_broadcast_mask)

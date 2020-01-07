@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,10 +16,6 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
-#include "core/assert.hpp"
-#include "ml/ops/dataholder.hpp"
-#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <memory>
@@ -51,38 +47,14 @@ public:
 
   PlaceHolder() = default;
 
-  explicit PlaceHolder(SPType const &sp)
-    : DataHolder<T>(sp)
-  {}
+  explicit PlaceHolder(SPType const &sp);
 
   ~PlaceHolder() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    return std::make_shared<SPType>();
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
-  /**
-   * Placeholders should not be shared, therefore a layer sharing its elements
-   * with another node should use a new (unshared) placeholder op
-   * @param me
-   * @return
-   */
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
-
-    auto copyshare = std::make_shared<MyType>(*this);
-
-    if (this->data_)
-    {
-      copyshare->data_ = std::make_shared<TensorType>(this->data_->Copy());
-    }
-
-    return copyshare;
-  }
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
   static constexpr OpType OpCode()
   {

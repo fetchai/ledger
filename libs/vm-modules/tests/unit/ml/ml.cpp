@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "gmock/gmock.h"
+#include "vm/pair.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
-#include "vm_modules/ml/training_pair.hpp"
 #include "vm_test_toolkit.hpp"
 
 #include <regex>
@@ -197,7 +197,7 @@ TEST_F(MLTests, DISABLED_dataloader_tensor_mode_invalid_add_data_by_files)
 TEST_F(MLTests, DISABLED_dataloader_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(
-    function main() : TrainingPair
+    function main() : Pair<Tensor,Array<Tensor>>
 
       var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;
@@ -229,7 +229,7 @@ TEST_F(MLTests, DISABLED_dataloader_serialisation_test)
   ASSERT_TRUE(toolkit.Run(&first_res));
 
   static char const *dataloader_deserialise_src = R"(
-      function main() : TrainingPair
+      function main() : Pair<Tensor,Array<Tensor>>
         var state = State<DataLoader>("dataloader");
         var dataloader = state.get();
         var tp = dataloader.getNext();
@@ -244,19 +244,35 @@ TEST_F(MLTests, DISABLED_dataloader_serialisation_test)
   EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(::testing::Between(1, 2));
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const initial_training_pair = first_res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
-  auto const training_pair         = res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
+  auto const initial_training_pair = first_res.Get<fetch::vm::Ptr<fetch::vm::Pair<
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>,
+      fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>>>>>();
+  auto const training_pair         = res.Get<fetch::vm::Ptr<fetch::vm::Pair<
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>,
+      fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>>>>>();
 
   AnyInteger index(0, TypeIds::UInt16);
 
-  auto array1 = initial_training_pair->data()->GetIndexedValue(index);
-  auto array2 = training_pair->data()->GetIndexedValue(index);
+  auto array1 =
+      initial_training_pair->GetSecond()
+          .Get<
+              fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>>>()
+          ->GetIndexedValue(index);
+  auto array2 =
+      training_pair->GetSecond()
+          .Get<
+              fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>>>()
+          ->GetIndexedValue(index);
 
   auto data1 = array1.Get<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()->GetTensor();
   auto data2 = array2.Get<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()->GetTensor();
 
-  auto label1 = initial_training_pair->label()->GetTensor();
-  auto label2 = training_pair->label()->GetTensor();
+  auto label1 = initial_training_pair->GetFirst()
+                    .Get<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()
+                    ->GetTensor();
+  auto label2 = training_pair->GetFirst()
+                    .Get<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()
+                    ->GetTensor();
 
   EXPECT_TRUE(data1.AllClose(data2, DataType{0}, DataType{0}));
   EXPECT_TRUE(label1.AllClose(label2, DataType{0}, DataType{0}));
@@ -668,7 +684,7 @@ TEST_F(MLTests, DISABLED_graph_step_test)
 
   auto const loss_reduction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
-  EXPECT_GT(loss_reduction->GetTensor().At(0, 0), 0);
+  EXPECT_GT(loss_reduction->GetTensor().At(0, 0), DataType{0});
 }
 
 }  // namespace

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -109,7 +109,9 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &       muddle,
   , beacon_dkg_successes_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_successes_total", "The total number of DKG successes")}
   , beacon_dkg_duplicate_creates_total_{telemetry::Registry::Instance().CreateCounter(
-        "beacon_dkg_duplicate_creates_total", "The total number of duplicate create attempts")}
+        "beacon_dkg_duplicate_creates_total", "The total number of duplicate aeons created")}
+  , beacon_dkg_duplicate_triggers_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_dkg_duplicate_triggers_total", "The total number of duplicate trigger attempts")}
   , time_slot_map_{{BeaconSetupService::State::RESET, 0},
                    {BeaconSetupService::State::CONNECT_TO_ALL, 1},
                    {BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS, 1},
@@ -855,9 +857,19 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
   beacon_dkg_successes_total_->add(1);
   beacon_dkg_miners_in_qual_->set(beacon_->manager.qual().size());
 
+  uint64_t const first_block = beacon_->aeon.round_start;
+
+  if (first_block == last_created_entropy_for_)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Created two conflicting aeons!");
+    beacon_dkg_duplicate_creates_total_->increment();
+  }
+
+  last_created_entropy_for_ = first_block;
+
   FETCH_LOG_INFO(LOGGING_NAME, NodeString(),
                  " ******* New beacon generated! ******* Qual: ", beacon_->manager.qual().size(),
-                 " of ", beacon_->aeon.members.size());
+                 " of ", beacon_->aeon.members.size(), " begin: ", first_block);
 
   if (callback_function_)
   {
@@ -1523,7 +1535,7 @@ void BeaconSetupService::StartNewCabinet(CabinetMemberList members, uint32_t thr
     FETCH_LOG_WARN(LOGGING_NAME, NodeString(),
                    "Duplicate creation of entropy: current_round: ", is_current_round,
                    " is_queued: ", is_already_queued);
-    beacon_dkg_duplicate_creates_total_->increment();
+    beacon_dkg_duplicate_triggers_total_->increment();
     return;
   }
 
