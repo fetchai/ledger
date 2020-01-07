@@ -249,7 +249,6 @@ TYPED_TEST(SliceTest, single_axis_saveparams_test)
   TypeParam  data({1, 2, 3, 4, 5});
   SizeVector axes({3});
   SizeVector indices({3});
-  TypeParam  gt({1, 2, 3, 1, 5});
 
   fetch::ml::ops::Slice<TypeParam> op(indices, axes);
 
@@ -405,8 +404,6 @@ TYPED_TEST(SliceTest, ranged_saveparams_backward_test)
 
   TypeParam error = TypeParam::FromString("1, 3; 4, 6; -1, -3; -2, -3");
   error.Reshape({2, 2, 2});
-  TypeParam gt = TypeParam::FromString("0, 0, 0, 0; 1, -1, 3, -3; 4, -2, 6, -3");
-  gt.Reshape({3, 2, 2});
 
   fetch::ml::ops::Slice<TypeParam>               op(start_end_slice, axis);
   std::vector<std::shared_ptr<const TensorType>> data_vec({std::make_shared<TensorType>(data)});
@@ -446,6 +443,52 @@ TYPED_TEST(SliceTest, ranged_saveparams_backward_test)
       new_error_signal.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
   fetch::math::state_clear<DataType>();
+}
+
+TYPED_TEST(SliceTest, multi_axes_saveparams_test)
+{
+  using TensorType    = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Slice<TensorType>::SPType;
+  using SizeVector    = typename TypeParam::SizeVector;
+
+  TypeParam data = TypeParam::FromString("1, 2, 3, 4; 4, 5, 6, 7; -1, -2, -3, -4");
+  data.Reshape({3, 2, 2});
+  SizeVector axes({1, 2});
+  SizeVector indices({1, 1});
+
+  fetch::ml::ops::Slice<TypeParam> op(indices, axes);
+
+  // forward pass
+  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::static_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  fetch::ml::ops::Slice<TensorType> new_op(*dsp2);
+
+  // check that new predictions match the old
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 }  // namespace test
