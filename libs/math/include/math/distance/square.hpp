@@ -34,7 +34,7 @@ typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
 
   while (it1.is_valid())
   {
-    Type d = static_cast<Type>((*it1) - (*it2));
+    auto d = static_cast<Type>((*it1) - (*it2));
     ret    = static_cast<Type>(ret + (d * d));
     ++it1;
     ++it2;

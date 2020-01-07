@@ -80,7 +80,7 @@ void MeanSquareErrorLoss<TensorType>::Forward(VecTensorType const &inputs, Tenso
     {
       while (it1.is_valid())
       {
-        DataType d   = static_cast<DataType>((*it1) - (*it2));
+        auto d = static_cast<DataType>((*it1) - (*it2));
         output(0, 0) = static_cast<DataType>(output(0, 0) + (d * d) * weightings_(0));
         ++it1;
         ++it2;
@@ -92,7 +92,7 @@ void MeanSquareErrorLoss<TensorType>::Forward(VecTensorType const &inputs, Tenso
       auto w_it = weightings_.cbegin();
       while (it1.is_valid())
       {
-        DataType d   = static_cast<DataType>((*it1) - (*it2));
+        auto d = static_cast<DataType>((*it1) - (*it2));
         output(0, 0) = static_cast<DataType>(output(0, 0) + (d * d) * (*w_it));
 
         ++it1;
@@ -110,7 +110,7 @@ void MeanSquareErrorLoss<TensorType>::Forward(VecTensorType const &inputs, Tenso
       auto w_it = weightings_.cbegin();
       while (it1.is_valid())
       {
-        DataType d   = static_cast<DataType>((*it1) - (*it2));
+        auto d = static_cast<DataType>((*it1) - (*it2));
         output(0, 0) = static_cast<DataType>(output(0, 0) + (d * d) * (*w_it));
         ++it1;
         ++it2;
