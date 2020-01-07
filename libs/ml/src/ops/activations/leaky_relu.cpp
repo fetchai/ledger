@@ -66,7 +66,7 @@ void LeakyRelu<TensorType>::Forward(VecTensorType const &inputs, TensorType &out
 
 template <typename TensorType>
 std::vector<TensorType> LeakyRelu<TensorType>::Backward(VecTensorType const &inputs,
-                                                  TensorType const &   error_signal)
+                                                        TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
   assert(inputs.front()->shape() == error_signal.shape());
@@ -103,7 +103,8 @@ std::vector<TensorType> LeakyRelu<TensorType>::Backward(VecTensorType const &inp
 }
 
 template <typename TensorType>
-std::vector<math::SizeType> LeakyRelu<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> LeakyRelu<TensorType>::ComputeOutputShape(
+    VecTensorType const &inputs) const
 {
   return inputs.front()->shape();
 }
