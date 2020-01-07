@@ -19,7 +19,6 @@
 #include "core/macros.hpp"
 #include "core/random/lfg.hpp"
 #include "math/fundamental_operators.hpp"
-//#include "math/matrix_operations.hpp"
 #include "ml/ops/activations/dropout.hpp"
 
 namespace fetch {
@@ -94,8 +93,8 @@ void Dropout<TensorType>::Forward(VecTensorType const &inputs, TensorType &outpu
     {
       if (rng_.AsType<DataType>() <= probability_)
       {
-        *it     = DataType{1} / probability_;
-        *out_it = (*it) * (*in_it);
+        *it     = static_cast<DataType>(DataType{1} / probability_);
+        *out_it = static_cast<DataType>((*it) * (*in_it));
       }
       else
       {

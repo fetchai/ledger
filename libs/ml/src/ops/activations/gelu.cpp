@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "core/assert.hpp"
 #include "math/activation_functions/gelu.hpp"
 #include "math/trigonometry.hpp"
 #include "ml/ops/activations/gelu.hpp"
