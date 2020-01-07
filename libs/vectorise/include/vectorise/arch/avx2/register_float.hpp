@@ -169,7 +169,6 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<float, 128> cons
   alignas(16) float out[4];
   n.Store(out);
   s << std::setprecision(std::numeric_limits<float>::digits10);
-  s << std::fixed;
   s << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3];
 
   return s;
@@ -181,7 +180,6 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<float, 256> cons
   alignas(32) float out[8];
   n.Store(out);
   s << std::setprecision(std::numeric_limits<float>::digits10);
-  s << std::fixed;
   s << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3] << ", " << out[4] << ", "
     << out[5] << ", " << out[6] << ", " << out[7];
 
@@ -307,6 +305,65 @@ inline VectorRegister<float, 256> vector_zero_above_element(VectorRegister<float
   conv         = _mm256_and_si256(conv, *reinterpret_cast<__m256i const *>(mask));
 
   return {_mm256_castsi256_ps(conv)};
+}
+    
+template<int32_t elements>
+inline VectorRegister<float, 128> rotate_elements_left(VectorRegister<float, 128> const &x)
+{
+  __m128i n = _mm_castps_si128(x.data());
+  n         = _mm_alignr_epi8(n, n, elements * 4);
+  return {_mm_castsi128_ps(n)};
+}
+
+template<int32_t elements>
+inline VectorRegister<float, 256> rotate_elements_left(VectorRegister<float, 256> const &x);
+
+template<>
+inline VectorRegister<float, 256> rotate_elements_left<0>(VectorRegister<float, 256> const &x)
+{
+  return x;
+}
+
+template<>
+inline VectorRegister<float, 256> rotate_elements_left<1>(VectorRegister<float, 256> const &x)
+{
+  __m128 hi = _mm256_extractf128_ps(x.data(), 1);
+  __m128 lo = _mm256_extractf128_ps(x.data(), 0);
+  __m128i hi1 = _mm_alignr_epi8(_mm_castps_si128(lo), _mm_castps_si128(hi), 4);
+  __m128i lo1 = _mm_alignr_epi8(_mm_castps_si128(hi), _mm_castps_si128(lo), 4);
+
+  return {_mm256_castsi256_ps(_mm256_set_m128i(hi1, lo1))};
+}
+
+template<>
+inline VectorRegister<float, 256> rotate_elements_left<2>(VectorRegister<float, 256> const &x)
+{
+  __m128 hi = _mm256_extractf128_ps(x.data(), 1);
+  __m128 lo = _mm256_extractf128_ps(x.data(), 0);
+  __m128i hi1 = _mm_alignr_epi8(_mm_castps_si128(lo), _mm_castps_si128(hi), 8);
+  __m128i lo1 = _mm_alignr_epi8(_mm_castps_si128(hi), _mm_castps_si128(lo), 8);
+
+  return {_mm256_castsi256_ps(_mm256_set_m128i(hi1, lo1))};
+}
+
+template<>
+inline VectorRegister<float, 256> rotate_elements_left<3>(VectorRegister<float, 256> const &x)
+{
+  __m128 hi = _mm256_extractf128_ps(x.data(), 1);
+  __m128 lo = _mm256_extractf128_ps(x.data(), 0);
+  __m128i hi1 = _mm_alignr_epi8(_mm_castps_si128(lo), _mm_castps_si128(hi), 12);
+  __m128i lo1 = _mm_alignr_epi8(_mm_castps_si128(hi), _mm_castps_si128(lo), 12);
+
+  return {_mm256_castsi256_ps(_mm256_set_m128i(hi1, lo1))};
+}
+
+template<>
+inline VectorRegister<float, 256> rotate_elements_left<4>(VectorRegister<float, 256> const &x)
+{
+  __m128 hi = _mm256_extractf128_ps(x.data(), 1);
+  __m128 lo = _mm256_extractf128_ps(x.data(), 0);
+
+  return {_mm256_set_m128(lo, hi)};
 }
 
 inline VectorRegister<float, 128> shift_elements_left(VectorRegister<float, 128> const &x)
