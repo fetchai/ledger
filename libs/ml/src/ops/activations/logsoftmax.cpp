@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
+//#include "core/macros.hpp"
 #include "math/activation_functions/softmax.hpp"
-#include "math/fundamental_operators.hpp"
+//#include "math/fundamental_operators.hpp"
 #include "math/standard_functions/log.hpp"
 #include "ml/ops/activations/logsoftmax.hpp"
 

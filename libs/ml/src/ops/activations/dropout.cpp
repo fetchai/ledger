@@ -19,7 +19,7 @@
 #include "core/macros.hpp"
 #include "core/random/lfg.hpp"
 #include "math/fundamental_operators.hpp"
-#include "math/matrix_operations.hpp"
+//#include "math/matrix_operations.hpp"
 #include "ml/ops/activations/dropout.hpp"
 
 namespace fetch {

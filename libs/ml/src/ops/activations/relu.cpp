@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
+//#include "core/assert.hpp"
 #include "math/activation_functions/relu.hpp"
 #include "ml/ops/activations/relu.hpp"
 

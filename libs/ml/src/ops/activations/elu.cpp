@@ -18,7 +18,7 @@
 
 #include "math/activation_functions/elu.hpp"
 #include "math/fundamental_operators.hpp"
-#include "math/matrix_operations.hpp"
+//#include "math/matrix_operations.hpp"
 #include "ml/ops/activations/elu.hpp"
 
 namespace fetch {
