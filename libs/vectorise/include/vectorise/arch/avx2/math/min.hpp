@@ -120,5 +120,23 @@ inline VectorRegister<double, 256> Min(VectorRegister<double, 256> const &a,
   return ret;
 }
 
+inline float Min(VectorRegister<float, 128> const &a)
+{
+  auto tmp = rotate_elements_left<2>(a);
+  auto ret = Min(a, tmp);
+  tmp = rotate_elements_left<1>(a);
+  return first_element(Min(tmp, ret));
+}
+
+inline float Min(VectorRegister<float, 256> const &a)
+{
+  auto tmp = rotate_elements_left<4>(a);
+  auto ret = Min(a, tmp);
+  tmp = rotate_elements_left<2>(a);
+  ret = Min(a, tmp);
+  tmp = rotate_elements_left<1>(a);
+  return first_element(Min(tmp, ret));
+}
+
 }  // namespace vectorise
 }  // namespace fetch

@@ -120,5 +120,23 @@ inline VectorRegister<double, 256> Max(VectorRegister<double, 256> const &a,
   return ret;
 }
 
+inline float Max(VectorRegister<float, 128> const &a)
+{
+  auto tmp = rotate_elements_left<2>(a);
+  auto ret = Max(a, tmp);
+  tmp = rotate_elements_left<1>(a);
+  return first_element(Max(tmp, ret));
+}
+
+inline float Max(VectorRegister<float, 256> const &a)
+{
+  auto tmp = rotate_elements_left<4>(a);
+  auto ret = Max(a, tmp);
+  tmp = rotate_elements_left<2>(a);
+  ret = Max(ret, tmp);
+  tmp = rotate_elements_left<1>(a);
+  return first_element(Max(tmp, ret));
+}
+
 }  // namespace vectorise
 }  // namespace fetch
