@@ -84,11 +84,11 @@ std::vector<TensorType> CrossEntropyLoss<TensorType>::Backward(VecTensorType con
     assert(*b_it == DataType{0} || *b_it == DataType{1});
     if (*b_it == DataType{1})
     {
-      *r_it = -*b_it / *a_it;
+      *r_it = static_cast<DataType>(-*b_it / *a_it);
     }
     else if (is_binary)
     {
-      *r_it = (one - *b_it) / (one - *a_it);
+      *r_it = static_cast<DataType>((one - *b_it) / (one - *a_it));
     }
 
     ++a_it;
