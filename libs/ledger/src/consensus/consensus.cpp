@@ -504,9 +504,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     }
 
     CabinetMemberList cabinet_member_list;
-    cabinet_history_[current.block_number] = cabinet;
-
-    TrimToSize(cabinet_history_, HISTORY_LENGTH);
+    AddCabinetToHistory(current.block_number, cabinet);
 
     bool member_of_cabinet{false};
     for (auto const &staker : *cabinet_history_[current.block_number])
@@ -945,7 +943,10 @@ void Consensus::SetDefaultStartTime(uint64_t default_start_time)
 void Consensus::AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet)
 {
   cabinet_history_[block_number] = cabinet;
-  TrimToSize(cabinet_history_, HISTORY_LENGTH);
+  if (block_number > cabinet_history_.crbegin()->first)
+  {
+    TrimToSize(cabinet_history_, HISTORY_LENGTH);
+  }
 }
 
 void Consensus::SetWhitelist(Minerwhitelist const &whitelist)
