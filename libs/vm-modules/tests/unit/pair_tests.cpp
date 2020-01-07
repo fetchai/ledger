@@ -183,7 +183,7 @@ TEST_F(PairTests, assign_fixed32_fixed64_test)
   ASSERT_EQ(stdout.str(), "-234.5669,-123.455999999");
 }
 
-TEST_F(PairTests, assign_fixed128_uint256_test)
+TEST_F(PairTests, assign_fixed128_string_test)
 {
   static char const *TEXT = R"(
     function main()
