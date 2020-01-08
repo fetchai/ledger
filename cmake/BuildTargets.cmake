@@ -320,7 +320,11 @@ function (configure_vendor_targets)
 
   # noisec
   set(USE_SODIUM OFF CACHE BOOL "Use Libsodium for crypto" FORCE)
+  set(EXTERNAL_OPENSSL vendor-openssl)
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/noisec)
+  add_library(vendor-noisec INTERFACE)
+  target_link_libraries(vendor-noisec INTERFACE noise_protocol)
+  target_include_directories(vendor-noisec INTERFACE ${FETCH_ROOT_VENDOR_DIR}/noisec/include)
 
 endfunction (configure_vendor_targets)
 
