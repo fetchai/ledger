@@ -1797,13 +1797,6 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
   return genesis;
 }
 
-bool MainChain::IsGenesisBlock(Block const &block)
-{
-  return block.block_number == 0 && block.previous_hash == chain::ZERO_HASH &&
-         block.hash == chain::GetGenesisDigest() &&
-         block.merkle_hash == chain::GetGenesisMerkleRoot() && !block.is_loose;
-}
-
 /**
  * Gets the current hash of the heaviest chain
  *

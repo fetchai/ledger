@@ -300,7 +300,6 @@ public:
   /// @}
 
   static IntBlockPtr CreateGenesisBlock();
-  static bool        IsGenesisBlock(Block const &block);
 
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);

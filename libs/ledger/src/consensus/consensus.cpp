@@ -450,7 +450,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   }
 
   // Don't try to set previous when we see genesis!
-  if (MainChain::IsGenesisBlock(current))
+  if (current.IsGenesis())
   {
     current_block_ = current;
   }
@@ -541,7 +541,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
       auto     current_time =
           GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
-      if (MainChain::IsGenesisBlock(current))
+      if (current.IsGenesis())
       {
         last_block_time = default_start_time_;
       }
@@ -739,7 +739,7 @@ Status Consensus::ValidBlock(Block const &current) const
   FETCH_LOCK(mutex_);
   Status ret = Status::YES;
 
-  if (MainChain::IsGenesisBlock(current))
+  if (current.IsGenesis())
   {
     return Status::YES;
   }
@@ -913,7 +913,7 @@ void Consensus::Reset(StakeSnapshot const &snapshot)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Consensus::Reset");
 
-  if (!MainChain::IsGenesisBlock(current_block_))
+  if (!current_block_.IsGenesis())
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Consensus::Reset failed: expected current block to be genesis");
 
