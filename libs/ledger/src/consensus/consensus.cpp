@@ -166,7 +166,14 @@ Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous) const
   }
 
   auto cabinet_ptr = cabinet_history_.find(last_snapshot);
-  assert(cabinet_ptr != cabinet_history_.end());
+
+  if (cabinet_ptr == cabinet_history_.end() || !(cabinet_ptr->second))
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Could not get cabinet from snapshot ", last_snapshot,
+                    " for block ", previous.block_number, " 0x", previous.hash);
+
+    throw std::runtime_error("Could not get cabinet from snapshot");
+  }
 
   Cabinet cabinet_copy = *(cabinet_ptr->second);
 
@@ -443,7 +450,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   }
 
   // Don't try to set previous when we see genesis!
-  if (current.block_number == 0)
+  if (current.IsGenesis())
   {
     current_block_ = current;
   }
@@ -504,12 +511,10 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     }
 
     CabinetMemberList cabinet_member_list;
-    cabinet_history_[current.block_number] = cabinet;
-
-    TrimToSize(cabinet_history_, HISTORY_LENGTH);
+    AddCabinetToHistory(current.block_number, cabinet);
 
     bool member_of_cabinet{false};
-    for (auto const &staker : *cabinet_history_[current.block_number])
+    for (auto const &staker : *cabinet)
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
 
@@ -536,7 +541,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
       auto     current_time =
           GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
-      if (current.block_number == 0)
+      if (current.IsGenesis())
       {
         last_block_time = default_start_time_;
       }
@@ -734,8 +739,7 @@ Status Consensus::ValidBlock(Block const &current) const
   FETCH_LOCK(mutex_);
   Status ret = Status::YES;
 
-  // TODO(HUT): more thorough checks for genesis needed
-  if (current.block_number == 0)
+  if (current.IsGenesis())
   {
     return Status::YES;
   }
@@ -765,7 +769,7 @@ Status Consensus::ValidBlock(Block const &current) const
     return Status::NO;
   }
 
-  if (!(current.block_number == block_preceeding->block_number + 1))
+  if (current.block_number != block_preceeding->block_number + 1)
   {
     consensus_last_validate_block_failure_->set(3);
     consensus_validate_block_failures_total_->add(1);
@@ -909,12 +913,14 @@ void Consensus::Reset(StakeSnapshot const &snapshot)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Consensus::Reset");
 
-  cabinet_history_[0] = stake_->Reset(snapshot, max_cabinet_size_);
-
-  if (cabinet_history_.find(0) == cabinet_history_.end())
+  if (!current_block_.IsGenesis())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "No cabinet history found for block when resetting.");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Consensus::Reset failed: expected current block to be genesis");
+
+    throw std::runtime_error("Failed to reset Consensus");
   }
+
+  cabinet_history_[current_block_.block_number] = stake_->Reset(snapshot, max_cabinet_size_);
 }
 
 void Consensus::SetMaxCabinetSize(uint16_t size)
@@ -945,7 +951,10 @@ void Consensus::SetDefaultStartTime(uint64_t default_start_time)
 void Consensus::AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet)
 {
   cabinet_history_[block_number] = cabinet;
-  TrimToSize(cabinet_history_, HISTORY_LENGTH);
+  if (block_number > cabinet_history_.crbegin()->first)
+  {
+    TrimToSize(cabinet_history_, HISTORY_LENGTH);
+  }
 }
 
 void Consensus::SetWhitelist(Minerwhitelist const &whitelist)
