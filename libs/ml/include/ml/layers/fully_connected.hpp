@@ -79,6 +79,9 @@ public:
     , regularisation_rate_(regularisation_rate)
     , init_mode_(init_mode)
   {
+    is_initialised_ = false;  // a workaround to force CompleteInitialisation be called only if
+    // this type of constructor was called (but not default one);
+
     // get correct name for the layer
     std::string name = GetName();
 
@@ -245,10 +248,10 @@ public:
   }
 
 private:
-  SizeType in_size_          = 0;
-  SizeType out_size_         = 0;
+  SizeType in_size_          = std::numeric_limits<SizeType>::max();
+  SizeType out_size_         = std::numeric_limits<SizeType>::max();
   bool     time_distributed_ = false;
-  bool     is_initialised_   = false;  // TEMPORARY
+  bool     is_initialised_   = true;  // TEMPORARY
 
   std::string                   input_;
   std::string                   flattened_input_;

@@ -468,6 +468,11 @@ TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name
 template <typename TensorType>
 void Graph<TensorType>::ComputeNodeShapes(const std::string &node_name)
 {
+  if (nodes_.find(node_name) == nodes_.end())
+  {
+    throw std::runtime_error("No node named " + node_name +
+                             " found in the Graph! Shape computing is not possble.");
+  }
   NodePtrType node   = nodes_.at(node_name);
   auto const  result = node->BatchOutputShape();
   if (result.empty())
