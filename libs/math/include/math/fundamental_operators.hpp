@@ -887,7 +887,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> Divide(ArrayType const &obj1, ArrayTyp
 
 /**
  * Implementation for scalar division. Implementing this helps keeps a uniform interface
- * @tparam T
+ * @tparam Type
  * @param scalar1
  * @param scalar2
  * @param ret
