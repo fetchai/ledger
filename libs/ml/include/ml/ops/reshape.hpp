@@ -61,6 +61,15 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Reshape";
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   std::vector<SizeType> new_shape_;
   SizeType              new_size_{0};

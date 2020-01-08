@@ -248,14 +248,16 @@ TYPED_TEST(ReshapeTest, Reshape_graph_serialisation_test)
   using DataType   = typename TypeParam::Type;
   using SPType     = fetch::ml::GraphSaveableParams<TensorType>;
 
-  std::vector<SizeType> final_shape({8, 1, 1, 1});
+  fetch::math::SizeVector initial_shape({2, 2, 2, 1});
+  fetch::math::SizeVector final_shape({8, 1, 1, 1});
 
   TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
-  data.Reshape({2, 2, 2, 1});
+  data.Reshape(initial_shape);
 
   fetch::ml::Graph<TensorType> g;
 
   std::string input_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  g.GetNode(input_name)->SetBatchInputShapes({initial_shape});
   std::string output_name =
       g.template AddNode<fetch::ml::ops::Reshape<TensorType>>("Output", {input_name}, final_shape);
 

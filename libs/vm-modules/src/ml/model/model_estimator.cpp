@@ -424,7 +424,7 @@ void ModelEstimator::CopyStateFrom(ModelEstimator const &src)
 ChargeAmount ModelEstimator::MaximumCharge(std::string const &log_msg)
 {
   FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::MAXIMUM_CHARGE : " + log_msg);
-  return 1;  // vm::MAXIMUM_CHARGE;
+  return vm::MAXIMUM_CHARGE;
 }
 
 bool ModelEstimator::State::SerializeTo(serializers::MsgPackSerializer &buffer)

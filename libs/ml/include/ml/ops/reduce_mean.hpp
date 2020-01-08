@@ -62,6 +62,15 @@ public:
   SizeType axis_;
 
   static constexpr char const *DESCRIPTOR = "ReduceMean";
+
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 };
 
 }  // namespace ops

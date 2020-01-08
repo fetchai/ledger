@@ -59,6 +59,15 @@ public:
     return OpType::OP_SQUEEZE;
   }
   static constexpr char const *DESCRIPTOR = "Squeeze";
+
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 };
 
 }  // namespace ops
