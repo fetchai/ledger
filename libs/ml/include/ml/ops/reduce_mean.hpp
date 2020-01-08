@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fundamental_operators.hpp"
-#include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -33,83 +31,28 @@ class ReduceMean : public fetch::ml::ops::Ops<T>
 public:
   using TensorType    = T;
   using DataType      = typename TensorType::Type;
-  using SizeType      = typename TensorType::SizeType;
+  using SizeType      = math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpReduceMeanSaveableParams<T>;
   using MyType        = ReduceMean<TensorType>;
 
-  explicit ReduceMean(SizeType axis)
-    : axis_(axis)
-  {}
+  explicit ReduceMean(SizeType axis);
 
-  explicit ReduceMean(SPType const &sp)
-    : Ops<T>(sp)
-  {
-    axis_ = sp.axis;
-  }
+  explicit ReduceMean(SPType const &sp);
 
   ~ReduceMean() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    auto sp  = std::make_shared<SPType>();
-    sp->axis = axis_;
-    return sp;
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
-    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
-    return copyshare;
-  }
-
-  /**
-   * ReduceMean averages values along specific axis.
-   * @param inputs vector containing one tensor which is the input tensor to ReduceMean
-   * @return
-   */
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(inputs.size() == 1);
-    assert(output.shape() == this->ComputeOutputShape(inputs));
-
-    fetch::math::ReduceMean((*inputs.at(0)), axis_, output);
-  }
-
-  /**
-   * Backward pass is calculated by broadcasting error signal along specified axis and dividing it
-   * by the size of that axis
-   * f'(input0)= error_signal/(size along specified axis)
-   */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    assert(inputs.size() == 1);
-    assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+                                   TensorType const &   error_signal) override;
 
-    TensorType ret_error_signal(inputs.at(0)->shape());
-
-    auto size = static_cast<DataType>(inputs.at(0)->shape().at(axis_));
-
-    Broadcast([size](DataType const &x, DataType &z) { z = x / size; }, error_signal,
-              ret_error_signal);
-
-    return {ret_error_signal};
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    auto shape = inputs.front()->shape();
-
-    shape.at(axis_) = static_cast<SizeType>(1);
-
-    return shape;
-  }
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
