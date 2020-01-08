@@ -117,8 +117,7 @@ void Block::UpdateTimestamp()
 
 bool Block::IsGenesis() const
 {
-  return !is_loose && block_number == 0 && previous_hash == chain::ZERO_HASH &&
-         hash == chain::GetGenesisDigest() && merkle_hash == chain::GetGenesisMerkleRoot();
+  return previous_hash == chain::ZERO_HASH;
 }
 
 }  // namespace ledger
