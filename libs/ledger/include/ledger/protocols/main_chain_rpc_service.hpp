@@ -179,8 +179,7 @@ private:
 
   void HandleChainResponse(Address const &address, BlockList blocks);
   template <class Begin, class End>
-  void  HandleChainResponse(Address const &address, Begin begin, End end);
-  State WalkBack();
+  void HandleChainResponse(Address const &address, Begin begin, End end);
   /// @}
 
   /// @name State Machine Handlers
