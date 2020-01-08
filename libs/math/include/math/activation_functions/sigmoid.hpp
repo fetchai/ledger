@@ -41,9 +41,9 @@ void Sigmoid(ArrayType const &t, ArrayType &ret)
   {
     if (*array_it >= Type{0})
     {
-      // e^x / (e^x + 1): which is equivalent to: 1 / (1 + e^-x)
-      Exp(*array_it, *rit);
-      Divide(*rit, static_cast<Type>(*rit + Type{1}), *rit);
+      // f(x) = 1 / (1 + e^-x)
+      Exp(static_cast<Type>(-*array_it), *rit);
+      Divide(Type{1}, static_cast<Type>(1 + *rit), *rit);
     }
     else
     {
