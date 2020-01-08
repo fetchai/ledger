@@ -250,14 +250,9 @@ TYPED_TEST(MaxPool2DTest, saveparams_test)
   SizeType const input_width   = 10;
   SizeType const input_height  = 5;
 
-  SizeType const output_width  = 4;
-  SizeType const output_height = 2;
-
   SizeType const batch_size = 2;
 
-  TensorType          data({channels_size, input_width, input_height, batch_size});
-  TensorType          gt({channels_size, output_width, output_height, batch_size});
-  std::vector<double> gt_input({4, 8, 12, 16, 8, 16, 24, 32, 8, 16, 24, 32, 16, 32, 48, 64});
+  TensorType data({channels_size, input_width, input_height, batch_size});
 
   for (SizeType c{0}; c < channels_size; ++c)
   {
@@ -266,18 +261,6 @@ TYPED_TEST(MaxPool2DTest, saveparams_test)
       for (SizeType j{0}; j < input_height; ++j)
       {
         data(c, i, j, 0) = fetch::math::AsType<DataType>((c + 1) * i * j);
-      }
-    }
-  }
-
-  for (SizeType c{0}; c < channels_size; ++c)
-  {
-    for (SizeType i{0}; i < output_width; ++i)
-    {
-      for (SizeType j{0}; j < output_height; ++j)
-      {
-        gt(c, i, j, 0) = fetch::math::AsType<DataType>(
-            gt_input[c * output_width * output_height + (i + j * output_width)]);
       }
     }
   }
