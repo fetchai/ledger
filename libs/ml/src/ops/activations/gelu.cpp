@@ -48,7 +48,13 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> Gelu<TensorType>::MakeSharedCop
   return copyshare;
 }
 
-// 0.5x(1+tanh(0.797885x+0.035677x^3))
+/**
+ * Gaussian error linear units - see https://arxiv.org/pdf/1606.08415.pdf
+ * f(x) = 0.5x(1+tanh(0.797885x+0.035677x^3))
+ * @tparam TensorType
+ * @param inputs
+ * @param output
+ */
 template <typename TensorType>
 void Gelu<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {

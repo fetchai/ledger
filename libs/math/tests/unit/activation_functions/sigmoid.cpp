@@ -158,8 +158,6 @@ TYPED_TEST(SigmoidTest, sigmoid_2x2)
 
   TypeParam output = fetch::math::Sigmoid(array1);
 
-  std::cout << "output.ToString(): " << output.ToString() << std::endl;
-
   TypeParam numpy_output{{2, 2}};
 
   numpy_output.Set(SizeType{0}, SizeType{0}, fetch::math::Type<DataType>("0.57444252"));

@@ -76,8 +76,6 @@ std::vector<TensorType> LogSoftmax<TensorType>::Backward(VecTensorType const &in
   TensorType t(error_signal.shape());
   fetch::math::Softmax((*inputs.front()), t, axis_);
 
-  // return_signal.InlineMultiply(t);
-
   // N-D softmax with 1 batch dimension
   if (inputs.front()->shape().size() > 1)
   {
