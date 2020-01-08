@@ -17,10 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
 
-#include <cassert>
 #include <memory>
 #include <vector>
 
@@ -40,76 +38,32 @@ public:
   using SPType        = OpMaskFillSaveableParams<TensorType>;
   using MyType        = MaskFill<TensorType>;
 
-  explicit MaskFill(DataType fill_value)
-    : fill_value_(fill_value)
-  {}
+  explicit MaskFill(DataType fill_value);
 
-  explicit MaskFill(SPType const &sp)
-    : Ops<T>(sp)
-  {
-    fill_value_ = sp.fill_value;
-  }
+  explicit MaskFill(SPType const &sp);
 
   ~MaskFill() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    auto sp        = std::make_shared<SPType>();
-    sp->fill_value = fill_value_;
-    return sp;
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
-
-    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
-
-    return copyshare;
-  }
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
   /**
    * based on boolean condition mask, decide if we need to fill the element with fill_value.
    * @param inputs - two inputs, first is mask, second is the array to be masked
    * array
    * @return
    */
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(inputs.size() == 2);
-    assert(output.shape() == this->ComputeOutputShape(inputs));
-
-    fetch::math::Multiply(*(inputs.at(0)), *(inputs.at(1)), output);
-    TensorType inv_mask = fetch::math::Subtract(DataType{1}, *(inputs.at(0)));
-    fetch::math::Multiply(inv_mask, fill_value_, inv_mask);
-    fetch::math::Add(output, inv_mask, output);
-  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
   /**
    * elementwise gradient for second input (the then input) is:
    * error' = mask * error_signal
    */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    assert(inputs.size() == 2);
-    assert(error_signal.size() == inputs.at(1)->size());
+                                   TensorType const &   error_signal) override;
 
-    TensorType return_signal(inputs.at(1)->shape());
-    TensorType mask_return_signal(inputs.at(0)->shape());
-
-    fetch::math::Multiply(*(inputs.front()), error_signal, return_signal);
-
-    // be adivsed, it is not reasonable to return gradient for mask, so the mask gradient is set to
-    // zero here
-    return {mask_return_signal, return_signal};
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    return inputs.at(1)->shape();
-  }
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
