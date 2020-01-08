@@ -38,7 +38,7 @@ public:
   using SPType        = OpRandomisedReluSaveableParams<TensorType>;
   using MyType        = RandomisedRelu<TensorType>;
 
-  RandomisedRelu(DataType const lower_bound, DataType const upper_bound,
+  RandomisedRelu(DataType lower_bound, DataType upper_bound,
                  SizeType const &random_seed = 25102015);
 
   explicit RandomisedRelu(SPType const &sp);
