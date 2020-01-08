@@ -239,10 +239,6 @@ TYPED_TEST(MultiplyTest, saveparams_test)
       "8, -7, 6,-5, 4,-3, 2,-1;"
       "-8,  7,-6, 5,-4, 3,-2, 1");
 
-  TensorType gt = TensorType::FromString(
-      "8, 14, 18,20, 20,18, 14,8;"
-      "-8,  14,-18, 20,-20, 18,-14, 8");
-
   OpType op;
 
   TensorType    prediction(op.ComputeOutputShape(
