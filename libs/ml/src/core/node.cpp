@@ -21,7 +21,8 @@
 namespace fetch {
 namespace ml {
 
-using Shape = fetch::math::SizeVector;
+using Shape       = fetch::math::SizeVector;
+using ShapeVector = std::vector<fetch::math::SizeVector>;
 
 /**
  * returns the stored operation type and syncs it with operation type of
@@ -40,6 +41,30 @@ OpType Node<TensorType>::OperationType()
     operation_type_ = op_ptr_->OperationType();
   }
   return operation_type_;
+}
+
+template <typename TensorType>
+bool Node<TensorType>::HasValidCache()
+{
+  return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
+}
+
+template <typename TensorType>
+void Node<TensorType>::SetBatchOutputShape(const Node::Shape &new_shape)
+{
+  op_ptr_->SetBatchOutputShape(new_shape);
+}
+
+template <typename TensorType>
+void Node<TensorType>::SetBatchInputShapes(const Node::ShapeVector &new_shapes)
+{
+  op_ptr_->SetBatchInputShapes(new_shapes);
+}
+
+template <typename TensorType>
+const ShapeVector &Node<TensorType>::BatchInputShapes()
+{
+  return op_ptr_->BatchInputShapes();
 }
 
 /**

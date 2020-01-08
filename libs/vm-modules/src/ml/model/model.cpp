@@ -86,6 +86,7 @@ std::map<std::string, MetricType> const VMModel::metrics_{
     {"scel", MetricType ::SOFTMAX_CROSS_ENTROPY},
 };
 
+static constexpr SizeType    AUTODETECT_INPUTS      = 0;
 static constexpr char const *IMPOSSIBLE_ADD_MESSAGE = "Impossible to add layer : ";
 static constexpr char const *LAYER_TYPE_MESSAGE     = "layer type";
 
@@ -528,7 +529,8 @@ void VMModel::LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
 void VMModel::LayerAddDenseAutoInputs(const fetch::vm::Ptr<String> &layer,
                                       const math::SizeType &        hidden_nodes)
 {
-  LayerAddDenseActivationImplementation(layer, 0, hidden_nodes, ActivationType::NOTHING);
+  LayerAddDenseActivationImplementation(layer, AUTODETECT_INPUTS, hidden_nodes,
+                                        ActivationType::NOTHING);
 }
 
 void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,

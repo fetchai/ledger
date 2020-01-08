@@ -85,17 +85,17 @@ public:
     // start to set up the structure
     input_ = this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
     // for non time distributed layer, flatten the input
-    flat_input_ = input_;
+    flattened_input_ = input_;
     if (!time_distributed_)
     {
-      flat_input_ =
+      flattened_input_ =
           this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input_});
     }
 
     weights_ = this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
 
     weights_matmul_ = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
-        name + "_MatrixMultiply", {weights_, flat_input_});
+        name + "_MatrixMultiply", {weights_, flattened_input_});
 
     bias_ = this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Bias", {});
 
@@ -107,10 +107,24 @@ public:
 
     this->AddInputNode(input_);
     this->SetOutputNode(output_);
+
+    // TEMP! workaround to solve test failing problems. If inputs count is known, the initialisation
+    // can be completed immediately.
+    if (in_size_ != 0)
+    {
+      this->batch_input_shapes_ = {{in_size_, 1}};
+      this->ComputeBatchOutputShape(this->batch_input_shapes_);
+      CompleteInitialisation();
+    }
   }
 
   void CompleteInitialisation() override
   {
+    if (is_initialised_)
+    {
+      return;
+    }
+
     assert(!this->batch_input_shapes_.empty());
     assert(!this->batch_output_shape_.empty());
     this->nodes_.at(input_)->SetBatchInputShapes(this->batch_input_shapes_);
@@ -118,9 +132,9 @@ public:
     FETCH_LOG_INFO(DESCRIPTOR, "-- Compiling sub-graph ... --");
 
     // When expected input shape is known, it is possible to compute flattened input
-    // shape of this fully connected layer
-    this->nodes_.at(flat_input_)->GetOp()->ComputeBatchOutputShape(this->batch_input_shapes_);
-    in_size_  = this->nodes_.at(flat_input_)->BatchOutputShape().front();
+    // shape of this fully connected layer.
+    this->nodes_.at(flattened_input_)->GetOp()->ComputeBatchOutputShape(this->batch_input_shapes_);
+    in_size_  = this->nodes_.at(flattened_input_)->BatchOutputShape().front();
     out_size_ = this->batch_output_shape_.front();
 
     // At this point we know everything necessary to directly assign shapes to
@@ -149,6 +163,7 @@ public:
                             regularisation_rate_);
     this->Compile();
     FETCH_LOG_INFO(DESCRIPTOR, "-- Sub-graph compiled. --");
+    is_initialised_ = true;
   }
 
   OpPtrType MakeSharedCopy(OpPtrType me) override
@@ -230,12 +245,13 @@ public:
   }
 
 private:
-  SizeType in_size_          = fetch::math::numeric_max<SizeType>();
-  SizeType out_size_         = fetch::math::numeric_max<SizeType>();
+  SizeType in_size_          = 0;
+  SizeType out_size_         = 0;
   bool     time_distributed_ = false;
+  bool     is_initialised_   = false;  // TEMPORARY
 
   std::string                   input_;
-  std::string                   flat_input_;
+  std::string                   flattened_input_;
   std::string                   weights_;
   std::string                   weights_matmul_;
   std::string                   bias_;

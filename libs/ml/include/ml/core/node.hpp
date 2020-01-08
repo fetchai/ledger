@@ -131,25 +131,13 @@ public:
 
   OpType OperationType();
 
-  bool HasValidCache()
-  {
-    return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
-  }
+  bool HasValidCache();
 
-  void SetBatchOutputShape(Shape const &new_shape)
-  {
-    op_ptr_->SetBatchOutputShape(new_shape);
-  }
+  void SetBatchOutputShape(Shape const &new_shape);
 
-  void SetBatchInputShapes(ShapeVector const &new_shapes)
-  {
-    op_ptr_->SetBatchInputShapes(new_shapes);
-  }
+  void SetBatchInputShapes(ShapeVector const &new_shapes);
 
-  ShapeVector const &BatchInputShapes()
-  {
-    return op_ptr_->BatchInputShapes();
-  }
+  ShapeVector const &BatchInputShapes();
 
   Shape BatchOutputShape();
 
