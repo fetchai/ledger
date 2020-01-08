@@ -20,9 +20,9 @@
 #include "math/base_types.hpp"
 #include "math/tensor/tensor.hpp"
 
-#include <list>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -80,17 +80,17 @@ struct StateDict
 
   /**
    * Used to merge a list of state dict together into a new object
-   * All are weighted equally -- Usefull for averaging weights of multiple similar models
+   * All are weighted equally -- Useful for averaging weights of multiple similar models
    * @param stateDictList
    */
-  static StateDict MergeList(std::list<StateDict> const &stateDictList)
+  static StateDict Merge(std::vector<StateDict> const &state_dicts)
   {
     StateDict ret;
-    for (auto const &sd : stateDictList)
+    for (auto const &sd : state_dicts)
     {
       ret.InlineAdd(sd, false);
     }
-    ret.InlineDivide(static_cast<DataType>(stateDictList.size()));
+    ret.InlineDivide(static_cast<DataType>(state_dicts.size()));
     return ret;
   }
 
@@ -101,8 +101,8 @@ struct StateDict
    */
   StateDict &Merge(StateDict const &o, DataType ratio = fetch::math::Type<DataType>("0.5"))
   {
-    assert(ratio >= 0 && ratio <= 1);
-    if (ratio > 0)
+    assert(ratio >= DataType{0} && ratio <= DataType{1});
+    if (ratio > DataType{0})
     {
       if (weights_)
       {

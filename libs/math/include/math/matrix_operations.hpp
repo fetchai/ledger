@@ -158,7 +158,7 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
   SizeType counter{0};
   while (rit.is_valid())
   {
-    assert((*it2 == 1) || (*it2 == 0));
+    assert((*it2 == typename ArrayType::Type{1}) || (*it2 == typename ArrayType::Type{0}));
     if (static_cast<uint64_t>(*it2))
     {
       *rit = *it1;
@@ -560,7 +560,7 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
 
   using DataType = typename ArrayType::Type;
-  ret.Fill(static_cast<DataType>(0));
+  ret.Fill(DataType{0});
 
   Reduce(axis, [](DataType const &x, DataType &y) { y = static_cast<DataType>(y + x); }, obj1, ret);
 }
@@ -594,9 +594,9 @@ void ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
 {
 
   using DataType = typename ArrayType::Type;
-  ret.Fill(static_cast<DataType>(0));
+  ret.Fill(DataType{0});
 
-  Reduce(axes, [](DataType const &x, DataType &y) { y += x; }, obj1, ret);
+  Reduce(axes, [](DataType const &x, DataType &y) { y = static_cast<DataType>(y + x); }, obj1, ret);
 }
 
 /**

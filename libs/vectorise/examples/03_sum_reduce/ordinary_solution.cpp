@@ -62,8 +62,8 @@ int main(int argc, char const **argv)
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    A[i] = type(fetch::math::Sin(type(i) * (-0.1)));
-    B[i] = type(fetch::math::Cos(type(i) * (-0.1)));
+    A[i] = type(fetch::math::Sin(type(i) * fetch::math::AsType<type>(-0.1)));
+    B[i] = type(fetch::math::Cos(type(i) * fetch::math::AsType<type>(-0.1)));
   }
 
   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();

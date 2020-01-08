@@ -30,31 +30,31 @@ typename ArrayType::Type AbsoluteDistance(ArrayType const &A, ArrayType const &B
   auto it1   = A.cbegin();
   auto it2   = B.cbegin();
   assert(it1.size() == it2.size());
-  auto ret = Type(0);
+  auto ret = Type{0};
   Type d;
 
   while (it1.is_valid())
   {
-    if ((*it1 > 0) && (*it2 > 0))
+    if ((*it1 > Type{0}) && (*it2 > Type{0}))
     {
       d = (*it1) - (*it2);
-      if (d < 0)
+      if (d < Type{0})
       {
         d = -d;
       }
     }
-    else if ((*it1) > 0)
+    else if ((*it1) > Type{0})
     {
       d = (*it1) - (*it2);
     }
-    else if ((*it2 > 0))
+    else if ((*it2 > Type{0}))
     {
       d = (*it2) - (*it1);
     }
     else
     {
       d = (*it2) - (*it1);
-      if (d < 0)
+      if (d < Type{0})
       {
         d = -d;
       }

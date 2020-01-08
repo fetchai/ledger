@@ -17,10 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/activation_functions/sigmoid.hpp"
-#include "math/activation_functions/softmax.hpp"
-#include "math/fundamental_operators.hpp"
-#include "math/metrics/cross_entropy.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -44,64 +40,21 @@ public:
 
   SoftmaxCrossEntropyLoss() = default;
 
-  explicit SoftmaxCrossEntropyLoss(SPType const &sp)
-    : Ops<T>(sp)
-  {}
+  explicit SoftmaxCrossEntropyLoss(SPType const &sp);
 
   ~SoftmaxCrossEntropyLoss() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    SPType sp{};
-    return std::make_shared<SPType>(sp);
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
-    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
-
-    return copyshare;
-  }
-
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    // third term may be present for specifying n_classes
-    assert(inputs.size() == 2);
-    assert(inputs.at(0)->size() == inputs.at(1)->size());
-
-    // sanity check the softmax adds up to 1
-    assert(Sum(fetch::math::Softmax((*inputs.at(0)))) - (DataType(inputs.at(0)->shape().at(1))) <
-           0.0001);
-
-    // softmax forward & then CrossEntropy
-    output(0, 0) =
-        fetch::math::CrossEntropyLoss(fetch::math::Softmax((*inputs.at(0))), (*inputs.at(1)));
-  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    FETCH_UNUSED(error_signal);
+                                   TensorType const &   error_signal) override;
 
-    assert(inputs.size() == 2);
-    assert(inputs.at(0)->size() == inputs.at(1)->size());
-
-    TensorType ret({inputs.at(0)->shape()});
-    fetch::math::Softmax((*inputs.at(0)), ret, 0);
-    fetch::math::Subtract(ret, (*inputs.at(1)), ret);
-
-    return {ret, ret};
-  }
-
-  std::vector<typename T::SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    (void)inputs;
-    return {1, 1};
-  }
+  std::vector<math::SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
