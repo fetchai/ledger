@@ -17,11 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/activation_functions/sigmoid.hpp"
-#include "math/fundamental_operators.hpp"
-#include "math/matrix_operations.hpp"
-#include "math/standard_functions/exp.hpp"
-#include "math/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -44,64 +39,21 @@ public:
 
   LogSigmoid() = default;
 
-  explicit LogSigmoid(SPType const &sp)
-    : Ops<T>(sp)
-  {}
+  explicit LogSigmoid(SPType const &sp);
 
   ~LogSigmoid() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    auto sp = std::make_shared<SPType>();
-    return sp;
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
-    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
-
-    return copyshare;
-  }
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(inputs.size() == 1);
-    assert(output.shape() == this->ComputeOutputShape(inputs));
-
-    fetch::math::Sigmoid((*inputs.front()), output);
-    fetch::math::Log(output, output);
-
-    // ensures numerical stability
-    for (auto &val : output)
-    {
-      val = fetch::vectorise::Min(val, epsilon_);
-    }
-  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    assert(inputs.size() == 1);
-    assert(inputs.front()->shape() == error_signal.shape());
-    TensorType return_signal{error_signal.shape()};
+                                   TensorType const &   error_signal) override;
 
-    // gradient of log-sigmoid function is 1/(e^x + 1))
-    fetch::math::Add(fetch::math::Exp((*inputs.front())), DataType{1}, return_signal);
-    fetch::math::Divide(DataType{1}, return_signal, return_signal);
-
-    // multiply by error_signal (chain rule)
-    fetch::math::Multiply(error_signal, return_signal, return_signal);
-
-    return {return_signal};
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    return inputs.front()->shape();
-  }
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
