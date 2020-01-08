@@ -93,8 +93,8 @@ void Sequential<TensorType>::SetExpectedInputShape(std::vector<SizeType> const &
 {
   std::vector<SizeType> slice_shape(shape);
   slice_shape.back() = 1;
-  this->graph_ptr_->GetNode(this->input_)->SetSliceOutputShape(slice_shape);
-  this->graph_ptr_->GetNode(this->input_)->SetExpectedSliceInputShapes({slice_shape});
+  this->graph_ptr_->GetNode(this->input_)->SetBatchOutputShape(slice_shape);
+  this->graph_ptr_->GetNode(this->input_)->SetBatchInputShapes({slice_shape});
 }
 
 template <typename TensorType>

@@ -465,7 +465,7 @@ template <typename TensorType>
 void Graph<TensorType>::RecursivelyLinkShapes(const std::string &node_name)
 {
   NodePtrType node   = nodes_.at(node_name);
-  auto const  result = node->SliceOutputShape();
+  auto const  result = node->BatchOutputShape();
   if (result.empty())
   {
     // throw error, something went bad.

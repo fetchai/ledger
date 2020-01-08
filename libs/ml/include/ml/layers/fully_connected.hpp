@@ -111,24 +111,22 @@ public:
 
   void CompleteInitialisation() override
   {
-    assert(!this->expected_slice_input_shapes_.empty());
-    assert(!this->slice_output_shape_.empty());
-    this->nodes_.at(input_)->SetExpectedSliceInputShapes(this->expected_slice_input_shapes_);
-    this->nodes_.at(input_)->SetSliceOutputShape(this->expected_slice_input_shapes_.front());
+    assert(!this->batch_input_shapes_.empty());
+    assert(!this->batch_output_shape_.empty());
+    this->nodes_.at(input_)->SetBatchInputShapes(this->batch_input_shapes_);
+    this->nodes_.at(input_)->SetBatchOutputShape(this->batch_input_shapes_.front());
     FETCH_LOG_INFO(DESCRIPTOR, "-- Compiling sub-graph ... --");
 
     // When expected input shape is known, it is possible to compute flattened input
     // shape of this fully connected layer
-    this->nodes_.at(flat_input_)
-        ->GetOp()
-        ->ComputeSliceOutputShape(this->expected_slice_input_shapes_);
-    in_size_  = this->nodes_.at(flat_input_)->SliceOutputShape().front();
-    out_size_ = this->slice_output_shape_.front();
+    this->nodes_.at(flat_input_)->GetOp()->ComputeBatchOutputShape(this->batch_input_shapes_);
+    in_size_  = this->nodes_.at(flat_input_)->BatchOutputShape().front();
+    out_size_ = this->batch_output_shape_.front();
 
     // At this point we know everything necessary to directly assign shapes to
     // leaf nodes such as Weights and Bias
-    this->nodes_.at(weights_)->SetSliceOutputShape({out_size_, in_size_});
-    this->nodes_.at(bias_)->SetSliceOutputShape(this->slice_output_shape_);
+    this->nodes_.at(weights_)->SetBatchOutputShape({out_size_, in_size_});
+    this->nodes_.at(bias_)->SetBatchOutputShape(this->batch_output_shape_);
 
     // initialize weight with specified method
     TensorType weights_data(std::vector<SizeType>({out_size_, in_size_}));

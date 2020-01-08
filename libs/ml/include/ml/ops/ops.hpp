@@ -55,13 +55,13 @@ public:
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;
 
   /**
-   * @brief ComputeSliceOutputShape is expensive function and should be used only for initialisation
+   * @brief ComputeBatchOutputShape is expensive function and should be used only for initialisation
    * or in ASSERT. On Forward you can use output.shape() and on Backward there is
    * error_signal.shape()
    * @param input_shapes
    * @return
    */
-  std::vector<SizeType> ComputeSliceOutputShape(ShapeVector const &input_shapes)
+  std::vector<SizeType> ComputeBatchOutputShape(ShapeVector const &input_shapes)
   {
     ShapeVector   tensor_shapes = input_shapes;
     VecTensorType dummies;
@@ -69,9 +69,9 @@ public:
     {
       dummies.push_back(std::make_shared<TensorType>(shape));
     }
-    SetSliceOutputShape(ComputeOutputShape(dummies));
-    SetExpectedSliceInputShapes(input_shapes);
-    return slice_output_shape_;
+    SetBatchOutputShape(ComputeOutputShape(dummies));
+    SetBatchInputShapes(input_shapes);
+    return batch_output_shape_;
   }
 
   virtual std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() = 0;
@@ -95,32 +95,32 @@ public:
     return is_training_;
   }
 
-  virtual void SetSliceOutputShape(Shape const &new_shape)
+  virtual void SetBatchOutputShape(Shape const &new_shape)
   {
-    slice_output_shape_ = new_shape;
+    batch_output_shape_ = new_shape;
   }
 
-  virtual void SetExpectedSliceInputShapes(ShapeVector const &new_shapes)
+  virtual void SetBatchInputShapes(ShapeVector const &new_shapes)
   {
-    expected_slice_input_shapes_ = new_shapes;
+    batch_input_shapes_ = new_shapes;
   }
 
   /**
-   * @brief SliceOutputShape returns an output shape of the layer, if a singluar slice of an input
+   * @brief BatchOutputShape returns an output shape of the layer, if a singluar slice of an input
    * data is given (e.g. batch size == 1)
    */
-  virtual Shape const &SliceOutputShape() const
+  virtual Shape const &BatchOutputShape() const
   {
-    return slice_output_shape_;
+    return batch_output_shape_;
   }
 
   /**
-   * @brief ExpectedSliceInputShapes returns a vector of shapes, that describes expected input
+   * @brief BatchInputShapes returns a vector of shapes, that describes expected input
    * slice shapes (e.g. when batch size of input data is 1)
    */
-  virtual ShapeVector const &ExpectedSliceInputShapes() const
+  virtual ShapeVector const &BatchInputShapes() const
   {
-    return expected_slice_input_shapes_;
+    return batch_input_shapes_;
   }
 
   /// OOP polymorphic wrapper around each Ops/Layer OpCode() static method.
@@ -149,7 +149,7 @@ public:
   // TODO(VH): extract to a free function.
   std::string OutputShapeAsString()
   {
-    std::vector<SizeType> const out_shape = this->SliceOutputShape();
+    std::vector<SizeType> const out_shape = this->BatchOutputShape();
     std::stringstream           ss;
     ss << " (out ";
     if (out_shape.empty())
@@ -169,7 +169,7 @@ public:
   // TODO(VH): extract to a free function.
   std::string InputShapesAsString()
   {
-    std::vector<std::vector<SizeType>> const in_shapes = this->ExpectedSliceInputShapes();
+    std::vector<std::vector<SizeType>> const in_shapes = this->BatchInputShapes();
     std::stringstream                        ss;
     ss << " (in ";
     if (in_shapes.empty())
@@ -194,9 +194,8 @@ public:
 protected:
   bool is_training_ = true;
 
-  // TODO(VH): impl. filling it on compilation.
-  ShapeVector expected_slice_input_shapes_{};
-  Shape       slice_output_shape_{};
+  ShapeVector batch_input_shapes_{};
+  Shape       batch_output_shape_{};
   // TODO(VH): ^^ impl. serialisation of new fields.
 
   // TODO(VH): extract to a free function.

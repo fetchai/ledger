@@ -136,22 +136,22 @@ public:
     return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }
 
-  void SetSliceOutputShape(Shape const &new_shape)
+  void SetBatchOutputShape(Shape const &new_shape)
   {
-    op_ptr_->SetSliceOutputShape(new_shape);
+    op_ptr_->SetBatchOutputShape(new_shape);
   }
 
-  void SetExpectedSliceInputShapes(ShapeVector const &new_shapes)
+  void SetBatchInputShapes(ShapeVector const &new_shapes)
   {
-    op_ptr_->SetExpectedSliceInputShapes(new_shapes);
+    op_ptr_->SetBatchInputShapes(new_shapes);
   }
 
-  ShapeVector const &ExpectedSliceInputShapes()
+  ShapeVector const &BatchInputShapes()
   {
-    return op_ptr_->ExpectedSliceInputShapes();
+    return op_ptr_->BatchInputShapes();
   }
 
-  Shape SliceOutputShape();
+  Shape BatchOutputShape();
 
 private:
   std::vector<NodeWeakPtrType> input_nodes_;

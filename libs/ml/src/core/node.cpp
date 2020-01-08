@@ -43,16 +43,16 @@ OpType Node<TensorType>::OperationType()
 }
 
 /**
- * @brief SliceOutputShape computes an output shape of the Node, if only 1 data slice (e.g.
+ * @brief BatchOutputShape computes an output shape of the Node, if only 1 data slice (e.g.
  * with batch size == 1) is provided to the Graph input. If there is no cached output shape,
  * the method is recursively called until either a cached shape or input Node is encountered.
  * @return vector of SizeType.
  */
 template <typename TensorType>
-Shape Node<TensorType>::SliceOutputShape()
+Shape Node<TensorType>::BatchOutputShape()
 {
   // Returned cached shape result if available;
-  Shape const candidate     = op_ptr_->SliceOutputShape();
+  Shape const candidate     = op_ptr_->BatchOutputShape();
   bool const  i_am_subgraph = OperationType() == OpType::LAYER_FULLY_CONNECTED;  // DEBUG! REMOVEME
   if (!candidate.empty() && !i_am_subgraph)
   {
@@ -81,7 +81,7 @@ Shape Node<TensorType>::SliceOutputShape()
       throw std::runtime_error("Unable to lock weak pointer.");
     }
     // Deeper recursive call.
-    auto const in_shape = node_ptr->SliceOutputShape();
+    auto const in_shape = node_ptr->BatchOutputShape();
     if (!in_shape.empty())
     {
       input_shapes.emplace_back(in_shape);
@@ -100,7 +100,7 @@ Shape Node<TensorType>::SliceOutputShape()
 
   if (!input_shapes.empty())
   {
-    op_ptr_->ComputeSliceOutputShape(input_shapes);
+    op_ptr_->ComputeBatchOutputShape(input_shapes);
     FETCH_LOG_INFO(name_.c_str(),
                    op_ptr_->InputShapesAsString() + "->" + op_ptr_->OutputShapeAsString());
   }
@@ -111,7 +111,7 @@ Shape Node<TensorType>::SliceOutputShape()
     return candidate;
   }
 
-  Shape const ops_out_shape = op_ptr_->SliceOutputShape();
+  Shape const ops_out_shape = op_ptr_->BatchOutputShape();
   if (ops_out_shape.empty())
   {
     // throw an error: invalid calcs from a previous layer.
