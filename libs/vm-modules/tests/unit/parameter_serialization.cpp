@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -160,6 +160,32 @@ TEST(ParameterSerialization, NativeCPPTypes)
 
   // Testing
   CreateVMAndRunScript(script, task);
+}
+
+TEST(ParameterSerialization, PairSerialization)
+{
+  MsgPackSerializer serializer;
+
+  std::pair<int, std::string> pair_in_1;
+  pair_in_1.first  = 1;
+  pair_in_1.second = "SOMETHING";
+
+  std::pair<std::string, int> pair_in_2;
+  pair_in_2.first  = "ELSE";
+  pair_in_2.second = -2;
+
+  serializer << pair_in_1;
+  serializer << pair_in_2;
+
+  std::pair<int, std::string> pair_out_1;
+  std::pair<std::string, int> pair_out_2;
+
+  auto deserializer = MsgPackSerializer{serializer.data()};
+  deserializer >> pair_out_1;
+  deserializer >> pair_out_2;
+
+  EXPECT_EQ(pair_in_1, pair_out_1);
+  EXPECT_EQ(pair_in_2, pair_out_2);
 }
 
 TEST(ParameterSerialization, VariantTypes)

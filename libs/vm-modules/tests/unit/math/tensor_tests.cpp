@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -1096,12 +1096,12 @@ TEST_F(MathTensorTests, tensor_argmax_test)
 
   auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({3, 2});
-  gt.Set(SizeType(0), SizeType(0), DataType{1.0});
-  gt.Set(SizeType(0), SizeType(1), DataType{1.0});
-  gt.Set(SizeType(1), SizeType(0), DataType{1.0});
-  gt.Set(SizeType(1), SizeType(1), DataType{1.0});
-  gt.Set(SizeType(2), SizeType(0), DataType{1.0});
-  gt.Set(SizeType(2), SizeType(1), DataType{0.0});
+  gt.Set(SizeType(0), SizeType(0), DataType{1});
+  gt.Set(SizeType(0), SizeType(1), DataType{1});
+  gt.Set(SizeType(1), SizeType(0), DataType{1});
+  gt.Set(SizeType(1), SizeType(1), DataType{1});
+  gt.Set(SizeType(2), SizeType(0), DataType{1});
+  gt.Set(SizeType(2), SizeType(1), DataType{0});
 
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }

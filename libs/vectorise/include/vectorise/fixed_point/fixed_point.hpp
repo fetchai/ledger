@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include "meta/tags.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/fixed_point/type_traits.hpp"
 #include "vectorise/platform.hpp"
 #include "vectorise/uint/int.hpp"
 #include "vectorise/uint/uint.hpp"
@@ -34,6 +35,15 @@
 #include <ostream>
 
 namespace fetch {
+
+namespace math {
+template <typename T, typename U>
+static constexpr meta::IfIsFixedPoint<T, T> AsType(U val, meta::IfIsFloat<U> * /*unused*/ = nullptr)
+{
+  return T::FromFloat(val);
+}
+}  // namespace math
+
 namespace fixed_point {
 
 template <uint16_t I, uint16_t F>
@@ -253,8 +263,6 @@ public:
    */
   template <typename T>
   constexpr explicit FixedPoint(T n, meta::IfIsInteger<T> * /*unused*/ = nullptr);
-  template <typename T>
-  constexpr explicit FixedPoint(T n, meta::IfIsFloat<T> * /*unused*/ = nullptr);
   constexpr FixedPoint(FixedPoint const &o);
   constexpr FixedPoint(Type const &integer, UnsignedType const &fraction);
   template <uint16_t N, uint16_t M>
@@ -287,8 +295,6 @@ public:
   constexpr FixedPoint &operator=(FixedPoint const &o);
   template <typename T>
   constexpr meta::IfIsInteger<T, FixedPoint> &operator=(T const &n);  // NOLINT
-  template <typename T>
-  constexpr meta::IfIsFloat<T, FixedPoint> &operator=(T const &n);  // NOLINT
 
   ///////////////////////////////////////////////////
   /// comparison operators for FixedPoint objects ///
@@ -302,24 +308,24 @@ public:
   constexpr bool operator>=(FixedPoint const &o) const;
   constexpr bool Near(FixedPoint const &o) const;
 
-  ////////////////////////////////////////////////
-  /// comparison operators against other types ///
-  ////////////////////////////////////////////////
+  ///////////////////////////////////////////////////
+  /// comparison operators against integral types ///
+  ///////////////////////////////////////////////////
 
-  template <typename OtherType>
-  constexpr bool operator==(OtherType const &o) const;
-  template <typename OtherType>
-  constexpr bool operator!=(OtherType const &o) const;
-  template <typename OtherType>
-  constexpr bool operator<(OtherType const &o) const;
-  template <typename OtherType>
-  constexpr bool operator>(OtherType const &o) const;
-  template <typename OtherType>
-  constexpr bool operator<=(OtherType const &o) const;
-  template <typename OtherType>
-  constexpr bool operator>=(OtherType const &o) const;
-  template <typename OtherType>
-  constexpr bool Near(OtherType const &o) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> operator==(T const &o) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> operator!=(T const &o) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> operator<(T const &o) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> operator>(T const &o) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> operator<=(T const &o) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> operator>=(T const &o) const;
+  template <typename T>
+  constexpr meta::IfIsInteger<T, bool> Near(T const &o) const;
 
   ///////////////////////
   /// unary operators ///
@@ -356,38 +362,43 @@ public:
   constexpr FixedPoint &operator>>=(FixedPoint const &n);
   constexpr FixedPoint &operator<<=(FixedPoint const &n);
 
-  /////////////////////////////////////////
-  /// math operators against primitives ///
-  /////////////////////////////////////////
+  /////////////////////////////////////////////
+  /// math operators against integral types ///
+  /////////////////////////////////////////////
 
   template <typename T>
-  constexpr FixedPoint operator+(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> operator+(T const &n) const;
   template <typename T>
-  constexpr FixedPoint operator-(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> operator-(T const &n) const;
   template <typename T>
-  constexpr FixedPoint operator*(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> operator*(T const &n) const;
   template <typename T>
-  constexpr FixedPoint operator/(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> operator/(T const &n) const;
   template <typename T>
-  constexpr FixedPoint operator&(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> operator&(T const &n) const;
   template <typename T>
-  constexpr FixedPoint operator|(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> operator|(T const &n) const;
   template <typename T>
-  constexpr FixedPoint operator^(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> operator^(T const &n) const;
   template <typename T>
-  constexpr FixedPoint &operator+=(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator+=(T const &n) const;
   template <typename T>
-  constexpr FixedPoint &operator-=(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator-=(T const &n) const;
   template <typename T>
-  constexpr FixedPoint &operator&=(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator&=(T const &n) const;
   template <typename T>
-  constexpr FixedPoint &operator|=(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator|=(T const &n) const;
   template <typename T>
-  constexpr FixedPoint &operator^=(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator^=(T const &n) const;
   template <typename T>
-  constexpr FixedPoint &operator*=(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator*=(T const &n) const;
   template <typename T>
-  constexpr FixedPoint &operator/=(T const &n) const;
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator/=(T const &n) const;
+
+  ///////////////////////
+  /// shift operators ///
+  ///////////////////////
+
   constexpr FixedPoint  operator>>(int n) const;
   constexpr FixedPoint  operator<<(int n) const;
   constexpr FixedPoint &operator<<=(int n);
@@ -485,6 +496,14 @@ private:
     : data_(n)
   {}
 
+  template <typename T>
+  static constexpr meta::IfIsFloat<T, FixedPoint> FromFloat(T n);
+  // Note: We need to disable the static analysis check here because of the friend declaration
+  template <typename T, typename U>
+  // NOLINTNEXTLINE
+  friend constexpr math::meta::IfIsFixedPoint<T, T> fetch::math::AsType(U val,
+                                                                        meta::IfIsFloat<U> *);
+
   /**
    * helper function that checks no rounding error when casting
    * @tparam T
@@ -503,7 +522,7 @@ private:
     /* Given x, find k such as x = 2^{2*k} * y, where 1 < y < 4
      */
     int k = 0;
-    while (x > 4)
+    while (x > FixedPoint{4})
     {
       k++;
       x >>= 2;
@@ -700,7 +719,7 @@ FixedPoint<I, F> const FixedPoint<I, F>::_0{0}; /* 0 */
 template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::_1{1}; /* 1 */
 template <uint16_t I, uint16_t F>
-FixedPoint<I, F> const FixedPoint<I, F>::_half{0.5}; /* 0.5 */
+FixedPoint<I, F> const FixedPoint<I, F>::_half{FixedPoint<I, F>::FromFloat(0.5)}; /* 0.5 */
 template <uint16_t I, uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::TOLERANCE(
     0, FixedPoint<I, F>::BaseTypeInfo::tolerance); /* 0 */
@@ -872,32 +891,6 @@ constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsInteger<T> * /*unused*/)
     Type abs_ = s * data_;
     abs_ <<= FRACTIONAL_BITS;
     data_ = s * abs_;
-  }
-}
-
-/**
- * Templated constructor only when T is a float/double type
- * @tparam T any float/double type
- * @param n float/double value to set FixedPoint to
- */
-template <uint16_t I, uint16_t F>
-template <typename T>
-constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsFloat<T> * /*unused*/)
-  : data_(static_cast<typename FixedPoint<I, F>::Type>(n * ONE_MASK))
-{
-  if (IsMinusZero(n))
-  {
-    data_ = 0;
-  }
-  else if (CheckOverflow(static_cast<NextType>(n * ONE_MASK)))
-  {
-    fp_state |= STATE_OVERFLOW;
-    data_ = MAX;
-  }
-  else if (CheckUnderflow(static_cast<NextType>(n * ONE_MASK)))
-  {
-    fp_state |= STATE_OVERFLOW;
-    data_ = MIN;
   }
 }
 
@@ -1183,7 +1176,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Round(FixedPoint<I, F> const &o)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  return Floor(o + FixedPoint{0.5});
+  return Floor(o + _half);
 }
 
 /**
@@ -1195,6 +1188,35 @@ template <uint16_t I, uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::FromBase(typename FixedPoint<I, F>::Type n)
 {
   return FixedPoint(n, NoScale());
+}
+
+/**
+ * Return a FixedPoint object constructed when T is a float/double type, replaces Float constructor
+ * @tparam T any float/double type
+ * @param n float/double value to set FixedPoint to
+ */
+template <uint16_t I, uint16_t F>
+template <typename T>
+constexpr meta::IfIsFloat<T, FixedPoint<I, F>> FixedPoint<I, F>::FromFloat(T n)
+{
+  FixedPoint ret;
+  ret.Data() = static_cast<typename FixedPoint<I, F>::Type>(n * ONE_MASK);
+
+  if (IsMinusZero(n))
+  {
+    ret.Data() = 0;
+  }
+  else if (CheckOverflow(static_cast<NextType>(n * ONE_MASK)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    ret.Data() = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(n * ONE_MASK)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    ret.Data() = MIN;
+  }
+  return std::move(ret);
 }
 
 /////////////////////////
@@ -1274,32 +1296,6 @@ constexpr meta::IfIsInteger<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T 
   else
   {
     data_ = {static_cast<Type>(n) << static_cast<Type>(FRACTIONAL_BITS)};
-  }
-  return *this;
-}
-
-/**
- * Assignment operator for primitive float types
- * @param the primitive to assign the FixedPoint object from
- * @return copies the given primitive float n
- */
-template <uint16_t I, uint16_t F>  // NOLINT
-template <typename T>
-constexpr meta::IfIsFloat<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T const &n)  // NOLINT
-{
-  if (CheckOverflow(static_cast<NextType>(n * ONE_MASK)))
-  {
-    fp_state |= STATE_OVERFLOW;
-    data_ = MAX;
-  }
-  else if (CheckUnderflow(static_cast<NextType>(n * ONE_MASK)))
-  {
-    fp_state |= STATE_OVERFLOW;
-    data_ = MIN;
-  }
-  else
-  {
-    data_ = static_cast<typename FixedPoint<I, F>::Type>(n * ONE_MASK);
   }
   return *this;
 }
@@ -1419,9 +1415,9 @@ constexpr bool FixedPoint<I, F>::Near(FixedPoint const &o) const
   return (Abs(*this - o) < TOLERANCE);
 }
 
-////////////////////////////////////////////////
-/// comparison operators against other types ///
-////////////////////////////////////////////////
+///////////////////////////////////////////////////
+/// comparison operators against integral types ///
+///////////////////////////////////////////////////
 
 /**
  * Equality comparison operator, note, NaN objects are never equal to each other
@@ -1429,8 +1425,8 @@ constexpr bool FixedPoint<I, F>::Near(FixedPoint const &o) const
  * @return true if objects are equal, false otherwise
  */
 template <uint16_t I, uint16_t F>
-template <typename OtherType>
-constexpr bool FixedPoint<I, F>::operator==(OtherType const &o) const
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::operator==(T const &o) const
 {
   return (*this == FixedPoint(o));
 }
@@ -1441,8 +1437,8 @@ constexpr bool FixedPoint<I, F>::operator==(OtherType const &o) const
  * @return true if objects are unequal, false otherwise
  */
 template <uint16_t I, uint16_t F>
-template <typename OtherType>
-constexpr bool FixedPoint<I, F>::operator!=(OtherType const &o) const
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::operator!=(T const &o) const
 {
   return (*this != FixedPoint(o));
 }
@@ -1453,8 +1449,8 @@ constexpr bool FixedPoint<I, F>::operator!=(OtherType const &o) const
  * @return true if object is less than o, false otherwise
  */
 template <uint16_t I, uint16_t F>
-template <typename OtherType>
-constexpr bool FixedPoint<I, F>::operator<(OtherType const &o) const
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::operator<(T const &o) const
 {
   return (*this < FixedPoint(o));
 }
@@ -1465,8 +1461,8 @@ constexpr bool FixedPoint<I, F>::operator<(OtherType const &o) const
  * @return true if object is greater than o, false otherwise
  */
 template <uint16_t I, uint16_t F>
-template <typename OtherType>
-constexpr bool FixedPoint<I, F>::operator>(OtherType const &o) const
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::operator>(T const &o) const
 {
   return (*this > FixedPoint(o));
 }
@@ -1477,8 +1473,8 @@ constexpr bool FixedPoint<I, F>::operator>(OtherType const &o) const
  * @return true if object is less than or equal to o, false otherwise
  */
 template <uint16_t I, uint16_t F>
-template <typename OtherType>
-constexpr bool FixedPoint<I, F>::operator<=(OtherType const &o) const
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::operator<=(T const &o) const
 {
   return (*this <= FixedPoint(o));
 }
@@ -1489,8 +1485,8 @@ constexpr bool FixedPoint<I, F>::operator<=(OtherType const &o) const
  * @return true if object is greater than o, false otherwise
  */
 template <uint16_t I, uint16_t F>
-template <typename OtherType>
-constexpr bool FixedPoint<I, F>::operator>=(OtherType const &o) const
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::operator>=(T const &o) const
 {
   return (*this >= FixedPoint(o));
 }
@@ -1501,8 +1497,8 @@ constexpr bool FixedPoint<I, F>::operator>=(OtherType const &o) const
  * @return true if object is close to o, false otherwise
  */
 template <uint16_t I, uint16_t F>
-template <typename OtherType>
-constexpr bool FixedPoint<I, F>::Near(OtherType const &o) const
+template <typename T>
+constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::Near(T const &o) const
 {
   return Near(FixedPoint{o});
 }
@@ -2017,7 +2013,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator/=(FixedPoint<I, F> const 
     else
     {
       fp_state |= STATE_INFINITY;
-      *this = infinity((IsPosInfinity(*this) && n > _0) || (IsNegInfinity(*this) && n < 0));
+      *this = infinity((IsPosInfinity(*this) && n > _0) || (IsNegInfinity(*this) && n < _0));
     }
   }
   else
@@ -2094,9 +2090,9 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator<<=(FixedPoint<I, F> const
   return *this;
 }
 
-/////////////////////////////////////////
-/// math operators against primitives ///
-/////////////////////////////////////////
+/////////////////////////////////////////////
+/// math operators against integral types ///
+/////////////////////////////////////////////
 
 /**
  * Addition operator
@@ -2105,7 +2101,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator<<=(FixedPoint<I, F> const
  */
 template <uint16_t I, uint16_t F>
 template <typename T>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::operator+(T const &n) const
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator+(T const &n) const
 {
   return *this + FixedPoint(n);
 }
@@ -2117,7 +2113,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator+(T const &n) const
  */
 template <uint16_t I, uint16_t F>
 template <typename T>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::operator-(T const &n) const
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator-(T const &n) const
 {
   return *this - FixedPoint(n);
 }
@@ -2129,7 +2125,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator-(T const &n) const
  */
 template <uint16_t I, uint16_t F>
 template <typename T>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::operator*(T const &n) const
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator*(T const &n) const
 {
   return *this * FixedPoint(n);
 }
@@ -2141,7 +2137,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator*(T const &n) const
  */
 template <uint16_t I, uint16_t F>
 template <typename T>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::operator/(T const &n) const
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator/(T const &n) const
 {
   return *this / FixedPoint(n);
 }
@@ -2153,7 +2149,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator/(T const &n) const
  */
 template <uint16_t I, uint16_t F>
 template <typename T>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::operator&(T const &n) const
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator&(T const &n) const
 {
   return *this & FixedPoint(n);
 }
@@ -2165,7 +2161,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator&(T const &n) const
  */
 template <uint16_t I, uint16_t F>
 template <typename T>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::operator|(T const &n) const
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator|(T const &n) const
 {
   return *this | FixedPoint(n);
 }
@@ -2177,10 +2173,14 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator|(T const &n) const
  */
 template <uint16_t I, uint16_t F>
 template <typename T>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::operator^(T const &n) const
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> FixedPoint<I, F>::operator^(T const &n) const
 {
   return *this ^ FixedPoint(n);
 }
+
+///////////////////////
+/// shift operators ///
+///////////////////////
 
 /**
  * Shift right assignment operator, shift self object right n bits
@@ -2241,43 +2241,43 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator<<=(int n)
 /////////////////////////////////////////////////////
 
 template <uint16_t I, uint16_t F, typename T>
-inline FixedPoint<I, F> operator+(T const &a, FixedPoint<I, F> const &n)
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator+(T const &a, FixedPoint<I, F> const &n)
 {
   return n + a;
 }
 
 template <uint16_t I, uint16_t F, typename T>
-FixedPoint<I, F> operator-(T const &a, FixedPoint<I, F> const &n)
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator-(T const &a, FixedPoint<I, F> const &n)
 {
   return FixedPoint<I, F>(a) - n;
 }
 
 template <uint16_t I, uint16_t F, typename T>
-FixedPoint<I, F> operator*(T const &a, FixedPoint<I, F> const &n)
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator*(T const &a, FixedPoint<I, F> const &n)
 {
   return n * a;
 }
 
 template <uint16_t I, uint16_t F, typename T>
-FixedPoint<I, F> operator/(T const &a, FixedPoint<I, F> const &n)
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator/(T const &a, FixedPoint<I, F> const &n)
 {
   return FixedPoint<I, F>(a) / n;
 }
 
 template <uint16_t I, uint16_t F, typename T>
-FixedPoint<I, F> operator&(T const &a, FixedPoint<I, F> const &n)
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator&(T const &a, FixedPoint<I, F> const &n)
 {
   return n & a;
 }
 
 template <uint16_t I, uint16_t F, typename T>
-FixedPoint<I, F> operator|(T const &a, FixedPoint<I, F> const &n)
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator|(T const &a, FixedPoint<I, F> const &n)
 {
   return n | a;
 }
 
 template <uint16_t I, uint16_t F, typename T>
-FixedPoint<I, F> operator^(T const &a, FixedPoint<I, F> const &n)
+inline meta::IfIsInteger<T, FixedPoint<I, F>> operator^(T const &a, FixedPoint<I, F> const &n)
 {
   return n ^ a;
 }
@@ -2466,7 +2466,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Abs(FixedPoint<I, F> const &x)
     return POSITIVE_INFINITY;
   }
 
-  if (Sign(x) > 0)
+  if (Sign(x) > _0)
   {
     return x;
   }
@@ -2779,15 +2779,14 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sqrt(FixedPoint<I, F> const &x)
 
     // Tune the approximation with 2 iterations of Goldsmith's algorithm (converges faster than
     // NR)
-    FixedPoint half{0.5};
     FixedPoint y_n = _1 / R;
     FixedPoint x_n = r * y_n;
-    FixedPoint h_n = half * y_n;
+    FixedPoint h_n = _half * y_n;
     FixedPoint r_n;
-    r_n = half - x_n * h_n;
+    r_n = _half - x_n * h_n;
     x_n = x_n + x_n * r_n;
     h_n = h_n + h_n * r_n;
-    r_n = half - x_n * h_n;
+    r_n = _half - x_n * h_n;
     x_n = x_n + x_n * r_n;
     h_n = h_n + h_n * r_n;
 
@@ -2932,7 +2931,9 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
     return NaN;
   }
 
-  FixedPoint s = _1 * ((y.Integer() + 1) & 1) + Sign(x) * (y.Integer() & 1);
+  FixedPoint s1{(y.Integer() + 1) & 1};
+  FixedPoint s2{(y.Integer()) & 1};
+  FixedPoint s = s1 + Sign(x) * s2;
   return s * Exp(y * Log(Abs(x)));
 }
 
@@ -2970,9 +2971,12 @@ constexpr FixedPoint<16, 16> FixedPoint<16, 16>::SinApproxPi4(FixedPoint<16, 16>
   FixedPoint<16, 16> r2 = r * r;
   FixedPoint<16, 16> r3 = r2 * r;
   FixedPoint<16, 16> r4 = r3 * r;
-  FixedPoint<16, 16> Q00{5880};
-  FixedPoint<16, 16> P = r * Q00 - r3 * 620;
-  FixedPoint<16, 16> Q = Q00 + r2 * 360 + r4 * 11;
+  FixedPoint<16, 16> P01{5880};
+  FixedPoint<16, 16> P03{620};
+  FixedPoint<16, 16> Q02{360};
+  FixedPoint<16, 16> Q04{11};
+  FixedPoint<16, 16> P = r * P01 - r3 * P03;
+  FixedPoint<16, 16> Q = P01 + r2 * Q02 + r4 * Q04;
   return P / Q;
 }
 
@@ -2985,9 +2989,13 @@ constexpr FixedPoint<32, 32> FixedPoint<32, 32>::SinApproxPi4(FixedPoint<32, 32>
   FixedPoint<32, 32> r3 = r2 * r;
   FixedPoint<32, 32> r4 = r3 * r;
   FixedPoint<32, 32> r5 = r4 * r;
-  FixedPoint<32, 32> Q00{166320};
-  FixedPoint<32, 32> P = r * Q00 - r3 * 22260 + r5 * 551;
-  FixedPoint<32, 32> Q = Q00 + r2 * 5460 + r4 * 75;
+  FixedPoint<32, 32> P01{166320};
+  FixedPoint<32, 32> P03{22260};
+  FixedPoint<32, 32> P05{551};
+  FixedPoint<32, 32> Q02{5460};
+  FixedPoint<32, 32> Q04{75};
+  FixedPoint<32, 32> P = r * P01 - r3 * P03 + r5 * P05;
+  FixedPoint<32, 32> Q = P01 + r2 * Q02 + r4 * Q04;
   return P / Q;
 }
 
@@ -3000,9 +3008,13 @@ constexpr FixedPoint<64, 64> FixedPoint<64, 64>::SinApproxPi4(FixedPoint<64, 64>
   FixedPoint<64, 64> r3 = r2 * r;
   FixedPoint<64, 64> r4 = r3 * r;
   FixedPoint<64, 64> r5 = r4 * r;
-  FixedPoint<64, 64> Q00{166320};
-  FixedPoint<64, 64> P   = r * Q00 - r3 * 22260 + r5 * 551;
-  FixedPoint<64, 64> Q   = Q00 + r2 * 5460 + r4 * 75;
+  FixedPoint<64, 64> P01{166320};
+  FixedPoint<64, 64> P03{22260};
+  FixedPoint<64, 64> P05{551};
+  FixedPoint<64, 64> Q02{5460};
+  FixedPoint<64, 64> Q04{75};
+  FixedPoint<64, 64> P   = r * P01 - r3 * P03 + r5 * P05;
+  FixedPoint<64, 64> Q   = P01 + r2 * Q02 + r4 * Q04;
   FixedPoint<64, 64> sin = P / Q;
 
   return sin;
@@ -3015,9 +3027,13 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::CosApproxPi4(FixedPoint<I, F> const
 
   FixedPoint<I, F> r2 = r * r;
   FixedPoint<I, F> r4 = r2 * r2;
-  FixedPoint<I, F> Q00{15120};
-  FixedPoint<I, F> P   = Q00 - r2 * 6900 + r4 * 313;
-  FixedPoint<I, F> Q   = Q00 + r2 * 660 + r4 * 13;
+  FixedPoint<I, F> P00{15120};
+  FixedPoint<I, F> P02{6900};
+  FixedPoint<I, F> P04{313};
+  FixedPoint<I, F> Q02{660};
+  FixedPoint<I, F> Q04{13};
+  FixedPoint<I, F> P   = P00 - r2 * P02 + r4 * P04;
+  FixedPoint<I, F> Q   = P00 + r2 * Q02 + r4 * Q04;
   FixedPoint<I, F> cos = P / Q;
 
   return cos;
@@ -3060,7 +3076,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sin(FixedPoint<I, F> const &x)
     return -Sin(-x);
   }
 
-  FixedPoint r = Fmod(x, CONST_PI * 2);
+  FixedPoint r = Fmod(x, CONST_PI * FixedPoint{2});
 
   if (r == _0)
   {
@@ -3104,7 +3120,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Cos(FixedPoint<I, F> const &x)
     return NaN;
   }
 
-  FixedPoint r = Fmod(Abs(x), CONST_PI * 2);
+  FixedPoint r = Fmod(Abs(x), CONST_PI * FixedPoint{2});
   if (r == _0)
   {
     return _1;
@@ -3267,7 +3283,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ASin(FixedPoint<I, F> const &x)
   auto       Q03 = static_cast<FixedPoint>(-ASin_Q03);  // -6.88283971605453293030e-01
   auto       Q04 = static_cast<FixedPoint>(ASin_Q04);   //  7.70381505559019352791e-02
   FixedPoint c;
-  if (x < 0.5)
+  if (x < _half)
   {
     FixedPoint t = x * x;
     FixedPoint P = t * (P00 + t * (P01 + t * (P02 + t * (P03 + t * (P04 + t * P05)))));
@@ -3276,24 +3292,25 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ASin(FixedPoint<I, F> const &x)
     return x + x * R;
   }
 
+  FixedPoint two{2};
   FixedPoint w = _1 - x;
-  FixedPoint t = w * 0.5;
+  FixedPoint t = w * _half;
   FixedPoint P = t * (P00 + t * (P01 + t * (P02 + t * (P03 + t * (P04 + t * P05)))));
   FixedPoint Q = _1 + t * (Q01 + t * (Q02 + t * (Q03 + t * Q04)));
   FixedPoint s = Sqrt(t);
   FixedPoint R = P / Q;
-  if (x < 0.975)
+  if (x < FromFloat(0.975))
   {
     w = s;
     c = (t - w * w) / (s + w);
-    P = s * R * 2.0 + c * 2.0;
-    Q = CONST_PI_4 - w * 2.0;
+    P = s * R * two + c * two;
+    Q = CONST_PI_4 - w * two;
     t = CONST_PI_4 - (P - Q);
     return t;
   }
 
   w = P / Q;
-  t = CONST_PI_2 - ((s + s * R) * 2.0);
+  t = CONST_PI_2 - ((s + s * R) * two);
   return t;
 }
 
@@ -3443,7 +3460,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan2(FixedPoint<I, F> const &y,
     }
     if (IsNegInfinity(x))
     {
-      return CONST_PI_4 * 3;
+      return CONST_PI_4 * FixedPoint{3};
     }
 
     return CONST_PI_2;
@@ -3456,7 +3473,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan2(FixedPoint<I, F> const &y,
     }
     if (IsNegInfinity(x))
     {
-      return -CONST_PI_4 * 3;
+      return -CONST_PI_4 * FixedPoint{3};
     }
 
     return -CONST_PI_2;
@@ -3529,8 +3546,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::SinH(FixedPoint<I, F> const &x)
     return NEGATIVE_INFINITY;
   }
 
-  FixedPoint half{0.5};
-  return half * (Exp(x) - Exp(-x));
+  return _half * (Exp(x) - Exp(-x));
 }
 
 /**
@@ -3567,8 +3583,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::CosH(FixedPoint<I, F> const &x)
     return POSITIVE_INFINITY;
   }
 
-  FixedPoint half{0.5};
-  return half * (Exp(x) + Exp(-x));
+  return _half * (Exp(x) + Exp(-x));
 }
 
 /**
@@ -3743,8 +3758,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATanH(FixedPoint<I, F> const &x)
   {
     return NaN;
   }
-  FixedPoint half{0.5};
-  return half * Log((_1 + x) / (_1 - x));
+  return _half * Log((_1 + x) / (_1 - x));
 }
 
 }  // namespace fixed_point

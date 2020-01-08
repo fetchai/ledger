@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -355,8 +355,11 @@ public:
   {
     type old_data;
     stack_.Get(i, old_data);
-    history_.Push(HistorySet{i, old_data}, HistorySet::value);
-    stack_.Set(i, object);
+    if (0 != memcmp(&object, &old_data, sizeof(type)))
+    {
+      history_.Push(HistorySet{i, old_data}, HistorySet::value);
+      stack_.Set(i, object);
+    }
   }
 
   uint64_t Push(type const &object)

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@
 #include "ml/ops/abs.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/elu.hpp"
+#include "ml/ops/activations/gelu.hpp"
 #include "ml/ops/activations/leaky_relu.hpp"
 #include "ml/ops/activations/logsigmoid.hpp"
 #include "ml/ops/activations/logsoftmax.hpp"
@@ -52,7 +53,9 @@
 #include "ml/ops/exp.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/log.hpp"
-#include "ml/ops/loss_functions.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
 #include "ml/ops/mask_fill.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/max_pool.hpp"

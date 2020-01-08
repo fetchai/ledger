@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "math/matrix_operations.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/layers/skip_gram.hpp"
-#include "ml/ops/loss_functions.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/lazy_adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/utilities/graph_saver.hpp"

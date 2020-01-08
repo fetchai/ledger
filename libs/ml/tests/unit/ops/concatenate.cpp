@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,15 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
 #include "ml/ops/concatenate.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
+#include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
-
+#include "ml/serializers/ml_types.hpp"
 #include <memory>
 #include <vector>
 
@@ -133,8 +131,7 @@ TYPED_TEST(ConcatenateTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(ConcatenateTest, saveparams_backward_test)

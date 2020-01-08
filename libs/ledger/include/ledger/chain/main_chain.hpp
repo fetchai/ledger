@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -92,7 +92,8 @@ enum class BlockStatus
   ADDED,      ///< The block has been added to the chain
   LOOSE,      ///< The block has been added to the chain but is currently loose
   DUPLICATE,  ///< The block has been detected as a duplicate
-  INVALID     ///< The block is invalid and has not been added to the chain
+  INVALID,    ///< The block is invalid and has not been added to the chain
+  DIRTY       ///< The block was previously removed and is on a cooldown
 };
 
 /**
@@ -113,6 +114,8 @@ constexpr char const *ToString(BlockStatus status)
     return "Duplicate";
   case BlockStatus::INVALID:
     return "Invalid";
+  case BlockStatus::DIRTY:
+    return "Dirty";
   }
 
   return "Unknown";
@@ -133,6 +136,7 @@ public:
   using BlockHashSet         = std::unordered_set<BlockHash>;
   using TransactionLayoutSet = std::unordered_set<chain::TransactionLayout>;
   using Travelogue           = TimeTravelogue<BlockPtr>;
+  using DirtyMap = std::map<BlockHash, uint64_t>;  // Map of hash to the time until is becomes valid
 
   static constexpr char const *LOGGING_NAME = "MainChain";
   static constexpr uint64_t    UPPER_BOUND  = 5000ull;
@@ -154,7 +158,7 @@ public:
   };
 
   // Construction / Destruction
-  explicit MainChain(Mode mode = Mode::IN_MEMORY_DB);
+  explicit MainChain(Mode mode = Mode::IN_MEMORY_DB, bool dirty_block_functionality = false);
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();
@@ -305,6 +309,8 @@ public:
   void FlushToDisk();
 
   Mode          mode_{Mode::IN_MEMORY_DB};
+  bool const    dirty_block_functionality_;
+  DirtyMap      dirty_map_;
   BlockStorePtr block_store_;  ///< Long term storage and backup
   std::fstream  head_store_;
 
@@ -325,6 +331,7 @@ public:
   telemetry::CounterPtr            bloom_filter_positive_count_;
   telemetry::CounterPtr            bloom_filter_false_positive_count_;
   telemetry::CounterPtr            block_loads_from_disk_;
+  telemetry::CounterPtr            dirty_blocks_attempt_add_;
 };
 
 }  // namespace ledger

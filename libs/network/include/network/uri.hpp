@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -84,6 +84,7 @@ public:
   Uri &operator=(Uri &&) = default;
   bool operator==(Uri const &other) const;
   bool operator!=(Uri const &other) const;
+  bool operator<(Uri const &other) const;
 
   std::string ToString() const;
 
@@ -123,6 +124,11 @@ inline bool Uri::operator==(Uri const &other) const
 inline bool Uri::operator!=(Uri const &other) const
 {
   return !(*this == other);
+}
+
+inline bool Uri::operator<(Uri const &other) const
+{
+  return uri_ < other.uri_;
 }
 
 }  // namespace network

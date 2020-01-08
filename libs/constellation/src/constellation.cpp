@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"
+#include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
 #include "ledger/tx_status_http_interface.hpp"
@@ -109,6 +110,26 @@ private:
   Constellation *const instance_;
   Callback const       callback_;
 };
+
+char const *ToString(ledger::MainChainRpcService::Mode mode)
+{
+  char const *text = "Unknown";
+
+  switch (mode)
+  {
+  case ledger::MainChainRpcService::Mode::STANDALONE:
+    text = "Standalone";
+    break;
+  case ledger::MainChainRpcService::Mode::PRIVATE_NETWORK:
+    text = "Private";
+    break;
+  case ledger::MainChainRpcService::Mode::PUBLIC_NETWORK:
+    text = "Public";
+    break;
+  }
+
+  return text;
+}
 
 template <typename T>
 void ResetItem(T &item)
@@ -358,6 +379,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , lane_port_start_(LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::LANE, 0))
   , shard_cfgs_{GenerateShardsConfig(cfg_, lane_port_start_)}
   , reactor_{"Reactor"}
+  , reactor_dkg_{"ReactorDKG"}
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
@@ -468,12 +490,9 @@ bool Constellation::OnRestorePreviousData(ledger::GenesisFileCreator::ConsensusP
   // - perform initial start up of the system state
   // - recover from previous genesis init
   {
-    std::string const genesis_file_path =
-        cfg_.genesis_file_location.empty() ? GENESIS_FILENAME : cfg_.genesis_file_location;
-
     GenesisFileCreator creator(*storage_, external_identity_, cfg_.db_prefix);
 
-    genesis_status = creator.LoadFile(genesis_file_path, cfg_.proof_of_stake, params);
+    genesis_status = creator.LoadContents(cfg_.genesis_file_contents, cfg_.proof_of_stake, params);
 
     if (genesis_status == GenesisFileCreator::Result::FAILURE)
     {
@@ -486,7 +505,7 @@ bool Constellation::OnRestorePreviousData(ledger::GenesisFileCreator::ConsensusP
   dag_ = GenerateDAG(cfg_, "dag_db_", true, external_identity_);
 
   // create the chain
-  chain_ = std::make_unique<MainChain>(ledger::MainChain::Mode::LOAD_PERSISTENT_DB);
+  chain_ = std::make_unique<MainChain>(ledger::MainChain::Mode::LOAD_PERSISTENT_DB, true);
 
   // necessary when doing state validity checks
   execution_manager_ = std::make_shared<ExecutionManager>(
@@ -636,8 +655,8 @@ bool Constellation::OnBringUpExternalNetwork(
   // Attach beacon runnables
   if (beacon_)
   {
-    reactor_.Attach(beacon_setup_->GetWeakRunnables());
-    reactor_.Attach(beacon_->GetWeakRunnable());
+    reactor_dkg_.Attach(beacon_setup_->GetWeakRunnables());
+    reactor_dkg_.Attach(beacon_->GetWeakRunnable());
   }
 
   // attach the services to the reactor
@@ -691,6 +710,7 @@ bool Constellation::OnBringUpExternalNetwork(
 
   // reactor important to run the block/chain state machine
   reactor_.Start();
+  reactor_dkg_.Start();
 
   /// BLOCK EXECUTION & MINING
   execution_manager_->Start();
@@ -787,6 +807,7 @@ void Constellation::OnTearDownExternalNetwork()
   }
 
   reactor_.Stop();
+  reactor_dkg_.Stop();
 
   if (agent_network_)
   {
@@ -1007,6 +1028,30 @@ bool Constellation::CheckStateIntegrity()
 void Constellation::SignalStop()
 {
   active_ = false;
+}
+
+std::ostream &operator<<(std::ostream &stream, Constellation::Config const &config)
+{
+  stream << "Network Mode.........: " << ToString(config.network_mode) << '\n';
+  stream << "Num Lanes............: " << config.num_lanes() << '\n';
+  stream << "Num Slices...........: " << config.num_slices << '\n';
+  stream << "Num Executors........: " << config.num_executors << '\n';
+  stream << "DB Prefix............: " << config.num_executors << '\n';
+  stream << "Processor Threads....: " << config.processor_threads << '\n';
+  stream << "Verification Threads.: " << config.verification_threads << '\n';
+  stream << "Max Peers............: " << config.max_peers << '\n';
+  stream << "Transient Peers......: " << config.transient_peers << '\n';
+  stream << "Block Internal.......: " << config.block_interval_ms << "ms\n";
+  stream << "Max Cabinet Size.....: " << config.max_cabinet_size << '\n';
+  stream << "Stake Delay Period...: " << config.stake_delay_period << '\n';
+  stream << "Aeon Period..........: " << config.aeon_period << '\n';
+  stream << "Kad Routing..........: " << config.kademlia_routing << '\n';
+  stream << "Proof of Stake.......: " << config.proof_of_stake << '\n';
+  stream << "Agents...............: " << config.enable_agents << '\n';
+  stream << "Messenger Port.......: " << config.messenger_port << '\n';
+  stream << "Mailbox Port.........: " << config.mailbox_port << '\n';
+
+  return stream;
 }
 
 }  // namespace constellation

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@
 
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
-#include "math/tensor_view.hpp"
+#include "math/tensor/tensor_view.hpp"
 
 namespace fetch {
 namespace math {

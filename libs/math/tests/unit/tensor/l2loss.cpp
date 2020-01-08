@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/metrics/l2_loss.hpp"
+#include "math/tensor/tensor.hpp"
 
 #include "gtest/gtest.h"
 
@@ -49,7 +50,7 @@ TEST(ndarray, l2_basic)
   double                          manual_test_loss = 0;
 
   // check that sign(0) = 0
-  test_loss = test_array.L2Loss();
+  test_loss = fetch::math::L2Loss(test_array);
 
   for (std::size_t i = 0; i < n; ++i)
   {
