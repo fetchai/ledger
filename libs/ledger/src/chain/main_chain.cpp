@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -50,13 +50,16 @@ namespace {
 constexpr char const *BLOOM_FILTER_STORE = "chain.bloom.db";
 }
 
+const uint64_t DIRTY_TIMEOUT{600};
+
 /**
  * Constructs the main chain
  *
  * @param mode Flag to signal which storage mode has been requested
  */
-MainChain::MainChain(Mode mode)
+MainChain::MainChain(Mode mode, bool dirty_block_functionality)
   : mode_{mode}
+  , dirty_block_functionality_{dirty_block_functionality}
   , bloom_filter_{1 + chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD / 2}
   , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
         "ledger_main_chain_bloom_filter_queried_bit_number",
@@ -70,6 +73,8 @@ MainChain::MainChain(Mode mode)
   , bloom_filter_false_positive_count_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_bloom_filter_false_positive_total",
         "Total number of false positive queries to the Ledger Main Chain Bloom filter"))
+  , dirty_blocks_attempt_add_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_dirty_blocks_attempt_add_total", "Total attempts to add a dirty block"))
 {
   if (Mode::IN_MEMORY_DB != mode)
   {
@@ -241,6 +246,11 @@ bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) con
     {
       // we need to descend from tip
       auto next_block = HeaviestChainBlockAbove(parent_block->block_number);
+      if (!next_block)
+      {
+        // there was a failure on block lookup attempt
+        return false;
+      }
       if (next_block->previous_hash == hash)
       {
         next_hash = next_block->hash;
@@ -478,6 +488,14 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
 {
   FETCH_LOCK(lock_);
 
+  if (dirty_block_functionality_)
+  {
+    // Set the time at which it will be valid once more
+    dirty_map_[hash] =
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) +
+        DIRTY_TIMEOUT;
+  }
+
   // Step 0. Manually set heaviest to a block we still know is valid
   auto block_to_remove = GetBlock(hash);
 
@@ -543,7 +561,6 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
  *
  * @param limit The maximum amount of blocks returned
  * @return The array of blocks
- * @throws std::runtime_error if a block lookup occurs
  */
 MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
@@ -581,9 +598,12 @@ MainChain::IntBlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
   while (block->block_number > limit + 1)
   {
     assert(!block->IsGenesis());
-    if (!LookupBlock(block->previous_hash, block))
+    auto const &previous_hash = block->previous_hash;
+    if (!LookupBlock(previous_hash, block))
     {
-      throw std::runtime_error("Cannot find a block for hash");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(previous_hash),
+                      " when recovering the previous block on the heaviest chain");
+      return {};
     }
     if (IsBlockInCache(block->hash))
     {
@@ -603,7 +623,6 @@ MainChain::IntBlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
  * @param start The hash of the first block
  * @param limit The maximum amount of blocks returned
  * @return The array of blocks
- * @throws std::runtime_error if a block lookup occurs
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
@@ -628,7 +647,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
                       " in get chain preceding");
-      throw std::runtime_error("Failed to look up block");
+      return {};
     }
     assert(block->block_number > 0 || block->IsGenesis());
 
@@ -678,7 +697,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
       FETCH_LOG_DEBUG(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
                       " during time travel. Note, next hash: ", next_hash);
 
-      return {heaviest->hash, heaviest->block_number};
+      return {};
     }
   }
 
@@ -1211,7 +1230,8 @@ void MainChain::TrimCache()
 
       if (trim_threshold >= block->block_number)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Removing loose block: 0x", block->hash.ToHex());
+        FETCH_LOG_INFO(LOGGING_NAME, "Removing stale block: 0x", block->hash.ToHex(),
+                       " number: ", block->block_number);
 
         // remove the entry from the tips map
         tips_.erase(block->hash);
@@ -1254,6 +1274,22 @@ void MainChain::TrimCache()
     else
     {
       ++loose_it;
+    }
+  }
+
+  // Trim dirty cache for blocks that are no longer interesting
+  uint64_t const time_now =
+      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
+
+  for (auto it = dirty_map_.begin(); it != dirty_map_.end();)
+  {
+    if (time_now > it->second)
+    {
+      it = dirty_map_.erase(it);
+    }
+    else
+    {
+      ++it;
     }
   }
 }
@@ -1393,10 +1429,22 @@ bool MainChain::UpdateHeaviestTip(IntBlockPtr const &block)
 BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks)
 {
   assert(!block->previous_hash.empty());
+  uint64_t const time_now =
+      GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
   MilliTimer myTimer("MainChain::InsertBlock", 750);
 
   FETCH_LOCK(lock_);
+
+  if (dirty_block_functionality_ && dirty_map_.find(block->hash) != dirty_map_.end())
+  {
+    if (time_now < dirty_map_[block->hash])
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Not adding dirty block!");
+      dirty_blocks_attempt_add_->add(1);
+      return BlockStatus::DIRTY;
+    }
+  }
 
   if (block->hash.empty())
   {
@@ -1546,7 +1594,7 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash
 
 /**
  * Attempt to locate a block stored in the in memory cache
- *
+
  * @param hash The hash of the block to search for
  * @param block The output block to be populated
  * @return true if successful, otherwise false

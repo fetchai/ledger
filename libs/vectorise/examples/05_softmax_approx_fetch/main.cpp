@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ int main(int argc, char const **argv)
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    A[i] = type(std::sin(0.1 * type(i)));
+    A[i] = type(std::sin(type(0.1) * type(i)));
   }
 
   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();

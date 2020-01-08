@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,12 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/tensor.hpp"
 #include "ml/ops/ops.hpp"
-#include "ml/regularisers/reg_types.hpp"
-#include "ml/regularisers/regulariser.hpp"
-#include "ml/state_dict.hpp"
 
 #include <functional>
 #include <memory>
@@ -30,6 +25,15 @@
 
 namespace fetch {
 namespace ml {
+
+template <typename TensorType>
+struct StateDict;
+
+namespace regularisers {
+template <typename TensorType>
+class Regulariser;
+}  // namespace regularisers
+
 namespace ops {
 
 /**
@@ -59,25 +63,11 @@ public:
   virtual void ApplySparseGradient(TensorType const &grad, SizeSet &update_rows)           = 0;
   virtual void ApplyRegularisation()                                                       = 0;
 
-  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0})
-  {
-    regulariser_         = regulariser;
-    regularisation_rate_ = regularisation_rate;
-  }
+  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0});
 
-  /**
-   * Enable or disable trainable gradient update freezing
-   * @param new_frozen_state
-   */
-  void SetFrozenState(bool new_frozen_state)
-  {
-    value_frozen_ = new_frozen_state;
-  }
+  void SetFrozenState(bool new_frozen_state);
 
-  bool GetFrozenState() const
-  {
-    return value_frozen_;
-  }
+  bool GetFrozenState() const;
 
 protected:
   RegPtrType regulariser_;

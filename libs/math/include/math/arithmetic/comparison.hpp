@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ inline bool IsZero(double const &x, double const &abs_tol = details::DEFAULT_ABS
 template <typename T>
 bool IsZero(T const &x)
 {
-  return x == 0;
+  return x == T{0};
 }
 
 inline bool IsNonZero(float const &x,
@@ -76,7 +76,7 @@ inline bool IsNonZero(double const &x,
 template <typename T>
 bool IsNonZero(T const &x)
 {
-  return x != 0;
+  return x != T{0};
 }
 
 inline bool IsEqual(float const &a, float const &b)

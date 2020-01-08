@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ fetch::meta::IfIsFloat<T, T> Rand(VM *vm, T const &a = T{.0}, T const &b = T{1.0
   if (a >= b)
   {
     vm->RuntimeError("Invalid argument: rand(a, b) must satisfy a < b");
-    return T{.0};
+    return T{0};
   }
 
   std::random_device rd;
@@ -68,7 +68,7 @@ fetch::math::meta::IfIsNotFixedPoint128<T, T> Rand(VM *vm, T const &a = T{.0}, T
   if (a >= b)
   {
     vm->RuntimeError("Invalid argument: rand(a, b) must satisfy a < b");
-    return T{.0};
+    return T{0};
   }
 
   std::random_device rd;
@@ -76,7 +76,7 @@ fetch::math::meta::IfIsNotFixedPoint128<T, T> Rand(VM *vm, T const &a = T{.0}, T
 
   auto a_dbl = static_cast<double>(a);
   auto b_dbl = static_cast<double>(b);
-  return static_cast<T>(std::uniform_real_distribution<double>{a_dbl, b_dbl}(mt));
+  return fetch::math::AsType<T>(std::uniform_real_distribution<double>{a_dbl, b_dbl}(mt));
 }
 
 // We cannot use default values for parameters a & b, as they would have to be of the form:
@@ -96,8 +96,8 @@ IfIsPtrFixed128<T, Ptr<T>> Rand(VM *vm, Ptr<T> const &a, Ptr<T> const &b)
 
   auto a_dbl = static_cast<double>(a->data_);
   auto b_dbl = static_cast<double>(b->data_);
-  auto x =
-      static_cast<fixed_point::fp128_t>(std::uniform_real_distribution<double>{a_dbl, b_dbl}(mt));
+  auto x     = fetch::math::AsType<fixed_point::fp128_t>(
+      std::uniform_real_distribution<double>{a_dbl, b_dbl}(mt));
   return Ptr<Fixed128>(new Fixed128(vm, x));
 }
 

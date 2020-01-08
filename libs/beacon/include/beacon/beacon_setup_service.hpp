@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -213,6 +213,7 @@ protected:
   telemetry::CounterPtr         beacon_dkg_aborts_total_;
   telemetry::CounterPtr         beacon_dkg_successes_total_;
   telemetry::CounterPtr         beacon_dkg_duplicate_creates_total_;
+  telemetry::CounterPtr         beacon_dkg_duplicate_triggers_total_;
 
   // Members below protected by mutex
   Mutex                        mutex_;
@@ -247,6 +248,7 @@ private:
   double                                            time_slots_in_dkg_ = 0;
 
   uint16_t failures_{0};
+  uint64_t last_created_entropy_for_{std::numeric_limits<uint64_t>::max()};
 
   // Debug/logging
   std::atomic<BeaconManager::CabinetIndex> index_{

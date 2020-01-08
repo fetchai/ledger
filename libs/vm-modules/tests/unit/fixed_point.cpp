@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ TEST_F(FixedPointTest, divide_fixed_point)
       print(a);
     endfunction
   )";
-  auto        gt   = static_cast<double>(fp32_t(1.5));
+  auto        gt   = static_cast<double>(fetch::math::AsType<fp32_t>(1.5));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 

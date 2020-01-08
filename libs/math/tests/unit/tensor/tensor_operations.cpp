@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "gtest/gtest.h"
-#include "math/tensor.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/tensor/tensor.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
@@ -180,8 +181,8 @@ TYPED_TEST(TensorOperationsTest, sum_test)
     }
   }
 
-  EXPECT_EQ(t1.Sum(), TypeParam(-4));
-  EXPECT_EQ(t2.Sum(), TypeParam(-21));
+  EXPECT_EQ(fetch::math::Sum(t1), TypeParam(-4));
+  EXPECT_EQ(fetch::math::Sum(t2), TypeParam(-21));
 }
 
 TYPED_TEST(TensorOperationsTest, transpose_test)

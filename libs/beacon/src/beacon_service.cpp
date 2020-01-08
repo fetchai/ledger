@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@
 #include "muddle/muddle_interface.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
+#include "telemetry/histogram.hpp"
+#include "telemetry/utils/timer.hpp"
+#include "telemetry/utils/to_seconds.hpp"
 
 #include "network/generics/milli_timer.hpp"
 
@@ -109,6 +112,12 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
         "beacon_state_gauge", "State the beacon is in as integer")}
   , beacon_most_recent_round_seen_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_most_recent_round_seen", "Most recent round the beacon has seen")}
+  , beacon_collect_time_{telemetry::Registry::Instance().CreateHistogram(
+        {0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1}, "beacon_collect_time",
+        "Time taken to collect signatures")}
+  , beacon_verify_time_{telemetry::Registry::Instance().CreateHistogram(
+        {0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1}, "beacon_verify_time",
+        "Time taken to verify signatures")}
 {
   // Attaching beacon ready callback handler
   beacon_setup.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) {
@@ -273,6 +282,9 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
+
+  started_request_for_sigs_ = Clock::now();
+
   FETCH_LOCK(mutex_);
 
   if (OutOfSync())
@@ -387,6 +399,13 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     FETCH_LOG_WARN(LOGGING_NAME, "Promise timed out and threw! This should not happen.");
   }
 
+  // Now collected
+  beacon_collect_time_->Add(
+      telemetry::details::ToSeconds(Clock::now() - started_request_for_sigs_));
+
+  MilliTimer const               timer{"Verify collective threshold signature", 100};
+  telemetry::FunctionTimer const timer1{*beacon_verify_time_};
+
   // Note: don't lock until the promise has resolved (above)! Otherwise the system can deadlock
   // due to everyone trying to lock and resolve each others' signatures
   {
@@ -431,7 +450,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
                     " signatures. Round: ", index);
   }  // Mutex unlocks here since verification can take some time
 
-  MilliTimer const timer{"Verify threshold signature", 100};
+  MilliTimer const timer2{"Verify threshold signature", 100};
 
   // TODO(HUT): possibility for infinite loop here I suspect.
   if (active_exe_unit_->manager.can_verify() && active_exe_unit_->manager.Verify())

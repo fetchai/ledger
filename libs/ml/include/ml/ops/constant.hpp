@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "ml/ops/dataholder.hpp"
-#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <memory>
@@ -62,42 +60,11 @@ public:
 
   ~Constant() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    auto sp = std::make_shared<SPType>();
-    if (this->data_)
-    {
-      sp->data = std::make_shared<TensorType>(this->data_->Copy());
-    }
-    return sp;
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
-  /**
-   * shares the constant
-   * @param me
-   * @return
-   */
-  std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override
-  {
-    assert(me.get() == this);
-    return me;
-  }
+  std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override;
 
-  /**
-   * sets the internally stored data
-   * @param data
-   * @return
-   */
-  bool SetData(TensorType const &data) override
-  {
-    if (!data_set_once_)
-    {
-      data_set_once_ = true;
-      return DataHolder<TensorType>::SetData(data);
-    }
-
-    throw ml::exceptions::InvalidMode("cannot set data in constant more than once");
-  }
+  bool SetData(TensorType const &data) override;
 
   static constexpr OpType OpCode()
   {

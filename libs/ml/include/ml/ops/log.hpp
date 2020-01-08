@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,13 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
 
 namespace fetch {
 namespace ml {
+
+struct OpsSaveableParams;
+
+template <typename TensorType>
+struct OpLogSaveableParams;
+
 namespace ops {
 
 template <class T>
@@ -39,61 +44,21 @@ public:
 
   Log() = default;
 
-  explicit Log(SPType const &sp)
-    : Ops<T>(sp)
-  {}
+  explicit Log(SPType const &sp);
 
   ~Log() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    auto sp = std::make_shared<SPType>();
-    return sp;
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
-    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
-    return copyshare;
-  }
-  /**
-   * elementwise Log
-   * @param inputs vector containing one tensor which is the input tensor to Log
-   * @return
-   */
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(inputs.size() == 1);
-    assert(output.shape() == this->ComputeOutputShape(inputs));
-
-    fetch::math::Log((*inputs.at(0)), output);
-  }
-
-  /**
-   * elementwise log gradient is 1/x * error:
-   * f'(input0)= error_signal/input0
-   */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    assert(inputs.size() == 1);
-    assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+                                   TensorType const &   error_signal) override;
 
-    TensorType ret_error_signal(inputs.at(0)->shape());
-    fetch::math::Divide(error_signal, (*inputs.at(0)), ret_error_signal);
-
-    return {ret_error_signal};
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    return inputs.front()->shape();
-  }
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {

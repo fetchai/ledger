@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@
 #include "core/serializers/main_serializer.hpp"
 #include "gtest/gtest.h"
 #include "math/base_types.hpp"
+#include "math/standard_functions/abs.hpp"
 #include "ml/ops/activations/randomised_relu.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace fetch {
 namespace ml {
@@ -66,7 +66,7 @@ void CheckForwardValues(TypeParam &data, TypeParam &prediction,
   auto pred_it = prediction.begin();
   while (data_it.is_valid())
   {
-    if (*data_it < 0)
+    if (*data_it < typename TypeParam::Type{0})
     {
       EXPECT_TRUE(IsAbsWithinRange(*pred_it, *data_it, lower_bound, upper_bound));
     }
@@ -89,7 +89,8 @@ TYPED_TEST(RandomisedReluTest, forward_test)
   DataType lower_bound = fetch::math::Type<DataType>("0.03");
   DataType upper_bound = fetch::math::Type<DataType>("0.08");
 
-  fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
+  fetch::ml::ops::RandomisedRelu<TensorType> op(fetch::math::Type<DataType>("0.03"),
+                                                fetch::math::Type<DataType>("0.08"), 12345);
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
@@ -272,8 +273,7 @@ TYPED_TEST(RandomisedReluTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(RandomisedReluTest, saveparams_backward_3d_tensor_test)

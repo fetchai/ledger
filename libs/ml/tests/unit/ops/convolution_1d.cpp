@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -70,8 +70,8 @@ TYPED_TEST(Convolution1DTest, forward_1x3x1_1x1x3x1)
   TensorType weights({1, 1, 3, 1});
   for (SizeType i{0}; i < 3; ++i)
   {
-    input.At(0, i, 0)      = static_cast<DataType>(i);
-    weights.At(0, 0, i, 0) = static_cast<DataType>(i);
+    input.At(0, i, 0)      = fetch::math::AsType<DataType>(i);
+    weights.At(0, 0, i, 0) = fetch::math::AsType<DataType>(i);
   }
   fetch::ml::ops::Convolution1D<TensorType> c;
 
@@ -171,7 +171,7 @@ TYPED_TEST(Convolution1DTest, forward_3x3x2_5x3x3x2)
     {
       for (SizeType i_i{0}; i_i < input_height; ++i_i)
       {
-        input(i_ic, i_i, i_b) = static_cast<DataType>(i_i + i_b);
+        input(i_ic, i_i, i_b) = fetch::math::AsType<DataType>(i_i + i_b);
       }
     }
   }
@@ -183,7 +183,7 @@ TYPED_TEST(Convolution1DTest, forward_3x3x2_5x3x3x2)
     {
       for (SizeType i_k{0}; i_k < kernel_height; ++i_k)
       {
-        kernels(i_oc, i_ic, i_k, 0) = static_cast<DataType>(i_oc + 1);
+        kernels(i_oc, i_ic, i_k, 0) = fetch::math::AsType<DataType>(i_oc + 1);
       }
     }
   }
@@ -219,7 +219,8 @@ TYPED_TEST(Convolution1DTest, forward_3x3x2_5x3x3x2)
   ASSERT_EQ(output.shape(), gt.shape());
 
   // Test correct values
-  ASSERT_TRUE(output.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(output.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution1DTest, backward_3x3x2_5x3x3x2)
@@ -248,7 +249,7 @@ TYPED_TEST(Convolution1DTest, backward_3x3x2_5x3x3x2)
     {
       for (SizeType i_i{0}; i_i < input_height; ++i_i)
       {
-        input(i_ic, i_i, i_b) = static_cast<DataType>(i_i + 1);
+        input(i_ic, i_i, i_b) = fetch::math::AsType<DataType>(i_i + 1);
         gt1(i_ic, i_i, i_b)   = DataType{10};
       }
     }
@@ -263,7 +264,7 @@ TYPED_TEST(Convolution1DTest, backward_3x3x2_5x3x3x2)
       {
 
         kernels(i_oc, i_ic, i_k, 0) = DataType{2};
-        gt2(i_oc, i_ic, i_k, 0)     = static_cast<DataType>((i_k + 1) * 2);
+        gt2(i_oc, i_ic, i_k, 0)     = fetch::math::AsType<DataType>((i_k + 1) * 2);
       }
     }
   }
@@ -275,7 +276,7 @@ TYPED_TEST(Convolution1DTest, backward_3x3x2_5x3x3x2)
     {
       for (SizeType i_o{0}; i_o < output_height; ++i_o)
       {
-        error(i_oc, i_o, i_b) = static_cast<DataType>(i_o + 1);
+        error(i_oc, i_o, i_b) = fetch::math::AsType<DataType>(i_o + 1);
       }
     }
   }
@@ -289,8 +290,10 @@ TYPED_TEST(Convolution1DTest, backward_3x3x2_5x3x3x2)
   ASSERT_EQ(prediction.at(1).shape(), kernels.shape());
 
   // Test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt1, DataType{1e-5f}, DataType{1e-5f}));
-  ASSERT_TRUE(prediction[1].AllClose(gt2, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(prediction[0].AllClose(gt1, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[1].AllClose(gt2, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(Convolution1DTest, saveparams_test)
@@ -340,8 +343,7 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(Convolution1DTest, saveparams_backward_3x3x2_5x3x3x2)
@@ -370,7 +372,7 @@ TYPED_TEST(Convolution1DTest, saveparams_backward_3x3x2_5x3x3x2)
     {
       for (SizeType i_i{0}; i_i < input_height; ++i_i)
       {
-        input(i_ic, i_i, i_b) = static_cast<DataType>(i_i + 1);
+        input(i_ic, i_i, i_b) = fetch::math::AsType<DataType>(i_i + 1);
       }
     }
   }

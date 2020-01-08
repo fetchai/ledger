@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -1245,9 +1245,9 @@ TEST(BasicVmEngineDmlfTests, Add64)
 TEST(BasicVmEngineDmlfTests, AddFixed)
 {
   ExecutionResult result = RunStatelessTest(
-      AddFixed, "add", Params{LedgerVariant(fp64_t(4.5)), LedgerVariant(fp32_t(5.5))});
+      AddFixed, "add", Params{LedgerVariant(fp64_t("4.5")), LedgerVariant(fp32_t("5.5"))});
   ASSERT_TRUE(result.succeeded()) << result.error().message() << '\n';
-  EXPECT_EQ(result.output().As<fp64_t>(), 10.0);
+  EXPECT_EQ(result.output().As<fp64_t>(), static_cast<fp64_t>(10));
 }
 
 TEST(BasicVmEngineDmlfTests, TrueBoolCompare)
@@ -1494,10 +1494,14 @@ TEST(BasicVmEngineDmlfTests, ArrayArrayOpTests)
   RunArrayTest("doInt64", std::vector<int64_t>{1, 2, 3, 4});
   RunArrayTest("doUInt64", std::vector<uint64_t>{1, 2, 3, 4});
 
-  RunArrayTest("doFixed32",
-               std::vector<fp32_t>{fp32_t{1.2}, fp32_t{2.4}, fp32_t{3.7}, fp32_t{4.8}});
-  RunArrayTest("doFixed64",
-               std::vector<fp64_t>{fp64_t{1.3}, fp64_t{2.2}, fp64_t{3.5}, fp64_t{4.7}});
+  RunArrayTest(
+      "doFixed32",
+      std::vector<fp32_t>{fetch::math::AsType<fp32_t>(1.2), fetch::math::AsType<fp32_t>(2.4),
+                          fetch::math::AsType<fp32_t>(3.7), fetch::math::AsType<fp32_t>(4.8)});
+  RunArrayTest(
+      "doFixed64",
+      std::vector<fp64_t>{fetch::math::AsType<fp64_t>(1.3), fetch::math::AsType<fp64_t>(2.2),
+                          fetch::math::AsType<fp64_t>(3.5), fetch::math::AsType<fp64_t>(4.7)});
 
   // RunArrayTest("doBool", std::vector<bool>{true,true,false,false});
   RunArrayTest("doString", std::vector<std::string>{"a", "b", "c", "d"});

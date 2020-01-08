@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -233,6 +233,7 @@ private:
   telemetry::CounterPtr         recv_block_loose_count_;
   telemetry::CounterPtr         recv_block_duplicate_count_;
   telemetry::CounterPtr         recv_block_invalid_count_;
+  telemetry::CounterPtr         recv_block_dirty_count_;
   telemetry::CounterPtr         state_synchronising_;
   telemetry::CounterPtr         state_synchronised_;
   telemetry::CounterPtr         state_start_sync_with_peer_;

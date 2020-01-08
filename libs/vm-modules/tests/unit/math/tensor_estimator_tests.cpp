@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -106,8 +106,10 @@ public:
 
   ChargeAmount GetReferenceReshapeEstimation(ShapeTo const &from_shape, ShapeTo const &new_shape)
   {
-    SizeType from_size   = fetch::math::Tensor<DataType>::PaddedSizeFromShape(from_shape);
-    SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(new_shape);
+    DataType from_size =
+        static_cast<DataType>(fetch::math::Tensor<DataType>::PaddedSizeFromShape(from_shape));
+    DataType padded_size =
+        static_cast<DataType>(fetch::math::Tensor<DataType>::PaddedSizeFromShape(new_shape));
 
     return static_cast<ChargeAmount>(VmTensorEstimator::RESHAPE_PADDED_SIZE_FROM_COEF * from_size +
                                      VmTensorEstimator::RESHAPE_PADDED_SIZE_TO_COEF * padded_size +
@@ -144,8 +146,10 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_min_test)
       VmTensor          vm_tensor(&toolkit.vm(), type_id, tensor);
       VmTensorEstimator tensor_estimator(vm_tensor);
 
-      SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_shape);
-      SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_shape);
+      DataType padded_size =
+          static_cast<DataType>(fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_shape));
+      DataType size =
+          static_cast<DataType>(fetch::math::Tensor<DataType>::SizeFromShape(tensor_shape));
 
       ChargeAmount const expected_charge =
           1 + static_cast<ChargeAmount>(VmTensorEstimator::MIN_PADDED_SIZE_COEF * padded_size +
@@ -186,8 +190,10 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_max_test)
       VmTensor          vm_tensor(&toolkit.vm(), type_id, tensor);
       VmTensorEstimator tensor_estimator(vm_tensor);
 
-      SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_shape);
-      SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_shape);
+      DataType padded_size =
+          static_cast<DataType>(fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_shape));
+      DataType size =
+          static_cast<DataType>(fetch::math::Tensor<DataType>::SizeFromShape(tensor_shape));
 
       ChargeAmount const expected_charge =
           1 + static_cast<ChargeAmount>(VmTensorEstimator::MAX_PADDED_SIZE_COEF * padded_size +
@@ -228,8 +234,10 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_sum_test)
       VmTensor          vm_tensor(&toolkit.vm(), type_id, tensor);
       VmTensorEstimator tensor_estimator(vm_tensor);
 
-      SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_shape);
-      SizeType size        = fetch::math::Tensor<DataType>::SizeFromShape(tensor_shape);
+      DataType padded_size =
+          static_cast<DataType>(fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_shape));
+      DataType size =
+          static_cast<DataType>(fetch::math::Tensor<DataType>::SizeFromShape(tensor_shape));
 
       ChargeAmount const expected_charge =
           1 + static_cast<ChargeAmount>(VmTensorEstimator::SUM_PADDED_SIZE_COEF * padded_size +
@@ -255,8 +263,10 @@ TEST_F(MathTensorEstimatorTests, tensor_estimator_transpose_test)
     VmTensor          vm_tensor(&toolkit.vm(), fetch::vm::TypeIds::Unknown, tensor);
     VmTensorEstimator tensor_estimator(vm_tensor);
 
-    SizeType padded_from_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_shape);
-    SizeType padded_to_size   = fetch::math::Tensor<DataType>::PaddedSizeFromShape(new_shape);
+    DataType padded_from_size =
+        static_cast<DataType>(fetch::math::Tensor<DataType>::PaddedSizeFromShape(tensor_shape));
+    DataType padded_to_size =
+        static_cast<DataType>(fetch::math::Tensor<DataType>::PaddedSizeFromShape(new_shape));
 
     ChargeAmount expected_charge{0};
     if (tensor_shape == new_shape)

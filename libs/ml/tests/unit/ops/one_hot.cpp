@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -51,8 +51,8 @@ TYPED_TEST(OneHotOpTest, forward_test)
 
   SizeType depth     = 3;
   SizeType axis      = 3;
-  auto     on_value  = DataType{5.0f};
-  auto     off_value = DataType{-1.0f};
+  auto     on_value  = DataType{5};
+  auto     off_value = DataType{-1};
 
   fetch::ml::ops::OneHot<TypeParam> op(depth, axis, on_value, off_value);
 
@@ -80,8 +80,8 @@ TYPED_TEST(OneHotOpTest, saveparams_test)
 
   SizeType depth     = 3;
   SizeType axis      = 3;
-  auto     on_value  = DataType{5.0f};
-  auto     off_value = DataType{-1.0f};
+  auto     on_value  = DataType{5};
+  auto     off_value = DataType{-1};
 
   OpType op(depth, axis, on_value, off_value);
 

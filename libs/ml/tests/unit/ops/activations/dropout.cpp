@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/activations/dropout.hpp"
-
 #include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
 #include "math/base_types.hpp"
+#include "ml/ops/activations/dropout.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 
@@ -41,10 +40,11 @@ namespace {
 template <typename TensorType>
 double zero_fraction(TensorType const &t1)
 {
-  double ret = 0;
+  using DataType = typename TensorType::Type;
+  double ret     = 0;
   for (auto const &i : t1)
   {
-    if (i == 0)
+    if (i == DataType{0})
     {
       ret++;
     }

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -200,6 +200,12 @@ private:
   void          SaveState();
   /// @}
 
+  //
+  using Clock     = std::chrono::high_resolution_clock;
+  using Timepoint = Clock::time_point;
+
+  Timepoint started_request_for_sigs_;
+
   telemetry::CounterPtr         beacon_entropy_generated_total_;
   telemetry::CounterPtr         beacon_entropy_future_signature_seen_total_;
   telemetry::CounterPtr         beacon_entropy_forced_to_time_out_total_;
@@ -208,6 +214,8 @@ private:
   telemetry::GaugePtr<uint64_t> beacon_entropy_current_round_;
   telemetry::GaugePtr<uint64_t> beacon_state_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_most_recent_round_seen_;
+  telemetry::HistogramPtr       beacon_collect_time_;
+  telemetry::HistogramPtr       beacon_verify_time_;
 };
 
 }  // namespace beacon

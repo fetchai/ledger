@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ TEST(RoutingTests, PeerTestReboot)
     for (uint64_t idx = 0; idx < N; ++idx)
     {
       fetch::muddle::KademliaTable table(FakeAddress(10), fetch::muddle::NetworkId("TEST"));
-      table.SetCacheFile("peer_table" + std::to_string(idx) + ".cache", false);
+      table.SetCacheFile("peer_table" + std::to_string(idx) + ".cache.db", false);
       table.Dump();
     }
   }
@@ -46,7 +46,7 @@ TEST(RoutingTests, PeerTestReboot)
     uint64_t idx = 0;
     for (auto &n : network->nodes)
     {
-      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
+      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache.db");
       ++idx;
     }
 
@@ -86,7 +86,7 @@ TEST(RoutingTests, PeerTestReboot)
     uint64_t idx = 0;
     for (auto &n : network->nodes)
     {
-      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache");
+      n->muddle->SetPeerTableFile("peer_table" + std::to_string(idx) + ".cache.db");
       ++idx;
     }
 
