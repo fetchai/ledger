@@ -54,6 +54,8 @@ using PromiseState           = fetch::service::PromiseState;
 using State                  = MainChainRpcService::State;
 using Mode                   = MainChainRpcService::Mode;
 
+constexpr uint64_t max_sensible_step_back = 10000;
+
 }  // namespace
 
 MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
@@ -121,10 +123,11 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
   // clang-format off
   state_machine_->RegisterHandler(State::SYNCHRONISING,           this, &MainChainRpcService::OnSynchronising);
   state_machine_->RegisterHandler(State::SYNCHRONISED,            this, &MainChainRpcService::OnSynchronised);
-  state_machine_->RegisterHandler(State::START_SYNC_WITH_PEER,  this, &MainChainRpcService::OnStartSyncWithPeer);
-  state_machine_->RegisterHandler(State::REQUEST_NEXT_BLOCKS, this, &MainChainRpcService::OnRequestNextSetOfBlocks);
+  state_machine_->RegisterHandler(State::START_SYNC_WITH_PEER,    this, &MainChainRpcService::OnStartSyncWithPeer);
+  state_machine_->RegisterHandler(State::REQUEST_NEXT_BLOCKS,     this, &MainChainRpcService::OnRequestNextSetOfBlocks);
   state_machine_->RegisterHandler(State::WAIT_FOR_NEXT_BLOCKS,    this, &MainChainRpcService::OnWaitForBlocks);
-  state_machine_->RegisterHandler(State::COMPLETE_SYNC_WITH_PEER,    this, &MainChainRpcService::OnCompleteSyncWithPeer);
+  state_machine_->RegisterHandler(State::COMPLETE_SYNC_WITH_PEER, this, &MainChainRpcService::OnCompleteSyncWithPeer);
+  state_machine_->RegisterHandler(State::WALK_BACK,               this, &MainChainRpcService::OnWalkBack);
   // clang-format on
 
   state_machine_->OnStateChange([](State current, State previous) {
@@ -446,15 +449,15 @@ State MainChainRpcService::OnWaitForBlocks()
 
   // if we are still waiting for the promise to resolve
   auto const status = current_request_->state();
-  if (status == PromiseState::WAITING)
+  switch (status)
   {
+  case PromiseState::WAITING:
     state_machine_->Delay(std::chrono::milliseconds{100});
     return State::WAIT_FOR_NEXT_BLOCKS;
-  }
 
-  // at this point the promise has either resolved successfully or not.
-  if ((status == PromiseState::FAILED) || (status == PromiseState::TIMEDOUT))
-  {
+    // at this point the promise has either resolved successfully or not.
+  case PromiseState::FAILED:
+  case PromiseState::TIMEDOUT:
     if (++consecutive_failures_ >= 3)
     {
       // too many failures give up on this peer
@@ -463,6 +466,7 @@ State MainChainRpcService::OnWaitForBlocks()
 
     state_machine_->Delay(std::chrono::milliseconds{100 * consecutive_failures_});
     return State::REQUEST_NEXT_BLOCKS;
+  default:;
   }
 
   // If we have passed all these checks then we have successfully retrieved a travelogue from our
@@ -480,11 +484,11 @@ State MainChainRpcService::OnWaitForBlocks()
   // this point
   if (log.status == TravelogueStatus::NOT_FOUND)
   {
-    // if the responding block was not found then walk back by one block
-    block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
-
-    return State::REQUEST_NEXT_BLOCKS;
+    // if the responding block was not found then start walking back slowly
+    return State::WALK_BACK;
   }
+  // The remote peer did not respond with NOT_FOUND, we can reset the stride.
+  back_stride_ = 1;
 
   // We always expect at least 1 block to be synced during this process, failure to do this is not
   // normal and implies we should try and sync with another peer
@@ -546,6 +550,21 @@ bool MainChainRpcService::ValidBlock(Block const &block, char const *action) con
     FETCH_LOG_WARN(LOGGING_NAME, "Exception in consensus on validating ", action, ": ", ex.what());
     return false;
   }
+}
+
+State MainChainRpcService::OnWalkBack()
+{
+  auto blocks_back = back_stride_;
+  if (blocks_back < max_sensible_step_back)
+  {
+    back_stride_ *= 2;
+  }
+
+  for (std::size_t i = 0; i < blocks_back && !block_resolving_->IsGenesis(); ++i)
+  {
+    block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
+  }
+  return State::REQUEST_NEXT_BLOCKS;
 }
 
 }  // namespace ledger

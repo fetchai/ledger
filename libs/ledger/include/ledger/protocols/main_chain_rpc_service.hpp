@@ -102,6 +102,7 @@ public:
     REQUEST_NEXT_BLOCKS,
     WAIT_FOR_NEXT_BLOCKS,
     COMPLETE_SYNC_WITH_PEER,
+    WALK_BACK
   };
 
   using MuddleEndpoint  = muddle::MuddleEndpoint;
@@ -178,7 +179,8 @@ private:
 
   void HandleChainResponse(Address const &address, BlockList blocks);
   template <class Begin, class End>
-  void HandleChainResponse(Address const &address, Begin begin, End end);
+  void  HandleChainResponse(Address const &address, Begin begin, End end);
+  State WalkBack();
   /// @}
 
   /// @name State Machine Handlers
@@ -189,6 +191,7 @@ private:
   State OnRequestNextSetOfBlocks();
   State OnWaitForBlocks();
   State OnCompleteSyncWithPeer();
+  State OnWalkBack();
 
   bool ValidBlock(Block const &block, char const *action) const;
   /// @}
@@ -224,6 +227,8 @@ private:
 
   BlockHash             current_missing_block_;
   std::atomic<uint16_t> loose_blocks_seen_{0};
+
+  std::size_t back_stride_{1};
   /// @}
 
   /// @name Telemetry
@@ -261,6 +266,8 @@ constexpr char const *ToString(MainChainRpcService::State state) noexcept
     return "Waiting for Blocks";
   case MainChainRpcService::State::COMPLETE_SYNC_WITH_PEER:
     return "Completed Sync with Peer";
+  case MainChainRpcService::State::WALK_BACK:
+    return "Walk Back";
   }
 
   return "unknown";
