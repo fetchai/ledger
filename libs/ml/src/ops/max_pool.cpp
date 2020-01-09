@@ -20,7 +20,6 @@
 #include "ml/ops/max_pool.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "ml/ops/max_pool_2d.hpp"
-
 #include <cassert>
 
 namespace fetch {

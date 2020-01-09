@@ -820,7 +820,7 @@ void Tensor<T, C>::Set(Args... args)
   }
 
   uint64_t index = TensorSetter<0, Args...>::IndexOf(stride_, shape_, std::forward<Args>(args)...);
-  Type value = static_cast<Type>(TensorSetter<0, Args...>::ValueOf(std::forward<Args>(args)...));
+  auto value = static_cast<Type>(TensorSetter<0, Args...>::ValueOf(std::forward<Args>(args)...));
 
   data_[index] = std::move(value);
 }
