@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "math/tensor/tensor.hpp"
 #include "ml/regularisers/reg_types.hpp"
 
@@ -28,7 +27,7 @@ namespace regularisers {
 /*
  * Abstract Regulariser interface
  */
-template <class T>
+template <typename T>
 class Regulariser
 {
 public:
@@ -37,9 +36,7 @@ public:
 
   Regulariser() = default;
 
-  explicit Regulariser(RegularisationType reg_type)
-    : reg_type(reg_type)
-  {}
+  explicit Regulariser(RegularisationType reg_type);
 
   virtual ~Regulariser() = default;
 

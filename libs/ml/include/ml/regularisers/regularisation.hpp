@@ -17,45 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/exceptions/exceptions.hpp"
-#include "ml/regularisers/l1_regulariser.hpp"
-#include "ml/regularisers/l2_regulariser.hpp"
-#include "ml/regularisers/reg_types.hpp"
 #include "ml/regularisers/regulariser.hpp"
-
-#include <memory>
-#include <stdexcept>
 
 namespace fetch {
 namespace ml {
 namespace details {
 
-template <class T>
-std::shared_ptr<fetch::ml::regularisers::Regulariser<T>> CreateRegulariser(RegularisationType type)
-{
-  using RegType    = fetch::ml::regularisers::Regulariser<T>;
-  using RegPtrType = std::shared_ptr<RegType>;
-
-  RegPtrType ret;
-  switch (type)
-  {
-  case RegularisationType::NONE:
-    // No regulariser
-    break;
-
-  case RegularisationType::L1:
-    ret.reset(new fetch::ml::regularisers::L1Regulariser<T>());
-    break;
-
-  case RegularisationType::L2:
-    ret.reset(new fetch::ml::regularisers::L2Regulariser<T>());
-    break;
-
-  default:
-    throw exceptions::InvalidMode("Unknown regulariser type");
-  }
-  return ret;
-}
+template <typename T>
+std::shared_ptr<fetch::ml::regularisers::Regulariser<T>> CreateRegulariser(RegularisationType type);
 
 }  // namespace details
 }  // namespace ml

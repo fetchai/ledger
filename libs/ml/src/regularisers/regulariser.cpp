@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2020 Fetch.AI Limited
@@ -23,22 +22,28 @@ namespace fetch {
 namespace ml {
 namespace regularisers {
 
-/*
- * L1 regularisation
- */
-template <class T>
-class L1Regulariser : public Regulariser<T>
-{
-public:
-  using TensorType = T;
-  using DataType   = typename TensorType::Type;
+template <typename TensorType>
+Regulariser<TensorType>::Regulariser(RegularisationType reg_type)
+  : reg_type(reg_type)
+{}
 
-  L1Regulariser();
+///////////////////////////////
+/// EXPLICIT INSTANTIATIONS ///
+///////////////////////////////
 
-  ~L1Regulariser() override = default;
-
-  void ApplyRegularisation(TensorType &weight, DataType regularisation_rate) override;
-};
+template class Regulariser<math::Tensor<int8_t>>;
+template class Regulariser<math::Tensor<int16_t>>;
+template class Regulariser<math::Tensor<int32_t>>;
+template class Regulariser<math::Tensor<int64_t>>;
+template class Regulariser<math::Tensor<uint8_t>>;
+template class Regulariser<math::Tensor<uint16_t>>;
+template class Regulariser<math::Tensor<uint32_t>>;
+template class Regulariser<math::Tensor<uint64_t>>;
+template class Regulariser<math::Tensor<float>>;
+template class Regulariser<math::Tensor<double>>;
+template class Regulariser<math::Tensor<fixed_point::fp32_t>>;
+template class Regulariser<math::Tensor<fixed_point::fp64_t>>;
+template class Regulariser<math::Tensor<fixed_point::fp128_t>>;
 
 }  // namespace regularisers
 }  // namespace ml
