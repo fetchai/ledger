@@ -1698,7 +1698,7 @@ void BM_MaskFillForward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input_1));
   inputs.emplace_back(std::make_shared<TensorType>(input_2));
 
-  T                                                n(1.0);
+  T                                                n(1);
   fetch::ml::ops::MaskFill<fetch::math::Tensor<T>> mfill(n);
 
   for (auto _ : state)
@@ -1764,7 +1764,7 @@ void BM_MaskFillBackward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input_1));
   inputs.emplace_back(std::make_shared<TensorType>(input_2));
 
-  T                                                n(1.0);
+  T                                                n(1);
   fetch::ml::ops::MaskFill<fetch::math::Tensor<T>> mfill(n);
 
   for (auto _ : state)
