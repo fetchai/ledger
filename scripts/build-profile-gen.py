@@ -38,6 +38,8 @@ def main():
     with open(profile_path, 'w') as profile_file:
         profile = {
             'cmd': cmd,
+            'startTime': start.isoformat(),
+            'endTime': finish.isoformat(),
             'outputPath': output_path,
             'duration': delta,
             'exitCode': exit_code,
