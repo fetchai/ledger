@@ -25,14 +25,14 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-template <class T>
+template <typename T>
 std::shared_ptr<OpsSaveableParams> Multiply<T>::GetOpSaveableParams()
 {
   SPType sp{};
   return std::make_shared<SPType>(sp);
 }
 
-template <class TensorType>
+template <typename TensorType>
 std::shared_ptr<fetch::ml::ops::Ops<TensorType>> Multiply<TensorType>::MakeSharedCopy(
     std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me)
 {
@@ -44,7 +44,15 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> Multiply<TensorType>::MakeShare
   return copyshare;
 }
 
-template <class T>
+/**
+ * elementwise multiplication
+ * for inputs to the multiply layer, if broadcasting is required, make sure the first input is the
+ * one with the complete shape
+ *
+ * @param inputs  left & right inputs to multiply
+ * @return
+ */
+template <typename T>
 void Multiply<T>::Forward(const VecTensorType &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
@@ -57,7 +65,12 @@ void Multiply<T>::Forward(const VecTensorType &inputs, TensorType &output)
   fetch::math::Multiply((*inputs.at(0)), (*inputs.at(1)), output);
 }
 
-template <class TensorType>
+/**
+ * elementwise multiplication gradient is:
+ * f'(input0)=input1*error_signal
+ * f'(input1)=input0*error_signal
+ */
+template <typename TensorType>
 std::vector<TensorType> Multiply<TensorType>::Backward(const VecTensorType &inputs,
                                                        const TensorType &   error_signal)
 {
@@ -107,12 +120,30 @@ std::vector<TensorType> Multiply<TensorType>::Backward(const VecTensorType &inpu
   return {error_signal_1, error_sum};
 }
 
-template <class T>
+template <typename T>
 std::vector<fetch::math::SizeType> Multiply<T>::ComputeOutputShape(
     const VecTensorType &inputs) const
 {
   return inputs.front()->shape();
 }
+
+///////////////////////////////
+/// EXPLICIT INSTANTIATIONS ///
+///////////////////////////////
+
+template class Multiply<math::Tensor<int8_t>>;
+template class Multiply<math::Tensor<int16_t>>;
+template class Multiply<math::Tensor<int32_t>>;
+template class Multiply<math::Tensor<int64_t>>;
+template class Multiply<math::Tensor<uint8_t>>;
+template class Multiply<math::Tensor<uint16_t>>;
+template class Multiply<math::Tensor<uint32_t>>;
+template class Multiply<math::Tensor<uint64_t>>;
+template class Multiply<math::Tensor<float>>;
+template class Multiply<math::Tensor<double>>;
+template class Multiply<math::Tensor<fixed_point::fp32_t>>;
+template class Multiply<math::Tensor<fixed_point::fp64_t>>;
+template class Multiply<math::Tensor<fixed_point::fp128_t>>;
 
 }  // namespace ops
 }  // namespace ml

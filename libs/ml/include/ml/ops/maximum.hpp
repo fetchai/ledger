@@ -49,18 +49,9 @@ public:
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
       std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
-  /**
-   * elementwise maximum
-   * @param inputs  left & right inputs to get maximum
-   * @return
-   */
+
   void Forward(VecTensorType const &inputs, TensorType &output) override;
 
-  /**
-   * elementwise maximum gradient is:
-   * f'(input0)=if(input0>input1)=error_signal
-   * f'(input1)=if(input0<=input1)=error_signal
-   */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override;
 

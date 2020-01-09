@@ -48,35 +48,8 @@ public:
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
-  /**
-   * This op should not be shared because it uses cacheing, therefore MakeSharedCopy returns a new
-   * op
-   * @param me
-   * @return
-   */
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
-
-    auto copyshare = std::make_shared<MyType>(*this);
-
-    copyshare->error_signal_1_       = error_signal_1_.Copy();
-    copyshare->error_signal_2_       = error_signal_2_.Copy();
-    copyshare->output_view_tensor_   = output_view_tensor_.Copy();
-    copyshare->fwd_in1_view_tensor_  = fwd_in1_view_tensor_.Copy();
-    copyshare->fwd_in2_view_tensor_  = fwd_in2_view_tensor_.Copy();
-    copyshare->back_in1_view_tensor_ = back_in1_view_tensor_.Copy();
-    copyshare->back_in2_view_tensor_ = back_in2_view_tensor_.Copy();
-    copyshare->err_sig_view_tensor_  = err_sig_view_tensor_.Copy();
-    copyshare->err1_                 = err1_.Copy();
-    copyshare->err2_                 = err2_.Copy();
-    copyshare->transpose_a_          = transpose_a_;
-    copyshare->transpose_b_          = transpose_b_;
-
-    return copyshare;
-  }
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
   void                    Forward(VecTensorType const &inputs, TensorType &output) override;
   std::vector<TensorType> Backward(VecTensorType const &inputs,

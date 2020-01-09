@@ -24,7 +24,7 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-template <class T>
+template <typename T>
 MaxPool1D<T>::MaxPool1D(const SPType &sp)
   : Ops<T>(sp)
 {
@@ -32,7 +32,7 @@ MaxPool1D<T>::MaxPool1D(const SPType &sp)
   stride_size_ = sp.stride_size;
 }
 
-template <class T>
+template <typename T>
 std::shared_ptr<OpsSaveableParams> MaxPool1D<T>::GetOpSaveableParams()
 {
   SPType sp{};
@@ -41,7 +41,7 @@ std::shared_ptr<OpsSaveableParams> MaxPool1D<T>::GetOpSaveableParams()
   return std::make_shared<SPType>(sp);
 }
 
-template <class TensorType>
+template <typename TensorType>
 std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MaxPool1D<TensorType>::MakeSharedCopy(
     std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me)
 {
@@ -53,7 +53,15 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MaxPool1D<TensorType>::MakeShar
   return copyshare;
 }
 
-template <class T>
+/**
+ * Applies 1D max pooling of kernel_size_ for each channel described here:
+ * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf
+ * @param inputs vector of tensor references where at:
+ * inputs[0] = input_data[input_channels x input_height]
+ * @param output tensor of size [input_channels=output_channels x number_of_stride_sized_steps]
+ * @return: output tensor parameter
+ */
+template <typename T>
 void MaxPool1D<T>::Forward(const VecTensorType &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
@@ -94,7 +102,18 @@ void MaxPool1D<T>::Forward(const VecTensorType &inputs, TensorType &output)
   }
 }
 
-template <class TensorType>
+/**
+ * Computes gradient of 1D max pooling of kernel_size_ for each channel described here:
+ * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf
+ * Error signal of max pool is passed only to max node
+ * @param inputs vector of tensor references where at:
+ * inputs[0] = input_data[input_channels x input_height]
+ * @param error_signal tensor of size [output_channels=input_channels x
+ * number_of_stride_sized_steps]
+ * @return: output vector of tensors with back propagated error signal
+ * output[0]=input_error[inputs[0].shape]
+ */
+template <typename TensorType>
 std::vector<TensorType> MaxPool1D<TensorType>::Backward(const VecTensorType &inputs,
                                                         const TensorType &   error_signal)
 {
@@ -142,7 +161,7 @@ std::vector<TensorType> MaxPool1D<TensorType>::Backward(const VecTensorType &inp
   return {return_signal};
 }
 
-template <class T>
+template <typename T>
 std::vector<fetch::math::SizeType> MaxPool1D<T>::ComputeOutputShape(
     const VecTensorType &inputs) const
 {
@@ -157,6 +176,24 @@ std::vector<fetch::math::SizeType> MaxPool1D<T>::ComputeOutputShape(
   output_shape.emplace_back(inputs.at(0)->shape().at(2));
   return output_shape;
 }
+
+///////////////////////////////
+/// EXPLICIT INSTANTIATIONS ///
+///////////////////////////////
+
+// template class MaxPool1D<math::Tensor<int8_t>>;
+// template class MaxPool1D<math::Tensor<int16_t>>;
+template class MaxPool1D<math::Tensor<int32_t>>;
+template class MaxPool1D<math::Tensor<int64_t>>;
+// template class MaxPool1D<math::Tensor<uint8_t>>;
+// template class MaxPool1D<math::Tensor<uint16_t>>;
+template class MaxPool1D<math::Tensor<uint32_t>>;
+template class MaxPool1D<math::Tensor<uint64_t>>;
+template class MaxPool1D<math::Tensor<float>>;
+template class MaxPool1D<math::Tensor<double>>;
+template class MaxPool1D<math::Tensor<fixed_point::fp32_t>>;
+template class MaxPool1D<math::Tensor<fixed_point::fp64_t>>;
+template class MaxPool1D<math::Tensor<fixed_point::fp128_t>>;
 
 }  // namespace ops
 }  // namespace ml

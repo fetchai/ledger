@@ -48,18 +48,9 @@ public:
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
       std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
-  /**
-   * based on boolean condition mask, decide if we need to fill the element with fill_value.
-   * @param inputs - two inputs, first is mask, second is the array to be masked
-   * array
-   * @return
-   */
+
   void Forward(VecTensorType const &inputs, TensorType &output) override;
 
-  /**
-   * elementwise gradient for second input (the then input) is:
-   * error' = mask * error_signal
-   */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override;
 

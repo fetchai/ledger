@@ -49,21 +49,9 @@ public:
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
       std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
-  /**
-   * elementwise multiplication
-   * for inputs to the multiply layer, if broadcasting is required, make sure the first input is the
-   * one with the complete shape
-   *
-   * @param inputs  left & right inputs to multiply
-   * @return
-   */
+
   void Forward(VecTensorType const &inputs, TensorType &output) override;
 
-  /**
-   * elementwise multiplication gradient is:
-   * f'(input0)=input1*error_signal
-   * f'(input1)=input0*error_signal
-   */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override;
 

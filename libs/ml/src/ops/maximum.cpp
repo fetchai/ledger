@@ -25,14 +25,14 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-template <class T>
+template <typename T>
 std::shared_ptr<OpsSaveableParams> Maximum<T>::GetOpSaveableParams()
 {
   SPType sp{};
   return std::make_shared<SPType>(sp);
 }
 
-template <class TensorType>
+template <typename TensorType>
 std::shared_ptr<fetch::ml::ops::Ops<TensorType>> Maximum<TensorType>::MakeSharedCopy(
     std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me)
 {
@@ -44,7 +44,12 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> Maximum<TensorType>::MakeShared
   return copyshare;
 }
 
-template <class T>
+/**
+ * elementwise maximum
+ * @param inputs  left & right inputs to get maximum
+ * @return
+ */
+template <typename T>
 void Maximum<T>::Forward(const VecTensorType &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
@@ -54,7 +59,12 @@ void Maximum<T>::Forward(const VecTensorType &inputs, TensorType &output)
   fetch::math::Maximum((*inputs.at(0)), (*inputs.at(1)), output);
 }
 
-template <class TensorType>
+/**
+ * elementwise maximum gradient is:
+ * f'(input0)=if(input0>input1)=error_signal
+ * f'(input1)=if(input0<=input1)=error_signal
+ */
+template <typename TensorType>
 std::vector<TensorType> Maximum<TensorType>::Backward(const VecTensorType &inputs,
                                                       const TensorType &   error_signal)
 {
@@ -91,11 +101,29 @@ std::vector<TensorType> Maximum<TensorType>::Backward(const VecTensorType &input
   return {return_signal_1, return_signal_2};
 }
 
-template <class T>
+template <typename T>
 std::vector<fetch::math::SizeType> Maximum<T>::ComputeOutputShape(const VecTensorType &inputs) const
 {
   return inputs.front()->shape();
 }
+
+///////////////////////////////
+/// EXPLICIT INSTANTIATIONS ///
+///////////////////////////////
+
+template class Maximum<math::Tensor<int8_t>>;
+template class Maximum<math::Tensor<int16_t>>;
+template class Maximum<math::Tensor<int32_t>>;
+template class Maximum<math::Tensor<int64_t>>;
+template class Maximum<math::Tensor<uint8_t>>;
+template class Maximum<math::Tensor<uint16_t>>;
+template class Maximum<math::Tensor<uint32_t>>;
+template class Maximum<math::Tensor<uint64_t>>;
+template class Maximum<math::Tensor<float>>;
+template class Maximum<math::Tensor<double>>;
+template class Maximum<math::Tensor<fixed_point::fp32_t>>;
+template class Maximum<math::Tensor<fixed_point::fp64_t>>;
+template class Maximum<math::Tensor<fixed_point::fp128_t>>;
 
 }  // namespace ops
 }  // namespace ml

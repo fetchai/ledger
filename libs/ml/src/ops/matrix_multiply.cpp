@@ -27,7 +27,7 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-template <class T>
+template <typename T>
 MatrixMultiply<T>::MatrixMultiply(const SPType &sp)
   : Ops<T>(sp)
 {
@@ -35,7 +35,7 @@ MatrixMultiply<T>::MatrixMultiply(const SPType &sp)
   transpose_b_ = sp.transpose_b;
 }
 
-template <class T>
+template <typename T>
 std::shared_ptr<OpsSaveableParams> MatrixMultiply<T>::GetOpSaveableParams()
 {
   auto ret         = std::make_shared<SPType>();
@@ -44,7 +44,7 @@ std::shared_ptr<OpsSaveableParams> MatrixMultiply<T>::GetOpSaveableParams()
   return ret;
 }
 
-template <class T>
+template <typename T>
 void MatrixMultiply<T>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
@@ -111,7 +111,7 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, TensorType &output)
   }
 }
 
-template <class T>
+template <typename T>
 std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
                                            TensorType const &   error_signal)
 {
@@ -216,7 +216,7 @@ std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
   return {error_signal_1_, error_signal_2_};
 }
 
-template <class T>
+template <typename T>
 std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShape(
     VecTensorType const &inputs) const
 {
@@ -413,6 +413,56 @@ void MatrixMultiply<TensorType>::BackDotWithTranspose(TensorType const &a, Tenso
         "ops::MatrixMultiply does not support both inputs transposed");
   }
 }
+
+/**
+ * This op should not be shared because it uses cacheing, therefore MakeSharedCopy returns a new
+ * op
+ * @param me
+ * @return
+ */
+template <typename TensorType>
+std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MatrixMultiply<TensorType>::MakeSharedCopy(
+    std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me)
+{
+  FETCH_UNUSED(me);
+  assert(me.get() == this);
+
+  auto copyshare = std::make_shared<MyType>(*this);
+
+  copyshare->error_signal_1_       = error_signal_1_.Copy();
+  copyshare->error_signal_2_       = error_signal_2_.Copy();
+  copyshare->output_view_tensor_   = output_view_tensor_.Copy();
+  copyshare->fwd_in1_view_tensor_  = fwd_in1_view_tensor_.Copy();
+  copyshare->fwd_in2_view_tensor_  = fwd_in2_view_tensor_.Copy();
+  copyshare->back_in1_view_tensor_ = back_in1_view_tensor_.Copy();
+  copyshare->back_in2_view_tensor_ = back_in2_view_tensor_.Copy();
+  copyshare->err_sig_view_tensor_  = err_sig_view_tensor_.Copy();
+  copyshare->err1_                 = err1_.Copy();
+  copyshare->err2_                 = err2_.Copy();
+  copyshare->transpose_a_          = transpose_a_;
+  copyshare->transpose_b_          = transpose_b_;
+
+  return copyshare;
+}
+
+///////////////////////////////
+/// EXPLICIT INSTANTIATIONS ///
+///////////////////////////////
+
+template class MatrixMultiply<math::Tensor<int8_t>>;
+template class MatrixMultiply<math::Tensor<int16_t>>;
+template class MatrixMultiply<math::Tensor<int32_t>>;
+template class MatrixMultiply<math::Tensor<int64_t>>;
+template class MatrixMultiply<math::Tensor<uint8_t>>;
+template class MatrixMultiply<math::Tensor<uint16_t>>;
+template class MatrixMultiply<math::Tensor<uint32_t>>;
+template class MatrixMultiply<math::Tensor<uint64_t>>;
+template class MatrixMultiply<math::Tensor<float>>;
+template class MatrixMultiply<math::Tensor<double>>;
+template class MatrixMultiply<math::Tensor<fixed_point::fp32_t>>;
+template class MatrixMultiply<math::Tensor<fixed_point::fp64_t>>;
+template class MatrixMultiply<math::Tensor<fixed_point::fp128_t>>;
+
 }  // namespace ops
 }  // namespace ml
 }  // namespace fetch

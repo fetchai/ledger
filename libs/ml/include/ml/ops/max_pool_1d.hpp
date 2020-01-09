@@ -51,27 +51,9 @@ public:
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
       std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
-  /**
-   * Applies 1D max pooling of kernel_size_ for each channel described here:
-   * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf
-   * @param inputs vector of tensor references where at:
-   * inputs[0] = input_data[input_channels x input_height]
-   * @param output tensor of size [input_channels=output_channels x number_of_stride_sized_steps]
-   * @return: output tensor parameter
-   */
+
   void Forward(VecTensorType const &inputs, TensorType &output) override;
 
-  /**
-   * Computes gradient of 1D max pooling of kernel_size_ for each channel described here:
-   * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf
-   * Error signal of max pool is passed only to max node
-   * @param inputs vector of tensor references where at:
-   * inputs[0] = input_data[input_channels x input_height]
-   * @param error_signal tensor of size [output_channels=input_channels x
-   * number_of_stride_sized_steps]
-   * @return: output vector of tensors with back propagated error signal
-   * output[0]=input_error[inputs[0].shape]
-   */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override;
 

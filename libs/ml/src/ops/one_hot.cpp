@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/one_hot.hpp"
 #include "math/one_hot.hpp"
+#include "ml/ops/one_hot.hpp"
 
 #include <cassert>
 
@@ -25,7 +25,7 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-template <class T>
+template <typename T>
 OneHot<T>::OneHot(const OneHot::SPType &sp)
   : Ops<T>(sp)
 {
@@ -35,7 +35,7 @@ OneHot<T>::OneHot(const OneHot::SPType &sp)
   off_value_ = sp.off_value;
 }
 
-template <class T>
+template <typename T>
 std::shared_ptr<OpsSaveableParams> OneHot<T>::GetOpSaveableParams()
 {
   SPType sp{};
@@ -47,7 +47,7 @@ std::shared_ptr<OpsSaveableParams> OneHot<T>::GetOpSaveableParams()
   return std::make_shared<SPType>(sp);
 }
 
-template <class TensorType>
+template <typename TensorType>
 std::shared_ptr<fetch::ml::ops::Ops<TensorType>> OneHot<TensorType>::MakeSharedCopy(
     std::shared_ptr<fetch::ml::ops::Ops<OneHot::TensorType>> me)
 {
@@ -59,7 +59,7 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> OneHot<TensorType>::MakeSharedC
   return copyshare;
 }
 
-template <class T>
+template <typename T>
 void OneHot<T>::Forward(const VecTensorType &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
@@ -68,7 +68,7 @@ void OneHot<T>::Forward(const VecTensorType &inputs, TensorType &output)
   fetch::math::OneHot(output, *(inputs.at(0)), depth_, axis_, on_value_, off_value_);
 }
 
-template <class TensorType>
+template <typename TensorType>
 std::vector<TensorType> OneHot<TensorType>::Backward(const VecTensorType &inputs,
                                                      const TensorType &   error_signal)
 {
@@ -80,7 +80,7 @@ std::vector<TensorType> OneHot<TensorType>::Backward(const VecTensorType &inputs
   return {TensorType{inputs.at(0)->shape()}};
 }
 
-template <class T>
+template <typename T>
 std::vector<fetch::math::SizeType> OneHot<T>::ComputeOutputShape(
     const OneHot::VecTensorType &inputs) const
 {
@@ -99,6 +99,24 @@ std::vector<fetch::math::SizeType> OneHot<T>::ComputeOutputShape(
 
   return shape;
 }
+
+///////////////////////////////
+/// EXPLICIT INSTANTIATIONS ///
+///////////////////////////////
+
+template class OneHot<math::Tensor<int8_t>>;
+template class OneHot<math::Tensor<int16_t>>;
+template class OneHot<math::Tensor<int32_t>>;
+template class OneHot<math::Tensor<int64_t>>;
+template class OneHot<math::Tensor<uint8_t>>;
+template class OneHot<math::Tensor<uint16_t>>;
+template class OneHot<math::Tensor<uint32_t>>;
+template class OneHot<math::Tensor<uint64_t>>;
+template class OneHot<math::Tensor<float>>;
+template class OneHot<math::Tensor<double>>;
+template class OneHot<math::Tensor<fixed_point::fp32_t>>;
+template class OneHot<math::Tensor<fixed_point::fp64_t>>;
+template class OneHot<math::Tensor<fixed_point::fp128_t>>;
 
 }  // namespace ops
 }  // namespace ml
