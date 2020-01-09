@@ -14,9 +14,9 @@ def parse_commandline():
 
     parser_files = subparsers.add_parser('files')
     parser_files.add_argument(
-        '--gt', type=float, help='Filter the set to files greater than a specified duration')
+        '--gt', type=float, help='Filter output to results with a duration greater than the value specified')
     parser_files.add_argument(
-        '--lt', type=float, help='Filter the set to files less than a specified duration')
+        '--lt', type=float, help='Filter output to results with a duration greater than the value specified')
     parser_files.add_argument(
         '-L', '--library', help='The specified library to filter on')
     parser_files.add_argument(
