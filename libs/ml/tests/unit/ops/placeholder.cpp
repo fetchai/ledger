@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -142,7 +142,6 @@ TYPED_TEST(PlaceholderAllTest, saveable_test)
   using OpType     = typename fetch::ml::ops::PlaceHolder<TensorType>;
 
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  TensorType gt   = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
 
   OpType op;
   op.SetData(data);
@@ -177,8 +176,7 @@ TYPED_TEST(PlaceholderAllTest, saveable_test)
   new_op.Forward({}, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 }  // namespace test

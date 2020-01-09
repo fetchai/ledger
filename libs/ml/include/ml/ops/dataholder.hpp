@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/ops.hpp"
-#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <memory>
@@ -26,6 +25,12 @@
 
 namespace fetch {
 namespace ml {
+
+struct OpsSaveableParams;
+
+template <typename TensorType>
+struct OpDataHolderSaveableParams;
+
 namespace ops {
 
 /**
@@ -53,60 +58,16 @@ public:
 
   ~DataHolder() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    return std::make_shared<SPType>();
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
-  /**
-   * forward recovers the stored data
-   * @param inputs
-   * @param output
-   */
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    FETCH_UNUSED(inputs);
-    assert(inputs.empty());
-    assert(data_);
-    output = *(data_);
-  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
-  /**
-   * backward for non training dataholders should just pass back the error signal
-   * @param inputs
-   * @param error_signal
-   * @return
-   */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    FETCH_UNUSED(inputs);
-    assert(inputs.empty());
-    return {error_signal};
-  }
+                                   TensorType const &   error_signal) override;
 
-  /**
-   * sets the internally stored data
-   * @param data
-   * @return
-   */
-  virtual bool SetData(TensorType const &data)
-  {
-    bool shape_changed = true;
-    if (data_)
-    {
-      shape_changed = (data_->shape() != data.shape());
-    }
-    data_ = std::make_shared<TensorType>(data);
-    return shape_changed;
-  }
+  virtual bool SetData(TensorType const &data);
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    FETCH_UNUSED(inputs);
-    assert(data_);
-    return data_->shape();
-  }
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {

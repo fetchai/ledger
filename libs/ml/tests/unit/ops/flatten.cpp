@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -130,7 +130,6 @@ TYPED_TEST(FlattenTest, saveparams_test)
   SizeType batches = 5;
 
   TypeParam data(std::vector<uint64_t>({height, width, batches}));
-  TypeParam gt(std::vector<uint64_t>({height * width, batches}));
 
   for (SizeType i{0}; i < height; i++)
   {
@@ -138,8 +137,7 @@ TYPED_TEST(FlattenTest, saveparams_test)
     {
       for (SizeType n{0}; n < batches; n++)
       {
-        data(i, j, n)         = static_cast<DataType>(i * 100 + j * 10 + n);
-        gt(j * height + i, n) = static_cast<DataType>(i * 100 + j * 10 + n);
+        data(i, j, n) = static_cast<DataType>(i * 100 + j * 10 + n);
       }
     }
   }
@@ -174,8 +172,7 @@ TYPED_TEST(FlattenTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(FlattenTest, saveparams_backward_test)

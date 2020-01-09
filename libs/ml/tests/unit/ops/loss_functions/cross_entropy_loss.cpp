@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -120,6 +120,7 @@ TYPED_TEST(CrossEntropyTest, onehot_forward_log_zero_test)
 TYPED_TEST(CrossEntropyTest, binary_forward_test)
 {
   using SizeType = fetch::math::SizeType;
+  using DataType = typename TypeParam::Type;
 
   uint64_t n_classes     = 1;
   uint64_t n_data_points = 3;
@@ -133,8 +134,8 @@ TYPED_TEST(CrossEntropyTest, binary_forward_test)
 
   for (SizeType i = 0; i < n_data_points * n_classes; ++i)
   {
-    data1.Set(SizeType{0}, i, typename TypeParam::Type(input_vals[i]));
-    data2.Set(SizeType{0}, i, typename TypeParam::Type(targets[i]));
+    data1.Set(SizeType{0}, i, fetch::math::AsType<DataType>(input_vals[i]));
+    data2.Set(SizeType{0}, i, fetch::math::AsType<DataType>(targets[i]));
   }
 
   fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
@@ -161,7 +162,7 @@ TYPED_TEST(CrossEntropyTest, binary_backward_test)
   std::vector<double> gt_data{-20, 1.1111111111111111, -2.0000};
   for (SizeType i = 0; i < gt.size(); ++i)
   {
-    gt.Set(SizeType{0}, i, typename TypeParam::Type(gt_data[i]));
+    gt.Set(SizeType{0}, i, fetch::math::AsType<DataType>(gt_data[i]));
   }
   gt = gt / static_cast<DataType>(n_data_points);
 
@@ -170,8 +171,8 @@ TYPED_TEST(CrossEntropyTest, binary_backward_test)
 
   for (SizeType i = 0; i < n_data_points * n_classes; ++i)
   {
-    data1.Set(SizeType{0}, i, typename TypeParam::Type(input_vals[i]));
-    data2.Set(SizeType{0}, i, typename TypeParam::Type(targets[i]));
+    data1.Set(SizeType{0}, i, fetch::math::AsType<DataType>(input_vals[i]));
+    data2.Set(SizeType{0}, i, fetch::math::AsType<DataType>(targets[i]));
   }
 
   TypeParam error_signal({1, 1});
@@ -186,7 +187,8 @@ TYPED_TEST(CrossEntropyTest, binary_backward_test)
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal)
                   .at(0)
-                  .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(CrossEntropyTest, onehot_backward_test)
@@ -217,7 +219,8 @@ TYPED_TEST(CrossEntropyTest, onehot_backward_test)
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal)
                   .at(0)
-                  .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(CrossEntropyTest, saveparams_test)
@@ -260,7 +263,7 @@ TYPED_TEST(CrossEntropyTest, saveparams_test)
   {
     for (uint64_t j{0}; j < n_classes; ++j)
     {
-      data1.Set(j, i, DataType(logits[counter]));
+      data1.Set(j, i, fetch::math::AsType<DataType>(logits[counter]));
       ++counter;
     }
   }
@@ -359,11 +362,9 @@ TYPED_TEST(CrossEntropyTest, saveparams_one_dimensional_backward_test)
       {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
 
   // test correct values
-  EXPECT_TRUE(
-      gradients.at(0).AllClose(new_gradients.at(0),
-                               fetch::math::function_tolerance<typename TypeParam::Type>() * 4,
-                               fetch::math::function_tolerance<typename TypeParam::Type>()) *
-      4);
+  EXPECT_TRUE(gradients.at(0).AllClose(new_gradients.at(0),
+                                       fetch::math::function_tolerance<DataType>() * DataType{4},
+                                       fetch::math::function_tolerance<DataType>() * DataType{4}));
 }
 
 }  // namespace test

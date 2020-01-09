@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/activations/dropout.hpp"
-
 #include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
 #include "math/base_types.hpp"
+#include "math/standard_functions/sqrt.hpp"
+#include "ml/ops/activations/dropout.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 
@@ -39,17 +39,18 @@ TYPED_TEST_CASE(DropoutTest, math::test::TensorFloatingTypes);
 
 namespace {
 template <typename TensorType>
-double zero_fraction(TensorType const &t1)
+typename TensorType::Type zero_fraction(TensorType const &t1)
 {
-  double ret = 0;
+  using DataType = typename TensorType::Type;
+  DataType ret{0};
   for (auto const &i : t1)
   {
-    if (i == 0)
+    if (i == DataType{0})
     {
       ret++;
     }
   }
-  return ret / static_cast<double>(t1.size());
+  return ret / static_cast<DataType>(t1.size());
 }
 
 /**
@@ -59,10 +60,12 @@ double zero_fraction(TensorType const &t1)
  * @param prob binomial distribution probability
  * @return
  */
-double two_stdev(math::SizeType tensorsize, double prob)
+template <typename DataType>
+DataType two_stdev(math::SizeType tensorsize, DataType prob)
 {
-  return 2.0 * sqrt(static_cast<double>(tensorsize) * prob * (1.0 - prob)) /
-         static_cast<double>(tensorsize);
+  return DataType{2} *
+         fetch::math::Sqrt(static_cast<DataType>(tensorsize) * prob * (DataType{1} - prob)) /
+         static_cast<DataType>(tensorsize);
 }
 
 }  // namespace
@@ -74,8 +77,9 @@ TYPED_TEST(DropoutTest, forward_test)
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   math::SizeType tensorsize = 10000;
-  TensorType     data       = TensorType::UniformRandom(tensorsize);
-  auto           prob       = fetch::math::Type<DataType>("0.5");
+  TensorType     data       = TensorType(tensorsize);
+  data.Fill(DataType{1});
+  auto prob = fetch::math::Type<DataType>("0.5");
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
@@ -85,22 +89,24 @@ TYPED_TEST(DropoutTest, forward_test)
   op.Forward(vec_data, prediction);
 
   // test correct fraction and sum
-  double abs_error = two_stdev(tensorsize, static_cast<double>(prob));
-  EXPECT_NEAR(zero_fraction(prediction), static_cast<double>(prob), abs_error);
+  DataType abs_error = two_stdev(tensorsize, static_cast<DataType>(prob));
+  EXPECT_NEAR(static_cast<double>(zero_fraction(prediction)), static_cast<double>(prob),
+              static_cast<double>(abs_error));
   // using 2* two_stdev * tensorsize for the error on this calculation is not quite correct but it's
   // close enough
   EXPECT_NEAR(static_cast<double>(fetch::math::Sum(prediction)),
               static_cast<double>(fetch::math::Sum(data)),
-              2 * abs_error * static_cast<double>(tensorsize));
+              static_cast<double>(DataType{2} * abs_error * static_cast<DataType>(tensorsize)));
 
   // Test after generating new random alpha value
   op.Forward(VecTensorType({std::make_shared<const TensorType>(data)}), prediction);
 
   // test correct fraction and sum
-  EXPECT_NEAR(zero_fraction(prediction), static_cast<double>(prob), abs_error);
+  EXPECT_NEAR(static_cast<double>(zero_fraction(prediction)), static_cast<double>(prob),
+              static_cast<double>(abs_error));
   EXPECT_NEAR(static_cast<double>(fetch::math::Sum(prediction)),
               static_cast<double>(fetch::math::Sum(data)),
-              2 * abs_error * static_cast<double>(tensorsize));
+              static_cast<double>(DataType{2} * abs_error * static_cast<DataType>(tensorsize)));
 
   // Test with is_training set to false
   op.SetTraining(false);
@@ -108,7 +114,7 @@ TYPED_TEST(DropoutTest, forward_test)
   op.Forward(VecTensorType({std::make_shared<const TensorType>(data)}), prediction);
 
   // test correct fraction and values
-  EXPECT_EQ(zero_fraction(prediction), 0);
+  EXPECT_EQ(zero_fraction(prediction), DataType{0});
   EXPECT_TRUE(prediction.AllClose(data));
 }
 
@@ -118,7 +124,8 @@ TYPED_TEST(DropoutTest, forward_3d_tensor_test)
   using TensorType = TypeParam;
 
   math::SizeType tensorsize = 1000;
-  TensorType     data       = TensorType::UniformRandom(tensorsize);
+  TensorType     data       = TensorType(tensorsize);
+  data.Fill(DataType{1});
   data.Reshape({10, 10, 10});
   DataType prob = fetch::math::Type<DataType>("0.5");
 
@@ -127,11 +134,12 @@ TYPED_TEST(DropoutTest, forward_3d_tensor_test)
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct fraction, sum and shape
-  double abs_error = two_stdev(tensorsize, static_cast<double>(prob));
-  EXPECT_NEAR(zero_fraction(prediction), static_cast<double>(prob), abs_error);
+  DataType abs_error = two_stdev(tensorsize, static_cast<DataType>(prob));
+  EXPECT_NEAR(static_cast<double>(zero_fraction(prediction)), static_cast<double>(prob),
+              static_cast<double>(abs_error));
   EXPECT_NEAR(static_cast<double>(fetch::math::Sum(prediction)),
               static_cast<double>(fetch::math::Sum(data)),
-              2 * abs_error * static_cast<double>(tensorsize));
+              static_cast<double>(DataType{2} * abs_error * static_cast<DataType>(tensorsize)));
   EXPECT_EQ(prediction.shape(), data.shape());
 }
 
@@ -141,9 +149,11 @@ TYPED_TEST(DropoutTest, backward_test)
   using TensorType = TypeParam;
 
   math::SizeType tensorsize = 10000;
-  TensorType     data       = TensorType::UniformRandom(tensorsize);
-  TensorType     error      = TensorType::UniformRandom(tensorsize);
-  auto const     prob       = fetch::math::Type<DataType>("0.5");
+  TensorType     data       = TensorType(tensorsize);
+  data.Fill(DataType{1});
+  TensorType error = TensorType(tensorsize);
+  error.Fill(DataType{1});
+  auto const prob = fetch::math::Type<DataType>("0.5");
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
@@ -155,11 +165,12 @@ TYPED_TEST(DropoutTest, backward_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct fraction and sum
-  double abs_error = two_stdev(tensorsize, static_cast<double>(prob));
-  EXPECT_NEAR(zero_fraction(prediction[0]), static_cast<double>(prob), abs_error);
+  DataType abs_error = two_stdev(tensorsize, static_cast<DataType>(prob));
+  EXPECT_NEAR(static_cast<double>(zero_fraction(prediction[0])), static_cast<double>(prob),
+              static_cast<double>(abs_error));
   EXPECT_NEAR(static_cast<double>(fetch::math::Sum(prediction[0])),
               static_cast<double>(fetch::math::Sum(error)),
-              2 * abs_error * static_cast<double>(tensorsize));
+              static_cast<double>(DataType{2} * abs_error * static_cast<DataType>(tensorsize)));
 
   // Test after generating new random alpha value
   // Forward pass will update random value
@@ -168,10 +179,11 @@ TYPED_TEST(DropoutTest, backward_test)
   prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct fraction and sum
-  EXPECT_NEAR(zero_fraction(prediction[0]), static_cast<double>(prob), abs_error);
+  EXPECT_NEAR(static_cast<double>(zero_fraction(prediction[0])), static_cast<double>(prob),
+              static_cast<double>(abs_error));
   EXPECT_NEAR(static_cast<double>(fetch::math::Sum(prediction[0])),
               static_cast<double>(fetch::math::Sum(error)),
-              2 * abs_error * static_cast<double>(tensorsize));
+              static_cast<double>(DataType{2} * abs_error * static_cast<DataType>(tensorsize)));
 }
 
 TYPED_TEST(DropoutTest, backward_3d_tensor_test)
@@ -182,10 +194,12 @@ TYPED_TEST(DropoutTest, backward_3d_tensor_test)
   DataType prob       = fetch::math::Type<DataType>("0.5");
 
   math::SizeType tensorsize = 1000;
-  TensorType     data       = TensorType::UniformRandom(tensorsize);
+  TensorType     data       = TensorType(tensorsize);
+  data.Fill(DataType{1});
   data.Reshape({10, 10, 10});
 
-  TensorType error = TensorType::UniformRandom(tensorsize);
+  TensorType error = TensorType(tensorsize);
+  error.Fill(DataType{1});
   error.Reshape({10, 10, 10});
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
@@ -198,11 +212,12 @@ TYPED_TEST(DropoutTest, backward_3d_tensor_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct fraction, sum and shape
-  double abs_error = two_stdev(tensorsize, static_cast<double>(prob));
-  EXPECT_NEAR(zero_fraction(prediction[0]), static_cast<double>(prob), abs_error);
+  DataType abs_error = two_stdev(tensorsize, static_cast<DataType>(prob));
+  EXPECT_NEAR(static_cast<double>(zero_fraction(prediction[0])), static_cast<double>(prob),
+              static_cast<double>(abs_error));
   EXPECT_NEAR(static_cast<double>(fetch::math::Sum(prediction[0])),
               static_cast<double>(fetch::math::Sum(error)),
-              2 * abs_error * static_cast<double>(tensorsize));
+              static_cast<double>(DataType{2} * abs_error * static_cast<DataType>(tensorsize)));
   EXPECT_EQ(prediction[0].shape(), error.shape());
 }
 
@@ -214,8 +229,9 @@ TYPED_TEST(DropoutTest, saveparams_test)
   using SPType        = typename fetch::ml::ops::Dropout<TensorType>::SPType;
   using OpType        = fetch::ml::ops::Dropout<TensorType>;
 
-  math::SizeType                tensorsize  = 1000;
-  TensorType                    data        = TensorType::UniformRandom(tensorsize);
+  math::SizeType tensorsize = 1000;
+  TensorType     data       = TensorType(tensorsize);
+  data.Fill(DataType{1});
   auto const                    prob        = fetch::math::Type<DataType>("0.5");
   typename TensorType::SizeType random_seed = 12345;
 
@@ -265,9 +281,11 @@ TYPED_TEST(DropoutTest, saveparams_backward_3d_tensor_test)
   DataType prob       = fetch::math::Type<DataType>("0.5");
 
   math::SizeType tensorsize = 1000;
-  TensorType     data       = TensorType::UniformRandom(tensorsize);
+  TensorType     data       = TensorType(tensorsize);
+  data.Fill(DataType{1});
   data.Reshape({10, 10, 10});
-  TensorType error = TensorType::UniformRandom(tensorsize);
+  TensorType error = TensorType(tensorsize);
+  error.Fill(DataType{2});
   error.Reshape({10, 10, 10});
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 

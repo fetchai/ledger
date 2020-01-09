@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public:
 
     std::size_t const num_transactions = generator_.unspent_count();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing (Backlog: ", num_transactions, ")");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Starting block packing (Backlog: ", num_transactions, ")");
 
     if (num_transactions <= num_lanes)
     {

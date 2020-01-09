@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ namespace ledger {
 namespace {
 
 // TODO(issue 7): Make cache configurable
-constexpr uint32_t MAX_CACHE_LIFETIME_MS = 30000;
+constexpr uint32_t MAX_CACHE_LIFETIME_MS = 60 * 1000;
 
 using fetch::byte_array::ConstByteArray;
 
@@ -139,6 +139,8 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
  */
 TSSP::TxArray TransactionStoreSyncProtocol::PullObjects(service::CallContext const &call_context)
 {
+  FETCH_UNUSED(call_context);
+
   pull_objects_total_->increment();
 
   // Creating result
@@ -153,16 +155,16 @@ TSSP::TxArray TransactionStoreSyncProtocol::PullObjects(service::CallContext con
     {
       for (auto &c : cache_)
       {
-        if (c.delivered_to.find(call_context.sender_address) == c.delivered_to.end())
-        {
-          c.delivered_to.insert(call_context.sender_address);
-          ret.push_back(c.data);
-        }
+        ret.push_back(c.data);
       }
     }
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": PullObjects: Sending back ", ret.size(), " TXs");
+  if (!ret.empty())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, ": PullObjects: Sending back ", ret.size(),
+                   " TXs");
+  }
 
   return ret;
 }

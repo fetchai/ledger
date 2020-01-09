@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 #include "ml/ops/activations/leaky_relu.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include <memory>
 
 namespace fetch {
@@ -43,7 +42,7 @@ TYPED_TEST(LeakyReluTest, forward_test)
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   TensorType gt   = TensorType::FromString("1, -0.02, 3, -0.04, 5, -0.06, 7, -0.08");
 
-  fetch::ml::ops::LeakyRelu<TensorType> op(DataType{0.01f});
+  fetch::ml::ops::LeakyRelu<TensorType> op(fetch::math::Type<DataType>("0.01"));
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
@@ -69,13 +68,13 @@ TYPED_TEST(LeakyReluTest, forward_3d_tensor_test)
     {
       for (SizeType k{0}; k < 2; ++k)
       {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gt_input[i + 2 * (j + 2 * k)]));
+        data.Set(i, j, k, fetch::math::AsType<DataType>(data_input[i + 2 * (j + 2 * k)]));
+        gt.Set(i, j, k, fetch::math::AsType<DataType>(gt_input[i + 2 * (j + 2 * k)]));
       }
     }
   }
 
-  fetch::ml::ops::LeakyRelu<TensorType> op(DataType{0.01f});
+  fetch::ml::ops::LeakyRelu<TensorType> op(fetch::math::Type<DataType>("0.01"));
 
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
@@ -94,7 +93,7 @@ TYPED_TEST(LeakyReluTest, backward_test)
   TensorType error = TensorType::FromString("0, 0, 0, 0.5, 1, 1, 0, 0");
   TensorType gt    = TensorType::FromString("0, 0, 0, 0.005, 1, 0.01, 0, 0");
 
-  fetch::ml::ops::LeakyRelu<TensorType> op(DataType{0.01f});
+  fetch::ml::ops::LeakyRelu<TensorType> op(fetch::math::Type<DataType>("0.01"));
   std::vector<TensorType>               prediction =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
@@ -122,14 +121,14 @@ TYPED_TEST(LeakyReluTest, backward_3d_tensor_test)
     {
       for (SizeType k{0}; k < 2; ++k)
       {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        error.Set(i, j, k, static_cast<DataType>(errorInput[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gt_input[i + 2 * (j + 2 * k)]));
+        data.Set(i, j, k, fetch::math::AsType<DataType>(data_input[i + 2 * (j + 2 * k)]));
+        error.Set(i, j, k, fetch::math::AsType<DataType>(errorInput[i + 2 * (j + 2 * k)]));
+        gt.Set(i, j, k, fetch::math::AsType<DataType>(gt_input[i + 2 * (j + 2 * k)]));
       }
     }
   }
 
-  fetch::ml::ops::LeakyRelu<TensorType> op(DataType{0.01f});
+  fetch::ml::ops::LeakyRelu<TensorType> op(fetch::math::Type<DataType>("0.01"));
   std::vector<TensorType>               prediction =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
@@ -148,7 +147,7 @@ TYPED_TEST(LeakyReluTest, saveparams_test)
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   TensorType gt   = TensorType::FromString("1, -0.02, 3, -0.04, 5, -0.06, 7, -0.08");
 
-  fetch::ml::ops::LeakyRelu<TensorType> op(DataType{0.01f});
+  fetch::ml::ops::LeakyRelu<TensorType> op(fetch::math::Type<DataType>("0.01"));
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward(VecTensorType({std::make_shared<const TensorType>(data)}), prediction);
 
@@ -199,14 +198,14 @@ TYPED_TEST(LeakyReluTest, saveparams_backward_3d_tensor_test)
     {
       for (SizeType k{0}; k < 2; ++k)
       {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        error.Set(i, j, k, static_cast<DataType>(errorInput[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gt_input[i + 2 * (j + 2 * k)]));
+        data.Set(i, j, k, fetch::math::AsType<DataType>(data_input[i + 2 * (j + 2 * k)]));
+        error.Set(i, j, k, fetch::math::AsType<DataType>(errorInput[i + 2 * (j + 2 * k)]));
+        gt.Set(i, j, k, fetch::math::AsType<DataType>(gt_input[i + 2 * (j + 2 * k)]));
       }
     }
   }
 
-  fetch::ml::ops::LeakyRelu<TensorType> op(DataType{0.01f});
+  fetch::ml::ops::LeakyRelu<TensorType> op(fetch::math::Type<DataType>("0.01"));
 
   // run op once to make sure caches etc. have been filled. Otherwise the test might be trivial!
   std::vector<TensorType> prediction =

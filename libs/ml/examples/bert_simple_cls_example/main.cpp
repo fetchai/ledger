@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
@@ -81,8 +81,8 @@ int main()
   std::string classification_output =
       g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
           "ClassificationOutput", {cls_token_output}, config.model_dims, 2u,
-          ActivationType::SOFTMAX, RegType::NONE, static_cast<DataType>(0),
-          WeightsInitType::XAVIER_GLOROT, false);
+          ActivationType::SOFTMAX, RegType::NONE, DataType{0}, WeightsInitType::XAVIER_GLOROT,
+          false);
   // Set up error signal
   std::string label = g.template AddNode<PlaceHolder<TensorType>>("Label", {});
   std::string error =
@@ -124,7 +124,7 @@ std::pair<std::vector<TensorType>, TensorType> PrepareToyClsDataset(
   for (SizeType i = 0; i < size; i++)
   {
     // 0 is used as cls token in this dataset
-    tokens_data.Set(0, i, static_cast<DataType>(0));
+    tokens_data.Set(0, i, DataType{0});
     if (i % 2 == 0)
     {  // get one constant token in the library other then 0 (the cls token)
       auto token = static_cast<DataType>(1 + lfg() % (config.vocab_size - 1));

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -119,9 +119,12 @@ TEST(TypeConstructionTest, one_point_zero_construction)
   TestEquivalence<double>("1.0", double(1.0));
 
   // fixed
-  TestEquivalence<fetch::fixed_point::fp32_t>("1.0", fetch::fixed_point::fp32_t(1.0));
-  TestEquivalence<fetch::fixed_point::fp64_t>("1.0", fetch::fixed_point::fp64_t(1.0));
-  TestEquivalence<fetch::fixed_point::fp128_t>("1.0", fetch::fixed_point::fp128_t(1.0));
+  TestEquivalence<fetch::fixed_point::fp32_t>("1.0",
+                                              fetch::math::AsType<fetch::fixed_point::fp32_t>(1.0));
+  TestEquivalence<fetch::fixed_point::fp64_t>("1.0",
+                                              fetch::math::AsType<fetch::fixed_point::fp64_t>(1.0));
+  TestEquivalence<fetch::fixed_point::fp128_t>(
+      "1.0", fetch::math::AsType<fetch::fixed_point::fp128_t>(1.0));
 }
 
 TEST(TypeConstructionTest, min_one_point_zero_construction)
@@ -143,9 +146,12 @@ TEST(TypeConstructionTest, min_one_point_zero_construction)
   TestEquivalence<double>("-1.0", double(-1.0));
 
   // fixed
-  TestEquivalence<fetch::fixed_point::fp32_t>("-1.0", fetch::fixed_point::fp32_t(-1.0));
-  TestEquivalence<fetch::fixed_point::fp64_t>("-1.0", fetch::fixed_point::fp64_t(-1.0));
-  TestEquivalence<fetch::fixed_point::fp128_t>("-1.0", fetch::fixed_point::fp128_t(-1.0));
+  TestEquivalence<fetch::fixed_point::fp32_t>(
+      "-1.0", fetch::math::AsType<fetch::fixed_point::fp32_t>(-1.0));
+  TestEquivalence<fetch::fixed_point::fp64_t>(
+      "-1.0", fetch::math::AsType<fetch::fixed_point::fp64_t>(-1.0));
+  TestEquivalence<fetch::fixed_point::fp128_t>(
+      "-1.0", fetch::math::AsType<fetch::fixed_point::fp128_t>(-1.0));
 }
 
 TEST(TypeConstructionTest, rounding_construction)
@@ -168,13 +174,13 @@ TEST(TypeConstructionTest, rounding_construction)
 
   // fixed
   TestNear<fetch::fixed_point::fp32_t>(
-      "-1.123456789", fetch::fixed_point::fp32_t(-1.123456789),
+      "-1.123456789", fetch::math::AsType<fetch::fixed_point::fp32_t>(-1.123456789),
       fetch::math::function_tolerance<fetch::fixed_point::fp32_t>());
   TestNear<fetch::fixed_point::fp64_t>(
-      "-1.123456789", fetch::fixed_point::fp64_t(-1.123456789),
+      "-1.123456789", fetch::math::AsType<fetch::fixed_point::fp64_t>(-1.123456789),
       fetch::math::function_tolerance<fetch::fixed_point::fp64_t>());
   TestNear<fetch::fixed_point::fp128_t>(
-      "-1.123456789", fetch::fixed_point::fp128_t(-1.123456789),
+      "-1.123456789", fetch::math::AsType<fetch::fixed_point::fp128_t>(-1.123456789),
       fetch::math::function_tolerance<fetch::fixed_point::fp128_t>());
 }
 

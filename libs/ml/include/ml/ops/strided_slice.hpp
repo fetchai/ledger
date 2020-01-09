@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -39,110 +39,23 @@ public:
   using MyType        = StridedSlice<TensorType>;
 
   explicit StridedSlice(SizeVector const &begins, SizeVector const &ends,
-                        SizeVector const &strides = {})
-    : begins_(begins)
-    , ends_(ends)
-    , strides_(strides)
-  {
-    assert(begins.size() == ends.size());
+                        SizeVector const &strides = {});
 
-    // Correction to match tf.StridedSlice
-    for (SizeType i{0}; i < ends_.size(); i++)
-    {
-      ends_[i] = ends[i] + 1;
-    }
-
-    if (strides.empty())
-    {
-      strides_ = begins;
-      for (SizeType i{0}; i < strides.size(); i++)
-      {
-        strides_.at(i) = 1;
-      }
-    }
-  }
-
-  explicit StridedSlice(SPType const &sp)
-    : Ops<T>(sp)
-  {
-    begins_  = sp.begins;
-    ends_    = sp.ends;
-    strides_ = sp.strides;
-  }
+  explicit StridedSlice(SPType const &sp);
 
   ~StridedSlice() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    auto sp = std::make_shared<SPType>();
-
-    sp->begins  = begins_;
-    sp->ends    = ends_;
-    sp->strides = strides_;
-
-    return sp;
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
-    return std::make_shared<MyType>(*this);  // calls default copy constructor of MyType;
-  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
-  /**
-   * Forward pass is done by assigning values in given ranges with stride size step for every
-   * dimmension from larger input tensor to smaller output tensor.
-   * @param inputs
-   * @param output
-   */
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(inputs.size() == 1);
-    assert(output.shape() == this->ComputeOutputShape(inputs));
-
-    auto slice = inputs.at(0)->Slice(begins_, ends_, strides_);
-    output.Assign(slice);
-  }
-
-  /**
-   * Backward pass is done by assigning smaller error signal tensor to larger return signal tensor
-   * @param inputs
-   * @param error_signal
-   * @return
-   */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    assert(inputs.size() == 1);
-    assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+                                   TensorType const &   error_signal) override;
 
-    TensorType ret_error_signal_{inputs.at(0)->shape()};
-
-    auto slice = ret_error_signal_.Slice(begins_, ends_, strides_);
-    slice.Assign(error_signal);
-
-    return {ret_error_signal_};
-  }
-
-  SizeVector ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-
-    SizeVector output_shape = inputs.front()->shape();
-
-    // Calculate number of stride size steps from specified begin to specified end for each
-    // dimension
-    for (SizeType i{0}; i < begins_.size(); i++)
-    {
-      assert(strides_.at(i) != 0);
-      assert(begins_.at(i) <= ends_.at(i));
-      output_shape.at(i) = ((ends_.at(i) - begins_.at(i) - 1) / strides_.at(i)) + 1;
-    }
-
-    return output_shape;
-  }
+  SizeVector ComputeOutputShape(VecTensorType const &inputs) const override;
 
   SizeVector begins_;
   SizeVector ends_;

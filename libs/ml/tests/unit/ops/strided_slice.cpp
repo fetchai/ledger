@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -579,8 +579,7 @@ TYPED_TEST(StridedSliceTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(StridedSliceTest, saveparams_backward_batch_test)
@@ -594,7 +593,6 @@ TYPED_TEST(StridedSliceTest, saveparams_backward_batch_test)
 
   TypeParam input({9, 9, 9, 6, 4});
   TypeParam error({6, 4, 3, 1, 2});
-  TypeParam gt({9, 9, 9, 6, 4});
 
   SizeVector begins({3, 1, 0, 4, 0});
   SizeVector ends({8, 7, 8, 5, 2});
@@ -607,26 +605,6 @@ TYPED_TEST(StridedSliceTest, saveparams_backward_batch_test)
     *it = static_cast<DataType>(cnt);
     cnt++;
     ++it;
-  }
-
-  for (SizeType i{0}; i < error.shape().at(0); i++)
-  {
-    for (SizeType j{0}; j < error.shape().at(1); j++)
-    {
-      for (SizeType k{0}; k < error.shape().at(2); k++)
-      {
-        for (SizeType l{0}; l < error.shape().at(3); l++)
-        {
-          for (SizeType m{0}; m < error.shape().at(4); m++)
-          {
-
-            gt.At(begins.at(0) + i * strides.at(0), begins.at(1) + j * strides.at(1),
-                  begins.at(2) + k * strides.at(2), begins.at(3) + l * strides.at(3),
-                  begins.at(4) + m * strides.at(4)) = error.At(i, j, k, l, m);
-          }
-        }
-      }
-    }
   }
 
   fetch::ml::ops::StridedSlice<TypeParam> op(begins, ends, strides);

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "json/document.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "variant/variant.hpp"
 #include "vm/io_observer_interface.hpp"

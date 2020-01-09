@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -36,23 +36,19 @@ void Sigmoid(ArrayType const &t, ArrayType &ret)
 
   auto array_it = t.cbegin();
   auto rit      = ret.begin();
-  Type zero{0};
-  Type one{1};
-  Type min_one{-1};
 
   while (array_it.is_valid())
   {
-    if (*array_it >= zero)
+    if (*array_it >= Type{0})
     {
-      Multiply(min_one, *array_it, *rit);
-      Exp(*rit, *rit);
-      Add(*rit, one, *rit);
-      Divide(one, *rit, *rit);
+      // f(x) = 1 / (1 + e^-x)
+      Exp(static_cast<Type>(-*array_it), *rit);
+      Divide(Type{1}, static_cast<Type>(1 + *rit), *rit);
     }
     else
     {
       Exp(*array_it, *rit);
-      Divide(*rit, *rit + one, *rit);
+      Divide(*rit, static_cast<Type>(*rit + Type{1}), *rit);
     }
     ++array_it;
     ++rit;

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -103,12 +103,6 @@ TYPED_TEST(ExpTest, saveparams_test)
       " 0, -2, 3,-4, 5,-6, 7,-8;"
       "-1,  2,-3, 4,-5, 6,-7, 8");
 
-  TensorType gt = TensorType::FromString(
-      "1, 0.135335283236613, 20.0855369231877, 0.018315638888734, 148.413159102577, "
-      "0.002478752176666, 1096.63315842846, 0.000335462627903;"
-      "0.367879441171442, 7.38905609893065, 0.049787068367864, 54.5981500331442, "
-      "0.006737946999085, 403.428793492735, 0.000911881965555, 2980.95798704173");
-
   OpType op;
 
   TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
@@ -139,8 +133,7 @@ TYPED_TEST(ExpTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(ExpTest, saveparams_backward_test)

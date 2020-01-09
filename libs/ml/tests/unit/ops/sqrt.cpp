@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -140,7 +140,6 @@ TYPED_TEST(SqrtTest, saveparams_test)
   using OpType        = typename fetch::ml::ops::Sqrt<TensorType>;
 
   TensorType data = TensorType::FromString("0, 1, 2, 4, 10, 100");
-  TensorType gt   = TensorType::FromString("0, 1, 1.41421356, 2, 3.1622776, 10");
 
   OpType op;
 

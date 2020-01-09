@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -113,7 +113,6 @@ TYPED_TEST(TransposeTest, saveparams_test)
   using OpType        = typename fetch::ml::ops::Transpose<TensorType>;
 
   TensorType data = TypeParam::FromString(R"(1, 2, -3; 4, 5, 6)");
-  TensorType gt   = TypeParam::FromString(R"(1, 4; 2, 5; -3, 6)");
 
   OpType op;
 

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -55,9 +55,9 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   TypeParam input({1, batch_size});
   TypeParam context({1, batch_size});
   TypeParam labels({1, batch_size});
-  input(0, 0)   = static_cast<DataType>(0);
+  input(0, 0)   = DataType{0};
   context(0, 0) = static_cast<DataType>(5);
-  labels(0, 0)  = static_cast<DataType>(0);
+  labels(0, 0)  = DataType{0};
 
   // Create layer
   LayerType layer(in_size, out_size, embed_size, vocab_size);

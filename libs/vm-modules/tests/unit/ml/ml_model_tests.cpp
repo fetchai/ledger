@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -541,6 +541,11 @@ TEST_F(VMModelTests, model_add_dropout_invalid_params)
   TestInvalidLayerAdding(R"(model.add("dropout", 10fp64);)");
 }
 
+TEST_F(VMModelTests, model_add_reshape_invalid_params)
+{
+  TestInvalidLayerAdding(R"(model.add("reshape", 10fp64);)");
+}
+
 TEST_F(VMModelTests, model_add_layers_invalid_activation_conv)
 {
   TestInvalidLayerAdding(
@@ -575,6 +580,11 @@ TEST_F(VMModelTests, model_uncompilable_add_layer__conv_invalid_params)
 TEST_F(VMModelTests, model_uncompilable_add_layer__dropout_invalid_params)
 {
   TestAddingUncompilableLayer(R"(model.add("dropout", 0u64);)");
+}
+
+TEST_F(VMModelTests, model_uncompilable_add_layer__reshape_invalid_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("reshape", 1u64);)");
 }
 
 TEST_F(VMModelTests, model_uncompilable_add_layer__activation_invalid_params)
@@ -1046,8 +1056,8 @@ TEST_F(VMModelTests, model_with_accuracy_metric)
   ASSERT_TRUE(toolkit.Run(&res));
 
   auto const metrics = res.Get<Ptr<Array<fetch::vm_modules::math::DataType>>>();
-  EXPECT_GE(metrics->elements.at(1), 0);
-  EXPECT_LE(metrics->elements.at(1), 1);
+  EXPECT_GE(metrics->elements.at(1), DataType{0});
+  EXPECT_LE(metrics->elements.at(1), DataType{1});
 }
 
 TEST_F(VMModelTests, model_sequential_flatten)
@@ -1056,6 +1066,24 @@ TEST_F(VMModelTests, model_sequential_flatten)
         function main()
           var model = Model("sequential");
           model.add("flatten");
+          model.compile("scel", "adam", {"categorical accuracy"});
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_reshape)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var shape = Array<UInt64>(3);
+          shape[0] = 3u64;
+          shape[1] = 2u64;
+          shape[2] = 1u64;
+          var model = Model("sequential");
+          model.add("reshape", shape);
           model.compile("scel", "adam", {"categorical accuracy"});
         endfunction
       )";
@@ -1134,6 +1162,254 @@ TEST_F(VMModelTests, model_sequential_flatten_2d_in_2d_out)
   auto const tensor            = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto const constructed_shape = tensor->shape();
   fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({2, 3});
+  EXPECT_TRUE(constructed_shape == expected.shape());
+}
+
+TEST_F(VMModelTests, model_sequential_reshape_2d_in_2d_out)
+{
+  static char const *SRC_METRIC = R"(
+          function main() : Tensor
+                          var shape = Array<UInt64>(1);
+                          shape[0] = 1u64;
+                          var x = Tensor(shape);
+                          var str_vals = "0.5; 7.1; 9.1; 6.2;";
+                          x.fromString(str_vals);
+
+                          var to_shape = Array<UInt64>(2);
+                          to_shape[0] = 4u64;
+                          to_shape[1] = 1u64;
+
+                          var model = Model("sequential");
+                          model.add("reshape", to_shape);
+                          model.compile("scel", "adam");
+                          var prediction = model.predict(x);
+
+                          return prediction;
+          endfunction
+      )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
+  auto const prediction        = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const constructed_shape = prediction->shape();
+
+  fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({4, 1});
+  gt(0, 0) = fetch::math::Type<DataType>("+0.5");
+  gt(1, 0) = fetch::math::Type<DataType>("+7.1");
+  gt(2, 0) = fetch::math::Type<DataType>("+9.1");
+  gt(3, 0) = fetch::math::Type<DataType>("+6.2");
+  ASSERT_TRUE((prediction->GetTensor())
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+  EXPECT_TRUE(constructed_shape == gt.shape());
+}
+
+TEST_F(VMModelTests, model_sequential_reshape_2d_in_2d_out_wrong_shape)
+{
+  static char const *SRC_METRIC = R"(
+          function main() : Tensor
+                          var shape = Array<UInt64>(1);
+                          shape[0] = 1u64;
+                          var x = Tensor(shape);
+                          var str_vals = "0.5; 7.1; 9.1; 6.2;";
+                          x.fromString(str_vals);
+
+                          var to_shape = Array<UInt64>(2);
+                          to_shape[0] = 1u64;
+                          to_shape[1] = 4u64;
+
+                          var model = Model("sequential");
+                          model.add("reshape", to_shape);
+                          model.compile("scel", "adam");
+                          var prediction = model.predict(x);
+
+                          return prediction;
+          endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_FALSE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_reshape_3d_in_2d_out)
+{
+  static char const *SRC_METRIC = R"(
+              function main() : Tensor
+                var shape = Array<UInt64>(1);
+                shape[0] = 1u64;
+                var x = Tensor(shape);
+                var str_vals = "0.5, 7.1, 9.1; 6.2, 7.1, 4.;";
+                x.fromString(str_vals);
+                x = x.unsqueeze();
+                var to_shape = Array<UInt64>(2);
+                to_shape[0] = 6u64;
+                to_shape[1] = 1u64;
+
+                var model = Model("sequential");
+                model.add("reshape", to_shape);
+                model.compile("scel", "adam");
+                var prediction = model.predict(x);
+                print(prediction.toString());
+
+                return prediction;
+              endfunction
+      )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
+
+  auto const prediction        = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const constructed_shape = prediction->shape();
+
+  fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({6, 1});
+  gt(0, 0) = fetch::math::Type<DataType>("+0.5");
+  gt(1, 0) = fetch::math::Type<DataType>("+6.2");
+  gt(2, 0) = fetch::math::Type<DataType>("+7.1");
+  gt(3, 0) = fetch::math::Type<DataType>("+7.1");
+  gt(4, 0) = fetch::math::Type<DataType>("+9.1");
+  gt(5, 0) = fetch::math::Type<DataType>("+4.0");
+
+  ASSERT_TRUE((prediction->GetTensor())
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+  EXPECT_TRUE(constructed_shape == gt.shape());
+}
+
+TEST_F(VMModelTests, model_sequential_reshape_2d_in_3d_out)
+{
+  static char const *SRC_METRIC = R"(
+          function main() : Tensor
+                          var shape = Array<UInt64>(1);
+                          shape[0] = 1u64;
+                          var x = Tensor(shape);
+                          var str_vals = "0.5; 7.1; 9.1; 6.2;";
+                          x.fromString(str_vals);
+
+                          var to_shape = Array<UInt64>(3);
+                          to_shape[0] = 2u64;
+                          to_shape[1] = 2u64;
+                          to_shape[2] = 1u64;
+
+                          var model = Model("sequential");
+                          model.add("reshape", to_shape);
+                          model.compile("scel", "adam");
+                          var prediction = model.predict(x);
+
+                          return prediction;
+          endfunction
+      )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
+  auto const prediction        = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const constructed_shape = prediction->shape();
+
+  fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({2, 2});
+  gt(0, 0) = fetch::math::Type<DataType>("+0.5");
+  gt(1, 0) = fetch::math::Type<DataType>("+7.1");
+  gt(0, 1) = fetch::math::Type<DataType>("+9.1");
+  gt(1, 1) = fetch::math::Type<DataType>("+6.2");
+  // the actual model output is {2, 2, 1}
+  ASSERT_TRUE((prediction->GetTensor())
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+  fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({2, 2, 1});
+  EXPECT_TRUE(constructed_shape == expected.shape());
+}
+
+TEST_F(VMModelTests, model_sequential_reshape_5d_in_3d_out)
+{
+  static char const *SRC_METRIC = R"(
+          function main() : Tensor
+                          var shape = Array<UInt64>(1);
+                          shape[0] = 1u64;
+                          var x = Tensor(shape);
+                          var str_vals = "0.5; 7.1; 9.1; 6.2;";
+                          x.fromString(str_vals);
+                          x = x.unsqueeze();
+                          x = x.unsqueeze();
+                          x = x.unsqueeze();
+
+                          var to_shape = Array<UInt64>(3);
+                          to_shape[0] = 2u64;
+                          to_shape[1] = 2u64;
+                          to_shape[2] = 1u64;
+
+                          var model = Model("sequential");
+                          model.add("reshape", to_shape);
+                          model.compile("scel", "adam");
+                          var prediction = model.predict(x);
+
+                          return prediction;
+          endfunction
+      )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
+  auto const prediction        = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const constructed_shape = prediction->shape();
+
+  fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({2, 2});
+  gt(0, 0) = fetch::math::Type<DataType>("+0.5");
+  gt(1, 0) = fetch::math::Type<DataType>("+7.1");
+  gt(0, 1) = fetch::math::Type<DataType>("+9.1");
+  gt(1, 1) = fetch::math::Type<DataType>("+6.2");
+  // the actual model output is {2, 2, 1}
+  ASSERT_TRUE((prediction->GetTensor())
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+  fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({2, 2, 1});
+  EXPECT_TRUE(constructed_shape == expected.shape());
+}
+
+TEST_F(VMModelTests, model_sequential_reshape_2d_in_8d_out)
+{
+  static char const *SRC_METRIC = R"(
+          function main() : Tensor
+                          var shape = Array<UInt64>(1);
+                          shape[0] = 1u64;
+                          var x = Tensor(shape);
+                          var str_vals = "0.5; 7.1; 8.0999; 6.2;";
+                          x.fromString(str_vals);
+
+                          var to_shape = Array<UInt64>(8);
+                          to_shape[0] = 2u64;
+                          to_shape[1] = 2u64;
+                          to_shape[2] = 1u64;
+                          to_shape[3] = 1u64;
+                          to_shape[4] = 1u64;
+                          to_shape[5] = 1u64;
+                          to_shape[6] = 1u64;
+                          to_shape[7] = 1u64;
+
+                          var model = Model("sequential");
+                          model.add("reshape", to_shape);
+                          model.compile("scel", "adam");
+                          var prediction = model.predict(x);
+
+                          return prediction;
+          endfunction
+      )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
+  auto const prediction        = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const constructed_shape = prediction->shape();
+
+  fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({2, 2});
+  gt(0, 0) = fetch::math::Type<DataType>("+0.5");
+  gt(1, 0) = fetch::math::Type<DataType>("+7.1");
+  gt(0, 1) = fetch::math::Type<DataType>("+8.0999");
+  gt(1, 1) = fetch::math::Type<DataType>("+6.2");
+  ASSERT_TRUE((prediction->GetTensor())
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+  fetch::math::Tensor<fetch::fixed_point::fp64_t> expected({2, 2, 1, 1, 1, 1, 1, 1});
   EXPECT_TRUE(constructed_shape == expected.shape());
 }
 

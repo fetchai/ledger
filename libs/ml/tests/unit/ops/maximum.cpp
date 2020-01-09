@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -118,10 +118,6 @@ TYPED_TEST(MaximumTest, saveparams_test)
       "8, -7, 6,-5, 4,-3, 2,-1;"
       "-8,  7,-6, 5,-4, 3,-2, 1");
 
-  TensorType gt = TensorType::FromString(
-      "8,	-2, 6, -4, 5, -3, 7, -1;"
-      "1,  7, 3,  5, 5,  6, 7,  8");
-
   OpType op;
 
   TensorType    prediction(op.ComputeOutputShape(
@@ -155,8 +151,7 @@ TYPED_TEST(MaximumTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 TYPED_TEST(MaximumTest, saveparams_backward_test)

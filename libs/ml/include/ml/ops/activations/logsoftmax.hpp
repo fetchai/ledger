@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,10 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
-#include "math/activation_functions/softmax.hpp"
-#include "math/fundamental_operators.hpp"
-#include "math/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -41,70 +37,23 @@ public:
   using SPType        = OpLogSoftmaxSaveableParams<T>;
   using MyType        = LogSoftmax<TensorType>;
 
-  explicit LogSoftmax(SizeType axis = 1)
-    : axis_(axis)
-  {}
+  explicit LogSoftmax(SizeType axis = 1);
 
-  explicit LogSoftmax(SPType const &sp)
-    : Ops<T>(sp)
-  {
-    axis_ = sp.axis;
-  }
+  explicit LogSoftmax(SPType const &sp);
 
   ~LogSoftmax() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    auto sp_ptr  = std::make_shared<SPType>();
-    sp_ptr->axis = axis_;
-    return sp_ptr;
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
-    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
-
-    return copyshare;
-  }
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(output.shape() == ComputeOutputShape(inputs));
-    assert(inputs.size() == 1);
-    fetch::math::Softmax((*inputs.front()), output, axis_);
-    fetch::math::Log(output, output);
-  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    assert(inputs.size() == 1);
-    assert(inputs.front()->shape() == error_signal.shape());
+                                   TensorType const &   error_signal) override;
 
-    TensorType return_signal = error_signal.Copy();
-    TensorType t(error_signal.shape());
-    fetch::math::Softmax((*inputs.front()), t, axis_);
-
-    // return_signal.InlineMultiply(t);
-
-    // N-D softmax with 1 batch dimension
-    if (inputs.front()->shape().size() > 1)
-    {
-      TensorType sum = ReduceSum(return_signal, axis_);
-      t.InlineMultiply(sum);
-    }
-
-    return_signal.InlineSubtract(t);
-    return {return_signal};
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    return inputs.front()->shape();
-  }
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
