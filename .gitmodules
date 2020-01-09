@@ -31,3 +31,6 @@
 [submodule "vendor/openssl"]
 	path = vendor/openssl
 	url = https://github.com/janbar/openssl-cmake.git
+[submodule "vendor/noisec"]
+	path = vendor/noisec
+	url = https://github.com/jinmannwong/noise-c.git
