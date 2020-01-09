@@ -18,7 +18,7 @@
 
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "ml/ops/divide.hpp"
+#include "ml/ops/subtract.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -34,30 +34,30 @@ namespace ml {
 namespace test {
 namespace {
 template <typename T>
-class DivideTest : public ::testing::Test
+class SubtractTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(DivideTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(SubtractTest, math::test::TensorFloatingTypes);
 
-TYPED_TEST(DivideTest, forward_test)
+TYPED_TEST(SubtractTest, forward_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
 
   TensorType data_1 = TensorType::FromString(
-      "1, -2, 3,-4, 5,-6, 7,-8;"
-      "1,  2, 3, 4, 5, 6, 7, 8");
+      "1,-2, 3,-4, 5,-6, 7,-8;"
+      "1, 2, 3, 4, 5, 6, 7, 8");
 
   TensorType data_2 = TensorType::FromString(
-      " 8, -7, 6,-5, 4,-3, 2,-1;"
-      "-8,  7,-6, 5,-4, 3,-2, 1");
+      " 8,-7, 6,-5, 4,-3, 2,-1;"
+      "-8, 7,-6, 5,-4, 3,-2, 1");
 
   TensorType gt = TensorType::FromString(
-      "0.125,	0.285714285714286,	0.5,	0.8,	1.25,	2,	3.5,	8;"
-      "-0.125, 0.285714285714286,	-0.5,	0.8,	-1.25,	2,	-3.5,	8");
+      "-7, 5,-3, 1, 1,-3, 5,-7;"
+      " 9,-5, 9,-1, 9, 3, 9, 7");
 
-  fetch::ml::ops::Divide<TensorType> op;
+  fetch::ml::ops::Subtract<TensorType> op;
 
   TypeParam prediction(op.ComputeOutputShape(
       {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}));
@@ -69,7 +69,7 @@ TYPED_TEST(DivideTest, forward_test)
                                   fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(DivideTest, backward_test)
+TYPED_TEST(SubtractTest, backward_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -83,19 +83,19 @@ TYPED_TEST(DivideTest, backward_test)
       "8,  7,-6, 5,-4, 3,-2, 1");
 
   TensorType gt_1 = TensorType::FromString(
-      "0.125, 0.142857142857143, 0.333333333333333, 0.4, 0.75, 1, 2, 4;"
-      "0.625, -0.714285714285714, -1, -1.2, -1.75, -2.33333333333333, -4, -8");
+      "1, -1,  2, -2,  3, -3,  4, -4;"
+      "5, -5,  6, -6,  7, -7,  8, -8");
 
   TensorType gt_2 = TensorType::FromString(
-      "-0.015625, -0.040816326530612, -0.166666666666667, -0.32, -0.9375, -2, -7, -32;"
-      "-0.078125, 0.204081632653061, -0.5, 0.96, -2.1875, 4.66666666666667, -14, 64");
+      "-1,  1, -2,  2, -3,  3, -4,  4;"
+      "-5,  5, -6,  6, -7,  7, -8,  8");
 
   TensorType error = TensorType::FromString(
       "1, -1, 2, -2, 3, -3, 4, -4;"
       "5, -5, 6, -6, 7, -7, 8, -8");
 
-  fetch::ml::ops::Divide<TensorType> op;
-  std::vector<TensorType>            prediction = op.Backward(
+  fetch::ml::ops::Subtract<TensorType> op;
+  std::vector<TensorType>              prediction = op.Backward(
       {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}, error);
 
   // test correct values
@@ -105,13 +105,13 @@ TYPED_TEST(DivideTest, backward_test)
                                      fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(DivideTest, saveparams_test)
+TYPED_TEST(SubtractTest, saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Divide<TensorType>::SPType;
-  using OpType        = fetch::ml::ops::Divide<TensorType>;
+  using SPType        = typename fetch::ml::ops::Subtract<TensorType>::SPType;
+  using OpType        = fetch::ml::ops::Subtract<TensorType>;
 
   TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
@@ -157,10 +157,10 @@ TYPED_TEST(DivideTest, saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(DivideTest, saveparams_backward_test)
+TYPED_TEST(SubtractTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
-  using OpType     = fetch::ml::ops::Divide<TensorType>;
+  using OpType     = fetch::ml::ops::Subtract<TensorType>;
   using SPType     = typename OpType::SPType;
 
   TensorType data_1 = TensorType::FromString(
@@ -175,8 +175,8 @@ TYPED_TEST(DivideTest, saveparams_backward_test)
       "1, -1, 2, -2, 3, -3, 4, -4;"
       "5, -5, 6, -6, 7, -7, 8, -8");
 
-  fetch::ml::ops::Divide<TensorType> op;
-  std::vector<TensorType>            prediction = op.Backward(
+  fetch::ml::ops::Subtract<TensorType> op;
+  std::vector<TensorType>              prediction = op.Backward(
       {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}, error);
 
   // extract saveparams

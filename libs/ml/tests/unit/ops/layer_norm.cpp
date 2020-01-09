@@ -169,11 +169,6 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   auto s1 = data.View(0).ToString();
   auto s2 = data.View(1).ToString();
 
-  TensorType gt = TensorType::FromString(
-      "-1.22474487, -0.98058068, 0, -0.79006571;"
-      "0, -0.39223227, -1.22474487,  -0.62076591;"
-      "1.22474487,  1.37281295, 1.22474487, 1.41083162");
-
   fetch::ml::ops::LayerNorm<TensorType> op(static_cast<typename TypeParam::SizeType>(0));
 
   TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType>(data)}));

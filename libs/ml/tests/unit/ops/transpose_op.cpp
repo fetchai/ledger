@@ -113,7 +113,6 @@ TYPED_TEST(TransposeTest, saveparams_test)
   using OpType        = typename fetch::ml::ops::Transpose<TensorType>;
 
   TensorType data = TypeParam::FromString(R"(1, 2, -3; 4, 5, 6)");
-  TensorType gt   = TypeParam::FromString(R"(1, 4; 2, 5; -3, 6)");
 
   OpType op;
 

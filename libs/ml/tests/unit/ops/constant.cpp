@@ -109,7 +109,6 @@ TYPED_TEST(ConstantTest, saveable_test)
   using OpType     = typename fetch::ml::ops::Constant<TensorType>;
 
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  TensorType gt   = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
 
   OpType op;
   op.SetData(data);
