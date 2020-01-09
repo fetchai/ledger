@@ -779,8 +779,8 @@ void VMModel::LayerAddReshape(const fetch::vm::Ptr<String> &                    
 }
 
 /**
- * @brief VMModel::LayerAddInput experimental InputLayer is a wrapper around ml Placeholder with a
- * fixed shape.
+ * @brief Sets expected input shape of the Model; if the shape is not set, hidden layers' shapes
+ * can not be automatically deduced/inferred and charge estimation is not possible.
  * @param layer - "input" expected
  * @param shape - input shape, min 2 dimensions, the trailing is batch size.
  */

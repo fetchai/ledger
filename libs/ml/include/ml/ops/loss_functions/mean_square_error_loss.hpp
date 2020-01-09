@@ -61,12 +61,13 @@ public:
   {
     return OpType::LOSS_MEAN_SQUARE_ERROR;
   }
+  static constexpr char const *DESCRIPTOR = "MeanSquareErrorLoss";
+
   OpType OperationType() const override
   {
     return this->OpCode();
   }
-  static constexpr char const *DESCRIPTOR = "MeanSquareErrorLoss";
-  char const *                 Descriptor() const override
+  char const *Descriptor() const override
   {
     return DESCRIPTOR;
   }

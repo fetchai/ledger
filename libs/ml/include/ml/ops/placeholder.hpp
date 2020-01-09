@@ -60,6 +60,7 @@ public:
   {
     return OpType::OP_PLACEHOLDER;
   }
+
   static constexpr char const *DESCRIPTOR = "PlaceHolder";
 
   OpType OperationType() const override

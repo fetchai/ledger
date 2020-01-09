@@ -102,12 +102,13 @@ public:
   {
     return OpType::OP_MATRIX_MULTIPLY;
   }
+  static constexpr char const *DESCRIPTOR = "MatrixMultiply";
+
   OpType OperationType() const override
   {
     return this->OpCode();
   }
-  static constexpr char const *DESCRIPTOR = "MatrixMultiply";
-  char const *                 Descriptor() const override
+  char const *Descriptor() const override
   {
     return DESCRIPTOR;
   }

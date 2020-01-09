@@ -88,11 +88,16 @@ Sequential<TensorType>::Sequential(ModelConfig<DataType> model_config)
   this->label_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Label", {});
 }
 
+/**
+ * Sets expected input shape of a data batch, that is processed with the Model.
+ * If the input shape is not set (unknown), input and output shapes of hidden layers
+ * can not be automatically deduced/inferred and charge estimation is not possible.
+ */
 template <typename TensorType>
 void Sequential<TensorType>::SetBatchInputShape(std::vector<SizeType> const &shape)
 {
   std::vector<SizeType> slice_shape(shape);
-  slice_shape.back() = 1;
+  slice_shape.back() = 1;  // Because a batch shape always presume batch size is 1.
   this->graph_ptr_->GetNode(this->input_)->SetBatchOutputShape(slice_shape);
   this->graph_ptr_->GetNode(this->input_)->SetBatchInputShapes({slice_shape});
 }

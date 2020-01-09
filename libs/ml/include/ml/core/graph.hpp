@@ -167,7 +167,7 @@ protected:
   void       SetInputReference(std::string const &node_name, TensorType const &data);
   void       InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
   TensorType ForwardPropagate(std::string const &node_name, bool is_training = true);
-  void       ComputeNodeShapes(std::string const &node_name);
+  void       ComputeAllNodeShapes();
 
 private:
   GraphState graph_state_ = GraphState::NOT_COMPILED;
@@ -330,10 +330,9 @@ void Graph<TensorType>::Compile()
       LinkNodesInGraph(node_name, node_inputs);
     }
 
-    // if nodes are linked, their shapes could be linked together (e.g. calculated for each layer)
     if (!connections_.empty())
     {
-      ComputeNodeShapes(connections_.back().first);
+      ComputeAllNodeShapes();
     }
 
     // TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not
@@ -466,16 +465,21 @@ TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name
  * @param node_name
  */
 template <typename TensorType>
-void Graph<TensorType>::ComputeNodeShapes(const std::string &node_name)
+void Graph<TensorType>::ComputeAllNodeShapes()
 {
-  if (nodes_.find(node_name) == nodes_.end())
+  std::string last_node_name = connections_.back().first;
+  if (nodes_.find(last_node_name) == nodes_.end())
   {
-    throw std::runtime_error("No node named " + node_name +
+    throw std::runtime_error("No node named " + last_node_name +
                              " found in the Graph! Shape computing is not possble.");
   }
-  NodePtrType node   = nodes_.at(node_name);
-  auto const  result = node->BatchOutputShape();
-  if (result.empty())
+  NodePtrType last_node = nodes_.at(last_node_name);
+
+  // A recursive call to the last node, which will trigger shape computing
+  // in all previous nodes.
+  math::SizeVector const output_shape_of_last_layer = last_node->BatchOutputShape();
+
+  if (output_shape_of_last_layer.empty())
   {
     // throw error, something went bad.
     FETCH_LOG_INFO(DESCRIPTOR, " Shape linking failed! ");

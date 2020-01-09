@@ -248,8 +248,8 @@ public:
   }
 
 private:
-  SizeType in_size_          = std::numeric_limits<SizeType>::max();
-  SizeType out_size_         = std::numeric_limits<SizeType>::max();
+  SizeType in_size_          = fetch::math::numeric_max<SizeType>();
+  SizeType out_size_         = fetch::math::numeric_max<SizeType>();
   bool     time_distributed_ = false;
   bool     is_initialised_   = true;  // TEMPORARY
 
