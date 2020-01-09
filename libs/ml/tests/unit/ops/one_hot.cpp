@@ -75,8 +75,6 @@ TYPED_TEST(OneHotOpTest, saveparams_test)
 
   TensorType data = TypeParam::FromString("1,0,1,2");
   data.Reshape({2, 2, 1, 1});
-  TensorType gt = TypeParam::FromString("-1, 5, -1; 5, -1, -1; -1, 5, -1; -1, -1, 5");
-  gt.Reshape({2, 2, 1, 3, 1});
 
   SizeType depth     = 3;
   SizeType axis      = 3;

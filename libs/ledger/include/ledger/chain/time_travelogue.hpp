@@ -28,7 +28,7 @@ enum class TravelogueStatus : uint8_t
 {
   HEAVIEST_BRANCH = 0,
   SIDE_BRANCH,
-  NOT_FOUND,
+  NOT_FOUND
 };
 
 /**

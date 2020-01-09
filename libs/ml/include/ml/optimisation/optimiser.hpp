@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "math/standard_functions/pow.hpp"
 #include "math/statistics/mean.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/dataloader.hpp"

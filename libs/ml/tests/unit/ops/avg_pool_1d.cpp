@@ -301,9 +301,7 @@ TYPED_TEST(AvgPool1DTest, saveparams_test)
   using SizeType      = fetch::math::SizeType;
 
   TensorType data({2, 5, 2});
-  TensorType gt({2, 2, 2});
   TensorType data_input = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8, 9, -10");
-  TensorType gt_input   = TensorType::FromString("3, 5, 9, 9");
 
   for (SizeType i_b{0}; i_b < 2; i_b++)
   {
@@ -316,15 +314,6 @@ TYPED_TEST(AvgPool1DTest, saveparams_test)
       }
     }
   }
-
-  gt(0, 0, 0) = DataType{-1} / DataType{2};
-  gt(0, 0, 1) = DataType{19} / DataType{2};
-  gt(0, 1, 0) = DataType{1} / DataType{2};
-  gt(0, 1, 1) = DataType{21} / DataType{2};
-  gt(1, 0, 0) = DataType{1} / DataType{2};
-  gt(1, 0, 1) = DataType{21} / DataType{2};
-  gt(1, 1, 0) = DataType{-1} / DataType{2};
-  gt(1, 1, 1) = DataType{19} / DataType{2};
 
   OpType op(4, 1);
 

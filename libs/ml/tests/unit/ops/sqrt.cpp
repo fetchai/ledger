@@ -140,7 +140,6 @@ TYPED_TEST(SqrtTest, saveparams_test)
   using OpType        = typename fetch::ml::ops::Sqrt<TensorType>;
 
   TensorType data = TensorType::FromString("0, 1, 2, 4, 10, 100");
-  TensorType gt   = TensorType::FromString("0, 1, 1.41421356, 2, 3.1622776, 10");
 
   OpType op;
 
