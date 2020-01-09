@@ -214,14 +214,13 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
     recv_block_invalid_count_->increment();
     break;
   case BlockStatus::DIRTY:
-    status_text = "Dirty";
     recv_block_invalid_count_->increment();
     break;
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "New Block: #", block.block_number, " 0x", block.hash.ToHex(),
                  " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(),
-                 " status: ", status_text, ")");
+                 " status: ", ToString(status), ")");
 }
 
 MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
