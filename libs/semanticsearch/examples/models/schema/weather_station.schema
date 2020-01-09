@@ -26,12 +26,12 @@ advertise x until_block 2020;
 advertise x until_block 2020;
 advertise x until_block 2020;
 
-instance y :  Position = {
+instance y : Position = {
     latitude: 0,
     longitude: 1
 };
 
-instance g :  Position = {
+instance g : Position = {
     latitude: 0,
     longitude: 20
 };

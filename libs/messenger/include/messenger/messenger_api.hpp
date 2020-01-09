@@ -18,9 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/service_ids.hpp"
+#include "json/document.hpp"
 #include "messenger/mailbox.hpp"
 #include "messenger/message.hpp"
 #include "messenger/messenger_protocol.hpp"
+#include "messenger/query_result.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -36,7 +38,8 @@ class MessengerAPI
 {
 public:
   using ConstByteArray = fetch::byte_array::ConstByteArray;
-  using ResultList     = std::vector<ConstByteArray>;
+  using JSONDocument   = json::JSONDocument;
+
   using NetworkManager = fetch::network::NetworkManager;
   using ConnectionType = std::shared_ptr<network::AbstractConnection>;
   using ServiceClient  = service::ServiceClient;
@@ -78,10 +81,9 @@ public:
 
   /// Search interface
   /// @{
-  ResultList FindAgents(service::CallContext const &call_context, ConstByteArray const &query_type,
-                        ConstByteArray const &query);
-
-  void Advertise(service::CallContext const &call_context);
+  QueryResult  Query(service::CallContext const &call_context, ConstByteArray const &query_type,
+                     ConstByteArray const &query);
+  JSONDocument ListModels() const;
   /// @}
 
   /// Ledger interface

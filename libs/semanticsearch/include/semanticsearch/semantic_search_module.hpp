@@ -206,6 +206,11 @@ public:
     return agent_directory_.GetAgent(pk);
   }
 
+  Agent GetAgent(AgentId const &id)
+  {
+    return agent_directory_.GetAgent(id);
+  }
+
   SchemaBuilderInterface NewModel(SchemaIdentifier const &name)
   {
     auto model = ObjectSchemaField::New();

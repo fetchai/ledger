@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/group_definitions.hpp"
 
 namespace fetch {
 namespace byte_array {
@@ -73,19 +74,71 @@ public:
   {
     return type_;
   }
+
   int line() const
   {
     return line_;
   }
+
   std::size_t character() const
   {
     return char_;
   }
 
 private:
-  int         type_ = -1;
-  int         line_ = 0;
-  std::size_t char_ = 0;
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
+
+  int32_t  type_ = -1;
+  int32_t  line_ = 0;
+  uint64_t char_ = 0;
 };
 }  // namespace byte_array
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<byte_array::Token, D>
+{
+public:
+  using Type       = byte_array::Token;
+  using DriverType = D;
+
+  static constexpr uint8_t TYPE      = 1;
+  static constexpr uint8_t LINE      = 2;
+  static constexpr uint8_t CHARACTER = 3;
+  static constexpr uint8_t VALUE     = 4;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &input)
+  {
+    auto map = map_constructor(4);
+
+    map.Append(TYPE, input.type_);
+    map.Append(LINE, input.line_);
+    map.Append(CHARACTER, input.char_);
+    map.Append(VALUE, static_cast<byte_array::ConstByteArray>(input));
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &output)
+  {
+    int32_t                    type;
+    int32_t                    line;
+    uint64_t                   character;
+    byte_array::ConstByteArray value;
+
+    map.ExpectKeyGetValue(TYPE, type);
+    map.ExpectKeyGetValue(LINE, line);
+    map.ExpectKeyGetValue(CHARACTER, character);
+    map.ExpectKeyGetValue(VALUE, value);
+
+    output       = Type(value);
+    output.char_ = character;
+    output.line_ = line;
+    output.type_ = type;
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

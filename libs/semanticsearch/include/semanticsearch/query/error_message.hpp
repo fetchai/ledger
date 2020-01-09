@@ -22,6 +22,7 @@
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 #include "core/commandline/vt100.hpp"
+#include "core/serializers/group_definitions.hpp"
 
 #include <vector>
 
@@ -56,6 +57,9 @@ public:
   uint64_t       character() const;
 
 private:
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
+
   ConstByteArray filename_;
   ConstByteArray source_;
   ConstByteArray message_;
@@ -64,4 +68,36 @@ private:
 };
 
 }  // namespace semanticsearch
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<semanticsearch::ErrorMessage, D>
+{
+public:
+  using Type       = semanticsearch::ErrorMessage;
+  using DriverType = D;
+
+  static constexpr uint8_t TOKEN = 1;
+  static constexpr uint8_t TYPE  = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &input)
+  {
+    auto map = map_constructor(3);
+    map.Append(TOKEN, input.token_);
+    map.Append(TYPE, static_cast<int32_t>(input.type_));
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &output)
+  {
+    int32_t type;
+    map.ExpectKeyGetValue(TOKEN, output.token_);
+    map.ExpectKeyGetValue(TYPE, type);
+    output.type_ = static_cast<semanticsearch::ErrorMessage::Type>(type);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

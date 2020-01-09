@@ -34,8 +34,7 @@ public:
     GET_MESSAGES   = 12,
     CLEAR_MESSAGES = 13,
 
-    FIND_MESSENGERS = 21,
-    ADVERTISE       = 22
+    QUERY = 21
   };
 
   explicit MessengerProtocol(MessengerAPI *api);

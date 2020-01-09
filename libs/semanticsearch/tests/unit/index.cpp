@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 #include "semanticsearch/index/in_memory_db_index.hpp"
 using namespace fetch::semanticsearch;
+
 TEST(SemanticSearchIndex, BasicOperations1D)
 {
   InMemoryDBIndex        database_index{1};
@@ -27,7 +28,7 @@ TEST(SemanticSearchIndex, BasicOperations1D)
   for (DBIndexType i = 0; i < 16; ++i)
   {
     SemanticPosition position;
-    position.PushBack(width * i + width / 2.);
+    position.PushBack(width * i + width / 2);
 
     database_index.AddRelation(i, position);
   }

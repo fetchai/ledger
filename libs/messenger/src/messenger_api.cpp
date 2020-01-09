@@ -55,6 +55,7 @@ void MessengerAPI::RegisterMessenger(service::CallContext const &call_context, b
 void MessengerAPI::UnregisterMessenger(service::CallContext const &call_context)
 {
   mailbox_.UnregisterMailbox(call_context.sender_address);
+  semantic_search_module_->UnregisterAgent(call_context.sender_address);
 }
 
 void MessengerAPI::SendMessage(service::CallContext const & /*call_context*/, Message msg)
@@ -79,16 +80,69 @@ MessengerAPI::ConstByteArray MessengerAPI::GetAddress() const
   return messenger_endpoint_.GetAddress();
 }
 
-MessengerAPI::ResultList MessengerAPI::FindAgents(service::CallContext const & /*call_context*/,
-                                                  ConstByteArray const & /*query_type*/,
-                                                  ConstByteArray const & /*query*/)
+QueryResult MessengerAPI::Query(service::CallContext const &call_context,
+                                ConstByteArray const &query_type, ConstByteArray const &query)
 {
+  QueryResult ret;
+  auto        agent = semantic_search_module_->GetAgent(call_context.sender_address);
 
-  return {"Hello world"};
+  if (agent == nullptr)
+  {
+    ret.message = "Agent not registered";
+
+    // Agent not registered
+    return ret;
+  }
+
+  // Right now we only support semantic search
+  if ((query_type != "semanticsearch") && (query_type != "semanticmodel"))
+  {
+    ret.message = "Unsupported search type";
+
+    return ret;
+  }
+
+  semanticsearch::QueryCompiler compiler(ret.error_tracker, semantic_search_module_);
+  auto                          compiled_query = compiler(query, "query.s");
+  if (ret.error_tracker)
+  {
+    ret.message = "Errors during compilation";
+
+    return ret;
+  }
+
+  // TODO: Enforce execution mode.
+  semanticsearch::QueryExecutor exe(semantic_search_module_, ret.error_tracker);
+
+  // Executing query on behalf of agent
+  auto results = exe.Execute(compiled_query, agent);
+
+  if (ret.error_tracker)
+  {
+    ret.message = "Errors during execution";
+
+    return ret;
+  }
+
+  for (auto &subscription_id : *results)
+  {
+    auto a = semantic_search_module_->GetAgent(subscription_id);
+
+    if (a != nullptr)
+    {
+      ret.agents.push_back(a->identity.identifier());
+    }
+  }
+
+  return ret;
 }
 
-void MessengerAPI::Advertise(service::CallContext const & /*call_context*/)
-{}
+MessengerAPI::JSONDocument MessengerAPI::ListModels() const
+{
+  JSONDocument doc;
+
+  return doc;
+}
 
 }  // namespace messenger
 }  // namespace fetch

@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 #include "semanticsearch/schema/semantic_reducer.hpp"
 using namespace fetch::semanticsearch;
+using namespace fetch;
 
 TEST(SemanticSearchIndex, SemanticReducer)
 {
@@ -32,7 +33,8 @@ TEST(SemanticSearchIndex, SemanticReducer)
     val -= from;
     val /= (to - from + 1);  // Plus one is needed for equality in validator
 
-    ret.PushBack(static_cast<SemanticCoordinateType>(SemanticCoordinateType::FP_MAX * val));
+    ret.PushBack(static_cast<SemanticCoordinateType>(SemanticCoordinateType::FP_MAX *
+                                                     math::AsType<SemanticCoordinateType>(val)));
     return ret;
   });
 

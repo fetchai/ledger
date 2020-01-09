@@ -55,6 +55,17 @@ AgentDirectory::Agent AgentDirectory::GetAgent(ConstByteArray const &pk)
   return agents_[id];
 }
 
+AgentDirectory::Agent AgentDirectory::GetAgent(AgentId const &id)
+{
+  auto it = agents_.find(id);
+  if (it == agents_.end())
+  {
+    return nullptr;
+  }
+
+  return it->second;
+}
+
 bool AgentDirectory::UnregisterAgent(ConstByteArray const &pk)
 {
   // We treat non-register agent as successful unregisters

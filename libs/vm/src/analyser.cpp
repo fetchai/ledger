@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/analyser.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/array.hpp"
 #include "vm/fixed.hpp"
 #include "vm/map.hpp"
@@ -50,6 +50,8 @@ std::string const PROBLEM_ANNOTATION   = "@problem";
 std::string const OBJECTIVE_ANNOTATION = "@objective";
 std::string const WORK_ANNOTATION      = "@work";
 std::string const CLEAR_ANNOTATION     = "@clear";
+std::string const INIT_TEST_ANNOTATION = "@initTest";
+std::string const TEST_ANNOTATION      = "@test";
 
 bool HasAnnotation(NodePtr const &annotations_node, std::string const &annotation_name)
 {
@@ -494,9 +496,9 @@ void Analyser::ValidateFunctionAnnotations(NodePtr const &function_node)
   for (auto const &annotation : annotations_node->children)
   {
     auto const &text = annotation->text;
-    if (text != INIT_ANNOTATION && text != ACTION_ANNOTATION && text != QUERY_ANNOTATION &&
-        text != PROBLEM_ANNOTATION && text != OBJECTIVE_ANNOTATION && text != WORK_ANNOTATION &&
-        text != CLEAR_ANNOTATION)
+    if (text != INIT_ANNOTATION && text != INIT_TEST_ANNOTATION && text != TEST_ANNOTATION &&
+        text != ACTION_ANNOTATION && text != QUERY_ANNOTATION && text != PROBLEM_ANNOTATION &&
+        text != OBJECTIVE_ANNOTATION && text != WORK_ANNOTATION && text != CLEAR_ANNOTATION)
     {
       AddError(annotation->line, "Invalid annotation '" + text + "'");
     }
