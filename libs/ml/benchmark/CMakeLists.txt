@@ -17,4 +17,3 @@ add_fetch_gbench(benchmark_ml_training fetch-ml training)
 add_fetch_gbench(benchmark_ml_serialization fetch-ml serialization)
 add_fetch_gbench(benchmark_ml_loss_functions fetch-ml loss_functions)
 add_fetch_gbench(benchmark_ml_metrics fetch-ml metrics)
-
