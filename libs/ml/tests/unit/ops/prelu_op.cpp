@@ -76,8 +76,6 @@ TYPED_TEST(PReluOpTest, backward_test)
                                              -1, 2,-3, 4,-5, 6,-7, 8)")
                         .Transpose();
 
-  std::cout << "data shape: " << data.shape().at(0) << ", " << data.shape().at(1) << std::endl;
-
   TensorType gt = TensorType::FromString(R"(0, 0, 0, 0, 1, 0.6, 0, 0;
                                             0, 0, 0, 0, 0.5, 1, 0, 0)")
                       .Transpose();
@@ -105,11 +103,6 @@ TYPED_TEST(PReluOpTest, saveparams_test)
 
   TensorType data =
       TensorType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
-
-  TensorType gt =
-      TensorType::FromString(
-          "1,-0.4,   3,-1.6,   5,-3.6,   7,-6.4; -0.1,   2,-0.9,   4,-2.5,   6,-4.9,   8")
-          .Transpose();
 
   TensorType alpha = TensorType::FromString("0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8").Transpose();
 
