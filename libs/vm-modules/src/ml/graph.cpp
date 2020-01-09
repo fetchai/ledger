@@ -88,13 +88,13 @@ void VMGraph::AddFullyConnected(VMPtrString const &name, VMPtrString const &inpu
       name->string(), {input_name->string()}, std::size_t(in), std::size_t(out));
 }
 
-void VMGraph::AddConv1D(VMPtrString const &name, VMPtrString const &input_name, int filters,
-                        int in_channels, int kernel_size, int stride_size)
+void VMGraph::AddConv1D(VMPtrString const &name, VMPtrString const &input_name, int width,
+                        int filters, int in_channels, int kernel_size, int stride_size)
 {
   graph_.AddNode<fetch::ml::layers::Convolution1D<MathTensorType>>(
-      name->string(), {input_name->string()}, static_cast<SizeType>(filters),
-      static_cast<SizeType>(in_channels), static_cast<SizeType>(kernel_size),
-      static_cast<SizeType>(stride_size));
+      name->string(), {input_name->string()}, static_cast<SizeType>(width),
+      static_cast<SizeType>(filters), static_cast<SizeType>(in_channels),
+      static_cast<SizeType>(kernel_size), static_cast<SizeType>(stride_size));
 }
 
 void VMGraph::AddRelu(VMPtrString const &name, VMPtrString const &input_name)

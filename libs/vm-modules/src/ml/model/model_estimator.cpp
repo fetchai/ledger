@@ -130,10 +130,13 @@ ChargeAmount ModelEstimator::LayerAddDenseActivationExperimental(
   return MaximumCharge("attempted to estimate unknown layer with unknown activation type");
 }
 
-ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType const &output_channels,
-                                          SizeType const &input_channels,
-                                          SizeType const &kernel_size, SizeType const &stride_size)
+ChargeAmount ModelEstimator::LayerAddConv1D(Ptr<String> const &layer, SizeType const &width,
+                                            SizeType const &output_channels,
+                                            SizeType const &input_channels,
+                                            SizeType const &kernel_size,
+                                            SizeType const &stride_size)
 {
+  FETCH_UNUSED(width);
   FETCH_UNUSED(layer);
   FETCH_UNUSED(output_channels);
   FETCH_UNUSED(input_channels);
@@ -142,10 +145,44 @@ ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType con
   return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
-ChargeAmount ModelEstimator::LayerAddConvActivation(
-    Ptr<String> const &layer, SizeType const &output_channels, SizeType const &input_channels,
-    SizeType const &kernel_size, SizeType const &stride_size, Ptr<String> const &activation)
+ChargeAmount ModelEstimator::LayerAddConv2D(Ptr<String> const &layer, SizeType const &width,
+                                            SizeType const &height, SizeType const &output_channels,
+                                            SizeType const &input_channels,
+                                            SizeType const &kernel_size,
+                                            SizeType const &stride_size)
 {
+  FETCH_UNUSED(width);
+  FETCH_UNUSED(height);
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(output_channels);
+  FETCH_UNUSED(input_channels);
+  FETCH_UNUSED(kernel_size);
+  FETCH_UNUSED(stride_size);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+ChargeAmount ModelEstimator::LayerAddConv1DActivation(
+    Ptr<String> const &layer, SizeType const &width, SizeType const &output_channels,
+    SizeType const &input_channels, SizeType const &kernel_size, SizeType const &stride_size,
+    Ptr<String> const &activation)
+{
+  FETCH_UNUSED(width);
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(output_channels);
+  FETCH_UNUSED(input_channels);
+  FETCH_UNUSED(kernel_size);
+  FETCH_UNUSED(stride_size);
+  FETCH_UNUSED(activation);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+ChargeAmount ModelEstimator::LayerAddConv2DActivation(
+    Ptr<String> const &layer, SizeType const &width, SizeType const &height,
+    SizeType const &output_channels, SizeType const &input_channels, SizeType const &kernel_size,
+    SizeType const &stride_size, Ptr<String> const &activation)
+{
+  FETCH_UNUSED(width);
+  FETCH_UNUSED(height);
   FETCH_UNUSED(layer);
   FETCH_UNUSED(output_channels);
   FETCH_UNUSED(input_channels);

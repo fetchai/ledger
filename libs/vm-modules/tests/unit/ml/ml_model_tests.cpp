@@ -455,28 +455,28 @@ TEST_F(VMModelTests, model_add_dense_relu)
 // Disabled until implementation of AddLayerConv estimator
 TEST_F(VMModelTests, model_add_conv1d_noact)
 {
-  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64);)",
+  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, 10u64);)",
                        IGNORE_CHARGE_ESTIMATION);
 }
 
 // Disabled until implementation of AddLayerConv estimator
 TEST_F(VMModelTests, model_add_conv1d_relu)
 {
-  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)",
+  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, 10u64, "relu");)",
                        IGNORE_CHARGE_ESTIMATION);
 }
 
 // Disabled until implementation of AddLayerConv estimator
 TEST_F(VMModelTests, model_add_conv2d_noact)
 {
-  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64);)",
+  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, 10u64);)",
                        IGNORE_CHARGE_ESTIMATION);
 }
 
 // Disabled until implementation of AddLayerConv estimator
 TEST_F(VMModelTests, model_add_conv2d_relu)
 {
-  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)",
+  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, 10u64, "relu");)",
                        IGNORE_CHARGE_ESTIMATION);
 }
 
@@ -508,12 +508,12 @@ TEST_F(VMModelTests, model_add_invalid_layer_type)
 
 TEST_F(VMModelTests, model_add_dense_invalid_params_noact)
 {
-  TestInvalidLayerAdding(R"(model.add("dense", 1u64, 1u64, 1u64, 1u64);)");
+  TestInvalidLayerAdding(R"(model.add("dense", 1u64, 1u64, 1u64, 1u64, 1u64);)");
 }
 
 TEST_F(VMModelTests, model_add_dense_invalid_params_relu)
 {
-  TestInvalidLayerAdding(R"(model.add("dense", 1u64, 1u64, 1u64, 1u64, "relu");)");
+  TestInvalidLayerAdding(R"(model.add("dense", 1u64, 1u64, 1u64, 1u64, 1u64, "relu");)");
 }
 
 TEST_F(VMModelTests, model_add_conv_invalid_params_noact)
@@ -549,7 +549,7 @@ TEST_F(VMModelTests, model_add_reshape_invalid_params)
 TEST_F(VMModelTests, model_add_layers_invalid_activation_conv)
 {
   TestInvalidLayerAdding(
-      R"(model.add("conv1d", 1u64, 1u64, 1u64, 1u64, "INVALID_ACTIVATION_CONV");)");
+      R"(model.add("conv1d", 1u64, 1u64, 1u64, 1u64, 1u64, "INVALID_ACTIVATION_CONV");)");
 }
 
 TEST_F(VMModelTests, model_uncompilable_add_layer__dense_uncompatible_params)
@@ -597,7 +597,7 @@ TEST_F(VMModelTests, model_add_layer_to_non_sequential)
   static char const *SRC = R"(
         function main()
           var model = Model("regressor");
-          model.add("conv1d", 1u64, 1u64, 1u64, 1u64);
+          model.add("conv1d", 1u64, 1u64, 1u64, 1u64, 1u64);
         endfunction
       )";
   EXPECT_TRUE(toolkit.Compile(SRC));
@@ -804,7 +804,7 @@ TEST_F(VMModelTests, conv1d_sequential_model_test)
 
       // set up a model
       var model = Model("sequential");
-      model.add("conv1d", output_channels, input_channels, kernel_size, stride_size);
+      model.add("conv1d", input_height, output_channels, input_channels, kernel_size, stride_size);
       model.compile("mse", "adam");
 
       // make an initial prediction
@@ -877,7 +877,7 @@ TEST_F(VMModelTests, conv2d_sequential_model_test)
 
       // set up a model
       var model = Model("sequential");
-      model.add("conv2d", output_channels, input_channels, kernel_size, stride_size);
+      model.add("conv2d", input_height, input_width, output_channels, input_channels, kernel_size, stride_size);
       model.compile("mse", "adam");
 
       // make an initial prediction

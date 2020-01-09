@@ -62,16 +62,33 @@ public:
                                        math::SizeType const &                   hidden_nodes,
                                        fetch::vm::Ptr<fetch::vm::String> const &activation);
 
-  ChargeAmount LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                            math::SizeType const &                   output_channels,
-                            math::SizeType const &input_channels, math::SizeType const &kernel_size,
-                            math::SizeType const &stride_size);
-  ChargeAmount LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                                      math::SizeType const &                   output_channels,
-                                      math::SizeType const &                   input_channels,
-                                      math::SizeType const &                   kernel_size,
-                                      math::SizeType const &                   stride_size,
-                                      fetch::vm::Ptr<fetch::vm::String> const &activation);
+  ChargeAmount LayerAddConv1D(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                              math::SizeType const &width, math::SizeType const &output_channels,
+                              math::SizeType const &input_channels,
+                              math::SizeType const &kernel_size, math::SizeType const &stride_size);
+
+  ChargeAmount LayerAddConv2D(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                              math::SizeType const &width, math::SizeType const &height,
+                              math::SizeType const &output_channels,
+                              math::SizeType const &input_channels,
+                              math::SizeType const &kernel_size, math::SizeType const &stride_size);
+
+  ChargeAmount LayerAddConv1DActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                        math::SizeType const &                   width,
+                                        math::SizeType const &                   output_channels,
+                                        math::SizeType const &                   input_channels,
+                                        math::SizeType const &                   kernel_size,
+                                        math::SizeType const &                   stride_size,
+                                        fetch::vm::Ptr<fetch::vm::String> const &activation);
+
+  ChargeAmount LayerAddConv2DActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                        math::SizeType const &width, math::SizeType const &height,
+                                        math::SizeType const &                   output_channels,
+                                        math::SizeType const &                   input_channels,
+                                        math::SizeType const &                   kernel_size,
+                                        math::SizeType const &                   stride_size,
+                                        fetch::vm::Ptr<fetch::vm::String> const &activation);
+
   ChargeAmount LayerAddDenseActivationExperimental(
       fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
       math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation);

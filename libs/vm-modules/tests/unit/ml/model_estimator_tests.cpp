@@ -254,6 +254,10 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_test)
   std::string model_type = "sequential";
   std::string layer_type = "convolution1D";
 
+  SizeType min_width  = 10;
+  SizeType max_width  = 50;
+  SizeType width_step = 10;
+
   SizeType min_input_size = 0;
   SizeType max_input_size = 500;
   SizeType input_step     = 10;
@@ -287,10 +291,13 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_test)
         for (SizeType stride_size = min_stride_size; stride_size < max_stride_size;
              stride_size += stride_step)
         {
+          for (SizeType width = min_width; width < max_width; width += width_step)
+          {
 
-          EXPECT_TRUE(model_estimator.LayerAddConv(vm_ptr_layer_type, output_channels,
-                                                   input_channels, kernel_size, stride_size) ==
-                      static_cast<ChargeAmount>(fetch::vm::MAXIMUM_CHARGE));
+            EXPECT_TRUE(model_estimator.LayerAddConv1D(vm_ptr_layer_type, width, output_channels,
+                                                       input_channels, kernel_size, stride_size) ==
+                        static_cast<ChargeAmount>(fetch::vm::MAXIMUM_CHARGE));
+          }
         }
       }
     }
@@ -302,6 +309,10 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
   std::string model_type      = "sequential";
   std::string layer_type      = "convolution1D";
   std::string activation_type = "relu";
+
+  SizeType min_width  = 10;
+  SizeType max_width  = 50;
+  SizeType width_step = 10;
 
   SizeType min_input_size = 0;
   SizeType max_input_size = 500;
@@ -337,11 +348,13 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
         for (SizeType stride_size = min_stride_size; stride_size < max_stride_size;
              stride_size += stride_step)
         {
-
-          EXPECT_TRUE(model_estimator.LayerAddConvActivation(vm_ptr_layer_type, output_channels,
-                                                             input_channels, kernel_size,
-                                                             stride_size, vm_ptr_activation_type) ==
-                      static_cast<ChargeAmount>(fetch::vm::MAXIMUM_CHARGE));
+          for (SizeType width = min_width; width < max_width; width += width_step)
+          {
+            EXPECT_TRUE(model_estimator.LayerAddConv1DActivation(
+                            vm_ptr_layer_type, width, output_channels, input_channels, kernel_size,
+                            stride_size, vm_ptr_activation_type) ==
+                        static_cast<ChargeAmount>(fetch::vm::MAXIMUM_CHARGE));
+          }
         }
       }
     }

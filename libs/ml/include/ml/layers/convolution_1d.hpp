@@ -57,13 +57,15 @@ public:
    * @param init_mode mode in which wights(kernel) will be initialised
    * @param seed random seed for weights(kernel) initialisation
    */
-  Convolution1D(SizeType const output_channels, SizeType const input_channels,
-                SizeType const kernel_size, SizeType const stride_size,
+  Convolution1D(SizeType const height, SizeType const output_channels,
+                SizeType const input_channels, SizeType const kernel_size,
+                SizeType const                stride_size,
                 details::ActivationType const activation_type = details::ActivationType::NOTHING,
                 std::string const &           name            = "Conv1D",
                 WeightsInit const             init_mode       = WeightsInit::XAVIER_GLOROT,
                 SizeType const                seed            = 123456789)
-    : kernel_size_{kernel_size}
+    : height_{height}
+    , kernel_size_{kernel_size}
     , input_channels_{input_channels}
     , output_channels_{output_channels}
     , stride_size_{stride_size}
@@ -108,6 +110,7 @@ public:
     ret->input_channels  = input_channels_;
     ret->output_channels = output_channels_;
     ret->stride_size     = stride_size_;
+    ret->height          = height_;
 
     return ret;
   }
@@ -119,6 +122,7 @@ public:
     input_channels_  = sp.input_channels;
     output_channels_ = sp.output_channels;
     stride_size_     = sp.stride_size;
+    height_          = sp.height;
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
@@ -137,6 +141,7 @@ public:
   static constexpr char const *DESCRIPTOR = "Convolution1DLayer";
 
 private:
+  SizeType height_{};
   SizeType kernel_size_{};
   SizeType input_channels_{};
   SizeType output_channels_{};

@@ -326,10 +326,14 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
   if (experimental_enabled)
   {
     module.GetClassInterface<VMModel>()
-        .CreateMemberFunction("add", &VMModel::LayerAddConv,
-                              UseEstimator(&ModelEstimator::LayerAddConv))
-        .CreateMemberFunction("add", &VMModel::LayerAddConvActivation,
-                              UseEstimator(&ModelEstimator::LayerAddConvActivation))
+        .CreateMemberFunction("add", &VMModel::LayerAddConv1D,
+                              UseEstimator(&ModelEstimator::LayerAddConv1D))
+        .CreateMemberFunction("add", &VMModel::LayerAddConv2D,
+                              UseEstimator(&ModelEstimator::LayerAddConv2D))
+        .CreateMemberFunction("add", &VMModel::LayerAddConv1DActivation,
+                              UseEstimator(&ModelEstimator::LayerAddConv1DActivation))
+        .CreateMemberFunction("add", &VMModel::LayerAddConv2DActivation,
+                              UseEstimator(&ModelEstimator::LayerAddConv2DActivation))
         .CreateMemberFunction("add", &VMModel::LayerAddFlatten,
                               UseEstimator(&ModelEstimator::LayerAddFlatten))
         .CreateMemberFunction("add", &VMModel::LayerAddDropout,
@@ -582,26 +586,37 @@ void VMModel::LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::St
   }
 }
 
-void VMModel::LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                           math::SizeType const &                   output_channels,
-                           math::SizeType const &input_channels, math::SizeType const &kernel_size,
-                           math::SizeType const &stride_size)
+void VMModel::LayerAddConv1D(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                             math::SizeType const &width, math::SizeType const &output_channels,
+                             math::SizeType const &input_channels,
+                             math::SizeType const &kernel_size, math::SizeType const &stride_size)
 {
-  LayerAddConvActivationImplementation(layer, output_channels, input_channels, kernel_size,
-                                       stride_size, ActivationType::NOTHING);
+  LayerAddConv1DActivationImplementation(layer, width, output_channels, input_channels, kernel_size,
+                                         stride_size, ActivationType::NOTHING);
 }
 
-void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                                     math::SizeType const &                   output_channels,
-                                     math::SizeType const &                   input_channels,
-                                     math::SizeType const &                   kernel_size,
-                                     math::SizeType const &                   stride_size,
-                                     fetch::vm::Ptr<fetch::vm::String> const &activation)
+void VMModel::LayerAddConv2D(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                             math::SizeType const &width, math::SizeType const &height,
+                             math::SizeType const &output_channels,
+                             math::SizeType const &input_channels,
+                             math::SizeType const &kernel_size, math::SizeType const &stride_size)
+{
+  LayerAddConv2DActivationImplementation(layer, width, height, output_channels, input_channels,
+                                         kernel_size, stride_size, ActivationType::NOTHING);
+}
+
+void VMModel::LayerAddConv1DActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                       math::SizeType const &                   width,
+                                       math::SizeType const &                   output_channels,
+                                       math::SizeType const &                   input_channels,
+                                       math::SizeType const &                   kernel_size,
+                                       math::SizeType const &                   stride_size,
+                                       fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
   try
   {
-    LayerAddConvActivationImplementation(
-        layer, output_channels, input_channels, kernel_size, stride_size,
+    LayerAddConv1DActivationImplementation(
+        layer, width, output_channels, input_channels, kernel_size, stride_size,
         ParseName(activation->string(), activations_, "activation function"));
   }
   catch (std::exception const &e)
@@ -610,29 +625,63 @@ void VMModel::LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &la
   }
 }
 
-void VMModel::LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                                                   math::SizeType const &output_channels,
-                                                   math::SizeType const &input_channels,
-                                                   math::SizeType const &kernel_size,
-                                                   math::SizeType const &stride_size,
-                                                   fetch::ml::details::ActivationType activation)
+void VMModel::LayerAddConv2DActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                       math::SizeType const &width, math::SizeType const &height,
+                                       math::SizeType const &                   output_channels,
+                                       math::SizeType const &                   input_channels,
+                                       math::SizeType const &                   kernel_size,
+                                       math::SizeType const &                   stride_size,
+                                       fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
   try
   {
-    SupportedLayerType const layer_type =
-        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
-    AssertLayerTypeMatches(layer_type, {SupportedLayerType::CONV1D, SupportedLayerType::CONV2D});
+    LayerAddConv2DActivationImplementation(
+        layer, width, height, output_channels, input_channels, kernel_size, stride_size,
+        ParseName(activation->string(), activations_, "activation function"));
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(std::string(e.what()));
+  }
+}
+
+void VMModel::LayerAddConv1DActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                                     math::SizeType const &                   width,
+                                                     math::SizeType const &output_channels,
+                                                     math::SizeType const &input_channels,
+                                                     math::SizeType const &kernel_size,
+                                                     math::SizeType const &stride_size,
+                                                     fetch::ml::details::ActivationType activation)
+{
+  FETCH_UNUSED(layer);
+  try
+  {
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
-    if (layer_type == SupportedLayerType::CONV1D)
-    {
-      me->Add<fetch::ml::layers::Convolution1D<TensorType>>(output_channels, input_channels,
-                                                            kernel_size, stride_size, activation);
-    }
-    else if (layer_type == SupportedLayerType::CONV2D)
-    {
-      me->Add<fetch::ml::layers::Convolution2D<TensorType>>(output_channels, input_channels,
-                                                            kernel_size, stride_size, activation);
-    }
+    me->Add<fetch::ml::layers::Convolution1D<TensorType>>(width, output_channels, input_channels,
+                                                          kernel_size, stride_size, activation);
+    compiled_ = false;
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
+    return;
+  }
+}
+
+void VMModel::LayerAddConv2DActivationImplementation(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &width,
+    math::SizeType const &height, math::SizeType const &output_channels,
+    math::SizeType const &input_channels, math::SizeType const &kernel_size,
+    math::SizeType const &stride_size, fetch::ml::details::ActivationType activation)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(width);
+  FETCH_UNUSED(height);
+  try
+  {
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+    me->Add<fetch::ml::layers::Convolution2D<TensorType>>(output_channels, input_channels,
+                                                          kernel_size, stride_size, activation);
     compiled_ = false;
   }
   catch (std::exception const &e)

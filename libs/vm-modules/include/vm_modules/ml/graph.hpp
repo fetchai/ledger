@@ -59,8 +59,8 @@ public:
                          fetch::vm::Ptr<fetch::vm::String> const &input_name, int in, int out);
 
   void AddConv1D(fetch::vm::Ptr<fetch::vm::String> const &name,
-                 fetch::vm::Ptr<fetch::vm::String> const &input_name, int filters, int in_channels,
-                 int kernel_size, int stride_size);
+                 fetch::vm::Ptr<fetch::vm::String> const &input_name, int width, int filters,
+                 int in_channels, int kernel_size, int stride_size);
 
   void AddRelu(fetch::vm::Ptr<fetch::vm::String> const &name,
                fetch::vm::Ptr<fetch::vm::String> const &input_name);

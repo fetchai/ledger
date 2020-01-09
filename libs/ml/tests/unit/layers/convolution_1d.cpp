@@ -53,8 +53,8 @@ TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as 
   input.FillUniformRandom();
 
   // Evaluate
-  fetch::ml::layers::Convolution1D<TensorType> conv(output_channels, input_channels, kernel_height,
-                                                    stride_size);
+  fetch::ml::layers::Convolution1D<TensorType> conv(input_height, output_channels, input_channels,
+                                                    kernel_height, stride_size);
   conv.SetInput("Conv1D_Input", input);
   TensorType output = conv.Evaluate("Conv1D_Conv1D", true);
 
@@ -88,8 +88,8 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
   input.FillUniformRandom();
 
   // Evaluate
-  fetch::ml::layers::Convolution1D<TensorType> conv(output_channels, input_channels, kernel_height,
-                                                    stride_size);
+  fetch::ml::layers::Convolution1D<TensorType> conv(input_height, output_channels, input_channels,
+                                                    kernel_height, stride_size);
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
@@ -129,8 +129,8 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
   error_signal.FillUniformRandom();
 
   // Evaluate
-  fetch::ml::layers::Convolution1D<TensorType> conv(output_channels, input_channels, kernel_height,
-                                                    stride_size);
+  fetch::ml::layers::Convolution1D<TensorType> conv(input_height, output_channels, input_channels,
+                                                    kernel_height, stride_size);
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
@@ -179,7 +179,7 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
       fetch::ml::OpType::LAYER_CONVOLUTION_1D, "Convolution2D",
       [output_channels, input_channels, kernel_height, stride_size]() {
         return std::make_shared<fetch::ml::layers::Convolution1D<TensorType>>(
-            output_channels, input_channels, kernel_height, stride_size);
+            input_height, output_channels, input_channels, kernel_height, stride_size);
       });
   conv.AddInput(placeholder_node);
 
@@ -232,7 +232,7 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
       fetch::ml::OpType::LAYER_CONVOLUTION_1D, "Convolution2D",
       [output_channels, input_channels, kernel_height, stride_size]() {
         return std::make_shared<fetch::ml::layers::Convolution1D<TensorType>>(
-            output_channels, input_channels, kernel_height, stride_size);
+            input_height, output_channels, input_channels, kernel_height, stride_size);
       });
   conv.AddInput(placeholder_node);
 
@@ -276,7 +276,8 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
   fetch::ml::Graph<TensorType> g;
   g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
   g.template AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
-      "Convolution1D", {"Input"}, output_channels, input_channels, kernel_height, stride_size);
+      "Convolution1D", {"Input"}, input_height, output_channels, input_channels, kernel_height,
+      stride_size);
   g.SetInput("Input", input);
 
   TensorType prediction = g.Evaluate("Convolution1D", true);
@@ -304,10 +305,11 @@ TYPED_TEST(Convolution1DTest, getStateDict)
   SizeType const output_channels = 5;
   SizeType const kernel_height   = 3;
   SizeType const stride_size     = 1;
+  SizeType const input_height    = 3;
 
   // Initialise weights
   fetch::ml::layers::Convolution1D<TensorType> conv(
-      output_channels, input_channels, kernel_height, stride_size,
+      input_height, output_channels, input_channels, kernel_height, stride_size,
       fetch::ml::details::ActivationType::NOTHING, "ConvTest");
   fetch::ml::StateDict<TensorType> sd = conv.StateDict();
 
@@ -353,7 +355,7 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   labels.FillUniformRandom();
 
   // Create layer
-  LayerType layer(output_channels, input_channels, kernel_height, stride_size);
+  LayerType layer(input_height, output_channels, input_channels, kernel_height, stride_size);
 
   // add label node
   std::string label_name =

@@ -224,7 +224,7 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   // Layers
   std::string layer_layernorm =
       AddOp<layers::LayerNorm<TensorType>>(g, {input_1}, std::vector<math::SizeType>({1}));
-  std::string layer_conv1d = AddOp<layers::Convolution1D<TensorType>>(g, {input_3d}, 1, 2, 1, 1);
+  std::string layer_conv1d = AddOp<layers::Convolution1D<TensorType>>(g, {input_3d}, 1, 1, 2, 1, 1);
   std::string layer_conv2d = AddOp<layers::Convolution2D<TensorType>>(g, {input_4d}, 1, 2, 1, 1);
   std::string layer_fc1    = AddOp<layers::FullyConnected<TensorType>>(g, {input_1}, 1, 1);
   std::string layer_mh     = AddOp<layers::MultiheadAttention<TensorType>>(

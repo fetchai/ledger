@@ -140,14 +140,30 @@ public:
                                fetch::vm::Ptr<fetch::vm::String> const &activation);
 
   // Experimental Layers
-  void LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                    math::SizeType const &output_channels, math::SizeType const &input_channels,
-                    math::SizeType const &kernel_size, math::SizeType const &stride_size);
-  void LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                              math::SizeType const &                   output_channels,
-                              math::SizeType const &                   input_channels,
-                              math::SizeType const &kernel_size, math::SizeType const &stride_size,
-                              fetch::vm::Ptr<fetch::vm::String> const &activation);
+  void LayerAddConv1D(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &width,
+                      math::SizeType const &output_channels, math::SizeType const &input_channels,
+                      math::SizeType const &kernel_size, math::SizeType const &stride_size);
+
+  void LayerAddConv2D(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &width,
+                      math::SizeType const &height, math::SizeType const &output_channels,
+                      math::SizeType const &input_channels, math::SizeType const &kernel_size,
+                      math::SizeType const &stride_size);
+
+  void LayerAddConv1DActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                math::SizeType const &width, math::SizeType const &output_channels,
+                                math::SizeType const &                   input_channels,
+                                math::SizeType const &                   kernel_size,
+                                math::SizeType const &                   stride_size,
+                                fetch::vm::Ptr<fetch::vm::String> const &activation);
+
+  void LayerAddConv2DActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                math::SizeType const &width, math::SizeType const &height,
+                                math::SizeType const &                   output_channels,
+                                math::SizeType const &                   input_channels,
+                                math::SizeType const &                   kernel_size,
+                                math::SizeType const &                   stride_size,
+                                fetch::vm::Ptr<fetch::vm::String> const &activation);
+
   void LayerAddDenseActivationExperimental(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                            math::SizeType const &                   inputs,
                                            math::SizeType const &                   hidden_nodes,
@@ -188,12 +204,19 @@ private:
                                              math::SizeType const &                   hidden_nodes,
                                              fetch::ml::details::ActivationType       activation);
 
-  void LayerAddConvActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                                            math::SizeType const &             output_channels,
-                                            math::SizeType const &             input_channels,
-                                            math::SizeType const &             kernel_size,
-                                            math::SizeType const &             stride_size,
-                                            fetch::ml::details::ActivationType activation);
+  void LayerAddConv1DActivationImplementation(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                              math::SizeType const &                   height,
+                                              math::SizeType const &             output_channels,
+                                              math::SizeType const &             input_channels,
+                                              math::SizeType const &             kernel_size,
+                                              math::SizeType const &             stride_size,
+                                              fetch::ml::details::ActivationType activation);
+
+  void LayerAddConv2DActivationImplementation(
+      fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &height,
+      math::SizeType const &width, math::SizeType const &output_channels,
+      math::SizeType const &input_channels, math::SizeType const &kernel_size,
+      math::SizeType const &stride_size, fetch::ml::details::ActivationType activation);
 
   inline void AssertLayerTypeMatches(SupportedLayerType                layer,
                                      std::vector<SupportedLayerType> &&valids) const;
