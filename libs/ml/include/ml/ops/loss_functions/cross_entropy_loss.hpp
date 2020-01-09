@@ -61,6 +61,15 @@ public:
     return OpType::LOSS_CROSS_ENTROPY;
   }
   static constexpr char const *DESCRIPTOR = "CrossEntropyLoss";
+
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 };
 
 }  // namespace ops

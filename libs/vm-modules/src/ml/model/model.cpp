@@ -585,6 +585,12 @@ void VMModel::LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::St
         ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
     AssertLayerTypeMatches(layer_type, {SupportedLayerType::DENSE});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
+    // if this is a first layer in a Model and inputs count is known,
+    // model's InputShape can be set as well.
+    if (me->LayerCount() == 0 && inputs != AUTODETECT_INPUTS)
+    {
+      me->SetBatchInputShape({inputs, 1});
+    }
     me->Add<fetch::ml::layers::FullyConnected<TensorType>>(inputs, hidden_nodes, activation);
     compiled_ = false;
   }
@@ -809,7 +815,7 @@ void VMModel::LayerAddInput(const fetch::vm::Ptr<String> &                   lay
           "Can not add an Input layer to non-empty Model! Input layer must be first.");
       return;
     }
-    me->SetExpectedInputShape(shape->elements);
+    me->SetBatchInputShape(shape->elements);
     compiled_ = false;
   }
   catch (std::exception const &e)
