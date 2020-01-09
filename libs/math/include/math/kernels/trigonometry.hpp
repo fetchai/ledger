@@ -178,7 +178,7 @@ struct TanH
   fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> operator()(Type const &x,
                                                                         Type &      y) const
   {
-    y = std::tanh(x);
+    y = static_cast<Type>(std::tanh(x));
   }
 
   template <typename Type>
@@ -194,7 +194,7 @@ struct ASinH
   fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> operator()(Type const &x,
                                                                         Type &      y) const
   {
-    y = std::asinh(x);
+    y = static_cast<Type>(std::asinh(x));
   }
 
   template <typename Type>
@@ -210,7 +210,7 @@ struct ACosH
   fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> operator()(Type const &x,
                                                                         Type &      y) const
   {
-    y = std::acosh(x);
+    y = static_cast<Type>(std::acosh(x));
   }
 
   template <typename Type>
@@ -226,7 +226,7 @@ struct ATanH
   fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> operator()(Type const &x,
                                                                         Type &      y) const
   {
-    y = std::atanh(x);
+    y = static_cast<Type>(std::atanh(x));
   }
 
   template <typename Type>

@@ -75,7 +75,8 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
   using Index = fetch::math::SizeType;
 
   auto tensor_constructor_charge_estimate = [](Ptr<Array<SizeType>> const &shape) -> ChargeAmount {
-    SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape(shape->elements);
+    DataType padded_size =
+        static_cast<DataType>(fetch::math::Tensor<DataType>::PaddedSizeFromShape(shape->elements));
 
     return static_cast<ChargeAmount>(CONSTRUCTION_PADDED_SIZE_COEF * padded_size +
                                      CONSTRUCTION_CONST_COEF) *

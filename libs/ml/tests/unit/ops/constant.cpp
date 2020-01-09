@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer_definition.hpp"
-#include "math/base_types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/constant.hpp"
 #include "ml/serializers/ml_types.hpp"
@@ -142,8 +141,7 @@ TYPED_TEST(ConstantTest, saveable_test)
   new_op.Forward({}, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(
-      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
 }  // namespace test

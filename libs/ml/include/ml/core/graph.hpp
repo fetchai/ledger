@@ -20,10 +20,12 @@
 #include "ml/core/node.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/weights.hpp"
+#include "ml/state_dict.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <stdexcept>
 #include <string>

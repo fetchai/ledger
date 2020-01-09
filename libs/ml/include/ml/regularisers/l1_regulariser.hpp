@@ -54,13 +54,13 @@ public:
     auto it = weight.begin();
     while (it.is_valid())
     {
-      if (*it > 0)
+      if (*it > DataType{0})
       {
-        *it -= regularisation_rate;
+        *it = static_cast<DataType>(*it - regularisation_rate);
       }
       else
       {
-        *it += regularisation_rate;
+        *it = static_cast<DataType>(*it + regularisation_rate);
       }
       ++it;
     }
