@@ -246,6 +246,11 @@ bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) con
     {
       // we need to descend from tip
       auto next_block = HeaviestChainBlockAbove(parent_block->block_number);
+      if (!next_block)
+      {
+        // there was a failure on block lookup attempt
+        return false;
+      }
       if (next_block->previous_hash == hash)
       {
         next_hash = next_block->hash;
@@ -556,7 +561,6 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
  *
  * @param limit The maximum amount of blocks returned
  * @return The array of blocks
- * @throws std::runtime_error if a block lookup occurs
  */
 MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
@@ -594,9 +598,12 @@ MainChain::IntBlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
   while (block->block_number > limit + 1)
   {
     assert(!block->IsGenesis());
-    if (!LookupBlock(block->previous_hash, block))
+    auto const &previous_hash = block->previous_hash;
+    if (!LookupBlock(previous_hash, block))
     {
-      throw std::runtime_error("Cannot find a block for hash");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(previous_hash),
+                      " when recovering the previous block on the heaviest chain");
+      return {};
     }
     if (IsBlockInCache(block->hash))
     {
@@ -616,7 +623,6 @@ MainChain::IntBlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
  * @param start The hash of the first block
  * @param limit The maximum amount of blocks returned
  * @return The array of blocks
- * @throws std::runtime_error if a block lookup occurs
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
@@ -641,7 +647,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
                       " in get chain preceding");
-      throw std::runtime_error("Failed to look up block");
+      return {};
     }
     assert(block->block_number > 0 || block->IsGenesis());
 
@@ -691,7 +697,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
       FETCH_LOG_DEBUG(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
                       " during time travel. Note, next hash: ", next_hash);
 
-      return {heaviest->hash, heaviest->block_number};
+      return {};
     }
   }
 
@@ -1588,7 +1594,7 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash
 
 /**
  * Attempt to locate a block stored in the in memory cache
- *
+
  * @param hash The hash of the block to search for
  * @param block The output block to be populated
  * @return true if successful, otherwise false

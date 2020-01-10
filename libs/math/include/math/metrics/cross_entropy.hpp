@@ -62,16 +62,16 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
       assert((*y_it == DataType{1}) || (*y_it == DataType{0}));
       if (*y_it == DataType{1})
       {
-        ret -= Log(*x_it);
+        ret = static_cast<DataType>(ret - Log(*x_it));
       }
       else
       {
-        tmp = DataType{1} - *x_it;
+        tmp = static_cast<DataType>(DataType{1} - *x_it);
         if (tmp <= DataType{0})
         {
           throw exceptions::NegativeLog("cannot take log of negative values");
         }
-        ret -= Log(tmp);
+        ret = static_cast<DataType>(ret - Log(tmp));
       }
       ++x_it;
       ++y_it;
@@ -84,7 +84,7 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
 
     for (SizeType idx = 0; idx < n_examples; ++idx)
     {
-      ret -= Log(x.At(SizeType(gt[idx]), idx));
+      ret = static_cast<DataType>(ret - Log(x.At(SizeType(gt[idx]), idx)));
     }
   }
   Divide(ret, static_cast<DataType>(n_examples), ret);
